@@ -114,7 +114,7 @@ class CNNClassifier(BaseDeepClassifier):
         """
         import tensorflow as tf
         from tensorflow import keras
-        
+
         tf.random.set_seed(self.random_seed)
 
         if self.metrics is None:
@@ -127,8 +127,11 @@ class CNNClassifier(BaseDeepClassifier):
             units=n_classes, activation=self.activation, use_bias=self.use_bias
         )(output_layer)
 
-        self.optimizer = keras.optimizers.Adam(learning_rate=0.01) \
-            if self.optimizer is None else self.optimizer
+        self.optimizer = (
+            keras.optimizers.Adam(learning_rate=0.01)
+            if self.optimizer is None
+            else self.optimizer
+        )
 
         model = keras.models.Model(inputs=input_layer, outputs=output_layer)
         model.compile(
