@@ -482,8 +482,8 @@ class KalmanFilterTransformerPK(BaseKalmanFilter, BaseTransformer):
     >>> time_steps, state_dim, measurement_dim = 10, 2, 3
     >>>
     >>> X = np.random.rand(time_steps, measurement_dim) * 10
-    >>> transformer = kf.KalmanFilterTransformerPK(state_dim=state_dim)
-    >>> X_transformed = transformer.fit_transform(X=X)
+    >>> transformer = kf.KalmanFilterTransformerPK(state_dim=state_dim) # doctest: +SKIP
+    >>> X_transformed = transformer.fit_transform(X=X)  # doctest: +SKIP
 
         Example of - denoising, matrix estimation and missing values:
     >>> import numpy as np  # doctest: +SKIP
@@ -496,14 +496,14 @@ class KalmanFilterTransformerPK(BaseKalmanFilter, BaseTransformer):
     >>>
     >>> # If matrices estimation is required, elements of `estimate_matrices`
     >>> # are assumed to be constants.
-    >>> transformer = kf.KalmanFilterTransformerPK(
+    >>> transformer = kf.KalmanFilterTransformerPK(  # doctest: +SKIP
     ...     state_dim=state_dim,
     ...     measurement_noise=np.eye(measurement_dim),
     ...     denoising=True,
     ...     estimate_matrices=['measurement_noise']
     ...     )
     >>>
-    >>> X_transformed = transformer.fit_transform(X=X)
+    >>> X_transformed = transformer.fit_transform(X=X)  # doctest: +SKIP
 
         Example of - dynamic inputs (matrix per time-step) and missing values:
     >>> import numpy as np  # doctest: +SKIP
@@ -516,13 +516,13 @@ class KalmanFilterTransformerPK(BaseKalmanFilter, BaseTransformer):
     >>>
     >>> # Dynamic input -
     >>> # `state_transition` provide different matrix for each time step.
-    >>> transformer = kf.KalmanFilterTransformerPK(
+    >>> transformer = kf.KalmanFilterTransformerPK(  # doctest: +SKIP
     ...     state_dim=state_dim,
     ...     state_transition=np.random.rand(time_steps, state_dim, state_dim),
     ...     estimate_matrices=['initial_state', 'initial_state_covariance']
     ...     )
     >>>
-    >>> X_transformed = transformer.fit_transform(X=X)
+    >>> X_transformed = transformer.fit_transform(X=X)  # doctest: +SKIP
     """
 
     _tags = {
@@ -936,8 +936,8 @@ class KalmanFilterTransformerFP(BaseKalmanFilter, BaseTransformer):
     >>> time_steps, state_dim, measurement_dim = 10, 2, 3
     >>>
     >>> X = np.random.rand(time_steps, measurement_dim) * 10
-    >>> transformer = kf.KalmanFilterTransformerFP(state_dim=state_dim)
-    >>> X_transformed = transformer.fit_transform(X=X)
+    >>> transformer = kf.KalmanFilterTransformerFP(state_dim=state_dim) # doctest: +SKIP
+    >>> Xt = transformer.fit_transform(X=X)  # doctest: +SKIP
 
         Example of - denoising, matrix estimation, missing values and transform with y:
     >>> import numpy as np  # doctest: +SKIP
@@ -954,14 +954,13 @@ class KalmanFilterTransformerFP(BaseKalmanFilter, BaseTransformer):
     >>>
     >>> # If matrices estimation is required, elements of `estimate_matrices`
     >>> # are assumed to be constants.
-    >>> transformer = kf.KalmanFilterTransformerFP(
+    >>> transformer = kf.KalmanFilterTransformerFP(  # doctest: +SKIP
     ...     state_dim=state_dim,
     ...     measurement_noise=np.eye(measurement_dim),
     ...     denoising=True,
     ...     estimate_matrices='measurement_noise'
     ...     )
-    >>>
-    >>> X_transformed = transformer.fit_transform(X=X, y=control_variable)
+    >>> Xt = transformer.fit_transform(X=X, y=control_variable)  # doctest: +SKIP
 
         Example of - dynamic inputs (matrix per time-step), missing values:
     >>> import numpy as np  # doctest: +SKIP
@@ -978,13 +977,12 @@ class KalmanFilterTransformerFP(BaseKalmanFilter, BaseTransformer):
     >>>
     >>> # Dynamic input -
     >>> # `state_transition` provide different matrix for each time step.
-    >>> transformer = kf.KalmanFilterTransformerFP(
+    >>> transformer = kf.KalmanFilterTransformerFP(  # doctest: +SKIP
     ...     state_dim=state_dim,
     ...     state_transition=np.random.rand(time_steps, state_dim, state_dim),
     ...     estimate_matrices=['initial_state', 'initial_state_covariance']
     ...     )
-    >>>
-    >>> X_transformed = transformer.fit_transform(X=X, y=control_variable)
+    >>> Xt = transformer.fit_transform(X=X, y=control_variable)  # doctest: +SKIP
     """
 
     _tags = {
