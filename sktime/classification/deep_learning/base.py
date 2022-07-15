@@ -65,6 +65,18 @@ class BaseDeepClassifier(BaseClassifier, ABC):
         """
         ...
 
+    def get_metrics(self):
+        """
+        Summary function to return the losses/metrics for model fit.
+
+        Returns
+        -------
+        history: dict,
+            Dictionary containing model's train/validation losses and metrics
+
+        """
+        return self.history.history
+
     def _predict(self, X, **kwargs):
         probs = self._predict_proba(X, **kwargs)
         rng = check_random_state(self.random_state)
