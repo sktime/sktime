@@ -4,7 +4,6 @@
 __author__ = ["James-Large", "TonyBagnall"]
 __all__ = ["CNNClassifier"]
 
-
 from sklearn.utils import check_random_state
 
 from sktime.classification.deep_learning.base import BaseDeepClassifier
@@ -58,6 +57,17 @@ class CNNClassifier(BaseDeepClassifier):
 
     Adapted from the implementation from Fawaz et. al
     https://github.com/hfawaz/dl-4-tsc/blob/master/classifiers/cnn.py
+
+    Examples
+    --------
+    >>> from sktime.classification.deep_learning.cnn import CNNClassifier
+    >>> from sktime.datasets import load_unit_test
+    >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
+    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
+    >>> cnn = CNNClassifier()
+    >>> cnn.fit(X_train, y_train)
+    CNNClassifier(...)
+    >>> y_pred = cnn.predict(X_test)
     """
 
     def __init__(
@@ -91,6 +101,7 @@ class CNNClassifier(BaseDeepClassifier):
         self.activation = activation
         self.use_bias = use_bias
         self.optimizer = optimizer
+        self.history = None
         self._network = CNNNetwork()
 
     def build_model(self, input_shape, n_classes, **kwargs):
