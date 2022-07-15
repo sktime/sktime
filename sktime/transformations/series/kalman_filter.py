@@ -535,6 +535,7 @@ class KalmanFilterTransformerPK(BaseKalmanFilter, BaseTransformer):
         "capability:missing_values:removes": False,
         # is transform result always guaranteed to contain no missing values?
         "scitype:instancewise": True,  # is this an instance-wise transform?
+        "python_dependencies": "pykalman",
     }
 
     def __init__(
@@ -551,8 +552,6 @@ class KalmanFilterTransformerPK(BaseKalmanFilter, BaseTransformer):
         estimate_matrices=None,
         denoising=False,
     ):
-        _check_soft_dependencies("pykalman", severity="error", object=self)
-
         super(KalmanFilterTransformerPK, self).__init__(
             state_dim=state_dim,
             state_transition=state_transition,
@@ -1001,6 +1000,7 @@ class KalmanFilterTransformerFP(BaseKalmanFilter, BaseTransformer):
         "capability:missing_values:removes": False,
         # is transform result always guaranteed to contain no missing values?
         "scitype:instancewise": True,  # is this an instance-wise transform?
+        "python_dependencies": "filterpy",
     }
 
     def __init__(
@@ -1016,8 +1016,6 @@ class KalmanFilterTransformerFP(BaseKalmanFilter, BaseTransformer):
         estimate_matrices=None,
         denoising=False,
     ):
-        _check_soft_dependencies("filterpy", severity="error", object=self)
-
         super(KalmanFilterTransformerFP, self).__init__(
             state_dim=state_dim,
             state_transition=state_transition,

@@ -215,6 +215,7 @@ class _Pipeline(
         from sktime.forecasting.naive import NaiveForecaster
         from sktime.transformations.series.adapt import TabularToSeriesAdaptor
         from sktime.transformations.series.exponent import ExponentTransformer
+        from sktime.utils.validation._dependencies import _check_estimator_deps
 
         # StandardScaler does not skip fit, NaiveForecaster is not probabilistic
         STEPS1 = [
@@ -223,16 +224,20 @@ class _Pipeline(
         ]
         params1 = {"steps": STEPS1}
 
-        # ARIMA has probabilistic methods, ExponentTransformer skips fit
-        STEPS2 = [
-            ("transformer", ExponentTransformer()),
-            ("forecaster", ARIMA()),
-        ]
-        params2 = {"steps": STEPS2}
+        if _check_estimator_deps(ARIMA, severity="none"):
+            # ARIMA has probabilistic methods, ExponentTransformer skips fit
+            STEPS2 = [
+                ("transformer", ExponentTransformer()),
+                ("forecaster", ARIMA()),
+            ]
+            params2 = {"steps": STEPS2}
 
-        params3 = {"steps": [ExponentTransformer(), ARIMA()]}
+            params3 = {"steps": [ExponentTransformer(), ARIMA()]}
 
-        return [params1, params2, params3]
+            return [params1, params2, params3]
+
+        else:
+            return params1
 
 
 # we ensure that internally we convert to pd.DataFrame for now
@@ -282,6 +287,7 @@ class ForecastingPipeline(_Pipeline):
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
         "capability:pred_int": True,
+        "X-y-must-have-same-index": False,
     }
 
     def __init__(self, steps):
@@ -289,14 +295,14 @@ class ForecastingPipeline(_Pipeline):
         self.steps_ = self._check_steps(steps, allow_postproc=False)
         super(ForecastingPipeline, self).__init__()
         tags_to_clone = [
-            "scitype:y",  # which y are fine? univariate/multivariate/both
             "ignores-exogeneous-X",  # does estimator ignore the exogeneous X?
             "capability:pred_int",  # can the estimator produce prediction intervals?
             "handles-missing-data",  # can estimator handle missing data?
             "requires-fh-in-fit",  # is forecasting horizon already required in fit?
-            "X-y-must-have-same-index",  # can estimator handle different X/y index?
             "enforce_index_type",  # index type that needs to be enforced in X/y
         ]
+        # we do not clone X-y-must-have-same-index, since transformers can
+        #   create indices, and that behaviour is not tag-inspectable
         self.clone_tags(self.forecaster_, tags_to_clone)
         self._anytagis_then_set("fit_is_empty", False, True, self.steps_)
 
@@ -653,6 +659,7 @@ class TransformedTargetForecaster(_Pipeline):
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
         "capability:pred_int": True,
+        "X-y-must-have-same-index": False,
     }
 
     def __init__(self, steps):
@@ -662,14 +669,14 @@ class TransformedTargetForecaster(_Pipeline):
 
         # set the tags based on forecaster
         tags_to_clone = [
-            "scitype:y",  # which y are fine? univariate/multivariate/both
             "ignores-exogeneous-X",  # does estimator ignore the exogeneous X?
             "capability:pred_int",  # can the estimator produce prediction intervals?
             "handles-missing-data",  # can estimator handle missing data?
             "requires-fh-in-fit",  # is forecasting horizon already required in fit?
-            "X-y-must-have-same-index",  # can estimator handle different X/y index?
             "enforce_index_type",  # index type that needs to be enforced in X/y
         ]
+        # we do not clone X-y-must-have-same-index, since transformers can
+        #   create indices, and that behaviour is not tag-inspectable
         self.clone_tags(self.forecaster_, tags_to_clone)
         self._anytagis_then_set("fit_is_empty", False, True, self.steps_)
 

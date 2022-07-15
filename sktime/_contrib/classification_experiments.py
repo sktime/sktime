@@ -18,6 +18,7 @@ import sktime.datasets.tsc_dataset_names as dataset_lists
 from sktime._contrib.set_classifier import set_classifier
 from sktime.benchmarking.experiments import load_and_run_classification_experiment
 from sktime.classification.deep_learning import CNNClassifier
+from sktime.classification.feature_based import FreshPRINCE
 from sktime.classification.interval_based import CanonicalIntervalForest
 from sktime.datasets import load_from_tsfile_to_dataframe as load_ts
 
@@ -101,8 +102,8 @@ if __name__ == "__main__":
         print(" Local Run")
         data_dir = "../datasets/data/"
         results_dir = "./temp/"
-        cls_name = "CNNClassifier"
-        classifier = CNNClassifier()
+        cls_name = "FreshPRINCE"
+        classifier = FreshPRINCE()
         dataset = "UnitTest"
         resample = 0
         tf = False

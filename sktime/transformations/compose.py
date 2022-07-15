@@ -20,6 +20,17 @@ __all__ = [
 ]
 
 
+def _coerce_to_sktime(other):
+    """Check and format inputs to dunders for compose."""
+    from sktime.transformations.series.adapt import TabularToSeriesAdaptor
+
+    # if sklearn transformer, adapt to sktime transformer first
+    if is_sklearn_transformer(other):
+        return TabularToSeriesAdaptor(other)
+
+    return other
+
+
 class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
     """Pipeline of transformers compositor.
 
@@ -124,7 +135,8 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
             "nested_univ",
             "numpy3D",
             "pd_multiindex_hier",
-        ]
+        ],
+        "univariate-only": False,
     }
 
     # no further default tag values - these are set dynamically below
@@ -157,12 +169,10 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         self._anytag_notnone_set("scitype:transform-labels", ests)
 
         self._anytagis_then_set("scitype:instancewise", False, True, ests)
-        self._anytagis_then_set("X-y-must-have-same-index", True, False, ests)
         self._anytagis_then_set("fit_is_empty", False, True, ests)
         self._anytagis_then_set("transform-returns-same-time-index", False, True, ests)
         self._anytagis_then_set("skip-inverse-transform", True, False, ests)
         self._anytagis_then_set("capability:inverse_transform", False, True, ests)
-        self._anytagis_then_set("univariate-only", True, False, ests)
 
         # can handle missing data iff all estimators can handle missing data
         #   up to a potential estimator when missing data is removed
@@ -203,18 +213,8 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
             not nested, contains only non-TransformerPipeline `sktime` transformers
         """
         from sktime.classification.compose import SklearnClassifierPipeline
-        from sktime.forecasting.base import BaseForecaster
-        from sktime.transformations.series.adapt import TabularToSeriesAdaptor
 
-        # need to escape if other is BaseForecaster
-        #   this is because forecsting Pipelines are *also* transformers
-        #   but they need to take precedence in parsing the expression
-        if isinstance(other, BaseForecaster):
-            return NotImplemented
-
-        # if sklearn transformer, adapt to sktime transformer first
-        if is_sklearn_transformer(other):
-            return self * TabularToSeriesAdaptor(other)
+        other = _coerce_to_sktime(other)
 
         # if sklearn classifier, use sklearn classifier pipeline
         if is_sklearn_classifier(other):
@@ -243,19 +243,7 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         TransformerPipeline object, concatenation of `other` (first) with `self` (last).
             not nested, contains only non-TransformerPipeline `sktime` steps
         """
-        # need to escape if other is BaseForecaster
-        #   this is because forecsting Pipelines are *also* transformers
-        #   but they need to take precedence in parsing the expression
-        from sktime.forecasting.base import BaseForecaster
-        from sktime.transformations.series.adapt import TabularToSeriesAdaptor
-
-        if isinstance(other, BaseForecaster):
-            return NotImplemented
-
-        # if sklearn transformer, adapt to sktime transformer first
-        if is_sklearn_transformer(other):
-            return TabularToSeriesAdaptor(other) * self
-
+        other = _coerce_to_sktime(other)
         return self._dunder_concat(
             other=other,
             base_class=BaseTransformer,
@@ -1009,3 +997,57 @@ class MultiplexTransformer(_DelegatedTransformer, _HeterogenousMetaEstimator):
             ],
         }
         return [params1, params2]
+
+    def __or__(self, other):
+        """Magic | (or) method, return (right) concatenated MultiplexTransformer.
+
+        Implemented for `other` being a transformer, otherwise returns `NotImplemented`.
+
+        Parameters
+        ----------
+        other: `sktime` transformer, must inherit from BaseTransformer
+            otherwise, `NotImplemented` is returned
+
+        Returns
+        -------
+        MultiplexTransformer object, concatenation of `self` (first) with `other`
+            (last).not nested, contains only non-MultiplexTransformer `sktime`
+            transformers
+
+        Raises
+        ------
+        ValueError if other is not of type MultiplexTransformer or BaseTransformer.
+        """
+        other = _coerce_to_sktime(other)
+        return self._dunder_concat(
+            other=other,
+            base_class=BaseTransformer,
+            composite_class=MultiplexTransformer,
+            attr_name="transformers",
+            concat_order="left",
+        )
+
+    def __ror__(self, other):
+        """Magic | (or) method, return (left) concatenated MultiplexTransformer.
+
+        Implemented for `other` being a transformer, otherwise returns `NotImplemented`.
+
+        Parameters
+        ----------
+        other: `sktime` transformer, must inherit from BaseTransformer
+            otherwise, `NotImplemented` is returned
+
+        Returns
+        -------
+        MultiplexTransformer object, concatenation of `self` (last) with `other`
+            (first). not nested, contains only non-MultiplexTransformer `sktime`
+            transformers
+        """
+        other = _coerce_to_sktime(other)
+        return self._dunder_concat(
+            other=other,
+            base_class=BaseTransformer,
+            composite_class=MultiplexTransformer,
+            attr_name="forecasters",
+            concat_order="right",
+        )
