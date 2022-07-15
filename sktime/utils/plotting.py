@@ -8,17 +8,15 @@ __author__ = ["mloning", "RNKuhns", "Drishti Bhasin"]
 
 import math
 from warnings import simplefilter
+from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 
 import numpy as np
 import pandas as pd
 
+from sktime.datatypes import convert_to
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.utils.validation.forecasting import check_y
 from sktime.utils.validation.series import check_consistent_index_type
-
-from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
-
-from sktime.datatypes import convert_to
 
 
 def plot_series(
@@ -43,9 +41,9 @@ def plot_series(
     """
     _check_soft_dependencies("matplotlib", "seaborn")
     import matplotlib.pyplot as plt
-    from matplotlib.ticker import FuncFormatter, MaxNLocator
-    from matplotlib.cbook import flatten
     import seaborn as sns
+    from matplotlib.cbook import flatten
+    from matplotlib.ticker import FuncFormatter, MaxNLocator
 
     for y in series:
         check_y(y)
@@ -335,8 +333,8 @@ def plot_windows(cv, y, title=""):
     """
     _check_soft_dependencies("matplotlib", "seaborn")
     import matplotlib.pyplot as plt
-    from matplotlib.ticker import MaxNLocator
     import seaborn as sns
+    from matplotlib.ticker import MaxNLocator
 
     simplefilter("ignore", category=UserWarning)
 
