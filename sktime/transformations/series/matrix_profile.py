@@ -36,10 +36,10 @@ class MatrixProfileTransformer(BaseTransformer):
     --------
     >>> from sktime.transformations.series.matrix_profile import \
     MatrixProfileTransformer
-    >>> from sktime.datasets import load_airline  # doctest: +SKIP
+    >>> from sktime.datasets import load_airline
     >>> y = load_airline()
-    >>> transformer = MatrixProfileTransformer()
-    >>> y_hat = transformer.fit_transform(y)
+    >>> transformer = MatrixProfileTransformer()  # doctest: +SKIP
+    >>> y_hat = transformer.fit_transform(y)  # doctest: +SKIP
     """
 
     _tags = {
