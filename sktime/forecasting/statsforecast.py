@@ -152,13 +152,13 @@ class StatsForecastAutoARIMA(_StatsForecastAdapter):
 
     Examples
     --------
-    >>> from sktime.datasets import load_airline  # doctest: +SKIP
+    >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.statsforecast import StatsForecastAutoARIMA
     >>> y = load_airline()
-    >>> forecaster = StatsForecastAutoARIMA(sp=12, d=0, max_p=2, max_q=2)
-    >>> forecaster.fit(y)
+    >>> forecaster = StatsForecastAutoARIMA(sp=12, d=0, max_p=2, max_q=2)  # doctest: +SKIP
+    >>> forecaster.fit(y)  # doctest: +SKIP
     StatsForecastAutoARIMA(...)
-    >>> y_pred = forecaster.predict(fh=[1,2,3])
+    >>> y_pred = forecaster.predict(fh=[1,2,3])  # doctest: +SKIP
     """
 
     def __init__(

@@ -255,13 +255,13 @@ class AutoARIMA(_PmdArimaAdapter):
 
     Examples
     --------
-    >>> from sktime.datasets import load_airline  # doctest: +SKIP
+    >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.arima import AutoARIMA
     >>> y = load_airline()
-    >>> forecaster = AutoARIMA(sp=12, d=0, max_p=2, max_q=2, suppress_warnings=True)
-    >>> forecaster.fit(y)
+    >>> forecaster = AutoARIMA(sp=12, d=0, max_p=2, max_q=2, suppress_warnings=True)  # doctest: +SKIP
+    >>> forecaster.fit(y)  # doctest: +SKIP
     AutoARIMA(...)
-    >>> y_pred = forecaster.predict(fh=[1,2,3])
+    >>> y_pred = forecaster.predict(fh=[1,2,3])  # doctest: +SKIP
     """  # noqa: E501
 
     _tags = {"handles-missing-data": True}

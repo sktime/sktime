@@ -121,18 +121,18 @@ class Prophet(_ProphetAdapter):
 
     Examples
     --------
-    >>> from sktime.datasets import load_airline  # doctest: +SKIP
+    >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.fbprophet import Prophet
     >>> # Prophet requires to have data with a pandas.DatetimeIndex
     >>> y = load_airline().to_timestamp(freq='M')
-    >>> forecaster = Prophet(
+    >>> forecaster = Prophet(  # doctest: +SKIP
     ...     seasonality_mode='multiplicative',
     ...     n_changepoints=int(len(y) / 12),
     ...     add_country_holidays={'country_name': 'Germany'},
     ...     yearly_seasonality=True)
-    >>> forecaster.fit(y)
+    >>> forecaster.fit(y)  # doctest: +SKIP
     Prophet(...)
-    >>> y_pred = forecaster.predict(fh=[1,2,3])
+    >>> y_pred = forecaster.predict(fh=[1,2,3])  # doctest: +SKIP
     """
 
     def __init__(
