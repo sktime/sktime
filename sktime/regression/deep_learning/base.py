@@ -6,7 +6,7 @@ The reason for this class between BaseClassifier and deep_learning classifiers i
 because we can generalise tags and _predict
 """
 
-__author__ = ["James-Large", "AurumnPegasus"]
+__author__ = ["AurumnPegasus"]
 __all__ = ["BaseDeepRegressor"]
 
 from abc import ABC, abstractmethod

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Time Convolutional Neural Network (CNN) for regression."""
 
-__author__ = ["James-Large", "TonyBagnall", "AurumnPegasus"]
+__author__ = ["AurumnPegasus"]
 __all__ = ["CNNRegressor"]
 
 from sktime.networks.cnn import CNNNetwork
