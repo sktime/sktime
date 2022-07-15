@@ -215,6 +215,7 @@ class _Pipeline(
         from sktime.forecasting.naive import NaiveForecaster
         from sktime.transformations.series.adapt import TabularToSeriesAdaptor
         from sktime.transformations.series.exponent import ExponentTransformer
+        from sktime.utils.validation._dependencies import _check_estimator_deps
 
         # StandardScaler does not skip fit, NaiveForecaster is not probabilistic
         STEPS1 = [
@@ -223,16 +224,20 @@ class _Pipeline(
         ]
         params1 = {"steps": STEPS1}
 
-        # ARIMA has probabilistic methods, ExponentTransformer skips fit
-        STEPS2 = [
-            ("transformer", ExponentTransformer()),
-            ("forecaster", ARIMA()),
-        ]
-        params2 = {"steps": STEPS2}
+        if _check_estimator_deps(ARIMA, severity="none"):
+            # ARIMA has probabilistic methods, ExponentTransformer skips fit
+            STEPS2 = [
+                ("transformer", ExponentTransformer()),
+                ("forecaster", ARIMA()),
+            ]
+            params2 = {"steps": STEPS2}
 
-        params3 = {"steps": [ExponentTransformer(), ARIMA()]}
+            params3 = {"steps": [ExponentTransformer(), ARIMA()]}
 
-        return [params1, params2, params3]
+            return [params1, params2, params3]
+
+        else:
+            return params1
 
 
 # we ensure that internally we convert to pd.DataFrame for now
