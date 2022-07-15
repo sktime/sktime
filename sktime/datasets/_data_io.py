@@ -136,7 +136,8 @@ def _load_dataset(name, split, return_X_y, extract_path=None):
     if not os.path.exists(os.path.join(local_module, local_dirname)):
         os.makedirs(os.path.join(local_module, local_dirname))
     if name not in _list_available_datasets(extract_path):
-        local_dirname = "local_data"
+        if extract_path is None:
+            local_dirname = "local_data"
         if not os.path.exists(os.path.join(local_module, local_dirname)):
             os.makedirs(os.path.join(local_module, local_dirname))
         if name not in _list_available_datasets(
