@@ -143,8 +143,8 @@ class STLBootstrapTransformer(BaseTransformer):
     Examples
     --------
     >>> from sktime.transformations.bootstrap import STLBootstrapTransformer
-    >>> from sktime.datasets import load_airline  # doctest: +SKIP
-    >>> from sktime.utils.plotting import plot_series
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.utils.plotting import plot_series  # doctest: +SKIP
     >>> y = load_airline()
     >>> transformer = STLBootstrapTransformer(10)
     >>> y_hat = transformer.fit_transform(y)
@@ -154,7 +154,7 @@ class STLBootstrapTransformer(BaseTransformer):
     ...     series.index = series.index.droplevel(0)
     ...     series_list.append(series)
     ...     names.append(group)
-    >>> plot_series(*series_list, labels=names)
+    >>> plot_series(*series_list, labels=names)  # doctest: +SKIP
     (...)
     >>> print(y_hat.head()) # doctest: +NORMALIZE_WHITESPACE
                           Number of airline passengers
@@ -454,8 +454,8 @@ class MovingBlockBootstrapTransformer(BaseTransformer):
     Examples
     --------
     >>> from sktime.transformations.bootstrap import MovingBlockBootstrapTransformer
-    >>> from sktime.datasets import load_airline  # doctest: +SKIP
-    >>> from sktime.utils.plotting import plot_series
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.utils.plotting import plot_series  # doctest: +SKIP
     >>> y = load_airline()
     >>> transformer = MovingBlockBootstrapTransformer(10)
     >>> y_hat = transformer.fit_transform(y)
@@ -465,7 +465,7 @@ class MovingBlockBootstrapTransformer(BaseTransformer):
     ...     series.index = series.index.droplevel(0)
     ...     series_list.append(series)
     ...     names.append(group)
-    >>> plot_series(*series_list, labels=names)
+    >>> plot_series(*series_list, labels=names)  # doctest: +SKIP
     (...)
     >>> print(y_hat.head()) # doctest: +NORMALIZE_WHITESPACE
                           Number of airline passengers

@@ -158,10 +158,10 @@ def plot_lags(series, lags=1, suptitle=None):
 
     Examples
     --------
-    >>> from sktime.datasets import load_airline  # doctest: +SKIP
+    >>> from sktime.datasets import load_airline
     >>> y = load_airline()
-    >>> fig, ax = plot_lags(y, lags=2) # plot of y(t) with y(t-2)
-    >>> fig, ax = plot_lags(y, lags=[1,2,3]) # plots of y(t) with y(t-1),y(t-2)..
+    >>> fig, ax = plot_lags(y, lags=2) # plot of y(t) with y(t-2)  # doctest: +SKIP
+    >>> fig, ax = plot_lags(y, lags=[1,2,3]) # y(t) & y(t-1), y(t-2).. # doctest: +SKIP
     """
     _check_soft_dependencies("matplotlib")
     import matplotlib.pyplot as plt

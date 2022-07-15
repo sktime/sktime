@@ -54,26 +54,26 @@ class MultiplexForecaster(_DelegatedForecaster, _HeterogenousMetaEstimator):
 
     Examples
     --------
-    >>> from sktime.forecasting.ets import AutoETS  # doctest: +SKIP
+    >>> from sktime.forecasting.ets import AutoETS
     >>> from sktime.forecasting.model_selection import (
     ...    ForecastingGridSearchCV,
     ...    ExpandingWindowSplitter)
     >>> from sktime.forecasting.compose import MultiplexForecaster
     >>> from sktime.forecasting.naive import NaiveForecaster
-    >>> from sktime.forecasting.arima import AutoARIMA
+    >>> from sktime.forecasting.theta import ThetaForecaster
     >>> from sktime.forecasting.model_evaluation import evaluate
     >>> from sktime.datasets import load_shampoo_sales
     >>> y = load_shampoo_sales()
     >>> forecaster = MultiplexForecaster(forecasters=[
     ...     ("ets", AutoETS()),
-    ...     ("arima", AutoARIMA(suppress_warnings=True, seasonal=False)),
+    ...     ("theta", ThetaForecaster()),
     ...     ("naive", NaiveForecaster())])
     >>> cv = ExpandingWindowSplitter(
     ...     start_with_window=True,
     ...     step_length=12)
     >>> gscv = ForecastingGridSearchCV(
     ...     cv=cv,
-    ...     param_grid={"selected_forecaster":["ets", "arima", "naive"]},
+    ...     param_grid={"selected_forecaster":["ets", "theta", "naive"]},
     ...     forecaster=forecaster)
     >>> gscv.fit(y)
     ForecastingGridSearchCV(...)
