@@ -67,7 +67,7 @@ def check_estimator(
     ...    ThetaForecaster, fixtures_to_run="test_score[ThetaForecaster-y:1cols-fh=1]"
     ... )
     All tests PASSED!
-    {'test_score[ARIMA-y:1cols-fh=1]': 'PASSED'}
+    {'test_score[ThetaForecaster-y:1cols-fh=1]': 'PASSED'}
     """
     from sktime.classification.early_classification.tests.test_all_early_classifiers import (  # noqa E501
         TestAllEarlyClassifiers,
