@@ -59,11 +59,13 @@ def check_estimator(
 
     Examples
     --------
-    >>> from sktime.forecasting.arima import ARIMA  # doctest: +SKIP
+    >>> from sktime.forecasting.theta import ThetaForecaster
     >>> from sktime.utils.estimator_checks import check_estimator
-    >>> results = check_estimator(ARIMA, tests_to_run="test_pred_int_tag")
+    >>> results = check_estimator(ThetaForecaster, tests_to_run="test_pred_int_tag")
     All tests PASSED!
-    >>> check_estimator(ARIMA, fixtures_to_run="test_score[ARIMA-y:1cols-fh=1]")
+    >>> check_estimator(
+    ...    ThetaForecaster, fixtures_to_run="test_score[ThetaForecaster-y:1cols-fh=1]"
+    ... )
     All tests PASSED!
     {'test_score[ARIMA-y:1cols-fh=1]': 'PASSED'}
     """
