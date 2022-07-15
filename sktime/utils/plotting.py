@@ -8,10 +8,10 @@ __author__ = ["mloning", "RNKuhns", "Drishti Bhasin"]
 
 import math
 from warnings import simplefilter
-from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 
 import numpy as np
 import pandas as pd
+from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 
 from sktime.datatypes import convert_to
 from sktime.utils.validation._dependencies import _check_soft_dependencies
