@@ -115,6 +115,9 @@ Some common caveats, also described in extension template text:
 How to test interface conformance
 ---------------------------------
 
+For a video tutorial and more examples on the below, please visit our
+`tutorial at pydata <https://github.com/sktime/sktime-workshop-pydata-london-2022>`__.
+
 Using the ``check_estimator`` utility
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
