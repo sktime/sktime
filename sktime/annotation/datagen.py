@@ -1,10 +1,14 @@
+# -*- coding: utf-8 -*-
+"""
+Synthetic data generating functions.
+"""
+
 from typing import Union
 
 import numpy as np
 import numpy.typing as npt
 from sklearn.utils.validation import check_random_state
 
-from sktime.base import BaseObject
 
 # what if we could pass data_gen functions - rather than assuming means?
 #   - could make it easier to swap out different mean assumptions
@@ -24,9 +28,9 @@ def mean_shift(
     Parameters
     ----------
     means : array_like
-        Means of the segments to be generated 
+        Means of the segments to be generated
     lengths : array_like
-        Lengths of the segments to be generated 
+        Lengths of the segments to be generated
     noise : float ir array_like
         Standard deviations fo the segments to be generated
     repeated_labels : bool
@@ -60,7 +64,7 @@ def mean_shift(
 
 def labels_with_repeats(means: npt.ArrayLike, noise: npt.ArrayLike) -> npt.ArrayLike:
     """
-    Generate labels for unique combinations of meas and noise
+    Generate labels for unique combinations of meas and noise.
     """
     data = [means, noise]
     unique, indices = np.unique(data, axis=1, return_inverse=True)
@@ -80,9 +84,9 @@ def label_mean_shift(
     Parameters
     ----------
     means : array_like
-        Means of the segments to be generated 
+        Means of the segments to be generated
     lengths : array_like
-        Lengths of the segments to be generated 
+        Lengths of the segments to be generated
     noise : float ir array_like
         Standard deviations fo the segments to be generated
     repeated_labels : bool
@@ -105,16 +109,8 @@ def label_mean_shift(
     return np.repeat(unique_labels, lengths)
 
 
-class BaseDataGenerator(BaseObject):
-    def __call__(self, *args, **kwargs):
-        return self.sample(*args, **kwargs)
-
-    def sample(self, *args, **kwargs):
-        return NotImplementedError
-
-
-class GenBasicGauss(BaseDataGenerator):
-    """Data generator base class in order to allow composition"""
+class GenBasicGauss:
+    """Data generator base class in order to allow composition."""
 
     def __init__(self, means, lengths, noise, random_state=None):
         self.means = means
@@ -123,6 +119,7 @@ class GenBasicGauss(BaseDataGenerator):
         self.random_state = random_state
 
     def sample(self):
+        """Generate data sample."""
         return mean_shift(
             means=self.means,
             lengths=self.lengths,
