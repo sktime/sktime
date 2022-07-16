@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+"""Tests for GGS module."""
+
 import numpy as np
 import pytest
 
@@ -7,7 +9,7 @@ from .ggs import GGS, GGSEstimator
 
 @pytest.fixture
 def univariate_mean_shift():
-    """A simple mean shift time series."""
+    """Generate simple mean shift time series."""
     x = np.concatenate(tuple(np.ones(5) * i**2 for i in range(4)))
     return x[:, np.newaxis]
 
