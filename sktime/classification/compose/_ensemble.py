@@ -13,11 +13,13 @@ from sklearn.ensemble._forest import (
     _generate_unsampled_indices,
     _get_n_samples_bootstrap,
 )
+from sklearn.metrics import accuracy_score
 from sklearn.pipeline import Pipeline
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils import compute_sample_weight
 from sklearn.utils.multiclass import check_classification_targets
 
+from sktime.base import _HeterogenousMetaEstimator
 from sktime.classification.base import BaseClassifier
 from sktime.series_as_features.base.estimators._ensemble import BaseTimeSeriesForest
 from sktime.transformations.panel.summarize import RandomIntervalFeatureExtractor
@@ -556,3 +558,269 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
         return {"n_estimators": 2}
+
+
+class WeightedEnsembleClassifier(BaseClassifier, _HeterogenousMetaEstimator):
+    """Weighted ensemble of classifiers with fittable ensemble weight.
+
+    Produces a probabilistic prediction which is the weighted average of
+    predictions of individual classifiers.
+    Classifier with name `name` has ensemble weight in `weights_[name]`.
+    `weights_` is fitted in `fit`, if `weights` is a scalar, otherwise fixed.
+
+    If `weights` is a scalar, empirical training loss is computed for each classifier.
+    In this case, ensemble weights of classifier is empirical loss,
+    to the power of `weights` (a scalar).
+
+    The evaluation for the empirical training loss can be selected
+    through the `metric` and `metric_type` parameters.
+
+    Parameters
+    ----------
+    classifiers : dict or None, default=None
+        Parameters for the ShapeletTransformClassifier module. If None, uses the
+        default parameters with a 2 hour transform contract.
+    weights : float, or iterable of float, optional, default=None
+        if float, ensemble weight for classifier i will be train score to this power
+        if iterable of float, must be equal length as classifiers
+            ensemble weight for classifier i will be weights[i]
+        if None, ensemble weights are equal (uniform average)
+    metric : sklearn metric for computing training score, default=accuracy_score
+        only used if weights is a float
+    metric_type : str, one of "point" or "proba", default="point"
+        type of sklearn metric, point prediction ("point") or probabilistic ("proba")
+        if "point", most probable class is passed as y_pred
+        if "proba", probability of most probable class is passed as y_pred
+    random_state : int or None, default=None
+        Seed for random number generation.
+
+    Attributes
+    ----------
+    classifiers_ : list of tuples (str, classifier) of sktime classifiers
+        clones of classifies in `classifiers` which are fitted in the ensemble
+        is always in (str, classifier) format, even if `classifiers` is just a list
+        strings not passed in `classifiers` are replaced by unique generated strings
+        i-th classifier in `classifier_` is clone of i-th in `classifier`
+    weights_ : dict with str being classifier names as in `classifiers_`
+        value at key is ensemble weights of classifier with name key
+        ensemble weights are fitted in `fit` if `weights` is a scalar
+
+    Examples
+    --------
+    >>> from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
+    >>> from sktime.classification.kernel_based import RocketClassifier
+    >>> from sktime.datasets import load_unit_test
+    >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
+    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
+    >>> clf = WeightedEnsembleClassifier(
+    ...     [KNeighborsTimeSeriesClassifier(), RocketClassifier()],
+    ...     weights=2,
+    ...)
+    >>> clf.fit(X_train, y_train)
+    WeightedEnsembleClassifier(...)
+    >>> y_pred = clf.predict(X_test)
+    """
+
+    _tags = {
+        "capability:multivariate": True,
+        "capability:missing_values": True,
+        "X_inner_mtype": [
+            "pd-multiindex",
+            "df-list",
+            "nested_univ",
+            "numpy3D",
+        ],
+    }
+
+    def __init__(self, classifiers, weights=None, metric=None, metric_type="point"):
+        self.classifiers = classifiers
+        self.weights = weights
+        self.metric = metric
+        self.metric_type = metric_type
+
+        # make the copies that are being fitted
+        self.classifiers_ = self._check_estimators(
+            self.classifiers, cls_type=BaseClassifier
+        )
+
+        if weights is None:
+            self.weights_ = {x[0]: 1 for x in self.classifiers_}
+        elif isinstance(weights, (float, int)):
+            self.weights_ = dict()
+        elif isinstance(weights, dict):
+            self.weights_ = {x[0]: weights[x[0]] for x in self.classifiers_}
+        else:
+            self.weights_ = {x[0]: weights[i] for i, x in enumerate(self.classifiers_)}
+
+        if metric is None:
+            self._metric = accuracy_score
+        else:
+            self._metric = metric
+
+        super(WeightedEnsembleClassifier, self).__init__()
+
+        # set property tags based on tags of components
+        ests = self.classifiers_
+        self._anytagis_then_set("capability:multivariate", False, True, ests)
+        self._anytagis_then_set("capability:missing_values", False, True, ests)
+
+    @property
+    def _classifiers(self):
+        return self._get_estimator_tuples(self.classifiers, clone_ests=False)
+
+    @_classifiers.setter
+    def _classifiers(self, value):
+        self.classifiers = value
+
+    def get_params(self, deep=True):
+        """Get parameters of estimator in `classifiers`.
+
+        Parameters
+        ----------
+        deep : boolean, optional, default=True
+            If True, will return the parameters for this estimator and
+            contained sub-objects that are estimators.
+
+        Returns
+        -------
+        params : mapping of string to any
+            Parameter names mapped to their values.
+        """
+        return self._get_params("_classifiers", deep=deep)
+
+    def set_params(self, **kwargs):
+        """Set the parameters of estimator in `classifiers`.
+
+        Valid parameter keys can be listed with ``get_params()``.
+
+        Returns
+        -------
+        self : returns an instance of self.
+        """
+        self._set_params("_classifiers", **kwargs)
+        return self
+
+    def _fit(self, X, y):
+        """Fit time series classifier to training data.
+
+        Parameters
+        ----------
+        X : guaranteed to be of a type in self.get_tag("X_inner_mtype")
+            if self.get_tag("X_inner_mtype") = "numpy3D":
+                3D np.ndarray of shape = [n_instances, n_dimensions, series_length]
+            if self.get_tag("X_inner_mtype") = "nested_univ":
+                pd.DataFrame with each column a dimension, each cell a pd.Series
+            for list of other mtypes, see datatypes.SCITYPE_REGISTER
+            for specifications, see examples/AA_datatypes_and_datasets.ipynb
+        y : 1D np.array of int, of shape [n_instances] - class labels for fitting
+            indices correspond to instance indices in X
+
+        Returns
+        -------
+        self : Reference to self.
+        """
+        for _, classifier in self.classifiers_:
+            classifier.fit(X=X, y=y)
+
+        if isinstance(self.weights, (float, int)):
+            exponent = self.weights
+            for clf_name, clf in self.classifiers_:
+                train_probs = clf.predict_proba(X=X)
+                train_preds = clf.classes_[np.argmax(train_probs, axis=1)]
+                if self.metric_type == "proba":
+                    for i in range(len(train_preds)):
+                        train_preds[i] = train_probs[i, np.argmax(train_probs[i, :])]
+                metric = self._metric
+                self.weights_[clf_name] = metric(y, train_preds) ** exponent
+
+        # # Find TDE weight using train set estimate
+        # train_probs = self._tde._get_train_probs(X, y, train_estimate_method="loocv")
+        # train_preds = self._tde.classes_[np.argmax(train_probs, axis=1)]
+        # self.tde_weight_ = accuracy_score(y, train_preds) ** 4
+
+        return self
+
+    def _predict(self, X) -> np.ndarray:
+        """Predicts labels for sequences in X.
+
+        Parameters
+        ----------
+        X : 3D np.array of shape = [n_instances, n_dimensions, series_length]
+            The data to make predictions for.
+
+        Returns
+        -------
+        y : array-like, shape = [n_instances]
+            Predicted class labels.
+        """
+        y_proba = self.predict_proba(X)
+        y_pred = y_proba.argmax(axis=1)
+
+        return y_pred
+
+    def _predict_proba(self, X) -> np.ndarray:
+        """Predicts labels probabilities for sequences in X.
+
+        Parameters
+        ----------
+        X : 3D np.array of shape = [n_instances, n_dimensions, series_length]
+            The data to make predict probabilities for.
+
+        Returns
+        -------
+        y : array-like, shape = [n_instances, n_classes_]
+            Predicted probabilities using the ordering in classes_.
+        """
+        dists = np.zeros((X.shape[0], self.n_classes_))
+
+        # Call predict proba on each classifier, multiply the probabilities by the
+        # classifiers weight then add them to the current HC2 probabilities
+        for clf_name, clf in self.classifiers_:
+            y_proba = clf.predict_proba(X=X)
+            dists += y_proba * self.weights_[clf_name]
+
+        # Make each instances probability array sum to 1 and return
+        y_proba = dists / dists.sum(axis=1, keepdims=True)
+
+        return y_proba
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            For classifiers, a "default" set of parameters should be provided for
+            general testing, and a "results_comparison" set for comparing against
+            previously recorded results if the general set does not produce suitable
+            probabilities to compare against.
+
+        Returns
+        -------
+        params : dict or list of dict, default={}
+            Parameters to create testing instances of the class.
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`.
+        """
+        from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
+        from sktime.classification.kernel_based import RocketClassifier
+        params1 = {
+            "classifiers": [
+                KNeighborsTimeSeriesClassifier.create_test_instance(),
+                RocketClassifier.create_test_instance(),
+            ],
+            "weights": [42, 1]
+        }
+
+        params2 = {
+            "classifiers": [
+                KNeighborsTimeSeriesClassifier.create_test_instance(),
+                RocketClassifier.create_test_instance(),
+            ],
+            "weights": 2,
+        }
+        return [params1, params2]
