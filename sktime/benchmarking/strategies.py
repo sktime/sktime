@@ -1,20 +1,15 @@
 # -*- coding: utf-8 -*-
-"""
-Unified high-level interface for various time series related learning
-strategies.
-"""
+"""Unified high-level interface for various time series related learning strategies."""
+
 __all__ = ["TSCStrategy", "TSRStrategy"]
-__author__ = ["Markus Löning", "Sajay Ganesh"]
+__author__ = ["mloning", "sajaysurya"]
 
 import pandas as pd
-from joblib import dump
-from joblib import load
-from sklearn.base import ClassifierMixin
-from sklearn.base import RegressorMixin
-from sklearn.base import _pprint
-from sklearn.model_selection import GridSearchCV
-from sklearn.model_selection import RandomizedSearchCV
+from joblib import dump, load
+from sklearn.base import ClassifierMixin, RegressorMixin, _pprint
+from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
 from sklearn.pipeline import Pipeline
+
 from sktime.base import BaseEstimator
 from sktime.classification.base import BaseClassifier
 from sktime.forecasting.base._sktime import BaseForecaster
@@ -31,8 +26,7 @@ CASES = ("TSR", "TSC")
 
 
 class BaseStrategy(BaseEstimator):
-    """
-    Abstract base strategy class.
+    """Abstract base strategy class.
 
     Implements attributes and operations shared by all strategies,
     including input and compatibility checks between passed estimator,
@@ -48,25 +42,22 @@ class BaseStrategy(BaseEstimator):
 
     @property
     def name(self):
-        """Makes attribute accessible, but read-only."""
+        """Read-only name attribute."""
         return self._name
 
     @property
     def estimator(self):
-        """Makes attribute accessible, but read-only."""
+        """Read-only estimator attribute."""
         return self._estimator
 
     def __getitem__(self, key):
-        """
-        Provide read only access via keys to the private traits
-        """
+        """Provide read only access via keys to the private traits."""
         if key not in self._traits.keys():
             raise KeyError
         return self._traits[key]
 
     def fit(self, task, data):
-        """
-        Fit the strategy to the given task and data.
+        """Fit the strategy to the given task and data.
 
         Parameters
         ----------
@@ -94,9 +85,7 @@ class BaseStrategy(BaseEstimator):
         return self._fit(data)
 
     def _check_task_compatibility(self, task):
-        """
-        Check compatibility of task with strategy
-        """
+        """Check compatibility of task with strategy."""
         # TODO replace by task-strategy compatibility lookup registry
         if hasattr(task, "_case"):
             if self._case != task._case:
@@ -108,10 +97,7 @@ class BaseStrategy(BaseEstimator):
             raise AttributeError("The passed case of the task is unknown")
 
     def _check_estimator_compatibility(self, estimator):
-        """
-        Check compatibility of estimator with strategy
-        """
-
+        """Check compatibility of estimator with strategy."""
         # Determine required estimator type from strategy case
         # TODO replace with strategy - estimator type registry lookup
         if hasattr(self, "_traits"):
@@ -154,9 +140,7 @@ class BaseStrategy(BaseEstimator):
 
     @staticmethod
     def _validate_data(data):
-        """
-        Helper function to validate input data.
-        """
+        """Validate input data."""
         if not isinstance(data, pd.DataFrame):
             raise ValueError(f"Data must be pandas DataFrame, but found: {type(data)}")
 
@@ -172,8 +156,8 @@ class BaseStrategy(BaseEstimator):
         dump(self, path)
 
     def load(self, path):
-        """
-        Load saved strategy
+        """Load saved strategy.
+
         Parameters
         ----------
         path: String
@@ -200,23 +184,21 @@ class BaseStrategy(BaseEstimator):
 
 
 class BaseSupervisedLearningStrategy(BaseStrategy):
-    """Abstract strategy class for time series supervised learning that
-    accepts a low-level estimator to
-    perform a given task.
+    """Abstract strategy class for time series supervised learning.
+
+    Accepts a low-level estimator to perform a given task.
 
     Implements predict and internal fit methods for time series regression
     and classification.
     """
 
     def _fit(self, data):
-        """
-        Internal fit
+        """Fit estimator - inner logic.
 
         Parameters
         ----------
         data : pandas.DataFrame
             Dataframe with feature and target variables as specified in task.
-
 
         Returns
         -------
@@ -230,8 +212,7 @@ class BaseSupervisedLearningStrategy(BaseStrategy):
         return self.estimator.fit(X, y)
 
     def predict(self, data):
-        """
-        Predict using the given test data.
+        """Predict using the given test data.
 
         Parameters
         ----------
@@ -245,7 +226,6 @@ class BaseSupervisedLearningStrategy(BaseStrategy):
         y_pred : pandas.Series
             Returns the series of predicted values.
         """
-
         # select features
         X = data[self._task.features]
 

@@ -94,7 +94,7 @@ def load_UCR_UEA_dataset(name, split=None, return_X_y=True, extract_path=None):
     Examples
     --------
     >>> from sktime.datasets import load_UCR_UEA_dataset
-    >>> X, y = load_UCR_UEA_dataset(name="Yoga")
+    >>> X, y = load_UCR_UEA_dataset(name="ArrowHead")
     """
     return _load_dataset(name, split, return_X_y, extract_path)
 

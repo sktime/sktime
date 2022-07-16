@@ -5,7 +5,7 @@
 """Composition functionality for reduction approaches to forecasting."""
 
 __author__ = [
-    "Ayushmaan Seth",
+    "AyushmaanSeth",
     "Kavin Anand",
     "Luis Zugasti",
     "Lovkush Agarwal",
@@ -475,8 +475,8 @@ class _RecursiveReducer(_Reducer):
     def _get_shifted_window(self, shift=0, y_update=None, X_update=None):
         """Select shifted window."""
         # Get the start and end points of the last window.
-        cutoff = _shift(self.cutoff, by=shift)
-        start = _shift(cutoff, by=-self.window_length_ + 1)
+        cutoff = _shift(self._cutoff, by=shift)
+        start = _shift(self._cutoff, by=shift - self.window_length_ + 1)
 
         if self.transformers_ is not None:
             # Get the last window of the endogenous variable.
