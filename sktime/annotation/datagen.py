@@ -1,14 +1,11 @@
 # -*- coding: utf-8 -*-
-"""
-Synthetic data generating functions.
-"""
+"""Synthetic data generating functions."""
 
 from typing import Union
 
 import numpy as np
 import numpy.typing as npt
 from sklearn.utils.validation import check_random_state
-
 
 # what if we could pass data_gen functions - rather than assuming means?
 #   - could make it easier to swap out different mean assumptions
@@ -21,9 +18,10 @@ def mean_shift(
     random_state: Union[int, np.random.RandomState] = None,
 ) -> npt.ArrayLike:
     """
-    Generates a series composed of segments, where each segment has length specified
-    in ``lengths`` and data sampled from a normal distribution with a mean from ``means``
-    and standard deviation from ``noise``.
+    Generate series from segments.
+    
+    Each segment has length specified in ``lengths`` and data sampled from a normal
+    distribution with a mean from ``means`` and standard deviation from ``noise``.
 
     Parameters
     ----------
@@ -46,7 +44,6 @@ def mean_shift(
     data : np.array
         univariate time series as np.array
     """
-
     rng = check_random_state(random_state)
     assert len(means) == len(lengths)
 
@@ -63,9 +60,7 @@ def mean_shift(
 
 
 def labels_with_repeats(means: npt.ArrayLike, noise: npt.ArrayLike) -> npt.ArrayLike:
-    """
-    Generate labels for unique combinations of meas and noise.
-    """
+    """Generate labels for unique combinations of meas and noise."""
     data = [means, noise]
     unique, indices = np.unique(data, axis=1, return_inverse=True)
     labels = np.arange(unique.shape[1])
