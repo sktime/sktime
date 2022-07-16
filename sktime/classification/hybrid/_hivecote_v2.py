@@ -11,6 +11,7 @@ __all__ = ["HIVECOTEV2"]
 from datetime import datetime
 
 import numpy as np
+from deprecated.sphinx import deprecated
 from sklearn.metrics import accuracy_score
 from sklearn.utils import check_random_state
 
@@ -21,6 +22,15 @@ from sktime.classification.kernel_based import Arsenal
 from sktime.classification.shapelet_based import ShapeletTransformClassifier
 
 
+# todo: remove in 0.15.0
+# deprecated since 0.14.0
+@deprecated(
+    version="0.14.0", reason=(
+        "HIVECOTEV2 will be removed in v0.15.0, see "
+        "https://github.com/alan-turing-institute/sktime/issues/3034"
+        ),
+    category=FutureWarning
+)
 class HIVECOTEV2(BaseClassifier):
     """Hierarchical Vote Collective of Transformation-based Ensembles (HIVE-COTE) V2.
 
