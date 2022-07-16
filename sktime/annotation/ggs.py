@@ -278,7 +278,9 @@ class GGS:
         self.change_points_ = self.find_change_points(X)
 
         labels = np.zeros(X.shape[0], dtype=np.int32)
-        for i, (start, stop) in enumerate(zip(self.change_points_[:-1], self.change_points_[1:])):
+        for i, (start, stop) in enumerate(
+            zip(self.change_points_[:-1], self.change_points_[1:])
+        ):
             labels[start:stop] = i
         return labels
 
