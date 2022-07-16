@@ -19,7 +19,7 @@ def mean_shift(
 ) -> npt.ArrayLike:
     """
     Generate series from segments.
-    
+
     Each segment has length specified in ``lengths`` and data sampled from a normal
     distribution with a mean from ``means`` and standard deviation from ``noise``.
 
@@ -31,11 +31,6 @@ def mean_shift(
         Lengths of the segments to be generated
     noise : float ir array_like
         Standard deviations fo the segments to be generated
-    repeated_labels : bool
-        A flag to indicate whether segment labels should be repeated for similar segments.
-        If ``True`` same label will be assigned for segments with same mean and noise,
-        independently of length. If ``False`` each consecutive segment will have a unique
-        label.
     random_state : int or np.random.RandomState
         Either a random seed or RandomState instance
 
@@ -85,10 +80,10 @@ def label_mean_shift(
     noise : float ir array_like
         Standard deviations fo the segments to be generated
     repeated_labels : bool
-        A flag to indicate whether segment labels should be repeated for similar segments.
+        Flag to indicate whether segment labels should be repeated for similar segments.
         If ``True`` same label will be assigned for segments with same mean and noise,
-        independently of length. If ``False`` each consecutive segment will have a unique
-        label.
+        independently of length. If ``False`` each consecutive segment will have
+        a unique label.
 
     Returns
     -------
