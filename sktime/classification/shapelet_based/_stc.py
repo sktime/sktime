@@ -350,4 +350,5 @@ class ShapeletTransformClassifier(BaseClassifier):
                 "n_shapelet_samples": 10,
                 "max_shapelets": 3,
                 "batch_size": 5,
+                "save_transformed_data": True,
             }

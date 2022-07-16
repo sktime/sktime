@@ -120,6 +120,7 @@ class MyTransformer(BaseTransformer):
         # todo: rename to capability:missing_values
         "capability:missing_values:removes": False,
         # is transform result always guaranteed to contain no missing values?
+        "python_version": None,  # PEP 440 python version specifier to limit versions
     }
     # in case of inheritance, concrete class should typically set tags
     #  alternatively, descendants can set tags in __init__

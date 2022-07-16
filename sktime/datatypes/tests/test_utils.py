@@ -10,11 +10,13 @@ import pytest
 from sktime.datatypes._check import check_is_mtype
 from sktime.datatypes._examples import get_examples
 from sktime.datatypes._utilities import (
+    _get_cutoff_from_index,
     get_cutoff,
     get_slice,
     get_time_index,
     get_window,
 )
+from sktime.utils._testing.hierarchical import _make_hierarchical
 
 SCITYPE_MTYPE_PAIRS = [
     ("Series", "pd.Series"),
@@ -78,7 +80,7 @@ def test_get_time_index(scitype, mtype):
 @pytest.mark.parametrize("return_index", [True, False])
 @pytest.mark.parametrize("scitype,mtype", SCITYPE_MTYPE_PAIRS)
 def test_get_cutoff(scitype, mtype, return_index, reverse_order, convert_input):
-    """Tests that conversions for scitype agree with from/to example fixtures.
+    """Tests that get_cutoff has correct output.
 
     Parameters
     ----------
@@ -86,7 +88,7 @@ def test_get_cutoff(scitype, mtype, return_index, reverse_order, convert_input):
     mtype : str - mtype of input
     return_index : bool - whether index (True) or index element is returned (False)
     reverse_order : bool - whether first (True) or last index (False) is retrieved
-    convert_input : bool, - whether input is converted (True) or passed through (False)
+    convert_input : bool - whether input is converted (True) or passed through (False)
 
     Raises
     ------
@@ -144,6 +146,59 @@ def test_get_cutoff(scitype, mtype, return_index, reverse_order, convert_input):
                 assert cutoff_val == time_idx.min()
             else:
                 assert cutoff_val == time_idx.max()
+
+
+@pytest.mark.parametrize("reverse_order", [True, False])
+def test_get_cutoff_from_index(reverse_order):
+    """Tests that _get_cutoff_from_index has correct output.
+
+    Parameters
+    ----------
+    return_index : bool - whether index (True) or index element is returned (False)
+    reverse_order : bool - whether first (True) or last index (False) is retrieved
+
+    Raises
+    ------
+    AssertionError if _get_cutoff_from_index does not return a length 1 pandas.index
+    AssertionError if _get_cutoff_from_index does not return the correct cutoff value
+    """
+    hier_fixture = _make_hierarchical()
+    hier_idx = hier_fixture.index
+
+    cutoff = _get_cutoff_from_index(
+        hier_idx, return_index=True, reverse_order=reverse_order
+    )
+    idx = _get_cutoff_from_index(
+        hier_idx, return_index=False, reverse_order=reverse_order
+    )
+
+    assert isinstance(cutoff, pd.DatetimeIndex) and len(cutoff) == 1
+    assert cutoff.freq == "D"
+    assert idx == cutoff[0]
+
+    if reverse_order:
+        assert idx == pd.Timestamp("2000-01-01")
+    else:
+        assert idx == pd.Timestamp("2000-01-12")
+
+    series_fixture = get_examples("pd.Series")[0]
+    series_idx = series_fixture.index
+
+    cutoff = _get_cutoff_from_index(
+        series_idx, return_index=True, reverse_order=reverse_order
+    )
+    idx = _get_cutoff_from_index(
+        series_idx, return_index=False, reverse_order=reverse_order
+    )
+
+    assert isinstance(cutoff, pd.Index) and len(cutoff) == 1
+    assert cutoff.is_integer()
+    assert idx == cutoff[0]
+
+    if reverse_order:
+        assert idx == 0
+    else:
+        assert idx == 3
 
 
 @pytest.mark.parametrize("bad_inputs", ["foo", 12345, [[[]]]])

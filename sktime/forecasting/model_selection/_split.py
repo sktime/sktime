@@ -1400,9 +1400,9 @@ def _split_by_fh(
     """
     if X is not None:
         check_equal_time_index(y, X)
-    fh = check_fh(fh)
-    idx = fh.to_pandas()
     index = y.index
+    fh = check_fh(fh, freq=index)
+    idx = fh.to_pandas()
 
     if fh.is_relative:
         if not fh.is_all_out_of_sample():
