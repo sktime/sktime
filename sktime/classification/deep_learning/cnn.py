@@ -9,7 +9,7 @@ from sktime.classification.deep_learning.base import BaseDeepClassifier
 from sktime.networks.cnn import CNNNetwork
 from sktime.utils.validation._dependencies import _check_dl_dependencies
 
-_check_dl_dependencies("tensorflow", severity="warning")
+_check_dl_dependencies(severity="warning")
 
 
 class CNNClassifier(BaseDeepClassifier):
@@ -60,7 +60,7 @@ class CNNClassifier(BaseDeepClassifier):
         loss="mean_squared_error",
         metrics=None,
     ):
-        _check_dl_dependencies("tensorflow", severity="error")
+        _check_dl_dependencies(severity="error")
         super(CNNClassifier, self).__init__()
         self.n_conv_layers = n_conv_layers
         self.avg_pool_size = avg_pool_size
@@ -136,7 +136,7 @@ class CNNClassifier(BaseDeepClassifier):
         self.input_shape = X.shape[1:]
         self.model_ = self.build_model(self.input_shape, self.n_classes_)
         if self.verbose:
-            self.model.summary()
+            self.model_.summary()
         self.history = self.model_.fit(
             X,
             y_onehot,
