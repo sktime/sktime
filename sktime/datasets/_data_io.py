@@ -225,6 +225,7 @@ def _load_provided_dataset(name, split=None, return_X_y=True, return_type=None):
                 f"Invalid data structure type {type(X_train)} for loading "
                 f"classification problem "
             )
+        X = X.reset_index(drop=True)
         y = np.concatenate((y_train, y_test))
 
     else:
