@@ -3,7 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Hierarchical Data Generators."""
 
-__author__ = ["ltsaprounis"]
+__author__ = ["ltsaprounis", "ciaran-g"]
 
 from itertools import product
 from typing import Tuple, Union
@@ -99,17 +99,46 @@ def _make_hierarchical(
     return df
 
 
-# todo adds some docs
 def _bottom_hier_datagen(
     no_levels=3,
     no_bottom_nodes=6,
     intercept_max=20,
     coef_1_max=20,
     coef_2_max=0.1,
+    random_seed=None,
 ):
-    """Hierarchical data generator using the flights dataset."""
+    """Hierarchical data generator using the flights dataset.
+
+    This function generates bottom level, i.e. not aggregated, time-series
+    from the flights dataset.
+
+    Each series is generated from the flights dataset using a linear model,
+    y = c0 + c1x + c2x^(c3), where the coefficients, intercept, and exponent
+    are randomly sampled for each series. The coefficients and intercept are
+    sampled between np.arange(0, *_max, 0.01) to keep the values positive. The
+    exponent is sampled from [0.5, 1, 1.5, 2].
+
+
+    Parameters
+    ----------
+    no_levels : int, optional
+        The number of levels not considering the time-index, by default 3
+    no_bottom_nodes : int, optional
+       Number of time series, i.e. bottom nodes, to generate, by default 6.
+    *_max : int, optional
+        Maximum possible value of the coefficient or intercept value.
+    random_seed : int, optional
+        Random seed for reproducability.
+
+
+    Returns
+    -------
+    pd.DataFrame with multiindex
+    """
     if no_levels > no_bottom_nodes:
         raise ValueError("no_levels should be less than no_bottom_nodes")
+
+    rng = np.random.default_rng(random_seed)
 
     base_ts = load_airline()
     df = pd.DataFrame(base_ts, index=base_ts.index)
@@ -126,8 +155,9 @@ def _bottom_hier_datagen(
         intercept = np.arange(0, intercept_max, 0.01)
         coef_1 = np.arange(0, coef_1_max, 0.01)
         coef_2 = np.arange(0, coef_2_max, 0.01)
-        power_2 = ([0.5, 1, 1.5, 2],)
+        power_2 = [0.5, 1, 1.5, 2]
 
+        # create structure of hierarchy
         node_lookup = pd.DataFrame(
             ["l1_node" + f"{x:02d}" for x in range(1, no_bottom_nodes + 1)]
         )
@@ -135,6 +165,7 @@ def _bottom_hier_datagen(
 
         if no_levels >= 2:
 
+            # create index from bottom up, sampling node names
             for i in range(2, no_levels + 1):
                 node_lookup["l" + str(i) + "_agg"] = node_lookup.groupby(
                     ["l" + str(i - 1) + "_agg"]
@@ -142,18 +173,19 @@ def _bottom_hier_datagen(
                     lambda x: "l"
                     + str(i)
                     + "_node"
-                    + f"{int(np.sort(np.random.choice(np.arange(1,np.floor(len(node_lookup.index)/i)+1, 1), size=1))):02d}"  # noqa from flake8 E501
+                    + "{:02d}".format(_sample_node(node_lookup.index, i, rng))
                 )
 
         node_lookup = node_lookup.set_index("l1_agg", drop=True)
 
+        # now define the series for each level by sampling coefficients etc.
         for i in range(2, no_bottom_nodes + 1):
             df["l1_node" + f"{i:02d}"] = (
-                np.random.choice(intercept, size=1)
-                + np.random.choice(coef_1, size=1) * df["l1_node01"]
+                rng.choice(intercept, size=1)
+                + rng.choice(coef_1, size=1) * df["l1_node01"]
                 + (
-                    np.random.choice(coef_2, size=1)
-                    * (df["l1_node01"] ** np.random.choice(power_2, size=1))
+                    rng.choice(coef_2, size=1)
+                    * (df["l1_node01"] ** rng.choice(power_2, size=1))
                 )
             )
 
@@ -179,3 +211,12 @@ def _bottom_hier_datagen(
         df.sort_index(inplace=True)
 
         return df
+
+
+def _sample_node(index_table, level, sampler):
+    """Sample a number of nodes depending on the size of hierarchy and level."""
+    nodes = np.arange(1, np.floor(len(index_table) / level) + 1, 1)
+    # return a single sample of them
+    sample_nodes = int(sampler.choice(nodes, size=1))
+
+    return sample_nodes

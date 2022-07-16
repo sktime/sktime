@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+__author__ = ["chrisholder", "TonyBagnall"]
+
 import inspect
 from typing import Callable, List, Union
 
@@ -8,7 +10,73 @@ from sktime.distances._numba_utils import is_no_python_compiled_callable
 from sktime.distances.base import DistanceCallable, MetricInfo, NumbaDistance
 
 
-def _resolve_metric(
+def _resolve_dist_instance(
+    metric: Union[str, Callable, NumbaDistance],
+    x: np.ndarray,
+    y: np.ndarray,
+    known_metric_dict: List[MetricInfo],
+    **kwargs: dict,
+):
+    """Resolve a metric from a string, callable or NumbaDistance instance.
+
+    This will take a given input (metric) and try and find the distance metric it
+    is referring to and return the callable for it.
+
+    Parameters
+    ----------
+    metric: str or Callable or NumbaDistance
+        The distance metric to use.
+    x: np.ndarray (2d array)
+        First time series.
+    y: np.ndarray (2d array)
+        Second time series.
+    known_metric_dict: List[MetricInfo]
+        List of known distance functions.
+    kwargs: dict, optional
+        Extra arguments for metric. Refer to each metric documentation for a list of
+        possible arguments.
+
+    Returns
+    -------
+    Callable[[np.ndarray, np.ndarray], float]]
+        No_python compiled distance resolved from the metric input.
+
+    Raises
+    ------
+    ValueError
+        If a metric string provided, and is not a defined valid string.
+        If a metric object (instance of class) is provided and doesn't inherit from
+        NumbaDistance.
+        If a resolved metric is not no_python compiled.
+        If the metric type cannot be determined.
+    """
+    numba_dist_instance: Union[NumbaDistance, None] = None
+
+    if isinstance(metric, NumbaDistance):
+        numba_dist_instance = metric
+    elif isinstance(metric, str):
+        numba_dist_instance = _resolve_str_metric(metric, known_metric_dict)
+    elif callable(metric):
+        if _is_distance_factory_callable(metric):
+            metric = metric(x, y, **kwargs)
+        elif _is_no_python_distance_callable(metric):
+            metric = metric
+        else:
+            for val in known_metric_dict:
+                if val.dist_func is metric:
+                    numba_dist_instance = val.dist_instance
+                    break
+    else:
+        raise ValueError(
+            "Unable to resolve the metric with the parameters provided."
+            "The metric must be a valid string, NumbaDistance or a"
+            "distance factory callable or no_python distance."
+        )
+
+    return numba_dist_instance
+
+
+def _resolve_metric_to_factory(
     metric: Union[str, Callable, NumbaDistance],
     x: np.ndarray,
     y: np.ndarray,

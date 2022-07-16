@@ -4,7 +4,6 @@
 """Meta-transformers for building composite transformers."""
 
 import pandas as pd
-from sklearn.base import clone
 from sklearn.utils.metaestimators import if_delegate_has_method
 
 from sktime.transformations.base import BaseTransformer
@@ -124,7 +123,7 @@ class OptionalPassthrough(BaseTransformer):
         self: a fitted instance of the estimator
         """
         if not self.passthrough:
-            self.transformer_ = clone(self.transformer)
+            self.transformer_ = self.transformer.clone()
             self.transformer_._fit(X, y)
         return self
 
@@ -295,7 +294,7 @@ class ColumnwiseTransformer(BaseTransformer):
         # fit by iterating over columns
         self.transformers_ = {}
         for colname in self.columns_:
-            transformer = clone(self.transformer)
+            transformer = self.transformer.clone()
             self.transformers_[colname] = transformer
             self.transformers_[colname].fit(X[colname], y)
         return self

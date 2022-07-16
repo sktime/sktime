@@ -53,11 +53,11 @@ expected_results = {
 
 expected_score = {"medoids": 0.3153846153846154}
 
-train_expected_score = {"medoids": 0.4858974358974359}
+train_expected_score = {"medoids": 0.48717948717948717}
 
-expected_inertia = {"medoids": 2387.3342740600688}
+expected_inertia = {"medoids": 2383.9806075295196}
 
-expected_iters = {"medoids": 5}
+expected_iters = {"medoids": 2}
 
 expected_labels = {
     "medoids": [
@@ -79,7 +79,7 @@ expected_labels = {
         4,
         1,
         0,
-        1,
+        4,
         4,
         0,
         0,
@@ -122,7 +122,6 @@ def test_kmedoids():
     test_medoids_result = kmedoids.predict(X_test)
     medoids_score = metrics.rand_score(y_test, test_medoids_result)
     proba = kmedoids.predict_proba(X_test)
-
     assert np.array_equal(test_medoids_result, expected_results["medoids"])
     assert medoids_score == expected_score["medoids"]
     assert train_score == train_expected_score["medoids"]

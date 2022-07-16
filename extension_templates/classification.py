@@ -11,6 +11,8 @@ How to use this implementation template to implement a new estimator:
 - make a copy of the template in a suitable location, give it a descriptive name.
 - work through all the "todo" comments below
 - fill in code for mandatory methods, and optionally for optional methods
+- do not write to reserved variables: is_fitted, _is_fitted, _X, _y, classes_,
+    n_classes_, fit_time_, _class_dictionary, _threads_to_use, _tags, _tags_dynamic
 - you can add more private methods, but do not override BaseEstimator's private methods
     an easy way to be safe is to prefix your methods with "_custom"
 - change docstrings for functions and the file
@@ -75,6 +77,7 @@ class MyTimeSeriesClassifier(BaseClassifier):
         "capability:train_estimate": False,
         "capability:contractable": False,
         "capability:multithreading": False,
+        "python_version": None,  # PEP 440 python version specifier to limit versions
     }
 
     # todo: add any hyper-parameters and components to constructor
@@ -156,7 +159,7 @@ class MyTimeSeriesClassifier(BaseClassifier):
         # IMPORTANT: avoid side effects to X
 
     # todo: consider implementing this, optional
-    # if you do not implement it, then the default _predict_proba will be  called.
+    # if you do not implement it, then the default _predict_proba will be called.
     # the default simply calls predict and sets probas to 0 or 1.
     def _predict_proba(self, X) -> np.ndarray:
         """Predicts labels probabilities for sequences in X.

@@ -19,13 +19,35 @@ class Aggregator(BaseTransformer):
 
     This transformer adds aggregate levels via summation to a DataFrame with a
     multiindex. The aggregate levels are included with the special tag "__total"
-    in the index.
+    in the index. The aggregate nodes are discovered from top-to-bottom from
+    the input data multiindex.
 
     Parameters
     ----------
     flatten_single_level : boolean (default=True)
         Remove aggregate nodes, i.e. ("__total"), where there is only a single
         child to the level
+
+    See Also
+    --------
+    ReconcilerForecaster
+    Reconciler
+
+    References
+    ----------
+    .. [1] https://otexts.com/fpp3/hierarchical.html
+
+    Examples
+    --------
+    >>> from sktime.transformations.hierarchical.aggregate import Aggregator
+    >>> from sktime.utils._testing.hierarchical import _bottom_hier_datagen
+    >>> agg = Aggregator()
+    >>> y = _bottom_hier_datagen(
+    ...     no_bottom_nodes=3,
+    ...     no_levels=1,
+    ...     random_seed=123,
+    ... )
+    >>> y = agg.fit_transform(y)
     """
 
     _tags = {
@@ -41,7 +63,7 @@ class Aggregator(BaseTransformer):
             "pd_multiindex_hier",
         ],
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
-        "capability:inverse_transform": False,  # does transformer have inverse
+        "capability:inverse_transform": True,  # does transformer have inverse
         "skip-inverse-transform": True,  # is inverse-transform skipped when called?
         "univariate-only": False,  # can the transformer handle multivariate X?
         "handles-missing-data": False,  # can estimator handle missing data?
@@ -63,97 +85,101 @@ class Aggregator(BaseTransformer):
 
         Parameters
         ----------
-        X : Panel of mtype pd_multiindex_hier
-            Data to be transformed
+        X : Panel of pd.DataFrame data to be transformed.
         y : Ignored argument for interface compatibility.
 
         Returns
         -------
-        df_out : multi-indexed pd.DataFrame of Panel mtype pd_multiindex
+        Transformed version of X
         """
-        X = X.copy()
-        X_orig_idx_names = X.index.names
-        new_idx_names = [str(x) for x in range(len(X_orig_idx_names))]
-        X.index.names = new_idx_names
-
         if X.index.nlevels == 1:
             warn(
                 "Aggregator is intended for use with X.index.nlevels > 1. "
                 "Returning X unchanged."
             )
             return X
-        else:
-            # check the tests are ok
-            if not _check_index_good(X):
-                raise ValueError(
-                    """Please check the index of X
-                        1) Does not contain any elements named "__total".
-                        2) Has all named levels.
-                    """
-                )
+        # check the tests are ok
+        if not _check_index_no_total(X):
+            warn(
+                "Found elemnts in the index of X named '__total'. Removing "
+                "these levels and aggregating."
+            )
+            X = self._inverse_transform(X)
+
+        # starting from top aggregate
+        df_out = X.copy()
+        for i in range(0, X.index.nlevels - 1, 1):
+            # finding "__totals" parent/child from (up -> down)
+            indx_grouper = np.arange(0, i, 1).tolist()
+            indx_grouper.append(X.index.nlevels - 1)
+
+            out = X.groupby(level=indx_grouper).sum()
+
+            # get new index with aggregate levels to match with old
+            new_idx = []
+            for j in range(0, X.index.nlevels - 1, 1):
+                if j in indx_grouper:
+                    new_idx.append(out.index.get_level_values(j))
+                else:
+                    new_idx.append(["__total"] * len(out.index))
+
+            # add in time index
+            new_idx.append(out.index.get_level_values(-1))
+
+            new_idx = pd.MultiIndex.from_arrays(new_idx, names=X.index.names)
+
+            out = out.set_index(new_idx)
+
+            df_out = pd.concat([out, df_out])
+
+        # now remove duplicated aggregate indexes
+        if self.flatten_single_levels:
+            new_index = _flatten_single_indexes(X)
+
+            nm = X.index.names[-1]
+            if nm is None:
+                nm = "level_" + str(X.index.nlevels - 1)
             else:
                 pass
 
-            # names from index
-            hier_names = list(X.index.names)
+            # now reindex with new non-duplicated axis
+            df_out = (
+                df_out.reset_index(level=-1).loc[new_index].set_index(nm, append=True)
+            ).rename_axis(X.index.names, axis=0)
 
-            # top level
-            top = X.groupby(level=-1).sum()
+        df_out.sort_index(inplace=True)
 
-            ind_names = hier_names[:-1]
-            for i in ind_names:
-                top[i] = "__total"
+        return df_out
 
-            top = top.set_index(ind_names, append=True).reorder_levels(hier_names)
+    def _inverse_transform(self, X, y=None):
+        """Inverse transform, inverse operation to transform.
 
-            df_out = pd.concat([top, X])
+        private _inverse_transform containing core logic, called from inverse_transform
 
-            # if we have a hierarchy with mid levels
-            if len(hier_names) > 2:
-                for i in range(len(hier_names) - 2):
-                    # list of levels to aggregate
-                    # aggregate from left index inward
-                    agg_levels = hier_names[0 : (i + 1)]
-                    # add in the final index (e.g. timepoints)
-                    agg_levels.append(hier_names[-1])
+        Parameters
+        ----------
+        X : Panel of pd.DataFrame data to be inverse transformed.
+        y : Ignored argument for interface compatibility.
 
-                    mid = X.groupby(level=agg_levels).sum()
-                    # now fill in index
-                    ind_names = list(set(hier_names).difference(agg_levels))
-                    for j in ind_names:
-                        mid[j] = "__total"
-                    # set back in index
-                    mid = mid.set_index(ind_names, append=True).reorder_levels(
-                        hier_names
-                    )
-                    df_out = pd.concat([df_out, mid])
-
-            # now remove duplicated aggregate indexes
-            if self.flatten_single_levels:
-                new_index = _flatten_single_indexes(X)
-                nm = X.index.names[-1]
-                # uncomment if contraints are relaxed on naming the time index
-                # if nm is None:
-                #     nm = "index"
-                df_out = (
-                    df_out.reset_index(level=-1)
-                    .loc[new_index]
-                    .set_index(nm, append=True, verify_integrity=True)
-                )
-
-            for i in range(df_out.index.nlevels - 1):
-
-                idx = df_out.index.get_level_values(level=i)
-                df_out = (
-                    df_out.droplevel(i)
-                    .set_index(idx, append=True)
-                    .reorder_levels(hier_names)
-                )
-
-            df_out.sort_index(inplace=True)
-
-            df_out.index.names = X_orig_idx_names
-            return df_out
+        Returns
+        -------
+        Inverse transformed version of X.
+        """
+        if X.index.nlevels == 1:
+            warn(
+                "Aggregator is intended for use with X.index.nlevels > 1. "
+                "Returning X unchanged."
+            )
+            return X
+        if _check_index_no_total(X):
+            warn(
+                "Inverse is inteded to be used with aggregated data. "
+                "Returning X unchanged."
+            )
+        else:
+            for i in range(X.index.nlevels - 1):
+                X = X.drop(index="__total", level=i)
+        return X
 
     @classmethod
     def get_test_params(cls):
@@ -172,28 +198,22 @@ class Aggregator(BaseTransformer):
         return params
 
 
-def _check_index_good(X):
+def _check_index_no_total(X):
     """Check the index of X and return boolean."""
-    # check the index is named
-    ind_names = list(X.index.names)
-    nm_chk = sum([y is not None for y in ind_names]) == len(ind_names)
-
     # check the elements of the index for "__total"
     chk_list = []
-    for i in list(X.index.names)[:-1]:
+    for i in range(0, X.index.nlevels - 1, 1):
         chk_list.append(X.index.get_level_values(level=i).isin(["__total"]).sum())
     tot_chk = sum(chk_list) == 0
 
-    all_ok = np.logical_and.reduce([nm_chk, tot_chk])
-
-    return all_ok
+    return tot_chk
 
 
 def _flatten_single_indexes(X):
     """Check the index of X and return new unique index object."""
     # get unique indexes outwith timepoints
     inds = list(X.droplevel(-1).index.unique())
-    ind_df = pd.DataFrame(inds, columns=X.droplevel(-1).index.unique().names)
+    ind_df = pd.DataFrame(inds)
 
     # add the new top aggregate level
     if len(ind_df.columns) == 1:
@@ -222,9 +242,17 @@ def _flatten_single_indexes(X):
             agg_ids = list(tmp[tmp > 1].dropna().index)
 
             # add the aggregate label down the the length of the orginal index
-            # only id add if there are two elements in list
-            if len(agg_ids) > 1:
 
+            # only add if >=1 elements in list and not at the 2nd aggregate level
+            add_indicator1 = (i < (len(ind_df.columns) - 1)) & (len(agg_ids) >= 1)
+            # or at the second most aggregate level and there are two aggs to add
+            # or at the second most aggregate level and there is 1 agg to add,
+            #   but the top level has more than one unique index
+            add_indicator2 = (len(agg_ids) > 1) | (
+                (len(agg_ids) == 1) & (ind_df.iloc[:, 0].nunique() > 1)
+            )
+
+            if add_indicator1 | add_indicator2:
                 agg_ids = [tuple([x]) if type(x) is not tuple else x for x in agg_ids]
                 for _j in range(i):
                     agg_ids = [x + ("__total",) for x in agg_ids]
@@ -237,11 +265,11 @@ def _flatten_single_indexes(X):
     inds.extend(out_list)
 
     if len(ind_df.columns) == 1:
-        new_index = pd.Index(inds, name=ind_df.columns[0])
+        new_index = pd.Index(inds, name=X.index.droplevel(-1).name)
     else:
         new_index = pd.MultiIndex.from_tuples(
             inds,
-            names=ind_df.columns,
+            names=X.index.droplevel(-1).names,
         )
 
     return new_index

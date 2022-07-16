@@ -8,6 +8,7 @@ from numba import njit
 
 from sktime.distances import distance, distance_factory
 from sktime.distances._distance import _METRIC_INFOS
+from sktime.distances._numba_utils import to_numba_timeseries
 from sktime.distances.base import MetricInfo
 from sktime.distances.tests._expected_results import _expected_distance_results_params
 from sktime.distances.tests._utils import create_test_distance_numpy
@@ -16,8 +17,8 @@ from sktime.distances.tests._utils import create_test_distance_numpy
 def _test_distance_params(
     param_list: List[Dict], distance_func: Callable, distance_str: str
 ):
-    x_univ = create_test_distance_numpy(10, 1)
-    y_univ = create_test_distance_numpy(10, 1, random_state=2)
+    x_univ = to_numba_timeseries(create_test_distance_numpy(10, 1))
+    y_univ = to_numba_timeseries(create_test_distance_numpy(10, 1, random_state=2))
 
     x_multi = create_test_distance_numpy(10, 10)
     y_multi = create_test_distance_numpy(10, 10, random_state=2)
@@ -35,7 +36,6 @@ def _test_distance_params(
             results.append(distance_func(x, y, **param_dict))
             results.append(distance(x, y, metric=distance_str, **param_dict))
             results.append(curr_dist_fact(x, y))
-
             if distance_str in _expected_distance_results_params:
                 if _expected_distance_results_params[distance_str][i][j] is not None:
                     for result in results:
@@ -70,6 +70,7 @@ DIST_PARAMS = {
     "wddtw": BASIC_BOUNDING_PARAMS
     + [{"compute_derivative": _test_derivative}]
     + [{"g": 0.5}],
+    "twe": BASIC_BOUNDING_PARAMS + [{"lmbda": 0.5}, {"nu": 0.9}, {"p": 4}],
 }
 
 

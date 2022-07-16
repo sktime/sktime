@@ -17,7 +17,6 @@ from sklearn.utils import check_random_state
 
 from sktime.base._base import _clone_estimator
 from sktime.classification.base import BaseClassifier
-from sktime.classification.feature_based import Catch22Classifier
 from sktime.classification.interval_based import CanonicalIntervalForest
 from sktime.utils.validation.panel import check_X
 
@@ -296,6 +295,8 @@ class ProbabilityThresholdEarlyClassifier(BaseClassifier):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class.
         """
+        from sktime.classification.feature_based import Catch22Classifier
+
         params = {
             "classification_points": [3],
             "estimator": Catch22Classifier(

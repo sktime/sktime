@@ -4,10 +4,8 @@ __author__ = ["mloning"]
 __all__ = ["ESTIMATOR_TEST_PARAMS", "EXCLUDE_ESTIMATORS", "EXCLUDED_TESTS"]
 
 import numpy as np
-from pyod.models.knn import KNN
 from sklearn.preprocessing import FunctionTransformer, StandardScaler
 
-from sktime.annotation.adapters import PyODAnnotator
 from sktime.annotation.clasp import ClaSPSegmentation
 from sktime.base import BaseEstimator
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
@@ -21,7 +19,6 @@ from sktime.registry import (
 from sktime.regression.compose import ComposableTimeSeriesForestRegressor
 from sktime.transformations.base import BaseTransformer
 from sktime.transformations.panel.compose import (
-    ColumnTransformer,
     SeriesToPrimitivesRowTransformer,
     SeriesToSeriesRowTransformer,
 )
@@ -59,6 +56,11 @@ EXCLUDED_TESTS = {
         "test_classifier_on_unit_test_data",
         "test_classifier_on_basic_motions",
     ],
+    # test fail with deep problem with pickling inside tensorflow.
+    "CNNClassifier": [
+        "test_fit_idempotent",
+        "test_persistence_via_pickle",
+    ],
     # pickling problem with local method see #2490
     "ProximityStump": [
         "test_persistence_via_pickle",
@@ -72,6 +74,22 @@ EXCLUDED_TESTS = {
         "test_persistence_via_pickle",
         "test_fit_does_not_overwrite_hyper_params",
     ],
+    # sth is not quite right with the RowTransformer-s changing state,
+    #   but these are anyway on their path to deprecation, see #2370
+    "SeriesToPrimitivesRowTransformer": ["test_methods_do_not_change_state"],
+    "SeriesToSeriesRowTransformer": ["test_methods_do_not_change_state"],
+    # ColumnTransformer still needs to be refactored, see #2537
+    "ColumnTransformer": ["test_methods_do_not_change_state"],
+    # Early classifiers intentionally retain information from pervious predict calls
+    #   for #1.
+    # #2 amd #3 are due to predict/predict_proba returning two items and that breaking
+    #   assert_array_equal
+    "TEASER": [
+        "test_methods_do_not_change_state",
+        "test_fit_idempotent",
+        "test_persistence_via_pickle",
+    ],
+    "VARMAX": "test_update_predict_single",  # see 2997, sporadic failure, unknown cause
 }
 
 # We here configure estimators for basic unit testing, including setting of
@@ -80,21 +98,7 @@ SERIES_TO_SERIES_TRANSFORMER = StandardScaler()
 SERIES_TO_PRIMITIVES_TRANSFORMER = FunctionTransformer(
     np.mean, kw_args={"axis": 0}, check_inverse=False
 )
-TRANSFORMERS = [
-    (
-        "transformer1",
-        SeriesToSeriesRowTransformer(
-            SERIES_TO_SERIES_TRANSFORMER, check_transformer=False
-        ),
-    ),
-    (
-        "transformer2",
-        SeriesToSeriesRowTransformer(
-            SERIES_TO_SERIES_TRANSFORMER, check_transformer=False
-        ),
-    ),
-]
-ANOMALY_DETECTOR = KNN()
+
 ESTIMATOR_TEST_PARAMS = {
     FittedParamExtractor: {
         "forecaster": ExponentialSmoothing(),
@@ -108,9 +112,6 @@ ESTIMATOR_TEST_PARAMS = {
         "transformer": SERIES_TO_SERIES_TRANSFORMER,
         "check_transformer": False,
     },
-    ColumnTransformer: {
-        "transformers": [(name, estimator, [0]) for name, estimator in TRANSFORMERS]
-    },
     RandomShapeletTransform: {
         "max_shapelets": 5,
         "n_shapelet_samples": 50,
@@ -121,7 +122,6 @@ ESTIMATOR_TEST_PARAMS = {
     },
     ComposableTimeSeriesForestRegressor: {"n_estimators": 3},
     UnobservedComponents: {"level": "local level"},
-    PyODAnnotator: {"estimator": ANOMALY_DETECTOR},
     ClaSPSegmentation: {"period_length": 5, "n_cps": 1},
 }
 

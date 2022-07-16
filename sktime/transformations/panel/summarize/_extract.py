@@ -7,7 +7,6 @@ __author__ = ["mloning"]
 import numpy as np
 import pandas as pd
 from joblib import Parallel, delayed
-from sklearn.base import clone
 
 from sktime.datatypes import convert_to
 from sktime.transformations.base import BaseTransformer
@@ -295,6 +294,7 @@ class RandomIntervalFeatureExtractor(BaseTransformer):
         columns = []
 
         i = 0
+        drop_list = []
         for func in features:
             # TODO generalise to series-to-series functions and function kwargs
             for start, end in intervals:
@@ -314,11 +314,17 @@ class RandomIntervalFeatureExtractor(BaseTransformer):
                         ).squeeze()
                     else:
                         raise
+                new_col_name = f"{start}_{end}_{func.__name__}"
+                if new_col_name in columns:
+                    drop_list += [i]
+                else:
+                    columns = columns + [new_col_name]
                 i += 1
-                columns.append(f"{start}_{end}_{func.__name__}")
 
         Xt = pd.DataFrame(Xt)
+        Xt = Xt.drop(columns=Xt.columns[drop_list])
         Xt.columns = columns
+
         return Xt
 
 
@@ -397,7 +403,7 @@ class FittedParamExtractor(BaseTransformer):
         # iterate over rows
         extracted_params = Parallel(n_jobs=self.n_jobs)(
             delayed(_fit_extract)(
-                clone(self.forecaster), _get_instance(X, i), param_names
+                self.forecaster.clone(), _get_instance(X, i), param_names
             )
             for i in range(n_instances)
         )

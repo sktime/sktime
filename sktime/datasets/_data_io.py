@@ -35,14 +35,8 @@ from urllib.request import urlretrieve
 import numpy as np
 import pandas as pd
 
-from sktime.datatypes._convert import convert
-from sktime.datatypes._hierarchical import MTYPE_LIST_HIERARCHICAL
-from sktime.datatypes._panel._convert import (
-    _make_column_names,
-    from_long_to_nested,
-    from_nested_to_2d_np_array,
-    from_nested_to_3d_numpy,
-)
+from sktime.datatypes import MTYPE_LIST_HIERARCHICAL, MTYPE_LIST_PANEL, convert
+from sktime.datatypes._panel._convert import _make_column_names, from_long_to_nested
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.validation.panel import check_X, check_X_y
 
@@ -101,9 +95,13 @@ def _download_and_extract(url, extract_path=None):
 def _list_available_datasets(extract_path):
     """Return a list of all the currently downloaded datasets.
 
-    Modified version of
-    https://github.com/tslearn-team/tslearn/blob
-    /775daddb476b4ab02268a6751da417b8f0711140/tslearn/datasets.py#L250
+    To count as available, each directory <dir_name> in the extract_path must contain
+    files called <dir_name>_TRAIN.ts and <dir_name>_TEST.ts.
+
+    Parameters
+    ----------
+    extract_path: string
+        root directory where to look for files, if None defaults to sktime/datasets/data
 
     Returns
     -------
@@ -115,11 +113,13 @@ def _list_available_datasets(extract_path):
         data_dir = os.path.join(MODULE, "data")
     else:
         data_dir = extract_path
-    datasets = [
-        path
-        for path in os.listdir(data_dir)
-        if os.path.isdir(os.path.join(data_dir, path))
-    ]
+    datasets = []
+    for name in os.listdir(data_dir):
+        sub_dir = os.path.join(data_dir, name)
+        if os.path.isdir(sub_dir):
+            all_files = os.listdir(sub_dir)
+            if name + "_TRAIN.ts" in all_files and name + "_TEST.ts" in all_files:
+                datasets.append(name)
     return datasets
 
 
@@ -142,8 +142,8 @@ def _load_dataset(name, split, return_X_y, extract_path=None):
         if name not in _list_available_datasets(
             os.path.join(local_module, local_dirname)
         ):
-            # Dataset is not baked in the datasets directory, look in local_data,
-            # if it is not there, download and install it.
+            # Dataset is not already present in the datasets directory provided.
+            # If it is not there, download and install it.
             url = "http://timeseriesclassification.com/Downloads/%s.zip" % name
             # This also tests the validitiy of the URL, can't rely on the html
             # status code as it always returns 200
@@ -308,7 +308,7 @@ def load_from_tsfile(
     full_file_path_and_name,
     replace_missing_vals_with="NaN",
     return_y=True,
-    return_data_type=None,
+    return_data_type="nested_univ",
 ):
     """Load time series .ts file into X and (optionally) y.
 
@@ -318,25 +318,31 @@ def load_from_tsfile(
 
     Parameters
     ----------
-    full_file_path_and_name: str
+    full_file_path_and_name : str
         The full pathname and file name of the .ts file to read.
-    replace_missing_vals_with: str, default NaN
+    replace_missing_vals_with : str, default NaN
        The value that missing values in the text file should be replaced with prior
        to parsing.
-    return_y: boolean, default True
+    return_y : boolean, default True
        whether to return the y variable, if it is present.
-    return_data_type: default, None
-        what data structure to return X in. Valid alternatives to None (default to
-        pd.DataFrame) are nested_univ (pd.DataFrame) are numpy2d/np2d/numpyflat or
-        numpy3d/np3d.
-        These arguments will raise an error if the data cannot be stored in the
-        requested type.
+    return_data_type : str, optional, default = "nested_univ"
+        memory data format specification to return X in.
+        str can be any other supported Panel mtype
+            for list of mtypes, see datatypes.SCITYPE_REGISTER
+            for specifications, see examples/AA_datatypes_and_datasets.ipynb
+        commonly used specifications:
+            "nested_univ: nested pd.DataFrame, pd.Series in cells
+            "numpy3D"/"numpy3d"/"np3D": 3D np.ndarray (instance, variable, time index)
+            "numpy2d"/"np2d"/"numpyflat": 2D np.ndarray (instance, time index)
+            "pd-multiindex": pd.DataFrame with 2-level (instance, time) MultiIndex
+        Exception is raised if the data cannot be stored in therequested type.
 
     Returns
     -------
-    X:  If return_data_type = None retuns X in a nested pd.dataframe
-        If return_data_type = numpy3d/np3ddefault DataFrame or ndarray
-    y (optional): ndarray.
+    X : sktime compatible in-memory container of mtype return_data_type
+        for list of mtypes, see datatypes.SCITYPE_REGISTER
+        for specifications, see examples/AA_datatypes_and_datasets.ipynb
+    y : returned only if return_y=True, np.ndarray
 
     Raises
     ------
@@ -347,102 +353,39 @@ def load_from_tsfile(
     ValueError if return_data_type = numpy3d but the data are unequal length series
     ValueError if return_data_type = numpy2d but the data are multivariate and/
     or unequal length series
-
     """
-    # Initialize flags and variables used when parsing the file
-    is_first_case = True
-    instance_list = []
-    class_val_list = []
-    line_num = 0
-    num_dimensions = 0
-    num_cases = 0
-    with open(full_file_path_and_name, "r", encoding="utf-8") as file:
-        _meta_data = _read_header(file, full_file_path_and_name)
-        for line in file:  # Will this work?
-            num_cases = num_cases + 1
-            line = line.replace("?", replace_missing_vals_with)
-            dimensions = line.split(":")
-            # If first instance then note the number of dimensions.
-            # This must be the same for all cases.
-            if is_first_case:
-                num_dimensions = len(dimensions)
-                if _meta_data["has_class_labels"]:
-                    num_dimensions -= 1
-                for _dim in range(0, num_dimensions):
-                    instance_list.append([])
-                is_first_case = False
-                _meta_data["num_dimensions"] = num_dimensions
-            # See how many dimensions a case has
-            this_line_num_dim = len(dimensions)
-            if _meta_data["has_class_labels"]:
-                this_line_num_dim -= 1
-            if this_line_num_dim != _meta_data["num_dimensions"]:
-                raise IOError(
-                    f"Error input {full_file_path_and_name} all cases must "
-                    f"have the {num_dimensions} dimensions. Case "
-                    f"{num_cases} has {this_line_num_dim}"
-                )
-            # Process the data for each dimension
-            for dim in range(0, _meta_data["num_dimensions"]):
-                dimension = dimensions[dim].strip()
-                if dimension:
-                    data_series = dimension.split(",")
-                    data_series = [float(i) for i in data_series]
-                    instance_list[dim].append(pd.Series(data_series))
-                else:
-                    instance_list[dim].append(pd.Series(dtype="object"))
-            if _meta_data["has_class_labels"]:
-                class_val_list.append(dimensions[_meta_data["num_dimensions"]].strip())
-                line_num += 1
-    # Check that the file was not empty
-    if line_num:
-        # Create a DataFrame from the data parsed
-        data = pd.DataFrame(dtype=np.float32)
-        for dim in range(0, _meta_data["num_dimensions"]):
-            data["dim_" + str(dim)] = instance_list[dim]
-        # convert to numpy if the user requests it.
-        if isinstance(return_data_type, str):
-            return_data_type = return_data_type.strip().lower()
-        if (
-            return_data_type == "numpy2d"
-            or return_data_type == "np2d"
-            or return_data_type == "numpyflat"
-        ):
-            if (
-                not _meta_data["has_timestamps"]
-                and _meta_data["is_equal_length"]
-                and _meta_data["is_univariate"]
-            ):
-                data = from_nested_to_2d_np_array(data)
-            else:
-                raise ValueError(
-                    "Unable to convert to 2d numpy as requested, "
-                    "because at least one flag means the data structure "
-                    f"cannot be used {_meta_data}"
-                )
-        elif return_data_type == "numpy3d" or return_data_type == "np3d":
-            if not _meta_data["has_timestamps"] and _meta_data["is_equal_length"]:
-                data = from_nested_to_3d_numpy(data)
-            else:
-                raise ValueError(
-                    " Unable to convert to 3d numpy as requested, "
-                    "because at least one flag means the data structure "
-                    f"cannot be used, meta data = {_meta_data}"
-                )
-        if return_y and not _meta_data["has_class_labels"]:
-            raise IOError(
-                f"class labels have been requested, but they "
-                f"are not present in the file "
-                f"{full_file_path_and_name}"
-            )
-        if _meta_data["has_class_labels"] and return_y:
-            return data, np.asarray(class_val_list)
-        else:
-            return data
-    else:
-        raise IOError(
-            f"Empty file {full_file_path_and_name} with header info but no " f"cases"
+    if return_data_type is None:
+        return_data_type = "nested_univ"
+    if return_data_type in ["numpy2d", "numpy2D", "np2d", "np2D"]:
+        return_data_type = "numpyflat"
+    if return_data_type in ["numpy3d", "np3d", "np3D"]:
+        return_data_type = "numpy3D"
+
+    if not isinstance(return_data_type, str):
+        raise TypeError(
+            f"return_data_type argument must be a str, but found "
+            f"{type(return_data_type)}"
         )
+    if return_data_type not in MTYPE_LIST_PANEL:
+        raise ValueError(
+            f"return_data_type must be one of the following identifier strings for "
+            f"sktime panel time series data format specifications: {MTYPE_LIST_PANEL}, "
+            f"but found {return_data_type}"
+        )
+
+    # Initialize flags and variables used when parsing the file
+    X, y = load_from_tsfile_to_dataframe(
+        full_file_path_and_name=full_file_path_and_name,
+        return_separate_X_and_y=True,
+        replace_missing_vals_with=replace_missing_vals_with,
+    )
+
+    X = convert(X, from_type="nested_univ", to_type=return_data_type)
+
+    if return_y:
+        return X, y
+    else:
+        return X
 
 
 def load_from_tsfile_to_dataframe(

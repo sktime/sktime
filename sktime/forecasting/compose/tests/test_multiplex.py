@@ -5,9 +5,10 @@
 
 __author__ = ["miraep8"]
 
-from sklearn.base import clone
+import pytest
 
 from sktime.datasets import load_shampoo_sales
+from sktime.forecasting.arima import AutoARIMA
 from sktime.forecasting.compose import MultiplexForecaster
 from sktime.forecasting.ets import AutoETS
 from sktime.forecasting.model_evaluation import evaluate
@@ -27,7 +28,7 @@ def _score_forecasters(forecasters, cv, y):
     score = None
     for name, forecaster in forecasters:
         results = evaluate(forecaster, cv, y)
-        results = results.mean()
+        results = results.mean(numeric_only=True)
         new_score = float(results[scoring_name])
         if not score or new_score < score:
             score = new_score
@@ -58,7 +59,7 @@ def test_multiplex_forecaster_alone():
     # agree with the unwrapped forecaster predictions!
     for ind, name in enumerate(forecaster_names):
         # make a copy to ensure we don't reference the same objectL
-        test_forecaster = clone(forecasters[ind])
+        test_forecaster = forecasters[ind].clone()
         test_forecaster.fit(y)
         multiplex_forecaster.selected_forecaster = name
         # Note- MultiplexForecaster will make a copy of the forecaster before fitting.
@@ -94,3 +95,41 @@ def test_multiplex_with_grid_search():
     gscv_best_name = gscv.best_forecaster_.selected_forecaster
     best_name = _score_forecasters(forecasters, cv, y)
     assert gscv_best_name == best_name
+
+
+def test_multiplex_or_dunder():
+    """Test that the MultiplexForecaster magic "|" dunder methodbahves as expected.
+
+    A MultiplexForecaster can be created by using the "|" dunder method on
+    either forecaster or MultiplexForecaster objects. Here we test that it performs
+    as expected on all the use cases, and raises the expected error in some others.
+    """
+    # test a simple | example with two forecasters:
+    multiplex_two_forecaster = AutoETS() | NaiveForecaster()
+    assert isinstance(multiplex_two_forecaster, MultiplexForecaster)
+    assert len(multiplex_two_forecaster.forecasters) == 2
+    # now test that | also works on two MultiplexForecasters:
+    multiplex_one = MultiplexForecaster([("arima", AutoARIMA()), ("ets", AutoETS())])
+    multiplex_two = MultiplexForecaster(
+        [("theta", ThetaForecaster()), ("naive", NaiveForecaster())]
+    )
+    multiplex_two_multiplex = multiplex_one | multiplex_two
+    assert isinstance(multiplex_two_multiplex, MultiplexForecaster)
+    assert len(multiplex_two_multiplex.forecasters) == 4
+    # last we will check 3 forecaster with the same name - should check both that
+    # MultiplexForecaster | forecaster works, and that ensure_unique_names works
+    multiplex_same_name_three_test = (
+        NaiveForecaster(strategy="last")
+        | NaiveForecaster(strategy="mean")
+        | NaiveForecaster(strategy="drift")
+    )
+    assert isinstance(multiplex_same_name_three_test, MultiplexForecaster)
+    assert len(multiplex_same_name_three_test.forecasters) == 3
+    forecaster_param_names = multiplex_same_name_three_test._get_estimator_names(
+        multiplex_same_name_three_test._forecasters
+    )
+    assert len(set(forecaster_param_names)) == 3
+
+    # test we get a ValueError if we try to | with anything else:
+    with pytest.raises(TypeError):
+        multiplex_one | "this shouldn't work"

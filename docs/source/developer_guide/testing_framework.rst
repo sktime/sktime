@@ -34,18 +34,16 @@ Module conventions are as follows:
 Test code architecture
 ----------------------
 
-.. _pytestuse: https://docs.pytest.org/en/6.2.x/example/index.html
-
 ``sktime`` test files should use best ``pytest`` practice such as fixtures or test parameterization where possible,
-instead of custom logic, see `pytest documentation <pytestuse>`_.
+instead of custom logic, see `pytest documentation`_.
+
+.. _pytest documentation: https://docs.pytest.org/en/6.2.x/example/index.html
 
 Estimator tests use ``sktime``'s framework plug-in to ``pytest_generate_tests``,
 which parameterizes estimator fixtures and data input scenarios.
 
 An illustrative example
 ~~~~~~~~~~~~~~~~~~~~~~~
-
-.. _pytestgentests: https://docs.pytest.org/en/6.2.x/parametrize.html#basic-pytest-generate-tests-example
 
 Starting with an example:
 
@@ -63,7 +61,9 @@ where the loop is orchestrated by ``pytest`` parameterization in
 ``pytest_generate_tests``, which automatically decorates the test with a suitable loop.
 Notably, loops in the test do not need to be written by the developer,
 if they use a fixture name (such as ``estimator_instance``) which already has a loop defined.
-See below for more details, or the `pytest documentation on the topic <pytestgentests>`_.
+See below for more details, or the `pytest documentation on the topic`_.
+
+.. _pytest documentation on the topic: https://docs.pytest.org/en/6.2.x/parametrize.html#basic-pytest-generate-tests-example
 
 The ``sktime`` plug-in for ``pytest`` generates the tuples of fixture values for this.
 In the above example, we loop over the following fixtures lists:
@@ -87,18 +87,19 @@ since inputs to ``fit`` of a classifier will differ to an input to ``fit`` of a 
 Parameterized fixtures
 ~~~~~~~~~~~~~~~~~~~~~~
 
-.. _pytestfixtparam: https://docs.pytest.org/en/6.2.x/parametrize.html
-
 ``sktime`` uses ``pytest`` fixture parameterization to execute tests in a loop over fixtures,
 for instance running all interface compatibility tests for all estimators.
-See the `pytest documentation on fixture parameterization <pytestfixtparam>`_ for an explanation of fixture parameterization
-in general.
+See the `pytest documentation on fixture parameterization`_ in general for an explanation of fixture parameterization.
+
+.. _pytest documentation on fixture parameterization: https://docs.pytest.org/en/6.2.x/parametrize.html
 
 Implementation-wise, loops over fixtures is orchestrated by ``pytest`` parameterization in
 ``pytest_generate_tests``, which automatically decorates every test by
 a ``mark.parameterize`` based on the test arguments (``estimator_instance`` and ``scenario`` in the above example).
 This is in line with standard use of ``pytest_generate_tests``, see the section in the ``pytest``
-documentation on `advanced fixture parameterization <pytestgentests>`_ using ``pytest_generate_tests``.
+documentation on `advanced fixture parameterization`_ using ``pytest_generate_tests``.
+
+.. _advanced fixture parameterization: https://docs.pytest.org/en/6.2.x/parametrize.html#basic-pytest-generate-tests-example
 
 Currently, the ``sktime`` testing framework provides automated fixture parameterization
 via ``mark.parameterize`` for the following fixtures, in module level tests:

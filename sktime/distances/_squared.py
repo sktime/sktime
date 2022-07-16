@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-__author__ = ["chrisholder"]
+__author__ = ["chrisholder", "TonyBagnall"]
+
 
 from typing import Any
 
@@ -20,9 +21,9 @@ class _SquaredDistance(NumbaDistance):
         Parameters
         ----------
         x: np.ndarray (1d or 2d array)
-            First timeseries.
+            First time series.
         y: np.ndarray (1d or 2d array)
-            Second timeseries.
+            Second time series.
         kwargs: Any
             Extra kwargs. For squared there are none however, this is kept for
             consistency.

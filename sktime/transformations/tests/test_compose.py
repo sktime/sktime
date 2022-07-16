@@ -8,10 +8,14 @@ __all__ = []
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
 
+from sktime.datatypes import get_examples
 from sktime.transformations.compose import FeatureUnion, TransformerPipeline
 from sktime.transformations.panel.padder import PaddingTransformer
 from sktime.transformations.series.exponent import ExponentTransformer
 from sktime.transformations.series.impute import Imputer
+from sktime.transformations.series.subset import ColumnSelect
+from sktime.transformations.series.summarize import SummaryTransformer
+from sktime.transformations.series.theta import ThetaLinesTransformer
 from sktime.utils._testing.deep_equals import deep_equals
 from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
 
@@ -138,3 +142,35 @@ def test_featureunion_transform_cols():
     )
 
     assert deep_equals(Xt.columns, expected_cols), msg
+
+
+def test_sklearn_after_primitives():
+    """Test that sklearn transformer after primitives is correctly applied."""
+    t = SummaryTransformer() * StandardScaler()
+    assert t.get_tag("scitype:transform-output") == "Primitives"
+
+    X = get_examples("pd-multiindex")[0]
+    X_out = t.fit_transform(X)
+    X_summary = SummaryTransformer().fit_transform(X)
+
+    assert deep_equals(X_out.index, X_summary.index)
+    assert deep_equals(X_out.columns, X_summary.columns)
+    # var_0 is the same for all three instances
+    # so summary statistics are all the same, thus StandardScaler transforms to 0
+    assert X_out.iloc[0, 0] > -0.01
+    assert X_out.iloc[0, 0] < 0.01
+    # var_1 has some variation between three instances
+    # fix this to one value to tie the output to current behaviour
+    assert X_out.iloc[0, 10] > -1.37
+    assert X_out.iloc[0, 10] < -1.36
+
+
+def test_pipeline_column_vectorization():
+    """Test that pipelines vectorize properly over columns."""
+    X = pd.DataFrame({"a": [1, 2], "b": [3, 4]})
+
+    t = ColumnSelect([0, 1]) * ThetaLinesTransformer()
+
+    X_theta = t.fit_transform(X)
+
+    assert set(X_theta.columns) == set(["a__0", "a__2", "b__0", "b__2"])

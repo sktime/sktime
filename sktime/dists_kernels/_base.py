@@ -55,8 +55,7 @@ class BasePairwiseTransformer(BaseEstimator):
     }
 
     def __init__(self):
-        super().__init__()
-        self.X_equals_X2 = False
+        super(BasePairwiseTransformer, self).__init__()
 
     def __call__(self, X, X2=None):
         """Compute distance/kernel matrix, call shorthand.
@@ -77,11 +76,6 @@ class BasePairwiseTransformer(BaseEstimator):
         -------
         distmat: np.array of shape [n, m]
             (i,j)-th entry contains distance/kernel between X.iloc[i] and X2.iloc[j]
-
-        Writes to self
-        --------------
-        X_equals_X2: bool = True if X2 was not passed, False if X2 was passed
-            for use to make internal calculations efficient, e.g., in _transform
         """
         # no input checks or input logic here, these are done in transform
         # this just defines __call__ as an alias for transform
@@ -103,22 +97,13 @@ class BasePairwiseTransformer(BaseEstimator):
         -------
         distmat: np.array of shape [n, m]
             (i,j)-th entry contains distance/kernel between X.iloc[i] and X2.iloc[j]
-
-        Writes to self
-        --------------
-        X_equals_X2: bool = True if X2 was not passed, False if X2 was passed
-            for use to make internal calculations efficient, e.g., in _transform
         """
         X = self._pairwise_table_x_check(X)
 
         if X2 is None:
             X2 = X
-            self.X_equals_X2 = True
         else:
             X2 = self._pairwise_table_x_check(X2, var_name="X2")
-            # todo, possibly:
-            # check X, X2 for equality, then set X_equals_X2
-            # could use deep_equals
 
         return self._transform(X=X, X2=X2)
 
@@ -146,6 +131,7 @@ class BasePairwiseTransformer(BaseEstimator):
     def fit(self, X=None, X2=None):
         """Fit method for interface compatibility (no logic inside)."""
         # no fitting logic, but in case fit is called or expected
+        self.reset()
         self._is_fitted = True
         return self
 
@@ -201,7 +187,6 @@ class BasePairwiseTransformerPanel(BaseEstimator):
 
     def __init__(self):
         super(BasePairwiseTransformerPanel, self).__init__()
-        self.X_equals_X2 = False
 
     def __call__(self, X, X2=None):
         """Compute distance/kernel matrix, call shorthand.
@@ -232,11 +217,6 @@ class BasePairwiseTransformerPanel(BaseEstimator):
         -------
         distmat: np.array of shape [n, m]
             (i,j)-th entry contains distance/kernel between X[i] and X2[j]
-
-        Writes to self
-        --------------
-        X_equals_X2: bool = True if X2 was not passed, False if X2 was passed
-            for use to make internal calculations efficient, e.g., in _transform
         """
         # no input checks or input logic here, these are done in transform
         # this just defines __call__ as an alias for transform
@@ -271,22 +251,13 @@ class BasePairwiseTransformerPanel(BaseEstimator):
         -------
         distmat: np.array of shape [n, m]
             (i,j)-th entry contains distance/kernel between X[i] and X2[j]
-
-        Writes to self
-        --------------
-        X_equals_X2: bool = True if X2 was not passed, False if X2 was passed
-            for use to make internal calculations efficient, e.g., in _transform
         """
         X = self._pairwise_panel_x_check(X)
 
         if X2 is None:
             X2 = X
-            self.X_equals_X2 = True
         else:
             X2 = self._pairwise_panel_x_check(X2, var_name="X2")
-            # todo, possibly:
-            # check X, X2 for equality, then set X_equals_X2
-            # could use deep_equals
 
         return self._transform(X=X, X2=X2)
 
@@ -318,6 +289,7 @@ class BasePairwiseTransformerPanel(BaseEstimator):
     def fit(self, X=None, X2=None):
         """Fit method for interface compatibility (no logic inside)."""
         # no fitting logic, but in case fit is called or expected
+        self.reset()
         self._is_fitted = True
         return self
 
@@ -352,8 +324,8 @@ class BasePairwiseTransformerPanel(BaseEstimator):
                 "X and X2 must be in an sktime compatible format, "
                 "of scitype Series or Panel, "
                 "for instance a pandas.DataFrame with sktime compatible time indices, "
-                "or with MultiIndex and lowest level a sktime compatible time index. "
-                "See the data format tutorial examples/AA_datatypes_and_datasets.ipynb"
+                "or with MultiIndex and last(-1) level an sktime compatible time index."
+                " See the data format tutorial examples/AA_datatypes_and_datasets.ipynb"
             )
             raise TypeError(msg)
 

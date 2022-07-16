@@ -17,6 +17,7 @@ from sklearn.utils.validation import check_random_state
 from sktime.alignment.base import BaseAligner
 from sktime.annotation.base import BaseSeriesAnnotator
 from sktime.classification.base import BaseClassifier
+from sktime.classification.early_classification import BaseEarlyClassifier
 from sktime.clustering.base import BaseClusterer
 from sktime.datatypes._panel._check import is_nested_dataframe
 from sktime.dists_kernels import BasePairwiseTransformer, BasePairwiseTransformerPanel
@@ -134,7 +135,7 @@ def _make_fit_args(estimator, **kwargs):
     elif isinstance(estimator, BaseSeriesAnnotator):
         X = make_annotation_problem(**kwargs)
         return (X,)
-    elif isinstance(estimator, BaseClassifier):
+    elif isinstance(estimator, (BaseClassifier, BaseEarlyClassifier)):
         return make_classification_problem(**kwargs)
     elif isinstance(estimator, BaseRegressor):
         return make_regression_problem(**kwargs)
@@ -167,7 +168,9 @@ def _make_predict_args(estimator, **kwargs):
     if isinstance(estimator, BaseForecaster):
         fh = 1
         return (fh,)
-    elif isinstance(estimator, (BaseClassifier, BaseRegressor, BaseClusterer)):
+    elif isinstance(
+        estimator, (BaseClassifier, BaseEarlyClassifier, BaseRegressor, BaseClusterer)
+    ):
         X = _make_panel_X(**kwargs)
         return (X,)
     elif isinstance(estimator, BaseSeriesAnnotator):
@@ -350,9 +353,12 @@ def _has_capability(est, method: str) -> bool:
         "predict_quantiles",
         "predict_var",
     ]:
-        ALWAYS_HAVE_PREDICT_PROBA = (BaseClassifier, BaseClusterer)
+        ALWAYS_HAVE_PREDICT_PROBA = (BaseClassifier, BaseEarlyClassifier, BaseClusterer)
         # all classifiers and clusterers implement predict_proba
         if method == "predict_proba" and isinstance(est, ALWAYS_HAVE_PREDICT_PROBA):
             return True
         return get_tag(est, "capability:pred_int", False)
+    # skip transform for forecasters that have it - pipelines
+    if method == "transform" and isinstance(est, BaseForecaster):
+        return False
     return True
