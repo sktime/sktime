@@ -306,15 +306,6 @@ def is_nested_dataframe(obj, return_metadata=False, var_name="obj"):
             msg = f"{var_name} entries must be pd.Series"
             return _ret(False, msg, None, return_metadata)
 
-    # Check instance index is unique
-    if not obj.index.is_unique:
-        duplicates = obj.index[obj.index.duplicated()].unique().to_list()
-        msg = (
-            f"The instance index of {var_name} must be unique, "
-            f"but found duplicates: {duplicates}"
-        )
-        return _ret(False, msg, None, return_metadata)
-
     metadata = dict()
     metadata["is_univariate"] = obj.shape[1] < 2
     metadata["n_instances"] = len(obj)
