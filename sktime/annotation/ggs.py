@@ -316,5 +316,5 @@ class GGSEstimator:
         return self
 
     def __repr__(self) -> str:
-        """String representation of the estimator."""
+        """Return a string representation of the estimator."""
         return self._adaptee.__repr__()
