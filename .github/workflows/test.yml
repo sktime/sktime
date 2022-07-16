@@ -49,7 +49,7 @@ jobs:
     runs-on: windows-2019
     strategy:
       matrix:
-        python-version: [3.7, 3.8]
+        python-version: [3.7, 3.8, 3.9, '3.10']
     steps:
       - uses: actions/checkout@v2
 
@@ -80,7 +80,6 @@ jobs:
           mkdir -p testdir/
           cp .coveragerc testdir/
           cp setup.cfg testdir/
-          cd testdir/
           python -m pytest
 
       - name: Publish code coverage
@@ -91,7 +90,7 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        python-version: [3.7, 3.8, 3.9]
+        python-version: [3.7, 3.8, 3.9, '3.10']
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python
@@ -119,7 +118,7 @@ jobs:
     runs-on: macOS-10.15
     strategy:
       matrix:
-        python-version: [3.7, 3.8, 3.9]
+        python-version: [3.7, 3.8, 3.9, '3.10']
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python
@@ -128,19 +127,6 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Display Python version
         run: python -c "import sys; print(sys.version)"
-
-      # - run: brew install libomp
-
-      # - name: Set env vars
-      #   run: |
-      #     echo "CC=/usr/bin/clang++" >> $GITHUB_ENV
-      #     echo "CXX=/usr/bin/clang++" >> $GITHUB_ENV
-      #     echo "DYLD_LIBRARY_PATH=/usr/local/opt/libomp/lib" >> $GITHUB_ENV
-      #     echo "CPPFLAGS=$CPPFLAGS -Xclang -fopenmp -std=c++11 -lstdc++" >> $GITHUB_ENV
-      #     echo "CFLAGS=$CFLAGS -I/opt/local/include/libomp -I/opt/local/include" >> $GITHUB_ENV
-      #     echo "CXXFLAGS=$CXXFLAGS -I/opt/local/include/libomp" >> $GITHUB_ENV
-      #     echo "LDFLAGS=$LDFLAGS -Wl,-rpath,/opt/local/lib/libomp -L/opt/local/lib/libomp -lomp" >> $GITHUB_ENV
-      #     echo "PATH=/usr/local/opt/ccache/libexec:$PATH" >> $GITHUB_ENV
 
       - name: Install sktime and dependencies
         run: |

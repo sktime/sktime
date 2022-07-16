@@ -52,6 +52,7 @@ class TimeSeriesKShapes(BaseClusterer):
 
     _tags = {
         "capability:multivariate": True,
+        "python_dependencies": "tslearn",
     }
 
     def __init__(
@@ -64,8 +65,6 @@ class TimeSeriesKShapes(BaseClusterer):
         verbose: bool = False,
         random_state: Union[int, RandomState] = None,
     ):
-        _check_soft_dependencies("tslearn", severity="error", object=self)
-
         self.init_algorithm = init_algorithm
         self.n_init = n_init
         self.max_iter = max_iter

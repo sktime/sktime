@@ -330,9 +330,11 @@ def update_data(X, X_new=None):
     if X_new is None:
         return X
 
-    # if X is vectorized, unwrap it first
+    # if X or X_new is vectorized, unwrap it first
     if isinstance(X, VectorizedDF):
         X = X.X
+    if isinstance(X_new, VectorizedDF):
+        X_new = X_new.X
     # we want to ensure that X is either numpy (1D, 2D, 3D)
     # or in one of the long pandas formats
     X = convert_to(

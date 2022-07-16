@@ -65,6 +65,7 @@ from sktime.datatypes import (
 )
 from sktime.datatypes._series_as_panel import convert_to_scitype
 from sktime.utils.sklearn import is_sklearn_classifier, is_sklearn_transformer
+from sktime.utils.validation._dependencies import _check_estimator_deps
 
 # single/multiple primitives
 Primitive = Union[np.integer, int, float, str]
@@ -122,6 +123,7 @@ class BaseTransformer(BaseEstimator):
         # todo: rename to capability:missing_values
         "capability:missing_values:removes": False,
         # is transform result always guaranteed to contain no missing values?
+        "python_version": None,  # PEP 440 python version specifier to limit versions
     }
 
     # allowed mtypes for transformers - Series and Panel
@@ -144,6 +146,7 @@ class BaseTransformer(BaseEstimator):
         self._converter_store_X = dict()  # storage dictionary for in/output conversion
 
         super(BaseTransformer, self).__init__()
+        _check_estimator_deps(self)
 
     def __mul__(self, other):
         """Magic * method, return (right) concatenated TransformerPipeline.

@@ -1,12 +1,15 @@
 # -*- coding: utf-8 -*-
 """Tests for signature method."""
 
+import sys
+
 import numpy as np
 import pytest
 
 from sktime.transformations.panel.signature_based import SignatureTransformer
 
 
+@pytest.mark.skipif(sys.version_info >= (3, 10), reason="esig does not work on 3.10")
 def test_generalised_signature_method():
     """Check that dimension and dim of output are correct."""
     # Build an array X, note that this is [n_sample, n_channels, length] shape.
@@ -36,6 +39,7 @@ def test_generalised_signature_method():
     assert np.allclose(method.fit_transform(X), true_arr)
 
 
+@pytest.mark.skipif(sys.version_info >= (3, 10), reason="esig does not work on 3.10")
 def test_window_error():
     """Test that wrong window parameters raise error."""
     X = np.random.randn(5, 2, 3)
