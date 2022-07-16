@@ -17,11 +17,10 @@ import logging
 import math
 from typing import Dict, List, Tuple
 
-from attrs import define, field, asdict
 import numpy as np
 import numpy.typing as npt
+from attrs import asdict, define, field
 from sklearn.utils.validation import check_random_state
-
 
 logger = logging.getLogger(__name__)
 

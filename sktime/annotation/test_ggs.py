@@ -1,7 +1,8 @@
-# coding: utf-8
-from .ggs import GGS, GGSEstimator
+# -*- coding: utf-8 -*-
 import numpy as np
 import pytest
+
+from .ggs import GGS, GGSEstimator
 
 
 @pytest.fixture
