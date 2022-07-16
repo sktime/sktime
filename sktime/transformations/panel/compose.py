@@ -185,24 +185,11 @@ class ColumnTransformer(_ColumnTransformer, _PanelToPanelTransformer):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        from sklearn.preprocessing import StandardScaler
+        from sktime.transformations.series.exponent import ExponentTransformer
 
-        from sktime.transformations.panel.compose import SeriesToSeriesRowTransformer
-
-        SERIES_TO_SERIES_TRANSFORMER = StandardScaler()
         TRANSFORMERS = [
-            (
-                "transformer1",
-                SeriesToSeriesRowTransformer(
-                    SERIES_TO_SERIES_TRANSFORMER, check_transformer=False
-                ),
-            ),
-            (
-                "transformer2",
-                SeriesToSeriesRowTransformer(
-                    SERIES_TO_SERIES_TRANSFORMER, check_transformer=False
-                ),
-            ),
+            ("transformer1", ExponentTransformer()),
+            ("transformer2", ExponentTransformer()),
         ]
 
         return {
