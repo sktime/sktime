@@ -15,12 +15,13 @@ Based on:
 
 import logging
 import math
-import random
 from typing import Dict, List, Tuple
 
 from attrs import define, field, asdict
 import numpy as np
 import numpy.typing as npt
+from sklearn.utils.validation import check_random_state
+
 
 logger = logging.getLogger(__name__)
 
@@ -173,8 +174,9 @@ class GGS:
         -------
             change_points:
         """
+        rng = check_random_state(self.random_state)
         bp = change_points[:]
-        random.seed(0)
+
         # Just one breakpoint, no need to adjust anything
         if len(bp) == 3:
             return bp
@@ -189,7 +191,7 @@ class GGS:
             this_pass = {b: 0 for b in bp}
             switch_any = False
             ordering = list(range(1, len(bp) - 1))
-            random.shuffle(ordering)
+            rng.shuffle(ordering)
             for i in ordering:
                 # Check if we need to adjust it
                 if (
