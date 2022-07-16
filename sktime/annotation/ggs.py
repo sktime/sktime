@@ -46,7 +46,7 @@ class GGS:
     verbose: bool = False
     random_state: int = None
 
-    change_points_: npt.ArrayLike = field(init=False)
+    change_points_: npt.ArrayLike = field(init=False, default=[])
     _intermediate_change_points: List[List[int]] = field(init=False, default=[])
     _intermediate_ll: List[float] = field(init=False, default=[])
 
