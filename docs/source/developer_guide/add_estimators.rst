@@ -114,16 +114,73 @@ Some common caveats, also described in extension template text:
 How to test interface conformance
 ---------------------------------
 
+Using the ``check_estimator`` utility
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 Usually, the simplest way to test interface conformance with ``sktime`` is via the
 ``check_estimator`` methods in the ``utils.estimator_checks`` module.
 
 When invoked, this will collect tests in ``sktime`` relevant for the estimator type and
 run them on the estimator.
 
+This can be used for manual debugging in a notebook environment.
+Example of running the full test suite for ``NaiveForecaster``:
+
+.. code-block:: python
+
+    from sktime.utils.estimator_checks import check_estimator
+    from sktime.forecasting.naive import NaiveForecaster
+    check_estimator(NaiveForecaster)
+
+The ``check_estimator`` utility will return, by default, a ``dict``, indexed by test/fixture combination strings,
+that is, a test name and the fixture combination string in squared brackets.
+Example: ``'test_repr[NaiveForecaster-2]'``, where ``test_repr`` is the test name, and ``NaiveForecaster-2`` the fixture combination string.
+
+Values of the return ``dict`` are either the string ``"PASSED"``, if the test succeeds, or the exception that is being raised.
+Exceptions are not raised by default. To raise exceptions instead, e.g., in debugging, use the argument ``return_exceptions=False``,
+which will raise the exceptions instead of returning them as dictionary values.
+
+To run or exclude certain tests, use the ``tests_to_run`` or ``tests_to_exclude`` arguments.
+Values provided should be names of tests (str), or a list of names of tests.
+Note that test names exclude the part in squared brackets.
+
+Example, running the test ``test_required_params`` with all fixtures:
+
+.. code-block:: python
+
+    check_estimator(NaiveForecaster, tests_to_run="test_required_params")
+
+``{'test_required_params[NaiveForecaster]': 'PASSED'}``
+
+To run or exclude certain tests, use the ``fixtures_to_run`` or ``fixtures_to_exclude`` arguments.
+Values provided should be names of test-fixture-combination strings (str), or a list of such.
+Valid strings are precisely the dictionary keys when using ``check_estimator`` with default parameters.
+
+Example, running the test-fixture-combination ``"test_repr[NaiveForecaster-2]"``:
+
+.. code-block:: python
+
+    check_estimator(NaiveForecaster, fixtures_to_run="test_repr[NaiveForecaster-2]")
+
+``{'test_repr[NaiveForecaster-2]': 'PASSED'}``
+
+A useful workflow for using ``check_estimator`` to debug an estimator is as follows:
+
+1. Run ``check_estimator(MyEstimator)`` to find failing tests
+2. Subset to failing tests or fixtures using ``fixtures_to_run`` or ``tests_to_run``
+3. If the failure is not obvious, set ``return_exceptions=False`` to raise the exception and inspecet the traceback.
+4. If the failure is still not clear, use advanced debuggers on the line of code with ``check_estimator``.
+
+Running the test suite in a repository clone
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 If the target location of the estimator is within ``sktime``, then the ``sktime`` test
 suite can be run instead. The ``sktime`` test suite (and CI/CD) will automatically
 collect all estimators of a certain type and run relevant tests on them.
 
+To run tests only for the estimator, the command ``pytest -k "EstimatorName"`` can be used.
+When using Visual Studio Code or pycharm, tests can also be sub-setted using GUI filter
+functionality - for this, refer to the respecetive IDE documentation on test integration.
 
 Testing within a third party extension package
 ----------------------------------------------
@@ -134,29 +191,9 @@ the ``sktime`` test suite can be imported and extended in two ways:
 
 *   importing ``check_estimator``, this will carry out the tests defined in ``sktime``
 
-.. code-block:: python
-
-    >>> from sktime.utils.estimator_checks import check_estimator
-    >>> from sktime.forecasting.naive import NaiveForecaster
-    >>> check_estimator(NaiveForecaster)
-
 *   importing test classes, e.g., ``test_all_estimators.TestAllEstimators`` or
     ``test_all_forecasters.TestAllForecasters``. The imports will be discovered directly
     by ``pytest``. The test suite also be extended by inheriting from the test classes.
-
-.. code-block:: python
-
-    >>> from sktime.forecasting.naive import NaiveForecaster
-    >>> from sktime.tests.test_all_estimators import TestAllEstimators
-    >>> TestAllEstimators().run_tests(
-    ...     NaiveForecaster,
-    ...     tests_to_run="test_required_params"
-    ... )
-    {'test_required_params[NaiveForecaster]': 'PASSED'}
-    >>> TestAllEstimators().run_tests(
-    ...     NaiveForecaster, fixtures_to_run="test_repr[NaiveForecaster-2]"
-    ... )
-    {'test_repr[NaiveForecaster-2]': 'PASSED'}
 
 Adding an ``sktime`` compatible estimator to ``sktime``
 =======================================================
