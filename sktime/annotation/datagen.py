@@ -1,9 +1,10 @@
 from typing import Union
-import numpy as np
-from sktime.base import BaseObject
-from sklearn.utils.validation import check_random_state
-import numpy.typing as npt
 
+import numpy as np
+import numpy.typing as npt
+from sklearn.utils.validation import check_random_state
+
+from sktime.base import BaseObject
 
 # what if we could pass data_gen functions - rather than assuming means?
 #   - could make it easier to swap out different mean assumptions
@@ -115,9 +116,7 @@ class BaseDataGenerator(BaseObject):
 class GenBasicGauss(BaseDataGenerator):
     """Data generator base class in order to allow composition"""
 
-    def __init__(
-        self, means, lengths, noise, random_state=None
-    ):
+    def __init__(self, means, lengths, noise, random_state=None):
         self.means = means
         self.lengths = lengths
         self.noise = noise
@@ -125,9 +124,11 @@ class GenBasicGauss(BaseDataGenerator):
 
     def sample(self):
         return mean_shift(
-            means=self.means, lengths=self.lengths, noise=self.noise, random_state=self.random_state
+            means=self.means,
+            lengths=self.lengths,
+            noise=self.noise,
+            random_state=self.random_state,
         )
-
 
 
 # this data has no autocorrelation concerns
