@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """Configurable time series ensembles."""
-__author__ = ["mloning", "AyushmaanSeth"]
+__author__ = ["mloning", "AyushmaanSeth", "fkiraly"]
 __all__ = ["ComposableTimeSeriesForestClassifier"]
 
 import numbers
@@ -732,11 +732,6 @@ class WeightedEnsembleClassifier(BaseClassifier, _HeterogenousMetaEstimator):
                         train_preds[i] = train_probs[i, np.argmax(train_probs[i, :])]
                 metric = self._metric
                 self.weights_[clf_name] = metric(y, train_preds) ** exponent
-
-        # # Find TDE weight using train set estimate
-        # train_probs = self._tde._get_train_probs(X, y, train_estimate_method="loocv")
-        # train_preds = self._tde.classes_[np.argmax(train_probs, axis=1)]
-        # self.tde_weight_ = accuracy_score(y, train_preds) ** 4
 
         return self
 
