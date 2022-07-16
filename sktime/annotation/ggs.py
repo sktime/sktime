@@ -13,17 +13,19 @@ Based on:
 - paper available at: https://stanford.edu/~boyd/papers/pdf/ggs.pdf
 """
 
-import abc
 import logging
 import math
 import random
-from typing import List, Tuple
+from typing import Dict, List, Tuple
 
+from attrs import define, field, asdict
 import numpy as np
+import numpy.typing as npt
 
 logger = logging.getLogger(__name__)
 
 
+@define
 class GGS:
     """
     Greedy Gaussian Segmentation.
@@ -32,22 +34,24 @@ class GGS:
     ----
         k_max: maximum number of change points to find
         lamb: regularization parameter
-        max_shuffles:
-        verbose:
+        max_shuffles: maximum number of shuffles
+        verbose: If ``True`` verbose output is enabled.
     """
 
-    def __init__(
-        self, k_max: int, lamb: float, max_shuffles: int = 250, verbose: bool = False
-    ):
-        self.k_max = k_max
-        self.lamb = lamb
-        self.max_shuffles = max_shuffles
-        self.verbose = verbose
+    k_max: int = 10
+    lamb: float = 1.0
+    max_shuffles: int = 250
+    verbose: bool = False
+    random_state: int = None
+
+    change_points_: npt.ArrayLike = field(init=False)
+    _intermediate_change_points: List[List[int]] = field(init=False, default=[])
+    _intermediate_ll: List[float] = field(init=False, default=[])
 
     def initialize_intermediates(self):
         """Fit."""
-        self.intermediate_change_points = []
-        self.intermediate_ll = []
+        self._intermediate_change_points = []
+        self._intermediate_ll = []
 
     def log_likelihood(self, cov: float, nrows: int, ncols: int) -> float:
         """
@@ -72,7 +76,7 @@ class GGS:
         )
 
     def cumulative_log_likelihood(
-        self, data: np.ndarray, change_points: List[int]
+        self, data: npt.ArrayLike, change_points: List[int]
     ) -> float:
         """
         Calculate cumulative GGS log likelihood for all segments.
@@ -94,14 +98,18 @@ class GGS:
             log_likelihood -= self.log_likelihood(cov, nrows, ncols)
         return log_likelihood
 
-    def add_new_change_point(self, data: np.ndarray) -> Tuple[int, float]:
+    def add_new_change_point(self, data: npt.ArrayLike) -> Tuple[int, float]:
         """
-        Add break point.
+        Add change point.
+
+        Parameters
+        ----------
+            data
 
         Returns
         -------
             index: change point index
-            gained log likehood
+            gll: gained log likelihood
         """
         # Initialize parameters
         m, n = data.shape
@@ -109,20 +117,20 @@ class GGS:
         orig_cov = np.cov(data.T, bias=True)
         origLL = self.log_likelihood(orig_cov, m, n)
         totSum = m * (orig_cov + np.outer(orig_mean, orig_mean))
-        muLeft = data[0, :] / n
-        muRight = (m * orig_mean - data[0, :]) / (m - 1)
+        mu_left = data[0, :] / n
+        mu_right = (m * orig_mean - data[0, :]) / (m - 1)
         runSum = np.outer(data[0, :], data[0, :])
         # Loop through all samples
         # find point where breaking the segment would have the largest LL increase
         minLL = origLL
-        minInd = 0
+        new_index = 0
         for i in range(2, m - 1):
             # Update parameters
             runSum = runSum + np.outer(data[i - 1, :], data[i - 1, :])
-            muLeft = ((i - 1) * muLeft + data[i - 1, :]) / (i)
-            muRight = ((m - i + 1) * muRight - data[i - 1, :]) / (m - i)
-            sigLeft = runSum / (i) - np.outer(muLeft, muLeft)
-            sigRight = (totSum - runSum) / (m - i) - np.outer(muRight, muRight)
+            mu_left = ((i - 1) * mu_left + data[i - 1, :]) / (i)
+            mu_right = ((m - i + 1) * mu_right - data[i - 1, :]) / (m - i)
+            sigLeft = runSum / (i) - np.outer(mu_left, mu_left)
+            sigRight = (totSum - runSum) / (m - i) - np.outer(mu_right, mu_right)
 
             # Compute Cholesky, LogDet, and Trace
             Lleft = np.linalg.cholesky(sigLeft + float(self.lamb) * np.identity(n) / i)
@@ -144,21 +152,21 @@ class GGS:
             # Keep track of the best point so far
             if LL < minLL:
                 minLL = LL
-                minInd = i
+                new_index = i
         # Return break, increase in LL
-        return minInd, minLL - origLL
+        return new_index, minLL - origLL
 
     def adjust_change_points(
-        self, data: np.ndarray, change_points: List[int], newInd
+        self, data: npt.ArrayLike, change_points: List[int], new_index: List[int]
     ) -> List[int]:
         """
         Adjust change points.
 
-        Args
-        ----
+        Parameters
+        ----------
             data: time series data
             change_points: change points indexes
-            newInd:
+            new_index: new change points
 
         Returns
         -------
@@ -171,47 +179,47 @@ class GGS:
             return bp
         # Keep track of what change_points have changed,
         # so that we don't have to adjust ones which we know are constant
-        lastPass = {}
-        thisPass = {b: 0 for b in bp}
-        for i in newInd:
-            thisPass[i] = 1
+        last_pass = {}
+        this_pass = {b: 0 for b in bp}
+        for i in new_index:
+            this_pass[i] = 1
         for _ in range(self.max_shuffles):
-            lastPass = dict(thisPass)
-            thisPass = {b: 0 for b in bp}
-            switchAny = False
+            last_pass = dict(this_pass)
+            this_pass = {b: 0 for b in bp}
+            switch_any = False
             ordering = list(range(1, len(bp) - 1))
             random.shuffle(ordering)
             for i in ordering:
                 # Check if we need to adjust it
                 if (
-                    lastPass[bp[i - 1]] == 1
-                    or lastPass[bp[i + 1]] == 1
-                    or thisPass[bp[i - 1]] == 1
-                    or thisPass[bp[i + 1]] == 1
+                    last_pass[bp[i - 1]] == 1
+                    or last_pass[bp[i + 1]] == 1
+                    or this_pass[bp[i - 1]] == 1
+                    or this_pass[bp[i + 1]] == 1
                 ):
                     tempData = data[bp[i - 1] : bp[i + 1], :]
                     ind, val = self.add_new_change_point(tempData)
                     if bp[i] != ind + bp[i - 1] and val != 0:
-                        lastPass[ind + bp[i - 1]] = lastPass[bp[i]]
-                        del lastPass[bp[i]]
-                        del thisPass[bp[i]]
-                        thisPass[ind + bp[i - 1]] = 1
+                        last_pass[ind + bp[i - 1]] = last_pass[bp[i]]
+                        del last_pass[bp[i]]
+                        del this_pass[bp[i]]
+                        this_pass[ind + bp[i - 1]] = 1
                         if self.verbose:
                             logger.info(
                                 f"Moving {bp[i]} to {ind + bp[i - 1]}"
                                 f"length = {tempData.shape[0]}, {ind}"
                             )
                         bp[i] = ind + bp[i - 1]
-                        switchAny = True
-            if not switchAny:
+                        switch_any = True
+            if not switch_any:
                 return bp
         return bp
 
-    def initialize_change_points(self, data: np.ndarray) -> List[int]:
+    def initialize_change_points(self, data: npt.ArrayLike) -> List[int]:
         """Initialize change points."""
         return [0, data.shape[0] + 1]
 
-    def find_change_points(self, data: np.ndarray) -> List[int]:
+    def find_change_points(self, data: npt.ArrayLike) -> List[int]:
         """
         Find ``k`` change points on the data at a specific lambda.
 
@@ -225,8 +233,8 @@ class GGS:
             and their corresponding covariance-regularized maximum likelihoods.
         """
         change_points = self.initialize_change_points(data)
-        self.intermediate_change_points = [change_points[:]]
-        self.intermediate_ll = [self.cumulative_log_likelihood(data, change_points)]
+        self._intermediate_change_points = [change_points[:]]
+        self._intermediate_ll = [self.cumulative_log_likelihood(data, change_points)]
 
         # Start GGS Algorithm
         for _ in range(self.k_max):
@@ -258,77 +266,43 @@ class GGS:
 
             # Calculate likelihood
             ll = self.cumulative_log_likelihood(data, change_points)
-            self.intermediate_change_points.append(change_points[:])
-            self.intermediate_ll.append(ll)
+            self._intermediate_change_points.append(change_points[:])
+            self._intermediate_ll.append(ll)
 
         return change_points
 
-    def fit(self, X):
-        change_points = self.find_change_points(X)
-        labels = np.zeros(X.shape[0], dtype=np.int32)
+    def predict(self, X: npt.ArrayLike):
+        self.change_points_ = self.find_change_points(X)
 
-        for i, (start, stop) in enumerate(zip(change_points[:-1], change_points[1:])):
+        labels = np.zeros(X.shape[0], dtype=np.int32)
+        for i, (start, stop) in enumerate(zip(self.change_points_[:-1], self.change_points_[1:])):
             labels[start:stop] = i
         return labels
 
 
-class SklearnBaseEstimator(metaclass=abc.ABCMeta):
-    """Define the domain-specific interface that Client uses."""
-
-    @abc.abstractmethod
-    def fit(self):
-        """Fit."""
-        pass
-
-    @abc.abstractmethod
-    def predict(self):
-        """Predict."""
-        pass
-
-
-# class GGSEstimator(SklearnBaseEstimator):
-#     """Sklearn Adapter."""
-
-#     adaptee_class = GGS
-    
-#     def __init__(
-#         self, k_max: int, lamb: float, max_shuffles: int = 250, verbose: bool = False
-#     ):
-#         self.k_max = k_max
-#         self.lamb = lamb
-#         self.max_shuffles = max_shuffles
-#         self.verbose = verbose
-
-#     def fit(self, X, y=None):
-#         """Fit."""
-#         self.adaptee = self.adaptee_class(**self.kwargs)
-#         self.adaptee.initialize_intermediates()
-#         return self.adaptee
-
-#     def predict(self, X, y=None):
-#         """Predict."""
-#         return self.fit(X, y).find_change_points(X)
-
-
-class GGSEstimator(SklearnBaseEstimator):
+class GGSEstimator:
     """Sklearn Adapter."""
 
     def __init__(self, **kwargs):
-        self.adaptee_class = GGS
         self.kwargs = kwargs
+        self._adaptee_class = GGS
+        self._adaptee = self._adaptee_class(**self.kwargs)
 
     def fit(self, X, y=None):
         """Fit."""
-        self.adaptee = self.adaptee_class(**self.kwargs)
-        self.adaptee.initialize_intermediates()
+        self._adaptee.initialize_intermediates()
         return self
 
-    def predict(self, X, y=None):
+    def predict(self, X, y=None) -> npt.ArrayLike:
         """Predict."""
-        return self.fit(X, y).fit(X)
+        return self._adaptee.predict(X)
 
-    def get_params(self):
-        return self.kwargs
+    def get_params(self) -> Dict:
+        return asdict(self._adaptee, filter=lambda attr, value: attr.init is True)
 
-    def set_params(self, *args, *kwargs):
-        self.adaptee_class(*args, **kwargs)
+    def set_params(self, *args, **kwargs):
+        self._adaptee = self._adaptee_class(*args, **kwargs)
+        return self
+
+    def __repr__(self):
+        return self._adaptee.__repr__()
