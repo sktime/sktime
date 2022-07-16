@@ -30,12 +30,13 @@ class GGS:
     """
     Greedy Gaussian Segmentation.
 
-    Args
-    ----
+    Parameters
+    ----------
         k_max: maximum number of change points to find
         lamb: regularization parameter
         max_shuffles: maximum number of shuffles
         verbose: If ``True`` verbose output is enabled.
+        random_state: either random seed or an instance of np.random.RandomState 
     """
 
     k_max: int = 10
@@ -288,14 +289,17 @@ class GGSEstimator:
         self._adaptee_class = GGS
         self._adaptee = self._adaptee_class(**self.kwargs)
 
-    def fit(self, X, y=None):
+    def fit(self, X: npt.ArrayLike, y: npt.ArrayLike = None):
         """Fit."""
         self._adaptee.initialize_intermediates()
         return self
 
-    def predict(self, X, y=None) -> npt.ArrayLike:
+    def predict(self, X: npt.ArrayLike, y: npt.ArrayLike = None) -> npt.ArrayLike:
         """Predict."""
         return self._adaptee.predict(X)
+
+    def fit_predict(self, X: npt.ArrayLike, y: npt.ArrayLike = None) -> npt.ArrayLike:
+        return self.fit(X, y).predict(X, y)
 
     def get_params(self) -> Dict:
         return asdict(self._adaptee, filter=lambda attr, value: attr.init is True)
