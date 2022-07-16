@@ -189,7 +189,7 @@ def test_nemenyi():
     return np.array_equal(expected, result)
 
 
-@pytest.mark.skip(reason="known sporadic failure of unknown cause, see #2368")
+@pytest.mark.xfail(reason="known sporadic failure of unknown cause, see #2368")
 def test_plots():
     """Test plots."""
     evaluator, metrics_by_strategy = evaluator_setup(score_function=accuracy_score)
