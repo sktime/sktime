@@ -7,7 +7,7 @@ from .ggs import GGS, GGSEstimator
 
 @pytest.fixture
 def univariate_mean_shift():
-    x = np.concatenate(tuple(np.ones(5) * i ** 2 for i in range(4)))
+    x = np.concatenate(tuple(np.ones(5) * i**2 for i in range(4)))
     return x[:, np.newaxis]
 
 

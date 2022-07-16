@@ -36,7 +36,7 @@ class GGS:
         lamb: regularization parameter
         max_shuffles: maximum number of shuffles
         verbose: If ``True`` verbose output is enabled.
-        random_state: either random seed or an instance of np.random.RandomState 
+        random_state: either random seed or an instance of ``np.random.RandomState``
     """
 
     k_max: int = 10
@@ -58,8 +58,8 @@ class GGS:
         """
         Compute the GGS log likelihood.
 
-        Args
-        ----
+        Parameters
+        ----------
             cov: covariance
             nrows: number of observations
             ncols: number of columns
@@ -274,6 +274,7 @@ class GGS:
         return change_points
 
     def predict(self, X: npt.ArrayLike):
+        """Predict."""
         self.change_points_ = self.find_change_points(X)
 
         labels = np.zeros(X.shape[0], dtype=np.int32)
@@ -302,14 +303,18 @@ class GGSEstimator:
         return self._adaptee.predict(X)
 
     def fit_predict(self, X: npt.ArrayLike, y: npt.ArrayLike = None) -> npt.ArrayLike:
+        """Fit and predict."""
         return self.fit(X, y).predict(X, y)
 
     def get_params(self) -> Dict:
+        """Return initialization parameters."""
         return asdict(self._adaptee, filter=lambda attr, value: attr.init is True)
 
     def set_params(self, *args, **kwargs):
+        """Initialize the estimator from parameters."""
         self._adaptee = self._adaptee_class(*args, **kwargs)
         return self
 
-    def __repr__(self):
+    def __repr__(self) -> str:
+        """String representation of the estimator."""
         return self._adaptee.__repr__()
