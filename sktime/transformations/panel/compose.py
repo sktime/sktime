@@ -231,24 +231,18 @@ class ColumnConcatenator(BaseTransformer):
           Transformed pandas DataFrame with same number of rows and single
           column
         """
-        Xst = X.stack()
-        idx = Xst.index
-        idx = idx.to_flat_index()
+        Xst = pd.DataFrame(X.stack())
+        Xt = Xst.swaplevel(-2, -1).sort_index().droplevel(-2)
 
-        def _merge_last(x):
-            x_list = list(x)
-            x = x_list.pop()
-            x_list[-1] = f"{x}__{x_list[-1]}"
-            return x_list
+        # the above has the right structure, but the wrong indes
+        # the time index is in general non-unique now, we replace it by integer index
+        inst_idx = Xt.index.get_level_values(0)
+        t_idx = [range(len(Xt.loc[x])) for x in inst_idx.unique()]
+        t_idx = np.concatenate(t_idx)
 
-        # stack, merge last two index levels, replace by integer/range index
-        new_idx = pd.MultiIndex.from_tuples([_merge_last(x) for x in idx])
-        t_vals = new_idx.get_level_values(-1).unique()
-        new_idx = new_idx.set_levels(range(len(t_vals)), level=-1)
-        Xst.index = new_idx
-        Xst = pd.DataFrame(Xst.sort_index())
-
-        return Xst
+        Xt.index = pd.MultiIndex.from_arrays([inst_idx, t_idx])
+        Xt.index.names = X.index.names
+        return Xt
 
 
 def _from_nested_to_series(x):
