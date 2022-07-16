@@ -70,6 +70,14 @@ class KNeighborsTimeSeriesRegressor(BaseRegressor):
     distance_mtype : str, or list of str optional. default = None.
         mtype that distance expects for X and X2, if a callable
             only set this if distance is not BasePairwiseTransformerPanel descendant
+    leaf_size : int, default=30
+        Leaf size passed to BallTree or KDTree. This can affect the
+        speed of the construction and query, as well as the memory required to store
+        the tree. The optimal value depends on the nature of the problem.
+    n_jobs : int, default=None
+        The number of parallel jobs to run for neighbors search.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors.
 
     Examples
     --------
@@ -96,14 +104,16 @@ class KNeighborsTimeSeriesRegressor(BaseRegressor):
         distance="dtw",
         distance_params=None,
         distance_mtype=None,
-        **kwargs,
+        leaf_size=30,
+        n_jobs=None,
     ):
         self.n_neighbors = n_neighbors
         self.algorithm = algorithm
         self.distance = distance
         self.distance_params = distance_params
         self.distance_mtype = distance_mtype
-
+        self.leaf_size = leaf_size
+        self.n_jobs = n_jobs
         # translate distance strings into distance callables
         if isinstance(distance, str) and distance not in DISTANCES_SUPPORTED:
             raise ValueError(
@@ -117,7 +127,8 @@ class KNeighborsTimeSeriesRegressor(BaseRegressor):
             algorithm=algorithm,
             metric="precomputed",
             metric_params=distance_params,
-            **kwargs,
+            leaf_size=leaf_size,
+            n_jobs=n_jobs,
         )
         self.weights = _check_weights(weights)
 

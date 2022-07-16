@@ -46,7 +46,9 @@ class TimeSeriesKMeans(TimeSeriesLloyds):
         Averaging method to compute the average of a cluster. Any of the following
         strings are valid: ['mean', 'dba']. If a Callable is provided must take the form
         Callable[[np.ndarray], np.ndarray].
-    distance_params: dict, defaults = None
+    average_params: dict, defaults = None = no parameters
+        Dictonary containing kwargs for averaging_method.
+    distance_params: dict, defaults = None = no parameters
         Dictonary containing kwargs for the distance metric being used.
 
     Attributes
@@ -92,11 +94,11 @@ class TimeSeriesKMeans(TimeSeriesLloyds):
                     "medoids_distance_metric"
                 ]
 
-        self.average_params = {}
-        if average_params is not None:
-            self.average_params = average_params
-
-        self._average_params = self.average_params
+        self.average_params = average_params
+        if self.average_params is None:
+            self._average_params = {}
+        else:
+            self._average_params = average_params
 
         super(TimeSeriesKMeans, self).__init__(
             n_clusters,

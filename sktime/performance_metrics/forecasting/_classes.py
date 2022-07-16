@@ -7,7 +7,12 @@ Classes named as ``*Score`` return a value to maximize: the higher the better.
 Classes named as ``*Error`` or ``*Loss`` return a value to minimize:
 the lower the better.
 """
+from warnings import warn
 
+import pandas as pd
+from sklearn.utils import check_array
+
+from sktime.datatypes import check_is_scitype, convert_to
 from sktime.performance_metrics.base import BaseMetric
 from sktime.performance_metrics.forecasting._functions import (
     geometric_mean_absolute_error,
@@ -33,7 +38,7 @@ from sktime.performance_metrics.forecasting._functions import (
     relative_loss,
 )
 
-__author__ = ["mloning", "Tomasz Chodakowski", "RNKuhns"]
+__author__ = ["mloning", "Tomasz Chodakowski", "RNKuhns", "fkiraly"]
 __all__ = [
     "make_forecasting_scorer",
     "MeanAbsoluteScaledError",
@@ -60,290 +65,369 @@ __all__ = [
 ]
 
 
-class _BaseForecastingErrorMetric(BaseMetric):
+class BaseForecastingErrorMetric(BaseMetric):
     """Base class for defining forecasting error metrics in sktime.
 
     Extends sktime's BaseMetric to the forecasting interface. Forecasting error
-    metrics measure the error (loss) between forecasts and true values. Lower
-    values are better.
+    metrics measure the error (loss) between forecasts and true values.
+
+    `multioutput` and `multilevel` parameters can be used to control averaging
+    across variables (`multioutput`) and (non-temporal) hierarchy levels (`multilevel`).
+
+    Parameters
+    ----------
+    multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
+            (n_outputs,), default='uniform_average'
+        Defines whether and how to aggregate metric for across variables.
+        If 'uniform_average' (default), errors are mean-averaged across variables.
+        If array-like, errors are weighted averaged across variables, values as weights.
+        If 'raw_values', does not average errors across variables, columns are retained.
+
+    multilevel : {'raw_values', 'uniform_average'}
+        Defines how to aggregate metric for hierarchical data (with levels).
+        If 'uniform_average' (default), errors are mean-averaged across levels.
+        If 'raw_values', does not average errors across levels, hierarchy is retained.
     """
 
     _tags = {
         "requires-y-train": False,
         "requires-y-pred-benchmark": False,
         "univariate-only": False,
+        "lower_is_better": True,
+        # "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"]
+        "inner_implements_multilevel": False,
     }
 
-    greater_is_better = False
-
-    def __init__(self, func, name=None, multioutput="uniform_average"):
+    def __init__(self, multioutput="uniform_average", multilevel="uniform_average"):
         self.multioutput = multioutput
-        super().__init__(func, name=name)
+        self.multilevel = multilevel
+        self.name = type(self).__name__
 
     def __call__(self, y_true, y_pred, **kwargs):
         """Calculate metric value using underlying metric function.
 
         Parameters
         ----------
-        y_true : pd.Series, pd.DataFrame or np.array of shape (fh,) or \
-                (fh, n_outputs) where fh is the forecasting horizon
-            Ground truth (correct) target values.
-
-        y_pred : pd.Series, pd.DataFrame or np.array of shape (fh,) or  \
-                (fh, n_outputs)  where fh is the forecasting horizon
-            Forecasted values.
-
-        y_train : pd.Series, pd.DataFrame or np.array of shape (n_timepoints,) or \
-                (n_timepoints, n_outputs), default = None
-            Optional keyword argument to pass training data.
-
-        y_pred_benchmark : pd.Series, pd.DataFrame or np.array of shape (fh,) \
-             or (fh, n_outputs) where fh is the forecasting horizon
-            Optional keyword argument to pass benchmark predictions.
+        y_true : time series in sktime compatible data container format
+            Ground truth (correct) target values
+            y can be in one of the following formats:
+            Series scitype: pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
+            Panel scitype: pd.DataFrame with 2-level row MultiIndex,
+                3D np.ndarray, list of Series pd.DataFrame, or nested pd.DataFrame
+            Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
+        y_pred :time series in sktime compatible data container format
+            Forecasted values to evaluate
+            must be of same format as y_true, same indices and columns if indexed
 
         Returns
         -------
-        loss : float
-            Calculated loss metric.
+        loss : float or np.ndarray
+            Calculated metric, averaged or by variable.
+            float if self.multioutput="uniform_average" or array-like
+                value is metric averaged over variables (see class docstring)
+            np.ndarray of shape (y_true.columns,) if self.multioutput="raw_values"
+                i-th entry is metric calculated for i-th variable
         """
-        return self.func(y_true, y_pred, multioutput=self.multioutput, **kwargs)
+        return self.evaluate(y_true, y_pred, **kwargs)
 
-
-class _BaseForecastingScoreMetric(_BaseForecastingErrorMetric):
-    """Base class for defining forecasting score metrics in sktime.
-
-    Extends sktime's BaseMetric to the forecasting interface. Forecasting score
-    metrics measure the agreement between forecasts and true values. Higher
-    values are better.
-    """
-
-    greater_is_better = True
-
-
-class _PercentageErrorMixin:
-    def __call__(self, y_true, y_pred, **kwargs):
-        """Calculate metric value using underlying metric function.
-
-        Uses `symmetric` attribute to determine whether underlying function
-        should return symmetric percentage error metric or a percentage error
-        metric.
+    def evaluate(self, y_true, y_pred, **kwargs):
+        """Evaluate the desired metric on given inputs.
 
         Parameters
         ----------
-        y_true : pd.Series, pd.DataFrame or np.array of shape (fh,) or \
-                (fh, n_outputs) where fh is the forecasting horizon
-            Ground truth (correct) target values.
-
-        y_pred : pd.Series, pd.DataFrame or np.array of shape (fh,) or  \
-                (fh, n_outputs)  where fh is the forecasting horizon
-            Forecasted values.
-
-        y_train : pd.Series, pd.DataFrame or np.array of shape (n_timepoints,) or \
-                (n_timepoints, n_outputs), default = None
-            Optional keyword argument to pass training data.
-
-        y_pred_benchmark : pd.Series, pd.DataFrame or np.array of shape (fh,) \
-             or (fh, n_outputs) where fh is the forecasting horizon
-            Optional keyword argument to pass benchmark predictions.
+        y_true : time series in sktime compatible data container format
+            Ground truth (correct) target values
+            y can be in one of the following formats:
+            Series scitype: pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
+            Panel scitype: pd.DataFrame with 2-level row MultiIndex,
+                3D np.ndarray, list of Series pd.DataFrame, or nested pd.DataFrame
+            Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
+        y_pred :time series in sktime compatible data container format
+            Forecasted values to evaluate
+            must be of same format as y_true, same indices and columns if indexed
 
         Returns
         -------
-        loss : float
-            Calculated loss metric.
+        loss : float or np.ndarray
+            Calculated metric, averaged or by variable.
+            float if self.multioutput="uniform_average" or array-like
+                value is metric averaged over variables (see class docstring)
+            np.ndarray of shape (y_true.columns,) if self.multioutput="raw_values"
+                i-th entry is metric calculated for i-th variable
         """
-        return self.func(
-            y_true,
-            y_pred,
-            multioutput=self.multioutput,
-            symmetric=self.symmetric,
-            **kwargs,
+        multioutput = self.multioutput
+        multilevel = self.multilevel
+        # Input checks and conversions
+        y_true_inner, y_pred_inner, multioutput, multilevel, kwargs = self._check_ys(
+            y_true, y_pred, multioutput, multilevel, **kwargs
+        )
+        # pass to inner function
+        out_df = self._evaluate(y_true=y_true_inner, y_pred=y_pred_inner, **kwargs)
+
+        return out_df
+
+    def _evaluate(self, y_true, y_pred, **kwargs):
+        """Evaluate the desired metric on given inputs.
+
+        private _evaluate containing core logic, called from evaluate
+
+        By default this uses evaluate_by_index, taking arithmetic mean over time points.
+
+        Parameters
+        ----------
+        y_true : time series in sktime compatible data container format
+            Ground truth (correct) target values
+            y can be in one of the following formats:
+            Series scitype: pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
+            Panel scitype: pd.DataFrame with 2-level row MultiIndex,
+                3D np.ndarray, list of Series pd.DataFrame, or nested pd.DataFrame
+            Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
+        y_pred :time series in sktime compatible data container format
+            Forecasted values to evaluate
+            must be of same format as y_true, same indices and columns if indexed
+
+        Returns
+        -------
+        loss : float or np.ndarray
+            Calculated metric, averaged or by variable.
+            float if self.multioutput="uniform_average" or array-like
+                value is metric averaged over variables (see class docstring)
+            np.ndarray of shape (y_true.columns,) if self.multioutput="raw_values"
+                i-th entry is metric calculated for i-th variable
+        """
+        # multioutput = self.multioutput
+        # multilevel = self.multilevel
+        try:
+            index_df = self._evaluate_by_index(y_true, y_pred, **kwargs)
+            return index_df.mean(axis=0)
+        except RecursionError:
+            RecursionError("Must implement one of _evaluate or _evaluate_by_index")
+
+    def evaluate_by_index(self, y_true, y_pred, **kwargs):
+        """Return the metric evaluated at each time point.
+
+        Parameters
+        ----------
+        y_true : time series in sktime compatible data container format
+            Ground truth (correct) target values
+            y can be in one of the following formats:
+            Series scitype: pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
+            Panel scitype: pd.DataFrame with 2-level row MultiIndex,
+                3D np.ndarray, list of Series pd.DataFrame, or nested pd.DataFrame
+            Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
+        y_pred :time series in sktime compatible data container format
+            Forecasted values to evaluate
+            must be of same format as y_true, same indices and columns if indexed
+
+        Returns
+        -------
+        loss : pd.Series or pd.DataFrame
+            Calculated metric, by time point (default=jackknife pseudo-values).
+            pd.Series if self.multioutput="uniform_average" or array-like
+                index is equal to index of y_true
+                entry at index i is metric at time i, averaged over variables
+            pd.DataFrame if self.multioutput="raw_values"
+                index and columns equal to those of y_true
+                i,j-th entry is metric at time i, at variable j
+        """
+        multioutput = self.multioutput
+        multilevel = self.multilevel
+        # Input checks and conversions
+        y_true_inner, y_pred_inner, multioutput, multilevel, kwargs = self._check_ys(
+            y_true, y_pred, multioutput, multilevel, **kwargs
+        )
+        # pass to inner function
+        out_df = self._evaluate_by_index(y_true_inner, y_pred_inner, **kwargs)
+
+        return out_df
+
+    def _evaluate_by_index(self, y_true, y_pred, **kwargs):
+        """Return the metric evaluated at each time point.
+
+        private _evaluate_by_index containing core logic, called from evaluate_by_index
+
+        By default this uses _evaluate to find jackknifed pseudosamples.
+        This yields estimates for the metric at each of the time points.
+        Caution: this is only sensible for differentiable statistics,
+        i.e., not for medians, quantiles or median/quantile based statistics.
+
+        Parameters
+        ----------
+        y_true : time series in sktime compatible data container format
+            Ground truth (correct) target values
+            y can be in one of the following formats:
+            Series scitype: pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
+            Panel scitype: pd.DataFrame with 2-level row MultiIndex,
+                3D np.ndarray, list of Series pd.DataFrame, or nested pd.DataFrame
+            Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
+        y_pred :time series in sktime compatible data container format
+            Forecasted values to evaluate
+            must be of same format as y_true, same indices and columns if indexed
+
+        Returns
+        -------
+        loss : pd.Series or pd.DataFrame
+            Calculated metric, by time point (default=jackknife pseudo-values).
+            pd.Series if self.multioutput="uniform_average" or array-like
+                index is equal to index of y_true
+                entry at index i is metric at time i, averaged over variables
+            pd.DataFrame if self.multioutput="raw_values"
+                index and columns equal to those of y_true
+                i,j-th entry is metric at time i, at variable j
+        """
+        multioutput = self.multioutput
+        n = y_true.shape[0]
+        if multioutput == "raw_values":
+            out_series = pd.DataFrame(index=y_true.index, columns=y_true.columns)
+        else:
+            out_series = pd.Series(index=y_true.index)
+        try:
+            x_bar = self.evaluate(y_true, y_pred, **kwargs)
+            for i in range(n):
+                idx = y_true.index[i]
+                pseudovalue = n * x_bar - (n - 1) * self.evaluate(
+                    y_true.drop(idx),
+                    y_pred.drop(idx),
+                )
+                out_series.loc[idx] = pseudovalue
+            return out_series
+        except RecursionError:
+            RecursionError("Must implement one of _evaluate or _evaluate_by_index")
+
+    def _check_consistent_input(self, y_true, y_pred, multioutput, multilevel):
+
+        # check row and column indices if y_true vs y_pred
+        same_rows = y_true.index.equals(y_pred.index)
+        same_row_num = len(y_true.index) == len(y_pred.index)
+        same_cols = y_true.columns.equals(y_pred.columns)
+        same_col_num = len(y_true.columns) == len(y_pred.columns)
+
+        if not same_row_num:
+            raise ValueError("y_pred and y_true do not have the same number of rows.")
+        if not same_col_num:
+            raise ValueError(
+                "y_pred and y_true do not have the same number of columns."
+            )
+
+        if not same_rows:
+            warn(
+                "y_pred and y_true do not have the same row index. "
+                "This may indicate incorrect objects passed to the metric. "
+                "Indices of y_true will be used for y_pred."
+            )
+            y_pred = y_pred.copy()
+            y_pred.index = y_true.index
+        if not same_cols:
+            warn(
+                "y_pred and y_true do not have the same column index. "
+                "This may indicate incorrect objects passed to the metric. "
+                "Indices of y_true will be used for y_pred."
+            )
+            y_pred = y_pred.copy()
+            y_pred.columns = y_true.columns
+
+        # check multioutput arg
+        # todo: add this back when variance_weighted is supported
+        # ("raw_values", "uniform_average", "variance_weighted")
+        allowed_multioutput_str = ("raw_values", "uniform_average")
+
+        if isinstance(multioutput, str):
+            if multioutput not in allowed_multioutput_str:
+                raise ValueError(
+                    f"Allowed 'multioutput' values are {allowed_multioutput_str}, "
+                    f"but found multioutput={multioutput}"
+                )
+        else:
+            multioutput = check_array(multioutput, ensure_2d=False)
+            if len(y_pred.columns) != len(multioutput):
+                raise ValueError(
+                    "There must be equally many custom weights (%d) as outputs (%d)."
+                    % (len(multioutput), len(y_pred.columns))
+                )
+
+        # check multilevel arg
+        allowed_multilevel_str = ("raw_values", "uniform_average")
+
+        if not isinstance(multilevel, str):
+            raise ValueError(f"multilevel must be a str, but found {type(multilevel)}")
+        if multilevel not in allowed_multilevel_str:
+            raise ValueError(
+                f"Allowed 'multilevel' values are {allowed_multilevel_str}, "
+                f"but found multilevel={multilevel}"
+            )
+
+        return y_true, y_pred, multioutput, multilevel
+
+    def _check_ys(self, y_true, y_pred, multioutput, multilevel, **kwargs):
+
+        SCITYPES = ["Series", "Panel", "Hierarchical"]
+        INNER_MTYPES = ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"]
+
+        def _coerce_to_df(y, var_name="y"):
+            valid, msg, _ = check_is_scitype(
+                y, scitype=SCITYPES, return_metadata=True, var_name=var_name
+            )
+            if not valid:
+                raise TypeError(msg)
+            y_inner = convert_to(y, to_type=INNER_MTYPES)
+            return y_inner
+
+        y_true = _coerce_to_df(y_true, var_name="y_true")
+        y_pred = _coerce_to_df(y_pred, var_name="y_pred")
+        if "y_train" in kwargs.keys():
+            kwargs["y_train"] = _coerce_to_df(kwargs["y_train"], var_name="y_train")
+
+        y_true, y_pred, multioutput, multilevel = self._check_consistent_input(
+            y_true, y_pred, multioutput, multilevel
         )
 
-
-class _SquaredErrorMixin:
-    def __call__(self, y_true, y_pred, **kwargs):
-        """Calculate metric value using underlying metric function.
-
-        Uses `square_root` attribute to determine whether the
-        underlying function should return the square_root of the metric or
-        the metric.
-
-        Parameters
-        ----------
-        y_true : pd.Series, pd.DataFrame or np.array of shape (fh,) or \
-                (fh, n_outputs) where fh is the forecasting horizon
-            Ground truth (correct) target values.
-
-        y_pred : pd.Series, pd.DataFrame or np.array of shape (fh,) or  \
-                (fh, n_outputs)  where fh is the forecasting horizon
-            Forecasted values.
-
-        y_train : pd.Series, pd.DataFrame or np.array of shape (n_timepoints,) or \
-                (n_timepoints, n_outputs), default = None
-            Optional keyword argument to pass training data.
-
-        y_pred_benchmark : pd.Series, pd.DataFrame or np.array of shape (fh,) \
-             or (fh, n_outputs) where fh is the forecasting horizon
-            Optional keyword argument to pass benchmark predictions.
-
-        Returns
-        -------
-        loss : float
-            Calculated loss metric.
-        """
-        return self.func(
-            y_true,
-            y_pred,
-            multioutput=self.multioutput,
-            square_root=self.square_root,
-            **kwargs,
-        )
+        return y_true, y_pred, multioutput, multilevel, kwargs
 
 
-class _SquaredPercentageErrorMixin:
-    def __call__(self, y_true, y_pred, **kwargs):
-        """Calculate metric value using underlying metric function.
+class BaseForecastingErrorMetricFunc(BaseForecastingErrorMetric):
+    """Adapter for numpy metrics."""
 
-        Uses `symmetric` attribute to determine whether underlying function
-        should return symmetric percentage error metric or a percentage error
-        metric. Also uses `square_root` attribute to determine whether the
-        underlying function should return the square_root of the metric or
-        the metric.
+    # all descendants should have a func class attribute
+    #   of signature func(y_true: np.ndarray, y_pred: np.darray, multioutput: bool)
+    #   additional optional args: y_train: np.darray, y_pred_benchmark: np.darray
+    #                       further args that are parameters
+    #       all np.ndarray should be 2D
+    # func should return 1D np.ndarray if multioutput="raw_values", otherwise float
 
-        Parameters
-        ----------
-        y_true : pd.Series, pd.DataFrame or np.array of shape (fh,) or \
-                (fh, n_outputs) where fh is the forecasting horizon
-            Ground truth (correct) target values.
-
-        y_pred : pd.Series, pd.DataFrame or np.array of shape (fh,) or  \
-                (fh, n_outputs)  where fh is the forecasting horizon
-            Forecasted values.
-
-        y_train : pd.Series, pd.DataFrame or np.array of shape (n_timepoints,) or \
-                (n_timepoints, n_outputs), default = None
-            Optional keyword argument to pass training data.
-
-        y_pred_benchmark : pd.Series, pd.DataFrame or np.array of shape (fh,) \
-             or (fh, n_outputs) where fh is the forecasting horizon
-            Optional keyword argument to pass benchmark predictions.
-
-        Returns
-        -------
-        loss : float
-            Calculated loss metric.
-        """
-        return self.func(
-            y_true,
-            y_pred,
-            multioutput=self.multioutput,
-            symmetric=self.symmetric,
-            square_root=self.square_root,
-            **kwargs,
-        )
+    def _evaluate(self, y_true, y_pred, **kwargs):
+        """Evaluate the desired metric on given inputs."""
+        # this dict should contain all parameters
+        params = self.get_params()
+        # adding kwargs to the metric, should not overwrite params (but does if clashes)
+        params.update(kwargs)
+        # we need to call type since we store func as a class attribute
+        res = type(self).func(y_true=y_true, y_pred=y_pred, **params)
+        return res
 
 
-class _AsymmetricErrorMixin:
-    def __call__(self, y_true, y_pred, **kwargs):
-        """Calculate metric value using underlying metric function.
+class _DynamicForecastingErrorMetric(BaseForecastingErrorMetricFunc):
+    """Class for defining forecasting error metrics from a function dynamically."""
 
-        Parameters
-        ----------
-        y_true : pd.Series, pd.DataFrame or np.array of shape (fh,) or \
-                (fh, n_outputs) where fh is the forecasting horizon
-            Ground truth (correct) target values.
+    def __init__(
+        self,
+        func,
+        name=None,
+        multioutput="uniform_average",
+        multilevel="uniform_average",
+        lower_is_better=True,
+    ):
+        self.multioutput = multioutput
+        self.multilevel = multilevel
+        self.func = func
+        self.name = name
+        super().__init__()
 
-        y_pred : pd.Series, pd.DataFrame or np.array of shape (fh,) or  \
-                (fh, n_outputs)  where fh is the forecasting horizon
-            Forecasted values.
-
-        y_train : pd.Series, pd.DataFrame or np.array of shape (n_timepoints,) or \
-                (n_timepoints, n_outputs), default = None
-            Optional keyword argument to pass training data.
-
-        Returns
-        -------
-        loss : float
-            Calculated loss metric.
-        """
-        return self.func(
-            y_true,
-            y_pred,
-            multioutput=self.multioutput,
-            asymmetric_threshold=self.asymmetric_threshold,
-            left_error_function=self.left_error_function,
-            right_error_function=self.right_error_function,
-            left_error_penalty=self.left_error_penalty,
-            right_error_penalty=self.right_error_penalty,
-            **kwargs,
-        )
+        if not lower_is_better:
+            self.set_tags(**{"lower_is_better": False})
 
 
-class _LinexErrorMixin:
-    def __call__(self, y_true, y_pred, **kwargs):
-        """Calculate metric value using underlying metric function.
-
-        Parameters
-        ----------
-        y_true : pd.Series, pd.DataFrame or np.array of shape (fh,) or \
-                (fh, n_outputs) where fh is the forecasting horizon
-            Ground truth (correct) target values.
-        y_pred : pd.Series, pd.DataFrame or np.array of shape (fh,) or  \
-                (fh, n_outputs)  where fh is the forecasting horizon
-            Forecasted values.
-        y_train : pd.Series, pd.DataFrame or np.array of shape (n_timepoints,) or \
-                (n_timepoints, n_outputs), default = None
-            Optional keyword argument to pass training data.
-
-        Returns
-        -------
-        loss : float
-            Calculated loss metric.
-        """
-        return self.func(
-            y_true, y_pred, a=self.a, b=self.b, multioutput=self.multioutput, **kwargs
-        )
-
-
-class _RelativeLossMixin:
-    def __call__(self, y_true, y_pred, **kwargs):
-        """Calculate metric value using underlying metric function.
-
-        Parameters
-        ----------
-        y_true : pd.Series, pd.DataFrame or np.array of shape (fh,) or \
-                (fh, n_outputs) where fh is the forecasting horizon
-            Ground truth (correct) target values.
-
-        y_pred : pd.Series, pd.DataFrame or np.array of shape (fh,) or  \
-                (fh, n_outputs)  where fh is the forecasting horizon
-            Forecasted values.
-
-        y_pred_benchmark : pd.Series, pd.DataFrame or np.array of shape (fh,) \
-             or (fh, n_outputs) where fh is the forecasting horizon
-            Optional keyword argument to pass benchmark predictions.
-
-        Returns
-        -------
-        loss : float
-            Calculated loss metric.
-        """
-        return self.func(
-            y_true,
-            y_pred,
-            multioutput=self.multioutput,
-            relative_loss_function=self.relative_loss_function,
-            **kwargs,
-        )
-
-
-class _ScaledForecastingErrorMetric(_BaseForecastingErrorMetric):
-    """Base class for defining forecasting success metrics in sktime.
-
-    Extends sktime's BaseMetric to the forecasting interface. Forecasting success
-    metrics measure the agreement between forecasts and true values. Higher
-    values are better.
-    """
+class _ScaledMetricTags:
+    """Tags for metrics that are scaled on training data y_train."""
 
     _tags = {
         "requires-y-train": True,
@@ -351,113 +435,15 @@ class _ScaledForecastingErrorMetric(_BaseForecastingErrorMetric):
         "univariate-only": False,
     }
 
-    def __init__(self, func, name=None, multioutput="uniform_average", sp=1):
-        self.sp = sp
-        super().__init__(func=func, name=name, multioutput=multioutput)
-
-
-class _ScaledSquaredForecastingErrorMetric(
-    _SquaredErrorMixin, _ScaledForecastingErrorMetric
-):
-    def __init__(
-        self, func, name=None, multioutput="uniform_average", sp=1, square_root=False
-    ):
-        self.square_root = square_root
-        super().__init__(func=func, name=name, multioutput=multioutput, sp=sp)
-
-
-class _PercentageForecastingErrorMetric(
-    _PercentageErrorMixin, _BaseForecastingErrorMetric
-):
-    def __init__(self, func, name=None, multioutput="uniform_average", symmetric=True):
-        self.symmetric = symmetric
-        super().__init__(func=func, name=name, multioutput=multioutput)
-
-
-class _SquaredForecastingErrorMetric(_SquaredErrorMixin, _BaseForecastingErrorMetric):
-    def __init__(
-        self, func, name=None, multioutput="uniform_average", square_root=False
-    ):
-        self.square_root = square_root
-        super().__init__(func=func, name=name, multioutput=multioutput)
-
-
-class _SquaredPercentageForecastingErrorMetric(
-    _SquaredPercentageErrorMixin, _BaseForecastingErrorMetric
-):
-    def __init__(
-        self,
-        func,
-        name=None,
-        multioutput="uniform_average",
-        square_root=False,
-        symmetric=True,
-    ):
-        self.square_root = square_root
-        self.symmetric = symmetric
-        super().__init__(func=func, name=name, multioutput=multioutput)
-
-
-class _AsymmetricForecastingErrorMetric(
-    _AsymmetricErrorMixin, _BaseForecastingErrorMetric
-):
-    def __init__(
-        self,
-        func,
-        name=None,
-        multioutput="uniform_average",
-        asymmetric_threshold=0,
-        left_error_function="squared",
-        right_error_function="absolute",
-        left_error_penalty=1.0,
-        right_error_penalty=1.0,
-    ):
-        self.asymmetric_threshold = asymmetric_threshold
-        self.left_error_function = left_error_function
-        self.right_error_function = right_error_function
-        self.left_error_penalty = left_error_penalty
-        self.right_error_penalty = right_error_penalty
-        super().__init__(func=func, name=name, multioutput=multioutput)
-
-
-class _LinexForecastingErrorMetric(_LinexErrorMixin, _BaseForecastingErrorMetric):
-    def __init__(
-        self,
-        func,
-        name=None,
-        multioutput="uniform_average",
-        a=1.0,
-        b=1.0,
-    ):
-        self.a = a
-        self.b = b
-        super().__init__(func=func, name=name, multioutput=multioutput)
-
-
-class _RelativeLossForecastingErrorMetric(
-    _RelativeLossMixin, _BaseForecastingErrorMetric
-):
-    _tags = {
-        "requires-y-train": False,
-        "requires-y-pred-benchmark": True,
-        "univariate-only": False,
-    }
-
-    def __init__(
-        self,
-        func,
-        name=None,
-        multioutput="uniform_average",
-        relative_loss_function=mean_absolute_error,
-    ):
-        self.relative_loss_function = relative_loss_function
-        super().__init__(func=func, name=name, multioutput=multioutput)
-
 
 def make_forecasting_scorer(
-    func, name=None, greater_is_better=False, multioutput="uniform_average"
+    func,
+    name=None,
+    greater_is_better=False,
+    multioutput="uniform_average",
+    multilevel="uniform_average",
 ):
-    """Create a metric class from metric functions.
+    """Create a metric class from a metric functions.
 
     Parameters
     ----------
@@ -475,19 +461,27 @@ def make_forecasting_scorer(
         If array-like, values used as weights to average the errors.
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
+    multilevel : {'raw_values', 'uniform_average'}
+        Defines how to aggregate metric for hierarchical data (with levels).
+        If 'uniform_average' (default), errors are mean-averaged across levels.
+        If 'raw_values', does not average errors across levels, hierarchy is retained.
 
     Returns
     -------
     scorer:
         Metric class that can be used as forecasting scorer.
     """
-    if greater_is_better:
-        return _BaseForecastingScoreMetric(func, name=name, multioutput=multioutput)
-    else:
-        return _BaseForecastingErrorMetric(func, name=name, multioutput=multioutput)
+    lower_is_better = not greater_is_better
+    return _DynamicForecastingErrorMetric(
+        func,
+        name=name,
+        multioutput=multioutput,
+        multilevel=multilevel,
+        lower_is_better=lower_is_better,
+    )
 
 
-class MeanAbsoluteScaledError(_ScaledForecastingErrorMetric):
+class MeanAbsoluteScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc):
     """Mean absolute scaled error (MASE).
 
     MASE output is non-negative floating point. The best value is 0.0.
@@ -514,19 +508,6 @@ class MeanAbsoluteScaledError(_ScaledForecastingErrorMetric):
         If array-like, values used as weights to average the errors.
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
-
-    Attributes
-    ----------
-    name : str
-        The name of the loss metric
-    greater_is_better : bool
-        Stores whether the metric is optimized by minimization or maximization.
-        If False, minimizing the metric is optimal.
-        If True, maximizing the metric is optimal.
-    sp : int
-        Stores seasonal periodicity of data.
-    multioutput : str
-        Stores how the metric should aggregate multioutput data.
 
     See Also
     --------
@@ -569,13 +550,19 @@ class MeanAbsoluteScaledError(_ScaledForecastingErrorMetric):
     0.21935483870967742
     """
 
-    def __init__(self, multioutput="uniform_average", sp=1):
-        name = "MeanAbsoluteScaledError"
-        func = mean_absolute_scaled_error
-        super().__init__(func=func, name=name, multioutput=multioutput, sp=sp)
+    func = mean_absolute_scaled_error
+
+    def __init__(
+        self,
+        multioutput="uniform_average",
+        multilevel="uniform_average",
+        sp=1,
+    ):
+        self.sp = sp
+        super().__init__(multioutput=multioutput, multilevel=multilevel)
 
 
-class MedianAbsoluteScaledError(_ScaledForecastingErrorMetric):
+class MedianAbsoluteScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc):
     """Median absolute scaled error (MdASE).
 
     MdASE output is non-negative floating point. The best value is 0.0.
@@ -606,19 +593,6 @@ class MedianAbsoluteScaledError(_ScaledForecastingErrorMetric):
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
 
-    Attributes
-    ----------
-    name : str
-        The name of the loss metric
-    greater_is_better : bool
-        Stores whether the metric is optimized by minimization or maximization.
-        If False, minimizing the metric is optimal.
-        If True, maximizing the metric is optimal.
-    sp : int
-        Stores seasonal periodicity of data.
-    multioutput : str
-        Stores how the metric should aggregate multioutput data.
-
     See Also
     --------
     MeanAbsoluteScaledError
@@ -642,8 +616,8 @@ class MedianAbsoluteScaledError(_ScaledForecastingErrorMetric):
     >>> import numpy as np
     >>> from sktime.performance_metrics.forecasting import MedianAbsoluteScaledError
     >>> y_train = np.array([5, 0.5, 4, 6, 3, 5, 2])
-    >>> y_true = [3, -0.5, 2, 7]
-    >>> y_pred = [2.5, 0.0, 2, 8]
+    >>> y_true = np.array([3, -0.5, 2, 7])
+    >>> y_pred = np.array([2.5, 0.0, 2, 8])
     >>> mdase = MedianAbsoluteScaledError()
     >>> mdase(y_true, y_pred, y_train=y_train)
     0.16666666666666666
@@ -660,13 +634,20 @@ class MedianAbsoluteScaledError(_ScaledForecastingErrorMetric):
     0.21935483870967742
     """
 
-    def __init__(self, multioutput="uniform_average", sp=1):
-        name = "MedianAbsoluteScaledError"
-        func = median_absolute_scaled_error
-        super().__init__(func=func, name=name, multioutput=multioutput, sp=sp)
+    func = median_absolute_scaled_error
+
+    def __init__(
+        self,
+        multioutput="uniform_average",
+        multilevel="uniform_average",
+        sp=1,
+    ):
+
+        self.sp = sp
+        super().__init__(multioutput=multioutput, multilevel=multilevel)
 
 
-class MeanSquaredScaledError(_ScaledSquaredForecastingErrorMetric):
+class MeanSquaredScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc):
     """Mean squared scaled error (MSSE) or root mean squared scaled error (RMSSE).
 
     If `square_root` is False then calculates MSSE, otherwise calculates RMSSE if
@@ -697,21 +678,6 @@ class MeanSquaredScaledError(_ScaledSquaredForecastingErrorMetric):
         If array-like, values used as weights to average the errors.
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
-
-    Attributes
-    ----------
-    name : str
-        The name of the loss metric
-    greater_is_better : bool
-        Stores whether the metric is optimized by minimization or maximization.
-        If False, minimizing the metric is optimal.
-        If True, maximizing the metric is optimal.
-    sp : int
-        Stores seasonal periodicity of data.
-    square_root : bool
-        Stores whether to take the square root of the metric
-    multioutput : str
-        Stores how the metric should aggregate multioutput data.
 
     See Also
     --------
@@ -750,19 +716,21 @@ class MeanSquaredScaledError(_ScaledSquaredForecastingErrorMetric):
     0.17451891814894502
     """
 
-    def __init__(self, multioutput="uniform_average", sp=1, square_root=False):
-        name = "MeanSquaredScaledError"
-        func = mean_squared_scaled_error
-        super().__init__(
-            func=func,
-            name=name,
-            multioutput=multioutput,
-            sp=1,
-            square_root=square_root,
-        )
+    func = mean_squared_scaled_error
+
+    def __init__(
+        self,
+        multioutput="uniform_average",
+        multilevel="uniform_average",
+        sp=1,
+        square_root=False,
+    ):
+        self.sp = sp
+        self.square_root = square_root
+        super().__init__(multioutput=multioutput, multilevel=multilevel)
 
 
-class MedianSquaredScaledError(_ScaledSquaredForecastingErrorMetric):
+class MedianSquaredScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc):
     """Median squared scaled error (MdSSE) or root median squared scaled error (RMdSSE).
 
     If `square_root` is False then calculates MdSSE, otherwise calculates RMdSSE if
@@ -783,7 +751,7 @@ class MedianSquaredScaledError(_ScaledSquaredForecastingErrorMetric):
 
     Parameters
     ----------
-    sp : int
+    sp : int, default = 1
         Seasonal periodicity of data.
     square_root : bool, default = False
         Whether to take the square root of the metric
@@ -793,21 +761,6 @@ class MedianSquaredScaledError(_ScaledSquaredForecastingErrorMetric):
         If array-like, values used as weights to average the errors.
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
-
-    Attributes
-    ----------
-    name : str
-        The name of the loss metric
-    greater_is_better : bool
-        Stores whether the metric is optimized by minimization or maximization.
-        If False, minimizing the metric is optimal.
-        If True, maximizing the metric is optimal.
-    sp : int
-        Seasonal periodicity of data.
-    square_root : bool
-        Stores whether to take the square root of the metric
-    multioutput : str
-        Stores how the metric should aggregate multioutput data.
 
     See Also
     --------
@@ -846,19 +799,21 @@ class MedianSquaredScaledError(_ScaledSquaredForecastingErrorMetric):
     0.16914781383660782
     """
 
-    def __init__(self, multioutput="uniform_average", sp=1, square_root=False):
-        name = "MedianSquaredScaledError"
-        func = median_squared_scaled_error
-        super().__init__(
-            func=func,
-            name=name,
-            multioutput=multioutput,
-            sp=sp,
-            square_root=square_root,
-        )
+    func = median_squared_scaled_error
+
+    def __init__(
+        self,
+        multioutput="uniform_average",
+        multilevel="uniform_average",
+        sp=1,
+        square_root=False,
+    ):
+        self.sp = sp
+        self.square_root = square_root
+        super().__init__(multioutput=multioutput, multilevel=multilevel)
 
 
-class MeanAbsoluteError(_BaseForecastingErrorMetric):
+class MeanAbsoluteError(BaseForecastingErrorMetricFunc):
     """Mean absolute error (MAE).
 
     MAE output is non-negative floating point. The best value is 0.0.
@@ -875,17 +830,6 @@ class MeanAbsoluteError(_BaseForecastingErrorMetric):
         If array-like, values used as weights to average the errors.
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
-
-    Attributes
-    ----------
-    name : str
-        The name of the loss metric
-    greater_is_better : bool
-        Stores whether the metric is optimized by minimization or maximization.
-        If False, minimizing the metric is optimal.
-        If True, maximizing the metric is optimal.
-    multioutput : str
-        Stores how the metric should aggregate multioutput data.
 
     See Also
     --------
@@ -919,13 +863,10 @@ class MeanAbsoluteError(_BaseForecastingErrorMetric):
     0.85
     """
 
-    def __init__(self, multioutput="uniform_average"):
-        name = "MeanAbsoluteError"
-        func = mean_absolute_error
-        super().__init__(func=func, name=name, multioutput=multioutput)
+    func = mean_absolute_error
 
 
-class MedianAbsoluteError(_BaseForecastingErrorMetric):
+class MedianAbsoluteError(BaseForecastingErrorMetricFunc):
     """Median absolute error (MdAE).
 
     MdAE output is non-negative floating point. The best value is 0.0.
@@ -946,17 +887,6 @@ class MedianAbsoluteError(_BaseForecastingErrorMetric):
         If array-like, values used as weights to average the errors.
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
-
-    Attributes
-    ----------
-    name : str
-        The name of the loss metric
-    greater_is_better : bool
-        Stores whether the metric is optimized by minimization or maximization.
-        If False, minimizing the metric is optimal.
-        If True, maximizing the metric is optimal.
-    multioutput : str
-        Stores how the metric should aggregate multioutput data.
 
     See Also
     --------
@@ -990,13 +920,10 @@ class MedianAbsoluteError(_BaseForecastingErrorMetric):
     0.85
     """
 
-    def __init__(self, multioutput="uniform_average"):
-        name = "MedianAbsoluteError"
-        func = median_absolute_error
-        super().__init__(func=func, name=name, multioutput=multioutput)
+    func = median_absolute_error
 
 
-class MeanSquaredError(_SquaredForecastingErrorMetric):
+class MeanSquaredError(BaseForecastingErrorMetricFunc):
     """Mean squared error (MSE) or root mean squared error (RMSE).
 
     If `square_root` is False then calculates MSE and if `square_root` is True
@@ -1018,19 +945,6 @@ class MeanSquaredError(_SquaredForecastingErrorMetric):
         If array-like, values used as weights to average the errors.
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
-
-    Attributes
-    ----------
-    name : str
-        The name of the loss metric
-    greater_is_better : bool
-        Stores whether the metric is optimized by minimization or maximization.
-        If False, minimizing the metric is optimal.
-        If True, maximizing the metric is optimal.
-    square_root : bool
-        Stores whether to take the square root of the
-    multioutput : str
-        Stores how the metric should aggregate multioutput data.
 
     See Also
     --------
@@ -1073,18 +987,19 @@ class MeanSquaredError(_SquaredForecastingErrorMetric):
     0.8936491673103708
     """
 
-    def __init__(self, multioutput="uniform_average", square_root=False):
-        name = "MeanSquaredError"
-        func = mean_squared_error
-        super().__init__(
-            func=func,
-            name=name,
-            multioutput=multioutput,
-            square_root=square_root,
-        )
+    func = mean_squared_error
+
+    def __init__(
+        self,
+        multioutput="uniform_average",
+        multilevel="uniform_average",
+        square_root=False,
+    ):
+        self.square_root = square_root
+        super().__init__(multioutput=multioutput, multilevel=multilevel)
 
 
-class MedianSquaredError(_SquaredForecastingErrorMetric):
+class MedianSquaredError(BaseForecastingErrorMetricFunc):
     """Median squared error (MdSE) or root median squared error (RMdSE).
 
     If `square_root` is False then calculates MdSE and if `square_root` is True
@@ -1111,19 +1026,6 @@ class MedianSquaredError(_SquaredForecastingErrorMetric):
         If array-like, values used as weights to average the errors.
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
-
-    Attributes
-    ----------
-    name : str
-        The name of the loss metric
-    greater_is_better : bool
-        Stores whether the metric is optimized by minimization or maximization.
-        If False, minimizing the metric is optimal.
-        If True, maximizing the metric is optimal.
-    square_root : bool
-        Stores whether to take the square root of the metric
-    multioutput : str
-        Stores how the metric should aggregate multioutput data.
 
     See Also
     --------
@@ -1168,18 +1070,19 @@ class MedianSquaredError(_SquaredForecastingErrorMetric):
     0.85
     """
 
-    def __init__(self, multioutput="uniform_average", square_root=False):
-        name = "MedianSquaredError"
-        func = median_squared_error
-        super().__init__(
-            func=func,
-            name=name,
-            multioutput=multioutput,
-            square_root=square_root,
-        )
+    func = median_squared_error
+
+    def __init__(
+        self,
+        multioutput="uniform_average",
+        multilevel="uniform_average",
+        square_root=False,
+    ):
+        self.square_root = square_root
+        super().__init__(multioutput=multioutput, multilevel=multilevel)
 
 
-class GeometricMeanAbsoluteError(_BaseForecastingErrorMetric):
+class GeometricMeanAbsoluteError(BaseForecastingErrorMetricFunc):
     """Geometric mean absolute error (GMAE).
 
     GMAE output is non-negative floating point. The best value is approximately
@@ -1198,17 +1101,6 @@ class GeometricMeanAbsoluteError(_BaseForecastingErrorMetric):
         If array-like, values used as weights to average the errors.
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
-
-    Attributes
-    ----------
-    name : str
-        The name of the loss metric
-    greater_is_better : bool
-        Stores whether the metric is optimized by minimization or maximization.
-        If False, minimizing the metric is optimal.
-        If True, maximizing the metric is optimal.
-    multioutput : str
-        Stores how the metric should aggregate multioutput data.
 
     See Also
     --------
@@ -1254,15 +1146,10 @@ class GeometricMeanAbsoluteError(_BaseForecastingErrorMetric):
     0.7000014418652152
     """
 
-    def __init__(self, multioutput="uniform_average"):
-        name = "GeometricMeanAbsoluteError"
-        func = geometric_mean_absolute_error
-        super(GeometricMeanAbsoluteError, self).__init__(
-            func=func, name=name, multioutput=multioutput
-        )
+    func = geometric_mean_absolute_error
 
 
-class GeometricMeanSquaredError(_SquaredForecastingErrorMetric):
+class GeometricMeanSquaredError(BaseForecastingErrorMetricFunc):
     """Geometric mean squared error (GMSE) or Root geometric mean squared error (RGMSE).
 
     If `square_root` is False then calculates GMSE and if `square_root` is True
@@ -1286,19 +1173,6 @@ class GeometricMeanSquaredError(_SquaredForecastingErrorMetric):
         If array-like, values used as weights to average the errors.
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
-
-    Attributes
-    ----------
-    name : str
-        The name of the loss metric
-    greater_is_better : bool
-        Stores whether the metric is optimized by minimization or maximization.
-        If False, minimizing the metric is optimal.
-        If True, maximizing the metric is optimal.
-    square_root : bool
-        Stores whether to take the square root of the metric
-    multioutput : str
-        Stores how the metric should aggregate multioutput data.
 
     See Also
     --------
@@ -1357,15 +1231,19 @@ class GeometricMeanSquaredError(_SquaredForecastingErrorMetric):
     0.7000014418652152
     """
 
-    def __init__(self, multioutput="uniform_average", square_root=False):
-        name = "GeometricMeanSquaredError"
-        func = geometric_mean_squared_error
-        super(GeometricMeanSquaredError, self).__init__(
-            func=func, name=name, multioutput=multioutput, square_root=square_root
-        )
+    func = geometric_mean_squared_error
+
+    def __init__(
+        self,
+        multioutput="uniform_average",
+        multilevel="uniform_average",
+        square_root=False,
+    ):
+        self.square_root = square_root
+        super().__init__(multioutput=multioutput, multilevel=multilevel)
 
 
-class MeanAbsolutePercentageError(_PercentageForecastingErrorMetric):
+class MeanAbsolutePercentageError(BaseForecastingErrorMetricFunc):
     """Mean absolute percentage error (MAPE) or symmetric version.
 
     If `symmetric` is False then calculates MAPE and if `symmetric` is True
@@ -1382,7 +1260,7 @@ class MeanAbsolutePercentageError(_PercentageForecastingErrorMetric):
 
     Parameters
     ----------
-    symmetric : bool, default = True
+    symmetric : bool, default = False
         Whether to calculate the symmetric version of the percentage metric
     multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
             (n_outputs,), default='uniform_average'
@@ -1390,19 +1268,6 @@ class MeanAbsolutePercentageError(_PercentageForecastingErrorMetric):
         If array-like, values used as weights to average the errors.
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
-
-    Attributes
-    ----------
-    name : str
-        The name of the loss metric
-    greater_is_better : bool
-        Stores whether the metric is optimized by minimization or maximization.
-        If False, minimizing the metric is optimal.
-        If True, maximizing the metric is optimal.
-    symmetric : bool
-        Stores whether to calculate the symmetric version of the percentage metric
-    multioutput : str
-        Stores how the metric should aggregate multioutput data.
 
     See Also
     --------
@@ -1425,7 +1290,7 @@ class MeanAbsolutePercentageError(_PercentageForecastingErrorMetric):
     >>> mape = MeanAbsolutePercentageError(symmetric=False)
     >>> mape(y_true, y_pred)
     0.33690476190476193
-    >>> smape = MeanAbsolutePercentageError()
+    >>> smape = MeanAbsolutePercentageError(symmetric=True)
     >>> smape(y_true, y_pred)
     0.5553379953379953
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
@@ -1437,29 +1302,30 @@ class MeanAbsolutePercentageError(_PercentageForecastingErrorMetric):
     >>> mape = MeanAbsolutePercentageError(multioutput='raw_values', symmetric=False)
     >>> mape(y_true, y_pred)
     array([0.38095238, 0.72222222])
-    >>> smape = MeanAbsolutePercentageError(multioutput='raw_values')
+    >>> smape = MeanAbsolutePercentageError(multioutput='raw_values', symmetric=True)
     >>> smape(y_true, y_pred)
     array([0.71111111, 0.50505051])
     >>> mape = MeanAbsolutePercentageError(multioutput=[0.3, 0.7], symmetric=False)
     >>> mape(y_true, y_pred)
     0.6198412698412699
-    >>> smape = MeanAbsolutePercentageError(multioutput=[0.3, 0.7])
+    >>> smape = MeanAbsolutePercentageError(multioutput=[0.3, 0.7], symmetric=True)
     >>> smape(y_true, y_pred)
     0.5668686868686869
     """
 
-    def __init__(self, multioutput="uniform_average", symmetric=True):
-        name = "MeanAbsolutePercentageError"
-        func = mean_absolute_percentage_error
-        super().__init__(
-            func=func,
-            name=name,
-            multioutput=multioutput,
-            symmetric=symmetric,
-        )
+    func = mean_absolute_percentage_error
+
+    def __init__(
+        self,
+        multioutput="uniform_average",
+        multilevel="uniform_average",
+        symmetric=False,
+    ):
+        self.symmetric = symmetric
+        super().__init__(multioutput=multioutput, multilevel=multilevel)
 
 
-class MedianAbsolutePercentageError(_PercentageForecastingErrorMetric):
+class MedianAbsolutePercentageError(BaseForecastingErrorMetricFunc):
     """Median absolute percentage error (MdAPE) or symmetric version.
 
     If `symmetric` is False then calculates MdAPE and if `symmetric` is True
@@ -1480,7 +1346,7 @@ class MedianAbsolutePercentageError(_PercentageForecastingErrorMetric):
 
     Parameters
     ----------
-    symmetric : bool, default = True
+    symmetric : bool, default = False
         Whether to calculate the symmetric version of the percentage metric
     multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
             (n_outputs,), default='uniform_average'
@@ -1488,19 +1354,6 @@ class MedianAbsolutePercentageError(_PercentageForecastingErrorMetric):
         If array-like, values used as weights to average the errors.
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
-
-    Attributes
-    ----------
-    name : str
-        The name of the loss metric
-    greater_is_better : bool
-        Stores whether the metric is optimized by minimization or maximization.
-        If False, minimizing the metric is optimal.
-        If True, maximizing the metric is optimal.
-    symmetric : bool
-        Stores whether to calculate the symmetric version of the percentage metric
-    multioutput : str
-        Stores how the metric should aggregate multioutput data.
 
     See Also
     --------
@@ -1523,7 +1376,7 @@ class MedianAbsolutePercentageError(_PercentageForecastingErrorMetric):
     >>> mdape = MedianAbsolutePercentageError(symmetric=False)
     >>> mdape(y_true, y_pred)
     0.16666666666666666
-    >>> smdape = MedianAbsolutePercentageError()
+    >>> smdape = MedianAbsolutePercentageError(symmetric=True)
     >>> smdape(y_true, y_pred)
     0.18181818181818182
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
@@ -1535,29 +1388,30 @@ class MedianAbsolutePercentageError(_PercentageForecastingErrorMetric):
     >>> mdape = MedianAbsolutePercentageError(multioutput='raw_values', symmetric=False)
     >>> mdape(y_true, y_pred)
     array([0.14285714, 1.        ])
-    >>> smdape = MedianAbsolutePercentageError(multioutput='raw_values')
+    >>> smdape = MedianAbsolutePercentageError(multioutput='raw_values', symmetric=True)
     >>> smdape(y_true, y_pred)
     array([0.13333333, 0.66666667])
     >>> mdape = MedianAbsolutePercentageError(multioutput=[0.3, 0.7], symmetric=False)
     >>> mdape(y_true, y_pred)
     0.7428571428571428
-    >>> smdape = MedianAbsolutePercentageError(multioutput=[0.3, 0.7])
+    >>> smdape = MedianAbsolutePercentageError(multioutput=[0.3, 0.7], symmetric=True)
     >>> smdape(y_true, y_pred)
     0.5066666666666666
     """
 
-    def __init__(self, multioutput="uniform_average", symmetric=True):
-        name = "MedianAbsolutePercentageError"
-        func = median_absolute_percentage_error
-        super().__init__(
-            func=func,
-            name=name,
-            multioutput=multioutput,
-            symmetric=symmetric,
-        )
+    func = median_absolute_percentage_error
+
+    def __init__(
+        self,
+        multioutput="uniform_average",
+        multilevel="uniform_average",
+        symmetric=False,
+    ):
+        self.symmetric = symmetric
+        super().__init__(multioutput=multioutput, multilevel=multilevel)
 
 
-class MeanSquaredPercentageError(_SquaredPercentageForecastingErrorMetric):
+class MeanSquaredPercentageError(BaseForecastingErrorMetricFunc):
     """Mean squared percentage error (MSPE)  or square root version.
 
     If `square_root` is False then calculates MSPE and if `square_root` is True
@@ -1577,7 +1431,7 @@ class MeanSquaredPercentageError(_SquaredPercentageForecastingErrorMetric):
 
     Parameters
     ----------
-    symmetric : bool, default = True
+    symmetric : bool, default = False
         Whether to calculate the symmetric version of the percentage metric
     square_root : bool, default = False
         Whether to take the square root of the metric
@@ -1587,21 +1441,6 @@ class MeanSquaredPercentageError(_SquaredPercentageForecastingErrorMetric):
         If array-like, values used as weights to average the errors.
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
-
-    Attributes
-    ----------
-    name : str
-        The name of the loss metric
-    greater_is_better : bool
-        Stores whether the metric is optimized by minimization or maximization.
-        If False, minimizing the metric is optimal.
-        If True, maximizing the metric is optimal.
-    symmetric : bool
-        Stores whether to calculate the symmetric version of the percentage metric
-    square_root : bool
-        Stores whether to take the square root of the metric
-    multioutput : str
-        Stores how the metric should aggregate multioutput data.
 
     See Also
     --------
@@ -1649,21 +1488,21 @@ class MeanSquaredPercentageError(_SquaredPercentageForecastingErrorMetric):
     0.7504665536595034
     """
 
+    func = mean_squared_percentage_error
+
     def __init__(
-        self, multioutput="uniform_average", symmetric=True, square_root=False
+        self,
+        multioutput="uniform_average",
+        multilevel="uniform_average",
+        symmetric=False,
+        square_root=False,
     ):
-        name = "MeanSquaredPercentageError"
-        func = mean_squared_percentage_error
-        super().__init__(
-            func=func,
-            name=name,
-            multioutput=multioutput,
-            symmetric=symmetric,
-            square_root=square_root,
-        )
+        self.symmetric = symmetric
+        self.square_root = square_root
+        super().__init__(multioutput=multioutput, multilevel=multilevel)
 
 
-class MedianSquaredPercentageError(_SquaredPercentageForecastingErrorMetric):
+class MedianSquaredPercentageError(BaseForecastingErrorMetricFunc):
     """Median squared percentage error (MdSPE)  or square root version.
 
     If `square_root` is False then calculates MdSPE and if `square_root` is True
@@ -1687,7 +1526,7 @@ class MedianSquaredPercentageError(_SquaredPercentageForecastingErrorMetric):
 
     Parameters
     ----------
-    symmetric : bool, default = True
+    symmetric : bool, default = False
         Whether to calculate the symmetric version of the percentage metric
     square_root : bool, default = False
         Whether to take the square root of the metric
@@ -1697,21 +1536,6 @@ class MedianSquaredPercentageError(_SquaredPercentageForecastingErrorMetric):
         If array-like, values used as weights to average the errors.
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
-
-    Attributes
-    ----------
-    name : str
-        The name of the loss metric
-    greater_is_better : bool
-        Stores whether the metric is optimized by minimization or maximization.
-        If False, minimizing the metric is optimal.
-        If True, maximizing the metric is optimal.
-    symmetric : bool
-        Stores whether to calculate the symmetric version of the percentage metric
-    square_root : bool
-        Stores whether to take the square root of the metric
-    multioutput : str
-        Stores how the metric should aggregate multioutput data.
 
     See Also
     --------
@@ -1759,21 +1583,21 @@ class MedianSquaredPercentageError(_SquaredPercentageForecastingErrorMetric):
     0.7428571428571428
     """
 
+    func = median_squared_percentage_error
+
     def __init__(
-        self, multioutput="uniform_average", symmetric=True, square_root=False
+        self,
+        multioutput="uniform_average",
+        multilevel="uniform_average",
+        symmetric=False,
+        square_root=False,
     ):
-        name = "MedianSquaredPercentageError"
-        func = median_squared_percentage_error
-        super().__init__(
-            func=func,
-            name=name,
-            multioutput=multioutput,
-            symmetric=symmetric,
-            square_root=square_root,
-        )
+        self.symmetric = symmetric
+        self.square_root = square_root
+        super().__init__(multioutput=multioutput, multilevel=multilevel)
 
 
-class MeanRelativeAbsoluteError(_BaseForecastingErrorMetric):
+class MeanRelativeAbsoluteError(BaseForecastingErrorMetricFunc):
     """Mean relative absolute error (MRAE).
 
     In relative error metrics, relative errors are first calculated by
@@ -1791,17 +1615,6 @@ class MeanRelativeAbsoluteError(_BaseForecastingErrorMetric):
         If array-like, values used as weights to average the errors.
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
-
-    Attributes
-    ----------
-    name : str
-        The name of the loss metric
-    greater_is_better : bool
-        Stores whether the metric is optimized by minimization or maximization.
-        If False, minimizing the metric is optimal.
-        If True, maximizing the metric is optimal.
-    multioutput : str
-        Stores how the metric should aggregate multioutput data.
 
     See Also
     --------
@@ -1843,13 +1656,10 @@ class MeanRelativeAbsoluteError(_BaseForecastingErrorMetric):
         "univariate-only": False,
     }
 
-    def __init__(self, multioutput="uniform_average"):
-        name = "MeanRelativeAbsoluteError"
-        func = mean_relative_absolute_error
-        super().__init__(func=func, name=name, multioutput=multioutput)
+    func = mean_relative_absolute_error
 
 
-class MedianRelativeAbsoluteError(_BaseForecastingErrorMetric):
+class MedianRelativeAbsoluteError(BaseForecastingErrorMetricFunc):
     """Median relative absolute error (MdRAE).
 
     In relative error metrics, relative errors are first calculated by
@@ -1867,17 +1677,6 @@ class MedianRelativeAbsoluteError(_BaseForecastingErrorMetric):
         If array-like, values used as weights to average the errors.
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
-
-    Attributes
-    ----------
-    name : str
-        The name of the loss metric
-    greater_is_better : bool
-        Stores whether the metric is optimized by minimization or maximization.
-        If False, minimizing the metric is optimal.
-        If True, maximizing the metric is optimal.
-    multioutput : str
-        Stores how the metric should aggregate multioutput data.
 
     See Also
     --------
@@ -1919,13 +1718,10 @@ class MedianRelativeAbsoluteError(_BaseForecastingErrorMetric):
         "univariate-only": False,
     }
 
-    def __init__(self, multioutput="uniform_average"):
-        name = "MedianRelativeAbsoluteError"
-        func = median_relative_absolute_error
-        super().__init__(func=func, name=name, multioutput=multioutput)
+    func = median_relative_absolute_error
 
 
-class GeometricMeanRelativeAbsoluteError(_BaseForecastingErrorMetric):
+class GeometricMeanRelativeAbsoluteError(BaseForecastingErrorMetricFunc):
     """Geometric mean relative absolute error (GMRAE).
 
     In relative error metrics, relative errors are first calculated by
@@ -1944,17 +1740,6 @@ class GeometricMeanRelativeAbsoluteError(_BaseForecastingErrorMetric):
         If array-like, values used as weights to average the errors.
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
-
-    Attributes
-    ----------
-    name : str
-        The name of the loss metric
-    greater_is_better : bool
-        Stores whether the metric is optimized by minimization or maximization.
-        If False, minimizing the metric is optimal.
-        If True, maximizing the metric is optimal.
-    multioutput : str
-        Stores how the metric should aggregate multioutput data.
 
     See Also
     --------
@@ -1997,13 +1782,10 @@ class GeometricMeanRelativeAbsoluteError(_BaseForecastingErrorMetric):
         "univariate-only": False,
     }
 
-    def __init__(self, multioutput="uniform_average"):
-        name = "GeometricMeanRelativeAbsoluteError"
-        func = geometric_mean_relative_absolute_error
-        super().__init__(func=func, name=name, multioutput=multioutput)
+    func = geometric_mean_relative_absolute_error
 
 
-class GeometricMeanRelativeSquaredError(_SquaredForecastingErrorMetric):
+class GeometricMeanRelativeSquaredError(BaseForecastingErrorMetricFunc):
     """Geometric mean relative squared error (GMRSE).
 
     If `square_root` is False then calculates GMRSE and if `square_root` is True
@@ -2028,19 +1810,6 @@ class GeometricMeanRelativeSquaredError(_SquaredForecastingErrorMetric):
         If array-like, values used as weights to average the errors.
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
-
-    Attributes
-    ----------
-    name : str
-        The name of the loss metric
-    greater_is_better : bool
-        Stores whether the metric is optimized by minimization or maximization.
-        If False, minimizing the metric is optimal.
-        If True, maximizing the metric is optimal.
-    square_root : bool
-        Stores whether to take the square root of the metric
-    multioutput : str
-        Stores how the metric should aggregate multioutput data.
 
     See Also
     --------
@@ -2083,18 +1852,19 @@ class GeometricMeanRelativeSquaredError(_SquaredForecastingErrorMetric):
         "univariate-only": False,
     }
 
-    def __init__(self, multioutput="uniform_average", square_root=False):
-        name = "GeometricMeanRelativeSquaredError"
-        func = geometric_mean_relative_squared_error
-        super().__init__(
-            func=func,
-            name=name,
-            multioutput=multioutput,
-            square_root=square_root,
-        )
+    func = geometric_mean_relative_squared_error
+
+    def __init__(
+        self,
+        multioutput="uniform_average",
+        multilevel="uniform_average",
+        square_root=False,
+    ):
+        self.square_root = square_root
+        super().__init__(multioutput=multioutput, multilevel=multilevel)
 
 
-class MeanAsymmetricError(_AsymmetricForecastingErrorMetric):
+class MeanAsymmetricError(BaseForecastingErrorMetricFunc):
     """Calculate mean of asymmetric loss function.
 
     Output is non-negative floating point. The best value is 0.0.
@@ -2142,25 +1912,6 @@ class MeanAsymmetricError(_AsymmetricForecastingErrorMetric):
         If array-like, values used as weights to average the errors.
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
-
-    Attributes
-    ----------
-    name : str
-        The name of the loss metric
-    greater_is_better : bool
-        Stores whether the metric is optimized by minimization or maximization.
-        If False, minimizing the metric is optimal.
-        If True, maximizing the metric is optimal.
-    asymmetric_threshold : float
-        Stores threshold to use applying asymmetric loss to errors
-    left_error_function: str
-        Stores loss penalty to apply to error values less than the asymmetric
-        threshold.
-    right_error_function: str
-        Stores loss penalty to apply to error values greater than or equal to the
-        asymmetric threshold.
-    multioutput : str
-        Stores how the metric should aggregate multioutput data.
 
     See Also
     --------
@@ -2210,30 +1961,28 @@ class MeanAsymmetricError(_AsymmetricForecastingErrorMetric):
     0.85
     """
 
+    func = mean_asymmetric_error
+
     def __init__(
         self,
         multioutput="uniform_average",
+        multilevel="uniform_average",
         asymmetric_threshold=0,
         left_error_function="squared",
         right_error_function="absolute",
         left_error_penalty=1.0,
         right_error_penalty=1.0,
     ):
-        name = "MeanAsymmetricError"
-        func = mean_asymmetric_error
-        super().__init__(
-            func=func,
-            name=name,
-            multioutput=multioutput,
-            asymmetric_threshold=asymmetric_threshold,
-            left_error_function=left_error_function,
-            right_error_function=right_error_function,
-            left_error_penalty=left_error_penalty,
-            right_error_penalty=right_error_penalty,
-        )
+        self.asymmetric_threshold = asymmetric_threshold
+        self.left_error_function = left_error_function
+        self.right_error_function = right_error_function
+        self.left_error_penalty = left_error_penalty
+        self.right_error_penalty = right_error_penalty
+
+        super().__init__(multioutput=multioutput, multilevel=multilevel)
 
 
-class MeanLinexError(_LinexForecastingErrorMetric):
+class MeanLinexError(BaseForecastingErrorMetricFunc):
     """Calculate mean linex error.
 
     Output is non-negative floating point. The best value is 0.0.
@@ -2267,20 +2016,6 @@ class MeanLinexError(_LinexForecastingErrorMetric):
         If array-like, values used as weights to average the errors.
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
-
-    Attributes
-    ----------
-    name : str
-        The name of the loss metric
-    greater_is_better : bool
-        Stores whether the metric is optimized by minimization or maximization.
-        If False, minimizing the metric is optimal.
-        If True, maximizing the metric is optimal.
-    a : bool
-        Stores the coefficient that controls whether over- or under- predictions
-        receive an approximately linear or exponential penalty.
-    b : str
-        Stores multiplicative penalty applied to errors.
 
     See Also
     --------
@@ -2330,13 +2065,21 @@ class MeanLinexError(_LinexForecastingErrorMetric):
     0.30917568000716666
     """
 
-    def __init__(self, a=1.0, b=1.0, multioutput="uniform_average"):
-        name = "MeanLinexError"
-        func = mean_linex_error
-        super().__init__(func=func, name=name, multioutput=multioutput, a=a, b=b)
+    func = mean_linex_error
+
+    def __init__(
+        self,
+        a=1.0,
+        b=1.0,
+        multioutput="uniform_average",
+        multilevel="uniform_average",
+    ):
+        self.a = a
+        self.b = b
+        super().__init__(multioutput=multioutput, multilevel=multilevel)
 
 
-class RelativeLoss(_RelativeLossForecastingErrorMetric):
+class RelativeLoss(BaseForecastingErrorMetricFunc):
     """Calculate relative loss of forecast versus benchmark forecast.
 
     Applies a forecasting performance metric to a set of forecasts and
@@ -2372,22 +2115,6 @@ class RelativeLoss(_RelativeLossForecastingErrorMetric):
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
 
-    Attributes
-    ----------
-    name : str
-        The name of the loss metric
-
-    greater_is_better : bool
-        Stores whether the metric is optimized by minimization or maximization.
-        If False, minimizing the metric is optimal.
-        If True, maximizing the metric is optimal.
-
-    relative_loss_function : function
-        Stores function used to calculate relative loss
-
-    multioutput : str
-        Stores how the metric should aggregate multioutput data.
-
     References
     ----------
     Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
@@ -2421,14 +2148,19 @@ class RelativeLoss(_RelativeLossForecastingErrorMetric):
     0.927272727272727
     """
 
+    _tags = {
+        "requires-y-train": False,
+        "requires-y-pred-benchmark": True,
+        "univariate-only": False,
+    }
+
+    func = relative_loss
+
     def __init__(
-        self, multioutput="uniform_average", relative_loss_function=mean_absolute_error
+        self,
+        multioutput="uniform_average",
+        multilevel="uniform_average",
+        relative_loss_function=mean_absolute_error,
     ):
-        name = "RelativeLoss"
-        func = relative_loss
-        super().__init__(
-            func=func,
-            name=name,
-            multioutput=multioutput,
-            relative_loss_function=relative_loss_function,
-        )
+        self.relative_loss_function = relative_loss_function
+        super().__init__(multioutput=multioutput, multilevel=multilevel)

@@ -173,6 +173,42 @@ class ColumnTransformer(_ColumnTransformer, _PanelToPanelTransformer):
                     "matrix, array, or pandas DataFrame).".format(name)
                 )
 
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        from sklearn.preprocessing import StandardScaler
+
+        from sktime.transformations.panel.compose import SeriesToSeriesRowTransformer
+
+        SERIES_TO_SERIES_TRANSFORMER = StandardScaler()
+        TRANSFORMERS = [
+            (
+                "transformer1",
+                SeriesToSeriesRowTransformer(
+                    SERIES_TO_SERIES_TRANSFORMER, check_transformer=False
+                ),
+            ),
+            (
+                "transformer2",
+                SeriesToSeriesRowTransformer(
+                    SERIES_TO_SERIES_TRANSFORMER, check_transformer=False
+                ),
+            ),
+        ]
+
+        return {
+            "transformers": [(name, estimator, [0]) for name, estimator in TRANSFORMERS]
+        }
+
     def fit(self, X, y=None):
         """Fit the transformer."""
         X = check_X(X, coerce_to_pandas=True)

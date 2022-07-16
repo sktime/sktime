@@ -42,9 +42,11 @@ def evaluate(
         Target time series to which to fit the forecaster.
     X : pd.DataFrame, default=None
         Exogenous variables
-    strategy : {"refit", "update"}
-        Must be "refit" or "update". The strategy defines whether the `forecaster` is
-        only fitted on the first train window data and then updated, or always refitted.
+    strategy : {"refit", "update", "no-update_params"}, optional, default="refit"
+        defines the ingestion mode when the forecaster sees new data when window expands
+        "refit" = forecaster is refitted to each training window
+        "update" = forecaster is updated with training window data, in sequence provided
+        "no-update_params" = fit to first training window, re-used without fit or update
     scoring : subclass of sktime.performance_metrics.BaseMetric, default=None.
         Used to get a score function that takes y_pred and y_test arguments
         and accept y_train as keyword argument.
@@ -62,17 +64,36 @@ def evaluate(
 
     Examples
     --------
+        The type of evaluation that is done by `evaluate` depends on metrics in
+        param `scoring`. Default is `MeanAbsolutePercentageError`.
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.model_evaluation import evaluate
     >>> from sktime.forecasting.model_selection import ExpandingWindowSplitter
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> y = load_airline()
     >>> forecaster = NaiveForecaster(strategy="mean", sp=12)
-    >>> cv = ExpandingWindowSplitter(
-    ...     initial_window=24,
-    ...     step_length=12,
-    ...     fh=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
+    >>> cv = ExpandingWindowSplitter(initial_window=12, step_length=3,
+    ... fh=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
     >>> results = evaluate(forecaster=forecaster, y=y, cv=cv)
+
+        Optionally, users may select other metrics that can be supplied
+        by `scoring` argument. These can be forecast metrics of any kind,
+        i.e., point forecast metrics, interval metrics, quantile foreast metrics.
+        https://www.sktime.org/en/stable/api_reference/performance_metrics.html?highlight=metrics
+
+        To evaluate estimators using a specific metric, provide them to the scoring arg.
+    >>> from sktime.performance_metrics.forecasting import MeanAbsoluteError
+    >>> loss = MeanAbsoluteError()
+    >>> results = evaluate(forecaster=forecaster, y=y, cv=cv, scoring=loss)
+
+        An example of an interval metric is the `PinballLoss`.
+        It can be used with all probabilistic forecasters.
+    >>> from sktime.forecasting.naive import NaiveVariance
+    >>> from sktime.performance_metrics.forecasting.probabilistic import PinballLoss
+    >>> loss = PinballLoss()
+    >>> forecaster = NaiveForecaster(strategy="drift")
+    >>> results = evaluate(forecaster=NaiveVariance(forecaster),
+    ... y=y, cv=cv, scoring=loss)
     """
     _check_strategy(strategy)
     cv = check_cv(cv, enforce_start_with_window=True)
@@ -88,7 +109,7 @@ def evaluate(
     score_name = "test_" + scoring.name
 
     # Initialize dataframe.
-    results = pd.DataFrame()
+    results = []
 
     # Run temporal cross-validation.
     for i, (train, test) in enumerate(cv.split(y)):
@@ -104,8 +125,9 @@ def evaluate(
             forecaster = forecaster.clone()
             forecaster.fit(y_train, X_train, fh=fh)
 
-        else:  # if strategy == "update":
-            forecaster.update(y_train, X_train)
+        else:  # if strategy in ["update", "no-update_params"]:
+            update_params = strategy == "update"
+            forecaster.update(y_train, X_train, update_params=update_params)
         fit_time = time.perf_counter() - start_fit
 
         pred_type = {
@@ -127,11 +149,7 @@ def evaluate(
             scitype = None
             metric_args = {}
 
-        y_pred = eval(pred_type[scitype])(
-            fh,
-            X_test,
-            **metric_args,
-        )
+        y_pred = eval(pred_type[scitype])(fh, X_test, **metric_args)
 
         pred_time = time.perf_counter() - start_pred
 
@@ -139,7 +157,7 @@ def evaluate(
         score = scoring(y_test, y_pred, y_train=y_train)
 
         # save results
-        results = results.append(
+        results.append(
             {
                 score_name: score,
                 "fit_time": fit_time,
@@ -149,10 +167,10 @@ def evaluate(
                 "y_train": y_train if return_data else np.nan,
                 "y_test": y_test if return_data else np.nan,
                 "y_pred": y_pred if return_data else np.nan,
-            },
-            ignore_index=True,
+            }
         )
 
+    results = pd.DataFrame(results)
     # post-processing of results
     if not return_data:
         results = results.drop(columns=["y_train", "y_test", "y_pred"])
@@ -191,12 +209,13 @@ def _check_strategy(strategy):
     ----------
     strategy : str
         strategy of how to evaluate a forecaster
+        must be in "refit", "update" , "no-update_params"
 
     Raises
     ------
     ValueError
         If strategy value is not in expected values, raise error.
     """
-    valid_strategies = ("refit", "update")
+    valid_strategies = ("refit", "update", "no-update_params")
     if strategy not in valid_strategies:
         raise ValueError(f"`strategy` must be one of {valid_strategies}")

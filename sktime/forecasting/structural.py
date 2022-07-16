@@ -242,7 +242,6 @@ class UnobservedComponents(_StatsModelsAdapter):
         flags=None,
         low_memory=False,
         random_state=None,
-        **kwargs
     ):
         # Model params
         self.level = level

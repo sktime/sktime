@@ -7,7 +7,7 @@ import pytest
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import FunctionTransformer
 
-from sktime.series_as_features.compose import FeatureUnion
+from sktime.transformations.compose import FeatureUnion
 from sktime.transformations.panel.reduce import Tabularizer
 from sktime.transformations.panel.segment import RandomIntervalSegmenter
 from sktime.transformations.panel.summarize import RandomIntervalFeatureExtractor

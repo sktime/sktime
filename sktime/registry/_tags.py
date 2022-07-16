@@ -7,7 +7,6 @@ No other place is necessary to add new tags.
 This module exports the following:
 
 ---
-
 ESTIMATOR_TAG_REGISTER - list of tuples
 
 each tuple corresponds to a tag, elements as follows:
@@ -19,8 +18,10 @@ each tuple corresponds to a tag, elements as follows:
             "bool" - valid values are True/False
             "int" - valid values are all integers
             "str" - valid values are all strings
+            "list" - valid values are all lists of arbitrary elements
             ("str", list_of_string) - any string in list_of_string is valid
             ("list", list_of_string) - any individual string and sub-list is valid
+            ("list", "str") - any individual string or list of strings is valid
         validity can be checked by check_tag_is_valid (see below)
     3 : string - plain English description of the tag
 
@@ -55,18 +56,6 @@ ESTIMATOR_TAG_REGISTER = [
         "transformer",
         "bool",
         "can transformer handle multivariate series? True = no",
-    ),
-    (
-        "fit-in-transform",
-        ["transformer", "transformer-pairwise", "transformer-pairwise-panel"],
-        "bool",
-        "does fit contain no logic and can be skipped? yes/no - deprecated for 0.12.0",
-    ),
-    (
-        "fit-in-predict",
-        "estimator",
-        "bool",
-        "does fit contain no logic and can be skipped? yes/no - deprecated for 0.12.0",
     ),
     (
         "fit_is_empty",
@@ -329,6 +318,18 @@ ESTIMATOR_TAG_REGISTER = [
         "bool",
         "Is a lower value better for the metric? True=yes, False=higher is better",
     ),
+    (
+        "python_version",
+        "estimator",
+        "str",
+        "python version specifier (PEP 440) for estimator, or None = all versions ok",
+    ),
+    (
+        "python_dependencies",
+        "estimator",
+        ("list", "str"),
+        "python dependencies of estimator as str or list of str",
+    ),
 ]
 
 ESTIMATOR_TAG_TABLE = pd.DataFrame(ESTIMATOR_TAG_REGISTER)
@@ -362,6 +363,9 @@ def check_tag_is_valid(tag_name, tag_value):
     if tag_type == "str" and not isinstance(tag_value, str):
         raise ValueError(tag_name + " must be string, found " + tag_value)
 
+    if tag_type == "list" and not isinstance(tag_value, list):
+        raise ValueError(tag_name + " must be list, found " + tag_value)
+
     if tag_type[0] == "str" and tag_value not in tag_type[1]:
         raise ValueError(
             tag_name + " must be one of " + tag_type[1] + " found " + tag_value
@@ -371,3 +375,11 @@ def check_tag_is_valid(tag_name, tag_value):
         raise ValueError(
             tag_name + " must be subest of " + tag_type[1] + " found " + tag_value
         )
+
+    if tag_type[0] == "list" and tag_type[1] == "str":
+        msg = f"{tag_name} must be str or list of str, found {tag_value}"
+        if not isinstance(tag_value, (str, list)):
+            raise ValueError(msg)
+        if isinstance(tag_value, list):
+            if not all(isinstance(x, str) for x in tag_value):
+                raise ValueError(msg)

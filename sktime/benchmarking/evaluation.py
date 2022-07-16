@@ -204,7 +204,7 @@ class Evaluator:
                 "p_val": p_val,
             }
 
-            t_df = t_df.append(t_test, ignore_index=True)
+            t_df = pd.concat([t_df, pd.DataFrame(t_test, index=[0])], ignore_index=True)
             values = np.append(values, t_stat)
             values = np.append(values, p_val)
 
@@ -245,7 +245,9 @@ class Evaluator:
             p_val = stats.binom_test(signs, n)
             sign_test = {"estimator_1": perm[0], "estimator_2": perm[1], "p_val": p_val}
 
-            sign_df = sign_df.append(sign_test, ignore_index=True)
+            sign_df = pd.concat(
+                [sign_df, pd.DataFrame(sign_test, index=[0])], ignore_index=True
+            )
             sign_df_pivot = sign_df.pivot(
                 index="estimator_1", columns="estimator_2", values="p_val"
             )
@@ -278,7 +280,9 @@ class Evaluator:
                 "t_stat": t_stat,
                 "p_val": p_val,
             }
-            ranksum_df = ranksum_df.append(ranksum, ignore_index=True)
+            ranksum_df = pd.concat(
+                [ranksum_df, pd.DataFrame(ranksum, index=[0])], ignore_index=True
+            )
             values = np.append(values, t_stat)
             values = np.append(values, p_val)
 
@@ -350,7 +354,9 @@ class Evaluator:
                 "p_val": p_val,
             }
 
-            wilcoxon_df = wilcoxon_df.append(w_test, ignore_index=True)
+            wilcoxon_df = pd.concat(
+                [wilcoxon_df, pd.DataFrame(w_test, index=[0])], ignore_index=True
+            )
 
         return wilcoxon_df
 
@@ -465,7 +471,7 @@ class Evaluator:
                         "cv_fold": [cv_fold],
                     }
                 )
-                run_times = run_times.append(unwrapped, ignore_index=True)
+                run_times = pd.concat([run_times, unwrapped], ignore_index=True)
 
         # calculate run time difference
         run_times["fit_runtime"] = (

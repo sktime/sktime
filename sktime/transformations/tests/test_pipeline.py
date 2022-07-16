@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Tests for transformer pipelines."""
+"""Tests for using sklearn FeatureUnion with sktime."""
 
 import numpy as np
 from sklearn.model_selection import train_test_split
@@ -37,7 +37,6 @@ def test_FeatureUnion_pipeline():
         ("clf", DecisionTreeClassifier()),
     ]
     clf = Pipeline(steps)
-
     clf.fit(X_train, y_train)
     y_pred = clf.predict(X_test)
 
