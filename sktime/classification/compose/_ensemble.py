@@ -803,12 +803,13 @@ class WeightedEnsembleClassifier(BaseClassifier, _HeterogenousMetaEstimator):
         """
         from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
         from sktime.classification.kernel_based import RocketClassifier
+
         params1 = {
             "classifiers": [
                 KNeighborsTimeSeriesClassifier.create_test_instance(),
                 RocketClassifier.create_test_instance(),
             ],
-            "weights": [42, 1]
+            "weights": [42, 1],
         }
 
         params2 = {
