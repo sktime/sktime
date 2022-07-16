@@ -220,12 +220,12 @@ def _load_provided_dataset(name, split=None, return_X_y=True, return_type=None):
             X = np.concatenate((X_train, X_test))
         elif isinstance(X_train, pd.DataFrame):
             X = pd.concat([X_train, X_test])
+            X = X.reset_index(drop=True)
         else:
             raise IOError(
                 f"Invalid data structure type {type(X_train)} for loading "
                 f"classification problem "
             )
-        X = X.reset_index(drop=True)
         y = np.concatenate((y_train, y_test))
 
     else:
