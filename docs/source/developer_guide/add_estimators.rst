@@ -186,8 +186,8 @@ collect all estimators of a certain type and tests applying for a given estimato
 
 For an overview of the testing framework, see the "testing framework" documentation.
 Generic interface conformance tests are contained in the classes ``TestAllEstimators``, ``TestAllForecasters``, and so on.
-Test-fixture-strings for an estimator ``EstimatorName`` will always contain ``EstimatorName`` as a substring.
-The converse is only true insofar no estimator name contains other estimator names as substrings.
+``pytest`` test-fixture-strings for an estimator ``EstimatorName`` will always contain ``EstimatorName`` as a substring,
+and are identical with the test-fixture-strings used by ``check_estimator``.
 
 To run tests only for a given estimator, the command ``pytest -k "EstimatorName"`` can be used.
 When using Visual Studio Code or pycharm, tests can also be sub-setted using GUI filter
