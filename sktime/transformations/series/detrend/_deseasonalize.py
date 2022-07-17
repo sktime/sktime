@@ -15,7 +15,6 @@ from sktime.transformations.base import BaseTransformer
 from sktime.utils.datetime import _get_duration, _get_freq
 from sktime.utils.seasonality import autocorrelation_seasonality_test
 from sktime.utils.validation.forecasting import check_sp
-from sktime.utils.validation.series import check_series
 
 
 class Deseasonalizer(BaseTransformer):
@@ -100,7 +99,7 @@ class Deseasonalizer(BaseTransformer):
             )
             % self.sp
         )
-        return np.resize(np.roll(self.seasonal_, shift=shift), y.shape[0])
+        return np.resize(np.roll(self.seasonal_, shift=shift), X.shape[0])
 
     def _fit(self, X, y=None):
         """Fit transformer to X and y.
