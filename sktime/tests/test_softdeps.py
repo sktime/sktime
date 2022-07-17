@@ -17,6 +17,7 @@ from importlib import import_module
 import pytest
 
 from sktime.registry import all_estimators
+from sktime.utils._testing.scenarios_getter import retrieve_scenarios
 from sktime.utils.validation._dependencies import _check_python_version
 
 # list of soft dependencies used
@@ -259,6 +260,29 @@ def test_est_construct_without_modulenotfound(estimator):
             f"Estimator {estimator.__name__} does not require soft dependencies "
             f"according to tags, but raises ModuleNotFoundError "
             f"on __init__. Any required soft dependencies should be added "
+            f'to the "python_dependencies" tag, and python version bouds should be'
+            f' added to the "python_version" tag. Exception text: {error_msg}'
+        ) from e
+
+
+@pytest.mark.parametrize("estimator", est_pyok_without_soft_dep)
+def test_est_fit_without_modulenotfound(estimator):
+    """Test that estimators that do not require soft dependencies fit properly."""
+    # skip composite estimators that have no soft dependencies
+    #   but which have soft dependencies in example components
+    if estimator.__name__ in EXCEPTED_FROM_NO_DEP_CHECK:
+        return None
+
+    try:
+        scenario = retrieve_scenarios(estimator)[0]
+        estimator.create_test_instance()
+        scenario.run(estimator, method_sequence=["fit"])
+    except ModuleNotFoundError as e:
+        error_msg = str(e)
+        raise RuntimeError(
+            f"Estimator {estimator.__name__} does not require soft dependencies "
+            f"according to tags, but raises ModuleNotFoundError "
+            f"on fit. Any required soft dependencies should be added "
             f'to the "python_dependencies" tag, and python version bouds should be'
             f' added to the "python_version" tag. Exception text: {error_msg}'
         ) from e
