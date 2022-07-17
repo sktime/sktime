@@ -11,7 +11,7 @@ import pandas as pd
 from statsmodels.tsa.seasonal import STL as _STL
 from statsmodels.tsa.seasonal import seasonal_decompose
 
-from sktime.transformations.base import BaseTransformer, _SeriesToSeriesTransformer
+from sktime.transformations.base import BaseTransformer
 from sktime.utils.datetime import _get_duration, _get_freq
 from sktime.utils.seasonality import autocorrelation_seasonality_test
 from sktime.utils.validation.forecasting import check_sp
@@ -89,17 +89,14 @@ class Deseasonalizer(BaseTransformer):
         self.seasonal_ = None
         super(Deseasonalizer, self).__init__()
 
-    def _set_y_index(self, y):
-        self._y_index = y.index
-
-    def _align_seasonal(self, y):
-        """Align seasonal components with y's time index."""
+    def _align_seasonal(self, X):
+        """Align seasonal components with X's time index."""
         shift = (
             -_get_duration(
-                y.index[0],
-                self._y_index[0],
+                X.index[0],
+                self._X.index[0],
                 coerce_to_int=True,
-                unit=_get_freq(self._y_index),
+                unit=_get_freq(self._X.index),
             )
             % self.sp
         )
@@ -115,14 +112,13 @@ class Deseasonalizer(BaseTransformer):
         X : pd.Series
             Data to fit transform to
         y : ignored argument for interface compatibility
-            Additional data, e.g., labels for transformation
 
         Returns
         -------
         self: a fitted instance of the estimator
         """
-        self._set_y_index(X)
-        sp = check_sp(self.sp)
+        self._X = X
+        sp = self.sp
 
         # apply seasonal decomposition
         self.seasonal_ = seasonal_decompose(
@@ -285,20 +281,23 @@ class ConditionalDeseasonalizer(Deseasonalizer):
             )
         return is_seasonal
 
-    def fit(self, Z, X=None):
-        """Fit to data.
+    def _fit(self, X, y=None):
+        """Fit transformer to X and y.
+
+        private _fit containing the core logic, called from fit
 
         Parameters
         ----------
-        y_train : pd.Series
+        X : pd.Series
+            Data to fit transform to
+        y : ignored argument for interface compatibility
 
         Returns
         -------
-        self : an instance of self
+        self: a fitted instance of the estimator
         """
-        z = check_series(Z, enforce_univariate=True)
-        self._set_y_index(z)
-        sp = check_sp(self.sp)
+        self._X = X
+        sp = self.sp
 
         # set default condition
         if self.seasonality_test is None:
@@ -307,12 +306,12 @@ class ConditionalDeseasonalizer(Deseasonalizer):
             self.seasonality_test_ = self.seasonality_test
 
         # check if data meets condition
-        self.is_seasonal_ = self._check_condition(z)
+        self.is_seasonal_ = self._check_condition(X)
 
         if self.is_seasonal_:
             # if condition is met, apply de-seasonalisation
             self.seasonal_ = seasonal_decompose(
-                z,
+                X,
                 model=self.model,
                 period=sp,
                 filt=None,
@@ -325,7 +324,6 @@ class ConditionalDeseasonalizer(Deseasonalizer):
                 np.zeros(self.sp) if self.model == "additive" else np.ones(self.sp)
             )
 
-        self._is_fitted = True
         return self
 
 
@@ -468,16 +466,19 @@ class STLTransformer(BaseTransformer):
         super(STLTransformer, self).__init__()
 
     def _fit(self, X, y=None):
-        """Fit to data.
+        """Fit transformer to X and y.
+
+        private _fit containing the core logic, called from fit
 
         Parameters
         ----------
         X : pd.Series
-        y : not used, argument present for interface compatibility
+            Data to fit transform to
+        y : ignored argument for interface compatibility
 
         Returns
         -------
-        self : an instance of self
+        self: a fitted instance of the estimator
         """
         # remember X for transform
         self._X = X
