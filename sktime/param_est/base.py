@@ -59,9 +59,8 @@ class BaseParamFitter(BaseEstimator):
     _tags = {
         "X_inner_mtype": "pd.DataFrame",  # which types do _fit/_predict, support for X?
         "scitype:X": "Series",  # which X scitypes are supported natively?
-        "ignores-exogeneous-X": True,  # does estimator ignore the exogeneous X?
-        "capability:pred_int": False,  # can the estimator produce prediction intervals?
         "capability:missing_values": False,  # can estimator handle missing data?
+        "capability:multivariate": False,  # can estimator handle multivariate data?
         "python_version": None,  # PEP 440 python version specifier to limit versions
         "python_dependencies": None  # string or str list of pkg soft dependencies
     }
@@ -193,25 +192,6 @@ class BaseParamFitter(BaseEstimator):
                 "fitted yet, please call fit on data before get_fitted_params"
             )
         return self._get_fitted_params()
-
-    def _get_fitted_params(self):
-        """Get fitted parameters.
-
-        private _get_fitted_params, called from get_fitted_params
-
-        State required:
-            Requires state to be "fitted".
-
-        Returns
-        -------
-        fitted_params : dict
-        """
-        # default retrieves all self attributes ending in "_"
-        # and returns them with keys that have the "_" removed
-        fitted_params = [attr for attr in dir(self) if attr.endswith("_")]
-        fitted_param_dict = {p[:-1]: getattr(self, p) for p in fitted_params}
-
-        return fitted_param_dict
 
     def _check_X(self, X=None):
         """Check and coerce X for fit/update functions.
@@ -379,18 +359,21 @@ class BaseParamFitter(BaseEstimator):
 
         return self
 
-    def _update_predict_single(
-        self,
-        y,
-        fh,
-        X=None,
-        update_params=True,
-    ):
-        """Update forecaster and then make forecasts.
+    def _get_fitted_params(self):
+        """Get fitted parameters.
 
-        Implements default behaviour of calling update and predict
-        sequentially, but can be overwritten by subclasses
-        to implement more efficient updating algorithms when available.
+        private _get_fitted_params, called from get_fitted_params
+
+        State required:
+            Requires state to be "fitted".
+
+        Returns
+        -------
+        fitted_params : dict
         """
-        self.update(y=y, X=X, update_params=update_params)
-        return self.predict(fh=fh, X=X)
+        # default retrieves all self attributes ending in "_"
+        # and returns them with keys that have the "_" removed
+        fitted_params = [attr for attr in dir(self) if attr.endswith("_")]
+        fitted_param_dict = {p[:-1]: getattr(self, p) for p in fitted_params}
+
+        return fitted_param_dict
