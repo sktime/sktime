@@ -235,6 +235,160 @@ class BaseClassifier(BaseEstimator, ABC):
 
         return self._predict_proba(X)
 
+    def fit_predict(self, X, y, cv=None, change_state=True) -> np.ndarray:
+        """Fit and predict labels for sequences in X.
+
+        Convenience method to produce in-sample predictions and
+        cross-validated out-of-sample predictions.
+
+        Writes to self, if change_state=True:
+            Sets self.is_fitted to True.
+            Sets fitted model attributes ending in "_".
+
+        Does not update state if change_state=False.
+
+        Parameters
+        ----------
+        X : 3D np.array (any number of dimensions, equal length series)
+                of shape [n_instances, n_dimensions, series_length]
+            or 2D np.array (univariate, equal length series)
+                of shape [n_instances, series_length]
+            or pd.DataFrame with each column a dimension, each cell a pd.Series
+                (any number of dimensions, equal or unequal length series)
+            or of any other supported Panel mtype
+                for list of mtypes, see datatypes.SCITYPE_REGISTER
+                for specifications, see examples/AA_datatypes_and_datasets.ipynb
+        y : 1D np.array of int, of shape [n_instances] - class labels for fitting
+            indices correspond to instance indices in X
+        cv : None, int, or sklearn cross-validation object, optional, default=None
+            None : predictions are in-sample, equivalent to fit(X, y).predict(X)
+            cv : predictions are equivalent to fit(X_train, y_train).predict(X_test)
+                where multiple X_train, y_train, X_test are obtained from cv folds
+                returned y is union over all test fold predictions
+                cv test folds must be non-intersecting
+            int : equivalent to cv=Kfold(int), i.e., k-fold cross-validation predictions
+        change_state : bool, optional (default=True)
+            if False, will not change the state of the classifier,
+                i.e., fit/predict sequence is run with a copy, self does not change
+            if True, will fit self to the full X and y,
+                end state will be equivalent to running fit(X, y)
+
+        Returns
+        -------
+        y : 1D np.array of int, of shape [n_instances] - predicted class labels
+            indices correspond to instance indices in X
+            if cv is passed, -1 indicates entries not seen in union of test sets
+        """
+        return self._fit_predict_boilerplate(
+            X=X, y=y, cv=cv, change_state=change_state, method="predict"
+        )
+
+    def _fit_predict_boilerplate(self, X, y, cv, change_state, method):
+        """Boilerplate logic for fit_predict and fit_predict_proba."""
+        from sklearn.model_selection import KFold
+
+        if isinstance(cv, int):
+            cv = KFold(cv)
+
+        if change_state:
+            self.reset()
+            est = self
+        else:
+            est = self.clone()
+
+        if cv is None:
+            return getattr(est.fit(X, y), method)(X)
+
+        # we now know that cv is an sklearn splitter
+        X, y = _internal_convert(X, y)
+        X_metadata = _check_classifier_input(X, y)
+        missing = X_metadata["has_nans"]
+        multivariate = not X_metadata["is_univariate"]
+        unequal = not X_metadata["is_equal_length"]
+        # Check this classifier can handle characteristics
+        self._check_capabilities(missing, multivariate, unequal)
+
+        # Convert data to format easily useable for applying cv
+        if isinstance(X, np.ndarray):
+            X = convert_to(
+                X,
+                to_type="numpy3D",
+                as_scitype="Panel",
+                store_behaviour="freeze",
+            )
+        else:
+            X = convert_to(
+                X,
+                to_type="nested_univ",
+                as_scitype="Panel",
+                store_behaviour="freeze",
+            )
+
+        if method == "predict_proba":
+            y_pred = np.empty([len(y), len(np.unique(y))])
+        else:
+            y_pred = np.empty_like(y)
+        y_pred[:] = -1
+        if isinstance(X, np.ndarray):
+            for tr_idx, tt_idx in cv.split(X):
+                X_train = X[tr_idx]
+                X_test = X[tt_idx]
+                y_train = y[tr_idx]
+                fitted_est = self.clone().fit(X_train, y_train)
+                y_pred[tt_idx] = getattr(fitted_est, method)(X_test)
+        else:
+            for tr_idx, tt_idx in cv.split(X):
+                X_train = X.iloc[tr_idx]
+                X_test = X.iloc[tt_idx]
+                y_train = y[tr_idx]
+                fitted_est = self.clone().fit(X_train, y_train)
+                y_pred[tt_idx] = getattr(fitted_est, method)(X_test)
+
+        return y_pred
+
+    def fit_predict_proba(self, X, y, cv=None, change_state=True) -> np.ndarray:
+        """Fit and predict labels probabilities for sequences in X.
+
+        Convenience method to produce in-sample predictions and
+        cross-validated out-of-sample predictions.
+
+        Parameters
+        ----------
+        X : 3D np.array (any number of dimensions, equal length series)
+                of shape [n_instances, n_dimensions, series_length]
+            or 2D np.array (univariate, equal length series)
+                of shape [n_instances, series_length]
+            or pd.DataFrame with each column a dimension, each cell a pd.Series
+                (any number of dimensions, equal or unequal length series)
+            or of any other supported Panel mtype
+                for list of mtypes, see datatypes.SCITYPE_REGISTER
+                for specifications, see examples/AA_datatypes_and_datasets.ipynb
+        y : 1D np.array of int, of shape [n_instances] - class labels for fitting
+            indices correspond to instance indices in X
+        cv : None, int, or sklearn cross-validation object, optional, default=None
+            None : predictions are in-sample, equivalent to fit(X, y).predict(X)
+            cv : predictions are equivalent to fit(X_train, y_train).predict(X_test)
+                where multiple X_train, y_train, X_test are obtained from cv folds
+                returned y is union over all test fold predictions
+                cv test folds must be non-intersecting
+            int : equivalent to cv=Kfold(int), i.e., k-fold cross-validation predictions
+        change_state : bool, optional (default=True)
+            if False, will not change the state of the classifier,
+                i.e., fit/predict sequence is run with a copy, self does not change
+            if True, will fit self to the full X and y,
+                end state will be equivalent to running fit(X, y)
+
+        Returns
+        -------
+        y : 2D array of shape [n_instances, n_classes] - predicted class probabilities
+            1st dimension indices correspond to instance indices in X
+            2nd dimension indices correspond to possible labels (integers)
+            (i, j)-th entry is predictive probability that i-th instance is of class j
+        """
+        return self._fit_predict_boilerplate(
+            X=X, y=y, cv=cv, change_state=change_state, method="predict_proba"
+        )
+
     def score(self, X, y) -> float:
         """Scores predicted labels against ground truth labels on X.
 
@@ -316,7 +470,6 @@ class BaseClassifier(BaseEstimator, ABC):
         """
         ...
 
-    @abstractmethod
     def _predict(self, X) -> np.ndarray:
         """Predicts labels for sequences in X.
 
@@ -337,7 +490,10 @@ class BaseClassifier(BaseEstimator, ABC):
         y : 1D np.array of int, of shape [n_instances] - predicted class labels
             indices correspond to instance indices in X
         """
-        ...
+        y_proba = self.predict_proba(X)
+        y_pred = y_proba.argmax(axis=1)
+
+        return y_pred
 
     def _predict_proba(self, X) -> np.ndarray:
         """Predicts labels probabilities for sequences in X.
