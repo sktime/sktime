@@ -98,9 +98,10 @@ BASE_CLASS_REGISTER = [
         "pairwise transformer for panel data, distance or kernel",
     ),
     ("aligner", BaseAligner, "time series aligner or sequence aligner"),
+
     # ("metric", BaseMetric, "performance metric"),
     # TODO Fails because it assumes it has fit
-    ("param_est", BaseParamFitter, "parameter fitting estimator")
+    ("param_est", BaseParamFitter, "parameter fitting estimator"),
 ]
 
 
