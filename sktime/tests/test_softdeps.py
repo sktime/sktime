@@ -255,7 +255,7 @@ def test_est_get_params_without_modulenotfound(estimator):
             f"Estimator {estimator.__name__} requires soft dependencies for parameters "
             f"returned by get_test_params. Test parameters should not require "
             f"soft dependencies and use only sktime internal objects. "
-            f'Exception text: {error_msg}'
+            f"Exception text: {error_msg}"
         ) from e
 
 
