@@ -68,6 +68,7 @@ from sktime.dists_kernels._base import (
     BasePairwiseTransformerPanel,
 )
 from sktime.forecasting.base import BaseForecaster
+
 # from sktime.performance_metrics.base import BaseMetric
 from sktime.param_est.base import BaseParamFitter
 from sktime.regression.base import BaseRegressor
@@ -98,7 +99,6 @@ BASE_CLASS_REGISTER = [
         "pairwise transformer for panel data, distance or kernel",
     ),
     ("aligner", BaseAligner, "time series aligner or sequence aligner"),
-
     # ("metric", BaseMetric, "performance metric"),
     # TODO Fails because it assumes it has fit
     ("param_est", BaseParamFitter, "parameter fitting estimator"),
