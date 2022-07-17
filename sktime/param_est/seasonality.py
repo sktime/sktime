@@ -188,7 +188,7 @@ class SeasonalityACF(BaseParamFitter):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         params1 = {}
-        params2 = {"candidate_sp": [3, 12, 24]}
+        params2 = {"candidate_sp": [3, 7, 12]}
 
         return [params1, params2]
 
@@ -246,7 +246,7 @@ class SeasonalityACFqstat(BaseParamFitter):
     >>> from sktime.datasets import load_airline
     >>> from sktime.param_est.seasonality import SeasonalityACFqstat
     >>> X = load_airline().diff()[1:]
-    >>> sp_est = SeasonalityACFqstat(candidate_sp=[3, 12, 24])
+    >>> sp_est = SeasonalityACFqstat(candidate_sp=[3, 7, 12])
     >>> sp_est.fit(X)
     SeasonalityACFqstat(...)
     >>> sp_est.get_fitted_params()["sp_significant"]
@@ -384,6 +384,6 @@ class SeasonalityACFqstat(BaseParamFitter):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         params1 = {}
-        params2 = {"candidate_sp": [3, 12, 24]}
+        params2 = {"candidate_sp": [3, 7, 12]}
 
         return [params1, params2]
