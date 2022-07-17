@@ -181,12 +181,20 @@ Running the test suite in a repository clone
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 If the target location of the estimator is within ``sktime``, then the ``sktime`` test
-suite can be run instead. The ``sktime`` test suite (and CI/CD) will automatically
-collect all estimators of a certain type and run relevant tests on them.
+suite can be run instead. The ``sktime`` test suite (and CI/CD) is ``pytest`` based, ``pytest`` will automatically
+collect all estimators of a certain type and tests applying for a given estimator.
 
-To run tests only for the estimator, the command ``pytest -k "EstimatorName"`` can be used.
+For an overview of the testing framework, see the "testing framework" documentation.
+Generic interface conformance tests are contained in the classes ``TestAllEstimators``, ``TestAllForecasters``, and so on.
+Test-fixture-strings for an estimator ``EstimatorName`` will always contain ``EstimatorName`` as a substring.
+The converse is only true insofar no estimator name contains other estimator names as substrings.
+
+To run tests only for a given estimator, the command ``pytest -k "EstimatorName"`` can be used.
 When using Visual Studio Code or pycharm, tests can also be sub-setted using GUI filter
 functionality - for this, refer to the respecetive IDE documentation on test integration.
+
+To identify codebase locations of tests applying to a specific estimator,
+a quick approach is searching the codebase for test strings produced by ``check_estimator``, preceded by ``def`` (for function/method definition).
 
 Testing within a third party extension package
 ----------------------------------------------
