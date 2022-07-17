@@ -41,7 +41,6 @@ def convert_from_multiindex_to_listdataset(trainDF, class_val_list=None):
     # Infer frequency
     # Frequency is inferred from pd.Series's index
     # All instances must have the same freq and only fixed freq is supported
-    # Default to nanosecond ('N') if none is specified
     # For a list of acceptable freq, see
     # https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#offset-aliases
     freq = pd.infer_freq(trainDF.loc[0, dimension_name[0]].index)
