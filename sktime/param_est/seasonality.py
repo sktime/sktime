@@ -80,7 +80,6 @@ class SeasonalityACF(BaseParamFitter):
     array([12, 11])
     """
 
-    _required_parameters = ["steps"]
     _tags = {
         "X_inner_mtype": "pd.Series",  # which types do _fit/_predict, support for X?
         "scitype:X": "Series",  # which X scitypes are supported natively?
@@ -252,7 +251,6 @@ class SeasonalityACFqstat(BaseParamFitter):
     >>> sp_est.get_fitted_params()["sp_significant"]
     """
 
-    _required_parameters = ["steps"]
     _tags = {
         "X_inner_mtype": "pd.Series",  # which types do _fit/_predict, support for X?
         "scitype:X": "Series",  # which X scitypes are supported natively?
