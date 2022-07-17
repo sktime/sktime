@@ -259,9 +259,9 @@ def test_est_construct_without_modulenotfound(estimator):
         raise RuntimeError(
             f"Estimator {estimator.__name__} does not require soft dependencies "
             f"according to tags, but raises ModuleNotFoundError "
-            f"on __init__. Any required soft dependencies should be added "
-            f'to the "python_dependencies" tag, and python version bouds should be'
-            f' added to the "python_version" tag. Exception text: {error_msg}'
+            f"on __init__ with test parameters. Any required soft dependencies should "
+            f'be added to the "python_dependencies" tag, and python version bounds '
+            f'should be added to the "python_version" tag. Exception text: {error_msg}'
         ) from e
 
 
@@ -283,6 +283,6 @@ def test_est_fit_without_modulenotfound(estimator):
             f"Estimator {estimator.__name__} does not require soft dependencies "
             f"according to tags, but raises ModuleNotFoundError "
             f"on fit. Any required soft dependencies should be added "
-            f'to the "python_dependencies" tag, and python version bouds should be'
+            f'to the "python_dependencies" tag, and python version bounds should be'
             f' added to the "python_version" tag. Exception text: {error_msg}'
         ) from e
