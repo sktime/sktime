@@ -244,6 +244,22 @@ def test_est_construct_if_softdep_available(estimator):
             ) from e
 
 
+@pytest.mark.parametrize("estimator", all_ests)
+def test_est_get_params_without_modulenotfound(estimator):
+    """Test that estimator test parameters do not rely on soft dependencies."""
+    try:
+        estimator.get_test_params()
+    except ModuleNotFoundError as e:
+        error_msg = str(e)
+        raise RuntimeError(
+            f"Estimator {estimator.__name__} does not require soft dependencies "
+            f"according to tags, but raises ModuleNotFoundError "
+            f"on __init__ with test parameters. Any required soft dependencies should "
+            f'be added to the "python_dependencies" tag, and python version bounds '
+            f'should be added to the "python_version" tag. Exception text: {error_msg}'
+        ) from e
+
+
 @pytest.mark.parametrize("estimator", est_pyok_without_soft_dep)
 def test_est_construct_without_modulenotfound(estimator):
     """Test that estimators that do not require soft dependencies construct properly."""
