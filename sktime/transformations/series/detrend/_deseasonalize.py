@@ -412,9 +412,9 @@ class STLTransformer(BaseTransformer):
     --------
     >>> from sktime.datasets import load_airline
     >>> from sktime.transformations.series.detrend import STLTransformer
-    >>> y = load_airline()
+    >>> X = load_airline()
     >>> transformer = STLTransformer(sp=12)
-    >>> y_hat = transformer.fit_transform(y)
+    >>> Xt = transformer.fit_transform(X)
     """
 
     _tags = {
@@ -427,7 +427,7 @@ class STLTransformer(BaseTransformer):
         "y_inner_mtype": "pd.Series",  # which mtypes do _fit/_predict support for y?
         "transform-returns-same-time-index": True,
         "univariate-only": True,
-        "fit-in-transform": False,
+        "fit_is_empty": False,
     }
 
     def __init__(
@@ -499,9 +499,9 @@ class STLTransformer(BaseTransformer):
             low_pass_jump=self.low_pass_jump,
         ).fit()
 
-        self.seasonal_ = pd.Series(self._stl.seasonal, index=X.index)
-        self.resid_ = pd.Series(self._stl.resid, index=X.index)
-        self.trend_ = pd.Series(self._stl.trend, index=X.index)
+        self.seasonal_ = pd.Series(self.stl_.seasonal, index=X.index)
+        self.resid_ = pd.Series(self.stl_.resid, index=X.index)
+        self.trend_ = pd.Series(self.stl_.trend, index=X.index)
 
         return self
 
