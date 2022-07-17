@@ -54,14 +54,14 @@ class SeasonalityACF(BaseParamFitter):
     --------
     >>> from sktime.datasets import load_airline
     >>> from sktime.param_est.seasonality import SeasonalityACF
-    >>> X = load_airline()
-    >>> sp_est = SeasonalityACF(candidate_sp=[3, 12, 24])
+    >>> X = load_airline().diff()[1:]
+    >>> sp_est = SeasonalityACF()
     >>> sp_est.fit(X)
     SeasonalityACF(...)
     >>> sp_est.get_fitted_params()["sp"]
     12
     >>> sp_est.get_fitted_params()["sp_significant"]
-    array([12, 24])
+    array([12, 11])
     """
 
     _required_parameters = ["steps"]
@@ -106,12 +106,22 @@ class SeasonalityACF(BaseParamFitter):
         -------
         self : reference to self
         """
-        candidate_sp = self.candidate_sp
         p_threshold = self.p_threshold
         adjusted = self.adjusted
+
         nlags = self.nlags
+        if nlags is None:
+            nobs = len(X)
+            nlags = min(10 * np.log10(nobs), nobs - 1)
+            nlags = int(nlags)
+
+        candidate_sp = self.candidate_sp
+        if candidate_sp is None:
+            candidate_sp = range(2, nlags)
+
         fft = self.fft
         missing = self.missing
+
         acf_series, confint = acf(
             x=X,
             adjusted=adjusted,
@@ -125,13 +135,11 @@ class SeasonalityACF(BaseParamFitter):
         lower = confint[:, 0]
         reject = lower < 0
 
-        if candidate_sp is not None:
-            lower_cand = lower[candidate_sp][1:]
-        else:
-            lower_cand = lower[1:]
+        lower_cand = lower[candidate_sp]
+        reject_cand = reject[candidate_sp]
 
-        sorting = np.argsort(-lower_cand) + 1
-        reject_ordered = reject[sorting]
+        sorting = np.argsort(-lower_cand)
+        reject_ordered = reject_cand[sorting]
         sp_ordered = np.array(candidate_sp)[sorting]
         sp_significant = sp_ordered[~reject_ordered]
 
@@ -272,13 +280,26 @@ class SeasonalityACFqstat(BaseParamFitter):
         -------
         self : reference to self
         """
-        candidate_sp = self.candidate_sp
         p_threshold = self.p_threshold
         p_adjust = self.p_adjust
         adjusted = self.adjusted
+
+        p_threshold = self.p_threshold
+        adjusted = self.adjusted
+
         nlags = self.nlags
+        if nlags is None:
+            nobs = len(X)
+            nlags = min(10 * np.log10(nobs), nobs - 1)
+            nlags = int(nlags)
+
+        candidate_sp = self.candidate_sp
+        if candidate_sp is None:
+            candidate_sp = range(2, nlags)
+
         fft = self.fft
         missing = self.missing
+
         acf_series, confint, qstat, pvalues = acf(
             x=X,
             adjusted=adjusted,
@@ -299,21 +320,22 @@ class SeasonalityACFqstat(BaseParamFitter):
         else:
             qstat_cand = qstat
             pvalues_cand = pvalues
+            candidate_sp = range(2, nlags)
 
         self.qstat_cand_ = qstat_cand
         self.pvalues_cand = pvalues_cand
 
         if p_adjust != "none":
-            reject, pvals_adj, _, _ = multipletests(
+            _, pvals_adj, _, _ = multipletests(
                 pvals=pvalues_cand, alpha=p_threshold, method=p_adjust
             )
             self.pvalues_adjusted_ = pvals_adj
         else:
             self.pvalues_adjusted_ = pvalues_cand
-            reject = pvalues_cand > p_threshold
+            reject_cand = pvalues_cand > p_threshold
 
         sorting = np.argsort(pvalues_cand)
-        reject_ordered = reject[sorting]
+        reject_ordered = reject_cand[sorting]
         sp_ordered = np.array(candidate_sp)[sorting]
         sp_significant = sp_ordered[reject_ordered]
 
