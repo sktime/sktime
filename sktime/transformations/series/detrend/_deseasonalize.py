@@ -84,7 +84,7 @@ class Deseasonalizer(BaseTransformer):
                 f"`model` must be one of {allowed_models}, " f"but found: {model}"
             )
         self.model = model
-        self._y_index = None
+        self._X = None
         self.seasonal_ = None
         super(Deseasonalizer, self).__init__()
 
@@ -198,8 +198,9 @@ class Deseasonalizer(BaseTransformer):
         -------
         self: a fitted instance of the estimator
         """
-        self._set_y_index(X)
-        return self
+        X_full = X.combine_first(self._X)
+        self._X = X_full
+        return self._fit(X_full, update_params=update_params)
 
 
 class ConditionalDeseasonalizer(Deseasonalizer):
@@ -461,7 +462,7 @@ class STLTransformer(BaseTransformer):
         self.trend_jump = trend_jump
         self.low_pass_jump = low_pass_jump
         self.return_components = return_components
-        self._Z_index = None
+        self._X = None
         super(STLTransformer, self).__init__()
 
     def _fit(self, X, y=None):
@@ -507,7 +508,7 @@ class STLTransformer(BaseTransformer):
     def _transform(self, X, y=None):
 
         # fit again if indices not seen, but don't store anything
-        if not X.index.equals(self._X_index):
+        if not X.index.equals(self._X.index):
             X_full = X.combine_first(self._X)
             new_stl = _STL(
                 X_full.values,
