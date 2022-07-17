@@ -54,10 +54,26 @@ class SeasonalityACF(BaseParamFitter):
     --------
     >>> from sktime.datasets import load_airline
     >>> from sktime.param_est.seasonality import SeasonalityACF
+    >>>
     >>> X = load_airline().diff()[1:]
     >>> sp_est = SeasonalityACF()
     >>> sp_est.fit(X)
     SeasonalityACF(...)
+    >>> sp_est.get_fitted_params()["sp"]
+    12
+    >>> sp_est.get_fitted_params()["sp_significant"]
+    array([12, 11])
+
+    Series should be stationary before applying ACF.
+    To pipeline SeasonalityACF with the Differencer, use the ParamFitterPipeline:
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.param_est.seasonality import SeasonalityACF
+    >>> from sktime.transformations.series.difference import Differencer
+    >>>
+    >>> X = load_airline()
+    >>> sp_est = Differencer() * SeasonalityACF()
+    >>> sp_est.fit(X)
+    ParamFitterPipeline(...)
     >>> sp_est.get_fitted_params()["sp"]
     12
     >>> sp_est.get_fitted_params()["sp_significant"]
