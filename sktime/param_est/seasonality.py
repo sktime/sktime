@@ -254,7 +254,7 @@ class SeasonalityACFqstat(BaseParamFitter):
         self.nlags = nlags
         self.fft = fft
         self.missing = missing
-        super(SeasonalityACF, self).__init__()
+        super(SeasonalityACFqstat, self).__init__()
 
     def _fit(self, X):
         """Fit estimator and estimate parameters.
