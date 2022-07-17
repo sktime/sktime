@@ -353,6 +353,7 @@ def test_fit_predict_cv(method):
 
     y_pred_cv_int = getattr(clf, method)(X, y, cv=3, change_state=False)
     y_pred_cv_obj = getattr(clf, method)(X, y, cv=cv, change_state=False)
+    assert not clf.is_fitted
 
     _assert_array_almost_equal(y_pred_cv_int, y_pred_cv_obj)
     assert -1 not in y_pred_cv_int
@@ -361,3 +362,14 @@ def test_fit_predict_cv(method):
     if method == "fit_predict_proba":
         n_cl = len(y.unique())
         assert y_pred_cv_int.shape[1] == n_cl
+
+    # check that state is same as self.fit(X, y) if change_state=True
+    y_pred_cv_obj_fit = getattr(clf, method)(X, y, cv=cv, change_state=True)
+    assert clf.is_fitted
+
+    # get output from fit and predict or predict_proba
+    clf = KNeighborsTimeSeriesClassifier()
+    normal_method = method.partition("_")[2]
+    y_pred_normal = getattr(clf.fit(X, y), normal_method)(X)
+
+    _assert_array_almost_equal(y_pred_normal, y_pred_cv_obj_fit)

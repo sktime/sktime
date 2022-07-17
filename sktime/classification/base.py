@@ -301,6 +301,8 @@ class BaseClassifier(BaseEstimator, ABC):
 
         if cv is None:
             return getattr(est.fit(X, y), method)(X)
+        elif change_state:
+            self.fit(X, y)
 
         # we now know that cv is an sklearn splitter
         X, y = _internal_convert(X, y)
