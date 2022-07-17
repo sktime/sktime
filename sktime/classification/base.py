@@ -288,7 +288,8 @@ class BaseClassifier(BaseEstimator, ABC):
         from sklearn.model_selection import KFold
 
         if isinstance(cv, int):
-            cv = KFold(cv)
+            random_state = getattr(self, "random_state", None)
+            cv = KFold(cv, random_state=random_state)
 
         if change_state:
             self.reset()
