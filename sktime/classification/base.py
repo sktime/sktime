@@ -495,7 +495,7 @@ class BaseClassifier(BaseEstimator, ABC):
         y : 1D np.array of int, of shape [n_instances] - predicted class labels
             indices correspond to instance indices in X
         """
-        y_proba = self.predict_proba(X)
+        y_proba = self._predict_proba(X)
         y_pred = y_proba.argmax(axis=1)
 
         return y_pred
