@@ -158,7 +158,7 @@ Example, running the test ``test_required_params`` with all fixtures:
 
 ``{'test_required_params[NaiveForecaster]': 'PASSED'}``
 
-To run or exclude certain tests, use the ``fixtures_to_run`` or ``fixtures_to_exclude`` arguments.
+To run or exclude certain test-fixture-combinations, use the ``fixtures_to_run`` or ``fixtures_to_exclude`` arguments.
 Values provided should be names of test-fixture-combination strings (str), or a list of such.
 Valid strings are precisely the dictionary keys when using ``check_estimator`` with default parameters.
 
