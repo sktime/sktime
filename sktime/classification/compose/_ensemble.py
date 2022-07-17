@@ -656,7 +656,8 @@ class WeightedEnsembleClassifier(BaseClassifier, _HeterogenousMetaEstimator):
 
         # pass on random state
         for _, clf in self.classifiers_:
-            if "random_state" in clf.get_params().keys():
+            params = clf.get_params()
+            if "random_state" in params and params["random_state"] is None:
                 clf.set_params(random_state=random_state)
 
         if weights is None:
