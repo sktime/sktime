@@ -266,7 +266,9 @@ class BaseClassifier(BaseEstimator, ABC):
                 where multiple X_train, y_train, X_test are obtained from cv folds
                 returned y is union over all test fold predictions
                 cv test folds must be non-intersecting
-            int : equivalent to cv=Kfold(int), i.e., k-fold cross-validation predictions
+            int : equivalent to cv=KFold(cv, shuffle=True, random_state=x),
+                i.e., k-fold cross-validation predictions out-of-sample
+                random_state x is taken from self if exists, otherwise x=None
         change_state : bool, optional (default=True)
             if False, will not change the state of the classifier,
                 i.e., fit/predict sequence is run with a copy, self does not change
@@ -289,7 +291,7 @@ class BaseClassifier(BaseEstimator, ABC):
 
         if isinstance(cv, int):
             random_state = getattr(self, "random_state", None)
-            cv = KFold(cv, random_state=random_state)
+            cv = KFold(cv, random_state=random_state, shuffle=True)
 
         if change_state:
             self.reset()
