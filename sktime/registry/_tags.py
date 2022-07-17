@@ -106,6 +106,12 @@ ESTIMATOR_TAG_REGISTER = [
         "is the transformer symmetric, i.e., t(x,y)=t(y,x) always?",
     ),
     (
+        "scitype:X",
+        "param_est",
+        "str",
+        "which scitypes does X internally support?",
+    ),
+    (
         "scitype:y",
         "forecaster",
         ("str", ["univariate", "multivariate", "both"]),
@@ -130,7 +136,7 @@ ESTIMATOR_TAG_REGISTER = [
     ),
     (
         "X_inner_mtype",
-        ["forecaster", "transformer", "transformer-pairwise-panel"],
+        ["forecaster", "transformer", "transformer-pairwise-panel", "param_est"],
         (
             "list",
             [
@@ -195,7 +201,7 @@ ESTIMATOR_TAG_REGISTER = [
     ),
     (
         "capability:multivariate",
-        ["classifier", "early_classifier"],
+        ["classifier", "early_classifier", "param_est"],
         "bool",
         "can the classifier classify time series with 2 or more variables?",
     ),
@@ -210,7 +216,7 @@ ESTIMATOR_TAG_REGISTER = [
     # Will be merged after refactor completion.
     (
         "capability:missing_values",
-        ["classifier", "early_classifier"],
+        ["classifier", "early_classifier", "param_est"],
         "bool",
         "can the classifier handle missing data (NA, np.nan) in inputs?",
     ),
