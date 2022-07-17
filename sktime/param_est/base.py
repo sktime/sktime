@@ -25,7 +25,6 @@ __all__ = ["BaseParamFitter"]
 
 from warnings import warn
 
-
 from sktime.base import BaseEstimator
 from sktime.datatypes import (
     VectorizedDF,
@@ -62,7 +61,7 @@ class BaseParamFitter(BaseEstimator):
         "capability:missing_values": False,  # can estimator handle missing data?
         "capability:multivariate": False,  # can estimator handle multivariate data?
         "python_version": None,  # PEP 440 python version specifier to limit versions
-        "python_dependencies": None  # string or str list of pkg soft dependencies
+        "python_dependencies": None,  # string or str list of pkg soft dependencies
     }
 
     def __init__(self):

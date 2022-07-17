@@ -6,7 +6,6 @@ __author__ = ["fkiraly"]
 __all__ = ["SeasonalityACF"]
 
 import numpy as np
-
 from statsmodels.stats.multitest import multipletests
 from statsmodels.tsa.stattools import acf
 
@@ -80,7 +79,7 @@ class SeasonalityACF(BaseParamFitter):
         adjusted=False,
         nlags=None,
         fft=True,
-        missing="none"
+        missing="none",
     ):
         self.candidate_sp = candidate_sp
         self.p_threshold = p_threshold
@@ -245,7 +244,7 @@ class SeasonalityACFqstat(BaseParamFitter):
         adjusted=False,
         nlags=None,
         fft=True,
-        missing="none"
+        missing="none",
     ):
         self.candidate_sp = candidate_sp
         self.p_threshold = p_threshold
@@ -281,7 +280,13 @@ class SeasonalityACFqstat(BaseParamFitter):
         fft = self.fft
         missing = self.missing
         acf_series, confint, qstat, pvalues = acf(
-            x=X, adjusted=adjusted, nlags=nlags, fft=fft, missing=missing, alpha=p_threshold, qstat=True,
+            x=X,
+            adjusted=adjusted,
+            nlags=nlags,
+            fft=fft,
+            missing=missing,
+            alpha=p_threshold,
+            qstat=True,
         )
         self.acf_ = acf_series
         self.confint_ = confint
