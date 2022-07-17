@@ -141,7 +141,7 @@ that is, a test name and the fixture combination string in squared brackets.
 Example: ``'test_repr[NaiveForecaster-2]'``, where ``test_repr`` is the test name, and ``NaiveForecaster-2`` the fixture combination string.
 
 Values of the return ``dict`` are either the string ``"PASSED"``, if the test succeeds, or the exception that the test would raise at failure.
-Exceptions are not raised by default, by ``check_estimator``, but returned as dictionary values.
+``check_estimator`` does not raise exceptions by default, the default is returning them as dictionary values.
 To raise the exceptions instead, e.g., for debugging, use the argument ``return_exceptions=False``,
 which will raise the exceptions instead of returning them as dictionary values.
 
