@@ -144,6 +144,7 @@ Values of the return ``dict`` are either the string ``"PASSED"``, if the test su
 ``check_estimator`` does not raise exceptions by default, the default is returning them as dictionary values.
 To raise the exceptions instead, e.g., for debugging, use the argument ``return_exceptions=False``,
 which will raise the exceptions instead of returning them as dictionary values.
+In that case, there will be at most one exception raised, namely the first exception encountered in the test execution order.
 
 To run or exclude certain tests, use the ``tests_to_run`` or ``tests_to_exclude`` arguments.
 Values provided should be names of tests (str), or a list of names of tests.
