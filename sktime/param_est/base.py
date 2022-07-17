@@ -228,7 +228,7 @@ class BaseParamFitter(BaseEstimator):
         X_inner_mtype = _coerce_to_list(self.get_tag("X_inner_mtype"))
         # X_inner_scitype = mtype_to_scitype(X_inner_mtype, return_unique=True)
 
-        ALLOWED_SCITYPES = _coerce_to_list(self.get_tag("scitype:y"))
+        ALLOWED_SCITYPES = _coerce_to_list(self.get_tag("scitype:X"))
         FORBIDDEN_MTYPES = ["numpyflat", "pd-wide"]
 
         for scitype in ALLOWED_SCITYPES:
@@ -374,6 +374,8 @@ class BaseParamFitter(BaseEstimator):
         # default retrieves all self attributes ending in "_"
         # and returns them with keys that have the "_" removed
         fitted_params = [attr for attr in dir(self) if attr.endswith("_")]
+        bad_params = [x for x in fitted_params if x.startswith("_")]
+        fitted_params = set(fitted_params).difference(bad_params)
         fitted_param_dict = {p[:-1]: getattr(self, p) for p in fitted_params}
 
         return fitted_param_dict
