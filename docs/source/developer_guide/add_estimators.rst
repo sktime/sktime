@@ -140,8 +140,9 @@ The ``check_estimator`` utility will return, by default, a ``dict``, indexed by 
 that is, a test name and the fixture combination string in squared brackets.
 Example: ``'test_repr[NaiveForecaster-2]'``, where ``test_repr`` is the test name, and ``NaiveForecaster-2`` the fixture combination string.
 
-Values of the return ``dict`` are either the string ``"PASSED"``, if the test succeeds, or the exception that is being raised.
-Exceptions are not raised by default. To raise exceptions instead, e.g., in debugging, use the argument ``return_exceptions=False``,
+Values of the return ``dict`` are either the string ``"PASSED"``, if the test succeeds, or the exception that the test would raise at failure.
+Exceptions are not raised by default, by ``check_estimator``, but returned as dictionary values.
+To raise the exceptions instead, e.g., for debugging, use the argument ``return_exceptions=False``,
 which will raise the exceptions instead of returning them as dictionary values.
 
 To run or exclude certain tests, use the ``tests_to_run`` or ``tests_to_exclude`` arguments.
