@@ -575,6 +575,9 @@ class WeightedEnsembleClassifier(BaseClassifier, _HeterogenousMetaEstimator):
     The evaluation for the empirical training loss can be selected
     through the `metric` and `metric_type` parameters.
 
+    Currently uses in-sample empirical training loss (fit.predict) only.
+    (todo: extend for out-of-sample by cv once evaluate/benchmarking is written for TSC)
+
     Parameters
     ----------
     classifiers : dict or None, default=None
@@ -615,7 +618,7 @@ class WeightedEnsembleClassifier(BaseClassifier, _HeterogenousMetaEstimator):
     >>> clf = WeightedEnsembleClassifier(
     ...     [KNeighborsTimeSeriesClassifier(), RocketClassifier()],
     ...     weights=2,
-    ...)
+    ... )
     >>> clf.fit(X_train, y_train)
     WeightedEnsembleClassifier(...)
     >>> y_pred = clf.predict(X_test)
@@ -632,16 +635,29 @@ class WeightedEnsembleClassifier(BaseClassifier, _HeterogenousMetaEstimator):
         ],
     }
 
-    def __init__(self, classifiers, weights=None, metric=None, metric_type="point"):
+    def __init__(
+        self,
+        classifiers,
+        weights=None,
+        metric=None,
+        metric_type="point",
+        random_state=None,
+    ):
         self.classifiers = classifiers
         self.weights = weights
         self.metric = metric
         self.metric_type = metric_type
+        self.random_state = random_state
 
         # make the copies that are being fitted
         self.classifiers_ = self._check_estimators(
             self.classifiers, cls_type=BaseClassifier
         )
+
+        # pass on random state
+        for _, clf in self.classifiers_:
+            if "random_state" in clf.get_params().keys():
+                clf.set_params(random_state=random_state)
 
         if weights is None:
             self.weights_ = {x[0]: 1 for x in self.classifiers_}
