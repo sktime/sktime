@@ -349,7 +349,7 @@ def test_fit_predict_cv(method):
 
     clf = KNeighborsTimeSeriesClassifier()
     clf.random_state = 42
-    cv = KFold(3, random_state=42)
+    cv = KFold(3, random_state=42, shuffle=True)
 
     y_pred_cv_int = getattr(clf, method)(X, y, cv=3, change_state=False)
     y_pred_cv_obj = getattr(clf, method)(X, y, cv=cv, change_state=False)
