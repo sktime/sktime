@@ -252,11 +252,10 @@ def test_est_get_params_without_modulenotfound(estimator):
     except ModuleNotFoundError as e:
         error_msg = str(e)
         raise RuntimeError(
-            f"Estimator {estimator.__name__} does not require soft dependencies "
-            f"according to tags, but raises ModuleNotFoundError "
-            f"on __init__ with test parameters. Any required soft dependencies should "
-            f'be added to the "python_dependencies" tag, and python version bounds '
-            f'should be added to the "python_version" tag. Exception text: {error_msg}'
+            f"Estimator {estimator.__name__} requires soft dependencies for parameters "
+            f"returned by get_test_params. Test parameters should not require "
+            f"soft dependencies and use only sktime internal objects. "
+            f'Exception text: {error_msg}'
         ) from e
 
 
@@ -291,8 +290,8 @@ def test_est_fit_without_modulenotfound(estimator):
 
     try:
         scenario = retrieve_scenarios(estimator)[0]
-        estimator.create_test_instance()
-        scenario.run(estimator, method_sequence=["fit"])
+        estimator_instance = estimator.create_test_instance()
+        scenario.run(estimator_instance, method_sequence=["fit"])
     except ModuleNotFoundError as e:
         error_msg = str(e)
         raise RuntimeError(
