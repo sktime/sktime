@@ -66,6 +66,7 @@ class FreshPRINCE(BaseClassifier):
         "capability:train_estimate": True,
         "classifier_type": "feature",
         "python_version": "<3.10",
+        "python_dependencies": "tsfresh",
     }
 
     def __init__(

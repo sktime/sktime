@@ -11,7 +11,7 @@ import pytest
 from sktime.forecasting.base._sktime import _BaseWindowForecaster
 from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.registry import all_estimators
-from sktime.utils._testing.forecasting import _get_n_columns, make_forecasting_problem
+from sktime.utils._testing.forecasting import make_forecasting_problem
 from sktime.utils._testing.series import _make_series
 
 FH0 = 1
@@ -31,16 +31,15 @@ y_train, y_test = temporal_train_test_split(y, train_size=0.75)
 def test_last_window(Forecaster):
     """Test window forecaster common API points."""
     f = Forecaster.create_test_instance()
-    n_columns_list = _get_n_columns(f.get_tag("scitype:y"))
+    n_columns = 1
 
-    for n_columns in n_columns_list:
-        f = Forecaster.create_test_instance()
-        y_train = _make_series(n_columns=n_columns)
-        # passing the same fh to both fit and predict works
-        f.fit(y_train, fh=FH0)
+    f = Forecaster.create_test_instance()
+    y_train = _make_series(n_columns=n_columns)
+    # passing the same fh to both fit and predict works
+    f.fit(y_train, fh=FH0)
 
-        actual, _ = f._get_last_window()
-        expected = y_train.iloc[-f.window_length_ :]
+    actual, _ = f._get_last_window()
+    expected = y_train.iloc[-f.window_length_ :]
 
-        np.testing.assert_array_equal(actual, expected)
-        assert len(actual) == f.window_length_
+    np.testing.assert_array_equal(actual, expected)
+    assert len(actual) == f.window_length_
