@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """Unified high-level interface for various time series related learning tasks."""
 
 from inspect import signature
@@ -67,9 +68,9 @@ class BaseTask(BaseObject):
         # error
         if self._metadata is not None:
             raise AttributeError(
-                'Metadata is already set and can only be set once, create a '
-                'new task for different '
-                'metadata')
+                "Metadata is already set and can only be set once, create a "
+                "new task for different metadata"
+            )
 
         # check for consistency of information provided in task with given
         # metadata
@@ -84,10 +85,10 @@ class BaseTask(BaseObject):
         self._metadata = {
             "nrow": metadata.shape[0],
             "ncol": metadata.shape[1],
-            "target_type": {self.target: type(i) for i in
-                            metadata[self.target]},
-            "feature_type": {col: {type(i) for i in metadata[col]} for col in
-                             self.features}
+            "target_type": {self.target: type(i) for i in metadata[self.target]},
+            "feature_type": {
+                col: {type(i) for i in metadata[col]} for col in self.features
+            },
         }
         return self
 
@@ -101,8 +102,9 @@ class BaseTask(BaseObject):
         """
         if not isinstance(metadata, pd.DataFrame):
             raise ValueError(
-                f'Metadata must be provided in form of a pandas dataframe, '
-                f'but found: {type(metadata)}')
+                f"Metadata must be provided in form of a pandas dataframe, "
+                f"but found: {type(metadata)}"
+            )
 
         if self.target not in metadata.columns:
             raise ValueError(f"Target: {self.target} not found in metadata")
@@ -110,7 +112,8 @@ class BaseTask(BaseObject):
         if self.features is not None:
             if not np.all(self.features.isin(metadata.columns)):
                 raise ValueError(
-                    f"Features: {list(self.features)} not found in metadata")
+                    f"Features: {list(self.features)} not found in metadata"
+                )
 
         if isinstance(self, (TSCTask, TSRTask)):
             if self.features is None:
@@ -118,20 +121,22 @@ class BaseTask(BaseObject):
                     raise ValueError(
                         f"For task of type: {type(self)}, at least one "
                         f"feature must be given, "
-                        f"but found none")
+                        f"but found none"
+                    )
 
             if metadata.shape[0] <= 1:
                 raise ValueError(
                     f"For task of type: {type(self)}, several samples (rows) "
                     f"must be given, but only "
-                    f"found: {metadata.shape[0]} samples")
+                    f"found: {metadata.shape[0]} samples"
+                )
 
     @classmethod
     def _get_param_names(cls):
         """Get parameter names for the task."""
         # fetch the constructor or the original constructor before
         # deprecation wrapping if any
-        init = getattr(cls.__init__, 'deprecated_original', cls.__init__)
+        init = getattr(cls.__init__, "deprecated_original", cls.__init__)
         if init is object.__init__:
             # No explicit constructor to introspect
             return []
@@ -140,9 +145,11 @@ class BaseTask(BaseObject):
         # to represent
         init_signature = signature(init)
         # Consider the constructor parameters excluding 'self'
-        parameters = [p for p in init_signature.parameters.values()
-                      if p.name != 'self' and p.kind != p.VAR_KEYWORD]
-
+        parameters = [
+            p
+            for p in init_signature.parameters.values()
+            if p.name != "self" and p.kind != p.VAR_KEYWORD
+        ]
         # Extract and sort argument names excluding 'self'
         return sorted([p.name for p in parameters])
 
@@ -154,8 +161,7 @@ class BaseTask(BaseObject):
         params : mapping of string to any
             Parameter names mapped to their values.
         """
-        out = {key: getattr(self, key, None) for key in
-               self._get_param_names()}
+        out = {key: getattr(self, key, None) for key in self._get_param_names()}
         return out
 
 
@@ -181,9 +187,8 @@ class TSCTask(BaseTask):
     """
 
     def __init__(self, target, features=None, metadata=None):
-        self._case = 'TSC'
-        super(TSCTask, self).__init__(target, features=features,
-                                      metadata=metadata)
+        self._case = "TSC"
+        super(TSCTask, self).__init__(target, features=features, metadata=metadata)
 
 
 class TSRTask(BaseTask):
@@ -208,6 +213,5 @@ class TSRTask(BaseTask):
     """
 
     def __init__(self, target, features=None, metadata=None):
-        self._case = 'TSR'
-        super(TSRTask, self).__init__(target, features=features,
-                                      metadata=metadata)
+        self._case = "TSR"
+        super(TSRTask, self).__init__(target, features=features, metadata=metadata)
