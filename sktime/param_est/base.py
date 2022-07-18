@@ -205,8 +205,7 @@ class BaseParamFitter(BaseEstimator):
         # input checks and minor coercions on X, y
         X_inner = self._check_X(X=X)
 
-        # update internal X/y with the new X/y
-        # this also updates cutoff from y
+        # update internal X with the new X
         self._update_X(X_inner)
 
         # checks and conversions complete, pass to inner update
