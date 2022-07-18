@@ -12,15 +12,14 @@ import numpy as np
 import pandas as pd
 from joblib import Parallel, delayed
 from sklearn.model_selection import ParameterGrid, ParameterSampler, check_cv
-from sklearn.utils.metaestimators import if_delegate_has_method
 
 from sktime.exceptions import NotFittedError
-from sktime.forecasting.base import BaseForecaster
+from sktime.forecasting.base._delegate import _DelegatedForecaster
 from sktime.forecasting.model_evaluation import evaluate
 from sktime.utils.validation.forecasting import check_scoring
 
 
-class BaseGridSearch(BaseForecaster):
+class BaseGridSearch(_DelegatedForecaster):
 
     _tags = {
         "scitype:y": "both",
@@ -68,107 +67,34 @@ class BaseGridSearch(BaseForecaster):
         ]
         self.clone_tags(forecaster, tags_to_clone)
 
-    @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
-    def _update(self, y, X=None, update_params=False):
-        """Call _update on the forecaster with the best found parameters."""
-        self.check_is_fitted("update")
-        self.best_forecaster_._update(y, X, update_params=update_params)
-        return self
+    _delegate_name = "best_forecaster_"
 
-    @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
-    def _predict(self, fh=None, X=None):
-        """Call _predict on the forecaster with the best found parameters."""
-        self.check_is_fitted("predict")
-        return self.best_forecaster_._predict(fh=fh, X=X)
-
-    @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
-    def _predict_interval(self, fh=None, X=None, coverage=None):
-        """Call _predict_interval on the forecaster with the best found parameters."""
-        self.check_is_fitted("predict")
-        return self.best_forecaster_._predict_interval(fh=fh, X=X, coverage=coverage)
-
-    @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
-    def _predict_quantiles(self, fh=None, X=None, alpha=None):
-        """Call _predict_quantiles on the forecaster with the best found parameters."""
-        self.check_is_fitted("predict")
-        return self.best_forecaster_._predict_quantiles(fh=fh, X=X, alpha=alpha)
-
-    @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
-    def _predict_var(self, fh=None, X=None, cov=False):
-        """Call _predict_var on the forecaster with the best found parameters."""
-        self.check_is_fitted("predict")
-        return self.best_forecaster_._predict_var(fh=fh, X=X, cov=cov)
-
-    @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
-    def _predict_proba(self, fh=None, X=None, marginal=True):
-        """Call _predict_proba on the forecaster with the best found parameters."""
-        self.check_is_fitted("predict")
-        return self.best_forecaster_._predict_proba(fh=fh, X=X, marginal=marginal)
-
-    @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
-    def transform(self, y, X=None):
-        """Call transform on the forecaster with the best found parameters."""
-        self.check_is_fitted("transform")
-        return self.best_forecaster_.transform(y, X)
-
-    @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
     def get_fitted_params(self):
         """Get fitted parameters.
 
         Returns
         -------
         fitted_params : dict
+            A dict containing the best hyper parameters and the parameters of
+            the best estimator (if available), merged together with the former
+            taking precedence.
         """
-        self.check_is_fitted("get_fitted_params")
-        return self.best_forecaster_.get_fitted_params()
+        if not self.is_fitted:
+            raise NotFittedError
 
-    @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
-    def inverse_transform(self, y, X=None):
-        """Call inverse_transform on the forecaster with the best found params.
+        if self._is_vectorized:
+            return {"forecasters_": self.forecasters_}
 
-        Only available if the underlying forecaster implements
-        ``inverse_transform`` and ``refit=True``.
-
-        Parameters
-        ----------
-        y : indexable, length n_samples
-            Must fulfill the input assumptions of the
-            underlying forecaster.
-        """
-        self.check_is_fitted("inverse_transform")
-        return self.best_forecaster_.inverse_transform(y, X)
+        fitted_params = {}
+        try:
+            fitted_params = self.best_forecaster_.get_fitted_params()
+        except NotImplementedError:
+            pass
+        fitted_params = {**fitted_params, **self.best_params_}
+        return fitted_params
 
     def _run_search(self, evaluate_candidates):
         raise NotImplementedError("abstract method")
-
-    def check_is_fitted(self, method_name=None):
-        """Check if `fit` has been called.
-
-        Parameters
-        ----------
-        method_name : str
-            Name of the calling method.
-
-        Raises
-        ------
-        NotFittedError
-            If forecaster has not been fitted yet.
-        """
-        super(BaseGridSearch, self).check_is_fitted()
-
-        # We additionally check if the tuned forecaster has been fitted.
-        if method_name is not None:
-            if not self.refit:
-                raise NotFittedError(
-                    "This %s instance was initialized "
-                    "with refit=False. %s is "
-                    "available only after refitting on the "
-                    "best parameters. You can refit an forecaster "
-                    "manually using the ``best_params_`` "
-                    "attribute" % (type(self).__name__, method_name)
-                )
-            else:
-                self.best_forecaster_.check_is_fitted()
 
     def _fit(self, y, X=None, fh=None):
         """Fit to training data.
@@ -257,7 +183,7 @@ class BaseGridSearch(BaseForecaster):
 
         # Rank results, according to whether greater is better for the given scoring.
         results[f"rank_{scoring_name}"] = results.loc[:, f"mean_{scoring_name}"].rank(
-            ascending=not scoring.greater_is_better
+            ascending=scoring.get_tag("lower_is_better")
         )
 
         self.cv_results_ = results
@@ -274,7 +200,7 @@ class BaseGridSearch(BaseForecaster):
 
         # Sort values according to rank
         results = results.sort_values(
-            by=f"rank_{scoring_name}", ascending=not scoring.greater_is_better
+            by=f"rank_{scoring_name}", ascending=scoring.get_tag("lower_is_better")
         )
         # Select n best forecaster
         self.n_best_forecasters_ = []
@@ -299,7 +225,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
     """Perform grid-search cross-validation to find optimal model parameters.
 
     The forecaster is fit on the initial window and then temporal
-    cross-validation is used to find the optimal parameter
+    cross-validation is used to find the optimal parameter.
 
     Grid-search cross-validation is performed based on a cross-validation
     iterator encoding the cross-validation scheme, the parameter grid to
@@ -350,7 +276,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
     cv_results_ : dict
         Results from grid search cross validation
     n_splits_: int
-        Number of splits in the data for cross validation}
+        Number of splits in the data for cross validation
     refit_time_ : float
         Time (seconds) to refit the best forecaster
     scorer_ : function
@@ -499,6 +425,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
         -------
         params : dict or list of dict
         """
+        from sktime.forecasting.exp_smoothing import ExponentialSmoothing
         from sktime.forecasting.model_selection._split import SingleWindowSplitter
         from sktime.forecasting.naive import NaiveForecaster
         from sktime.performance_metrics.forecasting import MeanAbsolutePercentageError
@@ -509,7 +436,13 @@ class ForecastingGridSearchCV(BaseGridSearch):
             "param_grid": {"window_length": [2, 5]},
             "scoring": MeanAbsolutePercentageError(symmetric=True),
         }
-        return params
+        params2 = {
+            "forecaster": ExponentialSmoothing(),
+            "cv": SingleWindowSplitter(fh=1),
+            "param_grid": {"initialization_method": ["estimated", "heuristic"]},
+            "scoring": MeanAbsolutePercentageError(symmetric=True),
+        }
+        return [params, params2]
 
 
 class ForecastingRandomizedSearchCV(BaseGridSearch):

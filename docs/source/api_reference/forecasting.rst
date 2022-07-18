@@ -201,6 +201,14 @@ All "ARIMA" models below include SARIMAX capability.
 
     VAR
 
+.. currentmodule:: sktime.forecasting.varmax
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    VARMAX
+
 Structural time series models
 -----------------------------
 
@@ -235,6 +243,14 @@ Structural time series models
     :template: class.rst
 
     UnobservedComponents
+
+.. currentmodule:: sktime.forecasting.dynamic_factor
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    DynamicFactor
 
 Ensembles and stacking
 ----------------------
@@ -279,7 +295,9 @@ Online and stream forecasting
     :toctree: auto_generated/
     :template: class.rst
 
+    UpdateEvery
     UpdateRefitsEvery
+    DontUpdate
 
 Model selection and tuning
 --------------------------
