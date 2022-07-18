@@ -26,8 +26,8 @@ def mean_shift(
         Means of the segments to be generated
     lengths : array_like
         Lengths of the segments to be generated
-    noise : float ir array_like
-        Standard deviations fo the segments to be generated
+    noise : float or array_like
+        Standard deviations of the segments to be generated
     random_state : int or np.random.RandomState
         Either a random seed or RandomState instance
 
@@ -93,8 +93,8 @@ def label_mean_shift(
         Means of the segments to be generated
     lengths : array_like
         Lengths of the segments to be generated
-    noise : float ir array_like
-        Standard deviations fo the segments to be generated
+    noise : float or array_like
+        Standard deviations of the segments to be generated
     repeated_labels : bool
         Flag to indicate whether segment labels should be repeated for similar segments.
         If ``True`` same label will be assigned for segments with same mean and noise,
@@ -106,7 +106,7 @@ def label_mean_shift(
     labels : np.array
         integer encoded array of labels, same length as data
     """
-    if isinstance(noise, float):
+    if isinstance(noise, (float, int)):
         noise = np.repeat(noise, len(means))
     if repeated_labels:
         unique_labels = labels_with_repeats(means, noise)
