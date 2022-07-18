@@ -5,7 +5,7 @@ __all__ = [
     "ContinuousIntervalTree",
 ]
 
-from sktime.classification_sklearn._continuous_interval_tree import (
+from sktime.classification.sklearn._continuous_interval_tree import (
     ContinuousIntervalTree,
 )
-from sktime.classification_sklearn._rotation_forest import RotationForest
+from sktime.classification.sklearn._rotation_forest import RotationForest

@@ -2,7 +2,7 @@
 """Rotation Forest test code."""
 import numpy as np
 
-from sktime.classification_sklearn import RotationForest
+from sktime.classification.sklearn import RotationForest
 from sktime.datasets import load_unit_test
 
 

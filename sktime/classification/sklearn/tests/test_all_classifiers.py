@@ -5,7 +5,7 @@ __author__ = ["MatthewMiddlehurst"]
 
 from sklearn.utils.estimator_checks import parametrize_with_checks
 
-from sktime.classification_sklearn import ContinuousIntervalTree, RotationForest
+from sktime.classification.sklearn import ContinuousIntervalTree, RotationForest
 
 
 @parametrize_with_checks([RotationForest(n_estimators=3), ContinuousIntervalTree()])

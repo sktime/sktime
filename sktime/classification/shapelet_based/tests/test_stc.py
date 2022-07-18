@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """ShapeletTransformClassifier test code."""
 from sktime.classification.shapelet_based import ShapeletTransformClassifier
-from sktime.classification_sklearn import RotationForest
+from sktime.classification.sklearn import RotationForest
 from sktime.datasets import load_unit_test
 
 

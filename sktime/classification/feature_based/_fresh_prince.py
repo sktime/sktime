@@ -11,7 +11,7 @@ __all__ = ["FreshPRINCE"]
 import numpy as np
 
 from sktime.classification.base import BaseClassifier
-from sktime.classification_sklearn import RotationForest
+from sktime.classification.sklearn import RotationForest
 from sktime.transformations.panel.tsfresh import TSFreshFeatureExtractor
 from sktime.utils.validation.panel import check_X_y
 

@@ -19,7 +19,7 @@ from sklearn.utils import check_random_state
 
 from sktime.base._base import _clone_estimator
 from sktime.classification.base import BaseClassifier
-from sktime.classification_sklearn._continuous_interval_tree import (
+from sktime.classification.sklearn._continuous_interval_tree import (
     ContinuousIntervalTree,
     _drcif_feature,
 )
