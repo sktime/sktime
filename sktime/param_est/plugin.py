@@ -58,7 +58,7 @@ class PluginParamsForecaster(_DelegatedForecaster):
     >>> sp_auto.fit(y, fh=[1, 2, 3])
     PluginParamsForecaster(...)
     >>> y_pred = sp_auto.predict()
-    >>> sp_auto.forecaster_.get_params()
+    >>> sp_auto.forecaster_.get_params()["sp"]
     12
     """
 

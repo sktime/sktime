@@ -249,6 +249,7 @@ class SeasonalityACFqstat(BaseParamFitter):
     >>> sp_est.fit(X)
     SeasonalityACFqstat(...)
     >>> sp_est.get_fitted_params()["sp_significant"]
+    array([12,  7,  3])
     """
 
     _tags = {
