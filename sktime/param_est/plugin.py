@@ -132,24 +132,24 @@ class PluginParamsForecaster(_DelegatedForecaster):
 
         params = self.params
         if params is None:
-            param_map = {x : x for x in fitted_params.keys()}
+            param_map = {x: x for x in fitted_params.keys()}
         elif isinstance(params, str):
-            param_map = {params : params}
+            param_map = {params: params}
         elif isinstance(params, list):
-            param_map = {x : x for x in params}
+            param_map = {x: x for x in params}
         elif isinstance(params, dict):
             param_map = params
         else:
             raise TypeError("params must be None, a str, a list of str, or a dict")
 
-        param_map = {x : param_map[x] for x in param_map.keys() if x in fc_par_names}
+        param_map = {x: param_map[x] for x in param_map.keys() if x in fc_par_names}
         param_map = {
-            x : param_map[x] for x in param_map.keys() if param_map[x] in pe_par_names
+            x: param_map[x] for x in param_map.keys() if param_map[x] in pe_par_names
         }
         self.param_map_ = param_map
 
         # obtain the values of fitted params, and set forecaster to those
-        new_params = {x : fitted_params[x] for x in param_map}
+        new_params = {x: fitted_params[x] for x in param_map}
         forecaster.set_params(**new_params)
 
         # fit the forecaster, with the fitted parameter values
@@ -207,7 +207,7 @@ class PluginParamsForecaster(_DelegatedForecaster):
 
             # obtain the values of fitted params, and set forecaster to those
             param_map = self.param_map_
-            new_params = {x : fitted_params[x] for x in param_map}
+            new_params = {x: fitted_params[x] for x in param_map}
             forecaster.set_params(**new_params)
 
             # now fit forecaster on entire data
