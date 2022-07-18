@@ -71,8 +71,8 @@ class NaiveForecaster(_BaseWindowForecaster):
                     first and last point of the window and
                     extrapolating it into the future.
 
-    sp : int, default=1
-        Seasonal periodicity to use in the seasonal forecasting.
+    sp : int, or None, default=1
+        Seasonal periodicity to use in the seasonal forecasting. None=1.
 
     window_length : int or None, default=None
         Window length to use in the `mean` strategy. If None, entire training
@@ -124,27 +124,28 @@ class NaiveForecaster(_BaseWindowForecaster):
         self : returns an instance of self.
         """
         # X_train is ignored
+        sp = self.sp or 1
 
         n_timepoints = y.shape[0]
 
         if self.strategy in ("last", "mean"):
             # check window length is greater than sp for seasonal mean or seasonal last
-            if self.window_length is not None and self.sp != 1:
-                if self.window_length < self.sp:
+            if self.window_length is not None and sp != 1:
+                if self.window_length < sp:
                     raise ValueError(
                         f"The `window_length`: "
                         f"{self.window_length} is smaller than "
-                        f"`sp`: {self.sp}."
+                        f"`sp`: {sp}."
                     )
             self.window_length_ = check_window_length(self.window_length, n_timepoints)
-            self.sp_ = check_sp(self.sp)
+            self.sp_ = check_sp(sp)
 
             #  if not given, set default window length
             if self.window_length is None:
                 self.window_length_ = len(y)
 
         elif self.strategy == "drift":
-            if self.sp != 1:
+            if sp != 1:
                 warn("For the `drift` strategy, the `sp` value will be ignored.")
             # window length we need for forecasts is just the
             # length of seasonal periodicity
@@ -168,7 +169,7 @@ class NaiveForecaster(_BaseWindowForecaster):
         # check window length
         if self.window_length_ > len(self._y):
             param = (
-                "sp" if self.strategy == "last" and self.sp != 1 else "window_length_"
+                "sp" if self.strategy == "last" and sp != 1 else "window_length_"
             )
             raise ValueError(
                 f"The {param}: {self.window_length_} is larger than "
@@ -185,7 +186,7 @@ class NaiveForecaster(_BaseWindowForecaster):
         fh = fh.to_relative(self.cutoff)
 
         strategy = self.strategy
-        sp = self.sp
+        sp = self.sp or 1
 
         # if last window only contains missing values, return nan
         if np.all(np.isnan(last_window)) or len(last_window) == 0:
