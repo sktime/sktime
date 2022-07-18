@@ -28,7 +28,7 @@ class ParamFitterFixtureGenerator(BaseFixtureGenerator):
     estimator_type_filter = "param_est"
 
 
-class TestAllClassifiers(ParamFitterFixtureGenerator, QuickTester):
+class TestAllParamFitters(ParamFitterFixtureGenerator, QuickTester):
     """Module level tests for all sktime classifiers."""
 
     def test_get_fitted_params(self, estimator_instance, scenario):
