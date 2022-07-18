@@ -239,14 +239,14 @@ class PluginParamsForecaster(_DelegatedForecaster):
         params1 = {
             "forecaster": NaiveForecaster(),
             "param_est": SeasonalityACF(),
-            "params": "sp"
+            "params": "sp",
         }
 
         # no params given, this should recognize that the intersection is only "sp"
         params2 = {
             "forecaster": NaiveForecaster(),
             "param_est": SeasonalityACF(),
-            "update_params": True
+            "update_params": True,
         }
 
         return [params1, params2]
