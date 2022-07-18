@@ -1,17 +1,15 @@
-"""
-Unified high-level interface for various time series related learning tasks.
-"""
+"""Unified high-level interface for various time series related learning tasks."""
 
 from inspect import signature
 
 import numpy as np
 import pandas as pd
-from sklearn.base import _pprint
+
+from sktime.base import BaseObject
 
 
-class BaseTask:
-    """
-    Abstract base task class.
+class BaseTask(BaseObject):
+    """Abstract base task class.
 
     A task encapsulates metadata information such as the feature and
     target variable which to fit the data to and additional necessary
@@ -34,6 +32,9 @@ class BaseTask:
 
     def __init__(self, target, features=None, metadata=None):
         # TODO input checks on target and feature args
+        self.target = target
+        self.features = features
+        self.metadata = metadata
         self._target = target
         self._features = features if features is None else pd.Index(features)
 
@@ -43,32 +44,8 @@ class BaseTask:
             self.set_metadata(
                 metadata)  # using the modified setter method below
 
-    @property
-    def target(self):
-        """
-        Make attributes read-only.
-        """
-        return self._target
-
-    @property
-    def features(self):
-        """
-        Make attributes read-only.
-        """
-        return self._features
-
-    @property
-    def metadata(self):
-        """
-        Make attributes read-only.
-        """
-        # TODO if metadata is a mutable object itself, its contents may
-        #  still be mutable
-        return self._metadata
-
     def set_metadata(self, metadata):
-        """
-        Provide missing metadata information to task if not already set.
+        """Provide missing metadata information to task if not already set.
 
         This method is especially useful in orchestration where metadata may
         not be
@@ -115,8 +92,7 @@ class BaseTask:
         return self
 
     def check_data_compatibility(self, metadata):
-        """
-        Check compatibility of task with passed metadata.
+        """Check compatibility of task with passed metadata.
 
         Parameters
         ----------
@@ -152,7 +128,7 @@ class BaseTask:
 
     @classmethod
     def _get_param_names(cls):
-        """Get parameter names for the task"""
+        """Get parameter names for the task."""
         # fetch the constructor or the original constructor before
         # deprecation wrapping if any
         init = getattr(cls.__init__, 'deprecated_original', cls.__init__)
@@ -181,11 +157,6 @@ class BaseTask:
         out = {key: getattr(self, key, None) for key in
                self._get_param_names()}
         return out
-
-    def __repr__(self):
-        class_name = self.__class__.__name__
-        return '%s(%s)' % (class_name, _pprint(self._get_params(),
-                                               offset=len(class_name), ),)
 
 
 class TSCTask(BaseTask):
