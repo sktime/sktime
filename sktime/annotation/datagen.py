@@ -132,23 +132,3 @@ class GenBasicGauss:
             noise=self.noise,
             random_state=self.random_state,
         )
-
-
-# this data has no autocorrelation concerns
-# it just creates an (N x 6) data array,
-# where the first half of the data exists in 1D,
-# and the second half of the data exists in 3D
-# need to add noise (and parametarise)
-
-# generate dataset
-# N=10
-# np.random.seed(10002)
-# X=np.zeros((N,6))
-
-# # half the points from one generating regime
-# for j in range(1):
-# 	X[:N,j]= np.random.normal(0,3,N/2)
-
-# # the other half from another
-# for j in range(3):
-# 	X[N:,j]= np.random.normal(2,1,N/2)
