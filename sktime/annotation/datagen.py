@@ -7,9 +7,6 @@ import numpy as np
 import numpy.typing as npt
 from sklearn.utils.validation import check_random_state
 
-# what if we could pass data_gen functions - rather than assuming means?
-#   - could make it easier to swap out different mean assumptions
-
 
 def mean_shift(
     means: npt.ArrayLike,
@@ -38,11 +35,30 @@ def mean_shift(
     -------
     data : np.array
         univariate time series as np.array
+
+    Examples
+    --------
+    >>> from sktime.annotation.datagen import mean_shift
+    >>> mean_shift([1, 2, 3], lengths=[2, 4, 8])
+    array([ 0.56558259, -0.99313531,  1.36502113,  2.672292  ,  2.21430948,
+            0.16796847,  1.85315518,  1.10375721,  1.78360117,  4.05422671,
+        -0.18436865,  3.12673702,  1.01784907,  2.71841937])
+
+    >>> from sktime.annotation.datagen import mean_shift
+    >>> mean_shift([1, 2, 3], lengths=[2, 4, 8], noise=0)
+    array([1., 1., 2., 2., 2., 2., 3., 3., 3., 3., 3., 3., 3., 3.])
+
+    >>> from sktime.annotation.datagen import mean_shift
+    >>> mean_shift([1, 2, 3], lengths=[2, 4, 8], noise=[0, 0.5, 1.0])
+    array([ 1.        ,  1.        ,  1.7384154 ,  1.50968953,  2.14813299,
+            1.710443  , -0.32769788,  2.92328436,  2.93809456,  2.17335942,
+            3.51210878,  2.74388728,  4.86323121,  3.54855417])
+
     """
     rng = check_random_state(random_state)
     assert len(means) == len(lengths)
 
-    if isinstance(noise, float):
+    if isinstance(noise, (float, int)):
         noise = np.repeat(noise, len(means))
 
     assert len(noise) == len(means)
