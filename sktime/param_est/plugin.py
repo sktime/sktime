@@ -56,6 +56,7 @@ class PluginParamsForecaster(_DelegatedForecaster):
     >>> fcst = NaiveForecaster()
     >>> sp_auto = PluginParamsForecaster(sp_est, fcst)
     >>> sp_auto.fit(y, fh=[1, 2, 3])
+    PluginParamsForecaster(...)
     >>> y_pred = sp_auto.predict()
     >>> sp_auto.forecaster_.get_params()
     12
