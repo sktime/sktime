@@ -17,6 +17,7 @@ from importlib import import_module
 import pytest
 
 from sktime.registry import all_estimators
+from sktime.tests._config import EXCLUDE_ESTIMATORS
 from sktime.utils._testing.scenarios_getter import retrieve_scenarios
 from sktime.utils.validation._dependencies import _check_python_version
 
@@ -160,7 +161,8 @@ def _python_compat(est):
     return _check_python_version(est, severity="none")
 
 
-all_ests = all_estimators(return_names=False)
+# all estimators - exclude estimators on the global exclusion list
+all_ests = all_estimators(return_names=False, exclude_estimators=EXCLUDE_ESTIMATORS)
 
 
 # estimators that should fail to construct because of python version
