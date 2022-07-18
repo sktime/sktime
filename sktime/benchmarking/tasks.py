@@ -33,9 +33,6 @@ class BaseTask(BaseObject):
 
     def __init__(self, target, features=None, metadata=None):
         # TODO input checks on target and feature args
-        self.target = target
-        self.features = features
-        self.metadata = metadata
         self._target = target
         self._features = features if features is None else pd.Index(features)
 
@@ -43,6 +40,23 @@ class BaseTask(BaseObject):
         # through setter method below
         if metadata is not None:
             self.set_metadata(metadata)  # using the modified setter method below
+
+    @property
+    def target(self):
+        """Variable target - read-only."""
+        return self._target
+
+    @property
+    def features(self):
+        """Variable features - read-only."""
+        return self._features
+
+    @property
+    def metadata(self):
+        """Variable metadata - read-only."""
+        # TODO if metadata is a mutable object itself, its contents may
+        #  still be mutable
+        return self._metadata
 
     def set_metadata(self, metadata):
         """Provide missing metadata information to task if not already set.
