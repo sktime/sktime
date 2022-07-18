@@ -340,7 +340,7 @@ class SeasonalityACFqstat(BaseParamFitter):
         self.pvalues_cand = pvalues_cand
 
         if p_adjust != "none":
-            _, pvals_adj, _, _ = multipletests(
+            reject_cand, pvals_adj, _, _ = multipletests(
                 pvals=pvalues_cand, alpha=p_threshold, method=p_adjust
             )
             self.pvalues_adjusted_ = pvals_adj
