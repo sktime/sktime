@@ -42,8 +42,7 @@ class BaseTask(BaseObject):
         self._metadata = None  # initialised as None, properly updated
         # through setter method below
         if metadata is not None:
-            self.set_metadata(
-                metadata)  # using the modified setter method below
+            self.set_metadata(metadata)  # using the modified setter method below
 
     def set_metadata(self, metadata):
         """Provide missing metadata information to task if not already set.
