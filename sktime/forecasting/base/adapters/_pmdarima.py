@@ -20,6 +20,7 @@ class _PmdArimaAdapter(BaseForecaster):
         "capability:pred_int": True,
         "requires-fh-in-fit": False,
         "handles-missing-data": True,
+        "python_dependencies": "pmdarima",
     }
 
     def __init__(self):
@@ -109,7 +110,7 @@ class _PmdArimaAdapter(BaseForecaster):
         # Initialize return objects
         fh_abs = fh.to_absolute(self.cutoff).to_numpy()
         fh_idx = fh.to_indexer(self.cutoff, from_cutoff=False)
-        y_pred = pd.Series(index=fh_abs)
+        y_pred = pd.Series(index=fh_abs, dtype="float64")
 
         # for in-sample predictions, pmdarima requires zero-based integer indicies
         start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]

@@ -204,7 +204,6 @@ class AutoETS(_StatsModelsAdapter):
         ignore_inf_ic=True,
         n_jobs=None,
         random_state=None,
-        **kwargs
     ):
         # Model params
         self.error = error

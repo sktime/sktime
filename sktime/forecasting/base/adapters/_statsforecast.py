@@ -25,7 +25,7 @@ class _StatsForecastAdapter(BaseForecaster):
         "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
         "capability:pred_int": True,  # does forecaster implement predict_quantiles?
-        # deprecated and likely to be removed in 0.12.0
+        "python_dependencies": "statsforecast",
     }
 
     def __init__(self):
@@ -132,7 +132,7 @@ class _StatsForecastAdapter(BaseForecaster):
         # initialize return objects
         fh_abs = fh.to_absolute(self.cutoff).to_numpy()
         fh_idx = fh.to_indexer(self.cutoff, from_cutoff=False)
-        y_pred = pd.Series(index=fh_abs)
+        y_pred = pd.Series(index=fh_abs, dtype="float64")
 
         result = self._forecaster.predict_in_sample()
         y_pred.loc[fh_abs] = result["mean"].values[fh_idx]

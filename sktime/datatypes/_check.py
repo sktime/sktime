@@ -148,6 +148,7 @@ def check_is_mtype(
             "is_univariate": bool, True iff table has one variable
             "is_empty": bool, True iff table has no variables or no instances
             "has_nans": bool, True iff the panel contains NaN values
+            "n_instances": int, number of instances/rows in the table
         For scitype "Alignment":
             currently none
 
