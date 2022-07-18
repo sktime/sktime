@@ -16,12 +16,12 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.utils import check_random_state
 
 from sktime.base._base import _clone_estimator
-from sktime.classification.base import BaseClassifier
+from sktime.classification.early_classification import BaseEarlyClassifier
 from sktime.classification.interval_based import CanonicalIntervalForest
 from sktime.utils.validation.panel import check_X
 
 
-class ProbabilityThresholdEarlyClassifier(BaseClassifier):
+class ProbabilityThresholdEarlyClassifier(BaseEarlyClassifier):
     """Probability Threshold Early Classifier.
 
     An early classifier which uses a threshold of prediction probability to determine

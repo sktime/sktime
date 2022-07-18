@@ -593,11 +593,11 @@ class TEASER(BaseEarlyClassifier):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class.
         """
-        from sktime.classification.feature_based import Catch22Classifier
+        from sktime.classification.feature_based import SummaryClassifier
 
         params = {
-            "classification_points": [3],
-            "estimator": Catch22Classifier(
+            "classification_points": [3, 5],
+            "estimator": SummaryClassifier(
                 estimator=RandomForestClassifier(n_estimators=2)
             ),
         }
