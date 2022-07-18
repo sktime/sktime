@@ -67,7 +67,6 @@ class CNNClassifier(BaseDeepClassifier):
     >>> cnn = CNNClassifier()
     >>> cnn.fit(X_train, y_train)
     CNNClassifier(...)
-    >>> y_pred = cnn.predict(X_test)
     """
 
     def __init__(
