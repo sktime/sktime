@@ -306,13 +306,14 @@ class GGSEstimator:
         """Fit and predict."""
         return self.fit(X, y).predict(X, y)
 
-    def get_params(self) -> Dict:
+    def get_params(self, deep: bool = True) -> Dict:
         """Return initialization parameters."""
         return asdict(self._adaptee, filter=lambda attr, value: attr.init is True)
 
-    def set_params(self, *args, **kwargs):
+    def set_params(self, **parameters):
         """Initialize the estimator from parameters."""
-        self._adaptee = self._adaptee_class(*args, **kwargs)
+        for key, value in parameters.items():
+            setattr(self._adaptee, key, value)
         return self
 
     def __repr__(self) -> str:
