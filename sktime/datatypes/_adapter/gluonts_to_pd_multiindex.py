@@ -28,11 +28,12 @@ def convert_gluonts_result_to_multiindex(gluonts_result):
     global_ls = []
     per_instance_ls = []
     columns = []
+    validation_no = gluonts_result[0].samples.shape[0]
 
     for i in range(instance_no):
-        validation_no = gluonts_result[i].samples.shape[0]
+
         period = gluonts_result[i].samples.shape[1]
-        start_date = pd.to_datetime(gluonts_result[i].start_date)
+        start_date = gluonts_result[i].start_date.to_timestamp()
         freq = gluonts_result[i].freq
         ts_index = pd.date_range(start=start_date, periods=period, freq=freq)
         per_instance_ls = [
