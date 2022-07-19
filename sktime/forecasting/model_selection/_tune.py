@@ -419,6 +419,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
         return_n_best_forecasters=1,
         pre_dispatch="2*n_jobs",
         backend="loky",
+        update_behaviour="full_refit",
     ):
         super(ForecastingGridSearchCV, self).__init__(
             forecaster=forecaster,
@@ -431,6 +432,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
             return_n_best_forecasters=return_n_best_forecasters,
             pre_dispatch=pre_dispatch,
             backend=backend,
+            update_behaviour=update_behaviour,
         )
         self.param_grid = param_grid
 
@@ -600,6 +602,7 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         random_state=None,
         pre_dispatch="2*n_jobs",
         backend="loky",
+        update_behaviour="full_refit",
     ):
         super(ForecastingRandomizedSearchCV, self).__init__(
             forecaster=forecaster,
@@ -612,6 +615,7 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
             return_n_best_forecasters=return_n_best_forecasters,
             pre_dispatch=pre_dispatch,
             backend=backend,
+            update_behaviour=update_behaviour,
         )
         self.param_distributions = param_distributions
         self.n_iter = n_iter
