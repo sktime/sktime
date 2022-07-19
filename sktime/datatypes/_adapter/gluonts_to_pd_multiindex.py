@@ -43,7 +43,7 @@ def convert_gluonts_result_to_multiindex(gluonts_result):
         global_ls.append(per_instance_ls)
 
     for k in range(validation_no):
-        columns.append("validation_" + str(k))
+        columns.append("result_" + str(k))
 
     nested_univ = pd.DataFrame(global_ls, columns=columns)
 
