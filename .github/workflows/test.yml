@@ -27,29 +27,12 @@ jobs:
         run: build_tools/fail_on_missing_init_files.sh
         shell: bash
 
-  run-notebook-examples:
-    needs: code-quality
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.7
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install .[all_extras,binder,dev]
-      - name: Run example notebooks
-        run: build_tools/run_examples.sh
-        shell: bash
-
   test-windows:
     needs: code-quality
     runs-on: windows-2019
     strategy:
       matrix:
-        python-version: [3.7, 3.8, 3.9, '3.10']
+        python-version: [3.7]
     steps:
       - uses: actions/checkout@v2
 
@@ -83,7 +66,7 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        python-version: [3.7, 3.8, 3.9, '3.10']
+        python-version: [3.7]
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python
@@ -108,7 +91,7 @@ jobs:
     runs-on: macOS-10.15
     strategy:
       matrix:
-        python-version: [3.7, 3.8, 3.9, '3.10']
+        python-version: [3.7]
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python
