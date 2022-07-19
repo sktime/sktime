@@ -82,9 +82,6 @@ jobs:
           cp setup.cfg testdir/
           python -m pytest
 
-      - name: Publish code coverage
-        uses: codecov/codecov-action@v2
-
   test-linux:
     needs: code-quality
     runs-on: ubuntu-20.04
@@ -110,9 +107,6 @@ jobs:
       - name: Run tests
         run: make test
 
-      - name: Publish code coverage
-        uses: codecov/codecov-action@v2
-
   test-mac:
     needs: code-quality
     runs-on: macOS-10.15
@@ -137,9 +131,6 @@ jobs:
 
       - name: Run tests
         run: make test
-
-      - name: Publish code coverage
-        uses: codecov/codecov-action@v2
 
   test-nosoftdeps:
     needs: code-quality
