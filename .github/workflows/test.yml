@@ -75,6 +75,13 @@ jobs:
       - name: Show dependencies
         run: python -m pip list
 
+      - name: Run tests
+        run: |
+          mkdir -p testdir/
+          cp .coveragerc testdir/
+          cp setup.cfg testdir/
+          python -m pytest
+
       - name: Publish code coverage
         uses: codecov/codecov-action@v3
 
@@ -100,6 +107,9 @@ jobs:
       - name: Show dependecies
         run: python -m pip list
 
+      - name: Run tests
+        run: make test
+
       - name: Publish code coverage
         uses: codecov/codecov-action@v3
 
@@ -124,6 +134,9 @@ jobs:
 
       - name: Show dependencies
         run: python -m pip list
+
+      - name: Run tests
+        run: make test
 
       - name: Publish code coverage
         uses: codecov/codecov-action@v3
