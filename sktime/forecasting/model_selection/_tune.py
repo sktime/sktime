@@ -41,6 +41,7 @@ class BaseGridSearch(_DelegatedForecaster):
         scoring=None,
         verbose=0,
         return_n_best_forecasters=1,
+        update_behaviour="full_refit",
     ):
 
         self.forecaster = forecaster
@@ -53,6 +54,7 @@ class BaseGridSearch(_DelegatedForecaster):
         self.scoring = scoring
         self.verbose = verbose
         self.return_n_best_forecasters = return_n_best_forecasters
+        self.update_behaviour = update_behaviour
         super(BaseGridSearch, self).__init__()
         tags_to_clone = [
             "requires-fh-in-fit",
@@ -242,6 +244,20 @@ class BaseGridSearch(_DelegatedForecaster):
         -------
         self : reference to self
         """
+        update_behaviour = self.update_behaviour
+
+        if update_behaviour == "full_refit":
+            super()._update(y=y, X=X, update_params=update_params)
+        elif update_behaviour == "inner_only":
+            self.best_forecaster_.update(y=y, X=X, update_params=update_params)
+        elif update_behaviour == "no_update":
+            self.best_forecaster_.update(y=y, X=X, update_params=False)
+        else:
+            raise ValueError(
+                'update_behaviour must be one of "full_refit", "inner_only",'
+                f' or "no_update", but found {update_behaviour}'
+            )
+        return self
 
 
 class ForecastingGridSearchCV(BaseGridSearch):
@@ -266,11 +282,17 @@ class ForecastingGridSearchCV(BaseGridSearch):
     cv : cross-validation generator or an iterable
         e.g. SlidingWindowSplitter()
     strategy : {"refit", "update", "no-update_params"}, optional, default="refit"
-        evaluation strategy when updating data, passed to `evaluate` internally
+        data ingestion strategy in fitting cv, passed to `evaluate` internally
         defines the ingestion mode when the forecaster sees new data when window expands
         "refit" = forecaster is refitted to each training window
         "update" = forecaster is updated with training window data, in sequence provided
         "no-update_params" = fit to first training window, re-used without fit or update
+    update_behaviour: str, optional, default = "full_refit"
+        one of {"full_refit", "inner_only", "no_update"}
+        behaviour of the forecaster when calling update
+        "full_refit" = both tuning parameters and inner estimator refit on all data seen
+        "inner_only" = tuning parameters are not re-tuned, inner estimator is updated
+        "no_update" = neither tuning parameters nor inner estimator are updated
     param_grid : dict or list of dictionaries
         Model tuning parameters of the forecaster to evaluate
     scoring: function, optional (default=None)
@@ -471,6 +493,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
             "cv": SingleWindowSplitter(fh=1),
             "param_grid": {"initialization_method": ["estimated", "heuristic"]},
             "scoring": MeanAbsolutePercentageError(symmetric=True),
+            "update_behaviour": "inner_only",
         }
         return [params, params2]
 
@@ -497,11 +520,17 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
     cv : cross-validation generator or an iterable
         e.g. SlidingWindowSplitter()
     strategy : {"refit", "update", "no-update_params"}, optional, default="refit"
-        evaluation strategy when updating data, passed to `evaluate` internally
+        data ingestion strategy in fitting cv, passed to `evaluate` internally
         defines the ingestion mode when the forecaster sees new data when window expands
         "refit" = forecaster is refitted to each training window
         "update" = forecaster is updated with training window data, in sequence provided
         "no-update_params" = fit to first training window, re-used without fit or update
+    update_behaviour: str, optional, default = "full_refit"
+        one of {"full_refit", "inner_only", "no_update"}
+        behaviour of the forecaster when calling update
+        "full_refit" = both tuning parameters and inner estimator refit on all data seen
+        "inner_only" = tuning parameters are not re-tuned, inner estimator is updated
+        "no_update" = neither tuning parameters nor inner estimator are updated
     param_distributions : dict or list of dicts
         Dictionary with parameters names (`str`) as keys and distributions
         or lists of parameters to try. Distributions must provide a ``rvs``
