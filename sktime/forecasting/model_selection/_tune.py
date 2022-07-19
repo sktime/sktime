@@ -220,6 +220,29 @@ class BaseGridSearch(_DelegatedForecaster):
 
         return self
 
+    def _update(self, y, X=None, update_params=True):
+        """Update time series to incremental training data.
+
+        Parameters
+        ----------
+        y : guaranteed to be of a type in self.get_tag("y_inner_mtype")
+            Time series with which to update the forecaster.
+            if self.get_tag("scitype:y")=="univariate":
+                guaranteed to have a single column/variable
+            if self.get_tag("scitype:y")=="multivariate":
+                guaranteed to have 2 or more columns
+            if self.get_tag("scitype:y")=="both": no restrictions apply
+        X : optional (default=None)
+            guaranteed to be of a type in self.get_tag("X_inner_mtype")
+            Exogeneous time series for the forecast
+        update_params : bool, optional (default=True)
+            whether model parameters should be updated
+
+        Returns
+        -------
+        self : reference to self
+        """
+
 
 class ForecastingGridSearchCV(BaseGridSearch):
     """Perform grid-search cross-validation to find optimal model parameters.
@@ -242,6 +265,12 @@ class ForecastingGridSearchCV(BaseGridSearch):
         or a scoring function must be passed.
     cv : cross-validation generator or an iterable
         e.g. SlidingWindowSplitter()
+    strategy : {"refit", "update", "no-update_params"}, optional, default="refit"
+        evaluation strategy when updating data, passed to `evaluate` internally
+        defines the ingestion mode when the forecaster sees new data when window expands
+        "refit" = forecaster is refitted to each training window
+        "update" = forecaster is updated with training window data, in sequence provided
+        "no-update_params" = fit to first training window, re-used without fit or update
     param_grid : dict or list of dictionaries
         Model tuning parameters of the forecaster to evaluate
     scoring: function, optional (default=None)
@@ -251,7 +280,8 @@ class ForecastingGridSearchCV(BaseGridSearch):
         None means 1 unless in a joblib.parallel_backend context.
         -1 means using all processors.
     refit: bool, optional (default=True)
-        Refit the forecaster with the best parameters on all the data
+        True = refit the forecaster with the best parameters on the entire data in fit
+        False = best forecaster remains fitted on the last fold in cv
     verbose: int, optional (default=0)
     return_n_best_forecasters: int, default=1
         In case the n best forecaster should be returned, this value can be set
@@ -466,6 +496,12 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         or a scoring function must be passed.
     cv : cross-validation generator or an iterable
         e.g. SlidingWindowSplitter()
+    strategy : {"refit", "update", "no-update_params"}, optional, default="refit"
+        evaluation strategy when updating data, passed to `evaluate` internally
+        defines the ingestion mode when the forecaster sees new data when window expands
+        "refit" = forecaster is refitted to each training window
+        "update" = forecaster is updated with training window data, in sequence provided
+        "no-update_params" = fit to first training window, re-used without fit or update
     param_distributions : dict or list of dicts
         Dictionary with parameters names (`str`) as keys and distributions
         or lists of parameters to try. Distributions must provide a ``rvs``
@@ -483,7 +519,8 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         None means 1 unless in a joblib.parallel_backend context.
         -1 means using all processors.
     refit: bool, optional (default=True)
-        Refit the forecaster with the best parameters on all the data
+        True = refit the forecaster with the best parameters on the entire data in fit
+        False = best forecaster remains fitted on the last fold in cv
     verbose: int, optional (default=0)
     return_n_best_forecasters: int, default=1
         In case the n best forecaster should be returned, this value can be set
