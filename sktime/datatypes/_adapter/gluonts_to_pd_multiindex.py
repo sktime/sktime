@@ -19,6 +19,32 @@ def convert_gluonts_result_to_multiindex(gluonts_result):
     -------
     A MultiIndex DF mtype type compatible with sktime.
 
+    Examples
+    --------
+    >>> from gluonts.dataset.util import to_pandas
+    >>> from gluonts.dataset.pandas import PandasDataset
+    >>> from gluonts.dataset.repository.datasets import get_dataset
+    >>> from gluonts.mx.model.simple_feedforward
+    ... import SimpleFeedForwardEstimator
+    >>> from gluonts.mx import Trainer
+    >>> import matplotlib.pyplot as plt
+    >>> from sktime.datatypes._adapter import gluonts_to_pd_multiindex
+
+
+    >>> dataset = get_dataset("airpassengers")
+    >>> feedforward = SimpleFeedForwardEstimator(prediction_length=12,
+    ... trainer=Trainer(epochs=5))
+    >>> model = feedforward.train(dataset.train)
+
+    # Make predictions
+    >>> true_values = to_pandas(list(dataset.test)[0])
+    >>> true_values.to_timestamp().plot(color="k")
+    # Predict the last 5 months
+    >>> prediction_input = PandasDataset(true_values[:-12])
+    >>> predictions = model.predict(prediction_input)
+    >>> result_ls = list(predictions)
+    >>> convert_gluonts_result_to_multiindex(result_ls)
+
     """
     import pandas as pd
 
