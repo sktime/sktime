@@ -5,7 +5,8 @@
 
 __author__ = ["miraep8"]
 
-import pandas as pd
+import numpy as np
+import pytest
 from numpy.testing import assert_array_equal
 from sklearn.base import clone
 
@@ -17,7 +18,7 @@ from sktime.forecasting.model_selection import (
     ForecastingGridSearchCV,
 )
 from sktime.forecasting.naive import NaiveForecaster
-from sktime.transformations.multiplexer import MultiplexTransformer
+from sktime.transformations.compose import MultiplexTransformer
 from sktime.transformations.series.exponent import ExponentTransformer
 from sktime.utils.validation.forecasting import check_scoring
 
@@ -31,8 +32,8 @@ def test_multiplex_transformer_alone():
     """
     y = load_shampoo_sales()
     # randomly make some of the values nans:
-    y.loc[y.sample(frac=0.1).index] = pd.np.nan
-    # Note - we select two forecasters which are deterministic.
+    y.loc[y.sample(frac=0.1).index] = np.nan
+    # Note - we select two transformers which are deterministic.
     transformer_tuples = [
         ("two", ExponentTransformer(2)),
         ("three", ExponentTransformer(3)),
@@ -40,20 +41,20 @@ def test_multiplex_transformer_alone():
     transformer_names = [name for name, _ in transformer_tuples]
     transformers = [transformer for _, transformer in transformer_tuples]
     multiplex_transformer = MultiplexTransformer(transformers=transformer_tuples)
-    # for each of the forecasters - check that the wrapped forecaster predictions
-    # agree with the unwrapped forecaster predictions!
+    # for each of the transformers - check that the wrapped transformer predictions
+    # agree with the unwrapped transformer (in combo with forecaster) predictions!
     for ind, name in enumerate(transformer_names):
         # make a copy to ensure we don't reference the same objectL
         test_transformer = clone(transformers[ind])
         y_transform_indiv = test_transformer.fit_transform(X=y)
         multiplex_transformer.selected_transformer = name
-        # Note- MultiplexForecaster will make a copy of the forecaster before fitting.
+        # Note- MultiplexTransformer will make a copy of the transformer before fitting.
         y_transform_multi = multiplex_transformer.fit_transform(X=y)
         assert_array_equal(y_transform_indiv, y_transform_multi)
 
 
 def _find_best_transformer(forecaster, transformers, cv, y):
-    """Evaluate all the forecasters on y and return the name of best."""
+    """Evaluate all the transformers on y and return the name of best."""
     scoring = check_scoring(None)
     scoring_name = f"test_{scoring.name}"
     score = None
@@ -61,7 +62,7 @@ def _find_best_transformer(forecaster, transformers, cv, y):
         test_transformer = clone(transformer)
         y_hat = test_transformer.fit_transform(y)
         results = evaluate(clone(forecaster), cv, y_hat)
-        results = results.mean()
+        results = results.mean(numeric_only=True)
         new_score = float(results[scoring_name])
         if not score or new_score < score:
             score = new_score
@@ -79,7 +80,7 @@ def test_multiplex_transformer_in_grid():
     y = load_shampoo_sales()
     # randomly make some of the values nans:
     y.iloc[[5, 10, 15, 25, 32]] = -1
-    # Note - we select two forecasters which are deterministic.
+    # Note - we select two transformers which are deterministic.
     transformer_tuples = [
         ("two", ExponentTransformer(2)),
         ("three", ExponentTransformer(3)),
@@ -109,3 +110,42 @@ def test_multiplex_transformer_in_grid():
         NaiveForecaster(strategy="mean"), transformer_tuples, cv, y
     )
     assert gscv_best_name == best_name
+
+
+def test_multiplex_or_dunder():
+    """Test that the MultiplexTransforemer magic "|" dunder works.
+
+    A MultiplexTransformer can be created by using the "|" dunder method on
+    either transformer or MultiplexTransformer objects. Here we test that it performs
+    as expected on all the use cases, and raises the expected error in some others.
+    """
+    # test a simple | example with two transformers:
+    multiplex_two_transformers = ExponentTransformer(2) | ExponentTransformer(3)
+    assert isinstance(multiplex_two_transformers, MultiplexTransformer)
+    assert len(multiplex_two_transformers.transformers) == 2
+    # now test that | also works on two MultiplexTransformers:
+    multiplex_one = MultiplexTransformer(
+        [("exp_2", ExponentTransformer(2)), ("exp_3", ExponentTransformer(3))]
+    )
+    multiplex_two = MultiplexTransformer(
+        [("exp_4", ExponentTransformer(4)), ("exp_5", ExponentTransformer(5))]
+    )
+
+    multiplex_two_multiplex = multiplex_one | multiplex_two
+    assert isinstance(multiplex_two_multiplex, MultiplexTransformer)
+    assert len(multiplex_two_multiplex.transformers) == 4
+    # last we will check 3 transformers with the same name - should check both that
+    # MultiplexTransformer | transformer works, and that ensure_unique_names works
+    multiplex_same_name_three_test = (
+        ExponentTransformer(2) | ExponentTransformer(3) | ExponentTransformer(4)
+    )
+    assert isinstance(multiplex_same_name_three_test, MultiplexTransformer)
+    assert len(multiplex_same_name_three_test._transformers) == 3
+    transformer_param_names = multiplex_same_name_three_test._get_estimator_names(
+        multiplex_same_name_three_test._transformers
+    )
+    assert len(set(transformer_param_names)) == 3
+
+    # test we get a ValueError if we try to | with anything else:
+    with pytest.raises(TypeError):
+        multiplex_one | "this shouldn't work"

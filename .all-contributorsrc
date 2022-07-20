@@ -499,7 +499,7 @@
     },
     {
       "login": "Piyush1729",
-      "name": "Piyush1729",
+      "name": "Piyush Gade",
       "avatar_url": "https://avatars2.githubusercontent.com/u/64950012?v=4",
       "profile": "https://github.com/Piyush1729",
       "contributions": [
@@ -1593,7 +1593,7 @@
         "code"
       ]
     },
-    { 
+    {
       "login": "bethrice44",
       "name": "bethrice44",
       "avatar_url": "https://avatars.githubusercontent.com/u/11226988?v=4",
@@ -1603,7 +1603,7 @@
         "code",
         "review",
         "test"
-       ]
+      ]
     },
     {
       "login": "keepersas",
@@ -1615,12 +1615,83 @@
       ]
     },
     {
+      "login": "ZiyaoWei",
+      "name": "Ziyao Wei",
+      "avatar_url": "https://avatars.githubusercontent.com/u/940823?v=4",
+      "profile": "https://github.com/ZiyaoWei",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
       "login": "dougollerenshaw",
       "name": "Doug Ollerenshaw",
       "avatar_url": "https://avatars.githubusercontent.com/u/19944442?v=4",
       "profile": "https://github.com/dougollerenshaw",
       "contributions": [
         "doc"
+      ]
+    },
+    {
+      "login": "AurumnPegasus",
+      "name": "Shivansh Subramanian",
+      "avatar_url": "https://avatars.githubusercontent.com/u/54315149?v=4",
+      "profile": "https://github.com/AurumnPegasus",
+      "contributions": [
+        "doc",
+        "code"
+      ]
+    },
+    {
+      "login": "NoaBenAmi",
+      "name": "Noa Ben Ami",
+      "avatar_url": "https://avatars.githubusercontent.com/u/37590002?v=4",
+      "profile": "https://github.com/NoaBenAmi",
+      "contributions": [
+        "code",
+        "test",
+        "doc"
+      ]
+    },
+    {
+      "login": "lielleravid",
+      "name": "Lielle Ravid",
+      "avatar_url": "https://avatars.githubusercontent.com/u/37774194?v=4",
+      "profile": "https://github.com/lielleravid",
+      "contributions": [
+        "code",
+        "doc"
+      ]
+    },
+    {
+      "login": "ciaran-g",
+      "name": "Ciaran Gilbert",
+      "avatar_url": "https://avatars.githubusercontent.com/u/41995662?v=4",
+      "profile": "https://github.com/ciaran-g",
+      "contributions": [
+        "bug",
+        "code",
+        "doc",
+        "test",
+        "ideas"
+      ]
+    },
+    {
+      "login": "lbventura",
+      "name": "Luis Ventura",
+      "avatar_url": "https://avatars.githubusercontent.com/u/68004282?s=96&v=4",
+      "profile": "https://github.com/lbventura",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "Ris-Bali",
+      "name": "Rishabh Bali",
+      "avatar_url": "https://avatars.githubusercontent.com/u/81592570?v=4",
+      "profile": "https://github.com/Ris-Bali",
+      "contributions": [
+        "code"
       ]
     }
   ],

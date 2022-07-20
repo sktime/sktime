@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """Configurable time series ensembles."""
-__author__ = ["mloning", "Ayushmaan Seth"]
+__author__ = ["mloning", "AyushmaanSeth"]
 __all__ = ["ComposableTimeSeriesForestClassifier"]
 
 import numbers
