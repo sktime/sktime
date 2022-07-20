@@ -8,6 +8,7 @@ __all__ = []
 
 import numpy as np
 import pandas as pd
+import pytest
 from sklearn.preprocessing import MinMaxScaler
 
 from sktime.datasets import load_airline
@@ -24,6 +25,7 @@ from sktime.transformations.series.detrend import Detrender
 from sktime.transformations.series.exponent import ExponentTransformer
 from sktime.transformations.series.impute import Imputer
 from sktime.transformations.series.outlier_detection import HampelFilter
+from sktime.utils.validation._dependencies import _check_estimator_deps
 
 
 def test_pipeline():
@@ -128,6 +130,10 @@ def test_pipeline_with_detrender():
     trans_fc.predict(1)
 
 
+@pytest.mark.skipif(
+    not _check_estimator_deps(ARIMA, severity="none"),
+    reason="skip test if required soft dependencies not available",
+)
 def test_nested_pipeline_with_index_creation_y_before_X():
     """Tests a nested pipeline where y indices are created before X indices.
 
@@ -153,6 +159,10 @@ def test_nested_pipeline_with_index_creation_y_before_X():
     assert len(y_pred) == 9
 
 
+@pytest.mark.skipif(
+    not _check_estimator_deps(ARIMA, severity="none"),
+    reason="skip test if required soft dependencies not available",
+)
 def test_nested_pipeline_with_index_creation_X_before_y():
     """Tests a nested pipeline where X indices are created before y indices.
 
