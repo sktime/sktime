@@ -19,7 +19,6 @@ from sktime.registry import (
 from sktime.regression.compose import ComposableTimeSeriesForestRegressor
 from sktime.transformations.base import BaseTransformer
 from sktime.transformations.panel.compose import (
-    ColumnTransformer,
     SeriesToPrimitivesRowTransformer,
     SeriesToSeriesRowTransformer,
 )
@@ -80,7 +79,20 @@ EXCLUDED_TESTS = {
     "SeriesToPrimitivesRowTransformer": ["test_methods_do_not_change_state"],
     "SeriesToSeriesRowTransformer": ["test_methods_do_not_change_state"],
     # ColumnTransformer still needs to be refactored, see #2537
-    "ColumnTransformer": ["test_methods_do_not_change_state"],
+    "ColumnTransformer": [
+        "test_methods_do_not_change_state",
+        "test_fit_transform_output",
+    ],
+    # Early classifiers intentionally retain information from pervious predict calls
+    #   for #1.
+    # #2 amd #3 are due to predict/predict_proba returning two items and that breaking
+    #   assert_array_equal
+    "TEASER": [
+        "test_methods_do_not_change_state",
+        "test_fit_idempotent",
+        "test_persistence_via_pickle",
+    ],
+    "VARMAX": "test_update_predict_single",  # see 2997, sporadic failure, unknown cause
 }
 
 # We here configure estimators for basic unit testing, including setting of
@@ -89,20 +101,7 @@ SERIES_TO_SERIES_TRANSFORMER = StandardScaler()
 SERIES_TO_PRIMITIVES_TRANSFORMER = FunctionTransformer(
     np.mean, kw_args={"axis": 0}, check_inverse=False
 )
-TRANSFORMERS = [
-    (
-        "transformer1",
-        SeriesToSeriesRowTransformer(
-            SERIES_TO_SERIES_TRANSFORMER, check_transformer=False
-        ),
-    ),
-    (
-        "transformer2",
-        SeriesToSeriesRowTransformer(
-            SERIES_TO_SERIES_TRANSFORMER, check_transformer=False
-        ),
-    ),
-]
+
 ESTIMATOR_TEST_PARAMS = {
     FittedParamExtractor: {
         "forecaster": ExponentialSmoothing(),
@@ -115,9 +114,6 @@ ESTIMATOR_TEST_PARAMS = {
     SeriesToSeriesRowTransformer: {
         "transformer": SERIES_TO_SERIES_TRANSFORMER,
         "check_transformer": False,
-    },
-    ColumnTransformer: {
-        "transformers": [(name, estimator, [0]) for name, estimator in TRANSFORMERS]
     },
     RandomShapeletTransform: {
         "max_shapelets": 5,

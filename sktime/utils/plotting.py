@@ -10,14 +10,12 @@ import math
 
 import numpy as np
 import pandas as pd
-
-from sktime.utils.validation._dependencies import _check_soft_dependencies
-from sktime.utils.validation.forecasting import check_y
-from sktime.utils.validation.series import check_consistent_index_type
-
 from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 
 from sktime.datatypes import convert_to
+from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.validation.forecasting import check_y
+from sktime.utils.validation.series import check_consistent_index_type
 
 
 def plot_series(
@@ -42,9 +40,9 @@ def plot_series(
     """
     _check_soft_dependencies("matplotlib", "seaborn")
     import matplotlib.pyplot as plt
-    from matplotlib.ticker import FuncFormatter, MaxNLocator
-    from matplotlib.cbook import flatten
     import seaborn as sns
+    from matplotlib.cbook import flatten
+    from matplotlib.ticker import FuncFormatter, MaxNLocator
 
     for y in series:
         check_y(y)
@@ -162,8 +160,8 @@ def plot_lags(series, lags=1, suptitle=None):
     --------
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
-    >>> fig, ax = plot_lags(y, lags=2) # plot of y(t) with y(t-2)
-    >>> fig, ax = plot_lags(y, lags=[1,2,3]) # plots of y(t) with y(t-1),y(t-2)..
+    >>> fig, ax = plot_lags(y, lags=2) # plot of y(t) with y(t-2)  # doctest: +SKIP
+    >>> fig, ax = plot_lags(y, lags=[1,2,3]) # y(t) & y(t-1), y(t-2).. # doctest: +SKIP
     """
     _check_soft_dependencies("matplotlib")
     import matplotlib.pyplot as plt
