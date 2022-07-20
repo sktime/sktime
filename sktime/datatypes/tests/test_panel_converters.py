@@ -5,7 +5,10 @@ import pandas as pd
 import pytest
 
 from sktime.datasets import generate_example_long_table, make_multi_index_dataframe
-from sktime.datatypes._adapter import convert_from_multiindex_to_listdataset
+from sktime.datatypes._adapter import (
+    convert_from_multiindex_to_listdataset,
+    convert_gluonts_result_to_multiindex,
+)
 from sktime.datatypes._panel._check import are_columns_nested, is_nested_dataframe
 from sktime.datatypes._panel._convert import (
     from_2d_array_to_nested,
@@ -337,4 +340,65 @@ def test_from_multiindex_to_listdataset(n_instances, n_columns, n_timepoints):
             np.testing.assert_array_equal(
                 control_result.loc[instance, dim].to_numpy(),
                 listdataset_result_list[instance]["target"][dim_no],
+            )
+
+
+@pytest.mark.parametrize("n_timepoints", N_TIMEPOINTS)
+def test_from_gluonts_to_multiindex(n_timepoints):
+    """Test from Gluonts results to MultiIndex."""
+    import numpy as np
+    import pandas as pd
+    from gluonts.dataset.pandas import PandasDataset
+    from gluonts.dataset.repository.datasets import get_dataset
+    from gluonts.dataset.util import to_pandas
+    from gluonts.mx import Trainer
+    from gluonts.mx.model.simple_feedforward import SimpleFeedForwardEstimator
+
+    from sktime.datatypes import convert_to
+
+    def get_sample_gluon_result(horizon):
+        dataset = get_dataset("airpassengers")
+        simple_model = SimpleFeedForwardEstimator(
+            prediction_length=horizon, trainer=Trainer(epochs=5)
+        )
+        model = simple_model.train(dataset.train)
+
+        # Make predictions
+        true_values = to_pandas(list(dataset.test)[0])
+        true_values.to_timestamp()
+        prediction_input = PandasDataset(true_values[:-horizon])
+        predictions = model.predict(prediction_input)
+        return list(predictions)
+
+    gluonts_result = get_sample_gluon_result(horizon=n_timepoints)
+    # Result from the converter
+    converter_result = convert_gluonts_result_to_multiindex(gluonts_result)
+    dimension_name = converter_result.columns
+    converter_result = convert_to(converter_result, to_type="nested_univ")
+    # Result from manual conversion
+    instance_no = len(gluonts_result)
+    global_ls = []
+    per_instance_ls = []
+    columns = []
+    validation_no = gluonts_result[0].samples.shape[0]
+    for i in range(instance_no):
+        period = gluonts_result[i].samples.shape[1]
+        start_date = gluonts_result[i].start_date.to_timestamp()
+        freq = gluonts_result[i].freq
+        ts_index = pd.date_range(start=start_date, periods=period, freq=freq)
+        per_instance_ls = [
+            pd.Series(data=gluonts_result[i].samples[j], index=ts_index)
+            for j in range(validation_no)
+        ]
+        global_ls.append(per_instance_ls)
+    for k in range(validation_no):
+        columns.append("result_" + str(k))
+    manual_result = pd.DataFrame(global_ls, columns=columns)
+
+    # Perform the test
+    for instance, _dim_name in manual_result.iterrows():
+        for _dim_no, dim in enumerate(dimension_name):
+            np.testing.assert_array_equal(
+                manual_result.loc[instance, dim].to_numpy(),
+                converter_result.loc[instance, dim].to_numpy(),
             )
