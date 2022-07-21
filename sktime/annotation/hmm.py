@@ -59,8 +59,8 @@ class HMM(BaseSeriesAnnotator):
     >>> test = HMM(emi_funcs, asarray([[0.25,0.75], [0.666, 0.333]]))
     >>> # generate synthetic data (or of course use your own!)
     >>> obs = asarray([3.7,3.2,3.4,3.6,-5.1,-5.2,-4.9])
-    >>> test.fit(obs)
-    >>> print(test.predict())
+    >>> test = test.fit(obs)
+    >>> labels = test.predict(obs)
     """
 
     # plan to update to make multivariate.
