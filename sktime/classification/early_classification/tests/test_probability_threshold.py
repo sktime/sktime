@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """ProbabilityThresholdEarlyClassifier test code."""
 import numpy as np
-from numpy import testing
+import pytest
 
 from sktime.classification.early_classification import (
     ProbabilityThresholdEarlyClassifier,
@@ -11,81 +11,33 @@ from sktime.datasets import load_unit_test
 from sktime.datatypes._panel._convert import from_nested_to_3d_numpy
 
 
-def test_prob_threshold_on_unit_test_data():
-    """Test of ProbabilityThresholdEarlyClassifier on unit test data."""
-    # load unit test data
+def test_early_prob_threshold_near_classification_points():
+    """Test of threshold with incremental time stamps outside defined class points."""
     X_train, y_train = load_unit_test(split="train", return_X_y=True)
     X_test, y_test = load_unit_test(split="test", return_X_y=True)
     indices = np.random.RandomState(0).choice(len(y_train), 10, replace=False)
 
     # train probability threshold
-    pt = ProbabilityThresholdEarlyClassifier(
+    teaser = ProbabilityThresholdEarlyClassifier(
         random_state=0,
-        classification_points=[6, 16, 24],
-        probability_threshold=1,
+        classification_points=[6, 10, 14, 18, 24],
         estimator=TimeSeriesForestClassifier(n_estimators=10, random_state=0),
     )
-    pt.fit(X_train, y_train)
+    teaser.fit(X_train, y_train)
 
-    final_probas = np.zeros((10, 2))
-    final_decisions = np.zeros(10)
+    # use test_points that are not within list above
+    test_points = [7, 11, 19, 20]
 
     X_test = from_nested_to_3d_numpy(X_test)
-    states = None
-    for i in pt.classification_points:
-        X = X_test[indices, :, :i]
-        probas = pt.predict_proba(X)
-        decisions, states = pt.decide_prediction_safety(X, probas, states)
+    X_test = X_test[indices]
 
-        for n in range(10):
-            if decisions[n] and final_decisions[n] == 0:
-                final_probas[n] = probas[n]
-                final_decisions[n] = i
+    decisions = np.zeros(len(X_test), dtype=bool)
+    for i in test_points:
+        X_test = X_test[np.invert(decisions)]
+        X = X_test[:, :, :i]
 
-    testing.assert_array_equal(final_probas, pt_unit_test_probas)
-
-
-pt_unit_test_probas = np.array(
-    [
-        [
-            0.0,
-            1.0,
-        ],
-        [
-            0.7,
-            0.3,
-        ],
-        [
-            0.0,
-            1.0,
-        ],
-        [
-            1.0,
-            0.0,
-        ],
-        [
-            1.0,
-            0.0,
-        ],
-        [
-            1.0,
-            0.0,
-        ],
-        [
-            1.0,
-            0.0,
-        ],
-        [
-            0.0,
-            1.0,
-        ],
-        [
-            1.0,
-            0.0,
-        ],
-        [
-            1.0,
-            0.0,
-        ],
-    ]
-)
+        if i == 20:
+            with pytest.raises(ValueError):
+                teaser.update_predict_proba(X)
+        else:
+            _, decisions = teaser.update_predict_proba(X)

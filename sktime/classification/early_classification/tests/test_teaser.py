@@ -19,32 +19,6 @@ def load_unit_data():
     return X_train, y_train, X_test, y_test, indices
 
 
-def test_teaser_on_unit_test_data():
-    """Test of TEASER on unit test data."""
-    X_train, y_train, X_test, y_test, indices = load_unit_data()
-
-    # train probability threshold
-    teaser = TEASER(
-        random_state=0,
-        classification_points=[6, 10, 16, 24],
-        estimator=TimeSeriesForestClassifier(n_estimators=10, random_state=0),
-    )
-    teaser.fit(X_train, y_train)
-
-    X_test = from_nested_to_3d_numpy(X_test)[indices]
-    final_probas = np.zeros((10, 2))
-    open_idx = np.arange(0, 10)
-
-    for i in teaser.classification_points:
-        probas, decisions = teaser.update_predict_proba(X_test[:, :, :i])
-        X_test, open_idx, final_idx = teaser.split_indices_and_filter(
-            X_test, open_idx, decisions
-        )
-        final_probas[final_idx] = probas[decisions]
-
-    testing.assert_array_equal(final_probas, teaser_unit_test_probas)
-
-
 def test_teaser_with_different_decision_maker():
     """Test of TEASER with different One-Class-Classifier."""
     X_train, y_train, X_test, y_test, indices = load_unit_data()
@@ -121,21 +95,6 @@ def test_teaser_full_length():
     testing.assert_allclose(teaser._train_accuracy, 0.9, rtol=0.01)
     testing.assert_allclose(teaser._train_earliness, 0.7333, rtol=0.01)
 
-
-teaser_unit_test_probas = np.array(
-    [
-        [0.0, 1.0],
-        [0.5, 0.5],
-        [0.0, 1.0],
-        [1.0, 0.0],
-        [0.7, 0.3],
-        [1.0, 0.0],
-        [1.0, 0.0],
-        [0.1, 0.9],
-        [0.9, 0.1],
-        [1.0, 0.0],
-    ]
-)
 
 teaser_if_unit_test_probas = np.array(
     [

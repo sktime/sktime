@@ -483,7 +483,6 @@ class TEASER(BaseEarlyClassifier):
     def _predict_oc_classifier(
         self, X_oc, n_consecutive_predictions, idx, estimator_preds, state_info
     ):
-
         # stores whether we have made a final decision on a prediction, if true
         # state info won't be edited in later time stamps
         finished = state_info[:, 1] >= n_consecutive_predictions
@@ -545,9 +544,9 @@ class TEASER(BaseEarlyClassifier):
             earliness,
         )
 
-    def _update_state_info(self, acccept_decision, preds, state_info, idx, time_stamp):
+    def _update_state_info(self, accept_decision, preds, state_info, idx, time_stamp):
         # consecutive predictions, add one if positive decision and same class
-        if acccept_decision[idx] and preds[idx] == state_info[idx][2]:
+        if accept_decision[idx] and preds[idx] == state_info[idx][2]:
             return (
                 time_stamp,
                 state_info[idx][1] + 1,
@@ -558,7 +557,7 @@ class TEASER(BaseEarlyClassifier):
         else:
             return (
                 time_stamp,
-                1 if acccept_decision[idx] else 0,
+                1 if accept_decision[idx] else 0,
                 preds[idx],
                 self._classification_points[time_stamp],
             )
@@ -594,11 +593,17 @@ class TEASER(BaseEarlyClassifier):
             Parameters to create testing instances of the class.
         """
         from sktime.classification.feature_based import SummaryClassifier
+        from sktime.classification.interval_based import TimeSeriesForestClassifier
 
-        params = {
-            "classification_points": [3, 5],
-            "estimator": SummaryClassifier(
-                estimator=RandomForestClassifier(n_estimators=2)
-            ),
-        }
-        return params
+        if parameter_set == "results_comparison":
+            return {
+                "classification_points": [6, 10, 16, 24],
+                "estimator": TimeSeriesForestClassifier(n_estimators=10),
+            }
+        else:
+            return {
+                "classification_points": [3, 5],
+                "estimator": SummaryClassifier(
+                    estimator=RandomForestClassifier(n_estimators=2)
+                ),
+            }

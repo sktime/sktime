@@ -239,14 +239,6 @@ ESTIMATOR_TAG_REGISTER = [
         "contract time setting, does the estimator support limiting max fit time?",
     ),
     (
-        "capability:early_prediction",
-        "classifier",
-        "bool",
-        "is the classifier an early classification algorithm? Can predict make "
-        "classifications on incomplete time series and make a decision on if the "
-        "prediction is trustworthy?",
-    ),
-    (
         "capability:multithreading",
         ["classifier", "early_classifier"],
         "bool",
