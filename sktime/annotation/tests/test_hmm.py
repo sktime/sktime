@@ -38,7 +38,7 @@ def test_hmm_basic_gauss():
         transition_matrix[ind, ind] = 1 - (1 / (s_len / 14))
     gauss_test = HMM(emi_funcs, transition_matrix)
     gauss_test.fit(gauss_data)
-    predicted_labels = gauss_test.predict()
+    predicted_labels = gauss_test.predict(gauss_data)
     assert len(predicted_labels == labels) >= 0.95 * len(predicted_labels)
 
 

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Tests for sktime annotators."""
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -23,4 +24,4 @@ def test_output_type(Estimator):
     estimator.fit(*args)
     args = _make_args(estimator, "predict")
     y_pred = estimator.predict(*args)
-    assert isinstance(y_pred, pd.Series)
+    assert isinstance(y_pred, pd.Series) or isinstance(y_pred, np.ndarray)
