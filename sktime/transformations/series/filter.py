@@ -105,7 +105,7 @@ class Filter(BaseTransformer):
         Xt = filter.filter_data(X, sfreq=sfreq, l_freq=l_freq, h_freq=h_freq, **kwargs)
 
         # transpose back to have sktime shape again (timepoints*channels)
-        if Xt.ndim == 2:
+        if X.ndim == 2:
             Xt = Xt.transpose()
         # if 3D, it comes out as 2D from filter_data and needs to be reshaped
         else:
