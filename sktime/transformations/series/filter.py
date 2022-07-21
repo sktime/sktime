@@ -101,13 +101,13 @@ class Filter(BaseTransformer):
         if kwargs is None:
             kwargs = {}
 
-        # X is now of shape channels * timepoints
+        # X is now of shape channels * timepoints or instance * channels * timepoints
         Xt = filter.filter_data(X, sfreq=sfreq, l_freq=l_freq, h_freq=h_freq, **kwargs)
 
-        # transpose back to have sktime shape again (timepoints*channels)
+        # Series, 2D: transpose back to have sktime shape again (timepoints*channels)
         if X.ndim == 2:
             Xt = Xt.transpose()
-        # if 3D, it comes out as 2D from filter_data and needs to be reshaped
+        # Panel, 3D: Xt comes out as 2D from filter_data and needs to be reshaped
         else:
             Xt = Xt.reshape(X.shape)
         return Xt
