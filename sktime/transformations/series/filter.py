@@ -5,7 +5,6 @@ __author__ = ["sveameyer13"]
 __all__ = ["Filter"]
 
 import numpy as np
-from mne import filter
 
 from sktime.transformations.base import BaseTransformer
 
@@ -44,6 +43,8 @@ class Filter(BaseTransformer):
         "scitype:instancewise": True,  # is this an instance-wise transform?
         "X_inner_mtype": ["np.ndarray", "numpy3D"],
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
+        "fit_is_empty": True,  # is fit empty and can be skipped? Yes = True
+        "python_dependencies": "mne",
     }
 
     def __init__(
@@ -85,6 +86,8 @@ class Filter(BaseTransformer):
         Xt : 2D or 3D numpy array, same dimension as X
             Transformed time series.
         """
+        from mne import filter
+
         # np.darray needs to be [anything, ..., time]
         # so 3D is ok, but we need to flip in 2d case
         if X.ndim == 2:
