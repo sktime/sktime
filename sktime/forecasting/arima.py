@@ -469,7 +469,15 @@ class AutoARIMA(_PmdArimaAdapter):
             "max_q": 2,
             "seasonal": False,
         }
-        return params
+        params2 = {
+            "d": 0,
+            "suppress_warnings": True,
+            "max_p": 2,
+            "max_q": 2,
+            "seasonal": False,
+            "update_pdq": True,
+        }
+        return [params, params2]
 
 
 class ARIMA(_PmdArimaAdapter):
