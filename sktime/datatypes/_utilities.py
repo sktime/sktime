@@ -297,7 +297,7 @@ def get_cutoff(
     if isinstance(obj, pd.DataFrame) and isinstance(obj.index, pd.MultiIndex):
         idx = obj.index
         series_idx = [
-                obj.loc[x].index.get_level_values(-1) for x in idx.droplevel(-1).unique()
+            obj.loc[x].index.get_level_values(-1) for x in idx.droplevel(-1).unique()
         ]
         cutoffs = [sub_idx(x, ix, return_index) for x in series_idx]
         return agg(cutoffs)
