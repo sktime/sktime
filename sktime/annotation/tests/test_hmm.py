@@ -4,6 +4,8 @@
 __author__ = ["miraep8"]
 
 import numpy as np
+import pytest
+from numpy import asarray
 from scipy.stats import norm
 
 from sktime.annotation.hmm import HMM
@@ -37,4 +39,31 @@ def test_hmm_basic_gauss():
     gauss_test = HMM(emi_funcs, transition_matrix)
     gauss_test.fit(gauss_data)
     predicted_labels = gauss_test.predict()
-    assert len(predicted_labels == labels) >= 0.9 * len(predicted_labels)
+    assert len(predicted_labels == labels) >= 0.95 * len(predicted_labels)
+
+
+def test_reject_bad_inputs():
+    """Demonstrate failute when initialized with bad inputs."""
+    # test we get a ValueError if we don't use square trans_prob
+    size = 2
+    valid_emi_funcs = [(norm.pdf, {"loc": 0, "scale": 1}) for _ in range(size)]
+    # trans_mat must be square:
+    with pytest.raises(ValueError):
+        HMM(
+            emission_funcs=valid_emi_funcs,
+            transition_prob_mat=asarray([[0.5, 0.5], [0.2, 0.8], [0.9, 0.1]]),
+        )
+    # trans_mat rows must sum to 1:
+    with pytest.raises(ValueError):
+        HMM(
+            emission_funcs=valid_emi_funcs,
+            transition_prob_mat=asarray([[10, 10], [0.2, 0.8]]),
+        )
+    # emi_funcs and trans mat must have shared dimension:
+    with pytest.raises(ValueError):
+        HMM(
+            emission_funcs=valid_emi_funcs,
+            transition_prob_mat=asarray(
+                [[0.25, 0.25, 0.5], [0.2, 0.7, 0.1], [0.3, 0.3, 0.4]]
+            ),
+        )

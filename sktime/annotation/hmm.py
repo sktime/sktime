@@ -114,6 +114,7 @@ class HMM(BaseSeriesAnnotator):
 
     @classmethod
     def _calculate_trans_mats(
+        cls,
         initial_probs: np.ndarray,
         emi_probs: np.ndarray,
         transition_prob_mat: np.ndarray,
@@ -179,7 +180,7 @@ class HMM(BaseSeriesAnnotator):
 
     @classmethod
     def _make_emission_probs(
-        emission_funcs: list, observations: np.ndarray
+        cls, emission_funcs: list, observations: np.ndarray
     ) -> np.ndarray:
         """Calculate the prob each obs comes from each hidden state."""
         # assign emission probabilities from each state to each position:
@@ -222,7 +223,7 @@ class HMM(BaseSeriesAnnotator):
         init_probs = self.initial_probs
         # if no initial_probs were supplied assign all states equal prob:
         if self.initial_probs is None:
-            init_probs = 1.0 / (self.num_states) * np.ones(len(self.num_states))
+            init_probs = 1.0 / (self.num_states) * np.ones(self.num_states)
         trans_prob, trans_id = HMM._calculate_trans_mats(
             init_probs,
             emi_probs,
