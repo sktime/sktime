@@ -99,9 +99,7 @@ class Filter(BaseTransformer):
         kwargs = self.filter_kwargs
 
         # z is now of shape channels * timepoints
-        Xt = filter.filter_data(
-            X, sfreq=sfreq, l_freq=l_freq, h_freq=h_freq, **kwargs
-        )
+        Xt = filter.filter_data(X, sfreq=sfreq, l_freq=l_freq, h_freq=h_freq, **kwargs)
 
         # transpose back to have sktime shape again (timepoints*channels)
         if Xt.ndim == 2:
