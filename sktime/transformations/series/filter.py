@@ -127,4 +127,4 @@ class Filter(BaseTransformer):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        return {"s_freq": 3}
+        return {"sfreq": 3}
