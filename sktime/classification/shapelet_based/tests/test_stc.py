@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """ShapeletTransformClassifier test code."""
-from sktime._contrib.vector_classifiers._rotation_forest import RotationForest
 from sktime.classification.shapelet_based import ShapeletTransformClassifier
+from sktime.classification.sklearn import RotationForest
 from sktime.datasets import load_unit_test
 
 
@@ -12,7 +12,7 @@ def test_contracted_stc():
 
     # train contracted STC
     stc = ShapeletTransformClassifier(
-        estimator=RotationForest(contract_max_n_estimators=2),
+        estimator=RotationForest(contract_max_n_estimators=2, random_state=0),
         max_shapelets=3,
         time_limit_in_minutes=0.25,
         contract_max_n_shapelet_samples=10,
@@ -20,3 +20,5 @@ def test_contracted_stc():
         random_state=0,
     )
     stc.fit(X_train, y_train)
+
+    assert len(stc._estimator.estimators_) > 1
