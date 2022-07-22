@@ -44,7 +44,7 @@ def mean_shift(
         1.76586304, 4.57921282, 3.76743473, 2.53052561, 3.54256004,
         2.53658231, 2.53427025, 3.24196227, 1.08671976])
 
-    >>> from sktime.annotation.datagen import mean_shift 
+    >>> from sktime.annotation.datagen import mean_shift
     >>> mean_shift([1, 2, 3], lengths=[2, 4, 8], noise=0)  # doctest: +SKIP
     array([1., 1., 2., 2., 2., 2., 3., 3., 3., 3., 3., 3., 3., 3.])
 
