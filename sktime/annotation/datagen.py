@@ -39,20 +39,20 @@ def mean_shift(
     Examples
     --------
     >>> from sktime.annotation.datagen import mean_shift
-    >>> mean_shift([1, 2, 3], lengths=[2, 4, 8])
-    array([ 0.56558259, -0.99313531,  1.36502113,  2.672292  ,  2.21430948,
-            0.16796847,  1.85315518,  1.10375721,  1.78360117,  4.05422671,
-        -0.18436865,  3.12673702,  1.01784907,  2.71841937])
+    >>> mean_shift([1, 2, 3], lengths=[2, 4, 8], random_state=42)  # doctest: +SKIP
+    array([1.49671415, 0.8617357 , 2.64768854, 3.52302986, 1.76584663,
+        1.76586304, 4.57921282, 3.76743473, 2.53052561, 3.54256004,
+        2.53658231, 2.53427025, 3.24196227, 1.08671976])
 
-    >>> from sktime.annotation.datagen import mean_shift
-    >>> mean_shift([1, 2, 3], lengths=[2, 4, 8], noise=0)
+    >>> from sktime.annotation.datagen import mean_shift 
+    >>> mean_shift([1, 2, 3], lengths=[2, 4, 8], noise=0)  # doctest: +SKIP
     array([1., 1., 2., 2., 2., 2., 3., 3., 3., 3., 3., 3., 3., 3.])
 
     >>> from sktime.annotation.datagen import mean_shift
-    >>> mean_shift([1, 2, 3], lengths=[2, 4, 8], noise=[0, 0.5, 1.0])
-    array([ 1.        ,  1.        ,  1.7384154 ,  1.50968953,  2.14813299,
-            1.710443  , -0.32769788,  2.92328436,  2.93809456,  2.17335942,
-            3.51210878,  2.74388728,  4.86323121,  3.54855417])
+    >>> mean_shift([1, 2, 3], lengths=[2, 4, 8], noise=[0, 0.5, 1.0])  # doctest: +SKIP
+    array([1.        , 1.        , 2.32384427, 2.76151493, 1.88292331,
+        1.88293152, 4.57921282, 3.76743473, 2.53052561, 3.54256004,
+        2.53658231, 2.53427025, 3.24196227, 1.08671976])
 
     """
     rng = check_random_state(random_state)
