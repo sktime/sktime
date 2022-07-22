@@ -13,12 +13,12 @@ from sktime.transformations.base import BaseTransformer
 
 # todo: bayesian updating?
 # todo: some optimisation of kernel bandwidths?
+# todo: clock changes and time-zone aware index?
+# todo: leap year?
 
 # next steps
-# move estimate into fit
-# clock changes
-# unique combination of tod/doy as lookup table
-# threshold as parameter
+# update function
+# documentation
 
 
 class ClearSky(BaseTransformer):
@@ -60,7 +60,7 @@ class ClearSky(BaseTransformer):
         "enforce_index_type": [
             pd.DatetimeIndex
         ],  # index type that needs to be enforced in X/y
-        "fit_is_empty": True,  # is fit empty and can be skipped? Yes = True
+        "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
         "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
         "transform-returns-same-time-index": True,
         "skip-inverse-transform": True,  # is inverse-transform skipped when called?
@@ -71,13 +71,65 @@ class ClearSky(BaseTransformer):
         "python_version": None,  # PEP 440 python version specifier to limit versions
     }
 
-    def __init__(self, quantile_prob=0.95, bw_diurnal=100, bw_annual=10):
+    def __init__(
+        self, quantile_prob=0.95, bw_diurnal=100, bw_annual=10, min_thresh=None
+    ):
 
         self.quantile_prob = quantile_prob
         self.bw_diurnal = bw_diurnal
         self.bw_annual = bw_annual
+        self.min_thresh = min_thresh
 
         super(ClearSky, self).__init__()
+
+    def _fit(self, X, y=None):
+        """Fit transformer to X and y.
+
+        private _fit containing the core logic, called from fit
+
+        Parameters
+        ----------
+        X : Series or Panel of mtype X_inner_mtype
+            if X_inner_mtype is list, _fit must support all types in it
+            Data to fit transform to
+        y : Series or Panel of mtype y_inner_mtype, default=None
+            Additional data, e.g., labels for transformation
+
+        Returns
+        -------
+        self: reference to self
+        """
+        df = pd.DataFrame(index=X.index)
+        df["yday"] = df.index.dayofyear
+        df["tod"] = df.index.hour + df.index.minute / 60 + df.index.second / 60
+
+        # set up smoothing grid
+        tod = pd.timedelta_range(start="0T", end="1D", freq=df.index.freq)[:-1]
+        tod = [x.total_seconds() / (60 * 60) for x in tod.to_pytimedelta()]
+        doy = pd.RangeIndex(start=1, stop=367)
+
+        indx = pd.MultiIndex.from_product([doy, tod], names=["doy", "tod"])
+
+        # csp look up table
+        csp = pd.Series(index=indx, dtype="float64")
+        self.clearskypower = (
+            csp.reset_index()
+            .groupby(["doy", "tod"])
+            .apply(
+                lambda x: _clearskypower(
+                    y=X,
+                    q=self.quantile_prob,
+                    tod_i=x.tod,
+                    doy_i=x.doy,
+                    tod_vec=df["tod"],
+                    doy_vec=df["yday"],
+                    bw_tod=self.bw_diurnal,
+                    bw_doy=self.bw_annual,
+                )
+            )
+        )
+
+        return self
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
@@ -96,67 +148,52 @@ class ClearSky(BaseTransformer):
         -------
         transformed version of X
         """
-        # get required seasonal aspects
-        df = pd.DataFrame(index=X.index)
-        df["yday"] = df.index.dayofyear
-        df["tod"] = df.index.hour + df.index.minute / 60 + df.index.second / 60
+        # get required seasonal index
+        doy = X.index.dayofyear
+        tod = X.index.hour + X.index.minute / 60 + X.index.second / 60
+        indx_seasonal = pd.MultiIndex.from_arrays([doy, tod], names=["doy", "tod"])
 
-        csp = df.apply(
-            lambda x: _clearskypower(
-                y=X,
-                q=self.quantile_prob,
-                tod_i=x.tod,
-                doy_i=x.yday,
-                tod_vec=df["tod"],
-                doy_vec=df["yday"],
-                bw_tod=self.bw_diurnal,
-                bw_doy=self.bw_annual,
-            ),
-            axis=1,
-        )
-
+        # look up values and overwrite index
+        csp = self.clearskypower[indx_seasonal].copy()
+        csp.index = X.index
         X_trafo = X / csp
 
-        X_trafo[(X / X.max()) < 0.01] = 0
+        # threshold for small morning/evening values
+        if self.min_thresh is not None:
+            X_trafo[X < self.min_thresh] = 0
+        else:
+            X_trafo[X == 0] = 0
 
         return X_trafo
 
-    # # todo: consider implementing this, optional
-    # # if not implementing, delete the _inverse_transform method
-    # # inverse transform exists only if transform does not change scitype
-    # #  i.e., Series transformed to Series
-    # def _inverse_transform(self, X, y=None):
-    #     """Inverse transform, inverse operation to transform.
+    def _inverse_transform(self, X, y=None):
+        """Inverse transform, inverse operation to transform.
 
-    #     private _inverse_transform containing core logic, called from
-    # inverse_transform
+        private _inverse_transform containing core logic, called from
+        inverse_transform
 
-    #     Parameters
-    #     ----------
-    #     X : Series or Panel of mtype X_inner_mtype
-    #         if X_inner_mtype is list, _inverse_transform must support all types in it
-    #         Data to be inverse transformed
-    #     y : Series or Panel of mtype y_inner_mtype, optional (default=None)
-    #         Additional data, e.g., labels for transformation
+        Parameters
+        ----------
+        X : Series or Panel of mtype X_inner_mtype
+            if X_inner_mtype is list, _inverse_transform must support all types in it
+            Data to be inverse transformed
+        y : Series or Panel of mtype y_inner_mtype, optional (default=None)
+            Additional data, e.g., labels for transformation
 
-    #     Returns
-    #     -------
-    #     inverse transformed version of X
-    #     """
-    #     # implement here
-    #     # IMPORTANT: avoid side effects to X, y
-    #     #
-    #     # type conventions are exactly those in _transform, reversed
-    #     #
-    #     # for example: if transform-output is "Series":
-    #     #  return should be of same mtype as input, X_inner_mtype
-    #     #  if multiple X_inner_mtype are supported, ensure same input/output
-    #     #
-    #     # todo: add the return mtype/scitype to the docstring, e.g.,
-    #     #  Returns
-    #     #  -------
-    #     #  X_inv_transformed : Series of mtype pd.DataFrame
-    #     #       inverse transformed version of X
+        Returns
+        -------
+        inverse transformed version of X
+        """
+        doy = X.index.dayofyear
+        tod = X.index.hour + X.index.minute / 60 + X.index.second / 60
+        indx_seasonal = pd.MultiIndex.from_arrays([doy, tod], names=["doy", "tod"])
+
+        # look up values and overwrite index
+        csp = self.clearskypower[indx_seasonal].copy()
+        csp.index = X.index
+        X_trafo = X * csp
+
+        return X_trafo
 
     # # todo: consider implementing this, optional
     # # if not implementing, delete the _update method
@@ -188,16 +225,16 @@ class ClearSky(BaseTransformer):
     #     #  if used, estimators should be cloned to attributes ending in "_"
     #     #  the clones, not the originals, should be used or fitted if needed
 
-    # # todo: consider implementing this, optional
-    # # if not implementing, delete the method
-    # def get_fitted_params(self):
-    #     """Get fitted parameters.
+    def get_fitted_params(self):
+        """Get fitted parameters.
 
-    #     Returns
-    #     -------
-    #     fitted_params : dict
-    #     """
-    #     # implement here
+        Returns
+        -------
+        fitted_params : dict
+        """
+        params = {"clearskypower": self.clearskypower}
+
+        return params
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -218,7 +255,12 @@ class ClearSky(BaseTransformer):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        params = {"quantile_prob": 0.95, "bw_diurnal": 100, "bw_annual": 10}
+        params = {
+            "quantile_prob": 0.95,
+            "bw_diurnal": 100,
+            "bw_annual": 10,
+            "min_thresh": None,
+        }
 
         return params
 
