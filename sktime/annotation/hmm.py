@@ -135,8 +135,7 @@ class HMM(BaseSeriesAnnotator):
         if not np.isclose(
             np.ones(tran_mat_len),
             np.sum(self.transition_prob_mat, axis=1),
-            rel_tol=5e-2,
-            abs_tol=0.0,
+            rtol=5e-2,
         ):
             raise ValueError("The sum of all rows in the transition matrix must be 1.")
         # sum of all initial_probs should be 1 if it is provided.
