@@ -37,6 +37,8 @@ class CNNClassifier(BaseDeepClassifier):
         fit parameter for the keras model
     optimizer       : keras.optimizer, default=keras.optimizers.Adam(),
     metrics         : list of strings, default=["accuracy"],
+    device          : string, default='/cpu:0'
+        specifies name of the device to fit and run model on.
 
     Notes
     -----
@@ -59,6 +61,7 @@ class CNNClassifier(BaseDeepClassifier):
         verbose=False,
         loss="mean_squared_error",
         metrics=None,
+        device="/cpu:0",
     ):
         _check_dl_dependencies("tensorflow", severity="error")
         super(CNNClassifier, self).__init__()
@@ -71,6 +74,7 @@ class CNNClassifier(BaseDeepClassifier):
         self.verbose = verbose
         self.loss = loss
         self.metrics = metrics
+        self.device = device
         self._network = CNNNetwork()
 
     def build_model(self, input_shape, n_classes, **kwargs):
@@ -126,6 +130,8 @@ class CNNClassifier(BaseDeepClassifier):
         -------
         self : object
         """
+        import tensorflow as tf
+
         if self.callbacks is None:
             self._callbacks = []
         y_onehot = self.convert_y_to_keras(y)
@@ -133,16 +139,18 @@ class CNNClassifier(BaseDeepClassifier):
         X = X.transpose(0, 2, 1)
 
         check_random_state(self.random_state)
-        self.input_shape = X.shape[1:]
-        self.model_ = self.build_model(self.input_shape, self.n_classes_)
-        if self.verbose:
-            self.model.summary()
-        self.history = self.model_.fit(
-            X,
-            y_onehot,
-            batch_size=self.batch_size,
-            epochs=self.n_epochs,
-            verbose=self.verbose,
-            callbacks=self._callbacks,
-        )
+
+        with tf.device(self.device):
+            self.input_shape = X.shape[1:]
+            self.model_ = self.build_model(self.input_shape, self.n_classes_)
+            if self.verbose:
+                self.model.summary()
+            self.history = self.model_.fit(
+                X,
+                y_onehot,
+                batch_size=self.batch_size,
+                epochs=self.n_epochs,
+                verbose=self.verbose,
+                callbacks=self._callbacks,
+            )
         return self

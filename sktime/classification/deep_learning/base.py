@@ -88,9 +88,12 @@ class BaseDeepClassifier(BaseClassifier, ABC):
         -------
         output : array of shape = [n_instances, n_classes] of probabilities
         """
+        import tensorflow as tf
+
         # Transpose to work correctly with keras
         X = X.transpose((0, 2, 1))
-        probs = self.model_.predict(X, self.batch_size, **kwargs)
+        with tf.device(self.device):
+            probs = self.model_.predict(X, self.batch_size, **kwargs)
 
         # check if binary classification
         if probs.shape[1] == 1:
