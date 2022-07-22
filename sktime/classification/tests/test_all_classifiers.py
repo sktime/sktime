@@ -102,10 +102,15 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
                 )
 
             X_train = scenario.args["fit"]["X"]
+            _, _, X_train_metadata = check_is_scitype(
+                X_train, "Panel", return_metadata=True
+            )
+            X_train_len = X_train_metadata["n_instances"]
+
             train_proba = estimator_instance._get_train_probs(X_train, y_train)
 
-            assert isinstance(y_proba, np.ndarray)
-            assert y_proba.shape == (X_new_instances, n_classes)
+            assert isinstance(train_proba, np.ndarray)
+            assert train_proba.shape == (X_train_len, n_classes)
             np.testing.assert_almost_equal(train_proba.sum(axis=1), 1, decimal=4)
 
     def test_classifier_on_unit_test_data(self, estimator_class):
