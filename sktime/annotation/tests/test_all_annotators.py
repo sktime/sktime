@@ -24,4 +24,4 @@ def test_output_type(Estimator):
     estimator.fit(*args)
     args = _make_args(estimator, "predict")
     y_pred = estimator.predict(*args)
-    assert isinstance(y_pred, pd.Series) or isinstance(y_pred, np.ndarray)
+    assert isinstance(y_pred, (pd.Series, np.ndarray))

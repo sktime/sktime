@@ -6,7 +6,6 @@ Implements a basic Hidden Markov Model (HMM) as an annotation estimator.
 To read more about the algorithm, check out the wikipedia page:
 (https://en.wikipedia.org/wiki/Hidden_Markov_model
 """
-from math import isclose
 from typing import Tuple
 
 import numpy as np
@@ -18,10 +17,10 @@ __all__ = ["HMM"]
 
 
 class HMM(BaseSeriesAnnotator):
-    """Implements a simple HMM fitted with viterbi algorithm.
+    """Implements a simple HMM fitted with Viterbi algorithm.
 
-    The HMM annotation estimator facilitates the appilcation of
-    the vertibi algorithm to fit a sequence of 'hidden state' class
+    The HMM annotation estimator uses the
+    the Viterbi algorithm to fit a sequence of 'hidden state' class
     annotations (represented by an array of integers the same size
     as the observation) to a sequence of observations.
 
@@ -33,18 +32,44 @@ class HMM(BaseSeriesAnnotator):
     belief of the probability distribution of hidden states at the
     start of the observation sequence).
 
+    _fit is currently empty as the parameters of the probability
+    distribution are required to be passed to the algorithm.
+
+    _predict - first the transition_probability and transition_id matrices are
+    calculated - these are both nxm matrices, where n is the number of
+    hidden states and m is the number of observations. The transition
+    probability matrices record the probability of the most likely
+    sequence which has observation `m` being assigned to hidden state n.
+    The transition_id's record the step before hidden state n that
+    proceeds it in the most likely path.  This logic is mostly carried
+    out by helper function _calculate_trans_mats.
+    Next, these matrices are used to calculate the most likely
+    path (by backtracing from the final mostly likely state and the
+    id's that proceeded it.)  This logic is done via a helper func
+    hmm_viterbi_label.
+
     Parameters
     ----------
-    emission_funcs : a list of functions, which should be properly
+    emission_funcs : a list of length n.  Should be either a list of
+        functions (callables, eg [func1, func2.....] - which take a
+        value and return a probability and have a signature of the form
+        func(X) -> float, or a list of function (callable) and keyword argument
+        dictionary tuples [(func, kwarg), (func, kwarg)], where each function
+        returns a probability when passed a single observation and
+        whatever arguments are supplied in the respective keyword arguent
+        dictionary (ie func(X, **kwarg) -> float) All functions should be properly
         normalized PDFs over the same space as the observed data.
-    transition_prob_mat: a nxn array of probabilities, where 'n'
+    transition_prob_mat: np.ndarry a nxn array of probabilities, where 'n'
         represents the number of hidden states in the HMM.  Each
         row should sumn to 1 in order to be properly normalized
         (ie the j'th column in the i'th row represents the
         probability of transitioning from state i to state j.)
-    initial_probs: optional, a 1d array of probabilities across
-        the starting states. Should match prior beliefs.  If none
-        is passed will give each state an equal initial probability.
+    initial_probs: np.ndarray (optional) a array of length n of probabilities over
+        the starting states. The length should match the length of both
+        the emission funcs list and the transition_prob_mat.
+        The initial probs should be reflective of prior beliefs.  If none
+        is passed will each hidden state will be assigned an equal inital
+        prob.
 
     Examples
     --------
@@ -56,15 +81,15 @@ class HMM(BaseSeriesAnnotator):
     >>> sd = [.25 for i in centers]
     >>> emi_funcs = [(norm.pdf, {'loc': mean,
     ...  'scale': sd[ind]}) for ind, mean in enumerate(centers)]
-    >>> test = HMM(emi_funcs, asarray([[0.25,0.75], [0.666, 0.333]]))
+    >>> hmm_est = HMM(emi_funcs, asarray([[0.25,0.75], [0.666, 0.333]]))
     >>> # generate synthetic data (or of course use your own!)
     >>> obs = asarray([3.7,3.2,3.4,3.6,-5.1,-5.2,-4.9])
-    >>> test = test.fit(obs)
-    >>> labels = test.predict(obs)
+    >>> hmm_est = hmm_est.fit(obs)
+    >>> labels = hmm_est.predict(obs)
     """
 
     # plan to update to make multivariate.
-    _tags = {"univariate-only": True, "fit_is_empty": False}
+    _tags = {"univariate-only": True, "fit_is_empty": True}
 
     def __init__(
         self,
@@ -73,42 +98,48 @@ class HMM(BaseSeriesAnnotator):
         initial_probs: np.ndarray = None,
     ):
         self.initial_probs = initial_probs
-        self.num_states = len(emission_funcs)
         self.emission_funcs = emission_funcs
         self.transition_prob_mat = transition_prob_mat
-        self.states = [i for i in range(self.num_states)]
-        self._validate_init()
         super(HMM, self).__init__(fmt="dense", labels="int_label")
+        self._validate_init()
 
     def _validate_init(self):
         """Verify that the parameters passed to init are well behaved."""
-        tran_mat_len = len(self.transition_prob_mat[:, 0])
+        tran_mat_len = self.transition_prob_mat.shape[0]
         # transition_prob_mat should be square:
-        if not len(self.transition_prob_mat.shape) == 2 or not tran_mat_len == len(
-            self.transition_prob_mat[0, :]
+        if (
+            not self.transition_prob_mat.ndim == 2
+            or not tran_mat_len == self.transition_prob_mat.shape[1]
         ):
             raise ValueError(
                 "Transtion Probability must be 2D square, but got an"
                 f"object of size {self.transition_prob_mat.shape}"
             )
         # number of states should be consistent!
-        init_prob_len = self.num_states
         if self.initial_probs is not None:
             init_prob_len = len(self.initial_probs)
-        if not tran_mat_len == self.num_states == init_prob_len:
+        else:
+            # if init-prob_lens is None, it will be generated with this len:
+            init_prob_len = len(self.emission_funcs)
+        if not tran_mat_len == len(self.emission_funcs) == init_prob_len:
             raise ValueError(
-                "Number of hidden states is inconsistent!  Was passed "
-                f"{self.num_states} number of emission funcs, {tran_mat_len}"
-                f" as the size of the transition matrix, and  "
-                f" {init_prob_len} number of initial state probs"
+                "Number of hidden states is inconsistent!  emission_funcs "
+                f" was of length {len(self.emission_funcs)} transition_prob_mat was "
+                f" of length {tran_mat_len} and the length of the passed "
+                f" (or generated) list of initial probabilities was "
+                f" {init_prob_len}. All of these lengths should be the same"
+                f" as they all correspond to the same underlying list of hidden"
+                f" states."
             )
-        for i in range(len(self.transition_prob_mat)):
-            if not isclose(
-                1, sum(self.transition_prob_mat[i, :]), rel_tol=5e-2, abs_tol=0.0
-            ):
-                raise ValueError(
-                    "The sum of all rows in the transition matrix must be 1."
-                )
+        # sum of all rows in transition_prob_mat should be 1.
+        if not np.isclose(
+            np.ones(tran_mat_len),
+            np.sum(self.transition_prob_mat, axis=1),
+            rel_tol=5e-2,
+            abs_tol=0.0,
+        ):
+            raise ValueError("The sum of all rows in the transition matrix must be 1.")
+        # sum of all initial_probs should be 1 if it is provided.
         if self.initial_probs is not None and not sum(self.initial_probs) == 1:
             raise ValueError("Sum of initial probs should be 1.")
 
@@ -121,7 +152,7 @@ class HMM(BaseSeriesAnnotator):
         num_obs: int,
         num_states: int,
     ) -> Tuple[np.array, np.array]:
-        """Calculate the transition mats used in the viterbi algorithm.
+        """Calculate the transition mats used in the Viterbi algorithm.
 
         Parameters
         ----------
@@ -186,12 +217,17 @@ class HMM(BaseSeriesAnnotator):
         # assign emission probabilities from each state to each position:
 
         emi_probs = np.zeros(shape=(len(emission_funcs), len(observations)))
-        for state_id, emission_tuple in enumerate(emission_funcs):
-            emission_func = emission_tuple[0]
-            kwargs = emission_tuple[1]
-            emi_probs[state_id, :] = np.array(
-                [emission_func(x, **kwargs) for x in observations]
-            )
+        for state_id, emission_func in enumerate(emission_funcs):
+            if isinstance(emission_func, tuple):
+                emission_func = emission_func[0]
+                kwargs = emission_func[1]
+                emi_probs[state_id, :] = np.array(
+                    [emission_func(x, **kwargs) for x in observations]
+                )
+            else:
+                emi_probs[state_id, :] = np.array(
+                    [emission_func(x) for x in observations]
+                )
         return emi_probs
 
     def _hmm_viterbi_label(self) -> np.array:
@@ -199,12 +235,14 @@ class HMM(BaseSeriesAnnotator):
 
         Parameters
         ----------
-        self - an HMM instance which already has already
+        self: (HMM) an HMM instance which already has already had trans_id and trans_mat
+            calculated.
 
         Returns
         -------
-            -hmm_fit: a 2xn array with the first column being position and the second
-                column being a peak assignment.
+        hmm_fit: (np.ndarray) an mx1 array where m is the length of the X (obs).
+            each entry in the array is an int representing a hidden id state
+            that has been assigned to that observation.
         """
         hmm_fit = np.zeros(self.num_obs)
         # Now we trace backwards and find the most likely path:
@@ -217,8 +255,14 @@ class HMM(BaseSeriesAnnotator):
         return hmm_fit
 
     def _fit(self, X, Y=None):
-        """Calculate the transition matrices for the given model/observation."""
+        """Assign remaining internal variables."""
+        self.num_states = len(self.emission_funcs)
+        self.states = [i for i in range(self.num_states)]
         self.num_obs = len(X)
+        return self
+
+    def _predict(self, X):
+        """Determine the most likely seq of hidden states by Viterbi algorithm."""
         emi_probs = HMM._make_emission_probs(self.emission_funcs, X)
         init_probs = self.initial_probs
         # if no initial_probs were supplied assign all states equal prob:
@@ -233,10 +277,6 @@ class HMM(BaseSeriesAnnotator):
         )
         self.trans_prob = trans_prob
         self.trans_id = trans_id
-        return self
-
-    def _predict(self, X):
-        """Use the transition matrices to calculate the most likely state."""
         return self._hmm_viterbi_label()
 
     @classmethod
