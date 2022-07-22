@@ -80,11 +80,10 @@ jobs:
           mkdir -p testdir/
           cp .coveragerc testdir/
           cp setup.cfg testdir/
-          cd testdir/
           python -m pytest
 
       - name: Publish code coverage
-        uses: codecov/codecov-action@v2
+        uses: codecov/codecov-action@v3
 
   test-linux:
     needs: code-quality
@@ -112,7 +111,7 @@ jobs:
         run: make test
 
       - name: Publish code coverage
-        uses: codecov/codecov-action@v2
+        uses: codecov/codecov-action@v3
 
   test-mac:
     needs: code-quality
@@ -140,7 +139,7 @@ jobs:
         run: make test
 
       - name: Publish code coverage
-        uses: codecov/codecov-action@v2
+        uses: codecov/codecov-action@v3
 
   test-nosoftdeps:
     needs: code-quality
