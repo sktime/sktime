@@ -4,7 +4,7 @@
 import numpy as np
 import pytest
 
-from sktime.alignment.ggs import GGS, GGSEstimator
+from sktime.annotation.ggs import GGS, GGSEstimator
 
 
 @pytest.fixture
