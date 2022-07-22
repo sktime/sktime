@@ -3,7 +3,8 @@
 HMM Annotation Estimator.
 
 Implements a basic Hidden Markov Model (HMM) as an annotation estimator.
-To read more about the algorithm, check out the `HMM wikipedia page <https://en.wikipedia.org/wiki/Hidden_Markov_model>`_.
+To read more about the algorithm, check out the `HMM wikipedia page
+<https://en.wikipedia.org/wiki/Hidden_Markov_model>`_.
 """
 from typing import Tuple
 
@@ -254,14 +255,14 @@ class HMM(BaseSeriesAnnotator):
         return hmm_fit
 
     def _fit(self, X, Y=None):
-        """Assign remaining internal variables."""
-        self.num_states = len(self.emission_funcs)
-        self.states = [i for i in range(self.num_states)]
-        self.num_obs = len(X)
+        """Do nothing, currently empty."""
         return self
 
     def _predict(self, X):
         """Determine the most likely seq of hidden states by Viterbi algorithm."""
+        self.num_states = len(self.emission_funcs)
+        self.states = [i for i in range(self.num_states)]
+        self.num_obs = len(X)
         emi_probs = HMM._make_emission_probs(self.emission_funcs, X)
         init_probs = self.initial_probs
         # if no initial_probs were supplied assign all states equal prob:
