@@ -136,7 +136,7 @@ class HMM(BaseSeriesAnnotator):
             np.ones(tran_mat_len),
             np.sum(self.transition_prob_mat, axis=1),
             rtol=5e-2,
-        ):
+        ).any():
             raise ValueError("The sum of all rows in the transition matrix must be 1.")
         # sum of all initial_probs should be 1 if it is provided.
         if self.initial_probs is not None and not sum(self.initial_probs) == 1:
