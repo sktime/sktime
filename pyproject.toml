@@ -1,6 +1,6 @@
 [project]
 name = "sktime"
-version = "0.11.4"
+version = "0.13.0"
 description = "A unified framework for machine learning with time series"
 authors = [
     {name = "Franz Király", email = "f.kiraly@ucl.ac.uk"},
@@ -10,7 +10,6 @@ authors = [
 ]
 maintainers = [
     {name = "Franz Király", email = "f.kiraly@ucl.ac.uk"},
-    {name = "Tony Bagnall", email = "ajb@uea.ac.uk"},
     {name = "Martin Walter"},
 ]
 readme = "README.md"
@@ -39,12 +38,13 @@ classifiers = [
     "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
 ]
-requires-python = ">=3.7,<3.10"
+requires-python = ">=3.7,<3.11"
 dependencies = [
     "deprecated>=1.2.13",
     "numba>=0.53",
-    "numpy>=1.21.0,<1.22",
+    "numpy>=1.21.0,<1.23",
     "pandas>=1.1.0,<1.5.0",
     "scikit-learn>=0.24.0,<1.2.0",
     "statsmodels>=0.12.1",
@@ -54,22 +54,24 @@ dependencies = [
 [project.optional-dependencies]
 all_extras = [
     "dtw-python",
-    "esig==0.9.7",
-    "prophet>=1.0",
+    "esig==0.9.7; python_version < '3.10'",
+    "filterpy>=1.4.5",
     "hcrystalball>=0.1.9",
     "matplotlib>=3.3.2",
     "pmdarima>=1.8.0,!=1.8.1",
+    "prophet>=1.1",
+    "pykalman>=0.9.5",
     "pyod>=0.8.0",
-    "pystan==2.19.1.1",
     "scikit_posthocs>=0.6.5",
     "seaborn>=0.11.0",
     "statsforecast>=0.5.2",
     "stumpy>=1.5.1",
     "tbats>=1.1.0",
-    "tensorflow",
     "tensorflow-probability",
-    "tsfresh>=0.17.0",
-    "tslearn>=0.5.2"
+    "tensorflow",
+    "tsfresh>=0.17.0; python_version < '3.10'",
+    "tslearn>=0.5.2",
+    "gluonts>=0.9.0",
 ]
 
 dev = [

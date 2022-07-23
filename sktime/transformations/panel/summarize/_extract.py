@@ -294,6 +294,7 @@ class RandomIntervalFeatureExtractor(BaseTransformer):
         columns = []
 
         i = 0
+        drop_list = []
         for func in features:
             # TODO generalise to series-to-series functions and function kwargs
             for start, end in intervals:
@@ -313,11 +314,17 @@ class RandomIntervalFeatureExtractor(BaseTransformer):
                         ).squeeze()
                     else:
                         raise
+                new_col_name = f"{start}_{end}_{func.__name__}"
+                if new_col_name in columns:
+                    drop_list += [i]
+                else:
+                    columns = columns + [new_col_name]
                 i += 1
-                columns.append(f"{start}_{end}_{func.__name__}")
 
         Xt = pd.DataFrame(Xt)
+        Xt = Xt.drop(columns=Xt.columns[drop_list])
         Xt.columns = columns
+
         return Xt
 
 

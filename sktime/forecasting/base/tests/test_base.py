@@ -7,18 +7,25 @@ __author__ = ["fkiraly"]
 from functools import reduce
 from operator import mul
 
+import pandas as pd
 import pytest
 
 from sktime.datatypes import check_is_mtype, convert
+from sktime.datatypes._utilities import get_cutoff, get_window
 from sktime.forecasting.arima import ARIMA
 from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils._testing.panel import _make_panel
 from sktime.utils._testing.series import _make_series
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 PANEL_MTYPES = ["pd-multiindex", "nested_univ", "numpy3D"]
 HIER_MTYPES = ["pd_multiindex_hier"]
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("pmdarima", severity="none"),
+    reason="skip test if required soft dependency for ARIMA not available",
+)
 @pytest.mark.parametrize("mtype", PANEL_MTYPES)
 def test_vectorization_series_to_panel(mtype):
     """Test that forecaster vectorization works for Panel data.
@@ -30,7 +37,8 @@ def test_vectorization_series_to_panel(mtype):
 
     y = _make_panel(n_instances=n_instances, random_state=42, return_mtype=mtype)
 
-    y_pred = ARIMA().fit(y).predict([1, 2, 3])
+    f = ARIMA()
+    y_pred = f.fit(y).predict([1, 2, 3])
     valid, _, metadata = check_is_mtype(y_pred, mtype, return_metadata=True)
 
     msg = (
@@ -55,7 +63,18 @@ def test_vectorization_series_to_panel(mtype):
     )
     assert y_pred_equal_length, msg
 
+    cutoff_expected = get_cutoff(y)
+    msg = (
+        "estimator in vectorization test does not properly update cutoff, "
+        f"expected {cutoff_expected}, but found {f.cutoff}"
+    )
+    assert f.cutoff == cutoff_expected, msg
 
+
+@pytest.mark.skipif(
+    not _check_soft_dependencies("pmdarima", severity="none"),
+    reason="skip test if required soft dependency for ARIMA not available",
+)
 @pytest.mark.parametrize("mtype", HIER_MTYPES)
 def test_vectorization_series_to_hier(mtype):
     """Test that forecaster vectorization works for Hierarchical data.
@@ -69,7 +88,8 @@ def test_vectorization_series_to_hier(mtype):
     y = _make_hierarchical(hierarchy_levels=hierarchy_levels, random_state=84)
     y = convert(y, from_type="pd_multiindex_hier", to_type=mtype)
 
-    y_pred = ARIMA().fit(y).predict([1, 2, 3])
+    f = ARIMA()
+    y_pred = f.fit(y).predict([1, 2, 3])
     valid, _, metadata = check_is_mtype(y_pred, mtype, return_metadata=True)
 
     msg = (
@@ -94,10 +114,20 @@ def test_vectorization_series_to_hier(mtype):
     )
     assert y_pred_equal_length, msg
 
+    msg = (
+        "estimator in vectorization test does not properly update cutoff, "
+        f"expected {y}, but found {f.cutoff}"
+    )
+    assert f.cutoff == get_cutoff(y), msg
+
 
 PROBA_DF_METHODS = ["predict_interval", "predict_quantiles", "predict_var"]
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("pmdarima", severity="none"),
+    reason="skip test if required soft dependency for ARIMA not available",
+)
 @pytest.mark.parametrize("method", PROBA_DF_METHODS)
 @pytest.mark.parametrize("mtype", PANEL_MTYPES)
 def test_vectorization_series_to_panel_proba(method, mtype):
@@ -130,6 +160,10 @@ def test_vectorization_series_to_panel_proba(method, mtype):
     assert valid, msg
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("pmdarima", severity="none"),
+    reason="skip test if required soft dependency for ARIMA not available",
+)
 @pytest.mark.parametrize("method", PROBA_DF_METHODS)
 @pytest.mark.parametrize("mtype", HIER_MTYPES)
 def test_vectorization_series_to_hier_proba(method, mtype):
@@ -162,6 +196,10 @@ def test_vectorization_series_to_hier_proba(method, mtype):
     assert valid, msg
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("pmdarima", severity="none"),
+    reason="skip test if required soft dependency for ARIMA not available",
+)
 @pytest.mark.parametrize("method", PROBA_DF_METHODS)
 def test_vectorization_preserves_row_index_names(method):
     """Test that forecaster vectorization preserves row index names in forecast."""
@@ -177,6 +215,62 @@ def test_vectorization_preserves_row_index_names(method):
     )
 
     assert y_pred.index.names == y.index.names, msg
+
+
+@pytest.mark.skipif(
+    not _check_soft_dependencies("pmdarima", severity="none"),
+    reason="skip test if required soft dependency for ARIMA not available",
+)
+@pytest.mark.parametrize("mtype", HIER_MTYPES)
+@pytest.mark.parametrize("exogeneous", [True, False])
+def test_vectorization_multivariate(mtype, exogeneous):
+    """Test that forecaster vectorization preserves row index names in forecast."""
+    hierarchy_levels = (2, 4)
+    n_instances = reduce(mul, hierarchy_levels)
+
+    y = _make_hierarchical(
+        hierarchy_levels=hierarchy_levels, random_state=84, n_columns=2
+    )
+
+    if exogeneous:
+        y_fit = get_window(y, lag=pd.Timedelta("3D"))
+        X_fit = y_fit
+        X_pred = get_window(y, window_length=pd.Timedelta("3D"), lag=pd.Timedelta("0D"))
+    else:
+        y_fit = y
+        X_fit = None
+        X_pred = None
+
+    est = ARIMA().fit(y=y_fit, X=X_fit, fh=[1, 2, 3])
+    y_pred = est.predict(X=X_pred)
+    valid, _, metadata = check_is_mtype(y_pred, mtype, return_metadata=True)
+
+    msg = (
+        f"vectorization of forecasters does not work for test example "
+        f"of mtype {mtype}, using the ARIMA forecaster"
+    )
+    assert valid, msg
+
+    msg = (
+        "vectorization over variables produces wrong set of variables in predict, "
+        f"expected {y_fit.columns}, found {y_pred.columns}"
+    )
+    assert set(y_fit.columns) == set(y_pred.columns), msg
+
+    y_pred_instances = metadata["n_instances"]
+    msg = (
+        f"vectorization test produces wrong number of instances "
+        f"expected {n_instances}, found {y_pred_instances}"
+    )
+
+    assert y_pred_instances == n_instances, msg
+
+    y_pred_equal_length = metadata["is_equal_length"]
+    msg = (
+        "vectorization test produces non-equal length Panel forecast, should be "
+        "equal length, and length equal to the forecasting horizon [1, 2, 3]"
+    )
+    assert y_pred_equal_length, msg
 
 
 def test_dynamic_tags_reset_properly():

@@ -17,6 +17,8 @@ How to use this implementation template to implement a new estimator:
 - make a copy of the template in a suitable location, give it a descriptive name.
 - work through all the "todo" comments below
 - fill in code for mandatory methods, and optionally for optional methods
+- do not write to reserved variables: is_fitted, _is_fitted, _X, _y, cutoff, _fh,
+    _cutoff, _converter_store_y, forecasters_, _tags, _tags_dynamic, _is_vectorized
 - you can add more private methods, but do not override BaseEstimator's private methods
     an easy way to be safe is to prefix your methods with "_custom"
 - change docstrings for functions and the file
@@ -86,10 +88,13 @@ class MyForecaster(BaseForecaster):
         self.parama = parama
         self.paramb = paramb
         self.paramc = paramc
-        # important: no checking or other logic should happen here
 
         # todo: change "MyForecaster" to the name of the class
         super(MyForecaster, self).__init__()
+
+        # todo: optional, parameter checking logic (if applicable) should happen here
+        # if writes derived values to self, should *not* overwrite self.parama etc
+        # instead, write to self._parama, self._newparam (starting with _)
 
     # todo: implement this, mandatory
     def _fit(self, y, X=None, fh=None):
