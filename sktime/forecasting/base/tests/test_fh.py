@@ -28,6 +28,7 @@ from sktime.forecasting.tests._config import (
     TEST_FHS_TIMEDELTA,
     VALID_INDEX_FH_COMBINATIONS,
 )
+from sktime.utils._testing.deep_equals import deep_equals
 from sktime.utils._testing.forecasting import _make_fh, make_forecasting_problem
 from sktime.utils._testing.series import _make_index
 from sktime.utils.datetime import (
@@ -154,6 +155,44 @@ def test_fh_method_delegation():
     fh = ForecastingHorizon(1)
     for method in DELEGATED_METHODS:
         assert hasattr(fh, method)
+
+
+
+@pytest.mark.parametrize(
+    "index_type, fh_type, is_relative", VALID_INDEX_FH_COMBINATIONS
+)
+@pytest.mark.parametrize(
+    "index_type2, fh_type2, is_relative2", VALID_INDEX_FH_COMBINATIONS
+)
+@pytest.mark.parametrize("steps", [*TEST_FHS, *TEST_FHS_TIMEDELTA])
+@pytest.mark.parametrize("steps2", [*TEST_FHS, *TEST_FHS_TIMEDELTA])
+def test_fh_equality(
+    index_type, fh_type, is_relative, steps, index_type2, fh_type2, is_relative2, steps2
+):
+    """Testing ForecastingHorizon equality dunder."""
+    # generate data
+    y = make_forecasting_problem(index_type=index_type)
+    y2 = make_forecasting_problem(index_type=index_type2)
+
+    # split data
+    y_train, _ = temporal_train_test_split(y, test_size=10)
+    y_train2, _ = temporal_train_test_split(y2, test_size=10)
+
+    # choose cutoff point
+    cutoff_idx = get_cutoff(y_train, return_index=True)
+    cutoff_idx2 = get_cutoff(y_train2, return_index=True)
+
+    # generate fh
+    fh = _make_fh(cutoff_idx, steps, fh_type, is_relative)
+    fh2 = _make_fh(cutoff_idx2, steps2, fh_type2, is_relative2)
+
+    fh_equal_expected = True
+    fh_equal_expected = fh_equal_expected and (index_type == index_type2)
+    fh_equal_expected = fh_equal_expected and (fh_type == fh_type2)
+    fh_equal_expected = fh_equal_expected and (is_relative == is_relative2)
+    fh_equal_expected = fh_equal_expected and deep_equals(steps, steps2)
+
+    assert fh_equal_expected == (fh == fh2)
 
 
 BAD_INPUT_ARGS = (
