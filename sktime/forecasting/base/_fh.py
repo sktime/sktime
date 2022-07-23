@@ -43,7 +43,6 @@ DELEGATED_METHODS = (
     "__ge__",
     "__ne__",
     "__lt__",
-    "__eq__",
     "__le__",
     "__radd__",
     "__rsub__",
@@ -298,7 +297,7 @@ class ForecastingHorizon:
 
     def __eq__(self, other):
         """Equality dunder. Compares is_relative, freq, and values."""
-        from sktime.utils._testing import deep_equals
+        from sktime.utils._testing.deep_equals import deep_equals
 
         if not isinstance(other, ForecastingHorizon):
             try:
@@ -312,7 +311,7 @@ class ForecastingHorizon:
         if not self.freq == other.freq:
             return False
 
-        if not deep_equals(self.values, other.values):
+        if not deep_equals(self._values, other._values):
             return False
 
         return True
