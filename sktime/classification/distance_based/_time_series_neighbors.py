@@ -223,11 +223,12 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
         # self._X should be the stored _X
         dist_mat = self._distance(X, self._X)
 
-        neigh_ind = self.knn_estimator_.kneighbors(
+        result = self.knn_estimator_.kneighbors(
             dist_mat, n_neighbors=n_neighbors, return_distance=return_distance
         )
 
-        return neigh_ind
+        # result is either dist, or (dist, ind) pair, depending on return_distance
+        return result
 
     def _predict(self, X):
         """Predict the class labels for the provided data.
