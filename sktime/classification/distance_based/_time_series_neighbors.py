@@ -23,7 +23,6 @@ __all__ = ["KNeighborsTimeSeriesClassifier"]
 from inspect import signature
 
 import numpy as np
-
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neighbors._base import _check_weights
 
@@ -34,6 +33,7 @@ from sktime.distances import pairwise_distance
 DISTANCES_SUPPORTED = [
     "euclidean",
     # Euclidean will default to the base class distance
+    "squared",
     "dtw",
     "ddtw",
     "wdtw",
@@ -42,6 +42,7 @@ DISTANCES_SUPPORTED = [
     "edr",
     "erp",
     "msm",
+    "twe",
 ]
 
 
@@ -74,7 +75,7 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
         distance measure between time series
         if str, must be one of the following strings:
             'euclidean', 'squared', 'dtw', 'ddtw', 'wdtw', 'wddtw',
-            'lcss', 'edr', 'erp', 'msm'
+            'lcss', 'edr', 'erp', 'msm', 'twe'
         this will substitute a hard-coded distance metric from sktime.distances
         If non-class callable, parameters can be passed via distance_params
             Example: knn_dtw = KNeighborsTimeSeriesClassifier(
@@ -146,7 +147,7 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
 
         super(KNeighborsTimeSeriesClassifier, self).__init__()
 
-        # translate distance strings into distance callables
+        # input check for supported distance strings
         if isinstance(distance, str) and distance not in DISTANCES_SUPPORTED:
             raise ValueError(
                 f"Unrecognised distance measure string: {distance}. "
