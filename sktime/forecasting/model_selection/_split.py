@@ -673,8 +673,11 @@ class CutoffSplitter(BaseSplitter):
     which using the notation provided in :class:`BaseSplitter`,
     can be written as :math:`\{k_1,\ldots,k_n\}` for integer based indexing,
     or :math:`\{t(k_1),\ldots,t(k_n)\}` for datetime based indexing.
-    Training window's last point is equal to the cutoff,
-    while test window starts from the next observation in `y`.
+    Training window's last point is equal to the cutoff.
+    Test window is defined by forecasting horizons
+    relative to the end of the training window.
+    It will contain as many indices
+    as there are forecasting horizons provided to the `fh` argument.
 
     The number of splits returned by `.get_n_splits`
     is then trivially equal to :math:`n`.
@@ -690,6 +693,17 @@ class CutoffSplitter(BaseSplitter):
     fh : int, timedelta, list or np.ndarray of ints or timedeltas
         Type should match the type of `cutoffs` input.
     window_length : int or timedelta or pd.DateOffset
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sktime.forecasting.model_selection import CutoffSplitter
+    >>> ts = np.arange(10)
+    >>> splitter = CutoffSplitter(
+    >>>     fh=np.array([2, 4]), cutoffs=np.array([3, 5]), window_length=3
+    >>> )
+    >>> list(splitter.split(ts))
+    [(array([1, 2, 3]), array([5, 7])), (array([3, 4, 5]), array([7, 9]))]
     """
 
     def __init__(
@@ -1034,7 +1048,12 @@ class SlidingWindowSplitter(BaseWindowSplitter):
 
     Split time series repeatedly into a fixed-length training and test set.
 
-    For example for `window_length = 5`, `step_length = 1` and `fh = 3`
+    Test window is defined by forecasting horizons
+    relative to the end of the training window.
+    It will contain as many indices
+    as there are forecasting horizons provided to the `fh` argument.
+
+    For example for `window_length = 5`, `step_length = 1` and `fh = np.arange(1, 3)`
     here is a representation of the folds::
 
     |-----------------------|
@@ -1042,7 +1061,6 @@ class SlidingWindowSplitter(BaseWindowSplitter):
     | - * * * * * x x x - - |
     | - - * * * * * x x x - |
     | - - - * * * * * x x x |
-
 
     ``*`` = training fold.
 
@@ -1061,6 +1079,18 @@ class SlidingWindowSplitter(BaseWindowSplitter):
     start_with_window : bool, optional (default=False)
         - If True, starts with full window.
         - If False, starts with empty window.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sktime.forecasting.model_selection import SlidingWindowSplitter
+    >>> ts = np.arange(10)
+    >>> splitter = SlidingWindowSplitter(
+    >>>     fh=np.array([2, 4]), window_length=3, step_length=2
+    >>> )
+    >>> list(splitter.split(ts))
+    [(array([0, 1, 2]), array([4, 6])), (array([2, 3, 4]), array([6, 8]))]
+
     """
 
     def __init__(
@@ -1088,6 +1118,11 @@ class ExpandingWindowSplitter(BaseWindowSplitter):
 
     Split time series repeatedly into an growing training set and a fixed-size test set.
 
+    Test window is defined by forecasting horizons
+    relative to the end of the training window.
+    It will contain as many indices
+    as there are forecasting horizons provided to the `fh` argument.
+
     For example for `initial_window = 5`, `step_length = 1` and `fh = 3`
     here is a representation of the folds::
 
@@ -1113,6 +1148,18 @@ class ExpandingWindowSplitter(BaseWindowSplitter):
     start_with_window : bool, optional (default=True)
         - If True, starts with full window.
         - If False, starts with empty window.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sktime.forecasting.model_selection import ExpandingWindowSplitter
+    >>> ts = np.arange(10)
+    >>> splitter = ExpandingWindowSplitter(
+    >>>     fh=np.array([2, 4]), initial_window=5, step_length=2
+    >>> )
+    >>> list(splitter.split(ts))
+    [(array([0, 1, 2, 3, 4]), array([6, 8]))]
+
     """
 
     def __init__(
@@ -1143,12 +1190,27 @@ class SingleWindowSplitter(BaseSplitter):
     Split time series once into a training and test set.
     See more details on what to expect from this splitter in :class:`BaseSplitter`.
 
+    Test window is defined by forecasting horizons
+    relative to the end of the training window.
+    It will contain as many indices
+    as there are forecasting horizons provided to the `fh` argument.
+
     Parameters
     ----------
     fh : int, list or np.array
         Forecasting horizon
     window_length : int or timedelta or pd.DateOffset
         Window length
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sktime.forecasting.model_selection import SingleWindowSplitter
+    >>> ts = np.arange(10)
+    >>> splitter = SingleWindowSplitter(fh=np.array([2, 4]), window_length=3)
+    >>> list(splitter.split(ts))
+    [(array([3, 4, 5]), array([7, 9]))]
+
     """
 
     def __init__(
