@@ -61,7 +61,7 @@ def profile_classifier(
 
     time_fit_list = []
     time_pred_list = []
-    for n_inst, n_tp, rep in grid:
+    for n_inst, n_tp, _rep in grid:
         X, y = make_classification_problem(n_instances=n_inst, n_timepoints=n_tp)
 
         est_i = est.clone()
