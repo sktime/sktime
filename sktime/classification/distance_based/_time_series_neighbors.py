@@ -20,6 +20,8 @@ param_names=None)
 __author__ = ["jasonlines", "TonyBagnall", "chrisholder", "fkiraly"]
 __all__ = ["KNeighborsTimeSeriesClassifier"]
 
+import numpy as np
+
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neighbors._base import _check_weights
 
@@ -75,8 +77,9 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
         When mpdist is used, the subsequence length (parameter m) must be set
             Example: knn_mpdist = KNeighborsTimeSeriesClassifier(
                                 metric='mpdist', metric_params={'m':30})
-        if callable, must be of signature (X: Panel, X2: Panel) -> np.ndarray
+        if callable, must be of signature (X: Panel, X2=None: Panel) -> np.ndarray
             output must be mxn array if X is Panel of m Series, X2 of n Series
+            should internally set X2 to X if X2=None is provided
             if distance_mtype is not set, must be able to take
                 X, X2 which are pd_multiindex and numpy3D mtype
         can be pairwise panel transformer inheriting from BasePairwiseTransformerPanel
@@ -123,6 +126,7 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
         distance="dtw",
         distance_params=None,
         distance_mtype=None,
+        distance_pass="function",
         leaf_size=30,
         n_jobs=None,
     ):
@@ -132,6 +136,7 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
         self.distance = distance
         self.distance_params = distance_params
         self.distance_mtype = distance_mtype
+        self.distance_pass = distance_pass
         self.leaf_size = leaf_size
         self.n_jobs = n_jobs
 
@@ -143,10 +148,20 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
                 "Alternatively, pass a callable distance measure into the constuctor."
             )
 
+        if distance_pass == "function":
+            metric = self._distance
+        elif distance_pass == "precomputed":
+            metric = "precomputed"
+        else:
+            raise ValueError(
+                'distance_pass must be "function" or "precomputed, '
+                f"found {distance_pass}"
+            )
+
         self.knn_estimator_ = KNeighborsClassifier(
             n_neighbors=n_neighbors,
             algorithm=algorithm,
-            metric="precomputed",
+            metric=metric,
             metric_params=distance_params,
             leaf_size=leaf_size,
             n_jobs=n_jobs,
@@ -162,12 +177,46 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
         elif distance_mtype is not None:
             self.set_tags(X_inner_mtype=distance_mtype)
 
-    def _distance(self, X, X2):
+    def _distance_mat(self, X, X2=None):
+        """Compute distance matrix - unified interface to str code and callable."""
+        distance = self.distance
+        distance_params = self.distance_params
+        if distance_params is None:
+            distance_params = {}
+
+        if isinstance(distance, str):
+            return pairwise_distance(X, X2, distance, **distance_params)
+        else:
+            return distance(X, X2)
+
+    def _distance(self, i, j=None):
         """Compute distance - unified interface to str code and callable."""
         distance = self.distance
         distance_params = self.distance_params
         if distance_params is None:
             distance_params = {}
+
+        if min(i) < len(self._X):
+            X = self._X
+        else:
+            X = self._X_pred
+            i = i - len(self._X)
+
+        i = i.astype("int")
+        j = j.astype("int")
+
+        if isinstance(self._X, np.ndarray):
+            X = X[i]
+            if j is None:
+                X2 = None
+            else:
+                X2 = self._X[j]
+        else:
+            X = X.iloc[i]
+            if j is None:
+                X2 = None
+            else:
+                X2 = self._X.iloc[j]
 
         if isinstance(distance, str):
             return pairwise_distance(X, X2, distance, **distance_params)
@@ -190,9 +239,18 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
         # store full data as indexed X
         self._X = X
 
-        dist_mat = self._distance(X, X)
+        distance_pass = self.distance_pass
 
-        self.knn_estimator_.fit(dist_mat, y)
+        if distance_pass == "precomputed":
+            dist_mat = self._distance_mat(X)
+            self.knn_estimator_.fit(dist_mat, y)
+
+        elif distance_pass == "function":
+            X_ind = np.expand_dims(np.arange(len(X)), 1)
+            self.knn_estimator_.fit(X_ind, y)
+
+        else:
+            raise RuntimeError("unexpected value of self.distance_pass")
 
         return self
 
@@ -223,7 +281,7 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
         self.check_is_fitted()
 
         # self._X should be the stored _X
-        dist_mat = self._distance(X, self._X)
+        dist_mat = self._distance_mat(X, self._X)
 
         neigh_ind = self.knn_estimator_.kneighbors(
             dist_mat, n_neighbors=n_neighbors, return_distance=return_distance
@@ -243,10 +301,23 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
         y : array of shape [n_samples] or [n_samples, n_outputs]
             Class labels for each data sample.
         """
-        # self._X should be the stored _X
-        dist_mat = self._distance(X, self._X)
+        distance_pass = self.distance_pass
 
-        y_pred = self.knn_estimator_.predict(dist_mat)
+        if distance_pass == "precomputed":
+            # self._X should be the stored _X
+            dist_mat = self._distance_mat(X, self._X)
+            y_pred = self.knn_estimator_.predict(dist_mat)
+
+        elif distance_pass == "function":
+            self._X_pred = X
+            n_train = len(self._X)
+            X_ind = np.expand_dims(np.arange(n_train, len(X) + n_train), 1)
+            y_pred = self.knn_estimator_.predict(X_ind)
+            delattr(self, "_X_pred")
+
+        else:
+            raise RuntimeError("unexpected value of self.distance_pass")
+
 
         return y_pred
 
@@ -265,7 +336,7 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
             by lexicographic order.
         """
         # self._X should be the stored _X
-        dist_mat = self._distance(X, self._X)
+        dist_mat = self._distance_mat(X, self._X)
 
         y_pred = self.knn_estimator_.predict_proba(dist_mat)
 
