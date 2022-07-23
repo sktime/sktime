@@ -196,13 +196,10 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
     def _fit(self, X, y):
         """Fit the model using X as training data and y as target values.
 
-        Input number of cases (n), with series of dimension (d), each series length (d).
-
         Parameters
         ----------
-        X : sktime-format pandas dataframe with shape(n,d),
-            or numpy ndarray with shape(n,d,m)
-
+        X : sktime comatible Panel data container, of mtype X_inner_mtype, with n series
+            data to fit the estimator to
         y : {array-like, sparse matrix}
             Target values of shape = [n]
         """
@@ -212,6 +209,11 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
         if self.pass_train_distances:
             dist_mat = self._distance(X)
         else:
+            # if we do not want/need to pass train-train distances,
+            #   we still need to pass a zeroes matrix, this means "do not consider"
+            # citing the sklearn KNeighborsClassifier docs on distance matrix input:
+            # "X may be a sparse graph, in which case only “nonzero” elements
+            #   may be considered neighbors."
             dist_mat = np.zeros([len(X), len(X)], dtype="float")
 
         self.knn_estimator_.fit(dist_mat, y)
@@ -257,7 +259,8 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
 
         Parameters
         ----------
-        X : sktime-compatible Panel data format, with n_samples series
+        X : sktime-compatible Panel data, of mtype X_inner_mtype, with n_samples series
+            data to predict class labels for
 
         Returns
         -------
@@ -276,7 +279,8 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
 
         Parameters
         ----------
-        X : sktime-compatible Panel data format, with n_samples series
+        X : sktime-compatible Panel data, of mtype X_inner_mtype, with n_samples series
+            data to predict class labels for
 
         Returns
         -------
