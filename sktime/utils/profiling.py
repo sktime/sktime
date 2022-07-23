@@ -12,12 +12,20 @@ from sktime.utils._testing.panel import make_classification_problem
 
 def profile_classifier(
     est,
-    n_instance_grid=None,
+    n_instances_grid=None,
     n_timepoints_grid=None,
     n_replicates=20,
-    return_replicates=False
+    return_replicates=False,
 ):
     """Profile runtime of a classifier.
+
+    Carries out a single fit and in-sample predict of est, on data
+    generated via make_classification_problem with n_instances, n_timepoints
+    as in the grid defined by the lists n_instances_grid, n_timepoints_grid.
+    Each experiment is repeated n_replicates times.
+
+    Of each experiment, time spent in fit and time spent in predict is measured.
+
 
     Parameters
     ----------
@@ -29,14 +37,27 @@ def profile_classifier(
     n_replicates : int, optional, default = 20
         number of fit/predict replicates per individual size
     return_replicates : bool, optional, default = False
+        Whether times are returned for each replicate (True) or summarized (False)
+
+    Returns
+    -------
+    pd.DataFrame with results of experiment
+    If return_replicates=False:
+        row index = (n_instances, n_timepoints)
+        col index = ("time_fit", mean or std) or ("time_pred", mean or std)
+        entries are mean/std of times spent in fit/predict, over replicate time sample
+    If return_replicates=True:
+        row index = (n_instances, n_timepoints, replicate_id)
+        col index = "time_fit" or "time_pred"
+        entries are individual times spent in fit/predict, for replicate w replicate_id
     """
     if isclass(est):
         est = est.create_test_instance()
-    if n_instance_grid is None:
-        n_instance_grid = [20, 40, 60, 80]
+    if n_instances_grid is None:
+        n_instances_grid = [20, 40, 60, 80]
     if n_timepoints_grid is None:
         n_timepoints_grid = [20, 40, 60, 80]
-    grid = list(product(n_instance_grid, n_timepoints_grid, range(n_replicates)))
+    grid = list(product(n_instances_grid, n_timepoints_grid, range(n_replicates)))
 
     time_fit_list = []
     time_pred_list = []
@@ -57,7 +78,23 @@ def profile_classifier(
 
     results = pd.DataFrame(
         {"time_fit": time_fit_list, "time_pred": time_pred_list},
-        index=pd.MultiIndex.from_tuples(grid)
+        index=pd.MultiIndex.from_tuples(
+            grid, names=["n_instances", "n_timepoints", "replicate_id"]
+        )
     )
 
-    return results
+    if return_replicates:
+        return results
+
+    else:
+        res = results
+        names = ["n_instances", "n_timepoints"]
+        means = res.groupby(res.index.droplevel(-1)).mean()
+        means.index = pd.MultiIndex.from_tuples(means.index, names=names)
+        std = res.groupby(res.index.droplevel(-1)).std()
+        std.index = pd.MultiIndex.from_tuples(std.index, names=names)
+
+        res_summary = pd.concat([means, std], axis=1, keys=["mean", "std"])
+        res_summary.columns = res_summary.columns.swaplevel().sort_values()
+
+        return res_summary
