@@ -825,6 +825,7 @@ class BaseEstimator(BaseObject):
         Returns
         -------
         fitted_params : dict of fitted parameters, keys are str names of parameters
+            parameters of components are indexed as [componentname]__[paramname]
         """
         if not self.is_fitted:
             raise NotFittedError(
