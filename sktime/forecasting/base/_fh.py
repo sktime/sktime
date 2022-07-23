@@ -296,6 +296,27 @@ class ForecastingHorizon:
             freq = self._freq
         return type(self)(values=values, is_relative=is_relative, freq=freq)
 
+    def __eq__(self, other):
+        """Equality dunder. Compares is_relative, freq, and values."""
+        from sktime.utils._testing import deep_equals
+
+        if not isinstance(other, ForecastingHorizon):
+            try:
+                other = ForecastingHorizon(other)
+            except Exception:
+                return False
+
+        if not self.is_relative == other.is_relative:
+            return False
+
+        if not self.freq == other.freq:
+            return False
+
+        if not deep_equals(self.values, other.values):
+            return False
+
+        return True
+
     @property
     def is_relative(self) -> bool:
         """Whether forecasting horizon is relative to the end of the training series.
