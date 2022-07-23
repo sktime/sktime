@@ -316,6 +316,11 @@ class ForecastingHorizon:
 
         return True
 
+    def __hash__(self):
+        """Need to define hash since we defined eq and used in _is_relative, etc."""
+        value_hash = hash(tuple(self._values.to_list()))
+        return hash((self.is_relative, self.freq, value_hash))
+
     @property
     def is_relative(self) -> bool:
         """Whether forecasting horizon is relative to the end of the training series.
