@@ -80,7 +80,7 @@ def profile_classifier(
         {"time_fit": time_fit_list, "time_pred": time_pred_list},
         index=pd.MultiIndex.from_tuples(
             grid, names=["n_instances", "n_timepoints", "replicate_id"]
-        )
+        ),
     )
 
     if return_replicates:
