@@ -210,7 +210,7 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
             dist_mat = self._distance(X)
         else:
             # if we do not want/need to pass train-train distances,
-            #   we still need to pass a zeroes matrix, this means "do not consider"
+            #   we still need to pass a zeros matrix, this means "do not consider"
             # citing the sklearn KNeighborsClassifier docs on distance matrix input:
             # "X may be a sparse graph, in which case only “nonzero” elements
             #   may be considered neighbors."
