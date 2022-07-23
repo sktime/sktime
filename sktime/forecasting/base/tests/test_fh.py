@@ -157,7 +157,6 @@ def test_fh_method_delegation():
         assert hasattr(fh, method)
 
 
-
 @pytest.mark.parametrize(
     "index_type, fh_type, is_relative", VALID_INDEX_FH_COMBINATIONS
 )
