@@ -11,6 +11,7 @@ import numpy as np
 import pandas as pd
 from sklearn.utils import check_array
 
+from sktime.datatypes._utilities import get_cutoff
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.validation import is_int
@@ -168,7 +169,9 @@ class Differencer(BaseTransformer):
         pad_z_inv = self.na_handling == "drop_na" or is_future
 
         cutoff = Z.index[0] if pad_z_inv else Z.index[self._cumulative_lags[-1]]
-        fh = ForecastingHorizon(np.arange(-1, -(self._cumulative_lags[-1] + 1), -1))
+        fh = ForecastingHorizon(
+            np.arange(-1, -(self._cumulative_lags[-1] + 1), -1), freq=self._freq
+        )
         index = fh.to_absolute(cutoff).to_pandas()
         index_diff = index.difference(self._Z.index)
 
@@ -206,6 +209,8 @@ class Differencer(BaseTransformer):
         self._prior_cum_lags = np.zeros_like(self._cumulative_lags)
         self._prior_cum_lags[1:] = self._cumulative_lags[:-1]
         self._Z = X.copy()
+
+        self._freq = get_cutoff(X, return_index=True)
         return self
 
     def _transform(self, X, y=None):
@@ -280,7 +285,7 @@ class Differencer(BaseTransformer):
                     cutoff = Z_inv.index[0]
                 else:
                     cutoff = Z_inv.index[prior_cum_lag + lag]
-                fh = ForecastingHorizon(np.arange(-1, -(lag + 1), -1))
+                fh = ForecastingHorizon(np.arange(-1, -(lag + 1), -1), freq=self._freq)
                 index = fh.to_absolute(cutoff).to_pandas()
 
                 if is_df:
