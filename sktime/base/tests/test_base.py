@@ -296,10 +296,9 @@ def test_get_fitted_params():
 
     Raises
     ------
-    AssertionError if logic behind _components is incorrect, logic tested:
-        calling _components on a non-composite returns an empty dict
-        calling _components on a composite returns name/BaseObject pair in dict,
-        and BaseObject returned is identical with attribute of the same name
+    AssertionError if logic behind get_fitted_params is incorrect, logic tested:
+        calling get_fitted_params on a non-composite fittable returns the fitted param
+        calling get_fitted_params on a composite returns all nested params
     """
     non_composite = FittableCompositionDummy(foo=42)
     composite = FittableCompositionDummy(foo=deepcopy(non_composite))
