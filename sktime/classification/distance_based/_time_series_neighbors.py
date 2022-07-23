@@ -27,6 +27,7 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neighbors._base import _check_weights
 
 from sktime.classification.base import BaseClassifier
+from sktime.datatypes import check_is_mtype
 from sktime.distances import pairwise_distance
 
 # add new distance string codes here
@@ -214,7 +215,10 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
             # citing the sklearn KNeighborsClassifier docs on distance matrix input:
             # "X may be a sparse graph, in which case only “nonzero” elements
             #   may be considered neighbors."
-            dist_mat = np.zeros([len(X), len(X)], dtype="float")
+            X_inner_mtype = self.get_tag("X_inner_mtype")
+            _, _, X_meta = check_is_mtype(X, X_inner_mtype, return_metadata=True)
+            n = X_meta["n_instances"]
+            dist_mat = np.zeros([n, n], dtype="float")
 
         self.knn_estimator_.fit(dist_mat, y)
 
@@ -295,3 +299,39 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
         y_pred = self.knn_estimator_.predict_proba(dist_mat)
 
         return y_pred
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            For classifiers, a "default" set of parameters should be provided for
+            general testing, and a "results_comparison" set for comparing against
+            previously recorded results if the general set does not produce suitable
+            probabilities to compare against.
+
+        Returns
+        -------
+        params : dict or list of dict, default={}
+            Parameters to create testing instances of the class.
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`.
+        """
+        # non-default distance and algorithm
+        params1 = {"distance": "euclidean"}
+
+        # testing distance_params
+        params2 = {"distance": "dtw", "distance_params": {"epsilon": 0.1}}
+
+        # testing that callables/classes can be passed
+        from sktime.dists_kernels.compose_tab_to_panel import AggrDist
+
+        dist = AggrDist.create_test_instance()
+        params3 = {"distance": dist}
+
+        return [params1, params2, params3]
