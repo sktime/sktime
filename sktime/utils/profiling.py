@@ -30,7 +30,7 @@ def profile_classifier(
     Parameters
     ----------
     est : sktime classifier, BaseClassifier descendant, object or class
-    n_instance_grid : list of int, default = None = [20, 40, 60, 80]
+    n_instances_grid : list of int, default = None = [20, 40, 60, 80]
         list of instance sizes (n_instances) in classification X/y to test
     n_timepoints_grid : list of int, default = None = [20, 40, 60, 80]
         list of time series lengths (n_instances) in classification X/y to test
@@ -50,6 +50,19 @@ def profile_classifier(
         row index = (n_instances, n_timepoints, replicate_id)
         col index = "time_fit" or "time_pred"
         entries are individual times spent in fit/predict, for replicate w replicate_id
+
+    Examples
+    --------
+    >>> from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
+    >>> from sktime.utils.profiling import profile_classifier
+    >>> 
+    >>> n_instances_grid = [20, 30]
+    >>> n_timepoints_grid = [20, 30]
+    >>> results = profile_classifier(
+    ...     KNeighborsTimeSeriesClassifier,
+    ...     n_instances_grid=n_instances_grid,
+    ...     n_timepoints_grid=n_timepoints_grid,
+    ... )
     """
     if isclass(est):
         est = est.create_test_instance()
