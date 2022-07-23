@@ -55,7 +55,7 @@ def profile_classifier(
     --------
     >>> from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
     >>> from sktime.utils.profiling import profile_classifier
-    >>> 
+    >>>
     >>> n_instances_grid = [20, 30]
     >>> n_timepoints_grid = [20, 30]
     >>> results = profile_classifier(
