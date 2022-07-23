@@ -90,7 +90,8 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
         mtype that distance expects for X and X2, if a callable
             only set this if distance is not BasePairwiseTransformerPanel descendant
     pass_train_distances : bool, optional, default = False.
-        Whether distances between training points are computed and passed to sklearn
+        Whether distances between training points are computed and passed to sklearn.
+        Passing is superfluous for algorithm='brute', but may have impact otherwise.
     leaf_size : int, default=30
         Leaf size passed to BallTree or KDTree.  This can affect the
         speed of the construction and query, as well as the memory
