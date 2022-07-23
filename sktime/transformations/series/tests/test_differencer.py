@@ -13,6 +13,7 @@ import pytest
 from sktime.datasets import load_airline
 from sktime.transformations.series.difference import Differencer
 from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 y_airline = load_airline()
 y_airline_df = pd.concat([y_airline, y_airline], axis=1)
