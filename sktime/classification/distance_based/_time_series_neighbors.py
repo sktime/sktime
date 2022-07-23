@@ -77,7 +77,7 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
             'lcss', 'edr', 'erp', 'msm'
         this will substitute a hard-coded distance metric from sktime.distances
         If non-class callable, parameters can be passed via distance_params
-            Example: knn_mpdist = KNeighborsTimeSeriesClassifier(
+            Example: knn_dtw = KNeighborsTimeSeriesClassifier(
                                     distance='dtw', distance_params={'epsilon':0.1})
         if any callable, must be of signature (X: Panel, X2: Panel) -> np.ndarray
             output must be mxn array if X is Panel of m Series, X2 of n Series
