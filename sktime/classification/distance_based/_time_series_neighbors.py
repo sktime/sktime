@@ -204,8 +204,6 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
         Parameters
         ----------
         X : sktime-compatible data format, Panel or Series, with n_samples series
-        y : {array-like, sparse matrix}
-            Target values of shape = [n_samples]
         n_neighbors : int
             Number of neighbors to get (default is the value
             passed to the constructor).
