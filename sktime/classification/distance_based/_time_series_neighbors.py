@@ -72,10 +72,10 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
             'euclidean', 'squared', 'dtw', 'ddtw', 'wdtw', 'wddtw',
             'lcss', 'edr', 'erp', 'msm'
         this will substitute a hard-coded distance metric from sktime.distances
-        When mpdist is used, the subsequence length (parameter m) must be set
+        If non-class callable, parameters can be passed via distance_params
             Example: knn_mpdist = KNeighborsTimeSeriesClassifier(
-                                metric='mpdist', metric_params={'m':30})
-        if callable, must be of signature (X: Panel, X2: Panel) -> np.ndarray
+                                    distance='dtw', distance_params={'epsilon':0.1})
+        if any callable, must be of signature (X: Panel, X2: Panel) -> np.ndarray
             output must be mxn array if X is Panel of m Series, X2 of n Series
             if distance_mtype is not set, must be able to take
                 X, X2 which are pd_multiindex and numpy3D mtype
@@ -135,6 +135,8 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
         self.leaf_size = leaf_size
         self.n_jobs = n_jobs
 
+        super(KNeighborsTimeSeriesClassifier, self).__init__()
+
         # translate distance strings into distance callables
         if isinstance(distance, str) and distance not in DISTANCES_SUPPORTED:
             raise ValueError(
@@ -152,8 +154,6 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
             n_jobs=n_jobs,
             weights=weights,
         )
-
-        super(KNeighborsTimeSeriesClassifier, self).__init__()
 
         # the distances in sktime.distances want numpy3D
         #   otherwise all Panel formats are ok
