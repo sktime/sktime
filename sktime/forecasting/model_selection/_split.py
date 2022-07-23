@@ -1053,7 +1053,7 @@ class SlidingWindowSplitter(BaseWindowSplitter):
     It will contain as many indices
     as there are forecasting horizons provided to the `fh` argument.
 
-    For example for `window_length = 5`, `step_length = 1` and `fh = np.arange(1, 3)`
+    For example for `window_length = 5`, `step_length = 1` and `fh = np.arange(1, 4)`
     here is a representation of the folds::
 
     |-----------------------|
@@ -1123,7 +1123,7 @@ class ExpandingWindowSplitter(BaseWindowSplitter):
     It will contain as many indices
     as there are forecasting horizons provided to the `fh` argument.
 
-    For example for `initial_window = 5`, `step_length = 1` and `fh = np.arange(1, 3)`
+    For example for `initial_window = 5`, `step_length = 1` and `fh = np.arange(1, 4)`
     here is a representation of the folds::
 
     |-----------------------|
