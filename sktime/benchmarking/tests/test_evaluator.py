@@ -198,6 +198,7 @@ def test_nemenyi():
     not _check_soft_dependencies("matplotlib", severity="none"),
     reason="skip test if required soft dependency not available",
 )
+@pytest.mark.xfail(reason="known sporadic failure of unknown cause, see #2368")
 def test_plots():
     """Test plots."""
     evaluator, metrics_by_strategy = evaluator_setup(score_function=accuracy_score)

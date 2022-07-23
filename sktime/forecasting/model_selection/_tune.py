@@ -13,6 +13,7 @@ import pandas as pd
 from joblib import Parallel, delayed
 from sklearn.model_selection import ParameterGrid, ParameterSampler, check_cv
 
+from sktime.exceptions import NotFittedError
 from sktime.forecasting.base._delegate import _DelegatedForecaster
 from sktime.forecasting.model_evaluation import evaluate
 from sktime.utils.validation.forecasting import check_scoring
@@ -67,6 +68,30 @@ class BaseGridSearch(_DelegatedForecaster):
         self.clone_tags(forecaster, tags_to_clone)
 
     _delegate_name = "best_forecaster_"
+
+    def get_fitted_params(self):
+        """Get fitted parameters.
+
+        Returns
+        -------
+        fitted_params : dict
+            A dict containing the best hyper parameters and the parameters of
+            the best estimator (if available), merged together with the former
+            taking precedence.
+        """
+        if not self.is_fitted:
+            raise NotFittedError
+
+        if self._is_vectorized:
+            return {"forecasters_": self.forecasters_}
+
+        fitted_params = {}
+        try:
+            fitted_params = self.best_forecaster_.get_fitted_params()
+        except NotImplementedError:
+            pass
+        fitted_params = {**fitted_params, **self.best_params_}
+        return fitted_params
 
     def _run_search(self, evaluate_candidates):
         raise NotImplementedError("abstract method")
@@ -200,7 +225,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
     """Perform grid-search cross-validation to find optimal model parameters.
 
     The forecaster is fit on the initial window and then temporal
-    cross-validation is used to find the optimal parameter
+    cross-validation is used to find the optimal parameter.
 
     Grid-search cross-validation is performed based on a cross-validation
     iterator encoding the cross-validation scheme, the parameter grid to
@@ -251,7 +276,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
     cv_results_ : dict
         Results from grid search cross validation
     n_splits_: int
-        Number of splits in the data for cross validation}
+        Number of splits in the data for cross validation
     refit_time_ : float
         Time (seconds) to refit the best forecaster
     scorer_ : function
