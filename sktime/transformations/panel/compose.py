@@ -265,8 +265,8 @@ class ColumnConcatenator(BaseTransformer):
 
 
 row_trafo_deprec_msg = (
-    "All row transformers are deprecated since 0.13.0 and will be removed "
-    "in 0.14.0. Vectorization functionality from Series to Panel is natively "
+    "All row transformers are deprecated since 0.14.0 and will be removed "
+    "in 0.15.0. Vectorization functionality from Series to Panel is natively "
     "integrated to all transformers via the base class. Simply use fit "
     "or transform on Panel data, no row transformer is necessary anymore."
 )
@@ -328,7 +328,7 @@ def make_row_transformer(transformer, transformer_type=None, **kwargs):
 
     This is now integrated into BaseTransformer, so no longer needed.
 
-    Deprecated from version 0.13.0, will be removed in 0.14.0.
+    Deprecated from version 0.14.0, will be removed in 0.15.0.
 
     Returns
     -------
