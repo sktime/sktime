@@ -7,7 +7,6 @@ __author__ = ["mloning", "fkiraly"]
 __all__ = ["TabularToSeriesAdaptor"]
 
 import numpy as np
-
 from sklearn.base import clone
 
 from sktime.transformations.base import BaseTransformer
