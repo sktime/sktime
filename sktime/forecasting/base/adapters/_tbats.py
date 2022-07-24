@@ -106,8 +106,8 @@ class _TbatsAdapter(BaseForecaster):
     def _update(self, y, X=None, update_params=True):
         """Update time series to incremental training data.
 
-        Derived from example script provided by core devs in TBATS repository
-        https://github.com/intive-DataScience/tbats/blob/master/examples/re_fit_model.py
+        Derived from example provided by core devs in TBATS repository
+        https://github.com/intive-DataScience/tbats/blob/master/examples/
 
         Parameters
         ----------
@@ -124,7 +124,7 @@ class _TbatsAdapter(BaseForecaster):
         """
         if update_params:
             # update model state and refit parameters
-            self._fit(y=self._y)  # _fit re-runs model instantiation script 
+            self._fit(y=self._y)  # _fit re-runs model instantiation 
             
         else:
             # update model state without refitting parameters
