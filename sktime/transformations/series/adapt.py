@@ -3,8 +3,10 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements adaptor for applying Scikit-learn-like transformers to time series."""
 
-__author__ = ["mloning"]
+__author__ = ["mloning", "fkiraly"]
 __all__ = ["TabularToSeriesAdaptor"]
+
+import numpy as np
 
 from sklearn.base import clone
 
@@ -108,7 +110,13 @@ class TabularToSeriesAdaptor(BaseTransformer):
         if hasattr(transformer, "inverse_transform"):
             self.set_tags(**{"capability:inverse_transform": True})
 
-        if fit_in_transform:
+        # sklearn transformers that are known to fit in transform do not need fit
+        if hasattr(transformer, "_get_tags"):
+            trafo_fit_in_transform = transformer._get_tags()["stateless"]
+        else:
+            trafo_fit_in_transform = False
+
+        if fit_in_transform or trafo_fit_in_transform:
             self.set_tags(**{"fit_is_empty": True})
 
     def _fit(self, X, y=None):
@@ -152,6 +160,15 @@ class TabularToSeriesAdaptor(BaseTransformer):
             Xt = self.transformer_.fit(X).transform(X)
         else:
             Xt = self.transformer_.transform(X)
+
+        # coerce sensibly to 2D np.ndarray
+        if isinstance(Xt, (int, float, str)):
+            Xt = np.array([[Xt]])
+        if not isinstance(Xt, np.ndarray):
+            Xt = np.array(Xt)
+        if Xt.ndim == 1:
+            Xt = Xt.reshape((len(X), 1))
+
         return Xt
 
     def _inverse_transform(self, X, y=None):

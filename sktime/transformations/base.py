@@ -958,7 +958,7 @@ class BaseTransformer(BaseEstimator):
                     raise RuntimeError(
                         "found different number of instances in transform than in fit. "
                         f"number of instances seen in fit: {n_fit}; "
-                        f"number of instances seen in transform: {n * m}"
+                        f"number of instances seen in transform: {n_trafos}"
                     )
 
                 # transform the i-th series/panel with the i-th stored transformer
