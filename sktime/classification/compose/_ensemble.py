@@ -575,8 +575,8 @@ class WeightedEnsembleClassifier(BaseClassifier, _HeterogenousMetaEstimator):
     The evaluation for the empirical training loss can be selected
     through the `metric` and `metric_type` parameters.
 
-    Currently uses in-sample empirical training loss (fit.predict) only.
-    (todo: extend for out-of-sample by cv once evaluate/benchmarking is written for TSC)
+    The in-sample empirical training loss is computed in-sample or out-of-sample,
+    depending on the `cv` parameter. None = in-sample; other = cross-validated oos.
 
     Parameters
     ----------
@@ -588,6 +588,16 @@ class WeightedEnsembleClassifier(BaseClassifier, _HeterogenousMetaEstimator):
         if iterable of float, must be equal length as classifiers
             ensemble weight for classifier i will be weights[i]
         if None, ensemble weights are equal (uniform average)
+    cv : None, int, or sklearn cross-validation object, optional, default=None
+        determines whether in-sample or which cross-validated predictions used in fit
+        None : predictions are in-sample, equivalent to fit(X, y).predict(X)
+        cv : predictions are equivalent to fit(X_train, y_train).predict(X_test)
+            where multiple X_train, y_train, X_test are obtained from cv folds
+            returned y is union over all test fold predictions
+            cv test folds must be non-intersecting
+        int : equivalent to cv=KFold(cv, shuffle=True, random_state=x),
+            i.e., k-fold cross-validation predictions out-of-sample
+            random_state x is taken from self if exists, otherwise x=None
     metric : sklearn metric for computing training score, default=accuracy_score
         only used if weights is a float
     metric_type : str, one of "point" or "proba", default="point"
@@ -639,12 +649,14 @@ class WeightedEnsembleClassifier(BaseClassifier, _HeterogenousMetaEstimator):
         self,
         classifiers,
         weights=None,
+        cv=None,
         metric=None,
         metric_type="point",
         random_state=None,
     ):
         self.classifiers = classifiers
         self.weights = weights
+        self.cv = cv
         self.metric = metric
         self.metric_type = metric_type
         self.random_state = random_state
@@ -736,13 +748,15 @@ class WeightedEnsembleClassifier(BaseClassifier, _HeterogenousMetaEstimator):
         -------
         self : Reference to self.
         """
-        for _, classifier in self.classifiers_:
-            classifier.fit(X=X, y=y)
-
-        if isinstance(self.weights, (float, int)):
+        # if weights are fixed, we only fit
+        if not isinstance(self.weights, (float, int)):
+            for _, classifier in self.classifiers_:
+                classifier.fit(X=X, y=y)
+        # if weights are calculated by training loss, we fit_predict
+        else:
             exponent = self.weights
             for clf_name, clf in self.classifiers_:
-                train_probs = clf.predict_proba(X=X)
+                train_probs = clf.fit_predict_proba(X=X, y=y, cv=self.cv)
                 train_preds = clf.classes_[np.argmax(train_probs, axis=1)]
                 if self.metric_type == "proba":
                     for i in range(len(train_preds)):
@@ -817,5 +831,6 @@ class WeightedEnsembleClassifier(BaseClassifier, _HeterogenousMetaEstimator):
                 RocketClassifier.create_test_instance(),
             ],
             "weights": 2,
+            "cv": 3
         }
         return [params1, params2]
