@@ -752,7 +752,7 @@ class WeightedEnsembleClassifier(BaseClassifier, _HeterogenousMetaEstimator):
         if not isinstance(self.weights, (float, int)):
             for _, classifier in self.classifiers_:
                 classifier.fit(X=X, y=y)
-        # if weights are calculated by training loss, we fit_predict
+        # if weights are calculated by training loss, we fit_predict and evaluate
         else:
             exponent = self.weights
             for clf_name, clf in self.classifiers_:
