@@ -831,6 +831,6 @@ class WeightedEnsembleClassifier(BaseClassifier, _HeterogenousMetaEstimator):
                 RocketClassifier.create_test_instance(),
             ],
             "weights": 2,
-            "cv": 3
+            "cv": 3,
         }
         return [params1, params2]
