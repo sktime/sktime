@@ -115,7 +115,9 @@ class TabularToSeriesAdaptor(BaseTransformer):
         else:
             trafo_fit_in_transform = False
 
-        if fit_in_transform or trafo_fit_in_transform:
+        self._skip_fit = fit_in_transform or trafo_fit_in_transform
+
+        if self._skip_fit:
             self.set_tags(**{"fit_is_empty": True})
 
     def _fit(self, X, y=None):
@@ -134,7 +136,7 @@ class TabularToSeriesAdaptor(BaseTransformer):
         -------
         self: a fitted instance of the estimator
         """
-        if not self.fit_in_transform:
+        if not self._skip_fit:
             self.transformer_.fit(X)
         return self
 
@@ -155,7 +157,7 @@ class TabularToSeriesAdaptor(BaseTransformer):
         Xt : 2D np.ndarray
             transformed version of X
         """
-        if self.fit_in_transform:
+        if self._skip_fit:
             Xt = self.transformer_.fit(X).transform(X)
         else:
             Xt = self.transformer_.transform(X)
