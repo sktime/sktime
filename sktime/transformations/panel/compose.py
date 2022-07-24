@@ -350,7 +350,12 @@ class SeriesToSeriesRowTransformer(_RowTransformer, _PanelToPanelTransformer):
         for i in range(X.shape[0]):
             xt = self.transformer_[i].fit_transform(X[i].T)
             xts.append(from_2d_array_to_nested(xt.T).T)
-        return pd.concat(xts, axis=0)
+        Xt = pd.concat(xts, axis=0)
+        if isinstance(X, pd.DataFrame):
+            Xt.index = X.index
+        else:
+            Xt = Xt.reset_index(drop=True)
+        return Xt
 
 
 def make_row_transformer(transformer, transformer_type=None, **kwargs):

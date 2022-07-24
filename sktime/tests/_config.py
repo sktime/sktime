@@ -61,6 +61,10 @@ EXCLUDED_TESTS = {
         "test_fit_idempotent",
         "test_persistence_via_pickle",
     ],
+    "CNNRegressor": [
+        "test_fit_idempotent",
+        "test_persistence_via_pickle",
+    ],
     # pickling problem with local method see #2490
     "ProximityStump": [
         "test_persistence_via_pickle",
@@ -79,7 +83,10 @@ EXCLUDED_TESTS = {
     "SeriesToPrimitivesRowTransformer": ["test_methods_do_not_change_state"],
     "SeriesToSeriesRowTransformer": ["test_methods_do_not_change_state"],
     # ColumnTransformer still needs to be refactored, see #2537
-    "ColumnTransformer": ["test_methods_do_not_change_state"],
+    "ColumnTransformer": [
+        "test_methods_do_not_change_state",
+        "test_fit_transform_output",
+    ],
     # Early classifiers intentionally retain information from pervious predict calls
     #   for #1.
     # #2 amd #3 are due to predict/predict_proba returning two items and that breaking
