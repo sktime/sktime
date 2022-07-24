@@ -5,7 +5,7 @@
 """Composition functionality for reduction approaches to forecasting."""
 
 __author__ = [
-    "Ayushmaan Seth",
+    "AyushmaanSeth",
     "Kavin Anand",
     "Luis Zugasti",
     "Lovkush Agarwal",
@@ -475,8 +475,8 @@ class _RecursiveReducer(_Reducer):
     def _get_shifted_window(self, shift=0, y_update=None, X_update=None):
         """Select shifted window."""
         # Get the start and end points of the last window.
-        cutoff = _shift(self.cutoff, by=shift)
-        start = _shift(cutoff, by=-self.window_length_ + 1)
+        cutoff = _shift(self._cutoff, by=shift)
+        start = _shift(self._cutoff, by=shift - self.window_length_ + 1)
 
         if self.transformers_ is not None:
             # Get the last window of the endogenous variable.
@@ -938,10 +938,22 @@ def make_reduction(
     estimator : an Estimator instance
         A reduction forecaster
 
+    Examples
+    --------
+    >>> from sktime.forecasting.compose import make_reduction
+    >>> from sktime.datasets import load_airline
+    >>> from sklearn.ensemble import GradientBoostingRegressor
+    >>> y = load_airline()
+    >>> regressor = GradientBoostingRegressor()
+    >>> forecaster = make_reduction(regressor, window_length=15, strategy="recursive")
+    >>> forecaster.fit(y)
+    RecursiveTabularRegressionForecaster(...)
+    >>> y_pred = forecaster.predict(fh=[1,2,3])
+
     References
     ----------
-    ..[1] Bontempi, Gianluca & Ben Taieb, Souhaib & Le Borgne, Yann-Aël. (2013).
-      Machine Learning Strategies for Time Series Forecasting.
+    .. [1] Bontempi, Gianluca & Ben Taieb, Souhaib & Le Borgne, Yann-Aël. (2013).
+        Machine Learning Strategies for Time Series Forecasting.
     """
     # We provide this function as a factory method for user convenience.
     strategy = _check_strategy(strategy)

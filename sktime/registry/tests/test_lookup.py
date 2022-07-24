@@ -115,7 +115,7 @@ def test_all_tags(estimator_scitype):
         if isinstance(tag[2], tuple):
             assert len(tag[2]) == 2
             assert isinstance(tag[2][0], str)
-            assert isinstance(tag[2][1], list)
+            assert isinstance(tag[2][1], (str, list))
         assert isinstance(tag[3], str)
 
 
