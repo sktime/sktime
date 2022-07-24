@@ -195,7 +195,7 @@ class TEASER(BaseEarlyClassifier):
             )
 
             # calculate harmonic mean from finished state info
-            hm, acc, earl = self._compute_harmonic_mean(state_info, y)
+            hm, acc, earl = self.compute_harmonic_mean(state_info, y)
 
             if hm > best_hm:
                 best_hm = hm
@@ -337,7 +337,7 @@ class TEASER(BaseEarlyClassifier):
 
     def _score(self, X, y) -> Tuple[float, float, float]:
         self._predict(X)
-        hm, acc, earl = self._compute_harmonic_mean(self.state_info, y)
+        hm, acc, earl = self.compute_harmonic_mean(self.state_info, y)
 
         return hm, acc, earl
 
@@ -524,26 +524,6 @@ class TEASER(BaseEarlyClassifier):
 
         return accept_decision, state_info
 
-    def _compute_harmonic_mean(self, state_info, y):
-        # calculate harmonic mean from finished state info
-        accuracy = np.average(
-            [
-                state_info[i][2] == self._class_dictionary[y[i]]
-                for i in range(len(state_info))
-            ]
-        )
-        earliness = np.average(
-            [
-                self._classification_points[state_info[i][0]] / self.series_length_
-                for i in range(len(state_info))
-            ]
-        )
-        return (
-            (2 * accuracy * (1 - earliness)) / (accuracy + (1 - earliness)),
-            accuracy,
-            earliness,
-        )
-
     def _update_state_info(self, accept_decision, preds, state_info, idx, time_stamp):
         # consecutive predictions, add one if positive decision and same class
         if accept_decision[idx] and preds[idx] == state_info[idx][2]:
@@ -575,6 +555,49 @@ class TEASER(BaseEarlyClassifier):
             ]
         )
         return preds, out[1]
+
+    def compute_harmonic_mean(self, state_info, y):
+        """Calculate harmonic mean from a state info matrix and array of class labeles.
+
+        Parameters
+        ----------
+        state_info : 2d np.ndarray of int
+            The state_info from a TEASER object after a prediction or update. It is
+            assumed the state_info is complete, and a positive decision has been
+            returned for all cases.
+        y : 1D np.array of int
+            Actual class labels for predictions. indices correspond to instance indices
+            in state_info.
+
+
+        Returns
+        -------
+        harmonic_mean : float
+            Harmonic Mean represents the balance between accuracy and earliness for a
+            set of early predictions.
+        accuracy : float
+            Accuracy for the predictions made in the state_info.
+        earliness : float
+            Average time taken to make a classification. The earliness for a single case
+            is the number of time points required divided by the total series length.
+        """
+        accuracy = np.average(
+            [
+                state_info[i][2] == self._class_dictionary[y[i]]
+                for i in range(len(state_info))
+            ]
+        )
+        earliness = np.average(
+            [
+                self._classification_points[state_info[i][0]] / self.series_length_
+                for i in range(len(state_info))
+            ]
+        )
+        return (
+            (2 * accuracy * (1 - earliness)) / (accuracy + (1 - earliness)),
+            accuracy,
+            earliness,
+        )
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):

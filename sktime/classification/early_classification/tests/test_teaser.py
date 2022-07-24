@@ -6,17 +6,11 @@ from numpy import testing
 from sklearn.ensemble import IsolationForest
 
 from sktime.classification.early_classification._teaser import TEASER
+from sktime.classification.early_classification.tests.test_all_early_classifiers import (  # noqa: E501
+    load_unit_data,
+)
 from sktime.classification.interval_based import TimeSeriesForestClassifier
-from sktime.datasets import load_unit_test
 from sktime.datatypes._panel._convert import from_nested_to_3d_numpy
-
-
-def load_unit_data():
-    """Load unit test data."""
-    X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    X_test, y_test = load_unit_test(split="test", return_X_y=True)
-    indices = np.random.RandomState(0).choice(len(y_train), 10, replace=False)
-    return X_train, y_train, X_test, y_test, indices
 
 
 def test_teaser_with_different_decision_maker():
@@ -46,6 +40,10 @@ def test_teaser_with_different_decision_maker():
 
     testing.assert_array_equal(final_probas, teaser_if_unit_test_probas)
 
+    # make sure full run matches
+    full_probas = teaser.predict_proba(X_test)
+    testing.assert_array_equal(full_probas, teaser_if_unit_test_probas)
+
 
 def test_teaser_near_classification_points():
     """Test of TEASER with incremental time stamps outside defined class points."""
@@ -55,7 +53,7 @@ def test_teaser_near_classification_points():
     teaser = TEASER(
         random_state=0,
         classification_points=[6, 10, 14, 18, 24],
-        estimator=TimeSeriesForestClassifier(n_estimators=10, random_state=0),
+        estimator=TimeSeriesForestClassifier(n_estimators=5, random_state=0),
     )
     teaser.fit(X_train, y_train)
 
@@ -74,10 +72,10 @@ def test_teaser_near_classification_points():
             with pytest.raises(ValueError):
                 teaser.update_predict_proba(X)
         else:
-            _, decisions = teaser.update_predict_proba(X)
+            _, decisions = teaser.update_predict(X)
 
 
-def test_teaser_full_length():
+def test_teaser_default():
     """Test of TEASER on the full data with the default estimator."""
     X_train, y_train, X_test, y_test, indices = load_unit_data()
 
@@ -88,7 +86,7 @@ def test_teaser_full_length():
     )
     teaser.fit(X_train, y_train)
 
-    hm, acc, earl = teaser.score(X_test, y_test)
+    _, acc, earl = teaser.score(X_test, y_test)
     testing.assert_allclose(acc, 0.818182, rtol=0.01)
     testing.assert_allclose(earl, 0.787878, rtol=0.01)
 

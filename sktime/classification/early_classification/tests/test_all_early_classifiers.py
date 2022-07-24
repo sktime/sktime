@@ -102,9 +102,7 @@ class TestAllEarlyClassifiers(EarlyClassifierFixtureGenerator, QuickTester):
             estimator_instance.set_params(random_state=0)
 
         # load unit test data
-        X_train, y_train = load_unit_test(split="train")
-        X_test, _ = load_unit_test(split="test")
-        indices = np.random.RandomState(0).choice(len(y_train), 10, replace=False)
+        X_train, y_train, X_test, y_test, indices = load_unit_data()
 
         # train classifier and predict probas
         estimator_instance.fit(X_train, y_train)
@@ -144,3 +142,11 @@ class TestAllEarlyClassifiers(EarlyClassifierFixtureGenerator, QuickTester):
 
         # assert probabilities are the same
         _assert_array_almost_equal(y_proba, expected_probas, decimal=2)
+
+
+def load_unit_data():
+    """Load unit test data."""
+    X_train, y_train = load_unit_test(split="train", return_X_y=True)
+    X_test, y_test = load_unit_test(split="test", return_X_y=True)
+    indices = np.random.RandomState(0).choice(len(y_train), 10, replace=False)
+    return X_train, y_train, X_test, y_test, indices
