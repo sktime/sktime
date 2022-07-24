@@ -5,9 +5,8 @@ Wraps kotsu benchmarking interface.
 """
 from typing import Callable, Optional, Type, Union
 
-import kotsu
-
 from sktime.base import BaseEstimator
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 
 class BaseBenchmark:
@@ -17,8 +16,12 @@ class BaseBenchmark:
     """
 
     def __init__(self):
+        _check_soft_dependencies("kotsu")
+        import kotsu
+
         self.estimators = kotsu.registration.ModelRegistry()
         self.validations = kotsu.registration.ValidationRegistry()
+        self.kotsu_run = kotsu.run.run
 
     def add_estimator(
         self,
@@ -50,5 +53,5 @@ class BaseBenchmark:
 
     def run(self, output_file):
         """Run the benchmark."""
-        results_df = kotsu.run.run(self.estimators, self.validations, output_file)
+        results_df = self.kotsu_run(self.estimators, self.validations, output_file)
         return results_df
