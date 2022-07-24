@@ -163,3 +163,6 @@ sktime/_contrib/debug.py
 sktime/_contrib/local_code.py
 sktime/_contrib/main.py
 sktime/_contrib/temp/
+setup.cfg
+sktime/benchmarking/kotsu_results.csv
+sktime/benchmarking/kotsu_results_interval.csv
