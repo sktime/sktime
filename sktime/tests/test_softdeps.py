@@ -17,6 +17,8 @@ from importlib import import_module
 import pytest
 
 from sktime.registry import all_estimators
+from sktime.tests._config import EXCLUDE_ESTIMATORS
+from sktime.utils._testing.scenarios_getter import retrieve_scenarios
 from sktime.utils.validation._dependencies import _check_python_version
 
 # list of soft dependencies used
@@ -25,6 +27,7 @@ SOFT_DEPENDENCIES = {
     "sktime.benchmarking.evaluation": ["matplotlib"],
     "sktime.benchmarking.experiments": ["tsfresh", "esig"],
     "sktime.classification.deep_learning": ["tensorflow"],
+    "sktime.regression.deep_learning": ["tensorflow"],
     "sktime.networks": ["tensorflow"],
     "sktime.clustering.evaluation._plot_clustering": ["matplotlib"],
 }
@@ -38,6 +41,12 @@ MODULES_TO_IGNORE = ("sktime._contrib", "sktime.utils._testing")
 # todo: long-term all example parameter settings should be soft dependency free
 # strings of class names to avoid the imports
 EXCEPTED_FROM_NO_DEP_CHECK = []
+
+
+# estimators excepted from checking that get_test_params does not import soft deps
+# this is ok, in general, for adapters to soft dependency frameworks
+# since such adapters will import estimators from the adapted framework
+EXCEPTED_FROM_GET_PARAMS_CHECK = ["PyODAnnotator"]
 
 
 def _is_test(module):
@@ -153,7 +162,8 @@ def _python_compat(est):
     return _check_python_version(est, severity="none")
 
 
-all_ests = all_estimators(return_names=False)
+# all estimators - exclude estimators on the global exclusion list
+all_ests = all_estimators(return_names=False, exclude_estimators=EXCLUDE_ESTIMATORS)
 
 
 # estimators that should fail to construct because of python version
@@ -243,6 +253,24 @@ def test_est_construct_if_softdep_available(estimator):
             ) from e
 
 
+@pytest.mark.parametrize("estimator", all_ests)
+def test_est_get_params_without_modulenotfound(estimator):
+    """Test that estimator test parameters do not rely on soft dependencies."""
+    if estimator.__name__ in EXCEPTED_FROM_GET_PARAMS_CHECK:
+        return None
+
+    try:
+        estimator.get_test_params()
+    except ModuleNotFoundError as e:
+        error_msg = str(e)
+        raise RuntimeError(
+            f"Estimator {estimator.__name__} requires soft dependencies for parameters "
+            f"returned by get_test_params. Test parameters should not require "
+            f"soft dependencies and use only sktime internal objects. "
+            f"Exception text: {error_msg}"
+        ) from e
+
+
 @pytest.mark.parametrize("estimator", est_pyok_without_soft_dep)
 def test_est_construct_without_modulenotfound(estimator):
     """Test that estimators that do not require soft dependencies construct properly."""
@@ -258,7 +286,34 @@ def test_est_construct_without_modulenotfound(estimator):
         raise RuntimeError(
             f"Estimator {estimator.__name__} does not require soft dependencies "
             f"according to tags, but raises ModuleNotFoundError "
-            f"on __init__. Any required soft dependencies should be added "
-            f'to the "python_dependencies" tag, and python version bouds should be'
+            f"on __init__ with test parameters. Any required soft dependencies should "
+            f'be added to the "python_dependencies" tag, and python version bounds '
+            f'should be added to the "python_version" tag. Exception text: {error_msg}'
+        ) from e
+
+
+@pytest.mark.parametrize("estimator", est_pyok_without_soft_dep)
+def test_est_fit_without_modulenotfound(estimator):
+    """Test that estimators that do not require soft dependencies fit properly."""
+    # skip composite estimators that have no soft dependencies
+    #   but which have soft dependencies in example components
+    if estimator.__name__ in EXCEPTED_FROM_NO_DEP_CHECK:
+        return None
+
+    try:
+        scenarios = retrieve_scenarios(estimator)
+        if len(scenarios) == 0:
+            return None
+        else:
+            scenario = scenarios[0]
+        estimator_instance = estimator.create_test_instance()
+        scenario.run(estimator_instance, method_sequence=["fit"])
+    except ModuleNotFoundError as e:
+        error_msg = str(e)
+        raise RuntimeError(
+            f"Estimator {estimator.__name__} does not require soft dependencies "
+            f"according to tags, but raises ModuleNotFoundError "
+            f"on fit. Any required soft dependencies should be added "
+            f'to the "python_dependencies" tag, and python version bounds should be'
             f' added to the "python_version" tag. Exception text: {error_msg}'
         ) from e
