@@ -191,7 +191,7 @@ def test_fh_equality(
     fh_equal_expected = fh_equal_expected and (is_relative == is_relative2)
     fh_equal_expected = fh_equal_expected and deep_equals(steps, steps2)
 
-    fh_equal_actual = (fh == fh2)
+    fh_equal_actual = fh == fh2
     assert fh_equal_expected == fh_equal_actual
 
 
