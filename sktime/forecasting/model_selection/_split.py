@@ -297,7 +297,7 @@ class BaseSplitter(BaseObject):
     and :math:`t(k)<t(k+1)` are ordered time indices.
     The exact set of indices depends on a concrete splitter.
     Method `.split` is used to generate a pair of index sets:
-    train :math:`\{t(1),\ldots,t(k)\}` and test :math:`\{t(k+1),\ldots,t(k+l)\}`.
+    train :math:`(t(1),\ldots,t(k))` and test :math:`(t(k+1),\ldots,t(k+l))`.
 
     In case `window_length` and `fh` are integer valued,
     they translate into :math:`k` and :math:`l`, respectively.
@@ -671,8 +671,8 @@ class CutoffSplitter(BaseSplitter):
 
     Here the user is expected to provide a set of cutoffs (train set endpoints),
     which using the notation provided in :class:`BaseSplitter`,
-    can be written as :math:`\{k_1,\ldots,k_n\}` for integer based indexing,
-    or :math:`\{t(k_1),\ldots,t(k_n)\}` for datetime based indexing.
+    can be written as :math:`(k_1,\ldots,k_n)` for integer based indexing,
+    or :math:`(t(k_1),\ldots,t(k_n))` for datetime based indexing.
     Training window's last point is equal to the cutoff.
 
     Test window is defined by forecasting horizons
@@ -686,7 +686,7 @@ class CutoffSplitter(BaseSplitter):
     is then trivially equal to :math:`n`.
 
     The sorted array of cutoffs returned by `.get_cutoffs` is then equal to
-    :math:`\{t(k_1),\ldots,t(k_n)\}` with :math:`k_i<k_{i+1}`.
+    :math:(t(k_1),\ldots,t(k_n))` with :math:`k_i<k_{i+1}`.
 
     Parameters
     ----------
