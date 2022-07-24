@@ -104,16 +104,19 @@ class MyForecaster(BaseForecaster):
         self.parama = parama
         self.paramb = paramb
         self.paramc = paramc
-        # important: no checking or other logic should happen here
+
+        # todo: change "MyForecaster" to the name of the class
+        super(MyForecaster, self).__init__()
+
+        # todo: optional, parameter checking logic (if applicable) should happen here
+        # if writes derived values to self, should *not* overwrite self.parama etc
+        # instead, write to self._parama, self._newparam (starting with _)
 
         # todo: default estimators should have None arg defaults
         #  and be initialized here
         #  do this only with default estimators, not with parameters
         # if est2 is None:
         #     self.estimator = MyDefaultEstimator()
-
-        # todo: change "MyForecaster" to the name of the class
-        super(MyForecaster, self).__init__()
 
         # todo: if tags of estimator depend on component tags, set these here
         #  only needed if estimator is a composite
