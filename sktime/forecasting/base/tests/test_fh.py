@@ -50,12 +50,8 @@ def _assert_index_equal(a, b):
     assert a.equals(b)
 
 
-@pytest.mark.parametrize(
-    "index_type, fh_type, is_relative", VALID_INDEX_FH_COMBINATIONS
-)
-@pytest.mark.parametrize("steps", [*TEST_FHS, *TEST_FHS_TIMEDELTA])
-def test_fh(index_type, fh_type, is_relative, steps):
-    """Testing ForecastingHorizon conversions."""
+def steps_and_fh_compatible(fh_type, steps):
+    """Check whether steps and fh_type are compatible."""
     int_types = ["int64", "int32"]
     steps_is_int = (
         isinstance(steps, (int, np.integer)) or np.array(steps).dtype in int_types
@@ -66,7 +62,16 @@ def test_fh(index_type, fh_type, is_relative, steps):
     steps_and_fh_incompatible = (fh_type == "timedelta" and steps_is_int) or (
         fh_type != "timedelta" and steps_is_timedelta
     )
-    if steps_and_fh_incompatible:
+    return steps_and_fh_incompatible
+
+
+@pytest.mark.parametrize(
+    "index_type, fh_type, is_relative", VALID_INDEX_FH_COMBINATIONS
+)
+@pytest.mark.parametrize("steps", [*TEST_FHS, *TEST_FHS_TIMEDELTA])
+def test_fh(index_type, fh_type, is_relative, steps):
+    """Testing ForecastingHorizon conversions."""
+    if not steps_and_fh_compatible(fh_type, steps):
         pytest.skip("steps and fh_type are incompatible")
     # generate data
     y = make_forecasting_problem(index_type=index_type)
@@ -99,6 +104,7 @@ def test_fh(index_type, fh_type, is_relative, steps):
     else:
         steps = pd.Index(steps)
 
+    int_types = ["int64", "int32"]
     if steps.dtype in int_types:
         fh_relative = pd.Index(steps, dtype="int64").sort_values()
         fh_absolute = y.index[np.where(y.index == cutoff)[0] + steps].sort_values()
@@ -169,6 +175,11 @@ def test_fh_equality(
     index_type, fh_type, is_relative, steps, index_type2, fh_type2, is_relative2, steps2
 ):
     """Testing ForecastingHorizon equality dunder."""
+    if not steps_and_fh_compatible(fh_type, steps):
+        pytest.skip("steps and fh_type are incompatible")
+    if not steps_and_fh_compatible(fh_type2, steps2):
+        pytest.skip("steps2 and fh_type2 are incompatible")
+
     # generate data
     y = make_forecasting_problem(index_type=index_type)
     y2 = make_forecasting_problem(index_type=index_type2)
