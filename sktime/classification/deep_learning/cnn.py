@@ -38,7 +38,7 @@ class CNNClassifier(BaseDeepClassifier):
         fit parameter for the keras model
     optimizer       : keras.optimizer, default=keras.optimizers.Adam(),
     metrics         : list of strings, default=["accuracy"],
-    random_seed     : integer, default=0
+    random_seed     : integer, default=None
         random seeding for initialisation of tf
     activation      : string or a tf callable, default="sigmoid"
         Activation function used in the output linear layer.
@@ -80,7 +80,7 @@ class CNNClassifier(BaseDeepClassifier):
         verbose=False,
         loss="mean_squared_error",
         metrics=None,
-        random_seed=0,
+        random_seed=None,
         activation="sigmoid",
         use_bias=True,
         optimizer=None,

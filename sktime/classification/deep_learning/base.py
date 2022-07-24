@@ -65,7 +65,7 @@ class BaseDeepClassifier(BaseClassifier, ABC):
         """
         ...
 
-    def get_metrics(self):
+    def summary(self):
         """
         Summary function to return the losses/metrics for model fit.
 
@@ -112,7 +112,27 @@ class BaseDeepClassifier(BaseClassifier, ABC):
         return probs
 
     def convert_y_to_keras(self, y, label_encoder=None, onehot_encoder=None):
-        """Convert y to required Keras format."""
+        """Convert y to required Keras format.
+
+        Parameters
+        ----------
+        y : an np.ndarray of shape n
+            The training data class labels.
+        label_encoder: sklearn.LabelEncoder object, default = None
+            Label encoder to encode different class data
+        onehot_encoder: sklearn.preprocessing.OneHotEncoder object,
+            default = None
+            One Hot Encoder to encode different class data
+
+        Returns
+        -------
+        y : an np.ndarray of shape n
+            Encoded version of the input y
+        label_encoder: sklearn.LabelEncoder
+            Label Encoder used to encode the input y
+        onehot_encoder: sklearn.preprocessing.OneHotEncoder
+            One Hot Encoder used to encode the input y
+        """
         if (label_encoder is None) and (onehot_encoder is None):
             # make the encoders and store in self
             self.label_encoder = LabelEncoder()
