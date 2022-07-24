@@ -40,6 +40,19 @@ class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
         if capability_tag:
             assert estimator_instance._has_implementation_of("_inverse_transform")
 
+    def test_inverse_transform_tags(self, estimator_instance):
+        """Test that inverse_transform tags are consistent."""
+        # skip this test if the estimator does not have inverse_transform
+        skip_tag = estimator_instance.get_tag("skip-inverse-transform")
+        cap_tag = estimator_instance.get_tag("capability:inverse_transform")
+
+        if skip_tag and not cap_tag:
+            raise ValueError(
+                'If a transformer sets the tag "skip-inverse-transform" to True, '
+                'it should also set "capability:inverse_transform" to True, because'
+                "a skipped inverse transform behaves as an actual transform (identity)."
+            )
+
     def _expected_trafo_output_scitype(self, X_scitype, trafo_input, trafo_output):
         """Return expected output scitype, given X scitype and input/output.
 
