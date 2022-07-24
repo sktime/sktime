@@ -13,15 +13,10 @@ from scipy import sparse
 from sklearn.base import clone
 from sklearn.compose import ColumnTransformer as _ColumnTransformer
 
-from sktime.datatypes._panel._convert import (
-    from_2d_array_to_nested,
-    from_3d_numpy_to_2d_array,
-    from_nested_to_2d_array,
-)
 from sktime.transformations.base import BaseTransformer, _PanelToPanelTransformer
 from sktime.utils.validation.panel import check_X
 
-__author__ = ["mloning", "sajaysurya"]
+__author__ = ["mloning", "sajaysurya", "fkiraly"]
 __all__ = [
     "ColumnTransformer",
     "SeriesToPrimitivesRowTransformer",
@@ -231,7 +226,7 @@ class ColumnConcatenator(BaseTransformer):
         "scitype:transform-output": "Series",
         # what scitype is returned: Primitives, Series, Panel
         "scitype:instancewise": False,  # is this an instance-wise transform?
-        "X_inner_mtype": "nested_univ",
+        "X_inner_mtype": ["pd-multiindex", "pd_multiindex_hier"],
         # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
         "fit_is_empty": True,  # is fit empty and can be skipped? Yes = True
@@ -255,18 +250,23 @@ class ColumnConcatenator(BaseTransformer):
           Transformed pandas DataFrame with same number of rows and single
           column
         """
-        # We concatenate by tabularizing all columns and then detabularizing
-        # them into a single column
-        if isinstance(X, pd.DataFrame):
-            Xt = from_nested_to_2d_array(X)
-        else:
-            Xt = from_3d_numpy_to_2d_array(X)
-        return from_2d_array_to_nested(Xt)
+        Xst = pd.DataFrame(X.stack())
+        Xt = Xst.swaplevel(-2, -1).sort_index().droplevel(-2)
+
+        # the above has the right structure, but the wrong indes
+        # the time index is in general non-unique now, we replace it by integer index
+        inst_idx = Xt.index.get_level_values(0)
+        t_idx = [range(len(Xt.loc[x])) for x in inst_idx.unique()]
+        t_idx = np.concatenate(t_idx)
+
+        Xt.index = pd.MultiIndex.from_arrays([inst_idx, t_idx])
+        Xt.index.names = X.index.names
+        return Xt
 
 
 row_trafo_deprec_msg = (
-    "All row transformers are deprecated since 0.12.0 and will be removed "
-    "in 0.13.0. Vectorization functionality from Series to Panel is natively "
+    "All row transformers are deprecated since 0.13.0 and will be removed "
+    "in 0.14.0. Vectorization functionality from Series to Panel is natively "
     "integrated to all transformers via the base class. Simply use fit "
     "or transform on Panel data, no row transformer is necessary anymore."
 )
@@ -322,16 +322,13 @@ class SeriesToSeriesRowTransformer(_RowTransformer, BaseTransformer):
     """Series-to-series row transformer."""
 
 
-msg = "Vectorization is now natively integrated in BaseTransform, simply "
-
-
-@deprecated(version="0.13.0", reason=row_trafo_deprec_msg, category=FutureWarning)
+@deprecated(version="0.14.0", reason=row_trafo_deprec_msg, category=FutureWarning)
 def make_row_transformer(transformer, transformer_type=None, **kwargs):
     """Old vectorization utility for transformers for panel data.
 
     This is now integrated into BaseTransformer, so no longer needed.
 
-    Deprecated from version 0.12.0, will be removed in 0.13.0.
+    Deprecated from version 0.13.0, will be removed in 0.14.0.
 
     Returns
     -------

@@ -1063,13 +1063,13 @@ class ForecastX(BaseForecaster):
 
     >>> y, X = load_longley()
     >>> fh = ForecastingHorizon([1, 2, 3])
-    >>> pipe = ForecastX(
+    >>> pipe = ForecastX(  # doctest: +SKIP
     ...     forecaster_X=VAR(),
     ...     forecaster_y=ARIMA(),
     ... )
-    >>> pipe = pipe.fit(y, X=X, fh=fh)
+    >>> pipe = pipe.fit(y, X=X, fh=fh)  # doctest: +SKIP
     >>> # this now works without X from the future of y!
-    >>> y_pred = pipe.predict(fh=fh)
+    >>> y_pred = pipe.predict(fh=fh)  # doctest: +SKIP
     """
 
     _tags = {
