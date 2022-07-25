@@ -4,7 +4,7 @@
 import numpy as np
 import pytest
 
-from sktime.annotation.ggs import GGS, GGSEstimator
+from sktime.annotation.ggs import GGS, GreedyGaussianSegmentation
 
 
 @pytest.fixture
@@ -22,9 +22,9 @@ def test_GGS_find_change_points(univariate_mean_shift):
     assert len(pred) == 5
 
 
-def test_GGSEstimator(univariate_mean_shift):
-    """Test the GGSEstimator."""
-    ggs = GGSEstimator(k_max=5, lamb=0.5)
+def test_GreedyGaussianSegmentation(univariate_mean_shift):
+    """Test the GreedyGaussianSegmentation."""
+    ggs = GreedyGaussianSegmentation(k_max=5, lamb=0.5)
     assert ggs.get_params() == {
         "k_max": 5,
         "lamb": 0.5,
