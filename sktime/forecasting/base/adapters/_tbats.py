@@ -102,7 +102,7 @@ class _TbatsAdapter(BaseForecaster):
         self._yname = y.name
 
         return self
-    
+
     def _update(self, y, X=None, update_params=True):
         """Update time series to incremental training data.
 
@@ -124,10 +124,12 @@ class _TbatsAdapter(BaseForecaster):
         """
         if update_params:
             # update model state and refit parameters
-            self._fit(y=self._y)  # _fit re-runs model instantiation
+            # _fit re-runs model instantiation which triggers refit
+            self._fit(y=self._y)
 
         else:
             # update model state without refitting parameters
+            # out-of-box fit tbats method will not refit parameters 
             self._forecaster.fit(y=self._y)
 
         return self
