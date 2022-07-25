@@ -28,7 +28,7 @@ test: ## Run unit tests
 	mkdir -p ${TEST_DIR}
 	cp .coveragerc ${TEST_DIR}
 	cp setup.cfg ${TEST_DIR}
-	python -m pytest
+	python -m pytest sktime/forecasting/model_selection/_split.py
 
 test_softdeps: ## Run unit tests
 	-rm -rf ${TEST_DIR}
