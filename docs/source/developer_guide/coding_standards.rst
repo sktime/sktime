@@ -72,7 +72,7 @@ Type the below in your python environment, and in the root of your local reposit
 
 .. code:: bash
 
-   pip install .[dev]
+   pip install -e .[dev]
 
 2. Set up pre-commit:
 
