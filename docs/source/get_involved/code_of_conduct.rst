@@ -66,9 +66,9 @@ The sktime team are dedicated to providing a welcoming and supportive
 environment for all people, regardless of background or identity. As
 such, we do not tolerate:
 * behaviour that is disrespectful to our
-community members or that excludes, intimidates, or causes discomfort to others.
+  community members or that excludes, intimidates, or causes discomfort to others.
 * discrimination or harassment based on protected characteristics, including
-restriction of fair opportunities based on protected characteristics
+  restriction of fair opportunities based on protected characteristics
 * silencing of reasonable opinions and stifling of free speech on topics within
   the project scope (science and open community operations)
 
