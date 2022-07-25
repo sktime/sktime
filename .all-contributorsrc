@@ -1693,6 +1693,24 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "shchur",
+      "name": "Oleksandr Shchur",
+      "avatar_url": "https://avatars.githubusercontent.com/u/6944857?v=4",
+      "profile": "https://github.com/shchur",
+      "contributions": [
+        "bug",
+        "code"
+      ]
+    },
+    {
+      "login": "jelc53",
+      "name": "Julian Cooper",
+      "profile": "https://github.com/jelc53",
+      "contributions": [
+        "tbats_update"
+      ]
     }
   ],
   "projectName": "sktime",
