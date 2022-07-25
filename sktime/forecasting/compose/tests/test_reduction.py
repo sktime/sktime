@@ -110,3 +110,41 @@ def test_reduction(y, index_names):
     forecaster2.fit(y, fh=[1, 2])
     y_pred = forecaster2.predict(fh=[1, 2, 12])
     check_eval(y_pred.index.names, index_names)
+
+
+def _check_cutoff(cutoff, index):
+    """Check if the cutoff is valid based on time index of forecasting horizon.
+
+    Validates that the cutoff contains necessary information and is
+    compatible with the time index of the forecasting horizon.
+
+    Parameters
+    ----------
+    cutoff : pd.Period, pd.Timestamp, int, optional (default=None)
+        Cutoff value is required to convert a relative forecasting
+        horizon to an absolute one and vice versa.
+    index : pd.PeriodIndex or pd.DataTimeIndex
+        Forecasting horizon time index that the cutoff value will be checked
+        against.
+    """
+    if cutoff is None:
+        raise ValueError("`cutoff` must be given, but found none.")
+
+    if isinstance(index, pd.PeriodIndex):
+        assert isinstance(cutoff, pd.Period)
+        assert index.freqstr == cutoff.freqstr
+
+    if isinstance(index, pd.DatetimeIndex):
+        assert isinstance(cutoff, pd.Timestamp)
+
+        if not hasattr(cutoff, "freqstr") or cutoff.freqstr is None:
+            raise AttributeError(
+                "The `freq` attribute of the time index is required, "
+                "but found: None. Please specify the `freq` argument "
+                "when setting the time index."
+            )
+
+        # For indices of type DatetimeIndex with irregular steps, frequency will be
+        # None
+        if index.freqstr is not None:
+            assert cutoff.freqstr == index.freqstr

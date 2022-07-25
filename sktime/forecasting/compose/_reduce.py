@@ -31,6 +31,7 @@ from sklearn.base import RegressorMixin, clone
 from sktime.datatypes._utilities import get_time_index
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.base._base import DEFAULT_ALPHA
+from sktime.forecasting.base._fh import _index_range
 from sktime.forecasting.base._sktime import _BaseWindowForecaster
 from sktime.regression.base import BaseRegressor
 from sktime.utils.datetime import _shift
@@ -478,17 +479,16 @@ class _RecursiveReducer(_Reducer):
         cutoff = _shift(self._cutoff, by=shift)
         start = _shift(self._cutoff, by=shift - self.window_length_ + 1)
 
+        relative = pd.Index(list(map(int, range(-self.window_length_ + 1, 1))))
+
         if self.transformers_ is not None:
             # Get the last window of the endogenous variable.
             # If X is given, also get the last window of the exogenous variables.
-            if isinstance(cutoff, pd._libs.tslibs.period.Period):
-                dateline = pd.period_range(start=start, end=cutoff)
-            elif isinstance(self.cutoff, np.int64) or isinstance(self.cutoff, int):
-                dateline = list(range(start, cutoff + 1))
-            else:
-                dateline = pd.date_range(start=start, end=cutoff)
 
-            y = _create_multiindex(dateline, self._y)
+            index_range = _index_range(relative, cutoff)
+
+            y = _create_fcst_df(index_range, self._y)
+
             y.update(self._y)
             if y_update is not None:
                 y.update(y_update)
@@ -496,7 +496,7 @@ class _RecursiveReducer(_Reducer):
             X_from_y = self.transformers_[0].fit_transform(y)
             X_from_y_cut = _cut_tail(X_from_y)
             if self._X is not None:
-                X = _create_multiindex(dateline, self._X)
+                X = _create_fcst_df(index_range, self._X)
                 X.update(self._X)
                 if X_update is not None:
                     X.update(X_update)
@@ -1073,3 +1073,46 @@ def _cut_tail(X, n_tail=1):
     else:
         X = X.tail(n_tail)
     return X
+
+
+def _create_fcst_df(target_date, origin_df, fill=None):
+    """Create an empty multiindex dataframe from origin dataframe."""
+    # Collect predictions
+    oi = origin_df.index
+    if not isinstance(oi, pd.MultiIndex):
+        if isinstance(origin_df, pd.Series):
+            if fill is None:
+                template = pd.Series(np.zeros(len(target_date)), index=target_date)
+            else:
+                template = pd.Series(fill, index=target_date)
+            template.name = origin_df.name
+            return template
+        else:
+            if fill is None:
+                template = pd.DataFrame(
+                    np.zeros((len(target_date), len(origin_df.columns))),
+                    index=target_date,
+                    columns=origin_df.columns.to_list(),
+                )
+            else:
+                template = pd.DataFrame(
+                    fill, index=target_date, columns=origin_df.columns.to_list()
+                )
+            return template
+
+    tsids = origin_df.index.get_level_values("instances").unique()
+    mi = pd.MultiIndex.from_product(
+        [tsids, target_date], names=["instances", "timepoints"]
+    )
+
+    if fill is None:
+        template = pd.DataFrame(
+            np.zeros((len(target_date) * len(tsids), len(origin_df.columns))),
+            index=mi,
+            columns=origin_df.columns.to_list(),
+        )
+    else:
+        template = pd.DataFrame(fill, index=mi, columns=origin_df.columns.to_list())
+
+    template = template.astype(origin_df.dtypes.to_dict())
+    return template
