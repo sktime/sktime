@@ -13,7 +13,9 @@ from scipy import sparse
 from sklearn.base import clone
 from sklearn.compose import ColumnTransformer as _ColumnTransformer
 
+from sktime.transformations.series.adapt import TabularToSeriesAdaptor
 from sktime.transformations.base import BaseTransformer, _PanelToPanelTransformer
+from sktime.utils.sklearn import is_sklearn_estimator
 from sktime.utils.validation.panel import check_X
 
 __author__ = ["mloning", "sajaysurya", "fkiraly"]
@@ -282,10 +284,15 @@ class _RowTransformer(BaseTransformer):
         warn(row_trafo_deprec_msg)
 
         self.transformer = transformer
-        self.transformer_ = clone(transformer)
+        transformer_ = clone(transformer)
+        # safer wrapping: coerce to sktime transformer
+        if is_sklearn_estimator(transformer_):
+            transformer_ = TabularToSeriesAdaptor(transformer_)
+        self.transformer_ = transformer_
+
         self.check_transformer = check_transformer
         super(_RowTransformer, self).__init__()
-        self.clone_tags(transformer)
+        self.clone_tags(transformer_)
         # fit needs to be run, or the internal fit may not be updated
         self.set_tags(**{"fit_is_empty": False})
 
