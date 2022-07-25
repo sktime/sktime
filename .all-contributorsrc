@@ -1703,6 +1703,14 @@
         "bug",
         "code"
       ]
+    },
+    {
+      "login": "jelc53",
+      "name": "Julian Cooper",
+      "profile": "https://github.com/jelc53",
+      "contributions": [
+        "tbats_update"
+      ]
     }
   ],
   "projectName": "sktime",
