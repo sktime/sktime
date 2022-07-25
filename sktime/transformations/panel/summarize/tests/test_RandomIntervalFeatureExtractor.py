@@ -88,8 +88,9 @@ def test_different_implementations():
 
     # Compare with chained transformations.
     tran1 = RandomIntervalSegmenter(n_intervals=1, random_state=random_state)
-    tran2 = Tabularizer(FunctionTransformer(func=np.mean, validate=False))
-    A = tran2.fit_transform(tran1.fit_transform(X_train))
+    tran2 = FunctionTransformer(func=np.mean, validate=False)
+    t_chain = tran1 * tran2
+    A = t_chain.fit_transform(X_train)
 
     tran = RandomIntervalFeatureExtractor(
         n_intervals=1, features=[np.mean], random_state=random_state
