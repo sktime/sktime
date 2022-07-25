@@ -60,7 +60,7 @@ class HMM(BaseSeriesAnnotator):
 
     Parameters
     ----------
-    emission_funcs : list of shape [num hidden states]
+    emission_funcs : list, shape = [num hidden states]
         List should be of length n (the number of hidden states)
         Either a list of callables [fx_1, fx_2] with signature fx_1(X) -> float
         or a list of callables and matched keyword arguments for those
@@ -69,11 +69,11 @@ class HMM(BaseSeriesAnnotator):
         The callables should take a value and return a probability when passed
         a single observation. All functions should be properly normalized PDFs
         over the same space as the observed data.
-    transition_prob_mat: 2D np.ndarry of shape [num hidden states, num hidden states]
+    transition_prob_mat: 2D np.ndarry, shape = [num_states, num_states]
         Each row should sumn to 1 in order to be properly normalized
         (ie the j'th column in the i'th row represents the
         probability of transitioning from state i to state j.)
-    initial_probs: 1D np.ndarray of shape [num hidden states], optional
+    initial_probs: 1D np.ndarray, shape = [num hidden states], optional
         A array of probabilities that the sequence of hidden states starts in each
         of the hidden states. If passed, should be of length `n` the number of
         hidden states and  should match the length of both the emission funcs
@@ -83,13 +83,13 @@ class HMM(BaseSeriesAnnotator):
 
     Attributes
     ----------
-    emission_funcs : list
+    emission_funcs : list, shape = [num_hidden_states]
         The functions to use in calculating the emission probabilities. Taken
         from the __init__ param of same name.
-    transition_prob_mat : 2D np.ndarray
+    transition_prob_mat: 2D np.ndarry, shape = [num_states, num_states]
         Matrix of transition probabilities from hidden state to hidden state.
         Taken from the __init__ param of same name.
-    initial_probs : 1D np.ndarray
+    initial_probs : 1D np.ndarray, shape = [num_hidden_states]
         Probability over the hidden state identity of the first state. If the
         __init__ param of same name was passed it will take on that value.
         Otherwise it is set to be uniform over all hidden states.
@@ -101,11 +101,11 @@ class HMM(BaseSeriesAnnotator):
         states.
     num_obs : int
         The length of the observations data.  Extracted from data.
-    trans_prob : 2D np.ndarray
+    trans_prob : 2D np.ndarray, shape = [num_observations, num_hidden_states]
         Shape [num observations, num hidden states]. The max probability that that
         observation is assigned to that hidden state.
         Calculated in _calculate_trans_mat and assigned in _predict.
-    trans_id : 2D np.ndarray
+    trans_id : 2D np.ndarray, shape = [num_observations, num_hidden_states]
         Shape [num observations, num hidden states]. The state id of the state
         proceeding the observation is assigned to that hidden state in the most
         likely path where that occurs. Calculated in _calculate_trans_mat and
@@ -203,27 +203,34 @@ class HMM(BaseSeriesAnnotator):
 
         Parameters
         ----------
-        initial_probs : (np.ndarray of float) - A nx1 dimensional array where n
+        initial_probs : 1D np.ndarray, shape = [num_hidden_states]
+            A nx1 dimensional array of floats where n
             represents the number of hidden states in the model. It
             contains the probability that hidden state for the state
             before the first observation was state n.  Should sum to 1.
-        emi_probs : (np.ndarray of float)- A nxm dimensional array, where n is the
+        emi_probs : 2D np.ndarray, shape = [num_observations, num_hidden_states]
+            A nxm dimensional arrayof floats, where n is the
             number of hidden states and m is the number of observations.
-            For a given observation, it will provide the probability for
-            each of the hidden states that they could have given rise to that
-            observation. Each entry should be beteen 0 and 1
-        transition_prob_mat : (np.ndarray) - A nxn dimensional array where n is
+            For a given observation, it should contain the probability that it
+            could havbe been generated (ie emitted) from each of the hidden states
+            Each entry should be beteen 0 and 1
+        transition_prob_mat : 2D np.ndarray, shape = [num_states, num_states]
+            A nxn dimensional array of floats where n is
             the number of hidden states in the model. The jth col in the ith row
             represents the probability of transitioning to state j from state i.
             Thus each row should sum to 1.
-        num_obs : (int) the number of observations (m)
-        num_states : (int) the number of hidden states (n)
+        num_obs : int,
+            the number of observations (m)
+        num_states : int,
+            the number of hidden states (n)
 
         Returns
         -------
-        trans_prob : (np.ndarray) an nxm dimensional array which represents the
+        trans_prob : 2D np.ndarray, shape = [num_observations, num_hidden_states]
+            an nxm dimensional array which represents the
             maximum probability of the hidden state of observation m is state n.
-        trans_id : (np.ndarray) a nxm dimensional array which for each observation
+        trans_id : 2D np.ndarray, shape = [num_observations, num_hidden_states]
+            a nxm dimensional array which for each observation
             "i" and state "j" the i,j entry records the state_id of the most
             likely state that could have led to the hidden state being "i" for
             observation "j".
@@ -260,7 +267,31 @@ class HMM(BaseSeriesAnnotator):
     def _make_emission_probs(
         cls, emission_funcs: list, observations: np.ndarray
     ) -> np.ndarray:
-        """Calculate the prob each obs comes from each hidden state."""
+        """Calculate the prob each obs comes from each hidden state.
+
+        Parameters
+        ----------
+        emission_funcs : list, shape = [num_hidden_states]
+            List should be of length n (the number of hidden states)
+            Either a list of callables [fx_1, fx_2] with signature fx_1(X) -> float
+            or a list of callables and matched keyword arguments for those
+            callables [(fx_1, kwarg_1), (fx_2, kwarg_2)] with signature
+            fx_1(X, **kwargs) -> float (or a list with some mixture of the two).
+            The callables should take a value and return a probability when passed
+            a single observation. All functions should be properly normalized PDFs
+            over the same space as the observed data.
+        observations : 1D np.ndarray, shape = [num_observations]
+            Observations to apply labels to.
+
+        Returns
+        -------
+        emi_probs : 2D np.ndarray, shape = [num_observations, num_hidden_states]
+            A nxm dimensional arrayof floats, where n is the
+            number of hidden states and m is the number of observations.
+            For a given observation, it contains the probability that it
+            could havbe been generated (ie emitted) from each of the hidden states
+            Each entry should be beteen 0 and 1
+        """
         # assign emission probabilities from each state to each position:
 
         emi_probs = np.zeros(shape=(len(emission_funcs), len(observations)))
@@ -291,7 +322,7 @@ class HMM(BaseSeriesAnnotator):
             a matrix of size [number of observations, number of hidden states]
             which contains the highest probability path that leads to
             observation m being assigned to hidden state n.
-        trans_id : np.ndarray,
+        trans_id : np.ndarray, shape = [num_observations, num_hidden_states]
             a matrix of size [number of observations, number of hidden states]
             which contains the state id of the state proceeding this one on the
             most likely path that has observation m being assigned to hidden
@@ -299,7 +330,8 @@ class HMM(BaseSeriesAnnotator):
 
         Returns
         -------
-        hmm_fit: (np.ndarray) an array of shape [length of the X (obs)].
+        hmm_fit: np.ndarray, shape = [num_observations]
+            an array of shape [length of the X (obs)].
             each entry in the array is an int representing a hidden id state
             that has been assigned to that observation.
         """
@@ -318,10 +350,8 @@ class HMM(BaseSeriesAnnotator):
 
         Parameters
         ----------
-        X : 1D np.array of shape = [n_observations]
+        X : 1D np.array, shape = [num_observations]
             Observations to apply labels to.
-        y : array-like, shape = [n_instances]
-            The class labels.
 
         Returns
         -------
@@ -335,13 +365,13 @@ class HMM(BaseSeriesAnnotator):
 
         Parameters
         ----------
-        X : 1D np.array of shape = [n_observations]
+        X : 1D np.array, shape = [num_observations]
             Observations to apply labels to.
 
         Returns
         -------
-        y : array-like, shape = [n_instances]
-            Predicted class labels.
+        annotated_x : array-like, shape = [num_observations]
+            Array of predicted class labels, same size as input.
         """
         self.num_states = len(self.emission_funcs)
         self.states = [i for i in range(self.num_states)]
