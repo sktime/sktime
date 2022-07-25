@@ -168,7 +168,7 @@ project event or platform include:
 -  decision making on resource allocation which has the effect of excluding people
    on the basis of protected characteristics, or other forms of systemic discrimination
 -  decision making on resource allocation that confers advantages to personal networks,
-   e.g., by preventing advertising of opportunities, or not applying best practice in recruitment
+   and excludes others, e.g., preventing advertising of opportunities, not applying best practice in recruitment
 -  reducing transparency of operations of sktime, e.g., by obfuscation of the paper trail
 -  invoking the code of conduct dishonestly, or as a form of bullying,
    especially from a position of power
