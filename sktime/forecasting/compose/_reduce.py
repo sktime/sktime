@@ -538,20 +538,10 @@ class _RecursiveReducer(_Reducer):
 
         if self.transformers_ is not None:
             fh_max = fh.to_relative(self.cutoff)[-1]
+            relative = pd.Index(list(map(int, range(1, fh_max + 1))))
+            index_range = _index_range(relative, self.cutoff)
 
-            if isinstance(self.cutoff, pd._libs.tslibs.period.Period):
-                dateline = pd.period_range(
-                    end=fh.to_absolute(self.cutoff)[-1], periods=fh_max
-                )
-            elif isinstance(self.cutoff, np.int64) or isinstance(self.cutoff, int):
-                dateline = list(
-                    range(self.cutoff + 1, fh.to_absolute(self.cutoff)[-1] + 1)
-                )
-            else:
-                dateline = pd.date_range(
-                    end=fh.to_absolute(self.cutoff)[-1], periods=fh_max
-                )
-            y_pred = _create_multiindex(dateline, self._y)
+            y_pred = _create_fcst_df(index_range, self._y)
 
             for i in range(fh_max):
                 # Slice prediction window.
@@ -565,7 +555,7 @@ class _RecursiveReducer(_Reducer):
                 # Generate predictions.
                 y_pred_vector = self.estimator_.predict(X_last)
                 y_pred_curr = _create_multiindex(
-                    [dateline[i]], self._y, fill=y_pred_vector
+                    [index_range[i]], self._y, fill=y_pred_vector
                 )
                 y_pred.update(y_pred_curr)
 

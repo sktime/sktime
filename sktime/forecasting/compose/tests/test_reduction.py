@@ -63,8 +63,7 @@ forecaster1 = make_reduction(
 )
 
 # forecaster1.fit(y=y_train_grp, X=y_train_grp)
-
-# # check_estimator(forecaster1, return_exceptions=False)
+# check_estimator(forecaster1, return_exceptions=False)
 # y_pred1 = forecaster1.predict(X=y_test_grp, fh=[1, 2, 12])
 
 forecaster2 = make_reduction(
@@ -74,6 +73,9 @@ forecaster2 = make_reduction(
     window_length=None,
     strategy="recursive",
 )
+
+y_numeric = y_train.copy()
+y_numeric.index = pd.to_numeric(y_numeric.index)
 
 # forecaster2.fit(y_train, fh=[1, 2])
 # y_pred2 = forecaster2.predict(fh=[1, 2, 12])
@@ -101,6 +103,10 @@ def check_eval(test_input, expected):
         ),
         (
             y_train,
+            [None],
+        ),
+        (
+            y_numeric,
             [None],
         ),
     ],
