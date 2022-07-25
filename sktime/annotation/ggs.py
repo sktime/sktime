@@ -319,7 +319,7 @@ class GreedyGaussianSegmentation:
 
     def fit(self, X: npt.ArrayLike, y: npt.ArrayLike = None):
         """Fit method for compatibility with sklearn-type estimator interface.
-        
+
         It sets the internal state of the estimator and returns the initialized instance.
 
         Parameters
@@ -348,7 +348,7 @@ class GreedyGaussianSegmentation:
         -------
             y_pred : array_like
                 1D array with predicted segmentation of the same size as the first dimension of X.
-                The numerical values represent distinct segments labels for each of the data points. 
+                The numerical values represent distinct segments labels for each of the data points.
         """
         return self._adaptee.predict(X)
 
@@ -367,7 +367,7 @@ class GreedyGaussianSegmentation:
         -------
             y_pred : array_like
                 1D array with predicted segmentation of the same size as the first dimension of X.
-                The numerical values represent distinct segments labels for each of the data points. 
+                The numerical values represent distinct segments labels for each of the data points.
 
         """
         return self.fit(X, y).predict(X, y)
@@ -384,16 +384,12 @@ class GreedyGaussianSegmentation:
         -------
             params: dict
                 Dictionary with the estimator's initialization parameters, with
-                keys being argument names and values being argument values. 
+                keys being argument names and values being argument values.
         """
         return asdict(self._adaptee, filter=lambda attr, value: attr.init is True)
 
     def set_params(self, **parameters):
         """Set the parameters of this object.
-
-        The method works on simple estimators as well as on nested objects.
-        The latter have parameters of the form ``<component>__<parameter>`` so that it's
-        possible to update each component of a nested object.
 
         Parameters
         ----------
