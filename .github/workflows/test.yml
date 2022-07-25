@@ -80,7 +80,7 @@ jobs:
           mkdir -p testdir/
           cp .coveragerc testdir/
           cp setup.cfg testdir/
-          python -m pytest sktime/forecasting/model_selection/_split.py
+          python -m pytest
 
       - name: Publish code coverage
         uses: codecov/codecov-action@v3
