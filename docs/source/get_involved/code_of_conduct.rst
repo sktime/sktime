@@ -281,8 +281,8 @@ enforcement manual, including bans and blocks online, or removal from a
 physical space.
 
 In situations where an individual community member acts unilaterally,
-they must inform Dr Franz Király as soon as possible, and report their
-actions for review within 24 hours.
+they must inform the sktime community council via info@sktime.org
+as soon as possible, and report their actions for review within 24 hours.
 
 4.3 Less-Urgent Situations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
