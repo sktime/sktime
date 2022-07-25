@@ -9,14 +9,15 @@ experience. Accordingly, everyone who participates in the sktime project
 is expected to show respect and courtesy to other community members at
 all times.
 
-Dr Franz Király, as principal investigator of this project, and all
-project members, are dedicated to a **harassment-free experience for
+The sktime community council, and all project members,
+are dedicated to a **harassment-free experience for
 everyone**, regardless of gender, gender identity and expression,
 sexual orientation, disability, physical appearance, body size, race,
 age or religion. **We do not tolerate harassment by and/or of members of
 our community in any form**.
 
-We are particularly motivated to support new and/or anxious
+We are dedicated to a **fair and equal opportunities environment** for everyone,
+and therefore are particularly motivated to support new and/or anxious
 collaborators, people who are looking to learn and develop their skills,
 and anyone who has experienced discrimination in the past.
 
@@ -28,11 +29,22 @@ conform to the following Code of Conduct.
 1 Introduction
 --------------
 
-sktime is a community-oriented and -led project. We value the
-involvement of everyone in the community. We are committed to creating a
-friendly and respectful place for learning, teaching and contributing.
-All participants in our in-person events and online communications are
-expected to show respect and courtesy to others at all times.
+sktime is a community-oriented and -led project.
+
+We value the involvement of everyone in the community, and strive to be an open
+community. We commit to provide fair and revarding opportunities for everyone without
+restriction, to participate, learn, and become leaders of the community. We expect from
+members of our community to create such opportunities for others as have been created
+for them.
+
+We are committed to scientific quality and strive to be an open forum on matters
+of technical content and open community governance. All community members are expected
+to adhere to the principle of free speech in academia and science, in order to create
+the best possible science and the best possible open community.
+
+We are committed to creating a friendly and respectful place for learning,
+teaching and contributing. All participants in our in-person events and online
+communications are expected to show respect and courtesy to others at all times.
 
 To make clear what is expected, everyone participating in activities
 associated with the sktime project is required to conform to this Code
@@ -40,28 +52,36 @@ of Conduct. This Code of Conduct applies to all spaces managed by the
 sktime project including, but not limited to, in-person focus groups and
 workshops, and communications online via GitHub.
 
-The lead investigator of the sktime - Dr Franz Király - is responsible
-for enforcing the Code of Conduct. He can be contacted by emailing
-f.kiraly@ucl.ac.uk.
+The communicty council of sktime (see current composition on "roles")
+is responsible for defining the Code of Conduct,
+and can be contacted under info@sktime.org.
 
-Reports may be reviewed by other members of the core development team,
-unless there is a conflict of interest, and will be kept confidential.
+The Code of Conduct Committee of sktie is responsible for enforcing the Code of Conduct.
+Reports can be made via the sktime issue tracker, and will be kept confidential.
 
 2 Code of Conduct
 -----------------
 
 The sktime team are dedicated to providing a welcoming and supportive
 environment for all people, regardless of background or identity. As
-such, we do not tolerate behaviour that is disrespectful to our
-community members or that excludes, intimidates, or causes discomfort to
-others. We do not tolerate discrimination or harassment based on
-characteristics that include, but are not limited to: gender identity
-and expression, sexual orientation, disability, physical appearance,
-body size, citizenship, nationality, ethnic or social origin, pregnancy,
-familial status, veteran status, genetic information, religion or belief
-(or lack thereof), membership of a national minority, property, age,
-education, socio-economic status, technical choices, and experience
-level.
+such, we do not tolerate:
+* behaviour that is disrespectful to our
+community members or that excludes, intimidates, or causes discomfort to others.
+* discrimination or harassment based on protected characteristics, including
+restriction of fair opportunities based on protected characteristics
+* silencing of reasonable opinions and stifling of free speech on topics within
+  the project scope (science and open community operations)
+
+In the rare cases where our ideals are in conflict, we strive to protect,
+in the context of power dynamics, the less powerful party or parties.
+
+Protected characteristics as referred to above include, but are not limited to:
+gender identity, gender expression, sex assigned at birth, biological sex,
+genetic information, sexual orientation, disability status, physical appearance,
+body size, citizenship, nationality, national origin, ethnic or social origin, pregnancy,
+familial status, family background, veteran status, trade union membership,
+religion or belief (or lack thereof), membership of a national minority, property, age,
+socio-economic status, neurotypicality or -atypicality, education, and experience level.
 
 Everyone who participates in the sktime project activities is required
 to conform to this Code of Conduct. This Code of Conduct applies to all
@@ -83,6 +103,7 @@ hope you will consider to be appropriate community guidelines:
 -  **Be respectful of different viewpoints and experiences**. Do not
    engage in homophobic, racist, transphobic, ageist, ableist, sexist,
    or otherwise exclusionary behaviour.
+   In disagreements, assume best intentions.
 -  **Use welcoming and inclusive language**. Exclusionary comments or
    jokes, threats or violent language are not acceptable. Do not address
    others in an angry, intimidating, or demeaning manner. Be considerate
@@ -104,6 +125,11 @@ hope you will consider to be appropriate community guidelines:
    succinct so as to allow maximum engagement by all participants. Do
    not interrupt others on the basis of disagreement; hold such comments
    until they have finished speaking.
+-  **Do not hesitate to voice critical opinions, and accept constructive
+   criticism gracefully**. A diverse space of opinions and observations is
+   crucial for fairness and diversity of our community, as well as its scientific quality.
+   Free speech and constant scrutiny directed at those in power is also essential to ensure
+   accountability and fair operations of our community, and to prevent groupthink or in-group dynamics.
 -  **Don’t be a bystander**. If you see something inappropriate
    happening, speak up. If you don't feel comfortable intervening but
    feel someone should, please feel free to ask a member of the Code of
@@ -133,15 +159,49 @@ project event or platform include:
 -  nonconsensual or unwelcome physical contact
 -  sustained disruption of talks, events or communications
 -  insults or put downs
--  sexist, racist, homophobic, transphobic, ableist, or exclusionary
-   jokes
+-  sexist, racist, homophobic, transphobic, ableist, or exclusionary jokes
 -  excessive swearing
 -  incitement to violence, suicide, or self-harm
 -  continuing to initiate interaction (including photography or
    recording) with someone after being asked to stop
 -  publication of private communication without consent
+-  allocating sktime resources or funding in a way that disadvantages by
+   protected characteristic such as nationality, socio-economic status, religion or belief,
+   or other forms of systemic discrimination
+-  allocating sktime resources or funding in a way that confers advantages to personal networks,
+   e.g., by preventing advertising of opportunities, or not applying best practice in recruitment
+-  attempts to obfuscate the paper trail or reduce transparency of operations of sktime
 
-2.3 Consequences of Unacceptable Behaviour
+2.3 Common precedent rules
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Sometimes, CoC requirements end up in conflict with each other.
+We outline a few precedent examples in how these are traded off.
+
+Examples:
+
+* contributor criticizing leadership for handing resources to personal network, leadership invoking "discomfort"
+* passionate disagreement on technical content between contributors
+* accidental violations of CoC due to protected characteristics of the person violating the CoC
+* systemic issues whose resolution causes discomfort in the community
+
+Precedent rules:
+
+* the less powerful party should be protected, i.e., CoC cannot be invoked by lead community member to silence critique of how funds are spent.
+  But, CoC should protect new contributors or early career members from more powerful community members, e.g., in operational or technical disputes.
+* technical content is not invalidated by tone, but tone must remain civil at all times.
+  I.e., valid arguments are not discarded because of tone, but participants in a technical
+  dispute may be punished for tone that is unwelcoming, e.g., name calling etc.
+* conditions that make compliance with certain aspects of CoC more difficult should be taken into account,
+  especially in parties that are the less powerful in a dynamic. Common examples are certain forms of neuroatypicality.
+  A more illustrative but very rare example would be Tourette's with the rare swearing tic that cannot be "turned off".
+* issues of systemic exclusion or discrimination should be addressed when apparent, even at the cost of some community discomfort.
+  E.g., meetings should be moved to less convenient times, or processes made more "formal",
+  if not doing so would exclude others in a discriminatory fashion.
+
+Behaviour that is clearly racist, sexist, etc, is always a CoC violation, and never part of trade-offs.
+
+2.4 Consequences of Unacceptable Behaviour
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Participants who are asked to stop any inappropriate behaviour are
@@ -153,13 +213,13 @@ event or platform (without refund), or impose any other appropriate
 sanctions (see the `enforcement manual <#enforcement-manual>`__ for
 details).
 
-2.4 Feedback
+2.5 Feedback
 ~~~~~~~~~~~~
 
 This Code of Conduct is not intended as a static set of rules by which
 everyone must abide. Rather, you are invited to make suggestions for
-updates or clarifications by contacting Dr Franz Király at
-f.kiraly@ucl.ac.uk or by making a pull request to this document on
+updates or clarifications by contacting the sktime community council at
+info@sktime.org, or by making a pull request to this document on
 GitHub.
 
 3 Incident Reporting Guidelines
@@ -168,15 +228,14 @@ GitHub.
 3.1 Contact points
 ~~~~~~~~~~~~~~~~~~
 
-If you feel able to, please contact Dr Franz Király by email at
-f.kiraly@ucl.ac.uk.
+Please report CoC incidents via the [reporting tool in the issue tracker](https://github.com/alan-turing-institute/sktime/issues/new/choose).
 
 3.2 Alternate contact points
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If you do not feel comfortable contacting Dr Franz Király, please report
-an incident to [Martina Vilas](https://martinagvilas.github.io/) who
-is not part of the core developer team.
+In case of conflict of interest of sktime CoC committee members, you can report
+through the [NumFOCUS CoC process](https://numfocus.org/code-of-conduct),
+or, in case of events, to the organisation at which the event is taking place (e.g., a university).
 
 3.3 What to do if someone is in physical danger
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -202,14 +261,9 @@ respectful and not include any harassing behaviours.
 4.1 The Code of Conduct Committee
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The Code of Conduct committee is:
+The Code of Conduct committee is currently on hiatus and re-organizing.
 
--  Dr Franz Király: f.kiraly@ucl.ac.uk
--  Dr Anthony Bagnall: anthony.bagnall@uea.ac.uk
--  Markus Löning: markus.loning@gmail.com
--  Martina Vilas: martinagonzalezvilas@gmail.com (external member)
-
-The first three members are part of sktime's core developer team. Martina Vilas is an external member. As the community grows, we will seek to build a more diverse committee.
+Please use the NumFOCUS CoC reporting process in the transition period.
 
 4.2 Urgent Situations: Acting Unilaterally
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -261,10 +315,7 @@ reporter(s) with an update and projected timeline for resolution.
 The Code of Conduct committee will seek to agree on a resolution by
 consensus of all members investigating the report in question. If the
 committee cannot reach consensus and deadlocks for over a week, Dr Franz
-Király, as lead investigator of the sktime project, will break the tie.
-If Dr Franz Király is unable to take part in the discussion due to a
-conflict of interest, Dr Anthony Bagnall, as an external member of the Code
-of Conduct committee, will make the decision.
+Király, as currently longest serving CC member of the sktime project, will break the tie.
 
 Possible responses may include:
 
@@ -307,9 +358,9 @@ committee is not required to act on this feedback.
 4.5 Conflicts of Interest
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-In the event of any conflict of interest such that Dr Franz Király is
-not able to evaluate or enforce the reported violation, Dr Anthony Bagnall
-will take Dr Franz Király's place if that resolves the conflict of interest. Otherwise Martina Vilas will take Dr Franz Király's place.
+In case of conflict of interest of sktime CoC committee members, you can report
+through the [NumFOCUS CoC process](https://numfocus.org/code-of-conduct),
+or, in case of events, to the organisation at which the event is taking place (e.g., a university).
 
 5 Acknowledgements
 ------------------
