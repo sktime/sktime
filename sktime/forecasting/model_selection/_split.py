@@ -704,7 +704,7 @@ class CutoffSplitter(BaseSplitter):
     >>> ts = np.arange(10)
     >>> splitter = CutoffSplitter(fh=[2, 4], cutoffs=np.array([3, 5]), window_length=3)
     >>> repr(list(splitter.split(ts)))
-    [(array([1, 2, 3]), array([5, 7])), (array([3, 4, 5]), array([7, 9]))]
+    '[(array([1, 2, 3]), array([5, 7])), (array([3, 4, 5]), array([7, 9]))]'
     """
 
     def __init__(
@@ -1089,8 +1089,8 @@ class SlidingWindowSplitter(BaseWindowSplitter):
     >>> from sktime.forecasting.model_selection import SlidingWindowSplitter
     >>> ts = np.arange(10)
     >>> splitter = SlidingWindowSplitter(fh=[2, 4], window_length=3, step_length=2)
-    >>> list(splitter.split(ts))
-    [(array([0, 1, 2]), array([4, 6])), (array([2, 3, 4]), array([6, 8]))]
+    >>> repr(list(splitter.split(ts)))
+    '[(array([0, 1, 2]), array([4, 6])), (array([2, 3, 4]), array([6, 8]))]'
 
     """
 
@@ -1158,8 +1158,8 @@ class ExpandingWindowSplitter(BaseWindowSplitter):
     >>> from sktime.forecasting.model_selection import ExpandingWindowSplitter
     >>> ts = np.arange(10)
     >>> splitter = ExpandingWindowSplitter(fh=[2, 4], initial_window=5, step_length=2)
-    >>> list(splitter.split(ts))
-    [(array([0, 1, 2, 3, 4]), array([6, 8]))]
+    >>> repr(list(splitter.split(ts)))
+    '[(array([0, 1, 2, 3, 4]), array([6, 8]))]'
 
     """
 
@@ -1211,8 +1211,8 @@ class SingleWindowSplitter(BaseSplitter):
     >>> from sktime.forecasting.model_selection import SingleWindowSplitter
     >>> ts = np.arange(10)
     >>> splitter = SingleWindowSplitter(fh=[2, 4], window_length=3)
-    >>> list(splitter.split(ts))
-    [(array([3, 4, 5]), array([7, 9]))]
+    >>> print(list(splitter.split(ts)))
+    '[(array([3, 4, 5]), array([7, 9]))]'
 
     """
 
