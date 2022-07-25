@@ -129,14 +129,14 @@ class _TbatsAdapter(BaseForecaster):
 
         else:
             # update model state without refitting parameters
-            # out-of-box fit tbats method will not refit parameters 
+            # out-of-box fit tbats method will not refit parameters
             self._forecaster.fit(y=self._y)
 
         return self
 
     def _predict(self, fh, X=None):
         """Forecast time series at future horizon.
-        
+
         Parameters
         ----------
         fh : int, list, np.array or ForecastingHorizon
