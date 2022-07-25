@@ -311,6 +311,7 @@ class GreedyGaussianSegmentation:
         random_state: int or np.random.RandomState
             Either random seed or an instance of ``np.random.RandomState``
     """
+
     def __init__(self, **kwargs):
         self.kwargs = kwargs
         self._adaptee_class = GGS
@@ -319,13 +320,14 @@ class GreedyGaussianSegmentation:
     def fit(self, X: npt.ArrayLike, y: npt.ArrayLike = None):
         """Fit method for compatibility with sklearn-type estimator interface.
 
-        It sets the internal state of the estimator and returns the initialized instance.
+        It sets the internal state of the estimator and returns the initialized
+        instance.
 
         Parameters
         ----------
             X: array_like
-                2D `array_like` representing time series with sequence index along the first
-                dimension and value series as columns.
+                2D `array_like` representing time series with sequence index along
+                the first dimension and value series as columns.
             y: array_like
                 Placeholder for compatibility with sklearn-api, not used, default=None.
         """
@@ -338,16 +340,17 @@ class GreedyGaussianSegmentation:
         Parameters
         ----------
             X: array_like
-                2D `array_like` representing time series with sequence index along the first
-                dimension and value series as columns.
+                2D `array_like` representing time series with sequence index along
+                the first dimension and value series as columns.
             y: array_like
                 Placeholder for compatibility with sklearn-api, not used, default=None.
 
         Returns
         -------
             y_pred : array_like
-                1D array with predicted segmentation of the same size as the first dimension of X.
-                The numerical values represent distinct segments labels for each of the data points.
+                1D array with predicted segmentation of the same size as the first
+                dimension of X. The numerical values represent distinct segments
+                labels for each of the data points.
         """
         return self._adaptee.predict(X)
 
@@ -357,16 +360,17 @@ class GreedyGaussianSegmentation:
         Parameters
         ----------
             X: array_like
-                2D `array_like` representing time series with sequence index along the first
-                dimension and value series as columns.
+                2D `array_like` representing time series with sequence index along
+                the first dimension and value series as columns.
             y: array_like
                 Placeholder for compatibility with sklearn-api, not used, default=None.
 
         Returns
         -------
             y_pred : array_like
-                1D array with predicted segmentation of the same size as the first dimension of X.
-                The numerical values represent distinct segments labels for each of the data points.
+                1D array with predicted segmentation of the same size as the first
+                dimension of X. The numerical values represent distinct segments
+                labels for each of the data points.
 
         """
         return self.fit(X, y).predict(X, y)
