@@ -180,40 +180,6 @@ class ClassifierPipeline(BaseClassifier, _HeterogenousMetaEstimator):
         else:
             return NotImplemented
 
-    @staticmethod
-    def _is_name_and_trafo(obj):
-        if not isinstance(obj, tuple) or len(obj) != 2:
-            return False
-        if not isinstance(obj[0], str) or not isinstance(obj[1], BaseTransformer):
-            return False
-        return True
-
-    def _anytagis(self, tag_name, value):
-        """Return whether any estimator in list has tag `tag_name` of value `value`."""
-        tagis = [est.get_tag(tag_name, value) == value for _, est in self.transformers_]
-        return any(tagis)
-
-    def _anytagis_then_set(self, tag_name, value, value_if_not):
-        """Set self's `tag_name` tag to `value` if any estimator on the list has it."""
-        if self._anytagis(tag_name=tag_name, value=value):
-            self.set_tags(**{tag_name: value})
-        else:
-            self.set_tags(**{tag_name: value_if_not})
-
-    def _anytag_notnone_val(self, tag_name):
-        """Return first non-'None' value of tag `tag_name` in estimator list."""
-        for _, est in self.transformers_:
-            tag_val = est.get_tag(tag_name)
-            if tag_val != "None":
-                return tag_val
-        return tag_val
-
-    def _anytag_notnone_set(self, tag_name):
-        """Set self's `tag_name` tag to first non-'None' value in estimator list."""
-        tag_val = self._anytag_notnone_val(tag_name=tag_name)
-        if tag_val != "None":
-            self.set_tags(**{tag_name: tag_val})
-
     def _fit(self, X, y):
         """Fit time series classifier to training data.
 
