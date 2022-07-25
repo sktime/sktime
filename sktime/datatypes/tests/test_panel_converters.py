@@ -351,8 +351,8 @@ def test_from_gluonts_to_multiindex(n_timepoints):
     from gluonts.dataset.pandas import PandasDataset
     from gluonts.dataset.repository.datasets import get_dataset
     from gluonts.dataset.util import to_pandas
+    from gluonts.model.simple_feedforward import SimpleFeedForwardEstimator
     from gluonts.mx import Trainer
-    from gluonts.mx.model.simple_feedforward import SimpleFeedForwardEstimator
 
     from sktime.datatypes import convert_to
 
