@@ -311,7 +311,6 @@ class GreedyGaussianSegmentation:
         random_state: int or np.random.RandomState
             Either random seed or an instance of ``np.random.RandomState``
     """
-
     def __init__(self, **kwargs):
         self.kwargs = kwargs
         self._adaptee_class = GGS
@@ -354,7 +353,7 @@ class GreedyGaussianSegmentation:
 
     def fit_predict(self, X: npt.ArrayLike, y: npt.ArrayLike = None) -> npt.ArrayLike:
         """Perform fit and predict.
- 
+
         Parameters
         ----------
             X: array_like
@@ -374,7 +373,7 @@ class GreedyGaussianSegmentation:
 
     def get_params(self, deep: bool = True) -> Dict:
         """Return initialization parameters.
-        
+
         Parameters
         ----------
             deep: bool
