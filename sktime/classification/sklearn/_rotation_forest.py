@@ -452,7 +452,7 @@ class RotationForest(BaseEstimator):
         indices = range(self.n_instances_)
         subsample = rng.choice(self.n_instances_, size=self.n_instances_)
 
-        # subsample must have at least unique classes
+        # subsample must have at least 2 unique classes
         while len(np.unique(y[subsample])) == 1:
             subsample = rng.choice(self.n_instances_, size=self.n_instances_)
 
