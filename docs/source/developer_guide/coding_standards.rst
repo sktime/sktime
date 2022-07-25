@@ -105,7 +105,7 @@ Visual Studio Code preferences also allow setting of parameters such as ``max_li
 In Visual Studio Code, we also recommend to add ``"editor.ruler": 88`` to your local ``settings.json`` to display the max line length.
 
 API design
-----------
+============
 
 The general design approach of sktime is described in the
 paper `“Designing Machine Learning Toolboxes: Concepts, Principles and
