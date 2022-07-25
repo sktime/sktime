@@ -85,7 +85,7 @@ class ProbabilityThresholdEarlyClassifier(BaseEarlyClassifier):
     >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
     >>> clf = ProbabilityThresholdEarlyClassifier(
     ...     classification_points=[6, 16, 24],
-    ...     estimator=TimeSeriesForestClassifier(n_estimators=10)
+    ...     estimator=TimeSeriesForestClassifier(n_estimators=10),
     ... )
     >>> clf.fit(X_train, y_train)
     ProbabilityThresholdEarlyClassifier(...)
@@ -230,7 +230,7 @@ class ProbabilityThresholdEarlyClassifier(BaseEarlyClassifier):
 
         # remove cases where a positive decision has been made
         state_info = self.state_info[
-            self.state_info[:, 1] < self._consecutive_predictions
+            self.state_info[:, 1] < self.consecutive_predictions
         ]
 
         # determine last index used
@@ -278,8 +278,8 @@ class ProbabilityThresholdEarlyClassifier(BaseEarlyClassifier):
         for i in range(last_idx, next_idx):
             accept_decision, state_info = self._decide_prediction_safety(
                 i,
-                probas[i],
-                preds[i],
+                probas[i - last_idx],
+                preds[i - last_idx],
                 state_info,
             )
 
@@ -298,24 +298,9 @@ class ProbabilityThresholdEarlyClassifier(BaseEarlyClassifier):
 
     def _score(self, X, y) -> Tuple[float, float, float]:
         self._predict(X)
+        hm, acc, earl = self.compute_harmonic_mean(self.state_info, y)
 
-        accuracy = np.average(
-            [
-                self.state_info[i][2] == self._class_dictionary[y[i]]
-                for i in range(len(self.state_info))
-            ]
-        )
-        earliness = np.average(
-            [
-                self._classification_points[self.state_info[i][0]] / self.series_length_
-                for i in range(len(self.state_info))
-            ]
-        )
-        return (
-            (2 * accuracy * (1 - earliness)) / (accuracy + (1 - earliness)),
-            accuracy,
-            earliness,
-        )
+        return hm, acc, earl
 
     def _decide_prediction_safety(self, idx, probas, preds, state_info):
         # stores whether we have made a final decision on a prediction, if true
@@ -330,10 +315,8 @@ class ProbabilityThresholdEarlyClassifier(BaseEarlyClassifier):
             offsets = np.argwhere(finished == 0).flatten()
             accept_decision = np.ones(n_instances, dtype=bool)
             if len(offsets) > 0:
-                decisions_subset = (
-                    probas[offsets][preds[offsets]] >= self.probability_threshold
-                )
-                accept_decision[offsets] = decisions_subset
+                p = probas[offsets, preds[offsets]]
+                accept_decision[offsets] = p >= self.probability_threshold
 
         # record consecutive class decisions
         state_info = np.array(
@@ -426,7 +409,7 @@ class ProbabilityThresholdEarlyClassifier(BaseEarlyClassifier):
         )
         return preds, out[1]
 
-    def compute_harmonic_mean(self, state_info, y):
+    def compute_harmonic_mean(self, state_info, y) -> Tuple[float, float, float]:
         """Calculate harmonic mean from a state info matrix and array of class labeles.
 
         Parameters

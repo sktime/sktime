@@ -23,6 +23,7 @@ def test_early_prob_threshold_near_classification_points():
         random_state=0,
         classification_points=[6, 10, 14, 18, 24],
         estimator=TimeSeriesForestClassifier(n_estimators=10, random_state=0),
+        probability_threshold=1,
     )
     pt.fit(X_train, y_train)
 
@@ -56,24 +57,28 @@ def test_early_prob_threshold_score():
     )
     pt.fit(X_train, y_train)
 
-    _, acc, earl = pt.score(X_test, y_test)
-    testing.assert_allclose(acc, 0.818182, rtol=0.01)
-    testing.assert_allclose(earl, 0.787878, rtol=0.01)
+    _, acc, earl = pt.score(X_test.iloc[indices], y_test[indices])
+    testing.assert_allclose(acc, 0.9, rtol=0.01)
+    testing.assert_allclose(earl, 0.25, rtol=0.01)
 
     # make sure update ends up with the same score
+    pt.reset_state_info()
+
     X_test = from_nested_to_3d_numpy(X_test)[indices]
     final_states = np.zeros((10, 4), dtype=int)
     open_idx = np.arange(0, 10)
 
     for i in pt.classification_points:
-        _, decisions = pt.update_predict(X_test[:, :, :i])
+        preds, decisions = pt.update_predict(X_test[:, :, :i])
         final_states[open_idx] = pt.get_state_info()
-
         X_test, open_idx, final_idx = pt.split_indices_and_filter(
             X_test, open_idx, decisions
         )
 
-    _, acc, earl = pt.compute_harmonic_mean(final_states, y_test)
+        if len(X_test) == 0:
+            break
 
-    testing.assert_allclose(acc, 0.818182, rtol=0.01)
-    testing.assert_allclose(earl, 0.787878, rtol=0.01)
+    _, acc, earl = pt.compute_harmonic_mean(final_states, y_test[indices])
+
+    testing.assert_allclose(acc, 0.9, rtol=0.01)
+    testing.assert_allclose(earl, 0.25, rtol=0.01)

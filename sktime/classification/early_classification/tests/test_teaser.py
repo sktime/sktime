@@ -27,6 +27,14 @@ def test_teaser_with_different_decision_maker():
     )
     teaser.fit(X_train, y_train)
 
+    full_probas, _ = teaser.predict_proba(X_test.iloc[indices])
+    testing.assert_array_almost_equal(
+        full_probas, teaser_if_unit_test_probas, decimal=2
+    )
+
+    # make sure update ends up with the same probas
+    teaser.reset_state_info()
+
     X_test = from_nested_to_3d_numpy(X_test)[indices]
     final_probas = np.zeros((10, 2))
     open_idx = np.arange(0, 10)
@@ -38,11 +46,12 @@ def test_teaser_with_different_decision_maker():
         )
         final_probas[final_idx] = probas[decisions]
 
-    testing.assert_array_equal(final_probas, teaser_if_unit_test_probas)
+        if len(X_test) == 0:
+            break
 
-    # make sure full run matches
-    full_probas = teaser.predict_proba(X_test)
-    testing.assert_array_equal(full_probas, teaser_if_unit_test_probas)
+    testing.assert_array_almost_equal(
+        final_probas, teaser_if_unit_test_probas, decimal=2
+    )
 
 
 def test_teaser_near_classification_points():
@@ -86,9 +95,9 @@ def test_teaser_default():
     )
     teaser.fit(X_train, y_train)
 
-    _, acc, earl = teaser.score(X_test, y_test)
-    testing.assert_allclose(acc, 0.818182, rtol=0.01)
-    testing.assert_allclose(earl, 0.787878, rtol=0.01)
+    _, acc, earl = teaser.score(X_test.iloc[indices], y_test)
+    testing.assert_allclose(acc, 0.6, rtol=0.01)
+    testing.assert_allclose(earl, 0.766667, rtol=0.01)
 
     testing.assert_allclose(teaser._train_accuracy, 0.9, rtol=0.01)
     testing.assert_allclose(teaser._train_earliness, 0.7333, rtol=0.01)

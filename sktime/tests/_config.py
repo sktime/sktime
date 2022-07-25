@@ -83,11 +83,16 @@ EXCLUDED_TESTS = {
         "test_methods_do_not_change_state",
         "test_fit_transform_output",
     ],
-    # Early classifiers intentionally retain information from pervious predict calls
+    # Early classifiers intentionally retain information from previous predict calls
     #   for #1.
     # #2 amd #3 are due to predict/predict_proba returning two items and that breaking
     #   assert_array_equal
-    "TEASER": [
+    "TEASER": [  # EC
+        "test_methods_do_not_change_state",
+        "test_fit_idempotent",
+        "test_persistence_via_pickle",
+    ],
+    "ProbabilityThresholdEarlyClassifier": [  # EC
         "test_methods_do_not_change_state",
         "test_fit_idempotent",
         "test_persistence_via_pickle",

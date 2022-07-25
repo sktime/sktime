@@ -238,8 +238,8 @@ class TEASER(BaseEarlyClassifier):
             )
             for i in range(0, next_idx)
         )
-
         X_oc, probas, preds = zip(*out)
+
         new_state_info, accept_decision = self._predict_oc_classifier_n_timestamps(
             preds,
             X_oc,
@@ -311,8 +311,8 @@ class TEASER(BaseEarlyClassifier):
             )
             for i in range(last_idx, next_idx)
         )
-
         X_oc, probas, preds = zip(*out)
+
         new_state_info, accept_decision = self._predict_oc_classifier_n_timestamps(
             preds,
             X_oc,
@@ -556,7 +556,7 @@ class TEASER(BaseEarlyClassifier):
         )
         return preds, out[1]
 
-    def compute_harmonic_mean(self, state_info, y):
+    def compute_harmonic_mean(self, state_info, y) -> Tuple[float, float, float]:
         """Calculate harmonic mean from a state info matrix and array of class labeles.
 
         Parameters
