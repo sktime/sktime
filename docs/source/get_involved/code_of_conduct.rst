@@ -261,7 +261,7 @@ respectful and not include any harassing behaviours.
 4.1 The Code of Conduct Committee
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The Code of Conduct committee is currently on hiatus and re-organizing.
+The sktime Code of Conduct committee is currently on hiatus and re-organizing.
 
 Please use the NumFOCUS CoC reporting process in the transition period.
 
