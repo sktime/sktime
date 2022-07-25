@@ -80,7 +80,7 @@ Type the below in your python environment, and in the root of your local reposit
 
    pre-commit install
 
-Once installed, pre-commit will automatically run our code quality
+Once installed, pre-commit will automatically run all ``sktime`` code quality
 checks on the files you changed whenever you make a new commit.
 
 You can find our pre-commit configuration in
