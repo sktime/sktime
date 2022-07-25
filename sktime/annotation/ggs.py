@@ -285,8 +285,32 @@ class GGS:
         return labels
 
 
-class GGSEstimator:
-    """Sklearn Adapter."""
+class GreedyGaussianSegmentation:
+    """Greedy Gaussian Segmentation Estimator.
+
+    Based on:
+
+        Hallac, D., Nystrup, P. & Boyd, S.
+        Greedy Gaussian segmentation of multivariate time series.
+        Adv Data Anal Classif 13, 727–751 (2019).
+        https://doi.org/10.1007/s11634-018-0335-0
+
+    - source code adapted based on: https://github.com/cvxgrp/GGS
+    - paper available at: https://stanford.edu/~boyd/papers/pdf/ggs.pdf
+
+    Parameters
+    ----------
+        k_max: int
+            Maximum number of change points to find, default=10
+        lamb: : float
+            Regularization parameter lambda, default=1.0
+        max_shuffles: int
+            maximum number of shuffles, default=
+        verbose: bool
+            If ``True`` verbose output is enabled.
+        random_state: int or np.random.RandomState
+            Either random seed or an instance of ``np.random.RandomState``
+    """
 
     def __init__(self, **kwargs):
         self.kwargs = kwargs
@@ -294,24 +318,92 @@ class GGSEstimator:
         self._adaptee = self._adaptee_class(**self.kwargs)
 
     def fit(self, X: npt.ArrayLike, y: npt.ArrayLike = None):
-        """Fit."""
+        """Fit method for compatibility with sklearn-type estimator interface.
+        
+        It sets the internal state of the estimator and returns the initialized instance.
+
+        Parameters
+        ----------
+            X: array_like
+                2D `array_like` representing time series with sequence index along the first
+                dimension and value series as columns.
+            y: array_like
+                Placeholder for compatibility with sklearn-api, not used, default=None.
+        """
         self._adaptee.initialize_intermediates()
         return self
 
     def predict(self, X: npt.ArrayLike, y: npt.ArrayLike = None) -> npt.ArrayLike:
-        """Predict."""
+        """Perform segmentation.
+
+        Parameters
+        ----------
+            X: array_like
+                2D `array_like` representing time series with sequence index along the first
+                dimension and value series as columns.
+            y: array_like
+                Placeholder for compatibility with sklearn-api, not used, default=None.
+
+        Returns
+        -------
+            y_pred : array_like
+                1D array with predicted segmentation of the same size as the first dimension of X.
+                The numerical values represent distinct segments labels for each of the data points. 
+        """
         return self._adaptee.predict(X)
 
     def fit_predict(self, X: npt.ArrayLike, y: npt.ArrayLike = None) -> npt.ArrayLike:
-        """Fit and predict."""
+        """Perform fit and predict.
+ 
+        Parameters
+        ----------
+            X: array_like
+                2D `array_like` representing time series with sequence index along the first
+                dimension and value series as columns.
+            y: array_like
+                Placeholder for compatibility with sklearn-api, not used, default=None.
+
+        Returns
+        -------
+            y_pred : array_like
+                1D array with predicted segmentation of the same size as the first dimension of X.
+                The numerical values represent distinct segments labels for each of the data points. 
+
+        """
         return self.fit(X, y).predict(X, y)
 
     def get_params(self, deep: bool = True) -> Dict:
-        """Return initialization parameters."""
+        """Return initialization parameters.
+        
+        Parameters
+        ----------
+            deep: bool
+                Dummy argument for compatibility with sklearn-api, not used.
+
+        Returns
+        -------
+            params: dict
+                Dictionary with the estimator's initialization parameters, with
+                keys being argument names and values being argument values. 
+        """
         return asdict(self._adaptee, filter=lambda attr, value: attr.init is True)
 
     def set_params(self, **parameters):
-        """Initialize the estimator from parameters."""
+        """Set the parameters of this object.
+
+        The method works on simple estimators as well as on nested objects.
+        The latter have parameters of the form ``<component>__<parameter>`` so that it's
+        possible to update each component of a nested object.
+
+        Parameters
+        ----------
+        parameters : dict
+            Initialization parameters for th estimator.
+
+        Returns
+        -------
+            self : reference to self (after parameters have been set)
+        """
         for key, value in parameters.items():
             setattr(self._adaptee, key, value)
         return self
