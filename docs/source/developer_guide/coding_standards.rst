@@ -64,15 +64,17 @@ Using pre-commit
 ^^^^^^^^^^^^^^^^
 
 To set up pre-commit, follow these steps in a python environment
-with the ``sktime`` ``dev`` dependencies installed:
+with the ``sktime`` ``dev`` dependencies installed.
 
-1. Install pre-commit:
+Type the below in your python environment, and in the root of your local repository clone:
+
+1. If not already done, ensure ``sktime`` with ``dev`` dependencies is installed, this includes ``pre-commit``:
 
 .. code:: bash
 
-   pip install pre-commit
+   pip install .[dev]
 
-2. Set up pre-commit (in root of local repository clone):
+2. Set up pre-commit:
 
 .. code:: bash
 
