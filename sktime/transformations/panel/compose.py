@@ -13,8 +13,8 @@ from scipy import sparse
 from sklearn.base import clone
 from sklearn.compose import ColumnTransformer as _ColumnTransformer
 
-from sktime.transformations.series.adapt import TabularToSeriesAdaptor
 from sktime.transformations.base import BaseTransformer, _PanelToPanelTransformer
+from sktime.transformations.series.adapt import TabularToSeriesAdaptor
 from sktime.utils.sklearn import is_sklearn_estimator
 from sktime.utils.validation.panel import check_X
 
