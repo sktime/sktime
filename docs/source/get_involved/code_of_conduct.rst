@@ -150,7 +150,7 @@ Examples of unacceptable behaviour by sktime community members at any
 project event or platform include:
 
 -  written or verbal comments which have the effect of excluding people
-   on the basis of membership of any specific group
+   on the basis of protected characteristics
 -  causing someone to fear for their safety, such as through stalking,
    following, or intimidation
 -  violent threats or language directed against another person
@@ -165,12 +165,12 @@ project event or platform include:
 -  continuing to initiate interaction (including photography or
    recording) with someone after being asked to stop
 -  publication of private communication without consent
--  allocating sktime resources or funding in a way that disadvantages by
-   protected characteristic such as nationality, socio-economic status, religion or belief,
-   or other forms of systemic discrimination
--  allocating sktime resources or funding in a way that confers advantages to personal networks,
+-  decision making on resource allocation which has the effect of excluding people
+   on the basis of protected characteristics, or other forms of systemic discrimination
+-  decision making on resource allocation that confers advantages to personal networks,
    e.g., by preventing advertising of opportunities, or not applying best practice in recruitment
--  attempts to obfuscate the paper trail or reduce transparency of operations of sktime
+-  reducing transparency of operations of sktime, e.g., by obfuscation of the paper trail
+-  invoking the code of conduct dishonestly or as a form of bullying
 
 2.3 Common precedent rules
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -182,8 +182,8 @@ Examples:
 
 * contributor criticizing leadership for handing resources to personal network, leadership invoking "discomfort"
 * passionate disagreement on technical content between contributors
-* accidental violations of CoC due to protected characteristics of the person violating the CoC
-* systemic issues whose resolution causes discomfort in the community
+* accidental violations of CoC causally due to protected characteristics of the person violating the CoC
+* systemic discrimination issues whose resolution would cause discomfort in the community
 
 Precedent rules:
 
