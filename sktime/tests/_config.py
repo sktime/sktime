@@ -60,7 +60,6 @@ EXCLUDED_TESTS = {
     "CNNClassifier": [
         "test_fit_idempotent",
         "test_persistence_via_pickle",
-        "test_fit_does_not_overwrite_hyper_params",
     ],
     # pickling problem with local method see #2490
     "ProximityStump": [

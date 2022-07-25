@@ -83,7 +83,7 @@ class CNNClassifier(BaseDeepClassifier):
         random_seed=None,
         activation="sigmoid",
         use_bias=True,
-        optimizer=None,
+        optimizer_=None,
     ):
         _check_dl_dependencies(severity="error")
         super(CNNClassifier, self).__init__()
@@ -99,7 +99,7 @@ class CNNClassifier(BaseDeepClassifier):
         self.random_seed = random_seed
         self.activation = activation
         self.use_bias = use_bias
-        self.optimizer = optimizer
+        self.optimizer_ = optimizer_
         self.history = None
         self._network = CNNNetwork()
 
@@ -139,8 +139,8 @@ class CNNClassifier(BaseDeepClassifier):
 
         self.optimizer = (
             keras.optimizers.Adam(learning_rate=0.01)
-            if self.optimizer is None
-            else self.optimizer
+            if self.optimizer_ is None
+            else self.optimizer_
         )
 
         model = keras.models.Model(inputs=input_layer, outputs=output_layer)
