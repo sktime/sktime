@@ -170,7 +170,8 @@ project event or platform include:
 -  decision making on resource allocation that confers advantages to personal networks,
    e.g., by preventing advertising of opportunities, or not applying best practice in recruitment
 -  reducing transparency of operations of sktime, e.g., by obfuscation of the paper trail
--  invoking the code of conduct dishonestly or as a form of bullying
+-  invoking the code of conduct dishonestly, or as a form of bullying,
+   especially from a position of power
 
 2.3 Common precedent rules
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
