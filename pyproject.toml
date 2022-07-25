@@ -1,6 +1,6 @@
 [project]
 name = "sktime"
-version = "0.12.1"
+version = "0.13.0"
 description = "A unified framework for machine learning with time series"
 authors = [
     {name = "Franz Király", email = "f.kiraly@ucl.ac.uk"},
@@ -38,6 +38,7 @@ classifiers = [
     "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
 ]
 requires-python = ">=3.7,<3.11"
 dependencies = [
@@ -70,6 +71,7 @@ all_extras = [
     "tensorflow",
     "tsfresh>=0.17.0; python_version < '3.10'",
     "tslearn>=0.5.2",
+    "gluonts>=0.9.0",
 ]
 
 dev = [
