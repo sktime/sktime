@@ -41,11 +41,8 @@ class BaseDeepClassifier(BaseClassifier, ABC):
         "python_dependencies": "tensorflow",
     }
 
-    def __init__(self, batch_size=40, random_state=None):
+    def __init__(self):
         super(BaseDeepClassifier, self).__init__()
-
-        self.batch_size = batch_size
-        self.random_state = random_state
         self.model_ = None
 
     @abstractmethod
@@ -80,7 +77,7 @@ class BaseDeepClassifier(BaseClassifier, ABC):
 
     def _predict(self, X, **kwargs):
         probs = self._predict_proba(X, **kwargs)
-        rng = check_random_state(self.random_state)
+        rng = check_random_state(self.random_seed)
         return np.array(
             [
                 self.classes_[int(rng.choice(np.flatnonzero(prob == prob.max())))]
@@ -112,43 +109,23 @@ class BaseDeepClassifier(BaseClassifier, ABC):
         probs = probs / probs.sum(axis=1, keepdims=1)
         return probs
 
-    def convert_y_to_keras(self, y, label_encoder=None, onehot_encoder=None):
-        """Convert y to required Keras format.
-
-        Parameters
-        ----------
-        y : an np.ndarray of shape n
-            The training data class labels.
-        label_encoder: sklearn.LabelEncoder object, default = None
-            Label encoder to encode different class data
-        onehot_encoder: sklearn.preprocessing.OneHotEncoder object,
-            default = None
-            One Hot Encoder to encode different class data
-
-        Returns
-        -------
-        y : an np.ndarray of shape n
-            Encoded version of the input y
-        label_encoder: sklearn.LabelEncoder
-            Label Encoder used to encode the input y
-        onehot_encoder: sklearn.preprocessing.OneHotEncoder
-            One Hot Encoder used to encode the input y
-        """
-        if (label_encoder is None) and (onehot_encoder is None):
-            # make the encoders and store in self
+    def convert_y_to_keras(self, y):
+        """Convert y to required Keras format."""
+        if self.label_encoder is None:
             self.label_encoder = LabelEncoder()
-            self.onehot_encoder = OneHotEncoder(sparse=False, categories="auto")
-            # categories='auto' to get rid of FutureWarning
-
             y = self.label_encoder.fit_transform(y)
             self.classes_ = self.label_encoder.classes_
             self.n_classes_ = len(self.classes_)
-
             y = y.reshape(len(y), 1)
+        else:
+            y = self.label_encoder.fit_transform(y)
+            y = y.reshape(len(y), 1)
+
+        if self.onehot_encoder is None:
+            self.onehot_encoder = OneHotEncoder(sparse=False, categories="auto")
+            # categories='auto' to get rid of FutureWarning
             y = self.onehot_encoder.fit_transform(y)
         else:
-            y = label_encoder.fit_transform(y)
-            y = y.reshape(len(y), 1)
-            y = onehot_encoder.fit_transform(y)
+            y = self.onehot_encoder.fit_transform(y)
 
-        return y, label_encoder, onehot_encoder
+        return y

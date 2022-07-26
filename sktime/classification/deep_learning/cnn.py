@@ -84,6 +84,8 @@ class CNNClassifier(BaseDeepClassifier):
         activation="sigmoid",
         use_bias=True,
         optimizer_=None,
+        label_encoder_=None,
+        onehot_encoder_=None,
     ):
         _check_dl_dependencies(severity="error")
         super(CNNClassifier, self).__init__()
@@ -100,6 +102,8 @@ class CNNClassifier(BaseDeepClassifier):
         self.activation = activation
         self.use_bias = use_bias
         self.optimizer_ = optimizer_
+        self.label_encoder_ = label_encoder_
+        self.onehot_encoder_ = onehot_encoder_
         self.history = None
         self._network = CNNNetwork()
 
@@ -167,11 +171,14 @@ class CNNClassifier(BaseDeepClassifier):
         """
         if self.callbacks is None:
             self._callbacks = []
-        y_onehot, self.label_encoder, self.onehot_encoder = self.convert_y_to_keras(y)
+
+        self.label_encoder = self.label_encoder_
+        self.onehot_encoder = self.onehot_encoder_
+        y_onehot = self.convert_y_to_keras(y)
         # Transpose to conform to Keras input style.
         X = X.transpose(0, 2, 1)
 
-        check_random_state(self.random_state)
+        check_random_state(self.random_seed)
         self.input_shape = X.shape[1:]
         self.model_ = self.build_model(self.input_shape, self.n_classes_)
         if self.verbose:
