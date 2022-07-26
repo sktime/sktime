@@ -524,9 +524,10 @@ class BaseClassifier(BaseEstimator, ABC):
             2nd dimension indices correspond to possible labels (integers)
             (i, j)-th entry is predictive probability that i-th instance is of class j
         """
-        dists = np.zeros((X.shape[0], self.n_classes_))
         preds = self._predict(X)
-        for i in range(0, X.shape[0]):
+        n_pred = len(preds)
+        dists = np.zeros((n_pred, self.n_classes_))
+        for i in range(n_pred):
             dists[i, self._class_dictionary[preds[i]]] = 1
 
         return dists
