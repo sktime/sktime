@@ -271,11 +271,6 @@ class DynamicFactor(_StatsModelsAdapter):
         # beginning of the training series when passing integers
         start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
 
-        # some test prints
-        print(f"fh is : {fh}")
-        print(f"start is : {start}")
-        print(f"end is : {end}")
-
         model = self._fitted_forecaster
 
         # statsmodels forecasts all periods from start to end of forecasting
@@ -289,16 +284,22 @@ class DynamicFactor(_StatsModelsAdapter):
         # return y_pred.loc[fh.to_absolute(self.cutoff).to_pandas()]
 
         df_list = []
-        for coverage in coverage_list:
 
-            alpha = -0.5 * coverage + 0.5
+        # generate the forecasts for each alpha/coverage
+        for coverage in coverage_list:
+            # there appears to be some confusion regarding coverage and alpha (check the tests)
+
+            alpha = coverage
+            # alpha = -0.5 * coverage + 0.5
 
             if "exog" in inspect.signature(model.__init__).parameters.keys():
-                y_pred = model.get_forecast(start=start, end=end, exog=X).conf_int(
+                y_pred = model.get_forecast(steps=(end - start) + 1, exog=X).conf_int(
                     alpha=alpha
                 )
             else:
-                y_pred = model.get_forecast(start=start, end=end).conf_int(alpha=alpha)
+                y_pred = model.get_forecast(steps=(end - start) + 1).conf_int(
+                    alpha=alpha
+                )
 
             y_pred.rename(
                 columns={orig_col: orig_col + f" {coverage}" for orig_col in y_pred},
@@ -306,9 +307,11 @@ class DynamicFactor(_StatsModelsAdapter):
             )
             df_list.append(y_pred)
 
+        # concatenate the predictions for different values of alpha
         final_df = pd.concat(df_list, axis=1)
 
-        mod_var_list = list(map(lambda x: x.replace(" ", ""), model.data.ynames))
+        # all this stuff below is just boilerplate for getting the correct columns
+        mod_var_list = list(map(lambda x: str(x).replace(" ", ""), model.data.ynames))
 
         rename_list = [
             var_name + " " + str(coverage) + " " + bound
@@ -334,7 +337,7 @@ class DynamicFactor(_StatsModelsAdapter):
         )
 
         final_columns = [
-            [col_name, str(coverage), bound]
+            [col_name, float(coverage), bound]
             for col_name in model.data.ynames
             for coverage in final_df_2.columns.get_level_values(1).unique()
             for bound in final_df_2.columns.get_level_values(2).unique()
