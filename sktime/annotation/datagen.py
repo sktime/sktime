@@ -19,8 +19,8 @@ def multivariate_shift(
     Generate multivariate series from segments.
 
     Each segment has length specified in ``lengths`` and data sampled from a
-    multivariate normal distribution with a mean from ``means`` and either covariance
-    from ``covs`` (either specified or built from ``vars``)
+    multivariate normal distribution with a mean from ``means`` and covariance
+    from ``covs`` (either specified or built from ``vars`` when unspecified)
 
     Parameters
     ----------
