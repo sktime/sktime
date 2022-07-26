@@ -72,6 +72,7 @@ jobs:
     strategy:
       matrix:
         python-version: [3.7, 3.8, 3.9, '3.10']
+
     steps:
       - uses: actions/checkout@v2
 
@@ -107,40 +108,13 @@ jobs:
       - name: Publish code coverage
         uses: codecov/codecov-action@v3
 
-  test-linux:
+  test-unix:
     needs: test-nosoftdeps
-    runs-on: ubuntu-20.04
     strategy:
       matrix:
         python-version: [3.7, 3.8, 3.9, '3.10']
-    steps:
-      - uses: actions/checkout@v2
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: ${{ matrix.python-version }}
-      - name: Display Python version
-        run: python -c "import sys; print(sys.version)"
-
-      - name: Install sktime and dependencies
-        run: |
-          python -m pip install .[all_extras,dev]
-
-      - name: Show dependecies
-        run: python -m pip list
-
-      - name: Run tests
-        run: make test
-
-      - name: Publish code coverage
-        uses: codecov/codecov-action@v3
-
-  test-mac:
-    needs: test-nosoftdeps
-    runs-on: macOS-10.15
-    strategy:
-      matrix:
-        python-version: [3.7, 3.8, 3.9, '3.10']
+        os: [ubuntu-20.04, macOS-10.15]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python
