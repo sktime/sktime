@@ -54,7 +54,7 @@ class RocketClassifier(_DelegatedClassifier):
     classes_ : list
         The classes labels.
     estimator_ : ClassifierPipeline
-        RocketClassifier as a ClassifierPipeline
+        RocketClassifier as a ClassifierPipeline, fitted to data internally
 
     See Also
     --------
