@@ -32,7 +32,7 @@ conform to the following Code of Conduct.
 sktime is a community-oriented and -led project.
 
 We value the involvement of everyone in the community, and strive to be an open
-community. We commit to provide fair and revarding opportunities for everyone without
+community. We commit to provide fair and rewarding opportunities for everyone without
 restriction, to participate, learn, and become leaders of the community. We expect from
 members of our community to create such opportunities for others as have been created
 for them.
