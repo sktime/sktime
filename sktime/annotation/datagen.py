@@ -97,7 +97,7 @@ def multivariate_shift(
     assert len(lengths) == L
 
     # if no covariance is specified, build it from variance
-    # assuming independent noise
+    # assuming independent random variables
     if covs is None:
         assert vars is not None
 
