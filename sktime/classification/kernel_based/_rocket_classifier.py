@@ -28,6 +28,24 @@ class RocketClassifier(_DelegatedClassifier):
     This classifier simply transforms the input data using the Rocket [1]_
     transformer and builds a RidgeClassifierCV estimator using the transformed data.
 
+    Shorthand for the pipeline
+    `rocket * StandardScaler(with_mean=False) * RidgeClassifierCV(alphas)`
+    where `alphas = MultiRocketMultivariate`, and
+    where `rocket` depends on params `rocket_transform`, `use_multivariate` as follows:
+
+        | rocket_transform | `use_multivariate` | rocket (class)          |
+        |------------------|--------------------|-------------------------|
+        | "rocket"         | any                | Rocket                  |
+        | "minirocket"     | True               | MiniRocketMultivariate  |
+        | "minirocket"     | False              | MiniRocket              |
+        | "multirocket"    | True               | MultiRocketMultivariate |
+        | "multirocket"    | False              | MultiRocket             |
+
+    classes are sktime classes, other parameters are passed on to the rocket class.
+
+    To build other classifiers with rocket transformers, use `make_pipeline` or the
+    pipeline dunder `*`, and different transformers/classifiers in combination.
+
     Parameters
     ----------
     num_kernels : int, optional, default=10,000
