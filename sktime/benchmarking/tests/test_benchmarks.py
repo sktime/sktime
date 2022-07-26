@@ -26,7 +26,7 @@ def test_basebenchmark(tmp_path):
     """Test registering estimator, registering a simple task, and running."""
     benchmark = benchmarks.BaseBenchmark()
 
-    benchmark.add_estimator(NaiveForecaster)
+    benchmark.add_estimator(NaiveForecaster(strategy="drift"))
     benchmark._add_task(factory_estimator_class_task)
 
     results_file = tmp_path / "results.csv"
@@ -56,8 +56,7 @@ def test_add_estimator_args(tmp_path):
     benchmark = benchmarks.BaseBenchmark()
 
     benchmark.add_estimator(
-        estimator_entrypoint=NaiveForecaster,
-        estimator_kwargs={"strategy": "mean"},
+        estimator=NaiveForecaster(strategy="drift"),
         estimator_id="test_id-v1",
     )
     benchmark._add_task(factory_estimator_class_task)
@@ -72,7 +71,7 @@ def test_add_task_args(tmp_path):
     """Test adding task with args specified."""
     benchmark = benchmarks.BaseBenchmark()
 
-    benchmark.add_estimator(NaiveForecaster)
+    benchmark.add_estimator(NaiveForecaster(strategy="drift"))
     benchmark._add_task(
         task_entrypoint=factory_estimator_class_task,
         task_kwargs={"some_kwarg": "some_value"},
@@ -89,7 +88,7 @@ def test_add_task_string_entrypoint(tmp_path):
     """Test adding task using string of entrypoint."""
     benchmark = benchmarks.BaseBenchmark()
 
-    benchmark.add_estimator(NaiveForecaster)
+    benchmark.add_estimator(NaiveForecaster(strategy="drift"))
     benchmark._add_task(
         "sktime.benchmarking.tests.test_benchmarks:factory_estimator_class_task"
     )

@@ -18,7 +18,7 @@ def test_forecastingbenchmark(tmp_path):
     """Test benchmarking a forecaster estimator."""
     benchmark = forecasting.ForecastingBenchmark()
 
-    benchmark.add_estimator(NaiveForecaster, {"strategy": "last"})
+    benchmark.add_estimator(NaiveForecaster(strategy="last"))
 
     cv_splitter = ExpandingWindowSplitter(
         initial_window=1,

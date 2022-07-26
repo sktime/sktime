@@ -3,7 +3,7 @@
 
 Wraps kotsu benchmarking interface.
 """
-from typing import Callable, Optional, Type, Union
+from typing import Callable, Optional, Union
 
 from sktime.base import BaseEstimator
 from sktime.utils.validation._dependencies import _check_soft_dependencies
@@ -25,15 +25,13 @@ class BaseBenchmark:
 
     def add_estimator(
         self,
-        estimator_entrypoint: Type[BaseEstimator],
-        estimator_kwargs: Optional[dict] = None,
+        estimator: BaseEstimator,
         estimator_id: Optional[str] = None,
     ):
         """Register an estimator to the benchmark."""
-        estimator_id = estimator_id or f"{estimator_entrypoint.__name__}-v1"
-        self.estimators.register(
-            id=estimator_id, entry_point=estimator_entrypoint, kwargs=estimator_kwargs
-        )
+        estimator_id = estimator_id or f"{estimator.__class__.__name__}-v1"
+        estimator = estimator.clone()  # extra cautious
+        self.estimators.register(id=estimator_id, entry_point=estimator.clone)
 
     def _add_task(
         self,
