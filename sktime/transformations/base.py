@@ -316,7 +316,7 @@ class BaseTransformer(BaseEstimator):
             else:
                 return ColumnSelect(columns1) * self * ColumnSelect(columns2)
         else:
-            return self * ColumnSelect(key)
+            return ColumnSelect(key) * self
 
     def fit(self, X, y=None):
         """Fit transformer to X, optionally to y.
