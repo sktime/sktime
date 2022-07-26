@@ -164,6 +164,9 @@ class RocketClassifier(_DelegatedClassifier):
             RidgeClassifierCV(alphas=np.logspace(-3, 3, 10)),
         )
 
+        if not use_multivariate:
+            self.set_tags(**{"capability:multivariate": False})
+
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
