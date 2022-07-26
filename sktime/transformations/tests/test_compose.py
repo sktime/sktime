@@ -182,13 +182,13 @@ def test_subset_getitem():
 
     t = ThetaLinesTransformer()
 
-    t_after = t["a__0"]
+    t_before = t["a"]
     t_before_with_colon = t[["a", "b"], :]
     t_after_with_colon = t[:, ["a__0", "a__2"]]
     t_both = t[["a", "b"], ["b__0", "b__2", "c__0", "c__2"]]
     t_none = t[:, :]
 
-    assert isinstance(t_after, TransformerPipeline)
+    assert isinstance(t_before, TransformerPipeline)
     assert isinstance(t_after_with_colon, TransformerPipeline)
     assert isinstance(t_before_with_colon, TransformerPipeline)
     assert isinstance(t_both, TransformerPipeline)
@@ -196,7 +196,7 @@ def test_subset_getitem():
 
     X_theta = t.fit_transform(X)
 
-    _assert_array_almost_equal(t_after.fit_transform(X), X_theta[["a__0"]])
+    _assert_array_almost_equal(t_before.fit_transform(X), X_theta[["a__0", "a__2"]])
     _assert_array_almost_equal(
         t_after_with_colon.fit_transform(X), X_theta[["a__0", "a__2"]]
     )
