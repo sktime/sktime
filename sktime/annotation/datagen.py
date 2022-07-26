@@ -8,6 +8,120 @@ import numpy.typing as npt
 from sklearn.utils.validation import check_random_state
 
 
+def multivariate_shift(
+    means: npt.ArrayLike,
+    lengths: npt.ArrayLike,
+    vars: Union[npt.ArrayLike, float] = 1.0,
+    covs: npt.ArrayLike = None,
+    random_state: Union[int, np.random.RandomState] = None,
+) -> npt.ArrayLike:
+    """
+    Generate multivariate series from segments.
+
+    Each segment has length specified in ``lengths`` and data sampled from a
+    multivariate normal distribution with a mean from ``means`` and either covariance
+    from ``covs`` (either specified or built from ``vars``)
+
+    Parameters
+    ----------
+    means : array_like
+        Means of the segments to be generated of shape (L, N)
+    lengths : array_like
+        Lengths of the segments to be generated of shape (L,)
+    vars : float or array_like (default=1.0)
+        Variance of the segments to be generated
+    covs : array_like (default=None)
+        Covariances of segments to be generated of shape (L, N, N)
+        If None, this will be constructed from vars
+    random_state : int or np.random.RandomState
+        Either a random seed or RandomState instance
+
+    Returns
+    -------
+    data : np.array
+        multivariate time series as np.array of shape (X, N)
+        where X = sum(lengths)
+
+    Examples
+    --------
+    >>> from sktime.annotation.datagen import multivariate_shift
+    >>> multivariate_shift([[1, 1], [2, 2], [3, 3]], lengths=[2, 3, 1], random_state=2)
+    array([[ 0.58324215,  0.94373317],
+        [-1.1361961 ,  2.64027081],
+        [ 0.20656441,  1.15825263],
+        [ 2.50288142,  0.75471191],
+        [ 0.94204778,  1.09099239],
+        [ 3.55145404,  5.29220801]])
+
+    >>> from sktime.annotation.datagen import multivariate_shift
+    >>> multivariate_shift([[1, 1], [2, 2], [3, 3]], lengths=[2, 3, 1],
+    vars = [[1.0, 1.0], [1.0, 1.0], [1.0, 1.0]], random_state=2)
+    array([[ 0.58324215,  0.94373317],
+        [-1.1361961 ,  2.64027081],
+        [ 0.20656441,  1.15825263],
+        [ 2.50288142,  0.75471191],
+        [ 0.94204778,  1.09099239],
+        [ 3.55145404,  5.29220801]])
+
+    >>> from sktime.annotation.datagen import multivariate_shift
+    >>> multivariate_shift([[1, 1], [2, 2], [3, 3]], lengths=[2, 3, 1], covs =
+    [[[1.0, 0], [0, 1.0]], [[1.0, 0], [0, 1.0]], [[1.0, 0], [0, 1.0]]], random_state=2)
+    array([[ 0.58324215,  0.94373317],
+        [-1.1361961 ,  2.64027081],
+        [ 0.20656441,  1.15825263],
+        [ 2.50288142,  0.75471191],
+        [ 0.94204778,  1.09099239],
+        [ 3.55145404,  5.29220801]])
+
+    >>> from sktime.annotation.datagen import multivariate_shift
+    >>> multivariate_shift([[1, 3], [4, 5]], lengths=[3, 3], covs = [[[0.5, 0.3],
+    [0.3, 1.0]], [[1.0, 0.3], [0.3, 0.7]]], random_state=2)
+    array([[ 0.78066776,  2.61125356],
+        [ 0.92296736,  0.51689669],
+        [-0.2694238 ,  1.47959507],
+        [ 4.00389069,  3.95225998],
+        [ 5.32264874,  5.05088075],
+        [ 2.62479901,  6.08308546]])
+
+    """
+
+    def get_covs(var):
+        """Fill 1D variance array of length N to 2D covariance array of size (N,N)."""
+        cov = np.zeros((N, N), float)
+        np.fill_diagonal(cov, var)
+        return cov
+
+    L, N = np.array(means).shape
+
+    rng = check_random_state(random_state)
+    assert len(lengths) == L
+
+    # if no covariance is specified, build it from variance
+    # assuming independent noise
+    if covs is None:
+        assert vars is not None
+
+        # vars van be specified as a float, make 1D array, repeat L times
+        if isinstance(vars, (float, int)):
+            vars = np.repeat(vars, N)
+            vars = np.tile(vars, (L, 1))
+
+        assert np.array(vars).shape == (L, N)
+
+        # get covariance matrices from variance arrays
+        covs = [get_covs(var) for var in vars]
+
+    assert np.array(covs).shape[0] == L
+    assert np.array(covs).shape[1] == N
+
+    segments_data = [
+        rng.multivariate_normal(mean=mean, cov=cov, size=length)
+        for mean, cov, length in zip(means, covs, lengths)
+    ]
+
+    return np.array(np.concatenate(tuple(segments_data)))
+
+
 def mean_shift(
     means: npt.ArrayLike,
     lengths: npt.ArrayLike,
