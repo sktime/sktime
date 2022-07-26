@@ -6,7 +6,6 @@
 __author__ = ["GuzalBulatova"]
 __all__ = ["ThetaNewForecaster"]
 
-from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
 from sktime.forecasting.compose import ColumnEnsembleForecaster
 from sktime.forecasting.compose._ensemble import _aggregate
@@ -20,16 +19,17 @@ class ThetaNewForecaster(_HeterogenousEnsembleForecaster):
     """Modular theta method for forecasting."""
 
     _tags = {
-        "scitype:y": "univariate",
         "univariate-only": False,
         "y_inner_mtype": "pd.Series",
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
     }
 
-    def __init__(self, theta_values=(0, 2), aggfunc="mean", weights=None):
+    def __init__(
+        self, theta_values=(0, 2), aggfunc="mean", weights=None, forecasters=None
+    ):
         self.aggfunc = aggfunc
-        self.forecasters = []
+        self.forecasters = forecasters
         self.weights = weights
         self.theta_values = theta_values
         super(ThetaNewForecaster, self).__init__(forecasters=self.forecasters)
@@ -37,7 +37,7 @@ class ThetaNewForecaster(_HeterogenousEnsembleForecaster):
     def _fit(self, y, X=None, fh=None):
         # TODO TransformedTargetForecaster should be able to work with multivariate data
 
-        self.forecasters = []
+        forecasters = []
         for i, theta in enumerate(self.theta_values):
             if theta == 0:
                 name = "trend" + str(i)
@@ -45,14 +45,16 @@ class ThetaNewForecaster(_HeterogenousEnsembleForecaster):
             else:
                 name = "ses" + str(i)
                 forecaster = (name, ExponentialSmoothing(), i)
-            self.forecasters.append(forecaster)
+            forecasters.append(forecaster)
 
+        column_ensemble_forecaster = ColumnEnsembleForecaster(forecasters=forecasters)
         self._pipe = TransformedTargetForecaster(
             steps=[
                 ("transformer", ThetaLinesTransformer(theta=self.theta_values)),
-                ("forecaster", ColumnEnsembleForecaster(forecasters=self.forecasters)),
+                ("forecaster", column_ensemble_forecaster),
             ]
         )
+        # self.forecasters = column_ensemble_forecaster._forecasters
         # for i, theta in enumerate(self.theta_values):
         #     if theta == 0:
         #         forecaster_ = PolynomialTrendForecaster()
@@ -68,12 +70,10 @@ class ThetaNewForecaster(_HeterogenousEnsembleForecaster):
         self._pipe.fit(y=y, X=X, fh=fh)
         return self
 
-    def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+    def _predict(self, fh, X=None, return_pred_int=False):
         # Call predict on the forecaster directly, not on the pipeline
         # because of output conversion
-        Y_pred = self._pipe.steps_[-1][-1].predict(
-            fh, X, return_pred_int=return_pred_int, alpha=alpha
-        )
+        Y_pred = self._pipe.steps_[-1][-1].predict(fh, X)
 
         return _aggregate(Y_pred, aggfunc=self.aggfunc, weights=self.weights)
 
