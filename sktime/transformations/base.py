@@ -288,9 +288,9 @@ class BaseTransformer(BaseEstimator):
         Returns
         -------
         the following TransformerPipeline object:
-            ColumnSubset(columns2) * self * ColumnSubset(columns1)
-            where `columns1` is last or only item in `key`, and `columns2` is the first
-            if only one item is passed in `key`, only `columns1` is applied to output
+            ColumnSubset(columns1) * self * ColumnSubset(columns2)
+            where `columns1` is first or only item in `key`, and `columns2` is the last
+            if only one item is passed in `key`, only `columns1` is applied to input
         """
         from sktime.transformations.series.subset import ColumnSelect
 
