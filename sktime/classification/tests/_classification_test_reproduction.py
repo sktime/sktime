@@ -458,7 +458,6 @@ if __name__ == "__main__":
             ProbabilityThresholdEarlyClassifier(
                 random_state=0,
                 classification_points=[6, 10, 16, 24],
-                probability_threshold=1,
                 estimator=TimeSeriesForestClassifier(n_estimators=10, random_state=0),
             )
         ),

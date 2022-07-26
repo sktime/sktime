@@ -85,7 +85,7 @@ class ProbabilityThresholdEarlyClassifier(BaseEarlyClassifier):
     >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
     >>> clf = ProbabilityThresholdEarlyClassifier(
     ...     classification_points=[6, 16, 24],
-    ...     estimator=TimeSeriesForestClassifier(n_estimators=10),
+    ...     estimator=TimeSeriesForestClassifier(n_estimators=5),
     ... )
     >>> clf.fit(X_train, y_train)
     ProbabilityThresholdEarlyClassifier(...)

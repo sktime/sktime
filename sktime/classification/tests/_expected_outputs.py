@@ -321,7 +321,7 @@ unit_test_proba["TEASER"] = np.array(
 unit_test_proba["ProbabilityThresholdEarlyClassifier"] = np.array(
     [
         [0.0, 1.0],
-        [0.5, 0.5],
+        [0.9, 0.1],
         [0.0, 1.0],
         [1.0, 0.0],
         [1.0, 0.0],
