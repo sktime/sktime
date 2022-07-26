@@ -56,7 +56,7 @@ The communicty council of sktime (see current composition on "roles")
 is responsible for defining the Code of Conduct,
 and can be contacted under info@sktime.org.
 
-The Code of Conduct Committee of sktie is responsible for enforcing the Code of Conduct.
+The Code of Conduct Committee of sktime is responsible for enforcing the Code of Conduct.
 Reports can be made via the sktime issue tracker, and will be kept confidential.
 
 2 Code of Conduct
