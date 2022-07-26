@@ -75,7 +75,7 @@ such, we do not tolerate:
 In the rare cases where our ideals are in conflict, we strive to protect,
 in the context of power dynamics, the less powerful party or parties.
 
-Protected characteristics as referred to above include, but are not limited to:
+'Protected characteristics' as referred to above include, but are not limited to:
 gender identity, gender expression, sex assigned at birth, biological sex,
 genetic information, sexual orientation, disability status, physical appearance,
 body size, citizenship, nationality, national origin, ethnic or social origin, pregnancy,
