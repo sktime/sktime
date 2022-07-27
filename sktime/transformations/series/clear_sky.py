@@ -11,37 +11,51 @@ from statsmodels.stats.weightstats import DescrStatsW
 
 from sktime.transformations.base import BaseTransformer
 
-# todo: bayesian updating?
-# todo: some optimisation of kernel bandwidths?
-# todo: clock changes and time-zone aware index?
-# todo: leap year?
-
-# next steps
-# update function
-# documentation
+# todo: update function?
+# todo: clock changes, time-zone aware index, miliseconds, leap year?
 
 
 class ClearSky(BaseTransformer):
-    """Custom transformer. todo: write docstring.
+    """Clear sky transformer for solar data.
 
-    todo: describe your custom transformer here
-        fill in sections appropriately
-        docstring must be numpydoc compliant
+    This is a transformation which converts a time series from it's original
+    domain into a percentage domain. The numerator at each time step in the
+    transformation is the input values, the denominator is a weighted
+    quantile of the time series for that particular time step. In the example
+    of solar power transformations, the denominator is an approximation of the
+    clear sky power, and the output of the transformation is the clearness index.
+
+    The clear sky power, i.e. the demoninator, is claculated on a grid containing
+    each unique combination of time-of-day and day-of-year. The spacing of the
+    grid depends on the frequency of the input data.
+
+    The weights are defined using von-mises kernels with bandwidths chosen by the
+    user.
+
+    This transformation can be innacurate at low values, in the solar example during
+    early morning and late evening. Therefore, clear sky values below a threshold can
+    be fixed to zero in the transformed domain. Denominator values of zero are set
+    to zero in the transformed domain by default.
+
+    This transformer is based on the work detailed in [1]_.
 
     Parameters
     ----------
-    parama : int
-        descriptive explanation of parama
-    paramb : string, optional (default='default')
-        descriptive explanation of paramb
-    paramc : boolean, optional (default= whether paramb is not the default)
-        descriptive explanation of paramc
-    and so on
-    est : sktime.estimator, BaseEstimator descendant
-        descriptive explanation of est
-    est2: another estimator
-        descriptive explanation of est2
-    and so on
+    quantile_prob : float, default=0.95
+        The probability level used to calculate the weighted quantile
+    bw_diurnal : float, default=100
+        The bandwidth of the diurnal kernel. This is the kappa value of the
+        von mises kernel for time of day.
+    bw_annual : float, default=10
+        The bandwidth of the annual kernel. This is the kappa value of the
+        von mises kernel for day of year.
+    min_thresh : float, default=0
+        The threshold of the clear sky power below which values are
+        set to zero in the transformed domain.
+
+    References
+    ----------
+    .. [1] https://doi.org/10.1016/j.solener.2009.05.016
     """
 
     _tags = {
@@ -72,7 +86,11 @@ class ClearSky(BaseTransformer):
     }
 
     def __init__(
-        self, quantile_prob=0.95, bw_diurnal=100, bw_annual=10, min_thresh=None
+        self,
+        quantile_prob=0.95,
+        bw_diurnal=100,
+        bw_annual=10,
+        min_thresh=0,
     ):
 
         self.quantile_prob = quantile_prob
@@ -89,11 +107,9 @@ class ClearSky(BaseTransformer):
 
         Parameters
         ----------
-        X : Series or Panel of mtype X_inner_mtype
-            if X_inner_mtype is list, _fit must support all types in it
-            Data to fit transform to
-        y : Series or Panel of mtype y_inner_mtype, default=None
-            Additional data, e.g., labels for transformation
+        X : Series of pd.DataFrame
+            Data used to estimate the clear sky power.
+        y : Ignored argument for interface compatibility.
 
         Returns
         -------
@@ -105,22 +121,22 @@ class ClearSky(BaseTransformer):
 
         # set up smoothing grid
         tod = pd.timedelta_range(start="0T", end="1D", freq=df.index.freq)[:-1]
-        tod = [x.total_seconds() / (60 * 60) for x in tod.to_pytimedelta()]
-        doy = pd.RangeIndex(start=1, stop=367)
+        tod = [(x.total_seconds() / (60 * 60)) for x in tod.to_pytimedelta()]
+        yday = pd.RangeIndex(start=1, stop=366)
 
-        indx = pd.MultiIndex.from_product([doy, tod], names=["doy", "tod"])
+        indx = pd.MultiIndex.from_product([yday, tod], names=["yday", "tod"])
 
         # csp look up table
         csp = pd.Series(index=indx, dtype="float64")
         self.clearskypower = (
             csp.reset_index()
-            .groupby(["doy", "tod"])
+            .groupby(["yday", "tod"])
             .apply(
                 lambda x: _clearskypower(
                     y=X,
                     q=self.quantile_prob,
                     tod_i=x.tod,
-                    doy_i=x.doy,
+                    doy_i=x.yday,
                     tod_vec=df["tod"],
                     doy_vec=df["yday"],
                     bw_tod=self.bw_diurnal,
@@ -138,20 +154,18 @@ class ClearSky(BaseTransformer):
 
         Parameters
         ----------
-        X : Series or Panel of mtype X_inner_mtype
-            if X_inner_mtype is list, _transform must support all types in it
-            Data to be transformed
-        y : Series or Panel of mtype y_inner_mtype, default=None
-            Additional data, e.g., labels for transformation
+        X : Series of pd.DataFrame
+            Data used to be transformed.
+        y : Ignored argument for interface compatibility.
 
         Returns
         -------
-        transformed version of X
+        X_trafo : transformed version of X
         """
         # get required seasonal index
-        doy = X.index.dayofyear
+        yday = X.index.dayofyear
         tod = X.index.hour + X.index.minute / 60 + X.index.second / 60
-        indx_seasonal = pd.MultiIndex.from_arrays([doy, tod], names=["doy", "tod"])
+        indx_seasonal = pd.MultiIndex.from_arrays([yday, tod], names=["yday", "tod"])
 
         # look up values and overwrite index
         csp = self.clearskypower[indx_seasonal].copy()
@@ -159,10 +173,7 @@ class ClearSky(BaseTransformer):
         X_trafo = X / csp
 
         # threshold for small morning/evening values
-        if self.min_thresh is not None:
-            X_trafo[X < self.min_thresh] = 0
-        else:
-            X_trafo[X == 0] = 0
+        X_trafo[csp <= self.min_thresh] = 0
 
         return X_trafo
 
@@ -174,19 +185,17 @@ class ClearSky(BaseTransformer):
 
         Parameters
         ----------
-        X : Series or Panel of mtype X_inner_mtype
-            if X_inner_mtype is list, _inverse_transform must support all types in it
-            Data to be inverse transformed
-        y : Series or Panel of mtype y_inner_mtype, optional (default=None)
-            Additional data, e.g., labels for transformation
+        X : Series of pd.DataFrame
+            Data used to be inversed transformed.
+        y : Ignored argument for interface compatibility.
 
         Returns
         -------
-        inverse transformed version of X
+        X_trafo : inverse transformed version of X
         """
-        doy = X.index.dayofyear
+        yday = X.index.dayofyear
         tod = X.index.hour + X.index.minute / 60 + X.index.second / 60
-        indx_seasonal = pd.MultiIndex.from_arrays([doy, tod], names=["doy", "tod"])
+        indx_seasonal = pd.MultiIndex.from_arrays([yday, tod], names=["yday", "tod"])
 
         # look up values and overwrite index
         csp = self.clearskypower[indx_seasonal].copy()
@@ -194,36 +203,6 @@ class ClearSky(BaseTransformer):
         X_trafo = X * csp
 
         return X_trafo
-
-    # # todo: consider implementing this, optional
-    # # if not implementing, delete the _update method
-    # # standard behaviour is "no update"
-    # # also delete in the case where there is no fitting
-    # def _update(self, X, y=None):
-    #     """Update transformer with X and y.
-
-    #     private _update containing the core logic, called from update
-
-    #     Parameters
-    #     ----------
-    #     X : Series or Panel of mtype X_inner_mtype
-    #         if X_inner_mtype is list, _update must support all types in it
-    #         Data to update transformer with
-    #     y : Series or Panel of mtype y_inner_mtype, default=None
-    #         Additional data, e.g., labels for tarnsformation
-
-    #     Returns
-    #     -------
-    #     self: reference to self
-    #     """
-    #     # implement here
-    #     # X, y passed to this function are always of X_inner_mtype, y_inner_mtype
-    #     # IMPORTANT: avoid side effects to X, y
-    #     #
-    #     # any model parameters should be written to attributes ending in "_"
-    #     #  attributes set by the constructor must not be overwritten
-    #     #  if used, estimators should be cloned to attributes ending in "_"
-    #     #  the clones, not the originals, should be used or fitted if needed
 
     def get_fitted_params(self):
         """Get fitted parameters.
@@ -266,7 +245,24 @@ class ClearSky(BaseTransformer):
 
 
 def _clearskypower(y, q, tod_i, doy_i, tod_vec, doy_vec, bw_tod, bw_doy):
-    """Docstring."""
+    """Estimate the clear sky power for a given day-of-year and hour-of-day.
+
+    Parameters
+    ----------
+    y : Series of measurements
+    q : Probability level used for the quantile
+    tod_i : time-of-day of interest in hours
+    doy_i : day-of-year of interest in days
+    tod_vec : Series of time-of-day corresponding to the index of y
+    doy_vec: Series of day-of-year corresponding to the index of y
+    bw_tod : Kappa value used for defining weights for time-of-day
+    bw_doy : Kappa value used for defining weights for day-of-year
+
+    Returns
+    -------
+    csp : float
+        The clear sky power at tod_i and doy_i
+    """
     wts_tod = vonmises.pdf(
         x=tod_i * 2 * np.pi / 24, kappa=bw_tod, loc=tod_vec * 2 * np.pi / 24
     )
