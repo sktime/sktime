@@ -43,4 +43,4 @@ How to apply
 
 We accept applications on a rolling basis and we will be in touch with you shortly!
 
-If you have any questions or get stuck, please don't hesitate to `chat with us on slack <https://join.slack.com/t/sktime-group/shared_invite/zt-62i7aejn-vXc3nOWF26S_P3VXFPWisQ>`_, join on of our collaborative community sessions on `discord <https://discord.com/invite/gqSab2K>`_, or email us at info@sktime.org.
+If you have any questions or get stuck, please don't hesitate to `chat with us on slack <https://join.slack.com/t/sktime-group/shared_invite/zt-1cghagwee-sqLJ~eHWGYgzWbqUX937ig>`_, join on of our collaborative community sessions on `discord <https://discord.com/invite/gqSab2K>`_, or email us at info@sktime.org.
