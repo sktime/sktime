@@ -170,6 +170,7 @@ class BaseClassifier(BaseEstimator, ABC):
 
         self.classes_ = np.unique(y)
         self.n_classes_ = self.classes_.shape[0]
+        self._X_metadata = X_metadata
         self._class_dictionary = {}
         for index, class_val in enumerate(self.classes_):
             self._class_dictionary[class_val] = index

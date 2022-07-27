@@ -57,8 +57,11 @@ class RocketClassifier(_DelegatedClassifier):
         MiniRocket and MultiRocket only. The maximum number of dilations per kernel.
     n_features_per_kernel : int, optional, default=4
         MultiRocket only. The number of features per kernel.
-    use_multivariate : bool, optional, default=True
-        whether to use multivariate rocket transforms (True) or univariate ones (False)
+    use_multivariate : str, ["auto", "yes", "no"], optional, default="auto"
+        whether to use multivariate rocket transforms or univariate ones
+        "auto" = multivariate iff data seen in fit is multivariate, otherwise univariate
+        "yes" = always uses multivariate transformers, native multi/univariate
+        "no" = always univariate transformers, multivariate by framework vectorization
     n_jobs : int, default=1
         The number of jobs to run in parallel for both `fit` and `predict`.
         ``-1`` means using all processors.
@@ -110,6 +113,7 @@ class RocketClassifier(_DelegatedClassifier):
 
     # valid rocket strings for input validity checking
     VALID_ROCKET_STRINGS = ["rocket", "minirocket", "multirocket"]
+    VALID_MULTIVAR_VALUES = ["auto", "yes", "no"]
 
     def __init__(
         self,
@@ -117,7 +121,7 @@ class RocketClassifier(_DelegatedClassifier):
         rocket_transform="rocket",
         max_dilations_per_kernel=32,
         n_features_per_kernel=4,
-        use_multivariate=True,
+        use_multivariate="auto",
         n_jobs=1,
         random_state=None,
     ):
@@ -132,38 +136,41 @@ class RocketClassifier(_DelegatedClassifier):
 
         super(RocketClassifier, self).__init__()
 
+        if use_multivariate not in self.VALID_MULTIVAR_VALUES:
+            raise ValueError(
+                f"Invalid use_multivariate value, must be one of "
+                f"{self.VALID_MULTIVAR_VALUES}, but found {rocket_transform}"
+            )
+
         if rocket_transform == "rocket":
-            rocket = Rocket(
+            univar_rocket = Rocket(
                 num_kernels=self.num_kernels,
                 random_state=self.random_state,
                 n_jobs=self._threads_to_use,
             )
+            multivar_rocket = univar_rocket
         elif rocket_transform == "minirocket":
-            if use_multivariate:
-                rocket = MiniRocketMultivariate(
+            multivar_rocket = MiniRocketMultivariate(
                     num_kernels=self.num_kernels,
                     max_dilations_per_kernel=self.max_dilations_per_kernel,
                     random_state=self.random_state,
                     n_jobs=self._threads_to_use,
                 )
-            else:
-                rocket = MiniRocket(
+            univar_rocket = MiniRocket(
                     num_kernels=self.num_kernels,
                     max_dilations_per_kernel=self.max_dilations_per_kernel,
                     random_state=self.random_state,
                     n_jobs=self._threads_to_use,
                 )
         elif self.rocket_transform == "multirocket":
-            if use_multivariate > 1:
-                rocket = MultiRocketMultivariate(
+            multivar_rocket = MultiRocketMultivariate(
                     num_kernels=self.num_kernels,
                     max_dilations_per_kernel=self.max_dilations_per_kernel,
                     n_features_per_kernel=self.n_features_per_kernel,
                     random_state=self.random_state,
                     n_jobs=self._threads_to_use,
                 )
-            else:
-                rocket = MultiRocket(
+            univar_rocket = MultiRocket(
                     num_kernels=self.num_kernels,
                     max_dilations_per_kernel=self.max_dilations_per_kernel,
                     n_features_per_kernel=self.n_features_per_kernel,
@@ -176,14 +183,37 @@ class RocketClassifier(_DelegatedClassifier):
                 f"{self.VALID_ROCKET_STRINGS}, but found {rocket_transform}"
             )
 
-        self.estimator_ = make_pipeline(
-            rocket,
+        self.multivar_rocket_ = make_pipeline(
+            multivar_rocket,
+            StandardScaler(with_mean=False),
+            RidgeClassifierCV(alphas=np.logspace(-3, 3, 10)),
+        )
+        self.univar_rocket_ = make_pipeline(
+            univar_rocket,
             StandardScaler(with_mean=False),
             RidgeClassifierCV(alphas=np.logspace(-3, 3, 10)),
         )
 
         if not use_multivariate:
             self.set_tags(**{"capability:multivariate": False})
+
+    @property
+    def estimator_(self):
+        """Shorthand for the internal estimator that is fitted."""
+        return self._get_delegate()
+
+    def _get_delegate(self):
+        use_multivariate = self.use_multivariate
+        if use_multivariate == "auto":
+            code_dict = {True: "yes", False: "no"}
+            use_multivariate = code_dict[not self._X_metadata["is_univariate"]]
+
+        if use_multivariate == "yes":
+            delegate = self.multivar_rocket_
+        else:
+            delegate = self.univar_rocket_
+
+        return delegate
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
