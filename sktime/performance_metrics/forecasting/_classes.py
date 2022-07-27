@@ -173,12 +173,18 @@ class BaseForecastingErrorMetric(BaseMetric):
 
         Returns
         -------
-        loss : float or np.ndarray
+        loss : float, np.ndarray, or pd.DataFrame
             Calculated metric, averaged or by variable.
             float if self.multioutput="uniform_average" or array-like
-                value is metric averaged over variables (see class docstring)
+                and self.multilevel="uniform_average" or "uniform_average_time"
+                value is metric averaged over variables and levels (see class docstring)
             np.ndarray of shape (y_true.columns,) if self.multioutput="raw_values"
+                and self.multilevel="uniform_average" or "uniform_average_time"
                 i-th entry is metric calculated for i-th variable
+            pd.DataFrame if self.multilevel=raw.values
+                of shape (n_levels, ) if self.multioutput = "uniform_average" or array
+                of shape (n_levels, y_true.columns) if self.multioutput="raw_values"
+                metric is applied per level, row averaging (yes/no) as in multioutput
         """
         multioutput = self.multioutput
         multilevel = self.multilevel
