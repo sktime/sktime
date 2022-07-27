@@ -139,7 +139,7 @@ class RocketClassifier(_DelegatedClassifier):
         if use_multivariate not in self.VALID_MULTIVAR_VALUES:
             raise ValueError(
                 f"Invalid use_multivariate value, must be one of "
-                f"{self.VALID_MULTIVAR_VALUES}, but found {rocket_transform}"
+                f"{self.VALID_MULTIVAR_VALUES}, but found {use_multivariate}"
             )
 
         if rocket_transform == "rocket":
