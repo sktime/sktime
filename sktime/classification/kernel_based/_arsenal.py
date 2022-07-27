@@ -319,9 +319,7 @@ class Arsenal(BaseClassifier):
 
     def _get_train_probs(self, X, y) -> np.ndarray:
         self.check_is_fitted()
-        X, y = check_X_y(
-            X, y, enforce_min_instances=3, enforce_min_classes=2, coerce_to_numpy=True
-        )
+        X, y = check_X_y(X, y, enforce_min_classes=2, coerce_to_numpy=True)
 
         n_instances, n_dims, series_length = X.shape
 
