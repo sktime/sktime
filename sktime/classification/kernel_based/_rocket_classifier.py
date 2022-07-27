@@ -36,10 +36,10 @@ class RocketClassifier(_DelegatedClassifier):
         | rocket_transform | `use_multivariate` | rocket (class)          |
         |------------------|--------------------|-------------------------|
         | "rocket"         | any                | Rocket                  |
-        | "minirocket"     | True               | MiniRocketMultivariate  |
-        | "minirocket"     | False              | MiniRocket              |
-        | "multirocket"    | True               | MultiRocketMultivariate |
-        | "multirocket"    | False              | MultiRocket             |
+        | "minirocket"     | "yes               | MiniRocketMultivariate  |
+        | "minirocket"     | "no"               | MiniRocket              |
+        | "multirocket"    | "yes"              | MultiRocketMultivariate |
+        | "multirocket"    | "no"               | MultiRocket             |
 
     classes are sktime classes, other parameters are passed on to the rocket class.
 
