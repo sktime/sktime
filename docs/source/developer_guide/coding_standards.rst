@@ -20,13 +20,14 @@ Code formatting and linting
 ---------------------------
 
 We adhere to the following code formatting standards:
+
 * `black <https://black.readthedocs.io/en/stable/>`__ with default settings
 
 * `flake8 <https://flake8.pycqa.org/en/latest/>`__ with a ``max_line_length=88`` and some exceptions as per ``setup.cfg``
 
 * ``isort`` with default settings
 
-* ``numpydoc`` to enforce numpy docstring standard <https://numpydoc.readthedocs.io/en/latest/format.html#docstring-standard>`_, along with sktime specific conventions described in our :ref:`developer_guide`'s :ref:`documentation section <developer_guide_documentation>`.
+* ``numpydoc`` to enforce numpy `< docstring standard https://numpydoc.readthedocs.io/en/latest/format.html#docstring-standard>`_ , along with sktime specific conventions described in our :ref:`developer_guide`'s :ref:`documentation section <developer_guide_documentation>`.
 
 This is enforced through our CI/CD workflows via `pre-commit <https://pre-commit.com/>`_.
 
