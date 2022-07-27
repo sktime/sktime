@@ -155,13 +155,13 @@ class RocketClassifier(_DelegatedClassifier):
                 max_dilations_per_kernel=self.max_dilations_per_kernel,
                 random_state=self.random_state,
                 n_jobs=self._threads_to_use,
-                )
+            )
             univar_rocket = MiniRocket(
                 num_kernels=self.num_kernels,
                 max_dilations_per_kernel=self.max_dilations_per_kernel,
                 random_state=self.random_state,
                 n_jobs=self._threads_to_use,
-                )
+            )
         elif self.rocket_transform == "multirocket":
             multivar_rocket = MultiRocketMultivariate(
                 num_kernels=self.num_kernels,
@@ -169,14 +169,14 @@ class RocketClassifier(_DelegatedClassifier):
                 n_features_per_kernel=self.n_features_per_kernel,
                 random_state=self.random_state,
                 n_jobs=self._threads_to_use,
-                )
+            )
             univar_rocket = MultiRocket(
                 num_kernels=self.num_kernels,
                 max_dilations_per_kernel=self.max_dilations_per_kernel,
                 n_features_per_kernel=self.n_features_per_kernel,
                 random_state=self.random_state,
                 n_jobs=self._threads_to_use,
-                )
+            )
         else:
             raise ValueError(
                 f"Invalid rocket_transform string, must be one of "
