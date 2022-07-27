@@ -30,7 +30,7 @@ class RocketClassifier(_DelegatedClassifier):
 
     Shorthand for the pipeline
     `rocket * StandardScaler(with_mean=False) * RidgeClassifierCV(alphas)`
-    where `alphas = MultiRocketMultivariate`, and
+    where `alphas = np.logspace(-3, 3, 10)`, and
     where `rocket` depends on params `rocket_transform`, `use_multivariate` as follows:
 
         | rocket_transform | `use_multivariate` | rocket (class)          |
