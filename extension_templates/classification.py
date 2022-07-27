@@ -11,6 +11,8 @@ How to use this implementation template to implement a new estimator:
 - make a copy of the template in a suitable location, give it a descriptive name.
 - work through all the "todo" comments below
 - fill in code for mandatory methods, and optionally for optional methods
+- do not write to reserved variables: is_fitted, _is_fitted, _X, _y, classes_,
+    n_classes_, fit_time_, _class_dictionary, _threads_to_use, _tags, _tags_dynamic
 - you can add more private methods, but do not override BaseEstimator's private methods
     an easy way to be safe is to prefix your methods with "_custom"
 - change docstrings for functions and the file
@@ -75,6 +77,7 @@ class MyTimeSeriesClassifier(BaseClassifier):
         "capability:train_estimate": False,
         "capability:contractable": False,
         "capability:multithreading": False,
+        "python_version": None,  # PEP 440 python version specifier to limit versions
     }
 
     # todo: add any hyper-parameters and components to constructor
@@ -87,16 +90,19 @@ class MyTimeSeriesClassifier(BaseClassifier):
         self.parama = parama
         self.paramb = paramb
         self.paramc = paramc
-        # important: no checking or other logic should happen here
+
+        # todo: change "MyTimeSeriesClassifier" to the name of the class
+        super(MyTimeSeriesClassifier, self).__init__()
+
+        # todo: optional, parameter checking logic (if applicable) should happen here
+        # if writes derived values to self, should *not* overwrite self.parama etc
+        # instead, write to self._parama, self._newparam (starting with _)
 
         # todo: default estimators should have None arg defaults
         #  and be initialized here
         #  do this only with default estimators, not with parameters
         # if est2 is None:
         #     self.estimator = MyDefaultEstimator()
-
-        # todo: change "MyTimeSeriesClassifier" to the name of the class
-        super(MyTimeSeriesClassifier, self).__init__()
 
         # todo: if tags of estimator depend on component tags, set these here
         #  only needed if estimator is a composite

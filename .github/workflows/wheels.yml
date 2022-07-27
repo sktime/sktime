@@ -14,7 +14,7 @@ jobs:
 
       - uses: actions/setup-python@v2
         with:
-          python-version: '3.9'
+          python-version: '3.10'
 
       - name: Build wheel
         run: |
@@ -33,8 +33,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-20.04, macOS-10.15]
-        python-version: [3.7, 3.8, 3.9]
+        os: [ubuntu-20.04, macOS-11]
+        python-version: ['3.7', '3.8', '3.9', '3.10']
 
     steps:
       - uses: actions/checkout@v2
@@ -66,12 +66,27 @@ jobs:
           # Window 64 bit
           - os: windows-2019
             python: 37
-            python-version: 3.7
+            python-version: '3.7'
             bitness: 64
             platform_id: win_amd64
           - os: windows-2019
             python: 38
-            python-version: 3.8
+            python-version: '3.8'
+            bitness: 64
+            platform_id: win_amd64
+          - os: windows-2019
+            python: 39
+            python-version: '3.9'
+            bitness: 64
+            platform_id: win_amd64
+          - os: windows-2019
+            python: 310
+            python-version: '3.10'
+            bitness: 64
+            platform_id: win_amd64
+          - os: windows-2019
+            python: 39
+            python-version: 3.9
             bitness: 64
             platform_id: win_amd64
 
@@ -95,11 +110,6 @@ jobs:
       - name: Install conda libpython
         run: conda install -c anaconda -n test -y libpython
 
-      - name: Install conda dependencies
-        run: |
-          conda install -c anaconda -n test -y "pystan==2.19.1.1"
-          conda install -c conda-forge -n test -y "prophet>=1.0.0"
-
       - name: Display downloaded artifacts
         run: ls -l wheelhouse
 
@@ -120,7 +130,6 @@ jobs:
           mkdir -p testdir/
           cp .coveragerc testdir/
           cp setup.cfg testdir/
-          cd testdir/
           python -m pytest
 
   upload_wheels:

@@ -8,12 +8,12 @@ import pandas as pd
 from sklearn.utils import check_array, check_consistent_length
 
 from sktime.datatypes import check_is_scitype, convert
-from sktime.performance_metrics.forecasting._classes import _BaseForecastingErrorMetric
+from sktime.performance_metrics.forecasting._classes import BaseForecastingErrorMetric
 
 # TODO: Rework tests now
 
 
-class _BaseProbaForecastingErrorMetric(_BaseForecastingErrorMetric):
+class _BaseProbaForecastingErrorMetric(BaseForecastingErrorMetric):
     """Base class for probabilistic forecasting error metrics in sktime.
 
     Extends sktime's BaseMetric to the forecasting interface. Forecasting error
@@ -39,16 +39,10 @@ class _BaseProbaForecastingErrorMetric(_BaseForecastingErrorMetric):
         "lower_is_better": True,
     }
 
-    def __init__(
-        self,
-        func=None,
-        name=None,
-        multioutput="uniform_average",
-        score_average=True,
-    ):
+    def __init__(self, multioutput="uniform_average", score_average=True):
         self.multioutput = multioutput
         self.score_average = score_average
-        super().__init__(func, name=name, multioutput=multioutput)
+        super().__init__(multioutput=multioutput)
 
     def __call__(self, y_true, y_pred, **kwargs):
         """Calculate metric value using underlying metric function.
@@ -398,19 +392,11 @@ class PinballLoss(_BaseProbaForecastingErrorMetric):
         "lower_is_better": True,
     }
 
-    def __init__(
-        self,
-        multioutput="uniform_average",
-        score_average=True,
-        alpha=None,
-    ):
-        name = "PinballLoss"
+    def __init__(self, multioutput="uniform_average", score_average=True, alpha=None):
         self.score_average = score_average
         self.alpha = self._check_alpha(alpha)
         self.metric_args = {"alpha": alpha}
-        super().__init__(
-            name=name, multioutput=multioutput, score_average=score_average
-        )
+        super().__init__(multioutput=multioutput, score_average=score_average)
 
     def _evaluate_by_index(self, y_true, y_pred, multioutput, **kwargs):
         """Logic for finding the metric evaluated at each index.
@@ -449,7 +435,7 @@ class PinballLoss(_BaseProbaForecastingErrorMetric):
 
         alpha_preds_np = alpha_preds.to_numpy()
         alpha_mat = np.repeat(
-            (y_pred.columns.get_level_values(1).to_numpy().reshape(1, -1)),
+            (alpha_preds.columns.get_level_values(1).to_numpy().reshape(1, -1)),
             repeats=y_true.shape[0],
             axis=0,
         )
@@ -489,12 +475,9 @@ class EmpiricalCoverage(_BaseProbaForecastingErrorMetric):
     }
 
     def __init__(self, multioutput="uniform_average", score_average=True):
-        name = "EmpiricalCoverage"
         self.score_average = score_average
         self.multioutput = multioutput
-        super().__init__(
-            name=name, score_average=score_average, multioutput=multioutput
-        )
+        super().__init__(score_average=score_average, multioutput=multioutput)
 
     def _evaluate_by_index(self, y_true, y_pred, multioutput, **kwargs):
         """Logic for finding the metric evaluated at each index.
@@ -559,12 +542,9 @@ class ConstraintViolation(_BaseProbaForecastingErrorMetric):
     }
 
     def __init__(self, multioutput="uniform_average", score_average=True):
-        name = "ConstraintViolation"
         self.score_average = score_average
         self.multioutput = multioutput
-        super().__init__(
-            name=name, score_average=score_average, multioutput=multioutput
-        )
+        super().__init__(score_average=score_average, multioutput=multioutput)
 
     def _evaluate_by_index(self, y_true, y_pred, multioutput, **kwargs):
         """Logic for finding the metric evaluated at each index.

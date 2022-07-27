@@ -95,6 +95,10 @@ class _StatsModelsAdapter(BaseForecaster):
         fitted_params : dict
         """
         self.check_is_fitted()
+
+        if hasattr(self, "_is_vectorized") and self._is_vectorized:
+            return {"forecasters": self.forecasters_}
+
         fitted_params = {}
         for name in self._get_fitted_param_names():
             if name in ["aic", "aicc", "bic", "hqic"]:

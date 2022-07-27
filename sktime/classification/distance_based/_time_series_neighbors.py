@@ -65,18 +65,40 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
             scikit-learn implementation. TO-DO: find permanent
             resolution to this issue (raise as an issue on sklearn GitHub?)
 
-
     Parameters
     ----------
-    n_neighbors     : int, set k for knn (default =1)
-    weights         : string or callable function, optional, default ==' uniform'
-                      mechanism for weighting a vote, one of: 'uniform', 'distance'
-                      or a callable function
-    algorithm       : search method for neighbours {‘auto’, ‘ball_tree’,
-    ‘kd_tree’, ‘brute’}: default = 'brute'
-    distance          : distance measure for time series: {'dtw','ddtw',
-    'wdtw','lcss','erp','msm','twe'}: default ='dtw'
+    n_neighbors : int, set k for knn (default =1)
+    distance : distance measure for time series: {'dtw','ddtw',
+        'wdtw','lcss','erp','msm','twe'}: default ='dtw'
     distance_params   : dictionary for metric parameters: default = None
+    algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, default='brute'
+        Algorithm used to compute the nearest neighbors:
+        - 'ball_tree' will use :class:`BallTree`
+        - 'kd_tree' will use :class:`KDTree`
+        - 'brute' will use a brute-force search.
+        - 'auto' will attempt to decide the most appropriate algorithm
+          based on the values passed to :meth:`fit` method.
+    weights : {'uniform', 'distance'} or callable, default='uniform'
+        Weight function used in prediction.  Possible values:
+        - 'uniform' : uniform weights.  All points in each neighborhood
+          are weighted equally.
+        - 'distance' : weight points by the inverse of their distance.
+          in this case, closer neighbors of a query point will have a
+          greater influence than neighbors which are further away.
+        - [callable] : a user-defined function which accepts an
+          array of distances, and returns an array of the same shape
+          containing the weights.
+    leaf_size : int, default=30
+        Leaf size passed to BallTree or KDTree.  This can affect the
+        speed of the construction and query, as well as the memory
+        required to store the tree.  The optimal value depends on the
+        nature of the problem.
+    n_jobs : int, default=None
+        The number of parallel jobs to run for neighbors search.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
+        Doesn't affect :meth:`fit` method.
 
     Examples
     --------
@@ -101,26 +123,30 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         weights="uniform",
         distance="dtw",
         distance_params=None,
-        **kwargs,
+        algorithm="brute",
+        leaf_size=30,
+        n_jobs=None,
     ):
-        # self._distance_params = distance_params
-        # if distance_params is None:
-        #    self._distance_params = {}
+        self.n_neighbors = n_neighbors
+        self.weights = _check_weights(weights)
         self.distance = distance
         self.distance_params = distance_params
-
         if isinstance(self.distance, str):
             distance = distance_factory(metric=self.distance)
 
+        self.algorithm = algorithm
+        self.leaf_size = leaf_size
+        self.n_jobs = n_jobs
+
         super(KNeighborsTimeSeriesClassifier, self).__init__(
             n_neighbors=n_neighbors,
-            algorithm="brute",
+            algorithm=algorithm,
             metric=distance,
             metric_params=None,  # Extra distance params handled in _fit
-            **kwargs,
+            leaf_size=leaf_size,
+            n_jobs=n_jobs,
         )
         BaseClassifier.__init__(self)
-        self.weights = _check_weights(weights)
 
         # We need to add is-fitted state when inheriting from scikit-learn
         self._is_fitted = False

@@ -10,8 +10,8 @@ __all__ = ["FreshPRINCE"]
 
 import numpy as np
 
-from sktime._contrib.vector_classifiers._rotation_forest import RotationForest
 from sktime.classification.base import BaseClassifier
+from sktime.classification.sklearn import RotationForest
 from sktime.transformations.panel.tsfresh import TSFreshFeatureExtractor
 from sktime.utils.validation.panel import check_X_y
 
@@ -58,21 +58,6 @@ class FreshPRINCE(BaseClassifier):
         scalable hypothesis tests (tsfresh–a python package)." Neurocomputing 307
         (2018): 72-77.
         https://www.sciencedirect.com/science/article/pii/S0925231218304843
-
-    Examples
-    --------
-    >>> from sktime.classification.feature_based import FreshPRINCE
-    >>> from sktime._contrib.vector_classifiers._rotation_forest import RotationForest
-    >>> from sktime.datasets import load_unit_test
-    >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
-    >>> clf = FreshPRINCE(
-    ...     default_fc_parameters="minimal",
-    ...     n_estimators=5,
-    ... )
-    >>> clf.fit(X_train, y_train)
-    FreshPRINCE(...)
-    >>> y_pred = clf.predict(X_test)
     """
 
     _tags = {
@@ -80,6 +65,8 @@ class FreshPRINCE(BaseClassifier):
         "capability:multithreading": True,
         "capability:train_estimate": True,
         "classifier_type": "feature",
+        "python_version": "<3.10",
+        "python_dependencies": "tsfresh",
     }
 
     def __init__(
@@ -238,4 +225,5 @@ class FreshPRINCE(BaseClassifier):
             return {
                 "n_estimators": 2,
                 "default_fc_parameters": "minimal",
+                "save_transformed_data": True,
             }

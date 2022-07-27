@@ -110,7 +110,7 @@ Notes
 The notes section can include several types of information, including:
 
 - Mathematical details of a code object or other important implementation details (using ..math or :math:`` functionality)
-- Links to alternative implementations of the code artifact that are external to ``sktime`` (e.g. the Java implementation of a sktime time series classifier)
+- Links to alternative implementations of the code artifact that are external to ``sktime`` (e.g. the Java implementation of an sktime time series classifier)
 - state changing methods (sktime estimator classes)
 
 References
@@ -148,7 +148,7 @@ Examples
 ~~~~~~~~
 
 Most code artifacts in sktime should include an examples section. At a minimum this should include a single example that illustrates basic functionality.
-The examples should use either a built-in sktime dataset or other simple data (e.g. randomly generated data, etc) generated using a sktime dependency
+The examples should use either a built-in sktime dataset or other simple data (e.g. randomly generated data, etc) generated using an sktime dependency
 (e.g. NumPy, pandas, etc) and whereever possible only depend on sktime or its core dependencies. Examples should also be designed to run quickly where possible.
 For quick running code artifacts, additional examples can be included to illustrate the affect of different parameter settings.
 

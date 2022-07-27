@@ -44,6 +44,8 @@ Libraries
      - Library for unsupervised learning with time series including dimensionality reduction, clustering, and Markov model estimation
    * - `deltapy <https://github.com/firmai/deltapy>`_
      - Collection of data augmentation tools, including feature extraction from time series, wraps existing toolkits like tsfresh
+   * - `diviner <https://github.com/databricks/diviner>`_
+     - Diviner by Databricks enables large-scale time series forecasting and serves as a wrapper around other open source forecasting libraries
    * - `dtaidistance <https://github.com/wannesm/dtaidistance>`_
      - Time series distances
    * - `dtw <https://github.com/pierre-rouanet/dtw>`_
@@ -130,6 +132,8 @@ Libraries
      - Extends the scikit-learn pipeline concept to time series data for classification, regression and forecasting
    * - `sktime <https://github.com/alan-turing-institute/sktime>`_
      - A scikit-learn compatible library for learning with time series/panel data including time series classification/regression and (supervised/panel) forecasting
+   * - `statsforecast <https://github.com/Nixtla/statsforecast>`_
+     - StatsForecast by Nixtla offers a collection of widely used univariate time series forecasting models optimized for high performance using numba
    * - `statsmodels <https://github.com/statsmodels/statsmodels>`_
      - Contains a submodule for classical time series models and hypothesis tests
    * - `stumpy <https://github.com/TDAmeritrade/stumpy>`_
