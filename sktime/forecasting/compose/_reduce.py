@@ -554,7 +554,7 @@ class _RecursiveReducer(_Reducer):
                 #     date_curr = pd.date_range(end=dateline[i], periods=1)
                 # Generate predictions.
                 y_pred_vector = self.estimator_.predict(X_last)
-                y_pred_curr = _create_multiindex(
+                y_pred_curr = _create_fcst_df(
                     [index_range[i]], self._y, fill=y_pred_vector
                 )
                 y_pred.update(y_pred_curr)
@@ -1072,7 +1072,8 @@ def _create_fcst_df(target_date, origin_df, fill=None):
     if not isinstance(oi, pd.MultiIndex):
         if isinstance(origin_df, pd.Series):
             if fill is None:
-                template = pd.Series(np.zeros(len(target_date)), index=target_date)
+                template = pd.Series(np.empty(len(target_date)), index=target_date)
+                template[:] = np.nan
             else:
                 template = pd.Series(fill, index=target_date)
             template.name = origin_df.name
@@ -1080,29 +1081,49 @@ def _create_fcst_df(target_date, origin_df, fill=None):
         else:
             if fill is None:
                 template = pd.DataFrame(
-                    np.zeros((len(target_date), len(origin_df.columns))),
+                    np.empty((len(target_date), len(origin_df.columns))),
                     index=target_date,
                     columns=origin_df.columns.to_list(),
                 )
+                template[:] = np.nan
             else:
                 template = pd.DataFrame(
                     fill, index=target_date, columns=origin_df.columns.to_list()
                 )
             return template
+    # What is an efficient way to get only the index?
+    idx = origin_df.reset_index()
+    x_names = origin_df.index.names[0:-1]
+    time_names = origin_df.index.names[-1]
+    idx = idx[x_names].drop_duplicates()
 
-    tsids = origin_df.index.get_level_values("instances").unique()
-    mi = pd.MultiIndex.from_product(
-        [tsids, target_date], names=["instances", "timepoints"]
+    timeframe = pd.DataFrame(target_date, columns=[time_names])
+
+    target_frame = idx.merge(timeframe, how="cross")
+    freq_inferred = target_date[0].freq
+    mi = (
+        target_frame.groupby(x_names, as_index=True)
+        .apply(
+            lambda df: df.drop(x_names, axis=1)
+            .set_index(time_names)
+            .asfreq(freq_inferred)
+        )
+        .index
     )
 
     if fill is None:
         template = pd.DataFrame(
-            np.zeros((len(target_date) * len(tsids), len(origin_df.columns))),
+            np.empty((len(target_date) * idx.shape[0], len(origin_df.columns))),
             index=mi,
             columns=origin_df.columns.to_list(),
         )
+        template[:] = np.nan
     else:
-        template = pd.DataFrame(fill, index=mi, columns=origin_df.columns.to_list())
+        template = pd.DataFrame(
+            fill,
+            index=mi,
+            columns=origin_df.columns.to_list(),
+        )
 
     template = template.astype(origin_df.dtypes.to_dict())
     return template
