@@ -76,6 +76,7 @@ def _coerce_to_scalar(obj):
     if isinstance(obj, pd.Series):
         assert len(obj) == 1
         return obj.iloc[0]
+    return obj
 
 
 def _coerce_to_df(obj):
