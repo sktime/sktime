@@ -440,9 +440,5 @@ class FittedParamExtractor(BaseTransformer):
             Each dict are parameters to construct an "interesting" test instance, i.e.,
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
-        """  
-        return{
-            "forecaster": ExponentialSmoothing(),
-            "param_names": ["initial_level"]
-        }
-
+        """
+        return {"forecaster": ExponentialSmoothing(), "param_names": ["initial_level"]}
