@@ -86,7 +86,8 @@ def test_metric_hierarchical(multioutput, multilevel, n_columns):
         expected_index = y_true.index.droplevel(-1).unique()
         found_index = res.index.unique()
         assert set(expected_index) == set(found_index)
-        assert all(y_true.columns == res.columns)
+        if isinstance(res, pd.DataFrame):
+            assert all(y_true.columns == res.columns)
     # if multilevel == "uniform_average" or "uniform_average_time"
     else:
         if multioutput == "uniform_average":
