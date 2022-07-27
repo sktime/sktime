@@ -67,6 +67,22 @@ __all__ = [
 ]
 
 
+def _coerce_to_scalar(obj):
+    """Coerce obj to scalar, from polymorphic input scalar or pandas."""
+    if isinstance(obj, pd.DataFrame):
+        assert len(obj) == 1
+        assert len(obj.columns) == 1
+        return obj.iloc[0, 0]
+    if isinstance(obj, pd.Series):
+        assert len(obj) == 1
+        return obj.iloc[0]
+
+
+def _coerce_to_df(obj):
+    """Coerce to pd.DataFrame, from polymorphic input scalar or pandas."""
+    return pd.DataFrame(obj)
+
+
 class BaseForecastingErrorMetric(BaseMetric):
     """Base class for defining forecasting error metrics in sktime.
 
@@ -124,12 +140,18 @@ class BaseForecastingErrorMetric(BaseMetric):
 
         Returns
         -------
-        loss : float or np.ndarray
+        loss : float, np.ndarray, or pd.DataFrame
             Calculated metric, averaged or by variable.
             float if self.multioutput="uniform_average" or array-like
-                value is metric averaged over variables (see class docstring)
+                and self.multilevel="uniform_average" or "uniform_average_time"
+                value is metric averaged over variables and levels (see class docstring)
             np.ndarray of shape (y_true.columns,) if self.multioutput="raw_values"
+                and self.multilevel="uniform_average" or "uniform_average_time"
                 i-th entry is metric calculated for i-th variable
+            pd.DataFrame if self.multilevel=raw.values
+                of shape (n_levels, ) if self.multioutput = "uniform_average" or array
+                of shape (n_levels, y_true.columns) if self.multioutput="raw_values"
+                metric is applied per level, row averaging (yes/no) as in multioutput
         """
         return self.evaluate(y_true, y_pred, **kwargs)
 
@@ -178,6 +200,12 @@ class BaseForecastingErrorMetric(BaseMetric):
                 # if level is averaged, but not variables, return numpy
                 if multioutput == "raw_values":
                     out_df = out_df.values
+
+        if multilevel == "uniform_average" and multioutput == "uniform_average":
+            out_df = _coerce_to_scalar(out_df)
+        if multilevel == "raw_values":
+            out_df = _coerce_to_df(out_df)
+
         return out_df
 
     def _evaluate(self, y_true, y_pred, **kwargs):
