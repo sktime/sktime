@@ -328,7 +328,7 @@ class RotationForest(BaseEstimator):
                 "A valid sklearn input such as a 2d numpy array is required."
                 "Sparse input formats are currently not supported."
             )
-        X = self._validate_data(X=X, y=y, ensure_min_samples=3, reset=False)
+        X, y = self._validate_data(X=X, y=y, ensure_min_samples=3, reset=False)
 
         n_classes = np.unique(y).shape[0]
         if n_classes < 2:
