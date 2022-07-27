@@ -67,11 +67,13 @@ class BaseClassifier(BaseEstimator, ABC):
     }
 
     def __init__(self):
-        self.classes_ = []
-        self.n_classes_ = 0
-        self.fit_time_ = 0
+        # reserved attributes written to in fit
+        self.classes_ = []  # classes seen in y, unique labels
+        self.n_classes_ = 0  # number of unique classes in y
+        self.fit_time_ = 0  # time elapsed in last fit call
         self._class_dictionary = {}
         self._threads_to_use = 1
+        self._X_metadata = []  # metadata/properties of X seen in fit
 
         # required for compatability with some sklearn interfaces
         # i.e. CalibratedClassifierCV
