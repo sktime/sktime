@@ -118,20 +118,26 @@ class MyTimeSeriesClassifier(BaseClassifier):
     def _fit(self, X, y):
         """Fit time series classifier to training data.
 
-        core logic
+        private _fit containing the core logic, called from fit
+
+        Writes to self:
+            Sets fitted model attributes ending in "_".
 
         Parameters
         ----------
-        X : Training data of type self.get_tag("X_inner_mtype")
-        y : array-like, shape = [n_instances] - the class labels
+        X : guaranteed to be of a type in self.get_tag("X_inner_mtype")
+            if self.get_tag("X_inner_mtype") = "numpy3D":
+                3D np.ndarray of shape = [n_instances, n_dimensions, series_length]
+            if self.get_tag("X_inner_mtype") = "nested_univ":
+                pd.DataFrame with each column a dimension, each cell a pd.Series
+            for list of other mtypes, see datatypes.SCITYPE_REGISTER
+            for specifications, see examples/AA_datatypes_and_datasets.ipynb
+        y : 1D np.array of int, of shape [n_instances] - class labels for fitting
+            indices correspond to instance indices in X
 
         Returns
         -------
-        self : reference to self.
-
-        State change
-        ------------
-        creates fitted model (attributes ending in "_")
+        self : Reference to self.
         """
 
         # implement here
@@ -147,15 +153,28 @@ class MyTimeSeriesClassifier(BaseClassifier):
     def _predict(self, X) -> np.ndarray:
         """Predict labels for sequences in X.
 
-        core logic
+        private _predict containing the core logic, called from predict
+
+        State required:
+            Requires state to be "fitted".
+
+        Accesses in self:
+            Fitted model attributes ending in "_"
 
         Parameters
         ----------
-        X : data not used in training, of type self.get_tag("X_inner_mtype")
+        X : guaranteed to be of a type in self.get_tag("X_inner_mtype")
+            if self.get_tag("X_inner_mtype") = "numpy3D":
+                3D np.ndarray of shape = [n_instances, n_dimensions, series_length]
+            if self.get_tag("X_inner_mtype") = "nested_univ":
+                pd.DataFrame with each column a dimension, each cell a pd.Series
+            for list of other mtypes, see datatypes.SCITYPE_REGISTER
+            for specifications, see examples/AA_datatypes_and_datasets.ipynb
 
         Returns
         -------
-        y : predictions of labels for X, np.ndarray
+        y : 1D np.array of int, of shape [n_instances] - predicted class labels
+            indices correspond to instance indices in X
         """
 
         # implement here
@@ -167,17 +186,30 @@ class MyTimeSeriesClassifier(BaseClassifier):
     def _predict_proba(self, X) -> np.ndarray:
         """Predicts labels probabilities for sequences in X.
 
-        Default behaviour is to call _predict and set the predicted class probability
-        to 1, other class probabilities to 0. Override if better estimates are
-        obtainable.
+        private _predict_proba containing the core logic, called from predict_proba
+
+        State required:
+            Requires state to be "fitted".
+
+        Accesses in self:
+            Fitted model attributes ending in "_"
 
         Parameters
         ----------
-        X : data to predict y with, of type self.get_tag("X_inner_mtype")
+        X : guaranteed to be of a type in self.get_tag("X_inner_mtype")
+            if self.get_tag("X_inner_mtype") = "numpy3D":
+                3D np.ndarray of shape = [n_instances, n_dimensions, series_length]
+            if self.get_tag("X_inner_mtype") = "nested_univ":
+                pd.DataFrame with each column a dimension, each cell a pd.Series
+            for list of other mtypes, see datatypes.SCITYPE_REGISTER
+            for specifications, see examples/AA_datatypes_and_datasets.ipynb
 
         Returns
         -------
-        y : predictions of probabilities for class values of X, np.ndarray
+        y : 2D array of shape [n_instances, n_classes] - predicted class probabilities
+            1st dimension indices correspond to instance indices in X
+            2nd dimension indices correspond to possible labels (integers)
+            (i, j)-th entry is predictive probability that i-th instance is of class j
         """
 
         # implement here
