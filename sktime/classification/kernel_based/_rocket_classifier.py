@@ -142,41 +142,27 @@ class RocketClassifier(_DelegatedClassifier):
                 f"{self.VALID_MULTIVAR_VALUES}, but found {use_multivariate}"
             )
 
+        common_params = {
+            "num_kernels": self.num_kernels,
+            "random_state": self.random_state,
+            "max_dilations_per_kernel": self.max_dilations_per_kernel,
+            "n_jobs": self._threads_to_use,
+        }
+
         if rocket_transform == "rocket":
-            univar_rocket = Rocket(
-                num_kernels=self.num_kernels,
-                random_state=self.random_state,
-                n_jobs=self._threads_to_use,
-            )
+            del common_params["max_dilations_per_kernel"]
+            univar_rocket = Rocket(**common_params)
             multivar_rocket = univar_rocket
+
         elif rocket_transform == "minirocket":
-            multivar_rocket = MiniRocketMultivariate(
-                num_kernels=self.num_kernels,
-                max_dilations_per_kernel=self.max_dilations_per_kernel,
-                random_state=self.random_state,
-                n_jobs=self._threads_to_use,
-            )
-            univar_rocket = MiniRocket(
-                num_kernels=self.num_kernels,
-                max_dilations_per_kernel=self.max_dilations_per_kernel,
-                random_state=self.random_state,
-                n_jobs=self._threads_to_use,
-            )
+            multivar_rocket = MiniRocketMultivariate(**common_params)
+            univar_rocket = MiniRocket(**common_params)
+
         elif self.rocket_transform == "multirocket":
-            multivar_rocket = MultiRocketMultivariate(
-                num_kernels=self.num_kernels,
-                max_dilations_per_kernel=self.max_dilations_per_kernel,
-                n_features_per_kernel=self.n_features_per_kernel,
-                random_state=self.random_state,
-                n_jobs=self._threads_to_use,
-            )
-            univar_rocket = MultiRocket(
-                num_kernels=self.num_kernels,
-                max_dilations_per_kernel=self.max_dilations_per_kernel,
-                n_features_per_kernel=self.n_features_per_kernel,
-                random_state=self.random_state,
-                n_jobs=self._threads_to_use,
-            )
+            common_params["n_features_per_kernel"] = self.n_features_per_kernel
+            multivar_rocket = MultiRocketMultivariate(**common_params)
+            univar_rocket = MultiRocket(**common_params)
+
         else:
             raise ValueError(
                 f"Invalid rocket_transform string, must be one of "
