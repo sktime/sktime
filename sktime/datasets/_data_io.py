@@ -160,11 +160,19 @@ def _load_dataset(name, split, return_X_y, return_type=None, extract_path=None):
                     + "is available on http://timeseriesclassification.com/.",
                 ) from e
 
-    return _load_provided_dataset(name, split, return_X_y, return_type, local_module, local_dirname)
+    return _load_provided_dataset(
+        name, split, return_X_y, return_type, local_module, local_dirname
+    )
 
 
-def _load_provided_dataset(name, split=None, return_X_y=True, return_type=None,
-                           local_module=MODULE, local_dirname=DIRNAME):
+def _load_provided_dataset(
+    name,
+    split=None,
+    return_X_y=True,
+    return_type=None,
+    local_module=MODULE,
+    local_dirname=DIRNAME,
+):
     """Load baked in time series classification datasets (helper function).
 
     Loads data from the provided files from sktime/datasets/data only.
@@ -178,7 +186,6 @@ def _load_provided_dataset(name, split=None, return_X_y=True, return_type=None,
         local_module: default = os.path.dirname(__file__),
         local_dirname: default = "data"
     """
-
     if isinstance(split, str):
         split = split.upper()
 
