@@ -115,7 +115,7 @@ def check_X(
     return X
 
 
-def check_y(y, enforce_min_instances=1, coerce_to_numpy=False):
+def check_y(y, enforce_min_instances=1, enforce_min_classes=1, coerce_to_numpy=False):
     """Validate input data.
 
     Parameters
@@ -123,6 +123,8 @@ def check_y(y, enforce_min_instances=1, coerce_to_numpy=False):
     y : pd.Series or np.array
     enforce_min_instances : int, optional (default=1)
         Enforce minimum number of instances.
+    enforce_min_classes : int, optional (default=1)
+        Enforce minimum number of unique class values in y.
     coerce_to_numpy : bool, optional (default=False)
         If True, y will be coerced to a numpy array.
 
@@ -143,6 +145,14 @@ def check_y(y, enforce_min_instances=1, coerce_to_numpy=False):
     if enforce_min_instances > 0:
         _enforce_min_instances(y, min_instances=enforce_min_instances)
 
+    if enforce_min_classes > 1:
+        n_classes = np.unique(y).shape[0]
+        if n_classes < enforce_min_classes:
+            raise ValueError(
+                f"Found array with: {n_classes} unique class values "
+                f"but a minimum of: {enforce_min_classes} is required."
+            )
+
     if coerce_to_numpy and isinstance(y, pd.Series):
         y = y.to_numpy()
 
@@ -155,6 +165,7 @@ def check_X_y(
     enforce_univariate=False,
     enforce_min_instances=1,
     enforce_min_columns=1,
+    enforce_min_classes=1,
     coerce_to_numpy=False,
     coerce_to_pandas=False,
 ):
@@ -170,6 +181,8 @@ def check_X_y(
         Enforce minimum number of instances.
     enforce_min_columns : int, optional (default=1)
         Enforce minimum number of columns (or time-series variables).
+    enforce_min_classes : int, optional (default=1)
+        Enforce minimum number of unique class values in y.
     coerce_to_numpy : bool, optional (default=False)
         If True, X will be coerced to a 3-dimensional numpy array.
     coerce_to_pandas : bool, optional (default=False)
