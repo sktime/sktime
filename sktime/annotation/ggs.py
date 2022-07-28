@@ -121,14 +121,14 @@ class GGS:
         m, n = data.shape
         orig_mean = np.mean(data, axis=0)
         orig_cov = np.cov(data.T, bias=True)
-        origLL = self.log_likelihood(orig_cov, m, n)
+        orig_ll = self.log_likelihood(orig_cov, m, n)
         totSum = m * (orig_cov + np.outer(orig_mean, orig_mean))
         mu_left = data[0, :] / n
         mu_right = (m * orig_mean - data[0, :]) / (m - 1)
         runSum = np.outer(data[0, :], data[0, :])
         # Loop through all samples
         # find point where breaking the segment would have the largest LL increase
-        minLL = origLL
+        minLL = orig_ll
         new_index = 0
         for i in range(2, m - 1):
             # Update parameters
@@ -160,7 +160,7 @@ class GGS:
                 minLL = LL
                 new_index = i
         # Return break, increase in LL
-        return new_index, minLL - origLL
+        return new_index, minLL - orig_ll
 
     def adjust_change_points(
         self, data: npt.ArrayLike, change_points: List[int], new_index: List[int]
