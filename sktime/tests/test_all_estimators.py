@@ -626,8 +626,10 @@ class QuickTester:
         return fixture_vars_return, fixture_prod_return, fixture_names_return
 
 
-class TestAllEstimators(BaseFixtureGenerator, QuickTester):
-    """Package level tests for all sktime estimators."""
+class TestAllObjects(BaseFixtureGenerator, QuickTester):
+    """Package level tests for all sktime objects."""
+
+    estimator_type_filter = "all"
 
     def test_create_test_instance(self, estimator_class):
         """Check first that create_test_instance logic works."""
@@ -920,6 +922,20 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
                 else:
                     assert param_value == param.default, param.name
 
+    def test_valid_estimator_class_tags(self, estimator_class):
+        """Check that Estimator class tags are in VALID_ESTIMATOR_TAGS."""
+        for tag in estimator_class.get_class_tags().keys():
+            assert tag in VALID_ESTIMATOR_TAGS
+
+    def test_valid_estimator_tags(self, estimator_instance):
+        """Check that Estimator tags are in VALID_ESTIMATOR_TAGS."""
+        for tag in estimator_instance.get_tags().keys():
+            assert tag in VALID_ESTIMATOR_TAGS
+
+
+class TestAllEstimators(BaseFixtureGenerator, QuickTester):
+    """Package level tests for all sktime estimators, i.e., objects with fit."""
+
     def test_fit_updates_state(self, estimator_instance, scenario):
         """Check fit/update state change."""
         # Check that fit updates the is-fitted states
@@ -1178,16 +1194,6 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
                 result_multiple_process,
                 err_msg="Results are not equal for n_jobs=1 and n_jobs=-1",
             )
-
-    def test_valid_estimator_class_tags(self, estimator_class):
-        """Check that Estimator class tags are in VALID_ESTIMATOR_TAGS."""
-        for tag in estimator_class.get_class_tags().keys():
-            assert tag in VALID_ESTIMATOR_TAGS
-
-    def test_valid_estimator_tags(self, estimator_instance):
-        """Check that Estimator tags are in VALID_ESTIMATOR_TAGS."""
-        for tag in estimator_instance.get_tags().keys():
-            assert tag in VALID_ESTIMATOR_TAGS
 
     def _get_err_msg(estimator):
         return (
