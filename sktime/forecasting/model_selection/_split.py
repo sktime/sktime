@@ -12,15 +12,10 @@ __all__ = [
 ]
 __author__ = ["mloning", "kkoralturk", "khrapovs"]
 
-import inspect
-import numbers
-import warnings
-from inspect import signature
 from typing import Iterator, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
-from sklearn.base import _pprint
 from sklearn.model_selection import train_test_split as _train_test_split
 
 from sktime.base import BaseObject
@@ -62,68 +57,6 @@ SPLIT_TYPE = Union[
 SPLIT_ARRAY_TYPE = Tuple[np.ndarray, np.ndarray]
 SPLIT_GENERATOR_TYPE = Iterator[SPLIT_ARRAY_TYPE]
 PANDAS_MTYPES = ["pd.DataFrame", "pd.Series", "pd-multiindex", "pd_multiindex_hier"]
-
-
-def _repr(self) -> str:
-    """Build repr for splitters similar to estimator objects."""
-    # This is copied from scikit-learn's BaseEstimator get_params method
-    cls = self.__class__
-    init = getattr(cls.__init__, "deprecated_original", cls.__init__)
-    # Ignore varargs, kw and default values and pop self
-    init_signature = signature(init)
-    # Consider the constructor parameters excluding 'self'
-    if init is object.__init__:
-        args = []
-    else:
-        args = sorted(
-            [
-                p.name
-                for p in init_signature.parameters.values()
-                if p.name != "self" and p.kind != p.VAR_KEYWORD
-            ]
-        )
-    class_name = self.__class__.__name__
-    params = dict()
-    for key in args:
-        # We need deprecation warnings to always be on in order to
-        # catch deprecated param values.
-        # This is set in utils/__init__.py but it gets overwritten
-        # when running under python3 somehow.
-        warnings.simplefilter("always", FutureWarning)
-        try:
-            with warnings.catch_warnings(record=True) as w:
-                value = getattr(self, key, None)
-                if value is None and hasattr(self, "cvargs"):
-                    value = self.cvargs.get(key, None)
-            if len(w) and w[0].category == FutureWarning:
-                # if the parameter is deprecated, don't show it
-                continue
-        finally:
-            warnings.filters.pop(0)
-        params[key] = value
-
-    def is_scalar_nan(x):
-        return bool(isinstance(x, numbers.Real) and np.isnan(x))
-
-    def has_changed(k, v):
-        init_params = init_signature.parameters
-        init_params = {name: param.default for name, param in init_params.items()}
-
-        if k not in init_params:  # happens if k is part of a **kwargs
-            return True
-        if init_params[k] == inspect._empty:  # k has no default value
-            return True
-
-        # Use repr as a last resort. It may be expensive.
-        if repr(v) != repr(init_params[k]) and not (
-            is_scalar_nan(init_params[k]) and init_params(v)
-        ):
-            return True
-        return False
-
-    params = {k: v for k, v in params.items() if has_changed(k, v)}
-
-    return "%s(%s)" % (class_name, _pprint(params, offset=len(class_name)))
 
 
 def _check_fh(fh: VALID_FORECASTING_HORIZON_TYPES) -> ForecastingHorizon:
@@ -700,9 +633,6 @@ class BaseSplitter(BaseObject):
             The forecasting horizon
         """
         return check_fh(self.fh)
-
-    def __repr__(self) -> str:
-        return _repr(self)
 
     @staticmethod
     def _get_train_window(
@@ -1400,9 +1330,9 @@ def _split_by_fh(
     """
     if X is not None:
         check_equal_time_index(y, X)
-    fh = check_fh(fh)
-    idx = fh.to_pandas()
     index = y.index
+    fh = check_fh(fh, freq=index)
+    idx = fh.to_pandas()
 
     if fh.is_relative:
         if not fh.is_all_out_of_sample():

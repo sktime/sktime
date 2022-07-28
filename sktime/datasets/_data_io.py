@@ -176,6 +176,7 @@ def _load_dataset(name, split, return_X_y, extract_path=None):
             result = load_from_tsfile_to_dataframe(abspath)
             X = pd.concat([X, pd.DataFrame(result[0])])
             y = pd.concat([y, pd.Series(result[1])])
+        X = X.reset_index(drop=True)
         y = pd.Series.to_numpy(y, dtype=str)
     else:
         raise ValueError("Invalid `split` value =", split)
@@ -219,6 +220,7 @@ def _load_provided_dataset(name, split=None, return_X_y=True, return_type=None):
             X = np.concatenate((X_train, X_test))
         elif isinstance(X_train, pd.DataFrame):
             X = pd.concat([X_train, X_test])
+            X = X.reset_index(drop=True)
         else:
             raise IOError(
                 f"Invalid data structure type {type(X_train)} for loading "

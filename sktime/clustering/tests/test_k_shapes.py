@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 """Tests for time series k-shapes."""
 import numpy as np
+import pytest
 
 from sktime.clustering.k_shapes import TimeSeriesKShapes
 from sktime.datasets import load_basic_motions
+from sktime.utils.validation._dependencies import _check_estimator_deps
 
 expected_results = [
     0,
@@ -98,6 +100,10 @@ expected_labels = [
 expected_score = 0.550860917533926
 
 
+@pytest.mark.skipif(
+    not _check_estimator_deps(TimeSeriesKShapes, severity="none"),
+    reason="skip test if required soft dependencies not available",
+)
 def test_kshapes():
     """Test implementation of Kshapes."""
     X_train, y_train = load_basic_motions(split="train")

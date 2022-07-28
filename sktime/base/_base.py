@@ -630,14 +630,6 @@ class TagAliaserMixin:
     ensure toremove this class as a parent of BaseObject or BaseEstimator.
     """
 
-    # dictionary of aliases
-    # key = old tag; value = new tag, aliased by old tag
-    alias_dict = {"capability:early_prediction": ""}
-
-    # dictionary of removal version
-    # key = old tag; value = version in which tag will be removed, as string
-    deprecate_dict = {"capability:early_prediction": "0.13.0"}
-
     def __init__(self):
         super(TagAliaserMixin, self).__init__()
 
@@ -795,7 +787,7 @@ class TagAliaserMixin:
                 warnings.warn(msg, category=DeprecationWarning)
 
 
-class BaseEstimator(TagAliaserMixin, BaseObject):
+class BaseEstimator(BaseObject):
     """Base class for defining estimators in sktime.
 
     Extends sktime's BaseObject to include basic functionality for fittable estimators.
