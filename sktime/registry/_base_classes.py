@@ -69,7 +69,7 @@ from sktime.dists_kernels._base import (
     BasePairwiseTransformerPanel,
 )
 from sktime.forecasting.base import BaseForecaster
-from sktime.forecasting.model_selection import BaseSplitter
+from sktime.forecasting.model_selection._split import BaseSplitter
 
 # from sktime.performance_metrics.base import BaseMetric
 from sktime.regression.base import BaseRegressor
