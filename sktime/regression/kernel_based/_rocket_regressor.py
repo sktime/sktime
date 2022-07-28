@@ -11,8 +11,8 @@ import numpy as np
 from sklearn.linear_model import RidgeCV
 from sklearn.preprocessing import StandardScaler
 
-from sktime.classification.kernel_based import RocketClassifier
 from sktime.regression._delegate import _DelegatedRegressor
+from sktime.regression.base import BaseRegressor
 from sktime.pipeline import make_pipeline
 from sktime.transformations.panel.rocket import (
     MiniRocket,
@@ -23,7 +23,7 @@ from sktime.transformations.panel.rocket import (
 )
 
 
-class RocketRegressor(_DelegatedRegressor, RocketClassifier):
+class RocketRegressor(_DelegatedRegressor, BaseRegressor):
     """Regressor wrapped for the Rocket transformer using RidgeCV regressor.
 
     This regressor simply transforms the input data using the Rocket [1]_
@@ -173,3 +173,41 @@ class RocketRegressor(_DelegatedRegressor, RocketClassifier):
 
         if not use_multivariate:
             self.set_tags(**{"capability:multivariate": False})
+
+    @property
+    def estimator_(self):
+        """Shorthand for the internal estimator that is fitted."""
+        return self._get_delegate()
+
+    def _get_delegate(self):
+        use_multivariate = self.use_multivariate
+        if use_multivariate == "auto":
+            code_dict = {True: "yes", False: "no"}
+            use_multivariate = code_dict[not self._X_metadata["is_univariate"]]
+
+        if use_multivariate == "yes":
+            delegate = self.multivar_rocket_
+        else:
+            delegate = self.univar_rocket_
+
+        return delegate
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default={}
+            Parameters to create testing instances of the class.
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`.
+        """
+        return {"num_kernels": 20}
