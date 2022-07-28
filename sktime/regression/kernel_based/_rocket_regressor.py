@@ -103,8 +103,11 @@ class RocketRegressor(_DelegatedRegressor, BaseRegressor):
     _tags = {
         "capability:multivariate": True,
         "capability:multithreading": True,
-        "regressor_type": "kernel",
     }
+
+    # valid rocket strings for input validity checking
+    VALID_ROCKET_STRINGS = ["rocket", "minirocket", "multirocket"]
+    VALID_MULTIVAR_VALUES = ["auto", "yes", "no"]
 
     def __init__(
         self,
