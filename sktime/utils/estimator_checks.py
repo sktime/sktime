@@ -69,11 +69,11 @@ def check_estimator(
     All tests PASSED!
     {'test_score[ThetaForecaster-y:1cols-fh=1]': 'PASSED'}
     """
+    from sktime.base import BaseEstimator
     from sktime.classification.early_classification.tests.test_all_early_classifiers import (  # noqa E501
         TestAllEarlyClassifiers,
     )
     from sktime.classification.tests.test_all_classifiers import TestAllClassifiers
-    from sktime.base import BaseEstimator
     from sktime.forecasting.tests.test_all_forecasters import TestAllForecasters
     from sktime.registry import scitype
     from sktime.regression.tests.test_all_regressors import TestAllRegressors
