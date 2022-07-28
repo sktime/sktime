@@ -591,7 +591,9 @@ class _RecursiveReducer(_Reducer):
             last[:, 0, :window_length] = y_last
             if X is not None:
                 last[:, 1:, :window_length] = X_last.T
-                last[:, 1:, window_length:] = X.T
+                last[:, 1:, window_length:] = X.iloc[
+                    -(last.shape[2] - window_length) :, :
+                ].T
 
             # Recursively generate predictions by iterating over forecasting horizon.
             for i in range(fh_max):
