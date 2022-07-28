@@ -67,11 +67,13 @@ class BaseClassifier(BaseEstimator, ABC):
     }
 
     def __init__(self):
-        self.classes_ = []
-        self.n_classes_ = 0
-        self.fit_time_ = 0
+        # reserved attributes written to in fit
+        self.classes_ = []  # classes seen in y, unique labels
+        self.n_classes_ = 0  # number of unique classes in y
+        self.fit_time_ = 0  # time elapsed in last fit call
         self._class_dictionary = {}
         self._threads_to_use = 1
+        self._X_metadata = []  # metadata/properties of X seen in fit
 
         # required for compatability with some sklearn interfaces
         # i.e. CalibratedClassifierCV
@@ -170,6 +172,7 @@ class BaseClassifier(BaseEstimator, ABC):
 
         self.classes_ = np.unique(y)
         self.n_classes_ = self.classes_.shape[0]
+        self._X_metadata = X_metadata
         self._class_dictionary = {}
         for index, class_val in enumerate(self.classes_):
             self._class_dictionary[class_val] = index
@@ -524,9 +527,10 @@ class BaseClassifier(BaseEstimator, ABC):
             2nd dimension indices correspond to possible labels (integers)
             (i, j)-th entry is predictive probability that i-th instance is of class j
         """
-        dists = np.zeros((X.shape[0], self.n_classes_))
         preds = self._predict(X)
-        for i in range(0, X.shape[0]):
+        n_pred = len(preds)
+        dists = np.zeros((n_pred, self.n_classes_))
+        for i in range(n_pred):
             dists[i, self._class_dictionary[preds[i]]] = 1
 
         return dists
