@@ -1,14 +1,12 @@
 # -*- coding: utf-8 -*-
 """KNN time series classification.
 
- Built on sklearn KNeighborsClassifier, this class supports a range of distance
- measure specifically for time series. These distance functions are defined in numba
- in sktime.distances. Python versions are in sktime.distances.elastic
- but these are orders of magnitude slower.
+This class is a KNN classifier which supports time series distance measures.
+The class has hardcoded string references to numba based distances in sktime.distances.
+It can also be used with callables, or sktime (pairwise transformer) estimators.
 
-Please note that many aspects of this class are taken from scikit-learn's
-KNeighborsTimeSeriesClassifier class with necessary changes to enable use with time
-series classification data and distance measures.
+This is a direct wrap or sklearn KNeighbors, with added functionality that allows
+time series distances to be passed, and the sktime time series classifier interface.
 
 todo: add a utility method to set keyword args for distance measure parameters.
 (e.g.  handle the parameter name(s) that are passed as metric_params automatically,
@@ -19,65 +17,48 @@ param_values_to_set=None,
 param_names=None)
 """
 
-__author__ = ["jasonlines", "TonyBagnall", "chrisholder"]
+__author__ = ["jasonlines", "TonyBagnall", "chrisholder", "fkiraly"]
 __all__ = ["KNeighborsTimeSeriesClassifier"]
 
-from functools import partial
+from inspect import signature
 
 import numpy as np
-from joblib import effective_n_jobs
-from scipy import stats
-from sklearn.metrics import pairwise_distances_chunked
-from sklearn.neighbors import KNeighborsClassifier as _KNeighborsClassifier
-from sklearn.neighbors._base import _check_weights, _get_weights
-from sklearn.utils.extmath import weighted_mode
-from sklearn.utils.multiclass import check_classification_targets
-from sklearn.utils.validation import check_array
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.neighbors._base import _check_weights
 
 from sktime.classification.base import BaseClassifier
+from sktime.datatypes import check_is_mtype
+from sktime.distances import pairwise_distance
 
-# New imports using Numba
-from sktime.distances import distance_factory
+# add new distance string codes here
+DISTANCES_SUPPORTED = [
+    "euclidean",
+    # Euclidean will default to the base class distance
+    "squared",
+    "dtw",
+    "ddtw",
+    "wdtw",
+    "wddtw",
+    "lcss",
+    "edr",
+    "erp",
+    "msm",
+    "twe",
+]
 
 
-class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
+class KNeighborsTimeSeriesClassifier(BaseClassifier):
     """KNN Time Series Classifier.
 
-    An adapted version of the scikit-learn KNeighborsClassifier to work with
-    time series data.
+    An adapted version of the scikit-learn KNeighborsClassifier for time series data.
 
-    Necessary changes required for time series data:
-        -   calls to X.shape in kneighbors, predict and predict_proba.
-            In the base class, these methods contain:
-                n_samples, _ = X.shape
-            This however assumes that data must be 2d (a set of multivariate
-            time series is 3d). Therefore these methods
-            needed to be overridden to change this call to the following to
-            support 3d data:
-                n_samples = X.shape[0]
-        -   check array has been disabled. This method allows nd data via an
-        argument in the method header. However, there
-            seems to be no way to set this in the classifier and allow it to
-            propagate down to the method. Therefore, this
-            method has been temporarily disabled (and then re-enabled). It
-            is unclear how to fix this issue without either
-            writing a new classifier from scratch or changing the
-            scikit-learn implementation. TO-DO: find permanent
-            resolution to this issue (raise as an issue on sklearn GitHub?)
+    This class is a KNN classifier which supports time series distance measures.
+    It has hardcoded string references to numba based distances in sktime.distances,
+    and can also be used with callables, or sktime (pairwise transformer) estimators.
 
     Parameters
     ----------
     n_neighbors : int, set k for knn (default =1)
-    distance : distance measure for time series: {'dtw','ddtw',
-        'wdtw','lcss','erp','msm','twe'}: default ='dtw'
-    distance_params   : dictionary for metric parameters: default = None
-    algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, default='brute'
-        Algorithm used to compute the nearest neighbors:
-        - 'ball_tree' will use :class:`BallTree`
-        - 'kd_tree' will use :class:`KDTree`
-        - 'brute' will use a brute-force search.
-        - 'auto' will attempt to decide the most appropriate algorithm
-          based on the values passed to :meth:`fit` method.
     weights : {'uniform', 'distance'} or callable, default='uniform'
         Weight function used in prediction.  Possible values:
         - 'uniform' : uniform weights.  All points in each neighborhood
@@ -88,6 +69,31 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         - [callable] : a user-defined function which accepts an
           array of distances, and returns an array of the same shape
           containing the weights.
+    algorithm : str, optional. default = 'brute'
+        search method for neighbours
+        one of {'auto’, 'ball_tree', 'kd_tree', 'brute'}
+    distance : str or callable, optional. default ='dtw'
+        distance measure between time series
+        if str, must be one of the following strings:
+            'euclidean', 'squared', 'dtw', 'ddtw', 'wdtw', 'wddtw',
+            'lcss', 'edr', 'erp', 'msm', 'twe'
+        this will substitute a hard-coded distance metric from sktime.distances
+        If non-class callable, parameters can be passed via distance_params
+            Example: knn_dtw = KNeighborsTimeSeriesClassifier(
+                                    distance='dtw', distance_params={'epsilon':0.1})
+        if any callable, must be of signature (X: Panel, X2: Panel) -> np.ndarray
+            output must be mxn array if X is Panel of m Series, X2 of n Series
+            if distance_mtype is not set, must be able to take
+                X, X2 which are pd_multiindex and numpy3D mtype
+        can be pairwise panel transformer inheriting from BasePairwiseTransformerPanel
+    distance_params : dict, optional. default = None.
+        dictionary for distance parameters, in case that distance is a str or callable
+    distance_mtype : str, or list of str optional. default = None.
+        mtype that distance expects for X and X2, if a callable
+            only set this if distance is not BasePairwiseTransformerPanel descendant
+    pass_train_distances : bool, optional, default = False.
+        Whether distances between training points are computed and passed to sklearn.
+        Passing is superfluous for algorithm='brute', but may have impact otherwise.
     leaf_size : int, default=30
         Leaf size passed to BallTree or KDTree.  This can affect the
         speed of the construction and query, as well as the memory
@@ -114,6 +120,7 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
 
     _tags = {
         "capability:multivariate": True,
+        "X_inner_mtype": ["pd-multiindex", "numpy3D"],
         "classifier_type": "distance",
     }
 
@@ -121,102 +128,101 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         self,
         n_neighbors=1,
         weights="uniform",
+        algorithm="brute",
         distance="dtw",
         distance_params=None,
-        algorithm="brute",
+        distance_mtype=None,
+        pass_train_distances=False,
         leaf_size=30,
         n_jobs=None,
     ):
         self.n_neighbors = n_neighbors
         self.weights = _check_weights(weights)
+        self.algorithm = algorithm
         self.distance = distance
         self.distance_params = distance_params
-        if isinstance(self.distance, str):
-            distance = distance_factory(metric=self.distance)
-
-        self.algorithm = algorithm
+        self.distance_mtype = distance_mtype
+        self.pass_train_distances = pass_train_distances
         self.leaf_size = leaf_size
         self.n_jobs = n_jobs
 
-        super(KNeighborsTimeSeriesClassifier, self).__init__(
+        super(KNeighborsTimeSeriesClassifier, self).__init__()
+
+        # input check for supported distance strings
+        if isinstance(distance, str) and distance not in DISTANCES_SUPPORTED:
+            raise ValueError(
+                f"Unrecognised distance measure string: {distance}. "
+                f"Allowed values for string codes are: {DISTANCES_SUPPORTED}. "
+                "Alternatively, pass a callable distance measure into the constuctor."
+            )
+
+        self.knn_estimator_ = KNeighborsClassifier(
             n_neighbors=n_neighbors,
             algorithm=algorithm,
-            metric=distance,
-            metric_params=None,  # Extra distance params handled in _fit
+            metric="precomputed",
+            metric_params=distance_params,
             leaf_size=leaf_size,
             n_jobs=n_jobs,
+            weights=weights,
         )
-        BaseClassifier.__init__(self)
 
-        # We need to add is-fitted state when inheriting from scikit-learn
-        self._is_fitted = False
+        # the distances in sktime.distances want numpy3D
+        #   otherwise all Panel formats are ok
+        if isinstance(self.distance, str):
+            self.set_tags(X_inner_mtype="numpy3D")
+        elif distance_mtype is not None:
+            self.set_tags(X_inner_mtype=distance_mtype)
 
-    def fit(self, X, y, **kwargs):
-        """Override fit is required to sort out the multiple inheritance."""
-        return BaseClassifier.fit(self, X, y, **kwargs)
+    def _distance(self, X, X2=None):
+        """Compute distance - unified interface to str code and callable."""
+        distance = self.distance
+        distance_params = self.distance_params
+        if distance_params is None:
+            distance_params = {}
+
+        if isinstance(distance, str):
+            return pairwise_distance(X, X2, distance, **distance_params)
+        else:
+            if X2 is not None:
+                return distance(X, X2, **distance_params)
+            # if X2 is None, check if distance allows None X2 to mean "X2=X"
+            else:
+                sig = signature(distance).parameters
+                X2_sig = sig[list(sig.keys())[1]]
+                if X2_sig.default is not None:
+                    return distance(X, X2, **distance_params)
+                else:
+                    return distance(X, **distance_params)
 
     def _fit(self, X, y):
         """Fit the model using X as training data and y as target values.
 
-        Input number of cases (n), with series of dimension (d), each series length (d).
-
         Parameters
         ----------
-        X : sktime-format pandas dataframe with shape(n,d),
-        or numpy ndarray with shape(n,d,m)
-
+        X : sktime comatible Panel data container, of mtype X_inner_mtype, with n series
+            data to fit the estimator to
         y : {array-like, sparse matrix}
             Target values of shape = [n]
         """
-        if isinstance(self.distance, str):
-            if self.distance_params is None:
-                self.metric = distance_factory(X[0], X[0], metric=self.distance)
-            else:
-                self.metric = distance_factory(
-                    X[0], X[0], metric=self.distance, **self.distance_params
-                )
-        check_classification_targets(y)
-        if y.ndim == 1 or y.ndim == 2 and y.shape[1] == 1:
-            self.outputs_2d_ = False
-            y = y.reshape((-1, 1))
+        # store full data as indexed X
+        self._X = X
+
+        if self.pass_train_distances:
+            dist_mat = self._distance(X)
         else:
-            self.outputs_2d_ = True
+            # if we do not want/need to pass train-train distances,
+            #   we still need to pass a zeros matrix, this means "do not consider"
+            # citing the sklearn KNeighborsClassifier docs on distance matrix input:
+            # "X may be a sparse graph, in which case only “nonzero” elements
+            #   may be considered neighbors."
+            X_inner_mtype = self.get_tag("X_inner_mtype")
+            _, _, X_meta = check_is_mtype(X, X_inner_mtype, return_metadata=True)
+            n = X_meta["n_instances"]
+            dist_mat = np.zeros([n, n], dtype="float")
 
-        self.classes_ = []
-        self._y = np.empty(y.shape, dtype=int)
-        for k in range(self._y.shape[1]):
-            classes, self._y[:, k] = np.unique(y[:, k], return_inverse=True)
-            self.classes_.append(classes)
+        self.knn_estimator_.fit(dist_mat, y)
 
-        if not self.outputs_2d_:
-            self.classes_ = self.classes_[0]
-            self._y = self._y.ravel()
-
-        if hasattr(check_array, "__wrapped__"):
-            temp = check_array.__wrapped__.__code__
-            check_array.__wrapped__.__code__ = _check_array_ts.__code__
-        else:
-            temp = check_array.__code__
-            check_array.__code__ = _check_array_ts.__code__
-        #  this is not fx = self._fit(X, y) in order to maintain backward
-        # compatibility with scikit learn 0.23, where _fit does not take an arg y
-        fx = super()._fit(X)
-
-        if hasattr(check_array, "__wrapped__"):
-            check_array.__wrapped__.__code__ = temp
-        else:
-            check_array.__code__ = temp
-
-        self._is_fitted = True
-        return fx
-
-    def _more_tags(self):
-        """Remove the need to pass y with _fit.
-
-        Overrides the scikit learn (>0.23) base class setting where 'requires_y' is true
-        so we can call fx = self._fit(X) and maintain backward compatibility.
-        """
-        return {"requires_y": False}
+        return self
 
     def kneighbors(self, X, n_neighbors=None, return_distance=True):
         """Find the K-neighbors of a point.
@@ -225,10 +231,7 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
 
         Parameters
         ----------
-        X : sktime-format pandas dataframe with shape([n_cases,n_dimensions]),
-        or numpy ndarray with shape([n_cases,n_readings,n_dimensions])
-        y : {array-like, sparse matrix}
-            Target values of shape = [n_samples]
+        X : sktime-compatible data format, Panel or Series, with n_samples series
         n_neighbors : int
             Number of neighbors to get (default is the value
             passed to the constructor).
@@ -245,163 +248,43 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         """
         self.check_is_fitted()
 
-        if n_neighbors is None:
-            n_neighbors = self.n_neighbors
-        elif n_neighbors <= 0:
-            raise ValueError("Expected n_neighbors > 0. Got %d" % n_neighbors)
-        else:
-            if not np.issubdtype(type(n_neighbors), np.integer):
-                raise TypeError(
-                    "n_neighbors does not take %s value, "
-                    "enter integer value" % type(n_neighbors)
-                )
+        # self._X should be the stored _X
+        dist_mat = self._distance(X, self._X)
 
-        if X is not None:
-            query_is_train = False
-            X = check_array(X, accept_sparse="csr", allow_nd=True)
-        else:
-            query_is_train = True
-            X = self._fit_X
-            # Include an extra neighbor to account for the sample itself being
-            # returned, which is removed later
-            n_neighbors += 1
+        result = self.knn_estimator_.kneighbors(
+            dist_mat, n_neighbors=n_neighbors, return_distance=return_distance
+        )
 
-        train_size = self._fit_X.shape[0]
-        if n_neighbors > train_size:
-            raise ValueError(
-                "Expected n_neighbors <= n_samples, "
-                " but n_samples = %d, n_neighbors = %d" % (train_size, n_neighbors)
-            )
-        n_samples = X.shape[0]
-        sample_range = np.arange(n_samples)[:, None]
+        # result is either dist, or (dist, ind) pair, depending on return_distance
+        return result
 
-        n_jobs = effective_n_jobs(self.n_jobs)
-        if self._fit_method == "brute":
-
-            reduce_func = partial(
-                self._kneighbors_reduce_func,
-                n_neighbors=n_neighbors,
-                return_distance=return_distance,
-            )
-
-            # for efficiency, use squared euclidean distances
-            kwds = (
-                {"squared": True}
-                if self.effective_metric_ == "euclidean"
-                else self.effective_metric_params_
-            )
-
-            result = pairwise_distances_chunked(
-                X,
-                self._fit_X,
-                reduce_func=reduce_func,
-                metric=self.effective_metric_,
-                n_jobs=n_jobs,
-                **kwds,
-            )
-        else:
-            raise ValueError("internal: _fit_method not recognized")
-
-        if return_distance:
-            dist, neigh_ind = zip(*result)
-            result = np.vstack(dist), np.vstack(neigh_ind)
-        else:
-            result = np.vstack(result)
-
-        if not query_is_train:
-            return result
-        else:
-            # If the query data is the same as the indexed data, we would like
-            # to ignore the first nearest neighbor of every sample, i.e
-            # the sample itself.
-            if return_distance:
-                dist, neigh_ind = result
-            else:
-                neigh_ind = result
-
-            sample_mask = neigh_ind != sample_range
-
-            # Corner case: When the number of duplicates are more
-            # than the number of neighbors, the first NN will not
-            # be the sample, but a duplicate.
-            # In that case mask the first duplicate.
-            dup_gr_nbrs = np.all(sample_mask, axis=1)
-            sample_mask[:, 0][dup_gr_nbrs] = False
-
-            neigh_ind = np.reshape(neigh_ind[sample_mask], (n_samples, n_neighbors - 1))
-
-            if return_distance:
-                dist = np.reshape(dist[sample_mask], (n_samples, n_neighbors - 1))
-                return dist, neigh_ind
-            return neigh_ind
-
-    def predict(self, X, **kwargs) -> np.ndarray:
-        """Predict wrapper."""
-        return BaseClassifier.predict(self, X, **kwargs)
-
-    def _predict(self, X) -> np.ndarray:
+    def _predict(self, X):
         """Predict the class labels for the provided data.
 
         Parameters
         ----------
-        X : sktime-format pandas dataframe or array-like, shape (n_query,
-        n_features), or (n_query, n_indexed) if metric == 'precomputed' test samples.
+        X : sktime-compatible Panel data, of mtype X_inner_mtype, with n_samples series
+            data to predict class labels for
 
         Returns
         -------
         y : array of shape [n_samples] or [n_samples, n_outputs]
             Class labels for each data sample.
         """
-        self.check_is_fitted()
+        # self._X should be the stored _X
+        dist_mat = self._distance(X, self._X)
 
-        if hasattr(check_array, "__wrapped__"):
-            temp = check_array.__wrapped__.__code__
-            check_array.__wrapped__.__code__ = _check_array_ts.__code__
-        else:
-            temp = check_array.__code__
-            check_array.__code__ = _check_array_ts.__code__
+        y_pred = self.knn_estimator_.predict(dist_mat)
 
-        neigh_dist, neigh_ind = self.kneighbors(X)
-        classes_ = self.classes_
-        _y = self._y
-        if not self.outputs_2d_:
-            _y = self._y.reshape((-1, 1))
-            classes_ = [self.classes_]
-
-        n_outputs = len(classes_)
-        n_samples = X.shape[0]
-        weights = _get_weights(neigh_dist, self.weights)
-
-        y_pred = np.empty((n_samples, n_outputs), dtype=classes_[0].dtype)
-        for k, classes_k in enumerate(classes_):
-            if weights is None:
-                mode, _ = stats.mode(_y[neigh_ind, k], axis=1)
-            else:
-                mode, _ = weighted_mode(_y[neigh_ind, k], weights, axis=1)
-
-            mode = np.asarray(mode.ravel(), dtype=np.intp)
-            y_pred[:, k] = classes_k.take(mode)
-
-        if not self.outputs_2d_:
-            y_pred = y_pred.ravel()
-
-        if hasattr(check_array, "__wrapped__"):
-            check_array.__wrapped__.__code__ = temp
-        else:
-            check_array.__code__ = temp
         return y_pred
 
-    def predict_proba(self, X, **kwargs) -> np.ndarray:
-        """Predict proba wrapper."""
-        return BaseClassifier.predict_proba(self, X, **kwargs)
-
-    def _predict_proba(self, X) -> np.ndarray:
+    def _predict_proba(self, X):
         """Return probability estimates for the test data X.
 
         Parameters
         ----------
-        X : 3D numpy array dimensions (n,d,m) or (n_query, n_indexed) if metric ==
-        'precomputed' Test samples.
+        X : sktime-compatible Panel data, of mtype X_inner_mtype, with n_samples series
+            data to predict class labels for
 
         Returns
         -------
@@ -410,56 +293,12 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
             The class probabilities of the input samples. Classes are ordered
             by lexicographic order.
         """
-        self.check_is_fitted()
+        # self._X should be the stored _X
+        dist_mat = self._distance(X, self._X)
 
-        if hasattr(check_array, "__wrapped__"):
-            temp = check_array.__wrapped__.__code__
-            check_array.__wrapped__.__code__ = _check_array_ts.__code__
-        else:
-            temp = check_array.__code__
-            check_array.__code__ = _check_array_ts.__code__
+        y_pred = self.knn_estimator_.predict_proba(dist_mat)
 
-        X = check_array(X, accept_sparse="csr")
-
-        neigh_dist, neigh_ind = self.kneighbors(X)
-
-        classes_ = self.classes_
-        _y = self._y
-        if not self.outputs_2d_:
-            _y = self._y.reshape((-1, 1))
-            classes_ = [self.classes_]
-
-        n_samples = X.shape[0]
-
-        weights = _get_weights(neigh_dist, self.weights)
-        if weights is None:
-            weights = np.ones_like(neigh_ind)
-
-        all_rows = np.arange(X.shape[0])
-        probabilities = []
-        for k, classes_k in enumerate(classes_):
-            pred_labels = _y[:, k][neigh_ind]
-            proba_k = np.zeros((n_samples, classes_k.size))
-
-            # a simple ':' index doesn't work right
-            for i, idx in enumerate(pred_labels.T):  # loop is O(n_neighbors)
-                proba_k[all_rows, idx] += weights[:, i]
-
-            # normalize 'votes' into real [0,1] probabilities
-            normalizer = proba_k.sum(axis=1)[:, np.newaxis]
-            normalizer[normalizer == 0.0] = 1.0
-            proba_k /= normalizer
-
-            probabilities.append(proba_k)
-
-        if not self.outputs_2d_:
-            probabilities = probabilities[0]
-
-        if hasattr(check_array, "__wrapped__"):
-            check_array.__wrapped__.__code__ = temp
-        else:
-            check_array.__code__ = temp
-        return probabilities
+        return y_pred
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -483,11 +322,16 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
-        return {"distance": "euclidean"}
+        # non-default distance and algorithm
+        params1 = {"distance": "euclidean"}
 
+        # testing distance_params
+        params2 = {"distance": "dtw", "distance_params": {"epsilon": 0.1}}
 
-# overwrite sklearn internal checks, this is really hacky
-# we now need to replace: check_array.__wrapped__.__code__ since it's
-# wrapped by a future warning decorator
-def _check_array_ts(array, *args, **kwargs):
-    return array
+        # testing that callables/classes can be passed
+        from sktime.dists_kernels.compose_tab_to_panel import AggrDist
+
+        dist = AggrDist.create_test_instance()
+        params3 = {"distance": dist}
+
+        return [params1, params2, params3]
