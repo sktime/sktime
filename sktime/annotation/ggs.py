@@ -32,11 +32,16 @@ class GGS:
 
     Parameters
     ----------
-        k_max: maximum number of change points to find
-        lamb: regularization parameter
-        max_shuffles: maximum number of shuffles
-        verbose: If ``True`` verbose output is enabled.
-        random_state: either random seed or an instance of ``np.random.RandomState``
+        k_max: int, default=10
+            Maximum number of change points to find
+        lamb: : float, default=1.0
+            Regularization parameter lambda
+        max_shuffles: int, default=250
+            maximum number of shuffles
+        verbose: bool, default=False
+            If ``True`` verbose output is enabled.
+        random_state: int or np.random.RandomState, default=None
+            Either random seed or an instance of ``np.random.RandomState``
     """
 
     k_max: int = 10
@@ -300,15 +305,15 @@ class GreedyGaussianSegmentation:
 
     Parameters
     ----------
-        k_max: int
-            Maximum number of change points to find, default=10
-        lamb: : float
-            Regularization parameter lambda, default=1.0
-        max_shuffles: int
-            maximum number of shuffles, default=
-        verbose: bool
+        k_max: int, default=10
+            Maximum number of change points to find
+        lamb: : float, default=1.0
+            Regularization parameter lambda
+        max_shuffles: int, default=250
+            maximum number of shuffles
+        verbose: bool, default=False
             If ``True`` verbose output is enabled.
-        random_state: int or np.random.RandomState
+        random_state: int or np.random.RandomState, default=None
             Either random seed or an instance of ``np.random.RandomState``
     """
 
