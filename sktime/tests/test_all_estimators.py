@@ -629,7 +629,7 @@ class QuickTester:
 class TestAllObjects(BaseFixtureGenerator, QuickTester):
     """Package level tests for all sktime objects."""
 
-    estimator_type_filter = "all"
+    estimator_type_filter = "object"
 
     def test_create_test_instance(self, estimator_class):
         """Check first that create_test_instance logic works."""

@@ -60,7 +60,7 @@ import pandas as pd
 
 from sktime.alignment.base import BaseAligner
 from sktime.annotation.base import BaseSeriesAnnotator
-from sktime.base import BaseObject
+from sktime.base import BaseEstimator, BaseObject
 from sktime.classification.base import BaseClassifier
 from sktime.classification.early_classification import BaseEarlyClassifier
 from sktime.clustering.base import BaseClusterer
@@ -82,7 +82,8 @@ from sktime.transformations.base import (
 )
 
 BASE_CLASS_REGISTER = [
-    ("all", BaseObject, "all objects"),
+    ("object", BaseObject, "object"),
+    ("estimator", BaseEstimator, "estimator = object with fit"),
     ("aligner", BaseAligner, "time series aligner or sequence aligner"),
     ("classifier", BaseClassifier, "time series classifier"),
     ("clusterer", BaseClusterer, "time series clusterer"),
