@@ -69,6 +69,7 @@ class TSFreshClassifier(BaseClassifier):
         "capability:multithreading": True,
         "classifier_type": "feature",
         "python_version": "<3.10",
+        "python_dependencies": "tsfresh",
     }
 
     def __init__(

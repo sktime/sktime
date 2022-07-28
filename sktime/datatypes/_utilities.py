@@ -296,7 +296,9 @@ def get_cutoff(
     # pd-multiindex (Panel) and pd_multiindex_hier (Hierarchical)
     if isinstance(obj, pd.DataFrame) and isinstance(obj.index, pd.MultiIndex):
         idx = obj.index
-        series_idx = [obj.loc[x].index.get_level_values(-1) for x in idx.droplevel(-1)]
+        series_idx = [
+            obj.loc[x].index.get_level_values(-1) for x in idx.droplevel(-1).unique()
+        ]
         cutoffs = [sub_idx(x, ix, return_index) for x in series_idx]
         return agg(cutoffs)
 
@@ -330,9 +332,11 @@ def update_data(X, X_new=None):
     if X_new is None:
         return X
 
-    # if X is vectorized, unwrap it first
+    # if X or X_new is vectorized, unwrap it first
     if isinstance(X, VectorizedDF):
         X = X.X
+    if isinstance(X_new, VectorizedDF):
+        X_new = X_new.X
     # we want to ensure that X is either numpy (1D, 2D, 3D)
     # or in one of the long pandas formats
     X = convert_to(
