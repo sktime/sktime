@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """RandOm Convolutional KErnel Transform (Rocket) regressor.
 
-Pipeline classifier using the ROCKET transformer and RidgeCV estimator.
+Pipeline regressor using the ROCKET transformer and RidgeCV estimator.
 """
 
 __author__ = ["fkiraly"]
@@ -26,7 +26,7 @@ from sktime.transformations.panel.rocket import (
 class RocketRegressor(_DelegatedRegressor, RocketClassifier):
     """Regressor wrapped for the Rocket transformer using RidgeCV regressor.
 
-    This classifier simply transforms the input data using the Rocket [1]_
+    This regressor simply transforms the input data using the Rocket [1]_
     transformer and builds a RidgeCV estimator using the transformed data.
 
     Shorthand for the pipeline
@@ -80,13 +80,7 @@ class RocketRegressor(_DelegatedRegressor, RocketClassifier):
 
     See Also
     --------
-    Rocket
-
-    Notes
-    -----
-    For the Java version, see
-    `TSML <https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/
-    tsml/classifiers/shapelet_based/ROCKETClassifier.java>`_.
+    Rocket, RocketClassifier
 
     References
     ----------
@@ -109,7 +103,7 @@ class RocketRegressor(_DelegatedRegressor, RocketClassifier):
     _tags = {
         "capability:multivariate": True,
         "capability:multithreading": True,
-        "classifier_type": "kernel",
+        "regressor_type": "kernel",
     }
 
     def __init__(
