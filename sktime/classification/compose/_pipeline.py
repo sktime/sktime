@@ -423,7 +423,7 @@ class SklearnClassifierPipeline(ClassifierPipeline):
 
         # can handle multivariate iff all transformers can
         # sklearn transformers always support multivariate
-        multivariate = self.transformers_.get_tag("univariate-only", True)
+        multivariate = not self.transformers_.get_tag("univariate-only", True)
         # can handle missing values iff transformer chain removes missing data
         # sklearn classifiers might be able to handle missing data (but no tag there)
         # so better set the tag liberally
@@ -546,8 +546,12 @@ class SklearnClassifierPipeline(ClassifierPipeline):
         y : predictions of probabilities for class values of X, np.ndarray
         """
         Xt = self.transformers_.transform(X)
-        Xt_sklearn = self._convert_X_to_sklearn(Xt)
-        return self.classifier_.predict_proba(Xt_sklearn)
+        if hasattr(self.classifier_, "predict_proba"):
+            Xt_sklearn = self._convert_X_to_sklearn(Xt)
+            return self.classifier_.predict_proba(Xt_sklearn)
+        else:
+            # if sklearn classifier does not have predict_proba
+            return BaseClassifier._predict_proba(self, X)
 
     def set_params(self, **kwargs):
         """Set the parameters of estimator in `transformers`.
