@@ -317,10 +317,23 @@ class GreedyGaussianSegmentation:
             Either random seed or an instance of ``np.random.RandomState``
     """
 
-    def __init__(self, **kwargs):
-        self.kwargs = kwargs
+    def __init__(
+        self,
+        k_max: int = 10,
+        lamb: float = 1.0,
+        max_shuffles: int = 250,
+        verbose: bool = False,
+        random_state: int = None,
+    ):
+
         self._adaptee_class = GGS
-        self._adaptee = self._adaptee_class(**self.kwargs)
+        self._adaptee = self._adaptee_class(
+            k_max=k_max,
+            lamb=lamb,
+            max_shuffles=max_shuffles,
+            verbose=verbose,
+            random_state=random_state,
+        )
 
     def fit(self, X: npt.ArrayLike, y: npt.ArrayLike = None):
         """Fit method for compatibility with sklearn-type estimator interface.
