@@ -846,7 +846,8 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
 
     def test_constructor(self, estimator_class):
         """Check that the constructor has correct signature and behaves correctly."""
-        assert getfullargspec(estimator_class.__init__).varkw is None
+        msg = "constructor __init__ should have no varargs"
+        assert getfullargspec(estimator_class.__init__).varkw is None, msg
 
         estimator = estimator_class.create_test_instance()
         assert isinstance(estimator, estimator_class)
