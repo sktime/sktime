@@ -83,9 +83,9 @@ class CNNClassifier(BaseDeepClassifier):
         random_seed=None,
         activation="sigmoid",
         use_bias=True,
-        optimizer_=None,
-        label_encoder_=None,
-        onehot_encoder_=None,
+        optimizer=None,
+        label_encoder=None,
+        onehot_encoder=None,
     ):
         _check_dl_dependencies(severity="error")
         super(CNNClassifier, self).__init__()
@@ -101,9 +101,9 @@ class CNNClassifier(BaseDeepClassifier):
         self.random_seed = random_seed
         self.activation = activation
         self.use_bias = use_bias
-        self.optimizer_ = optimizer_
-        self.label_encoder_ = label_encoder_
-        self.onehot_encoder_ = onehot_encoder_
+        self.optimizer = optimizer
+        self.label_encoder = label_encoder
+        self.onehot_encoder = onehot_encoder
         self.history = None
         self._network = CNNNetwork()
 
@@ -141,16 +141,16 @@ class CNNClassifier(BaseDeepClassifier):
             units=n_classes, activation=self.activation, use_bias=self.use_bias
         )(output_layer)
 
-        self.optimizer = (
+        self.optimizer_ = (
             keras.optimizers.Adam(learning_rate=0.01)
-            if self.optimizer_ is None
-            else self.optimizer_
+            if self.optimizer is None
+            else self.optimizer
         )
 
         model = keras.models.Model(inputs=input_layer, outputs=output_layer)
         model.compile(
             loss=self.loss,
-            optimizer=self.optimizer,
+            optimizer=self.optimizer_,
             metrics=metrics,
         )
         return model
@@ -172,8 +172,8 @@ class CNNClassifier(BaseDeepClassifier):
         if self.callbacks is None:
             self._callbacks = []
 
-        self.label_encoder = self.label_encoder_
-        self.onehot_encoder = self.onehot_encoder_
+        self.label_encoder_ = self.label_encoder
+        self.onehot_encoder_ = self.onehot_encoder
         y_onehot = self.convert_y_to_keras(y)
         # Transpose to conform to Keras input style.
         X = X.transpose(0, 2, 1)

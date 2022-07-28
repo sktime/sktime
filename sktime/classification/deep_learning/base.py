@@ -111,21 +111,21 @@ class BaseDeepClassifier(BaseClassifier, ABC):
 
     def convert_y_to_keras(self, y):
         """Convert y to required Keras format."""
-        if self.label_encoder is None:
-            self.label_encoder = LabelEncoder()
-            y = self.label_encoder.fit_transform(y)
-            self.classes_ = self.label_encoder.classes_
+        if self.label_encoder_ is None:
+            self.label_encoder_ = LabelEncoder()
+            y = self.label_encoder_.fit_transform(y)
+            self.classes_ = self.label_encoder_.classes_
             self.n_classes_ = len(self.classes_)
             y = y.reshape(len(y), 1)
         else:
-            y = self.label_encoder.fit_transform(y)
+            y = self.label_encoder_.fit_transform(y)
             y = y.reshape(len(y), 1)
 
-        if self.onehot_encoder is None:
-            self.onehot_encoder = OneHotEncoder(sparse=False, categories="auto")
+        if self.onehot_encoder_ is None:
+            self.onehot_encoder_ = OneHotEncoder(sparse=False, categories="auto")
             # categories='auto' to get rid of FutureWarning
-            y = self.onehot_encoder.fit_transform(y)
+            y = self.onehot_encoder_.fit_transform(y)
         else:
-            y = self.onehot_encoder.fit_transform(y)
+            y = self.onehot_encoder_.fit_transform(y)
 
         return y
