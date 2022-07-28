@@ -37,6 +37,9 @@ EXCLUDE_ESTIMATORS = [
     "TSFreshRelevantFeatureExtractor",
     # PlateauFinder seems to be broken, see #2259
     "PlateauFinder",
+    "RandomIntervalSegmenter",
+    "RandomIntervalFeatureExtractor",
+    "RandomShapeletTransform",
 ]
 
 
