@@ -6,7 +6,7 @@ __author__ = ["fkiraly"]
 
 import pytest
 
-from sktime.base import BaseEstimator
+from sktime.base import BaseObject
 from sktime.registry import all_estimators, all_tags, scitype
 from sktime.registry._base_classes import (
     BASE_CLASS_LOOKUP,
@@ -58,7 +58,7 @@ def _get_type_tuple(estimator_scitype):
             BASE_CLASS_LOOKUP[scitype] for scitype in _to_list(estimator_scitype)
         )
     else:
-        estimator_classes = (BaseEstimator,)
+        estimator_classes = (BaseObject,)
 
     return estimator_classes
 
