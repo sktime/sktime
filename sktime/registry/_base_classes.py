@@ -82,7 +82,7 @@ from sktime.transformations.base import (
 )
 
 BASE_CLASS_REGISTER = [
-    ("all", BaseObject, "all objects")
+    ("all", BaseObject, "all objects"),
     ("aligner", BaseAligner, "time series aligner or sequence aligner"),
     ("classifier", BaseClassifier, "time series classifier"),
     ("clusterer", BaseClusterer, "time series clusterer"),
