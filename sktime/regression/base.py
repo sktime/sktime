@@ -66,6 +66,7 @@ class BaseRegressor(BaseEstimator, ABC):
         self.fit_time_ = 0
         self._class_dictionary = {}
         self._threads_to_use = 1
+        self._X_metadata = {}
 
         # required for compatability with some sklearn interfaces
         # i.e. CalibratedRegressorCV
@@ -142,6 +143,7 @@ class BaseRegressor(BaseEstimator, ABC):
         # if X is 2D array, convert to 3D, if y is Series, convert to numpy
         X, y = _internal_convert(X, y)
         X_metadata = _check_regressor_input(X, y)
+        self._X_metadata = X_metadata
         missing = X_metadata["has_nans"]
         multivariate = not X_metadata["is_univariate"]
         unequal = not X_metadata["is_equal_length"]
