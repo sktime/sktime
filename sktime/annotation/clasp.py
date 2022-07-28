@@ -44,12 +44,12 @@ def find_dominant_window_sizes(X, offset=0.05):
         If the candidate change point is a trivial match
     """
     fourier = np.absolute(np.fft.fft(X))
-    freq = np.fft.fftfreq(X.shape[0], 1)
+    freqs = np.fft.fftfreq(X.shape[0], 1)
 
     coefs = []
     window_sizes = []
 
-    for coef, freq in zip(fourier, freq):
+    for coef, freq in zip(fourier, freqs):
         if coef and freq > 0:
             coefs.append(coef)
             window_sizes.append(1 / freq)
