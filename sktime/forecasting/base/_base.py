@@ -1911,8 +1911,11 @@ class BaseForecaster(BaseEstimator):
             # now we need to subset to lower/upper depending
             #   on whether alpha was < 0.5 or >= 0.5
             #   this formula gives the integer column indices giving lower/upper
-            col_selector = (np.array(alpha) >= 0.5) + 2 * np.arange(len(alpha))
-            pred_int = pred_int.iloc[:, col_selector]
+            col_selector_int = (np.array(alpha) >= 0.5) + 2 * np.arange(len(alpha))
+            col_selector_bool = np.isin(np.arange(2 * len(alpha)), col_selector_int)
+            num_var = len(pred_int.columns.get_level_values(0).unique())
+            col_selector_bool = np.tile(col_selector_bool, num_var)
+            pred_int = pred_int.iloc[:, col_selector_bool]
 
             # change the column labels (multiindex) to the format for intervals
             # idx returned by _predict_interval is

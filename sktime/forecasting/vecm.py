@@ -250,6 +250,9 @@ class VECM(_StatsModelsAdapter):
                 Upper/lower interval end forecasts are equivalent to
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
+        if type(coverage) is not list:
+            coverage = [coverage]
+
         exog_fc = X.values if X is not None else None
         fh_oos = fh.to_out_of_sample(self.cutoff)
         var_names = (
