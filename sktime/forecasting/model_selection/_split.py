@@ -904,7 +904,9 @@ class BaseWindowSplitter(BaseSplitter):
         """
         start = self._get_start(y=y, fh=fh)
         split_points = self.get_cutoffs(pd.Series(index=y, dtype=float)) + 1
-        split_points = split_points if self._initial_window is None else split_points[1:]
+        split_points = (
+            split_points if self._initial_window is None else split_points[1:]
+        )
         for split_point in split_points:
             train_start = self._get_train_start(
                 start=start if expanding else split_point,
@@ -952,7 +954,9 @@ class BaseWindowSplitter(BaseSplitter):
             if self._initial_window is not None:
 
                 if is_timedelta_or_date_offset(x=self._initial_window):
-                    start = y.get_loc(y[start] + self._initial_window + self.step_length)
+                    start = y.get_loc(
+                        y[start] + self._initial_window + self.step_length
+                    )
                 else:
                     start += self._initial_window + self.step_length
             else:
