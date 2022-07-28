@@ -280,7 +280,7 @@ class RegressorPipeline(BaseRegressor, _HeterogenousMetaEstimator):
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
         # imports
-        from sktime.classification.distance_based import KNeighborsTimeSeriesRegressor
+        from sktime.regression.distance_based import KNeighborsTimeSeriesRegressor
         from sktime.transformations.series.exponent import ExponentTransformer
 
         t1 = ExponentTransformer(power=2)
