@@ -9,7 +9,11 @@ from sktime.base import _HeterogenousMetaEstimator
 from sktime.transformations._delegate import _DelegatedTransformer
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.multiindex import flatten_multiindex
-from sktime.utils.sklearn import is_sklearn_classifier, is_sklearn_transformer
+from sktime.utils.sklearn import (
+    is_sklearn_classifier,
+    is_sklearn_regressor,
+    is_sklearn_transformer,
+)
 
 __author__ = ["fkiraly", "mloning", "miraep8"]
 __all__ = [
@@ -213,12 +217,17 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
             not nested, contains only non-TransformerPipeline `sktime` transformers
         """
         from sktime.classification.compose import SklearnClassifierPipeline
+        from sktime.regression.compose import SklearnRegressorPipeline
 
         other = _coerce_to_sktime(other)
 
         # if sklearn classifier, use sklearn classifier pipeline
         if is_sklearn_classifier(other):
             return SklearnClassifierPipeline(classifier=other, transformers=self.steps)
+
+        # if sklearn regressor, use sklearn regressor pipeline
+        if is_sklearn_regressor(other):
+            return SklearnRegressorPipeline(regressor=other, transformers=self.steps)
 
         return self._dunder_concat(
             other=other,
