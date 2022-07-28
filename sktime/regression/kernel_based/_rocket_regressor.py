@@ -11,9 +11,9 @@ import numpy as np
 from sklearn.linear_model import RidgeCV
 from sklearn.preprocessing import StandardScaler
 
+from sktime.pipeline import make_pipeline
 from sktime.regression._delegate import _DelegatedRegressor
 from sktime.regression.base import BaseRegressor
-from sktime.pipeline import make_pipeline
 from sktime.transformations.panel.rocket import (
     MiniRocket,
     MiniRocketMultivariate,
