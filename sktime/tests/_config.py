@@ -7,7 +7,7 @@ import numpy as np
 from sklearn.preprocessing import FunctionTransformer, StandardScaler
 
 from sktime.annotation.clasp import ClaSPSegmentation
-from sktime.base import BaseEstimator
+from sktime.base import BaseEstimator, BaseObject
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.structural import UnobservedComponents
 from sktime.registry import (
@@ -148,7 +148,8 @@ NON_STATE_CHANGING_METHODS = (
 # The following gives a list of valid estimator base classes.
 VALID_TRANSFORMER_TYPES = tuple(TRANSFORMER_MIXIN_LIST) + (BaseTransformer,)
 
-VALID_ESTIMATOR_BASE_TYPES = tuple(BASE_CLASS_LIST)
+BASE_BASE_TYPES = (BaseEstimator, BaseObject)
+VALID_ESTIMATOR_BASE_TYPES = tuple(set(BASE_CLASS_LIST).difference(BASE_BASE_TYPES))
 
 VALID_ESTIMATOR_TYPES = (
     BaseEstimator,
