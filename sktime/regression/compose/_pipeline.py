@@ -71,9 +71,9 @@ class RegressorPipeline(BaseRegressor, _HeterogenousMetaEstimator):
     Examples
     --------
     >>> from sktime.transformations.panel.pca import PCATransformer
-    >>> from sktime.classification.distance_based import KNeighborsTimeSeriesRegressor
     >>> from sktime.datasets import load_unit_test
-    >>> from sktime.classification.compose import RegressorPipeline
+    >>> from sktime.regression.compose import RegressorPipeline
+    >>> from sktime.regression.distance_based import KNeighborsTimeSeriesRegressor
     >>> X_train, y_train = load_unit_test(split="train")
     >>> X_test, y_test = load_unit_test(split="test")
     >>> pipeline = RegressorPipeline(
@@ -353,10 +353,10 @@ class SklearnRegressorPipeline(RegressorPipeline):
     Examples
     --------
     >>> from sklearn.neighbors import KNeighborsRegressor
+    >>> from sktime.datasets import load_unit_test
+    >>> from sktime.regression.compose import SklearnRegressorPipeline
     >>> from sktime.transformations.series.exponent import ExponentTransformer
     >>> from sktime.transformations.series.summarize import SummaryTransformer
-    >>> from sktime.datasets import load_unit_test
-    >>> from sktime.classification.compose import SklearnRegressorPipeline
     >>> X_train, y_train = load_unit_test(split="train")
     >>> X_test, y_test = load_unit_test(split="test")
     >>> t1 = ExponentTransformer()
