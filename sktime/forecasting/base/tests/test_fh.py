@@ -38,6 +38,7 @@ from sktime.utils.datetime import (
     _shift,
     infer_freq,
 )
+from sktime.utils.validation._dependencies import _check_estimator_deps
 from sktime.utils.validation.series import is_in_valid_index_types, is_integer_index
 
 
@@ -515,6 +516,10 @@ def test_exponential_smoothing():
 
 
 # TODO: Replace this long running test with fast unit test
+@pytest.mark.skipif(
+    not _check_estimator_deps(AutoARIMA, severity="none"),
+    reason="skip test if required soft dependencies not available",
+)
 def test_auto_arima():
     """Test bug in 805.
 

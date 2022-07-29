@@ -1603,7 +1603,7 @@
         "code",
         "review",
         "test"
-       ]
+      ]
     },
     {
       "login": "keepersas",
@@ -1674,6 +1674,51 @@
         "doc",
         "test",
         "ideas"
+      ]
+    },
+    {
+      "login": "mariamjabara",
+      "name": "Mariam Jabara",
+      "profile": "https://github.com/mariamjabara",
+      "contributions": [
+        "code"
+
+      ]
+    },
+    {
+      "login": "lbventura",
+      "name": "Luis Ventura",
+      "avatar_url": "https://avatars.githubusercontent.com/u/68004282?s=96&v=4",
+      "profile": "https://github.com/lbventura",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "Ris-Bali",
+      "name": "Rishabh Bali",
+      "avatar_url": "https://avatars.githubusercontent.com/u/81592570?v=4",
+      "profile": "https://github.com/Ris-Bali",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "shchur",
+      "name": "Oleksandr Shchur",
+      "avatar_url": "https://avatars.githubusercontent.com/u/6944857?v=4",
+      "profile": "https://github.com/shchur",
+      "contributions": [
+        "bug",
+        "code"
+      ]
+    },
+    {
+      "login": "jelc53",
+      "name": "Julian Cooper",
+      "profile": "https://github.com/jelc53",
+      "contributions": [
+        "tbats_update"
       ]
     }
   ],
