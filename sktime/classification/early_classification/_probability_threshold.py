@@ -90,7 +90,6 @@ class ProbabilityThresholdEarlyClassifier(BaseClassifier):
     _tags = {
         "capability:multivariate": True,
         "capability:multithreading": True,
-        "capability:early_prediction": True,
     }
 
     def __init__(
