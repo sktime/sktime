@@ -755,7 +755,8 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
         estimator = estimator_class
 
         # Check class for type of attribute
-        assert isinstance(estimator.is_fitted, property)
+        if isinstance(estimator_class, BaseEstimator):
+            assert isinstance(estimator.is_fitted, property)
 
         required_methods = _list_required_methods(estimator_class)
 
