@@ -179,7 +179,7 @@ def evaluate(
     return results
 
 
-def _split(y, X, train, test, fh):
+def _split(y, X, train, test, fh, trim_X=True):
     """Split y and X for given train and test set indices."""
     y_train = y.iloc[train]
     y_test = y.iloc[test]
@@ -191,9 +191,9 @@ def _split(y, X, train, test, fh):
     if X is not None:
         X_train = X.iloc[train, :]
 
-        # We need to expand test indices to a full range, since some forecasters
-        # require the full range of exogenous values.
+        # If working with a transforming forecaster, shouldn't trim
         test = np.arange(-1, test[-1]) + 1
+
         X_test = X.iloc[test, :]
     else:
         X_train = None
