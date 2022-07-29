@@ -52,6 +52,26 @@ class _PmdArimaAdapter(BaseForecaster):
         self._forecaster.fit(y, X=X)
         return self
 
+    def _update(self, y, X=None, update_params=True):
+        """Update model with data.
+
+        Parameters
+        ----------
+        y : pd.Series
+            Target time series to which to fit the forecaster.
+        X : pd.DataFrame, optional (default=None)
+            Exogenous variables are ignored
+
+        Returns
+        -------
+        self : returns an instance of self.
+        """
+        if update_params:
+            if X is not None:
+                X = X.loc[y.index]
+            self._forecaster.update(y, X=X)
+        return self
+
     def _predict(self, fh, X=None):
         """Make forecasts.
 
