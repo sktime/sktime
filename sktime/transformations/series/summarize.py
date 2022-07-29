@@ -38,7 +38,7 @@ class WindowSummarizer(BaseTransformer):
         For ease of notation, for the key "lag", only a single integer
         specifying the `lag` argument will be provided.
 
-        Please see blow a graphical representation of the logic using the following
+        Please see below a graphical representation of the logic using the following
         symbols:
 
         ``z`` = time stamp that the window is summarized *to*.

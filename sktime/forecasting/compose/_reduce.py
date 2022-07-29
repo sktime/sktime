@@ -106,11 +106,20 @@ def _sliding_window_transform(
         tf_fit = transformers[0].fit(y)
         X_from_y = tf_fit.transform(y)
 
-        X_from_y_cut = _cut_tail(X_from_y, n_tail=n_timepoints - tf_fit.truncate_start)
-        yt = _cut_tail(y, n_tail=n_timepoints - tf_fit.truncate_start)
+        if hasattr(tf_fit, "truncate_start"):
+            X_from_y_cut = _cut_tail(
+                X_from_y, n_tail=n_timepoints - tf_fit.truncate_start
+            )
+            yt = _cut_tail(y, n_tail=n_timepoints - tf_fit.truncate_start)
+        else:
+            X_from_y_cut = X_from_y
+            yt = y
 
         if X is not None:
-            X_cut = _cut_tail(X, n_tail=n_timepoints - tf_fit.truncate_start)
+            if hasattr(tf_fit, "truncate_start"):
+                X_cut = _cut_tail(X, n_tail=n_timepoints - tf_fit.truncate_start)
+            else:
+                X_cut = X
             Xt = pd.concat([X_from_y_cut, X_cut], axis=1)
         else:
             Xt = X_from_y_cut
@@ -286,7 +295,21 @@ class _DirectReducer(_Reducer):
     def _predict_last_window(
         self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA
     ):
-        # Get last window of available data.
+        """Fit to training data.
+
+        Parameters
+        ----------
+        fh : int, list, np.array or ForecastingHorizon
+            Forecasting horizon
+        X : pd.DataFrame, optional (default=None)
+            Exogenous time series
+        return_pred_int : bool
+        alpha : float or array-like
+
+        Returns
+        -------
+        y_pred = pd.Series or pd.DataFrame
+        """
         y_last, X_last = self._get_last_window()
 
         # If we cannot generate a prediction from the available data, return nan.
@@ -375,6 +398,21 @@ class _MultioutputReducer(_Reducer):
     def _predict_last_window(
         self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA
     ):
+        """Fit to training data.
+
+        Parameters
+        ----------
+        fh : int, list, np.array or ForecastingHorizon
+            Forecasting horizon
+        X : pd.DataFrame, optional (default=None)
+            Exogenous time series
+        return_pred_int : bool
+        alpha : float or array-like
+
+        Returns
+        -------
+        y_pred = pd.Series or pd.DataFrame
+        """
         # Get last window of available data.
         y_last, X_last = self._get_last_window()
 
@@ -474,8 +512,55 @@ class _RecursiveReducer(_Reducer):
         return self
 
     def _get_shifted_window(self, shift=0, y_update=None, X_update=None):
-        """Select shifted window."""
-        # Get the start and end points of the last window.
+        """Get the start and end points of a shifted window.
+
+        In recursive forecasting, the time based features need to be recalculated for
+        every time step that is forecast. This is done in an iterative fashion over
+        every forecasting horizon step. Shift specifies the timestemp over which the
+        iteration is done, i.e. a shift of 0 will get a window between window_length in
+        the past and t=0, shift = 1 will be window_length +1 and t= 1 etc- up to the
+        forecasting horizon.
+
+        Please see below a graphical representation of the logic using the following
+        symbols:
+
+        ``z`` = first observation to forecast.
+        Not part of the window.
+        ``*`` = (other) time stamps in the window which is summarized
+        ``x`` = observations, past or future, not part of the window
+
+        For`window_length = 7` and `fh = [3]` we get the following windows
+
+        `shift = 0`
+        |--------------------------- |
+        | x x x x * * * * * * * z x x|
+        |----------------------------|
+
+        `shift = 1`
+        |--------------------------- |
+        | x x x x x * * * * * * * z x|
+        |----------------------------|
+
+        `shift = 2`
+        |--------------------------- |
+        | x x x x x x * * * * * * * z|
+        |----------------------------|
+
+        Parameters
+        ----------
+        shift : integer
+            this will be correspond to the shift of the window_length into the future
+        y_update : a pandas Series or Dataframe
+            y values that were obtained in the recursive fashion.
+        X_update : a pandas Series or Dataframe
+            X values also need to be cut based on the into windows, see above.
+
+        Returns
+        -------
+        y, X: A pandas dataframe or series
+            contains the y and X data prepared for the respective windows, see above.
+
+        """
         cutoff = _shift(self._cutoff, by=shift)
         start = _shift(self._cutoff, by=shift - self.window_length_ + 1)
 
@@ -515,6 +600,27 @@ class _RecursiveReducer(_Reducer):
     def _predict_last_window(
         self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA
     ):
+        """Fit to training data.
+
+        In recursive reduction, iteration must be done over the
+        entire forecasting horizon. Specifically, when transformers are
+        applied to y that generate features in X, forecasting must be done step by
+        step to integrate the lateste prediction of for the new set of features in
+        X derived from that y.
+
+        Parameters
+        ----------
+        fh : int, list, np.array or ForecastingHorizon
+            Forecasting horizon
+        X : pd.DataFrame, optional (default=None)
+            Exogenous time series
+        return_pred_int : bool
+        alpha : float or array-like
+
+        Returns
+        -------
+        y_pred = pd.Series or pd.DataFrame
+        """
         if self._X is not None and X is None:
             raise ValueError(
                 "`X` must be passed to `predict` if `X` is given in `fit`."
@@ -527,7 +633,6 @@ class _RecursiveReducer(_Reducer):
             y_last, X_last = self._get_last_window()
 
         # If we cannot generate a prediction from the available data, return nan.
-        # danbartl: check for window_length fails since transformed data is returned.
         if self.transformers_ is None:
             if not self._is_predictable(y_last):
                 return self._predict_nan(fh)
@@ -544,14 +649,6 @@ class _RecursiveReducer(_Reducer):
             y_pred = _create_fcst_df(index_range, self._y)
 
             for i in range(fh_max):
-                # Slice prediction window.
-                # Collect inputs for predictions
-                # if isinstance(self.cutoff, pd._libs.tslibs.period.Period):
-                #     date_curr = pd.period_range(end=dateline[i], periods=1)
-                # elif isinstance(self.cutoff, np.int64):
-                #     date_curr = list(range(self.cutoff,self.cutoff+fh_max))
-                # else:
-                #     date_curr = pd.date_range(end=dateline[i], periods=1)
                 # Generate predictions.
                 y_pred_vector = self.estimator_.predict(X_last)
                 y_pred_curr = _create_fcst_df(
@@ -697,6 +794,21 @@ class _DirRecReducer(_Reducer):
     def _predict_last_window(
         self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA
     ):
+        """Fit to training data.
+
+        Parameters
+        ----------
+        fh : int, list, np.array or ForecastingHorizon
+            Forecasting horizon
+        X : pd.DataFrame, optional (default=None)
+            Exogenous time series
+        return_pred_int : bool
+        alpha : float or array-like
+
+        Returns
+        -------
+        y_pred = pd.Series or pd.DataFrame
+        """
         # Exogenous variables are not yet support for the dirrec strategy.
         # todo: implement this. For now, we escape.
         if X is not None:
@@ -1066,14 +1178,36 @@ def _cut_tail(X, n_tail=1):
 
 
 def _create_fcst_df(target_date, origin_df, fill=None):
-    """Create an empty multiindex dataframe from origin dataframe."""
-    # Collect predictions
+    """Create an empty multiindex dataframe from origin dataframe.
+
+    In recursive forecasting, a new dataframe needs to be created that collects
+    all forecasting steps (even for forecasting horizons other than those of interests).
+    For example for fh =[1,2,12] we need the whole forecasting horizons from 1 to 12.
+
+    Parameters
+    ----------
+    target_date : a list of dates
+        this will be correspond to the new timepoints index to be created in the
+        forecasting dataframe
+    origin_df : a pandas Series or Dataframe
+        the origin_df corresponds to the dataframe with the historic data. Useful
+        information inferred from that dataframe is the index of the historic dataframe
+        as well as the names of the original columns and the type of the object
+        (dataframe or series)
+    fill : a numpy.ndarray (optional)
+        Corresponds to a numpy array of values that is used to fill up the dataframe.
+        Useful when forecasts are returned from a forecasting models that discards
+        the hierarchical structure of the input pandas dataframe
+
+    Returns
+    -------
+    A pandas dataframe or series
+    """
     oi = origin_df.index
     if not isinstance(oi, pd.MultiIndex):
         if isinstance(origin_df, pd.Series):
             if fill is None:
-                template = pd.Series(np.empty(len(target_date)), index=target_date)
-                template[:] = np.nan
+                template = pd.Series(np.zeros(len(target_date)), index=target_date)
             else:
                 template = pd.Series(fill, index=target_date)
             template.name = origin_df.name
@@ -1081,49 +1215,47 @@ def _create_fcst_df(target_date, origin_df, fill=None):
         else:
             if fill is None:
                 template = pd.DataFrame(
-                    np.empty((len(target_date), len(origin_df.columns))),
+                    np.zeros((len(target_date), len(origin_df.columns))),
                     index=target_date,
                     columns=origin_df.columns.to_list(),
                 )
-                template[:] = np.nan
             else:
                 template = pd.DataFrame(
                     fill, index=target_date, columns=origin_df.columns.to_list()
                 )
             return template
-    # What is an efficient way to get only the index?
-    idx = origin_df.reset_index()
-    x_names = origin_df.index.names[0:-1]
-    time_names = origin_df.index.names[-1]
-    idx = idx[x_names].drop_duplicates()
-
-    timeframe = pd.DataFrame(target_date, columns=[time_names])
-
-    target_frame = idx.merge(timeframe, how="cross")
-    freq_inferred = target_date[0].freq
-    mi = (
-        target_frame.groupby(x_names, as_index=True)
-        .apply(
-            lambda df: df.drop(x_names, axis=1)
-            .set_index(time_names)
-            .asfreq(freq_inferred)
-        )
-        .index
-    )
-
-    if fill is None:
-        template = pd.DataFrame(
-            np.empty((len(target_date) * idx.shape[0], len(origin_df.columns))),
-            index=mi,
-            columns=origin_df.columns.to_list(),
-        )
-        template[:] = np.nan
     else:
-        template = pd.DataFrame(
-            fill,
-            index=mi,
-            columns=origin_df.columns.to_list(),
+        idx = origin_df.index.to_frame(index=False)
+        instance_names = idx.columns[0:-1].to_list()
+        time_names = idx.columns[-1]
+        idx = idx[instance_names].drop_duplicates()
+
+        timeframe = pd.DataFrame(target_date, columns=[time_names])
+
+        target_frame = idx.merge(timeframe, how="cross")
+        freq_inferred = target_date[0].freq
+        mi = (
+            target_frame.groupby(instance_names, as_index=True)
+            .apply(
+                lambda df: df.drop(instance_names, axis=1)
+                .set_index(time_names)
+                .asfreq(freq_inferred)
+            )
+            .index
         )
 
-    template = template.astype(origin_df.dtypes.to_dict())
-    return template
+        if fill is None:
+            template = pd.DataFrame(
+                np.zeros((len(target_date) * idx.shape[0], len(origin_df.columns))),
+                index=mi,
+                columns=origin_df.columns.to_list(),
+            )
+        else:
+            template = pd.DataFrame(
+                fill,
+                index=mi,
+                columns=origin_df.columns.to_list(),
+            )
+
+        template = template.astype(origin_df.dtypes.to_dict())
+        return template
