@@ -270,37 +270,7 @@ class ConformalIntervals(BaseForecaster):
             Entries are quantile forecasts, for var in col index,
                 at quantile probability in second col index, for the row index.
         """
-        pred_int = pd.DataFrame()
-
-        for a in alpha:
-            # compute quantiles corresponding to prediction interval coverage
-            #  this uses symmetric predictive intervals:
-            coverage = abs(1 - 2 * a)
-
-            # compute quantile forecasts corresponding to upper/lower
-            pred_a = self._predict_interval(fh=fh, X=X, coverage=[coverage])
-            pred_int = pd.concat([pred_int, pred_a], axis=1)
-
-        # now we need to subset to lower/upper depending
-        #   on whether alpha was < 0.5 or >= 0.5
-        #   this formula gives the integer column indices giving lower/upper
-        col_selector = (np.array(alpha) >= 0.5) + 2 * np.arange(len(alpha))
-        pred_int = pred_int.iloc[:, col_selector]
-
-        # change the column labels (multiindex) to the format for intervals
-        # idx returned by _predict_interval is
-        #   3-level MultiIndex with variable names, coverage, lower/upper
-        idx = pred_int.columns
-        # variable names (unique, in same order)
-        var_names = idx.get_level_values(0).unique()
-        # if was univariate & unnamed variable, replace default
-        if len(var_names) == 1 and var_names == ["Coverage"]:
-            var_names = ["Quantiles"]
-        # idx returned by _predict_quantiles should be
-        #   is 2-level MultiIndex with variable names, alpha
-        int_idx = pd.MultiIndex.from_product([var_names, alpha])
-
-        pred_int.columns = int_idx
+        pred_int = BaseForecaster._predict_quantiles(self, fh, X, alpha)
 
         return pred_int
 
