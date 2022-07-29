@@ -12,7 +12,10 @@ from statsmodels.stats.weightstats import DescrStatsW
 from sktime.transformations.base import BaseTransformer
 
 # todo: update function?
-# todo: clock changes, time-zone aware index, miliseconds, leap year?
+# todo: clock changes, time-zone aware index, miliseconds?
+
+# next steps
+# failing tests
 
 
 class ClearSky(BaseTransformer):
@@ -56,6 +59,15 @@ class ClearSky(BaseTransformer):
     References
     ----------
     .. [1] https://doi.org/10.1016/j.solener.2009.05.016
+
+    Examples
+    --------
+    >>> from sktime.transformations.series.clear_sky import ClearSky
+    >>> from sktime.utils._testing.series import _load_solar
+    >>> y = _load_solar()
+    >>> transformer = ClearSky()
+    >>> # takes ~1min
+    >>> y_hat = transformer.fit_transform(y)
     """
 
     _tags = {
@@ -66,7 +78,6 @@ class ClearSky(BaseTransformer):
         "capability:inverse_transform": True,  # can the transformer inverse transform?
         "univariate-only": True,  # can the transformer handle multivariate X?
         "X_inner_mtype": [
-            "pd.DataFrame",
             "pd.Series",
         ],  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
@@ -122,7 +133,7 @@ class ClearSky(BaseTransformer):
         # set up smoothing grid
         tod = pd.timedelta_range(start="0T", end="1D", freq=df.index.freq)[:-1]
         tod = [(x.total_seconds() / (60 * 60)) for x in tod.to_pytimedelta()]
-        yday = pd.RangeIndex(start=1, stop=366)
+        yday = pd.RangeIndex(start=1, stop=367)
 
         indx = pd.MultiIndex.from_product([yday, tod], names=["yday", "tod"])
 
