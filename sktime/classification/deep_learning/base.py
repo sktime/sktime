@@ -100,6 +100,16 @@ class BaseDeepClassifier(BaseClassifier, ABC):
         probs = probs / probs.sum(axis=1, keepdims=1)
         return probs
 
+    def save(self, path):
+        """Save the model at the given path."""
+        self.model_.save(path)
+
+    def load(self, path):
+        """Save the model at the given path."""
+        from tensorflow import keras
+
+        self.model_ = keras.models.load_model(path)
+
     def convert_y_to_keras(self, y, label_encoder=None, onehot_encoder=None):
         """Convert y to required Keras format."""
         if (label_encoder is None) and (onehot_encoder is None):
