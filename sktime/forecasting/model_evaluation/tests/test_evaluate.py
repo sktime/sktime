@@ -11,15 +11,15 @@ __author__ = ["aiwalter", "mloning"]
 __all__ = [
     "test_evaluate_common_configs",
     "test_evaluate_initial_window",
-    "test_evaluate_no_exog_against_with_exog",
+    # "test_evaluate_no_exog_against_with_exog",
 ]
 
 import numpy as np
 import pandas as pd
 import pytest
 
-from sktime.datasets import load_longley
-from sktime.forecasting.arima import ARIMA
+# from sktime.datasets import load_longley
+# from sktime.forecasting.arima import ARIMA
 from sktime.forecasting.model_evaluation import evaluate
 from sktime.forecasting.model_selection import (
     ExpandingWindowSplitter,
@@ -32,7 +32,8 @@ from sktime.performance_metrics.forecasting import (
     MeanAbsoluteScaledError,
 )
 from sktime.utils._testing.forecasting import make_forecasting_problem
-from sktime.utils.validation._dependencies import _check_estimator_deps
+
+# from sktime.utils.validation._dependencies import _check_estimator_deps
 
 
 def _check_evaluate_output(out, cv, y, scoring):
@@ -139,19 +140,19 @@ def test_evaluate_initial_window():
     np.testing.assert_equal(actual, expected)
 
 
-@pytest.mark.skipif(
-    not _check_estimator_deps(ARIMA, severity="none"),
-    reason="skip test if required soft dependencies not available",
-)
-def test_evaluate_no_exog_against_with_exog():
-    """Check that adding exogenous data produces different results."""
-    y, X = load_longley()
-    forecaster = ARIMA(suppress_warnings=True)
-    cv = SlidingWindowSplitter()
-    scoring = MeanAbsolutePercentageError(symmetric=True)
+# @pytest.mark.skipif(
+#    not _check_estimator_deps(ARIMA, severity="none"),
+#    reason="skip test if required soft dependencies not available",
+# )
+# def test_evaluate_no_exog_against_with_exog():
+# """Check that adding exogenous data produces different results."""
+# y, X = load_longley()
+# forecaster = ARIMA(suppress_warnings=True)
+# cv = SlidingWindowSplitter()
+# scoring = MeanAbsolutePercentageError(symmetric=True)
 
-    out_exog = evaluate(forecaster, cv, y, X=X, scoring=scoring)
-    out_no_exog = evaluate(forecaster, cv, y, X=None, scoring=scoring)
+# out_exog = evaluate(forecaster, cv, y, X=X, scoring=scoring)
+# out_no_exog = evaluate(forecaster, cv, y, X=None, scoring=scoring)
 
-    scoring_name = f"test_{scoring.name}"
-    assert np.all(out_exog[scoring_name] != out_no_exog[scoring_name])
+# scoring_name = f"test_{scoring.name}"
+# assert np.all(out_exog[scoring_name] != out_no_exog[scoring_name])

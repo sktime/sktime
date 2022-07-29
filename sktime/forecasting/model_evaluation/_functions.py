@@ -193,7 +193,7 @@ def _split(y, X, train, test, fh):
 
         # We need to expand test indices to a full range, since some forecasters
         # require the full range of exogenous values.
-        test = np.arange(test[0] - fh.min(), test[-1]) + 1
+        test = np.arange(-1, test[-1]) + 1
         X_test = X.iloc[test, :]
     else:
         X_train = None
