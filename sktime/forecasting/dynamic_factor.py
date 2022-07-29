@@ -262,7 +262,6 @@ class DynamicFactor(_StatsModelsAdapter):
                 Upper/lower interval end forecasts are equivalent to
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
-
         if type(coverage) is not list:
             coverage_list = [coverage]
         else:
@@ -273,24 +272,11 @@ class DynamicFactor(_StatsModelsAdapter):
 
         model = self._fitted_forecaster
 
-        # statsmodels forecasts all periods from start to end of forecasting
-        # horizon, but only return given time points in forecasting horizon
-
-        # these were commented from _predict method - necessary for int indices
-        # if "int" in (self._y.index[0]).__class__.__name__:  # Rather fishy solution
-        #    y_pred.index = np.arange(
-        #        start + self._y.index[0], end + self._y.index[0] + 1
-        #    )
-        # return y_pred.loc[fh.to_absolute(self.cutoff).to_pandas()]
-
         df_list = []
-
         # generate the forecasts for each alpha/coverage
         for coverage in coverage_list:
-            # there appears to be some confusion regarding coverage and alpha (check the tests)
 
-            alpha = coverage
-            # alpha = -0.5 * coverage + 0.5
+            alpha = -0.5 * coverage + 0.5
 
             if "exog" in inspect.signature(model.__init__).parameters.keys():
                 y_pred = model.get_forecast(steps=(end - start) + 1, exog=X).conf_int(
@@ -308,9 +294,9 @@ class DynamicFactor(_StatsModelsAdapter):
             df_list.append(y_pred)
 
         # concatenate the predictions for different values of alpha
-        final_df = pd.concat(df_list, axis=1)
+        predictions_df = pd.concat(df_list, axis=1)
 
-        # all this stuff below is just boilerplate for getting the correct columns
+        # all the code below is just boilerplate for getting the correct columns
         mod_var_list = list(map(lambda x: str(x).replace(" ", ""), model.data.ynames))
 
         rename_list = [
@@ -320,7 +306,7 @@ class DynamicFactor(_StatsModelsAdapter):
             for var_name in mod_var_list
         ]
 
-        final_df.columns = rename_list
+        predictions_df.columns = rename_list
 
         final_ord = [
             var_name + " " + str(coverage) + " " + bound
@@ -329,25 +315,31 @@ class DynamicFactor(_StatsModelsAdapter):
             for bound in ["lower", "upper"]
         ]
 
-        final_df = final_df[final_ord]
-        cols = [col_name.split(" ") for col_name in final_df.columns]
+        predictions_df = predictions_df[final_ord]
+        cols = [col_name.split(" ") for col_name in predictions_df.columns]
 
-        final_df_2 = pd.DataFrame(
-            final_df.values, columns=pd.MultiIndex.from_tuples(cols)
+        predictions_df_2 = pd.DataFrame(
+            predictions_df.values, columns=pd.MultiIndex.from_tuples(cols)
         )
 
         final_columns = [
             [col_name, float(coverage), bound]
             for col_name in model.data.ynames
-            for coverage in final_df_2.columns.get_level_values(1).unique()
-            for bound in final_df_2.columns.get_level_values(2).unique()
+            for coverage in predictions_df_2.columns.get_level_values(1).unique()
+            for bound in predictions_df_2.columns.get_level_values(2).unique()
         ]
 
-        final_df_3 = pd.DataFrame(
-            final_df_2.values, columns=pd.MultiIndex.from_tuples(final_columns)
+        predictions_df_3 = pd.DataFrame(
+            predictions_df_2.values, columns=pd.MultiIndex.from_tuples(final_columns)
         )
 
-        return final_df_3
+        if "int" in (self._y.index[0]).__class__.__name__:  # Rather fishy solution
+            predictions_df_3.index = np.arange(
+                start + self._y.index[0], end + self._y.index[0] + 1
+            )
+            return predictions_df_3.loc[fh.to_absolute(self.cutoff).to_pandas()]
+
+        return predictions_df_3
 
     def _fit_forecaster(self, y, X=None):
         """Fit to training data.
