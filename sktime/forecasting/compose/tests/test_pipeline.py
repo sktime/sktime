@@ -8,18 +8,24 @@ __all__ = []
 
 import numpy as np
 import pandas as pd
+import pytest
 from sklearn.preprocessing import MinMaxScaler
 
 from sktime.datasets import load_airline
+from sktime.datatypes import get_examples
+from sktime.datatypes._utilities import get_window
+from sktime.forecasting.arima import ARIMA
 from sktime.forecasting.compose import ForecastingPipeline, TransformedTargetForecaster
 from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.trend import PolynomialTrendForecaster
+from sktime.transformations.hierarchical.aggregate import Aggregator
 from sktime.transformations.series.adapt import TabularToSeriesAdaptor
 from sktime.transformations.series.detrend import Detrender
 from sktime.transformations.series.exponent import ExponentTransformer
 from sktime.transformations.series.impute import Imputer
 from sktime.transformations.series.outlier_detection import HampelFilter
+from sktime.utils.validation._dependencies import _check_estimator_deps
 
 
 def test_pipeline():
@@ -122,3 +128,61 @@ def test_pipeline_with_detrender():
     )
     trans_fc.fit(y)
     trans_fc.predict(1)
+
+
+@pytest.mark.skipif(
+    not _check_estimator_deps(ARIMA, severity="none"),
+    reason="skip test if required soft dependencies not available",
+)
+def test_nested_pipeline_with_index_creation_y_before_X():
+    """Tests a nested pipeline where y indices are created before X indices.
+
+    The potential failure mode is the pipeline failing as y has more indices than X,
+    in an intermediate stage and erroneous checks from the pipeline raise an error.
+    """
+    X = get_examples("pd_multiindex_hier")[0]
+    y = get_examples("pd_multiindex_hier")[1]
+
+    X_train = get_window(X, lag=1)
+    y_train = get_window(y, lag=1)
+    X_test = get_window(X, window_length=1)
+
+    # Aggregator creates indices for y (via *), then for X (via ForecastingPipeline)
+    f = Aggregator() * ForecastingPipeline([Aggregator(), ARIMA()])
+
+    f.fit(y=y_train, X=X_train, fh=1)
+    y_pred = f.predict(X=X_test)
+
+    # some basic expected output format checks
+    assert isinstance(y_pred, pd.DataFrame)
+    assert isinstance(y_pred.index, pd.MultiIndex)
+    assert len(y_pred) == 9
+
+
+@pytest.mark.skipif(
+    not _check_estimator_deps(ARIMA, severity="none"),
+    reason="skip test if required soft dependencies not available",
+)
+def test_nested_pipeline_with_index_creation_X_before_y():
+    """Tests a nested pipeline where X indices are created before y indices.
+
+    The potential failure mode is the pipeline failing as X has more indices than y,
+    in an intermediate stage and erroneous checks from the pipeline raise an error.
+    """
+    X = get_examples("pd_multiindex_hier")[0]
+    y = get_examples("pd_multiindex_hier")[1]
+
+    X_train = get_window(X, lag=1)
+    y_train = get_window(y, lag=1)
+    X_test = get_window(X, window_length=1)
+
+    # Aggregator creates indices for X (via ForecastingPipeline), then for y (via *)
+    f = ForecastingPipeline([Aggregator(), Aggregator() * ARIMA()])
+
+    f.fit(y=y_train, X=X_train, fh=1)
+    y_pred = f.predict(X=X_test)
+
+    # some basic expected output format checks
+    assert isinstance(y_pred, pd.DataFrame)
+    assert isinstance(y_pred.index, pd.MultiIndex)
+    assert len(y_pred) == 9

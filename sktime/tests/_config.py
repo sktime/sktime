@@ -8,7 +8,6 @@ from sklearn.preprocessing import FunctionTransformer, StandardScaler
 
 from sktime.annotation.clasp import ClaSPSegmentation
 from sktime.base import BaseEstimator
-from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.structural import UnobservedComponents
 from sktime.registry import (
     BASE_CLASS_LIST,
@@ -19,21 +18,15 @@ from sktime.registry import (
 from sktime.regression.compose import ComposableTimeSeriesForestRegressor
 from sktime.transformations.base import BaseTransformer
 from sktime.transformations.panel.compose import (
-    ColumnTransformer,
     SeriesToPrimitivesRowTransformer,
     SeriesToSeriesRowTransformer,
 )
 from sktime.transformations.panel.random_intervals import RandomIntervals
 from sktime.transformations.panel.shapelet_transform import RandomShapeletTransform
-from sktime.transformations.panel.summarize import FittedParamExtractor
 
 # The following estimators currently do not pass all unit tests
 # https://github.com/alan-turing-institute/sktime/issues/1627
 EXCLUDE_ESTIMATORS = [
-    # ConditionalDeseasonalizer and STLtransformer still need refactoring
-    #  (see PR 1773, blocked through open discussion) escaping until then
-    "ConditionalDeseasonalizer",
-    "STLTransformer",
     # SFA is non-compliant with any transformer interfaces, #2064
     "SFA",
     # requires y in fit, this is incompatible with the old testing framework
@@ -62,6 +55,10 @@ EXCLUDED_TESTS = {
         "test_fit_idempotent",
         "test_persistence_via_pickle",
     ],
+    "CNNRegressor": [
+        "test_fit_idempotent",
+        "test_persistence_via_pickle",
+    ],
     # pickling problem with local method see #2490
     "ProximityStump": [
         "test_persistence_via_pickle",
@@ -81,10 +78,16 @@ EXCLUDED_TESTS = {
     "SeriesToSeriesRowTransformer": ["test_methods_do_not_change_state"],
     # ColumnTransformer still needs to be refactored, see #2537
     "ColumnTransformer": ["test_methods_do_not_change_state"],
-    "ForecastingGridSearchCV": ["test_score"],  # unknown root cause, see #2751
-    "ForecastingRandomizedSearchCV": ["test_score"],  # unknown root cause, see #2751
-    # failure of test_score came up after a change of metric default params
-    # there should be no such failure, and all other algorithms pass. #2751 to track
+    # Early classifiers intentionally retain information from pervious predict calls
+    #   for #1.
+    # #2 amd #3 are due to predict/predict_proba returning two items and that breaking
+    #   assert_array_equal
+    "TEASER": [
+        "test_methods_do_not_change_state",
+        "test_fit_idempotent",
+        "test_persistence_via_pickle",
+    ],
+    "VARMAX": "test_update_predict_single",  # see 2997, sporadic failure, unknown cause
 }
 
 # We here configure estimators for basic unit testing, including setting of
@@ -93,25 +96,8 @@ SERIES_TO_SERIES_TRANSFORMER = StandardScaler()
 SERIES_TO_PRIMITIVES_TRANSFORMER = FunctionTransformer(
     np.mean, kw_args={"axis": 0}, check_inverse=False
 )
-TRANSFORMERS = [
-    (
-        "transformer1",
-        SeriesToSeriesRowTransformer(
-            SERIES_TO_SERIES_TRANSFORMER, check_transformer=False
-        ),
-    ),
-    (
-        "transformer2",
-        SeriesToSeriesRowTransformer(
-            SERIES_TO_SERIES_TRANSFORMER, check_transformer=False
-        ),
-    ),
-]
+
 ESTIMATOR_TEST_PARAMS = {
-    FittedParamExtractor: {
-        "forecaster": ExponentialSmoothing(),
-        "param_names": ["initial_level"],
-    },
     SeriesToPrimitivesRowTransformer: {
         "transformer": SERIES_TO_PRIMITIVES_TRANSFORMER,
         "check_transformer": False,
@@ -119,9 +105,6 @@ ESTIMATOR_TEST_PARAMS = {
     SeriesToSeriesRowTransformer: {
         "transformer": SERIES_TO_SERIES_TRANSFORMER,
         "check_transformer": False,
-    },
-    ColumnTransformer: {
-        "transformers": [(name, estimator, [0]) for name, estimator in TRANSFORMERS]
     },
     RandomShapeletTransform: {
         "max_shapelets": 5,

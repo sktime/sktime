@@ -11,7 +11,6 @@ import pandas as pd
 
 from sktime.forecasting.base import BaseForecaster
 from sktime.utils.validation import check_n_jobs
-from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.utils.validation.forecasting import check_sp
 
 
@@ -24,6 +23,7 @@ class _TbatsAdapter(BaseForecaster):
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
         # "capability:predict_quantiles": True,
+        "python_dependencies": "tbats",
     }
 
     def __init__(
@@ -39,8 +39,6 @@ class _TbatsAdapter(BaseForecaster):
         multiprocessing_start_method="spawn",
         context=None,
     ):
-        _check_soft_dependencies("tbats", severity="error", object=self)
-
         self.use_box_cox = use_box_cox
         self.box_cox_bounds = box_cox_bounds
         self.use_trend = use_trend
@@ -105,7 +103,38 @@ class _TbatsAdapter(BaseForecaster):
 
         return self
 
-    def _predict(self, fh, X):
+    def _update(self, y, X=None, update_params=True):
+        """Update time series to incremental training data.
+
+        Derived from example provided by core devs in TBATS repository
+        https://github.com/intive-DataScience/tbats/blob/master/examples/
+
+        Parameters
+        ----------
+        y : pd.Series
+            Target time series to which to fit the forecaster.
+        X : pd.DataFrame, optional (default=None)
+            Exogenous variables (ignored)
+        update_params : bool, optional (default=True)
+            whether model parameters should be updated
+
+        Returns
+        -------
+        self : reference to self
+        """
+        if update_params:
+            # update model state and refit parameters
+            # _fit re-runs model instantiation which triggers refit
+            self._fit(y=self._y)
+
+        else:
+            # update model state without refitting parameters
+            # out-of-box fit tbats method will not refit parameters
+            self._forecaster.fit(y=self._y)
+
+        return self
+
+    def _predict(self, fh, X=None):
         """Forecast time series at future horizon.
 
         Parameters

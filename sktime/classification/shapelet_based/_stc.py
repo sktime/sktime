@@ -11,9 +11,9 @@ __all__ = ["ShapeletTransformClassifier"]
 import numpy as np
 from sklearn.model_selection import cross_val_predict
 
-from sktime._contrib.vector_classifiers._rotation_forest import RotationForest
 from sktime.base._base import _clone_estimator
 from sktime.classification.base import BaseClassifier
+from sktime.classification.sklearn import RotationForest
 from sktime.transformations.panel.shapelet_transform import RandomShapeletTransform
 from sktime.utils.validation.panel import check_X_y
 
@@ -101,7 +101,7 @@ class ShapeletTransformClassifier(BaseClassifier):
     Examples
     --------
     >>> from sktime.classification.shapelet_based import ShapeletTransformClassifier
-    >>> from sktime._contrib.vector_classifiers._rotation_forest import RotationForest
+    >>> from sktime.classification.sklearn import RotationForest
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
     >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
@@ -350,4 +350,5 @@ class ShapeletTransformClassifier(BaseClassifier):
                 "n_shapelet_samples": 10,
                 "max_shapelets": 3,
                 "batch_size": 5,
+                "save_transformed_data": True,
             }

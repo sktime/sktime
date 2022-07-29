@@ -88,11 +88,6 @@ class TransformerTestScenario(TestScenario, BaseObject):
         if _is_child_of(obj, OLD_SERIES_MIXINS) and X_scitype != "Series":
             return False
 
-        # applicable only if number of variables in y complies with scitype:y
-        is_univariate = self.get_tag("X_univariate")
-        if not is_univariate and get_tag(obj, "univariate-only"):
-            return False
-
         # if transformer requires y, the scenario also must pass y
         has_y = self.get_tag("has_y")
         if not has_y and get_tag(obj, "requires_y"):
@@ -360,6 +355,23 @@ class TransformerFitTransformHierarchicalUnivariate(TransformerTestScenario):
     default_method_sequence = ["fit", "transform"]
 
 
+class TransformerFitTransformHierarchicalMultivariate(TransformerTestScenario):
+    """Fit/transform, multivariate Hierarchical X."""
+
+    _tags = {
+        "X_scitype": "Hierarchical",
+        "X_univariate": False,
+        "is_enabled": False,
+        "has_y": False,
+    }
+
+    args = {
+        "fit": {"X": _make_hierarchical(random_state=RAND_SEED, n_columns=2)},
+        "transform": {"X": _make_hierarchical(random_state=RAND_SEED + 1, n_columns=2)},
+    }
+    default_method_sequence = ["fit", "transform"]
+
+
 # todo: scenario for Panel X
 #   where test and training set has different n_instances or n_timepoints
 #   may need a tag that tells us whethe transformer can cope with this
@@ -372,5 +384,6 @@ scenarios_transformers = [
     TransformerFitTransformPanelMultivariate,
     TransformerFitTransformPanelUnivariateWithClassY,
     TransformerFitTransformPanelUnivariateWithClassYOnlyFit,
+    TransformerFitTransformHierarchicalMultivariate,
     TransformerFitTransformHierarchicalUnivariate,
 ]
