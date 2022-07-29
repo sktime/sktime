@@ -728,7 +728,7 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
     def test_inheritance(self, estimator_class):
         """Check that estimator inherits from BaseObject and/or BaseEstimator."""
         assert issubclass(
-            estimator_class, BaseEstimator
+            estimator_class, BaseObject
         ), f"object {estimator_class} is not a sub-class of BaseObject."
 
         if hasattr(estimator_class, "fit"):
