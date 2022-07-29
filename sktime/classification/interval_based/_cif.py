@@ -15,12 +15,12 @@ from sklearn.base import BaseEstimator
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils import check_random_state
 
-from sktime._contrib.vector_classifiers._continuous_interval_tree import (
+from sktime.base._base import _clone_estimator
+from sktime.classification.base import BaseClassifier
+from sktime.classification.sklearn._continuous_interval_tree import (
     ContinuousIntervalTree,
     _drcif_feature,
 )
-from sktime.base._base import _clone_estimator
-from sktime.classification.base import BaseClassifier
 from sktime.transformations.panel.catch22 import Catch22
 
 
