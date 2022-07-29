@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Clear sky transformer for solar power forecasting."""
+"""Clear sky transformer for solar time-series."""
 
 __author__ = ["ciaran-g"]
 
@@ -13,9 +13,6 @@ from sktime.transformations.base import BaseTransformer
 
 # todo: update function?
 # todo: clock changes, time-zone aware index, miliseconds?
-
-# next steps
-# failing tests
 
 
 class ClearSky(BaseTransformer):
