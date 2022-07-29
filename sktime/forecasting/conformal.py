@@ -270,51 +270,37 @@ class ConformalIntervals(BaseForecaster):
             Entries are quantile forecasts, for var in col index,
                 at quantile probability in second col index, for the row index.
         """
-        implements_interval = self._has_implementation_of("_predict_interval")
-        implements_quantiles = self._has_implementation_of("_predict_quantiles")
-        implements_proba = self._has_implementation_of("_predict_proba")
-        can_do_proba = implements_interval or implements_quantiles or implements_proba
+        pred_int = pd.DataFrame()
 
-        if not can_do_proba:
-            raise RuntimeError(
-                f"{self.__class__.__name__} does not implement "
-                "probabilistic forecasting, "
-                'but "capability:pred_int" flag has been set to True incorrectly. '
-                "This is likely a bug, please report, and/or set the flag to False."
-            )
+        for a in alpha:
+            # compute quantiles corresponding to prediction interval coverage
+            #  this uses symmetric predictive intervals:
+            coverage = abs(1 - 2 * a)
 
-        if implements_interval:
+            # compute quantile forecasts corresponding to upper/lower
+            pred_a = self._predict_interval(fh=fh, X=X, coverage=[coverage])
+            pred_int = pd.concat([pred_int, pred_a], axis=1)
 
-            pred_int = pd.DataFrame()
-            for a in alpha:
-                # compute quantiles corresponding to prediction interval coverage
-                #  this uses symmetric predictive intervals:
-                coverage = abs(1 - 2 * a)
+        # now we need to subset to lower/upper depending
+        #   on whether alpha was < 0.5 or >= 0.5
+        #   this formula gives the integer column indices giving lower/upper
+        col_selector = (np.array(alpha) >= 0.5) + 2 * np.arange(len(alpha))
+        pred_int = pred_int.iloc[:, col_selector]
 
-                # compute quantile forecasts corresponding to upper/lower
-                pred_a = self._predict_interval(fh=fh, X=X, coverage=[coverage])
-                pred_int = pd.concat([pred_int, pred_a], axis=1)
+        # change the column labels (multiindex) to the format for intervals
+        # idx returned by _predict_interval is
+        #   3-level MultiIndex with variable names, coverage, lower/upper
+        idx = pred_int.columns
+        # variable names (unique, in same order)
+        var_names = idx.get_level_values(0).unique()
+        # if was univariate & unnamed variable, replace default
+        if len(var_names) == 1 and var_names == ["Coverage"]:
+            var_names = ["Quantiles"]
+        # idx returned by _predict_quantiles should be
+        #   is 2-level MultiIndex with variable names, alpha
+        int_idx = pd.MultiIndex.from_product([var_names, alpha])
 
-            # now we need to subset to lower/upper depending
-            #   on whether alpha was < 0.5 or >= 0.5
-            #   this formula gives the integer column indices giving lower/upper
-            col_selector = (np.array(alpha) >= 0.5) + 2 * np.arange(len(alpha))
-            pred_int = pred_int.iloc[:, col_selector]
-
-            # change the column labels (multiindex) to the format for intervals
-            # idx returned by _predict_interval is
-            #   3-level MultiIndex with variable names, coverage, lower/upper
-            idx = pred_int.columns
-            # variable names (unique, in same order)
-            var_names = idx.get_level_values(0).unique()
-            # if was univariate & unnamed variable, replace default
-            if len(var_names) == 1 and var_names == ["Coverage"]:
-                var_names = ["Quantiles"]
-            # idx returned by _predict_quantiles should be
-            #   is 2-level MultiIndex with variable names, alpha
-            int_idx = pd.MultiIndex.from_product([var_names, alpha])
-
-            pred_int.columns = int_idx
+        pred_int.columns = int_idx
 
         return pred_int
 
