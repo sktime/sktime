@@ -70,8 +70,7 @@ from sktime.dists_kernels._base import (
 )
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.model_selection._split import BaseSplitter
-
-# from sktime.performance_metrics.base import BaseMetric
+from sktime.performance_metrics.base import BaseMetric
 from sktime.regression.base import BaseRegressor
 from sktime.transformations.base import (
     BaseTransformer,
@@ -89,6 +88,7 @@ BASE_CLASS_REGISTER = [
     ("clusterer", BaseClusterer, "time series clusterer"),
     ("early_classifier", BaseEarlyClassifier, "early time series classifier"),
     ("forecaster", BaseForecaster, "forecaster"),
+    ("metric", BaseMetric, "performance metric"),
     ("regressor", BaseRegressor, "time series regressor"),
     ("series-annotator", BaseSeriesAnnotator, "time series annotator"),
     ("splitter", BaseSplitter, "time series splitter"),
@@ -103,8 +103,6 @@ BASE_CLASS_REGISTER = [
         BasePairwiseTransformerPanel,
         "pairwise transformer for panel data, distance or kernel",
     ),
-    # ("metric", BaseMetric, "performance metric"),
-    # TODO Fails because it assumes it has fit
 ]
 
 

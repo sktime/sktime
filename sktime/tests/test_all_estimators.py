@@ -21,7 +21,7 @@ from sklearn.utils.estimator_checks import (
     check_get_params_invariance as _check_get_params_invariance,
 )
 
-from sktime.base import BaseEstimator
+from sktime.base import BaseEstimator, BaseObject
 from sktime.dists_kernels._base import (
     BasePairwiseTransformer,
     BasePairwiseTransformerPanel,
@@ -394,13 +394,13 @@ class QuickTester:
         Examples
         --------
         >>> from sktime.forecasting.naive import NaiveForecaster
-        >>> from sktime.tests.test_all_estimators import TestAllEstimators
-        >>> TestAllEstimators().run_tests(
+        >>> from sktime.tests.test_all_estimators import TestAllObjects
+        >>> TestAllObjects().run_tests(
         ...     NaiveForecaster,
         ...     tests_to_run="test_required_params"
         ... )
         {'test_required_params[NaiveForecaster]': 'PASSED'}
-        >>> TestAllEstimators().run_tests(
+        >>> TestAllObjects().run_tests(
         ...     NaiveForecaster, fixtures_to_run="test_repr[NaiveForecaster-2]"
         ... )
         {'test_repr[NaiveForecaster-2]': 'PASSED'}
@@ -726,15 +726,21 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
             )
 
     def test_inheritance(self, estimator_class):
-        """Check that estimator inherits from BaseEstimator."""
+        """Check that estimator inherits from BaseObject and/or BaseEstimator."""
         assert issubclass(estimator_class, BaseEstimator), (
-            f"Estimator: {estimator_class} " f"is not a sub-class of " f"BaseEstimator."
+            f"object {estimator_class} is not a sub-class of BaseObject."
         )
-        Estimator = estimator_class
+
+        if hasattr(estimator_class, "fit"):
+            assert issubclass(estimator_class, BaseEstimator), (
+                f"estimator: {estimator_class} has fit method, but"
+                f"is not a sub-class of BaseEstimator."
+            )
+
         # Usually estimators inherit only from one BaseEstimator type, but in some cases
         # they may be predictor and transformer at the same time (e.g. pipelines)
         n_base_types = sum(
-            issubclass(Estimator, cls) for cls in VALID_ESTIMATOR_BASE_TYPES
+            issubclass(estimator_class, cls) for cls in VALID_ESTIMATOR_BASE_TYPES
         )
 
         assert 2 >= n_base_types >= 1
@@ -742,7 +748,7 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
         # If the estimator inherits from more than one base estimator type, we check if
         # one of them is a transformer base type
         if n_base_types > 1:
-            assert issubclass(Estimator, VALID_TRANSFORMER_TYPES)
+            assert issubclass(estimator_class, VALID_TRANSFORMER_TYPES)
 
     def test_has_common_interface(self, estimator_class):
         """Check estimator implements the common interface."""
