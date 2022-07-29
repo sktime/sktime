@@ -50,10 +50,7 @@ from sktime.utils._testing.estimator_checks import (
     _list_required_methods,
 )
 from sktime.utils._testing.scenarios_getter import retrieve_scenarios
-from sktime.utils.validation._dependencies import (
-    _check_dl_dependencies,
-    _check_estimator_deps,
-)
+from sktime.utils.validation._dependencies import _check_dl_dependencies
 
 
 class BaseFixtureGenerator:
@@ -205,14 +202,6 @@ class BaseFixtureGenerator:
             for est in self._all_estimators()
             if not self.is_excluded(test_name, est)
         ]
-
-        # exclude classes based on python version compatibility
-        estimator_classes_to_test = [
-            est
-            for est in estimator_classes_to_test
-            if _check_estimator_deps(est, severity="none")
-        ]
-
         estimator_names = [est.__name__ for est in estimator_classes_to_test]
 
         return estimator_classes_to_test, estimator_names
@@ -1052,10 +1041,8 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
 
         # skip test if vectorization would be necessary and method predict_proba
         # this is since vectorization is not implemented for predict_proba
-        if method_nsc == "predict_proba":
-            try:
-                scenario.run(estimator, method_sequence=[method_nsc])
-            except NotImplementedError:
+        if hasattr(estimator, "_is_vectorized") and estimator._is_vectorized:
+            if method_nsc == "predict_proba":
                 return None
 
         # dict_after = dictionary of estimator after predict and fit
@@ -1090,10 +1077,8 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
 
         # skip test if vectorization would be necessary and method predict_proba
         # this is since vectorization is not implemented for predict_proba
-        if method_nsc == "predict_proba":
-            try:
-                scenario.run(estimator, method_sequence=[method_nsc])
-            except NotImplementedError:
+        if hasattr(estimator, "_is_vectorized") and estimator._is_vectorized:
+            if method_nsc == "predict_proba":
                 return None
 
         # Fit the model, get args before and after

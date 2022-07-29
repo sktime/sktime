@@ -477,16 +477,16 @@ class KalmanFilterTransformerPK(BaseKalmanFilter, BaseTransformer):
     Examples
     --------
         Basic example:
-    >>> import numpy as np  # doctest: +SKIP
+    >>> import numpy as np
     >>> import sktime.transformations.series.kalman_filter as kf
     >>> time_steps, state_dim, measurement_dim = 10, 2, 3
     >>>
     >>> X = np.random.rand(time_steps, measurement_dim) * 10
-    >>> transformer = kf.KalmanFilterTransformerPK(state_dim=state_dim) # doctest: +SKIP
-    >>> X_transformed = transformer.fit_transform(X=X)  # doctest: +SKIP
+    >>> transformer = kf.KalmanFilterTransformerPK(state_dim=state_dim)
+    >>> X_transformed = transformer.fit_transform(X=X)
 
         Example of - denoising, matrix estimation and missing values:
-    >>> import numpy as np  # doctest: +SKIP
+    >>> import numpy as np
     >>> import sktime.transformations.series.kalman_filter as kf
     >>> time_steps, state_dim, measurement_dim = 10, 2, 2
     >>>
@@ -496,17 +496,17 @@ class KalmanFilterTransformerPK(BaseKalmanFilter, BaseTransformer):
     >>>
     >>> # If matrices estimation is required, elements of `estimate_matrices`
     >>> # are assumed to be constants.
-    >>> transformer = kf.KalmanFilterTransformerPK(  # doctest: +SKIP
+    >>> transformer = kf.KalmanFilterTransformerPK(
     ...     state_dim=state_dim,
     ...     measurement_noise=np.eye(measurement_dim),
     ...     denoising=True,
     ...     estimate_matrices=['measurement_noise']
     ...     )
     >>>
-    >>> X_transformed = transformer.fit_transform(X=X)  # doctest: +SKIP
+    >>> X_transformed = transformer.fit_transform(X=X)
 
         Example of - dynamic inputs (matrix per time-step) and missing values:
-    >>> import numpy as np  # doctest: +SKIP
+    >>> import numpy as np
     >>> import sktime.transformations.series.kalman_filter as kf
     >>> time_steps, state_dim, measurement_dim = 10, 4, 4
     >>>
@@ -516,13 +516,13 @@ class KalmanFilterTransformerPK(BaseKalmanFilter, BaseTransformer):
     >>>
     >>> # Dynamic input -
     >>> # `state_transition` provide different matrix for each time step.
-    >>> transformer = kf.KalmanFilterTransformerPK(  # doctest: +SKIP
+    >>> transformer = kf.KalmanFilterTransformerPK(
     ...     state_dim=state_dim,
     ...     state_transition=np.random.rand(time_steps, state_dim, state_dim),
     ...     estimate_matrices=['initial_state', 'initial_state_covariance']
     ...     )
     >>>
-    >>> X_transformed = transformer.fit_transform(X=X)  # doctest: +SKIP
+    >>> X_transformed = transformer.fit_transform(X=X)
     """
 
     _tags = {
@@ -535,7 +535,6 @@ class KalmanFilterTransformerPK(BaseKalmanFilter, BaseTransformer):
         "capability:missing_values:removes": False,
         # is transform result always guaranteed to contain no missing values?
         "scitype:instancewise": True,  # is this an instance-wise transform?
-        "python_dependencies": "pykalman",
     }
 
     def __init__(
@@ -552,6 +551,8 @@ class KalmanFilterTransformerPK(BaseKalmanFilter, BaseTransformer):
         estimate_matrices=None,
         denoising=False,
     ):
+        _check_soft_dependencies("pykalman", severity="error", object=self)
+
         super(KalmanFilterTransformerPK, self).__init__(
             state_dim=state_dim,
             state_transition=state_transition,
@@ -931,16 +932,16 @@ class KalmanFilterTransformerFP(BaseKalmanFilter, BaseTransformer):
     Examples
     --------
         Basic example:
-    >>> import numpy as np  # doctest: +SKIP
+    >>> import numpy as np
     >>> import sktime.transformations.series.kalman_filter as kf
     >>> time_steps, state_dim, measurement_dim = 10, 2, 3
     >>>
     >>> X = np.random.rand(time_steps, measurement_dim) * 10
-    >>> transformer = kf.KalmanFilterTransformerFP(state_dim=state_dim) # doctest: +SKIP
-    >>> Xt = transformer.fit_transform(X=X)  # doctest: +SKIP
+    >>> transformer = kf.KalmanFilterTransformerFP(state_dim=state_dim)
+    >>> X_transformed = transformer.fit_transform(X=X)
 
         Example of - denoising, matrix estimation, missing values and transform with y:
-    >>> import numpy as np  # doctest: +SKIP
+    >>> import numpy as np
     >>> import sktime.transformations.series.kalman_filter as kf
     >>> time_steps, state_dim, measurement_dim = 10, 3, 3
     >>> control_variable_dim = 2
@@ -954,16 +955,17 @@ class KalmanFilterTransformerFP(BaseKalmanFilter, BaseTransformer):
     >>>
     >>> # If matrices estimation is required, elements of `estimate_matrices`
     >>> # are assumed to be constants.
-    >>> transformer = kf.KalmanFilterTransformerFP(  # doctest: +SKIP
+    >>> transformer = kf.KalmanFilterTransformerFP(
     ...     state_dim=state_dim,
     ...     measurement_noise=np.eye(measurement_dim),
     ...     denoising=True,
     ...     estimate_matrices='measurement_noise'
     ...     )
-    >>> Xt = transformer.fit_transform(X=X, y=control_variable)  # doctest: +SKIP
+    >>>
+    >>> X_transformed = transformer.fit_transform(X=X, y=control_variable)
 
         Example of - dynamic inputs (matrix per time-step), missing values:
-    >>> import numpy as np  # doctest: +SKIP
+    >>> import numpy as np
     >>> import sktime.transformations.series.kalman_filter as kf
     >>> time_steps, state_dim, measurement_dim = 10, 4, 4
     >>> control_variable_dim = 4
@@ -977,12 +979,13 @@ class KalmanFilterTransformerFP(BaseKalmanFilter, BaseTransformer):
     >>>
     >>> # Dynamic input -
     >>> # `state_transition` provide different matrix for each time step.
-    >>> transformer = kf.KalmanFilterTransformerFP(  # doctest: +SKIP
+    >>> transformer = kf.KalmanFilterTransformerFP(
     ...     state_dim=state_dim,
     ...     state_transition=np.random.rand(time_steps, state_dim, state_dim),
     ...     estimate_matrices=['initial_state', 'initial_state_covariance']
     ...     )
-    >>> Xt = transformer.fit_transform(X=X, y=control_variable)  # doctest: +SKIP
+    >>>
+    >>> X_transformed = transformer.fit_transform(X=X, y=control_variable)
     """
 
     _tags = {
@@ -998,7 +1001,6 @@ class KalmanFilterTransformerFP(BaseKalmanFilter, BaseTransformer):
         "capability:missing_values:removes": False,
         # is transform result always guaranteed to contain no missing values?
         "scitype:instancewise": True,  # is this an instance-wise transform?
-        "python_dependencies": "filterpy",
     }
 
     def __init__(
@@ -1014,6 +1016,8 @@ class KalmanFilterTransformerFP(BaseKalmanFilter, BaseTransformer):
         estimate_matrices=None,
         denoising=False,
     ):
+        _check_soft_dependencies("filterpy", severity="error", object=self)
+
         super(KalmanFilterTransformerFP, self).__init__(
             state_dim=state_dim,
             state_transition=state_transition,

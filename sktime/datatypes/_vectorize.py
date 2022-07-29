@@ -10,7 +10,6 @@ import pandas as pd
 
 from sktime.datatypes._check import check_is_scitype, mtype
 from sktime.datatypes._convert import convert_to
-from sktime.utils.multiindex import flatten_multiindex
 
 
 class VectorizedDF:
@@ -106,33 +105,36 @@ class VectorizedDF:
         self.X_multiindex = self._init_conversion(X)
         self.iter_indices = self._init_iter_indices()
 
-    def _coerce_to_df(self, obj, scitype=None, store=None, store_behaviour=None):
-        """Coerce obj to a pandas multiindex format."""
-        pandas_dict = {
-            "Series": "pd.DataFrame",
-            "Panel": "pd-multiindex",
-            "Hierarchical": "pd_multiindex_hier",
-            None: ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
-        }
-
-        if scitype not in pandas_dict.keys():
-            raise RuntimeError(
-                f"unexpected value found for attribute scitype: {scitype}"
-                f"must be one of {pandas_dict.keys()}"
-            )
-
-        return convert_to(
-            obj,
-            to_type=pandas_dict[scitype],
-            as_scitype=scitype,
-            store=store,
-            store_behaviour=store_behaviour,
-        )
-
     def _init_conversion(self, X):
         """Convert X to a pandas multiindex format."""
         is_scitype = self.is_scitype
-        return self._coerce_to_df(X, is_scitype, store=self.converter_store)
+
+        if is_scitype == "Series":
+            return convert_to(
+                X,
+                to_type="pd.DataFrame",
+                as_scitype="Series",
+                store=self.converter_store,
+            )
+        elif is_scitype == "Panel":
+            return convert_to(
+                X,
+                to_type="pd-multiindex",
+                as_scitype="Panel",
+                store=self.converter_store,
+            )
+        elif is_scitype == "Hierarchical":
+            return convert_to(
+                X,
+                to_type="pd_multiindex_hier",
+                as_scitype="Hierarchical",
+                store=self.converter_store,
+            )
+        else:
+            raise RuntimeError(
+                f"unexpected value found for attribute self.is_scitype: {is_scitype}"
+                'must be "Panel" or "Hierarchical"'
+            )
 
     def _init_iter_indices(self):
         """Initialize indices that are iterated over in vectorization."""
@@ -159,11 +161,6 @@ class VectorizedDF:
             col_ix = None
 
         return row_ix, col_ix
-
-    @property
-    def index(self):
-        """Defaults to pandas index of X converted to pandas type."""
-        return self.X_multiindex.index
 
     def get_iter_indices(self):
         """Get indices that are iterated over in vectorization.
@@ -251,13 +248,7 @@ class VectorizedDF:
         """Shorthand to retrieve self (iterator) as list."""
         return list(self)
 
-    def reconstruct(
-        self,
-        df_list,
-        convert_back=False,
-        overwrite_index=True,
-        col_multiindex="none",
-    ):
+    def reconstruct(self, df_list, convert_back=False, overwrite_index=True):
         """Reconstruct original format from iterable of vectorization instances.
 
         Parameters
@@ -265,90 +256,41 @@ class VectorizedDF:
         df_list : iterable of objects of same type and sequence as __getitem__ returns.
             can be self, but will in general be another object to be useful.
             Example: [some_operation(df) for df in self] that leaves types the same
-        convert_back : bool, optional, default = False
+        convert_back : bool, default = False
             whether to convert output back to mtype of X in __init__
             if False, the return will be a pandas.DataFrame with Index or multiIndex
             if True, the return is converted to the mtype of X in __init__
-        overwrite_index : bool, optional, default = True
+        overwrite_index : bool, default = True
             if True, the resulting return will have index overwritten by that of X
                 only if applies, i.e., overwrite is possible and X had an index
             if False, no index overwrite will happen
-        col_multiindex : str, one of "none", "flat", "multiindex", default = "none"
-            whether column multiindex is introduced, and if yes, what kind of,
-            in case of column vectorization being applied
-            "none" - df_list are simply concatenated, unless:
-                If at least one var is transformed to two or more, "flat" is enforced.
-                If this would cause non-unique column names, "flat" is enforced.
-            "multiindex" - additional level is introduced, by names of X passed to init,
-                if there would be more than one column underneath at least one level
-                this is added as an additional pandas MultiIndex level
-            "flat" - additional level is introduced, by names of X passed to init
-                if there would be more than one column underneath at least one level
-                like "multiindex", but new level is flattened to "var__colname" strings
-                no new multiindex level is introduced
 
         Returns
         -------
         X_reconstructed_orig_format : row-concatenation of df-list,
             with keys and additional level from self.get_iter_indices
             if convert_back=False, always a pd.DataFrame in an sktime MultiIndex format
-                (pd-muliindex mtype for Panel, or pd_multiindex_hier for Hierarchical)
+                (pd-multiindex mtype for Panel, or pd_multiindex_hier for Hierarchical)
             if convert_back=True, will have same format and mtype as X input to __init__
         """
-
-        def coerce_to_df(x):
-            if not isinstance(x, pd.DataFrame):
-                return self._coerce_to_df(x)
-            else:
-                return x
-
-        df_list = [coerce_to_df(x) for x in df_list]
-
-        # condition where "flat" behaviour is enforced if "none":
-        def _force_flat(df_list):
-            # transformer produces at least one multivariate output
-            # and there is more than one data frame to concatenate columns of
-            force_flat = len(df_list) > 1 and any(len(x.columns) > 1 for x in df_list)
-            # or, there would be duplicate columns, after the transformation
-            all_col_idx = [ix for df in df_list for ix in df.columns]
-            force_flat = force_flat or len(set(all_col_idx)) != len(all_col_idx)
-            return force_flat
-
         row_ix, col_ix = self.get_iter_indices()
-        force_flat = False
         if row_ix is None and col_ix is None:
             X_mi_reconstructed = self.X_multiindex
         elif col_ix is None:
             X_mi_reconstructed = pd.concat(df_list, keys=row_ix, axis=0)
         elif row_ix is None:
-            force_flat = _force_flat(df_list)
-            if col_multiindex in ["flat", "multiindex"] or force_flat:
-                col_keys = self.X_multiindex.columns
-            else:
-                col_keys = None
-            X_mi_reconstructed = pd.concat(df_list, axis=1, keys=col_keys)
+            X_mi_reconstructed = pd.concat(df_list, axis=1)
         else:  # both col_ix and row_ix are not None
             col_concats = []
             row_n = len(row_ix)
             col_n = len(col_ix)
             for i in range(row_n):
                 ith_col_block = df_list[i * col_n : (i + 1) * col_n]
-                force_flat = force_flat or _force_flat(ith_col_block)
-                if col_multiindex in ["flat", "multiindex"] or force_flat:
-                    col_keys = self.X_multiindex.columns
-                else:
-                    col_keys = None
-                col_concats += [pd.concat(ith_col_block, axis=1, keys=col_keys)]
-
+                col_concats += [pd.concat(ith_col_block, axis=1)]
             X_mi_reconstructed = pd.concat(col_concats, keys=row_ix, axis=0)
 
         X_mi_index = X_mi_reconstructed.index
         X_orig_row_index = self.X_multiindex.index
-
-        flatten = col_multiindex == "flat" or (col_multiindex == "none" and force_flat)
-        if flatten and isinstance(X_mi_reconstructed.columns, pd.MultiIndex):
-            X_mi_reconstructed.columns = flatten_multiindex(X_mi_reconstructed.columns)
-
         if overwrite_index and len(X_mi_index.names) == len(X_orig_row_index.names):
             X_mi_reconstructed.index = X_mi_index.set_names(X_orig_row_index.names)
 

@@ -15,7 +15,7 @@ import numpy as np
 from numba import njit
 from sklearn import preprocessing
 from sklearn.base import BaseEstimator
-from sklearn.utils import check_random_state
+from sklearn.utils import check_random_state, check_X_y
 
 from sktime.exceptions import NotFittedError
 from sktime.utils.numba.stats import iqr, mean, median, numba_max, numba_min, slope, std
@@ -43,11 +43,11 @@ class ContinuousIntervalTree(BaseEstimator):
 
     Attributes
     ----------
-    n_classes_ : int
+    n_classes : int
         The number of classes.
     classes_ : list
         The classes labels.
-    _root : _TreeNode
+    root : _TreeNode
         Tree root node.
 
     See Also
@@ -67,7 +67,7 @@ class ContinuousIntervalTree(BaseEstimator):
 
     Examples
     --------
-    >>> from sktime.classification.sklearn import ContinuousIntervalTree
+    >>> from sktime._contrib.vector_classifiers._continuous_interval_tree import ContinuousIntervalTree
     >>> from sktime.datasets import load_unit_test
     >>> from sktime.datatypes._panel._convert import from_nested_to_3d_numpy
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
@@ -90,6 +90,15 @@ class ContinuousIntervalTree(BaseEstimator):
         self.thresholds = thresholds
 
         self.random_state = random_state
+
+        # The following set in method fit
+        self.root = None
+        self.n_classes = 0
+        self.classes_ = []
+
+        self._class_dictionary = {}
+        # We need to add is-fitted state when inheriting from scikit-learn
+        self._is_fitted = False
 
         super(ContinuousIntervalTree, self).__init__()
 
@@ -114,36 +123,30 @@ class ContinuousIntervalTree(BaseEstimator):
         elif not isinstance(X, np.ndarray) or len(X.shape) > 2:
             raise ValueError(
                 "ContinuousIntervalTree is not a time series classifier. "
-                "A valid sklearn input such as a 2d numpy array is required."
-                "Sparse input formats are currently not supported."
+                "A 2d numpy array is required."
             )
-        X, y = self._validate_data(X=X, y=y, ensure_min_samples=2)
+        X, y = check_X_y(X, y)
 
-        self.n_instances_, self.n_atts_ = X.shape
         self.classes_ = np.unique(y)
-        self.n_classes_ = self.classes_.shape[0]
-        self._class_dictionary = {}
+        self.n_classes = self.classes_.shape[0]
         for index, classVal in enumerate(self.classes_):
             self._class_dictionary[classVal] = index
-
-        if self.n_classes_ == 1:
-            raise ValueError("fit input y must contain more than one class")
 
         le = preprocessing.LabelEncoder()
         y = le.fit_transform(y)
 
         rng = check_random_state(self.random_state)
-        self._root = _TreeNode(random_state=rng)
+        self.root = _TreeNode(random_state=rng)
 
         thresholds = np.linspace(np.min(X, axis=0), np.max(X, axis=0), self.thresholds)
 
-        distribution = np.zeros(self.n_classes_)
+        distribution = np.zeros(self.n_classes)
         for i in range(len(y)):
             distribution[y[i]] += 1
 
         entropy = _entropy(distribution, distribution.sum())
 
-        self._root.build_tree(
+        self.root.build_tree(
             X,
             y,
             thresholds,
@@ -151,7 +154,7 @@ class ContinuousIntervalTree(BaseEstimator):
             distribution,
             0,
             self.max_depth,
-            self.n_classes_,
+            self.n_classes,
             False,
         )
 
@@ -201,14 +204,12 @@ class ContinuousIntervalTree(BaseEstimator):
         elif not isinstance(X, np.ndarray) or len(X.shape) > 2:
             raise ValueError(
                 "ContinuousIntervalTree is not a time series classifier. "
-                "A valid sklearn input such as a 2d numpy array is required."
-                "Sparse input formats are currently not supported."
+                "A 2d numpy array is required."
             )
-        X = self._validate_data(X=X, reset=False)
 
-        dists = np.zeros((X.shape[0], self.n_classes_))
+        dists = np.zeros((X.shape[0], self.n_classes))
         for i in range(X.shape[0]):
-            dists[i] = self._root.predict_proba(X[i], self.n_classes_)
+            dists[i] = self.root.predict_proba(X[i], self.n_classes)
         return dists
 
     def _predict_proba_cif(self, X, c22, intervals, dims, atts):
@@ -221,15 +222,15 @@ class ContinuousIntervalTree(BaseEstimator):
         X = check_X(X, coerce_to_numpy=True)
         n_instances, n_dims, series_length = X.shape
 
-        dists = np.zeros((n_instances, self.n_classes_))
+        dists = np.zeros((n_instances, self.n_classes))
         for i in range(n_instances):
-            dists[i] = self._root.predict_proba_cif(
+            dists[i] = self.root.predict_proba_cif(
                 X[i].reshape((1, n_dims, series_length)),
                 c22,
                 intervals,
                 dims,
                 atts,
-                self.n_classes_,
+                self.n_classes,
             )
         return dists
 
@@ -245,21 +246,21 @@ class ContinuousIntervalTree(BaseEstimator):
         X = check_X(X, coerce_to_numpy=True)
         n_instances, n_dims, series_length = X.shape
 
-        dists = np.zeros((n_instances, self.n_classes_))
+        dists = np.zeros((n_instances, self.n_classes))
         for i in range(n_instances):
             r = [
                 X[i].reshape((1, n_dims, series_length)),
                 X_p[i].reshape((1, n_dims, X_p.shape[2])),
                 X_d[i].reshape((1, n_dims, X_d.shape[2])),
             ]
-            dists[i] = self._root.predict_proba_drcif(
+            dists[i] = self.root.predict_proba_drcif(
                 r,
                 c22,
                 n_intervals,
                 intervals,
                 dims,
                 atts,
-                self.n_classes_,
+                self.n_classes,
             )
         return dists
 
@@ -268,8 +269,8 @@ class ContinuousIntervalTree(BaseEstimator):
         splits = []
         gains = []
 
-        if self._root.best_split > -1:
-            self._find_splits_gain(self._root, splits, gains)
+        if self.root.best_split > -1:
+            self._find_splits_gain(self.root, splits, gains)
 
         return splits, gains
 

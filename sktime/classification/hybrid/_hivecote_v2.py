@@ -92,7 +92,7 @@ class HIVECOTEV2(BaseClassifier):
     Examples
     --------
     >>> from sktime.classification.hybrid import HIVECOTEV2
-    >>> from sktime.classification.sklearn import RotationForest
+    >>> from sktime._contrib.vector_classifiers._rotation_forest import RotationForest
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
     >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)

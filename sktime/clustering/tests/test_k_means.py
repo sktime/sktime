@@ -1,12 +1,10 @@
 # -*- coding: utf-8 -*-
 """Tests for time series k-means."""
 import numpy as np
-import pytest
 from sklearn import metrics
 
 from sktime.clustering.k_means import TimeSeriesKMeans
 from sktime.datasets import load_basic_motions
-from sktime.utils.validation._dependencies import _check_estimator_deps
 
 expected_results = {
     "mean": [
@@ -107,10 +105,6 @@ expected_labels = {
 }
 
 
-@pytest.mark.skipif(
-    not _check_estimator_deps(TimeSeriesKMeans, severity="none"),
-    reason="skip test if required soft dependencies not available",
-)
 def test_kmeans():
     """Test implementation of Kmeans."""
     X_train, y_train = load_basic_motions(split="train")
@@ -143,10 +137,6 @@ def test_kmeans():
         assert np.count_nonzero(val == 1.0) == 1
 
 
-@pytest.mark.skipif(
-    not _check_estimator_deps(TimeSeriesKMeans, severity="none"),
-    reason="skip test if required soft dependencies not available",
-)
 def test_kmeans_dba():
     """Test implementation of Kmeans using dba."""
     X_train, y_train = load_basic_motions(split="train")

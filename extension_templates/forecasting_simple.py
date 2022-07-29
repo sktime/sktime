@@ -88,13 +88,10 @@ class MyForecaster(BaseForecaster):
         self.parama = parama
         self.paramb = paramb
         self.paramc = paramc
+        # important: no checking or other logic should happen here
 
         # todo: change "MyForecaster" to the name of the class
         super(MyForecaster, self).__init__()
-
-        # todo: optional, parameter checking logic (if applicable) should happen here
-        # if writes derived values to self, should *not* overwrite self.parama etc
-        # instead, write to self._parama, self._newparam (starting with _)
 
     # todo: implement this, mandatory
     def _fit(self, y, X=None, fh=None):

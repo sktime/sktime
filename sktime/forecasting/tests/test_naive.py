@@ -9,7 +9,6 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sktime.datatypes._utilities import get_cutoff
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.tests._config import (
@@ -61,8 +60,7 @@ def test_strategy_last_seasonal(fh, sp):
     y_pred = f.predict(fh)
 
     # check predicted index
-    cutoff = get_cutoff(y_train, return_index=True)
-    _assert_correct_pred_time_index(y_pred.index, cutoff, fh)
+    _assert_correct_pred_time_index(y_pred.index, y_train.index[-1], fh)
 
     # check values
     fh = check_fh(fh)  # get well formatted fh
@@ -82,8 +80,7 @@ def test_strategy_mean_seasonal(fh, sp, window_length):
         y_pred = f.predict(fh)
 
         # check predicted index
-        cutoff = get_cutoff(y_train, return_index=True)
-        _assert_correct_pred_time_index(y_pred.index, cutoff, fh)
+        _assert_correct_pred_time_index(y_pred.index, y_train.index[-1], fh)
 
         if window_length is None:
             window_length = len(y_train)

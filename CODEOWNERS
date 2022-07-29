@@ -59,6 +59,9 @@ sktime/forecasting/sarimax.py @TNTran92
 sktime/performance_metrics/forecasting/_functions.py @aiwalter @rnkuhns
 sktime/performance_metrics/forecasting/_classes.py @rnkuhns
 
+sktime/forecasting/hcrystalball.py @MichalChromcak
+sktime/forecasting/test/test_hcrystalball.py @MichalChromcak
+
 sktime/annotation/clasp.py @patrickzib @ermshaua
 sktime/transformations/series/clasp.py @patrickzib @ermshaua
 

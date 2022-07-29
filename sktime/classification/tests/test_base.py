@@ -12,12 +12,7 @@ from sktime.classification.base import (
     _check_classifier_input,
     _internal_convert,
 )
-from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
 from sktime.classification.feature_based import Catch22Classifier
-from sktime.utils._testing.estimator_checks import (
-    _assert_array_almost_equal,
-    make_classification_problem,
-)
 from sktime.utils._testing.panel import _make_classification_y, _make_panel
 
 
@@ -306,70 +301,3 @@ def test_input_conversion_fit_predict(mtype):
     clf = _DummyConvertPandas()
     clf.fit(X, y)
     clf.predict(X)
-
-
-@pytest.mark.parametrize("method", ["fit_predict", "fit_predict_proba"])
-def test_fit_predict_change_state(method):
-    """Test change_state flag in fit_predict, fit_predict_proba works as intended."""
-    X, y = make_classification_problem()
-
-    clf = KNeighborsTimeSeriesClassifier()
-
-    y_pred = getattr(clf, method)(X, y, change_state=False)
-    assert not clf.is_fitted
-
-    y_pred_post_fit = getattr(clf, method)(X, y, change_state=True)
-    assert clf.is_fitted
-
-    y_pred_post_fit2 = getattr(clf, method)(X, y, change_state=False)
-    assert clf.is_fitted
-
-    # get output from fit and predict or predict_proba
-    clf = KNeighborsTimeSeriesClassifier()
-    normal_method = method.partition("_")[2]
-    y_pred_normal = getattr(clf.fit(X, y), normal_method)(X)
-
-    # all the above outputs should be equal
-    _assert_array_almost_equal(y_pred_normal, y_pred)
-    _assert_array_almost_equal(y_pred_post_fit, y_pred)
-    _assert_array_almost_equal(y_pred_post_fit, y_pred_post_fit2)
-
-    assert len(y_pred) == len(y)
-    if method == "fit_predict_proba":
-        n_cl = len(y.unique())
-        assert y_pred.shape[1] == n_cl
-
-
-@pytest.mark.parametrize("method", ["fit_predict", "fit_predict_proba"])
-def test_fit_predict_cv(method):
-    """Test cv argument in fit_predict, fit_predict_proba."""
-    from sklearn.model_selection import KFold
-
-    X, y = make_classification_problem()
-
-    clf = KNeighborsTimeSeriesClassifier()
-    clf.random_state = 42
-    cv = KFold(3, random_state=42, shuffle=True)
-
-    y_pred_cv_int = getattr(clf, method)(X, y, cv=3, change_state=False)
-    y_pred_cv_obj = getattr(clf, method)(X, y, cv=cv, change_state=False)
-    assert not clf.is_fitted
-
-    _assert_array_almost_equal(y_pred_cv_int, y_pred_cv_obj)
-    assert -1 not in y_pred_cv_int
-
-    assert len(y) == len(y_pred_cv_int)
-    if method == "fit_predict_proba":
-        n_cl = len(y.unique())
-        assert y_pred_cv_int.shape[1] == n_cl
-
-    # check that state is same as self.fit(X, y) if change_state=True
-    y_pred_cv_obj_fit = getattr(clf, method)(X, y, cv=cv, change_state=True)
-    assert clf.is_fitted
-
-    # get output from fit and predict or predict_proba
-    clf = KNeighborsTimeSeriesClassifier()
-    normal_method = method.partition("_")[2]
-    y_pred_normal = getattr(clf.fit(X, y), normal_method)(X)
-
-    _assert_array_almost_equal(y_pred_normal, y_pred_cv_obj_fit)

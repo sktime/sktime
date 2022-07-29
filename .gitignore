@@ -45,9 +45,6 @@ pip-log.txt
 pip-delete-this-directory.txt
 pip-wheel-metadata/
 
-# folder created by `make test`
-testdir/
-
 # Unit test / coverage reports
 htmlcov/
 .tox/

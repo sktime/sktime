@@ -144,7 +144,7 @@ class STLBootstrapTransformer(BaseTransformer):
     --------
     >>> from sktime.transformations.bootstrap import STLBootstrapTransformer
     >>> from sktime.datasets import load_airline
-    >>> from sktime.utils.plotting import plot_series  # doctest: +SKIP
+    >>> from sktime.utils.plotting import plot_series
     >>> y = load_airline()
     >>> transformer = STLBootstrapTransformer(10)
     >>> y_hat = transformer.fit_transform(y)
@@ -154,7 +154,7 @@ class STLBootstrapTransformer(BaseTransformer):
     ...     series.index = series.index.droplevel(0)
     ...     series_list.append(series)
     ...     names.append(group)
-    >>> plot_series(*series_list, labels=names)  # doctest: +SKIP
+    >>> plot_series(*series_list, labels=names)
     (...)
     >>> print(y_hat.head()) # doctest: +NORMALIZE_WHITESPACE
                           Number of airline passengers
@@ -174,7 +174,7 @@ class STLBootstrapTransformer(BaseTransformer):
         # todo: what is the scitype of y: None (not needed), Primitives, Series, Panel
         "scitype:transform-labels": "None",
         "scitype:instancewise": True,  # is this an instance-wise transform?
-        "X_inner_mtype": "pd.DataFrame",  # which mtypes do _fit/_predict support for X?
+        "X_inner_mtype": "pd.Series",  # which mtypes do _fit/_predict support for X?
         # X_inner_mtype can be Panel mtype even if transform-input is Series, vectorized
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "capability:inverse_transform": False,
@@ -293,9 +293,6 @@ class STLBootstrapTransformer(BaseTransformer):
         -------
         transformed version of X
         """
-        Xcol = X.columns
-        X = X[X.columns[0]]
-
         if len(X) <= self.block_length_:
             raise ValueError(
                 "STLBootstrapTransformer requires that block_length is"
@@ -369,10 +366,7 @@ class STLBootstrapTransformer(BaseTransformer):
                 )
             )
 
-        Xt = pd.concat(df_list)
-        Xt.columns = Xcol
-
-        return Xt
+        return pd.concat(df_list)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -455,7 +449,7 @@ class MovingBlockBootstrapTransformer(BaseTransformer):
     --------
     >>> from sktime.transformations.bootstrap import MovingBlockBootstrapTransformer
     >>> from sktime.datasets import load_airline
-    >>> from sktime.utils.plotting import plot_series  # doctest: +SKIP
+    >>> from sktime.utils.plotting import plot_series
     >>> y = load_airline()
     >>> transformer = MovingBlockBootstrapTransformer(10)
     >>> y_hat = transformer.fit_transform(y)
@@ -465,7 +459,7 @@ class MovingBlockBootstrapTransformer(BaseTransformer):
     ...     series.index = series.index.droplevel(0)
     ...     series_list.append(series)
     ...     names.append(group)
-    >>> plot_series(*series_list, labels=names)  # doctest: +SKIP
+    >>> plot_series(*series_list, labels=names)
     (...)
     >>> print(y_hat.head()) # doctest: +NORMALIZE_WHITESPACE
                           Number of airline passengers
@@ -485,7 +479,7 @@ class MovingBlockBootstrapTransformer(BaseTransformer):
         # todo: what is the scitype of y: None (not needed), Primitives, Series, Panel
         "scitype:transform-labels": "None",
         "scitype:instancewise": True,  # is this an instance-wise transform?
-        "X_inner_mtype": "pd.DataFrame",  # which mtypes do _fit/_predict support for X?
+        "X_inner_mtype": "pd.Series",  # which mtypes do _fit/_predict support for X?
         # X_inner_mtype can be Panel mtype even if transform-input is Series, vectorized
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "capability:inverse_transform": False,
@@ -531,9 +525,6 @@ class MovingBlockBootstrapTransformer(BaseTransformer):
         -------
         transformed version of X
         """
-        Xcol = X.columns
-        X = X[X.columns[0]]
-
         if len(X) <= self.block_length:
             raise ValueError(
                 "MovingBlockBootstrapTransformer requires that block_length is"
@@ -582,10 +573,7 @@ class MovingBlockBootstrapTransformer(BaseTransformer):
                 )
             )
 
-        Xt = pd.concat(df_list)
-        Xt.columns = Xcol
-
-        return Xt
+        return pd.concat(df_list)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):

@@ -430,7 +430,7 @@ class BOSSEnsemble(BaseClassifier):
         if parameter_set == "results_comparison":
             return {"max_ensemble_size": 5}
         else:
-            return {"max_ensemble_size": 2, "save_train_predictions": True}
+            return {"max_ensemble_size": 2}
 
 
 class IndividualBOSS(BaseClassifier):

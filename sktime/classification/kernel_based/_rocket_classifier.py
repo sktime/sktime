@@ -4,15 +4,15 @@
 Pipeline classifier using the ROCKET transformer and RidgeClassifierCV estimator.
 """
 
-__author__ = ["MatthewMiddlehurst", "victordremov", "fkiraly"]
+__author__ = ["MatthewMiddlehurst", "victordremov"]
 __all__ = ["RocketClassifier"]
 
 import numpy as np
 from sklearn.linear_model import RidgeClassifierCV
+from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
-from sktime.classification._delegate import _DelegatedClassifier
-from sktime.pipeline import make_pipeline
+from sktime.classification.base import BaseClassifier
 from sktime.transformations.panel.rocket import (
     MiniRocket,
     MiniRocketMultivariate,
@@ -22,46 +22,23 @@ from sktime.transformations.panel.rocket import (
 )
 
 
-class RocketClassifier(_DelegatedClassifier):
+class RocketClassifier(BaseClassifier):
     """Classifier wrapped for the Rocket transformer using RidgeClassifierCV.
 
     This classifier simply transforms the input data using the Rocket [1]_
     transformer and builds a RidgeClassifierCV estimator using the transformed data.
 
-    Shorthand for the pipeline
-    `rocket * StandardScaler(with_mean=False) * RidgeClassifierCV(alphas)`
-    where `alphas = np.logspace(-3, 3, 10)`, and
-    where `rocket` depends on params `rocket_transform`, `use_multivariate` as follows:
-
-        | rocket_transform | `use_multivariate` | rocket (class)          |
-        |------------------|--------------------|-------------------------|
-        | "rocket"         | any                | Rocket                  |
-        | "minirocket"     | "yes               | MiniRocketMultivariate  |
-        | "minirocket"     | "no"               | MiniRocket              |
-        | "multirocket"    | "yes"              | MultiRocketMultivariate |
-        | "multirocket"    | "no"               | MultiRocket             |
-
-    classes are sktime classes, other parameters are passed on to the rocket class.
-
-    To build other classifiers with rocket transformers, use `make_pipeline` or the
-    pipeline dunder `*`, and different transformers/classifiers in combination.
-
     Parameters
     ----------
-    num_kernels : int, optional, default=10,000
+    num_kernels : int, default=10,000
         The number of kernels the for Rocket transform.
-    rocket_transform : str, optional, default="rocket"
+    rocket_transform : str, default="rocket"
         The type of Rocket transformer to use.
-        Valid inputs = ["rocket", "minirocket", "multirocket"]
-    max_dilations_per_kernel : int, optional, default=32
+        Valid inputs = ["rocket","minirocket","multirocket"]
+    max_dilations_per_kernel : int, default=32
         MiniRocket and MultiRocket only. The maximum number of dilations per kernel.
-    n_features_per_kernel : int, optional, default=4
+    n_features_per_kernel : int, default=4
         MultiRocket only. The number of features per kernel.
-    use_multivariate : str, ["auto", "yes", "no"], optional, default="auto"
-        whether to use multivariate rocket transforms or univariate ones
-        "auto" = multivariate iff data seen in fit is multivariate, otherwise univariate
-        "yes" = always uses multivariate transformers, native multi/univariate
-        "no" = always univariate transformers, multivariate by framework vectorization
     n_jobs : int, default=1
         The number of jobs to run in parallel for both `fit` and `predict`.
         ``-1`` means using all processors.
@@ -74,8 +51,6 @@ class RocketClassifier(_DelegatedClassifier):
         The number of classes.
     classes_ : list
         The classes labels.
-    estimator_ : ClassifierPipeline
-        RocketClassifier as a ClassifierPipeline, fitted to data internally
 
     See Also
     --------
@@ -111,17 +86,12 @@ class RocketClassifier(_DelegatedClassifier):
         "classifier_type": "kernel",
     }
 
-    # valid rocket strings for input validity checking
-    VALID_ROCKET_STRINGS = ["rocket", "minirocket", "multirocket"]
-    VALID_MULTIVAR_VALUES = ["auto", "yes", "no"]
-
     def __init__(
         self,
         num_kernels=10000,
         rocket_transform="rocket",
         max_dilations_per_kernel=32,
         n_features_per_kernel=4,
-        use_multivariate="auto",
         n_jobs=1,
         random_state=None,
     ):
@@ -129,77 +99,120 @@ class RocketClassifier(_DelegatedClassifier):
         self.rocket_transform = rocket_transform
         self.max_dilations_per_kernel = max_dilations_per_kernel
         self.n_features_per_kernel = n_features_per_kernel
-        self.use_multivariate = use_multivariate
 
         self.n_jobs = n_jobs
         self.random_state = random_state
 
+        self._pipeline = None
+
         super(RocketClassifier, self).__init__()
 
-        if use_multivariate not in self.VALID_MULTIVAR_VALUES:
-            raise ValueError(
-                f"Invalid use_multivariate value, must be one of "
-                f"{self.VALID_MULTIVAR_VALUES}, but found {use_multivariate}"
+    def _fit(self, X, y):
+        """Build a pipeline containing the Rocket transformer and RidgeClassifierCV.
+
+        Parameters
+        ----------
+        X : 3D np.array of shape = [n_instances, n_dimensions, series_length]
+            The training data.
+        y : array-like, shape = [n_instances]
+            The class labels.
+
+        Returns
+        -------
+        self :
+            Reference to self.
+
+        Notes
+        -----
+        Changes state by creating a fitted model that updates attributes
+        ending in "_" and sets is_fitted flag to True.
+        """
+        _, n_dims, _ = X.shape
+
+        if self.rocket_transform == "rocket":
+            rocket = Rocket(
+                num_kernels=self.num_kernels,
+                random_state=self.random_state,
+                n_jobs=self._threads_to_use,
             )
-
-        common_params = {
-            "num_kernels": self.num_kernels,
-            "random_state": self.random_state,
-            "max_dilations_per_kernel": self.max_dilations_per_kernel,
-            "n_jobs": self._threads_to_use,
-        }
-
-        if rocket_transform == "rocket":
-            del common_params["max_dilations_per_kernel"]
-            univar_rocket = Rocket(**common_params)
-            multivar_rocket = univar_rocket
-
-        elif rocket_transform == "minirocket":
-            multivar_rocket = MiniRocketMultivariate(**common_params)
-            univar_rocket = MiniRocket(**common_params)
-
+        elif self.rocket_transform == "minirocket":
+            if n_dims > 1:
+                rocket = MiniRocketMultivariate(
+                    num_kernels=self.num_kernels,
+                    max_dilations_per_kernel=self.max_dilations_per_kernel,
+                    random_state=self.random_state,
+                    n_jobs=self._threads_to_use,
+                )
+            else:
+                rocket = MiniRocket(
+                    num_kernels=self.num_kernels,
+                    max_dilations_per_kernel=self.max_dilations_per_kernel,
+                    random_state=self.random_state,
+                    n_jobs=self._threads_to_use,
+                )
         elif self.rocket_transform == "multirocket":
-            common_params["n_features_per_kernel"] = self.n_features_per_kernel
-            multivar_rocket = MultiRocketMultivariate(**common_params)
-            univar_rocket = MultiRocket(**common_params)
-
+            if n_dims > 1:
+                rocket = MultiRocketMultivariate(
+                    num_kernels=self.num_kernels,
+                    max_dilations_per_kernel=self.max_dilations_per_kernel,
+                    n_features_per_kernel=self.n_features_per_kernel,
+                    random_state=self.random_state,
+                    n_jobs=self._threads_to_use,
+                )
+            else:
+                rocket = MultiRocket(
+                    num_kernels=self.num_kernels,
+                    max_dilations_per_kernel=self.max_dilations_per_kernel,
+                    n_features_per_kernel=self.n_features_per_kernel,
+                    random_state=self.random_state,
+                    n_jobs=self._threads_to_use,
+                )
         else:
-            raise ValueError(
-                f"Invalid rocket_transform string, must be one of "
-                f"{self.VALID_ROCKET_STRINGS}, but found {rocket_transform}"
-            )
+            raise ValueError(f"Invalid Rocket transformer: {self.rocket_transform}")
 
-        self.multivar_rocket_ = make_pipeline(
-            multivar_rocket,
+        self._pipeline = rocket_pipeline = make_pipeline(
+            rocket,
             StandardScaler(with_mean=False),
             RidgeClassifierCV(alphas=np.logspace(-3, 3, 10)),
         )
-        self.univar_rocket_ = make_pipeline(
-            univar_rocket,
-            StandardScaler(with_mean=False),
-            RidgeClassifierCV(alphas=np.logspace(-3, 3, 10)),
-        )
+        rocket_pipeline.fit(X, y)
 
-        if not use_multivariate:
-            self.set_tags(**{"capability:multivariate": False})
+        return self
 
-    @property
-    def estimator_(self):
-        """Shorthand for the internal estimator that is fitted."""
-        return self._get_delegate()
+    def _predict(self, X) -> np.ndarray:
+        """Predicts labels for sequences in X.
 
-    def _get_delegate(self):
-        use_multivariate = self.use_multivariate
-        if use_multivariate == "auto":
-            code_dict = {True: "yes", False: "no"}
-            use_multivariate = code_dict[not self._X_metadata["is_univariate"]]
+        Parameters
+        ----------
+        X : 3D np.array of shape = [n_instances, n_dimensions, series_length]
+            The data to make predictions for.
 
-        if use_multivariate == "yes":
-            delegate = self.multivar_rocket_
-        else:
-            delegate = self.univar_rocket_
+        Returns
+        -------
+        y : array-like, shape = [n_instances]
+            Predicted class labels.
+        """
+        return self._pipeline.predict(X)
 
-        return delegate
+    def _predict_proba(self, X) -> np.ndarray:
+        """Predicts labels probabilities for sequences in X.
+
+        Parameters
+        ----------
+        X : 3D np.array of shape = [n_instances, n_dimensions, series_length]
+            The data to make predict probabilities for.
+
+        Returns
+        -------
+        y : array-like, shape = [n_instances, n_classes_]
+            Predicted probabilities using the ordering in classes_.
+        """
+        dists = np.zeros((X.shape[0], self.n_classes_))
+        preds = self._pipeline.predict(X)
+        for i in range(0, X.shape[0]):
+            dists[i, np.where(self.classes_ == preds[i])] = 1
+
+        return dists
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):

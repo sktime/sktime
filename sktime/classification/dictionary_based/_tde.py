@@ -572,7 +572,6 @@ class TemporalDictionaryEnsemble(BaseClassifier):
                 "n_parameter_samples": 5,
                 "max_ensemble_size": 2,
                 "randomly_selected_params": 3,
-                "save_train_predictions": True,
             }
 
 

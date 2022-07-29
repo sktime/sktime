@@ -7,6 +7,8 @@ __author__ = ["aiwalter"]
 __all__ = ["Imputer"]
 
 
+from warnings import warn
+
 import numpy as np
 from sklearn.utils import check_random_state
 
@@ -168,6 +170,16 @@ class Imputer(BaseTransformer):
         """
         X = X.copy()
 
+        # TODO v0.13.0: Remove this if statement and warning
+        if self.method in ["drift", "mean", "median", "random"]:
+            warn(
+                """Imputer methods "drift", "mean", "median", "random" have been
+                moved to the fit() method, so usage via transform() is
+                deprecated. To still fit on the transform data only, please use the
+                new FitInTransform transformer.
+                """,
+                DeprecationWarning,
+            )
         # replace missing_values with np.nan
         if self.missing_values:
             X = X.replace(to_replace=self.missing_values, value=np.nan)
@@ -178,7 +190,7 @@ class Imputer(BaseTransformer):
         if self.method == "random":
             for col in X.columns:
                 X[col] = X[col].apply(
-                    lambda i: self._get_random(col) if np.isnan(i) else i  # noqa: B023
+                    lambda i: self._get_random(col) if np.isnan(i) else i
                 )
         elif self.method == "constant":
             X = X.fillna(value=self.value)

@@ -135,7 +135,7 @@ def _make_fit_args(estimator, **kwargs):
     elif isinstance(estimator, BaseSeriesAnnotator):
         X = make_annotation_problem(**kwargs)
         return (X,)
-    elif isinstance(estimator, (BaseClassifier, BaseEarlyClassifier)):
+    elif isinstance(estimator, BaseClassifier):
         return make_classification_problem(**kwargs)
     elif isinstance(estimator, BaseRegressor):
         return make_regression_problem(**kwargs)
@@ -353,7 +353,7 @@ def _has_capability(est, method: str) -> bool:
         "predict_quantiles",
         "predict_var",
     ]:
-        ALWAYS_HAVE_PREDICT_PROBA = (BaseClassifier, BaseEarlyClassifier, BaseClusterer)
+        ALWAYS_HAVE_PREDICT_PROBA = (BaseClassifier, BaseClusterer)
         # all classifiers and clusterers implement predict_proba
         if method == "predict_proba" and isinstance(est, ALWAYS_HAVE_PREDICT_PROBA):
             return True

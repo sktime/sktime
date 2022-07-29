@@ -62,7 +62,7 @@ repos:
   # We use the Python version instead of the original version which seems to require Docker
   # https://github.com/koalaman/shellcheck-precommit
   - repo: https://github.com/shellcheck-py/shellcheck-py
-    rev: v0.8.0.4
+    rev: v0.8.0.1
     hooks:
       - id: shellcheck
         name: shellcheck

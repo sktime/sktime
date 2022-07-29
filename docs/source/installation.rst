@@ -5,7 +5,7 @@ Installation
 
 ``sktime`` currently supports:
 
-* Python versions 3.7, 3.8, 3.9 and 3.10.
+* Python versions 3.7, 3.8 and 3.9
 * Operating systems Mac OS X, Unix-like OS, Windows 8.1 and higher
 
 See here for a `full list of precompiled wheels available on PyPI <https://pypi.org/simple/sktime/>`_.

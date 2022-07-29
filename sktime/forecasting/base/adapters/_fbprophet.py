@@ -21,8 +21,6 @@ class _ProphetAdapter(BaseForecaster):
         "capability:pred_int": True,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
-        "y_inner_mtype": "pd.DataFrame",
-        "python_dependencies": "prophet",
     }
 
     def _convert_int_to_date(self, y):
@@ -70,10 +68,7 @@ class _ProphetAdapter(BaseForecaster):
             X = self._convert_int_to_date(X)
 
         # We have to bring the data into the required format for fbprophet:
-        df = y.copy()
-        df.columns = ["y"]
-        df.index.name = "ds"
-        df = df.reset_index()
+        df = pd.DataFrame({"y": y, "ds": y.index})
 
         # Add seasonality/seasonalities
         if self.add_seasonality:
@@ -167,13 +162,10 @@ class _ProphetAdapter(BaseForecaster):
         out.set_index("ds", inplace=True)
         y_pred = out.loc[:, "yhat"]
 
-        # bring outputs into required format
-        # same column names as training data, index should be index, not "ds"
         y_pred = pd.DataFrame(y_pred)
         y_pred.reset_index(inplace=True)
         y_pred.index = y_pred["ds"].values
         y_pred.drop("ds", axis=1, inplace=True)
-        y_pred.columns = self._y.columns
 
         if self.y_index_was_int_:
             y_pred.index = self.fh.to_absolute(cutoff=self.cutoff)

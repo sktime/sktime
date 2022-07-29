@@ -99,16 +99,16 @@ class BATS(_TbatsAdapter):
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.bats import BATS
     >>> y = load_airline()
-    >>> forecaster = BATS(  # doctest: +SKIP
+    >>> forecaster = BATS(
     ...     use_box_cox=False,
     ...     use_trend=False,
     ...     use_damped_trend=False,
     ...     sp=12,
     ...     use_arma_errors=False,
     ...     n_jobs=1)
-    >>> forecaster.fit(y)  # doctest: +SKIP
+    >>> forecaster.fit(y)
     BATS(...)
-    >>> y_pred = forecaster.predict(fh=[1,2,3])  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=[1,2,3])
     """  # noqa: E501
 
     _fitted_param_names = "aic"

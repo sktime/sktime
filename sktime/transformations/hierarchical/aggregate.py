@@ -27,27 +27,6 @@ class Aggregator(BaseTransformer):
     flatten_single_level : boolean (default=True)
         Remove aggregate nodes, i.e. ("__total"), where there is only a single
         child to the level
-
-    See Also
-    --------
-    ReconcilerForecaster
-    Reconciler
-
-    References
-    ----------
-    .. [1] https://otexts.com/fpp3/hierarchical.html
-
-    Examples
-    --------
-    >>> from sktime.transformations.hierarchical.aggregate import Aggregator
-    >>> from sktime.utils._testing.hierarchical import _bottom_hier_datagen
-    >>> agg = Aggregator()
-    >>> y = _bottom_hier_datagen(
-    ...     no_bottom_nodes=3,
-    ...     no_levels=1,
-    ...     random_seed=123,
-    ... )
-    >>> y = agg.fit_transform(y)
     """
 
     _tags = {

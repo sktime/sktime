@@ -1950,8 +1950,8 @@ def pairwise_distance(
     metric: str or Callable, defaults = 'euclidean'
         The distance metric to use.
         If a string is given, the value must be one of the following strings:
-            'euclidean', 'squared', 'dtw', 'ddtw', 'wdtw', 'wddtw',
-            'lcss', 'edr', 'erp', 'msm'
+        'euclidean', 'squared', 'dtw', 'ddtw', 'wdtw', 'wddtw', 'lcss', 'edr', 'erp'
+
         If callable then it has to be a distance factory or numba distance callable.
         If you want to pass custom kwargs to the distance at runtime, use a distance
         factory as it constructs the distance using the kwargs before distance

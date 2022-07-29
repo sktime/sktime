@@ -11,6 +11,7 @@ import pytest
 from sklearn.model_selection import ParameterGrid, ParameterSampler
 
 from sktime.datasets import load_longley
+from sktime.forecasting.arima import ARIMA
 from sktime.forecasting.compose import TransformedTargetForecaster
 from sktime.forecasting.model_evaluation import evaluate
 from sktime.forecasting.model_selection import (
@@ -46,18 +47,23 @@ def _get_expected_scores(forecaster, cv, param_grid, y, X, scoring):
     return scores
 
 
-def _check_cv(forecaster, tuner, cv, param_grid, y, X, scoring):
-    actual = tuner.cv_results_[f"mean_test_{scoring.name}"]
+def _check_cv(forecaster, gscv, cv, param_grid, y, X, scoring):
+    actual = gscv.cv_results_[f"mean_test_{scoring.name}"]
 
     expected = _get_expected_scores(forecaster, cv, param_grid, y, X, scoring)
     np.testing.assert_array_equal(actual, expected)
 
     # Check if best parameters are selected.
-    best_idx = tuner.best_index_
+    best_idx = gscv.best_index_
     assert best_idx == actual.argmin()
 
-    fitted_params = tuner.get_fitted_params()
-    assert param_grid[best_idx].items() <= fitted_params.items()
+    best_params = gscv.best_params_
+    assert best_params == param_grid[best_idx]
+
+    # Check if best parameters are contained in best forecaster.
+    best_forecaster_params = gscv.best_forecaster_.get_params()
+    best_params = gscv.best_params_
+    assert best_params.items() <= best_forecaster_params.items()
 
 
 NAIVE = NaiveForecaster(strategy="mean")
@@ -65,12 +71,12 @@ NAIVE_GRID = {"window_length": TEST_WINDOW_LENGTHS_INT}
 PIPE = TransformedTargetForecaster(
     [
         ("transformer", Detrender(PolynomialTrendForecaster())),
-        ("forecaster", NaiveForecaster()),
+        ("forecaster", ARIMA()),
     ]
 )
 PIPE_GRID = {
     "transformer__forecaster__degree": [1, 2],
-    "forecaster__strategy": ["last", "mean"],
+    "forecaster__with_intercept": [True, False],
 }
 CVs = [
     *[SingleWindowSplitter(fh=fh) for fh in TEST_OOS_FHS],

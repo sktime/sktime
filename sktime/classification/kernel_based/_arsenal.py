@@ -390,11 +390,6 @@ class Arsenal(BaseClassifier):
 
         indices = range(self.n_instances_)
         subsample = rng.choice(self.n_instances_, size=self.n_instances_)
-
-        # subsample must have at least 2 unique classes
-        while len(np.unique(y[subsample])) == 1:
-            subsample = rng.choice(self.n_instances_, size=self.n_instances_)
-
         oob = [n for n in indices if n not in subsample]
 
         results = np.zeros((self.n_instances_, self.n_classes_))
@@ -440,10 +435,6 @@ class Arsenal(BaseClassifier):
         if parameter_set == "results_comparison":
             params = {"num_kernels": 20, "n_estimators": 5}
         else:
-            params = {
-                "num_kernels": 10,
-                "n_estimators": 2,
-                "save_transformed_data": True,
-            }
+            params = {"num_kernels": 10, "n_estimators": 2}
 
         return params

@@ -13,9 +13,7 @@ from sktime.transformations.compose import FeatureUnion, TransformerPipeline
 from sktime.transformations.panel.padder import PaddingTransformer
 from sktime.transformations.series.exponent import ExponentTransformer
 from sktime.transformations.series.impute import Imputer
-from sktime.transformations.series.subset import ColumnSelect
 from sktime.transformations.series.summarize import SummaryTransformer
-from sktime.transformations.series.theta import ThetaLinesTransformer
 from sktime.utils._testing.deep_equals import deep_equals
 from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
 
@@ -163,45 +161,3 @@ def test_sklearn_after_primitives():
     # fix this to one value to tie the output to current behaviour
     assert X_out.iloc[0, 10] > -1.37
     assert X_out.iloc[0, 10] < -1.36
-
-
-def test_pipeline_column_vectorization():
-    """Test that pipelines vectorize properly over columns."""
-    X = pd.DataFrame({"a": [1, 2], "b": [3, 4]})
-
-    t = ColumnSelect([0, 1]) * ThetaLinesTransformer()
-
-    X_theta = t.fit_transform(X)
-
-    assert set(X_theta.columns) == set(["a__0", "a__2", "b__0", "b__2"])
-
-
-def test_subset_getitem():
-    """Test subsetting using the [ ] dunder, __getitem__."""
-    X = pd.DataFrame({"a": [1, 2], "b": [3, 4], "c": [5, 6]})
-
-    t = ThetaLinesTransformer()
-
-    t_before = t["a"]
-    t_before_with_colon = t[["a", "b"], :]
-    t_after_with_colon = t[:, ["a__0", "a__2"]]
-    t_both = t[["a", "b"], ["b__0", "b__2", "c__0", "c__2"]]
-    t_none = t[:, :]
-
-    assert isinstance(t_before, TransformerPipeline)
-    assert isinstance(t_after_with_colon, TransformerPipeline)
-    assert isinstance(t_before_with_colon, TransformerPipeline)
-    assert isinstance(t_both, TransformerPipeline)
-    assert isinstance(t_none, ThetaLinesTransformer)
-
-    X_theta = t.fit_transform(X)
-
-    _assert_array_almost_equal(t_before.fit_transform(X), X_theta[["a__0", "a__2"]])
-    _assert_array_almost_equal(
-        t_after_with_colon.fit_transform(X), X_theta[["a__0", "a__2"]]
-    )
-    _assert_array_almost_equal(
-        t_before_with_colon.fit_transform(X), X_theta[["a__0", "a__2", "b__0", "b__2"]]
-    )
-    _assert_array_almost_equal(t_both.fit_transform(X), X_theta[["b__0", "b__2"]])
-    _assert_array_almost_equal(t_none.fit_transform(X), X_theta)

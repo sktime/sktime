@@ -16,14 +16,13 @@ class DistFromAligner(BasePairwiseTransformerPanel):
     Components
     ----------
     aligner: BaseAligner, must implement get_distances method
-        if None, distance is equal zero
     """
 
     _tags = {
         "symmetric": True,  # all the distances are symmetric
     }
 
-    def __init__(self, aligner=None):
+    def __init__(self, aligner):
 
         self.aligner = aligner
 
@@ -51,6 +50,8 @@ class DistFromAligner(BasePairwiseTransformerPanel):
         distmat: np.array of shape [n, m]
             (i,j)-th entry contains distance/kernel between X.iloc[i] and X2.iloc[j]
         """
+        aligner = self.aligner.clone()
+
         # find out whether we know that the resulting matrix is symmetric
         #   since aligner distances are always symmetric,
         #   we know it's the case for sure if X equals X2
@@ -64,11 +65,6 @@ class DistFromAligner(BasePairwiseTransformerPanel):
         m = len(X2)
 
         distmat = np.zeros((n, m), dtype="float")
-
-        if self.aligner is not None:
-            aligner = self.aligner.clone()
-        else:
-            return distmat
 
         for i in range(n):
             for j in range(m):
@@ -84,9 +80,5 @@ class DistFromAligner(BasePairwiseTransformerPanel):
         """Test parameters for DistFromAligner."""
         # importing inside to avoid circular dependencies
         from sktime.alignment.dtw_python import AlignerDTW
-        from sktime.utils.validation._dependencies import _check_estimator_deps
 
-        if _check_estimator_deps(AlignerDTW, severity="none"):
-            return {"aligner": AlignerDTW()}
-        else:
-            return {}
+        return {"aligner": AlignerDTW()}

@@ -5,15 +5,13 @@
 __author__ = ["mloning", "xiaobenbenecho", "khrapovs"]
 __all__ = []
 
-from functools import singledispatch
-from typing import Optional, Tuple, Union
+import re
+from typing import Tuple, Union
 from warnings import warn
 
 import numpy as np
 import pandas as pd
 
-from sktime.datatypes import VectorizedDF
-from sktime.datatypes._utilities import get_time_index
 from sktime.utils.validation.series import check_time_index, is_integer_index
 
 
@@ -70,10 +68,12 @@ def _get_intervals_count_and_unit(freq: str) -> Tuple[int, str]:
     """
     if freq is None:
         raise ValueError("frequency is missing")
-    else:
-        offset = pd.tseries.frequencies.to_offset(freq)
-        count, unit = offset.n, offset.base.freqstr
-        return count, unit
+    m = re.match(r"(?P<count>\d*)(?P<unit>[a-zA-Z]+)$", freq)
+    if not m:
+        raise ValueError(f"pandas frequency {freq} not understood.")
+    count, unit = m.groups()
+    count = 1 if not count else int(count)
+    return count, unit
 
 
 def _get_freq(x):
@@ -87,57 +87,6 @@ def _get_freq(x):
             return x.freqstr
     else:
         return None
-
-
-@singledispatch
-def infer_freq(y=None) -> Optional[str]:
-    """Infer frequency string from the time series object.
-
-    Parameters
-    ----------
-    y : Series, Panel, or Hierarchical object, or VectorizedDF, optional (default=None)
-
-    Returns
-    -------
-    str
-        Frequency string inferred from the pandas index,
-        or `None`, if inference fails.
-    """
-    return None
-
-
-@infer_freq.register(pd.DataFrame)
-@infer_freq.register(pd.Series)
-@infer_freq.register(np.ndarray)
-def _(y) -> Optional[str]:
-    return _infer_freq_from_index(get_time_index(y))
-
-
-@infer_freq.register(VectorizedDF)
-def _(y) -> Optional[str]:
-    return _infer_freq_from_index(get_time_index(y.as_list()[0]))
-
-
-def _infer_freq_from_index(index: pd.Index) -> Optional[str]:
-    """Infer frequency string from the pandas index.
-
-    Parameters
-    ----------
-    index : pd.Index
-
-    Returns
-    -------
-    str
-        Frequency string inferred from the pandas index,
-        or `None`, if inference fails.
-    """
-    if hasattr(index, "freqstr"):
-        return index.freqstr
-    else:
-        try:
-            return pd.infer_freq(index, warn=False)
-        except (TypeError, ValueError):
-            return None
 
 
 def _shift(x, by=1, return_index=False):

@@ -94,25 +94,6 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
         assert y_proba.shape == (X_new_instances, n_classes)
         np.testing.assert_almost_equal(y_proba.sum(axis=1), 1, decimal=4)
 
-        if estimator_instance.get_tag("capability:train_estimate"):
-            if not hasattr(estimator_instance, "_get_train_probs"):
-                raise ValueError(
-                    "Classifier capability:train_estimate tag is set to "
-                    "true, but no _get_train_probs method is present."
-                )
-
-            X_train = scenario.args["fit"]["X"]
-            _, _, X_train_metadata = check_is_scitype(
-                X_train, "Panel", return_metadata=True
-            )
-            X_train_len = X_train_metadata["n_instances"]
-
-            train_proba = estimator_instance._get_train_probs(X_train, y_train)
-
-            assert isinstance(train_proba, np.ndarray)
-            assert train_proba.shape == (X_train_len, n_classes)
-            np.testing.assert_almost_equal(train_proba.sum(axis=1), 1, decimal=4)
-
     def test_classifier_on_unit_test_data(self, estimator_class):
         """Test classifier on unit test data."""
         # we only use the first estimator instance for testing

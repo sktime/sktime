@@ -184,10 +184,11 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
         -------
         params : dict or list of dict
         """
+        from sktime.forecasting.arima import ARIMA
         from sktime.forecasting.naive import NaiveForecaster
 
         f1 = NaiveForecaster()
-        f2 = NaiveForecaster(strategy="mean", window_length=3)
+        f2 = ARIMA()
         params = {"forecasters": [("f1", f1), ("f2", f2)]}
 
         return params

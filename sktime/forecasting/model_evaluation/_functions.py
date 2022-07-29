@@ -42,11 +42,9 @@ def evaluate(
         Target time series to which to fit the forecaster.
     X : pd.DataFrame, default=None
         Exogenous variables
-    strategy : {"refit", "update", "no-update_params"}, optional, default="refit"
-        defines the ingestion mode when the forecaster sees new data when window expands
-        "refit" = forecaster is refitted to each training window
-        "update" = forecaster is updated with training window data, in sequence provided
-        "no-update_params" = fit to first training window, re-used without fit or update
+    strategy : {"refit", "update"}
+        Must be "refit" or "update". The strategy defines whether the `forecaster` is
+        only fitted on the first train window data and then updated, or always refitted.
     scoring : subclass of sktime.performance_metrics.BaseMetric, default=None.
         Used to get a score function that takes y_pred and y_test arguments
         and accept y_train as keyword argument.
@@ -65,7 +63,9 @@ def evaluate(
     Examples
     --------
         The type of evaluation that is done by `evaluate` depends on metrics in
-        param `scoring`. Default is `MeanAbsolutePercentageError`.
+        param `scoring`
+        When evaluating model/estimators on point forecast, users can let
+        scoring=None, which defaults to MeanAbsolutePercentageError
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.model_evaluation import evaluate
     >>> from sktime.forecasting.model_selection import ExpandingWindowSplitter
@@ -81,13 +81,14 @@ def evaluate(
         i.e., point forecast metrics, interval metrics, quantile foreast metrics.
         https://www.sktime.org/en/stable/api_reference/performance_metrics.html?highlight=metrics
 
-        To evaluate estimators using a specific metric, provide them to the scoring arg.
+        To evaluate models/estimators using a specific metric, provide them to the
+        scoring arg.
     >>> from sktime.performance_metrics.forecasting import MeanAbsoluteError
     >>> loss = MeanAbsoluteError()
     >>> results = evaluate(forecaster=forecaster, y=y, cv=cv, scoring=loss)
 
-        An example of an interval metric is the `PinballLoss`.
-        It can be used with all probabilistic forecasters.
+        An example of an interval metric is the PinballLoss. It can be used with
+        all probabilistic forecasters.
     >>> from sktime.forecasting.naive import NaiveVariance
     >>> from sktime.performance_metrics.forecasting.probabilistic import PinballLoss
     >>> loss = PinballLoss()
@@ -125,9 +126,8 @@ def evaluate(
             forecaster = forecaster.clone()
             forecaster.fit(y_train, X_train, fh=fh)
 
-        else:  # if strategy in ["update", "no-update_params"]:
-            update_params = strategy == "update"
-            forecaster.update(y_train, X_train, update_params=update_params)
+        else:  # if strategy == "update":
+            forecaster.update(y_train, X_train)
         fit_time = time.perf_counter() - start_fit
 
         pred_type = {
@@ -209,13 +209,12 @@ def _check_strategy(strategy):
     ----------
     strategy : str
         strategy of how to evaluate a forecaster
-        must be in "refit", "update" , "no-update_params"
 
     Raises
     ------
     ValueError
         If strategy value is not in expected values, raise error.
     """
-    valid_strategies = ("refit", "update", "no-update_params")
+    valid_strategies = ("refit", "update")
     if strategy not in valid_strategies:
         raise ValueError(f"`strategy` must be one of {valid_strategies}")

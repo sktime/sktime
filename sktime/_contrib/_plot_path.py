@@ -1,22 +1,14 @@
 # -*- coding: utf-8 -*-
-"""Alignment path plotting utilities."""
+import matplotlib.colors as colorplt
+import matplotlib.pyplot as plt
 import numpy as np
 
 from sktime.distances._distance import distance_alignment_path, pairwise_distance
-from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-_check_soft_dependencies("matplotlib", severity="warning")
+gray_cmap = colorplt.LinearSegmentedColormap.from_list("", ["#c9cacb", "white"])
 
 
-def _path_mask(cost_matrix, path, ax, theme=None):
-
-    _check_soft_dependencies("matplotlib")
-
-    import matplotlib.colors as colorplt
-
-    if theme is None:
-        theme = colorplt.LinearSegmentedColormap.from_list("", ["#c9cacb", "white"])
-
+def _path_mask(cost_matrix, path, ax, theme=gray_cmap):
     plot_matrix = np.zeros_like(cost_matrix)
     max_size = max(cost_matrix.shape)
     for i in range(max_size):
@@ -55,11 +47,6 @@ def _plot_path(
     title: str = "",
     plot_over_pw: bool = False,
 ):
-
-    _check_soft_dependencies("matplotlib")
-
-    import matplotlib as plt
-
     if dist_kwargs is None:
         dist_kwargs = {}
     try:
@@ -122,11 +109,6 @@ def _plot_path(
 
 
 def _plot_alignment(x, y, metric, dist_kwargs: dict = None, title: str = ""):
-
-    _check_soft_dependencies("matplotlib")
-
-    import matplotlib as plt
-
     if dist_kwargs is None:
         dist_kwargs = {}
     try:

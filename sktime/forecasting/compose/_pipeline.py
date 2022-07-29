@@ -215,7 +215,6 @@ class _Pipeline(
         from sktime.forecasting.naive import NaiveForecaster
         from sktime.transformations.series.adapt import TabularToSeriesAdaptor
         from sktime.transformations.series.exponent import ExponentTransformer
-        from sktime.utils.validation._dependencies import _check_estimator_deps
 
         # StandardScaler does not skip fit, NaiveForecaster is not probabilistic
         STEPS1 = [
@@ -224,20 +223,16 @@ class _Pipeline(
         ]
         params1 = {"steps": STEPS1}
 
-        if _check_estimator_deps(ARIMA, severity="none"):
-            # ARIMA has probabilistic methods, ExponentTransformer skips fit
-            STEPS2 = [
-                ("transformer", ExponentTransformer()),
-                ("forecaster", ARIMA()),
-            ]
-            params2 = {"steps": STEPS2}
+        # ARIMA has probabilistic methods, ExponentTransformer skips fit
+        STEPS2 = [
+            ("transformer", ExponentTransformer()),
+            ("forecaster", ARIMA()),
+        ]
+        params2 = {"steps": STEPS2}
 
-            params3 = {"steps": [ExponentTransformer(), ARIMA()]}
+        params3 = {"steps": [ExponentTransformer(), ARIMA()]}
 
-            return [params1, params2, params3]
-
-        else:
-            return params1
+        return [params1, params2, params3]
 
 
 # we ensure that internally we convert to pd.DataFrame for now
@@ -295,6 +290,7 @@ class ForecastingPipeline(_Pipeline):
         self.steps_ = self._check_steps(steps, allow_postproc=False)
         super(ForecastingPipeline, self).__init__()
         tags_to_clone = [
+            "scitype:y",  # which y are fine? univariate/multivariate/both
             "ignores-exogeneous-X",  # does estimator ignore the exogeneous X?
             "capability:pred_int",  # can the estimator produce prediction intervals?
             "handles-missing-data",  # can estimator handle missing data?
@@ -669,6 +665,7 @@ class TransformedTargetForecaster(_Pipeline):
 
         # set the tags based on forecaster
         tags_to_clone = [
+            "scitype:y",  # which y are fine? univariate/multivariate/both
             "ignores-exogeneous-X",  # does estimator ignore the exogeneous X?
             "capability:pred_int",  # can the estimator produce prediction intervals?
             "handles-missing-data",  # can estimator handle missing data?
@@ -1063,13 +1060,13 @@ class ForecastX(BaseForecaster):
 
     >>> y, X = load_longley()
     >>> fh = ForecastingHorizon([1, 2, 3])
-    >>> pipe = ForecastX(  # doctest: +SKIP
+    >>> pipe = ForecastX(
     ...     forecaster_X=VAR(),
     ...     forecaster_y=ARIMA(),
     ... )
-    >>> pipe = pipe.fit(y, X=X, fh=fh)  # doctest: +SKIP
+    >>> pipe = pipe.fit(y, X=X, fh=fh)
     >>> # this now works without X from the future of y!
-    >>> y_pred = pipe.predict(fh=fh)  # doctest: +SKIP
+    >>> y_pred = pipe.predict(fh=fh)
     """
 
     _tags = {

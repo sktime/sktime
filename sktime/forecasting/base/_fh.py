@@ -8,13 +8,11 @@ __all__ = ["ForecastingHorizon"]
 
 from functools import lru_cache
 from typing import Optional, Union
-from warnings import warn
 
 import numpy as np
 import pandas as pd
-from pandas.tseries.frequencies import to_offset
 
-from sktime.utils.datetime import _coerce_duration_to_int
+from sktime.utils.datetime import _coerce_duration_to_int, _get_freq
 from sktime.utils.validation import (
     array_is_int,
     array_is_timedelta_or_date_offset,
@@ -140,50 +138,6 @@ def _check_values(values: Union[VALID_FORECASTING_HORIZON_TYPES]) -> pd.Index:
     return values.sort_values()
 
 
-def _check_freq(obj):
-    """Coerce obj to a pandas frequency offset for the ForecastingHorizon.
-
-    Parameters
-    ----------
-    obj : pd.Index, pd.Period, pandas offset, or None
-
-    Returns
-    -------
-    pd offset
-
-    Raises
-    ------
-    TypeError if the type assumption on obj is not met
-    """
-    if isinstance(obj, pd.offsets.BaseOffset):
-        return obj
-    elif hasattr(obj, "_cutoff"):
-        return _check_freq(obj._cutoff)
-    elif isinstance(obj, (pd.Period, pd.Index)):
-        return _extract_freq_from_cutoff(obj)
-    elif isinstance(obj, str) or obj is None:
-        return to_offset(obj)
-    else:
-        return None
-
-
-def _extract_freq_from_cutoff(x) -> Optional[str]:
-    """Extract frequency string from cutoff.
-
-    Parameters
-    ----------
-    x : pd.Period, pd.PeriodIndex, pd.DatetimeIndex
-
-    Returns
-    -------
-    str : Frequency string or None
-    """
-    if isinstance(x, (pd.Period, pd.PeriodIndex, pd.DatetimeIndex)):
-        return x.freq
-    else:
-        return None
-
-
 class ForecastingHorizon:
     """Forecasting horizon.
 
@@ -199,16 +153,12 @@ class ForecastingHorizon:
         - if None, the flag is determined automatically:
             relative, if values are of supported relative index type
             absolute, if not relative and values of supported absolute index type
-    freq : str, pd.Index, pandas offset, or sktime forecaster, optional (default=None)
-        object carrying frequency information on values
-        ignored unless values is without inferrable freq
     """
 
     def __new__(
         cls,
         values: Union[VALID_FORECASTING_HORIZON_TYPES] = None,
         is_relative: bool = None,
-        freq=None,
     ):
         """Create a new ForecastingHorizon object."""
         # We want the ForecastingHorizon class to be an extension of the
@@ -225,27 +175,11 @@ class ForecastingHorizon:
         self,
         values: Union[VALID_FORECASTING_HORIZON_TYPES] = None,
         is_relative: Optional[bool] = True,
-        freq=None,
     ):
-        # coercing inputs
-
-        # values to pd.Index self._values
-        values = _check_values(values)
-        self._values = values
-
-        # infer freq from values, if available
-        # if not, infer from freq argument, if available
-        if hasattr(values, "index") and hasattr(values.index, "freq"):
-            self.freq = values.index.freq
-        elif hasattr(values, "freq"):
-            self.freq = values.freq
-        self.freq = freq
-
-        # infer self._is_relative from is_relative, and type of values
-        # depending on type of values, is_relative is inferred
-        # integers and timedeltas are interpreted as relative, by default, etc
         if is_relative is not None and not isinstance(is_relative, bool):
             raise TypeError("`is_relative` must be a boolean or None")
+        values = _check_values(values)
+
         # check types, note that isinstance() does not work here because index
         # types inherit from each other, hence we check for type equality
         error_msg = f"`values` type is not compatible with `is_relative={is_relative}`."
@@ -262,13 +196,14 @@ class ForecastingHorizon:
         else:
             if not is_in_valid_absolute_index_types(values):
                 raise TypeError(error_msg)
+
+        self._values = values
         self._is_relative = is_relative
 
     def _new(
         self,
         values: Union[VALID_FORECASTING_HORIZON_TYPES] = None,
         is_relative: bool = None,
-        freq: str = None,
     ):
         """Construct new ForecastingHorizon based on current object.
 
@@ -277,11 +212,9 @@ class ForecastingHorizon:
         values : pd.Index, pd.TimedeltaIndex, np.array, list, pd.Timedelta, or int
             Values of forecasting horizon.
         is_relative : bool, default=same as self.is_relative
-            - If None, determined automatically: same as self.is_relative
-            - If True, values are relative to end of training series.
-            - If False, values are absolute.
-        freq : str, optional (default=None)
-            Frequency string
+        - If None, determined automatically: same as self.is_relative
+        - If True, values are relative to end of training series.
+        - If False, values are absolute.
 
         Returns
         -------
@@ -291,10 +224,8 @@ class ForecastingHorizon:
         if values is None:
             values = self._values
         if is_relative is None:
-            is_relative = self._is_relative
-        if freq is None:
-            freq = self._freq
-        return type(self)(values=values, is_relative=is_relative, freq=freq)
+            is_relative = self.is_relative
+        return type(self)(values, is_relative)
 
     @property
     def is_relative(self) -> bool:
@@ -305,56 +236,6 @@ class ForecastingHorizon:
         is_relative : bool
         """
         return self._is_relative
-
-    @property
-    def freq(self) -> str:
-        """Frequency attribute.
-
-        Returns
-        -------
-        freq : pandas frequency string
-        """
-        if hasattr(self, "_freq") and hasattr(self._freq, "freqstr"):
-            # _freq is a pandas offset, frequency string is obtained via freqstr
-            return self._freq.freqstr
-        else:
-            return None
-
-    @freq.setter
-    def freq(self, obj) -> None:
-        """Frequency setter.
-
-        Attempts to set/update frequency from obj.
-        Sets self._freq to a pandas offset object (frequency representation).
-        Frequency is extracted from obj, via _check_freq.
-        Raises error if _freq is already set, and discrepant from frequency of obj.
-
-        Parameters
-        ----------
-        obj : str, pd.Index, BaseForecaster, pandas offset
-            object carrying frequency information on self.values
-
-        Raises
-        ------
-        ValueError : if freq is already set and discrepant from frequency of obj
-        """
-        freq_from_obj = _check_freq(obj)
-        if hasattr(self, "_freq"):
-            freq_from_self = self._freq
-        else:
-            freq_from_self = None
-
-        if freq_from_self is not None and freq_from_obj is not None:
-            if freq_from_self != freq_from_obj:
-                raise ValueError(
-                    "Frequencies from two sources do not coincide: "
-                    f"Current: {freq_from_self}, from update: {freq_from_obj}."
-                )
-        elif freq_from_obj is not None:  # only freq_from_obj is not None
-            self._freq = freq_from_obj
-        else:
-            # leave self._freq as freq_from_self, or set to None if does not exist yet
-            self._freq = freq_from_self
 
     def to_pandas(self) -> pd.Index:
         """Return forecasting horizon's underlying values as pd.Index.
@@ -381,30 +262,20 @@ class ForecastingHorizon:
         """
         return self.to_pandas().to_numpy(**kwargs)
 
-    def _coerce_cutoff_to_index_element(self, cutoff):
-        """Coerces cutoff to index element, and updates self.freq with cutoff."""
-        self.freq = cutoff
-        if isinstance(cutoff, pd.Index):
-            assert len(cutoff) > 0
-            cutoff = cutoff[-1]
-        return cutoff
-
     def to_relative(self, cutoff=None):
         """Return forecasting horizon values relative to a cutoff.
 
         Parameters
         ----------
-        cutoff : pd.Period, pd.Timestamp, int, or pd.Index, optional (default=None)
+        cutoff : pd.Period, pd.Timestamp, int, optional (default=None)
             Cutoff value required to convert a relative forecasting
             horizon to an absolute one (and vice versa).
-            If pd.Index, last/latest value is considered the cutoff
 
         Returns
         -------
         fh : ForecastingHorizon
             Relative representation of forecasting horizon.
         """
-        cutoff = self._coerce_cutoff_to_index_element(cutoff)
         return _to_relative(fh=self, cutoff=cutoff)
 
     def to_absolute(self, cutoff):
@@ -412,17 +283,15 @@ class ForecastingHorizon:
 
         Parameters
         ----------
-        cutoff : pd.Period, pd.Timestamp, int, or pd.Index
+        cutoff : pd.Period, pd.Timestamp, int
             Cutoff value is required to convert a relative forecasting
             horizon to an absolute one (and vice versa).
-            If pd.Index, last/latest value is considered the cutoff
 
         Returns
         -------
         fh : ForecastingHorizon
             Absolute representation of forecasting horizon.
         """
-        cutoff = self._coerce_cutoff_to_index_element(cutoff)
         return _to_absolute(fh=self, cutoff=cutoff)
 
     def to_absolute_int(self, start, cutoff=None):
@@ -432,10 +301,9 @@ class ForecastingHorizon:
         ----------
         start : pd.Period, pd.Timestamp, int
             Start value returned as zero.
-        cutoff : pd.Period, pd.Timestamp, int, or pd.Index, optional (default=None)
+        cutoff : pd.Period, pd.Timestamp, int, optional (default=None)
             Cutoff value required to convert a relative forecasting
             horizon to an absolute one (and vice versa).
-            If pd.Index, last/latest value is considered the cutoff
 
         Returns
         -------
@@ -443,8 +311,7 @@ class ForecastingHorizon:
             Absolute representation of forecasting horizon as zero-based
             integer index.
         """
-        cutoff = self._coerce_cutoff_to_index_element(cutoff)
-        freq = self.freq
+        freq = _get_freq(cutoff)
 
         if isinstance(cutoff, pd.Timestamp):
             # coerce to pd.Period for reliable arithmetic operations and
@@ -461,7 +328,7 @@ class ForecastingHorizon:
         # to convert the horizon to the absolute representation below
         if isinstance(start, pd.Timestamp):
             start = _coerce_to_period(start, freq=freq)
-        _check_cutoff(start, absolute)
+        _check_start(start, absolute)
 
         # Note: We should here also coerce to periods for more reliable arithmetic
         # operations as in `to_relative` but currently doesn't work with
@@ -476,7 +343,7 @@ class ForecastingHorizon:
         integers = pd.Index([date - start for date in absolute])
 
         if isinstance(absolute, (pd.PeriodIndex, pd.DatetimeIndex)):
-            integers = _coerce_duration_to_int(integers, freq=freq)
+            integers = _coerce_duration_to_int(integers, freq=_get_freq(cutoff))
 
         return self._new(integers, is_relative=False)
 
@@ -628,11 +495,16 @@ def _to_relative(fh: ForecastingHorizon, cutoff=None) -> ForecastingHorizon:
         absolute = fh.to_pandas()
         _check_cutoff(cutoff, absolute)
 
+        # We cannot use the freq from the ForecastingHorizon itself (or its
+        # wrapped pd.DatetimeIndex) because it may be none for non-regular
+        # indices, so instead we use the freq of cutoff.
+        freq = _get_freq(cutoff)
+
         if isinstance(absolute, pd.DatetimeIndex):
             # coerce to pd.Period for reliable arithmetics and computations of
             # time deltas
-            absolute = _coerce_to_period(absolute, freq=fh.freq)
-            cutoff = _coerce_to_period(cutoff, freq=fh.freq)
+            absolute = _coerce_to_period(absolute, freq)
+            cutoff = _coerce_to_period(cutoff, freq)
 
         # TODO: Replace when we upgrade our lower pandas bound
         #  to a version where this is fixed
@@ -643,7 +515,7 @@ def _to_relative(fh: ForecastingHorizon, cutoff=None) -> ForecastingHorizon:
         # Out: Index([<0 * Hours>, <4 * Hours>, <8 * Hours>], dtype = 'object')
         # [v - periods[0] for v in periods]
         # Out: Index([<0 * Hours>, <2 * Hours>, <4 * Hours>], dtype='object')
-        # TODO: 0.14.0: Check if this comment below can be removed,
+        # TODO: v0.12.1 OR 0.13.0: Check if this comment below can be removed,
         # so check if pandas has released the fix to PyPI:
         # This bug was reported: https://github.com/pandas-dev/pandas/issues/45999
         # and fixed: https://github.com/pandas-dev/pandas/pull/46006
@@ -654,9 +526,9 @@ def _to_relative(fh: ForecastingHorizon, cutoff=None) -> ForecastingHorizon:
 
         # Coerce durations (time deltas) into integer values for given frequency
         if isinstance(absolute, (pd.PeriodIndex, pd.DatetimeIndex)):
-            relative = _coerce_duration_to_int(relative, freq=fh.freq)
+            relative = _coerce_duration_to_int(relative, freq=freq)
 
-        return fh._new(relative, is_relative=True, freq=fh.freq)
+        return fh._new(relative, is_relative=True)
 
 
 # This function needs to be outside ForecastingHorizon
@@ -690,21 +562,21 @@ def _to_absolute(fh: ForecastingHorizon, cutoff) -> ForecastingHorizon:
         if is_timestamp:
             # coerce to pd.Period for reliable arithmetic operations and
             # computations of time deltas
-            cutoff = _coerce_to_period(cutoff, freq=fh.freq)
+            cutoff = _coerce_to_period(cutoff, freq=cutoff.freqstr)
 
         absolute = cutoff + relative
 
         if is_timestamp:
             # coerce back to DatetimeIndex after operation
-            absolute = absolute.to_timestamp(fh.freq)
+            absolute = absolute.to_timestamp(cutoff.freqstr)
 
-        return fh._new(absolute, is_relative=False, freq=fh.freq)
+        return fh._new(absolute, is_relative=False)
 
 
 def _check_cutoff(cutoff, index):
     """Check if the cutoff is valid based on time index of forecasting horizon.
 
-    Validates that the cutoff is
+    Validates that the cutoff contains necessary information and is
     compatible with the time index of the forecasting horizon.
 
     Parameters
@@ -726,6 +598,27 @@ def _check_cutoff(cutoff, index):
     if isinstance(index, pd.DatetimeIndex):
         assert isinstance(cutoff, pd.Timestamp)
 
+        if not hasattr(cutoff, "freqstr") or cutoff.freqstr is None:
+            raise AttributeError(
+                "The `freq` attribute of the time index is required, "
+                "but found: None. Please specify the `freq` argument "
+                "when setting the time index."
+            )
+
+        # For indices of type DatetimeIndex with irregular steps, frequency will be
+        # None
+        if index.freqstr is not None:
+            assert cutoff.freqstr == index.freqstr
+
+
+def _check_start(start, index):
+    if isinstance(index, pd.PeriodIndex):
+        assert isinstance(start, pd.Period)
+        assert index.freqstr == start.freqstr
+
+    if isinstance(index, pd.DatetimeIndex):
+        assert isinstance(start, pd.Timestamp)
+
 
 def _coerce_to_period(x, freq=None):
     """Coerce pandas time index to a alternative pandas time index.
@@ -736,24 +629,17 @@ def _coerce_to_period(x, freq=None):
 
     Parameters
     ----------
-    x : pandas Index or index element
+    x : pandas Index
         pandas Index to convert.
-    freq : pandas frequency string
+    freq :
 
     Returns
     -------
     index : pd.Period or pd.PeriodIndex
-        Index or index element coerced to period based format.
+        Index coerced to preferred format.
     """
-    # timestamp/freq combinations are deprecated from 0.13.0
-    # warning should be replaced by exception in 0.14.0
-    if isinstance(x, pd.Timestamp) and freq is None:
-        freq = x.freq
-        warn(
-            "use of ForecastingHorizon methods with pd.Timestamp carrying freq "
-            "is deprecated since 0.13.0 and will raise exception from 0.14.0"
-        )
-    #   raise ValueError("_coerce_to_period requires freq if x is pd.Timestamp")
+    if freq is None:
+        freq = _get_freq(x)
     try:
         return x.to_period(freq)
     except (ValueError, AttributeError) as e:

@@ -13,7 +13,6 @@ from sktime.registry import BASE_CLASS_LIST, BASE_CLASS_SCITYPE_LIST, scitype
 from sktime.utils._testing.scenarios_aligners import scenarios_aligners
 from sktime.utils._testing.scenarios_classification import (
     scenarios_classification,
-    scenarios_early_classification,
     scenarios_regression,
 )
 from sktime.utils._testing.scenarios_clustering import scenarios_clustering
@@ -27,7 +26,6 @@ from sktime.utils._testing.scenarios_transformers_pairwise import (
 scenarios = dict()
 scenarios["aligner"] = scenarios_aligners
 scenarios["classifier"] = scenarios_classification
-scenarios["early_classifier"] = scenarios_early_classification
 scenarios["clusterer"] = scenarios_clustering
 scenarios["forecaster"] = scenarios_forecasting
 scenarios["regressor"] = scenarios_regression
