@@ -88,6 +88,7 @@ EXCLUDED_TESTS = {
         "test_persistence_via_pickle",
     ],
     "VARMAX": "test_update_predict_single",  # see 2997, sporadic failure, unknown cause
+    "CNNNetwork": "test_inheritance",  # not a registered base class, WiP, see #3028
 }
 
 # We here configure estimators for basic unit testing, including setting of
