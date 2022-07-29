@@ -244,6 +244,80 @@ class ConformalIntervals(BaseForecaster):
 
         return pred_int.convert_dtypes()
 
+    def _predict_quantiles(self, fh, X, alpha):
+        """Compute/return prediction quantiles for a forecast.
+
+        private _predict_quantiles containing the core logic,
+            called from predict_quantiles and default _predict_interval
+
+        Parameters
+        ----------
+        fh : guaranteed to be ForecastingHorizon
+            The forecasting horizon with the steps ahead to to predict.
+        X : optional (default=None)
+            guaranteed to be of a type in self.get_tag("X_inner_mtype")
+            Exogeneous time series to predict from.
+        alpha : list of float, optional (default=[0.5])
+            A list of probabilities at which quantile forecasts are computed.
+
+        Returns
+        -------
+        quantiles : pd.DataFrame
+            Column has multi-index: first level is variable name from y in fit,
+                second level being the values of alpha passed to the function.
+            Row index is fh, with additional (upper) levels equal to instance levels,
+                    from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
+            Entries are quantile forecasts, for var in col index,
+                at quantile probability in second col index, for the row index.
+        """
+        implements_interval = self._has_implementation_of("_predict_interval")
+        implements_quantiles = self._has_implementation_of("_predict_quantiles")
+        implements_proba = self._has_implementation_of("_predict_proba")
+        can_do_proba = implements_interval or implements_quantiles or implements_proba
+
+        if not can_do_proba:
+            raise RuntimeError(
+                f"{self.__class__.__name__} does not implement "
+                "probabilistic forecasting, "
+                'but "capability:pred_int" flag has been set to True incorrectly. '
+                "This is likely a bug, please report, and/or set the flag to False."
+            )
+
+        if implements_interval:
+
+            pred_int = pd.DataFrame()
+            for a in alpha:
+                # compute quantiles corresponding to prediction interval coverage
+                #  this uses symmetric predictive intervals:
+                coverage = abs(1 - 2 * a)
+
+                # compute quantile forecasts corresponding to upper/lower
+                pred_a = self._predict_interval(fh=fh, X=X, coverage=[coverage])
+                pred_int = pd.concat([pred_int, pred_a], axis=1)
+
+            # now we need to subset to lower/upper depending
+            #   on whether alpha was < 0.5 or >= 0.5
+            #   this formula gives the integer column indices giving lower/upper
+            col_selector = (np.array(alpha) >= 0.5) + 2 * np.arange(len(alpha))
+            pred_int = pred_int.iloc[:, col_selector]
+
+            # change the column labels (multiindex) to the format for intervals
+            # idx returned by _predict_interval is
+            #   3-level MultiIndex with variable names, coverage, lower/upper
+            idx = pred_int.columns
+            # variable names (unique, in same order)
+            var_names = idx.get_level_values(0).unique()
+            # if was univariate & unnamed variable, replace default
+            if len(var_names) == 1 and var_names == ["Coverage"]:
+                var_names = ["Quantiles"]
+            # idx returned by _predict_quantiles should be
+            #   is 2-level MultiIndex with variable names, alpha
+            int_idx = pd.MultiIndex.from_product([var_names, alpha])
+
+            pred_int.columns = int_idx
+
+        return pred_int
+
     def _compute_sliding_residuals(self, y, X, forecaster, initial_window, sample_frac):
         """Compute sliding residuals used in uncertainty estimates.
 
