@@ -5,7 +5,7 @@
 """Composition functionality for reduction approaches to forecasting."""
 
 __author__ = [
-    "Ayushmaan Seth",
+    "AyushmaanSeth",
     "Kavin Anand",
     "Luis Zugasti",
     "Lovkush Agarwal",
@@ -940,10 +940,22 @@ def make_reduction(
     estimator : an Estimator instance
         A reduction forecaster
 
+    Examples
+    --------
+    >>> from sktime.forecasting.compose import make_reduction
+    >>> from sktime.datasets import load_airline
+    >>> from sklearn.ensemble import GradientBoostingRegressor
+    >>> y = load_airline()
+    >>> regressor = GradientBoostingRegressor()
+    >>> forecaster = make_reduction(regressor, window_length=15, strategy="recursive")
+    >>> forecaster.fit(y)
+    RecursiveTabularRegressionForecaster(...)
+    >>> y_pred = forecaster.predict(fh=[1,2,3])
+
     References
     ----------
-    ..[1] Bontempi, Gianluca & Ben Taieb, Souhaib & Le Borgne, Yann-Aël. (2013).
-      Machine Learning Strategies for Time Series Forecasting.
+    .. [1] Bontempi, Gianluca & Ben Taieb, Souhaib & Le Borgne, Yann-Aël. (2013).
+        Machine Learning Strategies for Time Series Forecasting.
     """
     # We provide this function as a factory method for user convenience.
     strategy = _check_strategy(strategy)

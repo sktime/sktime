@@ -53,9 +53,33 @@ class ReconcilerForecaster(BaseForecaster):
             "bu" - bottom-up
             "td_fcst" - top down based on forecast proportions
 
+    See Also
+    --------
+    Aggregator
+    Reconciler
+
     References
     ----------
     .. [1] https://otexts.com/fpp3/hierarchical.html
+
+    Examples
+    --------
+    >>> from sktime.forecasting.exp_smoothing import ExponentialSmoothing
+    >>> from sktime.forecasting.reconcile import ReconcilerForecaster
+    >>> from sktime.transformations.hierarchical.aggregate import Aggregator
+    >>> from sktime.utils._testing.hierarchical import _bottom_hier_datagen
+    >>> agg = Aggregator()
+    >>> y = _bottom_hier_datagen(
+    ...     no_bottom_nodes=3,
+    ...     no_levels=1,
+    ...     random_seed=123,
+    ... )
+    >>> y = agg.fit_transform(y)
+    >>> forecaster = ExponentialSmoothing()
+    >>> reconciler = ReconcilerForecaster(forecaster, method="mint_shrink")
+    >>> reconciler.fit(y)
+    ReconcilerForecaster(...)
+    >>> prds_recon = reconciler.predict(fh=[1])
     """
 
     _required_parameters = ["forecaster"]

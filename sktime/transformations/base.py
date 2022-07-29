@@ -65,6 +65,7 @@ from sktime.datatypes import (
 )
 from sktime.datatypes._series_as_panel import convert_to_scitype
 from sktime.utils.sklearn import is_sklearn_classifier, is_sklearn_transformer
+from sktime.utils.validation._dependencies import _check_estimator_deps
 
 # single/multiple primitives
 Primitive = Union[np.integer, int, float, str]
@@ -122,6 +123,7 @@ class BaseTransformer(BaseEstimator):
         # todo: rename to capability:missing_values
         "capability:missing_values:removes": False,
         # is transform result always guaranteed to contain no missing values?
+        "python_version": None,  # PEP 440 python version specifier to limit versions
     }
 
     # allowed mtypes for transformers - Series and Panel
@@ -144,6 +146,7 @@ class BaseTransformer(BaseEstimator):
         self._converter_store_X = dict()  # storage dictionary for in/output conversion
 
         super(BaseTransformer, self).__init__()
+        _check_estimator_deps(self)
 
     def __mul__(self, other):
         """Magic * method, return (right) concatenated TransformerPipeline.
@@ -269,6 +272,51 @@ class BaseTransformer(BaseEstimator):
             return other + self_as_pipeline
         else:
             return NotImplemented
+
+    def __getitem__(self, key):
+        """Magic [...] method, return column subsetted transformer.
+
+        First index does output subsetting, second index does input subsetting.
+
+        Keys must be valid inputs for `columns` in `ColumnSubset`.
+
+        Parameters
+        ----------
+        key: valid input for `columns` in `ColumnSubset`, or pair thereof
+            keys can also be a :-slice, in which case it is considered as not passed
+
+        Returns
+        -------
+        the following TransformerPipeline object:
+            ColumnSubset(columns1) * self * ColumnSubset(columns2)
+            where `columns1` is first or only item in `key`, and `columns2` is the last
+            if only one item is passed in `key`, only `columns1` is applied to input
+        """
+        from sktime.transformations.series.subset import ColumnSelect
+
+        def is_noneslice(obj):
+            res = isinstance(obj, slice)
+            res = res and obj.start is None and obj.stop is None and obj.step is None
+            return res
+
+        if isinstance(key, tuple):
+            if not len(key) == 2:
+                raise ValueError(
+                    "there should be one or two keys when calling [] or getitem, "
+                    "e.g., mytrafo[key], or mytrafo[key1, key2]"
+                )
+            columns1 = key[0]
+            columns2 = key[1]
+            if is_noneslice(columns1) and is_noneslice(columns2):
+                return self
+            elif is_noneslice(columns2):
+                return ColumnSelect(columns1) * self
+            elif is_noneslice(columns1):
+                return self * ColumnSelect(columns2)
+            else:
+                return ColumnSelect(columns1) * self * ColumnSelect(columns2)
+        else:
+            return ColumnSelect(key) * self
 
     def fit(self, X, y=None):
         """Fit transformer to X, optionally to y.
