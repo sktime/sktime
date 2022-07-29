@@ -25,7 +25,7 @@ class ClearSky(BaseTransformer):
     of solar power transformations, the denominator is an approximation of the
     clear sky power, and the output of the transformation is the clearness index.
 
-    The clear sky power, i.e. the demoninator, is claculated on a grid containing
+    The clear sky power, i.e. the denominator, is calculated on a grid containing
     each unique combination of time-of-day and day-of-year. The spacing of the
     grid depends on the frequency of the input data.
 
