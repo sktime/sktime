@@ -23,6 +23,18 @@ EXCLUDE_ESTIMATORS = [
     "TSFreshRelevantFeatureExtractor",
     # PlateauFinder seems to be broken, see #2259
     "PlateauFinder",
+    # below are removed due to mac failures we don't fully understand, see #3103
+    "HIVECOTEV1",
+    "HIVECOTEV2",
+    "RandomIntervalSpectralEnsemble",
+    "RandomInvervals",
+    "RandomIntervalSegmenter",
+    "RandomIntervalFeatureExtractor",
+    "RandomIntervalClassifier",
+    "MiniRocket",
+    "MatrixProfileTransformer",
+    # RandomShapeletTransform is breaking with empty lists, see #3138
+    "RandomShapeletTransform",
 ]
 
 

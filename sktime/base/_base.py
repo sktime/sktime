@@ -811,6 +811,62 @@ class BaseEstimator(BaseObject):
                 f"been fitted yet; please call `fit` first."
             )
 
+    def get_fitted_params(self):
+        """Get fitted parameters.
+
+        State required:
+            Requires state to be "fitted".
+
+        Returns
+        -------
+        fitted_params : dict of fitted parameters, keys are str names of parameters
+            parameters of components are indexed as [componentname]__[paramname]
+        """
+        if not self.is_fitted:
+            raise NotFittedError(
+                f"parameter estimator of type {type(self).__name__} has not been "
+                "fitted yet, please call fit on data before get_fitted_params"
+            )
+
+        fitted_params = dict()
+        c_dict = self._components()
+
+        def sh(x):
+            """Shorthand to remove all underscores at end of a string."""
+            if x.endswith("_"):
+                return sh(x[:-1])
+            else:
+                return x
+
+        for c in c_dict.keys():
+            c_f_params = c_dict[c].get_fitted_params()
+            c_f_params = {f"{sh(c)}__{k}": c_f_params[k] for k in c_f_params.keys()}
+            fitted_params.update(c_f_params)
+
+        fitted_params.update(self._get_fitted_params())
+
+        return fitted_params
+
+    def _get_fitted_params(self):
+        """Get fitted parameters.
+
+        private _get_fitted_params, called from get_fitted_params
+
+        State required:
+            Requires state to be "fitted".
+
+        Returns
+        -------
+        fitted_params : dict
+        """
+        # default retrieves all self attributes ending in "_"
+        # and returns them with keys that have the "_" removed
+        fitted_params = [attr for attr in dir(self) if attr.endswith("_")]
+        fitted_params = [x for x in fitted_params if not x.startswith("_")]
+        fitted_param_dict = {p[:-1]: getattr(self, p) for p in fitted_params}
+
+        return fitted_param_dict
+
 
 def _clone_estimator(base_estimator, random_state=None):
     estimator = clone(base_estimator)
