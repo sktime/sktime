@@ -35,6 +35,14 @@ EXCLUDE_ESTIMATORS = [
     "TSFreshRelevantFeatureExtractor",
     # PlateauFinder seems to be broken, see #2259
     "PlateauFinder",
+    # below are removed to diagnose mac failures
+    "HIVECOTEV1",
+    "HIVECOTEV2",
+    "RandomIntervalSpectralEnsemble",
+    "RandomInvervals",
+    "RandomIntervalSegmenter",
+    "RandomIntervalFeatureExtractor",
+    "RandomIntervalClassifier",
 ]
 
 
