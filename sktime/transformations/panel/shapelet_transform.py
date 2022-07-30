@@ -9,7 +9,6 @@ __all__ = ["ShapeletTransform", "RandomShapeletTransform"]
 
 import heapq
 import math
-from multiprocessing.sharedctypes import Value
 import time
 import warnings
 
