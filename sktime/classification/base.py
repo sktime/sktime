@@ -204,13 +204,14 @@ class BaseClassifier(BaseEstimator, ABC):
         """
         self.check_is_fitted()
 
+        # boilerplate input checks for predict-like methods
+        X = self._check_convert_X_for_predict(X)
+
         # handle the single-class-label case
         if len(self._class_dictionary) == 1:
             return self._single_class_y_pred(X, method="predict")
 
-        # boilerplate input checks for predict-like methods
-        X = self._check_convert_X_for_predict(X)
-
+        # call internal _predict_proba
         return self._predict(X)
 
     def predict_proba(self, X) -> np.ndarray:
@@ -237,13 +238,14 @@ class BaseClassifier(BaseEstimator, ABC):
         """
         self.check_is_fitted()
 
+        # boilerplate input checks for predict-like methods
+        X = self._check_convert_X_for_predict(X)
+
         # handle the single-class-label case
         if len(self._class_dictionary) == 1:
             return self._single_class_y_pred(X, method="predict_proba")
 
-        # boilerplate input checks for predict-like methods
-        X = self._check_convert_X_for_predict(X)
-
+        # call internal _predict_proba
         return self._predict_proba(X)
 
     def fit_predict(self, X, y, cv=None, change_state=True) -> np.ndarray:
@@ -315,10 +317,6 @@ class BaseClassifier(BaseEstimator, ABC):
         elif change_state:
             self.fit(X, y)
 
-        # handle single class case
-        if len(self._class_dictionary) == 1:
-            return self._single_class_y_pred(X)
-
         # we now know that cv is an sklearn splitter
         X, y = _internal_convert(X, y)
         X_metadata = _check_classifier_input(X, y)
@@ -327,6 +325,10 @@ class BaseClassifier(BaseEstimator, ABC):
         unequal = not X_metadata["is_equal_length"]
         # Check this classifier can handle characteristics
         self._check_capabilities(missing, multivariate, unequal)
+
+        # handle single class case
+        if len(self._class_dictionary) == 1:
+            return self._single_class_y_pred(X)
 
         # Convert data to format easily useable for applying cv
         if isinstance(X, np.ndarray):

@@ -330,6 +330,10 @@ class RotationForest(BaseEstimator):
             )
         X = self._validate_data(X=X, reset=False)
 
+        # handle the single-class-label case
+        if len(self._class_dictionary) == 1:
+            return np.repeat([[1]], len(X), axis=0)
+
         n_instances, n_atts = X.shape
 
         if n_instances != self.n_instances_ or n_atts != self.n_atts_:
