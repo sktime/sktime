@@ -21,6 +21,7 @@ from sktime.datatypes._panel._convert import (
     from_nested_to_multi_index,
 )
 from sktime.utils._testing.panel import make_classification_problem
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 N_INSTANCES = [10, 15]
 N_COLUMNS = [3, 5]
@@ -241,6 +242,10 @@ def test_from_nested_to_long(n_instances, n_columns, n_timepoints):
     assert (X_long.columns == ["case_id", "reading_id", "dim_id", "value"]).all()
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("gluonts", severity="none"),
+    reason="requires gluonts package in the example",
+)
 @pytest.mark.parametrize("n_instances", N_INSTANCES)
 @pytest.mark.parametrize("n_columns", N_COLUMNS)
 @pytest.mark.parametrize("n_timepoints", N_TIMEPOINTS)
