@@ -434,6 +434,10 @@ def _check_is_pdseries(z):
 class YtoX(BaseTransformer):
     """Create exogeneous features which are a copy of the endogenous data.
 
+    Replaces exogeneous features (`X`) by endogeneous data (`y`).
+
+    To *add* instead of *replace*, use `FeatureUnion`.
+
     Parameters
     ----------
     no parameters
@@ -456,7 +460,7 @@ class YtoX(BaseTransformer):
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
 
-        core logic
+        private _transform containing core logic, called from transform
 
         Parameters
         ----------
