@@ -8,7 +8,6 @@ from sklearn.preprocessing import FunctionTransformer, StandardScaler
 
 from sktime.annotation.clasp import ClaSPSegmentation
 from sktime.base import BaseEstimator
-from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.structural import UnobservedComponents
 from sktime.registry import (
     BASE_CLASS_LIST,
@@ -24,15 +23,10 @@ from sktime.transformations.panel.compose import (
 )
 from sktime.transformations.panel.random_intervals import RandomIntervals
 from sktime.transformations.panel.shapelet_transform import RandomShapeletTransform
-from sktime.transformations.panel.summarize import FittedParamExtractor
 
 # The following estimators currently do not pass all unit tests
 # https://github.com/alan-turing-institute/sktime/issues/1627
 EXCLUDE_ESTIMATORS = [
-    # ConditionalDeseasonalizer and STLtransformer still need refactoring
-    #  (see PR 1773, blocked through open discussion) escaping until then
-    "ConditionalDeseasonalizer",
-    "STLTransformer",
     # SFA is non-compliant with any transformer interfaces, #2064
     "SFA",
     # requires y in fit, this is incompatible with the old testing framework
@@ -58,6 +52,10 @@ EXCLUDED_TESTS = {
     ],
     # test fail with deep problem with pickling inside tensorflow.
     "CNNClassifier": [
+        "test_fit_idempotent",
+        "test_persistence_via_pickle",
+    ],
+    "CNNRegressor": [
         "test_fit_idempotent",
         "test_persistence_via_pickle",
     ],
@@ -100,10 +98,6 @@ SERIES_TO_PRIMITIVES_TRANSFORMER = FunctionTransformer(
 )
 
 ESTIMATOR_TEST_PARAMS = {
-    FittedParamExtractor: {
-        "forecaster": ExponentialSmoothing(),
-        "param_names": ["initial_level"],
-    },
     SeriesToPrimitivesRowTransformer: {
         "transformer": SERIES_TO_PRIMITIVES_TRANSFORMER,
         "check_transformer": False,

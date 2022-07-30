@@ -56,7 +56,6 @@ all_extras = [
     "dtw-python",
     "esig==0.9.7; python_version < '3.10'",
     "filterpy>=1.4.5",
-    "hcrystalball>=0.1.9",
     "matplotlib>=3.3.2",
     "pmdarima>=1.8.0,!=1.8.1",
     "prophet>=1.1",
@@ -71,6 +70,7 @@ all_extras = [
     "tensorflow",
     "tsfresh>=0.17.0; python_version < '3.10'",
     "tslearn>=0.5.2",
+    "gluonts>=0.9.0",
 ]
 
 dev = [
