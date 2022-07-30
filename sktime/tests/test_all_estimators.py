@@ -74,7 +74,7 @@ def subsample_by_version_os(x):
         ix = ix
     elif os_str == "Linux":
         ix = ix + 1
-    elif os_str.startswith("Mac"):
+    elif os_str == "Darwin":
         ix = ix + 2
     else:
         raise ValueError(f"found unexpected OS string: {os_str}")
