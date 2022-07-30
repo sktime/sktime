@@ -194,8 +194,8 @@ class RegressorPipeline(BaseRegressor, _HeterogenousMetaEstimator):
         ------------
         creates fitted model (attributes ending in "_")
         """
-        Xt = self.transformers_.fit_transform(X)
-        self.regressor_.fit(Xt, y)
+        Xt = self.transformers_.fit_transform(X=X, y=y)
+        self.regressor_.fit(X=Xt, y=y)
 
         return self
 
@@ -212,8 +212,8 @@ class RegressorPipeline(BaseRegressor, _HeterogenousMetaEstimator):
         -------
         y : predictions of labels for X, np.ndarray
         """
-        Xt = self.transformers_.transform(X)
-        return self.regressor_.predict(Xt)
+        Xt = self.transformers_.transform(X=X)
+        return self.regressor_.predict(X=Xt)
 
     def get_params(self, deep=True):
         """Get parameters of estimator in `transformers`.
@@ -480,7 +480,7 @@ class SklearnRegressorPipeline(RegressorPipeline):
         ------------
         creates fitted model (attributes ending in "_")
         """
-        Xt = self.transformers_.fit_transform(X)
+        Xt = self.transformers_.fit_transform(X=X, y=y)
         Xt_sklearn = self._convert_X_to_sklearn(Xt)
         self.regressor_.fit(Xt_sklearn, y)
 
@@ -499,7 +499,7 @@ class SklearnRegressorPipeline(RegressorPipeline):
         -------
         y : predictions of labels for X, np.ndarray
         """
-        Xt = self.transformers_.transform(X)
+        Xt = self.transformers_.transform(X=X)
         Xt_sklearn = self._convert_X_to_sklearn(Xt)
         return self.regressor_.predict(Xt_sklearn)
 
