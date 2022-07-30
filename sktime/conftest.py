@@ -13,6 +13,8 @@ by default, this is off, including for default local runs of pytest
 
 __author__ = ["fkiraly"]
 
+from sktime import tests
+
 
 def pytest_addoption(parser):
     """Pytest command line parser options adder."""
