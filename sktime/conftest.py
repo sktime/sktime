@@ -19,7 +19,7 @@ def pytest_addoption(parser):
         "--matrixdesign",
         action="store_true",
         default=False,
-        help="run slow tests",
+        help="sub-sample estimators in tests by os/version matrix partition design",
         choice=("True", "False", True, False),
     )
 
