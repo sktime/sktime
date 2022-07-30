@@ -1917,7 +1917,6 @@ class BaseForecaster(BaseEstimator):
             col_selector_bool = np.tile(col_selector_bool, num_var)
 
             pred_int = pred_int.iloc[:, col_selector_bool]
-
             # change the column labels (multiindex) to the format for intervals
             # idx returned by _predict_interval is
             #   3-level MultiIndex with variable names, coverage, lower/upper
