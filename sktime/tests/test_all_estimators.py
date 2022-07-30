@@ -72,7 +72,7 @@ def subsample_by_version_os(x):
     os_str = platform.system()
     if os_str == "Windows":
         ix = ix
-    elif os_str == "Ubuntu":
+    elif os_str == "Linux":
         ix = ix + 1
     elif os_str.startswith("Mac"):
         ix = ix + 2
