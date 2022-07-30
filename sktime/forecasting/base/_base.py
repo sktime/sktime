@@ -1915,6 +1915,7 @@ class BaseForecaster(BaseEstimator):
             col_selector_bool = np.isin(np.arange(2 * len(alpha)), col_selector_int)
             num_var = len(pred_int.columns.get_level_values(0).unique())
             col_selector_bool = np.tile(col_selector_bool, num_var)
+
             pred_int = pred_int.iloc[:, col_selector_bool]
 
             # change the column labels (multiindex) to the format for intervals
