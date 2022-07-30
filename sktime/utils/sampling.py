@@ -4,9 +4,10 @@
 Used in experiments to get deterministic resamples.
 """
 
+import random
+
 import numpy as np
 import pandas as pd
-import random
 import sklearn.utils
 
 
@@ -77,7 +78,6 @@ def stratified_resample(X_train, y_train, X_test, y_test, random_state):
     assert list(counts_train_new) == list(counts_train)
     assert list(counts_test_new) == list(counts_test)
     return X_train, y_train, X_test, y_test
-
 
 
 def random_partition(n, k=2, seed=42):

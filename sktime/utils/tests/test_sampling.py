@@ -6,7 +6,6 @@ import pytest
 from sktime.utils._testing.deep_equals import deep_equals
 from sktime.utils.sampling import random_partition
 
-
 NK_FIXTURES = [(10, 3), (15, 5), (19, 6), (3, 1), (1, 2)]
 SEED_FIXTURES = [42, 0, 100, -5]
 
