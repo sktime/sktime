@@ -26,7 +26,7 @@ def test_partition(n, k):
     part_union = set()
     for x in part:
         part_union = part_union.union(x)
-    assert set(range(n)) = part_union
+    assert set(range(n)) == part_union
 
     for i, x in enumerate(part):
         for j, y in enumerate(part):
