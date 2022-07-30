@@ -204,6 +204,10 @@ class BaseClassifier(BaseEstimator, ABC):
         """
         self.check_is_fitted()
 
+        # handle the single-class-label case
+        if len(self._class_dictionary) == 1:
+            return self._single_class_y_pred(X, method="predict")
+
         # boilerplate input checks for predict-like methods
         X = self._check_convert_X_for_predict(X)
 
@@ -232,6 +236,10 @@ class BaseClassifier(BaseEstimator, ABC):
             (i, j)-th entry is predictive probability that i-th instance is of class j
         """
         self.check_is_fitted()
+
+        # handle the single-class-label case
+        if len(self._class_dictionary) == 1:
+            return self._single_class_y_pred(X, method="predict_proba")
 
         # boilerplate input checks for predict-like methods
         X = self._check_convert_X_for_predict(X)
@@ -306,6 +314,10 @@ class BaseClassifier(BaseEstimator, ABC):
             return getattr(est.fit(X, y), method)(X)
         elif change_state:
             self.fit(X, y)
+
+        # handle single class case
+        if len(self._class_dictionary) == 1:
+            return self._single_class_y_pred(X)
 
         # we now know that cv is an sklearn splitter
         X, y = _internal_convert(X, y)
@@ -396,6 +408,15 @@ class BaseClassifier(BaseEstimator, ABC):
         return self._fit_predict_boilerplate(
             X=X, y=y, cv=cv, change_state=change_state, method="predict_proba"
         )
+
+    def _single_class_y_pred(self, X, method="predict"):
+        """Handle the prediction case where only single class label was seen in fit."""
+        _, _, X_meta = check_is_scitype(X, scitype="Panel", return_metadata=True)
+        n_instances = X_meta["n_instances"]
+        if method == "predict":
+            return np.repeat(list(self._class_dictionary.keys()), n_instances)
+        else:  # method == "predict_proba"
+            return np.repeat([[1]], n_instances, axis=0)
 
     def score(self, X, y) -> float:
         """Scores predicted labels against ground truth labels on X.
