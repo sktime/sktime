@@ -69,13 +69,15 @@ def subsample_by_version_os(x):
     import sys
 
     ix = sys.version_info.minor % 3
-    os = platform.system()
-    if os == "Windows":
+    os_str = platform.system()
+    if os_str == "Windows":
         ix = ix
-    elif os == "Ubuntu":
+    elif os_str == "Ubuntu":
         ix = ix + 1
-    elif os.startwith("Mac"):
+    elif os_str.startswith("Mac"):
         ix = ix + 2
+    else:
+        raise ValueError(f"found unexpected OS string: {os_str}")
     ix = ix % 3
 
     part = random_partition(len(x))
