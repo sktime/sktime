@@ -80,9 +80,9 @@ def subsample_by_version_os(x):
         raise ValueError(f"found unexpected OS string: {os_str}")
     ix = ix % 3
 
-    part = random_partition(len(x))
+    part = random_partition(len(x), 3)
     subset_idx = part[ix]
-    res = x[subset_idx]
+    res = [x[i] for i in subset_idx]
 
     return res
 
