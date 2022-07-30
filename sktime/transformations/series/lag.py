@@ -4,10 +4,22 @@
 
 __author__ = ["fkiraly"]
 
+import numpy as np
 import pandas as pd
 
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.multiindex import flatten_multiindex
+
+
+# this function is needed since pandas DataFrame.shift
+# seems to have problems with numpy int inside
+def _coerce_to_int(obj):
+    """Coerces numpy int or list of numpy int to python int."""
+    if isinstance(obj, np.integer):
+        return int(obj)
+    if isinstance(obj, list):
+        return [_coerce_to_int(x) for x in obj]
+    return obj
 
 
 class Lag(BaseTransformer):
@@ -152,7 +164,9 @@ class Lag(BaseTransformer):
 
     def _yield_shift_params(self):
         """Yield (periods, freq) pairs to pass to pandas.DataFrame.shift."""
-        for lag, freq in zip(self._lags, self._freq):
+        # we need to coerce lags, or shift will break with numpy
+        coerced_lags = _coerce_to_int(self._lags)
+        for lag, freq in zip(coerced_lags, self._freq):
             if not isinstance(lag, int):
                 yield 1, lag
             elif lag is None:

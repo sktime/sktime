@@ -20,7 +20,6 @@ from sklearn.utils._testing import set_random_state
 from sklearn.utils.estimator_checks import (
     check_get_params_invariance as _check_get_params_invariance,
 )
-from sklearn.utils.estimator_checks import check_set_params as _check_set_params
 
 from sktime.base import BaseEstimator
 from sktime.dists_kernels._base import (
@@ -51,7 +50,10 @@ from sktime.utils._testing.estimator_checks import (
     _list_required_methods,
 )
 from sktime.utils._testing.scenarios_getter import retrieve_scenarios
-from sktime.utils.validation._dependencies import _check_dl_dependencies
+from sktime.utils.validation._dependencies import (
+    _check_dl_dependencies,
+    _check_estimator_deps,
+)
 
 
 class BaseFixtureGenerator:
@@ -203,6 +205,14 @@ class BaseFixtureGenerator:
             for est in self._all_estimators()
             if not self.is_excluded(test_name, est)
         ]
+
+        # exclude classes based on python version compatibility
+        estimator_classes_to_test = [
+            est
+            for est in estimator_classes_to_test
+            if _check_estimator_deps(est, severity="none")
+        ]
+
         estimator_names = [est.__name__ for est in estimator_classes_to_test]
 
         return estimator_classes_to_test, estimator_names
@@ -776,8 +786,51 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
         """Check that set_params works correctly."""
         estimator = estimator_instance
         params = estimator.get_params()
-        assert estimator.set_params(**params) is estimator
-        _check_set_params(estimator.__class__.__name__, estimator)
+
+        msg = f"set_params of {type(estimator).__name__} does not return self"
+        assert estimator.set_params(**params) is estimator, msg
+
+        is_equal, equals_msg = deep_equals(
+            estimator.get_params(), params, return_msg=True
+        )
+        msg = (
+            f"get_params result of {type(estimator).__name__} (x) does not match "
+            f"what was passed to set_params (y). Reason for discrepancy: {equals_msg}"
+        )
+        assert is_equal, msg
+
+    def test_set_params_sklearn(self, estimator_class):
+        """Check that set_params works correctly, mirrors sklearn check_set_params.
+
+        Instead of the "fuzz values" in sklearn's check_set_params,
+        we use the other test parameter settings (which are assumed valid).
+        This guarantees settings which play along with the __init__ content.
+        """
+        estimator = estimator_class.create_test_instance()
+        test_params = estimator_class.get_test_params()
+        if not isinstance(test_params, list):
+            test_params = [test_params]
+
+        for params in test_params:
+            # we construct the full parameter set for params
+            # params may only have parameters that are deviating from defaults
+            # in order to set non-default parameters back to defaults
+            params_full = estimator_class.get_param_defaults()
+            params_full.update(params)
+
+            msg = f"set_params of {estimator_class.__name__} does not return self"
+            est_after_set = estimator.set_params(**params_full)
+            assert est_after_set is estimator, msg
+
+            is_equal, equals_msg = deep_equals(
+                estimator.get_params(deep=False), params_full, return_msg=True
+            )
+            msg = (
+                f"get_params result of {estimator_class.__name__} (x) does not match "
+                f"what was passed to set_params (y). "
+                f"Reason for discrepancy: {equals_msg}"
+            )
+            assert is_equal, msg
 
     def test_clone(self, estimator_instance):
         """Check we can call clone from scikit-learn."""
@@ -997,6 +1050,14 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
         _ = scenario.run(estimator, method_sequence=["fit"])
         dict_before = estimator.__dict__.copy()
 
+        # skip test if vectorization would be necessary and method predict_proba
+        # this is since vectorization is not implemented for predict_proba
+        if method_nsc == "predict_proba":
+            try:
+                scenario.run(estimator, method_sequence=[method_nsc])
+            except NotImplementedError:
+                return None
+
         # dict_after = dictionary of estimator after predict and fit
         _ = scenario.run(estimator, method_sequence=[method_nsc])
         dict_after = estimator.__dict__
@@ -1026,6 +1087,14 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
         assert deep_equals(
             fit_args_before, fit_args_after
         ), f"Estimator: {estimator} has side effects on arguments of fit"
+
+        # skip test if vectorization would be necessary and method predict_proba
+        # this is since vectorization is not implemented for predict_proba
+        if method_nsc == "predict_proba":
+            try:
+                scenario.run(estimator, method_sequence=[method_nsc])
+            except NotImplementedError:
+                return None
 
         # Fit the model, get args before and after
         _, args_after = scenario.run(

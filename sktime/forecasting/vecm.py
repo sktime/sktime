@@ -3,6 +3,7 @@
 
 """VECM Forecaster."""
 
+
 __all__ = ["VECM"]
 __author__ = ["thayeylolu", "AurumnPegasus"]
 
@@ -10,7 +11,6 @@ import numpy as np
 import pandas as pd
 from statsmodels.tsa.vector_ar.vecm import VECM as _VECM
 
-# from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base.adapters import _StatsModelsAdapter
 
 
@@ -85,6 +85,7 @@ class VECM(_StatsModelsAdapter):
         "requires-fh-in-fit": False,
         "univariate-only": False,
         "ignores-exogeneous-X": False,
+        "capability:pred_int": True,
     }
 
     def __init__(
@@ -249,9 +250,32 @@ class VECM(_StatsModelsAdapter):
                 Upper/lower interval end forecasts are equivalent to
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
-        pass
-        # implement here
-        # IMPORTANT: avoid side effects to y, X, fh, coverage
-        #
-        # Note: unlike in predict_interval where coverage can be float or list of float
-        #   coverage in _predict_interval is guaranteed to be a list of float
+        exog_fc = X.values if X is not None else None
+        fh_oos = fh.to_out_of_sample(self.cutoff)
+        var_names = (
+            self._y.index.name
+            if self._y.index.name is not None
+            else self._y.columns.values
+        )
+        int_idx = pd.MultiIndex.from_product([var_names, coverage, ["lower", "upper"]])
+        # pred_int = pd.DataFrame(index=int_idx)
+
+        for c in coverage:
+            alpha = 1 - c
+            _, y_lower, y_upper = self._fitted_forecaster.predict(
+                steps=fh_oos[-1],
+                exog_fc=exog_fc,
+                exog_coint_fc=self.exog_coint_fc,
+                alpha=alpha,
+            )
+            values = []
+            for v_idx in range(len(var_names)):
+                values.append(y_lower[0][v_idx])
+                values.append(y_upper[0][v_idx])
+                # pred_int.loc[(var_names[v_idx], c, "lower"), :] = (y_lower[0][v_idx])
+                # pred_int.loc[(var_names[v_idx], c, "upper"), :] = (y_upper[0][v_idx])
+        pred_int = pd.DataFrame(
+            [values], index=fh.to_absolute(self.cutoff), columns=int_idx
+        )
+
+        return pred_int

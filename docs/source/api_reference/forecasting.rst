@@ -105,6 +105,15 @@ Wrappers that add prediction intervals to any forecaster.
 
     ConformalIntervals
 
+.. currentmodule:: sktime.forecasting.compose
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    BaggingForecaster
+
+
 Trend forecasters
 -----------------
 
@@ -192,6 +201,14 @@ All "ARIMA" models below include SARIMAX capability.
 
     VAR
 
+.. currentmodule:: sktime.forecasting.varmax
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    VARMAX
+
 Structural time series models
 -----------------------------
 
@@ -227,6 +244,14 @@ Structural time series models
 
     UnobservedComponents
 
+.. currentmodule:: sktime.forecasting.dynamic_factor
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    DynamicFactor
+
 Ensembles and stacking
 ----------------------
 
@@ -239,6 +264,17 @@ Ensembles and stacking
     EnsembleForecaster
     AutoEnsembleForecaster
     StackingForecaster
+
+Hierarchical reconciliation
+---------------------------
+
+.. currentmodule:: sktime.forecasting.reconcile
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ReconcilerForecaster
 
 Online and stream forecasting
 -----------------------------
@@ -259,7 +295,9 @@ Online and stream forecasting
     :toctree: auto_generated/
     :template: class.rst
 
+    UpdateEvery
     UpdateRefitsEvery
+    DontUpdate
 
 Model selection and tuning
 --------------------------
