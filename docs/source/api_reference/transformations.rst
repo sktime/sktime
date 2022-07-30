@@ -148,8 +148,8 @@ These transformers extract simple summary features.
     RandomIntervalFeatureExtractor
     FittedParamExtractor
 
-Kernel and wavelet based features
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Shapelet, wavelet, and convolution based features
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: sktime.transformations.panel.rocket
 
