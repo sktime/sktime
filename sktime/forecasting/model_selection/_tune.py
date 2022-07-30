@@ -39,6 +39,7 @@ class BaseGridSearch(_DelegatedForecaster):
         backend="loky",
         refit=False,
         scoring=None,
+        error_score=np.nan,
         verbose=0,
         return_n_best_forecasters=1,
         update_behaviour="full_refit",
@@ -52,6 +53,7 @@ class BaseGridSearch(_DelegatedForecaster):
         self.backend = backend
         self.refit = refit
         self.scoring = scoring
+        self.error_score = error_score
         self.verbose = verbose
         self.return_n_best_forecasters = return_n_best_forecasters
         self.update_behaviour = update_behaviour
@@ -138,6 +140,7 @@ class BaseGridSearch(_DelegatedForecaster):
                 X,
                 strategy=self.strategy,
                 scoring=scoring,
+                error_score=self.error_score,
             )
 
             # Filter columns.
@@ -192,6 +195,11 @@ class BaseGridSearch(_DelegatedForecaster):
 
         # Select best parameters.
         self.best_index_ = results.loc[:, f"rank_{scoring_name}"].argmin()
+        # Raise error if all fits in evaluate failed because all score values are NaN.
+        if self.best_index_ == -1:
+            raise NotFittedError(
+                f"All fits of forecaster failed. Failed forecaster: {self.forecaster}"
+            )
         self.best_score_ = results.loc[self.best_index_, f"mean_{scoring_name}"]
         self.best_params_ = results.loc[self.best_index_, "params"]
         self.best_forecaster_ = self.forecaster.clone().set_params(**self.best_params_)
@@ -297,6 +305,10 @@ class ForecastingGridSearchCV(BaseGridSearch):
         Model tuning parameters of the forecaster to evaluate
     scoring: function, optional (default=None)
         Function to score models for evaluation of optimal parameters
+    error_score : "raise" or numeric, default=np.nan
+        Value to assign to the score if an error occurs in estimator fitting. If set
+        to "raise", the error is raised. If a numeric value is given, FitFailedWarning
+        is raised.
     n_jobs: int, optional (default=None)
         Number of jobs to run in parallel.
         None means 1 unless in a joblib.parallel_backend context.
@@ -412,6 +424,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
         cv,
         param_grid,
         scoring=None,
+        error_score=np.nan,
         strategy="refit",
         n_jobs=None,
         refit=True,
@@ -424,6 +437,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
         super(ForecastingGridSearchCV, self).__init__(
             forecaster=forecaster,
             scoring=scoring,
+            error_score=error_score,
             n_jobs=n_jobs,
             refit=refit,
             cv=cv,
@@ -545,6 +559,10 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         off runtime vs quality of the solution.
     scoring: function, optional (default=None)
         Function to score models for evaluation of optimal parameters
+    error_score : "raise" or numeric, default=np.nan
+        Value to assign to the score if an error occurs in estimator fitting. If set
+        to "raise", the error is raised. If a numeric value is given, FitFailedWarning
+        is raised.
     n_jobs: int, optional (default=None)
         Number of jobs to run in parallel.
         None means 1 unless in a joblib.parallel_backend context.
@@ -594,6 +612,7 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         param_distributions,
         n_iter=10,
         scoring=None,
+        error_score=np.nan,
         strategy="refit",
         n_jobs=None,
         refit=True,
@@ -607,6 +626,7 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         super(ForecastingRandomizedSearchCV, self).__init__(
             forecaster=forecaster,
             scoring=scoring,
+            error_score=error_score,
             strategy=strategy,
             n_jobs=n_jobs,
             refit=refit,
