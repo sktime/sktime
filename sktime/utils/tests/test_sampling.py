@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Testing sampling utilities"""
+"""Testing sampling utilities."""
 
 import pytest
 
