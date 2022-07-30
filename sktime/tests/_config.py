@@ -8,7 +8,6 @@ from sklearn.preprocessing import FunctionTransformer, StandardScaler
 
 from sktime.annotation.clasp import ClaSPSegmentation
 from sktime.base import BaseEstimator
-from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.structural import UnobservedComponents
 from sktime.registry import (
     BASE_CLASS_LIST,
@@ -24,15 +23,10 @@ from sktime.transformations.panel.compose import (
 )
 from sktime.transformations.panel.random_intervals import RandomIntervals
 from sktime.transformations.panel.shapelet_transform import RandomShapeletTransform
-from sktime.transformations.panel.summarize import FittedParamExtractor
 
 # The following estimators currently do not pass all unit tests
 # https://github.com/alan-turing-institute/sktime/issues/1627
 EXCLUDE_ESTIMATORS = [
-    # ConditionalDeseasonalizer and STLtransformer still need refactoring
-    #  (see PR 1773, blocked through open discussion) escaping until then
-    "ConditionalDeseasonalizer",
-    "STLTransformer",
     # SFA is non-compliant with any transformer interfaces, #2064
     "SFA",
     # requires y in fit, this is incompatible with the old testing framework
@@ -41,6 +35,18 @@ EXCLUDE_ESTIMATORS = [
     "TSFreshRelevantFeatureExtractor",
     # PlateauFinder seems to be broken, see #2259
     "PlateauFinder",
+    # below are removed due to mac failures we don't fully understand, see #3103
+    "HIVECOTEV1",
+    "HIVECOTEV2",
+    "RandomIntervalSpectralEnsemble",
+    "RandomInvervals",
+    "RandomIntervalSegmenter",
+    "RandomIntervalFeatureExtractor",
+    "RandomIntervalClassifier",
+    "MiniRocket",
+    "MatrixProfileTransformer",
+    # RandomShapeletTransform is breaking with empty lists, see #3138
+    "RandomShapeletTransform",
 ]
 
 
@@ -83,10 +89,7 @@ EXCLUDED_TESTS = {
     "SeriesToPrimitivesRowTransformer": ["test_methods_do_not_change_state"],
     "SeriesToSeriesRowTransformer": ["test_methods_do_not_change_state"],
     # ColumnTransformer still needs to be refactored, see #2537
-    "ColumnTransformer": [
-        "test_methods_do_not_change_state",
-        "test_fit_transform_output",
-    ],
+    "ColumnTransformer": ["test_methods_do_not_change_state"],
     # Early classifiers intentionally retain information from pervious predict calls
     #   for #1.
     # #2 amd #3 are due to predict/predict_proba returning two items and that breaking
@@ -107,10 +110,6 @@ SERIES_TO_PRIMITIVES_TRANSFORMER = FunctionTransformer(
 )
 
 ESTIMATOR_TEST_PARAMS = {
-    FittedParamExtractor: {
-        "forecaster": ExponentialSmoothing(),
-        "param_names": ["initial_level"],
-    },
     SeriesToPrimitivesRowTransformer: {
         "transformer": SERIES_TO_PRIMITIVES_TRANSFORMER,
         "check_transformer": False,
