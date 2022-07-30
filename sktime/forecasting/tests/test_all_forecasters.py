@@ -353,19 +353,21 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             # )
 
     @pytest.mark.parametrize(
-        "alpha", TEST_ALPHAS, ids=[f"alpha={a}" for a in TEST_ALPHAS]
+        "coverage", TEST_ALPHAS, ids=[f"alpha={a}" for a in TEST_ALPHAS]
     )
     @pytest.mark.parametrize(
         "fh_int_oos", TEST_OOS_FHS, ids=[f"fh={fh}" for fh in TEST_OOS_FHS]
     )
-    def test_predict_interval(self, estimator_instance, n_columns, fh_int_oos, alpha):
+    def test_predict_interval(
+        self, estimator_instance, n_columns, fh_int_oos, coverage
+    ):
         """Check prediction intervals returned by predict.
 
         Arguments
         ---------
         Forecaster: BaseEstimator class descendant, forecaster to test
         fh: ForecastingHorizon, fh at which to test prediction
-        alpha: float, coverage at which to make prediction intervals
+        coverage: float, coverage at which to make prediction intervals
 
         Raises
         ------
@@ -378,7 +380,9 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         estimator_instance.fit(y_train, fh=fh_int_oos)
         if estimator_instance.get_tag("capability:pred_int"):
 
-            pred_ints = estimator_instance.predict_interval(fh_int_oos, coverage=alpha)
+            pred_ints = estimator_instance.predict_interval(
+                fh_int_oos, coverage=coverage
+            )
             valid, msg, _ = check_is_mtype(
                 pred_ints, mtype="pred_interval", scitype="Proba", return_metadata=True
             )
@@ -386,7 +390,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
 
         else:
             with pytest.raises(NotImplementedError, match="prediction intervals"):
-                estimator_instance.predict_interval(fh_int_oos, coverage=alpha)
+                estimator_instance.predict_interval(fh_int_oos, coverage=coverage)
 
     def _check_predict_quantiles(
         self, pred_quantiles: pd.DataFrame, y_train: pd.Series, fh, alpha
