@@ -50,10 +50,39 @@ from sktime.utils._testing.estimator_checks import (
     _list_required_methods,
 )
 from sktime.utils._testing.scenarios_getter import retrieve_scenarios
+from sktime.utils.sampling import random_partition
 from sktime.utils.validation._dependencies import (
     _check_dl_dependencies,
     _check_estimator_deps,
 )
+
+
+def subsample_by_version_os(x):
+    """Subsample objects by operating system and python version.
+
+    Ensures each estimator is tested at least once on every OS and python version,
+    if combined with a matrix of OS/versions.
+
+    Currently assumes that matrix includes py3.8-3.10, and win/ubuntu/mac.
+    """
+    import platform
+    import sys
+
+    ix = sys.version_info.minor % 3
+    os = platform.system()
+    if os == "Windows":
+        ix = ix
+    elif os == "Ubuntu":
+        ix = ix + 1
+    elif os.startwith("Mac"):
+        ix = ix + 2
+    ix = ix % 3
+
+    part = random_partition(len(x))
+    subset_idx = part[ix]
+    res = x[subset_idx]
+
+    return res
 
 
 class BaseFixtureGenerator:
@@ -153,11 +182,16 @@ class BaseFixtureGenerator:
 
     def _all_estimators(self):
         """Retrieve list of all estimator classes of type self.estimator_type_filter."""
-        return all_estimators(
+        est_list = all_estimators(
             estimator_types=getattr(self, "estimator_type_filter", None),
             return_names=False,
             exclude_estimators=EXCLUDE_ESTIMATORS,
         )
+        # subsample estimators by OS & python version
+        # this ensures that only a 1/3 of estimators are tested for a given combination
+        # but all are tested on every OS at least once, and on every python version once
+        subs_est_list = subsample_by_version_os(est_list)
+        return subs_est_list
 
     def generator_dict(self):
         """Return dict with methods _generate_[variable] collected in a dict.
