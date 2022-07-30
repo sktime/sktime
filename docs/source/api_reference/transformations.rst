@@ -62,6 +62,7 @@ Pipeline building
 
     OptionalPassthrough
     ColumnwiseTransformer
+    YtoX
 
 .. currentmodule:: sktime.transformations.panel.compose
 
