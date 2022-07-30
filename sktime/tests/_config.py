@@ -43,6 +43,8 @@ EXCLUDE_ESTIMATORS = [
     "RandomIntervalSegmenter",
     "RandomIntervalFeatureExtractor",
     "RandomIntervalClassifier",
+    "MiniRocket",
+    "MatrixProfileTransformer",
 ]
 
 
