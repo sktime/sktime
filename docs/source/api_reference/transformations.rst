@@ -148,8 +148,17 @@ These transformers extract simple summary features.
     RandomIntervalFeatureExtractor
     FittedParamExtractor
 
-Shapelet, wavelet, and convolution based features
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Shapelets, wavelets, and convolution
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.transformations.panel.shapelet_transform
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ShapeletTransform
+    RandomShapeletTransform
 
 .. currentmodule:: sktime.transformations.panel.rocket
 
