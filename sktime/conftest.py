@@ -15,6 +15,7 @@ __author__ = ["fkiraly"]
 
 
 def pytest_addoption(parser):
+    """Pytest command line parser options adder."""
     parser.addoption(
         "--matrixdesign",
         action="store_true",
@@ -25,5 +26,6 @@ def pytest_addoption(parser):
 
 
 def pytest_configure(config):
+    """Pytest configuration preamble."""
     if config.getoption("--matrixdesign") in [True, "True"]:
         tests.test_all_estimators.MATRIXDESIGN = True
