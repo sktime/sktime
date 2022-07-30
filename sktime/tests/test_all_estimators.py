@@ -56,6 +56,10 @@ from sktime.utils.validation._dependencies import (
     _check_estimator_deps,
 )
 
+# whether to subsample estimators per os/version partition matrix design
+# default is False, can be set to True by pytest --matrixdesign True flag
+MATRIXDESIGN = False
+
 
 def subsample_by_version_os(x):
     """Subsample objects by operating system and python version.
@@ -192,8 +196,9 @@ class BaseFixtureGenerator:
         # subsample estimators by OS & python version
         # this ensures that only a 1/3 of estimators are tested for a given combination
         # but all are tested on every OS at least once, and on every python version once
-        subs_est_list = subsample_by_version_os(est_list)
-        return subs_est_list
+        if MATRIXDESIGN:
+            est_list = subsample_by_version_os(est_list)
+        return est_list
 
     def generator_dict(self):
         """Return dict with methods _generate_[variable] collected in a dict.
