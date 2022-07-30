@@ -385,7 +385,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             )
             valid, msg, _ = check_is_mtype(
                 pred_ints, mtype="pred_interval", scitype="Proba", return_metadata=True
-            )
+            )  # type: ignore
             assert valid, msg
 
         else:
