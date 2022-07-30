@@ -6,7 +6,6 @@ __author__ = ["mloning", "fkiraly", "TonyBagnall", "MatthewMiddlehurst"]
 import numpy as np
 import pandas as pd
 import pytest
-
 from sklearn.model_selection import KFold
 
 from sktime.classification.base import (
