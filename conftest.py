@@ -20,7 +20,6 @@ def pytest_addoption(parser):
     """Pytest command line parser options adder."""
     parser.addoption(
         "--matrixdesign",
-        action="store_true",
         default=False,
         help="sub-sample estimators in tests by os/version matrix partition design",
     )
