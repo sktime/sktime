@@ -584,6 +584,15 @@
       ]
     },
     {
+      "login": "achieveordie",
+      "name": "Sagar Mishra",
+      "avatar_url": "https://avatars.githubusercontent.com/u/54197164?v=4",
+      "profile": "https://github.com/achieveordie",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
       "login": "krumeto",
       "name": "Krum Arnaudov",
       "avatar_url": "https://avatars3.githubusercontent.com/u/11272436?v=4",
@@ -1633,6 +1642,7 @@
       ]
     },
     {
+
       "login": "AurumnPegasus",
       "name": "Shivansh Subramanian",
       "avatar_url": "https://avatars.githubusercontent.com/u/54315149?v=4",
@@ -1677,6 +1687,15 @@
       ]
     },
     {
+      "login": "mariamjabara",
+      "name": "Mariam Jabara",
+      "profile": "https://github.com/mariamjabara",
+      "contributions": [
+        "code"
+
+      ]
+    },
+    {
       "login": "lbventura",
       "name": "Luis Ventura",
       "avatar_url": "https://avatars.githubusercontent.com/u/68004282?s=96&v=4",
@@ -1709,7 +1728,8 @@
       "name": "Julian Cooper",
       "profile": "https://github.com/jelc53",
       "contributions": [
-        "tbats_update"
+        "code",
+        "ideas"
       ]
     }
   ],
