@@ -22,8 +22,8 @@ def pytest_addoption(parser):
         "--matrixdesign",
         action="store_true",
         default=False,
+        type=bool,
         help="sub-sample estimators in tests by os/version matrix partition design",
-        choices=("True", "False", True, False),
     )
 
 
