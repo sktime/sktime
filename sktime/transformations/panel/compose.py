@@ -15,6 +15,7 @@ from sklearn.compose import ColumnTransformer as _ColumnTransformer
 
 from sktime.transformations.base import BaseTransformer, _PanelToPanelTransformer
 from sktime.transformations.series.adapt import TabularToSeriesAdaptor
+from sktime.utils.multiindex import flatten_multiindex
 from sktime.utils.sklearn import is_sklearn_estimator
 from sktime.utils.validation.panel import check_X
 
@@ -149,7 +150,15 @@ class ColumnTransformer(_ColumnTransformer, _PanelToPanelTransformer):
         if self.sparse_output_:
             return sparse.hstack(Xs).tocsr()
         if self.preserve_dataframe and (pd.Series in types or pd.DataFrame in types):
-            return pd.concat(Xs, axis="columns")
+            vars = [y for x in self.transformers for y in x[2]]
+            vars_unique = len(set(vars)) == len(vars)
+            names = [str(x[0]) for x in self.transformers]
+            if vars_unique:
+                return pd.concat(Xs, axis="columns")
+            else:
+                Xt = pd.concat(Xs, axis="columns", keys=names)
+                Xt.columns = flatten_multiindex(Xt.columns)
+                return Xt
         return np.hstack(Xs)
 
     def _validate_output(self, result):

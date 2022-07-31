@@ -103,7 +103,38 @@ class _TbatsAdapter(BaseForecaster):
 
         return self
 
-    def _predict(self, fh, X):
+    def _update(self, y, X=None, update_params=True):
+        """Update time series to incremental training data.
+
+        Derived from example provided by core devs in TBATS repository
+        https://github.com/intive-DataScience/tbats/blob/master/examples/
+
+        Parameters
+        ----------
+        y : pd.Series
+            Target time series to which to fit the forecaster.
+        X : pd.DataFrame, optional (default=None)
+            Exogenous variables (ignored)
+        update_params : bool, optional (default=True)
+            whether model parameters should be updated
+
+        Returns
+        -------
+        self : reference to self
+        """
+        if update_params:
+            # update model state and refit parameters
+            # _fit re-runs model instantiation which triggers refit
+            self._fit(y=self._y)
+
+        else:
+            # update model state without refitting parameters
+            # out-of-box fit tbats method will not refit parameters
+            self._forecaster.fit(y=self._y)
+
+        return self
+
+    def _predict(self, fh, X=None):
         """Forecast time series at future horizon.
 
         Parameters
