@@ -325,9 +325,9 @@ class ForecastingGridSearchCV(BaseGridSearch):
         Specify the parallelisation backend implementation in joblib, where
         "loky" is used by default.
     error_score : "raise" or numeric, default=np.nan
-        Value to assign to the score if an error occurs in estimator fitting. If set
-        to "raise", the error is raised. If a numeric value is given, FitFailedWarning
-        is raised.
+        Value to assign to the score if an exception occurs in estimator fitting. If set
+        to "raise", the exception is raised. If a numeric value is given,
+        FitFailedWarning is raised.
 
     Attributes
     ----------
@@ -582,9 +582,9 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         Specify the parallelisation backend implementation in joblib, where
         "loky" is used by default.
     error_score : "raise" or numeric, default=np.nan
-        Value to assign to the score if an error occurs in estimator fitting. If set
-        to "raise", the error is raised. If a numeric value is given, FitFailedWarning
-        is raised.
+        Value to assign to the score if an exception occurs in estimator fitting. If set
+        to "raise", the exception is raised. If a numeric value is given,
+        FitFailedWarning is raised.
 
     Attributes
     ----------

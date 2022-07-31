@@ -59,9 +59,9 @@ def evaluate(
         The cells of the columns contain each a pd.Series for y_train,
         y_pred, y_test.
     error_score : "raise" or numeric, default=np.nan
-        Value to assign to the score if an error occurs in estimator fitting. If set
-        to "raise", the error is raised. If a numeric value is given, FitFailedWarning
-        is raised.
+        Value to assign to the score if an exception occurs in estimator fitting. If set
+        to "raise", the exception is raised. If a numeric value is given,
+        FitFailedWarning is raised.
 
     Returns
     -------
