@@ -1633,6 +1633,7 @@
       ]
     },
     {
+
       "login": "AurumnPegasus",
       "name": "Shivansh Subramanian",
       "avatar_url": "https://avatars.githubusercontent.com/u/54315149?v=4",
@@ -1718,7 +1719,8 @@
       "name": "Julian Cooper",
       "profile": "https://github.com/jelc53",
       "contributions": [
-        "tbats_update"
+        "code",
+        "ideas"
       ]
     }
   ],
