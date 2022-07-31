@@ -722,7 +722,7 @@ class CutoffSplitter(BaseSplitter):
             training_window = y.get_indexer(training_window)
             test_window = cutoff + fh.to_numpy()
             if is_datetime(x=cutoff):
-                test_window = y.get_indexer(test_window)
+                test_window = y.get_indexer(test_window[test_window >= y.min()])
             yield training_window, test_window
 
     def get_n_splits(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> int:
