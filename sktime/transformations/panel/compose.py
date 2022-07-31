@@ -365,9 +365,11 @@ class SeriesToPrimitivesRowTransformer(_RowTransformer, _PanelToTabularTransform
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
-        from sklearn.preprocessing import StandardScaler
+        import numpy as np
+        from sklearn.preprocessing import FunctionTransformer
 
-        return {"transformer": StandardScaler(), "check_transformer": False}
+        trafo = FunctionTransformer(np.mean, kw_args={"axis": 0}, check_inverse=False)
+        return {"transformer": trafo, "check_transformer": False}
 
 
 class SeriesToSeriesRowTransformer(_RowTransformer, _PanelToPanelTransformer):
@@ -407,11 +409,9 @@ class SeriesToSeriesRowTransformer(_RowTransformer, _PanelToPanelTransformer):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
-        import numpy as np
-        from sklearn.preprocessing import FunctionTransformer
+        from sklearn.preprocessing import StandardScaler
 
-        trafo = FunctionTransformer(np.mean, kw_args={"axis": 0}, check_inverse=False)
-        return {"transformer": trafo, "check_transformer": False}
+        return {"transformer": StandardScaler(), "check_transformer": False}
 
 
 def make_row_transformer(transformer, transformer_type=None, **kwargs):
