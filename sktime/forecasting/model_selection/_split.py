@@ -20,7 +20,7 @@ from sklearn.model_selection import train_test_split as _train_test_split
 
 from sktime.base import BaseObject
 from sktime.datatypes import check_is_scitype, convert_to
-from sktime.datatypes._utilities import get_index_for_series, get_time_index
+from sktime.datatypes._utilities import get_index_for_series, get_time_index, get_window
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.base._fh import VALID_FORECASTING_HORIZON_TYPES
 from sktime.utils.validation import (
@@ -709,34 +709,20 @@ class CutoffSplitter(BaseSplitter):
         window_length = check_window_length(
             window_length=self.window_length, n_timepoints=n_timepoints
         )
+        if isinstance(y, (pd.DatetimeIndex, pd.PeriodIndex)) and is_int(window_length):
+            window_length = y.freq * window_length
         _check_cutoffs_and_y(cutoffs=cutoffs, y=y)
         _check_cutoffs_fh_y(cutoffs=cutoffs, fh=fh, y=y)
-        max_fh = fh.max()
-        max_cutoff = np.max(cutoffs)
 
         for cutoff in cutoffs:
-            if is_int(x=window_length) and is_int(x=cutoff):
-                train_start = cutoff - window_length
-            elif is_timedelta_or_date_offset(x=window_length) and is_datetime(x=cutoff):
-                train_start = y.get_loc(max(y[0], cutoff - window_length))
-            else:
-                raise TypeError(
-                    f"Unsupported combination of types: "
-                    f"`window_length`: {type(window_length)}, "
-                    f"`cutoff`: {type(cutoff)}"
-                )
-
-            split_point = cutoff if is_int(x=cutoff) else y.get_loc(y[y <= cutoff][-1])
-            training_window = self._get_train_window(
-                y=y, train_start=train_start + 1, split_point=split_point + 1
-            )
-
+            train_end = y[cutoff] if is_int(cutoff) else cutoff
+            training_window = get_window(
+                pd.Series(index=y[y <= train_end]), window_length=window_length
+            ).index
+            training_window = y.get_indexer(training_window)
             test_window = cutoff + fh.to_numpy()
-            if is_datetime(x=max_cutoff) and is_timedelta(x=max_fh):
-                test_window = test_window[test_window >= y.min()]
-                test_window = np.array(
-                    [y.get_loc(timestamp) for timestamp in test_window]
-                )
+            if is_datetime(x=cutoff):
+                test_window = y.get_indexer(test_window)
             yield training_window, test_window
 
     def get_n_splits(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> int:
