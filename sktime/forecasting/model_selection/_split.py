@@ -20,7 +20,7 @@ from sklearn.model_selection import train_test_split as _train_test_split
 
 from sktime.base import BaseObject
 from sktime.datatypes import check_is_scitype, convert_to
-from sktime.datatypes._utilities import get_index_for_series, get_time_index
+from sktime.datatypes._utilities import get_index_for_series, get_time_index, get_window
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.base._fh import VALID_FORECASTING_HORIZON_TYPES
 from sktime.utils.validation import (
@@ -1162,24 +1162,21 @@ class SingleWindowSplitter(BaseSplitter):
     def _split(self, y: pd.Index) -> SPLIT_GENERATOR_TYPE:
         n_timepoints = y.shape[0]
         window_length = check_window_length(self.window_length, n_timepoints)
+        if isinstance(y, (pd.DatetimeIndex, pd.PeriodIndex)) and is_int(window_length):
+            window_length = y.freq * window_length
         fh = _check_fh(self.fh)
-        end = _get_end(y_index=y, fh=fh)
+        train_end = _get_end(y_index=y, fh=fh)
 
-        if window_length is None:
-            start = 0
-        elif is_int(window_length):
-            start = end - window_length + 1
-        else:
-            start = np.argwhere(y > y[end] - window_length).flatten()[0]
-
-        train = self._get_train_window(y=y, train_start=start, split_point=end + 1)
-
+        training_window = get_window(
+            pd.Series(index=y[y <= y[train_end]]), window_length=window_length
+        ).index
+        training_window = y.get_indexer(training_window)
         if array_is_int(fh):
-            test = end + fh.to_numpy()
+            test_window = train_end + fh.to_numpy()
         else:
-            test = np.array([y.get_loc(y[end] + x) for x in fh.to_pandas()])
+            test_window = y.get_indexer(y[train_end] + fh.to_pandas())
 
-        yield train, test
+        yield training_window, test_window
 
     def get_n_splits(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> int:
         """Return the number of splits.
