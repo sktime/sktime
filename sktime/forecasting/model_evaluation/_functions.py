@@ -11,8 +11,8 @@ import warnings
 
 import numpy as np
 import pandas as pd
-from sklearn.exceptions import FitFailedWarning
 
+from sktime.exceptions import FitFailedWarning
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.utils.validation.forecasting import (
     check_cv,
@@ -182,7 +182,8 @@ def evaluate(
                 warnings.warn(
                     f"""
                 Fitting of forecaster failed, you can set error_score='raise' to see
-                the exception message. The score will be set to {error_score}.
+                the exception message. Fit failed for len(y_train)={len(y_train)}.
+                The score will be set to {error_score}.
                 Failed forecaster: {forecaster}.
                 """,
                     FitFailedWarning,
