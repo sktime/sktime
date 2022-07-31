@@ -7,7 +7,7 @@ import numpy as np
 from sklearn.preprocessing import FunctionTransformer, StandardScaler
 
 from sktime.annotation.clasp import ClaSPSegmentation
-from sktime.base import BaseEstimator
+from sktime.base import BaseEstimator, BaseObject
 from sktime.forecasting.structural import UnobservedComponents
 from sktime.registry import (
     BASE_CLASS_LIST,
@@ -100,6 +100,7 @@ EXCLUDED_TESTS = {
         "test_persistence_via_pickle",
     ],
     "VARMAX": "test_update_predict_single",  # see 2997, sporadic failure, unknown cause
+    "CNNNetwork": "test_inheritance",  # not a registered base class, WiP, see #3028
 }
 
 # We here configure estimators for basic unit testing, including setting of
@@ -154,7 +155,8 @@ NON_STATE_CHANGING_METHODS = (
 # The following gives a list of valid estimator base classes.
 VALID_TRANSFORMER_TYPES = tuple(TRANSFORMER_MIXIN_LIST) + (BaseTransformer,)
 
-VALID_ESTIMATOR_BASE_TYPES = tuple(BASE_CLASS_LIST)
+BASE_BASE_TYPES = (BaseEstimator, BaseObject)
+VALID_ESTIMATOR_BASE_TYPES = tuple(set(BASE_CLASS_LIST).difference(BASE_BASE_TYPES))
 
 VALID_ESTIMATOR_TYPES = (
     BaseEstimator,

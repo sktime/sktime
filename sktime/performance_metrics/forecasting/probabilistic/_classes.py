@@ -327,7 +327,7 @@ class _BaseProbaForecastingErrorMetric(BaseForecastingErrorMetric):
         return alphas
 
     def _check_alpha(self, alpha):
-        """Check that alpha input is valid."""
+        """Check alpha input and coerce to np.ndarray."""
         if alpha is None:
             return None
 
@@ -394,8 +394,9 @@ class PinballLoss(_BaseProbaForecastingErrorMetric):
 
     def __init__(self, multioutput="uniform_average", score_average=True, alpha=None):
         self.score_average = score_average
-        self.alpha = self._check_alpha(alpha)
-        self.metric_args = {"alpha": alpha}
+        self.alpha = alpha
+        self._alpha = self._check_alpha(alpha)
+        self.metric_args = {"alpha": self._alpha}
         super().__init__(multioutput=multioutput, score_average=score_average)
 
     def _evaluate_by_index(self, y_true, y_pred, multioutput, **kwargs):
@@ -412,7 +413,7 @@ class PinballLoss(_BaseProbaForecastingErrorMetric):
         multioutput : string "uniform_average" or "raw_values"
             Determines how multioutput results will be treated.
         """
-        alpha = self.alpha
+        alpha = self._alpha
         y_pred_alphas = self._get_alpha_from(y_pred)
         if alpha is None:
             alphas = y_pred_alphas
