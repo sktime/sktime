@@ -30,8 +30,8 @@ def evaluate(
     X=None,
     strategy="refit",
     scoring=None,
-    error_score=np.nan,
     return_data=False,
+    error_score=np.nan,
 ):
     """Evaluate forecaster using timeseries cross-validation.
 
@@ -54,14 +54,14 @@ def evaluate(
         Used to get a score function that takes y_pred and y_test arguments
         and accept y_train as keyword argument.
         If None, then uses scoring = MeanAbsolutePercentageError(symmetric=True).
-    error_score : "raise" or numeric, default=np.nan
-        Value to assign to the score if an error occurs in estimator fitting. If set
-        to "raise", the error is raised. If a numeric value is given, FitFailedWarning
-        is raised.
     return_data : bool, default=False
         Returns three additional columns in the DataFrame, by default False.
         The cells of the columns contain each a pd.Series for y_train,
         y_pred, y_test.
+    error_score : "raise" or numeric, default=np.nan
+        Value to assign to the score if an error occurs in estimator fitting. If set
+        to "raise", the error is raised. If a numeric value is given, FitFailedWarning
+        is raised.
 
     Returns
     -------

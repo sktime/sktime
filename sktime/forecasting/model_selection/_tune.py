@@ -39,10 +39,10 @@ class BaseGridSearch(_DelegatedForecaster):
         backend="loky",
         refit=False,
         scoring=None,
-        error_score=np.nan,
         verbose=0,
         return_n_best_forecasters=1,
         update_behaviour="full_refit",
+        error_score=np.nan,
     ):
 
         self.forecaster = forecaster
@@ -53,10 +53,10 @@ class BaseGridSearch(_DelegatedForecaster):
         self.backend = backend
         self.refit = refit
         self.scoring = scoring
-        self.error_score = error_score
         self.verbose = verbose
         self.return_n_best_forecasters = return_n_best_forecasters
         self.update_behaviour = update_behaviour
+        self.error_score = error_score
         super(BaseGridSearch, self).__init__()
         tags_to_clone = [
             "requires-fh-in-fit",
@@ -306,10 +306,6 @@ class ForecastingGridSearchCV(BaseGridSearch):
         Model tuning parameters of the forecaster to evaluate
     scoring: function, optional (default=None)
         Function to score models for evaluation of optimal parameters
-    error_score : "raise" or numeric, default=np.nan
-        Value to assign to the score if an error occurs in estimator fitting. If set
-        to "raise", the error is raised. If a numeric value is given, FitFailedWarning
-        is raised.
     n_jobs: int, optional (default=None)
         Number of jobs to run in parallel.
         None means 1 unless in a joblib.parallel_backend context.
@@ -328,6 +324,10 @@ class ForecastingGridSearchCV(BaseGridSearch):
     backend: str, optional (default="loky")
         Specify the parallelisation backend implementation in joblib, where
         "loky" is used by default.
+    error_score : "raise" or numeric, default=np.nan
+        Value to assign to the score if an error occurs in estimator fitting. If set
+        to "raise", the error is raised. If a numeric value is given, FitFailedWarning
+        is raised.
 
     Attributes
     ----------
@@ -425,7 +425,6 @@ class ForecastingGridSearchCV(BaseGridSearch):
         cv,
         param_grid,
         scoring=None,
-        error_score=np.nan,
         strategy="refit",
         n_jobs=None,
         refit=True,
@@ -434,11 +433,11 @@ class ForecastingGridSearchCV(BaseGridSearch):
         pre_dispatch="2*n_jobs",
         backend="loky",
         update_behaviour="full_refit",
+        error_score=np.nan,
     ):
         super(ForecastingGridSearchCV, self).__init__(
             forecaster=forecaster,
             scoring=scoring,
-            error_score=error_score,
             n_jobs=n_jobs,
             refit=refit,
             cv=cv,
@@ -448,6 +447,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
             pre_dispatch=pre_dispatch,
             backend=backend,
             update_behaviour=update_behaviour,
+            error_score=error_score,
         )
         self.param_grid = param_grid
 
@@ -560,10 +560,6 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         off runtime vs quality of the solution.
     scoring: function, optional (default=None)
         Function to score models for evaluation of optimal parameters
-    error_score : "raise" or numeric, default=np.nan
-        Value to assign to the score if an error occurs in estimator fitting. If set
-        to "raise", the error is raised. If a numeric value is given, FitFailedWarning
-        is raised.
     n_jobs: int, optional (default=None)
         Number of jobs to run in parallel.
         None means 1 unless in a joblib.parallel_backend context.
@@ -585,6 +581,10 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
     backend: str, optional (default="loky")
         Specify the parallelisation backend implementation in joblib, where
         "loky" is used by default.
+    error_score : "raise" or numeric, default=np.nan
+        Value to assign to the score if an error occurs in estimator fitting. If set
+        to "raise", the error is raised. If a numeric value is given, FitFailedWarning
+        is raised.
 
     Attributes
     ----------
@@ -613,7 +613,6 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         param_distributions,
         n_iter=10,
         scoring=None,
-        error_score=np.nan,
         strategy="refit",
         n_jobs=None,
         refit=True,
@@ -623,11 +622,11 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         pre_dispatch="2*n_jobs",
         backend="loky",
         update_behaviour="full_refit",
+        error_score=np.nan,
     ):
         super(ForecastingRandomizedSearchCV, self).__init__(
             forecaster=forecaster,
             scoring=scoring,
-            error_score=error_score,
             strategy=strategy,
             n_jobs=n_jobs,
             refit=refit,
@@ -637,6 +636,7 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
             pre_dispatch=pre_dispatch,
             backend=backend,
             update_behaviour=update_behaviour,
+            error_score=error_score,
         )
         self.param_distributions = param_distributions
         self.n_iter = n_iter
