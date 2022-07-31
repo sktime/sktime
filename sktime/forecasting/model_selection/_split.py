@@ -787,6 +787,13 @@ class BaseWindowSplitter(BaseSplitter):
         self.initial_window = initial_window
         super(BaseWindowSplitter, self).__init__(fh=fh, window_length=window_length)
 
+    @property
+    def _initial_window(self):
+        if hasattr(self, "initial_window"):
+            return self.initial_window
+        else:
+            return None
+
     def _split(self, y: pd.Index) -> SPLIT_GENERATOR_TYPE:
         n_timepoints = y.shape[0]
         window_length = check_window_length(
@@ -795,7 +802,7 @@ class BaseWindowSplitter(BaseSplitter):
             name="window_length",
         )
         initial_window = check_window_length(
-            window_length=self.initial_window,
+            window_length=self._initial_window,
             n_timepoints=n_timepoints,
             name="initial_window",
         )
@@ -804,7 +811,7 @@ class BaseWindowSplitter(BaseSplitter):
             y=y, fh=fh, window_length=window_length, initial_window=initial_window
         )
 
-        if self.initial_window is not None:
+        if self._initial_window is not None:
             yield self._split_for_initial_window(y)
 
         for train, test in self._split_windows(window_length=window_length, y=y, fh=fh):
@@ -829,12 +836,12 @@ class BaseWindowSplitter(BaseSplitter):
             raise ValueError(
                 "`start_with_window` must be True if `initial_window` is given"
             )
-        if self.initial_window <= self.window_length:
+        if self._initial_window <= self.window_length:
             raise ValueError("`initial_window` must greater than `window_length`")
-        if is_int(x=self.initial_window):
-            end = self.initial_window
+        if is_int(x=self._initial_window):
+            end = self._initial_window
         else:
-            end = y.get_loc(y[0] + self.initial_window)
+            end = y.get_loc(y[0] + self._initial_window)
         train = self._get_train_window(y=y, train_start=0, split_point=end)
         if array_is_int(fh):
             test = end + fh.to_numpy() - 1
@@ -883,7 +890,9 @@ class BaseWindowSplitter(BaseSplitter):
         """
         start = self._get_start(y=y, fh=fh)
         split_points = self.get_cutoffs(pd.Series(index=y, dtype=float)) + 1
-        split_points = split_points if self.initial_window is None else split_points[1:]
+        split_points = (
+            split_points if self._initial_window is None else split_points[1:]
+        )
         for split_point in split_points:
             train_start = self._get_train_start(
                 start=start if expanding else split_point,
@@ -928,12 +937,14 @@ class BaseWindowSplitter(BaseSplitter):
         # length.
         if hasattr(self, "start_with_window") and self.start_with_window:
 
-            if hasattr(self, "initial_window") and self.initial_window is not None:
+            if self._initial_window is not None:
 
-                if is_timedelta_or_date_offset(x=self.initial_window):
-                    start = y.get_loc(y[start] + self.initial_window + self.step_length)
+                if is_timedelta_or_date_offset(x=self._initial_window):
+                    start = y.get_loc(
+                        y[start] + self._initial_window + self.step_length
+                    )
                 else:
-                    start += self.initial_window + self.step_length
+                    start += self._initial_window + self.step_length
             else:
                 if is_timedelta_or_date_offset(x=self.window_length):
                     start = y.get_loc(y[start] + self.window_length)
@@ -992,12 +1003,12 @@ class BaseWindowSplitter(BaseSplitter):
         fh = _check_fh(self.fh)
         step_length = check_step_length(self.step_length)
 
-        if self.initial_window is None:
+        if self._initial_window is None:
             start = self._get_start(y=y, fh=fh)
-        elif is_int(x=self.initial_window):
-            start = self.initial_window
+        elif is_int(x=self._initial_window):
+            start = self._initial_window
         else:
-            start = y.get_loc(y[0] + self.initial_window)
+            start = y.get_loc(y[0] + self._initial_window)
 
         end = _get_end(y_index=y, fh=fh) + 2
         if is_int(x=step_length):
@@ -1119,6 +1130,15 @@ class ExpandingWindowSplitter(BaseWindowSplitter):
             start_with_window=start_with_window,
         )
 
+        # initial_window needs to be written to self for sklearn compatibility
+        self.initial_window = initial_window
+        # this class still acts as if it were overwritten with None,
+        # via the _initial_window property that is read everywhere
+
+    @property
+    def _initial_window(self):
+        return None
+
     def _split_windows(self, **kwargs) -> SPLIT_GENERATOR_TYPE:
         return self._split_windows_generic(expanding=True, **kwargs)
 
@@ -1143,7 +1163,7 @@ class SingleWindowSplitter(BaseSplitter):
         window_length: Optional[ACCEPTED_WINDOW_LENGTH_TYPES] = None,
     ) -> None:
         _check_inputs_for_compatibility(args=[fh, window_length])
-        super(SingleWindowSplitter, self).__init__(fh, window_length)
+        super(SingleWindowSplitter, self).__init__(fh=fh, window_length=window_length)
 
     def _split(self, y: pd.Index) -> SPLIT_GENERATOR_TYPE:
         n_timepoints = y.shape[0]
