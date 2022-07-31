@@ -73,6 +73,10 @@ jobs:
       - name: Install sktime and dependencies
         run: python -m pip install .[all_extras,dev]
 
+      - name: Install baseobject
+        run: |
+          python -m pip install git+https://github.com/sktime/BaseObject.git@main
+
       - name: Show dependencies
         run: python -m pip list
 
@@ -106,6 +110,10 @@ jobs:
         run: |
           python -m pip install .[all_extras,dev]
 
+      - name: Install baseobject
+        run: |
+          python -m pip install git+https://github.com/sktime/BaseObject.git@main
+
       - name: Show dependencies
         run: python -m pip list
 
@@ -130,6 +138,10 @@ jobs:
       - name: Install sktime and dependencies
         run: |
           python -m pip install .[dev]
+
+      - name: Install baseobject
+        run: |
+          python -m pip install git+https://github.com/sktime/BaseObject.git@main
 
       - name: Show dependencies
         run: python -m pip list
