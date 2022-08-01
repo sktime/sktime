@@ -155,14 +155,11 @@ def evaluate(
             # predict
             start_pred = time.perf_counter()
 
-            if hasattr(scoring, "metric_args"):
-                metric_args = scoring.metric_args
+            scitype = scoring.get_tag("scitype:y_pred", None)
 
-            try:
-                scitype = scoring.get_tag("scitype:y_pred")
-            except ValueError:
-                # If no scitype exists then metric is not proba and no args needed
-                scitype = None
+            if hasattr(scoring, "metric_args") and scitype is not None:
+                metric_args = scoring.metric_args
+            else:
                 metric_args = {}
 
             y_pred = eval(pred_type[scitype])(fh, X_test, **metric_args)
