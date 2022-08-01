@@ -15,7 +15,7 @@ from sktime.utils.validation._dependencies import _check_soft_dependencies
 _check_soft_dependencies("hmmlearn", severity="warning")
 
 __author__ = ["miraep8"]
-__all__ = ["BaseHMMLearn"]
+__all__ = ["BaseHMMLearn", "GuassianHMM"]
 
 
 class BaseHMMLearn(BaseSeriesAnnotator):
@@ -41,6 +41,34 @@ class BaseHMMLearn(BaseSeriesAnnotator):
 
 @define
 class GuassianHMM(BaseHMMLearn):
+    """Hidden Markov Model with Gaussian emissions.
+
+    Attributes
+    ----------
+    n_features : int
+        Dimensionality of the Gaussian emissions.
+    monitor_ : ConvergenceMonitor
+        Monitor object used to check the convergence of EM.
+    startprob_ : array, shape (n_components, )
+        Initial state occupation distribution.
+    transmat_ : array, shape (n_components, n_components)
+        Matrix of transition probabilities between states.
+    means_ : array, shape (n_components, n_features)
+        Mean parameters for each state.
+    covars_ : array
+        Covariance parameters for each state.
+        The shape depends on :attr:`covariance_type`:
+        * (n_components, )                        if "spherical",
+        * (n_components, n_features)              if "diag",
+        * (n_components, n_features, n_features)  if "full",
+        * (n_features, n_features)                if "tied".
+
+    Examples
+    --------
+    >>> from sktime.annotation.hmm_learn import GaussianHMM
+    >>> GaussianHMM(n_components=2)  #doctest: +ELLIPSIS
+    GaussianHMM(algorithm='viterbi',...
+    """
 
     n_components: int = 1
     covariance_type: str = "diag"
@@ -61,7 +89,7 @@ class GuassianHMM(BaseHMMLearn):
     implementation: str = "log"
 
     def __attrs_post_init__(self):
-
+        """Initialize the _hmm_estimator to be hmmlearn GuassianHMM."""
         # import inside method to avoid hard dependency
         import hmmlearn
 
@@ -85,3 +113,25 @@ class GuassianHMM(BaseHMMLearn):
             self.implementation,
         )
         super(GuassianHMM, self).__init__()
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict
+        """
+        params = {
+            "n_components": 3,
+            "covariance_type": "diag",
+            "min_covar": 1e-3,
+        }
+
+        return params
