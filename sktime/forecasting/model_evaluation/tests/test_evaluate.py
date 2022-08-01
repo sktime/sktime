@@ -11,7 +11,7 @@ __author__ = ["aiwalter", "mloning"]
 __all__ = [
     "test_evaluate_common_configs",
     "test_evaluate_initial_window",
-    # "test_evaluate_no_exog_against_with_exog",
+    "test_evaluate_no_exog_against_with_exog",
 ]
 
 import numpy as np
