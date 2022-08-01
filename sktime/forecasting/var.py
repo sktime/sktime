@@ -3,6 +3,9 @@
 __all__ = ["VAR"]
 __author__ = ["thayeylolu", "aiwalter", "lbventura"]
 
+import itertools
+from collections import OrderedDict
+
 import numpy as np
 import pandas as pd
 from statsmodels.tsa.api import VAR as _VAR
@@ -234,7 +237,7 @@ class VAR(_StatsModelsAdapter):
 
         for cov in coverage:
 
-            alpha = -0.5 * cov + 0.5
+            alpha = 1 - cov
 
             fcast_interval = model.forecast_interval(
                 self._y.values[-n_lags:], steps=steps, alpha=alpha
@@ -258,14 +261,18 @@ class VAR(_StatsModelsAdapter):
 
         concat_df = pd.concat(df_list, axis=1)
 
-        concat_df_columns = {
-            col_df
-            for col in y_cols_no_space
-            for col_df in concat_df.columns
-            if col in col_df
-        }
+        concat_df_columns = list(
+            OrderedDict.fromkeys(
+                [
+                    col_df
+                    for col in y_cols_no_space
+                    for col_df in concat_df.columns
+                    if col in col_df
+                ]
+            )
+        )
 
-        pre_output_df = concat_df[list(concat_df_columns)]
+        pre_output_df = concat_df[concat_df_columns]
 
         pre_output_df_2 = pd.DataFrame(
             pre_output_df.values,
@@ -274,12 +281,22 @@ class VAR(_StatsModelsAdapter):
             ),
         )
 
-        final_columns = [
-            [col_name, cov, bound]
-            for col_name in self._y.columns
-            for cov in coverage
-            for bound in pre_output_df_2.columns.get_level_values(2).unique()
-        ]
+        # final_columns = [
+        #    [col_name, cov, bound]
+        #    for col_name in self._y.columns
+        #    for cov in coverage
+        #    for bound in pre_output_df_2.columns.get_level_values(2).unique()
+        # ]
+
+        final_columns = list(
+            itertools.product(
+                *[
+                    self._y.columns,
+                    coverage,
+                    pre_output_df_2.columns.get_level_values(2).unique(),
+                ]
+            )
+        )
 
         final_df = pd.DataFrame(
             pre_output_df_2.iloc[fh.to_indexer(self.cutoff), :].values,
