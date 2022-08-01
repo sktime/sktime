@@ -12,8 +12,6 @@ from attr import define
 from sktime.annotation.base import BaseSeriesAnnotator
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-_check_soft_dependencies("hmmlearn", severity="warning")
-
 __author__ = ["miraep8"]
 __all__ = ["BaseHMMLearn", "GuassianHMM"]
 
@@ -37,6 +35,9 @@ class BaseHMMLearn(BaseSeriesAnnotator):
     def sample(self, n_samples=1, random_state=None, currstate=None):
         """Interface class which allows users to sample from their HMM."""
         return self._hmm_estimator.sample(n_samples, random_state, currstate)
+
+
+_check_soft_dependencies("hmmlearn", severity="warning")
 
 
 @define
