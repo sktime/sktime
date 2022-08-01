@@ -1,28 +1,16 @@
 # -*- coding: utf-8 -*-
 
 __author__ = ["mloning"]
-__all__ = ["ESTIMATOR_TEST_PARAMS", "EXCLUDE_ESTIMATORS", "EXCLUDED_TESTS"]
+__all__ = ["EXCLUDE_ESTIMATORS", "EXCLUDED_TESTS"]
 
-import numpy as np
-from sklearn.preprocessing import FunctionTransformer, StandardScaler
-
-from sktime.annotation.clasp import ClaSPSegmentation
 from sktime.base import BaseEstimator, BaseObject
-from sktime.forecasting.structural import UnobservedComponents
 from sktime.registry import (
     BASE_CLASS_LIST,
     BASE_CLASS_LOOKUP,
     ESTIMATOR_TAG_LIST,
     TRANSFORMER_MIXIN_LIST,
 )
-from sktime.regression.compose import ComposableTimeSeriesForestRegressor
 from sktime.transformations.base import BaseTransformer
-from sktime.transformations.panel.compose import (
-    SeriesToPrimitivesRowTransformer,
-    SeriesToSeriesRowTransformer,
-)
-from sktime.transformations.panel.random_intervals import RandomIntervals
-from sktime.transformations.panel.shapelet_transform import RandomShapeletTransform
 
 # The following estimators currently do not pass all unit tests
 # https://github.com/alan-turing-institute/sktime/issues/1627
@@ -101,35 +89,6 @@ EXCLUDED_TESTS = {
     ],
     "VARMAX": "test_update_predict_single",  # see 2997, sporadic failure, unknown cause
     "CNNNetwork": "test_inheritance",  # not a registered base class, WiP, see #3028
-}
-
-# We here configure estimators for basic unit testing, including setting of
-# required hyper-parameters and setting of hyper-parameters for faster training.
-SERIES_TO_SERIES_TRANSFORMER = StandardScaler()
-SERIES_TO_PRIMITIVES_TRANSFORMER = FunctionTransformer(
-    np.mean, kw_args={"axis": 0}, check_inverse=False
-)
-
-ESTIMATOR_TEST_PARAMS = {
-    SeriesToPrimitivesRowTransformer: {
-        "transformer": SERIES_TO_PRIMITIVES_TRANSFORMER,
-        "check_transformer": False,
-    },
-    SeriesToSeriesRowTransformer: {
-        "transformer": SERIES_TO_SERIES_TRANSFORMER,
-        "check_transformer": False,
-    },
-    RandomShapeletTransform: {
-        "max_shapelets": 5,
-        "n_shapelet_samples": 50,
-        "batch_size": 20,
-    },
-    RandomIntervals: {
-        "n_intervals": 3,
-    },
-    ComposableTimeSeriesForestRegressor: {"n_estimators": 3},
-    UnobservedComponents: {"level": "local level"},
-    ClaSPSegmentation: {"period_length": 5, "n_cps": 1},
 }
 
 # We use estimator tags in addition to class hierarchies to further distinguish
