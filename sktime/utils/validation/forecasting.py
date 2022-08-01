@@ -34,7 +34,7 @@ from sktime.utils.validation import (
 )
 from sktime.utils.validation.series import check_equal_time_index, check_series
 
-ACCEPTED_CUTOFF_TYPES = np.ndarray, pd.Index
+ACCEPTED_CUTOFF_TYPES = list, np.ndarray, pd.Index
 VALID_CUTOFF_TYPES = Union[ACCEPTED_CUTOFF_TYPES]
 
 
