@@ -730,7 +730,7 @@ class CutoffSplitter(BaseSplitter):
         _check_cutoffs_fh_y(cutoffs=cutoffs, fh=fh, y=y)
 
         for cutoff in cutoffs:
-            null = 0 if is_int(cutoff) else pd.Timedelta(0)
+            null = 0 if is_int(cutoff) else pd.Timestamp(0)
             if cutoff >= null:
                 train_end = y[cutoff] if is_int(cutoff) else cutoff
                 training_window = get_window(
