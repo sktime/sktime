@@ -730,10 +730,14 @@ class CutoffSplitter(BaseSplitter):
         _check_cutoffs_fh_y(cutoffs=cutoffs, fh=fh, y=y)
 
         for cutoff in cutoffs:
-            train_end = y[cutoff] if is_int(cutoff) else cutoff
-            training_window = get_window(
-                pd.Series(index=y[y <= train_end]), window_length=window_length
-            ).index
+            null = 0 if is_int(cutoff) else pd.Timedelta(0)
+            if cutoff >= null:
+                train_end = y[cutoff] if is_int(cutoff) else cutoff
+                training_window = get_window(
+                    pd.Series(index=y[y <= train_end]), window_length=window_length
+                ).index
+            else:
+                training_window = []
             training_window = y.get_indexer(training_window)
             test_window = cutoff + fh.to_numpy()
             if is_datetime(x=cutoff):
