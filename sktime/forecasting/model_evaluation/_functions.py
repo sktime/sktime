@@ -29,6 +29,7 @@ def evaluate(
     strategy="refit",
     scoring=None,
     return_data=False,
+    trim_X=True,
 ):
     """Evaluate forecaster using timeseries cross-validation.
 
@@ -55,6 +56,10 @@ def evaluate(
         Returns three additional columns in the DataFrame, by default False.
         The cells of the columns contain each a pd.Series for y_train,
         y_pred, y_test.
+    trim_X : bool, default=True
+        Should the size of X_test be trimmed down to only include test indices (minus
+        forecasting horizon).  Should be true for most estimators, only set to false for
+        those estimators with built in transformers.
 
     Returns
     -------
@@ -114,7 +119,7 @@ def evaluate(
     # Run temporal cross-validation.
     for i, (train, test) in enumerate(cv.split(y)):
         # split data
-        y_train, y_test, X_train, X_test = _split(y, X, train, test, cv.fh)
+        y_train, y_test, X_train, X_test = _split(y, X, train, test, cv.fh, trim_X)
 
         # create forecasting horizon
         fh = ForecastingHorizon(y_test.index, is_relative=False)
@@ -179,7 +184,7 @@ def evaluate(
     return results
 
 
-def _split(y, X, train, test, fh):
+def _split(y, X, train, test, fh, trim_X=True):
     """Split y and X for given train and test set indices."""
     y_train = y.iloc[train]
     y_test = y.iloc[test]
@@ -191,9 +196,14 @@ def _split(y, X, train, test, fh):
     if X is not None:
         X_train = X.iloc[train, :]
 
-        # We need to expand test indices to a full range, since some forecasters
-        # require the full range of exogenous values.
-        test = np.arange(-1, test[-1]) + 1
+        if trim_X:
+            # We trim X but expand to include fh since some forecasters
+            # require a broader range of info:
+            test = np.arange(test[0] - fh.min(), test[-1]) + 1
+        else:
+            # We return the full range of exogenous values (eg for
+            # forecasters which change the size of X via transformers:
+            test = np.arange(-1, test[-1]) + 1
         X_test = X.iloc[test, :]
     else:
         X_train = None

@@ -28,6 +28,7 @@ class BaseGridSearch(_DelegatedForecaster):
         "ignores-exogeneous-X": True,
         "capability:pred_int": True,
     }
+    _trim_X = True
 
     def __init__(
         self,
@@ -138,6 +139,7 @@ class BaseGridSearch(_DelegatedForecaster):
                 X,
                 strategy=self.strategy,
                 scoring=scoring,
+                trim_X=self._trim_X,
             )
 
             # Filter columns.
@@ -405,6 +407,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
     """
 
     _required_parameters = ["forecaster", "cv", "param_grid"]
+    _trim_X = False
 
     def __init__(
         self,
