@@ -37,7 +37,7 @@ class BaseHMMLearn(BaseSeriesAnnotator):
         return self._hmm_estimator.sample(n_samples, random_state, currstate)
 
 
-_check_soft_dependencies("hmmlearn", severity="warning")
+_check_soft_dependencies("hmmlearn.hmm", severity="warning")
 
 
 @define
@@ -95,9 +95,9 @@ class GuassianHMM(BaseHMMLearn):
 
     def _fit(self, X, Y=None):
         # import inside _fit to avoid hard dependency.
-        import hmmlearn
+        from hmmlearn.hmm import GaussianHMM as _GaussianHMM
 
-        self._hmm_estimator = hmmlearn.hmm.GaussianHMM(
+        self._hmm_estimator = _GaussianHMM(
             self.n_components,
             self.covariance_type,
             self.min_covar,
