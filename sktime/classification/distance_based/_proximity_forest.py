@@ -48,10 +48,7 @@ class _CachedTransformer(_PanelToPanelTransformer):
     Attributes
     ----------
     cache       : location to store transforms seen before for fast look up
-
     """
-
-    _required_parameters = ["transformer"]
 
     def __init__(self, transformer):
         self.cache = {}

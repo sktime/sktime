@@ -105,7 +105,6 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
     >>> y_pred = forecaster.predict()
     """
 
-    _required_parameters = ["forecasters"]
     _tags = {
         "ignores-exogeneous-X": False,
         "requires-fh-in-fit": False,
@@ -301,7 +300,6 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
     >>> y_pred = forecaster.predict()
     """
 
-    _required_parameters = ["forecasters"]
     _tags = {
         "ignores-exogeneous-X": False,
         "requires-fh-in-fit": False,

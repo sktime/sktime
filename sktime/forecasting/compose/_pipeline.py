@@ -278,7 +278,6 @@ class ForecastingPipeline(_Pipeline):
     >>> y_pred = pipe.predict(fh=fh, X=X_test)
     """
 
-    _required_parameters = ["steps"]
     _tags = {
         "scitype:y": "both",
         "y_inner_mtype": SUPPORTED_MTYPES,
@@ -650,7 +649,6 @@ class TransformedTargetForecaster(_Pipeline):
     >>> pipe = imputer * Deseasonalizer() * forecaster * ExponentTransformer()
     """
 
-    _required_parameters = ["steps"]
     _tags = {
         "scitype:y": "both",
         "y_inner_mtype": SUPPORTED_MTYPES,

@@ -101,8 +101,6 @@ class ClassifierPipeline(BaseClassifier, _HeterogenousMetaEstimator):
         "capability:multithreading": False,
     }
 
-    _required_parameters = ["classifier"]
-
     # no default tag values - these are set dynamically below
 
     def __init__(self, classifier, transformers):
@@ -405,8 +403,6 @@ class SklearnClassifierPipeline(ClassifierPipeline):
         "capability:contractable": False,
         "capability:multithreading": False,
     }
-
-    _required_parameters = ["classifier"]
 
     # no default tag values - these are set dynamically below
 

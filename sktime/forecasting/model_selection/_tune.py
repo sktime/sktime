@@ -404,8 +404,6 @@ class ForecastingGridSearchCV(BaseGridSearch):
     >>> y_pred = gscv.predict(fh=[1,2,3])
     """
 
-    _required_parameters = ["forecaster", "cv", "param_grid"]
-
     def __init__(
         self,
         forecaster,
@@ -584,8 +582,6 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         The scores of n_best_forecasters_ sorted from best to worst
         score of forecasters
     """
-
-    _required_parameters = ["forecaster", "cv", "param_distributions"]
 
     def __init__(
         self,

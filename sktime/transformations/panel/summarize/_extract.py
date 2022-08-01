@@ -351,8 +351,6 @@ class FittedParamExtractor(BaseTransformer):
         -1 means using all processors.
     """
 
-    _required_parameters = ["forecaster"]
-
     _tags = {
         "fit_is_empty": True,
         "univariate-only": True,
