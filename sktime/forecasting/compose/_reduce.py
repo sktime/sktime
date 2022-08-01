@@ -1125,48 +1125,6 @@ def _get_forecaster(scitype, strategy):
     return registry[scitype][strategy]
 
 
-def _create_multiindex(target_date, origin_df, fill=None):
-    """Create an empty multiindex dataframe from origin dataframe."""
-    # Collect predictions
-    oi = origin_df.index
-    if not isinstance(oi, pd.MultiIndex):
-        if isinstance(origin_df, pd.Series):
-            if fill is None:
-                template = pd.Series(np.zeros(len(target_date)), index=target_date)
-            else:
-                template = pd.Series(fill, index=target_date)
-            return template
-        else:
-            if fill is None:
-                template = pd.DataFrame(
-                    np.zeros((len(target_date), len(origin_df.columns))),
-                    index=target_date,
-                    columns=origin_df.columns.to_list(),
-                )
-            else:
-                template = pd.DataFrame(
-                    fill, index=target_date, columns=origin_df.columns.to_list()
-                )
-            return template
-
-    tsids = origin_df.index.get_level_values("instances").unique()
-    mi = pd.MultiIndex.from_product(
-        [tsids, target_date], names=["instances", "timepoints"]
-    )
-
-    if fill is None:
-        template = pd.DataFrame(
-            np.zeros((len(target_date) * len(tsids), len(origin_df.columns))),
-            index=mi,
-            columns=origin_df.columns.to_list(),
-        )
-    else:
-        template = pd.DataFrame(fill, index=mi, columns=origin_df.columns.to_list())
-
-    template = template.astype(origin_df.dtypes.to_dict())
-    return template
-
-
 def _cut_tail(X, n_tail=1):
     """Cut input at tail, supports grouping."""
     if isinstance(X.index, pd.MultiIndex):
