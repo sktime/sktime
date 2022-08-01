@@ -232,14 +232,14 @@ def label_mean_shift(
 class GenBasicGauss:
     """Data generator base class in order to allow composition."""
 
-    def __init__(self, means, lengths, std_dev, random_state=None):
+    def __init__(self, means, lengths, std_dev=1.0, random_state=None):
         self.means = means
         self.lengths = lengths
         self.std_dev = std_dev
         self.random_state = random_state
 
     def sample(self):
-        """Generate data sample."""
+        """Generate univariate mean shift random data sample."""
         return mean_shift(
             means=self.means,
             lengths=self.lengths,
