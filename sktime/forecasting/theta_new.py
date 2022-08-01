@@ -23,6 +23,7 @@ class ThetaNewForecaster(_HeterogenousEnsembleForecaster):
         "y_inner_mtype": "pd.Series",
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
+        "python_version": ">3.7",
     }
 
     def __init__(
