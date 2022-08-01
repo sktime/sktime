@@ -191,6 +191,9 @@ Rights and responsibilities
    * - Nomination
      - They can nominate new core developers, CoC committee members and CC members.
 
+Expectations
+^^^^^^^^^^^^
+
 Without any restriction of eligibility, common expectations on newly appointed core developers are a history of:
 
 * sustained contributions to ``sktime``, over a period of at 3 months or longer
@@ -273,6 +276,17 @@ incidents and enforcing the CoC.
 They are the point of contact for reporting potential CoC incidents.
 
 In addition, they are responsible for maintaining and improving the CoC.
+
+
+Expectations
+^^^^^^^^^^^^
+
+Without restriction of eligibility:
+* it is generally expected that CoC committee members
+  maintain a high degree of independence of day-to-day matters in the ``sktime`` community,
+  as well as high personal and professional standards of fairness.
+* it is highly advisable that CoC committee members are specifically selected for
+  being unaffected by any potential power dynamics within the ``sktime`` community.
 
 Eligibility
 ^^^^^^^^^^^
