@@ -132,6 +132,25 @@ They can only make decisions about changes on class X. Class Y can be owned by a
 
 In particular, there can be multiple classes implementing algorithm A, and the algorithm maintainer of class X cannot prohibit implementation of, or make decisions on class Y.
 
+Expectations
+^^^^^^^^^^^^
+
+Without restriction to eligibility, it is generally expected that algorithm maintainers
+have a very good technical and methodological understanding of the algorithm they maintain.
+
+This understanding is typically present in inventors or proponents of said algorithm,
+but it is not necessary to be the inventor of an algorithm to be its maintainer.
+
+Eligibility
+^^^^^^^^^^^
+
+Anyone is eligible to be an algorithm maintainer.
+
+Anyone is eligible to be an algorithm maintainer of a specific algorithm that does not already have an algorithm maintainer.
+
+The presence of a specific implementation of a given abstract algorithm does not prevent anyone from becoming
+the algorithm maintainer of a different implementation of the same (or similar) abstract algorithm.
+
 Appointment
 ^^^^^^^^^^^
 
@@ -276,7 +295,6 @@ incidents and enforcing the CoC.
 They are the point of contact for reporting potential CoC incidents.
 
 In addition, they are responsible for maintaining and improving the CoC.
-
 
 Expectations
 ^^^^^^^^^^^^
