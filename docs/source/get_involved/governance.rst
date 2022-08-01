@@ -99,6 +99,15 @@ interface requirements and are called estimators. To faciliate
 maintainership questions, we try to write algorithms in separate files
 when possible.
 
+To clarify, "algorithm" in the above sense means "implemented estimator class".
+That is, algorithm maintainers gain rights and responsibilities with respect to
+that python code.
+They do not gain any rights on abstract methodology, e.g., in a case where
+the class implements methodology invented by third parties.
+
+In particular, algorithm maintainers do not gain rights or responsibilities on other,
+potential implementations of the same methodology in their estimator class.
+
 Rights and responsibilities
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -114,18 +123,41 @@ Rights and responsibilities
   * - Support
     - They are the first point of contact for users and other contributors for all questions, issues and proposals regarding their algorithm.
 
+Recall, "algorithm" refers to estimator classes.
+
+Therefore, the above rights and responsibilities exclude any power on further, potential implementations of the same or similar methodology.
+
+For instance, an algorithm maintainer of algorithm A implemented in class X cannot prohibit implementation of algorithm A in class Y.
+They can only make decisions about changes on class X. Class Y can be owned by a different algorithm maintainer.
+
+In particular, there can be multiple classes implementing algorithm A, and the algorithm maintainer of class X cannot prohibit implementation of, or make decisions on class Y.
+
 Appointment
 ^^^^^^^^^^^
 
 The contributor who contributes an algorithm is automatically appointed
-as its first maintainer. If they can no longer fulfil their maintenance
+as its first maintainer.
+
+Algorithm maintainers are listed in the `CODEOWNERS <https://github
+.com/alan-turing-institute/sktime/blob/main/CODEOWNERS>`__ file.
+
+When an algorithm maintainer resigns, they can appoint another contributor as the
+new algorithm maintainer. No vote is required. This change should be reflected in the ``CODEOWNERS`` file.
+
+Algorithm maintainers can be appointed by CC simple majority for any algorithm without maintainers.
+
+End of tenure
+^^^^^^^^^^^^^
+
+If algorithm maintainers can no longer fulfil their maintenance
 responsibilities, maintainers are expected to resign.
 
-When the maintainer resigns, they can appoint another contributor as the
-new maintainer. No vote is required.
+Algorithm maintainers that have been unresponsive for a 3 month period automatically
+give up their rights and responsibilities as algorithm maintainers.
 
-Maintainers are listed in the `CODEOWNERS <https://github
-.com/alan-turing-institute/sktime/blob/main/CODEOWNERS>`__ file.
+Unresponsiveness is defined as:
+* not engaging with decision making procedures within the reasonably time frames defined there
+* not reacting to issues or bug reports related to the algorithm, within ten working days
 
 .. _core-developers:
 
@@ -159,6 +191,18 @@ Rights and responsibilities
    * - Nomination
      - They can nominate new core developers, CoC committee members and CC members.
 
+Without any restriction of eligibility, common expectations on newly appointed core developers are a history of:
+
+* sustained contributions to ``sktime``, over a period of at 3 months or longer
+* contributions that go substantially beyond "algorithm maintainer" responsibilities.
+  In particular, contributions that go substantially beyond work on a single algorithm or a small set thereof.
+* openness to make valuable non-code contributions, e.g., helping new contributors, helping organize events, running project boards
+* responsiveness to issues, bug reports, decision making procedures
+* participation in community meetings and events, e.g., dev sprints, monthly developer meetings
+* an active commitment to the ``sktime`` community beyond immediate personal networks, being welcoming to all contributors
+
+To clarify, the above are common expectations and not formal prerequisities for appointment or eligibility.
+
 Eligibility
 ^^^^^^^^^^^
 
@@ -174,12 +218,14 @@ they have been nominated, there will be a vote by the current core
 developers.
 
 Voting on appointments is one of the few activities that takes
-place on the project’s private communication channels. The vote will be
-anonymous.
+place on the project's private communication channels. The vote will be
+anonymous and should be set up by a member of the community council.
 
 While it is expected that most votes will be unanimous, a 2/3 majority of
 the cast votes is enough. The vote needs to be open for five days excluding
 weekends.
+
+For details on the voting procedure, see :ref:`decision-making` below.
 
 End of tenure
 ^^^^^^^^^^^^^
@@ -197,17 +243,23 @@ Becoming inactive in the above sense means not contributing for the period via:
 * commenting on pull requests or issues
 * attending one of the regular meetings
 
-Becoming active (after becoming inactive) in the above sense requires one of:
+of a scope that goes beyond algorithm maintainer expectations - i.e., PR or issues related to owned algorithms do not count.
 
-* an approved pull request authored by the core developer
-* a contribution to the community that is minuted in one of the regular meetings
+Becoming active (after becoming inactive) in the above sense requires:
+
+* a contribution within the last month that goes beyond algorithm maintainer expectations, e.g.:
+  * an approved pull request authored by the core developer
+  * a substantial contribution to the community that is minuted in one of the regular meetings
+* success via the same voting procedure as for new core developers, with the exception that former core developers can also self-nominate
 
 .. _coc-committee-members:
 
 CoC committee members
 ~~~~~~~~~~~~~~~~~~~~~
 
-CoC members are contributors with special rights and responsibilities.
+CoC committee members are contributors with special rights and responsibilities.
+The CoC committee is the main judicative body of ``sktime``.
+
 The current members of the CoC committee are listed in the
 `CoC <https://www.sktime.org/en/stable/about/team.html>`__.
 
@@ -232,7 +284,7 @@ Anyone is eligible to be a CoC committee member.
 Appointment
 ^^^^^^^^^^^
 
-Membership of the CC is by nomination by a core developer and a vote by
+Membership of the CoC committee is by nomination by a core developer and a vote by
 all core developers. A nomination will result in discussion which will stay
 open for 5 days excluding weekends and then a vote by the core
 developers which will stay open for 5 days excluding weekends. CoC committee
@@ -249,12 +301,12 @@ of them will have a tie breaking privilege.
 
 .. _cc-members:
 
-CC members
-~~~~~~~~~~
+Community council members
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 CC (community council) members are core developers with additional rights and
-responsibilities to avoid deadlocks and ensure a smooth progress of the
-project.
+responsibilities. The CC is the main executive body of ``sktime``.
+CC members also help avoid deadlocks and ensure a smooth progress of the project.
 
 Current CC members are listed in the `community-council
 team <https://www.sktime.org/en/stable/about/team.html>`__
@@ -311,6 +363,8 @@ CC members can resign voluntarily at any point in time, by informing the CC in w
 CC members who do not actively engage with the responsibilities are
 expected to resign.
 
+CC members can be removed from the CC by an 80% majority of CC members.
+
 Communications
 ^^^^^^^^^^^^^^
 
@@ -332,7 +386,7 @@ used by the sktime project. We clarify:
 * how decisions are made, and
 * who participates in the decision making.
 
-sktime’s decision-making process is designed to take into account
+sktime's decision-making process is designed to take into account
 feedback from all community members and strives to find consensus, while
 avoiding deadlocks when no consensus can be found.
 
@@ -341,7 +395,7 @@ tracker <https://github.com/alan-turing-institute/sktime/issues>`__,
 `pull requests <https://github.com/alan-turing-institute/sktime/pulls>`__ or an :ref:`steps`. Some
 sensitive discussions and appointment votes occur on private chats.
 
-The CC reserves the right to overrule decisions.
+The CC reserves the right to overrule decisions with a simple CC majority.
 
 We distinguish between the following types of proposed changes. The
 corresponding decision making process is described in more detail below.
@@ -446,6 +500,20 @@ the CC tries to resolve the deadlock.
    members.
 -  Any proposal reaching stage 3 must be supported by an :ref:`steps`,
    which has been made public at least 5 days, excluding weekends, before the vote.
+
+Judication
+~~~~~~~~~~
+
+Besides its primary remit, the code of conduct, the CoC committee is empowered to
+judicate in contentious cases of application of the following rules by the CC:
+
+* voting rules, vote counts, start/end times
+* determining activity/inactivity of a core developer
+* determining unresponsiveness of an algorithm maintainer
+* inclusion and exclusion criteria for algorithms
+
+Judication is upon written appeal of core developers and algorithm maintainers to the CoC committee.
+A ruling by the CoC committee does not halt timelines, but can reverse decisions made.
 
 .. _steps:
 
