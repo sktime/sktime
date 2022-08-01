@@ -503,7 +503,7 @@ We have the following guidelines:
    and rarer variants as less accessible or findable alternatives. The choice of the "primary default"
    may change with use and relevance in the user community.
    We are aware that the choice of the "primary default" may give or remove visibility,
-   and aim to make the choice for usability and quality of the presentation.
+   and aim to make the choice for usability and quality of the selection.
 -  We are happy to accept historical algorithms of interest, as references to use in
    reproduction studies, including historical versions that are faulty implementations.
    Algorithms of historical interest will be clearly labelled as such, and inclusion
