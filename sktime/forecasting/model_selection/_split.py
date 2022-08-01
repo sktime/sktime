@@ -673,6 +673,9 @@ class CutoffSplitter(BaseSplitter):
     which using the notation provided in :class:`BaseSplitter`,
     can be written as :math:`(k_1,\ldots,k_n)` for integer based indexing,
     or :math:`(t(k_1),\ldots,t(k_n))` for datetime based indexing.
+
+    For a cutoff :math:`k_i` and a `window_length` :math:`w`
+    the training window is :math:`(k_i-w,k_i-w+1,k_i-w+2,\ldots,k_i)`.
     Training window's last point is equal to the cutoff.
 
     Test window is defined by forecasting horizons
