@@ -91,7 +91,10 @@ class GuassianHMM(BaseHMMLearn):
 
     def __attrs_post_init__(self):
         """Initialize the _hmm_estimator to be hmmlearn GuassianHMM."""
-        # import inside method to avoid hard dependency
+        super(GuassianHMM, self).__init__()
+
+    def _fit(self, X, Y=None):
+        # import inside _fit to avoid hard dependency.
         import hmmlearn
 
         self._hmm_estimator = hmmlearn.hmm.GaussianHMM(
@@ -113,7 +116,7 @@ class GuassianHMM(BaseHMMLearn):
             self.init_params,
             self.implementation,
         )
-        super(GuassianHMM, self).__init__()
+        super(GuassianHMM, self)._fit(X, Y)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
