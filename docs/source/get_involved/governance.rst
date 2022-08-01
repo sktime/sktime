@@ -485,7 +485,7 @@ deprecate and remove contributions.
 We have the following guidelines:
 
 -  ``sktime`` aims to provide a repository for algorithms to enhance reproducible research,
-   putting no lower bounds on number of citations, algorithms performance, or frequency of use.
+   putting no lower bounds on number of citations, algorithmic performance, or frequency of use.
 -  For inclusion, a scientific reference must be available and linked to the python estimator.
    A scientific reference is a formal description of the algorithm which
    satisfies basic scientific requirements, e.g., be formally correct, complete, and
@@ -497,7 +497,7 @@ We have the following guidelines:
    The form of the scientific reference can be a description in the class docstring,
    or a link to a scientific document, e.g., on the arXiv. Such a scientific document
    need not be peer-reviewed or journal published, but must adhere to scientific standards.
--  We strive to consolidate existing functionality if helps to improve
+-  We strive to consolidate existing functionality if it helps to improve
    the usability and maintainability of the project. For example, when
    there are multiple techniques for the same purpose, we may choose to present one variant as the "primary default",
    and rarer variants as less accessible or findable alternatives. The choice of the "primary default"
