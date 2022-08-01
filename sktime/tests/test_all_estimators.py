@@ -851,8 +851,7 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
         for param in init_params:
             assert param.default != param.empty, (
                 "parameter `%s` for %s has no default value and is not "
-                "set in `get_test_params`"
-                % (param.name, estimator.__class__.__name__)
+                "set in `get_test_params`" % (param.name, estimator.__class__.__name__)
             )
             if type(param.default) is type:
                 assert param.default in [np.float64, np.int64]
