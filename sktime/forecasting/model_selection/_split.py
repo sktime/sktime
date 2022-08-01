@@ -679,7 +679,7 @@ class CutoffSplitter(BaseSplitter):
     relative to the end of the training window.
     It will contain as many indices
     as there are forecasting horizons provided to the `fh` argument.
-    For a forecasating horizon :math:`(h_1,\ldots,h_H)`, the training window will
+    For a forecasating horizon :math:`(h_1,\ldots,h_H)`, the test window will
     consist of the indices :math:`(k_n+h_1,\ldots, k_n+h_H)`.
 
     The number of splits returned by `.get_n_splits`
@@ -690,7 +690,7 @@ class CutoffSplitter(BaseSplitter):
 
     Parameters
     ----------
-    cutoffs : list or np.array or pd.Index
+    cutoffs : list or np.ndarray or pd.Index
         Cutoff points, positive and integer- or datetime-index like.
         Type should match the type of `fh` input.
     fh : int, timedelta, list or np.ndarray of ints or timedeltas
