@@ -484,7 +484,7 @@ deprecate and remove contributions.
 
 We have the following guidelines:
 
--  ``sktime`` aims to provide a repository for algortihms to enhance reproducible research,
+-  ``sktime`` aims to provide a repository for algorithms to enhance reproducible research,
    putting no lower bounds on number of citations, algorithms performance, or frequency of use.
 -  For inclusion, a scientific reference must be available and linked to the python estimator.
    A scientific reference is a formal description of the algorithm which
