@@ -70,7 +70,7 @@ class BaseRegressor(BaseEstimator, ABC):
         # i.e. CalibratedClassifierCV
         self._estimator_type = "regressor"
 
-        super(BaseRegressor, self).__init__()
+        BaseEstimator.__init__(self)
 
     def fit(self, X, y):
         """Fit time series classifier to training data.

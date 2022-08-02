@@ -112,7 +112,7 @@ class BaseForecaster(BaseEstimator):
 
         self._converter_store_y = dict()  # storage dictionary for in/output conversion
 
-        super(BaseForecaster, self).__init__()
+        BaseEstimator.__init__(self)
         _check_estimator_deps(self)
 
     def __mul__(self, other):

@@ -145,7 +145,7 @@ class BaseTransformer(BaseEstimator):
 
         self._converter_store_X = dict()  # storage dictionary for in/output conversion
 
-        super(BaseTransformer, self).__init__()
+        BaseEstimator.__init__(self)
         _check_estimator_deps(self)
 
     def __mul__(self, other):

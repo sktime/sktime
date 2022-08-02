@@ -38,7 +38,7 @@ from sktime.utils.validation import check_n_jobs
 from sktime.utils.validation._dependencies import _check_estimator_deps
 
 
-class BaseClassifier(BaseEstimator, ABC):
+class BaseClassifier(BaseEstimator):
     """Abstract base class for time series classifiers.
 
     The base classifier specifies the methods and method signatures that all
@@ -77,7 +77,7 @@ class BaseClassifier(BaseEstimator, ABC):
         # i.e. CalibratedClassifierCV
         self._estimator_type = "classifier"
 
-        super(BaseClassifier, self).__init__()
+        BaseEstimator.__init__(self)
         _check_estimator_deps(self)
 
     def __rmul__(self, other):
@@ -445,7 +445,6 @@ class BaseClassifier(BaseEstimator, ABC):
         """
         return super().get_test_params(parameter_set=parameter_set)
 
-    @abstractmethod
     def _fit(self, X, y):
         """Fit time series classifier to training data.
 
