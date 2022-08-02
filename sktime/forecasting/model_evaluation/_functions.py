@@ -121,13 +121,6 @@ def evaluate(
     # Run temporal cross-validation.
     for i, (train, test) in enumerate(cv.split(y)):
 
-        # set default result values in case estimator fitting fails
-        score = error_score
-        fit_time = np.nan
-        pred_time = np.nan
-        cutoff = np.nan
-        y_pred = np.nan
-
         # split data
         y_train, y_test, X_train, X_test = _split(y, X, train, test, cv.fh)
 
@@ -171,6 +164,8 @@ def evaluate(
 
             # score
             score = scoring(y_test, y_pred, y_train=y_train)
+            if True:
+                raise ValueError("ererrere")
 
             # cutoff
             cutoff = forecaster.cutoff
@@ -188,6 +183,12 @@ def evaluate(
                 """,
                     FitFailedWarning,
                 )
+                # set default result values in case estimator fitting has failed
+                score = error_score
+                fit_time = np.nan
+                pred_time = np.nan
+                cutoff = np.nan
+                y_pred = np.nan
 
         # save results
         results.append(
