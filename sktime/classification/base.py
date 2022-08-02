@@ -25,7 +25,6 @@ __all__ = [
 __author__ = ["mloning", "fkiraly", "TonyBagnall", "MatthewMiddlehurst"]
 
 import time
-from abc import ABC, abstractmethod
 from warnings import warn
 
 import numpy as np

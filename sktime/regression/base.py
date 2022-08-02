@@ -25,7 +25,6 @@ __all__ = [
 __author__ = ["mloning", "fkiraly"]
 
 import time
-from abc import ABC, abstractmethod
 from warnings import warn
 
 import numpy as np
@@ -36,7 +35,7 @@ from sktime.datatypes import check_is_scitype, convert_to
 from sktime.utils.validation import check_n_jobs
 
 
-class BaseRegressor(BaseEstimator, ABC):
+class BaseRegressor(BaseEstimator):
     """Abstract base class for time series regressors.
 
     The base classifier specifies the methods and method signatures that all
@@ -179,7 +178,6 @@ class BaseRegressor(BaseEstimator, ABC):
 
         return r2_score(y, self.predict(X), normalize=True)
 
-    @abstractmethod
     def _fit(self, X, y):
         """Fit time series classifier to training data.
 
@@ -207,7 +205,6 @@ class BaseRegressor(BaseEstimator, ABC):
         """
         ...
 
-    @abstractmethod
     def _predict(self, X) -> np.ndarray:
         """Predicts labels for sequences in X.
 
