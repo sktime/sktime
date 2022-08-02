@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-"""Vector Auto Regressor."""
+"""Implements VAR Model as interface to statsmodels."""
+
 __all__ = ["VAR"]
 __author__ = ["thayeylolu", "aiwalter", "lbventura"]
 
