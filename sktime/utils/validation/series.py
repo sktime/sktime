@@ -16,8 +16,6 @@ from typing import Union
 import numpy as np
 import pandas as pd
 
-from sktime.datatypes._utilities import get_index_for_series
-
 # We currently support the following types for input data and time index types.
 VALID_DATA_TYPES = (pd.DataFrame, pd.Series, np.ndarray)
 VALID_INDEX_TYPES = (pd.RangeIndex, pd.PeriodIndex, pd.DatetimeIndex, pd.TimedeltaIndex)
@@ -254,6 +252,8 @@ def check_equal_time_index(*ys, mode="equal"):
             such that ys[i].index is not contained in ys[o].index
         np.ndarray are considered having (pandas) integer range index on axis 0
     """
+    from sktime.datatypes._utilities import get_index_for_series
+
     # None entries are ignored
     y_not_None = [y for y in ys if y is not None]
 
