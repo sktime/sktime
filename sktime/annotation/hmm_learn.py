@@ -26,7 +26,7 @@ class BaseHMMLearn(BaseSeriesAnnotator):
         super(BaseHMMLearn, self).__init__()
 
     def _fit(self, X, Y=None):
-        self._hmm_estimator = self._hmm_estimator.fit(X)
+        self._hmm_estimator = self._hmm_estimator.fit(X.reshape(-1, 1))
         return self
 
     def _predict(self, X):
