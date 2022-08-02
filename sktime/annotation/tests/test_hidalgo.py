@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
+"""Test for hidalgo segmentation."""
 import math
 
 import numpy as np
-import pandas as pd
-from sklearn.neighbors import NearestNeighbors
 
-from ..hidalgo import hidalgo
+from sktime.annotation.hidalgo import hidalgo
 
 
 def _isclose(list1, list2):
@@ -32,13 +31,13 @@ for j in range(3):
 
 
 def test_X():
+    """Test if innput data is of expected dimension and type."""
     assert isinstance(X, np.ndarray), "X should be a numpy array"
     assert len(np.shape(X)) == 2, "X should be a two-dimensional numpy array"
 
 
 def test_get_neighbourhood_params():
-
-    # get data related parameters
+    """Test for neighbourhood parameter generation."""
     MU, Iin, Iout, Iout_count, Iout_track = model._get_neighbourhood_params(X)
 
     MU_check = [
@@ -128,7 +127,7 @@ def test_get_neighbourhood_params():
 
 
 def test_initialise_params():
-
+    """Test for initialise parameters."""
     Iin = [
         2,
         4,
@@ -239,7 +238,7 @@ def test_initialise_params():
 
 
 def test_gibbs_sampling():
-
+    """Tests gibbs sampler for one iteration."""
     MU = [
         1.46472,
         5.40974,
@@ -382,7 +381,40 @@ def test_gibbs_sampling():
         pp,
         r,
     )
-    # sampling_check = [3.04431, 1.56489, 0.332044, 0.667956, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, -18.4604, -4.99662, 1.81112, 0.892297, 0.434086, 0.565914, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, -18.1564, -4.69259]
+    # sampling_check = [
+    #     3.04431,
+    #     1.56489,
+    #     0.332044,
+    #     0.667956,
+    #     1,
+    #     1,
+    #     1,
+    #     1,
+    #     1,
+    #     0,
+    #     0,
+    #     0,
+    #     0,
+    #     0,
+    #     -18.4604,
+    #     -4.99662,
+    #     1.81112,
+    #     0.892297,
+    #     0.434086,
+    #     0.565914,
+    #     1,
+    #     1,
+    #     1,
+    #     1,
+    #     1,
+    #     0,
+    #     0,
+    #     0,
+    #     0,
+    #     0,
+    #     -18.1564,
+    #     -4.69259,
+    # ]
     sampling_check = [
         1.54721,
         1.1892,
@@ -402,10 +434,7 @@ def test_gibbs_sampling():
         -8.44254,
     ]
 
-    print(sampling)
-    print(sampling_check)
-
     assert _isclose(sampling, sampling_check)
 
 
-## also need to test for estimate_zeta = True AND use_Potts = True
+# also need to test for estimate_zeta = True AND use_Potts = True

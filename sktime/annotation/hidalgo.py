@@ -1,36 +1,43 @@
 # -*- coding: utf-8 -*-
-"""This is the version of the full code that reads in randomly generated
-    number from a local csv.
 
-    Functions that are unit tested:
-        _get_neighbourhood_params
-        _initialise_params
-        gibbs_sampling
-    Untested functions:
-        _fit
-        fit
+"""
+HidAlgo (Heterogeneous Intrinsic Dimensionality Algorithm) Segmentation.
 
-    Questions:
-        1. how do we handle the deterministic case (reading in random numbers for testing)
-        2. ...
+Notes
+-----
+As described in
+@article{allegra2020data,
+  title={Data segmentation based on the local intrinsic dimension},
+  author={Allegra, Michele and Facco, Elena and Denti, Francesco and Laio,
+        Alessandro and Mira, Antonietta},
+  journal={Scientific reports},
+  volume={10},
+  number={1},
+  pages={1--12},
+  year={2020},
+  publisher={Nature Publishing Group}
+}
 """
 
-import math
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
 from sklearn.neighbors import NearestNeighbors
 
-random_z = pd.read_csv("./tests/random_z.csv", header=None).values.tolist()[0]
+random_z = [1, 0, 0, 1, 0, 1, 1, 0, 0, 0]
 
 
 def binom(N, q):
-    # this has to be a bespoke function, because
-    # print(binom(-1,0)) -> 1
-    # print(binom(-1,1)) -> -1
-    # print(binom(-1,2)) -> 1
-    # print(binom(-1,3)) -> -1
-    # whereas in scipy.special, returns nan
+    """
+    Replicate function in c++ implementation.
+
+    print(binom(-1,0)) -> 1
+    print(binom(-1,1)) -> -1
+    print(binom(-1,2)) -> 1
+    print(binom(-1,3)) -> -1
+    whereas in scipy.special, returns nan
+    """
     ss = 1.0
     if q == 0:
         return 1.0
@@ -39,8 +46,8 @@ def binom(N, q):
     return ss
 
 
-# partition function Z
 def Zpart(N, N1, zeta, q):
+    """Partition function for Z."""
     s = 0
     for q1 in range(q + 1):
         s += (
@@ -147,6 +154,8 @@ class hidalgo:
 
     def _get_neighbourhood_params(self, X):
         """
+        Neighbourhood information from input data X.
+
         Parameters
         ----------
         X :
@@ -189,6 +198,8 @@ class hidalgo:
 
     def _initialise_params(self, N, MU, Iin):
         """
+        Decription.
+
         Outputs
         ----------
         V :
@@ -203,7 +214,6 @@ class hidalgo:
         N_in :
         pp :
         """
-
         # params to initialise
         V = np.zeros(shape=self.K)
         NN = np.zeros(shape=self.K)
@@ -227,7 +237,7 @@ class hidalgo:
         #     V[Z[i]]=V[Z[i]]+np.log(MU[i])
         #     NN[Z[i]]+=1
 
-        if self.fixed_Z == False:
+        if self.fixed_Z is False:
             # z = int(np.floor(random.random()*K))
             Z = np.array(random_z, dtype=int)
         else:
@@ -276,10 +286,17 @@ class hidalgo:
         pp,
         r,
     ):
+        """
+        Gibbs sampling method to find joint posterior distribution of target variables.
 
-        random_list = pd.read_csv(
-            "./tests/random_numbers.csv", header=None
-        ).values.tolist()[0]
+        Notes
+        -----
+        Target parameters are d, p, Z
+        zeta must be computed for the probability distribution of the q-Neighbourhood
+        matrix
+        """
+        file_path = Path(__file__).parent.joinpath("tests", "random_numbers.csv")
+        random_list = pd.read_csv(file_path, header=None).values.tolist()[0]
 
         zeta = self.zeta
         q = self.q
@@ -302,7 +319,7 @@ class hidalgo:
             for k in range(K):
                 stop = False
 
-                while stop == False:
+                while stop is False:
 
                     # r1 = random.random()*200 # random sample for d[k]
                     # r2 = random.random() # random number for accepting
@@ -354,11 +371,11 @@ class hidalgo:
 
         #             d[k]=r1
 
-        #### SAMPLING p ###############################
+        # SAMPLING p
         for k in range(K - 1):
             stop = False
 
-            while stop == False:
+            while stop is False:
 
                 # r1 = random.random() # random sample for p[k]
                 # r2 = random.random() # random number for accepting
@@ -383,15 +400,13 @@ class hidalgo:
         # if(it%sampling_rate==0 and it>= Niter*burn_in):
         sampling = np.append(sampling, (1 - pp))
 
-        #### SAMPLING zeta ###############################
+        # SAMPLING zeta
         stop = False
         maxval = -100000
-        mx = 0
-        l = 0
 
-        if bool(use_Potts) == True and bool(estimate_zeta) == True:
-            for l in range(10):
-                zeta1 = 0.5 + 0.05 * l
+        if bool(use_Potts) and bool(estimate_zeta):
+            for zeta_candidates in range(10):
+                zeta1 = 0.5 + 0.05 * zeta_candidates
                 ZZ = np.empty((K, 0))
                 for k in range(K):
                     ZZ = np.append(ZZ, Zpart(N_, NN[k], zeta1, q))
@@ -403,9 +418,8 @@ class hidalgo:
 
                 if val > maxval:
                     maxval = val  # found max val for below frac
-                    mx = zeta1
 
-            while stop == False:
+            while stop is False:
                 # r1 = random.random() # random sample for zeta
                 # r2 = random.random() # random number for accepting
 
@@ -427,11 +441,11 @@ class hidalgo:
                     if it > 0:
                         zeta = r1
 
-        #### SAMPLING Z ###############################
+        # SAMPLING Z
 
         for i in range(N_):
 
-            if fixed_Z == True:
+            if fixed_Z:
                 break
 
             if abs(zeta - 1) < 1e-5:
@@ -447,7 +461,7 @@ class hidalgo:
 
             for k1 in range(K):
                 g = 0
-                if use_Potts == True:
+                if use_Potts:
                     n_in = 0
                     for j in range(q):
                         index = int(Iin[q * i + j])
@@ -480,17 +494,11 @@ class hidalgo:
             for k1 in range(K):
                 prob[k1] = prob[k1] / norm
 
-            while_loop_count = 0
-            print("stop", stop)
-            while stop == False:
-
-                while_loop_count += 1
-                # if while_loop_count > 10000: break
+            while stop is False:
 
                 # r1 = int(np.floor(random.random()*K))
                 # r2 = random.random()
 
-                print("r1", r1)
                 r1 = int(random_list.pop(0))
                 r2 = random_list.pop(0)
 
@@ -510,7 +518,7 @@ class hidalgo:
                     V[Z[i]] += np.log(MU[i])
                     b1[Z[i]] += np.log(MU[i])
 
-        #### updating prior on zeta ###############################
+        # updating prior on zeta
 
         N_in = 0
         for i in range(N_):
@@ -525,7 +533,7 @@ class hidalgo:
         f1[0] = f[0] + N_in
         f1[1] = f[1] + N_ * q - N_in
 
-        #### likelihood ###############################
+        # likelihood
         lik0 = 0
         for i in range(N_):
             lik0 = (
@@ -544,7 +552,12 @@ class hidalgo:
         return sampling
 
     def _fit(self, X):
+        """
+        Find parameter esimates as distributions in sampling.
 
+        Iterate through Nreplicas random starts and get posterior
+        samples with best max likelihood.
+        """
         MU, Iin, Iout, Iout_count, Iout_track = self._get_neighbourhood_params(X)
 
         N = np.shape(X)[0]
@@ -557,10 +570,6 @@ class hidalgo:
 
         bestsampling = np.zeros((Nsamp, Npar))
 
-        # iterate through Nreplicas random starts and get posterior
-        # samples with best max likelihood
-
-        ## todo: parallel
         # for r in range(self.Nreplicas):
         r = 1
         sampling = self.gibbs_sampling(
@@ -591,7 +600,7 @@ class hidalgo:
         return bestsampling
 
     def fit(self, X):
-        """Runs the Hidalgo algorithm and writes results to self.
+        """Run the Hidalgo algorithm and writes results to self.
 
         Write to self:
         self.d_ : 1D np.ndarray of length K
