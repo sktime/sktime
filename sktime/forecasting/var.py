@@ -18,7 +18,7 @@ class VAR(_StatsModelsAdapter):
     """
     A VAR model is a generalisation of the univariate autoregressive.
 
-    Direct interface for `statsmodels.tsa.statespace.dynamic_factor`
+    Direct interface for `statsmodels.tsa.vector_ar`
     A model for forecasting a vector of time series[1].
 
     Parameters
