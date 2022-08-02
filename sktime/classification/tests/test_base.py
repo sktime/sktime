@@ -185,6 +185,7 @@ def test_convert_input():
     4. Pass a pd.Series y, get a pd.Series back
     5. Pass a np.ndarray y, get a pd.Series back
     """
+
     def _internal_convert(X, y):
         return BaseClassifier._internal_convert(None, X, y)
 
@@ -226,6 +227,7 @@ def test__check_classifier_input():
     4. Test incorrect: y as a list
     5. Test incorrect: too few cases or too short a series
     """
+
     def _check_classifier_input(X, y):
         return BaseClassifier._check_classifier_input(None, X, y)
 
