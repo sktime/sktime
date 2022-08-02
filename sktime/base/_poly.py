@@ -6,8 +6,6 @@
 __author__ = ["fkiraly", "miraep8"]
 __all__ = ["BasePolymorph"]
 
-from inspect import isfunction
-
 from sktime.base import BaseObject
 
 
