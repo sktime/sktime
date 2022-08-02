@@ -718,7 +718,7 @@ class BaseClassifier(BaseEstimator, ABC):
                 if y.ndim > 1:
                     raise ValueError(
                         f"np.ndarray y must be 1-dimensional, "
-                        f"but found " f"{y.ndim} dimensions"
+                        f"but found {y.ndim} dimensions"
                     )
             # warn if only a single class label is seen
             # this should not raise exception since this can occur by train subsampling
