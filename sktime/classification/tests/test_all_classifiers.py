@@ -190,6 +190,6 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
         y[:] = 42
 
         error_msg = "single class label"
-    
+
         with pytest.warns(UserWarning, match=error_msg):
             estimator_instance.fit(X, y)
