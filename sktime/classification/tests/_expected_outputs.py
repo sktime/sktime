@@ -304,6 +304,34 @@ unit_test_proba["ShapeletTransformClassifier"] = np.array(
         [1.0, 0.0],
     ]
 )
+unit_test_proba["TEASER"] = np.array(
+    [
+        [0.0, 1.0],
+        [0.5, 0.5],
+        [0.0, 1.0],
+        [1.0, 0.0],
+        [0.7, 0.3],
+        [1.0, 0.0],
+        [1.0, 0.0],
+        [0.1, 0.9],
+        [0.9, 0.1],
+        [1.0, 0.0],
+    ]
+)
+unit_test_proba["ProbabilityThresholdEarlyClassifier"] = np.array(
+    [
+        [0.0, 1.0],
+        [0.9, 0.1],
+        [0.0, 1.0],
+        [1.0, 0.0],
+        [1.0, 0.0],
+        [1.0, 0.0],
+        [1.0, 0.0],
+        [0.0, 1.0],
+        [1.0, 0.0],
+        [1.0, 0.0],
+    ]
+)
 
 basic_motions_proba["ColumnEnsembleClassifier"] = np.array(
     [

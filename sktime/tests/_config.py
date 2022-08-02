@@ -94,7 +94,12 @@ EXCLUDED_TESTS = {
     #   for #1.
     # #2 amd #3 are due to predict/predict_proba returning two items and that breaking
     #   assert_array_equal
-    "TEASER": [
+    "TEASER": [  # EC
+        "test_methods_do_not_change_state",
+        "test_fit_idempotent",
+        "test_persistence_via_pickle",
+    ],
+    "ProbabilityThresholdEarlyClassifier": [  # EC
         "test_methods_do_not_change_state",
         "test_fit_idempotent",
         "test_persistence_via_pickle",

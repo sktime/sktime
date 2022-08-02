@@ -9,6 +9,7 @@ __author__ = ["MatthewMiddlehurst"]
 __all__ = ["ProbabilityThresholdEarlyClassifier"]
 
 import copy
+from typing import Tuple
 
 import numpy as np
 from joblib import Parallel, delayed
@@ -16,12 +17,11 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.utils import check_random_state
 
 from sktime.base._base import _clone_estimator
-from sktime.classification.base import BaseClassifier
-from sktime.classification.interval_based import CanonicalIntervalForest
-from sktime.utils.validation.panel import check_X
+from sktime.classification.early_classification.base import BaseEarlyClassifier
+from sktime.classification.interval_based import DrCIF
 
 
-class ProbabilityThresholdEarlyClassifier(BaseClassifier):
+class ProbabilityThresholdEarlyClassifier(BaseEarlyClassifier):
     """Probability Threshold Early Classifier.
 
     An early classifier which uses a threshold of prediction probability to determine
@@ -42,7 +42,7 @@ class ProbabilityThresholdEarlyClassifier(BaseClassifier):
         to deem a prediction as safe.
     estimator: sktime classifier, default=None
         An sktime estimator to be built using the transformed data. Defaults to a
-        CanonicalIntervalForest.
+        default DrCIF classifier.
     classification_points : List or None, default=None
         List of integer time series time stamps to build classifiers and allow
         predictions at. Early predictions must have a series length that matches a value
@@ -59,8 +59,20 @@ class ProbabilityThresholdEarlyClassifier(BaseClassifier):
     ----------
     n_classes_ : int
         The number of classes.
+    n_instances_ : int
+        The number of train cases.
+    n_dims_ : int
+        The number of dimensions per case.
+    series_length_ : int
+        The full length of each series.
     classes_ : list
         The unique class labels.
+    state_info : 2d np.ndarray (4 columns)
+        Information stored about input instances after the decision-making process in
+        update/predict methods. Used in update methods to make decisions based on
+        the resutls of previous method calls.
+        Records in order: the time stamp index, the number of consecutive decisions
+        made, the predicted class and the series length.
 
     Examples
     --------
@@ -73,7 +85,7 @@ class ProbabilityThresholdEarlyClassifier(BaseClassifier):
     >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
     >>> clf = ProbabilityThresholdEarlyClassifier(
     ...     classification_points=[6, 16, 24],
-    ...     estimator=TimeSeriesForestClassifier(n_estimators=10)
+    ...     estimator=TimeSeriesForestClassifier(n_estimators=5),
     ... )
     >>> clf.fit(X_train, y_train)
     ProbabilityThresholdEarlyClassifier(...)
@@ -83,21 +95,20 @@ class ProbabilityThresholdEarlyClassifier(BaseClassifier):
     _tags = {
         "capability:multivariate": True,
         "capability:multithreading": True,
-        "capability:early_prediction": True,
     }
 
     def __init__(
         self,
+        estimator=None,
         probability_threshold=0.85,
         consecutive_predictions=1,
-        estimator=None,
         classification_points=None,
         n_jobs=1,
         random_state=None,
     ):
+        self.estimator = estimator
         self.probability_threshold = probability_threshold
         self.consecutive_predictions = consecutive_predictions
-        self.estimator = estimator
         self.classification_points = classification_points
 
         self.n_jobs = n_jobs
@@ -106,19 +117,23 @@ class ProbabilityThresholdEarlyClassifier(BaseClassifier):
         self._estimators = []
         self._classification_points = []
 
+        self.n_instances_ = 0
+        self.n_dims_ = 0
+        self.series_length_ = 0
+
         super(ProbabilityThresholdEarlyClassifier, self).__init__()
 
     def _fit(self, X, y):
         m = getattr(self.estimator, "predict_proba", None)
-        if not callable(m):
+        if self.estimator is not None and not callable(m):
             raise ValueError("Base estimator must have a predict_proba method.")
 
-        _, _, series_length = X.shape
+        self.n_instances_, self.n_dims_, self.series_length_ = X.shape
 
         self._classification_points = (
             copy.deepcopy(self.classification_points)
             if self.classification_points is not None
-            else [round(series_length / i) for i in range(1, 21)]
+            else [round(self.series_length_ / i) for i in range(1, 21)]
         )
         # remove duplicates
         self._classification_points = list(set(self._classification_points))
@@ -126,8 +141,8 @@ class ProbabilityThresholdEarlyClassifier(BaseClassifier):
         # remove classification points that are less than 3 time stamps
         self._classification_points = [i for i in self._classification_points if i >= 3]
         # make sure the full series length is included
-        if self._classification_points[-1] != series_length:
-            self._classification_points.append(series_length)
+        if self._classification_points[-1] != self.series_length_:
+            self._classification_points.append(self.series_length_)
         # create dictionary of classification point indices
         self._classification_point_dictionary = {}
         for index, classification_point in enumerate(self._classification_points):
@@ -147,119 +162,180 @@ class ProbabilityThresholdEarlyClassifier(BaseClassifier):
 
         return self
 
-    def _predict(self, X) -> np.ndarray:
-        rng = check_random_state(self.random_state)
-        return np.array(
+    def _predict(self, X) -> Tuple[np.ndarray, np.ndarray]:
+        out = self._predict_proba(X)
+        return self._proba_output_to_preds(out)
+
+    def _update_predict(self, X) -> Tuple[np.ndarray, np.ndarray]:
+        out = self._update_predict_proba(X)
+        return self._proba_output_to_preds(out)
+
+    def _predict_proba(self, X) -> Tuple[np.ndarray, np.ndarray]:
+        n_instances, _, series_length = X.shape
+
+        # maybe use the largest index that is smaller than the series length
+        next_idx = self._get_next_idx(series_length) + 1
+
+        # if the input series length is invalid
+        if next_idx == 0:
+            raise ValueError(
+                f"Input series length does not match the classification points produced"
+                f" in fit. Input series length must be greater then the first point. "
+                f"Current classification points: {self._classification_points}"
+            )
+
+        m = getattr(self.estimator, "n_jobs", None)
+        threads = self._threads_to_use if m is None else 1
+
+        # compute all new updates since then
+        out = Parallel(n_jobs=threads)(
+            delayed(self._predict_proba_for_estimator)(
+                X,
+                i,
+            )
+            for i in range(0, next_idx)
+        )
+        probas, preds = zip(*out)
+
+        # a List containing the state info for case, edited at each time stamp.
+        # contains 1. the index of the time stamp, 2. the number of consecutive
+        # positive decisions made, and 3. the prediction made
+        self.state_info = np.zeros((len(preds[0]), 4), dtype=int)
+
+        # only compute new indices
+        for i in range(0, next_idx):
+            accept_decision, self.state_info = self._decide_prediction_safety(
+                i,
+                probas[i],
+                preds[i],
+                self.state_info,
+            )
+
+        probas = np.array(
             [
-                self.classes_[int(rng.choice(np.flatnonzero(prob == prob.max())))]
-                for prob in self._predict_proba(X)
+                probas[self.state_info[i][0]][i]
+                if accept_decision[i]
+                else [-1 for _ in range(self.n_classes_)]
+                for i in range(n_instances)
             ]
         )
 
-    def _predict_proba(self, X) -> np.ndarray:
-        _, _, series_length = X.shape
-        idx = self._classification_point_dictionary.get(series_length, -1)
-        if idx == -1:
-            raise ValueError(
-                f"Input series length does not match the classification points produced"
-                f" in fit. Current classification points: {self._classification_points}"
-            )
+        return probas, accept_decision
 
-        return self._estimators[idx].predict_proba(X)
-
-    def decide_prediction_safety(self, X, X_probabilities, state_info):
-        """Decide on the safety of an early classification.
-
-        Parameters
-        ----------
-        X : 3D np.array (any number of dimensions, equal length series) of shape =
-            [n_instances,n_dimensions,series_length] or pd.DataFrame with each column a
-            dimension, each cell a pd.Series (any number of dimensions, equal or unequal
-            length series).
-            The prediction time series data.
-        X_probabilities : 2D numpy array of shape = [n_instances,n_classes].
-            The predicted probabilities for X.
-        state_info : List or None
-            A List containing the state info for each decision in X. contains
-            information for future decisions on the data. Inputs should be None for the
-            first decision made, the returned List new_state_info for subsequent
-            decisions.
-
-        Returns
-        -------
-        decisions : List
-            A List of booleans, containing the decision of whether a prediction is safe
-            to use or not.
-        new_state_info : List
-            A List containing the state info for each decision in X, contains
-            information for future decisions on the data.
-        """
-        X = check_X(X, coerce_to_numpy=True)
-
+    def _update_predict_proba(self, X) -> Tuple[np.ndarray, np.ndarray]:
         n_instances, _, series_length = X.shape
-        idx = self._classification_point_dictionary.get(series_length, -1)
 
-        if idx == -1:
+        # maybe use the largest index that is smaller than the series length
+        next_idx = self._get_next_idx(series_length) + 1
+
+        # remove cases where a positive decision has been made
+        state_info = self.state_info[
+            self.state_info[:, 1] < self.consecutive_predictions
+        ]
+
+        # determine last index used
+        last_idx = np.max(state_info[0][0]) + 1
+
+        # if the input series length is invalid
+        if next_idx == 0:
             raise ValueError(
                 f"Input series length does not match the classification points produced"
-                f" in fit. Current classification points: {self._classification_points}"
+                f" in fit. Input series length must be greater then the first point. "
+                f"Current classification points: {self._classification_points}"
             )
-
-        # If this is the smallest dataset, there should be no state_info, else we
-        # should have state info for each, and they should all be the same length
-        if state_info is None and (
-            idx == 0 or idx == len(self._classification_points) - 1
-        ):
-            state_info = [(0, 0, 0) for _ in range(n_instances)]
-        elif isinstance(state_info, list) and idx > 0:
-            if not all(si[0] == idx for si in state_info):
-                raise ValueError("All input instances must be of the same length.")
-        else:
+        # check state info and X have the same length
+        if len(X) > len(state_info):
             raise ValueError(
-                "state_info should be None for first time input, and a list of "
-                "state_info outputs from the previous decision making for later inputs."
+                f"Input number of instances does not match the length of recorded "
+                f"state_info: {len(state_info)}. Cases with positive decisions "
+                f"returned should be removed from the array with the row ordering "
+                f"preserved, or the state information should be reset if new data is "
+                f"used."
+            )
+        # check if series length has increased from last time
+        elif last_idx >= next_idx:
+            raise ValueError(
+                f"All input instances must be from a larger classification point time "
+                f"stamp than the recorded state information. Required series length "
+                f"for current state information: "
+                f">={self._classification_points[last_idx]}"
             )
 
-        # if we have the full series, always return true
-        if idx == len(self._classification_points) - 1:
-            return [True for _ in range(n_instances)], None
+        m = getattr(self.estimator, "n_jobs", None)
+        threads = self._threads_to_use if m is None else 1
 
-        # find predicted class for each instance
-        rng = check_random_state(self.random_state)
-        preds = [
-            int(rng.choice(np.flatnonzero(prob == prob.max())))
-            for prob in X_probabilities
-        ]
-
-        # make a decision based on probability threshold, record consecutive class
-        # decisions
-        decisions = [
-            X_probabilities[i][preds[i]] >= self.probability_threshold
-            for i in range(n_instances)
-        ]
-        new_state_info = [
-            (
-                # next classification point index
-                idx + 1,
-                # consecutive predictions, add one if positive decision and same class
-                state_info[i][1] + 1 if decisions[i] and preds[i] == state_info[i][2]
-                # set to 0 if the decision is negative, 1 if its positive but different
-                # class
-                else 1 if decisions[i] else 0,
-                # predicted class index
-                preds[i],
+        # compute all new updates since then
+        out = Parallel(n_jobs=threads)(
+            delayed(self._predict_proba_for_estimator)(
+                X,
+                i,
             )
-            for i in range(n_instances)
-        ]
+            for i in range(last_idx, next_idx)
+        )
+        probas, preds = zip(*out)
 
-        # return the safety decisions and new state information for the instances
-        if self.consecutive_predictions < 2:
-            return decisions, new_state_info
-        else:
-            return [
-                True if new_state_info[i][1] >= self.consecutive_predictions else False
+        # only compute new indices
+        for i in range(last_idx, next_idx):
+            accept_decision, state_info = self._decide_prediction_safety(
+                i,
+                probas[i - last_idx],
+                preds[i - last_idx],
+                state_info,
+            )
+
+        probas = np.array(
+            [
+                probas[max(0, state_info[i][0] - last_idx)][i]
+                if accept_decision[i]
+                else [-1 for _ in range(self.n_classes_)]
                 for i in range(n_instances)
-            ], new_state_info
+            ]
+        )
+
+        self.state_info = state_info
+
+        return probas, accept_decision
+
+    def _score(self, X, y) -> Tuple[float, float, float]:
+        self._predict(X)
+        hm, acc, earl = self.compute_harmonic_mean(self.state_info, y)
+
+        return hm, acc, earl
+
+    def _decide_prediction_safety(self, idx, probas, preds, state_info):
+        # stores whether we have made a final decision on a prediction, if true
+        # state info won't be edited in later time stamps
+        finished = state_info[:, 1] >= self.consecutive_predictions
+        n_instances = len(preds)
+
+        full_length_ts = idx == len(self._classification_points) - 1
+        if full_length_ts:
+            accept_decision = np.ones(n_instances, dtype=bool)
+        else:
+            offsets = np.argwhere(finished == 0).flatten()
+            accept_decision = np.ones(n_instances, dtype=bool)
+            if len(offsets) > 0:
+                p = probas[offsets, preds[offsets]]
+                accept_decision[offsets] = p >= self.probability_threshold
+
+        # record consecutive class decisions
+        state_info = np.array(
+            [
+                self._update_state_info(accept_decision, preds, state_info, i, idx)
+                if not finished[i]
+                else state_info[i]
+                for i in range(n_instances)
+            ]
+        )
+
+        # check safety of decisions
+        if full_length_ts:
+            # Force prediction at last time stamp
+            accept_decision = np.ones(n_instances, dtype=bool)
+        else:
+            accept_decision = state_info[:, 1] >= self.consecutive_predictions
+
+        return accept_decision, state_info
 
     def _fit_estimator(self, X, y, i):
         rs = 255 if self.random_state == 0 else self.random_state
@@ -267,7 +343,7 @@ class ProbabilityThresholdEarlyClassifier(BaseClassifier):
         rng = check_random_state(rs)
 
         estimator = _clone_estimator(
-            CanonicalIntervalForest() if self.estimator is None else self.estimator,
+            DrCIF() if self.estimator is None else self.estimator,
             rng,
         )
 
@@ -278,6 +354,103 @@ class ProbabilityThresholdEarlyClassifier(BaseClassifier):
         estimator.fit(X[:, :, : self._classification_points[i]], y)
 
         return estimator
+
+    def _predict_proba_for_estimator(self, X, i):
+        rs = 255 if self.random_state == 0 else self.random_state
+        rs = None if self.random_state is None else rs * 37 * (i + 1)
+        rng = check_random_state(rs)
+
+        probas = self._estimators[i].predict_proba(
+            X[:, :, : self._classification_points[i]]
+        )
+        preds = np.array(
+            [int(rng.choice(np.flatnonzero(prob == prob.max()))) for prob in probas]
+        )
+
+        return probas, preds
+
+    def _get_next_idx(self, series_length):
+        """Return the largest index smaller than the series length."""
+        next_idx = -1
+        for idx, offset in enumerate(np.sort(self._classification_points)):
+            if offset <= series_length:
+                next_idx = idx
+        return next_idx
+
+    def _update_state_info(self, accept_decision, preds, state_info, idx, time_stamp):
+        # consecutive predictions, add one if positive decision and same class
+        if accept_decision[idx] and preds[idx] == state_info[idx][2]:
+            return (
+                time_stamp,
+                state_info[idx][1] + 1,
+                preds[idx],
+                self._classification_points[time_stamp],
+            )
+        # set to 0 if the decision is negative, 1 if its positive but different class
+        else:
+            return (
+                time_stamp,
+                1 if accept_decision[idx] else 0,
+                preds[idx],
+                self._classification_points[time_stamp],
+            )
+
+    def _proba_output_to_preds(self, out):
+        rng = check_random_state(self.random_state)
+        preds = np.array(
+            [
+                self.classes_[
+                    int(rng.choice(np.flatnonzero(out[0][i] == out[0][i].max())))
+                ]
+                if out[1][i]
+                else -1
+                for i in range(len(out[0]))
+            ]
+        )
+        return preds, out[1]
+
+    def compute_harmonic_mean(self, state_info, y) -> Tuple[float, float, float]:
+        """Calculate harmonic mean from a state info matrix and array of class labeles.
+
+        Parameters
+        ----------
+        state_info : 2d np.ndarray of int
+            The state_info from a ProbabilityThresholdEarlyClassifier object after a
+            prediction or update. It is assumed the state_info is complete, and a
+            positive decision has been returned for all cases.
+        y : 1D np.array of int
+            Actual class labels for predictions. indices correspond to instance indices
+            in state_info.
+
+
+        Returns
+        -------
+        harmonic_mean : float
+            Harmonic Mean represents the balance between accuracy and earliness for a
+            set of early predictions.
+        accuracy : float
+            Accuracy for the predictions made in the state_info.
+        earliness : float
+            Average time taken to make a classification. The earliness for a single case
+            is the number of time points required divided by the total series length.
+        """
+        accuracy = np.average(
+            [
+                state_info[i][2] == self._class_dictionary[y[i]]
+                for i in range(len(state_info))
+            ]
+        )
+        earliness = np.average(
+            [
+                self._classification_points[state_info[i][0]] / self.series_length_
+                for i in range(len(state_info))
+            ]
+        )
+        return (
+            (2 * accuracy * (1 - earliness)) / (accuracy + (1 - earliness)),
+            accuracy,
+            earliness,
+        )
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -295,12 +468,18 @@ class ProbabilityThresholdEarlyClassifier(BaseClassifier):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class.
         """
-        from sktime.classification.feature_based import Catch22Classifier
+        from sktime.classification.feature_based import SummaryClassifier
+        from sktime.classification.interval_based import TimeSeriesForestClassifier
 
-        params = {
-            "classification_points": [3],
-            "estimator": Catch22Classifier(
-                estimator=RandomForestClassifier(n_estimators=2)
-            ),
-        }
-        return params
+        if parameter_set == "results_comparison":
+            return {
+                "classification_points": [6, 10, 16, 24],
+                "estimator": TimeSeriesForestClassifier(n_estimators=10),
+            }
+        else:
+            return {
+                "classification_points": [3, 5],
+                "estimator": SummaryClassifier(
+                    estimator=RandomForestClassifier(n_estimators=2)
+                ),
+            }

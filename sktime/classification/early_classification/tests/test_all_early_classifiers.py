@@ -5,10 +5,16 @@ __author__ = ["mloning", "TonyBagnall", "fkiraly", "MatthewMiddlehurst"]
 
 import numpy as np
 
+from sktime.classification.tests._expected_outputs import (
+    basic_motions_proba,
+    unit_test_proba,
+)
 from sktime.classification.tests.test_all_classifiers import (
     TestAllClassifiers as ClassifierTests,
 )
+from sktime.datasets import load_basic_motions, load_unit_test
 from sktime.tests.test_all_estimators import BaseFixtureGenerator, QuickTester
+from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
 
 
 class EarlyClassifierFixtureGenerator(BaseFixtureGenerator):
@@ -74,3 +80,73 @@ class TestAllEarlyClassifiers(EarlyClassifierFixtureGenerator, QuickTester):
         assert isinstance(decisions, np.ndarray)
         assert decisions.shape == (X_new.shape[0],)
         assert decisions.dtype == bool
+
+    def test_early_classifier_on_unit_test_data(self, estimator_class):
+        """Test early classifier on unit test data."""
+        # we only use the first estimator instance for testing
+        classname = estimator_class.__name__
+
+        # retrieve expected predict_proba output, and skip test if not available
+        if classname in unit_test_proba.keys():
+            expected_probas = unit_test_proba[classname]
+        else:
+            # skip test if no expected probas are registered
+            return None
+
+        # we only use the first estimator instance for testing
+        estimator_instance = estimator_class.create_test_instance(
+            parameter_set="results_comparison"
+        )
+        # set random seed if possible
+        if "random_state" in estimator_instance.get_params().keys():
+            estimator_instance.set_params(random_state=0)
+
+        # load unit test data
+        X_train, y_train, X_test, y_test, indices = load_unit_data()
+
+        # train classifier and predict probas
+        estimator_instance.fit(X_train, y_train)
+        y_proba, _ = estimator_instance.predict_proba(X_test.iloc[indices])
+
+        # assert probabilities are the same
+        _assert_array_almost_equal(y_proba, expected_probas, decimal=2)
+
+    def test_early_classifier_on_basic_motions(self, estimator_class):
+        """Test early classifier on basic motions data."""
+        # we only use the first estimator instance for testing
+        classname = estimator_class.__name__
+
+        # retrieve expected predict_proba output, and skip test if not available
+        if classname in basic_motions_proba.keys():
+            expected_probas = basic_motions_proba[classname]
+        else:
+            # skip test if no expected probas are registered
+            return None
+
+        # we only use the first estimator instance for testing
+        estimator_instance = estimator_class.create_test_instance(
+            parameter_set="results_comparison"
+        )
+        # set random seed if possible
+        if "random_state" in estimator_instance.get_params().keys():
+            estimator_instance.set_params(random_state=0)
+
+        # load unit test data
+        X_train, y_train = load_basic_motions(split="train")
+        X_test, _ = load_basic_motions(split="test")
+        indices = np.random.RandomState(4).choice(len(y_train), 10, replace=False)
+
+        # train classifier and predict probas
+        estimator_instance.fit(X_train.iloc[indices], y_train[indices])
+        y_proba, _ = estimator_instance.predict_proba(X_test.iloc[indices])
+
+        # assert probabilities are the same
+        _assert_array_almost_equal(y_proba, expected_probas, decimal=2)
+
+
+def load_unit_data():
+    """Load unit test data."""
+    X_train, y_train = load_unit_test(split="train")
+    X_test, y_test = load_unit_test(split="test")
+    indices = np.random.RandomState(0).choice(len(y_train), 10, replace=False)
+    return X_train, y_train, X_test, y_test, indices

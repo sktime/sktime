@@ -1,91 +1,84 @@
 # -*- coding: utf-8 -*-
 """ProbabilityThresholdEarlyClassifier test code."""
 import numpy as np
+import pytest
 from numpy import testing
 
 from sktime.classification.early_classification import (
     ProbabilityThresholdEarlyClassifier,
 )
+from sktime.classification.early_classification.tests.test_all_early_classifiers import (  # noqa: E501
+    load_unit_data,
+)
 from sktime.classification.interval_based import TimeSeriesForestClassifier
-from sktime.datasets import load_unit_test
 from sktime.datatypes._panel._convert import from_nested_to_3d_numpy
 
 
-def test_prob_threshold_on_unit_test_data():
-    """Test of ProbabilityThresholdEarlyClassifier on unit test data."""
-    # load unit test data
-    X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    X_test, y_test = load_unit_test(split="test", return_X_y=True)
-    indices = np.random.RandomState(0).choice(len(y_train), 10, replace=False)
+def test_early_prob_threshold_near_classification_points():
+    """Test of threshold with incremental time stamps outside defined class points."""
+    X_train, y_train, X_test, y_test, indices = load_unit_data()
 
     # train probability threshold
     pt = ProbabilityThresholdEarlyClassifier(
         random_state=0,
-        classification_points=[6, 16, 24],
+        classification_points=[6, 10, 14, 18, 24],
+        estimator=TimeSeriesForestClassifier(n_estimators=10, random_state=0),
         probability_threshold=1,
+    )
+    pt.fit(X_train, y_train)
+
+    # use test_points that are not within list above
+    test_points = [7, 11, 19, 20]
+
+    X_test = from_nested_to_3d_numpy(X_test)
+    X_test = X_test[indices]
+
+    decisions = np.zeros(len(X_test), dtype=bool)
+    for i in test_points:
+        X_test = X_test[np.invert(decisions)]
+        X = X_test[:, :, :i]
+
+        if i == 20:
+            with pytest.raises(ValueError):
+                pt.update_predict_proba(X)
+        else:
+            _, decisions = pt.update_predict_proba(X)
+
+
+def test_early_prob_threshold_score():
+    """Test of threshold on the full data with the default estimator."""
+    X_train, y_train, X_test, y_test, indices = load_unit_data()
+
+    # train probability threshold
+    pt = ProbabilityThresholdEarlyClassifier(
+        random_state=0,
+        classification_points=[6, 10, 14, 18, 24],
         estimator=TimeSeriesForestClassifier(n_estimators=10, random_state=0),
     )
     pt.fit(X_train, y_train)
 
-    final_probas = np.zeros((10, 2))
-    final_decisions = np.zeros(10)
+    _, acc, earl = pt.score(X_test.iloc[indices], y_test[indices])
+    testing.assert_allclose(acc, 0.9, rtol=0.01)
+    testing.assert_allclose(earl, 0.25, rtol=0.01)
 
-    X_test = from_nested_to_3d_numpy(X_test)
-    states = None
+    # make sure update ends up with the same score
+    pt.reset_state_info()
+
+    X_test = from_nested_to_3d_numpy(X_test)[indices]
+    final_states = np.zeros((10, 4), dtype=int)
+    open_idx = np.arange(0, 10)
+
     for i in pt.classification_points:
-        X = X_test[indices, :, :i]
-        probas = pt.predict_proba(X)
-        decisions, states = pt.decide_prediction_safety(X, probas, states)
+        preds, decisions = pt.update_predict(X_test[:, :, :i])
+        final_states[open_idx] = pt.get_state_info()
+        X_test, open_idx, final_idx = pt.split_indices_and_filter(
+            X_test, open_idx, decisions
+        )
 
-        for n in range(10):
-            if decisions[n] and final_decisions[n] == 0:
-                final_probas[n] = probas[n]
-                final_decisions[n] = i
+        if len(X_test) == 0:
+            break
 
-    testing.assert_array_equal(final_probas, pt_unit_test_probas)
+    _, acc, earl = pt.compute_harmonic_mean(final_states, y_test[indices])
 
-
-pt_unit_test_probas = np.array(
-    [
-        [
-            0.0,
-            1.0,
-        ],
-        [
-            0.7,
-            0.3,
-        ],
-        [
-            0.0,
-            1.0,
-        ],
-        [
-            1.0,
-            0.0,
-        ],
-        [
-            1.0,
-            0.0,
-        ],
-        [
-            1.0,
-            0.0,
-        ],
-        [
-            1.0,
-            0.0,
-        ],
-        [
-            0.0,
-            1.0,
-        ],
-        [
-            1.0,
-            0.0,
-        ],
-        [
-            1.0,
-            0.0,
-        ],
-    ]
-)
+    testing.assert_allclose(acc, 0.9, rtol=0.01)
+    testing.assert_allclose(earl, 0.25, rtol=0.01)
