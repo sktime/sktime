@@ -77,7 +77,7 @@ class VAR(_StatsModelsAdapter):
         "y_inner_mtype": "pd.DataFrame",
         "requires-fh-in-fit": False,
         "univariate-only": False,
-        "ignores-exogeneous-X": False,
+        "ignores-exogeneous-X": True,
         "capability:pred_int": True,
     }
 
@@ -280,13 +280,6 @@ class VAR(_StatsModelsAdapter):
                 [col.split(" ") for col in pre_output_df]
             ),
         )
-
-        # final_columns = [
-        #    [col_name, cov, bound]
-        #    for col_name in self._y.columns
-        #    for cov in coverage
-        #    for bound in pre_output_df_2.columns.get_level_values(2).unique()
-        # ]
 
         final_columns = list(
             itertools.product(
