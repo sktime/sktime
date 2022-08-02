@@ -386,7 +386,8 @@ def _check_regressor_input(
         if isinstance(y, np.ndarray):
             if y.ndim > 1:
                 raise ValueError(
-                    f"y must be 1-dimensional but is in fact " f"{y.ndim} dimensional"
+                    f"np.ndarray y must be 1-dimensional, "
+                    f"but found {y.ndim} dimensions"
                 )
     return X_metadata
 
