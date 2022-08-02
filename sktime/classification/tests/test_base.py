@@ -186,7 +186,7 @@ def test_convert_input():
     5. Pass a np.ndarray y, get a pd.Series back
     """
 
-    def _internal_convert(X, y):
+    def _internal_convert(X, y=None):
         return BaseClassifier._internal_convert(None, X, y)
 
     cases = 5
@@ -228,7 +228,7 @@ def test__check_classifier_input():
     5. Test incorrect: too few cases or too short a series
     """
 
-    def _check_classifier_input(X, y):
+    def _check_classifier_input(X, y=None):
         return BaseClassifier._check_classifier_input(None, X, y)
 
     # 1. Test correct: X: np.array of 2 and 3 dimensions vs y:np.array and np.Series
