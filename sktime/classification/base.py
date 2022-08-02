@@ -161,6 +161,21 @@ class BaseClassifier(BaseEstimator, ABC):
 
         # Check this classifier can handle characteristics
         self._check_capabilities(missing, multivariate, unequal)
+
+        # remember class labels
+        self.classes_ = np.unique(y)
+        self.n_classes_ = self.classes_.shape[0]
+        self._class_dictionary = {}
+        for index, class_val in enumerate(self.classes_):
+            self._class_dictionary[class_val] = index
+
+        # escape early and do not fit if only one class label has been seen
+        #   in this case, we later predict the single class label seen
+        if len(self.classes_) == 1:
+            self.fit_time_ = int(round(time.time() * 1000)) - start
+            self._is_fitted = True
+            return self
+
         # Convert data as dictated by the classifier tags
         X = self._convert_X(X)
         multithread = self.get_tag("capability:multithreading")
@@ -171,13 +186,6 @@ class BaseClassifier(BaseEstimator, ABC):
                 raise AttributeError(
                     "self.n_jobs must be set if capability:multithreading is True"
                 )
-
-        # remember class labels
-        self.classes_ = np.unique(y)
-        self.n_classes_ = self.classes_.shape[0]
-        self._class_dictionary = {}
-        for index, class_val in enumerate(self.classes_):
-            self._class_dictionary[class_val] = index
 
         # pass coerced and checked data to inner _fit
         self._fit(X, y)
