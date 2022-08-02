@@ -5,6 +5,7 @@ __author__ = ["fkiraly"]
 
 from inspect import isclass
 
+from sktime.base._poly import BasePolymorph
 from sktime.registry._base_classes import BASE_CLASS_REGISTER
 
 
@@ -34,6 +35,9 @@ def scitype(obj, force_single_scitype=True, coerce_to_list=False):
     ------
     TypeError if no scitype can be determined for obj
     """
+    if isinstance(obj, BasePolymorph):
+        return obj.estimator_type
+
     if isclass(obj):
         scitypes = [sci[0] for sci in BASE_CLASS_REGISTER if issubclass(obj, sci[1])]
     else:
