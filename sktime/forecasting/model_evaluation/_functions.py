@@ -164,8 +164,6 @@ def evaluate(
 
             # score
             score = scoring(y_test, y_pred, y_train=y_train)
-            if True:
-                raise ValueError("ererrere")
 
             # cutoff
             cutoff = forecaster.cutoff
