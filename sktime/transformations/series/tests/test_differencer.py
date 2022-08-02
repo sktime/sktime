@@ -92,7 +92,7 @@ def test_differencer_prediction(y, lags):
 
 
 @pytest.mark.skipif(
-    _check_soft_dependencies("prophet", severity="none"),
+    not _check_soft_dependencies("prophet", severity="none"),
     reason="requires Prophet forecaster in the example",
 )
 def test_differencer_cutoff():
@@ -117,8 +117,8 @@ def test_differencer_cutoff():
     # split train/test both y and X
     fh = [1, 2]
     train_model, _ = temporal_train_test_split(y, fh=fh)
-    train_model.index = train_model.index.to_timestamp(freq="A")
     X_train = X[X.index.isin(train_model.index)]
+    train_model.index = train_model.index.to_timestamp(freq="A")
     X_train.index = X_train.index.to_timestamp(freq="A")
 
     # pipeline

@@ -49,6 +49,12 @@ Institutional sponsorship
 
 The 2019 joint sktime MLJ development sprint was kindly hosted by `UCL <https://www.ucl.ac.uk>`_ and `The Alan Turing Institute <https://turing.ac.uk>`_. Some participants could attend thanks to the initial funding of the `The Alan Turing Institute <https://turing.ac.uk>`_.
 
+Since 2022, `sktime` is an officially affiliated project of the `NumFOCUS <https://numfocus.org/>`_ organization.
+
+.. image:: ../images/numfocus.png
+  :width: 32 %
+  :target: https://numfocus.org
+
 Infrastructure
 --------------
 

@@ -193,3 +193,34 @@ def test_pipeline_inverse():
     Xtt = t.inverse_transform(Xt)
 
     _assert_array_almost_equal(X, Xtt)
+
+
+def test_subset_getitem():
+    """Test subsetting using the [ ] dunder, __getitem__."""
+    X = pd.DataFrame({"a": [1, 2], "b": [3, 4], "c": [5, 6]})
+
+    t = ThetaLinesTransformer()
+
+    t_before = t["a"]
+    t_before_with_colon = t[["a", "b"], :]
+    t_after_with_colon = t[:, ["a__0", "a__2"]]
+    t_both = t[["a", "b"], ["b__0", "b__2", "c__0", "c__2"]]
+    t_none = t[:, :]
+
+    assert isinstance(t_before, TransformerPipeline)
+    assert isinstance(t_after_with_colon, TransformerPipeline)
+    assert isinstance(t_before_with_colon, TransformerPipeline)
+    assert isinstance(t_both, TransformerPipeline)
+    assert isinstance(t_none, ThetaLinesTransformer)
+
+    X_theta = t.fit_transform(X)
+
+    _assert_array_almost_equal(t_before.fit_transform(X), X_theta[["a__0", "a__2"]])
+    _assert_array_almost_equal(
+        t_after_with_colon.fit_transform(X), X_theta[["a__0", "a__2"]]
+    )
+    _assert_array_almost_equal(
+        t_before_with_colon.fit_transform(X), X_theta[["a__0", "a__2", "b__0", "b__2"]]
+    )
+    _assert_array_almost_equal(t_both.fit_transform(X), X_theta[["b__0", "b__2"]])
+    _assert_array_almost_equal(t_none.fit_transform(X), X_theta)
