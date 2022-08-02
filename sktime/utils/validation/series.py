@@ -265,7 +265,7 @@ def check_equal_time_index(*ys, mode="equal"):
     first_index = get_index_for_series(y_not_None[0])
 
     for i, y in enumerate(y_not_None[1:]):
-        y_index = get_index_for_series(y_not_None[0])
+        y_index = get_index_for_series(y)
 
         if mode == "equal":
             failure_cond = not first_index.equals(y_index)
