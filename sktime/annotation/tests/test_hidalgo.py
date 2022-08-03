@@ -13,7 +13,7 @@ def _isclose(list1, list2):
 
 # get model
 K = 2
-model = hidalgo(K=K)
+model = hidalgo(K=K, Nreplicas=1)
 
 # generate dataset
 N = 10

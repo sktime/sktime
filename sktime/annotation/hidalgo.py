@@ -28,6 +28,17 @@ from sklearn.neighbors import NearestNeighbors
 random_z = [1, 0, 0, 1, 0, 1, 1, 0, 0, 0]
 
 
+def get_deterministic_number():
+    global random_list
+    file_path = Path(__file__).parent.joinpath("tests", "random_numbers.csv")
+    random_list = pd.read_csv(file_path, header=None).values.tolist()[0]
+
+
+def next_deterministic_number():
+    global random_list
+    return random_list.pop(0)
+
+
 def binom(N, q):
     """
     Replicate function in c++ implementation.
@@ -94,8 +105,6 @@ class hidalgo:
         update zeta in the sampling
     sampling_rate: int, optional, default=10 ** currently 2
         rate at which to save samples for each Niter
-    maxlik=-1.E10 **
-        ** I dont think we need this after refactor, used in fit for default overwrite
     a : np.ArrayLike, optional, default=1.0
         prior parameters of d
     b : np.ArrayLike, optional, default=1.0
@@ -104,6 +113,7 @@ class hidalgo:
         prior parameters of p
     f : np.ArrayLike, optional, default=1.0
         parameters of zeta
+
     """
 
     def __init__(
@@ -113,13 +123,12 @@ class hidalgo:
         zeta=0.8,
         q=3,
         Niter=10,
-        Nreplicas=1,
+        Nreplicas=10,
         burn_in=0.5,
         fixed_Z=0,
         use_Potts=1,
         estimate_zeta=0,
         sampling_rate=2,
-        maxlik=-1.0e10,
         a=None,
         b=None,
         c=None,
@@ -146,7 +155,6 @@ class hidalgo:
         self.use_Potts = use_Potts
         self.estimate_zeta = estimate_zeta
         self.sampling_rate = sampling_rate
-        self.maxlik = maxlik
         self.a = a
         self.b = b
         self.c = c
@@ -226,17 +234,6 @@ class hidalgo:
         f1 = np.empty(shape=2)
         pp = (self.K - 1) / self.K
 
-        # for i in range(N):
-        #     z = random_z.pop(0)
-        #     if self.fixed_Z==False:
-        #         #z = int(np.floor(random.random()*K))
-        #         Z[i]=z
-        #     else:
-        #         Z[i]=0
-
-        #     V[Z[i]]=V[Z[i]]+np.log(MU[i])
-        #     NN[Z[i]]+=1
-
         if bool(self.fixed_Z) is False:
             # z = int(np.floor(random.random()*K))
             Z = np.array(random_z, dtype=int)
@@ -267,7 +264,7 @@ class hidalgo:
 
     def gibbs_sampling(
         self,
-        N_,
+        N,
         MU,
         Iin,
         Iout,
@@ -295,15 +292,11 @@ class hidalgo:
         zeta must be computed for the probability distribution of the q-Neighbourhood
         matrix
         """
-        file_path = Path(__file__).parent.joinpath("tests", "random_numbers.csv")
-        random_list = pd.read_csv(file_path, header=None).values.tolist()[0]
-
+        get_deterministic_number()
         zeta = self.zeta
         q = self.q
         K = self.K
         Niter = self.Niter
-        sampling_rate = self.sampling_rate
-        burn_in = self.burn_in
         f = self.f
         fixed_Z = self.fixed_Z
         use_Potts = self.use_Potts
@@ -311,40 +304,36 @@ class hidalgo:
 
         sampling = np.empty(shape=0)
 
-        for it in range(Niter):
+        def sample_d(K, d, a1, b1):
 
-            def sample_d(K, d, a1, b1, sampling, random_list):
+            for k in range(K):
+                stop = False
 
-                for k in range(K):
-                    stop = False
+                while stop is False:
 
-                    while stop is False:
+                    # r1 = random.random()*200 # random sample for d[k]
+                    # r2 = random.random() # random number for accepting
+                    r1 = next_deterministic_number()
+                    r2 = next_deterministic_number()
 
-                        # r1 = random.random()*200 # random sample for d[k]
-                        # r2 = random.random() # random number for accepting
-                        r1 = random_list.pop(0)
-                        r2 = random_list.pop(0)
+                    rmax = (a1[k] - 1) / b1[k]
 
-                        rmax = (a1[k] - 1) / b1[k]
+                    if a1[k] - 1 > 0:
+                        frac = np.exp(
+                            -b1[k] * (r1 - rmax)
+                            - (a1[k] - 1) * (np.log(rmax) - np.log(r1))
+                        )
+                    else:
+                        frac = np.exp(-b1[k] * r1)
 
-                        if a1[k] - 1 > 0:
-                            frac = np.exp(
-                                -b1[k] * (r1 - rmax)
-                                - (a1[k] - 1) * (np.log(rmax) - np.log(r1))
-                            )
-                        else:
-                            frac = np.exp(-b1[k] * r1)
+                    if frac > r2:
+                        stop = True
+                        d[k] = r1
 
-                        if frac > r2:
-                            stop = True
-                            sampling = np.append(sampling, r1)
-                            d[k] = r1
+            return d
 
-                return sampling, d, random_list
+        def sample_p(K, p, pp, c1):
 
-            sampling, d, random_list = sample_d(K, d, a1, b1, sampling, random_list)
-
-            # SAMPLING p
             for k in range(K - 1):
                 stop = False
 
@@ -353,8 +342,10 @@ class hidalgo:
                     # r1 = random.random() # random sample for p[k]
                     # r2 = random.random() # random number for accepting
 
-                    r1 = random_list.pop(0)
-                    r2 = random_list.pop(0)
+                    # r1 = random_list.pop(0)
+                    # r2 = random_list.pop(0)
+                    r1 = next_deterministic_number()
+                    r2 = next_deterministic_number()
 
                     rmax = (c1[k] - 1) / (c1[k] - 1 + c1[K - 1] - 1)
                     frac = ((r1 / rmax) ** (c1[k] - 1)) * (
@@ -364,11 +355,19 @@ class hidalgo:
                     if frac > r2:
                         stop = True
                         r1 = r1 * (1.0 - pp + p[k])
-                        p[K - 1] += p[k] - r1
+                        p[K - 1] += p[k] - r1  # why???
                         pp -= p[k] - r1
                         p[k] = r1
-                        sampling = np.append(sampling, r1)
 
+            return (p, pp)
+
+        for it in range(Niter):
+
+            d = sample_d(K, d, a1, b1)
+            sampling = np.append(sampling, d)
+
+            (p, pp) = sample_p(K, p, pp, c1)
+            sampling = np.append(sampling, p[: K - 1])
             sampling = np.append(sampling, (1 - pp))
 
             # SAMPLING zeta
@@ -380,7 +379,7 @@ class hidalgo:
                     zeta1 = 0.5 + 0.05 * zeta_candidates
                     ZZ = np.empty((K, 0))
                     for k in range(K):
-                        ZZ = np.append(ZZ, Zpart(N_, NN[k], zeta1, q))
+                        ZZ = np.append(ZZ, Zpart(N, NN[k], zeta1, q))
                     h = 0
                     for k in range(K):
                         h = h + NN[k] * np.log(ZZ[k])
@@ -403,7 +402,7 @@ class hidalgo:
 
                     ZZ = np.empty((K, 0))
                     for k in range(K):
-                        ZZ = np.append(ZZ, Zpart(N_, NN[k], r1, q))
+                        ZZ = np.append(ZZ, Zpart(N, NN[k], r1, q))
                     h = 0
                     for k in range(K):
                         h = h + NN[k] * np.log(ZZ[k])
@@ -415,10 +414,11 @@ class hidalgo:
                         stop = True
                         if it > 0:
                             zeta = r1
+                            sampling = np.append(sampling, r1)
 
             # SAMPLING Z
 
-            for i in range(N_):
+            for i in range(N):
 
                 if fixed_Z:
                     break
@@ -448,10 +448,10 @@ class hidalgo:
                                 m_in = m_in + 1.0
 
                         g = (n_in + m_in) * np.log(zeta / (1 - zeta)) - np.log(
-                            Zpart(N_, NN[k1], zeta, q)
+                            Zpart(N, NN[k1], zeta, q)
                         )
                         g = g + np.log(
-                            Zpart(N_, NN[k1] - 1, zeta, q) / Zpart(N_, NN[k1], zeta, q)
+                            Zpart(N, NN[k1] - 1, zeta, q) / Zpart(N, NN[k1], zeta, q)
                         ) * (NN[k1] - 1)
 
                     if g > gmax:
@@ -494,7 +494,7 @@ class hidalgo:
             # updating prior on zeta
 
             N_in = 0
-            for i in range(N_):
+            for i in range(N):
                 k = Z[i]
 
                 for j in range(q):
@@ -504,11 +504,11 @@ class hidalgo:
                         N_in = N_in + 1.0
 
             f1[0] = f[0] + N_in
-            f1[1] = f[1] + N_ * q - N_in
+            f1[1] = f[1] + N * q - N_in
 
             # likelihood
             lik0 = 0
-            for i in range(N_):
+            for i in range(N):
                 lik0 = (
                     lik0
                     + np.log(p[Z[i]])
@@ -519,7 +519,7 @@ class hidalgo:
             lik1 = lik0 + np.log(zeta / (1 - zeta)) * N_in
 
             for k1 in range(K):
-                lik1 = lik1 - (NN[k1] * np.log(Zpart(N_, NN[k1], zeta, q)))
+                lik1 = lik1 - (NN[k1] * np.log(Zpart(N, NN[k1], zeta, q)))
 
             sampling = np.append(sampling, lik0)
             sampling = np.append(sampling, lik1)
@@ -542,46 +542,47 @@ class hidalgo:
 
         bestsampling = np.zeros(shape=0)
 
-        # for r in range(self.Nreplicas):
-        r = 1
-        sampling = self.gibbs_sampling(
-            N,
-            MU,
-            Iin,
-            Iout,
-            Iout_count,
-            Iout_track,
-            V,
-            NN,
-            d,
-            p,
-            a1,
-            b1,
-            c1,
-            Z,
-            f1,
-            N_in,
-            pp,
-            r,
-        )
-        sampling = np.reshape(sampling, (self.Niter, Npar))
-
-        idx = [
-            it
-            for it in range(self.Niter)
-            if it % self.sampling_rate == 0 and it >= self.Niter * self.burn_in
-        ]
-        sampling = sampling[
-            idx,
-        ]
-
+        maxlik = -1e10
         # this can be run in parallel...
+        for r in range(self.Nreplicas):
+            sampling = self.gibbs_sampling(
+                N,
+                MU,
+                Iin,
+                Iout,
+                Iout_count,
+                Iout_track,
+                V,
+                NN,
+                d,
+                p,
+                a1,
+                b1,
+                c1,
+                Z,
+                f1,
+                N_in,
+                pp,
+                r,
+            )
+            sampling = np.reshape(sampling, (self.Niter, Npar))
 
-        lik = np.mean(sampling[:, -1], axis=0)
-        if lik > self.maxlik:
-            bestsampling = sampling
+            idx = [
+                it
+                for it in range(self.Niter)
+                if it % self.sampling_rate == 0 and it >= self.Niter * self.burn_in
+            ]
+            sampling = sampling[
+                idx,
+            ]
 
-        return sampling
+            lik = np.mean(sampling[:, -1], axis=0)
+
+            if lik > maxlik:
+                bestsampling = sampling
+                maxlik = lik
+
+        return bestsampling
 
     def fit(self, X):
         """Run the Hidalgo algorithm and writes results to self.
@@ -632,7 +633,7 @@ class hidalgo:
         for k in range(K):
             Pi[k, :] = np.sum(sampling[:, 2 * K : 2 * K + N] == k, axis=0)
 
-        self.Pi = Pi / self.Nsamp
+        self.Pi = Pi / self.Nsamp  # the rows of sampling
         Z = np.argmax(Pi, axis=0)
         pZ = np.max(Pi, axis=0)
         Z = Z + 1
