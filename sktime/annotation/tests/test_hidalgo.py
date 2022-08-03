@@ -381,40 +381,6 @@ def test_gibbs_sampling():
         pp,
         r,
     )
-    # sampling_check = [
-    #     3.04431,
-    #     1.56489,
-    #     0.332044,
-    #     0.667956,
-    #     1,
-    #     1,
-    #     1,
-    #     1,
-    #     1,
-    #     0,
-    #     0,
-    #     0,
-    #     0,
-    #     0,
-    #     -18.4604,
-    #     -4.99662,
-    #     1.81112,
-    #     0.892297,
-    #     0.434086,
-    #     0.565914,
-    #     1,
-    #     1,
-    #     1,
-    #     1,
-    #     1,
-    #     0,
-    #     0,
-    #     0,
-    #     0,
-    #     0,
-    #     -18.1564,
-    #     -4.69259,
-    # ]
     sampling_check = [
         1.54721,
         1.1892,
@@ -434,7 +400,54 @@ def test_gibbs_sampling():
         -8.44254,
     ]
 
-    assert _isclose(sampling, sampling_check)
+    assert _isclose(sampling[:16], sampling_check)
+
+
+def test_fit():
+    """Tests _fit for filtering, all iterations."""
+    sampling = model._fit(X)  # need fresh instance of model?
+
+    sampling_check = [
+        [
+            3.04431,
+            1.56489,
+            0.332044,
+            0.667956,
+            1,
+            1,
+            1,
+            1,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            -18.4604,
+            -4.99662,
+        ],
+        [
+            1.81112,
+            0.892297,
+            0.434086,
+            0.565914,
+            1,
+            1,
+            1,
+            1,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            -18.1564,
+            -4.69259,
+        ],
+    ]
+
+    assert _isclose(sampling[0], sampling_check[0])
+    assert _isclose(sampling[1], sampling_check[1])
 
 
 # also need to test for estimate_zeta = True AND use_Potts = True
