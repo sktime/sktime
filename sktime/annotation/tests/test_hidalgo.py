@@ -4,7 +4,7 @@ import math
 
 import numpy as np
 
-from sktime.annotation.hidalgo import hidalgo
+from sktime.annotation.hidalgo import Hidalgo
 
 
 def _isclose(list1, list2):
@@ -13,7 +13,7 @@ def _isclose(list1, list2):
 
 # get model
 K = 2
-model = hidalgo(K=K, Nreplicas=1)
+model = Hidalgo(K=K, Nreplicas=1, seed=None)
 
 # generate dataset
 N = 10

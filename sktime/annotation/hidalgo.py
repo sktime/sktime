@@ -25,7 +25,9 @@ import numpy as np
 import pandas as pd
 from sklearn.neighbors import NearestNeighbors
 
-random_z = [1, 0, 0, 1, 0, 1, 1, 0, 0, 0]
+
+def get_deterministic_z():
+    return [1, 0, 0, 1, 0, 1, 1, 0, 0, 0]
 
 
 def get_deterministic_number():
@@ -71,7 +73,7 @@ def Zpart(N, N1, zeta, q):
     return s
 
 
-class hidalgo:
+class Hidalgo:
     """Class to fit parameters of the HidAlgo intrinsic dimension model.
 
     explain, reference
@@ -113,7 +115,9 @@ class hidalgo:
         prior parameters of p
     f : np.ArrayLike, optional, default=1.0
         parameters of zeta
-
+    seed : int, None, optional, default = 0
+        if None read in pre-generated random numbers from file
+        otherwise, generate random numbers with seed
     """
 
     def __init__(
@@ -123,7 +127,7 @@ class hidalgo:
         zeta=0.8,
         q=3,
         Niter=10,
-        Nreplicas=10,
+        Nreplicas=1,
         burn_in=0.5,
         fixed_Z=0,
         use_Potts=1,
@@ -133,6 +137,7 @@ class hidalgo:
         b=None,
         c=None,
         f=None,
+        seed=0,
     ):
 
         if a is None:
@@ -159,6 +164,7 @@ class hidalgo:
         self.b = b
         self.c = c
         self.f = f
+        self.seed = seed
 
     def _get_neighbourhood_params(self, X):
         """
@@ -220,6 +226,11 @@ class hidalgo:
 
         return N_in, f1
 
+    def get_random_z(self, N):
+        rng = np.random.default_rng(self.seed)
+        random_z = rng.random(N)
+        return [int(np.floor(i * self.K)) for i in random_z]
+
     def _initialise_params(self, N, MU, Iin):
         """
         Decription.
@@ -250,7 +261,12 @@ class hidalgo:
         pp = (self.K - 1) / self.K
 
         if bool(self.fixed_Z) is False:
-            # z = int(np.floor(random.random()*K))  #FIXME
+
+            if self.seed is None:
+                random_z = get_deterministic_z()
+            else:
+                random_z = self.get_random_z(N)
+
             Z = np.array(random_z, dtype=int)
         else:
             Z = np.zeros(N, dtype=int)
@@ -286,7 +302,7 @@ class hidalgo:
         f1,
         N_in,
         pp,
-        r,
+        rng,
     ):
         """
         Gibbs sampling method to find joint posterior distribution of target variables.
@@ -314,11 +330,12 @@ class hidalgo:
                 stop = False
 
                 while stop is False:
-
-                    # r1 = random.random()*200 # random sample for d[k]
-                    # r2 = random.random() # random number for accepting
-                    r1 = next_deterministic_number()
-                    r2 = next_deterministic_number()
+                    if self.seed is None:
+                        r1 = next_deterministic_number()
+                        r2 = next_deterministic_number()
+                    else:
+                        r1 = rng.random() * 200  # random sample for d[k]
+                        r2 = rng.random()  # random number for accepting
 
                     rmax = (a1[k] - 1) / b1[k]
 
@@ -342,12 +359,12 @@ class hidalgo:
                 stop = False
 
                 while stop is False:
-
-                    # r1 = random.random() # random sample for p[k]
-                    # r2 = random.random() # random number for accepting
-
-                    r1 = next_deterministic_number()
-                    r2 = next_deterministic_number()
+                    if self.seed is None:
+                        r1 = next_deterministic_number()
+                        r2 = next_deterministic_number()
+                    else:
+                        r1 = rng.random()  # random sample for p[k]
+                        r2 = rng.random()  # random number for accepting
 
                     rmax = (c1[k] - 1) / (c1[k] - 1 + c1[K - 1] - 1)
                     frac = ((r1 / rmax) ** (c1[k] - 1)) * (
@@ -387,11 +404,12 @@ class hidalgo:
                         maxval = val  # found max val for below frac
 
                 while stop is False:
-                    # r1 = random.random() # random sample for zeta
-                    # r2 = random.random() # random number for accepting
-
-                    r1 = next_deterministic_number()
-                    r2 = next_deterministic_number()
+                    if self.seed is None:
+                        r1 = next_deterministic_number()
+                        r2 = next_deterministic_number()
+                    else:
+                        r1 = rng.random()  # random sample for zeta
+                        r2 = rng.random()  # random number for accepting
 
                     ZZ = np.empty((K, 0))
                     for k in range(K):
@@ -457,12 +475,12 @@ class hidalgo:
                     prob[k1] = prob[k1] / norm
 
                 while stop is False:
-
-                    # r1 = int(np.floor(random.random()*K))
-                    # r2 = random.random()
-
-                    r1 = int(next_deterministic_number())
-                    r2 = next_deterministic_number()
+                    if self.seed is None:
+                        r1 = int(next_deterministic_number())
+                        r2 = next_deterministic_number()
+                    else:
+                        r1 = int(np.floor(rng.random() * K))  # random sample for Z
+                        r2 = rng.random()  # random number for accepting
 
                     if prob[r1] > r2:
                         stop = True
@@ -538,8 +556,14 @@ class hidalgo:
         bestsampling = np.zeros(shape=0)
 
         maxlik = -1e10
+        rng = None
+
         # this can be run in parallel...
         for r in range(self.Nreplicas):
+            # different for each loop, when parallel
+            if self.seed is not None:
+                rng = np.random.default_rng(self.seed * r + r)
+
             sampling = self.gibbs_sampling(
                 N,
                 MU,
@@ -558,7 +582,7 @@ class hidalgo:
                 f1,
                 N_in,
                 pp,
-                r,
+                rng,
             )
             sampling = np.reshape(sampling, (self.Niter, Npar))
 
