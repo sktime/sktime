@@ -115,7 +115,7 @@ class Hidalgo:
         prior parameters of p
     f : np.ArrayLike, optional, default=1.0
         parameters of zeta
-    seed : int, None, optional, default = 0
+    seed : int, None, optional, default = 1
         if None read in pre-generated random numbers from file
         otherwise, generate random numbers with seed
     """
@@ -137,7 +137,7 @@ class Hidalgo:
         b=None,
         c=None,
         f=None,
-        seed=0,
+        seed=1,
     ):
 
         if a is None:
@@ -562,7 +562,7 @@ class Hidalgo:
         for r in range(self.Nreplicas):
             # different for each loop, when parallel
             if self.seed is not None:
-                rng = np.random.default_rng(self.seed * r + r)
+                rng = np.random.default_rng(self.seed * r + 1)
 
             sampling = self.gibbs_sampling(
                 N,
