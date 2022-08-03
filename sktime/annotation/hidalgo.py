@@ -204,6 +204,22 @@ class hidalgo:
 
         return (mu, indicesIn, indicesOut, nbrcount, indicesTrack)
 
+    def update_zeta_prior(self, Iin, N, Z):
+        f1 = np.empty(shape=2)
+        N_in = 0
+        for i in range(N):
+            k = Z[i]
+
+            for j in range(self.q):
+                index = Iin[self.q * i + j]
+                if Z[index] == k:
+                    N_in += 1
+
+        f1[0] = self.f[0] + N_in
+        f1[1] = self.f[1] + N * self.q - N_in
+
+        return N_in, f1
+
     def _initialise_params(self, N, MU, Iin):
         """
         Decription.
@@ -231,11 +247,10 @@ class hidalgo:
         b1 = np.empty(shape=self.K)
         c1 = np.empty(shape=self.K)
         Z = np.empty(shape=N, dtype=int)
-        f1 = np.empty(shape=2)
         pp = (self.K - 1) / self.K
 
         if bool(self.fixed_Z) is False:
-            # z = int(np.floor(random.random()*K))
+            # z = int(np.floor(random.random()*K))  #FIXME
             Z = np.array(random_z, dtype=int)
         else:
             Z = np.zeros(N, dtype=int)
@@ -248,17 +263,7 @@ class hidalgo:
         b1 = self.b + V
         c1 = self.c + NN
 
-        N_in = 0
-        for i in range(N):
-            k = Z[i]
-
-            for j in range(self.q):
-                index = Iin[self.q * i + j]
-                if Z[index] == k:
-                    N_in += 1
-
-        f1[0] = self.f[0] + N_in
-        f1[1] = self.f[1] + N * self.q - N_in
+        N_in, f1 = self.update_zeta_prior(Iin, N, Z)
 
         return (V, NN, d, p, a1, b1, c1, Z, f1, N_in, pp)
 
@@ -297,7 +302,6 @@ class hidalgo:
         q = self.q
         K = self.K
         Niter = self.Niter
-        f = self.f
         fixed_Z = self.fixed_Z
         use_Potts = self.use_Potts
         estimate_zeta = self.estimate_zeta
@@ -342,8 +346,6 @@ class hidalgo:
                     # r1 = random.random() # random sample for p[k]
                     # r2 = random.random() # random number for accepting
 
-                    # r1 = random_list.pop(0)
-                    # r2 = random_list.pop(0)
                     r1 = next_deterministic_number()
                     r2 = next_deterministic_number()
 
@@ -361,16 +363,7 @@ class hidalgo:
 
             return (p, pp)
 
-        for it in range(Niter):
-
-            d = sample_d(K, d, a1, b1)
-            sampling = np.append(sampling, d)
-
-            (p, pp) = sample_p(K, p, pp, c1)
-            sampling = np.append(sampling, p[: K - 1])
-            sampling = np.append(sampling, (1 - pp))
-
-            # SAMPLING zeta
+        def sample_zeta(K, N, zeta, use_Potts, estimate_zeta, q, NN, f1, it):
             stop = False
             maxval = -100000
 
@@ -397,8 +390,8 @@ class hidalgo:
                     # r1 = random.random() # random sample for zeta
                     # r2 = random.random() # random number for accepting
 
-                    r1 = random_list.pop(0)
-                    r2 = random_list.pop(0)
+                    r1 = next_deterministic_number()
+                    r2 = next_deterministic_number()
 
                     ZZ = np.empty((K, 0))
                     for k in range(K):
@@ -414,7 +407,20 @@ class hidalgo:
                         stop = True
                         if it > 0:
                             zeta = r1
-                            sampling = np.append(sampling, r1)
+
+            return zeta
+
+        for it in range(Niter):
+
+            d = sample_d(K, d, a1, b1)
+            sampling = np.append(sampling, d)
+
+            (p, pp) = sample_p(K, p, pp, c1)
+            sampling = np.append(sampling, p[: K - 1])
+            sampling = np.append(sampling, (1 - pp))
+
+            zeta = sample_zeta(K, N, zeta, use_Potts, estimate_zeta, q, NN, f1, it)
+            # sampling = np.append(sampling, zeta) FIXME: update uni tests to include zeta output
 
             # SAMPLING Z
 
@@ -492,19 +498,7 @@ class hidalgo:
                         b1[Z[i]] += np.log(MU[i])
 
             # updating prior on zeta
-
-            N_in = 0
-            for i in range(N):
-                k = Z[i]
-
-                for j in range(q):
-                    index = int(Iin[q * i + j])
-
-                    if Z[index] == k:
-                        N_in = N_in + 1.0
-
-            f1[0] = f[0] + N_in
-            f1[1] = f[1] + N * q - N_in
+            N_in, f1 = self.update_zeta_prior(Iin, N, Z)
 
             # likelihood
             lik0 = 0
