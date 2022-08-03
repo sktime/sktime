@@ -410,29 +410,11 @@ class hidalgo:
 
             return zeta
 
-        for it in range(Niter):
-
-            d = sample_d(K, d, a1, b1)
-            sampling = np.append(sampling, d)
-
-            (p, pp) = sample_p(K, p, pp, c1)
-            sampling = np.append(sampling, p[: K - 1])
-            sampling = np.append(sampling, (1 - pp))
-
-            zeta = sample_zeta(K, N, zeta, use_Potts, estimate_zeta, q, NN, f1, it)
-            # sampling = np.append(sampling, zeta) FIXME: update uni tests to include zeta output
-
-            # SAMPLING Z
+        def sampling_Z(Z, NN, a1, c1, V, b1, zeta, N, fixed_Z, q):
+            if (abs(zeta - 1) < 1e-5) or fixed_Z:
+                return Z, NN, a1, c1, V, b1
 
             for i in range(N):
-
-                if fixed_Z:
-                    break
-
-                if abs(zeta - 1) < 1e-5:
-                    sampling = np.append(sampling, Z[i])
-                    continue
-
                 stop = False
                 prob = np.empty(shape=K)
                 gg = np.empty(shape=K)
@@ -479,17 +461,18 @@ class hidalgo:
                     # r1 = int(np.floor(random.random()*K))
                     # r2 = random.random()
 
-                    r1 = int(random_list.pop(0))
-                    r2 = random_list.pop(0)
+                    r1 = int(next_deterministic_number())
+                    r2 = next_deterministic_number()
 
                     if prob[r1] > r2:
                         stop = True
-                        sampling = np.append(sampling, r1)
+                        # minus values
                         NN[Z[i]] -= 1
                         a1[Z[i]] -= 1
                         c1[Z[i]] -= 1
                         V[Z[i]] -= np.log(MU[i])
                         b1[Z[i]] -= np.log(MU[i])
+                        # change, add values
                         Z[i] = r1
                         NN[Z[i]] += 1
                         a1[Z[i]] += 1
@@ -497,10 +480,9 @@ class hidalgo:
                         V[Z[i]] += np.log(MU[i])
                         b1[Z[i]] += np.log(MU[i])
 
-            # updating prior on zeta
-            N_in, f1 = self.update_zeta_prior(Iin, N, Z)
+            return Z, NN, a1, c1, V, b1
 
-            # likelihood
+        def sample_likelihood(N, p, d, Z, MU, N_in, zeta, NN):
             lik0 = 0
             for i in range(N):
                 lik0 = (
@@ -515,8 +497,27 @@ class hidalgo:
             for k1 in range(K):
                 lik1 = lik1 - (NN[k1] * np.log(Zpart(N, NN[k1], zeta, q)))
 
-            sampling = np.append(sampling, lik0)
-            sampling = np.append(sampling, lik1)
+            return lik0, lik1
+
+        for it in range(Niter):
+
+            d = sample_d(K, d, a1, b1)
+            sampling = np.append(sampling, d)
+
+            (p, pp) = sample_p(K, p, pp, c1)
+            sampling = np.append(sampling, p[: K - 1])
+            sampling = np.append(sampling, (1 - pp))
+
+            zeta = sample_zeta(K, N, zeta, use_Potts, estimate_zeta, q, NN, f1, it)
+            sampling = np.append(sampling, zeta)
+
+            Z, NN, a1, c1, V, b1 = sampling_Z(Z, NN, a1, c1, V, b1, zeta, N, fixed_Z, q)
+            sampling = np.append(sampling, Z)
+
+            N_in, f1 = self.update_zeta_prior(Iin, N, Z)
+
+            lik = sample_likelihood(N, p, d, Z, MU, N_in, zeta, NN)
+            sampling = np.append(sampling, lik)
 
         return sampling
 
@@ -532,7 +533,7 @@ class hidalgo:
         N = np.shape(X)[0]
         V, NN, d, p, a1, b1, c1, Z, f1, N_in, pp = self._initialise_params(N, MU, Iin)
 
-        Npar = N + 2 * self.K + 2 + 1 * (self.estimate_zeta)
+        Npar = N + 2 * self.K + 2 + 1
 
         bestsampling = np.zeros(shape=0)
 
@@ -625,9 +626,9 @@ class hidalgo:
         Pi = np.zeros((K, N))
 
         for k in range(K):
-            Pi[k, :] = np.sum(sampling[:, 2 * K : 2 * K + N] == k, axis=0)
+            Pi[k, :] = np.sum(sampling[:, (2 * K) + 1 : 2 * K + N + 1] == k, axis=0)
 
-        self.Pi = Pi / self.Nsamp  # the rows of sampling
+        self.Pi = Pi / np.shape(sampling)[0]
         Z = np.argmax(Pi, axis=0)
         pZ = np.max(Pi, axis=0)
         Z = Z + 1
