@@ -7,13 +7,14 @@ This code provides a base interface template for models
 from hmmlearn for using that library for annotation of time series.
 """
 
+import numpy as np
 from attr import define
 
 from sktime.annotation.base import BaseSeriesAnnotator
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 __author__ = ["miraep8"]
-__all__ = ["BaseHMMLearn", "GuassianHMM"]
+__all__ = ["BaseHMMLearn", "GaussianHMM"]
 
 
 class BaseHMMLearn(BaseSeriesAnnotator):
@@ -26,7 +27,9 @@ class BaseHMMLearn(BaseSeriesAnnotator):
         super(BaseHMMLearn, self).__init__()
 
     def _fit(self, X, Y=None):
-        self._hmm_estimator = self._hmm_estimator.fit(X.reshape(-1, 1))
+        if isinstance(X, np.ndarray) and len(X.shape) == 1:
+            X = X.reshape(-1, 1)
+        self._hmm_estimator = self._hmm_estimator.fit(X)
         return self
 
     def _predict(self, X):
@@ -41,7 +44,7 @@ _check_soft_dependencies("hmmlearn.hmm", severity="warning")
 
 
 @define
-class GuassianHMM(BaseHMMLearn):
+class GaussianHMM(BaseHMMLearn):
     """Hidden Markov Model with Gaussian emissions.
 
     Attributes
@@ -90,8 +93,8 @@ class GuassianHMM(BaseHMMLearn):
     implementation: str = "log"
 
     def __attrs_post_init__(self):
-        """Initialize the _hmm_estimator to be hmmlearn GuassianHMM."""
-        super(GuassianHMM, self).__init__()
+        """Initialize the _hmm_estimator to be hmmlearn GaussianHMM."""
+        super(GaussianHMM, self).__init__()
 
     def _fit(self, X, Y=None):
         # import inside _fit to avoid hard dependency.
@@ -116,7 +119,7 @@ class GuassianHMM(BaseHMMLearn):
             self.init_params,
             self.implementation,
         )
-        super(GuassianHMM, self)._fit(X, Y)
+        super(GaussianHMM, self)._fit(X, Y)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
