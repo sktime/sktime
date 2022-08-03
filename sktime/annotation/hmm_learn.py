@@ -7,7 +7,6 @@ This code provides a base interface template for models
 from hmmlearn for using that library for annotation of time series.
 """
 
-import numpy as np
 from attr import define
 
 from sktime.annotation.base import BaseSeriesAnnotator
@@ -27,8 +26,6 @@ class BaseHMMLearn(BaseSeriesAnnotator):
         super(BaseHMMLearn, self).__init__()
 
     def _fit(self, X, Y=None):
-        if isinstance(X, np.ndarray) and len(X.shape) == 1:
-            X = X.reshape(-1, 1)
         self._hmm_estimator = self._hmm_estimator.fit(X)
         return self
 
@@ -37,7 +34,9 @@ class BaseHMMLearn(BaseSeriesAnnotator):
 
     def sample(self, n_samples=1, random_state=None, currstate=None):
         """Interface class which allows users to sample from their HMM."""
-        return self._hmm_estimator.sample(n_samples, random_state, currstate)
+        return self._hmm_estimator.sample(n_samples, random_state, currstate).reshape(
+            -1, 1
+        )
 
 
 _check_soft_dependencies("hmmlearn.hmm", severity="warning")
