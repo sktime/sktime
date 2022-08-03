@@ -62,33 +62,3 @@ def _make_index(n_timepoints, index_type=None):
 
     else:
         raise ValueError(f"index_class: {index_type} is not supported")
-
-
-def _load_solar(
-    start="2021-05-01", end="2021-09-01", normalise=True, return_full_df=False
-):
-    """Get solar estimates for GB from Sheffield solar API for ClearSky."""
-    url = "https://api0.solar.sheffield.ac.uk/pvlive/api/v4/gsp/0?"
-    url = url + "start=" + start + "T00:00:00&"
-    url = url + "end=" + end + "T00:00:00&"
-    url = url + "extra_fields=capacity_mwp&"
-    url = url + "data_format=csv"
-
-    df = (
-        pd.read_csv(
-            url, index_col=["gsp_id", "datetime_gmt"], parse_dates=["datetime_gmt"]
-        )
-        .droplevel(0)
-        .sort_index()
-    )
-    df = df.asfreq("30T")
-    df["generation_pu"] = df["generation_mw"] / df["capacity_mwp"]
-
-    if return_full_df:
-        df["generation_pu"] = df["generation_mw"] / df["capacity_mwp"]
-        return df
-    else:
-        if normalise:
-            return df["generation_pu"].rename("solar_gen")
-        else:
-            return df["generation_mw"].rename("solar_gen")

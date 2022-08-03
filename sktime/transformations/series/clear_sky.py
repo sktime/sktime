@@ -32,7 +32,7 @@ class ClearSky(BaseTransformer):
     The weights are defined using von-mises kernels with bandwidths chosen by the
     user.
 
-    This transformation can be innacurate at low values, in the solar example during
+    This transformation can be inacurate at low values, in the solar example during
     early morning and late evening. Therefore, clear sky values below a threshold can
     be fixed to zero in the transformed domain. Denominator values of zero are set
     to zero in the transformed domain by default.
@@ -60,11 +60,11 @@ class ClearSky(BaseTransformer):
     Examples
     --------
     >>> from sktime.transformations.series.clear_sky import ClearSky
-    >>> from sktime.utils._testing.series import _load_solar
-    >>> y = _load_solar()
+    >>> from sktime.datasets import load_solar
+    >>> y = load_solar()
     >>> transformer = ClearSky()
     >>> # takes ~1min
-    >>> y_hat = transformer.fit_transform(y)
+    >>> y_trafo = transformer.fit_transform(y)
     """
 
     _tags = {
@@ -212,7 +212,7 @@ class ClearSky(BaseTransformer):
 
         return X_trafo
 
-    def get_fitted_params(self):
+    def _get_fitted_params(self):
         """Get fitted parameters.
 
         Returns
@@ -246,7 +246,7 @@ class ClearSky(BaseTransformer):
             "quantile_prob": 0.95,
             "bw_diurnal": 100,
             "bw_annual": 10,
-            "min_thresh": None,
+            "min_thresh": 0,
         }
 
         return params
