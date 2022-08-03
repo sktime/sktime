@@ -56,7 +56,7 @@ class HMM(BaseSeriesAnnotator):
     Next, these matrices are used to calculate the most likely
     path (by backtracing from the final mostly likely state and the
     id's that proceeded it.)  This logic is done via a helper func
-    hmm_viterbi_label .
+    hmm_viterbi_label.
 
     Parameters
     ----------
