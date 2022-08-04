@@ -87,7 +87,9 @@ EXCLUDED_TESTS = {
         "test_fit_idempotent",
         "test_persistence_via_pickle",
     ],
-    "VARMAX": "test_update_predict_single",  # see 2997, sporadic failure, unknown cause
+    "VARMAX": [
+        "test_update_predict_single",  # see 2997, sporadic failure, unknown cause
+        "test__y_when_refitting",  # see 3176
 }
 
 # We use estimator tags in addition to class hierarchies to further distinguish
