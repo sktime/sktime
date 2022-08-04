@@ -1056,7 +1056,10 @@ class BaseWindowSplitter(BaseSplitter):
 
 
 class SlidingWindowSplitter(BaseWindowSplitter):
-    r"""Sliding window splitter.
+    """Sliding window splitter."""
+
+    (
+        r"""
 
     Split time series repeatedly into a fixed-length training and test set.
 
@@ -1080,6 +1083,8 @@ class SlidingWindowSplitter(BaseWindowSplitter):
 
     ``x`` = test fold.
 
+    """
+        + """
     Parameters
     ----------
     fh : int, list or np.array
@@ -1104,6 +1109,7 @@ class SlidingWindowSplitter(BaseWindowSplitter):
     [(array([0, 1, 2]), array([4, 6])), (array([2, 3, 4]), array([6, 8]))]
 
     """
+    )
 
     def __init__(
         self,

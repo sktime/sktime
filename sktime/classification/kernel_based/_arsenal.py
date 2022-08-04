@@ -34,7 +34,7 @@ class Arsenal(BaseClassifier):
     Overview: an ensemble of ROCKET transformers using RidgeClassifierCV base
     classifier. Weights each classifier using the accuracy from the ridge
     cross-validation. Allows for generation of probability estimates at the
-    expense of scalability compared to ROCKETClassifier.
+    expense of scalability compared to RocketClassifier.
 
     Parameters
     ----------
@@ -85,7 +85,7 @@ class Arsenal(BaseClassifier):
 
     See Also
     --------
-    ROCKETClassifier
+    RocketClassifier
 
     Notes
     -----

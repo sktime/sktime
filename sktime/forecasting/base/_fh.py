@@ -244,7 +244,7 @@ class ForecastingHorizon:
                  '1960-07', '1960-08', '1960-09', '1960-10', '1960-11', '1960-12'],
                 dtype='period[M]', is_relative=False)
 
-        Automatically casted ForecastingHoruizon from list when calling predict()
+        Automatically casted ForecastingHorizon from list when calling predict()
     >>> forecaster = NaiveForecaster(strategy="drift")
     >>> forecaster.fit(y_train)
     NaiveForecaster(...)

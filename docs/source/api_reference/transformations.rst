@@ -135,7 +135,6 @@ These transformers extract simple summary features.
     :template: class.rst
 
     SummaryTransformer
-    MeanTransformer
     WindowSummarizer
 
 .. currentmodule:: sktime.transformations.panel.summarize
