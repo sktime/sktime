@@ -70,6 +70,10 @@ def check_pddataframe_series(obj, return_metadata=False, var_name="obj"):
     metadata["is_empty"] = len(index) < 1 or len(obj.columns) < 1
     metadata["is_univariate"] = len(obj.columns) < 2
 
+    # check that columns are unique
+    msg = f"{var_name} must have " f"unique column indices, but found {obj.columns}"
+    assert obj.columns.is_unique, msg
+
     # check whether the time index is of valid type
     if not is_in_valid_index_types(index):
         msg = (
