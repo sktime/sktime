@@ -205,7 +205,6 @@ class ForecastingHorizon:
 
     Examples
     --------
-        Imports
     >>> from sktime.forecasting.base import ForecastingHorizon
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.datasets import load_airline
