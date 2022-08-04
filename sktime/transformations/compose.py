@@ -9,7 +9,11 @@ from sktime.base import _HeterogenousMetaEstimator
 from sktime.transformations._delegate import _DelegatedTransformer
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.multiindex import flatten_multiindex
-from sktime.utils.sklearn import is_sklearn_classifier, is_sklearn_transformer
+from sktime.utils.sklearn import (
+    is_sklearn_classifier,
+    is_sklearn_regressor,
+    is_sklearn_transformer,
+)
 
 __author__ = ["fkiraly", "mloning", "miraep8"]
 __all__ = [
@@ -171,8 +175,13 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         self._anytagis_then_set("scitype:instancewise", False, True, ests)
         self._anytagis_then_set("fit_is_empty", False, True, ests)
         self._anytagis_then_set("transform-returns-same-time-index", False, True, ests)
-        self._anytagis_then_set("skip-inverse-transform", True, False, ests)
-        self._anytagis_then_set("capability:inverse_transform", False, True, ests)
+        self._anytagis_then_set("skip-inverse-transform", False, True, ests)
+
+        # self can inverse transform if for all est, we either skip or can inv-trasform
+        skips = [est.get_tag("skip-inverse-transform") for _, est in ests]
+        has_invs = [est.get_tag("capability:inverse_transform") for _, est in ests]
+        can_inv = [x or y for x, y in zip(skips, has_invs)]
+        self.set_tags(**{"capability:inverse_transform": all(can_inv)})
 
         # can handle missing data iff all estimators can handle missing data
         #   up to a potential estimator when missing data is removed
@@ -213,12 +222,17 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
             not nested, contains only non-TransformerPipeline `sktime` transformers
         """
         from sktime.classification.compose import SklearnClassifierPipeline
+        from sktime.regression.compose import SklearnRegressorPipeline
 
         other = _coerce_to_sktime(other)
 
         # if sklearn classifier, use sklearn classifier pipeline
         if is_sklearn_classifier(other):
             return SklearnClassifierPipeline(classifier=other, transformers=self.steps)
+
+        # if sklearn regressor, use sklearn regressor pipeline
+        if is_sklearn_regressor(other):
+            return SklearnRegressorPipeline(regressor=other, transformers=self.steps)
 
         return self._dunder_concat(
             other=other,
