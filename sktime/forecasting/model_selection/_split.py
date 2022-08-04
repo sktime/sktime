@@ -1352,7 +1352,7 @@ def temporal_train_test_split(
 
     References
     ----------
-    ..[1]  adapted from https://github.com/alkaline-ml/pmdarima/
+    .. [1]  adapted from https://github.com/alkaline-ml/pmdarima/
     """
     if fh is not None:
         if test_size is not None or train_size is not None:
