@@ -90,6 +90,7 @@ EXCLUDED_TESTS = {
     "VARMAX": [
         "test_update_predict_single",  # see 2997, sporadic failure, unknown cause
         "test__y_when_refitting",  # see 3176
+    ],
 }
 
 # We use estimator tags in addition to class hierarchies to further distinguish
