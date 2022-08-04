@@ -4,11 +4,9 @@
 """Test series module."""
 
 __author__ = ["benheid"]
-import numpy as np
-import pandas as pd
-import pytest
-from pytest import raises
 
+import numpy as np
+import pytest
 
 from sktime.utils.validation.series import check_equal_time_index
 
