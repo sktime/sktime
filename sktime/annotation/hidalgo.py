@@ -24,6 +24,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from sklearn.neighbors import NearestNeighbors
+from sklearn.utils.validation import check_random_state
 
 
 def get_deterministic_z():
@@ -231,9 +232,8 @@ class Hidalgo:
         return N_in, f1
 
     def get_random_z(self):
-        rng = np.random.default_rng(self.seed)
-        random_z = rng.random(self.N)
-        return [int(np.floor(i * self.K)) for i in random_z]
+        return self._rng.randint(0, self.K, self.N)
+
 
     def _initialise_params(self):
         """
@@ -300,7 +300,6 @@ class Hidalgo:
         f1,
         N_in,
         pp,
-        rng,
     ):
         """
         Gibbs sampling method to find joint posterior distribution of target variables.
@@ -312,6 +311,7 @@ class Hidalgo:
         matrix
         """
         get_deterministic_number()
+
         zeta = self.zeta
         q = self.q
         K = self.K
@@ -332,8 +332,8 @@ class Hidalgo:
                         r1 = next_deterministic_number()
                         r2 = next_deterministic_number()
                     else:
-                        r1 = rng.random() * 200  # random sample for d[k]
-                        r2 = rng.random()  # random number for accepting
+                        r1 = self._rng.random() * 200  # random sample for d[k]
+                        r2 = self._rng.random()  # random number for accepting
 
                     rmax = (a1[k] - 1) / b1[k]
 
@@ -361,8 +361,8 @@ class Hidalgo:
                         r1 = next_deterministic_number()
                         r2 = next_deterministic_number()
                     else:
-                        r1 = rng.random()  # random sample for p[k]
-                        r2 = rng.random()  # random number for accepting
+                        r1 = self._rng.random()  # random sample for p[k]
+                        r2 = self._rng.random()  # random number for accepting
 
                     rmax = (c1[k] - 1) / (c1[k] - 1 + c1[K - 1] - 1)
                     frac = ((r1 / rmax) ** (c1[k] - 1)) * (
@@ -406,8 +406,8 @@ class Hidalgo:
                         r1 = next_deterministic_number()
                         r2 = next_deterministic_number()
                     else:
-                        r1 = rng.random()  # random sample for zeta
-                        r2 = rng.random()  # random number for accepting
+                        r1 = self._rng.random()  # random sample for zeta
+                        r2 = self._rng.random()  # random number for accepting
 
                     ZZ = np.empty((K, 0))
                     for k in range(K):
@@ -478,8 +478,8 @@ class Hidalgo:
                         r1 = int(next_deterministic_number())
                         r2 = next_deterministic_number()
                     else:
-                        r1 = int(np.floor(rng.random() * K))  # random sample for Z
-                        r2 = rng.random()  # random number for accepting
+                        r1 = int(np.floor(self._rng.random() * K))  # random sample for Z
+                        r2 = self._rng.random()  # random number for accepting
 
                     if prob[r1] > r2:
                         stop = True
@@ -546,7 +546,7 @@ class Hidalgo:
         samples with best max likelihood.
         """
         self._get_neighbourhood_params(X)
-
+        self._rng = check_random_state(self.seed)
         V, NN, d, p, a1, b1, c1, Z, f1, N_in, pp = self._initialise_params()
 
         Npar = self.N + 2 * self.K + 2 + 1
@@ -554,13 +554,9 @@ class Hidalgo:
         bestsampling = np.zeros(shape=0)
 
         maxlik = -1e10
-        rng = None
 
-        # this can be run in parallel...
+        # this can be run in parallel...FIXME: ISSUE
         for r in range(self.Nreplicas):
-            # different for each loop, when parallel
-            if self.seed is not None:
-                rng = np.random.default_rng(self.seed * r + 1)
 
             sampling = self.gibbs_sampling(
                 V,
@@ -574,7 +570,6 @@ class Hidalgo:
                 f1,
                 N_in,
                 pp,
-                rng,
             )
             sampling = np.reshape(sampling, (self.Niter, Npar))
 

@@ -374,7 +374,6 @@ def test_gibbs_sampling():
         f1,
         N_in,
         pp,
-        r,
     )
     sampling_check = [
         1.54721,
@@ -446,6 +445,10 @@ def test_fit():
 
     assert _isclose(sampling[0], sampling_check[0])
     assert _isclose(sampling[1], sampling_check[1])
+
+
+
+
 
 
 # also need to test for estimate_zeta = True AND use_Potts = True
