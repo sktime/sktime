@@ -41,8 +41,11 @@ class BaseDeepClassifier(BaseClassifier, ABC):
         "python_dependencies": "tensorflow",
     }
 
-    def __init__(self):
+    def __init__(self, batch_size=40, random_state=None):
         super(BaseDeepClassifier, self).__init__()
+
+        self.batch_size = batch_size
+        self.random_state = random_state
         self.model_ = None
 
     @abstractmethod
@@ -77,7 +80,7 @@ class BaseDeepClassifier(BaseClassifier, ABC):
 
     def _predict(self, X, **kwargs):
         probs = self._predict_proba(X, **kwargs)
-        rng = check_random_state(self.random_seed)
+        rng = check_random_state(self.random_state)
         return np.array(
             [
                 self.classes_[int(rng.choice(np.flatnonzero(prob == prob.max())))]
