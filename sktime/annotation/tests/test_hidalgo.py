@@ -13,7 +13,7 @@ def _isclose(list1, list2):
 
 # get model
 K = 2
-model = Hidalgo(K=K, Nreplicas=1, seed=None)
+model = Hidalgo(K=K, Niter=10, seed=None)
 
 # generate dataset
 N = 10
@@ -38,9 +38,9 @@ def test_X():
 
 def test_get_neighbourhood_params():
     """Test for neighbourhood parameter generation."""
-    MU, Iin, Iout, Iout_count, Iout_track = model._get_neighbourhood_params(X)
+    model._get_neighbourhood_params(X)
 
-    MU_check = [
+    mu_check = [
         1.46472,
         5.40974,
         2.46472,
@@ -119,11 +119,11 @@ def test_get_neighbourhood_params():
     Iout_count_check = [2, 1, 1, 2, 5, 4, 2, 4, 3, 6]
     Iout_track_check = [0, 2, 3, 4, 6, 11, 15, 17, 21, 24]
 
-    assert _isclose(MU, MU_check)
-    assert _isclose(Iin, Iin_check)
-    assert _isclose(Iout, Iout_check)
-    assert _isclose(Iout_count, Iout_count_check)
-    assert _isclose(Iout_track, Iout_track_check)
+    assert _isclose(model.mu, mu_check)
+    assert _isclose(model.Iin, Iin_check)
+    assert _isclose(model.Iout, Iout_check)
+    assert _isclose(model.Iout_count, Iout_count_check)
+    assert _isclose(model.Iout_track, Iout_track_check)
 
 
 def test_initialise_params():
@@ -160,7 +160,7 @@ def test_initialise_params():
         7,
         4,
     ]
-    MU = [
+    mu = [
         1.46472,
         5.40974,
         2.46472,
@@ -173,12 +173,12 @@ def test_initialise_params():
         1.28065,
     ]
 
-    # fix random numbers for testing
-    # random_list = [1,0,0,1,0,1,1,0,0,0]
-    # read in from file in clkass
+    model._get_neighbourhood_params(X)
+    model.mu = mu
+    model.Iin = Iin
 
     # initialise all other parameers, including randomly generated ones
-    V, NN, d, p, a1, b1, c1, Z, f1, N_in, pp = model._initialise_params(N, MU, Iin)
+    V, NN, d, p, a1, b1, c1, Z, f1, N_in, pp = model._initialise_params()
 
     N_check = 10
     V_check = [
@@ -222,7 +222,7 @@ def test_initialise_params():
     ]
     pp_check = 0.5
 
-    assert N == N_check
+    assert model.N == N_check
     assert _isclose(Z, Z_check)
     assert _isclose(V, V_check)
     assert _isclose(NN, NN_check)
@@ -239,7 +239,7 @@ def test_initialise_params():
 
 def test_gibbs_sampling():
     """Tests gibbs sampler for one iteration."""
-    MU = [
+    model.mu = [
         1.46472,
         5.40974,
         2.46472,
@@ -251,7 +251,7 @@ def test_gibbs_sampling():
         1.85041,
         1.28065,
     ]
-    Iin = [
+    model.Iin = [
         2,
         4,
         7,
@@ -283,7 +283,7 @@ def test_gibbs_sampling():
         7,
         4,
     ]
-    Iout = [
+    model.Iout = [
         2,
         4,
         3,
@@ -315,8 +315,9 @@ def test_gibbs_sampling():
         6,
         7,
     ]
-    Iout_count = [2, 1, 1, 2, 5, 4, 2, 4, 3, 6]
-    Iout_track = [0, 2, 3, 4, 6, 11, 15, 17, 21, 24]
+    model.Iout_count = [2, 1, 1, 2, 5, 4, 2, 4, 3, 6]
+    model.Iout_track = [0, 2, 3, 4, 6, 11, 15, 17, 21, 24]
+    model.N = 10
 
     V = [
         3.67521,
@@ -362,12 +363,6 @@ def test_gibbs_sampling():
 
     # random list arg
     sampling = model.gibbs_sampling(
-        N,
-        MU,
-        Iin,
-        Iout,
-        Iout_count,
-        Iout_track,
         V,
         NN,
         d,

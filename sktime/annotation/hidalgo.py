@@ -126,7 +126,7 @@ class Hidalgo:
         K=1,
         zeta=0.8,
         q=3,
-        Niter=10,
+        Niter=10000,
         Nreplicas=1,
         burn_in=0.5,
         fixed_Z=0,
@@ -179,59 +179,63 @@ class Hidalgo:
         ----------
         mu :
             paramerer in Pereto distribtion estimated by r2/r1
-        indicesIn :
+        Iin :
             ? array of neighbours of point i
-        indicesOut :
+        Iout :
             ? array of points for which i is neighbour
-        nbrcount :
+        Iout_count :
             ?
-        indicesTrack :
+        Iout_track :
             ?
         """
         N, _ = np.shape(X)
-        q = self.q
+        self.N = N
 
         nbrs = NearestNeighbors(
-            n_neighbors=q + 1, algorithm="ball_tree", metric=self.metric
+            n_neighbors=self.q + 1, algorithm="ball_tree", metric=self.metric
         ).fit(X)
-        distances, indicesIn = nbrs.kneighbors(X)
+        distances, Iin = nbrs.kneighbors(X)
         mu = np.divide(distances[:, 2], distances[:, 1])
 
         nbrmat = np.zeros((N, N))
         for n in range(self.q):
-            nbrmat[indicesIn[:, 0], indicesIn[:, n + 1]] = 1
+            nbrmat[Iin[:, 0], Iin[:, n + 1]] = 1
 
-        nbrcount = np.sum(nbrmat, axis=0).astype(int)
-        indicesOut = np.where(nbrmat.T)[1].astype(int)
-        indicesTrack = np.cumsum(nbrcount)
-        indicesTrack = np.append(0, indicesTrack[:-1]).astype(int)
-        indicesIn = indicesIn[:, 1:]
-        indicesIn = np.reshape(indicesIn, (N * self.q,)).astype(int)
+        Iout_count = np.sum(nbrmat, axis=0).astype(int)
+        Iout = np.where(nbrmat.T)[1].astype(int)
+        Iout_track = np.cumsum(Iout_count)
+        Iout_track = np.append(0, Iout_track[:-1]).astype(int)
+        Iin = Iin[:, 1:]
+        Iin = np.reshape(Iin, (N * self.q,)).astype(int)
 
-        return (mu, indicesIn, indicesOut, nbrcount, indicesTrack)
+        self.mu = mu
+        self.Iin = Iin
+        self.Iout = Iout
+        self.Iout_count = Iout_count
+        self.Iout_track = Iout_track
 
-    def update_zeta_prior(self, Iin, N, Z):
+    def update_zeta_prior(self, Z):
         f1 = np.empty(shape=2)
         N_in = 0
-        for i in range(N):
+        for i in range(self.N):
             k = Z[i]
 
             for j in range(self.q):
-                index = Iin[self.q * i + j]
+                index = self.Iin[self.q * i + j]
                 if Z[index] == k:
                     N_in += 1
 
         f1[0] = self.f[0] + N_in
-        f1[1] = self.f[1] + N * self.q - N_in
+        f1[1] = self.f[1] + self.N * self.q - N_in
 
         return N_in, f1
 
-    def get_random_z(self, N):
+    def get_random_z(self):
         rng = np.random.default_rng(self.seed)
-        random_z = rng.random(N)
+        random_z = rng.random(self.N)
         return [int(np.floor(i * self.K)) for i in random_z]
 
-    def _initialise_params(self, N, MU, Iin):
+    def _initialise_params(self):
         """
         Decription.
 
@@ -257,7 +261,7 @@ class Hidalgo:
         a1 = np.empty(shape=self.K)
         b1 = np.empty(shape=self.K)
         c1 = np.empty(shape=self.K)
-        Z = np.empty(shape=N, dtype=int)
+        Z = np.empty(shape=self.N, dtype=int)
         pp = (self.K - 1) / self.K
 
         if bool(self.fixed_Z) is False:
@@ -265,32 +269,26 @@ class Hidalgo:
             if self.seed is None:
                 random_z = get_deterministic_z()
             else:
-                random_z = self.get_random_z(N)
+                random_z = self.get_random_z()
 
             Z = np.array(random_z, dtype=int)
         else:
-            Z = np.zeros(N, dtype=int)
+            Z = np.zeros(self.N, dtype=int)
 
-        for i in range(N):
-            V[Z[i]] = V[Z[i]] + np.log(MU[i])
+        for i in range(self.N):
+            V[Z[i]] = V[Z[i]] + np.log(self.mu[i])
             NN[Z[i]] += 1
 
         a1 = self.a + NN
         b1 = self.b + V
         c1 = self.c + NN
 
-        N_in, f1 = self.update_zeta_prior(Iin, N, Z)
+        N_in, f1 = self.update_zeta_prior(Z)
 
         return (V, NN, d, p, a1, b1, c1, Z, f1, N_in, pp)
 
     def gibbs_sampling(
         self,
-        N,
-        MU,
-        Iin,
-        Iout,
-        Iout_count,
-        Iout_track,
         V,
         NN,
         d,
@@ -380,7 +378,7 @@ class Hidalgo:
 
             return (p, pp)
 
-        def sample_zeta(K, N, zeta, use_Potts, estimate_zeta, q, NN, f1, it):
+        def sample_zeta(K, zeta, use_Potts, estimate_zeta, q, NN, f1, it):
             stop = False
             maxval = -100000
 
@@ -389,7 +387,7 @@ class Hidalgo:
                     zeta1 = 0.5 + 0.05 * zeta_candidates
                     ZZ = np.empty((K, 0))
                     for k in range(K):
-                        ZZ = np.append(ZZ, Zpart(N, NN[k], zeta1, q))
+                        ZZ = np.append(ZZ, Zpart(self.N, NN[k], zeta1, q))
                     h = 0
                     for k in range(K):
                         h = h + NN[k] * np.log(ZZ[k])
@@ -413,7 +411,7 @@ class Hidalgo:
 
                     ZZ = np.empty((K, 0))
                     for k in range(K):
-                        ZZ = np.append(ZZ, Zpart(N, NN[k], r1, q))
+                        ZZ = np.append(ZZ, Zpart(self.N, NN[k], r1, q))
                     h = 0
                     for k in range(K):
                         h = h + NN[k] * np.log(ZZ[k])
@@ -428,11 +426,11 @@ class Hidalgo:
 
             return zeta
 
-        def sampling_Z(Z, NN, a1, c1, V, b1, zeta, N, fixed_Z, q):
+        def sampling_Z(Z, NN, a1, c1, V, b1, zeta, fixed_Z, q):
             if (abs(zeta - 1) < 1e-5) or fixed_Z:
                 return Z, NN, a1, c1, V, b1
 
-            for i in range(N):
+            for i in range(self.N):
                 stop = False
                 prob = np.empty(shape=K)
                 gg = np.empty(shape=K)
@@ -444,20 +442,21 @@ class Hidalgo:
                     if use_Potts:
                         n_in = 0
                         for j in range(q):
-                            index = int(Iin[q * i + j])
+                            index = int(self.Iin[q * i + j])
                             if Z[index] == k1:
                                 n_in = n_in + 1.0
                         m_in = 0
-                        for j in range(int(Iout_count[i])):
-                            index = int(Iout[Iout_track[i] + j])
+                        for j in range(int(self.Iout_count[i])):
+                            index = int(self.Iout[self.Iout_track[i] + j])
                             if index > -1 and Z[index] == k1:
                                 m_in = m_in + 1.0
 
                         g = (n_in + m_in) * np.log(zeta / (1 - zeta)) - np.log(
-                            Zpart(N, NN[k1], zeta, q)
+                            Zpart(self.N, NN[k1], zeta, q)
                         )
                         g = g + np.log(
-                            Zpart(N, NN[k1] - 1, zeta, q) / Zpart(N, NN[k1], zeta, q)
+                            Zpart(self.N, NN[k1] - 1, zeta, q)
+                            / Zpart(self.N, NN[k1], zeta, q)
                         ) * (NN[k1] - 1)
 
                     if g > gmax:
@@ -468,7 +467,7 @@ class Hidalgo:
                     gg[k1] = np.exp(gg[k1] - gmax)
 
                 for k1 in range(K):
-                    prob[k1] = p[k1] * d[k1] * MU[i] ** (-(d[k1] + 1)) * gg[k1]
+                    prob[k1] = p[k1] * d[k1] * self.mu[i] ** (-(d[k1] + 1)) * gg[k1]
                     norm += prob[k1]
 
                 for k1 in range(K):
@@ -488,32 +487,32 @@ class Hidalgo:
                         NN[Z[i]] -= 1
                         a1[Z[i]] -= 1
                         c1[Z[i]] -= 1
-                        V[Z[i]] -= np.log(MU[i])
-                        b1[Z[i]] -= np.log(MU[i])
+                        V[Z[i]] -= np.log(self.mu[i])
+                        b1[Z[i]] -= np.log(self.mu[i])
                         # change, add values
                         Z[i] = r1
                         NN[Z[i]] += 1
                         a1[Z[i]] += 1
                         c1[Z[i]] += 1
-                        V[Z[i]] += np.log(MU[i])
-                        b1[Z[i]] += np.log(MU[i])
+                        V[Z[i]] += np.log(self.mu[i])
+                        b1[Z[i]] += np.log(self.mu[i])
 
             return Z, NN, a1, c1, V, b1
 
-        def sample_likelihood(N, p, d, Z, MU, N_in, zeta, NN):
+        def sample_likelihood(p, d, Z, N_in, zeta, NN):
             lik0 = 0
-            for i in range(N):
+            for i in range(self.N):
                 lik0 = (
                     lik0
                     + np.log(p[Z[i]])
                     + np.log(d[Z[i]])
-                    - (d[Z[i]] + 1) * np.log(MU[i])
+                    - (d[Z[i]] + 1) * np.log(self.mu[i])
                 )
 
             lik1 = lik0 + np.log(zeta / (1 - zeta)) * N_in
 
             for k1 in range(K):
-                lik1 = lik1 - (NN[k1] * np.log(Zpart(N, NN[k1], zeta, q)))
+                lik1 = lik1 - (NN[k1] * np.log(Zpart(self.N, NN[k1], zeta, q)))
 
             return lik0, lik1
 
@@ -526,15 +525,15 @@ class Hidalgo:
             sampling = np.append(sampling, p[: K - 1])
             sampling = np.append(sampling, (1 - pp))
 
-            zeta = sample_zeta(K, N, zeta, use_Potts, estimate_zeta, q, NN, f1, it)
+            zeta = sample_zeta(K, zeta, use_Potts, estimate_zeta, q, NN, f1, it)
             sampling = np.append(sampling, zeta)
 
-            Z, NN, a1, c1, V, b1 = sampling_Z(Z, NN, a1, c1, V, b1, zeta, N, fixed_Z, q)
+            Z, NN, a1, c1, V, b1 = sampling_Z(Z, NN, a1, c1, V, b1, zeta, fixed_Z, q)
             sampling = np.append(sampling, Z)
 
-            N_in, f1 = self.update_zeta_prior(Iin, N, Z)
+            N_in, f1 = self.update_zeta_prior(Z)
 
-            lik = sample_likelihood(N, p, d, Z, MU, N_in, zeta, NN)
+            lik = sample_likelihood(p, d, Z, N_in, zeta, NN)
             sampling = np.append(sampling, lik)
 
         return sampling
@@ -546,12 +545,11 @@ class Hidalgo:
         Iterate through Nreplicas random starts and get posterior
         samples with best max likelihood.
         """
-        MU, Iin, Iout, Iout_count, Iout_track = self._get_neighbourhood_params(X)
+        self._get_neighbourhood_params(X)
 
-        N = np.shape(X)[0]
-        V, NN, d, p, a1, b1, c1, Z, f1, N_in, pp = self._initialise_params(N, MU, Iin)
+        V, NN, d, p, a1, b1, c1, Z, f1, N_in, pp = self._initialise_params()
 
-        Npar = N + 2 * self.K + 2 + 1
+        Npar = self.N + 2 * self.K + 2 + 1
 
         bestsampling = np.zeros(shape=0)
 
@@ -565,12 +563,6 @@ class Hidalgo:
                 rng = np.random.default_rng(self.seed * r + 1)
 
             sampling = self.gibbs_sampling(
-                N,
-                MU,
-                Iin,
-                Iout,
-                Iout_count,
-                Iout_track,
                 V,
                 NN,
                 d,
@@ -652,9 +644,11 @@ class Hidalgo:
         for k in range(K):
             Pi[k, :] = np.sum(sampling[:, (2 * K) + 1 : 2 * K + N + 1] == k, axis=0)
 
+        self.sampling_z = sampling[:, (2 * K) + 1 : 2 * K + N + 1]
+
         self.Pi = Pi / np.shape(sampling)[0]
         Z = np.argmax(Pi, axis=0)
         pZ = np.max(Pi, axis=0)
-        Z = Z + 1
+        Z = Z + 1  # we can make base-zero
         Z[np.where(pZ < 0.8)] = 0
         self.Z = Z
