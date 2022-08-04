@@ -328,7 +328,7 @@ class RandomShapeletTransform(BaseTransformer):
         for s in self.shapelets:
             sabs = np.abs(s[6])
             self._sorted_indicies.append(
-                sorted(range(s[1]), reverse=True, key=lambda i: sabs[i])
+                sorted(range(s[1]), reverse=True, key=lambda i: sabs[i])  # noqa B023
             )
         return self
 
@@ -365,6 +365,26 @@ class RandomShapeletTransform(BaseTransformer):
             output[i] = dists
 
         return pd.DataFrame(output)
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        return {"max_shapelets": 5, "n_shapelet_samples": 50, "batch_size": 20}
 
     def _extract_random_shapelet(self, X, y, i, shapelets, max_shapelets_per_class):
         rs = 255 if self.random_state == 0 else self.random_state
