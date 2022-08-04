@@ -228,8 +228,8 @@ def test__check_classifier_input():
     5. Test incorrect: too few cases or too short a series
     """
 
-    def _check_classifier_input(X, y=None):
-        return BaseClassifier._check_classifier_input(None, X, y)
+    def _check_classifier_input(X, y=None, enforce_min_instances=None):
+        return BaseClassifier._check_classifier_input(None, X, y, enforce_min_instances)
 
     # 1. Test correct: X: np.array of 2 and 3 dimensions vs y:np.array and np.Series
     test_X1 = np.random.uniform(-1, 1, size=(5, 10))
