@@ -193,6 +193,11 @@ html_theme_options = {
             "url": "https://discord.com/invite/gqSab2K",
             "icon": "fab fa-discord",
         },
+        {
+            "name": "LinkedIn",
+            "url": "https://www.linkedin.com/company/sktime/",
+            "icon": "fab fa-linkedin",
+        },
     ],
     "favicons": [
         {
