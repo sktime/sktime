@@ -330,6 +330,10 @@ class RotationForest(BaseEstimator):
             )
         X = self._validate_data(X=X, reset=False)
 
+        # handle the single-class-label case
+        if len(self._class_dictionary) == 1:
+            return np.repeat([[1]], len(X), axis=0)
+
         n_instances, n_atts = X.shape
 
         if n_instances != self.n_instances_ or n_atts != self.n_atts_:
@@ -451,11 +455,6 @@ class RotationForest(BaseEstimator):
 
         indices = range(self.n_instances_)
         subsample = rng.choice(self.n_instances_, size=self.n_instances_)
-
-        # subsample must have at least 2 unique classes
-        while len(np.unique(y[subsample])) == 1:
-            subsample = rng.choice(self.n_instances_, size=self.n_instances_)
-
         oob = [n for n in indices if n not in subsample]
 
         results = np.zeros((self.n_instances_, self.n_classes_))
