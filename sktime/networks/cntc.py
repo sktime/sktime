@@ -9,7 +9,7 @@ from sktime.utils.validation._dependencies import _check_dl_dependencies
 _check_dl_dependencies(severity="warning")
 
 
-class CNNNetwork(BaseDeepNetwork):
+class CNTCNetwork(BaseDeepNetwork):
     """Combining contextual neural networks for time series classification.
 
     Adapted from the implementation used in [1]

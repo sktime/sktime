@@ -1,0 +1,172 @@
+# -*- coding: utf-8 -*-
+"""Contextual Time-series Neural Classifier for TSC."""
+
+__author__ = ["James-Large", "TonyBagnall", "AurumnPegasus"]
+__all__ = ["CNTClassifier"]
+from sklearn.utils import check_random_state
+
+from sktime.classification.deep_learning.base import BaseDeepClassifier
+from sktime.networks.cntc import CNTCNetwork
+from sktime.utils.validation._dependencies import _check_dl_dependencies
+
+_check_dl_dependencies(severity="warning")
+
+
+class CNTClassifier(BaseDeepClassifier):
+    """Contextual Time-series Neural Classifier (CNTC), as described in [1].
+
+    Parameters
+    ----------
+    n_epochs       : int, default = 2000
+        the number of epochs to train the model
+    batch_size      : int, default = 16
+        the number of samples per gradient update.
+    filter_sizes    : tuple of shape (2), default = (16, 8)
+        filter sizes for CNNs in CCNN arm.
+    kernel_sizes     : two-tuple, default = (1, 1)
+        the length of the 1D convolution window for
+        CNNs in CCNN arm.
+    rnn_size        : int, default = 64
+        number of rnn units in the CCNN arm.
+    lstm_size       : int, default = 8
+        number of lstm units in the CLSTM arm.
+    dense_size      : int, default = 64
+        dimension of dense layer in CNTC.
+    random_state    : int or None, default=None
+        Seed for random number generation.
+    verbose         : boolean, default = False
+        whether to output extra information
+    loss            : string, default="mean_squared_error"
+        fit parameter for the keras model
+    optimizer       : keras.optimizer, default=keras.optimizers.Adam(),
+    metrics         : list of strings, default=["accuracy"],
+
+    Notes
+    -----
+    Adapted from the implementation from Fullah et. al
+    https://github.com/AmaduFullah/CNTC_MODEL/blob/master/cntc.ipynb
+
+    References
+    ----------
+    .. [1] Network originally defined in:
+        @article{FULLAHKAMARA202057,
+        title = {Combining contextual neural networks for time series classification},
+        journal = {Neurocomputing},
+        volume = {384},
+        pages = {57-66},
+        year = {2020},
+        issn = {0925-2312},
+        doi = {https://doi.org/10.1016/j.neucom.2019.10.113},
+        url = {https://www.sciencedirect.com/science/article/pii/S0925231219316364},
+        author = {Amadu {Fullah Kamara} and Enhong Chen and Qi Liu and Zhen Pan},
+        keywords = {Time series classification, Contextual convolutional neural
+            networks, Contextual long short-term memory, Attention, Multilayer
+            perceptron},
+       }
+    """
+
+    def __init__(
+        self,
+        n_epochs=2000,
+        batch_size=16,
+        filter_sizes=(16, 8),
+        kernel_sizes=(1, 1),
+        rnn_size=64,
+        lstm_size=8,
+        dense_size=64,
+        callbacks=None,
+        verbose=False,
+        loss="categorical_crossentropy",
+        metrics=None,
+        random_state=0,
+    ):
+        _check_dl_dependencies(severity="error")
+        super(CNTClassifier, self).__init__()
+        self.kernel_sizes = kernel_sizes  # used plural
+        self.filter_sizes = filter_sizes  # used plural
+        self.rnn_size = rnn_size
+        self.lstm_size = lstm_size
+        self.dense_size = dense_size
+        self.callbacks = callbacks
+        self.n_epochs = n_epochs
+        self.batch_size = batch_size
+        self.verbose = verbose
+        self.loss = loss
+        self.metrics = metrics
+        self.random_state = random_state
+        self._network = CNTCNetwork()
+
+    def build_model(self, input_shape, n_classes, **kwargs):
+        """Construct a compiled, un-trained, keras model that is ready for training.
+
+        In sktime, time series are stored in numpy arrays of shape (d,m), where d
+        is the number of dimensions, m is the series length. Keras/tensorflow assume
+        data is in shape (m,d). This method also assumes (m,d). Transpose should
+        happen in fit.
+
+        Parameters
+        ----------
+        input_shape : tuple
+            The shape of the data fed into the input layer, should be (m,d)
+        n_classes: int
+            The number of classes, which becomes the size of the output layer
+
+        Returns
+        -------
+        output : a compiled Keras Model
+        """
+        from tensorflow import keras
+
+        if self.metrics is None:
+            metrics = ["accuracy"]
+        else:
+            metrics = self.metrics
+        input_layer, output_layer = self._network.build_network(input_shape, **kwargs)
+
+        output_layer = keras.layers.Dense(units=n_classes, activation="softmax")(
+            output_layer
+        )
+
+        model = keras.models.Model(inputs=input_layer, outputs=output_layer)
+        model.compile(
+            loss=self.loss,
+            optimizer=keras.optimizers.Adam(),
+            metrics=metrics,
+        )
+        return model
+
+    def _fit(self, X, y):
+        """Fit the classifier on the training set (X, y).
+
+        Parameters
+        ----------
+        X : np.ndarray of shape = (n_instances (n), n_dimensions (d), series_length (m))
+            The training input samples.
+        y : np.ndarray of shape n
+            The training data class labels.
+
+        Returns
+        -------
+        self : object
+        """
+        if self.callbacks is None:
+            self._callbacks = []
+        y_onehot = self.convert_y_to_keras(y)
+        # Transpose to conform to Keras input style.
+        X = X.transpose(0, 2, 1)
+
+        check_random_state(self.random_state)
+        self.input_shape = X.shape[1:]
+        self.model_ = self.build_model(self.input_shape, self.n_classes_)
+        X2 = self.model_.prepare_input(X)
+        if self.verbose:
+            self.model_.summary()
+        self.history = self.model_.fit(
+            [X2, X, X],
+            y_onehot,
+            batch_size=self.batch_size,
+            epochs=self.n_epochs,
+            verbose=self.verbose,
+            callbacks=self._callbacks,
+        )
+        return self
