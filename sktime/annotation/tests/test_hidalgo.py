@@ -12,8 +12,7 @@ def _isclose(list1, list2):
 
 
 # get model
-K = 2
-model = Hidalgo(K=K, Niter=10, seed=None)
+model = Hidalgo(K=2, Niter=10, seed=None)
 
 # generate dataset
 N = 10
@@ -178,7 +177,7 @@ def test_initialise_params():
     model.Iin = Iin
 
     # initialise all other parameers, including randomly generated ones
-    V, NN, d, p, a1, b1, c1, Z, f1, N_in, pp = model._initialise_params()
+    V, NN, a1, b1, c1, Z, f1, N_in = model._initialise_params()
 
     N_check = 10
     V_check = [
@@ -226,15 +225,15 @@ def test_initialise_params():
     assert _isclose(Z, Z_check)
     assert _isclose(V, V_check)
     assert _isclose(NN, NN_check)
-    assert _isclose(d, d_check)
-    assert _isclose(p, p_check)
+    # assert _isclose(d, d_check)
+    # assert _isclose(p, p_check)
     assert _isclose(a1, a1_check)
     assert _isclose(b1, b1_check)
     assert _isclose(c1, c1_check)
 
     assert N_in == N_in_check
     assert _isclose(f1, f1_check)
-    assert pp == pp_check
+    # assert pp == pp_check
 
 
 def test_gibbs_sampling():
@@ -365,15 +364,12 @@ def test_gibbs_sampling():
     sampling = model.gibbs_sampling(
         V,
         NN,
-        d,
-        p,
         a1,
         b1,
         c1,
         Z,
         f1,
         N_in,
-        pp,
     )
     sampling_check = [
         1.54721,
@@ -398,11 +394,13 @@ def test_gibbs_sampling():
     assert _isclose(sampling[:16], sampling_check)
 
 
-def test_fit():
-    """Tests _fit for filtering, all iterations."""
-    sampling = model._fit(X)  # need fresh instance of model?
+def test_predict():
+    """Tests predict for filtering, all iterations."""
+    model = Hidalgo(K=2, Niter=10, seed=None)
+    fitted_model = model._fit(X)
+    actual = fitted_model.predict(X)
 
-    sampling_check = [
+    expected = [
         [
             3.04431,
             1.56489,
@@ -443,12 +441,58 @@ def test_fit():
         ],
     ]
 
-    assert _isclose(sampling[0], sampling_check[0])
-    assert _isclose(sampling[1], sampling_check[1])
+    assert _isclose(fitted_model.sampling[0], expected[0])
+    assert _isclose(fitted_model.sampling[1], expected[1])
 
 
+def test_seed_predict():
 
+    expected = [
+        [
+            0.72269469,
+            3.20993546,
+            0.59599049,
+            0.40400951,
+            0.8,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            -17.9650666,
+            -4.50125762,
+        ],
+        [
+            0.85025968,
+            2.32993642,
+            0.80166206,
+            0.19833794,
+            0.8,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            0.0,
+            -19.21897121,
+            -7.78773922,
+        ],
+    ]
 
+    model = Hidalgo(K=2, Niter=10, seed=1)
+    fitted_model = model._fit(X)
+    actual = fitted_model.predict(X)
+
+    assert np.allclose(fitted_model.sampling, expected)
 
 
 # also need to test for estimate_zeta = True AND use_Potts = True

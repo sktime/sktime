@@ -234,7 +234,6 @@ class Hidalgo:
     def get_random_z(self):
         return self._rng.randint(0, self.K, self.N)
 
-
     def _initialise_params(self):
         """
         Decription.
@@ -256,13 +255,10 @@ class Hidalgo:
         # params to initialise
         V = np.zeros(shape=self.K)
         NN = np.zeros(shape=self.K)
-        d = np.ones(shape=self.K)
-        p = np.ones(shape=self.K) / self.K
         a1 = np.empty(shape=self.K)
         b1 = np.empty(shape=self.K)
         c1 = np.empty(shape=self.K)
         Z = np.empty(shape=self.N, dtype=int)
-        pp = (self.K - 1) / self.K
 
         if bool(self.fixed_Z) is False:
 
@@ -285,21 +281,18 @@ class Hidalgo:
 
         N_in, f1 = self.update_zeta_prior(Z)
 
-        return (V, NN, d, p, a1, b1, c1, Z, f1, N_in, pp)
+        return (V, NN, a1, b1, c1, Z, f1, N_in)
 
     def gibbs_sampling(
         self,
         V,
         NN,
-        d,
-        p,
         a1,
         b1,
         c1,
         Z,
         f1,
         N_in,
-        pp,
     ):
         """
         Gibbs sampling method to find joint posterior distribution of target variables.
@@ -321,9 +314,12 @@ class Hidalgo:
         estimate_zeta = self.estimate_zeta
 
         sampling = np.empty(shape=0)
+        pp = (K - 1) / K
+        p = np.ones(shape=K) / K
 
-        def sample_d(K, d, a1, b1):
+        def sample_d(K, a1, b1):
 
+            d = np.empty(shape=K)
             for k in range(K):
                 stop = False
 
@@ -478,7 +474,9 @@ class Hidalgo:
                         r1 = int(next_deterministic_number())
                         r2 = next_deterministic_number()
                     else:
-                        r1 = int(np.floor(self._rng.random() * K))  # random sample for Z
+                        r1 = int(
+                            np.floor(self._rng.random() * K)
+                        )  # random sample for Z
                         r2 = self._rng.random()  # random number for accepting
 
                     if prob[r1] > r2:
@@ -518,7 +516,7 @@ class Hidalgo:
 
         for it in range(Niter):
 
-            d = sample_d(K, d, a1, b1)
+            d = sample_d(K, a1, b1)
             sampling = np.append(sampling, d)
 
             (p, pp) = sample_p(K, p, pp, c1)
@@ -538,60 +536,17 @@ class Hidalgo:
 
         return sampling
 
-    def _fit(self, X):
-        """
-        Find parameter esimates as distributions in sampling.
+    def _fit(self, X, y=None):
+        self._rng = check_random_state(self.seed)
+        return self
 
+    def predict(self, X):
+        """
+        Run the Hidalgo algorithm and writes results to self.
+
+        Find parameter esimates as distributions in sampling.
         Iterate through Nreplicas random starts and get posterior
         samples with best max likelihood.
-        """
-        self._get_neighbourhood_params(X)
-        self._rng = check_random_state(self.seed)
-        V, NN, d, p, a1, b1, c1, Z, f1, N_in, pp = self._initialise_params()
-
-        Npar = self.N + 2 * self.K + 2 + 1
-
-        bestsampling = np.zeros(shape=0)
-
-        maxlik = -1e10
-
-        # this can be run in parallel...FIXME: ISSUE
-        for r in range(self.Nreplicas):
-
-            sampling = self.gibbs_sampling(
-                V,
-                NN,
-                d,
-                p,
-                a1,
-                b1,
-                c1,
-                Z,
-                f1,
-                N_in,
-                pp,
-            )
-            sampling = np.reshape(sampling, (self.Niter, Npar))
-
-            idx = [
-                it
-                for it in range(self.Niter)
-                if it % self.sampling_rate == 0 and it >= self.Niter * self.burn_in
-            ]
-            sampling = sampling[
-                idx,
-            ]
-
-            lik = np.mean(sampling[:, -1], axis=0)
-
-            if lik > maxlik:
-                bestsampling = sampling
-                maxlik = lik
-
-        return bestsampling
-
-    def fit(self, X):
-        """Run the Hidalgo algorithm and writes results to self.
 
         Write to self:
         self.d_ : 1D np.ndarray of length K
@@ -620,30 +575,69 @@ class Hidalgo:
         Returns
         -------
         None
-
         """
-        N = np.shape(X)[0]
 
-        sampling = self._fit(X)
+        self._get_neighbourhood_params(X)
+        V, NN, a1, b1, c1, Z, f1, N_in = self._initialise_params()
+
+        Npar = self.N + 2 * self.K + 2 + 1
+
+        bestsampling = np.zeros(shape=0)
+
+        maxlik = -1e10
+
+        # this can be run in parallel...FIXME: ISSUE
+        for _ in range(self.Nreplicas):
+
+            sampling = self.gibbs_sampling(
+                V,
+                NN,
+                a1,
+                b1,
+                c1,
+                Z,
+                f1,
+                N_in,
+            )
+            sampling = np.reshape(sampling, (self.Niter, Npar))
+
+            idx = [
+                it
+                for it in range(self.Niter)
+                if it % self.sampling_rate == 0 and it >= self.Niter * self.burn_in
+            ]
+            sampling = sampling[
+                idx,
+            ]
+
+            lik = np.mean(sampling[:, -1], axis=0)
+
+            if lik > maxlik:
+                bestsampling = sampling
+                maxlik = lik
+
         K = self.K
+        self.sampling = bestsampling
+        self.d_ = np.mean(bestsampling[:, :K], axis=0)
+        self.derr_ = np.std(bestsampling[:, :K], axis=0)
+        self.p_ = np.mean(bestsampling[:, K : 2 * K], axis=0)
+        self.perr_ = np.std(bestsampling[:, K : 2 * K], axis=0)
+        self.lik_ = np.mean(bestsampling[:, -1], axis=0)
+        self.likerr_ = np.std(bestsampling[:, -1], axis=0)
 
-        self.d_ = np.mean(sampling[:, :K], axis=0)
-        self.derr_ = np.std(sampling[:, :K], axis=0)
-        self.p_ = np.mean(sampling[:, K : 2 * K], axis=0)
-        self.perr_ = np.std(sampling[:, K : 2 * K], axis=0)
-        self.lik_ = np.mean(sampling[:, -1], axis=0)
-        self.likerr_ = np.std(sampling[:, -1], axis=0)
-
-        Pi = np.zeros((K, N))
+        Pi = np.zeros((K, self.N))
 
         for k in range(K):
-            Pi[k, :] = np.sum(sampling[:, (2 * K) + 1 : 2 * K + N + 1] == k, axis=0)
+            Pi[k, :] = np.sum(
+                bestsampling[:, (2 * K) + 1 : 2 * K + self.N + 1] == k, axis=0
+            )
 
-        self.sampling_z = sampling[:, (2 * K) + 1 : 2 * K + N + 1]
+        # self.sampling_z = bestsampling[:, (2 * K) + 1 : 2 * K + self.N + 1]
 
-        self.Pi = Pi / np.shape(sampling)[0]
+        self.Pi = Pi / np.shape(bestsampling)[0]
         Z = np.argmax(Pi, axis=0)
         pZ = np.max(Pi, axis=0)
         Z = Z + 1  # we can make base-zero
         Z[np.where(pZ < 0.8)] = 0
-        self.Z = Z
+
+        return Z
