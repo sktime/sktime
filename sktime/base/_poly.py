@@ -3,7 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements polymorphic base class."""
 
-__author__ = ["fkiraly", "miraep8"]
+__author__ = ["fkiraly", "benheid", "miraep8"]
 __all__ = ["BasePolymorph"]
 
 from sktime.base import BaseObject
@@ -15,18 +15,17 @@ class BasePolymorph(BaseObject):
     Partly adapted from sklearn utils.metaestimator.py.
     """
 
-    def __init__(self, estimator_type="base"):
+    def __new__(cls, *args, estimator_type="base", **kwargs):
+        """Polymorphic dispatcher to all sktime base classes."""
 
         from sktime.registry._lookup import _check_estimator_types
 
-        self.estimator_type = estimator_type
         baseclass = _check_estimator_types(estimator_type)[0]
+        obj = baseclass(*args, **kwargs)
 
-        super(BasePolymorph, self).__init__()
+        return obj
 
-        attr_to_copy = set(dir(baseclass)).difference(dir(self))
+    def __init__(self, estimator_type="base"):
 
-        for attr in attr_to_copy:
-            setattr(self, attr, getattr(baseclass, attr))
-
-        baseclass.__init__(self)
+        self.estimator_type = estimator_type
+        super().__init__()
