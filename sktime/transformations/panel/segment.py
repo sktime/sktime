@@ -312,7 +312,7 @@ def _rand_intervals_rand_n(x, random_state=None):
 
     References
     ----------
-    ..[1] Deng, Houtao, et al. "A time series forest for classification
+    .. [1] Deng, Houtao, et al. "A time series forest for classification
     and feature extraction."
         Information Sciences 239 (2013): 142-153.
     """
