@@ -57,14 +57,14 @@ class CNTCNetwork(BaseDeepNetwork):
         random_state=0,
         rnn_layer=64,
         filter_sizes=(16, 8),
-        kernal_sizes=(1, 1),
+        kernel_sizes=(1, 1),
         lstm_size=8,
         dense_size=64,
     ):
         self.random_state = random_state
         self.rnn_layer = rnn_layer
         self.filter_sizes = filter_sizes
-        self.kernal_sizes = kernal_sizes
+        self.kernel_sizes = kernel_sizes
         self.lstm_size = lstm_size
         self.dense_size = dense_size
         _check_dl_dependencies(severity="error")
@@ -94,10 +94,10 @@ class CNTCNetwork(BaseDeepNetwork):
 
         conv1 = keras.layers.Conv1D(
             self.filter_sizes[0],
-            self.kernal_sizes[0],
+            self.kernel_sizes[0],
             activation="relu",
             use_bias=True,
-            kernal_initializer="glorot_uniform",
+            kernel_initializer="glorot_uniform",
         )(input_layers[0])
         conv1 = keras.layers.BatchNormalization()(conv1)
         conv1 = keras.layers.Dropout(self.dropout)(conv1)
@@ -111,7 +111,7 @@ class CNTCNetwork(BaseDeepNetwork):
             self.rnn_layer * input_shape[1],
             activation="relu",
             use_bias=True,
-            kernal_initializer="glorot_uniform",
+            kernel_initializer="glorot_uniform",
         )(input_layers[1])
         rnn1 = keras.layers.BatchNormalization()(rnn1)
         rnn1 = keras.layers.Dropout(self.dropout)(rnn1)
@@ -119,15 +119,15 @@ class CNTCNetwork(BaseDeepNetwork):
 
         # Combining CNN and RNN
         conc1 = keras.layers.Concatenate(
-            axis=-2, name="contextual_convolutional_layer"
+            axis=-2, name="contextual_convolutional_layer1"
         )([conv1, rnn1])
 
         # Final CNN for C-CNN (WHY)
         conv2 = keras.layers.Conv1D(
             self.filter_sizes[1],
-            self.kernal_sizes[1],
+            self.kernel_sizes[1],
             activation="relu",
-            kernal_initializer="glorot_uniform",
+            kernel_initializer="glorot_uniform",
             name="standard_cnn_layer",
         )(conc1)
         conv2 = keras.layers.Dense(
@@ -142,13 +142,13 @@ class CNTCNetwork(BaseDeepNetwork):
         lstm1 = keras.layers.LSTM(
             self.lstm_size * input_shape[1],
             return_sequences=False,
-            kernal_initializer="glorot_uniform",
+            kernel_initializer="glorot_uniform",
             activation="relu",
         )(input_layers[2])
         lstm1 = keras.layers.Reshape((self.lstm_size, input_shape[1]))(lstm1)
         lstm1 = keras.layers.Dropout(self.dropout)(lstm1)
         merge = keras.layers.Concatenate(
-            axis=-2, name="contextual_convolutional_layer"
+            axis=-2, name="contextual_convolutional_layer2"
         )([conv2, lstm1])
 
         # Output calculation based on combination
@@ -168,11 +168,11 @@ class CNTCNetwork(BaseDeepNetwork):
 
         # Adding ouutput MLP Layer
         mlp1 = keras.layers.Dense(
-            self.dense_size, kernal_initializer="glorot_uniform", activation="relu"
+            self.dense_size, kernel_initializer="glorot_uniform", activation="relu"
         )(att)
         mlp1 = keras.layers.Dropout(0.1)(mlp1)
         mlp2 = keras.layers.Dense(
-            self.dense_size, kernal_initializer="glorot_uniform", activation="relu"
+            self.dense_size, kernel_initializer="glorot_uniform", activation="relu"
         )(mlp1)
         mlp2 = keras.layers.Dropout(0.1)(mlp2)
         flat = keras.layers.Flatten()(mlp2)
