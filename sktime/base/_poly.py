@@ -17,7 +17,6 @@ class BasePolymorph(BaseObject):
 
     def __new__(cls, *args, estimator_type="base", **kwargs):
         """Polymorphic dispatcher to all sktime base classes."""
-
         from sktime.registry._lookup import _check_estimator_types
 
         baseclass = _check_estimator_types(estimator_type)[0]
