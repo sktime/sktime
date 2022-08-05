@@ -15,10 +15,17 @@ class BasePolymorph(BaseObject):
     Partly adapted from sklearn utils.metaestimator.py.
     """
 
+    @classmethod
+    def _infer_estimator_type(cls, *args, **kwargs):
+        """Estimator type inference method, can be overridden by children."""
+        estimator_type = kwargs.get("estimator_type", "base")
+        return estimator_type
+
     def __new__(cls, *args, estimator_type="base", **kwargs):
         """Polymorphic dispatcher to all sktime base classes."""
         from sktime.registry._lookup import _check_estimator_types
 
+        estimator_type = cls._infer_estimator_type(*args, **kwargs)
         baseclass = _check_estimator_types(estimator_type)[0]
         obj = baseclass(*args, **kwargs)
 
