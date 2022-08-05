@@ -52,11 +52,21 @@ class CNNNetwork(BaseDeepNetwork):
        }
     """
 
-    def __init__(self, rnn_layer, filter_sizes, kernal_sizes, lstm_size):
+    def __init__(
+        self,
+        random_state=0,
+        rnn_layer=64,
+        filter_sizes=(16, 8),
+        kernal_sizes=(1, 1),
+        lstm_size=8,
+        dense_size=64,
+    ):
+        self.random_state = random_state
         self.rnn_layer = rnn_layer
         self.filter_sizes = filter_sizes
         self.kernal_sizes = kernal_sizes
         self.lstm_size = lstm_size
+        self.dense_size = dense_size
         _check_dl_dependencies(severity="error")
 
     def build_network(self, input_shape, **kwargs):
