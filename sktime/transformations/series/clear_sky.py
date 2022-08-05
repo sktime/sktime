@@ -85,7 +85,7 @@ class ClearSky(BaseTransformer):
         "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
         "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
         "transform-returns-same-time-index": True,
-        "skip-inverse-transform": True,  # is inverse-transform skipped when called?
+        "skip-inverse-transform": False,  # is inverse-transform skipped when called?
         "capability:unequal_length": False,
         "capability:unequal_length:removes": True,  # ?
         "handles-missing-data": False,
@@ -246,7 +246,7 @@ class ClearSky(BaseTransformer):
             "quantile_prob": 0.95,
             "bw_diurnal": 100,
             "bw_annual": 10,
-            "min_thresh": 0,
+            "min_thresh": None,
         }
 
         return params
