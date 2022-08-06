@@ -182,6 +182,7 @@ def all_estimators(
             that do not contain any of the strings on the `exclude` list
             string is prefixed by the string `prefix`
         """
+
         def _is_ignored_module(module):
             if exclude is None:
                 return False
@@ -193,7 +194,8 @@ def all_estimators(
                 yield f"{prefix}{module_name}"
                 if is_pgk:
                     yield from (
-                        f"{prefix}{module_name}.{x}" for x in _walk(f"{root}/{module_name}", exclude=exclude)
+                        f"{prefix}{module_name}.{x}"
+                        for x in _walk(f"{root}/{module_name}", exclude=exclude)
                     )
 
     # Ignore deprecation warnings triggered at import time and from walking
