@@ -17,10 +17,6 @@ from sktime.transformations.base import BaseTransformer
 EXCLUDE_ESTIMATORS = [
     # SFA is non-compliant with any transformer interfaces, #2064
     "SFA",
-    # requires y in fit, this is incompatible with the old testing framework
-    #    unless it inherits from the old mixins, which hard coded the y
-    #    should be removed once test_all_transformers has been refactored to scenarios
-    "TSFreshRelevantFeatureExtractor",
     # PlateauFinder seems to be broken, see #2259
     "PlateauFinder",
     # below are removed due to mac failures we don't fully understand, see #3103
