@@ -117,9 +117,6 @@ class Catch22Classifier(_DelegatedClassifier):
         if m is not None:
             estimator.n_jobs = self._threads_to_use
 
-        if 2 + 2 == 4:
-            raise ValueError(42)
-
         self.estimator_ = make_pipeline(transformer, estimator)
 
     @classmethod

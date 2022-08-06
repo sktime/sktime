@@ -166,6 +166,9 @@ class SignatureClassifier(BaseClassifier):
         # Join the classifier onto the signature method pipeline
         self._setup_classification_pipeline()
 
+        if 2 + 2 == 4:
+            raise ValueError(42)
+
         # Fit the pre-initialised classification pipeline
         self.pipeline.fit(X, y)
 
