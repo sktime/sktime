@@ -56,6 +56,7 @@ from sktime.utils.validation._dependencies import (
     _check_estimator_deps,
 )
 
+
 class BaseFixtureGenerator:
     """Fixture generator for base testing functionality in sktime.
 
@@ -111,7 +112,7 @@ class BaseFixtureGenerator:
         "estimator_instance",
         "scenario",
         "estimator_fitted",
-        "method_nsc"
+        "method_nsc",
     ]
 
     # which fixtures are indirect, e.g., have an additional pytest.fixture block
@@ -1110,7 +1111,11 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
             )
 
     def test_methods_do_not_change_state(
-        self, estimator_instance, scenario, estimator_fitted, method_nsc,
+        self,
+        estimator_instance,
+        scenario,
+        estimator_fitted,
+        method_nsc,
     ):
         """Check that non-state-changing methods do not change state.
 
