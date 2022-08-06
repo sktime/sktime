@@ -202,6 +202,58 @@ class ForecastingHorizon:
     freq : str, pd.Index, pandas offset, or sktime forecaster, optional (default=None)
         object carrying frequency information on values
         ignored unless values is without inferrable freq
+
+    Examples
+    --------
+    >>> from sktime.forecasting.base import ForecastingHorizon
+    >>> from sktime.forecasting.naive import NaiveForecaster
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.model_selection import temporal_train_test_split
+    >>> import numpy as np
+    >>> y = load_airline()
+    >>> y_train, y_test = temporal_train_test_split(y, test_size=6)
+
+        List as ForecastingHorizon
+    >>> ForecastingHorizon([1, 2, 3])
+    ForecastingHorizon([1, 2, 3], dtype='int64', is_relative=True)
+
+        Numpy as ForecastingHorizon
+    >>> ForecastingHorizon(np.arange(1, 7))
+    ForecastingHorizon([1, 2, 3, 4, 5, 6], dtype='int64', is_relative=True)
+
+        Absolute ForecastingHorizon with a pandas Index
+    >>> ForecastingHorizon(y_test.index, is_relative=False) # doctest: +SKIP
+    ForecastingHorizon(['1960-07', '1960-08', '1960-09', '1960-10',
+        '1960-11', '1960-12'], dtype='period[M]', name='Period', is_relative=False)
+
+        Converting
+    >>> # set cutoff (last time point of training data)
+    >>> cutoff = y_train.index[-1]
+    >>> cutoff
+    Period('1960-06', 'M')
+    >>> # to_relative
+    >>> fh = ForecastingHorizon(y_test.index, is_relative=False)
+    >>> fh.to_relative(cutoff=cutoff)
+    ForecastingHorizon([1, 2, 3, 4, 5, 6], dtype='int64', is_relative=True)
+
+    >>> # to_absolute
+    >>> fh = ForecastingHorizon([1, 2, 3, 4, 5, 6], is_relative=True)
+    >>> fh.to_absolute(cutoff=cutoff) # doctest: +SKIP
+    ForecastingHorizon(['1960-07', '1960-08', '1960-09', '1960-10',
+        '1960-11', '1960-12'], dtype='period[M]', is_relative=False)
+
+        Automatically casted ForecastingHorizon from list when calling predict()
+    >>> forecaster = NaiveForecaster(strategy="drift")
+    >>> forecaster.fit(y_train)
+    NaiveForecaster(...)
+    >>> y_pred = forecaster.predict(fh=[1,2,3])
+    >>> forecaster.fh
+    ForecastingHorizon([1, 2, 3], dtype='int64', is_relative=True)
+
+        This is identical to give an object of ForecastingHorizon
+    >>> y_pred = forecaster.predict(fh=ForecastingHorizon([1,2,3]))
+    >>> forecaster.fh
+    ForecastingHorizon([1, 2, 3], dtype='int64', is_relative=True)
     """
 
     def __new__(
