@@ -24,14 +24,14 @@ class TransformerFixtureGenerator(BaseFixtureGenerator):
         ranges over all scenarios returned by retrieve_scenarios
     """
 
-    # note: this should be separate from TestAllTransformers
+    # note: this should be separate from _TestAllTransformers
     #   additional fixtures, parameters, etc should be added here
-    #   TestAllTransformers should contain the tests only
+    #   _TestAllTransformers should contain the tests only
 
     estimator_type_filter = "transformer"
 
 
-class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
+class _TestAllTransformers(TransformerFixtureGenerator, QuickTester):
     """Module level tests for all sktime transformers."""
 
     def test_capability_inverse_tag_is_correct(self, estimator_instance):

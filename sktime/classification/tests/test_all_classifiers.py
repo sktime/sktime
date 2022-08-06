@@ -37,14 +37,14 @@ class ClassifierFixtureGenerator(BaseFixtureGenerator):
         ranges over all scenarios returned by retrieve_scenarios
     """
 
-    # note: this should be separate from TestAllClassifiers
+    # note: this should be separate from _TestAllClassifiers
     #   additional fixtures, parameters, etc should be added here
     #   Classifiers should contain the tests only
 
     estimator_type_filter = "classifier"
 
 
-class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
+class _TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
     """Module level tests for all sktime classifiers."""
 
     def test_multivariate_input_exception(self, estimator_instance):

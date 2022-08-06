@@ -72,9 +72,9 @@ class ForecasterFixtureGenerator(BaseFixtureGenerator):
         ranges over all scenarios returned by retrieve_scenarios
     """
 
-    # note: this should be separate from TestAllForecasters
+    # note: this should be separate from _TestAllForecasters
     #   additional fixtures, parameters, etc should be added here
-    #   TestAllForecasters should contain the tests only
+    #   _TestAllForecasters should contain the tests only
 
     estimator_type_filter = "forecaster"
 
@@ -137,7 +137,7 @@ class ForecasterFixtureGenerator(BaseFixtureGenerator):
             return TEST_STEP_LENGTHS_INT, [f"step={a}" for a in TEST_STEP_LENGTHS_INT]
 
 
-class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
+class _TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
     """Module level tests for all sktime forecasters."""
 
     def test_get_fitted_params(self, estimator_instance, scenario):

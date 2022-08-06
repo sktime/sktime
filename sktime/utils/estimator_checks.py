@@ -71,23 +71,23 @@ def check_estimator(
     """
     from sktime.base import BaseEstimator
     from sktime.classification.early_classification.tests.test_all_early_classifiers import (  # noqa E501
-        TestAllEarlyClassifiers,
+        _TestAllEarlyClassifiers,
     )
-    from sktime.classification.tests.test_all_classifiers import TestAllClassifiers
-    from sktime.forecasting.tests.test_all_forecasters import TestAllForecasters
+    from sktime.classification.tests.test_all_classifiers import _TestAllClassifiers
+    from sktime.forecasting.tests.test_all_forecasters import _TestAllForecasters
     from sktime.registry import scitype
-    from sktime.regression.tests.test_all_regressors import TestAllRegressors
-    from sktime.tests.test_all_estimators import TestAllEstimators, TestAllObjects
-    from sktime.transformations.tests.test_all_transformers import TestAllTransformers
+    from sktime.regression.tests.test_all_regressors import _TestAllRegressors
+    from sktime.tests.test_all_estimators import _TestAllEstimators, _TestAllObjects
+    from sktime.transformations.tests.test_all_transformers import _TestAllTransformers
 
     testclass_dict = dict()
-    testclass_dict["classifier"] = TestAllClassifiers
-    testclass_dict["early_classifier"] = TestAllEarlyClassifiers
-    testclass_dict["forecaster"] = TestAllForecasters
-    testclass_dict["regressor"] = TestAllRegressors
-    testclass_dict["transformer"] = TestAllTransformers
+    testclass_dict["classifier"] = _TestAllClassifiers
+    testclass_dict["early_classifier"] = _TestAllEarlyClassifiers
+    testclass_dict["forecaster"] = _TestAllForecasters
+    testclass_dict["regressor"] = _TestAllRegressors
+    testclass_dict["transformer"] = _TestAllTransformers
 
-    results = TestAllObjects().run_tests(
+    results = _TestAllObjects().run_tests(
         estimator=estimator,
         return_exceptions=return_exceptions,
         tests_to_run=tests_to_run,
@@ -97,7 +97,7 @@ def check_estimator(
     )
 
     if isinstance(estimator, BaseEstimator) or issubclass(estimator, BaseEstimator):
-        results_estimator = TestAllEstimators().run_tests(
+        results_estimator = _TestAllEstimators().run_tests(
             estimator=estimator,
             return_exceptions=return_exceptions,
             tests_to_run=tests_to_run,
