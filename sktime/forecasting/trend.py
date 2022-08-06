@@ -206,12 +206,24 @@ class PolynomialTrendForecaster(BaseForecaster):
 class STLForecaster(BaseForecaster):
     """Implements STLForecaster based on statsmodels.tsa.seasonal.STL implementation.
 
-    The STLForecaster is using an STL to decompose the given
-    series y into the three components trend, season and residuals [1]_. Then,
-    the forecaster_trend, forecaster_seasonal and forecaster_resid are fitted
-    on the components individually to forecast them also individually. The
-    final forecast is then the sum of the three component forecasts. The STL
-    decomposition is done by means of using the package statsmodels [2]_.
+    The STLForecaster applies the following algorithm, also see [1]_.
+
+    in `fit`:
+    1. use `statsmodels` STL [2]_ to decompose the given series `y` into
+        the three components: `trend`, `season` and `residuals`.
+    2. fit clones of `forecaster_trend` to `trend`, `forecaster_seasonal` to `season`,
+        and `forecaster_resid` to `residuals`, using `y`, `X`, `fh` from `fit`.
+        The forecasters are fitted as clones, stored in the attributes
+        `forecaster_trend_`, `forecaster_seasonal_`, `forecaster_resid_`.
+
+    In `predict`, forecasts as follows:
+    1. obtain forecasts `y_pred_trend` from `forecaster_trend_`,
+        `y_pred_seasonal` from `forecaster_seasonal_`, and
+        `y_pred_residual` from `forecaster_resid_`, using `X`, `fh`, from `predict`.
+    2. recompose `y_pred` as `y_pred = y_pred_trend + y_pred_seasonal + y_pred_residual`
+    3. return `y_pred`
+
+    `update` refits entirely, i.e., behaves as `fit` on all data seen so far.
 
     Parameters
     ----------
