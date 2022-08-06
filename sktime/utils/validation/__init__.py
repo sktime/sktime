@@ -21,6 +21,7 @@ from typing import Union
 import numpy as np
 import pandas as pd
 
+ACCEPTED_DATETIME_TYPES = np.datetime64, pd.Timestamp
 ACCEPTED_TIMEDELTA_TYPES = pd.Timedelta, timedelta, np.timedelta64
 ACCEPTED_DATEOFFSET_TYPES = pd.DateOffset
 ACCEPTED_WINDOW_LENGTH_TYPES = Union[
@@ -29,6 +30,11 @@ ACCEPTED_WINDOW_LENGTH_TYPES = Union[
 NON_FLOAT_WINDOW_LENGTH_TYPES = Union[
     int, Union[ACCEPTED_TIMEDELTA_TYPES], Union[ACCEPTED_DATEOFFSET_TYPES]
 ]
+
+
+def is_array(x) -> bool:
+    """Check if x is either a list or np.ndarray."""
+    return isinstance(x, (list, np.ndarray))
 
 
 def is_int(x) -> bool:
@@ -47,6 +53,11 @@ def is_timedelta(x) -> bool:
     return isinstance(x, ACCEPTED_TIMEDELTA_TYPES)
 
 
+def is_datetime(x) -> bool:
+    """Check if x is of datetime type."""
+    return isinstance(x, ACCEPTED_DATETIME_TYPES)
+
+
 def is_date_offset(x) -> bool:
     """Check if x is of pd.DateOffset type."""
     return isinstance(x, ACCEPTED_DATEOFFSET_TYPES)
@@ -55,6 +66,57 @@ def is_date_offset(x) -> bool:
 def is_timedelta_or_date_offset(x) -> bool:
     """Check if x is of timedelta or pd.DateOffset type."""
     return is_timedelta(x=x) or is_date_offset(x=x)
+
+
+def array_is_int(x) -> bool:
+    """Check if array is of integer type."""
+    return all([is_int(value) for value in x])
+
+
+def array_is_datetime64(x) -> bool:
+    """Check if array is of np.datetime64 type."""
+    return all([is_datetime(value) for value in x])
+
+
+def array_is_timedelta_or_date_offset(x) -> bool:
+    """Check if array is timedelta or pd.DateOffset type."""
+    return all([is_timedelta_or_date_offset(value) for value in x])
+
+
+def is_iterable(x) -> bool:
+    """Check if input is iterable."""
+    try:
+        iter(x)
+    except TypeError:
+        return False
+    else:
+        return True
+
+
+def is_iloc_like(x) -> bool:
+    """Check if input is .iloc friendly."""
+    if is_iterable(x):
+        return array_is_int(x)
+    else:
+        return is_int(x)
+
+
+def is_time_like(x) -> bool:
+    """Check if input is time-like (pd.Timedelta, pd.DateOffset, etc.)."""
+    if is_iterable(x):
+        return array_is_timedelta_or_date_offset(x) or array_is_datetime64(x)
+    else:
+        return is_timedelta_or_date_offset(x) or is_datetime(x)
+
+
+def all_inputs_are_iloc_like(args: list) -> bool:
+    """Check if all inputs in the list are .iloc friendly."""
+    return all([is_iloc_like(x) if x is not None else True for x in args])
+
+
+def all_inputs_are_time_like(args: list) -> bool:
+    """Check if all inputs in teh list are time-like."""
+    return all([is_time_like(x) if x is not None else True for x in args])
 
 
 def check_n_jobs(n_jobs: int) -> int:

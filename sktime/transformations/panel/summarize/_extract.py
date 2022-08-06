@@ -1,21 +1,22 @@
-#!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
+"""Sequence feature extraction transformers."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+
+__author__ = ["mloning"]
 
 import numpy as np
 import pandas as pd
-from joblib import Parallel
-from joblib import delayed
-from sklearn.base import clone
+from joblib import Parallel, delayed
 
-from sktime.transformations.base import _PanelToPanelTransformer
-from sktime.transformations.base import _PanelToTabularTransformer
+from sktime.datatypes import convert_to
+from sktime.transformations.base import BaseTransformer
 from sktime.transformations.panel.segment import RandomIntervalSegmenter
-from sktime.utils.validation.panel import check_X
 
 
-class PlateauFinder(_PanelToPanelTransformer):
-    """Transformer that finds segments of the same given value, plateau in
+class PlateauFinder(BaseTransformer):
+    """Plateau finder transformer.
+
+    Transformer that finds segments of the same given value, plateau in
     the time series, and
     returns the starting indices and lengths.
 
@@ -29,29 +30,36 @@ class PlateauFinder(_PanelToPanelTransformer):
         finder.
     """
 
-    _tags = {"fit-in-transform": True, "univariate-only": True}
+    _tags = {
+        "fit_is_empty": True,
+        "univariate-only": True,
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
+        "scitype:transform-output": "Series",
+        # what scitype is returned: Primitives, Series, Panel
+        "scitype:instancewise": False,  # is this an instance-wise transform?
+        "X_inner_mtype": "nested_univ",  # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
+    }
 
     def __init__(self, value=np.nan, min_length=2):
         self.value = value
         self.min_length = min_length
         super(PlateauFinder, self).__init__()
 
-    def transform(self, X, y=None):
+    def _transform(self, X, y=None):
         """Transform X.
+
         Parameters
         ----------
         X : nested pandas DataFrame of shape [n_samples, n_columns]
             Nested dataframe with time-series in cells.
+
         Returns
         -------
         Xt : pandas DataFrame
           Transformed pandas DataFrame
         """
-
-        # input checks
-        self.check_is_fitted()
-        X = check_X(X, enforce_univariate=True, coerce_to_pandas=True)
-
         # get column name
         column_name = X.columns[0]
 
@@ -95,15 +103,28 @@ class PlateauFinder(_PanelToPanelTransformer):
         )
         Xt["%s_starts" % column_prefix] = pd.Series(self._starts)
         Xt["%s_lengths" % column_prefix] = pd.Series(self._lengths)
+
+        Xt = Xt.applymap(lambda x: pd.Series(x))
         return Xt
 
 
-class DerivativeSlopeTransformer(_PanelToPanelTransformer):
-    # TODO add docstrings
-    def transform(self, X, y=None):
-        self.check_is_fitted()
-        X = check_X(X, enforce_univariate=False, coerce_to_pandas=True)
+class DerivativeSlopeTransformer(BaseTransformer):
+    """Derivative slope transformer."""
 
+    _tags = {
+        "fit_is_empty": True,
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
+        "scitype:transform-output": "Series",
+        # what scitype is returned: Primitives, Series, Panel
+        "scitype:instancewise": False,  # is this an instance-wise transform?
+        "X_inner_mtype": "nested_univ",  # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
+    }
+
+    # TODO add docstrings
+    def _transform(self, X, y=None):
+        """Transform X."""
         num_cases, num_dim = X.shape
         output_df = pd.DataFrame()
         for dim in range(num_dim):
@@ -115,6 +136,8 @@ class DerivativeSlopeTransformer(_PanelToPanelTransformer):
 
     @staticmethod
     def row_wise_get_der(X):
+        """Get derivatives."""
+
         def get_der(x):
             der = []
             for i in range(1, len(x) - 1):
@@ -136,8 +159,9 @@ def _check_features(features):
         )
 
 
-class RandomIntervalFeatureExtractor(_PanelToTabularTransformer):
-    """
+class RandomIntervalFeatureExtractor(BaseTransformer):
+    """Random interval feature extractor transform.
+
     Transformer that segments time-series into random intervals
     and subsequently extracts series-to-primitives features from each interval.
 
@@ -168,7 +192,17 @@ class RandomIntervalFeatureExtractor(_PanelToTabularTransformer):
         by `np.random`.
     """
 
-    _tags = {"univariate-only": True}
+    _tags = {
+        "fit_is_empty": False,
+        "univariate-only": True,
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
+        "scitype:transform-output": "Primitives",
+        # what is the scitype of y: None (not needed), Primitives, Series, Panel
+        "scitype:instancewise": True,  # is this an instance-wise transform?
+        "X_inner_mtype": "nested_univ",  # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "pd_Series_Table",  # and for y?
+    }
 
     def __init__(
         self,
@@ -185,7 +219,7 @@ class RandomIntervalFeatureExtractor(_PanelToTabularTransformer):
         self.features = features
         super(RandomIntervalFeatureExtractor, self).__init__()
 
-    def fit(self, X, y=None):
+    def _fit(self, X, y=None):
         """
         Fit transformer, generating random interval indices.
 
@@ -211,33 +245,30 @@ class RandomIntervalFeatureExtractor(_PanelToTabularTransformer):
         self.intervals_ = self._interval_segmenter.intervals_
         self.input_shape_ = self._interval_segmenter.input_shape_
         self._time_index = self._interval_segmenter._time_index
-        self._is_fitted = True
         return self
 
-    def transform(self, X, y=None):
-        """
+    def _transform(self, X, y=None):
+        """Transform X.
+
         Transform X, segments time-series in each column into random
         intervals using interval indices generated
         during `fit` and extracts features from each interval.
 
         Parameters
         ----------
-        X : nested pandas.DataFrame of shape [n_samples, n_features]
+        X : nested pandas.DataFrame of shape [n_instances, n_features]
             Nested dataframe with time-series in cells.
 
         Returns
         -------
         Xt : pandas.DataFrame
-          Transformed pandas DataFrame with same number of rows and one
-          column for each generated interval.
+          Transformed pandas DataFrame with n_instances rows and one
+            column for each generated interval.
         """
-        # Check is fit had been called
-        self.check_is_fitted()
-
         # Check input of feature calculators, i.e list of functions to be
         # applied to time-series
         features = _check_features(self.features)
-        X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
+        X = convert_to(X, "numpy3D")
 
         # Check that the input is of the same shape as the one passed
         # during fit.
@@ -251,7 +282,7 @@ class RandomIntervalFeatureExtractor(_PanelToTabularTransformer):
         #     raise ValueError('Indexes of input time-series are different
         #     from what was seen in `fit`')
 
-        n_instances, n_columns, _ = X.shape
+        n_instances, _, _ = X.shape
         n_features = len(features)
 
         intervals = self.intervals_
@@ -263,6 +294,7 @@ class RandomIntervalFeatureExtractor(_PanelToTabularTransformer):
         columns = []
 
         i = 0
+        drop_list = []
         for func in features:
             # TODO generalise to series-to-series functions and function kwargs
             for start, end in intervals:
@@ -282,16 +314,23 @@ class RandomIntervalFeatureExtractor(_PanelToTabularTransformer):
                         ).squeeze()
                     else:
                         raise
+                new_col_name = f"{start}_{end}_{func.__name__}"
+                if new_col_name in columns:
+                    drop_list += [i]
+                else:
+                    columns = columns + [new_col_name]
                 i += 1
-                columns.append(f"{start}_{end}_{func.__name__}")
 
         Xt = pd.DataFrame(Xt)
+        Xt = Xt.drop(columns=Xt.columns[drop_list])
         Xt.columns = columns
+
         return Xt
 
 
-class FittedParamExtractor(_PanelToTabularTransformer):
-    """
+class FittedParamExtractor(BaseTransformer):
+    """Fitted parameter extractor.
+
     Extract parameters of a fitted forecaster as features for a subsequent
     tabular learning task.
     This class first fits a forecaster to the given time series and then
@@ -312,7 +351,18 @@ class FittedParamExtractor(_PanelToTabularTransformer):
     """
 
     _required_parameters = ["forecaster"]
-    _tags = {"fit-in-transform": True, "univariate-only": True}
+
+    _tags = {
+        "fit_is_empty": True,
+        "univariate-only": True,
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
+        "scitype:transform-output": "Primitives",
+        # what is the scitype of y: None (not needed), Primitives, Series, Panel
+        "scitype:instancewise": True,  # is this an instance-wise transform?
+        "X_inner_mtype": "nested_univ",  # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
+    }
 
     def __init__(self, forecaster, param_names, n_jobs=None):
         self.forecaster = forecaster
@@ -320,23 +370,21 @@ class FittedParamExtractor(_PanelToTabularTransformer):
         self.n_jobs = n_jobs
         super(FittedParamExtractor, self).__init__()
 
-    def transform(self, X, y=None):
-        """
+    def _transform(self, X, y=None):
+        """Transform X.
 
         Parameters
         ----------
         X : pd.DataFrame
             Univariate time series to transform.
-        y : pd.DataFrame, optional (default=False)
-            Exogenous variables
+        y : ignored argument for interface compatibility
+            Additional data, e.g., labels for transformation
 
         Returns
         -------
         Xt : pd.DataFrame
             Extracted parameters; columns are parameter values
         """
-        self.check_is_fitted()
-        X = check_X(X, enforce_univariate=True)
         param_names = self._check_param_names(self.param_names)
         n_instances = X.shape[0]
 
@@ -355,7 +403,7 @@ class FittedParamExtractor(_PanelToTabularTransformer):
         # iterate over rows
         extracted_params = Parallel(n_jobs=self.n_jobs)(
             delayed(_fit_extract)(
-                clone(self.forecaster), _get_instance(X, i), param_names
+                self.forecaster.clone(), _get_instance(X, i), param_names
             )
             for i in range(n_instances)
         )
@@ -379,3 +427,25 @@ class FittedParamExtractor(_PanelToTabularTransformer):
                 f"but found: {type(param_names)}"
             )
         return param_names
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        from sktime.forecasting.exp_smoothing import ExponentialSmoothing
+
+        return {"forecaster": ExponentialSmoothing(), "param_names": ["initial_level"]}

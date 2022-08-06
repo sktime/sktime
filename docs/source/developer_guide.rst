@@ -18,8 +18,8 @@ New developers should:
 * install a development version of ``sktime``, see :ref:`installation`
 * set up CI tests locally and ensure they know how to check them remotely, see :ref:`continuous_integration`
 * get familiar with the git workflow (:ref:`git_workflow`) and coding standards (:ref:`coding_standards`)
-* feel free, at any point in time, to post questions on Slack, or ask core developers for help
-(see here for a `list of core developers <https://www.sktime.org/en/stable/about/team.html>`_)
+* feel free, at any point in time, to post questions on Slack, or ask core developers for help (see here for a `list of core developers <https://www.sktime.org/en/stable/about/team.html>`_)
+
 * feel free to join the collaborative coding sessions for pair programming or getting help on developer set-up
 
 Further special topics are listed below.
@@ -38,6 +38,7 @@ If you’re already familiar with scikit-learn, you may still learn something ne
    developer_guide/add_estimators
    developer_guide/add_dataset
    developer_guide/deprecation
+   developer_guide/dependencies
    developer_guide/documentation
    developer_guide/testing_framework
    developer_guide/release

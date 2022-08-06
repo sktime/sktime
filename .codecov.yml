@@ -6,7 +6,7 @@ ignore:
   - ".github/*"
   - ".binder/*"
   - "extension_templates/*"
-  - "sktime/contrib/**/*"
+  - "sktime/_contrib/**/*"
   - "*.md"
   - "*.yml"
   - "*.yaml"

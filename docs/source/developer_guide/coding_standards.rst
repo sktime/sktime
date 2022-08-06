@@ -1,5 +1,6 @@
 .. _coding_standards:
 
+================
 Coding standards
 ================
 
@@ -7,69 +8,107 @@ Coding standards
    :local:
 
 Coding style
-------------
+============
 
-We follow the `PEP8 <https://www.python.org/dev/peps/pep-0008/>`__
-coding guidelines. A good example can be found
-`here <https://gist.github.com/nateGeorge/5455d2c57fb33c1ae04706f2dc4fee01>`__.
+In coding, we follow:
 
-We use the `pre-commit <#Code-quality-checks>`_ workflow together with
-`black <https://black.readthedocs.io/en/stable/>`__ and
-`flake8 <https://flake8.pycqa.org/en/latest/>`__ to automatically apply
-consistent formatting and check whether your contribution complies with
-the PEP8 style.
+*  the `PEP8 <https://www.python.org/dev/peps/pep-0008/>`__ coding guidelines. A good example can be found `here <https://gist.github.com/nateGeorge/5455d2c57fb33c1ae04706f2dc4fee01>`__.
 
-For docstrings, we use the `numpy docstring standard <https://numpydoc.readthedocs.io/en/latest/format.html#docstring-standard>`_, along with sktime specific conventions described in our :ref:`developer_guide`'s :ref:`documentation section <developer_guide_documentation>`.
+* code formatting according to ``black``, ``flake8``, ``isort``, ``numpydoc``
 
-In addition, we add the following guidelines:
+Code formatting and linting
+---------------------------
 
--  Please check out our :ref:`glossary`.
+We adhere to the following code formatting standards:
+
+* `black <https://black.readthedocs.io/en/stable/>`__ with default settings
+
+* `flake8 <https://flake8.pycqa.org/en/latest/>`__ with a ``max_line_length=88`` and some exceptions as per ``setup.cfg``
+
+* ``isort`` with default settings
+
+* ``numpydoc`` to enforce numpy `docstring standard <https://numpydoc.readthedocs.io/en/latest/format.html#docstring-standard>`_ , along with sktime specific conventions described in our :ref:`developer_guide`'s :ref:`documentation section <developer_guide_documentation>`.
+
+This is enforced through our CI/CD workflows via `pre-commit <https://pre-commit.com/>`_.
+
+The full pre-commit configuration can be found in
+`.pre-commit-config.yaml <https://github.com/alan-turing-institute/sktime/blob/main/.pre-commit-config.yaml>`_.
+Additional configurations can be found in
+`setup.cfg <https://github.com/alan-turing-institute/sktime/blob/main/setup.cfg>`_.
+
+``sktime`` specific code formatting conventions
+-----------------------------------------------
+
+-  Check out our :ref:`glossary`.
 -  Use underscores to separate words in non-class names: ``n_instances``
    rather than ``ninstances``.
+-  exceptionally, capital letters ``X``, ``Y``, ``Z``, are permissible as variable names
+   or part of variable names such as ``X_train`` if referring to data sets, in accordance
+   with the PEP8 convention that such variable names are permissible if in prior use in an area
+   (here, this is the ``scikit-learn`` adjacenet ecosystem)
 -  Avoid multiple statements on one line. Prefer a line return after a
    control flow statement (``if``/``for``).
 -  Use absolute imports for references inside sktime.
--  Please don’t use ``import *`` in the source code. It is considered
+-  Don’t use ``import *`` in the source code. It is considered
    harmful by the official Python recommendations. It makes the code
    harder to read as the origin of symbols is no longer explicitly
    referenced, but most important, it prevents using a static analysis
    tool like pyflakes to automatically find bugs.
 
-.. _infrastructure::
+Setting up local code quality checks
+------------------------------------
 
-Dependencies
-------------
+There are two options to set up local code quality checks:
 
-We try to keep the number of core dependencies to a minimum and rely on
-other packages as soft dependencies when feasible.
+* using ``pre-commit`` for automated code formatting
+* setting up ``black``, ``flake8``, ``isort`` and/or ``numpydoc`` manually in a local dev IDE
+
+Using pre-commit
+^^^^^^^^^^^^^^^^
+
+To set up pre-commit, follow these steps in a python environment
+with the ``sktime`` ``dev`` dependencies installed.
+
+Type the below in your python environment, and in the root of your local repository clone:
+
+1. If not already done, ensure ``sktime`` with ``dev`` dependencies is installed, this includes ``pre-commit``:
+
+.. code:: bash
+
+   pip install -e .[dev]
+
+2. Set up pre-commit:
+
+.. code:: bash
+
+   pre-commit install
+
+Once installed, pre-commit will automatically run all ``sktime`` code quality
+checks on the files you changed whenever you make a new commit.
+
+You can find our pre-commit configuration in
+`.pre-commit-config.yaml <https://github.com/alan-turing-institute/sktime/blob/main/.pre-commit-config.yaml>`_.
+Additional configurations can be found in
+`setup.cfg <https://github.com/alan-turing-institute/sktime/blob/main/setup.cfg>`_.
 
 .. note::
+   If you want to exclude some line of code from being checked, you can add a ``# noqa`` (no quality assurance) comment at the end of that line.
 
-   A soft dependency is a dependency that is only required to import
-   certain modules, but not necessary to use most functionality. A soft
-   dependency is not installed automatically when the package is
-   installed. Instead, users need to install it manually if they want to
-   use a module that requires a soft dependency.
+Integrating with your local developer IDE
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-If you add a new dependency or change the version of an existing one,
-you need to update the following file:
+Local developer IDEs will usually integrate with common code quality checks, but need setting them up in IDE specific ways.
 
--  `pyproject.toml <https://github.com/alan-turing-institute/sktime/blob/main/pyproject.toml>`__
-   following the `PEP 621 <https://www.python.org/dev/peps/pep-0621/>`_ convention all dependencies
-   including build time dependencies and optional dependencies are specified in this file.
+For Visual Studio Code, ``black``, ``flake8``, ``isort`` and/or ``numpydoc`` will need to be activated individually in the preferences
+(e.g., search for ``black`` and check the box). The packages ``black`` etc will need to be installed in the python environment used by the IDE,
+this can be achieved by an install of ``sktime`` with ``dev`` dependencies.
 
-If a user is missing a soft dependency, we raise a user-friendly error message.
-This is handled through our ``_check_soft_dependencies`` defined
-`here <https://github.com/alan-turing-institute/sktime/blob/main/sktime/utils/validation/_dependencies.py>`__.
+Visual Studio Code preferences also allow setting of parameters such as ``max_line_length=88`` for ``flake8``.
 
-We use continuous integration tests to check if all soft
-dependencies are properly isolated to specific modules.
-If you add a new soft dependency, make sure to add it
-`here <https://github.com/alan-turing-institute/sktime/blob/main/build_tools/azure/check_soft_dependencies.py>`__
-together with the module that depends on it.
+In Visual Studio Code, we also recommend to add ``"editor.ruler": 88`` to your local ``settings.json`` to display the max line length.
 
 API design
-----------
+============
 
 The general design approach of sktime is described in the
 paper `“Designing Machine Learning Toolboxes: Concepts, Principles and
@@ -77,78 +116,4 @@ Patterns” <https://arxiv.org/abs/2101.04938>`__.
 
 .. note::
 
-   This is a first draft of the paper.
    Feedback and improvement suggestions are very welcome!
-
-
-Deprecation
------------
-
-.. note::
-
-    For planned changes and upcoming releases, see our :ref:`roadmap`.
-
-Description
-~~~~~~~~~~~
-
-Before removing or changing sktime's public API, we need to deprecate it.
-This gives users and developers time to transition to the new functionality.
-
-Once functionality is deprecated, it will be removed in the next minor release.
-We follow `semantic versioning <https://semver.org>`_, where the version number denotes <major>.<minor>.<patch>.
-For example, if we add the deprecation warning in release v0.9.0, we remove
-the functionality in release v0.10.0.
-
-Our current deprecation process is as follows:
-
-* We raise a `FutureWarning <https://docs.python.org/3/library/exceptions.html#FutureWarning>`_. The warning message should the give the version number when the functionality will be removed and describe the new usage.
-
-* We add a to-do comments to the lines of code that can be removed, with the version number when the code can be removed. For example, :code:`TODO: remove in v0.10.0`.
-
-* We remove all deprecated functionality as part of the release process, searching for the to-do comments.
-
-We use the `deprecated <https://deprecated.readthedocs.io/en/latest/index.html>`_ package for depreciation helper functions.
-
-To deprecate functionality, we use the :code:`deprecated` decorator.
-When importing it from :code:`deprecated.sphinx`, it automatically adds a deprecation message to the docstring.
-You can deprecate functions, methods or classes.
-
-Examples
-~~~~~~~~
-
-In the examples below, the :code:`deprecated` decorator will raise a FutureWarning saying that the functionality has been deprecated since version 0.8.0 and will be remove in version 0.10.0.
-
-Functions
-~~~~~~~~~
-
-.. code-block::
-
-    from deprecated.sphinx import deprecated
-
-    @deprecated(version="0.8.0", reason="my_old_function will be removed in v0.10.0", category=FutureWarning)
-    def my_old_function(x, y):
-        return x + y
-
-Methods
-~~~~~~~
-
-.. code-block::
-
-    from deprecated.sphinx import deprecated
-
-    class MyClass:
-
-        @deprecated(version="0.8.0", reason="my_old_method will be removed in v0.10.0", category=FutureWarning)
-        def my_old_method(self, x, y):
-            return x + y
-
-Classes
-~~~~~~~
-
-.. code-block::
-
-    from deprecated.sphinx import deprecated
-
-    @deprecated(version="0.8.0", reason="MyOldClass will be removed in v0.10.0", category=FutureWarning)
-    class MyOldClass:
-        pass

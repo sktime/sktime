@@ -63,7 +63,7 @@ def _sliding_mean_std(X, m):
         The moving mean and moving std
     """
     s = np.insert(np.cumsum(X), 0, 0)
-    sSq = np.insert(np.cumsum(X ** 2), 0, 0)
+    sSq = np.insert(np.cumsum(X**2), 0, 0)
     segSum = s[m:] - s[:-m]
     segSumSq = sSq[m:] - sSq[:-m]
     movmean = segSum / m
@@ -395,12 +395,11 @@ class ClaSPTransformer(BaseTransformer):
         "X_inner_mtype": "np.ndarray",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "univariate-only": True,
-        "fit-in-transform": True,
+        "fit_is_empty": True,
     }
 
     def __init__(self, window_length=10, scoring_metric="ROC_AUC"):
         self.window_length = int(window_length)
-        self.knn_mask = None
         self.scoring_metric = scoring_metric
         super(ClaSPTransformer, self).__init__()
 
@@ -424,10 +423,10 @@ class ClaSPTransformer(BaseTransformer):
             ClaSP of the single time series as output
             with length as (n-window_length+1)
         """
-        self._check_scoring_metric(self.scoring_metric)
+        scoring_metric_call = self._check_scoring_metric(self.scoring_metric)
 
         X = X.flatten()
-        Xt, self.knn_mask = clasp(X, self.window_length, score=self.scoring_metric_call)
+        Xt, _ = clasp(X, self.window_length, score=scoring_metric_call)
 
         return Xt
 
@@ -438,6 +437,12 @@ class ClaSPTransformer(BaseTransformer):
         ----------
         scoring_metric : string
             Choose from "ROC_AUC" or "F1"
+
+        Returns
+        -------
+        scoring_metric_call : a callable, keyed by the `scoring_metric` input
+            _roc_auc_score, if scoring_metric = "ROC_AUC"
+            _binary_f1_score, if scoring_metric = "F1"
         """
         valid_scores = ("ROC_AUC", "F1")
 
@@ -445,13 +450,20 @@ class ClaSPTransformer(BaseTransformer):
             raise ValueError(f"invalid input, please use one of {valid_scores}")
 
         if scoring_metric == "ROC_AUC":
-            self.scoring_metric_call = _roc_auc_score
+            return _roc_auc_score
         elif scoring_metric == "F1":
-            self.scoring_metric_call = _binary_f1_score
+            return _binary_f1_score
 
     @classmethod
-    def get_test_params(cls):
+    def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
 
         Returns
         -------

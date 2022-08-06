@@ -15,8 +15,6 @@ __all__ = ["deep_equals"]
 import numpy as np
 import pandas as pd
 
-# from sktime.base import BaseObject
-
 
 def deep_equals(x, y, return_msg=False):
     """Test two objects for equality in value.
@@ -114,6 +112,12 @@ def deep_equals(x, y, return_msg=False):
         return ret(*_tuple_equals(x, y, return_msg=True))
     elif isinstance(x, dict):
         return ret(*_dict_equals(x, y, return_msg=True))
+    elif isinstance(x, type(np.nan)):
+        return ret(
+            isinstance(y, type(np.nan)), f"type(x)={type(x)} != type(y)={type(y)}"
+        )
+    elif type(x).__name__ == "ForecastingHorizon":
+        return ret(*_fh_equals(x, y, return_msg=True))
     elif x != y:
         return ret(False, f" !=, {x} != {y}")
 
@@ -210,9 +214,16 @@ def _dict_equals(x, y, return_msg=False):
     ykeys = set(y.keys())
 
     if xkeys != ykeys:
-        return ret(False, f".keys, x.keys = {xkeys} != y.keys = {ykeys}")
+        xmy = xkeys.difference(ykeys)
+        ymx = ykeys.difference(xkeys)
+        diffmsg = ".keys,"
+        if len(xmy) > 0:
+            diffmsg += f" x.keys-y.keys = {xmy}."
+        if len(ymx) > 0:
+            diffmsg += f" y.keys-x.keys = {ymx}."
+        return ret(False, diffmsg)
 
-    # we now know all keys are the same
+    # we now know that xkeys == ykeys
     for key in xkeys:
         xi = x[key]
         yi = y[key]
@@ -221,5 +232,47 @@ def _dict_equals(x, y, return_msg=False):
         is_equal, msg = deep_equals(xi, yi, return_msg=True)
         if not is_equal:
             return ret(False, f"[{key}]" + msg)
+
+    return ret(True, "")
+
+
+def _fh_equals(x, y, return_msg=False):
+    """Test two forecasting horizons for equality.
+
+    Correct if both x and y are ForecastingHorizon
+
+    Parameters
+    ----------
+    x: ForcastingHorizon
+    y: ForcastingHorizon
+    return_msg : bool, optional, default=False
+        whether to return informative message about what is not equal
+
+    Returns
+    -------
+    is_equal: bool - True if x and y are equal in value
+        x and y do not need to be equal in reference
+    msg : str, only returned if return_msg = True
+        indication of what is the reason for not being equal
+            concatenation of the following strings:
+            .is_relative - x is absolute and y is relative, or vice versa
+            .values - values of x and y are not equal
+    """
+
+    def ret(is_equal, msg):
+        if return_msg:
+            if is_equal:
+                msg = ""
+            return is_equal, msg
+        else:
+            return is_equal
+
+    if x.is_relative != y.is_relative:
+        return ret(False, ".is_relative")
+
+    # recurse through values of x, y
+    is_equal, msg = deep_equals(x._values, y._values, return_msg=True)
+    if not is_equal:
+        return ret(False, ".values" + msg)
 
     return ret(True, "")

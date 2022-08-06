@@ -5,11 +5,6 @@ Time series classification
 
 The :mod:`sktime.classification` module contains algorithms and composition tools for time series classification.
 
-.. automodule:: sktime.classification
-    :no-members:
-    :no-inherited-members:
-
-
 Composition
 -----------
 
@@ -53,8 +48,19 @@ Distance-based
     ProximityTree
     ProximityStump
 
+Dummy
+-----
+
+.. currentmodule:: sktime.classification.dummy
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    DummyClassifier
+
 Hybrid
---------------
+------
 
 .. currentmodule:: sktime.classification.hybrid
 
@@ -101,11 +107,11 @@ Kernel-based
     :toctree: auto_generated/
     :template: class.rst
 
-    ROCKETClassifier
+    RocketClassifier
     Arsenal
 
 Feature-based
----------------
+-------------
 
 .. currentmodule:: sktime.classification.feature_based
 

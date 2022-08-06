@@ -19,7 +19,8 @@ class _PmdArimaAdapter(BaseForecaster):
         "ignores-exogeneous-X": False,
         "capability:pred_int": True,
         "requires-fh-in-fit": False,
-        "handles-missing-data": False,
+        "handles-missing-data": True,
+        "python_dependencies": "pmdarima",
     }
 
     def __init__(self):
@@ -29,7 +30,7 @@ class _PmdArimaAdapter(BaseForecaster):
     def _instantiate_model(self):
         raise NotImplementedError("abstract method")
 
-    def _fit(self, y, X=None, fh=None, **fit_params):
+    def _fit(self, y, X=None, fh=None):
         """Fit to training data.
 
         Parameters
@@ -45,8 +46,30 @@ class _PmdArimaAdapter(BaseForecaster):
         -------
         self : returns an instance of self.
         """
+        if X is not None:
+            X = X.loc[y.index]
         self._forecaster = self._instantiate_model()
-        self._forecaster.fit(y, X=X, **fit_params)
+        self._forecaster.fit(y, X=X)
+        return self
+
+    def _update(self, y, X=None, update_params=True):
+        """Update model with data.
+
+        Parameters
+        ----------
+        y : pd.Series
+            Target time series to which to fit the forecaster.
+        X : pd.DataFrame, optional (default=None)
+            Exogenous variables are ignored
+
+        Returns
+        -------
+        self : returns an instance of self.
+        """
+        if update_params:
+            if X is not None:
+                X = X.loc[y.index]
+            self._forecaster.update(y, X=X)
         return self
 
     def _predict(self, fh, X=None):
@@ -80,7 +103,7 @@ class _PmdArimaAdapter(BaseForecaster):
         else:
             y_ins = self._predict_in_sample(fh_ins, X=X)
             y_oos = self._predict_fixed_cutoff(fh_oos, X=X)
-            return y_ins.append(y_oos)
+            return pd.concat([y_ins, y_oos])
 
     def _predict_in_sample(
         self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA
@@ -107,7 +130,7 @@ class _PmdArimaAdapter(BaseForecaster):
         # Initialize return objects
         fh_abs = fh.to_absolute(self.cutoff).to_numpy()
         fh_idx = fh.to_indexer(self.cutoff, from_cutoff=False)
-        y_pred = pd.Series(index=fh_abs)
+        y_pred = pd.Series(index=fh_abs, dtype="float64")
 
         # for in-sample predictions, pmdarima requires zero-based integer indicies
         start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
@@ -246,7 +269,8 @@ class _PmdArimaAdapter(BaseForecaster):
         int_idx = pd.MultiIndex.from_product([var_names, coverage, ["lower", "upper"]])
         pred_int = pd.DataFrame(columns=int_idx)
 
-        kwargs = {"X": X, "return_pred_int": True, "alpha": coverage}
+        alpha = [1 - x for x in coverage]
+        kwargs = {"X": X, "return_pred_int": True, "alpha": alpha}
         # all values are out-of-sample
         if fh_is_oosample:
             _, y_pred_int = self._predict_fixed_cutoff(fh_oos, **kwargs)
@@ -268,8 +292,8 @@ class _PmdArimaAdapter(BaseForecaster):
         _, y_ins_pred_int = self._predict_in_sample(fh_ins, **kwargs)
         _, y_oos_pred_int = self._predict_fixed_cutoff(fh_oos, **kwargs)
         for ins_int, oos_int, a in zip(y_ins_pred_int, y_oos_pred_int, coverage):
-            pred_int[("Coverage", a, "lower")] = ins_int.append(oos_int)["lower"]
-            pred_int[("Coverage", a, "upper")] = ins_int.append(oos_int)["upper"]
+            pred_int[("Coverage", a, "lower")] = pd.concat([ins_int, oos_int])["lower"]
+            pred_int[("Coverage", a, "upper")] = pd.concat([ins_int, oos_int])["upper"]
 
         return pred_int
 

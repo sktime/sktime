@@ -6,10 +6,7 @@ Forecasting
 
 The :mod:`sktime.forecasting` module contains algorithms and composition tools for forecasting.
 
-.. automodule:: sktime.forecasting
-    :no-members:
-    :no-inherited-members:
-
+Use ``sktime.registry.all_estimators`` and ``sktime.registry.all_tags`` for dynamic search and tag-based listing of forecasters.
 
 Base
 ----
@@ -20,10 +17,64 @@ Base
     :toctree: auto_generated/
     :template: class.rst
 
+    BaseForecaster
     ForecastingHorizon
 
-Naive
------
+Pipeline composition
+--------------------
+
+Compositors for building forecasting pipelines.
+Pipelines can also be constructed using ``*``, ``+``, and ``|`` dunders.
+
+.. currentmodule:: sktime.pipeline
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: function.rst
+
+    make_pipeline
+
+.. currentmodule:: sktime.forecasting.compose
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TransformedTargetForecaster
+    ForecastingPipeline
+    ColumnEnsembleForecaster
+    MultiplexForecaster
+    ForecastX
+
+Reduction
+---------
+
+Reduction forecasters that use ``sklearn`` regressors or ``sktime`` time series regressors to make forecasts.
+Use ``make_reduction`` for easy specification.
+
+.. currentmodule:: sktime.forecasting.compose
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: function.rst
+
+    make_reduction
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    DirectTabularRegressionForecaster
+    DirectTimeSeriesRegressionForecaster
+    MultioutputTabularRegressionForecaster
+    MultioutputTimeSeriesRegressionForecaster
+    RecursiveTabularRegressionForecaster
+    RecursiveTimeSeriesRegressionForecaster
+    DirRecTabularRegressionForecaster
+    DirRecTimeSeriesRegressionForecaster
+
+Naive forecaster
+----------------
 
 .. currentmodule:: sktime.forecasting.naive
 
@@ -33,8 +84,38 @@ Naive
 
     NaiveForecaster
 
-Trend
------
+Prediction intervals
+--------------------
+
+Wrappers that add prediction intervals to any forecaster.
+
+.. currentmodule:: sktime.forecasting.naive
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    NaiveVariance
+
+.. currentmodule:: sktime.forecasting.conformal
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ConformalIntervals
+
+.. currentmodule:: sktime.forecasting.compose
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    BaggingForecaster
+
+
+Trend forecasters
+-----------------
 
 .. currentmodule:: sktime.forecasting.trend
 
@@ -44,9 +125,10 @@ Trend
 
     TrendForecaster
     PolynomialTrendForecaster
+    STLForecaster
 
-Exponential Smoothing
----------------------
+Exponential smoothing based forecasters
+---------------------------------------
 
 .. currentmodule:: sktime.forecasting.exp_smoothing
 
@@ -64,8 +146,27 @@ Exponential Smoothing
 
     AutoETS
 
-ARIMA
------
+.. currentmodule:: sktime.forecasting.theta
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ThetaForecaster
+
+.. currentmodule:: sktime.forecasting.croston
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    Croston
+
+AR/MA type forecasters
+----------------------
+
+Forecasters with AR or MA component.
+All "ARIMA" models below include SARIMAX capability.
 
 .. currentmodule:: sktime.forecasting.arima
 
@@ -76,19 +177,40 @@ ARIMA
     AutoARIMA
     ARIMA
 
-Theta
------
-
-.. currentmodule:: sktime.forecasting.theta
+.. currentmodule:: sktime.forecasting.statsforecast
 
 .. autosummary::
     :toctree: auto_generated/
     :template: class.rst
 
-    ThetaForecaster
+    StatsForecastAutoARIMA
 
-BATS/TBATS
-----------
+.. currentmodule:: sktime.forecasting.sarimax
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    SARIMAX
+
+.. currentmodule:: sktime.forecasting.var
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    VAR
+
+.. currentmodule:: sktime.forecasting.varmax
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    VARMAX
+
+Structural time series models
+-----------------------------
 
 .. currentmodule:: sktime.forecasting.bats
 
@@ -106,20 +228,6 @@ BATS/TBATS
 
     TBATS
 
-Croston
--------
-
-.. currentmodule:: sktime.forecasting.croston
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    Croston
-
-Prophet
--------
-
 .. currentmodule:: sktime.forecasting.fbprophet
 
 .. autosummary::
@@ -127,9 +235,6 @@ Prophet
     :template: class.rst
 
     Prophet
-
-Unobserved Components
---------------------
 
 .. currentmodule:: sktime.forecasting.structural
 
@@ -139,8 +244,16 @@ Unobserved Components
 
     UnobservedComponents
 
-Composition
------------
+.. currentmodule:: sktime.forecasting.dynamic_factor
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    DynamicFactor
+
+Ensembles and stacking
+----------------------
 
 .. currentmodule:: sktime.forecasting.compose
 
@@ -148,30 +261,23 @@ Composition
     :toctree: auto_generated/
     :template: class.rst
 
-    ColumnEnsembleForecaster
     EnsembleForecaster
     AutoEnsembleForecaster
     StackingForecaster
-    TransformedTargetForecaster
-    ForecastingPipeline
-    DirectTabularRegressionForecaster
-    DirectTimeSeriesRegressionForecaster
-    MultioutputTabularRegressionForecaster
-    MultioutputTimeSeriesRegressionForecaster
-    RecursiveTabularRegressionForecaster
-    RecursiveTimeSeriesRegressionForecaster
-    DirRecTabularRegressionForecaster
-    DirRecTimeSeriesRegressionForecaster
-    MultiplexForecaster
+
+Hierarchical reconciliation
+---------------------------
+
+.. currentmodule:: sktime.forecasting.reconcile
 
 .. autosummary::
     :toctree: auto_generated/
-    :template: function.rst
+    :template: class.rst
 
-    make_reduction
+    ReconcilerForecaster
 
-Online Forecasting
-------------------
+Online and stream forecasting
+-----------------------------
 
 .. currentmodule:: sktime.forecasting.online_learning
 
@@ -183,8 +289,18 @@ Online Forecasting
     NormalHedgeEnsemble
     NNLSEnsemble
 
-Model Selection
----------------
+.. currentmodule:: sktime.forecasting.stream
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    UpdateEvery
+    UpdateRefitsEvery
+    DontUpdate
+
+Model selection and tuning
+--------------------------
 
 .. currentmodule:: sktime.forecasting.model_selection
 
@@ -192,18 +308,8 @@ Model Selection
     :toctree: auto_generated/
     :template: class.rst
 
-    CutoffSplitter
-    SingleWindowSplitter
-    SlidingWindowSplitter
-    ExpandingWindowSplitter
     ForecastingGridSearchCV
     ForecastingRandomizedSearchCV
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: function.rst
-
-    temporal_train_test_split
 
 Model Evaluation (Backtesting)
 ------------------------------
@@ -216,12 +322,24 @@ Model Evaluation (Backtesting)
 
     evaluate
 
-VAR (Vector Autoregression)
+Time series splitters
+---------------------
 
-.. currentmodule:: sktime.forecasting.var
+Time series splitters can be used in both evaluation and tuning.
+
+.. currentmodule:: sktime.forecasting.model_selection
 
 .. autosummary::
     :toctree: auto_generated/
     :template: class.rst
 
-    VAR
+    CutoffSplitter
+    SingleWindowSplitter
+    SlidingWindowSplitter
+    ExpandingWindowSplitter
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: function.rst
+
+    temporal_train_test_split

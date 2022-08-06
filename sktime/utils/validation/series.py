@@ -3,7 +3,7 @@
 
 """Functions for checking input data."""
 
-__author__ = ["Markus Löning", "Drishti Bhasin"]
+__author__ = ["Markus Löning", "Drishti Bhasin", "khrapovs"]
 __all__ = [
     "check_series",
     "check_time_index",
@@ -18,7 +18,29 @@ import pandas as pd
 
 # We currently support the following types for input data and time index types.
 VALID_DATA_TYPES = (pd.DataFrame, pd.Series, np.ndarray)
-VALID_INDEX_TYPES = (pd.Int64Index, pd.RangeIndex, pd.PeriodIndex, pd.DatetimeIndex)
+VALID_INDEX_TYPES = (pd.RangeIndex, pd.PeriodIndex, pd.DatetimeIndex, pd.TimedeltaIndex)
+RELATIVE_INDEX_TYPES = (pd.RangeIndex, pd.TimedeltaIndex)
+ABSOLUTE_INDEX_TYPES = (pd.RangeIndex, pd.DatetimeIndex, pd.PeriodIndex)
+assert set(RELATIVE_INDEX_TYPES).issubset(VALID_INDEX_TYPES)
+assert set(ABSOLUTE_INDEX_TYPES).issubset(VALID_INDEX_TYPES)
+
+
+def is_integer_index(x) -> bool:
+    """Check that the input is an integer pd.Index."""
+    return isinstance(x, pd.Index) and x.is_integer()
+
+
+def is_in_valid_index_types(x) -> bool:
+    """Check that the input type belongs to the valid index types."""
+    return isinstance(x, VALID_INDEX_TYPES) or is_integer_index(x)
+
+
+def is_in_valid_relative_index_types(x) -> bool:
+    return isinstance(x, RELATIVE_INDEX_TYPES) or is_integer_index(x)
+
+
+def is_in_valid_absolute_index_types(x) -> bool:
+    return isinstance(x, ABSOLUTE_INDEX_TYPES) or is_integer_index(x)
 
 
 def _check_is_univariate(y, var_name="input"):
@@ -179,7 +201,7 @@ def check_time_index(
 
     # We here check for type equality because isinstance does not
     # work reliably because index types inherit from each other.
-    if not type(index) in VALID_INDEX_TYPES:
+    if not is_in_valid_index_types(index):
         raise NotImplementedError(
             f"{type(index)} is not supported for {var_name}, use "
             f"one of {VALID_INDEX_TYPES} instead."
@@ -188,7 +210,7 @@ def check_time_index(
     if enforce_index_type and type(index) is not enforce_index_type:
         raise NotImplementedError(
             f"{type(index)} is not supported for {var_name}, use "
-            f"type: {enforce_index_type} instead."
+            f"type: {enforce_index_type} or integer pd.Index instead."
         )
 
     # Check time index is ordered in time
@@ -212,8 +234,11 @@ def check_equal_time_index(*ys, mode="equal"):
 
     Parameters
     ----------
-    *ys : tuple of pd.Series, pd.DataFrame or 1/2D np.ndarray, or None
-        One or more time series
+    *ys : tuple of sktime compatible time series data containers
+        must be pd.Series, pd.DataFrame or 1/2D np.ndarray, or None
+        can be Series, Panel, Hierarchical, but must be pandas or numpy
+        note: this assumption is not checked by the function itself
+            if check is needed, use check_is_scitype or check_is_mtype before call
     mode : str, "equal" or "contained", optional, default = "equal"
         if "equal" will check for all indices being exactly equal
         if "contained", will check whether all indices are subset of ys[0].index
@@ -240,15 +265,11 @@ def check_equal_time_index(*ys, mode="equal"):
     else:
         first_index = y_not_None[0].index
 
-    check_time_index(first_index)
-
     for i, y in enumerate(y_not_None[1:]):
         if isinstance(y, np.ndarray):
-            y_index = pd.Index(y)
+            y_index = pd.Index(range(len(y)))
         else:
             y_index = y.index
-
-        check_time_index(y_index)
 
         if mode == "equal":
             failure_cond = not first_index.equals(y_index)
@@ -267,11 +288,6 @@ def check_equal_time_index(*ys, mode="equal"):
 
         if failure_cond:
             raise ValueError(msg)
-
-
-def _is_int_index(index):
-    """Check if index type is one of pd.RangeIndex or pd.Int64Index."""
-    return type(index) in (pd.Int64Index, pd.RangeIndex)
 
 
 def check_consistent_index_type(a, b):
@@ -294,8 +310,8 @@ def check_consistent_index_type(a, b):
         "series have the same index type."
     )
 
-    if _is_int_index(a):
-        if not _is_int_index(b):
+    if is_integer_index(a):
+        if not is_integer_index(b):
             raise TypeError(msg)
 
     else:

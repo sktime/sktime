@@ -88,38 +88,13 @@ class HIVECOTEV2(BaseClassifier):
     .. [1] Middlehurst, Matthew, James Large, Michael Flynn, Jason Lines, Aaron Bostrom,
        and Anthony Bagnall. "HIVE-COTE 2.0: a new meta ensemble for time series
        classification." Machine Learning (2021).
-
-    Examples
-    --------
-    >>> from sktime.classification.hybrid import HIVECOTEV2
-    >>> from sktime.contrib.vector_classifiers._rotation_forest import RotationForest
-    >>> from sktime.datasets import load_unit_test
-    >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
-    >>> clf = HIVECOTEV2(
-    ...     stc_params={
-    ...         "estimator": RotationForest(n_estimators=3),
-    ...         "n_shapelet_samples": 500,
-    ...         "max_shapelets": 20,
-    ...         "batch_size": 100,
-    ...     },
-    ...     drcif_params={"n_estimators": 10},
-    ...     arsenal_params={"num_kernels": 100, "n_estimators": 5},
-    ...     tde_params={
-    ...         "n_parameter_samples": 25,
-    ...         "max_ensemble_size": 5,
-    ...         "randomly_selected_params": 10,
-    ...     },
-    ... )
-    >>> clf.fit(X_train, y_train)
-    HIVECOTEV2(...)
-    >>> y_pred = clf.predict(X_test)
     """
 
     _tags = {
         "capability:multivariate": True,
         "capability:contractable": True,
         "capability:multithreading": True,
+        "classifier_type": "hybrid",
     }
 
     def __init__(
@@ -300,7 +275,7 @@ class HIVECOTEV2(BaseClassifier):
 
         return self
 
-    def _predict(self, X):
+    def _predict(self, X) -> np.ndarray:
         """Predicts labels for sequences in X.
 
         Parameters
@@ -321,7 +296,7 @@ class HIVECOTEV2(BaseClassifier):
             ]
         )
 
-    def _predict_proba(self, X, return_component_probas=False):
+    def _predict_proba(self, X, return_component_probas=False) -> np.ndarray:
         """Predicts labels probabilities for sequences in X.
 
         Parameters
@@ -369,3 +344,68 @@ class HIVECOTEV2(BaseClassifier):
 
         # Make each instances probability array sum to 1 and return
         return dists / dists.sum(axis=1, keepdims=True)
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            For classifiers, a "default" set of parameters should be provided for
+            general testing, and a "results_comparison" set for comparing against
+            previously recorded results if the general set does not produce suitable
+            probabilities to compare against.
+
+        Returns
+        -------
+        params : dict or list of dict, default={}
+            Parameters to create testing instances of the class.
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`.
+        """
+        from sklearn.ensemble import RandomForestClassifier
+
+        if parameter_set == "results_comparison":
+            return {
+                "stc_params": {
+                    "estimator": RandomForestClassifier(n_estimators=3),
+                    "n_shapelet_samples": 50,
+                    "max_shapelets": 5,
+                    "batch_size": 10,
+                },
+                "drcif_params": {
+                    "n_estimators": 3,
+                    "n_intervals": 2,
+                    "att_subsample_size": 2,
+                },
+                "arsenal_params": {"num_kernels": 50, "n_estimators": 3},
+                "tde_params": {
+                    "n_parameter_samples": 5,
+                    "max_ensemble_size": 3,
+                    "randomly_selected_params": 3,
+                },
+            }
+        else:
+            return {
+                "stc_params": {
+                    "estimator": RandomForestClassifier(n_estimators=1),
+                    "n_shapelet_samples": 5,
+                    "max_shapelets": 5,
+                    "batch_size": 5,
+                },
+                "drcif_params": {
+                    "n_estimators": 1,
+                    "n_intervals": 2,
+                    "att_subsample_size": 2,
+                },
+                "arsenal_params": {"num_kernels": 5, "n_estimators": 1},
+                "tde_params": {
+                    "n_parameter_samples": 1,
+                    "max_ensemble_size": 1,
+                    "randomly_selected_params": 1,
+                },
+            }

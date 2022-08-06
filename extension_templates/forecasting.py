@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
 Extension template for forecasters.
 
@@ -11,12 +12,14 @@ How to use this implementation template to implement a new estimator:
 - make a copy of the template in a suitable location, give it a descriptive name.
 - work through all the "todo" comments below
 - fill in code for mandatory methods, and optionally for optional methods
+- do not write to reserved variables: is_fitted, _is_fitted, _X, _y, cutoff, _fh,
+    _cutoff, _converter_store_y, forecasters_, _tags, _tags_dynamic, _is_vectorized
 - you can add more private methods, but do not override BaseEstimator's private methods
     an easy way to be safe is to prefix your methods with "_custom"
 - change docstrings for functions and the file
-- ensure interface compatibility by testing forecasting/tests/test_all_forecasters
-        and forecasting/tests/test_sktime_forecasters
+- ensure interface compatibility by sktime.utils.estimator_checks.check_estimator
 - once complete: use as a local library, or contribute to sktime via PR
+- more details: https://www.sktime.org/en/stable/developer_guide/add_estimators.html
 
 Mandatory implements:
     fitting         - _fit(self, y, X=None, fh=None)
@@ -26,13 +29,17 @@ Optional implements:
     updating                    - _update(self, y, X=None, update_params=True):
     predicting quantiles        - _predict_quantiles(self, fh, X=None, alpha=None)
     OR predicting intervals     - _predict_interval(self, fh, X=None, coverage=None)
+    predicting variance         - _predict_var(self, fh, X=None, cov=False)
+    distribution forecast       - _predict_proba(self, fh, X=None)
     fitted parameter inspection - get_fitted_params()
 
 Testing - implement if sktime forecaster (not needed locally):
     get default parameters for test instance(s) - get_test_params()
-
-copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
+# todo: write an informative docstring for the file or module, remove the above
+# todo: add an appropriate copyright notice for your estimator
+#       estimators contributed to sktime should have the copyright notice at the top
+#       estimators of your own do not need to have permissive or BSD-3 copyright
 
 # todo: uncomment the following line, enter authors' GitHub IDs
 # __author__ = [authorGitHubID, anotherAuthorGitHubID]
@@ -48,8 +55,8 @@ class MyForecaster(BaseForecaster):
 
     todo: describe your custom forecaster here
 
-    Hyper-parameters
-    ----------------
+    Parameters
+    ----------
     parama : int
         descriptive explanation of parama
     paramb : string, optional (default='default')
@@ -57,9 +64,6 @@ class MyForecaster(BaseForecaster):
     paramc : boolean, optional (default= whether paramb is not the default)
         descriptive explanation of paramc
     and so on
-
-    Components
-    ----------
     est : sktime.estimator, BaseEstimator descendant
         descriptive explanation of est
     est2: another estimator
@@ -84,8 +88,8 @@ class MyForecaster(BaseForecaster):
         "requires-fh-in-fit": True,  # is forecasting horizon already required in fit?
         "X-y-must-have-same-index": True,  # can estimator handle different X/y index?
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
-        "capability:pred_int": False,  # does forecaster implement predict_quantiles?
-        # deprecated and will be renamed to capability:predict_quantiles in 0.11.0
+        "capability:pred_int": False,  # does forecaster implement proba forecasts?
+        "python_version": None,  # PEP 440 python version specifier to limit versions
     }
     #  in case of inheritance, concrete class should typically set tags
     #  alternatively, descendants can set tags in __init__ (avoid this if possible)
@@ -100,16 +104,19 @@ class MyForecaster(BaseForecaster):
         self.parama = parama
         self.paramb = paramb
         self.paramc = paramc
-        # important: no checking or other logic should happen here
+
+        # todo: change "MyForecaster" to the name of the class
+        super(MyForecaster, self).__init__()
+
+        # todo: optional, parameter checking logic (if applicable) should happen here
+        # if writes derived values to self, should *not* overwrite self.parama etc
+        # instead, write to self._parama, self._newparam (starting with _)
 
         # todo: default estimators should have None arg defaults
         #  and be initialized here
         #  do this only with default estimators, not with parameters
         # if est2 is None:
         #     self.estimator = MyDefaultEstimator()
-
-        # todo: change "MyForecaster" to the name of the class
-        super(MyForecaster, self).__init__()
 
         # todo: if tags of estimator depend on component tags, set these here
         #  only needed if estimator is a composite
@@ -159,6 +166,12 @@ class MyForecaster(BaseForecaster):
         #  attributes set by the constructor must not be overwritten
         #  if used, estimators should be cloned to attributes ending in "_"
         #  the clones, not the originals shoudld be used or fitted if needed
+        #
+        # Note: when interfacing a model that has fit, with parameters
+        #   that are not data (y, X) or forecasting-horizon-like,
+        #   but model parameters, *don't* add as arguments to fit, but treat as follows:
+        #   1. pass to constructor,  2. write to self in constructor,
+        #   3. read from self in _fit,  4. pass to interfaced_model.fit in _fit
 
     # todo: implement this, mandatory
     def _predict(self, fh, X=None):
@@ -178,8 +191,9 @@ class MyForecaster(BaseForecaster):
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
             The forecasting horizon with the steps ahead to to predict.
             If not passed in _fit, guaranteed to be passed here
-        X : pd.DataFrame, optional (default=None)
-            Exogenous time series
+        X : optional (default=None)
+            guaranteed to be of a type in self.get_tag("X_inner_mtype")
+            Exogeneous time series for the forecast
 
         Returns
         -------
@@ -217,8 +231,9 @@ class MyForecaster(BaseForecaster):
             if self.get_tag("scitype:y")=="multivariate":
                 guaranteed to have 2 or more columns
             if self.get_tag("scitype:y")=="both": no restrictions apply
-        X : pd.DataFrame, optional (default=None)
-            Exogenous time series
+        X : optional (default=None)
+            guaranteed to be of a type in self.get_tag("X_inner_mtype")
+            Exogeneous time series for the forecast
         update_params : bool, optional (default=True)
             whether model parameters should be updated
 
@@ -249,6 +264,9 @@ class MyForecaster(BaseForecaster):
     #   when interfacing or implementing, consider which of the two is easier
     #   both can be implemented if desired, but usually that is not necessary
     #
+    # if _predict_var or _predict_proba is implemented, this will have a default
+    #   implementation which uses _predict_proba or _predict_var under normal assumption
+    #
     # if implementing _predict_interval, delete _predict_quantiles
     # if not implementing either, delete both methods
     def _predict_quantiles(self, fh, X=None, alpha=None):
@@ -266,21 +284,23 @@ class MyForecaster(BaseForecaster):
 
         Parameters
         ----------
-        fh : int, list, np.array or ForecastingHorizon
-            Forecasting horizon
-        X : pd.DataFrame, optional (default=None)
-            Exogenous time series
+        fh : guaranteed to be ForecastingHorizon
+            The forecasting horizon with the steps ahead to to predict.
+        X : optional (default=None)
+            guaranteed to be of a type in self.get_tag("X_inner_mtype")
+            Exogeneous time series for the forecast
         alpha : list of float (guaranteed not None and floats in [0,1] interval)
             A list of probabilities at which quantile forecasts are computed.
 
         Returns
         -------
-        pred_quantiles : pd.DataFrame
+        quantiles : pd.DataFrame
             Column has multi-index: first level is variable name from y in fit,
-                second level being the quantile forecasts for each alpha.
-                Quantile forecasts are calculated for each a in alpha.
-            Row index is fh. Entries are quantile forecasts, for var in col index,
-                at quantile probability in second-level col index, for each row index.
+                second level being the values of alpha passed to the function.
+            Row index is fh, with additional (upper) levels equal to instance levels,
+                    from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
+            Entries are quantile forecasts, for var in col index,
+                at quantile probability in second col index, for the row index.
         """
         # implement here
         # IMPORTANT: avoid side effects to y, X, fh, alpha
@@ -307,10 +327,11 @@ class MyForecaster(BaseForecaster):
 
         Parameters
         ----------
-        fh : int, list, np.array or ForecastingHorizon
-            Forecasting horizon, default = y.index (in-sample forecast)
-        X : pd.DataFrame, optional (default=None)
-            Exogenous time series
+        fh : guaranteed to be ForecastingHorizon
+            The forecasting horizon with the steps ahead to to predict.
+        X : optional (default=None)
+            guaranteed to be of a type in self.get_tag("X_inner_mtype")
+            Exogeneous time series for the forecast
         coverage : list of float (guaranteed not None and floats in [0,1] interval)
            nominal coverage(s) of predictive interval(s)
 
@@ -321,7 +342,9 @@ class MyForecaster(BaseForecaster):
                 second level coverage fractions for which intervals were computed.
                     in the same order as in input `coverage`.
                 Third level is string "lower" or "upper", for lower/upper interval end.
-            Row index is fh. Entries are forecasts of lower/upper interval end,
+            Row index is fh, with additional (upper) levels equal to instance levels,
+                from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
+            Entries are forecasts of lower/upper interval end,
                 for var in col index, at nominal coverage in second col index,
                 lower/upper depending on third col index, for the row index.
                 Upper/lower interval end forecasts are equivalent to
@@ -333,15 +356,99 @@ class MyForecaster(BaseForecaster):
         # Note: unlike in predict_interval where coverage can be float or list of float
         #   coverage in _predict_interval is guaranteed to be a list of float
 
+    # todo: consider implementing _predict_var
+    #
+    # if _predict_proba or interval/quantiles are implemented, this will have a default
+    #   implementation which uses _predict_proba or quantiles under normal assumption
+    #
+    # if not implementing, delete _predict_var
+    def _predict_var(self, fh, X=None, cov=False):
+        """Forecast variance at future horizon.
+
+        private _predict_var containing the core logic, called from predict_var
+
+        Parameters
+        ----------
+        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
+            The forecasting horizon with the steps ahead to to predict.
+            If not passed in _fit, guaranteed to be passed here
+        X : optional (default=None)
+            guaranteed to be of a type in self.get_tag("X_inner_mtype")
+            Exogeneous time series for the forecast
+        cov : bool, optional (default=False)
+            if True, computes covariance matrix forecast.
+            if False, computes marginal variance forecasts.
+
+        Returns
+        -------
+        pred_var : pd.DataFrame, format dependent on `cov` variable
+            If cov=False:
+                Column names are exactly those of `y` passed in `fit`/`update`.
+                    For nameless formats, column index will be a RangeIndex.
+                Row index is fh, with additional levels equal to instance levels,
+                    from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
+                Entries are variance forecasts, for var in col index.
+                A variance forecast for given variable and fh index is a predicted
+                    variance for that variable and index, given observed data.
+            If cov=True:
+                Column index is a multiindex: 1st level is variable names (as above)
+                    2nd level is fh.
+                Row index is fh, with additional levels equal to instance levels,
+                    from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
+                Entries are (co-)variance forecasts, for var in col index, and
+                    covariance between time index in row and col.
+                Note: no covariance forecasts are returned between different variables.
+        """
+        # implement here
+        # implementing the cov=True case is optional and can be omitted
+
+    # todo: consider implementing _predict_proba
+    #
+    # if interval/quantiles or _predict_var are implemented, this will have a default
+    #   implementation which uses variance or quantiles under normal assumption
+    #
+    # if not implementing, delete _predict_proba
+    def _predict_proba(self, fh, X, marginal=True):
+        """Compute/return fully probabilistic forecasts.
+
+        private _predict_proba containing the core logic, called from predict_proba
+
+        Parameters
+        ----------
+        fh : int, list, np.array or ForecastingHorizon (not optional)
+            The forecasting horizon encoding the time stamps to forecast at.
+            if has not been passed in fit, must be passed, not optional
+        X : time series in sktime compatible format, optional (default=None)
+                Exogeneous time series for the forecast
+            Should be of same scitype (Series, Panel, or Hierarchical) as y in fit
+            if self.get_tag("X-y-must-have-same-index"),
+                X.index must contain fh.index and y.index both
+        marginal : bool, optional (default=True)
+            whether returned distribution is marginal by time index
+
+        Returns
+        -------
+        pred_dist : tfp Distribution object
+            if marginal=True:
+                batch shape is 1D and same length as fh
+                event shape is 1D, with length equal number of variables being forecast
+                i-th (batch) distribution is forecast for i-th entry of fh
+                j-th (event) index is j-th variable, order as y in `fit`/`update`
+            if marginal=False:
+                there is a single batch
+                event shape is 2D, of shape (len(fh), no. variables)
+                i-th (event dim 1) distribution is forecast for i-th entry of fh
+                j-th (event dim 1) index is j-th variable, order as y in `fit`/`update`
+        """
+        # import tensorflow_probability as tfp
+        # tensorflow probability import should happen inside this function
+        #
+        # implement here
+        # implementing the marginal=False case is optional and can be omitted
+
     # todo: consider implementing this, optional
     # if not implementing, delete the method
-    def _predict_moving_cutoff(
-        self,
-        y,
-        cv,
-        X=None,
-        update_params=True,
-    ):
+    def _predict_moving_cutoff(self, y, cv, X=None, update_params=True):
         """Make single-step or multi-step moving cutoff predictions.
 
         Parameters
@@ -374,8 +481,15 @@ class MyForecaster(BaseForecaster):
     #   or to run local automated unit and integration testing of estimator
     #   method should return default parameters, so that a test instance can be created
     @classmethod
-    def get_test_params(cls):
+    def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            There are currently no reserved values for forecasters.
 
         Returns
         -------
@@ -388,12 +502,18 @@ class MyForecaster(BaseForecaster):
 
         # todo: set the testing parameters for the estimators
         # Testing parameters can be dictionary or list of dictionaries
+        # Testing parameter choice should cover internal cases well.
         #
-        # this can, if required, use:
+        # this method can, if required, use:
         #   class properties (e.g., inherited); parent class test case
         #   imported objects such as estimators from sktime or sklearn
         # important: all such imports should be *inside get_test_params*, not at the top
         #            since imports are used only at testing time
+        #
+        # The parameter_set argument is not used for automated, module level tests.
+        #   It can be used in custom, estimator specific tests, for "special" settings.
+        # A parameter dictionary must be returned *for all values* of parameter_set,
+        #   i.e., "parameter_set not available" errors should never be raised.
         #
         # example 1: specify params as dictionary
         # any number of params can be specified
@@ -403,5 +523,14 @@ class MyForecaster(BaseForecaster):
         # note: Only first dictionary will be used by create_test_instance
         # params = [{"est": value1, "parama": value2},
         #           {"est": value3, "parama": value4}]
+        # return params
         #
+        # example 3: parameter set depending on param_set value
+        #   note: only needed if a separate parameter set is needed in tests
+        # if parameter_set == "special_param_set":
+        #     params = {"est": value1, "parama": value2}
+        #     return params
+        #
+        # # "default" params - always returned except for "special_param_set" value
+        # params = {"est": value3, "parama": value4}
         # return params

@@ -33,13 +33,9 @@ Inspection methods:
 
 __author__ = ["fkiraly"]
 
-import numpy as np
-import pandas as pd
-
 from sktime.base import BaseEstimator
 from sktime.datatypes import check_is_scitype, convert_to
 from sktime.datatypes._series_as_panel import convert_Series_to_Panel
-from sktime.utils.validation.series import check_series
 
 
 class BasePairwiseTransformer(BaseEstimator):
@@ -54,12 +50,12 @@ class BasePairwiseTransformer(BaseEstimator):
     # default tag values - these typically make the "safest" assumption
     _tags = {
         "symmetric": False,  # is the transformer symmetric, i.e., t(x,y)=t(y,x) always?
-        "fit-in-transform": True,  # is "fit" empty? Yes, for all pairwise transforms
+        "X_inner_mtype": "numpy2D",  # which mtype is used internally in _transform?
+        "fit_is_empty": True,  # is "fit" empty? Yes, for all pairwise transforms
     }
 
     def __init__(self):
-        super().__init__()
-        self.X_equals_X2 = False
+        super(BasePairwiseTransformer, self).__init__()
 
     def __call__(self, X, X2=None):
         """Compute distance/kernel matrix, call shorthand.
@@ -80,11 +76,6 @@ class BasePairwiseTransformer(BaseEstimator):
         -------
         distmat: np.array of shape [n, m]
             (i,j)-th entry contains distance/kernel between X.iloc[i] and X2.iloc[j]
-
-        Writes to self
-        --------------
-        X_equals_X2: bool = True if X2 was not passed, False if X2 was passed
-            for use to make internal calculations efficient, e.g., in _transform
         """
         # no input checks or input logic here, these are done in transform
         # this just defines __call__ as an alias for transform
@@ -106,29 +97,13 @@ class BasePairwiseTransformer(BaseEstimator):
         -------
         distmat: np.array of shape [n, m]
             (i,j)-th entry contains distance/kernel between X.iloc[i] and X2.iloc[j]
-
-        Writes to self
-        --------------
-        X_equals_X2: bool = True if X2 was not passed, False if X2 was passed
-            for use to make internal calculations efficient, e.g., in _transform
         """
-        X = check_series(X)
+        X = self._pairwise_table_x_check(X)
 
         if X2 is None:
             X2 = X
-            self.X_equals_X2 = True
         else:
-            X2 = check_series(X2)
-
-            def input_as_numpy(val):
-                if isinstance(val, pd.DataFrame):
-                    return val.to_numpy(copy=True)
-                return val
-
-            temp_X = input_as_numpy(X)
-            temp_X2 = input_as_numpy(X2)
-            if np.array_equal(temp_X, temp_X2):
-                self.X_equals_X2 = True
+            X2 = self._pairwise_table_x_check(X2, var_name="X2")
 
         return self._transform(X=X, X2=X2)
 
@@ -156,8 +131,42 @@ class BasePairwiseTransformer(BaseEstimator):
     def fit(self, X=None, X2=None):
         """Fit method for interface compatibility (no logic inside)."""
         # no fitting logic, but in case fit is called or expected
+        self.reset()
         self._is_fitted = True
         return self
+
+    def _pairwise_table_x_check(self, X, var_name="X"):
+        """Check and coerce input data.
+
+        Method used to check the input and convert Table input
+            to internally used format, as defined in X_inner_mtype tag
+
+        Parameters
+        ----------
+        X: pd.DataFrame, pd.Series, numpy 1D or 2D, list of dicts
+            sktime data container compliant with the Table scitype
+            The value to be checked and coerced
+        var_name: str, variable name to print in error messages
+
+        Returns
+        -------
+        X: Panel data container of a supported format in X_inner_mtype
+            usually a 2D np.ndarray or a pd.DataFrame, unless overridden
+        """
+        X_valid = check_is_scitype(X, "Table", return_metadata=False, var_name=var_name)
+
+        if not X_valid:
+            msg = (
+                "X and X2 must be in an sktime compatible format, of scitype Table, "
+                "for instance a pandas.DataFrame or a 2D numpy.ndarray. "
+                "See the data format tutorial examples/AA_datatypes_and_datasets.ipynb"
+            )
+            raise TypeError(msg)
+
+        X_inner_mtype = self.get_tag("X_inner_mtype")
+        X_coerced = convert_to(X, to_type=X_inner_mtype, as_scitype="Table")
+
+        return X_coerced
 
 
 class BasePairwiseTransformerPanel(BaseEstimator):
@@ -173,12 +182,11 @@ class BasePairwiseTransformerPanel(BaseEstimator):
     _tags = {
         "symmetric": False,  # is the transformer symmetric, i.e., t(x,y)=t(y,x) always?
         "X_inner_mtype": "df-list",  # which mtype is used internally in _transform?
-        "fit-in-transform": True,  # is "fit" empty? Yes, for all pairwise transforms
+        "fit_is_empty": True,  # is "fit" empty? Yes, for all pairwise transforms
     }
 
     def __init__(self):
         super(BasePairwiseTransformerPanel, self).__init__()
-        self.X_equals_X2 = False
 
     def __call__(self, X, X2=None):
         """Compute distance/kernel matrix, call shorthand.
@@ -209,11 +217,6 @@ class BasePairwiseTransformerPanel(BaseEstimator):
         -------
         distmat: np.array of shape [n, m]
             (i,j)-th entry contains distance/kernel between X[i] and X2[j]
-
-        Writes to self
-        --------------
-        X_equals_X2: bool = True if X2 was not passed, False if X2 was passed
-            for use to make internal calculations efficient, e.g., in _transform
         """
         # no input checks or input logic here, these are done in transform
         # this just defines __call__ as an alias for transform
@@ -248,22 +251,13 @@ class BasePairwiseTransformerPanel(BaseEstimator):
         -------
         distmat: np.array of shape [n, m]
             (i,j)-th entry contains distance/kernel between X[i] and X2[j]
-
-        Writes to self
-        --------------
-        X_equals_X2: bool = True if X2 was not passed, False if X2 was passed
-            for use to make internal calculations efficient, e.g., in _transform
         """
         X = self._pairwise_panel_x_check(X)
 
         if X2 is None:
             X2 = X
-            self.X_equals_X2 = True
         else:
             X2 = self._pairwise_panel_x_check(X2, var_name="X2")
-            # todo, possibly:
-            # check X, X2 for equality, then set X_equals_X2
-            # could use deep_equals
 
         return self._transform(X=X, X2=X2)
 
@@ -295,6 +289,7 @@ class BasePairwiseTransformerPanel(BaseEstimator):
     def fit(self, X=None, X2=None):
         """Fit method for interface compatibility (no logic inside)."""
         # no fitting logic, but in case fit is called or expected
+        self.reset()
         self._is_fitted = True
         return self
 
@@ -307,6 +302,7 @@ class BasePairwiseTransformerPanel(BaseEstimator):
         Parameters
         ----------
         X: List of dfs, Numpy of dfs, 3d numpy
+            sktime data container compliant with the Series or Panel scitype
             The value to be checked
         var_name: str, variable name to print in error messages
 
@@ -324,7 +320,14 @@ class BasePairwiseTransformerPanel(BaseEstimator):
         X_scitype = metadata["scitype"]
 
         if not X_valid:
-            raise TypeError("X/X2 must be of Series or Panel scitype")
+            msg = (
+                "X and X2 must be in an sktime compatible format, "
+                "of scitype Series or Panel, "
+                "for instance a pandas.DataFrame with sktime compatible time indices, "
+                "or with MultiIndex and last(-1) level an sktime compatible time index."
+                " See the data format tutorial examples/AA_datatypes_and_datasets.ipynb"
+            )
+            raise TypeError(msg)
 
         # if the input is a single series, convert it to a Panel
         if X_scitype == "Series":

@@ -23,9 +23,9 @@ def _validate_bounding_result(
     matrix: np.ndarray (2d array)
         Bounding matrix.
     x: np.ndarray (1d, 2d or 3d array)
-        First timeseries.
+        First time series.
     y: np.ndarray (1d, 2d or 3d array)
-        Second timeseries.
+        Second time series.
     all_finite: bool, default = False
         Boolean that when true will check all the values are finite.
     all_infinite: bool, default = False
@@ -84,9 +84,9 @@ def _validate_bounding(
     Parameters
     ----------
     x: np.ndarray (1d, 2d or 3d)
-        First timeseries
+        First time series
     y: np.ndarray (1d, 2d, or 3d)
-        Second timeseries
+        Second time series
     """
     no_bounding = LowerBounding.NO_BOUNDING
     no_bounding_result = no_bounding.create_bounding_matrix(x, y)
@@ -168,33 +168,8 @@ def test_lower_bounding() -> None:
     )
 
     _validate_bounding(
-        x=np.array([10.0]),
-        y=np.array([15.0]),
-    )
-
-    _validate_bounding(
-        x=create_test_distance_numpy(10),
-        y=create_test_distance_numpy(10, random_state=2),
-    )
-
-    _validate_bounding(
-        x=create_test_distance_numpy(10, 1),
-        y=create_test_distance_numpy(10, 1, random_state=2),
-    )
-
-    _validate_bounding(
         x=create_test_distance_numpy(10, 10),
         y=create_test_distance_numpy(10, 10, random_state=2),
-    )
-
-    _validate_bounding(
-        x=create_test_distance_numpy(10, 10, 1),
-        y=create_test_distance_numpy(10, 10, 1, random_state=2),
-    )
-
-    _validate_bounding(
-        x=create_test_distance_numpy(10, 10, 10),
-        y=create_test_distance_numpy(10, 10, 10, random_state=2),
     )
 
 
@@ -239,36 +214,3 @@ def test_incorrect_parameters() -> None:
         sakoe_chiba.create_bounding_matrix(
             numpy_x, numpy_y, sakoe_chiba_window_radius=1.2, itakura_max_slope=10.0
         )
-
-
-def test_numba_lower_bounding() -> None:
-    """Test numba implementation of bounding."""
-    _validate_bounding(
-        x=np.array([10.0]),
-        y=np.array([15.0]),
-    )
-
-    _validate_bounding(
-        x=create_test_distance_numpy(10),
-        y=create_test_distance_numpy(10, random_state=2),
-    )
-
-    _validate_bounding(
-        x=create_test_distance_numpy(10, 1),
-        y=create_test_distance_numpy(10, 1, random_state=2),
-    )
-
-    _validate_bounding(
-        x=create_test_distance_numpy(10, 10),
-        y=create_test_distance_numpy(10, 10, random_state=2),
-    )
-
-    _validate_bounding(
-        x=create_test_distance_numpy(10, 10, 1),
-        y=create_test_distance_numpy(10, 10, 1, random_state=2),
-    )
-
-    _validate_bounding(
-        x=create_test_distance_numpy(10, 10, 10),
-        y=create_test_distance_numpy(10, 10, 10, random_state=2),
-    )

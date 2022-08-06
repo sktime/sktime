@@ -29,6 +29,7 @@ def create_conditional_fixtures_and_names(
     generator_dict: Dict[str, Callable],
     fixture_sequence: List[str] = None,
     raise_exceptions: bool = False,
+    deepcopy_fixtures: bool = False,
 ):
     """Create conditional fixtures for pytest_generate_tests.
 
@@ -69,6 +70,11 @@ def create_conditional_fixtures_and_names(
     raise_exceptions : bool, optional, default = False
         whether fixture generation errors or other Exceptions are raised
         if False, exceptions are returned instead of fixtures
+    deepcopy_fixtures : bool. optional, default = False
+        whether returned fixture list in fixture_prod are deecopy-independent
+        if False, identical list/tuple elements will be identical by reference
+        if True, identical elements will be identical by value but no by reference
+        "elements" refer to fixture[i] as described below, in fixture_prod
 
     Returns
     -------
@@ -85,6 +91,8 @@ def create_conditional_fixtures_and_names(
                         fixture_var(i-1) = fixture[i-1],
                     )
             return (fixture[1], fixture[2], ..., fixture[N])
+        if deepcopy_fixtures = False, identical fixture[i] are identical by reference
+        if deepcopy_fixtures = True, identical fixture[i] are not identical references
     fixture_names : list of str, fixture ids to use in pytest.fixture.parameterize
         fixture names, generated according to the following conditional rule:
             let fixture_vars = [fixture_var1, fixture_var2, ..., fixture_varN]
@@ -199,6 +207,11 @@ def create_conditional_fixtures_and_names(
 
     # in pytest convention, variable strings are separated by comma
     fixture_param_str = ",".join(fixture_vars)
+
+    # if deepcopy_fixtures = True:
+    # we run deepcopy on every element of fixture_prod to make them independent
+    if deepcopy_fixtures:
+        fixture_prod = [deepcopy(x) for x in fixture_prod]
 
     return fixture_param_str, fixture_prod, fixture_names
 

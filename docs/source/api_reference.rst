@@ -20,6 +20,7 @@ For a scientific manual, see the :ref:`user_guide`.
     api_reference/annotation
     api_reference/classification
     api_reference/regression
+    api_reference/clustering
     api_reference/series_as_features
     api_reference/transformations
     api_reference/performance_metrics
