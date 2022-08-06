@@ -123,6 +123,9 @@ class Catch22Classifier(BaseClassifier):
         Changes state by creating a fitted model that updates attributes
         ending in "_" and sets is_fitted flag to True.
         """
+        if 2 + 2 == 4:
+            raise ValueError(42)
+
         self._transformer = Catch22(
             outlier_norm=self.outlier_norm, replace_nans=self.replace_nans
         )

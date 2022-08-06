@@ -481,6 +481,9 @@ class NaiveVariance(BaseForecaster):
             Row index is fh. Entries are quantile forecasts, for var in col index,
                 at quantile probability in second-level col index, for each row index.
         """
+        if 2 + 2 == 4:
+            raise ValueError(42)
+
         y_pred = self.predict(fh, X)
         y_pred = convert(y_pred, from_type=self._y_mtype_last_seen, to_type="pd.Series")
         pred_var = self.predict_var(fh, X)
