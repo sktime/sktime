@@ -102,7 +102,7 @@ def test_estimator(estimator_class):
     """Universal test for an estimator. Used to measure time per estimator."""
     from sktime.utils.estimator_checks import check_estimator
 
-    excluded = EXCLUDED_TESTS[estimator_class.__name__]
+    excluded = EXCLUDED_TESTS.get(estimator_class.__name__, None)
 
     check_estimator(estimator_class, return_exceptions=False, tests_to_exclude=excluded)
 
