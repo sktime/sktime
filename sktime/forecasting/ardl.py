@@ -49,6 +49,7 @@ Testing - implement if sktime forecaster (not needed locally):
 
 
 # todo: add any necessary imports here
+import pandas as pd
 from statsmodels.tsa.ardl import ARDL as _ARDL
 from statsmodels.tsa.ardl import ardl_select_order as _ardl_select_order
 
@@ -267,8 +268,6 @@ class ARDL(_StatsModelsAdapter):
             X_oos=None,
             dynamic=False
     ):
-        # estimators should precede parameters
-        #  if estimators have default values, set None and initalize below
 
         # Model Params
         self.lags = lags
@@ -328,7 +327,7 @@ class ARDL(_StatsModelsAdapter):
         #   self.clone_tags(est2, ["enforce_index_type", "handles-missing-data"])
 
     # todo: implement this, mandatory
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh=None):
         """Fit forecaster to training data.
 
         private _fit containing the core logic, called from fit
@@ -343,10 +342,6 @@ class ARDL(_StatsModelsAdapter):
             if self.get_tag("scitype:y")=="univariate":
                 guaranteed to have a single column/variable
             A 1-d endogenous response variable. The dependent variable.
-        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
-            Required (non-optional) here if self.get_tag("requires-fh-in-fit")==True
-            Otherwise, if not passed in _fit, guaranteed to be passed in _predict
         X : optional (default=None)
             guaranteed to be of a type in self.get_tag("X_inner_mtype")
             Exogeneous time series to fit to.
@@ -448,7 +443,7 @@ class ARDL(_StatsModelsAdapter):
 
 
     # todo: implement this, mandatory
-    def _predict(self, fh, X=None):
+    def _predict(self, fh, X):
         """Forecast time series at future horizon.
 
         private _predict containing the core logic, called from predict
@@ -477,7 +472,10 @@ class ARDL(_StatsModelsAdapter):
         # statsmodels requires zero-based indexing starting at the
         # beginning of the training series when passing integers
         start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
-        X_oos = X[~X.index.isin(self._X.index)]
+        if X is not None:
+            X_oos = X[~X.index.isin(self._X.index)]
+        else:
+            X_oos = None
         # statsmodels forecasts all periods from start to end of forecasting
         # horizon, but only return given time points in forecasting horizon
         valid_indices = fh.to_absolute(self.cutoff).to_pandas()
@@ -543,4 +541,44 @@ class ARDL(_StatsModelsAdapter):
                   {'lags': 1, 'trend': 'ct', 'order': 2},
                   {'auto_ardl': True, 'maxlag': 2, 'maxorder': 2}]
         return params
+
+if __name__ =='__main__':
+    from sktime.utils.estimator_checks import check_estimator
+    from sktime.registry._lookup import all_tags
+    from sktime.tests.test_all_estimators import TestAllEstimators, QuickTester
+    from statsmodels.datasets import longley, grunfeld
+    from sktime.forecasting.base import ForecastingHorizon
+    from numpy.testing import assert_allclose
+    #print(TestAllEstimators().run_tests(ARDL))
+    #print(all_tags('forecaster'))
+    #tsa = TestAllEstimators()
+    #tsa.test_fit_does_not_overwrite_hyper_params(ARDL)
+    print(check_estimator(ARDL, fixtures_to_run='test_fit_does_not_overwrite_hyper_params[ARDL-1-ForecasterFitPredictMultivariateNoX]', return_exceptions=False))
+    #print(check_estimator(ARDL))
+
+    def test_against_statsmodels():
+        """
+        Compares sktime's ARDL interface with statsmodels ARDL
+        """
+        # data
+        data = longley.load_pandas().data
+        oos = data.iloc[-5:, :]
+        data = data.iloc[:-5, :]
+        y = data.TOTEMP
+        X = None
+        X_oos = None
+        # fit
+        sm_ardl = _ARDL(y, 2, X, trend="c")
+        res = sm_ardl.fit()
+        ardl_sktime = ARDL(lags=2, trend='c')
+        ardl_sktime.fit(y=y, X=X, fh=None)
+        # predict
+        fh = ForecastingHorizon([1, 2, 3])
+        start, end = y.shape[0] + fh[0] - 1, y.shape[0] + fh[-1] - 1
+        y_pred_stats = sm_ardl.predict(res.params, start=start, end=end, exog_oos=X_oos)
+        y_pred = ardl_sktime.predict(fh=fh, X=X_oos)
+        print(y_pred)
+        print(y_pred_stats)
+        return assert_allclose(y_pred, y_pred_stats)
+    #print(test_against_statsmodels())
 
