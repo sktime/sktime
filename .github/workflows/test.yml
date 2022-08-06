@@ -67,7 +67,7 @@ jobs:
         run: make PYTESTOPTIONS="--cov --cov-report=xml --timeout=600" test_softdeps
 
   test-windows:
-    needs: test-nosoftdeps
+    needs: code-quality
     runs-on: windows-2019
     strategy:
       matrix:
@@ -109,7 +109,7 @@ jobs:
         uses: codecov/codecov-action@v3
 
   test-unix:
-    needs: test-nosoftdeps
+    needs: code-quality
     strategy:
       matrix:
         python-version: [3.7, 3.8, 3.9, '3.10']
