@@ -78,6 +78,7 @@ dev = [
     "pre-commit",
     "pytest",
     "pytest-cov",
+    "pytest-randomly",
     "pytest-timeout",
     "wheel",
 ]

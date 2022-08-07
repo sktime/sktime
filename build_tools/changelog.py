@@ -23,6 +23,7 @@ GITHUB_REPOS = "https://api.github.com/repos"
 def fetch_merged_pull_requests(page: int = 1) -> List[Dict]:  # noqa
     "Fetch a page of pull requests"
     params = {
+        "base": "main",
         "state": "closed",
         "page": page,
         "per_page": 50,
@@ -160,6 +161,6 @@ if __name__ == "__main__":
     if diff["total_commits"] != len(pulls):
         raise ValueError(
             "Something went wrong and not all PR were fetched. "
-            f'There is {len(pulls)} PRs but {diff["total_commits"]} in the diff'
+            f'There are {len(pulls)} PRs but {diff["total_commits"]} in the diff. '
             "Please verify that all PRs are included in the changelog."
         )  # noqa
