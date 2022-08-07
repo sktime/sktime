@@ -186,7 +186,7 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
             inv_var = np.array(
                 [
                     1 / np.var(y_test - y_pred_test)
-                    for y_pred_test in self._predict_forecasters(fh_test, X)
+                    for y_pred_test in self._predict_forecasters(fh_test, X_test)
                 ]
             )
             # standardize the inverse variance

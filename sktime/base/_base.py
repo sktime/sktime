@@ -406,13 +406,8 @@ class BaseObject(_BaseEstimator):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        # imported inside the function to avoid circular imports
-        from sktime.tests._config import ESTIMATOR_TEST_PARAMS
-
-        # construct with parameter configuration for testing, otherwise construct with
-        # default parameters (empty dict)
-        params = ESTIMATOR_TEST_PARAMS.get(cls, {})
-        return params
+        # default parameters = empty dict
+        return {}
 
     @classmethod
     def create_test_instance(cls, parameter_set="default"):

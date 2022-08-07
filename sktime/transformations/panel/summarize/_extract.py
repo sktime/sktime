@@ -9,7 +9,6 @@ import pandas as pd
 from joblib import Parallel, delayed
 
 from sktime.datatypes import convert_to
-from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.transformations.base import BaseTransformer
 from sktime.transformations.panel.segment import RandomIntervalSegmenter
 
@@ -428,7 +427,7 @@ class FittedParamExtractor(BaseTransformer):
         return param_names
 
     @classmethod
-    def get_test_params(cls):
+    def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
 
         Parameters
@@ -436,7 +435,6 @@ class FittedParamExtractor(BaseTransformer):
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
             special parameters are defined for a value, will return `"default"` set.
-            There are currently no reserved values for distance/kernel transformers.
 
         Returns
         -------
@@ -446,4 +444,6 @@ class FittedParamExtractor(BaseTransformer):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
+        from sktime.forecasting.exp_smoothing import ExponentialSmoothing
+
         return {"forecaster": ExponentialSmoothing(), "param_names": ["initial_level"]}

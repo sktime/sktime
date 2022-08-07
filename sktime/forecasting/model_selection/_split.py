@@ -796,6 +796,27 @@ class CutoffSplitter(BaseSplitter):
         else:
             return np.argwhere(y.index.isin(check_cutoffs(self.cutoffs))).flatten()
 
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the splitter.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        params = {"cutoffs": np.array([3, 7, 10])}
+        return params
+
 
 class BaseWindowSplitter(BaseSplitter):
     """Base class for sliding and expanding window splitter."""
@@ -1310,6 +1331,27 @@ class SingleWindowSplitter(BaseSplitter):
         end = _get_end(y_index=y, fh=fh)
         return np.array([end])
 
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the splitter.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        params = {"fh": 3}
+        return params
+
 
 def temporal_train_test_split(
     y: ACCEPTED_Y_TYPES,
@@ -1352,7 +1394,7 @@ def temporal_train_test_split(
 
     References
     ----------
-    ..[1]  adapted from https://github.com/alkaline-ml/pmdarima/
+    .. [1]  adapted from https://github.com/alkaline-ml/pmdarima/
     """
     if fh is not None:
         if test_size is not None or train_size is not None:
