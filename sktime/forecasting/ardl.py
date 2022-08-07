@@ -247,23 +247,23 @@ class ARDL(_StatsModelsAdapter):
         order=None,
         fixed=None,
         causal=False,
-        trend='c',
+        trend="c",
         seasonal=False,
         deterministic=None,
         hold_back=None,
         period=None,
-        missing='none',
-        cov_type='nonrobust',
+        missing="none",
+        cov_type="nonrobust",
         cov_kwds=None,
         use_t=True,
         auto_ardl=False,
         maxlag=None,
         maxorder=None,
-        ic='bic',
+        ic="bic",
         glob=False,
         fixed_oos=None,
         X_oos=None,
-        dynamic=False
+        dynamic=False,
     ):
 
         # Model Params
@@ -418,9 +418,7 @@ class ARDL(_StatsModelsAdapter):
             )
 
             self._fitted_forecaster = self._forecaster.model.fit(
-                cov_type=self.cov_type,
-                cov_kwds=self.cov_kwds,
-                use_t=self.use_t
+                cov_type=self.cov_type, cov_kwds=self.cov_kwds, use_t=self.use_t
             )
         # implement here
         # IMPORTANT: avoid side effects to y, X, fh
@@ -570,9 +568,8 @@ class ARDL(_StatsModelsAdapter):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         params = [
-            {'lags': 1, 'trend': 'c', 'order': 2},
-            {'lags': 1, 'trend': 'ct'},
-            {'auto_ardl': True, 'maxlag': 1}
+            {"lags": 1, "trend": "c", "order": 2},
+            {"lags": 1, "trend": "ct"},
+            {"auto_ardl": True, "maxlag": 1},
         ]
         return params
-
