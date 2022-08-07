@@ -55,8 +55,3 @@ For user guides specific to learning tasks, see our :ref:`user_guide` page.
             :classes: btn-block btn-secondary stretched-link
 
     ---
-
-
-
-
-
