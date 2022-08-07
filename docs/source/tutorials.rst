@@ -18,4 +18,4 @@ The notebook files can be found `here <https://github.com/alan-turing-institute/
 .. nbgallery::
     :glob:
 
-    https://github.com/alan-turing-institute/sktime/blob/main/examples
+    examples/*
