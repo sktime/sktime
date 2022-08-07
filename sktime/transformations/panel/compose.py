@@ -119,8 +119,6 @@ class ColumnTransformer(_ColumnTransformer, _PanelToPanelTransformer):
         of the individual transformations and the `sparse_threshold` keyword.
     """
 
-    _required_parameters = ["transformers"]
-
     def __init__(
         self,
         transformers,
@@ -306,7 +304,6 @@ def _from_nested_to_series(x):
 class _RowTransformer(BaseTransformer):
     """Base class for RowTransformer."""
 
-    _required_parameters = ["transformer"]
     _tags = {"fit_is_empty": True}
 
     def __init__(self, transformer, check_transformer=True):

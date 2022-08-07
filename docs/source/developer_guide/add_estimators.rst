@@ -150,13 +150,13 @@ To run or exclude certain tests, use the ``tests_to_run`` or ``tests_to_exclude`
 Values provided should be names of tests (str), or a list of names of tests.
 Note that test names exclude the part in squared brackets.
 
-Example, running the test ``test_required_params`` with all fixtures:
+Example, running the test ``test_constructor`` with all fixtures:
 
 .. code-block:: python
 
-    check_estimator(NaiveForecaster, tests_to_run="test_required_params")
+    check_estimator(NaiveForecaster, tests_to_run="test_constructor")
 
-``{'test_required_params[NaiveForecaster]': 'PASSED'}``
+``{'test_constructor[NaiveForecaster]': 'PASSED'}``
 
 To run or exclude certain test-fixture-combinations, use the ``fixtures_to_run`` or ``fixtures_to_exclude`` arguments.
 Values provided should be names of test-fixture-combination strings (str), or a list of such.
