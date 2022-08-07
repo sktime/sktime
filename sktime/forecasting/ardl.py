@@ -1,11 +1,6 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements ARDL Model as interface to statsmodels."""
-
-
-_all_ = ["ARDL"]
-__author__ = ["kcc-lion"]
-
 import warnings
 
 import pandas as pd
@@ -15,6 +10,9 @@ from statsmodels.tsa.ardl import ardl_select_order as _ardl_select_order
 from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.base.adapters import _StatsModelsAdapter
 from sktime.forecasting.base.adapters._statsmodels import _coerce_int_to_range_index
+
+_all_ = ["ARDL"]
+__author__ = ["kcc-lion"]
 
 
 class ARDL(_StatsModelsAdapter):
@@ -295,14 +293,16 @@ class ARDL(_StatsModelsAdapter):
             if inner_order is not None and not isinstance(X, pd.DataFrame):
                 inner_order = 0
                 warnings.warn(
-                    "X is none but the order for the exogenous variables was specified. Order was thus set to 0"
+                    "X is none but the order for the exogenous variables was"
+                    " specified. Order was thus set to 0"
                 )
         else:
             if not isinstance(X, pd.DataFrame):
                 inner_order = 0
                 inner_auto_ardl = False
                 warnings.warn(
-                    "X is none but auto_ardl was set to True. auto_ardl was thus set to False with order=0"
+                    "X is none but auto_ardl was set to True. auto_ardl was"
+                    " thus set to False with order=0"
                 )
         return inner_order, inner_auto_ardl
 
@@ -338,8 +338,10 @@ class ARDL(_StatsModelsAdapter):
             y, X = _coerce_int_to_range_index(y, X)
 
         # validity check of passed params
-        # certain parameter combinations (e.g. (1) order != 0 and X=None, (2) auto_ardl=True and X=None) cause errors
-        # Thus, the below function checks for validity of params, resets them appropriately and issues a warning if need be
+        # certain parameter combinations (e.g. (1) order != 0 and X=None,
+        # (2) auto_ardl=True and X=None) cause errors
+        # Thus, the below function checks for validity of params,
+        # resets them appropriately and issues a  warning if need be
         inner_order, inner_auto_ardl = self.check_param_validity(X)
 
         if not inner_auto_ardl:
@@ -477,7 +479,7 @@ class ARDL(_StatsModelsAdapter):
         -------
         self : reference to self
         """
-        warnings.warn(f"Defaulting to `update_params=True`")
+        warnings.warn("Defaulting to `update_params=True`")
         update_params = True
         if update_params:
             # default to re-fitting if update is not implemented

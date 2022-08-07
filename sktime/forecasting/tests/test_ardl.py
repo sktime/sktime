@@ -72,7 +72,6 @@ def test_against_statsmodels_3():
     """
     # data
     data = longley.load_pandas().data
-    oos = data.iloc[-5:, :]
     data = data.iloc[:-5, :]
     y = data.TOTEMP
     X = None
