@@ -32,8 +32,6 @@ def test_against_statsmodels():
     start, end = X.shape[0] + fh[0] - 1, X.shape[0] + fh[-1] - 1
     y_pred_stats = sm_ardl.predict(res.params, start=start, end=end, exog_oos=X_oos)
     y_pred = ardl_sktime.predict(fh=fh, X=X_oos)
-    print(y_pred)
-    print(y_pred_stats)
     return assert_allclose(y_pred, y_pred_stats)
 
 
@@ -61,8 +59,6 @@ def test_against_statsmodels_2():
     start, end = X.shape[0] + fh[0] - 1, X.shape[0] + fh[-1] - 1
     y_pred_stats = sm_ardl.predict(res.params, start=start, end=end, exog_oos=X_oos)
     y_pred = ardl_sktime.predict(fh=fh, X=X_oos)
-    print(y_pred)
-    print(y_pred_stats)
     return assert_allclose(y_pred, y_pred_stats)
 
 
@@ -86,8 +82,6 @@ def test_against_statsmodels_3():
     start, end = y.shape[0] + fh[0] - 1, y.shape[0] + fh[-1] - 1
     y_pred_stats = sm_ardl.predict(res.params, start=start, end=end, exog_oos=X_oos)
     y_pred = ardl_sktime.predict(fh=fh, X=X_oos)
-    print(y_pred)
-    print(y_pred_stats)
     return assert_allclose(y_pred, y_pred_stats)
 
 
@@ -117,6 +111,4 @@ def test_auto_ardl():
     start, end = X.shape[0] + fh[0] - 1, X.shape[0] + fh[-1] - 1
     y_pred_stats = res.predict(start=start, end=end, exog_oos=X_oos)
     y_pred = ardl_sktime.predict(fh=fh, X=X_oos)
-    print(y_pred)
-    print(y_pred_stats)
     return assert_allclose(y_pred, y_pred_stats)
