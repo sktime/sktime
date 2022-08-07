@@ -6,43 +6,6 @@
 _all_ = ["ARDL"]
 __author__ = ["kcc-lion"]
 
-"""
-Extension template for forecasters.
-
-Purpose of this implementation template:
-    quick implementation of new estimators following the template
-    NOT a concrete class to import! This is NOT a base class or concrete class!
-    This is to be used as a "fill-in" coding template.
-
-How to use this implementation template to implement a new estimator:
-- make a copy of the template in a suitable location, give it a descriptive name.
-- work through all the "todo" comments below
-- fill in code for mandatory methods, and optionally for optional methods
-- do not write to reserved variables: is_fitted, _is_fitted, _X, _y, cutoff, _fh,
-    _cutoff, _converter_store_y, forecasters_, _tags, _tags_dynamic, _is_vectorized
-- you can add more private methods, but do not override BaseEstimator's private methods
-    an easy way to be safe is to prefix your methods with "_custom"
-- change docstrings for functions and the file
-- ensure interface compatibility by sktime.utils.estimator_checks.check_estimator
-- once complete: use as a local library, or contribute to sktime via PR
-- more details: https://www.sktime.org/en/stable/developer_guide/add_estimators.html
-
-Mandatory implements:
-    fitting         - _fit(self, y, X=None, fh=None)
-    forecasting     - _predict(self, fh=None, X=None)
-
-Optional implements:
-    updating                    - _update(self, y, X=None, update_params=True):
-    predicting quantiles        - _predict_quantiles(self, fh, X=None, alpha=None)
-    OR predicting intervals     - _predict_interval(self, fh, X=None, coverage=None)
-    predicting variance         - _predict_var(self, fh, X=None, cov=False)
-    distribution forecast       - _predict_proba(self, fh, X=None)
-    fitted parameter inspection - get_fitted_params()
-
-Testing - implement if sktime forecaster (not needed locally):
-    get default parameters for test instance(s) - get_test_params()
-"""
-
 import warnings
 
 import pandas as pd
@@ -54,7 +17,7 @@ from sktime.forecasting.base.adapters import _StatsModelsAdapter
 from sktime.forecasting.base.adapters._statsmodels import _coerce_int_to_range_index
 
 class ARDL(_StatsModelsAdapter):
-    """Autoregressive Distributed Lag (ARDL) Model. todo: write docstring.
+    """Autoregressive Distributed Lag (ARDL) Model.
 
     Direct interface for statsmodels.tsa.ardl.ARDL
 
@@ -186,19 +149,19 @@ class ARDL(_StatsModelsAdapter):
 
     .. math ::
 
-       Y_t = \delta_0 + \delta_1 t + \delta_2 t^2
-             + \sum_{i=1}^{s-1} \gamma_i I_{[(\mod(t,s) + 1) = i]}
-             + \sum_{j=1}^p \phi_j Y_{t-j}
-             + \sum_{l=1}^k \sum_{m=0}^{o_l} \beta_{l,m} X_{l, t-m}
-             + Z_t \lambda
-             + \epsilon_t
+       Y_t = delta_0 + delta_1 t + delta_2 t^2
+             + sum_{i=1}^{s-1} gamma_i I_{[(mod(t,s) + 1) = i]}
+             + sum_{j=1}^p phi_j Y_{t-j}
+             + sum_{l=1}^k sum_{m=0}^{o_l} beta_{l,m} X_{l, t-m}
+             + Z_t lambda
+             + epsilon_t
 
-    where :math:`\delta_\bullet` capture trends, :math:`\gamma_\bullet`
+    where :math:`delta_bullet` capture trends, :math:`gamma_bullet`
     capture seasonal shifts, s is the period of the seasonality, p is the
     lag length of the endogenous variable, k is the number of exogenous
     variables :math:`X_{l}`, :math:`o_l` is included the lag length of
     :math:`X_{l}`, :math:`Z_t` are ``r`` included fixed regressors and
-    :math:`\epsilon_t` is a white noise shock. If ``causal`` is ``True``,
+    :math:`epsilon_t` is a white noise shock. If ``causal`` is ``True``,
     then the 0-th lag of the exogenous variables is not included and the
     sum starts at ``m=1``.
 
