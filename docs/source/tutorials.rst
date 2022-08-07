@@ -3,18 +3,55 @@
 Tutorials
 =========
 
-We have a number of tutorial notebooks. If you like to run them interactively, you can launch them on Binder without
-having to install anything.
+Below are introductory tutorials for ``sktime``.
 
-We assume basic familiarity with `scikit-learn`_. If you haven’t worked with scikit-learn before, check out their
-`getting-started guide`_.
+Each tutorial is located in its own repository, which contains notebooks and links to a youtube video walkthrough.
 
-The notebook files can be found `here <https://github.com/alan-turing-institute/sktime/blob/main/examples>`_.
+For user guides specific to learning tasks, see our :ref:`user_guide` page.
 
-.. _scikit-learn: https://scikit-learn.org/stable/
-.. _getting-started guide: https://scikit-learn.org/stable/getting_started.html
+.. panels::
+    :card: + intro-card text-center
 
-.. nbgallery::
-    :glob:
+    ---
 
-    examples/*
+    Introductory tutorial
+    ^^^^^^^^^^^^^^^^^^^^^
+
+    General introduction to ``sktime``
+
+    +++
+
+    .. link-button:: https://github.com/sktime/sktime-tutorial-pydata-global-2021
+            :type: ref
+            :text: Intro to ``sktime``
+            :classes: btn-block btn-secondary stretched-link
+
+    ---
+
+    Implementing your own estimator
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    How to implement your own ``sktime`` compatible estimator.
+
+    +++
+
+    .. link-button:: https://github.com/sktime/sktime-workshop-pydata-london-2022
+            :type: ref
+            :text: Implementing estimators
+            :classes: btn-block btn-secondary stretched-link
+
+    ---
+
+    Advanced forecasting tutorial
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    Probabilistic and hierarchical forecasting with ``sktime``
+
+    +++
+
+    .. link-button:: https://github.com/sktime/sktime-tutorial-pydata-berlin-2022
+            :type: ref
+            :text: Advanced forecasting
+            :classes: btn-block btn-secondary stretched-link
+
+    ---
