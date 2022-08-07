@@ -38,7 +38,7 @@ def test_against_statsmodels():
 
 def test_against_statsmodels_2():
     """
-    Compares sktime's ARDL interface with statsmodels ARDL
+    Compares sktime's ARDL interface with statsmodels ARDL with different data
     """
     # data
     data = grunfeld.load_pandas().data
@@ -58,6 +58,31 @@ def test_against_statsmodels_2():
     # predict
     fh = ForecastingHorizon([1, 2, 3])
     start, end = X.shape[0] + fh[0] - 1, X.shape[0] + fh[-1] - 1
+    y_pred_stats = sm_ardl.predict(res.params, start=start, end=end, exog_oos=X_oos)
+    y_pred = ardl_sktime.predict(fh=fh, X=X_oos)
+    print(y_pred)
+    print(y_pred_stats)
+    return assert_allclose(y_pred, y_pred_stats)
+
+def test_against_statsmodels_3():
+    """
+    Compares sktime's ARDL interface with statsmodels ARDL with X=None
+    """
+    # data
+    data = longley.load_pandas().data
+    oos = data.iloc[-5:, :]
+    data = data.iloc[:-5, :]
+    y = data.TOTEMP
+    X = None
+    X_oos = None
+    # fit
+    sm_ardl = _ARDL(y, lags=2, exog=None, trend="c")
+    res = sm_ardl.fit()
+    ardl_sktime = ARDL(lags=2, trend='c')
+    ardl_sktime.fit(y=y, X=X, fh=None)
+    # predict
+    fh = ForecastingHorizon([1, 2, 3])
+    start, end = y.shape[0] + fh[0] - 1, y.shape[0] + fh[-1] - 1
     y_pred_stats = sm_ardl.predict(res.params, start=start, end=end, exog_oos=X_oos)
     y_pred = ardl_sktime.predict(fh=fh, X=X_oos)
     print(y_pred)

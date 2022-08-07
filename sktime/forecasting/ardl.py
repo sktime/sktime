@@ -442,95 +442,10 @@ class ARDL(_StatsModelsAdapter):
         #   1. pass to constructor,  2. write to self in constructor,
         #   3. read from self in _fit,  4. pass to interfaced_model.fit in _fit
         return self
-    def _update(self, y, X=None, update_params=True):
-        """Update time series to incremental training data.
-
-        private _update containing the core logic, called from update
-
-        State required:
-            Requires state to be "fitted".
-
-        Accesses in self:
-            Fitted model attributes ending in "_"
-            self.cutoff
-
-        Writes to self:
-            Sets fitted model attributes ending in "_", if update_params=True.
-            Does not write to self if update_params=False.
-
-        Parameters
-        ----------
-        y : guaranteed to be of a type in self.get_tag("y_inner_mtype")
-            Time series with which to update the forecaster.
-            if self.get_tag("scitype:y")=="univariate":
-                guaranteed to have a single column/variable
-            if self.get_tag("scitype:y")=="multivariate":
-                guaranteed to have 2 or more columns
-            if self.get_tag("scitype:y")=="both": no restrictions apply
-        X : optional (default=None)
-            guaranteed to be of a type in self.get_tag("X_inner_mtype")
-            Exogeneous time series for the forecast
-        update_params : bool, optional (default=True)
-            whether model parameters should be updated
-
-        Returns
-        -------
-        self : reference to self
-        """
-        if update_params:
-            # default to re-fitting if update is not implemented
-            warnings.warn(
-                f"NotImplementedWarning: {self.__class__.__name__} "
-                f"does not have a custom `update` method implemented. "
-                f"{self.__class__.__name__} will be refit each time "
-                f"`update` is called with update_params=True."
-            )
-            # we need to overwrite the mtype last seen, since the _y
-            #    may have been converted
-            mtype_last_seen = self._y_mtype_last_seen
-            # refit with updated data, not only passed data
-            self.fit(y=self._y, X=self._X, fh=self._fh)
-            # todo: should probably be self._fit, not self.fit
-            # but looping to self.fit for now to avoid interface break
-            self._y_mtype_last_seen = mtype_last_seen
-
-        # if update_params=False, and there are no components, do nothing
-        # if update_params=False, and there are components, we update cutoffs
-        elif self.is_composite():
-            # default to calling component _updates if update is not implemented
-            warnings.warn(
-                f"NotImplementedWarning: {self.__class__.__name__} "
-                f"does not have a custom `update` method implemented. "
-                f"{self.__class__.__name__} will update all component cutoffs each time"
-                f" `update` is called with update_params=False."
-            )
-            comp_forecasters = self._components(base_class=BaseForecaster)
-            for comp in comp_forecasters.values():
-                comp.update(y=y, X=X, update_params=False)
-
-        return self
-
     def summary(self):
         """Get a summary of the fitted forecaster."""
         self.check_is_fitted()
         return self._fitted_forecaster.summary()
-
-    def hessian(self):
-        """Get the hessian of the fitted forecaster."""
-        self.check_is_fitted()
-        return self._forecaster.hessian(self._fitted_forecaster.params)
-
-    def information(self):
-        """Get the fisher information matrix of the fitted forecaster."""
-        self.check_is_fitted()
-        return self._forecaster.information(self._fitted_forecaster.params)
-
-    def loglike(self):
-        """Get the loglikelihood of the fitted forecaster."""
-        self.check_is_fitted()
-        return self._forecaster.loglike(self._fitted_forecaster.params)
-
-
 
     # todo: implement this, mandatory
     def _predict(self, fh, X):
@@ -574,8 +489,75 @@ class ARDL(_StatsModelsAdapter):
         y_pred = self._fitted_forecaster.predict(start=start, end=end, exog=self._X, exog_oos=X, fixed_oos=self.fixed_oos)
         return y_pred.loc[valid_indices]
 
+    def _update(self, y, X=None, update_params=True):
+        """Update time series to incremental training data.
 
+        private _update containing the core logic, called from update
 
+        State required:
+            Requires state to be "fitted".
+
+        Accesses in self:
+            Fitted model attributes ending in "_"
+            self.cutoff
+
+        Writes to self:
+            Sets fitted model attributes ending in "_", if update_params=True.
+            Does not write to self if update_params=False.
+
+        Parameters
+        ----------
+        y : guaranteed to be of a type in self.get_tag("y_inner_mtype")
+            Time series with which to update the forecaster.
+            if self.get_tag("scitype:y")=="univariate":
+                guaranteed to have a single column/variable
+            if self.get_tag("scitype:y")=="multivariate":
+                guaranteed to have 2 or more columns
+            if self.get_tag("scitype:y")=="both": no restrictions apply
+        X : optional (default=None)
+            guaranteed to be of a type in self.get_tag("X_inner_mtype")
+            Exogeneous time series for the forecast
+        update_params : bool, optional (default=True)
+            whether model parameters should be updated
+
+        Returns
+        -------
+        self : reference to self
+        """
+        warnings.warn(f'Defaulting to `update_params=True`')
+        update_params=True
+        if update_params:
+            # default to re-fitting if update is not implemented
+            warnings.warn(
+                f"NotImplementedWarning: {self.__class__.__name__} "
+                f"does not have a custom `update` method implemented. "
+                f"{self.__class__.__name__} will be refit each time "
+                f"`update` is called with update_params=True."
+            )
+            # we need to overwrite the mtype last seen, since the _y
+            #    may have been converted
+            mtype_last_seen = self._y_mtype_last_seen
+            # refit with updated data, not only passed data
+            self.fit(y=self._y, X=self._X, fh=self._fh)
+            # todo: should probably be self._fit, not self.fit
+            # but looping to self.fit for now to avoid interface break
+            self._y_mtype_last_seen = mtype_last_seen
+
+        # if update_params=False, and there are no components, do nothing
+        # if update_params=False, and there are components, we update cutoffs
+        elif self.is_composite():
+            # default to calling component _updates if update is not implemented
+            warnings.warn(
+                f"NotImplementedWarning: {self.__class__.__name__} "
+                f"does not have a custom `update` method implemented. "
+                f"{self.__class__.__name__} will update all component cutoffs each time"
+                f" `update` is called with update_params=False."
+            )
+            comp_forecasters = self._components(base_class=BaseForecaster)
+            for comp in comp_forecasters.values():
+                comp.update(y=y, X=X, update_params=False)
+
+        return self
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
@@ -595,77 +577,8 @@ class ARDL(_StatsModelsAdapter):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-
-        # todo: set the testing parameters for the estimators
-        # Testing parameters can be dictionary or list of dictionaries
-        # Testing parameter choice should cover internal cases well.
-        #
-        # this method can, if required, use:
-        #   class properties (e.g., inherited); parent class test case
-        #   imported objects such as estimators from sktime or sklearn
-        # important: all such imports should be *inside get_test_params*, not at the top
-        #            since imports are used only at testing time
-        #
-        # The parameter_set argument is not used for automated, module level tests.
-        #   It can be used in custom, estimator specific tests, for "special" settings.
-        # A parameter dictionary must be returned *for all values* of parameter_set,
-        #   i.e., "parameter_set not available" errors should never be raised.
-        #
-        # example 1: specify params as dictionary
-        # any number of params can be specified
-        # params = {"est": value0, "parama": value1, "paramb": value2}
-        #
-        # example 2: specify params as list of dictionary
-        # note: Only first dictionary will be used by create_test_instance
-        # params = [{"est": value1, "parama": value2},
-        #           {"est": value3, "parama": value4}]
-        # return params
-        #
-        # example 3: parameter set depending on param_set value
-        #   note: only needed if a separate parameter set is needed in tests
-        # if parameter_set == "special_param_set":
-        #     params = {"est": value1, "parama": value2}
-        #     return params
-        #
-        # # "default" params - always returned except for "special_param_set" value
-        # params = {"est": value3, "parama": value4}
-        # return params
         params = [{'lags': 1, 'trend': 'c', 'order': 2},
                   {'lags': 1, 'trend': 'ct'},
                   {'auto_ardl': True, 'maxlag': 1}]
         return params
-
-if __name__ =='__main__':
-    from sktime.utils.estimator_checks import check_estimator
-    from statsmodels.datasets import longley, grunfeld
-    from sktime.forecasting.base import ForecastingHorizon
-    from numpy.testing import assert_allclose
-    #print(check_estimator(ARDL, fixtures_to_run='test_update_predict_predicted_index[ARDL-0-y:1cols-update_params=False-step=1-0-fh=1]', return_exceptions=False))
-    print(check_estimator(ARDL))
-
-    def test_against_statsmodels():
-        """
-        Compares sktime's ARDL interface with statsmodels ARDL
-        """
-        # data
-        data = longley.load_pandas().data
-        oos = data.iloc[-5:, :]
-        data = data.iloc[:-5, :]
-        y = data.TOTEMP
-        X = None
-        X_oos = None
-        # fit
-        sm_ardl = _ARDL(y, lags=2, exog=None, trend="c")
-        res = sm_ardl.fit()
-        ardl_sktime = ARDL(lags=2, trend='c')
-        ardl_sktime.fit(y=y, X=X, fh=None)
-        # predict
-        fh = ForecastingHorizon([1, 2, 3])
-        start, end = y.shape[0] + fh[0] - 1, y.shape[0] + fh[-1] - 1
-        y_pred_stats = sm_ardl.predict(res.params, start=start, end=end, exog_oos=X_oos)
-        y_pred = ardl_sktime.predict(fh=fh, X=X_oos)
-        print(y_pred)
-        print(y_pred_stats)
-        return assert_allclose(y_pred, y_pred_stats)
-    print(test_against_statsmodels())
 
