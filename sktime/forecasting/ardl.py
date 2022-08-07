@@ -50,10 +50,12 @@ Testing - implement if sktime forecaster (not needed locally):
 
 # todo: add any necessary imports here
 import pandas as pd
+import warnings
 from statsmodels.tsa.ardl import ARDL as _ARDL
 from statsmodels.tsa.ardl import ardl_select_order as _ardl_select_order
 
 from sktime.forecasting.base.adapters import _StatsModelsAdapter
+from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.base.adapters._statsmodels import _coerce_int_to_range_index
 
 class ARDL(_StatsModelsAdapter):
@@ -247,7 +249,7 @@ class ARDL(_StatsModelsAdapter):
     def __init__(
             self,
             lags=None,
-            order=0,
+            order=None,
             fixed=None,
             causal=False,
             trend='c',
@@ -326,6 +328,22 @@ class ARDL(_StatsModelsAdapter):
         # example 2: cloning tags from component
         #   self.clone_tags(est2, ["enforce_index_type", "handles-missing-data"])
 
+    def check_param_validity(self, X):
+        inner_order = self.order
+        inner_auto_ardl = self.auto_ardl
+
+
+        if not self.auto_ardl:
+            if inner_order is not None and not isinstance(X, pd.DataFrame):
+                inner_order = 0
+                warnings.warn('X is none but the order for the exogenous variables was specified. Order was thus set to 0')
+        else:
+            if not isinstance(X, pd.DataFrame):
+                inner_order = 0
+                inner_auto_ardl = False
+                warnings.warn('X is none but auto_ardl was set to True. auto_ardl was thus set to False with order=0')
+        return inner_order, inner_auto_ardl
+
     # todo: implement this, mandatory
     def _fit(self, y, X, fh=None):
         """Fit forecaster to training data.
@@ -357,12 +375,21 @@ class ARDL(_StatsModelsAdapter):
         if isinstance(y, pd.Series) and y.index.is_integer():
             y, X = _coerce_int_to_range_index(y, X)
 
-        if not self.auto_ardl:
+
+        # validity check of passed params
+        # certain parameter combinations (e.g. (1) order != 0 and X=None, (2) auto_ardl=True and X=None) cause errors
+        # Thus, the below function checks for validity of params, resets them appropriately and issues a warning if need be
+        inner_order, inner_auto_ardl = self.check_param_validity(X)
+
+        if not inner_auto_ardl:
+            #if not isinstance(X, pd.DataFrame) and self.order != 0:
+            #    raise Exception(f"order can not be {self.order} if X is None")
+
             self._forecaster = _ARDL(
                 endog=y,
                 lags=self.lags,
                 exog=X,
-                order=self.order,
+                order=inner_order,
                 trend=self.trend,
                 fixed=self.fixed,
                 causal=self.causal,
@@ -415,6 +442,73 @@ class ARDL(_StatsModelsAdapter):
         #   1. pass to constructor,  2. write to self in constructor,
         #   3. read from self in _fit,  4. pass to interfaced_model.fit in _fit
         return self
+    def _update(self, y, X=None, update_params=True):
+        """Update time series to incremental training data.
+
+        private _update containing the core logic, called from update
+
+        State required:
+            Requires state to be "fitted".
+
+        Accesses in self:
+            Fitted model attributes ending in "_"
+            self.cutoff
+
+        Writes to self:
+            Sets fitted model attributes ending in "_", if update_params=True.
+            Does not write to self if update_params=False.
+
+        Parameters
+        ----------
+        y : guaranteed to be of a type in self.get_tag("y_inner_mtype")
+            Time series with which to update the forecaster.
+            if self.get_tag("scitype:y")=="univariate":
+                guaranteed to have a single column/variable
+            if self.get_tag("scitype:y")=="multivariate":
+                guaranteed to have 2 or more columns
+            if self.get_tag("scitype:y")=="both": no restrictions apply
+        X : optional (default=None)
+            guaranteed to be of a type in self.get_tag("X_inner_mtype")
+            Exogeneous time series for the forecast
+        update_params : bool, optional (default=True)
+            whether model parameters should be updated
+
+        Returns
+        -------
+        self : reference to self
+        """
+        if update_params:
+            # default to re-fitting if update is not implemented
+            warnings.warn(
+                f"NotImplementedWarning: {self.__class__.__name__} "
+                f"does not have a custom `update` method implemented. "
+                f"{self.__class__.__name__} will be refit each time "
+                f"`update` is called with update_params=True."
+            )
+            # we need to overwrite the mtype last seen, since the _y
+            #    may have been converted
+            mtype_last_seen = self._y_mtype_last_seen
+            # refit with updated data, not only passed data
+            self.fit(y=self._y, X=self._X, fh=self._fh)
+            # todo: should probably be self._fit, not self.fit
+            # but looping to self.fit for now to avoid interface break
+            self._y_mtype_last_seen = mtype_last_seen
+
+        # if update_params=False, and there are no components, do nothing
+        # if update_params=False, and there are components, we update cutoffs
+        elif self.is_composite():
+            # default to calling component _updates if update is not implemented
+            warnings.warn(
+                f"NotImplementedWarning: {self.__class__.__name__} "
+                f"does not have a custom `update` method implemented. "
+                f"{self.__class__.__name__} will update all component cutoffs each time"
+                f" `update` is called with update_params=False."
+            )
+            comp_forecasters = self._components(base_class=BaseForecaster)
+            for comp in comp_forecasters.values():
+                comp.update(y=y, X=X, update_params=False)
+
+        return self
 
     def summary(self):
         """Get a summary of the fitted forecaster."""
@@ -436,10 +530,6 @@ class ARDL(_StatsModelsAdapter):
         self.check_is_fitted()
         return self._forecaster.loglike(self._fitted_forecaster.params)
 
-    def score(self):
-        """Get the loglikelihood of the fitted forecaster."""
-        self.check_is_fitted()
-        return self._forecaster.score(self._fitted_forecaster.params)
 
 
     # todo: implement this, mandatory
@@ -471,17 +561,20 @@ class ARDL(_StatsModelsAdapter):
         """
         # statsmodels requires zero-based indexing starting at the
         # beginning of the training series when passing integers
+
         start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
-        if X is not None:
-            X_oos = X[~X.index.isin(self._X.index)]
-        else:
-            X_oos = None
+        #if X is not None:
+        #    X_oos = X[~X.index.isin(self._X.index)]
+        #else:
+        #    X_oos = None
         # statsmodels forecasts all periods from start to end of forecasting
         # horizon, but only return given time points in forecasting horizon
         valid_indices = fh.to_absolute(self.cutoff).to_pandas()
 
-        y_pred = self._fitted_forecaster.predict(start=start, end=end, exog=self._X, exog_oos=X_oos, fixed_oos=self.fixed_oos)
+        y_pred = self._fitted_forecaster.predict(start=start, end=end, exog=self._X, exog_oos=X, fixed_oos=self.fixed_oos)
         return y_pred.loc[valid_indices]
+
+
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -537,24 +630,18 @@ class ARDL(_StatsModelsAdapter):
         # # "default" params - always returned except for "special_param_set" value
         # params = {"est": value3, "parama": value4}
         # return params
-        params = [{'lags': 2, 'trend': 'c', 'order': 0},
-                  {'lags': 1, 'trend': 'ct', 'order': 2},
-                  {'auto_ardl': True, 'maxlag': 2, 'maxorder': 2}]
+        params = [{'lags': 1, 'trend': 'c', 'order': 2},
+                  {'lags': 1, 'trend': 'ct'},
+                  {'auto_ardl': True, 'maxlag': 1}]
         return params
 
 if __name__ =='__main__':
     from sktime.utils.estimator_checks import check_estimator
-    from sktime.registry._lookup import all_tags
-    from sktime.tests.test_all_estimators import TestAllEstimators, QuickTester
     from statsmodels.datasets import longley, grunfeld
     from sktime.forecasting.base import ForecastingHorizon
     from numpy.testing import assert_allclose
-    #print(TestAllEstimators().run_tests(ARDL))
-    #print(all_tags('forecaster'))
-    #tsa = TestAllEstimators()
-    #tsa.test_fit_does_not_overwrite_hyper_params(ARDL)
-    print(check_estimator(ARDL, fixtures_to_run='test_fit_does_not_overwrite_hyper_params[ARDL-1-ForecasterFitPredictMultivariateNoX]', return_exceptions=False))
-    #print(check_estimator(ARDL))
+    #print(check_estimator(ARDL, fixtures_to_run='test_update_predict_predicted_index[ARDL-0-y:1cols-update_params=False-step=1-0-fh=1]', return_exceptions=False))
+    print(check_estimator(ARDL))
 
     def test_against_statsmodels():
         """
@@ -568,7 +655,7 @@ if __name__ =='__main__':
         X = None
         X_oos = None
         # fit
-        sm_ardl = _ARDL(y, 2, X, trend="c")
+        sm_ardl = _ARDL(y, lags=2, exog=None, trend="c")
         res = sm_ardl.fit()
         ardl_sktime = ARDL(lags=2, trend='c')
         ardl_sktime.fit(y=y, X=X, fh=None)
@@ -580,5 +667,5 @@ if __name__ =='__main__':
         print(y_pred)
         print(y_pred_stats)
         return assert_allclose(y_pred, y_pred_stats)
-    #print(test_against_statsmodels())
+    print(test_against_statsmodels())
 
