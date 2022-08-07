@@ -7,14 +7,13 @@ from statsmodels.datasets import grunfeld, longley
 from statsmodels.tsa.ardl import ARDL as _ARDL
 from statsmodels.tsa.ardl import ardl_select_order as _ardl_select_order
 
+from sktime.datasets import load_macroeconomic
 from sktime.forecasting.ardl import ARDL
 from sktime.forecasting.base import ForecastingHorizon
 
 
 def test_against_statsmodels():
-    """
-    Compares sktime's ARDL interface with statsmodels ARDL
-    """
+    """Compare sktime's ARDL interface with statsmodels ARDL."""
     # data
     data = longley.load_pandas().data
     oos = data.iloc[-5:, :]
@@ -36,9 +35,7 @@ def test_against_statsmodels():
 
 
 def test_against_statsmodels_2():
-    """
-    Compares sktime's ARDL interface with statsmodels ARDL with different data
-    """
+    """Compare sktime's ARDL interface with statsmodels ARDL with different data."""
     # data
     data = grunfeld.load_pandas().data
     oos = data.iloc[-5:, :]
@@ -63,9 +60,7 @@ def test_against_statsmodels_2():
 
 
 def test_against_statsmodels_3():
-    """
-    Compares sktime's ARDL interface with statsmodels ARDL with X=None
-    """
+    """Compare sktime's ARDL interface with statsmodels ARDL with X=None."""
     # data
     data = longley.load_pandas().data
     data = data.iloc[:-5, :]
@@ -85,10 +80,29 @@ def test_against_statsmodels_3():
     return assert_allclose(y_pred, y_pred_stats)
 
 
+def test_against_statsmodels_4():
+    """Compare sktime's ARDL interface with statsmodels ARDL."""
+    # data
+    data = load_macroeconomic()
+    data = data.iloc[:-5, :]
+    y = data.TOTEMP
+    X = None
+    X_oos = None
+    # fit
+    sm_ardl = _ARDL(y, lags=2, exog=None, trend="c")
+    res = sm_ardl.fit()
+    ardl_sktime = ARDL(lags=2, trend="c")
+    ardl_sktime.fit(y=y, X=X, fh=None)
+    # predict
+    fh = ForecastingHorizon([1, 2, 3])
+    start, end = y.shape[0] + fh[0] - 1, y.shape[0] + fh[-1] - 1
+    y_pred_stats = sm_ardl.predict(res.params, start=start, end=end, exog_oos=X_oos)
+    y_pred = ardl_sktime.predict(fh=fh, X=X_oos)
+    return assert_allclose(y_pred, y_pred_stats)
+
+
 def test_auto_ardl():
-    """
-    Compares sktime's ARDL interface with statsmodels ardl_select_order
-    """
+    """Compare sktime's ARDL interface with statsmodels ardl_select_order."""
     # data
     data = longley.load_pandas().data
     oos = data.iloc[-5:, :]

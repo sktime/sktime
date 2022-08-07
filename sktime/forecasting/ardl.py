@@ -177,16 +177,21 @@ class ARDL(_StatsModelsAdapter):
 
     Examples
     --------
+    Use ARDL on macroeconomic data
+    >>> from sktime.datasets import load_macroeconomic
+    >>> from sktime.forecasting.ardl import ARDL
+    >>> data = load_macroeconomic()
+    >>> oos = data.iloc[-5:, :]
+    >>> data = data.iloc[:-5, :]
+    >>> y = data.realgdp
+    >>> X = data[["realcons", "realinv"]]
+    >>> X_oos = oos[["realcons", "realinv"]]
+    >>> ardl = ARDL(lags=2, order={"realcons": 1, "realinv": 2}, trend="c")
+    >>> ardl.fit(y=y, X=X)
+    >>> fh = ForecastingHorizon([1, 2, 3])
+    >>> y_pred = ardl.predict(fh=fh, X=X_oos)
     """
 
-    # todo: fill out estimator tags here
-    #  tags are inherited from parent class if they are not set
-    # todo: define the forecaster scitype by setting the tags
-    #  the "forecaster scitype" is determined by the tags
-    #   scitype:y - the expected input scitype of y - univariate or multivariate or both
-    #  when changing scitype:y to multivariate or both:
-    #   y_inner_mtype should be changed to pd.DataFrame
-    # other tags are "safe defaults" which can usually be left as-is
     _tags = {
         "scitype:y": "univariate",  # which y are fine? univariate/multivariate/both
         "ignores-exogeneous-X": False,  # does estimator ignore the exogeneous X?
@@ -265,27 +270,8 @@ class ARDL(_StatsModelsAdapter):
 
         super(ARDL, self).__init__()
 
-        # todo: optional, parameter checking logic (if applicable) should happen here
-        # if writes derived values to self, should *not* overwrite self.parama etc
-        # instead, write to self._parama, self._newparam (starting with _)
-
-        # todo: default estimators should have None arg defaults
-        #  and be initialized here
-        #  do this only with default estimators, not with parameters
-        # if est2 is None:
-        #     self.estimator = MyDefaultEstimator()
-
-        # todo: if tags of estimator depend on component tags, set these here
-        #  only needed if estimator is a composite
-        #  tags set in the constructor apply to the object and override the class
-        #
-        # example 1: conditional setting of a tag
-        # if est.foo == 42:
-        #   self.set_tags(handles-missing-data=True)
-        # example 2: cloning tags from component
-        #   self.clone_tags(est2, ["enforce_index_type", "handles-missing-data"])
-
     def check_param_validity(self, X):
+        """Check for the validity of entered parameter combination."""
         inner_order = self.order
         inner_auto_ardl = self.auto_ardl
 
