@@ -2,12 +2,11 @@
 """Tests the ARDL model."""
 __author__ = ["kcc-lion"]
 
-
+from numpy.testing import assert_allclose
+from statsmodels.datasets import longley, grunfeld
 from statsmodels.tsa.ardl import ARDL as _ARDL
 from statsmodels.tsa.ardl import ardl_select_order as _ardl_select_order
 from sktime.forecasting.ardl import ARDL
-from numpy.testing import assert_allclose
-from statsmodels.datasets import longley, grunfeld
 from sktime.forecasting.base import ForecastingHorizon
 
 
@@ -25,7 +24,7 @@ def test_against_statsmodels():
     # fit
     sm_ardl = _ARDL(y, 2, X, {"GNPDEFL": 1, "GNP": 2}, trend="c")
     res = sm_ardl.fit()
-    ardl_sktime = ARDL(lags=2, order={"GNPDEFL": 1, "GNP": 2}, trend='c')
+    ardl_sktime = ARDL(lags=2, order={"GNPDEFL": 1, "GNP": 2}, trend="c")
     ardl_sktime.fit(y=y, X=X, fh=None)
     # predict
     fh = ForecastingHorizon([1, 2, 3])
@@ -49,7 +48,7 @@ def test_against_statsmodels_2():
     X_oos = oos[["capital", "invest"]]
     # fit
     lags = 1
-    trend = 'ct'
+    trend = "ct"
     order = 2
     sm_ardl = _ARDL(y, lags, X, order=order, trend=trend)
     res = sm_ardl.fit()
@@ -78,7 +77,7 @@ def test_against_statsmodels_3():
     # fit
     sm_ardl = _ARDL(y, lags=2, exog=None, trend="c")
     res = sm_ardl.fit()
-    ardl_sktime = ARDL(lags=2, trend='c')
+    ardl_sktime = ARDL(lags=2, trend="c")
     ardl_sktime.fit(y=y, X=X, fh=None)
     # predict
     fh = ForecastingHorizon([1, 2, 3])
@@ -100,11 +99,13 @@ def test_auto_ardl():
     y = data.TOTEMP
     X = data[["GNPDEFL", "GNP"]]
     X_oos = oos[["GNPDEFL", "GNP"]]
-    maxlag=2
-    maxorder=2
-    trend='c'
+    maxlag = 2
+    maxorder = 2
+    trend = "c"
     # fit
-    sm_ardl = _ardl_select_order(endog=y, maxlag=maxlag, exog=X, maxorder=maxorder, trend=trend)
+    sm_ardl = _ardl_select_order(
+        endog=y, maxlag=maxlag, exog=X, maxorder=maxorder, trend=trend
+    )
     res = sm_ardl.model.fit()
     ardl_sktime = ARDL(auto_ardl=True, maxlag=maxlag, maxorder=maxorder, trend=trend)
     ardl_sktime.fit(y=y, X=X, fh=None)

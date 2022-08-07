@@ -42,20 +42,15 @@ Optional implements:
 Testing - implement if sktime forecaster (not needed locally):
     get default parameters for test instance(s) - get_test_params()
 """
-# todo: write an informative docstring for the file or module, remove the above
-# todo: add an appropriate copyright notice for your estimator
-#       estimators contributed to sktime should have the copyright notice at the top
-#       estimators of your own do not need to have permissive or BSD-3 copyright
 
-
-# todo: add any necessary imports here
-import pandas as pd
 import warnings
+
+import pandas as pd
 from statsmodels.tsa.ardl import ARDL as _ARDL
 from statsmodels.tsa.ardl import ardl_select_order as _ardl_select_order
 
-from sktime.forecasting.base.adapters import _StatsModelsAdapter
 from sktime.forecasting.base._base import BaseForecaster
+from sktime.forecasting.base.adapters import _StatsModelsAdapter
 from sktime.forecasting.base.adapters._statsmodels import _coerce_int_to_range_index
 
 class ARDL(_StatsModelsAdapter):
@@ -247,28 +242,28 @@ class ARDL(_StatsModelsAdapter):
 
     # todo: add any hyper-parameters and components to constructor
     def __init__(
-            self,
-            lags=None,
-            order=None,
-            fixed=None,
-            causal=False,
-            trend='c',
-            seasonal=False,
-            deterministic=None,
-            hold_back=None,
-            period=None,
-            missing='none',
-            cov_type='nonrobust',
-            cov_kwds=None,
-            use_t=True,
-            auto_ardl=False,
-            maxlag=None,
-            maxorder=None,
-            ic='bic',
-            glob=False,
-            fixed_oos=None,
-            X_oos=None,
-            dynamic=False
+        self,
+        lags=None,
+        order=None,
+        fixed=None,
+        causal=False,
+        trend='c',
+        seasonal=False,
+        deterministic=None,
+        hold_back=None,
+        period=None,
+        missing='none',
+        cov_type='nonrobust',
+        cov_kwds=None,
+        use_t=True,
+        auto_ardl=False,
+        maxlag=None,
+        maxorder=None,
+        ic='bic',
+        glob=False,
+        fixed_oos=None,
+        X_oos=None,
+        dynamic=False
     ):
 
         # Model Params
@@ -304,7 +299,7 @@ class ARDL(_StatsModelsAdapter):
             assert self.lags is not None
 
         if self.auto_ardl and self.lags is not None:
-            raise ValueError('lags should not be specified if aut_ardl is True')
+            raise ValueError("lags should not be specified if aut_ardl is True")
 
         super(ARDL, self).__init__()
 
@@ -336,12 +331,16 @@ class ARDL(_StatsModelsAdapter):
         if not self.auto_ardl:
             if inner_order is not None and not isinstance(X, pd.DataFrame):
                 inner_order = 0
-                warnings.warn('X is none but the order for the exogenous variables was specified. Order was thus set to 0')
+                warnings.warn(
+                    "X is none but the order for the exogenous variables was specified. Order was thus set to 0"
+                )
         else:
             if not isinstance(X, pd.DataFrame):
                 inner_order = 0
                 inner_auto_ardl = False
-                warnings.warn('X is none but auto_ardl was set to True. auto_ardl was thus set to False with order=0')
+                warnings.warn(
+                    "X is none but auto_ardl was set to True. auto_ardl was thus set to False with order=0"
+                )
         return inner_order, inner_auto_ardl
 
     # todo: implement this, mandatory
@@ -382,9 +381,6 @@ class ARDL(_StatsModelsAdapter):
         inner_order, inner_auto_ardl = self.check_param_validity(X)
 
         if not inner_auto_ardl:
-            #if not isinstance(X, pd.DataFrame) and self.order != 0:
-            #    raise Exception(f"order can not be {self.order} if X is None")
-
             self._forecaster = _ARDL(
                 endog=y,
                 lags=self.lags,
@@ -397,13 +393,11 @@ class ARDL(_StatsModelsAdapter):
                 deterministic=self.deterministic,
                 hold_back=self.hold_back,
                 period=self.period,
-                missing=self.missing
+                missing=self.missing,
             )
 
             self._fitted_forecaster = self._forecaster.fit(
-                cov_type=self.cov_type,
-                cov_kwds=self.cov_kwds,
-                use_t=self.use_t
+                cov_type=self.cov_type, cov_kwds=self.cov_kwds, use_t=self.use_t
             )
         else:
             self._forecaster = _ardl_select_order(
@@ -420,7 +414,7 @@ class ARDL(_StatsModelsAdapter):
                 deterministic=self.deterministic,
                 hold_back=self.hold_back,
                 period=self.period,
-                missing=self.missing
+                missing=self.missing,
             )
 
             self._fitted_forecaster = self._forecaster.model.fit(
@@ -478,15 +472,13 @@ class ARDL(_StatsModelsAdapter):
         # beginning of the training series when passing integers
 
         start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
-        #if X is not None:
-        #    X_oos = X[~X.index.isin(self._X.index)]
-        #else:
-        #    X_oos = None
         # statsmodels forecasts all periods from start to end of forecasting
         # horizon, but only return given time points in forecasting horizon
         valid_indices = fh.to_absolute(self.cutoff).to_pandas()
 
-        y_pred = self._fitted_forecaster.predict(start=start, end=end, exog=self._X, exog_oos=X, fixed_oos=self.fixed_oos)
+        y_pred = self._fitted_forecaster.predict(
+            start=start, end=end, exog=self._X, exog_oos=X, fixed_oos=self.fixed_oos
+        )
         return y_pred.loc[valid_indices]
 
     def _update(self, y, X=None, update_params=True):
@@ -524,8 +516,8 @@ class ARDL(_StatsModelsAdapter):
         -------
         self : reference to self
         """
-        warnings.warn(f'Defaulting to `update_params=True`')
-        update_params=True
+        warnings.warn(f"Defaulting to `update_params=True`")
+        update_params = True
         if update_params:
             # default to re-fitting if update is not implemented
             warnings.warn(
@@ -577,8 +569,10 @@ class ARDL(_StatsModelsAdapter):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        params = [{'lags': 1, 'trend': 'c', 'order': 2},
-                  {'lags': 1, 'trend': 'ct'},
-                  {'auto_ardl': True, 'maxlag': 1}]
+        params = [
+            {'lags': 1, 'trend': 'c', 'order': 2},
+            {'lags': 1, 'trend': 'ct'},
+            {'auto_ardl': True, 'maxlag': 1}
+        ]
         return params
 
