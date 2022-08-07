@@ -16,6 +16,7 @@ from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.base.adapters import _StatsModelsAdapter
 from sktime.forecasting.base.adapters._statsmodels import _coerce_int_to_range_index
 
+
 class ARDL(_StatsModelsAdapter):
     """Autoregressive Distributed Lag (ARDL) Model.
 
@@ -290,7 +291,6 @@ class ARDL(_StatsModelsAdapter):
         inner_order = self.order
         inner_auto_ardl = self.auto_ardl
 
-
         if not self.auto_ardl:
             if inner_order is not None and not isinstance(X, pd.DataFrame):
                 inner_order = 0
@@ -336,7 +336,6 @@ class ARDL(_StatsModelsAdapter):
         # so we coerce them here to pd.RangeIndex
         if isinstance(y, pd.Series) and y.index.is_integer():
             y, X = _coerce_int_to_range_index(y, X)
-
 
         # validity check of passed params
         # certain parameter combinations (e.g. (1) order != 0 and X=None, (2) auto_ardl=True and X=None) cause errors
@@ -397,6 +396,7 @@ class ARDL(_StatsModelsAdapter):
         #   1. pass to constructor,  2. write to self in constructor,
         #   3. read from self in _fit,  4. pass to interfaced_model.fit in _fit
         return self
+
     def summary(self):
         """Get a summary of the fitted forecaster."""
         self.check_is_fitted()
@@ -511,6 +511,7 @@ class ARDL(_StatsModelsAdapter):
                 comp.update(y=y, X=X, update_params=False)
 
         return self
+
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.

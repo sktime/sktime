@@ -3,9 +3,10 @@
 __author__ = ["kcc-lion"]
 
 from numpy.testing import assert_allclose
-from statsmodels.datasets import longley, grunfeld
+from statsmodels.datasets import grunfeld, longley
 from statsmodels.tsa.ardl import ARDL as _ARDL
 from statsmodels.tsa.ardl import ardl_select_order as _ardl_select_order
+
 from sktime.forecasting.ardl import ARDL
 from sktime.forecasting.base import ForecastingHorizon
 
@@ -35,6 +36,7 @@ def test_against_statsmodels():
     print(y_pred_stats)
     return assert_allclose(y_pred, y_pred_stats)
 
+
 def test_against_statsmodels_2():
     """
     Compares sktime's ARDL interface with statsmodels ARDL with different data
@@ -63,6 +65,7 @@ def test_against_statsmodels_2():
     print(y_pred_stats)
     return assert_allclose(y_pred, y_pred_stats)
 
+
 def test_against_statsmodels_3():
     """
     Compares sktime's ARDL interface with statsmodels ARDL with X=None
@@ -87,6 +90,7 @@ def test_against_statsmodels_3():
     print(y_pred)
     print(y_pred_stats)
     return assert_allclose(y_pred, y_pred_stats)
+
 
 def test_auto_ardl():
     """
