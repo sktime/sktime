@@ -24,6 +24,7 @@ from sktime.datasets import (
     load_from_long_to_dataframe,
     load_from_tsfile,
     load_from_tsfile_to_dataframe,
+    load_solar,
     load_tsf_to_dataframe,
     load_UCR_UEA_dataset,
     load_uschange,
@@ -1383,3 +1384,71 @@ def test_convert_tsf_to_multiindex(freq):
         _convert_tsf_to_hierarchical(input_df, metadata, freq=freq),
         check_dtype=False,
     )
+
+
+@pytest.mark.parametrize("return_df", [False, True])
+def test_load_solar(return_df):
+    """Test function for loading solar data through the Sheffiled Solar API."""
+    # queried on 03/08/2022
+    test_equals = np.array(
+        [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.002,
+            0.021,
+            0.06,
+            0.113,
+            0.176,
+            0.251,
+            0.323,
+            0.356,
+            0.395,
+            0.427,
+            0.431,
+            0.398,
+            0.396,
+            0.406,
+            0.413,
+            0.43,
+            0.421,
+            0.414,
+            0.391,
+            0.37,
+            0.315,
+            0.258,
+            0.222,
+            0.203,
+            0.174,
+            0.134,
+            0.093,
+            0.055,
+            0.022,
+            0.002,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+        ]
+    )
+
+    y = load_solar(start="2021-05-01", end="2021-05-02", return_full_df=return_df)
+
+    if return_df:
+        assert isinstance(y, pd.DataFrame)
+    else:
+        assert isinstance(y, pd.Series)
+        y = y.round(3).to_numpy()
+        assert np.all(y == test_equals)
