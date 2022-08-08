@@ -2,7 +2,7 @@
 """Contextual Time-series Neural Classifier for TSC."""
 
 __author__ = ["James-Large", "TonyBagnall", "AurumnPegasus"]
-__all__ = ["CNTClassifier"]
+__all__ = ["CNTCClassifier"]
 from sklearn.utils import check_random_state
 
 from sktime.classification.deep_learning.base import BaseDeepClassifier
@@ -12,7 +12,7 @@ from sktime.utils.validation._dependencies import _check_dl_dependencies
 _check_dl_dependencies(severity="warning")
 
 
-class CNTClassifier(BaseDeepClassifier):
+class CNTCClassifier(BaseDeepClassifier):
     """Contextual Time-series Neural Classifier (CNTC), as described in [1].
 
     Parameters
@@ -81,7 +81,7 @@ class CNTClassifier(BaseDeepClassifier):
         random_state=0,
     ):
         _check_dl_dependencies(severity="error")
-        super(CNTClassifier, self).__init__()
+        super(CNTCClassifier, self).__init__()
         self.kernel_sizes = kernel_sizes  # used plural
         self.filter_sizes = filter_sizes  # used plural
         self.rnn_size = rnn_size
@@ -135,6 +135,71 @@ class CNTClassifier(BaseDeepClassifier):
         )
         return model
 
+    def prepare_input(self, X):
+        """
+        Prepare input for the CLSTM arm of the model.
+
+        According to the paper:
+            "
+                Time series data is fed into a CLSTM and CCNN networks simultaneously
+                and is perceived differently. In the CLSTM block, the input data is
+                viewed as a multivariate time series with a single time stamp. In
+                contrast, the CCNN block receives univariate data with numerous time
+                stamps
+            "
+
+        Arguments
+        ---------
+        X: tuple,
+            The input data fed into the model.
+
+        Returns
+        -------
+        trainX: tuple,
+            The input to be fed to the two arms of CNTC.
+        """
+        import numpy as np
+        import pandas as pd
+        from tensorflow import keras
+
+        if X.shape[2] == 1:
+            # Converting data to pandas
+            trainX1 = X.reshape([X.shape[0], X.shape[1]])
+            pd_trainX = pd.DataFrame(trainX1)
+
+            # Taking rolling window
+            window = pd_trainX.rolling(window=3).mean()
+            window = window.fillna(0)
+
+            trainX2 = np.concatenate((trainX1, window), axis=1)
+            trainX2 = keras.backend.variable(trainX2)
+            trainX2 = keras.layers.Dense(
+                trainX1.shape[1], input_shape=(trainX2.shape[1:])
+            )(trainX2)
+            trainX2 = keras.backend.eval(trainX2)
+            trainX = trainX2.reshape((trainX2.shape[0], trainX2.shape[1], 1))
+        else:
+            trainXs = []
+            for i in range(X.shape[2]):
+                trainX1 = X[:, :, i]
+                pd_trainX = pd.DataFrame(trainX1)
+
+                window = pd_trainX.rolling(window=3).mean()
+                window = window.fillna(0)
+
+                trainX2 = np.concatenate((trainX1, window), axis=1)
+                trainX2 = keras.backend.variable(trainX2)
+                trainX2 = keras.layers.Dense(
+                    trainX1.shape[1], input_shape=(trainX2.shape[1:])
+                )(trainX2)
+                trainX2 = keras.backend.eval(trainX2)
+
+                trainX = trainX2.reshape((trainX2.shape[0], trainX2.shape[1], 1))
+                trainXs.append(trainX)
+
+            trainX = np.concatenate(trainXs, axis=2)
+        return trainX
+
     def _fit(self, X, y):
         """Fit the classifier on the training set (X, y).
 
@@ -158,7 +223,7 @@ class CNTClassifier(BaseDeepClassifier):
         check_random_state(self.random_state)
         self.input_shape = X.shape[1:]
         self.model_ = self.build_model(self.input_shape, self.n_classes_)
-        X2 = self.model_.prepare_input(X)
+        X2 = self.prepare_input(X)
         if self.verbose:
             self.model_.summary()
         self.history = self.model_.fit(
@@ -170,3 +235,42 @@ class CNTClassifier(BaseDeepClassifier):
             callbacks=self._callbacks,
         )
         return self
+
+    def _predict(self, X, **kwargs):
+        import numpy as np
+
+        probs = self._predict_proba(X, **kwargs)
+        rng = check_random_state(self.random_state)
+        return np.array(
+            [
+                self.classes_[int(rng.choice(np.flatnonzero(prob == prob.max())))]
+                for prob in probs
+            ]
+        )
+
+    def _predict_proba(self, X, **kwargs):
+        """Find probability estimates for each class for all cases in X.
+
+        Parameters
+        ----------
+        X : an np.ndarray of shape = (n_instances, n_dimensions, series_length)
+            The training input samples.         input_checks: boolean
+            whether to check the X parameter
+
+        Returns
+        -------
+        output : array of shape = [n_instances, n_classes] of probabilities
+        """
+        import numpy as np
+
+        # Transpose to work correctly with keras
+        X = X.transpose((0, 2, 1))
+        X2 = self.prepare_input(X)
+        probs = self.model_.predict([X2, X, X], self.batch_size, **kwargs)
+
+        # check if binary classification
+        if probs.shape[1] == 1:
+            # first column is probability of class 0 and second is of class 1
+            probs = np.hstack([1 - probs, probs])
+        probs = probs / probs.sum(axis=1, keepdims=1)
+        return probs

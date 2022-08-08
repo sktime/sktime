@@ -59,6 +59,10 @@ EXCLUDED_TESTS = {
         "test_fit_idempotent",
         "test_persistence_via_pickle",
     ],
+    "CNTCClassifier": [
+        "test_fit_idempotent",
+        "test_persistence_via_pickle",
+    ],
     # pickling problem with local method see #2490
     "ProximityStump": [
         "test_persistence_via_pickle",
