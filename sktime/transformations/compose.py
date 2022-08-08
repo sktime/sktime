@@ -1061,3 +1061,236 @@ class MultiplexTransformer(_DelegatedTransformer, _HeterogenousMetaEstimator):
             attr_name="forecasters",
             concat_order="right",
         )
+
+
+class TransformerGraphPipeline(BaseTransformer, _HeterogenousMetaEstimator):
+    """Pipeline of transformers compositor.
+
+    TODO: update this for the graph pipeline
+    The `TransformerPipeline` compositor allows to chain transformers.
+    The pipeline is constructed with a list of sktime transformers,
+        i.e., estimators following the BaseTransformer interface.
+    The list can be unnamed - a simple list of transformers -
+        or string named - a list of pairs of string, estimator.
+
+    TODO: update this for the graph pipeline
+    For a list of transformers `trafo1`, `trafo2`, ..., `trafoN`,
+        the pipeline behaves as follows:
+    `fit` - changes state by running `trafo1.fit_transform`, `trafo2.fit_transform`, etc
+        sequentially, with `trafo[i]` receiving the output of `trafo[i-1]`
+    `transform` - result is of executing `trafo1.transform`, `trafo2.transform`, etc
+        with `trafo[i].transform` input = output of `trafo[i-1].transform`,
+        and returning the output of `trafoN.transform`
+
+    Parameters
+    ----------
+    steps : list of sktime transformers, or
+        list of tuples (str, transformer) of sktime transformers
+        these are "blueprint" transformers, states do not change when `fit` is called
+    edges: dict with str keys, str values, keys should be names of `steps` elements
+        output (key) - input (value) connections in the graph pipeline
+        valid keys/values are keys of `get_params` corresponding to estimators
+    out: str or list of str, all str must be names of `steps` elements
+        elements of the graph pipeline considered output nodes
+
+    Attributes
+    ----------
+    steps_ : list of tuples (str, transformer) of sktime transformers
+        clones of transformers in `steps` which are fitted in the pipeline
+        is always in (str, transformer) format, even if `steps` is just a list
+        strings not passed in `steps` are replaced by unique generated strings
+        i-th transformer in `steps_` is clone of i-th in `steps`
+    """
+
+    _tags = {
+        # we let all X inputs through to be handled by first transformer
+        "X_inner_mtype": [
+            "pd.DataFrame",
+            "pd-multiindex",
+            "pd_multiindex_hier",
+        ],
+    }
+
+    # no further default tag values - these are set dynamically below
+
+    def __init__(self, steps, edges=None, out=None):
+
+        self.steps = steps
+        self.steps_ = self._check_estimators(self.steps, cls_type=BaseTransformer)
+        self._step_lookup = dict(self.steps_)
+
+        self.edges = edges
+        if edges is None:
+            s = self.steps_
+            n = len(s)
+            self._edges = {s[i][0]: s[i + 1][0] for i in range(n - 1)}
+        else:
+            self._edges = self._coerce_to_str_keys(edges)
+
+        if out is None:
+            self._out = list(edges.values())[-1]
+        else:
+            self._out = out
+
+        self._parent_dict = self._construct_parent_dict()
+
+        super(TransformerGraphPipeline, self).__init__()
+
+    def _coerce_to_str_keys(self, edges):
+        """Coerce keys/values from integers to valid str keys."""
+
+        def str_key(i):
+            if isinstance(i, int):
+                return self.steps_[i][0]
+            elif isinstance(i, str):
+                return i
+            else:
+                raise ValueError(
+                    "keys and values of edges must be int or str, "
+                    f"but found key {i} of type {type(i)}"
+                )
+
+        str_dict = dict()
+        for k, v in edges.items():
+            str_dict[str_key(k)] = str_key(v)
+        return str_dict
+
+    # this should be in BaseTransformer !
+    def __call__(self, pipe, parents=None):
+        """Connect self to TransformerGraphPipeline pipe."""
+        if isinstance(pipe, TransformerGraphPipeline):
+            steps = pipe.steps + [self]
+            if parents is None:
+                parents = pipe._steps[-1][0]
+            n = len(pipe.edges)
+            edges = pipe.edges + {p: n + 1 for p in parents}
+        elif isinstance(pipe, BaseTransformer):
+            steps = [pipe, self]
+            edges = None
+        else:
+            raise TypeError(
+                "pipe must be a transformer, descendant of BaseTransformer, "
+                f"but found object of type {type(pipe)}"
+            )
+
+        return TransformerGraphPipeline(steps=steps, edges=edges)
+
+    def _sources(self):
+        """Find source nodes in the graph = nodes without incoming connection."""
+        es = self._edges
+        return [x for x in es.keys() if x not in es.values()]
+
+    @property
+    def _steps(self):
+        return self._get_estimator_tuples(self.steps, clone_ests=False)
+
+    @_steps.setter
+    def _steps(self, value):
+        self.steps = value
+
+    def _construct_parent_dict(self):
+        parent_dict = dict()
+        for k, v in self._edges.items():
+            if v not in parent_dict.keys():
+                parent_dict[v] = [k]
+            else:
+                parent_dict[v] = parent_dict[v] + [k]
+        return parent_dict
+
+    def _fit(self, X, y=None):
+        """Fit transformer to X and y.
+
+        private _fit containing the core logic, called from fit
+
+        Parameters
+        ----------
+        X : Series or Panel of mtype X_inner_mtype
+            if X_inner_mtype is list, _fit must support all types in it
+            Data to fit transform to
+        y : Series or Panel of mtype y_inner_mtype, default=None
+            Additional data, e.g., labels for transformation
+
+        Returns
+        -------
+        self: reference to self
+        """
+        t_dict = self._step_lookup
+        X_out = dict()
+
+        src = self._sources()
+        for t_name in src:
+            t = t_dict[t_name]
+            X_out[t_name] = t.fit_transform(X)
+
+        for t_out_name in self._edges:
+            t_in_name_list = self._parent_dict[t_out_name]
+            X_ins = [X_out[t_in_name] for t_in_name in t_in_name_list]
+            X_in = pd.concat(X_ins, keys = t_in_name_list)
+            t_out = t_dict[t_out_name]
+            X_out[t_out_name] = t_out.fit_transform(X=X_in)
+
+        return self
+
+    def _transform(self, X, y=None):
+        """Transform X and return a transformed version.
+
+        private _transform containing core logic, called from transform
+
+        Parameters
+        ----------
+        X : Series or Panel of mtype X_inner_mtype
+            if X_inner_mtype is list, _transform must support all types in it
+            Data to be transformed
+        y : Series or Panel of mtype y_inner_mtype, default=None
+            Additional data, e.g., labels for transformation
+
+        Returns
+        -------
+        transformed version of X
+        """
+        t_dict = self._step_lookup
+        X_out = dict()
+
+        src = self._sources()
+        for t_name in src:
+            t = t_dict[t_name]
+            X_out[t_name] = t.transform(X)
+
+        for t_in_name, t_out_name in self._edges:
+            X_in = X_out[t_in_name]
+            t_out = t_dict[t_out_name]
+            X_out[t_out_name] = t_out.transform(X=X_in)
+
+        out = self._out
+
+        if isinstance(out, list):
+            return [X_out[t_name] for t_name in out]
+        else:
+            return [X_out[out]]
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict
+        """
+        from sktime.transformations.series.impute import Imputer
+
+        # test with 2 simple detrend transformations with selected_transformer
+        params1 = {
+            "transformers": [
+                ("imputer_mean", Imputer(method="mean")),
+                ("imputer_near", Imputer(method="nearest")),
+            ],
+            "selected_transformer": "imputer_near",
+        }
+
+        return params1
