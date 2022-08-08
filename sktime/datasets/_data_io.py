@@ -182,7 +182,7 @@ def _load_provided_dataset(
         name : string, file name
         split : string, default = None, or one of "TRAIN" or "TEST".
         return_X_y : default = True, if true, returns X and y separately.
-        return_type : default = None,
+        return_type : string or None, default = None.
         local_module: default = os.path.dirname(__file__),
         local_dirname: default = "data"
     """
@@ -192,36 +192,30 @@ def _load_provided_dataset(
     if split in ("TRAIN", "TEST"):
         fname = name + "_" + split + ".ts"
         abspath = os.path.join(local_module, local_dirname, name, fname)
-        X, y = load_from_tsfile(abspath, return_data_type=return_type)
+        X, y = load_from_tsfile(abspath, return_data_type="nested_univ")
     # if split is None, load both train and test set
     elif split is None:
         fname = name + "_TRAIN.ts"
         abspath = os.path.join(local_module, local_dirname, name, fname)
-        X_train, y_train = load_from_tsfile(abspath, return_data_type=return_type)
+        X_train, y_train = load_from_tsfile(abspath, return_data_type="nested_univ")
 
         fname = name + "_TEST.ts"
         abspath = os.path.join(local_module, local_dirname, name, fname)
-        X_test, y_test = load_from_tsfile(abspath, return_data_type=return_type)
+        X_test, y_test = load_from_tsfile(abspath, return_data_type="nested_univ")
 
-        if isinstance(X_train, np.ndarray):
-            X = np.concatenate([X_train, X_test])
-        elif isinstance(X_train, pd.DataFrame):
-            X = pd.concat([X_train, X_test])
-            X = X.reset_index(drop=True)
-        else:
-            raise IOError(
-                f"Invalid data structure type {type(X_train)} for loading "
-                f"classification problem "
-            )
+        X = pd.concat([X_train, X_test])
+        X = X.reset_index(drop=True)
         y = np.concatenate([y_train, y_test])
 
     else:
         raise ValueError("Invalid `split` value =", split)
-    # Return appropriately
+
     if return_X_y:
+        X = convert(X, from_type="nested_univ", to_type=return_type)
         return X, y
     else:
         X["class_val"] = pd.Series(y)
+        X = convert(X, from_type="nested_univ", to_type=return_type)
         return X
 
 
@@ -324,7 +318,7 @@ def load_from_tsfile(
             "numpy3D"/"numpy3d"/"np3D": 3D np.ndarray (instance, variable, time index)
             "numpy2d"/"np2d"/"numpyflat": 2D np.ndarray (instance, time index)
             "pd-multiindex": pd.DataFrame with 2-level (instance, time) MultiIndex
-        Exception is raised if the data cannot be stored in therequested type.
+        Exception is raised if the data cannot be stored in the requested type.
 
     Returns
     -------
