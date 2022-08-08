@@ -65,6 +65,11 @@ class SFA(_PanelToPanelTransformer):
             ANOVA test. If False, the first Fourier coefficients are selected.
             Only applicable if labels are given
 
+        variance:               boolean, default = False
+            If True, the Fourier coefficient selection is done via a the largest
+            variance. If False, the first Fourier coefficients are selected.
+            Only applicable if labels are given
+
         bigrams:             boolean, default = False
             whether to create bigrams of SFA words
 
@@ -114,6 +119,7 @@ class SFA(_PanelToPanelTransformer):
         norm=False,
         binning_method="equi-depth",
         anova=False,
+        variance=False,
         bigrams=False,
         skip_grams=False,
         remove_repeat_words=False,
@@ -131,7 +137,9 @@ class SFA(_PanelToPanelTransformer):
 
         # we cannot select more than window_size many letters in a word
         offset = 2 if norm else 0
-        self.dft_length = window_size - offset if anova is True else word_length
+        self.dft_length = (
+            window_size - offset if (anova or variance) is True else word_length
+        )
         # make dft_length an even number (same number of reals and imags)
         self.dft_length = self.dft_length + self.dft_length % 2
 
@@ -155,6 +163,7 @@ class SFA(_PanelToPanelTransformer):
         self.levels = levels
         self.binning_method = binning_method
         self.anova = anova
+        self.variance = variance
 
         self.bigrams = bigrams
         self.skip_grams = skip_grams
@@ -200,6 +209,9 @@ class SFA(_PanelToPanelTransformer):
             raise ValueError(
                 "Class values must be provided for information gain binning"
             )
+
+        if self.variance and self.anova:
+            raise ValueError("Please set either variance or anova feature selection")
 
         if self.binning_method not in binning_methods:
             raise TypeError("binning_method must be one of: ", binning_methods)
@@ -401,6 +413,18 @@ class SFA(_PanelToPanelTransformer):
 
         if y is not None:
             y = np.repeat(y, num_windows_per_inst)
+
+        if self.variance and y is not None:
+            # determine variance
+            dft_variance = dft.var(axis=0)
+
+            # select word-length-many indices with largest variance
+            self.support = np.argsort(-dft_variance)[: self.word_length]
+
+            # select the Fourier coefficients with highest f-score
+            dft = dft[:, self.support]
+            self.dft_length = np.max(self.support) + 1
+            self.dft_length = self.dft_length + self.dft_length % 2  # even
 
         if self.anova and y is not None:
             non_constant = np.where(
@@ -660,7 +684,7 @@ class SFA(_PanelToPanelTransformer):
 
         return (
             transformed[:, start_offset:][:, self.support]
-            if self.anova
+            if (self.anova or self.variance)
             else transformed[:, start_offset:]
         )
 

@@ -1,0 +1,6 @@
+Classifier,Dataset,Accuracy,Fit-Time,Predict-Time
+WEASEL_STEROIDS(random_state=1379),ArrowHead,0.86857,2.44513,4.06695
+WEASEL_STEROIDS(random_state=1379),Beef,0.73333,3.04796,2.00909
+WEASEL_STEROIDS(random_state=1379),BeetleFly,0.95,0.86609,1.267
+WEASEL_STEROIDS(random_state=1379),BirdChicken,0.8,0.8456,1.17173
+WEASEL_STEROIDS(random_state=1379),Car,0.85,4.16309,3.25779

@@ -7,7 +7,7 @@ __all__ = [
     "TemporalDictionaryEnsemble",
     "IndividualTDE",
     "WEASEL",
-    "WEASEL2",
+    "WEASEL_STEROIDS",
     "MUSE",
 ]
 
@@ -19,4 +19,4 @@ from sktime.classification.dictionary_based._tde import (
     TemporalDictionaryEnsemble,
 )
 from sktime.classification.dictionary_based._weasel import WEASEL
-from sktime.classification.dictionary_based._weasel2 import WEASEL2
+from sktime.classification.dictionary_based._weasel_steroids import WEASEL_STEROIDS
