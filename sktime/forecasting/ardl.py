@@ -180,6 +180,7 @@ class ARDL(_StatsModelsAdapter):
     Use ARDL on macroeconomic data
     >>> from sktime.datasets import load_macroeconomic
     >>> from sktime.forecasting.ardl import ARDL
+    >>> from sktime.forecasting.base import ForecastingHorizon
     >>> data = load_macroeconomic()
     >>> oos = data.iloc[-5:, :]
     >>> data = data.iloc[:-5, :]
