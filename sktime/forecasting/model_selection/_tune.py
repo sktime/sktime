@@ -43,7 +43,6 @@ class BaseGridSearch(_DelegatedForecaster):
         return_n_best_forecasters=1,
         update_behaviour="full_refit",
         error_score=np.nan,
-        trim_X=True,
     ):
 
         self.forecaster = forecaster
@@ -58,7 +57,6 @@ class BaseGridSearch(_DelegatedForecaster):
         self.return_n_best_forecasters = return_n_best_forecasters
         self.update_behaviour = update_behaviour
         self.error_score = error_score
-        self.trim_X = trim_X
         super(BaseGridSearch, self).__init__()
         tags_to_clone = [
             "requires-fh-in-fit",
@@ -327,11 +325,6 @@ class ForecastingGridSearchCV(BaseGridSearch):
     backend: str, optional (default="loky")
         Specify the parallelisation backend implementation in joblib, where
         "loky" is used by default.
-    trim_X : bool, default=True
-        Should the size of X_test be trimmed down to only include test indices (minus
-        forecasting horizon).  Should be true for most estimators, only set to false for
-        those estimators with built in transformers. (eg if using GridSearch with a
-        transformer that changes the size of X).
     error_score : "raise" or numeric, default=np.nan
         Value to assign to the score if an exception occurs in estimator fitting. If set
         to "raise", the exception is raised. If a numeric value is given,
@@ -442,7 +435,6 @@ class ForecastingGridSearchCV(BaseGridSearch):
         backend="loky",
         update_behaviour="full_refit",
         error_score=np.nan,
-        trim_X=True,
     ):
         super(ForecastingGridSearchCV, self).__init__(
             forecaster=forecaster,
@@ -457,7 +449,6 @@ class ForecastingGridSearchCV(BaseGridSearch):
             backend=backend,
             update_behaviour=update_behaviour,
             error_score=error_score,
-            trim_X=trim_X,
         )
         self.param_grid = param_grid
 
@@ -595,11 +586,6 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         Value to assign to the score if an exception occurs in estimator fitting. If set
         to "raise", the exception is raised. If a numeric value is given,
         FitFailedWarning is raised.
-    trim_X : bool, default=True
-        Should the size of X_test be trimmed down to only include test indices (minus
-        forecasting horizon).  Should be true for most estimators, only set to false for
-        those estimators with built in transformers. (eg if using GridSearch with a
-        transformer that changes the size of X).
 
     Attributes
     ----------
@@ -638,7 +624,6 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         backend="loky",
         update_behaviour="full_refit",
         error_score=np.nan,
-        trim_X=True,
     ):
         super(ForecastingRandomizedSearchCV, self).__init__(
             forecaster=forecaster,
@@ -653,7 +638,6 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
             backend=backend,
             update_behaviour=update_behaviour,
             error_score=error_score,
-            trim_X=trim_X,
         )
         self.param_distributions = param_distributions
         self.n_iter = n_iter
