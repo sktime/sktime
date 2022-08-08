@@ -16,10 +16,10 @@ The high-level steps to implement ``sktime`` compatible estimators are as follow
 1.  identify the type of the estimator: forecaster, classifier, etc
 2.  copy the extension template for that kind of estimator to its intended location
 3.  complete the extension template
-4.  run the ``sktime`` test suite on the implemented estimator.
-    For more details on how to use the ``check_estimator`` facility, see `section <https://www.sktime.org/en/latest/developer_guide/add_estimators.html#using-the-check-estimator-utility>`__
-    or this `tutorial at pydata <https://github.com/sktime/sktime-workshop-pydata-london-2022>`__ on testing interface conformance.
+4.  run the ``sktime`` test suite and/or the ``check_estimator`` utility (see `here <https://www.sktime.org/en/latest/developer_guide/add_estimators.html#using-the-check-estimator-utility>`__)
 5.  if the test suite highlights bugs or issues, fix them and go to 4
+
+For more guidance on how to implement your own estimator, see this `tutorial at pydata <https://github.com/sktime/sktime-workshop-pydata-london-2022>`__ on testing interface conformance.
 
 
 What is my learning task?
