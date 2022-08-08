@@ -310,7 +310,9 @@ class ClaSPSegmentation(BaseSeriesAnnotator):
         if isinstance(X, pd.Series):
             X = X.to_numpy()
 
-        clasp_transformer = ClaSPTransformer(window_length=self.period_length).fit(X)
+        clasp_transformer = ClaSPTransformer(
+            window_length=self.period_length, exclusion_radius=self.exclusion_radius
+        ).fit(X)
 
         self.found_cps, self.profiles, self.scores = _segmentation(
             X,
