@@ -490,13 +490,14 @@ class _RecursiveReducer(_Reducer):
             trafo = self.transformers_
             fit_trafo = [i.fit(y) for i in trafo]
             ts = [i.truncate_start for i in fit_trafo if hasattr(i, "truncate_start")]
-            self.window_length_ = max(ts)
-        else:
-            raise ValueError(
-                "Reduce must either have window length as argument"
-                + "or needs to have it passed by transformer via"
-                + "truncate_start"
-            )
+            if len(ts) > 0:
+                self.window_length_ = max(ts)
+            else:
+                raise ValueError(
+                    "Reduce must either have window length as argument"
+                    + "or needs to have it passed by transformer via"
+                    + "truncate_start"
+                )
         yt, Xt = self._transform(y, X)
 
         # Make sure yt is 1d array to avoid DataConversion warning from scikit-learn.
