@@ -313,8 +313,9 @@ class WEASEL(BaseClassifier):
         return self.clf.predict_proba(bag)
 
     def _transform_words(self, X):
-        bag_all_words = [dict() for _ in range(len(X))]
-        for transformer in self.SFA_transformers:
+        def _parallel_transform_words(X, transformer):
+            bag_all_words = [[] for x in range(len(X))]
+
             # SFA transform
             sfa_words = transformer.transform(X)
             bag = sfa_words[0]
@@ -324,14 +325,25 @@ class WEASEL(BaseClassifier):
             # the used window-length
             for j in range(len(bag)):
                 for (key, value) in bag[j].items():
-                    # append the prefices to the words to distinguish
-                    # between window-sizes
-                    word = WEASEL._shift_left(
-                        key, self.highest_bit, transformer.window_size
-                    )
-                    bag_all_words[j][word] = value
+                    if value > 1:
+                        # append the prefices to the words to distinguish
+                        # between window-sizes
+                        word = WEASEL._shift_left(
+                            key, self.highest_bit, transformer.window_size
+                        )
+                        bag_all_words[j].append((word, value))
 
-        return bag_all_words
+            return bag_all_words
+
+        parallel_res = Parallel(n_jobs=self._threads_to_use)(
+            delayed(_parallel_transform_words)(X, transformer)
+            for transformer in self.SFA_transformers
+        )
+        all_words = [dict() for x in range(len(X))]
+        for sfa_words in parallel_res:
+            for idx, bag in enumerate(sfa_words):
+                all_words[idx].update(bag)
+        return all_words
 
     def _compute_window_inc(self):
         win_inc = self.window_inc
