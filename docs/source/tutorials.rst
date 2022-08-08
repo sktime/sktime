@@ -17,13 +17,13 @@ For user guides specific to learning tasks, see our :ref:`user_guide` page.
     Introductory tutorial
     ^^^^^^^^^^^^^^^^^^^^^
 
-    General introduction to ``sktime``
+    A general introduction to ``sktime`` - for first time users.
 
     +++
 
     .. link-button:: https://github.com/sktime/sktime-tutorial-pydata-global-2021
-            :type: ref
-            :text: Intro to ``sktime``
+            :type: url
+            :text: Intro to sktime
             :classes: btn-block btn-secondary stretched-link
 
     ---
@@ -31,12 +31,12 @@ For user guides specific to learning tasks, see our :ref:`user_guide` page.
     Implementing your own estimator
     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-    How to implement your own ``sktime`` compatible estimator.
+    How to implement your own ``sktime`` compatible estimator and check its validity.
 
     +++
 
     .. link-button:: https://github.com/sktime/sktime-workshop-pydata-london-2022
-            :type: ref
+            :type: url
             :text: Implementing estimators
             :classes: btn-block btn-secondary stretched-link
 
@@ -50,7 +50,7 @@ For user guides specific to learning tasks, see our :ref:`user_guide` page.
     +++
 
     .. link-button:: https://github.com/sktime/sktime-tutorial-pydata-berlin-2022
-            :type: ref
+            :type: url
             :text: Advanced forecasting
             :classes: btn-block btn-secondary stretched-link
 
