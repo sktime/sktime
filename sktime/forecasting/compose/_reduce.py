@@ -34,6 +34,7 @@ from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._fh import _index_range
 from sktime.forecasting.base._sktime import _BaseWindowForecaster
 from sktime.regression.base import BaseRegressor
+from sktime.transformations.compose import FeatureUnion
 from sktime.utils.datetime import _shift
 from sktime.utils.validation import check_window_length
 
@@ -102,24 +103,18 @@ def _sliding_window_transform(
     window_length = check_window_length(window_length, n_timepoints)
 
     if transformers is not None:
-        # danbartl: how to implement iteration over all transformers?
-        tf_fit = transformers[0].fit(y)
+        if len(transformers) == 1:
+            tf_fit = transformers[0].fit(y)
+        else:
+            feat = [("trafo_" + str(index), i) for index, i in enumerate(transformers)]
+            tf_fit = FeatureUnion(feat).fit(y)
         X_from_y = tf_fit.transform(y)
 
-        if hasattr(tf_fit, "truncate_start"):
-            X_from_y_cut = _cut_tail(
-                X_from_y, n_tail=n_timepoints - tf_fit.truncate_start
-            )
-            yt = _cut_tail(y, n_tail=n_timepoints - tf_fit.truncate_start)
-        else:
-            X_from_y_cut = X_from_y
-            yt = y
+        X_from_y_cut = _cut_tail(X_from_y, n_tail=n_timepoints - window_length)
+        yt = _cut_tail(y, n_tail=n_timepoints - window_length)
 
         if X is not None:
-            if hasattr(tf_fit, "truncate_start"):
-                X_cut = _cut_tail(X, n_tail=n_timepoints - tf_fit.truncate_start)
-            else:
-                X_cut = X
+            X_cut = _cut_tail(X, n_tail=n_timepoints - window_length)
             Xt = pd.concat([X_from_y_cut, X_cut], axis=1)
         else:
             Xt = X_from_y_cut
@@ -398,7 +393,7 @@ class _MultioutputReducer(_Reducer):
     def _predict_last_window(
         self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA
     ):
-        """Fit to training data.
+        """Predict to training data.
 
         Parameters
         ----------
@@ -492,13 +487,16 @@ class _RecursiveReducer(_Reducer):
             self.transformers = clone(self.transformers)
 
         if self.window_length is None:
-            if isinstance(self.transformers_, list):
-                truncate_start = self.transformers_[0].fit(y).truncate_start
-                self.window_length_ = truncate_start
-            else:
-                truncate_start = self.transformers_.fit(y).truncate_start
-                self.window_length_ = truncate_start
-
+            trafo = self.transformers_
+            fit_trafo = [i.fit(y) for i in trafo]
+            ts = [i.truncate_start for i in fit_trafo if hasattr(i, "truncate_start")]
+            self.window_length_ = max(ts)
+        else:
+            raise ValueError(
+                "Reduce must either have window length as argument"
+                + "or needs to have it passed by transformer via"
+                + "truncate_start"
+            )
         yt, Xt = self._transform(y, X)
 
         # Make sure yt is 1d array to avoid DataConversion warning from scikit-learn.
@@ -517,9 +515,14 @@ class _RecursiveReducer(_Reducer):
         In recursive forecasting, the time based features need to be recalculated for
         every time step that is forecast. This is done in an iterative fashion over
         every forecasting horizon step. Shift specifies the timestemp over which the
-        iteration is done, i.e. a shift of 0 will get a window between window_length in
-        the past and t=0, shift = 1 will be window_length +1 and t= 1 etc- up to the
-        forecasting horizon.
+        iteration is done, i.e. a shift of 0 will get a window between window_length
+        steps in the past and t=0, shift = 1 will be window_length - 1 steps in the past
+        and t= 1 etc- up to the forecasting horizon.
+
+        Will also apply any transformers passed to the recursive reducer to y. This en
+        bloc approach of directly applying the transformers is more efficient than
+        creating all lags first across the window and then applying the transformers
+        to the lagged data.
 
         Please see below a graphical representation of the logic using the following
         symbols:
@@ -561,27 +564,54 @@ class _RecursiveReducer(_Reducer):
             contains the y and X data prepared for the respective windows, see above.
 
         """
+        # shift and cutoff determine start and end of the window, respectively.
+        start = _shift(self._cutoff, by=shift - self.window_length_)
         cutoff = _shift(self._cutoff, by=shift)
-        start = _shift(self._cutoff, by=shift - self.window_length_ + 1)
-
-        relative = pd.Index(list(map(int, range(-self.window_length_ + 1, 1))))
 
         if self.transformers_ is not None:
             # Get the last window of the endogenous variable.
             # If X is given, also get the last window of the exogenous variables.
+            # relative _int will give the integer indices of the window defined above
+            relative_int = pd.Index(list(map(int, range(-self.window_length_, 1))))
+            # index_range will give the same indices,
+            # but using the date format of cutoff
+            index_range = _index_range(relative_int, cutoff)
 
-            index_range = _index_range(relative, cutoff)
+            # y_raw is defined solely for the purpose of deriving a dataframe
+            # window_length forecasting steps into the past in order to calculate the
+            # new X from y features based on the transformer provided
+            y_raw = _create_fcst_df(index_range, self._y)
 
-            y = _create_fcst_df(index_range, self._y)
+            # The y_raw dataframe will contain historical and / or recursively
+            # forecast value to calculate the new X features.
 
-            y.update(self._y)
+            # Historical values are passed here for all time steps of y_raw that lie in
+            # the past .
+            y_raw.update(self._y)
+
+            # Forecast values are passed here for all time steps of y_raw that lie in
+            # the future and were forecast in previous iterations.
             if y_update is not None:
-                y.update(y_update)
-            # Create new X with old values and new features derived from forecasts
-            X_from_y = self.transformers_[0].fit_transform(y)
+                y_raw.update(y_update)
+
+            # After filling the empty y_raw frame with historic / forecast values
+            # X from y features can be calculated based on the passed transformer.
+            if len(self.transformers_) == 1:
+                X_from_y = self.transformers_[0].fit_transform(y_raw)
+            else:
+                ref = self.transformers_
+                feat = [("trafo_" + str(index), i) for index, i in enumerate(ref)]
+                X_from_y = FeatureUnion(feat).fit_transform(y_raw)
+            # We are only interested in the last observations, since only that one
+            # contains relevant value. In recursive forecasting, only one observations
+            # can be forecast at a time.
             X_from_y_cut = _cut_tail(X_from_y)
+
+            # X_from_y_cut is added to X dataframe (unlike y_raw, the X dataframe can
+            # directly be created with one observation from the start,
+            # since no features need to be calculated).
             if self._X is not None:
-                X = _create_fcst_df(index_range, self._X)
+                X = _create_fcst_df([index_range[-1]], self._X)
                 X.update(self._X)
                 if X_update is not None:
                     X.update(X_update)
@@ -589,7 +619,7 @@ class _RecursiveReducer(_Reducer):
                 X = pd.concat([X_from_y_cut, X_cut], axis=1)
             else:
                 X = X_from_y_cut
-                y = _cut_tail(y)
+            y = _cut_tail(y_raw)
         else:
             # Get the last window of the endogenous variable.
             y = self._y.loc[start:cutoff].to_numpy()
@@ -600,12 +630,12 @@ class _RecursiveReducer(_Reducer):
     def _predict_last_window(
         self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA
     ):
-        """Fit to training data.
+        """.
 
         In recursive reduction, iteration must be done over the
         entire forecasting horizon. Specifically, when transformers are
         applied to y that generate features in X, forecasting must be done step by
-        step to integrate the lateste prediction of for the new set of features in
+        step to integrate the latest prediction of for the new set of features in
         X derived from that y.
 
         Parameters
@@ -619,7 +649,7 @@ class _RecursiveReducer(_Reducer):
 
         Returns
         -------
-        y_pred = pd.Series or pd.DataFrame
+        y_return = pd.Series or pd.DataFrame
         """
         if self._X is not None and X is None:
             raise ValueError(
