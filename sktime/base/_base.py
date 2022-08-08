@@ -406,18 +406,6 @@ class BaseObject(_BaseEstimator):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        # if non-default parameters are required, but none have been found,
-        # raise error
-        if hasattr(cls, "_required_parameters"):
-            required_parameters = getattr(cls, "required_parameters", [])
-            if len(required_parameters) > 0:
-                raise ValueError(
-                    f"Estimator: {cls} requires "
-                    f"non-default parameters for construction, "
-                    f"but none were given. Please set them "
-                    f"as given in the extension template"
-                )
-
         # default parameters = empty dict
         return {}
 
