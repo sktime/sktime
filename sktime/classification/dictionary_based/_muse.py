@@ -178,7 +178,7 @@ class MUSE(BaseClassifier):
         # Window length parameter space dependent on series length
         self.col_names = X.columns
 
-        # rng = check_random_state(self.random_state)
+        rng = check_random_state(self.random_state)
 
         self.n_dims = len(self.col_names)
         self.highest_dim_bit = (math.ceil(math.log2(self.n_dims))) + 1
@@ -193,7 +193,7 @@ class MUSE(BaseClassifier):
         self.SFA_transformers = [[] for _ in range(self.n_dims)]
 
         def _parallel_fit(ind, column):
-            rng = check_random_state(ind)
+            # rng = check_random_state(ind)
             all_words = [
                 [] for x in range(X.shape[0])
             ]  # no dict needed, array is enough

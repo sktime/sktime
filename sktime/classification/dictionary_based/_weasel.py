@@ -323,13 +323,13 @@ class WEASEL(BaseClassifier):
             # the used window-length
             for j in range(len(bag)):
                 for (key, value) in bag[j].items():
-                    if value > 1:
-                        # append the prefices to the words to distinguish
-                        # between window-sizes
-                        word = WEASEL._shift_left(
-                            key, self.highest_bit, transformer.window_size
-                        )
-                        bag_all_words[j].append((word, value))
+                    # if value > 1:
+                    # append the prefices to the words to distinguish
+                    # between window-sizes
+                    word = WEASEL._shift_left(
+                        key, self.highest_bit, transformer.window_size
+                    )
+                    bag_all_words[j].append((word, value))
 
             return bag_all_words
 
