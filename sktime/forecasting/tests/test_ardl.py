@@ -85,7 +85,7 @@ def test_against_statsmodels_4():
     # data
     data = load_macroeconomic()
     data = data.iloc[:-5, :]
-    y = data.TOTEMP
+    y = data.realgdp
     X = None
     X_oos = None
     # fit
