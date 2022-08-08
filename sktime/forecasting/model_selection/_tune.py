@@ -140,7 +140,6 @@ class BaseGridSearch(_DelegatedForecaster):
                 X,
                 strategy=self.strategy,
                 scoring=scoring,
-                trim_X=self.trim_X,
                 error_score=self.error_score,
             )
 
