@@ -37,8 +37,7 @@ class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
     def test_capability_inverse_tag_is_correct(self, estimator_instance):
         """Test that the capability:inverse_transform tag is set correctly."""
         capability_tag = estimator_instance.get_tag("capability:inverse_transform")
-        skip_tag = estimator_instance.get_tag("skip-inverse-transform")
-        if capability_tag and not skip_tag:
+        if capability_tag:
             assert estimator_instance._has_implementation_of("_inverse_transform")
 
     def _expected_trafo_output_scitype(self, X_scitype, trafo_input, trafo_output):

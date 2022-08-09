@@ -16,7 +16,7 @@ def _check_soft_dependencies(
     *packages,
     package_import_alias=None,
     severity="error",
-    obj=None,
+    object=None,
     suppress_import_stdout=False,
 ):
     """Check if required soft dependencies are installed and raise error or warning.
@@ -37,7 +37,7 @@ def _check_soft_dependencies(
             function returns False if one of packages is not installed, otherwise True
         "none" - does not raise exception or warning
             function returns False if one of packages is not installed, otherwise True
-    obj : python class, object, str, or None, default=None
+    object : python class, object, str, or None, default=None
         if self is passed here when _check_soft_dependencies is called within __init__,
         or a class is passed when it is called at the start of a single-class module,
         the error message is more informative and will refer to the class/object;
@@ -58,7 +58,7 @@ def _check_soft_dependencies(
         raise TypeError("packages must be str or tuple of str")
 
     if package_import_alias is None:
-        package_import_alias = {}
+        package_import_alias = dict()
     msg = "package_import_alias must be a dict with str keys and values"
     if not isinstance(package_import_alias, dict):
         raise TypeError(msg)
@@ -85,7 +85,7 @@ def _check_soft_dependencies(
             return True
         # if package cannot be imported, make the user aware of installation requirement
         except ModuleNotFoundError as e:
-            if obj is None:
+            if object is None:
                 msg = (
                     f"{e}. '{package}' is a soft dependency and not included in the "
                     f"base sktime installation. Please run: `pip install {package}` to "
@@ -94,14 +94,14 @@ def _check_soft_dependencies(
                     f"sktime[all_extras]`"
                 )
             else:
-                if not isclass(obj):
-                    class_name = type(obj).__name__
-                elif isclass(obj):
-                    class_name = obj.__name__
-                elif isinstance(obj, str):
-                    class_name = obj
+                if not isclass(object):
+                    class_name = type(object).__name__
+                elif isclass(object):
+                    class_name = object.__name__
+                elif isinstance(object, str):
+                    class_name = object
                 else:
-                    raise TypeError("obj must be a class, an object, a str, or None")
+                    raise TypeError("object must be a class, an object, a str, or None")
                 msg = (
                     f"{class_name} requires package '{package}' to be present "
                     f"in the python environment, but '{package}' was not found. "
@@ -289,7 +289,7 @@ def _check_estimator_deps(obj, msg=None, severity="error"):
     if pkg_deps is not None and not isinstance(pkg_deps, list):
         pkg_deps = [pkg_deps]
     if pkg_deps is not None:
-        pkg_deps_ok = _check_soft_dependencies(*pkg_deps, severity=severity, obj=obj)
+        pkg_deps_ok = _check_soft_dependencies(*pkg_deps, severity=severity, object=obj)
         compatible = compatible and pkg_deps_ok
 
     return compatible

@@ -170,10 +170,8 @@ class RotationForest(BaseEstimator):
         for index, classVal in enumerate(self.classes_):
             self._class_dictionary[classVal] = index
 
-        # escape if only one class seen
         if self.n_classes_ == 1:
-            self._is_fitted = True
-            return self
+            raise ValueError("fit input y must contain more than one class")
 
         time_limit = self.time_limit_in_minutes * 60
         start_time = time.time()
@@ -281,12 +279,6 @@ class RotationForest(BaseEstimator):
                 f"This instance of {self.__class__.__name__} has not "
                 f"been fitted yet; please call `fit` first."
             )
-
-        # treat case of single class seen in fit
-        if self.n_classes_ == 1:
-            n_instances = len(X)
-            return np.repeat([[1]], n_instances, axis=0)
-
         if isinstance(X, np.ndarray) and len(X.shape) == 3 and X.shape[1] == 1:
             X = np.reshape(X, (X.shape[0], -1))
         elif isinstance(X, pd.DataFrame) and len(X.shape) == 2:
@@ -337,10 +329,6 @@ class RotationForest(BaseEstimator):
                 "Sparse input formats are currently not supported."
             )
         X = self._validate_data(X=X, reset=False)
-
-        # handle the single-class-label case
-        if len(self._class_dictionary) == 1:
-            return np.repeat([[1]], len(X), axis=0)
 
         n_instances, n_atts = X.shape
 
@@ -463,6 +451,11 @@ class RotationForest(BaseEstimator):
 
         indices = range(self.n_instances_)
         subsample = rng.choice(self.n_instances_, size=self.n_instances_)
+
+        # subsample must have at least 2 unique classes
+        while len(np.unique(y[subsample])) == 1:
+            subsample = rng.choice(self.n_instances_, size=self.n_instances_)
+
         oob = [n for n in indices if n not in subsample]
 
         results = np.zeros((self.n_instances_, self.n_classes_))

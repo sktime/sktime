@@ -27,4 +27,3 @@ Datasets
     load_uschange
     load_UCR_UEA_dataset
     load_macroeconomic
-    load_solar

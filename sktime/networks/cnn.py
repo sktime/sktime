@@ -39,8 +39,6 @@ class CNNNetwork(BaseDeepNetwork):
     Journal of Systems Engineering and Electronics 28(1), 162--169, 2017
     """
 
-    _tags = {"python_dependencies": "tensorflow"}
-
     def __init__(
         self,
         kernel_size=7,

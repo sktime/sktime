@@ -135,7 +135,7 @@ class TSFreshFeatureExtractor(_TSFreshFeatureExtractor):
 
     References
     ----------
-    .. [1]  https://github.com/blue-yonder/tsfresh
+    ..[1]  https://github.com/blue-yonder/tsfresh
     """
 
     _tags = {
@@ -218,7 +218,7 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
 
     References
     ----------
-    .. [1]  https://github.com/blue-yonder/tsfresh
+    ..[1]  https://github.com/blue-yonder/tsfresh
     """
 
     _tags = {

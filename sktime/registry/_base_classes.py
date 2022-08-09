@@ -60,7 +60,6 @@ import pandas as pd
 
 from sktime.alignment.base import BaseAligner
 from sktime.annotation.base import BaseSeriesAnnotator
-from sktime.base import BaseEstimator, BaseObject
 from sktime.classification.base import BaseClassifier
 from sktime.classification.early_classification import BaseEarlyClassifier
 from sktime.clustering.base import BaseClusterer
@@ -69,9 +68,8 @@ from sktime.dists_kernels._base import (
     BasePairwiseTransformerPanel,
 )
 from sktime.forecasting.base import BaseForecaster
-from sktime.forecasting.model_selection._split import BaseSplitter
-from sktime.param_est.base import BaseParamFitter
-from sktime.performance_metrics.base import BaseMetric
+
+# from sktime.performance_metrics.base import BaseMetric
 from sktime.regression.base import BaseRegressor
 from sktime.transformations.base import (
     BaseTransformer,
@@ -82,18 +80,12 @@ from sktime.transformations.base import (
 )
 
 BASE_CLASS_REGISTER = [
-    ("object", BaseObject, "object"),
-    ("estimator", BaseEstimator, "estimator = object with fit"),
-    ("aligner", BaseAligner, "time series aligner or sequence aligner"),
-    ("classifier", BaseClassifier, "time series classifier"),
-    ("clusterer", BaseClusterer, "time series clusterer"),
-    ("early_classifier", BaseEarlyClassifier, "early time series classifier"),
-    ("forecaster", BaseForecaster, "forecaster"),
-    ("metric", BaseMetric, "performance metric"),
-    ("param_est", BaseParamFitter, "parameter fitting estimator"),
-    ("regressor", BaseRegressor, "time series regressor"),
     ("series-annotator", BaseSeriesAnnotator, "time series annotator"),
-    ("splitter", BaseSplitter, "time series splitter"),
+    ("classifier", BaseClassifier, "time series classifier"),
+    ("early_classifier", BaseEarlyClassifier, "early time series classifier"),
+    ("clusterer", BaseClusterer, "time series clusterer"),
+    ("regressor", BaseRegressor, "time series regressor"),
+    ("forecaster", BaseForecaster, "forecaster"),
     ("transformer", BaseTransformer, "time series transformer"),
     (
         "transformer-pairwise",
@@ -105,6 +97,9 @@ BASE_CLASS_REGISTER = [
         BasePairwiseTransformerPanel,
         "pairwise transformer for panel data, distance or kernel",
     ),
+    ("aligner", BaseAligner, "time series aligner or sequence aligner"),
+    # ("metric", BaseMetric, "performance metric"),
+    # TODO Fails because it assumes it has fit
 ]
 
 

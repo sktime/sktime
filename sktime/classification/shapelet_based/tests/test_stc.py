@@ -21,5 +21,4 @@ def test_contracted_stc():
     )
     stc.fit(X_train, y_train)
 
-    # fails stochastically, probably not a correct expectation, commented out, see #3206
-    # assert len(stc._estimator.estimators_) > 1
+    assert len(stc._estimator.estimators_) > 1

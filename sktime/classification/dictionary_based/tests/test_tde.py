@@ -42,5 +42,4 @@ def test_contracted_tde():
     )
     tde.fit(X_train, y_train)
 
-    # fails stochastically, probably not a correct expectation, commented out, see #3206
-    # assert len(tde.estimators_) > 1
+    assert len(tde.estimators_) > 1

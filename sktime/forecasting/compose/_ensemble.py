@@ -105,6 +105,7 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
     >>> y_pred = forecaster.predict()
     """
 
+    _required_parameters = ["forecasters"]
     _tags = {
         "ignores-exogeneous-X": False,
         "requires-fh-in-fit": False,
@@ -186,7 +187,7 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
             inv_var = np.array(
                 [
                     1 / np.var(y_test - y_pred_test)
-                    for y_pred_test in self._predict_forecasters(fh_test, X_test)
+                    for y_pred_test in self._predict_forecasters(fh_test, X)
                 ]
             )
             # standardize the inverse variance
@@ -300,6 +301,7 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
     >>> y_pred = forecaster.predict()
     """
 
+    _required_parameters = ["forecasters"]
     _tags = {
         "ignores-exogeneous-X": False,
         "requires-fh-in-fit": False,

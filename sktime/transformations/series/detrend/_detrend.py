@@ -59,6 +59,8 @@ class Detrender(BaseTransformer):
     >>> y_hat = transformer.fit_transform(y)
     """
 
+    _required_parameters = ["forecaster"]
+
     _tags = {
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel

@@ -43,6 +43,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
     >>> y_pred = forecaster.predict()
     """
 
+    _required_parameters = ["forecasters"]
     _tags = {
         "scitype:y": "both",
         "ignores-exogeneous-X": False,

@@ -79,6 +79,7 @@ class ConformalIntervals(BaseForecaster):
     >>> pred_int = conformal_forecaster.predict_interval()
     """
 
+    _required_parameters = ["forecaster"]
     _tags = {
         "scitype:y": "univariate",
         "requires-fh-in-fit": False,

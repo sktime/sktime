@@ -36,6 +36,8 @@ class TSInterpolator(BaseTransformer):
         "fit_is_empty": True,
     }
 
+    _required_parameter = ["length"]
+
     def __init__(self, length):
         """Initialize estimator.
 

@@ -7,12 +7,10 @@ __author__ = ["aiwalter", "mloning"]
 __all__ = ["evaluate"]
 
 import time
-import warnings
 
 import numpy as np
 import pandas as pd
 
-from sktime.exceptions import FitFailedWarning
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.utils.validation.forecasting import (
     check_cv,
@@ -31,7 +29,6 @@ def evaluate(
     strategy="refit",
     scoring=None,
     return_data=False,
-    error_score=np.nan,
 ):
     """Evaluate forecaster using timeseries cross-validation.
 
@@ -58,10 +55,6 @@ def evaluate(
         Returns three additional columns in the DataFrame, by default False.
         The cells of the columns contain each a pd.Series for y_train,
         y_pred, y_test.
-    error_score : "raise" or numeric, default=np.nan
-        Value to assign to the score if an exception occurs in estimator fitting. If set
-        to "raise", the exception is raised. If a numeric value is given,
-        FitFailedWarning is raised.
 
     Returns
     -------
@@ -120,74 +113,48 @@ def evaluate(
 
     # Run temporal cross-validation.
     for i, (train, test) in enumerate(cv.split(y)):
-
-        # set default result values in case estimator fitting fails
-        score = error_score
-        fit_time = np.nan
-        pred_time = np.nan
-        cutoff = np.nan
-        y_pred = np.nan
-
         # split data
         y_train, y_test, X_train, X_test = _split(y, X, train, test, cv.fh)
 
         # create forecasting horizon
         fh = ForecastingHorizon(y_test.index, is_relative=False)
 
+        # fit/update
+        start_fit = time.perf_counter()
+        if i == 0 or strategy == "refit":
+            forecaster = forecaster.clone()
+            forecaster.fit(y_train, X_train, fh=fh)
+
+        else:  # if strategy in ["update", "no-update_params"]:
+            update_params = strategy == "update"
+            forecaster.update(y_train, X_train, update_params=update_params)
+        fit_time = time.perf_counter() - start_fit
+
+        pred_type = {
+            "pred_quantiles": "forecaster.predict_quantiles",
+            "pred_intervals": "forecaster.predict_interval",
+            "pred_proba": "forecaster.predict_proba",
+            None: "forecaster.predict",
+        }
+        # predict
+        start_pred = time.perf_counter()
+
+        if hasattr(scoring, "metric_args"):
+            metric_args = scoring.metric_args
+
         try:
-            # fit/update
-            start_fit = time.perf_counter()
-            if i == 0 or strategy == "refit":
-                forecaster = forecaster.clone()
-                forecaster.fit(y_train, X_train, fh=fh)
+            scitype = scoring.get_tag("scitype:y_pred")
+        except ValueError:
+            # If no scitype exists then metric is not proba and no args needed
+            scitype = None
+            metric_args = {}
 
-            else:  # if strategy in ["update", "no-update_params"]:
-                update_params = strategy == "update"
-                forecaster.update(y_train, X_train, update_params=update_params)
-            fit_time = time.perf_counter() - start_fit
+        y_pred = eval(pred_type[scitype])(fh, X_test, **metric_args)
 
-            pred_type = {
-                "pred_quantiles": "forecaster.predict_quantiles",
-                "pred_intervals": "forecaster.predict_interval",
-                "pred_proba": "forecaster.predict_proba",
-                None: "forecaster.predict",
-            }
-            # predict
-            start_pred = time.perf_counter()
+        pred_time = time.perf_counter() - start_pred
 
-            if hasattr(scoring, "metric_args"):
-                metric_args = scoring.metric_args
-
-            try:
-                scitype = scoring.get_tag("scitype:y_pred")
-            except ValueError:
-                # If no scitype exists then metric is not proba and no args needed
-                scitype = None
-                metric_args = {}
-
-            y_pred = eval(pred_type[scitype])(fh, X_test, **metric_args)
-
-            pred_time = time.perf_counter() - start_pred
-
-            # score
-            score = scoring(y_test, y_pred, y_train=y_train)
-
-            # cutoff
-            cutoff = forecaster.cutoff
-
-        except Exception as e:
-            if error_score == "raise":
-                raise e
-            else:
-                warnings.warn(
-                    f"""
-                Fitting of forecaster failed, you can set error_score='raise' to see
-                the exception message. Fit failed for len(y_train)={len(y_train)}.
-                The score will be set to {error_score}.
-                Failed forecaster: {forecaster}.
-                """,
-                    FitFailedWarning,
-                )
+        # score
+        score = scoring(y_test, y_pred, y_train=y_train)
 
         # save results
         results.append(
@@ -196,7 +163,7 @@ def evaluate(
                 "fit_time": fit_time,
                 "pred_time": pred_time,
                 "len_train_window": len(y_train),
-                "cutoff": cutoff,
+                "cutoff": forecaster.cutoff,
                 "y_train": y_train if return_data else np.nan,
                 "y_test": y_test if return_data else np.nan,
                 "y_pred": y_pred if return_data else np.nan,

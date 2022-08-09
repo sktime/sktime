@@ -101,6 +101,8 @@ class ClassifierPipeline(BaseClassifier, _HeterogenousMetaEstimator):
         "capability:multithreading": False,
     }
 
+    _required_parameters = ["classifier"]
+
     # no default tag values - these are set dynamically below
 
     def __init__(self, classifier, transformers):
@@ -196,8 +198,8 @@ class ClassifierPipeline(BaseClassifier, _HeterogenousMetaEstimator):
         ------------
         creates fitted model (attributes ending in "_")
         """
-        Xt = self.transformers_.fit_transform(X=X, y=y)
-        self.classifier_.fit(X=Xt, y=y)
+        Xt = self.transformers_.fit_transform(X)
+        self.classifier_.fit(Xt, y)
 
         return self
 
@@ -214,8 +216,8 @@ class ClassifierPipeline(BaseClassifier, _HeterogenousMetaEstimator):
         -------
         y : predictions of labels for X, np.ndarray
         """
-        Xt = self.transformers_.transform(X=X)
-        return self.classifier_.predict(X=Xt)
+        Xt = self.transformers_.transform(X)
+        return self.classifier_.predict(Xt)
 
     def _predict_proba(self, X) -> np.ndarray:
         """Predicts labels probabilities for sequences in X.
@@ -404,6 +406,8 @@ class SklearnClassifierPipeline(ClassifierPipeline):
         "capability:multithreading": False,
     }
 
+    _required_parameters = ["classifier"]
+
     # no default tag values - these are set dynamically below
 
     def __init__(self, classifier, transformers):
@@ -503,7 +507,7 @@ class SklearnClassifierPipeline(ClassifierPipeline):
         ------------
         creates fitted model (attributes ending in "_")
         """
-        Xt = self.transformers_.fit_transform(X=X, y=y)
+        Xt = self.transformers_.fit_transform(X)
         Xt_sklearn = self._convert_X_to_sklearn(Xt)
         self.classifier_.fit(Xt_sklearn, y)
 
@@ -522,7 +526,7 @@ class SklearnClassifierPipeline(ClassifierPipeline):
         -------
         y : predictions of labels for X, np.ndarray
         """
-        Xt = self.transformers_.transform(X=X)
+        Xt = self.transformers_.transform(X)
         Xt_sklearn = self._convert_X_to_sklearn(Xt)
         return self.classifier_.predict(Xt_sklearn)
 

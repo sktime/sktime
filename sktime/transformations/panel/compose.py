@@ -119,6 +119,8 @@ class ColumnTransformer(_ColumnTransformer, _PanelToPanelTransformer):
         of the individual transformations and the `sparse_threshold` keyword.
     """
 
+    _required_parameters = ["transformers"]
+
     def __init__(
         self,
         transformers,
@@ -304,6 +306,7 @@ def _from_nested_to_series(x):
 class _RowTransformer(BaseTransformer):
     """Base class for RowTransformer."""
 
+    _required_parameters = ["transformer"]
     _tags = {"fit_is_empty": True}
 
     def __init__(self, transformer, check_transformer=True):
@@ -344,30 +347,6 @@ class SeriesToPrimitivesRowTransformer(_RowTransformer, _PanelToTabularTransform
             Xt[i] = self.transformer_[i].fit_transform(X[i].T)
         return pd.DataFrame(Xt)
 
-    @classmethod
-    def get_test_params(cls, parameter_set="default"):
-        """Return testing parameter settings for the estimator.
-
-        Parameters
-        ----------
-        parameter_set : str, default="default"
-            Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
-
-        Returns
-        -------
-        params : dict or list of dict, default={}
-            Parameters to create testing instances of the class.
-            Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`.
-        """
-        import numpy as np
-        from sklearn.preprocessing import FunctionTransformer
-
-        trafo = FunctionTransformer(np.mean, kw_args={"axis": 0}, check_inverse=False)
-        return {"transformer": trafo, "check_transformer": False}
-
 
 class SeriesToSeriesRowTransformer(_RowTransformer, _PanelToPanelTransformer):
     """Series-to-series row transformer."""
@@ -387,28 +366,6 @@ class SeriesToSeriesRowTransformer(_RowTransformer, _PanelToPanelTransformer):
         else:
             Xt = Xt.reset_index(drop=True)
         return Xt
-
-    @classmethod
-    def get_test_params(cls, parameter_set="default"):
-        """Return testing parameter settings for the estimator.
-
-        Parameters
-        ----------
-        parameter_set : str, default="default"
-            Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
-
-        Returns
-        -------
-        params : dict or list of dict, default={}
-            Parameters to create testing instances of the class.
-            Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`.
-        """
-        from sklearn.preprocessing import StandardScaler
-
-        return {"transformer": StandardScaler(), "check_transformer": False}
 
 
 def make_row_transformer(transformer, transformer_type=None, **kwargs):

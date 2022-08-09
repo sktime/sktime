@@ -34,7 +34,7 @@ class Arsenal(BaseClassifier):
     Overview: an ensemble of ROCKET transformers using RidgeClassifierCV base
     classifier. Weights each classifier using the accuracy from the ridge
     cross-validation. Allows for generation of probability estimates at the
-    expense of scalability compared to RocketClassifier.
+    expense of scalability compared to ROCKETClassifier.
 
     Parameters
     ----------
@@ -85,7 +85,7 @@ class Arsenal(BaseClassifier):
 
     See Also
     --------
-    RocketClassifier
+    ROCKETClassifier
 
     Notes
     -----
@@ -321,10 +321,6 @@ class Arsenal(BaseClassifier):
         self.check_is_fitted()
         X, y = check_X_y(X, y, coerce_to_numpy=True)
 
-        # handle the single-class-label case
-        if len(self._class_dictionary) == 1:
-            return self._single_class_y_pred(X, method="predict_proba")
-
         n_instances, n_dims, series_length = X.shape
 
         if (
@@ -394,6 +390,11 @@ class Arsenal(BaseClassifier):
 
         indices = range(self.n_instances_)
         subsample = rng.choice(self.n_instances_, size=self.n_instances_)
+
+        # subsample must have at least 2 unique classes
+        while len(np.unique(y[subsample])) == 1:
+            subsample = rng.choice(self.n_instances_, size=self.n_instances_)
+
         oob = [n for n in indices if n not in subsample]
 
         results = np.zeros((self.n_instances_, self.n_classes_))

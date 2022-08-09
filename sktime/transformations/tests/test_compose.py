@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Unit tests for transformer composition functionality attached to the base class."""
+"""Unit tests for (dunder) composition functionality attached to the base class."""
 
 __author__ = ["fkiraly"]
 __all__ = []
@@ -8,11 +8,9 @@ __all__ = []
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
 
-from sktime.datasets import load_airline
 from sktime.datatypes import get_examples
 from sktime.transformations.compose import FeatureUnion, TransformerPipeline
 from sktime.transformations.panel.padder import PaddingTransformer
-from sktime.transformations.series.boxcox import LogTransformer
 from sktime.transformations.series.exponent import ExponentTransformer
 from sktime.transformations.series.impute import Imputer
 from sktime.transformations.series.subset import ColumnSelect
@@ -176,23 +174,6 @@ def test_pipeline_column_vectorization():
     X_theta = t.fit_transform(X)
 
     assert set(X_theta.columns) == set(["a__0", "a__2", "b__0", "b__2"])
-
-
-def test_pipeline_inverse():
-    """Tests that inverse composition works, with inverse skips. Also see #3084."""
-    X = load_airline()
-    t = LogTransformer() * Imputer()
-
-    # LogTransformer has inverse_transform, and does not skip inverse transform
-    # therefore, pipeline should also not skip inverse transform, and have capability
-    assert t.get_tag("capability:inverse_transform")
-    assert not t.get_tag("skip-inverse-transform")
-
-    t.fit(X)
-    Xt = t.transform(X)
-    Xtt = t.inverse_transform(Xt)
-
-    _assert_array_almost_equal(X, Xtt)
 
 
 def test_subset_getitem():

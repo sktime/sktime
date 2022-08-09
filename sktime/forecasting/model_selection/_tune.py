@@ -42,7 +42,6 @@ class BaseGridSearch(_DelegatedForecaster):
         verbose=0,
         return_n_best_forecasters=1,
         update_behaviour="full_refit",
-        error_score=np.nan,
     ):
 
         self.forecaster = forecaster
@@ -56,7 +55,6 @@ class BaseGridSearch(_DelegatedForecaster):
         self.verbose = verbose
         self.return_n_best_forecasters = return_n_best_forecasters
         self.update_behaviour = update_behaviour
-        self.error_score = error_score
         super(BaseGridSearch, self).__init__()
         tags_to_clone = [
             "requires-fh-in-fit",
@@ -140,7 +138,6 @@ class BaseGridSearch(_DelegatedForecaster):
                 X,
                 strategy=self.strategy,
                 scoring=scoring,
-                error_score=self.error_score,
             )
 
             # Filter columns.
@@ -195,12 +192,6 @@ class BaseGridSearch(_DelegatedForecaster):
 
         # Select best parameters.
         self.best_index_ = results.loc[:, f"rank_{scoring_name}"].argmin()
-        # Raise error if all fits in evaluate failed because all score values are NaN.
-        if self.best_index_ == -1:
-            raise NotFittedError(
-                f"""All fits of forecaster failed, set error_score='raise' to see the exceptions.
-                Failed forecaster: {self.forecaster}"""
-            )
         self.best_score_ = results.loc[self.best_index_, f"mean_{scoring_name}"]
         self.best_params_ = results.loc[self.best_index_, "params"]
         self.best_forecaster_ = self.forecaster.clone().set_params(**self.best_params_)
@@ -324,10 +315,6 @@ class ForecastingGridSearchCV(BaseGridSearch):
     backend: str, optional (default="loky")
         Specify the parallelisation backend implementation in joblib, where
         "loky" is used by default.
-    error_score : "raise" or numeric, default=np.nan
-        Value to assign to the score if an exception occurs in estimator fitting. If set
-        to "raise", the exception is raised. If a numeric value is given,
-        FitFailedWarning is raised.
 
     Attributes
     ----------
@@ -417,6 +404,8 @@ class ForecastingGridSearchCV(BaseGridSearch):
     >>> y_pred = gscv.predict(fh=[1,2,3])
     """
 
+    _required_parameters = ["forecaster", "cv", "param_grid"]
+
     def __init__(
         self,
         forecaster,
@@ -431,7 +420,6 @@ class ForecastingGridSearchCV(BaseGridSearch):
         pre_dispatch="2*n_jobs",
         backend="loky",
         update_behaviour="full_refit",
-        error_score=np.nan,
     ):
         super(ForecastingGridSearchCV, self).__init__(
             forecaster=forecaster,
@@ -445,7 +433,6 @@ class ForecastingGridSearchCV(BaseGridSearch):
             pre_dispatch=pre_dispatch,
             backend=backend,
             update_behaviour=update_behaviour,
-            error_score=error_score,
         )
         self.param_grid = param_grid
 
@@ -579,10 +566,6 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
     backend: str, optional (default="loky")
         Specify the parallelisation backend implementation in joblib, where
         "loky" is used by default.
-    error_score : "raise" or numeric, default=np.nan
-        Value to assign to the score if an exception occurs in estimator fitting. If set
-        to "raise", the exception is raised. If a numeric value is given,
-        FitFailedWarning is raised.
 
     Attributes
     ----------
@@ -602,6 +585,8 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         score of forecasters
     """
 
+    _required_parameters = ["forecaster", "cv", "param_distributions"]
+
     def __init__(
         self,
         forecaster,
@@ -618,7 +603,6 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         pre_dispatch="2*n_jobs",
         backend="loky",
         update_behaviour="full_refit",
-        error_score=np.nan,
     ):
         super(ForecastingRandomizedSearchCV, self).__init__(
             forecaster=forecaster,
@@ -632,7 +616,6 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
             pre_dispatch=pre_dispatch,
             backend=backend,
             update_behaviour=update_behaviour,
-            error_score=error_score,
         )
         self.param_distributions = param_distributions
         self.n_iter = n_iter

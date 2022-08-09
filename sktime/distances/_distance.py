@@ -828,7 +828,7 @@ def twe_distance(
 
     References
     ----------
-    .. [1] Marteau, P.; F. (2009). "Time Warp Edit Distance with Stiffness Adjustment
+    ..[1] Marteau, P.; F. (2009). "Time Warp Edit Distance with Stiffness Adjustment
     for Time Series Matching". IEEE Transactions on Pattern Analysis and Machine
     Intelligence. 31 (2): 306–318.
     """
@@ -1739,7 +1739,7 @@ def twe_alignment_path(
 
     References
     ----------
-    .. [1] Marteau, P.; F. (2009). "Time Warp Edit Distance with Stiffness Adjustment
+    ..[1] Marteau, P.; F. (2009). "Time Warp Edit Distance with Stiffness Adjustment
     for Time Series Matching". IEEE Transactions on Pattern Analysis and Machine
     Intelligence. 31 (2): 306–318.
     """

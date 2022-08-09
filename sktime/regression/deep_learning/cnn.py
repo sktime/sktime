@@ -39,7 +39,7 @@ class CNNRegressor(BaseDeepRegressor):
 
     Notes
     -----
-    .. [1] Zhao et. al, Convolutional neural networks for
+    ..[1] Zhao et. al, Convolutional neural networks for
     time series classification, Journal of
     Systems Engineering and Electronics, 28(1):2017.
 

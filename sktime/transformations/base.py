@@ -64,11 +64,7 @@ from sktime.datatypes import (
     mtype_to_scitype,
 )
 from sktime.datatypes._series_as_panel import convert_to_scitype
-from sktime.utils.sklearn import (
-    is_sklearn_classifier,
-    is_sklearn_regressor,
-    is_sklearn_transformer,
-)
+from sktime.utils.sklearn import is_sklearn_classifier, is_sklearn_transformer
 from sktime.utils.validation._dependencies import _check_estimator_deps
 
 # single/multiple primitives
@@ -174,7 +170,6 @@ class BaseTransformer(BaseEstimator):
         if (
             isinstance(other, BaseTransformer)
             or is_sklearn_classifier(other)
-            or is_sklearn_regressor(other)
             or is_sklearn_transformer(other)
         ):
             self_as_pipeline = TransformerPipeline(steps=[self])
@@ -536,9 +531,6 @@ class BaseTransformer(BaseEstimator):
         inverse transformed version of X
             of the same type as X, and conforming to mtype format specifications
         """
-        if self.get_tag("skip-inverse-transform"):
-            return X
-
         if not self.get_tag("capability:inverse_transform"):
             raise NotImplementedError(
                 f"{type(self)} does not implement inverse_transform"
@@ -1011,7 +1003,7 @@ class BaseTransformer(BaseEstimator):
                     raise RuntimeError(
                         "found different number of instances in transform than in fit. "
                         f"number of instances seen in fit: {n_fit}; "
-                        f"number of instances seen in transform: {n_trafos}"
+                        f"number of instances seen in transform: {n * m}"
                     )
 
                 # transform the i-th series/panel with the i-th stored transformer

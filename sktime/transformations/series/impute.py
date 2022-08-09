@@ -91,7 +91,6 @@ class Imputer(BaseTransformer):
         "fit_is_empty": False,
         "handles-missing-data": True,
         "skip-inverse-transform": True,
-        "capability:inverse_transform": True,
         "univariate-only": False,
         "capability:missing_values:removes": True,
         # is transform result always guaranteed to contain no missing values?

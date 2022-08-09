@@ -617,6 +617,8 @@ class SummaryTransformer(BaseTransformer):
 
     See Also
     --------
+    MeanTransformer :
+        Calculate the mean of a timeseries.
     WindowSummarizer:
         Extracting features across (shifted) windows from series
 

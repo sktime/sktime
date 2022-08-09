@@ -107,7 +107,7 @@ Kernel-based
     :toctree: auto_generated/
     :template: class.rst
 
-    RocketClassifier
+    ROCKETClassifier
     Arsenal
 
 Feature-based

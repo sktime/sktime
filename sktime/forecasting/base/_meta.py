@@ -16,6 +16,8 @@ from sktime.forecasting.base._base import BaseForecaster
 class _HeterogenousEnsembleForecaster(BaseForecaster, _HeterogenousMetaEstimator):
     """Base class for heterogeneous ensemble forecasters."""
 
+    _required_parameters = ["forecasters"]
+
     def __init__(self, forecasters, n_jobs=None):
         self.forecasters = forecasters
         self.forecasters_ = None

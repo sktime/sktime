@@ -11,11 +11,11 @@ from inspect import isclass, signature
 import numpy as np
 import pandas as pd
 from pandas.testing import assert_frame_equal
+from sklearn.base import BaseEstimator
 from sklearn.utils.validation import check_random_state
 
 from sktime.alignment.base import BaseAligner
 from sktime.annotation.base import BaseSeriesAnnotator
-from sktime.base import BaseEstimator, BaseObject
 from sktime.classification.base import BaseClassifier
 from sktime.classification.early_classification import BaseEarlyClassifier
 from sktime.clustering.base import BaseClusterer
@@ -54,14 +54,13 @@ def _get_err_msg(estimator):
 
 def _list_required_methods(estimator):
     """Return list of required method names (beyond BaseEstimator ones)."""
-    # all BaseObject children must implement these
-    MUST_HAVE_FOR_OBJECTS = ["set_params", "get_params"]
-
     # all BaseEstimator children must implement these
     MUST_HAVE_FOR_ESTIMATORS = [
         "fit",
         "check_is_fitted",
         "is_fitted",  # read-only property
+        "set_params",
+        "get_params",
     ]
     # prediction/forecasting base classes that must have predict
     BASE_CLASSES_THAT_MUST_HAVE_PREDICT = (
@@ -77,9 +76,6 @@ def _list_required_methods(estimator):
     )
 
     required_methods = []
-
-    if isinstance(estimator, BaseObject):
-        required_methods += MUST_HAVE_FOR_OBJECTS
 
     if isinstance(estimator, BaseEstimator):
         required_methods += MUST_HAVE_FOR_ESTIMATORS

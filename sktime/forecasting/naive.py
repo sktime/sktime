@@ -402,6 +402,7 @@ class NaiveVariance(BaseForecaster):
     >>> var_pred = variance_forecaster.predict_var(fh=[1,2,3])
     """
 
+    _required_parameters = ["forecaster"]
     _tags = {
         "scitype:y": "univariate",
         "requires-fh-in-fit": False,

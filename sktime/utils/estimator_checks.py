@@ -69,7 +69,6 @@ def check_estimator(
     All tests PASSED!
     {'test_score[ThetaForecaster-y:1cols-fh=1]': 'PASSED'}
     """
-    from sktime.base import BaseEstimator
     from sktime.classification.early_classification.tests.test_all_early_classifiers import (  # noqa E501
         TestAllEarlyClassifiers,
     )
@@ -77,7 +76,7 @@ def check_estimator(
     from sktime.forecasting.tests.test_all_forecasters import TestAllForecasters
     from sktime.registry import scitype
     from sktime.regression.tests.test_all_regressors import TestAllRegressors
-    from sktime.tests.test_all_estimators import TestAllEstimators, TestAllObjects
+    from sktime.tests.test_all_estimators import TestAllEstimators
     from sktime.transformations.tests.test_all_transformers import TestAllTransformers
 
     testclass_dict = dict()
@@ -87,7 +86,7 @@ def check_estimator(
     testclass_dict["regressor"] = TestAllRegressors
     testclass_dict["transformer"] = TestAllTransformers
 
-    results = TestAllObjects().run_tests(
+    results = TestAllEstimators().run_tests(
         estimator=estimator,
         return_exceptions=return_exceptions,
         tests_to_run=tests_to_run,
@@ -95,17 +94,6 @@ def check_estimator(
         tests_to_exclude=tests_to_exclude,
         fixtures_to_exclude=fixtures_to_exclude,
     )
-
-    if isinstance(estimator, BaseEstimator) or issubclass(estimator, BaseEstimator):
-        results_estimator = TestAllEstimators().run_tests(
-            estimator=estimator,
-            return_exceptions=return_exceptions,
-            tests_to_run=tests_to_run,
-            fixtures_to_run=fixtures_to_run,
-            tests_to_exclude=tests_to_exclude,
-            fixtures_to_exclude=fixtures_to_exclude,
-        )
-        results.update(results_estimator)
 
     try:
         scitype_of_estimator = scitype(estimator)

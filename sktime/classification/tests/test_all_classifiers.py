@@ -14,10 +14,7 @@ from sktime.classification.tests._expected_outputs import (
 from sktime.datasets import load_basic_motions, load_unit_test
 from sktime.datatypes import check_is_scitype
 from sktime.tests.test_all_estimators import BaseFixtureGenerator, QuickTester
-from sktime.utils._testing.estimator_checks import (
-    _assert_array_almost_equal,
-    make_classification_problem,
-)
+from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
 from sktime.utils._testing.scenarios_classification import (
     ClassifierFitPredictMultivariate,
 )
@@ -179,17 +176,3 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
 
         # assert probabilities are the same
         _assert_array_almost_equal(y_proba, expected_probas, decimal=2)
-
-    def test_handles_single_class(self, estimator_instance):
-        """Test that estimator handles fit when only single class label is seen.
-
-        This is important for compatibility with ensembles that sub-sample,
-        as sub-sampling stochastically produces training sets with single class label.
-        """
-        X, y = make_classification_problem()
-        y[:] = 42
-
-        error_msg = "single class label"
-
-        with pytest.warns(UserWarning, match=error_msg):
-            estimator_instance.fit(X, y)

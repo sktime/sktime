@@ -16,7 +16,7 @@ _check_soft_dependencies(
     "dtw-python",
     package_import_alias={"dtw-python": "dtw"},
     severity="warning",
-    obj="AlignerDTW or AlignerDTWfromDist",
+    object="AlignerDTW or AlignerDTWfromDist",
     suppress_import_stdout=True,
 )
 
@@ -78,7 +78,7 @@ class AlignerDTW(BaseAligner):
             "dtw-python",
             package_import_alias={"dtw-python": "dtw"},
             severity="error",
-            obj=self,
+            object=self,
             suppress_import_stdout=True,
         )
         super(AlignerDTW, self).__init__()
@@ -254,7 +254,7 @@ class AlignerDTWfromDist(BaseAligner):
             "dtw-python",
             package_import_alias={"dtw-python": "dtw"},
             severity="error",
-            obj=self,
+            object=self,
             suppress_import_stdout=True,
         )
         super(AlignerDTWfromDist, self).__init__()

@@ -76,7 +76,6 @@ CVs = [
     *[SingleWindowSplitter(fh=fh) for fh in TEST_OOS_FHS],
     SlidingWindowSplitter(fh=1, initial_window=15),
 ]
-ERROR_SCORES = [np.nan, "raise", 1000]
 
 
 @pytest.mark.parametrize(
@@ -84,16 +83,11 @@ ERROR_SCORES = [np.nan, "raise", 1000]
 )
 @pytest.mark.parametrize("scoring", TEST_METRICS)
 @pytest.mark.parametrize("cv", CVs)
-@pytest.mark.parametrize("error_score", ERROR_SCORES)
-def test_gscv(forecaster, param_grid, cv, scoring, error_score):
+def test_gscv(forecaster, param_grid, cv, scoring):
     """Test ForecastingGridSearchCV."""
     y, X = load_longley()
     gscv = ForecastingGridSearchCV(
-        forecaster,
-        param_grid=param_grid,
-        cv=cv,
-        scoring=scoring,
-        error_score=error_score,
+        forecaster, param_grid=param_grid, cv=cv, scoring=scoring
     )
     gscv.fit(y, X)
 
@@ -105,11 +99,10 @@ def test_gscv(forecaster, param_grid, cv, scoring, error_score):
     "forecaster, param_grid", [(NAIVE, NAIVE_GRID), (PIPE, PIPE_GRID)]
 )
 @pytest.mark.parametrize("scoring", TEST_METRICS)
-@pytest.mark.parametrize("error_score", ERROR_SCORES)
 @pytest.mark.parametrize("cv", CVs)
 @pytest.mark.parametrize("n_iter", TEST_N_ITERS)
 @pytest.mark.parametrize("random_state", TEST_RANDOM_SEEDS)
-def test_rscv(forecaster, param_grid, cv, scoring, error_score, n_iter, random_state):
+def test_rscv(forecaster, param_grid, cv, scoring, n_iter, random_state):
     """Test ForecastingRandomizedSearchCV.
 
     Tests that ForecastingRandomizedSearchCV successfully searches the
@@ -121,7 +114,6 @@ def test_rscv(forecaster, param_grid, cv, scoring, error_score, n_iter, random_s
         param_distributions=param_grid,
         cv=cv,
         scoring=scoring,
-        error_score=error_score,
         n_iter=n_iter,
         random_state=random_state,
     )

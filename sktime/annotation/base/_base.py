@@ -22,7 +22,6 @@ State:
 """
 
 __author__ = ["satya-pattnaik ", "fkiraly"]
-__all__ = ["BaseSeriesAnnotator"]
 
 from sktime.base import BaseEstimator
 from sktime.utils.validation.annotation import check_fmt, check_labels

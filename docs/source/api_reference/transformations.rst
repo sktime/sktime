@@ -135,6 +135,7 @@ These transformers extract simple summary features.
     :template: class.rst
 
     SummaryTransformer
+    MeanTransformer
     WindowSummarizer
 
 .. currentmodule:: sktime.transformations.panel.summarize
@@ -148,17 +149,8 @@ These transformers extract simple summary features.
     RandomIntervalFeatureExtractor
     FittedParamExtractor
 
-Shapelets, wavelets, and convolution
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. currentmodule:: sktime.transformations.panel.shapelet_transform
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    ShapeletTransform
-    RandomShapeletTransform
+Kernel and wavelet based features
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: sktime.transformations.panel.rocket
 
@@ -307,15 +299,6 @@ Detrending
     Deseasonalizer
     ConditionalDeseasonalizer
     STLTransformer
-
-.. currentmodule:: sktime.transformations.series.clear_sky
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    ClearSky
-
 
 Filtering and denoising
 ~~~~~~~~~~~~~~~~~~~~~~~
