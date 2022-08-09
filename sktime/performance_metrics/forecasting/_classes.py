@@ -8,7 +8,7 @@ Classes named as ``*Error`` or ``*Loss`` return a value to minimize:
 the lower the better.
 """
 from copy import deepcopy
-from inspect import signature
+from inspect import isfunction, getfullargspec, signature
 from warnings import warn
 
 import numpy as np
@@ -513,20 +513,37 @@ class BaseForecastingErrorMetricFunc(BaseForecastingErrorMetric):
         # this dict should contain all parameters
         params = self.get_params()
 
-        func_params = signature(self.func).parameters.keys()
-        func_params = set(func_params).difference(["y_true", "y_pred"])
-        params = {key: params[key] for key in func_params}
-
         # adding kwargs to the metric, should not overwrite params (but does if clashes)
         params.update(kwargs)
 
         # calls class variable func, if available, or dynamic (object) variable
-        res = self.func(y_true=y_true, y_pred=y_pred, **params)
+        # we need to call type since we store func as a class attribute
+        if hasattr(type(self), "func") and isfunction(type(self).func):
+            func = type(self).func
+        else:
+            func = self.func
+
+        # if func does not catch kwargs, subset to args of func
+        if getfullargspec(func).varkw is None:
+            func_params = signature(func).parameters.keys()
+            func_params = set(func_params).difference(["y_true", "y_pred"])
+            params = {key: params[key] for key in func_params}
+
+        res = func(y_true=y_true, y_pred=y_pred, **params)
         return res
 
 
 class _DynamicForecastingErrorMetric(BaseForecastingErrorMetricFunc):
     """Class for defining forecasting error metrics from a function dynamically."""
+
+    # small hack to prevent self.func call to fill in first arg with self
+    @property
+    def func(self):
+        return self._func[0]
+
+    @func.setter
+    def func(self, value):
+        self._func = [value]
 
     def __init__(
         self,

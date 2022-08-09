@@ -108,7 +108,7 @@ def test_custom_metric(greater_is_better):
     """Test custom metric constructor, integration _DynamicForecastingErrorMetric."""
     y = load_airline()
 
-    def custom_mape(y_true , y_pred) -> float:
+    def custom_mape(y_true, y_pred) -> float:
 
         eps = np.finfo(np.float64).eps
 
