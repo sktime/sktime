@@ -26,6 +26,8 @@ __all__ = [
     "DirectReductionForecaster",
 ]
 
+from warnings import warn
+
 import numpy as np
 import pandas as pd
 from sklearn.base import RegressorMixin, clone
@@ -1157,7 +1159,13 @@ class DirectReductionForecaster(BaseForecaster):
         self.X_treatment = X_treatment
         self.impute_method = impute_method
         self._lags = list(range(window_length))
-        super(DirectReducerV2, self).__init__()
+        super(DirectReductionForecaster, self).__init__()
+
+        warn(
+            "DirectReductionForecaster is experimental, and interfaces may change. "
+            "user feedback is appreciated in issue #3224 here:" 
+            "https://github.com/alan-turing-institute/sktime/issues/3224"
+            )
 
     def _fit(self, y, X=None, fh=None):
         """Fit dispatcher based on X_treatment."""
