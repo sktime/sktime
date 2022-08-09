@@ -171,8 +171,6 @@ class _Reducer(_BaseWindowForecaster):
 
     _tags = {"ignores-exogeneous-X": False}  # reduction uses X in non-trivial way
 
-    _required_parameters = ["estimator"]
-
     def __init__(self, estimator, window_length=10, transformers=None):
         super(_Reducer, self).__init__(window_length=window_length)
         self.transformers = transformers

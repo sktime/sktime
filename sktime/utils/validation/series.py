@@ -267,7 +267,7 @@ def check_equal_time_index(*ys, mode="equal"):
 
     for i, y in enumerate(y_not_None[1:]):
         if isinstance(y, np.ndarray):
-            y_index = pd.Index(y)
+            y_index = pd.Index(range(len(y)))
         else:
             y_index = y.index
 

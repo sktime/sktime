@@ -249,7 +249,7 @@ class TransformerFitTransformSeriesUnivariateWithY(TransformerTestScenario):
         "X_univariate": True,
         "has_y": True,
         "is_enabled": True,
-        "y_scitype": "Table",
+        "y_scitype": "Series",
     }
 
     args = {

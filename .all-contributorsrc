@@ -1731,6 +1731,22 @@
         "code",
         "ideas"
       ]
+    },
+    {
+      "login": "benheid",
+      "name": "Benedikt Heidrich",
+      "profile": "https://github.com/benheid",
+      "contributions": [
+        "code",
+      ]
+    },
+    {
+      "login": "AnH0ang",
+      "name": "An Hoang",
+      "profile": "https://github.com/AnH0ang",
+      "contributions": [
+        "bug"
+      ]
     }
   ],
   "projectName": "sktime",
