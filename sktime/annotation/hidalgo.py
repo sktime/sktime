@@ -25,6 +25,7 @@ __all__ = ["Hidalgo"]
 
 from functools import reduce
 from pathlib import Path
+from pickle import FALSE
 
 import numpy as np
 import pandas as pd
@@ -48,7 +49,7 @@ def next_deterministic_number():
 
 
 def binom(N, q):
-    """Calculates the binomial coefficient."""
+    """Calculate the binomial coefficient."""
     if q == 0:
         return 1.0
     if N < 0:
@@ -58,7 +59,6 @@ def binom(N, q):
 
 def Zpart(N, N1, zeta, q):
     """Partition function for Z."""
-
     return sum(
         [
             binom(N1 - 1, q1)
@@ -133,9 +133,19 @@ class Hidalgo:
 
     Examples
     --------
+    >>> from sktime.annotation.hidalgo import Hidalgo
+    >>> import numpy as np
+    >>> np.random.seed(123)
+    >>> X = np.random.rand(10,3)
+    >>> X[6:, 1:] = 0
+    >>> model = Hidalgo(K=2, Niter=50, seed=10)
+    >>> fitted_model = model._fit(X)
+    >>> Z = fitted_model._predict(X)
+    >>> Z
+    array([0, 0, 0, 0, 0, 0, 1, 1, 1, 1], dtype=int64)
     """
 
-    _tags = {"univariate-only": False, "fit_is_empty": True}  # for unit test cases
+    _tags = {"univariate-only": FALSE}  # for unit test cases
 
     def __init__(
         self,
@@ -246,7 +256,7 @@ class Hidalgo:
         self.Iout_track = Iout_track
 
     def update_zeta_prior(self, Z):
-        """Updates prior parameters for zeta."""
+        """Update prior parameters for zeta."""
         N = self.N
         q = self.q
         f = self.f
@@ -261,7 +271,7 @@ class Hidalgo:
         return N_in, f1
 
     def get_random_z(self):
-        """Generates random Z from random number generator."""
+        """Generate random Z from random number generator."""
         K = self.K
         N = self.N
         return self._rng.randint(0, K, N)
