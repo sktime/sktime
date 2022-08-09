@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 """Test for hidalgo segmentation."""
-import math
-
 import numpy as np
 
 from sktime.annotation.hidalgo import Hidalgo
@@ -211,8 +209,7 @@ def test_initialise_params():
 
 
 def test_predict():
-    """Test _predict method including gibbs sampling iterations"""
-
+    """Test _predict method including gibbs sampling iterations."""
     expected = [
         [
             0.72269469,
