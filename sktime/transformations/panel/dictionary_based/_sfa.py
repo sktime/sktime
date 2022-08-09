@@ -9,7 +9,6 @@ __all__ = ["SFA"]
 
 import math
 import sys
-import time
 import warnings
 
 import numpy as np
@@ -186,11 +185,6 @@ class SFA(_PanelToPanelTransformer):
         self.level_bits = 0
         self.level_max = 0
 
-        self.time_mft = 0
-        self.time_sfa = 0
-        self.time_dft = 0
-        self.time_inc_mft = 0
-
         super(SFA, self).__init__()
 
     def fit(self, X, y=None):
@@ -275,22 +269,21 @@ class SFA(_PanelToPanelTransformer):
         X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
         X = X.squeeze(1)
 
-        transform = []
-        for i in range(X.shape[0]):
-            transform.append(self._transform_case(X[i, :]))
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", category=NumbaTypeSafetyWarning)
+            transform = Parallel(n_jobs=self.n_jobs)(
+                delayed(self._transform_case)(X[i, :]) for i in range(X.shape[0])
+            )
 
         _, words = zip(*transform)
         return words
 
     def _transform_case(self, X, supplied_dft=None):
-        start = time.process_time()
         dfts = self._mft(X)
-        self.time_mft += time.process_time() - start
 
         bag = {}
         words = np.array([0 for _ in range(dfts.shape[0])])
 
-        start = time.process_time()
         for window in range(dfts.shape[0]):
             word_raw = SFA._create_word(
                 dfts[window],
@@ -301,8 +294,6 @@ class SFA(_PanelToPanelTransformer):
             )
             # bag[word_raw] = bag.get(word_raw, 0) + 1
             words[window] = word_raw
-
-        self.time_sfa += time.process_time() - start
 
         return [bag, words]
 
@@ -553,7 +544,6 @@ class SFA(_PanelToPanelTransformer):
         stds = SFA._calc_incremental_mean_std(series, end, self.window_size)
         transformed = np.zeros((end, length))
 
-        start = time.process_time()
         X_fft = np.fft.rfft(series[: self.window_size])
         reals = np.real(X_fft)
         imags = np.imag(X_fft)
@@ -562,10 +552,6 @@ class SFA(_PanelToPanelTransformer):
         mft_data[1::2] = imags[: np.uint32(length / 2)]
 
         transformed[0] = mft_data * self.inverse_sqrt_win_size / stds[0]
-
-        self.time_dft += time.process_time() - start
-
-        start = time.process_time()
 
         # other runs using mft
         # moved to external method to use njit
@@ -578,8 +564,6 @@ class SFA(_PanelToPanelTransformer):
             transformed,
             self.inverse_sqrt_win_size,
         )
-        self.time_inc_mft += time.process_time() - start
-
         if self.lower_bounding:
             transformed[:, 1::2] = transformed[:, 1::2] * -1  # lower bounding
 
