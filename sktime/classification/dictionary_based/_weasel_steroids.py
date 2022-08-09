@@ -7,14 +7,12 @@ Dictionary based classifier based on SFA transform, BOSS and linear regression.
 __author__ = ["patrickzib"]
 __all__ = ["WEASEL_STEROIDS"]
 
-import math
-
 import numpy as np
 from joblib import Parallel, delayed
-from numba import njit
 
+# from numba import njit
 # from sklearn.ensemble import GradientBoostingClassifier
-from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import RidgeClassifierCV
 from sklearn.pipeline import make_pipeline
 from sklearn.utils import check_random_state
 
@@ -62,14 +60,6 @@ class WEASEL_STEROIDS(BaseClassifier):
     binning_strategy: {"equi-depth", "equi-width", "information-gain"},
     default="information-gain"
         The binning method used to derive the breakpoints.
-    window_inc: int, default=2
-        WEASEL create a BoP model for each window sizes. This is the
-        increment used to determine the next window size.
-    p_threshold:  int, default=0.05 (disabled by default)
-        Feature selection is applied based on the chi-squared test.
-        This is the p-value threshold to use for chi-squared test on bag-of-words
-        (lower means more strict). 1 indicates that the test
-        should not be performed.
     random_state: int or None, default=None
         Seed for random, integer
 
@@ -116,11 +106,9 @@ class WEASEL_STEROIDS(BaseClassifier):
     def __init__(
         self,
         anova=False,
-        variance=False,
+        variance=True,
         bigrams=False,
         binning_strategy="equi-depth",
-        window_inc=1,
-        p_threshold=0.05,
         n_jobs=4,
         ensemble_size=200,
         random_state=None,
@@ -128,9 +116,6 @@ class WEASEL_STEROIDS(BaseClassifier):
 
         # currently greater values than 4 are not supported.
         self.alphabet_size = 4
-
-        # feature selection is applied based on the chi-squared test.
-        self.p_threshold = p_threshold
 
         self.anova = anova
         self.variance = variance
@@ -143,12 +128,10 @@ class WEASEL_STEROIDS(BaseClassifier):
         self.random_state = random_state
 
         self.min_window = 8
-        self.max_window = 16
+        self.max_window = 32
         self.ensemble_size = ensemble_size
-        self.max_feature_count = 10_000
+        self.max_feature_count = 20_000
 
-        self.window_inc = window_inc
-        self.highest_bit = -1
         self.window_sizes = []
 
         self.series_length = 0
@@ -164,27 +147,17 @@ class WEASEL_STEROIDS(BaseClassifier):
         super(WEASEL_STEROIDS, self).__init__()
 
     @staticmethod
-    @njit
+    # @njit
     def _dilation(X, d):
-        first = X[:, :, 0::d]
+        # First order differences
+        # X2 = np.diff(X, axis=1)
+        # X = np.concatenate((X, X2), axis=1)
+        # dilation
+        first = np.array(X)[:, 0::d]
         for i in range(1, d):
-            second = X[:, :, i::d]
-            first = np.concatenate((first, second), axis=2)
+            second = X[:, i::d]
+            first = np.concatenate((first, second), axis=1)
         return first
-
-    class MyDict:
-        """Own Dict implementation for speed issues."""
-
-        def __init__(self):
-            self.content = []
-
-        def update(self, bag):
-            """Update the bag, adding all elements."""
-            self.content.extend(bag)
-
-        def items(self):
-            """Iterate the bag."""
-            return self.content
 
     def _fit(self, X, y):
         """Build a WEASEL classifiers from the training set (X, y).
@@ -203,8 +176,7 @@ class WEASEL_STEROIDS(BaseClassifier):
         """
         # Window length parameter space dependent on series length
         self.n_instances, self.series_length = X.shape[0], X.shape[-1]
-
-        win_inc = self._compute_window_inc()
+        X = X.squeeze(1)
 
         self.max_window = int(min(self.series_length, self.max_window))
         if self.min_window > self.max_window:
@@ -217,8 +189,7 @@ class WEASEL_STEROIDS(BaseClassifier):
                 f"the constructor, but the classifier may not work at "
                 f"all with very short series"
             )
-        self.window_sizes = list(range(self.min_window, self.max_window + 1, win_inc))
-        self.highest_bit = (math.ceil(math.log2(self.max_window))) + 1
+        self.window_sizes = list(range(self.min_window, self.max_window + 1))
 
         def _parallel_fit(
             i,
@@ -227,28 +198,28 @@ class WEASEL_STEROIDS(BaseClassifier):
             window_size = rng.choice(self.window_sizes)
             word_length = min(window_size - 2, rng.choice(self.word_lengths))
 
-            k = 2
-            dilation_sizes = np.int32(
-                [2**j for j in np.arange(0, np.log2(self.series_length / k))]
+            dilation = np.int32(
+                2
+                ** np.random.uniform(
+                    0, np.log2((self.series_length - 1) / (window_size - 1))
+                )
             )
-            dilation = rng.choice(dilation_sizes)
-            norm = rng.choice(self.norm_options)
 
-            # print(dilation_sizes, self.series_length)
-            # print(window_size, word_length, dilation, norm)
+            # TODO use abs on DFT?
+            # TODO count subgroups of two letters of the words?
+            # TODO test different configurations?
 
             transformer = SFA(
                 variance=self.variance,
                 word_length=word_length,
                 alphabet_size=self.alphabet_size,
                 window_size=window_size,
-                norm=norm,
+                norm=rng.choice(self.norm_options),
                 anova=self.anova,
-                # binning_method=self.binning_strategy,
-                binning_method=rng.choice(["equi-depth", "information-gain"]),
+                binning_method=self.binning_strategy,
+                # binning_method=rng.choice(["equi-depth", "information-gain"]),
                 bigrams=self.bigrams,
                 lower_bounding=False,
-                save_words=False,
                 n_jobs=self.n_jobs,
             )
 
@@ -258,6 +229,7 @@ class WEASEL_STEROIDS(BaseClassifier):
             # generate SFA words on subsample
             sfa_words = transformer.fit_transform(X2, y)
 
+            # all feature names
             feature_names = set()
             for t_words in sfa_words:
                 for t_word in t_words:
@@ -276,9 +248,7 @@ class WEASEL_STEROIDS(BaseClassifier):
                 )
             )
 
-            # merging bag-of-patterns of different window_sizes
-            # to single bag-of-patterns with prefix indicating
-            # the used window-length
+            # merging of arrays of used window-length
             all_win_words = np.zeros((self.n_instances, feature_count), dtype=np.int32)
             for j in range(len(sfa_words)):
                 for key in sfa_words[j]:
@@ -318,35 +288,29 @@ class WEASEL_STEROIDS(BaseClassifier):
                     idx, features_count : (features_count + rel_features_count)
                 ] = bag
 
-            # print (features_count,":",(features_count+rel_features_count))
             features_count += rel_features_count
 
-        # print("\tSize of dict", features_count)
-
         self.clf = make_pipeline(
-            # DictVectorizer(sparse=True, sort=False),
             # GradientBoostingClassifier(
-            #    subsample=0.8,
-            #    min_samples_split=len(np.unique(y)),
-            #    max_features="auto",
-            #    random_state=self.random_state,
-            #    n_estimators=200,
-            #    init=LogisticRegression(
-            #        solver="liblinear",
-            #        penalty="l2",
-            #        max_iter=5000,
-            #        random_state=self.random_state
-            #    )
-            #    #init=KNeighborsClassifier(
-            #    #    n_neighbors=5,
-            #    #    algorithm='ball_tree')
+            #   subsample=0.8,
+            #   min_samples_split=len(np.unique(y)),
+            #   max_features="auto",
+            #   random_state=self.random_state,
+            #   n_estimators=200,
+            #   init=LogisticRegression(
+            #       solver="liblinear",
+            #       penalty="l2",
+            #       max_iter=5000,
+            #       random_state=self.random_state
+            #   )
             # )
-            LogisticRegression(
-                solver="liblinear",
-                penalty="l2",
-                max_iter=5000,
-                random_state=self.random_state,
-            )
+            RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=False)
+            # LogisticRegression(
+            #    solver="liblinear",
+            #    penalty="l2",
+            #    max_iter=5000,
+            #    random_state=self.random_state,
+            # )
         )
 
         self.clf.fit(all_words, y)
@@ -405,6 +369,8 @@ class WEASEL_STEROIDS(BaseClassifier):
 
             return (all_win_words, feature_count)
 
+        X = X.squeeze(1)
+
         parallel_res = Parallel(n_jobs=self.n_jobs)(
             delayed(_parallel_transform_words)(
                 X,
@@ -439,12 +405,6 @@ class WEASEL_STEROIDS(BaseClassifier):
 
         return all_words
 
-    def _compute_window_inc(self):
-        win_inc = self.window_inc
-        if self.series_length < 100:
-            win_inc = 1  # less than 100 is ok runtime-wise
-        return win_inc
-
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
@@ -467,4 +427,4 @@ class WEASEL_STEROIDS(BaseClassifier):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
-        return {"window_inc": 4}
+        return {}

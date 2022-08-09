@@ -280,6 +280,7 @@ class SFA(_PanelToPanelTransformer):
 
     def _transform_case(self, X, supplied_dft=None):
         dfts = self._mft(X)
+        # TODO dfts[dfts < 0] = 0
 
         bag = {}
         words = np.array([0 for _ in range(dfts.shape[0])])
@@ -292,7 +293,6 @@ class SFA(_PanelToPanelTransformer):
                 self.breakpoints,
                 self.letter_bits,
             )
-            # bag[word_raw] = bag.get(word_raw, 0) + 1
             words[window] = word_raw
 
         return [bag, words]
