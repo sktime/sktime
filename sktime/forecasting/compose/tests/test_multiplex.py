@@ -18,6 +18,7 @@ from sktime.forecasting.model_selection import (
 )
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.theta import ThetaForecaster
+from sktime.utils.validation._dependencies import _check_estimator_deps
 from sktime.utils.validation.forecasting import check_scoring
 
 
@@ -97,6 +98,10 @@ def test_multiplex_with_grid_search():
     assert gscv_best_name == best_name
 
 
+@pytest.mark.skipif(
+    not _check_estimator_deps(AutoARIMA, severity="none"),
+    reason="skip test if required soft dependency for AutoARIMA not available",
+)
 def test_multiplex_or_dunder():
     """Test that the MultiplexForecaster magic "|" dunder methodbahves as expected.
 

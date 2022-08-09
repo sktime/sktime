@@ -5,6 +5,7 @@
 import inspect
 
 import numpy as np
+import pandas as pd
 from statsmodels.tsa.statespace.dynamic_factor import DynamicFactor as _DynamicFactor
 
 from sktime.forecasting.base.adapters import _StatsModelsAdapter
@@ -133,7 +134,7 @@ class DynamicFactor(_StatsModelsAdapter):
         "requires-fh-in-fit": False,
         "X-y-must-have-same-index": True,
         "enforce_index_type": None,
-        "capability:pred_int": False,
+        "capability:pred_int": True,
     }
 
     def __init__(
@@ -222,6 +223,123 @@ class DynamicFactor(_StatsModelsAdapter):
                 start + self._y.index[0], end + self._y.index[0] + 1
             )
         return y_pred.loc[fh.to_absolute(self.cutoff).to_pandas()]
+
+    def _predict_interval(self, fh, X=None, coverage: [float] = None):
+        """Compute/return prediction quantiles for a forecast.
+
+        private _predict_interval containing the core logic,
+            called from predict_interval and possibly predict_quantiles
+
+        State required:
+            Requires state to be "fitted".
+
+        Accesses in self:
+            Fitted model attributes ending in "_"
+            self.cutoff
+
+        Parameters
+        ----------
+        fh : guaranteed to be ForecastingHorizon
+            The forecasting horizon with the steps ahead to to predict.
+        X : optional (default=None)
+            guaranteed to be of a type in self.get_tag("X_inner_mtype")
+            Exogeneous time series for the forecast
+        coverage : list of float (guaranteed not None and floats in [0,1] interval)
+           nominal coverage(s) of predictive interval(s)
+
+        Returns
+        -------
+        pred_int : pd.DataFrame
+            Column has multi-index: first level is variable name from y in fit,
+                second level coverage fractions for which intervals were computed.
+                    in the same order as in input `coverage`.
+                Third level is string "lower" or "upper", for lower/upper interval end.
+            Row index is fh, with additional (upper) levels equal to instance levels,
+                from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
+            Entries are forecasts of lower/upper interval end,
+                for var in col index, at nominal coverage in second col index,
+                lower/upper depending on third col index, for the row index.
+                Upper/lower interval end forecasts are equivalent to
+                quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
+        """
+        if type(coverage) is not list:
+            coverage_list = [coverage]
+        else:
+            coverage_list = coverage
+        # statsmodels requires zero-based indexing starting at the
+        # beginning of the training series when passing integers
+        start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
+
+        model = self._fitted_forecaster
+
+        df_list = []
+        # generate the forecasts for each alpha/coverage
+        for coverage in coverage_list:
+
+            alpha = -0.5 * coverage + 0.5
+
+            if "exog" in inspect.signature(model.__init__).parameters.keys():
+                y_pred = model.get_forecast(steps=(end - start) + 1, exog=X).conf_int(
+                    alpha=alpha
+                )
+            else:
+                y_pred = model.get_forecast(steps=(end - start) + 1).conf_int(
+                    alpha=alpha
+                )
+
+            y_pred.rename(
+                columns={orig_col: orig_col + f" {coverage}" for orig_col in y_pred},
+                inplace=True,
+            )
+            df_list.append(y_pred)
+
+        # concatenate the predictions for different values of alpha
+        predictions_df = pd.concat(df_list, axis=1)
+
+        # all the code below is just boilerplate for getting the correct columns
+        mod_var_list = list(map(lambda x: str(x).replace(" ", ""), model.data.ynames))
+
+        rename_list = [
+            var_name + " " + str(coverage) + " " + bound
+            for coverage in coverage_list
+            for bound in ["lower", "upper"]
+            for var_name in mod_var_list
+        ]
+
+        predictions_df.columns = rename_list
+
+        final_ord = [
+            var_name + " " + str(coverage) + " " + bound
+            for var_name in mod_var_list
+            for coverage in coverage_list
+            for bound in ["lower", "upper"]
+        ]
+
+        predictions_df = predictions_df[final_ord]
+        cols = [col_name.split(" ") for col_name in predictions_df.columns]
+
+        predictions_df_2 = pd.DataFrame(
+            predictions_df.values, columns=pd.MultiIndex.from_tuples(cols)
+        )
+
+        final_columns = [
+            [col_name, float(coverage), bound]
+            for col_name in model.data.ynames
+            for coverage in predictions_df_2.columns.get_level_values(1).unique()
+            for bound in predictions_df_2.columns.get_level_values(2).unique()
+        ]
+
+        predictions_df_3 = pd.DataFrame(
+            predictions_df_2.values, columns=pd.MultiIndex.from_tuples(final_columns)
+        )
+
+        if "int" in (self._y.index[0]).__class__.__name__:  # Rather fishy solution
+            predictions_df_3.index = np.arange(
+                start + self._y.index[0], end + self._y.index[0] + 1
+            )
+            return predictions_df_3.loc[fh.to_absolute(self.cutoff).to_pandas()]
+
+        return predictions_df_3
 
     def _fit_forecaster(self, y, X=None):
         """Fit to training data.

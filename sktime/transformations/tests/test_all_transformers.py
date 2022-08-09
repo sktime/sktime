@@ -37,7 +37,8 @@ class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
     def test_capability_inverse_tag_is_correct(self, estimator_instance):
         """Test that the capability:inverse_transform tag is set correctly."""
         capability_tag = estimator_instance.get_tag("capability:inverse_transform")
-        if capability_tag:
+        skip_tag = estimator_instance.get_tag("skip-inverse-transform")
+        if capability_tag and not skip_tag:
             assert estimator_instance._has_implementation_of("_inverse_transform")
 
     def _expected_trafo_output_scitype(self, X_scitype, trafo_input, trafo_output):
@@ -107,6 +108,14 @@ class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
         #   todo: we probably want to mirror this into a "hierarchical" tag later on
         if type(estimator_instance).__name__ in ["Aggregator", "Reconciler"]:
             return None
+
+        # if DataFrame is returned, columns must be unique
+        if hasattr(Xt, "columns"):
+            msg = (
+                f"{type(estimator_instance).__name__}.transform return should have "
+                f"unique column indices, but found {Xt.columns}"
+            )
+            assert Xt.columns.is_unique, msg
 
         # if we vectorize, number of instances before/after transform should be same
 

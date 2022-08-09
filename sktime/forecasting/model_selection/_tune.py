@@ -41,6 +41,8 @@ class BaseGridSearch(_DelegatedForecaster):
         scoring=None,
         verbose=0,
         return_n_best_forecasters=1,
+        update_behaviour="full_refit",
+        error_score=np.nan,
     ):
 
         self.forecaster = forecaster
@@ -53,6 +55,8 @@ class BaseGridSearch(_DelegatedForecaster):
         self.scoring = scoring
         self.verbose = verbose
         self.return_n_best_forecasters = return_n_best_forecasters
+        self.update_behaviour = update_behaviour
+        self.error_score = error_score
         super(BaseGridSearch, self).__init__()
         tags_to_clone = [
             "requires-fh-in-fit",
@@ -136,6 +140,7 @@ class BaseGridSearch(_DelegatedForecaster):
                 X,
                 strategy=self.strategy,
                 scoring=scoring,
+                error_score=self.error_score,
             )
 
             # Filter columns.
@@ -190,6 +195,12 @@ class BaseGridSearch(_DelegatedForecaster):
 
         # Select best parameters.
         self.best_index_ = results.loc[:, f"rank_{scoring_name}"].argmin()
+        # Raise error if all fits in evaluate failed because all score values are NaN.
+        if self.best_index_ == -1:
+            raise NotFittedError(
+                f"""All fits of forecaster failed, set error_score='raise' to see the exceptions.
+                Failed forecaster: {self.forecaster}"""
+            )
         self.best_score_ = results.loc[self.best_index_, f"mean_{scoring_name}"]
         self.best_params_ = results.loc[self.best_index_, "params"]
         self.best_forecaster_ = self.forecaster.clone().set_params(**self.best_params_)
@@ -220,6 +231,43 @@ class BaseGridSearch(_DelegatedForecaster):
 
         return self
 
+    def _update(self, y, X=None, update_params=True):
+        """Update time series to incremental training data.
+
+        Parameters
+        ----------
+        y : guaranteed to be of a type in self.get_tag("y_inner_mtype")
+            Time series with which to update the forecaster.
+            if self.get_tag("scitype:y")=="univariate":
+                guaranteed to have a single column/variable
+            if self.get_tag("scitype:y")=="multivariate":
+                guaranteed to have 2 or more columns
+            if self.get_tag("scitype:y")=="both": no restrictions apply
+        X : optional (default=None)
+            guaranteed to be of a type in self.get_tag("X_inner_mtype")
+            Exogeneous time series for the forecast
+        update_params : bool, optional (default=True)
+            whether model parameters should be updated
+
+        Returns
+        -------
+        self : reference to self
+        """
+        update_behaviour = self.update_behaviour
+
+        if update_behaviour == "full_refit":
+            super()._update(y=y, X=X, update_params=update_params)
+        elif update_behaviour == "inner_only":
+            self.best_forecaster_.update(y=y, X=X, update_params=update_params)
+        elif update_behaviour == "no_update":
+            self.best_forecaster_.update(y=y, X=X, update_params=False)
+        else:
+            raise ValueError(
+                'update_behaviour must be one of "full_refit", "inner_only",'
+                f' or "no_update", but found {update_behaviour}'
+            )
+        return self
+
 
 class ForecastingGridSearchCV(BaseGridSearch):
     """Perform grid-search cross-validation to find optimal model parameters.
@@ -242,6 +290,18 @@ class ForecastingGridSearchCV(BaseGridSearch):
         or a scoring function must be passed.
     cv : cross-validation generator or an iterable
         e.g. SlidingWindowSplitter()
+    strategy : {"refit", "update", "no-update_params"}, optional, default="refit"
+        data ingestion strategy in fitting cv, passed to `evaluate` internally
+        defines the ingestion mode when the forecaster sees new data when window expands
+        "refit" = forecaster is refitted to each training window
+        "update" = forecaster is updated with training window data, in sequence provided
+        "no-update_params" = fit to first training window, re-used without fit or update
+    update_behaviour: str, optional, default = "full_refit"
+        one of {"full_refit", "inner_only", "no_update"}
+        behaviour of the forecaster when calling update
+        "full_refit" = both tuning parameters and inner estimator refit on all data seen
+        "inner_only" = tuning parameters are not re-tuned, inner estimator is updated
+        "no_update" = neither tuning parameters nor inner estimator are updated
     param_grid : dict or list of dictionaries
         Model tuning parameters of the forecaster to evaluate
     scoring: function, optional (default=None)
@@ -251,7 +311,8 @@ class ForecastingGridSearchCV(BaseGridSearch):
         None means 1 unless in a joblib.parallel_backend context.
         -1 means using all processors.
     refit: bool, optional (default=True)
-        Refit the forecaster with the best parameters on all the data
+        True = refit the forecaster with the best parameters on the entire data in fit
+        False = best forecaster remains fitted on the last fold in cv
     verbose: int, optional (default=0)
     return_n_best_forecasters: int, default=1
         In case the n best forecaster should be returned, this value can be set
@@ -263,6 +324,10 @@ class ForecastingGridSearchCV(BaseGridSearch):
     backend: str, optional (default="loky")
         Specify the parallelisation backend implementation in joblib, where
         "loky" is used by default.
+    error_score : "raise" or numeric, default=np.nan
+        Value to assign to the score if an exception occurs in estimator fitting. If set
+        to "raise", the exception is raised. If a numeric value is given,
+        FitFailedWarning is raised.
 
     Attributes
     ----------
@@ -352,8 +417,6 @@ class ForecastingGridSearchCV(BaseGridSearch):
     >>> y_pred = gscv.predict(fh=[1,2,3])
     """
 
-    _required_parameters = ["forecaster", "cv", "param_grid"]
-
     def __init__(
         self,
         forecaster,
@@ -367,6 +430,8 @@ class ForecastingGridSearchCV(BaseGridSearch):
         return_n_best_forecasters=1,
         pre_dispatch="2*n_jobs",
         backend="loky",
+        update_behaviour="full_refit",
+        error_score=np.nan,
     ):
         super(ForecastingGridSearchCV, self).__init__(
             forecaster=forecaster,
@@ -379,6 +444,8 @@ class ForecastingGridSearchCV(BaseGridSearch):
             return_n_best_forecasters=return_n_best_forecasters,
             pre_dispatch=pre_dispatch,
             backend=backend,
+            update_behaviour=update_behaviour,
+            error_score=error_score,
         )
         self.param_grid = param_grid
 
@@ -441,6 +508,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
             "cv": SingleWindowSplitter(fh=1),
             "param_grid": {"initialization_method": ["estimated", "heuristic"]},
             "scoring": MeanAbsolutePercentageError(symmetric=True),
+            "update_behaviour": "inner_only",
         }
         return [params, params2]
 
@@ -466,6 +534,18 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         or a scoring function must be passed.
     cv : cross-validation generator or an iterable
         e.g. SlidingWindowSplitter()
+    strategy : {"refit", "update", "no-update_params"}, optional, default="refit"
+        data ingestion strategy in fitting cv, passed to `evaluate` internally
+        defines the ingestion mode when the forecaster sees new data when window expands
+        "refit" = forecaster is refitted to each training window
+        "update" = forecaster is updated with training window data, in sequence provided
+        "no-update_params" = fit to first training window, re-used without fit or update
+    update_behaviour: str, optional, default = "full_refit"
+        one of {"full_refit", "inner_only", "no_update"}
+        behaviour of the forecaster when calling update
+        "full_refit" = both tuning parameters and inner estimator refit on all data seen
+        "inner_only" = tuning parameters are not re-tuned, inner estimator is updated
+        "no_update" = neither tuning parameters nor inner estimator are updated
     param_distributions : dict or list of dicts
         Dictionary with parameters names (`str`) as keys and distributions
         or lists of parameters to try. Distributions must provide a ``rvs``
@@ -483,7 +563,8 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         None means 1 unless in a joblib.parallel_backend context.
         -1 means using all processors.
     refit: bool, optional (default=True)
-        Refit the forecaster with the best parameters on all the data
+        True = refit the forecaster with the best parameters on the entire data in fit
+        False = best forecaster remains fitted on the last fold in cv
     verbose: int, optional (default=0)
     return_n_best_forecasters: int, default=1
         In case the n best forecaster should be returned, this value can be set
@@ -498,6 +579,10 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
     backend: str, optional (default="loky")
         Specify the parallelisation backend implementation in joblib, where
         "loky" is used by default.
+    error_score : "raise" or numeric, default=np.nan
+        Value to assign to the score if an exception occurs in estimator fitting. If set
+        to "raise", the exception is raised. If a numeric value is given,
+        FitFailedWarning is raised.
 
     Attributes
     ----------
@@ -517,8 +602,6 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         score of forecasters
     """
 
-    _required_parameters = ["forecaster", "cv", "param_distributions"]
-
     def __init__(
         self,
         forecaster,
@@ -534,6 +617,8 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         random_state=None,
         pre_dispatch="2*n_jobs",
         backend="loky",
+        update_behaviour="full_refit",
+        error_score=np.nan,
     ):
         super(ForecastingRandomizedSearchCV, self).__init__(
             forecaster=forecaster,
@@ -546,6 +631,8 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
             return_n_best_forecasters=return_n_best_forecasters,
             pre_dispatch=pre_dispatch,
             backend=backend,
+            update_behaviour=update_behaviour,
+            error_score=error_score,
         )
         self.param_distributions = param_distributions
         self.n_iter = n_iter

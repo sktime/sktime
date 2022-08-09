@@ -17,12 +17,12 @@ from sklearn.base import BaseEstimator
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils import check_random_state
 
-from sktime._contrib.vector_classifiers._continuous_interval_tree import (
+from sktime.base._base import _clone_estimator
+from sktime.classification.base import BaseClassifier
+from sktime.classification.sklearn._continuous_interval_tree import (
     ContinuousIntervalTree,
     _drcif_feature,
 )
-from sktime.base._base import _clone_estimator
-from sktime.classification.base import BaseClassifier
 from sktime.transformations.panel.catch22 import Catch22
 from sktime.utils.validation.panel import check_X_y
 
@@ -402,6 +402,10 @@ class DrCIF(BaseClassifier):
     def _get_train_probs(self, X, y) -> np.ndarray:
         self.check_is_fitted()
         X, y = check_X_y(X, y, coerce_to_numpy=True)
+
+        # handle the single-class-label case
+        if len(self._class_dictionary) == 1:
+            return self._single_class_y_pred(X, method="predict_proba")
 
         n_instances, n_dims, series_length = X.shape
 

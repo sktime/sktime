@@ -10,11 +10,7 @@ from scipy import sparse
 from sklearn.base import clone
 from sklearn.compose import ColumnTransformer as _ColumnTransformer
 
-from sktime.datatypes._panel._convert import (
-    from_2d_array_to_nested,
-    from_3d_numpy_to_2d_array,
-    from_nested_to_2d_array,
-)
+from sktime.datatypes._panel._convert import from_2d_array_to_nested
 from sktime.transformations.base import (
     BaseTransformer,
     _PanelToPanelTransformer,
@@ -22,9 +18,10 @@ from sktime.transformations.base import (
     _SeriesToPrimitivesTransformer,
     _SeriesToSeriesTransformer,
 )
+from sktime.utils.multiindex import flatten_multiindex
 from sktime.utils.validation.panel import check_X
 
-__author__ = ["mloning", "sajaysurya"]
+__author__ = ["mloning", "sajaysurya", "fkiraly"]
 __all__ = [
     "ColumnTransformer",
     "SeriesToPrimitivesRowTransformer",
@@ -122,8 +119,6 @@ class ColumnTransformer(_ColumnTransformer, _PanelToPanelTransformer):
         of the individual transformations and the `sparse_threshold` keyword.
     """
 
-    _required_parameters = ["transformers"]
-
     def __init__(
         self,
         transformers,
@@ -155,7 +150,15 @@ class ColumnTransformer(_ColumnTransformer, _PanelToPanelTransformer):
         if self.sparse_output_:
             return sparse.hstack(Xs).tocsr()
         if self.preserve_dataframe and (pd.Series in types or pd.DataFrame in types):
-            return pd.concat(Xs, axis="columns")
+            vars = [y for x in self.transformers for y in x[2]]
+            vars_unique = len(set(vars)) == len(vars)
+            names = [str(x[0]) for x in self.transformers]
+            if vars_unique:
+                return pd.concat(Xs, axis="columns")
+            else:
+                Xt = pd.concat(Xs, axis="columns", keys=names)
+                Xt.columns = flatten_multiindex(Xt.columns)
+                return Xt
         return np.hstack(Xs)
 
     def _validate_output(self, result):
@@ -247,7 +250,7 @@ class ColumnConcatenator(BaseTransformer):
         "scitype:transform-output": "Series",
         # what scitype is returned: Primitives, Series, Panel
         "scitype:instancewise": False,  # is this an instance-wise transform?
-        "X_inner_mtype": "nested_univ",
+        "X_inner_mtype": ["pd-multiindex", "pd_multiindex_hier"],
         # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
         "fit_is_empty": True,  # is fit empty and can be skipped? Yes = True
@@ -271,13 +274,18 @@ class ColumnConcatenator(BaseTransformer):
           Transformed pandas DataFrame with same number of rows and single
           column
         """
-        # We concatenate by tabularizing all columns and then detabularizing
-        # them into a single column
-        if isinstance(X, pd.DataFrame):
-            Xt = from_nested_to_2d_array(X)
-        else:
-            Xt = from_3d_numpy_to_2d_array(X)
-        return from_2d_array_to_nested(Xt)
+        Xst = pd.DataFrame(X.stack())
+        Xt = Xst.swaplevel(-2, -1).sort_index().droplevel(-2)
+
+        # the above has the right structure, but the wrong indes
+        # the time index is in general non-unique now, we replace it by integer index
+        inst_idx = Xt.index.get_level_values(0)
+        t_idx = [range(len(Xt.loc[x])) for x in inst_idx.unique()]
+        t_idx = np.concatenate(t_idx)
+
+        Xt.index = pd.MultiIndex.from_arrays([inst_idx, t_idx])
+        Xt.index.names = X.index.names
+        return Xt
 
 
 def _from_nested_to_series(x):
@@ -296,7 +304,6 @@ def _from_nested_to_series(x):
 class _RowTransformer(BaseTransformer):
     """Base class for RowTransformer."""
 
-    _required_parameters = ["transformer"]
     _tags = {"fit_is_empty": True}
 
     def __init__(self, transformer, check_transformer=True):
@@ -337,6 +344,30 @@ class SeriesToPrimitivesRowTransformer(_RowTransformer, _PanelToTabularTransform
             Xt[i] = self.transformer_[i].fit_transform(X[i].T)
         return pd.DataFrame(Xt)
 
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default={}
+            Parameters to create testing instances of the class.
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`.
+        """
+        import numpy as np
+        from sklearn.preprocessing import FunctionTransformer
+
+        trafo = FunctionTransformer(np.mean, kw_args={"axis": 0}, check_inverse=False)
+        return {"transformer": trafo, "check_transformer": False}
+
 
 class SeriesToSeriesRowTransformer(_RowTransformer, _PanelToPanelTransformer):
     """Series-to-series row transformer."""
@@ -350,7 +381,34 @@ class SeriesToSeriesRowTransformer(_RowTransformer, _PanelToPanelTransformer):
         for i in range(X.shape[0]):
             xt = self.transformer_[i].fit_transform(X[i].T)
             xts.append(from_2d_array_to_nested(xt.T).T)
-        return pd.concat(xts, axis=0)
+        Xt = pd.concat(xts, axis=0)
+        if isinstance(X, pd.DataFrame):
+            Xt.index = X.index
+        else:
+            Xt = Xt.reset_index(drop=True)
+        return Xt
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default={}
+            Parameters to create testing instances of the class.
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`.
+        """
+        from sklearn.preprocessing import StandardScaler
+
+        return {"transformer": StandardScaler(), "check_transformer": False}
 
 
 def make_row_transformer(transformer, transformer_type=None, **kwargs):
