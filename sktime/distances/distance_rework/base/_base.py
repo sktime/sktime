@@ -228,7 +228,11 @@ class BaseDistance(ABC):
         return _distance_callable(x, y)
 
     def independent_distance_factory(
-        self, x: np.ndarray, y: np.ndarray, return_cost_matrix: bool, **kwargs: dict
+        self,
+        x: np.ndarray,
+        y: np.ndarray,
+        return_cost_matrix: bool = False,
+        **kwargs: dict
     ) -> Callable[[np.ndarray, np.ndarray], float]:
         """Create a no_python distance for independent distance.
 
@@ -240,7 +244,7 @@ class BaseDistance(ABC):
             First time series
         y: np.ndarray (1d array of shape (m2,))
             Second time series
-        return_cost_matrix: bool
+        return_cost_matrix: bool, default = False
             Boolean that when true will also return the cost matrix.
         kwargs: dict
             kwargs for the given distance metric
@@ -281,7 +285,11 @@ class BaseDistance(ABC):
         return _distance_callable
 
     def dependent_distance_factory(
-        self, x: np.ndarray, y: np.ndarray, return_cost_matrix: bool, **kwargs: dict
+        self,
+        x: np.ndarray,
+        y: np.ndarray,
+        return_cost_matrix: bool = False,
+        **kwargs: dict
     ) -> Callable[[np.ndarray, np.ndarray], Union[float, Tuple[np.ndarray, float]]]:
         """Create a no_python distance for dependent distance.
 
@@ -293,7 +301,7 @@ class BaseDistance(ABC):
             First time series
         y: np.ndarray (2d array of shape (d, m2))
             Second time series
-        return_cost_matrix: bool
+        return_cost_matrix: bool, defaults = False
             Boolean that when true will also return the cost matrix.
         kwargs: dict
             kwargs for the given distance metric
