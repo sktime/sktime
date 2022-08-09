@@ -11,8 +11,6 @@ from sktime.classification.model_evaluation._function import evaluate_classifica
 from sktime.datasets import load_arrow_head
 
 
-@pytest.mark.parametrize("fold_no", [5, 7])
-@pytest.mark.parametrize("random_seed", [21, 42])
 def _split(X, y, train, test):
     """Split y and X for given train and test set indices.
 
@@ -30,7 +28,9 @@ def _split(X, y, train, test):
     return X_train, y_train, X_test, y_test
 
 
-def test_evaluate_classification_metrics(metrics, fold_no, random_seed):
+@pytest.mark.parametrize("fold_no", [5, 7])
+@pytest.mark.parametrize("random_seed", [21, 42])
+def test_evaluate_classification_metrics(fold_no, random_seed):
     """Test evaluate for basic classification problems."""
     # Merge train and test into one dataset
     arrow_train_X, arrow_train_y = load_arrow_head(
@@ -45,7 +45,6 @@ def test_evaluate_classification_metrics(metrics, fold_no, random_seed):
     arrow_y = np.concatenate([arrow_train_y, arrow_test_y], axis=0)
 
     classifier = RocketClassifier()
-    scoring = metrics
     cv = ShuffleSplit(n_splits=fold_no, test_size=0.2, random_state=random_seed)
 
     actual = evaluate_classification(classifier=classifier, X=arrow_X, y=arrow_y, cv=cv)
@@ -61,12 +60,11 @@ def test_evaluate_classification_metrics(metrics, fold_no, random_seed):
         # save results
         expected.append(
             {
-                "score_name": scoring,
                 "score": score,
             }
         )
     expected = pd.DataFrame(expected)
 
     np.testing.assert_array_equal(
-        expected["score"].to_numpy(), actual["scores"].to_numpy()
+        expected["score"].to_numpy(), actual["score"].to_numpy()
     )
