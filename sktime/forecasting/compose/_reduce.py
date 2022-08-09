@@ -1073,7 +1073,7 @@ def _coerce_col_str(X):
 
 
 class DirectReducerV2(BaseForecaster):
-    """Direct reduction forecaster.
+    """Direct reduction forecaster, incl single-output, multi-output, exogeneous Dir.
 
     Implements direct reduction, of forecasting to tabular regression.
 
