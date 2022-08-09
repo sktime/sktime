@@ -4,6 +4,8 @@
 __author__ = ["fkiraly"]
 __all__ = ["check_estimator"]
 
+from inspect import isclass
+
 
 def check_estimator(
     estimator,
@@ -96,7 +98,14 @@ def check_estimator(
         fixtures_to_exclude=fixtures_to_exclude,
     )
 
-    if isinstance(estimator, BaseEstimator) or issubclass(estimator, BaseEstimator):
+    def is_estimator(obj):
+        """Return whether obj is an estimator class or estimator object."""
+        if isclass(obj):
+            return issubclass(obj, BaseEstimator)
+        else:
+            return isinstance(obj, BaseEstimator)
+
+    if is_estimator(estimator):
         results_estimator = TestAllEstimators().run_tests(
             estimator=estimator,
             return_exceptions=return_exceptions,

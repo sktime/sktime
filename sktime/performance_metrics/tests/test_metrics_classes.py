@@ -106,6 +106,8 @@ def test_metric_hierarchical(multioutput, multilevel, n_columns):
 @pytest.mark.parametrize("greater_is_better", [True, False])
 def test_custom_metric(greater_is_better):
     """Test custom metric constructor, integration _DynamicForecastingErrorMetric."""
+    from sktime.utils.estimator_checks import check_estimator
+
     y = load_airline()
 
     def custom_mape(y_true, y_pred) -> float:
@@ -126,3 +128,5 @@ def test_custom_metric(greater_is_better):
 
     score = fc_scorer(y, y)
     assert isinstance(score, float)
+
+    check_estimator(fc_scorer, return_exceptions=False)

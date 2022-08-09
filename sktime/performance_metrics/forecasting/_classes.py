@@ -122,7 +122,9 @@ class BaseForecastingErrorMetric(BaseMetric):
     def __init__(self, multioutput="uniform_average", multilevel="uniform_average"):
         self.multioutput = multioutput
         self.multilevel = multilevel
-        self.name = type(self).__name__
+
+        if not hasattr(self, "name"):
+            self.name = type(self).__name__
 
         super(BaseForecastingErrorMetric, self).__init__()
 
@@ -536,15 +538,6 @@ class BaseForecastingErrorMetricFunc(BaseForecastingErrorMetric):
 class _DynamicForecastingErrorMetric(BaseForecastingErrorMetricFunc):
     """Class for defining forecasting error metrics from a function dynamically."""
 
-    # small hack to prevent self.func call to fill in first arg with self
-    @property
-    def func(self):
-        return self._func[0]
-
-    @func.setter
-    def func(self, value):
-        self._func = [value]
-
     def __init__(
         self,
         func,
@@ -564,6 +557,37 @@ class _DynamicForecastingErrorMetric(BaseForecastingErrorMetricFunc):
         )
 
         self.set_tags(**{"lower_is_better": lower_is_better})
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        def custom_mape(y_true, y_pred) -> float:
+
+            eps = np.finfo(np.float64).eps
+
+            result = np.mean(np.abs(y_true - y_pred) / np.maximum(np.abs(y_true), eps))
+
+            return float(result)
+
+        params = {
+            "func": custom_mape, "name": "custom_mape", "lower_is_better": False
+        }
+        return params
 
 
 class _ScaledMetricTags:
