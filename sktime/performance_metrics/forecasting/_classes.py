@@ -533,8 +533,7 @@ class _DynamicForecastingErrorMetric(BaseForecastingErrorMetricFunc):
         self.name = name
         super().__init__()
 
-        if not lower_is_better:
-            self.set_tags(**{"lower_is_better": False})
+        self.set_tags(**{"lower_is_better": lower_is_better})
 
 
 class _ScaledMetricTags:
