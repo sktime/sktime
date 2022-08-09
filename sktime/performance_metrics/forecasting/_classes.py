@@ -8,6 +8,7 @@ Classes named as ``*Error`` or ``*Loss`` return a value to minimize:
 the lower the better.
 """
 from copy import deepcopy
+from inspect import signature
 from warnings import warn
 
 import numpy as np
@@ -122,6 +123,8 @@ class BaseForecastingErrorMetric(BaseMetric):
         self.multioutput = multioutput
         self.multilevel = multilevel
         self.name = type(self).__name__
+
+        super(BaseForecastingErrorMetric, self).__init__()
 
     def __call__(self, y_true, y_pred, **kwargs):
         """Calculate metric value using underlying metric function.
@@ -509,10 +512,16 @@ class BaseForecastingErrorMetricFunc(BaseForecastingErrorMetric):
         """Evaluate the desired metric on given inputs."""
         # this dict should contain all parameters
         params = self.get_params()
+
+        func_params = signature(self.func).parameters.keys()
+        func_params = set(func_params).difference(["y_true", "y_pred"])
+        params = {key: params[key] for key in func_params}
+
         # adding kwargs to the metric, should not overwrite params (but does if clashes)
         params.update(kwargs)
-        # we need to call type since we store func as a class attribute
-        res = type(self).func(y_true=y_true, y_pred=y_pred, **params)
+
+        # calls class variable func, if available, or dynamic (object) variable
+        res = self.func(y_true=y_true, y_pred=y_pred, **params)
         return res
 
 
@@ -531,7 +540,11 @@ class _DynamicForecastingErrorMetric(BaseForecastingErrorMetricFunc):
         self.multilevel = multilevel
         self.func = func
         self.name = name
-        super().__init__()
+        self.lower_is_better = lower_is_better
+
+        super(_DynamicForecastingErrorMetric, self).__init__(
+            multioutput=multioutput, multilevel=multilevel
+        )
 
         self.set_tags(**{"lower_is_better": lower_is_better})
 
