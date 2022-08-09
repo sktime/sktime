@@ -7,7 +7,6 @@ import time
 import numpy as np
 import pandas as pd
 from scipy.stats import zscore
-from sklearn.metrics import accuracy_score
 
 from sktime.classification.dictionary_based import WEASEL_STEROIDS
 
@@ -185,8 +184,6 @@ if __name__ == "__main__":
         )
 
         # z-norm training/test data
-        # X_train = X_train.to_numpy()
-        # X_test = X_test.to_numpy()
         X_train = zscore(X_train, axis=1).to_numpy()
         X_test = zscore(X_test, axis=1).to_numpy()
         X_train = np.reshape(np.array(X_train), (len(X_train), 1, -1))
@@ -202,9 +199,8 @@ if __name__ == "__main__":
             WEASEL_STEROIDS(
                 random_state=1379,
                 binning_strategy="equi-depth",
-                variance=True,
-                sampling_type=1,  # random
-                ensemble_size=200,
+                variance=False,
+                ensemble_size=100,
                 n_jobs=4,
             ),
             # WEASEL_STEROIDS(
@@ -234,13 +230,15 @@ if __name__ == "__main__":
             fit_time = np.round(time.process_time() - fit_time, 5)
 
             pred_time = time.process_time()
-            y_pred = clf.predict(X_test)
+            acc = clf.score(X_test, y_test)
             pred_time = np.round(time.process_time() - pred_time, 5)
 
-            acc = np.round(accuracy_score(y_test, y_pred), 5)
-
-            # print(f"Dataset={dataset_name}")
-            # print(f"\ttime={fit_time, pred_time}")
+            # print(
+            #    f"Dataset={dataset_name},
+            #    Train-Size={np.shape(X_train)},
+            #    Test-Size={np.shape(X_test)}"
+            # )
+            # print(f"\ttime (fit, predict)={fit_time, pred_time}")
             # print(f"\taccuracy_score={acc}")
 
             scores.append((clf, dataset_name, acc, fit_time, pred_time))

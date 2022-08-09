@@ -1,6 +1,36 @@
 Classifier,Dataset,Accuracy,Fit-Time,Predict-Time
-WEASEL_STEROIDS(random_state=1379),ArrowHead,0.86857,2.44513,4.06695
-WEASEL_STEROIDS(random_state=1379),Beef,0.73333,3.04796,2.00909
-WEASEL_STEROIDS(random_state=1379),BeetleFly,0.95,0.86609,1.267
-WEASEL_STEROIDS(random_state=1379),BirdChicken,0.8,0.8456,1.17173
-WEASEL_STEROIDS(random_state=1379),Car,0.85,4.16309,3.25779
+"WEASEL_STEROIDS(ensemble_size=100, random_state=1379)",ArrowHead,0.8742857142857143,2.02374,1.20604
+"WEASEL_STEROIDS(ensemble_size=100, random_state=1379)",Beef,0.8333333333333334,3.94566,1.01695
+"WEASEL_STEROIDS(ensemble_size=100, random_state=1379)",BeetleFly,0.9,1.27982,1.08603
+"WEASEL_STEROIDS(ensemble_size=100, random_state=1379)",BirdChicken,0.9,1.31939,1.10271
+"WEASEL_STEROIDS(ensemble_size=100, random_state=1379)",Car,0.9166666666666666,3.18903,1.16466
+"WEASEL_STEROIDS(ensemble_size=100, random_state=1379)",CBF,0.9888888888888889,1.77616,1.35703
+"WEASEL_STEROIDS(ensemble_size=100, random_state=1379)",Coffee,1.0,1.39173,0.98717
+"WEASEL_STEROIDS(ensemble_size=100, random_state=1379)",DiatomSizeReduction,0.934640522875817,2.32315,1.26271
+"WEASEL_STEROIDS(ensemble_size=100, random_state=1379)",DistalPhalanxOutlineAgeGroup,0.7553956834532374,3.76057,1.08121
+"WEASEL_STEROIDS(ensemble_size=100, random_state=1379)",DistalPhalanxOutlineCorrect,0.7681159420289855,2.01777,1.01075
+"WEASEL_STEROIDS(ensemble_size=100, random_state=1379)",DistalPhalanxTW,0.697841726618705,5.80291,0.60909
+"WEASEL_STEROIDS(ensemble_size=100, random_state=1379)",ECG200,0.86,1.25723,0.85179
+"WEASEL_STEROIDS(ensemble_size=100, random_state=1379)",ECGFiveDays,0.9721254355400697,0.85423,1.21363
+"WEASEL_STEROIDS(ensemble_size=100, random_state=1379)",Gun_Point,0.9866666666666667,1.28756,1.16117
+"WEASEL_STEROIDS(ensemble_size=100, random_state=1379)",ItalyPowerDemand,0.9620991253644315,1.41036,1.31573
+"WEASEL_STEROIDS(ensemble_size=100, random_state=1379)",MiddlePhalanxOutlineAgeGroup,0.564935064935065,4.17643,1.11504
+"WEASEL_STEROIDS(ensemble_size=100, random_state=1379)",MiddlePhalanxOutlineCorrect,0.8350515463917526,2.35488,1.17714
+"WEASEL_STEROIDS(ensemble_size=100, random_state=1379)",MiddlePhalanxTW,0.5324675324675324,7.60756,1.05497
+"WEASEL_STEROIDS(ensemble_size=100, random_state=1379)",OliveOil,0.8666666666666667,3.27972,1.11442
+"WEASEL_STEROIDS(ensemble_size=100, random_state=1379)",Plane,1.0,4.5394,1.09999
+"WEASEL_STEROIDS(ensemble_size=100, random_state=1379)",ProximalPhalanxOutlineAgeGroup,0.8390243902439024,4.25058,1.14806
+"WEASEL_STEROIDS(ensemble_size=100, random_state=1379)",ProximalPhalanxOutlineCorrect,0.8831615120274914,2.50191,1.21194
+"WEASEL_STEROIDS(ensemble_size=100, random_state=1379)",ProximalPhalanxTW,0.8048780487804879,6.78933,1.14177
+"WEASEL_STEROIDS(ensemble_size=100, random_state=1379)",SonyAIBORobot Surface,0.7820299500831946,1.083,1.12474
+"WEASEL_STEROIDS(ensemble_size=100, random_state=1379)",SonyAIBORobot SurfaceII,0.9370409233997902,1.02589,1.18636
+"WEASEL_STEROIDS(ensemble_size=100, random_state=1379)",synthetic_control,0.97,4.39944,1.0813
+"WEASEL_STEROIDS(ensemble_size=100, random_state=1379)",TwoLeadECG,0.9833187006145742,0.9303,1.18471
+"WEASEL_STEROIDS(ensemble_size=100, random_state=1379)",Wine,0.8703703703703703,1.35669,1.04253
+"WEASEL_STEROIDS(ensemble_size=100, random_state=1379)",DiatomSizeReduction,0.934640522875817,2.17145,1.18855
+"WEASEL_STEROIDS(ensemble_size=100, random_state=1379)",DistalPhalanxOutlineAgeGroup,0.7553956834532374,3.74437,1.06019
+"WEASEL_STEROIDS(ensemble_size=100, random_state=1379)",DistalPhalanxOutlineCorrect,0.7681159420289855,2.02474,1.08385
+"WEASEL_STEROIDS(ensemble_size=100, random_state=1379)",DistalPhalanxTW,0.697841726618705,6.18884,1.05265
+"WEASEL_STEROIDS(ensemble_size=100, random_state=1379)",ECG200,0.86,1.35308,0.8596
+"WEASEL_STEROIDS(ensemble_size=100, random_state=1379)",ECGFiveDays,0.9721254355400697,0.92817,1.09014
+"WEASEL_STEROIDS(ensemble_size=100, random_state=1379)",MiddlePhalanxOutlineAgeGroup,0.564935064935065,4.03028,1.02783
