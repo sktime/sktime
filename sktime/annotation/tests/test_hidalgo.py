@@ -12,7 +12,7 @@ def _isclose(list1, list2):
 
 
 # get model
-model = Hidalgo(K=2, Niter=10, seed=None)
+model = Hidalgo(K=2, Niter=10, sampling_rate=2, seed=None)
 
 # generate dataset
 N = 10
@@ -398,7 +398,7 @@ def test_gibbs_sampling():
 
 def test_predict():
     """Tests predict for filtering, all iterations."""
-    model = Hidalgo(K=2, Niter=10, seed=None)
+    model = Hidalgo(K=2, Niter=10, sampling_rate=2, seed=None)
     fitted_model = model._fit(X)
     actual = fitted_model.predict(X)
 
@@ -490,7 +490,7 @@ def test_seed_predict():
         ],
     ]
 
-    model = Hidalgo(K=2, Niter=10, seed=1)
+    model = Hidalgo(K=2, Niter=10, sampling_rate=2, seed=1)
     fitted_model = model._fit(X)
     actual = fitted_model.predict(X)
 
