@@ -77,8 +77,8 @@ test_diffdateformat = pipe.transform(y_train).columns.to_list()
                 "ARMED",
                 "POP",
                 "year",
-                "quarter",
-                "month",
+                "quarter_of_year",
+                "month_of_year",
                 "week_of_year",
                 "month_of_quarter",
                 "week_of_quarter",
@@ -87,7 +87,7 @@ test_diffdateformat = pipe.transform(y_train).columns.to_list()
         ),
         (
             test_reduced_featurescope,
-            ["GNPDEFL", "GNP", "UNEMP", "ARMED", "POP", "year", "month"],
+            ["GNPDEFL", "GNP", "UNEMP", "ARMED", "POP", "year", "month_of_year"],
         ),
         (
             test_changing_frequency,
@@ -98,18 +98,27 @@ test_diffdateformat = pipe.transform(y_train).columns.to_list()
                 "ARMED",
                 "POP",
                 "year",
-                "quarter",
-                "month",
+                "quarter_of_year",
+                "month_of_year",
                 "month_of_quarter",
             ],
         ),
-        (test_manspec_with_tsfreq, ["GNPDEFL", "GNP", "UNEMP", "ARMED", "POP", "year"]),
+        (
+            test_manspec_with_tsfreq,
+            ["GNPDEFL", "GNP", "UNEMP", "ARMED", "POP", "year", "second_of_minute"],
+        ),
         (
             test_manspec_wo_tsfreq,
-            ["GNPDEFL", "GNP", "UNEMP", "ARMED", "POP", "year", "second"],
+            ["GNPDEFL", "GNP", "UNEMP", "ARMED", "POP", "year", "second_of_minute"],
         ),
-        (test_univariate_data, ["Number of airline passengers", "year", "second"]),
-        (test_diffdateformat, ["Number of airline passengers", "year", "second"]),
+        (
+            test_univariate_data,
+            ["Number of airline passengers", "year", "second_of_minute"],
+        ),
+        (
+            test_diffdateformat,
+            ["Number of airline passengers", "year", "second_of_minute"],
+        ),
     ],
 )
 def test_eval(test_input, expected):
