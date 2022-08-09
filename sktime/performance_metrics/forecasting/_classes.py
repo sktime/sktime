@@ -8,7 +8,7 @@ Classes named as ``*Error`` or ``*Loss`` return a value to minimize:
 the lower the better.
 """
 from copy import deepcopy
-from inspect import isfunction, getfullargspec, signature
+from inspect import getfullargspec, isfunction, signature
 from warnings import warn
 
 import numpy as np
