@@ -1165,7 +1165,7 @@ class DirectReductionForecaster(BaseForecaster):
             "DirectReductionForecaster is experimental, and interfaces may change. "
             "user feedback is appreciated in issue #3224 here: "
             "https://github.com/alan-turing-institute/sktime/issues/3224"
-            )
+        )
 
     def _fit(self, y, X=None, fh=None):
         """Fit dispatcher based on X_treatment."""
