@@ -19,6 +19,8 @@ As described in
 }
 """
 
+from sktime.annotation.base import BaseSeriesAnnotator
+
 __author__ = ["KatieBuc"]
 __all__ = ["Hidalgo"]
 
@@ -70,7 +72,7 @@ def Zpart(N, N1, zeta, q):
     )
 
 
-class Hidalgo:
+class Hidalgo(BaseSeriesAnnotator):
     """Class to fit parameters of the HidAlgo intrinsic dimension model.
 
     explain, reference
@@ -723,7 +725,7 @@ class Hidalgo:
         self.Pi = Pi / np.shape(bestsampling)[0]
         Z = np.argmax(Pi, axis=0)
         pZ = np.max(Pi, axis=0)
-        Z[np.where(pZ < 0.8)] = 0
+        Z[np.where(pZ < 0.8)] = -1
 
         return Z
 
