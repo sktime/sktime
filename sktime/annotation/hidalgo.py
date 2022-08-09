@@ -148,6 +148,8 @@ class Hidalgo(BaseSeriesAnnotator):
         c=None,
         f=None,
         seed=1,
+        fmt="dense",
+        labels="score",
     ):
 
         if a is None:
@@ -175,6 +177,8 @@ class Hidalgo(BaseSeriesAnnotator):
         self.c = c
         self.f = f
         self.seed = seed
+
+        super(Hidalgo, self).__init__(fmt=fmt, labels=labels)
 
     def _get_neighbourhood_params(self, X):
         """
