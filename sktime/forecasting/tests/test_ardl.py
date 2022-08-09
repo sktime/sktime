@@ -3,7 +3,7 @@
 __author__ = ["kcc-lion"]
 
 from numpy.testing import assert_allclose
-from statsmodels.datasets import grunfeld, longley
+from statsmodels.datasets import danish_data, grunfeld, longley
 from statsmodels.tsa.ardl import ARDL as _ARDL
 from statsmodels.tsa.ardl import ardl_select_order as _ardl_select_order
 
@@ -126,3 +126,22 @@ def test_auto_ardl():
     y_pred_stats = res.predict(start=start, end=end, exog_oos=X_oos)
     y_pred = ardl_sktime.predict(fh=fh, X=X_oos)
     return assert_allclose(y_pred, y_pred_stats)
+
+
+def test_against_statsmodels_5():
+    """Compare sktime's ARDL interface with statsmodels ARDL."""
+    # data
+    data = danish_data.load().data
+    data[["lrm", "lry", "ibo", "ide"]]
+    y = data.lrm
+    X = data[["lry", "ibo", "ide"]]
+    # fit
+    sel_res = _ardl_select_order(
+        data.lrm, 3, data[["lry", "ibo", "ide"]], 3, ic="aic", trend="c"
+    )
+    res = sel_res.model.fit()
+    ardl_sktime = ARDL(auto_ardl=True, maxlag=3, maxorder=3, trend="c", ic="aic")
+    ardl_sktime.fit(y=y, X=X, fh=None)
+    ardl_loglik = ardl_sktime.get_fitted_params()["loglike"]
+    sm_loglik = sel_res.model.loglike(res.params)
+    return assert_allclose(ardl_loglik, sm_loglik)

@@ -268,7 +268,7 @@ class ARDL(_StatsModelsAdapter):
             assert self.lags is not None
 
         if self.auto_ardl and self.lags is not None:
-            raise ValueError("lags should not be specified if aut_ardl is True")
+            raise ValueError("lags should not be specified if auto_ardl is True")
 
         super(ARDL, self).__init__()
 
@@ -372,19 +372,6 @@ class ARDL(_StatsModelsAdapter):
             self._fitted_forecaster = self._forecaster.model.fit(
                 cov_type=self.cov_type, cov_kwds=self.cov_kwds, use_t=self.use_t
             )
-        # implement here
-        # IMPORTANT: avoid side effects to y, X, fh
-        #
-        # any model parameters should be written to attributes ending in "_"
-        #  attributes set by the constructor must not be overwritten
-        #  if used, estimators should be cloned to attributes ending in "_"
-        #  the clones, not the originals shoudld be used or fitted if needed
-        #
-        # Note: when interfacing a model that has fit, with parameters
-        #   that are not data (y, X) or forecasting-horizon-like,
-        #   but model parameters, *don't* add as arguments to fit, but treat as follows:
-        #   1. pass to constructor,  2. write to self in constructor,
-        #   3. read from self in _fit,  4. pass to interfaced_model.fit in _fit
         return self
 
     def summary(self):
@@ -502,6 +489,51 @@ class ARDL(_StatsModelsAdapter):
 
         return self
 
+    def get_fitted_params(self):
+        """Get fitted parameters.
+
+        State required:
+            Requires state to be "fitted".
+
+        Returns
+        -------
+        fitted_params : dict
+        """
+        self.check_is_fitted()
+        fitted_params = {}
+        if isinstance(self._forecaster, _ARDL):
+            fitted_params["score"] = self._forecaster.score(
+                self._fitted_forecaster.params
+            )
+            fitted_params["hessian"] = self._forecaster.hessian(
+                self._fitted_forecaster.params
+            )
+            fitted_params["information"] = self._forecaster.information(
+                self._fitted_forecaster.params
+            )
+            fitted_params["loglike"] = self._forecaster.loglike(
+                self._fitted_forecaster.params
+            )
+        else:
+            if self._X is not None:
+                fitted_params["score"] = self._fitted_forecaster.model.score(
+                    self._fitted_forecaster.params
+                )
+                for x in ["_aic", "_bic", "_hqic"]:
+                    fitted_params[x[1:]] = eval("self._forecaster." + x)
+                fitted_params["hessian"] = self._fitted_forecaster.model.hessian(
+                    self._fitted_forecaster.params
+                )
+                fitted_params[
+                    "information"
+                ] = self._fitted_forecaster.model.information(
+                    self._fitted_forecaster.params
+                )
+                fitted_params["loglike"] = self._fitted_forecaster.model.loglike(
+                    self._fitted_forecaster.params
+                )
+        return fitted_params
+
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
@@ -524,6 +556,6 @@ class ARDL(_StatsModelsAdapter):
         params = [
             {"lags": 1, "trend": "c", "order": 2},
             {"lags": 1, "trend": "ct"},
-            {"auto_ardl": True, "maxlag": 1},
+            {"auto_ardl": True, "maxlag": 2, "maxorder": 2},
         ]
         return params
