@@ -26,28 +26,10 @@ __all__ = ["Hidalgo"]
 
 
 from functools import reduce
-from pathlib import Path
-from pickle import FALSE
 
 import numpy as np
-import pandas as pd
 from sklearn.neighbors import NearestNeighbors
 from sklearn.utils.validation import check_random_state
-
-
-def get_deterministic_z():
-    return [1, 0, 0, 1, 0, 1, 1, 0, 0, 0]
-
-
-def get_deterministic_number():
-    global random_list
-    file_path = Path(__file__).parent.joinpath("tests", "random_numbers.csv")
-    random_list = pd.read_csv(file_path, header=None).values.tolist()[0]
-
-
-def next_deterministic_number():
-    global random_list
-    return random_list.pop(0)
 
 
 def binom(N, q):
@@ -114,9 +96,8 @@ class Hidalgo(BaseSeriesAnnotator):
         prior parameters of p
     f : np.ArrayLike, optional, default=1.0
         parameters of zeta
-    seed : int, None, optional, default = 1
-        if None read in pre-generated random numbers from file
-        otherwise, generate random numbers with seed
+    seed : int, optional, default = 1
+        generate random numbers with seed
 
     Notes
     -----
@@ -147,7 +128,7 @@ class Hidalgo(BaseSeriesAnnotator):
     array([0, 0, 0, 0, 0, 0, 1, 1, 1, 1], dtype=int64)
     """
 
-    _tags = {"univariate-only": FALSE}  # for unit test cases
+    _tags = {"univariate-only": False}  # for unit test cases
 
     def __init__(
         self,
@@ -308,14 +289,9 @@ class Hidalgo(BaseSeriesAnnotator):
         b = self.b
         c = self.c
         fixed_Z = self.fixed_Z
-        seed = self.seed
 
         if not fixed_Z:
-            if seed is None:
-                random_z = get_deterministic_z()
-            else:
-                random_z = self.get_random_z()
-
+            random_z = self.get_random_z()
             Z = np.array(random_z, dtype=int)
         else:
             Z = np.zeros(N, dtype=int)
@@ -376,8 +352,6 @@ class Hidalgo(BaseSeriesAnnotator):
             posterior samples of d, p, Z and likelihood samples, respectively.
 
         """
-        get_deterministic_number()
-
         zeta = self.zeta
         q = self.q
         K = self.K
@@ -385,7 +359,6 @@ class Hidalgo(BaseSeriesAnnotator):
         fixed_Z = self.fixed_Z
         use_Potts = self.use_Potts
         estimate_zeta = self.estimate_zeta
-        seed = self.seed
 
         sampling = np.empty(shape=0)
         pp = (K - 1) / K
@@ -398,12 +371,8 @@ class Hidalgo(BaseSeriesAnnotator):
                 stop = False
 
                 while stop is False:
-                    if seed is None:
-                        r1 = next_deterministic_number()
-                        r2 = next_deterministic_number()
-                    else:
-                        r1 = self._rng.random() * 200  # random sample for d[k]
-                        r2 = self._rng.random()  # random number for accepting
+                    r1 = self._rng.random() * 200  # random sample for d[k]
+                    r2 = self._rng.random()  # random number for accepting
 
                     rmax = (a1[k] - 1) / b1[k]
 
@@ -424,18 +393,12 @@ class Hidalgo(BaseSeriesAnnotator):
 
         def sample_p(K, p, pp, c1):
 
-            seed = self.seed
-
             for k in range(K - 1):
                 stop = False
 
                 while stop is False:
-                    if seed is None:
-                        r1 = next_deterministic_number()
-                        r2 = next_deterministic_number()
-                    else:
-                        r1 = self._rng.random()  # random sample for p[k]
-                        r2 = self._rng.random()  # random number for accepting
+                    r1 = self._rng.random()  # random sample for p[k]
+                    r2 = self._rng.random()  # random number for accepting
 
                     rmax = (c1[k] - 1) / (c1[k] - 1 + c1[K - 1] - 1)
                     frac = ((r1 / rmax) ** (c1[k] - 1)) * (
@@ -454,7 +417,6 @@ class Hidalgo(BaseSeriesAnnotator):
         def sample_zeta(K, zeta, use_Potts, estimate_zeta, q, NN, f1, it):
 
             N = self.N
-            seed = self.seed
 
             stop = False
             maxval = -100000
@@ -474,12 +436,8 @@ class Hidalgo(BaseSeriesAnnotator):
                         maxval = val
 
                 while stop is False:
-                    if seed is None:
-                        r1 = next_deterministic_number()
-                        r2 = next_deterministic_number()
-                    else:
-                        r1 = self._rng.random()  # random sample for zeta
-                        r2 = self._rng.random()  # random number for accepting
+                    r1 = self._rng.random()  # random sample for zeta
+                    r2 = self._rng.random()  # random number for accepting
 
                     ZZ = [Zpart(N, NN[k], r1, q) for k in range(K)]
                     h = [NN[k] * np.log(ZZ[k]) for k in range(K)]
@@ -501,7 +459,6 @@ class Hidalgo(BaseSeriesAnnotator):
             Iout = self.Iout
             Iout_track = self.Iout_track
             Iout_count = self.Iout_count
-            seed = self.seed
 
             if (abs(zeta - 1) < 1e-5) or fixed_Z:
                 return Z, NN, a1, c1, V, b1
@@ -542,14 +499,8 @@ class Hidalgo(BaseSeriesAnnotator):
                 prob /= prob.sum()
 
                 while stop is False:
-                    if seed is None:
-                        r1 = int(next_deterministic_number())
-                        r2 = next_deterministic_number()
-                    else:
-                        r1 = int(
-                            np.floor(self._rng.random() * K)
-                        )  # random sample for Z
-                        r2 = self._rng.random()  # random number for accepting
+                    r1 = int(np.floor(self._rng.random() * K))  # random sample for Z
+                    r2 = self._rng.random()  # random number for accepting
 
                     if prob[r1] > r2:
                         stop = True
