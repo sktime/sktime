@@ -13,6 +13,139 @@ All notable changes to this project will be documented in this file. We keep tra
 For upcoming changes and next releases, see our `milestones <https://github.com/alan-turing-institute/sktime/milestones?direction=asc&sort=due_date&state=open>`_.
 For our long-term plan, see our :ref:`roadmap`.
 
+Version 0.13.1 - 2022-08-10
+---------------------------
+
+Enhancements
+~~~~~~~~~~~~
+
+* [ENH] dedicated ``_update`` for ``BATS`` and ``TBATS`` (:pr:`3086`) :user:`jelc53`
+* [ENH] flexible ``update`` behaviour of forecasting tuners (:pr:`3055`) :user:`fkiraly`
+* [ENH] add check for unique column indices to mtype checks (:pr:`2971`) :user:`fkiraly`
+* [ENH] ``__getitem__`` aka ``[ ]`` dunder for transformers, column subsetting (:pr:`2907`) :user:`fkiraly`
+* [ENH] refactor ``RocketClassifier`` to pipeline delegate (:pr:`3102`) :user:`fkiraly`
+* [ENH] AutoARIMA update options (:pr:`3068`) :user:`fkiraly`
+* [ENH] default implementation for ``get_fitted_params`` and nested fitted params interface (:pr:`3077`) :user:`fkiraly`
+* [ENH] Refactor ``Catch22Classifier`` to pipeline delegate (:pr:`3112`) :user:`fkiraly`
+* [ENH] classifier runtime profiling utility (:pr:`3076`) :user:`fkiraly`
+* [ENH] Rocket regressor and regressor pipelines, regressor delegators (:pr:`3126`) :user:`fkiraly`
+* [ENH] increase stateless scope of ``FunctionTransformer`` and ``TabularToSeriesAdaptor`` (:pr:`3087`) :user:`fkiraly`
+* [ENH] HMM annotation estimator (:pr:`2855`) :user:`miraep8`
+* [ENH] hierarchical forecasting notebook from pydata London 2022 (:pr:`3227`) :user:`fkiraly`
+
+Documentation
+~~~~~~~~~~~~~
+
+* [DOC] code quality docs expanded with instructions for local code quality checking set-up (:pr:`3089`) :user:`fkiraly`
+* [DOC] expanding content in testing section of "adding estimator" developer docs (:pr:`2544`) :user:`aiwalter`
+* [DOC] Fix references (:pr:`3170`) :user:`aiwalter`
+* [DOC] Added docstring examples and cleaning (:pr:`3174`) :user:`aiwalter`
+* [DOC] improved ``STLForecaster`` docstring (:pr:`3203`) :user:`fkiraly`
+* [DOC] Added notebook cell output for notebooks shown in website (:pr:`3215`) :user:`aiwalter`
+* [ENH] hierarchical forecasting notebook from pydata London 2022 (:pr:`3227`) :user:`fkiraly`
+
+Fixes
+~~~~~
+
+* [BUG] Fix HIVE-COTE2 sporadic test failure (:pr:`3094`) :user:`MatthewMiddlehurst`
+* [BUG] fixes to ``BaseClassifier._predict_proba`` default and ``SklearnClassifierPipeline`` in case ``predict_proba`` is not implemented (:pr:`3104`) :user:`fkiraly`
+* [BUG] fix forecaster default ``predict_quantiles`` for multivariate data (:pr:`3106`) :user:`fkiraly`
+* [MNT] temporarily exclude ``RandomShapeletTransform`` from tests (:pr:`3139`) :user:`fkiraly`
+* [BUG] ``ExpandingWindowSplitter`` constructor ``sklearn`` conformace fix (:pr:`3121`) :user:`fkiraly`
+* [BUG] fixes to inverse transform pipeline logic (:pr:`3085`) :user:`fkiraly`
+* [ENH] classifier single class handling (:pr:`3140`) :user:`fkiraly`
+* [BUG] address shadowing of ``object`` in ``_check_soft_dependencies`` (:pr:`3116`) :user:`fkiraly`
+* [BUG] allowing single class case in sklearn classifiers (trees/forests) (:pr:`3204`) :user:`fkiraly`
+* [BUG] skip check for no. estimators in contracted classifiers (:pr:`3207`) :user:`fkiraly`
+* [BUG] ``check_equal_time_index`` fix (:pr:`3160`) :user:`fkiraly`
+
+Maintenance
+~~~~~~~~~~~
+
+* [MNT] remove custom ``__repr__`` from ``BaseTask``, inherit from ``BaseObject`` (:pr:`3049`) :user:`fkiraly`
+* [DOC] Added NumFOCUS to sponsors website (:pr:`3093`) :user:`aiwalter`
+* [MNT] Updated slack link (:pr:`3066`) :user:`Arvind644`
+* [MNT] Removed hcrystalball from all_extras (:pr:`3091`) :user:`aiwalter`
+* [MNT] cleaning up CI workflow (:pr:`2896`) :user:`lmmentel`
+* [MNT] Bump macos github actions host to macos-11 (:pr:`3107`) :user:`lmmentel`
+* [MNT] temporarily exclude ``RandomShapeletTransform`` from tests (:pr:`3139`) :user:`fkiraly`
+* [MNT] temporary fix for Mac CI failures: skip recurringly failing estimators (:pr:`3134`) :user:`fkiraly`
+* [ENH] isolate soft dependencies (:pr:`3081`) :user:`fkiraly`
+* [MNT] reduce expected test time by making tests conditional on nosoftdeps (:pr:`3092`) :user:`fkiraly`
+* [MNT] Restrict changelog generator to changes to main branch (:pr:`3168`) :user:`lmmentel`
+* [MNT] skip known failure case for ``VARMAX`` (:pr:`3178`) :user:`fkiraly`
+* [MNT] Added pytest-randomly (:pr:`3187`) :user:`aiwalter`
+* [MNT] Updated social links and badges, added LinkedIn (:pr:`3195`) :user:`aiwalter`
+* [ENH] partition design for test matrix to reduce test time to a third (:pr:`3137`) :user:`fkiraly`
+* [MNT] reactivate tests for ``TSFreshRelevantFeatureExtractor`` (:pr:`3196`) :user:`fkiraly`
+* [BUG] prevent circular imports in ``all_estimators`` (:pr:`3198`) :user:`fkiraly`
+
+Refactored
+~~~~~~~~~~
+
+* [ENH] refactored ``ColumnConcatenator``, rewrite using ``pd-multiindex`` inner type (:pr:`2379`) :user:`fkiraly`
+* [ENH] complete refactor all test params (:pr:`3123`) :user:`fkiraly`
+* [ENH] refactor/move simple ``ShapeletTransform`` from ``_contrib`` to ``transformations`` module (:pr:`3136`) :user:`fkiraly`
+
+Other
+~~~~~
+
+* [ENH] Data generator for annotation (:pr:`2996`) :user:`lmmentel`
+* [MNT] Added Python 3.10 to installation docs (:pr:`3098`) :user:`aiwalter`
+* [DOC] Fixing improvements on local linting/precommit setup developer documentation (:pr:`3111`) :user:`C-mmon`
+* [ENH] metrics rework part IV - hierarchical metrics (:pr:`2601`) :user:`fkiraly`
+* [ENH] refactored ``KNeighborsTimeSeriesClassifier`` (:pr:`1998`) :user:`fkiraly`
+* [ENH] refactoring to move default params for fittedparamextractor to concre… (:pr:`2995`) :user:`mariamjabara`
+* [ENH] Featurizer simplified (:pr:`2922`) :user:`fkiraly`
+* [ENH] Dynamic factor predict_interval and predict_quantiles (:pr:`3105`) :user:`lbventura`
+* [Bug] Fix override/defaulting of "prediction intervals" adders  (:pr:`3129`) :user:`bethrice44`
+* [ENH] ``predict_interval`` capability for ``VECM`` (:pr:`2925`) :user:`AurumnPegasus`
+* [ENH] Refactor dataset loader (:pr:`3109`) :user:`achieveordie`
+* [ENH] Allow lists to be ``cutoff`` argument in ``CutoffSplitter`` (:pr:`3147`) :user:`khrapovs`
+* [DOC] Improve splitters docstrings (:pr:`3075`) :user:`khrapovs`
+* [ENH] Added error_score to evaluate and grid searches (:pr:`3135`) :user:`aiwalter`
+* [ENH] Adding ``VAR._predict_intervals`` (:pr:`3149`) :user:`lbventura`
+* Revert "[BUG] Fix HIVE-COTE2 sporadic test failure" (:pr:`3141`) :user:`fkiraly`
+* [BUG] Fix check_equal_time_index with numpy arrays as input. (:pr:`3167`) :user:`benHeid`
+* [ENH] test all ``BaseObject`` descendants for sklearn compatibility (:pr:`3122`) :user:`fkiraly`
+* [ENH] Changes to CNN Classifier (:pr:`2991`) :user:`AurumnPegasus`
+* [ENH] Deprecate ProbabilityThresholdEarlyClassifier (:pr:`3133`) :user:`MatthewMiddlehurst`
+* [MNT] Changed sktime logo on README (:pr:`3143`) :user:`aiwalter`
+* [BUG] Fix ``AutoEnsembleForecaster`` inverse variance bug (:pr:`3208`) :user:`AnH0ang`
+* [ENH] Parameter estimators and "plug in parameter" compositors (:pr:`3041`) :user:`fkiraly`
+* [ENH] ClearSky transformer for solar time series (:pr:`3130`) :user:`ciaran-g`
+* [ENH] Refactor ``SingleWindowSplitter`` using ``get_window`` function (:pr:`3146`) :user:`khrapovs`
+* [ENH] filter transformer from ``sktime-neuro`` (:pr:`3067`) :user:`fkiraly`
+* [ENH] remove ``_required_parameters`` interface point from ``BaseObject`` (:pr:`3152`) :user:`fkiraly`
+* [ENH] - Evaluate classification (:pr:`3173`) :user:`TNTran92`
+* [DOC] added more detail to step 4 of high-level steps to implementing an es… (:pr:`3200`) :user:`kcc-lion`
+* [BUG] Datetimefeatures inconsistent formats / day_of_year not working (:pr:`3222`) :user:`danbartl`
+* [ENH] Refactoring adjustment to make_reduction via global forecasting (:pr:`2486`) :user:`danbartl`
+
+Contributors
+~~~~~~~~~~~~
+
+:user:`achieveordie`,
+:user:`aiwalter`,
+:user:`AnH0ang`,
+:user:`Arvind644`,
+:user:`AurumnPegasus`,
+:user:`benHeid`,
+:user:`bethrice44`,
+:user:`C-mmon`,
+:user:`ciaran-g`,
+:user:`danbartl`,
+:user:`fkiraly`,
+:user:`jelc53`,
+:user:`kcc-lion`,
+:user:`khrapovs`,
+:user:`lbventura`,
+:user:`lmmentel`,
+:user:`mariamjabara`,
+:user:`MatthewMiddlehurst`,
+:user:`miraep8`,
+:user:`TNTran92`
+
 Version 0.13.0 - 2022-07-14
 ---------------------------
 
