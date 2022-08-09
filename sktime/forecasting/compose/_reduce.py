@@ -1077,6 +1077,14 @@ class DirectReducerV2(BaseForecaster):
 
     Implements direct reduction, of forecasting to tabular regression.
 
+    For no `X`, defaults to DirMO (direct multioutput) for `X_treatment = "concurrent"`,
+    and simple direct (direct single-output) for `X_treatment = "shifted"`.
+
+    Direct single-output with concurrent `X` behaviour can be configured
+    by passing a single-output `scikit-learn` compatible transformer.
+
+    Algorithm details:
+
     In `fit`, given endogeneous time series `y` and possibly exogeneous `X`:
         fits `estimator` to feature-label pairs as defined as follows.
     if `X_treatment = "concurrent":
@@ -1094,7 +1102,7 @@ class DirectReducerV2(BaseForecaster):
     if `X_treatment = "concurrent":
         applies fitted estimators' predict to
         feature = `y(c)`, `y(c-1)`, ..., `y(c-window_size)`, if provided: `X(c+h)`
-        to obtain a prediction for `y(c+h)`, for each `f` in the forecasting horizon
+        to obtain a prediction for `y(c+h)`, for each `h` in the forecasting horizon
     if `X_treatment = "shifted":
         applies fitted estimator's predict to
         features = `y(c)`, `y(c-1)`, ..., `y(c-window_size)`, if provided: `X(t)`
@@ -1142,7 +1150,7 @@ class DirectReducerV2(BaseForecaster):
         super(DirectReducerV2, self).__init__()
 
     def _fit(self, y, X=None, fh=None):
-        """Fitt dispatcher based on X_treatment."""
+        """Fit dispatcher based on X_treatment."""
         methodname = f"_fit_{self.X_treatment}"
         return getattr(self, methodname)(y=y, X=X, fh=fh)
 
