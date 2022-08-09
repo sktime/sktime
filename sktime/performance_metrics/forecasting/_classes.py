@@ -576,6 +576,7 @@ class _DynamicForecastingErrorMetric(BaseForecastingErrorMetricFunc):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
+
         def custom_mape(y_true, y_pred) -> float:
 
             eps = np.finfo(np.float64).eps
@@ -584,9 +585,7 @@ class _DynamicForecastingErrorMetric(BaseForecastingErrorMetricFunc):
 
             return float(result)
 
-        params = {
-            "func": custom_mape, "name": "custom_mape", "lower_is_better": False
-        }
+        params = {"func": custom_mape, "name": "custom_mape", "lower_is_better": False}
         return params
 
 
