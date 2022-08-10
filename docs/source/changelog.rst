@@ -19,8 +19,11 @@ Version 0.13.1 - 2022-08-10
 Highlights
 ~~~~~~~~~~
 
+* forecasting reducers constructed via ``make_reduction`` now fully support global/hierarchical forecasting (:pr:`2486`) :user:`danbartl`
 * forecasting metric classes now fully support hierarchical data and hierarchy averaging via ``multilevel`` argument (:pr:`2601`) :user:`fkiraly`
-* probabilisitic forecasting functionality for ``DynamicFactor`` and ``VECM`` (:pr:`2925`, :pr:`3105`) :user:`AurumnPegasus`, :user:`lbventura`
+* probabilisitic forecasting functionality for ``DynamicFactor``, ``VAR`` and ``VECM`` (:pr:`2925`, :pr:`3105`) :user:`AurumnPegasus`, :user:`lbventura`
+* new transformer: ``ClearSky`` transformer for solar irradiance time series (:pr:`3130`) :user:`ciaran-g`
+* new transformer: ``Filter`` transformer for low/high-pass and band filtering, interfaces ``mne`` ``filter_data`` (:pr:`3067`) :user:`fkiraly`, :user:`sveameyer13`
 
 Dependency changes
 ~~~~~~~~~~~~~~~~~~
@@ -31,8 +34,25 @@ Dependency changes
 Core interface changes
 ~~~~~~~~~~~~~~~~~~~~~~
 
+All Estimators
+^^^^^^^^^^^^^^
+
 * ``get_fitted_params`` now has a private implementer interface ``_get_fitted_params``, similar to ``fit`` / ``_fit`` etc
+* the undocumented ``_required_parameters`` parameter is no longer required (to be present in certain estimators)
+
+Forecasting
+^^^^^^^^^^^
+
 * forecasting metric classes now fully support hierarchical data and hierarchy averaging via ``multilevel`` argument
+
+Deprecations and removals
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Time series classification
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* ``ProbabilityThresholdEarlyClassifier`` has been deprecated and will be replaced by an early classifier of the same name in version 0.15.0.
+    Interfaces will not be downwards compatible.
 
 Enhancements
 ~~~~~~~~~~~~
@@ -41,7 +61,12 @@ BaseObject
 ^^^^^^^^^^
 
 * [ENH] default implementation for ``get_fitted_params`` and nested fitted params interface (:pr:`3077`) :user:`fkiraly`
+* [ENH] remove ``_required_parameters`` interface point from ``BaseObject`` (:pr:`3152`) :user:`fkiraly`
 
+Data sets and data loaders
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] Rework of data loaders (:pr:`3109`) :user:`achieveordie`
 
 Data types, checks, conversions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -51,13 +76,25 @@ Data types, checks, conversions
 Forecasting
 ^^^^^^^^^^^
 
+* [ENH] Reworked ``make_reduction`` for global forecasting (:pr:`2486`) :user:`danbartl`
 * [ENH] flexible ``update`` behaviour of forecasting tuners (:pr:`3055`) :user:`fkiraly`
 * [ENH] flexible ``update`` behaviour of ``AutoARIMA`` (:pr:`3068`) :user:`fkiraly`
 * [ENH] Reducer prototype rework - experimental (:pr:`2833`) :user:`fkiraly`
 * [ENH] better ``ForecastingHorizon`` construction error message (:pr:`3236`) :user:`fkiraly`
 * [ENH] metrics rework part IV - hierarchical metrics (:pr:`2601`) :user:`fkiraly`
+* [ENH] Reducer prototype rework - experimental (:pr:`2833`) :user:`fkiraly`
 * [ENH] ``predict_interval`` capability for ``VECM`` (:pr:`2925`) :user:`AurumnPegasus`
 * [ENH] ``DynamicFactor`` ``predict_interval`` and ``predict_quantiles`` (:pr:`3105`) :user:`lbventura`
+* [ENH] Added ``error_score`` to ``evaluate`` and forecasting tuners (:pr:`3135`) :user:`aiwalter`
+* [ENH] Refactor ``CutoffSplitter`` using ``get_window`` function (:pr:`3145`) :user:`khrapovs`
+* [ENH] Refactor ``SingleWindowSplitter`` using ``get_window`` function (:pr:`3146`) :user:`khrapovs`
+* [ENH] Allow lists to be ``cutoff`` argument in ``CutoffSplitter`` (:pr:`3147`) :user:`khrapovs`
+* [ENH] Adding ``VAR._predict_intervals`` (:pr:`3149`) :user:`lbventura`
+
+Parameter estimation
+^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] Parameter estimators and "plug in parameter" compositors (:pr:`3041`) :user:`fkiraly`
 
 Time series annotation
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -65,15 +102,17 @@ Time series annotation
 * [ENH] HMM annotation estimator (:pr:`2855`) :user:`miraep8`
 * [ENH] Data generator for annotation (:pr:`2996`) :user:`lmmentel`
 
-
 Time series classification
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * [ENH] refactored ``KNeighborsTimeSeriesClassifier`` (:pr:`1998`) :user:`fkiraly`
+* [ENH] Various improvements to CNN Classifier base class (:pr:`2991`) :user:`AurumnPegasus`
 * [ENH] refactor ``RocketClassifier`` to pipeline delegate (:pr:`3102`) :user:`fkiraly`
 * [ENH] refactor ``Catch22Classifier`` to pipeline delegate (:pr:`3112`) :user:`fkiraly`
 * [ENH] classifier runtime profiling utility (:pr:`3076`) :user:`fkiraly`
+* [ENH] Deprecate ``ProbabilityThresholdEarlyClassifier`` (:pr:`3133`) :user:`MatthewMiddlehurst`
 * [ENH] classifier single class handling (:pr:`3140`) :user:`fkiraly`
+* [ENH] Classification evaluation utility (:pr:`3173`) :user:`TNTran92`
 
 Time series regression
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -86,51 +125,30 @@ Transformations
 
 * [ENH] ``__getitem__`` aka ``[ ]`` dunder for transformers, column subsetting (:pr:`2907`) :user:`fkiraly`
 * [ENH] ``YtoX`` transformer to use transform endogeneous data as exogegneous (:pr:`2922`) :user:`fkiraly`
+* [ENH] ``Filter`` transformer from ``sktime-neuro`` (:pr:`3067`) :user:`fkiraly`
 * [ENH] increase stateless scope of ``FunctionTransformer`` and ``TabularToSeriesAdaptor`` (:pr:`3087`) :user:`fkiraly`
+* [ENH] ``ClearSky`` transformer for solar irradiance time series (:pr:`3130`) :user:`ciaran-g`
 * [ENH] move simple ``ShapeletTransform`` from ``_contrib`` to ``transformations`` module (:pr:`3136`) :user:`fkiraly`
 
+Testing framework
+^^^^^^^^^^^^^^^^^
 
-
-* [ENH] Refactor dataset loader (:pr:`3109`) :user:`achieveordie`
-* [ENH] Allow lists to be ``cutoff`` argument in ``CutoffSplitter`` (:pr:`3147`) :user:`khrapovs`
-* [DOC] Improve splitters docstrings (:pr:`3075`) :user:`khrapovs`
-* [ENH] Added error_score to evaluate and grid searches (:pr:`3135`) :user:`aiwalter`
-* [ENH] Adding ``VAR._predict_intervals`` (:pr:`3149`) :user:`lbventura`
-* [BUG] Fix check_equal_time_index with numpy arrays as input. (:pr:`3167`) :user:`benHeid`
 * [ENH] test all ``BaseObject`` descendants for sklearn compatibility (:pr:`3122`) :user:`fkiraly`
-* [ENH] Changes to CNN Classifier (:pr:`2991`) :user:`AurumnPegasus`
-* [ENH] Deprecate ProbabilityThresholdEarlyClassifier (:pr:`3133`) :user:`MatthewMiddlehurst`
-* [MNT] Changed sktime logo on README (:pr:`3143`) :user:`aiwalter`
-* [BUG] Fix ``AutoEnsembleForecaster`` inverse variance bug (:pr:`3208`) :user:`AnH0ang`
-* [ENH] Parameter estimators and "plug in parameter" compositors (:pr:`3041`) :user:`fkiraly`
-* [ENH] ClearSky transformer for solar time series (:pr:`3130`) :user:`ciaran-g`
-* [ENH] Refactor ``SingleWindowSplitter`` using ``get_window`` function (:pr:`3146`) :user:`khrapovs`
-* [ENH] filter transformer from ``sktime-neuro`` (:pr:`3067`) :user:`fkiraly`
-* [ENH] remove ``_required_parameters`` interface point from ``BaseObject`` (:pr:`3152`) :user:`fkiraly`
-* [ENH] - Evaluate classification (:pr:`3173`) :user:`TNTran92`
-* [DOC] added more detail to step 4 of high-level steps to implementing an es… (:pr:`3200`) :user:`kcc-lion`
-* [BUG] Datetimefeatures inconsistent formats / day_of_year not working (:pr:`3222`) :user:`danbartl`
-* [ENH] Refactoring adjustment to make_reduction via global forecasting (:pr:`2486`) :user:`danbartl`
-* [ENH] Refactor ``CutoffSplitter`` using ``get_window`` function (:pr:`3145`) :user:`khrapovs`
-* [BUG] Datetimefeatures inconsistent formats / day_of_year not working (:pr:`3223`) :user:`danbartl`
-* functools-wrapper-in-make_mock_estimator (:pr:`3228`) :user:`ltsaprounis`
-
-
-Refactored
-~~~~~~~~~~
-
-* [ENH] refactoring test params for ``FittedParamExtractor`` (:pr:`2995`) :user:`mariamjabara`
-* [ENH] complete refactor all test params (:pr:`3123`) :user:`fkiraly`
-* [ENH] Reducer prototype rework - experimental (:pr:`2833`) :user:`fkiraly`
+* [ENH] ``functools`` wrapper to preserve docstrings in estimators wrapped by ``make_mock_estimator`` (:pr:`3228`) :user:`ltsaprounis`
+* [ENH] refactoring test params for ``FittedParamExtractor`` to ``get_test_params`` (:pr:`2995`) :user:`mariamjabara`
+* [ENH] complete refactor of all remaining test params left in ``_config`` to ``get_test_params`` (:pr:`3123`) :user:`fkiraly`
 
 Documentation
 ~~~~~~~~~~~~~
 
 * [DOC] expanding content in testing section of "adding estimator" developer docs (:pr:`2544`) :user:`aiwalter`
+* [DOC] Improve splitters docstrings (:pr:`3075`) :user:`khrapovs`
 * [DOC] Added Python 3.10 to installation docs (:pr:`3098`) :user:`aiwalter`
 * [DOC] improvements on local linting/precommit setup developer documentation (:pr:`3111`) :user:`C-mmon`
+* [DOC] Changed sktime logo on README (:pr:`3143`) :user:`aiwalter`
 * [DOC] Fix references (:pr:`3170`) :user:`aiwalter`
 * [DOC] Added docstring examples and cleaning (:pr:`3174`) :user:`aiwalter`
+* [DOC] added more detail to step 4 of high-level steps to implementing an es… (:pr:`3200`) :user:`kcc-lion`
 * [DOC] improved ``STLForecaster`` docstring (:pr:`3203`) :user:`fkiraly`
 * [DOC] Added notebook cell output for notebooks shown in website (:pr:`3215`) :user:`aiwalter`
 * [DOC] hierarchical forecasting notebook from pydata London 2022 (:pr:`3227`) :user:`fkiraly`
@@ -144,7 +162,8 @@ Forecasting
 * [BUG] fix forecaster default ``predict_quantiles`` for multivariate data (:pr:`3106`) :user:`fkiraly`
 * [BUG] ``ExpandingWindowSplitter`` constructor ``sklearn`` conformace fix (:pr:`3121`) :user:`fkiraly`
 * [BUG] Fix override/defaulting of "prediction intervals" adders  (:pr:`3129`) :user:`bethrice44`
-* [BUG] ``check_equal_time_index`` fix (:pr:`3160`) :user:`fkiraly`
+* [BUG] Fix ``check_equal_time_index`` with numpy arrays as input (:pr:`3160`, :pr:`3167`) :user:`benHeid`
+* [BUG] Fix broken ``AutoEnsembleForecaster`` inverse variance method (:pr:`3208`) :user:`AnH0ang`
 
 Time series classification
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -158,6 +177,8 @@ Transformations
 ^^^^^^^^^^^^^^^
 
 * [BUG] fixed inverse transform logic in transformer pipelines (:pr:`3085`) :user:`fkiraly`
+* [BUG] Fixed ``DateTimeFeatures`` inconsistent output type formats (:pr:`3223`) :user:`danbartl`
+* [BUG] Fixed ``Datetimefeatures`` ``day_of_year`` option not working (:pr:`3223`) :user:`danbartl`
 
 Testing framework
 ^^^^^^^^^^^^^^^^^
@@ -184,11 +205,6 @@ Maintenance
 * [MNT] reactivate tests for ``TSFreshRelevantFeatureExtractor`` (:pr:`3196`) :user:`fkiraly`
 * [BUG] prevent circular imports in ``all_estimators`` (:pr:`3198`) :user:`fkiraly`
 
-Other
-~~~~~
-
-
-
 Contributors
 ~~~~~~~~~~~~
 
@@ -211,6 +227,7 @@ Contributors
 :user:`mariamjabara`,
 :user:`MatthewMiddlehurst`,
 :user:`miraep8`,
+:user:`sveameyer13`,
 :user:`TNTran92`
 
 Version 0.13.0 - 2022-07-14
@@ -281,9 +298,9 @@ Performance metrics
 * removed: ``func`` and ``name`` args from all performance metric constructors.
 * changed: the ``greater_is_better`` property is replaced by the ``greater_is_better`` tag.
 
-ime series classification
+Time series classification
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
-T
+
 * removed: ``"capability:early_prediction"`` tag from ``BaseClassifier`` descendants.
   Early classifiers are their own estimator type now.
   In order to search for early classifiers, use the ``early-classifier`` scitype string instead of the tag.
