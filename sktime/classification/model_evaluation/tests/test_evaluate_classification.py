@@ -3,8 +3,8 @@
 import numpy as np
 import pandas as pd
 import pytest
-from sklearn.metrics import accuracy_score
-from sklearn.model_selection import ShuffleSplit
+from sklearn.metrics import get_scorer
+from sklearn.model_selection import ShuffleSplit, cross_validate
 
 from sktime.classification.kernel_based import RocketClassifier
 from sktime.classification.model_evaluation._function import evaluate_classification
@@ -28,8 +28,8 @@ def _split(X, y, train, test):
     return X_train, y_train, X_test, y_test
 
 
-@pytest.mark.parametrize("fold_no", [5, 7])
-@pytest.mark.parametrize("random_seed", [21, 42])
+@pytest.mark.parametrize("fold_no", [5])
+@pytest.mark.parametrize("random_seed", [21])
 def test_evaluate_classification_metrics(fold_no, random_seed):
     """Test evaluate for basic classification problems."""
     # Merge train and test into one dataset
@@ -48,23 +48,15 @@ def test_evaluate_classification_metrics(fold_no, random_seed):
     cv = ShuffleSplit(n_splits=fold_no, test_size=0.2, random_state=random_seed)
 
     actual = evaluate_classification(classifier=classifier, X=arrow_X, y=arrow_y, cv=cv)
-    expected = []
-    for _i, (train, test) in enumerate(cv.split(arrow_X)):
-        # split data
-        X_train, y_train, X_test, y_test = _split(arrow_X, arrow_y, train, test)
-        classifier = classifier.clone()
-        classifier.fit(X_train, y_train)
-        y_pred = classifier.predict(X_test)
-        # score
-        score = accuracy_score(y_test, y_pred)
-        # save results
-        expected.append(
-            {
-                "score": score,
-            }
-        )
+
+    classifier = RocketClassifier().clone()
+    scoring = "accuracy"
+    scorer = get_scorer(scoring)
+    expected = cross_validate(
+        classifier, X=arrow_X, y=arrow_y, cv=cv, n_jobs=-1, scoring=scorer
+    )
     expected = pd.DataFrame(expected)
 
-    np.testing.assert_array_equal(
-        expected["score"].to_numpy(), actual["score"].to_numpy()
+    np.testing.assert_allclose(
+        expected["test_score"].mean(), actual["score"].mean(), rtol=1e-2
     )
