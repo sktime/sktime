@@ -847,9 +847,7 @@ def from_nested_to_3d_numpy(X):
     # Then the multi-indexed DataFrame can be converted to 3d NumPy array
     else:
         X_mi = from_nested_to_multi_index(X)
-        X_3d = from_multi_index_to_3d_numpy(
-            X_mi, instance_index="instance", time_index="timepoints"
-        )
+        X_3d = from_multi_index_to_3d_numpy(X_mi)
 
     return X_3d
 
