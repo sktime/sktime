@@ -2,6 +2,11 @@
 """WEASEL on Steroids classifier.
 
 Dictionary based classifier based on SFA transform, BOSS and linear regression.
+
+The fastest WEASEL on earth
+Tour de WEASEL
+WEASEL on steroids
+
 """
 
 __author__ = ["patrickzib"]

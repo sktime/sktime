@@ -12,10 +12,8 @@ import sys
 import warnings
 
 import numpy as np
-import pandas as pd
 from joblib import Parallel, delayed
-from numba import NumbaTypeSafetyWarning, njit, types
-from numba.typed import Dict
+from numba import NumbaTypeSafetyWarning, njit
 from sklearn.feature_selection import f_classif
 from sklearn.preprocessing import KBinsDiscretizer
 from sklearn.tree import DecisionTreeClassifier
@@ -73,23 +71,6 @@ class SFA_NEW(_PanelToPanelTransformer):
         bigrams:             boolean, default = False
             whether to create bigrams of SFA words
 
-        skip_grams:          boolean, default = False
-            whether to create skip-grams of SFA words
-
-        remove_repeat_words: boolean, default = False
-            whether to use numerosity reduction (default False)
-
-        levels:              int, default = 1
-            Number of spatial pyramid levels
-
-        save_words:          boolean, default = False
-            whether to save the words generated for each series (default False)
-
-        return_pandas_data_series:          boolean, default = False
-            set to true to return Pandas Series as a result of transform.
-            setting to true reduces speed significantly but is required for
-            automatic test.
-
         n_jobs:              int, optional, default = 1
             The number of jobs to run in parallel for both `transform`.
             ``-1`` means using all processors.
@@ -121,15 +102,7 @@ class SFA_NEW(_PanelToPanelTransformer):
         anova=False,
         variance=False,
         bigrams=False,
-        skip_grams=False,
-        remove_repeat_words=False,
-        levels=1,
         lower_bounding=True,
-        save_words=False,
-        keep_binning_dft=False,
-        return_pandas_data_series=False,
-        use_fallback_dft=False,
-        typed_dict=False,
         n_jobs=1,
     ):
         self.words = []
@@ -154,36 +127,22 @@ class SFA_NEW(_PanelToPanelTransformer):
         )
 
         self.norm = norm
-        self.remove_repeat_words = remove_repeat_words
 
-        self.save_words = save_words
-        self.keep_binning_dft = keep_binning_dft
         self.binning_dft = None
 
-        self.levels = levels
         self.binning_method = binning_method
         self.anova = anova
         self.variance = variance
 
         self.bigrams = bigrams
-        self.skip_grams = skip_grams
-
-        self.return_pandas_data_series = return_pandas_data_series
-        self.use_fallback_dft = (
-            use_fallback_dft if word_length < window_size - offset else True
-        )
-        self.typed_dict = typed_dict
-
         self.n_jobs = n_jobs
 
         self.n_instances = 0
         self.series_length = 0
+
         self.letter_bits = 0
-        self.letter_max = 0
         self.word_bits = 0
         self.max_bits = 0
-        self.level_bits = 0
-        self.level_max = 0
 
         super(SFA_NEW, self).__init__()
 
@@ -202,9 +161,6 @@ class SFA_NEW(_PanelToPanelTransformer):
         if self.alphabet_size < 2:
             raise ValueError("Alphabet size must be an integer greater than 2")
 
-        if self.word_length < 1:
-            raise ValueError("Word length must be an integer greater than 1")
-
         if self.binning_method == "information-gain" and y is None:
             raise ValueError(
                 "Class values must be provided for information gain binning"
@@ -217,35 +173,11 @@ class SFA_NEW(_PanelToPanelTransformer):
             raise TypeError("binning_method must be one of: ", binning_methods)
 
         self.letter_bits = math.ceil(math.log2(self.alphabet_size))
-        self.letter_max = pow(2, self.letter_bits) - 1
         self.word_bits = self.word_length * self.letter_bits
-        self.max_bits = (
-            self.word_bits * 2 if self.bigrams or self.skip_grams else self.word_bits
-        )
-
-        if self.typed_dict and self.max_bits > 64:
-            raise ValueError(
-                "Typed Dictionaries can only handle 64 bit words. "
-                "ceil(log2(alphabet_size)) * word_length must be less than or equal "
-                "to 64."
-                "With bi-grams or skip-grams enabled, this bit limit is 32."
-            )
-
-        if self.typed_dict and self.levels > 15:
-            raise ValueError(
-                "Typed Dictionaries can only handle 15 levels "
-                "(this is way to many anyway)."
-            )
+        self.max_bits = self.word_bits * 2 if self.bigrams else self.word_bits
 
         X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
         X = X.squeeze(1)
-
-        if self.levels > 1:
-            quadrants = 0
-            for i in range(self.levels):
-                quadrants += pow(2, i)
-            self.level_bits = math.ceil(math.log2(quadrants))
-            self.level_max = pow(2, self.level_bits) - 1
 
         self.n_instances, self.series_length = X.shape
         self.breakpoints = self._binning(X, y)
@@ -315,8 +247,7 @@ class SFA_NEW(_PanelToPanelTransformer):
                 for i in range(self.n_instances)
             ]
         )
-        if self.keep_binning_dft:
-            self.binning_dft = dft
+
         dft = dft.reshape(len(X) * num_windows_per_inst, self.dft_length)
 
         if y is not None:
@@ -440,17 +371,7 @@ class SFA_NEW(_PanelToPanelTransformer):
         result = np.zeros((len(split), self.dft_length), dtype=np.float64)
 
         for i, row in enumerate(split):
-            result[i] = (
-                self._discrete_fourier_transform(
-                    row,
-                    self.dft_length,
-                    self.norm,
-                    self.inverse_sqrt_win_size,
-                    self.lower_bounding,
-                )
-                if self.use_fallback_dft
-                else self._fast_fourier_transform(row)
-            )
+            result[i] = self._fast_fourier_transform(row)
 
         return result
 
@@ -488,61 +409,6 @@ class SFA_NEW(_PanelToPanelTransformer):
             dft[1::2] = dft[1::2] * -1  # lower bounding
         dft *= self.inverse_sqrt_win_size / std
         return dft[start:]
-
-    @staticmethod
-    @njit(fastmath=True, cache=True)
-    def _discrete_fourier_transform(
-        series,
-        dft_length,
-        norm,
-        inverse_sqrt_win_size,
-        lower_bounding,
-        apply_normalising_factor=True,
-        cut_start_if_norm=True,
-    ):
-        """Perform a discrete fourier transform using standard O(n^2) transform.
-
-        if self.norm is True, then the first term of the DFT is ignored
-
-        Input
-        -------
-        X : The training input samples.  array-like or sparse matrix of
-        shape = [n_samps, num_atts]
-
-        Returns
-        -------
-        1D array of fourier term, real_0,imag_0, real_1, imag_1 etc, length
-        num_atts or
-        num_atts-2 if if self.norm is True
-        """
-        start = 2 if norm else 0
-        output_length = start + dft_length
-
-        if cut_start_if_norm:
-            c = int(start / 2)
-        else:
-            c = 0
-            start = 0
-
-        dft = np.zeros(output_length - start)
-        for i in range(c, int(output_length / 2)):
-            for n in range(len(series)):
-                dft[(i - c) * 2] += series[n] * math.cos(
-                    2 * math.pi * n * i / len(series)
-                )
-                dft[(i - c) * 2 + 1] += -series[n] * math.sin(
-                    2 * math.pi * n * i / len(series)
-                )
-
-        if apply_normalising_factor:
-            if lower_bounding:
-                dft[1::2] = dft[1::2] * -1  # lower bounding
-
-            std = np.std(series)
-            std = std if std > 1e-8 else 1
-            dft *= inverse_sqrt_win_size / std
-
-        return dft
 
     def _mft(self, series):
         start_offset = 2 if self.norm else 0
@@ -607,186 +473,6 @@ class SFA_NEW(_PanelToPanelTransformer):
             normalising_factor = inverse_sqrt_win_size / stds[i]
             transformed[i] = mft_data * normalising_factor
 
-    def _shorten_bags(self, word_len):
-        if self.save_words is False:
-            raise ValueError(
-                "Words from transform must be saved using save_word to shorten bags."
-            )
-
-        if word_len > self.word_length:
-            word_len = self.word_length
-
-        if self.typed_dict:
-            warnings.simplefilter("ignore", category=NumbaTypeSafetyWarning)
-
-        dim = Parallel(n_jobs=self.n_jobs)(
-            delayed(self._shorten_case)(word_len, i) for i in range(len(self.words))
-        )
-
-        # cant pickle typed dict
-        if self.typed_dict and self.n_jobs != 1:
-            nl = [None] * len(dim)
-            for i, pdict in enumerate(dim):
-                ndict = (
-                    Dict.empty(
-                        key_type=types.UniTuple(types.int64, 2), value_type=types.uint32
-                    )
-                    if self.levels > 1
-                    else Dict.empty(key_type=types.int64, value_type=types.uint32)
-                )
-                for key, val in pdict.items():
-                    ndict[key] = val
-                nl[i] = pdict
-            dim = nl
-
-        new_bags = pd.DataFrame() if self.return_pandas_data_series else [None]
-        new_bags[0] = list(dim)
-
-        return new_bags
-
-    def _shorten_case(self, word_len, i):
-        if self.typed_dict:
-            new_bag = (
-                Dict.empty(
-                    key_type=types.Tuple((types.int64, types.int16)),
-                    value_type=types.uint32,
-                )
-                if self.levels > 1
-                else Dict.empty(key_type=types.int64, value_type=types.uint32)
-            )
-        else:
-            new_bag = {}
-
-        last_word = -1
-        repeat_words = 0
-
-        for window, word in enumerate(self.words[i]):
-            new_word = self._shorten_words(word, word_len)
-
-            repeat_word = (
-                self._add_to_pyramid(
-                    new_bag, new_word, last_word, window - int(repeat_words / 2)
-                )
-                if self.levels > 1
-                else self._add_to_bag(new_bag, new_word)
-            )
-
-            if repeat_word:
-                repeat_words += 1
-            else:
-                last_word = new_word
-                repeat_words = 0
-
-            if self.bigrams:
-                if window - self.window_size >= 0:
-                    bigram = self._create_bigram_words(
-                        new_word,
-                        self._shorten_words(
-                            self.words[i][window - self.window_size], word_len
-                        ),
-                    )
-
-                    if self.levels > 1:
-                        if self.typed_dict:
-                            bigram = (bigram, -1)
-                        else:
-                            bigram = (bigram << self.level_bits) | 0
-                    new_bag[bigram] = new_bag.get(bigram, 0) + 1
-
-            if self.skip_grams:
-                # creates skip-grams, skipping every (s-1)-th word in-between
-                for s in range(2, 4):
-                    if window - s * self.window_size >= 0:
-                        skip_gram = self._create_bigram_words(
-                            new_word,
-                            self._shorten_words(
-                                self.words[i][window - s * self.window_size],
-                                word_len,
-                            ),
-                        )
-
-                        if self.levels > 1:
-                            if self.typed_dict:
-                                skip_gram = (skip_gram, -1)
-                            else:
-                                skip_gram = (skip_gram << self.level_bits) | 0
-                        new_bag[skip_gram] = new_bag.get(skip_gram, 0) + 1
-
-        # cant pickle typed dict
-        if self.typed_dict and self.n_jobs != 1:
-            pdict = dict()
-            for key, val in new_bag.items():
-                pdict[key] = val
-            new_bag = pdict
-
-        return pd.Series(new_bag) if self.return_pandas_data_series else new_bag
-
-    def _add_to_bag(self, bag, word):
-        # store the histogram of word counts
-        bag[word] = bag.get(word, 0) + 1
-
-    def _add_to_pyramid(self, bag, word, last_word, window_ind):
-        if self.remove_repeat_words and word == last_word:
-            return True
-
-        start = 0
-        for i in range(self.levels):
-            if self.typed_dict:
-                new_word, num_quadrants = SFA_NEW._add_level_typed(
-                    word, start, i, window_ind, self.window_size, self.series_length
-                )
-            else:
-                new_word, num_quadrants = (
-                    SFA_NEW._add_level(
-                        word,
-                        start,
-                        i,
-                        window_ind,
-                        self.window_size,
-                        self.series_length,
-                        self.level_bits,
-                    )
-                    if self.word_bits + self.level_bits <= 64
-                    else self._add_level_large(
-                        word,
-                        start,
-                        i,
-                        window_ind,
-                    )
-                )
-            bag[new_word] = bag.get(new_word, 0) + num_quadrants
-            start += num_quadrants
-
-        return False
-
-    @staticmethod
-    @njit(fastmath=True, cache=True)
-    def _add_level(
-        word, start, level, window_ind, window_size, series_length, level_bits
-    ):
-        num_quadrants = pow(2, level)
-        quadrant = start + int(
-            (window_ind + int(window_size / 2)) / int(series_length / num_quadrants)
-        )
-        return (word << level_bits) | quadrant, num_quadrants
-
-    def _add_level_large(self, word, start, level, window_ind):
-        num_quadrants = pow(2, level)
-        quadrant = start + int(
-            (window_ind + int(self.window_size / 2))
-            / int(self.series_length / num_quadrants)
-        )
-        return (word << self.level_bits) | quadrant, num_quadrants
-
-    @staticmethod
-    @njit(fastmath=True, cache=True)
-    def _add_level_typed(word, start, level, window_ind, window_size, series_length):
-        num_quadrants = pow(2, level)
-        quadrant = start + int(
-            (window_ind + int(window_size / 2)) / int(series_length / num_quadrants)
-        )
-        return (word, quadrant), num_quadrants
-
     @staticmethod
     @njit(fastmath=True, cache=True)
     def _create_word(dft, word_length, alphabet_size, breakpoints, letter_bits):
@@ -795,16 +481,6 @@ class SFA_NEW(_PanelToPanelTransformer):
             for bp in range(alphabet_size):
                 if dft[i] <= breakpoints[i][bp]:
                     word = (word << letter_bits) | bp
-                    break
-
-        return word
-
-    def _create_word_large(self, dft):
-        word = 0
-        for i in range(self.word_length):
-            for bp in range(self.alphabet_size):
-                if dft[i] <= self.breakpoints[i][bp]:
-                    word = (word << self.letter_bits) | bp
                     break
 
         return word
@@ -852,89 +528,6 @@ class SFA_NEW(_PanelToPanelTransformer):
     @njit(fastmath=True, cache=True)
     def _create_bigram_word(word, other_word, word_bits):
         return (word << word_bits) | other_word
-
-    def _create_bigram_word_large(self, word, other_word):
-        return (word << self.word_bits) | other_word
-
-    def _shorten_words(self, word, word_len):
-        return (
-            SFA_NEW._shorten_word(word, self.word_length - word_len, self.letter_bits)
-            if self.word_bits <= 64
-            else self._shorten_word_large(word, self.word_length - word_len)
-        )
-
-    @staticmethod
-    @njit(fastmath=True, cache=True)
-    def _shorten_word(word, amount, letter_bits):
-        # shorten a word by set amount of letters
-        return word >> amount * letter_bits
-
-    def _shorten_word_large(self, word, amount):
-        # shorten a word by set amount of letters
-        return word >> amount * self.letter_bits
-
-    def bag_to_string(self, bag):
-        """Convert a bag of SFA words into a string."""
-        s = "{"
-        for word, value in bag.items():
-            s += "{0}: {1}, ".format(
-                self.word_list_typed(word) if self.typed_dict else self.word_list(word),
-                value,
-            )
-        s = s[:-2]
-        return s + "}"
-
-    def word_list(self, word):
-        """Find list of integers to obtain input word."""
-        letters = []
-        word_bits = self.word_bits + self.level_bits
-        shift = word_bits - self.letter_bits
-
-        for _ in range(self.word_length, 0, -1):
-            letters.append(word >> shift & self.letter_max)
-            shift -= self.letter_bits
-
-        if word.bit_length() > self.word_bits + self.level_bits:
-            bigram_letters = []
-            shift = self.word_bits + word_bits - self.letter_bits
-            for _ in range(self.word_length, 0, -1):
-                bigram_letters.append(word >> shift & self.letter_max)
-                shift -= self.letter_bits
-
-            letters = (bigram_letters, letters)
-
-        if self.levels > 1:
-            level = word >> 0 & self.level_max
-            letters = (letters, level)
-
-        return letters
-
-    def word_list_typed(self, word):
-        """Find list of integers to obtain input word."""
-        letters = []
-        shift = self.word_bits - self.letter_bits
-
-        if self.levels > 1:
-            level = word[1]
-            word = word[0]
-
-        for _ in range(self.word_length, 0, -1):
-            letters.append(word >> shift & self.letter_max)
-            shift -= self.letter_bits
-
-        if word.bit_length() > self.word_bits:
-            bigram_letters = []
-            shift = self.word_bits + self.word_bits - self.letter_bits
-            for _ in range(self.word_length, 0, -1):
-                bigram_letters.append(word >> shift & self.letter_max)
-                shift -= self.letter_bits
-
-            letters = (bigram_letters, letters)
-
-        if self.levels > 1:
-            letters = (letters, level)
-
-        return letters
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):

@@ -7,13 +7,17 @@ from warnings import simplefilter
 
 import numpy as np
 import pandas as pd
+
+# from convst.classifiers import R_DST_Ridge
 from joblib import Parallel, delayed
 from scipy.stats import zscore
-from sklearn.linear_model import RidgeClassifierCV
-from sklearn.pipeline import make_pipeline
 
-from sktime.classification.dictionary_based import WEASEL, WEASEL_STEROIDS
-from sktime.transformations.panel.rocket import MiniRocket, Rocket
+from sktime.classification.dictionary_based import WEASEL_STEROIDS
+
+# from sklearn.linear_model import RidgeClassifierCV
+# from sklearn.pipeline import make_pipeline
+
+# from sktime.transformations.panel.rocket import MiniRocket, Rocket
 
 sys.path.append("../../..")
 
@@ -187,22 +191,26 @@ if __name__ == "__main__":
         )
 
         clfs = {
-            "WEASEL": WEASEL(random_state=1379, n_jobs=4),
-            "WEASEL ST": WEASEL_STEROIDS(
+            # "WEASEL": WEASEL(
+            #    random_state=1379,
+            #    n_jobs=4
+            # ),
+            "WEASEL-ST": WEASEL_STEROIDS(
                 random_state=1379,
                 binning_strategies=["equi-depth", "equi-width"],
                 variance=True,
                 ensemble_size=50,
                 n_jobs=4,
             ),
-            "Rocket": make_pipeline(
-                Rocket(random_state=1379),
-                RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True),
-            ),
-            "MiniRocket": make_pipeline(
-                MiniRocket(random_state=1379),
-                RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True),
-            ),
+            # "R_DST": R_DST_Ridge(n_shapelets=10_000, n_jobs=1)
+            # "Rocket": make_pipeline(
+            #    Rocket(random_state=1379),
+            #    RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True),
+            # ),
+            # "MiniRocket": make_pipeline(
+            #    MiniRocket(random_state=1379),
+            #    RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True),
+            # ),
         }
         for name, _ in clfs.items():
             sum_scores[name] = {
