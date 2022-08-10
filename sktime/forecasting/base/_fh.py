@@ -122,7 +122,7 @@ def _check_values(values: Union[VALID_FORECASTING_HORIZON_TYPES]) -> pd.Index:
         valid_types = (
             "int",
             "1D np.ndarray of type int",
-            "1D np.ndarray of type timedelta or dateoffset,"
+            "1D np.ndarray of type timedelta or dateoffset",
             "list",
             *[f"pd.{index_type.__name__}" for index_type in VALID_INDEX_TYPES],
         )
