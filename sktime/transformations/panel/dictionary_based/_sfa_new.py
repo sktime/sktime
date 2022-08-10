@@ -4,8 +4,8 @@
 Configurable SFA transform for discretising time series into words.
 """
 
-__author__ = ["Matthew Middlehurst", "Patrick Schäfer"]
-__all__ = ["SFA"]
+__author__ = ["Patrick Schäfer"]
+__all__ = ["SFA_NEW"]
 
 import math
 import sys
@@ -29,7 +29,7 @@ binning_methods = {"equi-depth", "equi-width", "information-gain", "kmeans"}
 # TODO remove imag-part from dc-component component
 
 
-class SFA(_PanelToPanelTransformer):
+class SFA_NEW(_PanelToPanelTransformer):
     """Symbolic Fourier Approximation (SFA) Transformer.
 
     Overview: for each series:
@@ -185,7 +185,7 @@ class SFA(_PanelToPanelTransformer):
         self.level_bits = 0
         self.level_max = 0
 
-        super(SFA, self).__init__()
+        super(SFA_NEW, self).__init__()
 
     def fit(self, X, y=None):
         """Calculate word breakpoints using MCB or IGB.
@@ -250,6 +250,9 @@ class SFA(_PanelToPanelTransformer):
         self.n_instances, self.series_length = X.shape
         self.breakpoints = self._binning(X, y)
 
+        # TODO parameterize?
+        self.breakpoints[self.breakpoints < 0] = -np.inf
+
         self._is_fitted = True
         return self
 
@@ -269,135 +272,40 @@ class SFA(_PanelToPanelTransformer):
         X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
         X = X.squeeze(1)
 
+        # self.breakpoints[self.breakpoints > 0] = np.inf
+
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", category=NumbaTypeSafetyWarning)
             transform = Parallel(n_jobs=self.n_jobs)(
-                delayed(self._transform_case)(
-                    X[i, :],
-                    supplied_dft=self.binning_dft[i] if self.keep_binning_dft else None,
-                )
-                for i in range(X.shape[0])
+                delayed(self._transform_case)(X[i, :]) for i in range(X.shape[0])
             )
 
-        dim, words = zip(*transform)
-        if self.save_words:
-            self.words = list(words)
+        _, words = zip(*transform)
+        return words
 
-        # cant pickle typed dict
-        if self.typed_dict and self.n_jobs != 1:
-            nl = [None] * len(dim)
-            for i, pdict in enumerate(dim):
-                ndict = (
-                    Dict.empty(
-                        key_type=types.UniTuple(types.int64, 2), value_type=types.uint32
-                    )
-                    if self.levels > 1
-                    else Dict.empty(key_type=types.int64, value_type=types.uint32)
-                )
-                for key, val in pdict.items():
-                    ndict[key] = val
-                nl[i] = pdict
-            dim = nl
+    def _transform_case(self, X):
+        dfts = self._mft(X)
 
-        bags = pd.DataFrame() if self.return_pandas_data_series else [None]
-        bags[0] = list(dim)
-
-        return bags
-
-    def _transform_case(self, X, supplied_dft=None):
-        if supplied_dft is None:
-            dfts = self._mft(X)
-        else:
-            dfts = supplied_dft
-
-        if self.typed_dict:
-            bag = (
-                Dict.empty(
-                    key_type=types.UniTuple(types.int64, 2), value_type=types.uint32
-                )
-                if self.levels > 1
-                else Dict.empty(key_type=types.int64, value_type=types.uint32)
-            )
-        else:
-            bag = {}
-
-        last_word = -1
-        repeat_words = 0
-        words = (
-            np.zeros(dfts.shape[0], dtype=np.int64)
-            if self.word_bits <= 64
-            else [0 for _ in range(dfts.shape[0])]
-        )
+        words = []
 
         for window in range(dfts.shape[0]):
-            word_raw = (
-                SFA._create_word(
-                    dfts[window],
-                    self.word_length,
-                    self.alphabet_size,
-                    self.breakpoints,
-                    self.letter_bits,
-                )
-                if self.word_bits <= 64
-                else self._create_word_large(
-                    dfts[window],
-                )
+            word_raw = SFA_NEW._create_word(
+                dfts[window],
+                self.word_length,
+                self.alphabet_size,
+                self.breakpoints,
+                self.letter_bits,
             )
-            words[window] = word_raw
-
-            repeat_word = (
-                self._add_to_pyramid(
-                    bag, word_raw, last_word, window - int(repeat_words / 2)
-                )
-                if self.levels > 1
-                else self._add_to_bag(bag, word_raw, last_word)
-            )
-
-            if repeat_word:
-                repeat_words += 1
-            else:
-                last_word = word_raw
-                repeat_words = 0
+            words.append(word_raw)
 
             if self.bigrams:
                 if window - self.window_size >= 0:
                     bigram = self._create_bigram_words(
                         word_raw, words[window - self.window_size]
                     )
+                    words.append(bigram)
 
-                    if self.levels > 1:
-                        if self.typed_dict:
-                            bigram = (bigram, -1)
-                        else:
-                            bigram = (bigram << self.level_bits) | 0
-                    bag[bigram] = bag.get(bigram, 0) + 1
-
-            if self.skip_grams:
-                # creates skip-grams, skipping every (s-1)-th word in-between
-                for s in range(2, 4):
-                    if window - s * self.window_size >= 0:
-                        skip_gram = self._create_bigram_words(
-                            word_raw, words[window - s * self.window_size]
-                        )
-
-                        if self.levels > 1:
-                            if self.typed_dict:
-                                skip_gram = (skip_gram, -1)
-                            else:
-                                skip_gram = (skip_gram << self.level_bits) | 0
-                        bag[skip_gram] = bag.get(skip_gram, 0) + 1
-
-        # cant pickle typed dict
-        if self.typed_dict and self.n_jobs != 1:
-            pdict = dict()
-            for key, val in bag.items():
-                pdict[key] = val
-            bag = pdict
-
-        return [
-            pd.Series(bag) if self.return_pandas_data_series else bag,
-            words if self.save_words else [],
-        ]
+        return [{}, np.array(words)]
 
     def _binning(self, X, y=None):
         num_windows_per_inst = math.ceil(self.series_length / self.window_size)
@@ -499,7 +407,7 @@ class SFA(_PanelToPanelTransformer):
         breakpoints = np.zeros((self.word_length, self.alphabet_size))
         clf = DecisionTreeClassifier(
             criterion="entropy",
-            max_depth=int(np.floor(np.log2(self.alphabet_size))),
+            max_depth=np.log2(self.alphabet_size),
             max_leaf_nodes=self.alphabet_size,
             random_state=1,
         )
@@ -631,8 +539,7 @@ class SFA(_PanelToPanelTransformer):
                 dft[1::2] = dft[1::2] * -1  # lower bounding
 
             std = np.std(series)
-            if std == 0:
-                std = 1
+            std = std if std > 1e-8 else 1
             dft *= inverse_sqrt_win_size / std
 
         return dft
@@ -642,34 +549,22 @@ class SFA(_PanelToPanelTransformer):
         length = self.dft_length + start_offset + self.dft_length % 2
         end = max(1, len(series) - self.window_size + 1)
 
-        phis = SFA._get_phis(self.window_size, length)
-        stds = SFA._calc_incremental_mean_std(series, end, self.window_size)
+        phis = SFA_NEW._get_phis(self.window_size, length)
+        stds = SFA_NEW._calc_incremental_mean_std(series, end, self.window_size)
         transformed = np.zeros((end, length))
 
-        # first run with dft
-        if self.use_fallback_dft:
-            mft_data = self._discrete_fourier_transform(
-                series[0 : self.window_size],
-                self.dft_length,
-                self.norm,
-                self.inverse_sqrt_win_size,
-                self.lower_bounding,
-                apply_normalising_factor=False,
-                cut_start_if_norm=False,
-            )
-        else:
-            X_fft = np.fft.rfft(series[: self.window_size])
-            reals = np.real(X_fft)
-            imags = np.imag(X_fft)
-            mft_data = np.empty((length,), dtype=reals.dtype)
-            mft_data[0::2] = reals[: np.uint32(length / 2)]
-            mft_data[1::2] = imags[: np.uint32(length / 2)]
+        X_fft = np.fft.rfft(series[: self.window_size])
+        reals = np.real(X_fft)
+        imags = np.imag(X_fft)
+        mft_data = np.empty((length,), dtype=reals.dtype)
+        mft_data[0::2] = reals[: np.uint32(length / 2)]
+        mft_data[1::2] = imags[: np.uint32(length / 2)]
 
         transformed[0] = mft_data * self.inverse_sqrt_win_size / stds[0]
 
         # other runs using mft
         # moved to external method to use njit
-        SFA._iterate_mft(
+        SFA_NEW._iterate_mft(
             series,
             mft_data,
             phis,
@@ -678,7 +573,6 @@ class SFA(_PanelToPanelTransformer):
             transformed,
             self.inverse_sqrt_win_size,
         )
-
         if self.lower_bounding:
             transformed[:, 1::2] = transformed[:, 1::2] * -1  # lower bounding
 
@@ -774,7 +668,7 @@ class SFA(_PanelToPanelTransformer):
                     new_bag, new_word, last_word, window - int(repeat_words / 2)
                 )
                 if self.levels > 1
-                else self._add_to_bag(new_bag, new_word, last_word)
+                else self._add_to_bag(new_bag, new_word)
             )
 
             if repeat_word:
@@ -827,14 +721,9 @@ class SFA(_PanelToPanelTransformer):
 
         return pd.Series(new_bag) if self.return_pandas_data_series else new_bag
 
-    def _add_to_bag(self, bag, word, last_word):
-        if self.remove_repeat_words and word == last_word:
-            return True
-
+    def _add_to_bag(self, bag, word):
         # store the histogram of word counts
         bag[word] = bag.get(word, 0) + 1
-
-        return False
 
     def _add_to_pyramid(self, bag, word, last_word, window_ind):
         if self.remove_repeat_words and word == last_word:
@@ -843,12 +732,12 @@ class SFA(_PanelToPanelTransformer):
         start = 0
         for i in range(self.levels):
             if self.typed_dict:
-                new_word, num_quadrants = SFA._add_level_typed(
+                new_word, num_quadrants = SFA_NEW._add_level_typed(
                     word, start, i, window_ind, self.window_size, self.series_length
                 )
             else:
                 new_word, num_quadrants = (
-                    SFA._add_level(
+                    SFA_NEW._add_level(
                         word,
                         start,
                         i,
@@ -947,7 +836,7 @@ class SFA(_PanelToPanelTransformer):
 
     def _create_bigram_words(self, word_raw, word):
         return (
-            SFA._create_bigram_word(
+            SFA_NEW._create_bigram_word(
                 word,
                 word_raw,
                 self.word_bits,
@@ -969,7 +858,7 @@ class SFA(_PanelToPanelTransformer):
 
     def _shorten_words(self, word, word_len):
         return (
-            SFA._shorten_word(word, self.word_length - word_len, self.letter_bits)
+            SFA_NEW._shorten_word(word, self.word_length - word_len, self.letter_bits)
             if self.word_bits <= 64
             else self._shorten_word_large(word, self.word_length - word_len)
         )

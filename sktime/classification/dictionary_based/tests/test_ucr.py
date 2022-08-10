@@ -12,8 +12,8 @@ from scipy.stats import zscore
 from sklearn.linear_model import RidgeClassifierCV
 from sklearn.pipeline import make_pipeline
 
-from sktime.classification.dictionary_based import WEASEL_STEROIDS
-from sktime.transformations.panel.rocket import MiniRocket
+from sktime.classification.dictionary_based import WEASEL, WEASEL_STEROIDS
+from sktime.transformations.panel.rocket import MiniRocket, Rocket
 
 sys.path.append("../../..")
 
@@ -187,18 +187,17 @@ if __name__ == "__main__":
         )
 
         clfs = {
-            # WEASEL(
-            #    random_state=1379,
-            #    window_inc=1,
-            #    bigrams=True,
-            #    anova=True,
-            #    n_jobs=4),
-            "WEASEL": WEASEL_STEROIDS(
+            "WEASEL": WEASEL(random_state=1379, n_jobs=4),
+            "WEASEL ST": WEASEL_STEROIDS(
                 random_state=1379,
                 binning_strategies=["equi-depth", "equi-width"],
                 variance=True,
                 ensemble_size=50,
                 n_jobs=4,
+            ),
+            "Rocket": make_pipeline(
+                Rocket(random_state=1379),
+                RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True),
             ),
             "MiniRocket": make_pipeline(
                 MiniRocket(random_state=1379),
@@ -226,40 +225,38 @@ if __name__ == "__main__":
         )
 
         for name, clf in clfs.items():
-            try:
-                fit_time = time.time()
-                clf.fit(X_train, y_train)
-                fit_time = np.round(time.time() - fit_time, 5)
+            # try:
+            fit_time = time.time()
+            clf.fit(X_train, y_train)
+            fit_time = np.round(time.time() - fit_time, 5)
 
-                pred_time = time.time()
-                acc = clf.score(X_test, y_test)
-                pred_time = np.round(time.time() - pred_time, 5)
+            pred_time = time.time()
+            acc = clf.score(X_test, y_test)
+            pred_time = np.round(time.time() - pred_time, 5)
 
-                print(
-                    f"Dataset={dataset_name}"
-                    + f"\n\tclassifier={name}"
-                    + f"\n\ttime (fit, predict)="
-                    f"{np.round(fit_time, 3), np.round(pred_time, 3)}"
-                    + f"\n\taccuracy={np.round(acc, 4)}"
-                )
+            print(
+                f"Dataset={dataset_name}"
+                + f"\n\tclassifier={name}"
+                + f"\n\ttime (fit, predict)="
+                f"{np.round(fit_time, 3), np.round(pred_time, 3)}"
+                + f"\n\taccuracy={np.round(acc, 4)}"
+            )
 
-                sum_scores[name]["dataset"].append(dataset_name)
-                sum_scores[name]["all_scores"].append(acc)
-                sum_scores[name]["fit_time"] += sum_scores[name]["fit_time"] + fit_time
-                sum_scores[name]["pred_time"] += (
-                    sum_scores[name]["pred_time"] + pred_time
-                )
+            sum_scores[name]["dataset"].append(dataset_name)
+            sum_scores[name]["all_scores"].append(acc)
+            sum_scores[name]["fit_time"] += sum_scores[name]["fit_time"] + fit_time
+            sum_scores[name]["pred_time"] += sum_scores[name]["pred_time"] + pred_time
 
-                csv_scores.append((name, clf, dataset_name, acc, fit_time, pred_time))
+            csv_scores.append((name, clf, dataset_name, acc, fit_time, pred_time))
 
-            except Exception as e:
-                print("An exception occurred: {}".format(e))
-                print("\tFailed: ", dataset_name, name)
-                sum_scores[name]["dataset"].append(dataset_name)
-                sum_scores[name]["all_scores"].append(0)
-                sum_scores[name]["fit_time"] += sum_scores[name]["fit_time"] + 0
-                sum_scores[name]["pred_time"] += sum_scores[name]["pred_time"] + 0
-                csv_scores.append((name, clf, dataset_name, 0, 0, 0))
+        # except Exception as e:
+        #    print("An exception occurred: {}".format(e))
+        #    print("\tFailed: ", dataset_name, name)
+        #    sum_scores[name]["dataset"].append(dataset_name)
+        #    sum_scores[name]["all_scores"].append(0)
+        #    sum_scores[name]["fit_time"] += sum_scores[name]["fit_time"] + 0
+        #    sum_scores[name]["pred_time"] += sum_scores[name]["pred_time"] + 0
+        #    csv_scores.append((name, clf, dataset_name, 0, 0, 0))
         print("-----------------")
 
         return sum_scores  # , csv_scores

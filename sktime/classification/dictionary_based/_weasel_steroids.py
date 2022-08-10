@@ -17,7 +17,7 @@ from sklearn.linear_model import RidgeClassifierCV
 from sklearn.utils import check_random_state
 
 from sktime.classification.base import BaseClassifier
-from sktime.transformations.panel.dictionary_based import SFA
+from sktime.transformations.panel.dictionary_based import SFA_NEW
 
 
 class WEASEL_STEROIDS(BaseClassifier):
@@ -108,16 +108,16 @@ class WEASEL_STEROIDS(BaseClassifier):
         anova=False,
         variance=True,
         bigrams=False,
-        binning_strategies=("equi-depth"),
+        binning_strategies=["equi-depth"],
         n_jobs=4,
         ensemble_size=50,
         max_feature_count=20_000,
         min_window=8,
         max_window=32,
-        norm_options=(True, False),
-        word_lengths=(6, 8),
-        alphabet_sizes=(4),
-        use_first_differences=(False),
+        norm_options=[True, False],
+        word_lengths=[6, 8],
+        alphabet_sizes=[4],
+        use_first_differences=[False],
         random_state=None,
     ):
 
@@ -231,7 +231,7 @@ class WEASEL_STEROIDS(BaseClassifier):
             # TODO count subgroups of two letters of the words?
             # TODO test different configurations?
 
-            transformer = SFA(
+            transformer = SFA_NEW(
                 variance=self.variance,
                 word_length=word_length,
                 alphabet_size=alphabet_size,
