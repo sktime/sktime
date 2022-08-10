@@ -162,7 +162,10 @@ class WEASEL_STEROIDS(BaseClassifier):
 
     @staticmethod
     # @njit
-    def _dilation(X, d, first_difference):
+    def _dilation(X, d, ws, first_difference):
+        # padding = np.zeros((len(X), d // 2))
+        # X = np.concatenate((padding, X, padding), axis=1)
+
         if first_difference:
             X2 = np.diff(X, axis=1)
             X = np.concatenate((X, X2), axis=1)
@@ -251,7 +254,7 @@ class WEASEL_STEROIDS(BaseClassifier):
             )
 
             # generate dilated dataset
-            X2 = WEASEL_STEROIDS._dilation(X, dilation, first_difference)
+            X2 = WEASEL_STEROIDS._dilation(X, dilation, window_size, first_difference)
 
             # generate SFA words on subsample
             sfa_words = transformer.fit_transform(X2, y)
@@ -396,7 +399,9 @@ class WEASEL_STEROIDS(BaseClassifier):
         def _parallel_transform_words(
             X, transformer, relevant_features, feature_count, dilation, first_difference
         ):
-            X2 = WEASEL_STEROIDS._dilation(X, dilation, first_difference)
+            X2 = WEASEL_STEROIDS._dilation(
+                X, dilation, transformer.window_size, first_difference
+            )
 
             # SFA transform
             sfa_words = transformer.transform(X2)
