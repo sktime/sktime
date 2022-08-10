@@ -16,105 +16,86 @@ For our long-term plan, see our :ref:`roadmap`.
 Version 0.13.1 - 2022-08-10
 ---------------------------
 
+Highlights
+~~~~~~~~~~
+
+* forecasting metric classes now fully support hierarchical data and hierarchy averaging via ``multilevel`` argument (:pr:`2601`) :user:`fkiraly`
+* probabilisitic forecasting functionality for ``DynamicFactor`` and ``VECM`` (:pr:`2925`, :pr:`3105`) :user:`AurumnPegasus`, :user:`lbventura`
+
+Dependency changes
+~~~~~~~~~~~~~~~~~~
+
+* new soft dependency ``mne``, from ``Filter`` transformer
+* new developer dependency ``pytest-randomly``
+
+Core interface changes
+~~~~~~~~~~~~~~~~~~~~~~
+
+* ``get_fitted_params`` now has a private implementer interface ``_get_fitted_params``, similar to ``fit`` / ``_fit`` etc
+* forecasting metric classes now fully support hierarchical data and hierarchy averaging via ``multilevel`` argument
+
 Enhancements
 ~~~~~~~~~~~~
 
-* [ENH] dedicated ``_update`` for ``BATS`` and ``TBATS`` (:pr:`3086`) :user:`jelc53`
-* [ENH] flexible ``update`` behaviour of forecasting tuners (:pr:`3055`) :user:`fkiraly`
-* [ENH] add check for unique column indices to mtype checks (:pr:`2971`) :user:`fkiraly`
-* [ENH] ``__getitem__`` aka ``[ ]`` dunder for transformers, column subsetting (:pr:`2907`) :user:`fkiraly`
-* [ENH] refactor ``RocketClassifier`` to pipeline delegate (:pr:`3102`) :user:`fkiraly`
-* [ENH] AutoARIMA update options (:pr:`3068`) :user:`fkiraly`
+BaseObject
+^^^^^^^^^^
+
 * [ENH] default implementation for ``get_fitted_params`` and nested fitted params interface (:pr:`3077`) :user:`fkiraly`
-* [ENH] Refactor ``Catch22Classifier`` to pipeline delegate (:pr:`3112`) :user:`fkiraly`
-* [ENH] classifier runtime profiling utility (:pr:`3076`) :user:`fkiraly`
-* [ENH] Rocket regressor and regressor pipelines, regressor delegators (:pr:`3126`) :user:`fkiraly`
-* [ENH] increase stateless scope of ``FunctionTransformer`` and ``TabularToSeriesAdaptor`` (:pr:`3087`) :user:`fkiraly`
-* [ENH] HMM annotation estimator (:pr:`2855`) :user:`miraep8`
-* [ENH] hierarchical forecasting notebook from pydata London 2022 (:pr:`3227`) :user:`fkiraly`
+
+
+Data types, checks, conversions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] add check for unique column indices to mtype checks (:pr:`2971`) :user:`fkiraly`
+
+Forecasting
+^^^^^^^^^^^
+
+* [ENH] flexible ``update`` behaviour of forecasting tuners (:pr:`3055`) :user:`fkiraly`
+* [ENH] flexible ``update`` behaviour of ``AutoARIMA`` (:pr:`3068`) :user:`fkiraly`
 * [ENH] Reducer prototype rework - experimental (:pr:`2833`) :user:`fkiraly`
-
-Refactored
-~~~~~~~~~~
-
-* [ENH] complete refactor all test params (:pr:`3123`) :user:`fkiraly`
-* [ENH] refactor/move simple ``ShapeletTransform`` from ``_contrib`` to ``transformations`` module (:pr:`3136`) :user:`fkiraly`
-* [ENH] Reducer prototype rework - experimental (:pr:`2833`) :user:`fkiraly`
-
-Documentation
-~~~~~~~~~~~~~
-
-* [DOC] code quality docs expanded with instructions for local code quality checking set-up (:pr:`3089`) :user:`fkiraly`
-* [DOC] expanding content in testing section of "adding estimator" developer docs (:pr:`2544`) :user:`aiwalter`
-* [DOC] Fix references (:pr:`3170`) :user:`aiwalter`
-* [DOC] Added docstring examples and cleaning (:pr:`3174`) :user:`aiwalter`
-* [DOC] improved ``STLForecaster`` docstring (:pr:`3203`) :user:`fkiraly`
-* [DOC] Added notebook cell output for notebooks shown in website (:pr:`3215`) :user:`aiwalter`
-* [ENH] hierarchical forecasting notebook from pydata London 2022 (:pr:`3227`) :user:`fkiraly`
 * [ENH] better ``ForecastingHorizon`` construction error message (:pr:`3236`) :user:`fkiraly`
-
-Fixes
-~~~~~
-
-* [BUG] Fix HIVE-COTE2 sporadic test failure (:pr:`3094`) :user:`MatthewMiddlehurst`
-* [BUG] fixes to ``BaseClassifier._predict_proba`` default and ``SklearnClassifierPipeline`` in case ``predict_proba`` is not implemented (:pr:`3104`) :user:`fkiraly`
-* [BUG] fix forecaster default ``predict_quantiles`` for multivariate data (:pr:`3106`) :user:`fkiraly`
-* [MNT] temporarily exclude ``RandomShapeletTransform`` from tests (:pr:`3139`) :user:`fkiraly`
-* [BUG] ``ExpandingWindowSplitter`` constructor ``sklearn`` conformace fix (:pr:`3121`) :user:`fkiraly`
-* [BUG] fixes to inverse transform pipeline logic (:pr:`3085`) :user:`fkiraly`
-* [ENH] classifier single class handling (:pr:`3140`) :user:`fkiraly`
-* [BUG] address shadowing of ``object`` in ``_check_soft_dependencies`` (:pr:`3116`) :user:`fkiraly`
-* [BUG] allowing single class case in sklearn classifiers (trees/forests) (:pr:`3204`) :user:`fkiraly`
-* [BUG] skip check for no. estimators in contracted classifiers (:pr:`3207`) :user:`fkiraly`
-* [BUG] ``check_equal_time_index`` fix (:pr:`3160`) :user:`fkiraly`
-
-Maintenance
-~~~~~~~~~~~
-
-* [MNT] remove custom ``__repr__`` from ``BaseTask``, inherit from ``BaseObject`` (:pr:`3049`) :user:`fkiraly`
-* [DOC] Added NumFOCUS to sponsors website (:pr:`3093`) :user:`aiwalter`
-* [MNT] Updated slack link (:pr:`3066`) :user:`Arvind644`
-* [MNT] Removed hcrystalball from all_extras (:pr:`3091`) :user:`aiwalter`
-* [MNT] cleaning up CI workflow (:pr:`2896`) :user:`lmmentel`
-* [MNT] Bump macos github actions host to macos-11 (:pr:`3107`) :user:`lmmentel`
-* [MNT] temporarily exclude ``RandomShapeletTransform`` from tests (:pr:`3139`) :user:`fkiraly`
-* [MNT] temporary fix for Mac CI failures: skip recurringly failing estimators (:pr:`3134`) :user:`fkiraly`
-* [ENH] isolate soft dependencies (:pr:`3081`) :user:`fkiraly`
-* [MNT] reduce expected test time by making tests conditional on nosoftdeps (:pr:`3092`) :user:`fkiraly`
-* [MNT] Restrict changelog generator to changes to main branch (:pr:`3168`) :user:`lmmentel`
-* [MNT] skip known failure case for ``VARMAX`` (:pr:`3178`) :user:`fkiraly`
-* [MNT] Added pytest-randomly (:pr:`3187`) :user:`aiwalter`
-* [MNT] Updated social links and badges, added LinkedIn (:pr:`3195`) :user:`aiwalter`
-* [ENH] partition design for test matrix to reduce test time to a third (:pr:`3137`) :user:`fkiraly`
-* [MNT] reactivate tests for ``TSFreshRelevantFeatureExtractor`` (:pr:`3196`) :user:`fkiraly`
-* [BUG] prevent circular imports in ``all_estimators`` (:pr:`3198`) :user:`fkiraly`
-
-Refactored
-~~~~~~~~~~
-
-* [ENH] refactored ``ColumnConcatenator``, rewrite using ``pd-multiindex`` inner type (:pr:`2379`) :user:`fkiraly`
-* [ENH] complete refactor all test params (:pr:`3123`) :user:`fkiraly`
-* [ENH] refactor/move simple ``ShapeletTransform`` from ``_contrib`` to ``transformations`` module (:pr:`3136`) :user:`fkiraly`
-
-Other
-~~~~~
-
-* [ENH] Data generator for annotation (:pr:`2996`) :user:`lmmentel`
-* [MNT] Added Python 3.10 to installation docs (:pr:`3098`) :user:`aiwalter`
-* [DOC] Fixing improvements on local linting/precommit setup developer documentation (:pr:`3111`) :user:`C-mmon`
 * [ENH] metrics rework part IV - hierarchical metrics (:pr:`2601`) :user:`fkiraly`
-* [ENH] refactored ``KNeighborsTimeSeriesClassifier`` (:pr:`1998`) :user:`fkiraly`
-* [ENH] refactoring to move default params for fittedparamextractor to concre… (:pr:`2995`) :user:`mariamjabara`
-* [ENH] Featurizer simplified (:pr:`2922`) :user:`fkiraly`
-* [ENH] Dynamic factor predict_interval and predict_quantiles (:pr:`3105`) :user:`lbventura`
-* [Bug] Fix override/defaulting of "prediction intervals" adders  (:pr:`3129`) :user:`bethrice44`
 * [ENH] ``predict_interval`` capability for ``VECM`` (:pr:`2925`) :user:`AurumnPegasus`
+* [ENH] ``DynamicFactor`` ``predict_interval`` and ``predict_quantiles`` (:pr:`3105`) :user:`lbventura`
+
+Time series annotation
+^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] HMM annotation estimator (:pr:`2855`) :user:`miraep8`
+* [ENH] Data generator for annotation (:pr:`2996`) :user:`lmmentel`
+
+
+Time series classification
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] refactored ``KNeighborsTimeSeriesClassifier`` (:pr:`1998`) :user:`fkiraly`
+* [ENH] refactor ``RocketClassifier`` to pipeline delegate (:pr:`3102`) :user:`fkiraly`
+* [ENH] refactor ``Catch22Classifier`` to pipeline delegate (:pr:`3112`) :user:`fkiraly`
+* [ENH] classifier runtime profiling utility (:pr:`3076`) :user:`fkiraly`
+* [ENH] classifier single class handling (:pr:`3140`) :user:`fkiraly`
+
+Time series regression
+^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] ``RocketRegressor`` (:pr:`3126`) :user:`fkiraly`
+* [ENH] regressor pipelines, regressor delegators (:pr:`3126`) :user:`fkiraly`
+
+Transformations
+^^^^^^^^^^^^^^^
+
+* [ENH] ``__getitem__`` aka ``[ ]`` dunder for transformers, column subsetting (:pr:`2907`) :user:`fkiraly`
+* [ENH] ``YtoX`` transformer to use transform endogeneous data as exogegneous (:pr:`2922`) :user:`fkiraly`
+* [ENH] increase stateless scope of ``FunctionTransformer`` and ``TabularToSeriesAdaptor`` (:pr:`3087`) :user:`fkiraly`
+* [ENH] move simple ``ShapeletTransform`` from ``_contrib`` to ``transformations`` module (:pr:`3136`) :user:`fkiraly`
+
+
+
 * [ENH] Refactor dataset loader (:pr:`3109`) :user:`achieveordie`
 * [ENH] Allow lists to be ``cutoff`` argument in ``CutoffSplitter`` (:pr:`3147`) :user:`khrapovs`
 * [DOC] Improve splitters docstrings (:pr:`3075`) :user:`khrapovs`
 * [ENH] Added error_score to evaluate and grid searches (:pr:`3135`) :user:`aiwalter`
 * [ENH] Adding ``VAR._predict_intervals`` (:pr:`3149`) :user:`lbventura`
-* Revert "[BUG] Fix HIVE-COTE2 sporadic test failure" (:pr:`3141`) :user:`fkiraly`
 * [BUG] Fix check_equal_time_index with numpy arrays as input. (:pr:`3167`) :user:`benHeid`
 * [ENH] test all ``BaseObject`` descendants for sklearn compatibility (:pr:`3122`) :user:`fkiraly`
 * [ENH] Changes to CNN Classifier (:pr:`2991`) :user:`AurumnPegasus`
@@ -134,6 +115,80 @@ Other
 * [BUG] Datetimefeatures inconsistent formats / day_of_year not working (:pr:`3223`) :user:`danbartl`
 * functools-wrapper-in-make_mock_estimator (:pr:`3228`) :user:`ltsaprounis`
 
+
+Refactored
+~~~~~~~~~~
+
+* [ENH] refactoring test params for ``FittedParamExtractor`` (:pr:`2995`) :user:`mariamjabara`
+* [ENH] complete refactor all test params (:pr:`3123`) :user:`fkiraly`
+* [ENH] Reducer prototype rework - experimental (:pr:`2833`) :user:`fkiraly`
+
+Documentation
+~~~~~~~~~~~~~
+
+* [DOC] expanding content in testing section of "adding estimator" developer docs (:pr:`2544`) :user:`aiwalter`
+* [DOC] Added Python 3.10 to installation docs (:pr:`3098`) :user:`aiwalter`
+* [DOC] improvements on local linting/precommit setup developer documentation (:pr:`3111`) :user:`C-mmon`
+* [DOC] Fix references (:pr:`3170`) :user:`aiwalter`
+* [DOC] Added docstring examples and cleaning (:pr:`3174`) :user:`aiwalter`
+* [DOC] improved ``STLForecaster`` docstring (:pr:`3203`) :user:`fkiraly`
+* [DOC] Added notebook cell output for notebooks shown in website (:pr:`3215`) :user:`aiwalter`
+* [DOC] hierarchical forecasting notebook from pydata London 2022 (:pr:`3227`) :user:`fkiraly`
+
+Fixes
+~~~~~
+
+Forecasting
+^^^^^^^^^^^
+
+* [BUG] fix forecaster default ``predict_quantiles`` for multivariate data (:pr:`3106`) :user:`fkiraly`
+* [BUG] ``ExpandingWindowSplitter`` constructor ``sklearn`` conformace fix (:pr:`3121`) :user:`fkiraly`
+* [BUG] Fix override/defaulting of "prediction intervals" adders  (:pr:`3129`) :user:`bethrice44`
+* [BUG] ``check_equal_time_index`` fix (:pr:`3160`) :user:`fkiraly`
+
+Time series classification
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [BUG] Fix HIVE-COTE2 sporadic test failure (:pr:`3094`) :user:`MatthewMiddlehurst`
+* [BUG] fixes to ``BaseClassifier._predict_proba`` default and ``SklearnClassifierPipeline`` in case ``predict_proba`` is not implemented (:pr:`3104`) :user:`fkiraly`
+* [BUG] allowing single class case in sklearn classifiers (trees/forests) (:pr:`3204`) :user:`fkiraly`
+* [BUG] skip check for no. estimators in contracted classifiers (:pr:`3207`) :user:`fkiraly`
+
+Transformations
+^^^^^^^^^^^^^^^
+
+* [BUG] fixed inverse transform logic in transformer pipelines (:pr:`3085`) :user:`fkiraly`
+
+Testing framework
+^^^^^^^^^^^^^^^^^
+
+* [BUG] address shadowing of ``object`` in ``_check_soft_dependencies`` (:pr:`3116`) :user:`fkiraly`
+
+Maintenance
+~~~~~~~~~~~
+
+* [MNT] Updated slack link (:pr:`3066`) :user:`Arvind644`
+* [MNT] Removed ``hcrystalball`` from ``all_extras`` dependency set (:pr:`3091`) :user:`aiwalter`
+* [MNT] cleaning up CI workflow (:pr:`2896`) :user:`lmmentel`
+* [MNT] Bump macos github actions host to macos-11 (:pr:`3107`) :user:`lmmentel`
+* [MNT] temporarily exclude ``RandomShapeletTransform`` from tests (:pr:`3139`) :user:`fkiraly`
+* [MNT] temporary fix for Mac CI failures: skip recurringly failing estimators (:pr:`3134`) :user:`fkiraly`
+* [ENH] isolate soft dependencies (:pr:`3081`) :user:`fkiraly`
+* [MNT] reduce expected test time by making tests conditional on nosoftdeps (:pr:`3092`) :user:`fkiraly`
+* [MNT] temporarily exclude ``RandomShapeletTransform`` from tests (:pr:`3139`) :user:`fkiraly`
+* [MNT] Restrict changelog generator to changes to main branch (:pr:`3168`) :user:`lmmentel`
+* [MNT] skip known failure case for ``VARMAX`` (:pr:`3178`) :user:`fkiraly`
+* [MNT] Added ``pytest-randomly`` (:pr:`3187`) :user:`aiwalter`
+* [MNT] Updated social links and badges, added LinkedIn (:pr:`3195`) :user:`aiwalter`
+* [ENH] partition design for test matrix to reduce test time to a third (:pr:`3137`) :user:`fkiraly`
+* [MNT] reactivate tests for ``TSFreshRelevantFeatureExtractor`` (:pr:`3196`) :user:`fkiraly`
+* [BUG] prevent circular imports in ``all_estimators`` (:pr:`3198`) :user:`fkiraly`
+
+Other
+~~~~~
+
+
+
 Contributors
 ~~~~~~~~~~~~
 
@@ -148,7 +203,6 @@ Contributors
 :user:`ciaran-g`,
 :user:`danbartl`,
 :user:`fkiraly`,
-:user:`jelc53`,
 :user:`kcc-lion`,
 :user:`khrapovs`,
 :user:`lbventura`,
@@ -227,9 +281,9 @@ Performance metrics
 * removed: ``func`` and ``name`` args from all performance metric constructors.
 * changed: the ``greater_is_better`` property is replaced by the ``greater_is_better`` tag.
 
-Time series classification
+ime series classification
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
-
+T
 * removed: ``"capability:early_prediction"`` tag from ``BaseClassifier`` descendants.
   Early classifiers are their own estimator type now.
   In order to search for early classifiers, use the ``early-classifier`` scitype string instead of the tag.
