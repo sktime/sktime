@@ -28,8 +28,8 @@ def _split(X, y, train, test):
     return X_train, y_train, X_test, y_test
 
 
-@pytest.mark.parametrize("fold_no", [5])
-@pytest.mark.parametrize("random_seed", [21])
+@pytest.mark.parametrize("fold_no", [5, 10])
+@pytest.mark.parametrize("random_seed", [42])
 def test_evaluate_classification_metrics(fold_no, random_seed):
     """Test evaluate for basic classification problems."""
     # Merge train and test into one dataset
@@ -45,7 +45,7 @@ def test_evaluate_classification_metrics(fold_no, random_seed):
     arrow_y = np.concatenate([arrow_train_y, arrow_test_y], axis=0)
 
     classifier = RocketClassifier()
-    cv = ShuffleSplit(n_splits=fold_no, test_size=0.2, random_state=random_seed)
+    cv = ShuffleSplit(n_splits=fold_no, test_size=0.3, random_state=random_seed)
 
     actual = evaluate_classification(classifier=classifier, X=arrow_X, y=arrow_y, cv=cv)
 
