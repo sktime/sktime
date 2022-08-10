@@ -146,6 +146,7 @@ Documentation
 * [DOC] Added Python 3.10 to installation docs (:pr:`3098`) :user:`aiwalter`
 * [DOC] improvements on local linting/precommit setup developer documentation (:pr:`3111`) :user:`C-mmon`
 * [DOC] Changed sktime logo on README (:pr:`3143`) :user:`aiwalter`
+* [DOC] clarifications in the ``Deseasonalizer`` docstring (:pr:`3157`) :user:`fkiraly`
 * [DOC] Fix references (:pr:`3170`) :user:`aiwalter`
 * [DOC] Added docstring examples and cleaning (:pr:`3174`) :user:`aiwalter`
 * [DOC] added more detail to step 4 of high-level steps to implementing an es… (:pr:`3200`) :user:`kcc-lion`
