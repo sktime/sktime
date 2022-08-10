@@ -250,6 +250,9 @@ class SFA(_PanelToPanelTransformer):
         self.n_instances, self.series_length = X.shape
         self.breakpoints = self._binning(X, y)
 
+        # TODO parameterize?
+        self.breakpoints[self.breakpoints < 0] = -np.inf
+
         self._is_fitted = True
         return self
 
@@ -269,6 +272,8 @@ class SFA(_PanelToPanelTransformer):
         X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
         X = X.squeeze(1)
 
+        # self.breakpoints[self.breakpoints > 0] = np.inf
+
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", category=NumbaTypeSafetyWarning)
             transform = Parallel(n_jobs=self.n_jobs)(
@@ -278,12 +283,10 @@ class SFA(_PanelToPanelTransformer):
         _, words = zip(*transform)
         return words
 
-    def _transform_case(self, X, supplied_dft=None):
+    def _transform_case(self, X):
         dfts = self._mft(X)
-        # TODO dfts[dfts < 0] = 0
 
-        bag = {}
-        words = np.array([0 for _ in range(dfts.shape[0])])
+        words = []
 
         for window in range(dfts.shape[0]):
             word_raw = SFA._create_word(
@@ -293,9 +296,16 @@ class SFA(_PanelToPanelTransformer):
                 self.breakpoints,
                 self.letter_bits,
             )
-            words[window] = word_raw
+            words.append(word_raw)
 
-        return [bag, words]
+            if self.bigrams:
+                if window - self.window_size >= 0:
+                    bigram = self._create_bigram_words(
+                        word_raw, words[window - self.window_size]
+                    )
+                    words.append(bigram)
+
+        return [{}, np.array(words)]
 
     def _binning(self, X, y=None):
         num_windows_per_inst = math.ceil(self.series_length / self.window_size)
@@ -529,8 +539,7 @@ class SFA(_PanelToPanelTransformer):
                 dft[1::2] = dft[1::2] * -1  # lower bounding
 
             std = np.std(series)
-            if std == 0:
-                std = 1
+            std = std if std > 1e-8 else 1
             dft *= inverse_sqrt_win_size / std
 
         return dft
