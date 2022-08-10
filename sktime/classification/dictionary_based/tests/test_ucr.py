@@ -3,12 +3,17 @@
 import os
 import sys
 import time
+from warnings import simplefilter
 
 import numpy as np
 import pandas as pd
+from joblib import Parallel, delayed
 from scipy.stats import zscore
+from sklearn.linear_model import RidgeClassifierCV
+from sklearn.pipeline import make_pipeline
 
 from sktime.classification.dictionary_based import WEASEL_STEROIDS
+from sktime.transformations.panel.rocket import MiniRocket
 
 sys.path.append("../../..")
 
@@ -63,9 +68,9 @@ dataset_names_excerpt = [
     # 'EOGHorizontalSignal',
     # 'EOGVerticalSignal',
     # 'EthanolLevel',
-    # 'FaceAll',
-    # "FaceFour",
-    # 'FacesUCR',
+    "FaceAll",
+    "FaceFour",
+    "FacesUCR",
     # 'FiftyWords',
     # 'Fish',
     # 'FordA',
@@ -156,25 +161,23 @@ dataset_names_excerpt = [
     # 'Worms',
     # 'WormsTwoClass',
     # 'Yoga'
-    "DiatomSizeReduction",
-    "DistalPhalanxOutlineAgeGroup",
-    "DistalPhalanxOutlineCorrect",
-    "DistalPhalanxTW",
-    "ECG200",
-    "ECGFiveDays",
-    "MiddlePhalanxOutlineAgeGroup",
-    "MiddlePhalanxOutlineCorrect",
-    "MiddlePhalanxTW",
 ]
+
 
 others = []
 
 DATA_PATH = "/Users/bzcschae/workspace/similarity/datasets/classification/"
+parallel_jobs = 4
+
 
 if __name__ == "__main__":
-    scores = []
 
-    for dataset_name in dataset_names_excerpt:
+    def _parallel_fit(dataset_name):
+        csv_scores = []
+        sum_scores = {}
+
+        # ignore all future warnings
+        simplefilter(action="ignore", category=FutureWarning)
 
         X_train, y_train = load_from_ucr_tsv_to_dataframe_plain(
             os.path.join(DATA_PATH, dataset_name, dataset_name + "_TRAIN")
@@ -183,72 +186,123 @@ if __name__ == "__main__":
             os.path.join(DATA_PATH, dataset_name, dataset_name + "_TEST")
         )
 
-        # z-norm training/test data
-        X_train = zscore(X_train, axis=1).to_numpy()
-        X_test = zscore(X_test, axis=1).to_numpy()
-        X_train = np.reshape(np.array(X_train), (len(X_train), 1, -1))
-        X_test = np.reshape(np.array(X_test), (len(X_test), 1, -1))
-
-        clfs = [
+        clfs = {
             # WEASEL(
             #    random_state=1379,
             #    window_inc=1,
             #    bigrams=True,
             #    anova=True,
             #    n_jobs=4),
-            WEASEL_STEROIDS(
+            "WEASEL": WEASEL_STEROIDS(
                 random_state=1379,
-                binning_strategy="equi-depth",
-                variance=False,
-                ensemble_size=100,
+                binning_strategies=["equi-depth", "equi-width"],
+                variance=True,
+                ensemble_size=50,
                 n_jobs=4,
             ),
-            # WEASEL_STEROIDS(
-            #     random_state=1379,
-            #     binning_strategy="equi-width",
-            #     anova=True,
-            #     bigrams=False,
-            #     window_inc=1,
-            #     p_threshold=1,
-            #     n_jobs=4,
-            # ),
-            # WEASEL_STEROIDS(
-            #     random_state=1379,
-            #     # binning_strategy="equi-width",
-            #     anova=True,
-            #     bigrams=False,
-            #     window_inc=1,
-            #     p_threshold=1,
-            #     n_jobs=4,
-            # ),
-        ]
+            "MiniRocket": make_pipeline(
+                MiniRocket(random_state=1379),
+                RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True),
+            ),
+        }
+        for name, _ in clfs.items():
+            sum_scores[name] = {
+                "dataset": [],
+                "all_scores": [],
+                "fit_time": 0.0,
+                "pred_time": 0.0,
+            }
 
-        # print(f"\nDataset: {dataset_name, np.shape(X_train)}")
-        for clf in clfs:
-            fit_time = time.process_time()
-            clf.fit(X_train, y_train)
-            fit_time = np.round(time.process_time() - fit_time, 5)
+        # z-norm training/test data
+        X_train = zscore(X_train, axis=1)
+        X_test = zscore(X_test, axis=1)
+        X_train = np.reshape(np.array(X_train), (len(X_train), 1, -1))
+        X_test = np.reshape(np.array(X_test), (len(X_test), 1, -1))
 
-            pred_time = time.process_time()
-            acc = clf.score(X_test, y_test)
-            pred_time = np.round(time.process_time() - pred_time, 5)
+        print(
+            f"Running Dataset={dataset_name}, "
+            f"Train-Size={np.shape(X_train)}, "
+            f"Test-Size={np.shape(X_test)}"
+        )
 
-            # print(
-            #    f"Dataset={dataset_name},
-            #    Train-Size={np.shape(X_train)},
-            #    Test-Size={np.shape(X_test)}"
-            # )
-            # print(f"\ttime (fit, predict)={fit_time, pred_time}")
-            # print(f"\taccuracy_score={acc}")
+        for name, clf in clfs.items():
+            try:
+                fit_time = time.time()
+                clf.fit(X_train, y_train)
+                fit_time = np.round(time.time() - fit_time, 5)
 
-            scores.append((clf, dataset_name, acc, fit_time, pred_time))
-            pd.DataFrame.from_records(
-                scores,
-                columns=[
-                    "Classifier",
-                    "Dataset",
-                    "Accuracy",
-                    "Fit-Time",
-                    "Predict-Time",
-                ],
-            ).to_csv("scores.csv", index=None)
+                pred_time = time.time()
+                acc = clf.score(X_test, y_test)
+                pred_time = np.round(time.time() - pred_time, 5)
+
+                print(
+                    f"Dataset={dataset_name}"
+                    + f"\n\tclassifier={name}"
+                    + f"\n\ttime (fit, predict)="
+                    f"{np.round(fit_time, 3), np.round(pred_time, 3)}"
+                    + f"\n\taccuracy={np.round(acc, 4)}"
+                )
+
+                sum_scores[name]["dataset"].append(dataset_name)
+                sum_scores[name]["all_scores"].append(acc)
+                sum_scores[name]["fit_time"] += sum_scores[name]["fit_time"] + fit_time
+                sum_scores[name]["pred_time"] += (
+                    sum_scores[name]["pred_time"] + pred_time
+                )
+
+                csv_scores.append((name, clf, dataset_name, acc, fit_time, pred_time))
+
+            except Exception as e:
+                print("An exception occurred: {}".format(e))
+                print("\tFailed: ", dataset_name, name)
+                sum_scores[name]["dataset"].append(dataset_name)
+                sum_scores[name]["all_scores"].append(0)
+                sum_scores[name]["fit_time"] += sum_scores[name]["fit_time"] + 0
+                sum_scores[name]["pred_time"] += sum_scores[name]["pred_time"] + 0
+                csv_scores.append((name, clf, dataset_name, 0, 0, 0))
+        print("-----------------")
+
+        return sum_scores  # , csv_scores
+
+    parallel_res = Parallel(n_jobs=parallel_jobs)(
+        delayed(_parallel_fit)(dataset) for dataset in dataset_names_excerpt
+    )
+
+    sum_scores = {}
+    for result in parallel_res:
+        if not sum_scores:
+            sum_scores = result
+        else:
+            for name, data in result.items():
+                for key, value in data.items():
+                    sum_scores[name][key] += value
+
+    print("\n\n---- Final results -----")
+
+    for name, _ in sum_scores.items():
+        print("---- Name", name, "-----")
+        print(
+            "Total mean-accuracy:", np.round(np.mean(sum_scores[name]["all_scores"]), 3)
+        )
+        print(
+            "Total std-accuracy:", np.round(np.std(sum_scores[name]["all_scores"]), 3)
+        )
+        print(
+            "Total median-accuracy:",
+            np.round(np.median(sum_scores[name]["all_scores"]), 2),
+        )
+        print("Total fit_time:", np.round(sum_scores[name]["fit_time"], 2))
+        print("Total pred_time:", np.round(sum_scores[name]["pred_time"], 2))
+        print("-----------------")
+
+    """
+    pd.DataFrame.from_records(
+        scores,
+        columns=[
+            "Classifier",
+            "Dataset",
+            "Accuracy",
+            "Fit-Time",
+            "Predict-Time",
+        ],
+    ).to_csv("scores.csv", index=None)"""

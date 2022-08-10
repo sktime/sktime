@@ -111,27 +111,34 @@ class WEASEL_STEROIDS(BaseClassifier):
         binning_strategies=("equi-depth"),
         n_jobs=4,
         ensemble_size=50,
+        max_feature_count=20_000,
+        min_window=8,
+        max_window=32,
+        norm_options=(True, False),
+        word_lengths=(6, 8),
+        alphabet_sizes=(4),
+        use_first_differences=(False),
         random_state=None,
     ):
 
         # currently greater values than 4 are not supported.
-        self.alphabet_sizes = [4]
+        self.alphabet_sizes = alphabet_sizes
 
         self.anova = anova
         self.variance = variance
 
-        self.norm_options = [True, False]
-        self.word_lengths = [6, 8]
+        self.norm_options = norm_options
+        self.word_lengths = word_lengths
 
         self.bigrams = bigrams
         self.binning_strategies = binning_strategies
         self.random_state = random_state
 
-        self.min_window = 8
-        self.max_window = 32
+        self.min_window = min_window
+        self.max_window = max_window
         self.ensemble_size = ensemble_size
-        self.max_feature_count = 20_000
-
+        self.max_feature_count = max_feature_count
+        self.use_first_differences = use_first_differences
         self.window_sizes = []
 
         self.series_length = 0
@@ -150,8 +157,9 @@ class WEASEL_STEROIDS(BaseClassifier):
     @staticmethod
     # @njit
     def _dilation(X, d, first_difference):
-        # gap = np.zeros((len(X), 1))
-        # gap[:] = -10000
+        if first_difference:
+            X2 = np.diff(X, axis=1)
+            X = np.concatenate((X, X2), axis=1)
 
         # dilation on actual data
         X_first = np.array(X)[:, 0::d]
@@ -159,9 +167,10 @@ class WEASEL_STEROIDS(BaseClassifier):
             X_second = X[:, i::d]
             X_first = np.concatenate((X_first, X_second), axis=1)
 
-        if not first_difference:
-            return X_first
+        # if not first_difference:
+        return X_first
 
+        """
         # dilation on first order differences
         if first_difference:
             X2 = np.diff(X, axis=1)
@@ -170,6 +179,7 @@ class WEASEL_STEROIDS(BaseClassifier):
                 X2_second = X2[:, i::d]
                 X2_first = np.concatenate((X2_first, X2_second), axis=1)
             return np.concatenate((X_first, X2_first), axis=1)
+        """
 
     def _fit(self, X, y):
         """Build a WEASEL classifiers from the training set (X, y).
@@ -215,7 +225,7 @@ class WEASEL_STEROIDS(BaseClassifier):
                 2
                 ** rng.uniform(0, np.log2((self.series_length - 1) / (window_size - 1)))
             )
-            first_difference = False  # rng.choice([True, False])
+            first_difference = rng.choice(self.use_first_differences)
             binning_strategy = rng.choice(self.binning_strategies)
 
             # TODO count subgroups of two letters of the words?
@@ -265,8 +275,6 @@ class WEASEL_STEROIDS(BaseClassifier):
                 for key in sfa_words[j]:
                     if key in relevant_features:
                         all_win_words[j, relevant_features[key]] += 1
-
-            # all_win_words[all_win_words<2] = 0
 
             return (
                 all_win_words,

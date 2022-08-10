@@ -1,36 +1,197 @@
 Classifier,Dataset,Accuracy,Fit-Time,Predict-Time
-"WEASEL_STEROIDS(ensemble_size=100, random_state=1379)",ArrowHead,0.8742857142857143,2.02374,1.20604
-"WEASEL_STEROIDS(ensemble_size=100, random_state=1379)",Beef,0.8333333333333334,3.94566,1.01695
-"WEASEL_STEROIDS(ensemble_size=100, random_state=1379)",BeetleFly,0.9,1.27982,1.08603
-"WEASEL_STEROIDS(ensemble_size=100, random_state=1379)",BirdChicken,0.9,1.31939,1.10271
-"WEASEL_STEROIDS(ensemble_size=100, random_state=1379)",Car,0.9166666666666666,3.18903,1.16466
-"WEASEL_STEROIDS(ensemble_size=100, random_state=1379)",CBF,0.9888888888888889,1.77616,1.35703
-"WEASEL_STEROIDS(ensemble_size=100, random_state=1379)",Coffee,1.0,1.39173,0.98717
-"WEASEL_STEROIDS(ensemble_size=100, random_state=1379)",DiatomSizeReduction,0.934640522875817,2.32315,1.26271
-"WEASEL_STEROIDS(ensemble_size=100, random_state=1379)",DistalPhalanxOutlineAgeGroup,0.7553956834532374,3.76057,1.08121
-"WEASEL_STEROIDS(ensemble_size=100, random_state=1379)",DistalPhalanxOutlineCorrect,0.7681159420289855,2.01777,1.01075
-"WEASEL_STEROIDS(ensemble_size=100, random_state=1379)",DistalPhalanxTW,0.697841726618705,5.80291,0.60909
-"WEASEL_STEROIDS(ensemble_size=100, random_state=1379)",ECG200,0.86,1.25723,0.85179
-"WEASEL_STEROIDS(ensemble_size=100, random_state=1379)",ECGFiveDays,0.9721254355400697,0.85423,1.21363
-"WEASEL_STEROIDS(ensemble_size=100, random_state=1379)",Gun_Point,0.9866666666666667,1.28756,1.16117
-"WEASEL_STEROIDS(ensemble_size=100, random_state=1379)",ItalyPowerDemand,0.9620991253644315,1.41036,1.31573
-"WEASEL_STEROIDS(ensemble_size=100, random_state=1379)",MiddlePhalanxOutlineAgeGroup,0.564935064935065,4.17643,1.11504
-"WEASEL_STEROIDS(ensemble_size=100, random_state=1379)",MiddlePhalanxOutlineCorrect,0.8350515463917526,2.35488,1.17714
-"WEASEL_STEROIDS(ensemble_size=100, random_state=1379)",MiddlePhalanxTW,0.5324675324675324,7.60756,1.05497
-"WEASEL_STEROIDS(ensemble_size=100, random_state=1379)",OliveOil,0.8666666666666667,3.27972,1.11442
-"WEASEL_STEROIDS(ensemble_size=100, random_state=1379)",Plane,1.0,4.5394,1.09999
-"WEASEL_STEROIDS(ensemble_size=100, random_state=1379)",ProximalPhalanxOutlineAgeGroup,0.8390243902439024,4.25058,1.14806
-"WEASEL_STEROIDS(ensemble_size=100, random_state=1379)",ProximalPhalanxOutlineCorrect,0.8831615120274914,2.50191,1.21194
-"WEASEL_STEROIDS(ensemble_size=100, random_state=1379)",ProximalPhalanxTW,0.8048780487804879,6.78933,1.14177
-"WEASEL_STEROIDS(ensemble_size=100, random_state=1379)",SonyAIBORobot Surface,0.7820299500831946,1.083,1.12474
-"WEASEL_STEROIDS(ensemble_size=100, random_state=1379)",SonyAIBORobot SurfaceII,0.9370409233997902,1.02589,1.18636
-"WEASEL_STEROIDS(ensemble_size=100, random_state=1379)",synthetic_control,0.97,4.39944,1.0813
-"WEASEL_STEROIDS(ensemble_size=100, random_state=1379)",TwoLeadECG,0.9833187006145742,0.9303,1.18471
-"WEASEL_STEROIDS(ensemble_size=100, random_state=1379)",Wine,0.8703703703703703,1.35669,1.04253
-"WEASEL_STEROIDS(ensemble_size=100, random_state=1379)",DiatomSizeReduction,0.934640522875817,2.17145,1.18855
-"WEASEL_STEROIDS(ensemble_size=100, random_state=1379)",DistalPhalanxOutlineAgeGroup,0.7553956834532374,3.74437,1.06019
-"WEASEL_STEROIDS(ensemble_size=100, random_state=1379)",DistalPhalanxOutlineCorrect,0.7681159420289855,2.02474,1.08385
-"WEASEL_STEROIDS(ensemble_size=100, random_state=1379)",DistalPhalanxTW,0.697841726618705,6.18884,1.05265
-"WEASEL_STEROIDS(ensemble_size=100, random_state=1379)",ECG200,0.86,1.35308,0.8596
-"WEASEL_STEROIDS(ensemble_size=100, random_state=1379)",ECGFiveDays,0.9721254355400697,0.92817,1.09014
-"WEASEL_STEROIDS(ensemble_size=100, random_state=1379)",MiddlePhalanxOutlineAgeGroup,0.564935064935065,4.03028,1.02783
+"WEASEL_STEROIDS(ensemble_size=500, random_state=1379)",ArrowHead,0.9085714285714286,0.40099,1.50803
+"Pipeline(steps=[('minirocket', MiniRocket(random_state=1379)),
+                ('ridgeclassifiercv',
+                 RidgeClassifierCV(alphas=array([1.00000000e-03, 4.64158883e-03, 2.15443469e-02, 1.00000000e-01,
+       4.64158883e-01, 2.15443469e+00, 1.00000000e+01, 4.64158883e+01,
+       2.15443469e+02, 1.00000000e+03]),
+                                   normalize=True))])",ArrowHead,0.8628571428571429,0.8113,1.42061
+"WEASEL_STEROIDS(ensemble_size=500, random_state=1379)",Beef,0.8333333333333334,0.95548,1.12705
+"Pipeline(steps=[('minirocket', MiniRocket(random_state=1379)),
+                ('ridgeclassifiercv',
+                 RidgeClassifierCV(alphas=array([1.00000000e-03, 4.64158883e-03, 2.15443469e-02, 1.00000000e-01,
+       4.64158883e-01, 2.15443469e+00, 1.00000000e+01, 4.64158883e+01,
+       2.15443469e+02, 1.00000000e+03]),
+                                   normalize=True))])",Beef,0.8666666666666667,1.26083,0.93593
+"WEASEL_STEROIDS(ensemble_size=500, random_state=1379)",BeetleFly,0.95,1.0334,1.1563
+"Pipeline(steps=[('minirocket', MiniRocket(random_state=1379)),
+                ('ridgeclassifiercv',
+                 RidgeClassifierCV(alphas=array([1.00000000e-03, 4.64158883e-03, 2.15443469e-02, 1.00000000e-01,
+       4.64158883e-01, 2.15443469e+00, 1.00000000e+01, 4.64158883e+01,
+       2.15443469e+02, 1.00000000e+03]),
+                                   normalize=True))])",BeetleFly,0.9,0.98842,0.70749
+"WEASEL_STEROIDS(ensemble_size=500, random_state=1379)",BirdChicken,0.9,0.86266,1.16502
+"Pipeline(steps=[('minirocket', MiniRocket(random_state=1379)),
+                ('ridgeclassifiercv',
+                 RidgeClassifierCV(alphas=array([1.00000000e-03, 4.64158883e-03, 2.15443469e-02, 1.00000000e-01,
+       4.64158883e-01, 2.15443469e+00, 1.00000000e+01, 4.64158883e+01,
+       2.15443469e+02, 1.00000000e+03]),
+                                   normalize=True))])",BirdChicken,0.9,0.98592,0.78017
+"WEASEL_STEROIDS(ensemble_size=500, random_state=1379)",Car,0.9166666666666666,1.14428,1.29591
+"Pipeline(steps=[('minirocket', MiniRocket(random_state=1379)),
+                ('ridgeclassifiercv',
+                 RidgeClassifierCV(alphas=array([1.00000000e-03, 4.64158883e-03, 2.15443469e-02, 1.00000000e-01,
+       4.64158883e-01, 2.15443469e+00, 1.00000000e+01, 4.64158883e+01,
+       2.15443469e+02, 1.00000000e+03]),
+                                   normalize=True))])",Car,0.9166666666666666,1.60617,1.51305
+"WEASEL_STEROIDS(ensemble_size=500, random_state=1379)",CBF,0.9911111111111112,0.29259,2.23986
+"Pipeline(steps=[('minirocket', MiniRocket(random_state=1379)),
+                ('ridgeclassifiercv',
+                 RidgeClassifierCV(alphas=array([1.00000000e-03, 4.64158883e-03, 2.15443469e-02, 1.00000000e-01,
+       4.64158883e-01, 2.15443469e+00, 1.00000000e+01, 4.64158883e+01,
+       2.15443469e+02, 1.00000000e+03]),
+                                   normalize=True))])",CBF,0.9988888888888889,0.47159,1.72998
+"WEASEL_STEROIDS(ensemble_size=500, random_state=1379)",Coffee,1.0,1.00373,1.10333
+"Pipeline(steps=[('minirocket', MiniRocket(random_state=1379)),
+                ('ridgeclassifiercv',
+                 RidgeClassifierCV(alphas=array([1.00000000e-03, 4.64158883e-03, 2.15443469e-02, 1.00000000e-01,
+       4.64158883e-01, 2.15443469e+00, 1.00000000e+01, 4.64158883e+01,
+       2.15443469e+02, 1.00000000e+03]),
+                                   normalize=True))])",Coffee,1.0,0.89476,0.58857
+"WEASEL_STEROIDS(ensemble_size=500, random_state=1379)",DiatomSizeReduction,0.9379084967320261,0.43042,2.05534
+"Pipeline(steps=[('minirocket', MiniRocket(random_state=1379)),
+                ('ridgeclassifiercv',
+                 RidgeClassifierCV(alphas=array([1.00000000e-03, 4.64158883e-03, 2.15443469e-02, 1.00000000e-01,
+       4.64158883e-01, 2.15443469e+00, 1.00000000e+01, 4.64158883e+01,
+       2.15443469e+02, 1.00000000e+03]),
+                                   normalize=True))])",DiatomSizeReduction,0.9248366013071896,0.78373,2.1505
+"WEASEL_STEROIDS(ensemble_size=500, random_state=1379)",DistalPhalanxOutlineAgeGroup,0.762589928057554,2.21249,1.13215
+"Pipeline(steps=[('minirocket', MiniRocket(random_state=1379)),
+                ('ridgeclassifiercv',
+                 RidgeClassifierCV(alphas=array([1.00000000e-03, 4.64158883e-03, 2.15443469e-02, 1.00000000e-01,
+       4.64158883e-01, 2.15443469e+00, 1.00000000e+01, 4.64158883e+01,
+       2.15443469e+02, 1.00000000e+03]),
+                                   normalize=True))])",DistalPhalanxOutlineAgeGroup,0.7482014388489209,2.11549,0.67382
+"WEASEL_STEROIDS(ensemble_size=500, random_state=1379)",DistalPhalanxOutlineCorrect,0.7789855072463768,3.63533,1.25528
+"Pipeline(steps=[('minirocket', MiniRocket(random_state=1379)),
+                ('ridgeclassifiercv',
+                 RidgeClassifierCV(alphas=array([1.00000000e-03, 4.64158883e-03, 2.15443469e-02, 1.00000000e-01,
+       4.64158883e-01, 2.15443469e+00, 1.00000000e+01, 4.64158883e+01,
+       2.15443469e+02, 1.00000000e+03]),
+                                   normalize=True))])",DistalPhalanxOutlineCorrect,0.782608695652174,3.0569,0.98682
+"WEASEL_STEROIDS(ensemble_size=500, random_state=1379)",DistalPhalanxTW,0.6906474820143885,2.11677,1.06474
+"Pipeline(steps=[('minirocket', MiniRocket(random_state=1379)),
+                ('ridgeclassifiercv',
+                 RidgeClassifierCV(alphas=array([1.00000000e-03, 4.64158883e-03, 2.15443469e-02, 1.00000000e-01,
+       4.64158883e-01, 2.15443469e+00, 1.00000000e+01, 4.64158883e+01,
+       2.15443469e+02, 1.00000000e+03]),
+                                   normalize=True))])",DistalPhalanxTW,0.697841726618705,2.12064,0.67862
+"WEASEL_STEROIDS(ensemble_size=500, random_state=1379)",ECG200,0.84,1.04725,1.02154
+"Pipeline(steps=[('minirocket', MiniRocket(random_state=1379)),
+                ('ridgeclassifiercv',
+                 RidgeClassifierCV(alphas=array([1.00000000e-03, 4.64158883e-03, 2.15443469e-02, 1.00000000e-01,
+       4.64158883e-01, 2.15443469e+00, 1.00000000e+01, 4.64158883e+01,
+       2.15443469e+02, 1.00000000e+03]),
+                                   normalize=True))])",ECG200,0.92,0.98289,0.56598
+"WEASEL_STEROIDS(ensemble_size=500, random_state=1379)",ECGFiveDays,0.9965156794425087,0.35066,2.17389
+"Pipeline(steps=[('minirocket', MiniRocket(random_state=1379)),
+                ('ridgeclassifiercv',
+                 RidgeClassifierCV(alphas=array([1.00000000e-03, 4.64158883e-03, 2.15443469e-02, 1.00000000e-01,
+       4.64158883e-01, 2.15443469e+00, 1.00000000e+01, 4.64158883e+01,
+       2.15443469e+02, 1.00000000e+03]),
+                                   normalize=True))])",ECGFiveDays,1.0,0.54779,2.04871
+"WEASEL_STEROIDS(ensemble_size=500, random_state=1379)",Gun_Point,1.0,0.87392,1.0463
+"Pipeline(steps=[('minirocket', MiniRocket(random_state=1379)),
+                ('ridgeclassifiercv',
+                 RidgeClassifierCV(alphas=array([1.00000000e-03, 4.64158883e-03, 2.15443469e-02, 1.00000000e-01,
+       4.64158883e-01, 2.15443469e+00, 1.00000000e+01, 4.64158883e+01,
+       2.15443469e+02, 1.00000000e+03]),
+                                   normalize=True))])",Gun_Point,0.9933333333333333,0.7521,1.06434
+"WEASEL_STEROIDS(ensemble_size=500, random_state=1379)",ItalyPowerDemand,0.9514091350826045,0.619,1.55601
+"Pipeline(steps=[('minirocket', MiniRocket(random_state=1379)),
+                ('ridgeclassifiercv',
+                 RidgeClassifierCV(alphas=array([1.00000000e-03, 4.64158883e-03, 2.15443469e-02, 1.00000000e-01,
+       4.64158883e-01, 2.15443469e+00, 1.00000000e+01, 4.64158883e+01,
+       2.15443469e+02, 1.00000000e+03]),
+                                   normalize=True))])",ItalyPowerDemand,0.9659863945578231,0.50738,1.13254
+"WEASEL_STEROIDS(ensemble_size=500, random_state=1379)",MiddlePhalanxOutlineAgeGroup,0.577922077922078,2.0967,1.12956
+"Pipeline(steps=[('minirocket', MiniRocket(random_state=1379)),
+                ('ridgeclassifiercv',
+                 RidgeClassifierCV(alphas=array([1.00000000e-03, 4.64158883e-03, 2.15443469e-02, 1.00000000e-01,
+       4.64158883e-01, 2.15443469e+00, 1.00000000e+01, 4.64158883e+01,
+       2.15443469e+02, 1.00000000e+03]),
+                                   normalize=True))])",MiddlePhalanxOutlineAgeGroup,0.6038961038961039,1.35769,0.69696
+"WEASEL_STEROIDS(ensemble_size=500, random_state=1379)",MiddlePhalanxOutlineCorrect,0.8247422680412371,3.49733,1.35396
+"Pipeline(steps=[('minirocket', MiniRocket(random_state=1379)),
+                ('ridgeclassifiercv',
+                 RidgeClassifierCV(alphas=array([1.00000000e-03, 4.64158883e-03, 2.15443469e-02, 1.00000000e-01,
+       4.64158883e-01, 2.15443469e+00, 1.00000000e+01, 4.64158883e+01,
+       2.15443469e+02, 1.00000000e+03]),
+                                   normalize=True))])",MiddlePhalanxOutlineCorrect,0.8487972508591065,2.97606,0.99223
+"WEASEL_STEROIDS(ensemble_size=500, random_state=1379)",MiddlePhalanxTW,0.5584415584415584,2.04019,1.05631
+"Pipeline(steps=[('minirocket', MiniRocket(random_state=1379)),
+                ('ridgeclassifiercv',
+                 RidgeClassifierCV(alphas=array([1.00000000e-03, 4.64158883e-03, 2.15443469e-02, 1.00000000e-01,
+       4.64158883e-01, 2.15443469e+00, 1.00000000e+01, 4.64158883e+01,
+       2.15443469e+02, 1.00000000e+03]),
+                                   normalize=True))])",MiddlePhalanxTW,0.538961038961039,1.95224,0.6477
+"WEASEL_STEROIDS(ensemble_size=500, random_state=1379)",OliveOil,0.9,1.09451,1.16704
+"Pipeline(steps=[('minirocket', MiniRocket(random_state=1379)),
+                ('ridgeclassifiercv',
+                 RidgeClassifierCV(alphas=array([1.00000000e-03, 4.64158883e-03, 2.15443469e-02, 1.00000000e-01,
+       4.64158883e-01, 2.15443469e+00, 1.00000000e+01, 4.64158883e+01,
+       2.15443469e+02, 1.00000000e+03]),
+                                   normalize=True))])",OliveOil,0.9333333333333333,1.16546,1.15361
+"WEASEL_STEROIDS(ensemble_size=500, random_state=1379)",Plane,1.0,1.24602,1.1152
+"Pipeline(steps=[('minirocket', MiniRocket(random_state=1379)),
+                ('ridgeclassifiercv',
+                 RidgeClassifierCV(alphas=array([1.00000000e-03, 4.64158883e-03, 2.15443469e-02, 1.00000000e-01,
+       4.64158883e-01, 2.15443469e+00, 1.00000000e+01, 4.64158883e+01,
+       2.15443469e+02, 1.00000000e+03]),
+                                   normalize=True))])",Plane,1.0,1.12659,0.83951
+"WEASEL_STEROIDS(ensemble_size=500, random_state=1379)",ProximalPhalanxOutlineAgeGroup,0.8439024390243902,2.03034,1.13845
+"Pipeline(steps=[('minirocket', MiniRocket(random_state=1379)),
+                ('ridgeclassifiercv',
+                 RidgeClassifierCV(alphas=array([1.00000000e-03, 4.64158883e-03, 2.15443469e-02, 1.00000000e-01,
+       4.64158883e-01, 2.15443469e+00, 1.00000000e+01, 4.64158883e+01,
+       2.15443469e+02, 1.00000000e+03]),
+                                   normalize=True))])",ProximalPhalanxOutlineAgeGroup,0.848780487804878,1.90998,0.83433
+"WEASEL_STEROIDS(ensemble_size=500, random_state=1379)",ProximalPhalanxOutlineCorrect,0.865979381443299,3.50799,1.26918
+"Pipeline(steps=[('minirocket', MiniRocket(random_state=1379)),
+                ('ridgeclassifiercv',
+                 RidgeClassifierCV(alphas=array([1.00000000e-03, 4.64158883e-03, 2.15443469e-02, 1.00000000e-01,
+       4.64158883e-01, 2.15443469e+00, 1.00000000e+01, 4.64158883e+01,
+       2.15443469e+02, 1.00000000e+03]),
+                                   normalize=True))])",ProximalPhalanxOutlineCorrect,0.9072164948453608,3.00034,0.99067
+"WEASEL_STEROIDS(ensemble_size=500, random_state=1379)",ProximalPhalanxTW,0.824390243902439,2.07731,1.18393
+"Pipeline(steps=[('minirocket', MiniRocket(random_state=1379)),
+                ('ridgeclassifiercv',
+                 RidgeClassifierCV(alphas=array([1.00000000e-03, 4.64158883e-03, 2.15443469e-02, 1.00000000e-01,
+       4.64158883e-01, 2.15443469e+00, 1.00000000e+01, 4.64158883e+01,
+       2.15443469e+02, 1.00000000e+03]),
+                                   normalize=True))])",ProximalPhalanxTW,0.8195121951219512,1.79219,0.67646
+"WEASEL_STEROIDS(ensemble_size=500, random_state=1379)",SonyAIBORobot Surface,0.6023294509151415,0.53957,1.39118
+"Pipeline(steps=[('minirocket', MiniRocket(random_state=1379)),
+                ('ridgeclassifiercv',
+                 RidgeClassifierCV(alphas=array([1.00000000e-03, 4.64158883e-03, 2.15443469e-02, 1.00000000e-01,
+       4.64158883e-01, 2.15443469e+00, 1.00000000e+01, 4.64158883e+01,
+       2.15443469e+02, 1.00000000e+03]),
+                                   normalize=True))])",SonyAIBORobot Surface,0.8868552412645591,0.42972,1.45143
+"WEASEL_STEROIDS(ensemble_size=500, random_state=1379)",SonyAIBORobot SurfaceII,0.881427072402938,0.59068,2.05602
+"Pipeline(steps=[('minirocket', MiniRocket(random_state=1379)),
+                ('ridgeclassifiercv',
+                 RidgeClassifierCV(alphas=array([1.00000000e-03, 4.64158883e-03, 2.15443469e-02, 1.00000000e-01,
+       4.64158883e-01, 2.15443469e+00, 1.00000000e+01, 4.64158883e+01,
+       2.15443469e+02, 1.00000000e+03]),
+                                   normalize=True))])",SonyAIBORobot SurfaceII,0.9097586568730325,0.4534,1.57332
+"WEASEL_STEROIDS(ensemble_size=500, random_state=1379)",synthetic_control,0.9533333333333334,1.69164,1.38756
+"Pipeline(steps=[('minirocket', MiniRocket(random_state=1379)),
+                ('ridgeclassifiercv',
+                 RidgeClassifierCV(alphas=array([1.00000000e-03, 4.64158883e-03, 2.15443469e-02, 1.00000000e-01,
+       4.64158883e-01, 2.15443469e+00, 1.00000000e+01, 4.64158883e+01,
+       2.15443469e+02, 1.00000000e+03]),
+                                   normalize=True))])",synthetic_control,0.98,1.44596,0.82215
+"WEASEL_STEROIDS(ensemble_size=500, random_state=1379)",TwoLeadECG,0.9991220368744512,0.40112,2.15377
+"Pipeline(steps=[('minirocket', MiniRocket(random_state=1379)),
+                ('ridgeclassifiercv',
+                 RidgeClassifierCV(alphas=array([1.00000000e-03, 4.64158883e-03, 2.15443469e-02, 1.00000000e-01,
+       4.64158883e-01, 2.15443469e+00, 1.00000000e+01, 4.64158883e+01,
+       2.15443469e+02, 1.00000000e+03]),
+                                   normalize=True))])",TwoLeadECG,0.9982440737489026,0.47865,1.79797
+"WEASEL_STEROIDS(ensemble_size=500, random_state=1379)",Wine,0.8703703703703703,0.95445,1.2092
+"Pipeline(steps=[('minirocket', MiniRocket(random_state=1379)),
+                ('ridgeclassifiercv',
+                 RidgeClassifierCV(alphas=array([1.00000000e-03, 4.64158883e-03, 2.15443469e-02, 1.00000000e-01,
+       4.64158883e-01, 2.15443469e+00, 1.00000000e+01, 4.64158883e+01,
+       2.15443469e+02, 1.00000000e+03]),
+                                   normalize=True))])",Wine,0.9074074074074074,0.97634,0.79819
