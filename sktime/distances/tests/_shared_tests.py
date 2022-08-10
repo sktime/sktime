@@ -2,7 +2,6 @@
 from typing import Callable
 
 import numpy as np
-import pandas as pd
 import pytest
 from numba import njit
 
@@ -36,7 +35,7 @@ def _test_metric_parameters(distance_func: Callable):
         x_numpy, y_numpy, metric=_standalone_numba_distance
     )
 
-    if isinstance(class_result, float):
+    if isinstance(class_result, float) or class_result.shape == (1, 1):
         expected = 5.0
         assert class_result == expected, (
             f"Using a custom NumbaDistance did not produce the expected result. Ensure"
@@ -69,10 +68,6 @@ def _test_incorrect_parameters(distance_func: Callable):
     numpy_x = create_test_distance_numpy(10, 10)
     numpy_y = create_test_distance_numpy(10, 10, random_state=2)
 
-    df_x = pd.DataFrame(numpy_x)
-
-    series_x = df_x.iloc[0]
-
     numpy_4d = np.array([[[[1, 2, 3]]]])
 
     class _InvalidTestClass:
@@ -88,18 +83,6 @@ def _test_incorrect_parameters(distance_func: Callable):
 
     with pytest.raises(ValueError):  # Invalid metric string
         distance_func(numpy_x, numpy_y, metric="fake")
-
-    with pytest.raises(ValueError):  # Invalid x type as df
-        distance_func(df_x, numpy_y, metric="euclidean")
-
-    with pytest.raises(ValueError):  # Invalid x type as series
-        distance_func(series_x, numpy_y, metric="euclidean")
-
-    with pytest.raises(ValueError):  # Invalid y type as df
-        distance_func(numpy_x, df_x, metric="euclidean")
-
-    with pytest.raises(ValueError):  # Invalid y as series
-        distance_func(numpy_x, series_x, metric="euclidean")
 
     with pytest.raises(ValueError):  # Invalid dimensions x
         distance_func(numpy_4d, numpy_y, metric="euclidean")

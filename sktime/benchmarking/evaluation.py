@@ -14,16 +14,14 @@ from sktime.benchmarking.base import BaseResults
 from sktime.exceptions import NotEvaluatedError
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-_check_soft_dependencies("matplotlib", "scikit_posthocs")
-import matplotlib.pyplot as plt  # noqa: E402
-
-plt.style.use("seaborn-ticks")
+_check_soft_dependencies("matplotlib", "scikit_posthocs", severity="warning")
 
 
 class Evaluator:
     """Analyze results of machine learning experiments."""
 
     def __init__(self, results):
+
         if not isinstance(results, BaseResults):
             raise ValueError("`results` must inherit from BaseResults")
         self.results = results
@@ -138,6 +136,12 @@ class Evaluator:
 
     def plot_boxplots(self, metric_name=None, **kwargs):
         """Box plot of metric."""
+        _check_soft_dependencies("matplotlib")
+
+        import matplotlib.pyplot as plt  # noqa: E402
+
+        plt.style.use("seaborn-ticks")
+
         self._check_is_evaluated()
         metric_name = self._validate_metric_name(metric_name)
         column = self._get_column_name(metric_name, suffix="mean")
@@ -204,7 +208,7 @@ class Evaluator:
                 "p_val": p_val,
             }
 
-            t_df = t_df.append(t_test, ignore_index=True)
+            t_df = pd.concat([t_df, pd.DataFrame(t_test, index=[0])], ignore_index=True)
             values = np.append(values, t_stat)
             values = np.append(values, p_val)
 
@@ -245,7 +249,9 @@ class Evaluator:
             p_val = stats.binom_test(signs, n)
             sign_test = {"estimator_1": perm[0], "estimator_2": perm[1], "p_val": p_val}
 
-            sign_df = sign_df.append(sign_test, ignore_index=True)
+            sign_df = pd.concat(
+                [sign_df, pd.DataFrame(sign_test, index=[0])], ignore_index=True
+            )
             sign_df_pivot = sign_df.pivot(
                 index="estimator_1", columns="estimator_2", values="p_val"
             )
@@ -278,7 +284,9 @@ class Evaluator:
                 "t_stat": t_stat,
                 "p_val": p_val,
             }
-            ranksum_df = ranksum_df.append(ranksum, ignore_index=True)
+            ranksum_df = pd.concat(
+                [ranksum_df, pd.DataFrame(ranksum, index=[0])], ignore_index=True
+            )
             values = np.append(values, t_stat)
             values = np.append(values, p_val)
 
@@ -350,7 +358,9 @@ class Evaluator:
                 "p_val": p_val,
             }
 
-            wilcoxon_df = wilcoxon_df.append(w_test, ignore_index=True)
+            wilcoxon_df = pd.concat(
+                [wilcoxon_df, pd.DataFrame(w_test, index=[0])], ignore_index=True
+            )
 
         return wilcoxon_df
 
@@ -393,6 +403,8 @@ class Evaluator:
         Implementation used `scikit-posthocs
         <https://github.com/maximtrp/scikit-posthocs>`_.
         """
+        _check_soft_dependencies("scikit_posthocs")
+
         # lazy import to avoid hard dependency
         from scikit_posthocs import posthoc_nemenyi
 
@@ -465,7 +477,7 @@ class Evaluator:
                         "cv_fold": [cv_fold],
                     }
                 )
-                run_times = run_times.append(unwrapped, ignore_index=True)
+                run_times = pd.concat([run_times, unwrapped], ignore_index=True)
 
         # calculate run time difference
         run_times["fit_runtime"] = (
@@ -530,6 +542,10 @@ class Evaluator:
         ----------
         original implementation by Aaron Bostrom, modified by Markus Löning.
         """
+        _check_soft_dependencies("matplotlib")
+
+        import matplotlib.pyplot as plt  # noqa: E402
+
         self._check_is_evaluated()
         metric_name = self._validate_metric_name(metric_name)
         column = self._get_column_name(metric_name, suffix="mean")

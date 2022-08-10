@@ -9,6 +9,7 @@ import numpy as np
 import pytest
 
 from sktime.distances._distance import _METRIC_INFOS, pairwise_distance
+from sktime.distances._numba_utils import _make_3d_series
 from sktime.distances.base import MetricInfo, NumbaDistance
 from sktime.distances.tests._shared_tests import (
     _test_incorrect_parameters,
@@ -51,9 +52,9 @@ def _validate_pairwise_result(
     Parameters
     ----------
     x: np.ndarray (1d, 2d or 3d array)
-        First timeseries.
+        First time series.
     y: np.ndarray (1d, 2d or 3d array)
-        Second timeseries.
+        Second time series.
     metric_str: str
         Metric string name.
     distance_factory: Callable
@@ -65,13 +66,17 @@ def _validate_pairwise_result(
     kwargs_dict: dict
         Extra kwargs
     """
+    # Msm doesn't support multivariate so skip
+    if len(x.shape) == 3 and x.shape[1] > 1 and metric_str == "msm":
+        return
+    if len(x.shape) == 2 and x.shape[0] > 1 and metric_str == "msm":
+        return
+
     if kwargs_dict is None:
         kwargs_dict = {}
     metric_str_result = pairwise_distance(x, y, metric=metric_str, **kwargs_dict)
 
     expected_size = (len(x), len(y))
-    if x.ndim <= 1:
-        expected_size = (1, 1)
 
     assert metric_str_result.shape == expected_size, (
         f'The result for a pairwise using the string: {metric_str} as the "metric" '
@@ -144,9 +149,9 @@ def _validate_pairwise_result(
     metric_str_result_to_self = pairwise_distance(
         x, x, metric=metric_str, **kwargs_dict
     )
-    if metric_str != "lcss":
+    if metric_str != "twe" or metric_str == "lcss":
         assert metric_str_result_to_self.trace() == 0, (
-            f"The pairwise distance when given two of the same timeseries e.g."
+            f"The pairwise distance when given two of the same time series e.g."
             f"pairwise_distance(x, x, ...), diagonal should equal 0."
             f"(np.trace(result)). Instead for the pairwise metric given where "
             f"metric={metric_str} is {metric_str_result_to_self.trace()}"
@@ -155,7 +160,7 @@ def _validate_pairwise_result(
     assert np.array_equal(metric_dist_self_func_result, metric_str_result_to_self)
 
     assert _check_symmetric(metric_str_result_to_self) is True, (
-        f"The pairwise distance when given two of the same timeseries e.g."
+        f"The pairwise distance when given two of the same time series e.g."
         f"pairwise_distance(x, x, ...), should produce a symmetric matrix. This"
         f"means the left of the center diagonal should equal the right of the "
         f"center diagonal. This criteria is not met for the pairwise metric "
@@ -173,9 +178,9 @@ def _test_pw_equal_single_dists(
     Parameters
     ----------
     x: np.ndarray (1d, 2d or 3d array)
-        First timeseries
+        First time series
     y: np.ndarray (1d, 2d or 3d array)
-        Second timeseries
+        Second time series
     distance_function: Callable
         Distance function to test
     conical_name: str
@@ -189,14 +194,18 @@ def _test_pw_equal_single_dists(
         return
     pw_result = pairwise_distance(x, y, metric=conical_name)
 
+    x = _make_3d_series(x)
+    y = _make_3d_series(y)
+
     matrix = np.zeros((len(x), len(y)))
+
     for i in range(len(x)):
         curr_x = x[i]
         for j in range(len(y)):
             curr_y = y[j]
             matrix[i, j] = distance_function(curr_x, curr_y)
 
-    assert np.array_equal(matrix, pw_result)
+    assert np.allclose(matrix, pw_result)
 
 
 @pytest.mark.parametrize("dist", _METRIC_INFOS)
@@ -211,6 +220,7 @@ def test_pairwise_distance(dist: MetricInfo) -> None:
     name = dist.canonical_name
     distance_numba_class = dist.dist_instance
     distance_function = dist.dist_func
+
     distance_factory = distance_numba_class.distance_factory
 
     _validate_pairwise_result(
@@ -232,15 +242,6 @@ def test_pairwise_distance(dist: MetricInfo) -> None:
     )
 
     _validate_pairwise_result(
-        x=create_test_distance_numpy(5, 1),
-        y=create_test_distance_numpy(5, 1, random_state=2),
-        metric_str=name,
-        distance_factory=distance_factory,
-        distance_function=distance_function,
-        distance_numba_class=distance_numba_class,
-    )
-
-    _validate_pairwise_result(
         x=create_test_distance_numpy(5, 5),
         y=create_test_distance_numpy(5, 5, random_state=2),
         metric_str=name,
@@ -250,8 +251,8 @@ def test_pairwise_distance(dist: MetricInfo) -> None:
     )
 
     _validate_pairwise_result(
-        x=create_test_distance_numpy(5, 5, 1),
-        y=create_test_distance_numpy(5, 5, 1, random_state=2),
+        x=create_test_distance_numpy(5, 1, 5),
+        y=create_test_distance_numpy(5, 1, 5, random_state=2),
         metric_str=name,
         distance_factory=distance_factory,
         distance_function=distance_function,

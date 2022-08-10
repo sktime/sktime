@@ -148,6 +148,7 @@ def check_is_mtype(
             "is_univariate": bool, True iff table has one variable
             "is_empty": bool, True iff table has no variables or no instances
             "has_nans": bool, True iff the panel contains NaN values
+            "n_instances": int, number of instances/rows in the table
         For scitype "Alignment":
             currently none
 
@@ -298,21 +299,41 @@ def mtype(
     if as_scitype is not None:
         m_plus_scitypes = [(x[0], x[1]) for x in m_plus_scitypes if x[1] in as_scitype]
 
-    res = [
-        m_plus_scitype[0]
-        for m_plus_scitype in m_plus_scitypes
-        if check_is_mtype(obj, mtype=m_plus_scitype[0], scitype=m_plus_scitype[1])
-    ]
+    # collects mtypes that are tested as valid for obj
+    mtypes_positive = []
 
-    if len(res) > 1:
+    # collects error messages from mtypes that are tested as invalid for obj
+    mtypes_negative = dict()
+
+    for m_plus_scitype in m_plus_scitypes:
+        valid, msg, _ = check_is_mtype(
+            obj,
+            mtype=m_plus_scitype[0],
+            scitype=m_plus_scitype[1],
+            return_metadata=True,
+        )
+        if valid:
+            mtypes_positive += [m_plus_scitype[0]]
+        else:
+            mtypes_negative[m_plus_scitype[0]] = msg
+
+    if len(mtypes_positive) > 1:
         raise TypeError(
-            f"Error in check_is_mtype, more than one mtype identified: {res}"
+            f"Error in check_is_mtype, more than one mtype identified:"
+            f" {mtypes_positive}"
         )
 
-    if len(res) < 1:
-        raise TypeError("No valid mtype could be identified")
+    if len(mtypes_positive) < 1:
+        msg = ""
+        for mtype, error in mtypes_negative.items():
+            msg += f"{mtype}: {error}\r\n"
+        msg = (
+            f"No valid mtype could be identified for object of type {type(obj)}. "
+            f"Errors returned are as follows, in format [mtype]: [error message] \r\n"
+        ) + msg
+        raise TypeError(msg)
 
-    return res[0]
+    return mtypes_positive[0]
 
 
 def check_is_scitype(

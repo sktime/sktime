@@ -1,4 +1,31 @@
 # -*- coding: utf-8 -*-
+"""Machine type converters for Panel scitype.
+
+Exports conversion and mtype dictionary for Panel scitype:
+
+convert_dict: dict indexed by triples of str
+  1st element = convert from - str
+  2nd element = convert to - str
+  3rd element = considered as this scitype - str
+elements are conversion functions of machine type (1st) -> 2nd
+
+Function signature of all elements
+convert_dict[(from_type, to_type, as_scitype)]
+
+Parameters
+----------
+obj : from_type - object to convert
+store : dictionary - reference of storage for lossy conversions, default=None (no store)
+
+Returns
+-------
+converted_obj : to_type - object obj converted to to_type
+
+Raises
+------
+ValueError and TypeError, if requested conversion is not possible
+                            (depending on conversion logic)
+"""
 
 import numpy as np
 import pandas as pd
@@ -7,7 +34,6 @@ __all__ = [
     "convert_dict",
 ]
 
-from sktime.datatypes._panel._check import is_nested_dataframe
 from sktime.datatypes._panel._registry import MTYPE_LIST_PANEL
 
 # dictionary indexed by triples of types
@@ -519,53 +545,6 @@ def from_long_to_nested(
     else:
         X_nested.columns = column_names
 
-    # # get distinct dimension ids
-    # unique_dim_ids = long_dataframe.iloc[:, 1].unique()
-    # num_dims = len(unique_dim_ids)
-
-    # data_by_dim = []
-    # indices = []
-
-    # # get number of distinct cases (note: a case may have 1 or many dimensions)
-    # unique_case_ids = long_dataframe.iloc[:, 0].unique()
-    # # assume series are indexed from 0 to m-1 (can map to non-linear indices
-    # # later if needed)
-
-    # # init a list of size m for each d - to store the series data for m
-    # # cases over d dimensions
-    # # also, data may not be in order in long format so store index data for
-    # # aligning output later
-    # # (i.e. two stores required: one for reading id/timestamp and one for
-    # # value)
-    # for d in range(0, num_dims):
-    #     data_by_dim.append([])
-    #     indices.append([])
-    #     for _c in range(0, len(unique_case_ids)):
-    #         data_by_dim[d].append([])
-    #         indices[d].append([])
-
-    # # go through every row in the dataframe
-    # for i in range(0, len(long_dataframe)):
-    #     # extract the relevant data, catch cases where the dim id is not an
-    #     # int as it must be the class
-
-    #     row = long_dataframe.iloc[i]
-    #     case_id = int(row[0])
-    #     dim_id = int(row[1])
-    #     reading_id = int(row[2])
-    #     value = row[3]
-    #     data_by_dim[dim_id][case_id].append(value)
-    #     indices[dim_id][case_id].append(reading_id)
-
-    # x_data = {}
-    # for d in range(0, num_dims):
-    #     key = "dim_" + str(d)
-    #     dim_list = []
-    #     for i in range(0, len(unique_case_ids)):
-    #         temp = pd.Series(data_by_dim[d][i], indices[d][i])
-    #         dim_list.append(temp)
-    #     x_data[key] = pd.Series(dim_list)
-
     return X_nested
 
 
@@ -577,7 +556,7 @@ def from_long_to_nested_adp(obj, store=None):
 convert_dict[("pd-long", "nested_univ", "Panel")] = from_nested_to_long_adp
 
 
-def from_multi_index_to_3d_numpy(X, instance_index=None, time_index=None):
+def from_multi_index_to_3d_numpy(X):
     """Convert pandas multi-index Panel to numpy 3D Panel.
 
     Convert panel data stored as pandas multi-index DataFrame to
@@ -587,15 +566,6 @@ def from_multi_index_to_3d_numpy(X, instance_index=None, time_index=None):
     ----------
     X : pd.DataFrame
         The multi-index pandas DataFrame
-
-    instance_index, time_index are deprecated since 0.11.0 and will be removed in 0.12.0
-        these are not necessary, since: as of before 0.11.0, the column names are
-            guaranteed if the mtype is pd-multiindex, and after 0.12.0 the condition
-            on column names is relaxed
-    instance_index : str
-        Name of the multi-index level corresponding to the DataFrame's instances
-    time_index : str
-        Name of multi-index level corresponding to DataFrame's timepoints
 
     Returns
     -------
@@ -619,6 +589,7 @@ def from_multi_index_to_3d_numpy_adp(obj, store=None):
     res = from_multi_index_to_3d_numpy(X=obj)
     if isinstance(store, dict):
         store["columns"] = obj.columns
+        store["index_names"] = obj.index.names
 
     return res
 
@@ -697,6 +668,10 @@ def from_3d_numpy_to_multi_index_adp(obj, store=None):
         and len(store["columns"]) == obj.shape[1]
     ):
         res.columns = store["columns"]
+
+    if isinstance(store, dict) and "index_names" in store.keys():
+        res.index.names = store["index_names"]
+
     return res
 
 
@@ -713,8 +688,8 @@ def from_multi_index_to_nested(
     multi_ind_dataframe : pd.DataFrame
         Input multi-indexed pandas DataFrame
 
-    instance_index_name : str
-        The name of multi-index level corresponding to the DataFrame's instances
+    instance_index_name : int or str, default=0 (first level = 0-th index)
+        Index or name of multi-index level corresponding to the DataFrame's instances
 
     cells_as_numpy : bool, default = False
         If True, then nested cells contain NumPy array
@@ -753,7 +728,7 @@ def from_multi_index_to_nested(
             ]
 
         x_nested[_label] = pd.Series(dim_list)
-    x_nested = pd.DataFrame(x_nested)
+    x_nested = pd.DataFrame(x_nested).set_axis(instance_idxs)
 
     col_msg = "Multi-index and nested DataFrames should have same columns names"
     assert (x_nested.columns == multi_ind_dataframe.columns).all(), col_msg
@@ -762,6 +737,9 @@ def from_multi_index_to_nested(
 
 
 def from_multi_index_to_nested_adp(obj, store=None):
+
+    if isinstance(store, dict):
+        store["index_names"] = obj.index.names
 
     return from_multi_index_to_nested(multi_ind_dataframe=obj, instance_index=None)
 
@@ -794,66 +772,35 @@ def from_nested_to_multi_index(X, instance_index=None, time_index=None):
         The multi-indexed pandas DataFrame
 
     """
-    if not is_nested_dataframe(X):
-        raise ValueError("Input DataFrame is not a nested DataFrame")
+    # this contains the right values, but does not have the right index
+    #   need convert_dtypes or dtypes will always be object
+    # explode by column to ensure we deal with unequal length series properly
+    X_mi = pd.DataFrame()
 
-    if time_index is None:
-        time_index_name = "timepoints"
-    else:
-        time_index_name = time_index
+    for c in X.columns:
+        X_col = X[[c]].explode(c)
+        X_col = X_col.infer_objects()
 
-    # n_columns = X.shape[1]
-    nested_col_mask = [*are_columns_nested(X)]
+        # create the right MultiIndex and assign to X_mi
+        idx_df = X[[c]].applymap(lambda x: x.index).explode(c)
+        idx_df = idx_df.set_index(c, append=True)
+        X_col.index = idx_df.index.set_names([instance_index, time_index])
 
-    if instance_index is None:
-        instance_idxs = X.index.get_level_values(-1).unique()
-        # n_instances = instance_idxs.shape[0]
-        instance_index_name = "instance"
-
-    else:
-        if instance_index in X.index.names:
-            instance_idxs = X.index.get_level_values(instance_index).unique()
-        else:
-            instance_idxs = X.index.get_level_values(-1).unique()
-        # n_instances = instance_idxs.shape[0]
-        instance_index_name = instance_index
-
-    instances = []
-    for instance_idx in instance_idxs:
-        iidx = instance_idx
-        series = [i[1] for i in X.loc[iidx, :].iteritems()]
-        colnames = [i[0] for i in X.loc[iidx, :].iteritems()]
-        for x in series:
-            if hasattr(x, "name"):
-                x.name = None
-
-        instance = [pd.DataFrame(s, columns=[c]) for s, c in zip(series, colnames)]
-        instance = pd.concat(instance, axis=1)
-        # For primitive (non-nested column) assume the same
-        # primitive value applies to every timepoint of the instance
-        for col_idx, is_nested in enumerate(nested_col_mask):
-            if not is_nested:
-                instance.iloc[:, col_idx] = instance.iloc[:, col_idx].ffill()
-
-        # Correctly assign multi-index
-        multi_index = pd.MultiIndex.from_product(
-            [[instance_idx], instance.index],
-            names=[instance_index_name, time_index_name],
-        )
-        instance.index = multi_index
-        instances.append(instance)
-
-    X_mi = pd.concat(instances)
-    X_mi.columns = X.columns
+        X_mi[[c]] = X_col
 
     return X_mi
 
 
 def from_nested_to_multi_index_adp(obj, store=None):
 
-    return from_nested_to_multi_index(
+    res = from_nested_to_multi_index(
         X=obj, instance_index="instances", time_index="timepoints"
     )
+
+    if isinstance(store, dict) and "index_names" in store.keys():
+        res.index.names = store["index_names"]
+
+    return res
 
 
 convert_dict[("nested_univ", "pd-multiindex", "Panel")] = from_nested_to_multi_index_adp
@@ -883,15 +830,6 @@ def from_nested_to_3d_numpy(X):
     X_3d : np.ndarrray
         3-dimensional NumPy array
     """
-    # n_instances, n_columns = X.shape
-    # n_timepoints = X.iloc[0, 0].shape[0]
-    # array = np.empty((n_instances, n_columns, n_timepoints))
-    # for column in range(n_columns):
-    #     array[:, column, :] = X.iloc[:, column].tolist()
-    # return array
-    if not is_nested_dataframe(X):
-        raise ValueError("Input DataFrame is not a nested DataFrame")
-
     # n_columns = X.shape[1]
     nested_col_mask = [*are_columns_nested(X)]
 
@@ -985,6 +923,9 @@ def from_dflist_to_multiindex(obj, store=None):
 
     mi = pd.concat(obj, axis=0, keys=range(n), names=["instances", "timepoints"])
 
+    if isinstance(store, dict) and "index_names" in store.keys():
+        mi.index.names = store["index_names"]
+
     return mi
 
 
@@ -994,9 +935,11 @@ convert_dict[("df-list", "pd-multiindex", "Panel")] = from_dflist_to_multiindex
 def from_multiindex_to_dflist(obj, store=None):
 
     instance_index = obj.index.levels[0]
-    n = len(instance_index)
 
-    Xlist = [obj.loc[i].rename_axis(None) for i in range(n)]
+    Xlist = [obj.loc[i].rename_axis(None) for i in instance_index]
+
+    if isinstance(store, dict):
+        store["index_names"] = obj.index.names
 
     return Xlist
 
@@ -1116,12 +1059,14 @@ def _concat(fun1, fun2):
 
 for tp in set(MTYPE_LIST_PANEL).difference(["numpyflat", "numpy3D"]):
     if ("numpy3D", tp, "Panel") in convert_dict.keys():
-        convert_dict[("numpyflat", tp, "Panel")] = _concat(
-            convert_dict[("numpyflat", "numpy3D", "Panel")],
-            convert_dict[("numpy3D", tp, "Panel")],
-        )
+        if ("numpyflat", tp, "Panel") not in convert_dict.keys():
+            convert_dict[("numpyflat", tp, "Panel")] = _concat(
+                convert_dict[("numpyflat", "numpy3D", "Panel")],
+                convert_dict[("numpy3D", tp, "Panel")],
+            )
     if (tp, "numpy3D", "Panel") in convert_dict.keys():
-        convert_dict[(tp, "numpyflat", "Panel")] = _concat(
-            convert_dict[(tp, "numpy3D", "Panel")],
-            convert_dict[("numpy3D", "numpyflat", "Panel")],
-        )
+        if (tp, "numpyflat", "Panel") not in convert_dict.keys():
+            convert_dict[(tp, "numpyflat", "Panel")] = _concat(
+                convert_dict[(tp, "numpy3D", "Panel")],
+                convert_dict[("numpy3D", "numpyflat", "Panel")],
+            )

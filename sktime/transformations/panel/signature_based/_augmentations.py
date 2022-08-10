@@ -2,7 +2,7 @@
 import numpy as np
 from sklearn.pipeline import Pipeline
 
-from sktime.transformations.base import _SeriesToSeriesTransformer
+from sktime.transformations.base import BaseTransformer
 
 
 def _make_augmentation_pipeline(augmentation_list):
@@ -61,7 +61,7 @@ def _make_augmentation_pipeline(augmentation_list):
     return pipeline
 
 
-class _AddTime(_SeriesToSeriesTransformer):
+class _AddTime(BaseTransformer):
     """Add time component to each path.
 
     For a path of shape [B, L, C] this adds a time channel to be placed at the
@@ -69,21 +69,31 @@ class _AddTime(_SeriesToSeriesTransformer):
     [0, 1].
     """
 
-    def fit(self, X, y=None):
-        self._is_fitted = True
-        return self
+    _tags = {
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
+        "scitype:transform-output": "Series",
+        # what scitype is returned: Primitives, Series, Panel
+        "scitype:instancewise": True,  # is this an instance-wise transform?
+        "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
+        "fit_is_empty": True,  # is fit empty and can be skipped? Yes = True
+    }
 
-    def transform(self, data, y=None):
+    def _transform(self, X, y=None):
+
+        data = np.swapaxes(X, 1, 2)
         # Batch and length dim
         B, L = data.shape[0], data.shape[1]
 
         # Time scaled to 0, 1
         time_scaled = np.linspace(0, 1, L).reshape(1, L).repeat(B, 0).reshape(B, L, 1)
 
-        return np.concatenate((time_scaled, data), 2)
+        Xt = np.concatenate((time_scaled, data), 2)
+        return np.swapaxes(Xt, 1, 2)
 
 
-class _InvisibilityReset(_SeriesToSeriesTransformer):
+class _InvisibilityReset(BaseTransformer):
     """Add 'invisibility-reset' dimension to the path.
 
     This adds sensitivity to translation.
@@ -91,11 +101,20 @@ class _InvisibilityReset(_SeriesToSeriesTransformer):
     Introduced by Yang et al.: https://arxiv.org/pdf/1707.03993.pdf
     """
 
-    def fit(self, X, y=None):
-        self._is_fitted = True
-        return self
+    _tags = {
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
+        "scitype:transform-output": "Series",
+        # what scitype is returned: Primitives, Series, Panel
+        "scitype:instancewise": True,  # is this an instance-wise transform?
+        "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
+        "fit_is_empty": True,  # is fit empty and can be skipped? Yes = True
+    }
 
-    def transform(self, X, y=None):
+    def _transform(self, X, y=None):
+        X = np.swapaxes(X, 1, 2)
+
         # Batch, length, channels
         B, L, C = X.shape[0], X.shape[1], X.shape[2]
 
@@ -111,10 +130,11 @@ class _InvisibilityReset(_SeriesToSeriesTransformer):
         home = np.zeros(shape=(B, 1, C + 1))
         X_penoff = np.concatenate((X_pendown, home), 1)
 
-        return X_penoff
+        Xt = np.swapaxes(X_penoff, 1, 2)
+        return Xt
 
 
-class _LeadLag(_SeriesToSeriesTransformer):
+class _LeadLag(BaseTransformer):
     """Applies the lead-lag transformation to each path.
 
     We take the lead of an input stream, and augment it with the lag of the
@@ -127,11 +147,20 @@ class _LeadLag(_SeriesToSeriesTransformer):
         - https://arxiv.org/pdf/1307.7244.pdf
     """
 
-    def fit(self, X, y=None):
-        self._is_fitted = True
-        return self
+    _tags = {
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
+        "scitype:transform-output": "Series",
+        # what scitype is returned: Primitives, Series, Panel
+        "scitype:instancewise": True,  # is this an instance-wise transform?
+        "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
+        "fit_is_empty": True,  # is fit empty and can be skipped? Yes = True
+    }
 
-    def transform(self, X, y=None):
+    def _transform(self, X, y=None):
+        X = np.swapaxes(X, 1, 2)
+
         # Interleave
         X_repeat = X.repeat(2, axis=1)
 
@@ -142,10 +171,11 @@ class _LeadLag(_SeriesToSeriesTransformer):
         # Combine
         X_leadlag = np.concatenate((lead, lag), 2)
 
-        return X_leadlag
+        Xt = np.swapaxes(X_leadlag, 1, 2)
+        return Xt
 
 
-class _CumulativeSum(_SeriesToSeriesTransformer):
+class _CumulativeSum(BaseTransformer):
     """Cumulatively sums the values in the stream.
 
     Introduced in: https://arxiv.org/pdf/1603.03788.pdf
@@ -156,29 +186,46 @@ class _CumulativeSum(_SeriesToSeriesTransformer):
         Set True to append zero to the path before taking the cumulative sum.
     """
 
+    _tags = {
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
+        "scitype:transform-output": "Series",
+        # what scitype is returned: Primitives, Series, Panel
+        "scitype:instancewise": True,  # is this an instance-wise transform?
+        "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
+        "fit_is_empty": True,  # is fit empty and can be skipped? Yes = True
+    }
+
     def __init__(self, append_zero=False):
         self.append_zero = append_zero
 
-    def fit(self, X, y=None):
-        self._is_fitted = True
-        return self
-
-    def transform(self, X, y=None):
+    def _transform(self, X, y=None):
         if self.append_zero:
             X = _BasePoint().fit_transform(X)
-        return np.cumsum(X, 1)
+        Xt = np.cumsum(X, 2)
+        return Xt
 
 
-class _BasePoint(_SeriesToSeriesTransformer):
+class _BasePoint(BaseTransformer):
     """Appends a zero starting vector to every path.
 
     Introduced in: https://arxiv.org/pdf/2001.00706.pdf
     """
 
-    def fit(self, X, y=None):
-        self._is_fitted = True
-        return self
+    _tags = {
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
+        "scitype:transform-output": "Series",
+        # what scitype is returned: Primitives, Series, Panel
+        "scitype:instancewise": True,  # is this an instance-wise transform?
+        "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
+        "fit_is_empty": True,  # is fit empty and can be skipped? Yes = True
+    }
 
-    def transform(self, X, y=None):
+    def _transform(self, X, y=None):
+        X = np.swapaxes(X, 1, 2)
         zero_vec = np.zeros(shape=(X.shape[0], 1, X.shape[2]))
-        return np.concatenate((zero_vec, X), axis=1)
+        Xt = np.concatenate((zero_vec, X), axis=1)
+        return np.swapaxes(Xt, 1, 2)

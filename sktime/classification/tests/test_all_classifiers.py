@@ -6,15 +6,18 @@ __author__ = ["mloning", "TonyBagnall", "fkiraly"]
 
 import numpy as np
 import pytest
-from sklearn import clone
 
 from sktime.classification.tests._expected_outputs import (
     basic_motions_proba,
     unit_test_proba,
 )
 from sktime.datasets import load_basic_motions, load_unit_test
+from sktime.datatypes import check_is_scitype
 from sktime.tests.test_all_estimators import BaseFixtureGenerator, QuickTester
-from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
+from sktime.utils._testing.estimator_checks import (
+    _assert_array_almost_equal,
+    make_classification_problem,
+)
 from sktime.utils._testing.scenarios_classification import (
     ClassifierFitPredictMultivariate,
 )
@@ -75,18 +78,43 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
         n_classes = scenario.get_tag("n_classes")
         X_new = scenario.args["predict"]["X"]
         y_train = scenario.args["fit"]["y"]
+        # we use check_is_scitype to get the number instances in X_new
+        #   this is more robust against different scitypes in X_new
+        _, _, X_new_metadata = check_is_scitype(X_new, "Panel", return_metadata=True)
+        X_new_instances = X_new_metadata["n_instances"]
+
+        # run fit and predict
         y_pred = scenario.run(estimator_instance, method_sequence=["fit", "predict"])
 
         # check predict
         assert isinstance(y_pred, np.ndarray)
-        assert y_pred.shape == (X_new.shape[0],)
+        assert y_pred.shape == (X_new_instances,)
         assert np.all(np.isin(np.unique(y_pred), np.unique(y_train)))
 
         # check predict proba (all classifiers have predict_proba by default)
         y_proba = scenario.run(estimator_instance, method_sequence=["predict_proba"])
         assert isinstance(y_proba, np.ndarray)
-        assert y_proba.shape == (X_new.shape[0], n_classes)
-        np.testing.assert_allclose(y_proba.sum(axis=1), 1)
+        assert y_proba.shape == (X_new_instances, n_classes)
+        np.testing.assert_almost_equal(y_proba.sum(axis=1), 1, decimal=4)
+
+        if estimator_instance.get_tag("capability:train_estimate"):
+            if not hasattr(estimator_instance, "_get_train_probs"):
+                raise ValueError(
+                    "Classifier capability:train_estimate tag is set to "
+                    "true, but no _get_train_probs method is present."
+                )
+
+            X_train = scenario.args["fit"]["X"]
+            _, _, X_train_metadata = check_is_scitype(
+                X_train, "Panel", return_metadata=True
+            )
+            X_train_len = X_train_metadata["n_instances"]
+
+            train_proba = estimator_instance._get_train_probs(X_train, y_train)
+
+            assert isinstance(train_proba, np.ndarray)
+            assert train_proba.shape == (X_train_len, n_classes)
+            np.testing.assert_almost_equal(train_proba.sum(axis=1), 1, decimal=4)
 
     def test_classifier_on_unit_test_data(self, estimator_class):
         """Test classifier on unit test data."""
@@ -101,8 +129,8 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
             return None
 
         # we only use the first estimator instance for testing
-        estimator_instance = clone(
-            estimator_class.create_test_instance(parameter_set="results_comparison")
+        estimator_instance = estimator_class.create_test_instance(
+            parameter_set="results_comparison"
         )
         # set random seed if possible
         if "random_state" in estimator_instance.get_params().keys():
@@ -133,8 +161,8 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
             return None
 
         # we only use the first estimator instance for testing
-        estimator_instance = clone(
-            estimator_class.create_test_instance(parameter_set="results_comparison")
+        estimator_instance = estimator_class.create_test_instance(
+            parameter_set="results_comparison"
         )
         # set random seed if possible
         if "random_state" in estimator_instance.get_params().keys():
@@ -151,3 +179,17 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
 
         # assert probabilities are the same
         _assert_array_almost_equal(y_proba, expected_probas, decimal=2)
+
+    def test_handles_single_class(self, estimator_instance):
+        """Test that estimator handles fit when only single class label is seen.
+
+        This is important for compatibility with ensembles that sub-sample,
+        as sub-sampling stochastically produces training sets with single class label.
+        """
+        X, y = make_classification_problem()
+        y[:] = 42
+
+        error_msg = "single class label"
+
+        with pytest.warns(UserWarning, match=error_msg):
+            estimator_instance.fit(X, y)

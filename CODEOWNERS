@@ -1,8 +1,9 @@
 # The file lists sktime's algorithm maintainers as specified in GOVERNANCE.md.
 # Each line is a file pattern followed by one or more owners.
 
-* @fkiraly @aiwalter @TonyBagnall
+* @fkiraly @aiwalter
 
+sktime/classification/dummy/ @ZiyaoWei
 sktime/classification/dictionary_based/ @patrickzib @MatthewMiddlehurst @TonyBagnall
 sktime/classification/distance_based/ @jasonlines @goaster @TonyBagnall
 sktime/classification/early_classification/ @MatthewMiddlehurst @TonyBagnall
@@ -31,7 +32,10 @@ sktime/transformations/series/theta.py @GuzalBulatova
 sktime/transformations/series/difference.py @rnkuhns
 sktime/transformations/series/exponent.py @rnkuhns
 sktime/transformations/series/scaledlogit.py @ltsaprounis
+sktime/transformations/series/kalman_filter.py @NoaBenAmi
 sktime/transformations/panel/augmenter.py @MrPr3ntice @iljamaurer
+sktime/transformations/multiplex.py @miraep8
+sktime/transformations/tests/test_multiplexer.py @miraep8
 
 sktime/forecasting/base/ @fkiraly @mloning @aiwalter
 sktime/forecasting/base/adapters/_statsforecast.py @FedericoGarza
@@ -49,14 +53,11 @@ sktime/forecasting/compose/_column_ensemble.py @GuzalBulatova
 sktime/forecasting/compose/_multiplexer.py @koralturkk @aiwalter
 sktime/forecasting/compose/_pipeline.py @aiwalter
 sktime/forecasting/compose/_ensemble.py @aiwalter
-
 sktime/forecasting/online_learning/ @magittan
+sktime/forecasting/sarimax.py @TNTran92
 
 sktime/performance_metrics/forecasting/_functions.py @aiwalter @rnkuhns
 sktime/performance_metrics/forecasting/_classes.py @rnkuhns
-
-sktime/forecasting/hcrystalball.py @MichalChromcak
-sktime/forecasting/test/test_hcrystalball.py @MichalChromcak
 
 sktime/annotation/clasp.py @patrickzib @ermshaua
 sktime/transformations/series/clasp.py @patrickzib @ermshaua

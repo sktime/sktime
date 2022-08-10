@@ -8,7 +8,6 @@ __author__ = ["mloning"]
 __all__ = ["_HeterogenousEnsembleForecaster"]
 
 from joblib import Parallel, delayed
-from sklearn.base import clone
 
 from sktime.base import _HeterogenousMetaEstimator
 from sktime.forecasting.base._base import BaseForecaster
@@ -16,8 +15,6 @@ from sktime.forecasting.base._base import BaseForecaster
 
 class _HeterogenousEnsembleForecaster(BaseForecaster, _HeterogenousMetaEstimator):
     """Base class for heterogeneous ensemble forecasters."""
-
-    _required_parameters = ["forecasters"]
 
     def __init__(self, forecasters, n_jobs=None):
         self.forecasters = forecasters
@@ -64,7 +61,7 @@ class _HeterogenousEnsembleForecaster(BaseForecaster, _HeterogenousMetaEstimator
             return forecaster.fit(y, X, fh)
 
         self.forecasters_ = Parallel(n_jobs=self.n_jobs)(
-            delayed(_fit_forecaster)(clone(forecaster), y, X, fh)
+            delayed(_fit_forecaster)(forecaster.clone(), y, X, fh)
             for forecaster in forecasters
         )
 
@@ -94,7 +91,7 @@ class _HeterogenousEnsembleForecaster(BaseForecaster, _HeterogenousMetaEstimator
 
         Parameters
         ----------
-        deep : boolean, optional
+        deep : boolean, optional, default=True
             If True, will return the parameters for this estimator and
             contained sub-objects that are estimators.
 

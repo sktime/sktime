@@ -2,7 +2,7 @@
 """HIVE-COTE v2 test code."""
 
 from sktime.classification.hybrid import HIVECOTEV2
-from sktime.contrib.vector_classifiers._rotation_forest import RotationForest
+from sktime.classification.sklearn import RotationForest
 from sktime.datasets import load_unit_test
 
 

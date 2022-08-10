@@ -24,8 +24,9 @@ class _StatsModelsAdapter(BaseForecaster):
         "handles-missing-data": False,
     }
 
-    def __init__(self):
+    def __init__(self, random_state=None):
         self._forecaster = None
+        self.random_state = random_state
         self._fitted_forecaster = None
         super(_StatsModelsAdapter, self).__init__()
 
@@ -94,6 +95,10 @@ class _StatsModelsAdapter(BaseForecaster):
         fitted_params : dict
         """
         self.check_is_fitted()
+
+        if hasattr(self, "_is_vectorized") and self._is_vectorized:
+            return {"forecasters": self.forecasters_}
+
         fitted_params = {}
         for name in self._get_fitted_param_names():
             if name in ["aic", "aicc", "bic", "hqic"]:

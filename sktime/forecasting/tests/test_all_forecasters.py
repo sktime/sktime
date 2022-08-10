@@ -11,8 +11,11 @@ import pandas as pd
 import pytest
 
 from sktime.datatypes import check_is_mtype
+from sktime.datatypes._utilities import get_cutoff
 from sktime.exceptions import NotFittedError
+from sktime.forecasting.base._delegate import _DelegatedForecaster
 from sktime.forecasting.model_selection import (
+    ExpandingWindowSplitter,
     SlidingWindowSplitter,
     temporal_train_test_split,
 )
@@ -27,6 +30,7 @@ from sktime.forecasting.tests._config import (
 from sktime.performance_metrics.forecasting import mean_absolute_percentage_error
 from sktime.tests.test_all_estimators import BaseFixtureGenerator, QuickTester
 from sktime.utils._testing.forecasting import (
+    _assert_correct_columns,
     _assert_correct_pred_time_index,
     _get_expected_index_for_update_predict,
     _get_n_columns,
@@ -165,17 +169,14 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
 
     def test_y_multivariate_raises_error(self, estimator_instance):
         """Test that wrong y scitype raises error (uni/multivariate not supported)."""
-        if estimator_instance.get_tag("scitype:y") == "univariate":
-            y = _make_series(n_columns=2)
-            with pytest.raises(ValueError, match=r"univariate"):
-                estimator_instance.fit(y, fh=FH0)
-
         if estimator_instance.get_tag("scitype:y") == "multivariate":
             y = _make_series(n_columns=1)
             with pytest.raises(ValueError, match=r"two or more variables"):
                 estimator_instance.fit(y, fh=FH0)
 
-        if estimator_instance.get_tag("scitype:y") == "both":
+        if estimator_instance.get_tag("scitype:y") in ["univariate", "both"]:
+            # this should pass since "both" allows any number of variables
+            # and "univariate" automatically vectorizes, behaves multivariate
             pass
 
     # todo: should these not be "negative scenarios", tested in test_all_estimators?
@@ -208,18 +209,23 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         """Check that predicted time index matches forecasting horizon."""
         index_type, fh_type, is_relative = index_fh_comb
         if fh_type == "timedelta":
-            pytest.skip(pytest_skip_msg)
-
+            return None
+            # todo: ensure check_estimator works with pytest.skip like below
+            # pytest.skip(
+            #    "ForecastingHorizon with timedelta values "
+            #     "is currently experimental and not supported everywhere"
+            # )
         y_train = _make_series(
             n_columns=n_columns, index_type=index_type, n_timepoints=50
         )
-        cutoff = y_train.index[-1]
+        cutoff = get_cutoff(y_train, return_index=True)
         fh = _make_fh(cutoff, fh_int, fh_type, is_relative)
 
         try:
             estimator_instance.fit(y_train, fh=fh)
             y_pred = estimator_instance.predict()
-            _assert_correct_pred_time_index(y_pred.index, y_train.index[-1], fh=fh_int)
+            _assert_correct_pred_time_index(y_pred.index, cutoff, fh=fh_int)
+            _assert_correct_columns(y_pred, y_train)
         except NotImplementedError:
             pass
 
@@ -233,12 +239,17 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         """Check that predict_residuals method works as expected."""
         index_type, fh_type, is_relative = index_fh_comb
         if fh_type == "timedelta":
-            pytest.skip(pytest_skip_msg)
-
+            # workaround to ensure check_estimator without breaking e.g. debugging
+            return None
+            # todo: ensure check_estimator works with pytest.skip like below
+            # pytest.skip(
+            #    "ForecastingHorizon with timedelta values "
+            #     "is currently experimental and not supported everywhere"
+            # )
         y_train = _make_series(
             n_columns=n_columns, index_type=index_type, n_timepoints=50
         )
-        cutoff = y_train.index[-1]
+        cutoff = get_cutoff(y_train, return_index=True)
         fh = _make_fh(cutoff, fh_int, fh_type, is_relative)
         try:
             estimator_instance.fit(y_train, fh=fh)
@@ -249,7 +260,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             )
             y_test.index = y_pred.index
             y_res = estimator_instance.predict_residuals(y_test)
-            _assert_correct_pred_time_index(y_res.index, y_train.index[-1], fh=fh)
+            _assert_correct_pred_time_index(y_res.index, cutoff, fh=fh)
         except NotImplementedError:
             pass
 
@@ -265,14 +276,18 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         """Check that predicted time index matches forecasting horizon."""
         index_type, fh_type, is_relative = index_fh_comb
         if fh_type == "timedelta":
-            pytest.skip(pytest_skip_msg)
-
+            return None
+            # todo: ensure check_estimator works with pytest.skip like below
+            # pytest.skip(
+            #    "ForecastingHorizon with timedelta values "
+            #     "is currently experimental and not supported everywhere"
+            # )
         z, X = make_forecasting_problem(index_type=index_type, make_X=True)
 
         # Some estimators may not support all time index types and fh types, hence we
         # need to catch NotImplementedErrors.
         y = _make_series(n_columns=n_columns, index_type=index_type)
-        cutoff = y.index[len(y) // 2]
+        cutoff = get_cutoff(y.iloc[: len(y) // 2], return_index=True)
         fh = _make_fh(cutoff, fh_int_oos, fh_type, is_relative)
 
         y_train, _, X_train, X_test = temporal_train_test_split(y, X, fh=fh)
@@ -280,7 +295,9 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         try:
             estimator_instance.fit(y_train, X_train, fh=fh)
             y_pred = estimator_instance.predict(X=X_test)
-            _assert_correct_pred_time_index(y_pred.index, y_train.index[-1], fh)
+            cutoff = get_cutoff(y_train, return_index=True)
+            _assert_correct_pred_time_index(y_pred.index, cutoff, fh)
+            _assert_correct_columns(y_pred, y_train)
         except NotImplementedError:
             pass
 
@@ -293,17 +310,21 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         """Check that predicted time index equals fh for full in-sample predictions."""
         index_type, fh_type, is_relative = index_fh_comb
         if fh_type == "timedelta":
-            pytest.skip(pytest_skip_msg)
-
+            return None
+            # todo: ensure check_estimator works with pytest.skip like below
+            # pytest.skip(
+            #    "ForecastingHorizon with timedelta values "
+            #     "is currently experimental and not supported everywhere"
+            # )
         y_train = _make_series(n_columns=n_columns, index_type=index_type)
-        cutoff = y_train.index[-1]
+        cutoff = get_cutoff(y_train, return_index=True)
         steps = -np.arange(len(y_train))
         fh = _make_fh(cutoff, steps, fh_type, is_relative)
 
         try:
             estimator_instance.fit(y_train, fh=fh)
             y_pred = estimator_instance.predict()
-            _assert_correct_pred_time_index(y_pred.index, y_train.index[-1], fh)
+            _assert_correct_pred_time_index(y_pred.index, cutoff, fh)
         except NotImplementedError:
             pass
 
@@ -319,7 +340,8 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             assert list(pred_int.columns) == ["lower", "upper"]
 
             # check time index
-            _assert_correct_pred_time_index(pred_int.index, y_train.index[-1], fh_int)
+            cutoff = get_cutoff(y_train, return_index=True)
+            _assert_correct_pred_time_index(pred_int.index, cutoff, fh_int)
             # check values
             assert np.all(pred_int["upper"] >= pred_int["lower"])
 
@@ -331,19 +353,21 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             # )
 
     @pytest.mark.parametrize(
-        "alpha", TEST_ALPHAS, ids=[f"alpha={a}" for a in TEST_ALPHAS]
+        "coverage", TEST_ALPHAS, ids=[f"alpha={a}" for a in TEST_ALPHAS]
     )
     @pytest.mark.parametrize(
         "fh_int_oos", TEST_OOS_FHS, ids=[f"fh={fh}" for fh in TEST_OOS_FHS]
     )
-    def test_predict_interval(self, estimator_instance, n_columns, fh_int_oos, alpha):
+    def test_predict_interval(
+        self, estimator_instance, n_columns, fh_int_oos, coverage
+    ):
         """Check prediction intervals returned by predict.
 
         Arguments
         ---------
         Forecaster: BaseEstimator class descendant, forecaster to test
         fh: ForecastingHorizon, fh at which to test prediction
-        alpha: float, coverage at which to make prediction intervals
+        coverage: float, coverage at which to make prediction intervals
 
         Raises
         ------
@@ -356,12 +380,17 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         estimator_instance.fit(y_train, fh=fh_int_oos)
         if estimator_instance.get_tag("capability:pred_int"):
 
-            pred_ints = estimator_instance.predict_interval(fh_int_oos, coverage=alpha)
-            assert check_is_mtype(pred_ints, mtype="pred_interval", scitype="Proba")
+            pred_ints = estimator_instance.predict_interval(
+                fh_int_oos, coverage=coverage
+            )
+            valid, msg, _ = check_is_mtype(
+                pred_ints, mtype="pred_interval", scitype="Proba", return_metadata=True
+            )  # type: ignore
+            assert valid, msg
 
         else:
             with pytest.raises(NotImplementedError, match="prediction intervals"):
-                estimator_instance.predict_interval(fh_int_oos, coverage=alpha)
+                estimator_instance.predict_interval(fh_int_oos, coverage=coverage)
 
     def _check_predict_quantiles(
         self, pred_quantiles: pd.DataFrame, y_train: pd.Series, fh, alpha
@@ -369,7 +398,8 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         # check if the input is a dataframe
         assert isinstance(pred_quantiles, pd.DataFrame)
         # check time index (also checks forecasting horizon is more than one element)
-        _assert_correct_pred_time_index(pred_quantiles.index, y_train.index[-1], fh)
+        cutoff = get_cutoff(y_train, return_index=True)
+        _assert_correct_pred_time_index(pred_quantiles.index, cutoff, fh)
         # Forecasters where name of variables do not exist
         # In this cases y_train is series - the upper level in dataframe == 'Quantiles'
         if isinstance(y_train, pd.Series):
@@ -377,7 +407,8 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         else:
             # multiply variables with all alpha values
             expected = pd.MultiIndex.from_product([y_train.columns, [alpha]])
-        assert all(expected == pred_quantiles.columns.to_flat_index())
+        found = pred_quantiles.columns.to_flat_index()
+        assert all(expected == found)
 
         if isinstance(alpha, list):
             # sorts the columns that correspond to alpha values
@@ -425,7 +456,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
 
         Arguments
         ---------
-        Forecaster: BaseEstimator class descendant, forecaster to test
+        estimator_instance : instance of BaseForecaster
 
         Raises
         ------
@@ -435,6 +466,12 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             or by defaulting to each other and/or _predict_proba
         """
         f = estimator_instance
+        # we skip the _DelegatedForecaster, since it implements delegation methods
+        #   which may look like the method is implemented, but in fact it is not
+        if isinstance(f, _DelegatedForecaster):
+            return None
+
+        # check which methods are implemented
         implements_interval = f._has_implementation_of("_predict_interval")
         implements_quantiles = f._has_implementation_of("_predict_quantiles")
         implements_proba = f._has_implementation_of("_predict_proba")
@@ -467,7 +504,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
 
         fh_idx = check_fh(fh_int_oos).to_indexer()  # get zero based index
         expected = mean_absolute_percentage_error(
-            y_pred, y_test.iloc[fh_idx], symmetric=True
+            y_test.iloc[fh_idx], y_pred, symmetric=False
         )
 
         # compare expected score with actual score
@@ -487,29 +524,30 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         y_pred = estimator_instance.update_predict_single(
             y_test, update_params=update_params
         )
-        _assert_correct_pred_time_index(y_pred.index, y_test.index[-1], fh_int_oos)
+        cutoff = get_cutoff(y_train, return_index=True)
+        _assert_correct_pred_time_index(y_pred.index, cutoff, fh_int_oos)
+        _assert_correct_columns(y_pred, y_train)
 
     @pytest.mark.parametrize(
         "fh_int_oos", TEST_OOS_FHS, ids=[f"fh={fh}" for fh in TEST_OOS_FHS]
     )
-    @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS_INT)
+    @pytest.mark.parametrize("initial_window", TEST_WINDOW_LENGTHS_INT)
     def test_update_predict_predicted_index(
         self,
         estimator_instance,
         n_columns,
         fh_int_oos,
-        window_length,
         step_length,
+        initial_window,
         update_params,
     ):
         """Check predicted index in update_predict."""
         y = _make_series(n_columns=n_columns, all_positive=True, index_type="datetime")
         y_train, y_test = temporal_train_test_split(y)
-        cv = SlidingWindowSplitter(
-            fh_int_oos,
-            window_length=window_length,
+        cv = ExpandingWindowSplitter(
+            fh=fh_int_oos,
+            initial_window=initial_window,
             step_length=step_length,
-            start_with_window=False,
         )
         estimator_instance.fit(y_train, fh=fh_int_oos)
         y_pred = estimator_instance.update_predict(
@@ -517,7 +555,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         )
         assert isinstance(y_pred, (pd.Series, pd.DataFrame))
         expected = _get_expected_index_for_update_predict(
-            y_test, fh_int_oos, step_length
+            y_test, fh_int_oos, step_length, initial_window
         )
         actual = y_pred.index
         np.testing.assert_array_equal(actual, expected)

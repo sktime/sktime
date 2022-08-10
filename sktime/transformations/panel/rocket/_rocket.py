@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
-__author__ = "Angus Dempster"
+"""Rocket transformer."""
+
+__author__ = "angus924"
 __all__ = ["Rocket"]
 
 import multiprocessing
@@ -8,11 +10,10 @@ import numpy as np
 import pandas as pd
 from numba import get_num_threads, njit, prange, set_num_threads
 
-from sktime.transformations.base import _PanelToTabularTransformer
-from sktime.utils.validation.panel import check_X
+from sktime.transformations.base import BaseTransformer
 
 
-class Rocket(_PanelToTabularTransformer):
+class Rocket(BaseTransformer):
     """ROCKET.
 
     RandOm Convolutional KErnel Transform
@@ -37,6 +38,18 @@ class Rocket(_PanelToTabularTransformer):
     random seed (optional, default None)
     """
 
+    _tags = {
+        "univariate-only": False,
+        "fit_is_empty": False,
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
+        "scitype:transform-output": "Primitives",
+        # what is the scitype of y: None (not needed), Primitives, Series, Panel
+        "scitype:instancewise": False,  # is this an instance-wise transform?
+        "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
+    }
+
     def __init__(self, num_kernels=10_000, normalise=True, n_jobs=1, random_state=None):
         self.num_kernels = num_kernels
         self.normalise = normalise
@@ -44,7 +57,7 @@ class Rocket(_PanelToTabularTransformer):
         self.random_state = random_state if isinstance(random_state, int) else None
         super(Rocket, self).__init__()
 
-    def fit(self, X, y=None):
+    def _fit(self, X, y=None):
         """Generate random kernels adjusted to time series shape.
 
         Infers time series length and number of channels / dimensions (
@@ -53,38 +66,36 @@ class Rocket(_PanelToTabularTransformer):
 
         Parameters
         ----------
-        X : pandas DataFrame, input time series (sktime format)
-        y : array_like, target values (optional, ignored as irrelevant)
+        X : 3D np.ndarray of shape = [n_instances, n_dimensions, series_length]
+            panel of time series to transform
+        y : ignored argument for interface compatibility
 
         Returns
         -------
         self
         """
-        X = check_X(X, coerce_to_numpy=True)
         _, self.n_columns, n_timepoints = X.shape
         self.kernels = _generate_kernels(
             n_timepoints, self.num_kernels, self.n_columns, self.random_state
         )
-        self._is_fitted = True
         return self
 
-    def transform(self, X, y=None):
+    def _transform(self, X, y=None):
         """Transform input time series using random convolutional kernels.
 
         Parameters
         ----------
-        X : pandas DataFrame, input time series (sktime format)
-        y : array_like, target values (optional, ignored as irrelevant)
+        X : 3D np.ndarray of shape = [n_instances, n_dimensions, series_length]
+            panel of time series to transform
+        y : ignored argument for interface compatibility
 
         Returns
         -------
         pandas DataFrame, transformed features
         """
-        self.check_is_fitted()
-        _X = check_X(X, coerce_to_numpy=True)
         if self.normalise:
-            _X = (_X - _X.mean(axis=-1, keepdims=True)) / (
-                _X.std(axis=-1, keepdims=True) + 1e-8
+            X = (X - X.mean(axis=-1, keepdims=True)) / (
+                X.std(axis=-1, keepdims=True) + 1e-8
             )
         prev_threads = get_num_threads()
         if self.n_jobs < 1 or self.n_jobs > multiprocessing.cpu_count():
@@ -92,7 +103,7 @@ class Rocket(_PanelToTabularTransformer):
         else:
             n_jobs = self.n_jobs
         set_num_threads(n_jobs)
-        t = pd.DataFrame(_apply_kernels(_X.astype(np.float32), self.kernels))
+        t = pd.DataFrame(_apply_kernels(X.astype(np.float32), self.kernels))
         set_num_threads(prev_threads)
         return t
 

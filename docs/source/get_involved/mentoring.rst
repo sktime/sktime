@@ -33,7 +33,7 @@ In addition to the individual project work, all students are be expected to:
 * Discuss proposed changes online on GitHub issues,
 * Write a final blog post about your contribution.
 
-Please also read our `Code of Conduct <https://github.com/alan-turing-institute/sktime/blob/main/CODE_OF_CONDUCT.rst>`_.
+Please also read our `Code of Conduct <https://github.com/alan-turing-institute/sktime/blob/main/docs/source/get_involved/code_of_conduct.rst>`_.
 
 How to apply
 ------------
@@ -43,4 +43,4 @@ How to apply
 
 We accept applications on a rolling basis and we will be in touch with you shortly!
 
-If you have any questions or get stuck, please don't hesitate to `chat with us on slack <https://join.slack.com/t/sktime-group/shared_invite/zt-62i7aejn-vXc3nOWF26S_P3VXFPWisQ>`_, join on of our collaborative community sessions on `discord <https://discord.com/invite/gqSab2K>`_, or email us at info@sktime.org.
+If you have any questions or get stuck, please don't hesitate to `chat with us on slack <https://join.slack.com/t/sktime-group/shared_invite/zt-1cghagwee-sqLJ~eHWGYgzWbqUX937ig>`_, join on of our collaborative community sessions on `discord <https://discord.com/invite/gqSab2K>`_, or email us at info@sktime.org.

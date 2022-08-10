@@ -3,15 +3,14 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implement transformers for summarizing a time series."""
 
-__author__ = ["mloning", "RNKuhns", "danbartl"]
+__author__ = ["mloning", "RNKuhns", "danbartl", "grzegorzrut"]
 __all__ = ["SummaryTransformer", "WindowSummarizer"]
-
-import warnings
 
 import pandas as pd
 from joblib import Parallel, delayed
 
 from sktime.transformations.base import BaseTransformer
+from sktime.utils.multiindex import flatten_multiindex
 
 
 class WindowSummarizer(BaseTransformer):
@@ -39,7 +38,7 @@ class WindowSummarizer(BaseTransformer):
         For ease of notation, for the key "lag", only a single integer
         specifying the `lag` argument will be provided.
 
-        Please see blow a graphical representation of the logic using the following
+        Please see below a graphical representation of the logic using the following
         symbols:
 
         ``z`` = time stamp that the window is summarized *to*.
@@ -190,6 +189,7 @@ class WindowSummarizer(BaseTransformer):
         "X_inner_mtype": [
             "pd-multiindex",
             "pd.DataFrame",
+            "pd_multiindex_hier",
         ],  # which mtypes do _fit/_predict support for X?
         "skip-inverse-transform": True,  # is inverse-transform skipped when called?
         "univariate-only": False,  # can the transformer handle multivariate X?
@@ -203,15 +203,12 @@ class WindowSummarizer(BaseTransformer):
 
     def __init__(
         self,
-        lag_config=None,
         lag_feature=None,
         n_jobs=-1,
         target_cols=None,
         truncate=None,
     ):
 
-        # self._converter_store_X = dict()
-        self.lag_config = lag_config
         self.lag_feature = lag_feature
         self.n_jobs = n_jobs
         self.target_cols = target_cols
@@ -241,6 +238,8 @@ class WindowSummarizer(BaseTransformer):
             The raw inputs to transformed columns will be dropped.
         self: reference to self
         """
+        self._X_memory = X
+
         X_name = get_name_list(X)
 
         if self.target_cols is not None:
@@ -258,47 +257,32 @@ class WindowSummarizer(BaseTransformer):
             self._target_cols = self.target_cols
 
         # Convert lag config dictionary to pandas dataframe
-        if self.lag_config is not None:
-            func_dict = pd.DataFrame(self.lag_config).T.reset_index()
-            func_dict.rename(
-                columns={"index": "name", 0: "summarizer", 1: "window"},
-                inplace=True,
-            )
-            func_dict = func_dict.explode("window")
-            func_dict["window"] = func_dict["window"].apply(lambda x: [x[1] + 1, x[0]])
-            func_dict.drop("name", inplace=True, axis=1)
-            warnings.warn(
-                "Specifying lag features via lag_config is deprecated since 0.12.0,"
-                + " and will be removed in 0.13.0. Please use the lag_feature notation"
-                + " (see the documentation for the new notation)."
-            )
+        if self.lag_feature is None:
+            func_dict = pd.DataFrame(
+                {
+                    "lag": [1],
+                }
+            ).T.reset_index()
         else:
-            if self.lag_feature is None:
-                func_dict = pd.DataFrame(
-                    {
-                        "lag": [1],
-                    }
-                ).T.reset_index()
-            else:
-                func_dict = pd.DataFrame.from_dict(
-                    self.lag_feature, orient="index"
-                ).reset_index()
+            func_dict = pd.DataFrame.from_dict(
+                self.lag_feature, orient="index"
+            ).reset_index()
 
-            func_dict = pd.melt(
-                func_dict, id_vars="index", value_name="window", ignore_index=False
-            )
-            func_dict.sort_index(inplace=True)
-            func_dict.drop("variable", axis=1, inplace=True)
-            func_dict.rename(
-                columns={"index": "summarizer"},
-                inplace=True,
-            )
-            func_dict = func_dict.dropna(axis=0, how="any")
-            # Identify lags (since they can follow special notation)
-            lags = func_dict["summarizer"] == "lag"
-            # Convert lags to default list notation with window_length 1
-            boost_lag = func_dict.loc[lags, "window"].apply(lambda x: [int(x), 1])
-            func_dict.loc[lags, "window"] = boost_lag
+        func_dict = pd.melt(
+            func_dict, id_vars="index", value_name="window", ignore_index=False
+        )
+        func_dict.sort_index(inplace=True)
+        func_dict.drop("variable", axis=1, inplace=True)
+        func_dict.rename(
+            columns={"index": "summarizer"},
+            inplace=True,
+        )
+        func_dict = func_dict.dropna(axis=0, how="any")
+        # Identify lags (since they can follow special notation)
+        lags = func_dict["summarizer"] == "lag"
+        # Convert lags to default list notation with window_length 1
+        boost_lag = func_dict.loc[lags, "window"].apply(lambda x: [int(x), 1])
+        func_dict.loc[lags, "window"] = boost_lag
         self.truncate_start = func_dict["window"].apply(lambda x: x[0] + x[1] - 1).max()
         self._func_dict = func_dict
 
@@ -314,6 +298,9 @@ class WindowSummarizer(BaseTransformer):
         -------
         transformed version of X
         """
+        idx = X.index
+        X = X.combine_first(self._X_memory)
+
         func_dict = self._func_dict
         target_cols = self._target_cols
 
@@ -325,7 +312,8 @@ class WindowSummarizer(BaseTransformer):
             bfill = False
         for cols in target_cols:
             if isinstance(X.index, pd.MultiIndex):
-                X_grouped = X.groupby("instances")[cols]
+                hier_levels = list(range(X.index.nlevels - 1))
+                X_grouped = X.groupby(level=hier_levels)[cols]
                 df = Parallel(n_jobs=self.n_jobs)(
                     delayed(_window_feature)(X_grouped, **kwargs, bfill=bfill)
                     for index, kwargs in func_dict.iterrows()
@@ -341,7 +329,22 @@ class WindowSummarizer(BaseTransformer):
         Xt_out_df = pd.concat(Xt_out, axis=1)
         Xt_return = pd.concat([Xt_out_df, X.drop(target_cols, axis=1)], axis=1)
 
+        Xt_return = Xt_return.loc[idx]
         return Xt_return
+
+    def _update(self, X, y=None):
+        """Update X and return a transformed version.
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+        y : None
+
+        Returns
+        -------
+        transformed version of X
+        """
+        self._X_memory = X.combine_first(self._X_memory)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -607,11 +610,13 @@ class SummaryTransformer(BaseTransformer):
     quantiles : str, list, tuple or None, default=(0.1, 0.25, 0.5, 0.75, 0.9)
         Optional list of series quantiles to calculate. If None, no quantiles
         are calculated.
+    flatten_transform_index : bool, optional (default=True)
+        if True, columns of return DataFrame are flat, by "variablename__feature"
+        if False, columns are MultiIndex (variablename__feature)
+        has no effect if return mtype is one without column names
 
     See Also
     --------
-    MeanTransformer :
-        Calculate the mean of a timeseries.
     WindowSummarizer:
         Extracting features across (shifted) windows from series
 
@@ -645,9 +650,12 @@ class SummaryTransformer(BaseTransformer):
         self,
         summary_function=("mean", "std", "min", "max"),
         quantiles=(0.1, 0.25, 0.5, 0.75, 0.9),
+        flatten_transform_index=True,
     ):
         self.summary_function = summary_function
         self.quantiles = quantiles
+        self.flatten_transform_index = flatten_transform_index
+
         super(SummaryTransformer, self).__init__()
 
     def _transform(self, X, y=None):
@@ -668,8 +676,6 @@ class SummaryTransformer(BaseTransformer):
             If `series_or_df` is univariate then a scalar is returned. Otherwise,
             a pd.Series is returned.
         """
-        Z = X
-
         if self.summary_function is None and self.quantiles is None:
             raise ValueError(
                 "One of `summary_function` and `quantiles` must not be None."
@@ -677,14 +683,22 @@ class SummaryTransformer(BaseTransformer):
         summary_function = _check_summary_function(self.summary_function)
         quantiles = _check_quantiles(self.quantiles)
 
-        summary_value = Z.agg(summary_function)
+        summary_value = X.agg(summary_function)
         if quantiles is not None:
-            quantile_value = Z.quantile(quantiles)
+            quantile_value = X.quantile(quantiles)
             quantile_value.index = [str(s) for s in quantile_value.index]
             summary_value = pd.concat([summary_value, quantile_value])
 
-        if isinstance(Z, pd.Series):
-            summary_value.name = Z.name
+        if isinstance(X, pd.Series):
+            summary_value.name = X.name
             summary_value = pd.DataFrame(summary_value)
 
-        return summary_value.T
+        Xt = summary_value.T
+
+        if len(Xt) > 1:
+            # move the row index as second level to column
+            Xt = pd.DataFrame(Xt.T.unstack()).T
+            if self.flatten_transform_index:
+                Xt.columns = flatten_multiindex(Xt.columns)
+
+        return Xt

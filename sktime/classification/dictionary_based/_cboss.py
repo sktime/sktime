@@ -462,4 +462,8 @@ class ContractableBOSS(BaseClassifier):
         if parameter_set == "results_comparison":
             return {"n_parameter_samples": 10, "max_ensemble_size": 5}
         else:
-            return {"n_parameter_samples": 4, "max_ensemble_size": 2}
+            return {
+                "n_parameter_samples": 4,
+                "max_ensemble_size": 2,
+                "save_train_predictions": True,
+            }

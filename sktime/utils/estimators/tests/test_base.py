@@ -4,6 +4,7 @@
 __author__ = ["ltsaprounis"]
 
 import pytest
+from pandas.testing import assert_series_equal
 
 from sktime.classification.base import BaseClassifier
 from sktime.clustering.base import BaseClusterer
@@ -41,7 +42,18 @@ def test_mixin(base):
             pass
 
     dummy_instance = _DummyClass()
-    assert hasattr(dummy_instance, "_log") & hasattr(dummy_instance, "log")
+    assert hasattr(dummy_instance, "log")
+    dummy_instance.add_log_item(42)
+    assert hasattr(dummy_instance, "_MockEstimatorMixin__log")
+
+
+def test_add_log_item():
+    """Test _MockEstimatorMixin.add_log_item behaviour."""
+    mixin = _MockEstimatorMixin()
+    mixin.add_log_item(1)
+    mixin.add_log_item(2)
+    assert mixin.log[0] == 1
+    assert mixin.log[1] == 2
 
 
 def test_log_is_property():
@@ -148,3 +160,29 @@ def test_make_mock_estimator(estimator_class, method_regex, logged_methods):
     methods_called = [entry[0] for entry in estimator.log]
 
     assert set(methods_called) >= set(logged_methods)
+
+
+@pytest.mark.parametrize(
+    "estimator_class, estimator_kwargs",
+    [
+        (NaiveForecaster, {"strategy": "last", "sp": 2, "window_length": None}),
+        (NaiveForecaster, {"strategy": "mean", "sp": 1, "window_length": None}),
+    ],
+)
+def test_make_mock_estimator_with_kwargs(estimator_class, estimator_kwargs):
+    """Test that make_mock_estimator behaves like the passed estimator."""
+    mock_estimator = make_mock_estimator(estimator_class)
+    mock_estimator_instance = mock_estimator(estimator_kwargs)
+    estimator_instance = estimator_class(**estimator_kwargs)
+    mock_estimator_instance.fit(y_series)
+    estimator_instance.fit(y_series)
+
+    assert_series_equal(
+        estimator_instance.predict(fh=[1, 2, 3]),
+        mock_estimator_instance.predict(fh=[1, 2, 3]),
+    )
+    assert (
+        (mock_estimator_instance.strategy == estimator_kwargs["strategy"])
+        and (mock_estimator_instance.sp == estimator_kwargs["sp"])
+        and (mock_estimator_instance.window_length == estimator_kwargs["window_length"])
+    )

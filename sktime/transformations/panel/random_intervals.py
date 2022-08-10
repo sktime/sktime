@@ -12,18 +12,14 @@ import pandas as pd
 from sklearn.utils import check_random_state
 
 from sktime.base._base import _clone_estimator
-from sktime.transformations.base import _PanelToTabularTransformer
+from sktime.transformations.base import BaseTransformer
 from sktime.transformations.series.summarize import SummaryTransformer
-from sktime.utils.validation.panel import check_X
 
 
-class RandomIntervals(_PanelToTabularTransformer):
+class RandomIntervals(BaseTransformer):
     """Random interval feature transformer.
 
-    Overview:
-
-    Extracts intervals with random length, position and dimension from the series in
-    fit.
+    Extracts intervals with random length, position and dimension from series in fit.
     Transforms each interval subseries using the given transformer(s) and concatenates
     them into a feature vector in transform.
 
@@ -46,6 +42,17 @@ class RandomIntervals(_PanelToTabularTransformer):
         Seed for random, integer.
     """
 
+    _tags = {
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
+        "scitype:transform-output": "Primitives",
+        # what is the scitype of y: None (not needed), Primitives, Series, Panel
+        "scitype:instancewise": True,  # is this an instance-wise transform?
+        "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
+        "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
+    }
+
     def __init__(
         self,
         n_intervals=100,
@@ -65,7 +72,7 @@ class RandomIntervals(_PanelToTabularTransformer):
 
         super(RandomIntervals, self).__init__()
 
-    def fit(self, X, y=None):
+    def _fit(self, X, y=None):
         """Fit the random interval transform.
 
         Parameters
@@ -73,8 +80,6 @@ class RandomIntervals(_PanelToTabularTransformer):
         X : pandas DataFrame or 3d numpy array, input time series
         y : array_like, target values (optional, ignored)
         """
-        X = check_X(X, coerce_to_numpy=True)
-
         _, n_dims, series_length = X.shape
 
         if self.transformers is None:
@@ -123,11 +128,9 @@ class RandomIntervals(_PanelToTabularTransformer):
                     else 3
                 )
                 self._intervals[i][0] = self._intervals[i][1] - length
-
-        self._is_fitted = True
         return self
 
-    def transform(self, X, y=None):
+    def _transform(self, X, y=None):
         """Transform data into random interval features.
 
         Parameters
@@ -139,9 +142,6 @@ class RandomIntervals(_PanelToTabularTransformer):
         -------
         Pandas dataframe of random interval features.
         """
-        self.check_is_fitted()
-        X = check_X(X, coerce_to_numpy=True)
-
         X_t = []
         for i in range(0, self.n_intervals):
             for j in range(len(self._transformers)):
@@ -166,3 +166,23 @@ class RandomIntervals(_PanelToTabularTransformer):
                     X_t = np.concatenate((X_t, t), axis=1)
 
         return pd.DataFrame(X_t)
+
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        return {"n_intervals": 3}

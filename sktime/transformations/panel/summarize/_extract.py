@@ -7,12 +7,10 @@ __author__ = ["mloning"]
 import numpy as np
 import pandas as pd
 from joblib import Parallel, delayed
-from sklearn.base import clone
 
 from sktime.datatypes import convert_to
-from sktime.transformations.base import BaseTransformer, _PanelToPanelTransformer
+from sktime.transformations.base import BaseTransformer
 from sktime.transformations.panel.segment import RandomIntervalSegmenter
-from sktime.utils.validation.panel import check_X
 
 
 class PlateauFinder(BaseTransformer):
@@ -110,15 +108,23 @@ class PlateauFinder(BaseTransformer):
         return Xt
 
 
-class DerivativeSlopeTransformer(_PanelToPanelTransformer):
+class DerivativeSlopeTransformer(BaseTransformer):
     """Derivative slope transformer."""
 
-    # TODO add docstrings
-    def transform(self, X, y=None):
-        """Transform X."""
-        self.check_is_fitted()
-        X = check_X(X, enforce_univariate=False, coerce_to_pandas=True)
+    _tags = {
+        "fit_is_empty": True,
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
+        "scitype:transform-output": "Series",
+        # what scitype is returned: Primitives, Series, Panel
+        "scitype:instancewise": False,  # is this an instance-wise transform?
+        "X_inner_mtype": "nested_univ",  # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
+    }
 
+    # TODO add docstrings
+    def _transform(self, X, y=None):
+        """Transform X."""
         num_cases, num_dim = X.shape
         output_df = pd.DataFrame()
         for dim in range(num_dim):
@@ -288,6 +294,7 @@ class RandomIntervalFeatureExtractor(BaseTransformer):
         columns = []
 
         i = 0
+        drop_list = []
         for func in features:
             # TODO generalise to series-to-series functions and function kwargs
             for start, end in intervals:
@@ -307,11 +314,17 @@ class RandomIntervalFeatureExtractor(BaseTransformer):
                         ).squeeze()
                     else:
                         raise
+                new_col_name = f"{start}_{end}_{func.__name__}"
+                if new_col_name in columns:
+                    drop_list += [i]
+                else:
+                    columns = columns + [new_col_name]
                 i += 1
-                columns.append(f"{start}_{end}_{func.__name__}")
 
         Xt = pd.DataFrame(Xt)
+        Xt = Xt.drop(columns=Xt.columns[drop_list])
         Xt.columns = columns
+
         return Xt
 
 
@@ -336,8 +349,6 @@ class FittedParamExtractor(BaseTransformer):
         None means 1 unless in a joblib.parallel_backend context.
         -1 means using all processors.
     """
-
-    _required_parameters = ["forecaster"]
 
     _tags = {
         "fit_is_empty": True,
@@ -390,7 +401,7 @@ class FittedParamExtractor(BaseTransformer):
         # iterate over rows
         extracted_params = Parallel(n_jobs=self.n_jobs)(
             delayed(_fit_extract)(
-                clone(self.forecaster), _get_instance(X, i), param_names
+                self.forecaster.clone(), _get_instance(X, i), param_names
             )
             for i in range(n_instances)
         )
@@ -414,3 +425,25 @@ class FittedParamExtractor(BaseTransformer):
                 f"but found: {type(param_names)}"
             )
         return param_names
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        from sktime.forecasting.exp_smoothing import ExponentialSmoothing
+
+        return {"forecaster": ExponentialSmoothing(), "param_names": ["initial_level"]}

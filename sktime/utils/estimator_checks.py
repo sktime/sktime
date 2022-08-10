@@ -11,6 +11,8 @@ def check_estimator(
     tests_to_run=None,
     fixtures_to_run=None,
     verbose=True,
+    tests_to_exclude=None,
+    fixtures_to_exclude=None,
 ):
     """Run all tests on one single estimator.
 
@@ -37,6 +39,11 @@ def check_estimator(
             plus all test-fixture combinations in fixtures_to_run.
     verbose : str, optional, default=True.
         whether to print out informative summary of tests run.
+    tests_to_exclude : str or list of str, names of tests to exclude. default = None
+        removes tests that should not be run, after subsetting via tests_to_run.
+    fixtures_to_exclude : str or list of str, fixtures to exclude. default = None
+        removes test-fixture combinations that should not be run.
+        This is done after subsetting via fixtures_to_run.
 
     Returns
     -------
@@ -52,31 +59,53 @@ def check_estimator(
 
     Examples
     --------
-    >>> from sktime.forecasting.arima import ARIMA
+    >>> from sktime.forecasting.theta import ThetaForecaster
     >>> from sktime.utils.estimator_checks import check_estimator
-    >>> results = check_estimator(ARIMA, tests_to_run="test_pred_int_tag")
+    >>> results = check_estimator(ThetaForecaster, tests_to_run="test_pred_int_tag")
     All tests PASSED!
-    >>> check_estimator(ARIMA, fixtures_to_run="test_score[ARIMA-fh=1]")
+    >>> check_estimator(
+    ...    ThetaForecaster, fixtures_to_run="test_score[ThetaForecaster-y:1cols-fh=1]"
+    ... )
     All tests PASSED!
-    {'test_score[ARIMA-fh=1]': 'PASSED'}
+    {'test_score[ThetaForecaster-y:1cols-fh=1]': 'PASSED'}
     """
+    from sktime.base import BaseEstimator
+    from sktime.classification.early_classification.tests.test_all_early_classifiers import (  # noqa E501
+        TestAllEarlyClassifiers,
+    )
     from sktime.classification.tests.test_all_classifiers import TestAllClassifiers
     from sktime.forecasting.tests.test_all_forecasters import TestAllForecasters
     from sktime.registry import scitype
-    from sktime.tests.test_all_estimators import TestAllEstimators
+    from sktime.regression.tests.test_all_regressors import TestAllRegressors
+    from sktime.tests.test_all_estimators import TestAllEstimators, TestAllObjects
     from sktime.transformations.tests.test_all_transformers import TestAllTransformers
 
     testclass_dict = dict()
     testclass_dict["classifier"] = TestAllClassifiers
+    testclass_dict["early_classifier"] = TestAllEarlyClassifiers
     testclass_dict["forecaster"] = TestAllForecasters
+    testclass_dict["regressor"] = TestAllRegressors
     testclass_dict["transformer"] = TestAllTransformers
 
-    results = TestAllEstimators().run_tests(
+    results = TestAllObjects().run_tests(
         estimator=estimator,
         return_exceptions=return_exceptions,
         tests_to_run=tests_to_run,
         fixtures_to_run=fixtures_to_run,
+        tests_to_exclude=tests_to_exclude,
+        fixtures_to_exclude=fixtures_to_exclude,
     )
+
+    if isinstance(estimator, BaseEstimator) or issubclass(estimator, BaseEstimator):
+        results_estimator = TestAllEstimators().run_tests(
+            estimator=estimator,
+            return_exceptions=return_exceptions,
+            tests_to_run=tests_to_run,
+            fixtures_to_run=fixtures_to_run,
+            tests_to_exclude=tests_to_exclude,
+            fixtures_to_exclude=fixtures_to_exclude,
+        )
+        results.update(results_estimator)
 
     try:
         scitype_of_estimator = scitype(estimator)

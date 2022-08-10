@@ -3,15 +3,14 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Meta-transformers for building composite transformers."""
 
+__author__ = ["aiwalter", "SveaMeyer13", "fkiraly"]
+__all__ = ["OptionalPassthrough", "ColumnwiseTransformer", "YtoX"]
+
 import pandas as pd
-from sklearn.base import clone
 from sklearn.utils.metaestimators import if_delegate_has_method
 
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.validation.series import check_series
-
-__author__ = ["aiwalter", "SveaMeyer13"]
-__all__ = ["OptionalPassthrough", "ColumnwiseTransformer"]
 
 
 class OptionalPassthrough(BaseTransformer):
@@ -68,7 +67,6 @@ class OptionalPassthrough(BaseTransformer):
     >>> gscv_fitted = gscv.fit(load_airline())
     """
 
-    _required_parameters = ["transformer"]
     _tags = {
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
@@ -124,7 +122,7 @@ class OptionalPassthrough(BaseTransformer):
         self: a fitted instance of the estimator
         """
         if not self.passthrough:
-            self.transformer_ = clone(self.transformer)
+            self.transformer_ = self.transformer.clone()
             self.transformer_._fit(X, y)
         return self
 
@@ -231,7 +229,6 @@ class ColumnwiseTransformer(BaseTransformer):
     >>> Xt = transformer.fit_transform(X)
     """
 
-    _required_parameters = ["transformer"]
     _tags = {
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
@@ -295,7 +292,7 @@ class ColumnwiseTransformer(BaseTransformer):
         # fit by iterating over columns
         self.transformers_ = {}
         for colname in self.columns_:
-            transformer = clone(self.transformer)
+            transformer = self.transformer.clone()
             self.transformers_[colname] = transformer
             self.transformers_[colname].fit(X[colname], y)
         return self
@@ -430,3 +427,67 @@ def _check_is_pdseries(z):
         z = z.to_frame()
         is_series = True
     return z, is_series
+
+
+class YtoX(BaseTransformer):
+    """Create exogeneous features which are a copy of the endogenous data.
+
+    Replaces exogeneous features (`X`) by endogeneous data (`y`).
+
+    To *add* instead of *replace*, use `FeatureUnion`.
+
+    Parameters
+    ----------
+    no parameters
+    """
+
+    _tags = {
+        "transform-returns-same-time-index": True,
+        "skip-inverse-transform": False,
+        "univariate-only": False,
+        "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
+        "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
+        "scitype:y": "both",
+        "fit_is_empty": True,
+        "requires_y": True,
+    }
+
+    def __init__(self):
+        super(YtoX, self).__init__()
+
+    def _transform(self, X, y=None):
+        """Transform X and return a transformed version.
+
+        private _transform containing core logic, called from transform
+
+        Parameters
+        ----------
+        X : time series or panel in one of the pd.DataFrame formats
+            Data to be transformed
+        y : time series or panel in one of the pd.DataFrame formats
+            Additional data, e.g., labels for transformation
+
+        Returns
+        -------
+        y, as a transformed version of X
+        """
+        return y
+
+    def _inverse_transform(self, X, y=None):
+        """Inverse transform, inverse operation to transform.
+
+        Drops featurized column that was added in transform().
+
+        Parameters
+        ----------
+        X : Series or Panel of mtype X_inner_mtype
+            if X_inner_mtype is list, _inverse_transform must support all types in it
+            Data to be inverse transformed
+        y : Series or Panel of mtype y_inner_mtype, optional (default=None)
+            Additional data, e.g., labels for transformation
+
+        Returns
+        -------
+        inverse transformed version of X
+        """
+        return y

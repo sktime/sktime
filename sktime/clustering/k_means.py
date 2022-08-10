@@ -7,8 +7,9 @@ from typing import Callable, Union
 import numpy as np
 from numpy.random import RandomState
 
-from sktime.clustering.metrics.averaging._averaging import resolve_average_callable
-from sktime.clustering.partitioning._lloyds import TimeSeriesLloyds
+from sktime.clustering.metrics.averaging import _resolve_average_callable
+from sktime.clustering.partitioning import TimeSeriesLloyds
+from sktime.distances import pairwise_distance
 
 
 class TimeSeriesKMeans(TimeSeriesLloyds):
@@ -43,9 +44,11 @@ class TimeSeriesKMeans(TimeSeriesLloyds):
         Determines random number generation for centroid initialization.
     averaging_method: str or Callable, defaults = 'mean'
         Averaging method to compute the average of a cluster. Any of the following
-        strings are valid: ['mean']. If a Callable is provided must take the form
+        strings are valid: ['mean', 'dba']. If a Callable is provided must take the form
         Callable[[np.ndarray], np.ndarray].
-    distance_params: dict, defaults = None
+    average_params: dict, defaults = None = no parameters
+        Dictonary containing kwargs for averaging_method.
+    distance_params: dict, defaults = None = no parameters
         Dictonary containing kwargs for the distance metric being used.
 
     Attributes
@@ -73,11 +76,29 @@ class TimeSeriesKMeans(TimeSeriesLloyds):
         tol: float = 1e-6,
         verbose: bool = False,
         random_state: Union[int, RandomState] = None,
-        averaging_method: Union[str, Callable[[np.ndarray], np.ndarray]] = "dba",
+        averaging_method: Union[str, Callable[[np.ndarray], np.ndarray]] = "mean",
         distance_params: dict = None,
+        average_params: dict = None,
     ):
         self.averaging_method = averaging_method
-        self._averaging_method = resolve_average_callable(averaging_method)
+        self._averaging_method = _resolve_average_callable(averaging_method)
+
+        if averaging_method == "dba":
+            self._dba_medoids_distance_metric = "dtw"
+            self._precomputed_pairwise = None
+            if (
+                average_params is not None
+                and "medoids_distance_metric" in average_params
+            ):
+                self._dba_medoids_distance_metric = average_params[
+                    "medoids_distance_metric"
+                ]
+
+        self.average_params = average_params
+        if self.average_params is None:
+            self._average_params = {}
+        else:
+            self._average_params = average_params
 
         super(TimeSeriesKMeans, self).__init__(
             n_clusters,
@@ -90,6 +111,27 @@ class TimeSeriesKMeans(TimeSeriesLloyds):
             random_state,
             distance_params,
         )
+
+    def _fit(self, X: np.ndarray, y=None) -> np.ndarray:
+        """Fit time series clusterer to training data.
+
+        Parameters
+        ----------
+        X : np.ndarray (2d or 3d array of shape (n_instances, series_length) or shape
+            (n_instances, n_dimensions, series_length))
+            Training time series instances to cluster.
+        y: ignored, exists for API consistency reasons.
+
+        Returns
+        -------
+        self:
+            Fitted estimator.
+        """
+        if self.averaging_method == "dba":
+            self._precomputed_pairwise = pairwise_distance(
+                X, metric=self._dba_medoids_distance_metric, **self._average_params
+            )
+        return super()._fit(X, y)
 
     def _compute_new_cluster_centers(
         self, X: np.ndarray, assignment_indexes: np.ndarray
@@ -111,7 +153,21 @@ class TimeSeriesKMeans(TimeSeriesLloyds):
         new_centers = np.zeros((self.n_clusters, X.shape[1], X.shape[2]))
         for i in range(self.n_clusters):
             curr_indexes = np.where(assignment_indexes == i)[0]
-            result = self._averaging_method(X[curr_indexes])
+
+            if self.averaging_method == "dba":
+                distance_matrix = np.zeros((len(curr_indexes), len(curr_indexes)))
+                for j in range(len(curr_indexes)):
+                    curr_j = curr_indexes[j]
+                    for k in range(len(curr_indexes)):
+                        distance_matrix[j, k] = self._precomputed_pairwise[
+                            curr_j, curr_indexes[k]
+                        ]
+
+                self._average_params[
+                    "precomputed_medoids_pairwise_distance"
+                ] = distance_matrix
+
+            result = self._averaging_method(X[curr_indexes], **self._average_params)
             if result.shape[0] > 0:
                 new_centers[i, :] = result
         return new_centers

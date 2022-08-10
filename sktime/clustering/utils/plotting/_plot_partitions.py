@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.clustering.base import TimeSeriesInstances
-from sktime.clustering.partitioning._lloyds import TimeSeriesLloyds
+from sktime.clustering.partitioning import TimeSeriesLloyds
 from sktime.datatypes import convert_to
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 

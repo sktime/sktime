@@ -7,7 +7,6 @@ __all__ = ["Detrender"]
 __author__ = ["mloning", "SveaMeyer13"]
 
 import pandas as pd
-from sklearn.base import clone
 
 from sktime.forecasting.base._fh import ForecastingHorizon
 from sktime.forecasting.trend import PolynomialTrendForecaster
@@ -60,8 +59,6 @@ class Detrender(BaseTransformer):
     >>> y_hat = transformer.fit_transform(y)
     """
 
-    _required_parameters = ["forecaster"]
-
     _tags = {
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
@@ -109,14 +106,14 @@ class Detrender(BaseTransformer):
 
         # univariate: X is pd.Series
         if isinstance(X, pd.Series):
-            forecaster = clone(self.forecaster)
+            forecaster = self.forecaster.clone()
             # note: the y in the transformer is exogeneous in the forecaster, i.e., X
             self.forecaster_ = forecaster.fit(y=X, X=y)
         # multivariate
         elif isinstance(X, pd.DataFrame):
             self.forecaster_ = {}
             for colname in X.columns:
-                forecaster = clone(self.forecaster)
+                forecaster = self.forecaster.clone()
                 self.forecaster_[colname] = forecaster.fit(y=X[colname], X=y)
         else:
             raise TypeError("X must be pd.Series or pd.DataFrame")
@@ -158,7 +155,7 @@ class Detrender(BaseTransformer):
             if len(difference) != 0:
                 raise ValueError(
                     "X contains columns that have not been "
-                    "seen in fit: " + difference
+                    "seen in fit: " + str(difference)
                 )
             for colname in Xt.columns:
                 X_pred = self.forecaster_[colname].predict(fh=fh, X=y)
@@ -199,7 +196,7 @@ class Detrender(BaseTransformer):
             if len(difference) != 0:
                 raise ValueError(
                     "X contains columns that have not been "
-                    "seen in fit: " + difference
+                    "seen in fit: " + str(difference)
                 )
             for colname in X.columns:
                 X_pred = self.forecaster_[colname].predict(fh=fh, X=y)
