@@ -15,6 +15,7 @@ Each tutorial is located in its own repository, which contains notebooks and lin
     Nonetheless, there may be outdated parts - in such a case, we would be very thankful for bug reports.
 
 For user guides specific to learning tasks, see our :ref:`user_guide` page.
+The user guide notebooks are always functional with the most recent stable version.
 
 .. panels::
     :card: + intro-card text-center
