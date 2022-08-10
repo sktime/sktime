@@ -119,3 +119,8 @@ file = "LICENSE"
 [build-system]
 requires = ["setuptools", "wheel", "toml", "build"]
 build-backend = "setuptools.build_meta"
+
+[tool.nbqa.exclude]
+black = "^docs/source/examples/"
+flake8 = "^docs/source/examples/"
+isort = "^docs/source/examples/"
