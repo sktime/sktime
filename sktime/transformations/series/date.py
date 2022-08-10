@@ -261,7 +261,7 @@ def _calendar_dummies(x, funcs):
     else:
         cd = getattr(date_sequence, funcs)
     cd = pd.DataFrame(cd)
-    cd.rename(columns={cd.columns[0]: funcs}, inplace=True)
+    cd = cd.rename(columns={cd.columns[0]: funcs})
     cd[funcs] = np.int64(cd[funcs])
     return cd
 
