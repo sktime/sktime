@@ -126,8 +126,6 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
     >>> pipe = StandardScaler() * SummaryTransformer() * StandardScaler()
     """
 
-    _required_parameters = ["steps"]
-
     _tags = {
         # we let all X inputs through to be handled by first transformer
         "X_inner_mtype": [
@@ -461,8 +459,6 @@ class FeatureUnion(BaseTransformer, _HeterogenousMetaEstimator):
         if False, columns are MultiIndex (transformer, variablename)
         has no effect if return mtype is one without column names
     """
-
-    _required_parameters = ["transformer_list"]
 
     _tags = {
         "scitype:transform-input": "Series",

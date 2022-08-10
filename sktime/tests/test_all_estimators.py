@@ -438,9 +438,9 @@ class QuickTester:
         >>> from sktime.tests.test_all_estimators import TestAllObjects
         >>> TestAllObjects().run_tests(
         ...     NaiveForecaster,
-        ...     tests_to_run="test_required_params"
+        ...     tests_to_run="test_constructor"
         ... )
-        {'test_required_params[NaiveForecaster]': 'PASSED'}
+        {'test_constructor[NaiveForecaster]': 'PASSED'}
         >>> TestAllObjects().run_tests(
         ...     NaiveForecaster, fixtures_to_run="test_repr[NaiveForecaster-2]"
         ... )
@@ -710,37 +710,6 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
             "equal length"
         )
 
-    def test_required_params(self, estimator_class):
-        """Check required parameter interface."""
-        Estimator = estimator_class
-        # Check common meta-estimator interface
-        if hasattr(Estimator, "_required_parameters"):
-            required_params = Estimator._required_parameters
-
-            assert isinstance(required_params, list), (
-                f"For estimator: {Estimator}, `_required_parameters` must be a "
-                f"tuple, but found type: {type(required_params)}"
-            )
-
-            assert all([isinstance(param, str) for param in required_params]), (
-                f"For estimator: {Estimator}, elements of `_required_parameters` "
-                f"list must be strings"
-            )
-
-            # check if needless parameters are in _required_parameters
-            init_params = [
-                par.name for par in signature(Estimator.__init__).parameters.values()
-            ]
-            in_required_but_not_init = [
-                param for param in required_params if param not in init_params
-            ]
-            if len(in_required_but_not_init) > 0:
-                raise ValueError(
-                    f"Found parameters in `_required_parameters` which "
-                    f"are not in `__init__`: "
-                    f"{in_required_but_not_init}"
-                )
-
     def test_estimator_tags(self, estimator_class):
         """Check conventions on estimator tags."""
         Estimator = estimator_class
@@ -923,26 +892,17 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
 
         params = estimator.get_params()
 
-        # Filter out required parameters with no default value and parameters
-        # set for running tests
-        required_params = getattr(estimator, "_required_parameters", tuple())
-
         test_params = estimator_class.get_test_params()
         if isinstance(test_params, list):
             test_params = test_params[0]
         test_params = test_params.keys()
 
-        init_params = [
-            param
-            for param in init_params
-            if param.name not in required_params and param.name not in test_params
-        ]
+        init_params = [param for param in init_params if param.name not in test_params]
 
         for param in init_params:
             assert param.default != param.empty, (
                 "parameter `%s` for %s has no default value and is not "
-                "included in `_required_parameters`"
-                % (param.name, estimator.__class__.__name__)
+                "set in `get_test_params`" % (param.name, estimator.__class__.__name__)
             )
             if type(param.default) is type:
                 assert param.default in [np.float64, np.int64]

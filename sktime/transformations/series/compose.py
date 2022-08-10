@@ -67,7 +67,6 @@ class OptionalPassthrough(BaseTransformer):
     >>> gscv_fitted = gscv.fit(load_airline())
     """
 
-    _required_parameters = ["transformer"]
     _tags = {
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
@@ -230,7 +229,6 @@ class ColumnwiseTransformer(BaseTransformer):
     >>> Xt = transformer.fit_transform(X)
     """
 
-    _required_parameters = ["transformer"]
     _tags = {
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
