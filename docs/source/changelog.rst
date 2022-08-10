@@ -159,6 +159,7 @@ Documentation
 * [DOC] improved ``STLForecaster`` docstring (:pr:`3203`) :user:`fkiraly`
 * [DOC] added notebook cell output for notebooks shown in website (:pr:`3215`) :user:`aiwalter`
 * [DOC] hierarchical forecasting notebook from pydata London 2022 (:pr:`3227`) :user:`fkiraly`
+* [DOC] Cleaned up user docs and tutorials page (:pr:`3240`) :user:`fkiraly`
 
 Fixes
 ~~~~~
