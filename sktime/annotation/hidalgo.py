@@ -567,14 +567,14 @@ class Hidalgo(BaseSeriesAnnotator):
 
         return sampling
 
-    def _fit(self, X, y=None):
+    def _fit(self, X, Y=None):
         """There is no need to fit a model for HidAlgo.
 
         Parameters
         ----------
         X : pd.DataFrame
             Training data to fit model to (time series).
-        y : pd.Series, optional
+        Y : pd.Series, optional
             Ground truth annotations for training, not specified as HidAlgo
             is unsupervised.
 
