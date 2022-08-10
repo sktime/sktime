@@ -211,11 +211,13 @@ def _load_provided_dataset(
         raise ValueError("Invalid `split` value =", split)
 
     if return_X_y:
-        X = convert(X, from_type="nested_univ", to_type=return_type)
+        if return_type is not None:
+            X = convert(X, from_type="nested_univ", to_type=return_type)
         return X, y
     else:
         X["class_val"] = pd.Series(y)
-        X = convert(X, from_type="nested_univ", to_type=return_type)
+        if return_type is not None:
+            X = convert(X, from_type="nested_univ", to_type=return_type)
         return X
 
 
