@@ -20,21 +20,21 @@ class ARDL(_StatsModelsAdapter):
 
     Direct interface for statsmodels.tsa.ardl.ARDL
 
-    Parameters todo: overwrite parameters
+    Parameters
     ----------
     lags : {int, list[int]}, optional
         Only considered if auto_ardl is False
         The number of lags to include in the model if an integer or the
         list of lag indices to include.  For example, [1, 4] will only
         include lags 1 and 4 while lags=4 will include lags 1, 2, 3, and 4.
-    order : {int, sequence[int], dict}
-        Only considered of auto_ardl is False
+    order : {int, sequence[int], dict}, optional
+        Only considered if auto_ardl is False
         If int, uses lags 0, 1, ..., order  for all exog variables. If
         sequence[int], uses the ``order`` for all variables. If a dict,
         applies the lags series by series. If ``exog`` is anything other
         than a DataFrame, the keys are the column index of exog (e.g., 0,
         1, ...). If a DataFrame, keys are column names.
-    fixed : array_like
+    fixed : array_like, optional
         Additional fixed regressors that are not lagged.
     causal : bool, optional
         Whether to include lag 0 of exog variables.  If True, only includes
@@ -72,7 +72,7 @@ class ARDL(_StatsModelsAdapter):
         Available options are 'none', 'drop', and 'raise'. If 'none', no nan
         checking is done. If 'drop', any observations with nans are dropped.
         If 'raise', an error is raised. Default is 'none'.
-    cov_type : str
+    cov_type : str, optional
         The covariance estimator to use. The most common choices are listed
         below.  Supports all covariance estimators that are available
         in ``OLS.fit``.
@@ -103,8 +103,8 @@ class ARDL(_StatsModelsAdapter):
         the cov_type. It also removes degree of freedom corrections from
         the covariance estimator when cov_type is 'nonrobust'.
     auto_ardl : bool, optional
-        A flag indicating whether the number of lags should be determined automatically
-    maxlag : int
+        A flag indicating whether the number of lags should be determined automatically.
+    maxlag : int, optional
         Only considered if auto_ardl is True.
         The maximum lag to consider for the endogenous variable.
     maxorder : {int, dict}
@@ -112,10 +112,10 @@ class ARDL(_StatsModelsAdapter):
         If int, sets a common max lag length for all exog variables. If
         a dict, then sets individual lag length. They keys are column names
         if exog is a DataFrame or column indices otherwise.
-    ic : {"aic", "bic", "hqic"}
+    ic : {"aic", "bic", "hqic"}, optional
         Only considered if auto_ardl is True.
         The information criterion to use in model selection.
-    glob : bool
+    glob : bool, optional
         Only considered if auto_ardl is True.
         Whether to consider all possible submodels of the largest model
         or only if smaller order lags must be included if larger order
@@ -125,11 +125,11 @@ class ARDL(_StatsModelsAdapter):
         If False, the number of model considered is of the order
         maxlag*maxorder**k which may also be substantial when k and maxorder
         are large.
-    X_oos : array_like
+    X_oos : array_like, optional
         An array containing out-of-sample values of the exogenous
         variables. Must have the same number of columns as the X
         and at least as many rows as the number of out-of-sample forecasts.
-    fixed_oos : array_like
+    fixed_oos : array_like, optional
         An array containing out-of-sample values of the fixed variables.
         Must have the same number of columns as the fixed array
         and at least as many rows as the number of out-of-sample forecasts.
@@ -206,10 +206,7 @@ class ARDL(_StatsModelsAdapter):
         "capability:pred_int": False,  # does forecaster implement proba forecasts?
         "python_version": None,  # PEP 440 python version specifier to limit versions
     }
-    #  in case of inheritance, concrete class should typically set tags
-    #  alternatively, descendants can set tags in __init__ (avoid this if possible)
 
-    # todo: add any hyper-parameters and components to constructor
     def __init__(
         self,
         lags=None,
@@ -295,7 +292,7 @@ class ARDL(_StatsModelsAdapter):
         return inner_order, inner_auto_ardl
 
     # todo: implement this, mandatory
-    def _fit(self, y, X, fh=None):
+    def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
 
         private _fit containing the core logic, called from fit
@@ -379,8 +376,7 @@ class ARDL(_StatsModelsAdapter):
         self.check_is_fitted()
         return self._fitted_forecaster.summary()
 
-    # todo: implement this, mandatory
-    def _predict(self, fh, X):
+    def _predict(self, fh, X=None):
         """Forecast time series at future horizon.
 
         private _predict containing the core logic, called from predict
