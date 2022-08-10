@@ -1,12 +1,7 @@
 # -*- coding: utf-8 -*-
 """Test functions for data input and output."""
 
-__author__ = [
-    "SebasKoel",
-    "Emiliathewolf",
-    "TonyBagnall",
-    "jasonlines",
-]
+__author__ = ["SebasKoel", "Emiliathewolf", "TonyBagnall", "jasonlines", "achieveordie"]
 
 __all__ = []
 
@@ -30,8 +25,28 @@ from sktime.datasets import (
     load_uschange,
     write_dataframe_to_tsfile,
 )
-from sktime.datasets._data_io import MODULE, _convert_tsf_to_hierarchical
-from sktime.datatypes import check_is_mtype
+from sktime.datasets._data_io import (
+    MODULE,
+    _convert_tsf_to_hierarchical,
+    _load_provided_dataset,
+)
+from sktime.datatypes import MTYPE_LIST_PANEL, check_is_mtype
+
+
+@pytest.mark.parametrize("return_X_y", [True, False])
+@pytest.mark.parametrize("return_type", MTYPE_LIST_PANEL)
+def test_load_provided_dataset(return_X_y, return_type):
+    """Test function to check for proper loading.
+
+    Check this via permutating between all possibilities of return_X_y and return_type.
+    """
+    if return_X_y:
+        X, y = _load_provided_dataset("UnitTest", "TRAIN", return_X_y, return_type)
+    else:
+        X = _load_provided_dataset("UnitTest", "TRAIN", return_X_y, return_type)
+
+    # Check whether object is same mtype or not, via bool
+    assert check_is_mtype(X, return_type)
 
 
 def test_load_from_tsfile():
