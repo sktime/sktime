@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
+import sys
 from typing import Optional
 
 import pandas as pd
-from sklearn.metrics import get_scorer, get_scorer_names
+from sklearn.metrics import _scorer, get_scorer
 from sklearn.model_selection import BaseShuffleSplit, cross_validate
 
 from sktime.classification.base import BaseClassifier
@@ -40,31 +41,28 @@ def evaluate_classification(
     pd.DataFrame
         DataFrame that contains several columns with information regarding each
         fold of the classifier.
-
-    >>> from sktime.classification.model_evaluation import evaluate_classification
-    >>> from sktime.datasets import load_arrow_head
-    >>> from sktime.classification.kernel_based import RocketClassifier
-    >>> from sklearn.model_selection import ShuffleSplit
-    >>> import pandas as pd
-    >>> import numpy as np
-
-    >>> arrow_train_X, arrow_train_y = load_arrow_head(split="train",
-    ... return_type="nested_univ")
-    >>> arrow_test_X, arrow_test_y = load_arrow_head(split="test",
-    ... return_type="nested_univ")
-    >>> # Merge train and test set for cv
-    >>> arrow_X = pd.concat([arrow_train_X, arrow_test_X], axis=0)
-    >>> arrow_X = arrow_X.reset_index().drop(columns=["index"])
-    >>> arrow_y = np.concatenate([arrow_train_y, arrow_test_y], axis=0)
-
-    >>> cv = ShuffleSplit(n_splits=5, test_size=0.2, random_state=42)
-    >>> classifier = RocketClassifier()
-    >>> result = evaluate_classification(classifier=classifier,
-    ... X=arrow_X, y=arrow_y, cv=cv)
-
     """
+
+    def get_scorer_names():
+        """Get the names of all available scorers.
+
+        Only Activate when python version is less than 3.8
+
+        Returns
+        -------
+        list of str
+            Names of all available scorers.
+        """
+        return sorted(_SCORERS.keys())
+
     # Set metrics
-    list_of_scorer = get_scorer_names()  # Double check and remove this
+    if sys.version_info.major == 3 and sys.version_info.minor < 8:
+        _SCORERS = _scorer.SCORERS
+        list_of_scorer = get_scorer_names()
+    else:
+        _SCORERS = _scorer._SCORERS
+        list_of_scorer = get_scorer_names()
+
     if scoring is None:
         scoring = "accuracy"
     if scoring not in list_of_scorer:
