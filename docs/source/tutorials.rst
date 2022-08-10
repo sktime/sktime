@@ -9,8 +9,7 @@ Each tutorial is located in its own repository, which contains notebooks and lin
 
 .. note::
 
-    The tutorials and videos are based on snapshots of ``sktime`` at earlier versions,
-    as we record them only every few years.
+    The tutorials and videos are based on snapshots of ``sktime`` at earlier versions.
     They explain stable functionality which rarely changes, and most of the content is continuously tested in ``sktime`` CI.
     Nonetheless, there may be outdated parts - in such a case, we would be very thankful for bug reports.
 
