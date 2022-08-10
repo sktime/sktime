@@ -164,7 +164,7 @@ Testing framework
 * [ENH] test all ``BaseObject`` descendants for sklearn compatibility (:pr:`3122`) :user:`fkiraly`
 * [ENH] ``functools`` wrapper to preserve docstrings in estimators wrapped by ``make_mock_estimator`` (:pr:`3228`) :user:`ltsaprounis`
 * [ENH] refactoring test params for ``FittedParamExtractor`` to ``get_test_params`` (:pr:`2995`) :user:`mariamjabara`
-* [ENH] refactored test params for ColumnTransformer (:pr:`3008`) :user:`kcc-lion`
+* [ENH] refactored test params for ``ColumnTransformer`` (:pr:`3008`) :user:`kcc-lion`
 * [ENH] complete refactor of all remaining test params left in ``_config`` to ``get_test_params`` (:pr:`3123`) :user:`fkiraly`
 * [ENH] partition design for test matrix to reduce test time to a third (:pr:`3137`) :user:`fkiraly`
 
