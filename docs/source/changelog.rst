@@ -32,6 +32,14 @@ Enhancements
 * [ENH] increase stateless scope of ``FunctionTransformer`` and ``TabularToSeriesAdaptor`` (:pr:`3087`) :user:`fkiraly`
 * [ENH] HMM annotation estimator (:pr:`2855`) :user:`miraep8`
 * [ENH] hierarchical forecasting notebook from pydata London 2022 (:pr:`3227`) :user:`fkiraly`
+* [ENH] Reducer prototype rework - experimental (:pr:`2833`) :user:`fkiraly`
+
+Refactored
+~~~~~~~~~~
+
+* [ENH] complete refactor all test params (:pr:`3123`) :user:`fkiraly`
+* [ENH] refactor/move simple ``ShapeletTransform`` from ``_contrib`` to ``transformations`` module (:pr:`3136`) :user:`fkiraly`
+* [ENH] Reducer prototype rework - experimental (:pr:`2833`) :user:`fkiraly`
 
 Documentation
 ~~~~~~~~~~~~~
@@ -43,6 +51,7 @@ Documentation
 * [DOC] improved ``STLForecaster`` docstring (:pr:`3203`) :user:`fkiraly`
 * [DOC] Added notebook cell output for notebooks shown in website (:pr:`3215`) :user:`aiwalter`
 * [ENH] hierarchical forecasting notebook from pydata London 2022 (:pr:`3227`) :user:`fkiraly`
+* [ENH] better ``ForecastingHorizon`` construction error message (:pr:`3236`) :user:`fkiraly`
 
 Fixes
 ~~~~~
@@ -121,6 +130,9 @@ Other
 * [DOC] added more detail to step 4 of high-level steps to implementing an es… (:pr:`3200`) :user:`kcc-lion`
 * [BUG] Datetimefeatures inconsistent formats / day_of_year not working (:pr:`3222`) :user:`danbartl`
 * [ENH] Refactoring adjustment to make_reduction via global forecasting (:pr:`2486`) :user:`danbartl`
+* [ENH] Refactor ``CutoffSplitter`` using ``get_window`` function (:pr:`3145`) :user:`khrapovs`
+* [BUG] Datetimefeatures inconsistent formats / day_of_year not working (:pr:`3223`) :user:`danbartl`
+* functools-wrapper-in-make_mock_estimator (:pr:`3228`) :user:`ltsaprounis`
 
 Contributors
 ~~~~~~~~~~~~
@@ -141,6 +153,7 @@ Contributors
 :user:`khrapovs`,
 :user:`lbventura`,
 :user:`lmmentel`,
+:user:`ltsaprounis`,
 :user:`mariamjabara`,
 :user:`MatthewMiddlehurst`,
 :user:`miraep8`,
