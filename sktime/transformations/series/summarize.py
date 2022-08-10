@@ -38,7 +38,7 @@ class WindowSummarizer(BaseTransformer):
         For ease of notation, for the key "lag", only a single integer
         specifying the `lag` argument will be provided.
 
-        Please see blow a graphical representation of the logic using the following
+        Please see below a graphical representation of the logic using the following
         symbols:
 
         ``z`` = time stamp that the window is summarized *to*.
@@ -283,7 +283,7 @@ class WindowSummarizer(BaseTransformer):
         # Convert lags to default list notation with window_length 1
         boost_lag = func_dict.loc[lags, "window"].apply(lambda x: [int(x), 1])
         func_dict.loc[lags, "window"] = boost_lag
-        self.truncate_start = func_dict["window"].apply(lambda x: x[0] + x[1]).max()
+        self.truncate_start = func_dict["window"].apply(lambda x: x[0] + x[1] - 1).max()
         self._func_dict = func_dict
 
     def _transform(self, X, y=None):
