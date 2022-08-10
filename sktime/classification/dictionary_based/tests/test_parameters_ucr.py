@@ -203,7 +203,7 @@ if __name__ == "__main__":
                 norm_options=norm_options,
                 word_lengths=word_lengths,
                 use_first_differences=use_first_differences,
-                n_jobs=4,
+                n_jobs=1,
             ),
             # "MiniRocket": make_pipeline(
             #    MiniRocket(random_state=1379),

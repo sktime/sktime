@@ -193,16 +193,17 @@ if __name__ == "__main__":
         clfs = {
             # "WEASEL": WEASEL(
             #    random_state=1379,
-            #    n_jobs=4
+            #    n_jobs=1
             # ),
             "WEASEL-ST": WEASEL_STEROIDS(
                 random_state=1379,
                 binning_strategies=["equi-depth", "equi-width"],
+                norm_options=[True, True, True, True, False],  # p[True]=0.8
                 variance=True,
                 ensemble_size=50,
-                n_jobs=4,
+                n_jobs=1,
             ),
-            # "R_DST": R_DST_Ridge(n_shapelets=10_000, n_jobs=1)
+            # "R_DST": R_DST_Ridge(n_jobs=1)
             # "Rocket": make_pipeline(
             #    Rocket(random_state=1379),
             #    RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True),

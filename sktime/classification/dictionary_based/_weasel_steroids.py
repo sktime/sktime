@@ -14,11 +14,12 @@ __all__ = ["WEASEL_STEROIDS"]
 
 import numpy as np
 from joblib import Parallel, delayed
+from sklearn.linear_model import RidgeClassifierCV
 
 # from numba import njit
 # from sklearn.ensemble import GradientBoostingClassifier
 # from sklearn.pipeline import make_pipeline
-from sklearn.linear_model import RidgeClassifierCV
+# from sklearn.preprocessing import StandardScaler
 from sklearn.utils import check_random_state
 
 from sktime.classification.base import BaseClassifier
@@ -62,7 +63,7 @@ class WEASEL_STEROIDS(BaseClassifier):
         Only applicable if labels are given
     bigrams: boolean, default=True
         whether to create bigrams of SFA words
-    binning_strategy: {"equi-depth", "equi-width", "information-gain"},
+    binning_strategies: ["equi-depth", "equi-width", "information-gain"],
     default="information-gain"
         The binning method used to derive the breakpoints.
     random_state: int or None, default=None
@@ -298,29 +299,39 @@ class WEASEL_STEROIDS(BaseClassifier):
         all_words = np.zeros((len(X), self.max_feature_count), dtype=np.float32)
 
         for (
-            sfa_words,
-            transformer,
-            relevant_features,
-            rel_features_count,
-            dilation,
-            first_difference,
+            sfa_words2,
+            transformer2,
+            relevant_features2,
+            rel_features_count2,
+            dilation2,
+            first_difference2,
         ) in parallel_res:
-            self.SFA_transformers.append(transformer)
-            self.dilation_factors.append(dilation)
-            self.relevant_features.append(relevant_features)
-            self.rel_features_counts.append(rel_features_count)
-            self.first_differences.append(first_difference)
+            self.SFA_transformers.append(transformer2)
+            self.dilation_factors.append(dilation2)
+            self.relevant_features.append(relevant_features2)
+            self.rel_features_counts.append(rel_features_count2)
+            self.first_differences.append(first_difference2)
 
             # merging arrays from different threads
-            for idx, bag in enumerate(sfa_words):
+            for idx, bag in enumerate(sfa_words2):
                 all_words[
-                    idx, features_count : (features_count + rel_features_count)
+                    idx, features_count : (features_count + rel_features_count2)
                 ] = bag
 
-            features_count += rel_features_count
+            features_count += rel_features_count2
 
         # all_words = all_words / np.max(all_words)
+
         self.clf = RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=False)
+
+        # self.clf = make_pipeline(
+        #    StandardScaler(with_mean=True),
+        #    RidgeClassifierCV(
+        #        alphas=np.logspace(-3, 3, 10),
+        #        class_weight=None,
+        #        fit_intercept=True
+        #    )
+        # )
         # make_pipeline(
         # GradientBoostingClassifier(
         #   subsample=0.8,
@@ -397,7 +408,7 @@ class WEASEL_STEROIDS(BaseClassifier):
                     if key in relevant_features:
                         all_win_words[j, relevant_features[key]] += 1
 
-            return (all_win_words, feature_count)
+            return all_win_words, feature_count
 
         X = X.squeeze(1)
 
