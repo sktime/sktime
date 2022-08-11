@@ -8,9 +8,10 @@ __all__ = ["test_gscv", "test_rscv"]
 
 import numpy as np
 import pytest
+from numpy.testing import assert_array_equal
 from sklearn.model_selection import ParameterGrid, ParameterSampler
 
-from sktime.datasets import load_longley
+from sktime.datasets import load_airline, load_longley
 from sktime.forecasting.compose import TransformedTargetForecaster
 from sktime.forecasting.model_evaluation import evaluate
 from sktime.forecasting.model_selection import (
@@ -131,3 +132,29 @@ def test_rscv(forecaster, param_grid, cv, scoring, error_score, n_iter, random_s
         ParameterSampler(param_grid, n_iter, random_state=random_state)
     )
     _check_cv(forecaster, rscv, cv, param_distributions, y, X, scoring)
+
+
+def test_refit():
+    """Test refit param."""
+    y = load_airline()
+    cv = SlidingWindowSplitter(step_length=36, fh=[1, 2, 3], window_length=12)
+    forecaster = NaiveForecaster()
+    param_grid = {"strategy": ["mean"]}
+
+    # refit
+    gscv_refit = ForecastingGridSearchCV(
+        forecaster=forecaster, param_grid=param_grid, cv=cv, refit=True
+    )
+    gscv_refit.fit(y)
+    y_pred_refit = gscv_refit.predict(fh=[1, 2, 3])
+
+    # no refit
+    gscv_no_refit = ForecastingGridSearchCV(
+        forecaster=forecaster, param_grid=param_grid, cv=cv, refit=False
+    )
+    gscv_no_refit.fit(y)
+    y_pred_no_refit = gscv_no_refit.predict(fh=[1, 2, 3])
+
+    # predicts have to be different because of different training data
+    with pytest.raises(AssertionError):
+        assert_array_equal(y_pred_refit.values, y_pred_no_refit.values)
