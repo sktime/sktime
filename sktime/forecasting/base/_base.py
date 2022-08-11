@@ -199,12 +199,12 @@ class BaseForecaster(BaseEstimator):
         from sktime.utils.sklearn import is_sklearn_transformer
 
         # we wrap self in a pipeline, and concatenate with the other
-        #   the TransformedTargetForecaster does the rest, e.g., dispatch on other
+        #   the ForecastingPipeline does the rest, e.g., dispatch on other
         if isinstance(other, BaseTransformer):
             self_as_pipeline = ForecastingPipeline(steps=[self])
-            return other * self_as_pipeline
+            return other ** self_as_pipeline
         elif is_sklearn_transformer(other):
-            return TabularToSeriesAdaptor(other) * self
+            return TabularToSeriesAdaptor(other) ** self
         else:
             return NotImplemented
 
