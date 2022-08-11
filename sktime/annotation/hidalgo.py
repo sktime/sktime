@@ -1,25 +1,6 @@
 # -*- coding: utf-8 -*-
 
-"""
-HidAlgo (Heterogeneous Intrinsic Dimensionality Algorithm) Segmentation.
-
-Notes
------
-As described in
-@article{allegra2020data,
-  title={Data segmentation based on the local intrinsic dimension},
-  author={Allegra, Michele and Facco, Elena and Denti, Francesco and Laio,
-        Alessandro and Mira, Antonietta},
-  journal={Scientific reports},
-  volume={10},
-  number={1},
-  pages={1--12},
-  year={2020},
-  publisher={Nature Publishing Group}
-}
-"""
-
-from sktime.annotation.base import BaseSeriesAnnotator
+"""Hidalgo (Heterogeneous Intrinsic Dimensionality Algorithm) Segmentation."""
 
 __author__ = ["KatieBuc"]
 __all__ = ["Hidalgo"]
@@ -31,9 +12,19 @@ import numpy as np
 from sklearn.neighbors import NearestNeighbors
 from sklearn.utils.validation import check_random_state
 
+from sktime.annotation.base import BaseSeriesAnnotator
+
 
 def binom(N, q):
-    """Calculate the binomial coefficient."""
+    """Calculate the binomial coefficient.
+
+    Parameters
+    ----------
+    N : int, float
+        number of fixed elements from qhich q is chosen
+    q : int, float
+        number of subset q elements chosen from N
+    """
     if q == 0:
         return 1.0
     if N < 0:
@@ -42,7 +33,19 @@ def binom(N, q):
 
 
 def Zpart(N, N1, zeta, q):
-    """Partition function for Z."""
+    """Partition function for Z.
+
+    Parameters
+    ----------
+    N : int, float
+        number of rows of input data X
+    N1 : int, float
+        parameter value from NN[k] for k=0:K-1
+    zeta : float
+        parameter value zeta
+    q : int, float
+        parameter value q
+    """
     return sum(
         [
             binom(N1 - 1, q1)
@@ -55,7 +58,7 @@ def Zpart(N, N1, zeta, q):
 
 
 class Hidalgo(BaseSeriesAnnotator):
-    """Class to fit parameters of the HidAlgo intrinsic dimension model.
+    """Class to fit parameters of the Hidalgo intrinsic dimension model.
 
     explain, reference
 
@@ -99,20 +102,12 @@ class Hidalgo(BaseSeriesAnnotator):
     seed : int, optional, default = 1
         generate random numbers with seed
 
-    Notes
-    -----
-    As described in
-    @article{allegra2020data,
-    title={Data segmentation based on the local intrinsic dimension},
-    author={Allegra, Michele and Facco, Elena and Denti, Francesco and Laio,
-            Alessandro and Mira, Antonietta},
-    journal={Scientific reports},
-    volume={10},
-    number={1},
-    pages={1--12},
-    year={2020},
-    publisher={Nature Publishing Group}
-    }
+    References
+    ----------
+    Allegra, Michele, et al. "Data segmentation based on the local
+    intrinsic dimension." Scientific reports 10.1 (2020): 1-12.
+    https://www.nature.com/articles/s41598-020-72222-0
+
 
     Examples
     --------
@@ -125,7 +120,7 @@ class Hidalgo(BaseSeriesAnnotator):
     >>> fitted_model = model._fit(X)
     >>> Z = fitted_model._predict(X)
     >>> Z
-    array([0, 0, 0, 0, 0, 0, 1, 1, 1, 1], dtype=int64)
+    array([0, 0, 0, 0, 0, 0, 1, 1, 1, 1])
     """
 
     _tags = {"univariate-only": False}  # for unit test cases
@@ -270,9 +265,9 @@ class Hidalgo(BaseSeriesAnnotator):
         Outputs
         ----------
         V : 1D np.ndarray of length K
-            sum(log(mu_i)) for k in 1:K, when mu_i belongs to manifold k
+            sum(log(mu_i)) for k in 0:K-1, when mu_i belongs to manifold k
         NN : 1D np.ndarray of length K
-            count for k in 1:K, when data at index i belongs to manifold k
+            count for k in 0:K-1, when data at index i belongs to manifold k
         a1 : 1D np.ndarray of length K
             prior parameters of d
         b1 : 1D np.ndarray of length K
@@ -334,9 +329,9 @@ class Hidalgo(BaseSeriesAnnotator):
         Parameters
         ----------
         V : 1D np.ndarray of length K
-            sum(log(mu_i)) for k in 1:K, when mu_i belongs to manifold k
+            sum(log(mu_i)) for k in 0:K-1, when mu_i belongs to manifold k
         NN : 1D np.ndarray of length K
-            count for k in 1:K, when data at index i belongs to manifold k
+            count for k in 0:K-1, when data at index i belongs to manifold k
         a1 : 1D np.ndarray of length K
             prior parameters of d
         b1 : 1D np.ndarray of length K
@@ -567,16 +562,13 @@ class Hidalgo(BaseSeriesAnnotator):
 
         return sampling
 
-    def _fit(self, X, Y=None):
-        """There is no need to fit a model for HidAlgo.
+    def _fit(self, X):
+        """There is no need to fit a model for Hidalgo.
 
         Parameters
         ----------
         X : pd.DataFrame
             Training data to fit model to (time series).
-        Y : pd.Series, optional
-            Ground truth annotations for training, not specified as HidAlgo
-            is unsupervised.
 
         Returns
         -------
