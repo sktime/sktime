@@ -215,7 +215,6 @@ class _Pipeline(
         from sktime.forecasting.sarimax import SARIMAX
         from sktime.transformations.series.adapt import TabularToSeriesAdaptor
         from sktime.transformations.series.exponent import ExponentTransformer
-        from sktime.utils.validation._dependencies import _check_estimator_deps
 
         # StandardScaler does not skip fit, NaiveForecaster is not probabilistic
         STEPS1 = [
