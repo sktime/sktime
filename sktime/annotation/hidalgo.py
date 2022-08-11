@@ -242,7 +242,7 @@ class Hidalgo(BaseSeriesAnnotator):
         self.Iout_count = Iout_count
         self.Iout_track = Iout_track
 
-    def update_zeta_prior(self, Z):
+    def _update_zeta_prior(self, Z):
         """Update prior parameters for zeta."""
         N = self.N
         q = self.q
