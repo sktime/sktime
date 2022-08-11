@@ -2,6 +2,7 @@
 """Symbolic Fourier Approximation (SFA) Transformer.
 
 Configurable SFA transform for discretising time series into words.
+
 """
 
 __author__ = ["Patrick Schäfer"]
@@ -137,7 +138,6 @@ class SFA_NEW(_PanelToPanelTransformer):
         self.letter_bits = 0
         self.word_bits = 0
         self.max_bits = 0
-        # set_num_threads(n_jobs)
 
         super(SFA_NEW, self).__init__()
 
@@ -177,7 +177,7 @@ class SFA_NEW(_PanelToPanelTransformer):
         self.n_instances, self.series_length = X.shape
         self.breakpoints = self._binning(X, y)
 
-        # TODO parameterize?
+        # TODO parameterize? and use the lower part, too?
         self.breakpoints[self.breakpoints < 0] = -np.inf
 
         self._is_fitted = True
@@ -252,7 +252,7 @@ class SFA_NEW(_PanelToPanelTransformer):
                 self.support = non_constant[np.argsort(-f)][: self.word_length]
 
             # sort remaining indices
-            # self.support = np.sort(self.support)
+            self.support = np.sort(self.support)
 
             # select the Fourier coefficients with highest f-score
             dft = dft[:, self.support]
@@ -468,19 +468,6 @@ def _get_phis(window_size, length):
 
 
 @njit(fastmath=True, cache=True)
-def _iterate_mft(series, mft_data, phis, window_size, stds, transformed):
-    # TODO compute only those needed and not all?
-    for i in range(1, len(transformed)):
-        for n in range(0, len(mft_data), 2):
-            # only compute needed indices ??
-            real = mft_data[n] + series[i + window_size - 1] - series[i - 1]
-            imag = mft_data[n + 1]
-            mft_data[n] = real * phis[n] - imag * phis[n + 1]
-            mft_data[n + 1] = real * phis[n + 1] + phis[n] * imag
-        transformed[i] = mft_data / stds[i]
-
-
-@njit(fastmath=True, cache=True)
 def _create_bigram_word(word, other_word, word_bits):
     return (word << word_bits) | other_word
 
@@ -527,16 +514,30 @@ def _mft(series, window_size, dft_length, norm, support, anova, variance):
 
     transformed[0] = mft_data / stds[0]
 
+    if anova or variance:
+        # compute required indices
+        indices = np.full(len(mft_data), False)
+        for s in support:
+            indices[s] = True
+            if (s % 2) == 0:  # even
+                indices[s + 1] = True
+            else:  # uneven
+                indices[s - 1] = True
+        # mft_data = mft_data[indices]
+        # phis = phis[indices]
+    else:
+        indices = np.full(len(mft_data), True)
+
     # other runs using mft
-    # moved to external method to use njit
-    _iterate_mft(
-        series,
-        mft_data,
-        phis,
-        window_size,
-        stds,
-        transformed,
-    )
+    for i in range(1, len(transformed)):
+        for n in range(0, len(mft_data), 2):
+            # compute only those needed and not all
+            if indices[n]:
+                real = mft_data[n] + series[i + window_size - 1] - series[i - 1]
+                imag = mft_data[n + 1]
+                mft_data[n] = real * phis[n] - imag * phis[n + 1]
+                mft_data[n + 1] = real * phis[n + 1] + phis[n] * imag
+        transformed[i] = mft_data / stds[i]
 
     return (
         transformed[:, start_offset:][:, support]

@@ -18,14 +18,15 @@ from joblib import Parallel, delayed
 # from numba import set_num_threads
 from sklearn.linear_model import RidgeClassifierCV
 
-# from numba import njit
-# from sklearn.ensemble import GradientBoostingClassifier
-# from sklearn.pipeline import make_pipeline
 # from sklearn.preprocessing import StandardScaler
 from sklearn.utils import check_random_state
 
 from sktime.classification.base import BaseClassifier
 from sktime.transformations.panel.dictionary_based import SFA_NEW
+
+# from numba import njit
+
+# TODO change to transformer?
 
 
 class WEASEL_STEROIDS(BaseClassifier):
@@ -107,7 +108,7 @@ class WEASEL_STEROIDS(BaseClassifier):
     """
 
     _tags = {
-        "capability:multithreading": True,
+        "capabilitys:multithreading": True,
         "classifier_type": "dictionary",
     }
 
@@ -166,7 +167,7 @@ class WEASEL_STEROIDS(BaseClassifier):
     @staticmethod
     # @njit
     def _dilation(X, d, ws, first_difference):
-        # padding = np.zeros((len(X), d // 2))
+        # padding = np.zeros((len(X), d // 2))  # TODO ???
         # X = np.concatenate((padding, X, padding), axis=1)
 
         if first_difference:
@@ -222,85 +223,40 @@ class WEASEL_STEROIDS(BaseClassifier):
                 f"the constructor, but the classifier may not work at "
                 f"all with very short series"
             )
+
+        # Randomly choose window sizes
+
         self.window_sizes = list(range(self.min_window, self.max_window + 1, 1))
 
-        def _parallel_fit(
-            i,
-        ):
-            rng = check_random_state(i)
-            window_size = rng.choice(self.window_sizes)
-            alphabet_size = rng.choice(self.alphabet_sizes)
-            word_length = min(window_size - 2, rng.choice(self.word_lengths))
-            norm = rng.choice(self.norm_options)
-            dilation = np.int32(
-                2
-                ** rng.uniform(0, np.log2((self.series_length - 1) / (window_size - 1)))
+        # use every element at least once
+        # self.window_sizes = np.int32(np.round(np.linspace(
+        #       self.min_window, self.max_window + 1, self.ensemble_size)))
+
+        parallel_res = Parallel(n_jobs=self.n_jobs, timeout=99999)(
+            delayed(_parallel_fit)(
+                i,
+                X,
+                y,
+                self.window_sizes,
+                self.alphabet_sizes,
+                self.word_lengths,
+                self.series_length,
+                self.norm_options,
+                self.use_first_differences,
+                self.binning_strategies,
+                self.variance,
+                self.anova,
+                self.bigrams,
+                self.n_jobs,
+                self.max_feature_count,
+                self.ensemble_size,
+                self.n_instances,
             )
-            first_difference = rng.choice(self.use_first_differences)
-            binning_strategy = rng.choice(self.binning_strategies)
-
-            # TODO count subgroups of two letters of the words?
-            # TODO test different configurations?
-
-            transformer = SFA_NEW(
-                variance=self.variance,
-                word_length=word_length,
-                alphabet_size=alphabet_size,
-                window_size=window_size,
-                norm=norm,
-                anova=self.anova,
-                binning_method=binning_strategy,
-                bigrams=self.bigrams,
-                n_jobs=self.n_jobs,
-            )
-
-            # generate dilated dataset
-            X2 = WEASEL_STEROIDS._dilation(X, dilation, window_size, first_difference)
-
-            # generate SFA words on subsample
-            sfa_words = transformer.fit_transform(X2, y)
-
-            # all feature names
-            feature_names = set()
-            for t_words in sfa_words:
-                for t_word in t_words:
-                    feature_names.add(t_word)
-
-            feature_count = min(
-                self.max_feature_count // self.ensemble_size, len(feature_names)
-            )
-            relevant_features_idx = rng.choice(
-                len(feature_names), replace=False, size=feature_count
-            )
-            relevant_features = dict(
-                zip(
-                    np.array(list(feature_names))[relevant_features_idx],
-                    np.arange(feature_count),
-                )
-            )
-
-            # merging of arrays of used window-length
-            all_win_words = np.zeros((self.n_instances, feature_count), dtype=np.int32)
-            for j in range(len(sfa_words)):
-                for key in sfa_words[j]:
-                    if key in relevant_features:
-                        all_win_words[j, relevant_features[key]] += 1
-
-            return (
-                all_win_words,
-                transformer,
-                relevant_features,
-                feature_count,
-                dilation,
-                first_difference,
-            )
-
-        parallel_res = Parallel(n_jobs=self.n_jobs)(
-            delayed(_parallel_fit)(i) for i in range(self.ensemble_size)
+            for i in range(self.ensemble_size)
         )
 
         features_count = 0
-        all_words = np.zeros((len(X), self.max_feature_count), dtype=np.float32)
+        all_words = np.zeros((len(X), self.max_feature_count), dtype=np.int32)
 
         for (
             sfa_words2,
@@ -324,10 +280,24 @@ class WEASEL_STEROIDS(BaseClassifier):
 
             features_count += rel_features_count2
 
-        # all_words = all_words / np.max(all_words)
+        # all_words[all_words==0] = -1
 
         self.clf = RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=False)
 
+        # self.clf = make_pipeline(
+        #     GradientBoostingClassifier(
+        #       # subsample=0.8,
+        #       min_samples_split=len(np.unique(y)),
+        #       max_features="auto",
+        #       random_state=self.random_state,
+        #       n_estimators=10,
+        #       init=LogisticRegression(
+        #           solver="liblinear",
+        #           penalty="l2",
+        #           random_state=self.random_state
+        #       )
+        #     )
+        # )
         # self.clf = make_pipeline(
         #    StandardScaler(with_mean=True),
         #    RidgeClassifierCV(
@@ -336,32 +306,8 @@ class WEASEL_STEROIDS(BaseClassifier):
         #        fit_intercept=True
         #    )
         # )
-        # make_pipeline(
-        # GradientBoostingClassifier(
-        #   subsample=0.8,
-        #   min_samples_split=len(np.unique(y)),
-        #   max_features="auto",
-        #   random_state=self.random_state,
-        #   n_estimators=200,
-        #   init=LogisticRegression(
-        #       solver="liblinear",
-        #       penalty="l2",
-        #       max_iter=5000,
-        #       random_state=self.random_state
-        #   )
-        # )
-        # LogisticRegression(
-        #    solver="liblinear",
-        #    penalty="l2",
-        #    max_iter=5000,
-        #    random_state=self.random_state,
-        # )
-        # )
 
         self.clf.fit(all_words, y)
-        # print("Train acc", self.clf.score(all_words, y))
-        # print(self.clf.cv_values_)
-
         return self
 
     def _predict(self, X) -> np.ndarray:
@@ -397,28 +343,9 @@ class WEASEL_STEROIDS(BaseClassifier):
         return self.clf.predict_proba(bag)
 
     def _transform_words(self, X):
-        def _parallel_transform_words(
-            X, transformer, relevant_features, feature_count, dilation, first_difference
-        ):
-            X2 = WEASEL_STEROIDS._dilation(
-                X, dilation, transformer.window_size, first_difference
-            )
-
-            # SFA transform
-            sfa_words = transformer.transform(X2)
-
-            # merging arrays
-            all_win_words = np.zeros((len(X), feature_count), dtype=np.int32)
-            for j in range(len(sfa_words)):
-                for key in sfa_words[j]:
-                    if key in relevant_features:
-                        all_win_words[j, relevant_features[key]] += 1
-
-            return all_win_words, feature_count
-
         X = X.squeeze(1)
 
-        parallel_res = Parallel(n_jobs=self.n_jobs)(
+        parallel_res = Parallel(n_jobs=self.n_jobs, timeout=99999)(
             delayed(_parallel_transform_words)(
                 X,
                 self.SFA_transformers[i],
@@ -431,7 +358,7 @@ class WEASEL_STEROIDS(BaseClassifier):
         )
 
         features_count = 0
-        all_words = np.zeros((len(X), self.max_feature_count), dtype=np.float32)
+        all_words = np.zeros((len(X), self.max_feature_count), dtype=np.int32)
         for sfa_words, rel_features_count in parallel_res:
             for idx, bag in enumerate(sfa_words):
                 all_words[
@@ -439,7 +366,7 @@ class WEASEL_STEROIDS(BaseClassifier):
                 ] = bag
             features_count += rel_features_count
 
-        # all_words = all_words / np.max(all_words)
+        # all_words[all_words==0] = -1
         return all_words
 
     @classmethod
@@ -465,3 +392,109 @@ class WEASEL_STEROIDS(BaseClassifier):
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
         return {}
+
+
+def _parallel_fit(
+    i,
+    X,
+    y,
+    window_sizes,
+    alphabet_sizes,
+    word_lengths,
+    series_length,
+    norm_options,
+    use_first_differences,
+    binning_strategies,
+    variance,
+    anova,
+    bigrams,
+    n_jobs,
+    max_feature_count,
+    ensemble_size,
+    n_instances,
+):
+    rng = check_random_state(i)
+    window_size = rng.choice(window_sizes)  #
+    # window_size = window_sizes[i]
+    alphabet_size = rng.choice(alphabet_sizes)
+    word_length = min(window_size - 2, rng.choice(word_lengths))
+    norm = rng.choice(norm_options)
+    dilation = max(
+        1,
+        np.int32(2 ** rng.uniform(0, np.log2((series_length - 1) / (window_size - 1)))),
+    )
+    first_difference = rng.choice(use_first_differences)
+    binning_strategy = rng.choice(binning_strategies)
+
+    # TODO count subgroups of two letters of the words?
+
+    transformer = SFA_NEW(
+        variance=variance,
+        word_length=word_length,
+        alphabet_size=alphabet_size,
+        window_size=window_size,
+        norm=norm,
+        anova=anova,
+        binning_method=binning_strategy,
+        bigrams=bigrams,
+        n_jobs=n_jobs,
+    )
+
+    # generate dilated dataset
+    X2 = WEASEL_STEROIDS._dilation(X, dilation, window_size, first_difference)
+
+    # generate SFA words on subsample
+    sfa_words = transformer.fit_transform(X2, y)
+
+    # all feature names
+    feature_names = set()
+    for t_words in sfa_words:
+        for t_word in t_words:
+            feature_names.add(t_word)
+
+    feature_count = min(max_feature_count // ensemble_size, len(feature_names))
+    relevant_features_idx = rng.choice(
+        len(feature_names), replace=False, size=feature_count
+    )
+    relevant_features = dict(
+        zip(
+            np.array(list(feature_names))[relevant_features_idx],
+            np.arange(feature_count),
+        )
+    )
+
+    # merging of arrays of used window-length
+    all_win_words = np.zeros((n_instances, feature_count), dtype=np.int32)
+    for j in range(len(sfa_words)):
+        for key in sfa_words[j]:
+            if key in relevant_features:
+                all_win_words[j, relevant_features[key]] += 1
+
+    return (
+        all_win_words,
+        transformer,
+        relevant_features,
+        feature_count,
+        dilation,
+        first_difference,
+    )
+
+
+def _parallel_transform_words(
+    X, transformer, relevant_features, feature_count, dilation, first_difference
+):
+    X2 = WEASEL_STEROIDS._dilation(
+        X, dilation, transformer.window_size, first_difference
+    )
+
+    # SFA transform
+    sfa_words = transformer.transform(X2)
+
+    # merging arrays
+    all_win_words = np.zeros((len(X), feature_count), dtype=np.int32)
+    for j in range(len(sfa_words)):
+        for key in sfa_words[j]:
+            if key in relevant_features:
+                all_win_words[j, relevant_features[key]] += 1
+
+    return all_win_words, feature_count
