@@ -121,13 +121,15 @@ def _check_values(values: Union[VALID_FORECASTING_HORIZON_TYPES]) -> pd.Index:
     else:
         valid_types = (
             "int",
-            "np.array",
+            "1D np.ndarray of type int",
+            "1D np.ndarray of type timedelta or dateoffset",
             "list",
             *[f"pd.{index_type.__name__}" for index_type in VALID_INDEX_TYPES],
         )
         raise TypeError(
             f"Invalid `fh`. The type of the passed `fh` values is not supported. "
-            f"Please use one of {valid_types}, but found: {type(values)}"
+            f"Please use one of {valid_types}, but found type {type(values)}, "
+            f"values = {values}"
         )
 
     # check values does not contain duplicates

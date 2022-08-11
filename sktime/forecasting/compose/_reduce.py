@@ -5,11 +5,12 @@
 """Composition functionality for reduction approaches to forecasting."""
 
 __author__ = [
+    "mloning",
     "AyushmaanSeth",
     "Kavin Anand",
     "Luis Zugasti",
-    "Lovkush Agarwal",
-    "Markus Löning",
+    "Lovkush-A",
+    "fkiraly",
 ]
 
 __all__ = [
@@ -22,14 +23,18 @@ __all__ = [
     "MultioutputTabularRegressionForecaster",
     "DirRecTabularRegressionForecaster",
     "DirRecTimeSeriesRegressionForecaster",
+    "DirectReductionForecaster",
 ]
+
+from warnings import warn
 
 import numpy as np
 import pandas as pd
 from sklearn.base import RegressorMixin, clone
+from sklearn.multioutput import MultiOutputRegressor
 
 from sktime.datatypes._utilities import get_time_index
-from sktime.forecasting.base import ForecastingHorizon
+from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._fh import _index_range
 from sktime.forecasting.base._sktime import _BaseWindowForecaster
@@ -1246,3 +1251,313 @@ def _create_fcst_df(target_date, origin_df, fill=None):
 
         template = template.astype(origin_df.dtypes.to_dict())
         return template
+
+
+def _coerce_col_str(X):
+    """Coerce columns to string, to satisfy sklearn convention."""
+    X.columns = [str(x) for x in X.columns]
+    return X
+
+
+class DirectReductionForecaster(BaseForecaster):
+    """Direct reduction forecaster, incl single-output, multi-output, exogeneous Dir.
+
+    Implements direct reduction, of forecasting to tabular regression.
+
+    For no `X`, defaults to DirMO (direct multioutput) for `X_treatment = "concurrent"`,
+    and simple direct (direct single-output) for `X_treatment = "shifted"`.
+
+    Direct single-output with concurrent `X` behaviour can be configured
+    by passing a single-output `scikit-learn` compatible transformer.
+
+    Algorithm details:
+
+    In `fit`, given endogeneous time series `y` and possibly exogeneous `X`:
+        fits `estimator` to feature-label pairs as defined as follows.
+    if `X_treatment = "concurrent":
+        features = `y(t)`, `y(t-1)`, ..., `y(t-window_size)`, if provided: `X(t+h)`
+        labels = `y(t+h)` for `h` in the forecasting horizon
+        ranging over all `t` where the above have been observed (are in the index)
+        for each `h` in the forecasting horizon (separate estimator fitted per `h`)
+    if `X_treatment = "shifted":
+        features = `y(t)`, `y(t-1)`, ..., `y(t-window_size)`, if provided: `X(t)`
+        labels = `y(t+h_1)`, ..., `y(t+h_k)` for `h_j` in the forecasting horizon
+        ranging over all `t` where the above have been observed (are in the index)
+        estimator is fitted as a multi-output estimator (for all  `h_j` simultaneously)
+
+    In `predict`, given possibly exogeneous `X`, at cutoff time `c`,
+    if `X_treatment = "concurrent":
+        applies fitted estimators' predict to
+        feature = `y(c)`, `y(c-1)`, ..., `y(c-window_size)`, if provided: `X(c+h)`
+        to obtain a prediction for `y(c+h)`, for each `h` in the forecasting horizon
+    if `X_treatment = "shifted":
+        applies fitted estimator's predict to
+        features = `y(c)`, `y(c-1)`, ..., `y(c-window_size)`, if provided: `X(t)`
+        to obtain prediction for `y(c+h_1)`, ..., `y(c+h_k)` for `h_j` in forec. horizon
+
+    Parameters
+    ----------
+    estimator : sklearn regressor, must be compatible with sklearn interface
+        tabular regression algorithm used in reduction algorithm
+    window_length : int, optional, default=10
+        window length used in the reduction algorithm
+    transformers : currently not used
+    X_treatment : str, optional, one of "concurrent" (default) or "shifted"
+        determines the timestamps of X from which y(t+h) is predicted, for horizon h
+        "concurrent": y(t+h) is predicted from lagged y, and X(t+h), for all h in fh
+            in particular, if no y-lags are specified, y(t+h) is predicted from X(t)
+        "shifted": y(t+h) is predicted from lagged y, and X(t), for all h in fh
+            in particular, if no y-lags are specified, y(t+h) is predicted from X(t+h)
+    impute : str or None, optional, method string passed to Imputer
+        default="bfill", admissible strings are of Imputer.method parameter, see there
+        if None, no imputation is done when applying Lag transformer to obtain inner X
+    """
+
+    _tags = {
+        "requires-fh-in-fit": True,  # is the forecasting horizon required in fit?
+        "X_inner_mtype": "pd.DataFrame",
+        "y_inner_mtype": "pd.DataFrame",
+    }
+
+    def __init__(
+        self,
+        estimator,
+        window_length=10,
+        transformers=None,
+        X_treatment="concurrent",
+        impute_method="bfill",
+    ):
+        self.window_length = window_length
+        self.transformers = transformers
+        self.transformers_ = None
+        self.estimator = estimator
+        self.X_treatment = X_treatment
+        self.impute_method = impute_method
+        self._lags = list(range(window_length))
+        super(DirectReductionForecaster, self).__init__()
+
+        warn(
+            "DirectReductionForecaster is experimental, and interfaces may change. "
+            "user feedback is appreciated in issue #3224 here: "
+            "https://github.com/alan-turing-institute/sktime/issues/3224"
+        )
+
+    def _fit(self, y, X=None, fh=None):
+        """Fit dispatcher based on X_treatment."""
+        methodname = f"_fit_{self.X_treatment}"
+        return getattr(self, methodname)(y=y, X=X, fh=fh)
+
+    def _predict(self, X=None, fh=None):
+        """Predict dispatcher based on X_treatment."""
+        methodname = f"_predict_{self.X_treatment}"
+        return getattr(self, methodname)(X=X, fh=fh)
+
+    def _fit_shifted(self, y, X=None, fh=None):
+        """Fit to training data."""
+        from sktime.transformations.series.impute import Imputer
+        from sktime.transformations.series.lag import Lag
+
+        impute_method = self.impute_method
+
+        # lagger_y_to_X_ will lag y to obtain the sklearn X
+        lags = self._lags
+        lagger_y_to_X = Lag(lags=lags, index_out="extend")
+        if impute_method is not None:
+            lagger_y_to_X = lagger_y_to_X * Imputer(method=impute_method)
+        self.lagger_y_to_X_ = lagger_y_to_X
+
+        # lagger_y_to_y_ will lag y to obtain the sklearn y
+        fh_rel = fh.to_relative(self.cutoff)
+        y_lags = list(fh_rel)
+        y_lags = [-x for x in y_lags]
+        lagger_y_to_y = Lag(lags=y_lags, index_out="original")
+        self.lagger_y_to_y_ = lagger_y_to_y
+
+        yt = lagger_y_to_y.fit_transform(y)
+        y_notna = yt.notnull().all(axis=1)
+        y_notna_idx = y_notna.index[y_notna]
+
+        # we now check whether the set of full lags is empty
+        # if yes, we set a flag, since we cannot fit the reducer
+        # instead, later, we return a dummy prediction
+        if len(y_notna_idx) == 0:
+            self.empty_lags_ = True
+            self.dummy_value_ = y.mean()
+            return self
+        else:
+            self.empty_lags_ = False
+
+        yt = yt.loc[y_notna_idx]
+        Xt = lagger_y_to_X.fit_transform(y).loc[y_notna_idx]
+
+        if X is not None:
+            Xt = pd.concat([X.loc[y_notna_idx], Xt], axis=1)
+
+        Xt = _coerce_col_str(Xt)
+        yt = _coerce_col_str(yt)
+
+        estimator = clone(self.estimator)
+        if not estimator._get_tags()["multioutput"]:
+            estimator = MultiOutputRegressor(estimator)
+        estimator.fit(Xt, yt)
+        self.estimator_ = estimator
+
+        return self
+
+    def _predict_shifted(self, fh=None, X=None):
+        """Predict core logic."""
+        fh_idx = pd.Index(fh.to_absolute(self.cutoff))
+        y_cols = self._y.columns
+
+        if self.empty_lags_:
+            ret = pd.DataFrame(index=fh_idx, columns=y_cols)
+            for i in X.index:
+                X.loc[i] = self.dummy_value_
+            return ret
+
+        lagger_y_to_X = self.lagger_y_to_X_
+
+        Xt_lastrow = lagger_y_to_X.transform(self._y).loc[[self.cutoff]]
+        if self._X is not None:
+            Xt_lastrow = pd.concat([self._X.loc[[self.cutoff]], Xt_lastrow], axis=1)
+
+        Xt_lastrow = _coerce_col_str(Xt_lastrow)
+
+        estimator = self.estimator_
+        # 2D numpy array with col index = (fh, var) and 1 row
+        y_pred = estimator.predict(Xt_lastrow)
+        y_pred = y_pred.reshape((len(fh), len(y_cols)))
+
+        y_pred = pd.DataFrame(y_pred, columns=y_cols, index=fh_idx)
+
+        return y_pred
+
+    def _fit_concurrent(self, y, X=None, fh=None):
+        """Fit to training data."""
+        from sktime.transformations.series.impute import Imputer
+        from sktime.transformations.series.lag import Lag
+
+        impute_method = self.impute_method
+
+        # lagger_y_to_X_ will lag y to obtain the sklearn X
+        lags = self._lags
+        lagger_y_to_X = Lag(lags=lags, index_out="extend")
+        if impute_method is not None:
+            lagger_y_to_X = lagger_y_to_X * Imputer(method=impute_method)
+        self.lagger_y_to_X_ = lagger_y_to_X
+
+        fh_rel = fh.to_relative(self.cutoff)
+        y_lags = list(fh_rel)
+
+        Xt = lagger_y_to_X.fit_transform(y)
+
+        self.estimators_ = []
+
+        for lag in y_lags:
+
+            lag_plus = Lag(lag, index_out="extend")
+            Xtt = lag_plus.fit_transform(Xt)
+            Xtt_notna = Xtt.notnull().all(axis=1)
+            Xtt_notna_idx = Xtt_notna.index[Xtt_notna].intersection(y.index)
+
+            yt = y.loc[Xtt_notna_idx]
+            Xtt = Xtt.loc[Xtt_notna_idx]
+
+            # we now check whether the set of full lags is empty
+            # if yes, we set a flag, since we cannot fit the reducer
+            # instead, later, we return a dummy prediction
+            if len(Xtt_notna_idx) == 0:
+                self.estimators_.append(y.mean())
+            else:
+                if X is not None:
+                    Xtt = pd.concat([X.loc[Xtt_notna_idx], Xtt], axis=1)
+
+                Xtt = _coerce_col_str(Xtt)
+                yt = _coerce_col_str(yt)
+
+                estimator = clone(self.estimator)
+                estimator.fit(Xtt, yt)
+                self.estimators_.append(estimator)
+
+        return self
+
+    def _predict_concurrent(self, X=None, fh=None):
+        """Fit to training data."""
+        from sktime.transformations.series.lag import Lag
+
+        if X is not None and self._X is not None:
+            X_pool = X.combine_first(self._X)
+        elif X is None and self._X is not None:
+            X_pool = self._X
+        else:
+            X_pool = X
+
+        fh_idx = pd.Index(fh.to_absolute(self.cutoff))
+        y_cols = self._y.columns
+
+        lagger_y_to_X = self.lagger_y_to_X_
+
+        fh_rel = fh.to_relative(self.cutoff)
+        fh_abs = fh.to_absolute(self.cutoff)
+        y_lags = list(fh_rel)
+        y_abs = list(fh_abs)
+
+        Xt = lagger_y_to_X.transform(self._y)
+        y_pred_list = []
+
+        for i in range(len(y_lags)):
+
+            lag = y_lags[i]
+            predict_idx = y_abs[i]
+
+            lag_plus = Lag(lag, index_out="extend")
+            Xtt = lag_plus.fit_transform(Xt)
+            Xtt_predrow = Xtt.loc[[predict_idx]]
+            if X_pool is not None:
+                Xtt_predrow = pd.concat(
+                    [X_pool.loc[[predict_idx]], Xtt_predrow], axis=1
+                )
+
+            Xtt_predrow = _coerce_col_str(Xtt_predrow)
+
+            estimator = self.estimators_[i]
+
+            # if = no training indices in _fit, fill in y training mean
+            if isinstance(estimator, pd.Series):
+                y_pred_i = pd.DataFrame(index=[0], columns=y_cols)
+                y_pred_i.iloc[0] = estimator
+            # otherwise proceed as per direct reduction algorithm
+            else:
+                y_pred_i = estimator.predict(Xtt_predrow)
+            # 2D numpy array with col index = (var) and 1 row
+            y_pred_list.append(y_pred_i)
+
+        y_pred = np.concatenate(y_pred_list)
+        y_pred = pd.DataFrame(y_pred, columns=y_cols, index=fh_idx)
+
+        return y_pred
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        from sklearn.linear_model import LinearRegression
+
+        est = LinearRegression()
+        params1 = {"estimator": est, "window_length": 3, "X_treatment": "shifted"}
+        params2 = {"estimator": est, "window_length": 3, "X_treatment": "concurrent"}
+        return [params1, params2]
