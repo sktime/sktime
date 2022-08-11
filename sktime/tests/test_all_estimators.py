@@ -700,7 +700,7 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
             "all must be an instance of the class"
         )
 
-        assert np.all([isinstance(name, names) for name in names]), (
+        assert np.all([isinstance(name, str) for name in names]), (
             "list elements of second return returned by create_test_instances_and_names"
             " all must be strings"
         )
