@@ -187,6 +187,11 @@ def test_forecasting_pipeline_dunder_endog():
 
     forecaster = ExponentTransformer() * MinMaxScaler() * NaiveForecaster()
 
+    assert isinstance(forecaster, TransformedTargetForecaster)
+    assert isinstance(forecaster.steps[0], ExponentTransformer)
+    assert isinstance(forecaster.steps[1], TabularToSeriesAdaptor)
+    assert isinstance(forecaster.steps[2], NaiveForecaster)
+
     fh = np.arange(len(y_test)) + 1
     forecaster.fit(y_train, fh=fh)
     actual = forecaster.predict()
@@ -220,6 +225,15 @@ def test_forecasting_pipeline_dunder_exog():
 
     forecaster = ExponentTransformer() ** MinMaxScaler() ** SARIMAX(random_state=3)
     forecaster_alt = (ExponentTransformer() * MinMaxScaler()) ** SARIMAX(random_state=3)
+
+    assert isinstance(forecaster, ForecastingPipeline)
+    assert isinstance(forecaster.steps[0], ExponentTransformer)
+    assert isinstance(forecaster.steps[1], TabularToSeriesAdaptor)
+    assert isinstance(forecaster.steps[2], SARIMAX)
+    assert isinstance(forecaster_alt, ForecastingPipeline)
+    assert isinstance(forecaster_alt.steps[0], ExponentTransformer)
+    assert isinstance(forecaster_alt.steps[1], TabularToSeriesAdaptor)
+    assert isinstance(forecaster_alt.steps[2], SARIMAX)
 
     fh = np.arange(len(y_test)) + 1
     forecaster.fit(y_train, fh=fh, X=X_train)

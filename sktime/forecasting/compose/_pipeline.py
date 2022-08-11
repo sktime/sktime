@@ -324,7 +324,7 @@ class ForecastingPipeline(_Pipeline):
         """Return reference to the forecaster in the pipeline. Valid after _fit."""
         return self.steps_[-1][1]
 
-    def __rmul__(self, other):
+    def __rpow__(self, other):
         """Magic ** method, return (left) concatenated ForecastingPipeline.
 
         Implemented for `other` being a transformer, otherwise returns `NotImplemented`.
