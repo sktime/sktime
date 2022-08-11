@@ -256,6 +256,7 @@ class ForecastingPipeline(_Pipeline):
     >>> from sktime.datasets import load_longley
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.forecasting.compose import ForecastingPipeline
+    >>> from sktime.transformations.series.adapt import TabularToSeriesAdaptor
     >>> from sktime.transformations.series.impute import Imputer
     >>> from sktime.forecasting.base import ForecastingHorizon
     >>> from sktime.forecasting.model_selection import temporal_train_test_split
@@ -267,7 +268,7 @@ class ForecastingPipeline(_Pipeline):
         Example 1: string/estimator pairs
     >>> pipe = ForecastingPipeline(steps=[
     ...     ("imputer", Imputer(method="mean")),
-    ...     ("minmaxscaler", MinMaxScaler()),
+    ...     ("minmaxscaler", TabularToSeriesAdaptor(MinMaxScaler())),
     ...     ("forecaster", NaiveForecaster(strategy="drift"))]),
     >>> pipe.fit(y_train, X_train)
     ForecastingPipeline(...)
@@ -276,17 +277,17 @@ class ForecastingPipeline(_Pipeline):
         Example 2: without strings
     >>> pipe = ForecastingPipeline([
     ...     Imputer(method="mean"),
-    ...     MinMaxScaler(),
+    ...     TabularToSeriesAdaptor(MinMaxScaler()),
     ...     NaiveForecaster(strategy="drift"),
     ... ])
 
         Example 3: using the dunder method
     >>> forecaster = NaiveForecaster(strategy="drift")
     >>> imputer = Imputer(method="mean")
-    >>> pipe = (imputer * MinMaxScaler()) ** forecaster
+    >>> pipe = (imputer * TabularToSeriesAdaptor(MinMaxScaler())) ** forecaster
 
         Example 3b: using the dunder method, alternative
-    >>> pipe = imputer ** MinMaxScaler() ** forecaster
+    >>> pipe = imputer ** TabularToSeriesAdaptor(MinMaxScaler()) ** forecaster
     """
 
     _tags = {

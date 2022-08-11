@@ -184,7 +184,8 @@ def test_forecasting_pipeline_dunder_endog():
     y = load_airline()
     y_train, y_test = temporal_train_test_split(y)
 
-    forecaster = ExponentTransformer() * MinMaxScaler() * NaiveForecaster()
+    scaler = TabularToSeriesAdaptor(MinMaxScaler())
+    forecaster = ExponentTransformer() * scaler * NaiveForecaster()
 
     fh = np.arange(len(y_test)) + 1
     forecaster.fit(y_train, fh=fh)
@@ -217,8 +218,9 @@ def test_forecasting_pipeline_dunder_exSog():
     X = _make_series(n_columns=2)
     X_train, X_test = temporal_train_test_split(X)
 
-    forecaster = ExponentTransformer() ** MinMaxScaler() ** SARIMAX()
-    forecaster_alt = (ExponentTransformer() * MinMaxScaler()) ** SARIMAX()
+    scaler = TabularToSeriesAdaptor(MinMaxScaler())
+    forecaster = ExponentTransformer() ** scaler ** SARIMAX()
+    forecaster_alt = (ExponentTransformer() * scaler) ** SARIMAX()
 
     fh = np.arange(len(y_test)) + 1
     forecaster.fit(y_train, fh=fh, X=X_train)
