@@ -24,6 +24,7 @@ from sktime.transformations.series.detrend import Detrender
 from sktime.transformations.series.exponent import ExponentTransformer
 from sktime.transformations.series.impute import Imputer
 from sktime.transformations.series.outlier_detection import HampelFilter
+from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
 from sktime.utils._testing.series import _make_series
 
 
@@ -184,8 +185,7 @@ def test_forecasting_pipeline_dunder_endog():
     y = load_airline()
     y_train, y_test = temporal_train_test_split(y)
 
-    scaler = TabularToSeriesAdaptor(MinMaxScaler())
-    forecaster = ExponentTransformer() * scaler * NaiveForecaster()
+    forecaster = ExponentTransformer() * MinMaxScaler() * NaiveForecaster()
 
     fh = np.arange(len(y_test)) + 1
     forecaster.fit(y_train, fh=fh)
@@ -219,8 +219,8 @@ def test_forecasting_pipeline_dunder_exog():
     X_train, X_test = temporal_train_test_split(X)
 
     scaler = TabularToSeriesAdaptor(MinMaxScaler())
-    forecaster = ExponentTransformer() ** scaler ** SARIMAX()
-    forecaster_alt = (ExponentTransformer() * scaler) ** SARIMAX()
+    forecaster = ExponentTransformer() ** scaler ** SARIMAX(random_state=42)
+    forecaster_alt = (ExponentTransformer() * scaler) ** SARIMAX(random_state=42)
 
     fh = np.arange(len(y_test)) + 1
     forecaster.fit(y_train, fh=fh, X=X_train)
@@ -237,13 +237,16 @@ def test_forecasting_pipeline_dunder_exog():
         Xt = t1.fit_transform(Xt)
         t2 = TabularToSeriesAdaptor(MinMaxScaler())
         Xt = t2.fit_transform(Xt)
-        forecaster = SARIMAX()
+        forecaster = SARIMAX(random_state=42)
         forecaster.fit(yt, fh=fh, X=Xt)
 
         # predicting
-        y_pred = forecaster.predict(X=X_test)
+        Xtt = X_test.copy()
+        Xtt = t1.transform(Xtt)
+        Xtt = t2.transform(Xtt)
+        y_pred = forecaster.predict(X=Xtt)
         return y_pred
 
     expected = compute_expected_y_pred(y_train, X_train, X_test, fh)
-    np.testing.assert_array_equal(actual, expected)
-    np.testing.assert_array_equal(actual_alt, expected)
+    _assert_array_almost_equal(actual, expected)
+    _assert_array_almost_equal(actual_alt, expected)
