@@ -80,7 +80,6 @@ instance/
 docs/_build/
 docs/source/api_reference/auto_generated/
 docs/estimator_overview_table.md
-docs/source/examples
 
 # PyBuilder
 target/
