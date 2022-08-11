@@ -55,7 +55,7 @@ def Zpart(N, N1, zeta, q):
 
 
 class Hidalgo(BaseSeriesAnnotator):
-    """Class to fit parameters of the HidAlgo intrinsic dimension model.
+    """Class of the HidAlgo intrinsic dimension model.
 
     explain, reference
 
