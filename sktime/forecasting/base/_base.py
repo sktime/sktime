@@ -202,7 +202,7 @@ class BaseForecaster(BaseEstimator):
         #   the ForecastingPipeline does the rest, e.g., dispatch on other
         if isinstance(other, BaseTransformer):
             self_as_pipeline = ForecastingPipeline(steps=[self])
-            return other ** self_as_pipeline
+            return other**self_as_pipeline
         elif is_sklearn_transformer(other):
             return TabularToSeriesAdaptor(other) ** self
         else:
