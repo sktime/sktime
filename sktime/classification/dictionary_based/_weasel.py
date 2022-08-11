@@ -11,7 +11,7 @@ import math
 
 import numpy as np
 from joblib import Parallel, delayed
-from numba import njit
+from numba import njit, set_num_threads
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.feature_selection import chi2
 from sklearn.linear_model import LogisticRegression
@@ -152,6 +152,7 @@ class WEASEL(BaseClassifier):
         self.SFA_transformers = []
         self.clf = None
         self.n_jobs = n_jobs
+        set_num_threads(n_jobs)
 
         super(WEASEL, self).__init__()
 

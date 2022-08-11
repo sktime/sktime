@@ -13,7 +13,7 @@ import warnings
 
 import numpy as np
 from joblib import Parallel, delayed
-from numba import NumbaTypeSafetyWarning, njit
+from numba import NumbaTypeSafetyWarning, njit, set_num_threads
 from sklearn.feature_selection import f_classif
 from sklearn.preprocessing import KBinsDiscretizer
 from sklearn.tree import DecisionTreeClassifier
@@ -102,7 +102,6 @@ class SFA_NEW(_PanelToPanelTransformer):
         anova=False,
         variance=False,
         bigrams=False,
-        lower_bounding=True,
         n_jobs=1,
     ):
         self.words = []
@@ -121,10 +120,6 @@ class SFA_NEW(_PanelToPanelTransformer):
         self.word_length = word_length
         self.alphabet_size = alphabet_size
         self.window_size = window_size
-        self.lower_bounding = lower_bounding
-        self.inverse_sqrt_win_size = (
-            1.0 / math.sqrt(window_size) if not lower_bounding else 1.0
-        )
 
         self.norm = norm
 
@@ -143,6 +138,7 @@ class SFA_NEW(_PanelToPanelTransformer):
         self.letter_bits = 0
         self.word_bits = 0
         self.max_bits = 0
+        set_num_threads(n_jobs)
 
         super(SFA_NEW, self).__init__()
 
@@ -260,6 +256,9 @@ class SFA_NEW(_PanelToPanelTransformer):
             # select word-length-many indices with largest variance
             self.support = np.argsort(-dft_variance)[: self.word_length]
 
+            # sort remaining indices
+            self.support = np.sort(self.support)
+
             # select the Fourier coefficients with highest f-score
             dft = dft[:, self.support]
             self.dft_length = np.max(self.support) + 1
@@ -322,14 +321,14 @@ class SFA_NEW(_PanelToPanelTransformer):
 
                 for bp in range(self.alphabet_size - 1):
                     bin_index += target_bin_depth
-                    breakpoints[letter][bp] = column[int(bin_index)]
+                    breakpoints[letter, bp] = column[int(bin_index)]
 
             # use equi-width binning aka equi-frequency binning
             elif self.binning_method == "equi-width":
                 target_bin_width = (column[-1] - column[0]) / self.alphabet_size
 
                 for bp in range(self.alphabet_size - 1):
-                    breakpoints[letter][bp] = (bp + 1) * target_bin_width + column[0]
+                    breakpoints[letter, bp] = (bp + 1) * target_bin_width + column[0]
 
         breakpoints[:, self.alphabet_size - 1] = sys.float_info.max
         return breakpoints
@@ -347,15 +346,14 @@ class SFA_NEW(_PanelToPanelTransformer):
             clf.fit(dft[:, i][:, None], y)
             threshold = clf.tree_.threshold[clf.tree_.children_left != -1]
             for bp in range(len(threshold)):
-                breakpoints[i][bp] = threshold[bp]
+                breakpoints[i, bp] = threshold[bp]
             for bp in range(len(threshold), self.alphabet_size):
-                breakpoints[i][bp] = sys.float_info.max
+                breakpoints[i, bp] = sys.float_info.max
 
         return np.sort(breakpoints, axis=1)
 
     def _binning_dft(self, series, num_windows_per_inst):
-        # Splits individual time series into windows and returns the DFT for
-        # each
+        # Splits individual time series into windows and returns the DFT for each
         split = np.split(
             series,
             np.linspace(
@@ -368,7 +366,7 @@ class SFA_NEW(_PanelToPanelTransformer):
         start = self.series_length - self.window_size
         split[-1] = series[start : self.series_length]
 
-        result = np.zeros((len(split), self.dft_length), dtype=np.float64)
+        result = np.zeros((len(split), self.dft_length), dtype=np.float32)
 
         for i, row in enumerate(split):
             result[i] = self._fast_fourier_transform(row)
@@ -394,8 +392,10 @@ class SFA_NEW(_PanelToPanelTransformer):
         # first two are real and imaginary parts
         start = 2 if self.norm else 0
 
+        # std = 1.0
+        # if self.norm:
         s = np.std(series)
-        std = s if s > 1e-8 else 1
+        std = s if (s > 1e-4) else 1.0
 
         X_fft = np.fft.rfft(series)
         reals = np.real(X_fft)
@@ -405,9 +405,7 @@ class SFA_NEW(_PanelToPanelTransformer):
         dft = np.empty((length,), dtype=reals.dtype)
         dft[0::2] = reals[: np.uint32(length / 2)]
         dft[1::2] = imags[: np.uint32(length / 2)]
-        if self.lower_bounding:
-            dft[1::2] = dft[1::2] * -1  # lower bounding
-        dft *= self.inverse_sqrt_win_size / std
+        dft /= std
         return dft[start:]
 
     def _mft(self, series):
@@ -416,7 +414,11 @@ class SFA_NEW(_PanelToPanelTransformer):
         end = max(1, len(series) - self.window_size + 1)
 
         phis = SFA_NEW._get_phis(self.window_size, length)
+        # if self.norm:
         stds = SFA_NEW._calc_incremental_mean_std(series, end, self.window_size)
+        # else:
+        #    stds = np.ones(end, dtype=np.float32)
+
         transformed = np.zeros((end, length))
 
         X_fft = np.fft.rfft(series[: self.window_size])
@@ -426,7 +428,7 @@ class SFA_NEW(_PanelToPanelTransformer):
         mft_data[0::2] = reals[: np.uint32(length / 2)]
         mft_data[1::2] = imags[: np.uint32(length / 2)]
 
-        transformed[0] = mft_data * self.inverse_sqrt_win_size / stds[0]
+        transformed[0] = mft_data / stds[0]
 
         # other runs using mft
         # moved to external method to use njit
@@ -437,10 +439,7 @@ class SFA_NEW(_PanelToPanelTransformer):
             self.window_size,
             stds,
             transformed,
-            self.inverse_sqrt_win_size,
         )
-        if self.lower_bounding:
-            transformed[:, 1::2] = transformed[:, 1::2] * -1  # lower bounding
 
         return (
             transformed[:, start_offset:][:, self.support]
@@ -451,17 +450,16 @@ class SFA_NEW(_PanelToPanelTransformer):
     @staticmethod
     @njit(fastmath=True, cache=True)
     def _get_phis(window_size, length):
-        phis = np.zeros(length)
+        phis = np.zeros(length, dtype=np.float32)
         for i in range(int(length / 2)):
             phis[i * 2] += math.cos(2 * math.pi * (-i) / window_size)
             phis[i * 2 + 1] += -math.sin(2 * math.pi * (-i) / window_size)
         return phis
 
     @staticmethod
-    @njit(fastmath=True, cache=True)
-    def _iterate_mft(
-        series, mft_data, phis, window_size, stds, transformed, inverse_sqrt_win_size
-    ):
+    @njit(fastmath=True, cache=True)  # TODO parallel?
+    def _iterate_mft(series, mft_data, phis, window_size, stds, transformed):
+        # TODO compute only those needed and not all?
         for i in range(1, len(transformed)):
             for n in range(0, len(mft_data), 2):
                 # only compute needed indices
@@ -469,17 +467,15 @@ class SFA_NEW(_PanelToPanelTransformer):
                 imag = mft_data[n + 1]
                 mft_data[n] = real * phis[n] - imag * phis[n + 1]
                 mft_data[n + 1] = real * phis[n + 1] + phis[n] * imag
-
-            normalising_factor = inverse_sqrt_win_size / stds[i]
-            transformed[i] = mft_data * normalising_factor
+            transformed[i] = mft_data / stds[i]
 
     @staticmethod
-    @njit(fastmath=True, cache=True)
+    @njit(fastmath=True, cache=True)  # TODO parallel??
     def _create_word(dft, word_length, alphabet_size, breakpoints, letter_bits):
         word = np.int64(0)
         for i in range(word_length):
             for bp in range(alphabet_size):
-                if dft[i] <= breakpoints[i][bp]:
+                if dft[i] <= breakpoints[i, bp]:
                     word = (word << letter_bits) | bp
                     break
 
@@ -496,7 +492,7 @@ class SFA_NEW(_PanelToPanelTransformer):
         r_window_length = 1 / window_size
         mean = series_sum * r_window_length
         buf = math.sqrt(square_sum * r_window_length - mean * mean)
-        stds[0] = buf if buf > 1e-8 else 1
+        stds[0] = buf if buf > 1e-4 else 1.0
 
         for w in range(1, end):
             series_sum += series[w + window_size - 1] - series[w - 1]
@@ -506,22 +502,15 @@ class SFA_NEW(_PanelToPanelTransformer):
                 - series[w - 1] * series[w - 1]
             )
             buf = math.sqrt(square_sum * r_window_length - mean * mean)
-            stds[w] = buf if buf > 1e-8 else 1
+            stds[w] = buf if buf > 1e-4 else 1.0
 
         return stds
 
     def _create_bigram_words(self, word_raw, word):
-        return (
-            SFA_NEW._create_bigram_word(
-                word,
-                word_raw,
-                self.word_bits,
-            )
-            if self.max_bits <= 64
-            else self._create_bigram_word_large(
-                word,
-                word_raw,
-            )
+        return SFA_NEW._create_bigram_word(
+            word,
+            word_raw,
+            self.word_bits,
         )
 
     @staticmethod
@@ -549,5 +538,5 @@ class SFA_NEW(_PanelToPanelTransformer):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         # small window size for testing
-        params = {"window_size": 4, "return_pandas_data_series": True}
+        params = {"window_size": 4}
         return params

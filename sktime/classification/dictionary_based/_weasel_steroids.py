@@ -14,6 +14,7 @@ __all__ = ["WEASEL_STEROIDS"]
 
 import numpy as np
 from joblib import Parallel, delayed
+from numba import set_num_threads
 from sklearn.linear_model import RidgeClassifierCV
 
 # from numba import njit
@@ -157,6 +158,7 @@ class WEASEL_STEROIDS(BaseClassifier):
         self.first_differences = []
         self.clf = None
         self.n_jobs = n_jobs
+        set_num_threads(n_jobs)
 
         super(WEASEL_STEROIDS, self).__init__()
 
@@ -176,7 +178,6 @@ class WEASEL_STEROIDS(BaseClassifier):
             X_second = X[:, i::d]
             X_first = np.concatenate((X_first, X_second), axis=1)
 
-        # if not first_difference:
         return X_first
 
         """
@@ -249,7 +250,6 @@ class WEASEL_STEROIDS(BaseClassifier):
                 anova=self.anova,
                 binning_method=binning_strategy,
                 bigrams=self.bigrams,
-                lower_bounding=False,
                 n_jobs=self.n_jobs,
             )
 
