@@ -211,7 +211,7 @@ def test_forecasting_pipeline_dunder_endog():
     np.testing.assert_array_equal(actual, expected)
 
 
-def test_forecasting_pipeline_dunder_exSog():
+def test_forecasting_pipeline_dunder_exog():
     """Test forecasting pipeline dunder for exogeneous transformation."""
     y = _make_series()
     y_train, y_test = temporal_train_test_split(y)

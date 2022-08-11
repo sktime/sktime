@@ -269,7 +269,8 @@ class ForecastingPipeline(_Pipeline):
     >>> pipe = ForecastingPipeline(steps=[
     ...     ("imputer", Imputer(method="mean")),
     ...     ("minmaxscaler", TabularToSeriesAdaptor(MinMaxScaler())),
-    ...     ("forecaster", NaiveForecaster(strategy="drift"))]),
+    ...     ("forecaster", NaiveForecaster(strategy="drift")),
+    ... ])
     >>> pipe.fit(y_train, X_train)
     ForecastingPipeline(...)
     >>> y_pred = pipe.predict(fh=fh, X=X_test)
