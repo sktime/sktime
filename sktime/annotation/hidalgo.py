@@ -279,13 +279,17 @@ class Hidalgo(BaseSeriesAnnotator):
         fixed_Z = self.fixed_Z
 
         if a is None:
-            self.a = np.ones(K)
+            a = np.ones(K)
+            self.a = a
         if b is None:
-            self.b = np.ones(K)
+            b = np.ones(K)
+            self.b = b
         if c is None:
-            self.c = np.ones(K)
+            c = np.ones(K)
+            self.c = c
         if f is None:
-            self.f = np.ones(K)
+            f = np.ones(K)
+            self.f = f
 
         if not fixed_Z:
             random_z = self._rng.randint(0, K, N)
