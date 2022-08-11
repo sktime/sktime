@@ -58,7 +58,7 @@ def Zpart(N, N1, zeta, q):
 
 
 class Hidalgo(BaseSeriesAnnotator):
-    """Class to fit parameters of the Hidalgo intrinsic dimension model.
+    """Class of the HidAlgo intrinsic dimension model.
 
     explain, reference
 
@@ -237,7 +237,7 @@ class Hidalgo(BaseSeriesAnnotator):
         self.Iout_count = Iout_count
         self.Iout_track = Iout_track
 
-    def update_zeta_prior(self, Z):
+    def _update_zeta_prior(self, Z):
         """Update prior parameters for zeta."""
         N = self.N
         q = self.q
