@@ -343,7 +343,8 @@ class ForecastingGridSearchCV(BaseGridSearch):
         -1 means using all processors.
     refit: bool, optional (default=True)
         True = refit the forecaster with the best parameters on the entire data in fit
-        False = best forecaster remains fitted on the last fold in cv
+        False = best forecaster remains fitted on the last fold in cv. Setting to False
+        makes only sense when using a SlidingWindowSplitter.
     verbose: int, optional (default=0)
     return_n_best_forecasters: int, default=1
         In case the n best forecaster should be returned, this value can be set
@@ -532,6 +533,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
             "cv": SingleWindowSplitter(fh=1),
             "param_grid": {"window_length": [2, 5]},
             "scoring": MeanAbsolutePercentageError(symmetric=True),
+            "refit": [True, False],
         }
         params2 = {
             "forecaster": ExponentialSmoothing(),
@@ -594,7 +596,8 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         -1 means using all processors.
     refit: bool, optional (default=True)
         True = refit the forecaster with the best parameters on the entire data in fit
-        False = best forecaster remains fitted on the last fold in cv
+        False = best forecaster remains fitted on the last fold in cv. Setting to False
+        makes only sense when using a SlidingWindowSplitter.
     verbose: int, optional (default=0)
     return_n_best_forecasters: int, default=1
         In case the n best forecaster should be returned, this value can be set
