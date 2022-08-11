@@ -58,9 +58,12 @@ def Zpart(N, N1, zeta, q):
 
 
 class Hidalgo(BaseSeriesAnnotator):
-    """Class of the HidAlgo intrinsic dimension model.
+    """Class of the Hidalgo intrinsic dimension model.
 
-    explain, reference
+    Hidalgo is a robust approach in discriminating regions with
+    different local intrinsic dimensionality (topological feature
+    measuring complexity). Hidalgo offers unsupervised segmentation
+    of high-dimensional data.
 
     Parameters
     ----------
@@ -75,9 +78,9 @@ class Hidalgo(BaseSeriesAnnotator):
     q : int, optional, default=3
         number of points for local Z interaction, "local homogeneity range"
         see equation ?
-    Niter : int, optional, default=10000
+    n_iter : int, optional, default=1000
         number of Gibbs sampling iterations
-    Nreplicas : int, optional, default=1
+    n_replicas : int, optional, default=1
         number of random starts to run Gibbs sampling
     burn_in : float, optional, default=0.9
         percentage of Gibbs sampling iterations discarded, "burn-in fraction"
@@ -90,14 +93,14 @@ class Hidalgo(BaseSeriesAnnotator):
     estimate_zeta : bool, optional, default=False
         update zeta in the sampling
     sampling_rate: int, optional, default=10
-        rate at which to save samples for each Niter
-    a : np.ArrayLike, optional, default=1.0
+        rate at which to save samples for each n_iter
+    a : np.ArrayLike, optional, default=None
         prior parameters of d
-    b : np.ArrayLike, optional, default=1.0
+    b : np.ArrayLike, optional, default=None
         prior parameters of d
-    c : np.ArrayLike, optional, default=1.0
+    c : np.ArrayLike, optional, default=None
         prior parameters of p
-    f : np.ArrayLike, optional, default=1.0
+    f : np.ArrayLike, optional, default=None
         parameters of zeta
     seed : int, optional, default = 1
         generate random numbers with seed
@@ -116,7 +119,7 @@ class Hidalgo(BaseSeriesAnnotator):
     >>> np.random.seed(123)
     >>> X = np.random.rand(10,3)
     >>> X[6:, 1:] = 0
-    >>> model = Hidalgo(K=2, Niter=50, seed=10)
+    >>> model = Hidalgo(K=2, n_iter=50, seed=10)
     >>> fitted_model = model._fit(X)
     >>> Z = fitted_model._predict(X)
     >>> Z
@@ -131,8 +134,8 @@ class Hidalgo(BaseSeriesAnnotator):
         K=1,
         zeta=0.8,
         q=3,
-        Niter=10000,
-        Nreplicas=1,
+        n_iter=1000,
+        n_replicas=1,
         burn_in=0.5,
         fixed_Z=False,
         use_Potts=True,
@@ -147,22 +150,13 @@ class Hidalgo(BaseSeriesAnnotator):
         labels="score",
     ):
 
-        if a is None:
-            a = np.ones(K)
-        if b is None:
-            b = np.ones(K)
-        if c is None:
-            c = np.ones(K)
-        if f is None:
-            f = np.ones(K)
-
         self.metric = metric
         self.K = K
         self.zeta = zeta
         self.q = q
-        self.Niter = Niter
+        self.n_iter = n_iter
         self.burn_in = burn_in
-        self.Nreplicas = Nreplicas
+        self.n_replicas = n_replicas
         self.fixed_Z = fixed_Z
         self.use_Potts = use_Potts
         self.estimate_zeta = estimate_zeta
@@ -252,12 +246,6 @@ class Hidalgo(BaseSeriesAnnotator):
 
         return N_in, f1
 
-    def get_random_z(self):
-        """Generate random Z from random number generator."""
-        K = self.K
-        N = self.N
-        return self._rng.randint(0, K, N)
-
     def _initialise_params(self):
         """
         Decription.
@@ -287,10 +275,20 @@ class Hidalgo(BaseSeriesAnnotator):
         a = self.a
         b = self.b
         c = self.c
+        f = self.f
         fixed_Z = self.fixed_Z
 
+        if a is None:
+            self.a = np.ones(K)
+        if b is None:
+            self.b = np.ones(K)
+        if c is None:
+            self.c = np.ones(K)
+        if f is None:
+            self.f = np.ones(K)
+
         if not fixed_Z:
-            random_z = self.get_random_z()
+            random_z = self._rng.randint(0, K, N)
             Z = np.array(random_z, dtype=int)
         else:
             Z = np.zeros(N, dtype=int)
@@ -302,7 +300,7 @@ class Hidalgo(BaseSeriesAnnotator):
         b1 = b + V
         c1 = c + NN
 
-        N_in, f1 = self.update_zeta_prior(Z)
+        N_in, f1 = self._update_zeta_prior(Z)
 
         return (V, NN, a1, b1, c1, Z, f1, N_in)
 
@@ -347,14 +345,14 @@ class Hidalgo(BaseSeriesAnnotator):
 
         Returns
         -------
-        sampling : 2D np.ndarray of shape (Niter, Npar), where Npar = N + 2 * K + 2 + 1
+        sampling : 2D np.ndarray of shape (n_iter, Npar), where Npar = N + 2 * K + 2 + 1
             posterior samples of d, p, Z and likelihood samples, respectively.
 
         """
         zeta = self.zeta
         q = self.q
         K = self.K
-        Niter = self.Niter
+        n_iter = self.n_iter
         fixed_Z = self.fixed_Z
         use_Potts = self.use_Potts
         estimate_zeta = self.estimate_zeta
@@ -540,7 +538,7 @@ class Hidalgo(BaseSeriesAnnotator):
 
             return lik0, lik1
 
-        for it in range(Niter):
+        for it in range(n_iter):
 
             d = sample_d(K, a1, b1)
             sampling = np.append(sampling, d)
@@ -555,7 +553,7 @@ class Hidalgo(BaseSeriesAnnotator):
             Z, NN, a1, c1, V, b1 = sampling_Z(Z, NN, a1, c1, V, b1, zeta, fixed_Z, q)
             sampling = np.append(sampling, Z)
 
-            N_in, f1 = self.update_zeta_prior(Z)
+            N_in, f1 = self._update_zeta_prior(Z)
 
             lik = sample_likelihood(p, d, Z, N_in, zeta, NN)
             sampling = np.append(sampling, lik)
@@ -583,7 +581,7 @@ class Hidalgo(BaseSeriesAnnotator):
         Run the Hidalgo algorithm and writes results to self.
 
         Find parameter esimates as distributions in sampling.
-        Iterate through Nreplicas random starts and get posterior
+        Iterate through n_replicas random starts and get posterior
         samples with best max likelihood.
 
         Write to self:
@@ -614,8 +612,8 @@ class Hidalgo(BaseSeriesAnnotator):
             base-zero integer values corresponsing to segment (manifold k)
         """
         K = self.K
-        Nreplicas = self.Nreplicas
-        Niter = self.Niter
+        n_replicas = self.n_replicas
+        n_iter = self.n_iter
         sampling_rate = self.sampling_rate
         burn_in = self.burn_in
 
@@ -627,7 +625,7 @@ class Hidalgo(BaseSeriesAnnotator):
         bestsampling = np.zeros(shape=0)
         maxlik = -1e10
 
-        for _ in range(Nreplicas):
+        for _ in range(n_replicas):
 
             sampling = self.gibbs_sampling(
                 V,
@@ -639,12 +637,12 @@ class Hidalgo(BaseSeriesAnnotator):
                 f1,
                 N_in,
             )
-            sampling = np.reshape(sampling, (Niter, Npar))
+            sampling = np.reshape(sampling, (n_iter, Npar))
 
             idx = [
                 it
-                for it in range(Niter)
-                if it % sampling_rate == 0 and it >= Niter * burn_in
+                for it in range(n_iter)
+                if it % sampling_rate == 0 and it >= n_iter * burn_in
             ]
             sampling = sampling[
                 idx,
