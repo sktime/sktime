@@ -283,12 +283,13 @@ class ForecastingPipeline(_Pipeline):
     ... ])
 
         Example 3: using the dunder method
+        Note: * (= apply to `y`) has precedence over ** (= apply to `X`)
     >>> forecaster = NaiveForecaster(strategy="drift")
     >>> imputer = Imputer(method="mean")
-    >>> pipe = (imputer * TabularToSeriesAdaptor(MinMaxScaler())) ** forecaster
+    >>> pipe = (imputer * MinMaxScaler()) ** forecaster
 
         Example 3b: using the dunder method, alternative
-    >>> pipe = imputer ** TabularToSeriesAdaptor(MinMaxScaler()) ** forecaster
+    >>> pipe = imputer ** MinMaxScaler() ** forecaster
     """
 
     _tags = {
