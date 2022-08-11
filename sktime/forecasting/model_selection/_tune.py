@@ -141,10 +141,30 @@ class BaseGridSearch(_DelegatedForecaster):
                 strategy=self.strategy,
                 scoring=scoring,
                 error_score=self.error_score,
+                # get cv data in order to use it for fitting if self.refit is True
+                return_data=True,
             )
 
             # Filter columns.
-            out = out.filter(items=[scoring_name, "fit_time", "pred_time"], axis=1)
+            out = out.filter(
+                items=[
+                    scoring_name,
+                    "fit_time",
+                    "pred_time",
+                    "y_train",
+                    "X_train",
+                    "cutoff",
+                ],
+                axis=1,
+            )
+
+            # store y_train and X_train for the case refit param is True
+            row = out[out["cutoff"] == out["cutoff"].max()].iloc[0]
+            self._y_train_evaluate = row["y_train"]
+            self._X_train_evaluate = row["X_train"]
+
+            # drop columns
+            out = out.drop(columns=["y_train", "X_train", "cutoff"])
 
             # Aggregate results.
             out = out.mean()
@@ -208,6 +228,13 @@ class BaseGridSearch(_DelegatedForecaster):
         # Refit model with best parameters.
         if self.refit:
             self.best_forecaster_.fit(y, X, fh)
+        else:
+            # with with data from
+            self.best_forecaster_.fit(
+                y=self._y_train_evaluate,
+                X=self._X_train_evaluate,
+                fh=fh,
+            )
 
         # Sort values according to rank
         results = results.sort_values(
@@ -224,6 +251,10 @@ class BaseGridSearch(_DelegatedForecaster):
             # Refit model with best parameters.
             if self.refit:
                 forecaster.fit(y, X, fh)
+            else:
+                forecaster.fit(
+                    y=self._y_train_evaluate, X=self._X_train_evaluate, fh=fh
+                )
             self.n_best_forecasters_.append((rank, forecaster))
             # Save score
             score = results[f"mean_{scoring_name}"].iloc[i]
@@ -356,7 +387,6 @@ class ForecastingGridSearchCV(BaseGridSearch):
     --------
     >>> from sktime.datasets import load_shampoo_sales
     >>> from sktime.forecasting.model_selection import (
-    ...     ExpandingWindowSplitter,
     ...     ForecastingGridSearchCV,
     ...     ExpandingWindowSplitter)
     >>> from sktime.forecasting.naive import NaiveForecaster

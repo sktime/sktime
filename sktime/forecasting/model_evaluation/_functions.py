@@ -200,6 +200,8 @@ def evaluate(
                 "y_train": y_train if return_data else np.nan,
                 "y_test": y_test if return_data else np.nan,
                 "y_pred": y_pred if return_data else np.nan,
+                "X_train": X_train if return_data else np.nan,
+                "X_test": X_test if return_data else np.nan,
             }
         )
 
