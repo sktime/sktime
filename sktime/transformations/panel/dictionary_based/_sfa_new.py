@@ -9,11 +9,9 @@ __all__ = ["SFA_NEW"]
 
 import math
 import sys
-import warnings
 
 import numpy as np
-from joblib import Parallel, delayed
-from numba import NumbaTypeSafetyWarning, njit, set_num_threads
+from numba import njit, objmode, prange
 from sklearn.feature_selection import f_classif
 from sklearn.preprocessing import KBinsDiscretizer
 from sklearn.tree import DecisionTreeClassifier
@@ -23,6 +21,7 @@ from sktime.utils.validation.panel import check_X
 
 # The binning methods to use: equi-depth, equi-width, information gain or kmeans
 binning_methods = {"equi-depth", "equi-width", "information-gain", "kmeans"}
+
 
 # TODO remove imag-part from dc-component component
 
@@ -138,7 +137,7 @@ class SFA_NEW(_PanelToPanelTransformer):
         self.letter_bits = 0
         self.word_bits = 0
         self.max_bits = 0
-        set_num_threads(n_jobs)
+        # set_num_threads(n_jobs)
 
         super(SFA_NEW, self).__init__()
 
@@ -200,40 +199,18 @@ class SFA_NEW(_PanelToPanelTransformer):
         X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
         X = X.squeeze(1)
 
-        # self.breakpoints[self.breakpoints > 0] = np.inf
-
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", category=NumbaTypeSafetyWarning)
-            transform = Parallel(n_jobs=self.n_jobs)(
-                delayed(self._transform_case)(X[i, :]) for i in range(X.shape[0])
-            )
-
-        _, words = zip(*transform)
-        return words
-
-    def _transform_case(self, X):
-        dfts = self._mft(X)
-
-        words = []
-
-        for window in range(dfts.shape[0]):
-            word_raw = SFA_NEW._create_word(
-                dfts[window],
-                self.word_length,
-                self.alphabet_size,
-                self.breakpoints,
-                self.letter_bits,
-            )
-            words.append(word_raw)
-
-            if self.bigrams:
-                if window - self.window_size >= 0:
-                    bigram = self._create_bigram_words(
-                        word_raw, words[window - self.window_size]
-                    )
-                    words.append(bigram)
-
-        return [{}, np.array(words)]
+        return _transform_case(
+            X,
+            self.window_size,
+            self.dft_length,
+            self.norm,
+            self.series_length,
+            self.support,
+            self.anova,
+            self.variance,
+            self.breakpoints,
+            self.letter_bits,
+        )
 
     def _binning(self, X, y=None):
         num_windows_per_inst = math.ceil(self.series_length / self.window_size)
@@ -408,116 +385,6 @@ class SFA_NEW(_PanelToPanelTransformer):
         dft /= std
         return dft[start:]
 
-    def _mft(self, series):
-        start_offset = 2 if self.norm else 0
-        length = self.dft_length + start_offset + self.dft_length % 2
-        end = max(1, len(series) - self.window_size + 1)
-
-        phis = SFA_NEW._get_phis(self.window_size, length)
-        # if self.norm:
-        stds = SFA_NEW._calc_incremental_mean_std(series, end, self.window_size)
-        # else:
-        #    stds = np.ones(end, dtype=np.float32)
-
-        transformed = np.zeros((end, length))
-
-        X_fft = np.fft.rfft(series[: self.window_size])
-        reals = np.real(X_fft)
-        imags = np.imag(X_fft)
-        mft_data = np.empty((length,), dtype=reals.dtype)
-        mft_data[0::2] = reals[: np.uint32(length / 2)]
-        mft_data[1::2] = imags[: np.uint32(length / 2)]
-
-        transformed[0] = mft_data / stds[0]
-
-        # other runs using mft
-        # moved to external method to use njit
-        SFA_NEW._iterate_mft(
-            series,
-            mft_data,
-            phis,
-            self.window_size,
-            stds,
-            transformed,
-        )
-
-        return (
-            transformed[:, start_offset:][:, self.support]
-            if (self.anova or self.variance)
-            else transformed[:, start_offset:]
-        )
-
-    @staticmethod
-    @njit(fastmath=True, cache=True)
-    def _get_phis(window_size, length):
-        phis = np.zeros(length, dtype=np.float32)
-        for i in range(int(length / 2)):
-            phis[i * 2] += math.cos(2 * math.pi * (-i) / window_size)
-            phis[i * 2 + 1] += -math.sin(2 * math.pi * (-i) / window_size)
-        return phis
-
-    @staticmethod
-    @njit(fastmath=True, cache=True)  # TODO parallel?
-    def _iterate_mft(series, mft_data, phis, window_size, stds, transformed):
-        # TODO compute only those needed and not all?
-        for i in range(1, len(transformed)):
-            for n in range(0, len(mft_data), 2):
-                # only compute needed indices
-                real = mft_data[n] + series[i + window_size - 1] - series[i - 1]
-                imag = mft_data[n + 1]
-                mft_data[n] = real * phis[n] - imag * phis[n + 1]
-                mft_data[n + 1] = real * phis[n + 1] + phis[n] * imag
-            transformed[i] = mft_data / stds[i]
-
-    @staticmethod
-    @njit(fastmath=True, cache=True)  # TODO parallel??
-    def _create_word(dft, word_length, alphabet_size, breakpoints, letter_bits):
-        word = np.int64(0)
-        for i in range(word_length):
-            for bp in range(alphabet_size):
-                if dft[i] <= breakpoints[i, bp]:
-                    word = (word << letter_bits) | bp
-                    break
-
-        return word
-
-    @staticmethod
-    @njit(fastmath=True, cache=True)
-    def _calc_incremental_mean_std(series, end, window_size):
-        stds = np.zeros(end)
-        window = series[0:window_size]
-        series_sum = np.sum(window)
-        square_sum = np.sum(np.multiply(window, window))
-
-        r_window_length = 1 / window_size
-        mean = series_sum * r_window_length
-        buf = math.sqrt(square_sum * r_window_length - mean * mean)
-        stds[0] = buf if buf > 1e-4 else 1.0
-
-        for w in range(1, end):
-            series_sum += series[w + window_size - 1] - series[w - 1]
-            mean = series_sum * r_window_length
-            square_sum += (
-                series[w + window_size - 1] * series[w + window_size - 1]
-                - series[w - 1] * series[w - 1]
-            )
-            buf = math.sqrt(square_sum * r_window_length - mean * mean)
-            stds[w] = buf if buf > 1e-4 else 1.0
-
-        return stds
-
-    def _create_bigram_words(self, word_raw, word):
-        return SFA_NEW._create_bigram_word(
-            word,
-            word_raw,
-            self.word_bits,
-        )
-
-    @staticmethod
-    @njit(fastmath=True, cache=True)
-    def _create_bigram_word(word, other_word, word_bits):
-        return (word << word_bits) | other_word
-
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
@@ -540,3 +407,139 @@ class SFA_NEW(_PanelToPanelTransformer):
         # small window size for testing
         params = {"window_size": 4}
         return params
+
+
+@njit(fastmath=True, parallel=True, cache=True)
+def _transform_case(
+    X,
+    window_size,
+    dft_length,
+    norm,
+    series_length,
+    support,
+    anova,
+    variance,
+    breakpoints,
+    letter_bits,
+):
+
+    end = np.int32(series_length - window_size + 1)
+    transformed = np.zeros((X.shape[0], end), dtype=np.int64)
+    for i in prange(X.shape[0]):
+        dfts = _mft(X[i, :], window_size, dft_length, norm, support, anova, variance)
+        words = generate_words(dfts, breakpoints, letter_bits)
+        transformed[i, 0 : len(words)] = words
+
+    return transformed
+
+
+@njit(fastmath=True, cache=True)
+def _calc_incremental_mean_std(series, end, window_size):
+    stds = np.zeros(end)
+    window = series[0:window_size]
+    series_sum = np.sum(window)
+    square_sum = np.sum(np.multiply(window, window))
+
+    r_window_length = 1 / window_size
+    mean = series_sum * r_window_length
+    buf = math.sqrt(square_sum * r_window_length - mean * mean)
+    stds[0] = buf if buf > 1e-4 else 1.0
+
+    for w in range(1, end):
+        series_sum += series[w + window_size - 1] - series[w - 1]
+        mean = series_sum * r_window_length
+        square_sum += (
+            series[w + window_size - 1] * series[w + window_size - 1]
+            - series[w - 1] * series[w - 1]
+        )
+        buf = math.sqrt(square_sum * r_window_length - mean * mean)
+        stds[w] = buf if buf > 1e-4 else 1.0
+
+    return stds
+
+
+@njit(fastmath=True, cache=True)
+def _get_phis(window_size, length):
+    phis = np.zeros(length, dtype=np.float32)
+    for i in range(int(length / 2)):
+        phis[i * 2] += math.cos(2 * math.pi * (-i) / window_size)
+        phis[i * 2 + 1] += -math.sin(2 * math.pi * (-i) / window_size)
+    return phis
+
+
+@njit(fastmath=True, cache=True)
+def _iterate_mft(series, mft_data, phis, window_size, stds, transformed):
+    # TODO compute only those needed and not all?
+    for i in range(1, len(transformed)):
+        for n in range(0, len(mft_data), 2):
+            # only compute needed indices ??
+            real = mft_data[n] + series[i + window_size - 1] - series[i - 1]
+            imag = mft_data[n + 1]
+            mft_data[n] = real * phis[n] - imag * phis[n + 1]
+            mft_data[n + 1] = real * phis[n + 1] + phis[n] * imag
+        transformed[i] = mft_data / stds[i]
+
+
+@njit(fastmath=True, cache=True)
+def _create_bigram_word(word, other_word, word_bits):
+    return (word << word_bits) | other_word
+
+
+@njit(fastmath=True, parallel=True, cache=True)
+def generate_words(dfts, breakpoints, letter_bits):
+    words = np.zeros(dfts.shape[0], dtype=np.int64)
+    for window in prange(dfts.shape[0]):
+        word = np.int64(0)
+        for i in range(len(dfts[window])):
+            bp = np.searchsorted(breakpoints[i], dfts[window, i])
+            word = (word << letter_bits) | bp
+        words[window] = word
+
+        # if self.bigrams:
+        #     if window - self.window_size >= 0:
+        #         bigram = _create_bigram_words(
+        #             word_raw, words[window - self.window_size]
+        #         )
+        #         words.append(bigram)
+
+    return words
+
+
+@njit(fastmath=True, cache=True)
+def _mft(series, window_size, dft_length, norm, support, anova, variance):
+    start_offset = 2 if norm else 0
+    length = dft_length + start_offset + dft_length % 2
+    end = max(1, len(series) - window_size + 1)
+
+    phis = _get_phis(window_size, length)
+    stds = _calc_incremental_mean_std(series, end, window_size)
+
+    transformed = np.zeros((end, length))
+
+    with objmode(X_fft="complex128[:]"):
+        X_fft = np.fft.rfft(series[:window_size])  # complex128
+    reals = np.real(X_fft)  # float64
+    imags = np.imag(X_fft)  # float64
+
+    mft_data = np.empty((length,), dtype=reals.dtype)
+    mft_data[0::2] = reals[: np.uint32(length / 2)]
+    mft_data[1::2] = imags[: np.uint32(length / 2)]
+
+    transformed[0] = mft_data / stds[0]
+
+    # other runs using mft
+    # moved to external method to use njit
+    _iterate_mft(
+        series,
+        mft_data,
+        phis,
+        window_size,
+        stds,
+        transformed,
+    )
+
+    return (
+        transformed[:, start_offset:][:, support]
+        if (anova or variance)
+        else transformed[:, start_offset:]
+    )

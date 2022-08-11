@@ -14,7 +14,8 @@ __all__ = ["WEASEL_STEROIDS"]
 
 import numpy as np
 from joblib import Parallel, delayed
-from numba import set_num_threads
+
+# from numba import set_num_threads
 from sklearn.linear_model import RidgeClassifierCV
 
 # from numba import njit
@@ -158,7 +159,7 @@ class WEASEL_STEROIDS(BaseClassifier):
         self.first_differences = []
         self.clf = None
         self.n_jobs = n_jobs
-        set_num_threads(n_jobs)
+        # set_num_threads(n_jobs)
 
         super(WEASEL_STEROIDS, self).__init__()
 
