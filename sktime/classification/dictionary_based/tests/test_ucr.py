@@ -1,22 +1,28 @@
 # -*- coding: utf-8 -*-
 """UCR test."""
 import os
+
+os.environ["KMP_WARNINGS"] = "off"
+
 import sys
 import time
 from warnings import simplefilter
 
 import numpy as np
 import pandas as pd
+import torch
 
 # from convst.classifiers import R_DST_Ridge
 from joblib import Parallel, delayed
-from scipy.stats import zscore
+from sklearn.linear_model import RidgeClassifierCV
 
-from sktime.classification.dictionary_based import WEASEL_STEROIDS
+from sktime.classification.dictionary_based import WEASEL_STEROIDS, Hydra  # , WEASEL
+from sktime.transformations.panel.dictionary_based import SFA_NEW
 
-# from sklearn.linear_model import RidgeClassifierCV
+# from scipy.stats import zscore
+
+
 # from sklearn.pipeline import make_pipeline
-
 # from sktime.transformations.panel.rocket import MiniRocket, Rocket
 
 sys.path.append("../../..")
@@ -36,183 +42,202 @@ def load_from_ucr_tsv_to_dataframe_plain(full_file_path_and_name):
 
 
 dataset_names_excerpt = [
-    # 'ACSF1',
-    # 'Adiac',
-    # 'AllGestureWiimoteX',
-    # 'AllGestureWiimoteY',
-    # 'AllGestureWiimoteZ',
+    "ACSF1",
+    "Adiac",
+    "AllGestureWiimoteX",
+    "AllGestureWiimoteY",
+    "AllGestureWiimoteZ",
     "ArrowHead",
     "Beef",
     "BeetleFly",
     "BirdChicken",
-    # 'BME',
+    "BME",
     "Car",
     "CBF",
-    # 'Chinatown',
-    # 'ChlorineConcentration',
-    # 'CinCECGTorso',
+    "Chinatown",
+    "ChlorineConcentration",
+    "CinCECGTorso",
     "Coffee",
-    # 'Computers',
-    # 'CricketX',
-    # 'CricketY',
-    # 'CricketZ',
-    # 'Crop',
+    "Computers",
+    "CricketX",
+    "CricketY",
+    "CricketZ",
+    "Crop",
     "DiatomSizeReduction",
     "DistalPhalanxOutlineAgeGroup",
     "DistalPhalanxOutlineCorrect",
     "DistalPhalanxTW",
-    # 'DodgerLoopDay',
-    # 'DodgerLoopGame',
-    # 'DodgerLoopWeekend',
-    # 'Earthquakes',
+    "DodgerLoopDay",
+    "DodgerLoopGame",
+    "DodgerLoopWeekend",
+    "Earthquakes",
     "ECG200",
-    # 'ECG5000',
+    "ECG5000",
     "ECGFiveDays",
-    # 'ElectricDevices',
-    # 'EOGHorizontalSignal',
-    # 'EOGVerticalSignal',
-    # 'EthanolLevel',
+    "ElectricDevices",
+    "EOGHorizontalSignal",
+    "EOGVerticalSignal",
+    "EthanolLevel",
     "FaceAll",
     "FaceFour",
     "FacesUCR",
-    # 'FiftyWords',
-    # 'Fish',
-    # 'FordA',
-    # 'FordB',
-    # 'FreezerRegularTrain',
-    # 'FreezerSmallTrain',
-    # 'Fungi',
-    # 'GestureMidAirD1',
-    # 'GestureMidAirD2',
-    # 'GestureMidAirD3',
-    # 'GesturePebbleZ1',
-    # 'GesturePebbleZ2',
-    "Gun_Point",
-    # 'GunPointAgeSpan',
-    # 'GunPointMaleVersusFemale',
-    # 'GunPointOldVersusYoung',
-    # 'Ham',
-    # 'HandOutlines',
-    # 'Haptics',
-    # 'Herring',
-    # 'HouseTwenty',
-    # 'InlineSkate',
-    # 'InsectEPGRegularTrain',
-    # 'InsectEPGSmallTrain',
-    # 'InsectWingbeatSound',
+    "FiftyWords",
+    "Fish",
+    "FordA",
+    "FordB",
+    "FreezerRegularTrain",
+    "FreezerSmallTrain",
+    "Fungi",
+    "GestureMidAirD1",
+    "GestureMidAirD2",
+    "GestureMidAirD3",
+    "GesturePebbleZ1",
+    "GesturePebbleZ2",
+    "GunPoint",
+    "GunPointAgeSpan",
+    "GunPointMaleVersusFemale",
+    "GunPointOldVersusYoung",
+    "Ham",
+    "HandOutlines",
+    "Haptics",
+    "Herring",
+    "HouseTwenty",
+    "InlineSkate",
+    "InsectEPGRegularTrain",
+    "InsectEPGSmallTrain",
+    "InsectWingbeatSound",
     "ItalyPowerDemand",
-    # 'LargeKitchenAppliances',
-    # 'Lightning2',
-    # 'Lightning7',
-    # 'Mallat',
-    # 'Meat',
-    # 'MedicalImages',
-    # 'MelbournePedestrian',
+    "LargeKitchenAppliances",
+    "Lightning2",
+    "Lightning7",
+    "Mallat",
+    "Meat",
+    "MedicalImages",
+    "MelbournePedestrian",
     "MiddlePhalanxOutlineAgeGroup",
     "MiddlePhalanxOutlineCorrect",
     "MiddlePhalanxTW",
-    # 'Missing_value_and_variable_length_datasets_adjusted',
-    # 'MixedShapesRegularTrain',
-    # 'MixedShapesSmallTrain',
-    # 'MoteStrain',
-    # 'NonInvasiveFetalECGThorax1',
-    # 'NonInvasiveFetalECGThorax2',
+    "MixedShapesRegularTrain",
+    "MixedShapesSmallTrain",
+    "MoteStrain",
+    "NonInvasiveFetalECGThorax1",
+    "NonInvasiveFetalECGThorax2",
     "OliveOil",
-    # 'OSULeaf',
-    # 'PhalangesOutlinesCorrect',
-    # 'Phoneme',
-    # 'PickupGestureWiimoteZ',
-    # 'PigAirwayPressure',
-    # 'PigArtPressure',
-    # 'PigCVP',
-    # 'PLAID',
+    "OSULeaf",
+    "PhalangesOutlinesCorrect",
+    "Phoneme",
+    "PickupGestureWiimoteZ",
+    "PigAirwayPressure",
+    "PigArtPressure",
+    "PigCVP",
+    "PLAID",
     "Plane",
-    # 'PowerCons',
+    "PowerCons",
     "ProximalPhalanxOutlineAgeGroup",
     "ProximalPhalanxOutlineCorrect",
     "ProximalPhalanxTW",
-    # 'RefrigerationDevices',
-    # 'Rock',
-    # 'ScreenType',
-    # 'SemgHandGenderCh2',
-    # 'SemgHandMovementCh2',
-    # 'SemgHandSubjectCh2',
-    # 'ShakeGestureWiimoteZ',
-    # 'ShapeletSim',
-    # 'ShapesAll',
-    # 'SmallKitchenAppliances',
-    # 'SmoothSubspace',
-    "SonyAIBORobot Surface",
-    "SonyAIBORobot SurfaceII",
-    # 'StarLightCurves',
-    # 'Strawberry',
-    # 'SwedishLeaf',
-    # 'Symbols',
-    "synthetic_control",
-    # 'ToeSegmentation1',
-    # 'ToeSegmentation2',
-    # 'Trace',
+    "RefrigerationDevices",
+    "Rock",
+    "ScreenType",
+    "SemgHandGenderCh2",
+    "SemgHandMovementCh2",
+    "SemgHandSubjectCh2",
+    "ShakeGestureWiimoteZ",
+    "ShapeletSim",
+    "ShapesAll",
+    "SmallKitchenAppliances",
+    "SmoothSubspace",
+    "SonyAIBORobotSurface1",
+    "SonyAIBORobotSurface2",
+    "StarLightCurves",
+    "Strawberry",
+    "SwedishLeaf",
+    "Symbols",
+    "SyntheticControl",
+    "ToeSegmentation1",
+    "ToeSegmentation2",
+    "Trace",
     "TwoLeadECG",
-    # 'TwoPatterns',
-    # 'UMD',
-    # 'UWaveGestureLibraryAll',
-    # 'UWaveGestureLibraryX',
-    # 'UWaveGestureLibraryY',
-    # 'UWaveGestureLibraryZ',
-    # 'Wafer',
+    "TwoPatterns",
+    "UMD",
+    "UWaveGestureLibraryAll",
+    "UWaveGestureLibraryX",
+    "UWaveGestureLibraryY",
+    "UWaveGestureLibraryZ",
+    "Wafer",
     "Wine",
-    # 'WordSynonyms',
-    # 'Worms',
-    # 'WormsTwoClass',
-    # 'Yoga'
+    "WordSynonyms",
+    "Worms",
+    "WormsTwoClass",
+    "Yoga",
 ]
 
 
 others = []
 
-DATA_PATH = "/Users/bzcschae/workspace/similarity/datasets/classification/"
-parallel_jobs = 4
-
+# DATA_PATH = "/Users/bzcschae/workspace/similarity/datasets/classification/"
+DATA_PATH = "/Users/bzcschae/workspace/UCRArchive_2018/"
+parallel_jobs = 1
 
 if __name__ == "__main__":
 
     def _parallel_fit(dataset_name):
-        csv_scores = []
-        sum_scores = {}
-
         # ignore all future warnings
         simplefilter(action="ignore", category=FutureWarning)
 
         X_train, y_train = load_from_ucr_tsv_to_dataframe_plain(
-            os.path.join(DATA_PATH, dataset_name, dataset_name + "_TRAIN")
+            os.path.join(DATA_PATH, dataset_name, dataset_name + "_TRAIN.tsv")
         )
         X_test, y_test = load_from_ucr_tsv_to_dataframe_plain(
-            os.path.join(DATA_PATH, dataset_name, dataset_name + "_TEST")
+            os.path.join(DATA_PATH, dataset_name, dataset_name + "_TEST.tsv")
         )
 
+        X_train.fillna(0, inplace=True)
+        X_test.fillna(0, inplace=True)
+
+        threads_to_use = 4
         clfs = {
             # "WEASEL": WEASEL(
-            #    random_state=1379,
-            #    n_jobs=1
+            #     random_state=1379,
+            #     n_jobs=threads_to_use
             # ),
-            "WEASEL-ST": WEASEL_STEROIDS(
+            # "WEASEL-ST": WEASEL_STEROIDS(
+            #     random_state=1379,
+            #     binning_strategies=["equi-depth", "equi-width"],
+            #     min_window=16,
+            #     max_window=32,
+            #     max_feature_count=10_000,
+            #     word_lengths=[8], # test only 6 or 8?
+            #     # norm_options=[True, True, True, True, False],  # p[True]=0.8
+            #     norm_options=[False],  # p[True]=0.5
+            #     variance=True,
+            #     ensemble_size=50,
+            #     use_first_differences=[True, False],
+            #     n_jobs=threads_to_use,
+            # ),
+            "WEASEL_ST (OLD)": WEASEL_STEROIDS(
                 random_state=1379,
-                binning_strategies=["equi-depth", "equi-width"],
+                binning_strategies=["equi-depth"],  # "kmeans"
+                word_lengths=[6, 8],  # test only 6 or 8?
                 norm_options=[True, True, True, True, False],  # p[True]=0.8
                 variance=True,
                 ensemble_size=50,
-                n_jobs=1,
-            ),
-            # "R_DST": R_DST_Ridge(n_jobs=1)
+                use_first_differences=[True, False],
+                n_jobs=threads_to_use,
+            )
+            # "Hydra" : [], # see below
+            # "R_DST": R_DST_Ridge(random_state=1379, n_jobs=threads_to_use),
             # "Rocket": make_pipeline(
-            #    Rocket(random_state=1379),
-            #    RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True),
+            #     Rocket(random_state=1379, n_jobs=threads_to_use),
+            #     RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True),
             # ),
             # "MiniRocket": make_pipeline(
-            #    MiniRocket(random_state=1379),
+            #    MiniRocket(random_state=1379, n_jobs=threads_to_use),
             #    RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True),
             # ),
         }
+
+        sum_scores = {}
         for name, _ in clfs.items():
             sum_scores[name] = {
                 "dataset": [],
@@ -222,33 +247,48 @@ if __name__ == "__main__":
             }
 
         # z-norm training/test data
-        X_train = zscore(X_train, axis=1)
-        X_test = zscore(X_test, axis=1)
+        # X_train = zscore(X_train, axis=1)
+        # X_test = zscore(X_test, axis=1)
         X_train = np.reshape(np.array(X_train), (len(X_train), 1, -1))
         X_test = np.reshape(np.array(X_test), (len(X_test), 1, -1))
 
-        print(
-            f"Running Dataset={dataset_name}, "
-            f"Train-Size={np.shape(X_train)}, "
-            f"Test-Size={np.shape(X_test)}"
-        )
+        # print(
+        #    f"Running Dataset={dataset_name}, "
+        #    f"Train-Size={np.shape(X_train)}, "
+        #    f"Test-Size={np.shape(X_test)}"
+        # )
 
         for name, clf in clfs.items():
-            # try:
-            fit_time = time.time()
-            clf.fit(X_train, y_train)
-            fit_time = np.round(time.time() - fit_time, 5)
+            if name == "Hydra":
+                transform = Hydra(X_train.shape[-1])
+                X_training_transform = transform(torch.tensor(X_train).float())
+                X_test_transform = transform(torch.tensor(X_test).float())
 
-            pred_time = time.time()
-            acc = clf.score(X_test, y_test)
-            pred_time = np.round(time.time() - pred_time, 5)
+                clf = RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True)
+                fit_time = time.process_time()
+                clf.fit(X_training_transform, y_train)
+                fit_time = np.round(time.process_time() - fit_time, 5)
+
+                pred_time = time.process_time()
+                acc = clf.score(X_test_transform, y_test)
+                pred_time = np.round(time.process_time() - pred_time, 5)
+            else:
+                fit_time = time.perf_counter()
+                clf.fit(X_train, y_train)
+                fit_time = np.round(time.perf_counter() - fit_time, 5)
+
+                pred_time = time.perf_counter()
+                acc = clf.score(X_test, y_test)
+                pred_time = np.round(time.perf_counter() - pred_time, 5)
 
             print(
-                f"Dataset={dataset_name}"
+                f"Dataset={dataset_name}, "
+                + f"Train-Size={np.shape(X_train)}, "
+                + f"Test-Size={np.shape(X_test)}"
                 + f"\n\tclassifier={name}"
                 + f"\n\ttime (fit, predict)="
-                f"{np.round(fit_time, 3), np.round(pred_time, 3)}"
-                + f"\n\taccuracy={np.round(acc, 4)}"
+                f"{np.round(fit_time, 2), np.round(pred_time, 2)}"
+                + f"\n\taccuracy={np.round(acc, 3)}"
             )
 
             sum_scores[name]["dataset"].append(dataset_name)
@@ -256,19 +296,11 @@ if __name__ == "__main__":
             sum_scores[name]["fit_time"] += sum_scores[name]["fit_time"] + fit_time
             sum_scores[name]["pred_time"] += sum_scores[name]["pred_time"] + pred_time
 
-            csv_scores.append((name, clf, dataset_name, acc, fit_time, pred_time))
-
-        # except Exception as e:
-        #    print("An exception occurred: {}".format(e))
-        #    print("\tFailed: ", dataset_name, name)
-        #    sum_scores[name]["dataset"].append(dataset_name)
-        #    sum_scores[name]["all_scores"].append(0)
-        #    sum_scores[name]["fit_time"] += sum_scores[name]["fit_time"] + 0
-        #    sum_scores[name]["pred_time"] += sum_scores[name]["pred_time"] + 0
-        #    csv_scores.append((name, clf, dataset_name, 0, 0, 0))
+            # print("DFT:", SFA_NEW.time_dft)
+            # print("MCB:", SFA_NEW.time_mcb)
         print("-----------------")
 
-        return sum_scores  # , csv_scores
+        return sum_scores
 
     parallel_res = Parallel(n_jobs=parallel_jobs)(
         delayed(_parallel_fit)(dataset) for dataset in dataset_names_excerpt
@@ -301,14 +333,21 @@ if __name__ == "__main__":
         print("Total pred_time:", np.round(sum_scores[name]["pred_time"], 2))
         print("-----------------")
 
-    """
+    csv_scores = []
+    for name, _ in sum_scores.items():
+        all_accs = sum_scores[name]["all_scores"]
+        # total_fit_time in sum_scores[name]["all_scores"]
+        # total_predict_time in sum_scores[name]["all_scores"]
+        for acc, dataset_name in zip(all_accs, dataset_names_excerpt):
+            csv_scores.append((name, dataset_name, acc))
+
     pd.DataFrame.from_records(
-        scores,
+        csv_scores,
         columns=[
             "Classifier",
             "Dataset",
             "Accuracy",
-            "Fit-Time",
-            "Predict-Time",
+            # "Fit-Time",
+            # "Predict-Time",
         ],
-    ).to_csv("scores.csv", index=None)"""
+    ).to_csv("full_run_classifier_all_scores.csv", index=None)
