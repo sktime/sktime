@@ -158,3 +158,15 @@ def test_refit():
     # predicts have to be different because of different training data
     with pytest.raises(AssertionError):
         assert_array_equal(y_pred_refit.values, y_pred_no_refit.values)
+
+    # first index points must be different if no refit
+    assert not gscv_no_refit.best_forecaster_._y.head().index.equals(
+        gscv_no_refit._y.head().index
+    )
+    assert len(gscv_no_refit.best_forecaster_._y) != len(gscv_no_refit._y)
+
+    # first index points must be same if refit
+    assert gscv_refit.best_forecaster_._y.head().index.equals(
+        gscv_refit._y.head().index
+    )
+    assert len(gscv_no_refit.best_forecaster_._y) == len(gscv_no_refit._y)

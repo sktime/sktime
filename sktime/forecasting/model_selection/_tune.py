@@ -160,8 +160,7 @@ class BaseGridSearch(_DelegatedForecaster):
 
             # store y_train and X_train for the case refit param is True
             row = out[out["cutoff"] == out["cutoff"].max()].iloc[0]
-            self._y_train_evaluate = row["y_train"]
-            self._X_train_evaluate = row["X_train"]
+            self._y_evaluate = row["y_train"]
 
             # drop columns
             out = out.drop(columns=["y_train", "X_train", "cutoff"])
@@ -229,10 +228,15 @@ class BaseGridSearch(_DelegatedForecaster):
         if self.refit:
             self.best_forecaster_.fit(y, X, fh)
         else:
-            # with with data from
+            # with with data from last cv window length
+            fh_cv = self.cv.get_fh()
+            fh_max = fh_cv._values.max()
+            start_idx = self._y_evaluate.index[0] + fh_max
+            y_cv = y.loc[start_idx:]
+            X_cv = X.loc[start_idx:] if X is not None else None
             self.best_forecaster_.fit(
-                y=self._y_train_evaluate,
-                X=self._X_train_evaluate,
+                y=y_cv,
+                X=X_cv,
                 fh=fh,
             )
 
@@ -253,7 +257,9 @@ class BaseGridSearch(_DelegatedForecaster):
                 forecaster.fit(y, X, fh)
             else:
                 forecaster.fit(
-                    y=self._y_train_evaluate, X=self._X_train_evaluate, fh=fh
+                    y=y_cv,
+                    X=X_cv,
+                    fh=fh,
                 )
             self.n_best_forecasters_.append((rank, forecaster))
             # Save score
