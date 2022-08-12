@@ -169,4 +169,4 @@ def test_refit():
     assert gscv_refit.best_forecaster_._y.head().index.equals(
         gscv_refit._y.head().index
     )
-    assert len(gscv_no_refit.best_forecaster_._y) == len(gscv_no_refit._y)
+    assert len(gscv_refit.best_forecaster_._y) == len(gscv_refit._y)
