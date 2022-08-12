@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
-module exports for dist_kernels module
-"""
+"""Module exports for dist_kernels module."""
 
 from sktime.dists_kernels._base import (
     BasePairwiseTransformer,
