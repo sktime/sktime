@@ -32,9 +32,14 @@ from sktime.datasets._data_io import (
 )
 from sktime.datatypes import MTYPE_LIST_PANEL, check_is_mtype
 
+# Disabling test for these mtypes since they don't support certain functionality yet
+_TO_DISABLE = ["pd-long", "pd-wide", "numpyflat"]
+
 
 @pytest.mark.parametrize("return_X_y", [True, False])
-@pytest.mark.parametrize("return_type", MTYPE_LIST_PANEL)
+@pytest.mark.parametrize(
+    "return_type", [mtype for mtype in MTYPE_LIST_PANEL if mtype not in _TO_DISABLE]
+)
 def test_load_provided_dataset(return_X_y, return_type):
     """Test function to check for proper loading.
 
