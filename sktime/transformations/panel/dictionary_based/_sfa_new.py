@@ -22,9 +22,8 @@ from sktime.utils.validation.panel import check_X
 
 # The binning methods to use: equi-depth, equi-width, information gain or kmeans
 binning_methods = {"equi-depth", "equi-width", "information-gain", "kmeans"}
-
-
-# TODO remove imag-part from dc-component component
+time_dft = 0
+time_mft = 0
 
 
 class SFA_NEW(_PanelToPanelTransformer):
@@ -116,7 +115,7 @@ class SFA_NEW(_PanelToPanelTransformer):
         # make dft_length an even number (same number of reals and imags)
         self.dft_length = self.dft_length + self.dft_length % 2
 
-        self.support = np.array(list(range(word_length)))
+        self.support = np.arange(word_length)
 
         self.word_length = word_length
         self.alphabet_size = alphabet_size
@@ -235,7 +234,7 @@ class SFA_NEW(_PanelToPanelTransformer):
 
         if self.variance and y is not None:
             # determine variance
-            dft_variance = dft.var(axis=0)
+            dft_variance = np.var(dft, axis=0)
 
             # select word-length-many indices with largest variance
             self.support = np.argsort(-dft_variance)[: self.word_length]
@@ -283,7 +282,7 @@ class SFA_NEW(_PanelToPanelTransformer):
 
         for letter in range(self.word_length):
             for bp in range(1, len(breaks[letter]) - 1):
-                breakpoints[letter][bp - 1] = breaks[letter][bp]
+                breakpoints[letter, bp - 1] = breaks[letter, bp]
 
         breakpoints[:, self.alphabet_size - 1] = sys.float_info.max
         return breakpoints
@@ -293,10 +292,9 @@ class SFA_NEW(_PanelToPanelTransformer):
         total_num_windows = int(self.n_instances * num_windows_per_inst)
         breakpoints = np.zeros((self.word_length, self.alphabet_size))
 
+        dft = np.round(dft, 2)
         for letter in range(self.word_length):
-            res = [round(dft[i][letter] * 100) / 100 for i in range(total_num_windows)]
-            column = np.sort(np.array(res))
-
+            column = np.sort(dft[:, letter])
             bin_index = 0
 
             # use equi-depth binning
@@ -360,15 +358,16 @@ class SFA_NEW(_PanelToPanelTransformer):
         return params
 
 
-@njit(fastmath=True, cache=True)
+# @njit(fastmath=True, cache=True)
 def _binning_dft(X, num_windows_per_inst, window_size, series_length, dft_length, norm):
 
     # Splits individual time series into windows and returns the DFT for each
-    dft = np.zeros((len(X), num_windows_per_inst, dft_length), dtype=np.float32)
+    dft = np.zeros(
+        (len(X), num_windows_per_inst, dft_length), dtype=np.float32
+    )  # , dtype=np.float64
 
     for i in range(len(X)):
         start = series_length - window_size
-
         split = np.split(
             X[i, :],
             np.linspace(
@@ -379,17 +378,13 @@ def _binning_dft(X, num_windows_per_inst, window_size, series_length, dft_length
         )
 
         split[-1] = X[i, start:series_length]
-        result = np.zeros((len(split), dft_length), dtype=np.float32)
-        for j, row in enumerate(split):
-            result[j] = _fast_fourier_transform(row, norm, dft_length)
-
-        dft[i] = result
+        dft[i] = _fast_fourier_transform(np.array(split), norm, dft_length)
 
     return dft
 
 
 @njit(fastmath=True, cache=True)
-def _fast_fourier_transform(series, norm, dft_length):
+def _fast_fourier_transform(X, norm, dft_length):
     """Perform a discrete fourier transform using the fast fourier transform.
 
     if self.norm is True, then the first term of the DFT is ignored
@@ -407,23 +402,24 @@ def _fast_fourier_transform(series, norm, dft_length):
     """
     # first two are real and imaginary parts
     start = 2 if norm else 0
-
-    # std = 1.0
-    # if self.norm:
-    s = np.std(series)
-    std = s if (s > 1e-4) else 1.0
-
-    with objmode(X_fft="complex128[:]"):
-        X_fft = np.fft.rfft(series)
-    reals = np.real(X_fft)
-    imags = np.imag(X_fft)
-
     length = start + dft_length
-    dft = np.empty((length,), dtype=reals.dtype)
-    dft[0::2] = reals[: np.uint32(length / 2)]
-    dft[1::2] = imags[: np.uint32(length / 2)]
-    dft /= std
-    return dft[start:]
+    dft = np.empty((len(X), length), dtype=np.float32)  # , dtype=np.float64
+
+    stds = np.zeros(len(X), dtype=np.float32)
+    for i in range(len(stds)):
+        stds[i] = np.std(X[i])
+    # stds = np.std(X, axis=1)
+    stds = np.where(stds < 1e-4, 1, stds)
+
+    with objmode(X_ffts="complex128[:,:]"):
+        X_ffts = np.fft.rfft(X, axis=1)  # complex128
+    reals = np.real(X_ffts)  # float64[]
+    imags = np.imag(X_ffts)  # float64[]
+    dft[:, 0::2] = reals[:, 0 : length // 2]
+    dft[:, 1::2] = imags[:, 0 : length // 2]
+    dft /= stds.reshape(-1, 1)
+
+    return dft[:, start:]
 
 
 # @njit(fastmath=True, cache=True)  # njit and parallel=True is not working here?
@@ -445,6 +441,7 @@ def _transform_case(
     return transformed
 
 
+"""
 # @njit(fastmath=True, cache=True)
 def _sliding_mean_std(ts, m):
     # with objmode(s="float64[:]"):  # TODO faster alternative?
@@ -462,6 +459,7 @@ def _sliding_mean_std(ts, m):
     movstd = np.where(movstd < 1e-4, 1, movstd)
 
     return movstd
+"""
 
 
 @njit(fastmath=True, cache=True)
@@ -547,18 +545,18 @@ def _mft(X, window_size, dft_length, norm, support, anova, variance):
     transformed = np.zeros((X.shape[0], end, length), dtype=np.float32)
     stds = np.zeros((X.shape[0], end), dtype=np.float32)
 
-    for a in range(X.shape[0]):
-        with objmode(X_fft="complex128[:]"):
-            X_fft = np.fft.rfft(X[a, :window_size])  # complex128
-        reals = np.real(X_fft)  # float64
-        imags = np.imag(X_fft)  # float64
+    with objmode(X_ffts="complex128[:,:]"):
+        X_ffts = np.fft.rfft(X[:, :window_size], axis=1)  # complex128
+    reals = np.real(X_ffts)  # float64[]
+    imags = np.imag(X_ffts)  # float64[]
+    transformed[:, 0, 0::2] = reals[:, 0 : length // 2]
+    transformed[:, 0, 1::2] = imags[:, 0 : length // 2]
 
+    for a in range(X.shape[0]):
         # stds[a] = _sliding_mean_std(X[a], window_size)
         stds[a] = _calc_incremental_mean_std(X[a], end, window_size)
-        transformed[a, 0, 0::2] = reals[: length // 2]
-        transformed[a, 0, 1::2] = imags[: length // 2]
 
-    # other runs using mft
+    # other runs using MFT
     X2 = X.reshape(X.shape[0], X.shape[1], 1)
 
     # compute only those needed and not all using "indices"
