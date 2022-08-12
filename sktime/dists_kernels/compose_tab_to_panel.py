@@ -22,6 +22,22 @@ class AggrDist(BasePairwiseTransformerPanel):
     panel distance obtained by applying aggregation function to tabular distance matrix
         example: AggrDist(ScipyDist()) is mean Euclidean distance between series
 
+    Formal details (for real valued objects, mixed typed rows in analogy):
+    Let :math:`d: \mathbb{R}^k \times \mathbb{R}^{k}\rightarrow \mathbb{R}`
+    be the pairwise function in `transformer`, when applied to `k`-vectors.
+    Let :math:`f:\mathbb{R}^{n \ times m}` be the function `aggfunc` when applied to
+    an :math:`(n \times m)` matrix.
+    Let :math:`x_1, \dots, x_N\in \mathbb{R}^{n \times k}`, 
+    :math:`y_1, \dots y_M \in \mathbb{R}^{m \times k}` be collections of matrices,
+    representing time series panel valued inputs `X` and `X2`, as follows:
+    :math:`x_i` is the `i`-th instance in `X`, and :math:`x_{i, j\ell}` is the
+    `j`-th time point, `\ell`-th variable of `X`. Analogous for :math:`y` and `X2`.
+
+    Then, `transform(X, X2)` returns the :math:`(N \times M)` matrix
+    with :math:`(i, j)`-th entry :math:`f \left((d(x_{i, a}, y_{j, b}))_{a, b}\right)`,
+    where :math:`x_{i, a}` denotes the :math:`a`-th row of :math:`x_i`, and
+    :math:`y_{j, b}` denotes the :math:`b`-th row of :math:`x_j`.
+
     Parameters
     ----------
     transformer: pairwise transformer of BasePairwiseTransformer scitype
@@ -117,6 +133,21 @@ class FlatDist(BasePairwiseTransformerPanel):
 
     Applies the wrapped tabular distance to flattened series.
     Flattening is done to a 2D numpy array of shape (n_instances, (n_vars, n_timepts))
+
+    Formal details (for real valued objects, mixed typed rows in analogy):
+    Let :math:`d:\mathbb{R}^k \times \mathbb{R}^{k}\rightarrow \mathbb{R}`
+    be the pairwise function in `transformer`, when applied to `k`-vectors.
+    Let :math:`x_1, \dots, x_N\in \mathbb{R}^{n \times \ell}`, 
+    :math:`y_1, \dots y_M \in \mathbb{R}^{n \times \ell}` be collections of matrices,
+    representing time series panel valued inputs `X` and `X2`, as follows:
+    :math:`x_i` is the `i`-th instance in `X`, and :math:`x_{i, j\ell}` is the
+    `j`-th time point, `\ell`-th variable of `X`. Analogous for :math:`y` and `X2`.
+    Let :math:`f:\mathbb{R}^{n \times \ell} \rightarrow \mathbb{R}^{n \cdot \ell}`
+    be the mapping that flattens matrices by column-first lexicographical ordering,
+    and assume :math:`k = n \cdot \ell`.
+
+    Then, `transform(X, X2)` returns the :math:`(N \times M)` matrix
+    with :math:`(i, j)`-th entry :math:`d\left(f(x_i), f(y_j)\right)`.
 
     Parameters
     ----------
