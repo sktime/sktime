@@ -27,7 +27,7 @@ class AggrDist(BasePairwiseTransformerPanel):
     be the pairwise function in `transformer`, when applied to `k`-vectors.
     Let :math:`f:\mathbb{R}^{n \ times m}` be the function `aggfunc` when applied to
     an :math:`(n \times m)` matrix.
-    Let :math:`x_1, \dots, x_N\in \mathbb{R}^{n \times k}`, 
+    Let :math:`x_1, \dots, x_N\in \mathbb{R}^{n \times k}`,
     :math:`y_1, \dots y_M \in \mathbb{R}^{m \times k}` be collections of matrices,
     representing time series panel valued inputs `X` and `X2`, as follows:
     :math:`x_i` is the `i`-th instance in `X`, and :math:`x_{i, j\ell}` is the
@@ -137,7 +137,7 @@ class FlatDist(BasePairwiseTransformerPanel):
     Formal details (for real valued objects, mixed typed rows in analogy):
     Let :math:`d:\mathbb{R}^k \times \mathbb{R}^{k}\rightarrow \mathbb{R}`
     be the pairwise function in `transformer`, when applied to `k`-vectors.
-    Let :math:`x_1, \dots, x_N\in \mathbb{R}^{n \times \ell}`, 
+    Let :math:`x_1, \dots, x_N\in \mathbb{R}^{n \times \ell}`,
     :math:`y_1, \dots y_M \in \mathbb{R}^{n \times \ell}` be collections of matrices,
     representing time series panel valued inputs `X` and `X2`, as follows:
     :math:`x_i` is the `i`-th instance in `X`, and :math:`x_{i, j\ell}` is the
