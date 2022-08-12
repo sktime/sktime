@@ -269,7 +269,7 @@ if __name__ == "__main__":
     choose_variance = [True, False]
     choose_ensemble_size = [50, 100]
     choose_max_feature_count = [10_000, 20_000, 25_000, 50000]
-    choose_min_window = [4, 8, 12, 16]
+    choose_min_window = [4, 8]  # 12, 16
     choose_max_window = [16, 20, 24, 28, 32]
     choose_norm_options = [[False], [True, False]]
     choose_word_lengths = [[4], [6], [8], [6, 8], [6, 8, 10]]
@@ -288,7 +288,9 @@ if __name__ == "__main__":
                                         use_first_differences
                                     ) in choose_use_first_differences:
 
-                                        parallel_res = Parallel(n_jobs=parallel_jobs)(
+                                        parallel_res = Parallel(
+                                            n_jobs=parallel_jobs, timeout=99999
+                                        )(
                                             delayed(_parallel_fit)(
                                                 dataset,
                                                 binning_strategies,
