@@ -129,7 +129,6 @@ class WEASEL_STEROIDS(BaseClassifier):
         use_first_differences=[False],
         random_state=None,
     ):
-
         # currently greater values than 4 are not supported.
         self.alphabet_sizes = alphabet_sizes
 
@@ -167,8 +166,12 @@ class WEASEL_STEROIDS(BaseClassifier):
     @staticmethod
     # @njit
     def _dilation(X, d, ws, first_difference):
-        # padding = np.zeros((len(X), d // 2))  # TODO ???
-        # X = np.concatenate((padding, X, padding), axis=1)
+        # rep = (ws-1) // 2  # * d
+        # A = np.transpose([X[:, 0]] * rep)
+        # B = np.transpose([X[:, -1]] * rep)
+
+        # padding = np.fill((len(X), (ws-1) * d // 2))  # TODO ???
+        # X = np.concatenate((A, X, B), axis=1)
 
         if first_difference:
             X2 = np.diff(X, axis=1)
@@ -232,7 +235,7 @@ class WEASEL_STEROIDS(BaseClassifier):
         # self.window_sizes = np.int32(np.round(np.linspace(
         #       self.min_window, self.max_window + 1, self.ensemble_size)))
 
-        parallel_res = Parallel(n_jobs=self.n_jobs, timeout=99999)(
+        parallel_res = Parallel(n_jobs=self.n_jobs)(
             delayed(_parallel_fit)(
                 i,
                 X,
@@ -345,7 +348,7 @@ class WEASEL_STEROIDS(BaseClassifier):
     def _transform_words(self, X):
         X = X.squeeze(1)
 
-        parallel_res = Parallel(n_jobs=self.n_jobs, timeout=99999)(
+        parallel_res = Parallel(n_jobs=self.n_jobs)(
             delayed(_parallel_transform_words)(
                 X,
                 self.SFA_transformers[i],
@@ -425,6 +428,7 @@ def _parallel_fit(
     )
     first_difference = rng.choice(use_first_differences)
     binning_strategy = rng.choice(binning_strategies)
+    # upper = rng.choice([True, False])
 
     # TODO count subgroups of two letters of the words?
 
@@ -437,6 +441,7 @@ def _parallel_fit(
         anova=anova,
         binning_method=binning_strategy,
         bigrams=bigrams,
+        # upper=upper,
         n_jobs=n_jobs,
     )
 
@@ -446,11 +451,16 @@ def _parallel_fit(
     # generate SFA words on subsample
     sfa_words = transformer.fit_transform(X2, y)
 
-    # all feature names
+    # Prefilter and remove those with only one value
+    # TODO !!!
+    feature_once = set()
     feature_names = set()
     for t_words in sfa_words:
         for t_word in t_words:
-            feature_names.add(t_word)
+            if t_word in feature_once:
+                feature_names.add(t_word)
+            else:
+                feature_once.add(t_word)
 
     feature_count = min(max_feature_count // ensemble_size, len(feature_names))
     relevant_features_idx = rng.choice(
