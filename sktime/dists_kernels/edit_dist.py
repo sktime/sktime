@@ -195,6 +195,6 @@ class EditDist(BasePairwiseTransformerPanel):
     def get_test_params(cls, parameter_set="default"):
         """Test parameters for EditDist."""
 
-    param_list = [{"distance": x} for x in cls.ALLOWED_DISTANCE_STR]
+        param_list = [{"distance": x} for x in cls.ALLOWED_DISTANCE_STR]
 
-    return param_list
+        return param_list
