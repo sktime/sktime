@@ -229,9 +229,9 @@ class WEASEL_STEROIDS(BaseClassifier):
 
         # Randomly choose window sizes
 
-        self.window_sizes = list(range(self.min_window, self.max_window + 1, 1))
+        self.window_sizes = list(range(self.min_window + 1, self.max_window + 1, 1))
 
-        # use every element at least once
+        # use every element at least once ?
         # self.window_sizes = np.int32(np.round(np.linspace(
         #       self.min_window, self.max_window + 1, self.ensemble_size)))
 
@@ -284,6 +284,8 @@ class WEASEL_STEROIDS(BaseClassifier):
             features_count += rel_features_count2
 
         # all_words[all_words==0] = -1
+        # all_words = all_words / np.nanmax(all_words, axis=0)
+        # all_words = np.log(all_words+1)
 
         self.clf = RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=False)
 
@@ -370,6 +372,9 @@ class WEASEL_STEROIDS(BaseClassifier):
             features_count += rel_features_count
 
         # all_words[all_words==0] = -1
+        # all_words = all_words / np.nanmax(all_words, axis=0)
+        # all_words = np.log(all_words+1)
+
         return all_words
 
     @classmethod

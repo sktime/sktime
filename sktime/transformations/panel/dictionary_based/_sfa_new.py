@@ -178,7 +178,7 @@ class SFA_NEW(_PanelToPanelTransformer):
         self.n_instances, self.series_length = X.shape
         self.breakpoints = self._binning(X, y)
 
-        # TODO parameterize? and use the lower part, too?
+        # Cut upper or lower breakpoints
         if self.cut_upper:
             self.breakpoints[self.breakpoints < 0] = -np.inf
         else:
@@ -444,7 +444,7 @@ def _transform_case(
 """
 # @njit(fastmath=True, cache=True)
 def _sliding_mean_std(ts, m):
-    # with objmode(s="float64[:]"):  # TODO faster alternative?
+    # with objmode(s="float64[:]"):  # TODO numba does not support insert
     s = np.insert(np.cumsum(ts), 0, 0)
     # with objmode(sSq="float64[:]"):
     sSq = np.insert(np.cumsum(ts**2), 0, 0)
