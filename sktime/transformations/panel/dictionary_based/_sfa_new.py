@@ -427,7 +427,7 @@ def _fast_fourier_transform(series, norm, dft_length):
     return dft[start:]
 
 
-@njit(fastmath=True, cache=True)  # parallel=True is not working here?
+# @njit(fastmath=True, cache=True)  # njit and parallel=True is not working here?
 def _transform_case(
     X,
     window_size,
@@ -441,18 +441,46 @@ def _transform_case(
     letter_bits,
 ):
     end = np.int32(series_length - window_size + 1)
-    transformed = np.zeros((X.shape[0], end), dtype=np.int64)
+    transformed = np.zeros((X.shape[0], end))
+
+    dfts = _mft2(X, window_size, dft_length, norm, support, anova, variance)
+
     for i in range(X.shape[0]):
-        dfts = _mft(X[i, :], window_size, dft_length, norm, support, anova, variance)
-        words = generate_words(dfts, breakpoints, letter_bits)
+        words = generate_words(dfts[i], breakpoints, letter_bits)
         transformed[i, 0 : len(words)] = words
+    """
+
+    for i in range(X.shape[0]):
+        dfts = _mft(X[i,:], window_size, dft_length, norm, support, anova, variance)
+        words = generate_words(dfts, breakpoints, letter_bits)
+        transformed[i, 0: len(words)] = words
+    """
 
     return transformed
 
 
 @njit(fastmath=True, cache=True)
+def sliding_mean_std(ts, m):
+    with objmode(s="float64[:]"):
+        s = np.insert(np.cumsum(ts), 0, 0)  # TODO faster alternative?
+    with objmode(sSq="float64[:]"):
+        sSq = np.insert(np.cumsum(ts**2), 0, 0)  # TODO faster alternative?
+
+    segSum = s[m:] - s[:-m]
+    segSumSq = sSq[m:] - sSq[:-m]
+
+    # movmean = segSum / m
+    movstd = np.sqrt(segSumSq / m - (segSum / m) ** 2)
+
+    # avoid dividing by too small std, like 0
+    movstd = np.where(movstd < 1e-4, 1, movstd)
+
+    return movstd
+
+
+@njit(fastmath=True, cache=True)
 def _calc_incremental_mean_std(series, end, window_size):
-    stds = np.zeros(end)
+    stds = np.zeros(end, dtype=np.float32)
     window = series[0:window_size]
     series_sum = np.sum(window)
     square_sum = np.sum(np.multiply(window, window))
@@ -517,7 +545,7 @@ def _mft(series, window_size, dft_length, norm, support, anova, variance):
     end = max(1, len(series) - window_size + 1)
 
     phis = _get_phis(window_size, length)
-    stds = _calc_incremental_mean_std(series, end, window_size)
+    stds = sliding_mean_std(series, window_size)
 
     transformed = np.zeros((end, length))
 
@@ -561,4 +589,65 @@ def _mft(series, window_size, dft_length, norm, support, anova, variance):
         transformed[:, start_offset:][:, support]
         if (anova or variance)
         else transformed[:, start_offset:]
+    )
+
+
+@njit(fastmath=True, cache=True)
+def _mft2(X, window_size, dft_length, norm, support, anova, variance):
+    start_offset = 2 if norm else 0
+    length = dft_length + start_offset + dft_length % 2
+    end = max(1, len(X[0]) - window_size + 1)
+
+    #  compute only those needed and not all
+    if anova or variance:
+        indices = np.full(length, False)
+        for s in support:
+            indices[s] = True
+            if (s % 2) == 0:  # even
+                indices[s + 1] = True
+            else:  # uneven
+                indices[s - 1] = True
+    else:
+        indices = np.full(length, True)
+
+    phis = _get_phis(window_size, length)
+    transformed = np.zeros((X.shape[0], end, length), dtype=np.float32)
+    stds = np.zeros((X.shape[0], end), dtype=np.float32)
+
+    for a in range(X.shape[0]):
+        with objmode(X_fft="complex128[:]"):
+            X_fft = np.fft.rfft(X[a, :window_size])  # complex128
+        reals = np.real(X_fft)  # float64
+        imags = np.imag(X_fft)  # float64
+
+        # stds[a] = sliding_mean_std(X[a], window_size)
+        stds[a] = _calc_incremental_mean_std(X[a], end, window_size)
+        transformed[a, 0, 0::2] = reals[: np.uint32(length / 2)]
+        transformed[a, 0, 1::2] = imags[: np.uint32(length / 2)]
+
+    # other runs using mft
+    X2 = X.reshape(X.shape[0], X.shape[1], 1)
+
+    # compute only those needed and not all using "indices"
+    phis2 = phis[indices]
+    transformed2 = transformed[:, :, indices]
+    for i in range(1, end):
+        reals = transformed2[:, i - 1, 0::2] + X2[:, i + window_size - 1] - X2[:, i - 1]
+        imags = transformed2[:, i - 1, 1::2]
+        transformed2[:, i, 0::2] = (
+            reals * phis2[:length:2] - imags * phis2[1 : (length + 1) : 2]
+        )
+        transformed2[:, i, 1::2] = (
+            reals * phis2[1 : (length + 1) : 2] + phis2[:length:2] * imags
+        )
+
+    # divide all by stds
+    transformed[:, :, indices] = transformed2 / stds.reshape(
+        stds.shape[0], stds.shape[1], 1
+    )
+
+    return (
+        transformed[:, :, start_offset:][:, :, support]
+        if (anova or variance)
+        else transformed[:, :, start_offset:]
     )
