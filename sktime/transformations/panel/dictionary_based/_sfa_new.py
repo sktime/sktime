@@ -443,7 +443,7 @@ def _transform_case(
     end = np.int32(series_length - window_size + 1)
     transformed = np.zeros((X.shape[0], end))
 
-    dfts = _mft2(X, window_size, dft_length, norm, support, anova, variance)
+    dfts = _mft(X, window_size, dft_length, norm, support, anova, variance)
 
     for i in range(X.shape[0]):
         words = generate_words(dfts[i], breakpoints, letter_bits)
@@ -459,12 +459,12 @@ def _transform_case(
     return transformed
 
 
-@njit(fastmath=True, cache=True)
-def sliding_mean_std(ts, m):
-    with objmode(s="float64[:]"):
-        s = np.insert(np.cumsum(ts), 0, 0)  # TODO faster alternative?
-    with objmode(sSq="float64[:]"):
-        sSq = np.insert(np.cumsum(ts**2), 0, 0)  # TODO faster alternative?
+# @njit(fastmath=True, cache=True)
+def _sliding_mean_std(ts, m):
+    # with objmode(s="float64[:]"):  # TODO faster alternative?
+    s = np.insert(np.cumsum(ts), 0, 0)
+    # with objmode(sSq="float64[:]"):
+    sSq = np.insert(np.cumsum(ts**2), 0, 0)
 
     segSum = s[m:] - s[:-m]
     segSumSq = sSq[m:] - sSq[:-m]
@@ -537,63 +537,8 @@ def generate_words(dfts, breakpoints, letter_bits):
     return words
 
 
-# TODO vectorize for all in one go?
 @njit(fastmath=True, cache=True)
-def _mft(series, window_size, dft_length, norm, support, anova, variance):
-    start_offset = 2 if norm else 0
-    length = dft_length + start_offset + dft_length % 2
-    end = max(1, len(series) - window_size + 1)
-
-    phis = _get_phis(window_size, length)
-    stds = sliding_mean_std(series, window_size)
-
-    transformed = np.zeros((end, length))
-
-    with objmode(X_fft="complex128[:]"):
-        X_fft = np.fft.rfft(series[:window_size])  # complex128
-    reals = np.real(X_fft)  # float64
-    imags = np.imag(X_fft)  # float64
-
-    mft_data = np.empty((length,), dtype=reals.dtype)
-    mft_data[0::2] = reals[: np.uint32(length / 2)]
-    mft_data[1::2] = imags[: np.uint32(length / 2)]
-
-    transformed[0] = mft_data / stds[0]
-
-    if anova or variance:
-        # compute required indices
-        indices = np.full(len(mft_data), False)
-        for s in support:
-            indices[s] = True
-            if (s % 2) == 0:  # even
-                indices[s + 1] = True
-            else:  # uneven
-                indices[s - 1] = True
-        # mft_data = mft_data[indices]
-        # phis = phis[indices]
-    else:
-        indices = np.full(len(mft_data), True)
-
-    # other runs using mft
-    for i in range(1, len(transformed)):
-        for n in range(0, len(mft_data), 2):
-            # compute only those needed and not all
-            if indices[n]:
-                real = mft_data[n] + series[i + window_size - 1] - series[i - 1]
-                imag = mft_data[n + 1]
-                mft_data[n] = real * phis[n] - imag * phis[n + 1]
-                mft_data[n + 1] = real * phis[n + 1] + phis[n] * imag
-        transformed[i] = mft_data / stds[i]
-
-    return (
-        transformed[:, start_offset:][:, support]
-        if (anova or variance)
-        else transformed[:, start_offset:]
-    )
-
-
-@njit(fastmath=True, cache=True)
-def _mft2(X, window_size, dft_length, norm, support, anova, variance):
+def _mft(X, window_size, dft_length, norm, support, anova, variance):
     start_offset = 2 if norm else 0
     length = dft_length + start_offset + dft_length % 2
     end = max(1, len(X[0]) - window_size + 1)
@@ -620,10 +565,10 @@ def _mft2(X, window_size, dft_length, norm, support, anova, variance):
         reals = np.real(X_fft)  # float64
         imags = np.imag(X_fft)  # float64
 
-        # stds[a] = sliding_mean_std(X[a], window_size)
+        # stds[a] = _sliding_mean_std(X[a], window_size)
         stds[a] = _calc_incremental_mean_std(X[a], end, window_size)
-        transformed[a, 0, 0::2] = reals[: np.uint32(length / 2)]
-        transformed[a, 0, 1::2] = imags[: np.uint32(length / 2)]
+        transformed[a, 0, 0::2] = reals[: length // 2]
+        transformed[a, 0, 1::2] = imags[: length // 2]
 
     # other runs using mft
     X2 = X.reshape(X.shape[0], X.shape[1], 1)
