@@ -3,7 +3,6 @@
 
 import numpy as np
 
-
 __author__ = ["fkiraly"]
 
 from sktime.tests.test_all_estimators import BaseFixtureGenerator, QuickTester
