@@ -45,7 +45,8 @@ class TestAllPairwiseTransformers(TransformerPairwiseFixtureGenerator, QuickTest
         assert (
             # this is only true as long as fixture are of mtypes where len = n_instances
             # should that change, use check_is_mtype to get n_instances metadata
-            dist_mat.shape == (len_X, len_X2)
+            dist_mat.shape
+            == (len_X, len_X2)
         ), f"Shape of matrix returned by transform is wrong for {trafo_name}"
 
 
@@ -85,5 +86,6 @@ class TestAllPanelTransformers(TransformerPairwisePanelFixtureGenerator, QuickTe
         assert (
             # this is only true as long as fixture are of mtypes where len = n_instances
             # should that change, use check_is_mtype to get n_instances metadata
-            dist_mat.shape == (len_X, len_X2)
+            dist_mat.shape
+            == (len_X, len_X2)
         ), f"Shape of matrix returned by transform is wrong for {trafo_name}"
