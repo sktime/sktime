@@ -81,6 +81,8 @@ from sktime.transformations.base import (
     _SeriesToSeriesTransformer,
 )
 
+from ..networks.base import BaseDeepNetwork
+
 BASE_CLASS_REGISTER = [
     ("object", BaseObject, "object"),
     ("estimator", BaseEstimator, "estimator = object with fit"),
@@ -90,6 +92,7 @@ BASE_CLASS_REGISTER = [
     ("early_classifier", BaseEarlyClassifier, "early time series classifier"),
     ("forecaster", BaseForecaster, "forecaster"),
     ("metric", BaseMetric, "performance metric"),
+    ("network", BaseDeepNetwork, "deep learning network"),
     ("param_est", BaseParamFitter, "parameter fitting estimator"),
     ("regressor", BaseRegressor, "time series regressor"),
     ("series-annotator", BaseSeriesAnnotator, "time series annotator"),
