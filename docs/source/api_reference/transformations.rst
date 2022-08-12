@@ -308,6 +308,15 @@ Detrending
     ConditionalDeseasonalizer
     STLTransformer
 
+.. currentmodule:: sktime.transformations.series.clear_sky
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ClearSky
+
+
 Filtering and denoising
 ~~~~~~~~~~~~~~~~~~~~~~~
 

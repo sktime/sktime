@@ -8,6 +8,7 @@ Classes named as ``*Error`` or ``*Loss`` return a value to minimize:
 the lower the better.
 """
 from copy import deepcopy
+from inspect import getfullargspec, isfunction, signature
 from warnings import warn
 
 import numpy as np
@@ -121,7 +122,11 @@ class BaseForecastingErrorMetric(BaseMetric):
     def __init__(self, multioutput="uniform_average", multilevel="uniform_average"):
         self.multioutput = multioutput
         self.multilevel = multilevel
-        self.name = type(self).__name__
+
+        if not hasattr(self, "name"):
+            self.name = type(self).__name__
+
+        super(BaseForecastingErrorMetric, self).__init__()
 
     def __call__(self, y_true, y_pred, **kwargs):
         """Calculate metric value using underlying metric function.
@@ -509,10 +514,24 @@ class BaseForecastingErrorMetricFunc(BaseForecastingErrorMetric):
         """Evaluate the desired metric on given inputs."""
         # this dict should contain all parameters
         params = self.get_params()
+
         # adding kwargs to the metric, should not overwrite params (but does if clashes)
         params.update(kwargs)
+
+        # calls class variable func, if available, or dynamic (object) variable
         # we need to call type since we store func as a class attribute
-        res = type(self).func(y_true=y_true, y_pred=y_pred, **params)
+        if hasattr(type(self), "func") and isfunction(type(self).func):
+            func = type(self).func
+        else:
+            func = self.func
+
+        # if func does not catch kwargs, subset to args of func
+        if getfullargspec(func).varkw is None:
+            func_params = signature(func).parameters.keys()
+            func_params = set(func_params).difference(["y_true", "y_pred"])
+            params = {key: params[key] for key in func_params}
+
+        res = func(y_true=y_true, y_pred=y_pred, **params)
         return res
 
 
@@ -531,10 +550,43 @@ class _DynamicForecastingErrorMetric(BaseForecastingErrorMetricFunc):
         self.multilevel = multilevel
         self.func = func
         self.name = name
-        super().__init__()
+        self.lower_is_better = lower_is_better
 
-        if not lower_is_better:
-            self.set_tags(**{"lower_is_better": False})
+        super(_DynamicForecastingErrorMetric, self).__init__(
+            multioutput=multioutput, multilevel=multilevel
+        )
+
+        self.set_tags(**{"lower_is_better": lower_is_better})
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+
+        def custom_mape(y_true, y_pred) -> float:
+
+            eps = np.finfo(np.float64).eps
+
+            result = np.mean(np.abs(y_true - y_pred) / np.maximum(np.abs(y_true), eps))
+
+            return float(result)
+
+        params = {"func": custom_mape, "name": "custom_mape", "lower_is_better": False}
+        return params
 
 
 class _ScaledMetricTags:
