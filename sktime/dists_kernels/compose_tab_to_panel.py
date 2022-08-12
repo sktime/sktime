@@ -195,7 +195,7 @@ class FlatDist(BasePairwiseTransformerPanel):
         if deep_equals(X, X2):
             return self.transformer.transform(X)
         else:
-            return self.transformer.transform(X2)
+            return self.transformer.transform(X, X2)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
