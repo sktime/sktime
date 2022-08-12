@@ -141,9 +141,9 @@ class ElbowChannelSelection(BaseTransformer):
 
     Examples
     --------
-    >>> from sklearn.transformations.panel.channel_selection import ElbowClassSelection
+    >>> from sktime.transformations.panel.channel_selection import ElbowChannelSelection
     >>> from sktime.datasets import load_UCR_UEA_dataset
-    >>> cs = channel_selection.ElbowClassSelection()
+    >>> cs = channel_selection.ElbowChannelSelection()
     >>> X_train, y_train = load_UCR_UEA_dataset("Cricket", split="train",
                                                 return_X_y=True)
     >>> cs.fit(X_train, y_train)
@@ -242,7 +242,7 @@ class ElbowClassPairwise(BaseTransformer):
 
     Examples
     --------
-    >>> from sklearn.transformations.panel.channel_selection import ElbowClassPairwise
+    >>> from sktime.transformations.panel.channel_selection import ElbowClassPairwise
     >>> from sktime.datasets import load_UCR_UEA_dataset
     >>> cs = channel_selection.ElbowClassPairwise()
     >>> X_train, y_train = load_UCR_UEA_dataset("Cricket", split="train",
