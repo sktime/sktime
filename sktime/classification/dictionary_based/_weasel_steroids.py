@@ -229,13 +229,13 @@ class WEASEL_STEROIDS(BaseClassifier):
 
         # Randomly choose window sizes
 
-        self.window_sizes = list(range(self.min_window + 1, self.max_window + 1, 1))
+        self.window_sizes = list(range(self.min_window, self.max_window + 1, 1))
 
         # use every element at least once ?
         # self.window_sizes = np.int32(np.round(np.linspace(
         #       self.min_window, self.max_window + 1, self.ensemble_size)))
 
-        parallel_res = Parallel(n_jobs=self.n_jobs)(
+        parallel_res = Parallel(n_jobs=self.n_jobs, timeout=99999)(
             delayed(_parallel_fit)(
                 i,
                 X,
@@ -350,7 +350,7 @@ class WEASEL_STEROIDS(BaseClassifier):
     def _transform_words(self, X):
         X = X.squeeze(1)
 
-        parallel_res = Parallel(n_jobs=self.n_jobs)(
+        parallel_res = Parallel(n_jobs=self.n_jobs, timeout=99999)(
             delayed(_parallel_transform_words)(
                 X,
                 self.SFA_transformers[i],
@@ -458,14 +458,14 @@ def _parallel_fit(
 
     # Prefilter and remove those with only one value
     # TODO !!!
-    feature_once = set()
+    # feature_once = set()
     feature_names = set()
     for t_words in sfa_words:
         for t_word in t_words:
-            if t_word in feature_once:
-                feature_names.add(t_word)
-            else:
-                feature_once.add(t_word)
+            # if t_word in feature_once:
+            feature_names.add(t_word)
+            # else:
+            #    feature_once.add(t_word)
 
     feature_count = min(max_feature_count // ensemble_size, len(feature_names))
     relevant_features_idx = rng.choice(

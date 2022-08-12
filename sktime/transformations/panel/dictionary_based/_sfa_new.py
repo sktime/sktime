@@ -22,8 +22,6 @@ from sktime.utils.validation.panel import check_X
 
 # The binning methods to use: equi-depth, equi-width, information gain or kmeans
 binning_methods = {"equi-depth", "equi-width", "information-gain", "kmeans"}
-time_dft = 0
-time_mft = 0
 
 
 class SFA_NEW(_PanelToPanelTransformer):
@@ -362,9 +360,7 @@ class SFA_NEW(_PanelToPanelTransformer):
 def _binning_dft(X, num_windows_per_inst, window_size, series_length, dft_length, norm):
 
     # Splits individual time series into windows and returns the DFT for each
-    dft = np.zeros(
-        (len(X), num_windows_per_inst, dft_length), dtype=np.float32
-    )  # , dtype=np.float64
+    dft = np.zeros((len(X), num_windows_per_inst, dft_length))  # , dtype=np.float64
 
     for i in range(len(X)):
         start = series_length - window_size
@@ -403,9 +399,9 @@ def _fast_fourier_transform(X, norm, dft_length):
     # first two are real and imaginary parts
     start = 2 if norm else 0
     length = start + dft_length
-    dft = np.empty((len(X), length), dtype=np.float32)  # , dtype=np.float64
+    dft = np.empty((len(X), length))  # , dtype=np.float64
 
-    stds = np.zeros(len(X), dtype=np.float32)
+    stds = np.zeros(len(X))
     for i in range(len(stds)):
         stds[i] = np.std(X[i])
     # stds = np.std(X, axis=1)
@@ -464,7 +460,7 @@ def _sliding_mean_std(ts, m):
 
 @njit(fastmath=True, cache=True)
 def _calc_incremental_mean_std(series, end, window_size):
-    stds = np.zeros(end, dtype=np.float32)
+    stds = np.zeros(end)
     window = series[0:window_size]
     series_sum = np.sum(window)
     square_sum = np.sum(np.multiply(window, window))
@@ -490,7 +486,7 @@ def _calc_incremental_mean_std(series, end, window_size):
 @njit(fastmath=True, cache=True)
 def _get_phis(window_size, length):
     phis = np.zeros(length, dtype=np.float32)
-    i = np.arange(length // 2, dtype=np.int32)
+    i = np.arange(length // 2)
     const = 2 * np.pi / window_size
     phis[0::2] = np.cos((-i) * const)
     phis[1::2] = -np.sin((-i) * const)
@@ -530,6 +526,7 @@ def _mft(X, window_size, dft_length, norm, support, anova, variance):
     end = max(1, len(X[0]) - window_size + 1)
 
     #  compute only those needed and not all
+    """
     if anova or variance:
         indices = np.full(length, False)
         for s in support:
@@ -540,10 +537,11 @@ def _mft(X, window_size, dft_length, norm, support, anova, variance):
                 indices[s - 1] = True
     else:
         indices = np.full(length, True)
+    """
 
     phis = _get_phis(window_size, length)
-    transformed = np.zeros((X.shape[0], end, length), dtype=np.float32)
-    stds = np.zeros((X.shape[0], end), dtype=np.float32)
+    transformed = np.zeros((X.shape[0], end, length))
+    stds = np.zeros((X.shape[0], end))
 
     with objmode(X_ffts="complex128[:,:]"):
         X_ffts = np.fft.rfft(X[:, :window_size], axis=1)  # complex128
@@ -560,8 +558,8 @@ def _mft(X, window_size, dft_length, norm, support, anova, variance):
     X2 = X.reshape(X.shape[0], X.shape[1], 1)
 
     # compute only those needed and not all using "indices"
-    phis2 = phis[indices]
-    transformed2 = transformed[:, :, indices]
+    phis2 = phis  # [indices]
+    transformed2 = transformed  # [:, :, indices]
     for i in range(1, end):
         reals = transformed2[:, i - 1, 0::2] + X2[:, i + window_size - 1] - X2[:, i - 1]
         imags = transformed2[:, i - 1, 1::2]
@@ -573,9 +571,10 @@ def _mft(X, window_size, dft_length, norm, support, anova, variance):
         )
 
     # divide all by stds
-    transformed[:, :, indices] = transformed2 / stds.reshape(
-        stds.shape[0], stds.shape[1], 1
-    )
+    # transformed[:, :, indices] = transformed2 / stds.reshape(
+    #    stds.shape[0], stds.shape[1], 1
+    # )
+    transformed = transformed2 / stds.reshape(stds.shape[0], stds.shape[1], 1)
 
     return (
         transformed[:, :, start_offset:][:, :, support]
