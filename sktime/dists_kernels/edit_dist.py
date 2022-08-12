@@ -29,7 +29,7 @@ class EditDist(BasePairwiseTransformerPanel):
     are exactly the same and 1.0 means they are complete opposites.
 
     EDR [2]_ computes the minimum number of elements (as a percentage) that must be
-    removed from x and y so that the sum of the distance between the remaining 
+    removed from x and y so that the sum of the distance between the remaining
     signal elements lies within the tolerance (epsilon).
 
     The value returned will be between 0 and 1 per time series. The value will
@@ -59,7 +59,7 @@ class EditDist(BasePairwiseTransformerPanel):
     itakura_max_slope: float, default = None
         Gradient of the slope for itakura parallelogram (if using Itakura
         Parallelogram lower bounding)
-    bounding_matrix: 2D np.ndarray, optional, default = None 
+    bounding_matrix: 2D np.ndarray, optional, default = None
         if passed, must be of shape (len(X), len(X2)) for X, X2 in `transform`
         Custom bounding matrix to use. If defined then other lower_bounding params
         are ignored. The matrix should be structure so that indexes considered in
