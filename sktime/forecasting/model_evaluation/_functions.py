@@ -208,7 +208,9 @@ def evaluate(
     results = pd.DataFrame(results)
     # post-processing of results
     if not return_data:
-        results = results.drop(columns=["y_train", "y_test", "y_pred"])
+        results = results.drop(
+            columns=["y_train", "y_test", "y_pred", "X_train", "X_test"]
+        )
     results["len_train_window"] = results["len_train_window"].astype(int)
 
     return results
