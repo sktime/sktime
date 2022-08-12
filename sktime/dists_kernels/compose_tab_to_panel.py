@@ -17,7 +17,7 @@ from sktime.utils._testing.deep_equals import deep_equals
 
 
 class AggrDist(BasePairwiseTransformerPanel):
-    """Panel distance from tabular distance aggregation.
+    r"""Panel distance from tabular distance aggregation.
 
     panel distance obtained by applying aggregation function to tabular distance matrix
         example: AggrDist(ScipyDist()) is mean Euclidean distance between series
@@ -129,7 +129,7 @@ class AggrDist(BasePairwiseTransformerPanel):
 
 
 class FlatDist(BasePairwiseTransformerPanel):
-    """Panel distance from applying tabular distance to flattened time series.
+    r"""Panel distance from applying tabular distance to flattened time series.
 
     Applies the wrapped tabular distance to flattened series.
     Flattening is done to a 2D numpy array of shape (n_instances, (n_vars, n_timepts))
