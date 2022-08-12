@@ -770,14 +770,17 @@ def from_nested_to_multi_index(X, instance_index=None, time_index=None):
     -------
     X_mi : pd.DataFrame
         The multi-indexed pandas DataFrame
-
     """
     # this contains the right values, but does not have the right index
     #   need convert_dtypes or dtypes will always be object
     # explode by column to ensure we deal with unequal length series properly
     X_mi = pd.DataFrame()
 
-    for c in X.columns:
+    X_cols = X.columns
+    nested_cols = [c for c in X_cols if isinstance(X[[c]].iloc[0, 0], pd.Series)]
+    non_nested_cols = list(set(X_cols).difference(nested_cols))
+
+    for c in nested_cols:
         X_col = X[[c]].explode(c)
         X_col = X_col.infer_objects()
 
@@ -787,6 +790,11 @@ def from_nested_to_multi_index(X, instance_index=None, time_index=None):
         X_col.index = idx_df.index.set_names([instance_index, time_index])
 
         X_mi[[c]] = X_col
+
+    for c in non_nested_cols:
+        for ix in X.index:
+            X_mi.loc[ix, c] = X[[c]].loc[ix].iloc[0]
+        X_mi[[c]] = X_mi[[c]].astype(X[[c]].dtypes[0])
 
     return X_mi
 
