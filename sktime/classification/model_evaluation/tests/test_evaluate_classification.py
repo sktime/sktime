@@ -28,8 +28,8 @@ def _split(X, y, train, test):
     return X_train, y_train, X_test, y_test
 
 
-@pytest.mark.parametrize("fold_no", [5])
-@pytest.mark.parametrize("random_seed", [21, 42])
+@pytest.mark.parametrize("fold_no", [5, 7])
+@pytest.mark.parametrize("random_seed", [42])
 def test_evaluate_classification_metrics(fold_no, random_seed):
     """Test evaluate for basic classification problems."""
     # Merge train and test into one dataset
