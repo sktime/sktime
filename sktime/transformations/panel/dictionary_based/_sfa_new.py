@@ -102,7 +102,7 @@ class SFA_NEW(_PanelToPanelTransformer):
         anova=False,
         variance=False,
         bigrams=False,
-        upper=True,
+        cut_upper=True,
         n_jobs=1,
     ):
         self.words = []
@@ -132,8 +132,7 @@ class SFA_NEW(_PanelToPanelTransformer):
 
         self.bigrams = bigrams
         self.n_jobs = n_jobs
-
-        self.upper = upper
+        self.cut_upper = cut_upper
 
         self.n_instances = 0
         self.series_length = 0
@@ -181,7 +180,7 @@ class SFA_NEW(_PanelToPanelTransformer):
         self.breakpoints = self._binning(X, y)
 
         # TODO parameterize? and use the lower part, too?
-        if self.upper:
+        if self.cut_upper:
             self.breakpoints[self.breakpoints < 0] = -np.inf
         else:
             self.breakpoints[self.breakpoints > 0] = np.inf
@@ -440,21 +439,8 @@ def _transform_case(
     breakpoints,
     letter_bits,
 ):
-    end = np.int32(series_length - window_size + 1)
-    transformed = np.zeros((X.shape[0], end))
-
     dfts = _mft(X, window_size, dft_length, norm, support, anova, variance)
-
-    for i in range(X.shape[0]):
-        words = generate_words(dfts[i], breakpoints, letter_bits)
-        transformed[i, 0 : len(words)] = words
-    """
-
-    for i in range(X.shape[0]):
-        dfts = _mft(X[i,:], window_size, dft_length, norm, support, anova, variance)
-        words = generate_words(dfts, breakpoints, letter_bits)
-        transformed[i, 0: len(words)] = words
-    """
+    transformed = generate_words(dfts, breakpoints, letter_bits)
 
     return transformed
 
@@ -506,9 +492,10 @@ def _calc_incremental_mean_std(series, end, window_size):
 @njit(fastmath=True, cache=True)
 def _get_phis(window_size, length):
     phis = np.zeros(length, dtype=np.float32)
-    for i in range(int(length / 2)):
-        phis[i * 2] += math.cos(2 * math.pi * (-i) / window_size)
-        phis[i * 2 + 1] += -math.sin(2 * math.pi * (-i) / window_size)
+    i = np.arange(length // 2, dtype=np.int32)
+    const = 2 * np.pi / window_size
+    phis[0::2] = np.cos((-i) * const)
+    phis[1::2] = -np.sin((-i) * const)
     return phis
 
 
@@ -519,20 +506,21 @@ def _create_bigram_word(word, other_word, word_bits):
 
 @njit(fastmath=True, parallel=True, cache=True)
 def generate_words(dfts, breakpoints, letter_bits):
-    words = np.zeros(dfts.shape[0], dtype=np.int64)
-    for window in prange(dfts.shape[0]):
-        word = np.int64(0)
-        for i in range(len(dfts[window])):
-            bp = np.searchsorted(breakpoints[i], dfts[window, i])
-            word = (word << letter_bits) | bp
-        words[window] = word
+    words = np.zeros((dfts.shape[0], dfts.shape[1]), dtype=np.int64)
+    for a in prange(dfts.shape[0]):
+        for window in prange(dfts.shape[1]):
+            word = np.int64(0)
+            for i in range(len(dfts[a, window])):
+                bp = np.searchsorted(breakpoints[i], dfts[a, window, i])
+                word = (word << letter_bits) | bp
+            words[a, window] = word
 
-        # if self.bigrams:
-        #     if window - self.window_size >= 0:
-        #         bigram = _create_bigram_words(
-        #             word_raw, words[window - self.window_size]
-        #         )
-        #         words.append(bigram)
+            # if self.bigrams:
+            #     if window - self.window_size >= 0:
+            #         bigram = _create_bigram_words(
+            #             word_raw, words[window - self.window_size]
+            #         )
+            #         words.append(bigram)
 
     return words
 
