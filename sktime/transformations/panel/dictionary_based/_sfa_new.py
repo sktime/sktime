@@ -102,6 +102,7 @@ class SFA_NEW(_PanelToPanelTransformer):
         anova=False,
         variance=False,
         bigrams=False,
+        upper=True,
         n_jobs=1,
     ):
         self.words = []
@@ -131,6 +132,8 @@ class SFA_NEW(_PanelToPanelTransformer):
 
         self.bigrams = bigrams
         self.n_jobs = n_jobs
+
+        self.upper = upper
 
         self.n_instances = 0
         self.series_length = 0
@@ -178,7 +181,10 @@ class SFA_NEW(_PanelToPanelTransformer):
         self.breakpoints = self._binning(X, y)
 
         # TODO parameterize? and use the lower part, too?
-        self.breakpoints[self.breakpoints < 0] = -np.inf
+        if self.upper:
+            self.breakpoints[self.breakpoints < 0] = -np.inf
+        else:
+            self.breakpoints[self.breakpoints > 0] = np.inf
 
         self._is_fitted = True
         return self
@@ -214,11 +220,13 @@ class SFA_NEW(_PanelToPanelTransformer):
 
     def _binning(self, X, y=None):
         num_windows_per_inst = math.ceil(self.series_length / self.window_size)
-        dft = np.array(
-            [
-                self._binning_dft(X[i, :], num_windows_per_inst)
-                for i in range(self.n_instances)
-            ]
+        dft = _binning_dft(
+            X,
+            num_windows_per_inst,
+            self.window_size,
+            self.series_length,
+            self.dft_length,
+            self.norm,
         )
 
         dft = dft.reshape(len(X) * num_windows_per_inst, self.dft_length)
@@ -329,62 +337,6 @@ class SFA_NEW(_PanelToPanelTransformer):
 
         return np.sort(breakpoints, axis=1)
 
-    def _binning_dft(self, series, num_windows_per_inst):
-        # Splits individual time series into windows and returns the DFT for each
-        split = np.split(
-            series,
-            np.linspace(
-                self.window_size,
-                self.window_size * (num_windows_per_inst - 1),
-                num_windows_per_inst - 1,
-                dtype=np.int_,
-            ),
-        )
-        start = self.series_length - self.window_size
-        split[-1] = series[start : self.series_length]
-
-        result = np.zeros((len(split), self.dft_length), dtype=np.float32)
-
-        for i, row in enumerate(split):
-            result[i] = self._fast_fourier_transform(row)
-
-        return result
-
-    def _fast_fourier_transform(self, series):
-        """Perform a discrete fourier transform using the fast fourier transform.
-
-        if self.norm is True, then the first term of the DFT is ignored
-
-        Input
-        -------
-        X : The training input samples.  array-like or sparse matrix of
-        shape = [n_samps, num_atts]
-
-        Returns
-        -------
-        1D array of fourier term, real_0,imag_0, real_1, imag_1 etc, length
-        num_atts or
-        num_atts-2 if if self.norm is True
-        """
-        # first two are real and imaginary parts
-        start = 2 if self.norm else 0
-
-        # std = 1.0
-        # if self.norm:
-        s = np.std(series)
-        std = s if (s > 1e-4) else 1.0
-
-        X_fft = np.fft.rfft(series)
-        reals = np.real(X_fft)
-        imags = np.imag(X_fft)
-
-        length = start + self.dft_length
-        dft = np.empty((length,), dtype=reals.dtype)
-        dft[0::2] = reals[: np.uint32(length / 2)]
-        dft[1::2] = imags[: np.uint32(length / 2)]
-        dft /= std
-        return dft[start:]
-
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
@@ -409,7 +361,73 @@ class SFA_NEW(_PanelToPanelTransformer):
         return params
 
 
-@njit(fastmath=True, parallel=True, cache=True)
+@njit(fastmath=True, cache=True)
+def _binning_dft(X, num_windows_per_inst, window_size, series_length, dft_length, norm):
+
+    # Splits individual time series into windows and returns the DFT for each
+    dft = np.zeros((len(X), num_windows_per_inst, dft_length), dtype=np.float32)
+
+    for i in range(len(X)):
+        start = series_length - window_size
+
+        split = np.split(
+            X[i, :],
+            np.linspace(
+                window_size,
+                window_size * (num_windows_per_inst - 1),
+                num_windows_per_inst - 1,
+            ).astype(np.int_),
+        )
+
+        split[-1] = X[i, start:series_length]
+        result = np.zeros((len(split), dft_length), dtype=np.float32)
+        for j, row in enumerate(split):
+            result[j] = _fast_fourier_transform(row, norm, dft_length)
+
+        dft[i] = result
+
+    return dft
+
+
+@njit(fastmath=True, cache=True)
+def _fast_fourier_transform(series, norm, dft_length):
+    """Perform a discrete fourier transform using the fast fourier transform.
+
+    if self.norm is True, then the first term of the DFT is ignored
+
+    Input
+    -------
+    X : The training input samples.  array-like or sparse matrix of
+    shape = [n_samps, num_atts]
+
+    Returns
+    -------
+    1D array of fourier term, real_0,imag_0, real_1, imag_1 etc, length
+    num_atts or
+    num_atts-2 if if self.norm is True
+    """
+    # first two are real and imaginary parts
+    start = 2 if norm else 0
+
+    # std = 1.0
+    # if self.norm:
+    s = np.std(series)
+    std = s if (s > 1e-4) else 1.0
+
+    with objmode(X_fft="complex128[:]"):
+        X_fft = np.fft.rfft(series)
+    reals = np.real(X_fft)
+    imags = np.imag(X_fft)
+
+    length = start + dft_length
+    dft = np.empty((length,), dtype=reals.dtype)
+    dft[0::2] = reals[: np.uint32(length / 2)]
+    dft[1::2] = imags[: np.uint32(length / 2)]
+    dft /= std
+    return dft[start:]
+
+
+@njit(fastmath=True, cache=True)  # parallel=True is not working here?
 def _transform_case(
     X,
     window_size,
@@ -422,10 +440,9 @@ def _transform_case(
     breakpoints,
     letter_bits,
 ):
-
     end = np.int32(series_length - window_size + 1)
     transformed = np.zeros((X.shape[0], end), dtype=np.int64)
-    for i in prange(X.shape[0]):
+    for i in range(X.shape[0]):
         dfts = _mft(X[i, :], window_size, dft_length, norm, support, anova, variance)
         words = generate_words(dfts, breakpoints, letter_bits)
         transformed[i, 0 : len(words)] = words
@@ -492,6 +509,7 @@ def generate_words(dfts, breakpoints, letter_bits):
     return words
 
 
+# TODO vectorize for all in one go?
 @njit(fastmath=True, cache=True)
 def _mft(series, window_size, dft_length, norm, support, anova, variance):
     start_offset = 2 if norm else 0
