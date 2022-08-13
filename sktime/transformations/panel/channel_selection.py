@@ -146,7 +146,7 @@ class ElbowChannelSelection(BaseTransformer):
     >>> cs = ElbowChannelSelection()
     >>> X_train, y_train = load_UCR_UEA_dataset(
     ...     "Cricket", split="train", return_X_y=True
-    ... )        
+    ... )
     >>> cs.fit(X_train, y_train)
     >>> cs.transform(X_train)
     """
@@ -247,7 +247,7 @@ class ElbowClassPairwise(BaseTransformer):
     >>> cs = ElbowClassPairwise()
     >>> X_train, y_train = load_UCR_UEA_dataset(
     ...     "Cricket", split="train", return_X_y=True
-    ... )  
+    ... )
     >>> cs.fit(X_train, y_train)
     >>> cs.transform(X_train)
     """
