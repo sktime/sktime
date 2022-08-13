@@ -45,7 +45,7 @@ class ParamFitterPipeline(BaseParamFitter, _HeterogenousMetaEstimator):
             and `my_trafo1`, `my_trafo2` inherit from `BaseTransformer`, then,
             for instance, `my_trafo1 * my_trafo2 * est`
             will result in the same object as  obtained from the constructor
-            `ParamFitterPipeline(classifier=est, transformers=[my_trafo1, my_trafo2])`
+            `ParamFitterPipeline(param_est=est, transformers=[my_trafo1, my_trafo2])`
         magic multiplication can also be used with (str, transformer) pairs,
             as long as one element in the chain is a transformer
 
@@ -105,12 +105,12 @@ class ParamFitterPipeline(BaseParamFitter, _HeterogenousMetaEstimator):
 
         super(ParamFitterPipeline, self).__init__()
 
-        # can handle multivariate iff: both classifier and all transformers can
+        # can handle multivariate iff: both estimator and all transformers can
         multivariate = param_est.get_tag("capability:multivariate", False)
         multivariate = multivariate and not self.transformers_.get_tag(
             "univariate-only", True
         )
-        # can handle missing values iff: both classifier and all transformers can,
+        # can handle missing values iff: both estimator and all transformers can,
         #   *or* transformer chain removes missing data
         missing = param_est.get_tag("capability:missing_values", False)
         missing = missing and self.transformers_.get_tag("handles-missing-data", False)
@@ -272,10 +272,6 @@ class ParamFitterPipeline(BaseParamFitter, _HeterogenousMetaEstimator):
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
             special parameters are defined for a value, will return `"default"` set.
-            For classifiers, a "default" set of parameters should be provided for
-            general testing, and a "results_comparison" set for comparing against
-            previously recorded results if the general set does not produce suitable
-            probabilities to compare against.
 
         Returns
         -------
