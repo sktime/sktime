@@ -167,6 +167,7 @@ class ElbowChannelSelection(BaseTransformer):
 
         if transformer is None:
             from sktime.dists_kernels import FlatDist, ScipyDist
+
             self.transformer_ = FlatDist(ScipyDist())
         else:
             self.transformer_ = transformer.clone()
