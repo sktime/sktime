@@ -172,3 +172,28 @@ def convert_np_to_UvS_as_Series(obj: np.ndarray, store=None) -> pd.Series:
 
 
 convert_dict[("np.ndarray", "pd.Series", "Series")] = convert_np_to_UvS_as_Series
+
+import xarray as xr
+def convert_xrdataarray_to_Mvs_as_Series(obj: xr.DataArray, store=None) -> pd.DataFrame:
+    if not isinstance(obj, xr.DataArray):
+        raise TypeError("input must be a xr.DataArray")
+
+    #if isinstance(store, dict): # TODO Check
+    #    store["columns"] = obj.columns
+    #    store["index"] = obj.index
+
+    return obj.to_pandas()
+
+convert_dict[("xr.DataArray", "pd.DataFrame", "Series")] = convert_xrdataarray_to_Mvs_as_Series
+
+def convert_Mvs_to_xrdatarray_as_Series(obj: pd.DataFrame, store=None) -> xr.DataArray:
+    if not isinstance(obj, pd.DataFrame):
+        raise TypeError("input must be a xr.DataArray")
+
+    # if isinstance(store, dict): # TODO Check
+    #    store["columns"] = obj.columns
+    #    store["index"] = obj.index
+
+    return obj.T.to_xarray().to_array() # TODO Explain Transpose
+
+convert_dict[("pd.DataFrame", "xr.DataArray", "Series")] = convert_Mvs_to_xrdatarray_as_Series
