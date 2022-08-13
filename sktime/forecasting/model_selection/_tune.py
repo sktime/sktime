@@ -158,7 +158,7 @@ class BaseGridSearch(_DelegatedForecaster):
                 axis=1,
             )
 
-            # store y_train and X_train for the case refit param is True
+            # store y_train and X_train for the case refit param is False
             row = out[out["cutoff"] == out["cutoff"].max()].iloc[0]
             self._y_evaluate = row["y_train"]
             self._X_evaluate = row["X_train"]
