@@ -794,7 +794,7 @@ def from_nested_to_multi_index(X, instance_index=None, time_index=None):
     for c in non_nested_cols:
         for ix in X.index:
             X_mi.loc[ix, c] = X[[c]].loc[ix].iloc[0]
-        X_mi[[c]] = X_mi[[c]].astype(X[[c]].dtypes[0])
+        X_mi[[c]] = X_mi[[c]].convert_dtypes()
 
     return X_mi
 
