@@ -150,9 +150,9 @@ class ParamFitterPipeline(BaseParamFitter, _HeterogenousMetaEstimator):
         if isinstance(other, BaseTransformer):
             # use the transformers dunder to get a TransformerPipeline
             trafo_pipeline = other * self.transformers_
-            # then stick the expanded pipeline in a ClassifierPipeline
+            # then stick the expanded pipeline in a ParamFitterPipeline
             new_pipeline = ParamFitterPipeline(
-                classifier=self.classifier,
+                param_est=self.param_est,
                 transformers=trafo_pipeline.steps,
             )
             return new_pipeline
