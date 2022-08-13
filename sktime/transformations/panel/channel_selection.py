@@ -144,11 +144,11 @@ class ElbowChannelSelection(BaseTransformer):
     >>> from sktime.transformations.panel.channel_selection import ElbowChannelSelection
     >>> from sktime.datasets import load_UCR_UEA_dataset
     >>> cs = ElbowChannelSelection()
-    >>> X_train, y_train = load_UCR_UEA_dataset("Cricket", split="train",
-                                                return_X_y=True)
+    >>> X_train, y_train = load_UCR_UEA_dataset(
+    ...     "Cricket", split="train", return_X_y=True
+    ... )        
     >>> cs.fit(X_train, y_train)
     >>> cs.transform(X_train)
-
     """
 
     _tags = {
@@ -245,11 +245,11 @@ class ElbowClassPairwise(BaseTransformer):
     >>> from sktime.transformations.panel.channel_selection import ElbowClassPairwise
     >>> from sktime.datasets import load_UCR_UEA_dataset
     >>> cs = ElbowClassPairwise()
-    >>> X_train, y_train = load_UCR_UEA_dataset("Cricket", split="train",
-                                                return_X_y=True)
+    >>> X_train, y_train = load_UCR_UEA_dataset(
+    ...     "Cricket", split="train", return_X_y=True
+    ... )  
     >>> cs.fit(X_train, y_train)
     >>> cs.transform(X_train)
-
     """
 
     _tags = {
