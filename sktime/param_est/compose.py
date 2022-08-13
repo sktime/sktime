@@ -25,11 +25,11 @@ class ParamFitterPipeline(BaseParamFitter, _HeterogenousMetaEstimator):
 
     For a list of transformers `trafo1`, `trafo2`, ..., `trafoN` and an estimator `est`,
         the pipeline behaves as follows:
-    `fit(X)` - changes styte by running `trafo1.fit_transform` on `X`,
+    `fit(X)` - changes state by running `trafo1.fit_transform` on `X`,
         them `trafo2.fit_transform` on the output of `trafo1.fit_transform`, etc
         sequentially, with `trafo[i]` receiving the output of `trafo[i-1]`,
         and then running `est.fit` with `X` being the output of `trafo[N]`
-    `update(X)` - changes styte by running `trafo1.update.transform` on `X`,
+    `update(X)` - changes state by running `trafo1.update.transform` on `X`,
         them `trafo2.update.transform` on the output of `trafo1.update.transform`, etc
         sequentially, with `trafo[i]` receiving the output of `trafo[i-1]`,
         and then running `est.update` with `X` being the output of `trafo[N]`
@@ -250,7 +250,7 @@ class ParamFitterPipeline(BaseParamFitter, _HeterogenousMetaEstimator):
         -------
         self : returns an instance of self.
         """
-        if "classifier" in kwargs.keys():
+        if "param_est" in kwargs.keys():
             if not isinstance(kwargs["param_est"], BaseParamFitter):
                 raise TypeError('"param_est" arg must be an sktime parameter fitter')
         trafo_keys = self._get_params("_transformers", deep=True).keys()
