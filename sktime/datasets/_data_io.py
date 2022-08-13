@@ -44,6 +44,17 @@ DIRNAME = "data"
 MODULE = os.path.dirname(__file__)
 
 
+# Return appropriate return_type in case an alias was used
+def _alias_mtype_check(return_type):
+    if return_type is None:
+        return_type = "nested_univ"
+    if return_type in ["numpy2d", "numpy2D", "np2d", "np2D"]:
+        return_type = "numpyflat"
+    if return_type in ["numpy3d", "np3d", "np3D"]:
+        return_type = "numpy3D"
+    return return_type
+
+
 # time series classification data sets
 def _download_and_extract(url, extract_path=None):
     """
@@ -210,14 +221,13 @@ def _load_provided_dataset(
     else:
         raise ValueError("Invalid `split` value =", split)
 
+    return_type = _alias_mtype_check(return_type)
     if return_X_y:
-        if return_type is not None:
-            X = convert(X, from_type="nested_univ", to_type=return_type)
+        X = convert(X, from_type="nested_univ", to_type=return_type)
         return X, y
     else:
         X["class_val"] = pd.Series(y)
-        if return_type is not None:
-            X = convert(X, from_type="nested_univ", to_type=return_type)
+        X = convert(X, from_type="nested_univ", to_type=return_type)
         return X
 
 
@@ -339,12 +349,7 @@ def load_from_tsfile(
     ValueError if return_data_type = numpy2d but the data are multivariate and/
     or unequal length series
     """
-    if return_data_type is None:
-        return_data_type = "nested_univ"
-    if return_data_type in ["numpy2d", "numpy2D", "np2d", "np2D"]:
-        return_data_type = "numpyflat"
-    if return_data_type in ["numpy3d", "np3d", "np3D"]:
-        return_data_type = "numpy3D"
+    return_data_type = _alias_mtype_check(return_data_type)
 
     if not isinstance(return_data_type, str):
         raise TypeError(
