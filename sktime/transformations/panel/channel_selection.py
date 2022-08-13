@@ -5,7 +5,7 @@ A transformer that selects a subset of channels/dimensions for time series
 classification using a scoring system with an elbow point method.
 """
 
-__author__ = ["haskarb", "a-pasos-ruiz", "TonyBagnall"]
+__author__ = ["haskarb", "a-pasos-ruiz", "TonyBagnall", "fkiraly"]
 __all__ = ["ElbowChannelSelection", "ElbowClassPairwise"]
 
 
