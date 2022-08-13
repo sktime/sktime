@@ -106,7 +106,7 @@ scenarios_transformers_pairwise = [
 ]
 
 X = [d, d]
-X2 = [d2, d, d2]
+X2 = [d, d, d]
 
 X1_list_df = make_transformer_problem(
     n_instances=4, n_columns=4, n_timepoints=5, random_state=1, return_numpy=False
