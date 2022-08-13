@@ -19,27 +19,24 @@ class PwTrafoPanelPipeline(BasePairwiseTransformerPanel, _HeterogenousMetaEstima
 
     `PwTrafoPanelPipeline` chains transformers and a pairwise transformer at the end.
     The pipeline is constructed with a list of sktime transformers (BaseTransformer),
-        plus a pairwise panel transformer, followin BasePairwiseTransformerPanel.
+        plus a pairwise panel transformer, following BasePairwiseTransformerPanel.
     The transformer list can be unnamed - a simple list of transformers -
         or string named - a list of pairs of string, estimator.
 
     For a list of transformers `trafo1`, `trafo2`, ..., `trafoN` and an estimator `est`,
         the pipeline behaves as follows:
-    `transform(X)` - changes styte by running `trafo1.fit_transform` on `X`,
+    `transform(X)` - running `trafo1.fit_transform` on `X`,
         them `trafo2.fit_transform` on the output of `trafo1.fit_transform`, etc
-        sequentially, with `trafo[i]` receiving the output of `trafo[i-1]`,
-        and then running `est.fit` with `X` being the output of `trafo[N]`
-    `update(X)` - changes styte by running `trafo1.update.transform` on `X`,
-        them `trafo2.update.transform` on the output of `trafo1.update.transform`, etc
-        sequentially, with `trafo[i]` receiving the output of `trafo[i-1]`,
-        and then running `est.update` with `X` being the output of `trafo[N]`
+        sequentially, with `trafo[i]` receiving the output of `trafo[i-1]`.
+        Then passes output of `trafo[N]` to `pw_trafo.transform`, as `X`.
+        Same chain of transformers is run on `X2` and passed, if not `None`.
 
-    `ParamFitterPipeline` can also be created by using the magic multiplication
-        on any parameter estimator, i.e., if `est` inherits from `BaseParamFitter`,
+    `PwTrafoPanelPipeline` can also be created by using the magic multiplication
+        on any parameter estimator: if `pw_t` is `BasePairwiseTransformerPanel`,
             and `my_trafo1`, `my_trafo2` inherit from `BaseTransformer`, then,
-            for instance, `my_trafo1 * my_trafo2 * est`
+            for instance, `my_trafo1 * my_trafo2 * pw_t`
             will result in the same object as  obtained from the constructor
-            `ParamFitterPipeline(classifier=est, transformers=[my_trafo1, my_trafo2])`
+            `PwTrafoPanelPipeline(pw_trafo=pw_t, transformers=[my_trafo1, my_trafo2])`
         magic multiplication can also be used with (str, transformer) pairs,
             as long as one element in the chain is a transformer
 
@@ -54,17 +51,14 @@ class PwTrafoPanelPipeline(BasePairwiseTransformerPanel, _HeterogenousMetaEstima
 
     Examples
     --------
-    >>> from sktime.param_est.compose import ParamFitterPipeline
-    >>> from sktime.param_est.seasonality import SeasonalityACF
-    >>> from sktime.transformations.series.difference import Differencer
-    >>> from sktime.datasets import load_airline
+    >>> from sktime.dists_kernels.compose import PwTrafoPanelPipeline
+    >>> from sktime.dists_kernels.dtw import DtwDist
+    >>> from sktime.transformations.series.exponent import ExponentTransformer
+    >>> from sktime.datasets import load_unit_test
     >>>
-    >>> X = load_airline()
-    >>> pipeline = ParamFitterPipeline(SeasonalityACF(), [Differencer()])
-    >>> pipeline.fit(X)
-    ParamFitterPipeline(...)
-    >>> pipeline.get_fitted_params()["sp"]
-    12
+    >>> X, _ = load_unit_test()[0:7]
+    >>> pipeline = PwTrafoPanelPipeline(DtwDist(), [ExponentTransformer()])
+    >>> dist_mat = pipeline.transform(X)
     """
 
     _tags = {
