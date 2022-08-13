@@ -15,17 +15,17 @@ SUPPORTED_MTYPES = ["pd-multiindex", "nested_univ", "df-list", "numpy3D"]
 
 
 class PwTrafoPanelPipeline(BasePairwiseTransformerPanel, _HeterogenousMetaEstimator):
-    """Pipeline of transformers and a parameter estimator.
+    """Pipeline of transformers and a pairwise panel transformer.
 
-    The `ParamFitterPipeline` compositor chains transformers and a single estimator.
-    The pipeline is constructed with a list of sktime transformers, plus an estimator,
-        i.e., estimators following the BaseTransformer, ParamFitterPipeline interfaces.
+    `PwTrafoPanelPipeline` chains transformers and a pairwise transformer at the end.
+    The pipeline is constructed with a list of sktime transformers (BaseTransformer),
+        plus a pairwise panel transformer, followin BasePairwiseTransformerPanel.
     The transformer list can be unnamed - a simple list of transformers -
         or string named - a list of pairs of string, estimator.
 
     For a list of transformers `trafo1`, `trafo2`, ..., `trafoN` and an estimator `est`,
         the pipeline behaves as follows:
-    `fit(X)` - changes styte by running `trafo1.fit_transform` on `X`,
+    `transform(X)` - changes styte by running `trafo1.fit_transform` on `X`,
         them `trafo2.fit_transform` on the output of `trafo1.fit_transform`, etc
         sequentially, with `trafo[i]` receiving the output of `trafo[i-1]`,
         and then running `est.fit` with `X` being the output of `trafo[N]`
@@ -52,16 +52,6 @@ class PwTrafoPanelPipeline(BasePairwiseTransformerPanel, _HeterogenousMetaEstima
         list of tuples (str, transformer) of sktime transformers
         these are "blueprint" transformers, states do not change when `fit` is called
 
-    Attributes
-    ----------
-    pw_trafo_ : sktime estimator, clone of estimator in `pw_trafo`
-        this clone is fitted in the pipeline when `fit` is called
-    transformers_ : list of tuples (str, transformer) of sktime transformers
-        clones of transformers in `transformers` which are fitted in the pipeline
-        is always in (str, transformer) format, even if transformers is just a list
-        strings not passed in transformers are unique generated strings
-        i-th transformer in `transformers_` is clone of i-th in `transformers`
-
     Examples
     --------
     >>> from sktime.param_est.compose import ParamFitterPipeline
@@ -75,9 +65,6 @@ class PwTrafoPanelPipeline(BasePairwiseTransformerPanel, _HeterogenousMetaEstima
     ParamFitterPipeline(...)
     >>> pipeline.get_fitted_params()["sp"]
     12
-
-    Alternative construction via dunder method:
-    >>> pipeline = Differencer() * SeasonalityACF()
     """
 
     _tags = {
@@ -86,8 +73,6 @@ class PwTrafoPanelPipeline(BasePairwiseTransformerPanel, _HeterogenousMetaEstima
         "capability:multivariate": True,  # can estimator handle multivariate data?
         "capability:unequal_length": True,  # can dist handle unequal length panels?
     }
-
-    # no default tag values - these are set dynamically below
 
     def __init__(self, pw_trafo, transformers):
 
@@ -154,7 +139,7 @@ class PwTrafoPanelPipeline(BasePairwiseTransformerPanel, _HeterogenousMetaEstima
     def _transform(self, X, X2=None):
         """Compute distance/kernel matrix.
 
-            Core logic
+        private _transform containing core logic, called from public transform
 
         Behaviour: returns pairwise distance/kernel matrix
             between samples in X and X2
@@ -164,51 +149,80 @@ class PwTrafoPanelPipeline(BasePairwiseTransformerPanel, _HeterogenousMetaEstima
 
         Parameters
         ----------
-        X: pd.DataFrame of length n, or 2D np.array with n rows
-        X2: pd.DataFrame of length m, or 2D np.array with m rows, optional
-            default X2 = X
+        X: sktime Panel data container
+        X2: sktime Panel data container
 
         Returns
         -------
         distmat: np.array of shape [n, m]
             (i,j)-th entry contains distance/kernel between X.iloc[i] and X2.iloc[j]
         """
+        trafos = self.transformers_.clone()
+        pw_trafo = self.pw_trafo
+
+        Xt = trafos.fit_transform(X)
+
         # find out whether we know that the resulting matrix is symmetric
         #   since aligner distances are always symmetric,
         #   we know it's the case for sure if X equals X2
         if X2 is None:
-            X = X2
-            symm = True
+            X2t = None
         else:
-            symm = False
+            X2t = trafos.fit_transform(X2)
 
-        n = len(X)
-        m = len(X2)
-
-        distmat = np.zeros((n, m), dtype="float")
-
-        if self.aligner is not None:
-            aligner = self.aligner.clone()
-        else:
-            return distmat
-
-        for i in range(n):
-            for j in range(m):
-                if symm and j < i:
-                    distmat[i, j] = distmat[j, i]
-                else:
-                    distmat[i, j] = aligner.fit([X[i], X2[j]]).get_distance()
-
+        distmat = pw_trafo.transform(Xt, X2t)
         return distmat
+
+    def get_params(self, deep=True):
+        """Get parameters of estimator in `transformers`.
+
+        Parameters
+        ----------
+        deep : boolean, optional, default=True
+            If True, will return the parameters for this estimator and
+            contained sub-objects that are estimators.
+
+        Returns
+        -------
+        params : mapping of string to any
+            Parameter names mapped to their values.
+        """
+        params = dict()
+        trafo_params = self._get_params("_transformers", deep=deep)
+        params.update(trafo_params)
+
+        return params
+
+    def set_params(self, **kwargs):
+        """Set the parameters of estimator in `transformers`.
+
+        Valid parameter keys can be listed with ``get_params()``.
+
+        Returns
+        -------
+        self : returns an instance of self.
+        """
+        if "pw_trafo" in kwargs.keys():
+            if not isinstance(kwargs["pw_trafo"], BasePairwiseTransformerPanel):
+                raise TypeError('"pw_trafo" arg must be a pairwise panel transformer')
+        trafo_keys = self._get_params("_transformers", deep=True).keys()
+        pw_keys = self.pw_trafo.get_params(deep=True).keys()
+        trafo_args = self._subset_dict_keys(dict_to_subset=kwargs, keys=trafo_keys)
+        pw_args = self._subset_dict_keys(dict_to_subset=kwargs, keys=pw_keys)
+        if len(pw_args) > 0:
+            self.pw_trafo.set_params(**pw_args)
+        if len(trafo_args) > 0:
+            self._set_params("_transformers", **trafo_args)
+        return self
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Test parameters for DistFromAligner."""
-        # importing inside to avoid circular dependencies
-        from sktime.alignment.dtw_python import AlignerDTW
-        from sktime.utils.validation._dependencies import _check_estimator_deps
+        from sktime.transformations.series.exponent import ExponentTransformer
+        from sktime.dists_kernels.compose_tab_to_panel import AggrDist
 
-        if _check_estimator_deps(AlignerDTW, severity="none"):
-            return {"aligner": AlignerDTW()}
-        else:
-            return {}
+        params = {
+            "pw_trafo": AggrDist.create_test_instance(),
+            "transformers": [ExponentTransformer()],
+        }
+        return params
