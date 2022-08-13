@@ -161,6 +161,7 @@ class BaseGridSearch(_DelegatedForecaster):
             # store y_train and X_train for the case refit param is True
             row = out[out["cutoff"] == out["cutoff"].max()].iloc[0]
             self._y_evaluate = row["y_train"]
+            self._X_evaluate = row["X_train"]
 
             # drop columns
             out = out.drop(columns=["y_train", "X_train", "cutoff"])
@@ -229,15 +230,16 @@ class BaseGridSearch(_DelegatedForecaster):
             self.best_forecaster_.fit(y, X, fh)
         else:
             # with with data from last cv window length
-            fh_cv = self.cv.get_fh()
-            fh_max = fh_cv._values.max()
-            start_idx = self._y_evaluate.index[0] + fh_max
-            y_cv = y.loc[start_idx:]
-            X_cv = X.loc[start_idx:] if X is not None else None
             self.best_forecaster_.fit(
-                y=y_cv,
-                X=X_cv,
+                y=self._y_evaluate,
+                X=self._X_evaluate,
                 fh=fh,
+            )
+            # update to move cutoff to present
+            self.best_forecaster_.update(
+                y=y,
+                X=X,
+                update_params=False,
             )
 
         # Sort values according to rank
@@ -257,9 +259,15 @@ class BaseGridSearch(_DelegatedForecaster):
                 forecaster.fit(y, X, fh)
             else:
                 forecaster.fit(
-                    y=y_cv,
-                    X=X_cv,
+                    y=self._y_evaluate,
+                    X=self._X_evaluate,
                     fh=fh,
+                )
+                # update to move cutoff to present
+                forecaster.update(
+                    y=y,
+                    X=X,
+                    update_params=False,
                 )
             self.n_best_forecasters_.append((rank, forecaster))
             # Save score
@@ -348,9 +356,10 @@ class ForecastingGridSearchCV(BaseGridSearch):
         None means 1 unless in a joblib.parallel_backend context.
         -1 means using all processors.
     refit: bool, optional (default=True)
-        True = refit the forecaster with the best parameters on the entire data in fit
-        False = best forecaster remains fitted on the last fold in cv. Setting to False
-        makes only sense when using a SlidingWindowSplitter.
+        True = refit the forecaster with the best parameters on the entire data in fit.
+        False = best forecaster remains fitted on the last fold in cv but will b
+        updated to move cutoff to present by means of update(update_params=False).
+        Setting refit to False makes only sense when using a SlidingWindowSplitter.
     verbose: int, optional (default=0)
     return_n_best_forecasters: int, default=1
         In case the n best forecaster should be returned, this value can be set
@@ -601,9 +610,10 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         None means 1 unless in a joblib.parallel_backend context.
         -1 means using all processors.
     refit: bool, optional (default=True)
-        True = refit the forecaster with the best parameters on the entire data in fit
-        False = best forecaster remains fitted on the last fold in cv. Setting to False
-        makes only sense when using a SlidingWindowSplitter.
+        True = refit the forecaster with the best parameters on the entire data in fit.
+        False = best forecaster remains fitted on the last fold in cv but will b
+        updated to move cutoff to present by means of update(update_params=False).
+        Setting refit to False makes only sense when using a SlidingWindowSplitter.
     verbose: int, optional (default=0)
     return_n_best_forecasters: int, default=1
         In case the n best forecaster should be returned, this value can be set
