@@ -8,7 +8,6 @@ from sktime.dists_kernels._base import BasePairwiseTransformerPanel
 from sktime.transformations.base import BaseTransformer
 from sktime.transformations.compose import TransformerPipeline
 
-
 SUPPORTED_MTYPES = ["pd-multiindex", "nested_univ", "df-list", "numpy3D"]
 
 
@@ -211,8 +210,8 @@ class PwTrafoPanelPipeline(BasePairwiseTransformerPanel, _HeterogenousMetaEstima
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Test parameters for DistFromAligner."""
-        from sktime.transformations.series.exponent import ExponentTransformer
         from sktime.dists_kernels.compose_tab_to_panel import AggrDist
+        from sktime.transformations.series.exponent import ExponentTransformer
 
         params = {
             "pw_trafo": AggrDist.create_test_instance(),
