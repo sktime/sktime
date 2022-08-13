@@ -3,8 +3,6 @@
 
 __author__ = ["fkiraly"]
 
-import numpy as np
-
 from sktime.base import _HeterogenousMetaEstimator
 from sktime.dists_kernels._base import BasePairwiseTransformerPanel
 from sktime.transformations.base import BaseTransformer
@@ -56,7 +54,8 @@ class PwTrafoPanelPipeline(BasePairwiseTransformerPanel, _HeterogenousMetaEstima
     >>> from sktime.transformations.series.exponent import ExponentTransformer
     >>> from sktime.datasets import load_unit_test
     >>>
-    >>> X, _ = load_unit_test()[0:7]
+    >>> X, _ = load_unit_test()
+    >>> X = X[0:3]
     >>> pipeline = PwTrafoPanelPipeline(DtwDist(), [ExponentTransformer()])
     >>> dist_mat = pipeline.transform(X)
     """
