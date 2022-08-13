@@ -17,6 +17,7 @@ import pandas as pd
 from scipy.spatial.distance import euclidean
 from sklearn.neighbors import NearestCentroid
 
+from sktime.datatypes import convert
 from sktime.datatypes._panel._convert import from_3d_numpy_to_nested
 from sktime.transformations.base import BaseTransformer
 
@@ -121,6 +122,11 @@ class ElbowChannelSelection(BaseTransformer):
     distance between the class centroids by aggregating the distance for every
     class pair across each channel.
 
+    Parameters
+    ----------
+    transformer: sktime pairwise panel transformer, optional, default=None
+        default None = euclidean distance on flattened series, FlatDist(ScipyDist())
+
     Attributes
     ----------
     channels_selected : list
@@ -158,7 +164,7 @@ class ElbowChannelSelection(BaseTransformer):
         # what scitype is returned: Primitives, Series, Panel
         "scitype:instancewise": True,  # is this an instance-wise transform?
         "univariate-only": False,  # can the transformer handle multivariate X?
-        "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
+        "X_inner_mtype": "nested_univ",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "numpy1D",  # which mtypes do _fit/_predict support for y?
         "requires_y": True,  # does y need to be passed in fit?
         "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
@@ -167,8 +173,15 @@ class ElbowChannelSelection(BaseTransformer):
         # can the transformer handle unequal length time series (if passed Panel)?
     }
 
-    def __init__(self):
-        self.channels_selected = []
+    def __init__(self, transformer=None):
+        self.transformer = transformer
+
+        if transformer is None:
+            from sktime.dists_kernels import FlatDist, ScipyDist
+            self.transformer_ = FlatDist(ScipyDist())
+        else:
+            self.transformer_ = transformer.clone()
+
         super(ElbowChannelSelection, self).__init__()
 
     def _fit(self, X, y):
@@ -184,17 +197,30 @@ class ElbowChannelSelection(BaseTransformer):
         Returns
         -------
         self : reference to self.
-
         """
+        t = self.transformer_
+
         start = int(round(time.time() * 1000))
         centroid_obj = _shrunk_centroid(0)
-        centroids = centroid_obj.create_centroid(X.copy(), y)
-        distances = _distance_matrix()
-        self.distance_frame_ = distances.distance(centroids)
-        distance = self.distance_frame_.sum(axis=1).sort_values(ascending=False).values
-        indices = self.distance_frame_.sum(axis=1).sort_values(ascending=False).index
-        self.channels_selected.extend(_detect_knee_point(distance, indices)[0])
+
+        X_np = convert(X, "nested_univ", "numpy3D")
+        centroids = centroid_obj.create_centroid(X_np, y)
+        centroids_no_y = centroids.drop("class_vals", axis=1)
+        centroids_no_y.columns = X.columns
+
+        dists = [t.transform(X[[c]]).sum() for c in X.columns]
+        dists = pd.Series(dists)
+        self.distance_frame_ = dists
+
+        distance = dists.sort_values(ascending=False).values
+        indices = dists.sort_values(ascending=False).index
+
+        idx = _detect_knee_point(distance, indices)[0]
+
+        self.channels_selected = [X.columns[i] for i in idx]
+
         self.train_time_ = int(round(time.time() * 1000)) - start
+
         return self
 
     def _transform(self, X, y=None):
@@ -211,7 +237,7 @@ class ElbowChannelSelection(BaseTransformer):
         output : pandas DataFrame
             X with a subset of channels
         """
-        return X[:, self.channels_selected, :]
+        return X[[self.channels_selected]]
 
 
 class ElbowClassPairwise(BaseTransformer):
