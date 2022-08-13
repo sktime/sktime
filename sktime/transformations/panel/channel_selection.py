@@ -227,7 +227,7 @@ class ElbowChannelSelection(BaseTransformer):
         output : pandas DataFrame
             X with a subset of channels
         """
-        return X[[self.channels_selected]]
+        return X[self.channels_selected]
 
 
 class ElbowClassPairwise(BaseTransformer):
