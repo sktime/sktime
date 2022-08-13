@@ -28,7 +28,7 @@ class TransformerPairwiseFixtureGenerator(BaseFixtureGenerator):
 class TestAllPairwiseTransformers(TransformerPairwiseFixtureGenerator, QuickTester):
     """Module level tests for all sktime pairwise transformers (tabular)."""
 
-    def test_pairwise_transformers_tabular(estimator_instance, scenario):
+    def test_pairwise_transformers_tabular(self, estimator_instance, scenario):
         """Main test function for pairwise transformers on tabular data."""
         trafo_name = type(estimator_instance).__name__
         dist_mat = scenario.run(estimator_instance, method_sequence=["transform"])
@@ -69,7 +69,7 @@ class TransformerPairwisePanelFixtureGenerator(BaseFixtureGenerator):
 class TestAllPanelTransformers(TransformerPairwisePanelFixtureGenerator, QuickTester):
     """Module level tests for all sktime pairwise panel transformers."""
 
-    def test_pairwise_transformers_tabular(estimator_instance, scenario):
+    def test_pairwise_transformers_panel(self, estimator_instance, scenario):
         """Main test function for pairwise transformers on tabular data."""
         trafo_name = type(estimator_instance).__name__
         dist_mat = scenario.run(estimator_instance, method_sequence=["transform"])
