@@ -144,17 +144,6 @@ class ElbowChannelSelection(BaseTransformer):
     ----------
     ..[1]: Bhaskar Dhariyal et al. “Fast Channel Selection for Scalable Multivariate
     Time Series Classification.” AALTD, ECML-PKDD, Springer, 2021
-
-    Examples
-    --------
-    >>> from sktime.transformations.panel.channel_selection import ElbowChannelSelection
-    >>> from sktime.datasets import load_UCR_UEA_dataset
-    >>> cs = ElbowChannelSelection()
-    >>> X_train, y_train = load_UCR_UEA_dataset(
-    ...     "Cricket", split="train", return_X_y=True
-    ... )
-    >>> cs.fit(X_train, y_train)
-    >>> cs.transform(X_train)
     """
 
     _tags = {
@@ -265,17 +254,6 @@ class ElbowClassPairwise(BaseTransformer):
     ----------
     ..[1]: Bhaskar Dhariyal et al. “Fast Channel Selection for Scalable Multivariate
     Time Series Classification.” AALTD, ECML-PKDD, Springer, 2021
-
-    Examples
-    --------
-    >>> from sktime.transformations.panel.channel_selection import ElbowClassPairwise
-    >>> from sktime.datasets import load_UCR_UEA_dataset
-    >>> cs = ElbowClassPairwise()
-    >>> X_train, y_train = load_UCR_UEA_dataset(
-    ...     "Cricket", split="train", return_X_y=True
-    ... )
-    >>> cs.fit(X_train, y_train)
-    >>> cs.transform(X_train)
     """
 
     _tags = {
