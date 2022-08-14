@@ -14,7 +14,6 @@ from sklearn.utils.metaestimators import if_delegate_has_method
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.validation.series import check_series
 
-
 warn(
     "transformations.series.compose is deprecated and will be removed in"
     " version 0.15.0. All estimators in it will be moved to transformations.compose. "
@@ -26,15 +25,15 @@ warn(
 # mtypes for Series, Panel, Hierarchical,
 # with exception of some ambiguous and discouraged mtypes
 CORE_MTYPES = [
-            "pd.DataFrame",
-            "np.ndarray",
-            "pd.Series",
-            "pd-multiindex",
-            "df-list",
-            "nested_univ",
-            "numpy3D",
-            "pd_multiindex_hier",
-        ]
+    "pd.DataFrame",
+    "np.ndarray",
+    "pd.Series",
+    "pd-multiindex",
+    "df-list",
+    "nested_univ",
+    "numpy3D",
+    "pd_multiindex_hier",
+]
 
 
 class OptionalPassthrough(BaseTransformer):
