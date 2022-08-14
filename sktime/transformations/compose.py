@@ -1110,6 +1110,8 @@ class InvertTransform(_DelegatedTransformer):
 
         super(InvertTransform, self).__init__()
 
+        self.transformer_ = transformer.clone()
+
         # should be all tags, but not fit_is_empty
         #   (_fit should not be skipped)
         tags_to_clone = [
