@@ -31,9 +31,10 @@ class CombinedDistance(BasePairwiseTransformerPanel, _HeterogenousMetaEstimator)
     pw_trafos : list of sktime pairwise panel distances, or
         list of tuples (str, transformer) of sktime pairwise panel distances
         distances combined to a single distance using the operation
-    operation : None, str, or numpy ufunc, optional, default = None = mean
+    operation : None, str, function, or numpy ufunc, optional, default = None = mean
         if str, must be one of "mean", "+" (add), "*" (multiply), "max", "min"
-        operation carried out on the result of distances
+        if func, must be of signature (1D iterable) -> float
+        operation carried out on the distance matrices distances
 
     Examples
     --------
@@ -121,7 +122,12 @@ class CombinedDistance(BasePairwiseTransformerPanel, _HeterogenousMetaEstimator)
 
         distmats = [est.transform(X=X, X2=X2) for est in ests]
         distmat_stack = np.stack(distmats)
-        distmat = self.operation.reduce(distmat_stack)
+
+        operation = self._operation
+        if isinstance(operation, np.ufunc):
+            distmat = operation.reduce(distmat_stack)
+        else:
+            distmat = np.apply_over_axes(operation, distmat_stack, 0)
 
         return distmat
 
