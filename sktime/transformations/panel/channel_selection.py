@@ -224,11 +224,6 @@ class ElbowClassPairwise(BaseTransformer):
     selects the subset of channels using the elbow method that maximizes the
     distance between each class centroids pair across all channels.
 
-    Parameters
-    ----------
-    print_train_time : bool, optional (default=False)
-        Print the time taken to train the ECP.
-
     Attributes
     ----------
     channels_selected_ : list
