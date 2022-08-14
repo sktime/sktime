@@ -279,7 +279,7 @@ class BaseTransformer(BaseEstimator):
             return NotImplemented
 
     def __neg__(self):
-        """Magic unary - method, return OptionalPassthrough of self.
+        """Magic unary - (negation) method, return OptionalPassthrough of self.
 
         Intuition: `OptionalPassthrough` is "not having transformer", as an option.
 
