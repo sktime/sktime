@@ -11,8 +11,8 @@ from sklearn.preprocessing import StandardScaler
 from sktime.datasets import load_airline
 from sktime.datatypes import get_examples
 from sktime.transformations.compose import (
-    InvertTransform,
     FeatureUnion,
+    InvertTransform,
     TransformerPipeline,
 )
 from sktime.transformations.panel.padder import PaddingTransformer
