@@ -1125,7 +1125,7 @@ class InvertTransform(_DelegatedTransformer):
         ]
         self.clone_tags(transformer, tag_names=tags_to_clone)
 
-        if not transformer.get_tag("capability:inverse-transform", False):
+        if not transformer.get_tag("capability:inverse_transform", False):
             warn(
                 "transformer does not have capability to inverse transform, "
                 "according to capability:inverse_transform tag. "
