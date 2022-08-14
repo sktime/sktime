@@ -8,6 +8,11 @@ from sklearn import clone
 from sktime.base import _HeterogenousMetaEstimator
 from sktime.transformations._delegate import _DelegatedTransformer
 from sktime.transformations.base import BaseTransformer
+from sktime.transformations.series.compose import (
+    ColumnwiseTransformer,
+    OptionalPassthrough,
+    YtoX,
+)
 from sktime.utils.multiindex import flatten_multiindex
 from sktime.utils.sklearn import (
     is_sklearn_classifier,
@@ -17,11 +22,28 @@ from sktime.utils.sklearn import (
 
 __author__ = ["fkiraly", "mloning", "miraep8"]
 __all__ = [
-    "TransformerPipeline",
+    "ColumnwiseTransformer",
     "FeatureUnion",
     "FitInTransform",
     "MultiplexTransformer",
+    "OptionalPassthrough",
+    "TransformerPipeline",
+    "YtoX",
 ]
+
+
+# mtypes for Series, Panel, Hierarchical,
+# with exception of some ambiguous and discouraged mtypes
+CORE_MTYPES = [
+            "pd.DataFrame",
+            "np.ndarray",
+            "pd.Series",
+            "pd-multiindex",
+            "df-list",
+            "nested_univ",
+            "numpy3D",
+            "pd_multiindex_hier",
+        ]
 
 
 def _coerce_to_sktime(other):
@@ -128,16 +150,7 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
 
     _tags = {
         # we let all X inputs through to be handled by first transformer
-        "X_inner_mtype": [
-            "pd.DataFrame",
-            "np.ndarray",
-            "pd.Series",
-            "pd-multiindex",
-            "df-list",
-            "nested_univ",
-            "numpy3D",
-            "pd_multiindex_hier",
-        ],
+        "X_inner_mtype": CORE_MTYPES,
         "univariate-only": False,
     }
 
