@@ -278,6 +278,17 @@ class BaseTransformer(BaseEstimator):
         else:
             return NotImplemented
 
+    def __invert__(self):
+        """Magic unary ~ (inversion) method, return InvertTransform of self.
+
+        Returns
+        -------
+        `InvertTransform` object, containing `self`.
+        """
+        from sktime.transformations.compose import InvertTransform
+
+        return InvertTransform(self)
+
     def __getitem__(self, key):
         """Magic [...] method, return column subsetted transformer.
 
