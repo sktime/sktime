@@ -38,13 +38,13 @@ class CombinedDistance(BasePairwiseTransformerPanel, _HeterogenousMetaEstimator)
 
     Examples
     --------
-    >>> from sktime.dists_kernels.compose import CombinedDistance
+    >>> from sktime.dists_kernels.algebra import CombinedDistance
     >>> from sktime.dists_kernels.dtw import DtwDist
     >>> from sktime.datasets import load_unit_test
     >>>
     >>> X, _ = load_unit_test()
     >>> X = X[0:3]
-    >>> sum_dist = CombinedDistancee([DtwDist(), DtwDist(weighted=True)], "+")
+    >>> sum_dist = CombinedDistance([DtwDist(), DtwDist(weighted=True)], "+")
     >>> dist_mat = sum_dist.transform(X)
     """
 
@@ -124,7 +124,7 @@ class CombinedDistance(BasePairwiseTransformerPanel, _HeterogenousMetaEstimator)
 
         operation = self._operation
         if isinstance(operation, np.ufunc):
-            distmat = operation.reduce(distmat_stack)
+            distmat = operation.reduce(distmat_stack).squeeze(axis=0)
         else:
             distmat = np.apply_over_axes(operation, distmat_stack, 0)
 
