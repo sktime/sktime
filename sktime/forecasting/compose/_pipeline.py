@@ -214,6 +214,7 @@ class _Pipeline(
         from sktime.forecasting.arima import ARIMA
         from sktime.forecasting.naive import NaiveForecaster
         from sktime.transformations.series.adapt import TabularToSeriesAdaptor
+        from sktime.transformations.series.detrend import Detrender
         from sktime.transformations.series.exponent import ExponentTransformer
         from sktime.utils.validation._dependencies import _check_estimator_deps
 
@@ -232,7 +233,7 @@ class _Pipeline(
             ]
             params2 = {"steps": STEPS2}
 
-            params3 = {"steps": [ExponentTransformer(), ARIMA()]}
+            params3 = {"steps": [Detrender(), ARIMA()]}
 
             return [params1, params2, params3]
 
