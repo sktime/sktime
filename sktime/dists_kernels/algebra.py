@@ -77,7 +77,6 @@ class CombinedDistance(BasePairwiseTransformerPanel, _HeterogenousMetaEstimator)
 
     def _resolve_operation(self, operation):
         """Coerce operation to a numpy.ufunc."""
-
         alias_dict = {
             None: np.mean,
             "mean": np.mean,
