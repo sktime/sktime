@@ -4,7 +4,7 @@
 """Meta-transformers for building composite transformers."""
 
 __author__ = ["aiwalter", "SveaMeyer13", "fkiraly"]
-__all__ = ["OptionalPassthrough", "ColumnwiseTransformer", "YtoX"]
+__all__ = ["Id", "OptionalPassthrough", "ColumnwiseTransformer", "YtoX"]
 
 import pandas as pd
 from sklearn.utils.metaestimators import if_delegate_has_method
@@ -12,6 +12,20 @@ from sklearn.utils.metaestimators import if_delegate_has_method
 from sktime.transformations._delegate import _DelegatedTransformer
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.validation.series import check_series
+
+
+# mtypes for Series, Panel, Hierarchical,
+# with exception of some ambiguous and discouraged mtypes
+CORE_MTYPES = [
+    "pd.DataFrame",
+    "np.ndarray",
+    "pd.Series",
+    "pd-multiindex",
+    "df-list",
+    "nested_univ",
+    "numpy3D",
+    "pd_multiindex_hier",
+]
 
 
 class Id(_DelegatedTransformer):
@@ -64,11 +78,11 @@ class Id(_DelegatedTransformer):
         return X
 
 
-class OptionalPassthrough(BaseTransformer):
+class OptionalPassthrough(_DelegatedTransformer):
     """Wrap an existing transformer to tune whether to include it in a pipeline.
 
     Allows tuning the implicit hyperparameter whether or not to use a
-    particular transformer inside a pipeline (e.g. TranformedTargetForecaster)
+    particular transformer inside a pipeline (e.g. TransformedTargetForecaster)
     or not. This is achieved by the hyperparameter `passthrough`
     which can be added to a tuning grid then (see example).
 
@@ -134,9 +148,8 @@ class OptionalPassthrough(BaseTransformer):
 
     def __init__(self, transformer, passthrough=False):
         self.transformer = transformer
-        self.transformer_ = None
         self.passthrough = passthrough
-        self._is_fitted = False
+
         super(OptionalPassthrough, self).__init__()
 
         # should be all tags, but not fit_is_empty
@@ -155,69 +168,12 @@ class OptionalPassthrough(BaseTransformer):
         ]
         self.clone_tags(transformer, tag_names=tags_to_clone)
 
-    def _fit(self, X, y=None):
-        """Fit transformer to X and y.
+        if passthrough:
+            self.transformer_ = Id()
+        else:
+            self.transformer_ = transformer.clone()
 
-        private _fit containing the core logic, called from fit
-
-        Parameters
-        ----------
-        X : Series or Panel of mtype X_inner_mtype
-            if X_inner_mtype is list, _fit must support all types in it
-            Data to fit transform to
-        y : Series or Panel of mtype y_inner_mtype, default=None
-            Additional data, e.g., labels for tarnsformation
-
-        Returns
-        -------
-        self: a fitted instance of the estimator
-        """
-        if not self.passthrough:
-            self.transformer_ = self.transformer.clone()
-            self.transformer_._fit(X, y)
-        return self
-
-    def _transform(self, X, y=None):
-        """Transform X and return a transformed version.
-
-        private _transform containing the core logic, called from transform
-
-        Parameters
-        ----------
-        X : Series or Panel of mtype X_inner_mtype
-            if X_inner_mtype is list, _transform must support all types in it
-            Data to be transformed
-        y : Series or Panel of mtype y_inner_mtype, default=None
-            Additional data, e.g., labels for transformation
-
-        Returns
-        -------
-        transformed version of X
-        """
-        if not self.passthrough:
-            X = self.transformer_._transform(X, y)
-        return X
-
-    def _inverse_transform(self, X, y=None):
-        """Inverse transform, inverse operation to transform.
-
-        core logic
-
-        Parameters
-        ----------
-        X : Series or Panel of mtype X_inner_mtype
-            if X_inner_mtype is list, _inverse_transform must support all types in it
-            Data to be inverse transformed
-        y : Series or Panel of mtype y_inner_mtype, optional (default=None)
-            Additional data, e.g., labels for transformation
-
-        Returns
-        -------
-        inverse transformed version of X
-        """
-        if not self.passthrough:
-            X = self.transformer_._inverse_transform(X, y)
-        return X
+    _delegate_name = "transformer_"
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
