@@ -550,6 +550,7 @@ def _mft(X, window_size, dft_length, norm, support, anova, variance):
     transformed = np.zeros((X.shape[0], end, length))
     stds = np.zeros((X.shape[0], end))
 
+    # 1.) First run using DFT
     with objmode(X_ffts="complex128[:,:]"):
         X_ffts = np.fft.rfft(X[:, :window_size], axis=1)  # complex128
     reals = np.real(X_ffts)  # float64[]
@@ -557,14 +558,10 @@ def _mft(X, window_size, dft_length, norm, support, anova, variance):
     transformed[:, 0, 0::2] = reals[:, 0 : length // 2]
     transformed[:, 0, 1::2] = imags[:, 0 : length // 2]
 
-    for a in range(X.shape[0]):
-        # stds[a] = _sliding_mean_std(X[a], window_size)
-        stds[a] = _calc_incremental_mean_std(X[a], end, window_size)
-
-    # other runs using MFT
+    # 2.) Other runs using MFT
     X2 = X.reshape(X.shape[0], X.shape[1], 1)
 
-    # compute only those needed and not all using "indices"
+    # compute only those indices needed and not all
     phis2 = phis[indices]
     transformed2 = transformed[:, :, indices]
     for i in range(1, end):
@@ -577,7 +574,12 @@ def _mft(X, window_size, dft_length, norm, support, anova, variance):
             reals * phis2[1 : (length + 1) : 2] + phis2[:length:2] * imags
         )
 
-    # divide all by stds
+    # compute STDs
+    for a in range(X.shape[0]):
+        # stds[a] = _sliding_mean_std(X[a], window_size)
+        stds[a] = _calc_incremental_mean_std(X[a], end, window_size)
+
+    # divide all by stds and use only the best indices
     if anova or variance:
         return transformed2[:, :, mask] / stds.reshape(stds.shape[0], stds.shape[1], 1)
     else:
