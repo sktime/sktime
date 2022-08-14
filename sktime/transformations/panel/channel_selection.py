@@ -6,7 +6,7 @@ classification using a scoring system with an elbow point method.
 """
 
 __author__ = ["haskarb", "a-pasos-ruiz", "TonyBagnall"]
-__all__ = ["ElbowChannelSelection", "ElbowClassPairwise"]
+__all__ = ["ElbowClassSum", "ElbowClassPairwise"]
 
 
 import itertools
@@ -112,8 +112,8 @@ class _shrunk_centroid:
         return centroid_frame.reset_index(drop=True)
 
 
-class ElbowChannelSelection(BaseTransformer):
-    """Elbow Channel Selection (ECS) transformer to select a subset of channels.
+class ElbowClassSum(BaseTransformer):
+    """Elbow Class Sum (ECS) transformer to select a subset of channels.
 
     Overview: From the input of multivariate time series data, create a distance
     matrix [1] by calculating the distance between each class centroid. The
@@ -121,9 +121,10 @@ class ElbowChannelSelection(BaseTransformer):
     distance between the class centroids by aggregating the distance for every
     class pair across each channel.
 
+
     Attributes
     ----------
-    channels_selected : list
+    channels_selected_ : list
         List of channels selected by the ECS.
     distance_frame_ : DataFrame
         Distance matrix between the class centroids.
@@ -141,14 +142,13 @@ class ElbowChannelSelection(BaseTransformer):
 
     Examples
     --------
-    >>> from sktime.transformations.panel.channel_selection import ElbowChannelSelection
+    >>> from sktime.transformations.panel.channel_selection import ElbowClassSum
     >>> from sktime.datasets import load_UCR_UEA_dataset
-    >>> cs = ElbowChannelSelection()
+    >>> cs = ElbowClassSum()
     >>> X_train, y_train = load_UCR_UEA_dataset(
     ...     "Cricket", split="train", return_X_y=True
     ... )
     >>> cs.fit(X_train, y_train)
-    ElbowClassPairwise(...)
     >>> Xt = cs.transform(X_train)
     """
 
@@ -169,8 +169,8 @@ class ElbowChannelSelection(BaseTransformer):
     }
 
     def __init__(self):
-        self.channels_selected = []
-        super(ElbowChannelSelection, self).__init__()
+
+        super(ElbowClassSum, self).__init__()
 
     def _fit(self, X, y):
         """Fit ECS to a specified X and y.
@@ -187,6 +187,7 @@ class ElbowChannelSelection(BaseTransformer):
         self : reference to self.
 
         """
+        self.channels_selected_ = []
         start = int(round(time.time() * 1000))
         centroid_obj = _shrunk_centroid(0)
         centroids = centroid_obj.create_centroid(X.copy(), y)
@@ -194,7 +195,7 @@ class ElbowChannelSelection(BaseTransformer):
         self.distance_frame_ = distances.distance(centroids)
         distance = self.distance_frame_.sum(axis=1).sort_values(ascending=False).values
         indices = self.distance_frame_.sum(axis=1).sort_values(ascending=False).index
-        self.channels_selected.extend(_detect_knee_point(distance, indices)[0])
+        self.channels_selected_.extend(_detect_knee_point(distance, indices)[0])
         self.train_time_ = int(round(time.time() * 1000)) - start
         return self
 
@@ -212,7 +213,7 @@ class ElbowChannelSelection(BaseTransformer):
         output : pandas DataFrame
             X with a subset of channels
         """
-        return X[:, self.channels_selected, :]
+        return X[:, self.channels_selected_, :]
 
 
 class ElbowClassPairwise(BaseTransformer):
@@ -223,9 +224,14 @@ class ElbowClassPairwise(BaseTransformer):
     selects the subset of channels using the elbow method that maximizes the
     distance between each class centroids pair across all channels.
 
+    Parameters
+    ----------
+    print_train_time : bool, optional (default=False)
+        Print the time taken to train the ECP.
+
     Attributes
     ----------
-    channels_selected : list
+    channels_selected_ : list
         List of channels selected by the ECP.
     distance_frame_ : DataFrame
         Distance matrix between the class centroids.
@@ -247,7 +253,8 @@ class ElbowClassPairwise(BaseTransformer):
     >>> from sktime.datasets import load_UCR_UEA_dataset
     >>> cs = ElbowClassPairwise()
     >>> X_train, y_train = load_UCR_UEA_dataset(
-         "Cricket", split="train", return_X_y=True)
+    ...     "Cricket", split="train", return_X_y=True
+    ... )
     >>> cs.fit(X_train, y_train)
     >>> cs.transform(X_train)
     """
@@ -268,13 +275,7 @@ class ElbowClassPairwise(BaseTransformer):
         # can the transformer handle unequal length time series (if passed Panel)?
     }
 
-    def __init__(self, normalise=True, n_jobs=1, random_state=None):
-        self.normalise = normalise
-        self.n_jobs = n_jobs
-        self.random_state = random_state if isinstance(random_state, int) else None
-        self.channels_selected = []
-        self._is_fitted = False
-        self.train_time_ = 0
+    def __init__(self):
         super(ElbowClassPairwise, self).__init__()
 
     def _fit(self, X, y):
@@ -292,6 +293,7 @@ class ElbowClassPairwise(BaseTransformer):
         self : reference to self.
 
         """
+        self.channels_selected_ = []
         start = int(round(time.time() * 1000))
         centroid_obj = _shrunk_centroid(0)
         df = centroid_obj.create_centroid(X.copy(), y)
@@ -301,8 +303,8 @@ class ElbowClassPairwise(BaseTransformer):
         for pairdistance in self.distance_frame_.iteritems():
             distance = pairdistance[1].sort_values(ascending=False).values
             indices = pairdistance[1].sort_values(ascending=False).index
-            self.channels_selected.extend(_detect_knee_point(distance, indices)[0])
-            self.channels_selected = list(set(self.channels_selected))
+            self.channels_selected_.extend(_detect_knee_point(distance, indices)[0])
+            self.channels_selected_ = list(set(self.channels_selected_))
         self.train_time_ = int(round(time.time() * 1000)) - start
         self._is_fitted = True
         return self
@@ -321,4 +323,4 @@ class ElbowClassPairwise(BaseTransformer):
         output : pandas DataFrame
             X with a subset of channels
         """
-        return X[:, self.channels_selected, :]
+        return X[:, self.channels_selected_, :]
