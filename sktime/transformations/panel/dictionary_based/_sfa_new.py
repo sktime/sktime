@@ -530,23 +530,23 @@ def _mft(X, window_size, dft_length, norm, support, anova, variance):
     length = dft_length + start_offset + dft_length % 2
     end = max(1, len(X[0]) - window_size + 1)
 
-    """
     #  compute only those needed and not all
-    #  TODO!!!
+    support = support + start_offset
     if anova or variance:
         indices = np.full(length, False)
-        actual = np.full(length, False)
+        mask = np.full(length, False)
         for s in support:
             indices[s] = True
             if (s % 2) == 0:  # even
                 indices[s + 1] = True
             else:  # uneven
                 indices[s - 1] = True
-            actual[s] = True
+            mask[s] = True
     else:
         indices = np.full(length, True)
-        actual = indices
-    """
+        mask = indices
+    mask = mask[indices]
+    # print(mask, indices, support)
 
     phis = _get_phis(window_size, length)
     transformed = np.zeros((X.shape[0], end, length))
@@ -567,8 +567,8 @@ def _mft(X, window_size, dft_length, norm, support, anova, variance):
     X2 = X.reshape(X.shape[0], X.shape[1], 1)
 
     # compute only those needed and not all using "indices"
-    phis2 = phis  # [indices]
-    transformed2 = transformed  # [:, :, indices]
+    phis2 = phis[indices]
+    transformed2 = transformed[:, :, indices]
     for i in range(1, end):
         reals = transformed2[:, i - 1, 0::2] + X2[:, i + window_size - 1] - X2[:, i - 1]
         imags = transformed2[:, i - 1, 1::2]
@@ -580,13 +580,14 @@ def _mft(X, window_size, dft_length, norm, support, anova, variance):
         )
 
     # divide all by stds
-    # transformed = transformed2[:, :, actual] / stds.reshape(
-    #    stds.shape[0], stds.shape[1], 1
-    # )
-    transformed = transformed2 / stds.reshape(stds.shape[0], stds.shape[1], 1)
+    transformed[:, :, support] = transformed2[:, :, mask] / stds.reshape(
+        stds.shape[0], stds.shape[1], 1
+    )
+    # transformed = transformed2 / stds.reshape(stds.shape[0], stds.shape[1], 1)
 
     return (
-        transformed[:, :, start_offset:][:, :, support]
+        # transformed[:, :, start_offset:][:, :, support]
+        transformed[:, :, support]
         if (anova or variance)
         else transformed[:, :, start_offset:]
     )
