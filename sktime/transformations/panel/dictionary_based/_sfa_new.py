@@ -530,7 +530,7 @@ def _mft(X, window_size, dft_length, norm, support, anova, variance):
     length = dft_length + start_offset + dft_length % 2
     end = max(1, len(X[0]) - window_size + 1)
 
-    #  compute only those needed and not all
+    #  compute mask for only those indices needed and not all indices
     support = support + start_offset
     if anova or variance:
         indices = np.full(length, False)
@@ -542,11 +542,9 @@ def _mft(X, window_size, dft_length, norm, support, anova, variance):
             else:  # uneven
                 indices[s - 1] = True
             mask[s] = True
+        mask = mask[indices]
     else:
         indices = np.full(length, True)
-        mask = indices
-    mask = mask[indices]
-    # print(mask, indices, support)
 
     phis = _get_phis(window_size, length)
     transformed = np.zeros((X.shape[0], end, length))
@@ -580,14 +578,9 @@ def _mft(X, window_size, dft_length, norm, support, anova, variance):
         )
 
     # divide all by stds
-    transformed[:, :, support] = transformed2[:, :, mask] / stds.reshape(
-        stds.shape[0], stds.shape[1], 1
-    )
-    # transformed = transformed2 / stds.reshape(stds.shape[0], stds.shape[1], 1)
-
-    return (
-        # transformed[:, :, start_offset:][:, :, support]
-        transformed[:, :, support]
-        if (anova or variance)
-        else transformed[:, :, start_offset:]
-    )
+    if anova or variance:
+        return transformed2[:, :, mask] / stds.reshape(stds.shape[0], stds.shape[1], 1)
+    else:
+        return (transformed2 / stds.reshape(stds.shape[0], stds.shape[1], 1))[
+            :, :, start_offset:
+        ]
