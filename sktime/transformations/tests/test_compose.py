@@ -10,7 +10,11 @@ from sklearn.preprocessing import StandardScaler
 
 from sktime.datasets import load_airline
 from sktime.datatypes import get_examples
-from sktime.transformations.compose import FeatureUnion, TransformerPipeline
+from sktime.transformations.compose import (
+    InvertTransform,
+    FeatureUnion,
+    TransformerPipeline,
+)
 from sktime.transformations.panel.padder import PaddingTransformer
 from sktime.transformations.series.boxcox import LogTransformer
 from sktime.transformations.series.exponent import ExponentTransformer
@@ -224,3 +228,19 @@ def test_subset_getitem():
     )
     _assert_array_almost_equal(t_both.fit_transform(X), X_theta[["b__0", "b__2"]])
     _assert_array_almost_equal(t_none.fit_transform(X), X_theta)
+
+
+def test_dunder_neg():
+    """Test the neg dunder method, for wrapping in OptionalPassthrough."""
+    X = pd.DataFrame({"a": [1, 2], "b": [3, 4]})
+
+    t = ExponentTransformer(power=3)
+
+    t_inv = ~t
+
+    assert isinstance(t_inv, InvertTransform)
+    assert isinstance(t_inv.get_params()["transformer"], ExponentTransformer)
+
+    _assert_array_almost_equal(
+        t_inv.fit_transform(X), ExponentTransformer(1 / 3).fit_transform(X)
+    )
