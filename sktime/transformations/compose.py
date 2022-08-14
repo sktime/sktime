@@ -1205,5 +1205,11 @@ class InvertTransform(_DelegatedTransformer):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         from sktime.transformations.series.boxcox import BoxCoxTransformer
+        from sktime.transformations.series.exponent import ExponentTransformer
 
-        return {"transformer": BoxCoxTransformer(), "passthrough": False}
+        # ExponentTransformer skips fit
+        params1 = {"transformer": ExponentTransformer()}
+        # BoxCoxTransformer has fit
+        params2 = {"transformer": BoxCoxTransformer()}
+
+        return [params1, params2]
