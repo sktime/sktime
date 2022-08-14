@@ -160,6 +160,10 @@ class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
 
     def test_update(self, estimator_instance):
         """Test transformer update functionality."""
+        # todo: think of good way to deal with transformers that need y
+        if estimator_instance.get_tag("requires_y", False):
+            return None
+
         y = load_airline()
         y_fit = y[0:36]
         y_update1 = y[36:48]
