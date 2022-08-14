@@ -35,15 +35,15 @@ __all__ = [
 # mtypes for Series, Panel, Hierarchical,
 # with exception of some ambiguous and discouraged mtypes
 CORE_MTYPES = [
-            "pd.DataFrame",
-            "np.ndarray",
-            "pd.Series",
-            "pd-multiindex",
-            "df-list",
-            "nested_univ",
-            "numpy3D",
-            "pd_multiindex_hier",
-        ]
+    "pd.DataFrame",
+    "np.ndarray",
+    "pd.Series",
+    "pd-multiindex",
+    "df-list",
+    "nested_univ",
+    "numpy3D",
+    "pd_multiindex_hier",
+]
 
 
 def _coerce_to_sktime(other):
