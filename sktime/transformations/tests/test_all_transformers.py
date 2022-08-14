@@ -171,6 +171,7 @@ class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
         estimator_instance.update(y_update2, update_params=False)
         estimator_instance.transform(y_update2)
 
+
 # todo: add testing of inverse_transform
 # todo: refactor the below, equivalent index check
 
