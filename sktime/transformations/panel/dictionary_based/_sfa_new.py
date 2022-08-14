@@ -12,6 +12,8 @@ import math
 import sys
 
 import numpy as np
+
+# import scipy as scipy
 from numba import njit, objmode, prange
 from sklearn.feature_selection import f_classif
 from sklearn.preprocessing import KBinsDiscretizer
@@ -232,7 +234,10 @@ class SFA_NEW(_PanelToPanelTransformer):
 
         if self.variance and y is not None:
             # determine variance
+            # TODO test variants
             dft_variance = np.var(dft, axis=0)
+            # dft_variance = scipy.stats.skew(dft, axis=0)
+            # dft_variance = scipy.stats.kurtosis(dft, axis=0)
 
             # select word-length-many indices with largest variance
             self.support = np.argsort(-dft_variance)[: self.word_length]
@@ -525,18 +530,22 @@ def _mft(X, window_size, dft_length, norm, support, anova, variance):
     length = dft_length + start_offset + dft_length % 2
     end = max(1, len(X[0]) - window_size + 1)
 
-    #  compute only those needed and not all
     """
+    #  compute only those needed and not all
+    #  TODO!!!
     if anova or variance:
         indices = np.full(length, False)
+        actual = np.full(length, False)
         for s in support:
             indices[s] = True
             if (s % 2) == 0:  # even
                 indices[s + 1] = True
             else:  # uneven
                 indices[s - 1] = True
+            actual[s] = True
     else:
         indices = np.full(length, True)
+        actual = indices
     """
 
     phis = _get_phis(window_size, length)
@@ -571,7 +580,7 @@ def _mft(X, window_size, dft_length, norm, support, anova, variance):
         )
 
     # divide all by stds
-    # transformed[:, :, indices] = transformed2 / stds.reshape(
+    # transformed = transformed2[:, :, actual] / stds.reshape(
     #    stds.shape[0], stds.shape[1], 1
     # )
     transformed = transformed2 / stds.reshape(stds.shape[0], stds.shape[1], 1)

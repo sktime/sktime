@@ -185,16 +185,17 @@ class WEASEL_STEROIDS(BaseClassifier):
 
         return X_first
 
-        """
-        # dilation on first order differences
-        if first_difference:
-            X2 = np.diff(X, axis=1)
-            X2_first = X2[:, 0::d]
-            for i in range(1, d):
-                X2_second = X2[:, i::d]
-                X2_first = np.concatenate((X2_first, X2_second), axis=1)
-            return np.concatenate((X_first, X2_first), axis=1)
-        """
+        # # dilation on first order differences
+        # if first_difference:
+        #     # X2 = np.diff(X, axis=1)
+        #     X2_first = np.diff(X[:, 0::d], axis=1)
+        #     for i in range(1, d):
+        #         X2_second = np.diff(X[:, i::d], axis=1)
+        #         X2_first = np.concatenate((X2_first, X2_second), axis=1)
+        #
+        #     return np.concatenate((X_first, X2_first), axis=1)
+        # else:
+        #     return X_first
 
     def _fit(self, X, y):
         """Build a WEASEL classifiers from the training set (X, y).
@@ -288,29 +289,6 @@ class WEASEL_STEROIDS(BaseClassifier):
         # all_words = np.log(all_words+1)
 
         self.clf = RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=False)
-
-        # self.clf = make_pipeline(
-        #     GradientBoostingClassifier(
-        #       # subsample=0.8,
-        #       min_samples_split=len(np.unique(y)),
-        #       max_features="auto",
-        #       random_state=self.random_state,
-        #       n_estimators=10,
-        #       init=LogisticRegression(
-        #           solver="liblinear",
-        #           penalty="l2",
-        #           random_state=self.random_state
-        #       )
-        #     )
-        # )
-        # self.clf = make_pipeline(
-        #    StandardScaler(with_mean=True),
-        #    RidgeClassifierCV(
-        #        alphas=np.logspace(-3, 3, 10),
-        #        class_weight=None,
-        #        fit_intercept=True
-        #    )
-        # )
 
         self.clf.fit(all_words, y)
         return self
@@ -457,8 +435,9 @@ def _parallel_fit(
     sfa_words = transformer.fit_transform(X2, y)
 
     # Prefilter and remove those with only one value
-    # TODO !!!
+    # TODO : is it really usefull?
     # feature_once = set()
+    # TODO filter all non-real words
     feature_names = set()
     for t_words in sfa_words:
         for t_word in t_words:
