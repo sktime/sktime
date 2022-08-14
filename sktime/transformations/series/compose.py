@@ -90,11 +90,19 @@ class OptionalPassthrough(_DelegatedTransformer):
     ----------
     transformer : Estimator
         scikit-learn-like or sktime-like transformer to fit and apply to series.
+        this is a "blueprint" transformer, state does not change when `fit` is called
     passthrough : bool, default=False
        Whether to apply the given transformer or to just
         passthrough the data (identity transformation). If, True the transformer
         is not applied and the OptionalPassthrough uses the identity
         transformation.
+
+    Attributes
+    ----------
+    transformer_: transformer,
+        this clone is fitted when `fit` is called and provides `transform` and inverse
+        if passthrough = False, a clone of `transformer`passed
+        if passthrough = True, the identity transformer `Id`
 
     Examples
     --------
