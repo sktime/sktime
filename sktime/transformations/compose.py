@@ -20,7 +20,7 @@ from sktime.utils.sklearn import (
     is_sklearn_transformer,
 )
 
-__author__ = ["fkiraly", "mloning", "miraep8"]
+__author__ = ["fkiraly", "mloning", "miraep8", "aiwalter", "SveaMeyer13"]
 __all__ = [
     "ColumnwiseTransformer",
     "FeatureUnion",
