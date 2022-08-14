@@ -13,7 +13,6 @@ from sktime.transformations._delegate import _DelegatedTransformer
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.validation.series import check_series
 
-
 # mtypes for Series, Panel, Hierarchical,
 # with exception of some ambiguous and discouraged mtypes
 CORE_MTYPES = [
