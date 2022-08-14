@@ -149,6 +149,7 @@ class ElbowClassSum(BaseTransformer):
     ...     "Cricket", split="train", return_X_y=True
     ... )
     >>> cs.fit(X_train, y_train)
+    ElbowClassSum(...)
     >>> Xt = cs.transform(X_train)
     """
 
@@ -251,6 +252,7 @@ class ElbowClassPairwise(BaseTransformer):
     ...     "Cricket", split="train", return_X_y=True
     ... )
     >>> cs.fit(X_train, y_train)
+    ElbowClassPairwise(...)
     >>> Xt = cs.transform(X_train)
     """
 
