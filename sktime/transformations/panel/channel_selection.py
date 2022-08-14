@@ -256,7 +256,7 @@ class ElbowClassPairwise(BaseTransformer):
     ...     "Cricket", split="train", return_X_y=True
     ... )
     >>> cs.fit(X_train, y_train)
-    >>> cs.transform(X_train)
+    >>> Xt = cs.transform(X_train)
     """
 
     _tags = {
