@@ -242,16 +242,12 @@ if _check_soft_dependencies("xarray", severity="none"):
     import xarray as xr
 
     def check_xrdataarray_series(obj, return_metadata=False, var_name="obj"):
-        metadata = dict()
-        # TODO multiindexing is not allowed!
-        # TODO check number of time index
-        # TODO check order of indexes (First time, second column names?)
+        metadata = {}
 
         def ret(valid, msg, metadata, return_metadata):
             if return_metadata:
                 return valid, msg, metadata
-            else:
-                return valid
+            return valid
 
         if not isinstance(obj, xr.DataArray):
             msg = f"{var_name} must be a xarray.DataArray, found {type(obj)}"
@@ -261,14 +257,17 @@ if _check_soft_dependencies("xarray", severity="none"):
         if len(obj.dims) > 2: # Without multi indexing only two dimensions are possible
             msg = f"{var_name} must have two or less dimension, found {type(obj.dims)}"
             return ret(False, msg, None, return_metadata)
-        index = obj.indexes[obj.dims[0]] # TODO check the relation between coords and dims
+
+        # The first dimension is the index of the time series in sktimelen
+        index = obj.indexes[obj.dims[0]]
 
         metadata["is_empty"] = len(index) < 1 or len(obj.values) < 1
-        metadata["is_univariate"] = len(obj[obj.dims[1]]) < 2 # TODO requires that the second dimension describes the columns.
+        # The second dimension is the set of columns
+        metadata["is_univariate"] = len(obj[obj.dims[1]]) < 2
 
         # check that columns are unique
         msg = f"{var_name} must have " f"unique column indices, but found {obj.dims}"
-        assert len(obj.dims) == len(set(obj.dims)), msg # TODO Check column names
+        assert len(obj.dims) == len(set(obj.dims)), msg
 
         # check whether the time index is of valid type
         if not is_in_valid_index_types(index):
@@ -284,7 +283,7 @@ if _check_soft_dependencies("xarray", severity="none"):
             return ret(False, msg, None, return_metadata)
 
         # Check time index is ordered in time
-        if not index.is_monotonic: # TODO Check if index is monotonic
+        if not index.is_monotonic:
             msg = (
                 f"The (time) index of {var_name} must be sorted monotonically increasing, "
                 f"but found: {index}"
@@ -305,9 +304,3 @@ if _check_soft_dependencies("xarray", severity="none"):
         return ret(True, None, metadata, return_metadata)
 
     check_dict[("xr.DataArray", "Series")] = check_xrdataarray_series
-
-
-    #def check_xrdataset_series(obj, return_metadata=False, var_name="obj"):
-    #    pass
-
-    #check_dict[("xr.DataSet", "Series")] = check_xrdataset_series

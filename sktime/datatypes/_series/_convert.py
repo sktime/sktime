@@ -207,11 +207,9 @@ if _check_soft_dependencies("xarray", severity="none"):
         if not isinstance(obj, xr.DataArray):
             raise TypeError("input must be a xr.DataArray")
 
-        #if isinstance(store, dict): # TODO Check
-        #    store["columns"] = obj.columns
-        #    store["index"] = obj.index
-
-        return obj.to_pandas() # Alternative obj.to_dataframe("name").unstack()
+        if isinstance(store, dict):
+            store["coords"] = obj.coords
+        return obj.to_pandas()
 
     convert_dict[("xr.DataArray", "pd.DataFrame", "Series")] = convert_xrdataarray_to_Mvs_as_Series
 
@@ -219,11 +217,9 @@ if _check_soft_dependencies("xarray", severity="none"):
         if not isinstance(obj, pd.DataFrame):
             raise TypeError("input must be a xr.DataArray")
 
-        # if isinstance(store, dict): # TODO Check
-        #    store["columns"] = obj.columns
-        #    store["index"] = obj.index
-
-        return obj.T.to_xarray().to_array() # TODO Explain Transpose
+        if isinstance(store, dict) and "coords" in store:
+            return xr.DataArray(obj.values, store["coords"].coords)
+        return obj.T.to_xarray().to_array()
 
     convert_dict[("pd.DataFrame", "xr.DataArray", "Series")] = convert_Mvs_to_xrdatarray_as_Series
 

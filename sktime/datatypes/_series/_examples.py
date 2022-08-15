@@ -58,7 +58,9 @@ example_dict_lossy[("np.ndarray", "Series", 0)] = True
 
 if _check_soft_dependencies("xarray", severity="none"):
     import xarray as xr
-    da = xr.DataArray([[1], [4], [0.5], [-3]], dims=["index", "columns"], coords={"index": [0,1,2,3], "columns":["a"]})
+
+    da = xr.DataArray([[1], [4], [0.5], [-3]], dims=["index", "columns"],
+                      coords={"index": [0, 1, 2, 3], "columns": ["a"]})
 
     example_dict[("xr.DataArray", "Series", 0)] = da
     example_dict_lossy[("xr.DataArray", "Series", 0)] = False
@@ -88,7 +90,9 @@ example_dict[("np.ndarray", "Series", 1)] = arr
 example_dict_lossy[("np.ndarray", "Series", 1)] = True
 if _check_soft_dependencies("xarray", severity="none"):
     import xarray as xr
-    da = xr.DataArray([[1, 3], [4, 7], [0.5, 2], [-3, -3 / 7]], dims=["index", "columns"], coords={"index": [0,1,2,3], "columns":["a", "b"]})
+
+    da = xr.DataArray([[1, 3], [4, 7], [0.5, 2], [-3, -3 / 7]], dims=["index", "columns"],
+                      coords={"index": [0, 1, 2, 3], "columns": ["a", "b"]})
 
     example_dict[("xr.DataArray", "Series", 1)] = da
     example_dict_lossy[("xr.DataArray", "Series", 1)] = False
@@ -118,7 +122,9 @@ example_dict_lossy[("np.ndarray", "Series", 2)] = True
 
 if _check_soft_dependencies("xarray", severity="none"):
     import xarray as xr
-    da = xr.DataArray([[1, 3], [4, 7], [0.5, 2], [3, 3 / 7]], dims=["index", "columns"], coords={"index": [0,1,2,3], "columns":["a", "b"]})
+
+    da = xr.DataArray([[1, 3], [4, 7], [0.5, 2], [3, 3 / 7]], dims=["index", "columns"],
+                      coords={"index": [0, 1, 2, 3], "columns": ["a", "b"]})
 
     example_dict[("xr.DataArray", "Series", 2)] = da
     example_dict_lossy[("xr.DataArray", "Series", 2)] = False
