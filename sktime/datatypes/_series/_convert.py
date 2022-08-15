@@ -228,8 +228,10 @@ if _check_soft_dependencies("xarray", severity="none"):
 
         result = obj.T.to_xarray().to_array()
         if isinstance(store, dict) and "coords" in store:
-            result = result.rename(dict(zip(list(result.coords.keys()), store["coords"])))
-        return  result
+            result = result.rename(
+                dict(zip(list(result.coords.keys()), store["coords"]))
+            )
+        return result
 
     convert_dict[
         ("pd.DataFrame", "xr.DataArray", "Series")
