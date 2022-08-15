@@ -213,7 +213,7 @@ if _check_soft_dependencies("xarray", severity="none"):
             raise TypeError("input must be a xr.DataArray")
 
         if isinstance(store, dict):
-            store["coords"] = obj.coords
+            store["coords"] = list(obj.coords.keys())
         return obj.to_pandas()
 
     convert_dict[
@@ -226,9 +226,10 @@ if _check_soft_dependencies("xarray", severity="none"):
         if not isinstance(obj, pd.DataFrame):
             raise TypeError("input must be a xr.DataArray")
 
+        result = obj.T.to_xarray().to_array()
         if isinstance(store, dict) and "coords" in store:
-            return xr.DataArray(obj.values, store["coords"].coords)
-        return obj.T.to_xarray().to_array()
+            result = result.rename(dict(zip(list(result.coords.keys()), store["coords"])))
+        return  result
 
     convert_dict[
         ("pd.DataFrame", "xr.DataArray", "Series")
