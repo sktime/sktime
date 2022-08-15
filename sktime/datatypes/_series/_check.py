@@ -254,7 +254,7 @@ if _check_soft_dependencies("xarray", severity="none"):
             return ret(False, msg, None, return_metadata)
 
         # we now know obj is a xr.DataArray
-        if len(obj.dims) > 2: # Without multi indexing only two dimensions are possible
+        if len(obj.dims) > 2:  # Without multi indexing only two dimensions are possible
             msg = f"{var_name} must have two or less dimension, found {type(obj.dims)}"
             return ret(False, msg, None, return_metadata)
 
@@ -285,8 +285,8 @@ if _check_soft_dependencies("xarray", severity="none"):
         # Check time index is ordered in time
         if not index.is_monotonic:
             msg = (
-                f"The (time) index of {var_name} must be sorted monotonically increasing, "
-                f"but found: {index}"
+                f"The (time) index of {var_name} must be sorted "
+                f"monotonically increasing, but found: {index}"
             )
             return ret(False, msg, None, return_metadata)
 

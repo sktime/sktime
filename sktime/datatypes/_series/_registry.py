@@ -23,8 +23,8 @@ MTYPE_REGISTER_SERIES = [
     (
         "xr.DataArray",
         "Series",
-        "xr.DataArray representation of a uni- or multivariate series"
-    )
+        "xr.DataArray representation of a uni- or multivariate series",
+    ),
 ]
 
 MTYPE_LIST_SERIES = pd.DataFrame(MTYPE_REGISTER_SERIES)[0].values

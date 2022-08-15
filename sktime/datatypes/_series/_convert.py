@@ -175,6 +175,7 @@ def convert_np_to_UvS_as_Series(obj: np.ndarray, store=None) -> pd.Series:
 
 convert_dict[("np.ndarray", "pd.Series", "Series")] = convert_np_to_UvS_as_Series
 
+
 # obtain other conversions from/to numpyflat via concatenation to numpy3D
 def _concat(fun1, fun2):
     def concat_fun(obj, store=None):
@@ -201,9 +202,13 @@ def _extend_conversions(mtype, anchor_mtype, convert_dict):
                 convert_dict[(anchor_mtype, mtype, scitype)],
             )
 
+
 if _check_soft_dependencies("xarray", severity="none"):
     import xarray as xr
-    def convert_xrdataarray_to_Mvs_as_Series(obj: xr.DataArray, store=None) -> pd.DataFrame:
+
+    def convert_xrdataarray_to_Mvs_as_Series(
+        obj: xr.DataArray, store=None
+    ) -> pd.DataFrame:
         if not isinstance(obj, xr.DataArray):
             raise TypeError("input must be a xr.DataArray")
 
@@ -211,9 +216,13 @@ if _check_soft_dependencies("xarray", severity="none"):
             store["coords"] = obj.coords
         return obj.to_pandas()
 
-    convert_dict[("xr.DataArray", "pd.DataFrame", "Series")] = convert_xrdataarray_to_Mvs_as_Series
+    convert_dict[
+        ("xr.DataArray", "pd.DataFrame", "Series")
+    ] = convert_xrdataarray_to_Mvs_as_Series
 
-    def convert_Mvs_to_xrdatarray_as_Series(obj: pd.DataFrame, store=None) -> xr.DataArray:
+    def convert_Mvs_to_xrdatarray_as_Series(
+        obj: pd.DataFrame, store=None
+    ) -> xr.DataArray:
         if not isinstance(obj, pd.DataFrame):
             raise TypeError("input must be a xr.DataArray")
 
@@ -221,6 +230,8 @@ if _check_soft_dependencies("xarray", severity="none"):
             return xr.DataArray(obj.values, store["coords"].coords)
         return obj.T.to_xarray().to_array()
 
-    convert_dict[("pd.DataFrame", "xr.DataArray", "Series")] = convert_Mvs_to_xrdatarray_as_Series
+    convert_dict[
+        ("pd.DataFrame", "xr.DataArray", "Series")
+    ] = convert_Mvs_to_xrdatarray_as_Series
 
     _extend_conversions("xr.DataArray", "pd.DataFrame", convert_dict)
