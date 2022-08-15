@@ -40,6 +40,7 @@ __all__ = ["check_dict"]
 import numpy as np
 import pandas as pd
 
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.utils.validation.series import is_in_valid_index_types
 
 VALID_INDEX_TYPES = (pd.RangeIndex, pd.PeriodIndex, pd.DatetimeIndex)
@@ -237,75 +238,76 @@ def _index_equally_spaced(index):
     return all_equal
 
 
-import xarray as xr
+if _check_soft_dependencies("xarray", severity="none"):
+    import xarray as xr
 
-def check_xrdataarray_series(obj, return_metadata=False, var_name="obj"):
-    metadata = dict()
-    # TODO multiindexing is not allowed!
-    # TODO check number of time index
-    # TODO check order of indexes (First time, second column names?)
+    def check_xrdataarray_series(obj, return_metadata=False, var_name="obj"):
+        metadata = dict()
+        # TODO multiindexing is not allowed!
+        # TODO check number of time index
+        # TODO check order of indexes (First time, second column names?)
 
-    def ret(valid, msg, metadata, return_metadata):
-        if return_metadata:
-            return valid, msg, metadata
-        else:
-            return valid
+        def ret(valid, msg, metadata, return_metadata):
+            if return_metadata:
+                return valid, msg, metadata
+            else:
+                return valid
 
-    if not isinstance(obj, xr.DataArray):
-        msg = f"{var_name} must be a xarray.DataArray, found {type(obj)}"
-        return ret(False, msg, None, return_metadata)
-
-    # we now know obj is a xr.DataArray
-    if len(obj.dims) > 2: # Without multi indexing only two dimensions are possible
-        msg = f"{var_name} must have two or less dimension, found {type(obj.dims)}"
-        return ret(False, msg, None, return_metadata)
-    index = obj.indexes[obj.dims[0]] # TODO check the relation between coords and dims
-
-    metadata["is_empty"] = len(index) < 1 or len(obj.values) < 1
-    metadata["is_univariate"] = len(obj[obj.dims[1]]) < 2 # TODO requires that the second dimension describes the columns.
-
-    # check that columns are unique
-    msg = f"{var_name} must have " f"unique column indices, but found {obj.dims}"
-    assert len(obj.dims) == len(set(obj.dims)), msg # TODO Check column names
-
-    # check whether the time index is of valid type
-    if not is_in_valid_index_types(index):
-        msg = (
-            f"{type(index)} is not supported for {var_name}, use "
-            f"one of {VALID_INDEX_TYPES} or integer index instead."
-        )
-        return ret(False, msg, None, return_metadata)
-
-    # check that the dtype is not object
-    if "object" == obj.dtype:
-        msg = f"{var_name} should not have column of 'object' dtype"
-        return ret(False, msg, None, return_metadata)
-
-    # Check time index is ordered in time
-    if not index.is_monotonic: # TODO Check if index is monotonic
-        msg = (
-            f"The (time) index of {var_name} must be sorted monotonically increasing, "
-            f"but found: {index}"
-        )
-        return ret(False, msg, None, return_metadata)
-
-    if FREQ_SET_CHECK and isinstance(index, pd.DatetimeIndex):
-        if index.freq is None:
-            msg = f"{var_name} has DatetimeIndex, but no freq attribute set."
+        if not isinstance(obj, xr.DataArray):
+            msg = f"{var_name} must be a xarray.DataArray, found {type(obj)}"
             return ret(False, msg, None, return_metadata)
 
-    # check whether index is equally spaced or if there are any nans
-    #   compute only if needed
-    if return_metadata:
-        metadata["is_equally_spaced"] = _index_equally_spaced(index)
-        metadata["has_nans"] = obj.isnull().values.any()
+        # we now know obj is a xr.DataArray
+        if len(obj.dims) > 2: # Without multi indexing only two dimensions are possible
+            msg = f"{var_name} must have two or less dimension, found {type(obj.dims)}"
+            return ret(False, msg, None, return_metadata)
+        index = obj.indexes[obj.dims[0]] # TODO check the relation between coords and dims
 
-    return ret(True, None, metadata, return_metadata)
+        metadata["is_empty"] = len(index) < 1 or len(obj.values) < 1
+        metadata["is_univariate"] = len(obj[obj.dims[1]]) < 2 # TODO requires that the second dimension describes the columns.
 
-check_dict[("xr.DataArray", "Series")] = check_xrdataarray_series
+        # check that columns are unique
+        msg = f"{var_name} must have " f"unique column indices, but found {obj.dims}"
+        assert len(obj.dims) == len(set(obj.dims)), msg # TODO Check column names
+
+        # check whether the time index is of valid type
+        if not is_in_valid_index_types(index):
+            msg = (
+                f"{type(index)} is not supported for {var_name}, use "
+                f"one of {VALID_INDEX_TYPES} or integer index instead."
+            )
+            return ret(False, msg, None, return_metadata)
+
+        # check that the dtype is not object
+        if "object" == obj.dtype:
+            msg = f"{var_name} should not have column of 'object' dtype"
+            return ret(False, msg, None, return_metadata)
+
+        # Check time index is ordered in time
+        if not index.is_monotonic: # TODO Check if index is monotonic
+            msg = (
+                f"The (time) index of {var_name} must be sorted monotonically increasing, "
+                f"but found: {index}"
+            )
+            return ret(False, msg, None, return_metadata)
+
+        if FREQ_SET_CHECK and isinstance(index, pd.DatetimeIndex):
+            if index.freq is None:
+                msg = f"{var_name} has DatetimeIndex, but no freq attribute set."
+                return ret(False, msg, None, return_metadata)
+
+        # check whether index is equally spaced or if there are any nans
+        #   compute only if needed
+        if return_metadata:
+            metadata["is_equally_spaced"] = _index_equally_spaced(index)
+            metadata["has_nans"] = obj.isnull().values.any()
+
+        return ret(True, None, metadata, return_metadata)
+
+    check_dict[("xr.DataArray", "Series")] = check_xrdataarray_series
 
 
-#def check_xrdataset_series(obj, return_metadata=False, var_name="obj"):
-#    pass
+    #def check_xrdataset_series(obj, return_metadata=False, var_name="obj"):
+    #    pass
 
-#check_dict[("xr.DataSet", "Series")] = check_xrdataset_series
+    #check_dict[("xr.DataSet", "Series")] = check_xrdataset_series

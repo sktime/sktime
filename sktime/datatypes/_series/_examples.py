@@ -32,6 +32,8 @@ overall, conversions from non-lossy representations to any other ones
 import numpy as np
 import pandas as pd
 
+from sktime.utils.validation._dependencies import _check_soft_dependencies
+
 example_dict = dict()
 example_dict_lossy = dict()
 example_dict_metadata = dict()
@@ -54,11 +56,12 @@ arr = np.array([[1], [4], [0.5], [-3]])
 example_dict[("np.ndarray", "Series", 0)] = arr
 example_dict_lossy[("np.ndarray", "Series", 0)] = True
 
-import xarray as xr
-da = xr.DataArray([[1], [4], [0.5], [-3]], dims=["index", "columns"], coords={"index": [0,1,2,3], "columns":["a"]})
+if _check_soft_dependencies("xarray", severity="none"):
+    import xarray as xr
+    da = xr.DataArray([[1], [4], [0.5], [-3]], dims=["index", "columns"], coords={"index": [0,1,2,3], "columns":["a"]})
 
-example_dict[("xr.DataArray", "Series", 0)] = da
-example_dict_lossy[("xr.DataArray", "Series", 0)] = False
+    example_dict[("xr.DataArray", "Series", 0)] = da
+    example_dict_lossy[("xr.DataArray", "Series", 0)] = False
 
 
 example_dict_metadata[("Series", 0)] = {
@@ -83,11 +86,12 @@ arr = np.array([[1, 3], [4, 7], [0.5, 2], [-3, -3 / 7]])
 
 example_dict[("np.ndarray", "Series", 1)] = arr
 example_dict_lossy[("np.ndarray", "Series", 1)] = True
+if _check_soft_dependencies("xarray", severity="none"):
+    import xarray as xr
+    da = xr.DataArray([[1, 3], [4, 7], [0.5, 2], [-3, -3 / 7]], dims=["index", "columns"], coords={"index": [0,1,2,3], "columns":["a", "b"]})
 
-da = xr.DataArray([[1, 3], [4, 7], [0.5, 2], [-3, -3 / 7]], dims=["index", "columns"], coords={"index": [0,1,2,3], "columns":["a", "b"]})
-
-example_dict[("xr.DataArray", "Series", 1)] = da
-example_dict_lossy[("xr.DataArray", "Series", 1)] = False
+    example_dict[("xr.DataArray", "Series", 1)] = da
+    example_dict_lossy[("xr.DataArray", "Series", 1)] = False
 
 example_dict_metadata[("Series", 1)] = {
     "is_univariate": False,
@@ -112,11 +116,12 @@ arr = np.array([[1, 3], [4, 7], [0.5, 2], [3, 3 / 7]])
 example_dict[("np.ndarray", "Series", 2)] = arr
 example_dict_lossy[("np.ndarray", "Series", 2)] = True
 
-import xarray as xr
-da = xr.DataArray([[1, 3], [4, 7], [0.5, 2], [3, 3 / 7]], dims=["index", "columns"], coords={"index": [0,1,2,3], "columns":["a", "b"]})
+if _check_soft_dependencies("xarray", severity="none"):
+    import xarray as xr
+    da = xr.DataArray([[1, 3], [4, 7], [0.5, 2], [3, 3 / 7]], dims=["index", "columns"], coords={"index": [0,1,2,3], "columns":["a", "b"]})
 
-example_dict[("xr.DataArray", "Series", 2)] = da
-example_dict_lossy[("xr.DataArray", "Series", 2)] = False
+    example_dict[("xr.DataArray", "Series", 2)] = da
+    example_dict_lossy[("xr.DataArray", "Series", 2)] = False
 
 
 
