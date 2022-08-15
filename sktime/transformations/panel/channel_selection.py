@@ -121,17 +121,17 @@ class ElbowClassSum(BaseTransformer):
     distance between the class centroids by aggregating the distance for every
     class pair across each channel.
 
+    Note: Channels, variables, dimensions, features are used interchangeably in
+    literature.
 
     Attributes
     ----------
-    channels_selected_ : list
+    channels_selected_ : list of integers; integer being the index of the channel
         List of channels selected by the ECS.
     distance_frame_ : DataFrame
         distance matrix of the class centroids pair and channels.
-        ::
-            shape = [n_channels, n_class_centroids_pairs]
-            distance_frame_[i, Centroid_A_B] = distance between centroid class A and
-            centroid class B for channel i.
+            ``shape = [n_channels, n_class_centroids_pairs]``
+        Table 1 provides an illustration in [1].
     train_time_ : int
         Time taken to train the ECS.
 
@@ -229,16 +229,17 @@ class ElbowClassPairwise(BaseTransformer):
     selects the subset of channels using the elbow method that maximizes the
     distance between each class centroids pair across all channels.
 
+    Note: Channels, variables, dimensions, features are used interchangeably in
+    literature.
+
     Attributes
     ----------
-    channels_selected_ : list
-        List of channels selected by the ECP.
+    channels_selected_ : list of integers; integer being the index of the channel
+        List of channels selected by the ECS.
     distance_frame_ : DataFrame
         distance matrix of the class centroids pair and channels.
-        ::
-            shape = [n_channels, n_class_centroids_pairs]
-            distance_frame_[i, Centroid_A_B] = distance between centroid class A and
-            centroid class B for channel i.
+            ``shape = [n_channels, n_class_centroids_pairs]``
+        Table 1 provides an illustration in [1].
     train_time_ : int
         Time taken to train the ECP.
 
