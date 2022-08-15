@@ -127,7 +127,7 @@ class ElbowClassSum(BaseTransformer):
     channels_selected_ : list
         List of channels selected by the ECS.
     distance_frame_ : DataFrame
-        Distance matrix between the class centroids.
+        numeric distance matrix between the class centroids pair and channels.
     train_time_ : int
         Time taken to train the ECS.
 
@@ -230,7 +230,7 @@ class ElbowClassPairwise(BaseTransformer):
     channels_selected_ : list
         List of channels selected by the ECP.
     distance_frame_ : DataFrame
-        Distance matrix between the class centroids.
+        numeric distance matrix between the class centroids pair and channels.
     train_time_ : int
         Time taken to train the ECP.
 
@@ -303,7 +303,7 @@ class ElbowClassPairwise(BaseTransformer):
             self.channels_selected_.extend(_detect_knee_point(distance, indices)[0])
             self.channels_selected_ = list(set(self.channels_selected_))
         self.train_time_ = int(round(time.time() * 1000)) - start
-        self._is_fitted = True
+        # self._is_fitted = True
         return self
 
     def _transform(self, X, y=None):
