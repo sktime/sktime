@@ -37,6 +37,7 @@ import pandas as pd
 ##############################################################
 # methods to convert one machine type to another machine type
 ##############################################################
+from sktime.datatypes._registry import MTYPE_LIST_SERIES
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 convert_dict = dict()
@@ -174,6 +175,32 @@ def convert_np_to_UvS_as_Series(obj: np.ndarray, store=None) -> pd.Series:
 
 convert_dict[("np.ndarray", "pd.Series", "Series")] = convert_np_to_UvS_as_Series
 
+# obtain other conversions from/to numpyflat via concatenation to numpy3D
+def _concat(fun1, fun2):
+    def concat_fun(obj, store=None):
+        obj1 = fun1(obj, store=store)
+        obj2 = fun2(obj1, store=store)
+        return obj2
+
+    return concat_fun
+
+
+def _extend_conversions(mtype, anchor_mtype, convert_dict):
+    keys = convert_dict.keys()
+    scitype = list(keys)[0][2]
+
+    for tp in set(MTYPE_LIST_SERIES).difference([mtype, anchor_mtype]):
+        if (anchor_mtype, tp, scitype) in convert_dict.keys():
+            convert_dict[(mtype, tp, scitype)] = _concat(
+                convert_dict[(mtype, anchor_mtype, scitype)],
+                convert_dict[(anchor_mtype, tp, scitype)],
+            )
+        if (tp, anchor_mtype, scitype) in convert_dict.keys():
+            convert_dict[(tp, mtype, scitype)] = _concat(
+                convert_dict[(tp, anchor_mtype, scitype)],
+                convert_dict[(anchor_mtype, mtype, scitype)],
+            )
+
 if _check_soft_dependencies("xarray", severity="none"):
     import xarray as xr
     def convert_xrdataarray_to_Mvs_as_Series(obj: xr.DataArray, store=None) -> pd.DataFrame:
@@ -199,3 +226,5 @@ if _check_soft_dependencies("xarray", severity="none"):
         return obj.T.to_xarray().to_array() # TODO Explain Transpose
 
     convert_dict[("pd.DataFrame", "xr.DataArray", "Series")] = convert_Mvs_to_xrdatarray_as_Series
+
+    _extend_conversions("xr.DataArray", "pd.DataFrame", convert_dict)
