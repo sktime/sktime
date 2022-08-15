@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Tests for adapter transformers."""
+"""Tests for OptionalPassthrough transformer."""
 
 import pytest
 from pandas.testing import assert_series_equal
@@ -17,6 +17,9 @@ def test_passthrough(passthrough):
 
     transformer = OptionalPassthrough(ExponentTransformer(), passthrough=passthrough)
     y_hat = transformer.fit_transform(y)
+    y_inv = transformer.inverse_transform(y_hat)
+
+    assert_series_equal(y, y_inv)
 
     if passthrough:
         assert_series_equal(y, y_hat)
