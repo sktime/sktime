@@ -1315,6 +1315,7 @@ class DirectReductionForecaster(BaseForecaster):
 
     _tags = {
         "requires-fh-in-fit": True,  # is the forecasting horizon required in fit?
+        "ignores-exogeneous-X": False,
         "X_inner_mtype": "pd.DataFrame",
         "y_inner_mtype": "pd.DataFrame",
     }
