@@ -226,7 +226,7 @@ if _check_soft_dependencies("xarray", severity="none"):
         if not isinstance(obj, pd.DataFrame):
             raise TypeError("input must be a xr.DataArray")
 
-        result = obj.T.to_xarray().to_array()
+        result = xr.DataArray(obj.values, coords=[obj.index, obj.columns])
         if isinstance(store, dict) and "coords" in store:
             result = result.rename(
                 dict(zip(list(result.coords.keys()), store["coords"]))

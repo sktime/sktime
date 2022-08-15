@@ -15,6 +15,17 @@ __all__ = ["deep_equals"]
 import numpy as np
 import pandas as pd
 
+from sktime.utils.validation._dependencies import _check_soft_dependencies
+
+
+def check_xarray(x, y):
+    if _check_soft_dependencies("xarray", severity="none"):
+        import xarray as xr
+
+        if isinstance(y, xr.DataArray):
+            return True, x.equals(y)
+    return False, None
+
 
 def deep_equals(x, y, return_msg=False):
     """Test two objects for equality in value.
@@ -108,6 +119,9 @@ def deep_equals(x, y, return_msg=False):
             return ret(False, f".dtype, x.dtype = {x.dtype} != y.dtype = {y.dtype}")
         return ret(np.array_equal(x, y, equal_nan=True), ".values")
     # recursion through lists, tuples and dicts
+    elif check_xarray(x, y)[0]:
+        is_equal = check_xarray(x, y)[0]
+        return ret(is_equal, "The xr.DataArrays are not equal")
     elif isinstance(x, (list, tuple)):
         return ret(*_tuple_equals(x, y, return_msg=True))
     elif isinstance(x, dict):
