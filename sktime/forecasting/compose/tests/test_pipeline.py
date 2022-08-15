@@ -159,14 +159,14 @@ def test_pipeline_with_dimension_changing_transformer():
     pipe = TransformedTargetForecaster(
         steps=[
             ("log", OptionalPassthrough(LogTransformer())),
-            ("differencer", Differencer()),
+            ("differencer", Differencer(na_handling="drop_na")),
             ("scaler", TabularToSeriesAdaptor(StandardScaler())),
             (
                 "myforecasterpipe",
                 ForecastingPipeline(
                     steps=[
                         ("logX", OptionalPassthrough(LogTransformer())),
-                        ("differencerX", Differencer()),
+                        ("differencerX", Differencer(na_handling="drop_na")),
                         ("scalerX", TabularToSeriesAdaptor(StandardScaler())),
                         ("myforecaster", make_reduction(SVR())),
                     ]
