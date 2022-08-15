@@ -127,6 +127,7 @@ class CombinedDistance(BasePairwiseTransformerPanel, _HeterogenousMetaEstimator)
             distmat = operation.reduce(distmat_stack)
         else:
             distmat = np.apply_over_axes(operation, distmat_stack, 0)
+            distmat = distmat.squeeze(axis=0)
 
         return distmat
 
