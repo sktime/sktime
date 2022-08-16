@@ -2,7 +2,7 @@
 """Test for hidalgo segmentation."""
 import numpy as np
 
-from sktime.annotation.hidalgo import Hidalgo
+from sktime.transformations.series.hidalgo import Hidalgo
 
 # generate dataset
 np.random.seed(10002)

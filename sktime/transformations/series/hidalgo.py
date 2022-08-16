@@ -12,7 +12,7 @@ import numpy as np
 from sklearn.neighbors import NearestNeighbors
 from sklearn.utils.validation import check_random_state
 
-from sktime.annotation.base import BaseSeriesAnnotator
+from sktime.transformations.base import BaseTransformer
 
 
 def binom(N, q):
@@ -57,7 +57,7 @@ def Zpart(N, N1, zeta, q):
     )
 
 
-class Hidalgo(BaseSeriesAnnotator):
+class Hidalgo(BaseTransformer):
     """Class of the Hidalgo intrinsic dimension model.
 
     Hidalgo is a robust approach in discriminating regions with
@@ -114,7 +114,7 @@ class Hidalgo(BaseSeriesAnnotator):
 
     Examples
     --------
-    >>> from sktime.annotation.hidalgo import Hidalgo
+    >>> from sktime.transformations.series.hidalgo import Hidalgo
     >>> import numpy as np
     >>> np.random.seed(123)
     >>> X = np.random.rand(10,3)
@@ -123,7 +123,7 @@ class Hidalgo(BaseSeriesAnnotator):
     >>> fitted_model = model._fit(X)
     >>> Z = fitted_model._predict(X)
     >>> Z
-    array([0, 0, 0, 0, 0, 0, 1, 1, 1, 1])
+    array([0, 0, 0, 0, 0, 0, 1, 1, 1, 1], dtype=int64)
     """
 
     _tags = {"univariate-only": False}  # for unit test cases
@@ -146,8 +146,6 @@ class Hidalgo(BaseSeriesAnnotator):
         c=None,
         f=None,
         seed=1,
-        fmt="dense",
-        labels="score",
     ):
 
         self.metric = metric
@@ -167,7 +165,7 @@ class Hidalgo(BaseSeriesAnnotator):
         self.f = f
         self.seed = seed
 
-        super(Hidalgo, self).__init__(fmt=fmt, labels=labels)
+        super(Hidalgo, self).__init__()
 
     def _get_neighbourhood_params(self, X):
         """
@@ -580,7 +578,7 @@ class Hidalgo(BaseSeriesAnnotator):
         self._rng = check_random_state(seed)
         return self
 
-    def _predict(self, X):
+    def _transform(self, X, y=None):
         """
         Run the Hidalgo algorithm and writes results to self.
 
@@ -678,20 +676,20 @@ class Hidalgo(BaseSeriesAnnotator):
 
         return Z
 
-    def get_fitted_params(self):
-        """Get fitted parameters.
+    # def get_fitted_params(self):
+    #     """Get fitted parameters.
 
-        Returns
-        -------
-        fitted_params : dict
-        """
-        return {
-            "sampling": self.sampling,
-            "d": self.d_,
-            "derr": self.derr_,
-            "p": self.p_,
-            "perr": self.perr_,
-            "lik": self.lik_,
-            "likerr": self.likerr_,
-            "Pi": self.Pi,
-        }
+    #     Returns
+    #     -------
+    #     fitted_params : dict
+    #     """
+    #     return {
+    #         "sampling": self.sampling,
+    #         "d": self.d_,
+    #         "derr": self.derr_,
+    #         "p": self.p_,
+    #         "perr": self.perr_,
+    #         "lik": self.lik_,
+    #         "likerr": self.likerr_,
+    #         "Pi": self.Pi,
+    #     }
