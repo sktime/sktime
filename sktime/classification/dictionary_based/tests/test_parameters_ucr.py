@@ -31,11 +31,11 @@ def load_from_ucr_tsv_to_dataframe_plain(full_file_path_and_name):
 
 
 dataset_names_excerpt = [
-    "ACSF1",
-    "Adiac",
-    "AllGestureWiimoteX",
-    "AllGestureWiimoteY",
-    "AllGestureWiimoteZ",
+    # "ACSF1",
+    # "Adiac",
+    # "AllGestureWiimoteX",
+    # "AllGestureWiimoteY",
+    # "AllGestureWiimoteZ",
     "ArrowHead",
     "Beef",
     "BeetleFly",
@@ -47,10 +47,10 @@ dataset_names_excerpt = [
     # 'ChlorineConcentration',
     # 'CinCECGTorso',
     "Coffee",
-    "Computers",
-    "CricketX",
-    "CricketY",
-    "CricketZ",
+    # "Computers",
+    # "CricketX",
+    # "CricketY",
+    # "CricketZ",
     # 'Crop',
     "DiatomSizeReduction",
     "DistalPhalanxOutlineAgeGroup",
@@ -70,7 +70,7 @@ dataset_names_excerpt = [
     "FaceAll",
     "FaceFour",
     "FacesUCR",
-    "FiftyWords",
+    # "FiftyWords",
     # 'Fish',
     # 'FordA',
     # 'FordB',
@@ -83,18 +83,18 @@ dataset_names_excerpt = [
     # 'GesturePebbleZ1',
     # 'GesturePebbleZ2',
     "GunPoint",
-    "GunPointAgeSpan",
-    "GunPointMaleVersusFemale",
-    "GunPointOldVersusYoung",
+    # "GunPointAgeSpan",
+    # "GunPointMaleVersusFemale",
+    # "GunPointOldVersusYoung",
     # 'Ham',
     # 'HandOutlines',
     # 'Haptics',
     # 'Herring',
     # 'HouseTwenty',
     # 'InlineSkate',
-    "InsectEPGRegularTrain",
-    "InsectEPGSmallTrain",
-    "InsectWingbeatSound",
+    # "InsectEPGRegularTrain",
+    # "InsectEPGSmallTrain",
+    # "InsectWingbeatSound",
     "ItalyPowerDemand",
     # 'LargeKitchenAppliances',
     # 'Lightning2',
@@ -112,7 +112,7 @@ dataset_names_excerpt = [
     # 'NonInvasiveFetalECGThorax1',
     # 'NonInvasiveFetalECGThorax2',
     "OliveOil",
-    "OSULeaf",
+    # "OSULeaf",
     # 'PhalangesOutlinesCorrect',
     # 'Phoneme',
     # 'PickupGestureWiimoteZ',
@@ -179,6 +179,7 @@ if __name__ == "__main__":
         norm_options,
         word_lengths,
         use_first_differences,
+        alphabet_size,
     ):
         sum_scores = {}
 
@@ -201,6 +202,7 @@ if __name__ == "__main__":
                 max_feature_count=max_feature_count,
                 min_window=min_window,
                 max_window=max_window,
+                alphabet_sizes=[alphabet_size],
                 norm_options=norm_options,
                 word_lengths=word_lengths,
                 use_first_differences=use_first_differences,
@@ -267,22 +269,24 @@ if __name__ == "__main__":
 
     csv_scores = []
     choose_binning_strategies = [["equi-depth", "equi-width"], ["equi-depth"]]
-    choose_variance = [True]
+    # choose_variance = [True]
+    variance = True
     choose_ensemble_size = [50]
     choose_max_feature_count = [10_000]
-    choose_min_window = [8]
+    choose_min_window = [4, 6, 8]
+    choose_alphabet_size = [2, 4]
     choose_max_window = [16, 20, 24, 28, 32]
     choose_norm_options = [[False], [True, False]]
     choose_word_lengths = [[6], [8], [6, 8]]
-    choose_use_first_differences = [[True, False], [False], [True]]
+    choose_use_first_differences = [[True, False], [False]]
 
-    for variance in choose_variance:
-        for ensemble_size in choose_ensemble_size:
-            for max_feature_count in choose_max_feature_count:
-                for min_window in choose_min_window:
-                    for max_window in choose_max_window:
-                        for norm_options in choose_norm_options:
-                            for word_lengths in choose_word_lengths:
+    for ensemble_size in choose_ensemble_size:
+        for max_feature_count in choose_max_feature_count:
+            for min_window in choose_min_window:
+                for max_window in choose_max_window:
+                    for norm_options in choose_norm_options:
+                        for word_lengths in choose_word_lengths:
+                            for alphabet_size in choose_alphabet_size:
                                 for (
                                     use_first_differences
                                 ) in choose_use_first_differences:
@@ -293,7 +297,7 @@ if __name__ == "__main__":
                                             delayed(_parallel_fit)(
                                                 dataset,
                                                 binning_strategies,
-                                                variance,
+                                                True,
                                                 ensemble_size,
                                                 max_feature_count,
                                                 min_window,
@@ -301,6 +305,7 @@ if __name__ == "__main__":
                                                 norm_options,
                                                 word_lengths,
                                                 use_first_differences,
+                                                alphabet_size,
                                             )
                                             for dataset in dataset_names_excerpt
                                         )
@@ -328,6 +333,7 @@ if __name__ == "__main__":
                                                 norm_options,
                                                 word_lengths,
                                                 use_first_differences,
+                                                alphabet_size,
                                             )
 
                                             mean_acc = np.round(
@@ -376,6 +382,7 @@ if __name__ == "__main__":
                                                     norm_options,
                                                     word_lengths,
                                                     use_first_differences,
+                                                    alphabet_size,
                                                 )
                                             )
 
@@ -397,6 +404,7 @@ if __name__ == "__main__":
                                                 "norm_options",
                                                 "word_lengths",
                                                 "use_first_differences",
+                                                "alphabet_size",
                                             ],
                                         ).to_csv(
                                             "scores_weasel_all_parameters.csv",
