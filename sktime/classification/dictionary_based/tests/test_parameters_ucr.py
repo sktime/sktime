@@ -8,9 +8,11 @@ from warnings import simplefilter
 import numpy as np
 import pandas as pd
 from joblib import Parallel, delayed
-from scipy.stats import zscore
 
 from sktime.classification.dictionary_based import WEASEL_STEROIDS
+
+# from scipy.stats import zscore
+
 
 sys.path.append("../../..")
 
@@ -29,11 +31,11 @@ def load_from_ucr_tsv_to_dataframe_plain(full_file_path_and_name):
 
 
 dataset_names_excerpt = [
-    # 'ACSF1',
-    # 'Adiac',
-    # 'AllGestureWiimoteX',
-    # 'AllGestureWiimoteY',
-    # 'AllGestureWiimoteZ',
+    "ACSF1",
+    "Adiac",
+    "AllGestureWiimoteX",
+    "AllGestureWiimoteY",
+    "AllGestureWiimoteZ",
     "ArrowHead",
     "Beef",
     "BeetleFly",
@@ -45,10 +47,10 @@ dataset_names_excerpt = [
     # 'ChlorineConcentration',
     # 'CinCECGTorso',
     "Coffee",
-    # 'Computers',
-    # 'CricketX',
-    # 'CricketY',
-    # 'CricketZ',
+    "Computers",
+    "CricketX",
+    "CricketY",
+    "CricketZ",
     # 'Crop',
     "DiatomSizeReduction",
     "DistalPhalanxOutlineAgeGroup",
@@ -68,7 +70,7 @@ dataset_names_excerpt = [
     "FaceAll",
     "FaceFour",
     "FacesUCR",
-    # 'FiftyWords',
+    "FiftyWords",
     # 'Fish',
     # 'FordA',
     # 'FordB',
@@ -80,19 +82,19 @@ dataset_names_excerpt = [
     # 'GestureMidAirD3',
     # 'GesturePebbleZ1',
     # 'GesturePebbleZ2',
-    "Gun_Point",
-    # 'GunPointAgeSpan',
-    # 'GunPointMaleVersusFemale',
-    # 'GunPointOldVersusYoung',
+    "GunPoint",
+    "GunPointAgeSpan",
+    "GunPointMaleVersusFemale",
+    "GunPointOldVersusYoung",
     # 'Ham',
     # 'HandOutlines',
     # 'Haptics',
     # 'Herring',
     # 'HouseTwenty',
     # 'InlineSkate',
-    # 'InsectEPGRegularTrain',
-    # 'InsectEPGSmallTrain',
-    # 'InsectWingbeatSound',
+    "InsectEPGRegularTrain",
+    "InsectEPGSmallTrain",
+    "InsectWingbeatSound",
     "ItalyPowerDemand",
     # 'LargeKitchenAppliances',
     # 'Lightning2',
@@ -104,14 +106,13 @@ dataset_names_excerpt = [
     "MiddlePhalanxOutlineAgeGroup",
     "MiddlePhalanxOutlineCorrect",
     "MiddlePhalanxTW",
-    # 'Missing_value_and_variable_length_datasets_adjusted',
     # 'MixedShapesRegularTrain',
     # 'MixedShapesSmallTrain',
     # 'MoteStrain',
     # 'NonInvasiveFetalECGThorax1',
     # 'NonInvasiveFetalECGThorax2',
     "OliveOil",
-    # 'OSULeaf',
+    "OSULeaf",
     # 'PhalangesOutlinesCorrect',
     # 'Phoneme',
     # 'PickupGestureWiimoteZ',
@@ -135,13 +136,13 @@ dataset_names_excerpt = [
     # 'ShapesAll',
     # 'SmallKitchenAppliances',
     # 'SmoothSubspace',
-    "SonyAIBORobot Surface",
-    "SonyAIBORobot SurfaceII",
+    "SonyAIBORobotSurface1",
+    "SonyAIBORobotSurface2",
     # 'StarLightCurves',
     # 'Strawberry',
     # 'SwedishLeaf',
     # 'Symbols',
-    "synthetic_control",
+    "SyntheticControl",
     # 'ToeSegmentation1',
     # 'ToeSegmentation2',
     # 'Trace',
@@ -162,7 +163,7 @@ dataset_names_excerpt = [
 
 # DATA_PATH = "/Users/bzcschae/workspace/similarity/datasets/classification/"
 # parallel_jobs = 1
-DATA_PATH = "/vol/fob-wbib-vol2/wbi/schaefpa/sktime/datasets/classification"
+DATA_PATH = "/vol/fob-wbib-vol2/wbi/schaefpa/sktime/datasets/UCRArchive_2018"
 parallel_jobs = len(dataset_names_excerpt)
 
 if __name__ == "__main__":
@@ -185,10 +186,10 @@ if __name__ == "__main__":
         simplefilter(action="ignore", category=FutureWarning)
 
         X_train, y_train = load_from_ucr_tsv_to_dataframe_plain(
-            os.path.join(DATA_PATH, dataset_name, dataset_name + "_TRAIN")
+            os.path.join(DATA_PATH, dataset_name, dataset_name + "_TRAIN.tsv")
         )
         X_test, y_test = load_from_ucr_tsv_to_dataframe_plain(
-            os.path.join(DATA_PATH, dataset_name, dataset_name + "_TEST")
+            os.path.join(DATA_PATH, dataset_name, dataset_name + "_TEST.tsv")
         )
 
         clfs = {
@@ -203,7 +204,7 @@ if __name__ == "__main__":
                 norm_options=norm_options,
                 word_lengths=word_lengths,
                 use_first_differences=use_first_differences,
-                n_jobs=1,
+                n_jobs=8,
             ),
             # "MiniRocket": make_pipeline(
             #    MiniRocket(random_state=1379),
@@ -219,8 +220,8 @@ if __name__ == "__main__":
             }
 
         # z-norm training/test data
-        X_train = zscore(X_train, axis=1)
-        X_test = zscore(X_test, axis=1)  # TODO???
+        # X_train = zscore(X_train, axis=1)
+        # X_test = zscore(X_test, axis=1)
         X_train = np.reshape(np.array(X_train), (len(X_train), 1, -1))
         X_test = np.reshape(np.array(X_test), (len(X_test), 1, -1))
 
@@ -265,29 +266,27 @@ if __name__ == "__main__":
         return sum_scores
 
     csv_scores = []
-    choose_binning_strategies = [["equi-depth"], ["equi-depth", "equi-width"]]
-    choose_variance = [True, False]
-    choose_ensemble_size = [50, 100]
-    choose_max_feature_count = [10_000, 20_000, 25_000, 50000]
-    choose_min_window = [4, 8]  # 12, 16
+    choose_binning_strategies = [["equi-depth", "equi-width"], ["equi-depth"]]
+    choose_variance = [True]
+    choose_ensemble_size = [50]
+    choose_max_feature_count = [10_000]
+    choose_min_window = [8]
     choose_max_window = [16, 20, 24, 28, 32]
     choose_norm_options = [[False], [True, False]]
-    choose_word_lengths = [[4], [6], [8], [6, 8], [6, 8, 10]]
-    # choose_alphabet_sizes = [4]
-    choose_use_first_differences = [[True, False], [False]]
+    choose_word_lengths = [[6], [8], [6, 8]]
+    choose_use_first_differences = [[True, False], [False], [True]]
 
-    for binning_strategies in choose_binning_strategies:
-        for variance in choose_variance:
-            for ensemble_size in choose_ensemble_size:
-                for max_feature_count in choose_max_feature_count:
-                    for min_window in choose_min_window:
-                        for max_window in choose_max_window:
-                            for norm_options in choose_norm_options:
-                                for word_lengths in choose_word_lengths:
-                                    for (
-                                        use_first_differences
-                                    ) in choose_use_first_differences:
-
+    for variance in choose_variance:
+        for ensemble_size in choose_ensemble_size:
+            for max_feature_count in choose_max_feature_count:
+                for min_window in choose_min_window:
+                    for max_window in choose_max_window:
+                        for norm_options in choose_norm_options:
+                            for word_lengths in choose_word_lengths:
+                                for (
+                                    use_first_differences
+                                ) in choose_use_first_differences:
+                                    for binning_strategies in choose_binning_strategies:
                                         parallel_res = Parallel(
                                             n_jobs=parallel_jobs, timeout=99999
                                         )(

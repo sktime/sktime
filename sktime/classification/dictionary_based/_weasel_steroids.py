@@ -7,6 +7,7 @@ The fastest WEASEL on earth
 Tour de WEASEL
 WEASEL on steroids
 
+Rocket-Science on WEASEL
 """
 
 __author__ = ["patrickzib"]
@@ -170,7 +171,7 @@ class WEASEL_STEROIDS(BaseClassifier):
         # A = np.transpose([X[:, 0]] * rep)
         # B = np.transpose([X[:, -1]] * rep)
 
-        # padding = np.fill((len(X), (ws-1) * d // 2))  # TODO ???
+        # pad = np.zeros((len(X), ws * d))
         # X = np.concatenate((A, X, B), axis=1)
 
         if first_difference:
@@ -182,20 +183,7 @@ class WEASEL_STEROIDS(BaseClassifier):
         for i in range(1, d):
             X_second = X[:, i::d]
             X_first = np.concatenate((X_first, X_second), axis=1)
-
         return X_first
-
-        # # dilation on first order differences
-        # if first_difference:
-        #     # X2 = np.diff(X, axis=1)
-        #     X2_first = np.diff(X[:, 0::d], axis=1)
-        #     for i in range(1, d):
-        #         X2_second = np.diff(X[:, i::d], axis=1)
-        #         X2_first = np.concatenate((X2_first, X2_second), axis=1)
-        #
-        #     return np.concatenate((X_first, X2_first), axis=1)
-        # else:
-        #     return X_first
 
     def _fit(self, X, y):
         """Build a WEASEL classifiers from the training set (X, y).
@@ -229,12 +217,7 @@ class WEASEL_STEROIDS(BaseClassifier):
             )
 
         # Randomly choose window sizes
-
         self.window_sizes = list(range(self.min_window, self.max_window + 1, 1))
-
-        # use every element at least once ?
-        # self.window_sizes = np.int32(np.round(np.linspace(
-        #       self.min_window, self.max_window + 1, self.ensemble_size)))
 
         parallel_res = Parallel(n_jobs=self.n_jobs, timeout=99999)(
             delayed(_parallel_fit)(
@@ -259,7 +242,7 @@ class WEASEL_STEROIDS(BaseClassifier):
             for i in range(self.ensemble_size)
         )
 
-        features_count = 0
+        self.total_features_count = 0
         all_words = np.zeros((len(X), self.max_feature_count), dtype=np.int32)
 
         for (
@@ -279,16 +262,18 @@ class WEASEL_STEROIDS(BaseClassifier):
             # merging arrays from different threads
             for idx, bag in enumerate(sfa_words2):
                 all_words[
-                    idx, features_count : (features_count + rel_features_count2)
+                    idx,
+                    self.total_features_count : (
+                        self.total_features_count + rel_features_count2
+                    ),
                 ] = bag
 
-            features_count += rel_features_count2
+            self.total_features_count += rel_features_count2
 
-        # all_words[all_words==0] = -1
-        # all_words = all_words / np.nanmax(all_words, axis=0)
-        # all_words = np.log(all_words+1)
+        all_words = all_words[:, : self.total_features_count]
 
         self.clf = RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=False)
+        # print(f"\tCross-Validation Acc: {self.clf.best_score_}")
 
         self.clf.fit(all_words, y)
         return self
@@ -341,17 +326,13 @@ class WEASEL_STEROIDS(BaseClassifier):
         )
 
         features_count = 0
-        all_words = np.zeros((len(X), self.max_feature_count), dtype=np.int32)
+        all_words = np.zeros((len(X), self.total_features_count), dtype=np.int32)
         for sfa_words, rel_features_count in parallel_res:
             for idx, bag in enumerate(sfa_words):
                 all_words[
                     idx, features_count : (features_count + rel_features_count)
                 ] = bag
             features_count += rel_features_count
-
-        # all_words[all_words==0] = -1
-        # all_words = all_words / np.nanmax(all_words, axis=0)
-        # all_words = np.log(all_words+1)
 
         return all_words
 
@@ -400,8 +381,7 @@ def _parallel_fit(
     n_instances,
 ):
     rng = check_random_state(i)
-    window_size = rng.choice(window_sizes)  #
-    # window_size = window_sizes[i]
+    window_size = rng.choice(window_sizes)
     alphabet_size = rng.choice(alphabet_sizes)
     word_length = min(window_size - 2, rng.choice(word_lengths))
     norm = rng.choice(norm_options)
@@ -424,27 +404,21 @@ def _parallel_fit(
         anova=anova,
         binning_method=binning_strategy,
         bigrams=bigrams,
+        # dilation=dilation,
         # upper=upper,
         n_jobs=n_jobs,
     )
 
-    # generate dilated dataset
     X2 = WEASEL_STEROIDS._dilation(X, dilation, window_size, first_difference)
 
     # generate SFA words on subsample
     sfa_words = transformer.fit_transform(X2, y)
 
     # Prefilter and remove those with only one value
-    # TODO : is it really usefull?
-    # feature_once = set()
-    # TODO filter all non-real words
     feature_names = set()
     for t_words in sfa_words:
         for t_word in t_words:
-            # if t_word in feature_once:
             feature_names.add(t_word)
-            # else:
-            #    feature_once.add(t_word)
 
     feature_count = min(max_feature_count // ensemble_size, len(feature_names))
     relevant_features_idx = rng.choice(

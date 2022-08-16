@@ -11,19 +11,16 @@ from warnings import simplefilter
 import numpy as np
 import pandas as pd
 import torch
-
-# from convst.classifiers import R_DST_Ridge
+from convst.classifiers import R_DST_Ridge
 from joblib import Parallel, delayed
 from sklearn.linear_model import RidgeClassifierCV
+from sklearn.pipeline import make_pipeline
 
-from sktime.classification.dictionary_based import WEASEL_STEROIDS, Hydra  # , WEASEL
-from sktime.transformations.panel.dictionary_based import SFA_NEW
+from sktime.classification.dictionary_based import WEASEL, WEASEL_STEROIDS, Hydra
+from sktime.transformations.panel.rocket import MiniRocket, Rocket
 
 # from scipy.stats import zscore
 
-
-# from sklearn.pipeline import make_pipeline
-# from sktime.transformations.panel.rocket import MiniRocket, Rocket
 
 sys.path.append("../../..")
 
@@ -41,6 +38,57 @@ def load_from_ucr_tsv_to_dataframe_plain(full_file_path_and_name):
     return df, y
 
 
+dataset_names_excerpt2 = [
+    "ACSF1",
+    "Adiac",
+    "AllGestureWiimoteX",
+    "AllGestureWiimoteY",
+    "AllGestureWiimoteZ",
+    "ArrowHead",
+    "Beef",
+    "BeetleFly",
+    "BirdChicken",
+    "Car",
+    "CBF",
+    "Coffee",
+    "Computers",
+    "CricketX",
+    "CricketY",
+    "CricketZ",
+    "DiatomSizeReduction",
+    "DistalPhalanxOutlineAgeGroup",
+    "DistalPhalanxOutlineCorrect",
+    "DistalPhalanxTW",
+    "ECG200",
+    "ECGFiveDays",
+    "FaceAll",
+    "FaceFour",
+    "FacesUCR",
+    "FiftyWords",
+    "GunPoint",
+    "GunPointAgeSpan",
+    "GunPointMaleVersusFemale",
+    "GunPointOldVersusYoung",
+    "InsectEPGRegularTrain",
+    "InsectEPGSmallTrain",
+    "InsectWingbeatSound",
+    "ItalyPowerDemand",
+    "MiddlePhalanxOutlineAgeGroup",
+    "MiddlePhalanxOutlineCorrect",
+    "MiddlePhalanxTW",
+    "OliveOil",
+    "OSULeaf",
+    "Plane",
+    "ProximalPhalanxOutlineAgeGroup",
+    "ProximalPhalanxOutlineCorrect",
+    "ProximalPhalanxTW",
+    "SonyAIBORobotSurface1",
+    "SonyAIBORobotSurface2",
+    "SyntheticControl",
+    "TwoLeadECG",
+    "Wine",
+]
+
 dataset_names_excerpt = [
     "ACSF1",
     "Adiac",
@@ -51,139 +99,144 @@ dataset_names_excerpt = [
     "Beef",
     "BeetleFly",
     "BirdChicken",
-    # 'BME',
+    "BME",
     "Car",
     "CBF",
-    # 'Chinatown',
-    # 'ChlorineConcentration',
-    # 'CinCECGTorso',
+    "Chinatown",
+    "ChlorineConcentration",
+    "CinCECGTorso",
     "Coffee",
-    # 'Computers',
-    # 'CricketX',
-    # 'CricketY',
-    # 'CricketZ',
-    # 'Crop',
+    "Computers",
+    "CricketX",
+    "CricketY",
+    "CricketZ",
+    "Crop",
     "DiatomSizeReduction",
     "DistalPhalanxOutlineAgeGroup",
     "DistalPhalanxOutlineCorrect",
     "DistalPhalanxTW",
-    # 'DodgerLoopDay',
-    # 'DodgerLoopGame',
-    # 'DodgerLoopWeekend',
-    # 'Earthquakes',
+    "DodgerLoopDay",
+    "DodgerLoopGame",
+    "DodgerLoopWeekend",
+    "Earthquakes",
     "ECG200",
-    # 'ECG5000',
+    "ECG5000",
     "ECGFiveDays",
-    # 'ElectricDevices',
-    # 'EOGHorizontalSignal',
-    # 'EOGVerticalSignal',
-    # 'EthanolLevel',
+    "ElectricDevices",
+    "EOGHorizontalSignal",
+    "EOGVerticalSignal",
+    "EthanolLevel",
     "FaceAll",
     "FaceFour",
     "FacesUCR",
-    # 'FiftyWords',
-    # 'Fish',
-    # 'FordA',
-    # 'FordB',
-    # 'FreezerRegularTrain',
-    # 'FreezerSmallTrain',
-    # 'Fungi',
-    # 'GestureMidAirD1',
-    # 'GestureMidAirD2',
-    # 'GestureMidAirD3',
-    # 'GesturePebbleZ1',
-    # 'GesturePebbleZ2',
+    "FiftyWords",
+    "Fish",
+    "FordA",
+    "FordB",
+    "FreezerRegularTrain",
+    "FreezerSmallTrain",
+    "Fungi",
+    "GestureMidAirD1",
+    "GestureMidAirD2",
+    "GestureMidAirD3",
+    "GesturePebbleZ1",
+    "GesturePebbleZ2",
     "GunPoint",
-    # 'GunPointAgeSpan',
-    # 'GunPointMaleVersusFemale',
-    # 'GunPointOldVersusYoung',
-    # 'Ham',
-    # 'HandOutlines',
-    # 'Haptics',
-    # 'Herring',
-    # 'HouseTwenty',
-    # 'InlineSkate',
-    # 'InsectEPGRegularTrain',
-    # 'InsectEPGSmallTrain',
-    # 'InsectWingbeatSound',
+    "GunPointAgeSpan",
+    "GunPointMaleVersusFemale",
+    "GunPointOldVersusYoung",
+    "Ham",
+    "HandOutlines",
+    "Haptics",
+    "Herring",
+    "HouseTwenty",
+    "InlineSkate",
+    "InsectEPGRegularTrain",
+    "InsectEPGSmallTrain",
+    "InsectWingbeatSound",
     "ItalyPowerDemand",
-    # 'LargeKitchenAppliances',
-    # 'Lightning2',
-    # 'Lightning7',
-    # 'Mallat',
-    # 'Meat',
-    # 'MedicalImages',
-    # 'MelbournePedestrian',
+    "LargeKitchenAppliances",
+    "Lightning2",
+    "Lightning7",
+    "Mallat",
+    "Meat",
+    "MedicalImages",
+    "MelbournePedestrian",
     "MiddlePhalanxOutlineAgeGroup",
     "MiddlePhalanxOutlineCorrect",
     "MiddlePhalanxTW",
-    # 'MixedShapesRegularTrain',
-    # 'MixedShapesSmallTrain',
-    # 'MoteStrain',
-    # 'NonInvasiveFetalECGThorax1',
-    # 'NonInvasiveFetalECGThorax2',
+    "MixedShapesRegularTrain",
+    "MixedShapesSmallTrain",
+    "MoteStrain",
+    "NonInvasiveFetalECGThorax1",
+    "NonInvasiveFetalECGThorax2",
     "OliveOil",
-    # 'OSULeaf',
-    # 'PhalangesOutlinesCorrect',
-    # 'Phoneme',
-    # 'PickupGestureWiimoteZ',
-    # 'PigAirwayPressure',
-    # 'PigArtPressure',
-    # 'PigCVP',
-    # 'PLAID',
+    "OSULeaf",
+    "PhalangesOutlinesCorrect",
+    "Phoneme",
+    "PickupGestureWiimoteZ",
+    "PigAirwayPressure",
+    "PigArtPressure",
+    "PigCVP",
+    "PLAID",
     "Plane",
-    # 'PowerCons',
+    "PowerCons",
     "ProximalPhalanxOutlineAgeGroup",
     "ProximalPhalanxOutlineCorrect",
     "ProximalPhalanxTW",
-    # 'RefrigerationDevices',
-    # 'Rock',
-    # 'ScreenType',
-    # 'SemgHandGenderCh2',
-    # 'SemgHandMovementCh2',
-    # 'SemgHandSubjectCh2',
-    # 'ShakeGestureWiimoteZ',
-    # 'ShapeletSim',
-    # 'ShapesAll',
-    # 'SmallKitchenAppliances',
-    # 'SmoothSubspace',
+    "RefrigerationDevices",
+    "Rock",
+    "ScreenType",
+    "SemgHandGenderCh2",
+    "SemgHandMovementCh2",
+    "SemgHandSubjectCh2",
+    "ShakeGestureWiimoteZ",
+    "ShapeletSim",
+    "ShapesAll",
+    "SmallKitchenAppliances",
+    "SmoothSubspace",
     "SonyAIBORobotSurface1",
     "SonyAIBORobotSurface2",
-    # 'StarLightCurves',
-    # 'Strawberry',
-    # 'SwedishLeaf',
-    # 'Symbols',
+    "StarLightCurves",
+    "Strawberry",
+    "SwedishLeaf",
+    "Symbols",
     "SyntheticControl",
-    # 'ToeSegmentation1',
-    # 'ToeSegmentation2',
-    # 'Trace',
+    "ToeSegmentation1",
+    "ToeSegmentation2",
+    "Trace",
     "TwoLeadECG",
-    # 'TwoPatterns',
-    # 'UMD',
-    # 'UWaveGestureLibraryAll',
-    # 'UWaveGestureLibraryX',
-    # 'UWaveGestureLibraryY',
-    # 'UWaveGestureLibraryZ',
-    # 'Wafer',
+    "TwoPatterns",
+    "UMD",
+    "UWaveGestureLibraryAll",
+    "UWaveGestureLibraryX",
+    "UWaveGestureLibraryY",
+    "UWaveGestureLibraryZ",
+    "Wafer",
     "Wine",
-    # 'WordSynonyms',
-    # 'Worms',
-    # 'WormsTwoClass',
-    # 'Yoga'
+    "WordSynonyms",
+    "Worms",
+    "WormsTwoClass",
+    "Yoga",
 ]
 
+simplefilter(action="ignore", category=FutureWarning)
+simplefilter(action="ignore", category=UserWarning)
 
 others = []
 
-# DATA_PATH = "/Users/bzcschae/workspace/similarity/datasets/classification/"
-DATA_PATH = "/Users/bzcschae/workspace/UCRArchive_2018/"
-parallel_jobs = 1
+# DATA_PATH = "/Users/bzcschae/workspace/UCRArchive_2018/"
+# parallel_jobs = 1
+
+DATA_PATH = "/vol/fob-wbib-vol2/wbi/schaefpa/sktime/datasets/UCRArchive_2018"
+parallel_jobs = 60
 
 if __name__ == "__main__":
 
     def _parallel_fit(dataset_name):
         # ignore all future warnings
         simplefilter(action="ignore", category=FutureWarning)
+        simplefilter(action="ignore", category=UserWarning)
 
         X_train, y_train = load_from_ucr_tsv_to_dataframe_plain(
             os.path.join(DATA_PATH, dataset_name, dataset_name + "_TRAIN.tsv")
@@ -195,21 +248,17 @@ if __name__ == "__main__":
         X_train.fillna(0, inplace=True)
         X_test.fillna(0, inplace=True)
 
-        threads_to_use = 4
+        threads_to_use = 1
         clfs = {
-            # "WEASEL": WEASEL(
-            #     random_state=1379,
-            #     n_jobs=threads_to_use
-            # ),
+            "WEASEL": WEASEL(random_state=1379, n_jobs=threads_to_use),
             "WEASEL-ST (new)": WEASEL_STEROIDS(
                 random_state=1379,
-                binning_strategies=["equi-depth", "equi-width"],
-                min_window=16,
-                max_window=32,
+                binning_strategies=["equi-depth"],
+                min_window=8,
+                max_window=16,
                 max_feature_count=10_000,
-                word_lengths=[8],  # test only 6 or 8?
-                # norm_options=[True, True, True, True, False],  # p[True]=0.8
-                norm_options=[False],  # p[True]=0.5
+                word_lengths=[8],
+                norm_options=[False],
                 variance=True,
                 ensemble_size=50,
                 use_first_differences=[True, False],
@@ -234,20 +283,21 @@ if __name__ == "__main__":
                 word_lengths=[6, 8],  # test only 6 or 8?
                 norm_options=[True, True, True, True, False],  # p[True]=0.8
                 variance=True,
+                max_feature_count=10_000,
                 ensemble_size=50,
                 use_first_differences=[True, False],
                 n_jobs=threads_to_use,
             ),
-            # "Hydra" : [], # see below
-            # "R_DST": R_DST_Ridge(random_state=1379, n_jobs=threads_to_use),
-            # "Rocket": make_pipeline(
-            #     Rocket(random_state=1379, n_jobs=threads_to_use),
-            #     RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True),
-            # ),
-            # "MiniRocket": make_pipeline(
-            #    MiniRocket(random_state=1379, n_jobs=threads_to_use),
-            #    RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True),
-            # ),
+            "Hydra": [],  # see below
+            "R_DST": R_DST_Ridge(random_state=1379),
+            "Rocket": make_pipeline(
+                Rocket(random_state=1379, n_jobs=threads_to_use),
+                RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True),
+            ),
+            "MiniRocket": make_pipeline(
+                MiniRocket(random_state=1379, n_jobs=threads_to_use),
+                RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True),
+            ),
         }
 
         sum_scores = {}
@@ -296,6 +346,11 @@ if __name__ == "__main__":
 
             print(
                 f"Dataset={dataset_name}, "
+                + (
+                    f"Feature Count={clf.total_features_count}, "
+                    if hasattr(clf, "total_features_count")
+                    else f""
+                )
                 + f"Train-Size={np.shape(X_train)}, "
                 + f"Test-Size={np.shape(X_test)}"
                 + f"\n\tclassifier={name}"
@@ -315,7 +370,7 @@ if __name__ == "__main__":
 
         return sum_scores
 
-    parallel_res = Parallel(n_jobs=parallel_jobs)(
+    parallel_res = Parallel(n_jobs=parallel_jobs, timeout=99999)(
         delayed(_parallel_fit)(dataset) for dataset in dataset_names_excerpt
     )
 

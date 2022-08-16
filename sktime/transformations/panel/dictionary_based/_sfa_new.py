@@ -102,6 +102,7 @@ class SFA_NEW(_PanelToPanelTransformer):
         variance=False,
         bigrams=False,
         cut_upper=True,
+        dilation=1,
         n_jobs=1,
     ):
         self.words = []
@@ -132,6 +133,7 @@ class SFA_NEW(_PanelToPanelTransformer):
         self.bigrams = bigrams
         self.n_jobs = n_jobs
         self.cut_upper = cut_upper
+        self.dilation = dilation
 
         self.n_instances = 0
         self.series_length = 0
@@ -205,10 +207,11 @@ class SFA_NEW(_PanelToPanelTransformer):
 
         return _transform_case(
             X,
+            self.dilation,
             self.window_size,
             self.dft_length,
+            self.word_length,
             self.norm,
-            self.series_length,
             self.support,
             self.anova,
             self.variance,
@@ -217,20 +220,18 @@ class SFA_NEW(_PanelToPanelTransformer):
         )
 
     def _binning(self, X, y=None):
-        num_windows_per_inst = math.ceil(self.series_length / self.window_size)
         dft = _binning_dft(
             X,
-            num_windows_per_inst,
+            self.dilation,
             self.window_size,
             self.series_length,
             self.dft_length,
+            self.word_length,
             self.norm,
         )
 
-        dft = dft.reshape(len(X) * num_windows_per_inst, self.dft_length)
-
         if y is not None:
-            y = np.repeat(y, num_windows_per_inst)
+            y = np.repeat(y, dft.shape[0] * dft.shape[1] / len(y))
 
         if self.variance and y is not None:
             # determine variance
@@ -291,8 +292,6 @@ class SFA_NEW(_PanelToPanelTransformer):
         return breakpoints
 
     def _mcb(self, dft):
-        num_windows_per_inst = math.ceil(self.series_length / self.window_size)
-        total_num_windows = int(self.n_instances * num_windows_per_inst)
         breakpoints = np.zeros((self.word_length, self.alphabet_size))
 
         dft = np.round(dft, 2)
@@ -302,7 +301,7 @@ class SFA_NEW(_PanelToPanelTransformer):
 
             # use equi-depth binning
             if self.binning_method == "equi-depth":
-                target_bin_depth = total_num_windows / self.alphabet_size
+                target_bin_depth = len(dft) / self.alphabet_size
 
                 for bp in range(self.alphabet_size - 1):
                     bin_index += target_bin_depth
@@ -362,15 +361,25 @@ class SFA_NEW(_PanelToPanelTransformer):
 
 
 # @njit(fastmath=True, cache=True)
-def _binning_dft(X, num_windows_per_inst, window_size, series_length, dft_length, norm):
+def _binning_dft(X, d, window_size, series_length, dft_length, word_length, norm):
+    num_windows_per_inst = math.ceil(series_length / window_size)
 
     # Splits individual time series into windows and returns the DFT for each
     dft = np.zeros((len(X), num_windows_per_inst, dft_length))  # , dtype=np.float64
 
+    # use dilation?
+    if d > 1:
+        X2 = X[:, 0::d]
+        for i in range(1, d):
+            XX = X[:, i::d]
+            X2 = np.concatenate((X2, XX), axis=1)
+    else:
+        X2 = X
+
     for i in range(len(X)):
         start = series_length - window_size
         split = np.split(
-            X[i, :],
+            X2[i, :],
             np.linspace(
                 window_size,
                 window_size * (num_windows_per_inst - 1),
@@ -378,10 +387,21 @@ def _binning_dft(X, num_windows_per_inst, window_size, series_length, dft_length
             ).astype(np.int_),
         )
 
-        split[-1] = X[i, start:series_length]
+        split[-1] = X2[i, start:series_length]
         dft[i] = _fast_fourier_transform(np.array(split), norm, dft_length)
 
-    return dft
+    return dft.reshape(dft.shape[0] * dft.shape[1], dft_length)
+
+    """
+    if d > 1:
+        dfts = _mft_dilated(X, d, window_size, dft_length, norm,
+                            np.zeros(0, dtype=np.int_), False, False, word_length)
+    else:
+        dfts = _mft(X, window_size, dft_length, norm,
+                    np.zeros(0, dtype=np.int_), False, False)
+
+    return dfts.reshape(dfts.shape[0] * dfts.shape[1], dft_length)
+    """
 
 
 @njit(fastmath=True, cache=True)
@@ -409,7 +429,7 @@ def _fast_fourier_transform(X, norm, dft_length):
     stds = np.zeros(len(X))
     for i in range(len(stds)):
         stds[i] = np.std(X[i])
-    # stds = np.std(X, axis=1)
+    # stds = np.std(X, axis=1)  # not available in numba
     stds = np.where(stds < 1e-4, 1, stds)
 
     with objmode(X_ffts="complex128[:,:]"):
@@ -426,20 +446,33 @@ def _fast_fourier_transform(X, norm, dft_length):
 # @njit(fastmath=True, cache=True)  # njit and parallel=True is not working here?
 def _transform_case(
     X,
+    dilation,
     window_size,
     dft_length,
+    word_length,
     norm,
-    series_length,
     support,
     anova,
     variance,
     breakpoints,
     letter_bits,
 ):
-    dfts = _mft(X, window_size, dft_length, norm, support, anova, variance)
-    transformed = generate_words(dfts, breakpoints, letter_bits)
+    if dilation > 1:
+        dfts = _mft_dilated(
+            X,
+            dilation,
+            window_size,
+            dft_length,
+            norm,
+            support,
+            anova,
+            variance,
+            word_length,
+        )
+    else:
+        dfts = _mft(X, window_size, dft_length, norm, support, anova, variance)
 
-    return transformed
+    return generate_words(dfts, breakpoints, letter_bits)
 
 
 """
@@ -525,32 +558,74 @@ def generate_words(dfts, breakpoints, letter_bits):
 
 
 @njit(fastmath=True, cache=True)
+def _mft_dilated(
+    X, d, window_size, dft_length, norm, support, anova, variance, word_length
+):
+
+    X2 = X[:, 0::d]
+    for i in range(1, d):
+        XX = X[:, i::d]
+        X2 = np.concatenate((X2, XX), axis=1)
+
+    return _mft(np.array(X2), window_size, dft_length, norm, support, anova, variance)
+
+    """
+    X_first = _mft(np.array(X[:, 0::d]), window_size, dft_length,
+                   norm, support, anova, variance)
+    for i in range(1, d):
+        XX = _mft(np.array(X[:, i::d]), window_size, dft_length,
+                  norm, support, anova, variance)
+        X_first = np.concatenate((X_first, XX), axis=1)
+    return np.array(X_first)
+    """
+
+    """
+    # TODO formula???!!!
+    end = 0
+    for i in range(0, d):
+        end += max(1, X[:, i::d].shape[1] - window_size + 1)
+    # end = max(1, len(X[0]) - window_size + 1 - (window_size * (d-1)))
+
+    # size of output
+    XX = np.zeros((len(X), end, word_length))
+    start = 0
+    for i in range(0, d):
+        slice = np.array(X[:, i::d])
+        ll = slice.shape[1] - window_size + 1
+        XX[:, start:(start + ll), :] = \
+            _mft(slice, window_size, dft_length, norm, support, anova, variance)
+        start += ll
+
+    return np.array(XX)
+    """
+
+
+@njit(fastmath=True, cache=True)
 def _mft(X, window_size, dft_length, norm, support, anova, variance):
     start_offset = 2 if norm else 0
     length = dft_length + start_offset + dft_length % 2
     end = max(1, len(X[0]) - window_size + 1)
 
     #  compute mask for only those indices needed and not all indices
-    support = support + start_offset
     if anova or variance:
+        support = support + start_offset
         indices = np.full(length, False)
         mask = np.full(length, False)
         for s in support:
             indices[s] = True
+            mask[s] = True
             if (s % 2) == 0:  # even
                 indices[s + 1] = True
             else:  # uneven
                 indices[s - 1] = True
-            mask[s] = True
         mask = mask[indices]
     else:
         indices = np.full(length, True)
 
     phis = _get_phis(window_size, length)
     transformed = np.zeros((X.shape[0], end, length))
-    stds = np.zeros((X.shape[0], end))
 
-    # 1.) First run using DFT
+    # 1. First run using DFT
     with objmode(X_ffts="complex128[:,:]"):
         X_ffts = np.fft.rfft(X[:, :window_size], axis=1)  # complex128
     reals = np.real(X_ffts)  # float64[]
@@ -558,7 +633,7 @@ def _mft(X, window_size, dft_length, norm, support, anova, variance):
     transformed[:, 0, 0::2] = reals[:, 0 : length // 2]
     transformed[:, 0, 1::2] = imags[:, 0 : length // 2]
 
-    # 2.) Other runs using MFT
+    # 2. Other runs using MFT
     X2 = X.reshape(X.shape[0], X.shape[1], 1)
 
     # compute only those indices needed and not all
@@ -575,8 +650,8 @@ def _mft(X, window_size, dft_length, norm, support, anova, variance):
         )
 
     # compute STDs
+    stds = np.zeros((X.shape[0], end))
     for a in range(X.shape[0]):
-        # stds[a] = _sliding_mean_std(X[a], window_size)
         stds[a] = _calc_incremental_mean_std(X[a], end, window_size)
 
     # divide all by stds and use only the best indices
