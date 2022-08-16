@@ -256,13 +256,13 @@ if __name__ == "__main__":
                 # alphabet_sizes=[2],
                 binning_strategies=["equi-depth"],
                 min_window=8,
-                max_window=24,
+                max_window=16,
                 max_feature_count=10_000,
                 word_lengths=[8],
                 norm_options=[False],
                 variance=True,
                 ensemble_size=50,
-                use_first_differences=[False],
+                use_first_differences=[True, False],
                 n_jobs=threads_to_use,
             ),
             "WEASEL_ST (Config)": WEASEL_STEROIDS(
@@ -270,7 +270,7 @@ if __name__ == "__main__":
                 binning_strategies=["equi-depth", "equi-width"],
                 min_window=4,
                 # alphabet_sizes=[2],
-                max_window=28,
+                max_window=20,
                 max_feature_count=10_000,
                 word_lengths=[6],  # test only 6 or 8?
                 norm_options=[False],  # p[True]=0.8
