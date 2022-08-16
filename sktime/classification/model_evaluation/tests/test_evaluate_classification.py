@@ -58,5 +58,5 @@ def test_evaluate_classification_metrics(fold_no, random_seed):
     expected = pd.DataFrame(expected)
 
     np.testing.assert_allclose(
-        expected["test_score"].mean(), actual["score"].mean(), rtol=1e-2
+        expected["test_score"].mean(), actual["accuracy"].mean(), rtol=1e-2
     )
