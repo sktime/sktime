@@ -167,9 +167,11 @@ class SFA_NEW(_PanelToPanelTransformer):
         if self.binning_method not in binning_methods:
             raise TypeError("binning_method must be one of: ", binning_methods)
 
-        self.letter_bits = math.ceil(math.log2(self.alphabet_size))
+        self.letter_bits = np.uint32(math.ceil(math.log2(self.alphabet_size)))
         self.word_bits = self.word_length * self.letter_bits
-        self.max_bits = self.word_bits * 2 if self.bigrams else self.word_bits
+        self.max_bits = np.uint32(
+            self.word_bits * 2 if self.bigrams else self.word_bits
+        )
 
         X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
         X = X.squeeze(1)
@@ -272,7 +274,7 @@ class SFA_NEW(_PanelToPanelTransformer):
         )
         encoder.fit(dft)
         breaks = encoder.bin_edges_
-        breakpoints = np.zeros((self.word_length, self.alphabet_size))
+        breakpoints = np.zeros((self.word_length, self.alphabet_size), dtype=np.float32)
 
         for letter in range(self.word_length):
             for bp in range(1, len(breaks[letter]) - 1):
@@ -282,7 +284,7 @@ class SFA_NEW(_PanelToPanelTransformer):
         return breakpoints
 
     def _mcb(self, dft):
-        breakpoints = np.zeros((self.word_length, self.alphabet_size))
+        breakpoints = np.zeros((self.word_length, self.alphabet_size), dtype=np.float32)
 
         dft = np.round(dft, 2)
         for letter in range(self.word_length):
@@ -308,7 +310,7 @@ class SFA_NEW(_PanelToPanelTransformer):
         return breakpoints
 
     def _igb(self, dft, y):
-        breakpoints = np.zeros((self.word_length, self.alphabet_size))
+        breakpoints = np.zeros((self.word_length, self.alphabet_size), dtype=np.float32)
         clf = DecisionTreeClassifier(
             criterion="entropy",
             max_depth=np.log2(self.alphabet_size),
@@ -357,7 +359,7 @@ def _binning_dft(
     num_windows_per_inst = math.ceil(series_length / window_size)
 
     # Splits individual time series into windows and returns the DFT for each
-    dft = np.zeros((len(X), num_windows_per_inst, dft_length))  # , dtype=np.float64
+    dft = np.zeros((len(X), num_windows_per_inst, dft_length), dtype=np.float32)  #
 
     for i in range(len(X)):
         start = series_length - window_size
@@ -398,9 +400,9 @@ def _fast_fourier_transform(X, norm, dft_length, inverse_sqrt_win_size):
     # first two are real and imaginary parts
     start = 2 if norm else 0
     length = start + dft_length
-    dft = np.empty((len(X), length))  # , dtype=np.float64
+    dft = np.zeros((len(X), length), dtype=np.float32)  # , dtype=np.float64
 
-    stds = np.zeros(len(X))
+    stds = np.zeros(len(X), dtype=np.float32)
     for i in range(len(stds)):
         stds[i] = np.std(X[i])
     # stds = np.std(X, axis=1)  # not available in numba
@@ -451,14 +453,14 @@ def _transform_case(
         return words
 
     else:
-        bp = np.zeros((breakpoints.shape[0], 2))
+        bp = np.zeros((breakpoints.shape[0], 2), dtype=np.float32)
         bp[:, 0] = breakpoints[:, 1]
         bp[:, 1] = np.inf
         words1 = generate_words(dfts, bp, letter_bits, word_bits, window_size, bigrams)
         return words1
 
         """
-        bp = np.zeros((breakpoints.shape[0], 2))
+        bp = np.zeros((breakpoints.shape[0], 2), dtype=np.float32)
         bp[:, 0] = breakpoints[:, 2]
         bp[:, 1] = np.inf
         words2 = generate_words(
@@ -471,7 +473,7 @@ def _transform_case(
 
 @njit(fastmath=True, cache=True)
 def _calc_incremental_mean_std(series, end, window_size):
-    stds = np.zeros(end)
+    stds = np.zeros(end, dtype=np.float32)
     window = series[0:window_size]
     series_sum = np.sum(window)
     square_sum = np.sum(np.multiply(window, window))
@@ -513,18 +515,20 @@ def _create_bigram_word(word, other_word, word_bits):
 def generate_words(dfts, breakpoints, letter_bits, word_bits, window_size, bigrams):
     if bigrams:
         words = np.zeros(
-            (dfts.shape[0], 2 * dfts.shape[1] - window_size), dtype=np.int64
+            (dfts.shape[0], 2 * dfts.shape[1] - window_size), dtype=np.int32
         )
     else:
-        words = np.zeros((dfts.shape[0], dfts.shape[1]), dtype=np.int64)
+        words = np.zeros((dfts.shape[0], dfts.shape[1]), dtype=np.int32)
 
+    letter_bits = np.uint32(letter_bits)
     for a in prange(dfts.shape[0]):
         for window in prange(dfts.shape[1]):
-            word = np.int64(0)
+            word = np.int32(0)
             for i in range(len(dfts[a, window])):
                 for bp in range(breakpoints.shape[1]):
-                    # bp = np.searchsorted(breakpoints[i], dfts[a, window, i])
+                    # bp = np.searchsorted(breakpoints[i], dfts[a, window, i]))
                     if dfts[a, window, i] <= breakpoints[i, bp]:
+                        # print (type(word), type(letter_bits), type(bp))
                         word = (word << letter_bits) | bp
                         break
             words[a, window] = word
@@ -564,7 +568,7 @@ def _mft(
         indices = np.full(length, True)
 
     phis = _get_phis(window_size, length)
-    transformed = np.zeros((X.shape[0], end, length))
+    transformed = np.zeros((X.shape[0], end, length), dtype=np.float32)
 
     # 1. First run using DFT
     with objmode(X_ffts="complex128[:,:]"):
@@ -593,7 +597,7 @@ def _mft(
     transformed2 = transformed2 * inverse_sqrt_win_size
 
     # compute STDs
-    stds = np.zeros((X.shape[0], end))
+    stds = np.zeros((X.shape[0], end), dtype=np.float32)
     for a in range(X.shape[0]):
         stds[a] = _calc_incremental_mean_std(X[a], end, window_size)
 
