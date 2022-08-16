@@ -12,8 +12,6 @@ import math
 import sys
 
 import numpy as np
-
-# import scipy as scipy
 from numba import njit, objmode, prange
 from sklearn.feature_selection import f_classif
 from sklearn.preprocessing import KBinsDiscretizer
@@ -102,7 +100,6 @@ class SFA_NEW(_PanelToPanelTransformer):
         variance=False,
         bigrams=False,
         cut_upper=True,
-        dilation=1,
         n_jobs=1,
     ):
         self.words = []
@@ -133,7 +130,6 @@ class SFA_NEW(_PanelToPanelTransformer):
         self.bigrams = bigrams
         self.n_jobs = n_jobs
         self.cut_upper = cut_upper
-        self.dilation = dilation
 
         self.n_instances = 0
         self.series_length = 0
@@ -180,12 +176,6 @@ class SFA_NEW(_PanelToPanelTransformer):
         self.n_instances, self.series_length = X.shape
         self.breakpoints = self._binning(X, y)
 
-        # Cut upper or lower breakpoints
-        if self.cut_upper:
-            self.breakpoints[self.breakpoints < 0] = -np.inf
-        else:
-            self.breakpoints[self.breakpoints > 0] = np.inf
-
         self._is_fitted = True
         return self
 
@@ -205,24 +195,29 @@ class SFA_NEW(_PanelToPanelTransformer):
         X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
         X = X.squeeze(1)
 
+        bp = self.breakpoints.copy()
+
+        # Cut upper or lower breakpoints
+        if self.cut_upper:
+            bp[bp < 0] = -np.inf
+
         return _transform_case(
             X,
-            self.dilation,
             self.window_size,
             self.dft_length,
-            self.word_length,
             self.norm,
             self.support,
             self.anova,
             self.variance,
-            self.breakpoints,
+            bp,
             self.letter_bits,
+            self.word_bits,
+            self.bigrams,
         )
 
     def _binning(self, X, y=None):
         dft = _binning_dft(
             X,
-            self.dilation,
             self.window_size,
             self.series_length,
             self.dft_length,
@@ -235,10 +230,7 @@ class SFA_NEW(_PanelToPanelTransformer):
 
         if self.variance and y is not None:
             # determine variance
-            # TODO test variants
             dft_variance = np.var(dft, axis=0)
-            # dft_variance = scipy.stats.skew(dft, axis=0)
-            # dft_variance = scipy.stats.kurtosis(dft, axis=0)
 
             # select word-length-many indices with largest variance
             self.support = np.argsort(-dft_variance)[: self.word_length]
@@ -361,25 +353,16 @@ class SFA_NEW(_PanelToPanelTransformer):
 
 
 # @njit(fastmath=True, cache=True)
-def _binning_dft(X, d, window_size, series_length, dft_length, word_length, norm):
+def _binning_dft(X, window_size, series_length, dft_length, word_length, norm):
     num_windows_per_inst = math.ceil(series_length / window_size)
 
     # Splits individual time series into windows and returns the DFT for each
     dft = np.zeros((len(X), num_windows_per_inst, dft_length))  # , dtype=np.float64
 
-    # use dilation?
-    if d > 1:
-        X2 = X[:, 0::d]
-        for i in range(1, d):
-            XX = X[:, i::d]
-            X2 = np.concatenate((X2, XX), axis=1)
-    else:
-        X2 = X
-
     for i in range(len(X)):
         start = series_length - window_size
         split = np.split(
-            X2[i, :],
+            X[i, :],
             np.linspace(
                 window_size,
                 window_size * (num_windows_per_inst - 1),
@@ -387,21 +370,10 @@ def _binning_dft(X, d, window_size, series_length, dft_length, word_length, norm
             ).astype(np.int_),
         )
 
-        split[-1] = X2[i, start:series_length]
+        split[-1] = X[i, start:series_length]
         dft[i] = _fast_fourier_transform(np.array(split), norm, dft_length)
 
     return dft.reshape(dft.shape[0] * dft.shape[1], dft_length)
-
-    """
-    if d > 1:
-        dfts = _mft_dilated(X, d, window_size, dft_length, norm,
-                            np.zeros(0, dtype=np.int_), False, False, word_length)
-    else:
-        dfts = _mft(X, window_size, dft_length, norm,
-                    np.zeros(0, dtype=np.int_), False, False)
-
-    return dfts.reshape(dfts.shape[0] * dfts.shape[1], dft_length)
-    """
 
 
 @njit(fastmath=True, cache=True)
@@ -446,54 +418,21 @@ def _fast_fourier_transform(X, norm, dft_length):
 # @njit(fastmath=True, cache=True)  # njit and parallel=True is not working here?
 def _transform_case(
     X,
-    dilation,
     window_size,
     dft_length,
-    word_length,
     norm,
     support,
     anova,
     variance,
     breakpoints,
     letter_bits,
+    word_bits,
+    bigrams,
 ):
-    if dilation > 1:
-        dfts = _mft_dilated(
-            X,
-            dilation,
-            window_size,
-            dft_length,
-            norm,
-            support,
-            anova,
-            variance,
-            word_length,
-        )
-    else:
-        dfts = _mft(X, window_size, dft_length, norm, support, anova, variance)
-
-    return generate_words(dfts, breakpoints, letter_bits)
-
-
-"""
-# @njit(fastmath=True, cache=True)
-def _sliding_mean_std(ts, m):
-    # with objmode(s="float64[:]"):  # TODO numba does not support insert
-    s = np.insert(np.cumsum(ts), 0, 0)
-    # with objmode(sSq="float64[:]"):
-    sSq = np.insert(np.cumsum(ts**2), 0, 0)
-
-    segSum = s[m:] - s[:-m]
-    segSumSq = sSq[m:] - sSq[:-m]
-
-    # movmean = segSum / m
-    movstd = np.sqrt(segSumSq / m - (segSum / m) ** 2)
-
-    # avoid dividing by too small std, like 0
-    movstd = np.where(movstd < 1e-4, 1, movstd)
-
-    return movstd
-"""
+    dfts = _mft(X, window_size, dft_length, norm, support, anova, variance)
+    return generate_words(
+        dfts, breakpoints, letter_bits, word_bits, window_size, bigrams
+    )
 
 
 @njit(fastmath=True, cache=True)
@@ -537,8 +476,14 @@ def _create_bigram_word(word, other_word, word_bits):
 
 
 @njit(fastmath=True, parallel=True, cache=True)
-def generate_words(dfts, breakpoints, letter_bits):
-    words = np.zeros((dfts.shape[0], dfts.shape[1]), dtype=np.int64)
+def generate_words(dfts, breakpoints, letter_bits, word_bits, window_size, bigrams):
+    if bigrams:
+        words = np.zeros(
+            (dfts.shape[0], 2 * dfts.shape[1] - window_size), dtype=np.int64
+        )
+    else:
+        words = np.zeros((dfts.shape[0], dfts.shape[1]), dtype=np.int64)
+
     for a in prange(dfts.shape[0]):
         for window in prange(dfts.shape[1]):
             word = np.int64(0)
@@ -547,57 +492,14 @@ def generate_words(dfts, breakpoints, letter_bits):
                 word = (word << letter_bits) | bp
             words[a, window] = word
 
-            # if self.bigrams:
-            #     if window - self.window_size >= 0:
-            #         bigram = _create_bigram_words(
-            #             word_raw, words[window - self.window_size]
-            #         )
-            #         words.append(bigram)
+            if bigrams:
+                if window - window_size >= 0:
+                    bigram = _create_bigram_word(
+                        word, words[a, window - window_size], word_bits
+                    )
+                    words[a, (dfts.shape[1] + window - window_size)] = bigram
 
     return words
-
-
-@njit(fastmath=True, cache=True)
-def _mft_dilated(
-    X, d, window_size, dft_length, norm, support, anova, variance, word_length
-):
-
-    X2 = X[:, 0::d]
-    for i in range(1, d):
-        XX = X[:, i::d]
-        X2 = np.concatenate((X2, XX), axis=1)
-
-    return _mft(np.array(X2), window_size, dft_length, norm, support, anova, variance)
-
-    """
-    X_first = _mft(np.array(X[:, 0::d]), window_size, dft_length,
-                   norm, support, anova, variance)
-    for i in range(1, d):
-        XX = _mft(np.array(X[:, i::d]), window_size, dft_length,
-                  norm, support, anova, variance)
-        X_first = np.concatenate((X_first, XX), axis=1)
-    return np.array(X_first)
-    """
-
-    """
-    # TODO formula???!!!
-    end = 0
-    for i in range(0, d):
-        end += max(1, X[:, i::d].shape[1] - window_size + 1)
-    # end = max(1, len(X[0]) - window_size + 1 - (window_size * (d-1)))
-
-    # size of output
-    XX = np.zeros((len(X), end, word_length))
-    start = 0
-    for i in range(0, d):
-        slice = np.array(X[:, i::d])
-        ll = slice.shape[1] - window_size + 1
-        XX[:, start:(start + ll), :] = \
-            _mft(slice, window_size, dft_length, norm, support, anova, variance)
-        start += ll
-
-    return np.array(XX)
-    """
 
 
 @njit(fastmath=True, cache=True)
