@@ -196,13 +196,7 @@ class SFA_NEW(_PanelToPanelTransformer):
         X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
         X = X.squeeze(1)
 
-        bp = self.breakpoints.copy()
-
-        # Cut upper or lower breakpoints
-        if self.cut_upper:
-            bp[bp < 0] = -np.inf
-
-        return _transform_case(
+        words = _transform_case(
             X,
             self.window_size,
             self.dft_length,
@@ -210,12 +204,13 @@ class SFA_NEW(_PanelToPanelTransformer):
             self.support,
             self.anova,
             self.variance,
-            bp,
+            self.breakpoints,
             self.letter_bits,
             self.word_bits,
             self.bigrams,
             self.inverse_sqrt_win_size,
         )
+        return words
 
     def _binning(self, X, y=None):
         dft = _binning_dft(
@@ -448,9 +443,30 @@ def _transform_case(
         variance,
         inverse_sqrt_win_size,
     )
-    return generate_words(
-        dfts, breakpoints, letter_bits, word_bits, window_size, bigrams
-    )
+
+    if breakpoints.shape[1] == 2:
+        words = generate_words(
+            dfts, breakpoints, letter_bits, word_bits, window_size, bigrams
+        )
+        return words
+
+    else:
+        bp = np.zeros((breakpoints.shape[0], 2))
+        bp[:, 0] = breakpoints[:, 1]
+        bp[:, 1] = np.inf
+        words1 = generate_words(dfts, bp, letter_bits, word_bits, window_size, bigrams)
+        return words1
+
+        """
+        bp = np.zeros((breakpoints.shape[0], 2))
+        bp[:, 0] = breakpoints[:, 2]
+        bp[:, 1] = np.inf
+        words2 = generate_words(
+            dfts, bp, letter_bits, word_bits, window_size, bigrams
+        )
+
+        return np.concatenate((words1, words2), axis=1)
+        """
 
 
 @njit(fastmath=True, cache=True)
@@ -506,8 +522,11 @@ def generate_words(dfts, breakpoints, letter_bits, word_bits, window_size, bigra
         for window in prange(dfts.shape[1]):
             word = np.int64(0)
             for i in range(len(dfts[a, window])):
-                bp = np.searchsorted(breakpoints[i], dfts[a, window, i])
-                word = (word << letter_bits) | bp
+                for bp in range(breakpoints.shape[1]):
+                    # bp = np.searchsorted(breakpoints[i], dfts[a, window, i])
+                    if dfts[a, window, i] <= breakpoints[i, bp]:
+                        word = (word << letter_bits) | bp
+                        break
             words[a, window] = word
 
             if bigrams:
