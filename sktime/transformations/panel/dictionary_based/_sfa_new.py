@@ -120,6 +120,7 @@ class SFA_NEW(_PanelToPanelTransformer):
         self.window_size = window_size
 
         self.norm = norm
+        self.inverse_sqrt_win_size = 1.0 / math.sqrt(window_size)
 
         self.binning_dft = None
 
@@ -213,6 +214,7 @@ class SFA_NEW(_PanelToPanelTransformer):
             self.letter_bits,
             self.word_bits,
             self.bigrams,
+            self.inverse_sqrt_win_size,
         )
 
     def _binning(self, X, y=None):
@@ -223,6 +225,7 @@ class SFA_NEW(_PanelToPanelTransformer):
             self.dft_length,
             self.word_length,
             self.norm,
+            self.inverse_sqrt_win_size,
         )
 
         if y is not None:
@@ -353,7 +356,9 @@ class SFA_NEW(_PanelToPanelTransformer):
 
 
 # @njit(fastmath=True, cache=True)
-def _binning_dft(X, window_size, series_length, dft_length, word_length, norm):
+def _binning_dft(
+    X, window_size, series_length, dft_length, word_length, norm, inverse_sqrt_win_size
+):
     num_windows_per_inst = math.ceil(series_length / window_size)
 
     # Splits individual time series into windows and returns the DFT for each
@@ -371,13 +376,15 @@ def _binning_dft(X, window_size, series_length, dft_length, word_length, norm):
         )
 
         split[-1] = X[i, start:series_length]
-        dft[i] = _fast_fourier_transform(np.array(split), norm, dft_length)
+        dft[i] = _fast_fourier_transform(
+            np.array(split), norm, dft_length, inverse_sqrt_win_size
+        )
 
     return dft.reshape(dft.shape[0] * dft.shape[1], dft_length)
 
 
 @njit(fastmath=True, cache=True)
-def _fast_fourier_transform(X, norm, dft_length):
+def _fast_fourier_transform(X, norm, dft_length, inverse_sqrt_win_size):
     """Perform a discrete fourier transform using the fast fourier transform.
 
     if self.norm is True, then the first term of the DFT is ignored
@@ -411,6 +418,7 @@ def _fast_fourier_transform(X, norm, dft_length):
     dft[:, 0::2] = reals[:, 0 : length // 2]
     dft[:, 1::2] = imags[:, 0 : length // 2]
     dft /= stds.reshape(-1, 1)
+    dft *= inverse_sqrt_win_size
 
     return dft[:, start:]
 
@@ -428,8 +436,18 @@ def _transform_case(
     letter_bits,
     word_bits,
     bigrams,
+    inverse_sqrt_win_size,
 ):
-    dfts = _mft(X, window_size, dft_length, norm, support, anova, variance)
+    dfts = _mft(
+        X,
+        window_size,
+        dft_length,
+        norm,
+        support,
+        anova,
+        variance,
+        inverse_sqrt_win_size,
+    )
     return generate_words(
         dfts, breakpoints, letter_bits, word_bits, window_size, bigrams
     )
@@ -442,7 +460,7 @@ def _calc_incremental_mean_std(series, end, window_size):
     series_sum = np.sum(window)
     square_sum = np.sum(np.multiply(window, window))
 
-    r_window_length = 1 / window_size
+    r_window_length = 1.0 / window_size
     mean = series_sum * r_window_length
     buf = math.sqrt(square_sum * r_window_length - mean * mean)
     stds[0] = buf if buf > 1e-4 else 1.0
@@ -503,7 +521,9 @@ def generate_words(dfts, breakpoints, letter_bits, word_bits, window_size, bigra
 
 
 @njit(fastmath=True, cache=True)
-def _mft(X, window_size, dft_length, norm, support, anova, variance):
+def _mft(
+    X, window_size, dft_length, norm, support, anova, variance, inverse_sqrt_win_size
+):
     start_offset = 2 if norm else 0
     length = dft_length + start_offset + dft_length % 2
     end = max(1, len(X[0]) - window_size + 1)
@@ -550,6 +570,8 @@ def _mft(X, window_size, dft_length, norm, support, anova, variance):
         transformed2[:, i, 1::2] = (
             reals * phis2[1 : (length + 1) : 2] + phis2[:length:2] * imags
         )
+
+    transformed2 = transformed2 * inverse_sqrt_win_size
 
     # compute STDs
     stds = np.zeros((X.shape[0], end))
