@@ -15,48 +15,6 @@ from sklearn.utils.validation import check_random_state
 from sktime.transformations.base import BaseTransformer
 
 
-def binom(N, q):
-    """Calculate the binomial coefficient.
-
-    Parameters
-    ----------
-    N : int, float
-        number of fixed elements from qhich q is chosen
-    q : int, float
-        number of subset q elements chosen from N
-    """
-    if q == 0:
-        return 1.0
-    if N < 0:
-        return 0.0
-    return reduce(lambda x, y: x * y, [(N - q1) / (q1 + 1) for q1 in range(q)])
-
-
-def Zpart(N, N1, zeta, q):
-    """Partition function for Z.
-
-    Parameters
-    ----------
-    N : int, float
-        number of rows of input data X
-    N1 : int, float
-        parameter value from NN[k] for k=0:K-1
-    zeta : float
-        parameter value zeta
-    q : int, float
-        parameter value q
-    """
-    return sum(
-        [
-            binom(N1 - 1, q1)
-            * binom(N - N1, q - q1)
-            * zeta ** (q1)
-            * (1 - zeta) ** (q - q1)
-            for q1 in range(q + 1)
-        ]
-    )
-
-
 class Hidalgo(BaseTransformer):
     """Class of the Hidalgo intrinsic dimension model.
 
@@ -126,7 +84,15 @@ class Hidalgo(BaseTransformer):
     array([0, 0, 0, 0, 0, 0, 1, 1, 1, 1], dtype=int64)
     """
 
-    _tags = {"univariate-only": False}  # for unit test cases
+    _tags = {
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
+        "scitype:transform-output": "Series",
+        # what scitype is returned: Primitives, Series, Panel
+        "transform-returns-same-time-index": True,
+        "univariate-only": False,
+        "fit_is_empty": True,
+    }
 
     def __init__(
         self,
@@ -562,22 +528,6 @@ class Hidalgo(BaseTransformer):
 
         return sampling
 
-    def _fit(self, X):
-        """There is no need to fit a model for Hidalgo.
-
-        Parameters
-        ----------
-        X : pd.DataFrame
-            Training data to fit model to (time series).
-
-        Returns
-        -------
-        self
-        """
-        seed = self.seed
-        self._rng = check_random_state(seed)
-        return self
-
     def _transform(self, X, y=None):
         """
         Run the Hidalgo algorithm and writes results to self.
@@ -618,6 +568,9 @@ class Hidalgo(BaseTransformer):
         n_iter = self.n_iter
         sampling_rate = self.sampling_rate
         burn_in = self.burn_in
+        seed = self.seed
+
+        self._rng = check_random_state(seed)
 
         self._get_neighbourhood_params(X)
         V, NN, a1, b1, c1, Z, f1, N_in = self._initialise_params()
@@ -676,20 +629,44 @@ class Hidalgo(BaseTransformer):
 
         return Z
 
-    # def get_fitted_params(self):
-    #     """Get fitted parameters.
 
-    #     Returns
-    #     -------
-    #     fitted_params : dict
-    #     """
-    #     return {
-    #         "sampling": self.sampling,
-    #         "d": self.d_,
-    #         "derr": self.derr_,
-    #         "p": self.p_,
-    #         "perr": self.perr_,
-    #         "lik": self.lik_,
-    #         "likerr": self.likerr_,
-    #         "Pi": self.Pi,
-    #     }
+def binom(N, q):
+    """Calculate the binomial coefficient.
+
+    Parameters
+    ----------
+    N : int, float
+        number of fixed elements from qhich q is chosen
+    q : int, float
+        number of subset q elements chosen from N
+    """
+    if q == 0:
+        return 1.0
+    if N < 0:
+        return 0.0
+    return reduce(lambda x, y: x * y, [(N - q1) / (q1 + 1) for q1 in range(q)])
+
+
+def Zpart(N, N1, zeta, q):
+    """Partition function for Z.
+
+    Parameters
+    ----------
+    N : int, float
+        number of rows of input data X
+    N1 : int, float
+        parameter value from NN[k] for k=0:K-1
+    zeta : float
+        parameter value zeta
+    q : int, float
+        parameter value q
+    """
+    return sum(
+        [
+            binom(N1 - 1, q1)
+            * binom(N - N1, q - q1)
+            * zeta ** (q1)
+            * (1 - zeta) ** (q - q1)
+            for q1 in range(q + 1)
+        ]
+    )
