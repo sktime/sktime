@@ -227,7 +227,7 @@ class SFA_NEW(_PanelToPanelTransformer):
         )
 
         if y is not None:
-            y = np.repeat(y, dft.shape[0] * dft.shape[1] / len(y))
+            y = np.repeat(y, dft.shape[0] / len(y))
 
         if self.variance and y is not None:
             # determine variance
@@ -274,7 +274,10 @@ class SFA_NEW(_PanelToPanelTransformer):
             n_bins=self.alphabet_size, strategy=self.binning_method
         )
         encoder.fit(dft)
-        breaks = encoder.bin_edges_
+        if encoder.bin_edges_.ndim == 1:
+            breaks = encoder.bin_edges_.reshape((-1, 1))
+        else:
+            breaks = encoder.bin_edges_
         breakpoints = np.zeros((self.word_length, self.alphabet_size))
 
         for letter in range(self.word_length):
@@ -314,7 +317,7 @@ class SFA_NEW(_PanelToPanelTransformer):
         breakpoints = np.zeros((self.word_length, self.alphabet_size))
         clf = DecisionTreeClassifier(
             criterion="entropy",
-            max_depth=np.log2(self.alphabet_size),
+            max_depth=np.int32(np.log2(self.alphabet_size)),
             max_leaf_nodes=self.alphabet_size,
             random_state=1,
         )
@@ -325,7 +328,7 @@ class SFA_NEW(_PanelToPanelTransformer):
             for bp in range(len(threshold)):
                 breakpoints[i, bp] = threshold[bp]
             for bp in range(len(threshold), self.alphabet_size):
-                breakpoints[i, bp] = sys.float_info.max
+                breakpoints[i, bp] = np.inf
 
         return np.sort(breakpoints, axis=1)
 
@@ -407,7 +410,7 @@ def _fast_fourier_transform(X, norm, dft_length, inverse_sqrt_win_size):
     for i in range(len(stds)):
         stds[i] = np.std(X[i])
     # stds = np.std(X, axis=1)  # not available in numba
-    stds = np.where(stds < 1e-4, 1, stds)
+    stds = np.where(stds < 1e-8, 1e-8, stds)
 
     with objmode(X_ffts="complex128[:,:]"):
         X_ffts = np.fft.rfft(X, axis=1)  # complex128
@@ -484,7 +487,7 @@ def _calc_incremental_mean_std(series, end, window_size):
     r_window_length = 1.0 / window_size
     mean = series_sum * r_window_length
     buf = math.sqrt(square_sum * r_window_length - mean * mean)
-    stds[0] = buf if buf > 1e-4 else 1.0
+    stds[0] = buf if buf > 1e-8 else 1e-8
 
     for w in range(1, end):
         series_sum += series[w + window_size - 1] - series[w - 1]
@@ -494,7 +497,7 @@ def _calc_incremental_mean_std(series, end, window_size):
             - series[w - 1] * series[w - 1]
         )
         buf = math.sqrt(square_sum * r_window_length - mean * mean)
-        stds[w] = buf if buf > 1e-4 else 1.0
+        stds[w] = buf if buf > 1e-8 else 1e-8
 
     return stds
 
@@ -535,12 +538,12 @@ def generate_words(dfts, breakpoints, letter_bits, word_bits, window_size, bigra
                         break
             words[a, window] = word
 
-            # if bigrams:
-            #     if window - window_size >= 0:
-            #         bigram = _create_bigram_word(
-            #             word, words[a, window - window_size], word_bits
-            #         )
-            #         words[a, (dfts.shape[1] + window - window_size)] = bigram
+            if bigrams:
+                if window - window_size >= 0:
+                    bigram = _create_bigram_word(
+                        word, words[a, window - window_size], word_bits
+                    )
+                    words[a, (dfts.shape[1] + window - window_size)] = bigram
 
     return words
 
