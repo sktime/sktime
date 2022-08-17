@@ -46,7 +46,7 @@ def piecewise_normal_multivariate(
     Examples
     --------
     >>> from sktime.annotation.datagen import piecewise_normal_multivariate
-    >>> piecewise_normal_multivariate([[1, 1], [2, 2], [3, 3]],
+    >>> piecewise_normal_multivariate([[1, 1], [2, 2], [3, 3]],\
         lengths=[2, 3, 1], random_state=2)
     array([[ 0.58324215,  0.94373317],
         [-1.1361961 ,  2.64027081],
@@ -56,7 +56,7 @@ def piecewise_normal_multivariate(
         [ 3.55145404,  5.29220801]])
 
     >>> from sktime.annotation.datagen import piecewise_normal_multivariate
-    >>> piecewise_normal_multivariate([[1, 1], [2, 2], [3, 3]], lengths=[2, 3, 1],
+    >>> piecewise_normal_multivariate([[1, 1], [2, 2], [3, 3]], lengths=[2, 3, 1],\
         variances = [[1.0, 1.0], [1.0, 1.0], [1.0, 1.0]], random_state=2)
     array([[ 0.58324215,  0.94373317],
         [-1.1361961 ,  2.64027081],
@@ -66,7 +66,7 @@ def piecewise_normal_multivariate(
         [ 3.55145404,  5.29220801]])
 
     >>> from sktime.annotation.datagen import piecewise_normal_multivariate
-    >>> piecewise_normal_multivariate([[1, 1], [2, 2], [3, 3]], lengths=[2, 3, 1],
+    >>> piecewise_normal_multivariate([[1, 1], [2, 2], [3, 3]], lengths=[2, 3, 1],\
         covariances = [[[1.0, 0], [0, 1.0]], [[1.0, 0], [0, 1.0]], [[1.0, 0],
         [0, 1.0]]], random_state=2)
     array([[ 0.58324215,  0.94373317],
@@ -77,8 +77,8 @@ def piecewise_normal_multivariate(
         [ 3.55145404,  5.29220801]])
 
     >>> from sktime.annotation.datagen import piecewise_normal_multivariate
-    >>> piecewise_normal_multivariate([[1, 3], [4, 5]], lengths=[3, 3],
-        covariances = [[[0.5, 0.3], [0.3, 1.0]], [[1.0, 0.3], [0.3, 0.7]]],
+    >>> piecewise_normal_multivariate([[1, 3], [4, 5]], lengths=[3, 3],\
+        covariances = [[[0.5, 0.3], [0.3, 1.0]], [[1.0, 0.3], [0.3, 0.7]]],\
         random_state=2)
     array([[ 0.78066776,  2.61125356],
         [ 0.92296736,  0.51689669],
@@ -173,7 +173,7 @@ def piecewise_normal(
     array([1., 1., 2., 2., 2., 2., 3., 3., 3., 3., 3., 3., 3., 3.])
 
     >>> from sktime.annotation.datagen import piecewise_normal
-    >>> piecewise_normal([1, 2, 3], lengths=[2, 4, 8], std_dev=[0, 0.5, 1.0])
+    >>> piecewise_normal([1, 2, 3], lengths=[2, 4, 8], std_dev=[0, 0.5, 1.0])\
         # doctest: +SKIP
     array([1.        , 1.        , 2.32384427, 2.76151493, 1.88292331,
         1.88293152, 4.57921282, 3.76743473, 2.53052561, 3.54256004,
