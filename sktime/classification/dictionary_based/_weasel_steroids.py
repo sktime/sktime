@@ -271,8 +271,8 @@ class WEASEL_STEROIDS(BaseClassifier):
             self.total_features_count += rel_features_count2
 
         all_words = all_words[:, : self.total_features_count]
-
         self.clf = RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=False)
+
         # print(f"\tCross-Validation Acc: {self.clf.best_score_}")
 
         self.clf.fit(all_words, y)

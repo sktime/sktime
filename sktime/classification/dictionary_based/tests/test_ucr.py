@@ -265,20 +265,20 @@ if __name__ == "__main__":
                 use_first_differences=[True, False],
                 n_jobs=threads_to_use,
             ),
-            "WEASEL_ST (Best)": WEASEL_STEROIDS(
-                random_state=1379,
-                binning_strategies=["equi-depth"],
-                alphabet_sizes=[4],
-                min_window=4,
-                max_window=24,
-                max_feature_count=10_000,
-                word_lengths=[8],  # test only 6 or 8?
-                norm_options=[False],  # p[True]=0.8
-                variance=True,
-                ensemble_size=50,
-                use_first_differences=[True, False],
-                n_jobs=threads_to_use,
-            ),
+            # "WEASEL_ST (Best)": WEASEL_STEROIDS(
+            #     random_state=1379,
+            #     binning_strategies=["equi-depth"],
+            #     alphabet_sizes=[4],
+            #     min_window=4,
+            #     max_window=24,
+            #     max_feature_count=10_000,
+            #     word_lengths=[8],  # test only 6 or 8?
+            #     norm_options=[False],  # p[True]=0.8
+            #     variance=True,
+            #     ensemble_size=50,
+            #     use_first_differences=[True, False],
+            #     n_jobs=threads_to_use,
+            # ),
             # "WEASEL (Bench)": WEASEL_STEROIDS(
             #     random_state=1379,
             #     # alphabet_sizes=[2],

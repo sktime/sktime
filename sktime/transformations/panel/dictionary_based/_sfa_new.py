@@ -21,7 +21,7 @@ from sktime.transformations.base import _PanelToPanelTransformer
 from sktime.utils.validation.panel import check_X
 
 # The binning methods to use: equi-depth, equi-width, information gain or kmeans
-binning_methods = {"equi-depth", "equi-width", "information-gain", "kmeans"}
+binning_methods = {"equi-depth", "equi-width", "information-gain", "kmeans", "quantile"}
 
 
 class SFA_NEW(_PanelToPanelTransformer):
@@ -51,7 +51,8 @@ class SFA_NEW(_PanelToPanelTransformer):
         norm:                boolean, default = False
             mean normalise words by dropping first fourier coefficient
 
-        binning_method:      {"equi-depth", "equi-width", "information-gain", "kmeans"},
+        binning_method:      {"equi-depth", "equi-width", "information-gain", "kmeans",
+                              "quantile"},
                              default="equi-depth"
             the binning method used to derive the breakpoints.
 
@@ -264,7 +265,7 @@ class SFA_NEW(_PanelToPanelTransformer):
 
         if self.binning_method == "information-gain":
             return self._igb(dft, y)
-        elif self.binning_method == "kmeans":
+        elif self.binning_method == "kmeans" or self.binning_method == "quantile":
             return self._k_bins_discretizer(dft)
         else:
             return self._mcb(dft)
