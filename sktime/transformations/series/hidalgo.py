@@ -128,7 +128,7 @@ class Hidalgo(BaseTransformer):
         self.a = a
         self.b = b
         self.c = c
-        self.f = f
+        self.f = np.ones(shape=2)
         self.seed = seed
 
         super(Hidalgo, self).__init__()
@@ -228,7 +228,7 @@ class Hidalgo(BaseTransformer):
             prior parameters of p
         Z : 1D np.ndarray of length N
             segmentation based on manifold k
-        f1 : 1D np.ndarray of length K
+        f1 : 1D np.ndarray of length 2
             parameters of zeta
         N_in : int
             parameters of zeta
@@ -239,7 +239,6 @@ class Hidalgo(BaseTransformer):
         a = self.a
         b = self.b
         c = self.c
-        f = self.f
         fixed_Z = self.fixed_Z
 
         if a is None:
@@ -251,9 +250,6 @@ class Hidalgo(BaseTransformer):
         if c is None:
             c = np.ones(K)
             self.c = c
-        if f is None:
-            f = np.ones(K)
-            self.f = f
 
         if not fixed_Z:
             random_z = self._rng.randint(0, K, N)
