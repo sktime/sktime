@@ -251,12 +251,12 @@ if __name__ == "__main__":
         threads_to_use = 4
         clfs = {
             # "WEASEL": WEASEL(random_state=1379, n_jobs=threads_to_use),
-            "WEASEL-ST (new)": WEASEL_STEROIDS(
+            "WEASEL-ST (2nd Best)": WEASEL_STEROIDS(
                 random_state=1379,
-                # alphabet_sizes=[2],
-                binning_strategies=["equi-depth"],
-                min_window=8,
-                max_window=16,
+                alphabet_sizes=[2],
+                binning_strategies=["equi-depth", "equi-width"],
+                min_window=4,
+                max_window=24,
                 max_feature_count=10_000,
                 word_lengths=[8],
                 norm_options=[False],
@@ -265,32 +265,32 @@ if __name__ == "__main__":
                 use_first_differences=[True, False],
                 n_jobs=threads_to_use,
             ),
-            "WEASEL_ST (Config)": WEASEL_STEROIDS(
+            "WEASEL_ST (Best)": WEASEL_STEROIDS(
                 random_state=1379,
-                binning_strategies=["equi-depth", "equi-width"],
+                binning_strategies=["equi-depth"],
+                alphabet_sizes=[4],
                 min_window=4,
-                # alphabet_sizes=[2],
-                max_window=20,
+                max_window=24,
                 max_feature_count=10_000,
-                word_lengths=[6],  # test only 6 or 8?
+                word_lengths=[8],  # test only 6 or 8?
                 norm_options=[False],  # p[True]=0.8
                 variance=True,
                 ensemble_size=50,
                 use_first_differences=[True, False],
                 n_jobs=threads_to_use,
             ),
-            "WEASEL (Bench)": WEASEL_STEROIDS(
-                random_state=1379,
-                # alphabet_sizes=[2],
-                binning_strategies=["equi-depth"],  # "kmeans"
-                word_lengths=[6, 8],  # test only 6 or 8?
-                norm_options=[True, True, True, True, False],  # p[True]=0.8
-                variance=True,
-                max_feature_count=10_000,
-                ensemble_size=50,
-                use_first_differences=[True, False],
-                n_jobs=threads_to_use,
-            ),
+            # "WEASEL (Bench)": WEASEL_STEROIDS(
+            #     random_state=1379,
+            #     # alphabet_sizes=[2],
+            #     binning_strategies=["equi-depth"],  # "kmeans"
+            #     word_lengths=[6, 8],  # test only 6 or 8?
+            #     norm_options=[True, True, True, True, False],  # p[True]=0.8
+            #     variance=True,
+            #     max_feature_count=10_000,
+            #     ensemble_size=50,
+            #     use_first_differences=[True, False],
+            #     n_jobs=threads_to_use,
+            # ),
             # "Hydra": [],  # see below
             # "R_DST": R_DST_Ridge(random_state=1379),
             # "Rocket": make_pipeline(
