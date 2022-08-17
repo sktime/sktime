@@ -71,7 +71,7 @@ def _is_trivial_match(candidate, change_points, n_timepoints, exclusion_radius=0
     Parameters
     ----------
     candidate : int
-        A single candidate change point. Will me chosen if non-trivial match based
+        A single candidate change point. Will be chosen if non-trivial match based
         on exclusion_radius.
     change_points : list, dtype=int
         List of change points chosen so far
@@ -195,6 +195,8 @@ class ClaSPSegmentation(BaseSeriesAnnotator):
         Annotation output format:
         * If "sparse", a pd.Series of the found Change Points is returned
         * If "dense", a pd.IndexSeries with the Segmenation of X is returned
+    exclusion_radius : int
+        Exclusion Radius for change points to be non-trivial matches
 
     Notes
     -----
@@ -221,9 +223,10 @@ class ClaSPSegmentation(BaseSeriesAnnotator):
 
     _tags = {"univariate-only": True, "fit_is_empty": True}  # for unit test cases
 
-    def __init__(self, period_length=10, n_cps=1, fmt="sparse"):
+    def __init__(self, period_length=10, n_cps=1, fmt="sparse", exclusion_radius=0.05):
         self.period_length = int(period_length)
         self.n_cps = n_cps
+        self.exclusion_radius = exclusion_radius
         super(ClaSPSegmentation, self).__init__(fmt)
 
     def _fit(self, X, Y=None):
@@ -307,10 +310,15 @@ class ClaSPSegmentation(BaseSeriesAnnotator):
         if isinstance(X, pd.Series):
             X = X.to_numpy()
 
-        clasp_transformer = ClaSPTransformer(window_length=self.period_length).fit(X)
+        clasp_transformer = ClaSPTransformer(
+            window_length=self.period_length, exclusion_radius=self.exclusion_radius
+        ).fit(X)
 
         self.found_cps, self.profiles, self.scores = _segmentation(
-            X, clasp_transformer, n_change_points=self.n_cps, exclusion_radius=0.05
+            X,
+            clasp_transformer,
+            n_change_points=self.n_cps,
+            exclusion_radius=self.exclusion_radius,
         )
 
         return self.found_cps, self.profiles, self.scores
