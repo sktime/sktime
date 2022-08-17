@@ -128,7 +128,7 @@ class Hidalgo(BaseTransformer):
         self.a = a
         self.b = b
         self.c = c
-        self.f = np.ones(shape=2)
+        self.f = f
         self.seed = seed
 
         super(Hidalgo, self).__init__()
@@ -239,6 +239,7 @@ class Hidalgo(BaseTransformer):
         a = self.a
         b = self.b
         c = self.c
+        f = self.f
         fixed_Z = self.fixed_Z
 
         if a is None:
@@ -250,6 +251,9 @@ class Hidalgo(BaseTransformer):
         if c is None:
             c = np.ones(K)
             self.c = c
+        if f is None:
+            f = np.ones(2)
+            self.f = f
 
         if not fixed_Z:
             random_z = self._rng.randint(0, K, N)
