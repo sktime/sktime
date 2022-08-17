@@ -4,7 +4,6 @@ Greedy Gaussian Segmentation (GGS).
 
 Notes
 -----
-
 Based on:
 
     Hallac, D., Nystrup, P. & Boyd, S.
@@ -48,7 +47,6 @@ class GGS:
 
     Notes
     -----
-
     Based on:
 
         Hallac, D., Nystrup, P. & Boyd, S.
@@ -81,7 +79,7 @@ class GGS:
 
         Parameters
         ----------
-        cov: float 
+        cov: float
             covariance
         nrows: int
             number of observations
@@ -335,7 +333,6 @@ class GreedyGaussianSegmentation:
 
     Notes
     -----
-
     Based on:
 
         Hallac, D., Nystrup, P. & Boyd, S.
