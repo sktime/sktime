@@ -1264,7 +1264,9 @@ class BaseForecaster(BaseEstimator):
         # compatibility checks between X and y
         if X is not None and y is not None:
             if self.get_tag("X-y-must-have-same-index"):
-                if not self.get_tag("ignores-exogeneous-X"):
+                # currently, check_equal_time_index only works for Series
+                # todo: fix this so the check is general, using get_time_index
+                if not self.get_tag("ignores-exogeneous-X") and X_scitype == "Series":
                     check_equal_time_index(X, y, mode="contains")
 
             if y_scitype != X_scitype:
@@ -1911,9 +1913,12 @@ class BaseForecaster(BaseEstimator):
             # now we need to subset to lower/upper depending
             #   on whether alpha was < 0.5 or >= 0.5
             #   this formula gives the integer column indices giving lower/upper
-            col_selector = (np.array(alpha) >= 0.5) + 2 * np.arange(len(alpha))
-            pred_int = pred_int.iloc[:, col_selector]
+            col_selector_int = (np.array(alpha) >= 0.5) + 2 * np.arange(len(alpha))
+            col_selector_bool = np.isin(np.arange(2 * len(alpha)), col_selector_int)
+            num_var = len(pred_int.columns.get_level_values(0).unique())
+            col_selector_bool = np.tile(col_selector_bool, num_var)
 
+            pred_int = pred_int.iloc[:, col_selector_bool]
             # change the column labels (multiindex) to the format for intervals
             # idx returned by _predict_interval is
             #   3-level MultiIndex with variable names, coverage, lower/upper

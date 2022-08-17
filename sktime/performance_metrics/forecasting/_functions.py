@@ -54,7 +54,7 @@ def _get_kwarg(kwarg, metric_name="Metric", **kwargs):
     if kwarg_ is None:
         msg = "".join(
             [
-                f"{metric_name} requires `{kwarg}`.",
+                f"{metric_name} requires `{kwarg}`. ",
                 f"Pass `{kwarg}` as a keyword argument when calling the metric.",
             ]
         )
