@@ -77,7 +77,7 @@ def evaluate_classification(
         "score_name": [scoring] * len(scores["test_score"]),
         "fit_time": scores["fit_time"],
         "pred_time": scores["score_time"],
-        "score": scores["test_score"],
+        f"{scoring}": scores["test_score"],
     }
 
     results = pd.DataFrame(results)

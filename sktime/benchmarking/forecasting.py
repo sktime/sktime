@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+
+# -*- coding: utf-8 -*-
 """Benchmarking for forecasting estimators."""
 import functools
 from typing import Callable, Dict, List, Optional, Union
@@ -17,7 +19,23 @@ def forecasting_validation(
     estimator: BaseForecaster,
     **kwargs,
 ) -> Dict[str, Union[float, str]]:
-    """Run validation for a forecasting estimator."""
+    """Run validation for a forecasting estimator.
+
+    Parameters
+    ----------
+    dataset_loader : Callable
+        A function which returns a dataset, like from `sktime.datasets`.
+    cv_splitter : BaseSplitter object
+        Splitter used for generating validation folds.
+    scorers : a list of BaseMetric objects
+        Each BaseMetric output will be included in the results.
+    estimator : BaseForecaster object
+        Estimator to benchmark.
+
+    Returns
+    -------
+    Dictionary of benchmark results for that forecaster
+    """
     y = dataset_loader()
     results = {}
     for scorer in scorers:
@@ -31,7 +49,7 @@ def forecasting_validation(
     return results
 
 
-def factory_forecasting_validation(
+def _factory_forecasting_validation(
     dataset_loader: Callable,
     cv_splitter: BaseSplitter,
     scorers: List[BaseMetric],
@@ -60,7 +78,24 @@ class ForecastingBenchmark(BaseBenchmark):
         scorers: List[BaseMetric],
         task_id: Optional[str] = None,
     ):
-        """Register a forecasting task to the benchmark."""
+        """Register a forecasting task to the benchmark.
+
+        Parameters
+        ----------
+        dataset_loader : Callable
+            A function which returns a dataset, like from `sktime.datasets`.
+        cv_splitter : BaseSplitter object
+            Splitter used for generating validation folds.
+        scorers : a list of BaseMetric objects
+            Each BaseMetric output will be included in the results.
+        task_id : str, optional (default=None)
+            Identifier for the benchmark task. If none given then uses dataset loader
+            name combined with cv_splitter class name.
+
+        Returns
+        -------
+        A dictionary of benchmark results for that forecaster
+        """
         task_kwargs = {
             "dataset_loader": dataset_loader,
             "cv_splitter": cv_splitter,
@@ -71,4 +106,4 @@ class ForecastingBenchmark(BaseBenchmark):
                 f"[dataset={dataset_loader.__name__}]"
                 f"_[cv_splitter={cv_splitter.__class__.__name__}]-v1"
             )
-        self._add_task(factory_forecasting_validation, task_kwargs, task_id=task_id)
+        self._add_task(_factory_forecasting_validation, task_kwargs, task_id=task_id)
