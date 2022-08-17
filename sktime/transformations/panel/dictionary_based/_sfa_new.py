@@ -198,7 +198,7 @@ class SFA_NEW(_PanelToPanelTransformer):
         X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
         X = X.squeeze(1)
 
-        words = _transform_case(
+        words = _transform_case(  # , PPV
             X,
             self.window_size,
             self.dft_length,
@@ -212,7 +212,8 @@ class SFA_NEW(_PanelToPanelTransformer):
             self.bigrams,
             self.inverse_sqrt_win_size,
         )
-        return words
+
+        return words  # , PPV
 
     def _binning(self, X, y=None):
         dft = _binning_dft(
@@ -446,18 +447,20 @@ def _transform_case(
         inverse_sqrt_win_size,
     )
 
+    # PPV = np.sum(np.where(dfts > 0, 1, 0), axis=1)
+    # NPPV = np.sum(np.where(dfts < 0, 1, 0), axis=1)
+
     if breakpoints.shape[1] == 2:
         words = generate_words(
             dfts, breakpoints, letter_bits, word_bits, window_size, bigrams
         )
-        return words
-
+        return words  # , PPV
     else:
         bp = np.zeros((breakpoints.shape[0], 2))
         bp[:, 0] = breakpoints[:, 1]
         bp[:, 1] = np.inf
-        words1 = generate_words(dfts, bp, letter_bits, word_bits, window_size, bigrams)
-        return words1
+        words = generate_words(dfts, bp, letter_bits, word_bits, window_size, bigrams)
+        return words  # , PPV
 
         """
         bp = np.zeros((breakpoints.shape[0], 2))
@@ -467,7 +470,7 @@ def _transform_case(
             dfts, bp, letter_bits, word_bits, window_size, bigrams
         )
 
-        return np.concatenate((words1, words2), axis=1)
+        return np.concatenate((words, words2), axis=1)
         """
 
 
@@ -511,7 +514,7 @@ def _create_bigram_word(word, other_word, word_bits):
     return (word << word_bits) | other_word
 
 
-@njit(fastmath=True, parallel=True, cache=True)
+@njit(fastmath=True, cache=True)  # parallel=True,
 def generate_words(dfts, breakpoints, letter_bits, word_bits, window_size, bigrams):
     if bigrams:
         words = np.zeros(
@@ -520,25 +523,24 @@ def generate_words(dfts, breakpoints, letter_bits, word_bits, window_size, bigra
     else:
         words = np.zeros((dfts.shape[0], dfts.shape[1]), dtype=np.int32)
 
-    letter_bits = np.uint32(letter_bits)
+    letter_bits = np.int32(letter_bits)
     for a in prange(dfts.shape[0]):
         for window in prange(dfts.shape[1]):
             word = np.int32(0)
             for i in range(len(dfts[a, window])):
                 for bp in range(breakpoints.shape[1]):
-                    # bp = np.searchsorted(breakpoints[i], dfts[a, window, i]))
+                    # bp = np.searchsorted(breakpoints[i], dfts[a, window, i])
                     if dfts[a, window, i] <= breakpoints[i, bp]:
-                        # print (type(word), type(letter_bits), type(bp))
                         word = (word << letter_bits) | bp
                         break
             words[a, window] = word
 
-            if bigrams:
-                if window - window_size >= 0:
-                    bigram = _create_bigram_word(
-                        word, words[a, window - window_size], word_bits
-                    )
-                    words[a, (dfts.shape[1] + window - window_size)] = bigram
+            # if bigrams:
+            #     if window - window_size >= 0:
+            #         bigram = _create_bigram_word(
+            #             word, words[a, window - window_size], word_bits
+            #         )
+            #         words[a, (dfts.shape[1] + window - window_size)] = bigram
 
     return words
 

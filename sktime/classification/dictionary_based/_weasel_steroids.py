@@ -166,7 +166,7 @@ class WEASEL_STEROIDS(BaseClassifier):
 
     @staticmethod
     # @njit
-    def _dilation(X, d, ws, first_difference):
+    def _dilation(X, d, first_difference):
         # rep = (ws-1) // 2  # * d
         # A = np.transpose([X[:, 0]] * rep)
         # B = np.transpose([X[:, -1]] * rep)
@@ -243,7 +243,7 @@ class WEASEL_STEROIDS(BaseClassifier):
         )
 
         self.total_features_count = 0
-        all_words = np.zeros((len(X), self.max_feature_count), dtype=np.int32)
+        all_words = np.zeros((len(X), self.max_feature_count), dtype=np.uint16)
 
         for (
             sfa_words2,
@@ -326,7 +326,7 @@ class WEASEL_STEROIDS(BaseClassifier):
         )
 
         features_count = 0
-        all_words = np.zeros((len(X), self.total_features_count), dtype=np.int32)
+        all_words = np.zeros((len(X), self.total_features_count), dtype=np.uint16)
         for sfa_words, rel_features_count in parallel_res:
             for idx, bag in enumerate(sfa_words):
                 all_words[
@@ -383,8 +383,15 @@ def _parallel_fit(
     rng = check_random_state(i)
     window_size = rng.choice(window_sizes)
     alphabet_size = rng.choice(alphabet_sizes)
+
+    # TODO this is bogus
     word_length = min(window_size - 2, rng.choice(word_lengths))
     norm = rng.choice(norm_options)
+
+    # TODO this is better
+    # norm = rng.choice(norm_options)
+    # word_length = min(window_size - (2 if norm else 0), rng.choice(word_lengths))
+
     dilation = max(
         1,
         np.int32(2 ** rng.uniform(0, np.log2((series_length - 1) / (window_size - 1)))),
@@ -409,10 +416,10 @@ def _parallel_fit(
         n_jobs=n_jobs,
     )
 
-    X2 = WEASEL_STEROIDS._dilation(X, dilation, window_size, first_difference)
+    X2 = WEASEL_STEROIDS._dilation(X, dilation, first_difference)
 
     # generate SFA words on subsample
-    sfa_words = transformer.fit_transform(X2, y)
+    sfa_words = transformer.fit_transform(X2, y)  # , PPV
 
     # Prefilter and remove those with only one value
     feature_names = set()
@@ -438,11 +445,13 @@ def _parallel_fit(
             if key in relevant_features:
                 all_win_words[j, relevant_features[key]] += 1
 
+    # all_win_words = np.concatenate((all_win_words, PPV), axis=1)
+
     return (
         all_win_words,
         transformer,
         relevant_features,
-        feature_count,
+        all_win_words.shape[1],
         dilation,
         first_difference,
     )
@@ -451,18 +460,19 @@ def _parallel_fit(
 def _parallel_transform_words(
     X, transformer, relevant_features, feature_count, dilation, first_difference
 ):
-    X2 = WEASEL_STEROIDS._dilation(
-        X, dilation, transformer.window_size, first_difference
-    )
+    X2 = WEASEL_STEROIDS._dilation(X, dilation, first_difference)
 
     # SFA transform
-    sfa_words = transformer.transform(X2)
+    sfa_words = transformer.transform(X2)  # , PPV
 
     # merging arrays
+    # all_win_words = np.zeros((len(X), feature_count - PPV.shape[1]), dtype=np.int32)
     all_win_words = np.zeros((len(X), feature_count), dtype=np.int32)
     for j in range(len(sfa_words)):
         for key in sfa_words[j]:
             if key in relevant_features:
                 all_win_words[j, relevant_features[key]] += 1
+
+    # all_win_words = np.concatenate((all_win_words, PPV), axis=1)
 
     return all_win_words, feature_count
