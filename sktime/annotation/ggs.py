@@ -2,6 +2,9 @@
 """
 Greedy Gaussian Segmentation (GGS).
 
+Notes
+-----
+
 Based on:
 
     Hallac, D., Nystrup, P. & Boyd, S.
@@ -32,16 +35,29 @@ class GGS:
 
     Parameters
     ----------
-        k_max: int, default=10
-            Maximum number of change points to find
-        lamb: : float, default=1.0
-            Regularization parameter lambda
-        max_shuffles: int, default=250
-            maximum number of shuffles
-        verbose: bool, default=False
-            If ``True`` verbose output is enabled.
-        random_state: int or np.random.RandomState, default=None
-            Either random seed or an instance of ``np.random.RandomState``
+    k_max: int, default=10
+        Maximum number of change points to find
+    lamb: : float, default=1.0
+        Regularization parameter lambda
+    max_shuffles: int, default=250
+        maximum number of shuffles
+    verbose: bool, default=False
+        If ``True`` verbose output is enabled.
+    random_state: int or np.random.RandomState, default=None
+        Either random seed or an instance of ``np.random.RandomState``
+
+    Notes
+    -----
+
+    Based on:
+
+        Hallac, D., Nystrup, P. & Boyd, S.
+        Greedy Gaussian segmentation of multivariate time series.
+        Adv Data Anal Classif 13, 727–751 (2019).
+        https://doi.org/10.1007/s11634-018-0335-0
+
+    - source code adapted based on: https://github.com/cvxgrp/GGS
+    - paper available at: https://stanford.edu/~boyd/papers/pdf/ggs.pdf
     """
 
     k_max: int = 10
@@ -65,13 +81,16 @@ class GGS:
 
         Parameters
         ----------
-            cov: covariance
-            nrows: number of observations
-            ncols: number of columns
+        cov: float 
+            covariance
+        nrows: int
+            number of observations
+        ncols: int
+            number of columns
 
         Returns
         -------
-            log_likelihood
+        log_likelihood
         """
         (_, logdet) = np.linalg.slogdet(
             cov + float(self.lamb) * np.identity(ncols) / nrows
@@ -89,12 +108,14 @@ class GGS:
 
         Args
         ----
-            data: time series data
-            change_points: list of indexes of change points
+        data: array_like
+            time series data
+        change_points: list of ints
+            list of indexes of change points
 
         Returns
         -------
-            log_likelihood: cumulative log likelihood
+        log_likelihood: cumulative log likelihood
         """
         log_likelihood = 0
         for start, stop in zip(change_points[:-1], change_points[1:]):
@@ -110,12 +131,13 @@ class GGS:
 
         Parameters
         ----------
-            data
+        data: array_like
+            time series data
 
         Returns
         -------
-            index: change point index
-            gll: gained log likelihood
+        index: change point index
+        gll: gained log likelihood
         """
         # Initialize parameters
         m, n = data.shape
@@ -170,13 +192,17 @@ class GGS:
 
         Parameters
         ----------
-            data: time series data
-            change_points: change points indexes
-            new_index: new change points
+        data: array_like
+            time series data
+        change_points: list of ints
+            change points indexes
+        new_index: list of ints
+            new change points
 
         Returns
         -------
-            change_points:
+        change_points: list of ints
+            change point indexes
         """
         rng = check_random_state(self.random_state)
         bp = change_points[:]
@@ -230,14 +256,15 @@ class GGS:
         """
         Find ``k`` change points on the data at a specific lambda.
 
-        Args
-        ----
-            data: time series data
+        Parameters
+        ----------
+        data: array_like
+            time series data
 
         Returns
         -------
-            The K change points, along with all intermediate change points (for k < K)
-            and their corresponding covariance-regularized maximum likelihoods.
+        The K change points, along with all intermediate change points (for k < K)
+        and their corresponding covariance-regularized maximum likelihoods.
         """
         change_points = self.initialize_change_points(data)
         self._intermediate_change_points = [change_points[:]]
@@ -293,6 +320,22 @@ class GGS:
 class GreedyGaussianSegmentation:
     """Greedy Gaussian Segmentation Estimator.
 
+    Parameters
+    ----------
+    k_max: int, default=10
+        Maximum number of change points to find
+    lamb: : float, default=1.0
+        Regularization parameter lambda
+    max_shuffles: int, default=250
+        maximum number of shuffles
+    verbose: bool, default=False
+        If ``True`` verbose output is enabled.
+    random_state: int or np.random.RandomState, default=None
+        Either random seed or an instance of ``np.random.RandomState``
+
+    Notes
+    -----
+
     Based on:
 
         Hallac, D., Nystrup, P. & Boyd, S.
@@ -302,19 +345,6 @@ class GreedyGaussianSegmentation:
 
     - source code adapted based on: https://github.com/cvxgrp/GGS
     - paper available at: https://stanford.edu/~boyd/papers/pdf/ggs.pdf
-
-    Parameters
-    ----------
-        k_max: int, default=10
-            Maximum number of change points to find
-        lamb: : float, default=1.0
-            Regularization parameter lambda
-        max_shuffles: int, default=250
-            maximum number of shuffles
-        verbose: bool, default=False
-            If ``True`` verbose output is enabled.
-        random_state: int or np.random.RandomState, default=None
-            Either random seed or an instance of ``np.random.RandomState``
     """
 
     def __init__(
@@ -343,11 +373,11 @@ class GreedyGaussianSegmentation:
 
         Parameters
         ----------
-            X: array_like
-                2D `array_like` representing time series with sequence index along
-                the first dimension and value series as columns.
-            y: array_like
-                Placeholder for compatibility with sklearn-api, not used, default=None.
+        X: array_like
+            2D `array_like` representing time series with sequence index along
+            the first dimension and value series as columns.
+        y: array_like
+            Placeholder for compatibility with sklearn-api, not used, default=None.
         """
         self._adaptee.initialize_intermediates()
         return self
@@ -357,18 +387,18 @@ class GreedyGaussianSegmentation:
 
         Parameters
         ----------
-            X: array_like
-                2D `array_like` representing time series with sequence index along
-                the first dimension and value series as columns.
-            y: array_like
-                Placeholder for compatibility with sklearn-api, not used, default=None.
+        X: array_like
+            2D `array_like` representing time series with sequence index along
+            the first dimension and value series as columns.
+        y: array_like
+            Placeholder for compatibility with sklearn-api, not used, default=None.
 
         Returns
         -------
-            y_pred : array_like
-                1D array with predicted segmentation of the same size as the first
-                dimension of X. The numerical values represent distinct segments
-                labels for each of the data points.
+        y_pred : array_like
+            1D array with predicted segmentation of the same size as the first
+            dimension of X. The numerical values represent distinct segments
+            labels for each of the data points.
         """
         return self._adaptee.predict(X)
 
@@ -377,19 +407,18 @@ class GreedyGaussianSegmentation:
 
         Parameters
         ----------
-            X: array_like
-                2D `array_like` representing time series with sequence index along
-                the first dimension and value series as columns.
-            y: array_like
-                Placeholder for compatibility with sklearn-api, not used, default=None.
+        X: array_like
+            2D `array_like` representing time series with sequence index along
+            the first dimension and value series as columns.
+        y: array_like
+            Placeholder for compatibility with sklearn-api, not used, default=None.
 
         Returns
         -------
-            y_pred : array_like
-                1D array with predicted segmentation of the same size as the first
-                dimension of X. The numerical values represent distinct segments
-                labels for each of the data points.
-
+        y_pred : array_like
+            1D array with predicted segmentation of the same size as the first
+            dimension of X. The numerical values represent distinct segments
+            labels for each of the data points.
         """
         return self.fit(X, y).predict(X, y)
 
@@ -398,14 +427,14 @@ class GreedyGaussianSegmentation:
 
         Parameters
         ----------
-            deep: bool
-                Dummy argument for compatibility with sklearn-api, not used.
+        deep: bool
+            Dummy argument for compatibility with sklearn-api, not used.
 
         Returns
         -------
-            params: dict
-                Dictionary with the estimator's initialization parameters, with
-                keys being argument names and values being argument values.
+        params: dict
+            Dictionary with the estimator's initialization parameters, with
+            keys being argument names and values being argument values.
         """
         return asdict(self._adaptee, filter=lambda attr, value: attr.init is True)
 
@@ -419,7 +448,7 @@ class GreedyGaussianSegmentation:
 
         Returns
         -------
-            self : reference to self (after parameters have been set)
+        self : reference to self (after parameters have been set)
         """
         for key, value in parameters.items():
             setattr(self._adaptee, key, value)
