@@ -7,6 +7,7 @@ __all__ = ["Hidalgo"]
 
 
 from functools import reduce
+from typing import Union
 
 import numpy as np
 from sklearn.neighbors import NearestNeighbors
@@ -53,11 +54,11 @@ class Hidalgo(BaseTransformer):
     sampling_rate: int, optional, default=10
         rate at which to save samples for each n_iter
     a : np.ArrayLike, optional, default=None
-        prior parameters of d
+        prior parameters of d, the dimensionality of manifold k
     b : np.ArrayLike, optional, default=None
-        prior parameters of d
+        prior parameters of d, the dimensionality of manifold k
     c : np.ArrayLike, optional, default=None
-        prior parameters of p
+        prior parameters of p, the probability that point belongs to manifold k
     f : np.ArrayLike, optional, default=None
         parameters of zeta
     seed : int, optional, default = 1
@@ -330,7 +331,7 @@ class Hidalgo(BaseTransformer):
         p = np.ones(shape=K) / K
 
         def sample_d(K, a1, b1):
-
+            """Sample d, the dimension of manifold k."""
             d = np.empty(shape=K)
             for k in range(K):
                 stop = False
@@ -357,7 +358,7 @@ class Hidalgo(BaseTransformer):
             return d
 
         def sample_p(K, p, pp, c1):
-
+            """Sample p, the prior probability that a point belongs to manifold k."""
             for k in range(K - 1):
                 stop = False
 
@@ -380,7 +381,7 @@ class Hidalgo(BaseTransformer):
             return (p, pp)
 
         def sample_zeta(K, zeta, use_Potts, estimate_zeta, q, NN, f1, it):
-
+            """Sample zeta, latent variable indicating point i belongs to manifold k."""
             N = self.N
 
             stop = False
@@ -389,7 +390,7 @@ class Hidalgo(BaseTransformer):
             if use_Potts and estimate_zeta:
                 for zeta_candidates in range(10):
                     zeta1 = 0.5 + 0.05 * zeta_candidates
-                    ZZ = [Zpart(N, NN[k], zeta1, q) for k in range(K)]
+                    ZZ = [partition_function(N, NN[k], zeta1, q) for k in range(K)]
                     h = [NN[k] * np.log(ZZ[k]) for k in range(K)]
                     val = (
                         (f1[0] - 1) * np.log(zeta1)
@@ -404,7 +405,7 @@ class Hidalgo(BaseTransformer):
                     r1 = self._rng.random()  # random sample for zeta
                     r2 = self._rng.random()  # random number for accepting
 
-                    ZZ = [Zpart(N, NN[k], r1, q) for k in range(K)]
+                    ZZ = [partition_function(N, NN[k], r1, q) for k in range(K)]
                     h = [NN[k] * np.log(ZZ[k]) for k in range(K)]
                     val = (f1[0] - 1) * np.log(r1) + (f1[1] - 1) * np.log(1 - r1) - h
                     frac = np.exp(val - maxval)
@@ -448,9 +449,11 @@ class Hidalgo(BaseTransformer):
                         )
 
                         g = (n_in + m_in) * np.log(zeta / (1 - zeta)) - np.log(
-                            Zpart(N, NN[k1], zeta, q)
+                            partition_function(N, NN[k1], zeta, q)
                         )
-                        var = Zpart(N, NN[k1] - 1, zeta, q) / Zpart(N, NN[k1], zeta, q)
+                        var = partition_function(
+                            N, NN[k1] - 1, zeta, q
+                        ) / partition_function(N, NN[k1], zeta, q)
                         assert var > 0
                         g = g + np.log(var) * (NN[k1] - 1)
 
@@ -502,7 +505,7 @@ class Hidalgo(BaseTransformer):
             lik1 = lik0 + np.log(zeta / (1 - zeta)) * N_in
 
             for k1 in range(K):
-                lik1 = lik1 - (NN[k1] * np.log(Zpart(N, NN[k1], zeta, q)))
+                lik1 = lik1 - (NN[k1] * np.log(partition_function(N, NN[k1], zeta, q)))
 
             return lik0, lik1
 
@@ -647,7 +650,7 @@ def binom(N: Union[int, float], q: Union[int, float]):
     return reduce(lambda x, y: x * y, [(N - q1) / (q1 + 1) for q1 in range(q)])
 
 
-def Zpart(N, N1, zeta, q):
+def partition_function(N, N1, zeta, q):
     """Partition function for Z.
 
     Parameters
