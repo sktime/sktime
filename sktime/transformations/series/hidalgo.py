@@ -16,7 +16,7 @@ from sktime.transformations.base import BaseTransformer
 
 
 class Hidalgo(BaseTransformer):
-    """Class of the Hidalgo intrinsic dimension model.
+    """Heteregeneous Intrinsic Dimensionality Algorithm (Hidalgo) model.
 
     Hidalgo is a robust approach in discriminating regions with
     different local intrinsic dimensionality (topological feature
