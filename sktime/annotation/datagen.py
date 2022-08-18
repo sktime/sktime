@@ -76,8 +76,8 @@ def piecewise_normal_multivariate(
            [ 3.55145404,  5.29220801]])
 
     >>> from sktime.annotation.datagen import piecewise_normal_multivariate
-    >>> piecewise_normal_multivariate([[1, 3], [4, 5]], lengths=[3, 3],\
-        covariances = [[[0.5, 0.3], [0.3, 1.0]], [[1.0, 0.3], [0.3, 0.7]]],\
+    >>> piecewise_normal_multivariate(means=[[1, 3], [4, 5]], lengths=[3, 3],\
+        covariances=[[[0.5, 0.3], [0.3, 1.0]], [[1.0, 0.3], [0.3, 0.7]]],\
         random_state=2)
     array([[ 0.78066776,  2.61125356],
            [ 0.92296736,  0.51689669],
