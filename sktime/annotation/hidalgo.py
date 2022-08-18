@@ -13,10 +13,10 @@ import numpy as np
 from sklearn.neighbors import NearestNeighbors
 from sklearn.utils.validation import check_random_state
 
-from sktime.transformations.base import BaseTransformer
+from sktime.annotation.base import BaseSeriesAnnotator
 
 
-class Hidalgo(BaseTransformer):
+class Hidalgo(BaseSeriesAnnotator):
     """Heteregeneous Intrinsic Dimensionality Algorithm (Hidalgo) model.
 
     Hidalgo is a robust approach in discriminating regions with
@@ -73,7 +73,7 @@ class Hidalgo(BaseTransformer):
 
     Examples
     --------
-    >>> from sktime.transformations.series.hidalgo import Hidalgo
+    >>> from sktime.annotation.hidalgo import Hidalgo
     >>> import numpy as np
     >>> np.random.seed(123)
     >>> X = np.random.rand(10,3)
@@ -86,11 +86,6 @@ class Hidalgo(BaseTransformer):
     """
 
     _tags = {
-        "scitype:transform-input": "Series",
-        # what is the scitype of X: Series, or Panel
-        "scitype:transform-output": "Series",
-        # what scitype is returned: Primitives, Series, Panel
-        "transform-returns-same-time-index": True,
         "univariate-only": False,
         "fit_is_empty": True,
     }
@@ -531,7 +526,7 @@ class Hidalgo(BaseTransformer):
 
         return sampling
 
-    def _transform(self, X, y=None):
+    def _predict(self, X, y=None):
         """
         Run the Hidalgo algorithm and writes results to self.
 
