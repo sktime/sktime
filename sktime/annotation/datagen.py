@@ -28,12 +28,15 @@ def piecewise_normal_multivariate(
     lengths : array_like
         Lengths of the segments to be generated of shape (n_segments,)
     means : array_like
-        Means of the segments to be generated, as an array of shape (n_segments, n_series)
+        Means of the segments to be generated, as an array of shape
+        (n_segments, n_series)
     variances : float or array_like (default=1.0)
         Variance of the segments to be generated
     covariances : array_like (default=None)
-        Covariances of segments to be generated of shape (n_segments, n_series, n_series)
-        If None, this will be constructed from variances
+        Covariances of segments to be generated of shape
+        (n_segments, n_series, n_series)
+        If None, this will be constructed from variances by assuming independence
+        of random vairables, i.e. variance as diagonal elements of covariance matrix
     random_state : int or np.random.RandomState
         Either a random seed or ``RandomState`` instance
 
@@ -55,8 +58,9 @@ def piecewise_normal_multivariate(
            [ 3.55145404,  5.29220801]])
 
     >>> from sktime.annotation.datagen import piecewise_normal_multivariate
-    >>> piecewise_normal_multivariate(means=[[1, 1], [2, 2], [3, 3]], lengths=[2, 3, 1],\
-        variances=[[1.0, 1.0], [1.0, 1.0], [1.0, 1.0]], random_state=2)
+    >>> piecewise_normal_multivariate(means=[[1, 1], [2, 2], [3, 3]],\
+        lengths=[2, 3, 1], variances=[[1.0, 1.0], [1.0, 1.0], [1.0, 1.0]],\
+        random_state=2)
     array([[ 0.58324215,  0.94373317],
            [-1.1361961 ,  2.64027081],
            [ 0.20656441,  1.15825263],
@@ -65,9 +69,9 @@ def piecewise_normal_multivariate(
            [ 3.55145404,  5.29220801]])
 
     >>> from sktime.annotation.datagen import piecewise_normal_multivariate
-    >>> piecewise_normal_multivariate(means=[[1, 1], [2, 2], [3, 3]], lengths=[2, 3, 1],\
-        covariances=[[[1.0, 0], [0, 1.0]], [[1.0, 0], [0, 1.0]], [[1.0, 0],\
-        [0, 1.0]]], random_state=2)
+    >>> piecewise_normal_multivariate(means=[[1, 1], [2, 2], [3, 3]],\
+        lengths=[2, 3, 1], covariances=[[[1.0, 0], [0, 1.0]], [[1.0, 0],\
+            [0, 1.0]], [[1.0, 0], [0, 1.0]]], random_state=2)
     array([[ 0.58324215,  0.94373317],
            [-1.1361961 ,  2.64027081],
            [ 0.20656441,  1.15825263],
