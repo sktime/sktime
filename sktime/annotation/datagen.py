@@ -45,7 +45,7 @@ def piecewise_normal_multivariate(
     Examples
     --------
     >>> from sktime.annotation.datagen import piecewise_normal_multivariate
-    >>> piecewise_normal_multivariate([[1, 1], [2, 2], [3, 3]],\
+    >>> piecewise_normal_multivariate(means=[[1, 1], [2, 2], [3, 3]],\
         lengths=[2, 3, 1], random_state=2)
     array([[ 0.58324215,  0.94373317],
            [-1.1361961 ,  2.64027081],
