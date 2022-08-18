@@ -25,10 +25,10 @@ def piecewise_normal_multivariate(
 
     Parameters
     ----------
-    means : array_like
-        Means of the segments to be generated of shape (L, N)
     lengths : array_like
-        Lengths of the segments to be generated of shape (L,)
+        Lengths of the segments to be generated of shape (n_segments,)
+    means : array_like
+        Means of the segments to be generated, as an array of shape (n_segments, n_series)
     variances : float or array_like (default=1.0)
         Variance of the segments to be generated
     covariances : array_like (default=None)
