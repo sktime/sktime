@@ -630,7 +630,7 @@ class Hidalgo(BaseTransformer):
         return Z
 
 
-def binom(N, q):
+def binom(N: Union[int, float], q: Union[int, float]):
     """Calculate the binomial coefficient.
 
     Parameters
