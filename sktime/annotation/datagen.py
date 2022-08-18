@@ -39,7 +39,7 @@ def piecewise_normal_multivariate(
 
     Returns
     -------
-    data : np.array
+    data : array_like
         multivariate time series as np.array of shape (X, N)
         where X = sum(lengths)
 
