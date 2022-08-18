@@ -35,7 +35,7 @@ def piecewise_normal_multivariate(
         Covariances of segments to be generated of shape (n_segments, n_series, n_series)
         If None, this will be constructed from variances
     random_state : int or np.random.RandomState
-        Either a random seed or RandomState instance
+        Either a random seed or ``RandomState`` instance
 
     Returns
     -------
