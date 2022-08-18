@@ -128,8 +128,10 @@ def piecewise_normal_multivariate(
     assert np.array(covariances).shape[1] == N
 
     return np.concatenate(
-        rng.multivariate_normal(mean=mean, cov=cov, size=length)
-        for mean, cov, length in zip(means, covariances, lengths)
+        [
+            rng.multivariate_normal(mean=mean, cov=cov, size=length)
+            for mean, cov, length in zip(means, covariances, lengths)
+        ]
     )
 
 
