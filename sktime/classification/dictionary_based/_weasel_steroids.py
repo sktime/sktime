@@ -23,7 +23,7 @@ from sklearn.linear_model import RidgeClassifierCV
 from sklearn.utils import check_random_state
 
 from sktime.classification.base import BaseClassifier
-from sktime.transformations.panel.dictionary_based import SFA_NEW
+from sktime.transformations.panel.dictionary_based import SAX_NEW, SFA_NEW
 
 # from numba import njit
 
@@ -217,7 +217,7 @@ class WEASEL_STEROIDS(BaseClassifier):
             )
 
         # Randomly choose window sizes
-        self.window_sizes = list(range(self.min_window, self.max_window + 1, 1))
+        self.window_sizes = np.arange(self.min_window, self.max_window + 1, 1)
 
         parallel_res = Parallel(n_jobs=self.n_jobs, timeout=99999)(
             delayed(_parallel_fit)(
@@ -402,19 +402,25 @@ def _parallel_fit(
 
     # TODO count subgroups of two letters of the words?
 
-    transformer = SFA_NEW(
-        variance=variance,
-        word_length=word_length,
-        alphabet_size=alphabet_size,
-        window_size=window_size,
-        norm=norm,
-        anova=anova,
-        binning_method=binning_strategy,
-        bigrams=bigrams,
-        # dilation=dilation,
-        # upper=upper,
-        n_jobs=n_jobs,
-    )
+    # which_transform = rng.uniform(0, 1)
+    if True:  # which_transform > 0.33:
+        transformer = SFA_NEW(
+            variance=variance,
+            word_length=word_length,
+            alphabet_size=alphabet_size,
+            window_size=window_size,
+            norm=norm,
+            anova=anova,
+            binning_method=binning_strategy,
+            bigrams=bigrams,
+            # dilation=dilation,
+            # upper=upper,
+            n_jobs=n_jobs,
+        )
+    else:
+        transformer = SAX_NEW(
+            word_length=word_length, alphabet_size=4, window_size=window_size
+        )
 
     X2 = WEASEL_STEROIDS._dilation(X, dilation, first_difference)
 

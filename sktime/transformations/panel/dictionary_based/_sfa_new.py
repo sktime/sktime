@@ -234,7 +234,7 @@ class SFA_NEW(_PanelToPanelTransformer):
             # determine variance
             dft_variance = np.var(dft, axis=0)
 
-            # select word-length-many indices with largest variance
+            # select word-length-many indices with the largest variance
             self.support = np.argsort(-dft_variance)[: self.word_length]
 
             # sort remaining indices
