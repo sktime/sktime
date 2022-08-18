@@ -219,6 +219,10 @@ class WEASEL_STEROIDS(BaseClassifier):
                 f"all with very short series"
             )
 
+        if self.feature_selection == "none":
+            # TODO works only for alphabet of size 2 !!!
+            self.max_feature_count = 2 ** np.max(self.word_lengths) * self.ensemble_size
+
         # Randomly choose window sizes
         self.window_sizes = np.arange(self.min_window, self.max_window + 1, 1)
 
