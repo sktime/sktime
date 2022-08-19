@@ -42,9 +42,9 @@ def test_classificationbenchmark(tmp_path):
             "validation_id": {0: "[dataset=load_arrow_head]_[cv_splitter=KFold]-v1"},
             "model_id": {0: "RocketClassifier-v1"},
             "accuracy_fold_0_test": {0: 0.2264150943396226},
-            "accuracy_fold_1_test": {0: 0.9142857142857144},
-            "accuracy_mean": {0: 0.5703504043126685},
-            "accuracy_std": {0: 0.4863979799428758},
+            "accuracy_fold_1_test": {0: 0.9047619047619048},
+            "accuracy_mean": {0: 0.5655884995507637},
+            "accuracy_std": {0: 0.479663629645861},
         }
     )
 
