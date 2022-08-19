@@ -1747,7 +1747,17 @@
       "contributions": [
         "bug"
       ]
-    }
+    },
+    {
+      "login": "haskarb",
+      "name": "Bhaskar Dhariyal",
+      "avatar_url": "https://avatars.githubusercontent.com/u/20501023?v=4",
+      "profile": "https://haskarb.github.io/",
+      "contributions": [
+        "code",
+        "test"
+      ]
+    },
   ],
   "projectName": "sktime",
   "projectOwner": "alan-turing-institute",
