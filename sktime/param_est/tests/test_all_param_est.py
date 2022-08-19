@@ -8,7 +8,7 @@ from sktime.tests.test_all_estimators import BaseFixtureGenerator, QuickTester
 
 
 class ParamFitterFixtureGenerator(BaseFixtureGenerator):
-    """Fixture generator for classifier tests.
+    """Fixture generator for parameter fitters.
 
     Fixtures parameterized
     ----------------------
@@ -21,15 +21,11 @@ class ParamFitterFixtureGenerator(BaseFixtureGenerator):
         ranges over all scenarios returned by retrieve_scenarios
     """
 
-    # note: this should be separate from TestAllClassifiers
-    #   additional fixtures, parameters, etc should be added here
-    #   Classifiers should contain the tests only
-
     estimator_type_filter = "param_est"
 
 
 class TestAllParamFitters(ParamFitterFixtureGenerator, QuickTester):
-    """Module level tests for all sktime classifiers."""
+    """Module level tests for all sktime parameter fitters."""
 
     def test_get_fitted_params(self, estimator_instance, scenario):
         """Test get_fitted_params expected return."""
