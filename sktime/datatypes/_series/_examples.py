@@ -61,8 +61,7 @@ if _check_soft_dependencies("xarray", severity="none"):
 
     da = xr.DataArray(
         [[1], [4], [0.5], [-3]],
-        dims=["index", "columns"],
-        coords={"index": [0, 1, 2, 3], "columns": ["a"]},
+        coords=[[0, 1, 2, 3], ["a"]],
     )
 
     example_dict[("xr.DataArray", "Series", 0)] = da
@@ -96,8 +95,7 @@ if _check_soft_dependencies("xarray", severity="none"):
 
     da = xr.DataArray(
         [[1, 3], [4, 7], [0.5, 2], [-3, -3 / 7]],
-        dims=["index", "columns"],
-        coords={"index": [0, 1, 2, 3], "columns": ["a", "b"]},
+        coords=[[0, 1, 2, 3], ["a", "b"]],
     )
 
     example_dict[("xr.DataArray", "Series", 1)] = da
@@ -131,8 +129,7 @@ if _check_soft_dependencies("xarray", severity="none"):
 
     da = xr.DataArray(
         [[1, 3], [4, 7], [0.5, 2], [3, 3 / 7]],
-        dims=["index", "columns"],
-        coords={"index": [0, 1, 2, 3], "columns": ["a", "b"]},
+        coords=[[0, 1, 2, 3], ["a", "b"]],
     )
 
     example_dict[("xr.DataArray", "Series", 2)] = da
