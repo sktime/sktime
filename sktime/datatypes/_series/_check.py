@@ -263,7 +263,7 @@ if _check_soft_dependencies("xarray", severity="none"):
 
         metadata["is_empty"] = len(index) < 1 or len(obj.values) < 1
         # The second dimension is the set of columns
-        metadata["is_univariate"] = len(obj[obj.dims[1]]) < 2
+        metadata["is_univariate"] = len(obj.dims) == 1 or len(obj[obj.dims[1]]) < 2
 
         # check that columns are unique
         msg = f"{var_name} must have " f"unique column indices, but found {obj.dims}"

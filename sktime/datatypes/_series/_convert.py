@@ -49,7 +49,7 @@ def convert_identity(obj, store=None):
 
 
 # assign identity function to type conversion to self
-for tp in ["pd.Series", "pd.DataFrame", "np.ndarray"]:
+for tp in ["pd.Series", "pd.DataFrame", "np.ndarray", "xr.DataArray"]:
     convert_dict[(tp, tp, "Series")] = convert_identity
 
 
@@ -214,7 +214,10 @@ if _check_soft_dependencies("xarray", severity="none"):
 
         if isinstance(store, dict):
             store["coords"] = list(obj.coords.keys())
-        return obj.to_pandas()
+
+        index = obj.indexes[obj.dims[0]]
+        columns = obj.indexes[obj.dims[1]] if len(obj.dims) == 2 else None
+        return pd.DataFrame(obj.values, index=index, columns=columns)
 
     convert_dict[
         ("xr.DataArray", "pd.DataFrame", "Series")
