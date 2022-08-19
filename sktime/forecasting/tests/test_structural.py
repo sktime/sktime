@@ -196,6 +196,7 @@ def test_results_consistency(level, fh_length, y_airlines):
     model = _UnobservedComponents(level=level, endog=y_airlines)
     result = model.fit(disp=0)
     y_pred_base = result.forecast(steps=fh_length)
+    y_pred_base.name = y_airlines.name
     assert_series_equal(left=y_pred_forecaster, right=y_pred_base)
     assert len(fh) == y_pred_forecaster.shape[0]
 
