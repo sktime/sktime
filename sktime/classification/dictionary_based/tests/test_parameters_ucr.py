@@ -180,6 +180,7 @@ if __name__ == "__main__":
         word_lengths,
         use_first_differences,
         alphabet_size,
+        feature_selection,
     ):
         sum_scores = {}
 
@@ -206,6 +207,7 @@ if __name__ == "__main__":
                 norm_options=norm_options,
                 word_lengths=word_lengths,
                 use_first_differences=use_first_differences,
+                feature_selection=feature_selection,
                 n_jobs=8,
             ),
             # "MiniRocket": make_pipeline(
@@ -269,110 +271,65 @@ if __name__ == "__main__":
 
     csv_scores = []
     choose_binning_strategies = [["equi-depth", "equi-width"], ["equi-depth"]]
-    # choose_variance = [True]
     variance = True
     choose_ensemble_size = [50]
-    choose_max_feature_count = [10_000]
+    choose_max_features = [10_000]
     choose_min_window = [4, 6, 8]
     choose_alphabet_size = [2, 4]
     choose_max_window = [16, 20, 24, 28, 32]
     choose_norm_options = [[False], [True, False]]
-    choose_word_lengths = [[6], [8], [6, 8]]
-    choose_use_first_differences = [[True, False], [False]]
+    choose_word_lengths = [[8], [10], [8, 10]]
+    choose_first_diff = [[True, False], [False]]
+    choose_feature_selection = ["chi2", "none", "random"]
 
     for ensemble_size in choose_ensemble_size:
-        for max_feature_count in choose_max_feature_count:
+        for max_feature_count in choose_max_features:
             for min_window in choose_min_window:
                 for max_window in choose_max_window:
                     for norm_options in choose_norm_options:
                         for word_lengths in choose_word_lengths:
                             for alphabet_size in choose_alphabet_size:
-                                for (
-                                    use_first_differences
-                                ) in choose_use_first_differences:
+                                for use_first_differences in choose_first_diff:
                                     for binning_strategies in choose_binning_strategies:
-                                        parallel_res = Parallel(
-                                            n_jobs=parallel_jobs, timeout=99999
-                                        )(
-                                            delayed(_parallel_fit)(
-                                                dataset,
-                                                binning_strategies,
-                                                True,
-                                                ensemble_size,
-                                                max_feature_count,
-                                                min_window,
-                                                max_window,
-                                                norm_options,
-                                                word_lengths,
-                                                use_first_differences,
-                                                alphabet_size,
-                                            )
-                                            for dataset in dataset_names_excerpt
-                                        )
-
-                                        sum_scores = {}
-                                        for result in parallel_res:
-                                            if not sum_scores:
-                                                sum_scores = result
-                                            else:
-                                                for name, data in result.items():
-                                                    for key, value in data.items():
-                                                        sum_scores[name][key] += value
-
-                                        print("\n\n---- Final results -----")
-
-                                        for name, _ in sum_scores.items():
-                                            print("---- Name", name, "-----")
-                                            print(
-                                                binning_strategies,
-                                                variance,
-                                                ensemble_size,
-                                                max_feature_count,
-                                                min_window,
-                                                max_window,
-                                                norm_options,
-                                                word_lengths,
-                                                use_first_differences,
-                                                alphabet_size,
+                                        for (
+                                            feature_selection
+                                        ) in choose_feature_selection:
+                                            parallel_res = Parallel(
+                                                n_jobs=parallel_jobs, timeout=99999
+                                            )(
+                                                delayed(_parallel_fit)(
+                                                    dataset,
+                                                    binning_strategies,
+                                                    True,
+                                                    ensemble_size,
+                                                    max_feature_count,
+                                                    min_window,
+                                                    max_window,
+                                                    norm_options,
+                                                    word_lengths,
+                                                    use_first_differences,
+                                                    alphabet_size,
+                                                    feature_selection,
+                                                )
+                                                for dataset in dataset_names_excerpt
                                             )
 
-                                            mean_acc = np.round(
-                                                np.mean(sum_scores[name]["all_scores"]),
-                                                3,
-                                            )
-                                            std_acc = np.round(
-                                                np.std(sum_scores[name]["all_scores"]),
-                                                3,
-                                            )
-                                            median_acc = np.round(
-                                                np.median(
-                                                    sum_scores[name]["all_scores"]
-                                                ),
-                                                3,
-                                            )
-                                            total_fit_time = np.round(
-                                                sum_scores[name]["fit_time"], 2
-                                            )
-                                            total_predict_time = np.round(
-                                                sum_scores[name]["pred_time"], 2
-                                            )
-                                            print("Total mean-accuracy:", mean_acc)
-                                            print("Total std-accuracy:", std_acc)
-                                            print("Total median-accuracy:", median_acc)
-                                            print("Total fit_time:", total_fit_time)
-                                            print(
-                                                "Total pred_time:", total_predict_time
-                                            )
-                                            print("-----------------")
+                                            sum_scores = {}
+                                            for result in parallel_res:
+                                                if not sum_scores:
+                                                    sum_scores = result
+                                                else:
+                                                    for name, data in result.items():
+                                                        for key, value in data.items():
+                                                            sum_scores[name][
+                                                                key
+                                                            ] += value
 
-                                            csv_scores.append(
-                                                (
-                                                    name,
-                                                    mean_acc,
-                                                    std_acc,
-                                                    median_acc,
-                                                    total_fit_time,
-                                                    total_predict_time,
+                                            print("\n\n---- Final results -----")
+
+                                            for name, _ in sum_scores.items():
+                                                print("---- Name", name, "-----")
+                                                print(
                                                     binning_strategies,
                                                     variance,
                                                     ensemble_size,
@@ -383,30 +340,89 @@ if __name__ == "__main__":
                                                     word_lengths,
                                                     use_first_differences,
                                                     alphabet_size,
+                                                    feature_selection,
                                                 )
-                                            )
 
-                                        pd.DataFrame.from_records(
-                                            csv_scores,
-                                            columns=[
-                                                "Classifier",
-                                                "mean_acc",
-                                                "std_acc",
-                                                "median_acc",
-                                                "total_fit_time",
-                                                "total_predict_time",
-                                                "binning_strategies",
-                                                "variance",
-                                                "ensemble_size",
-                                                "max_feature_count",
-                                                "min_window",
-                                                "max_window",
-                                                "norm_options",
-                                                "word_lengths",
-                                                "use_first_differences",
-                                                "alphabet_size",
-                                            ],
-                                        ).to_csv(
-                                            "scores_weasel_all_parameters.csv",
-                                            index=None,
-                                        )
+                                                mean_acc = np.round(
+                                                    np.mean(
+                                                        sum_scores[name]["all_scores"]
+                                                    ),
+                                                    3,
+                                                )
+                                                std_acc = np.round(
+                                                    np.std(
+                                                        sum_scores[name]["all_scores"]
+                                                    ),
+                                                    3,
+                                                )
+                                                median_acc = np.round(
+                                                    np.median(
+                                                        sum_scores[name]["all_scores"]
+                                                    ),
+                                                    3,
+                                                )
+                                                total_fit_time = np.round(
+                                                    sum_scores[name]["fit_time"], 2
+                                                )
+                                                total_predict_time = np.round(
+                                                    sum_scores[name]["pred_time"], 2
+                                                )
+                                                print("Total mean-accuracy:", mean_acc)
+                                                print("Total std-accuracy:", std_acc)
+                                                print(
+                                                    "Total median-accuracy:", median_acc
+                                                )
+                                                print("Total fit_time:", total_fit_time)
+                                                print(
+                                                    "Total pred_time:",
+                                                    total_predict_time,
+                                                )
+                                                print("-----------------")
+
+                                                csv_scores.append(
+                                                    (
+                                                        name,
+                                                        mean_acc,
+                                                        std_acc,
+                                                        median_acc,
+                                                        total_fit_time,
+                                                        total_predict_time,
+                                                        binning_strategies,
+                                                        variance,
+                                                        ensemble_size,
+                                                        max_feature_count,
+                                                        min_window,
+                                                        max_window,
+                                                        norm_options,
+                                                        word_lengths,
+                                                        use_first_differences,
+                                                        alphabet_size,
+                                                        feature_selection,
+                                                    )
+                                                )
+
+                                            pd.DataFrame.from_records(
+                                                csv_scores,
+                                                columns=[
+                                                    "Classifier",
+                                                    "mean_acc",
+                                                    "std_acc",
+                                                    "median_acc",
+                                                    "total_fit_time",
+                                                    "total_predict_time",
+                                                    "binning_strategies",
+                                                    "variance",
+                                                    "ensemble_size",
+                                                    "max_feature_count",
+                                                    "min_window",
+                                                    "max_window",
+                                                    "norm_options",
+                                                    "word_lengths",
+                                                    "use_first_differences",
+                                                    "alphabet_size",
+                                                    "feature_selection",
+                                                ],
+                                            ).to_csv(
+                                                "scores_weasel_all_parameters.csv",
+                                                index=None,
+                                            )

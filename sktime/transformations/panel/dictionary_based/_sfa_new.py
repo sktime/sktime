@@ -467,6 +467,13 @@ def _transform_case(
         return words  # , PPV
 
         """
+        bp = breakpoints.copy()
+        bp[bp < 0] = -np.inf
+        words = generate_words(dfts, bp, letter_bits, word_bits, window_size, bigrams)
+        return words  # , PPV
+        """
+
+        """
         bp = np.zeros((breakpoints.shape[0], 2))
         bp[:, 0] = breakpoints[:, 2]
         bp[:, 1] = np.inf
@@ -518,7 +525,7 @@ def _create_bigram_word(word, other_word, word_bits):
     return (word << word_bits) | other_word
 
 
-@njit(fastmath=True, cache=True)  # parallel=True,
+@njit(fastmath=True, parallel=True, cache=True)
 def generate_words(dfts, breakpoints, letter_bits, word_bits, window_size, bigrams):
     if bigrams:
         words = np.zeros(

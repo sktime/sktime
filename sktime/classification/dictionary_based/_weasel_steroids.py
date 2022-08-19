@@ -15,6 +15,7 @@ __all__ = ["WEASEL_STEROIDS"]
 
 import numpy as np
 from joblib import Parallel, delayed
+from numba import njit
 from sklearn.feature_selection import chi2
 
 # from numba import set_num_threads
@@ -127,7 +128,7 @@ class WEASEL_STEROIDS(BaseClassifier):
         word_lengths=[6, 8],
         alphabet_sizes=[4],
         use_first_differences=[False],
-        feature_selection="none",
+        feature_selection="random",
         random_state=None,
     ):
         # currently greater values than 4 are not supported.
@@ -168,7 +169,6 @@ class WEASEL_STEROIDS(BaseClassifier):
         super(WEASEL_STEROIDS, self).__init__()
 
     @staticmethod
-    # @njit
     def _dilation(X, d, first_difference):
         # rep = (ws-1) // 2  # * d
         # A = np.transpose([X[:, 0]] * rep)
@@ -181,12 +181,29 @@ class WEASEL_STEROIDS(BaseClassifier):
             X2 = np.diff(X, axis=1)
             X = np.concatenate((X, X2), axis=1)
 
+        return WEASEL_STEROIDS._dilation2(X, d)
+
+    @staticmethod
+    @njit
+    def _dilation2(X, d):
         # dilation on actual data
+        start = 0
+        data = np.zeros(X.shape, dtype=np.float_)
+        for i in range(0, d):
+            curr = X[:, i::d]
+            end = curr.shape[1]
+            data[:, start : start + end] = curr
+            start += end
+
+        """
         X_first = np.array(X)[:, 0::d]
         for i in range(1, d):
             X_second = X[:, i::d]
             X_first = np.concatenate((X_first, X_second), axis=1)
         return X_first
+        """
+
+        return data
 
     def _fit(self, X, y):
         """Build a WEASEL classifiers from the training set (X, y).
@@ -499,7 +516,7 @@ def build_feature_vector(feature_names, n_instances, relevant_features_idx, sfa_
             np.arange(len(relevant_features_idx)),
         )
     )
-    all_win_words = np.zeros((n_instances, len(feature_names)), dtype=np.int32)
+    all_win_words = np.zeros((n_instances, len(relevant_features_idx)), dtype=np.int32)
     for j in range(len(sfa_words)):
         for key in sfa_words[j]:
             if key in relevant_features:

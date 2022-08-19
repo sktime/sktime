@@ -20,6 +20,8 @@ from sklearn.pipeline import make_pipeline
 from sktime.classification.dictionary_based import WEASEL, WEASEL_STEROIDS, Hydra
 from sktime.transformations.panel.rocket import MiniRocket, Rocket
 
+# from sklearn.ensemble import VotingClassifier, StackingClassifier
+
 # from scipy.stats import zscore
 
 
@@ -40,8 +42,8 @@ def load_from_ucr_tsv_to_dataframe_plain(full_file_path_and_name):
 
 
 dataset_names_full = [
-    "ACSF1",
-    "Adiac",
+    # "ACSF1",
+    # "Adiac",
     "AllGestureWiimoteX",
     "AllGestureWiimoteY",
     "AllGestureWiimoteZ",
@@ -210,11 +212,18 @@ simplefilter(action="ignore", category=UserWarning)
 
 others = []
 
-# DATA_PATH = "/Users/bzcschae/workspace/UCRArchive_2018/"
-# parallel_jobs = 1
+DATA_PATH = "/Users/bzcschae/workspace/UCRArchive_2018/"
+parallel_jobs = 1
 
-DATA_PATH = "/vol/fob-wbib-vol2/wbi/schaefpa/sktime/datasets/UCRArchive_2018"
-parallel_jobs = 40
+# local
+if os.path.exists(DATA_PATH):
+    DATA_PATH = "/Users/bzcschae/workspace/UCRArchive_2018/"
+    used_dataset = dataset_names_excerpt
+# server
+else:
+    DATA_PATH = "/vol/fob-wbib-vol2/wbi/schaefpa/sktime/datasets/UCRArchive_2018"
+    parallel_jobs = 80
+    used_dataset = dataset_names_full
 
 if __name__ == "__main__":
 
@@ -236,21 +245,7 @@ if __name__ == "__main__":
         threads_to_use = 4
         clfs = {
             # "WEASEL": WEASEL(random_state=1379, n_jobs=threads_to_use),
-            "WEASEL-ST (2nd Best)": WEASEL_STEROIDS(
-                random_state=1379,
-                alphabet_sizes=[2],
-                binning_strategies=["equi-depth", "equi-width"],
-                min_window=4,
-                max_window=24,
-                max_feature_count=10_000,
-                word_lengths=[8],
-                norm_options=[False],
-                variance=True,
-                ensemble_size=50,
-                use_first_differences=[True, False],
-                n_jobs=threads_to_use,
-            ),
-            "WEASEL_ST (Best)": WEASEL_STEROIDS(
+            "WEASEL_ST (None)": WEASEL_STEROIDS(
                 random_state=1379,
                 binning_strategies=["equi-depth"],
                 alphabet_sizes=[4],
@@ -262,20 +257,36 @@ if __name__ == "__main__":
                 variance=True,
                 ensemble_size=50,
                 use_first_differences=[True, False],
+                feature_selection="none",
                 n_jobs=threads_to_use,
             ),
-            "WEASEL (Bench)": WEASEL_STEROIDS(
+            "WEASEL_ST (Chi2)": WEASEL_STEROIDS(
                 random_state=1379,
-                # alphabet_sizes=[2],
-                binning_strategies=["equi-depth"],  # "kmeans"
-                word_lengths=[6, 8],  # test only 6 or 8?
-                norm_options=[True, True, True, True, False],  # p[True]=0.8
-                variance=True,
+                binning_strategies=["equi-depth"],
+                alphabet_sizes=[4],
+                min_window=4,
+                max_window=24,
                 max_feature_count=10_000,
+                word_lengths=[8],  # test only 6 or 8?
+                norm_options=[False],  # p[True]=0.8
+                variance=True,
                 ensemble_size=50,
                 use_first_differences=[True, False],
+                feature_selection="chi2",
                 n_jobs=threads_to_use,
             ),
+            # "WEASEL (Bench)": WEASEL_STEROIDS(
+            #     random_state=1379,
+            #     # alphabet_sizes=[2],
+            #     binning_strategies=["equi-depth"],  # "kmeans"
+            #     word_lengths=[6, 8],  # test only 6 or 8?
+            #     norm_options=[True, True, True, True, False],  # p[True]=0.8
+            #     variance=True,
+            #     max_feature_count=10_000,
+            #     ensemble_size=50,
+            #     use_first_differences=[True, False],
+            #     n_jobs=threads_to_use,
+            # ),
             # "Hydra": [],  # see below
             # "R_DST": R_DST_Ridge(random_state=1379),
             # "Rocket": make_pipeline(
@@ -287,6 +298,10 @@ if __name__ == "__main__":
             #     RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True),
             # ),
         }
+
+        # estimators = list(clfs.items())
+        # clfs["Voting"] = VotingClassifier(
+        #                        estimators = estimators, voting = 'hard', n_jobs=-1)
 
         sum_scores = {}
         for name, _ in clfs.items():
@@ -359,7 +374,7 @@ if __name__ == "__main__":
         return sum_scores
 
     parallel_res = Parallel(n_jobs=parallel_jobs, timeout=99999)(
-        delayed(_parallel_fit)(dataset) for dataset in dataset_names_full
+        delayed(_parallel_fit)(dataset) for dataset in used_dataset
     )
 
     sum_scores = {}
@@ -394,7 +409,7 @@ if __name__ == "__main__":
         all_accs = sum_scores[name]["all_scores"]
         # total_fit_time in sum_scores[name]["all_scores"]
         # total_predict_time in sum_scores[name]["all_scores"]
-        for acc, dataset_name in zip(all_accs, dataset_names_excerpt):
+        for acc, dataset_name in zip(all_accs, used_dataset):
             csv_scores.append((name, dataset_name, acc))
 
     pd.DataFrame.from_records(
