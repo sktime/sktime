@@ -223,6 +223,7 @@ def test_result_consistency_exog(level_sample_data_split):
     result = model.fit(disp=0)
     n_test = X_test.shape[0]
     y_pred_base = result.forecast(steps=n_test, exog=X_test)
+    y_pred_base.name = y_train.name
     assert_series_equal(left=y_pred_forecaster, right=y_pred_base)
     assert len(fh) == y_pred_forecaster.shape[0]
 
