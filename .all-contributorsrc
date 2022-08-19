@@ -1731,7 +1731,33 @@
         "code",
         "ideas"
       ]
-    }
+    },
+    {
+      "login": "benheid",
+      "name": "Benedikt Heidrich",
+      "profile": "https://github.com/benheid",
+      "contributions": [
+        "code",
+      ]
+    },
+    {
+      "login": "AnH0ang",
+      "name": "An Hoang",
+      "profile": "https://github.com/AnH0ang",
+      "contributions": [
+        "bug"
+      ]
+    },
+    {
+      "login": "haskarb",
+      "name": "Bhaskar Dhariyal",
+      "avatar_url": "https://avatars.githubusercontent.com/u/20501023?v=4",
+      "profile": "https://haskarb.github.io/",
+      "contributions": [
+        "code",
+        "test"
+      ]
+    },
   ],
   "projectName": "sktime",
   "projectOwner": "alan-turing-institute",
