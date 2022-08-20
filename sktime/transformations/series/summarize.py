@@ -84,7 +84,6 @@ class WindowSummarizer(BaseTransformer):
         | x x x x x x x x * * z x x |
         |---------------------------|
 
-
         Special case ´lag´: Since lags are frequently used and window length is
         redundant, a special notation will be used for lags. You need to provide a list
         of `lag` values, and `window_length` is not available.
@@ -100,13 +99,11 @@ class WindowSummarizer(BaseTransformer):
         | x x x x x x x * x x * z x |
         |---------------------------|
 
-
         If, for instance, the time series would have a daily frequency and the window
         function would be specified as `window=['1D','4D']`, the logic with the offsets
         would be exactly the same. Note that it is possible that the time difference
         between consecutive records is not constant or the offset is not equal
         to a multiple of a time series frequency.
-
 
         key: either custom function call (to be
                 provided by user) or str corresponding to native pandas window function:

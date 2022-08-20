@@ -10,6 +10,9 @@ from sktime.datasets import load_airline, load_longley
 from sktime.datatypes import get_examples
 from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.transformations.series.summarize import WindowSummarizer
+from sktime.utils._testing.hierarchical import _make_hierarchical
+from sktime.utils._testing.panel import _make_panel_X
+from sktime.utils._testing.series import _make_series
 
 
 def check_eval(test_input, expected):
@@ -169,3 +172,35 @@ def test_wrong_column():
     transformer = WindowSummarizer(target_cols=["dummy"])
     Xt = transformer.fit_transform(X_ll_train)
     return Xt
+
+
+list_X = [_make_series(), _make_panel_X(), _make_hierarchical()]
+
+lag_features_int = [
+    {"lag": [1, 3], "mean": [[3, 5]]},
+    {"lag": [1, 3], "mean": [[3, 5]]},
+]
+
+
+@pytest.mark.parametrize("lag_feature", lag_features_int)
+@pytest.mark.parametrize("X", list_X)
+def test_int_windows(X, lag_feature):
+    """Test WindowSummarizer with integer lag-feature inputs."""
+    t = WindowSummarizer(lag_feature=lag_feature)
+    t.fit_transform(X)
+
+
+list_X = [_make_series()]  # not applicable: , _make_panel_X(), _make_hierarchical()]
+
+lag_features_time = [
+    {"lag": [1, "30D"], "mean": [[3, "31D"]]},
+    {"lag": ["1D", "30D"], "mean": [["3D", "60D"]]},
+]
+
+
+@pytest.mark.parametrize("lag_feature", lag_features_time)
+@pytest.mark.parametrize("X", list_X)
+def test_time_like_windows(X, lag_feature):
+    """Test WindowSummarizer with time-like lag-feature inputs."""
+    t = WindowSummarizer(lag_feature=lag_feature)
+    t.fit_transform(X)
