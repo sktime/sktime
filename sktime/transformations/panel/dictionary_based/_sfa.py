@@ -20,7 +20,7 @@ from sklearn.feature_selection import f_classif
 from sklearn.preprocessing import KBinsDiscretizer
 from sklearn.tree import DecisionTreeClassifier
 
-from sktime.transformations.base import _PanelToPanelTransformer
+from sktime.transformations.base import BaseTransformer
 from sktime.utils.validation.panel import check_X
 
 # The binning methods to use: equi-depth, equi-width, information gain or kmeans
@@ -29,7 +29,7 @@ binning_methods = {"equi-depth", "equi-width", "information-gain", "kmeans"}
 # TODO remove imag-part from dc-component component
 
 
-class SFA(_PanelToPanelTransformer):
+class SFA(BaseTransformer):
     """Symbolic Fourier Approximation (SFA) Transformer.
 
     Overview: for each series:
@@ -96,7 +96,6 @@ class SFA(_PanelToPanelTransformer):
     num_insts = 0
     num_atts = 0
 
-
     References
     ----------
     .. [1] Schäfer, Patrick, and Mikael Högqvist. "SFA: a symbolic fourier approximation
@@ -104,7 +103,17 @@ class SFA(_PanelToPanelTransformer):
     15th international conference on extending database technology. 2012.
     """
 
-    _tags = {"univariate-only": True}
+    _tags = {
+        "univariate-only": True,
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
+        "scitype:transform-output": "Series",
+        # what scitype is returned: Primitives, Series, Panel
+        "scitype:instancewise": False,  # is this an instance-wise transform?
+        "X_inner_mtype": "nested_univ",  # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "pd_Series_Table",  # which mtypes does y require?
+        "requires_y": True,  # does y need to be passed in fit?
+    }
 
     def __init__(
         self,

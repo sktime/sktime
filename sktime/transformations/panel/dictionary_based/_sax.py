@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import scipy.stats
 
-from sktime.transformations.base import _PanelToPanelTransformer
+from sktime.transformations.base import BaseTransformer
 from sktime.transformations.panel.dictionary_based import PAA
 
 #    TO DO: verify this returned pandas is consistent with sktime
@@ -18,7 +18,7 @@ from sktime.utils.validation.panel import check_X
 __author__ = "Matthew Middlehurst"
 
 
-class SAX(_PanelToPanelTransformer):
+class SAX(BaseTransformer):
     """SAX (Symbolic Aggregate approXimation) transformer.
 
     as described in
@@ -57,10 +57,19 @@ class SAX(_PanelToPanelTransformer):
     Attributes
     ----------
         words:      history = []
-
     """
 
-    _tags = {"univariate-only": True, "fit_is_empty": True}
+    _tags = {
+        "univariate-only": True,
+        "fit_is_empty": True,
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
+        "scitype:transform-output": "Series",
+        # what scitype is returned: Primitives, Series, Panel
+        "scitype:instancewise": False,  # is this an instance-wise transform?
+        "X_inner_mtype": "nested_univ",  # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "None",  # which mtypes do _fit/_predict require for y?
+    }
 
     def __init__(
         self,

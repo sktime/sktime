@@ -1,14 +1,15 @@
 # -*- coding: utf-8 -*-
 import pandas as pd
-from sktime.transformations.base import _PanelToPanelTransformer
+from sktime.transformations.base import BaseTransformer
 from sktime.datatypes._panel._convert import from_nested_to_2d_array
 from sktime.utils.validation.panel import check_X
 
 __author__ = "Matthew Middlehurst"
 
 
-class PAA(_PanelToPanelTransformer):
-    """
+class PAA(BaseTransformer):
+    """Piecewise Aggregate Approximation Transformer (PAA).
+
     (PAA) Piecewise Aggregate Approximation Transformer, as described in
     Eamonn Keogh, Kaushik Chakrabarti, Michael Pazzani, and Sharad Mehrotra.
     Dimensionality reduction for fast similarity search in large time series
@@ -25,18 +26,28 @@ class PAA(_PanelToPanelTransformer):
     Parameters
     ----------
     num_intervals   : int, dimension of the transformed data (default 8)
-
     """
+
+    _tags = {
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
+        "scitype:transform-output": "Series",
+        # what scitype is returned: Primitives, Series, Panel
+        "scitype:instancewise": False,  # is this an instance-wise transform?
+        "X_inner_mtype": "nested_univ",  # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
+    }
 
     def __init__(self, num_intervals=8):
         self.num_intervals = num_intervals
         super(PAA, self).__init__()
 
     def set_num_intervals(self, n):
+        """Set self.num_intervals to n."""
         self.num_intervals = n
 
     def transform(self, X, y=None):
-        """
+        """Transform data.
 
         Parameters
         ----------
@@ -115,7 +126,8 @@ class PAA(_PanelToPanelTransformer):
         return dims
 
     def _check_parameters(self, num_atts):
-        """
+        """Check parameters of PAA.
+
         Function for checking the values of parameters inserted into PAA.
         For example, the number of subsequences cannot be larger than the
         time series length.
