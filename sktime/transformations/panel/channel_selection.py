@@ -127,7 +127,7 @@ class ElbowClassSum(BaseTransformer):
 
     Parameters
     ----------
-    transformer: sktime pairwise panel transformer, optional, default=None
+    distance: sktime pairwise panel transformer, optional, default=None
         default None = euclidean distance on flattened series, FlatDist(ScipyDist())
 
     Attributes
@@ -179,15 +179,15 @@ class ElbowClassSum(BaseTransformer):
         # can the transformer handle unequal length time series (if passed Panel)?
     }
 
-    def __init__(self, transformer=None):
-        self.transformer = transformer
+    def __init__(self, distance=None):
+        self.distance = distance
 
-        if transformer is None:
+        if distance is None:
             from sktime.dists_kernels import FlatDist, ScipyDist
 
-            self.transformer_ = FlatDist(ScipyDist())
+            self.distance_ = FlatDist(ScipyDist())
         else:
-            self.transformer_ = transformer.clone()
+            self.distance_ = distance.clone()
 
         super(ElbowClassSum, self).__init__()
 
@@ -205,7 +205,7 @@ class ElbowClassSum(BaseTransformer):
         -------
         self : reference to self.
         """
-        t = self.transformer_
+        t = self.distance_
 
         start = int(round(time.time() * 1000))
         centroid_obj = _shrunk_centroid(0)
