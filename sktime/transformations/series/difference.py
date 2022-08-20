@@ -2,16 +2,16 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Class to iteratively apply differences to a time series."""
-__author__ = ["RNKuhns"]
+__author__ = ["RNKuhns", "fkiraly"]
 __all__ = ["Differencer"]
 
 from typing import Union
-from warnings import warn
 
 import numpy as np
 import pandas as pd
 from sklearn.utils import check_array
 
+from sktime.datatypes._utilities import get_cutoff
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.validation import is_int
@@ -61,9 +61,6 @@ def _inverse_diff(Z, lag):
     return Z
 
 
-# todo: deprecation in 0.13.0
-#   remove the drop_na *argument* and its handling
-#   change the default behaviour form "drop_na" to "fill_zero"
 class Differencer(BaseTransformer):
     """Apply iterative differences to a timeseries.
 
@@ -87,13 +84,7 @@ class Differencer(BaseTransformer):
         The lags used to difference the data.
         If a single `int` value is
 
-    drop_na : bool, default = True
-        deprecated from 0.12.0, to be removed in 0.13.0
-        Whether the differencer should drop the initial observations that
-        contain missing values as a result of the differencing operation(s).
-
-    na_handling : str, default = "drop_na"
-        default will change to "fill_zero" from 0.13.0
+    na_handling : str, default = "fill_zero"
         How to handle the NaNs that appear at the start of the series from differencing
         Example: there are only 3 differences in a series of length 4,
             differencing [a, b, c, d] gives [?, b-a, c-b, d-c]
@@ -128,27 +119,9 @@ class Differencer(BaseTransformer):
 
     VALID_NA_HANDLING_STR = ["drop_na", "keep_na", "fill_zero"]
 
-    def __init__(self, lags=1, drop_na=None, na_handling="drop_na"):
+    def __init__(self, lags=1, na_handling="fill_zero"):
         self.lags = lags
-        self.drop_na = drop_na
         self.na_handling = self._check_na_handling(na_handling)
-        # note: internally, we will use self._na_handling
-        #   because we must never change input param saves for sklearn compatibility
-        #   and because we need to "translate" the old "drop_na" arg
-        #   this could, in certain cases, overwrite the self. parameter
-        #   and cause sklearn compatibility issues due to the point mentioned
-
-        translate_arg = {True: "drop_na", False: "keep_na"}
-
-        if drop_na is not None:
-            warn(
-                f"the drop_na parameter is deprecated and will be removed in 0.13.0, "
-                f'use na_handling="{translate_arg[drop_na]}" instead',
-                DeprecationWarning,
-            )
-            self._na_handling = translate_arg[drop_na]
-        else:
-            self._na_handling = na_handling
 
         self._Z = None
         self._lags = None
@@ -159,7 +132,7 @@ class Differencer(BaseTransformer):
 
         # if the na_handling is "fill_zero" or "keep_na"
         #   then the returned indices are same to the passed indices
-        if self._na_handling in ["fill_zero", "keep_na"]:
+        if self.na_handling in ["fill_zero", "keep_na"]:
             self.set_tags(**{"transform-returns-same-time-index": True})
 
     def _check_na_handling(self, na_handling):
@@ -196,7 +169,9 @@ class Differencer(BaseTransformer):
         pad_z_inv = self.na_handling == "drop_na" or is_future
 
         cutoff = Z.index[0] if pad_z_inv else Z.index[self._cumulative_lags[-1]]
-        fh = ForecastingHorizon(np.arange(-1, -(self._cumulative_lags[-1] + 1), -1))
+        fh = ForecastingHorizon(
+            np.arange(-1, -(self._cumulative_lags[-1] + 1), -1), freq=self._freq
+        )
         index = fh.to_absolute(cutoff).to_pandas()
         index_diff = index.difference(self._Z.index)
 
@@ -234,6 +209,8 @@ class Differencer(BaseTransformer):
         self._prior_cum_lags = np.zeros_like(self._cumulative_lags)
         self._prior_cum_lags[1:] = self._cumulative_lags[:-1]
         self._Z = X.copy()
+
+        self._freq = get_cutoff(X, return_index=True)
         return self
 
     def _transform(self, X, y=None):
@@ -255,7 +232,7 @@ class Differencer(BaseTransformer):
         """
         Xt = _diff_transform(X, self._lags)
 
-        na_handling = self._na_handling
+        na_handling = self.na_handling
         if na_handling == "drop_na":
             Xt = Xt.iloc[self._cumulative_lags[-1] :]
         elif na_handling == "fill_zero":
@@ -308,7 +285,7 @@ class Differencer(BaseTransformer):
                     cutoff = Z_inv.index[0]
                 else:
                     cutoff = Z_inv.index[prior_cum_lag + lag]
-                fh = ForecastingHorizon(np.arange(-1, -(lag + 1), -1))
+                fh = ForecastingHorizon(np.arange(-1, -(lag + 1), -1), freq=self._freq)
                 index = fh.to_absolute(cutoff).to_pandas()
 
                 if is_df:

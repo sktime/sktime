@@ -21,7 +21,6 @@ y_multi = get_examples(mtype="pd-multiindex", as_scitype="Panel")[0]
 # y Train will be univariate data set
 y_train, y_test = temporal_train_test_split(y)
 
-
 y_int = y.copy()
 y_int.index = [i for i in range(len(y_int))]
 
@@ -35,6 +34,36 @@ mi = pd.MultiIndex.from_product([[1], y_train.index], names=["instances", "timep
 y_group2 = pd.DataFrame(y_train.values, index=mi, columns=["y"])
 
 y_train_grp = pd.concat([y_group1, y_group2])
+
+y_train_hier = get_examples(mtype="pd_multiindex_hier")[0]
+
+X = y_train_hier.reset_index().copy()
+
+X = X[~((X["bar"] == 2) & (X["foo"] == "b"))]
+# X = X.set_index(["foo","bar","timepoints"])
+
+X = X[["foo", "bar"]].drop_duplicates()
+
+time_names = y_train.index.names[-1]
+timeframe = y_train.index.to_frame()
+
+X2 = X.merge(timeframe, how="cross")
+
+freq_inferred = y_train.index.freq
+
+x_names = X.columns
+if not isinstance(x_names, list):
+    x_names = x_names.to_list()
+
+y_train_reset = y_train.reset_index()
+
+X3 = X2.merge(y_train_reset, on="Period")
+
+freq_inferred = y_train.index.freq
+
+y_train_hier_unequal = X3.groupby(x_names, as_index=True).apply(
+    lambda df: df.drop(x_names, axis=1).set_index(time_names).asfreq(freq_inferred)
+)
 
 # Create Train Panel sample data
 mi = pd.MultiIndex.from_product([[0], y_test.index], names=["instances", "timepoints"])
@@ -63,9 +92,7 @@ forecaster1 = make_reduction(
 )
 
 # forecaster1.fit(y=y_train_grp, X=y_train_grp)
-
-# # check_estimator(forecaster1, return_exceptions=False)
-# y_pred1 = forecaster1.predict(X=y_test_grp, fh=[1, 2, 12])
+# check_estimator(forecaster1, return_exceptions=False)
 
 forecaster2 = make_reduction(
     regressor,
@@ -75,7 +102,21 @@ forecaster2 = make_reduction(
     strategy="recursive",
 )
 
+y_numeric = y_train.copy()
+y_numeric.index = pd.to_numeric(y_numeric.index)
+
 # forecaster2.fit(y_train, fh=[1, 2])
+# y_pred21 = forecaster2.predict(fh=[1, 2, 12])
+
+# forecaster2.fit(y_numeric, fh=[1, 2])
+# y_pred22 = forecaster2.predict(fh=[1, 2, 12])
+
+# forecaster2.fit(y_train_hier_unequal, fh=[1, 2])
+# y_pred23 = forecaster2.predict(fh=[1, 2, 12])
+
+# Multiindex Series is not supported
+# y_train_series = y_train_grp["y"]
+# forecaster2.fit(y_train_series, fh=[1, 2])
 # y_pred2 = forecaster2.predict(fh=[1, 2, 12])
 
 
@@ -102,6 +143,14 @@ def check_eval(test_input, expected):
         (
             y_train,
             [None],
+        ),
+        (
+            y_numeric,
+            [None],
+        ),
+        (
+            y_train_hier_unequal,
+            ["foo", "bar", "Period"],
         ),
     ],
 )

@@ -34,7 +34,7 @@ from copy import deepcopy
 
 import pytest
 
-from sktime.base import BaseObject
+from sktime.base import BaseEstimator, BaseObject
 
 
 # Fixture class for testing tag system
@@ -373,3 +373,44 @@ def test_nested_set_params_and_alias():
     # same as above, should overwrite "bar" of uber_composite
     uber_composite.set_params(**{"bar": 424243})
     assert uber_composite.get_params()["bar"] == 424243
+
+
+class FittableCompositionDummy(BaseEstimator):
+    """Potentially composite object, for testing."""
+
+    def __init__(self, foo, bar=84):
+        self.foo = foo
+        self.foo_ = deepcopy(foo)
+        self.bar = bar
+
+    def fit(self):
+        if hasattr(self.foo_, "fit"):
+            self.foo_.fit()
+        self._is_fitted = True
+
+
+def test_get_fitted_params():
+    """Tests fitted parameter retrieval.
+
+    Raises
+    ------
+    AssertionError if logic behind get_fitted_params is incorrect, logic tested:
+        calling get_fitted_params on a non-composite fittable returns the fitted param
+        calling get_fitted_params on a composite returns all nested params
+    """
+    non_composite = FittableCompositionDummy(foo=42)
+    composite = FittableCompositionDummy(foo=deepcopy(non_composite))
+
+    non_composite.fit()
+    composite.fit()
+
+    non_comp_f_params = non_composite.get_fitted_params()
+    comp_f_params = composite.get_fitted_params()
+
+    assert isinstance(non_comp_f_params, dict)
+    assert set(non_comp_f_params.keys()) == set(["foo"])
+
+    assert isinstance(comp_f_params, dict)
+    assert set(comp_f_params) == set(["foo", "foo__foo"])
+    assert comp_f_params["foo"] == composite.foo_
+    assert comp_f_params["foo"] != composite.foo

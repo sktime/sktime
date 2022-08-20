@@ -36,6 +36,7 @@ sktime/transformations/series/kalman_filter.py @NoaBenAmi
 sktime/transformations/panel/augmenter.py @MrPr3ntice @iljamaurer
 sktime/transformations/multiplex.py @miraep8
 sktime/transformations/tests/test_multiplexer.py @miraep8
+sktime/transformations/panel/channel_selection.py @haskarb @a-pasos-ruiz @TonyBagnall
 
 sktime/forecasting/base/ @fkiraly @mloning @aiwalter
 sktime/forecasting/base/adapters/_statsforecast.py @FedericoGarza
@@ -58,9 +59,6 @@ sktime/forecasting/sarimax.py @TNTran92
 
 sktime/performance_metrics/forecasting/_functions.py @aiwalter @rnkuhns
 sktime/performance_metrics/forecasting/_classes.py @rnkuhns
-
-sktime/forecasting/hcrystalball.py @MichalChromcak
-sktime/forecasting/test/test_hcrystalball.py @MichalChromcak
 
 sktime/annotation/clasp.py @patrickzib @ermshaua
 sktime/transformations/series/clasp.py @patrickzib @ermshaua

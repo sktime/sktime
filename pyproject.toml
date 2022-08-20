@@ -1,6 +1,6 @@
 [project]
 name = "sktime"
-version = "0.12.1"
+version = "0.13.1"
 description = "A unified framework for machine learning with time series"
 authors = [
     {name = "Franz Király", email = "f.kiraly@ucl.ac.uk"},
@@ -38,12 +38,13 @@ classifiers = [
     "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
 ]
-requires-python = ">=3.7,<3.10"
+requires-python = ">=3.7,<3.11"
 dependencies = [
     "deprecated>=1.2.13",
     "numba>=0.53",
-    "numpy>=1.21.0,<1.22",
+    "numpy>=1.21.0,<1.23",
     "pandas>=1.1.0,<1.5.0",
     "scikit-learn>=0.24.0,<1.2.0",
     "statsmodels>=0.12.1",
@@ -53,11 +54,12 @@ dependencies = [
 [project.optional-dependencies]
 all_extras = [
     "dtw-python",
-    "esig==0.9.7",
+    "esig==0.9.7; python_version < '3.10'",
     "filterpy>=1.4.5",
-    "hcrystalball>=0.1.9",
+    "gluonts>=0.9.0",
     "matplotlib>=3.3.2",
-    "pmdarima>=1.8.0,!=1.8.1",
+    "mne",
+    "pmdarima>=1.8.0,!=1.8.1,<2.0.0",
     "prophet>=1.1",
     "pykalman>=0.9.5",
     "pyod>=0.8.0",
@@ -68,7 +70,7 @@ all_extras = [
     "tbats>=1.1.0",
     "tensorflow-probability",
     "tensorflow",
-    "tsfresh>=0.17.0",
+    "tsfresh>=0.17.0; python_version < '3.10'",
     "tslearn>=0.5.2",
 ]
 
@@ -77,6 +79,7 @@ dev = [
     "pre-commit",
     "pytest",
     "pytest-cov",
+    "pytest-randomly",
     "pytest-timeout",
     "pytest-xdist",
     "wheel",
@@ -116,3 +119,8 @@ file = "LICENSE"
 [build-system]
 requires = ["setuptools", "wheel", "toml", "build"]
 build-backend = "setuptools.build_meta"
+
+[tool.nbqa.exclude]
+black = "^docs/source/examples/"
+flake8 = "^docs/source/examples/"
+isort = "^docs/source/examples/"

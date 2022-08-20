@@ -155,10 +155,12 @@ class StatsForecastAutoARIMA(_StatsForecastAdapter):
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.statsforecast import StatsForecastAutoARIMA
     >>> y = load_airline()
-    >>> forecaster = StatsForecastAutoARIMA(sp=12, d=0, max_p=2, max_q=2)
-    >>> forecaster.fit(y)
+    >>> forecaster = StatsForecastAutoARIMA(  # doctest: +SKIP
+    ...     sp=12, d=0, max_p=2, max_q=2
+    ... )
+    >>> forecaster.fit(y)  # doctest: +SKIP
     StatsForecastAutoARIMA(...)
-    >>> y_pred = forecaster.predict(fh=[1,2,3])
+    >>> y_pred = forecaster.predict(fh=[1,2,3])  # doctest: +SKIP
     """
 
     def __init__(
@@ -197,8 +199,6 @@ class StatsForecastAutoARIMA(_StatsForecastAdapter):
         biasadj: bool = False,
         parallel: bool = False,
     ):
-        _check_soft_dependencies("statsforecast", severity="error", object=self)
-
         self.start_p = start_p
         self.d = d
         self.start_q = start_q
