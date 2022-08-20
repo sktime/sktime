@@ -238,8 +238,6 @@ class WindowSummarizer(BaseTransformer):
             The raw inputs to transformed columns will be dropped.
         self: reference to self
         """
-        self._X_memory = X
-
         X_name = get_name_list(X)
 
         if self.target_cols is not None:
@@ -299,7 +297,7 @@ class WindowSummarizer(BaseTransformer):
         transformed version of X
         """
         idx = X.index
-        X = X.combine_first(self._X_memory)
+        X = self._X
 
         func_dict = self._func_dict
         target_cols = self._target_cols
@@ -344,7 +342,7 @@ class WindowSummarizer(BaseTransformer):
         -------
         transformed version of X
         """
-        self._X_memory = X.combine_first(self._X_memory)
+        return self
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
