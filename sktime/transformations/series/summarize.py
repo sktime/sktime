@@ -297,7 +297,7 @@ class WindowSummarizer(BaseTransformer):
         transformed version of X
         """
         idx = X.index
-        X = self._X
+        X = X.combine_first(self._X)
 
         func_dict = self._func_dict
         target_cols = self._target_cols
