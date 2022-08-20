@@ -45,7 +45,7 @@ class IndexSubset(BaseTransformer):
         "X_inner_mtype": ["pd.DataFrame", "pd.Series"],
         "y_inner_mtype": ["pd.DataFrame", "pd.Series"],
         "transform-returns-same-time-index": False,
-        "fit_is_empty": False,
+        "fit_is_empty": True,
         "univariate-only": False,
         "capability:inverse_transform": False,
     }
@@ -53,25 +53,6 @@ class IndexSubset(BaseTransformer):
     def __init__(self, index_treatment="keep"):
         self.index_treatment = index_treatment
         super(IndexSubset, self).__init__()
-
-    def _fit(self, X, y=None):
-        """Fit transformer to X and y.
-
-        private _fit containing the core logic, called from fit
-
-        Parameters
-        ----------
-        X : pd.DataFrame or pd.Series
-            Data the transformer is fitted to
-        y : ignored argument for interface compatibility
-            Additional data, e.g., labels for transformation
-
-        Returns
-        -------
-        self: a fitted instance of the estimator
-        """
-        self._X = X
-        return self
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
@@ -110,25 +91,6 @@ class IndexSubset(BaseTransformer):
                 f' "{index_treatment}"'
             )
         return Xt
-
-    def _update(self, X, y=None):
-        """Update transformer with X and y.
-
-        private _update containing the core logic, called from update
-
-        Parameters
-        ----------
-        X : pd.DataFrame or pd.Series
-            Data the transform is fitted to
-        y : ignored argument for interface compatibility
-            Additional data, e.g., labels for transformation
-
-        Returns
-        -------
-        self: a fitted instance of the estimator
-        """
-        self._X = X.combine_first(self._X)
-        return self
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
