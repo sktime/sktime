@@ -259,7 +259,6 @@ class ElbowClassSum(BaseTransformer):
         """
         return X[self.channels_selected]
 
-
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
@@ -287,6 +286,7 @@ class ElbowClassSum(BaseTransformer):
         params2 = {"distance": DtwDist()}
 
         return [params1, params2]
+
 
 class ElbowClassPairwise(BaseTransformer):
     """Elbow Class Pairwise (ECP) transformer to select a subset of channels.
