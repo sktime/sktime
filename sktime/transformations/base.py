@@ -62,6 +62,7 @@ from sktime.datatypes import (
     check_is_scitype,
     convert_to,
     mtype_to_scitype,
+    update_data,
 )
 from sktime.datatypes._series_as_panel import convert_to_scitype
 from sktime.utils.sklearn import (
@@ -330,8 +331,10 @@ class BaseTransformer(BaseEstimator):
             Changes state to "fitted".
 
         Writes to self:
-            Sets is_fitted flag to True.
-            Sets fitted model attributes ending in "_".
+        _is_fitted : flag is set to True.
+        _X : X, possibly coerced to inner type or update_data compatible type
+            by reference, when possible
+        model attributes (ending in "_") : dependent on estimator
 
         Parameters
         ----------
@@ -355,6 +358,7 @@ class BaseTransformer(BaseEstimator):
         # skip everything if fit_is_empty is True
         if self.get_tag("fit_is_empty"):
             self._is_fitted = True
+            self._X = update_data(None, X_new=X)
             return self
 
         # if requires_y is set, y is required in fit and update
@@ -363,6 +367,9 @@ class BaseTransformer(BaseEstimator):
 
         # check and convert X/y
         X_inner, y_inner = self._check_X_y(X=X, y=y)
+
+        # memorize X as self._X
+        self._X = update_data(None, X_new=X_inner)
 
         # checks and conversions complete, pass to inner fit
         #####################################################
@@ -386,8 +393,9 @@ class BaseTransformer(BaseEstimator):
             Requires state to be "fitted".
 
         Accesses in self:
-            Fitted model attributes ending in "_".
-            self._is_fitted
+        _is_fitted : must be True
+        _X : optionally accessed
+        fitted model attributes (ending in "_") : must be set, accessed by _transform
 
         Parameters
         ----------
@@ -457,8 +465,10 @@ class BaseTransformer(BaseEstimator):
             Changes state to "fitted".
 
         Writes to self:
-            Sets is_fitted flag to True.
-            Sets fitted model attributes ending in "_".
+        _is_fitted : flag is set to True.
+        _X : X, possibly coerced to inner type or update_data compatible type
+            by reference, when possible
+        model attributes (ending in "_") : dependent on estimator
 
         Parameters
         ----------
@@ -516,8 +526,9 @@ class BaseTransformer(BaseEstimator):
             Requires state to be "fitted".
 
         Accesses in self:
-            Fitted model attributes ending in "_".
-            self._is_fitted
+        _is_fitted : must be True
+        _X : optionally accessed
+        fitted model attributes (ending in "_") : accessed by _inverse_transform
 
         Parameters
         ----------
@@ -568,11 +579,14 @@ class BaseTransformer(BaseEstimator):
             Requires state to be "fitted".
 
         Accesses in self:
-            Fitted model attributes ending in "_".
-            self._is_fitted
+        _is_fitted : must be True
+        _X : accessed by _update and by update_data
+        fitted model attributes (ending in "_") : must be set, accessed by _update
 
         Writes to self:
-            May update fitted model attributes ending in "_".
+        _X : updated by values in X, via update_data
+        fitted model attributes (ending in "_") : only if update_params=True
+            type and nature of update are dependent on estimator
 
         Parameters
         ----------
@@ -597,11 +611,9 @@ class BaseTransformer(BaseEstimator):
         self.check_is_fitted()
 
         # skip everything if update_params is False
-        if not update_params:
-            return self
-
         # skip everything if fit_is_empty is True
-        if self.get_tag("fit_is_empty"):
+        if not update_params or self.get_tag("fit_is_empty", False):
+            self._X = update_data(self._X, X_new=X)  # update memory of X
             return self
 
         # if requires_y is set, y is required in fit and update
@@ -610,6 +622,9 @@ class BaseTransformer(BaseEstimator):
 
         # check and convert X/y
         X_inner, y_inner = self._check_X_y(X=X, y=y)
+
+        # update memory of X
+        self._X = update_data(self._X, X_new=X_inner)
 
         # checks and conversions complete, pass to inner fit
         #####################################################
