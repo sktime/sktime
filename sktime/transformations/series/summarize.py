@@ -9,7 +9,6 @@ __all__ = ["SummaryTransformer", "WindowSummarizer"]
 import re
 
 import numpy as np
-
 import pandas as pd
 from joblib import Parallel, delayed
 
@@ -540,7 +539,7 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False):
                 Z_index = Z_index.to_timestamp()
                 Z.index = Z_index
             except Exception:
-                raise TypeError('index has to be transformable to DatetimeIndex')
+                raise TypeError("index has to be transformable to DatetimeIndex")
 
         Z_index = pd.DataFrame([0] * len(Z), index=Z_index)
         Z_index.rename(columns={0: "col_index"}, inplace=True)
@@ -575,6 +574,7 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False):
                     )()
                 )
             else:
+
                 def _fill_na(x):
                     x = x.shift(lag, freq)
                     x = x.fillna(method="bfill").rolling(window_length)
@@ -587,11 +587,11 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False):
         else:
             feat = Z.shift(lag, freq).fillna(method="bfill")
         if isinstance(Z, pd.core.groupby.generic.SeriesGroupBy) and callable(
-                summarizer
+            summarizer
         ):
             feat = feat.rolling(window_length).apply(summarizer, raw=True)
         elif not isinstance(Z, pd.core.groupby.generic.SeriesGroupBy) and callable(
-                summarizer
+            summarizer
         ):
             feat = feat.apply(
                 lambda x: x.rolling(window_length).apply(summarizer, raw=True)
@@ -701,7 +701,7 @@ def _check_quantiles(quantiles):
         quantiles = [quantiles]
     elif isinstance(quantiles, (list, tuple)):
         if len(quantiles) == 0 or not all(
-                [isinstance(q, (int, float)) and 0.0 <= q <= 1.0 for q in quantiles]
+            [isinstance(q, (int, float)) and 0.0 <= q <= 1.0 for q in quantiles]
         ):
             raise ValueError(msg)
     elif quantiles is not None:
