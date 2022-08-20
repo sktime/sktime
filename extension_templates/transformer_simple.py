@@ -17,6 +17,8 @@ How to use this implementation template to implement a new estimator:
 - make a copy of the template in a suitable location, give it a descriptive name.
 - work through all the "todo" comments below
 - fill in code for mandatory methods, and optionally for optional methods
+- do not write to reserved variables: is_fitted, _is_fitted, _X, _y,
+    _converter_store_X, transformers_, _tags, _tags_dynamic
 - you can add more private methods, but do not override BaseEstimator's private methods
     an easy way to be safe is to prefix your methods with "_custom"
 - change docstrings for functions and the file
@@ -110,7 +112,6 @@ class MyTransformer(BaseTransformer):
         # is transform result always guaranteed to be equal length (and series)?
         #   not relevant for transformers that return Primitives in transform-output
         "handles-missing-data": False,  # can estimator handle missing data?
-        # todo: rename to capability:missing_values
         "capability:missing_values:removes": False,
         # is transform result always guaranteed to contain no missing values?
     }
@@ -122,10 +123,13 @@ class MyTransformer(BaseTransformer):
         self.parama = parama
         self.paramb = paramb
         self.paramc = paramc
-        # important: no checking or other logic should happen here
 
         # todo: change "MyTransformer" to the name of the class
         super(MyTransformer, self).__init__()
+
+        # todo: optional, parameter checking logic (if applicable) should happen here
+        # if writes derived values to self, should *not* overwrite self.parama etc
+        # instead, write to self._parama, self._newparam (starting with _)
 
     # todo: implement this, mandatory (except in special case below)
     def _fit(self, X, y=None):
@@ -155,7 +159,7 @@ class MyTransformer(BaseTransformer):
         #
         # special case: if no fitting happens before transformation
         #  then: delete _fit (don't implement)
-        #   set "fit-in-transform" tag to True
+        #   set "fit_is_empty" tag to True
         #
         # Note: when interfacing a model that has fit, with parameters
         #   that are not data (X, y) or data-like

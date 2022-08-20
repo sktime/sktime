@@ -30,7 +30,7 @@ class AlignerPairwiseMultivariateEqual(AlignerTestScenario):
         "X_univariate": False,
         "pairwise": True,
         "equal_length": True,
-        "pre-refactor": True,
+        "is_enabled": True,
     }
 
     args = {
@@ -51,7 +51,7 @@ class AlignerPairwiseUnivariateUnequal(AlignerTestScenario):
         "X_univariate": True,
         "pairwise": True,
         "equal_length": False,
-        "pre-refactor": False,
+        "is_enabled": False,
     }
 
     args = {
@@ -72,7 +72,7 @@ class AlignerMultipleUnivariateUnequal(AlignerTestScenario):
         "X_univariate": True,
         "pairwise": False,
         "equal_length": False,
-        "pre-refactor": False,
+        "is_enabled": False,
     }
 
     args = {

@@ -9,8 +9,6 @@ __all__ = ["_HeterogenousMetaEstimator"]
 from abc import ABCMeta
 from inspect import isclass
 
-from sklearn import clone
-
 from sktime.base import BaseEstimator
 
 
@@ -224,7 +222,7 @@ class _HeterogenousMetaEstimator(BaseEstimator, metaclass=ABCMeta):
             name = type(obj).__name__
 
         if clone_est:
-            return (name, clone(est))
+            return (name, est.clone())
         else:
             return (name, est)
 
@@ -268,7 +266,8 @@ class _HeterogenousMetaEstimator(BaseEstimator, metaclass=ABCMeta):
         Parameters
         ----------
         estimators : list of estimators, or list of (str, estimator tuples)
-        clone_ests : bool, whether estimators get cloned in the process
+        clone_ests : bool, optional, default=False.
+            whether estimators of the return are cloned (True) or references (False)
 
         Returns
         -------
@@ -278,7 +277,7 @@ class _HeterogenousMetaEstimator(BaseEstimator, metaclass=ABCMeta):
         """
         ests = self._get_estimator_list(estimators)
         if clone_ests:
-            ests = [clone(e) for e in ests]
+            ests = [e.clone() for e in ests]
         unique_names = self._get_estimator_names(estimators, make_unique=True)
         est_tuples = list(zip(unique_names, ests))
         return est_tuples
@@ -342,6 +341,99 @@ class _HeterogenousMetaEstimator(BaseEstimator, metaclass=ABCMeta):
         #   the algorithm recurses, but will always terminate
         #   because potential clashes are lexicographically increasing
         return self._make_strings_unique(uniquestr)
+
+    def _dunder_concat(
+        self, other, base_class, composite_class, attr_name="steps", concat_order="left"
+    ):
+        """Concatenate pipelines for dunder parsing, helper function.
+
+        This is used in concrete heterogeneous meta-estimators that implement
+        dunders for easy concatenation of pipeline-like composites.
+        Examples: TransformerPipeline, MultiplexForecaster, FeatureUnion
+
+        Parameters
+        ----------
+        self : `sktime` estimator, instance of composite_class (when this is invoked)
+        other : `sktime` estimator, should inherit from composite_class or base_class
+            otherwise, `NotImplemented` is returned
+        base_class : estimator base class assumed as base class for self, other,
+            and estimator components of composite_class, in case of concatenation
+        composite_class : estimator class that has attr_name attribute in instances
+            attr_name attribute should contain list of base_class estimators,
+            list of (str, base_class) tuples, or a mixture thereof
+        attr_name : str, optional, default="steps"
+            name of the attribute that contains estimator or (str, estimator) list
+            concatenation is done for this attribute, see below
+        concat_order : str, one of "left" and "right", optional, default="left"
+            if "left", result attr_name will be like self.attr_name + other.attr_name
+            if "right", result attr_name will be like other.attr_name + self.attr_name
+
+        Returns
+        -------
+        instance of composite_class, where attr_name is a concatenation of
+        self.attr_name and other.attr_name, if other was of composite_class
+        if other is of base_class, then composite_class(attr_name=other) is used
+        in place of other, for the concatenation
+        concat_order determines which list is first, see above
+        "concatenation" means: resulting instance's attr_name contains
+        list of (str, est), a direct result of concat self.attr_name and other.attr_name
+        if str are all the class names of est, list of est only is used instead
+        """
+        # input checks
+        if not isinstance(concat_order, str):
+            raise TypeError(f"concat_order must be str, but found {type(concat_order)}")
+        if concat_order not in ["left", "right"]:
+            raise ValueError(
+                f'concat_order must be one of "left", "right", but found '
+                f'"{concat_order}"'
+            )
+        if not isinstance(attr_name, str):
+            raise TypeError(f"attr_name must be str, but found {type(attr_name)}")
+        if not isclass(composite_class):
+            raise TypeError("composite_class must be a class")
+        if not isclass(base_class):
+            raise TypeError("base_class must be a class")
+        if not issubclass(composite_class, base_class):
+            raise ValueError("composite_class must be a subclass of base_class")
+        if not isinstance(self, composite_class):
+            raise TypeError("self must be an instance of composite_class")
+
+        def concat(x, y):
+            if concat_order == "left":
+                return x + y
+            else:
+                return y + x
+
+        # get attr_name from self and other
+        # can be list of ests, list of (str, est) tuples, or list of miture
+        self_attr = getattr(self, attr_name)
+
+        # from that, obtain ests, and original names (may be non-unique)
+        # we avoid _make_strings_unique call too early to avoid blow-up of string
+        ests_s = tuple(self._get_estimator_list(self_attr))
+        names_s = tuple(self._get_estimator_names(self_attr))
+        if isinstance(other, composite_class):
+            other_attr = getattr(other, attr_name)
+            ests_o = tuple(other._get_estimator_list(other_attr))
+            names_o = tuple(other._get_estimator_names(other_attr))
+            new_names = concat(names_s, names_o)
+            new_ests = concat(ests_s, ests_o)
+        elif isinstance(other, base_class):
+            new_names = concat(names_s, (type(other).__name__,))
+            new_ests = concat(ests_s, (other,))
+        elif self._is_name_and_est(other, base_class):
+            other_name = other[0]
+            other_est = other[1]
+            new_names = concat(names_s, (other_name,))
+            new_ests = concat(ests_s, (other_est,))
+        else:
+            return NotImplemented
+
+        # if all the names are equal to class names, we eat them away
+        if all(type(x[1]).__name__ == x[0] for x in zip(new_names, new_ests)):
+            return composite_class(**{attr_name: list(new_ests)})
+        else:
+            return composite_class(**{attr_name: list(zip(new_names, new_ests))})
 
     def _anytagis(self, tag_name, value, estimators):
         """Return whether any estimator in list has tag `tag_name` of value `value`.

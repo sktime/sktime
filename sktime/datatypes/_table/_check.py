@@ -30,6 +30,7 @@ metadata: dict - metadata about obj if valid, otherwise None
         "is_univariate": bool, True iff table has one variable
         "is_empty": bool, True iff table has no variables or no instances
         "has_nans": bool, True iff the panel contains NaN values
+        "n_instances": int, number of instances/rows in the table
 """
 
 __author__ = ["fkiraly"]
@@ -64,6 +65,7 @@ def check_pddataframe_table(obj, return_metadata=False, var_name="obj"):
     index = obj.index
     metadata["is_empty"] = len(index) < 1 or len(obj.columns) < 1
     metadata["is_univariate"] = len(obj.columns) < 2
+    metadata["n_instances"] = len(index)
 
     # check whether there are any nans
     #   compute only if needed
@@ -93,6 +95,7 @@ def check_pdseries_table(obj, return_metadata=False, var_name="obj"):
     index = obj.index
     metadata["is_empty"] = len(index) < 1
     metadata["is_univariate"] = True
+    metadata["n_instances"] = len(index)
 
     # check that dtype is not object
     if "object" == obj.dtypes:
@@ -124,6 +127,7 @@ def check_numpy1d_table(obj, return_metadata=False, var_name="obj"):
 
     # we now know obj is a 1D np.ndarray
     metadata["is_empty"] = len(obj) < 1
+    metadata["n_instances"] = len(obj)
     # 1D numpy arrays are considered univariate
     metadata["is_univariate"] = True
     # check whether there any nans; compute only if requested
@@ -151,6 +155,7 @@ def check_numpy2d_table(obj, return_metadata=False, var_name="obj"):
     # we now know obj is a 2D np.ndarray
     metadata["is_empty"] = len(obj) < 1 or obj.shape[1] < 1
     metadata["is_univariate"] = obj.shape[1] < 2
+    metadata["n_instances"] = obj.shape[0]
     # check whether there any nans; compute only if requested
     if return_metadata:
         metadata["has_nans"] = pd.isnull(obj).any()
@@ -169,7 +174,7 @@ def check_list_of_dict_table(obj, return_metadata=False, var_name="obj"):
         msg = f"{var_name} must be a list of dict, found {type(obj)}"
         return _ret(False, msg, None, return_metadata)
 
-    if not np.all(isinstance(x, dict) for x in obj):
+    if not np.all([isinstance(x, dict) for x in obj]):
         msg = (
             f"{var_name} must be a list of dict, but elements at following "
             f"indices are not dict: {np.where(not isinstance(x, dict) for x in obj)}"
@@ -199,6 +204,7 @@ def check_list_of_dict_table(obj, return_metadata=False, var_name="obj"):
             [pd.isnull(d[key]) for d in obj for key in d.keys()]
         )
         metadata["is_empty"] = len(obj) < 1 or np.all([len(x) < 1 for x in obj])
+        metadata["n_instances"] = len(obj)
 
     return _ret(True, None, metadata, return_metadata)
 

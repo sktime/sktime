@@ -184,14 +184,24 @@ html_theme_options = {
             "icon": "fab fa-github",
         },
         {
-            "name": "Twitter",
-            "url": "https://twitter.com/sktime_toolbox",
-            "icon": "fab fa-twitter",
+            "name": "Slack",
+            "url": "https://join.slack.com/t/sktime-group/shared_invite/zt-1cghagwee-sqLJ~eHWGYgzWbqUX937ig",  # noqa: E501
+            "icon": "fab fa-slack",
         },
         {
             "name": "Discord",
             "url": "https://discord.com/invite/gqSab2K",
             "icon": "fab fa-discord",
+        },
+        {
+            "name": "LinkedIn",
+            "url": "https://www.linkedin.com/company/sktime/",
+            "icon": "fab fa-linkedin",
+        },
+        {
+            "name": "Twitter",
+            "url": "https://twitter.com/sktime_toolbox",
+            "icon": "fab fa-twitter",
         },
     ],
     "favicons": [
@@ -358,10 +368,8 @@ def _make_estimator_overview(app):
             + "</a>"
         )
 
-        df = df.append(
-            pd.Series([modname, algorithm_type, author_info], index=COLNAMES),
-            ignore_index=True,
-        )
+        record = pd.DataFrame([modname, algorithm_type, author_info], index=COLNAMES).T
+        df = pd.concat([df, record], ignore_index=True)
     with open("estimator_overview_table.md", "w") as file:
         df.to_markdown(file, index=False)
 
@@ -375,7 +383,7 @@ def setup(app):
     """
 
     def adds(pth):
-        print("Adding stylesheet: %s" % pth)  # noqa: T001
+        print("Adding stylesheet: %s" % pth)  # noqa: T201, T001
         app.add_css_file(pth)
 
     adds("fields.css")  # for parameters, etc.

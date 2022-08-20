@@ -1,18 +1,15 @@
-#!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements pipelines for forecasting."""
 
 __author__ = ["mloning", "aiwalter"]
-__all__ = ["TransformedTargetForecaster", "ForecastingPipeline"]
+__all__ = ["TransformedTargetForecaster", "ForecastingPipeline", "ForecastX"]
 
 import pandas as pd
-from sklearn.base import clone
 
 from sktime.base import _HeterogenousMetaEstimator
 from sktime.forecasting.base._base import BaseForecaster
 from sktime.registry import scitype
-from sktime.transformations.base import _SeriesToSeriesTransformer
 from sktime.utils.validation.series import check_series
 
 
@@ -155,14 +152,22 @@ class _Pipeline(
     @property
     def named_steps(self):
         """Map the steps to a dictionary."""
-        return dict(self.steps)
+        return dict(self._steps)
+
+    @property
+    def _steps(self):
+        return self._get_estimator_tuples(self.steps, clone_ests=False)
+
+    @_steps.setter
+    def _steps(self, value):
+        self.steps = value
 
     def get_params(self, deep=True):
         """Get parameters for this estimator.
 
         Parameters
         ----------
-        deep : boolean, optional
+        deep : boolean, optional, default=True
             If True, will return the parameters for this estimator and
             contained subobjects that are estimators.
 
@@ -171,7 +176,7 @@ class _Pipeline(
         params : mapping of string to any
             Parameter names mapped to their values.
         """
-        return self._get_params("steps", deep=deep)
+        return self._get_params("_steps", deep=deep)
 
     def set_params(self, **kwargs):
         """Set the parameters of this estimator.
@@ -182,7 +187,7 @@ class _Pipeline(
         -------
         self
         """
-        self._set_params("steps", **kwargs)
+        self._set_params("_steps", **kwargs)
         return self
 
     # both children use the same step params for testing, so putting it here
@@ -206,8 +211,8 @@ class _Pipeline(
         """
         from sklearn.preprocessing import StandardScaler
 
-        from sktime.forecasting.arima import ARIMA
         from sktime.forecasting.naive import NaiveForecaster
+        from sktime.forecasting.sarimax import SARIMAX
         from sktime.transformations.series.adapt import TabularToSeriesAdaptor
         from sktime.transformations.series.exponent import ExponentTransformer
 
@@ -221,11 +226,13 @@ class _Pipeline(
         # ARIMA has probabilistic methods, ExponentTransformer skips fit
         STEPS2 = [
             ("transformer", ExponentTransformer()),
-            ("forecaster", ARIMA()),
+            ("forecaster", SARIMAX()),
         ]
         params2 = {"steps": STEPS2}
 
-        return [params1, params2]
+        params3 = {"steps": [ExponentTransformer(), SARIMAX()]}
+
+        return [params1, params2, params3]
 
 
 # we ensure that internally we convert to pd.DataFrame for now
@@ -249,24 +256,42 @@ class ForecastingPipeline(_Pipeline):
     >>> from sktime.datasets import load_longley
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.forecasting.compose import ForecastingPipeline
-    >>> from sktime.transformations.series.impute import Imputer
     >>> from sktime.transformations.series.adapt import TabularToSeriesAdaptor
+    >>> from sktime.transformations.series.impute import Imputer
     >>> from sktime.forecasting.base import ForecastingHorizon
     >>> from sktime.forecasting.model_selection import temporal_train_test_split
     >>> from sklearn.preprocessing import MinMaxScaler
     >>> y, X = load_longley()
     >>> y_train, _, X_train, X_test = temporal_train_test_split(y, X)
     >>> fh = ForecastingHorizon(X_test.index, is_relative=False)
+
+        Example 1: string/estimator pairs
     >>> pipe = ForecastingPipeline(steps=[
     ...     ("imputer", Imputer(method="mean")),
     ...     ("minmaxscaler", TabularToSeriesAdaptor(MinMaxScaler())),
-    ...     ("forecaster", NaiveForecaster(strategy="drift"))])
+    ...     ("forecaster", NaiveForecaster(strategy="drift")),
+    ... ])
     >>> pipe.fit(y_train, X_train)
     ForecastingPipeline(...)
     >>> y_pred = pipe.predict(fh=fh, X=X_test)
+
+        Example 2: without strings
+    >>> pipe = ForecastingPipeline([
+    ...     Imputer(method="mean"),
+    ...     TabularToSeriesAdaptor(MinMaxScaler()),
+    ...     NaiveForecaster(strategy="drift"),
+    ... ])
+
+        Example 3: using the dunder method
+        Note: * (= apply to `y`) has precedence over ** (= apply to `X`)
+    >>> forecaster = NaiveForecaster(strategy="drift")
+    >>> imputer = Imputer(method="mean")
+    >>> pipe = (imputer * MinMaxScaler()) ** forecaster
+
+        Example 3b: using the dunder method, alternative
+    >>> pipe = imputer ** MinMaxScaler() ** forecaster
     """
 
-    _required_parameters = ["steps"]
     _tags = {
         "scitype:y": "both",
         "y_inner_mtype": SUPPORTED_MTYPES,
@@ -275,6 +300,7 @@ class ForecastingPipeline(_Pipeline):
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
         "capability:pred_int": True,
+        "X-y-must-have-same-index": False,
     }
 
     def __init__(self, steps):
@@ -282,14 +308,14 @@ class ForecastingPipeline(_Pipeline):
         self.steps_ = self._check_steps(steps, allow_postproc=False)
         super(ForecastingPipeline, self).__init__()
         tags_to_clone = [
-            "scitype:y",  # which y are fine? univariate/multivariate/both
             "ignores-exogeneous-X",  # does estimator ignore the exogeneous X?
             "capability:pred_int",  # can the estimator produce prediction intervals?
             "handles-missing-data",  # can estimator handle missing data?
             "requires-fh-in-fit",  # is forecasting horizon already required in fit?
-            "X-y-must-have-same-index",  # can estimator handle different X/y index?
             "enforce_index_type",  # index type that needs to be enforced in X/y
         ]
+        # we do not clone X-y-must-have-same-index, since transformers can
+        #   create indices, and that behaviour is not tag-inspectable
         self.clone_tags(self.forecaster_, tags_to_clone)
         self._anytagis_then_set("fit_is_empty", False, True, self.steps_)
 
@@ -297,6 +323,49 @@ class ForecastingPipeline(_Pipeline):
     def forecaster_(self):
         """Return reference to the forecaster in the pipeline. Valid after _fit."""
         return self.steps_[-1][1]
+
+    def __rpow__(self, other):
+        """Magic ** method, return (left) concatenated ForecastingPipeline.
+
+        Implemented for `other` being a transformer, otherwise returns `NotImplemented`.
+
+        Parameters
+        ----------
+        other: `sktime` transformer, must inherit from BaseTransformer
+            otherwise, `NotImplemented` is returned
+
+        Returns
+        -------
+        ForecastingPipeline object,
+            concatenation of `other` (first) with `self` (last).
+            not nested, contains only non-TransformerPipeline `sktime` steps
+        """
+        from sktime.transformations.base import BaseTransformer
+        from sktime.transformations.compose import TransformerPipeline
+
+        _, ests = zip(*self.steps_)
+        names = tuple(self._get_estimator_names(self.steps))
+        if isinstance(other, TransformerPipeline):
+            _, trafos_o = zip(*other.steps_)
+            names_o = tuple(other._get_estimator_names(other.steps))
+            new_names = names_o + names
+            new_ests = trafos_o + ests
+        elif isinstance(other, BaseTransformer):
+            new_names = (type(other).__name__,) + names
+            new_ests = (other,) + ests
+        elif self._is_name_and_est(other, BaseTransformer):
+            other_name = other[0]
+            other_trafo = other[1]
+            new_names = (other_name,) + names
+            new_ests = (other_trafo,) + ests
+        else:
+            return NotImplemented
+
+        # if all the names are equal to class names, we eat them away
+        if all(type(x[1]).__name__ == x[0] for x in zip(new_names, new_ests)):
+            return ForecastingPipeline(steps=list(new_ests))
+        else:
+            return ForecastingPipeline(steps=list(zip(new_names, new_ests)))
 
     def _fit(self, y, X=None, fh=None):
         """Fit to training data.
@@ -318,13 +387,13 @@ class ForecastingPipeline(_Pipeline):
         if self._X is not None and not self.get_tag("ignores-exogeneous-X"):
             # transform X
             for step_idx, name, transformer in self._iter_transformers():
-                t = clone(transformer)
+                t = transformer.clone()
                 X = t.fit_transform(X=X, y=y)
                 self.steps_[step_idx] = (name, t)
 
         # fit forecaster
-        name, forecaster = self.steps[-1]
-        f = clone(forecaster)
+        name, forecaster = self.steps_[-1]
+        f = forecaster.clone()
         f.fit(y, X, fh)
         self.steps_[-1] = (name, f)
 
@@ -536,7 +605,7 @@ class ForecastingPipeline(_Pipeline):
 #     return Zt
 
 
-class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
+class TransformedTargetForecaster(_Pipeline):
     """Meta-estimator for forecasting transformed time series.
 
     Pipeline functionality to apply transformers to the target series. The
@@ -586,8 +655,9 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
     ----------
     steps : list of sktime transformers and forecasters, or
         list of tuples (str, estimator) of sktime transformers or forecasters
-            must contain exactly one transformer
-        these are "blueprint" transformers, states do not change when `fit` is called
+            the list must contain exactly one forecaster
+        these are "blueprint" transformers resp forecasters,
+            forecaster/transformer states do not change when `fit` is called
 
     Attributes
     ----------
@@ -612,7 +682,7 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
     >>> from sktime.transformations.series.exponent import ExponentTransformer
     >>> y = load_airline()
 
-    Example 1: string/estimator pairs
+        Example 1: string/estimator pairs
     >>> pipe = TransformedTargetForecaster(steps=[
     ...     ("imputer", Imputer(method="mean")),
     ...     ("detrender", Deseasonalizer()),
@@ -622,7 +692,7 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
     TransformedTargetForecaster(...)
     >>> y_pred = pipe.predict(fh=[1,2,3])
 
-    Example 2: without strings
+        Example 2: without strings
     >>> pipe = TransformedTargetForecaster([
     ...     Imputer(method="mean"),
     ...     Deseasonalizer(),
@@ -630,13 +700,12 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
     ...     ExponentTransformer(),
     ... ])
 
-    Example 3: using the dunder method
+        Example 3: using the dunder method
     >>> forecaster = NaiveForecaster(strategy="drift")
     >>> imputer = Imputer(method="mean")
     >>> pipe = imputer * Deseasonalizer() * forecaster * ExponentTransformer()
     """
 
-    _required_parameters = ["steps"]
     _tags = {
         "scitype:y": "both",
         "y_inner_mtype": SUPPORTED_MTYPES,
@@ -645,6 +714,7 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
         "capability:pred_int": True,
+        "X-y-must-have-same-index": False,
     }
 
     def __init__(self, steps):
@@ -654,14 +724,14 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
 
         # set the tags based on forecaster
         tags_to_clone = [
-            "scitype:y",  # which y are fine? univariate/multivariate/both
             "ignores-exogeneous-X",  # does estimator ignore the exogeneous X?
             "capability:pred_int",  # can the estimator produce prediction intervals?
             "handles-missing-data",  # can estimator handle missing data?
             "requires-fh-in-fit",  # is forecasting horizon already required in fit?
-            "X-y-must-have-same-index",  # can estimator handle different X/y index?
             "enforce_index_type",  # index type that needs to be enforced in X/y
         ]
+        # we do not clone X-y-must-have-same-index, since transformers can
+        #   create indices, and that behaviour is not tag-inspectable
         self.clone_tags(self.forecaster_, tags_to_clone)
         self._anytagis_then_set("fit_is_empty", False, True, self.steps_)
 
@@ -991,3 +1061,391 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
             self.transformers_pre_, pred_int, mode="proba"
         )
         return pred_int_transformed
+
+
+class ForecastX(BaseForecaster):
+    """Forecaster that forecasts exogeneous data for use in an endogeneous forecast.
+
+    In `predict`, this forecaster carries out a `predict` step on exogeneous `X`.
+    Then, a forecast is made for `y`, using exogeneous data plus its forecasts as `X`.
+    If `columns` argument is provided, will carry `predict` out only for the columns
+    in `columns`, and will use other columns in `X` unchanged.
+
+    The two forecasters and forecasting horizons (for forecasting `y` resp `X`)
+    can be selected independently, but default to the same.
+
+    The typical use case is extending exogeneous data available only up until the cutoff
+    into the future, for use by an exogeneous forecaster that requires such future data.
+
+    If no X is passed in `fit`, behaves like `forecaster_y`.
+    In such a case (no exogeneous data), there is no benefit in using this compositor.
+
+    Parameters
+    ----------
+    forecaster_y : BaseForecaster
+        sktime forecaster to use for endogeneous data `y`
+    forecaster_X : BaseForecaster, optional, default = forecaster_y
+        sktime forecaster to use for exogeneous data `X`
+    fh_X : None, ForecastingHorizon, or valid input to construct ForecastingHorizon
+        optional, default = None = same as used for `y` in any instance.
+        valid inputs to construct ForecastingHorizon are:
+        int, list of int, 1D np.ndarray, pandas.Index (see ForecastingHorizon)
+    behaviour : str, one of "update" or "refit", optional, default = "update"
+        if "update", forecaster_X is fit to the data batch seen in `fit`,
+            and updated with any `X` seen in calls of `update`.
+            Forecast added to `X` in `predict` is obtained from this state.
+        if "refit", then forecaster_X is fit to `X` in `predict` only,
+            Forecast added to `X` in `predict` is obtained from this state.
+    columns : None, or pandas compatible index iterator (e.g., list of str), optional
+        default = None = all columns in X are used for forecast
+        columns to which `forecaster_X` is applied
+
+    Attributes
+    ----------
+    forecaster_X_ : BaseForecaster
+        clone of forecaster_X, state updates with `fit` and `update`
+        created only if behaviour="update" and `X` passed is not None
+    forecaster_y_ : BaseForecaster
+        clone of forecaster_y, state updates with `fit` and `update`
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_longley
+    >>> from sktime.forecasting.arima import ARIMA
+    >>> from sktime.forecasting.base import ForecastingHorizon
+    >>> from sktime.forecasting.compose import ForecastX
+    >>> from sktime.forecasting.var import VAR
+
+    >>> y, X = load_longley()
+    >>> fh = ForecastingHorizon([1, 2, 3])
+    >>> pipe = ForecastX(  # doctest: +SKIP
+    ...     forecaster_X=VAR(),
+    ...     forecaster_y=ARIMA(),
+    ... )
+    >>> pipe = pipe.fit(y, X=X, fh=fh)  # doctest: +SKIP
+    >>> # this now works without X from the future of y!
+    >>> y_pred = pipe.predict(fh=fh)  # doctest: +SKIP
+    """
+
+    _tags = {
+        "X_inner_mtype": "pd.DataFrame",
+        "y_inner_mtype": "pd.DataFrame",
+        "X-y-must-have-same-index": False,
+        "fit_is_empty": False,
+        "ignores-exogeneous-X": False,
+        "capability:pred_int": True,
+    }
+
+    def __init__(
+        self, forecaster_y, forecaster_X, fh_X=None, behaviour="update", columns=None
+    ):
+
+        if behaviour not in ["update", "refit"]:
+            raise ValueError('behaviour must be one of "update", "refit"')
+
+        self.forecaster_y = forecaster_y
+        self.forecaster_X = forecaster_X
+
+        # forecaster_X_c handles the "if forecaster_X is None, use forecaster_y"
+        if forecaster_X is None:
+            self.forecaster_X_c = forecaster_y
+        else:
+            self.forecaster_X_c = forecaster_X
+        self.fh_X = fh_X
+        self.behaviour = behaviour
+        self.columns = columns
+
+        super(ForecastX, self).__init__()
+
+        self.clone_tags(forecaster_y, "capability:pred_int")
+
+        # tag_translate_dict = {
+        #    "handles-missing-data": forecaster.get_tag("handles-missing-data")
+        # }
+        # self.set_tags(**tag_translate_dict)
+
+    def _fit(self, y, X=None, fh=None):
+        """Fit to training data.
+
+        Parameters
+        ----------
+        y : time series in sktime compatible format
+            Target time series to which to fit the forecaster
+        fh : int, list or np.array, optional (default=None)
+            The forecasters horizon with the steps ahead to to predict.
+        X : time series in sktime compatible format, optional, default=None
+            Exogenous time series to which to fit the forecaster
+
+        Returns
+        -------
+        self : returns an instance of self.
+        """
+        if self.fh_X is None:
+            fh_X = fh
+        else:
+            fh_X = self.fh_X
+        self.fh_X_ = fh_X
+
+        # remember if X seen was None
+        self.X_was_None_ = X is None
+
+        if self.behaviour == "update" and X is not None:
+            self.forecaster_X_ = self.forecaster_X_c.clone()
+            self.forecaster_X_.fit(y=self._get_Xcols(X), fh=fh_X)
+
+        self.forecaster_y_ = self.forecaster_y.clone()
+        self.forecaster_y_.fit(y=y, X=X, fh=fh)
+
+        return self
+
+    def _get_Xcols(self, X):
+        """Shorthand to obtain X at self.columns."""
+        if self.columns is not None:
+            return X[self.columns]
+        else:
+            return X
+
+    def _get_forecaster_X_prediction(self, X=None, fh=None, method="predict"):
+        """Shorthand to obtain a prediction from forecaster_X, depending on behaviour.
+
+        If behaviour = "update": uses self.forecaster_X_, this is already fitted.
+        If behaviour = "refitted", uses a local clone of self.forecaster_X,
+            after fitting it to self._X, i.e., all exogeneous data seen so far.
+
+        Parameters
+        ----------
+        X : pandas.DataFrame, optional, default=None
+            exogeneous data seen in predict
+        fh : ForecastingHorizon, should be the input of the predict method, optional
+        method : str, optional, default="predict"
+            method of forecaster to call to obtain prediction
+
+        Returns
+        -------
+        X : sktime time series container
+            a forecast obtained using a clone of forecaster_X, state as above
+        """
+        if self.X_was_None_:
+            return None
+        if self.behaviour == "update":
+            forecaster = self.forecaster_X_
+        elif self.behaviour == "refit":
+            if self.fh_X_ is not None:
+                fh = self.fh_X_
+            forecaster = self.forecaster_X_c.clone()
+            forecaster.fit(y=self._get_Xcols(self._X), fh=fh)
+
+        X_pred = getattr(forecaster, method)()
+        if X is not None:
+            X_pred = X_pred.combine_first(X)
+
+        return X_pred
+
+    def _predict(self, fh=None, X=None):
+        """Forecast time series at future horizon.
+
+        Parameters
+        ----------
+        fh : int, list, np.array or ForecastingHorizon
+            Forecasting horizon
+        X : time series in sktime compatible format, optional, default=None
+            Exogenous time series to use in prediction
+
+        Returns
+        -------
+        y_pred : time series in sktime compatible format
+            Point forecasts
+        """
+        X = self._get_forecaster_X_prediction(fh=fh, X=X)
+        y_pred = self.forecaster_y_.predict(fh=fh, X=X)
+        return y_pred
+
+    def _update(self, y, X=None, update_params=True):
+        """Update fitted parameters.
+
+        Parameters
+        ----------
+        y : time series in sktime compatible format
+            Target time series to which to fit the forecaster
+        X : time series in sktime compatible format, optional, default=None
+            Exogenous time series to which to fit the forecaster
+        update_params : bool, optional (default=True)
+
+        Returns
+        -------
+        self : an instance of self
+        """
+        if self.behaviour == "update" and X is not None:
+            self.forecaster_X_.update(y=self._get_Xcols(X), update_params=update_params)
+        self.forecaster_y_.update(y=y, X=X, update_params=update_params)
+
+        return self
+
+    def _predict_interval(self, fh, X=None, coverage=0.90):
+        """Compute/return prediction interval forecasts.
+
+        private _predict_interval containing the core logic,
+            called from predict_interval and default _predict_quantiles
+
+        Parameters
+        ----------
+        fh : guaranteed to be ForecastingHorizon
+            The forecasting horizon with the steps ahead to to predict.
+        X : optional (default=None)
+            guaranteed to be of a type in self.get_tag("X_inner_mtype")
+            Exogeneous time series to predict from.
+        coverage : float or list, optional (default=0.95)
+           nominal coverage(s) of predictive interval(s)
+
+        Returns
+        -------
+        pred_int : pd.DataFrame
+            Column has multi-index: first level is variable name from y in fit,
+                second level coverage fractions for which intervals were computed.
+                    in the same order as in input `coverage`.
+                Third level is string "lower" or "upper", for lower/upper interval end.
+            Row index is fh, with additional (upper) levels equal to instance levels,
+                from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
+            Entries are forecasts of lower/upper interval end,
+                for var in col index, at nominal coverage in second col index,
+                lower/upper depending on third col index, for the row index.
+                Upper/lower interval end forecasts are equivalent to
+                quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
+        """
+        X = self._get_forecaster_X_prediction(fh=fh, X=X)
+        y_pred = self.forecaster_y_.predict_interval(fh=fh, X=X)
+        return y_pred
+
+    def _predict_quantiles(self, fh, X, alpha):
+        """Compute/return prediction quantiles for a forecast.
+
+        private _predict_quantiles containing the core logic,
+            called from predict_quantiles and default _predict_interval
+
+        Parameters
+        ----------
+        fh : guaranteed to be ForecastingHorizon
+            The forecasting horizon with the steps ahead to to predict.
+        X : optional (default=None)
+            guaranteed to be of a type in self.get_tag("X_inner_mtype")
+            Exogeneous time series to predict from.
+        alpha : list of float, optional (default=[0.5])
+            A list of probabilities at which quantile forecasts are computed.
+
+        Returns
+        -------
+        quantiles : pd.DataFrame
+            Column has multi-index: first level is variable name from y in fit,
+                second level being the values of alpha passed to the function.
+            Row index is fh, with additional (upper) levels equal to instance levels,
+                    from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
+            Entries are quantile forecasts, for var in col index,
+                at quantile probability in second col index, for the row index.
+        """
+        X = self._get_forecaster_X_prediction(fh=fh, X=X)
+        y_pred = self.forecaster_y_.predict_quantiles(fh=fh, X=X)
+        return y_pred
+
+    def _predict_var(self, fh=None, X=None, cov=False):
+        """Compute/return variance forecasts.
+
+        private _predict_var containing the core logic, called from predict_var
+
+        Parameters
+        ----------
+        fh : guaranteed to be ForecastingHorizon
+            The forecasting horizon with the steps ahead to to predict.
+        X : optional (default=None)
+            guaranteed to be of a type in self.get_tag("X_inner_mtype")
+            Exogeneous time series to predict from.
+        cov : bool, optional (default=False)
+            if True, computes covariance matrix forecast.
+            if False, computes marginal variance forecasts.
+
+        Returns
+        -------
+        pred_var : pd.DataFrame, format dependent on `cov` variable
+            If cov=False:
+                Column names are exactly those of `y` passed in `fit`/`update`.
+                    For nameless formats, column index will be a RangeIndex.
+                Row index is fh, with additional levels equal to instance levels,
+                    from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
+                Entries are variance forecasts, for var in col index.
+                A variance forecast for given variable and fh index is a predicted
+                    variance for that variable and index, given observed data.
+            If cov=True:
+                Column index is a multiindex: 1st level is variable names (as above)
+                    2nd level is fh.
+                Row index is fh, with additional levels equal to instance levels,
+                    from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
+                Entries are (co-)variance forecasts, for var in col index, and
+                    covariance between time index in row and col.
+                Note: no covariance forecasts are returned between different variables.
+        """
+        X = self._get_forecaster_X_prediction(fh=fh, X=X)
+        y_pred = self.forecaster_y_.predict_var(fh=fh, X=X)
+        return y_pred
+
+    # todo: does not work properly for multivariate or hierarchical
+    #   still need to implement this - once interface is consolidated
+    def _predict_proba(self, fh, X, marginal=True):
+        """Compute/return fully probabilistic forecasts.
+
+        private _predict_proba containing the core logic, called from predict_proba
+
+        Parameters
+        ----------
+        fh : guaranteed to be ForecastingHorizon
+            The forecasting horizon with the steps ahead to to predict.
+        X : optional (default=None)
+            guaranteed to be of a type in self.get_tag("X_inner_mtype")
+            Exogeneous time series to predict from.
+        marginal : bool, optional (default=True)
+            whether returned distribution is marginal by time index
+
+        Returns
+        -------
+        pred_dist : tfp Distribution object
+            if marginal=True:
+                batch shape is 1D and same length as fh
+                event shape is 1D, with length equal number of variables being forecast
+                i-th (batch) distribution is forecast for i-th entry of fh
+                j-th (event) index is j-th variable, order as y in `fit`/`update`
+            if marginal=False:
+                there is a single batch
+                event shape is 2D, of shape (len(fh), no. variables)
+                i-th (event dim 1) distribution is forecast for i-th entry of fh
+                j-th (event dim 1) index is j-th variable, order as y in `fit`/`update`
+        """
+        X = self._get_forecaster_X_prediction(fh=fh, X=X)
+        y_pred = self.forecaster_y_.predict_proba(fh=fh, X=X)
+        return y_pred
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            There are currently no reserved values for transformers.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        from sktime.forecasting.compose import DirectTabularRegressionForecaster
+        from sktime.forecasting.var import VAR
+
+        fx = VAR()
+        fy = DirectTabularRegressionForecaster.create_test_instance()
+
+        params = {"forecaster_X": fx, "forecaster_y": fy}
+
+        return params

@@ -4,14 +4,13 @@
 Builds classifiers on each dimension (column) independently.
 """
 
-__author__ = ["Aaron Bostrom"]
+__author__ = ["abostrom"]
 __all__ = ["ColumnEnsembleClassifier"]
 
 from itertools import chain
 
 import numpy as np
 import pandas as pd
-from sklearn.base import clone
 from sklearn.preprocessing import LabelEncoder
 
 from sktime.base import _HeterogenousMetaEstimator
@@ -23,6 +22,7 @@ class BaseColumnEnsembleClassifier(BaseClassifier, _HeterogenousMetaEstimator):
 
     _tags = {
         "capability:multivariate": True,
+        "X_inner_mtype": ["nested_univ", "pd-multiindex"],
     }
 
     def __init__(self, estimators, verbose=False):
@@ -30,6 +30,12 @@ class BaseColumnEnsembleClassifier(BaseClassifier, _HeterogenousMetaEstimator):
         self.estimators = estimators
         self.remainder = "drop"
         super(BaseColumnEnsembleClassifier, self).__init__()
+        self._anytagis_then_set(
+            "capability:unequal_length", False, True, self._estimators
+        )
+        self._anytagis_then_set(
+            "capability:missing_values", False, True, self._estimators
+        )
 
     @property
     def _estimators(self):
@@ -153,12 +159,11 @@ class BaseColumnEnsembleClassifier(BaseClassifier, _HeterogenousMetaEstimator):
 
         estimators_ = []
         for name, estimator, column in self._iter(replace_strings=True):
-            estimator = clone(estimator)
+            estimator = estimator.clone()
             estimator.fit(_get_column(X, column), transformed_y)
             estimators_.append((name, estimator, column))
 
         self.estimators_ = estimators_
-        self._is_fitted = True
         return self
 
     def _collect_probas(self, X):
@@ -171,7 +176,6 @@ class BaseColumnEnsembleClassifier(BaseClassifier, _HeterogenousMetaEstimator):
 
     def _predict_proba(self, X) -> np.ndarray:
         """Predict class probabilities for X using 'soft' voting."""
-        self.check_is_fitted()
         avg = np.average(self._collect_probas(X), axis=0)
         return avg
 
@@ -240,8 +244,6 @@ class ColumnEnsembleClassifier(BaseColumnEnsembleClassifier):
     >>> y_pred = col_ens.predict(X_test)
     """
 
-    _required_parameters = ["estimators"]
-
     def __init__(self, estimators, remainder="drop", verbose=False):
         self.remainder = remainder
         super(ColumnEnsembleClassifier, self).__init__(estimators, verbose=verbose)
@@ -251,7 +253,7 @@ class ColumnEnsembleClassifier(BaseColumnEnsembleClassifier):
 
         Parameters
         ----------
-        deep : boolean, optional
+        deep : boolean, optional, default=True
             If True, will return the parameters for this estimator and
             contained subobjects that are estimators.
 

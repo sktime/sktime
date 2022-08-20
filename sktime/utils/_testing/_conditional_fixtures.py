@@ -28,6 +28,7 @@ def create_conditional_fixtures_and_names(
     generator_dict: Dict[str, Callable],
     fixture_sequence: List[str] = None,
     raise_exceptions: bool = False,
+    deepcopy_fixtures: bool = False,
 ):
     """Create conditional fixtures for pytest_generate_tests.
 
@@ -68,6 +69,11 @@ def create_conditional_fixtures_and_names(
     raise_exceptions : bool, optional, default = False
         whether fixture generation errors or other Exceptions are raised
         if False, exceptions are returned instead of fixtures
+    deepcopy_fixtures : bool. optional, default = False
+        whether returned fixture list in fixture_prod are deecopy-independent
+        if False, identical list/tuple elements will be identical by reference
+        if True, identical elements will be identical by value but no by reference
+        "elements" refer to fixture[i] as described below, in fixture_prod
 
     Returns
     -------
@@ -84,6 +90,8 @@ def create_conditional_fixtures_and_names(
                         fixture_var(i-1) = fixture[i-1],
                     )
             return (fixture[1], fixture[2], ..., fixture[N])
+        if deepcopy_fixtures = False, identical fixture[i] are identical by reference
+        if deepcopy_fixtures = True, identical fixture[i] are not identical references
     fixture_names : list of str, fixture ids to use in pytest.fixture.parameterize
         fixture names, generated according to the following conditional rule:
             let fixture_vars = [fixture_var1, fixture_var2, ..., fixture_varN]
@@ -170,12 +178,10 @@ def create_conditional_fixtures_and_names(
             else:
                 kwargs = dict(zip(old_fixture_vars, fixture))
             # retrieve conditional fixtures, conditional on fixture values in kwargs
-            new_fixtures, new_fixture_names_r = deepcopy(
-                get_fixtures(fixture_var, **kwargs)
-            )
+            new_fixtures, new_fixture_names_r = get_fixtures(fixture_var, **kwargs)
             # new fixture values are concatenation/product of old values plus new
             new_fixture_prod += [
-                deepcopy(fixture) + (new_fixture,) for new_fixture in new_fixtures
+                fixture + (new_fixture,) for new_fixture in new_fixtures
             ]
             # new fixture name is concatenation of name so far and "dash-new name"
             #   if the new name is empty string, don't add a dash
@@ -196,6 +202,11 @@ def create_conditional_fixtures_and_names(
     #   in pytest convention, only multiple variables (2 or more) are tuples
     fixture_prod = [_remove_single(x) for x in fixture_prod]
 
+    # if deepcopy_fixtures = True:
+    # we run deepcopy on every element of fixture_prod to make them independent
+    if deepcopy_fixtures:
+        fixture_prod = [deepcopy(x) for x in fixture_prod]
+
     return fixture_param_str, fixture_prod, fixture_names
 
 
@@ -215,7 +226,7 @@ def _check_list_of_str(obj, name="obj"):
     ------
     TypeError if obj is not list of str
     """
-    if not isinstance(obj, list) or not np.all(isinstance(x, str) for x in obj):
+    if not isinstance(obj, list) or not np.all([isinstance(x, str) for x in obj]):
         raise TypeError(f"{name} must be a list of str")
     return obj
 

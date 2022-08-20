@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Class to iteratively apply differences to a time series."""
-__author__ = ["RNKuhns"]
+__author__ = ["RNKuhns", "fkiraly"]
 __all__ = ["Differencer"]
 
 from typing import Union
@@ -11,6 +11,7 @@ import numpy as np
 import pandas as pd
 from sklearn.utils import check_array
 
+from sktime.datatypes._utilities import get_cutoff
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.validation import is_int
@@ -66,8 +67,7 @@ class Differencer(BaseTransformer):
     The transformation works for univariate and multivariate timeseries. However,
     the multivariate case applies the same differencing to every series.
 
-    Difference transformations are applied at the specified lags in the order
-    provided.
+    Difference transformations are applied at the specified lags in the order provided.
 
     For example, given a timeseries with monthly periodicity, using lags=[1, 12]
     corresponds to applying a standard first difference to handle trend, and
@@ -84,18 +84,14 @@ class Differencer(BaseTransformer):
         The lags used to difference the data.
         If a single `int` value is
 
-    drop_na : bool, default = True
-        Whether the differencer should drop the initial observations that
-        contain missing values as a result of the differencing operation(s).
-
-    Attributes
-    ----------
-    lags : int or array-like
-        Lags used to perform the differencing of the input series.
-
-    drop_na : bool
-        Stores whether the Differencer drops the initial observations that contain
-        missing values as a result of the differencing operation(s).
+    na_handling : str, default = "fill_zero"
+        How to handle the NaNs that appear at the start of the series from differencing
+        Example: there are only 3 differences in a series of length 4,
+            differencing [a, b, c, d] gives [?, b-a, c-b, d-c]
+            so we need to determine what happens with the "?" (= unknown value)
+        "drop_na" - unknown value(s) are dropped, the series is shortened
+        "keep_na" - unknown value(s) is/are replaced by NaN
+        "fill_zero" - unknown value(s) is/are replaced by zero
 
     Examples
     --------
@@ -121,15 +117,33 @@ class Differencer(BaseTransformer):
         "capability:inverse_transform": True,
     }
 
-    def __init__(self, lags=1, drop_na=True):
+    VALID_NA_HANDLING_STR = ["drop_na", "keep_na", "fill_zero"]
+
+    def __init__(self, lags=1, na_handling="fill_zero"):
         self.lags = lags
-        self.drop_na = drop_na
+        self.na_handling = self._check_na_handling(na_handling)
+
         self._Z = None
         self._lags = None
         self._cumulative_lags = None
         self._prior_cum_lags = None
         self._prior_lags = None
         super(Differencer, self).__init__()
+
+        # if the na_handling is "fill_zero" or "keep_na"
+        #   then the returned indices are same to the passed indices
+        if self.na_handling in ["fill_zero", "keep_na"]:
+            self.set_tags(**{"transform-returns-same-time-index": True})
+
+    def _check_na_handling(self, na_handling):
+        """Check na_handling parameter, should be a valid string as per docstring."""
+        if na_handling not in self.VALID_NA_HANDLING_STR:
+            raise ValueError(
+                f'invalid na_handling parameter value encountered: "{na_handling}", '
+                f"na_handling must be one of: {self.VALID_NA_HANDLING_STR}"
+            )
+
+        return na_handling
 
     def _check_inverse_transform_index(self, Z):
         """Check fitted series contains indices needed in inverse_transform."""
@@ -152,10 +166,12 @@ class Differencer(BaseTransformer):
         elif first_idx > orig_last_idx:
             is_future = True
 
-        pad_z_inv = self.drop_na or is_future
+        pad_z_inv = self.na_handling == "drop_na" or is_future
 
         cutoff = Z.index[0] if pad_z_inv else Z.index[self._cumulative_lags[-1]]
-        fh = ForecastingHorizon(np.arange(-1, -(self._cumulative_lags[-1] + 1), -1))
+        fh = ForecastingHorizon(
+            np.arange(-1, -(self._cumulative_lags[-1] + 1), -1), freq=self._freq
+        )
         index = fh.to_absolute(cutoff).to_pandas()
         index_diff = index.difference(self._Z.index)
 
@@ -193,6 +209,8 @@ class Differencer(BaseTransformer):
         self._prior_cum_lags = np.zeros_like(self._cumulative_lags)
         self._prior_cum_lags[1:] = self._cumulative_lags[:-1]
         self._Z = X.copy()
+
+        self._freq = get_cutoff(X, return_index=True)
         return self
 
     def _transform(self, X, y=None):
@@ -213,8 +231,19 @@ class Differencer(BaseTransformer):
             transformed version of X
         """
         Xt = _diff_transform(X, self._lags)
-        if self.drop_na:
+
+        na_handling = self.na_handling
+        if na_handling == "drop_na":
             Xt = Xt.iloc[self._cumulative_lags[-1] :]
+        elif na_handling == "fill_zero":
+            Xt.iloc[: self._cumulative_lags[-1]] = 0
+        elif na_handling == "keep_na":
+            pass
+        else:
+            raise RuntimeError(
+                "unreachable condition, invalid na_handling value encountered: "
+                f"{na_handling}"
+            )
         return Xt
 
     def _inverse_transform(self, X, y=None):
@@ -256,7 +285,7 @@ class Differencer(BaseTransformer):
                     cutoff = Z_inv.index[0]
                 else:
                     cutoff = Z_inv.index[prior_cum_lag + lag]
-                fh = ForecastingHorizon(np.arange(-1, -(lag + 1), -1))
+                fh = ForecastingHorizon(np.arange(-1, -(lag + 1), -1), freq=self._freq)
                 index = fh.to_absolute(cutoff).to_pandas()
 
                 if is_df:
@@ -289,7 +318,11 @@ class Differencer(BaseTransformer):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
+        params = [{"na_handling": x} for x in cls.VALID_NA_HANDLING_STR]
         # we're testing that inverse_transform is inverse to transform
         #   and that is only correct if the first observation is not dropped
-        params = {"drop_na": False}
+        # todo: ensure that we have proper tests or escapes for "incomplete inverses"
+        params = params[1:]
+        #   this removes "drop_na" setting where the inverse has problems
+        #   need to deal with this in a better way in testing
         return params

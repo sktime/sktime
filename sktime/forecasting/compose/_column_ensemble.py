@@ -8,7 +8,6 @@ __all__ = ["ColumnEnsembleForecaster"]
 
 import numpy as np
 import pandas as pd
-from sklearn.base import clone
 
 from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
@@ -44,7 +43,6 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
     >>> y_pred = forecaster.predict()
     """
 
-    _required_parameters = ["forecasters"]
     _tags = {
         "scitype:y": "both",
         "ignores-exogeneous-X": False,
@@ -125,7 +123,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
         self.y_columns = list(y.columns)
 
         for (name, forecaster, index) in forecasters:
-            forecaster_ = clone(forecaster)
+            forecaster_ = forecaster.clone()
 
             forecaster_.fit(y.iloc[:, index], X, fh)
             self.forecasters_.append((name, forecaster_, index))
@@ -230,7 +228,12 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
             Row index is fh. Entries are quantile forecasts, for var in col index,
                 at quantile probability in second-level col index, for each row index.
         """
-        return self._by_column("predict_quantiles", fh=fh, X=X, alpha=alpha)
+        out = self._by_column("predict_quantiles", fh=fh, X=X, alpha=alpha)
+        if len(out.columns.get_level_values(0).unique()) == 1:
+            out.columns = out.columns.droplevel(level=0)
+        else:
+            out.columns = out.columns.droplevel(level=1)
+        return out
 
     def _predict_interval(self, fh=None, X=None, coverage=None):
         """Compute/return prediction quantiles for a forecast.
@@ -268,7 +271,12 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
                 Upper/lower interval end forecasts are equivalent to
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
-        return self._by_column("predict_interval", fh=fh, X=X, coverage=coverage)
+        out = self._by_column("predict_interval", fh=fh, X=X, coverage=coverage)
+        if len(out.columns.get_level_values(0).unique()) == 1:
+            out.columns = out.columns.droplevel(level=0)
+        else:
+            out.columns = out.columns.droplevel(level=1)
+        return out
 
     def _predict_var(self, fh, X=None, cov=False):
         """Forecast variance at future horizon.
@@ -336,7 +344,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
         if isinstance(self.forecasters, BaseForecaster):
             ycols = [str(col) for col in y.columns]
             colrange = range(len(ycols))
-            forecaster_list = [clone(self.forecasters) for _ in colrange]
+            forecaster_list = [self.forecasters.clone() for _ in colrange]
             return list(zip(ycols, forecaster_list, colrange))
 
         if (
@@ -391,7 +399,9 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
         """
         # imports
         from sktime.forecasting.naive import NaiveForecaster
+        from sktime.forecasting.theta import ThetaForecaster
 
-        FORECASTER = NaiveForecaster()
-        params = {"forecasters": FORECASTER}
-        return params
+        params1 = {"forecasters": NaiveForecaster()}
+        params2 = {"forecasters": ThetaForecaster()}
+
+        return [params1, params2]

@@ -3,7 +3,14 @@
 
 __author__ = ["ltsaprounis"]
 
-__all__ = ["MockUnivariateForecaster", "make_mock_estimator"]
+__all__ = [
+    "MockForecaster",
+    "MockUnivariateForecasterLogger",
+    "make_mock_estimator",
+]
 
 from sktime.utils.estimators._base import make_mock_estimator
-from sktime.utils.estimators._forecasters import MockUnivariateForecaster
+from sktime.utils.estimators._forecasters import (
+    MockForecaster,
+    MockUnivariateForecasterLogger,
+)

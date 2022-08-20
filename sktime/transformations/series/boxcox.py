@@ -1,22 +1,45 @@
-#!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
+"""Implemenents Box-Cox and Log Transformations."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file).
-"""Implmenents Box-Cox and Log Transformations."""
 
-__author__ = ["mloning, aiwalter, fkiraly"]
+__author__ = ["mloning", "aiwalter", "fkiraly"]
 __all__ = ["BoxCoxTransformer", "LogTransformer"]
 
 import numpy as np
 from scipy import optimize, special, stats
 from scipy.special import boxcox, inv_boxcox
 from scipy.stats import boxcox_llf, distributions, variation
-from scipy.stats.morestats import (
-    _boxcox_conf_interval,
-    _calc_uniform_order_statistic_medians,
-)
 
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.validation import is_int
+
+
+# copy-pasted from scipy 1.7.3 since it moved in 1.8.0 and broke this estimator
+# todo: find a suitable replacement
+def _calc_uniform_order_statistic_medians(n):
+    """Approximations of uniform order statistic medians.
+
+    Parameters
+    ----------
+    n : int
+        Sample size.
+
+    Returns
+    -------
+    v : 1d float array
+        Approximations of the order statistic medians.
+
+    References
+    ----------
+    .. [1] James J. Filliben, "The Probability Plot Correlation Coefficient
+           Test for Normality", Technometrics, Vol. 17, pp. 111-117, 1975.
+    """
+    v = np.empty(n, dtype=np.float64)
+    v[-1] = 0.5 ** (1.0 / n)
+    v[0] = 1 - v[-1]
+    i = np.arange(2, n)
+    v[1:-1] = (i - 0.3175) / (n + 0.365)
+    return v
 
 
 class BoxCoxTransformer(BaseTransformer):
@@ -382,7 +405,7 @@ def _guerrero(x, sp, bounds=None):
     return optimizer(_eval_guerrero, args=(x_std, x_mean))
 
 
-def _boxcox(x, lmbda=None, bounds=None, alpha=None):
+def _boxcox(x, lmbda=None, bounds=None):
     r"""Return a dataset transformed by a Box-Cox power transformation.
 
     Parameters
@@ -393,10 +416,6 @@ def _boxcox(x, lmbda=None, bounds=None, alpha=None):
         If `lmbda` is not None, do the transformation for that value.
         If `lmbda` is None, find the lambda that maximizes the log-likelihood
         function and return it as the second output argument.
-    alpha : {None, float}, optional
-        If ``alpha`` is not None, return the ``100 * (1-alpha)%`` confidence
-        interval for `lmbda` as the third output argument.
-        Must be between 0.0 and 1.0.
 
     Returns
     -------
@@ -405,10 +424,6 @@ def _boxcox(x, lmbda=None, bounds=None, alpha=None):
     maxlog : float, optional
         If the `lmbda` parameter is None, the second returned argument is
         the lambda that maximizes the log-likelihood function.
-    (min_ci, max_ci) : tuple of float, optional
-        If `lmbda` parameter is None and ``alpha`` is not None, this returned
-        tuple of floats represents the minimum and maximum confidence limits
-        given ``alpha``.
 
     See Also
     --------
@@ -457,9 +472,4 @@ def _boxcox(x, lmbda=None, bounds=None, alpha=None):
     lmax = _boxcox_normmax(x, bounds=bounds, method="mle")
     y = _boxcox(x, lmax)
 
-    if alpha is None:
-        return y, lmax
-    else:
-        # Find confidence interval
-        interval = _boxcox_conf_interval(x, lmax, alpha)
-        return y, lmax, interval
+    return y, lmax
