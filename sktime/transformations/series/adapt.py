@@ -268,7 +268,7 @@ class PandasTransformAdaptor(BaseTransformer):
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "univariate-only": False,
         "transform-returns-same-time-index": False,
-        "fit_is_empty": False,
+        "fit_is_empty": True,
         "capability:inverse_transform": False,
     }
 
@@ -294,26 +294,6 @@ class PandasTransformAdaptor(BaseTransformer):
 
         if apply_to == "call":
             self.set_tags(**{"fit_is_empty": True})
-
-    def _fit(self, X, y=None):
-        """Fit transformer to X and y.
-
-        private _fit containing the core logic, called from fit
-
-        Parameters
-        ----------
-        X : pd.DataFrame
-            Data to fit transform to
-        y : ignored argument for interface compatibility
-            Additional data, e.g., labels for transformation
-
-        Returns
-        -------
-        self: a fitted instance of the estimator
-        """
-        if self.apply_to in ["all", "all_subset"]:
-            self._X = X
-        return self
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
@@ -350,26 +330,6 @@ class PandasTransformAdaptor(BaseTransformer):
             Xt = Xt.loc[X.index]
 
         return Xt
-
-    def _update(self, X, y=None):
-        """Fit transformer to X and y.
-
-        private _fit containing the core logic, called from fit
-
-        Parameters
-        ----------
-        X : pd.DataFrame
-            Data to fit transform to
-        y : ignored argument for interface compatibility
-            Additional data, e.g., labels for transformation
-
-        Returns
-        -------
-        self: a fitted instance of the estimator
-        """
-        if self.apply_to in ["all", "all_subset"]:
-            self._X = X.combine_first(self._X)
-        return self
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
