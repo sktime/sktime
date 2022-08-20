@@ -355,12 +355,6 @@ class BaseTransformer(BaseEstimator):
         # if fit is called, estimator is reset, including fitted state
         self.reset()
 
-        # skip everything if fit_is_empty is True
-        if self.get_tag("fit_is_empty"):
-            self._is_fitted = True
-            self._X = update_data(None, X_new=X)
-            return self
-
         # if requires_y is set, y is required in fit and update
         if self.get_tag("requires_y") and y is None:
             raise ValueError(f"{self.__class__.__name__} requires `y` in `fit`.")
@@ -370,6 +364,11 @@ class BaseTransformer(BaseEstimator):
 
         # memorize X as self._X
         self._X = update_data(None, X_new=X_inner)
+
+        # skip everything if fit_is_empty is True
+        if self.get_tag("fit_is_empty"):
+            self._is_fitted = True
+            return self
 
         # checks and conversions complete, pass to inner fit
         #####################################################
@@ -610,12 +609,6 @@ class BaseTransformer(BaseEstimator):
         # check whether is fitted
         self.check_is_fitted()
 
-        # skip everything if update_params is False
-        # skip everything if fit_is_empty is True
-        if not update_params or self.get_tag("fit_is_empty", False):
-            self._X = update_data(self._X, X_new=X)  # update memory of X
-            return self
-
         # if requires_y is set, y is required in fit and update
         if self.get_tag("requires_y") and y is None:
             raise ValueError(f"{self.__class__.__name__} requires `y` in `update`.")
@@ -625,6 +618,11 @@ class BaseTransformer(BaseEstimator):
 
         # update memory of X
         self._X = update_data(self._X, X_new=X_inner)
+
+        # skip everything if update_params is False
+        # skip everything if fit_is_empty is True
+        if not update_params or self.get_tag("fit_is_empty", False):
+            return self
 
         # checks and conversions complete, pass to inner fit
         #####################################################
