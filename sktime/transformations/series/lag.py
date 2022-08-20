@@ -112,7 +112,7 @@ class Lag(BaseTransformer):
         "univariate-only": False,  # can the transformer handle multivariate X?
         "X_inner_mtype": "pd.DataFrame",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
-        "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
+        "fit_is_empty": True,  # is fit empty and can be skipped? Yes = True
         "transform-returns-same-time-index": False,
         # does transform return have the same time index as input X
         "skip-inverse-transform": True,  # is inverse-transform skipped when called?
@@ -185,24 +185,6 @@ class Lag(BaseTransformer):
                 name = f"{lag}{freq}"
             name = "lag_" + name
             yield name
-
-    def _fit(self, X, y=None):
-        """Fit transformer to X and y.
-
-        private _fit containing the core logic, called from fit
-
-        Parameters
-        ----------
-        X : pd.DataFrame
-            Data to fit transform to
-        y : ignored, passed for interface compatibility
-
-        Returns
-        -------
-        self: reference to self
-        """
-        # remember X for lagging across past data indices
-        self._X = X
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
@@ -319,7 +301,7 @@ class Lag(BaseTransformer):
         -------
         self: reference to self
         """
-        self._X = X.combine_first(self._X)
+        return self
 
     # todo: return default parameters, so that a test instance can be created
     #   required for automated unit and integration testing of estimator
