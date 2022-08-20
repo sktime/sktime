@@ -157,22 +157,20 @@ class ElbowClassSum(BaseTransformer):
     Examples
     --------
     >>> from sktime.transformations.panel.channel_selection import ElbowClassSum
-    >>> from sktime.datasets import load_UCR_UEA_dataset
-    >>> X_train, y_train = load_UCR_UEA_dataset(
-    ...     "Cricket", split="train", return_X_y=True
-    ... )
+    >>> from sktime.utils._testing.panel import make_classification_problem
+    >>> X, y = make_classification_problem(n_columns=3, n_classes=3, random_state=42)
     >>> cs = ElbowClassSum()
-    >>> cs.fit(X_train, y_train)
+    >>> cs.fit(X, y)
     ElbowClassSum(...)
-    >>> Xt = cs.transform(X_train)
+    >>> Xt = cs.transform(X)
 
     Any sktime compatible distance can be used, e.g., DTW distance:
     >>> from sktime.dists_kernels import DtwDist
     >>>
     >>> cs = ElbowClassSum(distance=DtwDist())
-    >>> cs.fit(X_train, y_train)
+    >>> cs.fit(X, y)
     ElbowClassSum(...)
-    >>> Xt = cs.transform(X_train)
+    >>> Xt = cs.transform(X)
     """
 
     _tags = {
@@ -257,7 +255,7 @@ class ElbowClassSum(BaseTransformer):
         output : pandas DataFrame
             X with a subset of channels
         """
-        return X[self.channels_selected]
+        return X[self.channels_selected_idx_]
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -322,14 +320,12 @@ class ElbowClassPairwise(BaseTransformer):
     Examples
     --------
     >>> from sktime.transformations.panel.channel_selection import ElbowClassPairwise
-    >>> from sktime.datasets import load_UCR_UEA_dataset
+    >>> from sktime.utils._testing.panel import make_classification_problem
+    >>> X, y = make_classification_problem(n_columns=3, n_classes=3, random_state=42)
     >>> cs = ElbowClassPairwise()
-    >>> X_train, y_train = load_UCR_UEA_dataset(
-    ...     "Cricket", split="train", return_X_y=True
-    ... )
-    >>> cs.fit(X_train, y_train)
+    >>> cs.fit(X, y)
     ElbowClassPairwise(...)
-    >>> Xt = cs.transform(X_train)
+    >>> Xt = cs.transform(X)
     """
 
     _tags = {
