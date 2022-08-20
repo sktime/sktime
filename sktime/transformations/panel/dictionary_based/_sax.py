@@ -38,25 +38,25 @@ class SAX(BaseTransformer):
 
     Parameters
     ----------
-        word_length:         int, length of word to shorten window to (using
-        PAA) (default 8)
-        alphabet_size:       int, number of values to discretise each value
-        to (default to 4)
-        window_size:         int, size of window for sliding. Input series
-        length for whole series transform (default to 12)
-        remove_repeat_words: boolean, whether to use numerosity reduction (
-        default False)
-        save_words:          boolean, whether to use numerosity reduction (
-        default False)
+    word_length:         int, length of word to shorten window to (using
+    PAA) (default 8)
+    alphabet_size:       int, number of values to discretise each value
+    to (default to 4)
+    window_size:         int, size of window for sliding. Input series
+    length for whole series transform (default to 12)
+    remove_repeat_words: boolean, whether to use numerosity reduction (
+    default False)
+    save_words:          boolean, whether to use numerosity reduction (
+    default False)
 
-        return_pandas_data_series:          boolean, default = True
-            set to true to return Pandas Series as a result of transform.
-            setting to true reduces speed significantly but is required for
-            automatic test.
+    return_pandas_data_series:          boolean, default = True
+        set to true to return Pandas Series as a result of transform.
+        setting to true reduces speed significantly but is required for
+        automatic test.
 
     Attributes
     ----------
-        words:      history = []
+    words:      history = []
     """
 
     _tags = {
@@ -66,7 +66,7 @@ class SAX(BaseTransformer):
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
         # what scitype is returned: Primitives, Series, Panel
-        "scitype:instancewise": False,  # is this an instance-wise transform?
+        "scitype:instancewise": True,  # is this an instance-wise transform?
         "X_inner_mtype": "nested_univ",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict require for y?
     }
@@ -90,6 +90,8 @@ class SAX(BaseTransformer):
 
         super(SAX, self).__init__()
 
+    # todo: looks like this just loops over series instances
+    # so should be refactored to work on Series directly
     def transform(self, X, y=None):
         """Transform data.
 

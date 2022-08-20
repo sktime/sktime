@@ -33,7 +33,7 @@ class PAA(BaseTransformer):
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
         # what scitype is returned: Primitives, Series, Panel
-        "scitype:instancewise": False,  # is this an instance-wise transform?
+        "scitype:instancewise": True,  # is this an instance-wise transform?
         "X_inner_mtype": "nested_univ",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
     }
@@ -46,6 +46,8 @@ class PAA(BaseTransformer):
         """Set self.num_intervals to n."""
         self.num_intervals = n
 
+    # todo: looks like this just loops over series instances
+    # so should be refactored to work on Series directly
     def transform(self, X, y=None):
         """Transform data.
 
