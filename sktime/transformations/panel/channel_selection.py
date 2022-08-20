@@ -132,8 +132,9 @@ class ElbowClassSum(BaseTransformer):
 
     Attributes
     ----------
-    channels_selected_ : list of integers; integer being the index of the channel
-        List of channels selected by the ECS.
+    channels_selected_ : list of pandas compatible index elements
+        List of variables/channels selected by the estimator
+        integers (iloc reference) if variables have no names, or data are index-less
     distance_frame_ : DataFrame
         distance matrix of the class centroids pair and channels.
             ``shape = [n_channels, n_class_centroids_pairs]``
@@ -154,10 +155,18 @@ class ElbowClassSum(BaseTransformer):
     --------
     >>> from sktime.transformations.panel.channel_selection import ElbowClassSum
     >>> from sktime.datasets import load_UCR_UEA_dataset
-    >>> cs = ElbowClassSum()
     >>> X_train, y_train = load_UCR_UEA_dataset(
     ...     "Cricket", split="train", return_X_y=True
     ... )
+    >>> cs = ElbowClassSum()
+    >>> cs.fit(X_train, y_train)
+    ElbowClassSum(...)
+    >>> Xt = cs.transform(X_train)
+
+    Any sktime compatible distance can be used, e.g., DTW distance:
+    >>> from sktime.dists_kernels import DtwDist
+    >>>
+    >>> cs = ElbowClassSum(distance=DtwDist())
     >>> cs.fit(X_train, y_train)
     ElbowClassSum(...)
     >>> Xt = cs.transform(X_train)
