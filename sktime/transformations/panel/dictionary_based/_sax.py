@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+"""Symbolic Aggregate approXimation (SAX) transformer."""
+
 import sys
 
 import numpy as np
@@ -19,7 +21,7 @@ __author__ = "MatthewMiddlehurst"
 
 
 class SAX(BaseTransformer):
-    """SAX (Symbolic Aggregate approXimation) transformer.
+    """Symbolic Aggregate approXimation (SAX) transformer.
 
     as described in
     Jessica Lin, Eamonn Keogh, Li Wei and Stefano Lonardi,

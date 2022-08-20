@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
+"""Piecewise Aggregate Approximation Transformer (PAA)."""
 import pandas as pd
+
 from sktime.datatypes._panel._convert import from_nested_to_2d_array
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.validation.panel import check_X
