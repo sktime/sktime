@@ -132,9 +132,12 @@ class ElbowClassSum(BaseTransformer):
 
     Attributes
     ----------
-    channels_selected_ : list of pandas compatible index elements
+    channels_selected_ : list of integer
         List of variables/channels selected by the estimator
-        integers (iloc reference) if variables have no names, or data are index-less
+        integers (iloc reference), referring to variables/channels by order
+    channels_selected_idx_ : list of pandas compatible index elements
+        List of variables/channels selected by the estimator
+        if data are index-less (no channel/var names), identical to channels_selected
     distance_frame_ : DataFrame
         distance matrix of the class centroids pair and channels.
             ``shape = [n_channels, n_class_centroids_pairs]``
@@ -233,7 +236,8 @@ class ElbowClassSum(BaseTransformer):
 
         idx = _detect_knee_point(distance, indices)[0]
 
-        self.channels_selected = [X.columns[i] for i in idx]
+        self.channels_selected_ = idx
+        self.channels_selected_idx_ = [X.columns[i] for i in idx]
 
         self.train_time_ = int(round(time.time() * 1000)) - start
 
