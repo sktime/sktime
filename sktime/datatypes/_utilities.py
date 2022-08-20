@@ -321,6 +321,8 @@ UPDATE_DATA_INTERNAL_MTYPES = [
 def update_data(X, X_new=None):
     """Update time series container with another one.
 
+    Coerces X, X_new to one of the assumed mtypes, if not already of that type.
+
     Parameters
     ----------
     X : None, or sktime data container, in one of the following mtype formats
