@@ -199,6 +199,7 @@ class WindowSummarizer(BaseTransformer):
         "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
         "transform-returns-same-time-index": False,
         # does transform return have the same time index as input X
+        "remember_data": True,  # remember all data seen as _X
     }
 
     def __init__(

@@ -129,6 +129,7 @@ class BaseTransformer(BaseEstimator):
         "capability:missing_values:removes": False,
         # is transform result always guaranteed to contain no missing values?
         "python_version": None,  # PEP 440 python version specifier to limit versions
+        "remember_data": False,  # whether all data seen is remembered as self._X
     }
 
     # allowed mtypes for transformers - Series and Panel
@@ -332,7 +333,8 @@ class BaseTransformer(BaseEstimator):
 
         Writes to self:
         _is_fitted : flag is set to True.
-        _X : X, possibly coerced to inner type or update_data compatible type
+        _X : X, coerced copy of X, if remember_data tag is True
+            possibly coerced to inner type or update_data compatible type
             by reference, when possible
         model attributes (ending in "_") : dependent on estimator
 
@@ -362,8 +364,9 @@ class BaseTransformer(BaseEstimator):
         # check and convert X/y
         X_inner, y_inner = self._check_X_y(X=X, y=y)
 
-        # memorize X as self._X
-        self._X = update_data(None, X_new=X_inner)
+        # memorize X as self._X, if remember_data tag is set to True
+        if self.get_tag("remember_data", False):
+            self._X = update_data(None, X_new=X_inner)
 
         # skip everything if fit_is_empty is True
         if self.get_tag("fit_is_empty"):
@@ -393,7 +396,7 @@ class BaseTransformer(BaseEstimator):
 
         Accesses in self:
         _is_fitted : must be True
-        _X : optionally accessed
+        _X : optionally accessed, only available if remember_data tag is True
         fitted model attributes (ending in "_") : must be set, accessed by _transform
 
         Parameters
@@ -465,7 +468,8 @@ class BaseTransformer(BaseEstimator):
 
         Writes to self:
         _is_fitted : flag is set to True.
-        _X : X, possibly coerced to inner type or update_data compatible type
+        _X : X, coerced copy of X, if remember_data tag is True
+            possibly coerced to inner type or update_data compatible type
             by reference, when possible
         model attributes (ending in "_") : dependent on estimator
 
@@ -526,7 +530,7 @@ class BaseTransformer(BaseEstimator):
 
         Accesses in self:
         _is_fitted : must be True
-        _X : optionally accessed
+        _X : optionally accessed, only available if remember_data tag is True
         fitted model attributes (ending in "_") : accessed by _inverse_transform
 
         Parameters
@@ -579,11 +583,11 @@ class BaseTransformer(BaseEstimator):
 
         Accesses in self:
         _is_fitted : must be True
-        _X : accessed by _update and by update_data
+        _X : accessed by _update and by update_data, if remember_data tag is True
         fitted model attributes (ending in "_") : must be set, accessed by _update
 
         Writes to self:
-        _X : updated by values in X, via update_data
+        _X : updated by values in X, via update_data, if remember_data tag is True
         fitted model attributes (ending in "_") : only if update_params=True
             type and nature of update are dependent on estimator
 
@@ -616,8 +620,9 @@ class BaseTransformer(BaseEstimator):
         # check and convert X/y
         X_inner, y_inner = self._check_X_y(X=X, y=y)
 
-        # update memory of X
-        self._X = update_data(self._X, X_new=X_inner)
+        # update memory of X, if remember_data tag is set to True
+        if self.get_tag("remember_data", False):
+            self._X = update_data(None, X_new=X_inner)
 
         # skip everything if update_params is False
         # skip everything if fit_is_empty is True

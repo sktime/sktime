@@ -120,6 +120,7 @@ class Lag(BaseTransformer):
         "capability:unequal_length:removes": False,
         "handles-missing-data": True,  # can estimator handle missing data?
         "capability:missing_values:removes": False,
+        "remember_data": True,  # remember all data seen as _X
     }
 
     # todo: add any hyper-parameters and components to constructor

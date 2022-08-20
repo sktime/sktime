@@ -95,6 +95,7 @@ class Imputer(BaseTransformer):
         "univariate-only": False,
         "capability:missing_values:removes": True,
         # is transform result always guaranteed to contain no missing values?
+        "remember_data": True,  # remember all data seen as _X
     }
 
     def __init__(

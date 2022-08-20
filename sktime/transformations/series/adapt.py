@@ -270,6 +270,7 @@ class PandasTransformAdaptor(BaseTransformer):
         "transform-returns-same-time-index": False,
         "fit_is_empty": True,
         "capability:inverse_transform": False,
+        "remember_data": True,  # remember all data seen as _X
     }
 
     def __init__(self, method, kwargs=None, apply_to="call"):

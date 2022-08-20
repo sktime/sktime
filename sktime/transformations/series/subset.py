@@ -48,6 +48,7 @@ class IndexSubset(BaseTransformer):
         "fit_is_empty": True,
         "univariate-only": False,
         "capability:inverse_transform": False,
+        "remember_data": True,  # remember all data seen as _X
     }
 
     def __init__(self, index_treatment="keep"):
