@@ -135,8 +135,6 @@ class Imputer(BaseTransformer):
         # implemented here. Some methods dont need fit, so they are just
         # impleented in _transform
         if self.method in ["drift", "forecaster"]:
-            # save train data as needed for multivariate fitting int _fit()
-            self._X = X.copy()
             self._y = y.copy() if y is not None else None
             if self.method == "drift":
                 self._forecaster = PolynomialTrendForecaster(degree=1)
@@ -147,8 +145,7 @@ class Imputer(BaseTransformer):
         elif self.method == "median":
             self._median = X.median()
         elif self.method == "random":
-            # save train data to get min() and max() in transform() for each column
-            self._X = X.copy()
+            pass
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
