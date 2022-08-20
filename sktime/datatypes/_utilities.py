@@ -327,7 +327,7 @@ def update_data(X, X_new=None):
     ----------
     X : None, or sktime data container, in one of the following mtype formats
         pd.DataFrame, pd.Series, np.ndarray, pd-multiindex, numpy3D,
-        pd_multiindex_hier
+        pd_multiindex_hier. If not of that format, coerced.
     X_new : None, or sktime data container, should be same mtype as X,
         or convert to same format when converting to format list via convert_to
 
