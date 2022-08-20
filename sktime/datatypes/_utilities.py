@@ -308,6 +308,16 @@ def get_cutoff(
         return agg(idxs)
 
 
+UPDATE_DATA_INTERNAL_MTYPES = [
+    "pd.DataFrame",
+    "pd.Series",
+    "np.ndarray",
+    "pd-multiindex",
+    "numpy3D",
+    "pd_multiindex_hier",
+]
+
+
 def update_data(X, X_new=None):
     """Update time series container with another one.
 
@@ -329,7 +339,18 @@ def update_data(X, X_new=None):
     from sktime.datatypes._convert import convert_to
     from sktime.datatypes._vectorize import VectorizedDF
 
-    # we only need to modify _X if X is not None
+    # if X or X_new is vectorized, unwrap it first
+    if isinstance(X, VectorizedDF):
+        X = X.X
+    if isinstance(X_new, VectorizedDF):
+        X_new = X_new.X
+
+    # we want to ensure that X, X_new are either numpy (1D, 2D, 3D)
+    # or in one of the long pandas formats
+    X = convert_to(X, to_type=UPDATE_DATA_INTERNAL_MTYPES)
+    X_new = convert_to(X_new, to_type=UPDATE_DATA_INTERNAL_MTYPES)
+
+    # we only need to modify X if X_new is not None
     if X_new is None:
         return X
 
@@ -337,24 +358,6 @@ def update_data(X, X_new=None):
     if X is None:
         return X_new
 
-    # if X or X_new is vectorized, unwrap it first
-    if isinstance(X, VectorizedDF):
-        X = X.X
-    if isinstance(X_new, VectorizedDF):
-        X_new = X_new.X
-    # we want to ensure that X is either numpy (1D, 2D, 3D)
-    # or in one of the long pandas formats
-    X = convert_to(
-        X,
-        to_type=[
-            "pd.DataFrame",
-            "pd.Series",
-            "np.ndarray",
-            "pd-multiindex",
-            "numpy3D",
-            "pd_multiindex_hier",
-        ],
-    )
     # update X with the new rows in X_new
     #  if X is np.ndarray, we assume all rows are new
     if isinstance(X, np.ndarray):
