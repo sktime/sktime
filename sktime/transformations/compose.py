@@ -139,6 +139,7 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
             "pd_multiindex_hier",
         ],
         "univariate-only": False,
+        "fit_is_empty": False,  # never skip fit, since self._X may have to be written
     }
 
     # no further default tag values - these are set dynamically below
@@ -171,7 +172,6 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         self._anytag_notnone_set("scitype:transform-labels", ests)
 
         self._anytagis_then_set("scitype:instancewise", False, True, ests)
-        self._anytagis_then_set("fit_is_empty", False, True, ests)
         self._anytagis_then_set("transform-returns-same-time-index", False, True, ests)
         self._anytagis_then_set("skip-inverse-transform", False, True, ests)
 
