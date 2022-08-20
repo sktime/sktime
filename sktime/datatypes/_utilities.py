@@ -313,7 +313,7 @@ def update_data(X, X_new=None):
 
     Parameters
     ----------
-    X : sktime data container, in one of the following mtype formats
+    X : None, or sktime data container, in one of the following mtype formats
         pd.DataFrame, pd.Series, np.ndarray, pd-multiindex, numpy3D,
         pd_multiindex_hier
     X_new : None, or sktime data container, should be same mtype as X,
@@ -324,6 +324,7 @@ def update_data(X, X_new=None):
     X updated with X_new, with rows/indices in X_new added
         entries in X_new overwrite X if at same index
         numpy based containers will always be interpreted as having new row index
+        if one of X, X_new is None, returns the other; if both are None, returns None
     """
     from sktime.datatypes._convert import convert_to
     from sktime.datatypes._vectorize import VectorizedDF
@@ -331,6 +332,10 @@ def update_data(X, X_new=None):
     # we only need to modify _X if X is not None
     if X_new is None:
         return X
+
+    # if X is None, but X_new is not, return N_new
+    if X is None:
+        return X_new
 
     # if X or X_new is vectorized, unwrap it first
     if isinstance(X, VectorizedDF):
