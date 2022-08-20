@@ -4,7 +4,7 @@
 Configurable SFA transform for discretising time series into words.
 """
 
-__author__ = ["Matthew Middlehurst", "Patrick Schäfer"]
+__author__ = ["MatthewMiddlehurst", "patrickzib"]
 __all__ = ["SFA"]
 
 import math
@@ -43,51 +43,51 @@ class SFA(BaseTransformer):
 
     Parameters
     ----------
-        word_length:         int, default = 8
-            length of word to shorten window to (using PAA)
+    word_length:         int, default = 8
+        length of word to shorten window to (using PAA)
 
-        alphabet_size:       int, default = 4
-            number of values to discretise each value to
+    alphabet_size:       int, default = 4
+        number of values to discretise each value to
 
-        window_size:         int, default = 12
-            size of window for sliding. Input series
-            length for whole series transform
+    window_size:         int, default = 12
+        size of window for sliding. Input series
+        length for whole series transform
 
-        norm:                boolean, default = False
-            mean normalise words by dropping first fourier coefficient
+    norm:                boolean, default = False
+        mean normalise words by dropping first fourier coefficient
 
-        binning_method:      {"equi-depth", "equi-width", "information-gain", "kmeans"},
-                             default="equi-depth"
-            the binning method used to derive the breakpoints.
+    binning_method:      {"equi-depth", "equi-width", "information-gain", "kmeans"},
+                            default="equi-depth"
+        the binning method used to derive the breakpoints.
 
-        anova:               boolean, default = False
-            If True, the Fourier coefficient selection is done via a one-way
-            ANOVA test. If False, the first Fourier coefficients are selected.
-            Only applicable if labels are given
+    anova:               boolean, default = False
+        If True, the Fourier coefficient selection is done via a one-way
+        ANOVA test. If False, the first Fourier coefficients are selected.
+        Only applicable if labels are given
 
-        bigrams:             boolean, default = False
-            whether to create bigrams of SFA words
+    bigrams:             boolean, default = False
+        whether to create bigrams of SFA words
 
-        skip_grams:          boolean, default = False
-            whether to create skip-grams of SFA words
+    skip_grams:          boolean, default = False
+        whether to create skip-grams of SFA words
 
-        remove_repeat_words: boolean, default = False
-            whether to use numerosity reduction (default False)
+    remove_repeat_words: boolean, default = False
+        whether to use numerosity reduction (default False)
 
-        levels:              int, default = 1
-            Number of spatial pyramid levels
+    levels:              int, default = 1
+        Number of spatial pyramid levels
 
-        save_words:          boolean, default = False
-            whether to save the words generated for each series (default False)
+    save_words:          boolean, default = False
+        whether to save the words generated for each series (default False)
 
-        return_pandas_data_series:          boolean, default = False
-            set to true to return Pandas Series as a result of transform.
-            setting to true reduces speed significantly but is required for
-            automatic test.
+    return_pandas_data_series:          boolean, default = False
+        set to true to return Pandas Series as a result of transform.
+        setting to true reduces speed significantly but is required for
+        automatic test.
 
-        n_jobs:              int, optional, default = 1
-            The number of jobs to run in parallel for both `transform`.
-            ``-1`` means using all processors.
+    n_jobs:              int, optional, default = 1
+        The number of jobs to run in parallel for both `transform`.
+        ``-1`` means using all processors.
 
     Attributes
     ----------

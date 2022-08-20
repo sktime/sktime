@@ -15,7 +15,7 @@ from sktime.utils.validation.panel import check_X
 # from numba import types
 # from numba.experimental import jitclass
 
-__author__ = "Matthew Middlehurst"
+__author__ = "MatthewMiddlehurst"
 
 
 class SAX(BaseTransformer):

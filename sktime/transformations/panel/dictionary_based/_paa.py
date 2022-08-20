@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 import pandas as pd
-from sktime.transformations.base import BaseTransformer
 from sktime.datatypes._panel._convert import from_nested_to_2d_array
+from sktime.transformations.base import BaseTransformer
 from sktime.utils.validation.panel import check_X
 
-__author__ = "Matthew Middlehurst"
+__author__ = "MatthewMiddlehurst"
 
 
 class PAA(BaseTransformer):
