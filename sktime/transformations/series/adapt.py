@@ -270,7 +270,7 @@ class PandasTransformAdaptor(BaseTransformer):
         "transform-returns-same-time-index": False,
         "fit_is_empty": False,
         "capability:inverse_transform": False,
-        "remember_data": True,  # remember all data seen as _X
+        "remember_data": False,  # remember all data seen as _X
     }
 
     def __init__(self, method, kwargs=None, apply_to="call"):
@@ -289,6 +289,9 @@ class PandasTransformAdaptor(BaseTransformer):
             )
 
         super(PandasTransformAdaptor, self).__init__()
+
+        if apply_to in ["all", "all_subset"]:
+            self.set_tags(**{"remember_data": True})
 
         if apply_to == "all_subset":
             self.set_tags(**{"transform-returns-same-time-index": True})
