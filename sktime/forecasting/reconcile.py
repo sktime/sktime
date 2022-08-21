@@ -82,8 +82,6 @@ class ReconcilerForecaster(BaseForecaster):
     >>> prds_recon = reconciler.predict(fh=[1])
     """
 
-    _required_parameters = ["forecaster"]
-
     _tags = {
         "scitype:y": "univariate",  # which y are fine? univariate/multivariate/both
         "ignores-exogeneous-X": False,  # does estimator ignore the exogeneous X?

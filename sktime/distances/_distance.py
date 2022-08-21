@@ -846,7 +846,7 @@ def twe_distance(
 
     References
     ----------
-    ..[1] Marteau, P.; F. (2009). "Time Warp Edit Distance with Stiffness Adjustment
+    .. [1] Marteau, P.; F. (2009). "Time Warp Edit Distance with Stiffness Adjustment
     for Time Series Matching". IEEE Transactions on Pattern Analysis and Machine
     Intelligence. 31 (2): 306–318.
     """
@@ -1775,7 +1775,7 @@ def twe_alignment_path(
 
     References
     ----------
-    ..[1] Marteau, P.; F. (2009). "Time Warp Edit Distance with Stiffness Adjustment
+    .. [1] Marteau, P.; F. (2009). "Time Warp Edit Distance with Stiffness Adjustment
     for Time Series Matching". IEEE Transactions on Pattern Analysis and Machine
     Intelligence. 31 (2): 306–318.
     """
@@ -1986,8 +1986,8 @@ def pairwise_distance(
     metric: str or Callable, defaults = 'euclidean'
         The distance metric to use.
         If a string is given, the value must be one of the following strings:
-        'euclidean', 'squared', 'dtw', 'ddtw', 'wdtw', 'wddtw', 'lcss', 'edr', 'erp'
-
+            'euclidean', 'squared', 'dtw', 'ddtw', 'wdtw', 'wddtw',
+            'lcss', 'edr', 'erp', 'msm'
         If callable then it has to be a distance factory or numba distance callable.
         If you want to pass custom kwargs to the distance at runtime, use a distance
         factory as it constructs the distance using the kwargs before distance

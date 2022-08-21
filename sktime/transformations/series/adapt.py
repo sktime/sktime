@@ -3,9 +3,10 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements adaptor for applying Scikit-learn-like transformers to time series."""
 
-__author__ = ["mloning"]
+__author__ = ["mloning", "fkiraly"]
 __all__ = ["TabularToSeriesAdaptor"]
 
+import numpy as np
 from sklearn.base import clone
 
 from sktime.transformations.base import BaseTransformer
@@ -83,8 +84,6 @@ class TabularToSeriesAdaptor(BaseTransformer):
     >>> y_hat = transformer.fit_transform(y)
     """
 
-    _required_parameters = ["transformer"]
-
     _tags = {
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
@@ -108,7 +107,15 @@ class TabularToSeriesAdaptor(BaseTransformer):
         if hasattr(transformer, "inverse_transform"):
             self.set_tags(**{"capability:inverse_transform": True})
 
-        if fit_in_transform:
+        # sklearn transformers that are known to fit in transform do not need fit
+        if hasattr(transformer, "_get_tags"):
+            trafo_fit_in_transform = transformer._get_tags()["stateless"]
+        else:
+            trafo_fit_in_transform = False
+
+        self._skip_fit = fit_in_transform or trafo_fit_in_transform
+
+        if self._skip_fit:
             self.set_tags(**{"fit_is_empty": True})
 
     def _fit(self, X, y=None):
@@ -127,7 +134,7 @@ class TabularToSeriesAdaptor(BaseTransformer):
         -------
         self: a fitted instance of the estimator
         """
-        if not self.fit_in_transform:
+        if not self._skip_fit:
             self.transformer_.fit(X)
         return self
 
@@ -148,10 +155,19 @@ class TabularToSeriesAdaptor(BaseTransformer):
         Xt : 2D np.ndarray
             transformed version of X
         """
-        if self.fit_in_transform:
+        if self._skip_fit:
             Xt = self.transformer_.fit(X).transform(X)
         else:
             Xt = self.transformer_.transform(X)
+
+        # coerce sensibly to 2D np.ndarray
+        if isinstance(Xt, (int, float, str)):
+            Xt = np.array([[Xt]])
+        if not isinstance(Xt, np.ndarray):
+            Xt = np.array(Xt)
+        if Xt.ndim == 1:
+            Xt = Xt.reshape((len(X), 1))
+
         return Xt
 
     def _inverse_transform(self, X, y=None):
