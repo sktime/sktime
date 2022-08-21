@@ -4,13 +4,14 @@
 """Meta-transformers for building composite transformers."""
 
 __author__ = ["aiwalter", "SveaMeyer13", "fkiraly"]
-__all__ = ["OptionalPassthrough", "ColumnwiseTransformer", "YtoX"]
+__all__ = ["Id", "OptionalPassthrough", "ColumnwiseTransformer", "YtoX"]
 
 from warnings import warn
 
 import pandas as pd
 from sklearn.utils.metaestimators import if_delegate_has_method
 
+from sktime.transformations._delegate import _DelegatedTransformer
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.validation.series import check_series
 
@@ -36,11 +37,61 @@ CORE_MTYPES = [
 ]
 
 
-class OptionalPassthrough(BaseTransformer):
+class Id(_DelegatedTransformer):
+    """Identity transformer, returns data unchanged in transform/inverse_transform."""
+
+    _tags = {
+        "capability:inverse_transform": True,  # can the transformer inverse transform?
+        "univariate-only": False,  # can the transformer handle multivariate X?
+        "X_inner_mtype": CORE_MTYPES,  # which mtypes do _fit/_predict support for X?
+        # this can be a Panel mtype even if transform-input is Series, vectorized
+        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
+        "fit_is_empty": True,  # is fit empty and can be skipped? Yes = True
+        "transform-returns-same-time-index": True,
+        # does transform return have the same time index as input X
+        "handles-missing-data": True,  # can estimator handle missing data?
+    }
+
+    def _transform(self, X, y=None):
+        """Transform X and return a transformed version.
+
+        private _transform containing the core logic, called from transform
+
+        Parameters
+        ----------
+        X : any sktime compatible data, Series, Panel, or Hierarchical
+        y : optional, default=None
+            ignored, argument present for interface conformance
+
+        Returns
+        -------
+        X, identical to input
+        """
+        return X
+
+    def _inverse_transform(self, X, y=None):
+        """Inverse transform X and return an inverse transformed version.
+
+        private _inverse_transform containing core logic, called from inverse_transform
+
+        Parameters
+        ----------
+        X : any sktime compatible data, Series, Panel, or Hierarchical
+        y : optional, default=None
+            ignored, argument present for interface conformance
+
+        Returns
+        -------
+        X, identical to input
+        """
+        return X
+
+
+class OptionalPassthrough(_DelegatedTransformer):
     """Wrap an existing transformer to tune whether to include it in a pipeline.
 
     Allows tuning the implicit hyperparameter whether or not to use a
-    particular transformer inside a pipeline (e.g. TranformedTargetForecaster)
+    particular transformer inside a pipeline (e.g. TransformedTargetForecaster)
     or not. This is achieved by the hyperparameter `passthrough`
     which can be added to a tuning grid then (see example).
 
@@ -48,11 +99,19 @@ class OptionalPassthrough(BaseTransformer):
     ----------
     transformer : Estimator
         scikit-learn-like or sktime-like transformer to fit and apply to series.
+        this is a "blueprint" transformer, state does not change when `fit` is called
     passthrough : bool, default=False
        Whether to apply the given transformer or to just
         passthrough the data (identity transformation). If, True the transformer
         is not applied and the OptionalPassthrough uses the identity
         transformation.
+
+    Attributes
+    ----------
+    transformer_: transformer,
+        this clone is fitted when `fit` is called and provides `transform` and inverse
+        if passthrough = False, a clone of `transformer`passed
+        if passthrough = True, the identity transformer `Id`
 
     Examples
     --------
@@ -106,9 +165,8 @@ class OptionalPassthrough(BaseTransformer):
 
     def __init__(self, transformer, passthrough=False):
         self.transformer = transformer
-        self.transformer_ = None
         self.passthrough = passthrough
-        self._is_fitted = False
+
         super(OptionalPassthrough, self).__init__()
 
         # should be all tags, but not fit_is_empty
@@ -127,69 +185,12 @@ class OptionalPassthrough(BaseTransformer):
         ]
         self.clone_tags(transformer, tag_names=tags_to_clone)
 
-    def _fit(self, X, y=None):
-        """Fit transformer to X and y.
+        if passthrough:
+            self.transformer_ = Id()
+        else:
+            self.transformer_ = transformer.clone()
 
-        private _fit containing the core logic, called from fit
-
-        Parameters
-        ----------
-        X : Series or Panel of mtype X_inner_mtype
-            if X_inner_mtype is list, _fit must support all types in it
-            Data to fit transform to
-        y : Series or Panel of mtype y_inner_mtype, default=None
-            Additional data, e.g., labels for tarnsformation
-
-        Returns
-        -------
-        self: a fitted instance of the estimator
-        """
-        if not self.passthrough:
-            self.transformer_ = self.transformer.clone()
-            self.transformer_._fit(X, y)
-        return self
-
-    def _transform(self, X, y=None):
-        """Transform X and return a transformed version.
-
-        private _transform containing the core logic, called from transform
-
-        Parameters
-        ----------
-        X : Series or Panel of mtype X_inner_mtype
-            if X_inner_mtype is list, _transform must support all types in it
-            Data to be transformed
-        y : Series or Panel of mtype y_inner_mtype, default=None
-            Additional data, e.g., labels for transformation
-
-        Returns
-        -------
-        transformed version of X
-        """
-        if not self.passthrough:
-            X = self.transformer_._transform(X, y)
-        return X
-
-    def _inverse_transform(self, X, y=None):
-        """Inverse transform, inverse operation to transform.
-
-        core logic
-
-        Parameters
-        ----------
-        X : Series or Panel of mtype X_inner_mtype
-            if X_inner_mtype is list, _inverse_transform must support all types in it
-            Data to be inverse transformed
-        y : Series or Panel of mtype y_inner_mtype, optional (default=None)
-            Additional data, e.g., labels for transformation
-
-        Returns
-        -------
-        inverse transformed version of X
-        """
-        if not self.passthrough:
-            X = self.transformer_._inverse_transform(X, y)
-        return X
+    _delegate_name = "transformer_"
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
