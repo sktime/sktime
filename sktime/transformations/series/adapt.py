@@ -268,7 +268,7 @@ class PandasTransformAdaptor(BaseTransformer):
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "univariate-only": False,
         "transform-returns-same-time-index": False,
-        "fit_is_empty": True,
+        "fit_is_empty": False,
         "capability:inverse_transform": False,
         "remember_data": True,  # remember all data seen as _X
     }
