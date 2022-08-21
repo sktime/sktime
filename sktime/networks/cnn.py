@@ -57,7 +57,7 @@ class CNNNetwork(BaseDeepNetwork):
         self.filter_sizes = [6, 12]
         self.activation = activation
 
-        super.__init__(CNNNetwork, self)
+        super(CNNNetwork, self).__init__()
 
     def build_network(self, input_shape, **kwargs):
         """Construct a network and return its input and output layers.
