@@ -12,7 +12,6 @@ from sktime.transformations.panel.dictionary_based import PAA
 
 #    TO DO: verify this returned pandas is consistent with sktime
 #    definition. Timestamps?
-from sktime.utils.validation.panel import check_X
 
 # from numba import types
 # from numba.experimental import jitclass
@@ -69,7 +68,7 @@ class SAX(BaseTransformer):
         "scitype:transform-output": "Series",
         # what scitype is returned: Primitives, Series, Panel
         "scitype:instancewise": True,  # is this an instance-wise transform?
-        "X_inner_mtype": "nested_univ",  # which mtypes do _fit/_predict support for X?
+        "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict require for y?
     }
 
@@ -90,11 +89,11 @@ class SAX(BaseTransformer):
         self.return_pandas_data_series = return_pandas_data_series
         self.words = []
 
-        super(SAX, self).__init__()
+        super(SAX, self).__init__(_output_convert="off")
 
     # todo: looks like this just loops over series instances
     # so should be refactored to work on Series directly
-    def transform(self, X, y=None):
+    def _transform(self, X, y=None):
         """Transform data.
 
         Parameters
@@ -106,8 +105,6 @@ class SAX(BaseTransformer):
         -------
         dims: Pandas data frame with first dimension in column zero
         """
-        self.check_is_fitted()
-        X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
         X = X.squeeze(1)
 
         if self.alphabet_size < 2 or self.alphabet_size > 4:

@@ -145,9 +145,10 @@ class BaseTransformer(BaseEstimator):
         "pd_multiindex_hier",
     ]
 
-    def __init__(self):
+    def __init__(self, _output_convert="auto"):
 
         self._converter_store_X = dict()  # storage dictionary for in/output conversion
+        self._output_convert = _output_convert
 
         super(BaseTransformer, self).__init__()
         _check_estimator_deps(self)
@@ -444,7 +445,10 @@ class BaseTransformer(BaseEstimator):
             Xt = self._vectorize("transform", X=X_inner, y=y_inner)
 
         # convert to output mtype
-        X_out = self._convert_output(Xt, metadata=metadata)
+        if self._output_convert == "auto":
+            X_out = self._convert_output(Xt, metadata=metadata)
+        else:
+            X_out = Xt
 
         return X_out
 
@@ -557,7 +561,10 @@ class BaseTransformer(BaseEstimator):
             Xt = self._vectorize("inverse_transform", X=X_inner, y=y_inner)
 
         # convert to output mtype
-        X_out = self._convert_output(Xt, metadata=metadata, inverse=True)
+        if self._output_convert == "auto":
+            X_out = self._convert_output(Xt, metadata=metadata, inverse=True)
+        else:
+            X_out = Xt
 
         return X_out
 
