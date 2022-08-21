@@ -1,10 +1,10 @@
-<a href="https://sktime.org"><img src="https://github.com/alan-turing-institute/sktime/blob/main/docs/source/images/sktime-logo-no-text.jpg?raw=true)" width="175" align="right" /></a>
+<a href="https://sktime.org"><img src="https://github.com/alan-turing-institute/sktime/blob/main/docs/source/images/sktime-logo.jpg?raw=true)" width="175" align="right" /></a>
 
 # Welcome to sktime
 
 > A unified interface for machine learning with time series
 
-:rocket: **Version 0.13.0 out now!** [Check out the release notes here](https://www.sktime.org/en/latest/changelog.html).
+:rocket: **Version 0.13.1 out now!** [Check out the release notes here](https://www.sktime.org/en/latest/changelog.html).
 
 sktime is a library for time series analysis in Python. It provides a unified interface for multiple time series learning tasks. Currently, this includes time series classification, regression, clustering, annotation and forecasting. It comes with [time series algorithms](https://www.sktime.org/en/stable/estimator_overview.html) and [scikit-learn] compatible tools to build, tune and validate time series models.
 
@@ -27,7 +27,7 @@ sktime is a library for time series analysis in Python. It provides a unified in
 | :woman_technologist: **[User Guides]**      | How to use sktime and its features.                             |
 | :scissors: **[Extension Templates]** | How to build your own estimator using sktime's API.            |
 | :control_knobs: **[API Reference]**      | The detailed reference for sktime's API.                        |
-| :tv: **[Video Tutorial]**            | Our video tutorial from the 2020 PyData Festival.      |
+| :tv: **[Video Tutorial]**            | Our video tutorial from 2021 PyData Global.      |
 | :hammer_and_wrench: **[Changelog]**          | Changes and version history.                                   |
 | :deciduous_tree: **[Roadmap]**          | sktime's software and community development plan.                                   |
 | :pencil: **[Related Software]**          | A list of related software. |
@@ -35,7 +35,7 @@ sktime is a library for time series analysis in Python. It provides a unified in
 [tutorials]: https://www.sktime.org/en/latest/tutorials.html
 [binder notebooks]: https://mybinder.org/v2/gh/alan-turing-institute/sktime/main?filepath=examples
 [user guides]: https://www.sktime.org/en/latest/user_guide.html
-[video tutorial]: https://github.com/sktime/sktime-tutorial-pydata-amsterdam-2020
+[video tutorial]: https://github.com/sktime/sktime-tutorial-pydata-global-2021
 [api reference]: https://www.sktime.org/en/latest/api_reference.html
 [changelog]: https://www.sktime.org/en/latest/changelog.html
 [roadmap]: https://www.sktime.org/en/latest/roadmap.html

@@ -121,13 +121,15 @@ def _check_values(values: Union[VALID_FORECASTING_HORIZON_TYPES]) -> pd.Index:
     else:
         valid_types = (
             "int",
-            "np.array",
+            "1D np.ndarray of type int",
+            "1D np.ndarray of type timedelta or dateoffset",
             "list",
             *[f"pd.{index_type.__name__}" for index_type in VALID_INDEX_TYPES],
         )
         raise TypeError(
             f"Invalid `fh`. The type of the passed `fh` values is not supported. "
-            f"Please use one of {valid_types}, but found: {type(values)}"
+            f"Please use one of {valid_types}, but found type {type(values)}, "
+            f"values = {values}"
         )
 
     # check values does not contain duplicates
@@ -819,3 +821,21 @@ def _coerce_to_period(x, freq=None):
             )
         else:
             raise
+
+
+def _index_range(relative, cutoff):
+    """Return Index Range relative to cutoff."""
+    _check_cutoff(cutoff, relative)
+    is_timestamp = isinstance(cutoff, pd.Timestamp)
+
+    if is_timestamp:
+        # coerce to pd.Period for reliable arithmetic operations and
+        # computations of time deltas
+        cutoff = _coerce_to_period(cutoff, freq=cutoff.freqstr)
+
+    absolute = cutoff + relative
+
+    if is_timestamp:
+        # coerce back to DatetimeIndex after operation
+        absolute = absolute.to_timestamp(cutoff.freqstr)
+    return absolute
