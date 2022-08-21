@@ -7,11 +7,12 @@ __all__ = []
 
 import numpy as np
 import pytest
+from statsmodels.tsa.seasonal import seasonal_decompose
+
 from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.forecasting.tests._config import TEST_SPS
 from sktime.transformations.series.detrend import Deseasonalizer
 from sktime.utils._testing.forecasting import make_forecasting_problem
-from statsmodels.tsa.seasonal import seasonal_decompose
 
 MODELS = ["additive", "multiplicative"]
 
@@ -60,10 +61,10 @@ def test_transform_inverse_transform_equivalence(sp, model):
 
 def test_deseasonalizer_in_pipeline():
     """Test deseasonalizer in pipeline, see issue #3267."""
-    from sktime.forecasting.theta import ThetaForecaster
-    from sktime.forecasting.compose import TransformedTargetForecaster
-    from sktime.transformations.series.detrend import Deseasonalizer
     from sktime.datasets import load_airline
+    from sktime.forecasting.compose import TransformedTargetForecaster
+    from sktime.forecasting.theta import ThetaForecaster
+    from sktime.transformations.series.detrend import Deseasonalizer
 
     all_df = load_airline().to_frame()
 
