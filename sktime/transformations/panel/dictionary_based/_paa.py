@@ -4,7 +4,6 @@ import pandas as pd
 
 from sktime.datatypes._panel._convert import from_nested_to_2d_array
 from sktime.transformations.base import BaseTransformer
-from sktime.utils.validation.panel import check_X
 
 __author__ = "MatthewMiddlehurst"
 
@@ -50,7 +49,7 @@ class PAA(BaseTransformer):
 
     # todo: looks like this just loops over series instances
     # so should be refactored to work on Series directly
-    def transform(self, X, y=None):
+    def _transform(self, X, y=None):
         """Transform data.
 
         Parameters
@@ -63,10 +62,6 @@ class PAA(BaseTransformer):
         dims: Pandas data frame with first dimension in column zero,
               second in column one etc.
         """
-        # Check the data
-        self.check_is_fitted()
-        X = check_X(X, enforce_univariate=False, coerce_to_pandas=True)
-
         # Get information about the dataframe
         num_atts = len(X.iloc[0, 0])
         col_names = X.columns
