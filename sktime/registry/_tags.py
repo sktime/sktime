@@ -201,13 +201,19 @@ ESTIMATOR_TAG_REGISTER = [
     ),
     (
         "capability:multivariate",
-        ["classifier", "early_classifier", "param_est"],
+        [
+            "classifier",
+            "early_classifier",
+            "param_est",
+            "transformer-pairwise",
+            "transformer-pairwise-panel",
+        ],
         "bool",
         "can the classifier classify time series with 2 or more variables?",
     ),
     (
         "capability:unequal_length",
-        ["classifier", "early_classifier", "transformer"],
+        ["classifier", "early_classifier", "transformer", "transformer-pairwise-panel"],
         "bool",
         "can the estimator handle unequal length time series?",
     ),
@@ -216,7 +222,13 @@ ESTIMATOR_TAG_REGISTER = [
     # Will be merged after refactor completion.
     (
         "capability:missing_values",
-        ["classifier", "early_classifier", "param_est"],
+        [
+            "classifier",
+            "early_classifier",
+            "param_est",
+            "transformer-pairwise",
+            "transformer-pairwise-panel",
+        ],
         "bool",
         "can the classifier handle missing data (NA, np.nan) in inputs?",
     ),
