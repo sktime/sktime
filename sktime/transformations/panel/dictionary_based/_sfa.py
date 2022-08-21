@@ -110,7 +110,7 @@ class SFA(BaseTransformer):
         "scitype:transform-output": "Series",
         # what scitype is returned: Primitives, Series, Panel
         "scitype:instancewise": False,  # is this an instance-wise transform?
-        "X_inner_mtype": "nested_univ",  # which mtypes do _fit/_predict support for X?
+        "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "pd_Series_Table",  # which mtypes does y require?
         "requires_y": True,  # does y need to be passed in fit?
     }
@@ -169,7 +169,8 @@ class SFA(BaseTransformer):
         self.skip_grams = skip_grams
 
         self.return_pandas_data_series = return_pandas_data_series
-        self.use_fallback_dft = (
+        self.use_fallback_dft = use_fallback_dft
+        self._use_fallback_dft = (
             use_fallback_dft if word_length < window_size - offset else True
         )
         self.typed_dict = typed_dict
@@ -186,6 +187,9 @@ class SFA(BaseTransformer):
         self.level_max = 0
 
         super(SFA, self).__init__()
+
+        if not return_pandas_data_series:
+            self._output_convert = "off"
 
     def fit(self, X, y=None):
         """Calculate word breakpoints using MCB or IGB.
@@ -250,7 +254,7 @@ class SFA(BaseTransformer):
         self._is_fitted = True
         return self
 
-    def transform(self, X, y=None):
+    def _transform(self, X, y=None):
         """Transform data into SFA words.
 
         Parameters
@@ -262,8 +266,6 @@ class SFA(BaseTransformer):
         -------
         List of dictionaries containing SFA words
         """
-        self.check_is_fitted()
-        X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
         X = X.squeeze(1)
 
         with warnings.catch_warnings():
@@ -525,7 +527,7 @@ class SFA(BaseTransformer):
                     self.inverse_sqrt_win_size,
                     self.lower_bounding,
                 )
-                if self.use_fallback_dft
+                if self._use_fallback_dft
                 else self._fast_fourier_transform(row)
             )
 
@@ -632,7 +634,7 @@ class SFA(BaseTransformer):
         transformed = np.zeros((end, length))
 
         # first run with dft
-        if self.use_fallback_dft:
+        if self._use_fallback_dft:
             mft_data = self._discrete_fourier_transform(
                 series[0 : self.window_size],
                 self.dft_length,
