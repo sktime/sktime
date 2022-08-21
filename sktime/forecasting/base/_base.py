@@ -88,7 +88,7 @@ class BaseForecaster(BaseEstimator):
     # default tag values - these typically make the "safest" assumption
     _tags = {
         "scitype:y": "univariate",  # which y are fine? univariate/multivariate/both
-        "ignores-exogeneous-X": True,  # does estimator ignore the exogeneous X?
+        "ignores-exogeneous-X": False,  # does estimator ignore the exogeneous X?
         "capability:pred_int": False,  # can the estimator produce prediction intervals?
         "handles-missing-data": False,  # can estimator handle missing data?
         "y_inner_mtype": "pd.Series",  # which types do _fit/_predict, support for y?
@@ -147,7 +147,7 @@ class BaseForecaster(BaseEstimator):
             return NotImplemented
 
     def __rmul__(self, other):
-        """Magic * method, return (left) concatenated TransformerPipeline.
+        """Magic * method, return (left) concatenated TransformedTargetForecaster.
 
         Implemented for `other` being a transformer, otherwise returns `NotImplemented`.
 
@@ -174,6 +174,37 @@ class BaseForecaster(BaseEstimator):
             return other * self_as_pipeline
         elif is_sklearn_transformer(other):
             return TabularToSeriesAdaptor(other) * self
+        else:
+            return NotImplemented
+
+    def __rpow__(self, other):
+        """Magic ** method, return (left) concatenated ForecastingPipeline.
+
+        Implemented for `other` being a transformer, otherwise returns `NotImplemented`.
+
+        Parameters
+        ----------
+        other: `sktime` transformer, must inherit from BaseTransformer
+            otherwise, `NotImplemented` is returned
+
+        Returns
+        -------
+        TransformedTargetForecaster object,
+            concatenation of `other` (first) with `self` (last).
+            not nested, contains only non-TransformerPipeline `sktime` steps
+        """
+        from sktime.forecasting.compose import ForecastingPipeline
+        from sktime.transformations.base import BaseTransformer
+        from sktime.transformations.series.adapt import TabularToSeriesAdaptor
+        from sktime.utils.sklearn import is_sklearn_transformer
+
+        # we wrap self in a pipeline, and concatenate with the other
+        #   the ForecastingPipeline does the rest, e.g., dispatch on other
+        if isinstance(other, BaseTransformer):
+            self_as_pipeline = ForecastingPipeline(steps=[self])
+            return other**self_as_pipeline
+        elif is_sklearn_transformer(other):
+            return TabularToSeriesAdaptor(other) ** self
         else:
             return NotImplemented
 
