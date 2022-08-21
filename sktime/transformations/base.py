@@ -445,7 +445,7 @@ class BaseTransformer(BaseEstimator):
             Xt = self._vectorize("transform", X=X_inner, y=y_inner)
 
         # convert to output mtype
-        if self._output_convert == "auto":
+        if not hasattr(self, "_output_convert") or self._output_convert == "auto":
             X_out = self._convert_output(Xt, metadata=metadata)
         else:
             X_out = Xt
