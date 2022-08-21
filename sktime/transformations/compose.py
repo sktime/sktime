@@ -17,7 +17,6 @@ from sktime.utils.sklearn import (
 )
 from sktime.utils.validation.series import check_series
 
-
 __author__ = ["fkiraly", "mloning", "miraep8", "aiwalter", "SveaMeyer13"]
 __all__ = [
     "ColumnwiseTransformer",
