@@ -95,7 +95,7 @@ class Imputer(BaseTransformer):
         "univariate-only": False,
         "capability:missing_values:removes": True,
         # is transform result always guaranteed to contain no missing values?
-        "remember_data": True,  # remember all data seen as _X
+        "remember_data": False,  # remember all data seen as _X
     }
 
     def __init__(
@@ -113,6 +113,10 @@ class Imputer(BaseTransformer):
         self.forecaster = forecaster
         self.random_state = random_state
         super(Imputer, self).__init__()
+
+        # these methods require self._X remembered in _fit and _update
+        if method in ["drift", "forecaster", "random"]:
+            self.set_tags(**{"remember_data": True})
 
     def _fit(self, X, y=None):
         """Fit transformer to X and y.
