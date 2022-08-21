@@ -6,12 +6,22 @@
 __author__ = ["aiwalter", "SveaMeyer13", "fkiraly"]
 __all__ = ["Id", "OptionalPassthrough", "ColumnwiseTransformer", "YtoX"]
 
+from warnings import warn
+
 import pandas as pd
 from sklearn.utils.metaestimators import if_delegate_has_method
 
 from sktime.transformations._delegate import _DelegatedTransformer
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.validation.series import check_series
+
+warn(
+    "transformations.series.compose is deprecated and will be removed in"
+    " version 0.15.0. All estimators in it will be moved to transformations.compose. "
+    "Please change imports to transformations.compose to avoid breakage.",
+    DeprecationWarning,
+)
+
 
 # mtypes for Series, Panel, Hierarchical,
 # with exception of some ambiguous and discouraged mtypes
@@ -145,7 +155,7 @@ class OptionalPassthrough(_DelegatedTransformer):
         "scitype:transform-output": "Series",
         # what scitype is returned: Primitives, Series, Panel
         "scitype:instancewise": True,  # is this an instance-wise transform?
-        "X_inner_mtype": ["pd.DataFrame", "pd.Series"],
+        "X_inner_mtype": CORE_MTYPES,
         # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "univariate-only": False,
