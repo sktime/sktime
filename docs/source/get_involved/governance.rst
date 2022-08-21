@@ -484,29 +484,36 @@ deprecate and remove contributions.
 
 We have the following guidelines:
 
--  We only consider published algorithms which have been shown to be
-   competitive in comparative benchmarking studies or practically useful
-   in applied projects. A technique that provides a clear-cut
-   improvement (e.g. an enhanced data structure or a more efficient
-   approximation technique) on a widely-used method will also be
-   considered for inclusion.
+-  ``sktime`` aims to provide a repository for algorithms to enhance reproducible research,
+   putting no lower bounds on number of citations, algorithmic performance, or frequency of use.
+-  For inclusion, a scientific reference must be available and linked to the python estimator.
+   A scientific reference is a formal description of the algorithm which
+   satisfies basic scientific requirements, e.g., be formally correct, complete, and
+   adhere with common conventions on presentation in the field of data science.
+-  The scientific reference must be free from unfounded scientific claims, pseudo-science,
+   commercial marketing, or other content inappropriate for a scientific reference.
+   The scientific reference must adhere to proper scientific citation standards,
+   i.e., citing primary sources, giving proper credit.
+   The form of the scientific reference can be a description in the class docstring,
+   or a link to a scientific document, e.g., on the arXiv. Such a scientific document
+   need not be peer-reviewed or journal published, but must adhere to scientific standards.
+-  We strive to consolidate existing functionality if it helps to improve
+   the usability and maintainability of the project. For example, when
+   there are multiple techniques for the same purpose, we may choose to present one variant as the "primary default",
+   and rarer variants as less accessible or findable alternatives. The choice of the "primary default"
+   may change with use and relevance in the user community.
+   We are aware that the choice of the "primary default" may give or remove visibility,
+   and aim to make the choice for usability and quality of the selection.
+-  We are happy to accept historical algorithms of interest, as references to use in
+   reproduction studies, including historical versions that are faulty implementations.
+   Algorithms of historical interest will be clearly labelled as such, and inclusion
+   is primarily guided by relevance, e.g., as a reference in an important study,
+   relevance in the scientific discourse, or as an important algorithmic baseline.
 -  From the algorithms or techniques that meet the above criteria, only
-   those which fit well within the current API of sktime are accepted.
-   For algorithms that do not fit well into the current API, the API
+   those which fit well within the current framework of sktime are accepted.
+   For algorithms that do not fit well into one of the current API definitions, the API
    will have to be extended first. For extending current API, see the
    `decision making process <#Decision-making>`__ for major changes.
--  The contributor should support the importance of the proposed
-   addition with research papers and/or implementations in other similar
-   packages, demonstrate its usefulness via common
-   use-cases/applications and corroborate performance improvements, if
-   any, with benchmarks and/or plots. It is expected that the proposed
-   algorithm should outperform the methods that are already implemented
-   in sktime in at least some areas.
--  We strive to consolidate existing functionality if helps to improve
-   the usability and maintainability of the project. For example, when
-   there are multiple techniques for the same purpose, we prefer to
-   combine them into a single class and make case distinctions based on
-   hyper-parameters.
 
 Note that your implementation need not be in sktime to be used together
 with sktime tools. You can implement your favorite algorithm in a sktime
@@ -516,9 +523,7 @@ to list it under `related
 software <https://github.com/alan-turing-institute/sktime/wiki/related-software>`__.
 
 If algorithms require major dependencies, we encourage to create a
-separate companion repository. For example, for deep learning techniques
-based on TensorFlow and Keras, we have
-`sktime-dl <https://github.com/sktime/sktime-dl>`__. For smaller
+separate companion repository. For smaller
 dependencies which are limited to a few files, we encourage to use soft
 dependencies, which are only required for particular modules, but not
 for most of sktime’s functionality and not for installing sktime.

@@ -6,6 +6,7 @@ from warnings import warn
 
 import pandas as pd
 from sklearn import clone
+from sklearn.utils.metaestimators import if_delegate_has_method
 
 from sktime.base import _HeterogenousMetaEstimator
 from sktime.transformations._delegate import _DelegatedTransformer
@@ -16,14 +17,33 @@ from sktime.utils.sklearn import (
     is_sklearn_regressor,
     is_sklearn_transformer,
 )
+from sktime.utils.validation.series import check_series
 
-__author__ = ["fkiraly", "mloning", "miraep8"]
+__author__ = ["fkiraly", "mloning", "miraep8", "aiwalter", "SveaMeyer13"]
 __all__ = [
-    "TransformerPipeline",
+    "ColumnwiseTransformer",
     "FeatureUnion",
     "FitInTransform",
-    "MultiplexTransformer",
+    "Id",
     "InvertTransform",
+    "MultiplexTransformer",
+    "OptionalPassthrough",
+    "TransformerPipeline",
+    "YtoX",
+]
+
+
+# mtypes for Series, Panel, Hierarchical,
+# with exception of some ambiguous and discouraged mtypes
+CORE_MTYPES = [
+    "pd.DataFrame",
+    "np.ndarray",
+    "pd.Series",
+    "pd-multiindex",
+    "df-list",
+    "nested_univ",
+    "numpy3D",
+    "pd_multiindex_hier",
 ]
 
 
@@ -131,16 +151,7 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
 
     _tags = {
         # we let all X inputs through to be handled by first transformer
-        "X_inner_mtype": [
-            "pd.DataFrame",
-            "np.ndarray",
-            "pd.Series",
-            "pd-multiindex",
-            "df-list",
-            "nested_univ",
-            "numpy3D",
-            "pd_multiindex_hier",
-        ],
+        "X_inner_mtype": CORE_MTYPES,
         "univariate-only": False,
     }
 
@@ -1172,6 +1183,7 @@ class InvertTransform(_DelegatedTransformer):
 
         Returns an inverse-transformed version of X by iterating over specified
         columns and applying the univariate series transformer to them.
+
         Only works if `self.transformer` has an `inverse_transform` method.
 
         Parameters
@@ -1197,7 +1209,6 @@ class InvertTransform(_DelegatedTransformer):
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
             special parameters are defined for a value, will return `"default"` set.
-
 
         Returns
         -------

@@ -17,6 +17,7 @@ from sktime.transformations.compose import (
 )
 from sktime.transformations.panel.padder import PaddingTransformer
 from sktime.transformations.series.boxcox import LogTransformer
+from sktime.transformations.series.compose import OptionalPassthrough
 from sktime.transformations.series.exponent import ExponentTransformer
 from sktime.transformations.series.impute import Imputer
 from sktime.transformations.series.subset import ColumnSelect
@@ -230,8 +231,8 @@ def test_subset_getitem():
     _assert_array_almost_equal(t_none.fit_transform(X), X_theta)
 
 
-def test_dunder_neg():
-    """Test the neg dunder method, for wrapping in OptionalPassthrough."""
+def test_dunder_invert():
+    """Test the invert dunder method, for wrapping in OptionalPassthrough."""
     X = pd.DataFrame({"a": [1, 2], "b": [3, 4]})
 
     t = ExponentTransformer(power=3)
@@ -244,3 +245,18 @@ def test_dunder_neg():
     _assert_array_almost_equal(
         t_inv.fit_transform(X), ExponentTransformer(1 / 3).fit_transform(X)
     )
+
+
+def test_dunder_neg():
+    """Test the neg dunder method, for wrapping in OptionalPassthrough."""
+    X = pd.DataFrame({"a": [1, 2], "b": [3, 4]})
+
+    t = ExponentTransformer(power=2)
+
+    tp = -t
+
+    assert isinstance(tp, OptionalPassthrough)
+    assert not tp.get_params()["passthrough"]
+    assert isinstance(tp.get_params()["transformer"], ExponentTransformer)
+
+    _assert_array_almost_equal(tp.fit_transform(X), X)
