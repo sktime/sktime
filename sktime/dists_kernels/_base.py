@@ -187,7 +187,7 @@ class BasePairwiseTransformerPanel(BaseEstimator):
         "fit_is_empty": True,  # is "fit" empty? Yes, for all pairwise transforms
         "capability:missing_values": True,  # can estimator handle missing data?
         "capability:multivariate": True,  # can estimator handle multivariate data?
-        "capability:unequal_length": False,  # can dist handle unequal length panels?
+        "capability:unequal_length": True,  # can dist handle unequal length panels?
     }
 
     def __init__(self):
