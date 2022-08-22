@@ -278,6 +278,31 @@ class BaseTransformer(BaseEstimator):
         else:
             return NotImplemented
 
+    def __invert__(self):
+        """Magic unary ~ (inversion) method, return InvertTransform of self.
+
+        Returns
+        -------
+        `InvertTransform` object, containing `self`.
+        """
+        from sktime.transformations.compose import InvertTransform
+
+        return InvertTransform(self)
+
+    def __neg__(self):
+        """Magic unary - (negation) method, return OptionalPassthrough of self.
+
+        Intuition: `OptionalPassthrough` is "not having transformer", as an option.
+
+        Returns
+        -------
+        `OptionalPassthrough` object, containing `self`, with `passthrough=False`.
+            The `passthrough` parameter can be set via `set_params`.
+        """
+        from sktime.transformations.compose import OptionalPassthrough
+
+        return OptionalPassthrough(self, passthrough=False)
+
     def __getitem__(self, key):
         """Magic [...] method, return column subsetted transformer.
 

@@ -20,7 +20,7 @@ from sklearn.model_selection import train_test_split as _train_test_split
 
 from sktime.base import BaseObject
 from sktime.datatypes import check_is_scitype, convert_to
-from sktime.datatypes._utilities import get_index_for_series, get_time_index
+from sktime.datatypes._utilities import get_index_for_series, get_time_index, get_window
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.base._fh import VALID_FORECASTING_HORIZON_TYPES
 from sktime.utils.validation import (
@@ -673,13 +673,16 @@ class CutoffSplitter(BaseSplitter):
     which using the notation provided in :class:`BaseSplitter`,
     can be written as :math:`(k_1,\ldots,k_n)` for integer based indexing,
     or :math:`(t(k_1),\ldots,t(k_n))` for datetime based indexing.
+
+    For a cutoff :math:`k_i` and a `window_length` :math:`w`
+    the training window is :math:`(k_i-w+1,k_i-w+2,k_i-w+3,\ldots,k_i)`.
     Training window's last point is equal to the cutoff.
 
     Test window is defined by forecasting horizons
     relative to the end of the training window.
     It will contain as many indices
     as there are forecasting horizons provided to the `fh` argument.
-    For a forecasating horizon :math:`(h_1,\ldots,h_H)`, the training window will
+    For a forecasating horizon :math:`(h_1,\ldots,h_H)`, the test window will
     consist of the indices :math:`(k_n+h_1,\ldots, k_n+h_H)`.
 
     The number of splits returned by `.get_n_splits`
@@ -690,7 +693,7 @@ class CutoffSplitter(BaseSplitter):
 
     Parameters
     ----------
-    cutoffs : list or np.array or pd.Index
+    cutoffs : list or np.ndarray or pd.Index
         Cutoff points, positive and integer- or datetime-index like.
         Type should match the type of `fh` input.
     fh : int, timedelta, list or np.ndarray of ints or timedeltas
@@ -724,34 +727,24 @@ class CutoffSplitter(BaseSplitter):
         window_length = check_window_length(
             window_length=self.window_length, n_timepoints=n_timepoints
         )
+        if isinstance(y, (pd.DatetimeIndex, pd.PeriodIndex)) and is_int(window_length):
+            window_length = y.freq * window_length
         _check_cutoffs_and_y(cutoffs=cutoffs, y=y)
         _check_cutoffs_fh_y(cutoffs=cutoffs, fh=fh, y=y)
-        max_fh = fh.max()
-        max_cutoff = np.max(cutoffs)
 
         for cutoff in cutoffs:
-            if is_int(x=window_length) and is_int(x=cutoff):
-                train_start = cutoff - window_length
-            elif is_timedelta_or_date_offset(x=window_length) and is_datetime(x=cutoff):
-                train_start = y.get_loc(max(y[0], cutoff - window_length))
+            null = 0 if is_int(cutoff) else pd.Timestamp(0)
+            if cutoff >= null:
+                train_end = y[cutoff] if is_int(cutoff) else cutoff
+                training_window = get_window(
+                    pd.Series(index=y[y <= train_end]), window_length=window_length
+                ).index
             else:
-                raise TypeError(
-                    f"Unsupported combination of types: "
-                    f"`window_length`: {type(window_length)}, "
-                    f"`cutoff`: {type(cutoff)}"
-                )
-
-            split_point = cutoff if is_int(x=cutoff) else y.get_loc(y[y <= cutoff][-1])
-            training_window = self._get_train_window(
-                y=y, train_start=train_start + 1, split_point=split_point + 1
-            )
-
+                training_window = []
+            training_window = y.get_indexer(training_window)
             test_window = cutoff + fh.to_numpy()
-            if is_datetime(x=max_cutoff) and is_timedelta(x=max_fh):
-                test_window = test_window[test_window >= y.min()]
-                test_window = np.array(
-                    [y.get_loc(timestamp) for timestamp in test_window]
-                )
+            if is_datetime(x=cutoff):
+                test_window = y.get_indexer(test_window[test_window >= y.min()])
             yield training_window, test_window
 
     def get_n_splits(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> int:
@@ -1268,24 +1261,21 @@ class SingleWindowSplitter(BaseSplitter):
     def _split(self, y: pd.Index) -> SPLIT_GENERATOR_TYPE:
         n_timepoints = y.shape[0]
         window_length = check_window_length(self.window_length, n_timepoints)
+        if isinstance(y, (pd.DatetimeIndex, pd.PeriodIndex)) and is_int(window_length):
+            window_length = y.freq * window_length
         fh = _check_fh(self.fh)
-        end = _get_end(y_index=y, fh=fh)
+        train_end = _get_end(y_index=y, fh=fh)
 
-        if window_length is None:
-            start = 0
-        elif is_int(window_length):
-            start = end - window_length + 1
-        else:
-            start = np.argwhere(y > y[end] - window_length).flatten()[0]
-
-        train = self._get_train_window(y=y, train_start=start, split_point=end + 1)
-
+        training_window = get_window(
+            pd.Series(index=y[y <= y[train_end]]), window_length=window_length
+        ).index
+        training_window = y.get_indexer(training_window)
         if array_is_int(fh):
-            test = end + fh.to_numpy()
+            test_window = train_end + fh.to_numpy()
         else:
-            test = np.array([y.get_loc(y[end] + x) for x in fh.to_pandas()])
+            test_window = y.get_indexer(y[train_end] + fh.to_pandas())
 
-        yield train, test
+        yield training_window, test_window
 
     def get_n_splits(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> int:
         """Return the number of splits.
