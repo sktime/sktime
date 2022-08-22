@@ -235,7 +235,11 @@ class ForecasterFitPredictMultivariateWithX(ForecasterTestScenario):
 
 
 y_panel = _make_panel_X(
-    n_instances=3, n_timepoints=10, n_columns=1, random_state=RAND_SEED
+    n_instances=3,
+    n_timepoints=10,
+    n_columns=1,
+    random_state=RAND_SEED,
+    all_positive=True,
 )
 
 
@@ -253,8 +257,9 @@ class ForecasterFitPredictPanelSimple(ForecasterTestScenario):
     default_method_sequence = ["fit", "predict"]
 
 
-y_hierarchical = _make_hierarchical(n_columns=1, random_state=RAND_SEED)
-
+y_hierarchical = _make_hierarchical(
+    hierarchy_levels = (2, 2), n_columns=1, random_state=RAND_SEED
+)
 
 class ForecasterFitPredictHierarchicalSimple(ForecasterTestScenario):
     """Fit/predict only, univariate Hierarchical y, no X, and longer fh in fit."""
