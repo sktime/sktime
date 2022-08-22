@@ -746,6 +746,45 @@ class Hidalgo(BaseSeriesAnnotator):
 
         return Z
 
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            Reserved values for classifiers:
+                "results_comparison" - used for identity testing in some classifiers
+                    should contain parameter settings comparable to "TSC bakeoff"
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        return {
+            "metric": "euclidean",
+            "K": 1,
+            "zeta": 0.8,
+            "q": 3,
+            "n_iter": 10,
+            "n_replicas": 1,
+            "burn_in": 0.5,
+            "fixed_Z": False,
+            "use_Potts": True,
+            "estimate_zeta": False,
+            "sampling_rate": 2,
+            "a": None,
+            "b": None,
+            "c": None,
+            "f": None,
+            "seed": 1,
+        }
+
 
 def binom(N: Union[int, float], q: Union[int, float]):
     """Calculate the binomial coefficient.
