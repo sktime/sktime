@@ -13,7 +13,121 @@ import numpy as np
 from sklearn.neighbors import NearestNeighbors
 from sklearn.utils.validation import check_random_state
 
-from sktime.annotation.base import BaseSeriesAnnotator
+from sktime.base import BaseEstimator
+from sktime.utils.validation.annotation import check_fmt, check_labels
+from sktime.utils.validation.series import check_series
+
+
+class BaseSeriesAnnotator(BaseEstimator):
+    """Base series annotator.
+
+    Parameters
+    ----------
+    fmt : str {"dense", "sparse"}, optional (default="dense")
+        Annotation output format:
+        * If "sparse", a sub-series of labels for only the outliers in X is returned,
+        * If "dense", a series of labels for all values in X is returned.
+    labels : str {"indicator", "score"}, optional (default="indicator")
+        Annotation output labels:
+        * If "indicator", returned values are boolean, indicating whether a value is an
+        outlier,
+        * If "score", returned values are floats, giving the outlier score.
+
+    Notes
+    -----
+    Assumes "predict" data is temporal future of "fit"
+    Single time series in both, no meta-data.
+
+    The base series annotator specifies the methods and method
+    signatures that all annotators have to implement.
+
+    Specific implementations of these methods is deferred to concrete
+    annotators.
+    """
+
+    def __init__(self, fmt="dense", labels="indicator"):
+        self.fmt = fmt
+        self.labels = labels
+
+        self._is_fitted = False
+
+        self._X = None
+        self._y = None
+
+        super(BaseSeriesAnnotator, self).__init__()
+
+    def fit(self, X, y=None):
+        """Fit to training data.
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+            Training data to fit model to (time series).
+        y : pd.Series, optional
+            Ground truth annotations for training if annotator is supervised.
+
+        Returns
+        -------
+        self :
+            Reference to self.
+
+        Notes
+        -----
+        Creates fitted model that updates attributes ending in "_". Sets
+        _is_fitted flag to True.
+        """
+        check_labels(self.labels)
+        check_fmt(self.fmt)
+        X = check_series(X)
+
+        if y is not None:
+            y = check_series(y)
+
+        self._X = X
+        self._y = y
+        self._fit(X=X, y=y)
+        self._is_fitted = True
+
+        return self
+
+    def predict(self, X):
+        """Create annotations on test/deployment data.
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+            Data to annotate (time series).
+
+        Returns
+        -------
+        y : pd.Series
+            Annotations for sequence X exact format depends on annotation type.
+        """
+        self.check_is_fitted()
+        X = check_series(X)
+        y = self._predict(X=X)
+
+        return y
+
+    def fit_predict(self, X, y=None):
+        """Fit to data, then predict it.
+
+        Fits model to X and y with given annotation parameters
+        and returns the annotations made by the model.
+
+        Parameters
+        ----------
+        X : pd.DataFrame, pd.Series or np.ndarray
+            Data to be transformed
+        y : pd.Series or np.ndarray, optional (default=None)
+            Target values of data to be predicted.
+
+        Returns
+        -------
+        self : pd.Series
+            Annotations for sequence X exact format depends on annotation type.
+        """
+        return self.fit(X, y).predict(X)
 
 
 class Hidalgo(BaseSeriesAnnotator):
@@ -33,10 +147,10 @@ class Hidalgo(BaseSeriesAnnotator):
     K : int, optional, default=2
         number of manifolds used in algorithm
     zeta : float, optional, defualt=0.8
-        "local homogeneity level" used in the algorithm, see equation ?
+        "local homogeneity level" used in the algorithm, see equation (4)
     q : int, optional, default=3
         number of points for local Z interaction, "local homogeneity range"
-        see equation ?
+        see equation (4)
     n_iter : int, optional, default=1000
         number of Gibbs sampling iterations
     n_replicas : int, optional, default=1
@@ -98,7 +212,7 @@ class Hidalgo(BaseSeriesAnnotator):
         q=3,
         n_iter=1000,
         n_replicas=1,
-        burn_in=0.5,
+        burn_in=0.9,
         fixed_Z=False,
         use_Potts=True,
         estimate_zeta=False,
@@ -108,6 +222,8 @@ class Hidalgo(BaseSeriesAnnotator):
         c=None,
         f=None,
         seed=1,
+        fmt="dense",
+        labels="score",
     ):
 
         self.metric = metric
@@ -127,7 +243,7 @@ class Hidalgo(BaseSeriesAnnotator):
         self.f = f
         self.seed = seed
 
-        super(Hidalgo, self).__init__()
+        super(Hidalgo, self).__init__(fmt=fmt, labels=labels)
 
     def _get_neighbourhood_params(self, X):
         """
@@ -484,7 +600,7 @@ class Hidalgo(BaseSeriesAnnotator):
             return Z, NN, a1, c1, V, b1
 
         def sample_likelihood(p, d, Z, N_in, zeta, NN):
-
+            """Sample likelihood values of mu, and local inhomogeneity penalisation."""
             N = self.N
             mu = self.mu
 
@@ -525,6 +641,10 @@ class Hidalgo(BaseSeriesAnnotator):
             sampling = np.append(sampling, lik)
 
         return sampling
+
+    def _fit(self, X, y=None):
+        """Empty."""
+        return self
 
     def _predict(self, X, y=None):
         """
