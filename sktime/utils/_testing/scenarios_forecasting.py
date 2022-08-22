@@ -69,7 +69,7 @@ class ForecasterTestScenario(TestScenario, BaseObject):
             return False
 
         # run Panel/Hierarchical scenarios for genuinely Panel/Hierarchical forecasters
-        y_scitype = self.get_tag("y_scitype", "Series")
+        y_scitype = self.get_tag("y_scitype", "Series", raise_error=False)
         scenario_is_hierarchical = y_scitype in ["Panel", "Hierarchical"]
 
         obj_y_inner_types = get_tag(obj, "y_inner_mtype")
