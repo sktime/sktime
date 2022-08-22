@@ -13,6 +13,21 @@ All notable changes to this project will be documented in this file. We keep tra
 For upcoming changes and next releases, see our `milestones <https://github.com/alan-turing-institute/sktime/milestones?direction=asc&sort=due_date&state=open>`_.
 For our long-term plan, see our :ref:`roadmap`.
 
+Version 0.13.2 - 2022-08-23
+---------------------------
+
+
+Highlights
+~~~~~~~~~~
+
+
+
+Dependency changes
+~~~~~~~~~~~~~~~~~~
+
+* ``pmdarima`` is bounded ``<2.0.0`` until compatibility issues are resolved
+
+
 Version 0.13.1 - 2022-08-11
 ---------------------------
 
