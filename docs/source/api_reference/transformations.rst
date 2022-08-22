@@ -51,17 +51,12 @@ Pipeline building
 
     TransformerPipeline
     FeatureUnion
+    ColumnwiseTransformer
     FitInTransform
     MultiplexTransformer
-
-.. currentmodule:: sktime.transformations.series.compose
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
     OptionalPassthrough
-    ColumnwiseTransformer
+    InvertTransform
+    Id
     YtoX
 
 .. currentmodule:: sktime.transformations.panel.compose
@@ -135,7 +130,6 @@ These transformers extract simple summary features.
     :template: class.rst
 
     SummaryTransformer
-    MeanTransformer
     WindowSummarizer
 
 .. currentmodule:: sktime.transformations.panel.summarize
@@ -149,8 +143,17 @@ These transformers extract simple summary features.
     RandomIntervalFeatureExtractor
     FittedParamExtractor
 
-Kernel and wavelet based features
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Shapelets, wavelets, and convolution
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.transformations.panel.shapelet_transform
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ShapeletTransform
+    RandomShapeletTransform
 
 .. currentmodule:: sktime.transformations.panel.rocket
 
@@ -299,6 +302,15 @@ Detrending
     Deseasonalizer
     ConditionalDeseasonalizer
     STLTransformer
+
+.. currentmodule:: sktime.transformations.series.clear_sky
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ClearSky
+
 
 Filtering and denoising
 ~~~~~~~~~~~~~~~~~~~~~~~

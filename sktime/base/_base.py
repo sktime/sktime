@@ -347,7 +347,11 @@ class BaseObject(_BaseEstimator):
         Changes object state by settting tag values in tag_dict as dynamic tags
         in self.
         """
-        self._tags_dynamic.update(deepcopy(tag_dict))
+        tag_update = deepcopy(tag_dict)
+        if hasattr(self, "_tags_dynamic"):
+            self._tags_dynamic.update(tag_update)
+        else:
+            self._tags_dynamic = tag_update
 
         return self
 
@@ -406,25 +410,8 @@ class BaseObject(_BaseEstimator):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        # imported inside the function to avoid circular imports
-        from sktime.tests._config import ESTIMATOR_TEST_PARAMS
-
-        # if non-default parameters are required, but none have been found,
-        # raise error
-        if hasattr(cls, "_required_parameters"):
-            required_parameters = getattr(cls, "required_parameters", [])
-            if len(required_parameters) > 0:
-                raise ValueError(
-                    f"Estimator: {cls} requires "
-                    f"non-default parameters for construction, "
-                    f"but none were given. Please set them "
-                    f"as given in the extension template"
-                )
-
-        # construct with parameter configuration for testing, otherwise construct with
-        # default parameters (empty dict)
-        params = ESTIMATOR_TEST_PARAMS.get(cls, {})
-        return params
+        # default parameters = empty dict
+        return {}
 
     @classmethod
     def create_test_instance(cls, parameter_set="default"):

@@ -64,7 +64,11 @@ from sktime.datatypes import (
     mtype_to_scitype,
 )
 from sktime.datatypes._series_as_panel import convert_to_scitype
-from sktime.utils.sklearn import is_sklearn_classifier, is_sklearn_transformer
+from sktime.utils.sklearn import (
+    is_sklearn_classifier,
+    is_sklearn_regressor,
+    is_sklearn_transformer,
+)
 from sktime.utils.validation._dependencies import _check_estimator_deps
 
 # single/multiple primitives
@@ -170,6 +174,7 @@ class BaseTransformer(BaseEstimator):
         if (
             isinstance(other, BaseTransformer)
             or is_sklearn_classifier(other)
+            or is_sklearn_regressor(other)
             or is_sklearn_transformer(other)
         ):
             self_as_pipeline = TransformerPipeline(steps=[self])
@@ -272,6 +277,31 @@ class BaseTransformer(BaseEstimator):
             return other + self_as_pipeline
         else:
             return NotImplemented
+
+    def __invert__(self):
+        """Magic unary ~ (inversion) method, return InvertTransform of self.
+
+        Returns
+        -------
+        `InvertTransform` object, containing `self`.
+        """
+        from sktime.transformations.compose import InvertTransform
+
+        return InvertTransform(self)
+
+    def __neg__(self):
+        """Magic unary - (negation) method, return OptionalPassthrough of self.
+
+        Intuition: `OptionalPassthrough` is "not having transformer", as an option.
+
+        Returns
+        -------
+        `OptionalPassthrough` object, containing `self`, with `passthrough=False`.
+            The `passthrough` parameter can be set via `set_params`.
+        """
+        from sktime.transformations.compose import OptionalPassthrough
+
+        return OptionalPassthrough(self, passthrough=False)
 
     def __getitem__(self, key):
         """Magic [...] method, return column subsetted transformer.
@@ -1006,7 +1036,7 @@ class BaseTransformer(BaseEstimator):
                     raise RuntimeError(
                         "found different number of instances in transform than in fit. "
                         f"number of instances seen in fit: {n_fit}; "
-                        f"number of instances seen in transform: {n * m}"
+                        f"number of instances seen in transform: {n_trafos}"
                     )
 
                 # transform the i-th series/panel with the i-th stored transformer
