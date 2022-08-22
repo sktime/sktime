@@ -16,7 +16,51 @@ from sktime.transformations.series.theta import ThetaLinesTransformer
 
 
 class ThetaNewForecaster(_HeterogenousEnsembleForecaster):
-    """Modular theta method for forecasting."""
+    """Modular theta method for forecasting.
+
+    Modularized implementation of Theta method as defined in [1]_ (TODO: add the
+    auto-theta method as described in [2]_).
+
+    Overview: Input :term:`univariate series <Univariate time series>` of length
+    "n" and decompose with :class:`ThetaLinesTransformer
+    <sktime.transformations.series.theta>` by modifying the local curvature of
+    the time series using Theta-coefficient values - `theta` parameter.
+    Thansformation gives a pd.DataFrame of shape `len(input series) * len(theta)`.
+
+    The resulting transformed series (Theta-lines) are extrapolated separately.
+    The forecasts are then aggregated into one prediction - aunivariate series,
+    of `len(fh)`.
+
+    References
+    ----------
+    .. [1] V.Assimakopoulos et al., "The theta model: a decomposition approach
+       to forecasting", International Journal of Forecasting, vol. 16, pp. 521-530,
+       2000.
+    .. [2] E.Spiliotis et al., "Generalizing the Theta method for
+       automatic forecasting ", European Journal of Operational
+       Research, vol. 284, pp. 550-558, 2020.
+
+
+    See Also
+    --------
+    ThetaLinesTransformer :
+        Input series decomposition, a step of the pipeline.
+
+    Notes
+    -----
+    Existing implementation :
+        :class:`sktime.forecasting.theta`.
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.theta_new import ThetaNewForecaster
+    >>> y = load_airline()
+    >>> forecaster = ThetaNewForecaster()
+    >>> forecaster.fit(y)
+    ThetaNewForecaster(...)
+    >>> y_pred = forecaster.predict(fh=[1,2,3])
+    """
 
     _tags = {
         "univariate-only": False,
