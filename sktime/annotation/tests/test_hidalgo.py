@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Test for hidalgo segmentation."""
 import numpy as np
+from sklearn.utils.validation import check_random_state
 
 from sktime.annotation.hidalgo import Hidalgo
 
@@ -177,6 +178,7 @@ def test_initialise_params():
     fitted_model.mu = mu
     fitted_model.Iin = Iin
     fitted_model.N = N
+    fitted_model._rng = check_random_state(model.seed)
 
     (
         V_actual,
