@@ -127,8 +127,11 @@ class ElbowClassSum(BaseTransformer):
 
     Parameters
     ----------
-    distance: sktime pairwise panel transformer, optional, default=None
+    distance: sktime pairwise panel transform, str, or callable, optional, default=None
+        if panel transform, will be used directly as the distance in the algorithm
         default None = euclidean distance on flattened series, FlatDist(ScipyDist())
+        if str, will behave as FlatDist(ScipyDist(distance)) = scipy dist on flat series
+        if callable, must be univariate nested_univ x nested_univ -> 2D float np.array
 
     Attributes
     ----------
@@ -190,16 +193,25 @@ class ElbowClassSum(BaseTransformer):
     }
 
     def __init__(self, distance=None):
+
         self.distance = distance
 
-        if distance is None:
-            from sktime.dists_kernels import FlatDist, ScipyDist
-
-            self.distance_ = FlatDist(ScipyDist())
-        else:
-            self.distance_ = distance.clone()
-
         super(ElbowClassSum, self).__init__()
+
+        from sktime.dists_kernels import (
+            BasePairwiseTransformerPanel,
+            FlatDist,
+            ScipyDist,
+        )
+
+        if distance is None:
+            self.distance_ = FlatDist(ScipyDist())
+        elif isinstance(distance, str):
+            self.distance_ = FlatDist(ScipyDist(metric=distance))
+        elif isinstance(distance, BasePairwiseTransformerPanel):
+            self.distance_ = distance.clone()
+        else:
+            self.distance_ = distance
 
     def _fit(self, X, y):
         """Fit ECS to a specified X and y.
@@ -225,7 +237,7 @@ class ElbowClassSum(BaseTransformer):
         centroids_no_y = centroids.drop("class_vals", axis=1)
         centroids_no_y.columns = X.columns
 
-        dists = [t.transform(X[[c]]).sum() for c in X.columns]
+        dists = [t(X[[c]]).sum() for c in X.columns]
         dists = pd.Series(dists)
         self.distance_frame_ = dists
 
@@ -283,7 +295,10 @@ class ElbowClassSum(BaseTransformer):
         # with custom distance
         params2 = {"distance": DtwDist()}
 
-        return [params1, params2]
+        # with string shorthand
+        params3 = {"distance": "cosine"}
+
+        return [params1, params2, params3]
 
 
 class ElbowClassPairwise(BaseTransformer):
