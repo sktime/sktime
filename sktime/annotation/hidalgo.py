@@ -192,9 +192,8 @@ class Hidalgo(BaseSeriesAnnotator):
     >>> np.random.seed(123)
     >>> X = np.random.rand(10,3)
     >>> X[6:, 1:] = 0
-    >>> model = Hidalgo(K=2, n_iter=50, seed=10)
-    >>> fitted_model = model._fit(X)
-    >>> Z = fitted_model._predict(X)
+    >>> model = Hidalgo(K=2, burn_in=0.5, n_iter=50, seed=10)
+    >>> Z = model.fit_predict(X)
     >>> Z
     array([0, 0, 0, 0, 0, 0, 1, 1, 1, 1], dtype=int64)
     """
