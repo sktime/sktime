@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Classifying benchmarks tests."""
 import pandas as pd
-from sklearn.model_selection import KFold
+from sklearn.model_selection import ShuffleSplit
 
 from sktime.benchmarking.classification import ClassificationBenchmark
 from sktime.classification.kernel_based import RocketClassifier
@@ -17,7 +17,7 @@ def test_classificationbenchmark(tmp_path):
     )
 
     # Specify cross-validation split methods
-    cv_splitter = KFold(n_splits=2, shuffle=False)
+    cv_splitter = ShuffleSplit(n_splits=2, test_size=0.2, random_state=42)
 
     # Specify comparison metrics
     scorers = ["accuracy"]
@@ -39,12 +39,14 @@ def test_classificationbenchmark(tmp_path):
 
     expected_result = pd.DataFrame(
         {
-            "validation_id": {0: "[dataset=load_arrow_head]_[cv_splitter=KFold]-v1"},
+            "validation_id": {
+                0: "[dataset=load_arrow_head]_[cv_splitter=ShuffleSplit]-v1"
+            },
             "model_id": {0: "RocketClassifier-v1"},
-            "accuracy_fold_0_test": {0: 0.2264150943396226},
-            "accuracy_fold_1_test": {0: 0.9047619047619048},
-            "accuracy_mean": {0: 0.5655884995507637},
-            "accuracy_std": {0: 0.479663629645861},
+            "accuracy_fold_0_test": {0: 1.0},
+            "accuracy_fold_1_test": {0: 0.9767441860465116},
+            "accuracy_mean": {0: 0.9883720930232558},
+            "accuracy_std": {0: 0.0164443437485243},
         }
     )
 
