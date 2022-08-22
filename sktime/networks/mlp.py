@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Multi Layer Perceptron (MLP) (minus the final output layer)."""
 
-__author__ = ["James-Large, Withington", "AurumnPegasus"]
+__author__ = ["James-Large", "Withington", "AurumnPegasus"]
 
 from sktime.networks.base import BaseDeepNetwork
 from sktime.utils.validation._dependencies import _check_dl_dependencies
