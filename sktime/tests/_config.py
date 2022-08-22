@@ -51,6 +51,10 @@ EXCLUDED_TESTS = {
         "test_fit_idempotent",
         "test_persistence_via_pickle",
     ],
+    "EncoderClassifier": [
+        "test_fit_idempotent",
+        "test_persistence_via_pickle",
+    ],
     "CNNRegressor": [
         "test_fit_idempotent",
         "test_persistence_via_pickle",
