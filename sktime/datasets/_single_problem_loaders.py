@@ -55,7 +55,9 @@ DIRNAME = "data"
 MODULE = os.path.dirname(__file__)
 
 
-def load_UCR_UEA_dataset(name, split=None, return_X_y=True, extract_path=None):
+def load_UCR_UEA_dataset(
+    name, split=None, return_X_y=True, return_type=None, extract_path=None
+):
     """Load dataset from UCR UEA time series archive.
 
     Downloads and extracts dataset if not already downloaded. Data is assumed to be
@@ -78,6 +80,18 @@ def load_UCR_UEA_dataset(name, split=None, return_X_y=True, extract_path=None):
         format <name>_TRAIN.ts or <name>_TEST.ts.
     return_X_y : bool, optional (default=False)
         it returns two objects, if False, it appends the class labels to the dataframe.
+    return_type: None or str, optional (default=None)
+        Memory data format specification to return X in, if None then return the default
+        "nested_univ" type.
+        str can be any other supported Panel mtype,
+            for list of mtypes, see datatypes.SCITYPE_REGISTER
+            for specifications, see examples/AA_datatypes_and_datasets.ipynb
+        commonly used specifications:
+            "nested_univ: nested pd.DataFrame, pd.Series in cells
+            "numpy3D"/"numpy3d"/"np3D": 3D np.ndarray (instance, variable, time index)
+            "numpy2d"/"np2d"/"numpyflat": 2D np.ndarray (instance, time index)
+            "pd-multiindex": pd.DataFrame with 2-level (instance, time) MultiIndex
+        Exception is raised if the data cannot be stored in the requested type.
     extract_path : str, optional (default=None)
         the path to look for the data. If no path is provided, the function
         looks in `sktime/datasets/data/`.
@@ -98,7 +112,7 @@ def load_UCR_UEA_dataset(name, split=None, return_X_y=True, extract_path=None):
     >>> from sktime.datasets import load_UCR_UEA_dataset
     >>> X, y = load_UCR_UEA_dataset(name="ArrowHead")
     """
-    return _load_dataset(name, split, return_X_y, extract_path)
+    return _load_dataset(name, split, return_X_y, return_type, extract_path)
 
 
 def load_plaid(split=None, return_X_y=True):
