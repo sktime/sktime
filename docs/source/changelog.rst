@@ -17,6 +17,59 @@ Version 0.13.2 - 2022-08-23
 ---------------------------
 
 
+Enhancements
+~~~~~~~~~~~~
+
+* [ENH] robustify ``BaseObject.set_tags`` against forgotten ``__init__`` (:pr:`3226`) :user:`fkiraly`
+* [ENH] ``**`` dunder for applying transformers to exogeneous data in forecasters (:pr:`3243`) :user:`fkiraly`
+* [ENH] statsmodels ARDL interface (:pr:`3209`) :user:`kcc-lion`
+* [ENH] expose edit distances as sklearn compatible objects (:pr:`3251`) :user:`fkiraly`
+* [ENH] set default ``ignores-exogeneous-X`` to ``False`` (:pr:`3260`) :user:`fkiraly`
+* [ENH] pipeline composition for pairwise panel transformers (:pr:`3263`) :user:`fkiraly`
+* [ENH] arithmetic combinations of distances/kernel transformers (:pr:`3264`) :user:`fkiraly`
+* [ENH] ``OptionalPassthrough`` wrapping via ``neg`` dunder (:pr:`3273`) :user:`fkiraly`
+* [ENH] refactor of ``OptionalPassthrough`` as a delegator (:pr:`3272`) :user:`fkiraly`
+* [ENH] constant distance dummy (:pr:`3266`) :user:`fkiraly`
+
+Fixes
+~~~~~
+
+* & achieveordie [BUG] fix recurring instances of forgotten list comprehension brackets inside ``np.all`` (:pr:`3245`) :user:`fkiraly`
+* [BUG] Fix tag in DirectReductionForecaster (:pr:`3257`) :user:`KishManani`
+* [BUG] fixed concat dunder for ``ParamFitterPipeline`` (:pr:`3262`) :user:`fkiraly`
+* [BUG] Fix ``write_ndarray_to_tsfile`` for ``classLabel = False`` (:pr:`3303`) :user:`paulbauriegel`
+* [BUG] fix ``Deseasonalizer._update`` (:pr:`3268`) :user:`fkiraly`
+
+Maintenance
+~~~~~~~~~~~
+
+* [MNT] add soft dependency tag to ``CNNClassifier`` (:pr:`3252`) :user:`fkiraly`
+* [MNT] bound ``pmdarima < 2.0.0`` (:pr:`3301`) :user:`fkiraly`
+* [BUG] fix merge accident that deleted ``DtwDist`` export (:pr:`3304`) :user:`fkiraly`
+* [ENH] move transformers to ``transformations.compose`` (:pr:`3310`) :user:`fkiraly`
+
+Refactored
+~~~~~~~~~~
+
+* [ENH] test class integration for pairwise transformers (:pr:`3254`) :user:`fkiraly`
+* [ENH] deprecate ``transformations.series.compose`` in favour of ``transformations.compose`` (:pr:`3271`) :user:`fkiraly`
+
+Other
+~~~~~
+
+* [ENH] in ``Lag``, make column naming consistent between single-lag and multi-lag case (:pr:`3261`) :user:`KishManani`
+* [ENH] Added test for OptionalPassthrough (:pr:`3276`) :user:`aiwalter`
+* [ENH] Channel selection for multivariate time series classification. (:pr:`3248`) :user:`haskarb`
+* [END][BUG] ClaSP Segmentation (:pr:`3217`) :user:`patrickzib`
+* Data generator for annotation (normal multivariate mean shift) (:pr:`3114`) :user:`KatieBuc`
+* [ENH] treat non nested cols in conversion ``nested_univ`` to ``pd-multiindex`` (:pr:`3250`) :user:`fkiraly`
+* [ENH] panel distance from flattened tabular distance (:pr:`3249`) :user:`fkiraly`
+* [BUG] fix failure of some conversions in ``_load_provided_dataset()`` (:pr:`3231`) :user:`achieveordie`
+* [GOV] ``sktime`` as a "library", not a "curated selection" (:pr:`3155`) :user:`fkiraly`
+* [ENH] inversion of transformer wrapper and dunder (:pr:`3274`) :user:`fkiraly`
+* [ENH] Msm distance cleanup (:pr:`2964`) :user:`chrisholder`
+
+
 Highlights
 ~~~~~~~~~~
 
@@ -27,6 +80,19 @@ Dependency changes
 
 * ``pmdarima`` is bounded ``<2.0.0`` until compatibility issues are resolved
 
+Contributors
+~~~~~~~~~~~~
+
+:user:`achieveordie`,
+:user:`aiwalter`,
+:user:`chrisholder`,
+:user:`fkiraly`,
+:user:`haskarb`,
+:user:`KatieBuc`,
+:user:`kcc-lion`,
+:user:`KishManani`,
+:user:`patrickzib`,
+:user:`paulbauriegel`
 
 Version 0.13.1 - 2022-08-11
 ---------------------------
