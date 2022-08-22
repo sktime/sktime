@@ -7,7 +7,7 @@ This code provides a base interface template for models
 from hmmlearn for using that library for annotation of time series.
 """
 
-from attr import define
+from attrs import define
 
 from sktime.annotation.base import BaseSeriesAnnotator
 from sktime.utils.validation._dependencies import _check_soft_dependencies
