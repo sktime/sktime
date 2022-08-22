@@ -266,7 +266,7 @@ class ForecasterFitPredictHierarchicalSimple(ForecasterTestScenario):
         "is_enabled": True,
     }
 
-    args = {"fit": {"y": y_panel.copy(), "fh": [1, 2, 3]}, "predict": {}}
+    args = {"fit": {"y": y_hierarchical.copy(), "fh": [1, 2, 3]}, "predict": {}}
     default_method_sequence = ["fit", "predict"]
 
 
