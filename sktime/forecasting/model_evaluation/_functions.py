@@ -170,7 +170,7 @@ def evaluate(
             pred_time = time.perf_counter() - start_pred
 
             # score
-            score = scoring(y_test.iloc[test], y_pred.iloc[test], y_train=y_train)
+            score = scoring(y_test, y_pred, y_train=y_train)
 
             # cutoff
             cutoff = forecaster.cutoff
