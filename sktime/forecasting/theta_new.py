@@ -4,7 +4,7 @@
 """Modular ThetaForecaster."""
 
 __author__ = ["GuzalBulatova"]
-__all__ = ["ThetaNewForecaster"]
+__all__ = ["ThetaModularForecaster"]
 
 from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
 from sktime.forecasting.compose import ColumnEnsembleForecaster
@@ -15,7 +15,7 @@ from sktime.forecasting.trend import PolynomialTrendForecaster
 from sktime.transformations.series.theta import ThetaLinesTransformer
 
 
-class ThetaNewForecaster(_HeterogenousEnsembleForecaster):
+class ThetaModularForecaster(_HeterogenousEnsembleForecaster):
     """Modular theta method for forecasting.
 
     Modularized implementation of Theta method as defined in [1]_ (TODO: add the
@@ -54,11 +54,11 @@ class ThetaNewForecaster(_HeterogenousEnsembleForecaster):
     Examples
     --------
     >>> from sktime.datasets import load_airline
-    >>> from sktime.forecasting.theta_new import ThetaNewForecaster
+    >>> from sktime.forecasting.theta_new import ThetaModularForecaster
     >>> y = load_airline()
-    >>> forecaster = ThetaNewForecaster()
+    >>> forecaster = ThetaModularForecaster()
     >>> forecaster.fit(y)
-    ThetaNewForecaster(...)
+    ThetaModularForecaster(...)
     >>> y_pred = forecaster.predict(fh=[1,2,3])
     """
 
@@ -77,7 +77,7 @@ class ThetaNewForecaster(_HeterogenousEnsembleForecaster):
         aggfunc="mean",
         weights=None,
     ):
-        super(ThetaNewForecaster, self).__init__(forecasters=forecasters)
+        super(ThetaModularForecaster, self).__init__(forecasters=forecasters)
         self.forecasters = forecasters
         self.aggfunc = aggfunc
         self.weights = weights
@@ -117,7 +117,7 @@ class ThetaNewForecaster(_HeterogenousEnsembleForecaster):
         the implementation of get_params in  _HeterogenousMetaEstimator which
         expects lists of tuples of len 2.
         """
-        params = super(ThetaNewForecaster, self).get_params(deep=False)
+        params = super(ThetaModularForecaster, self).get_params(deep=False)
         del params["forecasters"]
         params.update(self._colens.get_params(deep=deep))
         return params
