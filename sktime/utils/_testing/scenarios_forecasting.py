@@ -136,16 +136,17 @@ class ForecasterFitPredictUnivariateNoXLateFh(ForecasterTestScenario):
     default_method_sequence = ["fit", "predict"]
 
 
+y_with_name = _make_series(n_timepoints=20, random_state=RAND_SEED)
+y_with_name.name = "foo"
+
+
 class ForecasterFitPredictUnivariateNoXLongFh(ForecasterTestScenario):
     """Fit/predict only, univariate y, no X, longer fh, passed early in fit."""
 
     _tags = {"univariate_y": True, "fh_passed_in_fit": True, "is_enabled": True}
 
     args = {
-        "fit": {
-            "y": _make_series(n_timepoints=20, random_state=RAND_SEED),
-            "fh": [1, 2, 3],
-        },
+        "fit": {"y": y_with_name, "fh": [1, 2, 3]},
         "predict": {},
     }
     default_method_sequence = ["fit", "predict"]
@@ -173,17 +174,17 @@ class ForecasterFitPredictUnivariateWithX(ForecasterTestScenario):
     default_method_sequence = ["fit", "predict"]
 
 
-y_with_name = _make_series(n_timepoints=20, random_state=RAND_SEED)
-y_with_name.name = "foo"
-
-
 class ForecasterFitPredictUnivariateWithXLongFh(ForecasterTestScenario):
     """Fit/predict only, univariate y, with X, and longer fh, passed early in fit."""
 
     _tags = {"univariate_y": True, "fh_passed_in_fit": True}
 
     args = {
-        "fit": {"y": y_with_name, "X": X.copy(), "fh": [1, 2, 3]},
+        "fit": {
+            "y": _make_series(n_timepoints=20, random_state=RAND_SEED),
+            "X": X.copy(),
+            "fh": [1, 2, 3],
+        },
         "predict": {"X": X_test.copy()},
     }
     default_method_sequence = ["fit", "predict"]
