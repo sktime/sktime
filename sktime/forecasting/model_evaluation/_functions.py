@@ -214,9 +214,6 @@ def evaluate(
 
 def _split(y, X, train, test, fh):
     """Split y and X for given train and test set indices."""
-    # For test, we begin by returning the full range of test/train values.
-    # for those transformers that change the size of input.
-    test = np.arange(-1, test[-1]) + 1
     y_train = y.iloc[train]
     y_test = y.iloc[test]
 
@@ -226,6 +223,9 @@ def _split(y, X, train, test, fh):
 
     if X is not None:
         X_train = X.iloc[train, :]
+        # For test, we begin by returning the full range of test/train values.
+        # for those transformers that change the size of input.
+        test = np.arange(test[-1] + 1)
         X_test = X.iloc[test, :]
     else:
         X_train = None
