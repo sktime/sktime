@@ -1850,9 +1850,7 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         lagger_y_to_X = self.lagger_y_to_X_
 
         fh_rel = fh.to_relative(self.cutoff)
-        fh_abs = fh.to_absolute(self.cutoff)
         y_lags = list(fh_rel)
-        y_abs = list(fh_abs)
 
         # for all positive fh
         y_lags_no_gaps = range(y_lags[-1])
@@ -1867,7 +1865,8 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
 
             lag_plus = Lag(lags=1, index_out="extend")
             Xtt = lag_plus.fit_transform(Xt)
-            predict_idx = Xtt.iloc[[-1]].index.get_level_values(-1)[0]
+            y_plus_one = lag_plus.fit_transform(y_plus_preds)
+            predict_idx = y_plus_one.iloc[[-1]].index.get_level_values(-1)[0]
             Xtt_predrow = slice_at_ix(Xtt, predict_idx)
             if X_pool is not None:
                 Xtt_predrow = pd.concat(
@@ -1888,7 +1887,8 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
             # 2D numpy array with col index = (var) and 1 row
             y_pred_list.append(y_pred_i)
 
-            y_pred_new = self._get_expected_pred_idx(fh=predict_idx)
+            y_pred_new_idx = self._get_expected_pred_idx(fh=[predict_idx])
+            y_pred_new = pd.DataFrame(y_pred_i, columns=y_cols, index=y_pred_new_idx)
             y_plus_preds = y_plus_preds.combine_first(y_pred_new)
 
         y_pred = np.concatenate(y_pred_list)
