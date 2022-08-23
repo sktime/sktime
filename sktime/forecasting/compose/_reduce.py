@@ -1278,7 +1278,35 @@ def slice_at_ix(df, ix):
         return df.loc[[ix]]
 
 
-class DirectReductionForecaster(BaseForecaster):
+class _ReducerMixin:
+    """Common utilities for reducers."""
+
+    def _get_expected_pred_idx(self, fh):
+        """Construct DataFrame Index expected in y_pred, return of _predict.
+
+        Parameters
+        ----------
+        fh : ForecastingHorizon, fh of self
+
+        Returns
+        -------
+        fh_idx : pd.Index, expected index of y_pred returned by _predict
+            CAVEAT: sorted by index level -1, since reduction is applied by fh
+        """
+        fh_idx = pd.Index(fh.to_absolute(self.cutoff))
+        y_index = self._y.index
+
+        if isinstance(y_index, pd.MultiIndex):
+            y_inst_idx = y_index.droplevel(-1).unique()
+            if isinstance(y_inst_idx, pd.MultiIndex):
+                fh_idx = pd.Index([x + (y,) for y in fh_idx for x in y_inst_idx])
+            else:
+                fh_idx = pd.Index([(x, y) for y in fh_idx for x in y_inst_idx])
+
+        return fh_idx
+
+
+class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
     """Direct reduction forecaster, incl single-output, multi-output, exogeneous Dir.
 
     Implements direct reduction, of forecasting to tabular regression.
@@ -1395,30 +1423,6 @@ class DirectReductionForecaster(BaseForecaster):
         """Predict dispatcher based on X_treatment."""
         methodname = f"_predict_{self.X_treatment}"
         return getattr(self, methodname)(X=X, fh=fh)
-
-    def _get_expected_pred_idx(self, fh):
-        """Construct DataFrame Index expected in y_pred, return of _predict.
-
-        Parameters
-        ----------
-        fh : ForecastingHorizon, fh of self
-
-        Returns
-        -------
-        fh_idx : pd.Index, expected index of y_pred returned by _predict
-            CAVEAT: sorted by index level -1, since reduction is applied by fh        
-        """
-        fh_idx = pd.Index(fh.to_absolute(self.cutoff))
-        y_index = self._y.index
-
-        if isinstance(y_index, pd.MultiIndex):
-            y_inst_idx = y_index.droplevel(-1).unique()
-            if isinstance(y_inst_idx, pd.MultiIndex):
-                fh_idx = pd.Index([x + (y,) for y in fh_idx for x in y_inst_idx])
-            else:
-                fh_idx = pd.Index([(x, y) for y in fh_idx for x in y_inst_idx])
-
-        return fh_idx
 
     def _fit_shifted(self, y, X=None, fh=None):
         """Fit to training data."""
