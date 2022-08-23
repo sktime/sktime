@@ -933,8 +933,11 @@ class RecursiveTabularRegressionForecaster(_RecursiveReducer):
 
     _tags = {
         "requires-fh-in-fit": False,  # is the forecasting horizon required in fit?
-        "y_inner_mtype": ["pd.Series", "pd-multiindex", "pd_multiindex_hier"],
-        "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
+        "y_inner_mtype": "pd.Series",
+        "X_inner_mtype": "pd.DataFrame",
+        # hierarchical data types are commented out until #3316 is fixed
+        # "y_inner_mtype": ["pd.Series", "pd-multiindex", "pd_multiindex_hier"],
+        # "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
     }
 
     _estimator_scitype = "tabular-regressor"
