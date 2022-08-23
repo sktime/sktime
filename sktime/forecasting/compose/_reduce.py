@@ -1621,12 +1621,12 @@ class DirectReductionForecaster(BaseForecaster):
             "estimator": est,
             "window_length": 3,
             "X_treatment": "shifted",
-            "pooling": "global"  # all internal mtypes are tested across scenarios
+            "pooling": "global",  # all internal mtypes are tested across scenarios
         }
         params2 = {
             "estimator": est,
             "window_length": 3,
             "X_treatment": "concurrent",
-            "pooling": "global"
+            "pooling": "global",
         }
         return [params1, params2]
