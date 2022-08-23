@@ -80,8 +80,8 @@ class Hidalgo(BaseTransformer):
     >>> X[6:, 1:] = 0
     >>> model = Hidalgo(K=2, burn_in=0.5, n_iter=50, seed=10)
     >>> Z = model.fit_transform(X)
-    >>> Z
-    array([0, 0, 0, 0, 0, 0, 1, 1, 1, 1], dtype=int64)
+    >>> Z.tolist()
+    [0, 0, 0, 0, 0, 0, 1, 1, 1, 1]
     """
 
     _tags = {
@@ -135,7 +135,7 @@ class Hidalgo(BaseTransformer):
 
     def _get_neighbourhood_params(self, X):
         """
-        Neighbourhood information from input data X, writes to self.
+        Neighbourhood information from input data X.
 
         Parameters
         ----------
@@ -207,7 +207,7 @@ class Hidalgo(BaseTransformer):
 
     def _initialise_params(self, N, mu, Iin, _rng):
         """
-        Decription.
+        Initialise parameters used in algorithm.
 
         Outputs
         ----------
@@ -549,24 +549,25 @@ class Hidalgo(BaseTransformer):
 
     def _transform(self, X, y=None):
         """
-        Run the Hidalgo algorithm and writes results to self.
+        Run the Hidalgo algorithm.
 
         Find parameter esimates as distributions in sampling.
         Iterate through n_replicas random starts and get posterior
         samples with best max likelihood.
 
-        Write to self:
-        self.d_ : 1D np.ndarray of length K
+        Notes
+        -----
+        _d : 1D np.ndarray of length K
             posterior mean of d, from posterior sample in gibbs_sampling
-        self.derr_ : 1D np.ndarray of length K
+        _derr : 1D np.ndarray of length K
             posterior std of d, from posterior sample in gibbs_sampling
-        self.p_ : 1D np.ndarray of length K
+        _p : 1D np.ndarray of length K
             posterior mean of p, from posterior sample in gibbs_sampling
-        self.perr_ : 1D np.ndarray of length K
+        _perr : 1D np.ndarray of length K
             posterior std of p, from posterior sample in gibbs_sampling
-        self.lik_ : float
+        _lik : float
             mean of likelihood, from sample in gibbs_sampling
-        self.likerr_ : float
+        _likerr : float
             std of likelihood, from sample in gibbs_sampling
         Pi : 2D np.ndarray of shape (K, N)
             probability of posterior of z_i = k, point i can be safely
@@ -634,7 +635,6 @@ class Hidalgo(BaseTransformer):
                 bestsampling = sampling
                 maxlik = lik
 
-        # _sampling = bestsampling
         # _d = np.mean(bestsampling[:, :K], axis=0)
         # _derr = np.std(bestsampling[:, :K], axis=0)
         # _p = np.mean(bestsampling[:, K : 2 * K], axis=0)
