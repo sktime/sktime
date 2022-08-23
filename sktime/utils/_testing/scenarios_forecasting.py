@@ -19,6 +19,7 @@ from inspect import isclass
 import pandas as pd
 
 from sktime.base import BaseObject
+from sktime.datatypes import mtype_to_scitype
 from sktime.forecasting.base import BaseForecaster
 from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils._testing.panel import _make_panel_X
@@ -65,6 +66,19 @@ class ForecasterTestScenario(TestScenario, BaseObject):
         fh_in_fit = self.get_tag("fh_passed_in_fit")
 
         if not fh_in_fit and get_tag(obj, "requires-fh-in-fit"):
+            return False
+
+        # run Panel/Hierarchical scenarios for genuinely Panel/Hierarchical forecasters
+        y_scitype = self.get_tag("y_scitype", "Series", raise_error=False)
+        scenario_is_hierarchical = y_scitype in ["Panel", "Hierarchical"]
+
+        obj_y_inner_types = get_tag(obj, "y_inner_mtype")
+        obj_scitypes = mtype_to_scitype(obj_y_inner_types)
+        obj_is_hierarchical = "Panel" in obj_scitypes or "Hierarchical" in obj_scitypes
+
+        # if scenario is hierarchical and obj is not genuinely hierarchical,
+        # this would trigger generic vectorization, which is tested in test_base
+        if scenario_is_hierarchical and not obj_is_hierarchical:
             return False
 
         return True
@@ -222,28 +236,44 @@ class ForecasterFitPredictMultivariateWithX(ForecasterTestScenario):
 
 
 y_panel = _make_panel_X(
-    n_instances=3, n_timepoints=10, n_columns=1, random_state=RAND_SEED
+    n_instances=3,
+    n_timepoints=10,
+    n_columns=1,
+    random_state=RAND_SEED,
+    all_positive=True,
 )
 
 
 class ForecasterFitPredictPanelSimple(ForecasterTestScenario):
     """Fit/predict only, univariate Panel y, no X, and longer fh passed early in fit."""
 
-    _tags = {"univariate_y": True, "fh_passed_in_fit": True}
+    _tags = {
+        "univariate_y": True,
+        "fh_passed_in_fit": True,
+        "y_scitype": "Panel",
+        "is_enabled": True,
+    }
 
     args = {"fit": {"y": y_panel.copy(), "fh": [1, 2, 3]}, "predict": {}}
     default_method_sequence = ["fit", "predict"]
 
 
-y_hierarchical = _make_hierarchical(n_columns=1, random_state=RAND_SEED)
+y_hierarchical = _make_hierarchical(
+    hierarchy_levels=(2, 2), n_columns=1, random_state=RAND_SEED
+)
 
 
 class ForecasterFitPredictHierarchicalSimple(ForecasterTestScenario):
     """Fit/predict only, univariate Hierarchical y, no X, and longer fh in fit."""
 
-    _tags = {"univariate_y": True, "fh_passed_in_fit": True}
+    _tags = {
+        "univariate_y": True,
+        "fh_passed_in_fit": True,
+        "y_scitype": "Hierarchical",
+        "is_enabled": True,
+    }
 
-    args = {"fit": {"y": y_panel.copy(), "fh": [1, 2, 3]}, "predict": {}}
+    args = {"fit": {"y": y_hierarchical.copy(), "fh": [1, 2, 3]}, "predict": {}}
     default_method_sequence = ["fit", "predict"]
 
 
