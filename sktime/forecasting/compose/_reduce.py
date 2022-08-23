@@ -1630,3 +1630,290 @@ class DirectReductionForecaster(BaseForecaster):
             "pooling": "global",
         }
         return [params1, params2]
+
+
+class RecursiveReductionForecaster(BaseForecaster):
+    """Direct reduction forecaster, incl single-output, multi-output, exogeneous Dir.
+
+    Implements direct reduction, of forecasting to tabular regression.
+
+    For no `X`, defaults to DirMO (direct multioutput) for `X_treatment = "concurrent"`,
+    and simple direct (direct single-output) for `X_treatment = "shifted"`.
+
+    Direct single-output with concurrent `X` behaviour can be configured
+    by passing a single-output `scikit-learn` compatible transformer.
+
+    Algorithm details:
+
+    In `fit`, given endogeneous time series `y` and possibly exogeneous `X`:
+        fits `estimator` to feature-label pairs as defined as follows.
+    if `X_treatment = "concurrent":
+        features = `y(t)`, `y(t-1)`, ..., `y(t-window_size)`, if provided: `X(t+h)`
+        labels = `y(t+h)` for `h` in the forecasting horizon
+        ranging over all `t` where the above have been observed (are in the index)
+        for each `h` in the forecasting horizon (separate estimator fitted per `h`)
+    if `X_treatment = "shifted":
+        features = `y(t)`, `y(t-1)`, ..., `y(t-window_size)`, if provided: `X(t)`
+        labels = `y(t+h_1)`, ..., `y(t+h_k)` for `h_j` in the forecasting horizon
+        ranging over all `t` where the above have been observed (are in the index)
+        estimator is fitted as a multi-output estimator (for all  `h_j` simultaneously)
+
+    In `predict`, given possibly exogeneous `X`, at cutoff time `c`,
+    if `X_treatment = "concurrent":
+        applies fitted estimators' predict to
+        feature = `y(c)`, `y(c-1)`, ..., `y(c-window_size)`, if provided: `X(c+h)`
+        to obtain a prediction for `y(c+h)`, for each `h` in the forecasting horizon
+    if `X_treatment = "shifted":
+        applies fitted estimator's predict to
+        features = `y(c)`, `y(c-1)`, ..., `y(c-window_size)`, if provided: `X(t)`
+        to obtain prediction for `y(c+h_1)`, ..., `y(c+h_k)` for `h_j` in forec. horizon
+
+    Parameters
+    ----------
+    estimator : sklearn regressor, must be compatible with sklearn interface
+        tabular regression algorithm used in reduction algorithm
+    window_length : int, optional, default=10
+        window length used in the reduction algorithm
+    impute : str or None, optional, method string passed to Imputer
+        default="bfill", admissible strings are of Imputer.method parameter, see there
+        if None, no imputation is done when applying Lag transformer to obtain inner X
+    pooling : str, one of ["local", "global", "panel"], optional, default="local"
+        level on which data are pooled to fit the supervised regression model
+        "local" = unit/instance level, one reduced model per lowest hierarchy level
+        "global" = top level, one reduced model overall, on pooled data ignoring levels
+        "panel" = second lowest level, one reduced model per panel level (-2)
+        if there are 2 or less levels, "global" and "panel" result in the same
+        if there is only 1 level (single time series), all three settings agree
+    """
+
+    _tags = {
+        "requires-fh-in-fit": False,  # is the forecasting horizon required in fit?
+        "ignores-exogeneous-X": False,
+        "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
+        "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
+    }
+
+    def __init__(
+        self,
+        estimator,
+        window_length=10,
+        impute_method="bfill",
+        pooling="local",
+    ):
+        self.window_length = window_length
+        self.estimator = estimator
+        self.impute_method = impute_method
+        self.pooling = pooling
+        self._lags = list(range(window_length))
+        super(RecursiveReductionForecaster, self).__init__()
+
+        warn(
+            "RecursiveReductionForecaster is experimental, and interfaces may change. "
+            "user feedback is appreciated in issue #3224 here: "
+            "https://github.com/alan-turing-institute/sktime/issues/3224"
+        )
+
+        if pooling == "local":
+            mtypes = "pd.DataFrame"
+        elif pooling == "global":
+            mtypes = ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"]
+        elif pooling == "panel":
+            mtypes = ["pd.DataFrame", "pd-multiindex"]
+        else:
+            raise ValueError(
+                "pooling in DirectReductionForecaster must be one of"
+                ' "local", "global", "panel", '
+                f"but found {pooling}"
+            )
+        self.set_tags(**{"X_inner_mtype": mtypes})
+        self.set_tags(**{"y_inner_mtype": mtypes})
+
+    def _get_expected_pred_idx(self, fh):
+        """Construct DataFrame Index expected in y_pred, return of _predict."""
+        fh_idx = pd.Index(fh.to_absolute(self.cutoff))
+        y_index = self._y.index
+
+        if isinstance(y_index, pd.MultiIndex):
+            y_inst_idx = y_index.droplevel(-1).unique()
+            if isinstance(y_inst_idx, pd.MultiIndex):
+                fh_idx = pd.Index([x + (y,) for x in y_inst_idx for y in fh_idx])
+            else:
+                fh_idx = pd.Index([(x, y) for x in y_inst_idx for y in fh_idx])
+
+        return fh_idx
+
+    def _fit(self, y, X=None, fh=None):
+        """Fit forecaster to training data.
+
+        private _fit containing the core logic, called from fit
+
+        Parameters
+        ----------
+        y : pd.DataFrame
+            mtype is pd.DataFrame, pd-multiindex, or pd_multiindex_hier
+            Time series to which to fit the forecaster.
+        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
+            The forecasting horizon with the steps ahead to to predict.
+            Required (non-optional) here if self.get_tag("requires-fh-in-fit")==True
+            Otherwise, if not passed in _fit, guaranteed to be passed in _predict
+        X : pd.DataFrame optional (default=None)
+            mtype is pd.DataFrame, pd-multiindex, or pd_multiindex_hier
+            Exogeneous time series to fit to.
+
+        Returns
+        -------
+        self : reference to self
+        """
+        # todo: very similar to _fit_concurrent of DirectReductionForecaster - refactor?
+        from sktime.transformations.series.impute import Imputer
+        from sktime.transformations.series.lag import Lag
+
+        impute_method = self.impute_method
+
+        # lagger_y_to_X_ will lag y to obtain the sklearn X
+        lags = self._lags
+        lagger_y_to_X = Lag(lags=lags, index_out="extend")
+        if impute_method is not None:
+            lagger_y_to_X = lagger_y_to_X * Imputer(method=impute_method)
+        self.lagger_y_to_X_ = lagger_y_to_X
+
+        Xt = lagger_y_to_X.fit_transform(y)
+
+        # lag is 1, since we want to do recursive forecasting with 1 step ahead
+        lag_plus = Lag(lag=1, index_out="extend")
+        Xtt = lag_plus.fit_transform(Xt)
+        Xtt_notna = Xtt.notnull().all(axis=1)
+        Xtt_notna_idx = Xtt_notna.index[Xtt_notna].intersection(y.index)
+
+        yt = y.loc[Xtt_notna_idx]
+        Xtt = Xtt.loc[Xtt_notna_idx]
+
+        # we now check whether the set of full lags is empty
+        # if yes, we set a flag, since we cannot fit the reducer
+        # instead, later, we return a dummy prediction
+        if len(Xtt_notna_idx) == 0:
+            self.estimator_ = y.mean()
+        else:
+            if X is not None:
+                Xtt = pd.concat([X.loc[Xtt_notna_idx], Xtt], axis=1)
+
+            Xtt = _coerce_col_str(Xtt)
+            yt = _coerce_col_str(yt)
+
+            estimator = clone(self.estimator)
+            estimator.fit(Xtt, yt)
+            self.estimator_ = estimator
+
+        return self
+
+    def _predict(self, X=None, fh=None):
+        """Forecast time series at future horizon.
+
+        private _predict containing the core logic, called from predict
+
+        Parameters
+        ----------
+        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
+            The forecasting horizon with the steps ahead to to predict.
+            If not passed in _fit, guaranteed to be passed here
+        X : pd.DataFrame, optional (default=None)
+            mtype is pd.DataFrame, pd-multiindex, or pd_multiindex_hier
+            Exogeneous time series for the forecast
+
+        Returns
+        -------
+        y_pred : pd.DataFrame, same type as y in _fit
+            Point predictions
+        """
+        # very similar to _predict_concurrent of DirectReductionForecaster - refactor?
+        from sktime.transformations.series.lag import Lag
+
+        if X is not None and self._X is not None:
+            X_pool = X.combine_first(self._X)
+        elif X is None and self._X is not None:
+            X_pool = self._X
+        else:
+            X_pool = X
+
+        fh_idx = self._get_expected_pred_idx(fh=fh)
+        y_cols = self._y.columns
+
+        lagger_y_to_X = self.lagger_y_to_X_
+
+        fh_rel = fh.to_relative(self.cutoff)
+        fh_abs = fh.to_absolute(self.cutoff)
+        y_lags = list(fh_rel)
+        y_abs = list(fh_abs)
+
+        # for all positive fh
+        y_lags_no_gaps = range(y_lags[-1])
+        y_abs_no_gaps = [x + y_abs[-1] - y_lags[-1] + 1 for x in y_lags_no_gaps]
+
+        Xt = lagger_y_to_X.transform(self._y)
+        y_pred_list = []
+
+        for i in y_lags_no_gaps:
+
+            predict_idx = y_abs_no_gaps[i]
+
+            lag_plus = Lag(lags=1, index_out="extend")
+            Xtt = lag_plus.fit_transform(Xt)
+            Xtt_predrow = slice_at_ix(Xtt, predict_idx)
+            if X_pool is not None:
+                Xtt_predrow = pd.concat(
+                    [slice_at_ix(X_pool, predict_idx), Xtt_predrow], axis=1
+                )
+
+            Xtt_predrow = _coerce_col_str(Xtt_predrow)
+
+            estimator = self.estimator_
+
+            # if = no training indices in _fit, fill in y training mean
+            if isinstance(estimator, pd.Series):
+                y_pred_i = pd.DataFrame(index=[0], columns=y_cols)
+                y_pred_i.iloc[0] = estimator
+            # otherwise proceed as per direct reduction algorithm
+            else:
+                y_pred_i = estimator.predict(Xtt_predrow)
+            # 2D numpy array with col index = (var) and 1 row
+            y_pred_list.append(y_pred_i)
+
+        y_pred = np.concatenate(y_pred_list)
+        y_pred = pd.DataFrame(y_pred, columns=y_cols, index=fh_idx)
+
+        return y_pred
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        from sklearn.linear_model import LinearRegression
+
+        est = LinearRegression()
+        params1 = {
+            "estimator": est,
+            "window_length": 3,
+            "X_treatment": "shifted",
+            "pooling": "global",  # all internal mtypes are tested across scenarios
+        }
+        params2 = {
+            "estimator": est,
+            "window_length": 3,
+            "X_treatment": "concurrent",
+            "pooling": "global",
+        }
+        return [params1, params2]
