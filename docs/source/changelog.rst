@@ -30,6 +30,7 @@ Enhancements
 * [ENH] ``OptionalPassthrough`` wrapping via ``neg`` dunder (:pr:`3273`) :user:`fkiraly`
 * [ENH] refactor of ``OptionalPassthrough`` as a delegator (:pr:`3272`) :user:`fkiraly`
 * [ENH] constant distance dummy (:pr:`3266`) :user:`fkiraly`
+* [ENH] channel selection (Dhariyal et al 2021) with arbitrary distance (:pr:`3256`) :user:`fkiraly`
 
 Fixes
 ~~~~~
@@ -39,6 +40,12 @@ Fixes
 * [BUG] fixed concat dunder for ``ParamFitterPipeline`` (:pr:`3262`) :user:`fkiraly`
 * [BUG] Fix ``write_ndarray_to_tsfile`` for ``classLabel = False`` (:pr:`3303`) :user:`paulbauriegel`
 * [BUG] fix ``Deseasonalizer._update`` (:pr:`3268`) :user:`fkiraly`
+* [BUG] ensure that forecasters do not add ``pd.Series.name`` attribute (:pr:`3290`) :user:`fkiraly`
+* [ENH] fix ``_enforce_infer_freq`` private utility for short time series (:pr:`3287`) :user:`fkiraly`
+* [BUG] removes superfluous ``UserWarning`` in ``AutoETS.fit`` if ``auto=True`` and ``additive_only=True`` #3311 (:pr:`3317`) :user:`chillerobscuro`
+* [BUG] fix bug where default forecaster ``_update`` empties converter store (:pr:`3325`) :user:`fkiraly`
+* [BUG] fix ``ColumnEnsembleForecaster`` for hierarchical input (:pr:`3324`) :user:`fkiraly`
+* [ENH] remove hierarchical datatypes from recursive reduction forecasters (:pr:`3326`) :user:`fkiraly`
 
 Maintenance
 ~~~~~~~~~~~
@@ -68,6 +75,13 @@ Other
 * [GOV] ``sktime`` as a "library", not a "curated selection" (:pr:`3155`) :user:`fkiraly`
 * [ENH] inversion of transformer wrapper and dunder (:pr:`3274`) :user:`fkiraly`
 * [ENH] Msm distance cleanup (:pr:`2964`) :user:`chrisholder`
+* [ENH] test ``pd.Series`` with name attribute in forecasters (:pr:`3297`) :user:`fkiraly`
+* Revert "[ENH] test ``pd.Series`` with name attribute in forecasters" (:pr:`3322`) :user:`fkiraly`
+* [ENH] forecasting pipeline test case with ``Detrender`` (:pr:`3270`) :user:`fkiraly`
+* [ENH] test ``super.__init__`` call in objects and estimators (:pr:`3309`) :user:`fkiraly`
+* [ENH] test ``pd.Series`` with name attribute in forecasters (:pr:`3323`) :user:`fkiraly`
+* [ENH] test hierarchical forecasters with hierarchical data (:pr:`3321`) :user:`fkiraly`
+* [BUG] Delay trimming in ForecastingGridSearchCV until after transforming (:pr:`3132`) :user:`miraep8`
 
 
 Highlights
@@ -85,12 +99,14 @@ Contributors
 
 :user:`achieveordie`,
 :user:`aiwalter`,
+:user:`chillerobscuro`,
 :user:`chrisholder`,
 :user:`fkiraly`,
 :user:`haskarb`,
 :user:`KatieBuc`,
 :user:`kcc-lion`,
 :user:`KishManani`,
+:user:`miraep8`,
 :user:`patrickzib`,
 :user:`paulbauriegel`
 
