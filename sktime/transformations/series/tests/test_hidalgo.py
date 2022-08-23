@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Test for hidalgo segmentation."""
 import numpy as np
+from sklearn.utils.validation import check_random_state
 
 from sktime.transformations.series.hidalgo import Hidalgo
 
@@ -25,7 +26,7 @@ def test_X():
 
 def test_get_neighbourhood_params():
     """Test for neighbourhood parameter generation."""
-    model = Hidalgo(K=2, n_iter=10, sampling_rate=2, seed=1)
+    model = Hidalgo(K=2, n_iter=10, burn_in=0.5, sampling_rate=2, seed=1)
     model._get_neighbourhood_params(X)
 
     mu_expected = np.array(
@@ -122,7 +123,7 @@ def test_get_neighbourhood_params():
 
 def test_initialise_params():
     """Test for initialise parameters."""
-    model = Hidalgo(K=2, n_iter=10, sampling_rate=2, seed=1)
+    model = Hidalgo(K=2, n_iter=10, burn_in=0.5, sampling_rate=2, seed=1)
     mu = np.array(
         [
             1.464722,
@@ -177,6 +178,7 @@ def test_initialise_params():
     fitted_model.mu = mu
     fitted_model.Iin = Iin
     fitted_model.N = N
+    fitted_model._rng = check_random_state(model.seed)
 
     (
         V_actual,
@@ -251,7 +253,7 @@ def test_predict():
         ],
     ]
 
-    model = Hidalgo(K=2, n_iter=10, sampling_rate=2, seed=1)
+    model = Hidalgo(K=2, n_iter=10, burn_in=0.5, sampling_rate=2, seed=1)
     fitted_model = model._fit(X)
     _ = fitted_model._predict(X)
     actual = fitted_model.sampling
