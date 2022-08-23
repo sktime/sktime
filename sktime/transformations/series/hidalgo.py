@@ -142,9 +142,8 @@ class Hidalgo(BaseTransformer):
         X : 2D np.ndarray of shape (N, dim), where dim > 1
             data to fit the algorithm to
 
-        Notes
-        -----
-        Writes to self
+        Returns
+        -------
         N : int
             number of rows of X
         mu : 1D np.ndarray of length N
@@ -188,19 +187,12 @@ class Hidalgo(BaseTransformer):
         Iin = Iin[:, 1:]
         Iin = np.reshape(Iin, (N * q,)).astype(int)
 
-        self.N = N
-        self.mu = mu
-        self.Iin = Iin
-        self.Iout = Iout
-        self.Iout_count = Iout_count
-        self.Iout_track = Iout_track
+        return N, mu, Iin, Iout, Iout_count, Iout_track
 
-    def _update_zeta_prior(self, Z):
+    def _update_zeta_prior(self, Z, N, Iin):
         """Update prior parameters for zeta."""
-        N = self.N
         q = self.q
         f = self.f
-        Iin = self.Iin
 
         if f is None:
             f = np.ones(2)
@@ -213,7 +205,7 @@ class Hidalgo(BaseTransformer):
 
         return N_in, f1
 
-    def _initialise_params(self):
+    def _initialise_params(self, N, mu, Iin, _rng):
         """
         Decription.
 
@@ -236,9 +228,7 @@ class Hidalgo(BaseTransformer):
         N_in : int
             parameters of zeta
         """
-        N = self.N
         K = self.K
-        mu = self.mu
         a = self.a
         b = self.b
         c = self.c
@@ -252,7 +242,7 @@ class Hidalgo(BaseTransformer):
             c = np.ones(K)
 
         if not fixed_Z:
-            random_z = self._rng.randint(0, K, N)
+            random_z = _rng.randint(0, K, N)
             Z = np.array(random_z, dtype=int)
         else:
             Z = np.zeros(N, dtype=int)
@@ -264,12 +254,18 @@ class Hidalgo(BaseTransformer):
         b1 = b + V
         c1 = c + NN
 
-        N_in, f1 = self._update_zeta_prior(Z)
+        N_in, f1 = self._update_zeta_prior(Z, N, Iin)
 
         return (V, NN, a1, b1, c1, Z, f1, N_in)
 
     def gibbs_sampling(
         self,
+        N,
+        mu,
+        Iin,
+        Iout,
+        Iout_count,
+        Iout_track,
         V,
         NN,
         a1,
@@ -278,6 +274,7 @@ class Hidalgo(BaseTransformer):
         Z,
         f1,
         N_in,
+        _rng,
     ):
         """
         Gibbs sampling method to find joint posterior distribution of target variables.
@@ -325,15 +322,15 @@ class Hidalgo(BaseTransformer):
         pp = (K - 1) / K
         p = np.ones(shape=K) / K
 
-        def sample_d(K, a1, b1):
+        def sample_d(K, a1, b1, _rng):
             """Sample d, the dimension of manifold k."""
             d = np.empty(shape=K)
             for k in range(K):
                 stop = False
 
                 while stop is False:
-                    r1 = self._rng.random() * 200  # random sample for d[k]
-                    r2 = self._rng.random()  # random number for accepting
+                    r1 = _rng.random() * 200  # random sample for d[k]
+                    r2 = _rng.random()  # random number for accepting
 
                     rmax = (a1[k] - 1) / b1[k]
 
@@ -352,14 +349,14 @@ class Hidalgo(BaseTransformer):
 
             return d
 
-        def sample_p(K, p, pp, c1):
+        def sample_p(K, p, pp, c1, _rng):
             """Sample p, the prior probability that a point belongs to manifold k."""
             for k in range(K - 1):
                 stop = False
 
                 while stop is False:
-                    r1 = self._rng.random()  # random sample for p[k]
-                    r2 = self._rng.random()  # random number for accepting
+                    r1 = _rng.random()  # random sample for p[k]
+                    r2 = _rng.random()  # random number for accepting
 
                     rmax = (c1[k] - 1) / (c1[k] - 1 + c1[K - 1] - 1)
                     frac = ((r1 / rmax) ** (c1[k] - 1)) * (
@@ -375,10 +372,8 @@ class Hidalgo(BaseTransformer):
 
             return (p, pp)
 
-        def sample_zeta(K, zeta, use_Potts, estimate_zeta, q, NN, f1, it):
-            """Sample zeta, latent variable indicating point i belongs to manifold k."""
-            N = self.N
-
+        def sample_zeta(N, K, zeta, use_Potts, estimate_zeta, q, NN, f1, it, _rng):
+            """Sample zeta, sample probability neighbour of point from same manifold."""
             stop = False
             maxval = -100000
 
@@ -397,8 +392,8 @@ class Hidalgo(BaseTransformer):
                         maxval = val
 
                 while stop is False:
-                    r1 = self._rng.random()  # random sample for zeta
-                    r2 = self._rng.random()  # random number for accepting
+                    r1 = _rng.random()  # random sample for zeta
+                    r2 = _rng.random()  # random number for accepting
 
                     ZZ = [partition_function(N, NN[k], r1, q) for k in range(K)]
                     h = [NN[k] * np.log(ZZ[k]) for k in range(K)]
@@ -412,15 +407,25 @@ class Hidalgo(BaseTransformer):
 
             return zeta
 
-        def sampling_Z(Z, NN, a1, c1, V, b1, zeta, fixed_Z, q):
-
-            N = self.N
-            mu = self.mu
-            Iin = self.Iin
-            Iout = self.Iout
-            Iout_track = self.Iout_track
-            Iout_count = self.Iout_count
-
+        def sample_Z(
+            N,
+            mu,
+            Iin,
+            Iout,
+            Iout_count,
+            Iout_track,
+            Z,
+            NN,
+            a1,
+            c1,
+            V,
+            b1,
+            zeta,
+            fixed_Z,
+            q,
+            _rng,
+        ):
+            """Sample z, latent variable indicating point i belongs to manifold k."""
             if (abs(zeta - 1) < 1e-5) or fixed_Z:
                 return Z, NN, a1, c1, V, b1
 
@@ -462,8 +467,8 @@ class Hidalgo(BaseTransformer):
                 prob /= prob.sum()
 
                 while stop is False:
-                    r1 = int(np.floor(self._rng.random() * K))  # random sample for Z
-                    r2 = self._rng.random()  # random number for accepting
+                    r1 = int(np.floor(_rng.random() * K))  # random sample for Z
+                    r2 = _rng.random()  # random number for accepting
 
                     if prob[r1] > r2:
                         stop = True
@@ -483,11 +488,8 @@ class Hidalgo(BaseTransformer):
 
             return Z, NN, a1, c1, V, b1
 
-        def sample_likelihood(p, d, Z, N_in, zeta, NN):
+        def sample_likelihood(N, mu, p, d, Z, N_in, zeta, NN):
             """Sample likelihood values of mu, and local inhomogeneity penalisation."""
-            N = self.N
-            mu = self.mu
-
             lik0 = 0
             for i in range(N):
                 lik0 = (
@@ -506,22 +508,41 @@ class Hidalgo(BaseTransformer):
 
         for it in range(n_iter):
 
-            d = sample_d(K, a1, b1)
+            d = sample_d(K, a1, b1, _rng)
             sampling = np.append(sampling, d)
 
-            (p, pp) = sample_p(K, p, pp, c1)
+            (p, pp) = sample_p(K, p, pp, c1, _rng)
             sampling = np.append(sampling, p[: K - 1])
             sampling = np.append(sampling, (1 - pp))
 
-            zeta = sample_zeta(K, zeta, use_Potts, estimate_zeta, q, NN, f1, it)
+            zeta = sample_zeta(
+                N, K, zeta, use_Potts, estimate_zeta, q, NN, f1, it, _rng
+            )
             sampling = np.append(sampling, zeta)
 
-            Z, NN, a1, c1, V, b1 = sampling_Z(Z, NN, a1, c1, V, b1, zeta, fixed_Z, q)
+            Z, NN, a1, c1, V, b1 = sample_Z(
+                N,
+                mu,
+                Iin,
+                Iout,
+                Iout_count,
+                Iout_track,
+                Z,
+                NN,
+                a1,
+                c1,
+                V,
+                b1,
+                zeta,
+                fixed_Z,
+                q,
+                _rng,
+            )
             sampling = np.append(sampling, Z)
 
-            N_in, f1 = self._update_zeta_prior(Z)
+            N_in, f1 = self._update_zeta_prior(Z, N, Iin)
 
-            lik = sample_likelihood(p, d, Z, N_in, zeta, NN)
+            lik = sample_likelihood(N, mu, p, d, Z, N_in, zeta, NN)
             sampling = np.append(sampling, lik)
 
         return sampling
@@ -568,11 +589,10 @@ class Hidalgo(BaseTransformer):
         burn_in = self.burn_in
         seed = self.seed
 
-        self._rng = check_random_state(seed)
+        _rng = check_random_state(seed)
 
-        self._get_neighbourhood_params(X)
-        V, NN, a1, b1, c1, Z, f1, N_in = self._initialise_params()
-        N = self.N
+        N, mu, Iin, Iout, Iout_count, Iout_track = self._get_neighbourhood_params(X)
+        V, NN, a1, b1, c1, Z, f1, N_in = self._initialise_params(N, mu, Iin, _rng)
 
         Npar = N + 2 * K + 2 + 1
         bestsampling = np.zeros(shape=0)
@@ -581,6 +601,12 @@ class Hidalgo(BaseTransformer):
         for _ in range(n_replicas):
 
             sampling = self.gibbs_sampling(
+                N,
+                mu,
+                Iin,
+                Iout,
+                Iout_count,
+                Iout_track,
                 V,
                 NN,
                 a1,
@@ -589,6 +615,7 @@ class Hidalgo(BaseTransformer):
                 Z,
                 f1,
                 N_in,
+                _rng,
             )
             sampling = np.reshape(sampling, (n_iter, Npar))
 
@@ -607,20 +634,19 @@ class Hidalgo(BaseTransformer):
                 bestsampling = sampling
                 maxlik = lik
 
-        self.sampling = bestsampling
-        self.d_ = np.mean(bestsampling[:, :K], axis=0)
-        self.derr_ = np.std(bestsampling[:, :K], axis=0)
-        self.p_ = np.mean(bestsampling[:, K : 2 * K], axis=0)
-        self.perr_ = np.std(bestsampling[:, K : 2 * K], axis=0)
-        self.lik_ = np.mean(bestsampling[:, -1], axis=0)
-        self.likerr_ = np.std(bestsampling[:, -1], axis=0)
+        # _sampling = bestsampling
+        # _d = np.mean(bestsampling[:, :K], axis=0)
+        # _derr = np.std(bestsampling[:, :K], axis=0)
+        # _p = np.mean(bestsampling[:, K : 2 * K], axis=0)
+        # _perr = np.std(bestsampling[:, K : 2 * K], axis=0)
+        # _lik = np.mean(bestsampling[:, -1], axis=0)
+        # _likerr = np.std(bestsampling[:, -1], axis=0)
 
         Pi = np.zeros((K, N))
 
         for k in range(K):
             Pi[k, :] = np.sum(bestsampling[:, (2 * K) + 1 : 2 * K + N + 1] == k, axis=0)
 
-        self.Pi = Pi / np.shape(bestsampling)[0]
         Z = np.argmax(Pi, axis=0)
         pZ = np.max(Pi, axis=0)
         Z[np.where(pZ < 0.8)] = -1

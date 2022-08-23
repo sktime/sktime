@@ -27,8 +27,16 @@ def test_X():
 def test_get_neighbourhood_params():
     """Test for neighbourhood parameter generation."""
     model = Hidalgo(K=2, n_iter=10, burn_in=0.5, sampling_rate=2, seed=1)
-    model._get_neighbourhood_params(X)
+    (
+        N_actual,
+        mu_actual,
+        Iin_actual,
+        Iout_actual,
+        Iout_count_actual,
+        Iout_track_actual,
+    ) = model._get_neighbourhood_params(X)
 
+    N_expected = 10
     mu_expected = np.array(
         [
             1.464722,
@@ -114,16 +122,18 @@ def test_get_neighbourhood_params():
     Iout_count_expected = np.array([2, 1, 1, 2, 5, 4, 2, 4, 3, 6])
     Iout_track_expected = np.array([0, 2, 3, 4, 6, 11, 15, 17, 21, 24])
 
-    assert np.allclose(model.mu, mu_expected)
-    assert np.allclose(model.Iin, Iin_expected)
-    assert np.allclose(model.Iout, Iout_expected)
-    assert np.allclose(model.Iout_count, Iout_count_expected)
-    assert np.allclose(model.Iout_track, Iout_track_expected)
+    assert np.allclose(N_actual, N_expected)
+    assert np.allclose(mu_actual, mu_expected)
+    assert np.allclose(Iin_actual, Iin_expected)
+    assert np.allclose(Iout_actual, Iout_expected)
+    assert np.allclose(Iout_count_actual, Iout_count_expected)
+    assert np.allclose(Iout_track_actual, Iout_track_expected)
 
 
 def test_initialise_params():
     """Test for initialise parameters."""
     model = Hidalgo(K=2, n_iter=10, burn_in=0.5, sampling_rate=2, seed=1)
+    N = 10
     mu = np.array(
         [
             1.464722,
@@ -172,13 +182,7 @@ def test_initialise_params():
             4,
         ]
     )
-    N = 10
-
-    fitted_model = model._fit(X)
-    fitted_model.mu = mu
-    fitted_model.Iin = Iin
-    fitted_model.N = N
-    fitted_model._rng = check_random_state(model.seed)
+    _rng = check_random_state(model.seed)
 
     (
         V_actual,
@@ -189,7 +193,7 @@ def test_initialise_params():
         Z_actual,
         f1_actual,
         N_in_actual,
-    ) = fitted_model._initialise_params()
+    ) = model._initialise_params(N, mu, Iin, _rng)
 
     V_expected = [2.7142554736925324, 3.6367957651001124]
     NN_expected = [3, 7]
@@ -254,8 +258,31 @@ def test_transform():
     ]
 
     model = Hidalgo(K=2, n_iter=10, burn_in=0.5, sampling_rate=2, seed=1)
-    fitted_model = model._fit(X)
-    _ = fitted_model._transform(X)
-    actual = fitted_model.sampling
+    _rng = check_random_state(model.seed)
+
+    N, mu, Iin, Iout, Iout_count, Iout_track = model._get_neighbourhood_params(X)
+    V, NN, a1, b1, c1, Z, f1, N_in = model._initialise_params(N, mu, Iin, _rng)
+
+    sampling = model.gibbs_sampling(
+        N,
+        mu,
+        Iin,
+        Iout,
+        Iout_count,
+        Iout_track,
+        V,
+        NN,
+        a1,
+        b1,
+        c1,
+        Z,
+        f1,
+        N_in,
+        _rng,
+    )
+    sampling = np.reshape(sampling, (10, 17))
+    actual = sampling[
+        [6, 8],
+    ]
 
     assert np.allclose(actual, expected)
