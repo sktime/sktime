@@ -1652,7 +1652,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         return [params1, params2]
 
 
-class RecursiveReductionForecaster(BaseForecaster):
+class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
     """Direct reduction forecaster, incl single-output, multi-output, exogeneous Dir.
 
     Implements direct reduction, of forecasting to tabular regression.
@@ -1747,20 +1747,6 @@ class RecursiveReductionForecaster(BaseForecaster):
             )
         self.set_tags(**{"X_inner_mtype": mtypes})
         self.set_tags(**{"y_inner_mtype": mtypes})
-
-    def _get_expected_pred_idx(self, fh):
-        """Construct DataFrame Index expected in y_pred, return of _predict."""
-        fh_idx = pd.Index(fh.to_absolute(self.cutoff))
-        y_index = self._y.index
-
-        if isinstance(y_index, pd.MultiIndex):
-            y_inst_idx = y_index.droplevel(-1).unique()
-            if isinstance(y_inst_idx, pd.MultiIndex):
-                fh_idx = pd.Index([x + (y,) for x in y_inst_idx for y in fh_idx])
-            else:
-                fh_idx = pd.Index([(x, y) for x in y_inst_idx for y in fh_idx])
-
-        return fh_idx
 
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
