@@ -1573,9 +1573,9 @@ def write_ndarray_to_tsfile(
     # write class label line
     if class_label is not None:
         space_separated_class_label = " ".join(str(label) for label in class_label)
-        file.write(f"@classLabel true {space_separated_class_label}\n")
+        file.write(f"@classlabel true {space_separated_class_label}\n")
     else:
-        file.write("@class_label false\n")
+        file.write("@classlabel false\n")
     # begin writing the core data for each case
     # which are the series and the class value list if there is any
     file.write("@data\n")

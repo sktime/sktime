@@ -345,6 +345,8 @@ class BaseSplitter(BaseObject):
         self.window_length = window_length
         self.fh = fh
 
+        super(BaseSplitter, self).__init__()
+
     def split(self, y: ACCEPTED_Y_TYPES) -> SPLIT_GENERATOR_TYPE:
         """Get iloc references to train/test slits of `y`.
 
