@@ -258,8 +258,9 @@ class ForecasterFitPredictPanelSimple(ForecasterTestScenario):
 
 
 y_hierarchical = _make_hierarchical(
-    hierarchy_levels = (2, 2), n_columns=1, random_state=RAND_SEED
+    hierarchy_levels=(2, 2), n_columns=1, random_state=RAND_SEED
 )
+
 
 class ForecasterFitPredictHierarchicalSimple(ForecasterTestScenario):
     """Fit/predict only, univariate Hierarchical y, no X, and longer fh in fit."""
