@@ -45,7 +45,7 @@ def test_classificationbenchmark(tmp_path):
         0.921875,
         0.984375,
         0.90625,
-        1.0,
+        1.00,
         0.890625,
         0.859375,
         0.84375,
