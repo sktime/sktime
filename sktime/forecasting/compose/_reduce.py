@@ -1286,14 +1286,17 @@ class _ReducerMixin:
 
         Parameters
         ----------
-        fh : ForecastingHorizon, fh of self
+        fh : ForecastingHorizon, fh of self; or, iterable coercable to pd.Index
 
         Returns
         -------
         fh_idx : pd.Index, expected index of y_pred returned by _predict
             CAVEAT: sorted by index level -1, since reduction is applied by fh
         """
-        fh_idx = pd.Index(fh.to_absolute(self.cutoff))
+        if isinstance(fh, ForecastingHorizon):
+            fh_idx = pd.Index(fh.to_absolute(self.cutoff))
+        else:
+            fh_idx = pd.Index(fh)
         y_index = self._y.index
 
         if isinstance(y_index, pd.MultiIndex):
@@ -1786,7 +1789,7 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         Xt = lagger_y_to_X.fit_transform(y)
 
         # lag is 1, since we want to do recursive forecasting with 1 step ahead
-        lag_plus = Lag(lag=1, index_out="extend")
+        lag_plus = Lag(lags=1, index_out="extend")
         Xtt = lag_plus.fit_transform(Xt)
         Xtt_notna = Xtt.notnull().all(axis=1)
         Xtt_notna_idx = Xtt_notna.index[Xtt_notna].intersection(y.index)
@@ -1853,17 +1856,18 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
 
         # for all positive fh
         y_lags_no_gaps = range(y_lags[-1])
-        y_abs_no_gaps = [x + y_abs[-1] - y_lags[-1] + 1 for x in y_lags_no_gaps]
 
-        Xt = lagger_y_to_X.transform(self._y)
+        # we will keep growing y_plus_preds recursively
+        y_plus_preds = self._y
         y_pred_list = []
 
         for i in y_lags_no_gaps:
 
-            predict_idx = y_abs_no_gaps[i]
+            Xt = lagger_y_to_X.transform(y_plus_preds)
 
             lag_plus = Lag(lags=1, index_out="extend")
             Xtt = lag_plus.fit_transform(Xt)
+            predict_idx = Xtt.iloc[[-1]].index.get_level_values(-1)[0]
             Xtt_predrow = slice_at_ix(Xtt, predict_idx)
             if X_pool is not None:
                 Xtt_predrow = pd.concat(
@@ -1884,8 +1888,14 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
             # 2D numpy array with col index = (var) and 1 row
             y_pred_list.append(y_pred_i)
 
+            y_pred_new = self._get_expected_pred_idx(fh=predict_idx)
+            y_plus_preds = y_plus_preds.combine_first(y_pred_new)
+
         y_pred = np.concatenate(y_pred_list)
         y_pred = pd.DataFrame(y_pred, columns=y_cols, index=fh_idx)
+
+        if isinstance(y_pred.index, pd.MultiIndex):
+            y_pred = y_pred.sort_index()
 
         return y_pred
 
@@ -1913,13 +1923,7 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         params1 = {
             "estimator": est,
             "window_length": 3,
-            "X_treatment": "shifted",
             "pooling": "global",  # all internal mtypes are tested across scenarios
         }
-        params2 = {
-            "estimator": est,
-            "window_length": 3,
-            "X_treatment": "concurrent",
-            "pooling": "global",
-        }
-        return [params1, params2]
+
+        return params1
