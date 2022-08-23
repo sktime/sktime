@@ -66,7 +66,7 @@ Transformations
 * deprecated: the row transformers, ``SeriesToSeriesRowTransformer`` and ``SeriesToPrimitivesRowTransformer`` have been deprecated.
   Row/instance vectorization functionality is natively supported by ``sktime`` since 0.11.0 and does not need to be added by these wrappers anymore.
   Both transformers will be removed in 0.15.0. To migrate, simply remove the row transformer wrappers.
-  In some rarer ambiguous vectorization cases (e.g., using wrapped functions that are vectorized, such as ``np.mean``),
+  In some rarer, ambiguous vectorization cases (e.g., using wrapped functions that are vectorized, such as ``np.mean``),
   ``FunctionTransformer`` may have to be used instead of ``SeriesToPrimitivesRowTransformer``.
 
 
