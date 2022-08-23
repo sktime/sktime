@@ -1397,16 +1397,26 @@ class DirectReductionForecaster(BaseForecaster):
         return getattr(self, methodname)(X=X, fh=fh)
 
     def _get_expected_pred_idx(self, fh):
-        """Construct DataFrame Index expected in y_pred, return of _predict."""
+        """Construct DataFrame Index expected in y_pred, return of _predict.
+
+        Parameters
+        ----------
+        fh : ForecastingHorizon, fh of self
+
+        Returns
+        -------
+        fh_idx : pd.Index, expected index of y_pred returned by _predict
+            CAVEAT: sorted by index level -1, since reduction is applied by fh        
+        """
         fh_idx = pd.Index(fh.to_absolute(self.cutoff))
         y_index = self._y.index
 
         if isinstance(y_index, pd.MultiIndex):
             y_inst_idx = y_index.droplevel(-1).unique()
             if isinstance(y_inst_idx, pd.MultiIndex):
-                fh_idx = pd.Index([x + (y,) for x in y_inst_idx for y in fh_idx])
+                fh_idx = pd.Index([x + (y,) for y in fh_idx for x in y_inst_idx])
             else:
-                fh_idx = pd.Index([(x, y) for x in y_inst_idx for y in fh_idx])
+                fh_idx = pd.Index([(x, y) for y in fh_idx for x in y_inst_idx])
 
         return fh_idx
 
@@ -1488,6 +1498,9 @@ class DirectReductionForecaster(BaseForecaster):
         y_pred = y_pred.reshape((len(fh_idx), len(y_cols)))
 
         y_pred = pd.DataFrame(y_pred, columns=y_cols, index=fh_idx)
+
+        if isinstance(y_pred.index, pd.MultiIndex):
+            y_pred = y_pred.sort_index()
 
         return y_pred
 
@@ -1593,6 +1606,9 @@ class DirectReductionForecaster(BaseForecaster):
 
         y_pred = np.concatenate(y_pred_list)
         y_pred = pd.DataFrame(y_pred, columns=y_cols, index=fh_idx)
+
+        if isinstance(y_pred.index, pd.MultiIndex):
+            y_pred = y_pred.sort_index()
 
         return y_pred
 
