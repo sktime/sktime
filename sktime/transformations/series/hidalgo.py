@@ -202,6 +202,9 @@ class Hidalgo(BaseTransformer):
         f = self.f
         Iin = self.Iin
 
+        if f is None:
+            f = np.ones(2)
+
         N_in = sum([Z[Iin[q * i + j]] == Z[i] for j in range(q) for i in range(N)])
 
         f1 = np.empty(shape=2)
@@ -239,21 +242,14 @@ class Hidalgo(BaseTransformer):
         a = self.a
         b = self.b
         c = self.c
-        f = self.f
         fixed_Z = self.fixed_Z
 
         if a is None:
             a = np.ones(K)
-            self.a = a
         if b is None:
             b = np.ones(K)
-            self.b = b
         if c is None:
             c = np.ones(K)
-            self.c = c
-        if f is None:
-            f = np.ones(2)
-            self.f = f
 
         if not fixed_Z:
             random_z = self._rng.randint(0, K, N)
@@ -306,7 +302,7 @@ class Hidalgo(BaseTransformer):
             prior parameters of p
         Z : 1D np.ndarray of length N
             segmentation based on manifold k
-        f1 : 1D np.ndarray of length K
+        f1 : 1D np.ndarray of length 2
             parameters of zeta
         N_in : int
             parameters of zeta
