@@ -210,8 +210,8 @@ def test_initialise_params():
     assert N_in_actual == N_in_expected
 
 
-def test_predict():
-    """Test _predict method including gibbs sampling iterations."""
+def test_transform():
+    """Test _transform method including gibbs sampling iterations."""
     expected = [
         [
             0.72269469,
@@ -255,7 +255,7 @@ def test_predict():
 
     model = Hidalgo(K=2, n_iter=10, burn_in=0.5, sampling_rate=2, seed=1)
     fitted_model = model._fit(X)
-    _ = fitted_model._predict(X)
+    _ = fitted_model._transform(X)
     actual = fitted_model.sampling
 
     assert np.allclose(actual, expected)
