@@ -1291,7 +1291,7 @@ class _ReducerMixin:
         Returns
         -------
         fh_idx : pd.Index, expected index of y_pred returned by _predict
-            CAVEAT: sorted by index level -1, since reduction is applied by fh        
+            CAVEAT: sorted by index level -1, since reduction is applied by fh
         """
         fh_idx = pd.Index(fh.to_absolute(self.cutoff))
         y_index = self._y.index
