@@ -135,6 +135,7 @@ class ColumnTransformer(_ColumnTransformer, _PanelToPanelTransformer):
             n_jobs=n_jobs,
             transformer_weights=transformer_weights,
         )
+        BaseTransformer.__init__(self)
         self.preserve_dataframe = preserve_dataframe
         self._is_fitted = False
 
