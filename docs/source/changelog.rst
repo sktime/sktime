@@ -63,6 +63,11 @@ Transformations
 
 * deprecated: ``transformations.series.compose`` is deprecated in favour of ``transformations.compose``.
   All estimators in the former are moved to the latter, and will no longer be accessible in ``transformations.series.compose`` from 0.15.0.
+* deprecated: the row transformers, ``SeriesToSeriesRowTransformer`` and ``SeriesToPrimitivesRowTransformer`` have been deprecated.
+  Row/instance vectorization functionality is natively supported by ``sktime`` since 0.11.0 and does not need to be added by these wrappers anymore.
+  Both transformers will be removed in 0.15.0. To migrate, simply remove the row transformer wrappers.
+  In some rarer ambiguous vectorization cases (e.g., using wrapped functions that are vectorized, such as ``np.mean``),
+  ``FunctionTransformer`` may have to be used instead of ``SeriesToPrimitivesRowTransformer``.
 
 
 Enhancements
@@ -174,6 +179,7 @@ Transformations
 Maintenance
 ~~~~~~~~~~~
 
+* [MNT] Deprecation of row transformers (:pr:`2370`) :user:`fkiraly`
 * [MNT] add soft dependency tag to ``CNNClassifier`` (:pr:`3252`) :user:`fkiraly`
 * [MNT] bound ``pmdarima < 2.0.0`` (:pr:`3301`) :user:`fkiraly`
 * [MNT] fix merge accident that deleted ``DtwDist`` export (:pr:`3304`) :user:`fkiraly`
