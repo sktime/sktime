@@ -199,11 +199,6 @@ class SFA_NEW(_PanelToPanelTransformer):
         X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
         X = X.squeeze(1)
 
-        # if self.normalise:
-        #    X = (X - X.mean(axis=-1, keepdims=True)) / (
-        #        X.std(axis=-1, keepdims=True) + 1e-8
-        #    )
-
         words = _transform_case(  # , PPV
             X,
             self.window_size,

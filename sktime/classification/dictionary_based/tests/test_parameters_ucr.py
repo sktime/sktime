@@ -8,11 +8,9 @@ from warnings import simplefilter
 import numpy as np
 import pandas as pd
 from joblib import Parallel, delayed
+from scipy.stats import zscore
 
 from sktime.classification.dictionary_based import WEASEL_STEROIDS
-
-# from scipy.stats import zscore
-
 
 sys.path.append("../../..")
 
@@ -224,8 +222,8 @@ if __name__ == "__main__":
             }
 
         # z-norm training/test data
-        # X_train = zscore(X_train, axis=1)
-        # X_test = zscore(X_test, axis=1)
+        X_train = zscore(X_train, axis=1)
+        X_test = zscore(X_test, axis=1)
         X_train = np.reshape(np.array(X_train), (len(X_train), 1, -1))
         X_test = np.reshape(np.array(X_test), (len(X_test), 1, -1))
 

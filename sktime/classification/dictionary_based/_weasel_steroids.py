@@ -5,7 +5,8 @@ Dictionary based classifier based on SFA transform, BOSS and linear regression.
 
 The fastest WEASEL on earth
 Tour de WEASEL
-WEASEL on steroids
+WEASEL on Steroids
+WEASEL + Rocket-Science
 
 Rocket-Science on WEASEL
 """
@@ -334,6 +335,10 @@ class WEASEL_STEROIDS(BaseClassifier):
     def _transform_words(self, X):
         X = X.squeeze(1)
 
+        # X = (X - X.mean(axis=-1, keepdims=True)) / (
+        #        X.std(axis=-1, keepdims=True) + 1e-8
+        # )
+
         parallel_res = Parallel(n_jobs=self.n_jobs, timeout=99999)(
             delayed(_parallel_transform_words)(
                 X,
@@ -342,6 +347,7 @@ class WEASEL_STEROIDS(BaseClassifier):
                 self.rel_features_counts[i],
                 self.dilation_factors[i],
                 self.first_differences[i],
+                self.feature_selection,
             )
             for i in range(self.ensemble_size)
         )
