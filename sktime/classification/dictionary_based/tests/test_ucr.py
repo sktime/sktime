@@ -11,8 +11,7 @@ from warnings import simplefilter
 import numpy as np
 import pandas as pd
 import torch
-
-# from convst.classifiers import R_DST_Ridge
+from convst.classifiers import R_DST_Ridge
 from joblib import Parallel, delayed
 from sklearn.linear_model import RidgeClassifierCV
 from sklearn.pipeline import make_pipeline
@@ -42,8 +41,8 @@ def load_from_ucr_tsv_to_dataframe_plain(full_file_path_and_name):
 
 
 dataset_names_full = [
-    # "ACSF1",
-    # "Adiac",
+    "ACSF1",
+    "Adiac",
     "AllGestureWiimoteX",
     "AllGestureWiimoteY",
     "AllGestureWiimoteZ",
@@ -214,6 +213,7 @@ others = []
 
 DATA_PATH = "/Users/bzcschae/workspace/UCRArchive_2018/"
 parallel_jobs = 1
+threads_to_use = 4
 
 # local
 if os.path.exists(DATA_PATH):
@@ -242,7 +242,6 @@ if __name__ == "__main__":
         X_train.fillna(0, inplace=True)
         X_test.fillna(0, inplace=True)
 
-        threads_to_use = 4
         clfs = {
             # "WEASEL": WEASEL(random_state=1379, n_jobs=threads_to_use),
             "WEASEL_ST (None)": WEASEL_STEROIDS(
@@ -260,21 +259,21 @@ if __name__ == "__main__":
                 feature_selection="none",
                 n_jobs=threads_to_use,
             ),
-            "WEASEL_ST (Chi2)": WEASEL_STEROIDS(
-                random_state=1379,
-                binning_strategies=["equi-depth"],
-                alphabet_sizes=[4],
-                min_window=4,
-                max_window=24,
-                max_feature_count=10_000,
-                word_lengths=[8],  # test only 6 or 8?
-                norm_options=[False],  # p[True]=0.8
-                variance=True,
-                ensemble_size=50,
-                use_first_differences=[True, False],
-                feature_selection="chi2",
-                n_jobs=threads_to_use,
-            ),
+            # "WEASEL_ST (Chi2)": WEASEL_STEROIDS(
+            #     random_state=1379,
+            #     binning_strategies=["equi-depth"],
+            #     alphabet_sizes=[4],
+            #     min_window=4,
+            #     max_window=24,
+            #     max_feature_count=10_000,
+            #     word_lengths=[8],  # test only 6 or 8?
+            #     norm_options=[False],  # p[True]=0.8
+            #     variance=True,
+            #     ensemble_size=50,
+            #     use_first_differences=[True, False],
+            #     feature_selection="chi2",
+            #     n_jobs=threads_to_use,
+            # ),
             # "WEASEL (Bench)": WEASEL_STEROIDS(
             #     random_state=1379,
             #     # alphabet_sizes=[2],

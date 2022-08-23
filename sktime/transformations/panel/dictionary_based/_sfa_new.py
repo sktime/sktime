@@ -199,6 +199,11 @@ class SFA_NEW(_PanelToPanelTransformer):
         X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
         X = X.squeeze(1)
 
+        # if self.normalise:
+        #    X = (X - X.mean(axis=-1, keepdims=True)) / (
+        #        X.std(axis=-1, keepdims=True) + 1e-8
+        #    )
+
         words = _transform_case(  # , PPV
             X,
             self.window_size,
@@ -209,8 +214,6 @@ class SFA_NEW(_PanelToPanelTransformer):
             self.variance,
             self.breakpoints,
             self.letter_bits,
-            self.word_bits,
-            self.bigrams,
             self.inverse_sqrt_win_size,
         )
 
@@ -436,8 +439,6 @@ def _transform_case(
     variance,
     breakpoints,
     letter_bits,
-    word_bits,
-    bigrams,
     inverse_sqrt_win_size,
 ):
     dfts = _mft(
@@ -455,21 +456,19 @@ def _transform_case(
     # NPPV = np.sum(np.where(dfts < 0, 1, 0), axis=1)
 
     if breakpoints.shape[1] == 2:
-        words = generate_words(
-            dfts, breakpoints, letter_bits, word_bits, window_size, bigrams
-        )
+        words = generate_words(dfts, breakpoints, letter_bits)
         return words  # , PPV
     else:
         bp = np.zeros((breakpoints.shape[0], 2))
         bp[:, 0] = breakpoints[:, 1]
         bp[:, 1] = np.inf
-        words = generate_words(dfts, bp, letter_bits, word_bits, window_size, bigrams)
+        words = generate_words(dfts, bp, letter_bits)
         return words  # , PPV
 
         """
         bp = breakpoints.copy()
         bp[bp < 0] = -np.inf
-        words = generate_words(dfts, bp, letter_bits, word_bits, window_size, bigrams)
+        words = generate_words(dfts, bp, letter_bits)
         return words  # , PPV
         """
 
@@ -525,33 +524,33 @@ def _create_bigram_word(word, other_word, word_bits):
     return (word << word_bits) | other_word
 
 
-@njit(fastmath=True, parallel=True, cache=True)
-def generate_words(dfts, breakpoints, letter_bits, word_bits, window_size, bigrams):
-    if bigrams:
-        words = np.zeros(
-            (dfts.shape[0], 2 * dfts.shape[1] - window_size), dtype=np.int32
-        )
-    else:
-        words = np.zeros((dfts.shape[0], dfts.shape[1]), dtype=np.int32)
-
+@njit(fastmath=True, cache=True)
+def generate_words(dfts, breakpoints, letter_bits):
+    words = np.zeros((dfts.shape[0], dfts.shape[1]), dtype=np.int32)
     letter_bits = np.int32(letter_bits)
-    for a in prange(dfts.shape[0]):
-        for window in prange(dfts.shape[1]):
-            word = np.int32(0)
-            for i in range(len(dfts[a, window])):
-                for bp in range(breakpoints.shape[1]):
-                    # bp = np.searchsorted(breakpoints[i], dfts[a, window, i])
-                    if dfts[a, window, i] <= breakpoints[i, bp]:
-                        word = (word << letter_bits) | bp
-                        break
-            words[a, window] = word
 
-            if bigrams:
-                if window - window_size >= 0:
-                    bigram = _create_bigram_word(
-                        word, words[a, window - window_size], word_bits
-                    )
-                    words[a, (dfts.shape[1] + window - window_size)] = bigram
+    # special case: binary breakpoints
+    if breakpoints.shape[1] == 2:
+        vector = np.zeros((breakpoints.shape[0]), dtype=np.float32)
+        for i in range(breakpoints.shape[0]):
+            vector[i] = breakpoints.shape[1] ** i
+
+        for a in prange(dfts.shape[0]):
+            # for window in prange(dfts.shape[1]):
+            match = (dfts[a] <= breakpoints[:, 0]).astype(np.float32)
+            words[a, :] = np.dot(match, vector).astype(np.int32)
+
+    # general case: alphabet-size many breakpoints
+    else:
+        for a in prange(dfts.shape[0]):
+            for window in prange(dfts.shape[1]):
+                word = np.int32(0)
+                for i in range(len(dfts[a, window])):
+                    for bp in range(breakpoints.shape[1]):
+                        if dfts[a, window, i] <= breakpoints[i, bp]:
+                            word = (word << letter_bits) | bp
+                            break
+                words[a, window] = word
 
     return words
 

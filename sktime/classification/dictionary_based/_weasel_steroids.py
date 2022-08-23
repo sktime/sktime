@@ -17,15 +17,11 @@ import numpy as np
 from joblib import Parallel, delayed
 from numba import njit
 from sklearn.feature_selection import chi2
-
-# from numba import set_num_threads
 from sklearn.linear_model import RidgeClassifierCV
 from sklearn.utils import check_random_state
 
 from sktime.classification.base import BaseClassifier
 from sktime.transformations.panel.dictionary_based import SAX_NEW, SFA_NEW
-
-# from numba import njit
 
 # TODO change to transformer?
 
@@ -454,48 +450,51 @@ def _parallel_fit(
     sfa_words = transformer.fit_transform(X2, y)  # , PPV
 
     # Prefilter and remove those with only one value
+    all_win_words = None
+    relevant_features = None
 
-    feature_names = set()
-    for t_words in sfa_words:
-        for t_word in t_words:
-            feature_names.add(t_word)
+    if feature_selection == "none":
+        feature_count = 2**word_length
+        all_win_words = np.zeros((n_instances, feature_count), dtype=np.int32)
+        for j in range(len(sfa_words)):
+            for key in sfa_words[j]:
+                all_win_words[j, key] += 1
 
-    # Random feature selection
-    if feature_selection == "random":
-        feature_count = min(max_feature_count // ensemble_size, len(feature_names))
-        relevant_features_idx = rng.choice(
-            len(feature_names), replace=False, size=feature_count
-        )
-        all_win_words, relevant_features = build_feature_vector(
-            feature_names, n_instances, relevant_features_idx, sfa_words
-        )
+    else:
+        feature_names = set()
+        for t_words in sfa_words:
+            for t_word in t_words:
+                feature_names.add(t_word)
 
-    elif feature_selection == "none":
-        feature_count = len(list(feature_names))
-        relevant_features_idx = np.arange(feature_count)
-        all_win_words, relevant_features = build_feature_vector(
-            feature_names, n_instances, relevant_features_idx, sfa_words
-        )
-
-    # Chi-squared feature selection
-    elif feature_selection == "chi2":
-        feature_count = len(list(feature_names))
-        relevant_features_idx = np.arange(feature_count)
-        all_win_words, _ = build_feature_vector(
-            feature_names, n_instances, relevant_features_idx, sfa_words
-        )
-
-        feature_count = min(max_feature_count // ensemble_size, len(feature_names))
-        chi2_statistics, p = chi2(all_win_words, y)
-        relevant_features_idx = np.argsort(p)[:feature_count]
-        relevant_features = dict(
-            zip(
-                np.array(list(feature_names))[relevant_features_idx],
-                np.arange(feature_count),
+        # Random feature selection
+        if feature_selection == "random":
+            feature_count = min(max_feature_count // ensemble_size, len(feature_names))
+            relevant_features_idx = rng.choice(
+                len(feature_names), replace=False, size=feature_count
             )
-        )
-        # select subset of features
-        all_win_words = all_win_words[:, relevant_features_idx]
+            all_win_words, relevant_features = build_feature_vector(
+                feature_names, n_instances, relevant_features_idx, sfa_words
+            )
+
+        # Chi-squared feature selection
+        elif feature_selection == "chi2":
+            feature_count = len(list(feature_names))
+            relevant_features_idx = np.arange(feature_count)
+            all_win_words, _ = build_feature_vector(
+                feature_names, n_instances, relevant_features_idx, sfa_words
+            )
+
+            feature_count = min(max_feature_count // ensemble_size, len(feature_names))
+            chi2_statistics, p = chi2(all_win_words, y)
+            relevant_features_idx = np.argsort(p)[:feature_count]
+            relevant_features = dict(
+                zip(
+                    np.array(list(feature_names))[relevant_features_idx],
+                    np.arange(feature_count),
+                )
+            )
+            # select subset of features
+            all_win_words = all_win_words[:, relevant_features_idx]
 
     # all_win_words = np.concatenate((all_win_words, PPV), axis=1)
 
@@ -525,7 +524,13 @@ def build_feature_vector(feature_names, n_instances, relevant_features_idx, sfa_
 
 
 def _parallel_transform_words(
-    X, transformer, relevant_features, feature_count, dilation, first_difference
+    X,
+    transformer,
+    relevant_features,
+    feature_count,
+    dilation,
+    first_difference,
+    feature_selection,
 ):
     X2 = WEASEL_STEROIDS._dilation(X, dilation, first_difference)
 
@@ -537,8 +542,11 @@ def _parallel_transform_words(
     all_win_words = np.zeros((len(X), feature_count), dtype=np.int32)
     for j in range(len(sfa_words)):
         for key in sfa_words[j]:
-            if key in relevant_features:
-                all_win_words[j, relevant_features[key]] += 1
+            if feature_selection == "none":
+                all_win_words[j, key] += 1
+            else:
+                if key in relevant_features:
+                    all_win_words[j, relevant_features[key]] += 1
 
     # all_win_words = np.concatenate((all_win_words, PPV), axis=1)
 
