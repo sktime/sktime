@@ -530,10 +530,6 @@ class Hidalgo(BaseTransformer):
 
         return sampling
 
-    def _fit(self, X, y=None):
-        """Empty."""
-        return self
-
     def _transform(self, X, y=None):
         """
         Run the Hidalgo algorithm and writes results to self.
