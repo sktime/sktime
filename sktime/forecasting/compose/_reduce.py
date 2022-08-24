@@ -1853,6 +1853,7 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
     def _predict_out_of_sample(self, X_pool, fh):
         """Recursive reducer: predict out of sample (ahead of cutoff)."""
         # very similar to _predict_concurrent of DirectReductionForecaster - refactor?
+        from sktime.transformations.series.impute import Imputer
         from sktime.transformations.series.lag import Lag
 
         fh_idx = self._get_expected_pred_idx(fh=fh)
@@ -1882,6 +1883,9 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
             Xt = lagger_y_to_X.transform(y_plus_preds)
 
             lag_plus = Lag(lags=1, index_out="extend")
+            if self.impute_method is not None:
+                lag_plus = lag_plus * Imputer(method=self.impute_method)
+
             Xtt = lag_plus.fit_transform(Xt)
             y_plus_one = lag_plus.fit_transform(y_plus_preds)
             predict_idx = y_plus_one.iloc[[-1]].index.get_level_values(-1)[0]
@@ -1917,6 +1921,7 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
 
     def _predict_in_sample(self, X_pool, fh):
         """Recursive reducer: predict out of sample (in past of of cutoff)."""
+        from sktime.transformations.series.impute import Imputer
         from sktime.transformations.series.lag import Lag
 
         fh_idx = self._get_expected_pred_idx(fh=fh)
@@ -1930,6 +1935,9 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         Xt = lagger_y_to_X.transform(y)
 
         lag_plus = Lag(lags=1, index_out="extend")
+        if self.impute_method is not None:
+            lag_plus = lag_plus * Imputer(method=self.impute_method)
+
         Xtt = lag_plus.fit_transform(Xt)
 
         Xtt_predrows = slice_at_ix(Xtt, fh_abs)
