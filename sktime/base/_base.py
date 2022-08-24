@@ -643,7 +643,7 @@ class BaseObject(_BaseEstimator):
 
         Returns
         -------
-        unserialized self resulting in output `serial`, of `cls.save(None)`
+        deserialized self resulting in output `serial`, of `cls.save(None)`
         """
         import pickle
 
@@ -659,7 +659,7 @@ class BaseObject(_BaseEstimator):
 
         Returns
         -------
-        unserialized self resulting in output at `path`, of `cls.save(path)`
+        deserialized self resulting in output at `path`, of `cls.save(path)`
         """
         import pickle
 

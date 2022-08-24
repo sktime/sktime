@@ -14,7 +14,7 @@ def load(serial):
 
     Returns
     -------
-    unserialized self resulting in output `serial`, of `cls.save`
+    deserialized self resulting in output `serial`, of `cls.save`
 
     Example
     -------
