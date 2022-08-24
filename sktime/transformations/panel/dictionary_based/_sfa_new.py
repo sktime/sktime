@@ -355,32 +355,35 @@ class SFA_NEW(_PanelToPanelTransformer):
         return params
 
 
-# @njit(fastmath=True, cache=True)
+@njit(fastmath=True, cache=True)
 def _binning_dft(
     X, window_size, series_length, dft_length, word_length, norm, inverse_sqrt_win_size
 ):
     num_windows_per_inst = math.ceil(series_length / window_size)
 
     # Splits individual time series into windows and returns the DFT for each
+    data = disjoint_windows(X, num_windows_per_inst, series_length, window_size)
+
     dft = np.zeros((len(X), num_windows_per_inst, dft_length))  #
-
     for i in range(len(X)):
-        start = series_length - window_size
-        split = np.split(
-            X[i, :],
-            np.linspace(
-                window_size,
-                window_size * (num_windows_per_inst - 1),
-                num_windows_per_inst - 1,
-            ).astype(np.int_),
-        )
-
-        split[-1] = X[i, start:series_length]
         dft[i] = _fast_fourier_transform(
-            np.array(split), norm, dft_length, inverse_sqrt_win_size
+            data[i], norm, dft_length, inverse_sqrt_win_size
         )
 
     return dft.reshape(dft.shape[0] * dft.shape[1], dft_length)
+
+
+@njit(fastmath=True, cache=True)
+def disjoint_windows(X, num_windows_per_inst, series_length, window_size):
+    data = np.zeros((len(X), num_windows_per_inst, window_size))
+    for i in range(len(X)):
+        for j in range(num_windows_per_inst - 1):
+            data[i, j] = X[i, window_size * j : window_size * (j + 1)]
+
+        start = series_length - window_size
+        data[i, -1] = X[i, start:series_length]
+
+    return data
 
 
 @njit(fastmath=True, cache=True)

@@ -147,7 +147,7 @@ dataset_names_full = [
     "SmoothSubspace",
     "SonyAIBORobotSurface1",
     "SonyAIBORobotSurface2",
-    # "StarLightCurves",
+    "StarLightCurves",
     "Strawberry",
     "SwedishLeaf",
     "Symbols",
@@ -161,7 +161,7 @@ dataset_names_full = [
     "UWaveGestureLibraryAll",
     "UWaveGestureLibraryX",
     "UWaveGestureLibraryY",
-    "UWaveGestureLibraryZ",
+    # "UWaveGestureLibraryZ", # error???
     "Wafer",
     "Wine",
     "WordSynonyms",
@@ -322,6 +322,7 @@ if __name__ == "__main__":
         #    f"Test-Size={np.shape(X_test)}"
         # )
 
+        # try:
         for name, clf in clfs.items():
             if name == "Hydra":
                 transform = Hydra(X_train.shape[-1])
@@ -367,6 +368,9 @@ if __name__ == "__main__":
 
             # print("DFT:", SFA_NEW.time_dft)
             # print("MCB:", SFA_NEW.time_mcb)
+        # except:
+        #    print("Error", dataset_name)
+
         print("-----------------")
 
         return sum_scores
