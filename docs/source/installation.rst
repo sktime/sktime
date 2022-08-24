@@ -207,6 +207,22 @@ Some users have experienced issues when installing NumPy, particularly version 1
     Another option under Windows is to follow the instructions for `Unix-like OS`_, using the Windows Subsystem for Linux (WSL).
     For installing WSL, follow the instructions `here <https://docs.microsoft.com/en-us/windows/wsl/install-win10#step-2---check-requirements-for-running-wsl-2>`_.
 
+Some quick tips on virtual environments
+---------------------------------
+
+As mentioned above -  we recommend that you do all developement for sktime within a virtual environment.  Two good options for doing so are
+`conda <https://uoa-eresearch.github.io/eresearch-cookbook/recipe/2014/11/20/conda/>` (recommended) and `venv <https://realpython.com/python-virtual-environments-a-primer/>` (also good!).
+Using a virtual environment helps keep all the dependencies for the package seperated from other python installations on your device!  When using a
+virtual environment it is important to make sure that you use the python kernel in the virtual enviroment to test your code rather than the default one on your
+device.
+
+Doing so in VScode is easy! Bascially just create your virtual environment in the same folder as your sktime Github folder, and vscode will automatically detect it.
+All you have to do is select yes when VScode asks if you want it to use the new virtual environment!  But in case you run into unforeseen issues,
+`here <https://code.visualstudio.com/docs/python/environments>` are some tips to help you get it sorted.
+
+One other place where it is important to link your virtual environment is when using Jupyter Notebooks.  Of course - you can use Jupyter Notebooks natively within
+VScode (recommended), which should take care of assigning the correct kernel for you, but if you want to use jupyter notebooks seperately you need to add your new virtual environment
+as a valid kernel. `Here <https://janakiev.com/blog/jupyter-virtual-envs/>` are some instructions for doing so.
 
 References
 ----------
