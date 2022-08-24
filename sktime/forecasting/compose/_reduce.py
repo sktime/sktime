@@ -1837,15 +1837,34 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         y_pred : pd.DataFrame, same type as y in _fit
             Point predictions
         """
-        # very similar to _predict_concurrent of DirectReductionForecaster - refactor?
-        from sktime.transformations.series.lag import Lag
-
         if X is not None and self._X is not None:
             X_pool = X.combine_first(self._X)
         elif X is None and self._X is not None:
             X_pool = self._X
         else:
             X_pool = X
+
+        fh_oos = fh.to_out_of_sample(self.cutoff)
+        fh_ins = fh.to_in_sample(self.cutoff)
+
+        if len(fh_oos) == 0:
+            y_pred = self._predict_in_sample(X_pool, fh_ins)
+        elif len(fh_ins) == 0:
+            y_pred = self._predict_out_of_sample(X_pool, fh_oos)
+        else:
+            y_pred_ins = self._predict_in_sample(X_pool, fh_ins)
+            y_pred_oos = self._predict_out_of_sample(X_pool, fh_oos)
+            y_pred = pd.concat([y_pred_ins, y_pred_oos], axis=0)
+
+        if isinstance(y_pred.index, pd.MultiIndex):
+            y_pred = y_pred.sort_index()
+
+        return y_pred
+
+    def _predict_out_of_sample(self, X_pool, fh):
+        """Recursive reducer: predict out of sample (ahead of cutoff)."""
+        # very similar to _predict_concurrent of DirectReductionForecaster - refactor?
+        from sktime.transformations.series.lag import Lag
 
         fh_idx = self._get_expected_pred_idx(fh=fh)
         y_cols = self._y.columns
@@ -1905,10 +1924,47 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         y_pred = pd.DataFrame(y_pred, columns=y_cols, index=y_abs_no_gaps)
         y_pred = slice_at_ix(y_pred, fh_idx)
 
-        if isinstance(y_pred.index, pd.MultiIndex):
-            y_pred = y_pred.sort_index()
+        return y_pred
+
+    def _predict_in_sample(self, X_pool, fh):
+        """Recursive reducer: predict out of sample (in past of of cutoff)."""
+        from sktime.transformations.series.lag import Lag
+
+        fh_idx = self._get_expected_pred_idx(fh=fh)
+        y_cols = self._y.columns
+
+        lagger_y_to_X = self.lagger_y_to_X_
+
+        fh_abs = fh.to_absolute(self.cutoff)
+        y = self._y
+
+        Xt = lagger_y_to_X.transform(y)
+
+        lag_plus = Lag(lags=1, index_out="extend")
+        Xtt = lag_plus.fit_transform(Xt)
+
+        Xtt_predrows = slice_at_ix(Xtt, fh_abs)
+        if X_pool is not None:
+            Xtt_predrows = pd.concat(
+                [slice_at_ix(X_pool, fh_abs), Xtt_predrows], axis=1
+            )
+
+        Xtt_predrows = _coerce_col_str(Xtt_predrows)
+
+        estimator = self.estimator_
+
+        # if = no training indices in _fit, fill in y training mean
+        if isinstance(estimator, pd.Series):
+            y_pred = pd.DataFrame(index=fh_idx, columns=y_cols)
+            y_pred = y_pred.fillna(self.estimator)
+        # otherwise proceed as per direct reduction algorithm
+        else:
+            y_pred = estimator.predict(Xtt_predrows)
+            # 2D numpy array with col index = (var) and 1 row
+            y_pred = pd.DataFrame(y_pred, columns=y_cols, index=fh_idx)
 
         return y_pred
+
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
