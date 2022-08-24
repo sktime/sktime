@@ -98,6 +98,7 @@ class BaseForecaster(BaseEstimator):
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
         "fit_is_empty": False,  # is fit empty and can be skipped?
         "python_version": None,  # PEP 440 python version specifier to limit versions
+        "python_dependencies": None  # str or list of str, package soft dependencies
     }
 
     def __init__(self):
