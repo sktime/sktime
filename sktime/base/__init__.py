@@ -12,6 +12,6 @@ __all__ = [
     "load",
 ]
 
-from sktime.base._base import BaseObject, BaseEstimator
+from sktime.base._base import BaseEstimator, BaseObject
 from sktime.base._meta import _HeterogenousMetaEstimator
 from sktime.base._serialize import load
