@@ -15,6 +15,18 @@ def load(serial):
     Returns
     -------
     unserialized self resulting in output `serial`, of `cls.save`
+
+    Example
+    -------
+    >>> from sktime.base import load
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.naive import NaiveForecaster
+    >>> y = load_airline()
+    >>> forecaster = NaiveForecaster()
+    >>> forecaster.fit(y, fh=[1, 2, 3])
+    >>> pkl = forecaster.save()
+    >>> forecaster_loaded = load(pkl)
+    >>> forecaster_loaded.predict()
     """
     from zipfile import ZipFile
 
