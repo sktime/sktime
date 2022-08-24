@@ -86,6 +86,7 @@ class BaseForecaster(BaseEstimator):
     """
 
     # default tag values - these typically make the "safest" assumption
+    # for more extensive documentation, see forecasting extension template
     _tags = {
         "scitype:y": "univariate",  # which y are fine? univariate/multivariate/both
         "ignores-exogeneous-X": False,  # does estimator ignore the exogeneous X?
@@ -98,7 +99,7 @@ class BaseForecaster(BaseEstimator):
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
         "fit_is_empty": False,  # is fit empty and can be skipped?
         "python_version": None,  # PEP 440 python version specifier to limit versions
-        "python_dependencies": None  # str or list of str, package soft dependencies
+        "python_dependencies": None,  # str or list of str, package soft dependencies
     }
 
     def __init__(self):
