@@ -596,6 +596,46 @@ class BaseObject(_BaseEstimator):
 
         return comp_dict
 
+    def save(self, path=None):
+        """Save serialized self to bytes-like object or to file.
+
+        Behaviour:
+        if `path` is None, returns an in-memory serialized self
+        if `path` is a file location, stores self at that location
+
+        saved files are zip files with following contents:
+        metadata - contains class name of self, i.e., type(self).__name__
+        object - serialized self. This class uses the default serialization (pickle).
+
+        Parameters
+        ----------
+        path : None or file location (str or Path)
+            if None, self is saved to an in-memory object
+            if file location, self is saved to that file location
+
+        Returns
+        -------
+        if `path` is None - in-memory serialized self
+        if `path` is file location - BaseObjectFile with reference to location
+        """
+        import pickle
+
+        if path is None:
+            return pickle.dumps(self)
+
+        from zipfile import ZipFile
+
+        with ZipFile(path) as zipfile:
+            with zipfile.open("metadata", mode="w") as meta_file:
+                meta_file.write(type(self).__name__)
+            with zipfile.open("object", mode="w") as object:
+                object.write(pickle.dumps(self))
+
+
+class BaseObjectFile:
+
+    pass
+
 
 class TagAliaserMixin:
     """Mixin class for tag aliasing and deprecation of old tags.
