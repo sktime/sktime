@@ -5,6 +5,7 @@ __author__ = ["ltsaprounis"]
 
 import re
 from copy import deepcopy
+from functools import wraps
 from inspect import getcallargs, getfullargspec
 
 from sktime.base import BaseEstimator
@@ -40,6 +41,7 @@ class _MockEstimatorMixin:
 def _method_logger(method):
     """Log the method and it's arguments."""
 
+    @wraps(wrapped=method)
     def wrapper(self, *args, **kwargs):
         args_dict = getcallargs(method, self, *args, **kwargs)
         if not isinstance(self, _MockEstimatorMixin):

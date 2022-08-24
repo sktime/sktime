@@ -81,6 +81,7 @@ class TransformerTestScenario(TestScenario, BaseObject):
         """
         # pre-refactor classes can't deal with Series *and* Panel both
         X_scitype = self.get_tag("X_scitype")
+        y_scitype = self.get_tag("y_scitype", None, raise_error=False)
 
         if _is_child_of(obj, OLD_PANEL_MIXINS) and X_scitype != "Panel":
             return False
@@ -95,14 +96,23 @@ class TransformerTestScenario(TestScenario, BaseObject):
 
         # the case that we would need to vectorize with y, skip
         X_inner_mtype = get_tag(obj, "X_inner_mtype")
-        X_inner_scitypes = mtype_to_scitype(X_inner_mtype, return_unique=True)
-        if not isinstance(X_inner_scitypes, list):
-            X_inner_scitypes = [X_inner_scitypes]
+        X_inner_scitypes = mtype_to_scitype(
+            X_inner_mtype, return_unique=True, coerce_to_list=True
+        )
         # we require vectorization from of a Series trafo to Panel data ...
         if X_scitype == "Panel" and "Panel" not in X_inner_scitypes:
             # ... but y is passed and y is not ignored internally ...
             if self.get_tag("has_y") and get_tag(obj, "y_inner_mtype") != "None":
                 # ... this would raise an error since vectorization is not defined
+                return False
+
+        # ensure scenario y matches type of inner y
+        y_inner_mtype = get_tag(obj, "y_inner_mtype")
+        if y_inner_mtype not in [None, "None"]:
+            y_inner_scitypes = mtype_to_scitype(
+                y_inner_mtype, return_unique=True, coerce_to_list=True
+            )
+            if y_scitype not in y_inner_scitypes:
                 return False
 
         # only applicable if X of supported index type
@@ -222,10 +232,34 @@ class TransformerFitTransformSeriesMultivariate(TransformerTestScenario):
 
     args = {
         "fit": {
-            "X": _make_series(n_columns=2, n_timepoints=10, random_state=RAND_SEED)
+            "X": _make_series(n_columns=2, n_timepoints=10, random_state=RAND_SEED),
         },
         "transform": {
             "X": _make_series(n_columns=2, n_timepoints=10, random_state=RAND_SEED)
+        },
+    }
+    default_method_sequence = ["fit", "transform"]
+
+
+class TransformerFitTransformSeriesUnivariateWithY(TransformerTestScenario):
+    """Fit/transform, univariate Series X and univariate Series y."""
+
+    _tags = {
+        "X_scitype": "Series",
+        "X_univariate": True,
+        "has_y": True,
+        "is_enabled": True,
+        "y_scitype": "Series",
+    }
+
+    args = {
+        "fit": {
+            "X": _make_series(n_columns=1, n_timepoints=10, random_state=RAND_SEED),
+            "y": _make_series(n_columns=1, n_timepoints=10, random_state=RAND_SEED),
+        },
+        "transform": {
+            "X": _make_series(n_columns=1, n_timepoints=10, random_state=RAND_SEED),
+            "y": _make_series(n_columns=1, n_timepoints=10, random_state=RAND_SEED),
         },
     }
     default_method_sequence = ["fit", "transform"]
@@ -289,7 +323,7 @@ class TransformerFitTransformPanelUnivariateWithClassY(TransformerTestScenario):
         "X_univariate": True,
         "is_enabled": True,
         "has_y": True,
-        "y_scitype": "classes",
+        "y_scitype": "Table",
     }
 
     args = {
@@ -325,7 +359,7 @@ class TransformerFitTransformPanelUnivariateWithClassYOnlyFit(TransformerTestSce
         "X_univariate": True,
         "is_enabled": False,
         "has_y": True,
-        "y_scitype": "classes",
+        "y_scitype": "Table",
     }
 
     args = {
@@ -380,6 +414,7 @@ class TransformerFitTransformHierarchicalMultivariate(TransformerTestScenario):
 scenarios_transformers = [
     TransformerFitTransformSeriesUnivariate,
     TransformerFitTransformSeriesMultivariate,
+    TransformerFitTransformSeriesUnivariateWithY,
     TransformerFitTransformPanelUnivariate,
     TransformerFitTransformPanelMultivariate,
     TransformerFitTransformPanelUnivariateWithClassY,
