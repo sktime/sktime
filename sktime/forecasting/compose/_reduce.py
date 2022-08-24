@@ -1659,40 +1659,29 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
 
 
 class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
-    """Direct reduction forecaster, incl single-output, multi-output, exogeneous Dir.
+    """Recursive reduction forecaster, incl exogeneous Rec.
 
-    Implements direct reduction, of forecasting to tabular regression.
-
-    For no `X`, defaults to DirMO (direct multioutput) for `X_treatment = "concurrent"`,
-    and simple direct (direct single-output) for `X_treatment = "shifted"`.
-
-    Direct single-output with concurrent `X` behaviour can be configured
-    by passing a single-output `scikit-learn` compatible transformer.
+    Implements recursive reduction, of forecasting to tabular regression.
 
     Algorithm details:
 
     In `fit`, given endogeneous time series `y` and possibly exogeneous `X`:
         fits `estimator` to feature-label pairs as defined as follows.
-    if `X_treatment = "concurrent":
-        features = `y(t)`, `y(t-1)`, ..., `y(t-window_size)`, if provided: `X(t+h)`
-        labels = `y(t+h)` for `h` in the forecasting horizon
+
+        features = `y(t)`, `y(t-1)`, ..., `y(t-window_size)`, if provided: `X(t+1)`
+        labels = `y(t+1)`
         ranging over all `t` where the above have been observed (are in the index)
-        for each `h` in the forecasting horizon (separate estimator fitted per `h`)
-    if `X_treatment = "shifted":
-        features = `y(t)`, `y(t-1)`, ..., `y(t-window_size)`, if provided: `X(t)`
-        labels = `y(t+h_1)`, ..., `y(t+h_k)` for `h_j` in the forecasting horizon
-        ranging over all `t` where the above have been observed (are in the index)
-        estimator is fitted as a multi-output estimator (for all  `h_j` simultaneously)
 
     In `predict`, given possibly exogeneous `X`, at cutoff time `c`,
-    if `X_treatment = "concurrent":
         applies fitted estimators' predict to
-        feature = `y(c)`, `y(c-1)`, ..., `y(c-window_size)`, if provided: `X(c+h)`
-        to obtain a prediction for `y(c+h)`, for each `h` in the forecasting horizon
-    if `X_treatment = "shifted":
-        applies fitted estimator's predict to
-        features = `y(c)`, `y(c-1)`, ..., `y(c-window_size)`, if provided: `X(t)`
-        to obtain prediction for `y(c+h_1)`, ..., `y(c+h_k)` for `h_j` in forec. horizon
+        feature = `y(c)`, `y(c-1)`, ..., `y(c-window_size)`, if provided: `X(c+1)`
+        to obtain a prediction for `y(c+1)`.
+        If a given `y(t)` has not been observed, it is replaced by a prediction
+        obtained in the same way - done repeatedly until all predictions are obtained.
+        Out-of-sample, this results in the "recursive" behaviour, where predictions
+        at time points c+1, c+2, etc, are obtained iteratively.
+        In-sample, predictions are obtained in a single step, with potential
+        missing values obtained via the `impute` strategy chosen.
 
     Parameters
     ----------
@@ -1964,7 +1953,6 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
             y_pred = pd.DataFrame(y_pred, columns=y_cols, index=fh_idx)
 
         return y_pred
-
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
