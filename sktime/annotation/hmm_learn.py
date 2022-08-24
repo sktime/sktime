@@ -5,6 +5,9 @@ Hidden Markov Model based annotation from hmmlearn.
 
 This code provides a base interface template for models
 from hmmlearn for using that library for annotation of time series.
+
+Please see the original library
+(https://github.com/hmmlearn/hmmlearn/blob/main/lib/hmmlearn/hmm.py)
 """
 
 import pandas as pd
@@ -78,8 +81,7 @@ class GaussianHMM(BaseHMMLearn):
     Examples
     --------
     >>> from sktime.annotation.hmm_learn import GaussianHMM
-    >>> GaussianHMM(n_components=2)  #doctest: +ELLIPSIS
-    GaussianHMM(algorithm='viterbi',...
+    >>> GaussianHMM(algorithm='viterbi', n_components=2)
     """
 
     n_components: int = 1
