@@ -1856,7 +1856,11 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         y_lags = list(fh_rel)
 
         # for all positive fh
-        y_lags_no_gaps = range(y_lags[-1])
+        y_lags_no_gaps = range(1, y_lags[-1] + 1)
+        y_abs_no_gaps = ForecastingHorizon(
+            list(y_lags_no_gaps), is_relative=True, freq=self._cutoff
+        )
+        y_abs_no_gaps = y_abs_no_gaps.to_absolute(self._cutoff)
 
         # we will keep growing y_plus_preds recursively
         y_plus_preds = self._y
@@ -1895,7 +1899,8 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
             y_plus_preds = y_plus_preds.combine_first(y_pred_new)
 
         y_pred = np.concatenate(y_pred_list)
-        y_pred = pd.DataFrame(y_pred, columns=y_cols, index=fh_idx)
+        y_pred = pd.DataFrame(y_pred, columns=y_cols, index=y_abs_no_gaps)
+        y_pred = slice_at_ix(y_pred, fh_idx)
 
         if isinstance(y_pred.index, pd.MultiIndex):
             y_pred = y_pred.sort_index()
