@@ -616,7 +616,7 @@ class BaseObject(_BaseEstimator):
         Returns
         -------
         if `path` is None - in-memory serialized self
-        if `path` is file location - BaseObjectFile with reference to location
+        if `path` is file location - ZipFile with reference to location
         """
         import pickle
 
@@ -631,10 +631,43 @@ class BaseObject(_BaseEstimator):
             with zipfile.open("object", mode="w") as object:
                 object.write(pickle.dumps(self))
 
+        return ZipFile(path)
 
-class BaseObjectFile:
+    @classmethod
+    def load_from_serial(cls, serial):
+        """Load object from serialized memory container.
 
-    pass
+        Parameters
+        ----------
+        serial : output of `cls.save(None)`
+
+        Returns
+        -------
+        unserialized self resulting in output `serial`, of `cls.save(None)`
+        """
+        import pickle
+
+        return pickle.loads(serial)
+
+    @classmethod
+    def load_from_path(cls, path):
+        """Load object from file location.
+
+        Parameters
+        ----------
+        path : file location (str or Path)
+
+        Returns
+        -------
+        unserialized self resulting in output at `path`, of `cls.save(path)`
+        """
+        import pickle
+        from zipfile import ZipFile
+
+        with ZipFile(path) as zipfile:
+            with zipfile.open("object", mode="r") as object:
+                pickled = object.read()
+                return pickle.reads(pickled)
 
 
 class TagAliaserMixin:
