@@ -604,7 +604,7 @@ class BaseObject(_BaseEstimator):
         if `path` is a file location, stores self at that location
 
         saved files are zip files with following contents:
-        metadata - contains class name of self, i.e., type(self).__name__
+        metadata - contains class of self, i.e., type(self)
         object - serialized self. This class uses the default serialization (pickle).
 
         Parameters
@@ -621,13 +621,13 @@ class BaseObject(_BaseEstimator):
         import pickle
 
         if path is None:
-            return pickle.dumps(self)
+            return (type(self), pickle.dumps(self))
 
         from zipfile import ZipFile
 
         with ZipFile(path) as zipfile:
             with zipfile.open("metadata", mode="w") as meta_file:
-                meta_file.write(type(self).__name__)
+                meta_file.write(type(self))
             with zipfile.open("object", mode="w") as object:
                 object.write(pickle.dumps(self))
 
@@ -639,7 +639,7 @@ class BaseObject(_BaseEstimator):
 
         Parameters
         ----------
-        serial : output of `cls.save(None)`
+        serial : 1st element of output of `cls.save(None)`
 
         Returns
         -------
@@ -650,24 +650,20 @@ class BaseObject(_BaseEstimator):
         return pickle.loads(serial)
 
     @classmethod
-    def load_from_path(cls, path):
+    def load_from_path(cls, serial):
         """Load object from file location.
 
         Parameters
         ----------
-        path : file location (str or Path)
+        serial : result of ZipFile(path).open("object)
 
         Returns
         -------
         unserialized self resulting in output at `path`, of `cls.save(path)`
         """
         import pickle
-        from zipfile import ZipFile
 
-        with ZipFile(path) as zipfile:
-            with zipfile.open("object", mode="r") as object:
-                pickled = object.read()
-                return pickle.reads(pickled)
+        return pickle.loads(serial)
 
 
 class TagAliaserMixin:
