@@ -81,7 +81,7 @@ class GaussianHMM(BaseHMMLearn):
     Examples
     --------
     >>> from sktime.annotation.hmm_learn import GaussianHMM
-    >>> GaussianHMM(algorithm='viterbi', n_components=2)
+    >>> model = GaussianHMM(algorithm='viterbi', n_components=2)
     """
 
     n_components: int = 1
