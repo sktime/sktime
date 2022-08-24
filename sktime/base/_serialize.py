@@ -10,28 +10,31 @@ def load(serial):
 
     Parameters
     ----------
-    serial : serialized container, or str (path)
+    serial : serialized container, str (path), or ZipFile (reference)
 
     Returns
     -------
     unserialized self resulting in output `serial`, of `cls.save`
     """
+    from zipfile import ZipFile
+
     if isinstance(serial, tuple):
         cls = serial[0]
         stored = serial[1]
-        return stored.load_from_serial(stored)
-    elif isinstance(serial, str):
-        from zipfile import ZipFile
+        return cls.load_from_serial(stored)
+    elif isinstance(serial, (str, ZipFile)):
 
-        with ZipFile(serial) as zipfile:
-            with zipfile.open("metadata", mode="r") as metadata:
-                cls = metadata.read()
-            with zipfile.open("object", mode="r") as object:
-                return cls.load_from_path(object.read())
+        if isinstance(serial, str):
+            zipfile = ZipFile(serial)
+
+        with zipfile.open("metadata", mode="r") as metadata:
+            cls = metadata.read()
+        with zipfile.open("object", mode="r") as object:
+            return cls.load_from_path(object.read())
     else:
         raise TypeError(
             "serial must either be a serialized in-memory sktime object, "
-            "or a str pointing to a file which is a serialized sktime object, "
-            "created by save of an sktime object; but found serial "
+            "or a str or ZipFile pointing to a file which is a serialized sktime "
+            "object, created by save of an sktime object; but found serial "
             f"of type {serial}"
         )
