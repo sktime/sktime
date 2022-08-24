@@ -235,7 +235,9 @@ class WEASEL_STEROIDS(BaseClassifier):
             # TODO works only for alphabet of size 2 !!!
             # TODO use actual feature counts??!!
             self.max_feature_count = (
-                2 * (2 ** np.max(self.word_lengths)) * self.ensemble_size
+                # 2 * (2 ** np.max(self.word_lengths)) * self.ensemble_size
+                (2 ** np.max(self.word_lengths))
+                * self.ensemble_size
             )
 
         # Randomly choose window sizes
@@ -289,8 +291,7 @@ class WEASEL_STEROIDS(BaseClassifier):
             sfa_words.append(sfa_words2)
 
         # merging arrays from different threads
-        all_words = np.zeros((len(X), self.total_features_count), dtype=np.float)
-        merge_feature_vectors(all_words, sfa_words)
+        all_words = merge_feature_vectors(len(X), self.total_features_count, sfa_words)
 
         self.clf = RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=False)
         self.clf.fit(all_words, y)
@@ -355,9 +356,7 @@ class WEASEL_STEROIDS(BaseClassifier):
             for i in range(self.ensemble_size)
         )
 
-        all_words = np.zeros((len(X), self.total_features_count), dtype=np.float)
-        merge_feature_vectors(all_words, parallel_res)
-        return all_words
+        return merge_feature_vectors(len(X), self.total_features_count, parallel_res)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -519,13 +518,13 @@ def create_feature_names(sfa_words):
 @njit(cache=True, fastmath=True)
 def merge_features_none(X2_index, n_instances, sfa_words, word_length):
     feature_count = np.int32(2**word_length)
-    all_win_words = np.zeros((n_instances, 2 * feature_count))  # , dtype=np.float
+    all_win_words = np.zeros((n_instances, feature_count))  # , dtype=np.float
     for j in range(len(sfa_words)):
-        for k, key in enumerate(sfa_words[j]):
+        for _, key in enumerate(sfa_words[j]):
             all_win_words[j, key] += 1
-            cc = feature_count + key
-            if all_win_words[j, cc] == 0:
-                all_win_words[j, cc] = X2_index[k] / sfa_words.shape[1]
+            # cc = feature_count + key
+            # if all_win_words[j, cc] == 0:
+            #    all_win_words[j, cc] = X2_index[k] / sfa_words.shape[1]
     return all_win_words
 
 
@@ -582,12 +581,12 @@ def create_bag(
     # merging arrays
     all_win_words = np.zeros((len(X), feature_count))
     for j in range(len(sfa_words)):
-        for k, key in enumerate(sfa_words[j]):
+        for _, key in enumerate(sfa_words[j]):
             if feature_selection == "none":
                 all_win_words[j, key] += 1
-                cc = feature_count // 2 + key
-                if all_win_words[j, cc] == 0:
-                    all_win_words[j, cc] = X2_index[k] / sfa_words.shape[1]
+                # cc = feature_count // 2 + key
+                # if all_win_words[j, cc] == 0:
+                #    all_win_words[j, cc] = X2_index[k] / sfa_words.shape[1]
             else:
                 if key in relevant_features:
                     o = relevant_features[key]
@@ -596,10 +595,12 @@ def create_bag(
 
 
 @njit(cache=True, fastmath=True)
-def merge_feature_vectors(all_words, sfa_words):
+def merge_feature_vectors(d1, d2, sfa_words):
+    all_words = np.zeros((d1, d2))
     current_features_count = 0
     for sfa_words2 in sfa_words:
         all_words[
             :, current_features_count : (current_features_count + sfa_words2.shape[1])
         ] = sfa_words2
         current_features_count += sfa_words2.shape[1]
+    return all_words
