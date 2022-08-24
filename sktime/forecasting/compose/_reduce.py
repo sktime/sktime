@@ -1265,13 +1265,16 @@ def slice_at_ix(df, ix):
     Parameters
     ----------
     df : pd.DataFrame
-    ix : pandas compatible index value
+    ix : pandas compatible index value, or iterable of index values (incl pd.Index)
 
     Returns
     -------
     pd.DataFrame, row(s) of df, sliced at last (-1 st) level of df being equal to ix
         all index levels are retained in the return, none are dropped
+        CAVEAT: index is sorted by last (-1 st) level if ix is iterable
     """
+    if isinstance(ix, (list, pd.Index)):
+        return pd.concat([slice_at_ix(df, x) for x in ix])
     if isinstance(df.index, pd.MultiIndex):
         return df.xs(ix, level=-1, axis=0, drop_level=False)
     else:
