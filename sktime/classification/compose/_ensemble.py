@@ -236,6 +236,7 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
             class_weight=class_weight,
             max_samples=max_samples,
         )
+        BaseClassifier.__init__(self)
 
         # We need to add is-fitted state when inheriting from scikit-learn
         self._is_fitted = False

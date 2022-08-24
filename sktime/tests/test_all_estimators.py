@@ -21,7 +21,7 @@ from sklearn.utils.estimator_checks import (
     check_get_params_invariance as _check_get_params_invariance,
 )
 
-from sktime.base import BaseEstimator
+from sktime.base import BaseEstimator, BaseObject
 from sktime.dists_kernels._base import (
     BasePairwiseTransformer,
     BasePairwiseTransformerPanel,
@@ -49,10 +49,45 @@ from sktime.utils._testing.estimator_checks import (  # _get_args,
     _list_required_methods,
 )
 from sktime.utils._testing.scenarios_getter import retrieve_scenarios
+from sktime.utils.sampling import random_partition
 from sktime.utils.validation._dependencies import (
     _check_dl_dependencies,
     _check_estimator_deps,
 )
+
+# whether to subsample estimators per os/version partition matrix design
+# default is False, can be set to True by pytest --matrixdesign True flag
+MATRIXDESIGN = False
+
+
+def subsample_by_version_os(x):
+    """Subsample objects by operating system and python version.
+
+    Ensures each estimator is tested at least once on every OS and python version,
+    if combined with a matrix of OS/versions.
+
+    Currently assumes that matrix includes py3.8-3.10, and win/ubuntu/mac.
+    """
+    import platform
+    import sys
+
+    ix = sys.version_info.minor % 3
+    os_str = platform.system()
+    if os_str == "Windows":
+        ix = ix
+    elif os_str == "Linux":
+        ix = ix + 1
+    elif os_str == "Darwin":
+        ix = ix + 2
+    else:
+        raise ValueError(f"found unexpected OS string: {os_str}")
+    ix = ix % 3
+
+    part = random_partition(len(x), 3)
+    subset_idx = part[ix]
+    res = [x[i] for i in subset_idx]
+
+    return res
 
 
 class BaseFixtureGenerator:
@@ -152,11 +187,17 @@ class BaseFixtureGenerator:
 
     def _all_estimators(self):
         """Retrieve list of all estimator classes of type self.estimator_type_filter."""
-        return all_estimators(
+        est_list = all_estimators(
             estimator_types=getattr(self, "estimator_type_filter", None),
             return_names=False,
             exclude_estimators=EXCLUDE_ESTIMATORS,
         )
+        # subsample estimators by OS & python version
+        # this ensures that only a 1/3 of estimators are tested for a given combination
+        # but all are tested on every OS at least once, and on every python version once
+        if MATRIXDESIGN:
+            est_list = subsample_by_version_os(est_list)
+        return est_list
 
     def generator_dict(self):
         """Return dict with methods _generate_[variable] collected in a dict.
@@ -393,13 +434,13 @@ class QuickTester:
         Examples
         --------
         >>> from sktime.forecasting.naive import NaiveForecaster
-        >>> from sktime.tests.test_all_estimators import TestAllEstimators
-        >>> TestAllEstimators().run_tests(
+        >>> from sktime.tests.test_all_estimators import TestAllObjects
+        >>> TestAllObjects().run_tests(
         ...     NaiveForecaster,
-        ...     tests_to_run="test_required_params"
+        ...     tests_to_run="test_constructor"
         ... )
-        {'test_required_params[NaiveForecaster]': 'PASSED'}
-        >>> TestAllEstimators().run_tests(
+        {'test_constructor[NaiveForecaster]': 'PASSED'}
+        >>> TestAllObjects().run_tests(
         ...     NaiveForecaster, fixtures_to_run="test_repr[NaiveForecaster-2]"
         ... )
         {'test_repr[NaiveForecaster-2]': 'PASSED'}
@@ -548,7 +589,7 @@ class QuickTester:
                 obj = [obj]
             if not isinstance(obj, list):
                 raise ValueError(msg)
-            if not np.all(isinstance(x, str) for x in obj):
+            if not np.all([isinstance(x, str) for x in obj]):
                 raise ValueError(msg)
         return obj
 
@@ -625,8 +666,10 @@ class QuickTester:
         return fixture_vars_return, fixture_prod_return, fixture_names_return
 
 
-class TestAllEstimators(BaseFixtureGenerator, QuickTester):
-    """Package level tests for all sktime estimators."""
+class TestAllObjects(BaseFixtureGenerator, QuickTester):
+    """Package level tests for all sktime objects."""
+
+    estimator_type_filter = "object"
 
     def test_create_test_instance(self, estimator_class):
         """Check first that create_test_instance logic works."""
@@ -637,6 +680,14 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
             "object returned by create_test_instance must be an instance of the class, "
             f"found {type(estimator)}"
         )
+
+        msg = (
+            f"{estimator_class.__name__}.__init__ should call "
+            f"super({estimator_class.__name__}, self).__init__, "
+            "but that does not seem to be the case. Please ensure to call the "
+            f"parent class's constructor in {estimator_class.__name__}.__init__"
+        )
+        assert hasattr(estimator, "_tags_dynamic"), msg
 
     def test_create_test_instances_and_names(self, estimator_class):
         """Check that create_test_instances_and_names works."""
@@ -651,12 +702,12 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
             f"found {type(names)}"
         )
 
-        assert np.all(isinstance(est, estimator_class) for est in estimators), (
+        assert np.all([isinstance(est, estimator_class) for est in estimators]), (
             "list elements of first return returned by create_test_instances_and_names "
             "all must be an instance of the class"
         )
 
-        assert np.all(isinstance(name, names) for name in names), (
+        assert np.all([isinstance(name, str) for name in names]), (
             "list elements of second return returned by create_test_instances_and_names"
             " all must be strings"
         )
@@ -665,37 +716,6 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
             "the two lists returned by create_test_instances_and_names must have "
             "equal length"
         )
-
-    def test_required_params(self, estimator_class):
-        """Check required parameter interface."""
-        Estimator = estimator_class
-        # Check common meta-estimator interface
-        if hasattr(Estimator, "_required_parameters"):
-            required_params = Estimator._required_parameters
-
-            assert isinstance(required_params, list), (
-                f"For estimator: {Estimator}, `_required_parameters` must be a "
-                f"tuple, but found type: {type(required_params)}"
-            )
-
-            assert all([isinstance(param, str) for param in required_params]), (
-                f"For estimator: {Estimator}, elements of `_required_parameters` "
-                f"list must be strings"
-            )
-
-            # check if needless parameters are in _required_parameters
-            init_params = [
-                par.name for par in signature(Estimator.__init__).parameters.values()
-            ]
-            in_required_but_not_init = [
-                param for param in required_params if param not in init_params
-            ]
-            if len(in_required_but_not_init) > 0:
-                raise ValueError(
-                    f"Found parameters in `_required_parameters` which "
-                    f"are not in `__init__`: "
-                    f"{in_required_but_not_init}"
-                )
 
     def test_estimator_tags(self, estimator_class):
         """Check conventions on estimator tags."""
@@ -723,15 +743,21 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
             )
 
     def test_inheritance(self, estimator_class):
-        """Check that estimator inherits from BaseEstimator."""
-        assert issubclass(estimator_class, BaseEstimator), (
-            f"Estimator: {estimator_class} " f"is not a sub-class of " f"BaseEstimator."
-        )
-        Estimator = estimator_class
+        """Check that estimator inherits from BaseObject and/or BaseEstimator."""
+        assert issubclass(
+            estimator_class, BaseObject
+        ), f"object {estimator_class} is not a sub-class of BaseObject."
+
+        if hasattr(estimator_class, "fit"):
+            assert issubclass(estimator_class, BaseEstimator), (
+                f"estimator: {estimator_class} has fit method, but"
+                f"is not a sub-class of BaseEstimator."
+            )
+
         # Usually estimators inherit only from one BaseEstimator type, but in some cases
         # they may be predictor and transformer at the same time (e.g. pipelines)
         n_base_types = sum(
-            issubclass(Estimator, cls) for cls in VALID_ESTIMATOR_BASE_TYPES
+            issubclass(estimator_class, cls) for cls in VALID_ESTIMATOR_BASE_TYPES
         )
 
         assert 2 >= n_base_types >= 1
@@ -739,14 +765,15 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
         # If the estimator inherits from more than one base estimator type, we check if
         # one of them is a transformer base type
         if n_base_types > 1:
-            assert issubclass(Estimator, VALID_TRANSFORMER_TYPES)
+            assert issubclass(estimator_class, VALID_TRANSFORMER_TYPES)
 
     def test_has_common_interface(self, estimator_class):
         """Check estimator implements the common interface."""
         estimator = estimator_class
 
         # Check class for type of attribute
-        assert isinstance(estimator.is_fitted, property)
+        if isinstance(estimator_class, BaseEstimator):
+            assert isinstance(estimator.is_fitted, property)
 
         required_methods = _list_required_methods(estimator_class)
 
@@ -843,7 +870,8 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
 
     def test_constructor(self, estimator_class):
         """Check that the constructor has correct signature and behaves correctly."""
-        assert getfullargspec(estimator_class.__init__).varkw is None
+        msg = "constructor __init__ should have no varargs"
+        assert getfullargspec(estimator_class.__init__).varkw is None, msg
 
         estimator = estimator_class.create_test_instance()
         assert isinstance(estimator, estimator_class)
@@ -872,26 +900,17 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
 
         params = estimator.get_params()
 
-        # Filter out required parameters with no default value and parameters
-        # set for running tests
-        required_params = getattr(estimator, "_required_parameters", tuple())
-
         test_params = estimator_class.get_test_params()
         if isinstance(test_params, list):
             test_params = test_params[0]
         test_params = test_params.keys()
 
-        init_params = [
-            param
-            for param in init_params
-            if param.name not in required_params and param.name not in test_params
-        ]
+        init_params = [param for param in init_params if param.name not in test_params]
 
         for param in init_params:
             assert param.default != param.empty, (
                 "parameter `%s` for %s has no default value and is not "
-                "included in `_required_parameters`"
-                % (param.name, estimator.__class__.__name__)
+                "set in `get_test_params`" % (param.name, estimator.__class__.__name__)
             )
             if type(param.default) is type:
                 assert param.default in [np.float64, np.int64]
@@ -920,16 +939,35 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
                 else:
                     assert param_value == param.default, param.name
 
+    def test_valid_estimator_class_tags(self, estimator_class):
+        """Check that Estimator class tags are in VALID_ESTIMATOR_TAGS."""
+        for tag in estimator_class.get_class_tags().keys():
+            assert tag in VALID_ESTIMATOR_TAGS
+
+    def test_valid_estimator_tags(self, estimator_instance):
+        """Check that Estimator tags are in VALID_ESTIMATOR_TAGS."""
+        for tag in estimator_instance.get_tags().keys():
+            assert tag in VALID_ESTIMATOR_TAGS
+
+
+class TestAllEstimators(BaseFixtureGenerator, QuickTester):
+    """Package level tests for all sktime estimators, i.e., objects with fit."""
+
     def test_fit_updates_state(self, estimator_instance, scenario):
         """Check fit/update state change."""
         # Check that fit updates the is-fitted states
         attrs = ["_is_fitted", "is_fitted"]
 
         estimator = estimator_instance
+        estimator_class = type(estimator_instance)
 
-        assert hasattr(
-            estimator, "_is_fitted"
-        ), f"Estimator: {estimator.__name__} does not set_is_fitted in construction"
+        msg = (
+            f"{estimator_class.__name__}.__init__ should call "
+            f"super({estimator_class.__name__}, self).__init__, "
+            "but that does not seem to be the case. Please ensure to call the "
+            f"parent class's constructor in {estimator_class.__name__}.__init__"
+        )
+        assert hasattr(estimator, "_is_fitted"), msg
 
         # Check is_fitted attribute is set correctly to False before fit, at init
         for attr in attrs:
@@ -1178,16 +1216,6 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
                 result_multiple_process,
                 err_msg="Results are not equal for n_jobs=1 and n_jobs=-1",
             )
-
-    def test_valid_estimator_class_tags(self, estimator_class):
-        """Check that Estimator class tags are in VALID_ESTIMATOR_TAGS."""
-        for tag in estimator_class.get_class_tags().keys():
-            assert tag in VALID_ESTIMATOR_TAGS
-
-    def test_valid_estimator_tags(self, estimator_instance):
-        """Check that Estimator tags are in VALID_ESTIMATOR_TAGS."""
-        for tag in estimator_instance.get_tags().keys():
-            assert tag in VALID_ESTIMATOR_TAGS
 
     def _get_err_msg(estimator):
         return (

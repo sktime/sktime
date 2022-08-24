@@ -724,7 +724,7 @@ def load_airline():
 
     References
     ----------
-    ..[1] Box, G. E. P., Jenkins, G. M. and Reinsel, G. C. (1976) Time Series
+    .. [1] Box, G. E. P., Jenkins, G. M. and Reinsel, G. C. (1976) Time Series
           Analysis, Forecasting and Control. Third Edition. Holden-Day.
           Series G.
     """
