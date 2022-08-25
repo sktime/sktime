@@ -208,7 +208,7 @@ class Differencer(BaseTransformer):
         self._cumulative_lags = self._lags.cumsum()
         self._prior_cum_lags = np.zeros_like(self._cumulative_lags)
         self._prior_cum_lags[1:] = self._cumulative_lags[:-1]
-        self._Z = X.copy()
+        self._X = X.copy()
 
         self._freq = get_cutoff(X, return_index=True)
         return self
@@ -261,48 +261,41 @@ class Differencer(BaseTransformer):
         Xt : pd.Series or pd.DataFrame, same type as X
             inverse transformed version of X
         """
-        Z = X
-        is_df = isinstance(Z, pd.DataFrame)
-        is_contained_by_fit_z, pad_z_inv = self._check_inverse_transform_index(Z)
+        is_df = isinstance(X, pd.DataFrame)
+        _, pad_z_inv = self._check_inverse_transform_index(X)
 
-        # If `Z` is entirely contained in fitted `_Z` we can just return
-        # the values from the timeseires stored in `fit` as a shortcut
-        if is_contained_by_fit_z:
-            Z_inv = self._Z.loc[Z.index, :] if is_df else self._Z.loc[Z.index]
+        X_inv = X.copy()
+        for i, lag_info in enumerate(
+            zip(self._lags[::-1], self._prior_cum_lags[::-1])
+        ):
+            lag, prior_cum_lag = lag_info
+            _lags = self._lags[::-1][i + 1 :]
+            _transformed = _diff_transform(self._X, _lags)
 
-        else:
-            Z_inv = Z.copy()
-            for i, lag_info in enumerate(
-                zip(self._lags[::-1], self._prior_cum_lags[::-1])
-            ):
-                lag, prior_cum_lag = lag_info
-                _lags = self._lags[::-1][i + 1 :]
-                _transformed = _diff_transform(self._Z, _lags)
+            # Determine index values for initial values needed to reverse
+            # the differencing for the specified lag
+            if pad_z_inv:
+                cutoff = X_inv.index[0]
+            else:
+                cutoff = X_inv.index[prior_cum_lag + lag]
+            fh = ForecastingHorizon(np.arange(-1, -(lag + 1), -1), freq=self._freq)
+            index = fh.to_absolute(cutoff).to_pandas()
 
-                # Determine index values for initial values needed to reverse
-                # the differencing for the specified lag
-                if pad_z_inv:
-                    cutoff = Z_inv.index[0]
-                else:
-                    cutoff = Z_inv.index[prior_cum_lag + lag]
-                fh = ForecastingHorizon(np.arange(-1, -(lag + 1), -1), freq=self._freq)
-                index = fh.to_absolute(cutoff).to_pandas()
+            if is_df:
+                prior_n_timepoint_values = _transformed.loc[index, :]
+            else:
+                prior_n_timepoint_values = _transformed.loc[index]
+            if pad_z_inv:
+                X_inv = pd.concat([prior_n_timepoint_values, X_inv])
+            else:
+                X_inv.update(prior_n_timepoint_values)
 
-                if is_df:
-                    prior_n_timepoint_values = _transformed.loc[index, :]
-                else:
-                    prior_n_timepoint_values = _transformed.loc[index]
-                if pad_z_inv:
-                    Z_inv = pd.concat([prior_n_timepoint_values, Z_inv])
-                else:
-                    Z_inv.update(prior_n_timepoint_values)
-
-                Z_inv = _inverse_diff(Z_inv, lag)
+            X_inv = _inverse_diff(X_inv, lag)
 
         if pad_z_inv:
-            Z_inv = Z_inv.loc[Z.index, :] if is_df else Z_inv.loc[Z.index]
+            X_inv = X_inv.loc[X.index, :] if is_df else X_inv.loc[X.index]
 
-        Xt = Z_inv
+        Xt = X_inv
 
         return Xt
 
