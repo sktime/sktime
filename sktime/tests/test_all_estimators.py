@@ -42,9 +42,10 @@ from sktime.utils._testing._conditional_fixtures import (
     create_conditional_fixtures_and_names,
 )
 from sktime.utils._testing.deep_equals import deep_equals
-from sktime.utils._testing.estimator_checks import (  # _get_args,
+from sktime.utils._testing.estimator_checks import (
     _assert_array_almost_equal,
     _assert_array_equal,
+    _get_args,
     _has_capability,
     _list_required_methods,
 )
@@ -877,8 +878,7 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
         assert isinstance(estimator, estimator_class)
 
         # Ensure that each parameter is set in init
-        # init_params = _get_args(type(estimator).__init__)
-        init_params = vars(estimator)
+        init_params = _get_args(type(estimator).__init__)
         invalid_attr = set(init_params) - set(vars(estimator)) - {"self"}
         assert not invalid_attr, (
             "Estimator %s should store all parameters"
