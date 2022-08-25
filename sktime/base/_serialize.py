@@ -24,9 +24,10 @@ def load(serial):
     >>> y = load_airline()
     >>> forecaster = NaiveForecaster()
     >>> forecaster.fit(y, fh=[1, 2, 3])
+    NaiveForecaster()
     >>> pkl = forecaster.save()
     >>> forecaster_loaded = load(pkl)
-    >>> forecaster_loaded.predict()
+    >>> y_pred = forecaster_loaded.predict()
     """
     from zipfile import ZipFile
 
