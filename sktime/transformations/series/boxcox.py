@@ -253,7 +253,7 @@ class LogTransformer(BaseTransformer):
         "capability:inverse_transform": True,
     }
 
-    def _transform(self, X, y=None):
+    def _transform(self, X, y=None, offset = 0):
         """Transform X and return a transformed version.
 
         private _transform containing the core logic, called from transform
@@ -264,16 +264,20 @@ class LogTransformer(BaseTransformer):
             Data to be transformed
         y : ignored argument for interface compatibility
             Additional data, e.g., labels for transformation
+        offset : parameter set to deal with values of the data < 1,
+                 The value of this can be set according to your data.
+                 e.g. if min(data) = -4 , offset = 5 , would help the
+                 log transformation work well.
 
         Returns
         -------
         Xt : 2D np.ndarray
             transformed version of X
         """
-        Xt = np.log(X)
+        Xt = np.log(X+offset)
         return Xt
 
-    def _inverse_transform(self, X, y=None):
+    def _inverse_transform(self, X, y=None, offset = 0):
         """Inverse transform X and return an inverse transformed version.
 
         core logic
@@ -284,13 +288,17 @@ class LogTransformer(BaseTransformer):
             Data to be transformed
         y : ignored argument for interface compatibility
             Additional data, e.g., labels for transformation
+        offset : parameter set to deal with values of the data < 1,
+                 The value of this can be set according to your data.
+                 e.g. if min(data) = -4 , offset = 5 , would help the
+                 log transformation work well.
 
         Returns
         -------
         Xt : 2D np.ndarray
             inverse transformed version of X
         """
-        Xt = np.exp(X)
+        Xt = np.exp(X+ offset)
         return Xt
 
 
