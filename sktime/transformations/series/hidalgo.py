@@ -260,7 +260,7 @@ class Hidalgo(BaseTransformer):
 
         return (V, NN, a1, b1, c1, Z, f1, N_in)
 
-    def gibbs_sampling(
+    def _gibbs_sampling(
         self,
         N,
         mu,
@@ -604,7 +604,7 @@ class Hidalgo(BaseTransformer):
 
         for _ in range(n_replicas):
 
-            sampling = self.gibbs_sampling(
+            sampling = self._gibbs_sampling(
                 N,
                 mu,
                 Iin,
@@ -661,12 +661,21 @@ class Hidalgo(BaseTransformer):
         return self
 
     def _transform(self, X, y=None):
-        """Return the manifold k corresponding to each data point i.
+        """Transform X and return a transformed version.
+
+        private _transform containing core logic, called from transform
+
+        Parameters
+        ----------
+        X : Series of mtype X_inner_mtype
+            if X_inner_mtype is list, _transform must support all types in it
+            Data to be transformed
+        y : Series of mtype y_inner_mtype, default=None
+            Not used in this unsupervised implementation
 
         Returns
         -------
-        Z : 1D np.ndarray of length N
-            base-zero integer values corresponsing to segment (manifold k)
+        transformed version of X
         """
         return self._Z
 

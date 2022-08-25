@@ -263,7 +263,7 @@ def test_gibbs():
     N, mu, Iin, Iout, Iout_count, Iout_track = model._get_neighbourhood_params(X)
     V, NN, a1, b1, c1, Z, f1, N_in = model._initialise_params(N, mu, Iin, _rng)
 
-    sampling = model.gibbs_sampling(
+    sampling = model._gibbs_sampling(
         N,
         mu,
         Iin,
