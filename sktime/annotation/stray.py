@@ -44,6 +44,7 @@ class STRAY(BaseSeriesAnnotator):
         p=0.5,
         tn=50,
         outtail="max",
+        labels="indicator",
     ):
         self.alpha = alpha
         self.k = k
@@ -52,7 +53,8 @@ class STRAY(BaseSeriesAnnotator):
         self.p = p
         self.tn = tn
         self.outtail = outtail
-        super(STRAY, self).__init__(fmt="dense", labels="int_label")
+        self.labels = labels
+        super(STRAY, self).__init__(fmt="dense", labels=self.labels)
 
     def _find_threshold(self, outlier_score, n):
 
@@ -96,9 +98,7 @@ class STRAY(BaseSeriesAnnotator):
             d = distances[:, 1]
         else:
             diff = np.apply_along_axis(np.diff, 1, distances)
-            d = distances[
-                range(n), np.apply_along_axis(np.argmax, 1, diff) + 1
-            ]  # FIXME: length of n??
+            d = distances[range(n), np.apply_along_axis(np.argmax, 1, diff) + 1]
 
         out_index = self._find_threshold(d, n)
         return {"idx_outliers": out_index, "out_scores": d}
@@ -114,14 +114,18 @@ class STRAY(BaseSeriesAnnotator):
 
         n = np.shape(X_dropna)[0]
         outliers = self._use_KNN(X_dropna, n)
+
+        # adjusted back to length r, for missing data
         slice_ = [True if i in outliers["idx_outliers"] else False for i in range(n)]
-        idx_outliers = idx_dropna[slice_]  # adjusted for missing data
-        outlier_flag = [1 if i in idx_outliers else 0 for i in range(r)]
+        idx_outliers = idx_dropna[slice_]
+        outlier_bool = [1 if i in idx_outliers else 0 for i in range(r)]
+        outlier_scores = [
+            np.nan if i in idx_outliers else outliers["out_scores"][i] for i in range(r)
+        ]
 
         return {
-            "idx_outliers": idx_outliers,
-            "out_scores": outliers["out_scores"],
-            "outlier_flag": outlier_flag,
+            "outlier_scores": outlier_scores,
+            "outlier_bool": outlier_bool,
         }
 
     def _fit(self, X, Y=None):
@@ -140,4 +144,10 @@ class STRAY(BaseSeriesAnnotator):
 
     def _predict(self, X):
         """Something."""
-        return self._find_HDoutliers(X)
+
+        info_dict = self._find_HDoutliers(X)
+
+        if self.labels == "scores":
+            return info_dict["outlier_scores"]
+        else:
+            return info_dict["outlier_bool"]
