@@ -54,7 +54,7 @@ def _diff_transform(X: Union[pd.Series, pd.DataFrame], lags: np.array):
     return Xt
 
 
-def _inverse_diff_single(X, lag):
+def _inverse_diff(X, lag):
     for i in range(lag):
         X.iloc[i::lag] = X.iloc[i::lag].cumsum()
 
@@ -261,7 +261,8 @@ class Differencer(BaseTransformer):
         Xt : pd.Series or pd.DataFrame, same type as X
             inverse transformed version of X
         """
-        X_pool = X.combine_first(self._X)
+        is_df = isinstance(X, pd.DataFrame)
+        _, pad_z_inv = self._check_inverse_transform_index(X)
 
         X_inv = X.copy()
         for i, lag_info in enumerate(
