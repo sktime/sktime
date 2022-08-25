@@ -4,24 +4,28 @@
 
 __author__ = ["ltsaprounis"]
 
+import warnings
+from copy import deepcopy
 from typing import List, Union
+
+import numpy as np
 
 from sktime.transformations.base import BaseTransformer
 
 
-class FourierFeaures(BaseTransformer):
+class FourierFeatures(BaseTransformer):
     """Fourier Features for time series seasonality.
 
     Parameters
     ----------
     sp_list : List[Union[int, float]]
         list of seasonal periods
-    K_list : List[int]
+    fourier_terms_list : List[int]
         list of number of fourier terms (K) for each seasonal period.
         Each K matches to the sp (seasonal period) of the sp_list.
-        For example, if sp_list = [7, 365] and K_list = [3, 9], the seasonal frequency
-        of 7 will have 3 fourier terms and the seasonal frequency of 365 will have
-        9 fourier terms.
+        For example, if sp_list = [7, 365] and fourier_terms_list = [3, 9], the seasonal
+        frequency of 7 will have 3 fourier terms and the seasonal frequency of 365
+        will have 9 fourier terms.
 
     References
     ----------
@@ -29,14 +33,14 @@ class FourierFeaures(BaseTransformer):
         https://robjhyndman.com/hyndsight/longseasonality/
     .. [2] Hyndman, R.J., & Athanasopoulos, G. (2021) Forecasting: principles and
         practice, 3rd edition, OTexts: Melbourne, Australia. OTexts.com/fpp3.
-        Accessed on January 24th 2022.
+        Accessed on August 14th 2022.
 
     Examples
     --------
-    >>> from sktime.transformations.series.date import DateTimeFeatures
+    >>> from sktime.transformations.series.fourier import FourierFeatures
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
-    >>> transformer = DateTimeFeatures(ts_freq="M")
+    >>> transformer = FourierFeatures(sp_list=[12], fourier_terms_list=[4])
     >>> y_hat = transformer.fit_transform(y)
     """
 
@@ -75,7 +79,7 @@ class FourierFeaures(BaseTransformer):
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "requires_y": False,  # does y need to be passed in fit?
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
-        "fit_is_empty": True,  # is fit empty and can be skipped? Yes = True
+        "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
         "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
         "transform-returns-same-time-index": True,
         # does transform return have the same time index as input X
@@ -105,7 +109,7 @@ class FourierFeaures(BaseTransformer):
         self.fourier_terms_list = fourier_terms_list
 
         # todo: change "MyTransformer" to the name of the class
-        super(FourierFeaures, self).__init__()
+        super(FourierFeatures, self).__init__()
 
         # todo: optional, parameter checking logic (if applicable) should happen here
         # if writes derived values to self, should *not* overwrite self.parama etc
@@ -145,6 +149,36 @@ class FourierFeaures(BaseTransformer):
         -------
         self: reference to self
         """
+        if len(self.sp_list) != len(self.fourier_terms_list):
+            raise ValueError(
+                "In FourierFeatures the length of the sp_list needs to be equal "
+                "to the length of fourier_terms_list."
+            )
+
+        if np.any(np.array(self.sp_list) / np.array(self.fourier_terms_list) < 1):
+            raise ValueError(
+                "In FourierFeatures the number of each element of fourier_terms_list"
+                "needs to be lower from the corresponding element of the sp_list"
+            )
+
+        # Create the sp, k pairs
+        # Don't add pairs where the coefficient k/sp already exists
+        self.sp_k_pairs_list_ = []
+        coefficient_list = []
+        for i, sp in enumerate(self.sp_list):
+            for k in range(1, self.fourier_terms_list[i] + 1):
+                coef = k / sp
+                if coef not in coefficient_list:
+                    coefficient_list.append(coef)
+                    self.sp_k_pairs_list_.append((sp, k))
+                else:
+                    warnings.warn(
+                        f"The terms sin_{sp}_{k} and cos_{sp}_{k} from FourierFeatures "
+                        "will be skipped because the resulting coefficient already "
+                        "exists from other seasonal period, fourier term pairs."
+                    )
+
+        return self
 
         # implement here
         # X, y passed to this function are always of X_inner_mtype, y_inner_mtype
@@ -183,24 +217,18 @@ class FourierFeaures(BaseTransformer):
         -------
         transformed version of X
         """
-        # implement here
-        # X, y passed to this function are always of X_inner_mtype, y_inner_mtype
-        # IMPORTANT: avoid side effects to X, y
-        #
-        # if transform-output is "Primitives":
-        #  return should be pd.DataFrame, with as many rows as instances in input
-        #  if input is a single series, return should be single-row pd.DataFrame
-        # if transform-output is "Series":
-        #  return should be of same mtype as input, X_inner_mtype
-        #  if multiple X_inner_mtype are supported, ensure same input/output
-        # if transform-output is "Panel":
-        #  return a multi-indexed pd.DataFrame of Panel mtype pd_multiindex
-        #
-        # todo: add the return mtype/scitype to the docstring, e.g.,
-        #  Returns
-        #  -------
-        #  X_transformed : Series of mtype pd.DataFrame
-        #       transformed version of X
+        X_transformed = deepcopy(X)
+        int_index = X_transformed.reset_index().index
+
+        X_transformed["t"] = int_index
+        for sp_k in self.sp_k_pairs_list_:
+            sp = sp_k[0]
+            k = sp_k[1]
+
+            X_transformed[f"sin_{sp}_{k}"] = np.sin(int_index * 2 * k * np.pi / sp)
+            X_transformed[f"cos_{sp}_{k}"] = np.cos(int_index * 2 * k * np.pi / sp)
+
+        return X_transformed
 
     # todo: consider implementing this, optional
     # if not implementing, delete the _inverse_transform method
