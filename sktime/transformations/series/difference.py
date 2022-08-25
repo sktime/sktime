@@ -42,23 +42,23 @@ def _check_lags(lags):
     return lags
 
 
-def _diff_transform(Z: Union[pd.Series, pd.DataFrame], lags: np.array):
+def _diff_transform(X: Union[pd.Series, pd.DataFrame], lags: np.array):
     """Perform differencing on Series or DataFrame."""
-    Zt = Z.copy()
-
     if len(lags) != 0:
         for lag in lags:
             # converting lag to int since pandas complains if it's np.int64
-            Zt = Zt.diff(periods=int(lag))
+            Xt = X.diff(periods=int(lag))
+    else:
+        Xt = X
 
-    return Zt
+    return Xt
 
 
-def _inverse_diff(Z, lag):
+def _inverse_diff_single(X, lag):
     for i in range(lag):
-        Z.iloc[i::lag] = Z.iloc[i::lag].cumsum()
+        X.iloc[i::lag] = X.iloc[i::lag].cumsum()
 
-    return Z
+    return X
 
 
 class Differencer(BaseTransformer):
@@ -261,8 +261,7 @@ class Differencer(BaseTransformer):
         Xt : pd.Series or pd.DataFrame, same type as X
             inverse transformed version of X
         """
-        is_df = isinstance(X, pd.DataFrame)
-        _, pad_z_inv = self._check_inverse_transform_index(X)
+        X_pool = X.combine_first(self._X)
 
         X_inv = X.copy()
         for i, lag_info in enumerate(
