@@ -117,10 +117,12 @@ class STRAY(BaseSeriesAnnotator):
 
         # adjusted back to length r, for missing data
         slice_ = [True if i in outliers["idx_outliers"] else False for i in range(n)]
-        idx_outliers = idx_dropna[slice_]
+        idx_outliers = idx_dropna[slice_]  # index values from 1:r
         outlier_bool = [1 if i in idx_outliers else 0 for i in range(r)]
+
+        list_scores = outliers["out_scores"].tolist()
         outlier_scores = [
-            np.nan if i in idx_outliers else outliers["out_scores"][i] for i in range(r)
+            list_scores.pop(0) if i in idx_dropna else np.nan for i in range(r)
         ]
 
         return {
@@ -147,7 +149,7 @@ class STRAY(BaseSeriesAnnotator):
 
         info_dict = self._find_HDoutliers(X)
 
-        if self.labels == "scores":
+        if self.labels == "score":
             return info_dict["outlier_scores"]
         else:
             return info_dict["outlier_bool"]

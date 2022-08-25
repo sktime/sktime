@@ -130,20 +130,22 @@ def test_default_2D():
     assert np.allclose(y_pred_actual, y_pred_expected)
 
 
-def test_1D_scores_with_na():
-    X = [
-        np.nan,
-        -5.72257076,
-        -4.91555882,
-        -8.3456977,
-        -5.57087531,
-        0.0,
-        6.50605589,
-        5.42526004,
-        5.45336814,
-        5.435548,
-        5.10996217,
-    ]
+def test_1D_score_with_na():
+    X = np.array(
+        [
+            np.nan,
+            -5.72257076,
+            -4.91555882,
+            -8.3456977,
+            -5.57087531,
+            0.0,
+            6.50605589,
+            5.42526004,
+            5.45336814,
+            5.435548,
+            5.10996217,
+        ]
+    )
 
     y_scores_expected = [
         np.nan,
@@ -159,62 +161,85 @@ def test_1D_scores_with_na():
         0.02122967,
     ]
 
-    model = STRAY(label="scores", k=3).fit(X)
+    model = STRAY(labels="score", k=3).fit(X)
     y_scores_actual = model.predict(X)
-    assert np.allclose(y_scores_actual, y_scores_expected)
+    assert np.allclose(y_scores_actual, y_scores_expected, equal_nan=True)
 
 
 def test_1D_bool_with_na():
-    X = [
-        np.nan,
-        -5.72257076,
-        -4.91555882,
-        -8.3456977,
-        -5.57087531,
-        0.0,
-        6.50605589,
-        5.42526004,
-        5.45336814,
-        5.435548,
-        5.10996217,
-    ]
+    X = np.array(
+        [
+            np.nan,
+            -5.72257076,
+            -4.91555882,
+            -8.3456977,
+            -5.57087531,
+            0.0,
+            6.50605589,
+            5.42526004,
+            5.45336814,
+            5.435548,
+            5.10996217,
+        ]
+    )
 
     y_bool_expected = [0, 0, 1, 0, 1, 1, 0, 0, 0, 0, 0]
 
-    model = STRAY(label="indicator", k=3).fit(X)
+    model = STRAY(labels="indicator", k=3).fit(X)
     y_bool_actual = model.predict(X)
     assert np.allclose(y_bool_actual, y_bool_expected)
 
 
 def test_2D_score_with_na():
-    X = [
-        [-1.20706575, -0.57473996],
-        [0.27742924, -0.54663186],
-        [1.08444118, np.nan],
-        [-2.3456977, -0.89003783],
-        [0.42912469, -0.4771927],
-        [0.50605589, -0.99838644],
-    ]
+    X = np.array(
+        [
+            [-1.20706575, -0.57473996],
+            [0.27742924, -0.54663186],
+            [1.08444118, np.nan],
+            [-2.3456977, -0.89003783],
+            [0.42912469, -0.4771927],
+            [0.50605589, -0.99838644],
+        ]
+    )
 
     y_scores_expected = [0.5233413, 0.5233413, np.nan, 0.7248368, 0.6035040, 0.8704687]
 
-    model = STRAY(label="scores", k=2, tn=4).fit(X)
+    model = STRAY(labels="score", k=2, tn=4).fit(X)
     y_scores_actual = model.predict(X)
-    assert np.allclose(y_scores_actual, y_scores_expected)
+    assert np.allclose(y_scores_actual, y_scores_expected, equal_nan=True)
 
 
 def test_2D_bool_with_na():
-    X = [
-        [-1.20706575, -0.57473996],
-        [0.27742924, -0.54663186],
-        [1.08444118, np.nan],
-        [-2.3456977, -0.89003783],
-        [0.42912469, -0.4771927],
-        [0.50605589, -0.99838644],
-    ]
+    X = np.array(
+        [
+            [-1.20706575, -0.57473996],
+            [0.27742924, -0.54663186],
+            [1.08444118, np.nan],
+            [-2.3456977, -0.89003783],
+            [0.42912469, -0.4771927],
+            [0.50605589, -0.99838644],
+        ]
+    )
 
     y_bool_expected = [0, 0, 0, 1, 1, 1]
 
-    model = STRAY(label="indicator", k=2, tn=4).fit(X)
+    model = STRAY(labels="indicator", k=2, tn=4).fit(X)
     y_bool_actual = model.predict(X)
     assert np.allclose(y_bool_actual, y_bool_expected)
+
+
+# def test_2D_score_with_standardize():
+#     X = np.array([
+#         [-1.20706575, -0.57473996],
+#         [0.27742924, -0.54663186],
+#         [1.08444118, -0.5644520],
+#         [-2.3456977, -0.89003783],
+#         [0.42912469, -0.4771927],
+#         [0.50605589, -0.99838644],
+#     ])
+
+#     y_scores_expected = [1.1274565, 0.6139288, 0.5982989, 1.4866554, 0.5982989, 1.7245212]
+
+#     model = STRAY(labels="score", k=2, tn=4, normalize=standardize).fit(X)
+#     y_scores_actual = model.predict(X)
+#     assert np.allclose(y_scores_actual, y_scores_expected)
