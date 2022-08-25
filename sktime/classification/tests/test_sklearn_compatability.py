@@ -128,6 +128,6 @@ def test_sklearn_composite_classifiers(data_args, composite_classifier):
     fit_args = make_classification_problem(**data_args)
     composite_classifier.fit(*fit_args)
 
-    predict_args = _make_panel_X(**data_args)
-    preds = composite_classifier.predict(*predict_args)
+    X = _make_panel_X(**data_args)
+    preds = composite_classifier.predict(X=X)
     assert isinstance(preds, np.ndarray)
