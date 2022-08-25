@@ -101,6 +101,8 @@ class SFA_NEW(_PanelToPanelTransformer):
         variance=False,
         bigrams=False,
         cut_upper=True,
+        dilation=1,
+        first_difference=False,
         n_jobs=1,
     ):
         self.words = []
@@ -140,6 +142,9 @@ class SFA_NEW(_PanelToPanelTransformer):
         self.word_bits = 0
         self.max_bits = 0
 
+        self.dilation = dilation
+        self.first_difference = first_difference
+
         super(SFA_NEW, self).__init__()
 
     def fit(self, X, y=None):
@@ -177,8 +182,10 @@ class SFA_NEW(_PanelToPanelTransformer):
         X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
         X = X.squeeze(1)
 
-        self.n_instances, self.series_length = X.shape
-        self.breakpoints = self._binning(X, y)
+        X2, self.X_index = _dilation(X, self.dilation, self.first_difference)
+
+        self.n_instances, self.series_length = X2.shape
+        self.breakpoints = self._binning(X2, y)
 
         self._is_fitted = True
         return self
@@ -199,8 +206,9 @@ class SFA_NEW(_PanelToPanelTransformer):
         X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
         X = X.squeeze(1)
 
-        words = _transform_case(  # , PPV
-            X,
+        X2, self.X_index = _dilation(X, self.dilation, self.first_difference)
+        words = _transform_case(
+            X2,
             self.window_size,
             self.dft_length,
             self.norm,
@@ -212,7 +220,28 @@ class SFA_NEW(_PanelToPanelTransformer):
             self.inverse_sqrt_win_size,
         )
 
-        return words  # , PPV
+        # all_words = None
+        # for i in range(0, self.dilation):
+        #     X2_d = X2[:, i::self.dilation].copy()
+        #     words = _transform_case(
+        #         X2_d,
+        #         self.window_size,
+        #         self.dft_length,
+        #         self.norm,
+        #         self.support,
+        #         self.anova,
+        #         self.variance,
+        #         self.breakpoints,
+        #         self.letter_bits,
+        #         self.inverse_sqrt_win_size
+        #     )
+        #
+        #     if all_words is None:
+        #         all_words = words
+        #     else:
+        #         all_words = np.concatenate((all_words, words), axis=1)
+
+        return words
 
     def _binning(self, X, y=None):
         dft = _binning_dft(
@@ -362,19 +391,6 @@ def _binning_dft(
     num_windows_per_inst = math.ceil(series_length / window_size)
 
     # Splits individual time series into windows and returns the DFT for each
-    data = disjoint_windows(X, num_windows_per_inst, series_length, window_size)
-
-    dft = np.zeros((len(X), num_windows_per_inst, dft_length))  #
-    for i in range(len(X)):
-        dft[i] = _fast_fourier_transform(
-            data[i], norm, dft_length, inverse_sqrt_win_size
-        )
-
-    return dft.reshape(dft.shape[0] * dft.shape[1], dft_length)
-
-
-@njit(fastmath=True, cache=True)
-def disjoint_windows(X, num_windows_per_inst, series_length, window_size):
     data = np.zeros((len(X), num_windows_per_inst, window_size))
     for i in range(len(X)):
         for j in range(num_windows_per_inst - 1):
@@ -383,7 +399,13 @@ def disjoint_windows(X, num_windows_per_inst, series_length, window_size):
         start = series_length - window_size
         data[i, -1] = X[i, start:series_length]
 
-    return data
+    dft = np.zeros((len(X), num_windows_per_inst, dft_length))  #
+    for i in range(len(X)):
+        dft[i] = _fast_fourier_transform(  # TODO all in one go?!
+            data[i], norm, dft_length, inverse_sqrt_win_size
+        )
+
+    return dft.reshape(dft.shape[0] * dft.shape[1], dft_length)
 
 
 @njit(fastmath=True, cache=True)
@@ -426,7 +448,7 @@ def _fast_fourier_transform(X, norm, dft_length, inverse_sqrt_win_size):
     return dft[:, start:]
 
 
-# @njit(fastmath=True, cache=True)  # njit and parallel=True is not working here?
+@njit(fastmath=True, cache=True, parallel=True)  # njit and  is not working here?
 def _transform_case(
     X,
     window_size,
@@ -450,24 +472,21 @@ def _transform_case(
         inverse_sqrt_win_size,
     )
 
-    # PPV = np.sum(np.where(dfts > 0, 1, 0), axis=1)
-    # NPPV = np.sum(np.where(dfts < 0, 1, 0), axis=1)
-
     if breakpoints.shape[1] == 2:
         words = generate_words(dfts, breakpoints, letter_bits)
-        return words  # , PPV
+        return words
     else:
         bp = np.zeros((breakpoints.shape[0], 2))
         bp[:, 0] = breakpoints[:, 1]
         bp[:, 1] = np.inf
         words = generate_words(dfts, bp, letter_bits)
-        return words  # , PPV
+        return words
 
         """
         bp = breakpoints.copy()
         bp[bp < 0] = -np.inf
         words = generate_words(dfts, bp, letter_bits)
-        return words  # , PPV
+        return words
         """
 
         """
@@ -618,3 +637,30 @@ def _mft(
         return (transformed2 / stds.reshape(stds.shape[0], stds.shape[1], 1))[
             :, :, start_offset:
         ]
+
+
+def _dilation(X, d, first_difference):
+    if first_difference:
+        X2 = np.diff(X, axis=1)
+        X = np.concatenate((X, X2), axis=1)
+
+    return (
+        _dilation2(X, d),
+        _dilation2(np.arange(X.shape[1], dtype=np.float_).reshape(1, -1), d)[0],
+    )
+
+
+@njit(cache=True, fastmath=True)
+def _dilation2(X, d):
+    # dilation on actual data
+    if d > 1:
+        start = 0
+        data = np.zeros(X.shape, dtype=np.float_)
+        for i in range(0, d):
+            curr = X[:, i::d]
+            end = curr.shape[1]
+            data[:, start : start + end] = curr
+            start += end
+        return data
+    else:
+        return X

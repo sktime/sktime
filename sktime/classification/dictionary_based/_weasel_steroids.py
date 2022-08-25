@@ -14,9 +14,11 @@ Rocket-Science on WEASEL
 __author__ = ["patrickzib"]
 __all__ = ["WEASEL_STEROIDS"]
 
+from warnings import simplefilter
+
 import numpy as np
 from joblib import Parallel, delayed
-from numba import njit
+from numba import NumbaPendingDeprecationWarning, njit
 from numba.core import types
 from numba.typed import Dict
 from sklearn.feature_selection import chi2
@@ -27,6 +29,8 @@ from sktime.classification.base import BaseClassifier
 from sktime.transformations.panel.dictionary_based import SAX_NEW, SFA_NEW
 
 # TODO change to transformer?
+
+simplefilter(action="ignore", category=NumbaPendingDeprecationWarning)
 
 
 class WEASEL_STEROIDS(BaseClassifier):
@@ -154,10 +158,8 @@ class WEASEL_STEROIDS(BaseClassifier):
         self.n_instances = 0
 
         self.SFA_transformers = []
-        self.dilation_factors = []
         self.relevant_features = []
         self.rel_features_counts = []
-        self.first_differences = []
         self.clf = None
         self.n_jobs = n_jobs
 
@@ -166,39 +168,6 @@ class WEASEL_STEROIDS(BaseClassifier):
         # set_num_threads(n_jobs)
 
         super(WEASEL_STEROIDS, self).__init__()
-
-    @staticmethod
-    def _dilation(X, d, first_difference):
-        if first_difference:
-            X2 = np.diff(X, axis=1)
-            X = np.concatenate((X, X2), axis=1)
-
-        return (
-            WEASEL_STEROIDS._dilation2(X, d),
-            WEASEL_STEROIDS._dilation2(np.arange(X.shape[1]).reshape(1, -1), d)[0],
-        )
-
-    @staticmethod
-    @njit
-    def _dilation2(X, d):
-        # dilation on actual data
-        start = 0
-        data = np.zeros(X.shape, dtype=np.float_)
-        for i in range(0, d):
-            curr = X[:, i::d]
-            end = curr.shape[1]
-            data[:, start : start + end] = curr
-            start += end
-
-        """
-        X_first = np.array(X)[:, 0::d]
-        for i in range(1, d):
-            X_second = X[:, i::d]
-            X_first = np.concatenate((X_first, X_second), axis=1)
-        return X_first
-        """
-
-        return data
 
     def _fit(self, X, y):
         """Build a WEASEL classifiers from the training set (X, y).
@@ -229,15 +198,6 @@ class WEASEL_STEROIDS(BaseClassifier):
                 f" try set min_window to be smaller than series length in "
                 f"the constructor, but the classifier may not work at "
                 f"all with very short series"
-            )
-
-        if self.feature_selection == "none":
-            # TODO works only for alphabet of size 2 !!!
-            # TODO use actual feature counts??!!
-            self.max_feature_count = (
-                # 2 * (2 ** np.max(self.word_lengths)) * self.ensemble_size
-                (2 ** np.max(self.word_lengths))
-                * self.ensemble_size
             )
 
         # Randomly choose window sizes
@@ -279,14 +239,10 @@ class WEASEL_STEROIDS(BaseClassifier):
             transformer2,
             relevant_features2,
             rel_features_count2,
-            dilation2,
-            first_difference2,
         ) in parallel_res:
             self.SFA_transformers.append(transformer2)
-            self.dilation_factors.append(dilation2)
             self.relevant_features.append(relevant_features2)
             self.rel_features_counts.append(rel_features_count2)
-            self.first_differences.append(first_difference2)
             self.total_features_count += sfa_words2.shape[1]
             sfa_words.append(sfa_words2)
 
@@ -335,7 +291,7 @@ class WEASEL_STEROIDS(BaseClassifier):
         X = X.squeeze(1)
 
         # X = (X - X.mean(axis=-1, keepdims=True)) / (
-        #        X.std(axis=-1, keepdims=True) + 1e-8
+        #         X.std(axis=-1, keepdims=True) + 1e-8
         # )
 
         n_jobs = (
@@ -349,8 +305,6 @@ class WEASEL_STEROIDS(BaseClassifier):
                 self.SFA_transformers[i],
                 self.relevant_features[i],
                 self.rel_features_counts[i],
-                self.dilation_factors[i],
-                self.first_differences[i],
                 self.feature_selection,
             )
             for i in range(self.ensemble_size)
@@ -433,8 +387,8 @@ def _parallel_fit(
             anova=anova,
             binning_method=binning_strategy,
             bigrams=bigrams,
-            # dilation=dilation,
-            # upper=upper,
+            dilation=dilation,
+            first_difference=first_difference,
             n_jobs=n_jobs,
         )
     else:
@@ -442,10 +396,8 @@ def _parallel_fit(
             word_length=word_length, alphabet_size=4, window_size=window_size
         )
 
-    X2, X2_index = WEASEL_STEROIDS._dilation(X, dilation, first_difference)
-
     # generate SFA words on subsample
-    sfa_words = transformer.fit_transform(X2, y)
+    sfa_words = transformer.fit_transform(X, y)
 
     # Prefilter and remove those with only one value
     all_win_words = None
@@ -453,7 +405,7 @@ def _parallel_fit(
 
     if feature_selection == "none":
         all_win_words = merge_features_none(
-            X2_index, n_instances, sfa_words, word_length
+            transformer.X_index, alphabet_size, n_instances, sfa_words, word_length
         )
     else:
         feature_names = create_feature_names(sfa_words)
@@ -496,14 +448,7 @@ def _parallel_fit(
             # select subset of features
             all_win_words = all_win_words[:, relevant_features_idx]
 
-    return (
-        all_win_words,
-        transformer,
-        relevant_features,
-        all_win_words.shape[1],
-        dilation,
-        first_difference,
-    )
+    return (all_win_words, transformer, relevant_features, all_win_words.shape[1])
 
 
 @njit(cache=True, fastmath=True)
@@ -516,7 +461,7 @@ def create_feature_names(sfa_words):
 
 
 @njit(cache=True, fastmath=True)
-def merge_features_none(X2_index, n_instances, sfa_words, word_length):
+def merge_features_none(X_index, alphabet_size, n_instances, sfa_words, word_length):
     feature_count = np.int32(2**word_length)
     all_win_words = np.zeros((n_instances, feature_count))  # , dtype=np.float
     for j in range(len(sfa_words)):
@@ -524,7 +469,7 @@ def merge_features_none(X2_index, n_instances, sfa_words, word_length):
             all_win_words[j, key] += 1
             # cc = feature_count + key
             # if all_win_words[j, cc] == 0:
-            #    all_win_words[j, cc] = X2_index[k] / sfa_words.shape[1]
+            #    all_win_words[j, cc] = X_index[k] / sfa_words.shape[1]
     return all_win_words
 
 
@@ -550,18 +495,14 @@ def _parallel_transform_words(
     transformer,
     relevant_features,
     feature_count,
-    dilation,
-    first_difference,
     feature_selection,
 ):
-    X2, X2_index = WEASEL_STEROIDS._dilation(X, dilation, first_difference)
-
     # SFA transform
-    sfa_words = transformer.transform(X2)
+    sfa_words = transformer.transform(X)
 
     return create_bag(
         X,
-        X2_index,
+        transformer.X_index,
         feature_count,
         feature_selection,
         relevant_features
@@ -576,7 +517,7 @@ def _parallel_transform_words(
 
 @njit(cache=True, fastmath=True)
 def create_bag(
-    X, X2_index, feature_count, feature_selection, relevant_features, sfa_words
+    X, X_index, feature_count, feature_selection, relevant_features, sfa_words
 ):
     # merging arrays
     all_win_words = np.zeros((len(X), feature_count))
@@ -586,7 +527,7 @@ def create_bag(
                 all_win_words[j, key] += 1
                 # cc = feature_count // 2 + key
                 # if all_win_words[j, cc] == 0:
-                #    all_win_words[j, cc] = X2_index[k] / sfa_words.shape[1]
+                #    all_win_words[j, cc] = X_index[k] / sfa_words.shape[1]
             else:
                 if key in relevant_features:
                     o = relevant_features[key]
