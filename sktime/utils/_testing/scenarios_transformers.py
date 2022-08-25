@@ -15,34 +15,17 @@ import pandas as pd
 
 from sktime.base import BaseObject
 from sktime.datatypes import mtype_to_scitype
-from sktime.transformations.base import (
-    _PanelToPanelTransformer,
-    _PanelToTabularTransformer,
-    _SeriesToPrimitivesTransformer,
-    _SeriesToSeriesTransformer,
-)
+from sktime.transformations.base import _PanelToPanelTransformer
 from sktime.utils._testing.estimator_checks import _make_primitives, _make_tabular_X
 from sktime.utils._testing.forecasting import _make_series
 from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils._testing.panel import _make_classification_y, _make_panel_X
 from sktime.utils._testing.scenarios import TestScenario
 
-OLD_MIXINS = (
-    _PanelToPanelTransformer,
-    _PanelToTabularTransformer,
-    _SeriesToPrimitivesTransformer,
-    _SeriesToSeriesTransformer,
-)
+OLD_MIXINS = (_PanelToPanelTransformer,)
 
-OLD_PANEL_MIXINS = (
-    _PanelToPanelTransformer,
-    _PanelToTabularTransformer,
-)
+OLD_PANEL_MIXINS = (_PanelToPanelTransformer,)
 
-OLD_SERIES_MIXINS = (
-    _SeriesToPrimitivesTransformer,
-    _SeriesToSeriesTransformer,
-)
 
 # random seed for generating data to keep scenarios exactly reproducible
 RAND_SEED = 42
@@ -84,9 +67,6 @@ class TransformerTestScenario(TestScenario, BaseObject):
         y_scitype = self.get_tag("y_scitype", None, raise_error=False)
 
         if _is_child_of(obj, OLD_PANEL_MIXINS) and X_scitype != "Panel":
-            return False
-
-        if _is_child_of(obj, OLD_SERIES_MIXINS) and X_scitype != "Series":
             return False
 
         # if transformer requires y, the scenario also must pass y
@@ -157,9 +137,6 @@ class TransformerTestScenario(TestScenario, BaseObject):
             # determine output by X_out_scitype
             #   until transformer refactor is complete, use the old classes, too
             if _is_child_of(obj, OLD_MIXINS):
-                s2s = _is_child_of(obj, _SeriesToSeriesTransformer)
-                s2p = _is_child_of(obj, _SeriesToPrimitivesTransformer)
-                p2t = _is_child_of(obj, _PanelToTabularTransformer)
                 p2p = _is_child_of(obj, _PanelToPanelTransformer)
             else:
                 s2s = X_scitype == "Series" and X_out_series
