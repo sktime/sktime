@@ -211,9 +211,10 @@ class _Pipeline(
         """
         from sklearn.preprocessing import StandardScaler
 
-        from sktime.forecasting.arima import ARIMA
         from sktime.forecasting.naive import NaiveForecaster
+        from sktime.forecasting.sarimax import SARIMAX
         from sktime.transformations.series.adapt import TabularToSeriesAdaptor
+        from sktime.transformations.series.detrend import Detrender
         from sktime.transformations.series.exponent import ExponentTransformer
 
         # StandardScaler does not skip fit, NaiveForecaster is not probabilistic
@@ -226,11 +227,11 @@ class _Pipeline(
         # ARIMA has probabilistic methods, ExponentTransformer skips fit
         STEPS2 = [
             ("transformer", ExponentTransformer()),
-            ("forecaster", ARIMA()),
+            ("forecaster", SARIMAX()),
         ]
         params2 = {"steps": STEPS2}
 
-        params3 = {"steps": [ExponentTransformer(), ARIMA()]}
+        params3 = {"steps": [Detrender(), SARIMAX()]}
 
         return [params1, params2, params3]
 
@@ -256,24 +257,42 @@ class ForecastingPipeline(_Pipeline):
     >>> from sktime.datasets import load_longley
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.forecasting.compose import ForecastingPipeline
-    >>> from sktime.transformations.series.impute import Imputer
     >>> from sktime.transformations.series.adapt import TabularToSeriesAdaptor
+    >>> from sktime.transformations.series.impute import Imputer
     >>> from sktime.forecasting.base import ForecastingHorizon
     >>> from sktime.forecasting.model_selection import temporal_train_test_split
     >>> from sklearn.preprocessing import MinMaxScaler
     >>> y, X = load_longley()
     >>> y_train, _, X_train, X_test = temporal_train_test_split(y, X)
     >>> fh = ForecastingHorizon(X_test.index, is_relative=False)
+
+        Example 1: string/estimator pairs
     >>> pipe = ForecastingPipeline(steps=[
     ...     ("imputer", Imputer(method="mean")),
     ...     ("minmaxscaler", TabularToSeriesAdaptor(MinMaxScaler())),
-    ...     ("forecaster", NaiveForecaster(strategy="drift"))])
+    ...     ("forecaster", NaiveForecaster(strategy="drift")),
+    ... ])
     >>> pipe.fit(y_train, X_train)
     ForecastingPipeline(...)
     >>> y_pred = pipe.predict(fh=fh, X=X_test)
+
+        Example 2: without strings
+    >>> pipe = ForecastingPipeline([
+    ...     Imputer(method="mean"),
+    ...     TabularToSeriesAdaptor(MinMaxScaler()),
+    ...     NaiveForecaster(strategy="drift"),
+    ... ])
+
+        Example 3: using the dunder method
+        Note: * (= apply to `y`) has precedence over ** (= apply to `X`)
+    >>> forecaster = NaiveForecaster(strategy="drift")
+    >>> imputer = Imputer(method="mean")
+    >>> pipe = (imputer * MinMaxScaler()) ** forecaster
+
+        Example 3b: using the dunder method, alternative
+    >>> pipe = imputer ** MinMaxScaler() ** forecaster
     """
 
-    _required_parameters = ["steps"]
     _tags = {
         "scitype:y": "both",
         "y_inner_mtype": SUPPORTED_MTYPES,
@@ -282,6 +301,7 @@ class ForecastingPipeline(_Pipeline):
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
         "capability:pred_int": True,
+        "X-y-must-have-same-index": False,
     }
 
     def __init__(self, steps):
@@ -289,14 +309,14 @@ class ForecastingPipeline(_Pipeline):
         self.steps_ = self._check_steps(steps, allow_postproc=False)
         super(ForecastingPipeline, self).__init__()
         tags_to_clone = [
-            "scitype:y",  # which y are fine? univariate/multivariate/both
             "ignores-exogeneous-X",  # does estimator ignore the exogeneous X?
             "capability:pred_int",  # can the estimator produce prediction intervals?
             "handles-missing-data",  # can estimator handle missing data?
             "requires-fh-in-fit",  # is forecasting horizon already required in fit?
-            "X-y-must-have-same-index",  # can estimator handle different X/y index?
             "enforce_index_type",  # index type that needs to be enforced in X/y
         ]
+        # we do not clone X-y-must-have-same-index, since transformers can
+        #   create indices, and that behaviour is not tag-inspectable
         self.clone_tags(self.forecaster_, tags_to_clone)
         self._anytagis_then_set("fit_is_empty", False, True, self.steps_)
 
@@ -304,6 +324,49 @@ class ForecastingPipeline(_Pipeline):
     def forecaster_(self):
         """Return reference to the forecaster in the pipeline. Valid after _fit."""
         return self.steps_[-1][1]
+
+    def __rpow__(self, other):
+        """Magic ** method, return (left) concatenated ForecastingPipeline.
+
+        Implemented for `other` being a transformer, otherwise returns `NotImplemented`.
+
+        Parameters
+        ----------
+        other: `sktime` transformer, must inherit from BaseTransformer
+            otherwise, `NotImplemented` is returned
+
+        Returns
+        -------
+        ForecastingPipeline object,
+            concatenation of `other` (first) with `self` (last).
+            not nested, contains only non-TransformerPipeline `sktime` steps
+        """
+        from sktime.transformations.base import BaseTransformer
+        from sktime.transformations.compose import TransformerPipeline
+
+        _, ests = zip(*self.steps_)
+        names = tuple(self._get_estimator_names(self.steps))
+        if isinstance(other, TransformerPipeline):
+            _, trafos_o = zip(*other.steps_)
+            names_o = tuple(other._get_estimator_names(other.steps))
+            new_names = names_o + names
+            new_ests = trafos_o + ests
+        elif isinstance(other, BaseTransformer):
+            new_names = (type(other).__name__,) + names
+            new_ests = (other,) + ests
+        elif self._is_name_and_est(other, BaseTransformer):
+            other_name = other[0]
+            other_trafo = other[1]
+            new_names = (other_name,) + names
+            new_ests = (other_trafo,) + ests
+        else:
+            return NotImplemented
+
+        # if all the names are equal to class names, we eat them away
+        if all(type(x[1]).__name__ == x[0] for x in zip(new_names, new_ests)):
+            return ForecastingPipeline(steps=list(new_ests))
+        else:
+            return ForecastingPipeline(steps=list(zip(new_names, new_ests)))
 
     def _fit(self, y, X=None, fh=None):
         """Fit to training data.
@@ -620,7 +683,7 @@ class TransformedTargetForecaster(_Pipeline):
     >>> from sktime.transformations.series.exponent import ExponentTransformer
     >>> y = load_airline()
 
-    Example 1: string/estimator pairs
+        Example 1: string/estimator pairs
     >>> pipe = TransformedTargetForecaster(steps=[
     ...     ("imputer", Imputer(method="mean")),
     ...     ("detrender", Deseasonalizer()),
@@ -630,7 +693,7 @@ class TransformedTargetForecaster(_Pipeline):
     TransformedTargetForecaster(...)
     >>> y_pred = pipe.predict(fh=[1,2,3])
 
-    Example 2: without strings
+        Example 2: without strings
     >>> pipe = TransformedTargetForecaster([
     ...     Imputer(method="mean"),
     ...     Deseasonalizer(),
@@ -638,13 +701,12 @@ class TransformedTargetForecaster(_Pipeline):
     ...     ExponentTransformer(),
     ... ])
 
-    Example 3: using the dunder method
+        Example 3: using the dunder method
     >>> forecaster = NaiveForecaster(strategy="drift")
     >>> imputer = Imputer(method="mean")
     >>> pipe = imputer * Deseasonalizer() * forecaster * ExponentTransformer()
     """
 
-    _required_parameters = ["steps"]
     _tags = {
         "scitype:y": "both",
         "y_inner_mtype": SUPPORTED_MTYPES,
@@ -653,6 +715,7 @@ class TransformedTargetForecaster(_Pipeline):
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
         "capability:pred_int": True,
+        "X-y-must-have-same-index": False,
     }
 
     def __init__(self, steps):
@@ -662,14 +725,14 @@ class TransformedTargetForecaster(_Pipeline):
 
         # set the tags based on forecaster
         tags_to_clone = [
-            "scitype:y",  # which y are fine? univariate/multivariate/both
             "ignores-exogeneous-X",  # does estimator ignore the exogeneous X?
             "capability:pred_int",  # can the estimator produce prediction intervals?
             "handles-missing-data",  # can estimator handle missing data?
             "requires-fh-in-fit",  # is forecasting horizon already required in fit?
-            "X-y-must-have-same-index",  # can estimator handle different X/y index?
             "enforce_index_type",  # index type that needs to be enforced in X/y
         ]
+        # we do not clone X-y-must-have-same-index, since transformers can
+        #   create indices, and that behaviour is not tag-inspectable
         self.clone_tags(self.forecaster_, tags_to_clone)
         self._anytagis_then_set("fit_is_empty", False, True, self.steps_)
 
@@ -1056,13 +1119,13 @@ class ForecastX(BaseForecaster):
 
     >>> y, X = load_longley()
     >>> fh = ForecastingHorizon([1, 2, 3])
-    >>> pipe = ForecastX(
+    >>> pipe = ForecastX(  # doctest: +SKIP
     ...     forecaster_X=VAR(),
     ...     forecaster_y=ARIMA(),
     ... )
-    >>> pipe = pipe.fit(y, X=X, fh=fh)
+    >>> pipe = pipe.fit(y, X=X, fh=fh)  # doctest: +SKIP
     >>> # this now works without X from the future of y!
-    >>> y_pred = pipe.predict(fh=fh)
+    >>> y_pred = pipe.predict(fh=fh)  # doctest: +SKIP
     """
 
     _tags = {

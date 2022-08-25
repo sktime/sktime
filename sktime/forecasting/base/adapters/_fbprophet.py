@@ -3,7 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements adapter for Facebook prophet to be used in sktime framework."""
 
-__author__ = ["mloning", "aiwalter"]
+__author__ = ["mloning", "aiwalter", "fkiraly"]
 __all__ = ["_ProphetAdapter"]
 
 import os
@@ -11,7 +11,6 @@ import os
 import pandas as pd
 
 from sktime.forecasting.base import BaseForecaster
-from sktime.utils.validation.forecasting import check_y_X
 
 
 class _ProphetAdapter(BaseForecaster):
@@ -22,7 +21,18 @@ class _ProphetAdapter(BaseForecaster):
         "capability:pred_int": True,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
+        "y_inner_mtype": "pd.DataFrame",
+        "python_dependencies": "prophet",
     }
+
+    def _convert_int_to_date(self, y):
+        """Convert int to date, for use by prophet."""
+        y = y.copy()
+        idx_max = y.index[-1] + 1
+        int_idx = pd.date_range(start="2000-01-01", periods=idx_max, freq="D")
+        int_idx = int_idx[y.index]
+        y.index = int_idx
+        return y
 
     def _fit(self, y, X=None, fh=None):
         """Fit to training data.
@@ -42,10 +52,28 @@ class _ProphetAdapter(BaseForecaster):
         """
         self._instantiate_model()
         self._check_changepoints()
-        y, X = check_y_X(y, X, enforce_index_type=pd.DatetimeIndex)
+
+        if type(y.index) is pd.PeriodIndex:
+            raise NotImplementedError(
+                "pd.PeriodIndex is not supported for y, use "
+                "pd.DatetimeIndex or integer pd.Index instead."
+            )
+
+        # integer type indices are converted to datetime
+        # since facebook prophet can only deal with dates
+        if y.index.dtype == "int64":
+            self.y_index_was_int_ = True
+            y = self._convert_int_to_date(y)
+        else:
+            self.y_index_was_int_ = False
+        if X is not None and X.index.dtype == "int64":
+            X = self._convert_int_to_date(X)
 
         # We have to bring the data into the required format for fbprophet:
-        df = pd.DataFrame({"y": y, "ds": y.index})
+        df = y.copy()
+        df.columns = ["y"]
+        df.index.name = "ds"
+        df = df.reset_index()
 
         # Add seasonality/seasonalities
         if self.add_seasonality:
@@ -86,6 +114,15 @@ class _ProphetAdapter(BaseForecaster):
 
         return self
 
+    def _get_prophet_fh(self):
+        """Get a prophet compatible fh, in datetime, even if fh was int."""
+        fh = self.fh.to_absolute(cutoff=self.cutoff).to_pandas()
+        if not isinstance(fh, pd.DatetimeIndex):
+            max_int = fh[-1] + 1
+            fh_date = pd.date_range(start="2000-01-01", periods=max_int, freq="D")
+            fh = fh_date[fh]
+        return fh
+
     def _predict(self, fh=None, X=None):
         """Forecast time series at future horizon.
 
@@ -108,12 +145,13 @@ class _ProphetAdapter(BaseForecaster):
         Exception
             Error when merging data
         """
-        self._update_X(X, enforce_index_type=pd.DatetimeIndex)
-
-        fh = self.fh.to_absolute(cutoff=self.cutoff).to_pandas()
-        if not isinstance(fh, pd.DatetimeIndex):
-            raise ValueError("absolute `fh` must be represented as a pd.DatetimeIndex")
+        fh = self._get_prophet_fh()
         df = pd.DataFrame({"ds": fh}, index=fh)
+
+        if X is not None and X.index.dtype == "int64":
+            X = X.copy()
+            X = X.loc[self.fh.to_absolute(self.cutoff).to_numpy()]
+            X.index = fh
 
         # Merge X with df (of created future DatetimeIndex values)
         if X is not None:
@@ -129,10 +167,17 @@ class _ProphetAdapter(BaseForecaster):
         out.set_index("ds", inplace=True)
         y_pred = out.loc[:, "yhat"]
 
+        # bring outputs into required format
+        # same column names as training data, index should be index, not "ds"
         y_pred = pd.DataFrame(y_pred)
         y_pred.reset_index(inplace=True)
         y_pred.index = y_pred["ds"].values
         y_pred.drop("ds", axis=1, inplace=True)
+        y_pred.columns = self._y.columns
+
+        if self.y_index_was_int_:
+            y_pred.index = self.fh.to_absolute(cutoff=self.cutoff)
+
         return y_pred
 
     def _predict_interval(self, fh, X=None, coverage=0.90):
@@ -170,9 +215,12 @@ class _ProphetAdapter(BaseForecaster):
                 Upper/lower interval end forecasts are equivalent to
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
-        fh = fh.to_absolute(cutoff=self.cutoff).to_pandas()
-        if not isinstance(fh, pd.DatetimeIndex):
-            raise ValueError("absolute `fh` must be represented as a pd.DatetimeIndex")
+        fh = self._get_prophet_fh()
+
+        if X is not None and X.index.dtype == "int64":
+            X = X.copy()
+            X = X.loc[self.fh.to_absolute(self.cutoff).to_numpy()]
+            X.index = fh
 
         # prepare the return DataFrame - empty with correct cols
         var_names = ["Coverage"]
@@ -205,6 +253,9 @@ class _ProphetAdapter(BaseForecaster):
             pred_int[("Coverage", c, "lower")] = out_prophet.min(axis=1)
             pred_int[("Coverage", c, "upper")] = out_prophet.max(axis=1)
 
+        if self.y_index_was_int_:
+            pred_int.index = self.fh.to_absolute(cutoff=self.cutoff)
+
         return pred_int
 
     def get_fitted_params(self):
@@ -219,6 +270,10 @@ class _ProphetAdapter(BaseForecaster):
         https://facebook.github.io/prophet/docs/additional_topics.html
         """
         self.check_is_fitted()
+
+        if hasattr(self, "_is_vectorized") and self._is_vectorized:
+            return {"forecasters": self.forecasters_}
+
         fitted_params = {}
         for name in ["k", "m", "sigma_obs"]:
             fitted_params[name] = self._forecaster.params[name][0][0]

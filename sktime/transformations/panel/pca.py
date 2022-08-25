@@ -26,10 +26,52 @@ class PCATransformer(BaseTransformer):
         Number principal components in projection
         Default = min(num_instances, num_variables * num_time_points)
         See ``sklearn.decomposition.PCA`` documentation for further documentation.
-    **kwargs
-        Additional parameters passed on to ``sklearn.decomposition.PCA``.
-        See ``sklearn.decomposition.PCA``
-        documentation for a detailed description of all options.
+
+    copy : bool, default=True
+        If False, data passed to fit are overwritten and running
+        fit(X).transform(X) will not yield the expected results,
+        use fit_transform(X) instead.
+
+    whiten : bool, default=False
+        When True (False by default) the `components_` vectors are multiplied
+        by the square root of n_samples and then divided by the singular values
+        to ensure uncorrelated outputs with unit component-wise variances.
+
+        Whitening will remove some information from the transformed signal
+        (the relative variance scales of the components) but can sometime
+        improve the predictive accuracy of the downstream estimators by
+        making their data respect some hard-wired assumptions.
+
+    svd_solver : {'auto', 'full', 'arpack', 'randomized'}, default='auto'
+        If auto :
+            The solver is selected by a default policy based on `X.shape` and
+            `n_components`: if the input data is larger than 500x500 and the
+            number of components to extract is lower than 80% of the smallest
+            dimension of the data, then the more efficient 'randomized'
+            method is enabled. Otherwise the exact full SVD is computed and
+            optionally truncated afterwards.
+        If full :
+            run exact full SVD calling the standard LAPACK solver via
+            `scipy.linalg.svd` and select the components by postprocessing
+        If arpack :
+            run SVD truncated to n_components calling ARPACK solver via
+            `scipy.sparse.linalg.svds`. It requires strictly
+            0 < n_components < min(X.shape)
+        If randomized :
+            run randomized SVD by the method of Halko et al.
+
+    tol : float, default=0.0
+        Tolerance for singular values computed by svd_solver == 'arpack'.
+        Must be of range [0.0, infinity).
+
+    iterated_power : int or 'auto', default='auto'
+        Number of iterations for the power method computed by
+        svd_solver == 'randomized'.
+        Must be of range [0, infinity).
+
+    random_state : int, RandomState instance or None, default=None
+        Used when the 'arpack' or 'randomized' solvers are used. Pass an int
+        for reproducible results across multiple function calls.
     """
 
     _tags = {
@@ -44,9 +86,34 @@ class PCATransformer(BaseTransformer):
         "fit_is_empty": False,
     }
 
-    def __init__(self, n_components=None, **kwargs):
+    def __init__(
+        self,
+        n_components=None,
+        copy=True,
+        whiten=False,
+        svd_solver="auto",
+        tol=0.0,
+        iterated_power="auto",
+        random_state=None,
+    ):
         self.n_components = n_components
-        self.pca = PCA(self.n_components, **kwargs)
+        self.copy = copy
+        self.whiten = whiten
+        self.svd_solver = svd_solver
+        self.tol = tol
+        self.iterated_power = iterated_power
+        self.random_state = random_state
+
+        self.pca = PCA(
+            n_components,
+            copy=copy,
+            whiten=whiten,
+            svd_solver=svd_solver,
+            tol=tol,
+            iterated_power=iterated_power,
+            random_state=random_state,
+        )
+
         super(PCATransformer, self).__init__()
 
     def _fit(self, X, y=None):

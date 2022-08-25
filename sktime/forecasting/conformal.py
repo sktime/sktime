@@ -14,6 +14,7 @@ import numpy as np
 import pandas as pd
 from sklearn.base import clone
 
+from sktime.datatypes import convert, convert_to
 from sktime.datatypes._utilities import get_slice
 from sktime.forecasting.base import BaseForecaster
 
@@ -78,7 +79,6 @@ class ConformalIntervals(BaseForecaster):
     >>> pred_int = conformal_forecaster.predict_interval()
     """
 
-    _required_parameters = ["forecaster"]
     _tags = {
         "scitype:y": "univariate",
         "requires-fh-in-fit": False,
@@ -231,6 +231,8 @@ class ConformalIntervals(BaseForecaster):
             pred_int.loc[fh_ind] = pred_int_row
 
         y_pred = self.predict(fh=fh, X=X)
+        y_pred = convert(y_pred, from_type=self._y_mtype_last_seen, to_type="pd.Series")
+        y_pred.index = fh_absolute
 
         for col in cols:
             if self.method in ABS_RESIDUAL_BASED:
@@ -240,6 +242,36 @@ class ConformalIntervals(BaseForecaster):
             pred_int[col] = y_pred + sign * pred_int[col]
 
         return pred_int.convert_dtypes()
+
+    def _predict_quantiles(self, fh, X, alpha):
+        """Compute/return prediction quantiles for a forecast.
+
+        private _predict_quantiles containing the core logic,
+            called from predict_quantiles and default _predict_interval
+
+        Parameters
+        ----------
+        fh : guaranteed to be ForecastingHorizon
+            The forecasting horizon with the steps ahead to to predict.
+        X : optional (default=None)
+            guaranteed to be of a type in self.get_tag("X_inner_mtype")
+            Exogeneous time series to predict from.
+        alpha : list of float, optional (default=[0.5])
+            A list of probabilities at which quantile forecasts are computed.
+
+        Returns
+        -------
+        quantiles : pd.DataFrame
+            Column has multi-index: first level is variable name from y in fit,
+                second level being the values of alpha passed to the function.
+            Row index is fh, with additional (upper) levels equal to instance levels,
+                    from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
+            Entries are quantile forecasts, for var in col index,
+                at quantile probability in second col index, for the row index.
+        """
+        pred_int = BaseForecaster._predict_quantiles(self, fh, X, alpha)
+
+        return pred_int
 
     def _compute_sliding_residuals(self, y, X, forecaster, initial_window, sample_frac):
         """Compute sliding residuals used in uncertainty estimates.
@@ -266,6 +298,8 @@ class ConformalIntervals(BaseForecaster):
             if sample_frac is passed this will have NaN values for 1 - sample_frac
             fraction of the matrix
         """
+        y = convert_to(y, "pd.Series")
+
         y_index = y.index[initial_window:]
 
         residuals_matrix = pd.DataFrame(columns=y_index, index=y_index, dtype="float")

@@ -25,7 +25,7 @@ class _StatsForecastAdapter(BaseForecaster):
         "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
         "capability:pred_int": True,  # does forecaster implement predict_quantiles?
-        # deprecated and likely to be removed in 0.12.0
+        "python_dependencies": "statsforecast",
     }
 
     def __init__(self):
