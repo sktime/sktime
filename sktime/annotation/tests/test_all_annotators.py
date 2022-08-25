@@ -20,8 +20,8 @@ def test_output_type(Estimator):
 
     estimator = Estimator.create_test_instance()
 
-    args = make_annotation_problem(n_timepoints=50)
-    estimator.fit(*args)
-    args = make_annotation_problem(n_timepoints=10)
-    y_pred = estimator.predict(*args)
+    arg = make_annotation_problem(n_timepoints=50)
+    estimator.fit(arg)
+    arg = make_annotation_problem(n_timepoints=10)
+    y_pred = estimator.predict(arg)
     assert isinstance(y_pred, (pd.Series, np.ndarray))
