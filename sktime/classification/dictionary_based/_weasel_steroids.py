@@ -462,12 +462,14 @@ def create_feature_names(sfa_words):
 @njit(cache=True, fastmath=True)
 def create_bag_none(X_index, alphabet_size, n_instances, sfa_words, word_length):
     feature_count = np.int32(2**word_length)
-    all_win_words = np.zeros(
-        (n_instances, feature_count), dtype=np.int32
-    )  # , dtype=np.float
+    all_win_words = np.zeros((n_instances, feature_count), dtype=np.int32)
 
     for j in range(len(sfa_words)):
         all_win_words[j, :] = np.bincount(sfa_words[j], minlength=feature_count)
+
+    # cc = feature_count // 2 + key
+    # if all_win_words[j, cc] == 0:
+    #    all_win_words[j, cc] = X_index[k] / sfa_words.shape[1]
 
     return all_win_words
 
@@ -506,7 +508,6 @@ def create_bag_transform(
                     o = relevant_features[key]
                     all_win_words[j, o] += 1
 
-        #       all_win_words[j, key] += 1
         # cc = feature_count // 2 + key
         # if all_win_words[j, cc] == 0:
         #    all_win_words[j, cc] = X_index[k] / sfa_words.shape[1]
