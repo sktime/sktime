@@ -253,7 +253,7 @@ class LogTransformer(BaseTransformer):
         "capability:inverse_transform": True,
     }
 
-    def _transform(self, X, y=None):
+    def _transform(self, X, y=None, offset = 0):
         """Transform X and return a transformed version.
 
         private _transform containing the core logic, called from transform
@@ -270,10 +270,10 @@ class LogTransformer(BaseTransformer):
         Xt : 2D np.ndarray
             transformed version of X
         """
-        Xt = np.log(X)
+        Xt = np.log(X+ offset)
         return Xt
 
-    def _inverse_transform(self, X, y=None):
+    def _inverse_transform(self, X, y=None, offset = 0):
         """Inverse transform X and return an inverse transformed version.
 
         core logic
@@ -290,7 +290,7 @@ class LogTransformer(BaseTransformer):
         Xt : 2D np.ndarray
             inverse transformed version of X
         """
-        Xt = np.exp(X)
+        Xt = np.exp(X+ offset)
         return Xt
 
 
