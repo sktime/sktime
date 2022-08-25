@@ -166,8 +166,8 @@ class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
 
         y = load_airline()
         y_fit = y[0:36]
-        y_update1 = y[36:48]
-        y_update2 = y[48:60]
+        y_update1 = y[36:72]
+        y_update2 = y[72:108]
 
         estimator_instance.fit(y_fit)
         estimator_instance.update(y_update1, update_params=True)
