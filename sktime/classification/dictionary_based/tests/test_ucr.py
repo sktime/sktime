@@ -72,7 +72,7 @@ dataset_names_full = [
     "ECG200",
     "ECG5000",
     "ECGFiveDays",
-    "ElectricDevices",
+    # "ElectricDevices", # 12 Mins
     "EOGHorizontalSignal",
     "EOGVerticalSignal",
     "EthanolLevel",
@@ -147,7 +147,7 @@ dataset_names_full = [
     "SmoothSubspace",
     "SonyAIBORobotSurface1",
     "SonyAIBORobotSurface2",
-    "StarLightCurves",
+    # "StarLightCurves",  # 5 Mins
     "Strawberry",
     "SwedishLeaf",
     "Symbols",
@@ -171,6 +171,7 @@ dataset_names_full = [
 ]
 
 dataset_names_excerpt = [
+    # "Crop",
     "ArrowHead",
     "Beef",
     "BeetleFly",
@@ -212,7 +213,7 @@ others = []
 
 DATA_PATH = "/Users/bzcschae/workspace/UCRArchive_2018/"
 parallel_jobs = 1
-threads_to_use = 4
+threads_to_use = 8
 
 # local
 if os.path.exists(DATA_PATH):
@@ -243,46 +244,49 @@ if __name__ == "__main__":
 
         clfs = {
             # "WEASEL": WEASEL(random_state=1379, n_jobs=threads_to_use),
-            "WEASEL_ST (None)": WEASEL_STEROIDS(
+            "WEASEL_ST (ED+100)": WEASEL_STEROIDS(
                 random_state=1379,
                 binning_strategies=["equi-depth"],
-                alphabet_sizes=[4],
+                alphabet_sizes=[2],
                 min_window=4,
                 max_window=24,
                 max_feature_count=10_000,
                 word_lengths=[8],  # test only 6 or 8?
                 norm_options=[False],  # p[True]=0.8
                 variance=True,
-                ensemble_size=50,
+                ensemble_size=150,
                 use_first_differences=[True, False],
                 feature_selection="none",
                 n_jobs=threads_to_use,
             ),
-            # "WEASEL_ST (Chi2)": WEASEL_STEROIDS(
+            "WEASEL (EW+ED)": WEASEL_STEROIDS(
+                random_state=1379,
+                alphabet_sizes=[2],
+                binning_strategies=["equi-depth", "equi-width"],  # "kmeans"
+                min_window=4,
+                max_window=24,
+                word_lengths=[8],  # test only 6 or 8?
+                norm_options=[True, False],  # p[True]=0.8
+                variance=True,
+                max_feature_count=10_000,
+                ensemble_size=150,
+                use_first_differences=[True, False],
+                feature_selection="none",
+                n_jobs=threads_to_use,
+            ),
+            # "WEASEL (None 3)": WEASEL_STEROIDS(
             #     random_state=1379,
+            #     alphabet_sizes=[2],
             #     binning_strategies=["equi-depth"],
-            #     alphabet_sizes=[4],
             #     min_window=4,
-            #     max_window=24,
-            #     max_feature_count=10_000,
-            #     word_lengths=[8],  # test only 6 or 8?
-            #     norm_options=[False],  # p[True]=0.8
-            #     variance=True,
-            #     ensemble_size=50,
-            #     use_first_differences=[True, False],
-            #     feature_selection="chi2",
-            #     n_jobs=threads_to_use,
-            # ),
-            # "WEASEL (Bench)": WEASEL_STEROIDS(
-            #     random_state=1379,
-            #     # alphabet_sizes=[2],
-            #     binning_strategies=["equi-depth"],  # "kmeans"
-            #     word_lengths=[6, 8],  # test only 6 or 8?
-            #     norm_options=[True, True, True, True, False],  # p[True]=0.8
+            #     max_window=20,
+            #     word_lengths=[8],
+            #     norm_options=[True, False],
             #     variance=True,
             #     max_feature_count=10_000,
             #     ensemble_size=50,
             #     use_first_differences=[True, False],
+            #     feature_selection="none",
             #     n_jobs=threads_to_use,
             # ),
             # "Hydra": [],  # see below
@@ -311,8 +315,8 @@ if __name__ == "__main__":
             }
 
         # z-norm training/test data
-        X_train = zscore(X_train, axis=1)
-        X_test = zscore(X_test, axis=1)
+        # X_train = zscore(X_train, axis=1)
+        # X_test = zscore(X_test, axis=1)
         X_train = np.reshape(np.array(X_train), (len(X_train), 1, -1))
         X_test = np.reshape(np.array(X_test), (len(X_test), 1, -1))
 
@@ -375,7 +379,7 @@ if __name__ == "__main__":
 
         return sum_scores
 
-    parallel_res = Parallel(n_jobs=parallel_jobs, timeout=99999)(
+    parallel_res = Parallel(n_jobs=parallel_jobs, timeout=99999, batch_size=1)(
         delayed(_parallel_fit)(dataset) for dataset in used_dataset
     )
 

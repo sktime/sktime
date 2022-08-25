@@ -29,11 +29,11 @@ def load_from_ucr_tsv_to_dataframe_plain(full_file_path_and_name):
 
 
 dataset_names_excerpt = [
-    # "ACSF1",
-    # "Adiac",
-    # "AllGestureWiimoteX",
-    # "AllGestureWiimoteY",
-    # "AllGestureWiimoteZ",
+    "ACSF1",
+    "Adiac",
+    "AllGestureWiimoteX",
+    "AllGestureWiimoteY",
+    "AllGestureWiimoteZ",
     "ArrowHead",
     "Beef",
     "BeetleFly",
@@ -270,15 +270,15 @@ if __name__ == "__main__":
     csv_scores = []
     choose_binning_strategies = [["equi-depth", "equi-width"], ["equi-depth"]]
     variance = True
-    choose_ensemble_size = [50]
+    choose_ensemble_size = [50, 75, 100]
     choose_max_features = [10_000]
     choose_min_window = [4, 6, 8]
     choose_alphabet_size = [2, 4]
-    choose_max_window = [16, 20, 24, 28, 32]
+    choose_max_window = [16, 20, 24]
     choose_norm_options = [[False], [True, False]]
-    choose_word_lengths = [[8], [10], [8, 10]]
+    choose_word_lengths = [[4, 6, 8], [6, 8], [8]]
     choose_first_diff = [[True, False], [False]]
-    choose_feature_selection = ["chi2", "none", "random"]
+    choose_feature_selection = ["none"]
 
     for ensemble_size in choose_ensemble_size:
         for max_feature_count in choose_max_features:
@@ -293,7 +293,9 @@ if __name__ == "__main__":
                                             feature_selection
                                         ) in choose_feature_selection:
                                             parallel_res = Parallel(
-                                                n_jobs=parallel_jobs, timeout=99999
+                                                n_jobs=parallel_jobs,
+                                                timeout=99999,
+                                                batch_size=1,
                                             )(
                                                 delayed(_parallel_fit)(
                                                     dataset,
