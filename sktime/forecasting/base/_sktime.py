@@ -3,16 +3,15 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """sktime window forecaster base class."""
 
-__author__ = ["@mloning", "@big-o"]
+__author__ = ["@mloning", "@big-o", "fkiraly"]
 __all__ = ["_BaseWindowForecaster"]
 
 import numpy as np
 import pandas as pd
 
 from sktime.forecasting.base._base import DEFAULT_ALPHA, BaseForecaster
-from sktime.forecasting.model_selection import CutoffSplitter, SlidingWindowSplitter
+from sktime.forecasting.model_selection import CutoffSplitter
 from sktime.utils.datetime import _shift
-from sktime.utils.validation.forecasting import check_cv
 
 
 class _BaseWindowForecaster(BaseForecaster):
@@ -22,36 +21,6 @@ class _BaseWindowForecaster(BaseForecaster):
         super(_BaseWindowForecaster, self).__init__()
         self.window_length = window_length
         self.window_length_ = None
-
-    def update_predict(
-        self,
-        y,
-        cv=None,
-        X=None,
-        update_params=True,
-    ):
-        """Make and update predictions iteratively over the test set.
-
-        Parameters
-        ----------
-        y : pd.Series
-        cv : temporal cross-validation generator, optional (default=None)
-        X : pd.DataFrame, optional (default=None)
-        update_params : bool, optional (default=True)
-
-        Returns
-        -------
-        y_pred : pd.Series or pd.DataFrame
-        """
-        if cv is not None:
-            cv = check_cv(cv)
-        else:
-            cv = SlidingWindowSplitter(
-                self.fh.to_relative(self.cutoff),
-                window_length=self.window_length_,
-                start_with_window=False,
-            )
-        return self._predict_moving_cutoff(y, cv, X, update_params=update_params)
 
     def _predict(self, fh, X=None):
         """Predict core logic."""
@@ -151,8 +120,9 @@ class _BaseWindowForecaster(BaseForecaster):
     def _get_last_window(self):
         """Select last window."""
         # Get the start and end points of the last window.
-        cutoff = self.cutoff
+        cutoff = self._cutoff
         start = _shift(cutoff, by=-self.window_length_ + 1)
+        cutoff = cutoff[0]
 
         # Get the last window of the endogenous variable.
         y = self._y.loc[start:cutoff].to_numpy()
@@ -166,24 +136,3 @@ class _BaseWindowForecaster(BaseForecaster):
     def _predict_nan(fh):
         """Predict nan if predictions are not possible."""
         return np.full(len(fh), np.nan)
-
-    def _update_predict_single(self, y, fh, X=None, update_params=True):
-        """Update and make forecasts, core logic..
-
-        Implements default behaviour of calling update and predict
-        sequentially, but can be overwritten by subclasses
-        to implement more efficient updating algorithms when available.
-
-        Parameters
-        ----------
-        y
-        fh
-        X
-        update_params
-
-        Returns
-        -------
-        predictions
-        """
-        self.update(y=y, X=X, update_params=update_params)
-        return self._predict(fh=fh, X=X)

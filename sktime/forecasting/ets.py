@@ -242,14 +242,17 @@ class AutoETS(_StatsModelsAdapter):
         # Select model automatically
         if self.auto:
             # Initialise parameter ranges
-            if (y > 0).all():
-                error_range = ["add", "mul"]
-            else:
-                warnings.warn(
-                    "Warning: time series is not strictly positive,"
-                    "multiplicative components are ommitted"
-                )
+            if self.additive_only:
                 error_range = ["add"]
+            else:
+                if (y > 0).all():
+                    error_range = ["add", "mul"]
+                else:
+                    warnings.warn(
+                        "Warning: time series is not strictly positive, "
+                        "multiplicative components are ommitted"
+                    )
+                    error_range = ["add"]
 
             if self.allow_multiplicative_trend and (y > 0).all():
                 trend_range = ["add", "mul", None]

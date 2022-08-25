@@ -48,9 +48,16 @@ def convert_Series_to_Panel(obj, store=None):
 
     if isinstance(obj, np.ndarray):
         if len(obj.shape) == 2:
-            obj = np.expand_dims(obj, 2)
+            # from numpy2D to numpy3D
+            # numpy2D = (time, variables)
+            # numpy3D = (instances, variables, time)
+            obj = np.expand_dims(obj, 0)
+            obj = np.swapaxes(obj, 1, 2)
         elif len(obj.shape) == 1:
-            obj = np.expand_dims(obj, (1, 2))
+            # from numpy1D to numpy3D
+            # numpy1D = (time)
+            # numpy3D = (instances, variables, time)
+            obj = np.expand_dims(obj, (0, 1))
         else:
             raise ValueError("if obj is np.ndarray, must be of dim 1 or 2")
 
@@ -87,7 +94,11 @@ def convert_Panel_to_Series(obj, store=None):
     if isinstance(obj, np.ndarray):
         if obj.ndim != 3 or obj.shape[0] != 1:
             raise ValueError("if obj is np.ndarray, must be of dim 3, with shape[0]=1")
+        # from numpy3D to numpy2D
+        # numpy2D = (time, variables)
+        # numpy3D = (instances, variables, time)
         obj = np.reshape(obj, (obj.shape[1], obj.shape[2]))
+        obj = np.swapaxes(obj, 0, 1)
 
     return obj
 

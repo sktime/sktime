@@ -17,6 +17,15 @@ _check_soft_dependencies("prophet", severity="warning")
 class Prophet(_ProphetAdapter):
     """Prophet forecaster by wrapping Facebook's prophet algorithm [1]_.
 
+    Direct interface to Facebook prophet, using the sktime interface.
+    All hyper-parameters are exposed via the constructor.
+
+    Data can be passed in one of the sktime compatible formats,
+    naming a column `ds` such as in the prophet package is not necessary.
+
+    Integer indices can also be passed, in which case internally a conversion
+    to days since Jan 1, 2000 is carried out before passing to prophet.
+
     Parameters
     ----------
     freq: str, default=None
@@ -116,14 +125,14 @@ class Prophet(_ProphetAdapter):
     >>> from sktime.forecasting.fbprophet import Prophet
     >>> # Prophet requires to have data with a pandas.DatetimeIndex
     >>> y = load_airline().to_timestamp(freq='M')
-    >>> forecaster = Prophet(
+    >>> forecaster = Prophet(  # doctest: +SKIP
     ...     seasonality_mode='multiplicative',
     ...     n_changepoints=int(len(y) / 12),
     ...     add_country_holidays={'country_name': 'Germany'},
     ...     yearly_seasonality=True)
-    >>> forecaster.fit(y)
+    >>> forecaster.fit(y)  # doctest: +SKIP
     Prophet(...)
-    >>> y_pred = forecaster.predict(fh=[1,2,3])
+    >>> y_pred = forecaster.predict(fh=[1,2,3])  # doctest: +SKIP
     """
 
     def __init__(
@@ -153,8 +162,6 @@ class Prophet(_ProphetAdapter):
         stan_backend=None,
         verbose=0,
     ):
-        _check_soft_dependencies("prophet", severity="error", object=self)
-
         self.freq = freq
         self.add_seasonality = add_seasonality
         self.add_country_holidays = add_country_holidays
@@ -179,12 +186,12 @@ class Prophet(_ProphetAdapter):
         self.stan_backend = stan_backend
         self.verbose = verbose
 
+        super(Prophet, self).__init__()
+
         # import inside method to avoid hard dependency
         from prophet.forecaster import Prophet as _Prophet
 
         self._ModelClass = _Prophet
-
-        super(Prophet, self).__init__()
 
     def _instantiate_model(self):
         self._forecaster = self._ModelClass(
