@@ -248,7 +248,7 @@ class WEASEL_STEROIDS(BaseClassifier):
 
         # merging arrays from different threads
         all_words = np.concatenate(sfa_words, axis=1)
-        self.clf = RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=False)
+        self.clf = RidgeClassifierCV(alphas=np.logspace(-4, 4, 10), normalize=True)
         self.clf.fit(all_words, y)
         # print(f"\tCross-Validation Acc: {self.clf.best_score_}")
 
@@ -465,12 +465,10 @@ def create_bag_none(X_index, alphabet_size, n_instances, sfa_words, word_length)
     all_win_words = np.zeros(
         (n_instances, feature_count), dtype=np.int32
     )  # , dtype=np.float
+
     for j in range(len(sfa_words)):
-        for _, key in enumerate(sfa_words[j]):
-            all_win_words[j, key] += 1
-            # cc = feature_count + key
-            # if all_win_words[j, cc] == 0:
-            #    all_win_words[j, cc] = X_index[k] / sfa_words.shape[1]
+        all_win_words[j, :] = np.bincount(sfa_words[j], minlength=feature_count)
+
     return all_win_words
 
 
@@ -500,16 +498,19 @@ def create_bag_transform(
     # merging arrays
     all_win_words = np.zeros((len(X), feature_count), np.int32)
     for j in range(len(sfa_words)):
-        for _, key in enumerate(sfa_words[j]):
-            if feature_selection == "none":
-                all_win_words[j, key] += 1
-                # cc = feature_count // 2 + key
-                # if all_win_words[j, cc] == 0:
-                #    all_win_words[j, cc] = X_index[k] / sfa_words.shape[1]
-            else:
+        if feature_selection == "none":
+            all_win_words[j, :] = np.bincount(sfa_words[j], minlength=feature_count)
+        else:
+            for _, key in enumerate(sfa_words[j]):
                 if key in relevant_features:
                     o = relevant_features[key]
                     all_win_words[j, o] += 1
+
+        #       all_win_words[j, key] += 1
+        # cc = feature_count // 2 + key
+        # if all_win_words[j, cc] == 0:
+        #    all_win_words[j, cc] = X_index[k] / sfa_words.shape[1]
+
     return all_win_words, feature_count
 
 

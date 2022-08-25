@@ -448,7 +448,7 @@ def _fast_fourier_transform(X, norm, dft_length, inverse_sqrt_win_size):
     return dft[:, start:]
 
 
-@njit(fastmath=True, cache=True, parallel=True)  # njit and  is not working here?
+@njit(fastmath=True, cache=True)  # njit and  is not working here?
 def _transform_case(
     X,
     window_size,
@@ -482,22 +482,13 @@ def _transform_case(
         words = generate_words(dfts, bp, letter_bits)
         return words
 
+        # return generate_words(dfts, breakpoints, letter_bits)
+
         """
         bp = breakpoints.copy()
         bp[bp < 0] = -np.inf
         words = generate_words(dfts, bp, letter_bits)
         return words
-        """
-
-        """
-        bp = np.zeros((breakpoints.shape[0], 2))
-        bp[:, 0] = breakpoints[:, 2]
-        bp[:, 1] = np.inf
-        words2 = generate_words(
-            dfts, bp, letter_bits, word_bits, window_size, bigrams
-        )
-
-        return np.concatenate((words, words2), axis=1)
         """
 
 
@@ -553,21 +544,16 @@ def generate_words(dfts, breakpoints, letter_bits):
             vector[i] = breakpoints.shape[1] ** i
 
         for a in prange(dfts.shape[0]):
-            # for window in prange(dfts.shape[1]):
             match = (dfts[a] <= breakpoints[:, 0]).astype(np.float32)
             words[a, :] = np.dot(match, vector).astype(np.int32)
 
     # general case: alphabet-size many breakpoints
     else:
         for a in prange(dfts.shape[0]):
-            for window in prange(dfts.shape[1]):
-                word = np.int32(0)
-                for i in range(len(dfts[a, window])):
-                    for bp in range(breakpoints.shape[1]):
-                        if dfts[a, window, i] <= breakpoints[i, bp]:
-                            word = (word << letter_bits) | bp
-                            break
-                words[a, window] = word
+            for i in range(dfts.shape[2]):
+                words[a, :] = (words[a, :] << letter_bits) | np.digitize(
+                    dfts[a, :, i], breakpoints[i], right=True
+                )
 
     return words
 
@@ -663,4 +649,4 @@ def _dilation2(X, d):
             start += end
         return data
     else:
-        return X
+        return X.astype(np.float_)
