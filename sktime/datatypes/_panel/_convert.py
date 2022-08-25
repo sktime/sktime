@@ -892,6 +892,7 @@ def from_3d_numpy_to_nested(X, column_names=None, cells_as_numpy=False):
     df : pd.DataFrame
     """
     n_instances, n_columns, n_timepoints = X.shape
+    array_type = X.dtype
 
     container = np.array if cells_as_numpy else pd.Series
 
@@ -912,7 +913,7 @@ def from_3d_numpy_to_nested(X, column_names=None, cells_as_numpy=False):
     for j, column in enumerate(column_names):
         nested_column = (
             pd.DataFrame(X[:, j, :])
-            .apply(lambda x: [container(x)], axis=1)
+            .apply(lambda x: [container(x, dtype=array_type)], axis=1)
             .str[0]
             .rename(column)
         )
