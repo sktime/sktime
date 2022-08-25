@@ -214,7 +214,7 @@ def test_initialise_params():
     assert N_in_actual == N_in_expected
 
 
-def test_transform():
+def test_gibbs():
     """Test _transform method including gibbs sampling iterations."""
     expected = [
         [

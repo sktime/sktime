@@ -77,11 +77,13 @@ class Hidalgo(BaseTransformer):
     >>> import numpy as np
     >>> np.random.seed(123)
     >>> X = np.random.rand(10,3)
+    >>> X[6:, 1:] += 10
     >>> X[6:, 1:] = 0
     >>> model = Hidalgo(K=2, burn_in=0.5, n_iter=50, seed=10)
-    >>> Z = model.fit_transform(X)
+    >>> fitted_model = model.fit(X)
+    >>> Z = fitted_model.transform(X)
     >>> Z.tolist()
-    [0, 0, 0, 0, 0, 0, 1, 1, 1, 1]
+    [1, 1, 1, 1, 1, 1, 0, 0, 0, 0]
     """
 
     _tags = {
@@ -91,7 +93,7 @@ class Hidalgo(BaseTransformer):
         # what scitype is returned: Primitives, Series, Panel
         "transform-returns-same-time-index": True,
         "univariate-only": False,
-        "fit_is_empty": True,
+        "fit_is_empty": False,
     }
 
     def __init__(
@@ -547,9 +549,8 @@ class Hidalgo(BaseTransformer):
 
         return sampling
 
-    def _transform(self, X, y=None):
-        """
-        Run the Hidalgo algorithm.
+    def _fit(self, X, y=None):
+        """Run the Hidalgo algorithm.
 
         Find parameter esimates as distributions in sampling.
         Iterate through n_replicas random starts and get posterior
@@ -557,6 +558,7 @@ class Hidalgo(BaseTransformer):
 
         Notes
         -----
+        Writes to self
         _d : 1D np.ndarray of length K
             posterior mean of d, from posterior sample in gibbs_sampling
         _derr : 1D np.ndarray of length K
@@ -569,9 +571,11 @@ class Hidalgo(BaseTransformer):
             mean of likelihood, from sample in gibbs_sampling
         _likerr : float
             std of likelihood, from sample in gibbs_sampling
-        Pi : 2D np.ndarray of shape (K, N)
+        _Pi : 2D np.ndarray of shape (K, N)
             probability of posterior of z_i = k, point i can be safely
             assigned to manifold k if Pi > 0.8
+        _Z : 1D np.ndarray of length N
+            base-zero integer values corresponsing to segment (manifold k)
 
         Parameters
         ----------
@@ -580,8 +584,7 @@ class Hidalgo(BaseTransformer):
 
         Returns
         -------
-        Z : 1D np.ndarray of length N
-            base-zero integer values corresponsing to segment (manifold k)
+        self
         """
         K = self.K
         n_replicas = self.n_replicas
@@ -635,23 +638,37 @@ class Hidalgo(BaseTransformer):
                 bestsampling = sampling
                 maxlik = lik
 
-        # _d = np.mean(bestsampling[:, :K], axis=0)
-        # _derr = np.std(bestsampling[:, :K], axis=0)
-        # _p = np.mean(bestsampling[:, K : 2 * K], axis=0)
-        # _perr = np.std(bestsampling[:, K : 2 * K], axis=0)
-        # _lik = np.mean(bestsampling[:, -1], axis=0)
-        # _likerr = np.std(bestsampling[:, -1], axis=0)
+        self._d = np.mean(bestsampling[:, :K], axis=0)
+        self._derr = np.std(bestsampling[:, :K], axis=0)
+        self._p = np.mean(bestsampling[:, K : 2 * K], axis=0)
+        self._perr = np.std(bestsampling[:, K : 2 * K], axis=0)
+        self._lik = np.mean(bestsampling[:, -1], axis=0)
+        self._likerr = np.std(bestsampling[:, -1], axis=0)
 
         Pi = np.zeros((K, N))
 
         for k in range(K):
             Pi[k, :] = np.sum(bestsampling[:, (2 * K) + 1 : 2 * K + N + 1] == k, axis=0)
 
+        Pi = Pi / len(idx)
+        self._Pi = Pi
+
         Z = np.argmax(Pi, axis=0)
         pZ = np.max(Pi, axis=0)
         Z[np.where(pZ < 0.8)] = -1
+        self._Z = Z
 
-        return Z
+        return self
+
+    def _transform(self, X, y=None):
+        """Return the manifold k corresponding to each data point i.
+
+        Returns
+        -------
+        Z : 1D np.ndarray of length N
+            base-zero integer values corresponsing to segment (manifold k)
+        """
+        return self._Z
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
