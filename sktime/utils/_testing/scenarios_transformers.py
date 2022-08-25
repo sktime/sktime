@@ -46,6 +46,7 @@ OLD_SERIES_MIXINS = (
 
 # random seed for generating data to keep scenarios exactly reproducible
 RAND_SEED = 42
+RAND_SEED2 = 84
 
 
 def _is_child_of(obj, class_or_tuple):
@@ -214,7 +215,7 @@ class TransformerFitTransformSeriesUnivariate(TransformerTestScenario):
 
     args = {
         "fit": {"X": _make_series(n_timepoints=10, random_state=RAND_SEED)},
-        "transform": {"X": _make_series(n_timepoints=10, random_state=RAND_SEED)},
+        "transform": {"X": _make_series(n_timepoints=11, random_state=RAND_SEED2)},
         # "inverse_transform": {"X": _make_series(n_timepoints=10)},
     }
     default_method_sequence = ["fit", "transform"]
