@@ -77,9 +77,9 @@ class Hidalgo(BaseTransformer):
     >>> import numpy as np
     >>> np.random.seed(123)
     >>> X = np.random.rand(10,3)
-    >>> X[6:, 1:] += 10
+    >>> X[:6, 1:] += 10
     >>> X[6:, 1:] = 0
-    >>> model = Hidalgo(K=2, burn_in=0.5, n_iter=50, seed=10)
+    >>> model = Hidalgo(K=2, burn_in=0.8, n_iter=100, seed=10)
     >>> fitted_model = model.fit(X)
     >>> Z = fitted_model.transform(X)
     >>> Z.tolist()
