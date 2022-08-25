@@ -910,7 +910,12 @@ def from_3d_numpy_to_nested(X, column_names=None, cells_as_numpy=False):
 
     column_list = []
     for j, column in enumerate(column_names):
-        nested_column = pd.DataFrame(X[:, j, :]).apply(lambda x: [container(x)], axis=1).str[0].rename(column)
+        nested_column = (
+            pd.DataFrame(X[:, j, :])
+            .apply(lambda x: [container(x)], axis=1)
+            .str[0]
+            .rename(column)
+        )
         column_list.append(nested_column)
     df = pd.concat(column_list, axis=1)
     return df
