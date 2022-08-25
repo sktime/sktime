@@ -244,7 +244,7 @@ class TransformerFitTransformSeriesUnivariateWithY(TransformerTestScenario):
 
 y3 = _make_classification_y(n_instances=11, n_classes=3, random_state=RAND_SEED)
 X_np = _make_panel_X(
-    n_instances=11,
+    n_instances=6,
     n_timepoints=17,
     random_state=RAND_SEED,
     y=y3,
