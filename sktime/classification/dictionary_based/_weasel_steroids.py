@@ -248,7 +248,7 @@ class WEASEL_STEROIDS(BaseClassifier):
 
         # merging arrays from different threads
         all_words = np.concatenate(sfa_words, axis=1)
-        self.clf = RidgeClassifierCV(alphas=np.logspace(-4, 4, 10), normalize=True)
+        self.clf = RidgeClassifierCV(alphas=np.logspace(-4, 4, 10), normalize=False)
         self.clf.fit(all_words, y)
         # print(f"\tCross-Validation Acc: {self.clf.best_score_}")
 
