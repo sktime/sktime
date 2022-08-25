@@ -242,6 +242,35 @@ class TransformerFitTransformSeriesUnivariateWithY(TransformerTestScenario):
     default_method_sequence = ["fit", "transform"]
 
 
+y3 = _make_classification_y(n_instances=11, n_classes=3, random_state=RAND_SEED)
+X_np = _make_panel_X(
+    n_instances=11, n_timepoints=17, random_state=RAND_SEED, y=y3, return_numpy=True
+)
+X_test_np = _make_panel_X(
+    n_instances=6, n_timepoints=17, random_state=RAND_SEED, return_numpy=True
+)
+
+
+class TransformerFitTransformPanelUnivariateNumpyWithClassYOnlyFit(
+    TransformerTestScenario
+):
+    """Fit/predict with univariate panel X, numpy3D mtype, and labels y."""
+
+    _tags = {
+        "X_scitype": "Panel",
+        "X_univariate": True,
+        "has_y": True,
+        "is_enabled": True,
+        "y_scitype": "Table",
+    }
+
+    args = {
+        "fit": {"y": y3, "X": X_np},
+        "transform": {"X": X_test_np},
+    }
+    default_method_sequence = ["fit", "transform"]
+
+
 class TransformerFitTransformPanelUnivariate(TransformerTestScenario):
     """Fit/transform, univariate Panel X."""
 
@@ -396,6 +425,7 @@ scenarios_transformers = [
     TransformerFitTransformPanelMultivariate,
     TransformerFitTransformPanelUnivariateWithClassY,
     TransformerFitTransformPanelUnivariateWithClassYOnlyFit,
+    TransformerFitTransformPanelUnivariateNumpyWithClassYOnlyFit,
     TransformerFitTransformHierarchicalMultivariate,
     TransformerFitTransformHierarchicalUnivariate,
 ]

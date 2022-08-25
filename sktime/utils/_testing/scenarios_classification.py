@@ -144,7 +144,7 @@ class ClassifierFitPredictNumpy(ClassifierTestScenario):
     _tags = {
         "X_univariate": True,
         "X_unequal_length": False,
-        "is_enabled": True,
+        "is_enabled": False,
         "n_classes": 3,
     }
 
