@@ -247,8 +247,7 @@ class WEASEL_STEROIDS(BaseClassifier):
             sfa_words.append(sfa_words2)
 
         # merging arrays from different threads
-        all_words = merge_feature_vectors(len(X), self.total_features_count, sfa_words)
-
+        all_words = np.concatenate(sfa_words, axis=1)
         self.clf = RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=False)
         self.clf.fit(all_words, y)
         # print(f"\tCross-Validation Acc: {self.clf.best_score_}")
@@ -310,7 +309,7 @@ class WEASEL_STEROIDS(BaseClassifier):
             for i in range(self.ensemble_size)
         )
 
-        return merge_feature_vectors(len(X), self.total_features_count, parallel_res)
+        return np.concatenate(parallel_res, axis=1)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -404,7 +403,7 @@ def _parallel_fit(
     relevant_features = None
 
     if feature_selection == "none":
-        all_win_words = merge_features_none(
+        all_win_words = create_bag_none(
             transformer.X_index, alphabet_size, n_instances, sfa_words, word_length
         )
     else:
@@ -416,7 +415,7 @@ def _parallel_fit(
             relevant_features_idx = rng.choice(
                 len(feature_names), replace=False, size=feature_count
             )
-            all_win_words, relevant_features = build_feature_vector(
+            all_win_words, relevant_features = create_bag_feature_selection(
                 n_instances,
                 relevant_features_idx,
                 np.array(list(feature_names)),
@@ -426,8 +425,8 @@ def _parallel_fit(
         # Chi-squared feature selection
         elif feature_selection == "chi2":
             feature_count = len(list(feature_names))
-            relevant_features_idx = np.arange(feature_count)
-            all_win_words, _ = build_feature_vector(
+            relevant_features_idx = np.arange(feature_count, dtype=np.int32)
+            all_win_words, _ = create_bag_feature_selection(
                 n_instances,
                 relevant_features_idx,
                 np.array(list(feature_names)),
@@ -461,9 +460,11 @@ def create_feature_names(sfa_words):
 
 
 @njit(cache=True, fastmath=True)
-def merge_features_none(X_index, alphabet_size, n_instances, sfa_words, word_length):
+def create_bag_none(X_index, alphabet_size, n_instances, sfa_words, word_length):
     feature_count = np.int32(2**word_length)
-    all_win_words = np.zeros((n_instances, feature_count))  # , dtype=np.float
+    all_win_words = np.zeros(
+        (n_instances, feature_count), dtype=np.int32
+    )  # , dtype=np.float
     for j in range(len(sfa_words)):
         for _, key in enumerate(sfa_words[j]):
             all_win_words[j, key] += 1
@@ -474,7 +475,9 @@ def merge_features_none(X_index, alphabet_size, n_instances, sfa_words, word_len
 
 
 @njit(cache=True, fastmath=True)
-def build_feature_vector(n_instances, relevant_features_idx, feature_names, sfa_words):
+def create_bag_feature_selection(
+    n_instances, relevant_features_idx, feature_names, sfa_words
+):
     relevant_features = Dict.empty(key_type=types.int32, value_type=types.int32)
     for k, v in zip(
         feature_names[relevant_features_idx],
@@ -482,7 +485,7 @@ def build_feature_vector(n_instances, relevant_features_idx, feature_names, sfa_
     ):
         relevant_features[k] = v
 
-    all_win_words = np.zeros((n_instances, len(relevant_features_idx)))
+    all_win_words = np.zeros((n_instances, len(relevant_features_idx)), dtype=np.int32)
     for j in range(len(sfa_words)):
         for key in sfa_words[j]:
             if key in relevant_features:
@@ -490,37 +493,12 @@ def build_feature_vector(n_instances, relevant_features_idx, feature_names, sfa_
     return all_win_words, relevant_features
 
 
-def _parallel_transform_words(
-    X,
-    transformer,
-    relevant_features,
-    feature_count,
-    feature_selection,
-):
-    # SFA transform
-    sfa_words = transformer.transform(X)
-
-    return create_bag(
-        X,
-        transformer.X_index,
-        feature_count,
-        feature_selection,
-        relevant_features
-        if relevant_features
-        else Dict.empty(
-            key_type=types.int32,
-            value_type=types.int32,
-        ),
-        sfa_words,
-    )[0]
-
-
 @njit(cache=True, fastmath=True)
-def create_bag(
+def create_bag_transform(
     X, X_index, feature_count, feature_selection, relevant_features, sfa_words
 ):
     # merging arrays
-    all_win_words = np.zeros((len(X), feature_count))
+    all_win_words = np.zeros((len(X), feature_count), np.int32)
     for j in range(len(sfa_words)):
         for _, key in enumerate(sfa_words[j]):
             if feature_selection == "none":
@@ -535,13 +513,26 @@ def create_bag(
     return all_win_words, feature_count
 
 
-@njit(cache=True, fastmath=True)
-def merge_feature_vectors(d1, d2, sfa_words):
-    all_words = np.zeros((d1, d2))
-    current_features_count = 0
-    for sfa_words2 in sfa_words:
-        all_words[
-            :, current_features_count : (current_features_count + sfa_words2.shape[1])
-        ] = sfa_words2
-        current_features_count += sfa_words2.shape[1]
-    return all_words
+def _parallel_transform_words(
+    X,
+    transformer,
+    relevant_features,
+    feature_count,
+    feature_selection,
+):
+    # SFA transform
+    sfa_words = transformer.transform(X)
+
+    return create_bag_transform(
+        X,
+        transformer.X_index,
+        feature_count,
+        feature_selection,
+        relevant_features
+        if relevant_features
+        else Dict.empty(
+            key_type=types.int32,
+            value_type=types.int32,
+        ),
+        sfa_words,
+    )[0]
