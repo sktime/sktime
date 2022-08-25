@@ -112,7 +112,7 @@ X_test_multivariate = _make_panel_X(
 
 
 class ClassifierFitPredict(ClassifierTestScenario):
-    """Fit/predict with univariate panel X and labels y."""
+    """Fit/predict with univariate panel X, nested_univ mtype, and labels y."""
 
     _tags = {
         "X_univariate": True,
@@ -124,6 +124,33 @@ class ClassifierFitPredict(ClassifierTestScenario):
     args = {
         "fit": {"y": y, "X": X},
         "predict": {"X": X_test},
+    }
+    default_method_sequence = ["fit", "predict", "predict_proba", "decision_function"]
+    default_arg_sequence = ["fit", "predict", "predict", "predict"]
+
+
+y3 = _make_classification_y(n_instances=11, n_classes=3, random_state=RAND_SEED)
+X_np = _make_panel_X(
+    n_instances=11, n_timepoints=17, random_state=RAND_SEED, y=y3, return_numpy=True
+)
+X_test_np = _make_panel_X(
+    n_instances=6, n_timepoints=17, random_state=RAND_SEED, return_numpy=True
+)
+
+
+class ClassifierFitPredictNumpy(ClassifierTestScenario):
+    """Fit/predict with univariate panel X, numpy3D mtype, and labels y."""
+
+    _tags = {
+        "X_univariate": True,
+        "X_unequal_length": False,
+        "is_enabled": True,
+        "n_classes": 3,
+    }
+
+    args = {
+        "fit": {"y": y3, "X": X_np},
+        "predict": {"X": X_test_np},
     }
     default_method_sequence = ["fit", "predict", "predict_proba", "decision_function"]
     default_arg_sequence = ["fit", "predict", "predict", "predict"]
@@ -175,6 +202,7 @@ class ClassifierFitPredictUnequalLength(ClassifierTestScenario):
 
 scenarios_classification = [
     ClassifierFitPredict,
+    ClassifierFitPredictNumpy,
     ClassifierFitPredictMultivariate,
     ClassifierFitPredictUnequalLength,
 ]
@@ -182,6 +210,7 @@ scenarios_classification = [
 # same scenarios used for early classification
 scenarios_early_classification = [
     ClassifierFitPredict,
+    ClassifierFitPredictNumpy,
     ClassifierFitPredictMultivariate,
     ClassifierFitPredictUnequalLength,
 ]
@@ -189,6 +218,7 @@ scenarios_early_classification = [
 # we use the same scenarios for regression, as in the old test suite
 scenarios_regression = [
     ClassifierFitPredict,
+    ClassifierFitPredictNumpy,
     ClassifierFitPredictMultivariate,
     ClassifierFitPredictUnequalLength,
 ]
