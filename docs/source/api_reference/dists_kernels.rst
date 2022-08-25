@@ -4,7 +4,7 @@ Time series distances/kernels
 =============================
 
 The :mod:`sktime.dists_kernels` module contains pairwise transformers, such as
-distances and kernel functions on time series data. It also containe some distances/kernel functions for tabular data.
+distances and kernel functions on time series data. It also contains some distances/kernel functions for tabular data.
 
 Distances and kernel functions are treated the same, as they have the same formal signature - that of a "pairwise transformer".
 
