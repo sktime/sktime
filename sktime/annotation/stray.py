@@ -23,47 +23,99 @@ def standardize(x):
 
 
 class STRAY(BaseSeriesAnnotator):
-    """
-    Description.
+    """STRAY: robust anomaly detection in data streams with concept drift.
+
+    This is based on STRAY (Search TRace AnomalY) _[1], which is a modification
+    of HDoutliers _[2]. HDoutliers is a powerful algorithm for the detection of
+    anomalous observations in a dataset, which has (among other advantages) the
+    ability to detect clusters of outliers in multi-dimensional data without
+    requiring a model of the typical behavior of the system. However, it suffers
+    from some limitations that affect its accuracy. STRAY is an extension of
+    HDoutliers that uses extreme value theory for the anomolous threshold
+    calculation, to deal with data streams that exhibit non-stationary behavior.
 
     Parameters
     ----------
-    ...
+    alpha : float, optional (default=0.01)
+        Threshold for determining the cutoff for outliers. Observations are
+        considered outliers if they fall in the (1- alpha) tail of
+        the distribution of the nearest-neighbor distances between exemplars.
+    k : int, optional (default=10)
+        Number of neighbours considered.
+    knn_algorithm : str {"auto", "ball_tree", "kd_tree", "brute"}, optional
+        (default="brute")
+        Algorithm used to compute the nearest neighbors in
+        sklearn.neighbors.NearestNeighbors
+    normalize : function *** (default=unitize)
+        Method to normalize the columns of the data. This prevents variables
+        with large variances having disproportional influence on Euclidean distances.
+    p : float, optional (default=0.5)
+        Proportion of possible candidates for outliers. This defines the starting point
+        for the bottom up searching algorithm.
+    size_threshold : int, optional (default=50)
+        Sample size to calculate an emperical threshold.
+    outlier_tail : str {"min", "max"}, optional (default="max")
+        Direction of the outlier tail.
+
+    References
+    ----------
+    [1] Talagala, Priyanga Dilini, Rob J. Hyndman, and Kate Smith-Miles.
+    "Anomaly detection in high-dimensional data." Journal of Computational
+    and Graphical Statistics 30.2 (2021): 360-374.
+    [2] Wilkinson, Leland. "Visualizing big data outliers through
+    distributed aggregation." IEEE transactions on visualization and
+    computer graphics 24.1 (2017): 256-266.
 
     Examples
     --------
-    ...
+    >>> from sktime.annotation.stray import STRAY
+    >>> from numpy import asarray
+    >>> X = asarray([3.7,3.2,3.4,3.6,-5.1,-5.2,-4.9])
+    >>> model = STRAY(k=3)
+    >>> y = model.fit_predict(X)
+    >>> y
+    [0, 0, 0, 0, 1, 1, 1]
     """
 
     def __init__(
         self,
         alpha=0.01,
         k=10,
-        knnsearchtype="brute",
+        knn_algorithm="brute",
         normalize=unitize,
         p=0.5,
-        tn=50,
-        outtail="max",
-        labels="indicator",
+        size_threshold=50,
+        outlier_tail="max",
     ):
         self.alpha = alpha
         self.k = k
-        self.knnsearchtype = knnsearchtype
+        self.knn_algorithm = knn_algorithm
         self.normalize = normalize
         self.p = p
-        self.tn = tn
-        self.outtail = outtail
-        self.labels = labels
-        super(STRAY, self).__init__(fmt="dense", labels=self.labels)
+        self.size_threshold = size_threshold
+        self.outlier_tail = outlier_tail
+        super(STRAY, self).__init__(fmt="dense")
 
     def _find_threshold(self, outlier_score, n):
+        """Find Outlier Threshold.
 
-        if self.outtail == "min":
+        Parameters
+        ----------
+        outlier_score : np.ArrayLike
+            The outlier scores determined by k nearast neighbours distance
+        n : int
+            The number of rows remaining in X when NA's are removed.
+
+        Returns
+        -------
+        array of indices of the observations determined to be outliers.
+        """
+        if self.outlier_tail == "min":
             outlier_score = -outlier_score
 
         order = np.argsort(outlier_score)
         gaps = np.append(0, np.diff(outlier_score[order]))
-        n4 = int(max(min(self.tn, np.floor(n / 4)), 2))
+        n4 = int(max(min(self.size_threshold, np.floor(n / 4)), 2))
 
         J = np.array([i for i in range(2, n4 + 1)])
         start = int(max(np.floor(n * (1 - self.p)), 1))
@@ -84,13 +136,25 @@ class STRAY(BaseSeriesAnnotator):
         return np.where(outlier_score > bound)[0]
 
     def _use_KNN(self, X, n):
+        """Find outliers using kNN distance with maximum gap.
 
+        Parameters
+        ----------
+        X : np.ArrayLike
+            Data for anomaly detection (time series).
+        n : int
+            The number of rows remaining in X when NA's are removed.
+
+        Returns
+        -------
+        dict of index of outliers and the outlier scores
+        """
         if len(X.shape) == 1:
             nbrs = NearestNeighbors(n_neighbors=self.k + 1).fit(X.reshape(-1, 1))
             distances, _ = nbrs.kneighbors(X.reshape(-1, 1))
         else:
             nbrs = NearestNeighbors(
-                n_neighbors=self.k + 1, algorithm=self.knnsearchtype
+                n_neighbors=self.k + 1, algorithm=self.knn_algorithm
             ).fit(X)
             distances, _ = nbrs.kneighbors(X)
 
@@ -104,11 +168,22 @@ class STRAY(BaseSeriesAnnotator):
         return {"idx_outliers": out_index, "out_scores": d}
 
     def _find_HDoutliers(self, X):
+        """Detect Anomalies in High Dimensional Data.
+
+        Parameters
+        ----------
+        X : np.ArrayLike
+            Data for anomaly detection (time series).
+
+        Returns
+        -------
+        dict of anomalies and their corresponding scores
+        """
         r = np.shape(X)[0]
         idx_dropna = np.array([i for i in range(r) if not np.isnan(X[i]).any()])  # tag
         X_dropna = X[
             idx_dropna,
-        ]
+        ]  # FIXME: might move this somewhere else?
 
         X_dropna = np.apply_along_axis(self.normalize, 0, X_dropna)
 
@@ -135,21 +210,34 @@ class STRAY(BaseSeriesAnnotator):
 
         Parameters
         ----------
-        ...
+        X : pd.DataFrame
+            Training data to fit model to (time series).
+        Y : pd.Series, optional
+            Ground truth annotations for training if annotator is supervised.
 
         Returns
         -------
         self :
             Reference to self.
         """
+        info_dict = self._find_HDoutliers(X)
+
+        self.score_ = info_dict["outlier_scores"]
+        self.y_ = info_dict["outlier_bool"]
+
         return self
 
     def _predict(self, X):
-        """Something."""
+        """Return anomaly detection.
 
-        info_dict = self._find_HDoutliers(X)
+        Parameters
+        ----------
+        X : np.ArrayLike
+            Data for anomaly detection (time series).
 
-        if self.labels == "score":
-            return info_dict["outlier_scores"]
-        else:
-            return info_dict["outlier_bool"]
+        Returns
+        -------
+        y : np.ArrayLike
+            Anomaly values, boolean.
+        """
+        return self.y_

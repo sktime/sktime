@@ -5,11 +5,11 @@ __author__ = ["KatieBuc"]
 
 import numpy as np
 
-from sktime.annotation.stray import STRAY
+from sktime.annotation.stray import STRAY, standardize
 
 
 def test_default_1D():
-
+    """Test with default parameters and 1D input array."""
     X = np.array(
         [
             -7.207066,
@@ -47,7 +47,7 @@ def test_default_1D():
         ]
     )
 
-    y_pred_expected = [
+    y_expected = [
         0,
         0,
         0,
@@ -82,13 +82,13 @@ def test_default_1D():
         0,
     ]
 
-    model = STRAY().fit(X)
-    y_pred_actual = model.predict(X)
-    assert np.allclose(y_pred_actual, y_pred_expected)
+    model = STRAY()
+    y_actual = model.fit_predict(X)
+    assert np.allclose(y_actual, y_expected)
 
 
 def test_default_2D():
-
+    """Test with default parameters and 2D input array."""
     X = np.array(
         [
             [-1.207, -0.776, -0.694],
@@ -108,7 +108,7 @@ def test_default_2D():
         ]
     )
 
-    y_pred_expected = [
+    y_expected = [
         0,
         0,
         0,
@@ -125,12 +125,13 @@ def test_default_2D():
         1,
     ]
 
-    model = STRAY().fit(X)
-    y_pred_actual = model.predict(X)
-    assert np.allclose(y_pred_actual, y_pred_expected)
+    model = STRAY()
+    y_actual = model.fit_predict(X)
+    assert np.allclose(y_actual, y_expected)
 
 
 def test_1D_score_with_na():
+    """Test score with 1D input array with missing values."""
     X = np.array(
         [
             np.nan,
@@ -161,12 +162,14 @@ def test_1D_score_with_na():
         0.02122967,
     ]
 
-    model = STRAY(labels="score", k=3).fit(X)
-    y_scores_actual = model.predict(X)
+    model = STRAY(k=3)
+    fitted_model = model.fit(X)
+    y_scores_actual = fitted_model.score_
     assert np.allclose(y_scores_actual, y_scores_expected, equal_nan=True)
 
 
 def test_1D_bool_with_na():
+    """Test anomaly detection with 1D input array with missing values."""
     X = np.array(
         [
             np.nan,
@@ -183,14 +186,16 @@ def test_1D_bool_with_na():
         ]
     )
 
-    y_bool_expected = [0, 0, 1, 0, 1, 1, 0, 0, 0, 0, 0]
+    y_expected = [0, 0, 1, 0, 1, 1, 0, 0, 0, 0, 0]
 
-    model = STRAY(labels="indicator", k=3).fit(X)
-    y_bool_actual = model.predict(X)
-    assert np.allclose(y_bool_actual, y_bool_expected)
+    model = STRAY(k=3)
+    fitted_model = model.fit(X)
+    y_actual = fitted_model.y_
+    assert np.allclose(y_actual, y_expected)
 
 
 def test_2D_score_with_na():
+    """Test score with 2D input array with missing values."""
     X = np.array(
         [
             [-1.20706575, -0.57473996],
@@ -204,12 +209,14 @@ def test_2D_score_with_na():
 
     y_scores_expected = [0.5233413, 0.5233413, np.nan, 0.7248368, 0.6035040, 0.8704687]
 
-    model = STRAY(labels="score", k=2, tn=4).fit(X)
-    y_scores_actual = model.predict(X)
+    model = STRAY(k=2, size_threshold=4)
+    fitted_model = model.fit(X)
+    y_scores_actual = fitted_model.score_
     assert np.allclose(y_scores_actual, y_scores_expected, equal_nan=True)
 
 
 def test_2D_bool_with_na():
+    """Test anomaly detection with 2D input array with missing values."""
     X = np.array(
         [
             [-1.20706575, -0.57473996],
@@ -221,25 +228,37 @@ def test_2D_bool_with_na():
         ]
     )
 
-    y_bool_expected = [0, 0, 0, 1, 1, 1]
+    y_expected = [0, 0, 0, 1, 1, 1]
 
-    model = STRAY(labels="indicator", k=2, tn=4).fit(X)
-    y_bool_actual = model.predict(X)
-    assert np.allclose(y_bool_actual, y_bool_expected)
+    model = STRAY(k=2, size_threshold=4)
+    fitted_model = model.fit(X)
+    y_actual = fitted_model.y_
+    assert np.allclose(y_actual, y_expected)
 
 
-# def test_2D_score_with_standardize():
-#     X = np.array([
-#         [-1.20706575, -0.57473996],
-#         [0.27742924, -0.54663186],
-#         [1.08444118, -0.5644520],
-#         [-2.3456977, -0.89003783],
-#         [0.42912469, -0.4771927],
-#         [0.50605589, -0.99838644],
-#     ])
+def test_2D_score_with_standardize():
+    """Test score with 2D input array and `standardize` normalization."""
+    X = np.array(
+        [
+            [-1.20706575, -0.57473996],
+            [0.27742924, -0.54663186],
+            [1.08444118, -0.5644520],
+            [-2.3456977, -0.89003783],
+            [0.42912469, -0.4771927],
+            [0.50605589, -0.99838644],
+        ]
+    )
 
-#     y_scores_expected = [1.1274565, 0.6139288, 0.5982989, 1.4866554, 0.5982989, 1.7245212]
+    y_scores_expected = [
+        1.1274565,
+        0.6139288,
+        0.5982989,
+        1.4866554,
+        0.5982989,
+        1.7245212,
+    ]
 
-#     model = STRAY(labels="score", k=2, tn=4, normalize=standardize).fit(X)
-#     y_scores_actual = model.predict(X)
-#     assert np.allclose(y_scores_actual, y_scores_expected)
+    model = STRAY(k=2, size_threshold=4, normalize=standardize)
+    fitted_model = model.fit(X)
+    y_scores_actual = fitted_model.score_
+    assert np.allclose(y_scores_actual, y_scores_expected)
