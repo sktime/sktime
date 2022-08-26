@@ -170,28 +170,21 @@ def test_differencer_inverse_does_not_memorize():
     from sktime.transformations.series.difference import Differencer
 
     y = load_airline()
-    X = pd.DataFrame(
-        {
-            "lag1": y.shift(1).fillna(method="bfill"),
-            "lag2": y.shift(2).fillna(method="bfill"),
-        },
-        index=y.index,
-    )
 
-    y_train, y_test, X_train, X_test = temporal_train_test_split(y=y, X=X, test_size=30)
+    y_train, y_test = temporal_train_test_split(y=y, test_size=30)
     fh_out = np.arange(1, len(y_test) + 1)
     fh_ins = ForecastingHorizon(y_train.index, is_relative=False)
 
-    pipe = Differencer() ** (Differencer() * NaiveForecaster())
+    pipe = Differencer() * NaiveForecaster()
 
-    pipe.fit(y=y_train, X=X_train)
-    pipe_ins = pipe.predict(fh=fh_ins, X=X_train)
-    pipe.predict(fh=fh_out, X=X_test)
+    pipe.fit(y=y_train)
+    pipe_ins = pipe.predict(fh=fh_ins)
+    pipe.predict(fh=fh_out)
 
     naive_model = NaiveForecaster()
-    naive_model.fit(y=y_train, X=X_train)
-    model_ins = naive_model.predict(fh=fh_ins, X=X_train)
-    naive_model.predict(fh=fh_out, X=X_test)
+    naive_model.fit(y=y_train)
+    model_ins = naive_model.predict(fh=fh_ins)
+    naive_model.predict(fh=fh_out)
 
     # pipe output should not be similar to train input
     assert not np.allclose(y_train.to_numpy(), pipe_ins.to_numpy())
