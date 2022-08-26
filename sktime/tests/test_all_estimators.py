@@ -879,7 +879,7 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
 
         # Ensure that each parameter is set in init
         init_params = _get_args(type(estimator).__init__)
-        invalid_attr = set(init_params) - set(dir(estimator)) - {"self"}
+        invalid_attr = set(init_params) - set(vars(estimator)) - {"self"}
         assert not invalid_attr, (
             "Estimator %s should store all parameters"
             " as an attribute during init. Did not find "

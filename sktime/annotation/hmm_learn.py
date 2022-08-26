@@ -79,7 +79,13 @@ class GaussianHMM(BaseHMMLearn):
     Examples
     --------
     >>> from sktime.annotation.hmm_learn import GaussianHMM
+    >>> from sktime.annotation.datagen import piecewise_normal
+    >>> data = piecewise_normal(
+    >>>    means=[2, 4, 1], lengths=[10, 35, 40], random_state=7
+    >>> ).reshape((-1, 1))
     >>> model = GaussianHMM(algorithm='viterbi', n_components=2)
+    >>> model.fit(data)
+    >>> labeled_data = model.predict(data)
     """
 
     def __init__(
@@ -145,7 +151,7 @@ class GaussianHMM(BaseHMMLearn):
             self.init_params,
             self.implementation,
         )
-        super(GaussianHMM, self)._fit(X, Y)
+        return super(GaussianHMM, self)._fit(X, Y)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
