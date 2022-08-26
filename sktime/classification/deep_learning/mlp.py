@@ -1,20 +1,20 @@
 # -*- coding: utf-8 -*-
-"""Time Convolutional Neural Network (CNN) for classification."""
+"""Multi Layer Perceptron Network (MLP) for classification."""
 
-__author__ = ["James-Large", "TonyBagnall"]
-__all__ = ["CNNClassifier"]
+__author__ = ["James-Large", "AurumnPegasus"]
+__all__ = ["MLPClassifier"]
 
 from sklearn.utils import check_random_state
 
 from sktime.classification.deep_learning.base import BaseDeepClassifier
-from sktime.networks.cnn import CNNNetwork
+from sktime.networks.mlp import MLPNetwork
 from sktime.utils.validation._dependencies import _check_dl_dependencies
 
 _check_dl_dependencies(severity="warning")
 
 
-class CNNClassifier(BaseDeepClassifier):
-    """Time Convolutional Neural Network (CNN), as described in [1].
+class MLPClassifier(BaseDeepClassifier):
+    """Multi Layer Perceptron Network (MLP), as described in [1].
 
     Parameters
     ----------
@@ -23,13 +23,6 @@ class CNNClassifier(BaseDeepClassifier):
         the number of epochs to train the model
     batch_size      : int, default = 16
         the number of samples per gradient update.
-    kernel_size     : int, default = 7
-        the length of the 1D convolution window
-    avg_pool_size   : int, default = 3
-        size of the average pooling windows
-    n_conv_layers   : int, default = 2
-        the number of convolutional plus average pooling layers
-    filter_sizes    : array of shape (n_conv_layers) default = [6, 12]
     random_state    : int or None, default=None
         Seed for random number generation.
     verbose         : boolean, default = False
@@ -49,36 +42,34 @@ class CNNClassifier(BaseDeepClassifier):
 
     Notes
     -----
-    .. [1] Zhao et. al, Convolutional neural networks for
-    time series classification, Journal of
-    Systems Engineering and Electronics, 28(1):2017.
+    .. .. [1]  Network originally defined in:
+    @inproceedings{wang2017time, title={Time series classification from
+    scratch with deep neural networks: A strong baseline}, author={Wang,
+    Zhiguang and Yan, Weizhong and Oates, Tim}, booktitle={2017
+    International joint conference on neural networks (IJCNN)}, pages={
+    1578--1585}, year={2017}, organization={IEEE} }
 
-    Adapted from the implementation from Fawaz et. al
-    https://github.com/hfawaz/dl-4-tsc/blob/master/classifiers/cnn.py
+    Adapted from the implementation from source code
+    https://github.com/hfawaz/dl-4-tsc/blob/master/classifiers/mlp.py
 
     Examples
     --------
-    >>> from sktime.classification.deep_learning.cnn import CNNClassifier
+    >>> from sktime.classification.deep_learning.mlp import MLPClassifier
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
     >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
-    >>> cnn = CNNClassifier()
-    >>> cnn.fit(X_train, y_train)
-    CNNClassifier(...)
+    >>> mlp = MLPClassifier()
+    >>> mlp.fit(X_train, y_train)
+    MLPClassifier(...)
     """
-
-    _tags = {"python_dependencies": "tensorflow"}
 
     def __init__(
         self,
         n_epochs=2000,
         batch_size=16,
-        kernel_size=7,
-        avg_pool_size=3,
-        n_conv_layers=2,
         callbacks=None,
         verbose=False,
-        loss="mean_squared_error",
+        loss="categorical_crossentropy",
         metrics=None,
         random_state=None,
         activation="sigmoid",
@@ -86,10 +77,7 @@ class CNNClassifier(BaseDeepClassifier):
         optimizer=None,
     ):
         _check_dl_dependencies(severity="error")
-        super(CNNClassifier, self).__init__()
-        self.n_conv_layers = n_conv_layers
-        self.avg_pool_size = avg_pool_size
-        self.kernel_size = kernel_size
+        super(MLPClassifier, self).__init__()
         self.callbacks = callbacks
         self.n_epochs = n_epochs
         self.batch_size = batch_size
@@ -101,7 +89,7 @@ class CNNClassifier(BaseDeepClassifier):
         self.use_bias = use_bias
         self.optimizer = optimizer
         self.history = None
-        self._network = CNNNetwork()
+        self._network = MLPNetwork()
 
     def build_model(self, input_shape, n_classes, **kwargs):
         """Construct a compiled, un-trained, keras model that is ready for training.
