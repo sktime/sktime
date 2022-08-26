@@ -123,7 +123,7 @@ class Differencer(BaseTransformer):
         self.lags = lags
         self.na_handling = self._check_na_handling(na_handling)
 
-        self._Z = None
+        self._X = None
         self._lags = None
         self._cumulative_lags = None
         self._prior_cum_lags = None
@@ -148,7 +148,7 @@ class Differencer(BaseTransformer):
     def _check_inverse_transform_index(self, Z):
         """Check fitted series contains indices needed in inverse_transform."""
         first_idx = Z.index.min()
-        orig_first_idx, orig_last_idx = self._Z.index.min(), self._Z.index.max()
+        orig_first_idx, orig_last_idx = self._X.index.min(), self._X.index.max()
 
         is_contained_by_fitted_z = False
         is_future = False
@@ -160,7 +160,7 @@ class Differencer(BaseTransformer):
             ]
             raise ValueError(" ".join(msg))
 
-        elif Z.index.difference(self._Z.index).shape[0] == 0:
+        elif Z.index.difference(self._X.index).shape[0] == 0:
             is_contained_by_fitted_z = True
 
         elif first_idx > orig_last_idx:
@@ -173,7 +173,7 @@ class Differencer(BaseTransformer):
             np.arange(-1, -(self._cumulative_lags[-1] + 1), -1), freq=self._freq
         )
         index = fh.to_absolute(cutoff).to_pandas()
-        index_diff = index.difference(self._Z.index)
+        index_diff = index.difference(self._X.index)
 
         if index_diff.shape[0] != 0 and not is_contained_by_fitted_z:
             msg = [
@@ -265,9 +265,7 @@ class Differencer(BaseTransformer):
         _, pad_z_inv = self._check_inverse_transform_index(X)
 
         X_inv = X.copy()
-        for i, lag_info in enumerate(
-            zip(self._lags[::-1], self._prior_cum_lags[::-1])
-        ):
+        for i, lag_info in enumerate(zip(self._lags[::-1], self._prior_cum_lags[::-1])):
             lag, prior_cum_lag = lag_info
             _lags = self._lags[::-1][i + 1 :]
             _transformed = _diff_transform(self._X, _lags)
