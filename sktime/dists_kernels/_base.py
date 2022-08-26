@@ -52,6 +52,8 @@ class BasePairwiseTransformer(BaseEstimator):
         "symmetric": False,  # is the transformer symmetric, i.e., t(x,y)=t(y,x) always?
         "X_inner_mtype": "numpy2D",  # which mtype is used internally in _transform?
         "fit_is_empty": True,  # is "fit" empty? Yes, for all pairwise transforms
+        "capability:missing_values": True,  # can estimator handle missing data?
+        "capability:multivariate": True,  # can estimator handle multivariate data?
     }
 
     def __init__(self):
@@ -183,6 +185,9 @@ class BasePairwiseTransformerPanel(BaseEstimator):
         "symmetric": False,  # is the transformer symmetric, i.e., t(x,y)=t(y,x) always?
         "X_inner_mtype": "df-list",  # which mtype is used internally in _transform?
         "fit_is_empty": True,  # is "fit" empty? Yes, for all pairwise transforms
+        "capability:missing_values": True,  # can estimator handle missing data?
+        "capability:multivariate": True,  # can estimator handle multivariate data?
+        "capability:unequal_length": True,  # can dist handle unequal length panels?
     }
 
     def __init__(self):

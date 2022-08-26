@@ -244,8 +244,6 @@ class ColumnEnsembleClassifier(BaseColumnEnsembleClassifier):
     >>> y_pred = col_ens.predict(X_test)
     """
 
-    _required_parameters = ["estimators"]
-
     def __init__(self, estimators, remainder="drop", verbose=False):
         self.remainder = remainder
         super(ColumnEnsembleClassifier, self).__init__(estimators, verbose=verbose)
