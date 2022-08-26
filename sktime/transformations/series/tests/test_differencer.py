@@ -3,7 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Unit tests of Differencer functionality."""
 
-__author__ = ["RNKuhns"]
+__author__ = ["RNKuhns", "fkiraly", "ilkersigirci"]
 __all__ = []
 
 import numpy as np
@@ -151,3 +151,56 @@ def test_differencer_cutoff():
 
     # fit
     gscv.fit(train_model, X=X_train)
+
+
+def test_differencer_inverse_does_not_memorize():
+    """Tests that differencer inverse always computes inverse via cumsum.
+
+    Test case by ilkersigirci in #3345 (simplified)
+
+    Failure mode:
+    previous versions "remembered" the fit data, which can lead to unexpected
+    output in the case of pipelining forecasters with a Differencer, see # 3345
+    """
+    import numpy as np
+    from sktime.forecasting.base import ForecastingHorizon
+    from sktime.forecasting.model_selection import temporal_train_test_split
+    from sktime.forecasting.naive import NaiveForecaster
+    from sktime.transformations.series.boxcox import LogTransformer
+    from sktime.transformations.series.difference import Differencer
+
+    y = load_airline()
+    X = pd.DataFrame(
+        {
+            "lag1": y.shift(1).fillna(method="bfill"),
+            "lag2": y.shift(2).fillna(method="bfill")
+        },
+        index=y.index,
+    )
+
+    y_train, y_test, X_train, X_test = temporal_train_test_split(y=y, X=X, test_size=30)
+    fh_out = np.arange(1, len(y_test) + 1)
+    fh_ins = ForecastingHorizon(y_train.index, is_relative=False)
+
+    pipe = (
+        (-LogTransformer() * Differencer())
+        ** (-LogTransformer() * Differencer() * NaiveForecaster())
+    )
+
+    pipe.fit(y=y_train, X=X_train)
+    pipe_ins = pipe.predict(fh=fh_ins, X=X_train)
+    pipe.predict(fh=fh_out, X=X_test)
+
+    naive_model = NaiveForecaster()
+    naive_model.fit(y=y_train, X=X_train)
+    model_ins = naive_model.predict(fh=fh_ins, X=X_train)
+    naive_model.predict(fh=fh_out, X=X_test)
+
+    # pipe output should not be similar to train input
+    assert not np.allclose(y_train.to_numpy(), pipe_ins.to_numpy())
+
+    # pipe output should be similar to model output
+    assert np.allclose(pipe_ins.to_numpy(), model_ins.to_numpy())
+
+    # model output should not be similar to train input
+    assert not np.allclose(y_train.to_numpy(), model_ins.to_numpy())
