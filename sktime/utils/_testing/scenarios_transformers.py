@@ -102,8 +102,9 @@ class TransformerTestScenario(TestScenario, BaseObject):
         if isinstance(X, (pd.Series, pd.DataFrame)) and supported_idx_types is not None:
             if type(X.index) not in supported_idx_types:
                 return False
-        if isinstance(X, np.ndarray) and pd.RangeIndex not in supported_idx_types:
-            return False
+        if isinstance(X, np.ndarray) and supported_idx_types is not None:
+            if pd.RangeIndex not in supported_idx_types:
+                return False
 
         return True
 
