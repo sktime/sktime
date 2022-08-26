@@ -45,6 +45,7 @@ class FCNNetwork(BaseDeepNetwork):
         self,
         random_state=0,
     ):
+        super(FCNNetwork, self).__init__()
         _check_dl_dependencies(severity="error")
         self.random_state = random_state
 
@@ -53,7 +54,7 @@ class FCNNetwork(BaseDeepNetwork):
 
         Arguments
         ---------
-        input_shape : tuple
+        input_shape : tuple of shape = (series_length (m), n_dimensions (d))
             The shape of the data fed into the input layer
 
         Returns
