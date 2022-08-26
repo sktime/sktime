@@ -217,8 +217,8 @@ adding your virtual environment as a new kernel for your notebook.
 Other Startup Resources
 -----------------------
 
-Setting up a virtual environment
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Virtual environments
+~~~~~~~~~~~~~~~~~~~~
 
 Two good options for virtual environment managers are:
  - `conda <https://uoa-eresearch.github.io/eresearch-cookbook/recipe/2014/11/20/conda/>` (many of the sktime community uses this
