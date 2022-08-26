@@ -150,8 +150,8 @@ class CNTCClassifier(BaseDeepClassifier):
 
         Arguments
         ---------
-        X: tuple,
-            The input data fed into the model.
+        X: tuple of shape = (series_length (m), n_dimensions (d))
+            The shape of the data fed into the model.
 
         Returns
         -------
@@ -254,8 +254,7 @@ class CNTCClassifier(BaseDeepClassifier):
         Parameters
         ----------
         X : an np.ndarray of shape = (n_instances, n_dimensions, series_length)
-            The training input samples.         input_checks: boolean
-            whether to check the X parameter
+            The training input samples.
 
         Returns
         -------

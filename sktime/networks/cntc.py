@@ -74,8 +74,8 @@ class CNTCNetwork(BaseDeepNetwork):
 
         Arguments
         ---------
-        input_shape: tuple,
-            The shape of the data fed into the input layer
+        input_shape: tuple
+            The shape of the data fed into the input layer, should be (m,d)
 
         Returns
         -------
