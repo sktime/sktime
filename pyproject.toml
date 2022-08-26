@@ -49,6 +49,7 @@ dependencies = [
     "scikit-learn>=0.24.0,<1.2.0",
     "statsmodels>=0.12.1",
     "scipy<1.9.0",
+    "backoff",
 ]
 
 [project.optional-dependencies]
@@ -72,6 +73,7 @@ all_extras = [
     "tensorflow",
     "tsfresh>=0.17.0; python_version < '3.10'",
     "tslearn>=0.5.2",
+    "kotsu>=0.3.1",
 ]
 
 dev = [
