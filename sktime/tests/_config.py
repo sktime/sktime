@@ -51,7 +51,7 @@ EXCLUDED_TESTS = {
         "test_fit_idempotent",
         "test_persistence_via_pickle",
     ],
-    "FCNClassifier": [
+    "MLPClassifier": [
         "test_fit_idempotent",
         "test_persistence_via_pickle",
     ],

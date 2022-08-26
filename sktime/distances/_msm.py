@@ -49,7 +49,7 @@ class _MsmDistance(NumbaDistance):
         x: np.ndarray,
         y: np.ndarray,
         return_cost_matrix: bool = False,
-        c: float = 0.0,
+        c: float = 1.0,
         window: float = None,
         itakura_max_slope: float = None,
         bounding_matrix: np.ndarray = None,
@@ -58,19 +58,31 @@ class _MsmDistance(NumbaDistance):
         """Create a no_python compiled MSM distance path callable.
 
         Series should be shape (1, m), where m is the series length. Series can be
-        different
-        lengths.
+        different lengths.
 
         Parameters
         ----------
-        x: np.ndarray (2d array of shape (1,m1)).
+        x: np.ndarray (2d array of shape (d,m1)).
             First time series.
-        y: np.ndarray (2d array of shape (1,m2)).
+        y: np.ndarray (2d array of shape (d,m2)).
             Second time series.
         return_cost_matrix: bool, defaults = False
             Boolean that when true will also return the cost matrix.
-        c: float
-            parameter used in MSM (update later!)
+        c: float, default = 1.0
+            Cost for split or merge operation.
+        window: float, defaults = None
+            Float that is the radius of the sakoe chiba window (if using Sakoe-Chiba
+            lower bounding). Must be between 0 and 1.
+        itakura_max_slope: float, defaults = None
+            Gradient of the slope for itakura parallelogram (if using Itakura
+            Parallelogram lower bounding). Must be between 0 and 1.
+        bounding_matrix: np.ndarray (2d array of shape (m1,m2)), defaults = None
+            Custom bounding matrix to use. If defined then other lower_bounding params
+            are ignored. The matrix should be structure so that indexes considered in
+            bound should be the value 0. and indexes outside the bounding matrix should
+            be infinity.
+        kwargs: any
+            extra kwargs.
 
         Returns
         -------
@@ -93,6 +105,7 @@ class _MsmDistance(NumbaDistance):
                 f"univariate series, passed seris shape {x.shape[0]} and"
                 f"shape {y.shape[0]}"
             )
+
         _bounding_matrix = resolve_bounding_matrix(
             x, y, window, itakura_max_slope, bounding_matrix
         )
@@ -104,7 +117,7 @@ class _MsmDistance(NumbaDistance):
                 _x: np.ndarray,
                 _y: np.ndarray,
             ) -> Tuple[List, float, np.ndarray]:
-                cost_matrix = _cost_matrix(_x, _y, c, _bounding_matrix)
+                cost_matrix = _cost_matrix(_x, _y, _bounding_matrix, c)
                 path = compute_min_return_path(cost_matrix, _bounding_matrix)
                 return path, cost_matrix[-1, -1], cost_matrix
 
@@ -115,7 +128,7 @@ class _MsmDistance(NumbaDistance):
                 _x: np.ndarray,
                 _y: np.ndarray,
             ) -> Tuple[List, float]:
-                cost_matrix = _cost_matrix(_x, _y, c, _bounding_matrix)
+                cost_matrix = _cost_matrix(_x, _y, _bounding_matrix, c)
                 path = compute_min_return_path(cost_matrix, _bounding_matrix)
                 return path, cost_matrix[-1, -1]
 
@@ -125,7 +138,7 @@ class _MsmDistance(NumbaDistance):
         self,
         x: np.ndarray,
         y: np.ndarray,
-        c: float = 0.0,
+        c: float = 1.0,
         window: float = None,
         itakura_max_slope: float = None,
         bounding_matrix: np.ndarray = None,
@@ -133,18 +146,30 @@ class _MsmDistance(NumbaDistance):
     ) -> DistanceCallable:
         """Create a no_python compiled MSM distance callable.
 
-        Series should be shape (1, m), where m is the series length. Series can be
-        different
-        lengths.
+        Series should be shape (d, m) where m is the series length. Series can be
+        different lengths.
 
         Parameters
         ----------
-        x: np.ndarray (2d array of shape (1,m1)).
+        x: np.ndarray (2d array of shape (d,m1)).
             First time series.
-        y: np.ndarray (2d array of shape (1,m2)).
+        y: np.ndarray (2d array of shape (d,m2)).
             Second time series.
-        c: float
-            parameter used in MSM (update later!)
+        c: float, default = 1.0
+            Cost for split or merge operation.
+        window: float, defaults = None
+            Float that is the radius of the sakoe chiba window (if using Sakoe-Chiba
+            lower bounding). Must be between 0 and 1.
+        itakura_max_slope: float, defaults = None
+            Gradient of the slope for itakura parallelogram (if using Itakura
+            Parallelogram lower bounding). Must be between 0 and 1.
+        bounding_matrix: np.ndarray (2d array of shape (m1,m2)), defaults = None
+            Custom bounding matrix to use. If defined then other lower_bounding params
+            are ignored. The matrix should be structure so that indexes considered in
+            bound should be the value 0. and indexes outside the bounding matrix should
+            be infinity.
+        kwargs: any
+            extra kwargs.
 
         Returns
         -------
@@ -176,69 +201,44 @@ class _MsmDistance(NumbaDistance):
             _x: np.ndarray,
             _y: np.ndarray,
         ) -> float:
-            cost_matrix = _cost_matrix(_x, _y, c, _bounding_matrix)
+            cost_matrix = _cost_matrix(_x, _y, _bounding_matrix, c)
             return cost_matrix[-1, -1]
 
         return numba_msm_distance
 
 
-@njit(cache=True, fastmath=True)
-def _dimension_sum(x: np.ndarray, j: int):
-    total = 0
-    for i in range(x.shape[0]):
-        total += x[i][j]
-
-    return total
-
-
-@njit(cache=True)
-def _calc_cost_cell(
-    new_point: np.ndarray,
-    x: np.ndarray,
-    y: np.ndarray,
-    c: float,
-) -> float:
-    """Cost calculation function for MSM."""
-    new_point_sum = _dimension_sum(new_point)
-    x_sum = _dimension_sum(x)
-    y_sum = _dimension_sum(y)
-
-    if ((x_sum <= new_point_sum) and (new_point_sum <= y_sum)) or (
-        (y_sum <= new_point_sum) and new_point_sum <= x_sum
-    ):
-        return c
-    else:
-        a = np.abs(new_point_sum - x_sum)
-        b = np.abs(new_point_sum - y_sum)
-
-        if a < b:
-            return c + a
-        else:
-            return c + b
-        # return c + np.min([np.abs(new_point - x), np.abs(new_point - y)])
-
-
 @njit(cache=True)
 def _cost_function(x: float, y: float, z: float, c: float) -> float:
-    if (y <= x and x <= z) or (y >= x and x >= z):
+    """Compute the cost function for the MSM algorithm.
+
+    Parameters
+    ----------
+    x: float
+        First value.
+    y: float
+        Second value.
+    z: float
+        Third value.
+    c: float
+        Parameter used in MSM (update later!)
+
+    Returns
+    -------
+    float
+        Cost function value.
+    """
+    if (y <= x <= z) or (y >= x >= z):
         return c
-    a = x - y
-    if a < 0:
-        a = -a
-    b = x - z
-    if b < 0:
-        b = -b
-    if a > b:
-        return c + b
-    return c + a
+
+    return c + min(abs(x - y), abs(x - z))
 
 
 @njit(cache=True)
 def _cost_matrix(
     x: np.ndarray,
     y: np.ndarray,
-    c: float,
     bounding_matrix: np.ndarray,
+    c: float,
 ) -> float:
     """MSM distance compiled to no_python.
 
@@ -276,16 +276,9 @@ def _cost_matrix(
     for i in range(1, x_size):
         for j in range(1, y_size):
             if np.isfinite(bounding_matrix[i, j]):
-                d1 = cost[i - 1][j - 1] + np.abs(x[0][i] - y[0][j])
-                d2 = cost[i - 1][j] + _cost_function(x[0][i], x[0][i - 1], y[0][j], c)
-                d3 = cost[i][j - 1] + _cost_function(y[0][j], x[0][i], y[0][j - 1], c)
-
-            temp = d1
-            if d2 < temp:
-                temp = d2
-            if d3 < temp:
-                temp = d3
-
-            cost[i][j] = temp
+                d1 = cost[i - 1, j - 1] + np.abs(x[0][i] - y[0][j])
+                d2 = cost[i - 1, j] + _cost_function(x[0][i], x[0][i - 1], y[0][j], c)
+                d3 = cost[i, j - 1] + _cost_function(y[0][j], x[0][i], y[0][j - 1], c)
+                cost[i][j] = min(d1, d2, d3)
 
     return cost[0:, 0:]

@@ -590,7 +590,7 @@ class QuickTester:
                 obj = [obj]
             if not isinstance(obj, list):
                 raise ValueError(msg)
-            if not np.all(isinstance(x, str) for x in obj):
+            if not np.all([isinstance(x, str) for x in obj]):
                 raise ValueError(msg)
         return obj
 
@@ -682,6 +682,14 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
             f"found {type(estimator)}"
         )
 
+        msg = (
+            f"{estimator_class.__name__}.__init__ should call "
+            f"super({estimator_class.__name__}, self).__init__, "
+            "but that does not seem to be the case. Please ensure to call the "
+            f"parent class's constructor in {estimator_class.__name__}.__init__"
+        )
+        assert hasattr(estimator, "_tags_dynamic"), msg
+
     def test_create_test_instances_and_names(self, estimator_class):
         """Check that create_test_instances_and_names works."""
         estimators, names = estimator_class.create_test_instances_and_names()
@@ -695,12 +703,12 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
             f"found {type(names)}"
         )
 
-        assert np.all(isinstance(est, estimator_class) for est in estimators), (
+        assert np.all([isinstance(est, estimator_class) for est in estimators]), (
             "list elements of first return returned by create_test_instances_and_names "
             "all must be an instance of the class"
         )
 
-        assert np.all(isinstance(name, names) for name in names), (
+        assert np.all([isinstance(name, str) for name in names]), (
             "list elements of second return returned by create_test_instances_and_names"
             " all must be strings"
         )
@@ -951,10 +959,15 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
         attrs = ["_is_fitted", "is_fitted"]
 
         estimator = estimator_instance
+        estimator_class = type(estimator_instance)
 
-        assert hasattr(
-            estimator, "_is_fitted"
-        ), f"Estimator: {estimator.__name__} does not set_is_fitted in construction"
+        msg = (
+            f"{estimator_class.__name__}.__init__ should call "
+            f"super({estimator_class.__name__}, self).__init__, "
+            "but that does not seem to be the case. Please ensure to call the "
+            f"parent class's constructor in {estimator_class.__name__}.__init__"
+        )
+        assert hasattr(estimator, "_is_fitted"), msg
 
         # Check is_fitted attribute is set correctly to False before fit, at init
         for attr in attrs:
