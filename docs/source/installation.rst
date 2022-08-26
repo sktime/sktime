@@ -211,7 +211,7 @@ ImportError
 ~~~~~~~~~~~
 Import errors are often caused by an improperly linked virtual environment.  Make sure that
 your environment is activated and linked to whatever IDE you are using.  If you are using Jupyter
-Notebooks, follow `these instructions <https://janakiev.com/blog/jupyter-virtual-envs/>` for
+Notebooks, follow `these instructions <https://janakiev.com/blog/jupyter-virtual-envs/>`_ for
 adding your virtual environment as a new kernel for your notebook.
 
 Other Startup Resources
@@ -221,12 +221,11 @@ Virtual environments
 ~~~~~~~~~~~~~~~~~~~~
 
 Two good options for virtual environment managers are:
- - `conda <https://uoa-eresearch.github.io/eresearch-cookbook/recipe/2014/11/20/conda/>` (many of the sktime community uses this
-virtual environment, so this is recommended)
-- `venv <https://realpython.com/python-virtual-environments-a-primer/>` (also quite good!).
+* `conda <https://uoa-eresearch.github.io/eresearch-cookbook/recipe/2014/11/20/conda/>`_ (many sktime community members us this)
+* `venv <https://realpython.com/python-virtual-environments-a-primer/>`_ (also quite good!).
 
 Be sure to link your new virtual environment as the python kernel in whatever IDE you are using.  You can find the instructions for doing so
-in VScode `here <https://code.visualstudio.com/docs/python/environments>`.
+in VScode `here <https://code.visualstudio.com/docs/python/environments>`_.
 
 References
 ----------
