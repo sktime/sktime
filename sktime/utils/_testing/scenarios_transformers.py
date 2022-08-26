@@ -11,6 +11,7 @@ __all__ = ["scenarios_transformers"]
 from copy import deepcopy
 from inspect import isclass
 
+import numpy as np
 import pandas as pd
 
 from sktime.base import BaseObject
@@ -99,8 +100,10 @@ class TransformerTestScenario(TestScenario, BaseObject):
         X = self.args["fit"]["X"]
         supported_idx_types = get_tag(obj, "enforce_index_type")
         if isinstance(X, (pd.Series, pd.DataFrame)) and supported_idx_types is not None:
-            if type(X.index) not in get_tag(obj, "enforce_index_type"):
+            if type(X.index) not in supported_idx_types:
                 return False
+        if isinstance(X, np.ndarray) and pd.RangeIndex not in supported_idx_types:
+            return False
 
         return True
 
