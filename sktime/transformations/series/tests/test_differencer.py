@@ -163,6 +163,7 @@ def test_differencer_inverse_does_not_memorize():
     output in the case of pipelining forecasters with a Differencer, see # 3345
     """
     import numpy as np
+
     from sktime.forecasting.base import ForecastingHorizon
     from sktime.forecasting.model_selection import temporal_train_test_split
     from sktime.forecasting.naive import NaiveForecaster
@@ -173,7 +174,7 @@ def test_differencer_inverse_does_not_memorize():
     X = pd.DataFrame(
         {
             "lag1": y.shift(1).fillna(method="bfill"),
-            "lag2": y.shift(2).fillna(method="bfill")
+            "lag2": y.shift(2).fillna(method="bfill"),
         },
         index=y.index,
     )
@@ -182,10 +183,8 @@ def test_differencer_inverse_does_not_memorize():
     fh_out = np.arange(1, len(y_test) + 1)
     fh_ins = ForecastingHorizon(y_train.index, is_relative=False)
 
-    pipe = (
-        (-LogTransformer() * Differencer())
-        ** (-LogTransformer() * Differencer() * NaiveForecaster())
-    )
+    logdiff = -LogTransformer() * Differencer()
+    pipe = logdiff ** (logdiff * NaiveForecaster())
 
     pipe.fit(y=y_train, X=X_train)
     pipe_ins = pipe.predict(fh=fh_ins, X=X_train)
