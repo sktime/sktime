@@ -454,10 +454,10 @@ class QuickTester:
         >>> from sktime.tests.test_all_estimators import _TestAllObjects
         >>> _TestAllObjects().run_tests(
         ...     NaiveForecaster,
-        ...     tests_to_run="test_required_params"
+        ...     tests_to_run="test_constructor"
         ... )
-        {'test_required_params[NaiveForecaster]': 'PASSED'}
-        >>> _TestAllObjects().run_tests(
+        {'test_constructor[NaiveForecaster]': 'PASSED'}
+        >>> TestAllObjects().run_tests(
         ...     NaiveForecaster, fixtures_to_run="test_repr[NaiveForecaster-2]"
         ... )
         {'test_repr[NaiveForecaster-2]': 'PASSED'}
@@ -606,7 +606,7 @@ class QuickTester:
                 obj = [obj]
             if not isinstance(obj, list):
                 raise ValueError(msg)
-            if not np.all(isinstance(x, str) for x in obj):
+            if not np.all([isinstance(x, str) for x in obj]):
                 raise ValueError(msg)
         return obj
 
@@ -698,6 +698,14 @@ class _TestAllObjects(BaseFixtureGenerator, QuickTester):
             f"found {type(estimator)}"
         )
 
+        msg = (
+            f"{estimator_class.__name__}.__init__ should call "
+            f"super({estimator_class.__name__}, self).__init__, "
+            "but that does not seem to be the case. Please ensure to call the "
+            f"parent class's constructor in {estimator_class.__name__}.__init__"
+        )
+        assert hasattr(estimator, "_tags_dynamic"), msg
+
     def test_create_test_instances_and_names(self, estimator_class):
         """Check that create_test_instances_and_names works."""
         estimators, names = estimator_class.create_test_instances_and_names()
@@ -711,12 +719,12 @@ class _TestAllObjects(BaseFixtureGenerator, QuickTester):
             f"found {type(names)}"
         )
 
-        assert np.all(isinstance(est, estimator_class) for est in estimators), (
+        assert np.all([isinstance(est, estimator_class) for est in estimators]), (
             "list elements of first return returned by create_test_instances_and_names "
             "all must be an instance of the class"
         )
 
-        assert np.all(isinstance(name, names) for name in names), (
+        assert np.all([isinstance(name, str) for name in names]), (
             "list elements of second return returned by create_test_instances_and_names"
             " all must be strings"
         )
@@ -725,37 +733,6 @@ class _TestAllObjects(BaseFixtureGenerator, QuickTester):
             "the two lists returned by create_test_instances_and_names must have "
             "equal length"
         )
-
-    def test_required_params(self, estimator_class):
-        """Check required parameter interface."""
-        Estimator = estimator_class
-        # Check common meta-estimator interface
-        if hasattr(Estimator, "_required_parameters"):
-            required_params = Estimator._required_parameters
-
-            assert isinstance(required_params, list), (
-                f"For estimator: {Estimator}, `_required_parameters` must be a "
-                f"tuple, but found type: {type(required_params)}"
-            )
-
-            assert all([isinstance(param, str) for param in required_params]), (
-                f"For estimator: {Estimator}, elements of `_required_parameters` "
-                f"list must be strings"
-            )
-
-            # check if needless parameters are in _required_parameters
-            init_params = [
-                par.name for par in signature(Estimator.__init__).parameters.values()
-            ]
-            in_required_but_not_init = [
-                param for param in required_params if param not in init_params
-            ]
-            if len(in_required_but_not_init) > 0:
-                raise ValueError(
-                    f"Found parameters in `_required_parameters` which "
-                    f"are not in `__init__`: "
-                    f"{in_required_but_not_init}"
-                )
 
     def test_estimator_tags(self, estimator_class):
         """Check conventions on estimator tags."""
@@ -939,26 +916,17 @@ class _TestAllObjects(BaseFixtureGenerator, QuickTester):
 
         params = estimator.get_params()
 
-        # Filter out required parameters with no default value and parameters
-        # set for running tests
-        required_params = getattr(estimator, "_required_parameters", tuple())
-
         test_params = estimator_class.get_test_params()
         if isinstance(test_params, list):
             test_params = test_params[0]
         test_params = test_params.keys()
 
-        init_params = [
-            param
-            for param in init_params
-            if param.name not in required_params and param.name not in test_params
-        ]
+        init_params = [param for param in init_params if param.name not in test_params]
 
         for param in init_params:
             assert param.default != param.empty, (
                 "parameter `%s` for %s has no default value and is not "
-                "included in `_required_parameters`"
-                % (param.name, estimator.__class__.__name__)
+                "set in `get_test_params`" % (param.name, estimator.__class__.__name__)
             )
             if type(param.default) is type:
                 assert param.default in [np.float64, np.int64]
@@ -1007,10 +975,15 @@ class _TestAllEstimators(BaseFixtureGenerator, QuickTester):
         attrs = ["_is_fitted", "is_fitted"]
 
         estimator = estimator_instance
+        estimator_class = type(estimator_instance)
 
-        assert hasattr(
-            estimator, "_is_fitted"
-        ), f"Estimator: {estimator.__name__} does not set_is_fitted in construction"
+        msg = (
+            f"{estimator_class.__name__}.__init__ should call "
+            f"super({estimator_class.__name__}, self).__init__, "
+            "but that does not seem to be the case. Please ensure to call the "
+            f"parent class's constructor in {estimator_class.__name__}.__init__"
+        )
+        assert hasattr(estimator, "_is_fitted"), msg
 
         # Check is_fitted attribute is set correctly to False before fit, at init
         for attr in attrs:

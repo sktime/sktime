@@ -36,6 +36,7 @@ sktime/transformations/series/kalman_filter.py @NoaBenAmi
 sktime/transformations/panel/augmenter.py @MrPr3ntice @iljamaurer
 sktime/transformations/multiplex.py @miraep8
 sktime/transformations/tests/test_multiplexer.py @miraep8
+sktime/transformations/panel/channel_selection.py @haskarb @a-pasos-ruiz @TonyBagnall
 
 sktime/forecasting/base/ @fkiraly @mloning @aiwalter
 sktime/forecasting/base/adapters/_statsforecast.py @FedericoGarza

@@ -1,6 +1,6 @@
 [project]
 name = "sktime"
-version = "0.13.0"
+version = "0.13.2"
 description = "A unified framework for machine learning with time series"
 authors = [
     {name = "Franz Király", email = "f.kiraly@ucl.ac.uk"},
@@ -56,8 +56,10 @@ all_extras = [
     "dtw-python",
     "esig==0.9.7; python_version < '3.10'",
     "filterpy>=1.4.5",
+    "gluonts>=0.9.0",
     "matplotlib>=3.3.2",
-    "pmdarima>=1.8.0,!=1.8.1",
+    "mne",
+    "pmdarima>=1.8.0,!=1.8.1,<2.0.0",
     "prophet>=1.1",
     "pykalman>=0.9.5",
     "pyod>=0.8.0",
@@ -70,7 +72,6 @@ all_extras = [
     "tensorflow",
     "tsfresh>=0.17.0; python_version < '3.10'",
     "tslearn>=0.5.2",
-    "gluonts>=0.9.0",
 ]
 
 dev = [
@@ -118,3 +119,8 @@ file = "LICENSE"
 [build-system]
 requires = ["setuptools", "wheel", "toml", "build"]
 build-backend = "setuptools.build_meta"
+
+[tool.nbqa.exclude]
+black = "^docs/source/examples/"
+flake8 = "^docs/source/examples/"
+isort = "^docs/source/examples/"
