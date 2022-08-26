@@ -167,7 +167,6 @@ def test_differencer_inverse_does_not_memorize():
     from sktime.forecasting.base import ForecastingHorizon
     from sktime.forecasting.model_selection import temporal_train_test_split
     from sktime.forecasting.naive import NaiveForecaster
-    from sktime.transformations.series.boxcox import LogTransformer
     from sktime.transformations.series.difference import Differencer
 
     y = load_airline()
@@ -183,8 +182,7 @@ def test_differencer_inverse_does_not_memorize():
     fh_out = np.arange(1, len(y_test) + 1)
     fh_ins = ForecastingHorizon(y_train.index, is_relative=False)
 
-    logdiff = -LogTransformer() * Differencer()
-    pipe = logdiff ** (logdiff * NaiveForecaster())
+    pipe = Differencer() ** (Differencer() * NaiveForecaster())
 
     pipe.fit(y=y_train, X=X_train)
     pipe_ins = pipe.predict(fh=fh_ins, X=X_train)
