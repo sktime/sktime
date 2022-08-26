@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """a combination of CCNN and CLSTM as feature extractors."""
 
-__author__ = ["James-Large, Withington, TonyBagnall", "AurumnPegasus"]
+__author__ = ["James-Large", "Withington", "TonyBagnall", "AurumnPegasus"]
 
 from sktime.networks.base import BaseDeepNetwork
 from sktime.utils.validation._dependencies import _check_dl_dependencies
@@ -52,6 +52,8 @@ class CNTCNetwork(BaseDeepNetwork):
        }
     """
 
+    _tags = {"python_dependencies": "tensorflow"}
+
     def __init__(
         self,
         random_state=0,
@@ -61,13 +63,14 @@ class CNTCNetwork(BaseDeepNetwork):
         lstm_size=8,
         dense_size=64,
     ):
+        super(CNTCNetwork, self).__init__()
+        _check_dl_dependencies(severity="error")
         self.random_state = random_state
         self.rnn_layer = rnn_layer
         self.filter_sizes = filter_sizes
         self.kernel_sizes = kernel_sizes
         self.lstm_size = lstm_size
         self.dense_size = dense_size
-        _check_dl_dependencies(severity="error")
 
     def build_network(self, input_shape, **kwargs):
         """Construct a network and return its input and output layers.
