@@ -149,6 +149,15 @@ The ``.whl`` package and ``.exe`` installers can be built with:
 The resulting packages are generated in the ``dist/`` folder.
 
 
+sktime build requirements
+-------------------------
+
+This section outlines the ``sktime`` build requirements. These are required for:
+
+* installing ``sktime`` from source, e.g., development versions
+* the advanced developer set-up
+
+
 Setting up a development environment
 ------------------------------------
 
@@ -191,7 +200,7 @@ Troubleshooting
 ---------------
 
 Module not found
-""""""""""""""""
+~~~~~~~~~~~~~~~~
 
 The most frequent reason for *module not found* errors is installing ``sktime`` with
 minimum dependencies and using an estimator which interfaces a package that has not
@@ -199,7 +208,7 @@ been installed in the environment. To resolve this, install the missing package,
 install ``sktime`` with maximum dependencies (see above).
 
 ImportError
-"""""""""""
+~~~~~~~~~~~
 Import errors are often caused by an improperly linked virtual environment.  Make sure that
 your environment is activated and linked to whatever IDE you are using.  If you are using Jupyter
 Notebooks, follow `these instructions <https://janakiev.com/blog/jupyter-virtual-envs/>` for
@@ -209,7 +218,7 @@ Other Startup Resources
 -----------------------
 
 Setting up a virtual environment
-""""""""""""""""""""""""""""""""
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Two good options for virtual environment managers are:
  - `conda <https://uoa-eresearch.github.io/eresearch-cookbook/recipe/2014/11/20/conda/>` (many of the sktime community uses this
