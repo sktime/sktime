@@ -21,4 +21,5 @@ def test_wrapper_agrees_with_package():
     sktime_model.fit(X=data)
     hmmlearn_predict = hmmlearn_model.predict(X=data)
     sktime_predict = sktime_model.predict(X=data)
+    # will remove
     assert array_equal(hmmlearn_predict, sktime_predict)
