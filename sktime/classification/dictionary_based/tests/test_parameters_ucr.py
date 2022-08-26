@@ -272,9 +272,9 @@ if __name__ == "__main__":
     variance = True
     choose_ensemble_size = [50, 75, 100]
     choose_max_features = [10_000]
-    choose_min_window = [4, 6, 8]
+    choose_min_window = [4, 8, 12]
     choose_alphabet_size = [2, 4]
-    choose_max_window = [16, 20, 24]
+    choose_max_window = [16, 20, 30, 40, 50]
     choose_norm_options = [[False], [True, False]]
     choose_word_lengths = [[4, 6, 8], [6, 8], [8]]
     choose_first_diff = [[True, False], [False]]

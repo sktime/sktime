@@ -23,6 +23,8 @@ from numba.core import types
 from numba.typed import Dict
 from sklearn.feature_selection import chi2
 from sklearn.linear_model import RidgeClassifierCV
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import Normalizer
 from sklearn.utils import check_random_state
 
 from sktime.classification.base import BaseClassifier
@@ -248,7 +250,13 @@ class WEASEL_STEROIDS(BaseClassifier):
 
         # merging arrays from different threads
         all_words = np.concatenate(sfa_words, axis=1)
-        self.clf = RidgeClassifierCV(alphas=np.logspace(-4, 4, 10), normalize=False)
+        self.clf = make_pipeline(
+            Normalizer(norm="l2"),  # TODO??
+            RidgeClassifierCV(alphas=np.logspace(-4, 4, 10), normalize=False),
+        )
+
+        # self.clf = RidgeClassifierCV(alphas=np.logspace(-4, 4, 10), normalize=False)
+
         self.clf.fit(all_words, y)
         # print(f"\tCross-Validation Acc: {self.clf.best_score_}")
 

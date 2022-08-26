@@ -4,24 +4,26 @@ import os
 
 os.environ["KMP_WARNINGS"] = "off"
 
+import itertools
 import sys
 import time
 from warnings import simplefilter
+
+simplefilter(action="ignore", category=FutureWarning)
+simplefilter(action="ignore", category=UserWarning)
 
 import numpy as np
 import pandas as pd
 import torch
 from convst.classifiers import R_DST_Ridge
 from joblib import Parallel, delayed
-from scipy.stats import zscore
+
+# from scipy.stats import zscore
 from sklearn.linear_model import RidgeClassifierCV
 from sklearn.pipeline import make_pipeline
 
 from sktime.classification.dictionary_based import WEASEL, WEASEL_STEROIDS, Hydra
 from sktime.transformations.panel.rocket import MiniRocket, Rocket
-
-# from sklearn.ensemble import VotingClassifier, StackingClassifier
-
 
 sys.path.append("../../..")
 
@@ -206,14 +208,87 @@ dataset_names_excerpt = [
 ]
 
 
-simplefilter(action="ignore", category=FutureWarning)
-simplefilter(action="ignore", category=UserWarning)
+def get_classifiers():
+    """Obtain the benchmark classifiers."""
+    clfs = {
+        "WEASEL": WEASEL(random_state=1379, n_jobs=threads_to_use),
+        "WEASEL_ST (Chi2)": WEASEL_STEROIDS(
+            random_state=1379,
+            binning_strategies=["equi-depth"],
+            alphabet_sizes=[2],
+            min_window=8,
+            max_window=50,
+            max_feature_count=20_000,
+            word_lengths=[8],  # test only 6 or 8?
+            norm_options=[False],  # p[True]=0.8
+            variance=True,
+            ensemble_size=150,
+            use_first_differences=[True, False],
+            feature_selection="none",
+            n_jobs=threads_to_use,
+        ),
+        "WEASEL_ST (EqDe)": WEASEL_STEROIDS(
+            random_state=1379,
+            binning_strategies=["equi-depth"],
+            alphabet_sizes=[2],
+            min_window=4,
+            max_window=24,
+            max_feature_count=10_000,
+            word_lengths=[8],  # test only 6 or 8?
+            norm_options=[False],  # p[True]=0.8
+            variance=True,
+            ensemble_size=50,
+            use_first_differences=[True, False],
+            feature_selection="none",
+            n_jobs=threads_to_use,
+        ),
+        "WEASEL (EW+ED)": WEASEL_STEROIDS(
+            random_state=1379,
+            alphabet_sizes=[2],
+            binning_strategies=["equi-depth", "equi-width"],
+            min_window=4,
+            max_window=24,
+            word_lengths=[8],  # test only 6 or 8?
+            norm_options=[True, False],  # p[True]=0.8
+            variance=True,
+            max_feature_count=10_000,
+            ensemble_size=50,
+            use_first_differences=[True, False],
+            feature_selection="none",
+            n_jobs=threads_to_use,
+        ),
+        "WEASEL (None 3)": WEASEL_STEROIDS(
+            random_state=1379,
+            alphabet_sizes=[2],
+            binning_strategies=["equi-depth"],
+            min_window=4,
+            max_window=20,
+            word_lengths=[8],
+            norm_options=[True, False],
+            variance=True,
+            max_feature_count=10_000,
+            ensemble_size=50,
+            use_first_differences=[True, False],
+            feature_selection="none",
+            n_jobs=threads_to_use,
+        ),
+        "Hydra": [],  # see below
+        "R_DST": R_DST_Ridge(random_state=1379),
+        "Rocket": make_pipeline(
+            Rocket(random_state=1379, n_jobs=threads_to_use),
+            RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True),
+        ),
+        "MiniRocket": make_pipeline(
+            MiniRocket(random_state=1379, n_jobs=threads_to_use),
+            RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True),
+        ),
+    }
+    return clfs
 
-others = []
 
 DATA_PATH = "/Users/bzcschae/workspace/UCRArchive_2018/"
 parallel_jobs = 1
-threads_to_use = 8
+threads_to_use = 4
 
 # local
 if os.path.exists(DATA_PATH):
@@ -222,12 +297,13 @@ if os.path.exists(DATA_PATH):
 # server
 else:
     DATA_PATH = "/vol/fob-wbib-vol2/wbi/schaefpa/sktime/datasets/UCRArchive_2018"
-    parallel_jobs = 80
+    parallel_jobs = 20
+    threads_to_use = 4
     used_dataset = dataset_names_full
 
 if __name__ == "__main__":
 
-    def _parallel_fit(dataset_name):
+    def _parallel_fit(dataset_name, clf_name):
         # ignore all future warnings
         simplefilter(action="ignore", category=FutureWarning)
         simplefilter(action="ignore", category=UserWarning)
@@ -242,77 +318,16 @@ if __name__ == "__main__":
         X_train.fillna(0, inplace=True)
         X_test.fillna(0, inplace=True)
 
-        clfs = {
-            # "WEASEL": WEASEL(random_state=1379, n_jobs=threads_to_use),
-            "WEASEL_ST (ED+100)": WEASEL_STEROIDS(
-                random_state=1379,
-                binning_strategies=["equi-depth"],
-                alphabet_sizes=[2],
-                min_window=4,
-                max_window=24,
-                max_feature_count=10_000,
-                word_lengths=[8],  # test only 6 or 8?
-                norm_options=[False],  # p[True]=0.8
-                variance=True,
-                ensemble_size=150,
-                use_first_differences=[True, False],
-                feature_selection="none",
-                n_jobs=threads_to_use,
-            ),
-            "WEASEL (EW+ED)": WEASEL_STEROIDS(
-                random_state=1379,
-                alphabet_sizes=[2],
-                binning_strategies=["equi-depth", "equi-width"],  # "kmeans"
-                min_window=4,
-                max_window=24,
-                word_lengths=[8],  # test only 6 or 8?
-                norm_options=[True, False],  # p[True]=0.8
-                variance=True,
-                max_feature_count=10_000,
-                ensemble_size=150,
-                use_first_differences=[True, False],
-                feature_selection="none",
-                n_jobs=threads_to_use,
-            ),
-            # "WEASEL (None 3)": WEASEL_STEROIDS(
-            #     random_state=1379,
-            #     alphabet_sizes=[2],
-            #     binning_strategies=["equi-depth"],
-            #     min_window=4,
-            #     max_window=20,
-            #     word_lengths=[8],
-            #     norm_options=[True, False],
-            #     variance=True,
-            #     max_feature_count=10_000,
-            #     ensemble_size=50,
-            #     use_first_differences=[True, False],
-            #     feature_selection="none",
-            #     n_jobs=threads_to_use,
-            # ),
-            # "Hydra": [],  # see below
-            # "R_DST": R_DST_Ridge(random_state=1379),
-            # "Rocket": make_pipeline(
-            #     Rocket(random_state=1379, n_jobs=threads_to_use),
-            #     RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True),
-            # ),
-            # "MiniRocket": make_pipeline(
-            #     MiniRocket(random_state=1379, n_jobs=threads_to_use),
-            #     RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True),
-            # ),
-        }
-
-        # estimators = list(clfs.items())
-        # clfs["Voting"] = VotingClassifier(
-        #                        estimators = estimators, voting = 'hard', n_jobs=-1)
-
-        sum_scores = {}
-        for name, _ in clfs.items():
-            sum_scores[name] = {
+        sum_scores = {
+            clf_name: {
                 "dataset": [],
                 "all_scores": [],
+                "all_fit": [],
+                "all_pred": [],
                 "fit_time": 0.0,
                 "pred_time": 0.0,
             }
+        }
 
         # z-norm training/test data
         # X_train = zscore(X_train, axis=1)
@@ -320,67 +335,64 @@ if __name__ == "__main__":
         X_train = np.reshape(np.array(X_train), (len(X_train), 1, -1))
         X_test = np.reshape(np.array(X_test), (len(X_test), 1, -1))
 
-        # print(
-        #    f"Running Dataset={dataset_name}, "
-        #    f"Train-Size={np.shape(X_train)}, "
-        #    f"Test-Size={np.shape(X_test)}"
-        # )
-
         # try:
-        for name, clf in clfs.items():
-            if name == "Hydra":
-                transform = Hydra(X_train.shape[-1])
-                X_training_transform = transform(torch.tensor(X_train).float())
-                X_test_transform = transform(torch.tensor(X_test).float())
+        if clf_name == "Hydra":
+            fit_time = time.perf_counter()
+            transform = Hydra(X_train.shape[-1])
+            X_training_transform = transform(torch.tensor(X_train).float())
+            clf = RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True)
+            clf.fit(X_training_transform, y_train)
+            fit_time = np.round(time.perf_counter() - fit_time, 5)
 
-                clf = RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True)
-                fit_time = time.process_time()
-                clf.fit(X_training_transform, y_train)
-                fit_time = np.round(time.process_time() - fit_time, 5)
+            pred_time = time.perf_counter()
+            X_test_transform = transform(torch.tensor(X_test).float())
+            acc = clf.score(X_test_transform, y_test)
+            pred_time = np.round(time.perf_counter() - pred_time, 5)
+        else:
+            clf = get_classifiers()[clf_name].clone()
+            fit_time = time.perf_counter()
+            clf.fit(X_train, y_train)
+            fit_time = np.round(time.perf_counter() - fit_time, 5)
 
-                pred_time = time.process_time()
-                acc = clf.score(X_test_transform, y_test)
-                pred_time = np.round(time.process_time() - pred_time, 5)
-            else:
-                fit_time = time.perf_counter()
-                clf.fit(X_train, y_train)
-                fit_time = np.round(time.perf_counter() - fit_time, 5)
+            pred_time = time.perf_counter()
+            acc = clf.score(X_test, y_test)
+            pred_time = np.round(time.perf_counter() - pred_time, 5)
 
-                pred_time = time.perf_counter()
-                acc = clf.score(X_test, y_test)
-                pred_time = np.round(time.perf_counter() - pred_time, 5)
-
-            print(
-                f"Dataset={dataset_name}, "
-                + (
-                    f"Feature Count={clf.total_features_count}, "
-                    if hasattr(clf, "total_features_count")
-                    else f""
-                )
-                + f"Train-Size={np.shape(X_train)}, "
-                + f"Test-Size={np.shape(X_test)}"
-                + f"\n\tclassifier={name}"
-                + f"\n\ttime (fit, predict)="
-                f"{np.round(fit_time, 2), np.round(pred_time, 2)}"
-                + f"\n\taccuracy={np.round(acc, 3)}"
+        print(
+            f"Dataset={dataset_name}, "
+            + (
+                f"Feature Count={clf.total_features_count}, "
+                if hasattr(clf, "total_features_count")
+                else f""
             )
+            + f"Train-Size={np.shape(X_train)}, "
+            + f"Test-Size={np.shape(X_test)}"
+            + f"\n\tclassifier={clf_name}"
+            + f"\n\ttime (fit, predict)="
+            f"{np.round(fit_time, 2), np.round(pred_time, 2)}"
+            + f"\n\taccuracy={np.round(acc, 3)}"
+        )
 
-            sum_scores[name]["dataset"].append(dataset_name)
-            sum_scores[name]["all_scores"].append(acc)
-            sum_scores[name]["fit_time"] += sum_scores[name]["fit_time"] + fit_time
-            sum_scores[name]["pred_time"] += sum_scores[name]["pred_time"] + pred_time
+        sum_scores[clf_name]["dataset"].append(dataset_name)
+        sum_scores[clf_name]["all_scores"].append(acc)
+        sum_scores[clf_name]["all_fit"].append(fit_time)
+        sum_scores[clf_name]["all_pred"].append(pred_time)
 
-            # print("DFT:", SFA_NEW.time_dft)
-            # print("MCB:", SFA_NEW.time_mcb)
+        sum_scores[clf_name]["fit_time"] += sum_scores[clf_name]["fit_time"] + fit_time
+        sum_scores[clf_name]["pred_time"] += (
+            sum_scores[clf_name]["pred_time"] + pred_time
+        )
+
         # except:
-        #    print("Error", dataset_name)
+        #    print("Error", dataset_name, clf_name)
 
         print("-----------------")
 
         return sum_scores
 
     parallel_res = Parallel(n_jobs=parallel_jobs, timeout=99999, batch_size=1)(
-        delayed(_parallel_fit)(dataset) for dataset in used_dataset
+        delayed(_parallel_fit)(dataset, clf_name)
+        for dataset, clf_name in itertools.product(used_dataset, get_classifiers())
     )
 
     sum_scores = {}
@@ -389,7 +401,14 @@ if __name__ == "__main__":
             sum_scores = result
         else:
             for name, data in result.items():
+                if name not in sum_scores:
+                    sum_scores[name] = {}
                 for key, value in data.items():
+                    if key not in sum_scores[name]:
+                        if type(value) == list:
+                            sum_scores[name][key] = []
+                        else:
+                            sum_scores[name][key] = 0
                     sum_scores[name][key] += value
 
     print("\n\n---- Final results -----")
@@ -410,13 +429,17 @@ if __name__ == "__main__":
         print("Total pred_time:", np.round(sum_scores[name]["pred_time"], 2))
         print("-----------------")
 
+    csv_timings = []
     csv_scores = []
     for name, _ in sum_scores.items():
         all_accs = sum_scores[name]["all_scores"]
-        # total_fit_time in sum_scores[name]["all_scores"]
-        # total_predict_time in sum_scores[name]["all_scores"]
         for acc, dataset_name in zip(all_accs, used_dataset):
             csv_scores.append((name, dataset_name, acc))
+
+        all_fit = np.round(sum_scores[name]["all_fit"], 2)
+        all_pred = np.round(sum_scores[name]["all_pred"], 2)
+        for fit, pred, dataset_name in zip(all_fit, all_pred, used_dataset):
+            csv_timings.append((name, dataset_name, fit, pred))
 
     pd.DataFrame.from_records(
         csv_scores,
@@ -427,4 +450,14 @@ if __name__ == "__main__":
             # "Fit-Time",
             # "Predict-Time",
         ],
-    ).to_csv("full_run_classifier_all_scores.csv", index=None)
+    ).to_csv("classifier_all_scores.csv", index=None)
+
+    pd.DataFrame.from_records(
+        csv_timings,
+        columns=[
+            "Classifier",
+            "Dataset",
+            "Fit-Time",
+            "Predict-Time",
+        ],
+    ).to_csv("classifier_all_runtimes.csv", index=None)
