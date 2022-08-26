@@ -11,7 +11,6 @@ Please see the original library
 """
 
 import pandas as pd
-from attrs import define
 
 from sktime.annotation.base import BaseSeriesAnnotator
 from sktime.utils.validation._dependencies import _check_soft_dependencies
@@ -54,7 +53,6 @@ class BaseHMMLearn(BaseSeriesAnnotator):
 _check_soft_dependencies("hmmlearn.hmm", severity="warning")
 
 
-@define
 class GaussianHMM(BaseHMMLearn):
     """Hidden Markov Model with Gaussian emissions.
 
@@ -84,26 +82,44 @@ class GaussianHMM(BaseHMMLearn):
     >>> model = GaussianHMM(algorithm='viterbi', n_components=2)
     """
 
-    n_components: int = 1
-    covariance_type: str = "diag"
-    min_covar: float = 1e-3
-    startprob_prior: float = 1.0
-    transmat_prior: float = 1.0
-    means_prior: float = 0
-    means_weight: float = 0
-    covars_prior: float = 1e-2
-    covars_weight: float = 1
-    algorithm: str = "viterbi"
-    random_state: float = None
-    n_iter: int = 10
-    tol: float = 1e-2
-    verbose: bool = False
-    params: str = "stmc"
-    init_params: str = "stmc"
-    implementation: str = "log"
+    def __init__(
+        self,
+        n_components: int = 1,
+        covariance_type: str = "diag",
+        min_covar: float = 1e-3,
+        startprob_prior: float = 1.0,
+        transmat_prior: float = 1.0,
+        means_prior: float = 0,
+        means_weight: float = 0,
+        covars_prior: float = 1e-2,
+        covars_weight: float = 1,
+        algorithm: str = "viterbi",
+        random_state: float = None,
+        n_iter: int = 10,
+        tol: float = 1e-2,
+        verbose: bool = False,
+        params: str = "stmc",
+        init_params: str = "stmc",
+        implementation: str = "log",
+    ):
 
-    def __attrs_post_init__(self):
-        """Initialize the _hmm_estimator to be hmmlearn GaussianHMM."""
+        self.n_components = n_components
+        self.covariance_type = covariance_type
+        self.min_covar = min_covar
+        self.startprob_prior = startprob_prior
+        self.transmat_prior = transmat_prior
+        self.means_prior = means_prior
+        self.means_weight = means_weight
+        self.covars_prior = covars_prior
+        self.covars_weight = covars_weight
+        self.algorithm = algorithm
+        self.random_state = random_state
+        self.n_iter = n_iter
+        self.tol = tol
+        self.verbose = verbose
+        self.params = params
+        self.init_params = init_params
+        self.implementation = implementation
         super(GaussianHMM, self).__init__()
 
     def _fit(self, X, Y=None):
