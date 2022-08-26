@@ -200,7 +200,8 @@ def test_differencer_inverse_does_not_memorize():
     assert not np.allclose(y_train.to_numpy(), pipe_ins.to_numpy())
 
     # pipe output should be similar to model output
-    assert np.allclose(pipe_ins.to_numpy(), model_ins.to_numpy())
+    assert np.allclose(pipe_ins[1:].to_numpy(), model_ins[1:].to_numpy())
+    # (first element can be different)
 
     # model output should not be similar to train input
     assert not np.allclose(y_train.to_numpy(), model_ins.to_numpy())
