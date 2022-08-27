@@ -7,9 +7,7 @@ Interface module to scipy.spatial's pairwise distance function cdist
 
 __author__ = ["fkiraly"]
 
-from unittest import expectedFailure
 import pandas as pd
-import numpy as np
 
 from scipy.spatial.distance import cdist
 
@@ -25,15 +23,15 @@ class ScipyDist(BasePairwiseTransformer):
 
     Parameters
     ----------
-    metric: string or function, as in cdist; default = 'euclidean'
+    metric : string or function, as in cdist; default = 'euclidean'
         if string, one of: 'braycurtis', 'canberra', 'chebyshev', 'cityblock',
             'correlation', 'cosine', 'dice', 'euclidean', 'hamming', 'jaccard',
             'jensenshannon', 'kulsinski', 'mahalanobis', 'matching', 'minkowski',
             'rogerstanimoto', 'russellrao', 'seuclidean', 'sokalmichener',
             'sokalsneath', 'sqeuclidean', 'yule'
         if function, should have signature 1D-np.array x 1D-np.array -> float
-    p: if metric='minkowski', the "p" in "p-norm", otherwise irrelevant
-    colalign: string, one of 'intersect' (default), 'force-align', 'none'
+    p:  if metric='minkowski', the "p" in "p-norm", otherwise irrelevant
+    colalign : string, one of 'intersect' (default), 'force-align', 'none'
         controls column alignment if X, X2 passed in fit are pd.DataFrame
         columns between X and X2 are aligned via column names
         if 'intersect', distance is computed on columns occurring both in X and X2,
@@ -42,18 +40,24 @@ class ScipyDist(BasePairwiseTransformer):
             column ordering in X2 is copied from X
         if 'none', X and X2 are passed through unmodified (no columns are aligned)
             note: this will potentially align "non-matching" columns
+    metric_kwargs : dict
+        any kwargs passed to the metric in addition, i.e., to the function cdist
+        common kwargs: "w" : array-like, same length as X.columns, weights for metric
+        refer to scipy.spatial.distance.dist for a documentation of other extra kwargs
     """
 
     _tags = {
         "symmetric": True,  # all the distances are symmetric
     }
 
-    def __init__(self, metric="euclidean", p=2, colalign="intersect", weights=None):
+    def __init__(
+        self, metric="euclidean", p=2, colalign="intersect", metric_kwargs=None
+    ):
 
         self.metric = metric
         self.p = p
         self.colalign = colalign
-        self.weights = weights
+        self.metric_kwargs = metric_kwargs
 
         super(ScipyDist, self).__init__()
 
@@ -81,7 +85,9 @@ class ScipyDist(BasePairwiseTransformer):
         """
         p = self.p
         metric = self.metric
-        weights = self.weights
+        metric_kwargs = self.metric_kwargs
+        if metric_kwargs is None:
+            metric_kwargs = {}
 
         if isinstance(X, pd.DataFrame):
             X = X.select_dtypes("number").to_numpy(dtype="float")
@@ -89,21 +95,36 @@ class ScipyDist(BasePairwiseTransformer):
         if isinstance(X2, pd.DataFrame):
             X2 = X2.select_dtypes("number").to_numpy(dtype="float")
 
-        if np.ndim(weights) == 1:
-            if len(weights) == len(X.columns) == len(X2.columns):
-                X = weights*X
-                X2 = weights*X2
-            else:
-                raise Exception(
-                    "weights vector length must be equal to X and X2 number of columns")
-
-        if metric == "minkowski":
-            distmat = cdist(XA=X, XB=X2, metric=metric, p=p)
+        if metric == "minkowski" and "p" not in metric_kwargs.keys():
+            distmat = cdist(XA=X, XB=X2, metric=metric, p=p, **metric_kwargs)
         else:
-            distmat = cdist(XA=X, XB=X2, metric=metric)
+            distmat = cdist(XA=X, XB=X2, metric=metric, **metric_kwargs)
 
         return distmat
 
-# test for weights might be 
-# if there is no weights distance is as expected
-# if there are weithgs provded - distance is different
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            There are currently no reserved values for distance/kernel transformers.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        # default settings
+        params1 = {}
+
+        # using kwargs
+        params2 = {"metric": "minkowski", "p": 3}
+
+        return [params1, params2]
