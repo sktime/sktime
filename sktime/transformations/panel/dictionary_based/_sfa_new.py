@@ -13,9 +13,12 @@ import sys
 
 import numpy as np
 from numba import njit, objmode, prange
-from sklearn.feature_selection import f_classif
+from numba.core import types
+from numba.typed import Dict
+from sklearn.feature_selection import chi2, f_classif
 from sklearn.preprocessing import KBinsDiscretizer
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.utils import check_random_state
 
 from sktime.transformations.base import _PanelToPanelTransformer
 from sktime.utils.validation.panel import check_X
@@ -103,6 +106,9 @@ class SFA_NEW(_PanelToPanelTransformer):
         cut_upper=True,
         dilation=1,
         first_difference=False,
+        feature_selection="none",
+        max_feature_count=256,
+        random_state=None,
         n_jobs=1,
     ):
         self.words = []
@@ -145,7 +151,19 @@ class SFA_NEW(_PanelToPanelTransformer):
         self.dilation = dilation
         self.first_difference = first_difference
 
+        # Feature selection part
+        self.feature_selection = feature_selection
+        self.max_feature_count = max_feature_count
+        self.feature_count = 0
+        self.relevant_features = None
+
+        self.random_state = random_state
+
         super(SFA_NEW, self).__init__()
+
+    # def fit_transform(self, X, y=None):
+    #    """Fit to data, then transform it."""
+    #    self.fit(X, y).transform(X, y)
 
     def fit(self, X, y=None):
         """Calculate word breakpoints using MCB or IGB.
@@ -241,7 +259,86 @@ class SFA_NEW(_PanelToPanelTransformer):
         #     else:
         #         all_words = np.concatenate((all_words, words), axis=1)
 
-        return words
+        if y is None:
+            # transform: applies the feature selection strategy
+            empty_dict = Dict.empty(
+                key_type=types.int32,
+                value_type=types.int32,
+            )
+
+            # transform
+            return create_bag_transform(
+                X,
+                self.X_index,
+                self.feature_count,
+                self.feature_selection,
+                self.relevant_features if self.relevant_features else empty_dict,
+                words,
+            )[0]
+
+        else:
+            # fitting: learns the feature selection strategy, too
+            return self.transform_to_bag(words, y)
+
+    def transform_to_bag(self, words, y=None):
+        """Transform words to bag-of-pattern and apply feature selection."""
+        bag_of_words = None
+        rng = check_random_state(self.random_state)
+
+        if self.feature_selection == "none":
+            bag_of_words = create_bag_none(
+                self.X_index,
+                self.alphabet_size,
+                words.shape[0],
+                words,
+                self.word_length,
+            )
+        else:
+            feature_names = create_feature_names(words)
+
+            # Random feature selection
+            if self.feature_selection == "random":
+                feature_count = min(self.max_feature_count, len(feature_names))
+                relevant_features_idx = rng.choice(
+                    len(feature_names), replace=False, size=feature_count
+                )
+                bag_of_words, self.relevant_features = create_bag_feature_selection(
+                    words.shape[0],
+                    relevant_features_idx,
+                    np.array(list(feature_names)),
+                    words,
+                )
+
+            # Chi-squared feature selection
+            elif self.feature_selection == "chi2":
+                feature_count = len(list(feature_names))
+                relevant_features_idx = np.arange(feature_count, dtype=np.int32)
+                bag_of_words, _ = create_bag_feature_selection(
+                    words.shape[0],
+                    relevant_features_idx,
+                    np.array(list(feature_names)),
+                    words,
+                )
+
+                feature_count = min(self.max_feature_count, len(feature_names))
+                chi2_statistics, p = chi2(bag_of_words, y)
+                relevant_features_idx = np.argsort(p)[:feature_count]
+
+                self.relevant_features = Dict.empty(
+                    key_type=types.int32, value_type=types.int32
+                )
+                for k, v in zip(
+                    np.array(list(feature_names))[relevant_features_idx],
+                    np.arange(len(relevant_features_idx)),
+                ):
+                    self.relevant_features[k] = v
+
+                # select subset of features
+                bag_of_words = bag_of_words[:, relevant_features_idx]
+
+        self.feature_count = bag_of_words.shape[1]
+
+        return bag_of_words
 
     def _binning(self, X, y=None):
         dft = _binning_dft(
@@ -650,3 +747,68 @@ def _dilation2(X, d):
         return data
     else:
         return X.astype(np.float_)
+
+
+@njit(cache=True, fastmath=True)
+def create_feature_names(sfa_words):
+    feature_names = set()
+    for t_words in sfa_words:
+        for t_word in t_words:
+            feature_names.add(t_word)
+    return feature_names
+
+
+@njit(cache=True, fastmath=True)
+def create_bag_none(X_index, alphabet_size, n_instances, sfa_words, word_length):
+    feature_count = np.int32(2**word_length)
+    all_win_words = np.zeros((n_instances, feature_count), dtype=np.int32)
+
+    for j in range(len(sfa_words)):
+        all_win_words[j, :] = np.bincount(sfa_words[j], minlength=feature_count)
+
+    # cc = feature_count // 2 + key
+    # if all_win_words[j, cc] == 0:
+    #    all_win_words[j, cc] = X_index[k] / sfa_words.shape[1]
+
+    return all_win_words
+
+
+@njit(cache=True, fastmath=True)
+def create_bag_feature_selection(
+    n_instances, relevant_features_idx, feature_names, sfa_words
+):
+    relevant_features = Dict.empty(key_type=types.int32, value_type=types.int32)
+    for k, v in zip(
+        feature_names[relevant_features_idx],
+        np.arange(len(relevant_features_idx)),
+    ):
+        relevant_features[k] = v
+
+    all_win_words = np.zeros((n_instances, len(relevant_features_idx)), dtype=np.int32)
+    for j in range(len(sfa_words)):
+        for key in sfa_words[j]:
+            if key in relevant_features:
+                all_win_words[j, relevant_features[key]] += 1
+    return all_win_words, relevant_features
+
+
+@njit(cache=True, fastmath=True)
+def create_bag_transform(
+    X, X_index, feature_count, feature_selection, relevant_features, sfa_words
+):
+    # merging arrays
+    all_win_words = np.zeros((len(X), feature_count), np.int32)
+    for j in range(len(sfa_words)):
+        if feature_selection == "none":
+            all_win_words[j, :] = np.bincount(sfa_words[j], minlength=feature_count)
+        else:
+            for _, key in enumerate(sfa_words[j]):
+                if key in relevant_features:
+                    o = relevant_features[key]
+                    all_win_words[j, o] += 1
+
+        # cc = feature_count // 2 + key
+        # if all_win_words[j, cc] == 0:
+        #    all_win_words[j, cc] = X_index[k] / sfa_words.shape[1]
+
+    return all_win_words, feature_count
