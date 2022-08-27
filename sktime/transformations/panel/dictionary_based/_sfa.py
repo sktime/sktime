@@ -4,7 +4,7 @@
 Configurable SFA transform for discretising time series into words.
 """
 
-__author__ = ["Matthew Middlehurst", "Patrick Schäfer"]
+__author__ = ["MatthewMiddlehurst", "patrickzib"]
 __all__ = ["SFA"]
 
 import math
@@ -20,7 +20,7 @@ from sklearn.feature_selection import f_classif
 from sklearn.preprocessing import KBinsDiscretizer
 from sklearn.tree import DecisionTreeClassifier
 
-from sktime.transformations.base import _PanelToPanelTransformer
+from sktime.transformations.base import BaseTransformer
 from sktime.utils.validation.panel import check_X
 
 # The binning methods to use: equi-depth, equi-width, information gain or kmeans
@@ -29,7 +29,7 @@ binning_methods = {"equi-depth", "equi-width", "information-gain", "kmeans"}
 # TODO remove imag-part from dc-component component
 
 
-class SFA(_PanelToPanelTransformer):
+class SFA(BaseTransformer):
     """Symbolic Fourier Approximation (SFA) Transformer.
 
     Overview: for each series:
@@ -43,51 +43,51 @@ class SFA(_PanelToPanelTransformer):
 
     Parameters
     ----------
-        word_length:         int, default = 8
-            length of word to shorten window to (using PAA)
+    word_length:         int, default = 8
+        length of word to shorten window to (using PAA)
 
-        alphabet_size:       int, default = 4
-            number of values to discretise each value to
+    alphabet_size:       int, default = 4
+        number of values to discretise each value to
 
-        window_size:         int, default = 12
-            size of window for sliding. Input series
-            length for whole series transform
+    window_size:         int, default = 12
+        size of window for sliding. Input series
+        length for whole series transform
 
-        norm:                boolean, default = False
-            mean normalise words by dropping first fourier coefficient
+    norm:                boolean, default = False
+        mean normalise words by dropping first fourier coefficient
 
-        binning_method:      {"equi-depth", "equi-width", "information-gain", "kmeans"},
-                             default="equi-depth"
-            the binning method used to derive the breakpoints.
+    binning_method:      {"equi-depth", "equi-width", "information-gain", "kmeans"},
+                            default="equi-depth"
+        the binning method used to derive the breakpoints.
 
-        anova:               boolean, default = False
-            If True, the Fourier coefficient selection is done via a one-way
-            ANOVA test. If False, the first Fourier coefficients are selected.
-            Only applicable if labels are given
+    anova:               boolean, default = False
+        If True, the Fourier coefficient selection is done via a one-way
+        ANOVA test. If False, the first Fourier coefficients are selected.
+        Only applicable if labels are given
 
-        bigrams:             boolean, default = False
-            whether to create bigrams of SFA words
+    bigrams:             boolean, default = False
+        whether to create bigrams of SFA words
 
-        skip_grams:          boolean, default = False
-            whether to create skip-grams of SFA words
+    skip_grams:          boolean, default = False
+        whether to create skip-grams of SFA words
 
-        remove_repeat_words: boolean, default = False
-            whether to use numerosity reduction (default False)
+    remove_repeat_words: boolean, default = False
+        whether to use numerosity reduction (default False)
 
-        levels:              int, default = 1
-            Number of spatial pyramid levels
+    levels:              int, default = 1
+        Number of spatial pyramid levels
 
-        save_words:          boolean, default = False
-            whether to save the words generated for each series (default False)
+    save_words:          boolean, default = False
+        whether to save the words generated for each series (default False)
 
-        return_pandas_data_series:          boolean, default = False
-            set to true to return Pandas Series as a result of transform.
-            setting to true reduces speed significantly but is required for
-            automatic test.
+    return_pandas_data_series:          boolean, default = False
+        set to true to return Pandas Series as a result of transform.
+        setting to true reduces speed significantly but is required for
+        automatic test.
 
-        n_jobs:              int, optional, default = 1
-            The number of jobs to run in parallel for both `transform`.
-            ``-1`` means using all processors.
+    n_jobs:              int, optional, default = 1
+        The number of jobs to run in parallel for both `transform`.
+        ``-1`` means using all processors.
 
     Attributes
     ----------
@@ -96,7 +96,6 @@ class SFA(_PanelToPanelTransformer):
     num_insts = 0
     num_atts = 0
 
-
     References
     ----------
     .. [1] Schäfer, Patrick, and Mikael Högqvist. "SFA: a symbolic fourier approximation
@@ -104,7 +103,17 @@ class SFA(_PanelToPanelTransformer):
     15th international conference on extending database technology. 2012.
     """
 
-    _tags = {"univariate-only": True}
+    _tags = {
+        "univariate-only": True,
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
+        "scitype:transform-output": "Series",
+        # what scitype is returned: Primitives, Series, Panel
+        "scitype:instancewise": False,  # is this an instance-wise transform?
+        "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "pd_Series_Table",  # which mtypes does y require?
+        "requires_y": True,  # does y need to be passed in fit?
+    }
 
     def __init__(
         self,
@@ -160,7 +169,8 @@ class SFA(_PanelToPanelTransformer):
         self.skip_grams = skip_grams
 
         self.return_pandas_data_series = return_pandas_data_series
-        self.use_fallback_dft = (
+        self.use_fallback_dft = use_fallback_dft
+        self._use_fallback_dft = (
             use_fallback_dft if word_length < window_size - offset else True
         )
         self.typed_dict = typed_dict
@@ -177,6 +187,9 @@ class SFA(_PanelToPanelTransformer):
         self.level_max = 0
 
         super(SFA, self).__init__()
+
+        if not return_pandas_data_series:
+            self._output_convert = "off"
 
     def fit(self, X, y=None):
         """Calculate word breakpoints using MCB or IGB.
@@ -241,7 +254,7 @@ class SFA(_PanelToPanelTransformer):
         self._is_fitted = True
         return self
 
-    def transform(self, X, y=None):
+    def _transform(self, X, y=None):
         """Transform data into SFA words.
 
         Parameters
@@ -253,8 +266,6 @@ class SFA(_PanelToPanelTransformer):
         -------
         List of dictionaries containing SFA words
         """
-        self.check_is_fitted()
-        X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
         X = X.squeeze(1)
 
         with warnings.catch_warnings():
@@ -516,7 +527,7 @@ class SFA(_PanelToPanelTransformer):
                     self.inverse_sqrt_win_size,
                     self.lower_bounding,
                 )
-                if self.use_fallback_dft
+                if self._use_fallback_dft
                 else self._fast_fourier_transform(row)
             )
 
@@ -623,7 +634,7 @@ class SFA(_PanelToPanelTransformer):
         transformed = np.zeros((end, length))
 
         # first run with dft
-        if self.use_fallback_dft:
+        if self._use_fallback_dft:
             mft_data = self._discrete_fourier_transform(
                 series[0 : self.window_size],
                 self.dft_length,
