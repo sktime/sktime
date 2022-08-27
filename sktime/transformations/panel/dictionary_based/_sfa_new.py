@@ -164,22 +164,8 @@ class SFA_NEW(_PanelToPanelTransformer):
 
         super(SFA_NEW, self).__init__()
 
-    # def fit_transform(self, X, y=None):
-    #    """Fit to data, then transform it."""
-    #    self.fit(X, y).transform(X, y)
-
-    def fit(self, X, y=None):
-        """Calculate word breakpoints using MCB or IGB.
-
-        Parameters
-        ----------
-        X : pandas DataFrame or 3d numpy array, input time series.
-        y : array_like, target values (optional, ignored).
-
-        Returns
-        -------
-        self: object
-        """
+    def fit_transform(self, X, y=None):
+        """Fit to data, then transform it."""
         if self.alphabet_size < 2:
             raise ValueError("Alphabet size must be an integer greater than 2")
 
@@ -204,11 +190,39 @@ class SFA_NEW(_PanelToPanelTransformer):
         X = X.squeeze(1)
 
         X2, self.X_index = _dilation(X, self.dilation, self.first_difference)
-
         self.n_instances, self.series_length = X2.shape
         self.breakpoints = self._binning(X2, y)
-
         self._is_fitted = True
+
+        words = _transform_case(
+            X2,
+            self.window_size,
+            self.dft_length,
+            self.norm,
+            self.support,
+            self.anova,
+            self.variance,
+            self.breakpoints,
+            self.letter_bits,
+            self.inverse_sqrt_win_size,
+        )
+
+        # fitting: learns the feature selection strategy, too
+        return self.transform_to_bag(words, y)
+
+    def fit(self, X, y=None):
+        """Calculate word breakpoints using MCB or IGB.
+
+        Parameters
+        ----------
+        X : pandas DataFrame or 3d numpy array, input time series.
+        y : array_like, target values (optional, ignored).
+
+        Returns
+        -------
+        self: object
+        """
+        self.fit_transform(X, y)
         return self
 
     def transform(self, X, y=None):
@@ -264,26 +278,21 @@ class SFA_NEW(_PanelToPanelTransformer):
 
         # TODO count subgroups of two letters of the words?
 
-        if y is None:
-            # transform: applies the feature selection strategy
-            empty_dict = Dict.empty(
-                key_type=types.int32,
-                value_type=types.int32,
-            )
+        # transform: applies the feature selection strategy
+        empty_dict = Dict.empty(
+            key_type=types.int32,
+            value_type=types.int32,
+        )
 
-            # transform
-            return create_bag_transform(
-                X,
-                self.X_index,
-                self.feature_count,
-                self.feature_selection,
-                self.relevant_features if self.relevant_features else empty_dict,
-                words,
-            )[0]
-
-        else:
-            # fitting: learns the feature selection strategy, too
-            return self.transform_to_bag(words, y)
+        # transform
+        return create_bag_transform(
+            X,
+            self.X_index,
+            self.feature_count,
+            self.feature_selection,
+            self.relevant_features if self.relevant_features else empty_dict,
+            words,
+        )[0]
 
     def transform_to_bag(self, words, y=None):
         """Transform words to bag-of-pattern and apply feature selection."""
@@ -346,6 +355,7 @@ class SFA_NEW(_PanelToPanelTransformer):
         return bag_of_words
 
     def _binning(self, X, y=None):
+        # TODO needed? May use mft only...
         dft = _binning_dft(
             X,
             self.window_size,
