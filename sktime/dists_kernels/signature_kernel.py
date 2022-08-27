@@ -3,15 +3,22 @@
 
 __author__ = ["fkiraly"]
 
+import collections
 import numpy as np
-import pandas as pd
 from scipy.sparse.linalg import svds
 
 from sktime.dists_kernels._base import BasePairwiseTransformerPanel
 
 
-
 # cumsum varia
+# ------------
+def _coerce_to_list(i):
+    """Coerce integers to list of integers."""
+    if not isinstance(i, list):
+        return [i]
+    else:
+        return i
+
 
 def cumsum_rev_first(array):
     """Reverse cumsum over 0th axis."""
@@ -29,15 +36,17 @@ def cumsum_rev(array):
 
 def cumsum_mult(array, dims):
     """Cumsum over all axes in dims."""
+    dims = _coerce_to_list(dims)
     for dimind in dims:
-        array = np.cumsum(array, axis = dimind)
+        array = np.cumsum(array, axis=dimind)
     return array
 
 
 def roll_mult(array, shift, dims):
     """Roll over all axes in dims."""
+    dims = _coerce_to_list(dims)
     for dimind in dims:
-        array = np.roll(array, shift, axis = dimind)
+        array = np.roll(array, shift, axis=dimind)
     return array
 
 
@@ -64,6 +73,9 @@ def cumsum_shift_mult(array, dims):
     return array
 
 
+# low rank reduction utilities
+# ----------------------------
+
 def rankreduce(array, rankbound):
     """Project 2D array on top rankbound singular values."""
     arraysvd = svds(array.astype('f'), k=rankbound)
@@ -88,92 +100,120 @@ def sqdist(X, Y):
     return X_squared + Y_squared - 2 * X_times_Y
 
 
-kPolynom = lambda x, y, scale, deg : (1 + scale * np.inner(x, y)) ** deg
-kGauss = lambda x, y, scale: np.exp(-(scale ** 2) * sqdist(x, y)/2)
-kEuclid = lambda x, y, scale: scale*np.inner(x, y)
-kLaplace = lambda x, y, scale: np.exp(-scale * np.sqrt(np.inner(x-y, x-y)))
-kTanH = lambda x, y, off, scale: np.tanh(off + scale * np.inner(x, y))
+def k_polynom(x, y, scale, deg):
+    """Polynomial kernel of degree deg, with scale coeff."""
+    return (1 + scale * np.inner(x, y)) ** deg
 
-# In[]
 
-# FUNCTION mirror
-#  mirrors an upper triangular kernel matrix, helper for SqizeKernel
-mirror = lambda K: K-np.diag(np.diag(K))+np.transpose(K)
+def k_gauss(x, y, scale): 
+    """Gaussian kernel with scale coeff."""
+    return np.exp(-(scale ** 2) * sqdist(x, y)/2)
 
-# FUNCTION SquizeKernel
-#  computes the sequential kernel from a sequential kernel matrix
-#
-# Inputs:
-#  K             the kernel matrix of increments, i.e.,
-#                 K[i,j] is the kernel between the i-th increment of path 1,
-#                  and the j-th increment of path 2
-#  L             an integer \geq 1, representing the level of truncation
-# optional:
-#  theta         a positive scaling factor for the levels, i-th level by theta^i
-#  normalize     whether the output kernel matrix is normalized
-#    defaults: theta = 1.0, normalize = False
-#
-# Output:
-#  a real number, the sequential kernel between path 1 and path 2
-#
-def SqizeKernel(K, L, theta = 1.0, normalize = False):
-    #L-1 runs through loop;
-    #returns R_ij=(1+\sum_i2>i,j2>j A_i2,j2(1+\sum A_iLjL)...)
+
+def k_euclid(x, y, scale):
+    """Euclidea kernel with scale coeff.""" 
+    return scale * np.inner(x, y)
+
+
+def k_laplace(x, y, scale):
+    """Laplace kernel with scale coeff."""
+    return np.exp(-scale * np.sqrt(np.inner(x-y, x-y)))
+
+
+def k_tanh(x, y, off, scale):
+    """Tanh kernel with scale and offset."""
+    return np.tanh(off + scale * np.inner(x, y))
+
+
+def mirror(K):
+    """Mirrors an upper triangular kernel matrix, helper for Sqize_kernel."""
+    return K - np.diag(np.diag(K)) + np.transpose(K)
+
+
+def sqize_kernel(K, L, theta=1.0, normalize=False):
+    """Compute the sequential kernel from a sequential kernel matrix.
+
+    aka compute "sequentialization of the kernel K"
+
+    Parameters
+    ----------
+    K : 2D np.ndarray
+        the kernel matrix of increments, i.e.,
+        K[i,j] is the kernel between the i-th increment of path 1 (rows),
+        and the j-th increment of path 2 (columns)
+    L : an integer >= 1, representing the level of truncation
+    theta : float, optional, default=1.0
+        a positive scaling factor for the levels, i-th level is scaled by theta^i
+    normalize : bool, optional, default = False
+        whether the output kernel matrix is normalized
+        if True, sums and cumsums are divided by prod(K.shape)
+
+    Returns
+    -------
+    a real number, the sequential kernel between path 1 (rows of K) and path 2 (cols)
+    """
+    # L-1 runs through loop;
+    # returns R_ij=(1+\sum_i2>i,j2>j A_i2,j2(1+\sum A_iLjL)...)
     if normalize:
         normfac = np.prod(K.shape)
-        I = np.ones(K.shape)
+        Id = np.ones(K.shape)
         R = np.ones(K.shape)
-        for l in range(L-1):
-            R = (I + theta*cumsum_rev(K*R)/normfac)/(1+theta)
-        return (1 + theta*np.sum(K*R)/normfac)/(1+theta)
+        for _ in range(L-1):
+            R = (I + theta*cumsum_rev(K * R)/normfac)/(1+theta)
+        return (1 + theta*np.sum(K * R)/normfac)/(1+theta)
     else:
-        I = np.ones(K.shape)
+        Id = np.ones(K.shape)
         R = np.ones(K.shape)
-        for l in range(L-1):
-            R = I + cumsum_rev(K*R) #A*R is componentwise
-        return 1 + np.sum(K*R) #outermost bracket: since i1>=1 and not i1>1 we do it outside of loop
+        for _ in range(L - 1):
+            R = Id + cumsum_rev(K * R)  # A*R is componentwise
+        # outermost bracket: since i1>=1 and not i1>1 we do it outside of loop
+        return 1 + np.sum(K*R)
 
 
-# In[]
+def sqize_kernel_ho(K, L, D=1, theta=1.0, normalize=False):
+    """Compute the higher-order sequential kernel from a sequential kernel matrix.
 
-# FUNCTION SquizeKernelHO
-#  computes the higher order sequential kernel from a sequential kernel matrix
-#
-# Inputs:
-#  K             the kernel matrix of increments, i.e.,
-#                 K[i,j] is the kernel between the i-th increment of path 1,
-#                  and the j-th increment of path 2
-#  L             an integer \geq 1, representing the level of truncation
-#  D             an integer \geq 1, representing the order of approximation
-# optional:
-#  theta         a positive scaling factor for the levels, i-th level by theta^i
-#  normalize     whether the output kernel matrix is normalized
-#    defaults: theta = 1.0, normalize = False
-#
-# Output:
-#  a real number, the sequential kernel between path 1 and path 2
-#
-def SqizeKernelHO(K, L, D = 1, theta = 1.0, normalize = False):
-    A = np.zeros(np.concatenate(([L,D,D],K.shape)))
-    I = np.ones(K.shape)
-    
-    for l in range(1,L):
-        Dprime = min(D, l)
-        A[l,0,0,:,:] = K*(I + cumsum_shift_mult(np.sum(A[l-1,:,:,:,:],(0,1)),(0,1) ) )
-        for d1 in range(1,Dprime):
-            A[l,d1,0,:,:] = A[l,d1,0,:,:] + (1/d1)*K*cumsum_shift_mult(np.sum(A[l-1,d1-1,:,:,:],0),(1))
-            A[l,:,d1,:,:] = A[l,0,d1,:,:] + (1/d1)*K*cumsum_shift_mult(np.sum(A[l-1,:,d1-1,:,:],0),(0))
-            
-            for d2 in range(1,Dprime):
-                A[l,d1,d2,:,:] = A[l,d1,d2,:,:] + (1/(d1*d2))*K*cumsum_shift_mult(np.sum(A[l-1,d1-1,d2-1,:,:],0),(0))
+    aka compute "sequentialization of the kernel K", higher-order approximation
+
+    Parameters
+    ----------
+    K : 2D np.ndarray
+        the kernel matrix of increments, i.e.,
+        K[i,j] is the kernel between the i-th increment of path 1 (rows),
+        and the j-th increment of path 2 (columns)
+    L : an integer >= 1, representing the level of truncation
+    D : int, optional, default = 1
+        an integer \geq 1, representing the order of approximation
+    theta : float, optional, default=1.0
+        a positive scaling factor for the levels, i-th level is scaled by theta^i
+    normalize : bool, optional, default = False
+        whether the output kernel matrix is normalized
+        if True, sums and cumsums are divided by prod(K.shape)
+
+    Returns
+    -------
+    a real number, the sequential kernel between path 1 (rows of K) and path 2 (cols)
+    """
+    A = np.zeros(np.concatenate(([L, D, D], K.shape)))
+    Id = np.ones(K.shape)
+
+    for ell in range(1, L):
+        Dprime = min(D, ell)
+        Acs = cumsum_shift_mult(np.sum(A[ell-1, :, :, :, :], (0, 1)), (0, 1))
+        A[ell, 0, 0, :, :] = K * (Id + Acs)
+        for d1 in range(1, Dprime):
+            Acs1 = cumsum_shift_mult(np.sum(A[ell-1, d1-1, :, :, :], 0), 1)
+            Acs2 = cumsum_shift_mult(np.sum(A[ell-1, :, d1-1, :, :], 0), 0)
+            A[ell, d1, 0, :, :] = A[ell, d1, 0, :, :] + (1/d1) * K * Acs1
+            A[ell, :, d1, :, :] = A[ell, 0, d1, :, :] + (1/d1) * K * Acs2
+
+            for d2 in range(1, Dprime):
+                Acs12 = cumsum_shift_mult(np.sum(A[ell-1, d1-1, d2-1, :, :], 0), 0)
+                A[ell, d1, d2, :, :] = A[ell, d1, d2, :, :] + (1/(d1*d2)) * K * Acs12
                 
-    return 1 + np.sum(A[L-1,:,:,:,:])
+    return 1 + np.sum(A[L-1, :, :, :, :])
 
 
-
-# In[]
-
-import collections
 
 # low-rank decomposition
 #  models matrix A = U x V.T
@@ -282,7 +322,7 @@ def sum_LowRank(K):
     return np.inner(sum(K.U),sum(K.V))
     
 
-# FUNCTION SquizeKernelLowRank
+# FUNCTION Sqize_kernelLowRank
 #  computes the sequential kernel from a sequential kernel matrix
 #   faster by using a low-rank approximation
 #
@@ -301,7 +341,7 @@ def sum_LowRank(K):
 # Output:
 #  a real number, the sequential kernel between path 1 and path 2
 #
-def SqizeKernelLowRank(K, L, theta = 1.0, normalize = False, rankbound = float("inf")):
+def Sqize_kernelLowRank(K, L, theta = 1.0, normalize = False, rankbound = float("inf")):
     #L-1 runs through loop;
     #returns R_ij=(1+\sum_i2>i,j2>j A_i2,j2(1+\sum A_iLjL)...)
     if normalize:
@@ -326,7 +366,7 @@ def SqizeKernelLowRank(K, L, theta = 1.0, normalize = False, rankbound = float("
         #outermost bracket: since i1>=1 and not i1>1 we do it outside of loop
 
 
-# FUNCTION SquizeKernelLowRankFast
+# FUNCTION Sqize_kernel_low_rank_fast
 #  computes the sequential kernel from a sequential kernel matrix
 #   faster by using a low-rank approximation
 #
@@ -347,7 +387,7 @@ def SqizeKernelLowRank(K, L, theta = 1.0, normalize = False, rankbound = float("
 # Output:
 #  a matrix R such that R*R^t is the sequential kernel matrix
 #
-def SqizeKernelLowRankFast(K, L, theta = 1.0, normalize = False, rankbound = float("inf")):
+def Sqize_kernel_low_rank_fast(K, L, theta = 1.0, normalize = False, rankbound = float("inf")):
 
     if normalize:
 
@@ -394,30 +434,38 @@ def SqizeKernelLowRankFast(K, L, theta = 1.0, normalize = False, rankbound = flo
 # In[]
 # FUNCTION SeqKernel
 #  computes the sequential kernel matrix for a dataset of time series
-def SeqKernel(X,kernelfun,L=2,D=1,theta=1.0,normalize = False,lowrank = False,rankbound = float("inf")):
+def seq_kernel(
+    X,
+    kernelfun,
+    L=2,
+    D=1,
+    theta=1.0,
+    normalize=False,
+    lowrank=False,
+    rankbound=float("inf"),
+):
     
     N = np.shape(X)[0]   
-    
     KSeq = np.zeros((N,N))
-    
+
     if not(lowrank):
         if D == 1:
             for row1ind in range(N):
                 for row2ind in range(row1ind+1):
-                    KSeq[row1ind,row2ind] = SqizeKernel(kernelfun(X[row1ind].T,X[row2ind].T),L,theta,normalize)
+                    KSeq[row1ind,row2ind] = sqize_kernel(kernelfun(X[row1ind].T,X[row2ind].T),L,theta,normalize)
         else:
             for row1ind in range(N):
                 for row2ind in range(row1ind+1):
-                    KSeq[row1ind,row2ind] = SqizeKernelHO(kernelfun(X[row1ind].T,X[row2ind].T),L,D,theta,normalize)
+                    KSeq[row1ind,row2ind] = sqize_kernel_ho(kernelfun(X[row1ind].T,X[row2ind].T),L,D,theta,normalize)
     else:                
-
-        R = SqizeKernelLowRankFast(X.transpose([0,2,1]), L, theta, normalize)
+        R = Sqize_kernel_low_rank_fast(X.transpose([0,2,1]), L, theta, normalize)
         KSeq = np.inner(R,R)             
-                # todo: kernelfun gives back a LRdec object
-                #  for now, linear low-rank approximation is done
-                # KSeq[row1ind,row2ind] = SqizeKernelLowRank(kernelfun(X[row1ind].T,X[row2ind].T),L,theta,normalize = True)
-        
-    return mirror(KSeq) 
+        # todo: kernelfun gives back a LRdec object
+        #  for now, linear low-rank approximation is done
+        # KSeq[row1ind,row2ind] = Sqize_kernelLowRank(kernelfun(X[row1ind].T,X[row2ind].T),L,theta,normalize = True)
+
+    return mirror(KSeq)
+
     
 # FUNCTION SeqKernel
 #  computes sequential cross-kernel matrices
@@ -432,15 +480,15 @@ def SeqKernelXY(X,Y,kernelfun,L=2,D=1,theta=1.0,normalize = False,lowrank = Fals
         if D == 1:
             for row1ind in range(N):
                 for row2ind in range(M):
-                    KSeq[row1ind,row2ind] = SqizeKernel(kernelfun(X[row1ind].T,Y[row2ind].T),L,theta,normalize)
+                    KSeq[row1ind,row2ind] = sqize_kernel(kernelfun(X[row1ind].T,Y[row2ind].T),L,theta,normalize)
         else:
             for row1ind in range(N):
                 for row2ind in range(M):
-                    KSeq[row1ind,row2ind] = SqizeKernelHO(kernelfun(X[row1ind].T,Y[row2ind].T),L,D,theta,normalize)
+                    KSeq[row1ind,row2ind] = sqize_kernel_ho(kernelfun(X[row1ind].T,Y[row2ind].T),L,D,theta,normalize)
     else:
         
-        KSeq = np.inner(SqizeKernelLowRankFast(X.transpose([0,2,1]), L, theta, normalize, rankbound),SqizeKernelLowRankFast(Y.transpose([0,2,1]), L, theta, normalize, rankbound))             
-        #KSeq = np.inner(SqizeKernelLowRankFast(X, L, theta, normalize),SqizeKernelLowRankFast(Y, L, theta, normalize))             
+        KSeq = np.inner(sqize_kernel_low_rank_fast(X.transpose([0,2,1]), L, theta, normalize, rankbound),sqize_kernel_low_rank_fast(Y.transpose([0,2,1]), L, theta, normalize, rankbound))             
+        #KSeq = np.inner(sqize_kernel_low_rank_fast(X, L, theta, normalize),Sqize_kernel_ow_rank_fast(Y, L, theta, normalize))             
                 
     return KSeq
     
@@ -617,17 +665,6 @@ class SignatureKernel(BasePairwiseTransformerPanel):
         Similar Multidimensional Trajectories", In Proceedings of the
         18th International Conference on Data Engineering (ICDE '02).
         IEEE Computer Society, USA, 673.
-    .. [2] Lei Chen, M. Tamer Özsu, and Vincent Oria. 2005. Robust and fast similarity
-        search for moving object trajectories. In Proceedings of the 2005 ACM SIGMOD
-        international conference on Management of data (SIGMOD '05). Association for
-        Computing Machinery, New York, NY, USA, 491–502.
-        DOI:https://doi.org/10.1145/1066157.1066213
-    .. [3] Lei Chen and Raymond Ng. 2004. On the marriage of Lp-norms and edit distance.
-        In Proceedings of the Thirtieth international conference on Very large data
-        bases - Volume 30 (VLDB '04). VLDB Endowment, 792–803.
-    .. [4] Marteau, P.; F. (2009). "Time Warp Edit Distance with Stiffness Adjustment
-        for Time Series Matching". IEEE Transactions on Pattern Analysis and Machine
-        Intelligence. 31 (2): 306–318.
     """
 
     _tags = {
@@ -639,15 +676,7 @@ class SignatureKernel(BasePairwiseTransformerPanel):
 
     def __init__(
         self,
-        distance: str = "lcss",
-        window: Union[int, None] = None,
-        itakura_max_slope: Union[float, None] = None,
-        bounding_matrix: np.ndarray = None,
-        epsilon: float = 1.0,
-        g: float = 0.0,
-        lmbda: float = 1.0,
-        nu: float = 0.001,
-        p: int = 2,
+
     ):
         self.distance = distance
         self.window = window
@@ -659,36 +688,7 @@ class SignatureKernel(BasePairwiseTransformerPanel):
         self.nu = nu
         self.p = p
 
-        super(EditDist, self).__init__()
-
-        kwargs = {
-            "window": window,
-            "itakura_max_slope": itakura_max_slope,
-            "bounding_matrix": bounding_matrix,
-        }
-
-        if distance not in self.ALLOWED_DISTANCE_STR:
-            raise ValueError(
-                "distance must be one of the strings"
-                f"{self.ALLOWED_DISTANCE_STR}, but found"
-                f" {distance}"
-            )
-
-        # epsilon is used only for lcss, edr, erp
-        if distance in ["lcss", "edr", "erp"]:
-            kwargs["epsilon"] = epsilon
-
-        # g is used only for erp
-        if distance == "erp":
-            kwargs["g"] = g
-
-        # twe has three unique params
-        if distance == "twe":
-            kwargs["lmbda"] = lmbda
-            kwargs["nu"] = nu
-            kwargs["p"] = p
-
-        self.kwargs = kwargs
+        super(SignatureKernel, self).__init__()
 
     def _transform(self, X, X2=None):
         """Compute distance/kernel matrix.
