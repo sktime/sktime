@@ -112,11 +112,16 @@ def deep_equals(x, y, return_msg=False):
         return ret(*_tuple_equals(x, y, return_msg=True))
     elif isinstance(x, dict):
         return ret(*_dict_equals(x, y, return_msg=True))
+    elif isinstance(x, type(np.nan)):
+        return ret(
+            isinstance(y, type(np.nan)), f"type(x)={type(x)} != type(y)={type(y)}"
+        )
     elif type(x).__name__ == "ForecastingHorizon":
         return ret(*_fh_equals(x, y, return_msg=True))
-    elif x != y:
+    elif isinstance(x != y, bool) and x != y:
         return ret(False, f" !=, {x} != {y}")
-
+    elif np.any(x != y):
+        return ret(False, f" !=, {x} != {y}")
     return ret(True, "")
 
 

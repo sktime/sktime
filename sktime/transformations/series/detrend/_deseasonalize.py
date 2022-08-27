@@ -11,20 +11,23 @@ import pandas as pd
 from statsmodels.tsa.seasonal import STL as _STL
 from statsmodels.tsa.seasonal import seasonal_decompose
 
-from sktime.transformations.base import BaseTransformer, _SeriesToSeriesTransformer
+from sktime.transformations.base import BaseTransformer
 from sktime.utils.datetime import _get_duration, _get_freq
 from sktime.utils.seasonality import autocorrelation_seasonality_test
 from sktime.utils.validation.forecasting import check_sp
-from sktime.utils.validation.series import check_series
 
 
 class Deseasonalizer(BaseTransformer):
     """Remove seasonal components from a time series.
 
-    Fit computes :term:`seasonal components <Seasonality>` and
-    stores them in `seasonal_`.
+    Applies `statsmodels.tsa.seasonal.seasonal_compose` and removes the `seasonal`
+    component in `transform`. Adds seasonal component back again in `inverse_transform`.
+    Seasonality removal can be additive or multiplicative.
 
-    Transform aligns seasonal components stored in `_seasonal` with
+    `fit` computes :term:`seasonal components <Seasonality>` and
+    stores them in `seasonal_` attribute.
+
+    `transform` aligns seasonal components stored in `seasonal_` with
     the time index of the passed :term:`series <Time series>` and then
     substracts them ("additive" model) from the passed :term:`series <Time series>`
     or divides the passed series by them ("multiplicative" model).
@@ -85,25 +88,22 @@ class Deseasonalizer(BaseTransformer):
                 f"`model` must be one of {allowed_models}, " f"but found: {model}"
             )
         self.model = model
-        self._y_index = None
+        self._X = None
         self.seasonal_ = None
         super(Deseasonalizer, self).__init__()
 
-    def _set_y_index(self, y):
-        self._y_index = y.index
-
-    def _align_seasonal(self, y):
-        """Align seasonal components with y's time index."""
+    def _align_seasonal(self, X):
+        """Align seasonal components with X's time index."""
         shift = (
             -_get_duration(
-                y.index[0],
-                self._y_index[0],
+                X.index[0],
+                self._X.index[0],
                 coerce_to_int=True,
-                unit=_get_freq(self._y_index),
+                unit=_get_freq(self._X.index),
             )
             % self.sp
         )
-        return np.resize(np.roll(self.seasonal_, shift=shift), y.shape[0])
+        return np.resize(np.roll(self.seasonal_, shift=shift), X.shape[0])
 
     def _fit(self, X, y=None):
         """Fit transformer to X and y.
@@ -115,14 +115,13 @@ class Deseasonalizer(BaseTransformer):
         X : pd.Series
             Data to fit transform to
         y : ignored argument for interface compatibility
-            Additional data, e.g., labels for transformation
 
         Returns
         -------
         self: a fitted instance of the estimator
         """
-        self._set_y_index(X)
-        sp = check_sp(self.sp)
+        self._X = X
+        sp = self.sp
 
         # apply seasonal decomposition
         self.seasonal_ = seasonal_decompose(
@@ -203,7 +202,10 @@ class Deseasonalizer(BaseTransformer):
         -------
         self: a fitted instance of the estimator
         """
-        self._set_y_index(X)
+        X_full = X.combine_first(self._X)
+        self._X = X_full
+        if update_params:
+            self._fit(X_full, update_params=update_params)
         return self
 
 
@@ -285,20 +287,23 @@ class ConditionalDeseasonalizer(Deseasonalizer):
             )
         return is_seasonal
 
-    def fit(self, Z, X=None):
-        """Fit to data.
+    def _fit(self, X, y=None):
+        """Fit transformer to X and y.
+
+        private _fit containing the core logic, called from fit
 
         Parameters
         ----------
-        y_train : pd.Series
+        X : pd.Series
+            Data to fit transform to
+        y : ignored argument for interface compatibility
 
         Returns
         -------
-        self : an instance of self
+        self: a fitted instance of the estimator
         """
-        z = check_series(Z, enforce_univariate=True)
-        self._set_y_index(z)
-        sp = check_sp(self.sp)
+        self._X = X
+        sp = self.sp
 
         # set default condition
         if self.seasonality_test is None:
@@ -307,12 +312,12 @@ class ConditionalDeseasonalizer(Deseasonalizer):
             self.seasonality_test_ = self.seasonality_test
 
         # check if data meets condition
-        self.is_seasonal_ = self._check_condition(z)
+        self.is_seasonal_ = self._check_condition(X)
 
         if self.is_seasonal_:
             # if condition is met, apply de-seasonalisation
             self.seasonal_ = seasonal_decompose(
-                z,
+                X,
                 model=self.model,
                 period=sp,
                 filt=None,
@@ -325,20 +330,22 @@ class ConditionalDeseasonalizer(Deseasonalizer):
                 np.zeros(self.sp) if self.model == "additive" else np.ones(self.sp)
             )
 
-        self._is_fitted = True
         return self
 
 
-class STLTransformer(_SeriesToSeriesTransformer):
+class STLTransformer(BaseTransformer):
     """Remove seasonal components from a time-series using STL.
+
+    Interfaces STL from statsmodels as an sktime transformer.
 
     The STLTransformer is a descriptive transformer to remove seasonality
     from a series and is based on statsmodels.STL. It returns deseasonalized
-    data. All three components trend, season and residuals can be accessed
-    via attributes trend_, season_ and resid_. STLTransformer can not transform
-    or inverse_transform on data that was not given in fit() before.
+    data. Components are returned in addition if return_components=True
+    STLTransformer can not inverse_transform on indices not seen in fit().
     This means that for pipelining, the Deseasonalizer or Detrender must be
     used instead of STLTransformer.
+
+    Important note: the returned series has seasonality removed, but not trend.
 
     Parameters
     ----------
@@ -379,15 +386,23 @@ class STLTransformer(_SeriesToSeriesTransformer):
         than 1, the LOESS is used every low_pass_jump points and values between
         the two are linearly interpolated. Higher values reduce estimation
         time.
+    return_components : bool, default=False
+        if False, will return only the STL transformed series
+        if True, will return the transformed series, as well as three components
+            as variables in the returned multivariate series (DataFrame cols)
+            "transformed" - the transformed series
+            "seasonal" - the seasonal component
+            "trend" - the trend component
+            "resid" - the residuals after de-trending, de-seasonalizing
 
     Attributes
     ----------
     trend_ : pd.Series
-        Trend component.
+        Trend component of series seen in fit.
     seasonal_ : pd.Series
-        Seasonal components.
+        Seasonal components of series seen in fit.
     resid_ : pd.Series
-        Residuals component.
+        Residuals component of series seen in fit.
 
     See Also
     --------
@@ -403,12 +418,23 @@ class STLTransformer(_SeriesToSeriesTransformer):
     --------
     >>> from sktime.datasets import load_airline
     >>> from sktime.transformations.series.detrend import STLTransformer
-    >>> y = load_airline()
+    >>> X = load_airline()
     >>> transformer = STLTransformer(sp=12)
-    >>> y_hat = transformer.fit_transform(y)
+    >>> Xt = transformer.fit_transform(X)
     """
 
-    _tags = {"transform-returns-same-time-index": True, "univariate-only": True}
+    _tags = {
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
+        "scitype:transform-output": "Series",
+        # what scitype is returned: Primitives, Series, Panel
+        "scitype:instancewise": True,  # is this an instance-wise transform?
+        "X_inner_mtype": "pd.Series",  # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "pd.Series",  # which mtypes do _fit/_predict support for y?
+        "transform-returns-same-time-index": True,
+        "univariate-only": True,
+        "fit_is_empty": False,
+    }
 
     def __init__(
         self,
@@ -423,8 +449,14 @@ class STLTransformer(_SeriesToSeriesTransformer):
         seasonal_jump=1,
         trend_jump=1,
         low_pass_jump=1,
+        return_components=False,
     ):
         self.sp = check_sp(sp)
+
+        # The statsmodels.tsa.seasonal.STL can only deal with sp >= 2
+        if sp < 2:
+            raise ValueError("sp must be positive integer >= 2")
+
         self.seasonal = seasonal
         self.trend = trend
         self.low_pass = low_pass
@@ -435,31 +467,31 @@ class STLTransformer(_SeriesToSeriesTransformer):
         self.seasonal_jump = seasonal_jump
         self.trend_jump = trend_jump
         self.low_pass_jump = low_pass_jump
-        self._Z_index = None
+        self.return_components = return_components
+        self._X = None
         super(STLTransformer, self).__init__()
 
-    def fit(self, Z, X=None):
-        """Fit to data.
+    def _fit(self, X, y=None):
+        """Fit transformer to X and y.
+
+        private _fit containing the core logic, called from fit
 
         Parameters
         ----------
-        Z : pd.Series
-        X : pd.DataFrame
+        X : pd.Series
+            Data to fit transform to
+        y : ignored argument for interface compatibility
 
         Returns
         -------
-        self : an instance of self
+        self: a fitted instance of the estimator
         """
-        self._is_fitted = False
-        z = check_series(Z, enforce_univariate=True)
-        self._Z_index = Z.index
-        sp = check_sp(self.sp)
+        # remember X for transform
+        self._X = X
+        sp = self.sp
 
-        # The statsmodels.tsa.seasonal.STL can only deal with sp >= 2
-        if sp < 2:
-            raise ValueError("sp must be positive integer >= 2")
-        self._stl = _STL(
-            z.values,
+        self.stl_ = _STL(
+            X.values,
             period=sp,
             seasonal=self.seasonal,
             trend=self.trend,
@@ -473,25 +505,40 @@ class STLTransformer(_SeriesToSeriesTransformer):
             low_pass_jump=self.low_pass_jump,
         ).fit()
 
-        self.seasonal_ = pd.Series(self._stl.seasonal, index=Z.index)
-        self.resid_ = pd.Series(self._stl.resid, index=Z.index)
-        self.trend_ = pd.Series(self._stl.trend, index=Z.index)
+        self.seasonal_ = pd.Series(self.stl_.seasonal, index=X.index)
+        self.resid_ = pd.Series(self.stl_.resid, index=X.index)
+        self.trend_ = pd.Series(self.stl_.trend, index=X.index)
 
-        self._is_fitted = True
         return self
 
-    def _transform(self, y):
-        if not self._Z_index.equals(y.index):
-            raise NotImplementedError(
-                """
-                STLTransformer is only a descriptive trasnformer and
-                can only transform data that was given in fit().
-                Please use Deseasonalizer or Detrender."""
-            )
-        return y - self.seasonal_
+    def _transform(self, X, y=None):
 
-    def _inverse_transform(self, y):
-        if not self._Z_index.equals(y.index):
+        # fit again if indices not seen, but don't store anything
+        if not X.index.equals(self._X.index):
+            X_full = X.combine_first(self._X)
+            new_stl = _STL(
+                X_full.values,
+                period=self.sp,
+                seasonal=self.seasonal,
+                trend=self.trend,
+                low_pass=self.low_pass,
+                seasonal_deg=self.seasonal_deg,
+                trend_deg=self.trend_deg,
+                low_pass_deg=self.low_pass_deg,
+                robust=self.robust,
+                seasonal_jump=self.seasonal_jump,
+                trend_jump=self.trend_jump,
+                low_pass_jump=self.low_pass_jump,
+            ).fit()
+
+            ret_obj = self._make_return_object(X_full, new_stl)
+        else:
+            ret_obj = self._make_return_object(X, self.stl_)
+
+        return ret_obj
+
+    def _inverse_transform(self, X, y=None):
+        if not self._X.index.equals(X.index):
             raise NotImplementedError(
                 """
                 STLTransformer is only a descriptive trasnformer and
@@ -499,42 +546,49 @@ class STLTransformer(_SeriesToSeriesTransformer):
                 Please use Deseasonalizer or Detrender."""
             )
         return y + self.seasonal_
+        # return y + self.seasonal_ + self.trend_
 
-    def transform(self, Z, X=None):
-        """Transform data.
+    def _make_return_object(self, X, stl):
 
-        Returns a transformed version yt of y. The seasonal component is removed from y.
-        The trend and residual components can be accessed via
-        the attributes trend_ and resid_ for the fitted data.
+        # deseasonalize only
+        transformed = pd.Series(X.values - stl.seasonal, index=X.index)
+        # transformed = pd.Series(X.values - stl.seasonal - stl.trend, index=X.index)
 
-        Parameters
-        ----------
-        y : pd.Series
-        X : pd.DataFrame
+        if self.return_components:
+
+            seasonal = pd.Series(stl.seasonal, index=X.index)
+            resid = pd.Series(stl.resid, index=X.index)
+            trend = pd.Series(stl.trend, index=X.index)
+
+            ret = pd.DataFrame(
+                {
+                    "transformed": transformed,
+                    "seasonal": seasonal,
+                    "trend": trend,
+                    "resid": resid,
+                }
+            )
+        else:
+            ret = transformed
+
+        return ret
+
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
 
         Returns
         -------
-        yt : pd.Series
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        self.check_is_fitted()
-        z = check_series(Z, enforce_univariate=True)
-        return self._transform(z)
+        # test case 1: all default parmameters
+        params1 = {}
 
-    def inverse_transform(self, Z, X=None):
-        """Inverse transform data.
+        # test case 2: return all components
+        params2 = {"return_components": True}
 
-        Returns a transformed version of y.
-
-        Parameters
-        ----------
-        y : pd.Series
-        X : pd.DataFrame
-
-        Returns
-        -------
-        yt : pd.Series
-            Transformed time series.
-        """
-        self.check_is_fitted()
-        z = check_series(Z, enforce_univariate=True)
-        return self._inverse_transform(z)
+        return [params1, params2]

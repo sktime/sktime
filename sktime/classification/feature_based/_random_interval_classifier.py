@@ -10,9 +10,9 @@ __all__ = ["RandomIntervalClassifier"]
 
 import numpy as np
 
-from sktime._contrib.vector_classifiers._rotation_forest import RotationForest
 from sktime.base._base import _clone_estimator
 from sktime.classification.base import BaseClassifier
+from sktime.classification.sklearn import RotationForest
 from sktime.transformations.panel.catch22 import Catch22
 from sktime.transformations.panel.random_intervals import RandomIntervals
 
@@ -50,21 +50,6 @@ class RandomIntervalClassifier(BaseClassifier):
     See Also
     --------
     RandomIntervals
-
-    Examples
-    --------
-    >>> from sktime.classification.feature_based import RandomIntervalClassifier
-    >>> from sktime._contrib.vector_classifiers._rotation_forest import RotationForest
-    >>> from sktime.datasets import load_unit_test
-    >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
-    >>> clf = RandomIntervalClassifier(
-    ...     n_intervals=3,
-    ...     estimator=RotationForest(n_estimators=5),
-    ... )
-    >>> clf.fit(X_train, y_train)
-    RandomIntervalClassifier(...)
-    >>> y_pred = clf.predict(X_test)
     """
 
     _tags = {

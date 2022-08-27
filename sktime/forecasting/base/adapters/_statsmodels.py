@@ -85,7 +85,11 @@ class _StatsModelsAdapter(BaseForecaster):
 
         # statsmodels forecasts all periods from start to end of forecasting
         # horizon, but only return given time points in forecasting horizon
-        return y_pred.loc[fh.to_absolute(self.cutoff).to_pandas()]
+        y_pred = y_pred.loc[fh.to_absolute(self.cutoff).to_pandas()]
+        # ensure that name is not added nor removed
+        # otherwise this may upset conversion to pd.DataFrame
+        y_pred.name = self._y.name
+        return y_pred
 
     def get_fitted_params(self):
         """Get fitted parameters.
@@ -95,6 +99,10 @@ class _StatsModelsAdapter(BaseForecaster):
         fitted_params : dict
         """
         self.check_is_fitted()
+
+        if hasattr(self, "_is_vectorized") and self._is_vectorized:
+            return {"forecasters": self.forecasters_}
+
         fitted_params = {}
         for name in self._get_fitted_param_names():
             if name in ["aic", "aicc", "bic", "hqic"]:

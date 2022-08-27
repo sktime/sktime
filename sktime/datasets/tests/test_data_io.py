@@ -1,12 +1,7 @@
 # -*- coding: utf-8 -*-
 """Test functions for data input and output."""
 
-__author__ = [
-    "SebasKoel",
-    "Emiliathewolf",
-    "TonyBagnall",
-    "jasonlines",
-]
+__author__ = ["SebasKoel", "Emiliathewolf", "TonyBagnall", "jasonlines", "achieveordie"]
 
 __all__ = []
 
@@ -24,12 +19,40 @@ from sktime.datasets import (
     load_from_long_to_dataframe,
     load_from_tsfile,
     load_from_tsfile_to_dataframe,
+    load_solar,
     load_tsf_to_dataframe,
+    load_UCR_UEA_dataset,
     load_uschange,
     write_dataframe_to_tsfile,
 )
-from sktime.datasets._data_io import MODULE, _convert_tsf_to_hierarchical
-from sktime.datatypes import check_is_mtype
+from sktime.datasets._data_io import (
+    MODULE,
+    _convert_tsf_to_hierarchical,
+    _load_provided_dataset,
+)
+from sktime.datatypes import MTYPE_LIST_PANEL, check_is_mtype
+from sktime.utils.validation._dependencies import _check_soft_dependencies
+
+# Disabling test for these mtypes since they don't support certain functionality yet
+_TO_DISABLE = ["pd-long", "pd-wide", "numpyflat"]
+
+
+@pytest.mark.parametrize("return_X_y", [True, False])
+@pytest.mark.parametrize(
+    "return_type", [mtype for mtype in MTYPE_LIST_PANEL if mtype not in _TO_DISABLE]
+)
+def test_load_provided_dataset(return_X_y, return_type):
+    """Test function to check for proper loading.
+
+    Check this via permutating between all possibilities of return_X_y and return_type.
+    """
+    if return_X_y:
+        X, y = _load_provided_dataset("UnitTest", "TRAIN", return_X_y, return_type)
+    else:
+        X = _load_provided_dataset("UnitTest", "TRAIN", return_X_y, return_type)
+
+    # Check whether object is same mtype or not, via bool
+    assert check_is_mtype(X, return_type)
 
 
 def test_load_from_tsfile():
@@ -81,6 +104,17 @@ def test_load_from_tsfile():
     X, y = load_from_tsfile(full_file_path_and_name=data_path)
     assert isinstance(X, pd.DataFrame) and isinstance(y, np.ndarray)
     assert X.shape == (270, 12) and y.shape == (270,)
+
+
+def test_load_UCR_UEA_dataset():
+    """Tests load_UCR_UEA_dataset correctly loads a baked in data set.
+
+    Note this does not test whether download from timeseriesclassification.com works
+    correctly, since this would make testing dependent on an external website.
+    """
+    X, y = load_UCR_UEA_dataset(name="UnitTest")
+    assert isinstance(X, pd.DataFrame) and isinstance(y, np.ndarray)
+    assert X.shape == (42, 1) and y.shape == (42,)
 
 
 _CHECKS = {
@@ -1371,3 +1405,75 @@ def test_convert_tsf_to_multiindex(freq):
         _convert_tsf_to_hierarchical(input_df, metadata, freq=freq),
         check_dtype=False,
     )
+
+
+@pytest.mark.skipif(
+    not _check_soft_dependencies("backoff", severity="none"),
+    reason="load_solar requires backoff in the environment",
+)
+@pytest.mark.parametrize("return_df", [False, True])
+def test_load_solar(return_df):
+    """Test function for loading solar data through the Sheffiled Solar API."""
+    # queried on 03/08/2022
+    test_equals = np.array(
+        [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.002,
+            0.021,
+            0.06,
+            0.113,
+            0.176,
+            0.251,
+            0.323,
+            0.356,
+            0.395,
+            0.427,
+            0.431,
+            0.398,
+            0.396,
+            0.406,
+            0.413,
+            0.43,
+            0.421,
+            0.414,
+            0.391,
+            0.37,
+            0.315,
+            0.258,
+            0.222,
+            0.203,
+            0.174,
+            0.134,
+            0.093,
+            0.055,
+            0.022,
+            0.002,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+        ]
+    )
+
+    y = load_solar(start="2021-05-01", end="2021-05-02", return_full_df=return_df)
+
+    if return_df:
+        assert isinstance(y, pd.DataFrame)
+    else:
+        assert isinstance(y, pd.Series)
+        y = y.round(3).to_numpy()
+        assert np.all(y == test_equals)

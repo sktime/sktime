@@ -7,6 +7,7 @@ How to use this:
 - do NOT import this file directly - it will break
 - work through all the "todo" comments below
 - fill in code for mandatory methods, and optionally for optional methods
+- do not write to reserved variables: is_fitted, _is_fitted, _tags, _tags_dynamic
 - you can add more private methods, but do not override BaseEstimator's private methods
     an easy way to be safe is to prefix your methods with "_custom"
 - change docstrings for functions and the file
@@ -26,6 +27,13 @@ copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 from sktime.dists_kernels import BasePairwiseTransformerPanel
 
 # todo: add any necessary imports here
+
+# todo: if any imports are sktime soft dependencies:
+#  * make sure to fill in the "python_dependencies" tag with the package import name
+#  * add a _check_soft_dependencies warning here, example:
+#
+# from sktime.utils.validation._dependencies import check_soft_dependencies
+# _check_soft_dependencies("soft_dependency_name", severity="warning")
 
 
 class MyTrafoPwPanel(BasePairwiseTransformerPanel):
@@ -70,16 +78,19 @@ class MyTrafoPwPanel(BasePairwiseTransformerPanel):
         self.parama = parama
         self.paramb = paramb
         self.paramc = paramc
-        # important: no checking or other logic should happen here
+
+        # todo: change "MyTrafoPwPanel" to the name of the class
+        super(MyTrafoPwPanel, self).__init__()
+
+        # todo: optional, parameter checking logic (if applicable) should happen here
+        # if writes derived values to self, should *not* overwrite self.parama etc
+        # instead, write to self._parama, self._newparam (starting with _)
 
         # todo: default estimators should have None arg defaults
         #  and be initialized here
         #  do this only with default estimators, not with parameters
         # if est2 is None:
         #     self.estimator = MyDefaultEstimator()
-
-        # todo: change "MyTrafoPwPanel" to the name of the class
-        super(MyTrafoPwPanel, self).__init__()
 
         # todo: if tags of estimator depend on component tags, set these here
         #  only needed if estimator is a composite
