@@ -5,6 +5,7 @@ Composers that create panel pairwise transformers from table pairwise transforme
 Currently implemented composers in this module:
 
     AggrDist - panel distance from aggregation of tabular distance matrix entries
+    FlatDist - panel distance from applying tabular distance to flattened panel matrix
 """
 
 __author__ = ["fkiraly"]
@@ -16,26 +17,38 @@ from sktime.utils._testing.deep_equals import deep_equals
 
 
 class AggrDist(BasePairwiseTransformerPanel):
-    """Panel distance from tabular distance aggregation.
+    r"""Panel distance from tabular distance aggregation.
 
     panel distance obtained by applying aggregation function to tabular distance matrix
         example: AggrDist(ScipyDist()) is mean Euclidean distance between series
 
-    Components
+    Formal details (for real valued objects, mixed typed rows in analogy):
+    Let :math:`d: \mathbb{R}^k \times \mathbb{R}^{k}\rightarrow \mathbb{R}`
+    be the pairwise function in `transformer`, when applied to `k`-vectors.
+    Let :math:`f:\mathbb{R}^{n \ times m}` be the function `aggfunc` when applied to
+    an :math:`(n \times m)` matrix.
+    Let :math:`x_1, \dots, x_N\in \mathbb{R}^{n \times k}`,
+    :math:`y_1, \dots y_M \in \mathbb{R}^{m \times k}` be collections of matrices,
+    representing time series panel valued inputs `X` and `X2`, as follows:
+    :math:`x_i` is the `i`-th instance in `X`, and :math:`x_{i, j\ell}` is the
+    `j`-th time point, `\ell`-th variable of `X`. Analogous for :math:`y` and `X2`.
+
+    Then, `transform(X, X2)` returns the :math:`(N \times M)` matrix
+    with :math:`(i, j)`-th entry :math:`f \left((d(x_{i, a}, y_{j, b}))_{a, b}\right)`,
+    where :math:`x_{i, a}` denotes the :math:`a`-th row of :math:`x_i`, and
+    :math:`y_{j, b}` denotes the :math:`b`-th row of :math:`x_j`.
+
+    Parameters
     ----------
     transformer: pairwise transformer of BasePairwiseTransformer scitype
-
-    Hyper-parameters
-    ----------------
-    aggfunc: aggregation function 2D np.array -> float
-        default = None, however, if transform is called then defaults to np.mean
-    aggfunc_is_symm: bool - whether aggregation function is symmetric
-                i.e., invariant under transposing argument, it always holds that
-                    aggfunc(matrix) = aggfunc(np.transpose(matrix))
+    aggfunc: aggregation function (2D np.array) -> float or None, optional
+        default = None = np.mean
+    aggfunc_is_symm: bool, optional, default=False
+        whether aggregation function is symmetric (should be set according to aggfunc)
+            i.e., invariant under transposing argument, it always holds that
+                aggfunc(matrix) = aggfunc(np.transpose(matrix))
             used for fast computation of the resultant matrix (if symmetric)
             if unknown, False is the "safe" option that ensures correctness
-        default = True if aggfunc default is used
-            False otherwise (should be set according to choice of aggfunc)
     """
 
     def __init__(
@@ -50,6 +63,9 @@ class AggrDist(BasePairwiseTransformerPanel):
         self.transformer = transformer
 
         super(AggrDist, self).__init__()
+
+        if self.aggfunc_is_symm:
+            self.set_tag("symmetric", True)
 
     def _transform(self, X, X2=None):
         """Compute distance/kernel matrix.
@@ -106,6 +122,84 @@ class AggrDist(BasePairwiseTransformerPanel):
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Test parameters for AggrDist."""
+        # importing inside to avoid circular dependencies
+        from sktime.dists_kernels import ScipyDist
+
+        return {"transformer": ScipyDist()}
+
+
+class FlatDist(BasePairwiseTransformerPanel):
+    r"""Panel distance from applying tabular distance to flattened time series.
+
+    Applies the wrapped tabular distance to flattened series.
+    Flattening is done to a 2D numpy array of shape (n_instances, (n_vars, n_timepts))
+
+    Formal details (for real valued objects, mixed typed rows in analogy):
+    Let :math:`d:\mathbb{R}^k \times \mathbb{R}^{k}\rightarrow \mathbb{R}`
+    be the pairwise function in `transformer`, when applied to `k`-vectors.
+    Let :math:`x_1, \dots, x_N\in \mathbb{R}^{n \times \ell}`,
+    :math:`y_1, \dots y_M \in \mathbb{R}^{n \times \ell}` be collections of matrices,
+    representing time series panel valued inputs `X` and `X2`, as follows:
+    :math:`x_i` is the `i`-th instance in `X`, and :math:`x_{i, j\ell}` is the
+    `j`-th time point, `\ell`-th variable of `X`. Analogous for :math:`y` and `X2`.
+    Let :math:`f:\mathbb{R}^{n \times \ell} \rightarrow \mathbb{R}^{n \cdot \ell}`
+    be the mapping that flattens matrices by column-first lexicographical ordering,
+    and assume :math:`k = n \cdot \ell`.
+
+    Then, `transform(X, X2)` returns the :math:`(N \times M)` matrix
+    with :math:`(i, j)`-th entry :math:`d\left(f(x_i), f(y_j)\right)`.
+
+    Parameters
+    ----------
+    transformer: pairwise transformer of BasePairwiseTransformer scitype
+    """
+
+    _tags = {
+        "X_inner_mtype": "numpy3D",  # which mtype is used internally in _transform?
+    }
+
+    def __init__(self, transformer):
+
+        self.transformer = transformer
+
+        super(FlatDist, self).__init__()
+
+    def _transform(self, X, X2=None):
+        """Compute distance/kernel matrix.
+
+            Core logic.
+
+        Behaviour: returns pairwise distance/kernel matrix
+            between samples in X and X2
+                if X2 is not passed, is equal to X
+                if X/X2 is a pd.DataFrame and contains non-numeric columns,
+                    these are removed before computation
+
+        Parameters
+        ----------
+        X: pd.DataFrame of length n, or 2D np.array with n rows
+        X2: pd.DataFrame of length m, or 2D np.array with m rows, optional
+            default X2 = X
+
+        Returns
+        -------
+        distmat: np.array of shape [n, m]
+            (i,j)-th entry contains distance/kernel between X.iloc[i] and X2.iloc[j]
+        """
+        n_inst, n_vars, n_tts = X.shape
+        X = X.reshape(n_inst, n_vars * n_tts)
+
+        n_inst2, n_vars2, n_tts2 = X2.shape
+        X2 = X2.reshape(n_inst2, n_vars2 * n_tts2)
+
+        if deep_equals(X, X2):
+            return self.transformer.transform(X)
+        else:
+            return self.transformer.transform(X, X2)
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Test parameters for FlatDist."""
         # importing inside to avoid circular dependencies
         from sktime.dists_kernels import ScipyDist
 

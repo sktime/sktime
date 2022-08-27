@@ -259,13 +259,10 @@ class Lag(BaseTransformer):
 
             Xt_list.append(Xt)
 
-        if len(Xt_list) == 1:
-            Xt = Xt_list[0]
-        else:
-            lag_names = self._yield_shift_param_names()
-            Xt = pd.concat(Xt_list, axis=1, keys=lag_names, names=["lag", "variable"])
-            if self.flatten_transform_index:
-                Xt.columns = flatten_multiindex(Xt.columns)
+        lag_names = self._yield_shift_param_names()
+        Xt = pd.concat(Xt_list, axis=1, keys=lag_names, names=["lag", "variable"])
+        if self.flatten_transform_index:
+            Xt.columns = flatten_multiindex(Xt.columns)
 
         # some pandas versions do not sort index automatically after concat
         # so removing will break specific pandas versions

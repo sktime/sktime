@@ -15,7 +15,6 @@ from sklearn.preprocessing import PolynomialFeatures
 from statsmodels.tsa.seasonal import STL as _STL
 
 from sktime.forecasting.base import BaseForecaster
-from sktime.forecasting.naive import NaiveForecaster
 from sktime.utils.datetime import _get_duration
 
 
@@ -385,6 +384,8 @@ class STLForecaster(BaseForecaster):
         -------
         self : returns an instance of self.
         """
+        from sktime.forecasting.naive import NaiveForecaster
+
         self._stl = _STL(
             y.values,
             period=self.sp,
