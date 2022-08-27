@@ -7,6 +7,7 @@ Interface module to scipy.spatial's pairwise distance function cdist
 
 __author__ = ["fkiraly"]
 
+import numpy as np
 import pandas as pd
 from scipy.spatial.distance import cdist
 
@@ -39,7 +40,11 @@ class ScipyDist(BasePairwiseTransformer):
             column ordering in X2 is copied from X
         if 'none', X and X2 are passed through unmodified (no columns are aligned)
             note: this will potentially align "non-matching" columns
-    metric_kwargs : dict
+    var_weights : 1D np.array of float or None, default=None
+        weight/scaling vector applied to variables in X/X2
+        before being passed to cdist, i-th col of X/X2 is multiplied by var_weights[i]
+        if None, equivalent to all-ones vector
+    metric_kwargs : dict, optional, default=None
         any kwargs passed to the metric in addition, i.e., to the function cdist
         common kwargs: "w" : array-like, same length as X.columns, weights for metric
         refer to scipy.spatial.distance.dist for a documentation of other extra kwargs
@@ -50,12 +55,18 @@ class ScipyDist(BasePairwiseTransformer):
     }
 
     def __init__(
-        self, metric="euclidean", p=2, colalign="intersect", metric_kwargs=None
+        self,
+        metric="euclidean",
+        p=2,
+        colalign="intersect",
+        var_weights=None,
+        metric_kwargs=None,
     ):
 
         self.metric = metric
         self.p = p
         self.colalign = colalign
+        self.var_weights = var_weights
         self.metric_kwargs = metric_kwargs
 
         super(ScipyDist, self).__init__()
@@ -84,6 +95,7 @@ class ScipyDist(BasePairwiseTransformer):
         """
         p = self.p
         metric = self.metric
+        var_weights = self.var_weights
         metric_kwargs = self.metric_kwargs
         if metric_kwargs is None:
             metric_kwargs = {}
@@ -93,6 +105,15 @@ class ScipyDist(BasePairwiseTransformer):
 
         if isinstance(X2, pd.DataFrame):
             X2 = X2.select_dtypes("number").to_numpy(dtype="float")
+
+        if np.ndim(var_weights) == 1:
+            if len(var_weights) == len(X.columns) == len(X2.columns):
+                X = var_weights * X
+                X2 = var_weights * X2
+            else:
+                raise ValueError(
+                    "weights vector length must be equal to X and X2 number of columns"
+                )
 
         if metric == "minkowski" and "p" not in metric_kwargs.keys():
             distmat = cdist(XA=X, XB=X2, metric=metric, p=p, **metric_kwargs)
