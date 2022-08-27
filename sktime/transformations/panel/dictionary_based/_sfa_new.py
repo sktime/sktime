@@ -10,9 +10,10 @@ __all__ = ["SFA_NEW"]
 
 import math
 import sys
+from warnings import simplefilter
 
 import numpy as np
-from numba import njit, objmode, prange
+from numba import NumbaPendingDeprecationWarning, njit, objmode, prange
 from numba.core import types
 from numba.typed import Dict
 from sklearn.feature_selection import chi2, f_classif
@@ -25,6 +26,8 @@ from sktime.utils.validation.panel import check_X
 
 # The binning methods to use: equi-depth, equi-width, information gain or kmeans
 binning_methods = {"equi-depth", "equi-width", "information-gain", "kmeans", "quantile"}
+
+simplefilter(action="ignore", category=NumbaPendingDeprecationWarning)
 
 
 class SFA_NEW(_PanelToPanelTransformer):

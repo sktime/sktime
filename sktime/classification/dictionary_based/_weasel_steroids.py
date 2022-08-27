@@ -14,20 +14,13 @@ Rocket-Science on WEASEL
 __author__ = ["patrickzib"]
 __all__ = ["WEASEL_STEROIDS"]
 
-from warnings import simplefilter
-
 import numpy as np
 from joblib import Parallel, delayed
-from numba import NumbaPendingDeprecationWarning
 from sklearn.linear_model import RidgeClassifierCV
 from sklearn.utils import check_random_state
 
 from sktime.classification.base import BaseClassifier
 from sktime.transformations.panel.dictionary_based import SAX_NEW, SFA_NEW
-
-# TODO change to transformer?
-
-simplefilter(action="ignore", category=NumbaPendingDeprecationWarning)
 
 
 class WEASEL_STEROIDS(BaseClassifier):
