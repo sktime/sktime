@@ -347,8 +347,6 @@ def _parallel_fit(
     binning_strategy = rng.choice(binning_strategies)
     # upper = rng.choice([True, False])
 
-    # TODO count subgroups of two letters of the words?
-
     # which_transform = rng.uniform(0, 1)
     if True:  # which_transform > 0.33:
         transformer = SFA_NEW(

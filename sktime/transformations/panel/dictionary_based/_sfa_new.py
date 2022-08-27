@@ -262,6 +262,8 @@ class SFA_NEW(_PanelToPanelTransformer):
         #     else:
         #         all_words = np.concatenate((all_words, words), axis=1)
 
+        # TODO count subgroups of two letters of the words?
+
         if y is None:
             # transform: applies the feature selection strategy
             empty_dict = Dict.empty(
