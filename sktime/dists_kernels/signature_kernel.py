@@ -30,7 +30,7 @@ def cumsum_rev_first(array):
 def cumsum_rev(array):
     """Reverse cumsum over both axes 0 and 1."""
     out = np.zeros_like(array)
-    out[:-1, :-1] = np.cumsum(np.cumsum(array[:0:-1, :0:-1], 0),1)[::-1, ::-1]
+    out[:-1, :-1] = np.cumsum(np.cumsum(array[:0:-1, :0:-1], 0), 1)[::-1, ::-1]
     return out
 
 
@@ -79,7 +79,7 @@ def cumsum_shift_mult(array, dims):
 def rankreduce(array, rankbound):
     """Project 2D array on top rankbound singular values."""
     arraysvd = svds(array.astype('f'), k=rankbound)
-    return np.dot(arraysvd[0],np.diag(arraysvd[1]))
+    return np.dot(arraysvd[0], np.diag(arraysvd[1]))
 
 
 def rankreduce_batch(arrays, rankbound):
@@ -131,7 +131,7 @@ def mirror(K):
 
 
 def sqize_kernel(K, L, theta=1.0, normalize=False):
-    """Compute the sequential kernel from a sequential kernel matrix.
+    """Compute the sequential kernel from a pairwise kernel matrix.
 
     aka compute "sequentialization of the kernel K"
 
@@ -159,8 +159,8 @@ def sqize_kernel(K, L, theta=1.0, normalize=False):
         Id = np.ones(K.shape)
         R = np.ones(K.shape)
         for _ in range(L-1):
-            R = (I + theta*cumsum_rev(K * R)/normfac)/(1+theta)
-        return (1 + theta*np.sum(K * R)/normfac)/(1+theta)
+            R = (Id + theta*cumsum_rev(K * R)/normfac)/(1 + theta)
+        return (1 + theta*np.sum(K * R)/normfac)/(1 + theta)
     else:
         Id = np.ones(K.shape)
         R = np.ones(K.shape)
@@ -171,7 +171,7 @@ def sqize_kernel(K, L, theta=1.0, normalize=False):
 
 
 def sqize_kernel_ho(K, L, D=1, theta=1.0, normalize=False):
-    """Compute the higher-order sequential kernel from a sequential kernel matrix.
+    """Compute the higher-order sequential kernel from a pairwise kernel matrix.
 
     aka compute "sequentialization of the kernel K", higher-order approximation
 
@@ -183,7 +183,7 @@ def sqize_kernel_ho(K, L, D=1, theta=1.0, normalize=False):
         and the j-th increment of path 2 (columns)
     L : an integer >= 1, representing the level of truncation
     D : int, optional, default = 1
-        an integer \geq 1, representing the order of approximation
+        an integer >= 1, representing the order of approximation
     theta : float, optional, default=1.0
         a positive scaling factor for the levels, i-th level is scaled by theta^i
     normalize : bool, optional, default = False
@@ -210,160 +210,198 @@ def sqize_kernel_ho(K, L, D=1, theta=1.0, normalize=False):
             for d2 in range(1, Dprime):
                 Acs12 = cumsum_shift_mult(np.sum(A[ell-1, d1-1, d2-1, :, :], 0), 0)
                 A[ell, d1, d2, :, :] = A[ell, d1, d2, :, :] + (1/(d1*d2)) * K * Acs12
-                
+
     return 1 + np.sum(A[L-1, :, :, :, :])
 
 
-
 # low-rank decomposition
+# ----------------------
+
+# LRdec object
 #  models matrix A = U x V.T
 #  U and V should be *arrays*, not *matrices*
-LRdec = collections.namedtuple('LRdec', ['U','V'])
+LRdec = collections.namedtuple('LRdec', ['U', 'V'])
 
 
-# FUNCTION GetLowRankMatrix
-#  produce the matrix from the LRdec object
-#
-# Inputs:
-#  K            a LRdec type object
-#
-# Output:
-#  the matrix K.U x K.V.T modelled by the LRdec object
-def GetLowRankMatrix(K):
+def get_low_rank_matrix(K):
+    """Produce the matrix from the LRdec object.
+
+    Parameters
+    ----------
+    K : LRdec type object
+
+    Returns
+    -------
+    2D np.ndarray the matrix K.U x K.V.T modelled by the LRdec object
+    """
     return np.inner(K.U, K.V)
 
 
-# FUNCTION AddLowRank
-#  efficient computation of sum of low-rank representations
-#   using this and then GetLowRankMatrix is more efficient than an
-#   explicit computation if the rank of the final matrix is not full
-#
-# Inputs:
-#  K, R           LRdec type objects to add
-#
-# Output:
-#  LRdec type object for sum of K and R
+def add_low_rank(K, R):
+    """Efficient addition of two low-rank matrices.
 
-def AddLowRank(K, R):
-    return LRdec(np.concatenate((K.U,R.U), axis=1),np.concatenate((K.V,R.V), axis=1))
+    efficient computation of sum of low-rank representations
+    using this and then get_low_rank_matrix is more efficient than an
+    explicit computation if the rank of the final matrix is not full
 
-def AddLowRankOne(U, P):
-    return np.concatenate((U,P), axis=1)
+    Parameters
+    ----------
+    K, R : LRdec type objects to add
+
+    Returns
+    -------
+    LRdec type object for sum of K and R
+    """
+    return LRdec(np.concatenate((K.U, R.U), axis=1), np.concatenate((K.V, R.V), axis=1))
 
 
-def MultLowRank(K, theta):
+def add_low_rank_one(U, P):
+    """Efficient addition of low-rank matrices (symmetric)."""
+    return np.concatenate((U, P), axis=1)
+
+
+def mult_low_rank(K, theta):
+    """Efficient multiplication of two low-rank matrices.
+
+    efficient multiplication of sum of low-rank representations
+    using this and then get_low_rank_matrix is more efficient than an
+    explicit computation if the rank of the final matrix is not full
+
+    Parameters
+    ----------
+    K, R : LRdec type objects to add
+
+    Returns
+    -------
+    LRdec type object for product of K and R
+    """
     return LRdec(theta*K.U, theta*K.V)
 
 
-# FUNCTION HadamardLowRank
-#  efficient computation of Hadamard product of low-rank representations
-#   using this and then GetLowRankMatrix is more efficient than an
-#   explicit computation if the rank of the final matrix is not full
-#
-# Inputs:
-#  K, R           LRdec type objects to multiply
-#
-# Output:
-#  LRdec type object for Hadamard product of K and R
+def hadamard_low_rank(K, R):
+    """Efficient Hadamard product of two low-rank matrices.
 
-def HadamardLowRank(K, R):
+    efficient multiplication of sum of low-rank representations
+    using this and then get_low_rank_matrix is more efficient than an
+    explicit computation if the rank of the final matrix is not full
+
+    Parameters
+    ----------
+    K, R : LRdec type objects to add
+
+    Returns
+    -------
+    LRdec type object for Hadamard product of K and R
+    """
     rankK = K.U.shape[1]
     rankR = R.U.shape[1]
-    U = (np.tile(K.U,rankR)*np.repeat(R.U,rankK,1))
-    V = (np.tile(K.V,rankR)*np.repeat(R.V,rankK,1))
-    return LRdec(U,V)
-    
+    U = (np.tile(K.U, rankR)*np.repeat(R.U, rankK, 1))
+    V = (np.tile(K.V, rankR)*np.repeat(R.V, rankK, 1))
+    return LRdec(U, V)
+
+
 # multiplies U with every component (1st index) of P
-#def HadamardLowRankBatch(U, P):
+# def HadamardLowRankBatch(U, P):
 #    rankU = U.shape[1]
 #    N = P.shape[0]
 #    rankP = P.shape[2]
-#    return (np.repeat(np.repeat(np.array(U,ndmin = 3), rankP, 2),N,0)*np.repeat(P,rankU,2))  
+#    return (np.repeat(np.repeat(np.array(U,ndmin = 3), rankP, 2),N,0)
+#           *np.repeat(P,rankU,2))  
 
-# multiplies U and P component-wise (1st)
-def HadamardLowRankBatch(U, P):
+
+def hadamard_low_rank_batch(U, P):
+    """Hadamard multiply U and P component-wise (1st)."""
     rankU = U.shape[2]
     rankP = P.shape[2]
-    return (np.tile(U,rankP)*np.repeat(P,rankU,2))  
+    return (np.tile(U, rankP)*np.repeat(P, rankU, 2))  
 
-# with Nystroem type subsampling
+
 def HadamardLowRankSubS(U, P, rho):
+    """Hadamard multiply U and P component-wise (1st), with Nyström type subsampling."""
     rankU = U.shape[2]
     rankP = P.shape[2]
-    permut = np.sort(np.random.permutation(range(rankU*rankP))[range(rho)])
-    return (np.tile(U,rankP)*np.repeat(P,rankU,2))[:,:,permut]
- 
-    
-    
-# FUNCTION cumsum_LowRank
-# cumsum for LRdec type collections
-#  equivalent of cumsum_rev for LRdec type objects
-#
-# Inputs:
-#  K            LRdec type object to cumsum
-#
-# Output:
-#  LRdec type object for cumsum_rev of K
+    permut = np.sort(np.random.permutation(range(rankU * rankP))[range(rho)])
+    return (np.tile(U, rankP)*np.repeat(P, rankU, 2))[:, :, permut]
 
-def cumsum_LowRank(K):
-    return LRdec(cumsum_rev_first(K.U),cumsum_rev_first(K.V))
-    
-    
-# FUNCTION sum_LowRank
-# sum for LRdec type collections
-#  equivalent of sum_rev for LRdec type objects
-#
-# Inputs:
-#  K            LRdec type object to sum
-#
-# Output:
-#  LRdec type object for sum of K
-def sum_LowRank(K):
-    return np.inner(sum(K.U),sum(K.V))
-    
 
-# FUNCTION Sqize_kernelLowRank
-#  computes the sequential kernel from a sequential kernel matrix
-#   faster by using a low-rank approximation
-#
-# Inputs:
-#  K              LRdec type object, models low-rank factors
-#                   of the increment kernel matrix K such that K = K.U x K.V.T
-#                 where K[i,j] is the kernel between the i-th increment of path 1,
-#                  and the j-th increment of path 2
-#  L             an integer \geq 1, representing the level of truncation
-# optional:
-#  theta         a positive scaling factor for the levels, i-th level by theta^i
-#  normalize     whether the output kernel matrix is normalized
-#  rankbound     a hard threshold for the rank of the level matrices
-#    defaults: theta = 1.0, normalize = False, rankbound = infinity
-#
-# Output:
-#  a real number, the sequential kernel between path 1 and path 2
-#
-def Sqize_kernelLowRank(K, L, theta = 1.0, normalize = False, rankbound = float("inf")):
-    #L-1 runs through loop;
-    #returns R_ij=(1+\sum_i2>i,j2>j A_i2,j2(1+\sum A_iLjL)...)
+def cumsum_rev_low_rank(K):
+    """Compute cumsum for LRdec type collections.
+
+    equivalent of cumsum_rev for LRdec type objects
+
+    Parameters
+    ----------
+    K : LRdec type object to compute cumsum of
+
+    Return
+    ------
+    LRdec type object for cumsum_rev of K
+    """
+    return LRdec(cumsum_rev_first(K.U), cumsum_rev_first(K.V))
+
+
+def sum_low_rank(K):
+    """Compute cumsum for LRdec type collections.
+
+    equivalent of sum for LRdec type objects
+
+    Parameters
+    ----------
+    K : LRdec type object to compute sum of
+
+    Return
+    ------
+    LRdec type object for sum of K
+    """
+    return np.inner(sum(K.U), sum(K.V))
+
+
+def sqize_kernel_low_rank(K, L, theta=1.0, normalize=False, rankbound=float("inf")):
+    """Compute the sequential kernel from kernel matrix, with low-rank approximation.
+
+    Parameters
+    ----------
+    K : 2D np.ndarray
+        the kernel matrix of increments, i.e.,
+        K[i,j] is the kernel between the i-th increment of path 1 (rows),
+        and the j-th increment of path 2 (columns)
+    L : an integer >= 1, representing the level of truncation
+    theta : float, optional, default=1.0
+        a positive scaling factor for the levels, i-th level is scaled by theta^i
+    normalize : bool, optional, default = False
+        whether the output kernel matrix is normalized
+        if True, sums and cumsums are divided by prod(K.shape)
+    rankbound : int, optional, default = infinity
+        a hard threshold for the rank of the level matrices
+
+    Returns
+    -------
+    a real number, the sequential kernel between path 1 (rows of K) and path 2 (cols)
+    """
+    # L-1 runs through loop;
+    # returns R_ij=(1+\sum_i2>i,j2>j A_i2,j2(1+\sum A_iLjL)...)
     if normalize:
-        K = GetLowRankMatrix(K)
+        K = get_low_rank_matrix(K)
         normfac = np.prod(K.shape)
-        I = np.ones(K.shape)
+        Id = np.ones(K.shape)
         R = np.ones(K.shape)
-        for l in range(L-1):
-            R = (I + theta*cumsum_rev(K*R)/normfac)/(1+theta)
-        return (1 + theta*np.sum(K*R)/normfac)/(1+theta)
+        for _ in range(L-1):
+            R = (Id + theta*cumsum_rev(K * R)/normfac)/(1 + theta)
+        return (1 + theta*np.sum(K*R)/normfac)/(1 + theta)
     else:
-        I = LRdec(np.ones([K.U.shape[0],1]),np.ones([K.V.shape[0],1]))
-         # I = np.ones(K.shape)
-        R = I
-        for l in range(L-1):
-            #todo: execute only if rank is lower than rankbound
+        Id = LRdec(np.ones([K.U.shape[0], 1]), np.ones([K.V.shape[0], 1]))
+        # Id = np.ones(K.shape)
+        R = Id
+        for _ in range(L-1):
+            # todo: execute only if rank is lower than rankbound
             #       reduce to rank
-            R = AddLowRank(I,MultLowRank(cumsum_LowRank(HadamardLowRank(K,R)),theta))
-            #R=I + cumsum_rev(K*R)
-        return 1 + theta*sum_LowRank(HadamardLowRank(K,R)) 
-#        return 1 + np.sum(K*R)
-        #outermost bracket: since i1>=1 and not i1>1 we do it outside of loop
+            R = add_low_rank(
+                Id, mult_low_rank(cumsum_rev_low_rank(hadamard_low_rank(K, R)), theta)
+            )
+            # R = Id + cumsum_rev(K * R)
+        return 1 + theta * sum_low_rank(hadamard_low_rank(K, R)) 
+        # return 1 + np.sum(K*R)
+        # outermost bracket: since i1>=1 and not i1>1 we do it outside of loop
 
 
 # FUNCTION Sqize_kernel_low_rank_fast
@@ -387,46 +425,81 @@ def Sqize_kernelLowRank(K, L, theta = 1.0, normalize = False, rankbound = float(
 # Output:
 #  a matrix R such that R*R^t is the sequential kernel matrix
 #
-def Sqize_kernel_low_rank_fast(K, L, theta = 1.0, normalize = False, rankbound = float("inf")):
+def sqize_kernel_low_rank_fast(
+    K,
+    L,
+    theta=1.0,
+    normalize=False,
+    rankbound=float("inf")
+):
+    """Compute the sequential kernel from kernel matrix, with low-rank approximation.
 
+    Vectorized across series, and using (faster) low-rank approximation across series.
+
+    Parameters
+    ----------
+    K : 3D np.ndarray
+        containing joint low-rank factors (symmetric singular factor)
+            1st index counts sequences
+            2nd index counts time
+            3rd index counts features
+        so K[m,:,:] is the mth factor,
+        and K[m,:,:] x K[m,:,:]^t is the kernel matrix of the mth factor
+    L : an integer >= 1, representing the level of truncation
+    theta : float, optional, default=1.0
+        a positive scaling factor for the levels, i-th level is scaled by theta^i
+    normalize : bool, optional, default = False
+        whether the output kernel matrix is normalized
+        if True, sums and cumsums are divided by prod(K.shape)
+    rankbound : int, optional, default = infinity
+        a hard threshold for the rank of the level matrices
+
+    Returns
+    -------
+    np.ndarray of shape (m, r), where r = min(rankbound, K.shape[2])
+        a matrix R such that R*R^t is the sequential kernel matrix
+        R[i,j] is sequential kernel (low-rank) between i-th and j-th sequence in K
+    """
     if normalize:
 
         Ksize = K.shape[0]
-        B = np.ones([Ksize,1,1])
-        R = np.ones([Ksize,1])
+        B = np.ones([Ksize, 1, 1])
+        R = np.ones([Ksize, 1])
 
-        for l in range(L):
-            
-            P = np.sqrt(theta)*HadamardLowRankBatch(K,B)/Ksize
-            B = cumsum_shift_mult(P,[1])
-            
+        for _ in range(L):
+            P = np.sqrt(theta) * hadamard_low_rank_batch(K, B)/Ksize
+            B = cumsum_shift_mult(P, [1])
+
             if rankbound < B.shape[2]:
-                #B = rankreduce_batch(B,rankbound)
-                permut = np.sort(np.random.permutation(range(B.shape[2]))[range(rankbound)])
-                B = B[:,:,permut]
-                
-            R = np.concatenate((R,np.sum(B,axis = 1)), axis=1)/(np.sqrt(1+theta))
-            
+                # B = rankreduce_batch(B, rankbound)
+                permut = np.sort(
+                    np.random.permutation(range(B.shape[2]))[range(rankbound)]
+                )
+                B = B[:, :, permut]
+
+            R = np.concatenate((R, np.sum(B, axis=1)), axis=1)/(np.sqrt(1 + theta))
+
         return R
-        
+
     else:
-
         Ksize = K.shape[0]
-        B = np.ones([Ksize,1,1])
-        R = np.ones([Ksize,1])
+        B = np.ones([Ksize, 1, 1])
+        R = np.ones([Ksize, 1])
 
-        for l in range(L):
-            #todo: execute only if rank is lower than rankbound
+        for _ in range(L):
+            # todo: execute only if rank is lower than rankbound
             #       reduce to rank
-            P = np.sqrt(theta)*HadamardLowRankBatch(K,B)
-            B = cumsum_shift_mult(P,[1])
+            P = np.sqrt(theta) * hadamard_low_rank_batch(K, B)
+            B = cumsum_shift_mult(P, [1])
 
             if rankbound < B.shape[2]:
-                #B = rankreduce_batch(B,rankbound)
-                permut = np.sort(np.random.permutation(range(B.shape[2]))[range(rankbound)])
-                B = B[:,:,permut]
-                
-            R = np.concatenate((R,np.sum(B,axis = 1)), axis=1)
+                # B = rankreduce_batch(B, rankbound)
+                permut = np.sort(
+                    np.random.permutation(range(B.shape[2]))[range(rankbound)]
+                )
+                B = B[:, :, permut]
+
+            R = np.concatenate((R, np.sum(B, axis=1)), axis=1)
 
         return R
 
@@ -444,21 +517,21 @@ def seq_kernel(
     lowrank=False,
     rankbound=float("inf"),
 ):
-    
+
     N = np.shape(X)[0]   
-    KSeq = np.zeros((N,N))
+    KSeq = np.zeros((N, N))
 
     if not(lowrank):
         if D == 1:
             for row1ind in range(N):
                 for row2ind in range(row1ind+1):
-                    KSeq[row1ind,row2ind] = sqize_kernel(kernelfun(X[row1ind].T,X[row2ind].T),L,theta,normalize)
+                    KSeq[row1ind, row2ind] = sqize_kernel(kernelfun(X[row1ind].T, X[row2ind].T), L, theta, normalize)
         else:
             for row1ind in range(N):
                 for row2ind in range(row1ind+1):
-                    KSeq[row1ind,row2ind] = sqize_kernel_ho(kernelfun(X[row1ind].T,X[row2ind].T),L,D,theta,normalize)
+                    KSeq[row1ind, row2ind] = sqize_kernel_ho(kernelfun(X[row1ind].T, X[row2ind].T), L, D, theta, normalize)
     else:                
-        R = Sqize_kernel_low_rank_fast(X.transpose([0,2,1]), L, theta, normalize)
+        R = sqize_kernel_low_rank_fast(X.transpose([0,2,1]), L, theta, normalize)
         KSeq = np.inner(R,R)             
         # todo: kernelfun gives back a LRdec object
         #  for now, linear low-rank approximation is done
