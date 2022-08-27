@@ -6,6 +6,7 @@ __author__ = ["fkiraly"]
 import collections
 import numpy as np
 from scipy.sparse.linalg import svds
+from sklearn.base import BaseEstimator, TransformerMixin
 
 from sktime.dists_kernels._base import BasePairwiseTransformerPanel
 
@@ -105,13 +106,13 @@ def k_polynom(x, y, scale, deg):
     return (1 + scale * np.inner(x, y)) ** deg
 
 
-def k_gauss(x, y, scale): 
+def k_gauss(x, y, scale):
     """Gaussian kernel with scale coeff."""
     return np.exp(-(scale ** 2) * sqdist(x, y)/2)
 
 
 def k_euclid(x, y, scale):
-    """Euclidea kernel with scale coeff.""" 
+    """Euclidea kernel with scale coeff."""
     return scale * np.inner(x, y)
 
 
@@ -275,7 +276,7 @@ def mult_low_rank(K, theta):
     -------
     LRdec type object for product of K and R
     """
-    return LRdec(theta*K.U, theta*K.V)
+    return LRdec(theta * K.U, theta * K.V)
 
 
 def hadamard_low_rank(K, R):
@@ -306,14 +307,14 @@ def hadamard_low_rank(K, R):
 #    N = P.shape[0]
 #    rankP = P.shape[2]
 #    return (np.repeat(np.repeat(np.array(U,ndmin = 3), rankP, 2),N,0)
-#           *np.repeat(P,rankU,2))  
+#           *np.repeat(P,rankU,2))
 
 
 def hadamard_low_rank_batch(U, P):
     """Hadamard multiply U and P component-wise (1st)."""
     rankU = U.shape[2]
     rankP = P.shape[2]
-    return (np.tile(U, rankP)*np.repeat(P, rankU, 2))  
+    return (np.tile(U, rankP)*np.repeat(P, rankU, 2))
 
 
 def HadamardLowRankSubS(U, P, rho):
@@ -404,27 +405,6 @@ def sqize_kernel_low_rank(K, L, theta=1.0, normalize=False, rankbound=float("inf
         # outermost bracket: since i1>=1 and not i1>1 we do it outside of loop
 
 
-# FUNCTION Sqize_kernel_low_rank_fast
-#  computes the sequential kernel from a sequential kernel matrix
-#   faster by using a low-rank approximation
-#
-# Inputs:
-#  K              Array of dimension 3, containing joint low-rank factors
-#                  1st index counts sequences
-#                  2nd index counts time
-#                  3rd index counts features
-#                   so K[m,:,:] is the mth factor,
-#                    and K[m,:,:] x K[m,:,:]^t is the kernel matrix of the mth factor
-#  L             an integer \geq 1, representing the level of truncation
-# optional:
-#  theta         a positive scaling factor for the levels, i-th level by theta^i
-#  normalize     whether the output kernel matrix is normalized
-#  rankbound     a hard threshold for the rank of the level matrices
-#    defaults: theta = 1.0, normalize = False, rankbound = infinity
-#
-# Output:
-#  a matrix R such that R*R^t is the sequential kernel matrix
-#
 def sqize_kernel_low_rank_fast(
     K,
     L,
@@ -458,7 +438,7 @@ def sqize_kernel_low_rank_fast(
     -------
     np.ndarray of shape (m, r), where r = min(rankbound, K.shape[2])
         a matrix R such that R*R^t is the sequential kernel matrix
-        R[i,j] is sequential kernel (low-rank) between i-th and j-th sequence in K
+        R*R^t[i,j] is sequential kernel (low-rank) between i-th and j-th sequence in K
     """
     if normalize:
 
@@ -504,12 +484,9 @@ def sqize_kernel_low_rank_fast(
         return R
 
 
-# In[]
-# FUNCTION SeqKernel
-#  computes the sequential kernel matrix for a dataset of time series
 def seq_kernel(
     X,
-    kernelfun,
+    kernelfun=None,
     L=2,
     D=1,
     theta=1.0,
@@ -517,80 +494,220 @@ def seq_kernel(
     lowrank=False,
     rankbound=float("inf"),
 ):
+    """Compute the sequential kernel between seqeuence/time series.
 
+    Provides interface for vanilla sequential kernel, low-rank, and higher-order.
+
+    Parameters
+    ----------
+    X : 3D np.ndarray of shape (N, d, _)
+        collection of sequences/time series
+        1st index = instance index
+        2nd index = variable/feature index
+        3rd index = time index
+    kernelfun : function (2D np.ndarray x 2D np.ndarray) -> 2D np.ndarray
+        pairwise kernel function, matrix sizes (n, d) x (m, d) -> (n x m)
+        optional, default = Gaussian kernel with scale parameter 1
+    L : int, optional, default = 2
+        an integer >= 1, representing the level of truncation
+    D : int, optional, default = 1
+        an integer >= 1, representing the order of approximation
+        can be set only if lowrank = False, otherwise ignored (always = 1)
+    theta : float, optional, default=1.0
+        a positive scaling factor for the levels, i-th level is scaled by theta^i
+    normalize : bool, optional, default = False
+        whether the output kernel matrix is normalized
+        if True, sums and cumsums are divided by prod(K.shape)
+    lowrank : bool, optional, default = False
+        whether to use low rank approximation in computing the kernel
+    rankbound : int, optional, default = infinity
+        a hard threshold for the rank of the level matrices
+        used only if lowrank = True
+
+    Returns
+    -------
+    np.ndarray of shape (N, N), sequential kernel matrix
+        [i,j]-th entry is sequential kernel between X[i] and X[j]
+    """
     N = np.shape(X)[0]   
     KSeq = np.zeros((N, N))
 
-    if not(lowrank):
+    if kernelfun is None:
+        def kernelfun(x, y):
+            return k_gauss(x, y, 1)
+
+    if not lowrank:
         if D == 1:
             for row1ind in range(N):
                 for row2ind in range(row1ind+1):
-                    KSeq[row1ind, row2ind] = sqize_kernel(kernelfun(X[row1ind].T, X[row2ind].T), L, theta, normalize)
+                    KSeq[row1ind, row2ind] = sqize_kernel(
+                        K=kernelfun(X[row1ind].T, X[row2ind].T),
+                        L=L,
+                        theta=theta,
+                        normalize=normalize,
+                    )
         else:
             for row1ind in range(N):
                 for row2ind in range(row1ind+1):
-                    KSeq[row1ind, row2ind] = sqize_kernel_ho(kernelfun(X[row1ind].T, X[row2ind].T), L, D, theta, normalize)
-    else:                
-        R = sqize_kernel_low_rank_fast(X.transpose([0,2,1]), L, theta, normalize)
-        KSeq = np.inner(R,R)             
+                    KSeq[row1ind, row2ind] = sqize_kernel_ho(
+                        K=kernelfun(X[row1ind].T, X[row2ind].T),
+                        L=L,
+                        D=D,
+                        theta=theta,
+                        normalize=normalize,
+                    )
+    else:
+        R = sqize_kernel_low_rank_fast(
+            K=X.transpose([0, 2, 1]),
+            L=L,
+            theta=theta,
+            normalize=normalize,
+            rankbound=rankbound
+        )
+        KSeq = np.inner(R, R)             
         # todo: kernelfun gives back a LRdec object
         #  for now, linear low-rank approximation is done
-        # KSeq[row1ind,row2ind] = Sqize_kernelLowRank(kernelfun(X[row1ind].T,X[row2ind].T),L,theta,normalize = True)
-
+        # KSeq[row1ind,row2ind] = qqize_kernel_low_rank(
+        #   kernelfun(X[row1ind].T,X[row2ind].T),L,theta,normalize = True)
     return mirror(KSeq)
 
-    
-# FUNCTION SeqKernel
-#  computes sequential cross-kernel matrices
-def SeqKernelXY(X,Y,kernelfun,L=2,D=1,theta=1.0,normalize = False,lowrank = False,rankbound = float("inf")):
+
+def seq_kernel_XY(
+    X,
+    Y=None,
+    kernelfun=None,
+    L=2,
+    D=1,
+    theta=1.0,
+    normalize=False,
+    lowrank=False,
+    rankbound=float("inf")
+):
+    """Compute the sequential kernel between two different collections of seqeuence.
+
+    Provides interface for vanilla sequential kernel, low-rank, and higher-order.
+
+    Parameters
+    ----------
+    X : 3D np.ndarray of shape (N, d, _)
+        collection of sequences/time series
+        1st index = instance index
+        2nd index = variable/feature index
+        3rd index = time index
+    X : 3D np.ndarray of shape (N, d, _)
+        collection of sequences/time series
+        1st index = instance index
+        2nd index = variable/feature index
+        3rd index = time index
+    kernelfun : function (2D np.ndarray x 2D np.ndarray) -> 2D np.ndarray
+        pairwise kernel function, matrix sizes (n, d) x (m, d) -> (n x m)
+        optional, default = Gaussian kernel with scale parameter 1
+    L : int, optional, default = 2
+        an integer >= 1, representing the level of truncation
+    D : int, optional, default = 1
+        an integer >= 1, representing the order of approximation
+        can be set only if lowrank = False, otherwise ignored (always = 1)
+    theta : float, optional, default=1.0
+        a positive scaling factor for the levels, i-th level is scaled by theta^i
+    normalize : bool, optional, default = False
+        whether the output kernel matrix is normalized
+        if True, sums and cumsums are divided by prod(K.shape)
+    lowrank : bool, optional, default = False
+        whether to use low rank approximation in computing the kernel
+    rankbound : int, optional, default = infinity
+        a hard threshold for the rank of the level matrices
+        used only if lowrank = True
+
+    Returns
+    -------
+    np.ndarray of shape (N, M), sequential kernel matrix
+        [i,j]-th entry is sequential kernel between X[i] and Y[j]
+    """
+    # if no Y is passed, call seq_kernel
+    if Y is None:
+        return seq_kernel(
+            X=X,
+            kernelfun=kernelfun,
+            L=L,
+            D=D,
+            theta=theta,
+            normalize=normalize,
+            lowrank=lowrank,
+            rankbound=rankbound,
+        )
 
     N = np.shape(X)[0]   
     M = np.shape(Y)[0]   
-    
-    KSeq = np.zeros((N,M))
-    
+
+    KSeq = np.zeros((N, M))
+
+    if kernelfun is None:
+        def kernelfun(x, y):
+            return k_gauss(x, y, 1)
+
+    kwargs = {"L": L, "theta": theta, "normalize": normalize}
+
     if not(lowrank):
         if D == 1:
             for row1ind in range(N):
                 for row2ind in range(M):
-                    KSeq[row1ind,row2ind] = sqize_kernel(kernelfun(X[row1ind].T,Y[row2ind].T),L,theta,normalize)
+                    KSeq[row1ind, row2ind] = sqize_kernel(
+                        K=kernelfun(X[row1ind].T, Y[row2ind].T), **kwargs
+                    )
         else:
             for row1ind in range(N):
                 for row2ind in range(M):
-                    KSeq[row1ind,row2ind] = sqize_kernel_ho(kernelfun(X[row1ind].T,Y[row2ind].T),L,D,theta,normalize)
+                    KSeq[row1ind, row2ind] = sqize_kernel_ho(
+                        K=kernelfun(X[row1ind].T, Y[row2ind].T), D=D, **kwargs
+                    )
     else:
-        
-        KSeq = np.inner(sqize_kernel_low_rank_fast(X.transpose([0,2,1]), L, theta, normalize, rankbound),sqize_kernel_low_rank_fast(Y.transpose([0,2,1]), L, theta, normalize, rankbound))             
-        #KSeq = np.inner(sqize_kernel_low_rank_fast(X, L, theta, normalize),Sqize_kernel_ow_rank_fast(Y, L, theta, normalize))             
-                
+        U = sqize_kernel_low_rank_fast(
+            K=X.transpose([0, 2, 1]), rankbound=rankbound, **kwargs
+        )
+        V = sqize_kernel_low_rank_fast(
+            K=Y.transpose([0, 2, 1]), rankbound=rankbound, **kwargs
+        )
+        KSeq = np.inner(U, V)
+        # KSeq = np.inner(sqize_kernel_low_rank_fast(X, L, theta, normalize),
+        # wqize_kernel_low_rank_fast(Y, L, theta, normalize))
+
     return KSeq
-    
 
 
-# In[]
-# FUNCTION DataTabulator(X)
-def DataTabulator(X):
-    
+def data_tabulator(X):
+    """Tabulates sequence 3D np.ndarray into sklearn compatible 2D np.ndarray format."""
     Xshape = np.shape(X)
-        
-    return np.reshape(X,(Xshape[0],np.prod(Xshape[1:])))
-
-
+    return np.reshape(X, (Xshape[0], np.prod(Xshape[1:])))
 
 
 # In[]
 # FUNCTION TimeSeriesReshaper
 #  makes a 3D time series array out of a 2D data array
-def TimeSeriesReshaper(Xflat, numfeatures, subsample = 1, differences = True):
+def time_series_reshaper(Xflat, numfeatures, subsample=1, differences=True):
+    """Converts 2D np.ndarray into a time series 3D np.ndarray.
+
+    Useful as part of sklearn pipeline for internal conversion to time series 3D format.
+
+    optionally, subsamples or differences time series
+
+    Parameters
+    ----------
+    Xflat : 2D np.ndarray (instances, flattened time series)
+    numfeatures : number of features/variables in the time series
+    subsample : int, optional, default = 1
+        time index step size to sub-sample
+    differences : bool, optional, default = True
+        whether to take first temporal differences (True) or not (False)
+    """
     flatXshape = np.shape(Xflat)
-    Xshape = (flatXshape[0], numfeatures, flatXshape[1]/numfeatures)        
-    X = np.reshape(Xflat,Xshape)[:,:,::subsample]
-    
+    Xshape = (flatXshape[0], numfeatures, flatXshape[1]/numfeatures)
+    X = np.reshape(Xflat, Xshape)[:, :, ::subsample]
+
     if differences:
         return np.diff(X)
-    else:    
+    else:
         return X
-        
+
 
 # In[3]
 
@@ -612,8 +729,8 @@ def TimeSeriesReshaper(Xflat, numfeatures, subsample = 1, differences = True):
 #    differences = whether first differences are taken or not
 #    lowrank = whether low-rank approximations are used or not
 #
-from sklearn.base import BaseEstimator, TransformerMixin
 
+# for historical reasons - old scikit-learn version of the estimator
 class SeqKernelizer(BaseEstimator, TransformerMixin):
     def __init__(self, Level = 2, Degree = 1, theta = 1, kernel = 'linear', 
                  scale = 1, deg = 2, X = np.zeros((1,2)), 
@@ -634,12 +751,12 @@ class SeqKernelizer(BaseEstimator, TransformerMixin):
         self.X = X
         
     def fit(self, X, y=None):
-        self.X = TimeSeriesReshaper(X,self.numfeatures,self.subsample,self.differences)
+        self.X = time_series_reshaper(X,self.numfeatures,self.subsample,self.differences)
         return self
         
     def transform(self, Y):
         
-        Y = TimeSeriesReshaper(Y,self.numfeatures,self.subsample,self.differences)
+        Y = time_series_reshaper(Y,self.numfeatures,self.subsample,self.differences)
         
         kPolynom = lambda x,y,scale,deg : (1+scale*np.inner(x,y))**deg
         kGauss = lambda x,y,scale: np.exp(-(scale**2)*sqdist(x,y)/2)
@@ -655,7 +772,7 @@ class SeqKernelizer(BaseEstimator, TransformerMixin):
                 }
             return switcher.get(kername, "nothing")
             
-        KSeq = SeqKernelXY(Y,self.X,kernselect(self.kernel),self.Level,self.Degree,self.theta,self.normalize,self.lowrank,self.rankbound)
+        KSeq = seq_kernel_XY(Y,self.X,kernselect(self.kernel),self.Level,self.Degree,self.theta,self.normalize,self.lowrank,self.rankbound)
         
         return KSeq
 
