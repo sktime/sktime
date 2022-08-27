@@ -9,9 +9,7 @@ __all__ = ["MatrixProfileTransformer"]
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-_check_soft_dependencies("stumpy")
-
-import stumpy  # noqa: E402
+_check_soft_dependencies("stumpy", severity="warning")
 
 
 class MatrixProfileTransformer(BaseTransformer):
@@ -40,8 +38,8 @@ class MatrixProfileTransformer(BaseTransformer):
     MatrixProfileTransformer
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
-    >>> transformer = MatrixProfileTransformer()
-    >>> y_hat = transformer.fit_transform(y)
+    >>> transformer = MatrixProfileTransformer()  # doctest: +SKIP
+    >>> y_hat = transformer.fit_transform(y)  # doctest: +SKIP
     """
 
     _tags = {
@@ -54,7 +52,8 @@ class MatrixProfileTransformer(BaseTransformer):
         # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?,
         "univariate-only": True,
-        "fit-in-transform": True,  # for unit test cases
+        "fit_is_empty": True,  # for unit test cases
+        "python_dependencies": "stumpy",
     }
 
     def __init__(self, window_length=3):
@@ -80,6 +79,8 @@ class MatrixProfileTransformer(BaseTransformer):
             Matrix Profile of time series as output with length as
             (n_timepoints-window_length+1)
         """
+        import stumpy
+
         X = X.flatten()
         Xt = stumpy.stump(X, self.window_length)
         Xt = Xt[:, 0].astype("float")

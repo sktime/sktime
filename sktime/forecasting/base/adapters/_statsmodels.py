@@ -7,10 +7,10 @@ __author__ = ["mloning"]
 __all__ = ["_StatsModelsAdapter"]
 
 import inspect
+
 import numpy as np
 import pandas as pd
 
-from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base import BaseForecaster
 
 
@@ -24,8 +24,9 @@ class _StatsModelsAdapter(BaseForecaster):
         "handles-missing-data": False,
     }
 
-    def __init__(self):
+    def __init__(self, random_state=None):
         self._forecaster = None
+        self.random_state = random_state
         self._fitted_forecaster = None
         super(_StatsModelsAdapter, self).__init__()
 
@@ -47,7 +48,7 @@ class _StatsModelsAdapter(BaseForecaster):
         """
         # statsmodels does not support the pd.Int64Index as required,
         # so we coerce them here to pd.RangeIndex
-        if isinstance(y, pd.Series) and type(y.index) == pd.Int64Index:
+        if isinstance(y, pd.Series) and y.index.is_integer():
             y, X = _coerce_int_to_range_index(y, X)
         self._fit_forecaster(y, X)
         return self
@@ -56,7 +57,7 @@ class _StatsModelsAdapter(BaseForecaster):
         """Log used internally in fit."""
         raise NotImplementedError("abstract method")
 
-    def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+    def _predict(self, fh, X=None):
         """Make forecasts.
 
         Parameters
@@ -67,17 +68,12 @@ class _StatsModelsAdapter(BaseForecaster):
             i.e. np.array([1])
         X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored.
-        return_pred_int : bool, optional (default=False)
-        alpha : int or list, optional (default=0.95)
 
         Returns
         -------
         y_pred : pd.Series
             Returns series of predicted values.
         """
-        if return_pred_int:
-            raise NotImplementedError()
-
         # statsmodels requires zero-based indexing starting at the
         # beginning of the training series when passing integers
         start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
@@ -89,7 +85,11 @@ class _StatsModelsAdapter(BaseForecaster):
 
         # statsmodels forecasts all periods from start to end of forecasting
         # horizon, but only return given time points in forecasting horizon
-        return y_pred.loc[fh.to_absolute(self.cutoff).to_pandas()]
+        y_pred = y_pred.loc[fh.to_absolute(self.cutoff).to_pandas()]
+        # ensure that name is not added nor removed
+        # otherwise this may upset conversion to pd.DataFrame
+        y_pred.name = self._y.name
+        return y_pred
 
     def get_fitted_params(self):
         """Get fitted parameters.
@@ -99,6 +99,10 @@ class _StatsModelsAdapter(BaseForecaster):
         fitted_params : dict
         """
         self.check_is_fitted()
+
+        if hasattr(self, "_is_vectorized") and self._is_vectorized:
+            return {"forecasters": self.forecasters_}
+
         fitted_params = {}
         for name in self._get_fitted_param_names():
             if name in ["aic", "aicc", "bic", "hqic"]:
@@ -118,7 +122,7 @@ def _coerce_int_to_range_index(y, X=None):
         np.testing.assert_array_equal(y.index, new_index)
     except AssertionError:
         raise ValueError(
-            "Coercion of pd.Int64Index to pd.RangeIndex "
+            "Coercion of integer pd.Index to pd.RangeIndex "
             "failed. Please provide `y_train` with a "
             "pd.RangeIndex."
         )

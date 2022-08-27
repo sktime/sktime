@@ -11,23 +11,21 @@ from sklearn.tree import DecisionTreeClassifier
 
 from sktime.classification.compose import ComposableTimeSeriesForestClassifier
 from sktime.datasets import load_unit_test
-from sktime.series_as_features.compose import FeatureUnion
-from sktime.transformations.panel.compose import SeriesToPrimitivesRowTransformer
+from sktime.transformations.compose import FeatureUnion
 from sktime.transformations.panel.segment import RandomIntervalSegmenter
 from sktime.transformations.panel.summarize import RandomIntervalFeatureExtractor
+from sktime.transformations.series.adapt import TabularToSeriesAdaptor
 from sktime.utils._testing.panel import make_classification_problem
 from sktime.utils.slope_and_trend import _slope
 
 X, y = make_classification_problem()
 n_classes = len(np.unique(y))
 
-mean_transformer = SeriesToPrimitivesRowTransformer(
-    FunctionTransformer(func=np.mean, validate=False, kw_args={"axis": 0}),
-    check_transformer=False,
+mean_transformer = TabularToSeriesAdaptor(
+    FunctionTransformer(func=np.mean, validate=False, kw_args={"axis": 0})
 )
-std_transformer = SeriesToPrimitivesRowTransformer(
-    FunctionTransformer(func=np.std, validate=False, kw_args={"axis": 0}),
-    check_transformer=False,
+std_transformer = TabularToSeriesAdaptor(
+    FunctionTransformer(func=np.std, validate=False, kw_args={"axis": 0})
 )
 
 
@@ -51,6 +49,7 @@ def test_tsf_predict_proba():
 
 # Compare results from different but equivalent implementations
 # @pytest.mark.parametrize("n_intervals", ["log", 1, 3])
+@pytest.mark.xfail(reason="SeriesToPrimitivesTransformer will be deprecated, see 2179")
 @pytest.mark.parametrize("n_intervals", [1])
 @pytest.mark.parametrize("n_estimators", [1, 3])
 def test_equivalent_model_specifications(n_intervals, n_estimators):

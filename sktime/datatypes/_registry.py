@@ -41,6 +41,7 @@ from sktime.datatypes._hierarchical._registry import (
     MTYPE_REGISTER_HIERARCHICAL,
 )
 from sktime.datatypes._panel._registry import MTYPE_LIST_PANEL, MTYPE_REGISTER_PANEL
+from sktime.datatypes._proba._registry import MTYPE_LIST_PROBA, MTYPE_REGISTER_PROBA
 from sktime.datatypes._series._registry import MTYPE_LIST_SERIES, MTYPE_REGISTER_SERIES
 from sktime.datatypes._table._registry import MTYPE_LIST_TABLE, MTYPE_REGISTER_TABLE
 
@@ -50,6 +51,7 @@ MTYPE_REGISTER += MTYPE_REGISTER_PANEL
 MTYPE_REGISTER += MTYPE_REGISTER_HIERARCHICAL
 MTYPE_REGISTER += MTYPE_REGISTER_ALIGNMENT
 MTYPE_REGISTER += MTYPE_REGISTER_TABLE
+MTYPE_REGISTER += MTYPE_REGISTER_PROBA
 
 
 __all__ = [
@@ -59,6 +61,7 @@ __all__ = [
     "MTYPE_LIST_SERIES",
     "MTYPE_LIST_ALIGNMENT",
     "MTYPE_LIST_TABLE",
+    "MTYPE_LIST_PROBA",
     "SCITYPE_REGISTER",
 ]
 
@@ -69,16 +72,20 @@ SCITYPE_REGISTER = [
     ("Hierarchical", "hierarchical panel of time series with 3 or more levels"),
     ("Alignment", "series or sequence alignment"),
     ("Table", "data table with primitive column types"),
+    ("Proba", "probability distribution or distribution statistics, return types"),
 ]
 
+SCITYPE_LIST = [x[0] for x in SCITYPE_REGISTER]
 
-def mtype_to_scitype(mtype: str, return_unique=False):
+
+def mtype_to_scitype(mtype: str, return_unique=False, coerce_to_list=False):
     """Infer scitype belonging to mtype.
 
     Parameters
     ----------
     mtype : str, or list of str, or nested list/str object, or None
-        mtype(s) to find scitype of
+        mtype(s) to find scitype of, a valid mtype string
+        valid mtype strings, with explanation, are in datatypes.MTYPE_REGISTER
 
     Returns
     -------
@@ -88,7 +95,9 @@ def mtype_to_scitype(mtype: str, return_unique=False):
         if nested list/str object, replaces mtype str by scitype str
         if None, returns None
     return_unique : bool, default=False
-        if True, makes
+        if True, makes return unique
+    coerce_to_list : bool, default=Fakse
+        if True, coerces rerturn to list, even if one-element
 
     Raises
     ------
@@ -121,4 +130,58 @@ def mtype_to_scitype(mtype: str, return_unique=False):
     if len(scitype) < 1:
         raise ValueError(f"{mtype} is not a supported mtype")
 
-    return scitype[0]
+    if coerce_to_list:
+        return [scitype[0]]
+    else:
+        return scitype[0]
+
+
+def scitype_to_mtype(scitype: str):
+    """Return list of all mtypes belonging to scitype.
+
+    Parameters
+    ----------
+    scitype : str, or list of str
+        scitype(s) to find mtypes for, a valid scitype string
+        valid scitype strings, with explanation, are in datatypes.SCITYPE_REGISTER
+
+    Returns
+    -------
+    mtypes : list of str
+        all mtypes such that mtype_to_scitype(element) is in the list scitype
+        if list, returns this function element-wise applied
+        if nested list/str object, replaces mtype str by scitype str
+        if None, returns None
+
+    Raises
+    ------
+    TypeError, if input is not of the type specified
+    ValueError, if one of the strings is not a valid scitype string
+    RuntimeError, if there is no mtype for the/some scitype string (this must be a bug)
+    """
+    msg = "scitype argument must be str or list of str"
+    # handle the "None" case first
+    if scitype is None or scitype == "None":
+        raise TypeError(msg)
+    # recurse if mtype is a list
+    if isinstance(scitype, list):
+        scitype_list = [y for x in scitype for y in scitype_to_mtype(x)]
+        return scitype_list
+
+    # checking for type. Checking str is enough, recursion above will do the rest.
+    if not isinstance(scitype, str):
+        raise TypeError(msg)
+
+    # now we know scitype is a string, check if it is in the register
+    if scitype not in SCITYPE_LIST:
+        raise ValueError(
+            f'"{scitype}" is not a valid scitype string, see datatypes.SCITYPE_REGISTER'
+        )
+
+    mtypes = [k[0] for k in MTYPE_REGISTER if k[1] == scitype]
+
+    if len(mtypes) == 0:
+        # if there are no mtypes, this must have been reached by mistake/bug
+        raise RuntimeError("no mtypes defined for scitype " + scitype)
+
+    return mtypes

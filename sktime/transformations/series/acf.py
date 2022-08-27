@@ -77,7 +77,7 @@ class AutoCorrelationTransformer(BaseTransformer):
         "X_inner_mtype": "pd.Series",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "univariate-only": True,
-        "fit-in-transform": True,
+        "fit_is_empty": True,
     }
 
     def __init__(
@@ -123,8 +123,15 @@ class AutoCorrelationTransformer(BaseTransformer):
         return pd.Series(zt)
 
     @classmethod
-    def get_test_params(cls):
+    def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
 
         Returns
         -------
@@ -199,7 +206,7 @@ class PartialAutoCorrelationTransformer(BaseTransformer):
         "X_inner_mtype": "pd.Series",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "univariate-only": True,
-        "fit-in-transform": True,
+        "fit_is_empty": True,
     }
 
     def __init__(
@@ -233,8 +240,15 @@ class PartialAutoCorrelationTransformer(BaseTransformer):
         return pd.Series(zt)
 
     @classmethod
-    def get_test_params(cls):
+    def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
 
         Returns
         -------

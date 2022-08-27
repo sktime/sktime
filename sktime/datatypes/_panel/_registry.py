@@ -22,6 +22,7 @@ MTYPE_REGISTER_PANEL = [
     (
         "numpyflat",
         "Panel",
+        "WARNING: only for internal use, not a fully supported Panel mtype. "
         "2D np.array of format (n_instances, n_columns*n_timepoints)",
     ),
     ("pd-multiindex", "Panel", "pd.DataFrame with multi-index (instances, timepoints)"),

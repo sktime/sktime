@@ -1,10 +1,13 @@
 # The file lists sktime's algorithm maintainers as specified in GOVERNANCE.md.
 # Each line is a file pattern followed by one or more owners.
 
-* @fkiraly @aiwalter @TonyBagnall
+* @fkiraly @aiwalter
 
+sktime/classification/dummy/ @ZiyaoWei
 sktime/classification/dictionary_based/ @patrickzib @MatthewMiddlehurst @TonyBagnall
 sktime/classification/distance_based/ @jasonlines @goaster @TonyBagnall
+sktime/classification/early_classification/ @MatthewMiddlehurst @TonyBagnall
+sktime/classification/early_classification/_teaser.py @patrickzib @MatthewMiddlehurst @TonyBagnall
 sktime/classification/feature_based/ @MatthewMiddlehurst @TonyBagnall
 sktime/classification/feature_based/_signature_classifier.py @jambo6
 sktime/classification/hybrid/ @MatthewMiddlehurst @TonyBagnall
@@ -29,8 +32,14 @@ sktime/transformations/series/theta.py @GuzalBulatova
 sktime/transformations/series/difference.py @rnkuhns
 sktime/transformations/series/exponent.py @rnkuhns
 sktime/transformations/series/scaledlogit.py @ltsaprounis
+sktime/transformations/series/kalman_filter.py @NoaBenAmi
+sktime/transformations/panel/augmenter.py @MrPr3ntice @iljamaurer
+sktime/transformations/multiplex.py @miraep8
+sktime/transformations/tests/test_multiplexer.py @miraep8
+sktime/transformations/panel/channel_selection.py @haskarb @a-pasos-ruiz @TonyBagnall
 
 sktime/forecasting/base/ @fkiraly @mloning @aiwalter
+sktime/forecasting/base/adapters/_statsforecast.py @FedericoGarza
 sktime/forecasting/naive.py @Flix6x
 sktime/forecasting/ets.py @HYang1996
 sktime/forecasting/tests/test_ets.py @HYang1996
@@ -38,20 +47,18 @@ sktime/forecasting/fbprophet.py @aiwalter
 sktime/forecasting/bats.py @aiwalter
 sktime/forecasting/tbats.py @aiwalter
 sktime/forecasting/arima.py @HYang1996
+sktime/forecasting/statsforecast.py @FedericoGarza
 sktime/forecasting/structural.py @juanitorduz
 sktime/forecasting/model_selection/_split @koralturkk
 sktime/forecasting/compose/_column_ensemble.py @GuzalBulatova
 sktime/forecasting/compose/_multiplexer.py @koralturkk @aiwalter
 sktime/forecasting/compose/_pipeline.py @aiwalter
 sktime/forecasting/compose/_ensemble.py @aiwalter
-
 sktime/forecasting/online_learning/ @magittan
+sktime/forecasting/sarimax.py @TNTran92
 
 sktime/performance_metrics/forecasting/_functions.py @aiwalter @rnkuhns
 sktime/performance_metrics/forecasting/_classes.py @rnkuhns
-
-sktime/forecasting/hcrystalball.py @MichalChromcak
-sktime/forecasting/test/test_hcrystalball.py @MichalChromcak
 
 sktime/annotation/clasp.py @patrickzib @ermshaua
 sktime/transformations/series/clasp.py @patrickzib @ermshaua

@@ -3,7 +3,7 @@
 """Theta forecaster."""
 
 __all__ = ["ThetaForecaster"]
-__author__ = ["big-o", "mloning"]
+__author__ = ["big-o", "mloning", "kejsitake", "fkiraly"]
 
 from warnings import warn
 
@@ -11,11 +11,10 @@ import numpy as np
 import pandas as pd
 from scipy.stats import norm
 
-from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.transformations.series.detrend import Deseasonalizer
 from sktime.utils.slope_and_trend import _fit_trend
-from sktime.utils.validation.forecasting import check_alpha, check_sp
+from sktime.utils.validation.forecasting import check_sp
 
 
 class ThetaForecaster(ExponentialSmoothing):
@@ -85,6 +84,7 @@ class ThetaForecaster(ExponentialSmoothing):
 
     _fitted_param_names = ("initial_level", "smoothing_level")
     _tags = {
+        "scitype:y": "univariate",
         "ignores-exogeneous-X": True,
         "capability:pred_int": True,
         "requires-fh-in-fit": False,
@@ -132,8 +132,12 @@ class ThetaForecaster(ExponentialSmoothing):
         super(ThetaForecaster, self)._fit(y, fh=fh)
         self.initial_level_ = self._fitted_forecaster.params["smoothing_level"]
 
+        # compute and store historical residual standard error
+        self.sigma_ = np.sqrt(self._fitted_forecaster.sse / (len(y) - 1))
+
         # compute trend
         self.trend_ = self._compute_trend(y)
+
         return self
 
     def _predict(self, fh, X=None):
@@ -145,6 +149,8 @@ class ThetaForecaster(ExponentialSmoothing):
             The forecasters horizon with the steps ahead to to predict.
             Default is
             one-step ahead forecast, i.e. np.array([1]).
+        X : pd.DataFrame, optional (default=None)
+            Exogenous time series
 
         Returns
         -------
@@ -183,22 +189,20 @@ class ThetaForecaster(ExponentialSmoothing):
 
         return drift
 
-    def _predict_quantiles(self, fh, X=None, alpha=DEFAULT_ALPHA):
-        """
-        Compute/return prediction quantiles for a forecast.
+    def _predict_quantiles(self, fh, X=None, alpha=None):
+        """Compute/return prediction quantiles for a forecast.
 
-        Must be run *after* the forecaster has been fitted.
-
-        If alpha is iterable, multiple quantiles will be calculated.
+        private _predict_quantiles containing the core logic,
+            called from predict_quantiles and predict_interval
 
         Parameters
         ----------
         fh : int, list, np.array or ForecastingHorizon
-            Forecasting horizon, default = y.index (in-sample forecast)
+            Forecasting horizon
         X : pd.DataFrame, optional (default=None)
             Exogenous time series
-        alpha : float or list of float, optional (default=[0.05, 0.95])
-            A probability or list of, at which quantile forecasts are computed.
+        alpha : list of float, optional (default=[0.5])
+            A list of probabilities at which quantile forecasts are computed.
 
         Returns
         -------
@@ -208,34 +212,23 @@ class ThetaForecaster(ExponentialSmoothing):
             Row index is fh. Entries are quantile forecasts, for var in col index,
                 at quantile probability in second col index, for the row index.
         """
-        self.check_is_fitted()
-        alpha = check_alpha(alpha)
+        # prepare return data frame
+        index = pd.MultiIndex.from_product([["Quantiles"], alpha])
+        pred_quantiles = pd.DataFrame(columns=index)
 
-        n_timepoints = len(self._y)
-
-        self.sigma_ = np.sqrt(self._fitted_forecaster.sse / (n_timepoints - 1))
         sem = self.sigma_ * np.sqrt(
-            self.fh.to_relative(self.cutoff) * self.initial_level_ ** 2 + 1
+            self.fh.to_relative(self.cutoff) * self.initial_level_**2 + 1
         )
 
-        errors = []
+        y_pred = self._predict(fh, X)
+
+        # we assume normal additive noise with sem variance
         for a in alpha:
-            z = _zscore(1 - a)
-            error = z * sem
-            errors.append(pd.Series(error, index=self.fh.to_absolute(self.cutoff)))
+            pred_quantiles[("Quantiles", a)] = y_pred + norm.ppf(a) * sem
+        # todo: should this not increase with the horizon?
+        # i.e., sth like norm.ppf(a) * sem * fh.to_absolute(cutoff) ?
+        # I've just refactored this so will leave it for now
 
-        y_pred = super(ThetaForecaster, self).predict(fh, X)
-
-        pred_quantiles = pd.DataFrame()
-        for a, error in zip(alpha, errors):
-            if a < 0.5:
-                pred_quantiles[a] = y_pred - error
-            else:
-                pred_quantiles[a] = y_pred + error
-
-        arrays = [len(alpha) * ["Quantiles"], alpha]
-        index = pd.MultiIndex.from_tuples(list(zip(*arrays)))
-        pred_quantiles.columns = index
         return pred_quantiles
 
     def _update(self, y, X=None, update_params=True):

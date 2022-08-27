@@ -5,11 +5,6 @@ Time series classification
 
 The :mod:`sktime.classification` module contains algorithms and composition tools for time series classification.
 
-.. automodule:: sktime.classification
-    :no-members:
-    :no-inherited-members:
-
-
 Composition
 -----------
 
@@ -53,8 +48,19 @@ Distance-based
     ProximityTree
     ProximityStump
 
+Dummy
+-----
+
+.. currentmodule:: sktime.classification.dummy
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    DummyClassifier
+
 Hybrid
---------------
+------
 
 .. currentmodule:: sktime.classification.hybrid
 
@@ -63,6 +69,7 @@ Hybrid
     :template: class.rst
 
     HIVECOTEV1
+    HIVECOTEV2
 
 Interval-based
 --------------
@@ -74,10 +81,11 @@ Interval-based
     :template: class.rst
 
     TimeSeriesForestClassifier
-    RandomIntervalSpectralForest
     SupervisedTimeSeriesForest
     CanonicalIntervalForest
     DrCIF
+    RandomIntervalSpectralEnsemble
+
 
 Shapelet-based
 --------------
@@ -89,7 +97,6 @@ Shapelet-based
     :template: class.rst
 
     ShapeletTransformClassifier
-    MrSEQLClassifier
 
 Kernel-based
 ------------
@@ -100,11 +107,11 @@ Kernel-based
     :toctree: auto_generated/
     :template: class.rst
 
-    ROCKETClassifier
+    RocketClassifier
     Arsenal
 
 Feature-based
----------------
+-------------
 
 .. currentmodule:: sktime.classification.feature_based
 
@@ -116,3 +123,6 @@ Feature-based
     MatrixProfileClassifier
     TSFreshClassifier
     SignatureClassifier
+    FreshPRINCE
+    SummaryClassifier
+    RandomIntervalClassifier

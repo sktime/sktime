@@ -53,11 +53,11 @@ class TestScenario:
     ):
         if default_method_sequence is not None:
             self.default_method_sequence = _check_list_of_str(default_method_sequence)
-        else:
+        elif not hasattr(self, "default_method_sequence"):
             self.default_method_sequence = None
         if default_arg_sequence is not None:
             self.default_arg_sequence = _check_list_of_str(default_arg_sequence)
-        else:
+        elif not hasattr(self, "default_arg_sequence"):
             self.default_arg_sequence = None
         if args is not None:
             self.args = _check_dict_of_dict(args)
@@ -98,7 +98,7 @@ class TestScenario:
         arg_sequence=None,
         return_all=False,
         return_args=False,
-        deepcopy_return=True,
+        deepcopy_return=False,
     ):
         """Run a call(args) scenario on obj, and retrieve method outputs.
 
@@ -130,9 +130,12 @@ class TestScenario:
             whether arguments should also be returned
             if False, there is no second return argument
             if True, "args_after_call" return argument is returned
-        deepcopy_return : bool, default = True
+        deepcopy_return : bool, default = False
             whether returns are deepcopied before returned
+            if True, returns are deepcopies of return
             if False, returns are references/assignments, not deepcopies
+                NOTE: if self is returned (e.g., in fit), and deepcopy_return=False
+                    method calls may continue to have side effects on that return
 
         Returns
         -------
@@ -239,7 +242,7 @@ def _check_list_of_str(obj, name="obj"):
     ------
     TypeError if obj is not list of str
     """
-    if not isinstance(obj, list) or not np.all(isinstance(x, str) for x in obj):
+    if not isinstance(obj, list) or not np.all([isinstance(x, str) for x in obj]):
         raise TypeError(f"{obj} must be a list of str")
     return obj
 
@@ -263,8 +266,8 @@ def _check_dict_of_dict(obj, name="obj"):
     msg = f"{obj} must be a dict of dict, with str keys"
     if not isinstance(obj, dict):
         raise TypeError(msg)
-    if not np.all(isinstance(x, dict) for x in obj.values()):
+    if not np.all([isinstance(x, dict) for x in obj.values()]):
         raise TypeError(msg)
-    if not np.all(isinstance(x, str) for x in obj.keys()):
+    if not np.all([isinstance(x, str) for x in obj.keys()]):
         raise TypeError(msg)
     return obj

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-__author__ = ["Markus Löning"]
+__author__ = ["mloning"]
 __all__ = ["PresplitFilesCV", "SingleSplit"]
 
 import numpy as np
@@ -39,7 +39,7 @@ class PresplitFilesCV:
         # check input
         if not isinstance(data, pd.DataFrame):
             raise ValueError(f"Data must be pandas DataFrame, but found {type(data)}")
-        if not np.all(data.index.unique().isin(["train", "test"])):
+        if not np.all(data.index.get_level_values(0).unique().isin(["train", "test"])):
             raise ValueError(
                 "Train-test split not properly defined in "
                 "index of passed pandas DataFrame"
@@ -53,8 +53,10 @@ class PresplitFilesCV:
         # dataframe, and split them here again
         n_instances = data.shape[0]
         idx = np.arange(n_instances)
-        train = idx[data.index == "train"]
-        test = idx[data.index == "test"]
+        train = data.index.get_level_values(0) == "train"
+        test = data.index.get_level_values(0) == "test"
+        train = idx[train]
+        test = idx[test]
         yield train, test
 
         # if additionally a cv iterator is provided, yield the predefined
@@ -65,14 +67,22 @@ class PresplitFilesCV:
                 yield train, test
 
     def get_n_splits(self):
+        """
+        Return the number of splits.
+
+        Returns
+        -------
+        n_splits : int
+        """
         n_splits = 1 if self.cv is None else 1 + self.cv.get_n_splits()
         return n_splits
 
 
 class SingleSplit:
     """
-    Helper class for orchestration that uses a single split for training and
-    testing. Wrapper for sklearn.model_selection.train_test_split
+    Helper class for orchestration that uses a single split for training and testing.
+
+    Wrapper for sklearn.model_selection.train_test_split
 
     Parameters
     ----------
@@ -103,7 +113,7 @@ class SingleSplit:
     stratify : array-like or None (default=None)
         If not None, data is split in a stratified fashion, using this as
         the class labels.
-    """
+    """  # noqa: E501
 
     def __init__(
         self,
@@ -121,8 +131,10 @@ class SingleSplit:
 
     def split(self, data, y=None, groups=None):
         """
+        Split the data into training and testing data.
+
         Parameters
-        ---------
+        ----------
         data : pandas dataframe
             data used for cross validation
 
@@ -147,4 +159,5 @@ class SingleSplit:
 
     @staticmethod
     def get_n_splits():
+        """Return the number of splits (1)."""
         return 1

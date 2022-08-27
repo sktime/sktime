@@ -30,6 +30,7 @@ metadata: dict - metadata about obj if valid, otherwise None
         "is_univariate": bool, True iff table has one variable
         "is_empty": bool, True iff table has no variables or no instances
         "has_nans": bool, True iff the panel contains NaN values
+        "n_instances": int, number of instances/rows in the table
 """
 
 __author__ = ["fkiraly"]
@@ -42,6 +43,9 @@ import pandas as pd
 check_dict = dict()
 
 
+PRIMITIVE_TYPES = (float, int, str)
+
+
 def _ret(valid, msg, metadata, return_metadata):
     if return_metadata:
         return valid, msg, metadata
@@ -49,7 +53,7 @@ def _ret(valid, msg, metadata, return_metadata):
         return valid
 
 
-def check_pdDataFrame_Table(obj, return_metadata=False, var_name="obj"):
+def check_pddataframe_table(obj, return_metadata=False, var_name="obj"):
 
     metadata = dict()
 
@@ -61,6 +65,7 @@ def check_pdDataFrame_Table(obj, return_metadata=False, var_name="obj"):
     index = obj.index
     metadata["is_empty"] = len(index) < 1 or len(obj.columns) < 1
     metadata["is_univariate"] = len(obj.columns) < 2
+    metadata["n_instances"] = len(index)
 
     # check whether there are any nans
     #   compute only if needed
@@ -75,10 +80,40 @@ def check_pdDataFrame_Table(obj, return_metadata=False, var_name="obj"):
     return _ret(True, None, metadata, return_metadata)
 
 
-check_dict[("pd_DataFrame_Table", "Table")] = check_pdDataFrame_Table
+check_dict[("pd_DataFrame_Table", "Table")] = check_pddataframe_table
 
 
-def check_numpy1D_Table(obj, return_metadata=False, var_name="obj"):
+def check_pdseries_table(obj, return_metadata=False, var_name="obj"):
+
+    metadata = dict()
+
+    if not isinstance(obj, pd.Series):
+        msg = f"{var_name} must be a pandas.Series, found {type(obj)}"
+        return _ret(False, msg, None, return_metadata)
+
+    # we now know obj is a pd.Series
+    index = obj.index
+    metadata["is_empty"] = len(index) < 1
+    metadata["is_univariate"] = True
+    metadata["n_instances"] = len(index)
+
+    # check that dtype is not object
+    if "object" == obj.dtypes:
+        msg = f"{var_name} should not be of 'object' dtype"
+        return _ret(False, msg, None, return_metadata)
+
+    # check whether index is equally spaced or if there are any nans
+    #   compute only if needed
+    if return_metadata:
+        metadata["has_nans"] = obj.isna().values.any()
+
+    return _ret(True, None, metadata, return_metadata)
+
+
+check_dict[("pd_Series_Table", "Table")] = check_pdseries_table
+
+
+def check_numpy1d_table(obj, return_metadata=False, var_name="obj"):
 
     metadata = dict()
 
@@ -92,19 +127,20 @@ def check_numpy1D_Table(obj, return_metadata=False, var_name="obj"):
 
     # we now know obj is a 1D np.ndarray
     metadata["is_empty"] = len(obj) < 1
+    metadata["n_instances"] = len(obj)
     # 1D numpy arrays are considered univariate
     metadata["is_univariate"] = True
     # check whether there any nans; compute only if requested
     if return_metadata:
-        metadata["has_nans"] = np.isnan(obj).any()
+        metadata["has_nans"] = pd.isnull(obj).any()
 
     return _ret(True, None, metadata, return_metadata)
 
 
-check_dict[("numpy1D", "Table")] = check_numpy1D_Table
+check_dict[("numpy1D", "Table")] = check_numpy1d_table
 
 
-def check_numpy2D_Table(obj, return_metadata=False, var_name="obj"):
+def check_numpy2d_table(obj, return_metadata=False, var_name="obj"):
 
     metadata = dict()
 
@@ -119,11 +155,58 @@ def check_numpy2D_Table(obj, return_metadata=False, var_name="obj"):
     # we now know obj is a 2D np.ndarray
     metadata["is_empty"] = len(obj) < 1 or obj.shape[1] < 1
     metadata["is_univariate"] = obj.shape[1] < 2
+    metadata["n_instances"] = obj.shape[0]
     # check whether there any nans; compute only if requested
     if return_metadata:
-        metadata["has_nans"] = np.isnan(obj).any()
+        metadata["has_nans"] = pd.isnull(obj).any()
 
     return _ret(True, None, metadata, return_metadata)
 
 
-check_dict[("numpy2D", "Table")] = check_numpy2D_Table
+check_dict[("numpy2D", "Table")] = check_numpy2d_table
+
+
+def check_list_of_dict_table(obj, return_metadata=False, var_name="obj"):
+
+    metadata = dict()
+
+    if not isinstance(obj, list):
+        msg = f"{var_name} must be a list of dict, found {type(obj)}"
+        return _ret(False, msg, None, return_metadata)
+
+    if not np.all([isinstance(x, dict) for x in obj]):
+        msg = (
+            f"{var_name} must be a list of dict, but elements at following "
+            f"indices are not dict: {np.where(not isinstance(x, dict) for x in obj)}"
+        )
+        return _ret(False, msg, None, return_metadata)
+
+    for i, d in enumerate(obj):
+        for key in d.keys():
+            if not isinstance(d[key], PRIMITIVE_TYPES):
+                msg = (
+                    "all entries must be of primitive type (str, int, float), but "
+                    f"found {type(d[key])} at index {i}, key {key}"
+                )
+
+    # we now know obj is a list of dict
+    # check whether there any nans; compute only if requested
+    if return_metadata:
+        multivariate_because_one_row = np.any([len(x) > 1 for x in obj])
+        if not multivariate_because_one_row:
+            all_keys = np.unique([key for d in obj for key in d.keys()])
+            multivariate_because_keys_different = len(all_keys) > 1
+            multivariate = multivariate_because_keys_different
+        else:
+            multivariate = multivariate_because_one_row
+        metadata["is_univariate"] = not multivariate
+        metadata["has_nans"] = np.any(
+            [pd.isnull(d[key]) for d in obj for key in d.keys()]
+        )
+        metadata["is_empty"] = len(obj) < 1 or np.all([len(x) < 1 for x in obj])
+        metadata["n_instances"] = len(obj)
+
+    return _ret(True, None, metadata, return_metadata)
+
+
+check_dict[("list_of_dict", "Table")] = check_list_of_dict_table

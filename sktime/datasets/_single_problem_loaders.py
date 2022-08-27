@@ -34,6 +34,7 @@ __all__ = [
     "load_gun_point_segmentation",
     "load_electric_devices_segmentation",
     "load_macroeconomic",
+    "load_unit_test_tsf",
 ]
 
 import os
@@ -42,13 +43,19 @@ import numpy as np
 import pandas as pd
 import statsmodels.api as sm
 
-from sktime.datasets._data_io import _load_dataset, _load_provided_dataset
+from sktime.datasets._data_io import (
+    _load_dataset,
+    _load_provided_dataset,
+    load_tsf_to_dataframe,
+)
 
 DIRNAME = "data"
 MODULE = os.path.dirname(__file__)
 
 
-def load_UCR_UEA_dataset(name, split=None, return_X_y=True, extract_path=None):
+def load_UCR_UEA_dataset(
+    name, split=None, return_X_y=True, return_type=None, extract_path=None
+):
     """Load dataset from UCR UEA time series archive.
 
     Downloads and extracts dataset if not already downloaded. Data is assumed to be
@@ -71,13 +78,25 @@ def load_UCR_UEA_dataset(name, split=None, return_X_y=True, extract_path=None):
         format <name>_TRAIN.ts or <name>_TEST.ts.
     return_X_y : bool, optional (default=False)
         it returns two objects, if False, it appends the class labels to the dataframe.
+    return_type: None or str, optional (default=None)
+        Memory data format specification to return X in, if None then return the default
+        "nested_univ" type.
+        str can be any other supported Panel mtype,
+            for list of mtypes, see datatypes.SCITYPE_REGISTER
+            for specifications, see examples/AA_datatypes_and_datasets.ipynb
+        commonly used specifications:
+            "nested_univ: nested pd.DataFrame, pd.Series in cells
+            "numpy3D"/"numpy3d"/"np3D": 3D np.ndarray (instance, variable, time index)
+            "numpy2d"/"np2d"/"numpyflat": 2D np.ndarray (instance, time index)
+            "pd-multiindex": pd.DataFrame with 2-level (instance, time) MultiIndex
+        Exception is raised if the data cannot be stored in the requested type.
     extract_path : str, optional (default=None)
         the path to look for the data. If no path is provided, the function
         looks in `sktime/datasets/data/`.
 
     Returns
     -------
-    X: pandas DataFrame
+    X: pd.DataFrame
         The time series data for the problem with n_cases rows and either
         n_dimensions or n_dimensions+1 columns. Columns 1 to n_dimensions are the
         series associated with each case. If return_X_y is False, column
@@ -85,13 +104,17 @@ def load_UCR_UEA_dataset(name, split=None, return_X_y=True, extract_path=None):
     y: numpy array, optional
         The class labels for each case in X, returned separately if return_X_y is
         True, or appended to X if False
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_UCR_UEA_dataset
+    >>> X, y = load_UCR_UEA_dataset(name="ArrowHead")
     """
-    return _load_dataset(name, split, return_X_y, extract_path)
+    return _load_dataset(name, split, return_X_y, return_type, extract_path)
 
 
 def load_plaid(split=None, return_X_y=True):
-    """
-    Load the PLAID time series classification problem and returns X and y.
+    """Load the PLAID time series classification problem and returns X and y.
 
     Example of a univariate problem with unequal length series.
 
@@ -106,18 +129,21 @@ def load_plaid(split=None, return_X_y=True):
 
     Returns
     -------
-    X: pandas DataFrame with m rows and c columns
+    X: pd.DataFrame with m rows and c columns
         The time series data for the problem with m cases and c dimensions
     y: numpy array The class labels for each case in X
 
+    Examples
+    --------
+    >>> from sktime.datasets import load_plaid
+    >>> X, y = load_plaid()
     """
     name = "PLAID"
     return _load_dataset(name, split, return_X_y)
 
 
 def load_gunpoint(split=None, return_X_y=True):
-    """
-    Load the GunPoint time series classification problem and returns X and y.
+    """Load the GunPoint time series classification problem and returns X and y.
 
     Parameters
     ----------
@@ -130,10 +156,15 @@ def load_gunpoint(split=None, return_X_y=True):
 
     Returns
     -------
-    X: pandas DataFrame with m rows and c columns
+    X: pd.DataFrame with m rows and c columns
         The time series data for the problem with m cases and c dimensions
     y: numpy array
         The class labels for each case in X
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_gunpoint
+    >>> X, y = load_gunpoint()
 
     Notes
     -----
@@ -168,8 +199,7 @@ def load_gunpoint(split=None, return_X_y=True):
 
 
 def load_osuleaf(split=None, return_X_y=True):
-    """
-    Load the OSULeaf time series classification problem and returns X and y.
+    """Load the OSULeaf time series classification problem and returns X and y.
 
     Parameters
     ----------
@@ -183,10 +213,15 @@ def load_osuleaf(split=None, return_X_y=True):
 
     Returns
     -------
-    X: pandas DataFrame with m rows and c columns
+    X: pd.DataFrame with m rows and c columns
         The time series data for the problem with m cases and c dimensions
     y: numpy array
         The class labels for each case in X
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_osuleaf
+    >>> X, y = load_osuleaf()
 
     Notes
     -----
@@ -211,8 +246,7 @@ def load_osuleaf(split=None, return_X_y=True):
 
 
 def load_italy_power_demand(split=None, return_X_y=True):
-    """
-    Load ItalyPowerDemand time series classification problem.
+    """Load ItalyPowerDemand time series classification problem.
 
     Parameters
     ----------
@@ -226,10 +260,15 @@ def load_italy_power_demand(split=None, return_X_y=True):
 
     Returns
     -------
-    X: pandas DataFrame with m rows and c columns
+    X: pd.DataFrame with m rows and c columns
         The time series data for the problem with m cases and c dimensions
     y: numpy array
         The class labels for each case in X
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_italy_power_demand
+    >>> X, y = load_italy_power_demand()
 
     Notes
     -----
@@ -250,48 +289,61 @@ def load_italy_power_demand(split=None, return_X_y=True):
     return _load_dataset(name, split, return_X_y)
 
 
-def load_unit_test(split=None, return_X_y=True):
+def load_unit_test(split=None, return_X_y=True, return_type=None):
     """
-    Load UnitTest time series classification problem.
+    Load UnitTest data.
 
-    This problem is a stripped down version of the ChinaTown problem that is used in
-    correctness tests for classification.
+    This is an equal length univariate time series classification problem. It is a
+    stripped down version of the ChinaTown problem that is used in correctness tests
+    for classification. It loads a two class classification problem with number of
+    cases, n, where n = 42 (if split is None) or 20/22 (if split is "train"/"test")
+    of series length m = 24
 
     Parameters
     ----------
     split: None or str{"train", "test"}, optional (default=None)
-        Whether to load the train or test partition of the problem. By
-        default it loads both.
+        Whether to load the train or test partition of the problem. By default it
+        loads both.
     return_X_y: bool, optional (default=True)
-        If True, returns (features, target) separately instead of a single
-        dataframe with columns for
-        features and the target.
+        If True, returns (features, target) separately instead of a concatenated data
+        structure.
+    return_type: None or str{"numpy2d", "numpyflat", "numpy3d", "nested_univ"},
+        optional (default=None). Controls the returned data structure.
 
     Returns
     -------
-    X: pandas DataFrame with m rows and c columns
-        The time series data for the problem with m cases and c dimensions
-    y: numpy array
-        The class labels for each case in X
+    X:  The time series data for the problem. If return_type is either
+        "numpy2d"/"numpyflat", it returns 2D numpy array of shape (n,m), if "numpy3d" it
+        returns 3D numpy array of shape (n,1,m) and if "nested_univ" or None it returns
+        a nested pandas DataFrame of shape (n,1), where each cell is a pd.Series of
+        length m.
+    y: (optional) numpy array shape (n,1). The class labels for each case in X.
+        If return_X_y is False, y is appended to X.
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_unit_test
+    >>> X, y = load_unit_test()
 
     Details
     -------
-    This is the Chinatown problem with a smaller test set, useful for rapid tests. See
-    http://timeseriesclassification.com/description.php?Dataset=Chinatown
-    for the full dataset
+    This is the Chinatown problem with a smaller test set, useful for rapid tests.
     Dimensionality:     univariate
     Series length:      24
     Train cases:        20
     Test cases:         22 (full dataset has 345)
     Number of classes:  2
+
+     See
+    http://timeseriesclassification.com/description.php?Dataset=Chinatown
+    for the full dataset
     """
     name = "UnitTest"
-    return _load_provided_dataset(name, split, return_X_y)
+    return _load_provided_dataset(name, split, return_X_y, return_type)
 
 
 def load_japanese_vowels(split=None, return_X_y=True):
-    """
-    Load the JapaneseVowels time series classification problem.
+    """Load the JapaneseVowels time series classification problem.
 
     Example of a multivariate problem with unequal length series.
 
@@ -306,10 +358,15 @@ def load_japanese_vowels(split=None, return_X_y=True):
 
     Returns
     -------
-    X: pandas DataFrame with m rows and c columns
+    X: pd.DataFrame with m rows and c columns
         The time series data for the problem with m cases and c dimensions
     y: numpy array
         The class labels for each case in X
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_japanese_vowels
+    >>> X, y = load_japanese_vowels()
 
     Notes
     -----
@@ -357,10 +414,15 @@ def load_arrow_head(split=None, return_X_y=True, return_type="nested_univ"):
 
     Returns
     -------
-    X: pandas DataFrame with m rows and c columns
+    X: pd.DataFrame with m rows and c columns
         The time series data for the problem with m cases and c dimensions
     y: numpy array
         The class labels for each case in X
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_arrow_head
+    >>> X, y = load_arrow_head()
 
     Notes
     -----
@@ -392,8 +454,7 @@ def load_arrow_head(split=None, return_X_y=True, return_type="nested_univ"):
 
 
 def load_acsf1(split=None, return_X_y=True):
-    """
-    Load dataset on power consumption of typical appliances.
+    """Load dataset on power consumption of typical appliances.
 
     Parameters
     ----------
@@ -407,10 +468,15 @@ def load_acsf1(split=None, return_X_y=True):
 
     Returns
     -------
-    X: pandas DataFrame with m rows and c columns
+    X: pd.DataFrame with m rows and c columns
         The time series data for the problem with m cases and c dimensions
     y: numpy array
         The class labels for each case in X
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_acsf1
+    >>> X, y = load_acsf1()
 
     Notes
     -----
@@ -436,9 +502,13 @@ def load_acsf1(split=None, return_X_y=True):
     return _load_dataset(name, split, return_X_y)
 
 
-def load_basic_motions(split=None, return_X_y=True, return_type="nested_univ"):
+def load_basic_motions(split=None, return_X_y=True, return_type=None):
     """
-    Load the  BasicMotions time series classification problem and returns X and y.
+    Load the BasicMotions time series classification problem and returns X and y.
+
+    This is an equal length multivariate time series classification problem. It loads a
+    4 class classification problem with number of cases, n, where n = 80 (if
+    split is None) or 40 (if split is "train"/"test") of series length m = 100.
 
     Parameters
     ----------
@@ -446,17 +516,24 @@ def load_basic_motions(split=None, return_X_y=True, return_type="nested_univ"):
         Whether to load the train or test partition of the problem. By
         default it loads both.
     return_X_y: bool, optional (default=True)
-        If True, returns (features, target) separately instead of a single
-        dataframe with columns for
-        features and the target.
+        If True, returns (time series, target) separately as X and y instead of a single
+        data structure.
+    return_type: None or str{"numpy3d", "nested_univ"},
+        optional (default=None). Controls the returned data structure.
 
     Returns
     -------
-    X: pandas DataFrame with m rows and c columns
-        The time series data for the problem with m cases and c dimensions
-    y: numpy array
-        The class labels for each case in X
+    X:  The time series data for the problem. If return_type is either
+        "numpy2d"/"numpyflat", it returns 2D numpy array of shape (n,m), if "numpy3d" it
+        returns 3D numpy array of shape (n,6,m) and if "nested_univ" or None it returns
+        a nested pandas DataFrame of shape (n,6), where each cell is a pd.Series of
+        length m.
+    y: (optional) numpy array shape (n,1). The class labels for each case in X.
+        If return_X_y is False, y is appended to X.
 
+    Raises
+    ------
+    ValueError if argument "numpy2d"/"numpyflat" is passed as return_type
     Notes
     -----
     Dimensionality:     multivariate, 6
@@ -476,6 +553,12 @@ def load_basic_motions(split=None, return_X_y=True, return_type="nested_univ"):
     =BasicMotions
     """
     name = "BasicMotions"
+    if return_type == "numpy2d" or return_type == "numpyflat":
+        raise ValueError(
+            f"{name} loader: Error, attempting to load into a numpy2d "
+            f"array, but cannot because it is a multivariate problem. Use "
+            f"numpy3d instead"
+        )
     return _load_provided_dataset(
         name=name, split=split, return_X_y=return_X_y, return_type=return_type
     )
@@ -483,13 +566,17 @@ def load_basic_motions(split=None, return_X_y=True, return_type="nested_univ"):
 
 # forecasting data sets
 def load_shampoo_sales():
-    """
-    Load the shampoo sales univariate time series dataset for forecasting.
+    """Load the shampoo sales univariate time series dataset for forecasting.
 
     Returns
     -------
-    y : pandas Series/DataFrame
+    y : pd.Series/DataFrame
         Shampoo sales dataset
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_shampoo_sales
+    >>> y = load_shampoo_sales()
 
     Notes
     -----
@@ -502,7 +589,6 @@ def load_shampoo_sales():
     Frequency:          Monthly
     Number of cases:    1
 
-
     References
     ----------
     .. [1] Makridakis, Wheelwright and Hyndman (1998) Forecasting: methods
@@ -512,15 +598,14 @@ def load_shampoo_sales():
     name = "ShampooSales"
     fname = name + ".csv"
     path = os.path.join(MODULE, DIRNAME, name, fname)
-    y = pd.read_csv(path, index_col=0, squeeze=True, dtype={1: np.float})
+    y = pd.read_csv(path, index_col=0, dtype={1: float}).squeeze("columns")
     y.index = pd.PeriodIndex(y.index, freq="M", name="Period")
     y.name = "Number of shampoo sales"
     return y
 
 
 def load_longley(y_name="TOTEMP"):
-    """
-    Load the Longley dataset for forecasting with exogenous variables.
+    """Load the Longley dataset for forecasting with exogenous variables.
 
     Parameters
     ----------
@@ -529,10 +614,15 @@ def load_longley(y_name="TOTEMP"):
 
     Returns
     -------
-    y: pandas.Series
+    y: pd.Series
         The target series to be predicted.
-    X: pandas.DataFrame
+    X: pd.DataFrame
         The exogenous time series data for the problem.
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_longley
+    >>> y, X = load_longley()
 
     Notes
     -----
@@ -566,7 +656,7 @@ def load_longley(y_name="TOTEMP"):
     data = pd.read_csv(path, index_col=0)
     data = data.set_index("YEAR")
     data.index = pd.PeriodIndex(data.index, freq="Y", name="Period")
-    data = data.astype(np.float)
+    data = data.astype(float)
 
     # Get target series
     y = data.pop(y_name)
@@ -574,13 +664,17 @@ def load_longley(y_name="TOTEMP"):
 
 
 def load_lynx():
-    """
-    Load the lynx univariate time series dataset for forecasting.
+    """Load the lynx univariate time series dataset for forecasting.
 
     Returns
     -------
-    y : pandas Series/DataFrame
+    y : pd.Series/DataFrame
         Lynx sales dataset
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_lynx
+    >>> y = load_lynx()
 
     Notes
     -----
@@ -613,20 +707,24 @@ def load_lynx():
     name = "Lynx"
     fname = name + ".csv"
     path = os.path.join(MODULE, DIRNAME, name, fname)
-    y = pd.read_csv(path, index_col=0, squeeze=True, dtype={1: np.float})
+    y = pd.read_csv(path, index_col=0, dtype={1: float}).squeeze("columns")
     y.index = pd.PeriodIndex(y.index, freq="Y", name="Period")
     y.name = "Number of Lynx trappings"
     return y
 
 
 def load_airline():
-    """
-    Load the airline univariate time series dataset [1].
+    """Load the airline univariate time series dataset [1].
 
     Returns
     -------
     y : pd.Series
-     Time series
+        Time series
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> y = load_airline()
 
     Notes
     -----
@@ -643,14 +741,14 @@ def load_airline():
 
     References
     ----------
-    ..[1] Box, G. E. P., Jenkins, G. M. and Reinsel, G. C. (1976) Time Series
+    .. [1] Box, G. E. P., Jenkins, G. M. and Reinsel, G. C. (1976) Time Series
           Analysis, Forecasting and Control. Third Edition. Holden-Day.
           Series G.
     """
     name = "Airline"
     fname = name + ".csv"
     path = os.path.join(MODULE, DIRNAME, name, fname)
-    y = pd.read_csv(path, index_col=0, squeeze=True, dtype={1: np.float})
+    y = pd.read_csv(path, index_col=0, dtype={1: float}).squeeze("columns")
 
     # make sure time index is properly formatted
     y.index = pd.PeriodIndex(y.index, freq="M", name="Period")
@@ -659,15 +757,19 @@ def load_airline():
 
 
 def load_uschange(y_name="Consumption"):
-    """
-    Load MTS dataset for forecasting Growth rates of personal consumption and income.
+    """Load MTS dataset for forecasting Growth rates of personal consumption and income.
 
     Returns
     -------
-    y : pandas Series
+    y : pd.Series
         selected column, default consumption
-    X : pandas Dataframe
+    X : pd.DataFrame
         columns with explanatory variables
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_uschange
+    >>> y, X = load_uschange()
 
     Notes
     -----
@@ -688,19 +790,19 @@ def load_uschange(y_name="Consumption"):
 
     References
     ----------
-    ..fpp2: Data for "Forecasting: Principles and Practice" (2nd Edition)
+    .. [1] Data for "Forecasting: Principles and Practice" (2nd Edition)
     """
     name = "Uschange"
     fname = name + ".csv"
     path = os.path.join(MODULE, DIRNAME, name, fname)
-    data = pd.read_csv(path, index_col=0, squeeze=True)
+    data = pd.read_csv(path, index_col=0).squeeze("columns")
 
     # Sort by Quarter then set simple numeric index
     # TODO add support for period/datetime indexing
     # data.index = pd.PeriodIndex(data.index, freq='Y')
     data = data.sort_values("Quarter")
     data = data.reset_index(drop=True)
-    data.index = pd.Int64Index(data.index)
+    data.index = pd.Index(data.index, dtype=int)
     data.name = name
     y = data[y_name]
     if y_name != "Quarter":
@@ -722,8 +824,6 @@ def load_gun_point_segmentation():
     temporal patterns but are approximate and limited to the values
     [10,20,50,100] to avoid over-fitting.
 
-    -----------
-
     Returns
     -------
         X : pd.Series
@@ -732,7 +832,11 @@ def load_gun_point_segmentation():
             The annotated period length by a human expert
         change_points : numpy array
             The change points annotated within the dataset
-    -----------
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_gun_point_segmentation
+    >>> X, period_length, change_points = load_gun_point_segmentation()
     """
     dir = "segmentation"
     name = "GunPoint"
@@ -742,7 +846,7 @@ def load_gun_point_segmentation():
     change_points = np.int32([900])
 
     path = os.path.join(MODULE, DIRNAME, dir, fname)
-    ts = pd.read_csv(path, index_col=0, header=None, squeeze=True)
+    ts = pd.read_csv(path, index_col=0, header=None).squeeze("columns")
 
     return ts, period_length, change_points
 
@@ -760,8 +864,6 @@ def load_electric_devices_segmentation():
     temporal patterns but are approximate and limited to the values
     [10,20,50,100] to avoid over-fitting.
 
-    -----------
-
     Returns
     -------
         X : pd.Series
@@ -770,7 +872,11 @@ def load_electric_devices_segmentation():
             The annotated period length by a human expert
         change_points : numpy array
             The change points annotated within the dataset
-    -----------
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_electric_devices_segmentation
+    >>> X, period_length, change_points = load_electric_devices_segmentation()
     """
     dir = "segmentation"
     name = "ElectricDevices"
@@ -780,18 +886,23 @@ def load_electric_devices_segmentation():
     change_points = np.int32([1090, 4436, 5712, 7923])
 
     path = os.path.join(MODULE, DIRNAME, dir, fname)
-    ts = pd.read_csv(path, index_col=0, header=None, squeeze=True)
+    ts = pd.read_csv(path, index_col=0, header=None).squeeze("columns")
 
     return ts, period_length, change_points
 
 
 def load_PBS_dataset():
-    """Load the Pharmaceutical Benefit Scheme univariate time series dataset [1].
+    """Load the Pharmaceutical Benefit Scheme univariate time series dataset [1]_.
 
     Returns
     -------
     y : pd.Series
      Time series
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_PBS_dataset
+    >>> y = load_PBS_dataset()
 
     Notes
     -----
@@ -812,12 +923,12 @@ def load_PBS_dataset():
 
     References
     ----------
-    ..fpp3: Data for "Forecasting: Principles and Practice" (3rd Edition)
+    .. [1] Data for "Forecasting: Principles and Practice" (3rd Edition)
     """
     name = "PBS_dataset"
     fname = name + ".csv"
     path = os.path.join(MODULE, DIRNAME, name, fname)
-    y = pd.read_csv(path, index_col=0, squeeze=True, dtype={1: np.float})
+    y = pd.read_csv(path, index_col=0, dtype={1: float}).squeeze("columns")
 
     # make sure time index is properly formatted
     y.index = pd.PeriodIndex(y.index, freq="M", name="Period")
@@ -827,12 +938,17 @@ def load_PBS_dataset():
 
 def load_macroeconomic():
     """
-    Load the US Macroeconomic Data [1].
+    Load the US Macroeconomic Data [1]_.
 
     Returns
     -------
     y : pd.DataFrame
      Time series
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_macroeconomic
+    >>> y = load_macroeconomic()
 
     Notes
     -----
@@ -847,12 +963,12 @@ def load_macroeconomic():
 
     References
     ----------
-    ..[1] Wrapped via statsmodels:
+    .. [1] Wrapped via statsmodels:
           https://www.statsmodels.org/dev/datasets/generated/macrodata.html
-    ..[2] Data Source: FRED, Federal Reserve Economic Data, Federal Reserve
+    .. [2] Data Source: FRED, Federal Reserve Economic Data, Federal Reserve
           Bank of St. Louis; http://research.stlouisfed.org/fred2/;
           accessed December 15, 2009.
-    ..[3] Data Source: Bureau of Labor Statistics, U.S. Department of Labor;
+    .. [3] Data Source: Bureau of Labor Statistics, U.S. Department of Labor;
           http://www.bls.gov/data/; accessed December 15, 2009.
     """
     y = sm.datasets.macrodata.load_pandas().data
@@ -863,3 +979,105 @@ def load_macroeconomic():
     y = y.drop(columns=["year", "quarter", "time"])
     y.name = "US Macroeconomic Data"
     return y
+
+
+def load_unit_test_tsf():
+    """
+    Load tsf UnitTest dataset.
+
+    Returns
+    -------
+    loaded_data: pd.DataFrame
+        The converted dataframe containing the time series.
+    frequency: str
+        The frequency of the dataset.
+    forecast_horizon: int
+        The expected forecast horizon of the dataset.
+    contain_missing_values: bool
+        Whether the dataset contains missing values or not.
+    contain_equal_length: bool
+        Whether the series have equal lengths or not.
+    """
+    path = os.path.join(MODULE, DIRNAME, "UnitTest", "UnitTest_Tsf_Loader.tsf")
+    (
+        loaded_data,
+        frequency,
+        forecast_horizon,
+        contain_missing_values,
+        contain_equal_length,
+    ) = load_tsf_to_dataframe(path)
+
+    return (
+        loaded_data,
+        frequency,
+        forecast_horizon,
+        contain_missing_values,
+        contain_equal_length,
+    )
+
+
+def load_solar(
+    start="2021-05-01",
+    end="2021-09-01",
+    normalise=True,
+    return_full_df=False,
+    api_version="v4",
+):
+    """Get national solar estimates for GB from Sheffield Solar PV_Live API.
+
+    This function calls the Sheffield Solar PV_Live API to extract national solar data
+    for the GB eletricity network. Note that these are estimates of the true solar
+    generation, since the true values are "behind the meter" and essentially
+    unknown.
+
+    The returned time series is half hourly. For more information please refer
+    to [1, 2]_.
+
+    Parameters
+    ----------
+    start : string, default="2021-05-01"
+        The start date of the time-series in "YYYY-MM-DD" format
+    end : string, default="2021-09-01"
+        The end date of the time-series in "YYYY-MM-DD" format
+    normalise : boolean, default=True
+        Normalise the returned time-series by installed capacity?
+    return_full_df : boolean, default=False
+        Return a pd.DataFrame with power, capacity, and normalised estimates?
+    api_version : string, default="v4"
+        API version to call
+
+    References
+    ----------
+    .. [1] https://www.solar.sheffield.ac.uk/pvlive/
+    .. [2] https://www.solar.sheffield.ac.uk/pvlive/api/
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_solar
+    >>> y = load_solar()
+    """
+    url = "https://api0.solar.sheffield.ac.uk/pvlive/api/"
+    url = url + api_version + "/gsp/0?"
+    url = url + "start=" + start + "T00:00:00&"
+    url = url + "end=" + end + "T00:00:00&"
+    url = url + "extra_fields=capacity_mwp&"
+    url = url + "data_format=csv"
+
+    df = (
+        pd.read_csv(
+            url, index_col=["gsp_id", "datetime_gmt"], parse_dates=["datetime_gmt"]
+        )
+        .droplevel(0)
+        .sort_index()
+    )
+    df = df.asfreq("30T")
+    df["generation_pu"] = df["generation_mw"] / df["capacity_mwp"]
+
+    if return_full_df:
+        df["generation_pu"] = df["generation_mw"] / df["capacity_mwp"]
+        return df
+    else:
+        if normalise:
+            return df["generation_pu"].rename("solar_gen")
+        else:
+            return df["generation_mw"].rename("solar_gen")

@@ -122,7 +122,7 @@ class ContractableBOSS(BaseClassifier):
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
     >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
-    >>> clf = ContractableBOSS(n_parameter_samples=25, max_ensemble_size=5)
+    >>> clf = ContractableBOSS(n_parameter_samples=10, max_ensemble_size=3)
     >>> clf.fit(X_train, y_train)
     ContractableBOSS(...)
     >>> y_pred = clf.predict(X_test)
@@ -132,6 +132,7 @@ class ContractableBOSS(BaseClassifier):
         "capability:train_estimate": True,
         "capability:contractable": True,
         "capability:multithreading": True,
+        "classifier_type": "dictionary",
     }
 
     def __init__(
@@ -293,7 +294,7 @@ class ContractableBOSS(BaseClassifier):
 
         return self
 
-    def _predict(self, X):
+    def _predict(self, X) -> np.ndarray:
         """Predict class values of n instances in X.
 
         Parameters
@@ -314,7 +315,7 @@ class ContractableBOSS(BaseClassifier):
             ]
         )
 
-    def _predict_proba(self, X):
+    def _predict_proba(self, X) -> np.ndarray:
         """Predict class probabilities for n instances in X.
 
         Parameters
@@ -359,7 +360,7 @@ class ContractableBOSS(BaseClassifier):
 
         return possible_parameters
 
-    def _get_train_probs(self, X, y):
+    def _get_train_probs(self, X, y) -> np.ndarray:
         self.check_is_fitted()
         X, y = check_X_y(X, y, coerce_to_numpy=True, enforce_univariate=True)
 
@@ -435,3 +436,34 @@ class ContractableBOSS(BaseClassifier):
                     boss._train_predictions.append(c)
 
         return correct / train_size
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            For classifiers, a "default" set of parameters should be provided for
+            general testing, and a "results_comparison" set for comparing against
+            previously recorded results if the general set does not produce suitable
+            probabilities to compare against.
+
+        Returns
+        -------
+        params : dict or list of dict, default={}
+            Parameters to create testing instances of the class.
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`.
+        """
+        if parameter_set == "results_comparison":
+            return {"n_parameter_samples": 10, "max_ensemble_size": 5}
+        else:
+            return {
+                "n_parameter_samples": 4,
+                "max_ensemble_size": 2,
+                "save_train_predictions": True,
+            }

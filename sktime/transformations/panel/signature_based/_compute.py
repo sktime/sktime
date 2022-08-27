@@ -2,7 +2,7 @@
 """Class for signature computation over windows."""
 import numpy as np
 
-from sktime.transformations.base import _SeriesToPrimitivesTransformer
+from sktime.transformations.base import BaseTransformer
 from sktime.transformations.panel.signature_based._rescaling import (
     _rescale_path,
     _rescale_signature,
@@ -10,11 +10,10 @@ from sktime.transformations.panel.signature_based._rescaling import (
 from sktime.transformations.panel.signature_based._window import _window_getter
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-_check_soft_dependencies("esig")
-import esig  # noqa: E402
+_check_soft_dependencies("esig", severity="warning")
 
 
-class _WindowSignatureTransform(_SeriesToPrimitivesTransformer):
+class _WindowSignatureTransform(BaseTransformer):
     """Perform the signature transform over given windows.
 
     Given data of shape [N, L, C] and specification of a window method from the
@@ -26,6 +25,20 @@ class _WindowSignatureTransform(_SeriesToPrimitivesTransformer):
     ----------
     num_intervals: int, dimension of the transformed data (default 8)
     """
+
+    # default tag values for "Series-to-Primitives"
+    _tags = {
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
+        "scitype:transform-output": "Primitives",
+        # what scitype is returned: Primitives, Series, Panel
+        "scitype:instancewise": True,  # is this an instance-wise transform?
+        "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
+        "fit_is_empty": True,
+        "python_dependencies": "esig",
+        "python_version": "<3.10",
+    }
 
     def __init__(
         self,
@@ -43,35 +56,34 @@ class _WindowSignatureTransform(_SeriesToPrimitivesTransformer):
         self.window_length = window_length
         self.window_step = window_step
         self.sig_tfm = sig_tfm
-        self.depth = sig_depth
+        self.sig_depth = sig_depth
         self.rescaling = rescaling
 
         self.window = _window_getter(
             self.window_name, self.window_depth, self.window_length, self.window_step
         )
 
-    def fit(self, data, labels=None):
-        self._is_fitted = True
-        return self
+    def _transform(self, X, y=None):
 
-    def transform(self, data, y=None):
-        # Input checks
-        self.check_is_fitted()
+        import esig
+
+        depth = self.sig_depth
+        data = np.swapaxes(X, 1, 2)
 
         # Path rescaling
         if self.rescaling == "pre":
-            data = _rescale_path(data, self.depth)
+            data = _rescale_path(data, depth)
 
         # Prepare for signature computation
         if self.sig_tfm == "signature":
 
             def transform(x):
-                return esig.stream2sig(x, self.depth)[1:].reshape(-1, 1)
+                return esig.stream2sig(x, depth)[1:].reshape(-1, 1)
 
         else:
 
             def transform(x):
-                return esig.stream2logsig(x, self.depth).reshape(1, -1)
+                return esig.stream2logsig(x, depth).reshape(1, -1)
 
         length = data.shape[1]
 
@@ -86,7 +98,7 @@ class _WindowSignatureTransform(_SeriesToPrimitivesTransformer):
                 ).reshape(data.shape[0], -1)
                 # Rescale if specified
                 if self.rescaling == "post":
-                    signature = _rescale_signature(signature, data.shape[2], self.depth)
+                    signature = _rescale_signature(signature, data.shape[2], depth)
 
                 signature_group.append(signature)
             signatures.append(signature_group)

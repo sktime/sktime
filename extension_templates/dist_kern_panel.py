@@ -7,11 +7,13 @@ How to use this:
 - do NOT import this file directly - it will break
 - work through all the "todo" comments below
 - fill in code for mandatory methods, and optionally for optional methods
+- do not write to reserved variables: is_fitted, _is_fitted, _tags, _tags_dynamic
 - you can add more private methods, but do not override BaseEstimator's private methods
     an easy way to be safe is to prefix your methods with "_custom"
 - change docstrings for functions and the file
-[- ensure interface compatibility by testing ??? no tests yet, fill this in later]
+- ensure interface compatibility by sktime.utils.estimator_checks.check_estimator
 - once complete: use as a local library, or contribute to sktime via PR
+- more details: https://www.sktime.org/en/stable/developer_guide/add_estimators.html
 
 Mandatory implements:
     transforming    - _transform(self, X, X2=None)
@@ -25,6 +27,13 @@ copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 from sktime.dists_kernels import BasePairwiseTransformerPanel
 
 # todo: add any necessary imports here
+
+# todo: if any imports are sktime soft dependencies:
+#  * make sure to fill in the "python_dependencies" tag with the package import name
+#  * add a _check_soft_dependencies warning here, example:
+#
+# from sktime.utils.validation._dependencies import check_soft_dependencies
+# _check_soft_dependencies("soft_dependency_name", severity="warning")
 
 
 class MyTrafoPwPanel(BasePairwiseTransformerPanel):
@@ -69,16 +78,19 @@ class MyTrafoPwPanel(BasePairwiseTransformerPanel):
         self.parama = parama
         self.paramb = paramb
         self.paramc = paramc
-        # important: no checking or other logic should happen here
+
+        # todo: change "MyTrafoPwPanel" to the name of the class
+        super(MyTrafoPwPanel, self).__init__()
+
+        # todo: optional, parameter checking logic (if applicable) should happen here
+        # if writes derived values to self, should *not* overwrite self.parama etc
+        # instead, write to self._parama, self._newparam (starting with _)
 
         # todo: default estimators should have None arg defaults
         #  and be initialized here
         #  do this only with default estimators, not with parameters
         # if est2 is None:
         #     self.estimator = MyDefaultEstimator()
-
-        # todo: change "MyTrafoPwPanel" to the name of the class
-        super(MyTrafoPwPanel, self).__init__()
 
         # todo: if tags of estimator depend on component tags, set these here
         #  only needed if estimator is a composite
@@ -118,8 +130,15 @@ class MyTrafoPwPanel(BasePairwiseTransformerPanel):
     # todo: return default parameters, so that a test instance can be created
     #   required for automated unit and integration testing of estimator
     @classmethod
-    def get_test_params(cls):
+    def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            There are currently no reserved values for distance/kernel transformers.
 
         Returns
         -------
@@ -132,12 +151,18 @@ class MyTrafoPwPanel(BasePairwiseTransformerPanel):
 
         # todo: set the testing parameters for the estimators
         # Testing parameters can be dictionary or list of dictionaries
+        # Testing parameter choice should cover internal cases well.
         #
-        # this can, if required, use:
+        # this method can, if required, use:
         #   class properties (e.g., inherited); parent class test case
         #   imported objects such as estimators from sktime or sklearn
         # important: all such imports should be *inside get_test_params*, not at the top
         #            since imports are used only at testing time
+        #
+        # The parameter_set argument is not used for automated, module level tests.
+        #   It can be used in custom, estimator specific tests, for "special" settings.
+        # A parameter dictionary must be returned *for all values* of parameter_set,
+        #   i.e., "parameter_set not available" errors should never be raised.
         #
         # example 1: specify params as dictionary
         # any number of params can be specified
@@ -147,5 +172,14 @@ class MyTrafoPwPanel(BasePairwiseTransformerPanel):
         # note: Only first dictionary will be used by create_test_instance
         # params = [{"est": value1, "parama": value2},
         #           {"est": value3, "parama": value4}]
+        # return params
         #
+        # example 3: parameter set depending on param_set value
+        #   note: only needed if a separate parameter set is needed in tests
+        # if parameter_set == "special_param_set":
+        #     params = {"est": value1, "parama": value2}
+        #     return params
+        #
+        # # "default" params - always returned except for "special_param_set" value
+        # params = {"est": value3, "parama": value4}
         # return params

@@ -1,0 +1,14 @@
+# Dataset Information
+# Meta-data for unit testing
+#
+@relation test
+@attribute series_name string
+@attribute start_timestamp date
+@frequency yearly
+@horizon 4
+@missing false
+@equallength false
+@data
+T1:1979-01-01 00-00-00:25092.2284,24271.5134,25828.9883,27697.5047,27956.2276,29924.4321,30216.8321
+T2:1979-01-01 00-00-00:887896.51,887068.98,971549.04
+T3:1973-01-01 00-00-00:227921,230995,183635,238605,254186

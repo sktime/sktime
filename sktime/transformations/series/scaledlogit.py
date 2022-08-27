@@ -22,7 +22,7 @@ class ScaledLogitTransformer(BaseTransformer):
     accordingly. The transform is applied to all scalar elements of the input array
     individually.
 
-    Combined with a sktime.forecasting.compose.TransformedTargetForecaster it ensures
+    Combined with an sktime.forecasting.compose.TransformedTargetForecaster, it ensures
     that the forecast stays between the specified bounds (lower_bound, upper_bound).
 
     Parameters
@@ -97,7 +97,7 @@ class ScaledLogitTransformer(BaseTransformer):
         "X_inner_mtype": "np.ndarray",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "transform-returns-same-time-index": True,
-        "fit-in-transform": True,
+        "fit_is_empty": True,
         "univariate-only": False,
         "capability:inverse_transform": True,
         "skip-inverse-transform": False,
@@ -178,3 +178,30 @@ class ScaledLogitTransformer(BaseTransformer):
             X_inv_transformed = deepcopy(X)
 
         return X_inv_transformed
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        test_params = [
+            {"lower_bound": None, "upper_bound": None},
+            {"lower_bound": -(10**6), "upper_bound": None},
+            {"lower_bound": None, "upper_bound": 10**6},
+            {"lower_bound": -(10**6), "upper_bound": 10**6},
+        ]
+        return test_params

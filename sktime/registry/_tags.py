@@ -7,7 +7,6 @@ No other place is necessary to add new tags.
 This module exports the following:
 
 ---
-
 ESTIMATOR_TAG_REGISTER - list of tuples
 
 each tuple corresponds to a tag, elements as follows:
@@ -19,8 +18,10 @@ each tuple corresponds to a tag, elements as follows:
             "bool" - valid values are True/False
             "int" - valid values are all integers
             "str" - valid values are all strings
+            "list" - valid values are all lists of arbitrary elements
             ("str", list_of_string) - any string in list_of_string is valid
             ("list", list_of_string) - any individual string and sub-list is valid
+            ("list", "str") - any individual string or list of strings is valid
         validity can be checked by check_tag_is_valid (see below)
     3 : string - plain English description of the tag
 
@@ -57,16 +58,10 @@ ESTIMATOR_TAG_REGISTER = [
         "can transformer handle multivariate series? True = no",
     ),
     (
-        "fit-in-transform",
-        ["transformer", "transformer-pairwise", "transformer-pairwise-panel"],
-        "bool",
-        "does fit contain no logic and can be skipped? yes/no",
-    ),
-    (
-        "fit-in-predict",
+        "fit_is_empty",
         "estimator",
         "bool",
-        "does fit contain no logic and can be skipped? yes/no",
+        "fit contains no logic and can be skipped? Yes=True, No=False",
     ),
     (
         "transform-returns-same-time-index",
@@ -111,6 +106,12 @@ ESTIMATOR_TAG_REGISTER = [
         "is the transformer symmetric, i.e., t(x,y)=t(y,x) always?",
     ),
     (
+        "scitype:X",
+        "param_est",
+        "str",
+        "which scitypes does X internally support?",
+    ),
+    (
         "scitype:y",
         "forecaster",
         ("str", ["univariate", "multivariate", "both"]),
@@ -135,7 +136,7 @@ ESTIMATOR_TAG_REGISTER = [
     ),
     (
         "X_inner_mtype",
-        ["forecaster", "transformer", "transformer-pairwise-panel"],
+        ["forecaster", "transformer", "transformer-pairwise-panel", "param_est"],
         (
             "list",
             [
@@ -175,6 +176,12 @@ ESTIMATOR_TAG_REGISTER = [
         "what is the scitype of y: None (not needed), Primitives, Series, Panel?",
     ),
     (
+        "requires_y",
+        "transformer",
+        "bool",
+        "does this transformer require y to be passed in fit and transform?",
+    ),
+    (
         "capability:inverse_transform",
         "transformer",
         "bool",
@@ -184,28 +191,58 @@ ESTIMATOR_TAG_REGISTER = [
         "capability:pred_int",
         "forecaster",
         "bool",
-        "is the forecaster capable of returning prediction intervals in predict?",
+        "does the forecaster implement predict_interval or predict_quantiles?",
+    ),
+    (
+        "capability:pred_var",
+        "forecaster",
+        "bool",
+        "does the forecaster implement predict_variance?",
     ),
     (
         "capability:multivariate",
-        "classifier",
+        [
+            "classifier",
+            "early_classifier",
+            "param_est",
+            "transformer-pairwise",
+            "transformer-pairwise-panel",
+        ],
         "bool",
         "can the classifier classify time series with 2 or more variables?",
     ),
     (
         "capability:unequal_length",
-        "classifier",
+        ["classifier", "early_classifier", "transformer", "transformer-pairwise-panel"],
         "bool",
-        "can the classifier handle unequal length time series?",
+        "can the estimator handle unequal length time series?",
     ),
     # "capability:missing_values" is same as "handles-missing-data" tag.
     # They are kept distinct intentionally for easier TSC refactoring.
     # Will be merged after refactor completion.
     (
         "capability:missing_values",
-        "classifier",
+        [
+            "classifier",
+            "early_classifier",
+            "param_est",
+            "transformer-pairwise",
+            "transformer-pairwise-panel",
+        ],
         "bool",
         "can the classifier handle missing data (NA, np.nan) in inputs?",
+    ),
+    (
+        "capability:unequal_length:removes",
+        "transformer",
+        "bool",
+        "is the transformer result guaranteed to be equal length series (and series)?",
+    ),
+    (
+        "capability:missing_values:removes",
+        "transformer",
+        "bool",
+        "is the transformer result guaranteed to have no missing values?",
     ),
     (
         "capability:train_estimate",
@@ -220,37 +257,29 @@ ESTIMATOR_TAG_REGISTER = [
         "contract time setting, does the estimator support limiting max fit time?",
     ),
     (
-        "capability:early_prediction",
-        "classifier",
-        "bool",
-        "is the classifier an early classification algorithm? Can predict make "
-        "classifications on incomplete time series and make a decision on if the "
-        "prediction is trustworthy?",
-    ),
-    (
         "capability:multithreading",
-        "classifier",
+        ["classifier", "early_classifier"],
         "bool",
         "can the classifier set n_jobs to use multiple threads?",
     ),
-    # (
-    #     "handles-panel",
-    #     "annotator",
-    #     "bool",
-    #     "can handle panel annotations, i.e., list X/y?",
-    # ),
-    # (
-    #     "annotation-type",
-    #     "annotator",
-    #     "str",
-    #     "which annotation type? can be 'point', 'segment' or 'both'",
-    # ),
-    # (
-    #     "annotation-kind",
-    #     "annotator",
-    #     "str",
-    #     "which annotations? can be 'outlier', 'change', 'label', 'none'",
-    # ),
+    (
+        "classifier_type",
+        "classifier",
+        (
+            "list",
+            [
+                "dictionary",
+                "distance",
+                "feature",
+                "hybrid",
+                "interval",
+                "kernel",
+                "shapelet",
+            ],
+        ),
+        "which type the classifier falls under in the taxonomy of time series "
+        "classification algorithms.",
+    ),
     (
         "capability:multiple-alignment",
         "aligner",
@@ -268,6 +297,54 @@ ESTIMATOR_TAG_REGISTER = [
         "aligner",
         "bool",
         "does aligner return pairwise distance matrix between aligned series?",
+    ),
+    (
+        "requires-y-train",
+        "metric",
+        "bool",
+        "does metric require y-train data to be passed?",
+    ),
+    (
+        "requires-y-pred-benchmark",
+        "metric",
+        "bool",
+        "does metric require a predictive benchmark?",
+    ),
+    (
+        "univariate-metric",
+        "metric",
+        "bool",
+        "Does the metric only work on univariate y data?",
+    ),
+    (
+        "scitype:y_pred",
+        "metric",
+        "str",
+        "What is the scitype of y_pred: quantiles, proba, interval?",
+    ),
+    (
+        "lower_is_better",
+        "metric",
+        "bool",
+        "Is a lower value better for the metric? True=yes, False=higher is better",
+    ),
+    (
+        "inner_implements_multilevel",
+        "metric",
+        "bool",
+        "whether inner _evaluate can deal with multilevel (Panel/Hierarchical)",
+    ),
+    (
+        "python_version",
+        "estimator",
+        "str",
+        "python version specifier (PEP 440) for estimator, or None = all versions ok",
+    ),
+    (
+        "python_dependencies",
+        "estimator",
+        ("list", "str"),
+        "python dependencies of estimator as str or list of str",
     ),
 ]
 
@@ -302,6 +379,9 @@ def check_tag_is_valid(tag_name, tag_value):
     if tag_type == "str" and not isinstance(tag_value, str):
         raise ValueError(tag_name + " must be string, found " + tag_value)
 
+    if tag_type == "list" and not isinstance(tag_value, list):
+        raise ValueError(tag_name + " must be list, found " + tag_value)
+
     if tag_type[0] == "str" and tag_value not in tag_type[1]:
         raise ValueError(
             tag_name + " must be one of " + tag_type[1] + " found " + tag_value
@@ -311,3 +391,11 @@ def check_tag_is_valid(tag_name, tag_value):
         raise ValueError(
             tag_name + " must be subest of " + tag_type[1] + " found " + tag_value
         )
+
+    if tag_type[0] == "list" and tag_type[1] == "str":
+        msg = f"{tag_name} must be str or list of str, found {tag_value}"
+        if not isinstance(tag_value, (str, list)):
+            raise ValueError(msg)
+        if isinstance(tag_value, list):
+            if not all(isinstance(x, str) for x in tag_value):
+                raise ValueError(msg)

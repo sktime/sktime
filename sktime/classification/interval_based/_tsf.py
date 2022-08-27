@@ -77,13 +77,28 @@ class TimeSeriesForestClassifier(
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
     >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
-    >>> clf = TimeSeriesForestClassifier(n_estimators=10)
+    >>> clf = TimeSeriesForestClassifier(n_estimators=5)
     >>> clf.fit(X_train, y_train)
     TimeSeriesForestClassifier(...)
     >>> y_pred = clf.predict(X_test)
     """
 
     _base_estimator = DecisionTreeClassifier(criterion="entropy")
+
+    def __init__(
+        self,
+        min_interval=3,
+        n_estimators=200,
+        n_jobs=1,
+        random_state=None,
+    ):
+        super(TimeSeriesForestClassifier, self).__init__(
+            min_interval=min_interval,
+            n_estimators=n_estimators,
+            n_jobs=n_jobs,
+            random_state=random_state,
+        )
+        BaseClassifier.__init__(self)
 
     def fit(self, X, y, **kwargs):
         """Wrap fit to call BaseClassifier.fit.
@@ -106,7 +121,7 @@ class TimeSeriesForestClassifier(
     def _fit(self, X, y):
         BaseTimeSeriesForest._fit(self, X=X, y=y)
 
-    def _predict(self, X):
+    def _predict(self, X) -> np.ndarray:
         """Find predictions for all cases in X. Built on top of predict_proba.
 
         Parameters
@@ -154,6 +169,33 @@ class TimeSeriesForestClassifier(
             np.ones(self.n_classes) * self.n_estimators
         )
         return output
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            For classifiers, a "default" set of parameters should be provided for
+            general testing, and a "results_comparison" set for comparing against
+            previously recorded results if the general set does not produce suitable
+            probabilities to compare against.
+
+        Returns
+        -------
+        params : dict or list of dict, default={}
+            Parameters to create testing instances of the class.
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`.
+        """
+        if parameter_set == "results_comparison":
+            return {"n_estimators": 10}
+        else:
+            return {"n_estimators": 2}
 
 
 def _predict_single_classifier_proba(X, estimator, intervals):

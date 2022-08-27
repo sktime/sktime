@@ -10,7 +10,6 @@ import numpy as np
 import pandas as pd
 
 from sktime.forecasting.base import BaseForecaster
-from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.utils.validation import check_n_jobs
 from sktime.utils.validation.forecasting import check_sp
 
@@ -24,6 +23,7 @@ class _TbatsAdapter(BaseForecaster):
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
         # "capability:predict_quantiles": True,
+        "python_dependencies": "tbats",
     }
 
     def __init__(
@@ -39,7 +39,6 @@ class _TbatsAdapter(BaseForecaster):
         multiprocessing_start_method="spawn",
         context=None,
     ):
-
         self.use_box_cox = use_box_cox
         self.box_cox_bounds = box_cox_bounds
         self.use_trend = use_trend
@@ -55,6 +54,14 @@ class _TbatsAdapter(BaseForecaster):
         self._yname = None  # .fit(y) -> y.name
 
         super(_TbatsAdapter, self).__init__()
+
+    def _create_model_class(self):
+        """Instantiate (T)BATS model.
+
+        This method should write a (T)BATS model to self._ModelClass,
+            and should be overridden by concrete classes.
+        """
+        raise NotImplementedError
 
     def _instantiate_model(self):
         n_jobs = check_n_jobs(self.n_jobs)
@@ -89,13 +96,45 @@ class _TbatsAdapter(BaseForecaster):
         -------
         self : returns an instance of self.
         """
+        self._create_model_class()
         self._forecaster = self._instantiate_model()
         self._forecaster = self._forecaster.fit(y)
         self._yname = y.name
 
         return self
 
-    def _predict(self, fh, X, return_pred_int=False, alpha=DEFAULT_ALPHA):
+    def _update(self, y, X=None, update_params=True):
+        """Update time series to incremental training data.
+
+        Derived from example provided by core devs in TBATS repository
+        https://github.com/intive-DataScience/tbats/blob/master/examples/
+
+        Parameters
+        ----------
+        y : pd.Series
+            Target time series to which to fit the forecaster.
+        X : pd.DataFrame, optional (default=None)
+            Exogenous variables (ignored)
+        update_params : bool, optional (default=True)
+            whether model parameters should be updated
+
+        Returns
+        -------
+        self : reference to self
+        """
+        if update_params:
+            # update model state and refit parameters
+            # _fit re-runs model instantiation which triggers refit
+            self._fit(y=self._y)
+
+        else:
+            # update model state without refitting parameters
+            # out-of-box fit tbats method will not refit parameters
+            self._forecaster.fit(y=self._y)
+
+        return self
+
+    def _predict(self, fh, X=None):
         """Forecast time series at future horizon.
 
         Parameters
@@ -104,22 +143,13 @@ class _TbatsAdapter(BaseForecaster):
             Forecasting horizon
         X : (default=None)
             NOT USED BY TBATS
-        return_pred_int : bool, optional (default=False)
-            If True, returns prediction intervals for given alpha values.
-        alpha : float, optional (default=0.05)
-            Interpreted as "Confidence Interval" = 1 - alpha
 
         Returns
         -------
         y_pred : pd.Series
             Point predictions
-        y_pred_int : pd.DataFrame - only if return_pred_int=True
-            Prediction intervals
         """
-        if return_pred_int:
-            return self._tbats_forecast_with_interval(fh, alpha)
-        else:
-            return self._tbats_forecast(fh)
+        return self._tbats_forecast(fh)
 
     def _tbats_forecast(self, fh):
         """TBATS forecast without confidence interval.
@@ -207,82 +237,65 @@ class _TbatsAdapter(BaseForecaster):
 
         return y_pred, pred_int
 
-    def _predict_quantiles(self, fh, X, alpha):
-        """Compute/return quantile forecasts.
+    def _predict_interval(self, fh, X, coverage):
+        """Compute/return prediction quantiles for a forecast.
 
-        If alpha is iterable, multiple quantiles will be calculated.
+        private _predict_interval containing the core logic,
+            called from predict_interval and possibly predict_quantiles
 
-        In-sample is set to NaNs, ince TBATS does not support it.
+        Note: In-sample forecasts are set to NaNs, since TBATS does not support it.
+
+        State required:
+            Requires state to be "fitted".
+
+        Accesses in self:
+            Fitted model attributes ending in "_"
+            self.cutoff
 
         Parameters
         ----------
         fh : int, list, np.array or ForecastingHorizon
             Forecasting horizon, default = y.index (in-sample forecast)
-        X : (default=None)
+        X : pd.DataFrame, optional (default=None)
             Ignored, passed for interface compatibility
-        alpha : float or list of float, optional (default=[0.05, 0.95])
-            A probability or list of, at which quantile forecasts are computed.
+        coverage : list of float (guaranteed not None and floats in [0,1] interval)
+           nominal coverage(s) of predictive interval(s)
 
         Returns
         -------
-        quantiles : pd.DataFrame
+        pred_int : pd.DataFrame
             Column has multi-index: first level is variable name from y in fit,
-                second level being the values of alpha passed to the function.
-            Row index is fh. Entries are quantile forecasts, for var in col index,
-                at quantile probability in second col index, for the row index.
+                second level coverage fractions for which intervals were computed.
+                    in the same order as in input `coverage`.
+                Third level is string "lower" or "upper", for lower/upper interval end.
+            Row index is fh. Entries are forecasts of lower/upper interval end,
+                for var in col index, at nominal coverage in second col index,
+                lower/upper depending on third col index, for the row index.
+                Upper/lower interval end forecasts are equivalent to
+                quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
-        if isinstance(alpha, (int, float)):
-            alpha = [alpha]
-        # else assume iterative/ list
-
-        req_quant = np.asarray(alpha)  # requested quantiles
+        cutoff = self.cutoff
 
         # accumulator of results
-        acc = pd.DataFrame([], fh.to_absolute(self.cutoff))
+        var_names = ["Coverage"]
+        int_idx = pd.MultiIndex.from_product([var_names, coverage, ["lower", "upper"]])
+        pred_int = pd.DataFrame(columns=int_idx, index=fh.to_absolute(cutoff))
 
-        for q1 in req_quant:
+        for c in coverage:
 
-            if q1 in acc.columns:
-                # skip as this quantile is already computed by tbats
+            # separate treatment for "0" coverage: upper/lower = point prediction
+            if c == 0:
+                pred_int[("Coverage", 0, "lower")] = self._tbats_forecast(fh)
+                pred_int[("Coverage", 0, "upper")] = pred_int[("Coverage", 0, "lower")]
                 continue
-
-            # q = 0.5 -> conf_lev = 0 -> y_pred = pred_int[lower] = pred_int[upper]
-            # so don't compute CI intervals simply save y_hat = predictions
-            if q1 == 0.5:
-                acc[q1] = self._tbats_forecast(fh)
-                continue
-
-            # otherwise compute CI intervals
 
             # tbats with CI intervals
-            conf_level = np.abs(1 - q1 * 2)
-            y_pred, pred_int = self._tbats_forecast_with_interval(fh, conf_level)
+            _, tbats_pred_int = self._tbats_forecast_with_interval(fh, c)
 
-            # preserve q = 0.5, which is calculated and returned anyway
-            acc[0.5] = y_pred
+            pred_int[("Coverage", c, "lower")] = tbats_pred_int["lower"]
+            pred_int[("Coverage", c, "upper")] = tbats_pred_int["upper"]
 
-            q2 = 1 - q1  # the other quantile
-
-            # _get_pred_int() returns DataFrame with "lower" "upper" columns
-            # rename them to quantiles
-            colnames = {
-                "lower": q1 if q1 < q2 else q2,
-                "upper": q2 if q2 > q1 else q1,
-            }
-            pred_int = pred_int.rename(columns=colnames)
-
-            # add to acc
-            for q in [q1, q2]:
-                acc[q] = pred_int[q]
-
-        # order as requested and drop un-requested
-        quantiles = acc.reindex(columns=req_quant)
-
-        # the y.name for multi-index or "quantiles"
-        col_name = "Quantiles" if (self._yname in {None, ""}) else self._yname
-        quantiles.columns = pd.MultiIndex.from_product([[col_name], req_quant])
-
-        return quantiles
+        return pred_int
 
     def get_fitted_params(self):
         """Get fitted parameters.

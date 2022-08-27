@@ -15,7 +15,7 @@ from sktime.classification.base import BaseClassifier
 from sktime.classification.distance_based._time_series_neighbors import (
     KNeighborsTimeSeriesClassifier,
 )
-from sktime.datatypes._panel._convert import from_nested_to_2d_array
+from sktime.datatypes import convert
 from sktime.transformations.panel.dictionary_based._paa import PAA
 from sktime.transformations.panel.dwt import DWTTransformer
 from sktime.transformations.panel.hog1d import HOG1DTransformer
@@ -106,24 +106,32 @@ class ShapeDTW(BaseClassifier):
 
     Notes
     -----
-    ..[1] Jiaping Zhao and Laurent Itti, "shapeDTW: Shape Dynamic Time Warping",
+    .. [1] Jiaping Zhao and Laurent Itti, "shapeDTW: Shape Dynamic Time Warping",
         Pattern Recognition, 74, pp 171-184, 2018
         http://www.sciencedirect.com/science/article/pii/S0031320317303710,
 
     """
+
+    _tags = {
+        "classifier_type": "distance",
+    }
 
     def __init__(
         self,
         n_neighbors=1,
         subsequence_length=30,
         shape_descriptor_function="raw",
-        shape_descriptor_functions=["raw", "derivative"],  # noqa from flake8 B006
+        shape_descriptor_functions=None,
         metric_params=None,
     ):
         self.n_neighbors = n_neighbors
         self.subsequence_length = subsequence_length
         self.shape_descriptor_function = shape_descriptor_function
         self.shape_descriptor_functions = shape_descriptor_functions
+        if shape_descriptor_functions is None:
+            self._shape_descriptor_functions = ["raw", "derivative"]
+        else:
+            self._shape_descriptor_functions = shape_descriptor_functions
         self.metric_params = metric_params
 
         super(ShapeDTW, self).__init__()
@@ -214,7 +222,7 @@ class ShapeDTW(BaseClassifier):
             n = self.n_neighbors
             sl = self.subsequence_length
             sdf = self.shape_descriptor_function
-            sdfs = self.shape_descriptor_functions
+            sdfs = self._shape_descriptor_functions
             if sdfs is None or not (len(sdfs) == 2):
                 raise ValueError(
                     "When using 'compound', "
@@ -245,6 +253,7 @@ class ShapeDTW(BaseClassifier):
         # the test/training data. It extracts the subsequences
         # and then performs the shape descriptor function on
         # each subsequence.
+        X = convert(X, from_type="numpy3D", to_type="nested_univ")
         X = self.sw.transform(X)
 
         # Feed X into the appropriate shape descriptor function
@@ -252,7 +261,7 @@ class ShapeDTW(BaseClassifier):
 
         return X
 
-    def _predict_proba(self, X):
+    def _predict_proba(self, X) -> np.ndarray:
         """Perform predictions on the testing data X.
 
         This function returns the probabilities for each class.
@@ -272,7 +281,7 @@ class ShapeDTW(BaseClassifier):
         # Classify the test data
         return self.knn.predict_proba(X)
 
-    def _predict(self, X):
+    def _predict(self, X) -> np.ndarray:
         """Find predictions for all cases in X.
 
         Parameters
@@ -301,7 +310,7 @@ class ShapeDTW(BaseClassifier):
             self.transformer = [self._get_transformer(self.shape_descriptor_function)]
         else:
             self.transformer = []
-            for x in self.shape_descriptor_functions:
+            for x in self._shape_descriptor_functions:
                 self.transformer.append(self._get_transformer(x))
             if not (len(self.transformer) == 2):
                 raise ValueError(
@@ -459,12 +468,11 @@ class ShapeDTW(BaseClassifier):
         # Convert the dataframes into arrays
         for x in first_desc.columns:
             first_desc_array.append(
-                from_nested_to_2d_array(first_desc[x], return_numpy=True)
+                convert(first_desc[x], from_type="nested_univ", to_type="numpyflat")
             )
-
         for x in second_desc.columns:
             second_desc_array.append(
-                from_nested_to_2d_array(second_desc[x], return_numpy=True)
+                convert(first_desc[x], from_type="nested_univ", to_type="numpyflat")
             )
 
         # Concatenate the arrays together

@@ -38,7 +38,7 @@ class CosineTransformer(BaseTransformer):
         "X_inner_mtype": "np.ndarray",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "univariate-only": False,
-        "fit-in-transform": True,
+        "fit_is_empty": True,
         "transform-returns-same-time-index": True,
         "capability:inverse_transform": False,
         # switching off, since cos is not invertible outside [-pi, pi], fails test

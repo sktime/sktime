@@ -62,26 +62,14 @@ class TSFreshClassifier(BaseClassifier):
         scalable hypothesis tests (tsfresh–a python package)." Neurocomputing 307
         (2018): 72-77.
         https://www.sciencedirect.com/science/article/pii/S0925231218304843
-
-    Examples
-    --------
-    >>> from sktime.classification.feature_based import TSFreshClassifier
-    >>> from sklearn.ensemble import RandomForestClassifier
-    >>> from sktime.datasets import load_unit_test
-    >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
-    >>> clf = TSFreshClassifier(
-    ...     default_fc_parameters="minimal",
-    ...     estimator=RandomForestClassifier(n_estimators=10),
-    ... )
-    >>> clf.fit(X_train, y_train)
-    TSFreshClassifier(...)
-    >>> y_pred = clf.predict(X_test)
     """
 
     _tags = {
         "capability:multivariate": True,
         "capability:multithreading": True,
+        "classifier_type": "feature",
+        "python_version": "<3.10",
+        "python_dependencies": "tsfresh",
     }
 
     def __init__(
@@ -162,7 +150,7 @@ class TSFreshClassifier(BaseClassifier):
 
         return self
 
-    def _predict(self, X):
+    def _predict(self, X) -> np.ndarray:
         """Predict class values of n instances in X.
 
         Parameters
@@ -177,7 +165,7 @@ class TSFreshClassifier(BaseClassifier):
         """
         return self._estimator.predict(self._transformer.transform(X))
 
-    def _predict_proba(self, X):
+    def _predict_proba(self, X) -> np.ndarray:
         """Predict class probabilities for n instances in X.
 
         Parameters
@@ -199,3 +187,38 @@ class TSFreshClassifier(BaseClassifier):
             for i in range(0, X.shape[0]):
                 dists[i, self._class_dictionary[preds[i]]] = 1
             return dists
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            For classifiers, a "default" set of parameters should be provided for
+            general testing, and a "results_comparison" set for comparing against
+            previously recorded results if the general set does not produce suitable
+            probabilities to compare against.
+
+        Returns
+        -------
+        params : dict or list of dict, default={}
+            Parameters to create testing instances of the class.
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`.
+        """
+        if parameter_set == "results_comparison":
+            return {
+                "estimator": RandomForestClassifier(n_estimators=10),
+                "default_fc_parameters": "minimal",
+                "relevant_feature_extractor": False,
+            }
+        else:
+            return {
+                "estimator": RandomForestClassifier(n_estimators=2),
+                "default_fc_parameters": "minimal",
+                "relevant_feature_extractor": False,
+            }

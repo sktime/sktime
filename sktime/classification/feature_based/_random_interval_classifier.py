@@ -12,7 +12,7 @@ import numpy as np
 
 from sktime.base._base import _clone_estimator
 from sktime.classification.base import BaseClassifier
-from sktime.contrib.vector_classifiers._rotation_forest import RotationForest
+from sktime.classification.sklearn import RotationForest
 from sktime.transformations.panel.catch22 import Catch22
 from sktime.transformations.panel.random_intervals import RandomIntervals
 
@@ -50,26 +50,12 @@ class RandomIntervalClassifier(BaseClassifier):
     See Also
     --------
     RandomIntervals
-
-    Examples
-    --------
-    >>> from sktime.classification.feature_based import RandomIntervalClassifier
-    >>> from sktime.contrib.vector_classifiers._rotation_forest import RotationForest
-    >>> from sktime.datasets import load_unit_test
-    >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
-    >>> clf = RandomIntervalClassifier(
-    ...     n_intervals=5,
-    ...     estimator=RotationForest(n_estimators=10),
-    ... )
-    >>> clf.fit(X_train, y_train)
-    RandomIntervalClassifier(...)
-    >>> y_pred = clf.predict(X_test)
     """
 
     _tags = {
         "capability:multivariate": True,
         "capability:multithreading": True,
+        "classifier_type": "interval",
     }
 
     def __init__(
@@ -139,7 +125,7 @@ class RandomIntervalClassifier(BaseClassifier):
 
         return self
 
-    def _predict(self, X):
+    def _predict(self, X) -> np.ndarray:
         """Predict class values of n instances in X.
 
         Parameters
@@ -154,7 +140,7 @@ class RandomIntervalClassifier(BaseClassifier):
         """
         return self._estimator.predict(self._transformer.transform(X))
 
-    def _predict_proba(self, X):
+    def _predict_proba(self, X) -> np.ndarray:
         """Predict class probabilities for n instances in X.
 
         Parameters
@@ -176,3 +162,47 @@ class RandomIntervalClassifier(BaseClassifier):
             for i in range(0, X.shape[0]):
                 dists[i, self._class_dictionary[preds[i]]] = 1
             return dists
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            For classifiers, a "default" set of parameters should be provided for
+            general testing, and a "results_comparison" set for comparing against
+            previously recorded results if the general set does not produce suitable
+            probabilities to compare against.
+
+        Returns
+        -------
+        params : dict or list of dict, default={}
+            Parameters to create testing instances of the class.
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`.
+        """
+        from sklearn.ensemble import RandomForestClassifier
+
+        from sktime.transformations.series.summarize import SummaryTransformer
+
+        if parameter_set == "results_comparison":
+            return {
+                "n_intervals": 3,
+                "estimator": RandomForestClassifier(n_estimators=10),
+                "interval_transformers": SummaryTransformer(
+                    summary_function=("mean", "std", "min", "max"),
+                    quantiles=(0.25, 0.5, 0.75),
+                ),
+            }
+        else:
+            return {
+                "n_intervals": 2,
+                "estimator": RandomForestClassifier(n_estimators=2),
+                "interval_transformers": SummaryTransformer(
+                    summary_function=("mean", "min", "max"),
+                ),
+            }

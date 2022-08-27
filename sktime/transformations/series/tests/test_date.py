@@ -64,6 +64,30 @@ pipe = DateTimeFeatures(manual_selection=["year", "second_of_minute"])
 pipe.fit(y_train)
 test_diffdateformat = pipe.transform(y_train).columns.to_list()
 
+pipe = DateTimeFeatures(ts_freq="L", feature_scope="comprehensive")
+pipe.fit(y_train)
+test_full = pipe.transform(y_train).columns.to_list()
+test_types = pipe.transform(y_train).select_dtypes(include=["int64"]).columns.to_list()
+
+all_args = [
+    "Number of airline passengers",
+    "year",
+    "quarter_of_year",
+    "month_of_year",
+    "week_of_year",
+    "day_of_year",
+    "month_of_quarter",
+    "week_of_quarter",
+    "day_of_quarter",
+    "week_of_month",
+    "day_of_month",
+    "day_of_week",
+    "hour_of_day",
+    "minute_of_hour",
+    "second_of_minute",
+    "millisecond_of_second",
+]
+
 
 @pytest.mark.parametrize(
     "test_input,expected",
@@ -77,8 +101,8 @@ test_diffdateformat = pipe.transform(y_train).columns.to_list()
                 "ARMED",
                 "POP",
                 "year",
-                "quarter",
-                "month",
+                "quarter_of_year",
+                "month_of_year",
                 "week_of_year",
                 "month_of_quarter",
                 "week_of_quarter",
@@ -87,7 +111,7 @@ test_diffdateformat = pipe.transform(y_train).columns.to_list()
         ),
         (
             test_reduced_featurescope,
-            ["GNPDEFL", "GNP", "UNEMP", "ARMED", "POP", "year", "month"],
+            ["GNPDEFL", "GNP", "UNEMP", "ARMED", "POP", "year", "month_of_year"],
         ),
         (
             test_changing_frequency,
@@ -98,18 +122,35 @@ test_diffdateformat = pipe.transform(y_train).columns.to_list()
                 "ARMED",
                 "POP",
                 "year",
-                "quarter",
-                "month",
+                "quarter_of_year",
+                "month_of_year",
                 "month_of_quarter",
             ],
         ),
-        (test_manspec_with_tsfreq, ["GNPDEFL", "GNP", "UNEMP", "ARMED", "POP", "year"]),
+        (
+            test_manspec_with_tsfreq,
+            ["GNPDEFL", "GNP", "UNEMP", "ARMED", "POP", "year", "second_of_minute"],
+        ),
         (
             test_manspec_wo_tsfreq,
-            ["GNPDEFL", "GNP", "UNEMP", "ARMED", "POP", "year", "second"],
+            ["GNPDEFL", "GNP", "UNEMP", "ARMED", "POP", "year", "second_of_minute"],
         ),
-        (test_univariate_data, ["Number of airline passengers", "year", "second"]),
-        (test_diffdateformat, ["Number of airline passengers", "year", "second"]),
+        (
+            test_univariate_data,
+            ["Number of airline passengers", "year", "second_of_minute"],
+        ),
+        (
+            test_diffdateformat,
+            ["Number of airline passengers", "year", "second_of_minute"],
+        ),
+        (
+            test_full,
+            all_args,
+        ),
+        (
+            test_types,
+            all_args[1:],
+        ),
     ],
 )
 def test_eval(test_input, expected):

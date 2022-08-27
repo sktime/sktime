@@ -8,7 +8,6 @@ from warnings import warn
 
 import numpy as np
 import pytest
-from pandas.testing import assert_series_equal
 
 from sktime.datasets import load_airline
 from sktime.transformations.series.scaledlogit import ScaledLogitTransformer
@@ -30,19 +29,6 @@ def test_scaledlogit_transform(lower, upper, output):
     transformer = ScaledLogitTransformer(lower, upper)
     y_transformed = transformer.fit_transform(TEST_SERIES)
     assert np.all(output == y_transformed)
-
-
-# Tests that all cases have a consistent inverse transform
-@pytest.mark.parametrize(
-    "lower, upper", [(0, 700), (None, 700), (0, None), (None, None)]
-)
-def test_scaledlogit_consistent_invesre_transform(lower, upper):
-    """Tests that all cases have a consistent inverse transform."""
-    y = load_airline()
-    transformer = ScaledLogitTransformer(lower, upper)
-    y_transformed = transformer.fit_transform(y)
-    y_restored = transformer.inverse_transform(y_transformed)
-    assert_series_equal(y, y_restored, check_names=False)
 
 
 @pytest.mark.parametrize(
