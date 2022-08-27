@@ -40,7 +40,6 @@ __all__ = [
 import os
 from urllib.error import HTTPError
 
-import backoff
 import numpy as np
 import pandas as pd
 import statsmodels.api as sm
@@ -1004,7 +1003,6 @@ def load_unit_test_tsf():
     )
 
 
-@backoff.on_exception(wait_gen=backoff.expo, exception=HTTPError, max_tries=5)
 def load_solar(
     start="2021-05-01",
     end="2021-09-01",
@@ -1042,31 +1040,54 @@ def load_solar(
 
     Examples
     --------
-    >>> from sktime.datasets import load_solar
-    >>> y = load_solar()
+    >>> from sktime.datasets import load_solar  # doctest: +SKIP
+    >>> y = load_solar()  # doctest: +SKIP
     """
-    url = "https://api0.solar.sheffield.ac.uk/pvlive/api/"
-    url = url + api_version + "/gsp/0?"
-    url = url + "start=" + start + "T00:00:00&"
-    url = url + "end=" + end + "T00:00:00&"
-    url = url + "extra_fields=capacity_mwp&"
-    url = url + "data_format=csv"
+    from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-    df = (
-        pd.read_csv(
-            url, index_col=["gsp_id", "datetime_gmt"], parse_dates=["datetime_gmt"]
+    _check_soft_dependencies("backoff")
+
+    import backoff
+
+    @backoff.on_exception(wait_gen=backoff.expo, exception=HTTPError, max_tries=5)
+    def _load_solar(
+        start="2021-05-01",
+        end="2021-09-01",
+        normalise=True,
+        return_full_df=False,
+        api_version="v4",
+    ):
+        """Private loader, for decoration with backoff."""
+        url = "https://api0.solar.sheffield.ac.uk/pvlive/api/"
+        url = url + api_version + "/gsp/0?"
+        url = url + "start=" + start + "T00:00:00&"
+        url = url + "end=" + end + "T00:00:00&"
+        url = url + "extra_fields=capacity_mwp&"
+        url = url + "data_format=csv"
+
+        df = (
+            pd.read_csv(
+                url, index_col=["gsp_id", "datetime_gmt"], parse_dates=["datetime_gmt"]
+            )
+            .droplevel(0)
+            .sort_index()
         )
-        .droplevel(0)
-        .sort_index()
-    )
-    df = df.asfreq("30T")
-    df["generation_pu"] = df["generation_mw"] / df["capacity_mwp"]
-
-    if return_full_df:
+        df = df.asfreq("30T")
         df["generation_pu"] = df["generation_mw"] / df["capacity_mwp"]
-        return df
-    else:
-        if normalise:
-            return df["generation_pu"].rename("solar_gen")
+
+        if return_full_df:
+            df["generation_pu"] = df["generation_mw"] / df["capacity_mwp"]
+            return df
         else:
-            return df["generation_mw"].rename("solar_gen")
+            if normalise:
+                return df["generation_pu"].rename("solar_gen")
+            else:
+                return df["generation_mw"].rename("solar_gen")
+
+    return _load_solar(
+        start=start,
+        end=end,
+        normalise=normalise,
+        return_full_df=return_full_df,
+        api_version=api_version,
+    )

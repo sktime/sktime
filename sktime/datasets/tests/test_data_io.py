@@ -32,6 +32,7 @@ from sktime.datasets import (
 )
 from sktime.datasets._data_io import MODULE, _convert_tsf_to_hierarchical
 from sktime.datatypes import check_is_mtype
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 
 def test_load_from_tsfile():
@@ -1386,6 +1387,10 @@ def test_convert_tsf_to_multiindex(freq):
     )
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("backoff", severity="none"),
+    reason="load_solar requires backoff in the environment",
+)
 @pytest.mark.parametrize("return_df", [False, True])
 def test_load_solar(return_df):
     """Test function for loading solar data through the Sheffiled Solar API."""
