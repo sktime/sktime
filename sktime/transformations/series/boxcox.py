@@ -131,11 +131,13 @@ class BoxCoxTransformer(BaseTransformer):
         "capability:inverse_transform": True,
     }
 
-    def __init__(self, bounds=None, method="mle", sp=None):
+    def __init__(self, bounds=None, method="mle", sp=None, offset=0, scale=1):
         self.bounds = bounds
         self.method = method
         self.lambda_ = None
         self.sp = sp
+        self.offset = offset
+        self.scale = scale
         super(BoxCoxTransformer, self).__init__()
 
     def _fit(self, X, y=None):
@@ -253,7 +255,7 @@ class LogTransformer(BaseTransformer):
         "capability:inverse_transform": True,
     }
 
-    def _transform(self, X, y=None, offset = 0 , scale = 1 ):
+    def _transform(self, X, y=None):
         """Transform X and return a transformed version.
 
         private _transform containing the core logic, called from transform
@@ -271,10 +273,12 @@ class LogTransformer(BaseTransformer):
         Xt : 2D np.ndarray
             transformed version of X
         """
-        Xt = np.log(scale * (X + offset) )
+        offset = self._get_offset(X)
+        scale = self._get_scale(X)
+        Xt = np.log(scale * (X + offset))
         return Xt
 
-    def _inverse_transform(self, X, y=None, offset = 0 , scale = 1 ):
+    def _inverse_transform(self, X, y=None):
         """Inverse transform X and return an inverse transformed version.
 
         core logic
@@ -292,7 +296,9 @@ class LogTransformer(BaseTransformer):
         Xt : 2D np.ndarray
             inverse transformed version of X
         """
-        Xt = ( np.exp(X) / scale ) - offset
+        offset = self._get_offset(X)
+        scale = self._get_scale(X)
+        Xt = (np.exp(X) / scale) - offset
         return Xt
 
 
