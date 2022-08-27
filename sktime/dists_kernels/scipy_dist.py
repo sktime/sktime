@@ -8,7 +8,6 @@ Interface module to scipy.spatial's pairwise distance function cdist
 __author__ = ["fkiraly"]
 
 import pandas as pd
-
 from scipy.spatial.distance import cdist
 
 from sktime.dists_kernels._base import BasePairwiseTransformer
