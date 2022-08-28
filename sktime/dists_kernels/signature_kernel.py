@@ -401,7 +401,7 @@ def sqize_kernel_low_rank(K, L, theta=1.0, normalize=False, rankbound=float("inf
                 Id, mult_low_rank(cumsum_rev_low_rank(hadamard_low_rank(K, R)), theta)
             )
             # R = Id + cumsum_rev(K * R)
-        return 1 + theta * sum_low_rank(hadamard_low_rank(K, R)) 
+        return 1 + theta * sum_low_rank(hadamard_low_rank(K, R))
         # return 1 + np.sum(K*R)
         # outermost bracket: since i1>=1 and not i1>1 we do it outside of loop
 
@@ -530,7 +530,7 @@ def seq_kernel(
     np.ndarray of shape (N, N), sequential kernel matrix
         [i,j]-th entry is sequential kernel between X[i] and X[j]
     """
-    N = np.shape(X)[0]   
+    N = np.shape(X)[0]
     KSeq = np.zeros((N, N))
 
     if kernelfun is None:
@@ -565,7 +565,7 @@ def seq_kernel(
             normalize=normalize,
             rankbound=rankbound
         )
-        KSeq = np.inner(R, R)             
+        KSeq = np.inner(R, R)
         # todo: kernelfun gives back a LRdec object
         #  for now, linear low-rank approximation is done
         # KSeq[row1ind,row2ind] = qqize_kernel_low_rank(
@@ -637,8 +637,8 @@ def seq_kernel_XY(
             rankbound=rankbound,
         )
 
-    N = np.shape(X)[0]   
-    M = np.shape(Y)[0]   
+    N = np.shape(X)[0]
+    M = np.shape(Y)[0]
 
     KSeq = np.zeros((N, M))
 
@@ -792,7 +792,7 @@ class SeqKernelizer(BaseEstimator, TransformerMixin):
         deg=2,
         numfeatures=2,
         subsample=100,
-        differences=True, 
+        differences=True,
         normalize=False,
         lowrank=False,
         rankbound=float("inf"),
@@ -810,12 +810,12 @@ class SeqKernelizer(BaseEstimator, TransformerMixin):
         self.lowrank = lowrank
         self.rankbound = rankbound
 
-        self.reshape_kwargs = {
+        self._reshape_kwargs = {
             "numfeatures": numfeatures,
             "subsample": subsample,
             "differences": differences,
         }
-        self.kern_kwargs = {
+        self._kern_kwargs = {
             "level": level,
             "degree": degree,
             "theta": theta,
@@ -826,12 +826,12 @@ class SeqKernelizer(BaseEstimator, TransformerMixin):
 
     def fit(self, X, y=None):
         """Fit = reshape the series X."""
-        self._X = time_series_reshaper(X, **self.reshape_kwargs)
+        self._X = time_series_reshaper(X, **self._reshape_kwargs)
         return self
 
     def transform(self, X):
         """Transform the data to kernel matrix rows."""
-        X = time_series_reshaper(X, **self.reshape_kwargs)
+        X = time_series_reshaper(X, **self._reshape_kwargs)
 
         def kernselect(kername):
             switcher = {
@@ -842,111 +842,81 @@ class SeqKernelizer(BaseEstimator, TransformerMixin):
             }
             return switcher.get(kername, "nothing")
 
-        KSeq = seq_kernel_XY(X, self._X, kernselect(self.kernel), **self.kern_kwargs)
+        KSeq = seq_kernel_XY(X, self._X, kernselect(self.kernel), **self._kern_kwargs)
 
         return KSeq
 
 
 class SignatureKernel(BasePairwiseTransformerPanel):
-    r"""Interface to sktime native edit distances.
+    """Compute the sequential kernel matrix row features on collection of series.
 
-    Interface to the following edit distances:
-    LCSS - longest common subsequence distance
-    ERP - Edit distance for real penalty
-    EDR - Edit distance for real sequences
-    TWE - Time warp edit distance
-
-    LCSS [1]_ attempts to find the longest common sequence between two time series and
-    returns a value that is the percentage that longest common sequence assumes.
-    LCSS is computed by matching indexes that are
-    similar up until a defined threshold (epsilon).
-
-    The value returned will be between 0.0 and 1.0, where 0.0 means the two time series
-    are exactly the same and 1.0 means they are complete opposites.
-
-    EDR [2]_ computes the minimum number of elements (as a percentage) that must be
-    removed from x and y so that the sum of the distance between the remaining
-    signal elements lies within the tolerance (epsilon).
-
-    The value returned will be between 0 and 1 per time series. The value will
-    represent as a percentage of elements that must be removed for the time series to
-    be an exact match.
-
-    ERP [3]_ attempts align time series
-    by better considering how indexes are carried forward through the cost matrix.
-    Usually in the dtw cost matrix, if an alignment can't be found the previous value
-    is carried forward. ERP instead proposes the idea of gaps or sequences of points
-    that have no matches. These gaps are then punished based on their distance from 'g'.
-
-    TWE [4]_ is a distance measure for discrete time series
-    matching with time 'elasticity'. In comparison to other distance measures, (e.g.
-    DTW (Dynamic Time Warping) or LCS (Longest Common Subsequence Problem)), TWE is a
-    metric. Its computational time complexity is O(n^2), but can be drastically reduced
-    in some specific situation by using a corridor to reduce the search space. Its
-    memory space complexity can be reduced to O(n).
+    Implements the signature kernel of Kiraly et al, see [1]_ and [2]_,
+    including higher-order and low-rank approximation variants described therein.
 
     Parameters
     ----------
-    distance: str, one of ["lcss", "edr", "erp", "twe"], optional, default = "lcss"
-        name of the distance that is calculated
-    window: float, default = None
-        Float that is the radius of the sakoe chiba window (if using Sakoe-Chiba
-        lower bounding). Value must be between 0. and 1.
-    itakura_max_slope: float, default = None
-        Gradient of the slope for itakura parallelogram (if using Itakura
-        Parallelogram lower bounding)
-    bounding_matrix: 2D np.ndarray, optional, default = None
-        if passed, must be of shape (len(X), len(X2)) for X, X2 in `transform`
-        Custom bounding matrix to use. If defined then other lower_bounding params
-        are ignored. The matrix should be structure so that indexes considered in
-        bound should be the value 0. and indexes outside the bounding matrix should
-        be infinity.
-    epsilon : float, defaults = 1.
-        Used in LCSS, EDR, ERP, otherwise ignored
-        Matching threshold to determine if two subsequences are considered close
-        enough to be considered 'common'.
-    g: float, defaults = 0.
-        Used in ERP, otherwise ignored.
-        The reference value to penalise gaps.
-    lmbda: float, optional, default = 1.0
-        Used in TWE, otherwise ignored.
-        A constant penalty that punishes the editing efforts. Must be >= 1.0.
-    nu: float optional, default = 0.001
-        Used in TWE, otherwise ignored.
-        A non-negative constant which characterizes the stiffness of the elastic
-        twe measure. Must be > 0.
-    p: int optional, default = 2
-        Used in TWE, otherwise ignored.
-        Order of the p-norm for local cost.
+    kernel : sktime pairwise (tabular) transformer, callable, or None
+        inner (tabular) kernel used in the signature sequence kernel
+        if callable: function (2D np.ndarray x 2D np.ndarray) -> 2D np.ndarray
+        pairwise kernel function, matrix sizes (n, d) x (m, d) -> (n x m)
+        optional, default = None = Euclidean (linear) kernel with scale parameter 1
+    level : int, optional, default = 2
+        an integer >= 1, representing the level of truncation of the sequential kernel
+    degree : int, optional, default = 1
+        an integer >= 1, representing the order of approximation of sequential kernel
+        can be set only if lowrank = False, otherwise ignored (always = 1)
+    theta : float, optional, default=1.0
+        a positive scaling factor for the levels, i-th level is scaled by theta^i
+    normalize : bool, optional, default = False
+        whether the output kernel matrix is normalized
+        if True, sums and cumsums are divided by prod(K.shape)
+    lowrank : bool, optional, default = False
+        whether to use low rank approximation in computing the kernel
+    rankbound : int, optional, default = infinity
+        a hard threshold for the rank of the level matrices
+        used only if lowrank = True
 
     References
     ----------
-    .. [1] M. Vlachos, D. Gunopoulos, and G. Kollios. 2002. "Discovering
-        Similar Multidimensional Trajectories", In Proceedings of the
-        18th International Conference on Data Engineering (ICDE '02).
-        IEEE Computer Society, USA, 673.
+    .. [1] F. Kiraly, H. Oberhauser. 2016. "Kernels for sequentially ordered data.",
+        arXiv: 1601.08169.
+    .. [2] F. Kiraly, H. Oberhauser. 2019. "Kernels for sequentially ordered data.",
+        Journal of Machine Learning Research.
     """
 
-    _tags = {
-        "symmetric": True,  # all the distances are symmetric
-        "X_inner_mtype": "numpy3D",
-    }
-
-    ALLOWED_DISTANCE_STR = ["lcss", "edr", "erp", "twe"]
+    _tags = {"X_inner_mtype": "numpy3D"}
 
     def __init__(
         self,
-
+        kernel="None",
+        level=2,
+        degree=1,
+        theta=1,
+        normalize=False,
+        lowrank=False,
+        rankbound=float("inf"),
     ):
-        self.distance = distance
-        self.window = window
-        self.itakura_max_slope = itakura_max_slope
-        self.bounding_matrix = bounding_matrix
-        self.epsilon = epsilon
-        self.g = g
-        self.lmbda = lmbda
-        self.nu = nu
-        self.p = p
+        self.kernel = kernel
+        self.level = level
+        self.degree = degree
+        self.theta = theta
+        self.normalize = normalize
+        self.lowrank = lowrank
+        self.rankbound = rankbound
+
+        if kernel is None:
+            self._kernel = partial(k_euclid, scale=1)
+        else:
+            self._kernel = kernel
+
+        self._kern_kwargs = {
+            "L": level,
+            "D": degree,
+            "theta": theta,
+            "normalize": normalize,
+            "lowrank": lowrank,
+            "rankbound": rankbound,
+        }
 
         super(SignatureKernel, self).__init__()
 
@@ -972,16 +942,44 @@ class SignatureKernel(BasePairwiseTransformerPanel):
         distmat: np.array of shape [n, m]
             (i,j)-th entry contains distance/kernel between X[i] and X2[j]
         """
-        metric_key = self.distance
-        kwargs = self.kwargs
+        kwargs = self._kern_kwargs
+        kernel = self._kernel
 
-        distmat = pairwise_distance(X, X2, metric=metric_key, **kwargs)
-
-        return distmat
+        if X2 is None:
+            return seq_kernel(X, kernelfun=kernel, **kwargs)
+        else:
+            return seq_kernel_XY(X, X2, kernelfun=kernel, **kwargs)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
-        """Test parameters for EditDist."""
-        param_list = [{"distance": x} for x in cls.ALLOWED_DISTANCE_STR]
+        """Return testing parameter settings for the estimator.
 
-        return param_list
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            There are currently no reserved values for distance/kernel transformers.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        param1 = {}
+
+        # test higher level and normalization
+        param2 = {"level": 3, "normalize": True}
+
+        # test higher-order function
+        param3 = {"degree": 2}
+
+        # test low-rank approximation
+        param4 = {"lowrank": True}
+
+        paramlist = [param1, param2, param3, param4]
+
+        return paramlist
