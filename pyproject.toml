@@ -72,9 +72,11 @@ all_extras = [
     "tensorflow",
     "tsfresh>=0.17.0; python_version < '3.10'",
     "tslearn>=0.5.2",
+    "xarray",
 ]
 
 dev = [
+    "backoff",
     "httpx",
     "pre-commit",
     "pytest",
