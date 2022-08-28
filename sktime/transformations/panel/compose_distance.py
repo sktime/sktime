@@ -7,6 +7,7 @@ __all__ = ["DistanceFeatures"]
 import pandas as pd
 
 from sktime.transformations.base import BaseTransformer
+from sktime.utils.multiindex import flatten_multiindex
 
 
 class DistanceFeatures(BaseTransformer):
@@ -20,25 +21,28 @@ class DistanceFeatures(BaseTransformer):
 
     Parameters
     ----------
-    distance : pairwise panel transformer inheriting from BasePairwiseTransformerPanel,
-        or callable, or None, optional. default = None = FlatDist(ScipyDist())
+    distance: sktime pairwise panel transform, str, or callable, optional, default=None
+        if panel transform, will be used directly as the distance in the algorithm
+        default None = euclidean distance on flattened series, FlatDist(ScipyDist())
+        if str, will behave as FlatDist(ScipyDist(distance)) = scipy dist on flat series
+        if callable, must be distance_mtype x distance_mtype -> 2D float np.array
     distance_mtype : str, or list of str optional. default = None.
         mtype that distance expects for X and X2, if a callable
-            only set this if distance is not BasePairwiseTransformerPanel descendant
+        only set this if distance is not BasePairwiseTransformerPanel descendant
     flatten_hierarchy : bool, optional, default=False.
-        whether hierarchy in `transform` return is flattened (using `__` concat),
+        whether column hierarchy in `transform` return is flattened (using `__` concat),
         in case of a hierarchical series index seen in `fit`.
 
     Examples
     --------
     >>> from sktime.datasets import load_unit_test
-    >>> from sktime.regression.distance_based import KNeighborsTimeSeriesRegressor
-    >>> X_train, y_train = load_unit_test(return_X_y=True, split="train")
-    >>> X_test, y_test = load_unit_test(return_X_y=True, split="test")
-    >>> regressor = KNeighborsTimeSeriesRegressor()
-    >>> regressor.fit(X_train, y_train)
-    KNeighborsTimeSeriesRegressor(...)
-    >>> y_pred = regressor.predict(X_test)
+    >>> from sktime.transformations.panel.compose_distance import DistanceFeatures
+    >>> X_train, _ = load_unit_test(return_X_y=True, split="train")
+    >>> X, _ = load_unit_test(return_X_y=True, split="test")
+    >>> trafo = DistanceFeatures()
+    >>> trafo.fit(X_train)
+    DistanceFeatures(...)
+    >>> Xt = trafo.transform(X)
     """
 
     _tags = {
@@ -68,6 +72,21 @@ class DistanceFeatures(BaseTransformer):
         self.flatten_hierarchy = flatten_hierarchy
 
         super(DistanceFeatures, self).__init__()
+
+        from sktime.dists_kernels import (
+            BasePairwiseTransformerPanel,
+            FlatDist,
+            ScipyDist,
+        )
+
+        if distance is None:
+            self.distance_ = FlatDist(ScipyDist())
+        elif isinstance(distance, str):
+            self.distance_ = FlatDist(ScipyDist(metric=distance))
+        elif isinstance(distance, BasePairwiseTransformerPanel):
+            self.distance_ = distance.clone()
+        else:
+            self.distance_ = distance
 
         if distance_mtype is not None:
             self.set_tags(X_inner_mtype=distance_mtype)
@@ -101,7 +120,7 @@ class DistanceFeatures(BaseTransformer):
         -------
         transformed version of X
         """
-        distance = self.distance
+        distance = self.distance_
 
         X_train = self._X
 
@@ -109,6 +128,9 @@ class DistanceFeatures(BaseTransformer):
 
         X_train_ind = X_train.index.droplevel(-1)
         X_ind = X.index.droplevel(-1)
+
+        if self.flatten_hierarchy:
+            X_ind = flatten_multiindex(X_ind)
 
         Xt = pd.DataFrame(distmat, columns=X_train_ind, index=X_ind)
 
