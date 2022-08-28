@@ -124,10 +124,21 @@ class DistanceFeatures(BaseTransformer):
 
         X_train = self._X
 
-        distmat = distance(X, X_train)
+        X_train_ind = X_train.index.droplevel(-1).unique()
+        X_ind = X.index.droplevel(-1).unique()
 
-        X_train_ind = X_train.index.droplevel(-1)
-        X_ind = X.index.droplevel(-1)
+        def _coerce_to_panel(x):
+            """Coerce hierarchical or pandel x to panel."""
+            nlevels = x.index.nlevels
+            if nlevels > 2:
+                return x.droplevel(list(range(nlevels - 2)))
+            else:
+                return x
+
+        X = _coerce_to_panel(X)
+        X_train = _coerce_to_panel(X_train)
+
+        distmat = distance(X, X_train)
 
         if self.flatten_hierarchy:
             X_ind = flatten_multiindex(X_ind)
