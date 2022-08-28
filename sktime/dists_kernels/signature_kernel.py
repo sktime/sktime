@@ -5,6 +5,7 @@ __author__ = ["fkiraly"]
 
 import collections
 from functools import partial
+
 import numpy as np
 from scipy.sparse.linalg import svds
 from sklearn.base import BaseEstimator, TransformerMixin
@@ -78,6 +79,7 @@ def cumsum_shift_mult(array, dims):
 # low rank reduction utilities
 # ----------------------------
 
+
 def rankreduce(array, rankbound):
     """Project 2D array on top rankbound singular values."""
     arraysvd = svds(array.astype("f"), k=rankbound)
@@ -109,7 +111,7 @@ def k_polynom(x, y, scale, deg):
 
 def k_gauss(x, y, scale):
     """Gaussian kernel with scale coeff."""
-    return np.exp(-(scale ** 2) * sqdist(x, y) / 2)
+    return np.exp(-(scale**2) * sqdist(x, y) / 2)
 
 
 def k_euclid(x, y, scale):
@@ -119,7 +121,7 @@ def k_euclid(x, y, scale):
 
 def k_laplace(x, y, scale):
     """Laplace kernel with scale coeff."""
-    return np.exp(-scale * np.sqrt(np.inner(x-y, x-y)))
+    return np.exp(-scale * np.sqrt(np.inner(x - y, x - y)))
 
 
 def k_tanh(x, y, off, scale):
@@ -169,7 +171,7 @@ def sqize_kernel(K, L, theta=1.0, normalize=False):
         for _ in range(L - 1):
             R = Id + cumsum_rev(K * R)  # A*R is componentwise
         # outermost bracket: since i1>=1 and not i1>1 we do it outside of loop
-        return 1 + np.sum(K*R)
+        return 1 + np.sum(K * R)
 
 
 def sqize_kernel_ho(K, L, D=1, theta=1.0, normalize=False):
@@ -201,11 +203,11 @@ def sqize_kernel_ho(K, L, D=1, theta=1.0, normalize=False):
 
     for ell in range(1, L):
         Dprime = min(D, ell)
-        Acs = cumsum_shift_mult(np.sum(A[ell-1, :, :, :, :], (0, 1)), (0, 1))
+        Acs = cumsum_shift_mult(np.sum(A[ell - 1, :, :, :, :], (0, 1)), (0, 1))
         A[ell, 0, 0, :, :] = K * (Id + Acs)
         for d1 in range(1, Dprime):
-            Acs1 = cumsum_shift_mult(np.sum(A[ell-1, d1-1, :, :, :], 0), 1)
-            Acs2 = cumsum_shift_mult(np.sum(A[ell-1, :, d1-1, :, :], 0), 0)
+            Acs1 = cumsum_shift_mult(np.sum(A[ell - 1, d1-1, :, :, :], 0), 1)
+            Acs2 = cumsum_shift_mult(np.sum(A[ell - 1, :, d1-1, :, :], 0), 0)
             A[ell, d1, 0, :, :] = A[ell, d1, 0, :, :] + (1 / d1) * K * Acs1
             A[ell, :, d1, :, :] = A[ell, 0, d1, :, :] + (1 / d1) * K * Acs2
 
@@ -392,7 +394,7 @@ def sqize_kernel_low_rank(K, L, theta=1.0, normalize=False, rankbound=float("inf
         R = np.ones(K.shape)
         for _ in range(L - 1):
             R = (Id + theta * cumsum_rev(K * R) / normfac) / (1 + theta)
-        return (1 + theta * np.sum(K*R) / normfac) / (1 + theta)
+        return (1 + theta * np.sum(K * R) / normfac) / (1 + theta)
     else:
         Id = LRdec(np.ones([K.U.shape[0], 1]), np.ones([K.V.shape[0], 1]))
         # Id = np.ones(K.shape)
@@ -405,7 +407,7 @@ def sqize_kernel_low_rank(K, L, theta=1.0, normalize=False, rankbound=float("inf
             )
             # R = Id + cumsum_rev(K * R)
         return 1 + theta * sum_low_rank(hadamard_low_rank(K, R))
-        # return 1 + np.sum(K*R)
+        # return 1 + np.sum(K * R)
         # outermost bracket: since i1>=1 and not i1>1 we do it outside of loop
 
 
