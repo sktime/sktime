@@ -131,13 +131,11 @@ class BoxCoxTransformer(BaseTransformer):
         "capability:inverse_transform": True,
     }
 
-    def __init__(self, bounds=None, method="mle", sp=None, offset=0, scale=1):
+    def __init__(self, bounds=None, method="mle", sp=None):
         self.bounds = bounds
         self.method = method
         self.lambda_ = None
         self.sp = sp
-        self.offset = offset
-        self.scale = scale
         super(BoxCoxTransformer, self).__init__()
 
     def _fit(self, X, y=None):
@@ -254,6 +252,11 @@ class LogTransformer(BaseTransformer):
         "univariate-only": False,
         "capability:inverse_transform": True,
     }
+
+    def __init__(self, offset=0, scale=1):
+        self.offset = offset
+        self.scale = scale
+        super(LogTransformer, self).__init__()
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
