@@ -160,9 +160,9 @@ def sqize_kernel(K, L, theta=1.0, normalize=False):
         normfac = np.prod(K.shape)
         Id = np.ones(K.shape)
         R = np.ones(K.shape)
-        for _ in range(L-1):
-            R = (Id + theta*cumsum_rev(K * R) / normfac) / (1 + theta)
-        return (1 + theta*np.sum(K * R) / normfac) / (1 + theta)
+        for _ in range(L - 1):
+            R = (Id + theta * cumsum_rev(K * R) / normfac) / (1 + theta)
+        return (1 + theta * np.sum(K * R) / normfac) / (1 + theta)
     else:
         Id = np.ones(K.shape)
         R = np.ones(K.shape)
@@ -210,10 +210,13 @@ def sqize_kernel_ho(K, L, D=1, theta=1.0, normalize=False):
             A[ell, :, d1, :, :] = A[ell, 0, d1, :, :] + (1 / d1) * K * Acs2
 
             for d2 in range(1, Dprime):
-                Acs12 = cumsum_shift_mult(np.sum(A[ell-1, d1-1, d2-1, :, :], 0), 0)
-                A[ell, d1, d2, :, :] = A[ell, d1, d2, :, :] + (1 / (d1*d2)) * K * Acs12
-
-    return 1 + np.sum(A[L-1, :, :, :, :])
+                Acs12 = cumsum_shift_mult(
+                    np.sum(A[ell - 1, d1 - 1, d2 - 1, :, :], 0), 0
+                )
+                A[ell, d1, d2, :, :] = (
+                    A[ell, d1, d2, :, :] + (1 / (d1 * d2)) * K * Acs12
+                )
+    return 1 + np.sum(A[L - 1, :, :, :, :])
 
 
 # low-rank decomposition
@@ -297,8 +300,8 @@ def hadamard_low_rank(K, R):
     """
     rankK = K.U.shape[1]
     rankR = R.U.shape[1]
-    U = (np.tile(K.U, rankR)*np.repeat(R.U, rankK, 1))
-    V = (np.tile(K.V, rankR)*np.repeat(R.V, rankK, 1))
+    U = np.tile(K.U, rankR) * np.repeat(R.U, rankK, 1)
+    V = np.tile(K.V, rankR) * np.repeat(R.V, rankK, 1)
     return LRdec(U, V)
 
 
@@ -315,7 +318,7 @@ def hadamard_low_rank_batch(U, P):
     """Hadamard multiply U and P component-wise (1st)."""
     rankU = U.shape[2]
     rankP = P.shape[2]
-    return (np.tile(U, rankP)*np.repeat(P, rankU, 2))
+    return np.tile(U, rankP) * np.repeat(P, rankU, 2)
 
 
 def HadamardLowRankSubS(U, P, rho):
@@ -323,7 +326,7 @@ def HadamardLowRankSubS(U, P, rho):
     rankU = U.shape[2]
     rankP = P.shape[2]
     permut = np.sort(np.random.permutation(range(rankU * rankP))[range(rho)])
-    return (np.tile(U, rankP)*np.repeat(P, rankU, 2))[:, :, permut]
+    return (np.tile(U, rankP) * np.repeat(P, rankU, 2))[:, :, permut]
 
 
 def cumsum_rev_low_rank(K):
@@ -387,14 +390,14 @@ def sqize_kernel_low_rank(K, L, theta=1.0, normalize=False, rankbound=float("inf
         normfac = np.prod(K.shape)
         Id = np.ones(K.shape)
         R = np.ones(K.shape)
-        for _ in range(L-1):
-            R = (Id + theta*cumsum_rev(K * R) / normfac) / (1 + theta)
-        return (1 + theta*np.sum(K*R) / normfac) / (1 + theta)
+        for _ in range(L - 1):
+            R = (Id + theta * cumsum_rev(K * R) / normfac) / (1 + theta)
+        return (1 + theta * np.sum(K*R) / normfac) / (1 + theta)
     else:
         Id = LRdec(np.ones([K.U.shape[0], 1]), np.ones([K.V.shape[0], 1]))
         # Id = np.ones(K.shape)
         R = Id
-        for _ in range(L-1):
+        for _ in range(L - 1):
             # todo: execute only if rank is lower than rankbound
             #       reduce to rank
             R = add_low_rank(
