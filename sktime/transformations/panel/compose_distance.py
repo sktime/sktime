@@ -4,6 +4,7 @@
 __author__ = ["fkiraly"]
 __all__ = ["DistanceFeatures"]
 
+import pandas as pd
 
 from sktime.transformations.base import BaseTransformer
 
@@ -100,21 +101,15 @@ class DistanceFeatures(BaseTransformer):
         -------
         transformed version of X
         """
-        # implement here
-        # X, y passed to this function are always of X_inner_mtype, y_inner_mtype
-        # IMPORTANT: avoid side effects to X, y
-        #
-        # if transform-output is "Primitives":
-        #  return should be pd.DataFrame, with as many rows as instances in input
-        #  if input is a single series, return should be single-row pd.DataFrame
-        # if transform-output is "Series":
-        #  return should be of same mtype as input, X_inner_mtype
-        #  if multiple X_inner_mtype are supported, ensure same input/output
-        # if transform-output is "Panel":
-        #  return a multi-indexed pd.DataFrame of Panel mtype pd_multiindex
-        #
-        # todo: add the return mtype/scitype to the docstring, e.g.,
-        #  Returns
-        #  -------
-        #  X_transformed : Series of mtype pd.DataFrame
-        #       transformed version of X
+        distance = self.distance
+
+        X_train = self._X
+
+        distmat = distance(X, X_train)
+
+        X_train_ind = X_train.index.droplevel(-1)
+        X_ind = X.index.droplevel(-1)
+
+        Xt = pd.DataFrame(distmat, columns=X_train_ind, index=X_ind)
+
+        return Xt
