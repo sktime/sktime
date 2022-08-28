@@ -80,7 +80,7 @@ def cumsum_shift_mult(array, dims):
 
 def rankreduce(array, rankbound):
     """Project 2D array on top rankbound singular values."""
-    arraysvd = svds(array.astype('f'), k=rankbound)
+    arraysvd = svds(array.astype("f"), k=rankbound)
     return np.dot(arraysvd[0], np.diag(arraysvd[1]))
 
 
@@ -109,7 +109,7 @@ def k_polynom(x, y, scale, deg):
 
 def k_gauss(x, y, scale):
     """Gaussian kernel with scale coeff."""
-    return np.exp(-(scale ** 2) * sqdist(x, y)/2)
+    return np.exp(-(scale ** 2) * sqdist(x, y) / 2)
 
 
 def k_euclid(x, y, scale):
@@ -161,8 +161,8 @@ def sqize_kernel(K, L, theta=1.0, normalize=False):
         Id = np.ones(K.shape)
         R = np.ones(K.shape)
         for _ in range(L-1):
-            R = (Id + theta*cumsum_rev(K * R)/normfac)/(1 + theta)
-        return (1 + theta*np.sum(K * R)/normfac)/(1 + theta)
+            R = (Id + theta*cumsum_rev(K * R) / normfac) / (1 + theta)
+        return (1 + theta*np.sum(K * R) / normfac) / (1 + theta)
     else:
         Id = np.ones(K.shape)
         R = np.ones(K.shape)
@@ -206,12 +206,12 @@ def sqize_kernel_ho(K, L, D=1, theta=1.0, normalize=False):
         for d1 in range(1, Dprime):
             Acs1 = cumsum_shift_mult(np.sum(A[ell-1, d1-1, :, :, :], 0), 1)
             Acs2 = cumsum_shift_mult(np.sum(A[ell-1, :, d1-1, :, :], 0), 0)
-            A[ell, d1, 0, :, :] = A[ell, d1, 0, :, :] + (1/d1) * K * Acs1
-            A[ell, :, d1, :, :] = A[ell, 0, d1, :, :] + (1/d1) * K * Acs2
+            A[ell, d1, 0, :, :] = A[ell, d1, 0, :, :] + (1 / d1) * K * Acs1
+            A[ell, :, d1, :, :] = A[ell, 0, d1, :, :] + (1 / d1) * K * Acs2
 
             for d2 in range(1, Dprime):
                 Acs12 = cumsum_shift_mult(np.sum(A[ell-1, d1-1, d2-1, :, :], 0), 0)
-                A[ell, d1, d2, :, :] = A[ell, d1, d2, :, :] + (1/(d1*d2)) * K * Acs12
+                A[ell, d1, d2, :, :] = A[ell, d1, d2, :, :] + (1 / (d1*d2)) * K * Acs12
 
     return 1 + np.sum(A[L-1, :, :, :, :])
 
@@ -222,7 +222,7 @@ def sqize_kernel_ho(K, L, D=1, theta=1.0, normalize=False):
 # LRdec object
 #  models matrix A = U x V.T
 #  U and V should be *arrays*, not *matrices*
-LRdec = collections.namedtuple('LRdec', ['U', 'V'])
+LRdec = collections.namedtuple("LRdec", ["U", "V"])
 
 
 def get_low_rank_matrix(K):
@@ -388,8 +388,8 @@ def sqize_kernel_low_rank(K, L, theta=1.0, normalize=False, rankbound=float("inf
         Id = np.ones(K.shape)
         R = np.ones(K.shape)
         for _ in range(L-1):
-            R = (Id + theta*cumsum_rev(K * R)/normfac)/(1 + theta)
-        return (1 + theta*np.sum(K*R)/normfac)/(1 + theta)
+            R = (Id + theta*cumsum_rev(K * R) / normfac) / (1 + theta)
+        return (1 + theta*np.sum(K*R) / normfac) / (1 + theta)
     else:
         Id = LRdec(np.ones([K.U.shape[0], 1]), np.ones([K.V.shape[0], 1]))
         # Id = np.ones(K.shape)
@@ -411,7 +411,7 @@ def sqize_kernel_low_rank_fast(
     L,
     theta=1.0,
     normalize=False,
-    rankbound=float("inf")
+    rankbound=float("inf"),
 ):
     """Compute the sequential kernel from kernel matrix, with low-rank approximation.
 
@@ -448,7 +448,7 @@ def sqize_kernel_low_rank_fast(
         R = np.ones([Ksize, 1])
 
         for _ in range(L):
-            P = np.sqrt(theta) * hadamard_low_rank_batch(K, B)/Ksize
+            P = np.sqrt(theta) * hadamard_low_rank_batch(K, B) / Ksize
             B = cumsum_shift_mult(P, [1])
 
             if rankbound < B.shape[2]:
@@ -458,7 +458,7 @@ def sqize_kernel_low_rank_fast(
                 )
                 B = B[:, :, permut]
 
-            R = np.concatenate((R, np.sum(B, axis=1)), axis=1)/(np.sqrt(1 + theta))
+            R = np.concatenate((R, np.sum(B, axis=1)), axis=1) / (np.sqrt(1 + theta))
 
         return R
 
@@ -534,13 +534,12 @@ def seq_kernel(
     KSeq = np.zeros((N, N))
 
     if kernelfun is None:
-        def kernelfun(x, y):
-            return k_euclid(x, y, 1)
+        kernelfun = partial(k_euclid, scale=1)
 
     if not lowrank:
         if D == 1:
             for row1ind in range(N):
-                for row2ind in range(row1ind+1):
+                for row2ind in range(row1ind + 1):
                     KSeq[row1ind, row2ind] = sqize_kernel(
                         K=kernelfun(X[row1ind].T, X[row2ind].T),
                         L=L,
@@ -549,7 +548,7 @@ def seq_kernel(
                     )
         else:
             for row1ind in range(N):
-                for row2ind in range(row1ind+1):
+                for row2ind in range(row1ind + 1):
                     KSeq[row1ind, row2ind] = sqize_kernel_ho(
                         K=kernelfun(X[row1ind].T, X[row2ind].T),
                         L=L,
@@ -563,7 +562,7 @@ def seq_kernel(
             L=L,
             theta=theta,
             normalize=normalize,
-            rankbound=rankbound
+            rankbound=rankbound,
         )
         KSeq = np.inner(R, R)
         # todo: kernelfun gives back a LRdec object
@@ -582,7 +581,7 @@ def seq_kernel_XY(
     theta=1.0,
     normalize=False,
     lowrank=False,
-    rankbound=float("inf")
+    rankbound=float("inf"),
 ):
     """Compute the sequential kernel between two different collections of seqeuence.
 
@@ -643,12 +642,11 @@ def seq_kernel_XY(
     KSeq = np.zeros((N, M))
 
     if kernelfun is None:
-        def kernelfun(x, y):
-            return k_euclid(x, y, 1)
+        kernelfun = partial(k_euclid, scale=1)
 
     kwargs = {"L": L, "theta": theta, "normalize": normalize}
 
-    if not(lowrank):
+    if not lowrank:
         if D == 1:
             for row1ind in range(N):
                 for row2ind in range(M):
@@ -704,7 +702,7 @@ def time_series_reshaper(Xflat, numfeatures, subsample=1, differences=True):
         differencing is applied (after subsampling) if differences=True
     """
     flatXshape = np.shape(Xflat)
-    Xshape = (flatXshape[0], numfeatures, flatXshape[1]/numfeatures)
+    Xshape = (flatXshape[0], numfeatures, flatXshape[1] / numfeatures)
     X = np.reshape(Xflat, Xshape)[:, :, ::subsample]
 
     if differences:
@@ -835,10 +833,10 @@ class SeqKernelizer(BaseEstimator, TransformerMixin):
 
         def kernselect(kername):
             switcher = {
-                'linear': partial(k_euclid, scale=self.scale),
-                'Gauss': partial(k_gauss, scale=self.scale),
-                'Laplace': partial(k_laplace, scale=self.scale),
-                'poly': partial(k_polynom, scale=self.scale, deg=self.deg),
+                "linear": partial(k_euclid, scale=self.scale),
+                "Gauss": partial(k_gauss, scale=self.scale),
+                "Laplace": partial(k_laplace, scale=self.scale),
+                "poly": partial(k_polynom, scale=self.scale, deg=self.deg),
             }
             return switcher.get(kername, "nothing")
 
