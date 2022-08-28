@@ -482,7 +482,7 @@ def scitype(obj, candidate_scitypes=SCITYPE_LIST, exclude_mtypes=AMBIGUOUS_MTYPE
     for scitype in candidate_scitypes:
         valid = check_is_scitype(
             obj,
-            scitype=candidate_scitypes,
+            scitype=scitype,
             return_metadata=False,
             exclude_mtypes=exclude_mtypes,
         )
