@@ -473,8 +473,7 @@ def scitype(obj, candidate_scitypes=SCITYPE_LIST, exclude_mtypes=AMBIGUOUS_MTYPE
     TypeError if no type can be identified, or more than one type is identified
     """
     candidate_scitypes = _coerce_list_of_str(
-        candidate_scitypes,
-        var_name="candidate_scitypes"
+        candidate_scitypes, var_name="candidate_scitypes"
     )
 
     valid_scitypes = []
