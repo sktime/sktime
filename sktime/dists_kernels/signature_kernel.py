@@ -206,8 +206,8 @@ def sqize_kernel_ho(K, L, D=1, theta=1.0, normalize=False):
         Acs = cumsum_shift_mult(np.sum(A[ell - 1, :, :, :, :], (0, 1)), (0, 1))
         A[ell, 0, 0, :, :] = K * (Id + Acs)
         for d1 in range(1, Dprime):
-            Acs1 = cumsum_shift_mult(np.sum(A[ell - 1, d1-1, :, :, :], 0), 1)
-            Acs2 = cumsum_shift_mult(np.sum(A[ell - 1, :, d1-1, :, :], 0), 0)
+            Acs1 = cumsum_shift_mult(np.sum(A[ell - 1, d1 - 1, :, :, :], 0), 1)
+            Acs2 = cumsum_shift_mult(np.sum(A[ell - 1, :, d1 - 1, :, :], 0), 0)
             A[ell, d1, 0, :, :] = A[ell, d1, 0, :, :] + (1 / d1) * K * Acs1
             A[ell, :, d1, :, :] = A[ell, 0, d1, :, :] + (1 / d1) * K * Acs2
 
