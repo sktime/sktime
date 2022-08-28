@@ -1,12 +1,17 @@
 # -*- coding: utf-8 -*-
 """Machine type converters for Series to Panel.
 
-Exports conversion functions for conversions between Series and Panel:
+Exports conversion functions for conversions between series scitypes:
 
 convert_Series_to_Panel(obj, store=None)
     converts obj of Series mtype to "adjacent" Panel mtype (e.g., numpy to numpy)
 convert_Panel_to_Series(obj, store=None)
     converts obj of Panel mtype to "adjacent" Series mtype (e.g., numpy to numpy)
+convert_Series_to_Hierarchical(obj, store=None)
+convert_Hierarchical_to_series(obj, store=None)
+convert_Panel_to_Hierarchical(obj, store=None)
+convert_Hierarchical_to_Panel(obj, store=None)
+    converts to pd.DataFrame based data container in the target scitype
 """
 
 __author__ = ["fkiraly"]
