@@ -498,4 +498,4 @@ def scitype(obj, candidate_scitypes=SCITYPE_LIST, exclude_mtypes=AMBIGUOUS_MTYPE
             "Error in function scitype, no valid scitype could be identified."
         )
 
-    return scitype
+    return valid_scitypes[0]
