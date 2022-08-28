@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Signature kernels from Kiraly et al, 2015."""
+"""Signature kernels from Kiraly et al, 2016."""
 
 __author__ = ["fkiraly"]
 
@@ -14,10 +14,10 @@ from sktime.dists_kernels._base import BasePairwiseTransformerPanel
 
 # cumsum varia
 # ------------
-def _coerce_to_list(i):
+def _coerce_to_tuple(i):
     """Coerce integers to list of integers."""
-    if not isinstance(i, list):
-        return [i]
+    if not isinstance(i, tuple):
+        return (i,)
     else:
         return i
 
@@ -38,7 +38,7 @@ def cumsum_rev(array):
 
 def cumsum_mult(array, dims):
     """Cumsum over all axes in dims."""
-    dims = _coerce_to_list(dims)
+    dims = _coerce_to_tuple(dims)
     for dimind in dims:
         array = np.cumsum(array, axis=dimind)
     return array
@@ -46,7 +46,7 @@ def cumsum_mult(array, dims):
 
 def roll_mult(array, shift, dims):
     """Roll over all axes in dims."""
-    dims = _coerce_to_list(dims)
+    dims = _coerce_to_tuple(dims)
     for dimind in dims:
         array = np.roll(array, shift, axis=dimind)
     return array
@@ -888,7 +888,7 @@ class SignatureKernel(BasePairwiseTransformerPanel):
 
     def __init__(
         self,
-        kernel="None",
+        kernel=None,
         level=2,
         degree=1,
         theta=1,
