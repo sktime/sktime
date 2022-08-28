@@ -375,7 +375,6 @@ class SFA_NEW(_PanelToPanelTransformer):
             self.window_size,
             self.series_length,
             self.dft_length,
-            self.word_length,
             self.norm,
             self.inverse_sqrt_win_size,
         )
@@ -512,7 +511,7 @@ class SFA_NEW(_PanelToPanelTransformer):
 
 @njit(fastmath=True, cache=True)
 def _binning_dft(
-    X, window_size, series_length, dft_length, word_length, norm, inverse_sqrt_win_size
+    X, window_size, series_length, dft_length, norm, inverse_sqrt_win_size
 ):
     num_windows_per_inst = math.ceil(series_length / window_size)
 
