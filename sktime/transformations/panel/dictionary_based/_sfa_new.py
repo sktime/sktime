@@ -194,6 +194,20 @@ class SFA_NEW(_PanelToPanelTransformer):
         self.breakpoints = self._binning(X2, y)
         self._is_fitted = True
 
+        # use only alphabet of size 2
+        if self.breakpoints.shape[1] == 4:
+            bp = np.zeros((self.breakpoints.shape[0], 2))
+            bp[:, 0] = self.breakpoints[:, 1]
+            bp[:, 1] = np.inf
+            self.breakpoints = bp
+
+            """
+            bp = breakpoints.copy()
+            bp[bp < 0] = -np.inf
+            words = generate_words(dfts, bp, letter_bits)
+            return words
+            """
+
         words = _transform_case(
             X2,
             self.window_size,
@@ -302,7 +316,7 @@ class SFA_NEW(_PanelToPanelTransformer):
         if self.feature_selection == "none":
             bag_of_words = create_bag_none(
                 self.X_index,
-                self.alphabet_size,
+                self.breakpoints,
                 words.shape[0],
                 words,
                 self.word_length,
@@ -584,24 +598,7 @@ def _transform_case(
         inverse_sqrt_win_size,
     )
 
-    if breakpoints.shape[1] == 2:
-        words = generate_words(dfts, breakpoints, letter_bits)
-        return words
-    else:
-        bp = np.zeros((breakpoints.shape[0], 2))
-        bp[:, 0] = breakpoints[:, 1]
-        bp[:, 1] = np.inf
-        words = generate_words(dfts, bp, letter_bits)
-        return words
-
-        # return generate_words(dfts, breakpoints, letter_bits)
-
-        """
-        bp = breakpoints.copy()
-        bp[bp < 0] = -np.inf
-        words = generate_words(dfts, bp, letter_bits)
-        return words
-        """
+    return generate_words(dfts, breakpoints, letter_bits)
 
 
 @njit(fastmath=True, cache=True)
@@ -774,8 +771,8 @@ def create_feature_names(sfa_words):
 
 
 @njit(cache=True, fastmath=True)
-def create_bag_none(X_index, alphabet_size, n_instances, sfa_words, word_length):
-    feature_count = np.int32(2**word_length)
+def create_bag_none(X_index, breakpoints, n_instances, sfa_words, word_length):
+    feature_count = np.int32(breakpoints.shape[1] ** word_length)
     all_win_words = np.zeros((n_instances, feature_count), dtype=np.int32)
 
     for j in range(len(sfa_words)):
