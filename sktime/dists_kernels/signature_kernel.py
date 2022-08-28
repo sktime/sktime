@@ -4,6 +4,7 @@
 __author__ = ["fkiraly"]
 
 import collections
+from functools import partial
 import numpy as np
 from scipy.sparse.linalg import svds
 from sklearn.base import BaseEstimator, TransformerMixin
@@ -112,7 +113,7 @@ def k_gauss(x, y, scale):
 
 
 def k_euclid(x, y, scale):
-    """Euclidea kernel with scale coeff."""
+    """Euclidean kernel with scale coeff."""
     return scale * np.inner(x, y)
 
 
@@ -507,7 +508,7 @@ def seq_kernel(
         3rd index = time index
     kernelfun : function (2D np.ndarray x 2D np.ndarray) -> 2D np.ndarray
         pairwise kernel function, matrix sizes (n, d) x (m, d) -> (n x m)
-        optional, default = Gaussian kernel with scale parameter 1
+        optional, default = Euclidean (linear) kernel with scale parameter 1
     L : int, optional, default = 2
         an integer >= 1, representing the level of truncation
     D : int, optional, default = 1
@@ -534,7 +535,7 @@ def seq_kernel(
 
     if kernelfun is None:
         def kernelfun(x, y):
-            return k_gauss(x, y, 1)
+            return k_euclid(x, y, 1)
 
     if not lowrank:
         if D == 1:
@@ -594,14 +595,14 @@ def seq_kernel_XY(
         1st index = instance index
         2nd index = variable/feature index
         3rd index = time index
-    X : 3D np.ndarray of shape (N, d, _)
+    Y : 3D np.ndarray of shape (M, d, _)
         collection of sequences/time series
         1st index = instance index
         2nd index = variable/feature index
         3rd index = time index
     kernelfun : function (2D np.ndarray x 2D np.ndarray) -> 2D np.ndarray
         pairwise kernel function, matrix sizes (n, d) x (m, d) -> (n x m)
-        optional, default = Gaussian kernel with scale parameter 1
+        optional, default = Euclidean (linear) kernel with scale parameter 1
     L : int, optional, default = 2
         an integer >= 1, representing the level of truncation
     D : int, optional, default = 1
@@ -643,7 +644,7 @@ def seq_kernel_XY(
 
     if kernelfun is None:
         def kernelfun(x, y):
-            return k_gauss(x, y, 1)
+            return k_euclid(x, y, 1)
 
     kwargs = {"L": L, "theta": theta, "normalize": normalize}
 
@@ -680,11 +681,8 @@ def data_tabulator(X):
     return np.reshape(X, (Xshape[0], np.prod(Xshape[1:])))
 
 
-# In[]
-# FUNCTION TimeSeriesReshaper
-#  makes a 3D time series array out of a 2D data array
 def time_series_reshaper(Xflat, numfeatures, subsample=1, differences=True):
-    """Converts 2D np.ndarray into a time series 3D np.ndarray.
+    """Convert 2D np.ndarray into a time series 3D np.ndarray.
 
     Useful as part of sklearn pipeline for internal conversion to time series 3D format.
 
@@ -698,6 +696,12 @@ def time_series_reshaper(Xflat, numfeatures, subsample=1, differences=True):
         time index step size to sub-sample
     differences : bool, optional, default = True
         whether to take first temporal differences (True) or not (False)
+
+    Returns
+    -------
+    Xflat, as a 3D array
+        regular subsampling is applied if subsample > 1
+        differencing is applied (after subsampling) if differences=True
     """
     flatXshape = np.shape(Xflat)
     Xshape = (flatXshape[0], numfeatures, flatXshape[1]/numfeatures)
@@ -708,8 +712,6 @@ def time_series_reshaper(Xflat, numfeatures, subsample=1, differences=True):
     else:
         return X
 
-
-# In[3]
 
 # CLASS SeqKernelizer
 #  pipelines pre-processing of a time series datset with support vector classifier
@@ -732,48 +734,116 @@ def time_series_reshaper(Xflat, numfeatures, subsample=1, differences=True):
 
 # for historical reasons - old scikit-learn version of the estimator
 class SeqKernelizer(BaseEstimator, TransformerMixin):
-    def __init__(self, Level = 2, Degree = 1, theta = 1, kernel = 'linear', 
-                 scale = 1, deg = 2, X = np.zeros((1,2)), 
-                 numfeatures = 2, subsample = 100, differences = True, 
-                 normalize = False, lowrank = False, rankbound = float("inf")):
-        self.Level = Level
-        self.Degree = Degree
+    """Compute the sequential kernel matrix row features on collection of series.
+
+    Included for historical purposes only, as reference to original paper code,
+    and for reproduction of the original experiments in the JMLR publication.
+    Users and developers should use/modify SequentialKernel instead.
+
+    This sklearn estimator requires passing of integer "numfeatures" as parameter,
+    and will interpret rows of X as time series with `numfeatures` features/vars,
+    and X.shape[1]/numfeatures time stamps, reshaped in (vars, time stamps) order.
+
+    In transform, will transform a series to the row of the kernel matrix
+    between that series and all the series seen in fit,, via seq_kernel_XY.
+
+    Parameters
+    ----------
+    level : int, optional, default = 2
+        an integer >= 1, representing the level of truncation of the sequential kernel
+    degree : int, optional, default = 1
+        an integer >= 1, representing the order of approximation of sequential kernel
+        can be set only if lowrank = False, otherwise ignored (always = 1)
+    theta : float, optional, default=1.0
+        a positive scaling factor for the levels, i-th level is scaled by theta^i
+    kernel : str, one of "linear", "Gauss", "Laplace", "poly"
+        code for inner kernel in the sequential kernel, with kernel parameters
+        "linear" - Euclidean kernel with scale parameter
+        "Gauss" - Gaussian kernel with scale parameter
+        "Laplace" - Laplace kernel with scale parameter
+        "poly" - polynomial kernel with degree deg and scale parameter
+    scale : float, optional, default = 1.0
+        a positive scaling factor for the inner kernel
+    degree : int, optional, default = 1, used only for polynomial kernel (kernel="poly")
+        degree of the polynomial kernel (if used)
+    numfeatures : int, optional, default = 2
+        number of features/variables in the time series
+    subsample : int, optional, default = 1
+        time index step size to sub-sample
+    differences : bool, optional, default = True
+        whether to take first temporal differences (True) or not (False)
+    normalize : bool, optional, default = False
+        whether the output kernel matrix is normalized
+        if True, sums and cumsums are divided by prod(K.shape)
+    lowrank : bool, optional, default = False
+        whether to use low rank approximation in computing the kernel
+    rankbound : int, optional, default = infinity
+        a hard threshold for the rank of the level matrices
+        used only if lowrank = True
+    """
+
+    def __init__(
+        self,
+        level=2,
+        degree=1,
+        theta=1,
+        kernel="linear",
+        scale=1,
+        deg=2,
+        numfeatures=2,
+        subsample=100,
+        differences=True, 
+        normalize=False,
+        lowrank=False,
+        rankbound=float("inf"),
+    ):
+        self.level = level
+        self.degree = degree
         self.theta = theta
-        self.subsample = subsample
         self.kernel = kernel
         self.scale = scale
         self.deg = deg
         self.numfeatures = numfeatures
+        self.subsample = subsample
         self.differences = differences
         self.normalize = normalize
         self.lowrank = lowrank
         self.rankbound = rankbound
-        self.X = X
-        
+
+        self.reshape_kwargs = {
+            "numfeatures": numfeatures,
+            "subsample": subsample,
+            "differences": differences,
+        }
+        self.kern_kwargs = {
+            "level": level,
+            "degree": degree,
+            "theta": theta,
+            "normalize": normalize,
+            "lowrank": lowrank,
+            "rankbound": rankbound,
+        }
+
     def fit(self, X, y=None):
-        self.X = time_series_reshaper(X,self.numfeatures,self.subsample,self.differences)
+        """Fit = reshape the series X."""
+        self._X = time_series_reshaper(X, **self.reshape_kwargs)
         return self
-        
-    def transform(self, Y):
-        
-        Y = time_series_reshaper(Y,self.numfeatures,self.subsample,self.differences)
-        
-        kPolynom = lambda x,y,scale,deg : (1+scale*np.inner(x,y))**deg
-        kGauss = lambda x,y,scale: np.exp(-(scale**2)*sqdist(x,y)/2)
-        kEuclid = lambda x,y,scale: scale*np.inner(x,y)
-        kLaplace = lambda x,y,scale: np.exp(-scale*np.sqrt(np.inner(x-y,x-y)))
-        
+
+    def transform(self, X):
+        """Transform the data to kernel matrix rows."""
+        X = time_series_reshaper(X, **self.reshape_kwargs)
+
         def kernselect(kername):
             switcher = {
-                'linear': lambda x,y: kEuclid(x,y,self.scale),
-                'Gauss': lambda x,y: kGauss(x,y,self.scale),
-                'Laplace': lambda x,y: kLaplace(x,y,self.scale),
-                'poly': lambda x,y: kPolynom(x,y,self.scale,self.deg),
-                }
+                'linear': partial(k_euclid, scale=self.scale),
+                'Gauss': partial(k_gauss, scale=self.scale),
+                'Laplace': partial(k_laplace, scale=self.scale),
+                'poly': partial(k_polynom, scale=self.scale, deg=self.deg),
+            }
             return switcher.get(kername, "nothing")
-            
-        KSeq = seq_kernel_XY(Y,self.X,kernselect(self.kernel),self.Level,self.Degree,self.theta,self.normalize,self.lowrank,self.rankbound)
-        
+
+        KSeq = seq_kernel_XY(X, self._X, kernselect(self.kernel), **self.kern_kwargs)
+
         return KSeq
 
 
