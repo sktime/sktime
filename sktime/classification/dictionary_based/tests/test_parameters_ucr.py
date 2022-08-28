@@ -159,6 +159,45 @@ dataset_names_excerpt = [
     # 'Yoga'
 ]
 
+
+def get_classifiers(
+    alphabet_size,
+    binning_strategies,
+    ensemble_size,
+    feature_selection,
+    max_feature_count,
+    max_window,
+    min_window,
+    norm_options,
+    use_first_differences,
+    variance,
+    word_lengths,
+):
+    """Obtain the benchmark classifiers."""
+    clfs = {
+        "WEASEL": WEASEL_STEROIDS(
+            random_state=1379,
+            binning_strategies=binning_strategies,
+            variance=variance,
+            ensemble_size=ensemble_size,
+            max_feature_count=max_feature_count,
+            min_window=min_window,
+            max_window=max_window,
+            alphabet_sizes=[alphabet_size],
+            norm_options=norm_options,
+            word_lengths=word_lengths,
+            use_first_differences=use_first_differences,
+            feature_selection=feature_selection,
+            n_jobs=8,
+        ),
+        # "MiniRocket": make_pipeline(
+        #    MiniRocket(random_state=1379),
+        #    RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True)
+        # )
+    }
+    return clfs
+
+
 # DATA_PATH = "/Users/bzcschae/workspace/similarity/datasets/classification/"
 # parallel_jobs = 1
 DATA_PATH = "/vol/fob-wbib-vol2/wbi/schaefpa/sktime/datasets/UCRArchive_2018"
@@ -192,27 +231,20 @@ if __name__ == "__main__":
             os.path.join(DATA_PATH, dataset_name, dataset_name + "_TEST.tsv")
         )
 
-        clfs = {
-            "WEASEL": WEASEL_STEROIDS(
-                random_state=1379,
-                binning_strategies=binning_strategies,
-                variance=variance,
-                ensemble_size=ensemble_size,
-                max_feature_count=max_feature_count,
-                min_window=min_window,
-                max_window=max_window,
-                alphabet_sizes=[alphabet_size],
-                norm_options=norm_options,
-                word_lengths=word_lengths,
-                use_first_differences=use_first_differences,
-                feature_selection=feature_selection,
-                n_jobs=8,
-            ),
-            # "MiniRocket": make_pipeline(
-            #    MiniRocket(random_state=1379),
-            #    RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True)
-            # )
-        }
+        clfs = get_classifiers(
+            alphabet_size,
+            binning_strategies,
+            ensemble_size,
+            feature_selection,
+            max_feature_count,
+            max_window,
+            min_window,
+            norm_options,
+            use_first_differences,
+            variance,
+            word_lengths,
+        )
+
         for name, _ in clfs.items():
             sum_scores[name] = {
                 "dataset": [],
@@ -242,12 +274,6 @@ if __name__ == "__main__":
                 pred_time = time.time()
                 acc = clf.score(X_test, y_test)
                 pred_time = np.round(time.time() - pred_time, 5)
-
-                # print(f"Dataset={dataset_name}"
-                #      +f"\n\tclassifier={name}"
-                #      +f"\n\ttime (fit, predict)={np.round(fit_time, 3),
-                #                                   np.round(pred_time, 3)}"
-                #      +f"\n\taccuracy={np.round(acc, 4)}")
 
                 sum_scores[name]["dataset"].append(dataset_name)
                 sum_scores[name]["all_scores"].append(acc)

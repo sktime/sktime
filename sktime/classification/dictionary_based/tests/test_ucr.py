@@ -212,76 +212,62 @@ def get_classifiers():
     """Obtain the benchmark classifiers."""
     clfs = {
         "WEASEL": WEASEL(random_state=1379, n_jobs=threads_to_use),
-        "WEASEL_ST (Chi2)": WEASEL_STEROIDS(
-            random_state=1379,
-            binning_strategies=["equi-depth"],
-            alphabet_sizes=[2],
-            min_window=8,
-            max_window=50,
-            max_feature_count=20_000,
-            word_lengths=[8],  # test only 6 or 8?
-            norm_options=[False],  # p[True]=0.8
-            variance=True,
-            ensemble_size=150,
-            use_first_differences=[True, False],
-            feature_selection="none",
-            n_jobs=threads_to_use,
-        ),
-        "WEASEL_ST (EqDe)": WEASEL_STEROIDS(
-            random_state=1379,
-            binning_strategies=["equi-depth"],
-            alphabet_sizes=[2],
-            min_window=4,
-            max_window=24,
-            max_feature_count=10_000,
-            word_lengths=[8],  # test only 6 or 8?
-            norm_options=[False],  # p[True]=0.8
-            variance=True,
-            ensemble_size=50,
-            use_first_differences=[True, False],
-            feature_selection="none",
-            n_jobs=threads_to_use,
-        ),
-        "WEASEL (EW+ED)": WEASEL_STEROIDS(
-            random_state=1379,
-            alphabet_sizes=[2],
-            binning_strategies=["equi-depth", "equi-width"],
-            min_window=4,
-            max_window=24,
-            word_lengths=[8],  # test only 6 or 8?
-            norm_options=[True, False],  # p[True]=0.8
-            variance=True,
-            max_feature_count=10_000,
-            ensemble_size=50,
-            use_first_differences=[True, False],
-            feature_selection="none",
-            n_jobs=threads_to_use,
-        ),
-        "WEASEL (None 3)": WEASEL_STEROIDS(
-            random_state=1379,
-            alphabet_sizes=[2],
-            binning_strategies=["equi-depth"],
-            min_window=4,
-            max_window=20,
-            word_lengths=[8],
-            norm_options=[True, False],
-            variance=True,
-            max_feature_count=10_000,
-            ensemble_size=50,
-            use_first_differences=[True, False],
-            feature_selection="none",
-            n_jobs=threads_to_use,
-        ),
-        "Hydra": [],  # see below
-        "R_DST": R_DST_Ridge(random_state=1379),
-        "Rocket": make_pipeline(
-            Rocket(random_state=1379, n_jobs=threads_to_use),
-            RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True),
-        ),
-        "MiniRocket": make_pipeline(
-            MiniRocket(random_state=1379, n_jobs=threads_to_use),
-            RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True),
-        ),
+        # "WEASEL_ST (ED,FS:Chi2)": WEASEL_STEROIDS(
+        #     random_state=1379,
+        #     binning_strategies=["equi-depth"],
+        #     alphabet_sizes=[2],
+        #     min_window=8,
+        #     max_window=32,
+        #     max_feature_count=20_000,
+        #     word_lengths=[8],  # test only 6 or 8?
+        #     norm_options=[False],  # p[True]=0.8
+        #     variance=True,
+        #     ensemble_size=150,
+        #     use_first_differences=[True, False],
+        #     feature_selection="chi2",
+        #     n_jobs=threads_to_use,
+        # ),
+        # "WEASEL_ST (ED,FS:None)": WEASEL_STEROIDS(
+        #     random_state=1379,
+        #     binning_strategies=["equi-depth"],
+        #     alphabet_sizes=[2],
+        #     min_window=4,
+        #     max_window=24,
+        #     bigrams=False,
+        #     max_feature_count=10_000,
+        #     word_lengths=[8],  # test only 6 or 8?
+        #     norm_options=[False],  # p[True]=0.8
+        #     variance=True,
+        #     ensemble_size=50,
+        #     use_first_differences=[True, False],
+        #     feature_selection="chi2",
+        #     n_jobs=threads_to_use,
+        # ),
+        # "WEASEL_ST (EW+ED,FS:None)": WEASEL_STEROIDS(
+        #     random_state=1379,
+        #     alphabet_sizes=[2],
+        #     binning_strategies=["equi-depth", "equi-width"],
+        #     min_window=4,
+        #     max_window=24,
+        #     word_lengths=[8],  # test only 6 or 8?
+        #     norm_options=[True, False],  # p[True]=0.8
+        #     variance=True,
+        #     max_feature_count=10_000,
+        #     ensemble_size=50,
+        #     use_first_differences=[True, False],
+        #     feature_selection="none",
+        #     n_jobs=threads_to_use,
+        # ),
+        # "Hydra": [],  # see below
+        # "R_DST": R_DST_Ridge(random_state=1379),
+        # "Rocket": make_pipeline(
+        #    Rocket(random_state=1379, n_jobs=threads_to_use),
+        #    RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True),
+        # ),
+        # "MiniRocket": make_pipeline(
+        #    MiniRocket(random_state=1379, n_jobs=threads_to_use),
+        #    RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True),
+        # ),
     }
     return clfs
 
@@ -349,7 +335,10 @@ if __name__ == "__main__":
             acc = clf.score(X_test_transform, y_test)
             pred_time = np.round(time.perf_counter() - pred_time, 5)
         else:
-            clf = get_classifiers()[clf_name].clone()
+            # if clf_name == "R_DST_Ridge":
+            #    clf = get_classifiers()[clf_name]
+            # else:
+            clf = get_classifiers()[clf_name]
             fit_time = time.perf_counter()
             clf.fit(X_train, y_train)
             fit_time = np.round(time.perf_counter() - fit_time, 5)
@@ -383,8 +372,9 @@ if __name__ == "__main__":
             sum_scores[clf_name]["pred_time"] + pred_time
         )
 
-        # except:
-        #    print("Error", dataset_name, clf_name)
+        # except Exception as e:
+        #    print("An exception occurred: {}".format(e))
+        #    print("\tFailed: ", dataset_name, clf_name)
 
         print("-----------------")
 

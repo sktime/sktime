@@ -75,6 +75,15 @@ class SFA_NEW(_PanelToPanelTransformer):
         bigrams:             boolean, default = False
             whether to create bigrams of SFA words
 
+        p_threshold:  int, default=0.05 (disabled by default)
+            Feature selection is applied based on the chi-squared test.
+            This is the p-value threshold to use for chi-squared test on bag-of-words
+            (lower means more strict). 1 indicates that the test
+            should not be performed.
+
+        skip_grams:          boolean, default = False
+            whether to create skip-grams of SFA words
+
         n_jobs:              int, optional, default = 1
             The number of jobs to run in parallel for both `transform`.
             ``-1`` means using all processors.
@@ -106,11 +115,13 @@ class SFA_NEW(_PanelToPanelTransformer):
         anova=False,
         variance=False,
         bigrams=False,
+        skip_grams=False,
         cut_upper=True,
         dilation=1,
         first_difference=False,
         feature_selection="none",
         max_feature_count=256,
+        p_threshold=0.05,
         random_state=None,
         n_jobs=1,
     ):
@@ -141,6 +152,7 @@ class SFA_NEW(_PanelToPanelTransformer):
         self.variance = variance
 
         self.bigrams = bigrams
+        self.skip_grams = skip_grams
         self.n_jobs = n_jobs
         self.cut_upper = cut_upper
 
@@ -159,6 +171,9 @@ class SFA_NEW(_PanelToPanelTransformer):
         self.max_feature_count = max_feature_count
         self.feature_count = 0
         self.relevant_features = None
+
+        # feature selection is applied based on the chi-squared test.
+        self.p_threshold = p_threshold
 
         self.random_state = random_state
 
@@ -218,6 +233,8 @@ class SFA_NEW(_PanelToPanelTransformer):
             self.variance,
             self.breakpoints,
             self.letter_bits,
+            self.bigrams,
+            self.skip_grams,
             self.inverse_sqrt_win_size,
         )
 
@@ -266,6 +283,8 @@ class SFA_NEW(_PanelToPanelTransformer):
             self.variance,
             self.breakpoints,
             self.letter_bits,
+            self.bigrams,
+            self.skip_grams,
             self.inverse_sqrt_win_size,
         )
 
@@ -282,6 +301,7 @@ class SFA_NEW(_PanelToPanelTransformer):
         #         self.variance,
         #         self.breakpoints,
         #         self.letter_bits,
+        #         self.bigrams,
         #         self.inverse_sqrt_win_size
         #     )
         #
@@ -314,6 +334,8 @@ class SFA_NEW(_PanelToPanelTransformer):
         rng = check_random_state(self.random_state)
 
         if self.feature_selection == "none":
+            # TODO  only if not too much memory,
+            #       else sparse??
             bag_of_words = create_bag_none(
                 self.X_index,
                 self.breakpoints,
@@ -350,7 +372,8 @@ class SFA_NEW(_PanelToPanelTransformer):
 
                 feature_count = min(self.max_feature_count, len(feature_names))
                 chi2_statistics, p = chi2(bag_of_words, y)
-                relevant_features_idx = np.argsort(p)[:feature_count]
+                # relevant_features_idx = np.argsort(p)[:feature_count]
+                relevant_features_idx = np.where(p <= self.p_threshold)[0]
 
                 self.relevant_features = Dict.empty(
                     key_type=types.int32, value_type=types.int32
@@ -369,7 +392,6 @@ class SFA_NEW(_PanelToPanelTransformer):
         return bag_of_words
 
     def _binning(self, X, y=None):
-        # TODO needed? May use mft only...
         dft = _binning_dft(
             X,
             self.window_size,
@@ -526,7 +548,7 @@ def _binning_dft(
 
     dft = np.zeros((len(X), num_windows_per_inst, dft_length))  #
     for i in range(len(X)):
-        dft[i] = _fast_fourier_transform(  # TODO all in one go?!
+        dft[i] = _fast_fourier_transform(
             data[i], norm, dft_length, inverse_sqrt_win_size
         )
 
@@ -584,6 +606,8 @@ def _transform_case(
     variance,
     breakpoints,
     letter_bits,
+    bigrams,
+    skip_grams,
     inverse_sqrt_win_size,
 ):
     dfts = _mft(
@@ -597,7 +621,9 @@ def _transform_case(
         inverse_sqrt_win_size,
     )
 
-    return generate_words(dfts, breakpoints, letter_bits)
+    return generate_words(
+        dfts, bigrams, skip_grams, window_size, breakpoints, letter_bits
+    )
 
 
 @njit(fastmath=True, cache=True)
@@ -635,15 +661,25 @@ def _get_phis(window_size, length):
     return phis
 
 
-@njit(fastmath=True, cache=True)
-def _create_bigram_word(word, other_word, word_bits):
-    return (word << word_bits) | other_word
+# @njit(fastmath=True, cache=True)
+# def _create_bigram_word(word, other_word, word_bits):
+#    return (word << word_bits) | other_word
 
 
 @njit(fastmath=True, cache=True)
-def generate_words(dfts, breakpoints, letter_bits):
-    words = np.zeros((dfts.shape[0], dfts.shape[1]), dtype=np.int32)
+def generate_words(dfts, bigrams, skip_grams, window_size, breakpoints, letter_bits):
+    needed_size = dfts.shape[1]
+    if bigrams:
+        # allocate memory for bigrams
+        needed_size += max(0, dfts.shape[1] - window_size)
+    if skip_grams:
+        # allocate memory for 2- and 3-skip-grams
+        needed_size += max(0, 2 * dfts.shape[1] - 5 * window_size)
+
+    words = np.zeros((dfts.shape[0], needed_size), dtype=np.int32)
+
     letter_bits = np.int32(letter_bits)
+    word_bits = dfts.shape[2] * letter_bits
 
     # special case: binary breakpoints
     if breakpoints.shape[1] == 2:
@@ -653,15 +689,29 @@ def generate_words(dfts, breakpoints, letter_bits):
 
         for a in prange(dfts.shape[0]):
             match = (dfts[a] <= breakpoints[:, 0]).astype(np.float32)
-            words[a, :] = np.dot(match, vector).astype(np.int32)
+            words[a, : dfts.shape[1]] = np.dot(match, vector).astype(np.int32)
 
     # general case: alphabet-size many breakpoints
     else:
         for a in prange(dfts.shape[0]):
             for i in range(dfts.shape[2]):
-                words[a, :] = (words[a, :] << letter_bits) | np.digitize(
-                    dfts[a, :, i], breakpoints[i], right=True
-                )
+                words[a, : dfts.shape[1]] = (
+                    words[a, : dfts.shape[1]] << letter_bits
+                ) | np.digitize(dfts[a, :, i], breakpoints[i], right=True)
+
+    # add bigrams
+    if bigrams:
+        for a in range(0, dfts.shape[1] - window_size):
+            first_word = words[:, a]
+            second_word = words[:, a + window_size]
+            words[:, dfts.shape[1] + a] = (first_word << word_bits) | second_word
+
+    # add 2,3-skip-grams
+    for s in range(2, 4):
+        for a in range(0, dfts.shape[1] - s * window_size):
+            first_word = words[:, a]
+            second_word = words[:, a + s * window_size]
+            words[:, dfts.shape[1] + a] = (first_word << word_bits) | second_word
 
     return words
 
