@@ -9,6 +9,6 @@ __all__ = [
     "GMMHMM",
 ]
 
-from sktime.annotation.hmm_learn.base_HMM import BaseHMMLearn
-from sktime.annotation.hmm_learn.GaussianHMM import GaussianHMM
-from sktime.annotation.hmm_learn.GMMHMM import GMMHMM
+from sktime.annotation.hmm_learn.base import BaseHMMLearn
+from sktime.annotation.hmm_learn.gaussian import GaussianHMM
+from sktime.annotation.hmm_learn.gmmhmm import GMMHMM
