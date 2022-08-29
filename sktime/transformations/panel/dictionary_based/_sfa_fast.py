@@ -555,16 +555,19 @@ class SFA_NEW(_PanelToPanelTransformer):
     def __getstate__(self):
         """Return state as dictionary for pickling, required for typed Dict objects."""
         state = self.__dict__.copy()
-        state["relevant_features"] = dict(state["relevant_features"])
+
+        if type(state["relevant_features"]) == Dict:
+            state["relevant_features"] = dict(state["relevant_features"])
         return state
 
     def __setstate__(self, state):
         """Set current state using input pickling, required for typed Dict objects."""
         self.__dict__.update(state)
-        typed_dict = Dict.empty(key_type=types.uint32, value_type=types.uint32)
-        for key, value in self.relevant_features.items():
-            typed_dict[key] = value
-        self.relevant_features = typed_dict
+        if type(self.relevant_features) == Dict:
+            typed_dict = Dict.empty(key_type=types.uint32, value_type=types.uint32)
+            for key, value in self.relevant_features.items():
+                typed_dict[key] = value
+            self.relevant_features = typed_dict
 
 
 @njit(fastmath=True, cache=True)
