@@ -176,6 +176,9 @@ class GaussianHMM(BaseHMMLearn):
         return params
 
 
+_check_soft_dependencies("hmmlearn.hmm", severity="warning")
+
+
 class GMMHMM(BaseHMMLearn):
     """
     Hidden Markov Model with Gaussian mixture emissions.
