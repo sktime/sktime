@@ -201,7 +201,7 @@ class BOSSEnsemble(BaseClassifier):
                     self._alphabet_size,
                     save_words=True,
                     feature_selection=self.feature_selection,
-                    n_jobs=self._threads_to_use,
+                    n_jobs=self.n_jobs,
                     random_state=self.random_state,
                 )
                 boss.fit(X, y)
@@ -347,7 +347,7 @@ class BOSSEnsemble(BaseClassifier):
         else:
             for i, clf in enumerate(self.estimators_):
                 distance_matrix = pairwise.pairwise_distances(
-                    clf._transformed_data, n_jobs=self._threads_to_use
+                    clf._transformed_data, n_jobs=self.n_jobs
                 )
 
                 preds = []
@@ -374,7 +374,7 @@ class BOSSEnsemble(BaseClassifier):
         # there may be no words if feature selection is too aggressive
         if boss._transformed_data.shape[1] > 0:
             distance_matrix = pairwise.pairwise_distances(
-                boss._transformed_data, n_jobs=self._threads_to_use
+                boss._transformed_data, n_jobs=self.n_jobs
             )
 
             for i in range(train_size):
@@ -558,7 +558,7 @@ class IndividualBOSS(BaseClassifier):
             bigrams=False,
             # TODO remove_repeat_words=True,
             save_words=self.save_words,
-            n_jobs=self._threads_to_use,
+            n_jobs=self.n_jobs,
             feature_selection=self.feature_selection,
             return_sparse=True,
         )
@@ -584,7 +584,7 @@ class IndividualBOSS(BaseClassifier):
         test_bags = self._transformer.transform(X)
 
         distance_matrix = pairwise.pairwise_distances(
-            test_bags, self._transformed_data, n_jobs=self._threads_to_use
+            test_bags, self._transformed_data, n_jobs=self.n_jobs
         )
 
         classes = np.zeros(len(test_bags), dtype=type(self._class_vals[0]))
@@ -623,7 +623,7 @@ class IndividualBOSS(BaseClassifier):
         new_boss.classes_ = self.classes_
         new_boss._class_dictionary = self._class_dictionary
 
-        new_boss._threads_to_use = self._threads_to_use
+        new_boss.n_jobs = self.n_jobs
         new_boss._is_fitted = True
         return new_boss
 

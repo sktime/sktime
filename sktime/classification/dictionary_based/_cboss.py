@@ -252,7 +252,7 @@ class ContractableBOSS(BaseClassifier):
                 *parameters,
                 alphabet_size=self._alphabet_size,
                 save_words=False,
-                n_jobs=self._threads_to_use,
+                n_jobs=self.n_jobs,
                 feature_selection=self.feature_selection,
                 random_state=self.random_state,
             )
@@ -377,7 +377,7 @@ class ContractableBOSS(BaseClassifier):
             preds = (
                 clf._train_predictions
                 if self.save_train_predictions
-                else Parallel(n_jobs=self._threads_to_use)(
+                else Parallel(n_jobs=self.n_jobs)(
                     delayed(clf._train_predict)(
                         i,
                     )
@@ -405,7 +405,7 @@ class ContractableBOSS(BaseClassifier):
         # there may be no words if feature selection is too aggressive
         if boss._transformed_data.shape[1] > 0:
             distance_matrix = pairwise.pairwise_distances(
-                boss._transformed_data, n_jobs=self._threads_to_use
+                boss._transformed_data, n_jobs=self.n_jobs
             )
 
             for i in range(train_size):

@@ -193,8 +193,7 @@ class WEASEL(BaseClassifier):
         self.window_sizes = list(range(self.min_window, self.max_window, win_inc))
         self.highest_bit = (math.ceil(math.log2(self.max_window))) + 1
 
-        n_jobs = 1  # can't pickle
-        parallel_res = Parallel(n_jobs=n_jobs)(
+        parallel_res = Parallel(n_jobs=self.n_jobs)(
             delayed(_parallel_fit)(
                 X,
                 y,
@@ -206,6 +205,7 @@ class WEASEL(BaseClassifier):
                 self.binning_strategy,
                 self.feature_selection,
                 self.bigrams,
+                self.n_jobs,
             )
             for window_size in self.window_sizes
         )
@@ -230,7 +230,7 @@ class WEASEL(BaseClassifier):
                 # class_weight="balanced",
                 penalty="l2",
                 random_state=self.random_state,
-                n_jobs=self._threads_to_use,
+                n_jobs=self.n_jobs,
             )
 
         self.clf.fit(all_words, y)
@@ -272,7 +272,7 @@ class WEASEL(BaseClassifier):
         return self.clf.predict_proba(bag)
 
     def _transform_words(self, X):
-        parallel_res = Parallel(n_jobs=1)(  # can't pickle
+        parallel_res = Parallel(n_jobs=self._threads_to_use)(
             delayed(transformer.transform)(X) for transformer in self.SFA_transformers
         )
         all_words = []
@@ -332,6 +332,7 @@ def _parallel_fit(
     binning_strategy,
     feature_selection,
     bigrams,
+    n_jobs,
 ):
     rng = check_random_state(window_size)
     transformer = SFA_NEW(
@@ -345,6 +346,7 @@ def _parallel_fit(
         feature_selection=feature_selection,
         # TODO remove_repeat_words=False,
         save_words=False,
+        n_jobs=n_jobs,
     )
 
     all_words = transformer.fit_transform(X, y)
