@@ -848,7 +848,7 @@ def create_bag_feature_selection(
     relevant_features = Dict.empty(key_type=types.uint32, value_type=types.uint32)
     for k, v in zip(
         feature_names[relevant_features_idx],
-        np.arange(len(relevant_features_idx)),
+        np.arange(len(relevant_features_idx), dtype=np.uint32),
     ):
         relevant_features[k] = v
 
