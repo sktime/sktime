@@ -220,16 +220,14 @@ class WEASEL(BaseClassifier):
         if not self.support_probabilities:
             self.clf = RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=False)
         else:
-            self.clf = (
-                LogisticRegression(
-                    max_iter=5000,
-                    solver="liblinear",
-                    dual=True,
-                    # class_weight="balanced",
-                    penalty="l2",
-                    random_state=self.random_state,
-                    n_jobs=self._threads_to_use,
-                ),
+            self.clf = LogisticRegression(
+                max_iter=5000,
+                solver="liblinear",
+                dual=True,
+                # class_weight="balanced",
+                penalty="l2",
+                random_state=self.random_state,
+                n_jobs=self._threads_to_use,
             )
 
         self.clf.fit(all_words, y)
@@ -312,7 +310,7 @@ class WEASEL(BaseClassifier):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
-        return {"window_inc": 4}
+        return {"window_inc": 4, "support_probabilities": True}
 
 
 def _parallel_fit(
