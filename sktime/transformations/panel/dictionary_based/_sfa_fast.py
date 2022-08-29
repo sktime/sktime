@@ -766,7 +766,9 @@ def _mft(
     transformed[:, 0, 1::2] = imags[:, 0 : length // 2]
 
     # 2. Other runs using MFT
-    X2 = X.reshape(X.shape[0], X.shape[1], 1)
+    # X2 = X.reshape(X.shape[0], X.shape[1], 1)
+    # Bugfix to allow for slices on original X like in TEASER
+    X2 = X.copy().reshape(X.shape[0], X.shape[1], 1)
 
     # compute only those indices needed and not all
     phis2 = phis[indices]
