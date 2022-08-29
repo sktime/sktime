@@ -326,10 +326,7 @@ class ContractableBOSS(BaseClassifier):
         for n, clf in enumerate(self.estimators_):
             preds = clf.predict(X)
             for i in range(0, X.shape[0]):
-                # try:
                 sums[i, self._class_dictionary[preds[i]]] += self.weights_[n]
-                # except KeyError:
-                #    print("why??")
 
         dists = sums / (np.ones(self.n_classes_) * self._weight_sum)
 

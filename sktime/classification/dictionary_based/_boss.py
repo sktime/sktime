@@ -583,7 +583,7 @@ class IndividualBOSS(BaseClassifier):
             min_pos = np.argmin(distance_matrix[i])
             classes[i] = self._class_vals[min_pos]
 
-        return np.array(classes)
+        return classes
 
     def _train_predict(self, train_num, distance_matrix):
         distance_vector = distance_matrix[train_num]
