@@ -94,7 +94,6 @@ class SFA_NEW(_PanelToPanelTransformer):
 
     Attributes
     ----------
-    words: []
     breakpoints: = []
     num_insts = 0
     num_atts = 0
@@ -121,9 +120,7 @@ class SFA_NEW(_PanelToPanelTransformer):
         bigrams=False,
         skip_grams=False,
         save_words=False,
-        cut_upper=True,
-        dilation=1,
-        first_difference=False,
+        force_alphabet_size_two=True,
         feature_selection="none",
         max_feature_count=256,
         p_threshold=0.05,
@@ -162,7 +159,7 @@ class SFA_NEW(_PanelToPanelTransformer):
         self.bigrams = bigrams
         self.skip_grams = skip_grams
         self.n_jobs = n_jobs
-        self.cut_upper = cut_upper
+        self.force_alphabet_size_two = force_alphabet_size_two
 
         self.n_instances = 0
         self.series_length = 0
@@ -170,9 +167,6 @@ class SFA_NEW(_PanelToPanelTransformer):
         self.letter_bits = 0
         self.word_bits = 0
         self.max_bits = 0
-
-        self.dilation = dilation
-        self.first_difference = first_difference
 
         # Feature selection part
         self.feature_selection = feature_selection
@@ -214,28 +208,19 @@ class SFA_NEW(_PanelToPanelTransformer):
         X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
         X = X.squeeze(1)
 
-        X2, self.X_index = _dilation(X, self.dilation, self.first_difference)
-        self.n_instances, self.series_length = X2.shape
-        self.breakpoints = self._binning(X2, y)
+        self.n_instances, self.series_length = X.shape
+        self.breakpoints = self._binning(X, y)
         self._is_fitted = True
 
         # force alphabet of size 2
-        # TODO parameterize??
-        if self.breakpoints.shape[1] == 4:
+        if self.force_alphabet_size_two and self.breakpoints.shape[1] == 4:
             bp = np.zeros((self.breakpoints.shape[0], 2))
             bp[:, 0] = self.breakpoints[:, 1]
             bp[:, 1] = np.inf
             self.breakpoints = bp
 
-            """
-            bp = breakpoints.copy()
-            bp[bp < 0] = -np.inf
-            words = generate_words(dfts, bp, letter_bits)
-            return words
-            """
-
         words, dfts = _transform_case(
-            X2,
+            X,
             self.window_size,
             self.dft_length,
             self.norm,
@@ -286,9 +271,8 @@ class SFA_NEW(_PanelToPanelTransformer):
         X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
         X = X.squeeze(1)
 
-        X2, self.X_index = _dilation(X, self.dilation, self.first_difference)
         words, dfts = _transform_case(
-            X2,
+            X,
             self.window_size,
             self.dft_length,
             self.norm,
@@ -315,8 +299,6 @@ class SFA_NEW(_PanelToPanelTransformer):
 
         # transform
         return create_bag_transform(
-            # X,
-            self.X_index,
             self.feature_count,
             self.feature_selection,
             self.relevant_features if self.relevant_features else empty_dict,
@@ -330,7 +312,6 @@ class SFA_NEW(_PanelToPanelTransformer):
 
         if self.feature_selection == "none":
             bag_of_words = create_bag_none(
-                self.X_index,
                 self.breakpoints,
                 words.shape[0],
                 words,
@@ -812,33 +793,6 @@ def _mft(
         ]
 
 
-def _dilation(X, d, first_difference):
-    if first_difference:
-        X2 = np.diff(X, axis=1)
-        X = np.concatenate((X, X2), axis=1)
-
-    return (
-        _dilation2(X, d),
-        _dilation2(np.arange(X.shape[1], dtype=np.float_).reshape(1, -1), d)[0],
-    )
-
-
-@njit(cache=True, fastmath=True)
-def _dilation2(X, d):
-    # dilation on actual data
-    if d > 1:
-        start = 0
-        data = np.zeros(X.shape, dtype=np.float_)
-        for i in range(0, d):
-            curr = X[:, i::d]
-            end = curr.shape[1]
-            data[:, start : start + end] = curr
-            start += end
-        return data
-    else:
-        return X.astype(np.float_)
-
-
 @njit(cache=True, fastmath=True)
 def create_feature_names(sfa_words):
     feature_names = set()
@@ -849,16 +803,12 @@ def create_feature_names(sfa_words):
 
 
 @njit(cache=True, fastmath=True)
-def create_bag_none(X_index, breakpoints, n_instances, sfa_words, word_length):
+def create_bag_none(breakpoints, n_instances, sfa_words, word_length):
     feature_count = np.int32(breakpoints.shape[1] ** word_length)
     all_win_words = np.zeros((n_instances, feature_count), dtype=np.int32)
 
     for j in range(len(sfa_words)):
         all_win_words[j, :] = np.bincount(sfa_words[j], minlength=feature_count)
-
-    # cc = feature_count // 2 + key
-    # if all_win_words[j, cc] == 0:
-    #    all_win_words[j, cc] = X_index[k] / sfa_words.shape[1]
 
     return all_win_words
 
@@ -884,7 +834,7 @@ def create_bag_feature_selection(
 
 @njit(cache=True, fastmath=True)
 def create_bag_transform(
-    X_index, feature_count, feature_selection, relevant_features, sfa_words
+    feature_count, feature_selection, relevant_features, sfa_words
 ):
     # merging arrays
     all_win_words = np.zeros((len(sfa_words), feature_count), np.int32)
@@ -896,9 +846,5 @@ def create_bag_transform(
                 if key in relevant_features:
                     o = relevant_features[key]
                     all_win_words[j, o] += 1
-
-        # cc = feature_count // 2 + key
-        # if all_win_words[j, cc] == 0:
-        #    all_win_words[j, cc] = X_index[k] / sfa_words.shape[1]
 
     return all_win_words, feature_count

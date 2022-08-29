@@ -606,7 +606,6 @@ class IndividualBOSS(BaseClassifier):
         new_boss._transformer.dfts = self._transformer.dfts
         new_boss._transformer.breakpoints = self._transformer.breakpoints
         new_boss._transformer.support = self._transformer.support
-        new_boss._transformer.X_index = self._transformer.X_index
         new_boss._transformer.set_fitted()
 
         sfa_words = new_boss._transformer._shorten_bags(word_len, y)
