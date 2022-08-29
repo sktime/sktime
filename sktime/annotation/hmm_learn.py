@@ -16,7 +16,7 @@ from sktime.annotation.base import BaseSeriesAnnotator
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 __author__ = ["miraep8"]
-__all__ = ["BaseHMMLearn", "GaussianHMM"]
+__all__ = ["BaseHMMLearn", "GaussianHMM", "GMMHMM"]
 
 
 class BaseHMMLearn(BaseSeriesAnnotator):
@@ -106,6 +106,132 @@ class GaussianHMM(BaseHMMLearn):
         verbose: bool = False,
         params: str = "stmc",
         init_params: str = "stmc",
+        implementation: str = "log",
+    ):
+
+        self.n_components = n_components
+        self.covariance_type = covariance_type
+        self.min_covar = min_covar
+        self.startprob_prior = startprob_prior
+        self.transmat_prior = transmat_prior
+        self.means_prior = means_prior
+        self.means_weight = means_weight
+        self.covars_prior = covars_prior
+        self.covars_weight = covars_weight
+        self.algorithm = algorithm
+        self.random_state = random_state
+        self.n_iter = n_iter
+        self.tol = tol
+        self.verbose = verbose
+        self.params = params
+        self.init_params = init_params
+        self.implementation = implementation
+        super(GaussianHMM, self).__init__()
+
+    def _fit(self, X, Y=None):
+        # import inside _fit to avoid hard dependency.
+        from hmmlearn.hmm import GaussianHMM as _GaussianHMM
+
+        self._hmm_estimator = _GaussianHMM(
+            self.n_components,
+            self.covariance_type,
+            self.min_covar,
+            self.startprob_prior,
+            self.transmat_prior,
+            self.means_prior,
+            self.means_weight,
+            self.covars_prior,
+            self.covars_weight,
+            self.algorithm,
+            self.random_state,
+            self.n_iter,
+            self.tol,
+            self.verbose,
+            self.params,
+            self.init_params,
+            self.implementation,
+        )
+        return super(GaussianHMM, self)._fit(X, Y)
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict
+        """
+        params = {
+            "n_components": 3,
+            "covariance_type": "diag",
+            "min_covar": 1e-3,
+        }
+
+        return params
+
+
+class GMMHMM(BaseHMMLearn):
+    """
+    Hidden Markov Model with Gaussian mixture emissions.
+
+    Attributes
+    ----------
+    monitor_ : ConvergenceMonitor
+        Monitor object used to check the convergence of EM.
+    startprob_ : array, shape (n_components, )
+        Initial state occupation distribution.
+    transmat_ : array, shape (n_components, n_components)
+        Matrix of transition probabilities between states.
+    weights_ : array, shape (n_components, n_mix)
+        Mixture weights for each state.
+    means_ : array, shape (n_components, n_mix, n_features)
+        Mean parameters for each mixture component in each state.
+    covars_ : array
+        Covariance parameters for each mixture components in each state.
+        The shape depends on :attr:`covariance_type`:
+        * (n_components, n_mix)                          if "spherical",
+        * (n_components, n_mix, n_features)              if "diag",
+        * (n_components, n_mix, n_features, n_features)  if "full"
+        * (n_components, n_features, n_features)         if "tied".
+
+    Examples
+    --------
+    >>> from sktime.annotation.hmm_learn import GMMHMM
+    >>> from sktime.annotation.datagen import piecewise_normal
+    >>> data = piecewise_normal(
+    ...    means=[2, 4, 1], lengths=[10, 35, 40], random_state=7
+    ...    ).reshape((-1, 1))
+    >>> model = GMMHMM(algorithm='viterbi', n_components=2)
+    >>> model = model.fit(data)
+    >>> labeled_data = model.predict(data)
+    """
+
+    def __init__(
+        self,
+        n_components: int = 1,
+        n_mix: int = 1,
+        min_covar: float = 1e-3,
+        startprob_prior: float = 1.0,
+        transmat_prior: float = 1.0,
+        weights_prior: float = 1.0,
+        means_prior: float = 0.0,
+        means_weight: float = 0.0,
+        covars_prior=None,
+        covars_weight=None,
+        algorithm: str = "viterbi",
+        covariance_type: str = "diag",
+        random_state=None,
+        n_iter: int = 10,
+        tol: float = 1e-2,
+        verbose: bool = False,
+        params: str = "stmcw",
+        init_params: str = "stmcw",
         implementation: str = "log",
     ):
 
