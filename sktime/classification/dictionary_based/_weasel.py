@@ -316,6 +316,7 @@ class WEASEL(BaseClassifier):
         return {
             "window_inc": 4,
             "support_probabilities": True,
+            "bigrams": False,
             "feature_selection": "none",
         }
 
