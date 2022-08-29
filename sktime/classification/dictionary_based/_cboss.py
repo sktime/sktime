@@ -140,7 +140,7 @@ class ContractableBOSS(BaseClassifier):
         time_limit_in_minutes=0.0,
         contract_max_n_parameter_samples=np.inf,
         save_train_predictions=False,
-        sfa_feature_selection="chi2",
+        feature_selection="chi2",
         n_jobs=1,
         random_state=None,
     ):
@@ -154,7 +154,7 @@ class ContractableBOSS(BaseClassifier):
         self.save_train_predictions = save_train_predictions
         self.n_jobs = n_jobs
         self.random_state = random_state
-        self.sfa_feature_selection = sfa_feature_selection
+        self.feature_selection = feature_selection
 
         self.estimators_ = []
         self.weights_ = []
@@ -253,7 +253,7 @@ class ContractableBOSS(BaseClassifier):
                 alphabet_size=self._alphabet_size,
                 save_words=False,
                 n_jobs=self._threads_to_use,
-                feature_selection=self.sfa_feature_selection,
+                feature_selection=self.feature_selection,
                 random_state=self.random_state,
             )
             boss.fit(X_subsample, y_subsample)
@@ -450,5 +450,5 @@ class ContractableBOSS(BaseClassifier):
                 "n_parameter_samples": 4,
                 "max_ensemble_size": 2,
                 "save_train_predictions": True,
-                "sfa_feature_selection": "none",
+                "feature_selection": "none",
             }

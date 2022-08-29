@@ -119,6 +119,7 @@ class WEASEL(BaseClassifier):
         window_inc=2,
         p_threshold=0.05,
         n_jobs=1,
+        feature_selection="chi2",
         support_probabilities=False,
         random_state=None,
     ):
@@ -141,6 +142,7 @@ class WEASEL(BaseClassifier):
         self.min_window = 6
         self.max_window = 100
 
+        self.feature_selection = feature_selection
         self.window_inc = window_inc
         self.highest_bit = -1
         self.window_sizes = []
@@ -202,6 +204,7 @@ class WEASEL(BaseClassifier):
                 self.norm_options,
                 self.anova,
                 self.binning_strategy,
+                self.feature_selection,
                 self.bigrams,
             )
             for window_size in self.window_sizes
@@ -310,7 +313,11 @@ class WEASEL(BaseClassifier):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
-        return {"window_inc": 4, "support_probabilities": True}
+        return {
+            "window_inc": 4,
+            "support_probabilities": True,
+            "feature_selection": "none",
+        }
 
 
 def _parallel_fit(
@@ -322,6 +329,7 @@ def _parallel_fit(
     norm_options,
     anova,
     binning_strategy,
+    feature_selection,
     bigrams,
 ):
     rng = check_random_state(window_size)
@@ -333,7 +341,7 @@ def _parallel_fit(
         anova=anova,
         binning_method=binning_strategy,
         bigrams=bigrams,
-        feature_selection="chi2",
+        feature_selection=feature_selection,
         # TODO remove_repeat_words=False,
         save_words=False,
     )

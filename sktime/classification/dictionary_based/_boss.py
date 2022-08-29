@@ -410,9 +410,13 @@ class BOSSEnsemble(BaseClassifier):
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
         if parameter_set == "results_comparison":
-            return {"max_ensemble_size": 5}
+            return {"max_ensemble_size": 5, "feature_selection": "none"}
         else:
-            return {"max_ensemble_size": 2, "save_train_predictions": True}
+            return {
+                "max_ensemble_size": 2,
+                "save_train_predictions": True,
+                "feature_selection": "none",
+            }
 
 
 class IndividualBOSS(BaseClassifier):
