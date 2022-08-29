@@ -121,6 +121,7 @@ class BOSSEnsemble(BaseClassifier):
         max_win_len_prop=1,
         min_window=10,
         save_train_predictions=False,
+        feature_selection="chi2",
         n_jobs=1,
         random_state=None,
     ):
@@ -137,6 +138,7 @@ class BOSSEnsemble(BaseClassifier):
         self.n_estimators_ = 0
         self.series_length_ = 0
         self.n_instances_ = 0
+        self.feature_selection = feature_selection
 
         self._word_lengths = [16, 12, 8]
         self._norm_options = [True, False]
@@ -198,6 +200,7 @@ class BOSSEnsemble(BaseClassifier):
                     normalise,
                     self._alphabet_size,
                     save_words=True,
+                    feature_selection=self.feature_selection,
                     n_jobs=self._threads_to_use,
                     random_state=self.random_state,
                 )
@@ -603,6 +606,7 @@ class IndividualBOSS(BaseClassifier):
             self.norm,
             self.alphabet_size,
             save_words=self.save_words,
+            feature_selection=self.feature_selection,
             random_state=self.random_state,
             n_jobs=self.n_jobs,
         )
