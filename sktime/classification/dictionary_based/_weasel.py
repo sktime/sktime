@@ -11,15 +11,13 @@ import math
 
 import numpy as np
 from joblib import Parallel, delayed
-from numba import njit
-from sklearn.feature_extraction import DictVectorizer
-from sklearn.feature_selection import chi2
-from sklearn.linear_model import LogisticRegression
-from sklearn.pipeline import make_pipeline
+from numba import set_num_threads
+from scipy.sparse import hstack
+from sklearn.linear_model import RidgeClassifierCV
 from sklearn.utils import check_random_state
 
 from sktime.classification.base import BaseClassifier
-from sktime.transformations.panel.dictionary_based import SFA
+from sktime.transformations.panel.dictionary_based import SFA_NEW
 
 
 class WEASEL(BaseClassifier):
@@ -152,6 +150,7 @@ class WEASEL(BaseClassifier):
         self.SFA_transformers = []
         self.clf = None
         self.n_jobs = n_jobs
+        set_num_threads(n_jobs)
 
         super(WEASEL, self).__init__()
 
@@ -189,93 +188,36 @@ class WEASEL(BaseClassifier):
         self.window_sizes = list(range(self.min_window, self.max_window, win_inc))
         self.highest_bit = (math.ceil(math.log2(self.max_window))) + 1
 
-        def _parallel_fit(
-            window_size,
-        ):
-            rng = check_random_state(window_size)
-            all_words = [[] for x in range(len(X))]  # no dict needed, array is enough
-            relevant_features_count = 0
-
-            # for window_size in self.window_sizes:
-            transformer = SFA(
-                word_length=rng.choice(self.word_lengths),
-                alphabet_size=self.alphabet_size,
-                window_size=window_size,
-                norm=rng.choice(self.norm_options),
-                anova=self.anova,
-                # levels=rng.choice([1, 2, 3]),
-                binning_method=self.binning_strategy,
-                bigrams=self.bigrams,
-                remove_repeat_words=False,
-                lower_bounding=False,
-                save_words=False,
-                n_jobs=self._threads_to_use,
+        n_jobs = 1  # can't pickle
+        parallel_res = Parallel(n_jobs=n_jobs)(
+            delayed(_parallel_fit)(
+                X,
+                y,
+                window_size,
+                self.word_lengths,
+                self.alphabet_size,
+                self.norm_options,
+                self.anova,
+                self.binning_strategy,
+                self.bigrams,
             )
-
-            sfa_words = transformer.fit_transform(X, y)
-
-            # self.SFA_transformers.append(transformer)
-            bag = sfa_words[0]
-            apply_chi_squared = self.p_threshold < 1
-
-            # chi-squared test to keep only relevant features
-            relevant_features = {}
-            if apply_chi_squared:
-                vectorizer = DictVectorizer(sparse=True, dtype=np.int32, sort=False)
-                bag_vec = vectorizer.fit_transform(bag)
-
-                chi2_statistics, p = chi2(bag_vec, y)
-                relevant_features_idx = np.where(p <= self.p_threshold)[0]
-                relevant_features = set(
-                    np.array(vectorizer.feature_names_)[relevant_features_idx]
-                )
-                relevant_features_count += len(relevant_features_idx)
-
-            # merging bag-of-patterns of different window_sizes
-            # to single bag-of-patterns with prefix indicating
-            # the used window-length
-            for j in range(len(bag)):
-                for (key, value) in bag[j].items():
-                    # chi-squared test
-                    if (not apply_chi_squared) or (key in relevant_features):
-                        # append the prefixes to the words to
-                        # distinguish between window-sizes
-                        word = WEASEL._shift_left(key, self.highest_bit, window_size)
-                        all_words[j].append((word, value))
-
-            return all_words, transformer, relevant_features_count
-
-        parallel_res = Parallel(n_jobs=self._threads_to_use)(
-            delayed(_parallel_fit)(window_size) for window_size in self.window_sizes
-        )  # , verbose=self.verbose
-
-        relevant_features_count = 0
-        all_words = [dict() for x in range(len(X))]
-
-        for sfa_words, transformer, rel_features_count in parallel_res:
-            self.SFA_transformers.append(transformer)
-            relevant_features_count += rel_features_count
-
-            for idx, bag in enumerate(sfa_words):
-                all_words[idx].update(bag)
-
-        self.clf = make_pipeline(
-            DictVectorizer(sparse=True, sort=False),
-            # StandardScaler(copy=False),
-            LogisticRegression(
-                max_iter=5000,
-                solver="liblinear",
-                dual=True,
-                # class_weight="balanced",
-                penalty="l2",
-                random_state=self.random_state,
-                n_jobs=self._threads_to_use,
-            ),
+            for window_size in self.window_sizes
         )
+
+        all_words = []
+        for sfa_words, transformer in parallel_res:
+            self.SFA_transformers.append(transformer)
+            all_words.append(sfa_words)
+        if type(all_words[0]) is np.ndarray:
+            all_words = np.concatenate(all_words, axis=1)
+        else:
+            all_words = hstack((all_words))
+
+        self.clf = RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=False)
+        self.clf.fit(all_words, y)
 
         # print("Size of dict", relevant_features_count)
         self.clf.fit(all_words, y)
-
         return self
 
     def _predict(self, X) -> np.ndarray:
@@ -311,36 +253,17 @@ class WEASEL(BaseClassifier):
         return self.clf.predict_proba(bag)
 
     def _transform_words(self, X):
-        def _parallel_transform_words(X, transformer):
-            bag_all_words = [[] for x in range(len(X))]
-
-            # SFA transform
-            sfa_words = transformer.transform(X)
-            bag = sfa_words[0]
-
-            # merging bag-of-patterns of different window_sizes
-            # to single bag-of-patterns with prefix indicating
-            # the used window-length
-            for j in range(len(bag)):
-                for (key, value) in bag[j].items():
-                    # if value > 1:
-                    # append the prefices to the words to distinguish
-                    # between window-sizes
-                    word = WEASEL._shift_left(
-                        key, self.highest_bit, transformer.window_size
-                    )
-                    bag_all_words[j].append((word, value))
-
-            return bag_all_words
-
-        parallel_res = Parallel(n_jobs=self._threads_to_use)(
-            delayed(_parallel_transform_words)(X, transformer)
-            for transformer in self.SFA_transformers
+        parallel_res = Parallel(n_jobs=1)(  # can't pickle
+            delayed(transformer.transform)(X) for transformer in self.SFA_transformers
         )
-        all_words = [dict() for x in range(len(X))]
+        all_words = []
         for sfa_words in parallel_res:
-            for idx, bag in enumerate(sfa_words):
-                all_words[idx].update(bag)
+            all_words.append(sfa_words)
+        if type(all_words[0]) is np.ndarray:
+            all_words = np.concatenate(all_words, axis=1)
+        else:
+            all_words = hstack((all_words))
+
         return all_words
 
     def _compute_window_inc(self):
@@ -348,11 +271,6 @@ class WEASEL(BaseClassifier):
         if self.series_length < 100:
             win_inc = 1  # less than 100 is ok runtime-wise
         return win_inc
-
-    @staticmethod
-    @njit("int64(int64,int64,int64)", fastmath=True, cache=True)
-    def _shift_left(key, highest_bit, window_size):
-        return (key << highest_bit) | window_size
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -377,3 +295,32 @@ class WEASEL(BaseClassifier):
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
         return {"window_inc": 4}
+
+
+def _parallel_fit(
+    X,
+    y,
+    window_size,
+    word_lengths,
+    alphabet_size,
+    norm_options,
+    anova,
+    binning_strategy,
+    bigrams,
+):
+    rng = check_random_state(window_size)
+    transformer = SFA_NEW(
+        word_length=rng.choice(word_lengths),
+        alphabet_size=alphabet_size,
+        window_size=window_size,
+        norm=rng.choice(norm_options),
+        anova=anova,
+        binning_method=binning_strategy,
+        bigrams=bigrams,
+        feature_selection="chi2",
+        # TODO remove_repeat_words=False,
+        save_words=False,
+    )
+
+    all_words = transformer.fit_transform(X, y)
+    return all_words, transformer
