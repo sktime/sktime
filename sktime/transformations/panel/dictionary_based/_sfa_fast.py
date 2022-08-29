@@ -137,20 +137,18 @@ class SFA_NEW(_PanelToPanelTransformer):
 
         # we cannot select more than window_size many letters in a word
         offset = 2 if norm else 0
-        self.word_length_internal = word_length
-        self.word_length_internal_actual = min(window_size - offset, word_length)
+        self.word_length = word_length
+        self.word_length_actual = min(window_size - offset, word_length)
         self.dft_length = (
             window_size - offset
             if (anova or variance) is True
-            else self.word_length_interna
+            else self.word_length_actual
         )
         # make dft_length an even number (same number of reals and imags)
         self.dft_length = self.dft_length + self.dft_length % 2
-        self.word_length_internal_actual = (
-            self.word_length_internal_actual + self.word_length_internal_actual % 2
-        )
+        self.word_length_actual = self.word_length_actual + self.word_length_actual % 2
 
-        self.support = np.arange(self.word_length_internal_actual)
+        self.support = np.arange(self.word_length_actual)
 
         self.alphabet_size = alphabet_size
         self.window_size = window_size
@@ -209,7 +207,7 @@ class SFA_NEW(_PanelToPanelTransformer):
             raise TypeError("binning_method must be one of: ", binning_methods)
 
         self.letter_bits = np.uint32(math.ceil(math.log2(self.alphabet_size)))
-        self.word_bits = self.word_length_internal_actual * self.letter_bits
+        self.word_bits = self.word_length_actual * self.letter_bits
         self.max_bits = np.uint32(
             self.word_bits * 2 if self.bigrams else self.word_bits
         )
@@ -324,7 +322,7 @@ class SFA_NEW(_PanelToPanelTransformer):
                 self.breakpoints,
                 words.shape[0],
                 words,
-                self.word_length_internal_actual,
+                self.word_length_actual,
             )
         else:
             feature_names = create_feature_names(words)
@@ -396,7 +394,7 @@ class SFA_NEW(_PanelToPanelTransformer):
             dft_variance = np.var(dft, axis=0)
 
             # select word-length-many indices with the largest variance
-            self.support = np.argsort(-dft_variance)[: self.word_length_internal]
+            self.support = np.argsort(-dft_variance)[: self.word_length_actual]
 
             # sort remaining indices
             self.support = np.sort(self.support)
@@ -412,9 +410,9 @@ class SFA_NEW(_PanelToPanelTransformer):
             )[0]
 
             # select word-length many indices with best f-score
-            if self.word_length_internal <= non_constant.size:
+            if self.word_length_actual <= non_constant.size:
                 f, _ = f_classif(dft[:, non_constant], y)
-                self.support = non_constant[np.argsort(-f)][: self.word_length_internal]
+                self.support = non_constant[np.argsort(-f)][: self.word_length_actual]
 
             # sort remaining indices
             self.support = np.sort(self.support)
@@ -440,9 +438,9 @@ class SFA_NEW(_PanelToPanelTransformer):
             breaks = encoder.bin_edges_.reshape((-1, 1))
         else:
             breaks = encoder.bin_edges_
-        breakpoints = np.zeros((self.word_length_internal, self.alphabet_size))
+        breakpoints = np.zeros((self.word_length_actual, self.alphabet_size))
 
-        for letter in range(self.word_length_internal):
+        for letter in range(self.word_length_actual):
             for bp in range(1, len(breaks[letter]) - 1):
                 breakpoints[letter, bp - 1] = breaks[letter, bp]
 
@@ -450,10 +448,10 @@ class SFA_NEW(_PanelToPanelTransformer):
         return breakpoints
 
     def _mcb(self, dft):
-        breakpoints = np.zeros((self.word_length_internal, self.alphabet_size))
+        breakpoints = np.zeros((self.word_length_actual, self.alphabet_size))
 
         dft = np.round(dft, 2)
-        for letter in range(self.word_length_internal):
+        for letter in range(self.word_length_actual):
             column = np.sort(dft[:, letter])
             bin_index = 0
 
@@ -476,7 +474,7 @@ class SFA_NEW(_PanelToPanelTransformer):
         return breakpoints
 
     def _igb(self, dft, y):
-        breakpoints = np.zeros((self.word_length_internal, self.alphabet_size))
+        breakpoints = np.zeros((self.word_length_actual, self.alphabet_size))
         clf = DecisionTreeClassifier(
             criterion="entropy",
             max_depth=np.uint32(np.log2(self.alphabet_size)),
@@ -484,7 +482,7 @@ class SFA_NEW(_PanelToPanelTransformer):
             random_state=1,
         )
 
-        for i in range(self.word_length_internal):
+        for i in range(self.word_length_actual):
             clf.fit(dft[:, i][:, None], y)
             threshold = clf.tree_.threshold[clf.tree_.children_left != -1]
             for bp in range(len(threshold)):
@@ -500,14 +498,14 @@ class SFA_NEW(_PanelToPanelTransformer):
                 "Words from transform must be saved using save_word to shorten bags."
             )
 
-        if word_len > self.word_length_internal:
-            word_len = self.word_length_internal
+        if word_len > self.word_length_actual:
+            word_len = self.word_length_actual
 
         new_len = min(word_len, self.dfts.shape[2])
         self.dfts = self.dfts[:, :, :new_len]
         self.breakpoints = self.breakpoints[:new_len, :]
         self.support = self.support[:new_len]
-        self.word_length_internal = word_len
+        self.word_length_actual = word_len
         self.dft_length = new_len
 
         words = generate_words(
