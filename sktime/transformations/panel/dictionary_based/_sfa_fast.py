@@ -51,6 +51,10 @@ class SFA_NEW(_PanelToPanelTransformer):
         alphabet_size:       int, default = 4
             number of values to discretise each value to
 
+        force_alphabet_size_two:    bool, default=True
+            if set to True, will apply binning with alphabet of size 4 but transform
+            with only alphabet of size 2.
+
         window_size:         int, default = 12
             size of window for sliding. Input series
             length for whole series transform
@@ -293,8 +297,8 @@ class SFA_NEW(_PanelToPanelTransformer):
 
         # transform: applies the feature selection strategy
         empty_dict = Dict.empty(
-            key_type=types.int32,
-            value_type=types.int32,
+            key_type=types.uint32,
+            value_type=types.uint32,
         )
 
         # transform
@@ -336,7 +340,7 @@ class SFA_NEW(_PanelToPanelTransformer):
             # Chi-squared feature selection
             elif self.feature_selection == "chi2":
                 feature_count = len(list(feature_names))
-                relevant_features_idx = np.arange(feature_count, dtype=np.int32)
+                relevant_features_idx = np.arange(feature_count, dtype=np.uint32)
                 bag_of_words, _ = create_bag_feature_selection(
                     words.shape[0],
                     relevant_features_idx,
@@ -350,7 +354,7 @@ class SFA_NEW(_PanelToPanelTransformer):
                 relevant_features_idx = np.where(p <= self.p_threshold)[0]
 
                 self.relevant_features = Dict.empty(
-                    key_type=types.int32, value_type=types.int32
+                    key_type=types.uint32, value_type=types.uint32
                 )
                 for k, v in zip(
                     np.array(list(feature_names))[relevant_features_idx],
@@ -470,7 +474,7 @@ class SFA_NEW(_PanelToPanelTransformer):
         breakpoints = np.zeros((self.word_length, self.alphabet_size))
         clf = DecisionTreeClassifier(
             criterion="entropy",
-            max_depth=np.int32(np.log2(self.alphabet_size)),
+            max_depth=np.uint32(np.log2(self.alphabet_size)),
             max_leaf_nodes=self.alphabet_size,
             random_state=1,
         )
@@ -685,9 +689,9 @@ def generate_words(dfts, bigrams, skip_grams, window_size, breakpoints, letter_b
         # allocate memory for 2- and 3-skip-grams
         needed_size += max(0, 2 * dfts.shape[1] - 5 * window_size)
 
-    words = np.zeros((dfts.shape[0], needed_size), dtype=np.int32)
+    words = np.zeros((dfts.shape[0], needed_size), dtype=np.uint32)
 
-    letter_bits = np.int32(letter_bits)
+    letter_bits = np.uint32(letter_bits)
     word_bits = dfts.shape[2] * letter_bits
 
     # special case: binary breakpoints
@@ -698,7 +702,7 @@ def generate_words(dfts, bigrams, skip_grams, window_size, breakpoints, letter_b
 
         for a in prange(dfts.shape[0]):
             match = (dfts[a] <= breakpoints[:, 0]).astype(np.float32)
-            words[a, : dfts.shape[1]] = np.dot(match, vector).astype(np.int32)
+            words[a, : dfts.shape[1]] = np.dot(match, vector).astype(np.uint32)
 
     # general case: alphabet-size many breakpoints
     else:
@@ -804,8 +808,8 @@ def create_feature_names(sfa_words):
 
 @njit(cache=True, fastmath=True)
 def create_bag_none(breakpoints, n_instances, sfa_words, word_length):
-    feature_count = np.int32(breakpoints.shape[1] ** word_length)
-    all_win_words = np.zeros((n_instances, feature_count), dtype=np.int32)
+    feature_count = np.uint32(breakpoints.shape[1] ** word_length)
+    all_win_words = np.zeros((n_instances, feature_count), dtype=np.uint32)
 
     for j in range(len(sfa_words)):
         all_win_words[j, :] = np.bincount(sfa_words[j], minlength=feature_count)
@@ -817,14 +821,14 @@ def create_bag_none(breakpoints, n_instances, sfa_words, word_length):
 def create_bag_feature_selection(
     n_instances, relevant_features_idx, feature_names, sfa_words
 ):
-    relevant_features = Dict.empty(key_type=types.int32, value_type=types.int32)
+    relevant_features = Dict.empty(key_type=types.uint32, value_type=types.uint32)
     for k, v in zip(
         feature_names[relevant_features_idx],
         np.arange(len(relevant_features_idx)),
     ):
         relevant_features[k] = v
 
-    all_win_words = np.zeros((n_instances, len(relevant_features_idx)), dtype=np.int32)
+    all_win_words = np.zeros((n_instances, len(relevant_features_idx)), dtype=np.uint32)
     for j in range(len(sfa_words)):
         for key in sfa_words[j]:
             if key in relevant_features:
@@ -837,7 +841,7 @@ def create_bag_transform(
     feature_count, feature_selection, relevant_features, sfa_words
 ):
     # merging arrays
-    all_win_words = np.zeros((len(sfa_words), feature_count), np.int32)
+    all_win_words = np.zeros((len(sfa_words), feature_count), np.uint32)
     for j in range(len(sfa_words)):
         if feature_selection == "none":
             all_win_words[j, :] = np.bincount(sfa_words[j], minlength=feature_count)
