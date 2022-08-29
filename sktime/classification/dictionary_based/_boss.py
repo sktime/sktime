@@ -500,6 +500,7 @@ class IndividualBOSS(BaseClassifier):
         norm=False,
         alphabet_size=4,
         save_words=False,
+        feature_selection="chi2",  # here we use chi2 instead of none
         n_jobs=1,
         random_state=None,
     ):
@@ -518,6 +519,7 @@ class IndividualBOSS(BaseClassifier):
         self._accuracy = 0
         self._subsample = []
         self._train_predictions = []
+        self.feature_selection = feature_selection
 
         super(IndividualBOSS, self).__init__()
 
@@ -550,7 +552,7 @@ class IndividualBOSS(BaseClassifier):
             # TODO remove_repeat_words=True,
             save_words=self.save_words,
             n_jobs=self._threads_to_use,
-            feature_selection="chi2",  # here we use chi2 instead of none
+            feature_selection=self.feature_selection,
             return_sparse=True,
         )
 
@@ -578,7 +580,7 @@ class IndividualBOSS(BaseClassifier):
             test_bags, self._transformed_data, n_jobs=self._threads_to_use
         )
 
-        classes = np.zeros(len(test_bags))
+        classes = np.zeros(len(test_bags), dtype=type(self._class_vals[0]))
         for i in range(len(test_bags)):
             min_pos = np.argmin(distance_matrix[i])
             classes[i] = self._class_vals[min_pos]

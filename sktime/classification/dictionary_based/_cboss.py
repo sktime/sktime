@@ -251,6 +251,7 @@ class ContractableBOSS(BaseClassifier):
                 alphabet_size=self._alphabet_size,
                 save_words=False,
                 n_jobs=self._threads_to_use,
+                feature_selection="none",
                 random_state=self.random_state,
             )
             boss.fit(X_subsample, y_subsample)
