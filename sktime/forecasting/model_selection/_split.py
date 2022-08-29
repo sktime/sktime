@@ -1106,7 +1106,7 @@ class SlidingWindowSplitter(BaseWindowSplitter):
         Step length between windows
     initial_window : int or timedelta or pd.DateOffset, optional (default=None)
         Window length of first window
-    start_with_window : bool, optional (default=False)
+    start_with_window : bool, optional (default=True)
         - If True, starts with full window.
         - If False, starts with empty window.
 
