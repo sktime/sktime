@@ -16,6 +16,7 @@ __all__ = ["WEASEL_STEROIDS"]
 
 import numpy as np
 from joblib import Parallel, delayed
+from scipy.sparse import hstack
 from sklearn.linear_model import RidgeClassifierCV
 from sklearn.utils import check_random_state
 
@@ -229,7 +230,11 @@ class WEASEL_STEROIDS(BaseClassifier):
             sfa_words.append(sfa_words2)
 
         # merging arrays from different threads
-        all_words = np.concatenate(sfa_words, axis=1)
+        if type(sfa_words[0]) is np.ndarray:
+            all_words = np.concatenate(sfa_words, axis=1)
+        else:
+            all_words = hstack((sfa_words))
+
         self.clf = RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=False)
         self.clf.fit(all_words, y)
         # print(f"\tCross-Validation Acc: {self.clf.best_score_}")
@@ -284,7 +289,16 @@ class WEASEL_STEROIDS(BaseClassifier):
             delayed(transformer.transform)(X) for transformer in self.SFA_transformers
         )
 
-        return np.concatenate(parallel_res, axis=1)
+        all_words = []
+        for sfa_words in parallel_res:
+            all_words.append(sfa_words)
+
+        if type(all_words[0]) is np.ndarray:
+            all_words = np.concatenate(all_words, axis=1)
+        else:
+            all_words = hstack((all_words))
+
+        return all_words
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
