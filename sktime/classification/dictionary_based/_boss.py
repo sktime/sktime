@@ -138,7 +138,7 @@ class BOSSEnsemble(BaseClassifier):
         self.series_length_ = 0
         self.n_instances_ = 0
 
-        self._word_lengths = [16, 14]  # , 12, 10, 8
+        self._word_lengths = [16, 12, 8]
         self._norm_options = [True, False]
         self._alphabet_size = 4
 
@@ -550,7 +550,7 @@ class IndividualBOSS(BaseClassifier):
             # TODO remove_repeat_words=True,
             save_words=self.save_words,
             n_jobs=self._threads_to_use,
-            feature_selection="chi2",
+            feature_selection="chi2",  # here we use chi2 instead of none
             return_sparse=True,
         )
 
@@ -604,6 +604,7 @@ class IndividualBOSS(BaseClassifier):
         new_boss._transformer.dfts = self._transformer.dfts
         new_boss._transformer.breakpoints = self._transformer.breakpoints
         new_boss._transformer.support = self._transformer.support
+        new_boss._transformer.X_index = self._transformer.X_index
         new_boss._transformer.set_fitted()
 
         sfa_words = new_boss._transformer._shorten_bags(word_len, y)

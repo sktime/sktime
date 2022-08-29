@@ -218,8 +218,8 @@ def get_classifiers():
     """Obtain the benchmark classifiers."""
     clfs = {
         # "WEASEL": WEASEL(random_state=1379, n_jobs=threads_to_use),
-        "BOSS": BOSSEnsemble(random_state=1379, n_jobs=threads_to_use),
-        # "cBOSS": ContractableBOSS(random_state=1379, n_jobs=threads_to_use),
+        # "BOSS": BOSSEnsemble(random_state=1379, n_jobs=threads_to_use),
+        "cBOSS": ContractableBOSS(random_state=1379, n_jobs=threads_to_use),
         # "TDE": TemporalDictionaryEnsemble(random_state=1379, n_jobs=threads_to_use),
         # "WEASEL_ST (ED,FS:Chi2)": WEASEL_STEROIDS(
         #     random_state=1379,
