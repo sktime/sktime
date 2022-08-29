@@ -84,7 +84,7 @@ class GaussianHMM(BaseHMMLearn):
     ...    means=[2, 4, 1], lengths=[10, 35, 40], random_state=7
     ...    ).reshape((-1, 1))
     >>> model = GaussianHMM(algorithm='viterbi', n_components=2)
-    >>> model.fit(data)
+    >>> model = model.fit(data)
     >>> labeled_data = model.predict(data)
     """
 
