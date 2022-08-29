@@ -179,7 +179,7 @@ class SFA_NEW(_PanelToPanelTransformer):
         self.feature_selection = feature_selection
         self.max_feature_count = max_feature_count
         self.feature_count = 0
-        self.relevant_features = [0]
+        self.relevant_features = None
 
         # feature selection is applied based on the chi-squared test.
         self.p_threshold = p_threshold
@@ -298,11 +298,17 @@ class SFA_NEW(_PanelToPanelTransformer):
 
         # TODO count subgroups of two letters of the words?
 
+        # transform: applies the feature selection strategy
+        empty_dict = Dict.empty(
+            key_type=types.uint32,
+            value_type=types.uint32,
+        )
+
         # transform
         return create_bag_transform(
             self.feature_count,
             self.feature_selection,
-            self.relevant_features,
+            self.relevant_features if self.relevant_features else empty_dict,
             words,
             self.bigrams,
         )[0]
@@ -563,7 +569,7 @@ class SFA_NEW(_PanelToPanelTransformer):
     def __setstate__(self, state):
         """Set current state using input pickling, required for typed Dict objects."""
         self.__dict__.update(state)
-        if type(self.relevant_features) == Dict:
+        if type(self.relevant_features) == dict:
             typed_dict = Dict.empty(key_type=types.uint32, value_type=types.uint32)
             for key, value in self.relevant_features.items():
                 typed_dict[key] = value
