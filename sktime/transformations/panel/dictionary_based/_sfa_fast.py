@@ -179,7 +179,7 @@ class SFA_NEW(_PanelToPanelTransformer):
         self.feature_selection = feature_selection
         self.max_feature_count = max_feature_count
         self.feature_count = 0
-        self.relevant_features = None
+        self.relevant_features = [0]
 
         # feature selection is applied based on the chi-squared test.
         self.p_threshold = p_threshold
@@ -298,18 +298,13 @@ class SFA_NEW(_PanelToPanelTransformer):
 
         # TODO count subgroups of two letters of the words?
 
-        # transform: applies the feature selection strategy
-        empty_dict = Dict.empty(
-            key_type=types.uint32,
-            value_type=types.uint32,
-        )
-
         # transform
         return create_bag_transform(
             self.feature_count,
             self.feature_selection,
-            self.relevant_features if self.relevant_features else empty_dict,
+            self.relevant_features,
             words,
+            self.bigrams,
         )[0]
 
     def transform_to_bag(self, words, y=None):
@@ -317,7 +312,7 @@ class SFA_NEW(_PanelToPanelTransformer):
         bag_of_words = None
         rng = check_random_state(self.random_state)
 
-        if self.feature_selection == "none":
+        if self.feature_selection == "none" and not self.bigrams:
             bag_of_words = create_bag_none(
                 self.breakpoints,
                 words.shape[0],
@@ -327,8 +322,18 @@ class SFA_NEW(_PanelToPanelTransformer):
         else:
             feature_names = create_feature_names(words)
 
+            if self.feature_selection == "none" and self.bigrams:
+                feature_count = len(list(feature_names))
+                relevant_features_idx = np.arange(feature_count, dtype=np.uint32)
+                bag_of_words, self.relevant_features = create_bag_feature_selection(
+                    words.shape[0],
+                    relevant_features_idx,
+                    np.array(list(feature_names)),
+                    words,
+                )
+
             # Random feature selection
-            if self.feature_selection == "random":
+            elif self.feature_selection == "random":
                 feature_count = min(self.max_feature_count, len(feature_names))
                 relevant_features_idx = rng.choice(
                     len(feature_names), replace=False, size=feature_count
@@ -843,12 +848,12 @@ def create_bag_feature_selection(
 
 @njit(cache=True, fastmath=True)
 def create_bag_transform(
-    feature_count, feature_selection, relevant_features, sfa_words
+    feature_count, feature_selection, relevant_features, sfa_words, bigrams
 ):
     # merging arrays
     all_win_words = np.zeros((len(sfa_words), feature_count), np.uint32)
     for j in range(len(sfa_words)):
-        if feature_selection == "none":
+        if feature_selection == "none" and not bigrams:
             all_win_words[j, :] = np.bincount(sfa_words[j], minlength=feature_count)
         else:
             for _, key in enumerate(sfa_words[j]):
