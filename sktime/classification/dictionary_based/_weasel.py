@@ -13,7 +13,7 @@ import numpy as np
 from joblib import Parallel, delayed
 from numba import set_num_threads
 from scipy.sparse import hstack
-from sklearn.linear_model import RidgeClassifierCV
+from sklearn.linear_model import LogisticRegression, RidgeClassifierCV
 from sklearn.utils import check_random_state
 
 from sktime.classification.base import BaseClassifier
@@ -119,6 +119,7 @@ class WEASEL(BaseClassifier):
         window_inc=2,
         p_threshold=0.05,
         n_jobs=1,
+        support_probabilities=False,
         random_state=None,
     ):
 
@@ -150,6 +151,8 @@ class WEASEL(BaseClassifier):
         self.SFA_transformers = []
         self.clf = None
         self.n_jobs = n_jobs
+        self.support_probabilities = support_probabilities
+
         set_num_threads(n_jobs)
 
         super(WEASEL, self).__init__()
@@ -213,7 +216,22 @@ class WEASEL(BaseClassifier):
         else:
             all_words = hstack((all_words))
 
-        self.clf = RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=False)
+        # Ridge Classifier does not give probabilities
+        if not self.support_probabilities:
+            self.clf = RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=False)
+        else:
+            self.clf = (
+                LogisticRegression(
+                    max_iter=5000,
+                    solver="liblinear",
+                    dual=True,
+                    # class_weight="balanced",
+                    penalty="l2",
+                    random_state=self.random_state,
+                    n_jobs=self._threads_to_use,
+                ),
+            )
+
         self.clf.fit(all_words, y)
 
         # print("Size of dict", relevant_features_count)
