@@ -81,8 +81,8 @@ class GaussianHMM(BaseHMMLearn):
     >>> from sktime.annotation.hmm_learn import GaussianHMM
     >>> from sktime.annotation.datagen import piecewise_normal
     >>> data = piecewise_normal(
-    >>>    means=[2, 4, 1], lengths=[10, 35, 40], random_state=7
-    >>> ).reshape((-1, 1))
+    ...    means=[2, 4, 1], lengths=[10, 35, 40], random_state=7
+    ...    ).reshape((-1, 1))
     >>> model = GaussianHMM(algorithm='viterbi', n_components=2)
     >>> model.fit(data)
     >>> labeled_data = model.predict(data)
