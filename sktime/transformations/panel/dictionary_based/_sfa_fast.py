@@ -16,6 +16,7 @@ import numpy as np
 from numba import NumbaPendingDeprecationWarning, njit, objmode, prange
 from numba.core import types
 from numba.typed import Dict
+from scipy.sparse import csr_matrix
 from sklearn.feature_selection import chi2, f_classif
 from sklearn.preprocessing import KBinsDiscretizer
 from sklearn.tree import DecisionTreeClassifier
@@ -72,6 +73,9 @@ class SFA_NEW(_PanelToPanelTransformer):
             variance. If False, the first Fourier coefficients are selected.
             Only applicable if labels are given
 
+        save_words:          boolean, default = False
+            whether to save the words generated for each series (default False)
+
         bigrams:             boolean, default = False
             whether to create bigrams of SFA words
 
@@ -116,6 +120,7 @@ class SFA_NEW(_PanelToPanelTransformer):
         variance=False,
         bigrams=False,
         skip_grams=False,
+        save_words=False,
         cut_upper=True,
         dilation=1,
         first_difference=False,
@@ -123,22 +128,24 @@ class SFA_NEW(_PanelToPanelTransformer):
         max_feature_count=256,
         p_threshold=0.05,
         random_state=None,
+        return_sparse=True,
         n_jobs=1,
     ):
-        self.words = []
+        self.dfts = []
         self.breakpoints = []
 
         # we cannot select more than window_size many letters in a word
         offset = 2 if norm else 0
+        self.word_length = min(window_size - offset, word_length)
         self.dft_length = (
-            window_size - offset if (anova or variance) is True else word_length
+            window_size - offset if (anova or variance) is True else self.word_length
         )
         # make dft_length an even number (same number of reals and imags)
         self.dft_length = self.dft_length + self.dft_length % 2
+        self.word_length = self.word_length + self.word_length % 2
 
-        self.support = np.arange(word_length)
+        self.support = np.arange(self.word_length)
 
-        self.word_length = word_length
         self.alphabet_size = alphabet_size
         self.window_size = window_size
 
@@ -146,6 +153,7 @@ class SFA_NEW(_PanelToPanelTransformer):
         self.inverse_sqrt_win_size = 1.0 / math.sqrt(window_size)
 
         self.binning_dft = None
+        self.save_words = save_words
 
         self.binning_method = binning_method
         self.anova = anova
@@ -174,6 +182,8 @@ class SFA_NEW(_PanelToPanelTransformer):
 
         # feature selection is applied based on the chi-squared test.
         self.p_threshold = p_threshold
+
+        self.return_sparse = return_sparse
 
         self.random_state = random_state
 
@@ -209,7 +219,8 @@ class SFA_NEW(_PanelToPanelTransformer):
         self.breakpoints = self._binning(X2, y)
         self._is_fitted = True
 
-        # use only alphabet of size 2
+        # force alphabet of size 2
+        # TODO parameterize??
         if self.breakpoints.shape[1] == 4:
             bp = np.zeros((self.breakpoints.shape[0], 2))
             bp[:, 0] = self.breakpoints[:, 1]
@@ -223,7 +234,7 @@ class SFA_NEW(_PanelToPanelTransformer):
             return words
             """
 
-        words = _transform_case(
+        words, dfts = _transform_case(
             X2,
             self.window_size,
             self.dft_length,
@@ -237,6 +248,9 @@ class SFA_NEW(_PanelToPanelTransformer):
             self.skip_grams,
             self.inverse_sqrt_win_size,
         )
+
+        if self.save_words:
+            self.dfts = dfts
 
         # fitting: learns the feature selection strategy, too
         return self.transform_to_bag(words, y)
@@ -273,7 +287,7 @@ class SFA_NEW(_PanelToPanelTransformer):
         X = X.squeeze(1)
 
         X2, self.X_index = _dilation(X, self.dilation, self.first_difference)
-        words = _transform_case(
+        words, dfts = _transform_case(
             X2,
             self.window_size,
             self.dft_length,
@@ -288,27 +302,8 @@ class SFA_NEW(_PanelToPanelTransformer):
             self.inverse_sqrt_win_size,
         )
 
-        # all_words = None
-        # for i in range(0, self.dilation):
-        #     X2_d = X2[:, i::self.dilation].copy()
-        #     words = _transform_case(
-        #         X2_d,
-        #         self.window_size,
-        #         self.dft_length,
-        #         self.norm,
-        #         self.support,
-        #         self.anova,
-        #         self.variance,
-        #         self.breakpoints,
-        #         self.letter_bits,
-        #         self.bigrams,
-        #         self.inverse_sqrt_win_size
-        #     )
-        #
-        #     if all_words is None:
-        #         all_words = words
-        #     else:
-        #         all_words = np.concatenate((all_words, words), axis=1)
+        if self.save_words:
+            self.dfts = dfts
 
         # TODO count subgroups of two letters of the words?
 
@@ -320,7 +315,7 @@ class SFA_NEW(_PanelToPanelTransformer):
 
         # transform
         return create_bag_transform(
-            X,
+            # X,
             self.X_index,
             self.feature_count,
             self.feature_selection,
@@ -334,8 +329,6 @@ class SFA_NEW(_PanelToPanelTransformer):
         rng = check_random_state(self.random_state)
 
         if self.feature_selection == "none":
-            # TODO  only if not too much memory,
-            #       else sparse??
             bag_of_words = create_bag_none(
                 self.X_index,
                 self.breakpoints,
@@ -370,8 +363,8 @@ class SFA_NEW(_PanelToPanelTransformer):
                     words,
                 )
 
-                feature_count = min(self.max_feature_count, len(feature_names))
                 chi2_statistics, p = chi2(bag_of_words, y)
+                # feature_count = min(self.max_feature_count, len(feature_names))
                 # relevant_features_idx = np.argsort(p)[:feature_count]
                 relevant_features_idx = np.where(p <= self.p_threshold)[0]
 
@@ -388,6 +381,10 @@ class SFA_NEW(_PanelToPanelTransformer):
                 bag_of_words = bag_of_words[:, relevant_features_idx]
 
         self.feature_count = bag_of_words.shape[1]
+
+        # convert to sparse matrix, if too many entries
+        if self.return_sparse:  # Todo as ratio with elements??
+            bag_of_words = csr_matrix(bag_of_words)
 
         return bag_of_words
 
@@ -507,6 +504,34 @@ class SFA_NEW(_PanelToPanelTransformer):
 
         return np.sort(breakpoints, axis=1)
 
+    def _shorten_bags(self, word_len, y):
+        if self.save_words is False:
+            raise ValueError(
+                "Words from transform must be saved using save_word to shorten bags."
+            )
+
+        if word_len > self.word_length:
+            word_len = self.word_length
+
+        new_len = min(word_len, self.dfts.shape[2])
+        self.dfts = self.dfts[:, :, :new_len]
+        self.breakpoints = self.breakpoints[:new_len, :]
+        self.support = self.support[:new_len]
+        self.word_length = word_len
+        self.dft_length = new_len
+
+        words = generate_words(
+            self.dfts,
+            self.bigrams,
+            self.skip_grams,
+            self.window_size,
+            self.breakpoints,
+            self.letter_bits,
+        )
+
+        # retrain feature selection-strategy
+        return self.transform_to_bag(words, y)
+
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
@@ -530,6 +555,10 @@ class SFA_NEW(_PanelToPanelTransformer):
         params = {"window_size": 4}
         return params
 
+    def set_fitted(self):
+        """Whether `fit` has been called."""
+        self._is_fitted = True
+
 
 @njit(fastmath=True, cache=True)
 def _binning_dft(
@@ -546,11 +575,12 @@ def _binning_dft(
         start = series_length - window_size
         data[i, -1] = X[i, start:series_length]
 
-    dft = np.zeros((len(X), num_windows_per_inst, dft_length))  #
+    dft = np.zeros((len(X), num_windows_per_inst, dft_length))
     for i in range(len(X)):
-        dft[i] = _fast_fourier_transform(
+        return_val = _fast_fourier_transform(
             data[i], norm, dft_length, inverse_sqrt_win_size
         )
+        dft[i] = return_val
 
     return dft.reshape(dft.shape[0] * dft.shape[1], dft_length)
 
@@ -621,8 +651,11 @@ def _transform_case(
         inverse_sqrt_win_size,
     )
 
-    return generate_words(
-        dfts, bigrams, skip_grams, window_size, breakpoints, letter_bits
+    return (
+        generate_words(
+            dfts, bigrams, skip_grams, window_size, breakpoints, letter_bits
+        ),
+        dfts,
     )
 
 
@@ -659,11 +692,6 @@ def _get_phis(window_size, length):
     phis[0::2] = np.cos((-i) * const)
     phis[1::2] = -np.sin((-i) * const)
     return phis
-
-
-# @njit(fastmath=True, cache=True)
-# def _create_bigram_word(word, other_word, word_bits):
-#    return (word << word_bits) | other_word
 
 
 @njit(fastmath=True, cache=True)
@@ -707,11 +735,12 @@ def generate_words(dfts, bigrams, skip_grams, window_size, breakpoints, letter_b
             words[:, dfts.shape[1] + a] = (first_word << word_bits) | second_word
 
     # add 2,3-skip-grams
-    for s in range(2, 4):
-        for a in range(0, dfts.shape[1] - s * window_size):
-            first_word = words[:, a]
-            second_word = words[:, a + s * window_size]
-            words[:, dfts.shape[1] + a] = (first_word << word_bits) | second_word
+    if skip_grams:
+        for s in range(2, 4):
+            for a in range(0, dfts.shape[1] - s * window_size):
+                first_word = words[:, a]
+                second_word = words[:, a + s * window_size]
+                words[:, dfts.shape[1] + a] = (first_word << word_bits) | second_word
 
     return words
 
@@ -855,10 +884,10 @@ def create_bag_feature_selection(
 
 @njit(cache=True, fastmath=True)
 def create_bag_transform(
-    X, X_index, feature_count, feature_selection, relevant_features, sfa_words
+    X_index, feature_count, feature_selection, relevant_features, sfa_words
 ):
     # merging arrays
-    all_win_words = np.zeros((len(X), feature_count), np.int32)
+    all_win_words = np.zeros((len(sfa_words), feature_count), np.int32)
     for j in range(len(sfa_words)):
         if feature_selection == "none":
             all_win_words[j, :] = np.bincount(sfa_words[j], minlength=feature_count)

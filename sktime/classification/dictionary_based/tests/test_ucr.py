@@ -20,9 +20,15 @@ from joblib import Parallel, delayed
 
 # from scipy.stats import zscore
 from sklearn.linear_model import RidgeClassifierCV
-from sklearn.pipeline import make_pipeline
 
-from sktime.classification.dictionary_based import WEASEL, WEASEL_STEROIDS, Hydra
+from sktime.classification.dictionary_based import (
+    WEASEL,
+    WEASEL_STEROIDS,
+    BOSSEnsemble,
+    ContractableBOSS,
+    Hydra,
+    TemporalDictionaryEnsemble,
+)
 from sktime.transformations.panel.rocket import MiniRocket, Rocket
 
 sys.path.append("../../..")
@@ -211,7 +217,10 @@ dataset_names_excerpt = [
 def get_classifiers():
     """Obtain the benchmark classifiers."""
     clfs = {
-        "WEASEL": WEASEL(random_state=1379, n_jobs=threads_to_use),
+        # "WEASEL": WEASEL(random_state=1379, n_jobs=threads_to_use),
+        "BOSS": BOSSEnsemble(random_state=1379, n_jobs=threads_to_use),
+        # "cBOSS": ContractableBOSS(random_state=1379, n_jobs=threads_to_use),
+        # "TDE": TemporalDictionaryEnsemble(random_state=1379, n_jobs=threads_to_use),
         # "WEASEL_ST (ED,FS:Chi2)": WEASEL_STEROIDS(
         #     random_state=1379,
         #     binning_strategies=["equi-depth"],

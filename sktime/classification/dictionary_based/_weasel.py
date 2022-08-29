@@ -12,7 +12,8 @@ import math
 import numpy as np
 from joblib import Parallel, delayed
 from numba import set_num_threads
-from sklearn.linear_model import LogisticRegression
+from scipy.sparse import hstack
+from sklearn.linear_model import RidgeClassifierCV
 from sklearn.utils import check_random_state
 
 from sktime.classification.base import BaseClassifier
@@ -207,17 +208,13 @@ class WEASEL(BaseClassifier):
         for sfa_words, transformer in parallel_res:
             self.SFA_transformers.append(transformer)
             all_words.append(sfa_words)
-        all_words = np.concatenate(all_words, axis=1)
+        if type(all_words[0]) is np.ndarray:
+            all_words = np.concatenate(all_words, axis=1)
+        else:
+            all_words = hstack((all_words))
 
-        self.clf = LogisticRegression(
-            max_iter=5000,
-            solver="liblinear",
-            dual=True,
-            # class_weight="balanced",
-            penalty="l2",
-            random_state=self.random_state,
-            n_jobs=self.n_jobs,
-        )
+        self.clf = RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=False)
+        self.clf.fit(all_words, y)
 
         # print("Size of dict", relevant_features_count)
         self.clf.fit(all_words, y)
@@ -262,7 +259,10 @@ class WEASEL(BaseClassifier):
         all_words = []
         for sfa_words in parallel_res:
             all_words.append(sfa_words)
-        all_words = np.concatenate(all_words, axis=1)
+        if type(all_words[0]) is np.ndarray:
+            all_words = np.concatenate(all_words, axis=1)
+        else:
+            all_words = hstack((all_words))
 
         return all_words
 
@@ -317,10 +317,9 @@ def _parallel_fit(
         anova=anova,
         binning_method=binning_strategy,
         bigrams=bigrams,
-        feature_selection="chi2"
+        feature_selection="chi2",
         # TODO remove_repeat_words=False,
-        # TODO lower_bounding=False,
-        # TODO save_words=False,
+        save_words=False,
     )
 
     all_words = transformer.fit_transform(X, y)
