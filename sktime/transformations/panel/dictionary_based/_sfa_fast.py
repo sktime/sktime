@@ -13,7 +13,13 @@ import sys
 from warnings import simplefilter
 
 import numpy as np
-from numba import NumbaPendingDeprecationWarning, njit, objmode, prange
+from numba import (
+    NumbaPendingDeprecationWarning,
+    NumbaTypeSafetyWarning,
+    njit,
+    objmode,
+    prange,
+)
 from numba.core import types
 from numba.typed import Dict
 from scipy.sparse import csr_matrix
@@ -29,6 +35,7 @@ from sktime.utils.validation.panel import check_X
 binning_methods = {"equi-depth", "equi-width", "information-gain", "kmeans", "quantile"}
 
 simplefilter(action="ignore", category=NumbaPendingDeprecationWarning)
+simplefilter(action="ignore", category=NumbaTypeSafetyWarning)
 
 
 class SFA_NEW(_PanelToPanelTransformer):
@@ -73,7 +80,7 @@ class SFA_NEW(_PanelToPanelTransformer):
             Only applicable if labels are given
 
         variance:               boolean, default = False
-            If True, the Fourier coefficient selection is done via a the largest
+            If True, the Fourier coefficient selection is done via the largest
             variance. If False, the first Fourier coefficients are selected.
             Only applicable if labels are given
 
@@ -382,12 +389,11 @@ class SFA_NEW(_PanelToPanelTransformer):
         self.feature_count = bag_of_words.shape[1]
 
         # convert to sparse matrix, if too many entries
-        if (
-            self.return_sparse
-            and bag_of_words is not None
-            and bag_of_words.shape[1] > 1
-        ):
+        if self.return_sparse:
+            # if bag_of_words is not None and bag_of_words.shape[1] > 0:
             bag_of_words = csr_matrix(bag_of_words, dtype=np.uint32)
+            # else:
+            #    bag_of_words = csr_matrix(bag_of_words, shape=(len(bag_of_words), 0))
 
         return bag_of_words
 
