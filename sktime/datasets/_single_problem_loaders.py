@@ -40,7 +40,6 @@ __all__ = [
 import os
 from urllib.error import HTTPError
 
-import backoff
 import numpy as np
 import pandas as pd
 import statsmodels.api as sm
@@ -1018,7 +1017,6 @@ def load_unit_test_tsf():
     )
 
 
-@backoff.on_exception(wait_gen=backoff.expo, exception=HTTPError, max_tries=5)
 def load_solar(
     start="2021-05-01",
     end="2021-09-01",
