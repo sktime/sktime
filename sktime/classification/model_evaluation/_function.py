@@ -65,13 +65,13 @@ def evaluate_classification(
 
     # Set metrics
     list_of_scorer = get_scorer_names()  # Double check and remove this
+    if scoring is None:
+        scoring = "accuracy"
     if scoring not in list_of_scorer:
         raise Exception(
             "Metrics is not valid. See sklearn.metrics.get_scorer_names()"
             "for acceptable classsification metrics."
         )
-    if scoring is None:
-        scoring = "accuracy"
 
     scoring_method = get_scorer(scoring)
     scores = cross_validate(
