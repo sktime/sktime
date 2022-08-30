@@ -157,10 +157,8 @@ if __name__ == "__main__":
         "ContractableBOSS - UnitTest",
         _reproduce_classification_unit_test(
             ContractableBOSS(
-                n_parameter_samples=4,
-                max_ensemble_size=2,
-                save_train_predictions=True,
-                feature_selection="none",
+                n_parameter_samples=10,
+                max_ensemble_size=5,
                 random_state=0,
             )
         ),
