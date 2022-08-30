@@ -13,7 +13,6 @@ import math
 import time
 
 import numpy as np
-from joblib import Parallel, delayed
 from sklearn.metrics import pairwise
 from sklearn.utils import check_random_state
 
@@ -69,6 +68,11 @@ class ContractableBOSS(BaseClassifier):
     n_jobs : int, default = 1
         The number of jobs to run in parallel for both `fit` and `predict`.
         ``-1`` means using all processors.
+    feature_selection: {"chi2", "none", "random"}, default: chi2
+        Sets the feature selections strategy to be used. Chi2 reduces the number
+        of words significantly and is thus much faster (preferred). Random also reduces
+        the number significantly. None applies not feature selectiona and yields large
+        bag of words, e.g. much memory may be needed.
     random_state : int or None, default=None
         Seed for random integer.
 
@@ -140,6 +144,7 @@ class ContractableBOSS(BaseClassifier):
         time_limit_in_minutes=0.0,
         contract_max_n_parameter_samples=np.inf,
         save_train_predictions=False,
+        feature_selection="chi2",
         n_jobs=1,
         random_state=None,
     ):
@@ -153,6 +158,7 @@ class ContractableBOSS(BaseClassifier):
         self.save_train_predictions = save_train_predictions
         self.n_jobs = n_jobs
         self.random_state = random_state
+        self.feature_selection = feature_selection
 
         self.estimators_ = []
         self.weights_ = []
@@ -250,7 +256,8 @@ class ContractableBOSS(BaseClassifier):
                 *parameters,
                 alphabet_size=self._alphabet_size,
                 save_words=False,
-                n_jobs=self._threads_to_use,
+                n_jobs=self.n_jobs,
+                feature_selection=self.feature_selection,
                 random_state=self.random_state,
             )
             boss.fit(X_subsample, y_subsample)
@@ -369,22 +376,33 @@ class ContractableBOSS(BaseClassifier):
         results = np.zeros((n_instances, self.n_classes_))
         divisors = np.zeros(n_instances)
 
-        for i, clf in enumerate(self.estimators_):
-            subsample = clf._subsample
-            preds = (
-                clf._train_predictions
-                if self.save_train_predictions
-                else Parallel(n_jobs=self._threads_to_use)(
-                    delayed(clf._train_predict)(
-                        i,
-                    )
-                    for i in range(len(subsample))
-                )
-            )
+        if self.save_train_predictions:
+            for i, clf in enumerate(self.estimators_):
+                subsample = clf._subsample
+                preds = clf._train_predictions
 
-            for n, pred in enumerate(preds):
-                results[subsample[n]][self._class_dictionary[pred]] += self.weights_[i]
-                divisors[subsample[n]] += self.weights_[i]
+                for n, pred in enumerate(preds):
+                    results[subsample[n]][
+                        self._class_dictionary[pred]
+                    ] += self.weights_[i]
+                    divisors[subsample[n]] += self.weights_[i]
+
+        else:
+            for i, clf in enumerate(self.estimators_):
+                subsample = clf._subsample
+                distance_matrix = pairwise.pairwise_distances(
+                    clf._transformed_data, n_jobs=self.n_jobs
+                )
+
+                preds = []
+                for j in range(len(subsample)):
+                    preds.append(clf._train_predict(j, distance_matrix))
+
+                for n, pred in enumerate(preds):
+                    results[subsample[n]][
+                        self._class_dictionary[pred]
+                    ] += self.weights_[i]
+                    divisors[subsample[n]] += self.weights_[i]
 
         for i in range(n_instances):
             results[i] = (
@@ -402,7 +420,7 @@ class ContractableBOSS(BaseClassifier):
         # there may be no words if feature selection is too aggressive
         if boss._transformed_data.shape[1] > 0:
             distance_matrix = pairwise.pairwise_distances(
-                boss._transformed_data, n_jobs=self._threads_to_use
+                boss._transformed_data, n_jobs=self.n_jobs
             )
 
             for i in range(train_size):
@@ -447,4 +465,5 @@ class ContractableBOSS(BaseClassifier):
                 "n_parameter_samples": 4,
                 "max_ensemble_size": 2,
                 "save_train_predictions": True,
+                "feature_selection": "none",
             }

@@ -15,7 +15,7 @@ from sklearn.metrics import pairwise
 from sklearn.utils import check_random_state
 
 from sktime.classification.base import BaseClassifier
-from sktime.transformations.panel.dictionary_based import SFA_NEW
+from sktime.transformations.panel.dictionary_based import SFA_FAST
 from sktime.utils.validation.panel import check_X_y
 
 
@@ -61,6 +61,11 @@ class BOSSEnsemble(BaseClassifier):
     n_jobs : int, default=1
         The number of jobs to run in parallel for both `fit` and `predict`.
         ``-1`` means using all processors.
+    feature_selection: {"chi2", "none", "random"}, default: chi2
+        Sets the feature selections strategy to be used. Chi2 reduces the number
+        of words significantly and is thus much faster (preferred). Random also reduces
+        the number significantly. None applies not feature selectiona and yields large
+        bag of words, e.g. much memory may be needed.
     random_state : int or None, default=None
         Seed for random, integer.
 
@@ -121,6 +126,7 @@ class BOSSEnsemble(BaseClassifier):
         max_win_len_prop=1,
         min_window=10,
         save_train_predictions=False,
+        feature_selection="chi2",
         n_jobs=1,
         random_state=None,
     ):
@@ -137,6 +143,7 @@ class BOSSEnsemble(BaseClassifier):
         self.n_estimators_ = 0
         self.series_length_ = 0
         self.n_instances_ = 0
+        self.feature_selection = feature_selection
 
         self._word_lengths = [16, 12, 8]
         self._norm_options = [True, False]
@@ -198,7 +205,8 @@ class BOSSEnsemble(BaseClassifier):
                     normalise,
                     self._alphabet_size,
                     save_words=True,
-                    n_jobs=self._threads_to_use,
+                    feature_selection=self.feature_selection,
+                    n_jobs=self.n_jobs,
                     random_state=self.random_state,
                 )
                 boss.fit(X, y)
@@ -344,7 +352,7 @@ class BOSSEnsemble(BaseClassifier):
         else:
             for i, clf in enumerate(self.estimators_):
                 distance_matrix = pairwise.pairwise_distances(
-                    clf._transformed_data, n_jobs=self._threads_to_use
+                    clf._transformed_data, n_jobs=self.n_jobs
                 )
 
                 preds = []
@@ -371,7 +379,7 @@ class BOSSEnsemble(BaseClassifier):
         # there may be no words if feature selection is too aggressive
         if boss._transformed_data.shape[1] > 0:
             distance_matrix = pairwise.pairwise_distances(
-                boss._transformed_data, n_jobs=self._threads_to_use
+                boss._transformed_data, n_jobs=self.n_jobs
             )
 
             for i in range(train_size):
@@ -410,9 +418,13 @@ class BOSSEnsemble(BaseClassifier):
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
         if parameter_set == "results_comparison":
-            return {"max_ensemble_size": 5}
+            return {"max_ensemble_size": 5, "feature_selection": "none"}
         else:
-            return {"max_ensemble_size": 2, "save_train_predictions": True}
+            return {
+                "max_ensemble_size": 2,
+                "save_train_predictions": True,
+                "feature_selection": "none",
+            }
 
 
 class IndividualBOSS(BaseClassifier):
@@ -500,6 +512,7 @@ class IndividualBOSS(BaseClassifier):
         norm=False,
         alphabet_size=4,
         save_words=False,
+        feature_selection="chi2",  # here we use chi2 instead of none
         n_jobs=1,
         random_state=None,
     ):
@@ -507,6 +520,7 @@ class IndividualBOSS(BaseClassifier):
         self.word_length = word_length
         self.norm = norm
         self.alphabet_size = alphabet_size
+        self.feature_selection = feature_selection
 
         self.save_words = save_words
         self.n_jobs = n_jobs
@@ -541,7 +555,7 @@ class IndividualBOSS(BaseClassifier):
         Changes state by creating a fitted model that updates attributes
         ending in "_" and sets is_fitted flag to True.
         """
-        self._transformer = SFA_NEW(
+        self._transformer = SFA_FAST(
             word_length=self.word_length,
             alphabet_size=self.alphabet_size,
             window_size=self.window_size,
@@ -549,9 +563,10 @@ class IndividualBOSS(BaseClassifier):
             bigrams=False,
             # TODO remove_repeat_words=True,
             save_words=self.save_words,
-            n_jobs=self._threads_to_use,
-            feature_selection="chi2",  # here we use chi2 instead of none
+            n_jobs=self.n_jobs,
+            feature_selection=self.feature_selection,
             return_sparse=True,
+            random_state=self.random_state,
         )
 
         self._transformed_data = self._transformer.fit_transform(X, y)
@@ -575,15 +590,15 @@ class IndividualBOSS(BaseClassifier):
         test_bags = self._transformer.transform(X)
 
         distance_matrix = pairwise.pairwise_distances(
-            test_bags, self._transformed_data, n_jobs=self._threads_to_use
+            test_bags, self._transformed_data, n_jobs=self.n_jobs
         )
 
-        classes = np.zeros(len(test_bags))
-        for i in range(len(test_bags)):
+        classes = np.zeros(test_bags.shape[0], dtype=type(self._class_vals[0]))
+        for i in range(test_bags.shape[0]):
             min_pos = np.argmin(distance_matrix[i])
             classes[i] = self._class_vals[min_pos]
 
-        return np.array(classes)
+        return classes
 
     def _train_predict(self, train_num, distance_matrix):
         distance_vector = distance_matrix[train_num]
@@ -597,6 +612,7 @@ class IndividualBOSS(BaseClassifier):
             self.norm,
             self.alphabet_size,
             save_words=self.save_words,
+            feature_selection=self.feature_selection,
             random_state=self.random_state,
             n_jobs=self.n_jobs,
         )
@@ -604,7 +620,6 @@ class IndividualBOSS(BaseClassifier):
         new_boss._transformer.dfts = self._transformer.dfts
         new_boss._transformer.breakpoints = self._transformer.breakpoints
         new_boss._transformer.support = self._transformer.support
-        new_boss._transformer.X_index = self._transformer.X_index
         new_boss._transformer.set_fitted()
 
         sfa_words = new_boss._transformer._shorten_bags(word_len, y)
@@ -614,7 +629,7 @@ class IndividualBOSS(BaseClassifier):
         new_boss.classes_ = self.classes_
         new_boss._class_dictionary = self._class_dictionary
 
-        new_boss._threads_to_use = self._threads_to_use
+        new_boss.n_jobs = self.n_jobs
         new_boss._is_fitted = True
         return new_boss
 

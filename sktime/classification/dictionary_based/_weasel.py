@@ -13,11 +13,11 @@ import numpy as np
 from joblib import Parallel, delayed
 from numba import set_num_threads
 from scipy.sparse import hstack
-from sklearn.linear_model import RidgeClassifierCV
+from sklearn.linear_model import LogisticRegression, RidgeClassifierCV
 from sklearn.utils import check_random_state
 
 from sktime.classification.base import BaseClassifier
-from sktime.transformations.panel.dictionary_based import SFA_NEW
+from sktime.transformations.panel.dictionary_based import SFA_FAST
 
 
 class WEASEL(BaseClassifier):
@@ -68,6 +68,15 @@ class WEASEL(BaseClassifier):
         This is the p-value threshold to use for chi-squared test on bag-of-words
         (lower means more strict). 1 indicates that the test
         should not be performed.
+    feature_selection: {"chi2", "none", "random"}, default: chi2
+        Sets the feature selections strategy to be used. Chi2 reduces the number
+        of words significantly and is thus much faster (preferred). Random also reduces
+        the number significantly. None applies not feature selectiona and yields large
+        bag of words, e.g. much memory may be needed.
+    support_probabilities: bool, default: False
+        If set to False a RidgeClassifierCV will be trained, which has higher accuracy
+        and is faster. If set to True LogisticRegression will be trained, which
+        returns true probabilities.
     random_state: int or None, default=None
         Seed for random, integer
 
@@ -119,6 +128,8 @@ class WEASEL(BaseClassifier):
         window_inc=2,
         p_threshold=0.05,
         n_jobs=1,
+        feature_selection="chi2",
+        support_probabilities=False,
         random_state=None,
     ):
 
@@ -140,6 +151,7 @@ class WEASEL(BaseClassifier):
         self.min_window = 6
         self.max_window = 100
 
+        self.feature_selection = feature_selection
         self.window_inc = window_inc
         self.highest_bit = -1
         self.window_sizes = []
@@ -150,6 +162,8 @@ class WEASEL(BaseClassifier):
         self.SFA_transformers = []
         self.clf = None
         self.n_jobs = n_jobs
+        self.support_probabilities = support_probabilities
+
         set_num_threads(n_jobs)
 
         super(WEASEL, self).__init__()
@@ -188,8 +202,7 @@ class WEASEL(BaseClassifier):
         self.window_sizes = list(range(self.min_window, self.max_window, win_inc))
         self.highest_bit = (math.ceil(math.log2(self.max_window))) + 1
 
-        n_jobs = 1  # can't pickle
-        parallel_res = Parallel(n_jobs=n_jobs)(
+        parallel_res = Parallel(n_jobs=self.n_jobs)(
             delayed(_parallel_fit)(
                 X,
                 y,
@@ -199,7 +212,9 @@ class WEASEL(BaseClassifier):
                 self.norm_options,
                 self.anova,
                 self.binning_strategy,
+                self.feature_selection,
                 self.bigrams,
+                self.n_jobs,
             )
             for window_size in self.window_sizes
         )
@@ -213,7 +228,20 @@ class WEASEL(BaseClassifier):
         else:
             all_words = hstack((all_words))
 
-        self.clf = RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=False)
+        # Ridge Classifier does not give probabilities
+        if not self.support_probabilities:
+            self.clf = RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=False)
+        else:
+            self.clf = LogisticRegression(
+                max_iter=5000,
+                solver="liblinear",
+                dual=True,
+                # class_weight="balanced",
+                penalty="l2",
+                random_state=self.random_state,
+                n_jobs=self.n_jobs,
+            )
+
         self.clf.fit(all_words, y)
 
         # print("Size of dict", relevant_features_count)
@@ -250,10 +278,16 @@ class WEASEL(BaseClassifier):
             Predicted probabilities using the ordering in classes_.
         """
         bag = self._transform_words(X)
-        return self.clf.predict_proba(bag)
+        if self.support_probabilities:
+            return self.clf.predict_proba(bag)
+        else:
+            raise ValueError(
+                "Error in WEASEL, please set support_probabilities=True, to"
+                + "allow for probabilities to be computed."
+            )
 
     def _transform_words(self, X):
-        parallel_res = Parallel(n_jobs=1)(  # can't pickle
+        parallel_res = Parallel(n_jobs=self._threads_to_use)(
             delayed(transformer.transform)(X) for transformer in self.SFA_transformers
         )
         all_words = []
@@ -294,7 +328,12 @@ class WEASEL(BaseClassifier):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
-        return {"window_inc": 4}
+        return {
+            "window_inc": 4,
+            "support_probabilities": True,
+            "bigrams": False,
+            "feature_selection": "none",
+        }
 
 
 def _parallel_fit(
@@ -306,10 +345,12 @@ def _parallel_fit(
     norm_options,
     anova,
     binning_strategy,
+    feature_selection,
     bigrams,
+    n_jobs,
 ):
     rng = check_random_state(window_size)
-    transformer = SFA_NEW(
+    transformer = SFA_FAST(
         word_length=rng.choice(word_lengths),
         alphabet_size=alphabet_size,
         window_size=window_size,
@@ -317,9 +358,10 @@ def _parallel_fit(
         anova=anova,
         binning_method=binning_strategy,
         bigrams=bigrams,
-        feature_selection="chi2",
+        feature_selection=feature_selection,
         # TODO remove_repeat_words=False,
         save_words=False,
+        n_jobs=n_jobs,
     )
 
     all_words = transformer.fit_transform(X, y)

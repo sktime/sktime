@@ -21,7 +21,7 @@ from sklearn.linear_model import RidgeClassifierCV
 from sklearn.utils import check_random_state
 
 from sktime.classification.base import BaseClassifier
-from sktime.transformations.panel.dictionary_based import SAX_NEW, SFA_NEW
+from sktime.transformations.panel.dictionary_based import SAX_NEW, SFA_FAST
 
 
 class WEASEL_STEROIDS(BaseClassifier):
@@ -192,12 +192,7 @@ class WEASEL_STEROIDS(BaseClassifier):
         # Randomly choose window sizes
         self.window_sizes = np.arange(self.min_window, self.max_window + 1, 1)
 
-        n_jobs = (
-            1
-            if (self.feature_selection == "random" or self.feature_selection == "chi2")
-            else self.n_jobs
-        )
-        parallel_res = Parallel(n_jobs=n_jobs, timeout=99999)(
+        parallel_res = Parallel(n_jobs=self.n_jobs, timeout=99999)(
             delayed(_parallel_fit)(
                 i,
                 X,
@@ -280,12 +275,7 @@ class WEASEL_STEROIDS(BaseClassifier):
         #         X.std(axis=-1, keepdims=True) + 1e-8
         # )
 
-        n_jobs = (
-            1
-            if (self.feature_selection == "random" or self.feature_selection == "chi2")
-            else self.n_jobs
-        )
-        parallel_res = Parallel(n_jobs=n_jobs, timeout=99999)(
+        parallel_res = Parallel(n_jobs=self.n_jobs, timeout=99999)(
             delayed(transformer.transform)(X) for transformer in self.SFA_transformers
         )
 
@@ -363,7 +353,7 @@ def _parallel_fit(
 
     # which_transform = rng.uniform(0, 1)
     if True:  # which_transform > 0.33:
-        transformer = SFA_NEW(
+        transformer = SFA_FAST(
             variance=variance,
             word_length=word_length,
             alphabet_size=alphabet_size,
