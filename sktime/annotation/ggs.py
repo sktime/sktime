@@ -23,6 +23,7 @@ import numpy as np
 import numpy.typing as npt
 from attrs import asdict, define, field
 from sklearn.utils.validation import check_random_state
+from sktime.base import BaseEstimator
 
 logger = logging.getLogger(__name__)
 
@@ -315,7 +316,7 @@ class GGS:
         return labels
 
 
-class GreedyGaussianSegmentation:
+class GreedyGaussianSegmentation(BaseEstimator):
     """Greedy Gaussian Segmentation Estimator.
 
     Parameters
