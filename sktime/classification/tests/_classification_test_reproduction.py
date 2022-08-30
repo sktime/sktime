@@ -73,10 +73,10 @@ def _reproduce_early_classification_unit_test(estimator):
     final_decisions = np.zeros(10)
 
     X_test = from_nested_to_3d_numpy(X_test)
-    states = None
     for i in estimator.classification_points:
         X = X_test[indices, :, :i]
-        probas, decisions, states = estimator.predict_proba(X, state_info=states)
+        # TODO there are different return types as of now
+        probas, decisions = estimator.predict_proba(X)
 
         for n in range(10):
             if decisions[n] and final_decisions[n] == 0:
@@ -474,17 +474,17 @@ if __name__ == "__main__":
         ),
     )
 
-    _print_array(
-        "ProbabilityThresholdEarlyClassifier - UnitTest",
-        _reproduce_early_classification_unit_test(
-            ProbabilityThresholdEarlyClassifier(
-                random_state=0,
-                classification_points=[6, 16, 24],
-                probability_threshold=1,
-                estimator=TimeSeriesForestClassifier(n_estimators=10, random_state=0),
-            )
-        ),
-    )
+    # _print_array(
+    #     "ProbabilityThresholdEarlyClassifier - UnitTest",
+    #     _reproduce_early_classification_unit_test(
+    #         ProbabilityThresholdEarlyClassifier(
+    #             random_state=0,
+    #             classification_points=[6, 16, 24],
+    #             probability_threshold=1,
+    #             estimator=TimeSeriesForestClassifier(n_estimators=10, random_state=0),
+    #         )
+    #     ),
+    # )
     _print_array(
         "TEASER - UnitTest",
         _reproduce_early_classification_unit_test(
