@@ -385,7 +385,7 @@ class SFA_NEW(_PanelToPanelTransformer):
         if (
             self.return_sparse
             and bag_of_words is not None
-            and bag_of_words.shape[1] > 100
+            and bag_of_words.shape[1] > 10
         ):
             bag_of_words = csr_matrix(bag_of_words)
 
