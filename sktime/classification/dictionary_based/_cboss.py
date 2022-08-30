@@ -391,12 +391,12 @@ class ContractableBOSS(BaseClassifier):
             for i, clf in enumerate(self.estimators_):
                 subsample = clf._subsample
                 distance_matrix = pairwise.pairwise_distances(
-                    clf._transformed_data[subsample], n_jobs=self.n_jobs
+                    clf._transformed_data, n_jobs=self.n_jobs
                 )
 
                 preds = []
-                for i in range(len(subsample)):
-                    preds.append(clf._train_predict(i, distance_matrix))
+                for j in range(len(subsample)):
+                    preds.append(clf._train_predict(j, distance_matrix))
 
                 for n, pred in enumerate(preds):
                     results[subsample[n]][
