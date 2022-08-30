@@ -13,6 +13,7 @@ import sys
 from warnings import simplefilter
 
 import numpy as np
+import pandas as pd
 from numba import (
     NumbaPendingDeprecationWarning,
     NumbaTypeSafetyWarning,
@@ -28,7 +29,7 @@ from sklearn.preprocessing import KBinsDiscretizer
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils import check_random_state
 
-from sktime.transformations.base import _PanelToPanelTransformer
+from sktime.transformations.base import BaseTransformer
 from sktime.utils.validation.panel import check_X
 
 # The binning methods to use: equi-depth, equi-width, information gain or kmeans
@@ -38,7 +39,7 @@ simplefilter(action="ignore", category=NumbaPendingDeprecationWarning)
 simplefilter(action="ignore", category=NumbaTypeSafetyWarning)
 
 
-class SFA_NEW(_PanelToPanelTransformer):
+class SFA_NEW(BaseTransformer):
     """Symbolic Fourier Approximation (SFA) Transformer.
 
     Overview: for each series:
@@ -118,6 +119,11 @@ class SFA_NEW(_PanelToPanelTransformer):
             The number of jobs to run in parallel for both `transform`.
             ``-1`` means using all processors.
 
+        return_pandas_data_series:          boolean, default = False
+            set to true to return Pandas Series as a result of transform.
+            setting to true reduces speed significantly but is required for
+            automatic test.
+
     Attributes
     ----------
     breakpoints: = []
@@ -132,7 +138,17 @@ class SFA_NEW(_PanelToPanelTransformer):
     15th international conference on extending database technology. 2012.
     """
 
-    _tags = {"univariate-only": True}
+    _tags = {
+        "univariate-only": True,
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
+        "scitype:transform-output": "Series",
+        # what scitype is returned: Primitives, Series, Panel
+        "scitype:instancewise": False,  # is this an instance-wise transform?
+        "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "pd_Series_Table",  # which mtypes does y require?
+        "requires_y": True,  # does y need to be passed in fit?
+    }
 
     def __init__(
         self,
@@ -152,6 +168,7 @@ class SFA_NEW(_PanelToPanelTransformer):
         p_threshold=0.05,
         random_state=None,
         return_sparse=True,
+        return_pandas_data_series=False,
         n_jobs=1,
     ):
         self.dfts = []
@@ -207,10 +224,14 @@ class SFA_NEW(_PanelToPanelTransformer):
         self.p_threshold = p_threshold
 
         self.return_sparse = return_sparse
+        self.return_pandas_data_series = return_pandas_data_series
 
         self.random_state = random_state
 
         super(SFA_NEW, self).__init__()
+
+        if not return_pandas_data_series:
+            self._output_convert = "off"
 
     def fit_transform(self, X, y=None):
         """Fit to data, then transform it."""
@@ -284,7 +305,7 @@ class SFA_NEW(_PanelToPanelTransformer):
         self.fit_transform(X, y)
         return self
 
-    def transform(self, X, y=None):
+    def _transform(self, X, y=None):
         """Transform data into SFA words.
 
         Parameters
@@ -327,13 +348,21 @@ class SFA_NEW(_PanelToPanelTransformer):
         )
 
         # transform
-        return create_bag_transform(
+        bags = create_bag_transform(
             self.feature_count,
             self.feature_selection,
             self.relevant_features if self.relevant_features else empty_dict,
             words,
             self.bigrams,
         )[0]
+
+        if self.return_pandas_data_series:
+            bb = pd.DataFrame()
+            bb[0] = [pd.Series(bag) for bag in bags]
+            return bb
+        elif self.return_sparse:
+            bags = csr_matrix(bags, dtype=np.uint32)
+        return bags
 
     def transform_to_bag(self, words, y=None):
         """Transform words to bag-of-pattern and apply feature selection."""
@@ -403,13 +432,12 @@ class SFA_NEW(_PanelToPanelTransformer):
 
         self.feature_count = bag_of_words.shape[1]
 
-        # convert to sparse matrix, if too many entries
-        if self.return_sparse:
-            # if bag_of_words is not None and bag_of_words.shape[1] > 0:
+        if self.return_pandas_data_series:
+            bb = pd.DataFrame()
+            bb[0] = [pd.Series(bag) for bag in bag_of_words]
+            return bb
+        elif self.return_sparse:
             bag_of_words = csr_matrix(bag_of_words, dtype=np.uint32)
-            # else:
-            #    bag_of_words = csr_matrix(bag_of_words, shape=(len(bag_of_words), 0))
-
         return bag_of_words
 
     def _binning(self, X, y=None):
@@ -576,7 +604,11 @@ class SFA_NEW(_PanelToPanelTransformer):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         # small window size for testing
-        params = {"window_size": 4, "return_sparse": False}
+        params = {
+            "window_size": 4,
+            "return_sparse": False,
+            "return_pandas_data_series": True,
+        }
         return params
 
     def set_fitted(self):

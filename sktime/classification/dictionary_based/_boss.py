@@ -593,8 +593,8 @@ class IndividualBOSS(BaseClassifier):
             test_bags, self._transformed_data, n_jobs=self.n_jobs
         )
 
-        classes = np.zeros(len(test_bags), dtype=type(self._class_vals[0]))
-        for i in range(len(test_bags)):
+        classes = np.zeros(test_bags.shape[0], dtype=type(self._class_vals[0]))
+        for i in range(test_bags.shape[0]):
             min_pos = np.argmin(distance_matrix[i])
             classes[i] = self._class_vals[min_pos]
 
