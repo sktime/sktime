@@ -353,6 +353,12 @@ class GreedyGaussianSegmentation(BaseEstimator):
         verbose: bool = False,
         random_state: int = None,
     ):
+        # this is ugly and necessary only because of dum `test_constructor`
+        self.k_max = k_max
+        self.lamb = lamb
+        self.max_shuffles = max_shuffles
+        self.verbose = verbose
+        self.random_state = random_state
 
         self._adaptee_class = GGS
         self._adaptee = self._adaptee_class(
