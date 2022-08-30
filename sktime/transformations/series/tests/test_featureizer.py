@@ -28,4 +28,4 @@ def test_featurized_values():
     exp_transformer = ExponentTransformer()
     expected_len = lags + len(y_test)
     y_hat = exp_transformer.fit_transform(y[-expected_len:])
-    assert_array_equal(X_hat["TOTEMP"].values, y_hat.values)
+    assert_array_equal(X_hat[f"lag_{lags}__TOTEMP"].values, y_hat.values)

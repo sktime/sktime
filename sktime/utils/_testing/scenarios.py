@@ -242,7 +242,7 @@ def _check_list_of_str(obj, name="obj"):
     ------
     TypeError if obj is not list of str
     """
-    if not isinstance(obj, list) or not np.all(isinstance(x, str) for x in obj):
+    if not isinstance(obj, list) or not np.all([isinstance(x, str) for x in obj]):
         raise TypeError(f"{obj} must be a list of str")
     return obj
 
@@ -266,8 +266,8 @@ def _check_dict_of_dict(obj, name="obj"):
     msg = f"{obj} must be a dict of dict, with str keys"
     if not isinstance(obj, dict):
         raise TypeError(msg)
-    if not np.all(isinstance(x, dict) for x in obj.values()):
+    if not np.all([isinstance(x, dict) for x in obj.values()]):
         raise TypeError(msg)
-    if not np.all(isinstance(x, str) for x in obj.keys()):
+    if not np.all([isinstance(x, str) for x in obj.keys()]):
         raise TypeError(msg)
     return obj

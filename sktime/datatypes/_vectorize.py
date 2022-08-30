@@ -383,5 +383,6 @@ def _enforce_index_freq(item: pd.Series) -> pd.Series:
         it will stay None
     """
     if hasattr(item.index, "freq") and item.index.freq is None:
-        item.index.freq = pd.infer_freq(item.index)
+        if len(item.index) > 2:  # pandas.infer_freq errors out for length 1 or 2
+            item.index.freq = pd.infer_freq(item.index)
     return item

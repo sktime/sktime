@@ -4,6 +4,8 @@
 __author__ = ["fkiraly"]
 __all__ = ["check_estimator"]
 
+from inspect import isclass
+
 
 def check_estimator(
     estimator,
@@ -74,6 +76,10 @@ def check_estimator(
         TestAllEarlyClassifiers,
     )
     from sktime.classification.tests.test_all_classifiers import TestAllClassifiers
+    from sktime.dists_kernels.tests.test_all_dist_kernels import (
+        TestAllPairwiseTransformers,
+        TestAllPanelTransformers,
+    )
     from sktime.forecasting.tests.test_all_forecasters import TestAllForecasters
     from sktime.registry import scitype
     from sktime.regression.tests.test_all_regressors import TestAllRegressors
@@ -86,6 +92,8 @@ def check_estimator(
     testclass_dict["forecaster"] = TestAllForecasters
     testclass_dict["regressor"] = TestAllRegressors
     testclass_dict["transformer"] = TestAllTransformers
+    testclass_dict["transformer-pairwise"] = TestAllPairwiseTransformers
+    testclass_dict["transformer-pairwise-panel"] = TestAllPanelTransformers
 
     results = TestAllObjects().run_tests(
         estimator=estimator,
@@ -96,7 +104,14 @@ def check_estimator(
         fixtures_to_exclude=fixtures_to_exclude,
     )
 
-    if isinstance(estimator, BaseEstimator) or issubclass(estimator, BaseEstimator):
+    def is_estimator(obj):
+        """Return whether obj is an estimator class or estimator object."""
+        if isclass(obj):
+            return issubclass(obj, BaseEstimator)
+        else:
+            return isinstance(obj, BaseEstimator)
+
+    if is_estimator(estimator):
         results_estimator = TestAllEstimators().run_tests(
             estimator=estimator,
             return_exceptions=return_exceptions,

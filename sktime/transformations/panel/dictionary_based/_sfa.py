@@ -173,7 +173,8 @@ class SFA(BaseTransformer):
         self.skip_grams = skip_grams
 
         self.return_pandas_data_series = return_pandas_data_series
-        self.use_fallback_dft = (
+        self.use_fallback_dft = use_fallback_dft
+        self._use_fallback_dft = (
             use_fallback_dft if word_length < window_size - offset else True
         )
         self.typed_dict = typed_dict
