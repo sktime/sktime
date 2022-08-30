@@ -77,6 +77,8 @@ class STRAY(BaseSeriesAnnotator):
     [0, 0, 0, 0, 1, 1, 1]
     """
 
+    _tags = {"handles-missing-data": True, "X_inner_mtype": "np.ndarray"}
+
     def __init__(
         self,
         alpha=0.01,
