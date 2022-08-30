@@ -340,7 +340,7 @@ class HMM(BaseSeriesAnnotator):
         max_inds = np.zeros(num_obs, dtype=np.int32)
         max_inds[-1] = np.argmax(trans_prob[:, -1])
         hmm_fit[-1] = states[max_inds[-1]]
-        for index in range(num_obs - 1, -1, -1):
+        for index in range(num_obs - 1, 0, -1):
             max_inds[index - 1] = trans_id[max_inds[index], index]
             hmm_fit[index - 1] = states[max_inds[index - 1]]
         return hmm_fit
