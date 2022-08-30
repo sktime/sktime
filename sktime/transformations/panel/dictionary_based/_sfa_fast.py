@@ -90,16 +90,31 @@ class SFA_NEW(_PanelToPanelTransformer):
         bigrams:             boolean, default = False
             whether to create bigrams of SFA words
 
+        feature_selection: {"chi2", "none", "random"}, default: chi2
+            Sets the feature selections strategy to be used. Chi2 reduces the number
+            of words significantly and is thus much faster (preferred). Random also
+            reduces the number significantly. None applies not feature selectiona and
+            yields large bag of words, e.g. much memory may be needed.
+
         p_threshold:  int, default=0.05 (disabled by default)
-            Feature selection is applied based on the chi-squared test.
-            This is the p-value threshold to use for chi-squared test on bag-of-words
-            (lower means more strict). 1 indicates that the test
+            If feature_selection=chi2 is chosen, feature selection is applied based on
+            the chi-squared test. This is the p-value threshold to use for chi-squared
+            test on bag-of-words (lower means more strict). 1 indicates that the test
             should not be performed.
 
-        skip_grams:          boolean, default = False
+        max_feature_count:  int, default=256
+            If feature_selection=random is chosen, this parameter defines the number of
+            randomly chosen unique words used.
+
+        skip_grams:     boolean, default = False
             whether to create skip-grams of SFA words
 
-        n_jobs:              int, optional, default = 1
+        return_sparse:  boolean, default=True
+            if set to true, a scipy sparse matrix will be returned as BOP model.
+            If set to false a dense array will be returned as BOP model. Sparse
+            arrays are much more compact.
+
+        n_jobs:     int, optional, default = 1
             The number of jobs to run in parallel for both `transform`.
             ``-1`` means using all processors.
 
