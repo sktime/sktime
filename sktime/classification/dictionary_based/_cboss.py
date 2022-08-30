@@ -13,7 +13,6 @@ import math
 import time
 
 import numpy as np
-from joblib import Parallel, delayed
 from sklearn.metrics import pairwise
 from sklearn.utils import check_random_state
 
@@ -69,6 +68,11 @@ class ContractableBOSS(BaseClassifier):
     n_jobs : int, default = 1
         The number of jobs to run in parallel for both `fit` and `predict`.
         ``-1`` means using all processors.
+    feature_selection: {"chi2", "none", "random"}, default: chi2
+        Sets the feature selections strategy to be used. Chi2 reduces the number
+        of words significantly and is thus much faster (preferred). Random also reduces
+        the number significantly. None applies not feature selectiona and yields large
+        bag of words, e.g. much memory may be needed.
     random_state : int or None, default=None
         Seed for random integer.
 
@@ -372,22 +376,26 @@ class ContractableBOSS(BaseClassifier):
         results = np.zeros((n_instances, self.n_classes_))
         divisors = np.zeros(n_instances)
 
-        for i, clf in enumerate(self.estimators_):
-            subsample = clf._subsample
-            preds = (
-                clf._train_predictions
-                if self.save_train_predictions
-                else Parallel(n_jobs=self.n_jobs)(
-                    delayed(clf._train_predict)(
-                        i,
-                    )
-                    for i in range(len(subsample))
-                )
-            )
+        if self.save_train_predictions:
+            for clf in self.estimators_:
+                preds = clf._train_predictions
+                for n, pred in enumerate(preds):
+                    results[n][self._class_dictionary[pred]] += 1
+                    divisors[n] += 1
 
-            for n, pred in enumerate(preds):
-                results[subsample[n]][self._class_dictionary[pred]] += self.weights_[i]
-                divisors[subsample[n]] += self.weights_[i]
+            else:
+                for i, clf in enumerate(self.estimators_):
+                    distance_matrix = pairwise.pairwise_distances(
+                        clf._transformed_data, n_jobs=self.n_jobs
+                    )
+
+                    preds = []
+                    for i in range(n_instances):
+                        preds.append(clf._train_predict(i, distance_matrix))
+
+                    for n, pred in enumerate(preds):
+                        results[n][self._class_dictionary[pred]] += 1
+                        divisors[n] += 1
 
         for i in range(n_instances):
             results[i] = (

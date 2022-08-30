@@ -68,6 +68,15 @@ class WEASEL(BaseClassifier):
         This is the p-value threshold to use for chi-squared test on bag-of-words
         (lower means more strict). 1 indicates that the test
         should not be performed.
+    feature_selection: {"chi2", "none", "random"}, default: chi2
+        Sets the feature selections strategy to be used. Chi2 reduces the number
+        of words significantly and is thus much faster (preferred). Random also reduces
+        the number significantly. None applies not feature selectiona and yields large
+        bag of words, e.g. much memory may be needed.
+    support_probabilities: bool, default: False
+        If set to False a RidgeClassifierCV will be trained, which has higher accuracy
+        and is faster. If set to True LogisticRegression will be trained, which
+        returns true probabilities.
     random_state: int or None, default=None
         Seed for random, integer
 
@@ -269,7 +278,13 @@ class WEASEL(BaseClassifier):
             Predicted probabilities using the ordering in classes_.
         """
         bag = self._transform_words(X)
-        return self.clf.predict_proba(bag)
+        if self.support_probabilities:
+            return self.clf.predict_proba(bag)
+        else:
+            raise ValueError(
+                "Error in WEASEL, please set support_probabilities=True, to"
+                + "allow for probabilities to be computed."
+            )
 
     def _transform_words(self, X):
         parallel_res = Parallel(n_jobs=self._threads_to_use)(

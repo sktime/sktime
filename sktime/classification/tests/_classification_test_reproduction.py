@@ -125,7 +125,11 @@ if __name__ == "__main__":
                     (
                         "cBOSS",
                         ContractableBOSS(
-                            n_parameter_samples=4, max_ensemble_size=2, random_state=0
+                            n_parameter_samples=4,
+                            max_ensemble_size=2,
+                            random_state=0,
+                            save_train_predictions=True,
+                            feature_selection="none",
                         ),
                         [5],
                     ),
@@ -146,14 +150,18 @@ if __name__ == "__main__":
     _print_array(
         "BOSSEnsemble - UnitTest",
         _reproduce_classification_unit_test(
-            BOSSEnsemble(max_ensemble_size=5, random_state=0)
+            BOSSEnsemble(max_ensemble_size=5, feature_selection="none", random_state=0)
         ),
     )
     _print_array(
         "ContractableBOSS - UnitTest",
         _reproduce_classification_unit_test(
             ContractableBOSS(
-                n_parameter_samples=10, max_ensemble_size=5, random_state=0
+                n_parameter_samples=4,
+                max_ensemble_size=2,
+                save_train_predictions=True,
+                feature_selection="none",
+                random_state=0,
             )
         ),
     )
@@ -187,7 +195,15 @@ if __name__ == "__main__":
     )
     _print_array(
         "WEASEL - UnitTest",
-        _reproduce_classification_unit_test(WEASEL(window_inc=4, random_state=0)),
+        _reproduce_classification_unit_test(
+            WEASEL(
+                window_inc=4,
+                random_state=0,
+                support_probabilities=True,
+                bigrams=False,
+                feature_selection="none",
+            )
+        ),
     )
     _print_array(
         "ElasticEnsemble - UnitTest",

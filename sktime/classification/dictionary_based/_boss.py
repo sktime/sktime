@@ -61,6 +61,11 @@ class BOSSEnsemble(BaseClassifier):
     n_jobs : int, default=1
         The number of jobs to run in parallel for both `fit` and `predict`.
         ``-1`` means using all processors.
+    feature_selection: {"chi2", "none", "random"}, default: chi2
+        Sets the feature selections strategy to be used. Chi2 reduces the number
+        of words significantly and is thus much faster (preferred). Random also reduces
+        the number significantly. None applies not feature selectiona and yields large
+        bag of words, e.g. much memory may be needed.
     random_state : int or None, default=None
         Seed for random, integer.
 
@@ -515,6 +520,7 @@ class IndividualBOSS(BaseClassifier):
         self.word_length = word_length
         self.norm = norm
         self.alphabet_size = alphabet_size
+        self.feature_selection = feature_selection
 
         self.save_words = save_words
         self.n_jobs = n_jobs
@@ -526,7 +532,6 @@ class IndividualBOSS(BaseClassifier):
         self._accuracy = 0
         self._subsample = []
         self._train_predictions = []
-        self.feature_selection = feature_selection
 
         super(IndividualBOSS, self).__init__()
 
@@ -561,6 +566,7 @@ class IndividualBOSS(BaseClassifier):
             n_jobs=self.n_jobs,
             feature_selection=self.feature_selection,
             return_sparse=True,
+            random_state=self.random_state,
         )
 
         self._transformed_data = self._transformer.fit_transform(X, y)
