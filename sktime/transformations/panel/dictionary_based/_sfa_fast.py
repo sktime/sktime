@@ -6,7 +6,7 @@ Configurable SFA transform for discretising time series into words.
 """
 
 __author__ = ["Patrick Schäfer"]
-__all__ = ["SFA_NEW"]
+__all__ = ["SFA_FAST"]
 
 import math
 import sys
@@ -39,7 +39,7 @@ simplefilter(action="ignore", category=NumbaPendingDeprecationWarning)
 simplefilter(action="ignore", category=NumbaTypeSafetyWarning)
 
 
-class SFA_NEW(BaseTransformer):
+class SFA_FAST(BaseTransformer):
     """Symbolic Fourier Approximation (SFA) Transformer.
 
     Overview: for each series:
@@ -228,7 +228,7 @@ class SFA_NEW(BaseTransformer):
 
         self.random_state = random_state
 
-        super(SFA_NEW, self).__init__()
+        super(SFA_FAST, self).__init__()
 
         if not return_pandas_data_series:
             self._output_convert = "off"
@@ -317,8 +317,8 @@ class SFA_NEW(BaseTransformer):
         -------
         List of dictionaries containing SFA words
         """
-        self.check_is_fitted()
-        X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
+        # self.check_is_fitted()
+        # X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
         X = X.squeeze(1)
 
         words, dfts = _transform_case(

@@ -15,7 +15,7 @@ from sklearn.metrics import pairwise
 from sklearn.utils import check_random_state
 
 from sktime.classification.base import BaseClassifier
-from sktime.transformations.panel.dictionary_based import SFA_NEW
+from sktime.transformations.panel.dictionary_based import SFA_FAST
 from sktime.utils.validation.panel import check_X_y
 
 
@@ -555,7 +555,7 @@ class IndividualBOSS(BaseClassifier):
         Changes state by creating a fitted model that updates attributes
         ending in "_" and sets is_fitted flag to True.
         """
-        self._transformer = SFA_NEW(
+        self._transformer = SFA_FAST(
             word_length=self.word_length,
             alphabet_size=self.alphabet_size,
             window_size=self.window_size,
