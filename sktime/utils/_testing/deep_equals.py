@@ -14,6 +14,7 @@ __all__ = ["deep_equals"]
 
 import numpy as np
 import pandas as pd
+from scipy.sparse import csr_matrix
 
 
 def deep_equals(x, y, return_msg=False):
@@ -120,6 +121,10 @@ def deep_equals(x, y, return_msg=False):
         return ret(*_fh_equals(x, y, return_msg=True))
     elif isinstance(x != y, bool) and x != y:
         return ret(False, f" !=, {x} != {y}")
+    # csr-matrix must not be compared using np.any(x!=y)
+    elif isinstance(x, csr_matrix):
+        if not np.allclose(x.A, y.A):
+            return ret(False, f" !=, {x} != {y}")
     elif np.any(x != y):
         return ret(False, f" !=, {x} != {y}")
     return ret(True, "")
