@@ -110,7 +110,7 @@ class GMMHMM(BaseHMMLearn):
     >>> data = piecewise_normal(
     ...    means=[2, 4, 1], lengths=[10, 35, 40], random_state=7
     ...    ).reshape((-1, 1))
-    >>> model = GMMHMM(algorithm='viterbi', n_components=2)
+    >>> model = GMMHMM(n_components=3)
     >>> model = model.fit(data)
     >>> labeled_data = model.predict(data)
     """
@@ -140,7 +140,6 @@ class GMMHMM(BaseHMMLearn):
 
         self.n_components = n_components
         self.n_mix = n_mix
-        self.covariance_type = covariance_type
         self.min_covar = min_covar
         self.startprob_prior = startprob_prior
         self.transmat_prior = transmat_prior
@@ -150,6 +149,7 @@ class GMMHMM(BaseHMMLearn):
         self.covars_prior = covars_prior
         self.covars_weight = covars_weight
         self.algorithm = algorithm
+        self.covariance_type = covariance_type
         self.random_state = random_state
         self.n_iter = n_iter
         self.tol = tol
@@ -166,7 +166,6 @@ class GMMHMM(BaseHMMLearn):
         self._hmm_estimator = _GMMHMM(
             self.n_components,
             self.n_mix,
-            self.covariance_type,
             self.min_covar,
             self.startprob_prior,
             self.transmat_prior,
@@ -176,6 +175,7 @@ class GMMHMM(BaseHMMLearn):
             self.covars_prior,
             self.covars_weight,
             self.algorithm,
+            self.covariance_type,
             self.random_state,
             self.n_iter,
             self.tol,
