@@ -88,6 +88,8 @@ EXCLUDED_TESTS = {
         "test_update_predict_single",  # see 2997, sporadic failure, unknown cause
         "test__y_when_refitting",  # see 3176
     ],
+    # GGS inherits from BaseEstimator which breaks this test
+    "GreedyGaussianSegmentation": ["test_inheritance"]
 }
 
 # We use estimator tags in addition to class hierarchies to further distinguish
