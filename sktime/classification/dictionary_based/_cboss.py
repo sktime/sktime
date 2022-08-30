@@ -62,6 +62,15 @@ class ContractableBOSS(BaseClassifier):
     contract_max_n_parameter_samples : int, default=np.inf
         Max number of parameter combinations to consider when time_limit_in_minutes is
         set.
+    typed_dict : bool, default=True
+        Use a numba TypedDict to store word counts. May increase memory usage, but will
+        be faster for larger datasets. As the Dict cannot be pickled currently, there
+        will be some overhead converting it to a python dict with multiple threads and
+        pickling.
+
+        .. deprecated:: 0.13.3
+            ``typed_dict`` was deprecated in version 0.13.3 and will be removed in 0.14.
+
     save_train_predictions : bool, default=False
         Save the ensemble member train predictions in fit for use in _get_train_probs
         leave-one-out cross-validation.
@@ -143,6 +152,7 @@ class ContractableBOSS(BaseClassifier):
         min_window=10,
         time_limit_in_minutes=0.0,
         contract_max_n_parameter_samples=np.inf,
+        typed_dict="deprecated",
         save_train_predictions=False,
         feature_selection="chi2",
         n_jobs=1,
@@ -155,6 +165,7 @@ class ContractableBOSS(BaseClassifier):
 
         self.time_limit_in_minutes = time_limit_in_minutes
         self.contract_max_n_parameter_samples = contract_max_n_parameter_samples
+        self.typed_dict = typed_dict
         self.save_train_predictions = save_train_predictions
         self.n_jobs = n_jobs
         self.random_state = random_state

@@ -30,7 +30,7 @@ class WEASEL(BaseClassifier):
 
     There are these primary parameters:
             alphabet_size: alphabet size
-            chi2-threshold: used for feature selection to select best words
+            chi2 p-threshold: used for feature selection to select best words
             anova: select best l/2 fourier coefficients other than first ones
             bigrams: using bigrams of SFA words
             binning_strategy: the binning strategy used to discretise into
@@ -74,9 +74,12 @@ class WEASEL(BaseClassifier):
         the number significantly. None applies not feature selectiona and yields large
         bag of words, e.g. much memory may be needed.
     support_probabilities: bool, default: False
-        If set to False a RidgeClassifierCV will be trained, which has higher accuracy
-        and is faster. If set to True LogisticRegression will be trained, which
-        returns true probabilities.
+        If set to False, a RidgeClassifierCV will be trained, which has higher accuracy
+        and is faster, yet does not support predict_proba.
+        If set to True, a LogisticRegression will be trained, which does support
+        predict_proba(), yet is slower and typically less accuracy. predict_proba() is
+        needed for example in Early-Classification like TEASER.
+
     random_state: int or None, default=None
         Seed for random, integer
 
