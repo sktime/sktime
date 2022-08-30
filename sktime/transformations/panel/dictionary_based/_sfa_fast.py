@@ -382,7 +382,11 @@ class SFA_NEW(_PanelToPanelTransformer):
         self.feature_count = bag_of_words.shape[1]
 
         # convert to sparse matrix, if too many entries
-        if self.return_sparse:  # Todo as ratio with elements??
+        if (
+            self.return_sparse
+            and bag_of_words is not None
+            and bag_of_words.shape[1] > 100
+        ):
             bag_of_words = csr_matrix(bag_of_words)
 
         return bag_of_words
@@ -551,7 +555,7 @@ class SFA_NEW(_PanelToPanelTransformer):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         # small window size for testing
-        params = {"window_size": 4}
+        params = {"window_size": 4, "return_sparse": False}
         return params
 
     def set_fitted(self):
