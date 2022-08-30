@@ -377,25 +377,32 @@ class ContractableBOSS(BaseClassifier):
         divisors = np.zeros(n_instances)
 
         if self.save_train_predictions:
-            for clf in self.estimators_:
+            for i, clf in enumerate(self.estimators_):
+                subsample = clf._subsample
                 preds = clf._train_predictions
+
                 for n, pred in enumerate(preds):
-                    results[n][self._class_dictionary[pred]] += 1
-                    divisors[n] += 1
+                    results[subsample[n]][
+                        self._class_dictionary[pred]
+                    ] += self.weights_[i]
+                    divisors[subsample[n]] += self.weights_[i]
 
-            else:
-                for i, clf in enumerate(self.estimators_):
-                    distance_matrix = pairwise.pairwise_distances(
-                        clf._transformed_data, n_jobs=self.n_jobs
-                    )
+        else:
+            for i, clf in enumerate(self.estimators_):
+                subsample = clf._subsample
+                distance_matrix = pairwise.pairwise_distances(
+                    clf._transformed_data[subsample], n_jobs=self.n_jobs
+                )
 
-                    preds = []
-                    for i in range(n_instances):
-                        preds.append(clf._train_predict(i, distance_matrix))
+                preds = []
+                for i in range(len(subsample)):
+                    preds.append(clf._train_predict(i, distance_matrix))
 
-                    for n, pred in enumerate(preds):
-                        results[n][self._class_dictionary[pred]] += 1
-                        divisors[n] += 1
+                for n, pred in enumerate(preds):
+                    results[subsample[n]][
+                        self._class_dictionary[pred]
+                    ] += self.weights_[i]
+                    divisors[subsample[n]] += self.weights_[i]
 
         for i in range(n_instances):
             results[i] = (
