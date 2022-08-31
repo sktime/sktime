@@ -5,7 +5,7 @@ import numpy as np
 from scipy.stats import iqr
 from sklearn.neighbors import NearestNeighbors
 
-from sktime.annotation.base._base import BaseSeriesAnnotator
+from sktime.transformations.base import BaseTransformer
 
 __author__ = ["KatieBuc"]
 __all__ = ["STRAY"]
@@ -22,7 +22,7 @@ def standardize(x):
     return (x - np.median(x)) / iqr(x)
 
 
-class STRAY(BaseSeriesAnnotator):
+class STRAY(BaseTransformer):
     """STRAY: robust anomaly detection in data streams with concept drift.
 
     This is based on STRAY (Search TRace AnomalY) _[1], which is a modification
@@ -96,7 +96,7 @@ class STRAY(BaseSeriesAnnotator):
         self.p = p
         self.size_threshold = size_threshold
         self.outlier_tail = outlier_tail
-        super(STRAY, self).__init__(fmt="dense")
+        super(STRAY, self).__init__()
 
     def _find_threshold(self, outlier_score, n):
         """Find Outlier Threshold.
@@ -207,14 +207,14 @@ class STRAY(BaseSeriesAnnotator):
             "outlier_bool": outlier_bool,
         }
 
-    def _fit(self, X, Y=None):
+    def _fit(self, X, y=None):
         """Do nothing, currently empty.
 
         Parameters
         ----------
         X : pd.DataFrame
             Training data to fit model to (time series).
-        Y : pd.Series, optional
+        y : pd.Series, optional
             Ground truth annotations for training if annotator is supervised.
 
         Returns
@@ -229,7 +229,7 @@ class STRAY(BaseSeriesAnnotator):
 
         return self
 
-    def _predict(self, X):
+    def _transform(self, X, y=None):
         """Return anomaly detection.
 
         Parameters
