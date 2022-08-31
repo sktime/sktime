@@ -220,7 +220,9 @@ class _PmdArimaAdapter(BaseForecaster):
                 pred_ints.append(pred_int)
             return result[0], pred_ints
         else:
-            return pd.Series(result[fh_abs._values], index=fh_abs)
+            result = pd.Series(result)[fh_idx]
+            result.index = fh_abs
+            return result
 
     def _predict_interval(self, fh, X=None, coverage=0.90):
         """Compute/return prediction quantiles for a forecast.
