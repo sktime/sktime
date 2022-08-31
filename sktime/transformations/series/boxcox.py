@@ -269,6 +269,11 @@ class LogTransformer(BaseTransformer):
             Data to be transformed
         y : ignored argument for interface compatibility
             Additional data, e.g., labels for transformation
+        offset : float , default = 0
+                 Adds a constant to all the data points and shifts it along the x-axis
+        scale  : float , default = 1
+                 Multiplies a constant to all the data points.
+
 
 
         Returns
@@ -292,6 +297,10 @@ class LogTransformer(BaseTransformer):
             Data to be transformed
         y : ignored argument for interface compatibility
             Additional data, e.g., labels for transformation
+        offset : float , default = 0
+                 Adds a constant to all the data points and shifts it along the x-axis
+        scale  : float , default = 1
+                 Multiplies a constant to all the data points.
 
 
         Returns
