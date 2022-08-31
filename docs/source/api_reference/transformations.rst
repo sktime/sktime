@@ -51,17 +51,12 @@ Pipeline building
 
     TransformerPipeline
     FeatureUnion
+    ColumnwiseTransformer
     FitInTransform
     MultiplexTransformer
-
-.. currentmodule:: sktime.transformations.series.compose
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
     OptionalPassthrough
-    ColumnwiseTransformer
+    InvertTransform
+    Id
     YtoX
 
 .. currentmodule:: sktime.transformations.panel.compose
