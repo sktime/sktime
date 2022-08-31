@@ -712,7 +712,9 @@ class _RecursiveReducer(_Reducer):
             last[:, 0, :window_length] = y_last
             if X is not None:
                 last[:, 1:, :window_length] = X_last.T
-                last[:, 1:, window_length:] = X.T
+                last[:, 1:, window_length:] = X.iloc[
+                    -(last.shape[2] - window_length) :, :
+                ].T
 
             # Recursively generate predictions by iterating over forecasting horizon.
             for i in range(fh_max):
@@ -933,8 +935,11 @@ class RecursiveTabularRegressionForecaster(_RecursiveReducer):
 
     _tags = {
         "requires-fh-in-fit": False,  # is the forecasting horizon required in fit?
-        "y_inner_mtype": ["pd.Series", "pd-multiindex", "pd_multiindex_hier"],
-        "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
+        "y_inner_mtype": "pd.Series",
+        "X_inner_mtype": "pd.DataFrame",
+        # hierarchical data types are commented out until #3316 is fixed
+        # "y_inner_mtype": ["pd.Series", "pd-multiindex", "pd_multiindex_hier"],
+        # "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
     }
 
     _estimator_scitype = "tabular-regressor"
@@ -1315,6 +1320,7 @@ class DirectReductionForecaster(BaseForecaster):
 
     _tags = {
         "requires-fh-in-fit": True,  # is the forecasting horizon required in fit?
+        "ignores-exogeneous-X": False,
         "X_inner_mtype": "pd.DataFrame",
         "y_inner_mtype": "pd.DataFrame",
     }

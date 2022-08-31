@@ -4,6 +4,8 @@
 
 __author__ = ["fkiraly"]
 
+import itertools
+
 import pandas as pd
 import pytest
 
@@ -63,3 +65,31 @@ def test_lag_fit_transform_columns(X, index_out, lag):
             return 1
 
     assert ncols(Xt) == ncols(X) * len_lag
+
+
+@pytest.mark.parametrize("X", X_fixtures)
+@pytest.mark.parametrize("index_out", index_outs)
+@pytest.mark.parametrize("lags", [2, [2, 4]])
+def test_lag_fit_transform_column_names(X, index_out, lags):
+    """Test expected column names."""
+    t = Lag(lags=lags, index_out=index_out)
+    Xt = t.fit_transform(X)
+
+    if isinstance(Xt, pd.DataFrame):
+        lag_col_names = set(Xt.columns)
+
+        if isinstance(X, pd.DataFrame):
+            col_names = X.columns
+        elif isinstance(X, pd.Series):
+            col_names = [X.name if X.name else 0]
+        else:
+            pass
+
+        lags = [lags] if isinstance(lags, int) else lags
+        expected = {
+            f"lag_{lag}__{col}" for lag, col in itertools.product(lags, col_names)
+        }
+        assert lag_col_names == expected
+
+    elif isinstance(Xt, pd.Series):
+        assert Xt.name is None

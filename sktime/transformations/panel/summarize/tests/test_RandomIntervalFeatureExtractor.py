@@ -8,7 +8,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import FunctionTransformer
 
 from sktime.transformations.compose import FeatureUnion
-from sktime.transformations.panel.compose import SeriesToPrimitivesRowTransformer
+from sktime.transformations.panel.reduce import Tabularizer
 from sktime.transformations.panel.segment import RandomIntervalSegmenter
 from sktime.transformations.panel.summarize import RandomIntervalFeatureExtractor
 from sktime.utils._testing.panel import (
@@ -88,10 +88,9 @@ def test_different_implementations():
 
     # Compare with chained transformations.
     tran1 = RandomIntervalSegmenter(n_intervals=1, random_state=random_state)
-    tran2 = SeriesToPrimitivesRowTransformer(
-        FunctionTransformer(func=np.mean, validate=False), check_transformer=False
-    )
-    A = tran2.fit_transform(tran1.fit_transform(X_train))
+    tran2 = FunctionTransformer(func=np.mean, validate=False)
+    t_chain = tran1 * tran2
+    A = t_chain.fit_transform(X_train)
 
     tran = RandomIntervalFeatureExtractor(
         n_intervals=1, features=[np.mean], random_state=random_state
@@ -117,24 +116,15 @@ def test_different_pipelines():
                 [
                     (
                         "mean",
-                        SeriesToPrimitivesRowTransformer(
-                            FunctionTransformer(func=np.mean, validate=False),
-                            check_transformer=False,
-                        ),
+                        Tabularizer(FunctionTransformer(func=np.mean, validate=False)),
                     ),
                     (
                         "std",
-                        SeriesToPrimitivesRowTransformer(
-                            FunctionTransformer(func=np.std, validate=False),
-                            check_transformer=False,
-                        ),
+                        Tabularizer(FunctionTransformer(func=np.std, validate=False)),
                     ),
                     (
                         "slope",
-                        SeriesToPrimitivesRowTransformer(
-                            FunctionTransformer(func=_slope, validate=False),
-                            check_transformer=False,
-                        ),
+                        Tabularizer(FunctionTransformer(func=_slope, validate=False)),
                     ),
                 ]
             ),
