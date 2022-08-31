@@ -276,8 +276,8 @@ class LogTransformer(BaseTransformer):
         Xt : 2D np.ndarray
             transformed version of X
         """
-        offset = self._get_offset(X)
-        scale = self._get_scale(X)
+        offset = self.offset
+        scale = self.scale
         Xt = np.log(scale * (X + offset))
         return Xt
 
@@ -299,8 +299,8 @@ class LogTransformer(BaseTransformer):
         Xt : 2D np.ndarray
             inverse transformed version of X
         """
-        offset = self._get_offset(X)
-        scale = self._get_scale(X)
+        offset = self.offset
+        scale = self.scale
         Xt = (np.exp(X) / scale) - offset
         return Xt
 
