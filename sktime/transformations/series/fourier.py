@@ -17,6 +17,14 @@ from sktime.transformations.base import BaseTransformer
 class FourierFeatures(BaseTransformer):
     """Fourier Features for time series seasonality.
 
+    Fourier Series terms can be used as explanatory variables for the cases of multiple
+    seasonal periods and or complex / long seasonal periods [1][2]. For every seasonal
+    period, sp and fourier term k pair there are 2 fourier terms sin_sp_k and cos_sp_k:
+    - sin_sp_k = sin(2*pi*k*t/sp)
+    - cos_sp_k = cos(2*pi*k*t/sp)
+
+    The implementation is based on the fourier function from the R forecast package [3]
+
     Parameters
     ----------
     sp_list : List[Union[int, float]]
@@ -35,6 +43,7 @@ class FourierFeatures(BaseTransformer):
     .. [2] Hyndman, R.J., & Athanasopoulos, G. (2021) Forecasting: principles and
         practice, 3rd edition, OTexts: Melbourne, Australia. OTexts.com/fpp3.
         Accessed on August 14th 2022.
+    .. [3] https://pkg.robjhyndman.com/forecast/reference/fourier.html
 
     Examples
     --------
@@ -156,6 +165,7 @@ class FourierFeatures(BaseTransformer):
         transformed version of X
         """
         X_transformed = deepcopy(X)
+        # get the integer form of the PeriodIndex
         int_index = X_transformed.index.astype(int) - self.min_t_
 
         for sp_k in self.sp_k_pairs_list_:
@@ -186,38 +196,8 @@ class FourierFeatures(BaseTransformer):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-
-        # todo: set the testing parameters for the estimators
-        # Testing parameters can be dictionary or list of dictionaries
-        # Testing parameter choice should cover internal cases well.
-        #
-        # this method can, if required, use:
-        #   class properties (e.g., inherited); parent class test case
-        #   imported objects such as estimators from sktime or sklearn
-        # important: all such imports should be *inside get_test_params*, not at the top
-        #            since imports are used only at testing time
-        #
-        # The parameter_set argument is not used for automated, module level tests.
-        #   It can be used in custom, estimator specific tests, for "special" settings.
-        # A parameter dictionary must be returned *for all values* of parameter_set,
-        #   i.e., "parameter_set not available" errors should never be raised.
-        #
-        # example 1: specify params as dictionary
-        # any number of params can be specified
-        # params = {"est": value0, "parama": value1, "paramb": value2}
-        #
-        # example 2: specify params as list of dictionary
-        # note: Only first dictionary will be used by create_test_instance
-        # params = [{"est": value1, "parama": value2},
-        #           {"est": value3, "parama": value4}]
-        # return params
-        #
-        # example 3: parameter set depending on param_set value
-        #   note: only needed if a separate parameter set is needed in tests
-        # if parameter_set == "special_param_set":
-        #     params = {"est": value1, "parama": value2}
-        #     return params
-        #
-        # # "default" params - always returned except for "special_param_set" value
-        # params = {"est": value3, "parama": value4}
-        # return params
+        params = [
+            {"sp_list": [12], "fourier_terms_list": [4]},
+            {"sp_list": [12, 6.2], "fourier_terms_list": [3, 4]},
+        ]
+        return params
