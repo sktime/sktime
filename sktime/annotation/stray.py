@@ -79,7 +79,7 @@ class STRAY(BaseTransformer):
 
     _tags = {
         "handles-missing-data": True,
-        "X_inner_mtype": ["np.ndarray"],
+        "X_inner_mtype": "np.ndarray",
         "fit_is_empty": False,
     }
 
