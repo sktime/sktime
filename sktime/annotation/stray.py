@@ -72,12 +72,16 @@ class STRAY(BaseTransformer):
     >>> from numpy import asarray
     >>> X = asarray([3.7,3.2,3.4,3.6,-5.1,-5.2,-4.9])
     >>> model = STRAY(k=3)
-    >>> y = model.fit_predict(X)
+    >>> y = model.fit_transform(X)
     >>> y
     [0, 0, 0, 0, 1, 1, 1]
     """
 
-    _tags = {"handles-missing-data": True, "X_inner_mtype": "np.ndarray"}
+    _tags = {
+        "handles-missing-data": True,
+        "X_inner_mtype": ["np.ndarray"],
+        "fit_is_empty": False,
+    }
 
     def __init__(
         self,
@@ -156,7 +160,8 @@ class STRAY(BaseTransformer):
             distances, _ = nbrs.kneighbors(X.reshape(-1, 1))
         else:
             nbrs = NearestNeighbors(
-                n_neighbors=self.k + 1, algorithm=self.knn_algorithm
+                n_neighbors=n if self.k >= n else self.k + 1,
+                algorithm=self.knn_algorithm,
             ).fit(X)
             distances, _ = nbrs.kneighbors(X)
 
