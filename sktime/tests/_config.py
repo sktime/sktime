@@ -89,7 +89,7 @@ EXCLUDED_TESTS = {
         "test__y_when_refitting",  # see 3176
     ],
     # GGS inherits from BaseEstimator which breaks this test
-    "GreedyGaussianSegmentation": ["test_inheritance"]
+    "GreedyGaussianSegmentation": ["test_inheritance"],
 }
 
 # We use estimator tags in addition to class hierarchies to further distinguish
