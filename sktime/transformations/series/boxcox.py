@@ -214,6 +214,15 @@ class LogTransformer(BaseTransformer):
     The natural log transformation can used to make data more normally
     distributed and stabilize its variance.
 
+    Parameters
+    ----------
+    offset : float , default = 0
+             Adds a constant to all the data points and shifts them along the x-axis
+    scale  : float , default = 1
+             Multiplies a constant to all the data points.
+
+
+
     See Also
     --------
     BoxCoxTransformer :
