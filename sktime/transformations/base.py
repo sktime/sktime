@@ -145,9 +145,10 @@ class BaseTransformer(BaseEstimator):
         "pd_multiindex_hier",
     ]
 
-    def __init__(self):
+    def __init__(self, _output_convert="auto"):
 
         self._converter_store_X = dict()  # storage dictionary for in/output conversion
+        self._output_convert = _output_convert
 
         super(BaseTransformer, self).__init__()
         _check_estimator_deps(self)
@@ -277,6 +278,31 @@ class BaseTransformer(BaseEstimator):
             return other + self_as_pipeline
         else:
             return NotImplemented
+
+    def __invert__(self):
+        """Magic unary ~ (inversion) method, return InvertTransform of self.
+
+        Returns
+        -------
+        `InvertTransform` object, containing `self`.
+        """
+        from sktime.transformations.compose import InvertTransform
+
+        return InvertTransform(self)
+
+    def __neg__(self):
+        """Magic unary - (negation) method, return OptionalPassthrough of self.
+
+        Intuition: `OptionalPassthrough` is "not having transformer", as an option.
+
+        Returns
+        -------
+        `OptionalPassthrough` object, containing `self`, with `passthrough=False`.
+            The `passthrough` parameter can be set via `set_params`.
+        """
+        from sktime.transformations.compose import OptionalPassthrough
+
+        return OptionalPassthrough(self, passthrough=False)
 
     def __getitem__(self, key):
         """Magic [...] method, return column subsetted transformer.
@@ -444,7 +470,10 @@ class BaseTransformer(BaseEstimator):
             Xt = self._vectorize("transform", X=X_inner, y=y_inner)
 
         # convert to output mtype
-        X_out = self._convert_output(Xt, metadata=metadata)
+        if not hasattr(self, "_output_convert") or self._output_convert == "auto":
+            X_out = self._convert_output(Xt, metadata=metadata)
+        else:
+            X_out = Xt
 
         return X_out
 
@@ -557,7 +586,10 @@ class BaseTransformer(BaseEstimator):
             Xt = self._vectorize("inverse_transform", X=X_inner, y=y_inner)
 
         # convert to output mtype
-        X_out = self._convert_output(Xt, metadata=metadata, inverse=True)
+        if self._output_convert == "auto":
+            X_out = self._convert_output(Xt, metadata=metadata, inverse=True)
+        else:
+            X_out = Xt
 
         return X_out
 

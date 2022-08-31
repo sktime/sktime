@@ -204,7 +204,9 @@ class Deseasonalizer(BaseTransformer):
         """
         X_full = X.combine_first(self._X)
         self._X = X_full
-        return self._fit(X_full, update_params=update_params)
+        if update_params:
+            self._fit(X_full, update_params=update_params)
+        return self
 
 
 class ConditionalDeseasonalizer(Deseasonalizer):
