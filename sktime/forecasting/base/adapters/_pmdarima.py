@@ -171,10 +171,12 @@ class _PmdArimaAdapter(BaseForecaster):
                 pred_int.loc[fh_abs] = result[1][fh_idx, :]
                 pred_ints.append(pred_int)
             # unpack results
-            y_pred.loc[fh_abs] = result[0][fh_idx]
+            result = pd.Series(result[0]).iloc[fh_idx]
+            y_pred.loc[fh_abs] = result
             return y_pred, pred_ints
         else:
-            y_pred.loc[fh_abs] = result[fh_idx]
+            result = pd.Series(result).iloc[fh_idx]
+            y_pred.loc[fh_abs] = result
             return y_pred
 
     def _predict_fixed_cutoff(
