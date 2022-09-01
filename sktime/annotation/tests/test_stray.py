@@ -47,43 +47,45 @@ def test_default_1D():
         ]
     )
 
-    y_expected = [
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        1,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-    ]
+    y_expected = np.array(
+        [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+        ]
+    )
 
     model = STRAY()
-    y_actual = model.fit_predict(X)
+    y_actual = model.fit_transform(X)
     assert np.allclose(y_actual, y_expected)
 
 
@@ -108,25 +110,27 @@ def test_default_2D():
         ]
     )
 
-    y_expected = [
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        1,
-        1,
-    ]
+    y_expected = np.array(
+        [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            1,
+        ]
+    )
 
     model = STRAY()
-    y_actual = model.fit_predict(X)
+    y_actual = model.fit_transform(X)
     assert np.allclose(y_actual, y_expected)
 
 
@@ -148,19 +152,21 @@ def test_1D_score_with_na():
         ]
     )
 
-    y_scores_expected = [
-        np.nan,
-        0.17662069,
-        0.23095851,
-        0.17662069,
-        0.18683466,
-        0.33097498,
-        0.07087969,
-        0.02122967,
-        0.02312225,
-        0.02192238,
-        0.02122967,
-    ]
+    y_scores_expected = np.array(
+        [
+            np.nan,
+            0.17662069,
+            0.23095851,
+            0.17662069,
+            0.18683466,
+            0.33097498,
+            0.07087969,
+            0.02122967,
+            0.02312225,
+            0.02192238,
+            0.02122967,
+        ]
+    )
 
     model = STRAY(k=3)
     fitted_model = model.fit(X)
@@ -186,7 +192,7 @@ def test_1D_bool_with_na():
         ]
     )
 
-    y_expected = [0, 0, 1, 0, 1, 1, 0, 0, 0, 0, 0]
+    y_expected = np.array([0, 0, 1, 0, 1, 1, 0, 0, 0, 0, 0])
 
     model = STRAY(k=3)
     fitted_model = model.fit(X)
@@ -207,7 +213,9 @@ def test_2D_score_with_na():
         ]
     )
 
-    y_scores_expected = [0.5233413, 0.5233413, np.nan, 0.7248368, 0.6035040, 0.8704687]
+    y_scores_expected = np.array(
+        [0.5233413, 0.5233413, np.nan, 0.7248368, 0.6035040, 0.8704687]
+    )
 
     model = STRAY(k=2, size_threshold=4)
     fitted_model = model.fit(X)
@@ -228,7 +236,7 @@ def test_2D_bool_with_na():
         ]
     )
 
-    y_expected = [0, 0, 0, 1, 1, 1]
+    y_expected = np.array([0, 0, 0, 1, 1, 1])
 
     model = STRAY(k=2, size_threshold=4)
     fitted_model = model.fit(X)
@@ -249,14 +257,16 @@ def test_2D_score_with_standardize():
         ]
     )
 
-    y_scores_expected = [
-        1.1274565,
-        0.6139288,
-        0.5982989,
-        1.4866554,
-        0.5982989,
-        1.7245212,
-    ]
+    y_scores_expected = np.array(
+        [
+            1.1274565,
+            0.6139288,
+            0.5982989,
+            1.4866554,
+            0.5982989,
+            1.7245212,
+        ]
+    )
 
     model = STRAY(k=2, size_threshold=4, normalize=standardize)
     fitted_model = model.fit(X)
