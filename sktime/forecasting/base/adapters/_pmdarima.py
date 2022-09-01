@@ -220,7 +220,7 @@ class _PmdArimaAdapter(BaseForecaster):
                 pred_ints.append(pred_int)
             return result[0], pred_ints
         else:
-            result = pd.Series(result)[fh_idx]
+            result = pd.Series(result).iloc[fh_idx]
             result.index = fh_abs
             return result
 
