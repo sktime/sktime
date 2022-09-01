@@ -889,7 +889,7 @@ def _mft(
     transformed2 = transformed2 * inverse_sqrt_win_size
 
     # compute STDs
-    stds = np.zeros((X.shape[0], end), dtype=np.float32)
+    stds = np.zeros((X.shape[0], end))
     for a in range(X.shape[0]):
         stds[a] = _calc_incremental_mean_std(X[a], end, window_size)
 
@@ -964,9 +964,10 @@ def shorten_words(words, amount, letter_bits):
     new_words = np.zeros((words.shape[0], words.shape[1]), dtype=np.uint32)
 
     # Unigrams
-    for j in range(words.shape[1]):
+    shift_len = amount * letter_bits
+    for j in prange(words.shape[1]):
         # shorten a word by set amount of letters
-        new_words[:, j] = words[:, j] >> (amount * letter_bits)
+        new_words[:, j] = words[:, j] >> shift_len
 
     # TODO Bigrams
     # if bigrams:

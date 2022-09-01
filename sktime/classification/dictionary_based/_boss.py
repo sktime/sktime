@@ -127,7 +127,7 @@ class BOSSEnsemble(BaseClassifier):
         threshold=0.92,
         max_ensemble_size=500,
         max_win_len_prop=1,
-        min_window=10,
+        min_window=6,
         save_train_predictions=False,
         feature_selection="none",
         alphabet_size=4,
@@ -149,7 +149,7 @@ class BOSSEnsemble(BaseClassifier):
         self.n_instances_ = 0
         self.feature_selection = feature_selection
 
-        self._word_lengths = [16, 14, 12, 10, 8]
+        self._word_lengths = [16, 12, 8]
         self._norm_options = [True, False]
         self.alphabet_size = alphabet_size
 
@@ -518,7 +518,7 @@ class IndividualBOSS(BaseClassifier):
         norm=False,
         alphabet_size=4,
         save_words=False,
-        feature_selection="chi2",  # here we use chi2 instead of none
+        feature_selection="none",
         n_jobs=1,
         random_state=None,
     ):
@@ -571,8 +571,6 @@ class IndividualBOSS(BaseClassifier):
             save_words=self.save_words,
             n_jobs=self.n_jobs,
             feature_selection=self.feature_selection,
-            force_alphabet_size_two=False,
-            return_sparse=True,
             random_state=self.random_state,
         )
 
