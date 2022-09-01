@@ -565,7 +565,8 @@ class SFAFast(BaseTransformer):
         if word_len > self.word_length_actual:
             word_len = self.word_length_actual
 
-        new_len = min(word_len, self.words.shape[1])
+        new_len = min(word_len, self.word_length_actual)
+        new_len_diff = self.word_length_actual - new_len
         self.breakpoints = self.breakpoints[:new_len, :]
         self.support = self.support[:new_len]
         self.word_length_actual = word_len
@@ -576,15 +577,14 @@ class SFAFast(BaseTransformer):
         else:
             self.dft_length = new_len
 
-        new_words = shorten_words(
-            self.words,
-            word_len,
-            self.n_instances - self.window_size,
-            self.window_size,
-            self.letter_bits,
-            self.word_length * self.letter_bits,
-            self.bigrams,
-        )
+        if new_len_diff > 0:
+            new_words = shorten_words(
+                self.words,
+                new_len_diff,
+                self.letter_bits,
+            )
+        else:
+            new_words = self.words
 
         # retrain feature selection-strategy
         return self.transform_to_bag(new_words, y)
@@ -960,22 +960,20 @@ def create_bag_transform(
 
 
 @njit(fastmath=True, cache=True)
-def shorten_words(
-    words, amount, n_instances, window_size, letter_bits, word_bits, bigrams
-):
+def shorten_words(words, amount, letter_bits):
     new_words = np.zeros((words.shape[0], words.shape[1]), dtype=np.uint32)
 
     # Unigrams
-    for i in range(n_instances):
+    for i in range(words.shape[0]):
         for j, word in enumerate(words[i]):
             # shorten a word by set amount of letters
-            new_words[i, j] = word >> amount * letter_bits
+            new_words[i, j] = word >> (amount * letter_bits)
 
-    # Bigrams
-    if bigrams:
-        for a in range(0, n_instances):
-            first_word = new_words[:, a]
-            second_word = new_words[:, a + window_size]
-            words[:, n_instances + a] = (first_word << word_bits) | second_word
+    # TODO Bigrams
+    # if bigrams:
+    #     for a in range(0, n_instances):
+    #         first_word = new_words[:, a]
+    #         second_word = new_words[:, a + window_size]
+    #         words[:, n_instances + a] = (first_word << word_bits) | second_word
 
     return new_words

@@ -145,7 +145,7 @@ class BOSSEnsemble(BaseClassifier):
         self.n_instances_ = 0
         self.feature_selection = feature_selection
 
-        self._word_lengths = [16, 12, 8]
+        self._word_lengths = [16, 14, 12, 10, 8]
         self._norm_options = [True, False]
         self._alphabet_size = 4
 
@@ -218,7 +218,7 @@ class BOSSEnsemble(BaseClassifier):
                 best_word_len = boss._transformer.word_length
 
                 for n, word_len in enumerate(self._word_lengths):
-                    if n > 0:
+                    if n > 0 and word_len < boss._transformer.word_length_actual:
                         boss = boss._shorten_bags(word_len, y)
 
                     boss._accuracy = self._individual_train_acc(
@@ -566,7 +566,7 @@ class IndividualBOSS(BaseClassifier):
             save_words=self.save_words,
             n_jobs=self.n_jobs,
             feature_selection=self.feature_selection,
-            force_alphabet_size_two=True,
+            force_alphabet_size_two=False,
             return_sparse=True,
             random_state=self.random_state,
         )
@@ -630,6 +630,9 @@ class IndividualBOSS(BaseClassifier):
         new_boss._transformer.variance = self._transformer.variance
         new_boss._transformer.anova = self._transformer.anova
         new_boss._transformer.norm = self._transformer.norm
+        new_boss._transformer.force_alphabet_size_two = (
+            self._transformer.force_alphabet_size_two
+        )
         new_boss._transformer.bigrams = self._transformer.bigrams
         new_boss._transformer.set_fitted()
 
