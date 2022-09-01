@@ -211,8 +211,7 @@ class BoxCoxTransformer(BaseTransformer):
 class LogTransformer(BaseTransformer):
     """Natural logarithm transformation.
 
-    The natural log transformation can used to make data more normally
-    distributed and stabilize its variance.
+    Transforms each data point x to (scale * log(x+offset))
 
     Parameters
     ----------
@@ -220,8 +219,6 @@ class LogTransformer(BaseTransformer):
              Adds a constant to all the data points and shifts them along the x-axis
     scale  : float , default = 1
              Multiplies a constant to all the data points.
-
-
 
     See Also
     --------
