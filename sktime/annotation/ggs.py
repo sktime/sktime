@@ -2,17 +2,17 @@
 """
 Greedy Gaussian Segmentation (GGS).
 
-Notes
------
-Based on:
-
-    Hallac, D., Nystrup, P. & Boyd, S.
-    Greedy Gaussian segmentation of multivariate time series.
-    Adv Data Anal Classif 13, 727–751 (2019).
-    https://doi.org/10.1007/s11634-018-0335-0
+Based on the work from [1]_.
 
 - source code adapted based on: https://github.com/cvxgrp/GGS
 - paper available at: https://stanford.edu/~boyd/papers/pdf/ggs.pdf
+
+References
+----------
+.. [1] Hallac, D., Nystrup, P. & Boyd, S.
+   "Greedy Gaussian segmentation of multivariate time series.",
+    Adv Data Anal Classif 13, 727–751 (2019).
+    https://doi.org/10.1007/s11634-018-0335-0
 """
 
 import logging
@@ -49,15 +49,17 @@ class GGS:
 
     Notes
     -----
-    Based on:
-
-        Hallac, D., Nystrup, P. & Boyd, S.
-        Greedy Gaussian segmentation of multivariate time series.
-        Adv Data Anal Classif 13, 727–751 (2019).
-        https://doi.org/10.1007/s11634-018-0335-0
+    Based on the work from [1]_.
 
     - source code adapted based on: https://github.com/cvxgrp/GGS
     - paper available at: https://stanford.edu/~boyd/papers/pdf/ggs.pdf
+
+    References
+    ----------
+    .. [1] Hallac, D., Nystrup, P. & Boyd, S.,
+       "Greedy Gaussian segmentation of multivariate time series.",
+       Adv Data Anal Classif 13, 727–751 (2019).
+       https://doi.org/10.1007/s11634-018-0335-0
     """
 
     k_max: int = 10
@@ -335,15 +337,17 @@ class GreedyGaussianSegmentation(BaseEstimator):
 
     Notes
     -----
-    Based on:
-
-        Hallac, D., Nystrup, P. & Boyd, S.
-        Greedy Gaussian segmentation of multivariate time series.
-        Adv Data Anal Classif 13, 727–751 (2019).
-        https://doi.org/10.1007/s11634-018-0335-0
+    Based on the work from [1]_.
 
     - source code adapted based on: https://github.com/cvxgrp/GGS
     - paper available at: https://stanford.edu/~boyd/papers/pdf/ggs.pdf
+
+    References
+    ----------
+    .. [1] Hallac, D., Nystrup, P. & Boyd, S.,
+       "Greedy Gaussian segmentation of multivariate time series.",
+       Adv Data Anal Classif 13, 727–751 (2019).
+       https://doi.org/10.1007/s11634-018-0335-0
     """
 
     def __init__(
