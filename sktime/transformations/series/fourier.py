@@ -87,10 +87,21 @@ class FourierFeatures(BaseTransformer):
         "python_version": None,  # PEP 440 python version specifier to limit versions
     }
 
-    # todo: add any hyper-parameters and components to constructor
     def __init__(self, sp_list: List[Union[int, float]], fourier_terms_list: List[int]):
         self.sp_list = sp_list
         self.fourier_terms_list = fourier_terms_list
+
+        if len(self.sp_list) != len(self.fourier_terms_list):
+            raise ValueError(
+                "In FourierFeatures the length of the sp_list needs to be equal "
+                "to the length of fourier_terms_list."
+            )
+
+        if np.any(np.array(self.sp_list) / np.array(self.fourier_terms_list) < 1):
+            raise ValueError(
+                "In FourierFeatures the number of each element of fourier_terms_list"
+                "needs to be lower from the corresponding element of the sp_list"
+            )
 
         super(FourierFeatures, self).__init__()
 
@@ -111,18 +122,6 @@ class FourierFeatures(BaseTransformer):
         -------
         self: reference to self
         """
-        if len(self.sp_list) != len(self.fourier_terms_list):
-            raise ValueError(
-                "In FourierFeatures the length of the sp_list needs to be equal "
-                "to the length of fourier_terms_list."
-            )
-
-        if np.any(np.array(self.sp_list) / np.array(self.fourier_terms_list) < 1):
-            raise ValueError(
-                "In FourierFeatures the number of each element of fourier_terms_list"
-                "needs to be lower from the corresponding element of the sp_list"
-            )
-
         # Create the sp, k pairs
         # Don't add pairs where the coefficient k/sp already exists
         self.sp_k_pairs_list_ = []
