@@ -145,7 +145,7 @@ class BOSSEnsemble(BaseClassifier):
         self.n_instances_ = 0
         self.feature_selection = feature_selection
 
-        self._word_lengths = [16, 12, 8]
+        self._word_lengths = [16, 14, 12, 10, 8]
         self._norm_options = [True, False]
         self._alphabet_size = 4
 
@@ -308,7 +308,7 @@ class BOSSEnsemble(BaseClassifier):
         return dists
 
     def _include_in_ensemble(self, acc, max_acc, min_max_acc, size):
-        if acc >= max_acc * self.threshold:
+        if acc > 0 and acc >= max_acc * self.threshold:
             if size >= self.max_ensemble_size:
                 return acc > min_max_acc
             else:
