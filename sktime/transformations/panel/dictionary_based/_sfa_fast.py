@@ -162,7 +162,7 @@ class SFAFast(BaseTransformer):
         bigrams=False,
         skip_grams=False,
         save_words=False,
-        force_alphabet_size_two=True,
+        force_alphabet_size_two=False,
         feature_selection="none",
         max_feature_count=256,
         p_threshold=0.05,
@@ -964,10 +964,9 @@ def shorten_words(words, amount, letter_bits):
     new_words = np.zeros((words.shape[0], words.shape[1]), dtype=np.uint32)
 
     # Unigrams
-    for i in range(words.shape[0]):
-        for j, word in enumerate(words[i]):
-            # shorten a word by set amount of letters
-            new_words[i, j] = word >> (amount * letter_bits)
+    for j in range(words.shape[1]):
+        # shorten a word by set amount of letters
+        new_words[:, j] = words[:, j] >> (amount * letter_bits)
 
     # TODO Bigrams
     # if bigrams:

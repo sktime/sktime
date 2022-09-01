@@ -59,10 +59,12 @@ class BOSSEnsemble(BaseClassifier):
     save_train_predictions : bool, default=False
         Save the ensemble member train predictions in fit for use in _get_train_probs
         leave-one-out cross-validation.
+    alphabet_size : default = 4
+        Number of possible letters (values) for each word.
     n_jobs : int, default=1
         The number of jobs to run in parallel for both `fit` and `predict`.
         ``-1`` means using all processors.
-    feature_selection: {"chi2", "none", "random"}, default: chi2
+    feature_selection: {"chi2", "none", "random"}, default: none
         Sets the feature selections strategy to be used. Chi2 reduces the number
         of words significantly and is thus much faster (preferred). Random also reduces
         the number significantly. None applies not feature selectiona and yields large
@@ -127,7 +129,8 @@ class BOSSEnsemble(BaseClassifier):
         max_win_len_prop=1,
         min_window=10,
         save_train_predictions=False,
-        feature_selection="chi2",
+        feature_selection="none",
+        alphabet_size=4,
         n_jobs=1,
         random_state=None,
     ):
@@ -146,9 +149,9 @@ class BOSSEnsemble(BaseClassifier):
         self.n_instances_ = 0
         self.feature_selection = feature_selection
 
-        self._word_lengths = [16, 12, 8]
+        self._word_lengths = [16, 14, 12, 10, 8]
         self._norm_options = [True, False]
-        self._alphabet_size = 4
+        self.alphabet_size = alphabet_size
 
         super(BOSSEnsemble, self).__init__()
 
@@ -204,7 +207,7 @@ class BOSSEnsemble(BaseClassifier):
                     win_size,
                     self._word_lengths[0],
                     normalise,
-                    self._alphabet_size,
+                    self.alphabet_size,
                     save_words=True,
                     feature_selection=self.feature_selection,
                     n_jobs=self.n_jobs,
