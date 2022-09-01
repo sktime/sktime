@@ -430,6 +430,8 @@ class LowerBounding(Enum):
             )
         if x.ndim == 3:
             return x[0]
+        if x.ndim == 1:
+            x = x.reshape(1, -1)
         return x
 
 

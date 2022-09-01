@@ -13,6 +13,12 @@ from sktime.distances._distance_alignment_paths import compute_min_return_path
 from sktime.distances.distance_rework.base._types import (
     AlignmentPathReturn,
     DistanceCostCallable,
+IndependentDistanceParameters,
+DependentDistanceParameters,
+DistanceReturn,
+DistanceCostMatrixReturn,
+DistancePathReturn,
+DistancePathCostMatrixReturn,
 )
 from sktime.distances.lower_bounding import resolve_bounding_matrix
 
@@ -207,6 +213,8 @@ class BaseDistance(ABC):
 
         if return_cost_matrix is True:
 
+            # @njit('Tuple((Tuple(int32, int32)[:], float64, float64[:, :]))'
+            #       '(float64[:], float64[:])', cache=True)
             @njit()
             def _distance_callable(
                 _x: np.ndarray, _y: np.ndarray
@@ -217,6 +225,8 @@ class BaseDistance(ABC):
 
         else:
 
+            # @njit('Tuple(Tuple(reflected list(UniTuple(int64 x 2))<iv=None>, float64))(float64[:], float64[:])', cache=True)
+            # @njit((DistancePathReturn)())
             @njit()
             def _distance_callable(
                 _x: np.ndarray, _y: np.ndarray
@@ -225,7 +235,7 @@ class BaseDistance(ABC):
                 path = min_path_callable(cost_matrix, _bounding_matrix)
                 return path, distance
 
-        return _distance_callable(x, y)
+        return _distance_callable
 
     def independent_distance_factory(
         self,
@@ -273,7 +283,6 @@ class BaseDistance(ABC):
                 return cost_matrix, total
 
         else:
-
             @njit()
             def _distance_callable(_x: np.ndarray, _y: np.ndarray) -> float:
                 total = 0

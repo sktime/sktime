@@ -2,7 +2,7 @@ from typing import Tuple, Callable
 import numpy as np
 from numba import njit
 
-from sktime.distances.distance_rework.base import BaseDistance, DistanceCostCallable
+from sktime.distances.distance_rework.base import DistanceCostCallable
 from sktime.distances.distance_rework import _DtwDistance
 
 from sktime.distances.distance_rework.base._types import DerivativeCallable
@@ -28,7 +28,7 @@ def average_of_slope_transform(X: np.ndarray) -> np.ndarray:
     return np.array(derivative_X)
 
 
-# @njit()
+@njit(cache=True)
 def average_of_slope(q: np.ndarray) -> np.ndarray:
     r"""Compute the average of a slope between points.
 
@@ -98,10 +98,37 @@ class _DdtwDistance(_DtwDistance):
             compute_derivative = kwargs['compute_derivative']
         else:
             compute_derivative = average_of_slope
+        if 'window' in kwargs:
+            window = kwargs['window']
+        else:
+            window = None
+        if 'itakura_max_slope' in kwargs:
+            itakura_max_slope = kwargs['itakura_max_slope']
+        else:
+            itakura_max_slope = None
+        if 'bounding_matrix' in kwargs:
+            bounding_matrix = kwargs['bounding_matrix']
+        else:
+            bounding_matrix = None
 
         x = compute_derivative(x)
         y = compute_derivative(y)
-        independent = super().independent_distance_factory(x, y, **kwargs)
+
+        example_x = x
+        example_y = y
+
+        if example_x.ndim > 1:
+            example_x = example_x[0]
+            example_y = example_y[0]
+
+        dtw_callable = super()._independent_distance_factory(
+            example_x,
+            example_y,
+            window=window,
+            itakura_max_slope=itakura_max_slope,
+            bounding_matrix=bounding_matrix,
+            **kwargs
+        )
 
         if return_cost_matrix is True:
             # Return callable that sums the cost matrix
@@ -113,20 +140,27 @@ class _DdtwDistance(_DtwDistance):
                 _y = compute_derivative(_y)
                 total = 0
                 cost_matrix = np.zeros((_x.shape[1], _y.shape[1]))
-                for i in range(x.shape[0]):
-                    curr_cost_matrix, curr_dist = independent(_x[i], _y[i])
-                    cost_matrix = np.add(cost_matrix, curr_cost_matrix)
-                    total += curr_dist
+                if _x.ndim > 1:
+                    for i in range(x.shape[0]):
+                        curr_cost_matrix, curr_dist = dtw_callable(_x[i], _y[i])
+                        cost_matrix = np.add(cost_matrix, curr_cost_matrix)
+                        total += curr_dist
+                else:
+                    cost_matrix, total = dtw_callable(_x, _y)
                 return cost_matrix, total
 
         else:
-
             @njit()
             def _distance_callable(_x: np.ndarray, _y: np.ndarray) -> float:
+                _x = compute_derivative(_x)
+                _y = compute_derivative(_y)
                 total = 0
-                for i in range(_x.shape[0]):
-                    curr_cost_matrix, curr_dist = independent(_x[i], _y[i])
-                    total += curr_dist
+                if _x.ndim > 1:
+                    for i in range(x.shape[0]):
+                        cost_matrix, curr_dist = dtw_callable(_x[i], _y[i])
+                        total += curr_dist
+                else:
+                    _, total = dtw_callable(_x, _y)
                 return total
 
         return _distance_callable
@@ -148,11 +182,12 @@ class _DdtwDistance(_DtwDistance):
             "compute_derivative": compute_derivative,
         }
         format_kwargs = {**format_kwargs, **kwargs}
-        dtw_callable = super().dependent_distance_factory(
+        dtw_callable = super()._dependent_distance_factory(
             x, y, **format_kwargs
         )
 
-        @njit()
+        @njit('Tuple((float64[:, :], float64))(float64[:, :], float64[:, :])',
+              cache=True)
         def _ddtw_distance(
                 _x: np.ndarray,
                 _y: np.ndarray,

@@ -23,7 +23,8 @@ class _DtwDistance(BaseDistance):
             x, y, window, itakura_max_slope, bounding_matrix
         )
 
-        @njit(cache=True)
+        # @njit('Tuple((float64[:, :], float64))(float64[:], float64[:])', cache=True)
+        @njit()
         def _dtw_distance(
             _x: np.ndarray,
             _y: np.ndarray,
@@ -64,7 +65,8 @@ class _DtwDistance(BaseDistance):
             x[:, 0], y[:, 0], **kwargs
         )
 
-        @njit(cache=True)
+        @njit('Tuple((float64[:, :], float64))(float64[:, :], float64[:, :])',
+              cache=True)
         def _dtw_distance(
             _x: np.ndarray,
             _y: np.ndarray,
