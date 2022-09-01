@@ -630,6 +630,7 @@ class IndividualBOSS(BaseClassifier):
         new_boss._transformer.variance = self._transformer.variance
         new_boss._transformer.anova = self._transformer.anova
         new_boss._transformer.norm = self._transformer.norm
+        new_boss._transformer.bigrams = self._transformer.bigrams
         new_boss._transformer.set_fitted()
 
         sfa_words = new_boss._transformer._shorten_bags(word_len, y)

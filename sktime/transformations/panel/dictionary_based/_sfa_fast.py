@@ -576,16 +576,15 @@ class SFAFast(BaseTransformer):
         else:
             self.dft_length = new_len
 
-        new_words = shorten_words(self.words, word_len, self.letter_bits)
-
-        # words = generate_words(
-        #     dfts_shortened,
-        #     self.bigrams,
-        #     self.skip_grams,
-        #     self.window_size,
-        #     self.breakpoints,
-        #     self.letter_bits,
-        # )
+        new_words = shorten_words(
+            self.words,
+            word_len,
+            self.n_instances - self.window_size,
+            self.window_size,
+            self.letter_bits,
+            self.word_length * self.letter_bits,
+            self.bigrams,
+        )
 
         # retrain feature selection-strategy
         return self.transform_to_bag(new_words, y)
@@ -961,12 +960,22 @@ def create_bag_transform(
 
 
 @njit(fastmath=True, cache=True)
-def shorten_words(words, amount, letter_bits):
+def shorten_words(
+    words, amount, n_instances, window_size, letter_bits, word_bits, bigrams
+):
     new_words = np.zeros((words.shape[0], words.shape[1]), dtype=np.uint32)
-    for i in range(words.shape[0]):
+
+    # Unigrams
+    for i in range(n_instances):
         for j, word in enumerate(words[i]):
             # shorten a word by set amount of letters
             new_words[i, j] = word >> amount * letter_bits
 
-    # TODO handle bigrams!
+    # Bigrams
+    if bigrams:
+        for a in range(0, n_instances):
+            first_word = new_words[:, a]
+            second_word = new_words[:, a + window_size]
+            words[:, n_instances + a] = (first_word << word_bits) | second_word
+
     return new_words
