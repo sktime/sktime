@@ -224,14 +224,14 @@ class STRAY(BaseTransformer):
         }
 
     def _fit(self, X, y=None):
-        """Do nothing, currently empty.
+        """Find outliers using STRAY (Search TRace AnomalY).
 
         Parameters
         ----------
         X : pd.DataFrame
             Training data to fit model to (time series).
         y : pd.Series, optional
-            Ground truth annotations for training if annotator is supervised.
+            Not used for this unsupervsed method.
 
         Returns
         -------
