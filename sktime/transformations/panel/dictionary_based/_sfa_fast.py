@@ -171,7 +171,7 @@ class SFAFast(BaseTransformer):
         return_pandas_data_series=False,
         n_jobs=1,
     ):
-        self.dfts = []
+        self.words = []
         self.breakpoints = []
 
         # we cannot select more than window_size many letters in a word
@@ -212,7 +212,6 @@ class SFAFast(BaseTransformer):
 
         self.letter_bits = 0
         self.word_bits = 0
-        self.max_bits = 0
 
         # Feature selection part
         self.feature_selection = feature_selection
@@ -251,9 +250,6 @@ class SFAFast(BaseTransformer):
 
         self.letter_bits = np.uint32(math.ceil(math.log2(self.alphabet_size)))
         self.word_bits = self.word_length_actual * self.letter_bits
-        self.max_bits = np.uint32(
-            self.word_bits * 2 if self.bigrams else self.word_bits
-        )
 
         X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
         X = X.squeeze(1)
@@ -268,6 +264,9 @@ class SFAFast(BaseTransformer):
             bp[:, 0] = self.breakpoints[:, 1]
             bp[:, 1] = np.inf
             self.breakpoints = bp
+
+            # self.letter_bits = 1
+            # self.alphabet_size = 2
 
         words, dfts = _transform_case(
             X,
@@ -285,7 +284,7 @@ class SFAFast(BaseTransformer):
         )
 
         if self.save_words:
-            self.dfts = dfts
+            self.words = words
 
         # fitting: learns the feature selection strategy, too
         return self.transform_to_bag(words, y)
@@ -336,10 +335,9 @@ class SFAFast(BaseTransformer):
             self.inverse_sqrt_win_size,
         )
 
-        if self.save_words:
-            self.dfts = dfts
-
-        # TODO count subgroups of two letters of the words?
+        # only save at fit
+        # if self.save_words:
+        #    self.words = words
 
         # transform: applies the feature selection strategy
         empty_dict = Dict.empty(
@@ -369,7 +367,9 @@ class SFAFast(BaseTransformer):
         bag_of_words = None
         rng = check_random_state(self.random_state)
 
-        if self.feature_selection == "none" and not self.bigrams:
+        if self.feature_selection == "none" and (
+            self.breakpoints.shape[1] <= 2 and not self.bigrams
+        ):
             bag_of_words = create_bag_none(
                 self.breakpoints,
                 words.shape[0],
@@ -379,7 +379,7 @@ class SFAFast(BaseTransformer):
         else:
             feature_names = create_feature_names(words)
 
-            if self.feature_selection == "none" and self.bigrams:
+            if self.feature_selection == "none":
                 feature_count = len(list(feature_names))
                 relevant_features_idx = np.arange(feature_count, dtype=np.uint32)
                 bag_of_words, self.relevant_features = create_bag_feature_selection(
@@ -514,7 +514,7 @@ class SFAFast(BaseTransformer):
     def _mcb(self, dft):
         breakpoints = np.zeros((self.word_length_actual, self.alphabet_size))
 
-        dft = np.round(dft, 2)
+        dft = np.round(dft, 3)
         for letter in range(self.word_length_actual):
             column = np.sort(dft[:, letter])
             bin_index = 0
@@ -565,24 +565,30 @@ class SFAFast(BaseTransformer):
         if word_len > self.word_length_actual:
             word_len = self.word_length_actual
 
-        new_len = min(word_len, self.dfts.shape[2])
-        self.dfts = self.dfts[:, :, :new_len]
+        new_len = min(word_len, self.words.shape[1])
         self.breakpoints = self.breakpoints[:new_len, :]
         self.support = self.support[:new_len]
         self.word_length_actual = word_len
-        self.dft_length = new_len
 
-        words = generate_words(
-            self.dfts,
-            self.bigrams,
-            self.skip_grams,
-            self.window_size,
-            self.breakpoints,
-            self.letter_bits,
-        )
+        if self.anova or self.variance:
+            self.dft_length = np.max(self.support) + 1
+            self.dft_length = self.dft_length + self.dft_length % 2  # even
+        else:
+            self.dft_length = new_len
+
+        new_words = shorten_words(self.words, word_len, self.letter_bits)
+
+        # words = generate_words(
+        #     dfts_shortened,
+        #     self.bigrams,
+        #     self.skip_grams,
+        #     self.window_size,
+        #     self.breakpoints,
+        #     self.letter_bits,
+        # )
 
         # retrain feature selection-strategy
-        return self.transform_to_bag(words, y)
+        return self.transform_to_bag(new_words, y)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -800,6 +806,16 @@ def generate_words(dfts, bigrams, skip_grams, window_size, breakpoints, letter_b
                     words[a, : dfts.shape[1]] << letter_bits
                 ) | np.digitize(dfts[a, :, i], breakpoints[i], right=True)
 
+        # for a in prange(dfts.shape[0]):
+        #     for w in prange(dfts.shape[1]):
+        #         word = np.uint32(0)
+        #         for i in range(breakpoints.shape[0]):
+        #             for bp in range(breakpoints.shape[1]):
+        #                 if dfts[a, w, i] <= breakpoints[i][bp]:
+        #                     word = (word << letter_bits) | bp
+        #                     break
+        #         words[a, w] = word
+
     # add bigrams
     if bigrams:
         for a in range(0, dfts.shape[1] - window_size):
@@ -874,7 +890,7 @@ def _mft(
     transformed2 = transformed2 * inverse_sqrt_win_size
 
     # compute STDs
-    stds = np.zeros((X.shape[0], end))
+    stds = np.zeros((X.shape[0], end), dtype=np.float32)
     for a in range(X.shape[0]):
         stds[a] = _calc_incremental_mean_std(X[a], end, window_size)
 
@@ -933,7 +949,7 @@ def create_bag_transform(
     # merging arrays
     all_win_words = np.zeros((len(sfa_words), feature_count), np.uint32)
     for j in range(len(sfa_words)):
-        if feature_selection == "none" and not bigrams:
+        if len(relevant_features) == 0:
             all_win_words[j, :] = np.bincount(sfa_words[j], minlength=feature_count)
         else:
             for _, key in enumerate(sfa_words[j]):
@@ -942,3 +958,15 @@ def create_bag_transform(
                     all_win_words[j, o] += 1
 
     return all_win_words, feature_count
+
+
+@njit(fastmath=True, cache=True)
+def shorten_words(words, amount, letter_bits):
+    new_words = np.zeros((words.shape[0], words.shape[1]), dtype=np.uint32)
+    for i in range(words.shape[0]):
+        for j, word in enumerate(words[i]):
+            # shorten a word by set amount of letters
+            new_words[i, j] = word >> amount * letter_bits
+
+    # TODO handle bigrams!
+    return new_words

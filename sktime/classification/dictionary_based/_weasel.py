@@ -190,7 +190,6 @@ class WEASEL(BaseClassifier):
         self.n_instances, self.series_length = X.shape[0], X.shape[-1]
 
         win_inc = self._compute_window_inc()
-
         self.max_window = int(min(self.series_length, self.max_window))
         if self.min_window > self.max_window:
             raise ValueError(

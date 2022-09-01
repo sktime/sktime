@@ -145,7 +145,7 @@ class BOSSEnsemble(BaseClassifier):
         self.n_instances_ = 0
         self.feature_selection = feature_selection
 
-        self._word_lengths = [16, 14, 12, 10, 8]
+        self._word_lengths = [16, 12, 8]
         self._norm_options = [True, False]
         self._alphabet_size = 4
 
@@ -566,6 +566,7 @@ class IndividualBOSS(BaseClassifier):
             save_words=self.save_words,
             n_jobs=self.n_jobs,
             feature_selection=self.feature_selection,
+            force_alphabet_size_two=True,
             return_sparse=True,
             random_state=self.random_state,
         )
@@ -619,9 +620,16 @@ class IndividualBOSS(BaseClassifier):
             n_jobs=self.n_jobs,
         )
         new_boss._transformer = self._transformer.clone()  # clone not working :(
-        new_boss._transformer.dfts = self._transformer.dfts
+        new_boss._transformer.words = self._transformer.words
         new_boss._transformer.breakpoints = self._transformer.breakpoints
         new_boss._transformer.support = self._transformer.support
+        new_boss._transformer.letter_bits = self._transformer.letter_bits
+        new_boss._transformer.alphabet_size = self._transformer.alphabet_size
+        new_boss._transformer.feature_selection = self._transformer.feature_selection
+        new_boss._transformer.binning_method = self._transformer.binning_method
+        new_boss._transformer.variance = self._transformer.variance
+        new_boss._transformer.anova = self._transformer.anova
+        new_boss._transformer.norm = self._transformer.norm
         new_boss._transformer.set_fitted()
 
         sfa_words = new_boss._transformer._shorten_bags(word_len, y)
