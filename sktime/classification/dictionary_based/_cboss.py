@@ -286,18 +286,20 @@ class ContractableBOSS(BaseClassifier):
             else:
                 weight = 0.000000001
 
-            if num_classifiers < self.max_ensemble_size:
-                if boss._accuracy < lowest_acc:
-                    lowest_acc = boss._accuracy
-                    lowest_acc_idx = num_classifiers
-                self.weights_.append(weight)
-                self.estimators_.append(boss)
-            elif boss._accuracy > lowest_acc:
-                self.weights_[lowest_acc_idx] = weight
-                self.estimators_[lowest_acc_idx] = boss
-                lowest_acc, lowest_acc_idx = self._worst_ensemble_acc()
+            # Only keep the classifier, if its accuracy is non-zero
+            if boss._accuracy > 0:
+                if num_classifiers < self.max_ensemble_size:
+                    if boss._accuracy < lowest_acc:
+                        lowest_acc = boss._accuracy
+                        lowest_acc_idx = num_classifiers
+                    self.weights_.append(weight)
+                    self.estimators_.append(boss)
+                elif boss._accuracy > lowest_acc:
+                    self.weights_[lowest_acc_idx] = weight
+                    self.estimators_[lowest_acc_idx] = boss
+                    lowest_acc, lowest_acc_idx = self._worst_ensemble_acc()
 
-            num_classifiers += 1
+                num_classifiers += 1
             train_time = time.time() - start_time
 
         self.n_estimators_ = len(self.estimators_)
