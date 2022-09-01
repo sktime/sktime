@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """Tests for STRAY (Search TRace AnomalY) outlier estimator."""
 
+import warnings
+
 import numpy as np
 from scipy.stats import iqr
 from sklearn.neighbors import NearestNeighbors
@@ -46,9 +48,10 @@ class STRAY(BaseTransformer):
         (default="brute")
         Algorithm used to compute the nearest neighbors in
         sklearn.neighbors.NearestNeighbors
-    normalize : function *** (default=unitize)
+    normalize : callable {unitize, standardize} (default=unitize)
         Method to normalize the columns of the data. This prevents variables
         with large variances having disproportional influence on Euclidean distances.
+        from sktime.annotation.stray import unitize, standardize
     p : float, optional (default=0.5)
         Proportion of possible candidates for outliers. This defines the starting point
         for the bottom up searching algorithm.
@@ -56,6 +59,13 @@ class STRAY(BaseTransformer):
         Sample size to calculate an emperical threshold.
     outlier_tail : str {"min", "max"}, optional (default="max")
         Direction of the outlier tail.
+
+    Attributes
+    ----------
+    score_ : pd.Series
+        Outlier score of each data point in X.
+    y_ : pd.Series
+        Outlier boolean flag for each data point in X.
 
     References
     ----------
@@ -81,6 +91,7 @@ class STRAY(BaseTransformer):
         "handles-missing-data": True,
         "X_inner_mtype": "np.ndarray",
         "fit_is_empty": False,
+        "skip-inverse-transform": True,
     }
 
     def __init__(
@@ -200,12 +211,12 @@ class STRAY(BaseTransformer):
         # adjusted back to length r, for missing data
         slice_ = [True if i in outliers["idx_outliers"] else False for i in range(n)]
         idx_outliers = idx_dropna[slice_]  # index values from 1:r
-        outlier_bool = [1 if i in idx_outliers else 0 for i in range(r)]
+        outlier_bool = np.array([1 if i in idx_outliers else 0 for i in range(r)])
 
         list_scores = outliers["out_scores"].tolist()
-        outlier_scores = [
-            list_scores.pop(0) if i in idx_dropna else np.nan for i in range(r)
-        ]
+        outlier_scores = np.array(
+            [list_scores.pop(0) if i in idx_dropna else np.nan for i in range(r)]
+        )
 
         return {
             "outlier_scores": outlier_scores,
@@ -227,8 +238,10 @@ class STRAY(BaseTransformer):
         self :
             Reference to self.
         """
-        info_dict = self._find_HDoutliers(X)
+        # remember X for transform
+        self._X = X
 
+        info_dict = self._find_HDoutliers(X)
         self.score_ = info_dict["outlier_scores"]
         self.y_ = info_dict["outlier_bool"]
 
@@ -244,7 +257,27 @@ class STRAY(BaseTransformer):
 
         Returns
         -------
-        y : np.ArrayLike
-            Anomaly values, boolean.
+        y_ : np.ArrayLike
+            Anomaly detection, boolean.
         """
+        # fit again if data is different to fit, but don't store anything
+        if not np.allclose(X, self._X):
+            new_obj = STRAY(
+                X,
+                alpha=self.alpha,
+                k=self.k,
+                knn_algorithm=self.knn_algorithm,
+                normalize=self.normalize,
+                p=self.p,
+                size_threshold=self.size_threshold,
+                outlier_tail=self.outlier_tail,
+            ).fit()
+            warnings.warn(
+                "Warning: Input data X differs from that given to fit(). "
+                "Refitting with new input data, not storing updated public class "
+                "attributes. For this, explicitly use fit(X) or fit_transform(X)."
+            )
+
+            return new_obj.y_
+
         return self.y_
