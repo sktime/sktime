@@ -195,7 +195,6 @@ class SFAFast(BaseTransformer):
         self.norm = norm
         self.inverse_sqrt_win_size = 1.0 / math.sqrt(window_size)
 
-        self.binning_dft = None
         self.save_words = save_words
 
         self.binning_method = binning_method
@@ -211,7 +210,7 @@ class SFAFast(BaseTransformer):
         self.series_length = 0
 
         self.letter_bits = 0
-        self.word_bits = 0
+        # self.word_bits = 0
 
         # Feature selection part
         self.feature_selection = feature_selection
@@ -249,7 +248,7 @@ class SFAFast(BaseTransformer):
             raise TypeError("binning_method must be one of: ", binning_methods)
 
         self.letter_bits = np.uint32(math.ceil(math.log2(self.alphabet_size)))
-        self.word_bits = self.word_length_actual * self.letter_bits
+        # self.word_bits = self.word_length_actual * self.letter_bits
 
         X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
         X = X.squeeze(1)
@@ -264,9 +263,8 @@ class SFAFast(BaseTransformer):
             bp[:, 0] = self.breakpoints[:, 1]
             bp[:, 1] = np.inf
             self.breakpoints = bp
-
-            # self.letter_bits = 1
-            # self.alphabet_size = 2
+            self.letter_bits = 1
+            self.alphabet_size = 2
 
         words, dfts = _transform_case(
             X,
@@ -514,7 +512,7 @@ class SFAFast(BaseTransformer):
     def _mcb(self, dft):
         breakpoints = np.zeros((self.word_length_actual, self.alphabet_size))
 
-        dft = np.round(dft, 3)
+        dft = np.round(dft, 2)
         for letter in range(self.word_length_actual):
             column = np.sort(dft[:, letter])
             bin_index = 0
@@ -569,7 +567,6 @@ class SFAFast(BaseTransformer):
         new_len_diff = self.word_length_actual - new_len
         self.breakpoints = self.breakpoints[:new_len, :]
         self.support = self.support[:new_len]
-        self.word_length_actual = word_len
 
         if self.anova or self.variance:
             self.dft_length = np.max(self.support) + 1
@@ -585,6 +582,9 @@ class SFAFast(BaseTransformer):
             )
         else:
             new_words = self.words
+
+        self.words = new_words
+        self.word_length_actual = word_len
 
         # retrain feature selection-strategy
         return self.transform_to_bag(new_words, y)

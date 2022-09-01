@@ -8,6 +8,7 @@ BOSS and a BOSS ensemble.
 __author__ = ["MatthewMiddlehurst", "Patrick Schäfer"]
 __all__ = ["BOSSEnsemble", "IndividualBOSS"]
 
+import copy
 from itertools import compress
 
 import numpy as np
@@ -145,7 +146,7 @@ class BOSSEnsemble(BaseClassifier):
         self.n_instances_ = 0
         self.feature_selection = feature_selection
 
-        self._word_lengths = [16, 14, 12, 10, 8]
+        self._word_lengths = [16, 12, 8]
         self._norm_options = [True, False]
         self._alphabet_size = 4
 
@@ -218,17 +219,18 @@ class BOSSEnsemble(BaseClassifier):
                 best_word_len = boss._transformer.word_length
 
                 for n, word_len in enumerate(self._word_lengths):
-                    if n > 0 and word_len < boss._transformer.word_length_actual:
-                        boss = boss._shorten_bags(word_len, y)
+                    if word_len <= win_size:
+                        if n > 0 and word_len < boss._transformer.word_length_actual:
+                            boss = boss._shorten_bags(word_len, y)
 
-                    boss._accuracy = self._individual_train_acc(
-                        boss, y, self.n_instances_, best_acc_for_win_size
-                    )
+                        boss._accuracy = self._individual_train_acc(
+                            boss, y, self.n_instances_, best_acc_for_win_size
+                        )
 
-                    if boss._accuracy >= best_acc_for_win_size:
-                        best_acc_for_win_size = boss._accuracy
-                        best_classifier_for_win_size = boss
-                        best_word_len = word_len
+                        if boss._accuracy >= best_acc_for_win_size:
+                            best_acc_for_win_size = boss._accuracy
+                            best_classifier_for_win_size = boss
+                            best_word_len = word_len
 
                 if self._include_in_ensemble(
                     best_acc_for_win_size,
@@ -619,22 +621,8 @@ class IndividualBOSS(BaseClassifier):
             random_state=self.random_state,
             n_jobs=self.n_jobs,
         )
-        new_boss._transformer = self._transformer.clone()  # clone not working :(
+        new_boss._transformer = copy.copy(self._transformer)
         new_boss._transformer.words = self._transformer.words
-        new_boss._transformer.breakpoints = self._transformer.breakpoints
-        new_boss._transformer.support = self._transformer.support
-        new_boss._transformer.letter_bits = self._transformer.letter_bits
-        new_boss._transformer.alphabet_size = self._transformer.alphabet_size
-        new_boss._transformer.feature_selection = self._transformer.feature_selection
-        new_boss._transformer.binning_method = self._transformer.binning_method
-        new_boss._transformer.variance = self._transformer.variance
-        new_boss._transformer.anova = self._transformer.anova
-        new_boss._transformer.norm = self._transformer.norm
-        new_boss._transformer.force_alphabet_size_two = (
-            self._transformer.force_alphabet_size_two
-        )
-        new_boss._transformer.bigrams = self._transformer.bigrams
-        new_boss._transformer.set_fitted()
 
         sfa_words = new_boss._transformer._shorten_bags(word_len, y)
         new_boss._transformed_data = sfa_words
@@ -653,7 +641,7 @@ class IndividualBOSS(BaseClassifier):
 
     def _set_word_len(self, word_len):
         self.word_length = word_len
-        self._transformer.word_length = word_len
+        self._transformer.word_length_actual = word_len
 
 
 # @njit(cache=True, fastmath=True)
