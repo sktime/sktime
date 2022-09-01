@@ -351,17 +351,18 @@ class BOSSEnsemble(BaseClassifier):
 
         else:
             for i, clf in enumerate(self.estimators_):
-                distance_matrix = pairwise.pairwise_distances(
-                    clf._transformed_data, n_jobs=self.n_jobs
-                )
+                if self._transformed_data.shape[1] > 0:
+                    distance_matrix = pairwise.pairwise_distances(
+                        clf._transformed_data, n_jobs=self.n_jobs
+                    )
 
-                preds = []
-                for i in range(n_instances):
-                    preds.append(clf._train_predict(i, distance_matrix))
+                    preds = []
+                    for i in range(n_instances):
+                        preds.append(clf._train_predict(i, distance_matrix))
 
-                for n, pred in enumerate(preds):
-                    results[n][self._class_dictionary[pred]] += 1
-                    divisors[n] += 1
+                    for n, pred in enumerate(preds):
+                        results[n][self._class_dictionary[pred]] += 1
+                        divisors[n] += 1
 
         for i in range(n_instances):
             results[i] = (
@@ -588,15 +589,16 @@ class IndividualBOSS(BaseClassifier):
             Predicted class labels.
         """
         test_bags = self._transformer.transform(X)
-
-        distance_matrix = pairwise.pairwise_distances(
-            test_bags, self._transformed_data, n_jobs=self.n_jobs
-        )
-
         classes = np.zeros(test_bags.shape[0], dtype=type(self._class_vals[0]))
-        for i in range(test_bags.shape[0]):
-            min_pos = np.argmin(distance_matrix[i])
-            classes[i] = self._class_vals[min_pos]
+
+        if self._transformed_data.shape[1] > 0:
+            distance_matrix = pairwise.pairwise_distances(
+                test_bags, self._transformed_data, n_jobs=self.n_jobs
+            )
+
+            for i in range(test_bags.shape[0]):
+                min_pos = np.argmin(distance_matrix[i])
+                classes[i] = self._class_vals[min_pos]
 
         return classes
 
