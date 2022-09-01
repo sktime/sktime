@@ -84,7 +84,7 @@ class STRAY(BaseTransformer):
     >>> model = STRAY(k=3)
     >>> y = model.fit_transform(X)
     >>> y
-    [0, 0, 0, 0, 1, 1, 1]
+    array([0, 0, 0, 0, 1, 1, 1])
     """
 
     _tags = {
