@@ -172,3 +172,6 @@ def test_pca_reduction():
     X_actual = fitted_model.X
 
     assert np.allclose(abs(X_expected), abs(X_actual), rtol=0.001)
+
+
+# TODO: test with rows all zero variance

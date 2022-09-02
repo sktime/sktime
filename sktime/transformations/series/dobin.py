@@ -62,8 +62,10 @@ class DOBIN(BaseTransformer):
 
     Attributes
     ----------
-    _basis
-    _coords
+    _basis : pd.DataFrame
+        The basis vectors suitable for outlier detection.
+    _coords : pd.DataFrame
+        The transformed coordinates of the data.
 
     References
     ----------
@@ -73,6 +75,19 @@ class DOBIN(BaseTransformer):
 
     Examples
     --------
+    >>> from sktime.transformations.series.dobin import DOBIN
+    >>> import numpy as np
+    >>> from sktime.datasets import load_uschange
+    >>> _, X = load_uschange()
+    >>> model = DOBIN()
+    >>> X_outlier = model.fit_transform(X)
+    >>> X_outlier.head()
+            DB0       DB1       DB2       DB3
+    0  1.151965  0.116488  0.286064  0.288140
+    1  1.191976  0.100772  0.050835  0.225985
+    2  1.221158  0.078031  0.034030  0.249676
+    3  1.042420  0.188494  0.218460  0.205251
+    4  1.224701  0.020028 -0.294705  0.199827
     """
 
     _tags = {
@@ -101,9 +116,8 @@ class DOBIN(BaseTransformer):
 
         n_obs, n_dim = X.shape
 
+        # if more dimensions than observations, change of basis to subspace
         if n_obs < n_dim:
-            # more dimensions than observations, change of basis
-            # to subspace
             pca = PCA(n_components=n_obs)
             X = pca.fit_transform(X)
             _, n_dim = X.shape
@@ -140,32 +154,35 @@ class DOBIN(BaseTransformer):
             B = np.dot(B, B1)
 
         # new coordinates
-        coords = X.dot(basis)
+        coords = X.dot(
+            np.array(basis)
+        )  # will error if both DataFrames and rownames != colnames
 
+        basis.columns = ["".join(["DB", str(i)]) for i in range(len(basis.columns))]
         self._basis = basis
+        coords.columns = ["".join(["DB", str(i)]) for i in range(len(coords.columns))]
         self._coords = coords
 
         return self
 
+    def _transform(self, X, y=None):
 
-def _transform(self, X, y=None):
+        # fit again if indices not seen, but don't store anything
+        if not X.index.equals(self._X.index):
+            X_full = X.combine_first(self._X)
+            new_dobin = DOBIN(
+                frac=self.frac,
+                normalize=self.normalize,
+                k=self.k,
+            ).fit(X_full)
+            warnings.warn(
+                "Warning: Input data X differs from that given to fit(). "
+                "Refitting with new input data, not storing updated public class "
+                "attributes. For this, explicitly use fit(X) or fit_transform(X)."
+            )
+            return new_dobin._coords
 
-    # fit again if indices not seen, but don't store anything
-    if not X.index.equals(self._X.index):
-        X_full = X.combine_first(self._X)
-        new_dobin = DOBIN(
-            frac=self.frac,
-            normalize=self.normalize,
-            k=self.k,
-        ).fit(X_full)
-        warnings.warn(
-            "Warning: Input data X differs from that given to fit(). "
-            "Refitting with new input data, not storing updated public class "
-            "attributes. For this, explicitly use fit(X) or fit_transform(X)."
-        )
-        return new_dobin._coords
-
-    return self._coords
+        return self._coords
 
 
 def close_distance_matrix(X, k, frac):
@@ -173,7 +190,7 @@ def close_distance_matrix(X, k, frac):
     X = pd.DataFrame(X)
     nbrs = NearestNeighbors(n_neighbors=k + 1, metric="euclidean").fit(
         X
-    )  # FIXME: what default distance metric??
+    )  # FIXME: double check default distance metric in R??
     _, indices = nbrs.kneighbors(X)
 
     dist = pd.DataFrame(
