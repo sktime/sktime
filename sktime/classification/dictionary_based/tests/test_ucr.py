@@ -20,6 +20,7 @@ from joblib import Parallel, delayed
 
 # from scipy.stats import zscore
 from sklearn.linear_model import RidgeClassifierCV
+from sklearn.pipeline import make_pipeline
 
 from sktime.classification.dictionary_based import (
     WEASEL,
@@ -179,7 +180,6 @@ dataset_names_full = [
 ]
 
 dataset_names_excerpt = [
-    # "Crop",
     "ArrowHead",
     "Beef",
     "BeetleFly",
@@ -217,25 +217,25 @@ dataset_names_excerpt = [
 def get_classifiers():
     """Obtain the benchmark classifiers."""
     clfs = {
-        "WEASEL": WEASEL(random_state=1379, n_jobs=threads_to_use),
+        # "WEASEL": WEASEL(random_state=1379, n_jobs=threads_to_use),
         # "BOSS": BOSSEnsemble(random_state=1379, n_jobs=threads_to_use),
         # "cBOSS": ContractableBOSS(random_state=1379, n_jobs=threads_to_use),
         # "TDE": TemporalDictionaryEnsemble(random_state=1379, n_jobs=threads_to_use),
-        "WEASEL_ST (ED,FS:Chi2)": WEASEL_STEROIDS(
-            random_state=1379,
-            binning_strategies=["equi-depth"],
-            alphabet_sizes=[2],
-            min_window=8,
-            max_window=32,
-            max_feature_count=20_000,
-            word_lengths=[8],  # test only 6 or 8?
-            norm_options=[False],  # p[True]=0.8
-            variance=True,
-            ensemble_size=150,
-            use_first_differences=[True, False],
-            feature_selection="chi2",
-            n_jobs=threads_to_use,
-        ),
+        # "WEASEL_ST (ED,FS:None)": WEASEL_STEROIDS(
+        #     random_state=1379,
+        #     binning_strategies=["equi-depth"],
+        #     alphabet_sizes=[2],
+        #     min_window=8,
+        #     max_window=32,
+        #     max_feature_count=10_000,
+        #     word_lengths=[8],  # test only 6 or 8?
+        #     norm_options=[False],  # p[True]=0.8
+        #     variance=True,
+        #     ensemble_size=50,
+        #     use_first_differences=[True, False],
+        #     feature_selection="none",
+        #     n_jobs=threads_to_use,
+        # ),
         "WEASEL_ST (ED,FS:None)": WEASEL_STEROIDS(
             random_state=1379,
             binning_strategies=["equi-depth"],
@@ -249,30 +249,30 @@ def get_classifiers():
             variance=True,
             ensemble_size=50,
             use_first_differences=[True, False],
-            feature_selection="chi2",
-            n_jobs=threads_to_use,
-        ),
-        "WEASEL_ST (EW+ED,FS:None)": WEASEL_STEROIDS(
-            random_state=1379,
-            alphabet_sizes=[2],
-            binning_strategies=["equi-depth", "equi-width"],
-            min_window=4,
-            max_window=24,
-            word_lengths=[8],  # test only 6 or 8?
-            norm_options=[True, False],  # p[True]=0.8
-            variance=True,
-            max_feature_count=10_000,
-            ensemble_size=50,
-            use_first_differences=[True, False],
             feature_selection="none",
             n_jobs=threads_to_use,
         ),
+        # "WEASEL_ST (EW+ED,FS:None)": WEASEL_STEROIDS(
+        #     random_state=1379,
+        #     alphabet_sizes=[2],
+        #     binning_strategies=["equi-depth", "equi-width"],
+        #     min_window=4,
+        #     max_window=24,
+        #     word_lengths=[8],  # test only 6 or 8?
+        #     norm_options=[True, False],  # p[True]=0.8
+        #     variance=True,
+        #     max_feature_count=10_000,
+        #     ensemble_size=50,
+        #     use_first_differences=[True, False],
+        #     feature_selection="none",
+        #     n_jobs=threads_to_use,
+        # ),
         # "Hydra": [],  # see below
         # "R_DST": R_DST_Ridge(random_state=1379),
-        # "Rocket": make_pipeline(
-        #    Rocket(random_state=1379, n_jobs=threads_to_use),
-        #    RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True),
-        # ),
+        "Rocket": make_pipeline(
+            Rocket(random_state=1379, n_jobs=threads_to_use),
+            RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True),
+        ),
         # "MiniRocket": make_pipeline(
         #    MiniRocket(random_state=1379, n_jobs=threads_to_use),
         #    RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True),

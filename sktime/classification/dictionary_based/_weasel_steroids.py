@@ -21,7 +21,7 @@ from sklearn.linear_model import RidgeClassifierCV
 from sklearn.utils import check_random_state
 
 from sktime.classification.base import BaseClassifier
-from sktime.transformations.panel.dictionary_based import SAX_NEW, SFA_FAST
+from sktime.transformations.panel.dictionary_based import SAX_NEW, SFAFast
 
 
 class WEASEL_STEROIDS(BaseClassifier):
@@ -353,7 +353,7 @@ def _parallel_fit(
 
     # which_transform = rng.uniform(0, 1)
     if True:  # which_transform > 0.33:
-        transformer = SFA_FAST(
+        transformer = SFAFast(
             variance=variance,
             word_length=word_length,
             alphabet_size=alphabet_size,
