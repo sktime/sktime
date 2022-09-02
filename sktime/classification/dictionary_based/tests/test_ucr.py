@@ -236,7 +236,7 @@ def get_classifiers():
         #     feature_selection="none",
         #     n_jobs=threads_to_use,
         # ),
-        "WEASEL_ST (ED,FS:None)": WEASEL_STEROIDS(
+        "WEASEL_ST": WEASEL_STEROIDS(
             random_state=1379,
             binning_strategies=["equi-depth"],
             alphabet_sizes=[2],
@@ -432,7 +432,7 @@ if __name__ == "__main__":
         for fit, pred, dataset_name in zip(all_fit, all_pred, all_datasets):
             csv_timings.append((name, dataset_name, fit, pred))
 
-    if not server:
+    if server:
         pd.DataFrame.from_records(
             csv_scores,
             columns=[
