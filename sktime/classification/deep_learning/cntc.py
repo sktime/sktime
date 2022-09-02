@@ -73,7 +73,6 @@ class CNTCClassifier(BaseDeepClassifier):
     >>> cntc = CNTCClassifier()
     >>> cntc.fit(X_train, y_train)
     CNTCClassifier(...)
-
     """
 
     def __init__(
@@ -128,10 +127,7 @@ class CNTCClassifier(BaseDeepClassifier):
         """
         from tensorflow import keras
 
-        if self.metrics is None:
-            metrics = ["accuracy"]
-        else:
-            metrics = self.metrics
+        metrics = ["accuracy"] if self.metrics is None else self.metrics
         input_layer, output_layer = self._network.build_network(input_shape, **kwargs)
 
         output_layer = keras.layers.Dense(units=n_classes, activation="softmax")(

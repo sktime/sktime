@@ -4,9 +4,13 @@
 __author__ = ["James-Large", "Withington", "TonyBagnall", "AurumnPegasus"]
 
 from sktime.networks.base import BaseDeepNetwork
-from sktime.utils.validation._dependencies import _check_dl_dependencies
+from sktime.utils.validation._dependencies import (
+    _check_dl_dependencies,
+    _check_soft_dependencies,
+)
 
 _check_dl_dependencies(severity="warning")
+_check_soft_dependencies(severity="warning")
 
 
 class CNTCNetwork(BaseDeepNetwork):
@@ -52,7 +56,7 @@ class CNTCNetwork(BaseDeepNetwork):
        }
     """
 
-    _tags = {"python_dependencies": "tensorflow"}
+    _tags = {"python_dependencies": ["tensorflow", "keras_self_attention"]}
 
     def __init__(
         self,
@@ -65,6 +69,7 @@ class CNTCNetwork(BaseDeepNetwork):
     ):
         super(CNTCNetwork, self).__init__()
         _check_dl_dependencies(severity="error")
+        _check_soft_dependencies(severity="error")
         self.random_state = random_state
         self.rnn_layer = rnn_layer
         self.filter_sizes = filter_sizes
