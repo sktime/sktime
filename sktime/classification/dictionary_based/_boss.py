@@ -128,7 +128,7 @@ class BOSSEnsemble(BaseClassifier):
         max_win_len_prop=1,
         min_window=6,
         save_train_predictions=False,
-        feature_selection="none",
+        feature_selection="chi2",
         alphabet_size=2,
         n_jobs=1,
         random_state=None,
@@ -183,7 +183,7 @@ class BOSSEnsemble(BaseClassifier):
         self.estimators_ = []
 
         # Window length parameter space dependent on series length
-        max_window_searches = self.series_length_ / 2
+        max_window_searches = self.series_length_ / 4
         max_window = int(self.series_length_ * self.max_win_len_prop)
         win_inc = max(1, int((max_window - self.min_window) / max_window_searches))
 
