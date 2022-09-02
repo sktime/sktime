@@ -222,7 +222,9 @@ class SFAFast(BaseTransformer):
             )
 
         if self.variance and self.anova:
-            raise ValueError("Please set either variance or anova feature selection")
+            raise ValueError(
+                "Please set either variance or anova Fourier coefficient" " selection"
+            )
 
         if self.binning_method not in binning_methods:
             raise TypeError("binning_method must be one of: ", binning_methods)
