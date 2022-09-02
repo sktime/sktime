@@ -175,19 +175,7 @@ class SFAFast(BaseTransformer):
         self.breakpoints = []
 
         # we cannot select more than window_size many letters in a word
-        offset = 2 if norm else 0
         self.word_length = word_length
-        self.word_length_actual = min(window_size - offset, word_length)
-        self.dft_length = (
-            window_size - offset
-            if (anova or variance) is True
-            else self.word_length_actual
-        )
-        # make dft_length an even number (same number of reals and imags)
-        self.dft_length = self.dft_length + self.dft_length % 2
-        self.word_length_actual = self.word_length_actual + self.word_length_actual % 2
-
-        self.support = np.arange(self.word_length_actual)
 
         self.alphabet_size = alphabet_size
         self.window_size = window_size
@@ -208,9 +196,7 @@ class SFAFast(BaseTransformer):
 
         self.n_instances = 0
         self.series_length = 0
-
         self.letter_bits = 0
-        # self.word_bits = 0
 
         # Feature selection part
         self.feature_selection = feature_selection
@@ -247,6 +233,18 @@ class SFAFast(BaseTransformer):
         if self.binning_method not in binning_methods:
             raise TypeError("binning_method must be one of: ", binning_methods)
 
+        offset = 2 if self.norm else 0
+        self.word_length_actual = min(self.window_size - offset, self.word_length)
+        self.dft_length = (
+            self.window_size - offset
+            if (self.anova or self.variance) is True
+            else self.word_length_actual
+        )
+        # make dft_length an even number (same number of reals and imags)
+        self.dft_length = self.dft_length + self.dft_length % 2
+        self.word_length_actual = self.word_length_actual + self.word_length_actual % 2
+
+        self.support = np.arange(self.word_length_actual)
         self.letter_bits = np.uint32(math.ceil(math.log2(self.alphabet_size)))
         # self.word_bits = self.word_length_actual * self.letter_bits
 
@@ -270,6 +268,7 @@ class SFAFast(BaseTransformer):
             X,
             self.window_size,
             self.dft_length,
+            self.word_length_actual,
             self.norm,
             self.support,
             self.anova,
@@ -285,7 +284,7 @@ class SFAFast(BaseTransformer):
             self.words = words
 
         # fitting: learns the feature selection strategy, too
-        return self.transform_to_bag(words, y)
+        return self.transform_to_bag(words, self.word_length_actual, y)
 
     def fit(self, X, y=None):
         """Calculate word breakpoints using MCB or IGB.
@@ -322,6 +321,7 @@ class SFAFast(BaseTransformer):
             X,
             self.window_size,
             self.dft_length,
+            self.word_length_actual,
             self.norm,
             self.support,
             self.anova,
@@ -360,7 +360,7 @@ class SFAFast(BaseTransformer):
             bags = csr_matrix(bags, dtype=np.uint32)
         return bags
 
-    def transform_to_bag(self, words, y=None):
+    def transform_to_bag(self, words, word_len, y=None):
         """Transform words to bag-of-pattern and apply feature selection."""
         bag_of_words = None
         rng = check_random_state(self.random_state)
@@ -372,7 +372,7 @@ class SFAFast(BaseTransformer):
                 self.breakpoints,
                 words.shape[0],
                 words,
-                self.word_length_actual,
+                word_len,  # self.word_length_actual,
             )
         else:
             feature_names = create_feature_names(words)
@@ -559,35 +559,26 @@ class SFAFast(BaseTransformer):
             raise ValueError(
                 "Words from transform must be saved using save_word to shorten bags."
             )
+        if self.bigrams:
+            raise ValueError("Bigrams are currently not supported.")
+        if self.variance or self.anova:
+            raise ValueError(
+                "Variance or Anova based feature selection is currently not supported."
+            )
 
-        if word_len > self.word_length_actual:
-            word_len = self.word_length_actual
-
+        # determine the new word-length
         new_len = min(word_len, self.word_length_actual)
-        new_len_diff = self.word_length_actual - new_len
-        self.breakpoints = self.breakpoints[:new_len, :]
-        self.support = self.support[:new_len]
 
-        if self.anova or self.variance:
-            self.dft_length = np.max(self.support) + 1
-            self.dft_length = self.dft_length + self.dft_length % 2  # even
-        else:
-            self.dft_length = new_len
+        # the difference in word-length to shorten the words to
+        new_len_diff = self.word_length_actual - new_len
 
         if new_len_diff > 0:
-            new_words = shorten_words(
-                self.words,
-                new_len_diff,
-                self.letter_bits,
-            )
+            new_words = shorten_words(self.words, new_len_diff, self.letter_bits)
         else:
             new_words = self.words
 
-        self.words = new_words
-        self.word_length_actual = word_len
-
         # retrain feature selection-strategy
-        return self.transform_to_bag(new_words, y)
+        return self.transform_to_bag(new_words, new_len, y)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -703,11 +694,12 @@ def _fast_fourier_transform(X, norm, dft_length, inverse_sqrt_win_size):
     return dft[:, start:]
 
 
-@njit(fastmath=True, cache=True)  # njit and  is not working here?
+@njit(fastmath=True, cache=True)
 def _transform_case(
     X,
     window_size,
     dft_length,
+    word_length,
     norm,
     support,
     anova,
@@ -731,7 +723,13 @@ def _transform_case(
 
     return (
         generate_words(
-            dfts, bigrams, skip_grams, window_size, breakpoints, letter_bits
+            dfts,
+            bigrams,
+            skip_grams,
+            window_size,
+            breakpoints,
+            word_length,
+            letter_bits,
         ),
         dfts,
     )
@@ -773,7 +771,9 @@ def _get_phis(window_size, length):
 
 
 @njit(fastmath=True, cache=True)
-def generate_words(dfts, bigrams, skip_grams, window_size, breakpoints, letter_bits):
+def generate_words(
+    dfts, bigrams, skip_grams, window_size, breakpoints, word_length, letter_bits
+):
     needed_size = dfts.shape[1]
     if bigrams:
         # allocate memory for bigrams
@@ -785,7 +785,7 @@ def generate_words(dfts, bigrams, skip_grams, window_size, breakpoints, letter_b
     words = np.zeros((dfts.shape[0], needed_size), dtype=np.uint32)
 
     letter_bits = np.uint32(letter_bits)
-    word_bits = dfts.shape[2] * letter_bits
+    word_bits = word_length * letter_bits  # dfts.shape[2] * letter_bits
 
     # special case: binary breakpoints
     if breakpoints.shape[1] == 2:
@@ -800,7 +800,7 @@ def generate_words(dfts, bigrams, skip_grams, window_size, breakpoints, letter_b
     # general case: alphabet-size many breakpoints
     else:
         for a in prange(dfts.shape[0]):
-            for i in range(dfts.shape[2]):
+            for i in range(word_length):  # range(dfts.shape[2]):
                 words[a, : dfts.shape[1]] = (
                     words[a, : dfts.shape[1]] << letter_bits
                 ) | np.digitize(dfts[a, :, i], breakpoints[i], right=True)
@@ -948,7 +948,7 @@ def create_bag_transform(
     # merging arrays
     all_win_words = np.zeros((len(sfa_words), feature_count), np.uint32)
     for j in range(len(sfa_words)):
-        if len(relevant_features) == 0:
+        if len(relevant_features) == 0 and feature_selection == "none":
             all_win_words[j, :] = np.bincount(sfa_words[j], minlength=feature_count)
         else:
             for _, key in enumerate(sfa_words[j]):

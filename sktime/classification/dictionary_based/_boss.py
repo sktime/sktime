@@ -8,7 +8,6 @@ BOSS and a BOSS ensemble.
 __author__ = ["MatthewMiddlehurst", "Patrick Schäfer"]
 __all__ = ["BOSSEnsemble", "IndividualBOSS"]
 
-import copy
 from itertools import compress
 
 import numpy as np
@@ -59,7 +58,7 @@ class BOSSEnsemble(BaseClassifier):
     save_train_predictions : bool, default=False
         Save the ensemble member train predictions in fit for use in _get_train_probs
         leave-one-out cross-validation.
-    alphabet_size : default = 4
+    alphabet_size : default = 2
         Number of possible letters (values) for each word.
     n_jobs : int, default=1
         The number of jobs to run in parallel for both `fit` and `predict`.
@@ -130,7 +129,7 @@ class BOSSEnsemble(BaseClassifier):
         min_window=6,
         save_train_predictions=False,
         feature_selection="none",
-        alphabet_size=4,
+        alphabet_size=2,
         n_jobs=1,
         random_state=None,
     ):
@@ -149,7 +148,7 @@ class BOSSEnsemble(BaseClassifier):
         self.n_instances_ = 0
         self.feature_selection = feature_selection
 
-        self._word_lengths = [16, 12, 8]
+        self._word_lengths = [16, 14, 12, 10, 8]
         self._norm_options = [True, False]
         self.alphabet_size = alphabet_size
 
@@ -184,12 +183,10 @@ class BOSSEnsemble(BaseClassifier):
         self.estimators_ = []
 
         # Window length parameter space dependent on series length
-        max_window_searches = self.series_length_ / 4
-
+        max_window_searches = self.series_length_ / 2
         max_window = int(self.series_length_ * self.max_win_len_prop)
-        win_inc = int((max_window - self.min_window) / max_window_searches)
-        if win_inc < 1:
-            win_inc = 1
+        win_inc = max(1, int((max_window - self.min_window) / max_window_searches))
+
         if self.min_window > max_window + 1:
             raise ValueError(
                 f"Error in BOSSEnsemble, min_window ="
@@ -203,6 +200,7 @@ class BOSSEnsemble(BaseClassifier):
         min_max_acc = -1
         for normalise in self._norm_options:
             for win_size in range(self.min_window, max_window + 1, win_inc):
+                # max_word_len = min(self.min_window - 2, self.word_lengths[0])
                 boss = IndividualBOSS(
                     win_size,
                     self._word_lengths[0],
@@ -222,18 +220,17 @@ class BOSSEnsemble(BaseClassifier):
                 best_word_len = boss._transformer.word_length
 
                 for n, word_len in enumerate(self._word_lengths):
-                    if word_len <= win_size:
-                        if n > 0 and word_len < boss._transformer.word_length_actual:
-                            boss = boss._shorten_bags(word_len, y)
+                    if n > 0 and word_len < boss._transformer.word_length:
+                        boss = boss._shorten_bags(word_len, y)
 
-                        boss._accuracy = self._individual_train_acc(
-                            boss, y, self.n_instances_, best_acc_for_win_size
-                        )
+                    boss._accuracy = self._individual_train_acc(
+                        boss, y, self.n_instances_, best_acc_for_win_size
+                    )
 
-                        if boss._accuracy >= best_acc_for_win_size:
-                            best_acc_for_win_size = boss._accuracy
-                            best_classifier_for_win_size = boss
-                            best_word_len = word_len
+                    if boss._accuracy >= best_acc_for_win_size:
+                        best_acc_for_win_size = boss._accuracy
+                        best_classifier_for_win_size = boss
+                        best_word_len = word_len
 
                 if self._include_in_ensemble(
                     best_acc_for_win_size,
@@ -242,7 +239,7 @@ class BOSSEnsemble(BaseClassifier):
                     len(self.estimators_),
                 ):
                     best_classifier_for_win_size._clean()
-                    best_classifier_for_win_size._set_word_len(best_word_len)
+                    best_classifier_for_win_size._set_word_len(X, y, best_word_len)
                     self.estimators_.append(best_classifier_for_win_size)
 
                     if best_acc_for_win_size > max_acc:
@@ -459,7 +456,7 @@ class IndividualBOSS(BaseClassifier):
         Length of word to use to use in BOSS algorithm.
     norm : bool, default = False
         Whether to normalize words by dropping the first Fourier coefficient.
-    alphabet_size : default = 4
+    alphabet_size : default = 2
         Number of possible letters (values) for each word.
     save_words : bool, default = True
         Whether to keep NumPy array of words in SFA transformation even after
@@ -516,7 +513,7 @@ class IndividualBOSS(BaseClassifier):
         window_size=10,
         word_length=8,
         norm=False,
-        alphabet_size=4,
+        alphabet_size=2,
         save_words=False,
         feature_selection="none",
         n_jobs=1,
@@ -603,6 +600,10 @@ class IndividualBOSS(BaseClassifier):
             for i in range(test_bags.shape[0]):
                 min_pos = np.argmin(distance_matrix[i])
                 classes[i] = self._class_vals[min_pos]
+        else:
+            # set to most frequent element
+            counts = np.bincount(self._class_vals)
+            classes[:] = np.argmax(counts)
 
         return classes
 
@@ -619,30 +620,31 @@ class IndividualBOSS(BaseClassifier):
             self.alphabet_size,
             save_words=self.save_words,
             feature_selection=self.feature_selection,
-            random_state=self.random_state,
             n_jobs=self.n_jobs,
+            random_state=self.random_state,
         )
-        new_boss._transformer = copy.copy(self._transformer)
-        new_boss._transformer.words = self._transformer.words
-
-        sfa_words = new_boss._transformer._shorten_bags(word_len, y)
-        new_boss._transformed_data = sfa_words
+        new_boss._transformer = self._transformer
+        new_bag = new_boss._transformer._shorten_bags(word_len, y)
+        new_boss._transformed_data = new_bag
         new_boss._class_vals = self._class_vals
         new_boss.n_classes_ = self.n_classes_
         new_boss.classes_ = self.classes_
         new_boss._class_dictionary = self._class_dictionary
-
-        new_boss.n_jobs = self.n_jobs
         new_boss._is_fitted = True
+
         return new_boss
 
     def _clean(self):
         self._transformer.words = None
         self._transformer.save_words = False
 
-    def _set_word_len(self, word_len):
+    def _set_word_len(self, X, y, word_len):
         self.word_length = word_len
-        self._transformer.word_length_actual = word_len
+
+        # we have to retrain feature selection for now
+        # might be optimized by remembering feature_dicts
+        self._transformer.word_length = min(self._transformer.word_length, word_len)
+        self._transformed_data = self._transformer.fit_transform(X, y)
 
 
 # @njit(cache=True, fastmath=True)

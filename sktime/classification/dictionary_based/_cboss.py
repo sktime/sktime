@@ -77,7 +77,7 @@ class ContractableBOSS(BaseClassifier):
     n_jobs : int, default = 1
         The number of jobs to run in parallel for both `fit` and `predict`.
         ``-1`` means using all processors.
-    feature_selection: {"chi2", "none", "random"}, default: chi2
+    feature_selection: {"chi2", "none", "random"}, default: none
         Sets the feature selections strategy to be used. Chi2 reduces the number
         of words significantly and is thus much faster (preferred). Random also reduces
         the number significantly. None applies not feature selectiona and yields large
@@ -149,12 +149,12 @@ class ContractableBOSS(BaseClassifier):
         n_parameter_samples=250,
         max_ensemble_size=50,
         max_win_len_prop=1,
-        min_window=10,
+        min_window=6,
         time_limit_in_minutes=0.0,
         contract_max_n_parameter_samples=np.inf,
         typed_dict="deprecated",
         save_train_predictions=False,
-        feature_selection="chi2",
+        feature_selection="none",
         n_jobs=1,
         random_state=None,
     ):
@@ -180,7 +180,7 @@ class ContractableBOSS(BaseClassifier):
         self._weight_sum = 0
         self._word_lengths = [16, 14, 12, 10, 8]
         self._norm_options = [True, False]
-        self._alphabet_size = 4
+        self._alphabet_size = 2
 
         super(ContractableBOSS, self).__init__()
 

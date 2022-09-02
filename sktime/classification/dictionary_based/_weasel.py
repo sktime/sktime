@@ -137,7 +137,7 @@ class WEASEL(BaseClassifier):
     ):
 
         # currently greater values than 4 are not supported.
-        self.alphabet_size = 4
+        self.alphabet_size = 2
 
         # feature selection is applied based on the chi-squared test.
         self.p_threshold = p_threshold
@@ -361,7 +361,7 @@ def _parallel_fit(
         binning_method=binning_strategy,
         bigrams=bigrams,
         feature_selection=feature_selection,
-        force_alphabet_size_two=True,
+        force_alphabet_size_two=False,
         # TODO remove_repeat_words=False,
         save_words=False,
         n_jobs=n_jobs,
