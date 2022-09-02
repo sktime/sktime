@@ -284,6 +284,7 @@ def get_classifiers():
 DATA_PATH = "/Users/bzcschae/workspace/UCRArchive_2018/"
 parallel_jobs = 1
 threads_to_use = 4
+server = False
 
 # local
 if os.path.exists(DATA_PATH):
@@ -292,8 +293,9 @@ if os.path.exists(DATA_PATH):
 # server
 else:
     DATA_PATH = "/vol/fob-wbib-vol2/wbi/schaefpa/sktime/datasets/UCRArchive_2018"
-    parallel_jobs = 20
-    threads_to_use = 4
+    parallel_jobs = 80
+    threads_to_use = 1
+    server = True
     used_dataset = dataset_names_full
 
 if __name__ == "__main__":
@@ -331,30 +333,18 @@ if __name__ == "__main__":
         X_test = np.reshape(np.array(X_test), (len(X_test), 1, -1))
 
         # try:
-        if clf_name == "Hydra":
-            fit_time = time.perf_counter()
-            transform = Hydra(X_train.shape[-1])
-            X_training_transform = transform(torch.tensor(X_train).float())
-            clf = RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True)
-            clf.fit(X_training_transform, y_train)
-            fit_time = np.round(time.perf_counter() - fit_time, 5)
 
-            pred_time = time.perf_counter()
-            X_test_transform = transform(torch.tensor(X_test).float())
-            acc = clf.score(X_test_transform, y_test)
-            pred_time = np.round(time.perf_counter() - pred_time, 5)
-        else:
-            # if clf_name == "R_DST_Ridge":
-            #    clf = get_classifiers()[clf_name]
-            # else:
-            clf = get_classifiers()[clf_name]
-            fit_time = time.perf_counter()
-            clf.fit(X_train, y_train)
-            fit_time = np.round(time.perf_counter() - fit_time, 5)
+        # if clf_name == "R_DST_Ridge":
+        #    clf = get_classifiers()[clf_name]
+        # else:
+        clf = get_classifiers()[clf_name]
+        fit_time = time.perf_counter()
+        clf.fit(X_train, y_train)
+        fit_time = np.round(time.perf_counter() - fit_time, 5)
 
-            pred_time = time.perf_counter()
-            acc = clf.score(X_test, y_test)
-            pred_time = np.round(time.perf_counter() - pred_time, 5)
+        pred_time = time.perf_counter()
+        acc = clf.score(X_test, y_test)
+        pred_time = np.round(time.perf_counter() - pred_time, 5)
 
         print(
             f"Dataset={dataset_name}, "
@@ -384,12 +374,13 @@ if __name__ == "__main__":
         # except Exception as e:
         #    print("An exception occurred: {}".format(e))
         #    print("\tFailed: ", dataset_name, clf_name)
+        #    print(e)
 
         print("-----------------")
 
         return sum_scores
 
-    parallel_res = Parallel(n_jobs=parallel_jobs, timeout=99999, batch_size=1)(
+    parallel_res = Parallel(n_jobs=parallel_jobs, timeout=9999999, batch_size=1)(
         delayed(_parallel_fit)(dataset, clf_name)
         for dataset, clf_name in itertools.product(used_dataset, get_classifiers())
     )
@@ -432,31 +423,33 @@ if __name__ == "__main__":
     csv_scores = []
     for name, _ in sum_scores.items():
         all_accs = sum_scores[name]["all_scores"]
-        for acc, dataset_name in zip(all_accs, used_dataset):
+        all_datasets = sum_scores[name]["dataset"]
+        for acc, dataset_name in zip(all_accs, all_datasets):
             csv_scores.append((name, dataset_name, acc))
 
         all_fit = np.round(sum_scores[name]["all_fit"], 2)
         all_pred = np.round(sum_scores[name]["all_pred"], 2)
-        for fit, pred, dataset_name in zip(all_fit, all_pred, used_dataset):
+        for fit, pred, dataset_name in zip(all_fit, all_pred, all_datasets):
             csv_timings.append((name, dataset_name, fit, pred))
 
-    pd.DataFrame.from_records(
-        csv_scores,
-        columns=[
-            "Classifier",
-            "Dataset",
-            "Accuracy",
-            # "Fit-Time",
-            # "Predict-Time",
-        ],
-    ).to_csv("classifier_all_scores.csv", index=None)
+    if not server:
+        pd.DataFrame.from_records(
+            csv_scores,
+            columns=[
+                "Classifier",
+                "Dataset",
+                "Accuracy",
+                # "Fit-Time",
+                # "Predict-Time",
+            ],
+        ).to_csv("classifier_all_scores.csv", index=None)
 
-    pd.DataFrame.from_records(
-        csv_timings,
-        columns=[
-            "Classifier",
-            "Dataset",
-            "Fit-Time",
-            "Predict-Time",
-        ],
-    ).to_csv("classifier_all_runtimes.csv", index=None)
+        pd.DataFrame.from_records(
+            csv_timings,
+            columns=[
+                "Classifier",
+                "Dataset",
+                "Fit-Time",
+                "Predict-Time",
+            ],
+        ).to_csv("classifier_all_runtimes.csv", index=None)

@@ -17,7 +17,7 @@ from sklearn.linear_model import LogisticRegression, RidgeClassifierCV
 from sklearn.utils import check_random_state
 
 from sktime.classification.base import BaseClassifier
-from sktime.transformations.panel.dictionary_based import SFA_FAST
+from sktime.transformations.panel.dictionary_based import SFAFast
 
 
 class WEASEL(BaseClassifier):
@@ -30,7 +30,7 @@ class WEASEL(BaseClassifier):
 
     There are these primary parameters:
             alphabet_size: alphabet size
-            chi2-threshold: used for feature selection to select best words
+            chi2 p-threshold: used for feature selection to select best words
             anova: select best l/2 fourier coefficients other than first ones
             bigrams: using bigrams of SFA words
             binning_strategy: the binning strategy used to discretise into
@@ -68,15 +68,20 @@ class WEASEL(BaseClassifier):
         This is the p-value threshold to use for chi-squared test on bag-of-words
         (lower means more strict). 1 indicates that the test
         should not be performed.
+    alphabet_size : default = 2
+        Number of possible letters (values) for each word.
     feature_selection: {"chi2", "none", "random"}, default: chi2
         Sets the feature selections strategy to be used. Chi2 reduces the number
         of words significantly and is thus much faster (preferred). Random also reduces
         the number significantly. None applies not feature selectiona and yields large
         bag of words, e.g. much memory may be needed.
     support_probabilities: bool, default: False
-        If set to False a RidgeClassifierCV will be trained, which has higher accuracy
-        and is faster. If set to True LogisticRegression will be trained, which
-        returns true probabilities.
+        If set to False, a RidgeClassifierCV will be trained, which has higher accuracy
+        and is faster, yet does not support predict_proba.
+        If set to True, a LogisticRegression will be trained, which does support
+        predict_proba(), yet is slower and typically less accuracy. predict_proba() is
+        needed for example in Early-Classification like TEASER.
+
     random_state: int or None, default=None
         Seed for random, integer
 
@@ -127,6 +132,7 @@ class WEASEL(BaseClassifier):
         binning_strategy="information-gain",
         window_inc=2,
         p_threshold=0.05,
+        alphabet_size=2,
         n_jobs=1,
         feature_selection="chi2",
         support_probabilities=False,
@@ -134,7 +140,7 @@ class WEASEL(BaseClassifier):
     ):
 
         # currently greater values than 4 are not supported.
-        self.alphabet_size = 4
+        self.alphabet_size = alphabet_size
 
         # feature selection is applied based on the chi-squared test.
         self.p_threshold = p_threshold
@@ -187,7 +193,6 @@ class WEASEL(BaseClassifier):
         self.n_instances, self.series_length = X.shape[0], X.shape[-1]
 
         win_inc = self._compute_window_inc()
-
         self.max_window = int(min(self.series_length, self.max_window))
         if self.min_window > self.max_window:
             raise ValueError(
@@ -350,7 +355,7 @@ def _parallel_fit(
     n_jobs,
 ):
     rng = check_random_state(window_size)
-    transformer = SFA_FAST(
+    transformer = SFAFast(
         word_length=rng.choice(word_lengths),
         alphabet_size=alphabet_size,
         window_size=window_size,

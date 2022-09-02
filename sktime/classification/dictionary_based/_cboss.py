@@ -62,13 +62,22 @@ class ContractableBOSS(BaseClassifier):
     contract_max_n_parameter_samples : int, default=np.inf
         Max number of parameter combinations to consider when time_limit_in_minutes is
         set.
+    typed_dict : bool, default=True
+        Use a numba TypedDict to store word counts. May increase memory usage, but will
+        be faster for larger datasets. As the Dict cannot be pickled currently, there
+        will be some overhead converting it to a python dict with multiple threads and
+        pickling.
+
+        .. deprecated:: 0.13.3
+            ``typed_dict`` was deprecated in version 0.13.3 and will be removed in 0.14.
+
     save_train_predictions : bool, default=False
         Save the ensemble member train predictions in fit for use in _get_train_probs
         leave-one-out cross-validation.
     n_jobs : int, default = 1
         The number of jobs to run in parallel for both `fit` and `predict`.
         ``-1`` means using all processors.
-    feature_selection: {"chi2", "none", "random"}, default: chi2
+    feature_selection: {"chi2", "none", "random"}, default: none
         Sets the feature selections strategy to be used. Chi2 reduces the number
         of words significantly and is thus much faster (preferred). Random also reduces
         the number significantly. None applies not feature selectiona and yields large
@@ -140,9 +149,10 @@ class ContractableBOSS(BaseClassifier):
         n_parameter_samples=250,
         max_ensemble_size=50,
         max_win_len_prop=1,
-        min_window=10,
+        min_window=6,
         time_limit_in_minutes=0.0,
         contract_max_n_parameter_samples=np.inf,
+        typed_dict="deprecated",
         save_train_predictions=False,
         feature_selection="chi2",
         n_jobs=1,
@@ -155,6 +165,7 @@ class ContractableBOSS(BaseClassifier):
 
         self.time_limit_in_minutes = time_limit_in_minutes
         self.contract_max_n_parameter_samples = contract_max_n_parameter_samples
+        self.typed_dict = typed_dict
         self.save_train_predictions = save_train_predictions
         self.n_jobs = n_jobs
         self.random_state = random_state
@@ -169,7 +180,7 @@ class ContractableBOSS(BaseClassifier):
         self._weight_sum = 0
         self._word_lengths = [16, 14, 12, 10, 8]
         self._norm_options = [True, False]
-        self._alphabet_size = 4
+        self._alphabet_size = 2
 
         super(ContractableBOSS, self).__init__()
 
@@ -275,18 +286,20 @@ class ContractableBOSS(BaseClassifier):
             else:
                 weight = 0.000000001
 
-            if num_classifiers < self.max_ensemble_size:
-                if boss._accuracy < lowest_acc:
-                    lowest_acc = boss._accuracy
-                    lowest_acc_idx = num_classifiers
-                self.weights_.append(weight)
-                self.estimators_.append(boss)
-            elif boss._accuracy > lowest_acc:
-                self.weights_[lowest_acc_idx] = weight
-                self.estimators_[lowest_acc_idx] = boss
-                lowest_acc, lowest_acc_idx = self._worst_ensemble_acc()
+            # Only keep the classifier, if its accuracy is non-zero
+            if boss._accuracy > 0:
+                if num_classifiers < self.max_ensemble_size:
+                    if boss._accuracy < lowest_acc:
+                        lowest_acc = boss._accuracy
+                        lowest_acc_idx = num_classifiers
+                    self.weights_.append(weight)
+                    self.estimators_.append(boss)
+                elif boss._accuracy > lowest_acc:
+                    self.weights_[lowest_acc_idx] = weight
+                    self.estimators_[lowest_acc_idx] = boss
+                    lowest_acc, lowest_acc_idx = self._worst_ensemble_acc()
 
-            num_classifiers += 1
+                num_classifiers += 1
             train_time = time.time() - start_time
 
         self.n_estimators_ = len(self.estimators_)

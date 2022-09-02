@@ -354,7 +354,11 @@ class TEASER(BaseEarlyClassifier):
         rs = None if self.random_state is None else rs * 37 * (i + 1)
         rng = check_random_state(rs)
 
-        default = MUSE() if X.shape[1] > 1 else WEASEL()
+        default = (
+            MUSE()
+            if X.shape[1] > 1
+            else WEASEL(support_probabilities=True, alphabet_size=4)
+        )
         estimator = _clone_estimator(
             default if self.estimator is None else self.estimator,
             rng,

@@ -15,7 +15,7 @@ from sklearn.metrics import pairwise
 from sklearn.utils import check_random_state
 
 from sktime.classification.base import BaseClassifier
-from sktime.transformations.panel.dictionary_based import SFA_FAST
+from sktime.transformations.panel.dictionary_based import SFAFast
 from sktime.utils.validation.panel import check_X_y
 
 
@@ -58,10 +58,12 @@ class BOSSEnsemble(BaseClassifier):
     save_train_predictions : bool, default=False
         Save the ensemble member train predictions in fit for use in _get_train_probs
         leave-one-out cross-validation.
+    alphabet_size : default = 2
+        Number of possible letters (values) for each word.
     n_jobs : int, default=1
         The number of jobs to run in parallel for both `fit` and `predict`.
         ``-1`` means using all processors.
-    feature_selection: {"chi2", "none", "random"}, default: chi2
+    feature_selection: {"chi2", "none", "random"}, default: none
         Sets the feature selections strategy to be used. Chi2 reduces the number
         of words significantly and is thus much faster (preferred). Random also reduces
         the number significantly. None applies not feature selectiona and yields large
@@ -124,9 +126,10 @@ class BOSSEnsemble(BaseClassifier):
         threshold=0.92,
         max_ensemble_size=500,
         max_win_len_prop=1,
-        min_window=10,
+        min_window=6,
         save_train_predictions=False,
         feature_selection="chi2",
+        alphabet_size=2,
         n_jobs=1,
         random_state=None,
     ):
@@ -145,9 +148,9 @@ class BOSSEnsemble(BaseClassifier):
         self.n_instances_ = 0
         self.feature_selection = feature_selection
 
-        self._word_lengths = [16, 12, 8]
+        self._word_lengths = [16, 14, 12, 10, 8]
         self._norm_options = [True, False]
-        self._alphabet_size = 4
+        self.alphabet_size = alphabet_size
 
         super(BOSSEnsemble, self).__init__()
 
@@ -181,11 +184,9 @@ class BOSSEnsemble(BaseClassifier):
 
         # Window length parameter space dependent on series length
         max_window_searches = self.series_length_ / 4
-
         max_window = int(self.series_length_ * self.max_win_len_prop)
-        win_inc = int((max_window - self.min_window) / max_window_searches)
-        if win_inc < 1:
-            win_inc = 1
+        win_inc = max(1, int((max_window - self.min_window) / max_window_searches))
+
         if self.min_window > max_window + 1:
             raise ValueError(
                 f"Error in BOSSEnsemble, min_window ="
@@ -199,11 +200,12 @@ class BOSSEnsemble(BaseClassifier):
         min_max_acc = -1
         for normalise in self._norm_options:
             for win_size in range(self.min_window, max_window + 1, win_inc):
+                # max_word_len = min(self.min_window - 2, self.word_lengths[0])
                 boss = IndividualBOSS(
                     win_size,
                     self._word_lengths[0],
                     normalise,
-                    self._alphabet_size,
+                    self.alphabet_size,
                     save_words=True,
                     feature_selection=self.feature_selection,
                     n_jobs=self.n_jobs,
@@ -218,7 +220,7 @@ class BOSSEnsemble(BaseClassifier):
                 best_word_len = boss._transformer.word_length
 
                 for n, word_len in enumerate(self._word_lengths):
-                    if n > 0:
+                    if n > 0 and word_len < boss._transformer.word_length:
                         boss = boss._shorten_bags(word_len, y)
 
                     boss._accuracy = self._individual_train_acc(
@@ -237,7 +239,7 @@ class BOSSEnsemble(BaseClassifier):
                     len(self.estimators_),
                 ):
                     best_classifier_for_win_size._clean()
-                    best_classifier_for_win_size._set_word_len(best_word_len)
+                    best_classifier_for_win_size._set_word_len(X, y, best_word_len)
                     self.estimators_.append(best_classifier_for_win_size)
 
                     if best_acc_for_win_size > max_acc:
@@ -308,7 +310,7 @@ class BOSSEnsemble(BaseClassifier):
         return dists
 
     def _include_in_ensemble(self, acc, max_acc, min_max_acc, size):
-        if acc >= max_acc * self.threshold:
+        if acc > 0 and acc >= max_acc * self.threshold:
             if size >= self.max_ensemble_size:
                 return acc > min_max_acc
             else:
@@ -351,17 +353,18 @@ class BOSSEnsemble(BaseClassifier):
 
         else:
             for i, clf in enumerate(self.estimators_):
-                distance_matrix = pairwise.pairwise_distances(
-                    clf._transformed_data, n_jobs=self.n_jobs
-                )
+                if self._transformed_data.shape[1] > 0:
+                    distance_matrix = pairwise.pairwise_distances(
+                        clf._transformed_data, n_jobs=self.n_jobs
+                    )
 
-                preds = []
-                for i in range(n_instances):
-                    preds.append(clf._train_predict(i, distance_matrix))
+                    preds = []
+                    for i in range(n_instances):
+                        preds.append(clf._train_predict(i, distance_matrix))
 
-                for n, pred in enumerate(preds):
-                    results[n][self._class_dictionary[pred]] += 1
-                    divisors[n] += 1
+                    for n, pred in enumerate(preds):
+                        results[n][self._class_dictionary[pred]] += 1
+                        divisors[n] += 1
 
         for i in range(n_instances):
             results[i] = (
@@ -453,7 +456,7 @@ class IndividualBOSS(BaseClassifier):
         Length of word to use to use in BOSS algorithm.
     norm : bool, default = False
         Whether to normalize words by dropping the first Fourier coefficient.
-    alphabet_size : default = 4
+    alphabet_size : default = 2
         Number of possible letters (values) for each word.
     save_words : bool, default = True
         Whether to keep NumPy array of words in SFA transformation even after
@@ -510,9 +513,9 @@ class IndividualBOSS(BaseClassifier):
         window_size=10,
         word_length=8,
         norm=False,
-        alphabet_size=4,
+        alphabet_size=2,
         save_words=False,
-        feature_selection="chi2",  # here we use chi2 instead of none
+        feature_selection="none",
         n_jobs=1,
         random_state=None,
     ):
@@ -555,7 +558,7 @@ class IndividualBOSS(BaseClassifier):
         Changes state by creating a fitted model that updates attributes
         ending in "_" and sets is_fitted flag to True.
         """
-        self._transformer = SFA_FAST(
+        self._transformer = SFAFast(
             word_length=self.word_length,
             alphabet_size=self.alphabet_size,
             window_size=self.window_size,
@@ -565,7 +568,6 @@ class IndividualBOSS(BaseClassifier):
             save_words=self.save_words,
             n_jobs=self.n_jobs,
             feature_selection=self.feature_selection,
-            return_sparse=True,
             random_state=self.random_state,
         )
 
@@ -588,15 +590,20 @@ class IndividualBOSS(BaseClassifier):
             Predicted class labels.
         """
         test_bags = self._transformer.transform(X)
-
-        distance_matrix = pairwise.pairwise_distances(
-            test_bags, self._transformed_data, n_jobs=self.n_jobs
-        )
-
         classes = np.zeros(test_bags.shape[0], dtype=type(self._class_vals[0]))
-        for i in range(test_bags.shape[0]):
-            min_pos = np.argmin(distance_matrix[i])
-            classes[i] = self._class_vals[min_pos]
+
+        if self._transformed_data.shape[1] > 0:
+            distance_matrix = pairwise.pairwise_distances(
+                test_bags, self._transformed_data, n_jobs=self.n_jobs
+            )
+
+            for i in range(test_bags.shape[0]):
+                min_pos = np.argmin(distance_matrix[i])
+                classes[i] = self._class_vals[min_pos]
+        else:
+            # set to most frequent element
+            counts = np.bincount(self._class_vals)
+            classes[:] = np.argmax(counts)
 
         return classes
 
@@ -613,33 +620,31 @@ class IndividualBOSS(BaseClassifier):
             self.alphabet_size,
             save_words=self.save_words,
             feature_selection=self.feature_selection,
-            random_state=self.random_state,
             n_jobs=self.n_jobs,
+            random_state=self.random_state,
         )
-        new_boss._transformer = self._transformer.clone()  # clone not working :(
-        new_boss._transformer.dfts = self._transformer.dfts
-        new_boss._transformer.breakpoints = self._transformer.breakpoints
-        new_boss._transformer.support = self._transformer.support
-        new_boss._transformer.set_fitted()
-
-        sfa_words = new_boss._transformer._shorten_bags(word_len, y)
-        new_boss._transformed_data = sfa_words
+        new_boss._transformer = self._transformer
+        new_bag = new_boss._transformer._shorten_bags(word_len, y)
+        new_boss._transformed_data = new_bag
         new_boss._class_vals = self._class_vals
         new_boss.n_classes_ = self.n_classes_
         new_boss.classes_ = self.classes_
         new_boss._class_dictionary = self._class_dictionary
-
-        new_boss.n_jobs = self.n_jobs
         new_boss._is_fitted = True
+
         return new_boss
 
     def _clean(self):
         self._transformer.words = None
         self._transformer.save_words = False
 
-    def _set_word_len(self, word_len):
+    def _set_word_len(self, X, y, word_len):
         self.word_length = word_len
-        self._transformer.word_length = word_len
+
+        # we have to retrain feature selection for now
+        # might be optimized by remembering feature_dicts
+        self._transformer.word_length = min(self._transformer.word_length, word_len)
+        self._transformed_data = self._transformer.fit_transform(X, y)
 
 
 # @njit(cache=True, fastmath=True)
