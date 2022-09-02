@@ -68,7 +68,7 @@ class FourierFeatures(BaseTransformer):
         # this can be a Panel mtype even if transform-input is Series, vectorized
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "requires_y": False,  # does y need to be passed in fit?
-        "enforce_index_type": pd.PeriodIndex,  # index type that needs to be enforced
+        "enforce_index_type": [pd.PeriodIndex],  # index type that needs to be enforced
         # in X/y
         "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
         "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
