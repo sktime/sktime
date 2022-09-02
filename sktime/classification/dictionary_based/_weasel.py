@@ -361,7 +361,6 @@ def _parallel_fit(
         binning_method=binning_strategy,
         bigrams=bigrams,
         feature_selection=feature_selection,
-        force_alphabet_size_two=False,
         # TODO remove_repeat_words=False,
         save_words=False,
         n_jobs=n_jobs,

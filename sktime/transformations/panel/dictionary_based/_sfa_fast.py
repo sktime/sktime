@@ -59,10 +59,6 @@ class SFAFast(BaseTransformer):
         alphabet_size:       int, default = 4
             number of values to discretise each value to
 
-        force_alphabet_size_two:    bool, default=True
-            if set to True, will apply binning with alphabet of size 4 but transform
-            with only alphabet of size 2.
-
         window_size:         int, default = 12
             size of window for sliding. Input series
             length for whole series transform
@@ -162,7 +158,6 @@ class SFAFast(BaseTransformer):
         bigrams=False,
         skip_grams=False,
         save_words=False,
-        force_alphabet_size_two=False,
         feature_selection="none",
         max_feature_count=256,
         p_threshold=0.05,
@@ -192,7 +187,6 @@ class SFAFast(BaseTransformer):
         self.bigrams = bigrams
         self.skip_grams = skip_grams
         self.n_jobs = n_jobs
-        self.force_alphabet_size_two = force_alphabet_size_two
 
         self.n_instances = 0
         self.series_length = 0
@@ -254,15 +248,6 @@ class SFAFast(BaseTransformer):
         self.n_instances, self.series_length = X.shape
         self.breakpoints = self._binning(X, y)
         self._is_fitted = True
-
-        # force alphabet of size 2
-        if self.force_alphabet_size_two and self.breakpoints.shape[1] == 4:
-            bp = np.zeros((self.breakpoints.shape[0], 2))
-            bp[:, 0] = self.breakpoints[:, 1]
-            bp[:, 1] = np.inf
-            self.breakpoints = bp
-            self.letter_bits = 1
-            self.alphabet_size = 2
 
         words, dfts = _transform_case(
             X,
