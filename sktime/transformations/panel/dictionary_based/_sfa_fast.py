@@ -23,7 +23,7 @@ from numba import (
 )
 from numba.core import types
 from numba.typed import Dict
-from scipy.sparse import csr_matrix
+from scipy.sparse import csr_matrix, hstack
 from sklearn.feature_selection import chi2, f_classif
 from sklearn.preprocessing import KBinsDiscretizer
 from sklearn.tree import DecisionTreeClassifier
@@ -299,7 +299,42 @@ class SFAFast(BaseTransformer):
             self.words = words
 
         # fitting: learns the feature selection strategy, too
-        return self.transform_to_bag(words, self.word_length_actual, y)
+        bag = self.transform_to_bag(words, self.word_length_actual, y)
+
+        # transform: applies the feature selection strategy
+        # bag = self.add_level(bag, words)
+
+        return bag
+
+    def add_level(self, bag, words):
+        """Add one pyramid level."""
+        empty_dict = Dict.empty(
+            key_type=types.uint32,
+            value_type=types.uint32,
+        )
+
+        idx = self.X_index[: words.shape[1]] < len(self.X_index) // 2
+
+        bag_lvl2_l = create_bag_transform(
+            self.X_index,
+            self.feature_count,
+            self.feature_selection,
+            self.relevant_features if self.relevant_features else empty_dict,
+            words[:, idx],
+            self.bigrams,
+        )[0]
+        bag_lvl2_r = create_bag_transform(
+            self.X_index,
+            self.feature_count,
+            self.feature_selection,
+            self.relevant_features if self.relevant_features else empty_dict,
+            words[:, ~idx],
+            self.bigrams,
+        )[0]
+        if type(bag) is np.ndarray:
+            return np.concatenate([bag, bag_lvl2_l, bag_lvl2_r], axis=1)
+        else:
+            return hstack([bag, bag_lvl2_l, bag_lvl2_r])
 
     def fit(self, X, y=None):
         """Calculate word breakpoints using MCB or IGB.
@@ -368,6 +403,8 @@ class SFAFast(BaseTransformer):
             words,
             self.bigrams,
         )[0]
+
+        # bags = self.add_level(bags, words)
 
         if self.return_pandas_data_series:
             bb = pd.DataFrame()
@@ -823,16 +860,6 @@ def generate_words(
                     words[a, : dfts.shape[1]] << letter_bits
                 ) | np.digitize(dfts[a, :, i], breakpoints[i], right=True)
 
-        # for a in prange(dfts.shape[0]):
-        #     for w in prange(dfts.shape[1]):
-        #         word = np.uint32(0)
-        #         for i in range(breakpoints.shape[0]):
-        #             for bp in range(breakpoints.shape[1]):
-        #                 if dfts[a, w, i] <= breakpoints[i][bp]:
-        #                     word = (word << letter_bits) | bp
-        #                     break
-        #         words[a, w] = word
-
     # add bigrams
     if bigrams:
         for a in range(0, dfts.shape[1] - window_size):
@@ -840,13 +867,13 @@ def generate_words(
             second_word = words[:, a + window_size]
             words[:, dfts.shape[1] + a] = (first_word << word_bits) | second_word
 
-    # add 2,3-skip-grams
-    if skip_grams:
-        for s in range(2, 4):
-            for a in range(0, dfts.shape[1] - s * window_size):
-                first_word = words[:, a]
-                second_word = words[:, a + s * window_size]
-                words[:, dfts.shape[1] + a] = (first_word << word_bits) | second_word
+    # # add 2,3-skip-grams
+    # if skip_grams:
+    #     for s in range(2, 4):
+    #         for a in range(0, dfts.shape[1] - s * window_size):
+    #             first_word = words[:, a]
+    #             second_word = words[:, a + s * window_size]
+    #             words[:, dfts.shape[1] + a] = (first_word << word_bits) | second_word
 
     return words
 
@@ -964,9 +991,12 @@ def create_bag_none(X_index, breakpoints, n_instances, sfa_words, word_length):
     for j in range(len(sfa_words)):
         all_win_words[j, :] = np.bincount(sfa_words[j], minlength=feature_count)
 
-    # cc = feature_count // 2 + key
-    # if all_win_words[j, cc] == 0:
-    #    all_win_words[j, cc] = X_index[k] / sfa_words.shape[1]
+        # all_win_words[j, :feature_count] =
+        # np.bincount(sfa_words[j], minlength=feature_count)
+        # for k, key in enumerate(sfa_words[j]):
+        #     cc = feature_count + key
+        #     if all_win_words[j, cc] == 0:
+        #         all_win_words[j, cc] = X_index[k]  # / sfa_words.shape[1]
 
     return all_win_words
 
@@ -998,6 +1028,8 @@ def create_bag_transform(
     all_win_words = np.zeros((len(sfa_words), feature_count), np.uint32)
     for j in range(len(sfa_words)):
         if len(relevant_features) == 0 and feature_selection == "none":
+            # all_win_words[j, :feature_count // 2] =
+            # np.bincount(sfa_words[j], minlength=feature_count // 2)
             all_win_words[j, :] = np.bincount(sfa_words[j], minlength=feature_count)
         else:
             for _, key in enumerate(sfa_words[j]):
@@ -1005,11 +1037,12 @@ def create_bag_transform(
                     o = relevant_features[key]
                     all_win_words[j, o] += 1
 
-        # cc = feature_count // 2 + key
-        # if all_win_words[j, cc] == 0:
-        #    all_win_words[j, cc] = X_index[k] / sfa_words.shape[1]
+        # for k, key in enumerate(sfa_words[j]):
+        #     cc = feature_count // 2 + key
+        #     if all_win_words[j, cc] == 0:
+        #         all_win_words[j, cc] = X_index[k]  # / sfa_words.shape[1]
 
-    return all_win_words, feature_count
+    return all_win_words, all_win_words.shape[1]
 
 
 @njit(fastmath=True, cache=True)

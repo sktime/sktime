@@ -113,17 +113,17 @@ class WEASEL_STEROIDS(BaseClassifier):
         variance=True,
         bigrams=False,
         binning_strategies=["equi-depth"],
-        n_jobs=4,
         ensemble_size=50,
         max_feature_count=20_000,
-        min_window=8,
-        max_window=32,
-        norm_options=[True, False],
-        word_lengths=[6, 8],
+        min_window=4,
+        max_window=24,
+        norm_options=[False],
+        word_lengths=[8],
         alphabet_sizes=[4],
         use_first_differences=[False],
         feature_selection="random",
         random_state=None,
+        n_jobs=4,
     ):
         # currently greater values than 4 are not supported.
         self.alphabet_sizes = alphabet_sizes
