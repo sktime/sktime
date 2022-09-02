@@ -442,7 +442,7 @@ if __name__ == "__main__":
                 # "Fit-Time",
                 # "Predict-Time",
             ],
-        ).to_csv("classifier_all_scores.csv", index=None)
+        ).to_csv("classifier_all_scores-02-09-22.csv", index=None)
 
         pd.DataFrame.from_records(
             csv_timings,
@@ -452,4 +452,4 @@ if __name__ == "__main__":
                 "Fit-Time",
                 "Predict-Time",
             ],
-        ).to_csv("classifier_all_runtimes.csv", index=None)
+        ).to_csv("classifier_all_runtimes-02-09-22.csv", index=None)
