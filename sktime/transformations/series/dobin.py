@@ -1,11 +1,14 @@
 # -*- coding: utf-8 -*-
 """Preprocessing algorithm DOBIN (Distance based Outlier BasIs using Neighbors)."""
 
+import warnings
+
 import numpy as np
 import pandas as pd
 from pandas.api.types import is_numeric_dtype
 from scipy.linalg import null_space
 from scipy.stats import iqr
+from sklearn.decomposition import PCA
 from sklearn.neighbors import NearestNeighbors
 
 from sktime.transformations.base import BaseTransformer
@@ -91,6 +94,7 @@ class DOBIN(BaseTransformer):
 
     def _fit(self, X, y=None):
 
+        self._X = X
         X = X.apply(self.normalize, axis=0)
 
         assert all(X.apply(is_numeric_dtype, axis=0))
@@ -100,18 +104,20 @@ class DOBIN(BaseTransformer):
         if n_obs < n_dim:
             # more dimensions than observations, change of basis
             # to subspace
-            pass
+            pca = PCA(n_components=n_obs)
+            X = pca.fit_transform(X)
+            _, n_dim = X.shape
 
         if self.k is None:
             self.k = min(20, max(n_obs // 20, 2))
 
-        _X = X.copy()
+        X_copy = X.copy()
         B = np.identity(n_dim)
         basis = pd.DataFrame()
 
         for _ in range(n_dim):
             # Compute Y space
-            y_space = close_distance_matrix(_X, self.k, self.frac)
+            y_space = close_distance_matrix(X_copy, self.k, self.frac)
 
             # Find eta
             w = y_space.apply(sum, axis=0)
@@ -122,13 +128,13 @@ class DOBIN(BaseTransformer):
             basis = pd.concat([basis, basis_col], axis=1)
 
             # Find xperp
-            xperp = _X - np.dot(np.dot(np.array(_X), eta.T), eta)
+            xperp = X_copy - np.dot(np.dot(np.array(X_copy), eta.T), eta)
 
             # Find a basis B for xperp
             B1 = null_space(eta)
 
             # Change xperp coordinates to B basis
-            _X = np.dot(xperp, B1)
+            X_copy = np.dot(xperp, B1)
 
             # Update B with B1, each time 1 dimension is reduced
             B = np.dot(B, B1)
@@ -142,12 +148,32 @@ class DOBIN(BaseTransformer):
         return self
 
 
+def _transform(self, X, y=None):
+
+    # fit again if indices not seen, but don't store anything
+    if not X.index.equals(self._X.index):
+        X_full = X.combine_first(self._X)
+        new_dobin = DOBIN(
+            frac=self.frac,
+            normalize=self.normalize,
+            k=self.k,
+        ).fit(X_full)
+        warnings.warn(
+            "Warning: Input data X differs from that given to fit(). "
+            "Refitting with new input data, not storing updated public class "
+            "attributes. For this, explicitly use fit(X) or fit_transform(X)."
+        )
+        return new_dobin._coords
+
+    return self._coords
+
+
 def close_distance_matrix(X, k, frac):
 
     X = pd.DataFrame(X)
     nbrs = NearestNeighbors(n_neighbors=k + 1, metric="euclidean").fit(
         X
-    )  # FIXME: what default metric??
+    )  # FIXME: what default distance metric??
     _, indices = nbrs.kneighbors(X)
 
     dist = pd.DataFrame(
