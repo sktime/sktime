@@ -74,17 +74,9 @@ class SquaringResiduals(BaseForecaster):
     >>> var_fc = ThetaForecaster()
     >>> y = load_macroeconomic().realgdp
     >>> sqr = SquaringResiduals(forecaster=fc, variance_forecaster=var_fc)
-    >>> sqr.fit(y)
-    SquaringResiduals(forecaster=NaiveForecaster(),
-                  variance_forecaster=ThetaForecaster())
+    >>> sqr = sqr.fit(y)
     >>> fh = ForecastingHorizon(values=[1, 2, 3])
-    >>> sqr.predict_interval(fh, coverage=0.95)
-                Coverage
-                   0.95
-                  lower        upper
-    2009Q4  2568.614268  2988.987732
-    2010Q1  2568.384823  2989.217177
-    2010Q2  2568.155628  2989.446372
+    >>> pred_interval = sqr.predict_interval(fh, coverage=0.95)
     """
 
     _tags = {
