@@ -70,11 +70,10 @@ class SquaringResiduals(BaseForecaster):
     >>> from sktime.forecasting.theta import ThetaForecaster
     >>> from sktime.forecasting.squaring_residuals import SquaringResiduals
 
-    >>> forecaster = NaiveForecaster()
-    >>> variance_forecaster = ThetaForecaster()
+    >>> fc = NaiveForecaster()
+    >>> var_fc = ThetaForecaster()
     >>> y = load_macroeconomic().realgdp
-    >>> sqr = SquaringResiduals(forecaster=forecaster,
-    >>>                         variance_forecaster=variance_forecaster)
+    >>> sqr = SquaringResiduals(forecaster=fc, variance_forecaster=var_fc)
     >>> sqr.fit(y)
     SquaringResiduals(forecaster=NaiveForecaster(),
                   variance_forecaster=ThetaForecaster())
