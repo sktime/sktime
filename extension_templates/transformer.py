@@ -102,6 +102,7 @@ class MyTransformer(BaseTransformer):
         # to list all valid tags with description, use sktime.registry.all_tags
         #   all_tags(estimator_types="transformer", as_dataframe=True)
         #
+        #
         # behavioural tags: transformer type
         # ----------------------------------
         #
@@ -128,7 +129,8 @@ class MyTransformer(BaseTransformer):
         # scitype:transform-labels types the y used in transform
         #   if y is not used in transform, this should be "None"
         "scitype:transform-labels": "None",
-        # validvalues: "None" (not needed), "Primitives", "Series", "Panel"
+        # valid values: "None" (not needed), "Primitives", "Series", "Panel"
+        #
         #
         # behavioural tags: internal type
         # ----------------------------------
@@ -157,12 +159,17 @@ class MyTransformer(BaseTransformer):
         # valid avlues: False (no), True = exception is raised if no y is seen in _fit
         #   y can be passed or not in _transform for either value of requires_y
         #
+        #
         # capability tags: properties of the estimator
         # --------------------------------------------
         #
-
+        # it_is_empty = is fit empty and can be skipped?
+        "fit_is_empty": True,
+        # valid values: True = _fit is considered empty and skipped, False = No
+        # CAUTION: default is "True", i.e., _fit will be skipped even if implemented
+        #
         # X-y-must-have-same-index = can estimator handle different X/y index?
-        "X-y-must-have-same-index": True,
+        "X-y-must-have-same-index": False,
         # valid values: boolean True (yes), False (no)
         # if True, raises exception if X.index is not contained in y.index
         #
@@ -171,22 +178,50 @@ class MyTransformer(BaseTransformer):
         # valid values: pd.Index subtype, or list of pd.Index subtype
         # if not None, raises exception if X.index, y.index level -1 is not of that type
         #
-        "fit_is_empty": True,  # is fit empty and can be skipped? Yes = True
+        # transform-returns-same-time-index = does transform return same index as input?
         "transform-returns-same-time-index": False,
-        # does transform return have the same time index as input X
-
-        "capability:inverse_transform": False,  # can the transformer inverse transform?
+        # valid values: boolean True (yes), False (no)
+        # if True, transform and inverse_transform returns should have
+        #   same length and same index (if pandas) as inputs
+        # no exception is raised if this tag is incorrectly set
         #
-        "skip-inverse-transform": False,  # is inverse-transform skipped when called?
+        # capability:inverse_transform = is inverse_transform implemented?
+        "capability:inverse_transform": False,
+        # valid values: boolean True (yes), False (no)
+        # if True, _inverse_transform must be implemented
+        # if False, exception is raised if inverse_transform is called,
+        #   unless the skip-inverse-transform tag is set to True
+        #
+        # skip-inverse-transform = is inverse-transform skipped when called?
+        "skip-inverse-transform": False,
+        # if False, capability:inverse_transform tag behaviour is as per devault
+        # if True, inverse_transform is the identity transform and raises no exception
+        #   this is useful for transformers where inverse_transform
+        #   may be called but should behave as the identity, e.g., imputers
+        #
+        # capability:unequal_length = can the transformer handle unequal length panels,
+        #   i.e., when passed unequal length instances in Panel or Hierarchical data
         "capability:unequal_length": True,
-        # can the transformer handle unequal length time series (if passed Panel)?
+        # valid values: boolean True (yes), False (no)
+        # if False, may raise exception when passed unequal length Panel/Hierarchical
+        #
+        # capability:unequal_length:removes = if passed Panel/Hierarchical,
+        #   is transform result always guaranteed to be equal length (and series)?
         "capability:unequal_length:removes": False,
-        # is transform result always guaranteed to be equal length (and series)?
-        #   not relevant for transformers that return Primitives in transform-output
+        # valid values: boolean True (yes), False (no)
+        # applicable only if scitype:transform-output is not "Primitives"
+        # used for search index and validity checking, does not raise direct exception
+        #
+        # handles-missing-data = can the transformer handle missing data (np or pd.NA)?
         "handles-missing-data": False,  # can estimator handle missing data?
-        # todo: rename to capability:missing_values
+        # valid values: boolean True (yes), False (no)
+        # if False, may raise exception when passed time series with missing values
+        #
+        # capability:missing_values:removes = if passed time series
+        #   is transform result always guaranteed to contain no missing values?
         "capability:missing_values:removes": False,
-        # is transform result always guaranteed to contain no missing values?
+        # valid values: boolean True (yes), False (no)
+        # used for search index and validity checking, does not raise direct exception
         #
         #
         # dependency tags: python version and soft dependencies
