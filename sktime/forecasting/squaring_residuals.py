@@ -405,19 +405,3 @@ class SquaringResiduals(BaseForecaster):
             },
         ]
         return params
-
-
-if __name__ == "__main__":
-    from sktime.datasets import load_macroeconomic
-    from sktime.forecasting.base import ForecastingHorizon
-    from sktime.forecasting.naive import NaiveForecaster
-    from sktime.forecasting.theta import ThetaForecaster
-
-    forecaster = NaiveForecaster()
-    variance_forecaster = ThetaForecaster()
-    y = load_macroeconomic().realgdp
-    sqr = SquaringResiduals(forecaster=forecaster,
-                            variance_forecaster=variance_forecaster)
-    print(sqr.fit(y))
-    fh = ForecastingHorizon(values=[1, 2, 3])
-    print(sqr.predict_interval(fh, coverage=0.95))
