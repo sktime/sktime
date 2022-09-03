@@ -163,7 +163,7 @@ class MyTransformer(BaseTransformer):
         # capability tags: properties of the estimator
         # --------------------------------------------
         #
-        # it_is_empty = is fit empty and can be skipped?
+        # fit_is_empty = is fit empty and can be skipped?
         "fit_is_empty": True,
         # valid values: True = _fit is considered empty and skipped, False = No
         # CAUTION: default is "True", i.e., _fit will be skipped even if implemented
