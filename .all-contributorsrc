@@ -1760,6 +1760,17 @@
         "test"
       ]
     },
+    {
+      "login": "kcc-lion",
+      "name": "Kai Lion",
+      "profile": "https://github.com/kcc-lion",
+      "contributions": [
+        "code",
+        "test",
+        "doc"
+      ]
+    },
+
   ],
   "projectName": "sktime",
   "projectOwner": "alan-turing-institute",
