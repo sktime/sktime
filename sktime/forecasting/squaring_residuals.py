@@ -1,49 +1,11 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""
-Extension template for forecasters.
+"""Implements the probabilistic Squaring Residuals forecaster."""
 
-Purpose of this implementation template:
-    quick implementation of new estimators following the template
-    NOT a concrete class to import! This is NOT a base class or concrete class!
-    This is to be used as a "fill-in" coding template.
-
-How to use this implementation template to implement a new estimator:
-- make a copy of the template in a suitable location, give it a descriptive name.
-- work through all the "todo" comments below
-- fill in code for mandatory methods, and optionally for optional methods
-- do not write to reserved variables: is_fitted, _is_fitted, _X, _y, cutoff, _fh,
-    _cutoff, _converter_store_y, forecasters_, _tags, _tags_dynamic, _is_vectorized
-- you can add more private methods, but do not override BaseEstimator's private methods
-    an easy way to be safe is to prefix your methods with "_custom"
-- change docstrings for functions and the file
-- ensure interface compatibility by sktime.utils.estimator_checks.check_estimator
-- once complete: use as a local library, or contribute to sktime via PR
-- more details: https://www.sktime.org/en/stable/developer_guide/add_estimators.html
-
-Mandatory implements:
-    fitting         - _fit(self, y, X=None, fh=None)
-    forecasting     - _predict(self, fh=None, X=None)
-
-Optional implements:
-    updating                    - _update(self, y, X=None, update_params=True):
-    predicting quantiles        - _predict_quantiles(self, fh, X=None, alpha=None)
-    OR predicting intervals     - _predict_interval(self, fh, X=None, coverage=None)
-    predicting variance         - _predict_var(self, fh, X=None, cov=False)
-    distribution forecast       - _predict_proba(self, fh, X=None)
-    fitted parameter inspection - get_fitted_params()
-
-Testing - implement if sktime forecaster (not needed locally):
-    get default parameters for test instance(s) - get_test_params()
-"""
-# todo: write an informative docstring for the file or module, remove the above
-# todo: add an appropriate copyright notice for your estimator
-#       estimators contributed to sktime should have the copyright notice at the top
-#       estimators of your own do not need to have permissive or BSD-3 copyright
-
-# todo: uncomment the following line, enter authors' GitHub IDs
+__all__ = ["SquaringResiduals"]
 __author__ = ["kcc-lion"]
 
+from warnings import warn
 
 import pandas as pd
 
@@ -54,34 +16,78 @@ from sktime.forecasting.naive import NaiveForecaster
 
 
 class SquaringResiduals(BaseForecaster):
-    """Custom forecaster. todo: write docstring.
+    """SquaringResiduals forecaster.
 
-    todo: describe your custom forecaster here
+    Wraps a forecaster with another variance_forecaster object that
+    allows for quantile and interval estimation by fitting the residual
+    forecaster to the rolling residuals.
+
+    Fitting proceeds as follows:
+    Let $t_1, ..., t_N$ be the train set.
+    Let $steps_ahead$ be a positive integer indicating the steps ahead
+    we want to forecast the residuals.Let $initial_window$ be
+    the minimal number of observations to which the forecaster is fitted.
+
+    1. For $i= initial_window, ..., N - steps_ahead$
+        a. Train/Update forecaster A on $y(t_1), ..., y(t_i)$
+        b. Make point prediction for $t_{i+steps_ahead}$ to get
+           $hat{y}(t_{i+steps_ahead})$
+        c. Compute the residual for $t_{i+steps_ahead}$ with
+            $r(t_{i+steps_ahead}) := y(t_{i+steps_ahead}) - hat{y}(t_{i+steps_ahead})$
+        d. Apply  $e(t_{i+steps_ahead}) := h(r(t_{i+steps_ahead}))$
+           where $h(x)$ is given by $strategy$
+    3. Train variance_forecaster on $e(t_{initial_window+steps_ahead}), ..., e(t_{N})$
+
+    Prediction for $t_{N+steps_ahead}$ is done as follows:
+    1. Use forecaster again to predict location parameter $hat{y}(t_{N+steps_ahead})$
+    2. Use variance_forecaster to predict scale parameter $e(t_{N+steps_ahead})$
+    3. Calculate prediction intervals based on
+        e.g. normal assumption $N(hat{y}(t_{N+steps_ahead}),  e(t_{N+steps_ahead}))$
 
     Parameters
     ----------
-    parama : int
-        descriptive explanation of parama
-    paramb : string, optional (default='default')
-        descriptive explanation of paramb
-    paramc : boolean, optional (default= whether paramb is not the default)
-        descriptive explanation of paramc
-    and so on
-    est : sktime.estimator, BaseEstimator descendant
-        descriptive explanation of est
-    est2: another estimator
-        descriptive explanation of est2
-    and so on
+    forecaster : sktime.estimator, optional
+        Estimator to which probabilistic forecasts are being added
+    variance_forecaster : sktime.estimator, optional
+        Estimator which is fitted to the residuals of forecaster
+    initial_window : int, optional, default=2
+        Size of initial_window to which forecaster is fitted
+    steps_ahead : int, optional, default=1
+        Steps ahead for which we predict the residuals
+    strategy : str, optional, default='square'
+        Function applied to the residuals
+    distr : str, optional, default='norm'
+        Distributional assumption (["norm", "laplace", "t", "cauchy"])
+    distr_kwargs : dict, optional
+        Additional arguments required by the distributional assumption
+
+    Examples
+    --------
+    Use SquaringResiduals on macroeconomic data
+    >>> from sktime.datasets import load_macroeconomic
+    >>> from sktime.forecasting.base import ForecastingHorizon
+    >>> from sktime.forecasting.naive import NaiveForecaster
+    >>> from sktime.forecasting.theta import ThetaForecaster
+    >>> from sktime.forecasting.squaring_residuals import SquaringResiduals
+
+    >>> forecaster = NaiveForecaster()
+    >>> variance_forecaster = ThetaForecaster()
+    >>> y = load_macroeconomic().realgdp
+    >>> sqr = SquaringResiduals(forecaster=forecaster,
+    >>>                         variance_forecaster=variance_forecaster)
+    >>> sqr.fit(y)
+    SquaringResiduals(forecaster=NaiveForecaster(),
+                  variance_forecaster=ThetaForecaster())
+    >>> fh = ForecastingHorizon(values=[1, 2, 3])
+    >>> sqr.predict_interval(fh, coverage=0.95)
+                Coverage
+                   0.95
+                  lower        upper
+    2009Q4  2568.614268  2988.987732
+    2010Q1  2568.384823  2989.217177
+    2010Q2  2568.155628  2989.446372
     """
 
-    # todo: fill out estimator tags here
-    #  tags are inherited from parent class if they are not set
-    # todo: define the forecaster scitype by setting the tags
-    #  the "forecaster scitype" is determined by the tags
-    #   scitype:y - the expected input scitype of y - univariate or multivariate or both
-    #  when changing scitype:y to multivariate or both:
-    #   y_inner_mtype should be changed to pd.DataFrame
-    # other tags are "safe defaults" which can usually be left as-is
     _tags = {
         "scitype:y": "univariate",  # which y are fine? univariate/multivariate/both
         "ignores-exogeneous-X": True,  # does estimator ignore the exogeneous X?
@@ -94,24 +100,19 @@ class SquaringResiduals(BaseForecaster):
         "capability:pred_int": True,  # does forecaster implement proba forecasts?
         "python_version": None,  # PEP 440 python version specifier to limit versions
     }
-    #  in case of inheritance, concrete class should typically set tags
-    #  alternatively, descendants can set tags in __init__ (avoid this if possible)
 
-    # todo: add any hyper-parameters and components to constructor
     def __init__(
         self,
         forecaster=None,
-        residual_forecaster=None,
+        variance_forecaster=None,
         initial_window=2,
         steps_ahead=1,
         strategy="square",
         distr="norm",
         distr_kwargs=None,
     ):
-        # estimators should precede parameters
-        #  if estimators have default values, set None and initalize below
         self.forecaster = forecaster
-        self.residual_forecaster = residual_forecaster
+        self.variance_forecaster = variance_forecaster
         self.strategy = strategy
         self.steps_ahead = steps_ahead
         self.initial_window = initial_window
@@ -119,7 +120,6 @@ class SquaringResiduals(BaseForecaster):
         self.distr_kwargs = distr_kwargs
         super(SquaringResiduals, self).__init__()
 
-        # todo: optional, parameter checking logic (if applicable) should happen here
         assert self.distr in ["norm", "laplace", "t", "cauchy"]
         assert self.strategy in ["square", "abs"]
         assert self.steps_ahead >= 1, "Steps ahead should be larger or equal to one"
@@ -129,8 +129,8 @@ class SquaringResiduals(BaseForecaster):
 
         if self.forecaster is None:
             self.forecaster = NaiveForecaster()
-        if self.residual_forecaster is None:
-            self.residual_forecaster = NaiveForecaster()
+        if self.variance_forecaster is None:
+            self.variance_forecaster = NaiveForecaster()
 
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
@@ -161,7 +161,7 @@ class SquaringResiduals(BaseForecaster):
         -------
         self : reference to self
         """
-        self._residual_forecaster_ = self.residual_forecaster.clone()
+        self._variance_forecaster_ = self.variance_forecaster.clone()
         self._forecaster_ = self.forecaster.clone()
 
         y = convert_to(y, "pd.Series")
@@ -178,7 +178,7 @@ class SquaringResiduals(BaseForecaster):
         else:
             residuals = residuals.abs()
 
-        self._residual_forecaster_.fit(y=residuals)
+        self._variance_forecaster_.fit(y=residuals)
         return self
 
     def _predict(self, fh, X=None):
@@ -225,7 +225,7 @@ class SquaringResiduals(BaseForecaster):
             residuals = residuals**2
         else:
             residuals = residuals.abs()
-        self._residual_forecaster_.update(y=residuals, update_params=update_params)
+        self._variance_forecaster_.update(y=residuals, update_params=update_params)
         return self.predict(fh, X)
 
     def _predict_quantiles(self, fh, X=None, alpha=None):
@@ -304,7 +304,9 @@ class SquaringResiduals(BaseForecaster):
             if cov=True, pd.DataFrame with index fh and columns fh.
                 a square matrix of size len(fh) with predictive covariance matrix.
         """
-        pred_var = self._residual_forecaster_.predict(X=X, fh=fh)
+        if cov:
+            warn(f"cov={cov} is not supported. Defaulting to cov=False instead.")
+        pred_var = self._variance_forecaster_.predict(X=X, fh=fh)
         pred_var = convert_to(pred_var, to_type="pd.Series")
         if self.strategy == "square":
             pred_var = pred_var**0.5
@@ -353,13 +355,10 @@ class SquaringResiduals(BaseForecaster):
             residuals = residuals**2
         else:
             residuals = residuals.abs()
-        self._residual_forecaster_.update_predict(
+        self._variance_forecaster_.update_predict(
             y=residuals, update_params=update_params
         )
         return self
-
-        # implement here
-        # IMPORTANT: avoid side effects to X, fh
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -386,20 +385,20 @@ class SquaringResiduals(BaseForecaster):
         params = [
             {
                 "forecaster": NaiveForecaster(),
-                "residual_forecaster": NaiveForecaster(),
+                "variance_forecaster": NaiveForecaster(),
                 "initial_window": 2,
                 "distr": "norm",
             },
             {
                 "forecaster": NaiveForecaster(),
-                "residual_forecaster": NaiveForecaster(),
+                "variance_forecaster": NaiveForecaster(),
                 "initial_window": 2,
                 "distr": "t",
                 "distr_kwargs": {"df": 21},
             },
             {
                 "forecaster": Croston(),
-                "residual_forecaster": Croston(),
+                "variance_forecaster": Croston(),
                 "initial_window": 2,
                 "distr": "t",
                 "distr_kwargs": {"df": 21},
@@ -411,19 +410,14 @@ class SquaringResiduals(BaseForecaster):
 if __name__ == "__main__":
     from sktime.datasets import load_macroeconomic
     from sktime.forecasting.base import ForecastingHorizon
+    from sktime.forecasting.naive import NaiveForecaster
     from sktime.forecasting.theta import ThetaForecaster
-    from sktime.utils.estimator_checks import check_estimator
 
     forecaster = NaiveForecaster()
-    residual_forecaster = ThetaForecaster()
+    variance_forecaster = ThetaForecaster()
     y = load_macroeconomic().realgdp
-    sqr = SquaringResiduals(
-        forecaster=forecaster, residual_forecaster=residual_forecaster
-    )
-    fh_fit = ForecastingHorizon(values=[1])
-    sqr.fit(y, fh=fh_fit)
-    fh_pred = ForecastingHorizon(values=[1, 2, 3])
-    print(sqr.predict(ForecastingHorizon(values=[2, 5])))
-    print(sqr.predict_quantiles(fh_pred, X=None, alpha=[0.025, 0.975]))
-    print(sqr.predict_interval(fh_pred, coverage=0.95))
-    print(check_estimator(SquaringResiduals, return_exceptions=True))
+    sqr = SquaringResiduals(forecaster=forecaster,
+                            variance_forecaster=variance_forecaster)
+    print(sqr.fit(y))
+    fh = ForecastingHorizon(values=[1, 2, 3])
+    print(sqr.predict_interval(fh, coverage=0.95))
