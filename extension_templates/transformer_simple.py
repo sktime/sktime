@@ -137,14 +137,14 @@ class MyTransformer(BaseTransformer):
         #   if not on the list, converted to the first entry of the same scitype
         #
         # univariate-only controls whether internal X can be univariate/multivariate
-        # if multivariate is not valid, applies vectorization over variables
+        # if True (only univariate), always applies vectorization over variables
         "univariate-only": False,
         # valid values: True = inner _fit, _transform receive only univariate serie
         #   False = uni- and multivariate series are passed to inner methods
         #
         # requires_y = does y need to be passed in fit?
         "requires_y": False,
-        # valid avlues: False (no), True = exception is raised if no y is seen in _fit
+        # valid values: False (no), True = exception is raised if no y is seen in _fit
         #   y can be passed or not in _transform for either value of requires_y
         #
         #
