@@ -345,7 +345,7 @@ class ConformalIntervals(BaseForecaster):
 
         n_initial_window = self._parse_initial_window(y, initial_window=initial_window)
 
-        y_index = y.iloc[n_initial_window:]
+        y_index = y.iloc[n_initial_window:].index
 
         residuals_matrix = pd.DataFrame(columns=y_index, index=y_index, dtype="float")
 
