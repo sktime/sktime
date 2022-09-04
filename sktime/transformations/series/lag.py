@@ -494,12 +494,17 @@ class ReducerTransform(BaseTransformer):
         lags = self._lags
         freq = self.freq
 
-        transformers = []
+        # edge case of no reduction features - prepare to return all-zeros matrix
         if len(lags) == 0 and y is None:
-            raise ValueError(
+            warn(
                 "no lags specified and no exogeneous data present, "
-                "empty reduction X"
+                "empty reduction X. Returning all-zeros X."
             )
+            self.trafo_ = 0
+            return self
+
+        transformers = []
+
         if len(lags) > 0:
             t = Lag(lags=lags, freq=freq, index_out="original", keep_column_names=True)
             transformers += [("Lag", t)]
@@ -538,6 +543,10 @@ class ReducerTransform(BaseTransformer):
         -------
         pd.DataFrame, transformed version of X
         """
+        # treat edge case of empty reduction matrix: return all-zeros
+        if self.trafo_ == 0:
+            return pd.DataFrame(0, index=X.index, columns=["zero"])
+
         Xt = self.trafo_.transform(X=X, y=y)
 
         varnames = Xt.columns.get_level_values(1)
