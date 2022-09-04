@@ -1668,6 +1668,5 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
             "X_treatment": "concurrent",
             "pooling": "global",
         }
-        # params3 = {"estimator": est, "window_length": 0}
-        return [params1, params2]
-        # return [params1, params2, params3]
+        params3 = {"estimator": est, "window_length": 0}
+        return [params1, params2, params3]
