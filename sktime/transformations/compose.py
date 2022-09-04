@@ -1654,7 +1654,9 @@ class YtoX(BaseTransformer):
 
     Parameters
     ----------
-    no parameters
+    subset_index : boolean, optional, default=False
+        if True, subsets the output of `transform` to `X.index`,
+        i.e., outputs `y.loc[X.index]`
     """
 
     _tags = {
@@ -1668,7 +1670,10 @@ class YtoX(BaseTransformer):
         "requires_y": True,
     }
 
-    def __init__(self):
+    def __init__(self, subset_index=False):
+
+        self.subset_index = subset_index
+
         super(YtoX, self).__init__()
 
     def _transform(self, X, y=None):
@@ -1687,7 +1692,10 @@ class YtoX(BaseTransformer):
         -------
         y, as a transformed version of X
         """
-        return y
+        if self.subset_index:
+            return y.loc[X.index.intersection(y.index)]
+        else:
+            return y
 
     def _inverse_transform(self, X, y=None):
         """Inverse transform, inverse operation to transform.
@@ -1706,4 +1714,7 @@ class YtoX(BaseTransformer):
         -------
         inverse transformed version of X
         """
-        return y
+        if self.subset_index:
+            return y.loc[X.index.intersection(y.index)]
+        else:
+            return y
