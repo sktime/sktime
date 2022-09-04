@@ -1134,18 +1134,6 @@ class BaseForecaster(BaseEstimator):
 
         return mean_absolute_percentage_error(y, self.predict(fh, X))
 
-    def get_fitted_params(self):
-        """Get fitted parameters.
-
-        State required:
-            Requires state to be "fitted".
-
-        Returns
-        -------
-        fitted_params : dict
-        """
-        raise NotImplementedError("abstract method")
-
     def _check_X_y(self, X=None, y=None):
         """Check and coerce X/y for fit/predict/update functions.
 
