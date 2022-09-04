@@ -278,6 +278,39 @@ class ConformalIntervals(BaseForecaster):
 
         return pred_int
 
+    def _parse_initial_window(self, y, initial_window=None):
+
+        n_samples = len(y)
+
+        if initial_window is None:
+            initial_window = max(10, 0.1 * n_samples)
+
+        initial_window_type = np.asarray(initial_window).dtype.kind
+
+        if (
+            initial_window_type == "i"
+            and (initial_window >= n_samples or initial_window <= 0)
+            or initial_window_type == "f"
+            and (initial_window <= 0 or initial_window >= 1)
+        ):
+            raise ValueError(
+                "initial_window={0} should be either positive and smaller"
+                " than the number of samples {1} or a float in the "
+                "(0, 1) range".format(initial_window, n_samples)
+            )
+
+        if initial_window is not None and initial_window_type not in ("i", "f"):
+            raise ValueError(
+                "Invalid value for initial_window: {}".format(initial_window)
+            )
+
+        if initial_window_type == "f":
+            n_initial_window = int(floor(initial_window * n_samples))
+        elif initial_window_type == "i":
+            n_initial_window = int(initial_window)
+
+        return n_initial_window
+
     def _compute_sliding_residuals(self, y, X, forecaster, initial_window, sample_frac):
         """Compute sliding residuals used in uncertainty estimates.
 
@@ -309,34 +342,8 @@ class ConformalIntervals(BaseForecaster):
             fraction of the matrix
         """
         y = convert_to(y, "pd.Series")
-        n_samples = len(y)
 
-        if initial_window is None:
-            initial_window = max(10, 0.1 * n_samples)
-
-        initial_window_type = np.asarray(initial_window).dtype.kind
-
-        if (
-            initial_window_type == "i"
-            and (initial_window >= n_samples or initial_window <= 0)
-            or initial_window_type == "f"
-            and (initial_window <= 0 or initial_window >= 1)
-        ):
-            raise ValueError(
-                "initial_window={0} should be either positive and smaller"
-                " than the number of samples {1} or a float in the "
-                "(0, 1) range".format(initial_window, n_samples)
-            )
-
-        if initial_window is not None and initial_window_type not in ("i", "f"):
-            raise ValueError(
-                "Invalid value for initial_window: {}".format(initial_window)
-            )
-
-        if initial_window_type == "f":
-            n_initial_window = int(floor(initial_window * n_samples))
-        elif initial_window_type == "i":
-            n_initial_window = int(initial_window)
+        n_initial_window = self._parse_initial_window(y, initial_window=initial_window)
 
         y_index = y.iloc[n_initial_window:]
 
