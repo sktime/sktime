@@ -334,9 +334,9 @@ class ConformalIntervals(BaseForecaster):
             )
 
         if initial_window_type == "f":
-            n_initial_window = floor(initial_window * n_samples)
+            n_initial_window = int(floor(initial_window * n_samples))
         elif initial_window_type == "i":
-            n_initial_window = float(initial_window)
+            n_initial_window = int(initial_window)
 
         y_index = y.index[n_initial_window:]
 
