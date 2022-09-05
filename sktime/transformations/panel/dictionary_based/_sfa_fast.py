@@ -5,7 +5,7 @@ Configurable SFA transform for discretising time series into words.
 
 """
 
-__author__ = ["Patrick Schäfer"]
+__author__ = ["patrickzib"]
 __all__ = ["SFAFast"]
 
 import math
@@ -106,6 +106,9 @@ class SFAFast(BaseTransformer):
         skip_grams:     boolean, default = False
             whether to create skip-grams of SFA words
 
+        remove_repeat_words: boolean, default = False
+            whether to use numerosity reduction (default False)
+
         return_sparse:  boolean, default=True
             if set to true, a scipy sparse matrix will be returned as BOP model.
             If set to false a dense array will be returned as BOP model. Sparse
@@ -157,6 +160,7 @@ class SFAFast(BaseTransformer):
         variance=False,
         bigrams=False,
         skip_grams=False,
+        remove_repeat_words=False,
         save_words=False,
         feature_selection="none",
         max_feature_count=256,
@@ -177,6 +181,7 @@ class SFAFast(BaseTransformer):
 
         self.norm = norm
         self.inverse_sqrt_win_size = 1.0 / math.sqrt(window_size)
+        self.remove_repeat_words = remove_repeat_words
 
         self.save_words = save_words
 
@@ -257,6 +262,7 @@ class SFAFast(BaseTransformer):
             self.dft_length,
             self.word_length_actual,
             self.norm,
+            self.remove_repeat_words,
             self.support,
             self.anova,
             self.variance,
@@ -266,6 +272,9 @@ class SFAFast(BaseTransformer):
             self.skip_grams,
             self.inverse_sqrt_win_size,
         )
+
+        if self.remove_repeat_words:
+            words = remove_repeating_words(words)
 
         if self.save_words:
             self.words = words
@@ -310,6 +319,7 @@ class SFAFast(BaseTransformer):
             self.dft_length,
             self.word_length_actual,
             self.norm,
+            self.remove_repeat_words,
             self.support,
             self.anova,
             self.variance,
@@ -337,6 +347,7 @@ class SFAFast(BaseTransformer):
             self.relevant_features if self.relevant_features else empty_dict,
             words,
             self.bigrams,
+            self.remove_repeat_words,
         )[0]
 
         if self.return_pandas_data_series:
@@ -360,6 +371,7 @@ class SFAFast(BaseTransformer):
                 words.shape[0],
                 words,
                 word_len,  # self.word_length_actual,
+                self.remove_repeat_words,
             )
         else:
             feature_names = create_feature_names(words)
@@ -385,6 +397,7 @@ class SFAFast(BaseTransformer):
                     relevant_features_idx,
                     np.array(list(feature_names)),
                     words,
+                    self.remove_repeat_words,
                 )
 
             # Chi-squared feature selection
@@ -396,6 +409,7 @@ class SFAFast(BaseTransformer):
                     relevant_features_idx,
                     np.array(list(feature_names)),
                     words,
+                    self.remove_repeat_words,
                 )
 
                 chi2_statistics, p = chi2(bag_of_words, y)
@@ -577,7 +591,6 @@ class SFAFast(BaseTransformer):
             Name of the set of test parameters to return, for use in tests. If no
             special parameters are defined for a value, will return `"default"` set.
 
-
         Returns
         -------
         params : dict or list of dict, default = {}
@@ -688,6 +701,7 @@ def _transform_case(
     dft_length,
     word_length,
     norm,
+    remove_repeat_words,
     support,
     anova,
     variance,
@@ -708,18 +722,34 @@ def _transform_case(
         inverse_sqrt_win_size,
     )
 
-    return (
-        generate_words(
-            dfts,
-            bigrams,
-            skip_grams,
-            window_size,
-            breakpoints,
-            word_length,
-            letter_bits,
-        ),
+    words = generate_words(
         dfts,
+        bigrams,
+        skip_grams,
+        window_size,
+        breakpoints,
+        word_length,
+        letter_bits,
     )
+
+    if remove_repeat_words:
+        words = remove_repeating_words(words)
+
+    return words, dfts
+
+
+@njit(fastmath=True, cache=True)
+def remove_repeating_words(words):
+    for i in range(words.shape[0]):
+        last_word = 0
+        for j in range(words.shape[1]):
+            if last_word == words[i, j]:
+                # We encode the repeated words as 0 and remove them
+                # This is implementged using np.nonzero in numba. Thus must be 0
+                words[i, j] = 0
+            last_word = words[i, j]
+
+    return words
 
 
 @njit(fastmath=True, cache=True)
@@ -792,16 +822,6 @@ def generate_words(
                     words[a, : dfts.shape[1]] << letter_bits
                 ) | np.digitize(dfts[a, :, i], breakpoints[i], right=True)
 
-        # for a in prange(dfts.shape[0]):
-        #     for w in prange(dfts.shape[1]):
-        #         word = np.uint32(0)
-        #         for i in range(breakpoints.shape[0]):
-        #             for bp in range(breakpoints.shape[1]):
-        #                 if dfts[a, w, i] <= breakpoints[i][bp]:
-        #                     word = (word << letter_bits) | bp
-        #                     break
-        #         words[a, w] = word
-
     # add bigrams
     if bigrams:
         for a in range(0, dfts.shape[1] - window_size):
@@ -809,13 +829,13 @@ def generate_words(
             second_word = words[:, a + window_size]
             words[:, dfts.shape[1] + a] = (first_word << word_bits) | second_word
 
-    # add 2,3-skip-grams
-    if skip_grams:
-        for s in range(2, 4):
-            for a in range(0, dfts.shape[1] - s * window_size):
-                first_word = words[:, a]
-                second_word = words[:, a + s * window_size]
-                words[:, dfts.shape[1] + a] = (first_word << word_bits) | second_word
+    # # add 2,3-skip-grams
+    # if skip_grams:
+    #     for s in range(2, 4):
+    #         for a in range(0, dfts.shape[1] - s * window_size):
+    #             first_word = words[:, a]
+    #             second_word = words[:, a + s * window_size]
+    #             words[:, dfts.shape[1] + a] = (first_word << word_bits) | second_word
 
     return words
 
@@ -899,19 +919,28 @@ def create_feature_names(sfa_words):
 
 
 @njit(cache=True, fastmath=True)
-def create_bag_none(breakpoints, n_instances, sfa_words, word_length):
+def create_bag_none(
+    breakpoints, n_instances, sfa_words, word_length, remove_repeat_words
+):
     feature_count = np.uint32(breakpoints.shape[1] ** word_length)
     all_win_words = np.zeros((n_instances, feature_count), dtype=np.uint32)
 
     for j in range(len(sfa_words)):
-        all_win_words[j, :] = np.bincount(sfa_words[j], minlength=feature_count)
+        # this mask is used to encode the repeated words
+        if remove_repeat_words:
+            masked = np.nonzero(sfa_words[j])
+            all_win_words[j, :] = np.bincount(
+                sfa_words[j][masked], minlength=feature_count
+            )
+        else:
+            all_win_words[j, :] = np.bincount(sfa_words[j], minlength=feature_count)
 
     return all_win_words
 
 
 @njit(cache=True, fastmath=True)
 def create_bag_feature_selection(
-    n_instances, relevant_features_idx, feature_names, sfa_words
+    n_instances, relevant_features_idx, feature_names, sfa_words, remove_repeat_words
 ):
     relevant_features = Dict.empty(key_type=types.uint32, value_type=types.uint32)
     for k, v in zip(
@@ -919,6 +948,10 @@ def create_bag_feature_selection(
         np.arange(len(relevant_features_idx), dtype=np.uint32),
     ):
         relevant_features[k] = v
+
+    if remove_repeat_words:
+        if 0 in relevant_features:
+            del relevant_features[0]
 
     all_win_words = np.zeros((n_instances, len(relevant_features_idx)), dtype=np.uint32)
     for j in range(len(sfa_words)):
@@ -930,20 +963,36 @@ def create_bag_feature_selection(
 
 @njit(cache=True, fastmath=True)
 def create_bag_transform(
-    feature_count, feature_selection, relevant_features, sfa_words, bigrams
+    feature_count,
+    feature_selection,
+    relevant_features,
+    sfa_words,
+    bigrams,
+    remove_repeat_words,
 ):
     # merging arrays
     all_win_words = np.zeros((len(sfa_words), feature_count), np.uint32)
     for j in range(len(sfa_words)):
         if len(relevant_features) == 0 and feature_selection == "none":
-            all_win_words[j, :] = np.bincount(sfa_words[j], minlength=feature_count)
+            # this mask is used to encode the repeated words
+            if remove_repeat_words:
+                masked = np.nonzero(sfa_words[j])
+                all_win_words[j, :] = np.bincount(
+                    sfa_words[j][masked], minlength=feature_count
+                )
+            else:
+                all_win_words[j, :] = np.bincount(sfa_words[j], minlength=feature_count)
         else:
+            if remove_repeat_words:
+                if 0 in relevant_features:
+                    del relevant_features[0]
+
             for _, key in enumerate(sfa_words[j]):
                 if key in relevant_features:
                     o = relevant_features[key]
                     all_win_words[j, o] += 1
 
-    return all_win_words, feature_count
+    return all_win_words, all_win_words.shape[1]
 
 
 @njit(fastmath=True, cache=True)

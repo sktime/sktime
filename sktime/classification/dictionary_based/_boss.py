@@ -5,7 +5,7 @@ Dictionary based BOSS classifiers based on SFA transform. Contains a single
 BOSS and a BOSS ensemble.
 """
 
-__author__ = ["MatthewMiddlehurst", "Patrick Schäfer"]
+__author__ = ["MatthewMiddlehurst", "patrickzib"]
 __all__ = ["BOSSEnsemble", "IndividualBOSS"]
 
 from itertools import compress
@@ -564,7 +564,7 @@ class IndividualBOSS(BaseClassifier):
             window_size=self.window_size,
             norm=self.norm,
             bigrams=False,
-            # TODO remove_repeat_words=True,
+            remove_repeat_words=True,
             save_words=self.save_words,
             n_jobs=self.n_jobs,
             feature_selection=self.feature_selection,
