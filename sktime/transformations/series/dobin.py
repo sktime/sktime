@@ -20,7 +20,7 @@ __all__ = ["DOBIN"]
 def unitize(x):
     diff = max(x) - min(x)
     if diff == 0:
-        return np.zeros(len(x))
+        return x
     return (x - min(x)) / diff
 
 
@@ -120,6 +120,7 @@ class DOBIN(BaseTransformer):
         if n_obs < n_dim:
             pca = PCA(n_components=n_obs)
             X = pca.fit_transform(X)
+            self._X_pca = X
             _, n_dim = X.shape
 
         if self.k is None:
@@ -136,6 +137,12 @@ class DOBIN(BaseTransformer):
             # Find eta
             w = y_space.apply(sum, axis=0)
             eta = np.array([w / np.sqrt(sum(w**2))])
+
+            # If any...
+            if np.isnan(eta).any():
+                basis_col = pd.DataFrame(null_space(basis.T))
+                basis = pd.concat([basis, basis_col], axis=1)
+                break
 
             # Update basis
             basis_col = pd.DataFrame(np.dot(B, eta.T))
@@ -188,9 +195,7 @@ class DOBIN(BaseTransformer):
 def close_distance_matrix(X, k, frac):
 
     X = pd.DataFrame(X)
-    nbrs = NearestNeighbors(n_neighbors=k + 1, metric="euclidean").fit(
-        X
-    )  # FIXME: double check default distance metric in R??
+    nbrs = NearestNeighbors(n_neighbors=k + 1, metric="euclidean").fit(X)
     _, indices = nbrs.kneighbors(X)
 
     dist = pd.DataFrame(

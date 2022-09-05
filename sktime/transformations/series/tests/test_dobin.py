@@ -148,7 +148,6 @@ def test_fit_median_standardization():
 
 def test_pca_reduction():
     """Test when n_obs is less than n_dim and PCA is applied initially."""
-
     X = np.array(
         [
             [1.4374e01, 6.5900e00, 1.1520e00, -1.2400e-01, -1.6000e-02, 9.1900e-01],
@@ -169,9 +168,39 @@ def test_pca_reduction():
 
     model = DOBIN(k=2, frac=0.5)
     fitted_model = model.fit(X)
-    X_actual = fitted_model.X
+    X_actual = fitted_model._X_pca
 
     assert np.allclose(abs(X_expected), abs(X_actual), rtol=0.001)
 
 
-# TODO: test with rows all zero variance
+def test_zero_variance():
+    """Test for column with zero variance."""
+    X = np.array(
+        [
+            [-0.626, 0.659, 1.0],
+            [0.184, -1.641, 1.0],
+            [-0.836, 0.975, 1.0],
+            [1.595, 1.477, 1.0],
+        ]
+    )
+
+    coords_expected = np.array(
+        [
+            [0.4736931, 0.57202103, 1.0],
+            [0.35209305, -0.22820652, 1.0],
+            [0.45632521, 0.70405059, 1.0],
+            [1.3830473, 0.2952629, 1.0],
+        ]
+    )
+
+    basis_expected = np.array(
+        [[0.8391551, -0.5438922, 0.0], [0.5438922, 0.8391551, 0.0], [0.0, 0.0, 1.0]]
+    )
+
+    model = DOBIN(k=1, frac=0.5)
+    fitted_model = model.fit(X)
+    coords_actual = fitted_model._coords
+    basis_actual = fitted_model._basis
+
+    assert np.allclose(coords_expected, coords_actual)
+    assert np.allclose(basis_expected, basis_actual)
