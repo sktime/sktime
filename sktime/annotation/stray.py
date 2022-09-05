@@ -40,7 +40,7 @@ class STRAY(BaseTransformer):
     ----------
     alpha : float, optional (default=0.01)
         Threshold for determining the cutoff for outliers. Observations are
-        considered outliers if they fall in the (1- alpha) tail of
+        considered outliers if they fall in the (1 - alpha) tail of
         the distribution of the nearest-neighbor distances between exemplars.
     k : int, optional (default=10)
         Number of neighbours considered.
