@@ -231,21 +231,21 @@ def get_classifiers():
         "BOSS": BOSSEnsemble(random_state=1379, n_jobs=threads_to_use),
         # "cBOSS": ContractableBOSS(random_state=1379, n_jobs=threads_to_use),
         # "TDE": TemporalDictionaryEnsemble(random_state=1379, n_jobs=threads_to_use),
-        "WEASEL_RS (ED,FS:None)": WEASEL_STEROIDS(
-            random_state=1379,
-            binning_strategies=["equi-depth"],
-            alphabet_sizes=[2],
-            min_window=4,
-            max_window=24,
-            max_feature_count=10_000,
-            word_lengths=[8],  # test only 6 or 8?
-            norm_options=[False],  # p[True]=0.8
-            variance=True,
-            ensemble_size=50,
-            use_first_differences=[True, False],
-            feature_selection="none",
-            n_jobs=threads_to_use,
-        ),
+        # "WEASEL_RS (ED,FS:None)": WEASEL_STEROIDS(
+        #     random_state=1379,
+        #     binning_strategies=["equi-depth"],
+        #     alphabet_sizes=[2],
+        #     min_window=4,
+        #     max_window=24,
+        #     max_feature_count=10_000,
+        #     word_lengths=[8],  # test only 6 or 8?
+        #     norm_options=[False],  # p[True]=0.8
+        #     variance=True,
+        #     ensemble_size=50,
+        #     use_first_differences=[True, False],
+        #     feature_selection="none",
+        #     n_jobs=threads_to_use,
+        # ),
         # "WEASEL_RS": WEASEL_STEROIDS(
         #     random_state=1379,
         #     binning_strategies=["equi-depth"],

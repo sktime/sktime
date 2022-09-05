@@ -14,6 +14,20 @@ from sktime.classification.dictionary_based import WEASEL_STEROIDS
 
 sys.path.append("../../..")
 
+"""
+Interesting!
+FreezerSmallTrain
+GestureMidAirD3
+InlineSkate
+MelbournePedestrian
+PickupGestureWiimoteZ
+PowerCons
+SemgHandMovementCh2
+SmoothSubspace
+Worms
+WormsTwoClass
+"""
+
 
 def load_from_ucr_tsv_to_dataframe_plain(full_file_path_and_name):
     """Load UCR datasets."""

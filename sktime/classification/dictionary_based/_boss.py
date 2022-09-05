@@ -11,10 +11,8 @@ __all__ = ["BOSSEnsemble", "IndividualBOSS"]
 from itertools import compress
 
 import numpy as np
-
-# from sklearn.metrics import pairwise
+from sklearn.metrics import pairwise
 from sklearn.utils import check_random_state
-from sklearn.utils.extmath import safe_sparse_dot
 
 from sktime.classification.base import BaseClassifier
 from sktime.transformations.panel.dictionary_based import SFAFast
@@ -356,7 +354,9 @@ class BOSSEnsemble(BaseClassifier):
         else:
             for i, clf in enumerate(self.estimators_):
                 if self._transformed_data.shape[1] > 0:
-                    distance_matrix = compute_pairwise_distances(clf._transformed_data)
+                    distance_matrix = pairwise_distances(
+                        clf._transformed_data, n_jobs=self.n_jobs
+                    )
 
                     preds = []
                     for i in range(n_instances):
@@ -381,7 +381,9 @@ class BOSSEnsemble(BaseClassifier):
 
         # there may be no words if feature selection is too aggressive
         if boss._transformed_data.shape[1] > 0:
-            distance_matrix = compute_pairwise_distances(boss._transformed_data)
+            distance_matrix = pairwise_distances(
+                boss._transformed_data, n_jobs=self.n_jobs
+            )
 
             for i in range(train_size):
                 if correct + train_size - i < required_correct:
@@ -562,7 +564,7 @@ class IndividualBOSS(BaseClassifier):
             window_size=self.window_size,
             norm=self.norm,
             bigrams=False,
-            # TODO remove_repeat_words=True,
+            remove_repeat_words=False,
             save_words=self.save_words,
             n_jobs=self.n_jobs,
             feature_selection=self.feature_selection,
@@ -591,8 +593,8 @@ class IndividualBOSS(BaseClassifier):
         classes = np.zeros(test_bags.shape[0], dtype=type(self._class_vals[0]))
 
         if self._transformed_data.shape[1] > 0:
-            distance_matrix = compute_pairwise_distances(
-                test_bags, self._transformed_data
+            distance_matrix = pairwise_distances(
+                test_bags, self._transformed_data, self.n_jobs
             )
 
             for i in range(test_bags.shape[0]):
@@ -645,6 +647,12 @@ class IndividualBOSS(BaseClassifier):
         self._transformed_data = self._transformer.fit_transform(X, y)
 
 
+def pairwise_distances(X, Y=None, n_jobs=1):
+    """Find the euclidean distance between all pairs of bop-models."""
+    # TODO asymmetric BOSS distance??
+    return pairwise.pairwise_distances(X, Y, n_jobs=n_jobs)
+
+
 # @njit(cache=True, fastmath=True)
 # def boss_distance(first, second, best_dist=sys.float_info.max):
 #     """Find the distance between two histograms.
@@ -674,36 +682,70 @@ class IndividualBOSS(BaseClassifier):
 #         The boss distance between the first and second dictionaries.
 #     """
 #     # TODO asymmetric distance??
-#     # second_sliced = second[first.indices]
+
+
+# @njit()
+# def compute_pairwise_distances(X, Y=None):
 #
-#     #buf = (first - second)
-#     #return buf.dot(buf.T)[0,0]
-#     return pairwise.pairwise_distances(first, second)
-
-# X = boss._transformed_data
-# distances = -2 * safe_sparse_dot(X, X.T, dense_output=True)
-# distances += XX
-
-
-def compute_pairwise_distances(X, Y=None):
-    # distance_matrix = pairwise.pairwise_distances(
-    #    boss._transformed_data, n_jobs=self.n_jobs
-    # )
-    # distance_matrix = pairwise.pairwise_distances(
-    #   test_bags, self._transformed_data, n_jobs=self.n_jobs
-    # )
-
-    from sklearn.utils.sparsefuncs_fast import csr_row_norms
-
-    XX = csr_row_norms(X)
-    YY = csr_row_norms(X)
-    if Y is None:
-        A = XX - 2 * safe_sparse_dot(X, X.T, dense_output=True) + YY
-        np.maximum(A, 0, out=A)
-        np.fill_diagonal(A, 0)
-        return A
-    else:
-        A = -2 * safe_sparse_dot(X, Y.T, dense_output=True)
-        A = XX.astype(np.int32).reshape(-1, 1) + A + YY.reshape(-1, 1)
-        np.maximum(A, 0, out=A)
-        return A
+#     nn_distances = np.zeros(X.shape[0])
+#     nn_positions = np.zeros(X.shape[0], dtype=np.uint32)
+#     same = False
+#
+#     # if isinstance(X, csr_matrix):
+#     if Y is None:
+#         Y = X
+#         same = True
+#
+#     for i in range(X.shape[0]):
+#         nn_distances[i] = np.Inf
+#         nn_positions[i] = 0
+#
+#         cx = X[i].tocoo()
+#         x_c = cx.col
+#         x_d = cx.data
+#
+#         for j in range(Y.shape[0]):
+#             if i == j and same:
+#                 continue
+#
+#             cy = Y[j].tocoo()
+#             y_c = cy.col
+#             y_d = cy.data
+#
+#             distance = boss_distance_csr_matrix(
+#                 i, j, nn_distances[i], x_c, x_d, y_c, y_d
+#             )
+#
+#             if distance < nn_distances[i]:
+#                 nn_distances[i] = distance
+#                 nn_positions[i] = j
+#
+#     return nn_positions
+#
+#     # last_y = 0
+#     # for x_i, x_j, x_v in zip(cx.row, cx.col, cx.data):
+#     #    for a in range(last_y, len(cy.col)):
+#     #    (i, j, v)
+#
+#     # TODO!
+#     # else:
+#
+#
+# @njit(fastmath=True, cache=True)
+# def boss_distance_csr_matrix(i, j, nn_distance, x_c, x_d, y_c, y_d):
+#     last_b = 0
+#     distance = 0
+#     for a in range(len(x_c)):
+#         for b in range(last_b, len(y_c)):
+#             # match of keys
+#             if x_c[a] == y_c[b]:
+#                 buf = x_d[a] - y_d[b]
+#                 distance += buf * buf
+#                 last_b = j
+#                 break
+#             elif x_c[a] < y_c[b]:
+#                 break
+#         if distance >= nn_distance:
+#             return distance
+#
+#     return distance
