@@ -11,8 +11,10 @@ __all__ = ["BOSSEnsemble", "IndividualBOSS"]
 from itertools import compress
 
 import numpy as np
-from sklearn.metrics import pairwise
+
+# from sklearn.metrics import pairwise
 from sklearn.utils import check_random_state
+from sklearn.utils.extmath import safe_sparse_dot
 
 from sktime.classification.base import BaseClassifier
 from sktime.transformations.panel.dictionary_based import SFAFast
@@ -354,9 +356,7 @@ class BOSSEnsemble(BaseClassifier):
         else:
             for i, clf in enumerate(self.estimators_):
                 if self._transformed_data.shape[1] > 0:
-                    distance_matrix = pairwise.pairwise_distances(
-                        clf._transformed_data, n_jobs=self.n_jobs
-                    )
+                    distance_matrix = compute_pairwise_distances(clf._transformed_data)
 
                     preds = []
                     for i in range(n_instances):
@@ -381,9 +381,7 @@ class BOSSEnsemble(BaseClassifier):
 
         # there may be no words if feature selection is too aggressive
         if boss._transformed_data.shape[1] > 0:
-            distance_matrix = pairwise.pairwise_distances(
-                boss._transformed_data, n_jobs=self.n_jobs
-            )
+            distance_matrix = compute_pairwise_distances(boss._transformed_data)
 
             for i in range(train_size):
                 if correct + train_size - i < required_correct:
@@ -593,8 +591,8 @@ class IndividualBOSS(BaseClassifier):
         classes = np.zeros(test_bags.shape[0], dtype=type(self._class_vals[0]))
 
         if self._transformed_data.shape[1] > 0:
-            distance_matrix = pairwise.pairwise_distances(
-                test_bags, self._transformed_data, n_jobs=self.n_jobs
+            distance_matrix = compute_pairwise_distances(
+                test_bags, self._transformed_data
             )
 
             for i in range(test_bags.shape[0]):
@@ -681,3 +679,31 @@ class IndividualBOSS(BaseClassifier):
 #     #buf = (first - second)
 #     #return buf.dot(buf.T)[0,0]
 #     return pairwise.pairwise_distances(first, second)
+
+# X = boss._transformed_data
+# distances = -2 * safe_sparse_dot(X, X.T, dense_output=True)
+# distances += XX
+
+
+def compute_pairwise_distances(X, Y=None):
+    # distance_matrix = pairwise.pairwise_distances(
+    #    boss._transformed_data, n_jobs=self.n_jobs
+    # )
+    # distance_matrix = pairwise.pairwise_distances(
+    #   test_bags, self._transformed_data, n_jobs=self.n_jobs
+    # )
+
+    from sklearn.utils.sparsefuncs_fast import csr_row_norms
+
+    XX = csr_row_norms(X)
+    YY = csr_row_norms(X)
+    if Y is None:
+        A = XX - 2 * safe_sparse_dot(X, X.T, dense_output=True) + YY
+        np.maximum(A, 0, out=A)
+        np.fill_diagonal(A, 0)
+        return A
+    else:
+        A = -2 * safe_sparse_dot(X, Y.T, dense_output=True)
+        A = XX.astype(np.int32).reshape(-1, 1) + A + YY.reshape(-1, 1)
+        np.maximum(A, 0, out=A)
+        return A

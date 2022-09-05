@@ -340,6 +340,7 @@ def _parallel_fit(
 
     # maximize word-length
     word_length = min(window_size - 2, rng.choice(word_lengths))
+
     norm = rng.choice(norm_options)
     # word_length = min(window_size - (2 if norm else 0), rng.choice(word_lengths))
 
@@ -361,6 +362,7 @@ def _parallel_fit(
             norm=norm,
             anova=anova,
             binning_method=binning_strategy,
+            remove_repeat_words=False,
             bigrams=bigrams,
             dilation=dilation,
             first_difference=first_difference,
