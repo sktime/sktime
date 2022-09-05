@@ -46,7 +46,7 @@ class STRAY(BaseTransformer):
         Number of neighbours considered.
     knn_algorithm : str {"auto", "ball_tree", "kd_tree", "brute"}, optional
         (default="brute")
-        Algorithm used to compute the nearest neighbors in
+        Algorithm used to compute the nearest neighbors, from
         sklearn.neighbors.NearestNeighbors
     normalize : callable {unitize, standardize} (default=unitize)
         Method to normalize the columns of the data. This prevents variables
