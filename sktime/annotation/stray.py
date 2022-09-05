@@ -69,7 +69,7 @@ class STRAY(BaseTransformer):
 
     References
     ----------
-    [1] Talagala, Priyanga Dilini, Rob J. Hyndman, and Kate Smith-Miles.
+    .. [1] Talagala, Priyanga Dilini, Rob J. Hyndman, and Kate Smith-Miles.
     "Anomaly detection in high-dimensional data." Journal of Computational
     and Graphical Statistics 30.2 (2021): 360-374.
     [2] Wilkinson, Leland. "Visualizing big data outliers through
