@@ -138,7 +138,8 @@ class DOBIN(BaseTransformer):
             w = y_space.apply(sum, axis=0)
             eta = np.array([w / np.sqrt(sum(w**2))])
 
-            # If any...
+            # If issues finding Y space (e.g. no variance in column)
+            # get null space of basis
             if np.isnan(eta).any():
                 basis_col = pd.DataFrame(null_space(basis.T))
                 basis = pd.concat([basis, basis_col], axis=1)
