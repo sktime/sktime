@@ -534,7 +534,7 @@ class IndividualBOSS(BaseClassifier):
         self.norm = norm
         self.alphabet_size = alphabet_size
         self.feature_selection = feature_selection
-        self.use_boss_distance = (use_boss_distance,)
+        self.use_boss_distance = use_boss_distance
 
         self.save_words = save_words
         self.n_jobs = n_jobs
