@@ -72,7 +72,7 @@ class STRAY(BaseTransformer):
     .. [1] Talagala, Priyanga Dilini, Rob J. Hyndman, and Kate Smith-Miles.
     "Anomaly detection in high-dimensional data." Journal of Computational
     and Graphical Statistics 30.2 (2021): 360-374.
-    [2] Wilkinson, Leland. "Visualizing big data outliers through
+    .. [2] Wilkinson, Leland. "Visualizing big data outliers through
     distributed aggregation." IEEE transactions on visualization and
     computer graphics 24.1 (2017): 256-266.
 
