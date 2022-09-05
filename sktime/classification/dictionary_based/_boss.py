@@ -13,6 +13,8 @@ from itertools import compress
 import numpy as np
 from sklearn.metrics import pairwise
 from sklearn.utils import check_random_state
+from sklearn.utils.extmath import safe_sparse_dot
+from sklearn.utils.sparsefuncs_fast import csr_row_norms
 
 from sktime.classification.base import BaseClassifier
 from sktime.transformations.panel.dictionary_based import SFAFast
@@ -126,9 +128,10 @@ class BOSSEnsemble(BaseClassifier):
         threshold=0.92,
         max_ensemble_size=500,
         max_win_len_prop=1,
-        min_window=6,
+        min_window=10,
         save_train_predictions=False,
-        feature_selection="chi2",
+        feature_selection="none",
+        use_boss_distance=True,
         alphabet_size=2,
         n_jobs=1,
         random_state=None,
@@ -141,6 +144,7 @@ class BOSSEnsemble(BaseClassifier):
         self.save_train_predictions = save_train_predictions
         self.n_jobs = n_jobs
         self.random_state = random_state
+        self.use_boss_distance = use_boss_distance
 
         self.estimators_ = []
         self.n_estimators_ = 0
@@ -207,6 +211,7 @@ class BOSSEnsemble(BaseClassifier):
                     normalise,
                     self.alphabet_size,
                     save_words=True,
+                    use_boss_distance=self.use_boss_distance,
                     feature_selection=self.feature_selection,
                     n_jobs=self.n_jobs,
                     random_state=self.random_state,
@@ -354,8 +359,10 @@ class BOSSEnsemble(BaseClassifier):
         else:
             for i, clf in enumerate(self.estimators_):
                 if self._transformed_data.shape[1] > 0:
-                    distance_matrix = pairwise.pairwise_distances(
-                        clf._transformed_data, n_jobs=self.n_jobs
+                    distance_matrix = pairwise_distances(
+                        clf._transformed_data,
+                        use_boss_distance=self.use_boss_distance,
+                        n_jobs=self.n_jobs,
                     )
 
                     preds = []
@@ -381,8 +388,10 @@ class BOSSEnsemble(BaseClassifier):
 
         # there may be no words if feature selection is too aggressive
         if boss._transformed_data.shape[1] > 0:
-            distance_matrix = pairwise.pairwise_distances(
-                boss._transformed_data, n_jobs=self.n_jobs
+            distance_matrix = pairwise_distances(
+                boss._transformed_data,
+                use_boss_distance=self.use_boss_distance,
+                n_jobs=self.n_jobs,
             )
 
             for i in range(train_size):
@@ -515,6 +524,7 @@ class IndividualBOSS(BaseClassifier):
         norm=False,
         alphabet_size=2,
         save_words=False,
+        use_boss_distance=False,
         feature_selection="none",
         n_jobs=1,
         random_state=None,
@@ -524,6 +534,7 @@ class IndividualBOSS(BaseClassifier):
         self.norm = norm
         self.alphabet_size = alphabet_size
         self.feature_selection = feature_selection
+        self.use_boss_distance = (use_boss_distance,)
 
         self.save_words = save_words
         self.n_jobs = n_jobs
@@ -593,8 +604,11 @@ class IndividualBOSS(BaseClassifier):
         classes = np.zeros(test_bags.shape[0], dtype=type(self._class_vals[0]))
 
         if self._transformed_data.shape[1] > 0:
-            distance_matrix = pairwise.pairwise_distances(
-                test_bags, self._transformed_data, n_jobs=self.n_jobs
+            distance_matrix = pairwise_distances(
+                test_bags,
+                self._transformed_data,
+                use_boss_distance=self.use_boss_distance,
+                n_jobs=self.n_jobs,
             )
 
             for i in range(test_bags.shape[0]):
@@ -619,6 +633,7 @@ class IndividualBOSS(BaseClassifier):
             self.norm,
             self.alphabet_size,
             save_words=self.save_words,
+            use_boss_distance=self.use_boss_distance,
             feature_selection=self.feature_selection,
             n_jobs=self.n_jobs,
             random_state=self.random_state,
@@ -647,37 +662,55 @@ class IndividualBOSS(BaseClassifier):
         self._transformed_data = self._transformer.fit_transform(X, y)
 
 
+def pairwise_distances(X, Y=None, use_boss_distance=False, n_jobs=1):
+    """Find the euclidean distance between all pairs of bop-models."""
+    if use_boss_distance:
+        if Y is None:
+            Y = X
+
+        distance_matrix = np.zeros((X.shape[0], Y.shape[0]))
+        for i in range(len(distance_matrix)):
+            distance_matrix[i] = boss_distance(X, Y, i)
+    else:
+        distance_matrix = pairwise.pairwise_distances(X, Y, n_jobs=n_jobs)
+
+    if X is Y or Y is None:
+        np.fill_diagonal(distance_matrix, np.inf)
+
+    return distance_matrix
+
+
 # @njit(cache=True, fastmath=True)
-# def boss_distance(first, second, best_dist=sys.float_info.max):
-#     """Find the distance between two histograms.
-#
-#     This returns the distance between first and second dictionaries, using a non
-#     symmetric distance measure. It is used to find the distance between historgrams
-#     of words.
-#
-#     This distance function is designed for sparse matrix, represented as either a
-#     dictionary or an arrray. It only measures the distance between counts present in
-#     the first dictionary and the second. Hence dist(a,b) does not necessarily equal
-#     dist(b,a).
-#
-#     Parameters
-#     ----------
-#     first : sparse matrix
-#         Base dictionary used in distance measurement.
-#     second : sparse matrix
-#         Second dictionary that will be used to measure distance from `first`.
-#     best_dist : int, float or sys.float_info.max
-#         Largest distance value. Values above this will be replaced by
-#         sys.float_info.max.
-#
-#     Returns
-#     -------
-#     dist : float
-#         The boss distance between the first and second dictionaries.
-#     """
-#     # TODO asymmetric distance??
-#     # second_sliced = second[first.indices]
-#
-#     #buf = (first - second)
-#     #return buf.dot(buf.T)[0,0]
-#     return pairwise.pairwise_distances(first, second)
+def boss_distance(X, Y, i):
+    """Find the distance between two histograms.
+
+    This returns the distance between first and second dictionaries, using a non-
+    symmetric distance measure. It is used to find the distance between historgrams
+    of words.
+
+    This distance function is designed for sparse matrix, represented as either a
+    dictionary or an arrray. It only measures the distance between counts present in
+    the first dictionary and the second. Hence dist(a,b) does not necessarily equal
+    dist(b,a).
+
+    Parameters
+    ----------
+    X : sparse matrix
+        Base dictionary used in distance measurement.
+    Y : sparse matrix
+        Second dictionary that will be used to measure distance from `first`.
+    i : int
+        index of current element
+
+    Returns
+    -------
+    dist : float
+        The boss distance between the first and second dictionaries.
+    """
+    mask = X[i].nonzero()[1]
+    XXX = X[i, mask]
+    XX = csr_row_norms(X[i])
+    YY = csr_row_norms(Y[:, mask])
+    A = XX - 2 * safe_sparse_dot(XXX, Y[:, mask].T, dense_output=True) + YY
+    np.maximum(A, 0, out=A)
+    return A

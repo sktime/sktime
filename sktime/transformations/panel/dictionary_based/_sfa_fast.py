@@ -161,6 +161,7 @@ class SFAFast(BaseTransformer):
         bigrams=False,
         skip_grams=False,
         remove_repeat_words=False,
+        lower_bounding=True,
         save_words=False,
         feature_selection="none",
         max_feature_count=256,
@@ -180,7 +181,11 @@ class SFAFast(BaseTransformer):
         self.window_size = window_size
 
         self.norm = norm
-        self.inverse_sqrt_win_size = 1.0 / math.sqrt(window_size)
+        self.lower_bounding = lower_bounding
+        self.inverse_sqrt_win_size = (
+            1.0 / math.sqrt(window_size) if not lower_bounding else 1.0
+        )
+
         self.remove_repeat_words = remove_repeat_words
 
         self.save_words = save_words
@@ -271,6 +276,7 @@ class SFAFast(BaseTransformer):
             self.bigrams,
             self.skip_grams,
             self.inverse_sqrt_win_size,
+            self.lower_bounding,
         )
 
         if self.remove_repeat_words:
@@ -328,6 +334,7 @@ class SFAFast(BaseTransformer):
             self.bigrams,
             self.skip_grams,
             self.inverse_sqrt_win_size,
+            self.lower_bounding,
         )
 
         # only save at fit
@@ -384,6 +391,7 @@ class SFAFast(BaseTransformer):
                     relevant_features_idx,
                     np.array(list(feature_names)),
                     words,
+                    self.remove_repeat_words,
                 )
 
             # Random feature selection
@@ -447,6 +455,7 @@ class SFAFast(BaseTransformer):
             self.dft_length,
             self.norm,
             self.inverse_sqrt_win_size,
+            self.lower_bounding,
         )
 
         if y is not None:
@@ -631,7 +640,13 @@ class SFAFast(BaseTransformer):
 
 @njit(fastmath=True, cache=True)
 def _binning_dft(
-    X, window_size, series_length, dft_length, norm, inverse_sqrt_win_size
+    X,
+    window_size,
+    series_length,
+    dft_length,
+    norm,
+    inverse_sqrt_win_size,
+    lower_bounding,
 ):
     num_windows_per_inst = math.ceil(series_length / window_size)
 
@@ -650,6 +665,9 @@ def _binning_dft(
             data[i], norm, dft_length, inverse_sqrt_win_size
         )
         dft[i] = return_val
+
+    if lower_bounding:
+        dft[:, :, 1::2] = dft[:, :, 1::2] * -1  # lower bounding
 
     return dft.reshape(dft.shape[0] * dft.shape[1], dft_length)
 
@@ -710,6 +728,7 @@ def _transform_case(
     bigrams,
     skip_grams,
     inverse_sqrt_win_size,
+    lower_bounding,
 ):
     dfts = _mft(
         X,
@@ -720,6 +739,7 @@ def _transform_case(
         anova,
         variance,
         inverse_sqrt_win_size,
+        lower_bounding,
     )
 
     words = generate_words(
@@ -842,7 +862,15 @@ def generate_words(
 
 @njit(fastmath=True, cache=True)
 def _mft(
-    X, window_size, dft_length, norm, support, anova, variance, inverse_sqrt_win_size
+    X,
+    window_size,
+    dft_length,
+    norm,
+    support,
+    anova,
+    variance,
+    inverse_sqrt_win_size,
+    lower_bounding,
 ):
     start_offset = 2 if norm else 0
     length = dft_length + start_offset + dft_length % 2
@@ -894,6 +922,9 @@ def _mft(
         )
 
     transformed2 = transformed2 * inverse_sqrt_win_size
+
+    if lower_bounding:
+        transformed2[:, :, 1::2] = transformed2[:, :, 1::2] * -1
 
     # compute STDs
     stds = np.zeros((X.shape[0], end))
