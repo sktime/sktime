@@ -96,13 +96,13 @@ class STRAY(BaseTransformer):
 
     def __init__(
         self,
-        alpha=0.01,
-        k=10,
-        knn_algorithm="brute",
-        normalize=unitize,
-        p=0.5,
-        size_threshold=50,
-        outlier_tail="max",
+        alpha: float = 0.01,
+        k: int = 10,
+        knn_algorithm: str = "brute",
+        normalize: Callable = unitize,
+        p: float = 0.5,
+        size_threshold: int = 50,
+        outlier_tail: str = "max",
     ):
         self.alpha = alpha
         self.k = k
