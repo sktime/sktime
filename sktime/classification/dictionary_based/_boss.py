@@ -6,7 +6,7 @@ BOSS and a BOSS ensemble.
 """
 
 __author__ = ["MatthewMiddlehurst", "patrickzib"]
-__all__ = ["BOSSEnsemble", "IndividualBOSS"]
+__all__ = ["BOSSEnsemble", "IndividualBOSS", "pairwise_distances"]
 
 from itertools import compress
 
