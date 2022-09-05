@@ -611,8 +611,10 @@ class SFAFast(BaseTransformer):
         # small window size for testing
         params = {
             "window_size": 4,
-            "return_sparse": False,
+            "return_sparse": True,
             "return_pandas_data_series": True,
+            "feature_selection": "random",
+            "alphabet_size": 2,
         }
         return params
 
