@@ -61,6 +61,9 @@ class STRAY(BaseTransformer):
         Sample size to calculate an emperical threshold.
     outlier_tail : str {"min", "max"}, optional (default="max")
         Direction of the outlier tail.
+    return_bool : bool, optional (default=False)
+        If True, outliers are filled with True and non-outliers with False.
+        Else, outliers are filled with np.nan.
 
     Attributes
     ----------
@@ -105,6 +108,7 @@ class STRAY(BaseTransformer):
         p: float = 0.5,
         size_threshold: int = 50,
         outlier_tail: str = "max",
+        return_bool: bool = False,
     ):
         self.alpha = alpha
         self.k = k
@@ -113,6 +117,7 @@ class STRAY(BaseTransformer):
         self.p = p
         self.size_threshold = size_threshold
         self.outlier_tail = outlier_tail
+        self.return_bool = return_bool
         super(STRAY, self).__init__()
 
     def _find_threshold(self, outlier_score, n):
@@ -154,7 +159,7 @@ class STRAY(BaseTransformer):
 
         return np.where(outlier_score > bound)[0]
 
-    def _use_KNN(self, X: npt.ArrayLike, n: int) -> Dict:
+    def _find_outliers_kNN(self, X: npt.ArrayLike, n: int) -> Dict:
         """Find outliers using kNN distance with maximum gap.
 
         Parameters
@@ -187,7 +192,7 @@ class STRAY(BaseTransformer):
         out_index = self._find_threshold(d, n)
         return {"idx_outliers": out_index, "out_scores": d}
 
-    def _find_HDoutliers(self, X):
+    def _find_outliers(self, X):
         """Detect Anomalies in High Dimensional Data.
 
         Parameters
@@ -200,7 +205,7 @@ class STRAY(BaseTransformer):
         dict of anomalies and their corresponding scores
         """
         r = np.shape(X)[0]
-        idx_dropna = np.argwhere((~np.isnan(X)).all(axis=1)).flatten()
+        idx_dropna = np.array([i for i in range(r) if not np.isnan(X[i]).any()])
         X_dropna = X[
             idx_dropna,
         ]
@@ -208,7 +213,7 @@ class STRAY(BaseTransformer):
         X_dropna = np.apply_along_axis(self.normalize, 0, X_dropna)
 
         n = np.shape(X_dropna)[0]
-        outliers = self._use_KNN(X_dropna, n)
+        outliers = self._find_outliers_kNN(X_dropna, n)
 
         # adjusted back to length r, for missing data
         slice_ = [True if i in outliers["idx_outliers"] else False for i in range(n)]
@@ -243,7 +248,7 @@ class STRAY(BaseTransformer):
         # remember X for transform
         self._X = X
 
-        info_dict = self._find_HDoutliers(X)
+        info_dict = self._find_outliers(X)
         self.score_ = info_dict["outlier_scores"]
         self.y_ = info_dict["outlier_bool"]
 
@@ -279,7 +284,6 @@ class STRAY(BaseTransformer):
                 "Refitting with new input data, not storing updated public class "
                 "attributes. For this, explicitly use fit(X) or fit_transform(X)."
             )
+            return new_obj.y_.astype(bool)
 
-            return new_obj.y_
-
-        return self.y_
+        return self.y_.astype(bool)
