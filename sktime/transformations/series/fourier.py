@@ -15,13 +15,23 @@ from sktime.transformations.base import BaseTransformer
 
 
 class FourierFeatures(BaseTransformer):
-    """Fourier Features for time series seasonality.
+    r"""Fourier Features for time series seasonality.
 
     Fourier Series terms can be used as explanatory variables for the cases of multiple
     seasonal periods and or complex / long seasonal periods [1][2]. For every seasonal
-    period, sp and fourier term k pair there are 2 fourier terms sin_sp_k and cos_sp_k:
-    - sin_sp_k = sin(2*pi*k*t/sp)
-    - cos_sp_k = cos(2*pi*k*t/sp)
+    period, :math:`sp` and fourier term :math:`k` pair there are 2 fourier terms
+    sin_sp_k and cos_sp_k:
+    - sin_sp_k = :math:`sin(\frac{2 \pi k t}{sp})`
+    - cos_sp_k = :math:`cos(\frac{2 \pi k t}{sp})`
+
+    Where :math:`t` is the number of time steps elapsed from the beginning of the time
+    series.
+
+    The output of the trasform is a pandas DataFrame that includes the fourier terms as
+    additional columns with the naming convention stated above (sin_sp_k and cos_sp_k).
+    For instance for sp_list = [12, 3] and fourier_terms_list = [2, 1] the transformed
+    series will have the additional columns:
+    "cos_12_1", "sin_12_1", "cos_12_2", "sin_12_2", "cos_3_1", "sin_3_1"
 
     The implementation is based on the fourier function from the R forecast package [3]
 
