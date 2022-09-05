@@ -72,8 +72,8 @@ all_extras = [
     "tensorflow",
     "tsfresh>=0.17.0; python_version < '3.10'",
     "tslearn>=0.5.2",
-    "keras_self_attention"
     "xarray",
+    "keras_self_attention"
 ]
 
 dev = [
