@@ -247,7 +247,7 @@ class STRAY(BaseTransformer):
 
         return self
 
-    def _transform(self, X, y=None):
+    def _transform(self, X: npt.ArrayLike, y: npt.ArrayLike = None) -> npt.ArrayLike:
         """Return anomaly detection.
 
         Parameters
