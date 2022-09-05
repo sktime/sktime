@@ -2,8 +2,10 @@
 """Tests for STRAY (Search TRace AnomalY) outlier estimator."""
 
 import warnings
+from typing import Callable, Dict
 
 import numpy as np
+import numpy.typing as npt
 from scipy.stats import iqr
 from sklearn.neighbors import NearestNeighbors
 
@@ -198,10 +200,10 @@ class STRAY(BaseTransformer):
         dict of anomalies and their corresponding scores
         """
         r = np.shape(X)[0]
-        idx_dropna = np.array([i for i in range(r) if not np.isnan(X[i]).any()])  # tag
+        idx_dropna = np.argwhere((~np.isnan(X)).all(axis=1)).flatten()
         X_dropna = X[
             idx_dropna,
-        ]  # FIXME: might move this somewhere else?
+        ]
 
         X_dropna = np.apply_along_axis(self.normalize, 0, X_dropna)
 
@@ -228,8 +230,8 @@ class STRAY(BaseTransformer):
 
         Parameters
         ----------
-        X : pd.DataFrame
-            Training data to fit model to (time series).
+        X : np.ArrayLike
+            Data for anomaly detection (time series).
         y : pd.Series, optional
             Not used for this unsupervsed method.
 
