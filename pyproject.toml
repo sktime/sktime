@@ -72,10 +72,12 @@ all_extras = [
     "tensorflow",
     "tsfresh>=0.17.0; python_version < '3.10'",
     "tslearn>=0.5.2",
-    "keras_self_attention>='0.51.0'"
+    "keras_self_attention"
+    "xarray",
 ]
 
 dev = [
+    "backoff",
     "httpx",
     "pre-commit",
     "pytest",
