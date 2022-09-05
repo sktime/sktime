@@ -61,9 +61,6 @@ class STRAY(BaseTransformer):
         Sample size to calculate an emperical threshold.
     outlier_tail : str {"min", "max"}, optional (default="max")
         Direction of the outlier tail.
-    return_bool : bool, optional (default=False)
-        If True, outliers are filled with True and non-outliers with False.
-        Else, outliers are filled with np.nan.
 
     Attributes
     ----------
@@ -84,12 +81,23 @@ class STRAY(BaseTransformer):
     Examples
     --------
     >>> from sktime.annotation.stray import STRAY
-    >>> from numpy import asarray
-    >>> X = asarray([3.7,3.2,3.4,3.6,-5.1,-5.2,-4.9])
+    >>> from sktime.datasets import load_airline
+    >>> X = load_airline().head(10)
     >>> model = STRAY(k=3)
     >>> y = model.fit_transform(X)
     >>> y
-    array([0, 0, 0, 0, 1, 1, 1])
+    Period
+    1949-01    False
+    1949-02    False
+    1949-03    False
+    1949-04    False
+    1949-05     True
+    1949-06     True
+    1949-07     True
+    1949-08     True
+    1949-09    False
+    1949-10     True
+    Freq: M, dtype: bool
     """
 
     _tags = {
@@ -108,7 +116,6 @@ class STRAY(BaseTransformer):
         p: float = 0.5,
         size_threshold: int = 50,
         outlier_tail: str = "max",
-        return_bool: bool = False,
     ):
         self.alpha = alpha
         self.k = k
@@ -117,7 +124,6 @@ class STRAY(BaseTransformer):
         self.p = p
         self.size_threshold = size_threshold
         self.outlier_tail = outlier_tail
-        self.return_bool = return_bool
         super(STRAY, self).__init__()
 
     def _find_threshold(self, outlier_score, n):
