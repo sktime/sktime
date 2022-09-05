@@ -21,7 +21,7 @@ unit_test_proba["BOSSEnsemble"] = np.array(
         [0.75, 0.25],
         [0.0, 1.0],
         [0.75, 0.25],
-        [1.0, 0.0],
+        [0.5, 0.5],
     ]
 )
 unit_test_proba["ContractableBOSS"] = np.array(

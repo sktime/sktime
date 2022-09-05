@@ -154,7 +154,7 @@ class ContractableBOSS(BaseClassifier):
         contract_max_n_parameter_samples=np.inf,
         typed_dict="deprecated",
         save_train_predictions=False,
-        feature_selection="chi2",
+        feature_selection="none",
         n_jobs=1,
         random_state=None,
     ):
