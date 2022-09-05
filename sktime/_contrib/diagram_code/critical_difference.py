@@ -10,8 +10,7 @@ from scipy.stats import distributions, find_repeats, rankdata
 
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-_check_soft_dependencies("matplotlib")
-import matplotlib.pyplot as plt
+_check_soft_dependencies("matplotlib", severity="warning")
 
 
 def _check_friedman(n_strategies, n_datasets, ranked_data, alpha):
@@ -113,6 +112,10 @@ def plot_critical_difference(
         reverse : bool
            if set to 'True', the lowest rank is on the right (default: 'True')
     """
+    _check_soft_dependencies("matplotlib")
+
+    import matplotlib.pyplot as plt
+
     # Helper Functions
     def _nth(l, n):
         """Return only nth element in a list."""

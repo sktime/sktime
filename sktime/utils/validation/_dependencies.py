@@ -16,7 +16,7 @@ def _check_soft_dependencies(
     *packages,
     package_import_alias=None,
     severity="error",
-    object=None,
+    obj=None,
     suppress_import_stdout=False,
 ):
     """Check if required soft dependencies are installed and raise error or warning.
@@ -37,7 +37,7 @@ def _check_soft_dependencies(
             function returns False if one of packages is not installed, otherwise True
         "none" - does not raise exception or warning
             function returns False if one of packages is not installed, otherwise True
-    object : python class, object, str, or None, default=None
+    obj : python class, object, str, or None, default=None
         if self is passed here when _check_soft_dependencies is called within __init__,
         or a class is passed when it is called at the start of a single-class module,
         the error message is more informative and will refer to the class/object;
@@ -58,7 +58,7 @@ def _check_soft_dependencies(
         raise TypeError("packages must be str or tuple of str")
 
     if package_import_alias is None:
-        package_import_alias = dict()
+        package_import_alias = {}
     msg = "package_import_alias must be a dict with str keys and values"
     if not isinstance(package_import_alias, dict):
         raise TypeError(msg)
@@ -85,7 +85,7 @@ def _check_soft_dependencies(
             return True
         # if package cannot be imported, make the user aware of installation requirement
         except ModuleNotFoundError as e:
-            if object is None:
+            if obj is None:
                 msg = (
                     f"{e}. '{package}' is a soft dependency and not included in the "
                     f"base sktime installation. Please run: `pip install {package}` to "
@@ -94,14 +94,14 @@ def _check_soft_dependencies(
                     f"sktime[all_extras]`"
                 )
             else:
-                if not isclass(object):
-                    class_name = type(object).__name__
-                elif isclass(object):
-                    class_name = object.__name__
-                elif isinstance(object, str):
-                    class_name = object
+                if not isclass(obj):
+                    class_name = type(obj).__name__
+                elif isclass(obj):
+                    class_name = obj.__name__
+                elif isinstance(obj, str):
+                    class_name = obj
                 else:
-                    raise TypeError("object must be a class, an object, a str, or None")
+                    raise TypeError("obj must be a class, an object, a str, or None")
                 msg = (
                     f"{class_name} requires package '{package}' to be present "
                     f"in the python environment, but '{package}' was not found. "
@@ -251,7 +251,7 @@ def _check_estimator_deps(obj, msg=None, severity="error"):
     """Check all dependencies of estimator, packages and python.
 
     Convenience wrapper around _check_python_version and _check_soft_dependencies,
-    checking against estimator tags "python_version_upper_bound", "python_dependencies".
+    checking against estimator tags "python_version", "python_dependencies".
 
     Parameters
     ----------
@@ -259,12 +259,19 @@ def _check_estimator_deps(obj, msg=None, severity="error"):
         used to check python version
     msg : str, optional, default = default message (msg below)
         error message to be returned in the `ModuleNotFoundError`, overrides default
-    severity : str, "error" (default) or "warning"
-        whether the check should raise an error, or only a warning
-
+    severity : str, "error" (default), "warning", or "none"
+        behaviour for raising errors or warnings
+        "error" - raises a ModuleNotFoundException if environment is incompatible
+        "warning" - raises a warning if environment is incompatible
+            function returns False if environment is incompatible, otherwise True
+        "none" - does not raise exception or warning
+            function returns False if environment is incompatible, otherwise True
     Returns
     -------
-    reference to obj
+    compatible : bool, whether obj is compatible with python environment
+        False is returned only if no exception is raised by the function
+        checks for python version using the python_version tag of obj
+        checks for soft dependencies present using the python_dependencies tag of obj
 
     Raises
     ------
@@ -275,12 +282,14 @@ def _check_estimator_deps(obj, msg=None, severity="error"):
         User friendly error if obj has package dependencies that are not satisfied.
         Packages are determined based on the "python_dependencies" tag of obj.
     """
-    _check_python_version(obj, severity=severity)
+    compatible = True
+    compatible = compatible and _check_python_version(obj, severity=severity)
 
-    pkg_deps = obj.get_tag("python_dependencies", None, raise_error=False)
+    pkg_deps = obj.get_class_tag("python_dependencies", None)
     if pkg_deps is not None and not isinstance(pkg_deps, list):
         pkg_deps = [pkg_deps]
     if pkg_deps is not None:
-        _check_soft_dependencies(*pkg_deps, severity=severity, object=obj)
+        pkg_deps_ok = _check_soft_dependencies(*pkg_deps, severity=severity, obj=obj)
+        compatible = compatible and pkg_deps_ok
 
-    return obj
+    return compatible

@@ -45,6 +45,9 @@ pip-log.txt
 pip-delete-this-directory.txt
 pip-wheel-metadata/
 
+# folder created by `make test`
+testdir/
+
 # Unit test / coverage reports
 htmlcov/
 .tox/
@@ -77,7 +80,6 @@ instance/
 docs/_build/
 docs/source/api_reference/auto_generated/
 docs/estimator_overview_table.md
-docs/source/examples
 
 # PyBuilder
 target/

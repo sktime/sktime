@@ -35,7 +35,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
-          python-version: 3.7
+          python-version: 3.9
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -44,12 +44,35 @@ jobs:
         run: build_tools/run_examples.sh
         shell: bash
 
-  test-windows:
+  test-nosoftdeps:
     needs: code-quality
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+      - name: Display Python version
+        run: python -c "import sys; print(sys.version)"
+
+      - name: Install sktime and dependencies
+        run: |
+          python -m pip install .[dev]
+
+      - name: Show dependencies
+        run: python -m pip list
+
+      - name: Run tests
+        run: make PYTESTOPTIONS="--cov --cov-report=xml --timeout=600" test_softdeps
+
+  test-windows:
+    needs: test-nosoftdeps
     runs-on: windows-2019
     strategy:
       matrix:
         python-version: [3.7, 3.8, 3.9, '3.10']
+
     steps:
       - uses: actions/checkout@v2
 
@@ -80,46 +103,18 @@ jobs:
           mkdir -p testdir/
           cp .coveragerc testdir/
           cp setup.cfg testdir/
-          cd testdir/
           python -m pytest
 
       - name: Publish code coverage
-        uses: codecov/codecov-action@v2
+        uses: codecov/codecov-action@v3
 
-  test-linux:
-    needs: code-quality
-    runs-on: ubuntu-20.04
+  test-unix:
+    needs: test-nosoftdeps
     strategy:
       matrix:
         python-version: [3.7, 3.8, 3.9, '3.10']
-    steps:
-      - uses: actions/checkout@v2
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: ${{ matrix.python-version }}
-      - name: Display Python version
-        run: python -c "import sys; print(sys.version)"
-
-      - name: Install sktime and dependencies
-        run: |
-          python -m pip install .[all_extras,dev]
-
-      - name: Show dependecies
-        run: python -m pip list
-
-      - name: Run tests
-        run: make test
-
-      - name: Publish code coverage
-        uses: codecov/codecov-action@v2
-
-  test-mac:
-    needs: code-quality
-    runs-on: macOS-10.15
-    strategy:
-      matrix:
-        python-version: [3.7, 3.8, 3.9, '3.10']
+        os: [ubuntu-20.04, macOS-11]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python
@@ -140,26 +135,4 @@ jobs:
         run: make test
 
       - name: Publish code coverage
-        uses: codecov/codecov-action@v2
-
-  test-nosoftdeps:
-    needs: code-quality
-    runs-on: ubuntu-20.04
-    steps:
-      - uses: actions/checkout@v2
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.9
-      - name: Display Python version
-        run: python -c "import sys; print(sys.version)"
-
-      - name: Install sktime and dependencies
-        run: |
-          python -m pip install .[dev]
-
-      - name: Show dependencies
-        run: python -m pip list
-
-      - name: Run tests
-        run: make PYTESTOPTIONS="--cov --cov-report=xml --timeout=600" test_softdeps
+        uses: codecov/codecov-action@v3

@@ -24,7 +24,6 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
         -1 means using all processors.
     """
 
-    _required_parameters = ["forecasters"]
     _tags = {
         "ignores-exogeneous-X": True,
         "requires-fh-in-fit": False,
