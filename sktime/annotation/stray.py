@@ -223,7 +223,7 @@ class STRAY(BaseTransformer):
             "outlier_bool": outlier_bool,
         }
 
-    def _fit(self, X, y=None):
+    def _fit(self, X: npt.ArrayLike, y: npt.ArrayLike = None):
         """Find outliers using STRAY (Search TRace AnomalY).
 
         Parameters
