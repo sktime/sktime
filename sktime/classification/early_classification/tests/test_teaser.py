@@ -117,7 +117,7 @@ def test_teaser_full_length():
     hm, acc, earl = teaser.score(X_test, y_test)
 
     testing.assert_allclose(acc, 0.818, rtol=0.01)
-    testing.assert_allclose(earl, 0.787, rtol=0.01)
+    testing.assert_allclose(earl, 0.757, rtol=0.01)
 
     testing.assert_allclose(teaser._train_accuracy, 0.9, rtol=0.01)
     testing.assert_allclose(teaser._train_earliness, 0.733, rtol=0.01)
