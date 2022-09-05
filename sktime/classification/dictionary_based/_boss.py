@@ -131,7 +131,7 @@ class BOSSEnsemble(BaseClassifier):
         min_window=10,
         save_train_predictions=False,
         feature_selection="none",
-        use_boss_distance=True,
+        use_boss_distance=False,
         alphabet_size=2,
         n_jobs=1,
         random_state=None,
@@ -430,12 +430,17 @@ class BOSSEnsemble(BaseClassifier):
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
         if parameter_set == "results_comparison":
-            return {"max_ensemble_size": 5, "feature_selection": "none"}
+            return {
+                "max_ensemble_size": 5,
+                "feature_selection": "none",
+                "use_boss_distance": False,
+            }
         else:
             return {
                 "max_ensemble_size": 2,
                 "save_train_predictions": True,
                 "feature_selection": "none",
+                "use_boss_distance": False,
             }
 
 
