@@ -152,7 +152,7 @@ class STRAY(BaseTransformer):
 
         return np.where(outlier_score > bound)[0]
 
-    def _use_KNN(self, X, n):
+    def _use_KNN(self, X: npt.ArrayLike, n: int) -> Dict:
         """Find outliers using kNN distance with maximum gap.
 
         Parameters
