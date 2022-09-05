@@ -116,6 +116,14 @@ class DOBIN(BaseTransformer):
 
         n_obs, n_dim = X.shape
 
+        if n_dim == 1:
+            warnings.warn(
+                "Warning: Input data X is univariate. For dimensionality reduction, "
+                "please provide multivariate input."
+            )
+            self._coords = X
+            return self
+
         # if more dimensions than observations, change of basis to subspace
         if n_obs < n_dim:
             pca = PCA(n_components=n_obs)
@@ -203,10 +211,10 @@ def close_distance_matrix(X, k, frac):
         [
             (
                 (
-                    X.loc[
+                    X.iloc[
                         i,
                     ]
-                    - X.loc[
+                    - X.iloc[
                         j,
                     ]
                 )
