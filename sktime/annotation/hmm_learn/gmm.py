@@ -190,8 +190,6 @@ class GMMHMM(BaseHMMLearn):
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
 
-        Hello hello this is an insignificant change.
-
         Parameters
         ----------
         parameter_set : str, default="default"
