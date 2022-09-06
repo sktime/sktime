@@ -5,6 +5,8 @@
 __author__ = ["mloning", "fkiraly"]
 __all__ = []
 
+import pandas as pd
+
 from sktime.datatypes import check_is_scitype
 from sktime.tests.test_all_estimators import BaseFixtureGenerator, QuickTester
 from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
@@ -154,7 +156,7 @@ class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
         Xit = estimator_instance.inverse_transform(Xt)
         if estimator_instance.get_tag("transform-returns-same-time-index"):
             _assert_array_almost_equal(X, Xit)
-        else:
+        elif isinstance(X, pd.DataFrame):
             _assert_array_almost_equal(X.loc[Xit.index], Xit)
 
 
