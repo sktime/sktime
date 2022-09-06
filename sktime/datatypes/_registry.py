@@ -36,7 +36,6 @@ from sktime.datatypes._alignment._registry import (
     MTYPE_LIST_ALIGNMENT,
     MTYPE_REGISTER_ALIGNMENT,
 )
-from sktime.datatypes._check import AMBIGUOUS_MTYPES
 from sktime.datatypes._hierarchical._registry import (
     MTYPE_LIST_HIERARCHICAL,
     MTYPE_REGISTER_HIERARCHICAL,
@@ -54,6 +53,10 @@ MTYPE_REGISTER += MTYPE_REGISTER_ALIGNMENT
 MTYPE_REGISTER += MTYPE_REGISTER_TABLE
 MTYPE_REGISTER += MTYPE_REGISTER_PROBA
 
+# mtypes to exclude in checking since they are ambiguous and rare
+AMBIGUOUS_MTYPES = ["numpyflat", "alignment_loc"]
+
+# all time series mtypes excluding ambiguous ones
 ALL_TIME_SERIES_MTYPES = MTYPE_LIST_PANEL + MTYPE_LIST_SERIES + MTYPE_LIST_HIERARCHICAL
 ALL_TIME_SERIES_MTYPES = list(set(ALL_TIME_SERIES_MTYPES).difference(AMBIGUOUS_MTYPES))
 
