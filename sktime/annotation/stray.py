@@ -276,7 +276,6 @@ class STRAY(BaseTransformer):
         # fit again if data is different to fit, but don't store anything
         if not np.allclose(X, self._X):
             new_obj = STRAY(
-                X,
                 alpha=self.alpha,
                 k=self.k,
                 knn_algorithm=self.knn_algorithm,
@@ -284,7 +283,7 @@ class STRAY(BaseTransformer):
                 p=self.p,
                 size_threshold=self.size_threshold,
                 outlier_tail=self.outlier_tail,
-            ).fit()
+            ).fit(X)
             warnings.warn(
                 "Warning: Input data X differs from that given to fit(). "
                 "Refitting with new input data, not storing updated public class "
