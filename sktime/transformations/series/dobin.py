@@ -170,9 +170,9 @@ class DOBIN(BaseTransformer):
             B = np.dot(B, B1)
 
         # new coordinates
-        coords = X.dot(
-            np.array(basis)
-        )  # will error if both DataFrames and rownames != colnames
+        coords = pd.DataFrame(
+            X.dot(np.array(basis))
+        )  # convert np.array, error if both pd.DataFrames and rownames != colnames
 
         basis.columns = ["".join(["DB", str(i)]) for i in range(len(basis.columns))]
         self._basis = basis
