@@ -382,8 +382,8 @@ Missing value imputation
 
     Imputer
 
-Datetime feature generation
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Seasonality and Date-Time Features
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: sktime.transformations.series.date
 
@@ -392,9 +392,6 @@ Datetime feature generation
     :template: class.rst
 
     DateTimeFeatures
-
-Trigonometric Features
-~~~~~~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: sktime.transformations.series.fourier
 
