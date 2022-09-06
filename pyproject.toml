@@ -57,6 +57,7 @@ all_extras = [
     "esig==0.9.7; python_version < '3.10'",
     "filterpy>=1.4.5",
     "gluonts>=0.9.0",
+    "keras-self-attention",
     "matplotlib>=3.3.2",
     "mne",
     "pmdarima>=1.8.0,!=1.8.1,<2.0.0",
@@ -105,6 +106,7 @@ docs = [
 ]
 
 dl = [
+    "keras-self-attention",
     "tensorflow",
     "tensorflow-probability",
 ]
