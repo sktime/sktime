@@ -45,18 +45,18 @@ class Lag(BaseTransformer):
     lags : lag offset, or list of lag offsets, optional, default=0 (identity transform)
         a "lag offset" can be one of the following:
         int - number of periods to shift/lag
-        time-like: DateOffset, tseries.offsets, or timedelta
+        time-like: `DateOffset`, `tseries.offsets`, or `timedelta`
             time delta offset to shift/lag
             requires time index of transformed data to be time-like (not int)
         str - time rule from pandas.tseries module, e.g., "EOM"
     freq : frequency descriptor of list of frequency descriptors, optional, default=None
-        if passed, must be scalar, or list of equal length to "lags" argument
-        elements in freq correspond to elements in lags
-        if i-th element of freq is not None, i-th element of lags must be int
+        if passed, must be scalar, or list of equal length to `lags` parameter
+        elements in `freq` correspond to elements in lags
+        if i-th element of `freq` is not None, i-th element of `lags` must be int
             this is called the "corresponding lags element" below
         "frequency descriptor" can be one of the following:
-        time-like: DateOffset, tseries.offsets, or timedelta
-            multiplied to corresponding "lags" element when shifting
+        time-like: `DateOffset`, `tseries.offsets`, or `timedelta`
+            multiplied to corresponding `lags` element when shifting
         str - offset from pd.tseries module, e.g., "D", "M", or time rule, e.g., "EOM"
     index_out : str, optional, one of "shift", "original", "extend", default="extend"
         determines set of output indices in lagged time series
@@ -69,6 +69,10 @@ class Lag(BaseTransformer):
         if True, columns of return DataFrame are flat, by "lagname__variablename"
         if False, columns are MultiIndex (lagname, variablename)
         has no effect if return mtype is one without column names
+    keep_column_names : bool, optional (default=False)
+        has an effect only if `lags` contains only a single element
+        if True, ensures that column names of `transform` output are same as in input,
+        i.e., not `lag_x__varname` but `varname`. Overrides `flatten_transform_index`.
 
     Examples
     --------
@@ -129,12 +133,14 @@ class Lag(BaseTransformer):
         freq=None,
         index_out="extend",
         flatten_transform_index=True,
+        keep_column_names=False,
     ):
 
         self.lags = lags
         self.freq = freq
         self.index_out = index_out
         self.flatten_transform_index = flatten_transform_index
+        self.keep_column_names = keep_column_names
 
         if index_out not in ["shift", "extend", "original"]:
             raise ValueError(
@@ -222,6 +228,7 @@ class Lag(BaseTransformer):
         index_out = self.index_out
 
         X_orig_idx = X.index
+        X_orig_cols = X.columns
         X = X.combine_first(self._X).copy()
 
         shift_params = list(self._yield_shift_params())
@@ -263,6 +270,8 @@ class Lag(BaseTransformer):
         Xt = pd.concat(Xt_list, axis=1, keys=lag_names, names=["lag", "variable"])
         if self.flatten_transform_index:
             Xt.columns = flatten_multiindex(Xt.columns)
+        if len(shift_params) == 1 and self.keep_column_names:
+            Xt.columns = X_orig_cols
 
         # some pandas versions do not sort index automatically after concat
         # so removing will break specific pandas versions
