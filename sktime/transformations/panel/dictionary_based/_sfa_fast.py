@@ -300,6 +300,7 @@ class SFAFast(BaseTransformer):
         -------
         self: object
         """
+        # with parallel_backend("loky", inner_max_num_threads=n_jobs):
         self.fit_transform(X, y)
         return self
 
