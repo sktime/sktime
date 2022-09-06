@@ -149,7 +149,7 @@ class ContractableBOSS(BaseClassifier):
         n_parameter_samples=250,
         max_ensemble_size=50,
         max_win_len_prop=1,
-        min_window=6,
+        min_window=10,
         time_limit_in_minutes=0.0,
         contract_max_n_parameter_samples=np.inf,
         typed_dict="deprecated",
@@ -180,7 +180,7 @@ class ContractableBOSS(BaseClassifier):
         self._weight_sum = 0
         self._word_lengths = [16, 14, 12, 10, 8]
         self._norm_options = [True, False]
-        self._alphabet_size = 2
+        self._alphabet_size = 4
 
         super(ContractableBOSS, self).__init__()
 

@@ -11,14 +11,20 @@ __all__ = ["BOSSEnsemble", "IndividualBOSS", "pairwise_distances"]
 from itertools import compress
 
 import numpy as np
+
+# from joblib import Parallel, parallel_backend
 from sklearn.metrics import pairwise
 from sklearn.utils import check_random_state
 from sklearn.utils.extmath import safe_sparse_dot
+
+# from sklearn.utils.fixes import delayed
 from sklearn.utils.sparsefuncs_fast import csr_row_norms
 
 from sktime.classification.base import BaseClassifier
 from sktime.transformations.panel.dictionary_based import SFAFast
 from sktime.utils.validation.panel import check_X_y
+
+# from sklearn.utils.validation import _num_samples
 
 
 class BOSSEnsemble(BaseClassifier):
@@ -65,6 +71,9 @@ class BOSSEnsemble(BaseClassifier):
     n_jobs : int, default=1
         The number of jobs to run in parallel for both `fit` and `predict`.
         ``-1`` means using all processors.
+    use_boss_distance : boolean, default=False
+        The Boss-distance is an asymmetric distance measure. It provides higher
+        accuracy, yet is signifaicantly slower to compute.
     feature_selection: {"chi2", "none", "random"}, default: none
         Sets the feature selections strategy to be used. Chi2 reduces the number
         of words significantly and is thus much faster (preferred). Random also reduces
@@ -132,7 +141,7 @@ class BOSSEnsemble(BaseClassifier):
         save_train_predictions=False,
         feature_selection="none",
         use_boss_distance=False,
-        alphabet_size=2,
+        alphabet_size=4,
         n_jobs=1,
         random_state=None,
     ):
@@ -527,9 +536,9 @@ class IndividualBOSS(BaseClassifier):
         window_size=10,
         word_length=8,
         norm=False,
-        alphabet_size=2,
+        alphabet_size=4,
         save_words=False,
-        use_boss_distance=False,
+        use_boss_distance=True,
         feature_selection="none",
         n_jobs=1,
         random_state=None,
@@ -667,15 +676,27 @@ class IndividualBOSS(BaseClassifier):
         self._transformed_data = self._transformer.fit_transform(X, y)
 
 
+def _dist_wrapper(dist_matrix, s, X, Y, XX_row_norms):
+    """Write in-place to a slice of a distance matrix."""
+    dist_matrix[s, :] = boss_distance(X, Y, s, XX_row_norms)
+
+
 def pairwise_distances(X, Y=None, use_boss_distance=False, n_jobs=1):
     """Find the euclidean distance between all pairs of bop-models."""
     if use_boss_distance:
         if Y is None:
             Y = X
 
+        XX_row_norms = csr_row_norms(X)
         distance_matrix = np.zeros((X.shape[0], Y.shape[0]))
+        # with parallel_backend("loky", inner_max_num_threads=n_jobs):
+        # Parallel(n_jobs=n_jobs)(
+        #     delayed(_dist_wrapper)(distance_matrix, s, X, Y, XX_row_norms)
+        #     for s in range(_num_samples(X))
+        # )
+
         for i in range(len(distance_matrix)):
-            distance_matrix[i] = boss_distance(X, Y, i)
+            distance_matrix[i] = boss_distance(X, Y, i, XX_row_norms)
     else:
         distance_matrix = pairwise.pairwise_distances(X, Y, n_jobs=n_jobs)
 
@@ -686,7 +707,7 @@ def pairwise_distances(X, Y=None, use_boss_distance=False, n_jobs=1):
 
 
 # @njit(cache=True, fastmath=True)
-def boss_distance(X, Y, i):
+def boss_distance(X, Y, i, XX_row_norms=None):
     """Find the distance between two histograms.
 
     This returns the distance between first and second dictionaries, using a non-
@@ -713,9 +734,11 @@ def boss_distance(X, Y, i):
         The boss distance between the first and second dictionaries.
     """
     mask = X[i].nonzero()[1]
-    XXX = X[i, mask]
-    XX = csr_row_norms(X[i])
+    if XX_row_norms is None:
+        XX = csr_row_norms(X[i])
+    else:
+        XX = XX_row_norms[i]
     YY = csr_row_norms(Y[:, mask])
-    A = XX - 2 * safe_sparse_dot(XXX, Y[:, mask].T, dense_output=True) + YY
+    A = XX - 2 * safe_sparse_dot(X[i, mask], Y[:, mask].T, dense_output=True) + YY
     np.maximum(A, 0, out=A)
     return A
