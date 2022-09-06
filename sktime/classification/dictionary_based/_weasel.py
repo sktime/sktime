@@ -248,9 +248,6 @@ class WEASEL(BaseClassifier):
             )
 
         self.clf.fit(all_words, y)
-
-        # print("Size of dict", relevant_features_count)
-        self.clf.fit(all_words, y)
         return self
 
     def _predict(self, X) -> np.ndarray:
