@@ -26,6 +26,10 @@ def standardize(x):
     return (x - np.median(x)) / iqr(x)
 
 
+def identity(x):
+    return x
+
+
 class STRAY(BaseTransformer):
     """STRAY: robust anomaly detection in data streams with concept drift.
 
@@ -50,10 +54,10 @@ class STRAY(BaseTransformer):
         (default="brute")
         Algorithm used to compute the nearest neighbors, from
         sklearn.neighbors.NearestNeighbors
-    normalize : callable {unitize, standardize} (default=unitize)
+    normalize : callable {unitize, standardize, identity} (default=unitize)
         Method to normalize the columns of the data. This prevents variables
         with large variances having disproportional influence on Euclidean distances.
-        from sktime.annotation.stray import unitize, standardize
+        from sktime.annotation.stray import unitize, standardize, identity
     p : float, optional (default=0.5)
         Proportion of possible candidates for outliers. This defines the starting point
         for the bottom up searching algorithm.
@@ -126,7 +130,7 @@ class STRAY(BaseTransformer):
         self.outlier_tail = outlier_tail
         super(STRAY, self).__init__()
 
-    def _find_threshold(self, outlier_score, n):
+    def _find_threshold(self, outlier_score: npt.ArrayLike, n: int):
         """Find Outlier Threshold.
 
         Parameters
@@ -147,7 +151,7 @@ class STRAY(BaseTransformer):
         gaps = np.append(0, np.diff(outlier_score[order]))
         n4 = int(max(min(self.size_threshold, np.floor(n / 4)), 2))
 
-        J = np.array([i for i in range(2, n4 + 1)])
+        J = np.array(range(2, n4 + 1))
         start = int(max(np.floor(n * (1 - self.p)), 1))
 
         ghat = [
