@@ -11,20 +11,17 @@ __all__ = ["BOSSEnsemble", "IndividualBOSS", "pairwise_distances"]
 from itertools import compress
 
 import numpy as np
-
-# from joblib import Parallel, parallel_backend
+from joblib import Parallel, effective_n_jobs
 from sklearn.metrics import pairwise
-from sklearn.utils import check_random_state
+from sklearn.utils import check_random_state, gen_even_slices
 from sklearn.utils.extmath import safe_sparse_dot
-
-# from sklearn.utils.fixes import delayed
+from sklearn.utils.fixes import delayed
 from sklearn.utils.sparsefuncs_fast import csr_row_norms
+from sklearn.utils.validation import _num_samples
 
 from sktime.classification.base import BaseClassifier
 from sktime.transformations.panel.dictionary_based import SFAFast
 from sktime.utils.validation.panel import check_X_y
-
-# from sklearn.utils.validation import _num_samples
 
 
 class BOSSEnsemble(BaseClassifier):
@@ -71,7 +68,7 @@ class BOSSEnsemble(BaseClassifier):
     n_jobs : int, default=1
         The number of jobs to run in parallel for both `fit` and `predict`.
         ``-1`` means using all processors.
-    use_boss_distance : boolean, default=False
+    use_boss_distance : boolean, default=True
         The Boss-distance is an asymmetric distance measure. It provides higher
         accuracy, yet is signifaicantly slower to compute.
     feature_selection: {"chi2", "none", "random"}, default: none
@@ -140,7 +137,7 @@ class BOSSEnsemble(BaseClassifier):
         min_window=10,
         save_train_predictions=False,
         feature_selection="none",
-        use_boss_distance=False,
+        use_boss_distance=True,
         alphabet_size=4,
         n_jobs=1,
         random_state=None,
@@ -676,9 +673,10 @@ class IndividualBOSS(BaseClassifier):
         self._transformed_data = self._transformer.fit_transform(X, y)
 
 
-def _dist_wrapper(dist_matrix, s, X, Y, XX_row_norms):
+def _dist_wrapper(dist_matrix, X, Y, s, XX_all=None, XY_all=None):
     """Write in-place to a slice of a distance matrix."""
-    dist_matrix[s, :] = boss_distance(X, Y, s, XX_row_norms)
+    for i in range(s.start, s.stop):
+        dist_matrix[i] = boss_distance(X, Y, i, XX_all, XY_all)
 
 
 def pairwise_distances(X, Y=None, use_boss_distance=False, n_jobs=1):
@@ -688,15 +686,19 @@ def pairwise_distances(X, Y=None, use_boss_distance=False, n_jobs=1):
             Y = X
 
         XX_row_norms = csr_row_norms(X)
-        distance_matrix = np.zeros((X.shape[0], Y.shape[0]))
-        # with parallel_backend("loky", inner_max_num_threads=n_jobs):
-        # Parallel(n_jobs=n_jobs)(
-        #     delayed(_dist_wrapper)(distance_matrix, s, X, Y, XX_row_norms)
-        #     for s in range(_num_samples(X))
-        # )
+        XY = safe_sparse_dot(X, Y.T, dense_output=True)
 
-        for i in range(len(distance_matrix)):
-            distance_matrix[i] = boss_distance(X, Y, i, XX_row_norms)
+        distance_matrix = np.zeros((X.shape[0], Y.shape[0]))
+
+        if n_jobs > 1:
+            Parallel(n_jobs=n_jobs, backend="threading")(
+                delayed(_dist_wrapper)(distance_matrix, X, Y, s, XX_row_norms, XY)
+                for s in gen_even_slices(_num_samples(X), effective_n_jobs(n_jobs))
+            )
+        else:
+            for i in range(len(distance_matrix)):
+                distance_matrix[i] = boss_distance(X, Y, i, XX_row_norms, XY)
+
     else:
         distance_matrix = pairwise.pairwise_distances(X, Y, n_jobs=n_jobs)
 
@@ -707,7 +709,7 @@ def pairwise_distances(X, Y=None, use_boss_distance=False, n_jobs=1):
 
 
 # @njit(cache=True, fastmath=True)
-def boss_distance(X, Y, i, XX_row_norms=None):
+def boss_distance(X, Y, i, XX_all=None, XY_all=None):
     """Find the distance between two histograms.
 
     This returns the distance between first and second dictionaries, using a non-
@@ -734,11 +736,16 @@ def boss_distance(X, Y, i, XX_row_norms=None):
         The boss distance between the first and second dictionaries.
     """
     mask = X[i].nonzero()[1]
-    if XX_row_norms is None:
+    if XX_all is None:
         XX = csr_row_norms(X[i])
     else:
-        XX = XX_row_norms[i]
+        XX = XX_all[i]
+    if XY_all is None:
+        XY = safe_sparse_dot(X[i], Y.T, dense_output=True)
+    else:
+        XY = XY_all[i]
+
     YY = csr_row_norms(Y[:, mask])
-    A = XX - 2 * safe_sparse_dot(X[i, mask], Y[:, mask].T, dense_output=True) + YY
+    A = XX - 2 * XY + YY
     np.maximum(A, 0, out=A)
     return A

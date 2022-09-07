@@ -335,6 +335,7 @@ class WEASEL(BaseClassifier):
             "support_probabilities": True,
             "bigrams": False,
             "feature_selection": "none",
+            "alphabet_size": 2,
         }
 
 

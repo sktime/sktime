@@ -304,7 +304,7 @@ class SFAFast(BaseTransformer):
         self.fit_transform(X, y)
         return self
 
-    def _transform(self, X, y=None):
+    def transform(self, X, y=None):
         """Transform data into SFA words.
 
         Parameters
@@ -316,8 +316,8 @@ class SFAFast(BaseTransformer):
         -------
         List of dictionaries containing SFA words
         """
-        # self.check_is_fitted()
-        # X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
+        self.check_is_fitted()
+        X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
         X = X.squeeze(1)
 
         words, dfts = _transform_case(
@@ -422,10 +422,7 @@ class SFAFast(BaseTransformer):
                 )
 
                 chi2_statistics, p = chi2(bag_of_words, y)
-                # feature_count = min(self.max_feature_count, len(feature_names))
-                # relevant_features_idx = np.argsort(p)[:feature_count]
                 relevant_features_idx = np.where(p <= self.p_threshold)[0]
-
                 self.relevant_features = Dict.empty(
                     key_type=types.uint32, value_type=types.uint32
                 )
