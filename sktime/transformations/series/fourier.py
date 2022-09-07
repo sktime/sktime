@@ -18,11 +18,11 @@ class FourierFeatures(BaseTransformer):
     r"""Fourier Features for time series seasonality.
 
     Fourier Series terms can be used as explanatory variables for the cases of multiple
-    seasonal periods and or complex / long seasonal periods [1][2]. For every seasonal
-    period, :math:`sp` and fourier term :math:`k` pair there are 2 fourier terms
-    sin_sp_k and cos_sp_k:
-    - sin_sp_k = :math:`sin(\frac{2 \pi k t}{sp})`
-    - cos_sp_k = :math:`cos(\frac{2 \pi k t}{sp})`
+    seasonal periods and or complex / long seasonal periods [1]_, [2]_. For every
+    seasonal period, :math:`sp` and fourier term :math:`k` pair there are 2 fourier
+    terms sin_sp_k and cos_sp_k:
+        - sin_sp_k = :math:`sin(\frac{2 \pi k t}{sp})`
+        - cos_sp_k = :math:`cos(\frac{2 \pi k t}{sp})`
 
     Where :math:`t` is the number of time steps elapsed from the beginning of the time
     series.
@@ -33,7 +33,7 @@ class FourierFeatures(BaseTransformer):
     series will have the additional columns:
     "cos_12_1", "sin_12_1", "cos_12_2", "sin_12_2", "cos_3_1", "sin_3_1"
 
-    The implementation is based on the fourier function from the R forecast package [3]
+    The implementation is based on the fourier function from the R forecast package [3]_
 
     Parameters
     ----------
