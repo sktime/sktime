@@ -81,12 +81,13 @@ class DOBIN(BaseTransformer):
     >>> from sktime.transformations.series.dobin import DOBIN
     >>> from sklearn.preprocessing import MinMaxScaler
     >>> import numpy as np
+    >>> import pandas as pd
     >>> from sktime.datasets import load_uschange
     >>> _, X = load_uschange()
     >>> scaler = MinMaxScaler()
     >>> X = scaler.fit_transform(X)
     >>> model = DOBIN()
-    >>> X_outlier = model.fit_transform(X)
+    >>> X_outlier = model.fit_transform(pd.DataFrame(X))
     >>> X_outlier.head()
             DB0       DB1       DB2       DB3
     0  1.151965  0.116488  0.286064  0.288140
@@ -204,7 +205,7 @@ class DOBIN(BaseTransformer):
 
 
 def close_distance_matrix(X, k, frac):
-
+    """Calculate distance between close pairs."""
     X = pd.DataFrame(X)
     nbrs = NearestNeighbors(n_neighbors=k + 1, metric="euclidean").fit(X)
     _, indices = nbrs.kneighbors(X)
