@@ -131,8 +131,7 @@ class DOBIN(BaseTransformer):
             self._X_pca = X
             _, n_dim = X.shape
 
-        if self.k is None:
-            self.k = min(20, max(n_obs // 20, 2))
+        self.k_ = min(20, max(n_obs // 20, 2)) if self.k is None else self.k
 
         X_copy = X.copy()
         B = np.identity(n_dim)
@@ -140,7 +139,7 @@ class DOBIN(BaseTransformer):
 
         for _ in range(n_dim):
             # Compute Y space
-            y_space = close_distance_matrix(X_copy, self.k, self.frac)
+            y_space = close_distance_matrix(X_copy, self.k_, self.frac)
 
             # Find eta
             w = y_space.apply(sum, axis=0)
