@@ -16,33 +16,36 @@ from sktime.forecasting.naive import NaiveForecaster
 
 
 class SquaringResiduals(BaseForecaster):
-    """SquaringResiduals forecaster.
+    r"""Compute the prediction variance based on a separate forecaster.
 
-    Wraps a forecaster with another variance_forecaster object that
-    allows for quantile and interval estimation by fitting the residual
-    forecaster to the rolling residuals.
+    Wraps a `forecaster` with another `variance_forecaster` object that
+    allows for quantile and interval estimation by fitting the
+    `variance_forecaster` to the rolling residuals.
 
     Fitting proceeds as follows:
-    Let $t_1, ..., t_N$ be the train set.
-    Let $steps_ahead$ be a positive integer indicating the steps ahead
-    we want to forecast the residuals.Let $initial_window$ be
+    Let :math:`t_1, \dots, t_N` be the train set.
+    Let `steps_ahead` be a positive integer indicating the steps ahead
+    we want to forecast the residuals. Let `initial_window` be
     the minimal number of observations to which the forecaster is fitted.
 
-    1. For $i= initial_window, ..., N - steps_ahead$
-        a. Train/Update forecaster A on $y(t_1), ..., y(t_i)$
-        b. Make point prediction for $t_{i+steps_ahead}$ to get
-           $hat{y}(t_{i+steps_ahead})$
-        c. Compute the residual for $t_{i+steps_ahead}$ with
-            $r(t_{i+steps_ahead}) := y(t_{i+steps_ahead}) - hat{y}(t_{i+steps_ahead})$
-        d. Apply  $e(t_{i+steps_ahead}) := h(r(t_{i+steps_ahead}))$
-           where $h(x)$ is given by $strategy$
-    3. Train variance_forecaster on $e(t_{initial_window+steps_ahead}), ..., e(t_{N})$
+    1. For :math:`i = initial\_window, \dots, N - steps\_ahead`
+        a. Train/Update forecaster A on :math:`y(t_1), \dots, y(t_i)`
+        b. Make point prediction for :math:`t_{i+steps\_ahead}` to get
+           :math:`\hat{y}(t_{i+steps\_ahead})`
+        c. Compute the residual for :math:`t_{i+steps\_ahead}` with
+           :math:`r(t_{i+steps\_ahead}) := y(t_{i+steps\_ahead})
+           - \hat{y}(t_{i+steps\_ahead})`
+        d. Apply  :math:`e(t_{i+steps\_ahead}) := h(r(t_{i+steps\_ahead}))`
+           where :math:`h(x)` is given by :math:`strategy`
+    2. Train `variance_forecaster` on
+       :math:`e(t_{initial\_window+steps\_ahead}), \dots, e(t_{N})`
 
-    Prediction for $t_{N+steps_ahead}$ is done as follows:
-    1. Use forecaster again to predict location parameter $hat{y}(t_{N+steps_ahead})$
-    2. Use variance_forecaster to predict scale parameter $e(t_{N+steps_ahead})$
-    3. Calculate prediction intervals based on
-        e.g. normal assumption $N(hat{y}(t_{N+steps_ahead}),  e(t_{N+steps_ahead}))$
+    Prediction for :math:`t_{N+steps\_ahead}` is done as follows:
+
+    1. Use `forecaster` to predict location param :math:`\hat{y}(t_{N+steps\_ahead})`
+    2. Use `variance_forecaster` to predict scale param :math:`e(t_{N+steps\_ahead})`
+    3. Calculate prediction intervals based on e.g. normal assumption
+       :math:`N(\hat{y}(t_{N+steps\_ahead}),  e(t_{N+steps\_ahead}))`
 
     Parameters
     ----------
@@ -63,13 +66,11 @@ class SquaringResiduals(BaseForecaster):
 
     Examples
     --------
-    Use SquaringResiduals on macroeconomic data
     >>> from sktime.datasets import load_macroeconomic
     >>> from sktime.forecasting.base import ForecastingHorizon
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.forecasting.theta import ThetaForecaster
     >>> from sktime.forecasting.squaring_residuals import SquaringResiduals
-
     >>> fc = NaiveForecaster()
     >>> var_fc = ThetaForecaster()
     >>> y = load_macroeconomic().realgdp
