@@ -117,8 +117,8 @@ class BaseDistance(ABC):
             Additional keyword arguments.
         """
         if x.ndim < 2:
-            temp_x = x.reshape(-1, 1)
-            temp_y = y.reshape(-1, 1)
+            temp_x = x.reshape(1, -1)
+            temp_y = y.reshape(1, -1)
         else:
             temp_x = x
             temp_y = y
@@ -178,7 +178,7 @@ class BaseDistance(ABC):
                 def _independent_distance_wrapper(_x, _y):
                     total = 0
                     cost_matrix = np.zeros((_x.shape[1], _y.shape[1]))
-                    for i in range(x.shape[0]):
+                    for i in range(_x.shape[0]):
                         curr_dist, curr_cost_matrix = callable_distance(_x[i], _y[i])
                         cost_matrix = np.add(cost_matrix, curr_cost_matrix)
                         total += curr_dist
@@ -188,7 +188,7 @@ class BaseDistance(ABC):
 
                 def _independent_distance_wrapper(_x, _y):
                     total = 0
-                    for i in range(x.shape[0]):
+                    for i in range(_x.shape[0]):
                         curr_dist = callable_distance(_x[i], _y[i])
                         total += curr_dist
                     return total
@@ -253,12 +253,12 @@ class BaseDistance(ABC):
             )(_preprocess_time_series_callback)
 
         if x.ndim < 2:
-
+            stop = ''
             def _preprocess_time_series(_x: np.ndarray):
+                # Takes a 1d array and converts it to 2d (cant use reshape in numba)
                 x_size = _x.shape[0]
-                _process_x = np.zeros((x_size, 1))
-                for i in range(0, x_size):
-                    _process_x[i, :] = _x[i]
+                _process_x = np.zeros((1, x_size))
+                _process_x[0] = _x
                 return _preprocess_time_series_callback(_process_x)
 
             if self._numba_distance is True:

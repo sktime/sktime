@@ -4,14 +4,13 @@ import numpy as np
 from sktime.distances.distance_rework.tests.redo import (
     BaseDistance,
     DistanceCallable,
-    _SquaredDistance,
 )
 from sktime.distances.lower_bounding import resolve_bounding_matrix
 
 
 class _DtwDistance(BaseDistance):
     _has_cost_matrix = True
-    _numba_distance = False
+    _numba_distance = True
     _cache = True
     _fastmath = True
 
@@ -60,6 +59,8 @@ class _DtwDistance(BaseDistance):
         bounding_matrix: np.ndarray = None,
         **kwargs: dict
     ) -> DistanceCallable:
+        # Has to be here because circular import if at top
+        from sktime.distances.distance_rework.tests.redo import _SquaredDistance
 
         _bounding_matrix = resolve_bounding_matrix(
             x, y, window, itakura_max_slope, bounding_matrix

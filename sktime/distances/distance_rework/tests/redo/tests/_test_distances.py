@@ -6,7 +6,14 @@ from sktime.distances.distance_rework.tests.redo import (
     _DtwDistance,
     _EuclideanDistance,
     _SquaredDistance,
+    _DdtwDistance,
+    _WdtwDistance,
+    _WddtwDistance
 )
+from sktime.distances import distance
+from numba import config
+
+# config.DISABLE_JIT = True
 
 
 def _distance_tests(
@@ -58,6 +65,7 @@ def _distance_tests(
     assert independent_cost_matrix[-1, -1] == independent_result
     assert isinstance(dependent_cost_matrix, np.ndarray)
     assert dependent_cost_matrix[-1, -1] == dependent_result
+
 
     # independent_path, independent_path_result = dist.distance_alignment_path(
     #     x, y, strategy="independent"
@@ -114,6 +122,21 @@ def _get_test_result(dist: BaseDistance):
     _output_result(x_1d, y_1d, "1d")
     _output_result(x_2d, y_2d, "2d")
 
+def _check_matches_old(dist, old_ist_str):
+    # 1d check
+    old_distance_1d = distance(x_1d, y_1d, metric=old_ist_str, g=0.05)
+    ind_1d = dist.distance(x_1d, y_1d, strategy="independent")
+    dep_1d = dist.distance(x_1d, y_1d, strategy="dependent")
+
+    old_distance_2d = distance(x_2d, y_2d, metric=old_ist_str, g=0.05)
+    ind_2d = dist.distance(x_2d, y_2d, strategy="independent")
+    dep_2d = dist.distance(x_2d, y_2d, strategy="dependent")
+    stope = ''
+
+    assert (old_distance_1d == ind_1d or old_distance_1d == dep_1d)
+    assert (old_distance_2d == ind_2d or old_distance_2d == dep_2d)
+
+
 
 def test_euclidean_distance():
     _distance_tests(
@@ -122,13 +145,32 @@ def test_euclidean_distance():
     _distance_tests(
         _EuclideanDistance(), x_2d, y_2d, 66.39465339920075, 66.39465339920075
     )
+    _check_matches_old(_EuclideanDistance(), "euclidean")
 
 
 def test_squared_distance():
     _distance_tests(_SquaredDistance(), x_1d, y_1d, 15156.5, 15156.5)
     _distance_tests(_SquaredDistance(), x_2d, y_2d, 4408.25, 4408.25)
+    _check_matches_old(_SquaredDistance(), "squared")
 
 
 def test_dtw():
-    _distance_tests(_DtwDistance(), x_1d, y_1d, 15156.5, 15156.5)
+    _distance_tests(_DtwDistance(), x_1d, y_1d, 1247.5, 1247.5)
     _distance_tests(_DtwDistance(), x_2d, y_2d, 3823.25, 4408.25)
+    _check_matches_old(_DtwDistance(), "dtw")
+
+def test_ddtw():
+    _distance_tests(_DdtwDistance(), x_1d, y_1d, 4073.984375, 4073.984375)
+    _distance_tests(_DdtwDistance(), x_2d, y_2d, 3475.921875, 3833.84375)
+    _check_matches_old(_DdtwDistance(), "ddtw")
+
+def test_wdtw():
+    _distance_tests(_WdtwDistance(), x_1d, y_1d, 546.9905488055973, 546.9905488055973)
+    _distance_tests(_WdtwDistance(), x_2d, y_2d, 1710.0368744540094, 1930.0354399701807)
+    _check_matches_old(_WdtwDistance(), "wdtw")
+
+def test_wddtw():
+    _distance_tests(_WddtwDistance(), x_1d, y_1d, 1879.3085987999807,
+                    1879.3085987999807)
+    _distance_tests(_WddtwDistance(), x_2d, y_2d, 1578.927748232979, 1725.86611586604)
+    _check_matches_old(_WddtwDistance(), "wddtw")

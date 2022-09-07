@@ -1,14 +1,20 @@
+# -*- coding: utf-8 -*-
 import numpy as np
-from numba import njit
-from typing import Callable, Tuple, Union
 
-from sktime.distances.distance_rework.base import BaseDistance, DistanceCostCallable
+from sktime.distances.distance_rework.tests.redo import (
+    BaseDistance,
+    DistanceCallable,
+)
 from sktime.distances.lower_bounding import resolve_bounding_matrix
-from sktime.distances.distance_rework._squared_euclidean import _SquaredEuclidean
 
 
 class _WdtwDistance(BaseDistance):
-    def _independent_distance_factory(
+    _has_cost_matrix = True
+    _numba_distance = True
+    _cache = True
+    _fastmath = True
+
+    def _independent_distance(
             self,
             x: np.ndarray,
             y: np.ndarray,
@@ -17,18 +23,17 @@ class _WdtwDistance(BaseDistance):
             bounding_matrix: np.ndarray = None,
             g: float = 0.05,
             **kwargs: dict
-    ) -> DistanceCostCallable:
+    ) -> DistanceCallable:
         _bounding_matrix = resolve_bounding_matrix(
             x, y, window, itakura_max_slope, bounding_matrix
         )
 
-        @njit(cache=True)
-        def _wdtw_distance(
+        def _numba_wdtw(
                 _x: np.ndarray,
                 _y: np.ndarray,
-        ) -> Tuple[np.ndarray, float]:
-            x_size = x.shape[1]
-            y_size = y.shape[1]
+        ):
+            x_size = _x.shape[0]
+            y_size = _y.shape[0]
             cost_matrix = np.full((x_size + 1, y_size + 1), np.inf)
             cost_matrix[0, 0] = 0.0
 
@@ -41,16 +46,16 @@ class _WdtwDistance(BaseDistance):
                     if np.isfinite(_bounding_matrix[i, j]):
                         squared_dist = (_x[i] - _y[j]) ** 2
                         cost_matrix[i + 1, j + 1] = \
-                            squared_dist * weight_vector[i - j] + min(
-                                    cost_matrix[i, j + 1],
-                                    cost_matrix[i + 1, j],
-                                    cost_matrix[i, j]
-                                )
+                            squared_dist * weight_vector[abs(i - j)] + min(
+                                cost_matrix[i, j + 1],
+                                cost_matrix[i + 1, j],
+                                cost_matrix[i, j]
+                            )
 
-            return cost_matrix[1:, 1:], cost_matrix[-1, -1]
-        return _wdtw_distance
+            return cost_matrix[-1, -1], cost_matrix[1:, 1:]
+        return _numba_wdtw
 
-    def _dependent_distance_factory(
+    def _dependent_distance(
             self,
             x: np.ndarray,
             y: np.ndarray,
@@ -59,22 +64,26 @@ class _WdtwDistance(BaseDistance):
             bounding_matrix: np.ndarray = None,
             g: float = 0.05,
             **kwargs: dict
-    ) -> DistanceCostCallable:
+    ) -> DistanceCallable:
+        # Has to be here because circular import if at top
+        from sktime.distances.distance_rework.tests.redo import _SquaredDistance
+
         _bounding_matrix = resolve_bounding_matrix(
             x, y, window, itakura_max_slope, bounding_matrix
         )
 
-        squared_euclidean = _SquaredEuclidean()._independent_distance_factory(
-            x[:, 0], y[:, 0], **kwargs
+        _example_x = x[:, 0]
+        _example_y = y[:, 0]
+        squared_distance = _SquaredDistance().distance_factory(
+            _example_x, _example_y, strategy="independent", **kwargs
         )
 
-        @njit(cache=True)
-        def _wdtw_distance(
+        def _numba_wdtw(
                 _x: np.ndarray,
                 _y: np.ndarray,
-        ) -> Tuple[np.ndarray, float]:
-            x_size = x.shape[1]
-            y_size = y.shape[1]
+        ):
+            x_size = _x.shape[1]
+            y_size = _y.shape[1]
             cost_matrix = np.full((x_size + 1, y_size + 1), np.inf)
             cost_matrix[0, 0] = 0.0
 
@@ -85,14 +94,14 @@ class _WdtwDistance(BaseDistance):
             for i in range(x_size):
                 for j in range(y_size):
                     if np.isfinite(_bounding_matrix[i, j]):
-                        squared_dist = squared_euclidean(_x[:, i], _y[:, j])
+                        squared_dist = squared_distance(_x[:, i], _y[:, j])
                         cost_matrix[i + 1, j + 1] = \
-                            squared_dist * weight_vector[i - j] + min(
+                            squared_dist * weight_vector[abs(i - j)] + min(
                                 cost_matrix[i, j + 1],
                                 cost_matrix[i + 1, j],
                                 cost_matrix[i, j]
                             )
 
-            return cost_matrix[1:, 1:], cost_matrix[-1, -1]
+            return cost_matrix[-1, -1], cost_matrix[1:, 1:]
 
-        return _wdtw_distance
+        return _numba_wdtw

@@ -116,7 +116,7 @@ class _WdtwDistance(NumbaDistance):
 
         if return_cost_matrix is True:
 
-            @njit(cache=True)
+            # @njit(cache=True)
             def numba_wdtw_distance_alignment_path(
                 _x: np.ndarray,
                 _y: np.ndarray,
@@ -127,7 +127,7 @@ class _WdtwDistance(NumbaDistance):
 
         else:
 
-            @njit(cache=True)
+            # @njit(cache=True)
             def numba_wdtw_distance_alignment_path(
                 _x: np.ndarray,
                 _y: np.ndarray,
@@ -198,7 +198,7 @@ class _WdtwDistance(NumbaDistance):
                 f"The value of g must be a float. The current value is {g}"
             )
 
-        @njit(cache=True)
+        # @njit(cache=True)
         def numba_wdtw_distance(
             _x: np.ndarray,
             _y: np.ndarray,
@@ -209,7 +209,7 @@ class _WdtwDistance(NumbaDistance):
         return numba_wdtw_distance
 
 
-@njit(cache=True)
+# @njit(cache=True)
 def _weighted_cost_matrix(
     x: np.ndarray, y: np.ndarray, bounding_matrix: np.ndarray, g: float
 ):

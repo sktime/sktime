@@ -110,7 +110,7 @@ class _WddtwDistance(NumbaDistance):
 
         if return_cost_matrix is True:
 
-            @njit(cache=True)
+            # @njit(cache=True)
             def numba_wddtw_distance_alignment_path(
                 _x: np.ndarray,
                 _y: np.ndarray,
@@ -123,7 +123,7 @@ class _WddtwDistance(NumbaDistance):
 
         else:
 
-            @njit(cache=True)
+            # @njit(cache=True)
             def numba_wddtw_distance_alignment_path(
                 _x: np.ndarray,
                 _y: np.ndarray,
@@ -211,7 +211,7 @@ class _WddtwDistance(NumbaDistance):
                 f"{compute_derivative.__name__}"
             )
 
-        @njit(cache=True)
+        # @njit(cache=True)
         def numba_wddtw_distance(
             _x: np.ndarray,
             _y: np.ndarray,
