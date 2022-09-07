@@ -237,7 +237,7 @@ class HMM(BaseSeriesAnnotator):
         # trans_prob represents the maximum probability of being in that
         # state at that stage
         trans_prob = np.zeros((num_states, num_obs))
-        trans_prob[:, 0] = np.log(initial_probs)
+        trans_prob[:, 0] = np.log(initial_probs) + np.log(emi_probs[:, 0])
 
         # trans_id is the index of the state that would have been the most
         # likely preceeding state.
@@ -245,15 +245,16 @@ class HMM(BaseSeriesAnnotator):
 
         # use Vertibi Algorithm to fill in trans_prob and trans_id:
         for i in range(1, num_obs):
-            # use log probabilities to try to keep nums reasonable -Inf
-            # means 0 probability
-            paths = np.zeros((num_states, num_states))
-            for j in range(num_states):
-                paths[j, :] += trans_prob[:, i - 1]  # adds prev trans_prob column-wise
-                paths[:, j] += np.log(emi_probs[:, i])  # adds log(probs_sub) row-wise
-            paths += np.log(
-                transition_prob_mat
-            )  # adds log(transition_prob_mat) element-wise
+            # adds log(transition_prob_mat) element-wise:
+            paths = np.log(transition_prob_mat)
+            # adds the probabilities for the state before columsn wise:
+            paths += np.stack(
+                [trans_prob[:, i - 1] for _ in range(num_states)], axis=0
+            ).T
+            # adds the probabilities from emission row wise:
+            paths += np.stack(
+                [np.log(emi_probs[:, i]) for _ in range(num_states)], axis=0
+            )
             trans_id[:, i] = np.argmax(paths, axis=0)
             trans_prob[:, i] = np.max(paths, axis=0)
 
