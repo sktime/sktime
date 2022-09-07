@@ -7,7 +7,6 @@ import numpy as np
 import pandas as pd
 from pandas.api.types import is_numeric_dtype
 from scipy.linalg import null_space
-from scipy.stats import iqr
 from sklearn.decomposition import PCA
 from sklearn.neighbors import NearestNeighbors
 
@@ -15,29 +14,6 @@ from sktime.transformations.base import BaseTransformer
 
 __author__ = ["KatieBuc"]
 __all__ = ["DOBIN"]
-
-
-def unitize(x):
-    diff = max(x) - min(x)
-    if diff == 0:
-        return x
-    return (x - min(x)) / diff
-
-
-def standardize_median(x):
-    if iqr(x) == 0:
-        return x
-    return (x - np.median(x)) / iqr(x)
-
-
-def standardize_mean(x):
-    if np.std(x) == 0:
-        return x
-    return (x - np.mean(x)) / np.std(x)
-
-
-def identity(x):
-    return x
 
 
 class DOBIN(BaseTransformer):
