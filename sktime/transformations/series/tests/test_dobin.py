@@ -4,8 +4,9 @@
 __author__ = ["KatieBuc"]
 
 import numpy as np
+from sklearn.preprocessing import MinMaxScaler, RobustScaler
 
-from sktime.transformations.series.dobin import DOBIN, standardize_median
+from sktime.transformations.series.dobin import DOBIN
 
 
 def test_fit_default():
@@ -84,6 +85,8 @@ def test_fit_default():
         ]
     )
 
+    scaler = MinMaxScaler()
+    X = scaler.fit_transform(X)
     model = DOBIN()
     fitted_model = model.fit(X)
     coords_actual = fitted_model._coords
@@ -137,7 +140,9 @@ def test_fit_median_standardization():
         ]
     )
 
-    model = DOBIN(k=3, normalize=standardize_median)
+    scaler = RobustScaler()
+    X = scaler.fit_transform(X)
+    model = DOBIN(k=3)
     fitted_model = model.fit(X)
     coords_actual = fitted_model._coords
     basis_actual = fitted_model._basis
@@ -166,6 +171,8 @@ def test_pca_reduction():
         ]
     )
 
+    scaler = MinMaxScaler()
+    X = scaler.fit_transform(X)
     model = DOBIN(k=2, frac=0.5)
     fitted_model = model.fit(X)
     X_actual = fitted_model._X_pca
@@ -186,10 +193,10 @@ def test_zero_variance():
 
     coords_expected = np.array(
         [
-            [0.4736931, 0.57202103, 1.0],
-            [0.35209305, -0.22820652, 1.0],
-            [0.45632521, 0.70405059, 1.0],
-            [1.3830473, 0.2952629, 1.0],
+            [0.4736931, 0.57202103, 0],
+            [0.35209305, -0.22820652, 0],
+            [0.45632521, 0.70405059, 0],
+            [1.3830473, 0.2952629, 0],
         ]
     )
 
@@ -197,6 +204,8 @@ def test_zero_variance():
         [[0.8391551, -0.5438922, 0.0], [0.5438922, 0.8391551, 0.0], [0.0, 0.0, 1.0]]
     )
 
+    scaler = MinMaxScaler()
+    X = scaler.fit_transform(X)
     model = DOBIN(k=1, frac=0.5)
     fitted_model = model.fit(X)
     coords_actual = fitted_model._coords

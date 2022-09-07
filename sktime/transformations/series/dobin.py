@@ -48,14 +48,17 @@ class DOBIN(BaseTransformer):
     has a simple mathematical foundation and can be used as a dimension
     reduction tool for outlier detection tasks.
 
+    Method assumes normalized data, for example:
+    from sklearn.preprocessing import MinMaxScaler, RobustScaler, StandardScaler
+
+    This prevents variables with large variances having disproportional
+    influence on Euclidean distances. The original implelemtation -[1] uses
+    MinMaxScaler normalization.
+
     Parameters
     ----------
     frac : int, float (default=0.95)
         The cut-off quantile for Y space
-    normalize : callable {unitize, standardize_median, standardize_mean}
-        (default=unitize)
-        Method to normalize the columns of the data. This prevents variables
-        with large variances having disproportional influence on Euclidean distances.
     k : int (default=None)
         Number of nearest neighbours considered, with a default value None calculated
         as 5% of the number of observations with a cap of 20.
@@ -76,9 +79,12 @@ class DOBIN(BaseTransformer):
     Examples
     --------
     >>> from sktime.transformations.series.dobin import DOBIN
+    >>> from sklearn.preprocessing import MinMaxScaler
     >>> import numpy as np
     >>> from sktime.datasets import load_uschange
     >>> _, X = load_uschange()
+    >>> scaler = MinMaxScaler()
+    >>> X = scaler.fit_transform(X)
     >>> model = DOBIN()
     >>> X_outlier = model.fit_transform(X)
     >>> X_outlier.head()
@@ -99,18 +105,15 @@ class DOBIN(BaseTransformer):
     def __init__(
         self,
         frac=0.95,
-        normalize=unitize,  # TODO: make it so that we accept sktime normalizations
         k=None,
     ):
         self.frac = frac
-        self.normalize = normalize
         self.k = k
         super(DOBIN, self).__init__()
 
     def _fit(self, X, y=None):
 
         self._X = X
-        X = X.apply(self.normalize, axis=0)
 
         assert all(X.apply(is_numeric_dtype, axis=0))
 
