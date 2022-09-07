@@ -4,8 +4,9 @@
 __author__ = ["KatieBuc"]
 
 import numpy as np
+from sklearn.preprocessing import MinMaxScaler, RobustScaler
 
-from sktime.annotation.stray import STRAY, standardize
+from sktime.annotation.stray import STRAY
 
 
 def test_default_1D():
@@ -84,6 +85,8 @@ def test_default_1D():
         ]
     )
 
+    scaler = MinMaxScaler()
+    X = scaler.fit_transform(X.reshape(-1, 1))
     model = STRAY()
     y_actual = model.fit_transform(X)
     assert np.allclose(y_actual, y_expected)
@@ -129,6 +132,8 @@ def test_default_2D():
         ]
     )
 
+    scaler = MinMaxScaler()
+    X = scaler.fit_transform(X)
     model = STRAY()
     y_actual = model.fit_transform(X)
     assert np.allclose(y_actual, y_expected)
@@ -168,6 +173,8 @@ def test_1D_score_with_na():
         ]
     )
 
+    scaler = MinMaxScaler()
+    X = scaler.fit_transform(X.reshape(-1, 1))
     model = STRAY(k=3)
     fitted_model = model.fit(X)
     y_scores_actual = fitted_model.score_
@@ -194,6 +201,8 @@ def test_1D_bool_with_na():
 
     y_expected = np.array([0, 0, 1, 0, 1, 1, 0, 0, 0, 0, 0])
 
+    scaler = MinMaxScaler()
+    X = scaler.fit_transform(X.reshape(-1, 1))
     model = STRAY(k=3)
     fitted_model = model.fit(X)
     y_actual = fitted_model.y_
@@ -217,6 +226,8 @@ def test_2D_score_with_na():
         [0.5233413, 0.5233413, np.nan, 0.7248368, 0.6035040, 0.8704687]
     )
 
+    scaler = MinMaxScaler()
+    X = scaler.fit_transform(X)
     model = STRAY(k=2, size_threshold=4)
     fitted_model = model.fit(X)
     y_scores_actual = fitted_model.score_
@@ -238,6 +249,8 @@ def test_2D_bool_with_na():
 
     y_expected = np.array([0, 0, 0, 1, 1, 1])
 
+    scaler = MinMaxScaler()
+    X = scaler.fit_transform(X)
     model = STRAY(k=2, size_threshold=4)
     fitted_model = model.fit(X)
     y_actual = fitted_model.y_
@@ -245,7 +258,7 @@ def test_2D_bool_with_na():
 
 
 def test_2D_score_with_standardize():
-    """Test score with 2D input array and `standardize` normalization."""
+    """Test score with 2D input array and median/IQR normalization."""
     X = np.array(
         [
             [-1.20706575, -0.57473996],
@@ -268,7 +281,9 @@ def test_2D_score_with_standardize():
         ]
     )
 
-    model = STRAY(k=2, size_threshold=4, normalize=standardize)
+    scaler = RobustScaler()
+    X = scaler.fit_transform(X)
+    model = STRAY(k=2, size_threshold=4)
     fitted_model = model.fit(X)
     y_scores_actual = fitted_model.score_
     assert np.allclose(y_scores_actual, y_scores_expected)

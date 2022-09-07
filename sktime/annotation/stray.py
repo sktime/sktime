@@ -2,32 +2,16 @@
 """Tests for STRAY (Search TRace AnomalY) outlier estimator."""
 
 import warnings
-from typing import Callable, Dict
+from typing import Dict
 
 import numpy as np
 import numpy.typing as npt
-from scipy.stats import iqr
 from sklearn.neighbors import NearestNeighbors
 
 from sktime.transformations.base import BaseTransformer
 
 __author__ = ["KatieBuc"]
 __all__ = ["STRAY"]
-
-
-def unitize(x):
-    diff = max(x) - min(x)
-    if diff == 0:
-        return np.zeros(len(x))
-    return (x - min(x)) / diff
-
-
-def standardize(x):
-    return (x - np.median(x)) / iqr(x)
-
-
-def identity(x):
-    return x
 
 
 class STRAY(BaseTransformer):
@@ -54,10 +38,6 @@ class STRAY(BaseTransformer):
         (default="brute")
         Algorithm used to compute the nearest neighbors, from
         sklearn.neighbors.NearestNeighbors
-    normalize : callable {unitize, standardize, identity} (default=unitize)
-        Method to normalize the columns of the data. This prevents variables
-        with large variances having disproportional influence on Euclidean distances.
-        from sktime.annotation.stray import unitize, standardize, identity
     p : float, optional (default=0.5)
         Proportion of possible candidates for outliers. This defines the starting point
         for the bottom up searching algorithm.
@@ -86,22 +66,17 @@ class STRAY(BaseTransformer):
     --------
     >>> from sktime.annotation.stray import STRAY
     >>> from sktime.datasets import load_airline
+    >>> from sklearn.preprocessing import MinMaxScaler
+    >>> import numpy as np
     >>> X = load_airline().head(10)
+    >>> X = np.array(X).reshape(-1, 1)
+    >>> scaler = MinMaxScaler()
+    >>> X = scaler.fit_transform(X)
     >>> model = STRAY(k=3)
     >>> y = model.fit_transform(X)
     >>> y
-    Period
-    1949-01    False
-    1949-02    False
-    1949-03    False
-    1949-04    False
-    1949-05     True
-    1949-06     True
-    1949-07     True
-    1949-08     True
-    1949-09    False
-    1949-10     True
-    Freq: M, dtype: bool
+    array([False, False, False, False,  True,  True,  True,  True, False,
+        True])
     """
 
     _tags = {
@@ -116,7 +91,6 @@ class STRAY(BaseTransformer):
         alpha: float = 0.01,
         k: int = 10,
         knn_algorithm: str = "brute",
-        normalize: Callable = unitize,
         p: float = 0.5,
         size_threshold: int = 50,
         outlier_tail: str = "max",
@@ -124,7 +98,6 @@ class STRAY(BaseTransformer):
         self.alpha = alpha
         self.k = k
         self.knn_algorithm = knn_algorithm
-        self.normalize = normalize
         self.p = p
         self.size_threshold = size_threshold
         self.outlier_tail = outlier_tail
@@ -220,8 +193,6 @@ class STRAY(BaseTransformer):
             idx_dropna,
         ]
 
-        X_dropna = np.apply_along_axis(self.normalize, 0, X_dropna)
-
         n = np.shape(X_dropna)[0]
         outliers = self._find_outliers_kNN(X_dropna, n)
 
@@ -283,7 +254,6 @@ class STRAY(BaseTransformer):
                 alpha=self.alpha,
                 k=self.k,
                 knn_algorithm=self.knn_algorithm,
-                normalize=self.normalize,
                 p=self.p,
                 size_threshold=self.size_threshold,
                 outlier_tail=self.outlier_tail,
