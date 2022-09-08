@@ -6,8 +6,17 @@ __author__ = ["fkiraly"]
 
 import pandas as pd
 
+from sktime.datatypes import ALL_TIME_SERIES_MTYPES
 from sktime.datatypes._utilities import get_window
 from sktime.forecasting.base._delegate import _DelegatedForecaster
+
+
+# prepare tags to clone - exceptions are TAGS_TO_KEEP
+TAGS_TO_KEEP = ["fit_is_empty", "X_inner_mtype", "y_inner_mtype"]
+# fit must be executed to fit the wrapped estimator and remember the cutoff
+# mtype tags are set so X/y is passed through, conversions happen in wrapped estimator
+TAGS_TO_CLONE = _DelegatedForecaster().get_tags().keys()
+TAGS_TO_CLONE = list(set(TAGS_TO_CLONE).difference(TAGS_TO_KEEP))
 
 
 class UpdateRefitsEvery(_DelegatedForecaster):
@@ -39,7 +48,12 @@ class UpdateRefitsEvery(_DelegatedForecaster):
 
     _delegate_name = "forecaster_"
 
-    _tags = {"fit_is_empty": False, "requires-fh-in-fit": False}
+    _tags = {
+        "fit_is_empty": False,
+        "requires-fh-in-fit": False,
+        "y_inner_mtype": ALL_TIME_SERIES_MTYPES,
+        "X_inner_mtype": ALL_TIME_SERIES_MTYPES,
+    }
 
     def __init__(
         self, forecaster, refit_interval=0, refit_window_size=None, refit_window_lag=0
@@ -53,10 +67,7 @@ class UpdateRefitsEvery(_DelegatedForecaster):
 
         super(UpdateRefitsEvery, self).__init__()
 
-        self.clone_tags(forecaster)
-
-        # fit must be executed to fit the wrapped estimator and remember the cutoff
-        self.set_tags(fit_is_empty=False)
+        self.clone_tags(forecaster, TAGS_TO_CLONE)
 
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
@@ -219,7 +230,12 @@ class UpdateEvery(_DelegatedForecaster):
 
     _delegate_name = "forecaster_"
 
-    _tags = {"fit_is_empty": False, "requires-fh-in-fit": False}
+    _tags = {
+        "fit_is_empty": False,
+        "requires-fh-in-fit": False,
+        "y_inner_mtype": ALL_TIME_SERIES_MTYPES,
+        "X_inner_mtype": ALL_TIME_SERIES_MTYPES,
+    }
 
     def __init__(self, forecaster, update_interval=None):
         self.forecaster = forecaster
@@ -229,10 +245,7 @@ class UpdateEvery(_DelegatedForecaster):
 
         super(UpdateEvery, self).__init__()
 
-        self.clone_tags(forecaster)
-
-        # fit must be executed to fit the wrapped estimator and remember the cutoff
-        self.set_tags(fit_is_empty=False)
+        self.clone_tags(forecaster, TAGS_TO_KEEP)
 
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
@@ -379,7 +392,12 @@ class DontUpdate(_DelegatedForecaster):
 
     _delegate_name = "forecaster_"
 
-    _tags = {"fit_is_empty": False, "requires-fh-in-fit": False}
+    _tags = {
+        "fit_is_empty": False,
+        "requires-fh-in-fit": False,
+        "y_inner_mtype": ALL_TIME_SERIES_MTYPES,
+        "X_inner_mtype": ALL_TIME_SERIES_MTYPES,
+    }
 
     def __init__(self, forecaster):
         self.forecaster = forecaster
@@ -387,7 +405,7 @@ class DontUpdate(_DelegatedForecaster):
 
         super(DontUpdate, self).__init__()
 
-        self.clone_tags(forecaster)
+        self.clone_tags(forecaster, TAGS_TO_CLONE)
 
     def _update(self, y, X=None, update_params=True):
         """Update time series to incremental training data.
