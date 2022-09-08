@@ -248,9 +248,6 @@ class WEASEL(BaseClassifier):
             )
 
         self.clf.fit(all_words, y)
-
-        # print("Size of dict", relevant_features_count)
-        self.clf.fit(all_words, y)
         return self
 
     def _predict(self, X) -> np.ndarray:
@@ -338,6 +335,7 @@ class WEASEL(BaseClassifier):
             "support_probabilities": True,
             "bigrams": False,
             "feature_selection": "none",
+            "alphabet_size": 2,
         }
 
 
@@ -364,7 +362,7 @@ def _parallel_fit(
         binning_method=binning_strategy,
         bigrams=bigrams,
         feature_selection=feature_selection,
-        # TODO remove_repeat_words=False,
+        remove_repeat_words=False,
         save_words=False,
         n_jobs=n_jobs,
     )

@@ -5,7 +5,7 @@ Configurable SFA transform for discretising time series into words.
 
 """
 
-__author__ = ["Patrick Schäfer"]
+__author__ = ["patrickzib"]
 __all__ = ["SFAFast"]
 
 import math
@@ -58,10 +58,6 @@ class SFAFast(BaseTransformer):
 
         alphabet_size:       int, default = 4
             number of values to discretise each value to
-
-        force_alphabet_size_two:    bool, default=True
-            if set to True, will apply binning with alphabet of size 4 but transform
-            with only alphabet of size 2.
 
         window_size:         int, default = 12
             size of window for sliding. Input series
@@ -165,8 +161,8 @@ class SFAFast(BaseTransformer):
         bigrams=False,
         skip_grams=False,
         remove_repeat_words=False,
+        lower_bounding=True,
         save_words=False,
-        force_alphabet_size_two=False,
         dilation=1,
         first_difference=False,
         feature_selection="none",
@@ -187,7 +183,11 @@ class SFAFast(BaseTransformer):
         self.window_size = window_size
 
         self.norm = norm
-        self.inverse_sqrt_win_size = 1.0 / math.sqrt(window_size)
+        self.lower_bounding = lower_bounding
+        self.inverse_sqrt_win_size = (
+            1.0 / math.sqrt(window_size) if not lower_bounding else 1.0
+        )
+
         self.remove_repeat_words = remove_repeat_words
 
         self.save_words = save_words
@@ -199,7 +199,6 @@ class SFAFast(BaseTransformer):
         self.bigrams = bigrams
         self.skip_grams = skip_grams
         self.n_jobs = n_jobs
-        self.force_alphabet_size_two = force_alphabet_size_two
 
         self.n_instances = 0
         self.series_length = 0
@@ -268,22 +267,6 @@ class SFAFast(BaseTransformer):
         self.breakpoints = self._binning(X2, y)
         self._is_fitted = True
 
-        # force alphabet of size 2
-        if self.force_alphabet_size_two and self.breakpoints.shape[1] == 4:
-            bp = np.zeros((self.breakpoints.shape[0], 2))
-            bp[:, 0] = self.breakpoints[:, 1]
-            bp[:, 1] = np.inf
-            self.breakpoints = bp
-            self.alphabet_size = 2
-            self.letter_bits = 1
-
-            """
-            bp = breakpoints.copy()
-            bp[bp < 0] = -np.inf
-            words = generate_words(dfts, bp, letter_bits)
-            return words
-            """
-
         words, dfts = _transform_case(
             X2,
             self.window_size,
@@ -299,6 +282,7 @@ class SFAFast(BaseTransformer):
             self.bigrams,
             self.skip_grams,
             self.inverse_sqrt_win_size,
+            self.lower_bounding,
         )
 
         if self.remove_repeat_words:
@@ -359,6 +343,7 @@ class SFAFast(BaseTransformer):
         -------
         self: object
         """
+        # with parallel_backend("loky", inner_max_num_threads=n_jobs):
         self.fit_transform(X, y)
         return self
 
@@ -394,6 +379,7 @@ class SFAFast(BaseTransformer):
             self.bigrams,
             self.skip_grams,
             self.inverse_sqrt_win_size,
+            self.lower_bounding,
         )
 
         # only save at fit
@@ -483,10 +469,7 @@ class SFAFast(BaseTransformer):
                 )
 
                 chi2_statistics, p = chi2(bag_of_words, y)
-                # feature_count = min(self.max_feature_count, len(feature_names))
-                # relevant_features_idx = np.argsort(p)[:feature_count]
                 relevant_features_idx = np.where(p <= self.p_threshold)[0]
-
                 self.relevant_features = Dict.empty(
                     key_type=types.uint32, value_type=types.uint32
                 )
@@ -517,6 +500,7 @@ class SFAFast(BaseTransformer):
             self.dft_length,
             self.norm,
             self.inverse_sqrt_win_size,
+            self.lower_bounding,
         )
 
         if y is not None:
@@ -661,7 +645,6 @@ class SFAFast(BaseTransformer):
             Name of the set of test parameters to return, for use in tests. If no
             special parameters are defined for a value, will return `"default"` set.
 
-
         Returns
         -------
         params : dict or list of dict, default = {}
@@ -672,9 +655,12 @@ class SFAFast(BaseTransformer):
         """
         # small window size for testing
         params = {
+            "word_length": 4,
             "window_size": 4,
-            "return_sparse": False,
+            "return_sparse": True,
             "return_pandas_data_series": True,
+            "feature_selection": "chi2",
+            "alphabet_size": 2,
         }
         return params
 
@@ -702,7 +688,13 @@ class SFAFast(BaseTransformer):
 
 @njit(fastmath=True, cache=True)
 def _binning_dft(
-    X, window_size, series_length, dft_length, norm, inverse_sqrt_win_size
+    X,
+    window_size,
+    series_length,
+    dft_length,
+    norm,
+    inverse_sqrt_win_size,
+    lower_bounding,
 ):
     num_windows_per_inst = math.ceil(series_length / window_size)
 
@@ -721,6 +713,9 @@ def _binning_dft(
             data[i], norm, dft_length, inverse_sqrt_win_size
         )
         dft[i] = return_val
+
+    if lower_bounding:
+        dft[:, :, 1::2] = dft[:, :, 1::2] * -1  # lower bounding
 
     return dft.reshape(dft.shape[0] * dft.shape[1], dft_length)
 
@@ -781,6 +776,7 @@ def _transform_case(
     bigrams,
     skip_grams,
     inverse_sqrt_win_size,
+    lower_bounding,
 ):
     dfts = _mft(
         X,
@@ -791,6 +787,7 @@ def _transform_case(
         anova,
         variance,
         inverse_sqrt_win_size,
+        lower_bounding,
     )
 
     words = generate_words(
@@ -895,7 +892,7 @@ def generate_words(
 
     # add bigrams
     if bigrams:
-        for a in range(0, dfts.shape[1] - window_size):
+        for a in prange(0, dfts.shape[1] - window_size):
             first_word = words[:, a]
             second_word = words[:, a + window_size]
             words[:, dfts.shape[1] + a] = (first_word << word_bits) | second_word
@@ -913,7 +910,15 @@ def generate_words(
 
 @njit(fastmath=True, cache=True)
 def _mft(
-    X, window_size, dft_length, norm, support, anova, variance, inverse_sqrt_win_size
+    X,
+    window_size,
+    dft_length,
+    norm,
+    support,
+    anova,
+    variance,
+    inverse_sqrt_win_size,
+    lower_bounding,
 ):
     start_offset = 2 if norm else 0
     length = dft_length + start_offset + dft_length % 2
@@ -965,6 +970,9 @@ def _mft(
         )
 
     transformed2 = transformed2 * inverse_sqrt_win_size
+
+    if lower_bounding:
+        transformed2[:, :, 1::2] = transformed2[:, :, 1::2] * -1
 
     # compute STDs
     stds = np.zeros((X.shape[0], end))
@@ -1023,11 +1031,7 @@ def create_bag_none(
     feature_count = np.uint32(breakpoints.shape[1] ** word_length)
     all_win_words = np.zeros((n_instances, feature_count), dtype=np.uint32)
 
-    for j in range(len(sfa_words)):
-        # all_win_words[j, :feature_count] = np.bincount(
-        # sfa_words[j], minlength=feature_count)
-        # all_win_words[j, feature_count:] = all_win_words[j, :feature_count] >= 1
-
+    for j in prange(len(sfa_words)):
         # this mask is used to encode the repeated words
         if remove_repeat_words:
             masked = np.nonzero(sfa_words[j])
@@ -1036,13 +1040,6 @@ def create_bag_none(
             )
         else:
             all_win_words[j, :] = np.bincount(sfa_words[j], minlength=feature_count)
-
-        # all_win_words[j, :feature_count] =
-        # np.bincount(sfa_words[j], minlength=feature_count)
-        # for k, key in enumerate(sfa_words[j]):
-        #     cc = feature_count + key
-        #     if all_win_words[j, cc] == 0:
-        #         all_win_words[j, cc] = X_index[k]  # / sfa_words.shape[1]
 
     return all_win_words
 
@@ -1063,7 +1060,7 @@ def create_bag_feature_selection(
             del relevant_features[0]
 
     all_win_words = np.zeros((n_instances, len(relevant_features_idx)), dtype=np.uint32)
-    for j in range(len(sfa_words)):
+    for j in range(sfa_words.shape[0]):
         for key in sfa_words[j]:
             if key in relevant_features:
                 all_win_words[j, relevant_features[key]] += 1
@@ -1082,7 +1079,7 @@ def create_bag_transform(
 ):
     # merging arrays
     all_win_words = np.zeros((len(sfa_words), feature_count), np.uint32)
-    for j in range(len(sfa_words)):
+    for j in prange(len(sfa_words)):
         if len(relevant_features) == 0 and feature_selection == "none":
             # all_win_words[j, :feature_count // 2] =
             # np.bincount(sfa_words[j], minlength=feature_count // 2)

@@ -17,8 +17,6 @@ import pandas as pd
 import torch
 from convst.classifiers import R_DST_Ridge
 from joblib import Parallel, delayed
-
-# from scipy.stats import zscore
 from sklearn.linear_model import RidgeClassifierCV
 from sklearn.pipeline import make_pipeline
 
@@ -228,24 +226,25 @@ def get_classifiers():
     """Obtain the benchmark classifiers."""
     clfs = {
         # "WEASEL": WEASEL(random_state=1379, n_jobs=threads_to_use),
-        "BOSS": BOSSEnsemble(random_state=1379, n_jobs=threads_to_use),
+        # "BOSS": BOSSEnsemble(random_state=1379, n_jobs=threads_to_use),
         # "cBOSS": ContractableBOSS(random_state=1379, n_jobs=threads_to_use),
         # "TDE": TemporalDictionaryEnsemble(random_state=1379, n_jobs=threads_to_use),
-        # "WEASEL_RS (ED,FS:None)": WEASEL_STEROIDS(
-        #     random_state=1379,
-        #     binning_strategies=["equi-depth"],
-        #     alphabet_sizes=[2],
-        #     min_window=4,
-        #     max_window=24,
-        #     max_feature_count=10_000,
-        #     word_lengths=[8],  # test only 6 or 8?
-        #     norm_options=[False],  # p[True]=0.8
-        #     variance=True,
-        #     ensemble_size=50,
-        #     use_first_differences=[True, False],
-        #     feature_selection="none",
-        #     n_jobs=threads_to_use,
-        # ),
+        "WEASEL_RS (ED,FS:None)": WEASEL_STEROIDS(
+            random_state=1379,
+            binning_strategies=["equi-depth"],
+            alphabet_sizes=[2],
+            lower_bounding=False,
+            min_window=4,
+            max_window=24,
+            max_feature_count=10_000,
+            word_lengths=[8],  # test only 6 or 8?
+            norm_options=[False],  # p[True]=0.8
+            variance=True,
+            ensemble_size=50,
+            use_first_differences=[True, False],
+            feature_selection="none",
+            n_jobs=threads_to_use,
+        ),
         # "WEASEL_RS": WEASEL_STEROIDS(
         #     random_state=1379,
         #     binning_strategies=["equi-depth"],
@@ -277,16 +276,16 @@ def get_classifiers():
         #     feature_selection="none",
         #     n_jobs=threads_to_use,
         # ),
-        # "Hydra": [],  # see below
-        # "R_DST": R_DST_Ridge(random_state=1379),
-        # "Rocket": make_pipeline(
-        #    Rocket(random_state=1379, n_jobs=threads_to_use),
-        #    RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True),
-        # ),
-        # "MiniRocket": make_pipeline(
-        #    MiniRocket(random_state=1379, n_jobs=threads_to_use),
-        #    RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True),
-        # ),
+        "Hydra": [],  # see below
+        "R_DST": R_DST_Ridge(random_state=1379),
+        "Rocket": make_pipeline(
+            Rocket(random_state=1379, n_jobs=threads_to_use),
+            RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True),
+        ),
+        "MiniRocket": make_pipeline(
+            MiniRocket(random_state=1379, n_jobs=threads_to_use),
+            RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True),
+        ),
     }
     return clfs
 
@@ -336,25 +335,33 @@ if __name__ == "__main__":
             }
         }
 
-        # z-norm training/test data
-        # X_train = zscore(X_train, axis=1)
-        # X_test = zscore(X_test, axis=1)
+        # try:
+
         X_train = np.reshape(np.array(X_train), (len(X_train), 1, -1))
         X_test = np.reshape(np.array(X_test), (len(X_test), 1, -1))
 
-        # try:
+        if clf_name == "Hydra":
+            transform = Hydra(X_train.shape[-1])
+            X_training_transform = transform(torch.tensor(X_train).float())
+            X_test_transform = transform(torch.tensor(X_test).float())
 
-        # if clf_name == "R_DST_Ridge":
-        #    clf = get_classifiers()[clf_name]
-        # else:
-        clf = get_classifiers()[clf_name]
-        fit_time = time.perf_counter()
-        clf.fit(X_train, y_train)
-        fit_time = np.round(time.perf_counter() - fit_time, 5)
+            clf = RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True)
+            fit_time = time.process_time()
+            clf.fit(X_training_transform, y_train)
+            fit_time = np.round(time.process_time() - fit_time, 5)
 
-        pred_time = time.perf_counter()
-        acc = clf.score(X_test, y_test)
-        pred_time = np.round(time.perf_counter() - pred_time, 5)
+            pred_time = time.process_time()
+            acc = clf.score(X_test_transform, y_test)
+            pred_time = np.round(time.process_time() - pred_time, 5)
+        else:
+            clf = get_classifiers()[clf_name]
+            fit_time = time.process_time()
+            clf.fit(X_train, y_train)
+            fit_time = np.round(time.process_time() - fit_time, 5)
+
+            pred_time = time.process_time()
+            acc = clf.score(X_test, y_test)
+            pred_time = np.round(time.process_time() - pred_time, 5)
 
         print(
             f"Dataset={dataset_name}, "

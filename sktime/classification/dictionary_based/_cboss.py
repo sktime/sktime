@@ -7,17 +7,17 @@ ensemble structure of the original BOSS algorithm.
 
 __author__ = ["MatthewMiddlehurst", "BINAYKUMAR943"]
 
-__all__ = ["ContractableBOSS"]
+__all__ = ["ContractableBOSS", "pairwise_distances"]
 
 import math
 import time
 
 import numpy as np
-from sklearn.metrics import pairwise
 from sklearn.utils import check_random_state
 
 from sktime.classification.base import BaseClassifier
 from sktime.classification.dictionary_based import IndividualBOSS
+from sktime.classification.dictionary_based._boss import pairwise_distances
 from sktime.utils.validation.panel import check_X_y
 
 
@@ -149,12 +149,12 @@ class ContractableBOSS(BaseClassifier):
         n_parameter_samples=250,
         max_ensemble_size=50,
         max_win_len_prop=1,
-        min_window=6,
+        min_window=10,
         time_limit_in_minutes=0.0,
         contract_max_n_parameter_samples=np.inf,
         typed_dict="deprecated",
         save_train_predictions=False,
-        feature_selection="chi2",
+        feature_selection="none",
         n_jobs=1,
         random_state=None,
     ):
@@ -180,7 +180,7 @@ class ContractableBOSS(BaseClassifier):
         self._weight_sum = 0
         self._word_lengths = [16, 14, 12, 10, 8]
         self._norm_options = [True, False]
-        self._alphabet_size = 2
+        self._alphabet_size = 4
 
         super(ContractableBOSS, self).__init__()
 
@@ -403,7 +403,7 @@ class ContractableBOSS(BaseClassifier):
         else:
             for i, clf in enumerate(self.estimators_):
                 subsample = clf._subsample
-                distance_matrix = pairwise.pairwise_distances(
+                distance_matrix = pairwise_distances(
                     clf._transformed_data, n_jobs=self.n_jobs
                 )
 
@@ -432,7 +432,7 @@ class ContractableBOSS(BaseClassifier):
 
         # there may be no words if feature selection is too aggressive
         if boss._transformed_data.shape[1] > 0:
-            distance_matrix = pairwise.pairwise_distances(
+            distance_matrix = pairwise_distances(
                 boss._transformed_data, n_jobs=self.n_jobs
             )
 

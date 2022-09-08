@@ -112,6 +112,7 @@ class WEASEL_STEROIDS(BaseClassifier):
         anova=False,
         variance=True,
         bigrams=False,
+        lower_bounding=True,
         binning_strategies=["equi-depth"],
         ensemble_size=50,
         max_feature_count=20_000,
@@ -135,6 +136,7 @@ class WEASEL_STEROIDS(BaseClassifier):
         self.word_lengths = word_lengths
 
         self.bigrams = bigrams
+        self.lower_bounding = lower_bounding
         self.binning_strategies = binning_strategies
         self.random_state = random_state
 
@@ -207,6 +209,7 @@ class WEASEL_STEROIDS(BaseClassifier):
                 self.variance,
                 self.anova,
                 self.bigrams,
+                self.lower_bounding,
                 self.n_jobs,
                 self.max_feature_count,
                 self.ensemble_size,
@@ -329,6 +332,7 @@ def _parallel_fit(
     variance,
     anova,
     bigrams,
+    lower_bounding,
     n_jobs,
     max_feature_count,
     ensemble_size,
@@ -365,6 +369,7 @@ def _parallel_fit(
             remove_repeat_words=False,
             bigrams=bigrams,
             dilation=dilation,
+            lower_bounding=lower_bounding,
             first_difference=first_difference,
             feature_selection=feature_selection,
             max_feature_count=max_feature_count // ensemble_size,
