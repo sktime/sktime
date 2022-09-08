@@ -9,6 +9,7 @@ from sklearn import clone
 from sklearn.utils.metaestimators import if_delegate_has_method
 
 from sktime.base import _HeterogenousMetaEstimator
+from sktime.datatypes import ALL_TIME_SERIES_MTYPES
 from sktime.transformations._delegate import _DelegatedTransformer
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.multiindex import flatten_multiindex
@@ -906,6 +907,7 @@ class MultiplexTransformer(_DelegatedTransformer, _HeterogenousMetaEstimator):
     _tags = {
         "fit_is_empty": False,
         "univariate-only": False,
+        "X_inner_mtype": ALL_TIME_SERIES_MTYPES,
     }
 
     _delegate_name = "transformer_"
@@ -928,6 +930,8 @@ class MultiplexTransformer(_DelegatedTransformer, _HeterogenousMetaEstimator):
         self._set_transformer()
         self.clone_tags(self.transformer_)
         self.set_tags(**{"fit_is_empty": False})
+        # this ensures that we convert in the inner estimator, not in the multiplexer
+        self.set_tags(**{"X_inner_mtype": ALL_TIME_SERIES_MTYPES})
 
     @property
     def _transformers(self):

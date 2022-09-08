@@ -59,12 +59,12 @@ class ClearSky(BaseTransformer):
 
     Examples
     --------
-    >>> from sktime.transformations.series.clear_sky import ClearSky
-    >>> from sktime.datasets import load_solar
-    >>> y = load_solar()
-    >>> transformer = ClearSky()
+    >>> from sktime.transformations.series.clear_sky import ClearSky  # doctest: +SKIP
+    >>> from sktime.datasets import load_solar  # doctest: +SKIP
+    >>> y = load_solar()  # doctest: +SKIP
+    >>> transformer = ClearSky()  # doctest: +SKIP
     >>> # takes ~1min
-    >>> y_trafo = transformer.fit_transform(y)
+    >>> y_trafo = transformer.fit_transform(y)  # doctest: +SKIP
     """
 
     _tags = {
