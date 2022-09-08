@@ -8,11 +8,13 @@ __all__ = [
     "IndividualTDE",
     "WEASEL",
     "MUSE",
+    "MUSE_NEW",
 ]
 
 from sktime.classification.dictionary_based._boss import BOSSEnsemble, IndividualBOSS
 from sktime.classification.dictionary_based._cboss import ContractableBOSS
 from sktime.classification.dictionary_based._muse import MUSE
+from sktime.classification.dictionary_based._muse_new import MUSE_NEW
 from sktime.classification.dictionary_based._tde import (
     IndividualTDE,
     TemporalDictionaryEnsemble,
