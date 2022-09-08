@@ -65,7 +65,7 @@ dataset_names_excerpt = [
     "CricketX",
     "CricketY",
     "CricketZ",
-    "Crop",
+    # "Crop",
     "DiatomSizeReduction",
     "DistalPhalanxOutlineAgeGroup",
     "DistalPhalanxOutlineCorrect",
@@ -274,21 +274,21 @@ if __name__ == "__main__":
         X_train = np.reshape(np.array(X_train), (len(X_train), 1, -1))
         X_test = np.reshape(np.array(X_test), (len(X_test), 1, -1))
 
-        print(
-            f"Running Dataset={dataset_name}, "
-            f"Train-Size={np.shape(X_train)}, "
-            f"Test-Size={np.shape(X_test)}"
-        )
+        # print(
+        #     f"Running Dataset={dataset_name}, "
+        #     f"Train-Size={np.shape(X_train)}, "
+        #     f"Test-Size={np.shape(X_test)}"
+        # )
 
         for name, clf in clfs.items():
             try:
-                fit_time = time.time()
+                fit_time = time.process_time()
                 clf.fit(X_train, y_train)
-                fit_time = np.round(time.time() - fit_time, 5)
+                fit_time = np.round(time.process_time() - fit_time, 5)
 
-                pred_time = time.time()
+                pred_time = time.process_time()
                 acc = clf.score(X_test, y_test)
-                pred_time = np.round(time.time() - pred_time, 5)
+                pred_time = np.round(time.process_time() - pred_time, 5)
 
                 sum_scores[name]["dataset"].append(dataset_name)
                 sum_scores[name]["all_scores"].append(acc)
@@ -297,6 +297,12 @@ if __name__ == "__main__":
                     sum_scores[name]["pred_time"] + pred_time
                 )
 
+                print(
+                    f"Finished Dataset={dataset_name}, "
+                    f"Accuracy={np.round(acc, 2)}, "
+                    f"Fit-Time={sum_scores[name]['fit_time']}, "
+                    f"Fit-Time={sum_scores[name]['pred_time']} "
+                )
             except Exception as e:
                 print("An exception occurred: {}".format(e))
                 print("\tFailed: ", dataset_name, name)
@@ -312,7 +318,7 @@ if __name__ == "__main__":
     choose_max_window = [16, 20, 24, 28, 32, 36, 40]
     choose_norm_options = [[False], [True, False]]
     choose_word_lengths = [[8]]
-    choose_first_diff = [[True, False], [False]]
+    choose_first_diff = [[True, False], [True]]
     choose_lower_bounding = [True, False]
 
     for ensemble_size in choose_ensemble_size:
