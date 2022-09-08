@@ -6,6 +6,9 @@ os.environ["KMP_WARNINGS"] = "off"
 
 import itertools
 import sys
+
+sys.path.insert(0, "./")
+
 import time
 from warnings import simplefilter
 
@@ -79,7 +82,7 @@ dataset_names_full = [
     "ECG200",
     "ECG5000",
     "ECGFiveDays",
-    # "ElectricDevices", # 12 Mins
+    # "ElectricDevices",
     "EOGHorizontalSignal",
     "EOGVerticalSignal",
     "EthanolLevel",
@@ -88,8 +91,8 @@ dataset_names_full = [
     "FacesUCR",
     "FiftyWords",
     "Fish",
-    "FordA",
-    "FordB",
+    # "FordA",
+    # "FordB",
     "FreezerRegularTrain",
     "FreezerSmallTrain",
     "Fungi",
@@ -103,7 +106,7 @@ dataset_names_full = [
     "GunPointMaleVersusFemale",
     "GunPointOldVersusYoung",
     "Ham",
-    "HandOutlines",
+    # "HandOutlines",
     "Haptics",
     "Herring",
     "HouseTwenty",
@@ -125,17 +128,17 @@ dataset_names_full = [
     "MixedShapesRegularTrain",
     "MixedShapesSmallTrain",
     "MoteStrain",
-    "NonInvasiveFetalECGThorax1",
-    "NonInvasiveFetalECGThorax2",
+    # "NonInvasiveFetalECGThorax1",
+    # "NonInvasiveFetalECGThorax2",
     "OliveOil",
     "OSULeaf",
     "PhalangesOutlinesCorrect",
     "Phoneme",
     "PickupGestureWiimoteZ",
-    "PigAirwayPressure",
+    # "PigAirwayPressure",
     "PigArtPressure",
     "PigCVP",
-    "PLAID",
+    # "PLAID",
     "Plane",
     "PowerCons",
     "ProximalPhalanxOutlineAgeGroup",
@@ -149,7 +152,7 @@ dataset_names_full = [
     "SemgHandSubjectCh2",
     "ShakeGestureWiimoteZ",
     "ShapeletSim",
-    "ShapesAll",
+    # "ShapesAll",
     "SmallKitchenAppliances",
     "SmoothSubspace",
     "SonyAIBORobotSurface1",
@@ -165,7 +168,7 @@ dataset_names_full = [
     "TwoLeadECG",
     "TwoPatterns",
     "UMD",
-    "UWaveGestureLibraryAll",
+    # "UWaveGestureLibraryAll",
     "UWaveGestureLibraryX",
     "UWaveGestureLibraryY",
     # "UWaveGestureLibraryZ", # error???
@@ -229,7 +232,7 @@ def get_classifiers():
         # "BOSS": BOSSEnsemble(random_state=1379, n_jobs=threads_to_use),
         # "cBOSS": ContractableBOSS(random_state=1379, n_jobs=threads_to_use),
         # "TDE": TemporalDictionaryEnsemble(random_state=1379, n_jobs=threads_to_use),
-        "WEASEL_RS (ED,FS:None)": WEASEL_STEROIDS(
+        "WEASEL 2.0": WEASEL_STEROIDS(
             random_state=1379,
             binning_strategies=["equi-depth"],
             alphabet_sizes=[2],
@@ -335,63 +338,65 @@ if __name__ == "__main__":
             }
         }
 
-        # try:
+        try:
 
-        X_train = np.reshape(np.array(X_train), (len(X_train), 1, -1))
-        X_test = np.reshape(np.array(X_test), (len(X_test), 1, -1))
+            X_train = np.reshape(np.array(X_train), (len(X_train), 1, -1))
+            X_test = np.reshape(np.array(X_test), (len(X_test), 1, -1))
 
-        if clf_name == "Hydra":
-            fit_time = time.perf_counter()
-            transform = Hydra(X_train.shape[-1])
-            X_training_transform = transform(torch.tensor(X_train).float())
+            if clf_name == "Hydra":
+                fit_time = time.process_time()
+                transform = Hydra(X_train.shape[-1])
+                X_training_transform = transform(torch.tensor(X_train).float())
 
-            clf = RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True)
-            clf.fit(X_training_transform, y_train)
-            fit_time = np.round(time.perf_counter() - fit_time, 5)
+                clf = RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True)
+                clf.fit(X_training_transform, y_train)
+                fit_time = np.round(time.process_time() - fit_time, 5)
 
-            pred_time = time.perf_counter()
-            X_test_transform = transform(torch.tensor(X_test).float())
-            acc = clf.score(X_test_transform, y_test)
-            pred_time = np.round(time.perf_counter() - pred_time, 5)
-        else:
-            clf = get_classifiers()[clf_name]
-            fit_time = time.perf_counter()
-            clf.fit(X_train, y_train)
-            fit_time = np.round(time.perf_counter() - fit_time, 5)
+                pred_time = time.process_time()
+                X_test_transform = transform(torch.tensor(X_test).float())
+                acc = clf.score(X_test_transform, y_test)
+                pred_time = np.round(time.process_time() - pred_time, 5)
+            else:
+                clf = get_classifiers()[clf_name]
+                fit_time = time.process_time()
+                clf.fit(X_train, y_train)
+                fit_time = np.round(time.process_time() - fit_time, 5)
 
-            pred_time = time.perf_counter()
-            acc = clf.score(X_test, y_test)
-            pred_time = np.round(time.perf_counter() - pred_time, 5)
+                pred_time = time.process_time()
+                acc = clf.score(X_test, y_test)
+                pred_time = np.round(time.process_time() - pred_time, 5)
 
-        print(
-            f"Dataset={dataset_name}, "
-            + (
-                f"Feature Count={clf.total_features_count}, "
-                if hasattr(clf, "total_features_count")
-                else f""
+            print(
+                f"Dataset={dataset_name}, "
+                + (
+                    f"Feature Count={clf.total_features_count}, "
+                    if hasattr(clf, "total_features_count")
+                    else f""
+                )
+                + f"Train-Size={np.shape(X_train)}, "
+                + f"Test-Size={np.shape(X_test)}"
+                + f"\n\tclassifier={clf_name}"
+                + f"\n\ttime (fit, predict)="
+                f"{np.round(fit_time, 2), np.round(pred_time, 2)}"
+                + f"\n\taccuracy={np.round(acc, 3)}"
             )
-            + f"Train-Size={np.shape(X_train)}, "
-            + f"Test-Size={np.shape(X_test)}"
-            + f"\n\tclassifier={clf_name}"
-            + f"\n\ttime (fit, predict)="
-            f"{np.round(fit_time, 2), np.round(pred_time, 2)}"
-            + f"\n\taccuracy={np.round(acc, 3)}"
-        )
 
-        sum_scores[clf_name]["dataset"].append(dataset_name)
-        sum_scores[clf_name]["all_scores"].append(acc)
-        sum_scores[clf_name]["all_fit"].append(fit_time)
-        sum_scores[clf_name]["all_pred"].append(pred_time)
+            sum_scores[clf_name]["dataset"].append(dataset_name)
+            sum_scores[clf_name]["all_scores"].append(acc)
+            sum_scores[clf_name]["all_fit"].append(fit_time)
+            sum_scores[clf_name]["all_pred"].append(pred_time)
 
-        sum_scores[clf_name]["fit_time"] += sum_scores[clf_name]["fit_time"] + fit_time
-        sum_scores[clf_name]["pred_time"] += (
-            sum_scores[clf_name]["pred_time"] + pred_time
-        )
+            sum_scores[clf_name]["fit_time"] += (
+                sum_scores[clf_name]["fit_time"] + fit_time
+            )
+            sum_scores[clf_name]["pred_time"] += (
+                sum_scores[clf_name]["pred_time"] + pred_time
+            )
 
-        # except Exception as e:
-        #    print("An exception occurred: {}".format(e))
-        #    print("\tFailed: ", dataset_name, clf_name)
-        #    print(e)
+        except Exception as e:
+            print("An exception occurred: {}".format(e))
+            print("\tFailed: ", dataset_name, clf_name)
+            print(e)
 
         print("-----------------")
 
@@ -449,24 +454,24 @@ if __name__ == "__main__":
         for fit, pred, dataset_name in zip(all_fit, all_pred, all_datasets):
             csv_timings.append((name, dataset_name, fit, pred))
 
-    if server:
-        pd.DataFrame.from_records(
-            csv_scores,
-            columns=[
-                "Classifier",
-                "Dataset",
-                "Accuracy",
-                # "Fit-Time",
-                # "Predict-Time",
-            ],
-        ).to_csv("classifier_all_scores-08-09-22.csv", index=None)
+    # if server:
+    pd.DataFrame.from_records(
+        csv_scores,
+        columns=[
+            "Classifier",
+            "Dataset",
+            "Accuracy",
+            # "Fit-Time",
+            # "Predict-Time",
+        ],
+    ).to_csv("subset_scores-08-09-22.csv", index=None)
 
-        pd.DataFrame.from_records(
-            csv_timings,
-            columns=[
-                "Classifier",
-                "Dataset",
-                "Fit-Time",
-                "Predict-Time",
-            ],
-        ).to_csv("classifier_all_runtimes-08-09-22.csv", index=None)
+    pd.DataFrame.from_records(
+        csv_timings,
+        columns=[
+            "Classifier",
+            "Dataset",
+            "Fit-Time",
+            "Predict-Time",
+        ],
+    ).to_csv("subset_runtimes-08-09-22.csv", index=None)
