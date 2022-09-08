@@ -845,7 +845,7 @@ def generate_words(
 
     # add bigrams
     if bigrams:
-        for a in range(0, dfts.shape[1] - window_size):
+        for a in prange(0, dfts.shape[1] - window_size):
             first_word = words[:, a]
             second_word = words[:, a + window_size]
             words[:, dfts.shape[1] + a] = (first_word << word_bits) | second_word
@@ -957,7 +957,7 @@ def create_bag_none(
     feature_count = np.uint32(breakpoints.shape[1] ** word_length)
     all_win_words = np.zeros((n_instances, feature_count), dtype=np.uint32)
 
-    for j in range(len(sfa_words)):
+    for j in prange(len(sfa_words)):
         # this mask is used to encode the repeated words
         if remove_repeat_words:
             masked = np.nonzero(sfa_words[j])
@@ -986,7 +986,7 @@ def create_bag_feature_selection(
             del relevant_features[0]
 
     all_win_words = np.zeros((n_instances, len(relevant_features_idx)), dtype=np.uint32)
-    for j in range(len(sfa_words)):
+    for j in range(sfa_words.shape[0]):
         for key in sfa_words[j]:
             if key in relevant_features:
                 all_win_words[j, relevant_features[key]] += 1
@@ -1004,7 +1004,7 @@ def create_bag_transform(
 ):
     # merging arrays
     all_win_words = np.zeros((len(sfa_words), feature_count), np.uint32)
-    for j in range(len(sfa_words)):
+    for j in prange(len(sfa_words)):
         if len(relevant_features) == 0 and feature_selection == "none":
             # this mask is used to encode the repeated words
             if remove_repeat_words:
