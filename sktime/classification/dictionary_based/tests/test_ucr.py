@@ -341,27 +341,27 @@ if __name__ == "__main__":
         X_test = np.reshape(np.array(X_test), (len(X_test), 1, -1))
 
         if clf_name == "Hydra":
+            fit_time = time.perf_counter()
             transform = Hydra(X_train.shape[-1])
             X_training_transform = transform(torch.tensor(X_train).float())
-            X_test_transform = transform(torch.tensor(X_test).float())
 
             clf = RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True)
-            fit_time = time.process_time()
             clf.fit(X_training_transform, y_train)
-            fit_time = np.round(time.process_time() - fit_time, 5)
+            fit_time = np.round(time.perf_counter() - fit_time, 5)
 
-            pred_time = time.process_time()
+            pred_time = time.perf_counter()
+            X_test_transform = transform(torch.tensor(X_test).float())
             acc = clf.score(X_test_transform, y_test)
-            pred_time = np.round(time.process_time() - pred_time, 5)
+            pred_time = np.round(time.perf_counter() - pred_time, 5)
         else:
             clf = get_classifiers()[clf_name]
-            fit_time = time.process_time()
+            fit_time = time.perf_counter()
             clf.fit(X_train, y_train)
-            fit_time = np.round(time.process_time() - fit_time, 5)
+            fit_time = np.round(time.perf_counter() - fit_time, 5)
 
-            pred_time = time.process_time()
+            pred_time = time.perf_counter()
             acc = clf.score(X_test, y_test)
-            pred_time = np.round(time.process_time() - pred_time, 5)
+            pred_time = np.round(time.perf_counter() - pred_time, 5)
 
         print(
             f"Dataset={dataset_name}, "
@@ -459,7 +459,7 @@ if __name__ == "__main__":
                 # "Fit-Time",
                 # "Predict-Time",
             ],
-        ).to_csv("classifier_all_scores-02-09-22.csv", index=None)
+        ).to_csv("classifier_all_scores-08-09-22.csv", index=None)
 
         pd.DataFrame.from_records(
             csv_timings,
@@ -469,4 +469,4 @@ if __name__ == "__main__":
                 "Fit-Time",
                 "Predict-Time",
             ],
-        ).to_csv("classifier_all_runtimes-02-09-22.csv", index=None)
+        ).to_csv("classifier_all_runtimes-08-09-22.csv", index=None)
