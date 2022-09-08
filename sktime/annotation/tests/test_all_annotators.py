@@ -9,6 +9,7 @@ from sktime.registry import all_estimators
 from sktime.utils._testing.annotation import make_annotation_problem
 from sktime.utils.validation._dependencies import _check_estimator_deps
 
+# todo: sporadic failure needs to be fixed, see issue #3394
 EXCLUDE = "HMM"
 
 ALL_ANNOTATORS = all_estimators(
