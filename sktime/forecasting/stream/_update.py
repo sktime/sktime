@@ -10,7 +10,6 @@ from sktime.datatypes import ALL_TIME_SERIES_MTYPES
 from sktime.datatypes._utilities import get_window
 from sktime.forecasting.base._delegate import _DelegatedForecaster
 
-
 # prepare tags to clone - exceptions are TAGS_TO_KEEP
 TAGS_TO_KEEP = ["fit_is_empty", "X_inner_mtype", "y_inner_mtype"]
 # fit must be executed to fit the wrapped estimator and remember the cutoff
