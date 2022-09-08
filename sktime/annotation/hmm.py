@@ -376,11 +376,11 @@ class HMM(BaseSeriesAnnotator):
         self.num_states = len(self.emission_funcs)
         self.states = list(range(self.num_states))
         self.num_obs = len(X)
-        emi_probs = HMM._make_emission_probs(self.emission_funcs, X)
+        emi_probs = self._make_emission_probs(self.emission_funcs, X)
         init_probs = self.initial_probs
         if self.initial_probs is None:
             init_probs = 1.0 / self.num_states * np.ones(self.num_states)
-        trans_prob, trans_id = HMM._calculate_trans_mats(
+        trans_prob, trans_id = self._calculate_trans_mats(
             init_probs,
             emi_probs,
             self.transition_prob_mat,
@@ -390,7 +390,7 @@ class HMM(BaseSeriesAnnotator):
 
         self.trans_prob = trans_prob
         self.trans_id = trans_id
-        return HMM._hmm_viterbi_label(
+        return self._hmm_viterbi_label(
             self.num_obs, self.states, self.trans_prob, self.trans_id
         )
 
