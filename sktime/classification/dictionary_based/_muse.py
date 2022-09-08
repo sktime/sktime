@@ -12,6 +12,7 @@ import math
 import warnings
 
 import numpy as np
+from joblib import Parallel, delayed
 from numba import njit
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.feature_selection import chi2
@@ -106,7 +107,7 @@ class MUSE(BaseClassifier):
     _tags = {
         "capability:multivariate": True,
         "capability:multithreading": True,
-        "X_inner_mtype": "nested_univ",  # MUSE requires nested datafrane
+        "X_inner_mtype": "nested_univ",  # MUSE requires nested dataframe
         "classifier_type": "dictionary",
     }
 
@@ -181,7 +182,6 @@ class MUSE(BaseClassifier):
 
         self.n_dims = len(self.col_names)
         self.highest_dim_bit = (math.ceil(math.log2(self.n_dims))) + 1
-        self.highest_bits = np.zeros(self.n_dims)
 
         if self.n_dims == 1:
             warnings.warn(
@@ -189,16 +189,18 @@ class MUSE(BaseClassifier):
                 + " multivariate series. It is recommended WEASEL is used instead."
             )
 
-        self.SFA_transformers = [[] for _ in range(self.n_dims)]
+        def _parallel_fit(ind, column):
+            all_words = [
+                [] for x in range(X.shape[0])
+            ]  # no dict needed, array is enough
+            relevant_features_count = 0
 
-        # the words of all dimensions and all time series
-        all_words = [dict() for _ in range(X.shape[0])]
-
-        # On each dimension, perform SFA
-        for ind, column in enumerate(self.col_names):
+            # On each dimension, perform SFA
             X_dim = X[[column]]
             X_dim = from_nested_to_3d_numpy(X_dim)
             series_length = X_dim.shape[-1]  # TODO compute minimum over all ts ?
+
+            SFA_transformers = []
 
             # increment window size in steps of 'win_inc'
             win_inc = self._compute_window_inc(series_length)
@@ -213,13 +215,13 @@ class MUSE(BaseClassifier):
                     f"the constructor, but the classifier may not work at "
                     f"all with very short series"
                 )
-            self.window_sizes.append(
+
+            window_sizes = np.array(
                 list(range(self.min_window, self.max_window, win_inc))
             )
+            highest_bits = math.ceil(math.log2(self.max_window)) + 1
 
-            self.highest_bits[ind] = math.ceil(math.log2(self.max_window)) + 1
-
-            for window_size in self.window_sizes[ind]:
+            for window_size in window_sizes:
                 transformer = SFA(
                     word_length=rng.choice(self.word_lengths),
                     alphabet_size=self.alphabet_size,
@@ -236,12 +238,12 @@ class MUSE(BaseClassifier):
 
                 sfa_words = transformer.fit_transform(X_dim, y)
 
-                self.SFA_transformers[ind].append(transformer)
+                SFA_transformers.append(transformer)
                 bag = sfa_words[0]
+                apply_chi_squared = self.p_threshold < 1
 
                 # chi-squared test to keep only relevant features
                 relevant_features = {}
-                apply_chi_squared = self.p_threshold < 1
                 if apply_chi_squared:
                     vectorizer = DictVectorizer(sparse=True, dtype=np.int32, sort=False)
                     bag_vec = vectorizer.fit_transform(bag)
@@ -251,11 +253,12 @@ class MUSE(BaseClassifier):
                     relevant_features = set(
                         np.array(vectorizer.feature_names_)[relevant_features_idx]
                     )
+                    relevant_features_count += len(relevant_features_idx)
 
                 # merging bag-of-patterns of different window_sizes
                 # to single bag-of-patterns with prefix indicating
                 # the used window-length
-                highest = np.int32(self.highest_bits[ind])
+                highest = np.int32(highest_bits)
                 for j in range(len(bag)):
                     for (key, value) in bag[j].items():
                         # chi-squared test
@@ -265,7 +268,43 @@ class MUSE(BaseClassifier):
                             word = MUSE._shift_left(
                                 key, highest, ind, self.highest_dim_bit, window_size
                             )
-                            all_words[j][word] = value
+                            all_words[j].append((word, value))
+
+            return (
+                all_words,
+                relevant_features_count,
+                SFA_transformers,
+                window_sizes,
+                highest_bits,
+            )
+
+        parallel_res = Parallel(n_jobs=self._threads_to_use)(
+            delayed(_parallel_fit)(ind, column)
+            for (ind, column) in enumerate(self.col_names.values)
+        )
+
+        relevant_features_count = 0
+        all_words = [dict() for x in range(len(X))]
+
+        self.SFA_transformers = []
+        self.window_sizes = []
+        self.highest_bits = []
+
+        for (
+            sfa_words,
+            rel_features_count,
+            transformers,
+            window_sizes,
+            highest_bits,
+        ) in parallel_res:
+            relevant_features_count += rel_features_count
+
+            self.window_sizes.append(window_sizes)
+            self.SFA_transformers.append(transformers)
+            self.highest_bits.append(highest_bits)
+
+            for idx, bag in enumerate(sfa_words):
+                all_words[idx].update(bag)
 
         self.clf = make_pipeline(
             DictVectorizer(sparse=True, sort=False),
@@ -325,15 +364,14 @@ class MUSE(BaseClassifier):
         if self.use_first_order_differences:
             X = self._add_first_order_differences(X)
 
-        bag_all_words = [dict() for _ in range(len(X))]
+        def _parallel_transform_words(X, ind, column):
+            bag_all_words = [[] for _ in range(len(X))]
 
-        # On each dimension, perform SFA
-        for ind, column in enumerate(self.col_names):
+            # On each dimension, perform SFA
             X_dim = X[[column]]
             X_dim = from_nested_to_3d_numpy(X_dim)
 
             for i, window_size in enumerate(self.window_sizes[ind]):
-
                 # SFA transform
                 sfa_words = self.SFA_transformers[ind][i].transform(X_dim)
                 bag = sfa_words[0]
@@ -349,9 +387,18 @@ class MUSE(BaseClassifier):
                         word = MUSE._shift_left(
                             key, highest, ind, self.highest_dim_bit, window_size
                         )
-                        bag_all_words[j][word] = value
+                        bag_all_words[j].append((word, value))
+            return bag_all_words
 
-        return bag_all_words
+        parallel_res = Parallel(n_jobs=self._threads_to_use)(
+            delayed(_parallel_transform_words)(X, ind, column)
+            for ind, column in enumerate(self.col_names)
+        )
+        all_words = [dict() for x in range(len(X))]
+        for sfa_words in parallel_res:
+            for idx, bag in enumerate(sfa_words):
+                all_words[idx].update(bag)
+        return all_words
 
     def _add_first_order_differences(self, X):
         X_copy = X.copy()

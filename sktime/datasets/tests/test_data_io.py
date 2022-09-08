@@ -31,6 +31,7 @@ from sktime.datasets._data_io import (
     _load_provided_dataset,
 )
 from sktime.datatypes import MTYPE_LIST_PANEL, check_is_mtype
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 # Disabling test for these mtypes since they don't support certain functionality yet
 _TO_DISABLE = ["pd-long", "pd-wide", "numpyflat"]
@@ -1406,6 +1407,10 @@ def test_convert_tsf_to_multiindex(freq):
     )
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("backoff", severity="none"),
+    reason="load_solar requires backoff in the environment",
+)
 @pytest.mark.parametrize("return_df", [False, True])
 def test_load_solar(return_df):
     """Test function for loading solar data through the Sheffiled Solar API."""

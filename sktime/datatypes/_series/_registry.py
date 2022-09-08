@@ -20,6 +20,11 @@ MTYPE_REGISTER_SERIES = [
         "Series",
         "2D numpy.ndarray with rows=samples, cols=variables, index=integers",
     ),
+    (
+        "xr.DataArray",
+        "Series",
+        "xr.DataArray representation of a uni- or multivariate series",
+    ),
 ]
 
 MTYPE_LIST_SERIES = pd.DataFrame(MTYPE_REGISTER_SERIES)[0].values
