@@ -234,11 +234,11 @@ def get_classifiers():
         # "TDE": TemporalDictionaryEnsemble(random_state=1379, n_jobs=threads_to_use),
         "WEASEL 2.0": WEASEL_STEROIDS(
             random_state=1379,
-            binning_strategies=["equi-depth"],
+            binning_strategies=["equi-depth", "equi-width"],
             alphabet_sizes=[2],
-            lower_bounding=False,
+            lower_bounding=True,
             min_window=4,
-            max_window=24,
+            max_window=20,
             max_feature_count=10_000,
             word_lengths=[8],  # test only 6 or 8?
             norm_options=[False],  # p[True]=0.8
@@ -279,16 +279,16 @@ def get_classifiers():
         #     feature_selection="none",
         #     n_jobs=threads_to_use,
         # ),
-        "Hydra": [],  # see below
-        "R_DST": R_DST_Ridge(random_state=1379),
-        "Rocket": make_pipeline(
-            Rocket(random_state=1379, n_jobs=threads_to_use),
-            RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True),
-        ),
-        "MiniRocket": make_pipeline(
-            MiniRocket(random_state=1379, n_jobs=threads_to_use),
-            RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True),
-        ),
+        # "Hydra": [],  # see below
+        # "R_DST": R_DST_Ridge(random_state=1379),
+        # "Rocket": make_pipeline(
+        #     Rocket(random_state=1379, n_jobs=threads_to_use),
+        #     RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True),
+        # ),
+        # "MiniRocket": make_pipeline(
+        #     MiniRocket(random_state=1379, n_jobs=threads_to_use),
+        #     RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True),
+        # ),
     }
     return clfs
 
