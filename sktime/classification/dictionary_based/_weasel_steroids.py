@@ -125,6 +125,7 @@ class WEASEL_STEROIDS(BaseClassifier):
         feature_selection="random",
         remove_repeat_words=False,
         random_state=None,
+        sections=1,
         n_jobs=4,
     ):
         # currently greater values than 4 are not supported.
@@ -152,6 +153,7 @@ class WEASEL_STEROIDS(BaseClassifier):
         self.window_sizes = []
         self.series_length = 0
         self.n_instances = 0
+        self.sections = sections
 
         self.SFA_transformers = []
 
@@ -217,6 +219,7 @@ class WEASEL_STEROIDS(BaseClassifier):
                 self.ensemble_size,
                 self.feature_selection,
                 self.remove_repeat_words,
+                self.sections,
             )
             for i in range(self.ensemble_size)
         )
@@ -341,6 +344,7 @@ def _parallel_fit(
     ensemble_size,
     feature_selection,
     remove_repeat_words,
+    sections,
 ):
     rng = check_random_state(i)
     window_size = rng.choice(window_sizes)
@@ -376,6 +380,7 @@ def _parallel_fit(
             lower_bounding=lower_bounding,
             first_difference=first_difference,
             feature_selection=feature_selection,
+            sections=sections,
             max_feature_count=max_feature_count // ensemble_size,
             random_state=i,
             n_jobs=n_jobs,

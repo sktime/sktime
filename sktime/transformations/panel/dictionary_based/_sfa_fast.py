@@ -166,6 +166,7 @@ class SFAFast(BaseTransformer):
         dilation=1,
         first_difference=False,
         feature_selection="none",
+        sections=1,
         max_feature_count=256,
         p_threshold=0.05,
         random_state=None,
@@ -199,6 +200,7 @@ class SFAFast(BaseTransformer):
         self.bigrams = bigrams
         self.skip_grams = skip_grams
         self.n_jobs = n_jobs
+        self.sections = sections
 
         self.n_instances = 0
         self.series_length = 0
@@ -314,8 +316,8 @@ class SFAFast(BaseTransformer):
             self.feature_selection,
             self.relevant_features if self.relevant_features else empty_dict,
             words[:, idx],
-            self.bigrams,
             self.remove_repeat_words,
+            self.sections,
         )[0]
         bag_lvl2_r = create_bag_transform(
             self.X_index,
@@ -323,8 +325,8 @@ class SFAFast(BaseTransformer):
             self.feature_selection,
             self.relevant_features if self.relevant_features else empty_dict,
             words[:, ~idx],
-            self.bigrams,
             self.remove_repeat_words,
+            self.sections,
         )[0]
         if type(bag) is np.ndarray:
             return np.concatenate([bag, bag_lvl2_l, bag_lvl2_r], axis=1)
@@ -399,8 +401,8 @@ class SFAFast(BaseTransformer):
             self.feature_selection,
             self.relevant_features if self.relevant_features else empty_dict,
             words,
-            self.bigrams,
             self.remove_repeat_words,
+            self.sections,
         )[0]
 
         # bags = self.add_level(bags, words)
@@ -428,6 +430,7 @@ class SFAFast(BaseTransformer):
                 words,
                 word_len,  # self.word_length_actual,
                 self.remove_repeat_words,
+                sections=self.sections,
             )
         else:
             feature_names = create_feature_names(words)
@@ -1026,20 +1029,44 @@ def create_feature_names(sfa_words):
 
 @njit(cache=True, fastmath=True)
 def create_bag_none(
-    X_index, breakpoints, n_instances, sfa_words, word_length, remove_repeat_words
+    X_index,
+    breakpoints,
+    n_instances,
+    sfa_words,
+    word_length,
+    remove_repeat_words,
+    sections,
 ):
     feature_count = np.uint32(breakpoints.shape[1] ** word_length)
-    all_win_words = np.zeros((n_instances, feature_count), dtype=np.uint32)
+    needed_size = feature_count
+    if sections > 1:
+        needed_size = 2 * feature_count
+    all_win_words = np.zeros((n_instances, needed_size), dtype=np.uint32)
 
     for j in prange(len(sfa_words)):
         # this mask is used to encode the repeated words
         if remove_repeat_words:
             masked = np.nonzero(sfa_words[j])
-            all_win_words[j, :] = np.bincount(
+            all_win_words[j, :feature_count] = np.bincount(
                 sfa_words[j][masked], minlength=feature_count
             )
         else:
-            all_win_words[j, :] = np.bincount(sfa_words[j], minlength=feature_count)
+            all_win_words[j, :feature_count] = np.bincount(
+                sfa_words[j], minlength=feature_count
+            )
+
+    # count number of sections the word is present
+    if sections > 1:
+        section_count = np.zeros(
+            (n_instances, feature_count, sections), dtype=np.uint32
+        )
+        max_index = max(X_index) + 1
+        for j in prange(sfa_words.shape[0]):
+            for i in prange(sfa_words.shape[1]):
+                section_count[
+                    j, sfa_words[j, i], int(X_index[i] / max_index * sections)
+                ] = 1
+        all_win_words[:, feature_count:] = section_count.sum(axis=-1)
 
     return all_win_words
 
@@ -1064,6 +1091,9 @@ def create_bag_feature_selection(
         for key in sfa_words[j]:
             if key in relevant_features:
                 all_win_words[j, relevant_features[key]] += 1
+
+    # TODO sections
+
     return all_win_words, relevant_features
 
 
@@ -1074,28 +1104,23 @@ def create_bag_transform(
     feature_selection,
     relevant_features,
     sfa_words,
-    bigrams,
     remove_repeat_words,
+    sections,
 ):
-    # merging arrays
     all_win_words = np.zeros((len(sfa_words), feature_count), np.uint32)
+
     for j in prange(len(sfa_words)):
         if len(relevant_features) == 0 and feature_selection == "none":
-            # all_win_words[j, :feature_count // 2] =
-            # np.bincount(sfa_words[j], minlength=feature_count // 2)
-            # all_win_words[j, :feature_count//2] = np.bincount(
-            # sfa_words[j], minlength=feature_count // 2)
-            # all_win_words[j, feature_count//2:] =
-            # all_win_words[j, :feature_count//2] >= 1
-
             # this mask is used to encode the repeated words
             if remove_repeat_words:
                 masked = np.nonzero(sfa_words[j])
-                all_win_words[j, :] = np.bincount(
+                all_win_words[j, :feature_count] = np.bincount(
                     sfa_words[j][masked], minlength=feature_count
                 )
             else:
-                all_win_words[j, :] = np.bincount(sfa_words[j], minlength=feature_count)
+                all_win_words[j, :feature_count] = np.bincount(
+                    sfa_words[j], minlength=feature_count
+                )
         else:
             if remove_repeat_words:
                 if 0 in relevant_features:
@@ -1106,10 +1131,18 @@ def create_bag_transform(
                     o = relevant_features[key]
                     all_win_words[j, o] += 1
 
-        # for k, key in enumerate(sfa_words[j]):
-        #     cc = feature_count // 2 + key
-        #     if all_win_words[j, cc] == 0:
-        #         all_win_words[j, cc] = X_index[k]  # / sfa_words.shape[1]
+    # count number of sections the word is present
+    if sections > 1 and len(relevant_features) == 0 and feature_selection == "none":
+        section_count = np.zeros(
+            (sfa_words.shape[0], feature_count // 2, sections), dtype=np.uint32
+        )
+        max_index = max(X_index) + 1
+        for j in prange(sfa_words.shape[0]):
+            for i in prange(sfa_words.shape[1]):
+                section_count[
+                    j, sfa_words[j, i], int(X_index[i] / max_index * sections)
+                ] = 1
+        all_win_words[:, feature_count // 2 :] = section_count.sum(axis=-1)
 
     return all_win_words, all_win_words.shape[1]
 

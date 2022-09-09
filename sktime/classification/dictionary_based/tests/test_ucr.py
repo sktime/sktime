@@ -70,7 +70,7 @@ dataset_names_full = [
     "CricketX",
     "CricketY",
     "CricketZ",
-    "Crop",
+    # "Crop",
     "DiatomSizeReduction",
     "DistalPhalanxOutlineAgeGroup",
     "DistalPhalanxOutlineCorrect",
@@ -246,16 +246,17 @@ def get_classifiers():
             ensemble_size=50,
             use_first_differences=[True, False],
             feature_selection="none",
+            sections=2,
             # remove_repeat_words=True,
             n_jobs=threads_to_use,
         ),
         "WEASEL 2b": WEASEL_STEROIDS(
             random_state=1379,
-            binning_strategies=["equi-depth", "equi-width"],
+            binning_strategies=["equi-depth"],
             alphabet_sizes=[2],
-            lower_bounding=True,
+            lower_bounding=False,
             min_window=4,
-            max_window=40,
+            max_window=24,
             max_feature_count=10_000,
             word_lengths=[8],
             norm_options=[False],
@@ -263,17 +264,17 @@ def get_classifiers():
             ensemble_size=50,
             use_first_differences=[True, False],
             feature_selection="none",
+            sections=4,
             # remove_repeat_words=True,
             n_jobs=threads_to_use,
         ),
         "WEASEL 2c": WEASEL_STEROIDS(
             random_state=1379,
-            binning_strategies=["equi-depth", "equi-width"],
+            binning_strategies=["equi-depth"],
             alphabet_sizes=[2],
-            lower_bounding=True,
-            min_window=8,
-            max_window=32,
-            # remove_repeat_words=True,
+            lower_bounding=False,
+            min_window=4,
+            max_window=24,
             max_feature_count=10_000,
             word_lengths=[8],
             norm_options=[False],
@@ -281,8 +282,64 @@ def get_classifiers():
             ensemble_size=50,
             use_first_differences=[True, False],
             feature_selection="none",
+            sections=8,
+            # remove_repeat_words=True,
             n_jobs=threads_to_use,
         ),
+        "WEASEL 2d": WEASEL_STEROIDS(
+            random_state=1379,
+            binning_strategies=["equi-depth"],
+            alphabet_sizes=[2],
+            lower_bounding=False,
+            min_window=4,
+            max_window=24,
+            max_feature_count=10_000,
+            word_lengths=[8],
+            norm_options=[False],
+            variance=True,
+            ensemble_size=50,
+            use_first_differences=[True, False],
+            feature_selection="none",
+            sections=16,
+            # remove_repeat_words=True,
+            n_jobs=threads_to_use,
+        ),
+        # "WEASEL 2b": WEASEL_STEROIDS(
+        #     random_state=1379,
+        #     binning_strategies=["equi-depth", "equi-width"],
+        #     alphabet_sizes=[2],
+        #     lower_bounding=True,
+        #     min_window=4,
+        #     max_window=40,
+        #     max_feature_count=10_000,
+        #     word_lengths=[8],
+        #     norm_options=[False],
+        #     variance=True,
+        #     ensemble_size=50,
+        #     use_first_differences=[True, False],
+        #     feature_selection="none",
+        #     sections=sections,
+        #     # remove_repeat_words=True,
+        #     n_jobs=threads_to_use,
+        # ),
+        # "WEASEL 2c": WEASEL_STEROIDS(
+        #     random_state=1379,
+        #     binning_strategies=["equi-depth", "equi-width"],
+        #     alphabet_sizes=[2],
+        #     lower_bounding=True,
+        #     min_window=8,
+        #     max_window=32,
+        #     # remove_repeat_words=True,
+        #     max_feature_count=10_000,
+        #     word_lengths=[8],
+        #     norm_options=[False],
+        #     variance=True,
+        #     ensemble_size=50,
+        #     use_first_differences=[True, False],
+        #     feature_selection="none",
+        #     sections=sections,
+        #     n_jobs=threads_to_use,
+        # ),
         # "Hydra": [],  # see below
         # "R_DST": R_DST_Ridge(random_state=1379),
         # "Rocket": make_pipeline(
@@ -342,65 +399,63 @@ if __name__ == "__main__":
             }
         }
 
-        try:
+        # try:
 
-            X_train = np.reshape(np.array(X_train), (len(X_train), 1, -1))
-            X_test = np.reshape(np.array(X_test), (len(X_test), 1, -1))
+        X_train = np.reshape(np.array(X_train), (len(X_train), 1, -1))
+        X_test = np.reshape(np.array(X_test), (len(X_test), 1, -1))
 
-            if clf_name == "Hydra":
-                fit_time = time.process_time()
-                transform = Hydra(X_train.shape[-1])
-                X_training_transform = transform(torch.tensor(X_train).float())
+        if clf_name == "Hydra":
+            fit_time = time.process_time()
+            transform = Hydra(X_train.shape[-1])
+            X_training_transform = transform(torch.tensor(X_train).float())
 
-                clf = RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True)
-                clf.fit(X_training_transform, y_train)
-                fit_time = np.round(time.process_time() - fit_time, 5)
+            clf = RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True)
+            clf.fit(X_training_transform, y_train)
+            fit_time = np.round(time.process_time() - fit_time, 5)
 
-                pred_time = time.process_time()
-                X_test_transform = transform(torch.tensor(X_test).float())
-                acc = clf.score(X_test_transform, y_test)
-                pred_time = np.round(time.process_time() - pred_time, 5)
-            else:
-                clf = get_classifiers()[clf_name]
-                fit_time = time.process_time()
-                clf.fit(X_train, y_train)
-                fit_time = np.round(time.process_time() - fit_time, 5)
+            pred_time = time.process_time()
+            X_test_transform = transform(torch.tensor(X_test).float())
+            acc = clf.score(X_test_transform, y_test)
+            pred_time = np.round(time.process_time() - pred_time, 5)
+        else:
+            clf = get_classifiers()[clf_name]
+            fit_time = time.process_time()
+            clf.fit(X_train, y_train)
+            fit_time = np.round(time.process_time() - fit_time, 5)
 
-                pred_time = time.process_time()
-                acc = clf.score(X_test, y_test)
-                pred_time = np.round(time.process_time() - pred_time, 5)
+            pred_time = time.process_time()
+            acc = clf.score(X_test, y_test)
+            pred_time = np.round(time.process_time() - pred_time, 5)
 
-            print(
-                f"Dataset={dataset_name}, "
-                + (
-                    f"Feature Count={clf.total_features_count}, "
-                    if hasattr(clf, "total_features_count")
-                    else f""
-                )
-                + f"Train-Size={np.shape(X_train)}, "
-                + f"Test-Size={np.shape(X_test)}"
-                + f"\n\tclassifier={clf_name}"
-                + f"\n\ttime (fit, predict)="
-                f"{np.round(fit_time, 2), np.round(pred_time, 2)}"
-                + f"\n\taccuracy={np.round(acc, 3)}"
+        print(
+            f"Dataset={dataset_name}, "
+            + (
+                f"Feature Count={clf.total_features_count}, "
+                if hasattr(clf, "total_features_count")
+                else f""
             )
+            + f"Train-Size={np.shape(X_train)}, "
+            + f"Test-Size={np.shape(X_test)}"
+            + f"\n\tclassifier={clf_name}"
+            + f"\n\ttime (fit, predict)="
+            f"{np.round(fit_time, 2), np.round(pred_time, 2)}"
+            + f"\n\taccuracy={np.round(acc, 3)}"
+        )
 
-            sum_scores[clf_name]["dataset"].append(dataset_name)
-            sum_scores[clf_name]["all_scores"].append(acc)
-            sum_scores[clf_name]["all_fit"].append(fit_time)
-            sum_scores[clf_name]["all_pred"].append(pred_time)
+        sum_scores[clf_name]["dataset"].append(dataset_name)
+        sum_scores[clf_name]["all_scores"].append(acc)
+        sum_scores[clf_name]["all_fit"].append(fit_time)
+        sum_scores[clf_name]["all_pred"].append(pred_time)
 
-            sum_scores[clf_name]["fit_time"] += (
-                sum_scores[clf_name]["fit_time"] + fit_time
-            )
-            sum_scores[clf_name]["pred_time"] += (
-                sum_scores[clf_name]["pred_time"] + pred_time
-            )
+        sum_scores[clf_name]["fit_time"] += sum_scores[clf_name]["fit_time"] + fit_time
+        sum_scores[clf_name]["pred_time"] += (
+            sum_scores[clf_name]["pred_time"] + pred_time
+        )
 
-        except Exception as e:
-            print("An exception occurred: {}".format(e))
-            print("\tFailed: ", dataset_name, clf_name)
-            print(e)
+        # except Exception as e:
+        #    print("An exception occurred: {}".format(e))
+        #    print("\tFailed: ", dataset_name, clf_name)
+        #    print(e)
 
         print("-----------------")
 
