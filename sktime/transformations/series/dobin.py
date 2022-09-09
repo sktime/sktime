@@ -29,7 +29,7 @@ class DOBIN(BaseTransformer):
 
     This prevents variables with large variances having disproportional
     influence on Euclidean distances. The original implelemtation _[1] uses
-    MinMaxScaler normalization.
+    ``MinMaxScaler`` normalization.
 
     Parameters
     ----------
