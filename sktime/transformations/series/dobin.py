@@ -4,6 +4,7 @@
 import warnings
 
 import numpy as np
+import numpy.typing as npt
 import pandas as pd
 from pandas.api.types import is_numeric_dtype
 from scipy.linalg import null_space
@@ -33,11 +34,10 @@ class DOBIN(BaseTransformer):
 
     Parameters
     ----------
-    frac : int, float (default=0.95)
+    frac : float (default=0.95)
         The cut-off quantile for Y space
     k : int (default=None)
-        Number of nearest neighbours considered, with a default value None calculated
-        as 5% of the number of observations with a cap of 20.
+        Number of nearest neighbours considered.
 
     Attributes
     ----------
@@ -48,7 +48,7 @@ class DOBIN(BaseTransformer):
 
     References
     ----------
-    [1] Kandanaarachchi, Sevvandi, and Rob J. Hyndman. "Dimension reduction
+    .. [1] Kandanaarachchi, Sevvandi, and Rob J. Hyndman. "Dimension reduction
     for outlier detection using DOBIN." Journal of Computational and Graphical
     Statistics 30.1 (2021): 204-219.
 
@@ -89,7 +89,21 @@ class DOBIN(BaseTransformer):
         super(DOBIN, self).__init__()
 
     def _fit(self, X, y=None):
+        """Fit transformer to X and y.
 
+        private _fit containing the core logic, called from fit
+
+        Parameters
+        ----------
+        X : Series of mtype X_inner_mtype
+            Data to be transformed
+        y : Series of mtype y_inner_mtype, default=None
+            Not required for this unsupervised transform.
+
+        Returns
+        -------
+        self: reference to self
+        """
         self._X = X
 
         assert all(X.apply(is_numeric_dtype, axis=0))
@@ -161,13 +175,26 @@ class DOBIN(BaseTransformer):
         return self
 
     def _transform(self, X, y=None):
+        """Transform X and return a transformed version.
 
+        private _transform containing core logic, called from transform
+
+        Parameters
+        ----------
+        X : Series of mtype X_inner_mtype
+            Data to be transformed
+        y : Series of mtype y_inner_mtype, default=None
+            Not required for this unsupervised transform.
+
+        Returns
+        -------
+        transformed version of X
+        """
         # fit again if indices not seen, but don't store anything
         if not X.index.equals(self._X.index):
             X_full = X.combine_first(self._X)
             new_dobin = DOBIN(
                 frac=self.frac,
-                normalize=self.normalize,
                 k=self.k,
             ).fit(X_full)
             warnings.warn(
@@ -180,8 +207,21 @@ class DOBIN(BaseTransformer):
         return self._coords
 
 
-def close_distance_matrix(X, k, frac):
-    """Calculate distance between close pairs."""
+def close_distance_matrix(X: npt.ArrayLike, k: int, frac: float):
+    """Calculate distance between close pairs.
+
+    Parameters
+    ----------
+    X : np.ArrayLike
+        Data to be transformed
+    k : int
+        Number of nearest neighbours considered. If k = None, it is empirically
+        derived as ``min(0.05 * number of observations, 20)``
+
+    Returns
+    -------
+    pd.DataFrame of pairs of close neighbour indices
+    """
     X = pd.DataFrame(X)
     nbrs = NearestNeighbors(n_neighbors=k + 1, metric="euclidean").fit(X)
     _, indices = nbrs.kneighbors(X)
