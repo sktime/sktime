@@ -25,7 +25,7 @@ class DOBIN(BaseTransformer):
     reduction tool for outlier detection tasks.
 
     Method assumes normalized data, for example:
-    from sklearn.preprocessing import MinMaxScaler, RobustScaler, StandardScaler
+    ``from sklearn.preprocessing import MinMaxScaler, RobustScaler, StandardScaler``
 
     This prevents variables with large variances having disproportional
     influence on Euclidean distances. The original implelemtation _[1] uses
