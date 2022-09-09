@@ -11,14 +11,15 @@ gain for any number of segmentations.
 """
 
 from dataclasses import dataclass
-from typing import Tuple, List, Dict
-import numpy as np
-import pandas as pd
-import numpy.typing as npt
-from attrs import define, asdict
-from sortedcontainers import SortedSet
-from sktime.base import BaseEstimator
+from typing import Dict, List
 
+import numpy as np
+import numpy.typing as npt
+import pandas as pd
+from attrs import asdict, define
+from sortedcontainers import SortedSet
+
+from sktime.base import BaseEstimator
 
 __all__ = ["InformationGainSegmentation"]
 __author__ = ["lmmentel"]
@@ -82,8 +83,8 @@ class IGTS:
     Notes
     -----
     Based on the work from [1]_.
-    - alternative python implementation: https://github.com/cruiseresearchgroup/IGTS-python
-    - MATLAB implementation: https://github.com/cruiseresearchgroup/IGTS-matlab
+    - alt. py implementation: https://github.com/cruiseresearchgroup/IGTS-python
+    - MATLAB version: https://github.com/cruiseresearchgroup/IGTS-matlab
     - paper available at:
 
     References
@@ -115,7 +116,8 @@ class IGTS:
 
         Exclude existing change points.
 
-        TODO: exclude points within a neighborhood of existing change points with neighborhood radius
+        TODO: exclude points within a neighborhood of existing
+        change points with neighborhood radius
         """
         return SortedSet(range(0, n_samples, step)).difference(change_points)
 
@@ -127,7 +129,7 @@ class IGTS:
         return entropy(X) - sum(segment_entropies) / X.shape[0]
 
     def find_change_points(self, X: npt.ArrayLike) -> SortedSet:
-        """Find change points"""
+        """Find change points."""
         n_samples, n_series = X.shape
         ig_max = 0
         self.intermediate_results_ = []
@@ -143,7 +145,7 @@ class IGTS:
                 try_change_points = SortedSet([candidate]).update(current_change_points)
                 ig = self.information_gain_cost(X, try_change_points)
                 if self.verbose:
-                    print(f"{ig=:.5f} for {candidate} current {current_change_points}")
+                    print(f"{ig=:.5f} for {candidate} current {current_change_points}")  # noqa
                 if ig > ig_max:
                     ig_max = ig
                     best_candidate = candidate
@@ -156,12 +158,14 @@ class IGTS:
             )
             if self.verbose:
                 print(
-                    f"BEST {ig_max=:.5f} for {best_candidate} current {current_change_points}"
-                )
+                    f"BEST {ig_max=:.5f} for {best_candidate} " +
+                    f"current {current_change_points}"
+                )  # noqa
         return current_change_points
 
 
 class InformationGainSegmentation(BaseEstimator):
+    """IGTS Estimator."""
     def __init__(
         self,
         k_max: int = 10,
@@ -177,6 +181,7 @@ class InformationGainSegmentation(BaseEstimator):
 
     def fit(self, X: npt.ArrayLike, y: npt.ArrayLike = None):
         """Fit method for compatibility with sklearn-type estimator interface.
+
         It sets the internal state of the estimator and returns the initialized
         instance.
 
