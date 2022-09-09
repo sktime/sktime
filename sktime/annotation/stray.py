@@ -76,7 +76,7 @@ class STRAY(BaseTransformer):
     >>> y = model.fit_transform(X)
     >>> y
     array([False, False, False, False,  True,  True,  True,  True, False,
-        True])
+    ... True])
     """
 
     _tags = {
