@@ -69,32 +69,34 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
 
     For a list of transformers `trafo1`, `trafo2`, ..., `trafoN`,
         the pipeline behaves as follows:
-    `fit` - changes state by running `trafo1.fit_transform`, `trafo2.fit_transform`, etc
-        sequentially, with `trafo[i]` receiving the output of `trafo[i-1]`
-    `transform` - result is of executing `trafo1.transform`, `trafo2.transform`, etc
-        with `trafo[i].transform` input = output of `trafo[i-1].transform`,
-        and returning the output of `trafoN.transform`
-    `inverse_transform` - result is of executing `trafo[i].inverse_transform`,
-        with `trafo[i].inverse_transform` input = output `trafo[i-1].inverse_transform`,
-        and returning the output of `trafoN.inverse_transform`
-    `update` - changes state by chaining `trafo1.update`, `trafo1.transform`,
-        `trafo2.update`, `trafo2.transform`, ..., `trafoN.update`,
-        where `trafo[i].update` and `trafo[i].transform` receive as input
+        * `fit` - changes state by running `trafo1.fit_transform`,
+            trafo2.fit_transform` etc sequentially, with
+            `trafo[i]` receiving the output of `trafo[i-1]`
+        * `transform` - result is of executing `trafo1.transform`, `trafo2.transform`,
+            etc with `trafo[i].transform` input = output of `trafo[i-1].transform`,
+            and returning the output of `trafoN.transform`
+        * `inverse_transform` - result is of executing `trafo[i].inverse_transform`,
+            with `trafo[i].inverse_transform` input = output
+            `trafo[i-1].inverse_transform`, and returning the output of
+            `trafoN.inverse_transform`
+        * `update` - changes state by chaining `trafo1.update`, `trafo1.transform`,
+            `trafo2.update`, `trafo2.transform`, ..., `trafoN.update`,
+            where `trafo[i].update` and `trafo[i].transform` receive as input
             the output of `trafo[i-1].transform`
 
-    `get_params`, `set_params` uses `sklearn` compatible nesting interface
-        if list is unnamed, names are generated as names of classes
-        if names are non-unique, `f"_{str(i)}"` is appended to each name string
-            where `i` is the total count of occurrence of a non-unique string
-            inside the list of names leading up to it (inclusive)
+    The `get_params`, `set_params` uses `sklearn` compatible nesting interface
+    if list is unnamed, names are generated as names of classes
+    if names are non-unique, `f"_{str(i)}"` is appended to each name string
+    where `i` is the total count of occurrence of a non-unique string
+    inside the list of names leading up to it (inclusive)
 
-    `TransformerPipeline` can also be created by using the magic multiplication
-        on any transformer, i.e., any estimator inheriting from `BaseTransformer`
-            for instance, `my_trafo1 * my_trafo2 * my_trafo3`
-            will result in the same object as  obtained from the constructor
-            `TransformerPipeline([my_trafo1, my_trafo2, my_trafo3])`
-        magic multiplication can also be used with (str, transformer) pairs,
-            as long as one element in the chain is a transformer
+    The `TransformerPipeline` can also be created by using the magic multiplication
+    on any transformer, i.e., any estimator inheriting from `BaseTransformer`
+    for instance, `my_trafo1 * my_trafo2 * my_trafo3`
+    will result in the same object as  obtained from the constructor
+    `TransformerPipeline([my_trafo1, my_trafo2, my_trafo3])`
+    A magic multiplication can also be used with (str, transformer) pairs,
+    as long as one element in the chain is a transformer
 
     Parameters
     ----------
@@ -112,8 +114,6 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
 
     Examples
     --------
-    We'll construct a pipeline from 2 transformers below, in three different ways
-    Preparing the transformers
     >>> from sktime.transformations.series.exponent import ExponentTransformer
     >>> t1 = ExponentTransformer(power=2)
     >>> t2 = ExponentTransformer(power=0.5)
