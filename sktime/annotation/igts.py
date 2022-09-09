@@ -176,7 +176,41 @@ class IGTS:
         return current_change_points
 
 
-class InformationGainSegmentation(BaseEstimator):
+class SegmentationMixin:
+    """This mixin provides methods useful for segmentation problems."""
+
+    def to_classification(self, change_points: SortedSet) -> npt.ArrayLike:
+        """Convert change point locations to a classification vector.
+
+        Change point detection results can be treated as classification
+        with true change point locations marked with 1's at position of
+        the change point and remaining non-change point locations being
+        0's.
+
+        For example change points [2, 8] for a time series of length 10
+        would result in: [0, 0, 1, 0, 0, 0, 0, 0, 1, 0].
+        """
+        return np.bincount(change_points[1:-1], minlength=change_points[-1])
+
+    def to_clusters(self, change_points: SortedSet) -> npt.ArrayLike:
+        """Convert change point locations to a clustering vector.
+
+        Change point detection results can be treated as clustering
+        with each segment separated by change points assigned a
+        distinct dummy label.
+
+        For example change points [2, 8] for a time series of length 10
+        would result in: [0, 0, 1, 1, 1, 1, 1, 1, 2, 2].
+        """
+        labels = np.zeros(change_points[-1], dtype=np.int32)
+        for i, (start, stop) in enumerate(
+            zip(change_points[:-1], change_points[1:])
+        ):
+            labels[start:stop] = i
+        return labels
+
+
+class InformationGainSegmentation(SegmentationMixin, BaseEstimator):
     """IGTS Estimator."""
 
     def __init__(
@@ -225,13 +259,7 @@ class InformationGainSegmentation(BaseEstimator):
             labels for each of the data points.
         """
         self.change_points_ = self._adaptee.find_change_points(X)
-
-        labels = np.zeros(X.shape[0], dtype=np.int32)
-        for i, (start, stop) in enumerate(
-            zip(self.change_points_[:-1], self.change_points_[1:])
-        ):
-            labels[start:stop] = i
-        return labels
+        return self.to_clusters(self.change_points_)
 
     def get_params(self, deep: bool = True) -> Dict:
         """Return initialization parameters.
