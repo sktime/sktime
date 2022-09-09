@@ -44,7 +44,9 @@ def generate_segments(X: npt.ArrayLike, change_points: SortedSet) -> npt.ArrayLi
         yield X[start:end, :]
 
 
-def generate_segments_pandas(X: npt.ArrayLike, change_points: SortedSet) -> npt.ArrayLike:
+def generate_segments_pandas(
+    X: npt.ArrayLike, change_points: SortedSet
+) -> npt.ArrayLike:
     """Generate separate segments from time series based on change points."""
     for interval in pd.IntervalIndex.from_breaks(change_points, closed="both"):
         yield X[interval.left : interval.right, :]
@@ -190,6 +192,7 @@ class InformationGainSegmentation(BaseEstimator):
 
     def predict(self, X: npt.ArrayLike, y: npt.ArrayLike = None) -> npt.ArrayLike:
         """Perform segmentation.
+
         Parameters
         ----------
         X: array_like
@@ -197,6 +200,7 @@ class InformationGainSegmentation(BaseEstimator):
             the first dimension and value series as columns.
         y: array_like
             Placeholder for compatibility with sklearn-api, not used, default=None.
+
         Returns
         -------
         y_pred : array_like
@@ -204,7 +208,14 @@ class InformationGainSegmentation(BaseEstimator):
             dimension of X. The numerical values represent distinct segments
             labels for each of the data points.
         """
-        return self._adaptee.find_change_points(X)
+        self.change_points_ = self._adaptee.find_change_points(X)
+
+        labels = np.zeros(X.shape[0], dtype=np.int32)
+        for i, (start, stop) in enumerate(
+            zip(self.change_points_[:-1], self.change_points_[1:])
+        ):
+            labels[start:stop] = i
+        return labels
 
     def get_params(self, deep: bool = True) -> Dict:
         """Return initialization parameters.
