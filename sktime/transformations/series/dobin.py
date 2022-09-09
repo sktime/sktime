@@ -28,7 +28,7 @@ class DOBIN(BaseTransformer):
     from sklearn.preprocessing import MinMaxScaler, RobustScaler, StandardScaler
 
     This prevents variables with large variances having disproportional
-    influence on Euclidean distances. The original implelemtation -[1] uses
+    influence on Euclidean distances. The original implelemtation _[1] uses
     MinMaxScaler normalization.
 
     Parameters
