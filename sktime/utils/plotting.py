@@ -38,6 +38,13 @@ def plot_series(
     -------
     fig : plt.Figure
     ax : plt.Axis
+
+    Examples
+    --------
+    >>> from sktime.utils.plotting import plot_series
+    >>> from sktime.datasets import load_airline
+    >>> y = load_airline()
+    >>> fig, ax = plot_series(y)
     """
     _check_soft_dependencies("matplotlib", "seaborn")
     import matplotlib.pyplot as plt
@@ -159,6 +166,7 @@ def plot_lags(series, lags=1, suptitle=None):
 
     Examples
     --------
+    >>> from sktime.utils.plotting import plot_lags
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
     >>> fig, ax = plot_lags(y, lags=2) # plot of y(t) with y(t-2)  # doctest: +SKIP
