@@ -115,8 +115,6 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
 
     Examples
     --------
-        We'll construct a pipeline from 2 transformers below, in three different ways
-        Preparing the transformers
     >>> from sktime.transformations.series.exponent import ExponentTransformer
     >>> t1 = ExponentTransformer(power=2)
     >>> t2 = ExponentTransformer(power=0.5)
