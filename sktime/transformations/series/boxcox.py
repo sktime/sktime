@@ -265,6 +265,7 @@ class LogTransformer(BaseTransformer):
         y : ignored argument for interface compatibility
             Additional data, e.g., labels for transformation
 
+
         Returns
         -------
         Xt : 2D np.ndarray
@@ -284,6 +285,7 @@ class LogTransformer(BaseTransformer):
             Data to be transformed
         y : ignored argument for interface compatibility
             Additional data, e.g., labels for transformation
+
 
         Returns
         -------

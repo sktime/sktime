@@ -6,19 +6,17 @@ __author__ = ["mloning", "fkiraly", "TonyBagnall", "MatthewMiddlehurst"]
 import numpy as np
 import pandas as pd
 import pytest
+from sklearn.model_selection import KFold
 
-from sktime.classification.base import (
-    BaseClassifier,
-    _check_classifier_input,
-    _internal_convert,
-)
+from sktime.classification.base import BaseClassifier
 from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
 from sktime.classification.feature_based import Catch22Classifier
-from sktime.utils._testing.estimator_checks import (
-    _assert_array_almost_equal,
+from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
+from sktime.utils._testing.panel import (
+    _make_classification_y,
+    _make_panel,
     make_classification_problem,
 )
-from sktime.utils._testing.panel import _make_classification_y, _make_panel
 
 
 class _DummyClassifier(BaseClassifier):
@@ -188,6 +186,10 @@ def test_convert_input():
     4. Pass a pd.Series y, get a pd.Series back
     5. Pass a np.ndarray y, get a pd.Series back
     """
+
+    def _internal_convert(X, y=None):
+        return BaseClassifier._internal_convert(None, X, y)
+
     cases = 5
     length = 10
     test_X1 = np.random.uniform(-1, 1, size=(cases, length))
@@ -226,6 +228,10 @@ def test__check_classifier_input():
     4. Test incorrect: y as a list
     5. Test incorrect: too few cases or too short a series
     """
+
+    def _check_classifier_input(X, y=None, enforce_min_instances=1):
+        return BaseClassifier._check_classifier_input(None, X, y, enforce_min_instances)
+
     # 1. Test correct: X: np.array of 2 and 3 dimensions vs y:np.array and np.Series
     test_X1 = np.random.uniform(-1, 1, size=(5, 10))
     test_X2 = np.random.uniform(-1, 1, size=(5, 2, 10))
@@ -343,8 +349,6 @@ def test_fit_predict_change_state(method):
 @pytest.mark.parametrize("method", ["fit_predict", "fit_predict_proba"])
 def test_fit_predict_cv(method):
     """Test cv argument in fit_predict, fit_predict_proba."""
-    from sklearn.model_selection import KFold
-
     X, y = make_classification_problem()
 
     clf = KNeighborsTimeSeriesClassifier()
@@ -373,3 +377,52 @@ def test_fit_predict_cv(method):
     y_pred_normal = getattr(clf.fit(X, y), normal_method)(X)
 
     _assert_array_almost_equal(y_pred_normal, y_pred_cv_obj_fit)
+
+
+@pytest.mark.parametrize("method", ["predict", "predict_proba"])
+def test_predict_single_class(method):
+    """Test return of predict/_proba in case only single class seen in fit."""
+    X, y = make_classification_problem()
+    y[:] = 42
+    n_instances = 10
+    X_test = X[:n_instances]
+
+    clf = KNeighborsTimeSeriesClassifier()
+
+    clf.fit(X, y)
+    y_pred = getattr(clf, method)(X_test)
+
+    if method == "predict":
+        assert isinstance(y_pred, np.ndarray)
+        assert y_pred.ndim == 1
+        assert y_pred.shape == (n_instances,)
+        assert all(list(y_pred == 42))
+    if method == "predict_proba":
+        assert isinstance(y_pred, np.ndarray)
+        assert y_pred.ndim == 2
+        assert y_pred.shape == (n_instances, 1)
+        assert all(list(y_pred == 1))
+
+
+@pytest.mark.parametrize("cv", [None, KFold(3, random_state=42, shuffle=True)])
+@pytest.mark.parametrize("method", ["fit_predict", "fit_predict_proba"])
+def test_fit_predict_single_class(method, cv):
+    """Test return of fit_predict/_proba in case only single class seen in fit."""
+    X, y = make_classification_problem()
+    y[:] = 42
+    n_instances = len(X)
+
+    clf = KNeighborsTimeSeriesClassifier()
+
+    y_pred = getattr(clf, method)(X, y, cv=cv, change_state=False)
+
+    if method == "fit_predict":
+        assert isinstance(y_pred, np.ndarray)
+        assert y_pred.ndim == 1
+        assert y_pred.shape == (n_instances,)
+        assert all(list(y_pred == 42))
+    if method == "fit_predict_proba":
+        assert isinstance(y_pred, np.ndarray)
+        assert y_pred.ndim == 2
+        assert y_pred.shape == (n_instances, 1)
+        assert all(list(y_pred == 1))

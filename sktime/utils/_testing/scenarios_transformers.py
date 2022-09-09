@@ -11,41 +11,26 @@ __all__ = ["scenarios_transformers"]
 from copy import deepcopy
 from inspect import isclass
 
+import numpy as np
 import pandas as pd
 
 from sktime.base import BaseObject
 from sktime.datatypes import mtype_to_scitype
-from sktime.transformations.base import (
-    _PanelToPanelTransformer,
-    _PanelToTabularTransformer,
-    _SeriesToPrimitivesTransformer,
-    _SeriesToSeriesTransformer,
-)
+from sktime.transformations.base import _PanelToPanelTransformer
 from sktime.utils._testing.estimator_checks import _make_primitives, _make_tabular_X
 from sktime.utils._testing.forecasting import _make_series
 from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils._testing.panel import _make_classification_y, _make_panel_X
 from sktime.utils._testing.scenarios import TestScenario
 
-OLD_MIXINS = (
-    _PanelToPanelTransformer,
-    _PanelToTabularTransformer,
-    _SeriesToPrimitivesTransformer,
-    _SeriesToSeriesTransformer,
-)
+OLD_MIXINS = (_PanelToPanelTransformer,)
 
-OLD_PANEL_MIXINS = (
-    _PanelToPanelTransformer,
-    _PanelToTabularTransformer,
-)
+OLD_PANEL_MIXINS = (_PanelToPanelTransformer,)
 
-OLD_SERIES_MIXINS = (
-    _SeriesToPrimitivesTransformer,
-    _SeriesToSeriesTransformer,
-)
 
 # random seed for generating data to keep scenarios exactly reproducible
 RAND_SEED = 42
+RAND_SEED2 = 84
 
 
 def _is_child_of(obj, class_or_tuple):
@@ -81,11 +66,9 @@ class TransformerTestScenario(TestScenario, BaseObject):
         """
         # pre-refactor classes can't deal with Series *and* Panel both
         X_scitype = self.get_tag("X_scitype")
+        y_scitype = self.get_tag("y_scitype", None, raise_error=False)
 
         if _is_child_of(obj, OLD_PANEL_MIXINS) and X_scitype != "Panel":
-            return False
-
-        if _is_child_of(obj, OLD_SERIES_MIXINS) and X_scitype != "Series":
             return False
 
         # if transformer requires y, the scenario also must pass y
@@ -95,9 +78,9 @@ class TransformerTestScenario(TestScenario, BaseObject):
 
         # the case that we would need to vectorize with y, skip
         X_inner_mtype = get_tag(obj, "X_inner_mtype")
-        X_inner_scitypes = mtype_to_scitype(X_inner_mtype, return_unique=True)
-        if not isinstance(X_inner_scitypes, list):
-            X_inner_scitypes = [X_inner_scitypes]
+        X_inner_scitypes = mtype_to_scitype(
+            X_inner_mtype, return_unique=True, coerce_to_list=True
+        )
         # we require vectorization from of a Series trafo to Panel data ...
         if X_scitype == "Panel" and "Panel" not in X_inner_scitypes:
             # ... but y is passed and y is not ignored internally ...
@@ -105,11 +88,23 @@ class TransformerTestScenario(TestScenario, BaseObject):
                 # ... this would raise an error since vectorization is not defined
                 return False
 
+        # ensure scenario y matches type of inner y
+        y_inner_mtype = get_tag(obj, "y_inner_mtype")
+        if y_inner_mtype not in [None, "None"]:
+            y_inner_scitypes = mtype_to_scitype(
+                y_inner_mtype, return_unique=True, coerce_to_list=True
+            )
+            if y_scitype not in y_inner_scitypes:
+                return False
+
         # only applicable if X of supported index type
         X = self.args["fit"]["X"]
         supported_idx_types = get_tag(obj, "enforce_index_type")
         if isinstance(X, (pd.Series, pd.DataFrame)) and supported_idx_types is not None:
-            if type(X.index) not in get_tag(obj, "enforce_index_type"):
+            if type(X.index) not in supported_idx_types:
+                return False
+        if isinstance(X, np.ndarray) and supported_idx_types is not None:
+            if pd.RangeIndex not in supported_idx_types:
                 return False
 
         return True
@@ -147,9 +142,6 @@ class TransformerTestScenario(TestScenario, BaseObject):
             # determine output by X_out_scitype
             #   until transformer refactor is complete, use the old classes, too
             if _is_child_of(obj, OLD_MIXINS):
-                s2s = _is_child_of(obj, _SeriesToSeriesTransformer)
-                s2p = _is_child_of(obj, _SeriesToPrimitivesTransformer)
-                p2t = _is_child_of(obj, _PanelToTabularTransformer)
                 p2p = _is_child_of(obj, _PanelToPanelTransformer)
             else:
                 s2s = X_scitype == "Series" and X_out_series
@@ -222,11 +214,74 @@ class TransformerFitTransformSeriesMultivariate(TransformerTestScenario):
 
     args = {
         "fit": {
-            "X": _make_series(n_columns=2, n_timepoints=10, random_state=RAND_SEED)
+            "X": _make_series(n_columns=2, n_timepoints=10, random_state=RAND_SEED),
         },
         "transform": {
             "X": _make_series(n_columns=2, n_timepoints=10, random_state=RAND_SEED)
         },
+    }
+    default_method_sequence = ["fit", "transform"]
+
+
+class TransformerFitTransformSeriesUnivariateWithY(TransformerTestScenario):
+    """Fit/transform, univariate Series X and univariate Series y."""
+
+    _tags = {
+        "X_scitype": "Series",
+        "X_univariate": True,
+        "has_y": True,
+        "is_enabled": True,
+        "y_scitype": "Series",
+    }
+
+    args = {
+        "fit": {
+            "X": _make_series(n_columns=1, n_timepoints=10, random_state=RAND_SEED),
+            "y": _make_series(n_columns=1, n_timepoints=10, random_state=RAND_SEED),
+        },
+        "transform": {
+            "X": _make_series(n_columns=1, n_timepoints=10, random_state=RAND_SEED),
+            "y": _make_series(n_columns=1, n_timepoints=10, random_state=RAND_SEED),
+        },
+    }
+    default_method_sequence = ["fit", "transform"]
+
+
+y3 = _make_classification_y(n_instances=9, n_classes=3)
+X_np = _make_panel_X(
+    n_instances=9,
+    n_columns=1,
+    n_timepoints=10,
+    all_positive=True,
+    return_numpy=True,
+    random_state=RAND_SEED,
+)
+X_test_np = _make_panel_X(
+    n_instances=9,
+    n_columns=1,
+    n_timepoints=10,
+    all_positive=True,
+    return_numpy=True,
+    random_state=RAND_SEED2,
+)
+
+
+class TransformerFitTransformPanelUnivariateNumpyWithClassYOnlyFit(
+    TransformerTestScenario
+):
+    """Fit/predict with univariate panel X, numpy3D mtype, and labels y."""
+
+    _tags = {
+        "X_scitype": "Panel",
+        "X_univariate": True,
+        "has_y": True,
+        "is_enabled": True,
+        "y_scitype": "Table",
+    }
+
+    args = {
+        "fit": {"y": y3, "X": X_np},
+        "transform": {"X": X_test_np},
     }
     default_method_sequence = ["fit", "transform"]
 
@@ -289,7 +344,7 @@ class TransformerFitTransformPanelUnivariateWithClassY(TransformerTestScenario):
         "X_univariate": True,
         "is_enabled": True,
         "has_y": True,
-        "y_scitype": "classes",
+        "y_scitype": "Table",
     }
 
     args = {
@@ -325,7 +380,7 @@ class TransformerFitTransformPanelUnivariateWithClassYOnlyFit(TransformerTestSce
         "X_univariate": True,
         "is_enabled": False,
         "has_y": True,
-        "y_scitype": "classes",
+        "y_scitype": "Table",
     }
 
     args = {
@@ -380,10 +435,12 @@ class TransformerFitTransformHierarchicalMultivariate(TransformerTestScenario):
 scenarios_transformers = [
     TransformerFitTransformSeriesUnivariate,
     TransformerFitTransformSeriesMultivariate,
+    TransformerFitTransformSeriesUnivariateWithY,
     TransformerFitTransformPanelUnivariate,
     TransformerFitTransformPanelMultivariate,
     TransformerFitTransformPanelUnivariateWithClassY,
     TransformerFitTransformPanelUnivariateWithClassYOnlyFit,
+    TransformerFitTransformPanelUnivariateNumpyWithClassYOnlyFit,
     TransformerFitTransformHierarchicalMultivariate,
     TransformerFitTransformHierarchicalUnivariate,
 ]

@@ -62,9 +62,14 @@ from sktime.datatypes import (
     check_is_scitype,
     convert_to,
     mtype_to_scitype,
+    update_data,
 )
 from sktime.datatypes._series_as_panel import convert_to_scitype
-from sktime.utils.sklearn import is_sklearn_classifier, is_sklearn_transformer
+from sktime.utils.sklearn import (
+    is_sklearn_classifier,
+    is_sklearn_regressor,
+    is_sklearn_transformer,
+)
 from sktime.utils.validation._dependencies import _check_estimator_deps
 
 # single/multiple primitives
@@ -124,6 +129,7 @@ class BaseTransformer(BaseEstimator):
         "capability:missing_values:removes": False,
         # is transform result always guaranteed to contain no missing values?
         "python_version": None,  # PEP 440 python version specifier to limit versions
+        "remember_data": False,  # whether all data seen is remembered as self._X
     }
 
     # allowed mtypes for transformers - Series and Panel
@@ -141,9 +147,10 @@ class BaseTransformer(BaseEstimator):
         "pd_multiindex_hier",
     ]
 
-    def __init__(self):
+    def __init__(self, _output_convert="auto"):
 
         self._converter_store_X = dict()  # storage dictionary for in/output conversion
+        self._output_convert = _output_convert
 
         super(BaseTransformer, self).__init__()
         _check_estimator_deps(self)
@@ -170,6 +177,7 @@ class BaseTransformer(BaseEstimator):
         if (
             isinstance(other, BaseTransformer)
             or is_sklearn_classifier(other)
+            or is_sklearn_regressor(other)
             or is_sklearn_transformer(other)
         ):
             self_as_pipeline = TransformerPipeline(steps=[self])
@@ -273,6 +281,31 @@ class BaseTransformer(BaseEstimator):
         else:
             return NotImplemented
 
+    def __invert__(self):
+        """Magic unary ~ (inversion) method, return InvertTransform of self.
+
+        Returns
+        -------
+        `InvertTransform` object, containing `self`.
+        """
+        from sktime.transformations.compose import InvertTransform
+
+        return InvertTransform(self)
+
+    def __neg__(self):
+        """Magic unary - (negation) method, return OptionalPassthrough of self.
+
+        Intuition: `OptionalPassthrough` is "not having transformer", as an option.
+
+        Returns
+        -------
+        `OptionalPassthrough` object, containing `self`, with `passthrough=False`.
+            The `passthrough` parameter can be set via `set_params`.
+        """
+        from sktime.transformations.compose import OptionalPassthrough
+
+        return OptionalPassthrough(self, passthrough=False)
+
     def __getitem__(self, key):
         """Magic [...] method, return column subsetted transformer.
 
@@ -325,8 +358,11 @@ class BaseTransformer(BaseEstimator):
             Changes state to "fitted".
 
         Writes to self:
-            Sets is_fitted flag to True.
-            Sets fitted model attributes ending in "_".
+        _is_fitted : flag is set to True.
+        _X : X, coerced copy of X, if remember_data tag is True
+            possibly coerced to inner type or update_data compatible type
+            by reference, when possible
+        model attributes (ending in "_") : dependent on estimator
 
         Parameters
         ----------
@@ -347,8 +383,8 @@ class BaseTransformer(BaseEstimator):
         # if fit is called, estimator is reset, including fitted state
         self.reset()
 
-        # skip everything if fit_is_empty is True
-        if self.get_tag("fit_is_empty"):
+        # skip everything if fit_is_empty is True and we do not need to remember data
+        if self.get_tag("fit_is_empty") and not self.get_tag("remember_data", False):
             self._is_fitted = True
             return self
 
@@ -358,6 +394,15 @@ class BaseTransformer(BaseEstimator):
 
         # check and convert X/y
         X_inner, y_inner = self._check_X_y(X=X, y=y)
+
+        # memorize X as self._X, if remember_data tag is set to True
+        if self.get_tag("remember_data", False):
+            self._X = update_data(None, X_new=X_inner)
+
+        # skip the rest if fit_is_empty is True
+        if self.get_tag("fit_is_empty"):
+            self._is_fitted = True
+            return self
 
         # checks and conversions complete, pass to inner fit
         #####################################################
@@ -381,8 +426,9 @@ class BaseTransformer(BaseEstimator):
             Requires state to be "fitted".
 
         Accesses in self:
-            Fitted model attributes ending in "_".
-            self._is_fitted
+        _is_fitted : must be True
+        _X : optionally accessed, only available if remember_data tag is True
+        fitted model attributes (ending in "_") : must be set, accessed by _transform
 
         Parameters
         ----------
@@ -439,7 +485,10 @@ class BaseTransformer(BaseEstimator):
             Xt = self._vectorize("transform", X=X_inner, y=y_inner)
 
         # convert to output mtype
-        X_out = self._convert_output(Xt, metadata=metadata)
+        if not hasattr(self, "_output_convert") or self._output_convert == "auto":
+            X_out = self._convert_output(Xt, metadata=metadata)
+        else:
+            X_out = Xt
 
         return X_out
 
@@ -452,8 +501,11 @@ class BaseTransformer(BaseEstimator):
             Changes state to "fitted".
 
         Writes to self:
-            Sets is_fitted flag to True.
-            Sets fitted model attributes ending in "_".
+        _is_fitted : flag is set to True.
+        _X : X, coerced copy of X, if remember_data tag is True
+            possibly coerced to inner type or update_data compatible type
+            by reference, when possible
+        model attributes (ending in "_") : dependent on estimator
 
         Parameters
         ----------
@@ -511,8 +563,9 @@ class BaseTransformer(BaseEstimator):
             Requires state to be "fitted".
 
         Accesses in self:
-            Fitted model attributes ending in "_".
-            self._is_fitted
+        _is_fitted : must be True
+        _X : optionally accessed, only available if remember_data tag is True
+        fitted model attributes (ending in "_") : accessed by _inverse_transform
 
         Parameters
         ----------
@@ -531,6 +584,9 @@ class BaseTransformer(BaseEstimator):
         inverse transformed version of X
             of the same type as X, and conforming to mtype format specifications
         """
+        if self.get_tag("skip-inverse-transform"):
+            return X
+
         if not self.get_tag("capability:inverse_transform"):
             raise NotImplementedError(
                 f"{type(self)} does not implement inverse_transform"
@@ -549,7 +605,10 @@ class BaseTransformer(BaseEstimator):
             Xt = self._vectorize("inverse_transform", X=X_inner, y=y_inner)
 
         # convert to output mtype
-        X_out = self._convert_output(Xt, metadata=metadata, inverse=True)
+        if self._output_convert == "auto":
+            X_out = self._convert_output(Xt, metadata=metadata, inverse=True)
+        else:
+            X_out = Xt
 
         return X_out
 
@@ -560,11 +619,14 @@ class BaseTransformer(BaseEstimator):
             Requires state to be "fitted".
 
         Accesses in self:
-            Fitted model attributes ending in "_".
-            self._is_fitted
+        _is_fitted : must be True
+        _X : accessed by _update and by update_data, if remember_data tag is True
+        fitted model attributes (ending in "_") : must be set, accessed by _update
 
         Writes to self:
-            May update fitted model attributes ending in "_".
+        _X : updated by values in X, via update_data, if remember_data tag is True
+        fitted model attributes (ending in "_") : only if update_params=True
+            type and nature of update are dependent on estimator
 
         Parameters
         ----------
@@ -588,20 +650,21 @@ class BaseTransformer(BaseEstimator):
         # check whether is fitted
         self.check_is_fitted()
 
-        # skip everything if update_params is False
-        if not update_params:
-            return self
-
-        # skip everything if fit_is_empty is True
-        if self.get_tag("fit_is_empty"):
-            return self
-
         # if requires_y is set, y is required in fit and update
         if self.get_tag("requires_y") and y is None:
             raise ValueError(f"{self.__class__.__name__} requires `y` in `update`.")
 
         # check and convert X/y
         X_inner, y_inner = self._check_X_y(X=X, y=y)
+
+        # update memory of X, if remember_data tag is set to True
+        if self.get_tag("remember_data", False):
+            self._X = update_data(None, X_new=X_inner)
+
+        # skip everything if update_params is False
+        # skip everything if fit_is_empty is True
+        if not update_params or self.get_tag("fit_is_empty", False):
+            return self
 
         # checks and conversions complete, pass to inner fit
         #####################################################
@@ -1003,7 +1066,7 @@ class BaseTransformer(BaseEstimator):
                     raise RuntimeError(
                         "found different number of instances in transform than in fit. "
                         f"number of instances seen in fit: {n_fit}; "
-                        f"number of instances seen in transform: {n * m}"
+                        f"number of instances seen in transform: {n_trafos}"
                     )
 
                 # transform the i-th series/panel with the i-th stored transformer

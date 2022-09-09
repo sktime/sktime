@@ -38,7 +38,7 @@ from sklearn.pipeline import Pipeline
 
 from sktime.classification.interval_based import CanonicalIntervalForest
 from sktime.transformations.panel.pca import PCATransformer
-from sktime.utils._testing.estimator_checks import _make_args
+from sktime.utils._testing.panel import _make_panel_X, make_classification_problem
 
 DATA_ARGS = [
     {"return_numpy": True, "n_columns": 2},
@@ -89,7 +89,7 @@ COMPOSITE_ESTIMATORS = [
 def test_sklearn_cross_validation(data_args):
     """Test sklearn cross-validation works with sktime panel data and classifiers."""
     clf = CanonicalIntervalForest.create_test_instance()
-    fit_args = _make_args(clf, "fit", **data_args)
+    fit_args = make_classification_problem(**data_args)
 
     scores = cross_val_score(clf, *fit_args, cv=KFold(n_splits=3))
     assert isinstance(scores, np.ndarray)
@@ -99,8 +99,7 @@ def test_sklearn_cross_validation(data_args):
 @pytest.mark.parametrize("cross_validation_method", CROSS_VALIDATION_METHODS)
 def test_sklearn_cross_validation_iterators(data_args, cross_validation_method):
     """Test if sklearn cross-validation iterators can handle sktime panel data."""
-    clf = CanonicalIntervalForest.create_test_instance()
-    fit_args = _make_args(clf, "fit", **data_args)
+    fit_args = make_classification_problem(**data_args)
     groups = [1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 10]
 
     for train, test in cross_validation_method.split(*fit_args, groups=groups):
@@ -113,7 +112,7 @@ def test_sklearn_parameter_tuning(data_args, parameter_tuning_method):
     """Test if sklearn parameter tuners can handle sktime panel data and classifiers."""
     clf = CanonicalIntervalForest.create_test_instance()
     param_grid = {"n_intervals": [2, 3], "att_subsample_size": [2, 3]}
-    fit_args = _make_args(clf, "fit", **data_args)
+    fit_args = make_classification_problem(**data_args)
 
     parameter_tuning_method = parameter_tuning_method(
         clf, param_grid, cv=KFold(n_splits=3)
@@ -126,10 +125,9 @@ def test_sklearn_parameter_tuning(data_args, parameter_tuning_method):
 @pytest.mark.parametrize("composite_classifier", COMPOSITE_ESTIMATORS)
 def test_sklearn_composite_classifiers(data_args, composite_classifier):
     """Test if sklearn composite classifiers can handle sktime data and classifiers."""
-    base_clf = CanonicalIntervalForest()
-    fit_args = _make_args(base_clf, "fit", **data_args)
+    fit_args = make_classification_problem(**data_args)
     composite_classifier.fit(*fit_args)
 
-    predict_args = _make_args(base_clf, "predict", **data_args)
-    preds = composite_classifier.predict(*predict_args)
+    X = _make_panel_X(**data_args)
+    preds = composite_classifier.predict(X=X)
     assert isinstance(preds, np.ndarray)
