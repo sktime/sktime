@@ -1146,7 +1146,7 @@ class InvertTransform(_DelegatedTransformer):
                 "If the tag was correctly set, this transformer will likely crash"
             )
         inner_output = transformer.get_tag("scitype:transform-output")
-        if not transformer.get_tag("scitype:transform-output") != "Series":
+        if transformer.get_tag("scitype:transform-output") != "Series":
             warn(
                 f"transformer output is not Series but {inner_output}, "
                 "according to scitype:transform-output tag. "

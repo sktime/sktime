@@ -472,12 +472,30 @@ def scitype(obj, candidate_scitypes=SCITYPE_LIST, exclude_mtypes=AMBIGUOUS_MTYPE
     ------
     TypeError if no type can be identified, or more than one type is identified
     """
-    _, _, metadata = check_is_scitype(
-        obj,
-        scitype=candidate_scitypes,
-        return_metadata=True,
-        exclude_mtypes=exclude_mtypes,
+    candidate_scitypes = _coerce_list_of_str(
+        candidate_scitypes, var_name="candidate_scitypes"
     )
-    scitype = metadata["scitype"]
 
-    return scitype
+    valid_scitypes = []
+
+    for scitype in candidate_scitypes:
+        valid = check_is_scitype(
+            obj,
+            scitype=scitype,
+            return_metadata=False,
+            exclude_mtypes=exclude_mtypes,
+        )
+        if valid:
+            valid_scitypes += [scitype]
+
+    if len(valid_scitypes) > 1:
+        raise TypeError(
+            "Error in function scitype, more than one valid scitype identified:"
+            f"{ valid_scitypes}"
+        )
+    if len(valid_scitypes) == 0:
+        raise TypeError(
+            "Error in function scitype, no valid scitype could be identified."
+        )
+
+    return valid_scitypes[0]
