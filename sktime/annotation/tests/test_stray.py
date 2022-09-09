@@ -223,7 +223,7 @@ def test_2D_score_with_na():
     )
 
     y_scores_expected = np.array(
-        [0.5233413, 0.5233413, np.nan, 0.7248368, 0.6035040, 0.8704687]
+        [0.43612712, 0.43612712, np.nan, 0.69004259, 0.51240831, 0.85697804]
     )
 
     scaler = MinMaxScaler()

@@ -249,7 +249,7 @@ class STRAY(BaseTransformer):
             Anomaly detection, boolean.
         """
         # fit again if data is different to fit, but don't store anything
-        if not np.allclose(X, self._X):
+        if not np.allclose(X, self._X, equal_nan=True):
             new_obj = STRAY(
                 alpha=self.alpha,
                 k=self.k,
