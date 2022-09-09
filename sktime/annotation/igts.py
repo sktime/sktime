@@ -146,7 +146,9 @@ class IGTS:
                 try_change_points = SortedSet([candidate]).update(current_change_points)
                 ig = self.information_gain_cost(X, try_change_points)
                 if self.verbose:
-                    logger.info(f"{ig=:.5f} for {candidate} current {current_change_points}")
+                    logger.info(
+                        f"{ig=:.5f} for {candidate} current {current_change_points}"
+                    )
                 if ig > ig_max:
                     ig_max = ig
                     best_candidate = candidate
@@ -159,14 +161,15 @@ class IGTS:
             )
             if self.verbose:
                 logger.info(
-                    f"BEST {ig_max=:.5f} for {best_candidate} " +
-                    f"current {current_change_points}"
+                    f"BEST {ig_max=:.5f} for {best_candidate} "
+                    + f"current {current_change_points}"
                 )
         return current_change_points
 
 
 class InformationGainSegmentation(BaseEstimator):
     """IGTS Estimator."""
+
     def __init__(
         self,
         k_max: int = 10,
