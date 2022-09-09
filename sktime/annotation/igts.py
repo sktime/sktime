@@ -96,6 +96,16 @@ class IGTS:
        Pervasive and Mobile Computing, 38, 92-109, (2017).
        https://www.sciencedirect.com/science/article/abs/pii/S1574119217300081
 
+    Example
+    -------
+    >>> from sktime.annotation.datagen import piecewise_normal_multivariate
+    >>> from sklearn.preprocessing import MinMaxScaler
+    >>> X = piecewise_normal_multivariate(lengths=[10, 10, 10, 10], means=[0.0, 10.0, 5.0, 2.0], variances=[0.0, 2.0, 0.5, 0.1])
+    >>> X_scaled = MinMaxScaler(feature_range=(0, 1)).fit_transform(X)
+    >>> from sktime.annotation.igts import InformationGainSegmentation
+    >>> igts = InformationGainSegmentation(k_max=3, step=2)
+    >>> y = igts.fit_predict(X_scaled)
+
     """
 
     # init attributes
@@ -145,10 +155,9 @@ class IGTS:
             ):
                 try_change_points = SortedSet([candidate]).update(current_change_points)
                 ig = self.information_gain_cost(X, try_change_points)
-                if self.verbose:
-                    logger.info(
-                        f"{ig=:.5f} for {candidate} current {current_change_points}"
-                    )
+                logger.info(
+                    f"{ig=:.5f} for {candidate} current {current_change_points}"
+                )
                 if ig > ig_max:
                     ig_max = ig
                     best_candidate = candidate
@@ -159,11 +168,11 @@ class IGTS:
                     k=k, score=ig_max, change_points=current_change_points
                 )
             )
-            if self.verbose:
-                logger.info(
-                    f"BEST {ig_max=:.5f} for {best_candidate} "
-                    + f"current {current_change_points}"
-                )
+
+            logger.info(
+                f"BEST {ig_max=:.5f} for {best_candidate} "
+                + f"current {current_change_points}"
+            )
         return current_change_points
 
 
@@ -174,13 +183,11 @@ class InformationGainSegmentation(BaseEstimator):
         self,
         k_max: int = 10,
         step: int = 5,
-        verbose: bool = False,
     ):
         self._adaptee_class = IGTS
         self._adaptee = self._adaptee_class(
             k_max=k_max,
             step=step,
-            verbose=verbose,
         )
 
     def fit(self, X: npt.ArrayLike, y: npt.ArrayLike = None):
