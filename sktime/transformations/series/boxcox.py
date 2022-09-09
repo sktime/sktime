@@ -214,7 +214,7 @@ class LogTransformer(BaseTransformer):
     The Natural logarithm transformation can be used to make the data more normally
     distributed and stabilize its variance.
 
-    Transforms each data point x to (scale * log(x+offset))
+    Transforms each data point x to log(scale *(x+offset))
 
     Parameters
     ----------
