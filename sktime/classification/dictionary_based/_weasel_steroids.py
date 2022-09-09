@@ -123,6 +123,7 @@ class WEASEL_STEROIDS(BaseClassifier):
         alphabet_sizes=[4],
         use_first_differences=[False],
         feature_selection="random",
+        remove_repeat_words=False,
         random_state=None,
         n_jobs=4,
     ):
@@ -146,6 +147,7 @@ class WEASEL_STEROIDS(BaseClassifier):
         self.max_feature_count = max_feature_count
         self.use_first_differences = use_first_differences
         self.feature_selection = feature_selection
+        self.remove_repeat_words = remove_repeat_words
 
         self.window_sizes = []
         self.series_length = 0
@@ -214,11 +216,11 @@ class WEASEL_STEROIDS(BaseClassifier):
                 self.max_feature_count,
                 self.ensemble_size,
                 self.feature_selection,
+                self.remove_repeat_words,
             )
             for i in range(self.ensemble_size)
         )
 
-        self.total_features_count = 0
         sfa_words = []
         for (
             sfa_words2,
@@ -235,6 +237,7 @@ class WEASEL_STEROIDS(BaseClassifier):
 
         self.clf = RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=False)
         self.clf.fit(all_words, y)
+        self.total_features_count = all_words.shape[1]
         # print(f"\tCross-Validation Acc: {self.clf.best_score_}")
 
         return self
@@ -337,6 +340,7 @@ def _parallel_fit(
     max_feature_count,
     ensemble_size,
     feature_selection,
+    remove_repeat_words,
 ):
     rng = check_random_state(i)
     window_size = rng.choice(window_sizes)
@@ -366,7 +370,7 @@ def _parallel_fit(
             norm=norm,
             anova=anova,
             binning_method=binning_strategy,
-            remove_repeat_words=False,
+            remove_repeat_words=remove_repeat_words,
             bigrams=bigrams,
             dilation=dilation,
             lower_bounding=lower_bounding,

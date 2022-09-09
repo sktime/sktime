@@ -232,53 +232,57 @@ def get_classifiers():
         # "BOSS": BOSSEnsemble(random_state=1379, n_jobs=threads_to_use),
         # "cBOSS": ContractableBOSS(random_state=1379, n_jobs=threads_to_use),
         # "TDE": TemporalDictionaryEnsemble(random_state=1379, n_jobs=threads_to_use),
-        "WEASEL 2.0": WEASEL_STEROIDS(
+        "WEASEL 2a": WEASEL_STEROIDS(
+            random_state=1379,
+            binning_strategies=["equi-depth"],
+            alphabet_sizes=[2],
+            lower_bounding=False,
+            min_window=4,
+            max_window=24,
+            max_feature_count=10_000,
+            word_lengths=[8],
+            norm_options=[False],
+            variance=True,
+            ensemble_size=50,
+            use_first_differences=[True, False],
+            feature_selection="none",
+            # remove_repeat_words=True,
+            n_jobs=threads_to_use,
+        ),
+        "WEASEL 2b": WEASEL_STEROIDS(
             random_state=1379,
             binning_strategies=["equi-depth", "equi-width"],
             alphabet_sizes=[2],
             lower_bounding=True,
             min_window=4,
-            max_window=20,
+            max_window=40,
             max_feature_count=10_000,
-            word_lengths=[8],  # test only 6 or 8?
-            norm_options=[False],  # p[True]=0.8
+            word_lengths=[8],
+            norm_options=[False],
+            variance=True,
+            ensemble_size=50,
+            use_first_differences=[True, False],
+            feature_selection="none",
+            # remove_repeat_words=True,
+            n_jobs=threads_to_use,
+        ),
+        "WEASEL 2c": WEASEL_STEROIDS(
+            random_state=1379,
+            binning_strategies=["equi-depth", "equi-width"],
+            alphabet_sizes=[2],
+            lower_bounding=True,
+            min_window=8,
+            max_window=32,
+            # remove_repeat_words=True,
+            max_feature_count=10_000,
+            word_lengths=[8],
+            norm_options=[False],
             variance=True,
             ensemble_size=50,
             use_first_differences=[True, False],
             feature_selection="none",
             n_jobs=threads_to_use,
         ),
-        # "WEASEL_RS": WEASEL_STEROIDS(
-        #     random_state=1379,
-        #     binning_strategies=["equi-depth"],
-        #     alphabet_sizes=[2],
-        #     min_window=4,
-        #     max_window=24,
-        #     bigrams=False,
-        #     max_feature_count=10_000,
-        #     word_lengths=[8],  # test only 6 or 8?
-        #     norm_options=[False],  # p[True]=0.8
-        #     variance=True,
-        #     ensemble_size=50,
-        #     use_first_differences=[True, False],
-        #     feature_selection="none",
-        #     n_jobs=threads_to_use,
-        # ),
-        # "WEASEL_RS (EW+ED,FS:None)": WEASEL_STEROIDS(
-        #     random_state=1379,
-        #     alphabet_sizes=[2],
-        #     binning_strategies=["equi-depth", "equi-width"],
-        #     min_window=4,
-        #     max_window=24,
-        #     word_lengths=[8],  # test only 6 or 8?
-        #     norm_options=[True, False],  # p[True]=0.8
-        #     variance=True,
-        #     max_feature_count=10_000,
-        #     ensemble_size=50,
-        #     use_first_differences=[True, False],
-        #     feature_selection="none",
-        #     n_jobs=threads_to_use,
-        # ),
         # "Hydra": [],  # see below
         # "R_DST": R_DST_Ridge(random_state=1379),
         # "Rocket": make_pipeline(
@@ -464,7 +468,7 @@ if __name__ == "__main__":
             # "Fit-Time",
             # "Predict-Time",
         ],
-    ).to_csv("subset_scores-08-09-22.csv", index=None)
+    ).to_csv("full_scores-09-09-22.csv", index=None)
 
     pd.DataFrame.from_records(
         csv_timings,
@@ -474,4 +478,4 @@ if __name__ == "__main__":
             "Fit-Time",
             "Predict-Time",
         ],
-    ).to_csv("subset_runtimes-08-09-22.csv", index=None)
+    ).to_csv("full_runtimes-09-09-22.csv", index=None)
