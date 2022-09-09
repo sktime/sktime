@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Information Gain-based Temporal Segmentation.
 
@@ -10,6 +11,7 @@ gain for any number of segmentations.
 
 """
 
+import logging
 from dataclasses import dataclass
 from typing import Dict, List
 
@@ -23,6 +25,8 @@ from sktime.base import BaseEstimator
 
 __all__ = ["InformationGainSegmentation"]
 __author__ = ["lmmentel"]
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -77,8 +81,6 @@ class IGTS:
     step: : int, default=5
         Step size, or stride for selecting candidate locations of change points.
         Fox example a `step=5` would produce candidates [0, 5, 10, ...]
-    verbose: bool, default=False
-        If `True` verbose output will be printed
 
     Notes
     -----
@@ -99,7 +101,6 @@ class IGTS:
     # init attributes
     k_max: int = 10
     step: int = 5
-    verbose: bool = False
 
     # computed attributes
     intermediate_results_: List = None
@@ -145,7 +146,7 @@ class IGTS:
                 try_change_points = SortedSet([candidate]).update(current_change_points)
                 ig = self.information_gain_cost(X, try_change_points)
                 if self.verbose:
-                    print(f"{ig=:.5f} for {candidate} current {current_change_points}")  # noqa
+                    logger.info(f"{ig=:.5f} for {candidate} current {current_change_points}")
                 if ig > ig_max:
                     ig_max = ig
                     best_candidate = candidate
@@ -157,10 +158,10 @@ class IGTS:
                 )
             )
             if self.verbose:
-                print(
+                logger.info(
                     f"BEST {ig_max=:.5f} for {best_candidate} " +
                     f"current {current_change_points}"
-                )  # noqa
+                )
         return current_change_points
 
 
