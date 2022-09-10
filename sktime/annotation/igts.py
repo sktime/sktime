@@ -177,7 +177,7 @@ class IGTS:
 
 
 class SegmentationMixin:
-    """This mixin provides methods useful for segmentation problems."""
+    """Mixin with methods useful for segmentation problems."""
 
     def to_classification(self, change_points: SortedSet) -> npt.ArrayLike:
         """Convert change point locations to a classification vector.
