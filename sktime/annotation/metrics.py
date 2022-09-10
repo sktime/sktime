@@ -6,13 +6,10 @@ Metrics are suitable for comparing predicted change point sets
 against true change points and quantify the error.
 """
 
-import numpy.typing as npt
 import numpy as np
+import numpy.typing as npt
 from scipy.spatial.distance import directed_hausdorff
-
-
-def check_array(iterable):
-    return np.array(iterable)
+from sklearn.utils import check_array
 
 
 def annotation_error(
@@ -32,8 +29,8 @@ def annotation_error(
     -------
         annotation_error
     """
-    true_change_points = check_array(true_change_points)
-    pred_change_points = check_array(pred_change_points)
+    true_change_points = check_array(true_change_points, ensure_2d=False)
+    pred_change_points = check_array(pred_change_points, ensure_2d=False)
     return abs(true_change_points.size - pred_change_points.size)
 
 
@@ -81,6 +78,6 @@ def prediction_ratio(
     -------
         prediction_ratio
     """
-    true_change_points = check_array(true_change_points)
-    pred_change_points = check_array(pred_change_points)
+    true_change_points = check_array(true_change_points, ensure_2d=False)
+    pred_change_points = check_array(pred_change_points, ensure_2d=False)
     return pred_change_points.size / true_change_points.size
