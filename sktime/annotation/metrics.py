@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 """
 Metrics for evaluating performance of annotation estimators.
+
+Metrics are suitable for comparing predicted change point sets
+against true change points and quantify the error.
 """
 
 import numpy.typing as npt
@@ -12,7 +15,9 @@ def check_array(iterable):
     return np.array(iterable)
 
 
-def annotation_error(true_change_points: npt.ArrayLike, pred_change_points: npt.ArrayLike) -> float:
+def annotation_error(
+    true_change_points: npt.ArrayLike, pred_change_points: npt.ArrayLike
+) -> float:
     """
     Annotation error measuring discrepancy in the number of change points.
 
@@ -20,7 +25,7 @@ def annotation_error(true_change_points: npt.ArrayLike, pred_change_points: npt.
     ----------
     true_change_points: array_like
         Indexes of true change points
-    pred_change_points: array_like 
+    pred_change_points: array_like
         Indexes of predicted change points
 
     Returns
@@ -48,7 +53,6 @@ def hausdorff_error(
     -------
         Hausdorff error.
     """
-
     a = np.array(true_change_points).reshape(-1, 1)
     b = np.array(pred_change_points).reshape(-1, 1)
 
@@ -60,7 +64,9 @@ def hausdorff_error(
     return d
 
 
-def prediction_ratio(true_change_points: npt.ArrayLike, pred_change_points: np.array) -> float:
+def prediction_ratio(
+    true_change_points: npt.ArrayLike, pred_change_points: np.array
+) -> float:
     """
     Prediction ratio as the ratio of number of predicted to true change points.
 
@@ -68,7 +74,7 @@ def prediction_ratio(true_change_points: npt.ArrayLike, pred_change_points: np.a
     ----------
     true_change_points: array_like
         Indexes of true change points
-    pred_change_points: array_like 
+    pred_change_points: array_like
         Indexes of predicted change points
 
     Returns
