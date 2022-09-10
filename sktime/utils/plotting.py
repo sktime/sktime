@@ -274,6 +274,13 @@ def plot_correlations(
 
     axes : np.ndarray
         Array of the figure's Axe objects
+
+    Examples
+    --------
+    >>> from sktime.utils.plotting import plot_correlations
+    >>> from sktime.datasets import load_airline
+    >>> y = load_airline()
+    >>> fig, ax = plot_correlations(y)
     """
     _check_soft_dependencies("matplotlib")
     import matplotlib.pyplot as plt
