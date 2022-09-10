@@ -5,6 +5,7 @@ Metrics for evaluating performance of annotation estimators.
 
 import numpy.typing as npt
 import numpy as np
+from scipy.spatial.distance import directed_hausdorff
 
 
 def check_array(iterable):
@@ -31,10 +32,37 @@ def annotation_error(true_change_points: npt.ArrayLike, pred_change_points: npt.
     return abs(true_change_points.size - pred_change_points.size)
 
 
+def hausdorff_error(
+    true_change_points: np.array, pred_change_points: np.array, symmetric: bool = True
+) -> float:
+    """
+    Hausdorff metric measures how far two subsets of a metric space are from each other.
+
+    Parameters
+    ----------
+        true_change_points: true indices of change points
+        pred_change_points: predicted indices of change points
+        symmetric: if `True` symmetric Hasudorff distance will be used
+
+    Returns
+    -------
+        Hausdorff error.
+    """
+
+    a = np.array(true_change_points).reshape(-1, 1)
+    b = np.array(pred_change_points).reshape(-1, 1)
+
+    d = directed_hausdorff(a, b)[0]
+
+    if symmetric:
+        d = max(d, directed_hausdorff(b, a)[0])
+
+    return d
+
+
 def prediction_ratio(true_change_points: npt.ArrayLike, pred_change_points: np.array) -> float:
     """
-    Compute the prediction ration as the ratio of number of predicted change points
-    to true change points.
+    Prediction ratio as the ratio of number of predicted to true change points.
 
     Parameters
     ----------
@@ -46,11 +74,6 @@ def prediction_ratio(true_change_points: npt.ArrayLike, pred_change_points: np.a
     Returns
     -------
         prediction_ratio
-
-    References
-    ----------
-    .. [1]  W-H. Lee, J. Ortiz, B. Ko, R. Lee,
-       "Time Segmentation through automatic feature learning", 2018.
     """
     true_change_points = check_array(true_change_points)
     pred_change_points = check_array(pred_change_points)
