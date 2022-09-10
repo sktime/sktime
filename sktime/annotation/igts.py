@@ -203,9 +203,7 @@ class SegmentationMixin:
         would result in: [0, 0, 1, 1, 1, 1, 1, 1, 2, 2].
         """
         labels = np.zeros(change_points[-1], dtype=np.int32)
-        for i, (start, stop) in enumerate(
-            zip(change_points[:-1], change_points[1:])
-        ):
+        for i, (start, stop) in enumerate(zip(change_points[:-1], change_points[1:])):
             labels[start:stop] = i
         return labels
 
