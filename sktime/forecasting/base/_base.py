@@ -1207,13 +1207,13 @@ class BaseForecaster(BaseEstimator):
             """Check input metadata against self's missing capability tag."""
             if not self.get_tag("handles-missing-data"):
                 msg = (
-                    f"{type(self).__name} cannot handle missing data (nans), "
+                    f"{type(self).__name__} cannot handle missing data (nans), "
                     f"but {obj_name} passed contained missing data."
                 )
                 if self.get_class_tag("handles-missing-data"):
                     msg = msg + (
-                        f" Whether instances of {type(self).__name} can handle "
-                        "missing data is depends on parameters of the instance, "
+                        f" Whether instances of {type(self).__name__} can handle "
+                        "missing data depends on parameters of the instance, "
                         "e.g., estimator components."
                     )
                 if metadata["has_nans"]:
