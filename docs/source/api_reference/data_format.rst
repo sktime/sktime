@@ -20,34 +20,54 @@ This document has the following content:
 - Introduction: What is a ``.ts`` file, why and when to use it.
 - Description: What are the individual components of a ``.ts`` file.
 - Instructions: How to create your own ``.ts`` file.
-- Illustrations: A running example to tie up above sections.
+- Illustrations: A running example to tie up the above sections.
 
 Introduction
 ------------
 This document formalizes string identifiers used in ``.ts`` file format.
-Encoded in ``utf-8``, ``.ts`` files stores time-series dataset and its corresponding metadata and can be
-opened via any basic editor like notepad for visual inspection.
+Encoded in ``utf-8``, ``.ts`` files stores time-series dataset and its corresponding
+metadata(specified via string identifiers) and can be opened via any basic editor like notepad for visual inspection.
 String identifiers refer to strings beginning with ``@`` in the file.
 
 ``.ts`` files contains information blocks in the following order:
 
-1. All the comments to describe the dataset. (begins with ``#`` in the file)
-2. All the String Identifiers to give information about the metadata (begins with ``@`` in the file).
-3. Actual dataset.
+1. A description block.
+      All lines in this block begin with ``#`` and provides citations and comments about the dataset.
+      See :ref:`subsection on description block <comment description>` for more details.
+2. A metadata block.
+      All lines in this block begin with ``@`` and each line has one string identifier and corresponding value.
+      See :ref:`subsection on metadata block <metadata description>` for more details.
+3. A dataset block.
 
-See `Basic Motion.ts`_ for a concrete example.
-
-These identifiers serve the purpose of containing metadata for the dataset.
-``sktime``'s core loader/writer functions relies on their existence to correctly load data into memory.
-This is also helpful to provide information about the dataset to a different user not familiar with the dataset.
+See `Basic Motion.ts`_ for a concrete example, an `illustration`_ section is also provided for reference.
 
 To understand how the actual data is stored and loaded, visit `loading data`_.
 
 Description
 -----------
-This section describes different string identifiers present in a ``.ts`` file and how are they employed in the file.
+This section describes the components of a ``.ts`` file.
 
-Information that are included in the metadata:
+.. _comment description:
+
+Description Block
+^^^^^^^^^^^^^^^^^
+
+This is an optional block that is present to provide context for the dataset. All lines are ignored by the ``sktime``
+loader functions.
+
+.. _metadata description:
+
+Metadata Block
+^^^^^^^^^^^^^^
+
+A metadata block consists of various string identifiers that serve the purpose of containing metadata for the dataset.
+``sktime``'s core loader/writer functions rely on their existence to correctly load data into memory.
+This is also helpful to provide information about the dataset to a different user not familiar with the dataset.
+
+The format of individual string identifier is: ``@<identifier> [value]``,
+except for ``@data`` where there is no trailing information.
+
+Information that is included in the metadata:
 
 * Name of the dataset
 * Does it include timestamps
@@ -57,10 +77,7 @@ Information that are included in the metadata:
 * Do all instances have the same length
 * Labels for the class
 
-String identifiers are present before the actual data and are to be written at the start of line only.
-Each identifier must be present at a separate line.
-The format of individual string identifier is: ``@<identifier> [value]``,
-except for ``@data`` where there is no trailing information.
+String identifiers are to be written at the start of the line only and must be present at a separate line.
 
 .. note::
     Since these datasets are often from different sources (see `tsregression`_ and `timeseriesclassification.com`_)
@@ -71,6 +88,8 @@ except for ``@data`` where there is no trailing information.
 
     However, if you run into an inconsistency that isn't already taken care of,
     kindly consider opening an `issue`_.
+
+Here is a list of string identifiers along with their descriptions:
 
 .. list-table::
     :widths: 10 40 30 20
