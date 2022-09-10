@@ -125,6 +125,11 @@ def all_estimators(
             passed in return_tags will serve as column names for all columns of
             tags that were optionally requested.
 
+    Examples
+    --------
+    >>> from sktime.registry import all_estimators
+    >>> all_estimators("forecaster", as_dataframe=True)
+
     References
     ----------
     Modified version from scikit-learn's `all_estimators()`.
