@@ -69,7 +69,8 @@ except for ``@data`` where there is no trailing information.
 
     For this document, we will only use lowercase to represent the identifier.
 
-    However, if you run into an inconsistency that isn't already taken care of, kindly consider opening an `issue`_.
+    However, if you run into an inconsistency that isn't already taken care of,
+    kindly consider opening an `issue`_.
 
 .. list-table::
     :widths: 10 40 30 20
