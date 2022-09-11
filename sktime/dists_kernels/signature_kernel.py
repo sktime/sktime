@@ -15,6 +15,8 @@ from sktime.dists_kernels._base import BasePairwiseTransformerPanel
 
 # cumsum varia
 # ------------
+
+
 def _coerce_to_list_or_tuple(i):
     """Coerce integers to list of integers."""
     if not isinstance(i, (list, tuple)):
@@ -79,6 +81,7 @@ def cumsum_shift_mult(array, dims):
 # low rank reduction utilities
 # ----------------------------
 
+
 def rankreduce(array, rankbound):
     """Project 2D array on top rankbound singular values."""
     arraysvd = svds(array.astype("f"), k=rankbound)
@@ -95,6 +98,7 @@ def rankreduce_batch(arrays, rankbound):
 
 # kernels and distances
 # ---------------------
+
 
 def sqdist(X, Y):
     """Row-wise squared distance between 2D array X and 2D array Y."""
@@ -138,6 +142,7 @@ def mirror(K):
 
 # sequential kernel implementation
 # --------------------------------
+
 
 def sqize_kernel(K, L, theta=1.0, normalize=False):
     """Compute the sequential kernel from a pairwise kernel matrix.
@@ -371,6 +376,7 @@ def sum_low_rank(K):
 # sequential kernel - low-rank version
 # ------------------------------------
 
+
 def sqize_kernel_low_rank(K, L, theta=1.0, normalize=False, rankbound=float("inf")):
     """Compute the sequential kernel from kernel matrix, with low-rank approximation.
 
@@ -500,6 +506,7 @@ def sqize_kernel_low_rank_fast(
 
 # sequential kernel - wraps all versions
 # --------------------------------------
+
 
 def seq_kernel(
     X,
@@ -860,6 +867,7 @@ class SeqKernelizer(BaseEstimator, TransformerMixin):
 
 # sktime interface - pairwise transformer
 # ---------------------------------------
+
 
 class SignatureKernel(BasePairwiseTransformerPanel):
     """Compute the sequential kernel matrix row features on collection of series.
