@@ -12,7 +12,6 @@ from sklearn.base import BaseEstimator, TransformerMixin
 
 from sktime.dists_kernels._base import BasePairwiseTransformerPanel
 
-
 # cumsum varia
 # ------------
 
