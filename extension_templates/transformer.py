@@ -159,6 +159,13 @@ class MyTransformer(BaseTransformer):
         # valid values: False (no), True = exception is raised if no y is seen in _fit
         #   y can be passed or not in _transform for either value of requires_y
         #
+        # remember_data = whether all data seen is remembered as self._X
+        "remember_data": False,
+        # valid vales: False (no), True = self._X is created/update in fit/update
+        #   self._X is all X passed via fit or update, updated via update_data
+        #   self._X is of mtype seen in fit, update adds more data to the same container
+        #   self._X can be used (readonly) by the estimator in _fit, _transform, _update
+        #   if set to True, fit-is-empty must be set to False
         #
         # capability tags: properties of the estimator
         # --------------------------------------------
