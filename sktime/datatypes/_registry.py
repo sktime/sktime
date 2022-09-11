@@ -166,7 +166,7 @@ def scitype_to_mtype(scitype: str, softdeps: str = "exclude"):
     scitype : str, or list of str
         scitype(s) to find mtypes for, a valid scitype string
         valid scitype strings, with explanation, are in datatypes.SCITYPE_REGISTER
-    softdeps : str, optional, default = "exclude
+    softdeps : str, optional, default = "exclude"
         whether to return mtypes that require soft dependencies
         "exclude" = only mtypes that do not require soft dependencies are returned
         "present" = only mtypes with soft deps satisfied by the environment are returned
