@@ -79,7 +79,6 @@ def cumsum_shift_mult(array, dims):
 # low rank reduction utilities
 # ----------------------------
 
-
 def rankreduce(array, rankbound):
     """Project 2D array on top rankbound singular values."""
     arraysvd = svds(array.astype("f"), k=rankbound)
@@ -93,6 +92,9 @@ def rankreduce_batch(arrays, rankbound):
         resultarrays[i, :, :] = rankreduce(arrays[i, :, :], rankbound)
     return resultarrays
 
+
+# kernels and distances
+# ---------------------
 
 def sqdist(X, Y):
     """Row-wise squared distance between 2D array X and 2D array Y."""
@@ -133,6 +135,9 @@ def mirror(K):
     """Mirrors an upper triangular kernel matrix, helper for Sqize_kernel."""
     return K - np.diag(np.diag(K)) + np.transpose(K)
 
+
+# sequential kernel implementation
+# --------------------------------
 
 def sqize_kernel(K, L, theta=1.0, normalize=False):
     """Compute the sequential kernel from a pairwise kernel matrix.
@@ -323,7 +328,7 @@ def hadamard_low_rank_batch(U, P):
     return np.tile(U, rankP) * np.repeat(P, rankU, 2)
 
 
-def HadamardLowRankSubS(U, P, rho):
+def hadamard_low_rank_subsample(U, P, rho):
     """Hadamard multiply U and P component-wise (1st), with Nyström type subsampling."""
     rankU = U.shape[2]
     rankP = P.shape[2]
@@ -362,6 +367,9 @@ def sum_low_rank(K):
     """
     return np.inner(sum(K.U), sum(K.V))
 
+
+# sequential kernel - low-rank version
+# ------------------------------------
 
 def sqize_kernel_low_rank(K, L, theta=1.0, normalize=False, rankbound=float("inf")):
     """Compute the sequential kernel from kernel matrix, with low-rank approximation.
@@ -489,6 +497,9 @@ def sqize_kernel_low_rank_fast(
 
         return R
 
+
+# sequential kernel - wraps all versions
+# --------------------------------------
 
 def seq_kernel(
     X,
@@ -716,6 +727,8 @@ def time_series_reshaper(Xflat, numfeatures, subsample=1, differences=True):
         return X
 
 
+# scikit-learn estimator (original 2016 paper)
+# --------------------------------------------
 # for historical reasons - old scikit-learn version of the estimator
 class SeqKernelizer(BaseEstimator, TransformerMixin):
     """Compute the sequential kernel matrix row features on collection of series.
@@ -844,6 +857,9 @@ class SeqKernelizer(BaseEstimator, TransformerMixin):
 
         return KSeq
 
+
+# sktime interface - pairwise transformer
+# ---------------------------------------
 
 class SignatureKernel(BasePairwiseTransformerPanel):
     """Compute the sequential kernel matrix row features on collection of series.
