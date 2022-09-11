@@ -869,7 +869,7 @@ def generate_words(
     return words
 
 
-@njit(fastmath=True, cache=True)
+@njit(fastmath=True, cache=True, parallel=True, nogil=True)
 def _mft(
     X,
     window_size,
@@ -965,7 +965,7 @@ def create_bag_none(
     feature_count = np.uint32(breakpoints.shape[1] ** word_length)
     all_win_words = np.zeros((n_instances, feature_count), dtype=np.uint32)
 
-    for j in prange(len(sfa_words)):
+    for j in prange(sfa_words.shape[0]):
         # this mask is used to encode the repeated words
         if remove_repeat_words:
             masked = np.nonzero(sfa_words[j])
