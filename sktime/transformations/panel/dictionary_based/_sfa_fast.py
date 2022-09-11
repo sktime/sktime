@@ -9,6 +9,7 @@ __author__ = ["patrickzib"]
 __all__ = ["SFAFast"]
 
 import math
+import multiprocessing
 import sys
 from warnings import simplefilter
 
@@ -20,6 +21,7 @@ from numba import (
     njit,
     objmode,
     prange,
+    set_num_threads,
 )
 from numba.core import types
 from numba.typed import Dict
@@ -215,6 +217,12 @@ class SFAFast(BaseTransformer):
         self.return_pandas_data_series = return_pandas_data_series
 
         self.random_state = random_state
+
+        if self.n_jobs < 1 or self.n_jobs > multiprocessing.cpu_count():
+            n_jobs = multiprocessing.cpu_count()
+        else:
+            n_jobs = self.n_jobs
+        set_num_threads(n_jobs)
 
         super(SFAFast, self).__init__()
 

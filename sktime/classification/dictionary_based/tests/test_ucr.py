@@ -16,7 +16,7 @@ import numpy as np
 import pandas as pd
 import torch
 from convst.classifiers import R_DST_Ridge
-from joblib import Parallel, delayed
+from joblib import Parallel, delayed, parallel_backend
 from scipy.stats import zscore
 from sklearn.linear_model import RidgeClassifierCV
 
@@ -241,7 +241,7 @@ def get_classifiers(threads_to_use):
 
 
 DATA_PATH = "/Users/bzcschae/workspace/UCRArchive_2018/"
-parallel_jobs = 1
+parallel_jobs = 4
 threads_to_use = 4
 server = False
 
@@ -253,7 +253,7 @@ if os.path.exists(DATA_PATH):
 else:
     DATA_PATH = "/vol/fob-wbib-vol2/wbi/schaefpa/sktime/datasets/UCRArchive_2018"
     parallel_jobs = 80
-    threads_to_use = 1
+    threads_to_use = 8
     server = True
     used_dataset = dataset_names_full
 
@@ -339,14 +339,13 @@ if __name__ == "__main__":
 
         return sum_scores
 
-    parallel_res = Parallel(
-        n_jobs=parallel_jobs, backend="threading", timeout=9999999, batch_size=1
-    )(
-        delayed(_parallel_fit)(dataset, clf_name)
-        for dataset, clf_name in itertools.product(
-            used_dataset, get_classifiers(threads_to_use)
+    with parallel_backend("threading", n_jobs=-1):
+        parallel_res = Parallel(n_jobs=parallel_jobs, timeout=9999999, batch_size=1)(
+            delayed(_parallel_fit)(dataset, clf_name)
+            for dataset, clf_name in itertools.product(
+                used_dataset, get_classifiers(threads_to_use)
+            )
         )
-    )
 
     sum_scores = {}
     for result in parallel_res:

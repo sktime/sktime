@@ -205,7 +205,7 @@ class MUSE_NEW(BaseClassifier):
         if self.variance and self.anova:
             raise ValueError("MUSE Warning: Please set either variance or anova.")
 
-        parallel_res = Parallel(n_jobs=self.n_jobs)(
+        parallel_res = Parallel(n_jobs=self.n_jobs, backend="threading")(
             delayed(_parallel_fit)(
                 X,
                 y,
@@ -307,7 +307,7 @@ class MUSE_NEW(BaseClassifier):
         if self.use_first_order_differences:
             X = self._add_first_order_differences(X)
 
-        parallel_res = Parallel(n_jobs=self._threads_to_use)(
+        parallel_res = Parallel(n_jobs=self._threads_to_use, backend="threading")(
             delayed(_parallel_transform_words)(
                 X, self.window_sizes, self.SFA_transformers, ind
             )
