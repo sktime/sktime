@@ -42,6 +42,7 @@ class MLPNetwork(BaseDeepNetwork):
     ):
         _check_dl_dependencies(severity="error")
         self.random_state = random_state
+        super(MLPNetwork, self).__init__()
 
     def build_network(self, input_shape, **kwargs):
         """Construct a network and return its input and output layers.
