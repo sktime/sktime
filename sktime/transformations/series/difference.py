@@ -116,6 +116,9 @@ def _inverse_diff(X, lags, X_diff_seq=None):
         and applies cumsum to X at period lag[value], for value in the list `lag`
     if `X_diff_seq` is provided, uses values stored for indices outside `X` to invert
     """
+    if isinstance(lags, int):
+        lags = [lags]
+
     # if lag is numpy, convert to list
     if isinstance(lags, np.ndarray):
         lags = list(lags)
@@ -124,30 +127,32 @@ def _inverse_diff(X, lags, X_diff_seq=None):
     if isinstance(lags, (list, tuple)):
         if len(lags) == 0:
             return X
-        lags = lags.copy()
 
-        # lag_first = pop last element of lags
-        lag_last = lags.pop()
+    lags = lags.copy()
 
-        if X_diff_seq is not None:
-            X = X.combine_first(X_diff_seq[len(lags)])
-        X_diff_last = _inverse_diff(X, lag_last)
-        return _inverse_diff(X_diff_last, lags, X_diff_seq=X_diff_seq)
+    # lag_first = pop last element of lags
+    lag_last = lags.pop()
 
-    X = X.copy()
+    if X_diff_seq is not None:
+        X = X.combine_first(X_diff_seq[len(lags)])
 
-    if lags < 0:
-        X = X.iloc[::-1]
+    X_diff_last = X.copy()
 
-    abs_lag = abs(lags)
+    if lag_last < 0:
+        X_diff_last = X_diff_last.iloc[::-1]
+
+    abs_lag = abs(lag_last)
 
     for i in range(abs_lag):
-        X.iloc[i::abs_lag] = X.iloc[i::abs_lag].cumsum()
+        X_diff_last.iloc[i::abs_lag] = X_diff_last.iloc[i::abs_lag].cumsum()
 
-    if lags < 0:
-        X = X.iloc[::-1]
+    if lag_last < 0:
+        X_diff_last = X_diff_last.iloc[::-1]
 
-    return X
+    if len(lags) > 0:
+        return _inverse_diff(X_diff_last, lags, X_diff_seq=X_diff_seq)
+    else:
+        return X_diff_last
 
 
 class Differencer(BaseTransformer):
