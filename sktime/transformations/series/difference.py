@@ -52,6 +52,7 @@ def _diff_transform(X: Union[pd.Series, pd.DataFrame], lags: np.array):
 
     Returns
     -------
+    `X` differenced at lags `lags`, always a copy (no reference)
     if `lags` is int, applies diff to X at period `lags`
         returns X.diff(periods=lag)
     if `lags` is list of int, loops over elements from start to end
@@ -65,7 +66,7 @@ def _diff_transform(X: Union[pd.Series, pd.DataFrame], lags: np.array):
             # converting lag to int since pandas complains if it's np.int64
             Xt = X.diff(periods=int(lag))
     else:
-        Xt = X
+        Xt = X.copy()
 
     return Xt
 
@@ -80,6 +81,7 @@ def _inverse_diff(X, lag):
 
     Returns
     -------
+    `X` inverse differenced at lags `lags`, always a copy (no reference)
     if `lag` is int, applies cumsum to X at period `lag`
         for i in range(lag), X.iloc[i::lag] = X.iloc[i::lag].cumsum()
     if `lag` is list of int, loops over elements from start to end
@@ -100,8 +102,19 @@ def _inverse_diff(X, lag):
         X_diff_first = _inverse_diff(X, lag_first)
         return _inverse_diff(X_diff_first, lag)
 
-    for i in range(lag):
-        X.iloc[i::lag] = X.iloc[i::lag].cumsum()
+    X = X.copy()
+
+    if lag < 0:
+        X = X.iloc[::-1]
+
+    abs_lag = abs(lag)
+
+    for i in range(abs_lag):
+        X.iloc[i::abs_lag] = X.iloc[i::abs_lag].cumsum()
+
+    if lag < 0:
+        X = X.iloc[::-1]
+
     return X
 
 
