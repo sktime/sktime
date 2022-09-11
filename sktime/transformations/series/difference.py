@@ -190,8 +190,6 @@ class Differencer(BaseTransformer):
         self._X = None
         self._lags = _check_lags(self.lags)
         self._cumulative_lags = None
-        self._prior_cum_lags = None
-        self._prior_lags = None
         super(Differencer, self).__init__()
 
         # if the na_handling is "fill_zero" or "keep_na"
@@ -227,12 +225,9 @@ class Differencer(BaseTransformer):
         self: a fitted instance of the estimator
         """
         memory = self.memory
-        lags = self.lags
 
-        self._prior_lags = np.roll(lags, shift=1)
-        self._prior_lags[0] = 0
-        lagsum = self._lags.cumsum()
-        self._cumulative_lags = lagsum
+        lagsum = self._lags.cumsum()[-1]
+        self._lagsum = lagsum
 
         # remember X or part of X
         if memory == "all":
@@ -269,13 +264,11 @@ class Differencer(BaseTransformer):
 
         Xt = _diff_transform(X, self._lags)
 
-        Xt = Xt.loc[X_orig_index]
-
         na_handling = self.na_handling
         if na_handling == "drop_na":
-            Xt = Xt.iloc[self._cumulative_lags[-1] :]
+            Xt = Xt.iloc[self._lagsum :]
         elif na_handling == "fill_zero":
-            Xt.iloc[: self._cumulative_lags[-1]] = 0
+            Xt.iloc[: self._lagsum] = 0
         elif na_handling == "keep_na":
             pass
         else:
@@ -283,6 +276,9 @@ class Differencer(BaseTransformer):
                 "unreachable condition, invalid na_handling value encountered: "
                 f"{na_handling}"
             )
+
+        Xt = Xt.loc[X_orig_index]
+
         return Xt
 
     def _inverse_transform(self, X, y=None):
