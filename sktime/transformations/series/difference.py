@@ -43,7 +43,23 @@ def _check_lags(lags):
 
 
 def _diff_transform(X: Union[pd.Series, pd.DataFrame], lags: np.array):
-    """Perform differencing on Series or DataFrame."""
+    """Perform differencing on Series or DataFrame.
+
+    Parameters
+    ----------
+    X : pd.DataFrame
+    lags : int or list of int
+
+    Returns
+    -------
+    if `lags` is int, applies diff to X at period `lags`
+        returns X.diff(periods=lag)
+    if `lags` is list of int, loops over elements from start to end
+        and applies diff to X at period lags[value], for value in the list `lags`
+    """
+    if isinstance(lags, int):
+        lags = [lags]
+
     if len(lags) != 0:
         for lag in lags:
             # converting lag to int since pandas complains if it's np.int64
@@ -55,9 +71,37 @@ def _diff_transform(X: Union[pd.Series, pd.DataFrame], lags: np.array):
 
 
 def _inverse_diff(X, lag):
+    """Inverse to difference.
+
+    Parameters
+    ----------
+    X : pd.Series or pd.DataFrame
+    lag : int or list of int
+
+    Returns
+    -------
+    if `lag` is int, applies cumsum to X at period `lag`
+        for i in range(lag), X.iloc[i::lag] = X.iloc[i::lag].cumsum()
+    if `lag` is list of int, loops over elements from start to end
+        and applies cumsum to X at period lag[value], for value in the list `lag`
+    """
+    # if lag is numpy, convert to list
+    if isinstance(lag, np.ndarray):
+        lag = list(lag)
+
+    # if lag is a list, recurse
+    if isinstance(lag, (list, tuple)):
+        if len(lag) == 0:
+            return X
+        lag = lag.copy()
+        lag.reverse()
+        lag_first = lag.pop()
+        lag.reverse()
+        X_diff_first = _inverse_diff(X, lag_first)
+        return _inverse_diff(X_diff_first, lag)
+
     for i in range(lag):
         X.iloc[i::lag] = X.iloc[i::lag].cumsum()
-
     return X
 
 
@@ -84,7 +128,7 @@ class Differencer(BaseTransformer):
         The lags used to difference the data.
         If a single `int` value is
 
-    na_handling : str, default = "fill_zero"
+    na_handling : str, optional, default = "fill_zero"
         How to handle the NaNs that appear at the start of the series from differencing
         Example: there are only 3 differences in a series of length 4,
             differencing [a, b, c, d] gives [?, b-a, c-b, d-c]
@@ -92,6 +136,13 @@ class Differencer(BaseTransformer):
         "drop_na" - unknown value(s) are dropped, the series is shortened
         "keep_na" - unknown value(s) is/are replaced by NaN
         "fill_zero" - unknown value(s) is/are replaced by zero
+
+    memory : str, optional, default = "all"
+        how much of previously seen X to remember, for exact reconstruction of inverse
+        "all" : estimator remembers all X, inverse is correct for all indices seen
+        "latest" : estimator only remembers latest X necessary for future reconstruction
+            inverses at any time stamps after fit are correct, but not past time stamps
+        "none" : estimator does not remember any X, inverse is direct cumsum
 
     Examples
     --------
@@ -119,7 +170,7 @@ class Differencer(BaseTransformer):
 
     VALID_NA_HANDLING_STR = ["drop_na", "keep_na", "fill_zero"]
 
-    def __init__(self, lags=1, na_handling="fill_zero"):
+    def __init__(self, lags=1, na_handling="fill_zero", memory="all"):
         self.lags = lags
         self.na_handling = self._check_na_handling(na_handling)
 
