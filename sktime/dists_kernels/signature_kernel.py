@@ -739,6 +739,13 @@ def time_series_reshaper(Xflat, numfeatures, subsample=1, differences=True):
 class SeqKernelizer(BaseEstimator, TransformerMixin):
     """Compute the sequential kernel matrix row features on collection of series.
 
+    Original implementation of signature kernel in [1]_ and [2]_.
+    The algorithm used therein is sklearn GridSearchCV wrapping
+    the sklearn pipeline of SeqKernelizer and SVC.
+
+    Identical behaviour can be obtained in sktime as
+    a grid search wrapped DistanceFeatures(SignatureKernel()) * SVC() pipeline
+
     Included for historical purposes only, as reference to original paper code,
     and for reproduction of the original experiments in the JMLR publication.
     Users and developers should use/modify SequentialKernel instead.
@@ -783,6 +790,13 @@ class SeqKernelizer(BaseEstimator, TransformerMixin):
     rankbound : int, optional, default = infinity
         a hard threshold for the rank of the level matrices
         used only if lowrank = True
+
+    References
+    ----------
+    .. [1] F. Kiraly, H. Oberhauser. 2016. "Kernels for sequentially ordered data.",
+        arXiv: 1601.08169.
+    .. [2] F. Kiraly, H. Oberhauser. 2019. "Kernels for sequentially ordered data.",
+        Journal of Machine Learning Research.
     """
 
     def __init__(
