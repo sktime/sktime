@@ -265,12 +265,9 @@ class Differencer(BaseTransformer):
         # remember X or part of X
         if memory == "all":
             self._X = X
-            self._X_for_inv = X
         elif memory == "latest":
             n_memory = min(len(X), lagsum)
             self._X = X.iloc[-n_memory:]
-            # n_inv_memory = min(len(X), lagsum + n_memory)
-            # self._X_for_inv = X.iloc[-n_inv_memory:]
 
         self._freq = get_cutoff(X, return_index=True)
         return self
@@ -330,7 +327,7 @@ class Differencer(BaseTransformer):
         Xt : pd.Series or pd.DataFrame, same type as X
             inverse transformed version of X
         """
-        lags = self.lags
+        lags = self._lags
 
         X_diff_seq = _diff_to_seq(self._X, lags)
 
