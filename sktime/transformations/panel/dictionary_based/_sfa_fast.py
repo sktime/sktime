@@ -958,7 +958,7 @@ def _mft(
         ]
 
 
-@njit(cache=True, fastmath=True, parallel=True, nogil=True)
+@njit(cache=True, fastmath=True, nogil=True)
 def create_bag_none(
     breakpoints, n_instances, sfa_words, word_length, remove_repeat_words
 ):
