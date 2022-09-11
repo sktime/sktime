@@ -133,6 +133,7 @@ def _inverse_diff(X, lags, X_diff_seq=None):
     # lag_first = pop last element of lags
     lag_last = lags.pop()
 
+    # invert last lag index
     if X_diff_seq is not None:
         X = X.combine_first(X_diff_seq[len(lags)])
 
@@ -149,8 +150,10 @@ def _inverse_diff(X, lags, X_diff_seq=None):
     if lag_last < 0:
         X_diff_last = X_diff_last.iloc[::-1]
 
+    # if any more lags, recurse
     if len(lags) > 0:
         return _inverse_diff(X_diff_last, lags, X_diff_seq=X_diff_seq)
+    # else return
     else:
         return X_diff_last
 
