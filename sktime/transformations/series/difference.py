@@ -232,6 +232,7 @@ class Differencer(BaseTransformer):
         # remember X or part of X
         if memory == "all":
             self._X = X
+            self._X_for_inv = X
         elif memory == "latest":
             n_memory = min(len(X), lagsum)
             self._X = X.iloc[-n_memory:]
