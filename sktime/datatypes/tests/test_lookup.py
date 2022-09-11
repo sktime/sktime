@@ -96,4 +96,4 @@ def test_scitype_to_mtype(mtype, scitype):
 
     # check that mtype is returned for "present" setting iff soft dep is satisfied
     result_present = scitype_to_mtype(scitype, softdeps="present")
-    assert mtype in result_present == softdep_present
+    assert (mtype in result_present) == softdep_present
