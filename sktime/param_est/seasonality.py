@@ -50,6 +50,13 @@ class SeasonalityACF(BaseParamFitter):
             estimate the autocovariance. When using "conservative",
             n is set to the number of non-missing observations.
 
+    Attributes
+    ----------
+    sp_ : int, seasonality period at lowest p-level, if any sub-threshold, else 1
+        if `candidate_sp` is passed, will be in `candidate_sp` or 1
+    sp_significant_ : list of int, seasonality periods with sub-threshold p-levels
+        ordered increasingly by p-level. Empty list, not [1], if none are sub-threshold
+
     Examples
     --------
     >>> from sktime.datasets import load_airline
@@ -162,8 +169,8 @@ class SeasonalityACF(BaseParamFitter):
             self.sp_ = sp_significant[0]
             self.sp_significant_ = sp_significant
         else:
-            self.sp_ = None
-            self.sp_significant_ = None
+            self.sp_ = 1
+            self.sp_significant_ = []
 
         return self
 
@@ -239,6 +246,13 @@ class SeasonalityACFqstat(BaseParamFitter):
             removed when computing the mean and cross-products that are used to
             estimate the autocovariance. When using "conservative",
             n is set to the number of non-missing observations.
+
+    Attributes
+    ----------
+    sp_ : int, seasonality period at lowest p-level, if any sub-threshold, else 1
+        if `candidate_sp` is passed, will be in `candidate_sp` or 1
+    sp_significant_ : list of int, seasonality periods with sub-threshold p-levels
+        ordered increasingly by p-level. Empty list, not [1], if none are sub-threshold
 
     Examples
     --------
@@ -358,8 +372,8 @@ class SeasonalityACFqstat(BaseParamFitter):
             self.sp_ = sp_significant[0]
             self.sp_significant_ = sp_significant
         else:
-            self.sp_ = None
-            self.sp_significant_ = None
+            self.sp_ = 1
+            self.sp_significant_ = []
 
         return self
 
