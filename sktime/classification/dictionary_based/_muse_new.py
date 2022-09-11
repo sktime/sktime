@@ -46,6 +46,10 @@ class MUSE_NEW(BaseClassifier):
         If True, the Fourier coefficient selection is done via a one-way
         ANOVA test. If False, the first Fourier coefficients are selected.
         Only applicable if labels are given
+    variance: boolean, default = False
+            If True, the Fourier coefficient selection is done via the largest
+            variance. If False, the first Fourier coefficients are selected.
+            Only applicable if labels are given
     bigrams: boolean, default=True
         whether to create bigrams of SFA words
     window_inc: int, default=2
@@ -123,12 +127,14 @@ class MUSE_NEW(BaseClassifier):
     def __init__(
         self,
         anova=True,
+        variance=False,
         bigrams=True,
         window_inc=2,
-        p_threshold=0.05,
         alphabet_size=2,
+        word_lengths=[4, 6],
         use_first_order_differences=True,
         feature_selection="chi2",
+        p_threshold=0.05,
         support_probabilities=False,
         n_jobs=1,
         random_state=None,
@@ -140,10 +146,11 @@ class MUSE_NEW(BaseClassifier):
         # feature selection is applied based on the chi-squared test.
         self.p_threshold = p_threshold
         self.anova = anova
+        self.variance = variance
         self.use_first_order_differences = use_first_order_differences
 
         self.norm_options = [False]
-        self.word_lengths = [4, 6]
+        self.word_lengths = word_lengths
 
         self.bigrams = bigrams
         self.binning_strategies = ["equi-width", "equi-depth"]
@@ -195,6 +202,9 @@ class MUSE_NEW(BaseClassifier):
                 + " multivariate series. It is recommended WEASEL is used instead."
             )
 
+        if self.variance and self.anova:
+            raise ValueError("MUSE Warning: Please set either variance or anova.")
+
         parallel_res = Parallel(n_jobs=self.n_jobs)(
             delayed(_parallel_fit)(
                 X,
@@ -207,6 +217,7 @@ class MUSE_NEW(BaseClassifier):
                 self.alphabet_size,
                 self.norm_options,
                 self.anova,
+                self.variance,
                 self.binning_strategies,
                 self.bigrams,
                 self.n_jobs,
@@ -381,6 +392,7 @@ def _parallel_fit(
     alphabet_size,
     norm_options,
     anova,
+    variance,
     binning_strategies,
     bigrams,
     n_jobs,
@@ -424,6 +436,7 @@ def _parallel_fit(
             window_size=window_size,
             norm=rng.choice(norm_options),
             anova=anova,
+            variance=variance,
             binning_method=rng.choice(binning_strategies),
             bigrams=bigrams,
             remove_repeat_words=False,

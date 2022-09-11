@@ -91,16 +91,38 @@ def get_classifiers(threads_to_use):
     """Obtain the benchmark classifiers."""
     clfs = {
         # "MUSE (old)" : MUSE(random_state=1379, n_jobs=threads_to_use),
-        "MUSE (new,a=4)": MUSE_NEW(
-            random_state=1379, alphabet_size=4, n_jobs=threads_to_use
+        "MUSE 2a (default +46 +variance)": MUSE_NEW(
+            random_state=1379,
+            alphabet_size=2,
+            variance=True,
+            anova=False,
+            n_jobs=threads_to_use,
         ),
-        "MUSE (new,a=2)": MUSE_NEW(
+        "MUSE 2b (default +46)": MUSE_NEW(
             random_state=1379, alphabet_size=2, n_jobs=threads_to_use
         ),
-        # "MUSE (new,a=2, random)": MUSE_NEW(random_state=1379,
-        #                           feature_selection="random",
-        #                           alphabet_size=2,
-        #                           n_jobs=threads_to_use),
+        "MUSE 2c (default +46 -bigrams)": MUSE_NEW(
+            random_state=1379, alphabet_size=2, bigrams=False, n_jobs=threads_to_use
+        ),
+        "MUSE 2d (default +46 -bigrams +variance)": MUSE_NEW(
+            random_state=1379,
+            alphabet_size=2,
+            bigrams=False,
+            variance=True,
+            anova=False,
+            n_jobs=threads_to_use,
+        ),
+        "MUSE 2a (default +6 +variance)": MUSE_NEW(
+            random_state=1379,
+            alphabet_size=2,
+            variance=True,
+            anova=False,
+            word_lengths=[6],
+            n_jobs=threads_to_use,
+        ),
+        "MUSE 2b (default +6)": MUSE_NEW(
+            random_state=1379, alphabet_size=2, word_lengths=[6], n_jobs=threads_to_use
+        ),
     }
     return clfs
 
