@@ -1001,7 +1001,7 @@ def create_bag_feature_selection(
     return all_win_words, relevant_features
 
 
-@njit(cache=True, fastmath=True, parallel=True, nogil=True)
+@njit(cache=True, fastmath=True, nogil=True)
 def create_bag_transform(
     feature_count,
     feature_selection,
@@ -1012,7 +1012,7 @@ def create_bag_transform(
 ):
     # merging arrays
     all_win_words = np.zeros((len(sfa_words), feature_count), np.uint32)
-    for j in prange(len(sfa_words)):
+    for j in prange(sfa_words.shape[0]):
         if len(relevant_features) == 0 and feature_selection == "none":
             # this mask is used to encode the repeated words
             if remove_repeat_words:
@@ -1035,7 +1035,7 @@ def create_bag_transform(
     return all_win_words, all_win_words.shape[1]
 
 
-@njit(fastmath=True, cache=True, parallel=True, nogil=True)
+@njit(fastmath=True, cache=True, nogil=True)
 def shorten_words(words, amount, letter_bits):
     new_words = np.zeros((words.shape[0], words.shape[1]), dtype=np.uint32)
 
