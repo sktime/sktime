@@ -49,11 +49,15 @@ from sktime.datatypes._hierarchical._registry import (
     MTYPE_SOFT_DEPS_HIERARCHICAL,
 )
 from sktime.datatypes._panel._registry import (
-    MTYPE_LIST_PANEL, MTYPE_REGISTER_PANEL, MTYPE_SOFT_DEPS_PANEL
+    MTYPE_LIST_PANEL,
+    MTYPE_REGISTER_PANEL,
+    MTYPE_SOFT_DEPS_PANEL,
 )
 from sktime.datatypes._proba._registry import MTYPE_LIST_PROBA, MTYPE_REGISTER_PROBA
 from sktime.datatypes._series._registry import (
-    MTYPE_LIST_SERIES, MTYPE_REGISTER_SERIES, MTYPE_SOFT_DEPS_SERIES
+    MTYPE_LIST_SERIES,
+    MTYPE_REGISTER_SERIES,
+    MTYPE_SOFT_DEPS_SERIES,
 )
 from sktime.datatypes._table._registry import MTYPE_LIST_TABLE, MTYPE_REGISTER_TABLE
 
