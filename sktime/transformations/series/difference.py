@@ -60,12 +60,11 @@ def _diff_transform(X: Union[pd.Series, pd.DataFrame], lags: np.array):
     if isinstance(lags, int):
         lags = [lags]
 
-    if len(lags) != 0:
-        for lag in lags:
-            # converting lag to int since pandas complains if it's np.int64
-            Xt = X.diff(periods=int(lag))
-    else:
-        Xt = X.copy()
+    Xt = X
+
+    for lag in lags:
+        # converting lag to int since pandas complains if it's np.int64
+        Xt = Xt.diff(periods=int(lag))
 
     return Xt
 
@@ -88,10 +87,12 @@ def _diff_to_seq(X: Union[pd.Series, pd.DataFrame], lags: np.array):
     if isinstance(lags, int):
         lags = [lags]
 
-    ret = []
+    ret = [X]
+    Xd = X
     for lag in lags:
         # converting lag to int since pandas complains if it's np.int64
-        ret += [X.diff(periods=int(lag))]
+        Xd = Xd.diff(periods=int(lag))
+        ret += [Xd]
     return ret
 
 
@@ -115,9 +116,6 @@ def _inverse_diff(X, lags, X_diff_seq=None):
         and applies cumsum to X at period lag[value], for value in the list `lag`
     if `X_diff_seq` is provided, uses values stored for indices outside `X` to invert
     """
-    if isinstance(lags, int):
-        lags = [lags]
-
     # if lag is numpy, convert to list
     if isinstance(lags, np.ndarray):
         lags = list(lags)
@@ -129,14 +127,12 @@ def _inverse_diff(X, lags, X_diff_seq=None):
         lags = lags.copy()
 
         # lag_first = pop last element of lags
-        lags.reverse()
-        lag_first = lags.pop()
-        lags.reverse()
+        lag_last = lags.pop()
 
         if X_diff_seq is not None:
-            X = X.combine_first(X_diff_seq[len(lags - 1)])
-        X_diff_first = _inverse_diff(X, lag_first)
-        return _inverse_diff(X_diff_first, lags, X_diff_seq=X_diff_seq)
+            X = X.combine_first(X_diff_seq[len(lags)])
+        X_diff_last = _inverse_diff(X, lag_last)
+        return _inverse_diff(X_diff_last, lags, X_diff_seq=X_diff_seq)
 
     X = X.copy()
 
@@ -336,13 +332,11 @@ class Differencer(BaseTransformer):
         """
         lags = self.lags
 
-        X_diff = _diff_to_seq(self._X, lags)
+        X_diff_seq = _diff_to_seq(self._X, lags)
 
         X_orig_index = X.index
 
-        X = update_data(X=X_diff, X_new=X)
-
-        Xt = _inverse_diff(X, lags)
+        Xt = _inverse_diff(X, lags, X_diff_seq=X_diff_seq)
 
         Xt = Xt.loc[X_orig_index]
 
