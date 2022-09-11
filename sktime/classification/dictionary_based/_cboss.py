@@ -62,7 +62,7 @@ class ContractableBOSS(BaseClassifier):
     contract_max_n_parameter_samples : int, default=np.inf
         Max number of parameter combinations to consider when time_limit_in_minutes is
         set.
-    typed_dict : bool, default=True
+    typed_dict : bool, default="deprecated"
         Use a numba TypedDict to store word counts. May increase memory usage, but will
         be faster for larger datasets. As the Dict cannot be pickled currently, there
         will be some overhead converting it to a python dict with multiple threads and

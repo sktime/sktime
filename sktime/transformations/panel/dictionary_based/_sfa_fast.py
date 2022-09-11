@@ -9,6 +9,7 @@ __author__ = ["patrickzib"]
 __all__ = ["SFAFast"]
 
 import math
+import multiprocessing
 import sys
 from warnings import simplefilter
 
@@ -20,6 +21,7 @@ from numba import (
     njit,
     objmode,
     prange,
+    set_num_threads,
 )
 from numba.core import types
 from numba.typed import Dict
@@ -215,6 +217,12 @@ class SFAFast(BaseTransformer):
         self.return_pandas_data_series = return_pandas_data_series
 
         self.random_state = random_state
+
+        if self.n_jobs < 1 or self.n_jobs > multiprocessing.cpu_count():
+            n_jobs = multiprocessing.cpu_count()
+        else:
+            n_jobs = self.n_jobs
+        set_num_threads(n_jobs)
 
         super(SFAFast, self).__init__()
 
@@ -639,7 +647,7 @@ class SFAFast(BaseTransformer):
             self.relevant_features = typed_dict
 
 
-@njit(fastmath=True, cache=True)
+@njit(fastmath=True, cache=True, parallel=True, nogil=True)
 def _binning_dft(
     X,
     window_size,
@@ -653,7 +661,7 @@ def _binning_dft(
 
     # Splits individual time series into windows and returns the DFT for each
     data = np.zeros((len(X), num_windows_per_inst, window_size))
-    for i in range(len(X)):
+    for i in prange(len(X)):
         for j in range(num_windows_per_inst - 1):
             data[i, j] = X[i, window_size * j : window_size * (j + 1)]
 
@@ -661,7 +669,7 @@ def _binning_dft(
         data[i, -1] = X[i, start:series_length]
 
     dft = np.zeros((len(X), num_windows_per_inst, dft_length))
-    for i in range(len(X)):
+    for i in prange(len(X)):
         return_val = _fast_fourier_transform(
             data[i], norm, dft_length, inverse_sqrt_win_size
         )
@@ -808,7 +816,7 @@ def _get_phis(window_size, length):
     return phis
 
 
-@njit(fastmath=True, cache=True)
+@njit(fastmath=True, cache=True, parallel=True, nogil=True)
 def generate_words(
     dfts, bigrams, skip_grams, window_size, breakpoints, word_length, letter_bits
 ):
@@ -950,7 +958,7 @@ def create_feature_names(sfa_words):
     return feature_names
 
 
-@njit(cache=True, fastmath=True)
+@njit(cache=True, fastmath=True, parallel=True, nogil=True)
 def create_bag_none(
     breakpoints, n_instances, sfa_words, word_length, remove_repeat_words
 ):
@@ -993,7 +1001,7 @@ def create_bag_feature_selection(
     return all_win_words, relevant_features
 
 
-@njit(cache=True, fastmath=True)
+@njit(cache=True, fastmath=True, parallel=True, nogil=True)
 def create_bag_transform(
     feature_count,
     feature_selection,
@@ -1027,7 +1035,7 @@ def create_bag_transform(
     return all_win_words, all_win_words.shape[1]
 
 
-@njit(fastmath=True, cache=True)
+@njit(fastmath=True, cache=True, parallel=True, nogil=True)
 def shorten_words(words, amount, letter_bits):
     new_words = np.zeros((words.shape[0], words.shape[1]), dtype=np.uint32)
 
