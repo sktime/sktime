@@ -27,6 +27,13 @@ each tuple corresponds to an mtype, elements as follows:
 
 ---
 
+MTYPE_SOFT_DEPS - dict with str keys and values
+
+keys are mtypes with soft dependencies, values are str or list of str
+strings in values are names of soft dependency packages required for the mtype
+
+---
+
 mtype_to_scitype(mtype: str) - convenience function that returns scitype for an mtype
 
 ---
@@ -39,10 +46,15 @@ from sktime.datatypes._alignment._registry import (
 from sktime.datatypes._hierarchical._registry import (
     MTYPE_LIST_HIERARCHICAL,
     MTYPE_REGISTER_HIERARCHICAL,
+    MTYPE_SOFT_DEPS_HIERARCHICAL,
 )
-from sktime.datatypes._panel._registry import MTYPE_LIST_PANEL, MTYPE_REGISTER_PANEL
+from sktime.datatypes._panel._registry import (
+    MTYPE_LIST_PANEL, MTYPE_REGISTER_PANEL, MTYPE_SOFT_DEPS_PANEL
+)
 from sktime.datatypes._proba._registry import MTYPE_LIST_PROBA, MTYPE_REGISTER_PROBA
-from sktime.datatypes._series._registry import MTYPE_LIST_SERIES, MTYPE_REGISTER_SERIES
+from sktime.datatypes._series._registry import (
+    MTYPE_LIST_SERIES, MTYPE_REGISTER_SERIES, MTYPE_SOFT_DEPS_SERIES
+)
 from sktime.datatypes._table._registry import MTYPE_LIST_TABLE, MTYPE_REGISTER_TABLE
 
 MTYPE_REGISTER = []
@@ -53,6 +65,11 @@ MTYPE_REGISTER += MTYPE_REGISTER_ALIGNMENT
 MTYPE_REGISTER += MTYPE_REGISTER_TABLE
 MTYPE_REGISTER += MTYPE_REGISTER_PROBA
 
+MTYPE_SOFT_DEPS = {}
+MTYPE_SOFT_DEPS.update(MTYPE_SOFT_DEPS_SERIES)
+MTYPE_SOFT_DEPS.update(MTYPE_SOFT_DEPS_PANEL)
+MTYPE_SOFT_DEPS.update(MTYPE_SOFT_DEPS_HIERARCHICAL)
+
 
 __all__ = [
     "MTYPE_REGISTER",
@@ -62,6 +79,7 @@ __all__ = [
     "MTYPE_LIST_ALIGNMENT",
     "MTYPE_LIST_TABLE",
     "MTYPE_LIST_PROBA",
+    "MTYPE_SOFT_DEPS",
     "SCITYPE_REGISTER",
 ]
 
@@ -136,7 +154,7 @@ def mtype_to_scitype(mtype: str, return_unique=False, coerce_to_list=False):
         return scitype[0]
 
 
-def scitype_to_mtype(scitype: str):
+def scitype_to_mtype(scitype: str, softdeps: str = "exclude"):
     """Return list of all mtypes belonging to scitype.
 
     Parameters
@@ -144,6 +162,12 @@ def scitype_to_mtype(scitype: str):
     scitype : str, or list of str
         scitype(s) to find mtypes for, a valid scitype string
         valid scitype strings, with explanation, are in datatypes.SCITYPE_REGISTER
+    softdeps : str, optional, default = "exclude
+        whether to return mtypes that require soft dependencies
+        "exclude" = only mtypes that do not require soft dependencies are returned
+        "present" = only mtypes with soft deps satisfied by the environment are returned
+        "all" = all mtypes, irrespective of soft deps satisfied or required, returned
+        any other value defaults to "all"
 
     Returns
     -------
@@ -184,4 +208,24 @@ def scitype_to_mtype(scitype: str):
         # if there are no mtypes, this must have been reached by mistake/bug
         raise RuntimeError("no mtypes defined for scitype " + scitype)
 
-    return mtypes
+    if softdeps not in ["exclude", "present"]:
+        return mtypes
+
+    if softdeps == "exclude":
+        # subset to mtypes that require no soft deps
+        mtypes = [m for m in mtypes if m not in MTYPE_SOFT_DEPS.keys()]
+        return mtypes
+
+    if softdeps == "present":
+        from sktime.utils.validation._dependencies import _check_soft_dependencies
+
+        def present(x):
+            """Return True if x has satisfied soft dependency or has no soft dep."""
+            if x in MTYPE_SOFT_DEPS.keys():
+                return True
+            else:
+                return _check_soft_dependencies(x, severity="none")
+
+        # return only mtypes with soft dependencies present (or requiring none)
+        mtypes = [m for m in mtypes if present(m)]
+        return mtypes
