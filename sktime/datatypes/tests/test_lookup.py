@@ -85,7 +85,7 @@ def test_scitype_to_mtype(mtype, scitype):
 
     # check that mtype is not returned in "exclude" setting if requires soft dep
     result_no_softdeps = scitype_to_mtype(scitype, softdeps="exclude")
-    assert mtype in MTYPE_SOFT_DEPS.keys() != mtype in result_no_softdeps
+    assert (mtype in MTYPE_SOFT_DEPS.keys()) != (mtype in result_no_softdeps)
 
     if mtype in MTYPE_SOFT_DEPS.keys():
         softdep_present = _check_soft_dependencies(
