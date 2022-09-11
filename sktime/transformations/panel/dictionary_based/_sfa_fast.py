@@ -869,7 +869,16 @@ def generate_words(
     return words
 
 
-@njit(fastmath=True, cache=True, parallel=True, nogil=True)
+@njit(cache=True, fastmath=True)
+def create_feature_names(sfa_words):
+    feature_names = set()
+    for t_words in sfa_words:
+        for t_word in t_words:
+            feature_names.add(t_word)
+    return feature_names
+
+
+@njit(fastmath=True, cache=True, nogil=True)
 def _mft(
     X,
     window_size,
@@ -947,15 +956,6 @@ def _mft(
         return (transformed2 / stds.reshape(stds.shape[0], stds.shape[1], 1))[
             :, :, start_offset:
         ]
-
-
-@njit(cache=True, fastmath=True)
-def create_feature_names(sfa_words):
-    feature_names = set()
-    for t_words in sfa_words:
-        for t_word in t_words:
-            feature_names.add(t_word)
-    return feature_names
 
 
 @njit(cache=True, fastmath=True, parallel=True, nogil=True)
