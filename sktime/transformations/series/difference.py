@@ -47,7 +47,7 @@ def _diff_transform(X: Union[pd.Series, pd.DataFrame], lags: np.array):
     Parameters
     ----------
     X : pd.DataFrame
-    lags : int or list of int
+    lags : int or iterable of int, e.g., list of int
 
     Returns
     -------
@@ -70,48 +70,85 @@ def _diff_transform(X: Union[pd.Series, pd.DataFrame], lags: np.array):
     return Xt
 
 
-def _inverse_diff(X, lag):
+def _diff_to_seq(X: Union[pd.Series, pd.DataFrame], lags: np.array):
+    """Difference a series multiple times and return intermediate results.
+
+    Parameters
+    ----------
+    X : pd.DataFrame
+    lags : int or iterable of int, e.g., list of int
+
+    Returns
+    -------
+    list, i-th element is _diff_transform(X, lags[0:i])
+    """
+    if X is None:
+        return None
+
+    if isinstance(lags, int):
+        lags = [lags]
+
+    ret = []
+    for lag in lags:
+        # converting lag to int since pandas complains if it's np.int64
+        ret += [X.diff(periods=int(lag))]
+    return ret
+
+
+def _inverse_diff(X, lags, X_diff_seq=None):
     """Inverse to difference.
 
     Parameters
     ----------
     X : pd.Series or pd.DataFrame
-    lag : int or list of int
+    lags : int or iterable of int, e.g., list of int
+    X_diff_seq : list of pd.Series or pd.DataFrame
+        elements must match type, columns and index type of X
+        length must be equal or longer than length of lags
 
     Returns
     -------
     `X` inverse differenced at lags `lags`, always a copy (no reference)
-    if `lag` is int, applies cumsum to X at period `lag`
+    if `lags` is int, applies cumsum to X at period `lag`
         for i in range(lag), X.iloc[i::lag] = X.iloc[i::lag].cumsum()
-    if `lag` is list of int, loops over elements from start to end
+    if `lags` is list of int, loops over elements from start to end
         and applies cumsum to X at period lag[value], for value in the list `lag`
+    if `X_diff_seq` is provided, uses values stored for indices outside `X` to invert
     """
+    if isinstance(lags, int):
+        lags = [lags]
+
     # if lag is numpy, convert to list
-    if isinstance(lag, np.ndarray):
-        lag = list(lag)
+    if isinstance(lags, np.ndarray):
+        lags = list(lags)
 
     # if lag is a list, recurse
-    if isinstance(lag, (list, tuple)):
-        if len(lag) == 0:
+    if isinstance(lags, (list, tuple)):
+        if len(lags) == 0:
             return X
-        lag = lag.copy()
-        lag.reverse()
-        lag_first = lag.pop()
-        lag.reverse()
+        lags = lags.copy()
+
+        # lag_first = pop last element of lags
+        lags.reverse()
+        lag_first = lags.pop()
+        lags.reverse()
+
+        if X_diff_seq is not None:
+            X = X.combine_first(X_diff_seq[len(lags - 1)])
         X_diff_first = _inverse_diff(X, lag_first)
-        return _inverse_diff(X_diff_first, lag)
+        return _inverse_diff(X_diff_first, lags, X_diff_seq=X_diff_seq)
 
     X = X.copy()
 
-    if lag < 0:
+    if lags < 0:
         X = X.iloc[::-1]
 
-    abs_lag = abs(lag)
+    abs_lag = abs(lags)
 
     for i in range(abs_lag):
         X.iloc[i::abs_lag] = X.iloc[i::abs_lag].cumsum()
 
-    if lag < 0:
+    if lags < 0:
         X = X.iloc[::-1]
 
     return X
@@ -236,8 +273,8 @@ class Differencer(BaseTransformer):
         elif memory == "latest":
             n_memory = min(len(X), lagsum)
             self._X = X.iloc[-n_memory:]
-            n_inv_memory = min(len(X), lagsum + n_memory)
-            self._X_for_inv = X.iloc[-n_inv_memory:]
+            # n_inv_memory = min(len(X), lagsum + n_memory)
+            # self._X_for_inv = X.iloc[-n_inv_memory:]
 
         self._freq = get_cutoff(X, return_index=True)
         return self
@@ -297,13 +334,9 @@ class Differencer(BaseTransformer):
         Xt : pd.Series or pd.DataFrame, same type as X
             inverse transformed version of X
         """
-        memory = self.memory
         lags = self.lags
 
-        if memory in ["all", "latest"]:
-            X_diff = _diff_transform(self._X_for_inv, self._lags)
-        else:
-            X_diff = None
+        X_diff = _diff_to_seq(self._X, lags)
 
         X_orig_index = X.index
 
