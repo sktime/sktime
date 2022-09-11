@@ -11,8 +11,7 @@ import numpy as np
 import pandas as pd
 from sklearn.utils import check_array
 
-from sktime.datatypes._utilities import get_cutoff
-from sktime.forecasting.base import ForecastingHorizon
+from sktime.datatypes._utilities import get_cutoff, update_data
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.validation import is_int
 
@@ -186,9 +185,10 @@ class Differencer(BaseTransformer):
     def __init__(self, lags=1, na_handling="fill_zero", memory="all"):
         self.lags = lags
         self.na_handling = self._check_na_handling(na_handling)
+        self.memory = memory
 
         self._X = None
-        self._lags = None
+        self._lags = _check_lags(self.lags)
         self._cumulative_lags = None
         self._prior_cum_lags = None
         self._prior_lags = None
@@ -209,46 +209,6 @@ class Differencer(BaseTransformer):
 
         return na_handling
 
-    def _check_inverse_transform_index(self, Z):
-        """Check fitted series contains indices needed in inverse_transform."""
-        first_idx = Z.index.min()
-        orig_first_idx, orig_last_idx = self._X.index.min(), self._X.index.max()
-
-        is_contained_by_fitted_z = False
-        is_future = False
-
-        if first_idx < orig_first_idx:
-            msg = [
-                "Some indices of `Z` are prior to timeseries used in `fit`.",
-                "Reconstruction via `inverse_transform` is not possible.",
-            ]
-            raise ValueError(" ".join(msg))
-
-        elif Z.index.difference(self._X.index).shape[0] == 0:
-            is_contained_by_fitted_z = True
-
-        elif first_idx > orig_last_idx:
-            is_future = True
-
-        pad_z_inv = self.na_handling == "drop_na" or is_future
-
-        cutoff = Z.index[0] if pad_z_inv else Z.index[self._cumulative_lags[-1]]
-        fh = ForecastingHorizon(
-            np.arange(-1, -(self._cumulative_lags[-1] + 1), -1), freq=self._freq
-        )
-        index = fh.to_absolute(cutoff).to_pandas()
-        index_diff = index.difference(self._X.index)
-
-        if index_diff.shape[0] != 0 and not is_contained_by_fitted_z:
-            msg = [
-                f"Inverse transform requires indices {index}",
-                "to have been stored in `fit()`,",
-                f"but the indices {index_diff} were not found.",
-            ]
-            raise ValueError(" ".join(msg))
-
-        return is_contained_by_fitted_z, pad_z_inv
-
     def _fit(self, X, y=None):
         """
         Fit transformer to X and y.
@@ -266,13 +226,22 @@ class Differencer(BaseTransformer):
         -------
         self: a fitted instance of the estimator
         """
-        self._lags = _check_lags(self.lags)
-        self._prior_lags = np.roll(self._lags, shift=1)
+        memory = self.memory
+        lags = self.lags
+
+        self._prior_lags = np.roll(lags, shift=1)
         self._prior_lags[0] = 0
-        self._cumulative_lags = self._lags.cumsum()
-        self._prior_cum_lags = np.zeros_like(self._cumulative_lags)
-        self._prior_cum_lags[1:] = self._cumulative_lags[:-1]
-        self._X = X.copy()
+        lagsum = self._lags.cumsum()
+        self._cumulative_lags = lagsum
+
+        # remember X or part of X
+        if memory == "all":
+            self._X = X
+        elif memory == "latest":
+            n_memory = min(len(X), lagsum)
+            self._X = X.iloc[-n_memory:]
+            n_inv_memory = min(len(X), lagsum + n_memory)
+            self._X_for_inv = X.iloc[-n_inv_memory:]
 
         self._freq = get_cutoff(X, return_index=True)
         return self
@@ -294,7 +263,13 @@ class Differencer(BaseTransformer):
         Xt : pd.Series or pd.DataFrame, same type as X
             transformed version of X
         """
+        X_orig_index = X.index
+
+        X = update_data(X=self._X, X_new=X)
+
         Xt = _diff_transform(X, self._lags)
+
+        Xt = Xt.loc[X_orig_index]
 
         na_handling = self.na_handling
         if na_handling == "drop_na":
@@ -325,39 +300,21 @@ class Differencer(BaseTransformer):
         Xt : pd.Series or pd.DataFrame, same type as X
             inverse transformed version of X
         """
-        is_df = isinstance(X, pd.DataFrame)
-        _, pad_z_inv = self._check_inverse_transform_index(X)
+        memory = self.memory
+        lags = self.lags
 
-        X_inv = X.copy()
-        for i, lag_info in enumerate(zip(self._lags[::-1], self._prior_cum_lags[::-1])):
-            lag, prior_cum_lag = lag_info
-            _lags = self._lags[::-1][i + 1 :]
-            _transformed = _diff_transform(self._X, _lags)
+        if memory in ["all", "latest"]:
+            X_diff = _diff_transform(self._X_for_inv, self._lags)
+        else:
+            X_diff = None
 
-            # Determine index values for initial values needed to reverse
-            # the differencing for the specified lag
-            if pad_z_inv:
-                cutoff = X_inv.index[0]
-            else:
-                cutoff = X_inv.index[prior_cum_lag + lag]
-            fh = ForecastingHorizon(np.arange(-1, -(lag + 1), -1), freq=self._freq)
-            index = fh.to_absolute(cutoff).to_pandas()
+        X_orig_index = X.index
 
-            if is_df:
-                prior_n_timepoint_values = _transformed.loc[index, :]
-            else:
-                prior_n_timepoint_values = _transformed.loc[index]
-            if pad_z_inv:
-                X_inv = pd.concat([prior_n_timepoint_values, X_inv])
-            else:
-                X_inv.update(prior_n_timepoint_values)
+        X = update_data(X=X_diff, X_new=X)
 
-            X_inv = _inverse_diff(X_inv, lag)
+        Xt = _inverse_diff(X, lags)
 
-        if pad_z_inv:
-            X_inv = X_inv.loc[X.index, :] if is_df else X_inv.loc[X.index]
-
-        Xt = X_inv
+        Xt = Xt.loc[X_orig_index]
 
         return Xt
 
