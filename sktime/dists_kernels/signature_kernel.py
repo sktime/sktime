@@ -716,25 +716,6 @@ def time_series_reshaper(Xflat, numfeatures, subsample=1, differences=True):
         return X
 
 
-# CLASS SeqKernelizer
-#  pipelines pre-processing of a time series datset with support vector classifier
-#
-# parameters:
-#  Level, theta: parameters in of the sequentialization
-#   Level = cut-off degree
-#   theta = scaling factor
-#  kernel, scale, deg: parameter for the primary kernel
-#   kernel = name of the kernel used: linear, Gauss, Laplace, poly
-#   scale = scaling constant, multiplicative to scalar product
-#   deg = degree, for polynomial kernel
-#  subsample, numfeatures, differences:
-#   pre-processing parameters for time series.
-#    numfeatures = number of features per time point, for internal reshaping
-#    subsample = time series is subsampled to every subsample-th time point
-#    differences = whether first differences are taken or not
-#    lowrank = whether low-rank approximations are used or not
-#
-
 # for historical reasons - old scikit-learn version of the estimator
 class SeqKernelizer(BaseEstimator, TransformerMixin):
     """Compute the sequential kernel matrix row features on collection of series.
