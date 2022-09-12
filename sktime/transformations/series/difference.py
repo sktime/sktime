@@ -96,6 +96,14 @@ def _diff_to_seq(X: Union[pd.Series, pd.DataFrame], lags: np.array):
     return ret
 
 
+def _shift(ix, periods):
+    """Shift pandas index by periods."""
+    if isinstance(ix, (pd.DatetimeIndex, pd.PeriodIndex, pd.TimedeltaIndex)):
+        return ix.shift(periods)
+    else:
+        return ix + periods
+
+
 def _inverse_diff(X, lags, X_diff_seq=None):
     """Inverse to difference.
 
@@ -120,7 +128,7 @@ def _inverse_diff(X, lags, X_diff_seq=None):
         lags = [lags]
 
     # if lag is numpy, convert to list
-    if isinstance(lags, np.ndarray):
+    if isinstance(lags, (np.ndarray, list, tuple)):
         lags = list(lags)
 
     # if lag is a list, recurse
@@ -135,7 +143,11 @@ def _inverse_diff(X, lags, X_diff_seq=None):
 
     # invert last lag index
     if X_diff_seq is not None:
-        X = X.combine_first(X_diff_seq[len(lags)])
+        X_diff_orig = X_diff_seq[len(lags)]
+        X_ix_shift = X.index.shift(-lag_last)
+        X_update = X_diff_orig.loc[X_ix_shift.intersection(X_diff_orig.index)]
+
+        X = X.combine_first(X_update)
 
     X_diff_last = X.copy()
 
