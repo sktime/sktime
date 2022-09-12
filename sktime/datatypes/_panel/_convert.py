@@ -770,14 +770,17 @@ def from_nested_to_multi_index(X, instance_index=None, time_index=None):
     -------
     X_mi : pd.DataFrame
         The multi-indexed pandas DataFrame
-
     """
     # this contains the right values, but does not have the right index
     #   need convert_dtypes or dtypes will always be object
     # explode by column to ensure we deal with unequal length series properly
     X_mi = pd.DataFrame()
 
-    for c in X.columns:
+    X_cols = X.columns
+    nested_cols = [c for c in X_cols if isinstance(X[[c]].iloc[0, 0], pd.Series)]
+    non_nested_cols = list(set(X_cols).difference(nested_cols))
+
+    for c in nested_cols:
         X_col = X[[c]].explode(c)
         X_col = X_col.infer_objects()
 
@@ -787,6 +790,11 @@ def from_nested_to_multi_index(X, instance_index=None, time_index=None):
         X_col.index = idx_df.index.set_names([instance_index, time_index])
 
         X_mi[[c]] = X_col
+
+    for c in non_nested_cols:
+        for ix in X.index:
+            X_mi.loc[ix, c] = X[[c]].loc[ix].iloc[0]
+        X_mi[[c]] = X_mi[[c]].convert_dtypes()
 
     return X_mi
 
@@ -883,9 +891,8 @@ def from_3d_numpy_to_nested(X, column_names=None, cells_as_numpy=False):
     -------
     df : pd.DataFrame
     """
-    df = pd.DataFrame()
-    # n_instances, n_variables, _ = X.shape
     n_instances, n_columns, n_timepoints = X.shape
+    array_type = X.dtype
 
     container = np.array if cells_as_numpy else pd.Series
 
@@ -902,8 +909,16 @@ def from_3d_numpy_to_nested(X, column_names=None, cells_as_numpy=False):
             )
             raise ValueError(msg)
 
+    column_list = []
     for j, column in enumerate(column_names):
-        df[column] = [container(X[instance, j, :]) for instance in range(n_instances)]
+        nested_column = (
+            pd.DataFrame(X[:, j, :])
+            .apply(lambda x: [container(x, dtype=array_type)], axis=1)
+            .str[0]
+            .rename(column)
+        )
+        column_list.append(nested_column)
+    df = pd.concat(column_list, axis=1)
     return df
 
 
