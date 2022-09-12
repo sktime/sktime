@@ -303,6 +303,8 @@ class Differencer(BaseTransformer):
 
         Xt = _diff_transform(X, self._lags)
 
+        Xt = Xt.loc[X_orig_index]
+
         na_handling = self.na_handling
         if na_handling == "drop_na":
             Xt = Xt.iloc[self._lagsum :]
@@ -315,8 +317,6 @@ class Differencer(BaseTransformer):
                 "unreachable condition, invalid na_handling value encountered: "
                 f"{na_handling}"
             )
-
-        Xt = Xt.loc[X_orig_index]
 
         return Xt
 
