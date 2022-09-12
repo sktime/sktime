@@ -208,7 +208,7 @@ class MUSE_NEW(BaseClassifier):
         parallel_res = Parallel(n_jobs=self.n_jobs, backend="threading")(
             delayed(_parallel_fit)(
                 X,
-                y,
+                y.copy(),  # no clue why, but this copy is required.
                 ind,
                 self.min_window,
                 self.max_window,

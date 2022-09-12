@@ -465,7 +465,7 @@ class SFAFast(BaseTransformer):
         )
 
         if y is not None:
-            y = np.repeat(y, dft.shape[0] / len(y))
+            y = np.repeat(y, dft.shape[0] // len(y))
 
         if self.variance and y is not None:
             # determine variance
@@ -790,7 +790,7 @@ def _calc_incremental_mean_std(series, end, window_size):
 
     r_window_length = 1.0 / window_size
     mean = series_sum * r_window_length
-    buf = math.sqrt(square_sum * r_window_length - mean * mean)
+    buf = math.sqrt(max(square_sum * r_window_length - mean * mean, 0))
     stds[0] = buf if buf > 1e-8 else 1e-8
 
     for w in range(1, end):
@@ -800,7 +800,7 @@ def _calc_incremental_mean_std(series, end, window_size):
             series[w + window_size - 1] * series[w + window_size - 1]
             - series[w - 1] * series[w - 1]
         )
-        buf = math.sqrt(square_sum * r_window_length - mean * mean)
+        buf = math.sqrt(max(0, square_sum * r_window_length - mean * mean))
         stds[w] = buf if buf > 1e-8 else 1e-8
 
     return stds

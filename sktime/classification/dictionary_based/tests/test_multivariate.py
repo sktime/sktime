@@ -101,28 +101,17 @@ def get_classifiers(threads_to_use):
         "MUSE 2b (default +46)": MUSE_NEW(
             random_state=1379, alphabet_size=2, n_jobs=threads_to_use
         ),
-        "MUSE 2c (default +46 -bigrams)": MUSE_NEW(
-            random_state=1379, alphabet_size=2, bigrams=False, n_jobs=threads_to_use
-        ),
-        "MUSE 2d (default +46 -bigrams +variance)": MUSE_NEW(
-            random_state=1379,
-            alphabet_size=2,
-            bigrams=False,
-            variance=True,
-            anova=False,
-            n_jobs=threads_to_use,
-        ),
-        "MUSE 2a (default +6 +variance)": MUSE_NEW(
-            random_state=1379,
-            alphabet_size=2,
-            variance=True,
-            anova=False,
-            word_lengths=[6],
-            n_jobs=threads_to_use,
-        ),
-        "MUSE 2b (default +6)": MUSE_NEW(
-            random_state=1379, alphabet_size=2, word_lengths=[6], n_jobs=threads_to_use
-        ),
+        # "MUSE 2c (default +46 -bigrams)": MUSE_NEW(
+        #     random_state=1379, alphabet_size=2, bigrams=False, n_jobs=threads_to_use
+        # ),
+        # "MUSE 2d (default +46 -bigrams +variance)": MUSE_NEW(
+        #     random_state=1379,
+        #     alphabet_size=2,
+        #     bigrams=False,
+        #     variance=True,
+        #     anova=False,
+        #     n_jobs=threads_to_use,
+        # ),
     }
     return clfs
 
@@ -163,61 +152,59 @@ if __name__ == "__main__":
             }
         }
 
-        try:
+        # try:
 
-            X_train, y_train = load_UCR_UEA_dataset(
-                dataset_name,
-                split="train",
-                extract_path=DATA_PATH,
-                return_type="numpy3D",
+        X_train, y_train = load_UCR_UEA_dataset(
+            dataset_name,
+            split="train",
+            extract_path=DATA_PATH,
+            return_type="numpy3D",
+        )
+        X_test, y_test = load_UCR_UEA_dataset(
+            dataset_name,
+            split="test",
+            extract_path=DATA_PATH,
+            return_type="numpy3D",
+        )
+
+        clf = get_classifiers(threads_to_use)[clf_name]
+        fit_time = time.perf_counter()
+        clf.fit(X_train, y_train)
+        fit_time = np.round(time.perf_counter() - fit_time, 5)
+
+        pred_time = time.perf_counter()
+        acc = clf.score(X_test, y_test)
+        pred_time = np.round(time.perf_counter() - pred_time, 5)
+
+        print(
+            f"Dataset={dataset_name}, "
+            + (
+                f"Feature Count={clf.total_features_count}, "
+                if hasattr(clf, "total_features_count")
+                else f""
             )
-            X_test, y_test = load_UCR_UEA_dataset(
-                dataset_name,
-                split="test",
-                extract_path=DATA_PATH,
-                return_type="numpy3D",
-            )
+            + f"Train-Size={np.shape(X_train)}, "
+            + f"Test-Size={np.shape(X_test)}"
+            + f"\n\tclassifier={clf_name}"
+            + f"\n\ttime (fit, predict)="
+            f"{np.round(fit_time, 2), np.round(pred_time, 2)}"
+            + f"\n\taccuracy={np.round(acc, 3)}"
+        )
 
-            clf = get_classifiers(threads_to_use)[clf_name]
-            fit_time = time.perf_counter()
-            clf.fit(X_train, y_train)
-            fit_time = np.round(time.perf_counter() - fit_time, 5)
+        sum_scores[clf_name]["dataset"].append(dataset_name)
+        sum_scores[clf_name]["all_scores"].append(acc)
+        sum_scores[clf_name]["all_fit"].append(fit_time)
+        sum_scores[clf_name]["all_pred"].append(pred_time)
 
-            pred_time = time.perf_counter()
-            acc = clf.score(X_test, y_test)
-            pred_time = np.round(time.perf_counter() - pred_time, 5)
+        sum_scores[clf_name]["fit_time"] += sum_scores[clf_name]["fit_time"] + fit_time
+        sum_scores[clf_name]["pred_time"] += (
+            sum_scores[clf_name]["pred_time"] + pred_time
+        )
 
-            print(
-                f"Dataset={dataset_name}, "
-                + (
-                    f"Feature Count={clf.total_features_count}, "
-                    if hasattr(clf, "total_features_count")
-                    else f""
-                )
-                + f"Train-Size={np.shape(X_train)}, "
-                + f"Test-Size={np.shape(X_test)}"
-                + f"\n\tclassifier={clf_name}"
-                + f"\n\ttime (fit, predict)="
-                f"{np.round(fit_time, 2), np.round(pred_time, 2)}"
-                + f"\n\taccuracy={np.round(acc, 3)}"
-            )
-
-            sum_scores[clf_name]["dataset"].append(dataset_name)
-            sum_scores[clf_name]["all_scores"].append(acc)
-            sum_scores[clf_name]["all_fit"].append(fit_time)
-            sum_scores[clf_name]["all_pred"].append(pred_time)
-
-            sum_scores[clf_name]["fit_time"] += (
-                sum_scores[clf_name]["fit_time"] + fit_time
-            )
-            sum_scores[clf_name]["pred_time"] += (
-                sum_scores[clf_name]["pred_time"] + pred_time
-            )
-
-        except Exception as e:
-            print("An exception occurred: {}".format(e))
-            print("\tFailed: ", dataset_name, clf_name)
-            print(e)
+        # except Exception as e:
+        #    print("An exception occurred: {}".format(e))
+        #    print("\tFailed: ", dataset_name, clf_name)
+        #    print(e)
 
         print("-----------------")
 
