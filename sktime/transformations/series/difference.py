@@ -292,6 +292,13 @@ class Differencer(BaseTransformer):
         self._freq = get_cutoff(X, return_index=True)
         return self
 
+    def _check_freq(self, X):
+        """Ensure X carries same freq as X seen in _fit."""
+        if self._freq is not None and hasattr(self._freq, "freq"):
+            if hasattr(X.index, "freq") and X.index.freq is None:
+                X.index.freq = self._freq.freq
+        return X
+
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
 
@@ -312,6 +319,8 @@ class Differencer(BaseTransformer):
         X_orig_index = X.index
 
         X = update_data(X=self._X, X_new=X)
+
+        X = self._check_freq(X)
 
         Xt = _diff_transform(X, self._lags)
 
@@ -350,6 +359,8 @@ class Differencer(BaseTransformer):
         lags = self._lags
 
         X_diff_seq = _diff_to_seq(self._X, lags)
+
+        X = self._check_freq(X)
 
         X_orig_index = X.index
 
