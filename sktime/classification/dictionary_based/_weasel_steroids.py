@@ -16,12 +16,14 @@ __all__ = ["WEASEL_STEROIDS"]
 
 import numpy as np
 from joblib import Parallel, delayed
-from scipy.sparse import hstack
+from scipy.sparse import hstack  # csr_matrix
 from sklearn.linear_model import RidgeClassifierCV
 from sklearn.utils import check_random_state
 
 from sktime.classification.base import BaseClassifier
 from sktime.transformations.panel.dictionary_based import SAX_NEW, SFAFast
+
+# from sktime.transformations.panel.rocket import MiniRocket, Rocket
 
 
 class WEASEL_STEROIDS(BaseClassifier):
@@ -181,7 +183,7 @@ class WEASEL_STEROIDS(BaseClassifier):
         """
         # Window length parameter space dependent on series length
         self.n_instances, self.series_length = X.shape[0], X.shape[-1]
-        X = X.squeeze(1)
+        XX = X.squeeze(1)
 
         self.max_window = int(min(self.series_length, self.max_window))
         if self.min_window > self.max_window:
@@ -201,7 +203,7 @@ class WEASEL_STEROIDS(BaseClassifier):
         parallel_res = Parallel(n_jobs=self.n_jobs, timeout=99999, backend="threading")(
             delayed(_parallel_fit)(
                 i,
-                X,
+                XX,
                 y.copy(),
                 self.window_sizes,
                 self.alphabet_sizes,
@@ -232,10 +234,15 @@ class WEASEL_STEROIDS(BaseClassifier):
             self.SFA_transformers.append(transformer)
             sfa_words.append(sfa_words2)
 
+        # self.rocket = MiniRocket(random_state=1379, n_jobs=self.n_jobs)
+        # X_features = self.rocket.fit_transform(X, y)
+
         # merging arrays from different threads
         if type(sfa_words[0]) is np.ndarray:
+            # sfa_words.append(X_features)
             all_words = np.concatenate(sfa_words, axis=1)
         else:
+            # sfa_words.append(csr_matrix(X_features.values))
             all_words = hstack((sfa_words))
 
         self.clf = RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=False)
@@ -278,23 +285,27 @@ class WEASEL_STEROIDS(BaseClassifier):
         return self.clf.predict_proba(bag)
 
     def _transform_words(self, X):
-        X = X.squeeze(1)
+        XX = X.squeeze(1)
 
         # X = (X - X.mean(axis=-1, keepdims=True)) / (
         #         X.std(axis=-1, keepdims=True) + 1e-8
         # )
 
         parallel_res = Parallel(n_jobs=self.n_jobs, timeout=99999, backend="threading")(
-            delayed(transformer.transform)(X) for transformer in self.SFA_transformers
+            delayed(transformer.transform)(XX) for transformer in self.SFA_transformers
         )
 
         all_words = []
         for sfa_words in parallel_res:
             all_words.append(sfa_words)
 
+        # X_features = self.rocket.transform(X)
+
         if type(all_words[0]) is np.ndarray:
+            # all_words.append(X_features)
             all_words = np.concatenate(all_words, axis=1)
         else:
+            # all_words.append(csr_matrix(X_features.values))
             all_words = hstack((all_words))
 
         return all_words
@@ -383,6 +394,9 @@ def _parallel_fit(
             sections=sections,
             max_feature_count=max_feature_count // ensemble_size,
             random_state=i,
+            return_sparse=not (
+                feature_selection == "none" and alphabet_size == 2 and not bigrams
+            ),
             n_jobs=n_jobs,
         )
     else:
