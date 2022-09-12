@@ -21,7 +21,7 @@ class DOBIN(BaseTransformer):
     """Distance based Outlier BasIs using Neighbors (DOBIN).
 
     DOBIN is a pre-processing algorithm that constructs a set of basis
-    basistors tailored for outlier detection as described by _[1]. DOBIN
+    vectors tailored for outlier detection as described by _[1]. DOBIN
     has a simple mathematical foundation and can be used as a dimension
     reduction tool for outlier detection tasks.
 
@@ -188,7 +188,8 @@ class DOBIN(BaseTransformer):
 
         Returns
         -------
-        transformed version of X
+        transformed version of X, representing the original data on a new set of
+        coordinates, obtained by multiplying input data by the basis vectors.
         """
         # fit again if indices not seen, but don't store anything
         if not X.index.equals(self._X.index):
