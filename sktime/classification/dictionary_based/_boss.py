@@ -68,7 +68,7 @@ class BOSSEnsemble(BaseClassifier):
         pickling.
 
         .. deprecated:: 0.13.3
-            ``typed_dict`` was deprecated in version 0.13.3 and will be removed in 0.14.
+            ``typed_dict`` was deprecated in version 0.13.3 and will be removed in 0.15.
 
     save_train_predictions : bool, default=False
         Save the ensemble member train predictions in fit for use in _get_train_probs
@@ -212,7 +212,7 @@ class BOSSEnsemble(BaseClassifier):
         if self.typed_dict != "deprecated":
             warnings.warn(
                 "``typed_dict`` was deprecated in version 0.13.3 and "
-                "will be removed in 0.14."
+                "will be removed in 0.15."
             )
 
         if self.min_window > max_window + 1:

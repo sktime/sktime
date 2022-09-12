@@ -74,7 +74,7 @@ class WEASEL(BaseClassifier):
 
         .. deprecated:: 0.13.3
             the default = 4 was deprecated in version 0.13.3 and will be changed to
-            default = 2 in 0.14. Please use alphabet_size=2 due to its lower memory
+            default = 2 in 0.15. Please use alphabet_size=2 due to its lower memory
             footprint, better runtime at equal accuracy.
 
     feature_selection: {"chi2", "none", "random"}, default: chi2
@@ -139,7 +139,7 @@ class WEASEL(BaseClassifier):
         binning_strategy="information-gain",
         window_inc=2,
         p_threshold=0.05,
-        alphabet_size=4,
+        alphabet_size=4,  # TODO set default alphabet_size=2 in v0.15
         n_jobs=1,
         feature_selection="chi2",
         support_probabilities=False,
@@ -201,7 +201,7 @@ class WEASEL(BaseClassifier):
         if self.alphabet_size != 2:
             warnings.warn(
                 "``alphabet_size=4`` was deprecated in version 0.13.3 and "
-                "will be changed to ``alphabet_size=2`` in 0.14."
+                "will be changed to ``alphabet_size=2`` in 0.15."
                 "Please use alphabet_size=2 due to its lower memory "
                 "footprint, better runtime at equal accuracy."
             )
