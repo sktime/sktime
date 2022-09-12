@@ -1739,7 +1739,7 @@
       "name": "Benedikt Heidrich",
       "profile": "https://github.com/benheid",
       "contributions": [
-        "code",
+        "code"
       ]
     },
     {
@@ -1760,6 +1760,16 @@
         "test"
       ]
     },
+    {
+      "login": "bugslayer-332",
+      "name": "Arepalli Yashwanth Reddy",
+      "profile": "https://github.com/bugslayer-332",
+      "contributions": [
+        "code",
+        "bug",
+        "doc"
+      ]
+    }
   ],
   "projectName": "sktime",
   "projectOwner": "alan-turing-institute",
