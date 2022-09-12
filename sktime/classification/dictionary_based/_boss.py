@@ -73,7 +73,7 @@ class BOSSEnsemble(BaseClassifier):
     save_train_predictions : bool, default=False
         Save the ensemble member train predictions in fit for use in _get_train_probs
         leave-one-out cross-validation.
-    alphabet_size : default = 2
+    alphabet_size : default = 4
         Number of possible letters (values) for each word.
     n_jobs : int, default=1
         The number of jobs to run in parallel for both `fit` and `predict`.
@@ -494,7 +494,7 @@ class IndividualBOSS(BaseClassifier):
         Length of word to use to use in BOSS algorithm.
     norm : bool, default = False
         Whether to normalize words by dropping the first Fourier coefficient.
-    alphabet_size : default = 2
+    alphabet_size : default = 4
         Number of possible letters (values) for each word.
     save_words : bool, default = True
         Whether to keep NumPy array of words in SFA transformation even after
