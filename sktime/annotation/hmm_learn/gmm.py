@@ -105,14 +105,14 @@ class GMMHMM(BaseHMMLearn):
 
     Examples
     --------
-    >>> from sktime.annotation.hmm_learn import GMMHMM
-    >>> from sktime.annotation.datagen import piecewise_normal
-    >>> data = piecewise_normal(
+    >>> from sktime.annotation.hmm_learn import GMMHMM # doctest: +SKIP
+    >>> from sktime.annotation.datagen import piecewise_normal # doctest: +SKIP
+    >>> data = piecewise_normal( # doctest: +SKIP
     ...    means=[2, 4, 1], lengths=[10, 35, 40], random_state=7
     ...    ).reshape((-1, 1))
-    >>> model = GMMHMM(n_components=3)
-    >>> model = model.fit(data)
-    >>> labeled_data = model.predict(data)
+    >>> model = GMMHMM(n_components=3) # doctest: +SKIP
+    >>> model = model.fit(data) # doctest: +SKIP
+    >>> labeled_data = model.predict(data) # doctest: +SKIP
     """
 
     def __init__(

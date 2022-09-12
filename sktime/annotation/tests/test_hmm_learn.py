@@ -3,19 +3,25 @@
 
 __author__ = ["miraep8"]
 
-from hmmlearn.hmm import GMMHMM as _GMMHMM
-from hmmlearn.hmm import GaussianHMM as _GaussianHMM
+import pytest
 from numpy import array_equal
 
 from sktime.annotation.datagen import piecewise_normal
-from sktime.annotation.hmm_learn import GMMHMM, GaussianHMM
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("hmmlearn", severity="none"),
+    reason="skip test if required soft dependency for hmmlearn not available",
+)
 def test_GaussianHMM_wrapper():
     """Verify that the wrapped GaussianHMM estimator agrees with hmmlearn."""
-    data = piecewise_normal(
-        means=[2, 4, 1], lengths=[10, 35, 40], random_state=7
-    ).reshape((-1, 1))
+    # moved all potential soft dependency import inside the test:
+    from hmmlearn.hmm import GaussianHMM as _GaussianHMM
+
+    from sktime.annotation.hmm_learn import GaussianHMM
+
+    data = piecewise_normal(means=[2, 4, 1], lengths=[10, 35, 40], random_state=7)
     hmmlearn_model = _GaussianHMM(n_components=3, random_state=7)
     sktime_model = GaussianHMM(n_components=3, random_state=7)
     hmmlearn_model.fit(X=data)
@@ -25,8 +31,17 @@ def test_GaussianHMM_wrapper():
     assert array_equal(hmmlearn_predict, sktime_predict)
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("hmmlearn", severity="none"),
+    reason="skip test if required soft dependency for hmmlearn not available",
+)
 def test_GMMHMM_wrapper():
     """Verify that the wrapped GMMHMM estimator agrees with hmmlearn."""
+    # moved all potential soft dependency import inside the test:
+    from hmmlearn.hmm import GMMHMM as _GMMHMM
+
+    from sktime.annotation.hmm_learn import GMMHMM
+
     data = piecewise_normal(
         means=[2, 4, 1], lengths=[10, 35, 40], random_state=7
     ).reshape((-1, 1))
