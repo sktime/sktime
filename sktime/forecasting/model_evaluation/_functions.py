@@ -223,10 +223,9 @@ def _split(y, X, train, test, fh):
 
     if X is not None:
         X_train = X.iloc[train, :]
-
-        # We need to expand test indices to a full range, since some forecasters
-        # require the full range of exogenous values.
-        test = np.arange(test[0] - fh.min(), test[-1]) + 1
+        # For test, we begin by returning the full range of test/train values.
+        # for those transformers that change the size of input.
+        test = np.arange(test[-1] + 1)
         X_test = X.iloc[test, :]
     else:
         X_train = None

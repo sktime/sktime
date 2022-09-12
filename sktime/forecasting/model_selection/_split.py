@@ -345,6 +345,8 @@ class BaseSplitter(BaseObject):
         self.window_length = window_length
         self.fh = fh
 
+        super(BaseSplitter, self).__init__()
+
     def split(self, y: ACCEPTED_Y_TYPES) -> SPLIT_GENERATOR_TYPE:
         """Get iloc references to train/test slits of `y`.
 
@@ -1104,7 +1106,7 @@ class SlidingWindowSplitter(BaseWindowSplitter):
         Step length between windows
     initial_window : int or timedelta or pd.DateOffset, optional (default=None)
         Window length of first window
-    start_with_window : bool, optional (default=False)
+    start_with_window : bool, optional (default=True)
         - If True, starts with full window.
         - If False, starts with empty window.
 
