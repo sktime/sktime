@@ -462,13 +462,13 @@ if __name__ == "__main__":
 
         return sum_scores
 
-    # with parallel_backend("threading", n_jobs=-1):
-    parallel_res = Parallel(n_jobs=parallel_jobs, timeout=9999999, batch_size=1)(
-        delayed(_parallel_fit)(dataset, clf_name)
-        for dataset, clf_name in itertools.product(
-            used_dataset, get_classifiers(threads_to_use)
+    with parallel_backend("threading", n_jobs=-1):
+        parallel_res = Parallel(n_jobs=parallel_jobs, timeout=9999999, batch_size=1)(
+            delayed(_parallel_fit)(dataset, clf_name)
+            for dataset, clf_name in itertools.product(
+                used_dataset, get_classifiers(threads_to_use)
+            )
         )
-    )
 
     sum_scores = {}
     for result in parallel_res:
