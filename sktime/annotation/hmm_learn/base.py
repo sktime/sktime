@@ -22,7 +22,11 @@ __all__ = ["BaseHMMLearn"]
 class BaseHMMLearn(BaseSeriesAnnotator):
     """Base class for all HMM wrappers, handles required overlap between packages."""
 
-    _tags = {"univariate-only": True, "fit_is_empty": True}  # for unit test cases
+    __tags = {
+        "univariate-only": True,
+        "fit_is_empty": True,
+        "python_dependencies": "hmmlearn",
+    }  # for unit test cases
     _hmm_estimator = None
 
     def __init__(self):

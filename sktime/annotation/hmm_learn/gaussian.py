@@ -13,6 +13,8 @@ from sktime.utils.validation._dependencies import _check_soft_dependencies
 __author__ = ["miraep8"]
 __all__ = ["GaussianHMM"]
 
+_check_soft_dependencies("hmmlearn.hmm", severity="warning")
+
 
 class GaussianHMM(BaseHMMLearn):
     """Hidden Markov Model with Gaussian emissions.
@@ -203,6 +205,3 @@ class GaussianHMM(BaseHMMLearn):
         }
 
         return params
-
-
-_check_soft_dependencies("hmmlearn.hmm", severity="warning")
