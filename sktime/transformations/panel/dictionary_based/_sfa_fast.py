@@ -647,7 +647,7 @@ class SFAFast(BaseTransformer):
             self.relevant_features = typed_dict
 
 
-@njit(fastmath=True, cache=True, parallel=True, nogil=True)
+@njit(fastmath=True, cache=True)
 def _binning_dft(
     X,
     window_size,
@@ -816,7 +816,7 @@ def _get_phis(window_size, length):
     return phis
 
 
-@njit(fastmath=True, cache=True, parallel=True, nogil=True)
+@njit(fastmath=True, cache=True)
 def generate_words(
     dfts, bigrams, skip_grams, window_size, breakpoints, word_length, letter_bits
 ):
@@ -878,7 +878,7 @@ def create_feature_names(sfa_words):
     return feature_names
 
 
-@njit(fastmath=True, cache=True, nogil=True)
+@njit(fastmath=True, cache=True)
 def _mft(
     X,
     window_size,
@@ -958,7 +958,7 @@ def _mft(
         ]
 
 
-@njit(cache=True, fastmath=True, nogil=True)
+@njit(cache=True, fastmath=True)
 def create_bag_none(
     breakpoints, n_instances, sfa_words, word_length, remove_repeat_words
 ):
@@ -1001,7 +1001,7 @@ def create_bag_feature_selection(
     return all_win_words, relevant_features
 
 
-@njit(cache=True, fastmath=True, nogil=True)
+@njit(cache=True, fastmath=True)
 def create_bag_transform(
     feature_count,
     feature_selection,
@@ -1035,7 +1035,7 @@ def create_bag_transform(
     return all_win_words, all_win_words.shape[1]
 
 
-@njit(fastmath=True, cache=True, nogil=True)
+@njit(fastmath=True, cache=True)
 def shorten_words(words, amount, letter_bits):
     new_words = np.zeros((words.shape[0], words.shape[1]), dtype=np.uint32)
 
