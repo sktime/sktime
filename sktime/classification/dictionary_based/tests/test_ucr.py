@@ -341,16 +341,16 @@ def get_classifiers(threads_to_use):
         #     sections=sections,
         #     n_jobs=threads_to_use,
         # ),
-        # "Hydra": [],  # see below
-        # "R_DST": R_DST_Ridge(random_state=1379),
-        # "Rocket": make_pipeline(
-        #     Rocket(random_state=1379, n_jobs=threads_to_use),
-        #     RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True),
-        # ),
-        # "MiniRocket": make_pipeline(
-        #     MiniRocket(random_state=1379, n_jobs=threads_to_use),
-        #     RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True),
-        # ),
+        "Hydra": [],  # see below
+        "R_DST": R_DST_Ridge(random_state=1379),
+        "Rocket": make_pipeline(
+            Rocket(random_state=1379, n_jobs=threads_to_use),
+            RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True),
+        ),
+        "MiniRocket": make_pipeline(
+            MiniRocket(random_state=1379, n_jobs=threads_to_use),
+            RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True),
+        ),
     }
     return clfs
 
