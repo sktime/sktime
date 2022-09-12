@@ -346,6 +346,12 @@ ESTIMATOR_TAG_REGISTER = [
         ("list", "str"),
         "python dependencies of estimator as str or list of str",
     ),
+    (
+        "remember_data",
+        ["forecaster", "transformer"],
+        "bool",
+        "whether estimator remembers all data seen as self._X, self._y, etc",
+    ),
 ]
 
 ESTIMATOR_TAG_TABLE = pd.DataFrame(ESTIMATOR_TAG_REGISTER)

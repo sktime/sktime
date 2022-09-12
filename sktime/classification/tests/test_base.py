@@ -11,11 +11,12 @@ from sklearn.model_selection import KFold
 from sktime.classification.base import BaseClassifier
 from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
 from sktime.classification.feature_based import Catch22Classifier
-from sktime.utils._testing.estimator_checks import (
-    _assert_array_almost_equal,
+from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
+from sktime.utils._testing.panel import (
+    _make_classification_y,
+    _make_panel,
     make_classification_problem,
 )
-from sktime.utils._testing.panel import _make_classification_y, _make_panel
 
 
 class _DummyClassifier(BaseClassifier):
