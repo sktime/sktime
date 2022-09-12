@@ -61,6 +61,12 @@ def test_differencer_remove_missing_false(y, lags, na_handling):
     """Test transform against inverse_transform."""
     transformer = Differencer(lags=lags, na_handling=na_handling)
     y_transform = transformer.fit_transform(y)
+
+    # if na_handling is fill_zero, get rid of the zeros for reconstruction
+    if na_handling == "fill_zero":
+        y_transform = y_transform[24:]
+        y = y[24:]
+
     y_reconstructed = transformer.inverse_transform(y_transform)
 
     _assert_array_almost_equal(y, y_reconstructed)
