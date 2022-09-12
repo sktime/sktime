@@ -14,7 +14,7 @@ from warnings import simplefilter
 
 import numpy as np
 import pandas as pd
-from numba import (
+from numba import (  # set_num_threads,
     NumbaPendingDeprecationWarning,
     NumbaTypeSafetyWarning,
     njit,
@@ -222,6 +222,12 @@ class SFAFast(BaseTransformer):
         self.return_pandas_data_series = return_pandas_data_series
 
         self.random_state = random_state
+
+        # if self.n_jobs < 1 or self.n_jobs > multiprocessing.cpu_count():
+        #     n_jobs = multiprocessing.cpu_count()
+        # else:
+        #     n_jobs = self.n_jobs
+        # set_num_threads(n_jobs)
 
         super(SFAFast, self).__init__()
 
@@ -703,7 +709,7 @@ def _binning_dft(
 
     # Splits individual time series into windows and returns the DFT for each
     data = np.zeros((len(X), num_windows_per_inst, window_size))
-    for i in range(len(X)):
+    for i in prange(len(X)):
         for j in range(num_windows_per_inst - 1):
             data[i, j] = X[i, window_size * j : window_size * (j + 1)]
 
@@ -711,7 +717,7 @@ def _binning_dft(
         data[i, -1] = X[i, start:series_length]
 
     dft = np.zeros((len(X), num_windows_per_inst, dft_length))
-    for i in range(len(X)):
+    for i in prange(len(X)):
         return_val = _fast_fourier_transform(
             data[i], norm, dft_length, inverse_sqrt_win_size
         )
@@ -832,7 +838,7 @@ def _calc_incremental_mean_std(series, end, window_size):
 
     r_window_length = 1.0 / window_size
     mean = series_sum * r_window_length
-    buf = math.sqrt(square_sum * r_window_length - mean * mean)
+    buf = math.sqrt(max(square_sum * r_window_length - mean * mean, 0.0))
     stds[0] = buf if buf > 1e-8 else 1e-8
 
     for w in range(1, end):
@@ -842,7 +848,7 @@ def _calc_incremental_mean_std(series, end, window_size):
             series[w + window_size - 1] * series[w + window_size - 1]
             - series[w - 1] * series[w - 1]
         )
-        buf = math.sqrt(square_sum * r_window_length - mean * mean)
+        buf = math.sqrt(max(square_sum * r_window_length - mean * mean, 0.0))
         stds[w] = buf if buf > 1e-8 else 1e-8
 
     return stds
@@ -1043,7 +1049,7 @@ def create_bag_none(
         needed_size = 2 * feature_count
     all_win_words = np.zeros((n_instances, needed_size), dtype=np.uint32)
 
-    for j in prange(len(sfa_words)):
+    for j in prange(sfa_words.shape[0]):
         # this mask is used to encode the repeated words
         if remove_repeat_words:
             masked = np.nonzero(sfa_words[j])
@@ -1110,8 +1116,7 @@ def create_bag_transform(
     sections,
 ):
     all_win_words = np.zeros((len(sfa_words), feature_count), np.uint32)
-
-    for j in prange(len(sfa_words)):
+    for j in prange(sfa_words.shape[0]):
         if len(relevant_features) == 0 and feature_selection == "none":
             # this mask is used to encode the repeated words
             if remove_repeat_words:

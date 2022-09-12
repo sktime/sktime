@@ -19,7 +19,8 @@ import numpy as np
 import pandas as pd
 import torch
 from convst.classifiers import R_DST_Ridge
-from joblib import Parallel, delayed
+from joblib import Parallel, delayed, parallel_backend
+from scipy.stats import zscore
 from sklearn.linear_model import RidgeClassifierCV
 from sklearn.pipeline import make_pipeline
 
@@ -225,7 +226,7 @@ dataset_names_excerpt = [
 ]
 
 
-def get_classifiers():
+def get_classifiers(threads_to_use):
     """Obtain the benchmark classifiers."""
     clfs = {
         # "WEASEL": WEASEL(random_state=1379, n_jobs=threads_to_use),
@@ -246,7 +247,7 @@ def get_classifiers():
             ensemble_size=50,
             use_first_differences=[True, False],
             feature_selection="none",
-            sections=2,
+            # sections=2,
             # remove_repeat_words=True,
             n_jobs=threads_to_use,
         ),
@@ -346,10 +347,10 @@ def get_classifiers():
         #     Rocket(random_state=1379, n_jobs=threads_to_use),
         #     RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True),
         # ),
-        # "MiniRocket": make_pipeline(
-        #     MiniRocket(random_state=1379, n_jobs=threads_to_use),
-        #     RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True),
-        # ),
+        "MiniRocket": make_pipeline(
+            MiniRocket(random_state=1379, n_jobs=threads_to_use),
+            RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True),
+        ),
     }
     return clfs
 
@@ -367,7 +368,7 @@ if os.path.exists(DATA_PATH):
 else:
     DATA_PATH = "/vol/fob-wbib-vol2/wbi/schaefpa/sktime/datasets/UCRArchive_2018"
     parallel_jobs = 80
-    threads_to_use = 1
+    threads_to_use = 8
     server = True
     used_dataset = dataset_names_full
 
@@ -418,14 +419,14 @@ if __name__ == "__main__":
             acc = clf.score(X_test_transform, y_test)
             pred_time = np.round(time.process_time() - pred_time, 5)
         else:
-            clf = get_classifiers()[clf_name]
-            fit_time = time.process_time()
+            clf = get_classifiers(threads_to_use)[clf_name]
+            fit_time = time.perf_counter()
             clf.fit(X_train, y_train)
-            fit_time = np.round(time.process_time() - fit_time, 5)
+            fit_time = np.round(time.perf_counter() - fit_time, 5)
 
-            pred_time = time.process_time()
+            pred_time = time.perf_counter()
             acc = clf.score(X_test, y_test)
-            pred_time = np.round(time.process_time() - pred_time, 5)
+            pred_time = np.round(time.perf_counter() - pred_time, 5)
 
         print(
             f"Dataset={dataset_name}, "
@@ -461,9 +462,12 @@ if __name__ == "__main__":
 
         return sum_scores
 
+    # with parallel_backend("threading", n_jobs=-1):
     parallel_res = Parallel(n_jobs=parallel_jobs, timeout=9999999, batch_size=1)(
         delayed(_parallel_fit)(dataset, clf_name)
-        for dataset, clf_name in itertools.product(used_dataset, get_classifiers())
+        for dataset, clf_name in itertools.product(
+            used_dataset, get_classifiers(threads_to_use)
+        )
     )
 
     sum_scores = {}

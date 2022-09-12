@@ -198,11 +198,11 @@ class WEASEL_STEROIDS(BaseClassifier):
         # Randomly choose window sizes
         self.window_sizes = np.arange(self.min_window, self.max_window + 1, 1)
 
-        parallel_res = Parallel(n_jobs=self.n_jobs, timeout=99999)(
+        parallel_res = Parallel(n_jobs=self.n_jobs, timeout=99999, backend="threading")(
             delayed(_parallel_fit)(
                 i,
                 X,
-                y,
+                y.copy(),
                 self.window_sizes,
                 self.alphabet_sizes,
                 self.word_lengths,
@@ -284,7 +284,7 @@ class WEASEL_STEROIDS(BaseClassifier):
         #         X.std(axis=-1, keepdims=True) + 1e-8
         # )
 
-        parallel_res = Parallel(n_jobs=self.n_jobs, timeout=99999)(
+        parallel_res = Parallel(n_jobs=self.n_jobs, timeout=99999, backend="threading")(
             delayed(transformer.transform)(X) for transformer in self.SFA_transformers
         )
 
