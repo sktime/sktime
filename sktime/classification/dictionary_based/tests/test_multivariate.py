@@ -46,7 +46,7 @@ dataset_names_full = [
     "BasicMotions",
     ## "CharacterTrajectories",  # variable length
     "Cricket",
-    "DuckDuckGeese",
+    "DuckDuckGeese",  # Muse old is slow
     "EigenWorms",
     "Epilepsy",
     "ERing",
@@ -62,7 +62,7 @@ dataset_names_full = [
     "LSST",
     "MotorImagery",
     "NATOPS",
-    "PEMS-SF",
+    "PEMS-SF",  # PEMS-SF, MUSE old, Feature Count=31930999, 128 Stunden
     "PenDigits",
     "PhonemeSpectra",
     "RacketSports",
