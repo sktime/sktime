@@ -347,10 +347,10 @@ def get_classifiers(threads_to_use):
         #     Rocket(random_state=1379, n_jobs=threads_to_use),
         #     RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True),
         # ),
-        "MiniRocket": make_pipeline(
-            MiniRocket(random_state=1379, n_jobs=threads_to_use),
-            RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True),
-        ),
+        # "MiniRocket": make_pipeline(
+        #     MiniRocket(random_state=1379, n_jobs=threads_to_use),
+        #     RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True),
+        # ),
     }
     return clfs
 
@@ -414,10 +414,10 @@ if __name__ == "__main__":
             clf.fit(X_training_transform, y_train)
             fit_time = np.round(time.process_time() - fit_time, 5)
 
-            pred_time = time.process_time()
+            pred_time = time.perf_counter()
             X_test_transform = transform(torch.tensor(X_test).float())
             acc = clf.score(X_test_transform, y_test)
-            pred_time = np.round(time.process_time() - pred_time, 5)
+            pred_time = np.round(time.perf_counter() - pred_time, 5)
         else:
             clf = get_classifiers(threads_to_use)[clf_name]
             fit_time = time.perf_counter()
