@@ -53,9 +53,9 @@ def load_from_ucr_tsv_to_dataframe_plain(full_file_path_and_name):
 dataset_names_full = [
     "ACSF1",
     "Adiac",
-    "AllGestureWiimoteX",
-    "AllGestureWiimoteY",
-    "AllGestureWiimoteZ",
+    # "AllGestureWiimoteX",
+    # "AllGestureWiimoteY",
+    # "AllGestureWiimoteZ",
     "ArrowHead",
     "Beef",
     "BeetleFly",
@@ -71,19 +71,19 @@ dataset_names_full = [
     "CricketX",
     "CricketY",
     "CricketZ",
-    # "Crop",
+    "Crop",
     "DiatomSizeReduction",
     "DistalPhalanxOutlineAgeGroup",
     "DistalPhalanxOutlineCorrect",
     "DistalPhalanxTW",
-    "DodgerLoopDay",
-    "DodgerLoopGame",
-    "DodgerLoopWeekend",
+    # "DodgerLoopDay",
+    # "DodgerLoopGame",
+    # "DodgerLoopWeekend",
     "Earthquakes",
     "ECG200",
     "ECG5000",
     "ECGFiveDays",
-    # "ElectricDevices",
+    "ElectricDevices",
     "EOGHorizontalSignal",
     "EOGVerticalSignal",
     "EthanolLevel",
@@ -92,22 +92,22 @@ dataset_names_full = [
     "FacesUCR",
     "FiftyWords",
     "Fish",
-    # "FordA",
-    # "FordB",
+    "FordA",
+    "FordB",
     "FreezerRegularTrain",
     "FreezerSmallTrain",
-    "Fungi",
-    "GestureMidAirD1",
-    "GestureMidAirD2",
-    "GestureMidAirD3",
-    "GesturePebbleZ1",
-    "GesturePebbleZ2",
+    # "Fungi",
+    # "GestureMidAirD1",
+    # "GestureMidAirD2",
+    # "GestureMidAirD3",
+    # "GesturePebbleZ1",
+    # "GesturePebbleZ2",
     "GunPoint",
     "GunPointAgeSpan",
     "GunPointMaleVersusFemale",
     "GunPointOldVersusYoung",
     "Ham",
-    # "HandOutlines",
+    "HandOutlines",
     "Haptics",
     "Herring",
     "HouseTwenty",
@@ -122,21 +122,21 @@ dataset_names_full = [
     "Mallat",
     "Meat",
     "MedicalImages",
-    "MelbournePedestrian",
+    # "MelbournePedestrian",
     "MiddlePhalanxOutlineAgeGroup",
     "MiddlePhalanxOutlineCorrect",
     "MiddlePhalanxTW",
     "MixedShapesRegularTrain",
     "MixedShapesSmallTrain",
     "MoteStrain",
-    # "NonInvasiveFetalECGThorax1",
-    # "NonInvasiveFetalECGThorax2",
+    "NonInvasiveFetalECGThorax1",
+    "NonInvasiveFetalECGThorax2",
     "OliveOil",
     "OSULeaf",
     "PhalangesOutlinesCorrect",
     "Phoneme",
     "PickupGestureWiimoteZ",
-    # "PigAirwayPressure",
+    "PigAirwayPressure",
     "PigArtPressure",
     "PigCVP",
     # "PLAID",
@@ -153,12 +153,12 @@ dataset_names_full = [
     "SemgHandSubjectCh2",
     "ShakeGestureWiimoteZ",
     "ShapeletSim",
-    # "ShapesAll",
+    "ShapesAll",
     "SmallKitchenAppliances",
     "SmoothSubspace",
     "SonyAIBORobotSurface1",
     "SonyAIBORobotSurface2",
-    # "StarLightCurves",  # 5 Mins
+    "StarLightCurves",  # 5 Mins
     "Strawberry",
     "SwedishLeaf",
     "Symbols",
@@ -169,10 +169,10 @@ dataset_names_full = [
     "TwoLeadECG",
     "TwoPatterns",
     "UMD",
-    # "UWaveGestureLibraryAll",
+    "UWaveGestureLibraryAll",
     "UWaveGestureLibraryX",
     "UWaveGestureLibraryY",
-    # "UWaveGestureLibraryZ", # error???
+    "UWaveGestureLibraryZ",  # error???
     "Wafer",
     "Wine",
     "WordSynonyms",
@@ -368,7 +368,7 @@ if os.path.exists(DATA_PATH):
 else:
     DATA_PATH = "/vol/fob-wbib-vol2/wbi/schaefpa/sktime/datasets/UCRArchive_2018"
     parallel_jobs = 80
-    threads_to_use = 8
+    threads_to_use = 1
     server = True
     used_dataset = dataset_names_full
 
@@ -406,13 +406,13 @@ if __name__ == "__main__":
         X_test = np.reshape(np.array(X_test), (len(X_test), 1, -1))
 
         if clf_name == "Hydra":
-            fit_time = time.process_time()
+            fit_time = time.perf_counter()
             transform = Hydra(X_train.shape[-1])
             X_training_transform = transform(torch.tensor(X_train).float())
 
             clf = RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True)
             clf.fit(X_training_transform, y_train)
-            fit_time = np.round(time.process_time() - fit_time, 5)
+            fit_time = np.round(time.perf_counter() - fit_time, 5)
 
             pred_time = time.perf_counter()
             X_test_transform = transform(torch.tensor(X_test).float())
@@ -462,13 +462,13 @@ if __name__ == "__main__":
 
         return sum_scores
 
-    with parallel_backend("threading", n_jobs=-1):
-        parallel_res = Parallel(n_jobs=parallel_jobs, timeout=9999999, batch_size=1)(
-            delayed(_parallel_fit)(dataset, clf_name)
-            for dataset, clf_name in itertools.product(
-                used_dataset, get_classifiers(threads_to_use)
-            )
+    # with parallel_backend("threading", n_jobs=-1):
+    parallel_res = Parallel(n_jobs=parallel_jobs, timeout=9999999, batch_size=1)(
+        delayed(_parallel_fit)(dataset, clf_name)
+        for dataset, clf_name in itertools.product(
+            used_dataset, get_classifiers(threads_to_use)
         )
+    )
 
     sum_scores = {}
     for result in parallel_res:
@@ -527,7 +527,7 @@ if __name__ == "__main__":
                 # "Fit-Time",
                 # "Predict-Time",
             ],
-        ).to_csv("full_scores-09-09-22.csv", index=None)
+        ).to_csv("ucr-112-accuracy-12-09-22.csv", index=None)
 
         pd.DataFrame.from_records(
             csv_timings,
@@ -537,4 +537,4 @@ if __name__ == "__main__":
                 "Fit-Time",
                 "Predict-Time",
             ],
-        ).to_csv("full_runtimes-09-09-22.csv", index=None)
+        ).to_csv("ucr-112-runtime-12-09-22.csv", index=None)
