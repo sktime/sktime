@@ -179,7 +179,7 @@ def test_differencer_inverse_does_not_memorize():
 
     y_train, y_test = temporal_train_test_split(y=y, test_size=30)
     fh_out = np.arange(1, len(y_test) + 1)
-    fh_ins = ForecastingHorizon(y_train.index, is_relative=False)
+    fh_ins = ForecastingHorizon(y_train.index, is_relative=False)[1:]
 
     pipe = Differencer() * NaiveForecaster()
 
@@ -193,11 +193,11 @@ def test_differencer_inverse_does_not_memorize():
     naive_model.predict(fh=fh_out)
 
     # pipe output should not be similar to train input
-    assert not np.allclose(y_train.to_numpy(), pipe_ins.to_numpy())
+    assert not np.allclose(y_train[1:].to_numpy(), pipe_ins.to_numpy())
 
     # pipe output should be similar to model output
-    assert np.allclose(pipe_ins[1:].to_numpy(), model_ins[1:].to_numpy())
+    assert np.allclose(pipe_ins.to_numpy(), model_ins.to_numpy())
     # (first element can be different)
 
     # model output should not be similar to train input
-    assert not np.allclose(y_train.to_numpy(), model_ins.to_numpy())
+    assert not np.allclose(y_train[1:].to_numpy(), model_ins.to_numpy())
