@@ -195,8 +195,8 @@ class TransformerFitTransformSeriesUnivariate(TransformerTestScenario):
     }
 
     args = {
-        "fit": {"X": _make_series(n_timepoints=10, random_state=RAND_SEED)},
-        "transform": {"X": _make_series(n_timepoints=10, random_state=RAND_SEED)},
+        "fit": {"X": _make_series(n_timepoints=11, random_state=RAND_SEED)},
+        "transform": {"X": _make_series(n_timepoints=11, random_state=RAND_SEED2)},
         # "inverse_transform": {"X": _make_series(n_timepoints=10)},
     }
     default_method_sequence = ["fit", "transform"]

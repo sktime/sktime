@@ -6,6 +6,7 @@ Implements a basic Hidden Markov Model (HMM) as an annotation estimator.
 To read more about the algorithm, check out the `HMM wikipedia page
 <https://en.wikipedia.org/wiki/Hidden_Markov_model>`_.
 """
+import warnings
 from typing import Tuple
 
 import numpy as np
@@ -259,7 +260,7 @@ class HMM(BaseSeriesAnnotator):
             trans_prob[:, i] = np.max(paths, axis=0)
 
         if np.any(np.isinf(trans_prob[:, -1])):
-            raise ValueError("Change parameters, the distribution doesn't work")
+            warnings.warn("Change parameters, the distribution doesn't work")
 
         return trans_prob, trans_id
 
@@ -409,7 +410,7 @@ class HMM(BaseSeriesAnnotator):
         params : dict or list of dict
         """
         centers = [3.5, -5]
-        sd = [0.25 for _ in centers]
+        sd = [100 for _ in centers]
         emi_funcs = [
             (norm.pdf, {"loc": mean, "scale": sd[ind]})
             for ind, mean in enumerate(centers)
