@@ -74,6 +74,15 @@ To add an estimator with a soft dependency, ensure the following:
    utility should be used in ``__init__``. Both the warning and constructor call should use the ``package_import_alias`` argument for this.
 *  If the soft dependencies require specific python versions, the ``python_version``
    tag should also be populated, with a PEP 440 compliant version specification ``str`` such as ``"<3.10"`` or ``">3.6,~=3.8"``.
+*  Skip the corresponding doctests.  To do this add a ``# doctest: +SKIP`` to the end of each line in the doctest to skip.
+   If concerned about reducing testing coverage, can add the doctest back in the testing file. See arima as an example.
+*  Decorate all tests for the estimator with the soft dependency with ``@pytest.mark.skipif(
+    not _check_soft_dependencies("your soft dependency library name", severity="none"),
+    reason="skip test if required soft dependency for your soft dependency library name not available",
+   )``
+   This will skip your test unless the system has the required packages installed and is helpful for any users running ``check_estimator``
+   on all estimators.
+   See the tests for pydarima (in forecasting) for an example.
 
 Adding a core or developer dependency
 -------------------------------------
