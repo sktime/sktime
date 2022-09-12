@@ -38,11 +38,12 @@ class BaseHMMLearn(BaseSeriesAnnotator):
 
     @staticmethod
     def _fix_input(X):
+        index = None
         series = isinstance(X, pd.Series)
         if series:
             index = X.index
             X = (X.to_numpy()).reshape((-1, 1))
-        if isinstance(X, np.ndarray):
+        if isinstance(X, np.ndarray) and X.ndim == 1:
             X = X.reshape((-1, 1))
         return X, series, index
 

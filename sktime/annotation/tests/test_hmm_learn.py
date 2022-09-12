@@ -21,7 +21,9 @@ def test_wrapper_agrees_with_package():
 
     from sktime.annotation.hmm_learn import GaussianHMM
 
-    data = piecewise_normal(means=[2, 4, 1], lengths=[10, 35, 40], random_state=7)
+    data = piecewise_normal(
+        means=[2, 4, 1], lengths=[10, 35, 40], random_state=7
+    ).reshape((-1, 1))
     hmmlearn_model = _GaussianHMM(n_components=3, random_state=7)
     sktime_model = GaussianHMM(n_components=3, random_state=7)
     hmmlearn_model.fit(X=data)
