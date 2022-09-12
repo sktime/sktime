@@ -225,7 +225,7 @@ def scitype_to_mtype(scitype: str, softdeps: str = "exclude"):
 
         def present(x):
             """Return True if x has satisfied soft dependency or has no soft dep."""
-            if x in MTYPE_SOFT_DEPS.keys():
+            if x not in MTYPE_SOFT_DEPS.keys():
                 return True
             else:
                 return _check_soft_dependencies(x, severity="none")
