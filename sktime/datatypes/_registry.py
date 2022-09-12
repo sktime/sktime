@@ -228,7 +228,7 @@ def scitype_to_mtype(scitype: str, softdeps: str = "exclude"):
             if x not in MTYPE_SOFT_DEPS.keys():
                 return True
             else:
-                return _check_soft_dependencies(x, severity="none")
+                return _check_soft_dependencies(MTYPE_SOFT_DEPS[x], severity="none")
 
         # return only mtypes with soft dependencies present (or requiring none)
         mtypes = [m for m in mtypes if present(m)]
