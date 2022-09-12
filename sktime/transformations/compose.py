@@ -65,7 +65,7 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
     The pipeline is constructed with a list of sktime transformers, i.e.
     estimators following the BaseTransformer interface. The list can be
     unnamed (a simple list of transformers) or string named (a list of
-    pairs of string, estimator.
+    pairs of string, estimator).
 
     For a list of transformers `trafo1`, `trafo2`, ..., `trafoN`,
     the pipeline behaves as follows:
@@ -91,7 +91,7 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
     where `i` is the total count of occurrence of a non-unique string
     inside the list of names leading up to it (inclusive)
 
-    The `TransformerPipeline` can also be created by using the magic multiplication
+    A `TransformerPipeline` can also be created by using the magic multiplication
     on any transformer, i.e., any estimator inheriting from `BaseTransformer`
     for instance, `my_trafo1 * my_trafo2 * my_trafo3`
     will result in the same object as  obtained from the constructor
