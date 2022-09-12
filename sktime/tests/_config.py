@@ -49,15 +49,12 @@ EXCLUDED_TESTS = {
     # test fail with deep problem with pickling inside tensorflow.
     "CNNClassifier": [
         "test_fit_idempotent",
-        "test_persistence_via_pickle",
     ],
     "MLPClassifier": [
         "test_fit_idempotent",
-        "test_persistence_via_pickle",
     ],
     "CNNRegressor": [
         "test_fit_idempotent",
-        "test_persistence_via_pickle",
     ],
     # pickling problem with local method see #2490
     "ProximityStump": [

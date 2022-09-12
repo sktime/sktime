@@ -5,7 +5,7 @@ Abstract base class for the Keras neural network classifiers.
 The reason for this class between BaseClassifier and deep_learning classifiers is
 because we can generalise tags, _predict and _predict_proba
 """
-__author__ = ["James-Large", "ABostrom", "TonyBagnall"]
+__author__ = ["James-Large", "ABostrom", "TonyBagnall", "achieveordie"]
 __all__ = ["BaseDeepClassifier"]
 
 from abc import ABC, abstractmethod
@@ -123,3 +123,14 @@ class BaseDeepClassifier(BaseClassifier, ABC):
         # categories='auto' to get rid of FutureWarning
         y = self.onehot_encoder.fit_transform(y)
         return y
+
+    def __getstate__(self):
+        """Magic method called during serialization."""
+        copy = self.__dict__.copy()
+        del copy["optimizer"]
+        del copy["model_"]
+        if copy.get("history") is not None:
+            del copy["history"]
+        if copy.get("optimizer_") is not None:
+            del copy["optimizer_"]
+        return copy

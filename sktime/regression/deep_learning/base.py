@@ -6,7 +6,7 @@ The reason for this class between BaseClassifier and deep_learning classifiers i
 because we can generalise tags and _predict
 """
 
-__author__ = ["AurumnPegasus"]
+__author__ = ["AurumnPegasus", "achieveordie"]
 __all__ = ["BaseDeepRegressor"]
 
 from abc import ABC, abstractmethod
@@ -80,3 +80,14 @@ class BaseDeepRegressor(BaseRegressor, ABC):
         y_pred = self.model_.predict(X, self.batch_size, **kwargs)
         y_pred = np.squeeze(y_pred, axis=-1)
         return y_pred
+
+    def __getstate__(self):
+        """Magic method called during serialization."""
+        copy = self.__dict__.copy()
+        del copy["optimizer"]
+        del copy["model_"]
+        if copy.get("history") is not None:
+            del copy["history"]
+        if copy.get("optimizer_") is not None:
+            del copy["optimizer_"]
+        return copy
