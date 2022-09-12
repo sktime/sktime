@@ -219,7 +219,7 @@ class LogTransformer(BaseTransformer):
     Parameters
     ----------
     offset : float , default = 0
-             Adds a constant to all the data.
+             Additive constant applied to all the data.
     scale  : float , default = 1
              Multiplicative scaling constant applied to all the data.
 
