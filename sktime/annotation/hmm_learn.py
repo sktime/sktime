@@ -19,10 +19,17 @@ __author__ = ["miraep8"]
 __all__ = ["BaseHMMLearn", "GaussianHMM"]
 
 
+_check_soft_dependencies("hmmlearn", severity="warning")
+
+
 class BaseHMMLearn(BaseSeriesAnnotator):
     """Base class for all HMM wrappers, handles required overlap between packages."""
 
-    _tags = {"univariate-only": True, "fit_is_empty": True}  # for unit test cases
+    _tags = {
+        "univariate-only": True,
+        "fit_is_empty": True,
+        "python_dependencies": "hmmlearn",
+    }  # for unit test cases
     _hmm_estimator = None
 
     def __init__(self):
@@ -48,9 +55,6 @@ class BaseHMMLearn(BaseSeriesAnnotator):
     def sample(self, n_samples=1, random_state=None, currstate=None):
         """Interface class which allows users to sample from their HMM."""
         return self._hmm_estimator.sample(n_samples, random_state, currstate)
-
-
-_check_soft_dependencies("hmmlearn.hmm", severity="warning")
 
 
 class GaussianHMM(BaseHMMLearn):
@@ -134,14 +138,14 @@ class GaussianHMM(BaseHMMLearn):
 
     Examples
     --------
-    >>> from sktime.annotation.hmm_learn import GaussianHMM
-    >>> from sktime.annotation.datagen import piecewise_normal
-    >>> data = piecewise_normal(
+    >>> from sktime.annotation.hmm_learn import GaussianHMM # doctest: +SKIP
+    >>> from sktime.annotation.datagen import piecewise_normal # doctest: +SKIP
+    >>> data = piecewise_normal( # doctest: +SKIP
     ...    means=[2, 4, 1], lengths=[10, 35, 40], random_state=7
     ...    ).reshape((-1, 1))
-    >>> model = GaussianHMM(algorithm='viterbi', n_components=2)
-    >>> model = model.fit(data)
-    >>> labeled_data = model.predict(data)
+    >>> model = GaussianHMM(algorithm='viterbi', n_components=2) # doctest: +SKIP
+    >>> model = model.fit(data) # doctest: +SKIP
+    >>> labeled_data = model.predict(data) # doctest: +SKIP
     """
 
     def __init__(
