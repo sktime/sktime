@@ -61,6 +61,9 @@ sktime/performance_metrics/forecasting/_functions.py @aiwalter @rnkuhns
 sktime/performance_metrics/forecasting/_classes.py @rnkuhns
 
 sktime/annotation/clasp.py @patrickzib @ermshaua
+sktime/annotation/igts.py @lmmentel
+sktime/annotation/ggs.py @lmmentel
+sktime/annotation/datagen.py @lmmentel
 sktime/transformations/series/clasp.py @patrickzib @ermshaua
 
 .github/workflows/* @lmmentel @freddyaboulton
