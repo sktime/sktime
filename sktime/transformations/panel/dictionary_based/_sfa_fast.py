@@ -449,6 +449,7 @@ class SFAFast(BaseTransformer):
                     relevant_features_idx,
                     np.array(list(feature_names)),
                     words,
+                    self.remove_repeat_words,
                 )
 
             # Random feature selection
