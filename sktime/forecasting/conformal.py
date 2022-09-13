@@ -66,6 +66,10 @@ class ConformalIntervals(BaseForecaster):
         residuals matrix values for (for speeding up calculation)
     verbose : bool, optional, default=False
         whether to print warnings if windows with too few data points occur
+    n_jobs : int or None, optional, default=None
+        The number of jobs to run in parallel for fit. None means 1 unless
+        in a joblib.parallel_backend context.
+        -1 means using all processors.
 
     References
     ----------
