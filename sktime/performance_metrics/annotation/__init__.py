@@ -2,11 +2,10 @@
 
 """Metrics to assess performance of segmentation task."""
 
-
-from sktime.performance_metrics.annotation.metrics import (
+from sktime.performance_metrics.annotation.metrics import (  # noqa
     annotation_error,
     hausdorff_error,
     prediction_ratio,
-)  # noqa
+)
 
 __author__ = ["lmmentel"]
