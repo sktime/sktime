@@ -18,9 +18,9 @@ from sktime.forecasting.naive import NaiveForecaster
 class SquaringResiduals(BaseForecaster):
     r"""Compute the prediction variance based on a separate forecaster.
 
-    Wraps a `forecaster` with another `variance_forecaster` object that
+    Wraps a `forecaster` with another `residual_forecaster` object that
     allows for quantile and interval estimation by fitting the
-    `variance_forecaster` to the rolling residuals.
+    `residual_forecaster` to the rolling residuals.
 
     Fitting proceeds as follows:
     Let :math:`t_1, \dots, t_N` be the train set.
@@ -32,26 +32,26 @@ class SquaringResiduals(BaseForecaster):
         a. Train/Update forecaster A on :math:`y(t_1), \dots, y(t_i)`
         b. Make point prediction for :math:`t_{i+steps\_ahead}` to get
            :math:`\hat{y}(t_{i+steps\_ahead})`
-        c. Compute the residual for :math:`t_{i+steps\_ahead}` with
+        c. Compute the residual for :math:`t_{i+steps\_ahead}` as
            :math:`r(t_{i+steps\_ahead}) := y(t_{i+steps\_ahead})
            - \hat{y}(t_{i+steps\_ahead})`
-        d. Apply  :math:`e(t_{i+steps\_ahead}) := h(r(t_{i+steps\_ahead}))`
+        d. Compute :math:`e(t_{i+steps\_ahead}) := h(r(t_{i+steps\_ahead}))`
            where :math:`h(x)` is given by :math:`strategy`
-    2. Train `variance_forecaster` on
+    2. Train `residual_forecaster` on
        :math:`e(t_{initial\_window+steps\_ahead}), \dots, e(t_{N})`
 
     Prediction for :math:`t_{N+steps\_ahead}` is done as follows:
 
     1. Use `forecaster` to predict location param :math:`\hat{y}(t_{N+steps\_ahead})`
-    2. Use `variance_forecaster` to predict scale param :math:`e(t_{N+steps\_ahead})`
+    2. Use `residual_forecaster` to predict scale param :math:`e(t_{N+steps\_ahead})`
     3. Calculate prediction intervals based on e.g. normal assumption
        :math:`N(\hat{y}(t_{N+steps\_ahead}),  e(t_{N+steps\_ahead}))`
 
     Parameters
     ----------
-    forecaster : sktime.estimator, optional
+    forecaster : sktime forecaster, BaseForecaster descendant, optional
         Estimator to which probabilistic forecasts are being added
-    variance_forecaster : sktime.estimator, optional
+    residual_forecaster : sktime forecaster, BaseForecaster descendant, optional
         Estimator which is fitted to the residuals of forecaster
     initial_window : int, optional, default=2
         Size of initial_window to which forecaster is fitted
@@ -62,7 +62,7 @@ class SquaringResiduals(BaseForecaster):
     distr : str, optional, default='norm'
         Distributional assumption (["norm", "laplace", "t", "cauchy"])
     distr_kwargs : dict, optional
-        Additional arguments required by the distributional assumption
+        Additional arguments required by the distribution
 
     Examples
     --------
@@ -74,7 +74,7 @@ class SquaringResiduals(BaseForecaster):
     >>> fc = NaiveForecaster()
     >>> var_fc = ThetaForecaster()
     >>> y = load_macroeconomic().realgdp
-    >>> sqr = SquaringResiduals(forecaster=fc, variance_forecaster=var_fc)
+    >>> sqr = SquaringResiduals(forecaster=fc, residual_forecaster=var_fc)
     >>> sqr = sqr.fit(y)
     >>> fh = ForecastingHorizon(values=[1, 2, 3])
     >>> pred_interval = sqr.predict_interval(fh, coverage=0.95)
@@ -96,15 +96,15 @@ class SquaringResiduals(BaseForecaster):
     def __init__(
         self,
         forecaster=None,
-        variance_forecaster=None,
-        initial_window=2,
+        residual_forecaster=None,
+        initial_window=1,
         steps_ahead=1,
         strategy="square",
         distr="norm",
         distr_kwargs=None,
     ):
         self.forecaster = forecaster
-        self.variance_forecaster = variance_forecaster
+        self.residual_forecaster = residual_forecaster
         self.strategy = strategy
         self.steps_ahead = steps_ahead
         self.initial_window = initial_window
@@ -121,8 +121,8 @@ class SquaringResiduals(BaseForecaster):
 
         if self.forecaster is None:
             self.forecaster = NaiveForecaster()
-        if self.variance_forecaster is None:
-            self.variance_forecaster = NaiveForecaster()
+        if self.residual_forecaster is None:
+            self.residual_forecaster = NaiveForecaster()
 
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
@@ -153,7 +153,7 @@ class SquaringResiduals(BaseForecaster):
         -------
         self : reference to self
         """
-        self._variance_forecaster_ = self.variance_forecaster.clone()
+        self._residual_forecaster_ = self.residual_forecaster.clone()
         self._forecaster_ = self.forecaster.clone()
 
         y = convert_to(y, "pd.Series")
@@ -170,7 +170,7 @@ class SquaringResiduals(BaseForecaster):
         else:
             residuals = residuals.abs()
 
-        self._variance_forecaster_.fit(y=residuals)
+        self._residual_forecaster_.fit(y=residuals)
         return self
 
     def _predict(self, fh, X=None):
@@ -217,7 +217,7 @@ class SquaringResiduals(BaseForecaster):
             residuals = residuals**2
         else:
             residuals = residuals.abs()
-        self._variance_forecaster_.update(y=residuals, update_params=update_params)
+        self._residual_forecaster_.update(y=residuals, update_params=update_params)
         return self.predict(fh, X)
 
     def _predict_quantiles(self, fh, X=None, alpha=None):
@@ -298,7 +298,7 @@ class SquaringResiduals(BaseForecaster):
         """
         if cov:
             warn(f"cov={cov} is not supported. Defaulting to cov=False instead.")
-        pred_var = self._variance_forecaster_.predict(X=X, fh=fh)
+        pred_var = self._residual_forecaster_.predict(X=X, fh=fh)
         pred_var = convert_to(pred_var, to_type="pd.Series")
         if self.strategy == "square":
             pred_var = pred_var**0.5
@@ -339,15 +339,16 @@ class SquaringResiduals(BaseForecaster):
         -------
         self : reference to self
         """
-        y_pred = self._forecaster_.update_predict(
-            y=y, cv=self.cv, X=X, update_params=update_params
+        self._forecaster_.update(
+            y=y,  X=X, update_params=update_params
         )
-        residuals = y.iloc[self.initial_window :] - y_pred
+        y_pred = self._forecaster_.predict(fh=y.index, X=X)
+        residuals = y - y_pred
         if self.strategy == "square":
             residuals = residuals**2
         else:
             residuals = residuals.abs()
-        self._variance_forecaster_.update_predict(
+        self._residual_forecaster_.update(
             y=residuals, update_params=update_params
         )
         return self
@@ -377,20 +378,20 @@ class SquaringResiduals(BaseForecaster):
         params = [
             {
                 "forecaster": NaiveForecaster(),
-                "variance_forecaster": NaiveForecaster(),
+                "residual_forecaster": NaiveForecaster(),
                 "initial_window": 2,
                 "distr": "norm",
             },
             {
                 "forecaster": NaiveForecaster(),
-                "variance_forecaster": NaiveForecaster(),
+                "residual_forecaster": NaiveForecaster(),
                 "initial_window": 2,
                 "distr": "t",
                 "distr_kwargs": {"df": 21},
             },
             {
                 "forecaster": Croston(),
-                "variance_forecaster": Croston(),
+                "residual_forecaster": Croston(),
                 "initial_window": 2,
                 "distr": "t",
                 "distr_kwargs": {"df": 21},
