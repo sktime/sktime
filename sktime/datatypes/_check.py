@@ -32,7 +32,7 @@ from sktime.datatypes._alignment import check_dict_Alignment
 from sktime.datatypes._hierarchical import check_dict_Hierarchical
 from sktime.datatypes._panel import check_dict_Panel
 from sktime.datatypes._proba import check_dict_Proba
-from sktime.datatypes._registry import SCITYPE_LIST, mtype_to_scitype
+from sktime.datatypes._registry import AMBIGUOUS_MTYPES, SCITYPE_LIST, mtype_to_scitype
 from sktime.datatypes._series import check_dict_Series
 from sktime.datatypes._table import check_dict_Table
 
@@ -44,10 +44,6 @@ check_dict.update(check_dict_Hierarchical)
 check_dict.update(check_dict_Alignment)
 check_dict.update(check_dict_Table)
 check_dict.update(check_dict_Proba)
-
-
-# mtypes to exclude
-AMBIGUOUS_MTYPES = ["numpyflat", "alignment_loc"]
 
 
 def _check_scitype_valid(scitype: str = None):
