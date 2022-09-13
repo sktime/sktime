@@ -29,7 +29,7 @@ __author__ = ["lmmentel"]
 
 # module level check to allow type hints
 _check_soft_dependencies("sortedcontainers", severity="error")
-from sortedcontainers import SortedSet
+from sortedcontainers import SortedSet  # noqa
 
 logger = logging.getLogger(__name__)
 
