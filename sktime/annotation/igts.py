@@ -21,6 +21,7 @@ import pandas as pd
 from attrs import asdict, define
 
 from sktime.base import BaseEstimator
+
 # from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 __all__ = ["InformationGainSegmentation"]
