@@ -7,6 +7,6 @@ from sktime.performance_metrics.annotation.metrics import (
     annotation_error,
     hausdorff_error,
     prediction_ratio,
-)
+)  # noqa
 
 __author__ = ["lmmentel"]
