@@ -128,7 +128,12 @@ def all_estimators(
     Examples
     --------
     >>> from sktime.registry import all_estimators
-    >>> all_estimators("forecaster", as_dataframe=True)
+    >>> # return a complete list of estimators as pd.Dataframe
+    >>> all_estimators(as_dataframe=True)
+    >>> # return all forecasters by filtering for estimator type
+    >>> all_estimators("forecaster")
+    >>> # return all forecasters which handle missing data in the input by tag filtering
+    >>> all_estimators("forecaster", filter_tags={"handles-missing-data": True})
 
     References
     ----------
