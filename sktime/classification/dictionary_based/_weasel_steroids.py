@@ -21,7 +21,7 @@ from sklearn.linear_model import RidgeClassifierCV
 from sklearn.utils import check_random_state
 
 from sktime.classification.base import BaseClassifier
-from sktime.transformations.panel.dictionary_based import SAX_NEW, SFAFast
+from sktime.transformations.panel.dictionary_based import SFAFast
 
 # from sktime.transformations.panel.rocket import MiniRocket, Rocket
 
@@ -228,11 +228,11 @@ class WEASEL_STEROIDS(BaseClassifier):
 
         sfa_words = []
         for (
-            sfa_words2,
+            words,
             transformer,
         ) in parallel_res:
-            self.SFA_transformers.append(transformer)
-            sfa_words.append(sfa_words2)
+            self.SFA_transformers.extend(transformer)
+            sfa_words.extend(words)
 
         # self.rocket = MiniRocket(random_state=1379, n_jobs=self.n_jobs)
         # X_features = self.rocket.fit_transform(X, y)
@@ -296,8 +296,8 @@ class WEASEL_STEROIDS(BaseClassifier):
         )
 
         all_words = []
-        for sfa_words in parallel_res:
-            all_words.append(sfa_words)
+        for words in parallel_res:
+            all_words.append(words)
 
         # X_features = self.rocket.transform(X)
 
@@ -363,47 +363,45 @@ def _parallel_fit(
 
     # maximize word-length
     word_length = min(window_size - 2, rng.choice(word_lengths))
-
     norm = rng.choice(norm_options)
-    # word_length = min(window_size - (2 if norm else 0), rng.choice(word_lengths))
 
     dilation = max(
         1,
         np.int32(2 ** rng.uniform(0, np.log2((series_length - 1) / (window_size - 1)))),
     )
+
     first_difference = rng.choice(use_first_differences)
     binning_strategy = rng.choice(binning_strategies)
-    # upper = rng.choice([True, False])
 
-    # which_transform = rng.uniform(0, 1)
-    if True:  # which_transform > 0.33:
-        transformer = SFAFast(
-            variance=variance,
-            word_length=word_length,
-            alphabet_size=alphabet_size,
-            window_size=window_size,
-            norm=norm,
-            anova=anova,
-            binning_method=binning_strategy,
-            remove_repeat_words=remove_repeat_words,
-            bigrams=bigrams,
-            dilation=dilation,
-            lower_bounding=lower_bounding,
-            first_difference=first_difference,
-            feature_selection=feature_selection,
-            sections=sections,
-            max_feature_count=max_feature_count // ensemble_size,
-            random_state=i,
-            return_sparse=not (
-                feature_selection == "none" and alphabet_size == 2 and not bigrams
-            ),
-            n_jobs=n_jobs,
-        )
-    else:
-        transformer = SAX_NEW(
-            word_length=word_length, alphabet_size=4, window_size=window_size
-        )
+    all_words = []
+    all_transformers = []
+    # for first_difference in use_first_differences:
+    transformer = SFAFast(
+        variance=variance,
+        word_length=word_length,
+        alphabet_size=alphabet_size,
+        window_size=window_size,
+        norm=norm,
+        anova=anova,
+        binning_method=binning_strategy,
+        remove_repeat_words=remove_repeat_words,
+        bigrams=bigrams,
+        dilation=dilation,
+        lower_bounding=lower_bounding,
+        first_difference=first_difference,
+        feature_selection=feature_selection,
+        sections=sections,
+        max_feature_count=max_feature_count // ensemble_size,
+        random_state=i,
+        return_sparse=not (
+            feature_selection == "none" and alphabet_size == 2 and not bigrams
+        ),
+        n_jobs=n_jobs,
+    )
 
     # generate SFA words on subsample
     words = transformer.fit_transform(X, y)
-    return (words, transformer)
+    all_words.append(words)
+    all_transformers.append(transformer)
+
+    return all_words, all_transformers

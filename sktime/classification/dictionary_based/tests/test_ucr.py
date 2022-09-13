@@ -341,16 +341,16 @@ def get_classifiers(threads_to_use):
         #     sections=sections,
         #     n_jobs=threads_to_use,
         # ),
-        "Hydra": [],  # see below
-        "R_DST": R_DST_Ridge(random_state=1379),
-        "Rocket": make_pipeline(
-            Rocket(random_state=1379, n_jobs=threads_to_use),
-            RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True),
-        ),
-        "MiniRocket": make_pipeline(
-            MiniRocket(random_state=1379, n_jobs=threads_to_use),
-            RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True),
-        ),
+        # "Hydra": [],  # see below
+        # "R_DST": R_DST_Ridge(random_state=1379),
+        # "Rocket": make_pipeline(
+        #     Rocket(random_state=1379, n_jobs=threads_to_use),
+        #     RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True),
+        # ),
+        # "MiniRocket": make_pipeline(
+        #     MiniRocket(random_state=1379, n_jobs=threads_to_use),
+        #     RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True),
+        # ),
     }
     return clfs
 
@@ -406,6 +406,8 @@ if __name__ == "__main__":
         X_test = np.reshape(np.array(X_test), (len(X_test), 1, -1))
 
         if clf_name == "Hydra":
+            print(torch.get_num_threads())
+
             fit_time = time.perf_counter()
             transform = Hydra(X_train.shape[-1])
             X_training_transform = transform(torch.tensor(X_train).float())
