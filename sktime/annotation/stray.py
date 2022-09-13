@@ -68,15 +68,13 @@ class STRAY(BaseTransformer):
     >>> from sktime.datasets import load_airline
     >>> from sklearn.preprocessing import MinMaxScaler
     >>> import numpy as np
-    >>> X = load_airline().head(10)
-    >>> X = np.array(X).reshape(-1, 1)
+    >>> X = load_airline().to_frame().to_numpy()
     >>> scaler = MinMaxScaler()
     >>> X = scaler.fit_transform(X)
     >>> model = STRAY(k=3)
     >>> y = model.fit_transform(X)
-    >>> y
-    array([False, False, False, False,  True,  True,  True,  True, False,
-    ... True])
+    >>> y[:5]
+    array([False, False, False, False, False])
     """
 
     _tags = {
@@ -103,7 +101,7 @@ class STRAY(BaseTransformer):
         self.outlier_tail = outlier_tail
         super(STRAY, self).__init__()
 
-    def _find_threshold(self, outlier_score: npt.ArrayLike, n: int):
+    def _find_threshold(self, outlier_score: npt.ArrayLike, n: int) -> npt.ArrayLike:
         """Find Outlier Threshold.
 
         Parameters
