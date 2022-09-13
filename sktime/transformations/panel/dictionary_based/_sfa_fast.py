@@ -1064,18 +1064,19 @@ def create_bag_none(
 
     # count number of sections the word is present
     if sections > 1:
-        section_count = np.zeros(
-            (n_instances, feature_count, sections), dtype=np.uint32
-        )
-        max_index = max(X_index) + 1
+        # section_count = np.zeros(
+        #   (n_instances, feature_count, sections), dtype=np.uint32
+        # )
+        # max_index = max(X_index) + 1
         for j in range(sfa_words.shape[0]):
             for i in range(sfa_words.shape[1]):
-                section_count[
-                    j, sfa_words[j, i], int(X_index[i] / max_index * sections)
-                ] = 1
-                # all_win_words[j, feature_count + sfa_words[j, i]] = \
-                #    max(X_index[i], all_win_words[j, feature_count + sfa_words[j, i]])
-        all_win_words[:, feature_count:] = section_count.sum(axis=-1)
+                # section_count[
+                #    j, sfa_words[j, i], int(X_index[i] / max_index * sections)
+                # ] = 1
+                all_win_words[j, feature_count + sfa_words[j, i]] = max(
+                    X_index[i], all_win_words[j, feature_count + sfa_words[j, i]]
+                )
+        # all_win_words[:, feature_count:] = section_count.sum(axis=-1)
 
     return all_win_words
 
@@ -1142,19 +1143,20 @@ def create_bag_transform(
     # count number of sections the word is present
     if sections > 1:
         if len(relevant_features) == 0 and feature_selection == "none":
-            section_count = np.zeros(
-                (sfa_words.shape[0], feature_count // 2, sections), dtype=np.uint32
-            )
-            max_index = max(X_index) + 1
+            # section_count = np.zeros(
+            #   (sfa_words.shape[0], feature_count // 2, sections), dtype=np.uint32
+            # )
+            # max_index = max(X_index) + 1
             for j in range(sfa_words.shape[0]):
                 for i in range(sfa_words.shape[1]):
-                    section_count[
-                        j, sfa_words[j, i], int(X_index[i] / max_index * sections)
-                    ] = 1
-                    # all_win_words[j, feature_count // 2 + sfa_words[j, i]] = \
-                    #    max(X_index[i], all_win_words[j, feature_count // 2
-                    #    + sfa_words[j, i]])
-            all_win_words[:, feature_count // 2 :] = section_count.sum(axis=-1)
+                    # section_count[
+                    #   j, sfa_words[j, i], int(X_index[i] / max_index * sections)
+                    # ] = 1
+                    all_win_words[j, feature_count // 2 + sfa_words[j, i]] = max(
+                        X_index[i],
+                        all_win_words[j, feature_count // 2 + sfa_words[j, i]],
+                    )
+            # all_win_words[:, feature_count // 2 :] = section_count.sum(axis=-1)
 
     return all_win_words, all_win_words.shape[1]
 

@@ -100,7 +100,7 @@ class WEASEL_STEROIDS(BaseClassifier):
     >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
     >>> clf = WEASEL_STEROIDS(window_inc=4)
     >>> clf.fit(X_train, y_train)
-    WEASEL2(...)
+    WEASEL_STEROIDS(...)
     >>> y_pred = clf.predict(X_test)
     """
 
@@ -246,7 +246,7 @@ class WEASEL_STEROIDS(BaseClassifier):
             all_words = np.concatenate(sfa_words, axis=1)
         else:
             # sfa_words.append(csr_matrix(X_features.values))
-            all_words = hstack((sfa_words))
+            all_words = hstack(sfa_words)
 
         self.clf = RidgeClassifierCV(alphas=np.logspace(-1, 6, 10), normalize=False)
         self.clf.fit(all_words, y)
@@ -306,7 +306,7 @@ class WEASEL_STEROIDS(BaseClassifier):
             all_words = np.concatenate(all_words, axis=1)
         else:
             # all_words.append(csr_matrix(X_features.values))
-            all_words = hstack((all_words))
+            all_words = hstack(all_words)
 
         return all_words
 
