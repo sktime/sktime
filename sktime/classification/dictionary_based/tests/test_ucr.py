@@ -247,7 +247,7 @@ def get_classifiers(threads_to_use):
             ensemble_size=50,
             use_first_differences=[True, False],
             feature_selection="none",
-            # sections=2,
+            sections=2,
             # remove_repeat_words=True,
             n_jobs=threads_to_use,
         ),
@@ -305,52 +305,16 @@ def get_classifiers(threads_to_use):
         #     # remove_repeat_words=True,
         #     n_jobs=threads_to_use,
         # ),
-        # "WEASEL 2b": WEASEL_STEROIDS(
-        #     random_state=1379,
-        #     binning_strategies=["equi-depth", "equi-width"],
-        #     alphabet_sizes=[2],
-        #     lower_bounding=True,
-        #     min_window=4,
-        #     max_window=40,
-        #     max_feature_count=10_000,
-        #     word_lengths=[8],
-        #     norm_options=[False],
-        #     variance=True,
-        #     ensemble_size=50,
-        #     use_first_differences=[True, False],
-        #     feature_selection="none",
-        #     sections=sections,
-        #     # remove_repeat_words=True,
-        #     n_jobs=threads_to_use,
-        # ),
-        # "WEASEL 2c": WEASEL_STEROIDS(
-        #     random_state=1379,
-        #     binning_strategies=["equi-depth", "equi-width"],
-        #     alphabet_sizes=[2],
-        #     lower_bounding=True,
-        #     min_window=8,
-        #     max_window=32,
-        #     # remove_repeat_words=True,
-        #     max_feature_count=10_000,
-        #     word_lengths=[8],
-        #     norm_options=[False],
-        #     variance=True,
-        #     ensemble_size=50,
-        #     use_first_differences=[True, False],
-        #     feature_selection="none",
-        #     sections=sections,
-        #     n_jobs=threads_to_use,
-        # ),
-        # "Hydra": [],  # see below
-        # "R_DST": R_DST_Ridge(random_state=1379),
-        # "Rocket": make_pipeline(
-        #     Rocket(random_state=1379, n_jobs=threads_to_use),
-        #     RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True),
-        # ),
-        # "MiniRocket": make_pipeline(
-        #     MiniRocket(random_state=1379, n_jobs=threads_to_use),
-        #     RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True),
-        # ),
+        "Hydra": [],  # see below
+        "R_DST": R_DST_Ridge(random_state=1379),
+        "Rocket": make_pipeline(
+            Rocket(random_state=1379, n_jobs=threads_to_use),
+            RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True),
+        ),
+        "MiniRocket": make_pipeline(
+            MiniRocket(random_state=1379, n_jobs=threads_to_use),
+            RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True),
+        ),
     }
     return clfs
 
@@ -406,8 +370,7 @@ if __name__ == "__main__":
         X_test = np.reshape(np.array(X_test), (len(X_test), 1, -1))
 
         if clf_name == "Hydra":
-            print(torch.get_num_threads())
-
+            # print(torch.get_num_threads())
             fit_time = time.perf_counter()
             transform = Hydra(X_train.shape[-1])
             X_training_transform = transform(torch.tensor(X_train).float())
@@ -529,7 +492,7 @@ if __name__ == "__main__":
                 # "Fit-Time",
                 # "Predict-Time",
             ],
-        ).to_csv("ucr-112-accuracy-12-09-22.csv", index=None)
+        ).to_csv("ucr-112-accuracy-13-09-22.csv", index=None)
 
         pd.DataFrame.from_records(
             csv_timings,
@@ -539,4 +502,4 @@ if __name__ == "__main__":
                 "Fit-Time",
                 "Predict-Time",
             ],
-        ).to_csv("ucr-112-runtime-12-09-22.csv", index=None)
+        ).to_csv("ucr-112-runtime-13-09-22.csv", index=None)

@@ -16,14 +16,14 @@ __all__ = ["WEASEL_STEROIDS"]
 
 import numpy as np
 from joblib import Parallel, delayed
-from scipy.sparse import hstack  # csr_matrix
+from scipy.sparse import hstack  # , csr_matrix
 from sklearn.linear_model import RidgeClassifierCV
 from sklearn.utils import check_random_state
 
 from sktime.classification.base import BaseClassifier
 from sktime.transformations.panel.dictionary_based import SFAFast
 
-# from sktime.transformations.panel.rocket import MiniRocket, Rocket
+# from sktime.transformations.panel.rocket import MiniRocket
 
 
 class WEASEL_STEROIDS(BaseClassifier):
@@ -222,14 +222,17 @@ class WEASEL_STEROIDS(BaseClassifier):
                 self.feature_selection,
                 self.remove_repeat_words,
                 self.sections,
+                self.random_state,
             )
             for i in range(self.ensemble_size)
         )
 
         sfa_words = []
+        # self.norms = []
         for (
             words,
             transformer,
+            # norms
         ) in parallel_res:
             self.SFA_transformers.extend(transformer)
             sfa_words.extend(words)
@@ -287,16 +290,13 @@ class WEASEL_STEROIDS(BaseClassifier):
     def _transform_words(self, X):
         XX = X.squeeze(1)
 
-        # X = (X - X.mean(axis=-1, keepdims=True)) / (
-        #         X.std(axis=-1, keepdims=True) + 1e-8
-        # )
-
         parallel_res = Parallel(n_jobs=self.n_jobs, timeout=99999, backend="threading")(
             delayed(transformer.transform)(XX) for transformer in self.SFA_transformers
         )
 
         all_words = []
         for words in parallel_res:
+            # words = words.astype(np.float32) / norm
             all_words.append(words)
 
         # X_features = self.rocket.transform(X)
@@ -356,8 +356,13 @@ def _parallel_fit(
     feature_selection,
     remove_repeat_words,
     sections,
+    random_state,
 ):
-    rng = check_random_state(i)
+    if random_state is None:
+        rng = check_random_state(None)
+    else:
+        rng = check_random_state(random_state + i)
+
     window_size = rng.choice(window_sizes)
     alphabet_size = rng.choice(alphabet_sizes)
 
@@ -375,7 +380,6 @@ def _parallel_fit(
 
     all_words = []
     all_transformers = []
-    # for first_difference in use_first_differences:
     transformer = SFAFast(
         variance=variance,
         word_length=word_length,
