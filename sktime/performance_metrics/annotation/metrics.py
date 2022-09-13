@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Metrics for evaluating performance of annotation estimators.
+Metrics for evaluating performance of segmentation estimators.
 
 Metrics are suitable for comparing predicted change point sets
 against true change points and quantify the error.
@@ -10,6 +10,9 @@ import numpy as np
 import numpy.typing as npt
 from scipy.spatial.distance import directed_hausdorff
 from sklearn.utils import check_array
+
+
+__author__ = ["lmmentel"]
 
 
 def annotation_error(
