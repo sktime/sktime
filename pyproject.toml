@@ -47,6 +47,7 @@ dependencies = [
     "numpy>=1.21.0,<1.23",
     "pandas>=1.1.0,<1.5.0",
     "scikit-learn>=0.24.0,<1.2.0",
+    "sortedcontainers>=2.4.0",
     "statsmodels>=0.12.1",
     "scipy<1.9.0",
 ]
@@ -65,7 +66,6 @@ all_extras = [
     "pyod>=0.8.0",
     "scikit_posthocs>=0.6.5",
     "seaborn>=0.11.0",
-    "sortedcontainers>=2.4.0",
     "statsforecast>=0.5.2",
     "stumpy>=1.5.1",
     "tbats>=1.1.0",
