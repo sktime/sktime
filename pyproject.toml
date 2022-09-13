@@ -65,6 +65,7 @@ all_extras = [
     "pyod>=0.8.0",
     "scikit_posthocs>=0.6.5",
     "seaborn>=0.11.0",
+    "sortedcontainers>=2.4.0",
     "statsforecast>=0.5.2",
     "stumpy>=1.5.1",
     "tbats>=1.1.0",
