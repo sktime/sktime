@@ -248,10 +248,10 @@ class WEASEL_STEROIDS(BaseClassifier):
             # sfa_words.append(csr_matrix(X_features.values))
             all_words = hstack((sfa_words))
 
-        self.clf = RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=False)
+        self.clf = RidgeClassifierCV(alphas=np.logspace(-1, 6, 10), normalize=False)
         self.clf.fit(all_words, y)
         self.total_features_count = all_words.shape[1]
-        # print(f"\tCross-Validation Acc: {self.clf.best_score_}")
+        self.cross_val_score = self.clf.best_score_
 
         return self
 
