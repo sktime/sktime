@@ -1000,8 +1000,8 @@ def _mft(
 
 def _dilation(X, d, first_difference):
     if first_difference:
-        X2 = np.diff(X, axis=1)
-        X = np.concatenate((X, X2), axis=1)  # TODO?!
+        X2 = np.diff(X, axis=1, prepend=0)
+        X = np.concatenate((X, X2), axis=1)
 
     return (
         _dilation2(X, d),
