@@ -7,6 +7,8 @@ os.environ["KMP_WARNINGS"] = "off"
 import itertools
 import sys
 
+import psutil
+
 sys.path.insert(0, "./")
 
 import time
@@ -240,14 +242,15 @@ def get_classifiers(threads_to_use):
             lower_bounding=False,
             min_window=4,
             max_window=24,
-            max_feature_count=10_000,
+            max_feature_count=20_000,
             word_lengths=[8],
             norm_options=[False],
             variance=True,
+            anova=False,
             ensemble_size=50,
             use_first_differences=[True, False],
             feature_selection="none",
-            sections=2,
+            # sections=1,
             # remove_repeat_words=True,
             n_jobs=threads_to_use,
         ),
@@ -262,10 +265,9 @@ def get_classifiers(threads_to_use):
         #     word_lengths=[8],
         #     norm_options=[False],
         #     variance=True,
-        #     ensemble_size=50,
+        #     ensemble_size=75,
         #     use_first_differences=[True, False],
         #     feature_selection="none",
-        #     sections=4,
         #     # remove_repeat_words=True,
         #     n_jobs=threads_to_use,
         # ),
@@ -280,10 +282,9 @@ def get_classifiers(threads_to_use):
         #     word_lengths=[8],
         #     norm_options=[False],
         #     variance=True,
-        #     ensemble_size=50,
+        #     ensemble_size=75,
         #     use_first_differences=[True, False],
         #     feature_selection="none",
-        #     sections=8,
         #     # remove_repeat_words=True,
         #     n_jobs=threads_to_use,
         # ),
@@ -298,23 +299,22 @@ def get_classifiers(threads_to_use):
         #     word_lengths=[8],
         #     norm_options=[False],
         #     variance=True,
-        #     ensemble_size=50,
+        #     ensemble_size=75,
         #     use_first_differences=[True, False],
         #     feature_selection="none",
-        #     sections=16,
         #     # remove_repeat_words=True,
         #     n_jobs=threads_to_use,
         # ),
-        "Hydra": [],  # see below
-        "R_DST": R_DST_Ridge(random_state=1379),
-        "Rocket": make_pipeline(
-            Rocket(random_state=1379, n_jobs=threads_to_use),
-            RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True),
-        ),
-        "MiniRocket": make_pipeline(
-            MiniRocket(random_state=1379, n_jobs=threads_to_use),
-            RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True),
-        ),
+        # "Hydra": [],  # see below
+        # "R_DST": R_DST_Ridge(random_state=1379),
+        # "Rocket": make_pipeline(
+        #     Rocket(random_state=1379, n_jobs=threads_to_use),
+        #     RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True),
+        # ),
+        # "MiniRocket": make_pipeline(
+        #     MiniRocket(random_state=1379, n_jobs=threads_to_use),
+        #     RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True),
+        # ),
     }
     return clfs
 
@@ -349,9 +349,6 @@ if __name__ == "__main__":
         X_test, y_test = load_from_ucr_tsv_to_dataframe_plain(
             os.path.join(DATA_PATH, dataset_name, dataset_name + "_TEST.tsv")
         )
-
-        X_train.fillna(0, inplace=True)
-        X_test.fillna(0, inplace=True)
 
         sum_scores = {
             clf_name: {
@@ -492,7 +489,7 @@ if __name__ == "__main__":
                 # "Fit-Time",
                 # "Predict-Time",
             ],
-        ).to_csv("ucr-112-accuracy-13-09-22.csv", index=None)
+        ).to_csv("ucr-112-accuracy-sonic-dict-competitors.csv", index=None)
 
         pd.DataFrame.from_records(
             csv_timings,
@@ -502,4 +499,4 @@ if __name__ == "__main__":
                 "Fit-Time",
                 "Predict-Time",
             ],
-        ).to_csv("ucr-112-runtime-13-09-22.csv", index=None)
+        ).to_csv("ucr-112-runtime-sonic-dict-competitors.csv", index=None)

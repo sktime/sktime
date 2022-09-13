@@ -304,7 +304,7 @@ class SFAFast(BaseTransformer):
 
         # transform: applies the feature selection strategy
         # bag = self.add_level(bag, words)
-
+        # bag[bag == 0] = -10
         return bag
 
     def add_level(self, bag, words):
@@ -419,6 +419,8 @@ class SFAFast(BaseTransformer):
             return bb
         elif self.return_sparse:
             bags = csr_matrix(bags, dtype=np.uint32)
+
+        # bags[bags==0] = -10
         return bags
 
     def transform_to_bag(self, words, word_len, y=None):
@@ -427,7 +429,9 @@ class SFAFast(BaseTransformer):
         rng = check_random_state(self.random_state)
 
         if self.feature_selection == "none" and (
-            self.breakpoints.shape[1] <= 2 and not self.bigrams
+            self.breakpoints.shape[1] <= 2
+            and not self.bigrams
+            and self.word_length <= 8
         ):
             bag_of_words = create_bag_none(
                 self.X_index,
@@ -1048,7 +1052,7 @@ def create_bag_none(
     needed_size = feature_count
     if sections > 1:
         needed_size = 2 * feature_count
-    all_win_words = np.zeros((n_instances, needed_size), dtype=np.uint32)
+    all_win_words = np.zeros((n_instances, needed_size), dtype=np.int32)
 
     for j in prange(sfa_words.shape[0]):
         # this mask is used to encode the repeated words
@@ -1096,7 +1100,7 @@ def create_bag_feature_selection(
         if 0 in relevant_features:
             del relevant_features[0]
 
-    all_win_words = np.zeros((n_instances, len(relevant_features_idx)), dtype=np.uint32)
+    all_win_words = np.zeros((n_instances, len(relevant_features_idx)), dtype=np.int32)
     for j in range(sfa_words.shape[0]):
         for key in sfa_words[j]:
             if key in relevant_features:
@@ -1117,7 +1121,7 @@ def create_bag_transform(
     remove_repeat_words,
     sections,
 ):
-    all_win_words = np.zeros((len(sfa_words), feature_count), np.uint32)
+    all_win_words = np.zeros((len(sfa_words), feature_count), np.int32)
     for j in prange(sfa_words.shape[0]):
         if len(relevant_features) == 0 and feature_selection == "none":
             # this mask is used to encode the repeated words
