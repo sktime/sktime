@@ -19,12 +19,17 @@ import numpy as np
 import numpy.typing as npt
 import pandas as pd
 from attrs import asdict, define
-from sortedcontainers import SortedSet
 
 from sktime.base import BaseEstimator
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 __all__ = ["InformationGainSegmentation"]
 __author__ = ["lmmentel"]
+
+
+# module level check to allow type hints
+_check_soft_dependencies("sortedcontainers", severity="error")
+from sortedcontainers import SortedSet
 
 logger = logging.getLogger(__name__)
 
