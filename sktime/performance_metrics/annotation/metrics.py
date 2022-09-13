@@ -11,7 +11,6 @@ import numpy.typing as npt
 from scipy.spatial.distance import directed_hausdorff
 from sklearn.utils import check_array
 
-
 __author__ = ["lmmentel"]
 
 
