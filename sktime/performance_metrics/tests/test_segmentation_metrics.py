@@ -2,9 +2,8 @@
 """Test segmentation metrics."""
 
 import pytest
-from sortedcontainers import SortedSet
 
-from sktime.annotation.metrics import (
+from sktime.performance_metrics.annotation.metrics import (
     annotation_error,
     hausdorff_error,
     prediction_ratio,
@@ -14,14 +13,14 @@ from sktime.annotation.metrics import (
 @pytest.fixture
 def exact_match():
     """Change points with exact match."""
-    change_points = SortedSet(range(5))
+    change_points = list(range(5))
     return change_points, change_points
 
 
 @pytest.fixture
 def different_lengths():
     """Change points with different lengths."""
-    return SortedSet(range(5)), SortedSet(range(10))
+    return list(range(5)), list(range(10))
 
 
 def test_annotation_error_exact(exact_match):
