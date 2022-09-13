@@ -8,6 +8,7 @@ __author__ = ["patrickzib", "Arik Ermshaus"]
 __all__ = ["WEASEL"]
 
 import math
+import warnings
 
 import numpy as np
 from joblib import Parallel, delayed
@@ -68,8 +69,14 @@ class WEASEL(BaseClassifier):
         This is the p-value threshold to use for chi-squared test on bag-of-words
         (lower means more strict). 1 indicates that the test
         should not be performed.
-    alphabet_size : default = 2
+    alphabet_size : default = 4
         Number of possible letters (values) for each word.
+
+        .. deprecated:: 0.13.3
+            the default = 4 was deprecated in version 0.13.3 and will be changed to
+            default = 2 in 0.15. Please use alphabet_size=2 due to its lower memory
+            footprint, better runtime at equal accuracy.
+
     feature_selection: {"chi2", "none", "random"}, default: chi2
         Sets the feature selections strategy to be used. Chi2 reduces the number
         of words significantly and is thus much faster (preferred). Random also reduces
@@ -139,7 +146,6 @@ class WEASEL(BaseClassifier):
         random_state=None,
     ):
 
-        # currently greater values than 4 are not supported.
         self.alphabet_size = alphabet_size
 
         # feature selection is applied based on the chi-squared test.
@@ -192,6 +198,14 @@ class WEASEL(BaseClassifier):
         # Window length parameter space dependent on series length
         self.n_instances, self.series_length = X.shape[0], X.shape[-1]
 
+        if self.alphabet_size != 2:
+            warnings.warn(
+                "``alphabet_size=4`` was deprecated in version 0.13.3 and "
+                "will be changed to ``alphabet_size=2`` in 0.15."
+                "Please use alphabet_size=2 due to its lower memory "
+                "footprint, better runtime at equal accuracy."
+            )
+
         win_inc = self._compute_window_inc()
         self.max_window = int(min(self.series_length, self.max_window))
         if self.min_window > self.max_window:
@@ -207,7 +221,7 @@ class WEASEL(BaseClassifier):
         self.window_sizes = list(range(self.min_window, self.max_window, win_inc))
         self.highest_bit = (math.ceil(math.log2(self.max_window))) + 1
 
-        parallel_res = Parallel(n_jobs=self.n_jobs)(
+        parallel_res = Parallel(n_jobs=self.n_jobs, backend="threading")(
             delayed(_parallel_fit)(
                 X,
                 y,
@@ -289,7 +303,7 @@ class WEASEL(BaseClassifier):
             )
 
     def _transform_words(self, X):
-        parallel_res = Parallel(n_jobs=self._threads_to_use)(
+        parallel_res = Parallel(n_jobs=self._threads_to_use, backend="threading")(
             delayed(transformer.transform)(X) for transformer in self.SFA_transformers
         )
         all_words = []
