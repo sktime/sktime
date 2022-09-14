@@ -1137,14 +1137,40 @@ class BaseForecaster(BaseEstimator):
     def get_fitted_params(self):
         """Get fitted parameters.
 
+        Overrides BaseEstimator default in case of vectorization.
+
         State required:
             Requires state to be "fitted".
 
         Returns
         -------
-        fitted_params : dict
+        fitted_params : dict of fitted parameters, keys are str names of parameters
+            parameters of components are indexed as [componentname]__[paramname]
         """
-        raise NotImplementedError("abstract method")
+        # if self is not vectorized, run the default get_fitted_params
+        if not getattr(self, "_is_vectorized", False):
+            return super(BaseForecaster, self).get_fitted_params()
+
+        # otherwise, we delegate to the instances' get_fitted_params
+        # instances' parameters are returned at dataframe-slice-like keys
+        fitted_params = {}
+
+        # forecasters contains a pd.DataFrame with the individual forecasters
+        forecasters = self.forecasters_
+
+        # return forecasters in the "forecasters" param
+        fitted_params["forecasters"] = forecasters
+
+        # populate fitted_params with forecasters and their parameters
+        for ix, col in zip(forecasters.index, forecasters.columns):
+            fcst = forecasters.loc[ix, col]
+            fcst_key = f"forecasters.loc[{ix},{col}]"
+            fitted_params[fcst_key] = fcst
+            fcst_params = fcst.get_fitted_params()
+            for key, val in fcst_params.items():
+                fitted_params[f"{fcst_key}__{key}"] = val
+
+        return fitted_params
 
     def _check_X_y(self, X=None, y=None):
         """Check and coerce X/y for fit/predict/update functions.
