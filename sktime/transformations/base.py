@@ -407,6 +407,7 @@ class BaseTransformer(BaseEstimator):
         # checks and conversions complete, pass to inner fit
         #####################################################
         vectorization_needed = isinstance(X_inner, VectorizedDF)
+        self._is_vectorized = vectorization_needed
         # we call the ordinary _fit if no looping/vectorization needed
         if not vectorization_needed:
             self._fit(X=X_inner, y=y_inner)
@@ -677,6 +678,44 @@ class BaseTransformer(BaseEstimator):
             self._vectorize("update", X=X_inner, y=y_inner)
 
         return self
+
+    def get_fitted_params(self):
+        """Get fitted parameters.
+
+        Overrides BaseEstimator default in case of vectorization.
+
+        State required:
+            Requires state to be "fitted".
+
+        Returns
+        -------
+        fitted_params : dict of fitted parameters, keys are str names of parameters
+            parameters of components are indexed as [componentname]__[paramname]
+        """
+        # if self is not vectorized, run the default get_fitted_params
+        if not getattr(self, "_is_vectorized", False):
+            return super(BaseTransformer, self).get_fitted_params()
+
+        # otherwise, we delegate to the instances' get_fitted_params
+        # instances' parameters are returned at dataframe-slice-like keys
+        fitted_params = {}
+
+        # transformers contains a pd.DataFrame with the individual transformers
+        transformers = self.transformers_
+
+        # return forecasters in the "forecasters" param
+        fitted_params["transformers"] = transformers
+
+        # populate fitted_params with ftransformers and their parameters
+        for ix, col in zip(transformers.index, transformers.columns):
+            fcst = transformers.loc[ix, col]
+            fcst_key = f"transformers.loc[{ix},{col}]"
+            fitted_params[fcst_key] = fcst
+            fcst_params = fcst.get_fitted_params()
+            for key, val in fcst_params.items():
+                fitted_params[f"{fcst_key}__{key}"] = val
+
+        return fitted_params
 
     def _check_X_y(self, X=None, y=None, return_metadata=False):
         """Check and coerce X/y for fit/transform functions.
