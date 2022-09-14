@@ -102,7 +102,7 @@ if __name__ == "__main__":
     Example simple usage, with arguments input via script or hard coded for testing.
     """
     clusterer = "kmeans"
-    chris_config = True  # This is so chris doesn't have to change config each time
+    chris_config = False  # This is so chris doesn't have to change config each time
     tune = False
 
     if sys.argv.__len__() > 1:  # cluster run, this is fragile
@@ -125,6 +125,7 @@ if __name__ == "__main__":
         resample = 2
         tf = True
         distance = "msm"
+        averaging = "dba"
     else:  # Local run
         print(" Local Run")
         dataset = "UnitTest"
@@ -132,7 +133,8 @@ if __name__ == "__main__":
         results_dir = "./temp"
         resample = 0
         tf = True
-        distance = "msm"
+        distance = "euclidean"
+        averaging = "mean"
     train_X, train_Y = load_ts(
         f"{data_dir}/{dataset}/{dataset}_TRAIN.ts", return_data_type="numpy2d"
     )
@@ -161,7 +163,7 @@ if __name__ == "__main__":
     else:
         parameters = {"window": 1.0, "epsilon": 0.05, "g": 0.05, "c": 1}
     clst = TimeSeriesKMeans(
-        averaging_method="dba",
+        averaging_method=averaging,
         average_params={"averaging_distance_metric": distance},
         metric=distance,
         distance_params=parameters,
