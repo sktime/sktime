@@ -77,6 +77,7 @@ def load_dl(serial):
     >>> sample_test_X = np.random.randn(5, 24, 16)
     >>> cnn = CNNClassifier(n_epochs=1)
     >>> cnn.fit(sample_X, sample_y)
+    CNNClassifier(n_epochs=1)
     >>> cnn.save(save_folder_location)
     >>> loaded_cnn = load_dl(save_folder_location)
     >>> pred = cnn.predict(X=sample_test_X)
