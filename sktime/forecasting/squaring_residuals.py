@@ -10,7 +10,7 @@ from warnings import warn
 import pandas as pd
 
 from sktime.datatypes._convert import convert_to
-from sktime.forecasting.base import BaseForecaster
+from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 from sktime.forecasting.model_selection import ExpandingWindowSplitter
 from sktime.forecasting.naive import NaiveForecaster
 
@@ -203,23 +203,6 @@ class SquaringResiduals(BaseForecaster):
         y_pred = self._forecaster_.predict(X=X, fh=fh_abs)
         return y_pred
 
-    def _update_predict_single(self, y, fh, X=None, update_params=True):
-        """Update forecaster and then make forecasts.
-
-        Implements default behaviour of calling update and predict
-        sequentially, but can be overwritten by subclasses
-        to implement more efficient updating algorithms when available.
-        """
-        self._forecaster_.update(self._y, X, update_params=update_params)
-        y_pred = self._forecaster_.predict(fh=y.index, X=X)
-        residuals = y - y_pred
-        if self.strategy == "square":
-            residuals = residuals**2
-        else:
-            residuals = residuals.abs()
-        self._residual_forecaster_.update(y=residuals, update_params=update_params)
-        return self.predict(fh, X)
-
     def _predict_quantiles(self, fh, X=None, alpha=None):
         """Compute/return prediction quantiles for a forecast.
 
@@ -339,18 +322,15 @@ class SquaringResiduals(BaseForecaster):
         -------
         self : reference to self
         """
-        self._forecaster_.update(
-            y=y,  X=X, update_params=update_params
-        )
-        y_pred = self._forecaster_.predict(fh=y.index, X=X)
+        self._forecaster_._update(y=y, X=X, update_params=update_params)
+        fh = ForecastingHorizon(values=y.index, is_relative=False)
+        y_pred = self._forecaster_.predict(fh=fh, X=X)
         residuals = y - y_pred
         if self.strategy == "square":
             residuals = residuals**2
         else:
             residuals = residuals.abs()
-        self._residual_forecaster_.update(
-            y=residuals, update_params=update_params
-        )
+        self._residual_forecaster_._update(y=residuals, update_params=update_params)
         return self
 
     @classmethod
