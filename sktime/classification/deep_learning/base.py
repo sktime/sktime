@@ -5,7 +5,7 @@ Abstract base class for the Keras neural network classifiers.
 The reason for this class between BaseClassifier and deep_learning classifiers is
 because we can generalise tags, _predict and _predict_proba
 """
-__author__ = ["James-Large", "ABostrom", "TonyBagnall"]
+__author__ = ["James-Large", "ABostrom", "TonyBagnall", "achieveordie"]
 __all__ = ["BaseDeepClassifier"]
 
 from abc import ABC, abstractmethod
@@ -15,6 +15,7 @@ from sklearn.preprocessing import LabelEncoder, OneHotEncoder
 from sklearn.utils import check_random_state
 
 from sktime.classification.base import BaseClassifier
+from sktime.exceptions import NotFittedError
 
 
 class BaseDeepClassifier(BaseClassifier, ABC):
@@ -123,3 +124,110 @@ class BaseDeepClassifier(BaseClassifier, ABC):
         # categories='auto' to get rid of FutureWarning
         y = self.onehot_encoder.fit_transform(y)
         return y
+
+    def __getstate__(self):
+        """Get Dict config that will be used when a serialization method is called.
+
+        Returns
+        -------
+        copy : dict, the config to be serialized
+        """
+        copy = self.__dict__.copy()
+        check_before_deletion = ["model_", "history", "optimizer_"]
+        # if attribute "optimizer" is not None, then it must
+        # have been supplied by the user and will be equal to "optimizer_"
+        # delete it normally with other non-serializable attributes
+        if copy["optimizer"] is not None:
+            check_before_deletion.append("optimizer")
+        # if it is None, then save it as 0, so it can be
+        # later correctly restored as None
+        else:
+            copy["optimizer"] = 0
+        for attribute in check_before_deletion:
+            if copy.get(attribute) is not None:
+                del copy[attribute]
+        return copy
+
+    def __setstate__(self, state):
+        """Magic method called during deserialization.
+
+        Parameters
+        ----------
+        state : dict, as returned from __getstate__(), used for correct deserialization
+
+        Returns
+        -------
+        -
+        """
+        self.__dict__ = state
+        self.__dict__["model_"] = self.model_
+        # Having 0 as value implies "optimizer" attribute was None
+        # as per __getstate__()
+        if self.__dict__.get("optimizer") == 0:
+            self.__dict__["optimizer"] = None
+        else:
+            self.__dict__["optimizer"] = self.model_.optimizer
+        self.__dict__["optimizer_"] = self.model_.optimizer
+        self.__dict__["history"] = self.history
+
+    def save(self, path=None):
+        """Save serialized self to bytes-like object or to folder.
+
+        Behaviour:
+        if `path` is None, returns an in-memory serialized self
+        if `path` is a file location, stores self at that location
+        saved folder contains the following contents:
+        metadata - contains class of self, i.e., type(self)
+        object - serialized self. This class uses the default serialization (pickle)
+
+        Parameters
+        ----------
+        path : None or folder location (str or Path)
+            if None, self is saved to an in-memory object
+            if folder location, self is saved to that folder location
+
+        Returns
+        -------
+        if `path` is None - in-memory serialized self
+        if `path` is file location - None
+        """
+        import pickle
+        from pathlib import Path
+
+        if path is None:
+            return (type(self), pickle.dumps(self))
+
+        if self.model_ is None:
+            raise NotFittedError("Model not built yet, call it via `.build_model()`")
+
+        path = Path(path)
+        path.mkdir(exist_ok=True)
+
+        self.model_.save(path / "keras/")
+        with open(path / "history", "wb") as history_writer:
+            pickle.dump(self.history.history, history_writer)
+
+        pickle.dump(type(self), open(path / "_metadata", "wb"))
+        pickle.dump(self, open(path / "_obj", "wb"))
+
+    @classmethod
+    def load_from_path(cls, serial):
+        """Load object from file location.
+
+        Parameters
+        ----------
+        serial : Name of the folder
+
+        Returns
+        -------
+        deserialized self resulting in output at `path`, of `cls.save(path)`
+        """
+        import pickle
+
+        from tensorflow import keras
+
+        cls.model_ = keras.models.load_model(serial / "keras/")
+        cls.history = keras.callbacks.History()
+        cls.history.set_params(pickle.load(open(serial / "history", "rb")))
+
+        return pickle.load(open(serial / "_obj", "rb"))
