@@ -712,7 +712,9 @@ class _RecursiveReducer(_Reducer):
             last[:, 0, :window_length] = y_last
             if X is not None:
                 last[:, 1:, :window_length] = X_last.T
-                last[:, 1:, window_length:] = X.T
+                last[:, 1:, window_length:] = X.iloc[
+                    -(last.shape[2] - window_length) :, :
+                ].T
 
             # Recursively generate predictions by iterating over forecasting horizon.
             for i in range(fh_max):
@@ -933,8 +935,11 @@ class RecursiveTabularRegressionForecaster(_RecursiveReducer):
 
     _tags = {
         "requires-fh-in-fit": False,  # is the forecasting horizon required in fit?
-        "y_inner_mtype": ["pd.Series", "pd-multiindex", "pd_multiindex_hier"],
-        "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
+        "y_inner_mtype": "pd.Series",
+        "X_inner_mtype": "pd.DataFrame",
+        # hierarchical data types are commented out until #3316 is fixed
+        # "y_inner_mtype": ["pd.Series", "pd-multiindex", "pd_multiindex_hier"],
+        # "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
     }
 
     _estimator_scitype = "tabular-regressor"
@@ -1259,7 +1264,54 @@ def _coerce_col_str(X):
     return X
 
 
-class DirectReductionForecaster(BaseForecaster):
+def slice_at_ix(df, ix):
+    """Slice pd.DataFrame at one index value, valid for simple Index and MultiIndex.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+    ix : pandas compatible index value
+
+    Returns
+    -------
+    pd.DataFrame, row(s) of df, sliced at last (-1 st) level of df being equal to ix
+        all index levels are retained in the return, none are dropped
+    """
+    if isinstance(df.index, pd.MultiIndex):
+        return df.xs(ix, level=-1, axis=0, drop_level=False)
+    else:
+        return df.loc[[ix]]
+
+
+class _ReducerMixin:
+    """Common utilities for reducers."""
+
+    def _get_expected_pred_idx(self, fh):
+        """Construct DataFrame Index expected in y_pred, return of _predict.
+
+        Parameters
+        ----------
+        fh : ForecastingHorizon, fh of self
+
+        Returns
+        -------
+        fh_idx : pd.Index, expected index of y_pred returned by _predict
+            CAVEAT: sorted by index level -1, since reduction is applied by fh
+        """
+        fh_idx = pd.Index(fh.to_absolute(self.cutoff))
+        y_index = self._y.index
+
+        if isinstance(y_index, pd.MultiIndex):
+            y_inst_idx = y_index.droplevel(-1).unique()
+            if isinstance(y_inst_idx, pd.MultiIndex):
+                fh_idx = pd.Index([x + (y,) for y in fh_idx for x in y_inst_idx])
+            else:
+                fh_idx = pd.Index([(x, y) for y in fh_idx for x in y_inst_idx])
+
+        return fh_idx
+
+
+class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
     """Direct reduction forecaster, incl single-output, multi-output, exogeneous Dir.
 
     Implements direct reduction, of forecasting to tabular regression.
@@ -1311,13 +1363,20 @@ class DirectReductionForecaster(BaseForecaster):
     impute : str or None, optional, method string passed to Imputer
         default="bfill", admissible strings are of Imputer.method parameter, see there
         if None, no imputation is done when applying Lag transformer to obtain inner X
+    pooling : str, one of ["local", "global", "panel"], optional, default="local"
+        level on which data are pooled to fit the supervised regression model
+        "local" = unit/instance level, one reduced model per lowest hierarchy level
+        "global" = top level, one reduced model overall, on pooled data ignoring levels
+        "panel" = second lowest level, one reduced model per panel level (-2)
+        if there are 2 or less levels, "global" and "panel" result in the same
+        if there is only 1 level (single time series), all three settings agree
     """
 
     _tags = {
         "requires-fh-in-fit": True,  # is the forecasting horizon required in fit?
         "ignores-exogeneous-X": False,
-        "X_inner_mtype": "pd.DataFrame",
-        "y_inner_mtype": "pd.DataFrame",
+        "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
+        "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
     }
 
     def __init__(
@@ -1327,6 +1386,7 @@ class DirectReductionForecaster(BaseForecaster):
         transformers=None,
         X_treatment="concurrent",
         impute_method="bfill",
+        pooling="local",
     ):
         self.window_length = window_length
         self.transformers = transformers
@@ -1334,6 +1394,7 @@ class DirectReductionForecaster(BaseForecaster):
         self.estimator = estimator
         self.X_treatment = X_treatment
         self.impute_method = impute_method
+        self.pooling = pooling
         self._lags = list(range(window_length))
         super(DirectReductionForecaster, self).__init__()
 
@@ -1342,6 +1403,21 @@ class DirectReductionForecaster(BaseForecaster):
             "user feedback is appreciated in issue #3224 here: "
             "https://github.com/alan-turing-institute/sktime/issues/3224"
         )
+
+        if pooling == "local":
+            mtypes = "pd.DataFrame"
+        elif pooling == "global":
+            mtypes = ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"]
+        elif pooling == "panel":
+            mtypes = ["pd.DataFrame", "pd-multiindex"]
+        else:
+            raise ValueError(
+                "pooling in DirectReductionForecaster must be one of"
+                ' "local", "global", "panel", '
+                f"but found {pooling}"
+            )
+        self.set_tags(**{"X_inner_mtype": mtypes})
+        self.set_tags(**{"y_inner_mtype": mtypes})
 
     def _fit(self, y, X=None, fh=None):
         """Fit dispatcher based on X_treatment."""
@@ -1407,29 +1483,33 @@ class DirectReductionForecaster(BaseForecaster):
 
     def _predict_shifted(self, fh=None, X=None):
         """Predict core logic."""
-        fh_idx = pd.Index(fh.to_absolute(self.cutoff))
         y_cols = self._y.columns
+        fh_idx = self._get_expected_pred_idx(fh=fh)
 
         if self.empty_lags_:
             ret = pd.DataFrame(index=fh_idx, columns=y_cols)
-            for i in X.index:
-                X.loc[i] = self.dummy_value_
+            for i in ret.index:
+                ret.loc[i] = self.dummy_value_
             return ret
 
         lagger_y_to_X = self.lagger_y_to_X_
 
-        Xt_lastrow = lagger_y_to_X.transform(self._y).loc[[self.cutoff]]
+        Xt_lastrow = slice_at_ix(lagger_y_to_X.transform(self._y), self.cutoff)
         if self._X is not None:
-            Xt_lastrow = pd.concat([self._X.loc[[self.cutoff]], Xt_lastrow], axis=1)
+            exog_X_lastrow = slice_at_ix(self._X, self.cutoff)
+            Xt_lastrow = pd.concat([exog_X_lastrow, Xt_lastrow], axis=1)
 
         Xt_lastrow = _coerce_col_str(Xt_lastrow)
 
         estimator = self.estimator_
         # 2D numpy array with col index = (fh, var) and 1 row
         y_pred = estimator.predict(Xt_lastrow)
-        y_pred = y_pred.reshape((len(fh), len(y_cols)))
+        y_pred = y_pred.reshape((len(fh_idx), len(y_cols)))
 
         y_pred = pd.DataFrame(y_pred, columns=y_cols, index=fh_idx)
+
+        if isinstance(y_pred.index, pd.MultiIndex):
+            y_pred = y_pred.sort_index()
 
         return y_pred
 
@@ -1493,7 +1573,7 @@ class DirectReductionForecaster(BaseForecaster):
         else:
             X_pool = X
 
-        fh_idx = pd.Index(fh.to_absolute(self.cutoff))
+        fh_idx = self._get_expected_pred_idx(fh=fh)
         y_cols = self._y.columns
 
         lagger_y_to_X = self.lagger_y_to_X_
@@ -1513,10 +1593,10 @@ class DirectReductionForecaster(BaseForecaster):
 
             lag_plus = Lag(lag, index_out="extend")
             Xtt = lag_plus.fit_transform(Xt)
-            Xtt_predrow = Xtt.loc[[predict_idx]]
+            Xtt_predrow = slice_at_ix(Xtt, predict_idx)
             if X_pool is not None:
                 Xtt_predrow = pd.concat(
-                    [X_pool.loc[[predict_idx]], Xtt_predrow], axis=1
+                    [slice_at_ix(X_pool, predict_idx), Xtt_predrow], axis=1
                 )
 
             Xtt_predrow = _coerce_col_str(Xtt_predrow)
@@ -1535,6 +1615,9 @@ class DirectReductionForecaster(BaseForecaster):
 
         y_pred = np.concatenate(y_pred_list)
         y_pred = pd.DataFrame(y_pred, columns=y_cols, index=fh_idx)
+
+        if isinstance(y_pred.index, pd.MultiIndex):
+            y_pred = y_pred.sort_index()
 
         return y_pred
 
@@ -1559,6 +1642,16 @@ class DirectReductionForecaster(BaseForecaster):
         from sklearn.linear_model import LinearRegression
 
         est = LinearRegression()
-        params1 = {"estimator": est, "window_length": 3, "X_treatment": "shifted"}
-        params2 = {"estimator": est, "window_length": 3, "X_treatment": "concurrent"}
+        params1 = {
+            "estimator": est,
+            "window_length": 3,
+            "X_treatment": "shifted",
+            "pooling": "global",  # all internal mtypes are tested across scenarios
+        }
+        params2 = {
+            "estimator": est,
+            "window_length": 3,
+            "X_treatment": "concurrent",
+            "pooling": "global",
+        }
         return [params1, params2]
