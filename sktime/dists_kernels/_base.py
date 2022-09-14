@@ -52,6 +52,8 @@ class BasePairwiseTransformer(BaseEstimator):
         "symmetric": False,  # is the transformer symmetric, i.e., t(x,y)=t(y,x) always?
         "X_inner_mtype": "numpy2D",  # which mtype is used internally in _transform?
         "fit_is_empty": True,  # is "fit" empty? Yes, for all pairwise transforms
+        "capability:missing_values": True,  # can estimator handle missing data?
+        "capability:multivariate": True,  # can estimator handle multivariate data?
     }
 
     def __init__(self):
@@ -183,6 +185,9 @@ class BasePairwiseTransformerPanel(BaseEstimator):
         "symmetric": False,  # is the transformer symmetric, i.e., t(x,y)=t(y,x) always?
         "X_inner_mtype": "df-list",  # which mtype is used internally in _transform?
         "fit_is_empty": True,  # is "fit" empty? Yes, for all pairwise transforms
+        "capability:missing_values": True,  # can estimator handle missing data?
+        "capability:multivariate": True,  # can estimator handle multivariate data?
+        "capability:unequal_length": True,  # can dist handle unequal length panels?
     }
 
     def __init__(self):
@@ -324,8 +329,8 @@ class BasePairwiseTransformerPanel(BaseEstimator):
                 "X and X2 must be in an sktime compatible format, "
                 "of scitype Series or Panel, "
                 "for instance a pandas.DataFrame with sktime compatible time indices, "
-                "or with MultiIndex and lowest level a sktime compatible time index. "
-                "See the data format tutorial examples/AA_datatypes_and_datasets.ipynb"
+                "or with MultiIndex and last(-1) level an sktime compatible time index."
+                " See the data format tutorial examples/AA_datatypes_and_datasets.ipynb"
             )
             raise TypeError(msg)
 

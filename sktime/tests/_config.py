@@ -1,47 +1,36 @@
 # -*- coding: utf-8 -*-
 
 __author__ = ["mloning"]
-__all__ = ["ESTIMATOR_TEST_PARAMS", "EXCLUDE_ESTIMATORS", "EXCLUDED_TESTS"]
+__all__ = ["EXCLUDE_ESTIMATORS", "EXCLUDED_TESTS"]
 
-import numpy as np
-from sklearn.preprocessing import FunctionTransformer, StandardScaler
-
-from sktime.annotation.clasp import ClaSPSegmentation
-from sktime.base import BaseEstimator
-from sktime.forecasting.exp_smoothing import ExponentialSmoothing
-from sktime.forecasting.structural import UnobservedComponents
+from sktime.base import BaseEstimator, BaseObject
 from sktime.registry import (
     BASE_CLASS_LIST,
     BASE_CLASS_LOOKUP,
     ESTIMATOR_TAG_LIST,
     TRANSFORMER_MIXIN_LIST,
 )
-from sktime.regression.compose import ComposableTimeSeriesForestRegressor
 from sktime.transformations.base import BaseTransformer
-from sktime.transformations.panel.compose import (
-    ColumnTransformer,
-    SeriesToPrimitivesRowTransformer,
-    SeriesToSeriesRowTransformer,
-)
-from sktime.transformations.panel.random_intervals import RandomIntervals
-from sktime.transformations.panel.shapelet_transform import RandomShapeletTransform
-from sktime.transformations.panel.summarize import FittedParamExtractor
 
 # The following estimators currently do not pass all unit tests
 # https://github.com/alan-turing-institute/sktime/issues/1627
 EXCLUDE_ESTIMATORS = [
-    # ConditionalDeseasonalizer and STLtransformer still need refactoring
-    #  (see PR 1773, blocked through open discussion) escaping until then
-    "ConditionalDeseasonalizer",
-    "STLTransformer",
     # SFA is non-compliant with any transformer interfaces, #2064
     "SFA",
-    # requires y in fit, this is incompatible with the old testing framework
-    #    unless it inherits from the old mixins, which hard coded the y
-    #    should be removed once test_all_transformers has been refactored to scenarios
-    "TSFreshRelevantFeatureExtractor",
     # PlateauFinder seems to be broken, see #2259
     "PlateauFinder",
+    # below are removed due to mac failures we don't fully understand, see #3103
+    "HIVECOTEV1",
+    "HIVECOTEV2",
+    "RandomIntervalSpectralEnsemble",
+    "RandomInvervals",
+    "RandomIntervalSegmenter",
+    "RandomIntervalFeatureExtractor",
+    "RandomIntervalClassifier",
+    "MiniRocket",
+    "MatrixProfileTransformer",
+    # RandomShapeletTransform is breaking with empty lists, see #3138
+    "RandomShapeletTransform",
 ]
 
 
@@ -59,6 +48,14 @@ EXCLUDED_TESTS = {
     ],
     # test fail with deep problem with pickling inside tensorflow.
     "CNNClassifier": [
+        "test_fit_idempotent",
+        "test_persistence_via_pickle",
+    ],
+    "MLPClassifier": [
+        "test_fit_idempotent",
+        "test_persistence_via_pickle",
+    ],
+    "CNNRegressor": [
         "test_fit_idempotent",
         "test_persistence_via_pickle",
     ],
@@ -81,59 +78,24 @@ EXCLUDED_TESTS = {
     "SeriesToSeriesRowTransformer": ["test_methods_do_not_change_state"],
     # ColumnTransformer still needs to be refactored, see #2537
     "ColumnTransformer": ["test_methods_do_not_change_state"],
-    "ForecastingGridSearchCV": ["test_score"],  # unknown root cause, see #2751
-    "ForecastingRandomizedSearchCV": ["test_score"],  # unknown root cause, see #2751
-    # failure of test_score came up after a change of metric default params
-    # there should be no such failure, and all other algorithms pass. #2751 to track
-}
-
-# We here configure estimators for basic unit testing, including setting of
-# required hyper-parameters and setting of hyper-parameters for faster training.
-SERIES_TO_SERIES_TRANSFORMER = StandardScaler()
-SERIES_TO_PRIMITIVES_TRANSFORMER = FunctionTransformer(
-    np.mean, kw_args={"axis": 0}, check_inverse=False
-)
-TRANSFORMERS = [
-    (
-        "transformer1",
-        SeriesToSeriesRowTransformer(
-            SERIES_TO_SERIES_TRANSFORMER, check_transformer=False
-        ),
-    ),
-    (
-        "transformer2",
-        SeriesToSeriesRowTransformer(
-            SERIES_TO_SERIES_TRANSFORMER, check_transformer=False
-        ),
-    ),
-]
-ESTIMATOR_TEST_PARAMS = {
-    FittedParamExtractor: {
-        "forecaster": ExponentialSmoothing(),
-        "param_names": ["initial_level"],
-    },
-    SeriesToPrimitivesRowTransformer: {
-        "transformer": SERIES_TO_PRIMITIVES_TRANSFORMER,
-        "check_transformer": False,
-    },
-    SeriesToSeriesRowTransformer: {
-        "transformer": SERIES_TO_SERIES_TRANSFORMER,
-        "check_transformer": False,
-    },
-    ColumnTransformer: {
-        "transformers": [(name, estimator, [0]) for name, estimator in TRANSFORMERS]
-    },
-    RandomShapeletTransform: {
-        "max_shapelets": 5,
-        "n_shapelet_samples": 50,
-        "batch_size": 20,
-    },
-    RandomIntervals: {
-        "n_intervals": 3,
-    },
-    ComposableTimeSeriesForestRegressor: {"n_estimators": 3},
-    UnobservedComponents: {"level": "local level"},
-    ClaSPSegmentation: {"period_length": 5, "n_cps": 1},
+    # Early classifiers intentionally retain information from pervious predict calls
+    #   for #1.
+    # #2 amd #3 are due to predict/predict_proba returning two items and that breaking
+    #   assert_array_equal
+    "TEASER": [
+        "test_methods_do_not_change_state",
+        "test_fit_idempotent",
+        "test_persistence_via_pickle",
+    ],
+    "CNNNetwork": "test_inheritance",  # not a registered base class, WiP, see #3028
+    "VARMAX": [
+        "test_update_predict_single",  # see 2997, sporadic failure, unknown cause
+        "test__y_when_refitting",  # see 3176
+    ],
+    # GGS inherits from BaseEstimator which breaks this test
+    "GreedyGaussianSegmentation": ["test_inheritance", "test_create_test_instance"],
+    "SAX": "test_fit_transform_output",  # SAX returns strange output format
+    # this needs to be fixed, was not tested previously due to legacy exception
 }
 
 # We use estimator tags in addition to class hierarchies to further distinguish
@@ -159,7 +121,8 @@ NON_STATE_CHANGING_METHODS = (
 # The following gives a list of valid estimator base classes.
 VALID_TRANSFORMER_TYPES = tuple(TRANSFORMER_MIXIN_LIST) + (BaseTransformer,)
 
-VALID_ESTIMATOR_BASE_TYPES = tuple(BASE_CLASS_LIST)
+BASE_BASE_TYPES = (BaseEstimator, BaseObject)
+VALID_ESTIMATOR_BASE_TYPES = tuple(set(BASE_CLASS_LIST).difference(BASE_BASE_TYPES))
 
 VALID_ESTIMATOR_TYPES = (
     BaseEstimator,

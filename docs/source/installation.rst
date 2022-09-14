@@ -5,7 +5,7 @@ Installation
 
 ``sktime`` currently supports:
 
-* Python versions 3.7, 3.8 and 3.9
+* Python versions 3.7, 3.8, 3.9 and 3.10.
 * Operating systems Mac OS X, Unix-like OS, Windows 8.1 and higher
 
 See here for a `full list of precompiled wheels available on PyPI <https://pypi.org/simple/sktime/>`_.
@@ -58,43 +58,6 @@ To install ``sktime`` with maximum dependencies, including soft dependencies, in
 Note: currently this does not include the dependency ``catch-22``.
 As this package is not available on ``conda-forge``, it must be installed via ``pip`` if desired.
 Contributions to remedy this situation are appreciated.
-
-
-Release versions - troubleshooting
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Module not found
-""""""""""""""""
-
-The most frequent reason for *module not found* errors is installing ``sktime`` with
-minimum dependencies and using an estimator which interfaces a package that has not
-been installed in the environment. To resolve this, install the missing package, or
-install ``sktime`` with maximum dependencies (see above).
-
-
-Facebook prophet
-""""""""""""""""
-
-A frequent issue arises with installation of facebook prophet when installing via ``pip``, especially on Windows systems.
-There are several workarounds:
-
-- Option 1: Install manually via ``conda-forge``:
-
-   .. code-block:: bash
-
-       conda install -c conda-forge pystan
-       conda install -c conda-forge prophet
-
-The remaining packages can be installed via ``pip`` or ``conda``.
-
-- Option 2: Install ``pystan`` with ``no-cache`` parameter:
-
-   .. code-block:: bash
-
-       pip install pystan --no-cache
-
-- Option 3: If on Windows: use WSL (Windows Subsystem for Linux), see end of section `Windows 8.1 and higher`_.
-
 
 Development versions
 --------------------
@@ -196,8 +159,9 @@ This section outlines the ``sktime`` build requirements. These are required for:
 
 
 Setting up a development environment
-""""""""""""""""""""""""""""""""""""
-You now need to set up a new python virtual environment. Our instructions will go through the commands to set up a ``conda`` environment which is recommended for sktime development.
+------------------------------------
+
+First set up a new virtual environment. Our instructions will go through the commands to set up a ``conda`` environment which is recommended for sktime development.
 This relies on an `anaconda installation <https://www.anaconda.com/products/individual#windows>`_. The process will be similar for ``venv`` or other virtual environment managers.
 
 In the ``anaconda prompt`` terminal:
@@ -211,22 +175,15 @@ In the ``anaconda prompt`` terminal:
 
 3. Activate the environment: :code:`conda activate sktime-dev`
 
-4. Install required packages:
+4. Build an editable version of sktime :code:`pip install -e .[all_extras,dev]`
 
-   1. :code:`conda install -c conda-forge pystan`
-   2. :code:`conda install -c conda-forge prophet`
-   3. :code:`conda install -c conda-forge scipy`
-
-   If you fail to satisfy all the requirements see the `troubleshooting section <https://www.sktime.org/en/stable/installation.html#release-versions-troubleshooting>`_.
-
-5. Build an editable version of sktime :code:`pip install -e .[all_extras,dev]`
-6. If everything has worked you should see message "successfully installed sktime"
+5. If everything has worked you should see message "successfully installed sktime"
 
 Some users have experienced issues when installing NumPy, particularly version 1.19.4.
 
 .. note::
 
-    If step 5. results in a "no matches found" error, it may be due to how your shell handles special characters.
+    If step 4. results in a "no matches found" error, it may be due to how your shell handles special characters.
 
     - Possible solution: use quotation marks:
 
@@ -239,6 +196,36 @@ Some users have experienced issues when installing NumPy, particularly version 1
     Another option under Windows is to follow the instructions for `Unix-like OS`_, using the Windows Subsystem for Linux (WSL).
     For installing WSL, follow the instructions `here <https://docs.microsoft.com/en-us/windows/wsl/install-win10#step-2---check-requirements-for-running-wsl-2>`_.
 
+Troubleshooting
+---------------
+
+Module not found
+~~~~~~~~~~~~~~~~
+
+The most frequent reason for *module not found* errors is installing ``sktime`` with
+minimum dependencies and using an estimator which interfaces a package that has not
+been installed in the environment. To resolve this, install the missing package, or
+install ``sktime`` with maximum dependencies (see above).
+
+ImportError
+~~~~~~~~~~~
+Import errors are often caused by an improperly linked virtual environment.  Make sure that
+your environment is activated and linked to whatever IDE you are using.  If you are using Jupyter
+Notebooks, follow `these instructions <https://janakiev.com/blog/jupyter-virtual-envs/>`_ for
+adding your virtual environment as a new kernel for your notebook.
+
+Other Startup Resources
+-----------------------
+
+Virtual environments
+~~~~~~~~~~~~~~~~~~~~
+
+Two good options for virtual environment managers are:
+* `conda <https://uoa-eresearch.github.io/eresearch-cookbook/recipe/2014/11/20/conda/>`_ (many sktime community members us this)
+* `venv <https://realpython.com/python-virtual-environments-a-primer/>`_ (also quite good!).
+
+Be sure to link your new virtual environment as the python kernel in whatever IDE you are using.  You can find the instructions for doing so
+in VScode `here <https://code.visualstudio.com/docs/python/environments>`_.
 
 References
 ----------

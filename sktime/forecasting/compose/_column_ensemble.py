@@ -43,7 +43,6 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
     >>> y_pred = forecaster.predict()
     """
 
-    _required_parameters = ["forecasters"]
     _tags = {
         "scitype:y": "both",
         "ignores-exogeneous-X": False,
@@ -102,6 +101,13 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
                 )
             ]
 
+    def _coerce_to_pd_index(self, obj):
+        """Coerce obj to pandas Index."""
+        if isinstance(obj, int):
+            return pd.Index([obj])
+        else:
+            return pd.Index(obj)
+
     def _fit(self, y, X=None, fh=None):
         """Fit to training data.
 
@@ -126,7 +132,8 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
         for (name, forecaster, index) in forecasters:
             forecaster_ = forecaster.clone()
 
-            forecaster_.fit(y.iloc[:, index], X, fh)
+            pd_index = self._coerce_to_pd_index(index)
+            forecaster_.fit(y.iloc[:, pd_index], X, fh)
             self.forecasters_.append((name, forecaster_, index))
 
         return self
@@ -145,7 +152,8 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
         self : an instance of self.
         """
         for _, forecaster, index in self.forecasters_:
-            forecaster.update(y.iloc[:, index], X, update_params=update_params)
+            pd_index = self._coerce_to_pd_index(index)
+            forecaster.update(y.iloc[:, pd_index], X, update_params=update_params)
         return self
 
     def _by_column(self, methodname, **kwargs):
@@ -155,6 +163,8 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
         ----------
         methodname : str, one of the methods of self
             assumed to take kwargs and return pd.DataFrame
+        col_multiindex : bool, optional, default=False
+            if True, will add an additional column multiindex at top, entries = index
 
         Returns
         -------
@@ -162,12 +172,19 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
             result of [f.methodname(**kwargs) for _, f, _ in self.forecsaters_]
             column-concatenated with keys being the variable names last seen in y
         """
+        # get col_multiindex arg from kwargs
+        col_multiindex = kwargs.pop("col_multiindex", False)
+
         y_preds = []
         keys = []
         for _, forecaster, index in self.forecasters_:
             y_preds += [getattr(forecaster, methodname)(**kwargs)]
             keys += [index]
-        y_pred = pd.concat(y_preds, axis=1, keys=keys)
+
+        if col_multiindex:
+            y_pred = pd.concat(y_preds, axis=1, keys=keys)
+        else:
+            y_pred = pd.concat(y_preds, axis=1)
         return y_pred
 
     def _predict(self, fh=None, X=None):
@@ -229,7 +246,9 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
             Row index is fh. Entries are quantile forecasts, for var in col index,
                 at quantile probability in second-level col index, for each row index.
         """
-        out = self._by_column("predict_quantiles", fh=fh, X=X, alpha=alpha)
+        out = self._by_column(
+            "predict_quantiles", fh=fh, X=X, alpha=alpha, col_multiindex=True
+        )
         if len(out.columns.get_level_values(0).unique()) == 1:
             out.columns = out.columns.droplevel(level=0)
         else:
@@ -272,7 +291,9 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
                 Upper/lower interval end forecasts are equivalent to
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
-        out = self._by_column("predict_interval", fh=fh, X=X, coverage=coverage)
+        out = self._by_column(
+            "predict_interval", fh=fh, X=X, coverage=coverage, col_multiindex=True
+        )
         if len(out.columns.get_level_values(0).unique()) == 1:
             out.columns = out.columns.droplevel(level=0)
         else:
@@ -309,7 +330,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
                 Entries are (co-)variance forecasts, for var in col index, and
                     covariance between time index in row and col.
         """
-        return self._by_column("predict_var", fh=fh, X=X, cov=cov)
+        return self._by_column("predict_var", fh=fh, X=X, cov=cov, col_multiindex=True)
 
     def get_params(self, deep=True):
         """Get parameters of estimator in `_forecasters`.

@@ -499,7 +499,7 @@
     },
     {
       "login": "Piyush1729",
-      "name": "Piyush1729",
+      "name": "Piyush Gade",
       "avatar_url": "https://avatars2.githubusercontent.com/u/64950012?v=4",
       "profile": "https://github.com/Piyush1729",
       "contributions": [
@@ -581,6 +581,17 @@
       "profile": "https://github.com/evanmiller29",
       "contributions": [
         "tutorial"
+      ]
+    },
+    {
+      "login": "achieveordie",
+      "name": "Sagar Mishra",
+      "avatar_url": "https://avatars.githubusercontent.com/u/54197164?v=4",
+      "profile": "https://github.com/achieveordie",
+      "contributions": [
+        "bug",
+        "code",
+        "doc"
       ]
     },
     {
@@ -1603,7 +1614,7 @@
         "code",
         "review",
         "test"
-       ]
+      ]
     },
     {
       "login": "keepersas",
@@ -1633,6 +1644,17 @@
       ]
     },
     {
+
+      "login": "AurumnPegasus",
+      "name": "Shivansh Subramanian",
+      "avatar_url": "https://avatars.githubusercontent.com/u/54315149?v=4",
+      "profile": "https://github.com/AurumnPegasus",
+      "contributions": [
+        "doc",
+        "code"
+      ]
+    },
+    {
       "login": "NoaBenAmi",
       "name": "Noa Ben Ami",
       "avatar_url": "https://avatars.githubusercontent.com/u/37590002?v=4",
@@ -1652,7 +1674,92 @@
         "code",
         "doc"
       ]
-    }
+    },
+    {
+      "login": "ciaran-g",
+      "name": "Ciaran Gilbert",
+      "avatar_url": "https://avatars.githubusercontent.com/u/41995662?v=4",
+      "profile": "https://github.com/ciaran-g",
+      "contributions": [
+        "bug",
+        "code",
+        "doc",
+        "test",
+        "ideas"
+      ]
+    },
+    {
+      "login": "mariamjabara",
+      "name": "Mariam Jabara",
+      "profile": "https://github.com/mariamjabara",
+      "contributions": [
+        "code"
+
+      ]
+    },
+    {
+      "login": "lbventura",
+      "name": "Luis Ventura",
+      "avatar_url": "https://avatars.githubusercontent.com/u/68004282?s=96&v=4",
+      "profile": "https://github.com/lbventura",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "Ris-Bali",
+      "name": "Rishabh Bali",
+      "avatar_url": "https://avatars.githubusercontent.com/u/81592570?v=4",
+      "profile": "https://github.com/Ris-Bali",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "shchur",
+      "name": "Oleksandr Shchur",
+      "avatar_url": "https://avatars.githubusercontent.com/u/6944857?v=4",
+      "profile": "https://github.com/shchur",
+      "contributions": [
+        "bug",
+        "code"
+      ]
+    },
+    {
+      "login": "jelc53",
+      "name": "Julian Cooper",
+      "profile": "https://github.com/jelc53",
+      "contributions": [
+        "code",
+        "ideas"
+      ]
+    },
+    {
+      "login": "benheid",
+      "name": "Benedikt Heidrich",
+      "profile": "https://github.com/benheid",
+      "contributions": [
+        "code",
+      ]
+    },
+    {
+      "login": "AnH0ang",
+      "name": "An Hoang",
+      "profile": "https://github.com/AnH0ang",
+      "contributions": [
+        "bug"
+      ]
+    },
+    {
+      "login": "haskarb",
+      "name": "Bhaskar Dhariyal",
+      "avatar_url": "https://avatars.githubusercontent.com/u/20501023?v=4",
+      "profile": "https://haskarb.github.io/",
+      "contributions": [
+        "code",
+        "test"
+      ]
+    },
   ],
   "projectName": "sktime",
   "projectOwner": "alan-turing-institute",

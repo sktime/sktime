@@ -4,10 +4,22 @@
 
 __author__ = ["fkiraly"]
 
+import numpy as np
 import pandas as pd
 
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.multiindex import flatten_multiindex
+
+
+# this function is needed since pandas DataFrame.shift
+# seems to have problems with numpy int inside
+def _coerce_to_int(obj):
+    """Coerces numpy int or list of numpy int to python int."""
+    if isinstance(obj, np.integer):
+        return int(obj)
+    if isinstance(obj, list):
+        return [_coerce_to_int(x) for x in obj]
+    return obj
 
 
 class Lag(BaseTransformer):
@@ -33,18 +45,18 @@ class Lag(BaseTransformer):
     lags : lag offset, or list of lag offsets, optional, default=0 (identity transform)
         a "lag offset" can be one of the following:
         int - number of periods to shift/lag
-        time-like: DateOffset, tseries.offsets, or timedelta
+        time-like: `DateOffset`, `tseries.offsets`, or `timedelta`
             time delta offset to shift/lag
             requires time index of transformed data to be time-like (not int)
         str - time rule from pandas.tseries module, e.g., "EOM"
     freq : frequency descriptor of list of frequency descriptors, optional, default=None
-        if passed, must be scalar, or list of equal length to "lags" argument
-        elements in freq correspond to elements in lags
-        if i-th element of freq is not None, i-th element of lags must be int
+        if passed, must be scalar, or list of equal length to `lags` parameter
+        elements in `freq` correspond to elements in lags
+        if i-th element of `freq` is not None, i-th element of `lags` must be int
             this is called the "corresponding lags element" below
         "frequency descriptor" can be one of the following:
-        time-like: DateOffset, tseries.offsets, or timedelta
-            multiplied to corresponding "lags" element when shifting
+        time-like: `DateOffset`, `tseries.offsets`, or `timedelta`
+            multiplied to corresponding `lags` element when shifting
         str - offset from pd.tseries module, e.g., "D", "M", or time rule, e.g., "EOM"
     index_out : str, optional, one of "shift", "original", "extend", default="extend"
         determines set of output indices in lagged time series
@@ -57,6 +69,10 @@ class Lag(BaseTransformer):
         if True, columns of return DataFrame are flat, by "lagname__variablename"
         if False, columns are MultiIndex (lagname, variablename)
         has no effect if return mtype is one without column names
+    keep_column_names : bool, optional (default=False)
+        has an effect only if `lags` contains only a single element
+        if True, ensures that column names of `transform` output are same as in input,
+        i.e., not `lag_x__varname` but `varname`. Overrides `flatten_transform_index`.
 
     Examples
     --------
@@ -108,6 +124,7 @@ class Lag(BaseTransformer):
         "capability:unequal_length:removes": False,
         "handles-missing-data": True,  # can estimator handle missing data?
         "capability:missing_values:removes": False,
+        "remember_data": True,  # remember all data seen as _X
     }
 
     # todo: add any hyper-parameters and components to constructor
@@ -117,12 +134,14 @@ class Lag(BaseTransformer):
         freq=None,
         index_out="extend",
         flatten_transform_index=True,
+        keep_column_names=False,
     ):
 
         self.lags = lags
         self.freq = freq
         self.index_out = index_out
         self.flatten_transform_index = flatten_transform_index
+        self.keep_column_names = keep_column_names
 
         if index_out not in ["shift", "extend", "original"]:
             raise ValueError(
@@ -152,7 +171,9 @@ class Lag(BaseTransformer):
 
     def _yield_shift_params(self):
         """Yield (periods, freq) pairs to pass to pandas.DataFrame.shift."""
-        for lag, freq in zip(self._lags, self._freq):
+        # we need to coerce lags, or shift will break with numpy
+        coerced_lags = _coerce_to_int(self._lags)
+        for lag, freq in zip(coerced_lags, self._freq):
             if not isinstance(lag, int):
                 yield 1, lag
             elif lag is None:
@@ -172,24 +193,6 @@ class Lag(BaseTransformer):
             name = "lag_" + name
             yield name
 
-    def _fit(self, X, y=None):
-        """Fit transformer to X and y.
-
-        private _fit containing the core logic, called from fit
-
-        Parameters
-        ----------
-        X : pd.DataFrame
-            Data to fit transform to
-        y : ignored, passed for interface compatibility
-
-        Returns
-        -------
-        self: reference to self
-        """
-        # remember X for lagging across past data indices
-        self._X = X
-
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
 
@@ -208,6 +211,7 @@ class Lag(BaseTransformer):
         index_out = self.index_out
 
         X_orig_idx = X.index
+        X_orig_cols = X.columns
         X = X.combine_first(self._X).copy()
 
         shift_params = list(self._yield_shift_params())
@@ -245,13 +249,12 @@ class Lag(BaseTransformer):
 
             Xt_list.append(Xt)
 
-        if len(Xt_list) == 1:
-            Xt = Xt_list[0]
-        else:
-            lag_names = self._yield_shift_param_names()
-            Xt = pd.concat(Xt_list, axis=1, keys=lag_names, names=["lag", "variable"])
-            if self.flatten_transform_index:
-                Xt.columns = flatten_multiindex(Xt.columns)
+        lag_names = self._yield_shift_param_names()
+        Xt = pd.concat(Xt_list, axis=1, keys=lag_names, names=["lag", "variable"])
+        if self.flatten_transform_index:
+            Xt.columns = flatten_multiindex(Xt.columns)
+        if len(shift_params) == 1 and self.keep_column_names:
+            Xt.columns = X_orig_cols
 
         # some pandas versions do not sort index automatically after concat
         # so removing will break specific pandas versions
@@ -308,7 +311,7 @@ class Lag(BaseTransformer):
         -------
         self: reference to self
         """
-        self._X = X.combine_first(self._X)
+        return self
 
     # todo: return default parameters, so that a test instance can be created
     #   required for automated unit and integration testing of estimator

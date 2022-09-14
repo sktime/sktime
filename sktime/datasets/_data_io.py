@@ -44,6 +44,17 @@ DIRNAME = "data"
 MODULE = os.path.dirname(__file__)
 
 
+# Return appropriate return_type in case an alias was used
+def _alias_mtype_check(return_type):
+    if return_type is None:
+        return_type = "nested_univ"
+    if return_type in ["numpy2d", "numpy2D", "np2d", "np2D"]:
+        return_type = "numpyflat"
+    if return_type in ["numpy3d", "np3d", "np3D"]:
+        return_type = "numpy3D"
+    return return_type
+
+
 # time series classification data sets
 def _download_and_extract(url, extract_path=None):
     """
@@ -95,9 +106,13 @@ def _download_and_extract(url, extract_path=None):
 def _list_available_datasets(extract_path):
     """Return a list of all the currently downloaded datasets.
 
-    Modified version of
-    https://github.com/tslearn-team/tslearn/blob
-    /775daddb476b4ab02268a6751da417b8f0711140/tslearn/datasets.py#L250
+    To count as available, each directory <dir_name> in the extract_path must contain
+    files called <dir_name>_TRAIN.ts and <dir_name>_TEST.ts.
+
+    Parameters
+    ----------
+    extract_path: string
+        root directory where to look for files, if None defaults to sktime/datasets/data
 
     Returns
     -------
@@ -109,15 +124,17 @@ def _list_available_datasets(extract_path):
         data_dir = os.path.join(MODULE, "data")
     else:
         data_dir = extract_path
-    datasets = [
-        path
-        for path in os.listdir(data_dir)
-        if os.path.isdir(os.path.join(data_dir, path))
-    ]
+    datasets = []
+    for name in os.listdir(data_dir):
+        sub_dir = os.path.join(data_dir, name)
+        if os.path.isdir(sub_dir):
+            all_files = os.listdir(sub_dir)
+            if name + "_TRAIN.ts" in all_files and name + "_TEST.ts" in all_files:
+                datasets.append(name)
     return datasets
 
 
-def _load_dataset(name, split, return_X_y, extract_path=None):
+def _load_dataset(name, split, return_X_y, return_type=None, extract_path=None):
     """Load time series classification datasets (helper function)."""
     # Allow user to have non standard extract path
     if extract_path is not None:
@@ -136,8 +153,8 @@ def _load_dataset(name, split, return_X_y, extract_path=None):
         if name not in _list_available_datasets(
             os.path.join(local_module, local_dirname)
         ):
-            # Dataset is not baked in the datasets directory, look in local_data,
-            # if it is not there, download and install it.
+            # Dataset is not already present in the datasets directory provided.
+            # If it is not there, download and install it.
             url = "http://timeseriesclassification.com/Downloads/%s.zip" % name
             # This also tests the validitiy of the URL, can't rely on the html
             # status code as it always returns 200
@@ -153,36 +170,20 @@ def _load_dataset(name, split, return_X_y, extract_path=None):
                     "Please make sure the dataset "
                     + "is available on http://timeseriesclassification.com/.",
                 ) from e
-    if isinstance(split, str):
-        split = split.upper()
 
-    if split in ("TRAIN", "TEST"):
-        fname = name + "_" + split + ".ts"
-        abspath = os.path.join(local_module, local_dirname, name, fname)
-        X, y = load_from_tsfile_to_dataframe(abspath)
-    # if split is None, load both train and test set
-    elif split is None:
-        X = pd.DataFrame(dtype="object")
-        y = pd.Series(dtype="object")
-        for split in ("TRAIN", "TEST"):
-            fname = name + "_" + split + ".ts"
-            abspath = os.path.join(local_module, local_dirname, name, fname)
-            result = load_from_tsfile_to_dataframe(abspath)
-            X = pd.concat([X, pd.DataFrame(result[0])])
-            y = pd.concat([y, pd.Series(result[1])])
-        y = pd.Series.to_numpy(y, dtype=str)
-    else:
-        raise ValueError("Invalid `split` value =", split)
-
-    # Return appropriately
-    if return_X_y:
-        return X, y
-    else:
-        X["class_val"] = pd.Series(y)
-        return X
+    return _load_provided_dataset(
+        name, split, return_X_y, return_type, local_module, local_dirname
+    )
 
 
-def _load_provided_dataset(name, split=None, return_X_y=True, return_type=None):
+def _load_provided_dataset(
+    name,
+    split=None,
+    return_X_y=True,
+    return_type=None,
+    local_module=MODULE,
+    local_dirname=DIRNAME,
+):
     """Load baked in time series classification datasets (helper function).
 
     Loads data from the provided files from sktime/datasets/data only.
@@ -192,41 +193,41 @@ def _load_provided_dataset(name, split=None, return_X_y=True, return_type=None):
         name : string, file name
         split : string, default = None, or one of "TRAIN" or "TEST".
         return_X_y : default = True, if true, returns X and y separately.
-        return_type : default = None,
+        return_type : string or None, default = None.
+        local_module: default = os.path.dirname(__file__),
+        local_dirname: default = "data"
     """
     if isinstance(split, str):
         split = split.upper()
 
     if split in ("TRAIN", "TEST"):
         fname = name + "_" + split + ".ts"
-        abspath = os.path.join(MODULE, DIRNAME, name, fname)
-        X, y = load_from_tsfile(abspath, return_data_type=return_type)
+        abspath = os.path.join(local_module, local_dirname, name, fname)
+        X, y = load_from_tsfile(abspath, return_data_type="nested_univ")
     # if split is None, load both train and test set
     elif split is None:
         fname = name + "_TRAIN.ts"
-        abspath = os.path.join(MODULE, DIRNAME, name, fname)
-        X_train, y_train = load_from_tsfile(abspath, return_data_type=return_type)
+        abspath = os.path.join(local_module, local_dirname, name, fname)
+        X_train, y_train = load_from_tsfile(abspath, return_data_type="nested_univ")
+
         fname = name + "_TEST.ts"
-        abspath = os.path.join(MODULE, DIRNAME, name, fname)
-        X_test, y_test = load_from_tsfile(abspath, return_data_type=return_type)
-        if isinstance(X_train, np.ndarray):
-            X = np.concatenate((X_train, X_test))
-        elif isinstance(X_train, pd.DataFrame):
-            X = pd.concat([X_train, X_test])
-        else:
-            raise IOError(
-                f"Invalid data structure type {type(X_train)} for loading "
-                f"classification problem "
-            )
-        y = np.concatenate((y_train, y_test))
+        abspath = os.path.join(local_module, local_dirname, name, fname)
+        X_test, y_test = load_from_tsfile(abspath, return_data_type="nested_univ")
+
+        X = pd.concat([X_train, X_test])
+        X = X.reset_index(drop=True)
+        y = np.concatenate([y_train, y_test])
 
     else:
         raise ValueError("Invalid `split` value =", split)
-    # Return appropriately
+
+    return_type = _alias_mtype_check(return_type)
     if return_X_y:
+        X = convert(X, from_type="nested_univ", to_type=return_type)
         return X, y
     else:
         X["class_val"] = pd.Series(y)
+        X = convert(X, from_type="nested_univ", to_type=return_type)
         return X
 
 
@@ -307,8 +308,8 @@ def load_from_tsfile(
     """Load time series .ts file into X and (optionally) y.
 
     Data from a .ts file is loaded into a nested pd.DataFrame, or optionally into a
-    2d np.ndarray (equal length, univariate problem) or 3d np.ndarray (eqal length,
-    multivariate problem) if requested. If present, y is loaded into a 1d .
+    2d np.ndarray (equal length, univariate problem) or 3d np.ndarray (equal length,
+    multivariate problem) if requested. If present, y is loaded into a 1d np.ndarray.
 
     Parameters
     ----------
@@ -329,7 +330,7 @@ def load_from_tsfile(
             "numpy3D"/"numpy3d"/"np3D": 3D np.ndarray (instance, variable, time index)
             "numpy2d"/"np2d"/"numpyflat": 2D np.ndarray (instance, time index)
             "pd-multiindex": pd.DataFrame with 2-level (instance, time) MultiIndex
-        Exception is raised if the data cannot be stored in therequested type.
+        Exception is raised if the data cannot be stored in the requested type.
 
     Returns
     -------
@@ -348,12 +349,7 @@ def load_from_tsfile(
     ValueError if return_data_type = numpy2d but the data are multivariate and/
     or unequal length series
     """
-    if return_data_type is None:
-        return_data_type = "nested_univ"
-    if return_data_type in ["numpy2d", "numpy2D", "np2d", "np2D"]:
-        return_data_type = "numpyflat"
-    if return_data_type in ["numpy3d", "np3d", "np3D"]:
-        return_data_type = "numpy3D"
+    return_data_type = _alias_mtype_check(return_data_type)
 
     if not isinstance(return_data_type, str):
         raise TypeError(
@@ -1577,9 +1573,9 @@ def write_ndarray_to_tsfile(
     # write class label line
     if class_label is not None:
         space_separated_class_label = " ".join(str(label) for label in class_label)
-        file.write(f"@classLabel true {space_separated_class_label}\n")
+        file.write(f"@classlabel true {space_separated_class_label}\n")
     else:
-        file.write("@class_label false\n")
+        file.write("@classlabel false\n")
     # begin writing the core data for each case
     # which are the series and the class value list if there is any
     file.write("@data\n")

@@ -6,8 +6,6 @@
 __author__ = ["mloning", "RNKuhns", "danbartl", "grzegorzrut"]
 __all__ = ["SummaryTransformer", "WindowSummarizer"]
 
-import warnings
-
 import pandas as pd
 from joblib import Parallel, delayed
 
@@ -40,7 +38,7 @@ class WindowSummarizer(BaseTransformer):
         For ease of notation, for the key "lag", only a single integer
         specifying the `lag` argument will be provided.
 
-        Please see blow a graphical representation of the logic using the following
+        Please see below a graphical representation of the logic using the following
         symbols:
 
         ``z`` = time stamp that the window is summarized *to*.
@@ -152,19 +150,6 @@ class WindowSummarizer(BaseTransformer):
     >>> transformer = WindowSummarizer(**kwargs)
     >>> y_transformed = transformer.fit_transform(y)
 
-        Example where we transform on a different, later test set:
-    >>> y = load_airline()
-    >>> y_train, y_test = temporal_train_test_split(y)
-    >>> kwargs = {
-    ...     "lag_config": {
-    ...         "lag": ["lag", [[1, 0]]],
-    ...         "mean": ["mean", [[3, 0], [12, 0]]],
-    ...         "std": ["std", [[4, 0]]],
-    ...     }
-    ... }
-    >>> transformer = WindowSummarizer(**kwargs)
-    >>> y_test_transformed = transformer.fit(y_train).transform(y_test)
-
         Example with transforming multiple columns of exogeneous features
     >>> y, X = load_longley()
     >>> y_train, y_test, X_train, X_test = temporal_train_test_split(y, X)
@@ -214,19 +199,17 @@ class WindowSummarizer(BaseTransformer):
         "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
         "transform-returns-same-time-index": False,
         # does transform return have the same time index as input X
+        "remember_data": True,  # remember all data seen as _X
     }
 
     def __init__(
         self,
-        lag_config=None,
         lag_feature=None,
         n_jobs=-1,
         target_cols=None,
         truncate=None,
     ):
 
-        # self._converter_store_X = dict()
-        self.lag_config = lag_config
         self.lag_feature = lag_feature
         self.n_jobs = n_jobs
         self.target_cols = target_cols
@@ -256,8 +239,6 @@ class WindowSummarizer(BaseTransformer):
             The raw inputs to transformed columns will be dropped.
         self: reference to self
         """
-        self._X_memory = X
-
         X_name = get_name_list(X)
 
         if self.target_cols is not None:
@@ -275,48 +256,33 @@ class WindowSummarizer(BaseTransformer):
             self._target_cols = self.target_cols
 
         # Convert lag config dictionary to pandas dataframe
-        if self.lag_config is not None:
-            func_dict = pd.DataFrame(self.lag_config).T.reset_index()
-            func_dict.rename(
-                columns={"index": "name", 0: "summarizer", 1: "window"},
-                inplace=True,
-            )
-            func_dict = func_dict.explode("window")
-            func_dict["window"] = func_dict["window"].apply(lambda x: [x[1] + 1, x[0]])
-            func_dict.drop("name", inplace=True, axis=1)
-            warnings.warn(
-                "Specifying lag features via lag_config is deprecated since 0.12.0,"
-                + " and will be removed in 0.13.0. Please use the lag_feature notation"
-                + " (see the documentation for the new notation)."
-            )
+        if self.lag_feature is None:
+            func_dict = pd.DataFrame(
+                {
+                    "lag": [1],
+                }
+            ).T.reset_index()
         else:
-            if self.lag_feature is None:
-                func_dict = pd.DataFrame(
-                    {
-                        "lag": [1],
-                    }
-                ).T.reset_index()
-            else:
-                func_dict = pd.DataFrame.from_dict(
-                    self.lag_feature, orient="index"
-                ).reset_index()
+            func_dict = pd.DataFrame.from_dict(
+                self.lag_feature, orient="index"
+            ).reset_index()
 
-            func_dict = pd.melt(
-                func_dict, id_vars="index", value_name="window", ignore_index=False
-            )
-            func_dict.sort_index(inplace=True)
-            func_dict.drop("variable", axis=1, inplace=True)
-            func_dict.rename(
-                columns={"index": "summarizer"},
-                inplace=True,
-            )
-            func_dict = func_dict.dropna(axis=0, how="any")
-            # Identify lags (since they can follow special notation)
-            lags = func_dict["summarizer"] == "lag"
-            # Convert lags to default list notation with window_length 1
-            boost_lag = func_dict.loc[lags, "window"].apply(lambda x: [int(x), 1])
-            func_dict.loc[lags, "window"] = boost_lag
-        self.truncate_start = func_dict["window"].apply(lambda x: x[0] + x[1]).max()
+        func_dict = pd.melt(
+            func_dict, id_vars="index", value_name="window", ignore_index=False
+        )
+        func_dict.sort_index(inplace=True)
+        func_dict.drop("variable", axis=1, inplace=True)
+        func_dict.rename(
+            columns={"index": "summarizer"},
+            inplace=True,
+        )
+        func_dict = func_dict.dropna(axis=0, how="any")
+        # Identify lags (since they can follow special notation)
+        lags = func_dict["summarizer"] == "lag"
+        # Convert lags to default list notation with window_length 1
+        boost_lag = func_dict.loc[lags, "window"].apply(lambda x: [int(x), 1])
+        func_dict.loc[lags, "window"] = boost_lag
+        self.truncate_start = func_dict["window"].apply(lambda x: x[0] + x[1] - 1).max()
         self._func_dict = func_dict
 
     def _transform(self, X, y=None):
@@ -332,7 +298,7 @@ class WindowSummarizer(BaseTransformer):
         transformed version of X
         """
         idx = X.index
-        X = X.combine_first(self._X_memory)
+        X = X.combine_first(self._X)
 
         func_dict = self._func_dict
         target_cols = self._target_cols
@@ -364,20 +330,6 @@ class WindowSummarizer(BaseTransformer):
 
         Xt_return = Xt_return.loc[idx]
         return Xt_return
-
-    def _update(self, X, y=None):
-        """Update X and return a transformed version.
-
-        Parameters
-        ----------
-        X : pd.DataFrame
-        y : None
-
-        Returns
-        -------
-        transformed version of X
-        """
-        self._X_memory = X.combine_first(self._X_memory)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -650,8 +602,6 @@ class SummaryTransformer(BaseTransformer):
 
     See Also
     --------
-    MeanTransformer :
-        Calculate the mean of a timeseries.
     WindowSummarizer:
         Extracting features across (shifted) windows from series
 

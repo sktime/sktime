@@ -105,8 +105,8 @@ class ThetaLinesTransformer(BaseTransformer):
         trend = forecaster.predict(fh=fh)
 
         theta_lines = np.zeros((X.shape[0], len(theta)))
-        for i, theta in enumerate(theta):
-            theta_lines[:, i] = _theta_transform(X, trend, theta)
+        for i, theta_i in enumerate(theta):
+            theta_lines[:, i] = _theta_transform(X, trend, theta_i)
         if isinstance(self.theta, (float, int)):
             return pd.Series(theta_lines.flatten(), index=X.index)
         else:

@@ -226,7 +226,7 @@ def _check_list_of_str(obj, name="obj"):
     ------
     TypeError if obj is not list of str
     """
-    if not isinstance(obj, list) or not np.all(isinstance(x, str) for x in obj):
+    if not isinstance(obj, list) or not np.all([isinstance(x, str) for x in obj]):
         raise TypeError(f"{name} must be a list of str")
     return obj
 

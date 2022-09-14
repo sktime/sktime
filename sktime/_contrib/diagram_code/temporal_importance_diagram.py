@@ -1,18 +1,24 @@
 # -*- coding: utf-8 -*-
 """Temporal importance curve diagram generators for interval forests."""
 
-__author__ = ["Matthew Middlehurst"]
+__author__ = ["MatthewMiddlehurst"]
 
 import numpy as np
-from matplotlib import pyplot as plt
 
 from sktime.classification.interval_based import CanonicalIntervalForest
 from sktime.transformations.panel import catch22
+from sktime.utils.validation._dependencies import _check_soft_dependencies
+
+_check_soft_dependencies("matplotlib", severity="warning")
 
 
 def plot_curves(curves, curve_names, top_curves_shown=None, plot_mean=True):
     """Temporal importance curve diagram generator for interval forests."""
     # find attributes to display by max information gain for any time point.
+    _check_soft_dependencies("matplotlib")
+
+    import matplotlib.pyplot as plt
+
     top_curves_shown = len(curves) if top_curves_shown is None else top_curves_shown
     max_ig = [max(i) for i in curves]
     top = sorted(range(len(max_ig)), key=lambda i: max_ig[i], reverse=True)[
