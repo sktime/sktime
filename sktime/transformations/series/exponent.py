@@ -6,6 +6,8 @@
 __author__ = ["Ryan Kuhns"]
 __all__ = ["ExponentTransformer", "SqrtTransformer"]
 
+from warnings import warn
+
 import numpy as np
 import pandas as pd
 
@@ -101,6 +103,14 @@ class ExponentTransformer(BaseTransformer):
 
         super(ExponentTransformer, self).__init__()
 
+        if abs(power) < 1e-6:
+            warn(
+                "power close to zero passed to ExponentTransformer, "
+                "inverse_transform will default to identity "
+                "if called, in order to avoid division by zero"
+            )
+            self.set_tags({"skip-inverse-transform": True})
+
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
 
@@ -176,7 +186,7 @@ class ExponentTransformer(BaseTransformer):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        return [{"power": 2.5}, {"power": 0}]
+        return [{"power": 2.5, "offset": 1}, {"power": 0}]
 
 
 class SqrtTransformer(ExponentTransformer):
