@@ -8,6 +8,7 @@ Code based partially on NaiveVariance by ilyasmoutawwakil.
 __all__ = ["ConformalIntervals"]
 __author__ = ["fkiraly", "bethrice44"]
 
+from math import floor
 from warnings import warn
 
 import numpy as np
@@ -53,8 +54,12 @@ class ConformalIntervals(BaseForecaster):
             Caveat: this does not give frequentist but conformal predictive intervals
         "conformal": as in Stankeviciute et al, but with H=1,
             i.e., no Bonferroni correction under number of indices in the horizon
-    initial_window : int, optional, default=1
-        number of minimum initial indices to use for fitting when computing residuals
+    initial_window : float, int or None, optional (default=max(10, 0.1*len(y)))
+        Defines the size of the initial training window
+        If float, should be between 0.0 and 1.0 and represent the proportion
+        of the dataset to include for the initial window for the train split.
+        If int, represents the relative number of train samples in the initial window.
+        If None, the value is set to the larger of 0.1*len(y) and 10
     sample_frac : float, optional, default=None
         value in range (0,1) corresponding to fraction of y index to calculate
         residuals matrix values for (for speeding up calculation)
@@ -79,7 +84,6 @@ class ConformalIntervals(BaseForecaster):
     >>> pred_int = conformal_forecaster.predict_interval()
     """
 
-    _required_parameters = ["forecaster"]
     _tags = {
         "scitype:y": "univariate",
         "requires-fh-in-fit": False,
@@ -244,6 +248,69 @@ class ConformalIntervals(BaseForecaster):
 
         return pred_int.convert_dtypes()
 
+    def _predict_quantiles(self, fh, X, alpha):
+        """Compute/return prediction quantiles for a forecast.
+
+        private _predict_quantiles containing the core logic,
+            called from predict_quantiles and default _predict_interval
+
+        Parameters
+        ----------
+        fh : guaranteed to be ForecastingHorizon
+            The forecasting horizon with the steps ahead to to predict.
+        X : optional (default=None)
+            guaranteed to be of a type in self.get_tag("X_inner_mtype")
+            Exogeneous time series to predict from.
+        alpha : list of float, optional (default=[0.5])
+            A list of probabilities at which quantile forecasts are computed.
+
+        Returns
+        -------
+        quantiles : pd.DataFrame
+            Column has multi-index: first level is variable name from y in fit,
+                second level being the values of alpha passed to the function.
+            Row index is fh, with additional (upper) levels equal to instance levels,
+                    from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
+            Entries are quantile forecasts, for var in col index,
+                at quantile probability in second col index, for the row index.
+        """
+        pred_int = BaseForecaster._predict_quantiles(self, fh, X, alpha)
+
+        return pred_int
+
+    def _parse_initial_window(self, y, initial_window=None):
+
+        n_samples = len(y)
+
+        if initial_window is None:
+            initial_window = max(10, 0.1 * n_samples)
+
+        initial_window_type = np.asarray(initial_window).dtype.kind
+
+        if (
+            initial_window_type == "i"
+            and (initial_window >= n_samples or initial_window <= 0)
+            or initial_window_type == "f"
+            and (initial_window <= 0 or initial_window >= 1)
+        ):
+            raise ValueError(
+                "initial_window={0} should be either positive and smaller"
+                " than the number of samples {1} or a float in the "
+                "(0, 1) range".format(initial_window, n_samples)
+            )
+
+        if initial_window is not None and initial_window_type not in ("i", "f"):
+            raise ValueError(
+                "Invalid value for initial_window: {}".format(initial_window)
+            )
+
+        if initial_window_type == "f":
+            n_initial_window = int(floor(initial_window * n_samples))
+        elif initial_window_type == "i":
+            n_initial_window = int(initial_window)
+
+        return n_initial_window
+
     def _compute_sliding_residuals(self, y, X, forecaster, initial_window, sample_frac):
         """Compute sliding residuals used in uncertainty estimates.
 
@@ -255,10 +322,15 @@ class ConformalIntervals(BaseForecaster):
             sktime compatible exogeneous time series to use in forecasts
         forecaster : sktime compatible forecaster
             forecaster to use in computing the sliding residuals
-        initial_window : int
-            minimum length of initial window to use in fitting
+        initial_window : float, int or None, optional (default=max(10, 0.1*len(y)))
+            Defines the size of the initial training window
+            If float, should be between 0.0 and 1.0 and represent the proportion
+            of the dataset to include for the initial window for the train split.
+            If int, represents the relative number of train samples in the
+            initial window.
+            If None, the value is set to the larger of 0.1*len(y) and 10
         sample_frac : float
-            for speeding up computing of residuals matrix.
+            For speeding up computing of residuals matrix.
             sample value in range (0, 1) to obtain a fraction of y indices to
             compute residuals matrix for
         Returns
@@ -271,7 +343,9 @@ class ConformalIntervals(BaseForecaster):
         """
         y = convert_to(y, "pd.Series")
 
-        y_index = y.index[initial_window:]
+        n_initial_window = self._parse_initial_window(y, initial_window=initial_window)
+
+        y_index = y.iloc[n_initial_window:].index
 
         residuals_matrix = pd.DataFrame(columns=y_index, index=y_index, dtype="float")
 

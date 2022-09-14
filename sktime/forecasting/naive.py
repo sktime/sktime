@@ -6,11 +6,13 @@
 __all__ = ["NaiveForecaster", "NaiveVariance"]
 __author__ = [
     "mloning",
-    "Piyush Gade",
+    "piyush1729",
+    "sri1419",
     "Flix6x",
     "aiwalter",
     "IlyasMoutawwakil",
     "fkiraly",
+    "bethrice44",
 ]
 
 from warnings import warn
@@ -23,22 +25,79 @@ from sktime.datatypes._convert import convert, convert_to
 from sktime.datatypes._utilities import get_slice
 from sktime.forecasting.base._base import DEFAULT_ALPHA, BaseForecaster
 from sktime.forecasting.base._sktime import _BaseWindowForecaster
-from sktime.forecasting.compose import ColumnEnsembleForecaster
 from sktime.utils.validation import check_window_length
 from sktime.utils.validation.forecasting import check_sp
 
 
-class _NaiveForecaster(_BaseWindowForecaster):
-    """Univariate NaiveForecaster."""
+class NaiveForecaster(_BaseWindowForecaster):
+    """Forecast based on naive assumptions about past trends continuing.
+
+    NaiveForecaster is a forecaster that makes forecasts using simple
+    strategies. Two out of three strategies are robust against NaNs. The
+    NaiveForecaster can also be used for multivariate data and it then
+    applies internally the ColumnEnsembleForecaster, so each column
+    is forecasted with the same strategy.
+
+    Internally, this forecaster does the following:
+    - obtains the so-called "last window", a 1D array that denotes the
+      most recent time window that the forecaster is allowed to use
+    - reshapes the last window into a 2D array according to the given
+      seasonal periodicity (prepended with NaN values to make it fit);
+    - make a prediction for each column, using the given strategy:
+      - "last": last non-NaN row
+      - "mean": np.nanmean over rows
+    - tile the predictions using the seasonal periodicity
+
+    Parameters
+    ----------
+    strategy : {"last", "mean", "drift"}, default="last"
+        Strategy used to make forecasts:
+
+        * "last":   (robust against NaN values)
+                    forecast the last value in the
+                    training series when sp is 1.
+                    When sp is not 1,
+                    last value of each season
+                    in the last window will be
+                    forecasted for each season.
+        * "mean":   (robust against NaN values)
+                    forecast the mean of last window
+                    of training series when sp is 1.
+                    When sp is not 1, mean of all values
+                    in a season from last window will be
+                    forecasted for each season.
+        * "drift":  (not robust against NaN values)
+                    forecast by fitting a line between the
+                    first and last point of the window and
+                    extrapolating it into the future.
+
+    sp : int, or None, default=1
+        Seasonal periodicity to use in the seasonal forecasting. None=1.
+
+    window_length : int or None, default=None
+        Window length to use in the `mean` strategy. If None, entire training
+            series will be used.
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.naive import NaiveForecaster
+    >>> y = load_airline()
+    >>> forecaster = NaiveForecaster(strategy="drift")
+    >>> forecaster.fit(y)
+    NaiveForecaster(...)
+    >>> y_pred = forecaster.predict(fh=[1,2,3])
+    """
 
     _tags = {
+        "y_inner_mtype": "pd.Series",
         "requires-fh-in-fit": False,
-        "handles-missing-data": True,  # todo: switch to True if GH1367 is fixed
+        "handles-missing-data": True,
         "scitype:y": "univariate",
     }
 
     def __init__(self, strategy="last", window_length=None, sp=1):
-        super(_NaiveForecaster, self).__init__()
+        super(NaiveForecaster, self).__init__()
         self.strategy = strategy
         self.sp = sp
         self.window_length = window_length
@@ -65,27 +124,28 @@ class _NaiveForecaster(_BaseWindowForecaster):
         self : returns an instance of self.
         """
         # X_train is ignored
+        sp = self.sp or 1
 
         n_timepoints = y.shape[0]
 
         if self.strategy in ("last", "mean"):
             # check window length is greater than sp for seasonal mean or seasonal last
-            if self.window_length is not None and self.sp != 1:
-                if self.window_length < self.sp:
+            if self.window_length is not None and sp != 1:
+                if self.window_length < sp:
                     raise ValueError(
                         f"The `window_length`: "
                         f"{self.window_length} is smaller than "
-                        f"`sp`: {self.sp}."
+                        f"`sp`: {sp}."
                     )
             self.window_length_ = check_window_length(self.window_length, n_timepoints)
-            self.sp_ = check_sp(self.sp)
+            self.sp_ = check_sp(sp)
 
             #  if not given, set default window length
             if self.window_length is None:
                 self.window_length_ = len(y)
 
         elif self.strategy == "drift":
-            if self.sp != 1:
+            if sp != 1:
                 warn("For the `drift` strategy, the `sp` value will be ignored.")
             # window length we need for forecasts is just the
             # length of seasonal periodicity
@@ -108,9 +168,7 @@ class _NaiveForecaster(_BaseWindowForecaster):
 
         # check window length
         if self.window_length_ > len(self._y):
-            param = (
-                "sp" if self.strategy == "last" and self.sp != 1 else "window_length_"
-            )
+            param = "sp" if self.strategy == "last" and sp != 1 else "window_length_"
             raise ValueError(
                 f"The {param}: {self.window_length_} is larger than "
                 f"the training series."
@@ -126,7 +184,7 @@ class _NaiveForecaster(_BaseWindowForecaster):
         fh = fh.to_relative(self.cutoff)
 
         strategy = self.strategy
-        sp = self.sp
+        sp = self.sp or 1
 
         # if last window only contains missing values, return nan
         if np.all(np.isnan(last_window)) or len(last_window) == 0:
@@ -245,111 +303,6 @@ class _NaiveForecaster(_BaseWindowForecaster):
         fh_idx = fh.to_indexer(self.cutoff)
         return y_pred[fh_idx]
 
-
-class NaiveForecaster(BaseForecaster):
-    """Forecast based on naive assumptions about past trends continuing.
-
-    NaiveForecaster is a forecaster that makes forecasts using simple
-    strategies. Two out of three strategies are robust against NaNs. The
-    NaiveForecaster can also be used for multivariate data and it then
-    applies internally the ColumnEnsembleForecaster, so each column
-    is forecasted with the same strategy.
-
-    Internally, this forecaster does the following:
-    - obtains the so-called "last window", a 1D array that denotes the
-      most recent time window that the forecaster is allowed to use
-    - reshapes the last window into a 2D array according to the given
-      seasonal periodicity (prepended with NaN values to make it fit);
-    - make a prediction for each column, using the given strategy:
-      - "last": last non-NaN row
-      - "mean": np.nanmean over rows
-    - tile the predictions using the seasonal periodicity
-
-    Parameters
-    ----------
-    strategy : {"last", "mean", "drift"}, default="last"
-        Strategy used to make forecasts:
-
-        * "last":   (robust against NaN values)
-                    forecast the last value in the
-                    training series when sp is 1.
-                    When sp is not 1,
-                    last value of each season
-                    in the last window will be
-                    forecasted for each season.
-        * "mean":   (robust against NaN values)
-                    forecast the mean of last window
-                    of training series when sp is 1.
-                    When sp is not 1, mean of all values
-                    in a season from last window will be
-                    forecasted for each season.
-        * "drift":  (not robust against NaN values)
-                    forecast by fitting a line between the
-                    first and last point of the window and
-                    extrapolating it into the future.
-
-    sp : int, default=1
-        Seasonal periodicity to use in the seasonal forecasting.
-
-    window_length : int or None, default=None
-        Window length to use in the `mean` strategy. If None, entire training
-            series will be used.
-
-    Examples
-    --------
-    >>> from sktime.datasets import load_airline
-    >>> from sktime.forecasting.naive import NaiveForecaster
-    >>> y = load_airline()
-    >>> forecaster = NaiveForecaster(strategy="drift")
-    >>> forecaster.fit(y)
-    NaiveForecaster(...)
-    >>> y_pred = forecaster.predict(fh=[1,2,3])
-    """
-
-    _tags = {
-        "y_inner_mtype": ["pd.DataFrame", "pd.Series"],
-        "scitype:y": "both",
-        "requires-fh-in-fit": False,
-        "handles-missing-data": True,  # todo: switch to True if GH1367 is fixed
-    }
-
-    def __init__(self, strategy="last", window_length=None, sp=1):
-        self.strategy = strategy
-        self.sp = sp
-        self.window_length = window_length
-        super(NaiveForecaster, self).__init__()
-
-    def _fit(self, y, X=None, fh=None):
-        """Fit to training data.
-
-        Parameters
-        ----------
-        y : pd.Series, pd.DataFrame
-            Target time series to which to fit the forecaster.
-        fh : int, list or np.array, default=None
-            The forecasters horizon with the steps ahead to to predict.
-        X : pd.DataFrame, default=None
-            Exogenous variables are ignored.
-
-        Returns
-        -------
-        self : returns an instance of self.
-        """
-        self._forecaster = ColumnEnsembleForecaster(
-            _NaiveForecaster(
-                strategy=self.strategy, sp=self.sp, window_length=self.window_length
-            )
-        )
-
-        # 1st part of preserving name/columns, otherwise they get lost on occasion
-        # provisionally hard-fixing the mess of 100 nested function calls
-        # until someone finds it in their heart to simplify the NaiveForecaster
-        if isinstance(y, pd.Series):
-            self.cols_ = y.name
-        else:
-            self.cols_ = y.columns
-        self._forecaster.fit(y=y, X=X, fh=fh)
-
     def _predict(self, fh=None, X=None):
         """Forecast time series at future horizon.
 
@@ -360,40 +313,22 @@ class NaiveForecaster(BaseForecaster):
         X : pd.DataFrame, optional (default=None)
             Exogenous time series
         """
-        y_pred = self._forecaster.predict(fh=fh, X=X)
+        y_pred = super(NaiveForecaster, self)._predict(fh=fh, X=X)
+
+        # test_predict_time_index_in_sample_full[ForecastingPipeline-0-int-int-True]
+        #   causes a pd.DataFrame to appear as y_pred, which upsets the next lines
+        #   reasons are unclear, this is coming from the _BaseWindowForecaster
+        # todo: investigate this
+        if isinstance(y_pred, pd.DataFrame):
+            y_pred = y_pred.iloc[:, 0]
 
         # check for in-sample prediction, if first time point needs to be imputed
         if self._y.index[0] in y_pred.index:
-            # fill NaN with next row values
-            y_pred.loc[self._y.index[0]] = y_pred.loc[self._y.index[1]]
-
-        # 2nd part of preserving name/columns, otherwise they get lost on occasion
-        # provisionally hard-fixing the mess of 100 nested function calls
-        # until someone finds it in their heart to simplify the NaiveForecaster
-        if isinstance(y_pred, pd.Series):
-            y_pred.name = self.cols_
-        else:  # is pd.DataFrame
-            y_pred.columns = self.cols_
+            if y_pred.loc[[self._y.index[0]]].hasnans:
+                # fill NaN with observed values
+                y_pred.loc[self._y.index[0]] = self._y[self._y.index[1]]
 
         return y_pred
-
-    def _update(self, y, X=None, update_params=True):
-        """Update cutoff value and, optionally, fitted parameters.
-
-        Parameters
-        ----------
-        y : pd.Series, pd.DataFrame, or np.array
-            Target time series to which to fit the forecaster.
-        X : pd.DataFrame, optional (default=None)
-            Exogeneous data
-        update_params : bool, optional (default=True)
-            whether model parameters should be updated
-
-        Returns
-        -------
-        self : reference to self
-        """
-        return self._forecaster.update(y=y, X=X, update_params=update_params)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -415,9 +350,9 @@ class NaiveForecaster(BaseForecaster):
         """
         params_list = [
             {},
-            {"sp": 2},
-            {"strategy": "mean"},
+            {"strategy": "mean", "sp": 2},
             {"strategy": "drift"},
+            {"strategy": "last"},
             {"strategy": "mean", "window_length": 5},
         ]
 
@@ -467,7 +402,6 @@ class NaiveVariance(BaseForecaster):
     >>> var_pred = variance_forecaster.predict_var(fh=[1,2,3])
     """
 
-    _required_parameters = ["forecaster"]
     _tags = {
         "scitype:y": "univariate",
         "requires-fh-in-fit": False,

@@ -48,30 +48,12 @@ class IndexSubset(BaseTransformer):
         "fit_is_empty": False,
         "univariate-only": False,
         "capability:inverse_transform": False,
+        "remember_data": True,  # remember all data seen as _X
     }
 
     def __init__(self, index_treatment="keep"):
         self.index_treatment = index_treatment
         super(IndexSubset, self).__init__()
-
-    def _fit(self, X, y=None):
-        """Fit transformer to X and y.
-
-        private _fit containing the core logic, called from fit
-
-        Parameters
-        ----------
-        X : pd.DataFrame or pd.Series
-            Data the transformer is fitted to
-        y : ignored argument for interface compatibility
-            Additional data, e.g., labels for transformation
-
-        Returns
-        -------
-        self: a fitted instance of the estimator
-        """
-        self._X = X
-        return self
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
@@ -110,25 +92,6 @@ class IndexSubset(BaseTransformer):
                 f' "{index_treatment}"'
             )
         return Xt
-
-    def _update(self, X, y=None):
-        """Update transformer with X and y.
-
-        private _update containing the core logic, called from update
-
-        Parameters
-        ----------
-        X : pd.DataFrame or pd.Series
-            Data the transform is fitted to
-        y : ignored argument for interface compatibility
-            Additional data, e.g., labels for transformation
-
-        Returns
-        -------
-        self: a fitted instance of the estimator
-        """
-        self._X = X.combine_first(self._X)
-        return self
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -228,8 +191,10 @@ class ColumnSelect(BaseTransformer):
 
         if columns is None:
             return X
-        else:
-            columns = pd.Index(columns)
+        if pd.api.types.is_scalar(columns):
+            columns = [columns]
+
+        columns = pd.Index(columns)
 
         if integer_treatment == "col" and columns.is_integer():
             columns = [x for x in columns if x < len(X.columns)]
@@ -275,5 +240,6 @@ class ColumnSelect(BaseTransformer):
         params1 = {"columns": None}
         params2 = {"columns": [0, 2, 3]}
         params3 = {"columns": ["a", "foo", "bar"], "index_treatment": "keep"}
+        params4 = {"columns": "a", "index_treatment": "keep"}
 
-        return [params1, params2, params3]
+        return [params1, params2, params3, params4]

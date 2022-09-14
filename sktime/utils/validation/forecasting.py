@@ -34,7 +34,7 @@ from sktime.utils.validation import (
 )
 from sktime.utils.validation.series import check_equal_time_index, check_series
 
-ACCEPTED_CUTOFF_TYPES = np.ndarray, pd.Index
+ACCEPTED_CUTOFF_TYPES = list, np.ndarray, pd.Index
 VALID_CUTOFF_TYPES = Union[ACCEPTED_CUTOFF_TYPES]
 
 
@@ -262,8 +262,8 @@ def check_sp(sp, enforce_list=False):
     return sp
 
 
-def check_fh(fh, enforce_relative=False):
-    """Validate forecasting horizon.
+def check_fh(fh, enforce_relative: bool = False, freq=None):
+    """Coerce to ForecastingHorizon object and validate inputs.
 
     Parameters
     ----------
@@ -271,17 +271,29 @@ def check_fh(fh, enforce_relative=False):
         Forecasting horizon specifying the time points to predict.
     enforce_relative : bool, optional (default=False)
         If True, checks if fh is relative.
+    freq : str, or pd.Index, optional (default=None)
+        object carrying frequency information on values
+        ignored unless values is without inferrable freq
+        Frequency string or pd.Index
 
     Returns
     -------
     fh : ForecastingHorizon
         Validated forecasting horizon.
+
+    Raises
+    ------
+    ValueError
+        If passed fh is of length zero
+        If enforce_relative is True, but fh.is_relative is False
     """
     # Convert to ForecastingHorizon
     from sktime.forecasting.base import ForecastingHorizon
 
     if not isinstance(fh, ForecastingHorizon):
-        fh = ForecastingHorizon(fh, is_relative=None)
+        fh = ForecastingHorizon(fh, is_relative=None, freq=freq)
+    else:
+        fh.freq = freq
 
     # Check if non-empty, note we check for empty values here, rather than
     # during construction of ForecastingHorizon because ForecastingHorizon

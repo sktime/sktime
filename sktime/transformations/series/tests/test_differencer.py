@@ -13,6 +13,7 @@ import pytest
 from sktime.datasets import load_airline
 from sktime.transformations.series.difference import Differencer
 from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 y_airline = load_airline()
 y_airline_df = pd.concat([y_airline, y_airline], axis=1)
@@ -88,3 +89,65 @@ def test_differencer_prediction(y, lags):
     y_pred_inv = transformer.inverse_transform(y_pred)
 
     _assert_array_almost_equal(y_true, y_pred_inv)
+
+
+@pytest.mark.skipif(
+    not _check_soft_dependencies("prophet", severity="none"),
+    reason="requires Prophet forecaster in the example",
+)
+def test_differencer_cutoff():
+    """Tests a special case that triggers freq inference.
+
+    Failure mode:
+    raises ValueError "Must supply freq for datetime value"
+    on line "fh = ForecastingHorizon(etc" in Differencer._check_inverse_transform_index
+    """
+    from sktime.datasets import load_longley
+    from sktime.forecasting.compose import TransformedTargetForecaster
+    from sktime.forecasting.fbprophet import Prophet
+    from sktime.forecasting.model_selection import (
+        ExpandingWindowSplitter,
+        ForecastingGridSearchCV,
+        temporal_train_test_split,
+    )
+    from sktime.transformations.series.difference import Differencer
+
+    y, X = load_longley()
+
+    # split train/test both y and X
+    fh = [1, 2]
+    train_model, _ = temporal_train_test_split(y, fh=fh)
+    X_train = X[X.index.isin(train_model.index)]
+    train_model.index = train_model.index.to_timestamp(freq="A")
+    X_train.index = X_train.index.to_timestamp(freq="A")
+
+    # pipeline
+    pipe = TransformedTargetForecaster(
+        steps=[
+            ("differencer", Differencer(na_handling="fill_zero")),
+            ("myforecaster", Prophet()),
+        ]
+    )
+
+    # cv setup
+    N_cv_fold = 1
+    step_cv = 1
+    cv = ExpandingWindowSplitter(
+        initial_window=len(train_model) - (N_cv_fold - 1) * step_cv - len(fh),
+        start_with_window=True,
+        step_length=step_cv,
+        fh=fh,
+    )
+
+    param_grid = [{"differencer__na_handling": ["fill_zero"]}]
+
+    # grid search
+    gscv = ForecastingGridSearchCV(
+        forecaster=pipe,
+        cv=cv,
+        param_grid=param_grid,
+        verbose=1,
+    )
+
+    # fit
+    gscv.fit(train_model, X=X_train)

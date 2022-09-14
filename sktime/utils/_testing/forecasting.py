@@ -23,12 +23,10 @@ from sktime.utils.validation.forecasting import check_fh
 def _get_n_columns(tag):
     """Return the the number of columns to use in tests."""
     n_columns_list = []
-    if tag == "univariate":
-        n_columns_list = [1]
+    if tag in ["univariate", "both"]:
+        n_columns_list = [1, 2]
     elif tag == "multivariate":
         n_columns_list = [2]
-    elif tag == "both":
-        n_columns_list = [1, 2]
     else:
         raise ValueError(f"Unexpected tag {tag} in _get_n_columns.")
     return n_columns_list
@@ -138,6 +136,23 @@ def _assert_correct_pred_time_index(y_pred_index, cutoff, fh):
     y_pred_index.equals(expected)
 
 
+def _assert_correct_columns(y_pred, y_train):
+    """Check that forecast object has right column names."""
+    if isinstance(y_pred, pd.DataFrame) and isinstance(y_train, pd.DataFrame):
+        msg = (
+            "forecast pd.DataFrame must have same column index as past data, "
+            f"expected {y_train.columns} but found {y_pred.columns}"
+        )
+        assert (y_pred.columns == y_train.columns).all(), msg
+
+    if isinstance(y_pred, pd.Series) and isinstance(y_train, pd.Series):
+        msg = (
+            "forecast pd.Series must have same name as past data, "
+            f"expected {y_train.name} but found {y_pred.name}"
+        )
+        assert y_pred.name == y_train.name, msg
+
+
 def _make_fh(cutoff, steps, fh_type, is_relative):
     """Construct forecasting horizons for testing."""
     from sktime.forecasting.tests._config import INDEX_TYPE_LOOKUP
@@ -156,11 +171,16 @@ def _make_fh(cutoff, steps, fh_type, is_relative):
     else:
         kwargs = {}
 
+        if fh_type in ["datetime", "period"]:
+            cutoff_freq = cutoff.freq
+        if isinstance(cutoff, pd.Index):
+            cutoff = cutoff[0]
+
         if fh_type == "datetime":
-            steps *= cutoff.freq
+            steps *= cutoff_freq
 
         if fh_type == "period":
-            kwargs = {"freq": cutoff.freq}
+            kwargs = {"freq": cutoff_freq}
 
         values = cutoff + steps
         return ForecastingHorizon(fh_class(values, **kwargs), is_relative)

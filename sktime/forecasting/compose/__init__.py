@@ -23,8 +23,10 @@ __all__ = [
     "StackingForecaster",
     "MultiplexForecaster",
     "make_reduction",
+    "BaggingForecaster",
 ]
 
+from sktime.forecasting.compose._bagging import BaggingForecaster
 from sktime.forecasting.compose._column_ensemble import ColumnEnsembleForecaster
 from sktime.forecasting.compose._ensemble import (
     AutoEnsembleForecaster,

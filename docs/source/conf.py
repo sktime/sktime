@@ -184,14 +184,24 @@ html_theme_options = {
             "icon": "fab fa-github",
         },
         {
-            "name": "Twitter",
-            "url": "https://twitter.com/sktime_toolbox",
-            "icon": "fab fa-twitter",
+            "name": "Slack",
+            "url": "https://join.slack.com/t/sktime-group/shared_invite/zt-1cghagwee-sqLJ~eHWGYgzWbqUX937ig",  # noqa: E501
+            "icon": "fab fa-slack",
         },
         {
             "name": "Discord",
             "url": "https://discord.com/invite/gqSab2K",
             "icon": "fab fa-discord",
+        },
+        {
+            "name": "LinkedIn",
+            "url": "https://www.linkedin.com/company/sktime/",
+            "icon": "fab fa-linkedin",
+        },
+        {
+            "name": "Twitter",
+            "url": "https://twitter.com/sktime_toolbox",
+            "icon": "fab fa-twitter",
         },
     ],
     "favicons": [

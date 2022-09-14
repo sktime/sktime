@@ -11,9 +11,14 @@ from numpy.testing._private.utils import assert_array_equal
 from pytest import raises
 
 from sktime.datasets import load_airline
+from sktime.datatypes._utilities import get_cutoff
 from sktime.forecasting.arima import AutoARIMA
 from sktime.forecasting.base import ForecastingHorizon
-from sktime.forecasting.base._fh import DELEGATED_METHODS
+from sktime.forecasting.base._fh import (
+    DELEGATED_METHODS,
+    _check_freq,
+    _extract_freq_from_cutoff,
+)
 from sktime.forecasting.ets import AutoETS
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.model_selection import temporal_train_test_split
@@ -31,7 +36,9 @@ from sktime.utils.datetime import (
     _get_freq,
     _get_intervals_count_and_unit,
     _shift,
+    infer_freq,
 )
+from sktime.utils.validation._dependencies import _check_estimator_deps
 from sktime.utils.validation.series import is_in_valid_index_types, is_integer_index
 
 
@@ -71,10 +78,13 @@ def test_fh(index_type, fh_type, is_relative, steps):
     y_train, y_test = temporal_train_test_split(y, test_size=10)
 
     # choose cutoff point
-    cutoff = y_train.index[-1]
+    cutoff_idx = get_cutoff(y_train, return_index=True)
+    cutoff = cutoff_idx[0]
 
     # generate fh
-    fh = _make_fh(cutoff, steps, fh_type, is_relative)
+    fh = _make_fh(cutoff_idx, steps, fh_type, is_relative)
+    # update frequency of the forecasting horizon
+    fh.freq = infer_freq(y)
     if fh_type == "int":
         assert is_integer_index(fh.to_pandas())
     else:
@@ -205,16 +215,19 @@ def test_check_fh_relative_values_input_conversion_to_pandas_index(arg):
 
 TIMEPOINTS = [
     pd.Period("2000", freq="M"),
-    pd.Timestamp("2000-01-01", freq="D"),
+    pd.Timestamp("2000-01-01").to_period(freq="D"),
     int(1),
     3,
 ]
+
+LENGTH1_INDICES = [pd.Index([x]) for x in TIMEPOINTS]
+LENGTH1_INDICES += [pd.DatetimeIndex(["2000-01-01"], freq="D")]
 
 
 @pytest.mark.parametrize("timepoint", TIMEPOINTS)
 @pytest.mark.parametrize("by", [-3, -1, 0, 1, 3])
 def test_shift(timepoint, by):
-    """Test shifting of ForecastingHorizon."""
+    """Test shifting of cutoff index element."""
     ret = _shift(timepoint, by=by)
 
     # check output type, pandas index types inherit from each other,
@@ -224,6 +237,21 @@ def test_shift(timepoint, by):
     # check if for a zero shift, input and output are the same
     if by == 0:
         assert timepoint == ret
+
+
+@pytest.mark.parametrize("timepoint", LENGTH1_INDICES)
+@pytest.mark.parametrize("by", [-3, -1, 0, 1, 3])
+def test_shift_index(timepoint, by):
+    """Test shifting of cutoff index, length 1 pandas.Index type."""
+    ret = _shift(timepoint, by=by, return_index=True)
+
+    # check output type, pandas index types inherit from each other,
+    # hence check for type equality here rather than using isinstance
+    assert type(ret) is type(timepoint)
+
+    # check if for a zero shift, input and output are the same
+    if by == 0:
+        assert (timepoint == ret).all()
 
 
 DURATIONS_ALLOWED = [
@@ -296,8 +324,10 @@ FREQUENCY_STRINGS = [*FIXED_FREQUENCY_STRINGS, *NON_FIXED_FREQUENCY_STRINGS]
 def test_to_absolute_freq(freqstr):
     """Test conversion when anchorings included in frequency."""
     train = pd.Series(1, index=pd.date_range("2021-10-06", freq=freqstr, periods=3))
+    cutoff = get_cutoff(train, return_index=True)
     fh = ForecastingHorizon([1, 2, 3])
-    abs_fh = fh.to_absolute(train.index[-1])
+
+    abs_fh = fh.to_absolute(cutoff)
     assert abs_fh._values.freqstr == freqstr
 
 
@@ -306,10 +336,11 @@ def test_absolute_to_absolute_with_integer_horizon(freqstr):
     """Test converting between absolute and relative with integer horizon."""
     # Converts from absolute to relative and back to absolute
     train = pd.Series(1, index=pd.date_range("2021-10-06", freq=freqstr, periods=3))
+    cutoff = get_cutoff(train, return_index=True)
     fh = ForecastingHorizon([1, 2, 3])
-    abs_fh = fh.to_absolute(train.index[-1])
+    abs_fh = fh.to_absolute(cutoff)
 
-    converted_abs_fh = abs_fh.to_relative(train.index[-1]).to_absolute(train.index[-1])
+    converted_abs_fh = abs_fh.to_relative(cutoff).to_absolute(cutoff)
     assert_array_equal(abs_fh, converted_abs_fh)
     assert converted_abs_fh._values.freqstr == freqstr
 
@@ -319,13 +350,14 @@ def test_absolute_to_absolute_with_timedelta_horizon(freqstr):
     """Test converting between absolute and relative."""
     # Converts from absolute to relative and back to absolute
     train = pd.Series(1, index=pd.date_range("2021-10-06", freq=freqstr, periods=3))
+    cutoff = get_cutoff(train, return_index=True)
     count, unit = _get_intervals_count_and_unit(freq=freqstr)
     fh = ForecastingHorizon(
         pd.timedelta_range(pd.to_timedelta(count, unit=unit), freq=freqstr, periods=3)
     )
-    abs_fh = fh.to_absolute(train.index[-1])
+    abs_fh = fh.to_absolute(cutoff)
 
-    converted_abs_fh = abs_fh.to_relative(train.index[-1]).to_absolute(train.index[-1])
+    converted_abs_fh = abs_fh.to_relative(cutoff).to_absolute(cutoff)
     assert_array_equal(abs_fh, converted_abs_fh)
     assert converted_abs_fh._values.freqstr == freqstr
 
@@ -335,10 +367,11 @@ def test_relative_to_relative_with_integer_horizon(freqstr):
     """Test converting between relative and absolute with integer horizons."""
     # Converts from relative to absolute and back to relative
     train = pd.Series(1, index=pd.date_range("2021-10-06", freq=freqstr, periods=3))
+    cutoff = get_cutoff(train, return_index=True)
     fh = ForecastingHorizon([1, 2, 3])
-    abs_fh = fh.to_absolute(train.index[-1])
+    abs_fh = fh.to_absolute(cutoff)
 
-    converted_rel_fh = abs_fh.to_relative(train.index[-1])
+    converted_rel_fh = abs_fh.to_relative(cutoff)
     assert_array_equal(fh, converted_rel_fh)
 
 
@@ -347,13 +380,14 @@ def test_relative_to_relative_with_timedelta_horizon(freqstr):
     """Test converting between relative and absolute with timedelta horizons."""
     # Converts from relative to absolute and back to relative
     train = pd.Series(1, index=pd.date_range("2021-10-06", freq=freqstr, periods=3))
+    cutoff = get_cutoff(train, return_index=True)
     count, unit = _get_intervals_count_and_unit(freq=freqstr)
     fh = ForecastingHorizon(
         pd.timedelta_range(pd.to_timedelta(count, unit=unit), freq=freqstr, periods=3)
     )
-    abs_fh = fh.to_absolute(train.index[-1])
+    abs_fh = fh.to_absolute(cutoff)
 
-    converted_rel_fh = abs_fh.to_relative(train.index[-1])
+    converted_rel_fh = abs_fh.to_relative(cutoff)
     assert_array_equal(converted_rel_fh, np.arange(1, 4))
 
 
@@ -366,8 +400,9 @@ def test_to_relative(freq: str):
     """
     freq = "2H"
     t = pd.date_range(start="2021-01-01", freq=freq, periods=5)
+    cutoff = get_cutoff(t, return_index=True, reverse_order=True)
     fh_abs = ForecastingHorizon(t, is_relative=False)
-    fh_rel = fh_abs.to_relative(cutoff=t.min())
+    fh_rel = fh_abs.to_relative(cutoff=cutoff)
     assert_array_equal(fh_rel, np.arange(5))
 
 
@@ -378,7 +413,21 @@ def test_to_absolute_int(idx: int, freq: str):
     # Converts from relative to absolute and back to relative
     train = pd.Series(1, index=pd.date_range("2021-10-06", freq=freq, periods=5))
     fh = ForecastingHorizon([1, 2, 3])
-    absolute_int = fh.to_absolute_int(start=train.index[0], cutoff=train.index[idx])
+    cutoff = train.index[[idx]]
+    cutoff.freq = train.index.freq
+    absolute_int = fh.to_absolute_int(start=train.index[0], cutoff=cutoff)
+    assert_array_equal(fh + idx, absolute_int)
+
+
+@pytest.mark.parametrize("idx", range(5))
+@pytest.mark.parametrize("freq", FREQUENCY_STRINGS)
+def test_to_absolute_int_fh_with_freq(idx: int, freq: str):
+    """Test converting between relative and absolute, freq passed to fh."""
+    # Converts from relative to absolute and back to relative
+    train = pd.Series(1, index=pd.date_range("2021-10-06", freq=freq, periods=5))
+    fh = ForecastingHorizon([1, 2, 3], freq=freq)
+    cutoff = train.index[idx]
+    absolute_int = fh.to_absolute_int(start=train.index[0], cutoff=cutoff)
     assert_array_equal(fh + idx, absolute_int)
 
 
@@ -391,9 +440,34 @@ def test_estimator_fh(freqstr):
     )
     forecaster = AutoETS(auto=True, sp=52, n_jobs=-1, restrict=True)
     forecaster.fit(train)
-    pred = forecaster.predict(np.arange(1, 27))
-    expected_fh = ForecastingHorizon(np.arange(1, 27)).to_absolute(train.index[-1])
+    fh = ForecastingHorizon(np.arange(1, 27))
+    pred = forecaster.predict(fh)
+    expected_fh = fh.to_absolute(train.index[-1])
     assert_array_equal(pred.index.to_numpy(), expected_fh.to_numpy())
+
+
+@pytest.mark.parametrize("freq", ["G", "W1"])
+def test_error_with_incorrect_string_frequency(freq: str):
+    """Test error with incorrect string frequency string."""
+    match = f"Invalid frequency: {freq}"
+    with pytest.raises(ValueError, match=match):
+        ForecastingHorizon([1, 2, 3], freq=freq)
+    fh = ForecastingHorizon([1, 2, 3])
+    with pytest.raises(ValueError, match=match):
+        fh.freq = freq
+
+
+@pytest.mark.parametrize("freqstr", ["M", "D"])
+def test_frequency_setter(freqstr):
+    """Test frequency setter."""
+    fh = ForecastingHorizon([1, 2, 3])
+    assert fh.freq is None
+
+    fh.freq = freqstr
+    assert fh.freq == freqstr
+
+    fh = ForecastingHorizon([1, 2, 3], freq=freqstr)
+    assert fh.freq == freqstr
 
 
 # TODO: Replace this long running test with fast unit test
@@ -442,6 +516,10 @@ def test_exponential_smoothing():
 
 
 # TODO: Replace this long running test with fast unit test
+@pytest.mark.skipif(
+    not _check_estimator_deps(AutoARIMA, severity="none"),
+    reason="skip test if required soft dependencies not available",
+)
 def test_auto_arima():
     """Test bug in 805.
 
@@ -482,3 +560,23 @@ def test_auto_arima():
     pd.testing.assert_index_equal(
         y_pred_sk.index, pd.date_range("January 11, 2021", periods=3, freq="2D")
     )
+
+
+def test_extract_freq_from_inputs() -> None:
+    """Test extract frequency from inputs."""
+    assert _check_freq(None) is None
+    cutoff = pd.Period("2020", freq="D")
+    assert _check_freq(cutoff) == "D"
+    assert _check_freq("D") == "D"
+
+
+@pytest.mark.parametrize("freq", FREQUENCY_STRINGS)
+def test_extract_freq_from_cutoff(freq: str) -> None:
+    """Test extract frequency from cutoff."""
+    assert _extract_freq_from_cutoff(pd.Period("2020", freq=freq)) == freq
+
+
+@pytest.mark.parametrize("x", [1, pd.Timestamp("2020")])
+def test_extract_freq_from_cutoff_with_wrong_input(x) -> None:
+    """Test extract frequency from cutoff with wrong input."""
+    assert _extract_freq_from_cutoff(x) is None

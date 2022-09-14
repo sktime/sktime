@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Unit tests for (dunder) composition functionality attached to the base class."""
+"""Unit tests for transformer composition functionality attached to the base class."""
 
 __author__ = ["fkiraly"]
 __all__ = []
@@ -8,12 +8,21 @@ __all__ = []
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
 
+from sktime.datasets import load_airline
 from sktime.datatypes import get_examples
-from sktime.transformations.compose import FeatureUnion, TransformerPipeline
+from sktime.transformations.compose import (
+    FeatureUnion,
+    InvertTransform,
+    TransformerPipeline,
+)
 from sktime.transformations.panel.padder import PaddingTransformer
+from sktime.transformations.series.boxcox import LogTransformer
+from sktime.transformations.series.compose import OptionalPassthrough
 from sktime.transformations.series.exponent import ExponentTransformer
 from sktime.transformations.series.impute import Imputer
+from sktime.transformations.series.subset import ColumnSelect
 from sktime.transformations.series.summarize import SummaryTransformer
+from sktime.transformations.series.theta import ThetaLinesTransformer
 from sktime.utils._testing.deep_equals import deep_equals
 from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
 
@@ -161,3 +170,93 @@ def test_sklearn_after_primitives():
     # fix this to one value to tie the output to current behaviour
     assert X_out.iloc[0, 10] > -1.37
     assert X_out.iloc[0, 10] < -1.36
+
+
+def test_pipeline_column_vectorization():
+    """Test that pipelines vectorize properly over columns."""
+    X = pd.DataFrame({"a": [1, 2], "b": [3, 4]})
+
+    t = ColumnSelect([0, 1]) * ThetaLinesTransformer()
+
+    X_theta = t.fit_transform(X)
+
+    assert set(X_theta.columns) == set(["a__0", "a__2", "b__0", "b__2"])
+
+
+def test_pipeline_inverse():
+    """Tests that inverse composition works, with inverse skips. Also see #3084."""
+    X = load_airline()
+    t = LogTransformer() * Imputer()
+
+    # LogTransformer has inverse_transform, and does not skip inverse transform
+    # therefore, pipeline should also not skip inverse transform, and have capability
+    assert t.get_tag("capability:inverse_transform")
+    assert not t.get_tag("skip-inverse-transform")
+
+    t.fit(X)
+    Xt = t.transform(X)
+    Xtt = t.inverse_transform(Xt)
+
+    _assert_array_almost_equal(X, Xtt)
+
+
+def test_subset_getitem():
+    """Test subsetting using the [ ] dunder, __getitem__."""
+    X = pd.DataFrame({"a": [1, 2], "b": [3, 4], "c": [5, 6]})
+
+    t = ThetaLinesTransformer()
+
+    t_before = t["a"]
+    t_before_with_colon = t[["a", "b"], :]
+    t_after_with_colon = t[:, ["a__0", "a__2"]]
+    t_both = t[["a", "b"], ["b__0", "b__2", "c__0", "c__2"]]
+    t_none = t[:, :]
+
+    assert isinstance(t_before, TransformerPipeline)
+    assert isinstance(t_after_with_colon, TransformerPipeline)
+    assert isinstance(t_before_with_colon, TransformerPipeline)
+    assert isinstance(t_both, TransformerPipeline)
+    assert isinstance(t_none, ThetaLinesTransformer)
+
+    X_theta = t.fit_transform(X)
+
+    _assert_array_almost_equal(t_before.fit_transform(X), X_theta[["a__0", "a__2"]])
+    _assert_array_almost_equal(
+        t_after_with_colon.fit_transform(X), X_theta[["a__0", "a__2"]]
+    )
+    _assert_array_almost_equal(
+        t_before_with_colon.fit_transform(X), X_theta[["a__0", "a__2", "b__0", "b__2"]]
+    )
+    _assert_array_almost_equal(t_both.fit_transform(X), X_theta[["b__0", "b__2"]])
+    _assert_array_almost_equal(t_none.fit_transform(X), X_theta)
+
+
+def test_dunder_invert():
+    """Test the invert dunder method, for wrapping in OptionalPassthrough."""
+    X = pd.DataFrame({"a": [1, 2], "b": [3, 4]})
+
+    t = ExponentTransformer(power=3)
+
+    t_inv = ~t
+
+    assert isinstance(t_inv, InvertTransform)
+    assert isinstance(t_inv.get_params()["transformer"], ExponentTransformer)
+
+    _assert_array_almost_equal(
+        t_inv.fit_transform(X), ExponentTransformer(1 / 3).fit_transform(X)
+    )
+
+
+def test_dunder_neg():
+    """Test the neg dunder method, for wrapping in OptionalPassthrough."""
+    X = pd.DataFrame({"a": [1, 2], "b": [3, 4]})
+
+    t = ExponentTransformer(power=2)
+
+    tp = -t
+
+    assert isinstance(tp, OptionalPassthrough)
+    assert not tp.get_params()["passthrough"]
+    assert isinstance(tp.get_params()["transformer"], ExponentTransformer)
+
+    _assert_array_almost_equal(tp.fit_transform(X), X)
