@@ -449,7 +449,7 @@ def _parallel_fit(
             # lower_bounding=lower_bounding,
             first_difference=first_difference,
             feature_selection=feature_selection,
-            max_feature_count=max_feature_count // ensemble_size,
+            max_feature_count=int(max_feature_count / (ensemble_size * X.shape[1])),
             random_state=ind,
             return_sparse=not (
                 feature_selection == "none" and alphabet_size == 2 and not bigrams

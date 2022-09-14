@@ -25,6 +25,8 @@ from sklearn.linear_model import RidgeClassifierCV
 from sklearn.pipeline import make_pipeline
 
 from sktime.classification.dictionary_based import MUSE, MUSE_STEROIDS
+from sktime.classification.feature_based import FreshPRINCE, TSFreshClassifier
+from sktime.classification.interval_based import CanonicalIntervalForest, DrCIF
 from sktime.transformations.panel.rocket import (
     MiniRocketMultivariate,
     MultiRocketMultivariate,
@@ -105,7 +107,8 @@ def get_classifiers(threads_to_use):
             use_first_differences=False,
             binning_strategies=["equi-depth"],
             feature_selection="chi2",
-            ensemble_size=75,
+            # ensemble_size=75,
+            # max_feature_count=30_000,
             word_lengths=[8],
             alphabet_sizes=[2],
             n_jobs=threads_to_use,
@@ -118,6 +121,10 @@ def get_classifiers(threads_to_use):
         #    MultiRocketMultivariate(random_state=1379, n_jobs=threads_to_use),
         #    RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True),
         # ),
+        # "DrCif": DrCIF(random_state=1379, n_jobs=threads_to_use),
+        # "CIF": CanonicalIntervalForest(random_state=1379, n_jobs=threads_to_use),
+        # "FreshPrince": FreshPRINCE(random_state=1379, n_jobs=threads_to_use),
+        # "TSFresh": TSFreshClassifier(random_state=1379, n_jobs=threads_to_use),
     }
     return clfs
 
