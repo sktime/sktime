@@ -174,7 +174,7 @@ dataset_names_full = [
     "UWaveGestureLibraryAll",
     "UWaveGestureLibraryX",
     "UWaveGestureLibraryY",
-    "UWaveGestureLibraryZ",  # error???
+    # "UWaveGestureLibraryZ",  # error???
     "Wafer",
     "Wine",
     "WordSynonyms",
@@ -328,6 +328,8 @@ server = False
 if os.path.exists(DATA_PATH):
     DATA_PATH = "/Users/bzcschae/workspace/UCRArchive_2018/"
     used_dataset = dataset_names_excerpt
+    # used_dataset = dataset_names_full
+    # server = True
 # server
 else:
     DATA_PATH = "/vol/fob-wbib-vol2/wbi/schaefpa/sktime/datasets/UCRArchive_2018"
@@ -365,6 +367,8 @@ if __name__ == "__main__":
 
         X_train = np.reshape(np.array(X_train), (len(X_train), 1, -1))
         X_test = np.reshape(np.array(X_test), (len(X_test), 1, -1))
+        X_train = zscore(X_train, axis=-1)
+        X_test = zscore(X_test, axis=-1)
 
         if clf_name == "Hydra":
             # print(torch.get_num_threads())

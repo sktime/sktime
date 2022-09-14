@@ -123,14 +123,13 @@ class WEASEL_STEROIDS(BaseClassifier):
         norm_options=[False],
         word_lengths=[8],
         alphabet_sizes=[4],
-        use_first_differences=[False],
+        use_first_differences=[True, False],
         feature_selection="random",
         remove_repeat_words=False,
         random_state=None,
         sections=1,
         n_jobs=4,
     ):
-        # currently greater values than 4 are not supported.
         self.alphabet_sizes = alphabet_sizes
 
         self.anova = anova
@@ -248,7 +247,7 @@ class WEASEL_STEROIDS(BaseClassifier):
             # sfa_words.append(csr_matrix(X_features.values))
             all_words = hstack(sfa_words)
 
-        self.clf = RidgeClassifierCV(alphas=np.logspace(-1, 6, 10), normalize=False)
+        self.clf = RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=False)
         self.clf.fit(all_words, y)
         self.total_features_count = all_words.shape[1]
         self.cross_val_score = self.clf.best_score_
@@ -369,14 +368,13 @@ def _parallel_fit(
     # maximize word-length
     word_length = min(window_size - 2, rng.choice(word_lengths))
     norm = rng.choice(norm_options)
+    first_difference = rng.choice(use_first_differences)
+    binning_strategy = rng.choice(binning_strategies)
 
     dilation = max(
         1,
         np.int32(2 ** rng.uniform(0, np.log2((series_length - 1) / (window_size - 1)))),
     )
-
-    first_difference = rng.choice(use_first_differences)
-    binning_strategy = rng.choice(binning_strategies)
 
     all_words = []
     all_transformers = []

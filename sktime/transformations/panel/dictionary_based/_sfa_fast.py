@@ -1003,13 +1003,20 @@ def _mft(
 
 
 def _dilation(X, d, first_difference):
+    padding = np.zeros((len(X), 10))
+    X = np.concatenate((padding, X, padding), axis=1)
+
+    # adding first order differences
     if first_difference:
         X2 = np.diff(X, axis=1, prepend=0)
         X = np.concatenate((X, X2), axis=1)
 
+    # adding dilation
+    X_dilated = _dilation2(X, d)
+
     return (
-        _dilation2(X, d),
-        _dilation2(np.arange(X.shape[1], dtype=np.float_).reshape(1, -1), d)[0],
+        X_dilated,
+        _dilation2(np.arange(X_dilated.shape[1], dtype=np.float_).reshape(1, -1), d)[0],
     )
 
 

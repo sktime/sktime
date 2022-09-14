@@ -21,8 +21,14 @@ simplefilter(action="ignore", category=PerformanceWarning)
 import numpy as np
 import pandas as pd
 from joblib import Parallel, delayed
+from sklearn.linear_model import RidgeClassifierCV
+from sklearn.pipeline import make_pipeline
 
-from sktime.classification.dictionary_based import MUSE, MUSE_NEW
+from sktime.classification.dictionary_based import MUSE, MUSE_STEROIDS
+from sktime.transformations.panel.rocket import (
+    MiniRocketMultivariate,
+    MultiRocketMultivariate,
+)
 
 sys.path.append("../../..")
 
@@ -90,27 +96,27 @@ dataset_names_excerpt = [
 def get_classifiers(threads_to_use):
     """Obtain the benchmark classifiers."""
     clfs = {
-        # "MUSE (old)" : MUSE(random_state=1379, n_jobs=threads_to_use),
-        "MUSE 2a (default +46 +variance)": MUSE_NEW(
+        # "MUSE (old)": MUSE(
+        #    random_state=1379,
+        #    n_jobs=threads_to_use,
+        # ),
+        "MUSE Steroids": MUSE_STEROIDS(
             random_state=1379,
-            alphabet_size=2,
-            variance=True,
-            anova=False,
+            use_first_differences=False,
+            binning_strategies=["equi-depth"],
+            feature_selection="chi2",
+            ensemble_size=75,
+            word_lengths=[8],
+            alphabet_sizes=[2],
             n_jobs=threads_to_use,
         ),
-        "MUSE 2b (default +46)": MUSE_NEW(
-            random_state=1379, alphabet_size=2, n_jobs=threads_to_use
-        ),
-        # "MUSE 2c (default +46 -bigrams)": MUSE_NEW(
-        #     random_state=1379, alphabet_size=2, bigrams=False, n_jobs=threads_to_use
+        # "MiniRocket": make_pipeline(
+        #    MiniRocketMultivariate(random_state=1379, n_jobs=threads_to_use),
+        #    RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True),
         # ),
-        # "MUSE 2d (default +46 -bigrams +variance)": MUSE_NEW(
-        #     random_state=1379,
-        #     alphabet_size=2,
-        #     bigrams=False,
-        #     variance=True,
-        #     anova=False,
-        #     n_jobs=threads_to_use,
+        # "MultiRocket": make_pipeline(
+        #    MultiRocketMultivariate(random_state=1379, n_jobs=threads_to_use),
+        #    RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True),
         # ),
     }
     return clfs
@@ -277,7 +283,7 @@ if __name__ == "__main__":
                 "Dataset",
                 "Accuracy",
             ],
-        ).to_csv("classifier_all_scores_mv_06-09-22.csv", index=None)
+        ).to_csv("uea-multivariate-accuracy-sone.csv", index=None)
 
         pd.DataFrame.from_records(
             csv_timings,
@@ -287,4 +293,4 @@ if __name__ == "__main__":
                 "Fit-Time",
                 "Predict-Time",
             ],
-        ).to_csv("classifier_all_runtimes_mv_06-09-22.csv", index=None)
+        ).to_csv("uea-multivariate-runtime-sone.csv", index=None)
