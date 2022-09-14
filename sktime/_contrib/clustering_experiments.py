@@ -111,15 +111,12 @@ if __name__ == "__main__":
         distance = sys.argv[3]
         dataset = sys.argv[4]
         resample = int(sys.argv[5]) - 1
-        tf = True
+        tf = sys.argv[6]
+        clusterer = sys.argv[8]
+        averaging = sys.argv[9]
+        if averaging == "dba":
+            results_dir = results_dir + clusterer + "_dba"
     # kraken run, needs sorting out
-    #        print(sys.argv)
-    #        data_dir = "/home/ajb/data/Univariate_ts/"
-    #        results_dir = "/home/ajb/results/kmeans/"
-    #        dataset = sys.argv[1]
-    #        resample = int(sys.argv[2]) - 1
-    #        tf = True
-    #        distance = sys.argv[3]
     elif chris_config is True:
         path = "C:/Users/chris/Documents/Masters"
         data_dir = os.path.abspath(f"{path}/datasets/Univariate_ts/")
@@ -130,7 +127,7 @@ if __name__ == "__main__":
         distance = "msm"
     else:  # Local run
         print(" Local Run")
-        dataset = "ElectricDevices"
+        dataset = "UnitTest"
         data_dir = f"../datasets/data/"
         results_dir = "./temp"
         resample = 0
@@ -181,6 +178,6 @@ if __name__ == "__main__":
         cls_name=name,
         dataset_name=dataset,
         resample_id=resample,
-        overwrite=True,
+        overwrite=False,
     )
     print("done")
