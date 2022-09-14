@@ -109,7 +109,7 @@ class ExponentTransformer(BaseTransformer):
                 "inverse_transform will default to identity "
                 "if called, in order to avoid division by zero"
             )
-            self.set_tags({"skip-inverse-transform": True})
+            self.set_tags(**{"skip-inverse-transform": True})
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
