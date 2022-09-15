@@ -449,11 +449,13 @@ class SFAFast(BaseTransformer):
                 feature_count = len(list(feature_names))
                 relevant_features_idx = np.arange(feature_count, dtype=np.uint32)
                 bag_of_words, self.relevant_features = create_bag_feature_selection(
+                    self.X_index,
                     words.shape[0],
                     relevant_features_idx,
                     np.array(list(feature_names)),
                     words,
                     self.remove_repeat_words,
+                    self.sections,
                 )
 
             # Random feature selection
@@ -463,38 +465,47 @@ class SFAFast(BaseTransformer):
                     len(feature_names), replace=False, size=feature_count
                 )
                 bag_of_words, self.relevant_features = create_bag_feature_selection(
+                    self.X_index,
                     words.shape[0],
                     relevant_features_idx,
                     np.array(list(feature_names)),
                     words,
                     self.remove_repeat_words,
+                    self.sections,
                 )
 
             # Chi-squared feature selection
             elif self.feature_selection == "chi2":
-                feature_count = len(list(feature_names))
+                feature_names_array = np.array(list(feature_names))
+                feature_count = len(feature_names_array)
                 relevant_features_idx = np.arange(feature_count, dtype=np.uint32)
                 bag_of_words, _ = create_bag_feature_selection(
+                    self.X_index,
                     words.shape[0],
                     relevant_features_idx,
-                    np.array(list(feature_names)),
+                    feature_names_array,
                     words,
                     self.remove_repeat_words,
+                    self.sections,
                 )
 
                 chi2_statistics, p = chi2(bag_of_words, y)
                 relevant_features_idx = np.where(p <= self.p_threshold)[0]
+
+                # select subset of features
+                bag_of_words = bag_of_words[:, relevant_features_idx]
+
+                relevant_features_idx = relevant_features_idx[
+                    relevant_features_idx < len(feature_names_array)
+                ]
                 self.relevant_features = Dict.empty(
                     key_type=types.uint32, value_type=types.uint32
                 )
                 for k, v in zip(
-                    np.array(list(feature_names))[relevant_features_idx],
+                    feature_names_array[relevant_features_idx],
                     np.arange(len(relevant_features_idx)),
                 ):
                     self.relevant_features[k] = v
-
-                # select subset of features
-                bag_of_words = bag_of_words[:, relevant_features_idx]
 
         self.feature_count = bag_of_words.shape[1]
 
@@ -1075,26 +1086,32 @@ def create_bag_none(
 
     # count number of sections the word is present
     if sections > 1:
-        # section_count = np.zeros(
-        #   (n_instances, feature_count, sections), dtype=np.uint32
-        # )
-        # max_index = max(X_index) + 1
+        section_count = np.zeros(
+            (n_instances, feature_count, sections), dtype=np.uint32
+        )
+        max_index = max(X_index) + 1
         for j in range(sfa_words.shape[0]):
             for i in range(sfa_words.shape[1]):
-                # section_count[
-                #    j, sfa_words[j, i], int(X_index[i] / max_index * sections)
-                # ] = 1
-                all_win_words[j, feature_count + sfa_words[j, i]] = max(
-                    X_index[i], all_win_words[j, feature_count + sfa_words[j, i]]
-                )
-        # all_win_words[:, feature_count:] = section_count.sum(axis=-1)
+                section_count[
+                    j, sfa_words[j, i], int(X_index[i] / max_index * sections)
+                ] = 1
+                # all_win_words[j, feature_count + sfa_words[j, i]] = max(
+                #     X_index[i], all_win_words[j, feature_count + sfa_words[j, i]]
+                # )
+        all_win_words[:, feature_count:] = section_count.sum(axis=-1)
 
     return all_win_words
 
 
 @njit(cache=True, fastmath=True)
 def create_bag_feature_selection(
-    n_instances, relevant_features_idx, feature_names, sfa_words, remove_repeat_words
+    X_index,
+    n_instances,
+    relevant_features_idx,
+    feature_names,
+    sfa_words,
+    remove_repeat_words,
+    sections,
 ):
     relevant_features = Dict.empty(key_type=types.uint32, value_type=types.uint32)
     for k, v in zip(
@@ -1107,13 +1124,32 @@ def create_bag_feature_selection(
         if 0 in relevant_features:
             del relevant_features[0]
 
-    all_win_words = np.zeros((n_instances, len(relevant_features_idx)), dtype=np.int32)
+    needed_size = len(relevant_features_idx)
+    if sections > 1:
+        needed_size = 2 * needed_size
+
+    all_win_words = np.zeros((n_instances, needed_size), dtype=np.int32)
     for j in range(sfa_words.shape[0]):
         for key in sfa_words[j]:
             if key in relevant_features:
                 all_win_words[j, relevant_features[key]] += 1
 
-    # TODO sections
+    # count number of sections the word is present
+    if sections > 1:
+        section_count = np.zeros(
+            (sfa_words.shape[0], len(relevant_features_idx), sections), dtype=np.uint32
+        )
+        max_index = max(X_index) + 1
+        for j in range(sfa_words.shape[0]):
+            for i, key in enumerate(sfa_words[j]):
+                if key in relevant_features:
+                    section_count[
+                        j,
+                        relevant_features[key],
+                        int(X_index[i] / max_index * sections),
+                    ] = 1
+
+        all_win_words[:, len(relevant_features_idx) :] = section_count.sum(axis=-1)
 
     return all_win_words, relevant_features
 
@@ -1154,20 +1190,37 @@ def create_bag_transform(
     # count number of sections the word is present
     if sections > 1:
         if len(relevant_features) == 0 and feature_selection == "none":
-            # section_count = np.zeros(
-            #   (sfa_words.shape[0], feature_count // 2, sections), dtype=np.uint32
-            # )
-            # max_index = max(X_index) + 1
+            section_count = np.zeros(
+                (sfa_words.shape[0], feature_count // 2, sections), dtype=np.uint32
+            )
+            max_index = max(X_index) + 1
             for j in range(sfa_words.shape[0]):
                 for i in range(sfa_words.shape[1]):
-                    # section_count[
-                    #   j, sfa_words[j, i], int(X_index[i] / max_index * sections)
-                    # ] = 1
-                    all_win_words[j, feature_count // 2 + sfa_words[j, i]] = max(
-                        X_index[i],
-                        all_win_words[j, feature_count // 2 + sfa_words[j, i]],
-                    )
-            # all_win_words[:, feature_count // 2 :] = section_count.sum(axis=-1)
+                    section_count[
+                        j, sfa_words[j, i], int(X_index[i] / max_index * sections)
+                    ] = 1
+
+                    # all_win_words[j, feature_count // 2 + sfa_words[j, i]] = max(
+                    #    X_index[i],
+                    #    all_win_words[j, feature_count // 2 + sfa_words[j, i]],
+                    # )
+
+            all_win_words[:, feature_count // 2 :] = section_count.sum(axis=-1)
+        else:
+            section_count = np.zeros(
+                (sfa_words.shape[0], feature_count // 2, sections), dtype=np.uint32
+            )
+            max_index = max(X_index) + 1
+            for j in range(sfa_words.shape[0]):
+                for i, key in enumerate(sfa_words[j]):
+                    if key in relevant_features:
+                        section_count[
+                            j,
+                            relevant_features[key],
+                            int(X_index[i] / max_index * sections),
+                        ] = 1
+
+            all_win_words[:, feature_count // 2 :] = section_count.sum(axis=-1)
 
     return all_win_words, all_win_words.shape[1]
 

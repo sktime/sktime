@@ -248,7 +248,9 @@ class WEASEL_STEROIDS(BaseClassifier):
             # sfa_words.append(csr_matrix(X_features.values))
             all_words = hstack(sfa_words)
 
-        self.clf = RidgeClassifierCV(alphas=np.logspace(-1, 6, 10), normalize=False)
+        self.clf = RidgeClassifierCV(
+            alphas=np.logspace(-1, 6, 10), normalize=False
+        )  # TODO testen??
         self.clf.fit(all_words, y)
         self.total_features_count = all_words.shape[1]
         self.cross_val_score = self.clf.best_score_
@@ -381,13 +383,13 @@ def _parallel_fit(
     all_words = []
     all_transformers = []
 
-    for dilation in dilations:
+    for dilation in np.unique(dilations):
         alphabet_size = rng.choice(alphabet_sizes)
 
         # maximize word-length
         word_length = min(window_size - 2, rng.choice(word_lengths))
         norm = rng.choice(norm_options)
-        first_difference = True  # rng.choice(use_first_differences)
+        first_difference = rng.choice(use_first_differences)  # TODO always True???
         binning_strategy = rng.choice(binning_strategies)
 
         transformer = SFAFast(
