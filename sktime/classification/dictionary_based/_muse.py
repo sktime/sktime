@@ -356,8 +356,10 @@ class MUSE(BaseClassifier):
         """
         return {
             "window_inc": 4,
+            "alphabet_size": 2,
             "use_first_order_differences": False,
             "support_probabilities": True,
+            "feature_selection": "none",
             "bigrams": False,
         }
 
