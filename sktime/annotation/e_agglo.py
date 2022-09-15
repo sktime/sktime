@@ -104,11 +104,13 @@ class EAGGLO(BaseTransformer):
         merged_ = pd.DataFrame(index=range(N_ - 1), columns=range(2))
 
         # set initial GOF value
-        fit_ = sum([D_.iloc[i, left_[i]] + D_.iloc[i, right_[i]] for i in range(N_)])
+        fit_ = np.array(
+            [sum([D_.iloc[i, left_[i]] + D_.iloc[i, right_[i]] for i in range(N_)])]
+        )
 
         # change point progression
         progression_ = pd.DataFrame(index=range(N_), columns=range(N_))
-        progression_.iloc[0, ] = [
+        progression_.iloc[0,] = [
             sum(sizes_[:i]) if i > 0 else 0 for i in range(N_)
         ]  # FIXME: does this need to be N_+1, just N?
 
@@ -128,6 +130,66 @@ class EAGGLO(BaseTransformer):
         self.fit_ = fit_
         self.progression_ = progression_
         self.lm_ = lm_
+
+    def gof_update(self, i):
+        """Docstring."""
+        fit = self.fit_[-1]
+        j = self.right_[i]
+
+        # get new left and right clusters
+        rr = self.right_[j]
+        ll = self.left_[i]
+
+        # remove unneeded values in the GOF
+        fit -= 2 * (self.D_.loc[i, j] + self.D_.loc[i, ll] + self.D_.loc[j, rr])
+
+        # get cluster sizes
+        n1 = self.sizes_[i]
+        n2 = self.sizes_[j]
+
+        # add distance to new left cluster
+        n3 = self.sizes_[ll]
+        k = (
+            (n1 + n3) * self.D_.loc[i, ll]
+            + (n2 + n3) * self.D_.loc[j, ll]
+            - n3 * self.D_.loc[i, j]
+        ) / (n1 + n2 + n3)
+        fit += 2 * k
+
+        # add distance to new right
+        n3 = self.sizes_[rr]
+        k = (
+            (n1 + n3) * self.D_.loc[i, rr]
+            + (n2 + n3) * self.D_.loc[j, rr]
+            - n3 * self.D_.loc[i, j]
+        ) / (n1 + n2 + n3)
+        fit += 2 * k
+
+        return fit
+
+    def find_closest(self, i):
+        ...
+
+    def _fit(self, X, y=None):
+        """Find ....
+
+        Parameters
+        ----------
+        X : np.ArrayLike
+            Data for anomaly detection (time series).
+        y : pd.Series, optional
+            Not used for this unsupervsed method.
+
+        Returns
+        -------
+        self :
+            Reference to self.
+        """
+        # check alpha in range
+        # check penalty function
+        self.process_data(X)
+
+        # find which clusters optimize the GOF and then update the distances
 
 
 def get_within(X, alpha):
