@@ -224,7 +224,7 @@ class Catch22(BaseTransformer):
     # todo remove in v0.15
     @deprecated(
         version="0.13.2",
-        reason="The Catch22 transform_single_feature method will be removed in v0.15.0. Use the 'features' parameters for the class.",  # noqa: E501
+        reason="The Catch22 transform_single_feature method will be removed in v0.15.0. Use the 'features' parameter for the class.",  # noqa: E501
         category=FutureWarning,
     )
     def transform_single_feature(self, X, feature, case_id=None):

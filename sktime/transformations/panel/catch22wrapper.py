@@ -24,6 +24,8 @@ class Catch22Wrapper(BaseTransformer):
     Transforms series into the 22 Catch22 [1]_ features extracted from the hctsa [2]_
     toolbox.
 
+    Parameters
+    ----------
     features : str or List of str, optional, default="all"
         The Catch22 features to extract by name. If "all", all features are extracted.
     replace_nans : bool, optional, default=True
