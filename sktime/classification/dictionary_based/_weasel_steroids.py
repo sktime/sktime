@@ -223,7 +223,8 @@ class WEASEL_STEROIDS(BaseClassifier):
                 self.sections,
                 self.random_state,
             )
-            for i in range(self.ensemble_size)
+            # for i in range(self.ensemble_size)
+            for i in range(len(self.window_sizes))
         )
 
         sfa_words = []
@@ -247,7 +248,7 @@ class WEASEL_STEROIDS(BaseClassifier):
             # sfa_words.append(csr_matrix(X_features.values))
             all_words = hstack(sfa_words)
 
-        self.clf = RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=False)
+        self.clf = RidgeClassifierCV(alphas=np.logspace(-1, 6, 10), normalize=False)
         self.clf.fit(all_words, y)
         self.total_features_count = all_words.shape[1]
         self.cross_val_score = self.clf.best_score_
@@ -362,48 +363,62 @@ def _parallel_fit(
     else:
         rng = check_random_state(random_state + i)
 
-    window_size = rng.choice(window_sizes)
-    alphabet_size = rng.choice(alphabet_sizes)
+    # window_size = rng.choice(window_sizes)
+    window_size = window_sizes[i]
 
-    # maximize word-length
-    word_length = min(window_size - 2, rng.choice(word_lengths))
-    norm = rng.choice(norm_options)
-    first_difference = rng.choice(use_first_differences)
-    binning_strategy = rng.choice(binning_strategies)
-
-    dilation = max(
+    ii = ensemble_size / len(window_sizes)
+    dilations = np.maximum(
         1,
-        np.int32(2 ** rng.uniform(0, np.log2((series_length - 1) / (window_size - 1)))),
+        np.int32(
+            2
+            ** rng.uniform(
+                0,
+                np.log2((series_length - 1) / (window_size - 1)),
+                size=int(np.ceil(ii)),
+            )
+        ),
     )
-
     all_words = []
     all_transformers = []
-    transformer = SFAFast(
-        variance=variance,
-        word_length=word_length,
-        alphabet_size=alphabet_size,
-        window_size=window_size,
-        norm=norm,
-        anova=anova,
-        binning_method=binning_strategy,
-        remove_repeat_words=remove_repeat_words,
-        bigrams=bigrams,
-        dilation=dilation,
-        lower_bounding=lower_bounding,
-        first_difference=first_difference,
-        feature_selection=feature_selection,
-        sections=sections,
-        max_feature_count=max_feature_count // ensemble_size,
-        random_state=i,
-        return_sparse=not (
-            feature_selection == "none" and alphabet_size == 2 and not bigrams
-        ),
-        n_jobs=n_jobs,
-    )
 
-    # generate SFA words on subsample
-    words = transformer.fit_transform(X, y)
-    all_words.append(words)
-    all_transformers.append(transformer)
+    for dilation in dilations:
+        alphabet_size = rng.choice(alphabet_sizes)
+
+        # maximize word-length
+        word_length = min(window_size - 2, rng.choice(word_lengths))
+        norm = rng.choice(norm_options)
+        first_difference = True  # rng.choice(use_first_differences)
+        binning_strategy = rng.choice(binning_strategies)
+
+        transformer = SFAFast(
+            variance=variance,
+            word_length=word_length,
+            alphabet_size=alphabet_size,
+            window_size=window_size,
+            norm=norm,
+            anova=anova,
+            binning_method=binning_strategy,
+            remove_repeat_words=remove_repeat_words,
+            bigrams=bigrams,
+            dilation=dilation,
+            lower_bounding=lower_bounding,
+            first_difference=first_difference,
+            feature_selection=feature_selection,
+            sections=sections,
+            max_feature_count=max_feature_count // ensemble_size,
+            random_state=i,
+            return_sparse=not (
+                feature_selection == "none"
+                and alphabet_size == 2
+                and not bigrams
+                and len(alphabet_sizes) == 1
+            ),
+            n_jobs=n_jobs,
+        )
+
+        # generate SFA words on subsample
+        words = transformer.fit_transform(X, y)
+        all_words.append(words)
+        all_transformers.append(transformer)
 
     return all_words, all_transformers
