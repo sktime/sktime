@@ -365,8 +365,8 @@ def _parallel_fit(
     else:
         rng = check_random_state(random_state + i)
 
-    # window_size = rng.choice(window_sizes)
-    window_size = window_sizes[i]
+    window_size = rng.choice(window_sizes)
+    # window_size = window_sizes[i]
 
     ii = ensemble_size / len(window_sizes)
     dilations = np.maximum(

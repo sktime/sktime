@@ -358,7 +358,7 @@ if os.path.exists(DATA_PATH):
 # server
 else:
     DATA_PATH = "/vol/fob-wbib-vol2/wbi/schaefpa/sktime/datasets/UCRArchive_2018"
-    parallel_jobs = 80
+    parallel_jobs = 40
     threads_to_use = 1
     server = True
     used_dataset = dataset_names_full
