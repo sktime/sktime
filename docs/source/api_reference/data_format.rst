@@ -17,7 +17,7 @@ Overview
 --------
 This document has the following content:
 
-- Introduction: What is a ``.ts`` file, why and when to use it.
+- Introduction: What is a ``.ts`` file, when and why to use it.
 - Description: What are the individual components of a ``.ts`` file.
 - Instructions: How to create your own ``.ts`` file.
 - Illustrations: A running example to tie up the above sections.
@@ -32,16 +32,50 @@ String identifiers refer to strings beginning with ``@`` in the file.
 ``.ts`` files contains information blocks in the following order:
 
 1. A description block.
-      All lines in this block begin with ``#`` and provides citations and comments about the dataset.
+      It contains any number of continuous lines starting with ``#``.
+      Each ``#`` is followed by an arbitrary (utf-8) sequence of symbols.
+      The ``ts`` specification does not prescribe any content for the description block,
+      but it is common to include a description of the dataset contained in the file.
+      Eg: a full data dictionary, citations, etc.
       See :ref:`subsection on description block <comment description>` for more details.
 2. A metadata block.
-      All lines in this block begin with ``@`` and each line has one string identifier and corresponding value.
-      See :ref:`subsection on metadata block <metadata description>` for more details.
+      It contains continuous lines starting with ``@``.
+      Each ``@`` is directly followed a string identifier without whitespace(``@<identifier>``),
+      followed by an appropriate value for the identifier where the value depends on type of identifier.
+      There is no strict order of occurrence for all string identifiers, except
+      ``@data`` which must be at the end of this block.
+      The number of lines in this block depends on certain properties of the dataset
+      (e.g: if the dataset is multidimensional,
+      an additional line is required to specify number of dimensions)
+      See :ref:`subsection on metadata block <metadata description>` for further details.
 3. A dataset block.
+      It contains list of float values that represent the dataset. In the simplest case(when timestamps are absent)
+      Values for a series are expressed in a comma-seperated list and the index of each value is relative to its
+      position in the list (0, 1, ..., m). An instance may contain 1 to many dimensions, where instances are
+      line-delimited and dimensions within an instance are colon-delimited(:). In case timestamps are present,
+      individual data of the series is enclosed within round brackets as ``(YYYY-MM-DD HH:mm:ss,<value>)``.
+      The response variable is at the end of each instance and is seperated via a colon.
+      To understand data representation, visit `loading data`_.
 
-See `Basic Motion.ts`_ for a concrete example, an `illustration`_ section is also provided for reference.
+Here is an extract from `Basic Motion.ts`_ that shows all three blocks:
 
-To understand how the actual data is stored and loaded, visit `loading data`_.
+.. code-block:: text
+   :linenos:
+   :name: data-format-extract
+
+   #The data was generated as part of a student project where four students performed four activities whilst wearing a smart watch.
+   #The watch collects 3D accelerometer and a 3D gyroscope It consists of four classes, which are walking, resting, running and
+   #badminton.
+   ...
+   @problemName BasicMotions
+   @timeStamps false
+   @missing false
+   ...
+   @data
+   -0.740653,-0.740653,10.208449,2.867009,-0.194301,-0.194301,-0.249618,0.516079,-0.255552:Standing
+   -0.247409,-0.247409,-0.77129,-0.576154,-0.368484,-0.020851,-0.020851,-0.465607,-0.382975,-0.382975:Walking
+   ...
+
 
 Description
 -----------
@@ -53,7 +87,8 @@ Description Block
 ^^^^^^^^^^^^^^^^^
 
 This is an optional block that is present to provide context for the dataset. All lines are ignored by the ``sktime``
-loader functions.
+loader functions. We recommend the user to add information that will give context about the dataset, like
+how the dataset was collected, the type of license associated with this dataset, citations etc.
 
 .. _metadata description:
 
@@ -151,10 +186,11 @@ expected `format <https://github.com/alan-turing-institute/sktime/blob/main/exam
 Few points to keep in mind while creating the dataset:
 
   1. The general order of identifiers **does not** matter with the exception that ``@data`` should be the last string identifier.
-  2. Lines containing an identifier **must** begin with it.
-  3. The **only** place a space is allowed is between an identifier and its corresponding value.
-  4. Avoid having newline characters in between lines.
-  5. Follow the "comments, identifiers, data" order
+  2. One line should contain only one identifier-value pair.
+  3. Lines containing an identifier **must** begin with it.
+  4. The **only** place a space is allowed is between an identifier and its corresponding value.
+  5. Avoid having newline characters in between lines.
+  6. Follow the "comments, identifiers, data" order
 
 1. *Create an empty file*
     Open your favorite text editor (even notepad works). We'll add contents into this file before finally saving as a ``.ts`` file.
@@ -196,7 +232,8 @@ Illustration
 ------------
 Here, we provide a running example showing how your file will look like after performing each step in the instructions.
 
-The sample dataset that we will use for this is:
+The sample dataset that we will use for this is as shown
+(single instance of multidimensional regression data, with timestamps):
 
 .. code-block:: text
    :linenos:
