@@ -74,13 +74,14 @@ To add an estimator with a soft dependency, ensure the following:
    utility should be used in ``__init__``. Both the warning and constructor call should use the ``package_import_alias`` argument for this.
 *  If the soft dependencies require specific python versions, the ``python_version``
    tag should also be populated, with a PEP 440 compliant version specification ``str`` such as ``"<3.10"`` or ``">3.6,~=3.8"``.
-*  Skip the corresponding doctests.  To do this add a ``# doctest: +SKIP`` to the end of each line in the doctest to skip.
-   If concerned about reducing testing coverage, can add the doctest back in the testing file. See arima as an example.
-*  Decorate all tests for the estimator with the soft dependency with a ``@pytest.mark.skipif(...)`` conditional on a check to ``_check_soft_dependencies``
-   for your new soft depenency.
-   This will skip your test unless the system has the required packages installed and is helpful for any users running ``check_estimator``
-   on all estimators.
-   See the tests for pydarima (in forecasting) for a concrete example.
+*  If including docstring examples that use soft dependencies, ensure to skip doctest. To do this add a ``# doctest: +SKIP`` to the end of each
+   line in the doctest to skip. Check out the arima estimator as as an example. If concerned that skipping the test will reduce test coverage,
+   consider exposing the doctest example as a pytest test function instead, see below how to handle soft dependencies in pytest functions.".
+*  Decorate all pytest tests that import soft dependencies with a ``@pytest.mark.skipif(...)`` conditional on a check to ``_check_soft_dependencies``
+   for your new soft depenency.  Be sure that all soft dependencies which are imported for testing are imported within the test funciton itself
+   rather than for the whole module)!  This decorator will then skip your test unless the system has the required packages installed.  Doing this is
+   helpful for any users running ``check_estimator`` on all estimators, or a full local `pytest` run without the required soft dependency.
+   Again, see the tests for pydarima (in forecasting) for a concrete example.
 
 Adding a core or developer dependency
 -------------------------------------
