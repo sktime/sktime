@@ -167,8 +167,60 @@ class EAGGLO(BaseTransformer):
 
         return fit
 
-    def find_closest(self, i):
-        ...
+    def find_closest(self, K):
+        """Docstring."""
+        best = -1e10
+        result = [0, 0, 0]
+
+        # iterate to see how the GOF value changes
+        for i in range(K):
+            if self.open_[i]:
+                x = self.gof_update(i)
+                if x > best:
+                    best = x
+                    result = [i, self.right_[i], x]
+        return result
+
+    def update_distances(self, i, j, K):
+        """Docstring."""
+        # which clusters were merged
+        self.merged_.loc[K - self.N_ + 1, 0] = -i if i <= self.N_ else i - self.N_
+        self.merged_.loc[K - self.N_ + 1, 1] = -j if j <= self.N_ else j - self.N_
+
+        # update left and right neighbors
+        ll = self.left_[i]
+        rr = self.right_[j]
+        self.left_[K + 1] = ll
+        self.right_[K + 1] = rr
+        self.right_[ll] = K + 1
+        self.left_[rr] = K + 1
+
+        # update information about which clusters have been merged
+        self.open_[i] = False
+        self.open_[j] = False
+
+        # assign size to newly created cluster
+        n1 = self.sizes_[i]
+        n2 = self.sizes_[j]
+        self.sizes_[K + 1] = n1 + n2
+
+        # update set of change points
+        self.progression_.loc[K - self.N_ + 2,] = self.progression_.loc[
+            K - self.N_ + 1,
+        ]
+        self.progression_.loc[K - self.N_ + 2, self.lm_[j]] = np.nan
+        self.lm_[K + 1] = self.lm_[i]
+
+        # update distances
+        for k in range(K):
+            if self.open_[k]:
+                n3 = self.sizes_[k]
+                n = n1 + n2 + n3
+                self.D_.loc[K + 1, k] = self.D_.loc[k, K + 1] = (
+                    (n - n2) * self.D_.loc[i, k]
+                    + (n - n1) * self.D_.loc[j, k]
+                    - n3 * self.D_.loc[i, j]
+                ) / n
 
     def _fit(self, X, y=None):
         """Find ....
