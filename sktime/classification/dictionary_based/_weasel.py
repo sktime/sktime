@@ -24,28 +24,28 @@ from sktime.transformations.panel.dictionary_based import SFAFast
 class WEASEL(BaseClassifier):
     """Word Extraction for Time Series Classification (WEASEL).
 
-    Overview: Input n series length m
+    Overview: Input *n* series length *m*
     WEASEL is a dictionary classifier that builds a bag-of-patterns using SFA
     for different window lengths and learns a logistic regression classifier
     on this bag.
 
     There are these primary parameters:
-            alphabet_size: alphabet size
-            chi2 p-threshold: used for feature selection to select best words
-            anova: select best l/2 fourier coefficients other than first ones
-            bigrams: using bigrams of SFA words
-            binning_strategy: the binning strategy used to discretise into
-                             SFA words.
-    WEASEL slides a window length w along the series. The w length window
-    is shortened to an l length word through taking a Fourier transform and
-    keeping the best l/2 complex coefficients using an anova one-sided
-    test. These l coefficients are then discretised into alpha possible
-    symbols, to form a word of length l. A histogram of words for each
+            - alphabet_size: alphabet size
+            - p-threshold: threshold used for chi^2-feature selection to
+                        select best words.
+            - anova: select best l/2 fourier coefficients other than first ones
+            - bigrams: using bigrams of SFA words
+            - binning_strategy: the binning strategy used to discretise into SFA words.
+    WEASEL slides a window length *w* along the series. The *w* length window
+    is shortened to an *l* length word through taking a Fourier transform and
+    keeping the best *l/2* complex coefficients using an anova one-sided
+    test. These *l* coefficients are then discretised into alpha possible
+    symbols, to form a word of length *l*. A histogram of words for each
     series is formed and stored.
     For each window-length a bag is created and all words are joint into
     one bag-of-patterns. Words from different window-lengths are
     discriminated by different prefixes.
-    fit involves training a logistic regression classifier on the single
+    *fit* involves training a logistic regression classifier on the single
     bag-of-patterns.
 
     predict uses the logistic regression classifier
@@ -78,10 +78,11 @@ class WEASEL(BaseClassifier):
             footprint, better runtime at equal accuracy.
 
     feature_selection: {"chi2", "none", "random"}, default: chi2
-        Sets the feature selections strategy to be used. Chi2 reduces the number
-        of words significantly and is thus much faster (preferred). Random also reduces
-        the number significantly. None applies not feature selectiona and yields large
-        bag of words, e.g. much memory may be needed.
+        Sets the feature selections strategy to be used. *Chi2* reduces the number
+        of words significantly and is thus much faster (preferred). If set to chi2,
+         p_threshold is applied.  *Random* also reduces the number significantly.
+         *None* applies not feature selectiona and yields large bag of words,
+         e.g. much memory may be needed.
     support_probabilities: bool, default: False
         If set to False, a RidgeClassifierCV will be trained, which has higher accuracy
         and is faster, yet does not support predict_proba.
@@ -198,7 +199,7 @@ class WEASEL(BaseClassifier):
         # Window length parameter space dependent on series length
         self.n_instances, self.series_length = X.shape[0], X.shape[-1]
 
-        if self.alphabet_size != 2:
+        if self.alphabet_size == 4:
             warnings.warn(
                 "``alphabet_size=4`` was deprecated in version 0.13.3 and "
                 "will be changed to ``alphabet_size=2`` in 0.15."
