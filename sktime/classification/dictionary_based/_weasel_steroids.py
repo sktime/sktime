@@ -249,7 +249,7 @@ class WEASEL_STEROIDS(BaseClassifier):
             all_words = hstack(sfa_words)
 
         self.clf = RidgeClassifierCV(
-            alphas=np.logspace(-1, 6, 10), normalize=False
+            alphas=np.logspace(-1, 5, 10), normalize=False
         )  # TODO testen??
         self.clf.fit(all_words, y)
         self.total_features_count = all_words.shape[1]
@@ -383,7 +383,7 @@ def _parallel_fit(
     all_words = []
     all_transformers = []
 
-    for dilation in np.unique(dilations):
+    for dilation in dilations:
         alphabet_size = rng.choice(alphabet_sizes)
 
         # maximize word-length
