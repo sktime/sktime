@@ -25,26 +25,32 @@ class DOBIN(BaseTransformer):
     has a simple mathematical foundation and can be used as a dimension
     reduction tool for outlier detection tasks.
 
-    Method assumes normalized data, for example:
+    Method assumes normalized data, the original R code implementation uses:
     ``from sklearn.preprocessing import MinMaxScaler, RobustScaler, StandardScaler``
-
     This prevents variables with large variances having disproportional
     influence on Euclidean distances. The original implelemtation _[1] uses
-    ``MinMaxScaler`` normalization.
+    ``MinMaxScaler`` normalization, and removes NA values before normalization.
+
+    We emphasize that DOBIN is not an outlier detection method; rather it is
+    a pre-processing step that can be used by any outlier detection method.
 
     Parameters
     ----------
     frac : float (default=0.95)
         The cut-off quantile for Y space
+        (parameter q in _[1]).
     k : int (default=None)
-        Number of nearest neighbours considered.
+        Number of nearest neighbours considered
+        (parameter k_2 on page 9 in _[1])
 
     Attributes
     ----------
     _basis : pd.DataFrame
-        The basis vectors suitable for outlier detection.
+        The basis vectors suitable for outlier detection
+        (denoted as Theta in _[1]).
     _coords : pd.DataFrame
-        The transformed coordinates of the data.
+        The transformed coordinates of the data
+        (denoted as tilde{X}, see equation 8 in _[1])
 
     References
     ----------
