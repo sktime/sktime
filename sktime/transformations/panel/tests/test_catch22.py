@@ -1,185 +1,62 @@
 # -*- coding: utf-8 -*-
 """Catch22 test code."""
+
 import numpy as np
+import pytest
 from numpy import testing
 
-from sktime.datasets import load_basic_motions, load_unit_test
+from sktime.datasets import load_basic_motions
 from sktime.transformations.panel.catch22 import Catch22
-
-
-def test_catch22_on_unit_test():
-    """Test of Catch22 on unit test data."""
-    # load unit test data
-    X_train, y_train = load_unit_test(split="train")
-    indices = np.random.RandomState(0).choice(len(y_train), 5, replace=False)
-
-    # fit catch22
-    c22 = Catch22(outlier_norm=True)
-    c22.fit(X_train.iloc[indices], y_train[indices])
-
-    # assert transformed data is the same
-    data = np.nan_to_num(c22.transform(X_train.iloc[indices]), False, 0, 0, 0)
-    testing.assert_array_almost_equal(data, catch22_unit_test_data)
-
-
-def test_catch22_single_feature_on_unit_test():
-    """Test of Catch22 on unit test data."""
-    # load unit test data
-    X_train, y_train = load_unit_test(split="train")
-    indices = np.random.RandomState(0).choice(len(y_train), 2, replace=False)
-
-    # fit catch22
-    c22 = Catch22(outlier_norm=True)
-    c22.fit(X_train.iloc[indices], y_train[indices])
-
-    # assert transformed data is the same
-    results = catch22_unit_test_data.transpose()
-    for i in range(22):
-        data = np.nan_to_num(
-            c22.transform_single_feature(X_train.iloc[indices], i), False, 0, 0, 0
-        )
-        testing.assert_array_almost_equal(data, results[i][:2])
+from sktime.transformations.panel.catch22wrapper import Catch22Wrapper
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 
 def test_catch22_on_basic_motions():
     """Test of Catch22 on basic motions data."""
     # load basic motions data
-    X_train, y_train = load_basic_motions(split="train")
-    indices = np.random.RandomState(4).choice(len(y_train), 5, replace=False)
+    X_train, _ = load_basic_motions(split="train")
+    indices = np.random.RandomState(4).choice(len(X_train), 5, replace=False)
 
-    # fit catch22
-    c22 = Catch22()
-    c22.fit(X_train.iloc[indices], y_train[indices])
-
-    # assert transformed data is the same
-    data = np.nan_to_num(c22.transform(X_train.iloc[indices]), False, 0, 0, 0)
+    # fit Catch22 and assert transformed data is the same
+    c22 = Catch22(replace_nans=True)
+    data = c22.fit_transform(X_train.iloc[indices])
     testing.assert_array_almost_equal(data, catch22_basic_motions_data)
 
+    # fit Catch22 with select features and assert transformed data is the same
+    c22 = Catch22(replace_nans=True, features=feature_names)
+    data = c22.fit_transform(X_train.iloc[indices])
+    testing.assert_array_almost_equal(
+        data,
+        catch22_basic_motions_data[:, np.sort(np.r_[0:132:22, 5:132:22, 9:132:22])],
+    )
 
-catch22_unit_test_data = np.array(
-    [
-        [
-            125.0,
-            64.0,
-            12.0,
-            0.4166666666666666,
-            -0.5,
-            5.0,
-            12.0,
-            201809.1796094523,
-            0.19634954084936207,
-            290.41157230783676,
-            10158389.695652174,
-            0.6890092384766584,
-            6.0,
-            1.0,
-            4.0,
-            1.4836116549664229,
-            1.1428571428571428,
-            0.33206729175825095,
-            0.0,
-            0.0,
-            0.1111111111111111,
-            6.0,
-        ],
-        [
-            162.39999389648438,
-            93.69999694824219,
-            12.0,
-            0.37499999999999994,
-            -0.45833333333333337,
-            5.0,
-            10.0,
-            215833.29634416648,
-            0.19634954084936207,
-            311.8028073602811,
-            6178823.478260869,
-            0.6040399169957669,
-            5.0,
-            0.9565217391304348,
-            5.0,
-            1.601149361627198,
-            0.5714285714285714,
-            0.33199585882480837,
-            0.0,
-            0.0,
-            0.1111111111111111,
-            0.0,
-        ],
-        [
-            132.89999389648438,
-            74.94999694824219,
-            12.0,
-            0.37499999999999994,
-            -0.5416666666666667,
-            5.0,
-            11.0,
-            133274.21287765825,
-            0.19634954084936207,
-            259.5532704990584,
-            2922963.4782608696,
-            0.8020096485829413,
-            5.0,
-            1.0,
-            5.0,
-            1.4836116549664229,
-            0.42857142857142855,
-            0.33170445599629694,
-            0.0,
-            0.0,
-            0.1111111111111111,
-            5.0,
-        ],
-        [
-            215.1999969482422,
-            122.0999984741211,
-            12.0,
-            0.5416666666666666,
-            -0.45833333333333337,
-            6.0,
-            16.0,
-            404807.2927517244,
-            0.19634954084936207,
-            331.0570128841759,
-            10323049.43478261,
-            0.6251819918197027,
-            7.0,
-            1.0,
-            6.0,
-            1.714203171343286,
-            0.375,
-            0.2487030955256314,
-            0.0,
-            0.0,
-            0.16666666666666666,
-            0.0,
-        ],
-        [
-            155.10000610351562,
-            82.55000305175781,
-            11.0,
-            0.37499999999999994,
-            -0.5208333333333334,
-            5.0,
-            12.0,
-            276289.15137908916,
-            0.19634954084936207,
-            317.8343938909621,
-            11863211.826086957,
-            0.7449158910995153,
-            6.0,
-            1.0,
-            4.0,
-            1.4836116549664229,
-            1.0,
-            0.3320445278536131,
-            0.0,
-            0.0,
-            0.1111111111111111,
-            0.0,
-        ],
-    ]
+
+@pytest.mark.skipif(
+    not _check_soft_dependencies("pycatch22", severity="none"),
+    reason="skip test if required soft dependency pycatch22 not available",
 )
+def test_catch22_wrapper_on_basic_motions():
+    """Test of Catch22Wrapper on basic motions data."""
+    # load basic motions data
+    X_train, _ = load_basic_motions(split="train")
+    indices = np.random.RandomState(4).choice(len(X_train), 5, replace=False)
+
+    # fit Catch22Wrapper and assert transformed data is the same
+    c22 = Catch22Wrapper(replace_nans=True)
+    data = c22.fit_transform(X_train.iloc[indices])
+    testing.assert_array_almost_equal(data, catch22_basic_motions_data)
+
+    # fit Catch22Wrapper with select features and assert transformed data is the same
+    c22 = Catch22Wrapper(replace_nans=True, features=feature_names)
+    data = c22.fit_transform(X_train.iloc[indices])
+    testing.assert_array_almost_equal(
+        data,
+        catch22_basic_motions_data[:, np.sort(np.r_[0:132:22, 5:132:22, 9:132:22])],
+    )
+
+
+feature_names = ["DN_HistogramMode_5", "CO_f1ecac", "FC_LocalSimple_mean3_stderr"]
+
 catch22_basic_motions_data = np.array(
     [
         [

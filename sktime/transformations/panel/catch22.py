@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-"""catch22 features.
+"""Catch22 features.
 
-A transformer for the catch22 features.
+A transformer for the Catch22 features.
 """
 
 __author__ = ["MatthewMiddlehurst"]
@@ -11,6 +11,7 @@ import math
 
 import numpy as np
 import pandas as pd
+from deprecated.sphinx import deprecated
 from joblib import Parallel, delayed
 from numba import njit
 
@@ -19,16 +20,33 @@ from sktime.transformations.base import BaseTransformer
 
 
 class Catch22(BaseTransformer):
-    """Canonical Time-series Characteristics (catch22).
+    """Canonical Time-series Characteristics (Catch22).
 
     Overview: Input n series with d dimensions of length m
-    Transforms series into the 22 catch22 [1]_ features extracted from the hctsa [2]_
+    Transforms series into the 22 Catch22 [1]_ features extracted from the hctsa [2]_
     toolbox.
+
+    Parameters
+    ----------
+    features : str or List of str, optional, default="all"
+        The Catch22 features to extract by name. If "all", all features are extracted.
+    outlier_norm : bool, optional, default=False
+        Normalise each series during the two outlier Catch22 features, which can take a
+        while to process for large values.
+    replace_nans : bool, optional, default=True
+        Replace NaN or inf values from the Catch22 transform with 0.
+    n_jobs : int, optional, default=1
+        The number of jobs to run in parallel for both `fit` and `predict`.
+        ``-1`` means using all processors.
+
+    See Also
+    --------
+    Catch22Wrapper Catch22Classifier
 
     Notes
     -----
-    Original catch22 package implementations:
-    https://github.com/chlubba/catch22
+    Original Catch22 package implementations:
+    https://github.com/DynamicsAndNeuralSystems/Catch22
 
     For the Java version, see
     https://github.com/uea-machine-learning/tsml/blob/master/src/main/java
@@ -45,27 +63,28 @@ class Catch22(BaseTransformer):
     """
 
     _tags = {
-        "scitype:transform-input": "Series",
-        # what is the scitype of X: Series, or Panel
+        "scitype:transform-input": "Panel",
         "scitype:transform-output": "Primitives",
-        # what is the scitype of y: None (not needed), Primitives, Series, Panel
-        "scitype:instancewise": True,  # is this an instance-wise transform?
-        "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
-        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
+        "scitype:instancewise": True,
+        "X_inner_mtype": "numpy3D",
+        "y_inner_mtype": "None",
         "fit_is_empty": True,
     }
 
     def __init__(
         self,
+        features="all",
         outlier_norm=False,
         replace_nans=False,
-        n_jobs=-1,
+        n_jobs=1,
     ):
+        self.features = features
         self.outlier_norm = outlier_norm
         self.replace_nans = replace_nans
 
         self.n_jobs = n_jobs
 
+        # todo remove in v0.15
         self._case_id = None
         self._st_n_instances = 0
         self._st_series_length = 0
@@ -80,82 +99,134 @@ class Catch22(BaseTransformer):
         super(Catch22, self).__init__()
 
     def _transform(self, X, y=None):
-        """Transform data into the catch22 features.
+        """Transform data into the Catch22 features.
 
         Parameters
         ----------
-        X : 3d numpy array, input time series panel.
-        y : array_like, target values (optional, ignored).
+        X : 3D numpy array of shape [n_instances, n_dimensions, n_features],
+            input time series panel.
+        y : ignored.
 
         Returns
         -------
-        Pandas dataframe containing 22 features for each input series.
+        c22 : Pandas DataFrame of shape [n_instances, c*n_dimensions] where c is the
+             number of features requested, containing Catch22 features for X.
         """
         n_instances = X.shape[0]
 
-        if self.n_jobs == -1:
-            c22_list = [self._transform_case(X[i]) for i in range(n_instances)]
-        else:
-            c22_list = Parallel(n_jobs=self.n_jobs)(
-                delayed(self._transform_case)(
-                    X[i],
+        if isinstance(self.features, str):
+            if self.features == "all":
+                f_idx = [i for i in range(22)]
+            elif self.features in feature_names:
+                f_idx = feature_names.index(self.features)
+            else:
+                raise ValueError("Invalid feature selection.")
+        elif isinstance(self.features, (list, tuple)):
+            if len(self.features) > 0 and all(
+                [f in feature_names for f in self.features]
+            ):
+                f_idx = list(
+                    dict.fromkeys([feature_names.index(f) for f in self.features])
                 )
-                for i in range(n_instances)
+            else:
+                raise ValueError("Invalid feature selection.")
+        else:
+            raise ValueError("Invalid feature selection.")
+
+        c22_list = Parallel(n_jobs=self.n_jobs)(
+            delayed(self._transform_case)(
+                X[i],
+                f_idx,
             )
+            for i in range(n_instances)
+        )
 
         if self.replace_nans:
             c22_list = np.nan_to_num(c22_list, False, 0, 0, 0)
 
         return pd.DataFrame(c22_list)
 
-    def _transform_case(self, series):
-        c22 = np.zeros(22 * len(series))
-        for i in range(len(series)):
-            outlier_series = series[i]
-            if self.outlier_norm:
-                std = np.std(outlier_series)
-                if std > 0:
-                    outlier_series = (outlier_series - np.mean(outlier_series)) / std
+    def _transform_case(self, X, f_idx):
+        c22 = np.zeros(len(f_idx) * len(X))
 
-            smin = np.min(series[i])
-            smax = np.max(series[i])
-            smean = np.mean(series[i])
+        for i in range(len(X)):
+            series = X[i]
+            dim = i * len(f_idx)
+            outlier_series = None
+            smin = None
+            smax = None
+            smean = None
+            fft = None
+            ac = None
+            acfz = None
 
-            nfft = int(np.power(2, np.ceil(np.log(len(series[i])) / np.log(2))))
-            fft = np.fft.fft(series[i] - smean, n=nfft)
-            ac = _autocorr(series[i], fft)
-            acfz = _ac_first_zero(ac)
+            for n in range(len(f_idx)):
+                feature = f_idx[n]
+                args = [series]
 
-            dim = 22 * i
-            c22[dim] = Catch22._DN_HistogramMode_5(series[i], smin, smax)
-            c22[dim + 1] = Catch22._DN_HistogramMode_10(series[i], smin, smax)
-            c22[dim + 2] = Catch22._SB_BinaryStats_diff_longstretch0(series[i], smean)
-            c22[dim + 3] = Catch22._DN_OutlierInclude_p_001_mdrmd(outlier_series)
-            c22[dim + 4] = Catch22._DN_OutlierInclude_n_001_mdrmd(outlier_series)
-            c22[dim + 5] = Catch22._CO_f1ecac(ac)
-            c22[dim + 6] = Catch22._CO_FirstMin_ac(ac)
-            c22[dim + 7] = Catch22._SP_Summaries_welch_rect_area_5_1(series[i], fft)
-            c22[dim + 8] = Catch22._SP_Summaries_welch_rect_centroid(series[i], fft)
-            c22[dim + 9] = Catch22._FC_LocalSimple_mean3_stderr(series[i])
-            c22[dim + 10] = Catch22._CO_trev_1_num(series[i])
-            c22[dim + 11] = Catch22._CO_HistogramAMI_even_2_5(series[i], smin, smax)
-            c22[dim + 12] = Catch22._IN_AutoMutualInfoStats_40_gaussian_fmmi(ac)
-            c22[dim + 13] = Catch22._MD_hrv_classic_pnn40(series[i])
-            c22[dim + 14] = Catch22._SB_BinaryStats_mean_longstretch1(series[i])
-            c22[dim + 15] = Catch22._SB_MotifThree_quantile_hh(series[i])
-            c22[dim + 16] = Catch22._FC_LocalSimple_mean1_tauresrat(series[i], acfz)
-            c22[dim + 17] = Catch22._CO_Embed2_Dist_tau_d_expfit_meandiff(
-                series[i], acfz
-            )
-            c22[dim + 18] = Catch22._SC_FluctAnal_2_dfa_50_1_2_logi_prop_r1(series[i])
-            c22[dim + 19] = Catch22._SC_FluctAnal_2_rsrangefit_50_1_logi_prop_r1(
-                series[i]
-            )
-            c22[dim + 20] = Catch22._SB_TransitionMatrix_3ac_sumdiagcov(series[i], acfz)
-            c22[dim + 21] = Catch22._PD_PeriodicityWang_th0_01(series[i])
+                if feature == 0 or feature == 1 or feature == 11:
+                    if smin is None:
+                        smin = np.min(series)
+                    if smax is None:
+                        smax = np.max(series)
+                    args = [series, smin, smax]
+                elif feature == 2:
+                    if smean is None:
+                        smean = np.mean(series)
+                    args = [series, smean]
+                elif feature == 3 or feature == 4:
+                    if self.outlier_norm:
+                        if smean is None:
+                            smean = np.mean(series)
+                        if outlier_series is None:
+                            outlier_series = _normalise_series(series, smean)
+                        args = [outlier_series]
+                    else:
+                        args = [series]
+                elif feature == 7 or feature == 8:
+                    if smean is None:
+                        smean = np.mean(series)
+                    if fft is None:
+                        nfft = int(
+                            np.power(2, np.ceil(np.log(len(series)) / np.log(2)))
+                        )
+                        fft = np.fft.fft(series - smean, n=nfft)
+                    args = [series, fft]
+                elif feature == 5 or feature == 6 or feature == 12:
+                    if smean is None:
+                        smean = np.mean(series)
+                    if fft is None:
+                        nfft = int(
+                            np.power(2, np.ceil(np.log(len(series)) / np.log(2)))
+                        )
+                        fft = np.fft.fft(series - smean, n=nfft)
+                    if ac is None:
+                        ac = _autocorr(series, fft)
+                    args = [ac]
+                elif feature == 16 or feature == 17 or feature == 20:
+                    if smean is None:
+                        smean = np.mean(series)
+                    if fft is None:
+                        nfft = int(
+                            np.power(2, np.ceil(np.log(len(series)) / np.log(2)))
+                        )
+                        fft = np.fft.fft(series - smean, n=nfft)
+                    if ac is None:
+                        ac = _autocorr(series, fft)
+                    if acfz is None:
+                        acfz = _ac_first_zero(ac)
+                    args = [series, acfz]
+
+                c22[dim + n] = features[feature](*args)
 
         return c22
 
+    # todo remove in v0.15
+    @deprecated(
+        version="0.13.2",
+        reason="The Catch22 transform_single_feature method will be removed in v0.15.0. Use the 'features' parameters for the class.",  # noqa: E501
+        category=FutureWarning,
+    )
     def transform_single_feature(self, X, feature, case_id=None):
         """Transform data into a specified catch22 feature.
 
@@ -240,6 +311,7 @@ class Catch22(BaseTransformer):
 
         return np.asarray(c22_list)
 
+    # todo remove in v0.15
     def _transform_case_single(self, series, feature, case_id, inst_idx):
         args = [series]
 
@@ -255,7 +327,7 @@ class Catch22(BaseTransformer):
                 if self.outlier_norm:
                     std = np.std(series)
                     if std > 0:
-                        series = (series - np.mean(series)) / std  # todo numba
+                        series = (series - np.mean(series)) / std
                 args = [series]
             elif feature == 7 or feature == 8:
                 smean = np.mean(series)
@@ -1199,6 +1271,14 @@ def _spline_fit(X):
             )
 
     return y_out
+
+
+@njit(fastmath=True, cache=True)
+def _normalise_series(X, mean):
+    std = np.std(X)
+    if std > 0:
+        return (X - mean) / std
+    return X
 
 
 feature_names = [
