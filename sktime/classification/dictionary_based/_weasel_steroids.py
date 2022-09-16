@@ -17,7 +17,8 @@ __all__ = ["WEASEL_STEROIDS"]
 import numpy as np
 from joblib import Parallel, delayed
 from scipy.sparse import hstack
-from sklearn.feature_selection import SelectPercentile, chi2
+
+# from sklearn.feature_selection import SelectPercentile, chi2
 from sklearn.linear_model import RidgeClassifierCV
 from sklearn.pipeline import make_pipeline
 from sklearn.utils import check_random_state
@@ -251,7 +252,7 @@ class WEASEL_STEROIDS(BaseClassifier):
             all_words = hstack(sfa_words)
 
         self.clf = make_pipeline(
-            SelectPercentile(chi2, percentile=50),
+            # SelectPercentile(chi2, percentile=50),
             RidgeClassifierCV(alphas=np.logspace(-1, 5, 10)),  # , normalize=True
         )  # TODO testen??
 
