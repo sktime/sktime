@@ -129,8 +129,8 @@ class MUSE_STEROIDS(BaseClassifier):
         anova=False,
         variance=True,
         bigrams=False,
-        binning_strategies=["equi-depth", "equi-width"],
-        ensemble_size=50,
+        binning_strategies=["equi-depth"],
+        ensemble_size=60,
         max_feature_count=20_000,
         min_window=4,
         max_window=24,
@@ -262,7 +262,7 @@ class MUSE_STEROIDS(BaseClassifier):
 
         # Ridge Classifier does not give probabilities
         if not self.support_probabilities:
-            self.clf = RidgeClassifierCV(alphas=np.logspace(-1, 6, 10), normalize=False)
+            self.clf = RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=False)
         else:
             self.clf = LogisticRegression(
                 max_iter=5000,
@@ -419,7 +419,7 @@ def _parallel_fit(
     alphabet_size = rng.choice(alphabet_sizes)
     word_length = min(window_size - 2, rng.choice(word_lengths))
     norm = rng.choice(norm_options)
-    first_difference = rng.choice([True, False])
+    first_difference = rng.choice([False])
     binning_strategy = rng.choice(binning_strategies)
 
     series_length = X.shape[-1]

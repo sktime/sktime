@@ -20,7 +20,7 @@ simplefilter(action="ignore", category=PerformanceWarning)
 
 import numpy as np
 import pandas as pd
-from joblib import Parallel, delayed
+from joblib import Parallel, delayed, parallel_backend
 from sklearn.linear_model import RidgeClassifierCV
 from sklearn.pipeline import make_pipeline
 
@@ -104,7 +104,7 @@ def get_classifiers(threads_to_use):
         # ),
         "MUSE Steroids": MUSE_STEROIDS(
             random_state=1379,
-            use_first_differences=False,
+            use_first_differences=True,
             binning_strategies=["equi-depth"],
             feature_selection="chi2",
             # ensemble_size=75,
@@ -141,7 +141,7 @@ if os.path.exists(DATA_PATH):
 # server
 else:
     DATA_PATH = "/vol/fob-wbib-vol2/wbi/schaefpa/sktime/datasets/Multivariate_ts"
-    parallel_jobs = 80
+    parallel_jobs = 40
     threads_to_use = 1
     server = True
     used_dataset = dataset_names_full
@@ -290,7 +290,7 @@ if __name__ == "__main__":
                 "Dataset",
                 "Accuracy",
             ],
-        ).to_csv("uea-multivariate-accuracy-sone.csv", index=None)
+        ).to_csv("uea-multivariate-accuracy-sone-2.csv", index=None)
 
         pd.DataFrame.from_records(
             csv_timings,
@@ -300,4 +300,4 @@ if __name__ == "__main__":
                 "Fit-Time",
                 "Predict-Time",
             ],
-        ).to_csv("uea-multivariate-runtime-sone.csv", index=None)
+        ).to_csv("uea-multivariate-runtime-sone-2.csv", index=None)
