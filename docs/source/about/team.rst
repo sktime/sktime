@@ -70,7 +70,8 @@ Core Developers
      - :user:`patrickzib`
    * - Stanislav Khrapov
      - :user:`khrapovs`
-
+   * - Svea Marie Meyer
+     - :user:`SveaMeyer13`
 
 Former Core Developers (inactive)
 ---------------------------------
@@ -100,7 +101,5 @@ Former Core Developers (inactive)
      - :user:`rnkuhns`
    * - Sajaysurya Ganesh
      - :user:`sajaysurya`
-   * - Svea Marie Meyer
-     - :user:`SveaMeyer13`
    * -
      - :user:`big-o`
