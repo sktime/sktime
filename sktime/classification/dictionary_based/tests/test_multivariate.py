@@ -102,7 +102,7 @@ def get_classifiers(threads_to_use):
         #    random_state=1379,
         #    n_jobs=threads_to_use,
         # ),
-        "MUSE Steroids": MUSE_STEROIDS(
+        "MUSE (dilation)": MUSE_STEROIDS(
             random_state=1379,
             use_first_differences=True,
             binning_strategies=["equi-depth"],
@@ -190,18 +190,23 @@ if __name__ == "__main__":
         pred_time = np.round(time.perf_counter() - pred_time, 5)
 
         print(
-            f"Dataset={dataset_name}, "
+            # f"Dataset={dataset_name}, "
+            # + (
+            #    f"Feature Count={clf.total_features_count}, "
+            #    if hasattr(clf, "total_features_count")
+            #    else f""
+            # )
+            # + f"Train-Size={np.shape(X_train)}, "
+            # + f"Test-Size={np.shape(X_test)}\n"
+            f"{clf_name},{dataset_name},"
+            + f"{np.round(acc, 3)},"
+            + f"{np.round(fit_time, 2)},"
+            + f"{np.round(pred_time, 2)}"
             + (
-                f"Feature Count={clf.total_features_count}, "
+                f",{clf.total_features_count}"
                 if hasattr(clf, "total_features_count")
                 else f""
             )
-            + f"Train-Size={np.shape(X_train)}, "
-            + f"Test-Size={np.shape(X_test)}"
-            + f"\n\tclassifier={clf_name}"
-            + f"\n\ttime (fit, predict)="
-            f"{np.round(fit_time, 2), np.round(pred_time, 2)}"
-            + f"\n\taccuracy={np.round(acc, 3)}"
         )
 
         sum_scores[clf_name]["dataset"].append(dataset_name)
@@ -219,7 +224,7 @@ if __name__ == "__main__":
         #    print("\tFailed: ", dataset_name, clf_name)
         #    print(e)
 
-        print("-----------------")
+        # print("-----------------")
 
         return sum_scores
 
