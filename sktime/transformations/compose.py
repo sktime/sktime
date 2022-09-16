@@ -70,17 +70,21 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
     For a list of transformers `trafo1`, `trafo2`, ..., `trafoN`,
     the pipeline behaves as follows:
 
-    * `fit` - changes state by running `trafo1.fit_transform`,
+    * `fit`
+        Changes state by running `trafo1.fit_transform`,
         trafo2.fit_transform` etc sequentially, with
         `trafo[i]` receiving the output of `trafo[i-1]`
-    * `transform` - result is of executing `trafo1.transform`, `trafo2.transform`,
+    * `transform`
+        Result is of executing `trafo1.transform`, `trafo2.transform`,
         etc with `trafo[i].transform` input = output of `trafo[i-1].transform`,
         and returning the output of `trafoN.transform`
-    * `inverse_transform` - result is of executing `trafo[i].inverse_transform`,
+    * `inverse_transform`
+        Result is of executing `trafo[i].inverse_transform`,
         with `trafo[i].inverse_transform` input = output
         `trafo[i-1].inverse_transform`, and returning the output of
         `trafoN.inverse_transform`
-    * `update` - changes state by chaining `trafo1.update`, `trafo1.transform`,
+    * `update`
+        Changes state by chaining `trafo1.update`, `trafo1.transform`,
         `trafo2.update`, `trafo2.transform`, ..., `trafoN.update`,
         where `trafo[i].update` and `trafo[i].transform` receive as input
         the output of `trafo[i-1].transform`
