@@ -235,16 +235,16 @@ def get_classifiers(threads_to_use):
         # "BOSS": BOSSEnsemble(random_state=1379, n_jobs=threads_to_use),
         # "cBOSS": ContractableBOSS(random_state=1379, n_jobs=threads_to_use),
         # "TDE": TemporalDictionaryEnsemble(random_state=1379, n_jobs=threads_to_use),
-        "WEASEL 2 (none, ew, ed, 60, 2)": WEASEL_STEROIDS(
+        "WEASEL 2": WEASEL_STEROIDS(
             random_state=1379,
             binning_strategies=["equi-depth"],
             alphabet_sizes=[2],
-            lower_bounding=False,
+            # lower_bounding=False,
             min_window=4,
             max_window=24,
             max_feature_count=20_000,
             word_lengths=[8],
-            norm_options=[False],
+            # norm_options=[False],
             variance=True,
             anova=False,
             ensemble_size=60,
@@ -419,18 +419,15 @@ if __name__ == "__main__":
                 acc = clf.score(X_test, y_test)
                 pred_time = np.round(time.perf_counter() - pred_time, 5)
             print(
-                f"Dataset={dataset_name}, "
+                f"{clf_name},{dataset_name},"
+                + f"{np.round(acc, 3)},"
+                + f"{np.round(fit_time, 2)},"
+                + f"{np.round(pred_time, 2)}"
                 + (
-                    f"Feature Count={clf.total_features_count}, "
+                    f",{clf.total_features_count}"
                     if hasattr(clf, "total_features_count")
                     else f""
                 )
-                + f"Train-Size={np.shape(X_train)}, "
-                + f"Test-Size={np.shape(X_test)}"
-                + f"\n\tclassifier={clf_name}"
-                + f"\n\ttime (fit, predict)="
-                f"{np.round(fit_time, 2), np.round(pred_time, 2)}"
-                + f"\n\taccuracy={np.round(acc, 3)}"
             )
             sum_scores[clf_name]["dataset"].append(dataset_name)
             sum_scores[clf_name]["all_scores"].append(acc)

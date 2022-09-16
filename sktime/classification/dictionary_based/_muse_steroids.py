@@ -137,7 +137,7 @@ class MUSE_STEROIDS(BaseClassifier):
         norm_options=[False],
         word_lengths=[8],
         alphabet_sizes=[2],
-        use_first_differences=False,
+        use_first_differences=True,
         feature_selection="chi2",
         support_probabilities=False,
         n_jobs=1,

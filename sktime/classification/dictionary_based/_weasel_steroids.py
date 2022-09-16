@@ -18,6 +18,7 @@ import numpy as np
 from joblib import Parallel, delayed
 from scipy.sparse import hstack  # , csr_matrix
 from sklearn.linear_model import RidgeClassifierCV
+from sklearn.pipeline import make_pipeline
 from sklearn.utils import check_random_state
 
 from sktime.classification.base import BaseClassifier
@@ -248,13 +249,19 @@ class WEASEL_STEROIDS(BaseClassifier):
             # sfa_words.append(csr_matrix(X_features.values))
             all_words = hstack(sfa_words)
 
-        self.clf = RidgeClassifierCV(
-            alphas=np.logspace(-1, 5, 10), normalize=False
-        )  # TODO testen??
+        def log_transform(x):
+            return np.sqrt(x)
+
+        self.clf = make_pipeline(
+            RidgeClassifierCV(
+                alphas=np.logspace(-1, 5, 20)  # , normalize=True
+            )  # TODO testen??
+        )
 
         self.clf.fit(all_words, y)
         self.total_features_count = all_words.shape[1]
-        self.cross_val_score = self.clf.best_score_
+        if hasattr(self.clf, "best_score_"):
+            self.cross_val_score = self.clf.best_score_
 
         return self
 
@@ -393,35 +400,80 @@ def _parallel_fit(
         first_difference = rng.choice(use_first_differences)  # TODO always True???
         binning_strategy = rng.choice(binning_strategies)
 
-        transformer = SFAFast(
-            variance=variance,
-            word_length=word_length,
-            alphabet_size=alphabet_size,
-            window_size=window_size,
-            norm=norm,
-            anova=anova,
-            binning_method=binning_strategy,
-            remove_repeat_words=remove_repeat_words,
-            bigrams=bigrams,
-            dilation=dilation,
-            lower_bounding=lower_bounding,
-            first_difference=first_difference,
-            feature_selection=feature_selection,
-            sections=sections,
-            max_feature_count=max_feature_count // ensemble_size,
-            random_state=i,
-            return_sparse=not (
-                feature_selection == "none"
-                and alphabet_size == 2
-                and not bigrams
-                and len(alphabet_sizes) == 1
-            ),
-            n_jobs=n_jobs,
+        transformer = getSFAFast(
+            alphabet_size,
+            alphabet_sizes,
+            anova,
+            bigrams,
+            binning_strategy,
+            dilation,
+            ensemble_size,
+            feature_selection,
+            first_difference,
+            i,
+            lower_bounding,
+            max_feature_count,
+            n_jobs,
+            norm,
+            remove_repeat_words,
+            sections,
+            variance,
+            window_size,
+            word_length,
         )
 
-        # generate SFA words on subsample
+        # generate SFA words on sample
         words = transformer.fit_transform(X, y)
         all_words.append(words)
         all_transformers.append(transformer)
 
     return all_words, all_transformers
+
+
+def getSFAFast(
+    alphabet_size,
+    alphabet_sizes,
+    anova,
+    bigrams,
+    binning_strategy,
+    dilation,
+    ensemble_size,
+    feature_selection,
+    first_difference,
+    i,
+    lower_bounding,
+    max_feature_count,
+    n_jobs,
+    norm,
+    remove_repeat_words,
+    sections,
+    variance,
+    window_size,
+    word_length,
+):
+    transformer = SFAFast(
+        variance=variance,
+        word_length=word_length,
+        alphabet_size=alphabet_size,
+        window_size=window_size,
+        norm=norm,
+        anova=anova,
+        binning_method=binning_strategy,
+        remove_repeat_words=remove_repeat_words,
+        bigrams=bigrams,
+        dilation=dilation,
+        lower_bounding=lower_bounding,
+        first_difference=first_difference,
+        feature_selection=feature_selection,
+        sections=sections,
+        max_feature_count=max_feature_count // ensemble_size,
+        random_state=i,
+        return_sparse=not (
+            feature_selection == "none"
+            and alphabet_size == 2
+            and not bigrams
+            and len(alphabet_sizes) == 1
+        ),
+        n_jobs=n_jobs,
+    )
+    return transformer
