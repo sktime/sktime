@@ -254,6 +254,14 @@ class WEASEL_STEROIDS(BaseClassifier):
         self.clf = make_pipeline(
             # SelectPercentile(chi2, percentile=50),
             RidgeClassifierCV(alphas=np.logspace(-1, 5, 10)),  # , normalize=True
+            # LogisticRegression(
+            #     max_iter=5000,
+            #     solver="liblinear",
+            #     # class_weight="balanced",
+            #     penalty="l1",
+            #     random_state=self.random_state,
+            #     n_jobs=self.n_jobs,
+            # )
         )  # TODO testen??
 
         self.clf.fit(all_words, y)
