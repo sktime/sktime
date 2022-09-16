@@ -14,7 +14,9 @@ import warnings
 import numpy as np
 from joblib import Parallel, delayed
 from scipy.sparse import hstack
+from sklearn.feature_selection import SelectPercentile, chi2
 from sklearn.linear_model import LogisticRegression, RidgeClassifierCV
+from sklearn.pipeline import make_pipeline
 from sklearn.utils import check_random_state
 
 from sktime.classification.base import BaseClassifier
@@ -262,7 +264,11 @@ class MUSE_STEROIDS(BaseClassifier):
 
         # Ridge Classifier does not give probabilities
         if not self.support_probabilities:
-            self.clf = RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=False)
+            self.clf = make_pipeline(
+                SelectPercentile(chi2, percentile=50),
+                RidgeClassifierCV(alphas=np.logspace(-3, 3, 10)),  # , normalize=True
+            )  # TODO testen??
+
         else:
             self.clf = LogisticRegression(
                 max_iter=5000,

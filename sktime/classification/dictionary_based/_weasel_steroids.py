@@ -16,7 +16,8 @@ __all__ = ["WEASEL_STEROIDS"]
 
 import numpy as np
 from joblib import Parallel, delayed
-from scipy.sparse import hstack  # , csr_matrix
+from scipy.sparse import hstack
+from sklearn.feature_selection import SelectPercentile, chi2
 from sklearn.linear_model import RidgeClassifierCV
 from sklearn.pipeline import make_pipeline
 from sklearn.utils import check_random_state
@@ -249,14 +250,10 @@ class WEASEL_STEROIDS(BaseClassifier):
             # sfa_words.append(csr_matrix(X_features.values))
             all_words = hstack(sfa_words)
 
-        def log_transform(x):
-            return np.sqrt(x)
-
         self.clf = make_pipeline(
-            RidgeClassifierCV(
-                alphas=np.logspace(-1, 5, 20)  # , normalize=True
-            )  # TODO testen??
-        )
+            SelectPercentile(chi2, percentile=50),
+            RidgeClassifierCV(alphas=np.logspace(-1, 5, 10)),  # , normalize=True
+        )  # TODO testen??
 
         self.clf.fit(all_words, y)
         self.total_features_count = all_words.shape[1]

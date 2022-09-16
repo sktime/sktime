@@ -1125,8 +1125,8 @@ def create_bag_feature_selection(
             del relevant_features[0]
 
     needed_size = len(relevant_features_idx)
-    if sections > 1:
-        needed_size = 2 * needed_size
+    # if sections > 1:
+    #    needed_size = 2 * needed_size
 
     all_win_words = np.zeros((n_instances, needed_size), dtype=np.int32)
     for j in range(sfa_words.shape[0]):
@@ -1135,21 +1135,22 @@ def create_bag_feature_selection(
                 all_win_words[j, relevant_features[key]] += 1
 
     # count number of sections the word is present
-    if sections > 1:
-        section_count = np.zeros(
-            (sfa_words.shape[0], len(relevant_features_idx), sections), dtype=np.uint32
-        )
-        max_index = max(X_index) + 1
-        for j in range(sfa_words.shape[0]):
-            for i, key in enumerate(sfa_words[j]):
-                if key in relevant_features:
-                    section_count[
-                        j,
-                        relevant_features[key],
-                        int(X_index[i] / max_index * sections),
-                    ] = 1
-
-        all_win_words[:, len(relevant_features_idx) :] = section_count.sum(axis=-1)
+    # if sections > 1:
+    #     section_count = np.zeros(
+    #         (sfa_words.shape[0], len(relevant_features_idx), sections),
+    #         dtype=np.uint32
+    #     )
+    #     max_index = max(X_index) + 1
+    #     for j in range(sfa_words.shape[0]):
+    #         for i, key in enumerate(sfa_words[j]):
+    #             if key in relevant_features:
+    #                 section_count[
+    #                     j,
+    #                     relevant_features[key],
+    #                     int(X_index[i] / max_index * sections),
+    #                 ] = 1
+    #
+    #     all_win_words[:, len(relevant_features_idx) :] = section_count.sum(axis=-1)
 
     return all_win_words, relevant_features
 
@@ -1206,21 +1207,21 @@ def create_bag_transform(
                     # )
 
             all_win_words[:, feature_count // 2 :] = section_count.sum(axis=-1)
-        else:
-            section_count = np.zeros(
-                (sfa_words.shape[0], feature_count // 2, sections), dtype=np.uint32
-            )
-            max_index = max(X_index) + 1
-            for j in range(sfa_words.shape[0]):
-                for i, key in enumerate(sfa_words[j]):
-                    if key in relevant_features:
-                        section_count[
-                            j,
-                            relevant_features[key],
-                            int(X_index[i] / max_index * sections),
-                        ] = 1
-
-            all_win_words[:, feature_count // 2 :] = section_count.sum(axis=-1)
+        # else:
+        #     section_count = np.zeros(
+        #         (sfa_words.shape[0], feature_count // 2, sections), dtype=np.uint32
+        #     )
+        #     max_index = max(X_index) + 1
+        #     for j in range(sfa_words.shape[0]):
+        #         for i, key in enumerate(sfa_words[j]):
+        #             if key in relevant_features:
+        #                 section_count[
+        #                     j,
+        #                     relevant_features[key],
+        #                     int(X_index[i] / max_index * sections),
+        #                 ] = 1
+        #
+        #     all_win_words[:, feature_count // 2 :] = section_count.sum(axis=-1)
 
     return all_win_words, all_win_words.shape[1]
 
