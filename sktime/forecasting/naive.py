@@ -23,7 +23,7 @@ from scipy.stats import norm
 
 from sktime.datatypes._convert import convert, convert_to
 from sktime.datatypes._utilities import get_slice
-from sktime.forecasting.base._base import DEFAULT_ALPHA, BaseForecaster, ForecastingHorizon
+from sktime.forecasting.base._base import DEFAULT_ALPHA, BaseForecaster
 from sktime.forecasting.base._sktime import _BaseWindowForecaster
 from sktime.utils.validation import check_window_length
 from sktime.utils.validation.forecasting import check_sp
@@ -358,21 +358,22 @@ class NaiveForecaster(_BaseWindowForecaster):
         """
         y_pred = self.predict(fh)
         y_pred = convert(y_pred, from_type=self._y_mtype_last_seen, to_type="pd.Series")
-    
+
         pred_var = self.predict_var(fh)
         z_scores = norm.ppf(alpha)
-    
+
         errors = np.sqrt(pred_var.to_numpy().reshape(len(pred_var), 1)) * z_scores
         pred_quantiles = pd.DataFrame(
             y_pred + errors,
             columns=pd.MultiIndex.from_product([["Quantiles"], alpha]),
-            index=fh.to_absolute(self.cutoff).to_pandas()
+            index=fh.to_absolute(self.cutoff).to_pandas(),
         )
-    
+
         return pred_quantiles
 
     def _predict_var(self, fh, X=None, cov=False):
         """Compute/return prediction variance for naive forecasts.
+
         Variance are computed according to formulas from (Table 5.2)
         Forecasting: Principles and Practice textbook [1]_.
 
@@ -400,7 +401,6 @@ class NaiveForecaster(_BaseWindowForecaster):
         ----------
         .. [1] https://otexts.com/fpp3/prediction-intervals.html#benchmark-methods
         """
-
         y = self._y
         y = convert(y, from_type=self._y_mtype_last_seen, to_type="pd.Series")
         T = len(y)
@@ -430,21 +430,25 @@ class NaiveForecaster(_BaseWindowForecaster):
         sp = self.sp
         window_length = self.window_length or T
         # Formulas from:
-        # https://otexts.com/fpp3/prediction-intervals.html#benchmark-methods (Table 5.2)
+        # https://otexts.com/fpp3/prediction-intervals.html (Table 5.2)
         partial_se_formulas = {
-            "last": lambda h: np.sqrt(h) if sp == 1 else np.sqrt(np.floor((h - 1) / sp) + 1),
+            "last": lambda h: np.sqrt(h)
+            if sp == 1
+            else np.sqrt(np.floor((h - 1) / sp) + 1),
             "mean": lambda h: np.repeat(np.sqrt(1 + (1 / window_length)), len(h)),
             "drift": lambda h: np.sqrt(h * (1 + h / (T - 1))),
         }
 
         fh_periods = np.array(fh.to_relative(self.cutoff))
         marginal_se = se_res * partial_se_formulas[self.strategy](fh_periods)
-        marginal_vars = marginal_se ** 2
+        marginal_vars = marginal_se**2
 
         fh_idx = fh.to_absolute(self.cutoff).to_pandas()
         if cov:
             fh_size = len(fh)
-            cov_matrix = np.fill_diagonal(np.zeros(shape=(fh_size, fh_size)), marginal_vars)
+            cov_matrix = np.fill_diagonal(
+                np.zeros(shape=(fh_size, fh_size)), marginal_vars
+            )
             pred_var = pd.DataFrame(cov_matrix, columns=fh_idx, index=fh_idx)
         else:
             pred_var = pd.DataFrame(marginal_vars, index=fh_idx)

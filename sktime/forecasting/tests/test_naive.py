@@ -269,10 +269,12 @@ def test_strategy_mean_and_last_seasonal_additional_combinations(
         ("mean", 1, 24),
         ("mean", 24, 24),
         ("drift", 1, None),
-    ]
+    ],
 )
 def test_naive_predict_var_backwards(strategy, sp, window_length):
-    """Test whether, given h=1 and large T, the forecast standard error
+    """Checks naive prediction variance computations.
+
+    Test whether, given h=1 and large T, the forecast standard error
     is approximately equal to the residual standard errors.
     This property is noted in the Forecasting: Principles and
     Practice textbook (FPP3) [1]_.
@@ -284,7 +286,7 @@ def test_naive_predict_var_backwards(strategy, sp, window_length):
     check that our results are approximately equal.
 
     References
-    -----------
+    ----------
     .. [1] https://otexts.com/fpp3/prediction-intervals.html#benchmark-methods
     """
     n_timepoints = 100000
@@ -309,9 +311,9 @@ def test_naive_predict_var_backwards(strategy, sp, window_length):
 
     upper_bound, lower_bound = (sigma + 0.001), (sigma - 0.001)
     assert lower_bound < sigma_res < upper_bound
-    
 
-def test_naive_predict_quantiles_against_R_naive():
-    # TODO: compare with results from R
-    # https://github.com/robjhyndman/forecast/blob/master/R/naive.R
-    pass
+
+# def test_naive_predict_quantiles_against_R_naive():
+#     # TODO: compare with results from R
+#     # https://github.com/robjhyndman/forecast/blob/master/R/naive.R
+#     pass
