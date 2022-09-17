@@ -6,111 +6,107 @@ __author__ = ["fkiraly", "achieveordie"]
 
 
 def load(serial):
-    """Load object from serialized location - in-memory or file.
+    """Load an object either from in-memory or from a location.
+
+    This location will be a file(for non-DL estimators) / folder(for DL estimators).
 
     Parameters
     ----------
-    serial : serialized container, str (path), or ZipFile (reference)
+    serial : tuple or string or ZipFile or Path object
+        if serial is a tuple:
+            Contains two elements, first in-memory metadata and second
+            the related object.
+        if serial is a string:
+            Will be converted into a Path object, if resulting
+            object is a file then calls internal classical loader
+            if it is a folder then calls internal deep loader
+            otherwise throws an error.
+        if serial is a Zipfile:
+            Calls to load internal classical loader.
 
     Returns
     -------
-    deserialized self resulting in output `serial`, of `cls.save`
+    Deserialized self resulting in output `serial`, of `cls.save`
 
-    Example
-    -------
-    >>> from sktime.base import load
-    >>> from sktime.datasets import load_airline
-    >>> from sktime.forecasting.naive import NaiveForecaster
-    >>> y = load_airline()
-    >>> forecaster = NaiveForecaster()
-    >>> forecaster.fit(y, fh=[1, 2, 3])
+    Examples
+    --------
+    >>> def load_classical_example():
+    ...     from sktime.base import load
+    ...     from sktime.datasets import load_airline
+    ...     from sktime.forecasting.naive import NaiveForecaster
+    ...     y = load_airline()
+    ...     forecaster = NaiveForecaster()
+    ...     forecaster.fit(y, fh=[1, 2, 3])
+    ...     pkl = forecaster.save()
+    ...     forecaster_loaded = load(pkl)
+    ...     y_pred = forecaster_loaded.predict()
+    >>> load_classical_example()
     NaiveForecaster()
-    >>> pkl = forecaster.save()
-    >>> forecaster_loaded = load(pkl)
-    >>> y_pred = forecaster_loaded.predict()
+    >>> def load_dl_example():
+    ...     from sktime.base import load
+    ...     import numpy as np
+    ...     from sktime.classification.deep_learning import CNNClassifier
+    ...     save_folder_location = "save_folder"
+    ...     sample_X = np.random.randn(15, 24, 16)
+    ...     sample_y = np.random.randint(0, 2, size=(15, ))
+    ...     sample_test_X = np.random.randn(5, 24, 16)
+    ...     cnn = CNNClassifier(n_epochs=1)
+    ...     cnn.fit(sample_X, sample_y)
+    ...     cnn.save(save_folder_location)
+    ...     loaded_cnn = load(save_folder_location)
+    ...     pred = cnn.predict(X=sample_test_X)
+    ...     loaded_pred = loaded_cnn.predict(X=sample_test_X)
+    ...     print(np.allclose(pred, loaded_pred))
+    ...     # True
+    >>> load_dl_example() # doctest: +SKIP
     """
+    from pathlib import Path
     from zipfile import ZipFile
 
     if isinstance(serial, tuple):
         cls = serial[0]
         stored = serial[1]
         return cls.load_from_serial(stored)
-    elif isinstance(serial, (str, ZipFile)):
 
-        if isinstance(serial, str):
-            zipfile = ZipFile(serial)
+    elif isinstance(serial, (str, Path)):
+        path = Path(serial) if isinstance(serial, str) else serial
+        if not path.exists():
+            raise FileNotFoundError(f"The given save location: {serial}\nwas not found")
+        elif path.is_dir():
+            return _load_dl(path)
+        elif path.is_file():
+            return _load_classical(path)
+        else:
+            raise TypeError("Shouldn't reach here, adding for completion")
 
-        with zipfile.open("metadata", mode="r") as metadata:
-            cls = metadata.read()
-        with zipfile.open("object", mode="r") as object:
-            return cls.load_from_path(object.read())
+    elif isinstance(serial, ZipFile):
+        return _load_classical(serial)
+
     else:
         raise TypeError(
             "serial must either be a serialized in-memory sktime object, "
-            "or a str or ZipFile pointing to a file which is a serialized sktime "
+            "a str, Path or ZipFile pointing to a file which is a serialized sktime "
             "object, created by save of an sktime object; but found serial "
             f"of type {serial}"
         )
 
 
-def load_dl(serial):
-    """Load Deep-Learning estimators from in-memory of saved folder.
-
-    Parameters
-    ----------
-    serial : tuple or str or Path object
-        if tuple then represents in-memory byte object of saved DL model
-        if str / Path then points to the folder that was used with .save(path)
-
-    Returns
-    -------
-    deserialized self resulting in output `serial`, of `cls.save`
-
-    Example
-    -------
-    >>> from sktime.base import load_dl
-    >>> import numpy as np
-    >>> from sktime.classification.deep_learning import CNNClassifier
-    >>> save_folder_location = "save_folder"
-    >>> sample_X = np.random.randn(15, 24, 16)
-    >>> sample_y = np.random.randint(0, 2, size=(15, ))
-    >>> sample_test_X = np.random.randn(5, 24, 16)
-    >>> cnn = CNNClassifier(n_epochs=1)
-    >>> cnn.fit(sample_X, sample_y)
-    CNNClassifier(n_epochs=1)
-    >>> cnn.save(save_folder_location)
-    >>> loaded_cnn = load_dl(save_folder_location)
-    >>> pred = cnn.predict(X=sample_test_X)
-    >>> loaded_pred = loaded_cnn.predict(X=sample_test_X)
-    >>> print(np.allclose(pred, loaded_pred))
-    True
-    """
-    import pickle
+def _load_classical(serial):
+    """Call functionality to load Non-DL estimators."""
     from pathlib import Path
+    from zipfile import ZipFile
 
-    if isinstance(serial, tuple):
-        cls = serial[0]
-        stored = serial[1]
-        return cls.load_from_serial(stored)
-    elif isinstance(serial, (str, Path)):
-        if isinstance(serial, str):
-            serial = Path(serial)
+    zipfile = ZipFile(serial) if isinstance(serial, Path) else serial
 
-        if not serial.is_dir():
-            raise TypeError(
-                "`path` is expected to be a directory; but found "
-                "`Path(serial).is_dir()` to be False"
-            )
-        if not serial.exists():
-            raise FileNotFoundError(
-                f"The given save directory: {serial}\nwas not found"
-            )
-        cls = pickle.load(open(serial / "_metadata", "rb"))
-        return cls.load_from_path(serial)
-    else:
-        raise TypeError(
-            "serial must either be a serialized in-memory sktime object, "
-            "or a str or Path object pointing to a directory "
-            "which is a serialized sktime object, created by save "
-            f"of an sktime object; but found serial of type {serial}"
-        )
+    with zipfile.open("metadata", mode="r") as metadata:
+        cls = metadata.read()
+    with zipfile.open("object", mode="r") as object:
+        return cls.load_from_path(object.read())
+
+
+def _load_dl(serial):
+    """Call functionality to load DL estimators."""
+    import pickle
+
+    cls = pickle.load(open(serial / "_metadata", "rb"))
+    return cls.load_from_path(serial)
