@@ -271,23 +271,23 @@ def test_strategy_mean_and_last_seasonal_additional_combinations(
         ("drift", 1, None),
     ]
 )
-def test_naive_predict_var_approx_equal_residual_se(strategy, sp, window_length):
+def test_naive_predict_var_backwards(strategy, sp, window_length):
     """Test whether, given h=1 and large T, the forecast standard error
     is approximately equal to the residual standard errors.
     This property is noted in the Forecasting: Principles and
     Practice textbook (FPP3) [1]_.
 
     More specifically, predict_var computes the forecast standard errors
-    (and hence variance) using the residuals standard errors.
-    According to FPP3, this operation can be fully inverted.
-    For this unit test, we work backwards and check that our
-    results are approximately equal.
+    (and hence variance) from the residuals standard errors times
+    some constant. According to FPP3, this operation can be fully inverted.
+    Hence, for this unit test, we redo our computations backwards and
+    check that our results are approximately equal.
 
     References
     -----------
     .. [1] https://otexts.com/fpp3/prediction-intervals.html#benchmark-methods
     """
-    n_timepoints = 1000000
+    n_timepoints = 100000
     mu, sigma = 0.0, 10.0
     fake_idx = pd.date_range("1980", periods=n_timepoints + 1, freq="H")
     np.random.seed(42)
@@ -307,8 +307,8 @@ def test_naive_predict_var_approx_equal_residual_se(strategy, sp, window_length)
     else:
         sigma_res = sigma / np.sqrt(2 / (T - 1))
 
-    upper_bound, lower_bound = (sigma + 0.5), (sigma - 0.5)
-    # assert lower_bound < sigma_res < upper_bound
+    upper_bound, lower_bound = (sigma + 0.001), (sigma - 0.001)
+    assert lower_bound < sigma_res < upper_bound
     
 
 def test_naive_predict_quantiles_against_R_naive():
