@@ -257,3 +257,61 @@ def test_strategy_mean_and_last_seasonal_additional_combinations(
         for i in range(1 + len(test_data) // sp):
             test_data[i * sp : i * sp + sp - window_length] = np.nan
         pd.testing.assert_series_equal(forecast_data, test_data)
+
+
+@pytest.mark.parametrize(
+    "strategy,sp,window_length",
+    [
+        ("last", 1, None),
+        ("last", 24, None),
+        ("mean", 1, None),
+        ("mean", 24, None),
+        ("mean", 1, 24),
+        ("mean", 24, 24),
+        ("drift", 1, None),
+    ]
+)
+def test_naive_predict_var_approx_equal_residual_se(strategy, sp, window_length):
+    """Test whether, given h=1 and large T, the forecast standard error
+    is approximately equal to the residual standard errors.
+    This property is noted in the Forecasting: Principles and
+    Practice textbook (FPP3) [1]_.
+
+    More specifically, predict_var computes the forecast standard errors
+    (and hence variance) using the residuals standard errors.
+    According to FPP3, this operation can be fully inverted.
+    For this unit test, we work backwards and check that our
+    results are approximately equal.
+
+    References
+    -----------
+    .. [1] https://otexts.com/fpp3/prediction-intervals.html#benchmark-methods
+    """
+    n_timepoints = 1000000
+    mu, sigma = 0.0, 10.0
+    fake_idx = pd.date_range("1980", periods=n_timepoints + 1, freq="H")
+    np.random.seed(42)
+    y = pd.Series(np.random.normal(mu, sigma, size=n_timepoints), index=fake_idx[:-1])
+
+    h = 1
+    forecaster = NaiveForecaster(strategy, sp=sp, window_length=window_length)
+    sigma2 = forecaster.fit(y).predict_var(fh=h)
+    sigma = np.sqrt(sigma2).iloc[0, 0]
+
+    T = len(y.dropna())
+    if strategy == "last":
+        # This is trival because square root of (h) when h=1 is just 1
+        sigma_res = sigma / np.sqrt(h)
+    elif strategy == "mean":
+        sigma_res = sigma / np.sqrt(2 / T)
+    else:
+        sigma_res = sigma / np.sqrt(2 / (T - 1))
+
+    upper_bound, lower_bound = (sigma + 0.5), (sigma - 0.5)
+    # assert lower_bound < sigma_res < upper_bound
+    
+
+def test_naive_predict_quantiles_against_R_naive():
+    # TODO: compare with results from R
+    # https://github.com/robjhyndman/forecast/blob/master/R/naive.R
+    pass
