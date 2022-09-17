@@ -25,8 +25,6 @@ def test_IGTS_find_change_points(univariate_mean_shift):
 def test_GreedyGaussianSegmentation(univariate_mean_shift):
     """Test the GreedyGaussianSegmentation."""
     igts = InformationGainSegmentation(k_max=5, step=1)
-    assert igts.get_params() == {
-        "k_max": 5,
-        "step": 1}
+    assert igts.get_params() == {"k_max": 5, "step": 1}
     pred = igts.fit_predict(univariate_mean_shift)
     assert pred == [1, 4]
