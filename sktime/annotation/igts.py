@@ -3,11 +3,18 @@
 Information Gain-based Temporal Segmentation.
 
 Information Gain Temporal Segmentation (IGTS) is a method for segmenting
-multivariate time series based off reducing the entropy in each segment.
+multivariate time series based off reducing the entropy in each segment [1]_.
 
 The amount of entropy lost by the segmentations made is called the Information
 Gain (IG). The aim is to find the segmentations that have the maximum information
 gain for any number of segmentations.
+
+References
+----------
+.. [1] Sadri, Amin, Yongli Ren, and Flora D. Salim.
+    "Information gain-based metric for recognizing transitions in human activities.",
+    Pervasive and Mobile Computing, 38, 92-109, (2017).
+    https://www.sciencedirect.com/science/article/abs/pii/S1574119217300081
 
 """
 
@@ -37,7 +44,21 @@ class ChangePointResult:
 
 
 def entropy(X: npt.ArrayLike) -> float:
-    """Shannons's entropy for time series."""
+    """Shannons's entropy for time series.
+
+    As defined by equations (3) and (4) from [1]_.
+
+    Parameters
+    ----------
+    X: array_like
+        Time series data as a 2D numpy array with sequence index along rows
+        and value series in columns.
+
+    Returns
+    -------
+    entropy: float
+        Computed entropy.
+    """
     p = np.sum(X, axis=0) / np.sum(X)
     p = p[p > 0.0]
     return -np.sum(p * np.log(p))
@@ -151,7 +172,7 @@ class IGTS:
     def information_gain_score(X: npt.ArrayLike, change_points: List[int]) -> float:
         """Calculate the information gain score.
 
-        The formula is based on equation ?? from [1]_
+        The formula is based on equation (2) from [1]_.
 
         Parameters
         ----------
@@ -348,3 +369,19 @@ class InformationGainSegmentation(SegmentationMixin, BaseEstimator):
     def __repr__(self) -> str:
         """Return a string representation of the estimator."""
         return self._adaptee.__repr__()
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict
+        """
+        return {"k_max": 2, "step": 1}
