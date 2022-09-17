@@ -15,7 +15,6 @@ __author__ = [
     "bethrice44",
 ]
 
-import math
 from warnings import warn
 
 import numpy as np
