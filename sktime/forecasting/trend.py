@@ -369,6 +369,21 @@ class STLForecaster(BaseForecaster):
         self.forecaster_resid = forecaster_resid
         super(STLForecaster, self).__init__()
 
+        # Can handle prediction variance estimation iff:
+        # all underlying forecasters have capability to
+        # compute forecast variance.
+        # NOTE: Assume that NaiveForecaster does not have
+        # predict variance implemented (as of this PR).
+        # We can change the default behavior to set capability:pred_var as True
+        # after closing https://github.com/alan-turing-institute/sktime/pull/3435
+        forecasters = [
+            self.forecaster_trend,
+            self.forecaster_seasonal,
+            self.forecaster_resid,
+        ]
+        if all(f is not None and f.get_tag("capability:pred_var") for f in forecasters):
+            self.set_tags({"capability:pred_var": True})
+
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
 
@@ -447,6 +462,45 @@ class STLForecaster(BaseForecaster):
         y_pred_resid = self.forecaster_resid_.predict(fh=fh, X=X)
         y_pred = y_pred_seasonal + y_pred_trend + y_pred_resid
         return y_pred
+
+    def predict_var(self, fh, X=None):
+        """Compute/return prediction variance for a forecast.
+
+        Important! Predicted variance assumes the following:
+        1. Residuals for each forecaster are pairwise independent from each other.
+        2. That the residuals for each forecaster follow a normal distribution.
+
+        Under the first assumption, we apply Bienayme's identity [1]_ and sum
+        up the predicted forecast variances of the individual STL forecasters.
+        This summed variance gives us the forecast variance of the combined
+        STL forecaster. The second assumption allows us to compute prediction
+        intervals for the combined STL forecaster via z-scores. In particular,
+        we assume the combined STL forecaster's residuals are also normally
+        distributed because the linear combination of normally distributed
+        random variables is also normally distributed.
+
+        Parameters
+        ----------
+        fh : int, list, np.array or ForecastingHorizon
+            Forecasting horizon
+        X : pd.DataFrame, optional (default=None)
+            Exogenous time series
+        cov : bool, optional (default=False)
+            If True, return the covariance matrix.
+            If False, return the marginal variance.
+
+        Returns
+        -------
+        pred_var :
+            if cov=False, pd.DataFrame with index fh.
+                a vector of same length as fh with predictive marginal variances;
+            if cov=True, pd.DataFrame with index fh and columns fh.
+                a square matrix of size len(fh) with predictive covariance matrix.
+
+        References
+        ----------
+        [1] https://en.wikipedia.org/wiki/Bienaym%C3%A9%27s_identity
+        """
 
     def _update(self, y, X=None, update_params=True):
         """Update cutoff value and, optionally, fitted parameters.
