@@ -281,7 +281,7 @@ def _read_header(file, full_file_path_and_name):
                 tokens = line.split(" ")
                 token_len = len(tokens)
                 if tokens[1] == "false":
-                    meta_data["class_labels"] = False
+                    meta_data["has_class_labels"] = False
                 elif tokens[1] != "true":
                     raise IOError(
                         "invalid classLabel value in file " f"{full_file_path_and_name}"
@@ -290,6 +290,22 @@ def _read_header(file, full_file_path_and_name):
                     raise IOError(
                         f"if the classlabel tag is true then class values must be "
                         f"supplied in file{full_file_path_and_name} but read {tokens}"
+                    )
+            elif line.startswith("@targetlabel"):
+                tokens = line.split(" ")
+                token_len = len(tokens)
+                if tokens[1] == "false":
+                    meta_data["has_class_labels"] = False
+                elif tokens[1] != "true":
+                    raise IOError(
+                        "invalid targetlabel value in file "
+                        f"{full_file_path_and_name}"
+                    )
+                if token_len > 2:
+                    raise IOError(
+                        "targetlabel tag should not be accompanied with info "
+                        "apart from true/false, but found "
+                        f"{tokens}"
                     )
             elif line.startswith("@data"):
                 return meta_data
@@ -514,6 +530,29 @@ def load_from_tsfile_to_dataframe(
                     has_class_labels_tag = True
                     class_label_list = [token.strip() for token in tokens[2:]]
                     metadata_started = True
+                elif line.startswith("@targetlabel"):
+                    if data_started:
+                        raise IOError("metadata must come before data")
+                    tokens = line.split(" ")
+                    token_len = len(tokens)
+                    if token_len == 1:
+                        raise IOError(
+                            "targetlabel tag requires an associated Boolean value"
+                        )
+                    if tokens[1] == "true":
+                        class_labels = True
+                    elif tokens[1] == "false":
+                        class_labels = False
+                    else:
+                        raise IOError("invalid targetlabel value")
+                    if token_len > 2:
+                        raise IOError(
+                            "targetlabel tag should not be accompanied with info "
+                            "apart from true/false, but found "
+                            f"{tokens}"
+                        )
+                    has_class_labels_tag = True
+                    metadata_started = True
                 # Check if this line contains the start of data
                 elif line.startswith("@data"):
                     if line != "@data":
@@ -540,7 +579,7 @@ def load_from_tsfile_to_dataframe(
                         )
                     # Replace any missing values with the value specified
                     line = line.replace("?", replace_missing_vals_with)
-                    # Check if we dealing with data that has timestamps
+                    # Check if we are dealing with data that has timestamps
                     if timestamps:
                         # We're dealing with timestamps so cannot just split
                         # line on ':' as timestamps may contain one
