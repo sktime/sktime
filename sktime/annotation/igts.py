@@ -25,7 +25,7 @@ from typing import Dict, List
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
-from attrs import asdict, define
+from attrs import asdict, define, field
 
 from sktime.base import BaseEstimator
 
@@ -93,17 +93,25 @@ class IGTS:
     location that creates the maximum information gain. Once this is found, it
     repeats the process until it finds `k_max` splits of the time series.
 
+    .. note::
+
+       IGTS does not work very well for univariate series but it can still be
+       used if the original univariate series are augmented by an extra feature
+       dimensions. A technique proposed in the paper [1]_ us to subtract the
+       series from it's largest element and append to the series.
+
     Parameters
     ----------
     k_max: int, default=10
         Maximum number of change points to find. The number of segments is thus k+1.
     step: : int, default=5
         Step size, or stride for selecting candidate locations of change points.
-        Fox example a `step=5` would produce candidates [0, 5, 10, ...]
+        Fox example a `step=5` would produce candidates [0, 5, 10, ...]. Has the same
+        meaning as `step` in `range` function.
 
     Attributes
     ----------
-    intermediate_results_: list
+    intermediate_results_: list of `ChangePointResult`
         Intermediate segmentation results for each k value, where k=1, 2, ..., k_max
 
     Notes
@@ -138,16 +146,13 @@ class IGTS:
     step: int = 5
 
     # computed attributes
-    intermediate_results_: List = None
+    intermediate_results_: List = field(init=False, default=[])
 
     def identity(self, X: npt.ArrayLike) -> List[int]:
         """Return identity segmentation, i.e. terminal indexes of the data."""
         return sorted([0, X.shape[0]])
 
-    @staticmethod
-    def get_candidates(
-        n_samples: int, step: int, change_points: List[int]
-    ) -> List[int]:
+    def get_candidates(self, n_samples: int, change_points: List[int]) -> List[int]:
         """Generate candidate change points.
 
         Also exclude existing change points.
@@ -156,9 +161,6 @@ class IGTS:
         ----------
         n_samples: int
             Length of the time series.
-        step: int
-            Step or stride to take while generating candidates. Has the same
-            meaning as `step` in `range` function.
         change_points: list of ints
             Current set of change points, that will be used to exclude values
             from candidates.
@@ -166,7 +168,9 @@ class IGTS:
         TODO: exclude points within a neighborhood of existing
         change points with neighborhood radius
         """
-        return sorted(set(range(0, n_samples, step)).difference(set(change_points)))
+        return sorted(
+            set(range(0, n_samples, self.step)).difference(set(change_points))
+        )
 
     @staticmethod
     def information_gain_score(X: npt.ArrayLike, change_points: List[int]) -> float:
@@ -215,38 +219,40 @@ class IGTS:
             include the identity segmentation, i.e. first and last index + 1 values.
         """
         n_samples, n_series = X.shape
-        ig_max = 0
+        if n_series == 1:
+            raise ValueError(
+                "Detected univariate series, IGTS will not work properly"
+                " in this case. Consider augmenting your series to multivariate."
+            )
         self.intermediate_results_ = []
 
         # by convention initialize with the identity segmentation
         current_change_points = self.identity(X)
 
         for k in range(self.k_max):
+            ig_max = 0
             # find a point which maximizes score
-            for candidate in self.get_candidates(
-                n_samples, self.step, current_change_points
-            ):
+            for candidate in self.get_candidates(n_samples, current_change_points):
                 try_change_points = {candidate}
                 try_change_points.update(current_change_points)
                 try_change_points = sorted(try_change_points)
                 ig = self.information_gain_score(X, try_change_points)
-                logger.info(
-                    f"{ig=:.5f} for {candidate} current {current_change_points}"
-                )
+                logger.info(f"{ig=:.5f} for {candidate=} with {try_change_points=}")
                 if ig > ig_max:
                     ig_max = ig
                     best_candidate = candidate
 
-            current_change_points.add(best_candidate)
+            current_change_points.append(best_candidate)
+            current_change_points.sort()
             self.intermediate_results_.append(
                 ChangePointResult(
-                    k=k, score=ig_max, change_points=current_change_points
+                    k=k, score=ig_max, change_points=current_change_points.copy()
                 )
             )
 
             logger.info(
-                f"BEST {ig_max=:.5f} for {best_candidate} "
-                + f"current {current_change_points}"
+                f"BEST {ig_max=:.5f} for {best_candidate=} "
+                + f"current {current_change_points=}"
             )
         return current_change_points
 
@@ -284,7 +290,46 @@ class SegmentationMixin:
 
 
 class InformationGainSegmentation(SegmentationMixin, BaseEstimator):
-    """IGTS Estimator."""
+    """Information Gain based Temporal Segmentation (IGTS) Estimator.
+
+    IGTS is a n unsupervised method for segmenting multivariate time series
+    into non-overlapping segments by locating change points that for which
+    the information gain is maximized.
+
+    Information gain (IG) is defined as the amount of entropy lost by the segmentation.
+    The aim is to find the segmentation that have the maximum information
+    gain for a specified number of segments.
+
+    IGTS uses top-down search method to greedily find the next change point
+    location that creates the maximum information gain. Once this is found, it
+    repeats the process until it finds `k_max` splits of the time series.
+
+    .. note::
+
+       IGTS does not work very well for univariate series but it can still be
+       used if the original univariate series are augmented by an extra feature
+       dimensions. A technique proposed in the paper [1]_ us to subtract the
+       series from it's largest element and append to the series.
+
+    Parameters
+    ----------
+    k_max: int, default=10
+        Maximum number of change points to find. The number of segments is thus k+1.
+
+    step: : int, default=5
+        Step size, or stride for selecting candidate locations of change points.
+        Fox example a `step=5` would produce candidates [0, 5, 10, ...]. Has the same
+        meaning as `step` in `range` function.
+
+    Attributes
+    ----------
+    change_points_: list of int
+        Locations of change points as integer indexes. By convention change points
+        include the identity segmentation, i.e. first and last index + 1 values.
+
+    intermediate_results_: list of `ChangePointResult`
+        Intermediate segmentation results for each k value, where k=1, 2, ..., k_max
+    """
 
     def __init__(
         self,
@@ -308,6 +353,7 @@ class InformationGainSegmentation(SegmentationMixin, BaseEstimator):
         X: array_like
             2D `array_like` representing time series with sequence index along
             the first dimension and value series as columns.
+
         y: array_like
             Placeholder for compatibility with sklearn-api, not used, default=None.
         """
@@ -321,6 +367,7 @@ class InformationGainSegmentation(SegmentationMixin, BaseEstimator):
         X: array_like
             2D `array_like` representing time series with sequence index along
             the first dimension and value series as columns.
+
         y: array_like
             Placeholder for compatibility with sklearn-api, not used, default=None.
 
@@ -332,7 +379,31 @@ class InformationGainSegmentation(SegmentationMixin, BaseEstimator):
             labels for each of the data points.
         """
         self.change_points_ = self._adaptee.find_change_points(X)
+        self.intermediate_resutls_ = self._adaptee.intermediate_results_
         return self.to_clusters(self.change_points_)
+
+    def fit_predict(self, X: npt.ArrayLike, y: npt.ArrayLike = None) -> npt.ArrayLike:
+        """Perform segmentation.
+
+        A convenience method for compatibility with sklearn-like api.
+
+        Parameters
+        ----------
+        X: array_like
+            2D `array_like` representing time series with sequence index along
+            the first dimension and value series as columns.
+
+        y: array_like
+            Placeholder for compatibility with sklearn-api, not used, default=None.
+
+        Returns
+        -------
+        y_pred : array_like
+            1D array with predicted segmentation of the same size as the first
+            dimension of X. The numerical values represent distinct segments
+            labels for each of the data points.
+        """
+        return self.fit(X=X, y=y).predict(X=X, y=y)
 
     def get_params(self, deep: bool = True) -> Dict:
         """Return initialization parameters.
