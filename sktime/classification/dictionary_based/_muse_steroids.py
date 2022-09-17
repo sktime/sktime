@@ -223,7 +223,8 @@ class MUSE_STEROIDS(BaseClassifier):
                 f"all with very short series"
             )
 
-        self.window_sizes = np.arange(self.min_window, self.max_window + 1, 1)
+        window_inc = max((self.max_window - self.min_window) // 20, 1)
+        self.window_sizes = np.arange(self.min_window, self.max_window + 1, window_inc)
 
         parallel_res = Parallel(n_jobs=self.n_jobs, backend="threading")(
             delayed(_parallel_fit)(
@@ -377,14 +378,6 @@ class MUSE_STEROIDS(BaseClassifier):
             "support_probabilities": True,
             "bigrams": False,
         }
-
-
-def _compute_window_inc(series_length, window_inc):
-    win_inc = window_inc
-    if series_length < 100:
-        win_inc = 1  # less than 100 is ok time-wise
-
-    return win_inc
 
 
 def _parallel_transform_words(X, SFA_transformers):

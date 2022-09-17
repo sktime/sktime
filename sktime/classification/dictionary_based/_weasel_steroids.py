@@ -200,7 +200,9 @@ class WEASEL_STEROIDS(BaseClassifier):
             )
 
         # Randomly choose window sizes
-        self.window_sizes = np.arange(self.min_window, self.max_window + 1, 1)
+        # self.window_sizes = np.arange(self.min_window, self.max_window + 1, 1)
+        window_inc = (self.max_window - self.min_window) // 20
+        self.window_sizes = np.arange(self.min_window, self.max_window + 1, window_inc)
 
         parallel_res = Parallel(n_jobs=self.n_jobs, timeout=99999, backend="threading")(
             delayed(_parallel_fit)(

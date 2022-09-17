@@ -13,6 +13,8 @@ import sys
 import time
 from warnings import simplefilter
 
+from scipy.stats import zscore
+
 simplefilter(action="ignore", category=FutureWarning)
 simplefilter(action="ignore", category=UserWarning)
 simplefilter(action="ignore", category=PerformanceWarning)
@@ -102,17 +104,88 @@ def get_classifiers(threads_to_use):
         #    random_state=1379,
         #    n_jobs=threads_to_use,
         # ),
-        "MUSE (dilation)": MUSE_STEROIDS(
+        "MUSE (dilation,24)": MUSE_STEROIDS(
             random_state=1379,
             use_first_differences=True,
             binning_strategies=["equi-depth"],
             feature_selection="chi2",
-            # ensemble_size=75,
-            # max_feature_count=30_000,
+            min_window=4,
+            max_window=24,
             word_lengths=[8],
+            variance=True,
+            anova=False,
             alphabet_sizes=[2],
             n_jobs=threads_to_use,
         ),
+        # "MUSE (dilation,44)": MUSE_STEROIDS(
+        #     random_state=1379,
+        #     use_first_differences=True,
+        #     binning_strategies=["equi-depth"],
+        #     feature_selection="chi2",
+        #     min_window=4,
+        #     max_window=44,
+        #     word_lengths=[8],
+        #     variance=True,
+        #     anova=False,
+        #     alphabet_sizes=[2],
+        #     n_jobs=threads_to_use,
+        # ),
+        # "MUSE (dilation,54)": MUSE_STEROIDS(
+        #     random_state=1379,
+        #     use_first_differences=True,
+        #     binning_strategies=["equi-depth"],
+        #     feature_selection="chi2",
+        #     min_window=4,
+        #     max_window=54,
+        #     word_lengths=[8],
+        #     variance=True,
+        #     anova=False,
+        #     alphabet_sizes=[2],
+        #     n_jobs=threads_to_use,
+        # ),
+        # "MUSE (dilation,64)": MUSE_STEROIDS(
+        #     random_state=1379,
+        #     use_first_differences=True,
+        #     binning_strategies=["equi-depth"],
+        #     feature_selection="chi2",
+        #     min_window=4,
+        #     max_window=64,
+        #     # ensemble_size=75,
+        #     # max_feature_count=30_000,
+        #     word_lengths=[8],
+        #     variance=True,
+        #     anova=False,
+        #     alphabet_sizes=[2],
+        #     n_jobs=threads_to_use,
+        # ),
+        # "MUSE (dilation,84)": MUSE_STEROIDS(
+        #     random_state=1379,
+        #     use_first_differences=True,
+        #     binning_strategies=["equi-depth"],
+        #     feature_selection="chi2",
+        #     min_window=4,
+        #     max_window=84,
+        #     # ensemble_size=75,
+        #     # max_feature_count=30_000,
+        #     word_lengths=[8],
+        #     variance=True,
+        #     anova=False,
+        #     alphabet_sizes=[2],
+        #     n_jobs=threads_to_use,
+        # ),
+        # "MUSE (dilation,74)": MUSE_STEROIDS(
+        #     random_state=1379,
+        #     use_first_differences=True,
+        #     binning_strategies=["equi-depth"],
+        #     feature_selection="chi2",
+        #     min_window=4,
+        #     max_window=74,
+        #     word_lengths=[8],
+        #     variance=True,
+        #     anova=False,
+        #     alphabet_sizes=[2],
+        #     n_jobs=threads_to_use,
+        # ),
         # "MiniRocket": make_pipeline(
         #    MiniRocketMultivariate(random_state=1379, n_jobs=threads_to_use),
         #    RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True),
@@ -141,7 +214,7 @@ if os.path.exists(DATA_PATH):
 # server
 else:
     DATA_PATH = "/vol/fob-wbib-vol2/wbi/schaefpa/sktime/datasets/Multivariate_ts"
-    parallel_jobs = 40
+    parallel_jobs = 30
     threads_to_use = 1
     server = True
     used_dataset = dataset_names_full
@@ -179,6 +252,9 @@ if __name__ == "__main__":
             extract_path=DATA_PATH,
             return_type="numpy3D",
         )
+
+        # X_train = zscore(X_train, axis=-1)
+        # X_test = zscore(X_test, axis=-1)
 
         clf = get_classifiers(threads_to_use)[clf_name]
         fit_time = time.perf_counter()
