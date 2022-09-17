@@ -10,6 +10,11 @@ for time series annotation (for example, anomaly or outlier detection).
    :no-members:
    :no-inherited-members:
 
+Time Series Segmentation
+------------------------
+
+.. automodule:: sktime.annotation.igts
+
 
 Adapters
 --------
