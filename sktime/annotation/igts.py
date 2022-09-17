@@ -22,7 +22,6 @@ from attrs import asdict, define
 
 from sktime.base import BaseEstimator
 
-
 __all__ = ["InformationGainSegmentation"]
 __author__ = ["lmmentel"]
 
@@ -50,9 +49,7 @@ def generate_segments(X: npt.ArrayLike, change_points: List[int]) -> npt.ArrayLi
         yield X[start:end, :]
 
 
-def generate_segments_pandas(
-    X: npt.ArrayLike, change_points: List
-) -> npt.ArrayLike:
+def generate_segments_pandas(X: npt.ArrayLike, change_points: List) -> npt.ArrayLike:
     """Generate separate segments from time series based on change points."""
     for interval in pd.IntervalIndex.from_breaks(sorted(change_points), closed="both"):
         yield X[interval.left : interval.right, :]
@@ -153,7 +150,7 @@ class IGTS:
     @staticmethod
     def information_gain_score(X: npt.ArrayLike, change_points: List[int]) -> float:
         """Calculate the information gain score.
-        
+
         The formula is based on equation ?? from [1]_
 
         Parameters
@@ -179,7 +176,7 @@ class IGTS:
 
     def find_change_points(self, X: npt.ArrayLike) -> List[int]:
         """Find change points.
-        
+
         Using a top-down search method, iteratively identify at most
         `k_max` change points that increase the information gain score
         the most.
@@ -189,7 +186,7 @@ class IGTS:
         X: array_like
             Time series data as a 2D numpy array with sequence index along rows
             and value series in columns.
-        
+
         Returns
         -------
         change_points: list of ints
