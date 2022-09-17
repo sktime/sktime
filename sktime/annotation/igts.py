@@ -22,15 +22,10 @@ from attrs import asdict, define
 
 from sktime.base import BaseEstimator
 
-# from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 __all__ = ["InformationGainSegmentation"]
 __author__ = ["lmmentel"]
 
-
-# module level check to allow type hints
-# _check_soft_dependencies("sortedcontainers", severity="error")
-from sortedcontainers import SortedSet  # noqa
 
 logger = logging.getLogger(__name__)
 
@@ -49,17 +44,17 @@ def entropy(X: npt.ArrayLike) -> float:
     return -np.sum(p * np.log(p))
 
 
-def generate_segments(X: npt.ArrayLike, change_points: SortedSet) -> npt.ArrayLike:
+def generate_segments(X: npt.ArrayLike, change_points: List[int]) -> npt.ArrayLike:
     """Generate separate segments from time series based on change points."""
     for start, end in zip(change_points[:-1], change_points[1:]):
         yield X[start:end, :]
 
 
 def generate_segments_pandas(
-    X: npt.ArrayLike, change_points: SortedSet
+    X: npt.ArrayLike, change_points: List
 ) -> npt.ArrayLike:
     """Generate separate segments from time series based on change points."""
-    for interval in pd.IntervalIndex.from_breaks(change_points, closed="both"):
+    for interval in pd.IntervalIndex.from_breaks(sorted(change_points), closed="both"):
         yield X[interval.left : interval.right, :]
 
 
@@ -87,6 +82,11 @@ class IGTS:
     step: : int, default=5
         Step size, or stride for selecting candidate locations of change points.
         Fox example a `step=5` would produce candidates [0, 5, 10, ...]
+
+    Attributes
+    ----------
+    intermediate_results_: list
+        Intermediate segmentation results for each k value, where k=1, 2, ..., k_max
 
     Notes
     -----
@@ -122,46 +122,96 @@ class IGTS:
     # computed attributes
     intermediate_results_: List = None
 
-    def identity(self, X: npt.ArrayLike) -> SortedSet:
+    def identity(self, X: npt.ArrayLike) -> List[int]:
         """Return identity segmentation, i.e. terminal indexes of the data."""
-        return SortedSet([0, X.shape[0]])
+        return sorted([0, X.shape[0]])
 
     @staticmethod
     def get_candidates(
-        n_samples: int, step: int, change_points: SortedSet
-    ) -> SortedSet:
+        n_samples: int, step: int, change_points: List[int]
+    ) -> List[int]:
         """Generate candidate change points.
 
-        Exclude existing change points.
+        Also exclude existing change points.
+
+        Parameters
+        ----------
+        n_samples: int
+            Length of the time series.
+        step: int
+            Step or stride to take while generating candidates. Has the same
+            meaning as `step` in `range` function.
+        change_points: list of ints
+            Current set of change points, that will be used to exclude values
+            from candidates.
 
         TODO: exclude points within a neighborhood of existing
         change points with neighborhood radius
         """
-        return SortedSet(range(0, n_samples, step)).difference(change_points)
+        return sorted(set(range(0, n_samples, step)).difference(set(change_points)))
 
     @staticmethod
-    def information_gain_cost(X: npt.ArrayLike, change_points: SortedSet) -> float:
+    def information_gain_score(X: npt.ArrayLike, change_points: List[int]) -> float:
+        """Calculate the information gain score.
+        
+        The formula is based on equation ?? from [1]_
+
+        Parameters
+        ----------
+        X: array_like
+            Time series data as a 2D numpy array with sequence index along rows
+            and value series in columns.
+
+        change_points: list of ints
+            Locations of change points as integer indexes. By convention change points
+            include the identity segmentation, i.e. first and last index + 1 values.
+
+        Returns
+        -------
+        information_gain: float
+            Information gain score for the segmentation corresponding to the change
+            points.
+        """
         segment_entropies = [
             seg.shape[0] * entropy(seg) for seg in generate_segments(X, change_points)
         ]
         return entropy(X) - sum(segment_entropies) / X.shape[0]
 
-    def find_change_points(self, X: npt.ArrayLike) -> SortedSet:
-        """Find change points."""
+    def find_change_points(self, X: npt.ArrayLike) -> List[int]:
+        """Find change points.
+        
+        Using a top-down search method, iteratively identify at most
+        `k_max` change points that increase the information gain score
+        the most.
+
+        Parameters
+        ----------
+        X: array_like
+            Time series data as a 2D numpy array with sequence index along rows
+            and value series in columns.
+        
+        Returns
+        -------
+        change_points: list of ints
+            Locations of change points as integer indexes. By convention change points
+            include the identity segmentation, i.e. first and last index + 1 values.
+        """
         n_samples, n_series = X.shape
         ig_max = 0
         self.intermediate_results_ = []
 
-        # by convention
-        current_change_points = SortedSet(self.identity(X))
+        # by convention initialize with the identity segmentation
+        current_change_points = self.identity(X)
 
         for k in range(self.k_max):
             # find a point which maximizes score
             for candidate in self.get_candidates(
                 n_samples, self.step, current_change_points
             ):
-                try_change_points = SortedSet([candidate]).update(current_change_points)
-                ig = self.information_gain_cost(X, try_change_points)
+                try_change_points = {candidate}
+                try_change_points.update(current_change_points)
+                try_change_points = sorted(try_change_points)
+                ig = self.information_gain_score(X, try_change_points)
                 logger.info(
                     f"{ig=:.5f} for {candidate} current {current_change_points}"
                 )
@@ -186,7 +236,7 @@ class IGTS:
 class SegmentationMixin:
     """Mixin with methods useful for segmentation problems."""
 
-    def to_classification(self, change_points: SortedSet) -> npt.ArrayLike:
+    def to_classification(self, change_points: List[int]) -> npt.ArrayLike:
         """Convert change point locations to a classification vector.
 
         Change point detection results can be treated as classification
@@ -199,7 +249,7 @@ class SegmentationMixin:
         """
         return np.bincount(change_points[1:-1], minlength=change_points[-1])
 
-    def to_clusters(self, change_points: SortedSet) -> npt.ArrayLike:
+    def to_clusters(self, change_points: List[int]) -> npt.ArrayLike:
         """Convert change point locations to a clustering vector.
 
         Change point detection results can be treated as clustering
