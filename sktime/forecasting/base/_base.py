@@ -820,6 +820,7 @@ class BaseForecaster(BaseEstimator):
         X=None,
         update_params=True,
         reset_forecaster=True,
+        output_format="auto",
     ):
         """Make predictions and update model iteratively over the test set.
 
