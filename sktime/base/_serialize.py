@@ -40,8 +40,7 @@ def load(serial):
     ...     pkl = forecaster.save()
     ...     forecaster_loaded = load(pkl)
     ...     y_pred = forecaster_loaded.predict()
-    >>> load_classical_example()
-    NaiveForecaster()
+    >>> load_classical_example() # doctest: +SKIP
     >>> def load_dl_example():
     ...     from sktime.base import load
     ...     import numpy as np
