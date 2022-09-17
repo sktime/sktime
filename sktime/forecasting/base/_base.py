@@ -821,6 +821,7 @@ class BaseForecaster(BaseEstimator):
         update_params=True,
         reset_forecaster=True,
         output_format="auto",
+        fh_priority="cv",
     ):
         """Make predictions and update model iteratively over the test set.
 
@@ -882,11 +883,16 @@ class BaseForecaster(BaseEstimator):
             if False, will update self when the update/predict sequence is run
                 as if update/predict were called directly
         output_format : str, optional (default="auto")
+            controls which format the output y_pred will be returned in, see Returns
             "overwrite" : output is in of same type format as y,
                 forecasts from later folds overwrite forecasts from earlier folds
             "multiindex" : output is pd.DataFrame, indexed by (cutoff, horizon)
             "auto" : as "overwrite" if collection of absolute horizon points is unique
                 as "multiindex" if collection of absolute horizon points is not unique
+        fh_priority : str, optional (default="cv")
+            which fh - of `self`, or of `cv` - will be used if the two are discrepant
+            "cv" - the `fh` of the `cv` argument is used
+            "self" - the `fh` of `self` is used
 
         Returns
         -------
@@ -904,19 +910,20 @@ class BaseForecaster(BaseEstimator):
                 entry is the point prediction of col index predicted from row index
                 entry is nan if no prediction is made at that (cutoff, horizon) pair
         """
-        from sktime.forecasting.model_selection import ExpandingWindowSplitter
-
-        if cv is None:
-            cv = ExpandingWindowSplitter(initial_window=1)
-
         self.check_is_fitted()
 
-        # input checks and minor coercions on X, y
-        X_inner, y_inner = self._check_X_y(X=X, y=y)
+        if cv is None:
+            from sktime.forecasting.model_selection import ExpandingWindowSplitter
 
-        cv = check_cv(cv)
+            cv = ExpandingWindowSplitter(initial_window=1)
+        else:
+            cv = check_cv(cv)
 
-        fh = cv.get_fh()
+        if fh_priority == "self":
+            fh = self.fh
+        else:
+            fh = cv.get_fh()
+
         y_preds = []
         cutoffs = []
 
@@ -931,15 +938,8 @@ class BaseForecaster(BaseEstimator):
         y_first_index = get_cutoff(y, return_index=True, reverse_order=True)
         self_copy._set_cutoff(_shift(y_first_index, by=-1, return_index=True))
 
-        if isinstance(y, VectorizedDF):
-            y = y.X
-        if isinstance(X, VectorizedDF):
-            X = X.X
-
         # iterate over data
-        for new_window, _ in cv.split(y):
-            y_new = y.iloc[new_window]
-
+        for y_new, _ in cv.split_series(y):
             # we use `update_predict_single` here
             #  this updates the forecasting horizon
             y_pred = self_copy.update_predict_single(
@@ -959,7 +959,6 @@ class BaseForecaster(BaseEstimator):
                     store_behaviour="freeze",
                 )
         return _format_moving_cutoff_predictions(y_preds, cutoffs)
-
 
     def update_predict_single(
         self,
