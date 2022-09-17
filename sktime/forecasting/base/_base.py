@@ -880,17 +880,23 @@ class BaseForecaster(BaseEstimator):
                 and cutoff, model parameters, data memory of self do not change
             if False, will update self when the update/predict sequence is run
                 as if update/predict were called directly
+        output_format : str, optional (default="auto")
+            "overwrite" : output is in of same type format as y,
+                forecasts from later folds overwrite forecasts from earlier folds
+            "multiindex" : output is pd.DataFrame, indexed by (cutoff, horizon)
+            "auto" : as "overwrite" if collection of absolute horizon points is unique
+                as "multiindex" if collection of absolute horizon points is not unique
 
         Returns
         -------
         y_pred : object that tabulates point forecasts from multiple split batches
             format depends on pairs (cutoff, absolute horizon) forecast overall
-            if collection of absolute horizon points is unique:
+            output_format="overwrite", or "auto" with unique absolute horizon points:
                 type is time series in sktime compatible data container format
                 cutoff is suppressed in output
                 has same type as the y that has been passed most recently:
                 Series, Panel, Hierarchical scitype, same format (see above)
-            if collection of absolute horizon points is not unique:
+            output_format="multiindex", or "auto" and duplicate absolute horizon points:
                 type is a pandas DataFrame, with row and col index being time stamps
                 row index corresponds to cutoffs that are predicted from
                 column index corresponds to absolut horizons that are predicted
@@ -909,13 +915,50 @@ class BaseForecaster(BaseEstimator):
 
         cv = check_cv(cv)
 
-        return self._predict_moving_cutoff(
-            y=y_inner,
-            cv=cv,
-            X=X_inner,
-            update_params=update_params,
-            reset_forecaster=reset_forecaster,
-        )
+        fh = cv.get_fh()
+        y_preds = []
+        cutoffs = []
+
+        # enter into a detached cutoff mode, if reset_forecaster is True
+        if reset_forecaster:
+            self_copy = deepcopy(self)
+        # otherwise just work with a reference to self
+        else:
+            self_copy = self
+
+        # set cutoff to time point before data
+        y_first_index = get_cutoff(y, return_index=True, reverse_order=True)
+        self_copy._set_cutoff(_shift(y_first_index, by=-1, return_index=True))
+
+        if isinstance(y, VectorizedDF):
+            y = y.X
+        if isinstance(X, VectorizedDF):
+            X = X.X
+
+        # iterate over data
+        for new_window, _ in cv.split(y):
+            y_new = y.iloc[new_window]
+
+            # we use `update_predict_single` here
+            #  this updates the forecasting horizon
+            y_pred = self_copy.update_predict_single(
+                y=y_new,
+                fh=fh,
+                X=X,
+                update_params=update_params,
+            )
+            y_preds.append(y_pred)
+            cutoffs.append(self_copy.cutoff)
+
+            for i in range(len(y_preds)):
+                y_preds[i] = convert_to(
+                    y_preds[i],
+                    self._y_mtype_last_seen,
+                    store=self._converter_store_y,
+                    store_behaviour="freeze",
+                )
+        return _format_moving_cutoff_predictions(y_preds, cutoffs)
+
 
     def update_predict_single(
         self,
