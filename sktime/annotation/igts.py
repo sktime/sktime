@@ -18,7 +18,7 @@ References
 
 """
 
-import logging
+# import logging
 from dataclasses import dataclass
 from typing import Dict, List
 
@@ -33,7 +33,7 @@ __all__ = ["InformationGainSegmentation"]
 __author__ = ["lmmentel"]
 
 
-logger = logging.getLogger(__name__)
+# logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -237,7 +237,7 @@ class IGTS:
                 try_change_points.update(current_change_points)
                 try_change_points = sorted(try_change_points)
                 ig = self.information_gain_score(X, try_change_points)
-                logger.info(f"{ig=:.5f} for {candidate=} with {try_change_points=}")
+                # logger.info(f"{ig=:.5f} for {candidate=} with {try_change_points=}")
                 if ig > ig_max:
                     ig_max = ig
                     best_candidate = candidate
@@ -250,10 +250,10 @@ class IGTS:
                 )
             )
 
-            logger.info(
-                f"BEST {ig_max=:.5f} for {best_candidate=} "
-                + f"current {current_change_points=}"
-            )
+            # logger.info(
+            #     f"BEST {ig_max=:.5f} for {best_candidate=} "
+            #     + f"current {current_change_points=}"
+            # )
         return current_change_points
 
 
