@@ -133,7 +133,8 @@ class IGTS:
     >>> from sktime.annotation.datagen import piecewise_normal_multivariate
     >>> from sklearn.preprocessing import MinMaxScaler
     >>> X = piecewise_normal_multivariate(lengths=[10, 10, 10, 10],
-    ... means=[0.0, 10.0, 5.0, 2.0], variances=[0.0, 2.0, 0.5, 0.1])
+    ... means=[[0.0, 1.0], [11.0, 10.0], [5.0, 3.0], [2.0, 2.0]],
+    ... variances=0.5)
     >>> X_scaled = MinMaxScaler(feature_range=(0, 1)).fit_transform(X)
     >>> from sktime.annotation.igts import InformationGainSegmentation
     >>> igts = InformationGainSegmentation(k_max=3, step=2)
@@ -329,6 +330,33 @@ class InformationGainSegmentation(SegmentationMixin, BaseEstimator):
 
     intermediate_results_: list of `ChangePointResult`
         Intermediate segmentation results for each k value, where k=1, 2, ..., k_max
+
+    Notes
+    -----
+    Based on the work from [1]_.
+    - alt. py implementation: https://github.com/cruiseresearchgroup/IGTS-python
+    - MATLAB version: https://github.com/cruiseresearchgroup/IGTS-matlab
+    - paper available at:
+
+    References
+    ----------
+    .. [1] Sadri, Amin, Yongli Ren, and Flora D. Salim.
+       "Information gain-based metric for recognizing transitions in human activities.",
+       Pervasive and Mobile Computing, 38, 92-109, (2017).
+       https://www.sciencedirect.com/science/article/abs/pii/S1574119217300081
+
+    Example
+    -------
+    >>> from sktime.annotation.datagen import piecewise_normal_multivariate
+    >>> from sklearn.preprocessing import MinMaxScaler
+    >>> X = piecewise_normal_multivariate(lengths=[10, 10, 10, 10],
+    ... means=[[0.0, 1.0], [11.0, 10.0], [5.0, 3.0], [2.0, 2.0]],
+    ... variances=0.5)
+    >>> X_scaled = MinMaxScaler(feature_range=(0, 1)).fit_transform(X)
+    >>> from sktime.annotation.igts import InformationGainSegmentation
+    >>> igts = InformationGainSegmentation(k_max=3, step=2)
+    >>> y = igts.fit_predict(X_scaled)
+
     """
 
     def __init__(
