@@ -370,8 +370,15 @@ class STLForecaster(BaseForecaster):
         super(STLForecaster, self).__init__()
 
         # Can handle prediction variance estimation iff:
-        # all underlying forecasters have capability to
-        # compute forecast variance.
+        # all underlying forecasters have one of the following three implemented
+        def _implements_var(f) -> bool:
+            flag = (
+                f._has_implementation_of("_predict_interval")
+                or f._has_implementation_of("_predict_quantiles")
+                or f._has_implementation_of("_predict_proba")
+            )
+            return flag
+
         # NOTE: Assume that NaiveForecaster does not have
         # predict variance implemented (as of this PR).
         # We can change the default behavior to set capability:pred_var as True
@@ -381,8 +388,8 @@ class STLForecaster(BaseForecaster):
             self.forecaster_seasonal,
             self.forecaster_resid,
         ]
-        if all(f is not None and f.get_tag("capability:pred_var") for f in forecasters):
-            self.set_tags({"capability:pred_var": True})
+        if all(f is not None and _implements_var(f) for f in forecasters):
+            self.set_tags(**{"capability:pred_int": True, "capability:pred_var": True})
 
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
@@ -463,7 +470,7 @@ class STLForecaster(BaseForecaster):
         y_pred = y_pred_seasonal + y_pred_trend + y_pred_resid
         return y_pred
 
-    def predict_var(self, fh, X=None):
+    def _predict_var(self, fh, X=None, cov=False):
         """Compute/return prediction variance for a forecast.
 
         Important! Predicted variance assumes the following:
