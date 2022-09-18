@@ -298,7 +298,9 @@ class AutoETS(_StatsModelsAdapter):
 
             # Fit function
             def _fit(error, trend, seasonal, damped):
-                from statsmodels.tsa.exponential_smoothing.ets import ETSModel as _ETSModel
+                from statsmodels.tsa.exponential_smoothing.ets import (
+                    ETSModel as _ETSModel
+                )
 
                 _forecaster = _ETSModel(
                     y,
