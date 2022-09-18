@@ -91,8 +91,8 @@ class _Pipeline(
             if not sorted([x[0] for x in estimator_tuples]) == sorted(permutation):
                 raise ValueError(
                     f"""Permutations must contain the same step names as the pipeline,
-                    found tuple names {[x[0] for x in estimator_tuples]} but got
-                    permutation {permutation}."""
+                    found tuple names {sorted([x[0] for x in estimator_tuples])} but got
+                    permutation {sorted(permutation)}."""
                 )
 
             # sort steps
