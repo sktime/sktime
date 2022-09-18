@@ -6,7 +6,6 @@ import inspect
 
 import numpy as np
 import pandas as pd
-from statsmodels.tsa.statespace.dynamic_factor import DynamicFactor as _DynamicFactor
 
 from sktime.forecasting.base.adapters import _StatsModelsAdapter
 
@@ -351,6 +350,8 @@ class DynamicFactor(_StatsModelsAdapter):
         X:pd.DataFrame , optional (default=None)
           Exogenous variables
         """
+        from statsmodels.tsa.statespace.dynamic_factor import DynamicFactor as _DynamicFactor
+
         self._forecaster = _DynamicFactor(
             endog=y,
             exog=X,
