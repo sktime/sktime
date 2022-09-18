@@ -13,7 +13,6 @@ from itertools import product
 import numpy as np
 import pandas as pd
 from joblib import Parallel, delayed
-from statsmodels.tsa.exponential_smoothing.ets import ETSModel as _ETSModel
 
 from sktime.forecasting.base.adapters import _StatsModelsAdapter
 
@@ -299,6 +298,8 @@ class AutoETS(_StatsModelsAdapter):
 
             # Fit function
             def _fit(error, trend, seasonal, damped):
+                from statsmodels.tsa.exponential_smoothing.ets import ETSModel as _ETSModel
+
                 _forecaster = _ETSModel(
                     y,
                     error=error,
