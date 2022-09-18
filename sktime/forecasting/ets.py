@@ -237,6 +237,9 @@ class AutoETS(_StatsModelsAdapter):
         super(AutoETS, self).__init__(random_state=random_state)
 
     def _fit_forecaster(self, y, X=None):
+        from statsmodels.tsa.exponential_smoothing.ets import (
+            ETSModel as _ETSModel,
+        )
 
         # Select model automatically
         if self.auto:
@@ -298,10 +301,6 @@ class AutoETS(_StatsModelsAdapter):
 
             # Fit function
             def _fit(error, trend, seasonal, damped):
-                from statsmodels.tsa.exponential_smoothing.ets import (
-                    ETSModel as _ETSModel,
-                )
-
                 _forecaster = _ETSModel(
                     y,
                     error=error,
