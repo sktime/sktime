@@ -9,7 +9,6 @@ from collections import OrderedDict
 
 import numpy as np
 import pandas as pd
-from statsmodels.tsa.api import VAR as _VAR
 
 from sktime.forecasting.base.adapters import _StatsModelsAdapter
 
@@ -124,6 +123,8 @@ class VAR(_StatsModelsAdapter):
         -------
         self : returns an instance of self.
         """
+        from statsmodels.tsa.api import VAR as _VAR
+
         self._forecaster = _VAR(
             endog=y, exog=X, dates=self.dates, freq=self.freq, missing=self.missing
         )
