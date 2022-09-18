@@ -508,6 +508,11 @@ class STLForecaster(BaseForecaster):
         ----------
         [1] https://en.wikipedia.org/wiki/Bienaym%C3%A9%27s_identity
         """
+        pred_var_seasonal = self.forecaster_seasonal_.predict_var(fh=fh, X=X, cov=False)
+        pred_var_trend = self.forecaster_trend_.predict_var(fh=fh, X=X, cov=False)
+        pred_var_resid = self.forecaster_resid_.predict_var(fh=fh, X=X, cov=False)
+        pred_var = pred_var_seasonal + pred_var_trend + pred_var_resid
+        return pred_var
 
     def _update(self, y, X=None, update_params=True):
         """Update cutoff value and, optionally, fitted parameters.
