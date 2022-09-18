@@ -2,7 +2,7 @@
 import numpy as np
 from numba import njit
 
-from sktime.distances.distance_rework.tests.redo import BaseDistance, DistanceCallable
+from sktime.distances.distance_rework import BaseDistance, DistanceCallable
 from sktime.distances.lower_bounding import resolve_bounding_matrix
 
 
@@ -72,7 +72,7 @@ class _MsmDistance(BaseDistance):
         **kwargs: dict
     ) -> DistanceCallable:
         # Has to be here because circular import if at top
-        from sktime.distances.distance_rework.tests.redo import _EuclideanDistance
+        from sktime.distances.distance_rework import _EuclideanDistance
 
         _bounding_matrix = resolve_bounding_matrix(
             x, y, window, itakura_max_slope, bounding_matrix

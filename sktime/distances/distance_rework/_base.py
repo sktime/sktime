@@ -133,6 +133,7 @@ class BaseDistance(ABC):
             return _local_dist
 
         if x.ndim < 2:
+            strategy = "independent"
             temp_x = x.reshape(1, -1)
             temp_y = y.reshape(1, -1)
         else:

@@ -1,11 +1,35 @@
 # -*- coding: utf-8 -*-
-"""Time series distance module."""
-# -*- coding: utf-8 -*-
-__all__ = ["_SquaredEuclidean", "_EuclideanDistance", "_DtwDistance", "_DdtwDistance",
-           "_WdtwDistance", "_WddtwDistance"]
-from sktime.distances.distance_rework._dtw import _DtwDistance
-from sktime.distances.distance_rework._euclidean import _EuclideanDistance
-from sktime.distances.distance_rework._squared_euclidean import _SquaredEuclidean
+"""Distance module."""
+__all__ = [
+    "BaseDistance",
+    "DistanceCallable",
+    "_EuclideanDistance",
+    "_SquaredDistance",
+    "_DtwDistance",
+    "_WdtwDistance",
+    "_DdtwDistance",
+    "_WddtwDistance",
+    "_EdrDistance",
+    "LocalDistanceCallable",
+    "_ErpDistance",
+    "_LcssDistance",
+    "_TweDistance",
+    "_MsmDistance",
+]
+
+from sktime.distances.distance_rework._base import (
+    BaseDistance,
+    DistanceCallable,
+    LocalDistanceCallable,
+)
 from sktime.distances.distance_rework._ddtw import _DdtwDistance
-from sktime.distances.distance_rework._wdtw import _WdtwDistance
+from sktime.distances.distance_rework._dtw import _DtwDistance
+from sktime.distances.distance_rework._edr import _EdrDistance
+from sktime.distances.distance_rework._erp import _ErpDistance
+from sktime.distances.distance_rework._euclidean import _EuclideanDistance
+from sktime.distances.distance_rework._lcss import _LcssDistance
+from sktime.distances.distance_rework._msm import _MsmDistance
+from sktime.distances.distance_rework._squared import _SquaredDistance
+from sktime.distances.distance_rework._twe import _TweDistance
 from sktime.distances.distance_rework._wddtw import _WddtwDistance
+from sktime.distances.distance_rework._wdtw import _WdtwDistance

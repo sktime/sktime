@@ -4,7 +4,7 @@ from typing import Callable
 import numpy as np
 from numba import njit
 
-from sktime.distances.distance_rework.tests.redo import BaseDistance, DistanceCallable
+from sktime.distances.distance_rework import BaseDistance, DistanceCallable
 from sktime.distances.lower_bounding import resolve_bounding_matrix
 
 
@@ -58,7 +58,7 @@ class _ErpDistance(BaseDistance):
         **kwargs
     ) -> DistanceCallable:
         # Has to be here because circular import if at top
-        from sktime.distances.distance_rework.tests.redo import _SquaredDistance
+        from sktime.distances.distance_rework import _SquaredDistance
 
         local_squared_distance = _SquaredDistance().distance_factory(
             x[0], y[0], strategy="local"
@@ -111,7 +111,7 @@ class _ErpDistance(BaseDistance):
         **kwargs
     ) -> DistanceCallable:
         # Has to be here because circular import if at top
-        from sktime.distances.distance_rework.tests.redo import _EuclideanDistance
+        from sktime.distances.distance_rework import _EuclideanDistance
 
         _example_x = x[:, 0]
         _example_y = y[:, 0]

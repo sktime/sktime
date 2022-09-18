@@ -2,7 +2,7 @@
 import pandas as pd
 
 from sktime.distances import distance_factory
-from sktime.distances.distance_rework.tests.redo import (
+from sktime.distances.distance_rework import (
     _DdtwDistance,
     _DtwDistance,
     _EdrDistance,
@@ -15,7 +15,7 @@ from sktime.distances.distance_rework.tests.redo import (
     _WddtwDistance,
     _WdtwDistance,
 )
-from sktime.distances.distance_rework.tests.redo.tests._utils import (
+from sktime.distances.distance_rework.tests._utils import (
     _time_distance,
     create_test_distance_numpy,
 )

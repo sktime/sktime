@@ -3,7 +3,7 @@ from typing import Callable
 
 import numpy as np
 
-from sktime.distances.distance_rework.tests.redo import BaseDistance, DistanceCallable
+from sktime.distances.distance_rework import BaseDistance, DistanceCallable
 from sktime.distances.lower_bounding import resolve_bounding_matrix
 
 
@@ -38,7 +38,7 @@ class _TweDistance(BaseDistance):
         **kwargs: dict
     ) -> DistanceCallable:
         # Has to be here because circular import if at top
-        from sktime.distances.distance_rework.tests.redo import _SquaredDistance
+        from sktime.distances.distance_rework import _SquaredDistance
 
         local_squared_dist = _SquaredDistance().distance_factory(
             x[0], y[0], strategy="local"
@@ -101,7 +101,7 @@ class _TweDistance(BaseDistance):
         **kwargs: dict
     ) -> DistanceCallable:
         # Has to be here because circular import if at top
-        from sktime.distances.distance_rework.tests.redo import _EuclideanDistance
+        from sktime.distances.distance_rework import _EuclideanDistance
 
         pad_ts = self._preprocessing_time_series_callback(**kwargs)
 

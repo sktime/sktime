@@ -4,7 +4,7 @@ from math import isclose
 import numpy as np
 
 from sktime.distances import distance
-from sktime.distances.distance_rework.tests.redo import (
+from sktime.distances.distance_rework import (
     BaseDistance,
     _DdtwDistance,
     _DtwDistance,
@@ -43,6 +43,8 @@ def _distance_tests(
     expected_dependent : float
         The expected result for the dependent strategy.
     """
+    # if x.ndim == 1 or x.shape[0] == 1:
+    #     expected_dependent = expected_dependent
     independent_result = dist.distance(x, y, strategy="independent")
     dependent_result = dist.distance(x, y, strategy="dependent")
 
@@ -140,8 +142,8 @@ def _get_test_result(dist: BaseDistance):
             dependent_result = dependent_result[0]
         # obj_type = str(type(dist)).split(".")[-1].split("'")[0]
         # print(
-        #    f"_distance_tests({obj_type}(), x_{dims}, y_{dims}, {independent_result}, "
-        #     f"{dependent_result})"
+        #     f"\n\n_distance_tests({obj_type}(), x_{dims}, y_{dims}, "
+        #     f"{independent_result}, {dependent_result})"
         # )
 
     _output_result(x_1d, y_1d, "1d")
@@ -224,9 +226,10 @@ def test_edr():
 
 def test_erp():
     """Test erp distance."""
-    _distance_tests(_ErpDistance(), x_1d, y_1d, 1596.5, 100.0)
+    _distance_tests(_ErpDistance(), x_1d, y_1d, 1596.5, 1596.5)
     _distance_tests(_ErpDistance(), x_2d, y_2d, 3864.25, 139.26863313696143)
-    _check_matches_old(_ErpDistance(), "erp")
+    # old uses euclidean in independent so can't compare (but is equal when using
+    # squared)
 
 
 def test_lcss():
@@ -247,7 +250,7 @@ def test_lcss():
 
 def test_twe():
     """Test twe distance."""
-    _distance_tests(_TweDistance(), x_1d, y_1d, 2442.018000000001, 119.01800000000003)
+    _distance_tests(_TweDistance(), x_1d, y_1d, 2442.018000000001, 2442.018000000001)
     _distance_tests(_TweDistance(), x_2d, y_2d, 8506.52, 277.53726627392285)
     # error in old twe so cant compare
 
