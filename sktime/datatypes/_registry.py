@@ -53,6 +53,15 @@ MTYPE_REGISTER += MTYPE_REGISTER_ALIGNMENT
 MTYPE_REGISTER += MTYPE_REGISTER_TABLE
 MTYPE_REGISTER += MTYPE_REGISTER_PROBA
 
+# mtypes to exclude in checking since they are ambiguous and rare
+AMBIGUOUS_MTYPES = ["numpyflat", "alignment_loc"]
+
+# all time series mtypes excluding ambiguous ones
+ALL_TIME_SERIES_MTYPES = (
+    list(MTYPE_LIST_PANEL) + list(MTYPE_LIST_SERIES) + list(MTYPE_LIST_HIERARCHICAL)
+)
+ALL_TIME_SERIES_MTYPES = list(set(ALL_TIME_SERIES_MTYPES).difference(AMBIGUOUS_MTYPES))
+
 
 __all__ = [
     "MTYPE_REGISTER",

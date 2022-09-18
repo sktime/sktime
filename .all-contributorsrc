@@ -1769,7 +1769,17 @@
         "bug",
         "doc"
       ]
-    }
+    },
+    {
+      "login": "shagn",
+      "name": "Sebastian Hagn",
+      "avatar_url": "https://avatars.githubusercontent.com/u/16029092?v=4",
+      "profile": "https://github.com/shagn",
+      "contributions": [
+        "doc",
+      ]
+    },
+
   ],
   "projectName": "sktime",
   "projectOwner": "alan-turing-institute",
