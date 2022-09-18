@@ -350,7 +350,9 @@ class DynamicFactor(_StatsModelsAdapter):
         X:pd.DataFrame , optional (default=None)
           Exogenous variables
         """
-        from statsmodels.tsa.statespace.dynamic_factor import DynamicFactor as _DynamicFactor
+        from statsmodels.tsa.statespace.dynamic_factor import (
+            DynamicFactor as _DynamicFactor,
+        )
 
         self._forecaster = _DynamicFactor(
             endog=y,
