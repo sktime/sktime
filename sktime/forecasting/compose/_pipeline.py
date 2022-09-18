@@ -101,7 +101,7 @@ class _Pipeline(
                 for step in estimator_tuples:
                     if p == step[0]:
                         estimator_tuples_permuted.append(step)
-            estimator_tuples = estimator_tuples_permuted
+            estimator_tuples = estimator_tuples_permuted.copy()
 
         # Shallow copy
         return estimator_tuples
@@ -752,8 +752,9 @@ class TransformedTargetForecaster(_Pipeline):
     def __init__(self, steps, permutation=None):
         self.steps = steps
         self.permutation = permutation
+        # TODO: This attribute assignment should only happen in fit()
         self.steps_ = self._check_steps(
-            estimators=steps, allow_postproc=True, permutation=permutation
+            estimators=self.steps, allow_postproc=True, permutation=self.permutation
         )
         super(TransformedTargetForecaster, self).__init__()
 
@@ -907,7 +908,9 @@ class TransformedTargetForecaster(_Pipeline):
         -------
         self : returns an instance of self.
         """
-        self.steps_ = self._get_estimator_tuples(self.steps, clone_ests=True)
+        self.steps_ = self._check_steps(
+            estimators=self.steps, allow_postproc=True, permutation=self.permutation
+        )
 
         # transform pre
         yt = y
