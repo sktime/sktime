@@ -1,10 +1,7 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 
-from sktime.distances.distance_rework.tests.redo import (
-    BaseDistance,
-    DistanceCallable,
-)
+from sktime.distances.distance_rework.tests.redo import BaseDistance, DistanceCallable
 from sktime.distances.lower_bounding import resolve_bounding_matrix
 
 
@@ -23,6 +20,13 @@ class _DtwDistance(BaseDistance):
         bounding_matrix: np.ndarray = None,
         **kwargs: dict
     ) -> DistanceCallable:
+        # Has to be here because circular import if at top
+        from sktime.distances.distance_rework.tests.redo import _SquaredDistance
+
+        local_squared_dist = _SquaredDistance().distance_factory(
+            x[0], y[0], strategy="local"
+        )
+
         _bounding_matrix = resolve_bounding_matrix(
             x, y, window, itakura_max_slope, bounding_matrix
         )
@@ -39,7 +43,7 @@ class _DtwDistance(BaseDistance):
             for i in range(x_size):
                 for j in range(y_size):
                     if np.isfinite(_bounding_matrix[i, j]):
-                        squared_dist = (_x[i] - _y[j]) ** 2
+                        squared_dist = local_squared_dist(_x[i], _y[j])
                         cost_matrix[i + 1, j + 1] = squared_dist + min(
                             cost_matrix[i, j + 1],
                             cost_matrix[i + 1, j],

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from abc import ABC, abstractmethod
-from typing import Callable, Optional, Tuple, Union
+from typing import Callable, Tuple, Union
 
 import numpy as np
 from numba import njit
@@ -10,9 +10,12 @@ __all__ = ["BaseDistance", "numbadistance", "DistanceCallable"]
 DistanceCallableReturn = Union[float, Tuple[float, np.ndarray]]
 
 DistanceCallable = Callable[[np.ndarray, np.ndarray], DistanceCallableReturn]
+LocalDistanceCallable = Callable[[float, float], float]
 
 
 def numbadistance(*args, **kwargs):
+    """Create numba distance function."""
+
     def wrapper(func):
         distance_type = args[0]
         cache = False
@@ -91,16 +94,17 @@ class BaseDistance(ABC):
     _numba_distance = False
     _cache = True
     _fastmath = False
+    _has_local_distance = False
 
     def distance_factory(
         self,
-        x: np.ndarray,
-        y: np.ndarray,
+        x: Union[np.ndarray, float],
+        y: Union[np.ndarray, float],
         strategy: str = "independent",
         return_cost_matrix: bool = False,
         **kwargs
-    ) -> DistanceCallable:
-        """Factory method for distance functions.
+    ) -> Union[DistanceCallable, LocalDistanceCallable]:
+        """Create a distance functions.
 
         Parameters
         ----------
@@ -116,6 +120,18 @@ class BaseDistance(ABC):
         kwargs : dict
             Additional keyword arguments.
         """
+        if strategy == "local" and self._has_local_distance is True:
+            local_dist = self._local_distance(x, y, **kwargs)
+            if self._numba_distance is True:
+                _local_dist = njit(
+                    "(float64)(float64, float64)",
+                    cache=self._cache,
+                    fastmath=self._fastmath,
+                )(local_dist)
+            else:
+                _local_dist = local_dist
+            return _local_dist
+
         if x.ndim < 2:
             temp_x = x.reshape(1, -1)
             temp_y = y.reshape(1, -1)
@@ -132,6 +148,7 @@ class BaseDistance(ABC):
             initial_distance_callable = self._independent_distance(
                 temp_x, temp_y, **kwargs
             )
+
         else:
             initial_distance_callable = self._dependent_distance(
                 temp_x, temp_y, **kwargs
@@ -220,14 +237,14 @@ class BaseDistance(ABC):
 
                 def result_callback_callable(_x, _y):
                     distance, cost_matrix = final_distance_callable(_x, _y)
-                    distance = result_callback(distance)
+                    distance = result_callback(distance, _x.shape[-1], _y.shape[-1])
                     return distance, cost_matrix
 
             else:
 
                 def result_callback_callable(_x: np.ndarray, _y: np.ndarray):
                     distance = final_distance_callable(_x, _y)
-                    return result_callback(distance)
+                    return result_callback(distance, _x.shape[-1], _y.shape[-1])
 
             if self._numba_distance is True:
                 result_callback_callable = numbadistance(
@@ -253,7 +270,7 @@ class BaseDistance(ABC):
             )(_preprocess_time_series_callback)
 
         if x.ndim < 2:
-            stop = ''
+
             def _preprocess_time_series(_x: np.ndarray):
                 # Takes a 1d array and converts it to 2d (cant use reshape in numba)
                 x_size = _x.shape[0]
@@ -301,6 +318,7 @@ class BaseDistance(ABC):
         return_cost_matrix: bool = False,
         **kwargs: dict
     ) -> DistanceCallableReturn:
+        """Distance between two time series."""
         distance_callable = self.distance_factory(
             x, y, strategy, return_cost_matrix, **kwargs
         )
@@ -314,6 +332,7 @@ class BaseDistance(ABC):
         return_cost_matrix: bool = False,
         **kwargs: dict
     ) -> DistanceCallableReturn:
+        """Independent distance between two time series."""
         return self.distance(x, y, "independent", return_cost_matrix, **kwargs)
 
     def dependent_distance(
@@ -323,10 +342,15 @@ class BaseDistance(ABC):
         return_cost_matrix: bool = False,
         **kwargs: dict
     ) -> DistanceCallableReturn:
+        """Dependent distance between two time series."""
         return self.distance(x, y, "dependent", return_cost_matrix, **kwargs)
 
-    def _result_distance_callback(self) -> Callable[[float], float]:
-        def _result_callback(distance: float) -> float:
+    def local_distance(self, x: float, y: float, **kwargs: dict) -> float:
+        """Local distance between two floats."""
+        return self.distance(x, y, "local", **kwargs)
+
+    def _result_distance_callback(self) -> Callable[[float, int, int], float]:
+        def _result_callback(distance: float, x_size: int, y_size: int) -> float:
             return distance
 
         return _result_callback
@@ -340,7 +364,7 @@ class BaseDistance(ABC):
         return function.
 
         Parameters
-        ---------
+        ----------
         **kwargs: dict
             Keyword arguments for the given distance.
         """
@@ -357,9 +381,11 @@ class BaseDistance(ABC):
             "This method is an optional implementation. It will"
             "default to using the independent distance."
         )
-        # return self.distance_factory(
-        #     x, y, 'independent', self._has_cost_matrix, **kwargs
-        # )
+
+    def _local_distance(
+        self, x: float, y: float, **kwargs: dict
+    ) -> LocalDistanceCallable:
+        raise NotImplementedError("This distance does not support local distance")
 
     @abstractmethod
     def _independent_distance(

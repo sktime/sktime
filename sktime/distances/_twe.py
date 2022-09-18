@@ -184,7 +184,7 @@ class _TweDistance(NumbaDistance):
             x, y, window, itakura_max_slope, bounding_matrix
         )
 
-        @njit(cache=True)
+        # @njit(cache=True)
         def numba_twe_distance(
             _x: np.ndarray,
             _y: np.ndarray,
@@ -216,7 +216,7 @@ def pad_ts(x: np.ndarray) -> np.ndarray:
     return padded_x
 
 
-@njit(cache=True)
+# @njit(cache=True)
 def _twe_cost_matrix(
     x: np.ndarray,
     y: np.ndarray,

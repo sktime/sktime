@@ -1,10 +1,7 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 
-from sktime.distances.distance_rework.tests.redo import (
-    BaseDistance,
-    DistanceCallable,
-)
+from sktime.distances.distance_rework.tests.redo import BaseDistance, DistanceCallable
 from sktime.distances.lower_bounding import resolve_bounding_matrix
 
 
@@ -15,22 +12,29 @@ class _WdtwDistance(BaseDistance):
     _fastmath = True
 
     def _independent_distance(
-            self,
-            x: np.ndarray,
-            y: np.ndarray,
-            window: int = None,
-            itakura_max_slope: float = None,
-            bounding_matrix: np.ndarray = None,
-            g: float = 0.05,
-            **kwargs: dict
+        self,
+        x: np.ndarray,
+        y: np.ndarray,
+        window: int = None,
+        itakura_max_slope: float = None,
+        bounding_matrix: np.ndarray = None,
+        g: float = 0.05,
+        **kwargs: dict
     ) -> DistanceCallable:
+        # Has to be here because circular import if at top
+        from sktime.distances.distance_rework.tests.redo import _SquaredDistance
+
+        local_squared_dist = _SquaredDistance().distance_factory(
+            x[0], y[0], strategy="local"
+        )
+
         _bounding_matrix = resolve_bounding_matrix(
             x, y, window, itakura_max_slope, bounding_matrix
         )
 
         def _numba_wdtw(
-                _x: np.ndarray,
-                _y: np.ndarray,
+            _x: np.ndarray,
+            _y: np.ndarray,
         ):
             x_size = _x.shape[0]
             y_size = _y.shape[0]
@@ -44,26 +48,28 @@ class _WdtwDistance(BaseDistance):
             for i in range(x_size):
                 for j in range(y_size):
                     if np.isfinite(_bounding_matrix[i, j]):
-                        squared_dist = (_x[i] - _y[j]) ** 2
-                        cost_matrix[i + 1, j + 1] = \
-                            squared_dist * weight_vector[abs(i - j)] + min(
-                                cost_matrix[i, j + 1],
-                                cost_matrix[i + 1, j],
-                                cost_matrix[i, j]
-                            )
+                        squared_dist = local_squared_dist(_x[i], _y[j])
+                        cost_matrix[i + 1, j + 1] = squared_dist * weight_vector[
+                            abs(i - j)
+                        ] + min(
+                            cost_matrix[i, j + 1],
+                            cost_matrix[i + 1, j],
+                            cost_matrix[i, j],
+                        )
 
             return cost_matrix[-1, -1], cost_matrix[1:, 1:]
+
         return _numba_wdtw
 
     def _dependent_distance(
-            self,
-            x: np.ndarray,
-            y: np.ndarray,
-            window: int = None,
-            itakura_max_slope: float = None,
-            bounding_matrix: np.ndarray = None,
-            g: float = 0.05,
-            **kwargs: dict
+        self,
+        x: np.ndarray,
+        y: np.ndarray,
+        window: int = None,
+        itakura_max_slope: float = None,
+        bounding_matrix: np.ndarray = None,
+        g: float = 0.05,
+        **kwargs: dict
     ) -> DistanceCallable:
         # Has to be here because circular import if at top
         from sktime.distances.distance_rework.tests.redo import _SquaredDistance
@@ -79,8 +85,8 @@ class _WdtwDistance(BaseDistance):
         )
 
         def _numba_wdtw(
-                _x: np.ndarray,
-                _y: np.ndarray,
+            _x: np.ndarray,
+            _y: np.ndarray,
         ):
             x_size = _x.shape[1]
             y_size = _y.shape[1]
@@ -95,12 +101,13 @@ class _WdtwDistance(BaseDistance):
                 for j in range(y_size):
                     if np.isfinite(_bounding_matrix[i, j]):
                         squared_dist = squared_distance(_x[:, i], _y[:, j])
-                        cost_matrix[i + 1, j + 1] = \
-                            squared_dist * weight_vector[abs(i - j)] + min(
-                                cost_matrix[i, j + 1],
-                                cost_matrix[i + 1, j],
-                                cost_matrix[i, j]
-                            )
+                        cost_matrix[i + 1, j + 1] = squared_dist * weight_vector[
+                            abs(i - j)
+                        ] + min(
+                            cost_matrix[i, j + 1],
+                            cost_matrix[i + 1, j],
+                            cost_matrix[i, j],
+                        )
 
             return cost_matrix[-1, -1], cost_matrix[1:, 1:]
 
