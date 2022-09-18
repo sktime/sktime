@@ -9,13 +9,13 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sktime.forecasting.trend import PolynomialTrendForecaster
+from sktime.forecasting.trend import PolynomialTrendForecaster, STLForecaster
 from sktime.utils._testing.forecasting import make_forecasting_problem
+from sktime.utils.estimators._forecasters import MockForecaster
 
 
 def get_expected_polynomial_coefs(y, degree, with_intercept=True):
-    """Helper function to compute expected coefficients from polynomial
-    regression"""
+    """Helper function to compute expected coefficients from polynomial regression."""
     poly_matrix = np.vander(np.arange(len(y)), degree + 1)
     if not with_intercept:
         poly_matrix = poly_matrix[:, :-1]
@@ -54,3 +54,18 @@ def test_constant_trend():
     y_pred = forecaster.fit(y).predict(fh)
 
     np.testing.assert_array_almost_equal(y, y_pred)
+
+
+def test_stl_pred_var():
+
+    y = pd.Series(np.arange(30))
+    mock_forecaster = MockForecaster(prediction_constant=10)
+    forecaster = STLForecaster(
+        forecaster_resid=mock_forecaster,
+        forecaster_seasonal=mock_forecaster,
+        forecaster_trend=mock_forecaster,
+    )
+    fh = [1, 2, 3, 4]
+    y_pred_var = forecaster.fit(y).predict_var(fh=fh)
+    expected = mock_forecaster.fit(y).predict_var(fh=fh) * 3
+    pd.testing.assert_frame_equal(y_pred_var, expected)
