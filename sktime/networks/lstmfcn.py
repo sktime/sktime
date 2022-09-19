@@ -3,8 +3,8 @@
 
 __author__ = ["Jack Russon", "AurumnPegasus"]
 
+from sktime.networks.attentionlstm import AttentionLSTM
 from sktime.networks.base import BaseDeepNetwork
-from sktime.networks.modules.attentionlstm import AttentionLSTM
 from sktime.utils.validation._dependencies import _check_dl_dependencies
 
 _check_dl_dependencies(severity="warning")
@@ -69,6 +69,7 @@ class LSTMFCNNetwork(BaseDeepNetwork):
         self.dropout = dropout
         self.random_state = random_state
         self.attention = attention
+        super(LSTMFCNNetwork, self).__init__()
 
     def build_network(self, input_shape, **kwargs):
         """Construct a network and return its input and output layers.
