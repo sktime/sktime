@@ -305,9 +305,9 @@ def test_naive_predict_var_backwards(strategy, sp, window_length):
         # This is trival because square root of (h) when h=1 is just 1
         sigma_res = sigma / np.sqrt(h)
     elif strategy == "mean":
-        sigma_res = sigma / np.sqrt(2 / T)
+        sigma_res = sigma / np.sqrt(1 + (1 / T))
     else:
-        sigma_res = sigma / np.sqrt(2 / (T - 1))
+        sigma_res = sigma / np.sqrt(1 + (1 / (T - 1)))
 
     upper_bound, lower_bound = (sigma + 0.001), (sigma - 0.001)
     assert lower_bound < sigma_res < upper_bound

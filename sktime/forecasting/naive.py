@@ -436,7 +436,7 @@ class NaiveForecaster(_BaseWindowForecaster):
             if sp == 1
             else np.sqrt(np.floor((h - 1) / sp) + 1),
             "mean": lambda h: np.repeat(np.sqrt(1 + (1 / window_length)), len(h)),
-            "drift": lambda h: np.sqrt(h * (1 + h / (T - 1))),
+            "drift": lambda h: np.sqrt(h * (1 + (h / (T - 1)))),
         }
 
         fh_periods = np.array(fh.to_relative(self.cutoff))
