@@ -90,6 +90,8 @@ class EAGGLO(BaseTransformer):
                 )
                 D_.iloc[i, j] = D_.iloc[j, i] = 2 * between - within[i] - within[j]
 
+        np.fill_diagonal(D_.values, 0)
+
         # set up left and right neighbors
         # special case for clusters 0 and N_-1 to allow for cyclic merging
         left_ = np.repeat(0, 2 * N_ - 1)
@@ -109,10 +111,10 @@ class EAGGLO(BaseTransformer):
         )
 
         # change point progression
-        progression_ = pd.DataFrame(index=range(N_), columns=range(N_))
+        progression_ = pd.DataFrame(index=range(N_), columns=range(N_ + 1))
         progression_.iloc[0,] = [
-            sum(sizes_[:i]) if i > 0 else 0 for i in range(N_)
-        ]  # FIXME: does this need to be N_+1, just N?
+            sum(sizes_[:i]) if i > 0 else 0 for i in range(N_ + 1)
+        ]  # N + 1 for cyclic mergers
 
         # array to specify the starting point of a cluster
         lm_ = np.repeat(0, 2 * N_ - 1)
@@ -131,7 +133,7 @@ class EAGGLO(BaseTransformer):
         self.progression_ = progression_
         self.lm_ = lm_
 
-    def gof_update(self, i):
+    def _gof_update(self, i):
         """Docstring."""
         fit = self.fit_[-1]
         j = self.right_[i]
@@ -167,21 +169,23 @@ class EAGGLO(BaseTransformer):
 
         return fit
 
-    def find_closest(self, K):
+    def _find_closest(self, K):
         """Docstring."""
-        best = -1e10
-        result = [0, 0, 0]
+        best_fit = -1e10
+        result = (0, 0)
 
         # iterate to see how the GOF value changes
         for i in range(K):
             if self.open_[i]:
-                x = self.gof_update(i)
-                if x > best:
-                    best = x
-                    result = [i, self.right_[i], x]
+                fit_ = self._gof_update(i)
+                if fit_ > best_fit:
+                    best_fit = fit_
+                    result = (i, self.right_[i])
+
+        self.fit_ = np.append(self.fit_, best_fit)
         return result
 
-    def update_distances(self, i, j, K):
+    def _update_distances(self, i, j, K):
         """Docstring."""
         # which clusters were merged
         self.merged_.loc[K - self.N_ + 1, 0] = -i if i <= self.N_ else i - self.N_
@@ -239,9 +243,42 @@ class EAGGLO(BaseTransformer):
         """
         # check alpha in range
         # check penalty function
-        self.process_data(X)
+        self._process_data(X)
 
         # find which clusters optimize the GOF and then update the distances
+        for K in range(self.N_ - 1, 2 * self.N_ - 2):
+            i, j = self._find_closest(K)
+            self._update_distances(i, j, K)
+
+        # penalize the GOF statistic
+        # TODO: penalty function
+
+        # get the set of change points for the "best" clustering
+        idx = np.argmax(self.fit_)
+        self.estimates_ = np.sort(
+            self.progression_.loc[
+                idx,
+            ].dropna()
+        )
+
+        # remove change point N+1 if a cyclic merger was performed
+        self.estimates_ = (
+            self.estimates_[:-1] if self.estimates_[0] != 0 else self.estimates_
+        )
+
+        # create final membership vector
+        def get_cluster(estimates):
+            return np.repeat(
+                range(len(np.diff(estimates))), np.diff(estimates).astype(int)
+            )
+
+        if self.estimates_[0] == 0:
+            self.cluster_ = get_cluster(self.estimates_)
+        else:
+            tmp = get_cluster(np.append([0], self.estimates_))
+            self.cluster_ = np.append(tmp, np.repeat(0, X.shape[0] - len(tmp)))
+
+        return self
 
 
 def get_within(X, alpha):
