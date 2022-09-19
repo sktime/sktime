@@ -104,15 +104,17 @@ def get_classifiers(threads_to_use):
         #    random_state=1379,
         #    n_jobs=threads_to_use,
         # ),
-        "MUSE (dilation,24)": MUSE_STEROIDS(
+        "MUSE (dilation,104)": MUSE_STEROIDS(
             random_state=1379,
             use_first_differences=True,
             binning_strategies=["equi-depth"],
             feature_selection="chi2",
             min_window=4,
-            max_window=24,
+            max_window=104,
             word_lengths=[8],
             variance=True,
+            ensemble_size=100,
+            max_feature_count=30_000,
             anova=False,
             alphabet_sizes=[2],
             n_jobs=threads_to_use,
@@ -227,19 +229,6 @@ if __name__ == "__main__":
         simplefilter(action="ignore", category=UserWarning)
         simplefilter(action="ignore", category=PerformanceWarning)
 
-        sum_scores = {
-            clf_name: {
-                "dataset": [],
-                "all_scores": [],
-                "all_fit": [],
-                "all_pred": [],
-                "fit_time": 0.0,
-                "pred_time": 0.0,
-            }
-        }
-
-        # try:
-
         X_train, y_train = load_UCR_UEA_dataset(
             dataset_name,
             split="train",
@@ -256,24 +245,42 @@ if __name__ == "__main__":
         # X_train = zscore(X_train, axis=-1)
         # X_test = zscore(X_test, axis=-1)
 
+        if server:
+            try:
+                return make_run(
+                    X_test, X_train, clf_name, dataset_name, y_test, y_train
+                )
+            except Exception as e:
+                print("An exception occurred: {}".format(e))
+                print("\tFailed: ", dataset_name, clf_name)
+                print(e)
+        else:
+            return make_run(X_test, X_train, clf_name, dataset_name, y_test, y_train)
+
+        # print("-----------------")
+
+        return sum_scores
+
+    def make_run(X_test, X_train, clf_name, dataset_name, y_test, y_train):
+        """Run experiments."""
+        sum_scores = {
+            clf_name: {
+                "dataset": [],
+                "all_scores": [],
+                "all_fit": [],
+                "all_pred": [],
+                "fit_time": 0.0,
+                "pred_time": 0.0,
+            }
+        }
         clf = get_classifiers(threads_to_use)[clf_name]
         fit_time = time.perf_counter()
         clf.fit(X_train, y_train)
         fit_time = np.round(time.perf_counter() - fit_time, 5)
-
         pred_time = time.perf_counter()
         acc = clf.score(X_test, y_test)
         pred_time = np.round(time.perf_counter() - pred_time, 5)
-
         print(
-            # f"Dataset={dataset_name}, "
-            # + (
-            #    f"Feature Count={clf.total_features_count}, "
-            #    if hasattr(clf, "total_features_count")
-            #    else f""
-            # )
-            # + f"Train-Size={np.shape(X_train)}, "
-            # + f"Test-Size={np.shape(X_test)}\n"
             f"{clf_name},{dataset_name},"
             + f"{np.round(acc, 3)},"
             + f"{np.round(fit_time, 2)},"
@@ -284,24 +291,14 @@ if __name__ == "__main__":
                 else f""
             )
         )
-
         sum_scores[clf_name]["dataset"].append(dataset_name)
         sum_scores[clf_name]["all_scores"].append(acc)
         sum_scores[clf_name]["all_fit"].append(fit_time)
         sum_scores[clf_name]["all_pred"].append(pred_time)
-
         sum_scores[clf_name]["fit_time"] += sum_scores[clf_name]["fit_time"] + fit_time
         sum_scores[clf_name]["pred_time"] += (
             sum_scores[clf_name]["pred_time"] + pred_time
         )
-
-        # except Exception as e:
-        #    print("An exception occurred: {}".format(e))
-        #    print("\tFailed: ", dataset_name, clf_name)
-        #    print(e)
-
-        # print("-----------------")
-
         return sum_scores
 
     parallel_res = Parallel(

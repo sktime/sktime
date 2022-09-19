@@ -235,99 +235,81 @@ def get_classifiers(threads_to_use):
         # "BOSS": BOSSEnsemble(random_state=1379, n_jobs=threads_to_use),
         # "cBOSS": ContractableBOSS(random_state=1379, n_jobs=threads_to_use),
         # "TDE": TemporalDictionaryEnsemble(random_state=1379, n_jobs=threads_to_use),
-        "WEASEL 2": WEASEL_STEROIDS(
+        "WEASEL (dilation;24)": WEASEL_STEROIDS(
             random_state=1379,
             binning_strategies=["equi-depth"],
             alphabet_sizes=[2],
             min_window=4,
             max_window=24,
-            max_feature_count=20_000,
+            max_feature_count=30_000,
             word_lengths=[8],
-            variance=False,
-            anova=False,
-            ensemble_size=60,
+            variance=True,
+            ensemble_size=100,
             use_first_differences=[True],
             feature_selection="none",
             # sections=1,
-            # remove_repeat_words=True,
             n_jobs=threads_to_use,
         ),
-        # "WEASEL 2 (maxabs, chi2, 60, 2-4)": WEASEL_STEROIDS(
-        #     random_state=1379,
-        #     binning_strategies=["equi-depth"],
-        #     alphabet_sizes=[2, 4],
-        #     lower_bounding=False,
-        #     min_window=4,
-        #     max_window=24,
-        #     max_feature_count=20_000,
-        #     word_lengths=[8],
-        #     norm_options=[False],
-        #     variance=True,
-        #     anova=False,
-        #     ensemble_size=60,
-        #     use_first_differences=[True, False],
-        #     feature_selection="chi2",
-        #     # sections=1,
-        #     # remove_repeat_words=True,
-        #     n_jobs=threads_to_use,
-        # ),
-        # "WEASEL 2 (random, 60, 2-4)": WEASEL_STEROIDS(
-        #     random_state=1379,
-        #     binning_strategies=["equi-depth"],
-        #     alphabet_sizes=[2, 4],
-        #     lower_bounding=False,
-        #     min_window=4,
-        #     max_window=24,
-        #     max_feature_count=20_000,
-        #     word_lengths=[8],
-        #     norm_options=[False],
-        #     variance=True,
-        #     anova=False,
-        #     ensemble_size=60,
-        #     use_first_differences=[True, False],
-        #     feature_selection="random",
-        #     # sections=1,
-        #     # remove_repeat_words=True,
-        #     n_jobs=threads_to_use,
-        # ),
-        # "WEASEL 2 (chi2, 100)": WEASEL_STEROIDS(
-        #     random_state=1379,
-        #     binning_strategies=["equi-depth"],
-        #     alphabet_sizes=[2],
-        #     lower_bounding=False,
-        #     min_window=4,
-        #     max_window=24,
-        #     max_feature_count=20_000,
-        #     word_lengths=[8],
-        #     norm_options=[False],
-        #     variance=True,
-        #     anova=False,
-        #     ensemble_size=100,
-        #     use_first_differences=[True, False],
-        #     feature_selection="chi2",
-        #     # sections=1,
-        #     # remove_repeat_words=True,
-        #     n_jobs=threads_to_use,
-        # ),
-        # "WEASEL 2 (chi2, 150)": WEASEL_STEROIDS(
-        #     random_state=1379,
-        #     binning_strategies=["equi-depth"],
-        #     alphabet_sizes=[2],
-        #     lower_bounding=False,
-        #     min_window=4,
-        #     max_window=24,
-        #     max_feature_count=20_000,
-        #     word_lengths=[8],
-        #     norm_options=[False],
-        #     variance=True,
-        #     anova=False,
-        #     ensemble_size=150,
-        #     use_first_differences=[True, False],
-        #     feature_selection="chi2",
-        #     # sections=1,
-        #     # remove_repeat_words=True,
-        #     n_jobs=threads_to_use,
-        # ),
+        "WEASEL (dilation;44)": WEASEL_STEROIDS(
+            random_state=1379,
+            binning_strategies=["equi-depth"],
+            alphabet_sizes=[2],
+            min_window=4,
+            max_window=44,
+            max_feature_count=30_000,
+            word_lengths=[8],
+            variance=True,
+            ensemble_size=100,
+            use_first_differences=[True],
+            feature_selection="none",
+            # sections=1,
+            n_jobs=threads_to_use,
+        ),
+        "WEASEL (dilation;64)": WEASEL_STEROIDS(
+            random_state=1379,
+            binning_strategies=["equi-depth"],
+            alphabet_sizes=[2],
+            min_window=4,
+            max_window=64,
+            max_feature_count=30_000,
+            word_lengths=[8],
+            variance=True,
+            ensemble_size=100,
+            use_first_differences=[True],
+            feature_selection="none",
+            # sections=1,
+            n_jobs=threads_to_use,
+        ),
+        "WEASEL (dilation;84)": WEASEL_STEROIDS(
+            random_state=1379,
+            binning_strategies=["equi-depth"],
+            alphabet_sizes=[2],
+            min_window=4,
+            max_window=84,
+            max_feature_count=30_000,
+            word_lengths=[8],
+            variance=True,
+            ensemble_size=100,
+            use_first_differences=[True],
+            feature_selection="none",
+            # sections=1,
+            n_jobs=threads_to_use,
+        ),
+        "WEASEL (dilation;104)": WEASEL_STEROIDS(
+            random_state=1379,
+            binning_strategies=["equi-depth"],
+            alphabet_sizes=[2],
+            min_window=4,
+            max_window=104,
+            max_feature_count=30_000,
+            word_lengths=[8],
+            variance=True,
+            ensemble_size=100,
+            use_first_differences=[True],
+            feature_selection="none",
+            # sections=1,
+            n_jobs=threads_to_use,
+        ),
         # "Hydra": [],  # see below
         # "R_DST": R_DST_Ridge(random_state=1379),
         # "Rocket": make_pipeline(
@@ -356,7 +338,7 @@ if os.path.exists(DATA_PATH):
 # server
 else:
     DATA_PATH = "/vol/fob-wbib-vol2/wbi/schaefpa/sktime/datasets/UCRArchive_2018"
-    parallel_jobs = 40
+    parallel_jobs = 30
     threads_to_use = 1
     server = True
     used_dataset = dataset_names_full
@@ -381,65 +363,6 @@ if __name__ == "__main__":
         X_train = zscore(X_train, axis=-1)
         X_test = zscore(X_test, axis=-1)
 
-        def make_run(X_test, X_train, clf_name, dataset_name, y_test, y_train):
-            sum_scores = {
-                clf_name: {
-                    "dataset": [],
-                    "all_scores": [],
-                    "all_fit": [],
-                    "all_pred": [],
-                    "fit_time": 0.0,
-                    "pred_time": 0.0,
-                }
-            }
-
-            if clf_name == "Hydra":
-                # print(torch.get_num_threads())
-                fit_time = time.perf_counter()
-                transform = Hydra(X_train.shape[-1])
-                X_training_transform = transform(torch.tensor(X_train).float())
-
-                clf = RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True)
-                clf.fit(X_training_transform, y_train)
-                fit_time = np.round(time.perf_counter() - fit_time, 5)
-
-                pred_time = time.perf_counter()
-                X_test_transform = transform(torch.tensor(X_test).float())
-                acc = clf.score(X_test_transform, y_test)
-                pred_time = np.round(time.perf_counter() - pred_time, 5)
-            else:
-                clf = get_classifiers(threads_to_use)[clf_name]
-                fit_time = time.perf_counter()
-                clf.fit(X_train, y_train)
-                fit_time = np.round(time.perf_counter() - fit_time, 5)
-
-                pred_time = time.perf_counter()
-                acc = clf.score(X_test, y_test)
-                pred_time = np.round(time.perf_counter() - pred_time, 5)
-            print(
-                f"{clf_name},{dataset_name},"
-                + f"{np.round(acc, 3)},"
-                + f"{np.round(fit_time, 2)},"
-                + f"{np.round(pred_time, 2)}"
-                + (
-                    f",{clf.total_features_count}"
-                    if hasattr(clf, "total_features_count")
-                    else f""
-                )
-            )
-            sum_scores[clf_name]["dataset"].append(dataset_name)
-            sum_scores[clf_name]["all_scores"].append(acc)
-            sum_scores[clf_name]["all_fit"].append(fit_time)
-            sum_scores[clf_name]["all_pred"].append(pred_time)
-            sum_scores[clf_name]["fit_time"] += (
-                sum_scores[clf_name]["fit_time"] + fit_time
-            )
-            sum_scores[clf_name]["pred_time"] += (
-                sum_scores[clf_name]["pred_time"] + pred_time
-            )
-
-            return sum_scores
-
         if server:
             try:  # catch exceptions
                 return make_run(
@@ -452,7 +375,64 @@ if __name__ == "__main__":
         else:
             return make_run(X_test, X_train, clf_name, dataset_name, y_test, y_train)
 
-        print("-----------------")
+        # print("-----------------")
+        # return sum_scores
+
+    def make_run(X_test, X_train, clf_name, dataset_name, y_test, y_train):
+        """Run experiments."""
+        sum_scores = {
+            clf_name: {
+                "dataset": [],
+                "all_scores": [],
+                "all_fit": [],
+                "all_pred": [],
+                "fit_time": 0.0,
+                "pred_time": 0.0,
+            }
+        }
+
+        if clf_name == "Hydra":
+            # print(torch.get_num_threads())
+            fit_time = time.perf_counter()
+            transform = Hydra(X_train.shape[-1])
+            X_training_transform = transform(torch.tensor(X_train).float())
+
+            clf = RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True)
+            clf.fit(X_training_transform, y_train)
+            fit_time = np.round(time.perf_counter() - fit_time, 5)
+
+            pred_time = time.perf_counter()
+            X_test_transform = transform(torch.tensor(X_test).float())
+            acc = clf.score(X_test_transform, y_test)
+            pred_time = np.round(time.perf_counter() - pred_time, 5)
+        else:
+            clf = get_classifiers(threads_to_use)[clf_name]
+            fit_time = time.perf_counter()
+            clf.fit(X_train, y_train)
+            fit_time = np.round(time.perf_counter() - fit_time, 5)
+
+            pred_time = time.perf_counter()
+            acc = clf.score(X_test, y_test)
+            pred_time = np.round(time.perf_counter() - pred_time, 5)
+        print(
+            f"{clf_name},{dataset_name},"
+            + f"{np.round(acc, 3)},"
+            + f"{np.round(fit_time, 2)},"
+            + f"{np.round(pred_time, 2)}"
+            + (
+                f",{clf.total_features_count}"
+                if hasattr(clf, "total_features_count")
+                else f""
+            )
+        )
+        sum_scores[clf_name]["dataset"].append(dataset_name)
+        sum_scores[clf_name]["all_scores"].append(acc)
+        sum_scores[clf_name]["all_fit"].append(fit_time)
+        sum_scores[clf_name]["all_pred"].append(pred_time)
+        sum_scores[clf_name]["fit_time"] += sum_scores[clf_name]["fit_time"] + fit_time
+        sum_scores[clf_name]["pred_time"] += (
+            sum_scores[clf_name]["pred_time"] + pred_time
+        )
 
         return sum_scores
 

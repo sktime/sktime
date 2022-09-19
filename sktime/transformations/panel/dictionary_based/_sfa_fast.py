@@ -490,7 +490,8 @@ class SFAFast(BaseTransformer):
                 )
 
                 chi2_statistics, p = chi2(bag_of_words, y)
-                relevant_features_idx = np.where(p <= self.p_threshold)[0]
+                relevant_features_idx = np.argsort(p)[: self.max_feature_count]
+                # relevant_features_idx = np.where(p <= self.p_threshold)[0]
 
                 # select subset of features
                 bag_of_words = bag_of_words[:, relevant_features_idx]
@@ -1019,8 +1020,8 @@ def _dilation(X, d, first_difference):
 
     # adding first order differences
     if first_difference:
-        X2 = np.diff(X, axis=1, prepend=0)
-        X = np.concatenate((X, X2), axis=1)
+        X = np.diff(X, axis=1, prepend=0)
+        # X = np.concatenate((X, X2), axis=1)
 
     # adding dilation
     X_dilated = _dilation2(X, d)
