@@ -364,10 +364,10 @@ class NaiveForecaster(_BaseWindowForecaster):
 
         errors = (
             np.sqrt(pred_var.to_numpy().reshape(len(pred_var), 1)) * z_scores
-        ).reshape((len(y_pred),))
+        ).reshape(len(y_pred), len(alpha))
 
         pred_quantiles = pd.DataFrame(
-            y_pred + errors,
+            errors + y_pred.values.reshape(len(y_pred), 1),
             columns=pd.MultiIndex.from_product([["Quantiles"], alpha]),
             index=fh.to_absolute(self.cutoff).to_pandas(),
         )
