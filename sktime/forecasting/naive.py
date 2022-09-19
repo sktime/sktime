@@ -402,7 +402,7 @@ class NaiveForecaster(_BaseWindowForecaster):
         .. [1] https://otexts.com/fpp3/prediction-intervals.html#benchmark-methods
         """
         y = self._y
-        y = convert(y, from_type=self._y_mtype_last_seen, to_type="pd.Series")
+        y = convert_to(y, "pd.Series")
         T = len(y)
 
         # Compute "past" residuals
