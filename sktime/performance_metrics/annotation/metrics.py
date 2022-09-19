@@ -18,7 +18,7 @@ def annotation_error(
     true_change_points: npt.ArrayLike, pred_change_points: npt.ArrayLike
 ) -> float:
     """
-    Annotation error measuring discrepancy in the number of change points.
+    Annotation error counting the difference in the number of change points.
 
     Parameters
     ----------
