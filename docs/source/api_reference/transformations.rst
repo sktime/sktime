@@ -51,17 +51,12 @@ Pipeline building
 
     TransformerPipeline
     FeatureUnion
+    ColumnwiseTransformer
     FitInTransform
     MultiplexTransformer
-
-.. currentmodule:: sktime.transformations.series.compose
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
     OptionalPassthrough
-    ColumnwiseTransformer
+    InvertTransform
+    Id
     YtoX
 
 .. currentmodule:: sktime.transformations.panel.compose
@@ -387,8 +382,8 @@ Missing value imputation
 
     Imputer
 
-Datetime feature generation
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Seasonality and Date-Time Features
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: sktime.transformations.series.date
 
@@ -397,6 +392,14 @@ Datetime feature generation
     :template: class.rst
 
     DateTimeFeatures
+
+.. currentmodule:: sktime.transformations.series.fourier
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    FourierFeatures
 
 Auto-correlation series
 ~~~~~~~~~~~~~~~~~~~~~~~

@@ -589,7 +589,9 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/54197164?v=4",
       "profile": "https://github.com/achieveordie",
       "contributions": [
-        "code"
+        "bug",
+        "code",
+        "doc"
       ]
     },
     {
@@ -1737,7 +1739,7 @@
       "name": "Benedikt Heidrich",
       "profile": "https://github.com/benheid",
       "contributions": [
-        "code",
+        "code"
       ]
     },
     {
@@ -1747,7 +1749,37 @@
       "contributions": [
         "bug"
       ]
-    }
+    },
+    {
+      "login": "haskarb",
+      "name": "Bhaskar Dhariyal",
+      "avatar_url": "https://avatars.githubusercontent.com/u/20501023?v=4",
+      "profile": "https://haskarb.github.io/",
+      "contributions": [
+        "code",
+        "test"
+      ]
+    },
+    {
+      "login": "bugslayer-332" ,
+      "name": "Arepalli Yashwanth Reddy",
+      "profile": "https://github.com/bugslayer-332",
+      "contributions": [
+        "code",
+        "bug",
+        "doc"
+      ]
+    },
+    {
+      "login": "shagn",
+      "name": "Sebastian Hagn",
+      "avatar_url": "https://avatars.githubusercontent.com/u/16029092?v=4",
+      "profile": "https://github.com/shagn",
+      "contributions": [
+        "doc",
+      ]
+    },
+
   ],
   "projectName": "sktime",
   "projectOwner": "alan-turing-institute",

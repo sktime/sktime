@@ -14,10 +14,8 @@ from sktime.classification.tests._expected_outputs import (
 from sktime.datasets import load_basic_motions, load_unit_test
 from sktime.datatypes import check_is_scitype
 from sktime.tests.test_all_estimators import BaseFixtureGenerator, QuickTester
-from sktime.utils._testing.estimator_checks import (
-    _assert_array_almost_equal,
-    make_classification_problem,
-)
+from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
+from sktime.utils._testing.panel import make_classification_problem
 from sktime.utils._testing.scenarios_classification import (
     ClassifierFitPredictMultivariate,
 )

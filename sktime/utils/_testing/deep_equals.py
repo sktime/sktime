@@ -118,9 +118,14 @@ def deep_equals(x, y, return_msg=False):
         )
     elif type(x).__name__ == "ForecastingHorizon":
         return ret(*_fh_equals(x, y, return_msg=True))
-    elif x != y:
+    elif isinstance(x != y, bool) and x != y:
         return ret(False, f" !=, {x} != {y}")
-
+    # csr-matrix must not be compared using np.any(x!=y)
+    elif type(x).__name__ == "csr_matrix":  # isinstance(x, csr_matrix):
+        if not np.allclose(x.A, y.A):
+            return ret(False, f" !=, {x} != {y}")
+    elif np.any(x != y):
+        return ret(False, f" !=, {x} != {y}")
     return ret(True, "")
 
 

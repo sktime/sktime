@@ -347,7 +347,11 @@ class BaseObject(_BaseEstimator):
         Changes object state by settting tag values in tag_dict as dynamic tags
         in self.
         """
-        self._tags_dynamic.update(deepcopy(tag_dict))
+        tag_update = deepcopy(tag_dict)
+        if hasattr(self, "_tags_dynamic"):
+            self._tags_dynamic.update(tag_update)
+        else:
+            self._tags_dynamic = tag_update
 
         return self
 
@@ -812,7 +816,7 @@ class BaseEstimator(BaseObject):
         """
         if not self.is_fitted:
             raise NotFittedError(
-                f"parameter estimator of type {type(self).__name__} has not been "
+                f"estimator of type {type(self).__name__} has not been "
                 "fitted yet, please call fit on data before get_fitted_params"
             )
 
@@ -827,9 +831,11 @@ class BaseEstimator(BaseObject):
                 return x
 
         for c in c_dict.keys():
-            c_f_params = c_dict[c].get_fitted_params()
-            c_f_params = {f"{sh(c)}__{k}": c_f_params[k] for k in c_f_params.keys()}
-            fitted_params.update(c_f_params)
+            comp = c_dict[c]
+            if comp._is_fitted:
+                c_f_params = c_dict[c].get_fitted_params()
+                c_f_params = {f"{sh(c)}__{k}": c_f_params[k] for k in c_f_params.keys()}
+                fitted_params.update(c_f_params)
 
         fitted_params.update(self._get_fitted_params())
 

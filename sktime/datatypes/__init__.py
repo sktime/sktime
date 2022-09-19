@@ -13,6 +13,7 @@ from sktime.datatypes._check import (
 from sktime.datatypes._convert import convert, convert_to
 from sktime.datatypes._examples import get_examples
 from sktime.datatypes._registry import (
+    ALL_TIME_SERIES_MTYPES,
     MTYPE_LIST_HIERARCHICAL,
     MTYPE_LIST_PANEL,
     MTYPE_LIST_PROBA,
@@ -28,6 +29,7 @@ from sktime.datatypes._utilities import get_cutoff, update_data
 from sktime.datatypes._vectorize import VectorizedDF
 
 __all__ = [
+    "ALL_TIME_SERIES_MTYPES",
     "check_is_mtype",
     "check_is_scitype",
     "check_raise",
