@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """E-agglo."""
 
+import warnings
+
 import numpy as np
 import pandas as pd
 
@@ -112,7 +114,7 @@ class EAGGLO(BaseTransformer):
 
         # change point progression
         progression_ = pd.DataFrame(index=range(N_), columns=range(N_ + 1))
-        progression_.iloc[0, ] = [
+        progression_.iloc[0,] = [
             sum(sizes_[:i]) if i > 0 else 0 for i in range(N_ + 1)
         ]  # N + 1 for cyclic mergers
 
@@ -209,7 +211,7 @@ class EAGGLO(BaseTransformer):
         self.sizes_[K + 1] = n1 + n2
 
         # update set of change points
-        self.progression_.loc[K - self.N_ + 2, ] = self.progression_.loc[
+        self.progression_.loc[K - self.N_ + 2,] = self.progression_.loc[
             K - self.N_ + 1,
         ]
         self.progression_.loc[K - self.N_ + 2, self.lm_[j]] = np.nan
@@ -241,8 +243,11 @@ class EAGGLO(BaseTransformer):
         self :
             Reference to self.
         """
-        # check alpha in range
-        # check penalty function
+        self._X = X
+
+        # TODO: check alpha in range
+        # TODO: check penalty function
+
         self._process_data(X)
 
         # find which clusters optimize the GOF and then update the distances
@@ -251,7 +256,7 @@ class EAGGLO(BaseTransformer):
             self._update_distances(i, j, K)
 
         # penalize the GOF statistic
-        # TODO: penalty function
+        # TODO: apply the penalty function
 
         # get the set of change points for the "best" clustering
         idx = np.argmax(self.fit_)
@@ -279,6 +284,40 @@ class EAGGLO(BaseTransformer):
             self.cluster_ = np.append(tmp, np.repeat(0, X.shape[0] - len(tmp)))
 
         return self
+
+    def _transform(self, X, y=None):
+        """Transform X and return a transformed version.
+        
+        private _transform containing core logic, called from transform
+
+        Parameters
+        ----------
+        X : Series of mtype X_inner_mtype
+            Data to be transformed
+        y : Series of mtype y_inner_mtype, default=None
+            Not required for this unsupervised transform.
+
+        Returns
+        -------
+        transformed version of X, representing the original data on a new set of
+        coordinates, obtained by multiplying input data by the basis vectors.
+        """
+        # fit again if indices not seen, but don't store anything
+        if not X.index.equals(self._X.index):
+            X_full = X.combine_first(self._X)
+            new_eagglo = EAGGLO(
+                member=self.member,
+                alpha=self.alpha,
+                penalty=self.penalty,
+            ).fit(X_full)
+            warnings.warn(
+                "Warning: Input data X differs from that given to fit(). "
+                "Refitting with new input data, not storing updated public class "
+                "attributes. For this, explicitly use fit(X) or fit_transform(X)."
+            )
+            return new_eagglo.cluster_
+
+        return self.cluster_
 
 
 def get_within(X, alpha):

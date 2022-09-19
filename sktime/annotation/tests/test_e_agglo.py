@@ -9,7 +9,7 @@ import pandas as pd
 from sktime.annotation.e_agglo import EAGGLO
 
 
-def test_default_params_univariate():
+def test_fit_default_params_univariate():
     """Test data."""
     X = pd.DataFrame([-7.207066, -5.722571, 5.889715, 5.488990])
 
@@ -26,7 +26,7 @@ def test_default_params_univariate():
     assert np.allclose(fit_actual, fit_expected)
 
 
-def test_other_params_univariate():
+def test_fit_other_params_univariate():
     """Test data."""
     X = pd.DataFrame([-7.207066, -5.722571, 5.889715, 5.488990])
 
@@ -43,7 +43,7 @@ def test_other_params_univariate():
     assert np.allclose(fit_actual, fit_expected)
 
 
-def test_other_params_multivariate():
+def test_fit_default_params_multivariate():
     """Test data."""
     X = pd.DataFrame(
         [-6.475593, -6.709440, 4.892682, 4.748014, 5.476172],
@@ -61,3 +61,8 @@ def test_other_params_multivariate():
 
     assert np.allclose(cluster_actual, cluster_expected)
     assert np.allclose(fit_actual, fit_expected)
+
+
+def test_penalty():
+    """Test data."""
+    pass
