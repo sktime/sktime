@@ -127,7 +127,7 @@ class WEASEL_STEROIDS(BaseClassifier):
         word_lengths=[8],
         alphabet_sizes=[4],
         use_first_differences=[True, False],
-        feature_selection="random",
+        feature_selection="chi2",
         remove_repeat_words=False,
         random_state=None,
         sections=1,
@@ -249,16 +249,8 @@ class WEASEL_STEROIDS(BaseClassifier):
 
         self.clf = make_pipeline(
             # SelectPercentile(chi2, percentile=50),
-            RidgeClassifierCV(alphas=np.logspace(-1, 5, 10)),  # , normalize=True
-            # LogisticRegression(
-            #     max_iter=5000,
-            #     solver="liblinear",
-            #     # class_weight="balanced",
-            #     penalty="l1",
-            #     random_state=self.random_state,
-            #     n_jobs=self.n_jobs,
-            # )
-        )  # TODO testen??
+            RidgeClassifierCV(alphas=np.logspace(-1, 5, 10)),
+        )
 
         self.clf.fit(all_words, y)
         self.total_features_count = all_words.shape[1]
@@ -406,7 +398,7 @@ def _parallel_fit(
             max_feature_count,
             n_jobs,
             norm,
-            remove_repeat_words // ensemble_size,
+            remove_repeat_words,
             sections,
             variance,
             window_size,
@@ -456,7 +448,7 @@ def getSFAFast(
         first_difference=first_difference,
         feature_selection=feature_selection,
         sections=sections,
-        max_feature_count=max_feature_count // ensemble_size,
+        max_feature_count=max_feature_count // ensemble_size,  # TODO * 2
         random_state=i,
         return_sparse=False,
         n_jobs=n_jobs,
