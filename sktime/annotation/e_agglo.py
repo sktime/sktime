@@ -77,7 +77,7 @@ class EAGGLO(BaseTransformer):
         ]
 
         # dataframe of between between-within distances
-        D_ = pd.DataFrame(index=range(2 * N_), columns=range(2 * N_))
+        D_ = pd.DataFrame(index=range(2 * N_), columns=range(2 * N_))  # .fillna(np.Inf)
 
         for i in range(N_):
             for j in range(N_):
@@ -177,7 +177,7 @@ class EAGGLO(BaseTransformer):
         result = (0, 0)
 
         # iterate to see how the GOF value changes
-        for i in range(K):
+        for i in range(K + 1):
             if self.open_[i]:
                 fit_ = self._gof_update(i)
                 if fit_ > best_fit:
@@ -189,7 +189,7 @@ class EAGGLO(BaseTransformer):
 
     def _update_distances(self, i, j, K):
         """Docstring."""
-        # which clusters were merged
+        # which clusters were merged, info only
         self.merged_.loc[K - self.N_ + 1, 0] = -i if i <= self.N_ else i - self.N_
         self.merged_.loc[K - self.N_ + 1, 1] = -j if j <= self.N_ else j - self.N_
 
@@ -218,15 +218,17 @@ class EAGGLO(BaseTransformer):
         self.lm_[K + 1] = self.lm_[i]
 
         # update distances
-        for k in range(K):
+        for k in range(K + 1):
             if self.open_[k]:
                 n3 = self.sizes_[k]
                 n = n1 + n2 + n3
-                self.D_.loc[K + 1, k] = self.D_.loc[k, K + 1] = (
+                val = (
                     (n - n2) * self.D_.loc[i, k]
                     + (n - n1) * self.D_.loc[j, k]
                     - n3 * self.D_.loc[i, j]
                 ) / n
+                self.D_.loc[K + 1, k] = val
+                self.D_.loc[k, K + 1] = val
 
     def _fit(self, X, y=None):
         """Find ....
@@ -237,6 +239,12 @@ class EAGGLO(BaseTransformer):
             Data for anomaly detection (time series).
         y : pd.Series, optional
             Not used for this unsupervsed method.
+
+        Attributes
+        ----------
+        fit_
+        cluster_
+        TODO: change from public to private variables
 
         Returns
         -------
@@ -287,7 +295,7 @@ class EAGGLO(BaseTransformer):
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
-        
+
         private _transform containing core logic, called from transform
 
         Parameters
