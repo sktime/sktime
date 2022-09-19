@@ -125,6 +125,16 @@ def all_estimators(
             passed in return_tags will serve as column names for all columns of
             tags that were optionally requested.
 
+    Examples
+    --------
+    >>> from sktime.registry import all_estimators
+    >>> # return a complete list of estimators as pd.Dataframe
+    >>> all_estimators(as_dataframe=True)
+    >>> # return all forecasters by filtering for estimator type
+    >>> all_estimators("forecaster")
+    >>> # return all forecasters which handle missing data in the input by tag filtering
+    >>> all_estimators("forecaster", filter_tags={"handles-missing-data": True})
+
     References
     ----------
     Modified version from scikit-learn's `all_estimators()`.
