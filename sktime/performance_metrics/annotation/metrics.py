@@ -46,7 +46,7 @@ def hausdorff_error(
     ----------
         true_change_points: true indices of change points
         pred_change_points: predicted indices of change points
-        symmetric: if `True` symmetric Hasudorff distance will be used
+        symmetric: if `True` symmetric Hausdorff distance will be used
 
     Returns
     -------
