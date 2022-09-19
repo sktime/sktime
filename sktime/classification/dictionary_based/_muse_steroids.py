@@ -223,8 +223,8 @@ class MUSE_STEROIDS(BaseClassifier):
                 f"all with very short series"
             )
 
-        window_inc = max((self.max_window - self.min_window) // 20, 1)
-        self.window_sizes = np.arange(self.min_window, self.max_window + 1, window_inc)
+        # window_inc = max((self.max_window - self.min_window) // 50, 1)
+        self.window_sizes = np.arange(self.min_window, self.max_window + 1, 1)
 
         parallel_res = Parallel(n_jobs=self.n_jobs, backend="threading")(
             delayed(_parallel_fit)(
@@ -451,9 +451,7 @@ def _parallel_fit(
             feature_selection=feature_selection,
             max_feature_count=int(max_feature_count / (ensemble_size * X.shape[1])),
             random_state=ind,
-            return_sparse=not (
-                feature_selection == "none" and alphabet_size == 2 and not bigrams
-            ),
+            return_sparse=False,
             n_jobs=n_jobs,
         )
         all_words.append(transformer.fit_transform(X_dim, y))

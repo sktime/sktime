@@ -201,8 +201,8 @@ class WEASEL_STEROIDS(BaseClassifier):
 
         # Randomly choose window sizes
         # self.window_sizes = np.arange(self.min_window, self.max_window + 1, 1)
-        window_inc = (self.max_window - self.min_window) // 20
-        self.window_sizes = np.arange(self.min_window, self.max_window + 1, window_inc)
+        # window_inc = max(1, (self.max_window - self.min_window) // 50)
+        self.window_sizes = np.arange(self.min_window, self.max_window + 1, 1)
 
         parallel_res = Parallel(n_jobs=self.n_jobs, timeout=99999, backend="threading")(
             delayed(_parallel_fit)(
@@ -228,17 +228,11 @@ class WEASEL_STEROIDS(BaseClassifier):
                 self.sections,
                 self.random_state,
             )
-            # for i in range(self.ensemble_size)
-            for i in range(len(self.window_sizes))
+            for i in range(self.ensemble_size)
         )
 
         sfa_words = []
-        # self.norms = []
-        for (
-            words,
-            transformer,
-            # norms
-        ) in parallel_res:
+        for (words, transformer) in parallel_res:
             self.SFA_transformers.extend(transformer)
             sfa_words.extend(words)
 
@@ -382,32 +376,21 @@ def _parallel_fit(
         rng = check_random_state(random_state + i)
 
     window_size = rng.choice(window_sizes)
-    # window_size = window_sizes[i]
-
-    ii = ensemble_size / len(window_sizes)
-    dilations = np.maximum(
+    dilation = np.maximum(
         1,
-        np.int32(
-            2
-            ** rng.uniform(
-                0,
-                np.log2((series_length - 1) / (window_size - 1)),
-                size=int(np.ceil(ii)),
-            )
-        ),
+        np.int32(2 ** rng.uniform(0, np.log2((series_length - 1) / (window_size - 1)))),
     )
-    all_words = []
+
+    alphabet_size = rng.choice(alphabet_sizes)
+
+    # maximize word-length
+    word_length = min(window_size - 2, rng.choice(word_lengths))
+    norm = rng.choice(norm_options)
+    binning_strategy = rng.choice(binning_strategies)
+
     all_transformers = []
-
-    for dilation in dilations:
-        alphabet_size = rng.choice(alphabet_sizes)
-
-        # maximize word-length
-        word_length = min(window_size - 2, rng.choice(word_lengths))
-        norm = rng.choice(norm_options)
-        first_difference = rng.choice(use_first_differences)  # TODO always True???
-        binning_strategy = rng.choice(binning_strategies)
-
+    all_words = []
+    for first_difference in [True, False]:
         transformer = getSFAFast(
             alphabet_size,
             alphabet_sizes,
@@ -423,7 +406,7 @@ def _parallel_fit(
             max_feature_count,
             n_jobs,
             norm,
-            remove_repeat_words,
+            remove_repeat_words // ensemble_size,
             sections,
             variance,
             window_size,
@@ -434,7 +417,6 @@ def _parallel_fit(
         words = transformer.fit_transform(X, y)
         all_words.append(words)
         all_transformers.append(transformer)
-
     return all_words, all_transformers
 
 
@@ -476,12 +458,7 @@ def getSFAFast(
         sections=sections,
         max_feature_count=max_feature_count // ensemble_size,
         random_state=i,
-        return_sparse=not (
-            feature_selection == "none"
-            and alphabet_size == 2
-            and not bigrams
-            and len(alphabet_sizes) == 1
-        ),
+        return_sparse=False,
         n_jobs=n_jobs,
     )
     return transformer
