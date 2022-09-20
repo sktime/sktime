@@ -5,7 +5,6 @@ Metrics for evaluating performance of segmentation estimators.
 Metrics are suitable for comparing predicted change point sets
 against true change points and quantify the error.
 """
-
 import numpy as np
 import numpy.typing as npt
 from scipy.spatial.distance import directed_hausdorff
@@ -14,22 +13,22 @@ from sklearn.utils import check_array
 __author__ = ["lmmentel"]
 
 
-def annotation_error(
+def count_error(
     true_change_points: npt.ArrayLike, pred_change_points: npt.ArrayLike
 ) -> float:
     """
-    Annotation error counting the difference in the number of change points.
+    Error counting the difference in the number of change points.
 
     Parameters
     ----------
     true_change_points: array_like
-        Indexes of true change points
+        Integer indexes (positions) of true change points
     pred_change_points: array_like
-        Indexes of predicted change points
+        Integer indexes (positions) of predicted change points
 
     Returns
     -------
-        annotation_error
+        count_error
     """
     true_change_points = check_array(true_change_points, ensure_2d=False)
     pred_change_points = check_array(pred_change_points, ensure_2d=False)
@@ -37,16 +36,29 @@ def annotation_error(
 
 
 def hausdorff_error(
-    true_change_points: np.array, pred_change_points: np.array, symmetric: bool = True
+    true_change_points: npt.ArrayLike,
+    pred_change_points: npt.ArrayLike,
+    symmetric: bool = True,
+    seed: int = 0,
 ) -> float:
     """
-    Hausdorff metric measures how far two subsets of a metric space are from each other.
+    Compute the Hausdorff distance between two sets of change points.
+
+    .. seealso::
+
+       This function wraps `scipy.spatial.distance.directed_hausdorff <https://docs.scipy.org/doc/scipy/reference/generated/scipy.spatial.distance.directed_hausdorff.html>`_
 
     Parameters
     ----------
-        true_change_points: true indices of change points
-        pred_change_points: predicted indices of change points
-        symmetric: if `True` symmetric Hausdorff distance will be used
+    true_change_points: array_like
+        Integer indexes (positions) of true change points
+    pred_change_points: array_like
+        Integer indexes (positions) of predicted change points
+    symmetric: bool
+        If `True` symmetric Hausdorff distance will be used
+    seed: int, default=0
+        Local numpy.random.RandomState seed. Default is 0, a random
+        shuffling of u and v that guarantees reproducibility.
 
     Returns
     -------
@@ -64,17 +76,17 @@ def hausdorff_error(
 
 
 def prediction_ratio(
-    true_change_points: npt.ArrayLike, pred_change_points: np.array
+    true_change_points: npt.ArrayLike, pred_change_points: npt.ArrayLike
 ) -> float:
     """
-    Prediction ratio as the ratio of number of predicted to true change points.
+    Prediction ratio is the ratio of number of predicted to true change points.
 
     Parameters
     ----------
     true_change_points: array_like
-        Indexes of true change points
+        Integer indexes (positions) of true change points
     pred_change_points: array_like
-        Indexes of predicted change points
+        Integer indexes (positions) of predicted change points
 
     Returns
     -------

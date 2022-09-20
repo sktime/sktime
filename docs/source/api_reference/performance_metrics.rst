@@ -73,3 +73,15 @@ Functions
     mean_asymmetric_error
     mean_linex_error
     relative_loss
+
+
+Segmentation
+~~~~~~~~~~~~
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: function.rst
+
+    count_error
+    hausdorff_error
+    prediction_ratio
