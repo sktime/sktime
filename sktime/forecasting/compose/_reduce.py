@@ -674,7 +674,7 @@ class _RecursiveReducer(_Reducer):
 
         # Get last window of available data.
         if self.pooling == "global":
-            y_last, X_last = self._get_shifted_window()
+            y_last, X_last = self._get_shifted_window(shift=1)
         else:
             y_last, X_last = self._get_last_window()
 
@@ -705,7 +705,7 @@ class _RecursiveReducer(_Reducer):
                 # # Update last window with previous prediction.
                 if i + 1 != fh_max:
                     y_last, X_last = self._get_shifted_window(
-                        y_update=y_pred, X_update=X, shift=i + 1
+                        y_update=y_pred, X_update=X, shift=i + 2
                     )
 
         else:
@@ -959,7 +959,7 @@ class RecursiveTabularRegressionForecaster(_RecursiveReducer):
         estimator,
         window_length=10,
         transformers=None,
-        pooling="local",
+        pooling="global",
     ):
         super(_RecursiveReducer, self).__init__(
             estimator=estimator, window_length=window_length, transformers=transformers
