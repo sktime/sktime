@@ -46,7 +46,7 @@ def hausdorff_error(
 
     .. seealso::
 
-       This function wraps `scipy.spatial.distance.directed_hausdorff <https://docs.scipy.org/doc/scipy/reference/generated/scipy.spatial.distance.directed_hausdorff.html>`_
+       This function wraps :py:func:`scipy.spatial.distance.directed_hausdorff`
 
     Parameters
     ----------
