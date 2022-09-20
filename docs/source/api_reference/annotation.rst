@@ -13,7 +13,11 @@ for time series annotation (for example, anomaly or outlier detection).
 Time Series Segmentation
 ------------------------
 
-.. automodule:: sktime.annotation.igts
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    InformationGainSegmentation
 
 
 Adapters
