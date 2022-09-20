@@ -407,7 +407,7 @@ class InformationGainSegmentation(SegmentationMixin, BaseEstimator):
             labels for each of the data points.
         """
         self.change_points_ = self._adaptee.find_change_points(X)
-        self.intermediate_resutls_ = self._adaptee.intermediate_results_
+        self.intermediate_results_ = self._adaptee.intermediate_results_
         return self.to_clusters(self.change_points_)
 
     def fit_predict(self, X: npt.ArrayLike, y: npt.ArrayLike = None) -> npt.ArrayLike:
