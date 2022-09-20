@@ -97,7 +97,7 @@ class WEASEL_STEROIDS(BaseClassifier):
 
     Examples
     --------
-    >>> from sktime.classification.dictionary_based import WEASEL_STEROIDS
+    >>> from sktime.classification.dictio"nary_based import WEASEL_STEROIDS
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
     >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
