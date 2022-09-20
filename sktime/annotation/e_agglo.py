@@ -114,7 +114,7 @@ class EAGGLO(BaseTransformer):
 
         # change point progression
         progression_ = pd.DataFrame(index=range(N_), columns=range(N_ + 1))
-        progression_.iloc[0,] = [
+        progression_.iloc[0, ] = [
             sum(sizes_[:i]) if i > 0 else 0 for i in range(N_ + 1)
         ]  # N + 1 for cyclic mergers
 
@@ -211,7 +211,7 @@ class EAGGLO(BaseTransformer):
         self.sizes_[K + 1] = n1 + n2
 
         # update set of change points
-        self.progression_.loc[K - self.N_ + 2,] = self.progression_.loc[
+        self.progression_.loc[K - self.N_ + 2, ] = self.progression_.loc[
             K - self.N_ + 1,
         ]
         self.progression_.loc[K - self.N_ + 2, self.lm_[j]] = np.nan
