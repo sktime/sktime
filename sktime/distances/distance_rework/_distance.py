@@ -198,11 +198,14 @@ def pairwise_distance(
         y = x
     _y = _make_3d_series(y)
     symmetric = np.array_equal(_x, _y)
-    _metric_instance = _resolve_metric_to_instance(metric)
-    example_x = _make_3d_series(x)[0]
-    _dist_callable = _metric_instance.distance_factory(example_x, example_x, strategy=strategy, **kwargs)
+    if isinstance(metric, str):
+        _metric_instance = _resolve_metric_to_instance(metric)
+        example_x = _make_3d_series(x)[0]
+        _dist_callable = _metric_instance.distance_factory(example_x, example_x, strategy=strategy, **kwargs)
 
-    return _compute_pairwise_distance(_x, _y, symmetric, _dist_callable)
+        return _compute_pairwise_distance(_x, _y, symmetric, _dist_callable)
+    else:
+        return _compute_pairwise_distance(x, y, symmetric, metric)
 
 
 

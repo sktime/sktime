@@ -161,6 +161,8 @@ def test_kmeans_dba():
         n_clusters=4,
         init_algorithm="kmeans++",
         metric="dtw",
+        distance_params={'strategy': 'dependent'},
+        average_params={'strategy': 'dependent'}
     )
     train_predict = kmeans.fit_predict(X_train.head(num_test_values))
     train_mean_score = metrics.rand_score(y_train[0:num_test_values], train_predict)
@@ -168,6 +170,7 @@ def test_kmeans_dba():
     test_mean_result = kmeans.predict(X_test.head(num_test_values))
     mean_score = metrics.rand_score(y_test[0:num_test_values], test_mean_result)
     proba = kmeans.predict_proba(X_test.head(num_test_values))
+    joe = ''
 
     assert np.array_equal(test_mean_result, expected_results["dba"])
     assert mean_score == expected_score["dba"]

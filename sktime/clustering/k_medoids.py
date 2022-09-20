@@ -9,7 +9,7 @@ from numpy.random import RandomState
 
 from sktime.clustering.metrics.medoids import medoids
 from sktime.clustering.partitioning import TimeSeriesLloyds
-from sktime.distances import pairwise_distance
+from sktime.distances.distance_rework import pairwise_distance
 
 
 class TimeSeriesKMedoids(TimeSeriesLloyds):

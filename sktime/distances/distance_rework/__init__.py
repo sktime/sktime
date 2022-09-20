@@ -16,6 +16,11 @@ __all__ = [
     "_LcssDistance",
     "_TweDistance",
     "_MsmDistance",
+    "distance",
+    "distance_factory",
+    "distance_alignment_path_factory",
+    "distance_alignment_path",
+    "pairwise_distance",
 ]
 
 from sktime.distances.distance_rework._base import (
@@ -35,3 +40,10 @@ from sktime.distances.distance_rework._squared import _SquaredDistance
 from sktime.distances.distance_rework._twe import _TweDistance
 from sktime.distances.distance_rework._wddtw import _WddtwDistance
 from sktime.distances.distance_rework._wdtw import _WdtwDistance
+from sktime.distances.distance_rework._distance import (
+    distance,
+    distance_factory,
+    distance_alignment_path_factory,
+    distance_alignment_path,
+    pairwise_distance
+)
