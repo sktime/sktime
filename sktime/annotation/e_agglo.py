@@ -409,15 +409,14 @@ def penalty2(x):
 
 
 def get_penalty_func(penalty):
+    PENALTIES = {"penalty1": penalty1, "penalty2": penalty2}
 
     if callable(penalty):
         return penalty
 
     elif isinstance(penalty, str):
-        if penalty == "penalty1":
-            return penalty1
-        elif penalty == "penalty2":
-            return penalty2
+        if penalty in PENALTIES.keys():
+            return PENALTIES[penalty]
 
     raise Exception(
         "penalty must be callable or string values 'penalty1' or 'penalty2'."
