@@ -253,8 +253,7 @@ class EAGGLO(BaseTransformer):
         """
         self._X = X
 
-        # TODO: check alpha in range
-        # TODO: check penalty function
+        assert self.alpha > 0 and self.alpha <= 2
 
         self._process_data(X)
 
@@ -264,7 +263,17 @@ class EAGGLO(BaseTransformer):
             self._update_distances(i, j, K)
 
         # penalize the GOF statistic
-        # TODO: apply the penalty function
+        if self.penalty is not None:
+            penalty_func = get_penalty_func(self.penalty)
+            cps = [
+                self.progression_.loc[
+                    i,
+                ]
+                .dropna()
+                .values.astype(float)
+                for i in range(len(self.progression_))
+            ]
+            self.fit_ += list(map(penalty_func, cps))
 
         # get the set of change points for the "best" clustering
         idx = np.argmax(self.fit_)
@@ -389,3 +398,27 @@ def get_between(X, Y, alpha):
         for j in range(m)
         for i in range(n)
     ) / (m * n)
+
+
+def penalty1(x):
+    return -len(x)
+
+
+def penalty2(x):
+    return np.mean(np.diff(np.sort(x)))
+
+
+def get_penalty_func(penalty):
+
+    if callable(penalty):
+        return penalty
+
+    elif isinstance(penalty, str):
+        if penalty == "penalty1":
+            return penalty1
+        elif penalty == "penalty2":
+            return penalty2
+
+    raise Exception(
+        "penalty must be callable or string values 'penalty1' or 'penalty2'."
+    )
