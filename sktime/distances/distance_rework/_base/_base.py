@@ -406,7 +406,5 @@ class MetricInfo(NamedTuple):
     canonical_name: str
     # All aliases, including canonical_name
     aka: Set[str]
-    # Python distance function (can use numba inside but callable must be in python)
-    dist_func: DistanceCallable
     # NumbaDistance class
     dist_instance: BaseDistance
