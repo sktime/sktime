@@ -161,6 +161,8 @@ def test_kmeans_dba():
         n_clusters=4,
         init_algorithm="kmeans++",
         metric="dtw",
+        distance_params={'strategy': 'dependent'},
+        average_params={'strategy': 'dependent'}
     )
     train_predict = kmeans.fit_predict(X_train.head(num_test_values))
     train_mean_score = metrics.rand_score(y_train[0:num_test_values], train_predict)

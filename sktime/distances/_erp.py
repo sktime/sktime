@@ -164,7 +164,7 @@ class _ErpDistance(NumbaDistance):
         if not isinstance(g, float):
             raise ValueError("The value of g must be a float.")
 
-        @njit(cache=True)
+        # @njit(cache=True)
         def numba_erp_distance(_x: np.ndarray, _y: np.ndarray) -> float:
             cost_matrix = _erp_cost_matrix(_x, _y, _bounding_matrix, g)
 
@@ -173,7 +173,7 @@ class _ErpDistance(NumbaDistance):
         return numba_erp_distance
 
 
-@njit(cache=True)
+# @njit(cache=True)
 def _erp_cost_matrix(
     x: np.ndarray, y: np.ndarray, bounding_matrix: np.ndarray, g: float
 ):

@@ -7,8 +7,8 @@ import numpy as np
 from numba import njit
 
 from sktime.clustering.metrics.medoids import medoids
-from sktime.distances import distance_alignment_path_factory
-from sktime.distances.base import DistanceAlignmentPathCallable
+from sktime.distances.distance_rework import distance_alignment_path_factory
+from sktime.distances.distance_rework._base._base_elastic import AlignmentPathCallable
 
 
 def dba(
@@ -87,9 +87,9 @@ def dba(
     return center
 
 
-@njit(fastmath=True)
+# @njit(fastmath=True)
 def _dba_update(
-    center: np.ndarray, X: np.ndarray, path_callable: DistanceAlignmentPathCallable
+    center: np.ndarray, X: np.ndarray, path_callable: AlignmentPathCallable
 ) -> Tuple[np.ndarray, float]:
     """Perform an update iteration for dba.
 
@@ -117,7 +117,7 @@ def _dba_update(
     cost = 0.0
     for i in range(X_size):
         curr_ts = X[i]
-        curr_alignment, _ = path_callable(curr_ts, center)
+        curr_alignment = path_callable(curr_ts, center)
         for j, k in curr_alignment:
             alignment[:, k] += curr_ts[:, j]
             sum[k] += 1

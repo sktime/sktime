@@ -4,7 +4,7 @@ __author__ = ["chrisholder", "TonyBagnall"]
 
 import numpy as np
 
-from sktime.distances import pairwise_distance
+from sktime.distances.distance_rework import pairwise_distance
 
 
 def medoids(

@@ -9,7 +9,7 @@ from numpy.random import RandomState
 
 from sktime.clustering.metrics.averaging import _resolve_average_callable
 from sktime.clustering.partitioning import TimeSeriesLloyds
-from sktime.distances import pairwise_distance
+from sktime.distances.distance_rework import pairwise_distance
 
 
 class TimeSeriesKMeans(TimeSeriesLloyds):
