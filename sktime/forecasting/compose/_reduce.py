@@ -40,6 +40,7 @@ from sktime.forecasting.base._fh import _index_range
 from sktime.forecasting.base._sktime import _BaseWindowForecaster
 from sktime.regression.base import BaseRegressor
 from sktime.transformations.compose import FeatureUnion
+from sktime.transformations.series.summarize import WindowSummarizer
 from sktime.utils.datetime import _shift
 from sktime.utils.validation import check_window_length
 
@@ -489,6 +490,16 @@ class _RecursiveReducer(_Reducer):
             self.transformers_ = clone(self.transformers)
             self.transformers = clone(self.transformers)
 
+        if self.transformers is None and self.pooling == "global":
+            kwargs = {
+                "lag_feature": {
+                    "lag": list(range(1, self.window_length + 1)),
+                }
+            }
+            self.transformers = [WindowSummarizer(**kwargs)]
+            self.transformers_ = clone(self.transformers)
+            self.transformers = clone(self.transformers)
+
         if self.window_length is None:
             trafo = self.transformers_
             fit_trafo = [i.fit(y) for i in trafo]
@@ -572,7 +583,7 @@ class _RecursiveReducer(_Reducer):
         start = _shift(self._cutoff, by=shift - self.window_length_)
         cutoff = _shift(self._cutoff, by=shift)
 
-        if self.transformers_ is not None:
+        if self.pooling == "global":
             # Get the last window of the endogenous variable.
             # If X is given, also get the last window of the exogenous variables.
             # relative _int will give the integer indices of the window defined above
@@ -661,13 +672,13 @@ class _RecursiveReducer(_Reducer):
             )
 
         # Get last window of available data.
-        if self.transformers_ is not None:
+        if self.pooling == "global":
             y_last, X_last = self._get_shifted_window()
         else:
             y_last, X_last = self._get_last_window()
 
         # If we cannot generate a prediction from the available data, return nan.
-        if self.transformers_ is None:
+        if self.pooling != "global":
             if not self._is_predictable(y_last):
                 return self._predict_nan(fh)
         else:
@@ -675,7 +686,7 @@ class _RecursiveReducer(_Reducer):
             if not np.sum(np.isnan(ys)) == 0 and np.sum(np.isinf(ys)) == 0:
                 return self._predict_nan(fh)
 
-        if self.transformers_ is not None:
+        if self.pooling == "global":
             fh_max = fh.to_relative(self.cutoff)[-1]
             relative = pd.Index(list(map(int, range(1, fh_max + 1))))
             index_range = _index_range(relative, self.cutoff)
@@ -942,6 +953,36 @@ class RecursiveTabularRegressionForecaster(_RecursiveReducer):
         # "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
     }
 
+    def __init__(
+        self,
+        estimator,
+        window_length=10,
+        transformers=None,
+        pooling="local",
+    ):
+        super(_RecursiveReducer, self).__init__(
+            estimator=estimator, window_length=window_length, transformers=transformers
+        )
+        self.pooling = pooling
+
+        if pooling == "local":
+            mtypes_y = "pd.Series"
+            mtypes_x = "pd.DataFrame"
+        elif pooling == "global":
+            mtypes_y = ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"]
+            mtypes_x = mtypes_y
+        elif pooling == "panel":
+            mtypes_y = ["pd.DataFrame", "pd-multiindex"]
+            mtypes_x = mtypes_y
+        else:
+            raise ValueError(
+                "pooling in DirectReductionForecaster must be one of"
+                ' "local", "global", "panel", '
+                f"but found {pooling}"
+            )
+        self.set_tags(**{"X_inner_mtype": mtypes_x})
+        self.set_tags(**{"y_inner_mtype": mtypes_y})
+
     _estimator_scitype = "tabular-regressor"
 
 
@@ -1051,6 +1092,7 @@ def make_reduction(
     window_length=10,
     scitype="infer",
     transformers=None,
+    pooling="local",
 ):
     """Make forecaster based on reduction to tabular or time-series regression.
 
@@ -1105,7 +1147,10 @@ def make_reduction(
 
     Forecaster = _get_forecaster(scitype, strategy)
     return Forecaster(
-        estimator=estimator, window_length=window_length, transformers=transformers
+        estimator=estimator,
+        window_length=window_length,
+        transformers=transformers,
+        pooling=pooling,
     )
 
 
@@ -1230,16 +1275,23 @@ def _create_fcst_df(target_date, origin_df, fill=None):
         timeframe = pd.DataFrame(target_date, columns=[time_names])
 
         target_frame = idx.merge(timeframe, how="cross")
-        freq_inferred = target_date[0].freq
-        mi = (
-            target_frame.groupby(instance_names, as_index=True)
-            .apply(
-                lambda df: df.drop(instance_names, axis=1)
-                .set_index(time_names)
-                .asfreq(freq_inferred)
+        if hasattr(target_date, "freq"):
+            freq_inferred = target_date[0].freq
+            mi = (
+                target_frame.groupby(instance_names, as_index=True)
+                .apply(
+                    lambda df: df.drop(instance_names, axis=1)
+                    .set_index(time_names)
+                    .asfreq(freq_inferred)
+                )
+                .index
             )
-            .index
-        )
+        else:
+            mi = (
+                target_frame.groupby(instance_names, as_index=True)
+                .apply(lambda df: df.drop(instance_names, axis=1).set_index(time_names))
+                .index
+            )
 
         if fill is None:
             template = pd.DataFrame(
