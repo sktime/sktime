@@ -52,4 +52,4 @@ def test_InformationGainSegmentation(multivariate_mean_shift):
         ),
     )
     assert igts.change_points_ == [0, 5, 10, 15, 20]
-    assert len(igts.intermediate_resutls_) == 3
+    assert len(igts.intermediate_results_) == 3
