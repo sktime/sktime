@@ -174,7 +174,7 @@ def check_list_of_dict_table(obj, return_metadata=False, var_name="obj"):
         msg = f"{var_name} must be a list of dict, found {type(obj)}"
         return _ret(False, msg, None, return_metadata)
 
-    if not np.all(isinstance(x, dict) for x in obj):
+    if not np.all([isinstance(x, dict) for x in obj]):
         msg = (
             f"{var_name} must be a list of dict, but elements at following "
             f"indices are not dict: {np.where(not isinstance(x, dict) for x in obj)}"

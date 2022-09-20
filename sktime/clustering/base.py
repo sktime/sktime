@@ -13,6 +13,7 @@ import pandas as pd
 from sktime.base import BaseEstimator
 from sktime.datatypes import check_is_scitype, convert_to
 from sktime.utils.validation import check_n_jobs
+from sktime.utils.validation._dependencies import _check_estimator_deps
 
 # Valid input types for clustering
 TimeSeriesInstances = Union[pd.DataFrame, np.ndarray]
@@ -43,6 +44,7 @@ class BaseClusterer(BaseEstimator, ABC):
         self._threads_to_use = 1
         self.n_clusters = n_clusters
         super(BaseClusterer, self).__init__()
+        _check_estimator_deps(self)
 
     def fit(self, X: TimeSeriesInstances, y=None) -> BaseEstimator:
         """Fit time series clusterer to training data.
@@ -304,9 +306,8 @@ class BaseClusterer(BaseEstimator, ABC):
         X: np.ndarray (at least 2d) or pd.Dataframe or List[pd.Dataframe]
             Converted X.
         """
-        if isinstance(X, np.ndarray):
-            if X.ndim == 2:
-                X = X.reshape(X.shape[0], 1, X.shape[1])
+        if isinstance(X, np.ndarray) and X.ndim == 2:
+            X = X.reshape(X.shape[0], 1, X.shape[1])
         return X
 
     def _check_clusterer_input(

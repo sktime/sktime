@@ -38,6 +38,7 @@ class BaseDeepClassifier(BaseClassifier, ABC):
     _tags = {
         "X_inner_mtype": "numpy3D",
         "capability:multivariate": True,
+        "python_dependencies": "tensorflow",
     }
 
     def __init__(self, batch_size=40, random_state=None):
@@ -64,6 +65,18 @@ class BaseDeepClassifier(BaseClassifier, ABC):
         A compiled Keras Model
         """
         ...
+
+    def summary(self):
+        """
+        Summary function to return the losses/metrics for model fit.
+
+        Returns
+        -------
+        history: dict,
+            Dictionary containing model's train/validation losses and metrics
+
+        """
+        return self.history.history
 
     def _predict(self, X, **kwargs):
         probs = self._predict_proba(X, **kwargs)
@@ -99,23 +112,14 @@ class BaseDeepClassifier(BaseClassifier, ABC):
         probs = probs / probs.sum(axis=1, keepdims=1)
         return probs
 
-    def convert_y_to_keras(self, y, label_encoder=None, onehot_encoder=None):
+    def convert_y_to_keras(self, y):
         """Convert y to required Keras format."""
-        if (label_encoder is None) and (onehot_encoder is None):
-            # make the encoders and store in self
-            self.label_encoder = LabelEncoder()
-            self.onehot_encoder = OneHotEncoder(sparse=False, categories="auto")
-            # categories='auto' to get rid of FutureWarning
-
-            y = self.label_encoder.fit_transform(y)
-            self.classes_ = self.label_encoder.classes_
-            self.n_classes_ = len(self.classes_)
-
-            y = y.reshape(len(y), 1)
-            y = self.onehot_encoder.fit_transform(y)
-        else:
-            y = label_encoder.fit_transform(y)
-            y = y.reshape(len(y), 1)
-            y = onehot_encoder.fit_transform(y)
-
+        self.label_encoder = LabelEncoder()
+        y = self.label_encoder.fit_transform(y)
+        self.classes_ = self.label_encoder.classes_
+        self.n_classes_ = len(self.classes_)
+        y = y.reshape(len(y), 1)
+        self.onehot_encoder = OneHotEncoder(sparse=False, categories="auto")
+        # categories='auto' to get rid of FutureWarning
+        y = self.onehot_encoder.fit_transform(y)
         return y

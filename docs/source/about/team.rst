@@ -29,8 +29,6 @@ Code of Conduct Committee
 
    * - Name
      - GitHub ID
-   * - Anthony Bagnall
-     - :user:`TonyBagnall`
    * - Franz Kiraly
      - :user:`fkiraly`
    * - Martina Vilas
@@ -44,8 +42,6 @@ Core Developers
 
    * - Name
      - GitHub ID
-   * - Aaron Bostrom
-     - :user:`abostrom`
    * - Anthony Bagnall
      - :user:`TonyBagnall`
    * - Chris Holder
@@ -56,12 +52,8 @@ Core Developers
      - :user:`fkiraly`
    * - Freddy A Boulton
      - :user:`freddyaboulton`
-   * - George Oastler
-     - :user:`goastler`
    * - Guzal Bulatova
      - :user:`GuzalBulatova`
-   * - James Large
-     - :user:`james-large`
    * - Leonidas Tsaprounis
      - :user:`ltsaprounis`
    * - Lovkush Agarwal
@@ -89,10 +81,16 @@ Former Core Developers (inactive)
 
    * - Name
      - GitHub ID
+   * - Aaron Bostrom
+     - :user:`abostrom`
    * - Ayushmaan Seth
      - :user:`ayushmaanseth`
+   * - George Oastler
+     - :user:`goastler`
    * - Hongyi Yang
      - :user:`hyang1996`
+   * - James Large
+     - :user:`james-large`
    * - Jason Lines
      - :user:`jasonlines`
    * - Mathew Smith

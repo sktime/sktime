@@ -44,12 +44,12 @@ def find_dominant_window_sizes(X, offset=0.05):
         If the candidate change point is a trivial match
     """
     fourier = np.absolute(np.fft.fft(X))
-    freq = np.fft.fftfreq(X.shape[0], 1)
+    freqs = np.fft.fftfreq(X.shape[0], 1)
 
     coefs = []
     window_sizes = []
 
-    for coef, freq in zip(fourier, freq):
+    for coef, freq in zip(fourier, freqs):
         if coef and freq > 0:
             coefs.append(coef)
             window_sizes.append(1 / freq)
@@ -71,7 +71,7 @@ def _is_trivial_match(candidate, change_points, n_timepoints, exclusion_radius=0
     Parameters
     ----------
     candidate : int
-        A single candidate change point. Will me chosen if non-trivial match based
+        A single candidate change point. Will be chosen if non-trivial match based
         on exclusion_radius.
     change_points : list, dtype=int
         List of change points chosen so far
@@ -195,6 +195,8 @@ class ClaSPSegmentation(BaseSeriesAnnotator):
         Annotation output format:
         * If "sparse", a pd.Series of the found Change Points is returned
         * If "dense", a pd.IndexSeries with the Segmenation of X is returned
+    exclusion_radius : int
+        Exclusion Radius for change points to be non-trivial matches
 
     Notes
     -----
@@ -221,9 +223,10 @@ class ClaSPSegmentation(BaseSeriesAnnotator):
 
     _tags = {"univariate-only": True, "fit_is_empty": True}  # for unit test cases
 
-    def __init__(self, period_length=10, n_cps=1, fmt="sparse"):
+    def __init__(self, period_length=10, n_cps=1, fmt="sparse", exclusion_radius=0.05):
         self.period_length = int(period_length)
         self.n_cps = n_cps
+        self.exclusion_radius = exclusion_radius
         super(ClaSPSegmentation, self).__init__(fmt)
 
     def _fit(self, X, Y=None):
@@ -307,10 +310,15 @@ class ClaSPSegmentation(BaseSeriesAnnotator):
         if isinstance(X, pd.Series):
             X = X.to_numpy()
 
-        clasp_transformer = ClaSPTransformer(window_length=self.period_length).fit(X)
+        clasp_transformer = ClaSPTransformer(
+            window_length=self.period_length, exclusion_radius=self.exclusion_radius
+        ).fit(X)
 
         self.found_cps, self.profiles, self.scores = _segmentation(
-            X, clasp_transformer, n_change_points=self.n_cps, exclusion_radius=0.05
+            X,
+            clasp_transformer,
+            n_change_points=self.n_cps,
+            exclusion_radius=self.exclusion_radius,
         )
 
         return self.found_cps, self.profiles, self.scores
@@ -334,3 +342,23 @@ class ClaSPSegmentation(BaseSeriesAnnotator):
         start = np.insert(cps, 0, 0)
         end = np.append(cps, len(X))
         return pd.IntervalIndex.from_arrays(start, end)
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        return {"period_length": 5, "n_cps": 1}

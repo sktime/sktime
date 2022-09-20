@@ -3,7 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements a composite Time series Forest Regressor that accepts a pipeline."""
 
-__author__ = ["Markus Löning", "Ayushmaan Seth"]
+__author__ = ["Markus Löning", "AyushmaanSeth"]
 __all__ = ["ComposableTimeSeriesForestRegressor"]
 
 import numbers
@@ -383,3 +383,23 @@ class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
 
     def _predict(self, X):
         """Empty method to satisfy abstract parent. Needs refactoring."""
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        return {"n_estimators": 3}
