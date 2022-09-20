@@ -97,7 +97,7 @@ class WEASEL_STEROIDS(BaseClassifier):
 
     Examples
     --------
-    >>> from sktime.classification.dictio"nary_based import WEASEL_STEROIDS
+    >>> from sktime.classification.dictionary_based import WEASEL_STEROIDS
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
     >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
@@ -187,6 +187,14 @@ class WEASEL_STEROIDS(BaseClassifier):
         self.n_instances, self.series_length = X.shape[0], X.shape[-1]
         XX = X.squeeze(1)
 
+        # avoid overfitting with too many features
+        if self.n_instances <= 40:
+            self.max_window = 24
+            self.ensemble_size = 50
+        elif self.n_classes_ <= 2:
+            self.max_window = 64
+            self.ensemble_size = 100
+
         self.max_window = int(min(self.series_length, self.max_window))
         if self.min_window > self.max_window:
             raise ValueError(
@@ -200,8 +208,6 @@ class WEASEL_STEROIDS(BaseClassifier):
             )
 
         # Randomly choose window sizes
-        # self.window_sizes = np.arange(self.min_window, self.max_window + 1, 1)
-        # window_inc = max(1, (self.max_window - self.min_window) // 50)
         self.window_sizes = np.arange(self.min_window, self.max_window + 1, 1)
 
         parallel_res = Parallel(n_jobs=self.n_jobs, timeout=99999, backend="threading")(
