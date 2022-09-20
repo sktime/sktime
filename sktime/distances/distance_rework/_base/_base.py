@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from abc import ABC, abstractmethod
-from typing import Callable, Tuple, Union
+from typing import Callable, Tuple, Union, NamedTuple, Set, List
 
 import numpy as np
 from numba import njit
@@ -8,7 +8,6 @@ from numba import njit
 __all__ = ["BaseDistance", "numbadistance", "DistanceCallable"]
 
 DistanceCallableReturn = Union[float, Tuple[float, np.ndarray]]
-
 DistanceCallable = Callable[[np.ndarray, np.ndarray], DistanceCallableReturn]
 LocalDistanceCallable = Callable[[float, float], float]
 
@@ -42,7 +41,6 @@ def numbadistance(*args, **kwargs):
 
     return wrapper
 
-
 def format_time_series(*args, **kwargs):
     def wrapper(func):
         example_x = args[0]
@@ -72,7 +70,6 @@ def format_time_series(*args, **kwargs):
             return func
 
     return wrapper
-
 
 class BaseDistance(ABC):
     """Base class for distances.
@@ -257,36 +254,7 @@ class BaseDistance(ABC):
         else:
             result_callback_callable = final_distance_callable
 
-        # Add the callback in if the user has custom logic to perform on the time
-        # series before the distance is called.
-        _preprocess_time_series_callback = self._preprocessing_time_series_callback(
-            **kwargs
-        )
-
-        if self._numba_distance is True:
-            _preprocess_time_series_callback = njit(
-                "(float64[:, :])(float64[:, :])",
-                cache=self._cache,
-                fastmath=self._fastmath,
-            )(_preprocess_time_series_callback)
-
-        if x.ndim < 2:
-
-            def _preprocess_time_series(_x: np.ndarray):
-                # Takes a 1d array and converts it to 2d (cant use reshape in numba)
-                x_size = _x.shape[0]
-                _process_x = np.zeros((1, x_size))
-                _process_x[0] = _x
-                return _preprocess_time_series_callback(_process_x)
-
-            if self._numba_distance is True:
-                _preprocess_time_series = njit(
-                    "(float64[:, :])(float64[:])",
-                    cache=self._cache,
-                    fastmath=self._fastmath,
-                )(_preprocess_time_series)
-        else:
-            _preprocess_time_series = _preprocess_time_series_callback
+        _preprocess_time_series = self._preprocess_time_series_factory(x, y, **kwargs)
 
         def _preprocessed_distance_callable(_x: np.ndarray, _y: np.ndarray):
             _preprocess_x = _preprocess_time_series(_x)
@@ -375,6 +343,42 @@ class BaseDistance(ABC):
 
         return _preprocessing_callback
 
+    def _preprocess_time_series_factory(
+            self, x, y, **kwargs
+    ) -> Callable[[np.ndarray], np.ndarray]:
+        # Add the callback in if the user has custom logic to perform on the time
+        # series before the distance is called.
+        _preprocess_time_series_callback = self._preprocessing_time_series_callback(
+            **kwargs
+        )
+
+        if self._numba_distance is True:
+            _preprocess_time_series_callback = njit(
+                "(float64[:, :])(float64[:, :])",
+                cache=self._cache,
+                fastmath=self._fastmath,
+            )(_preprocess_time_series_callback)
+
+        if x.ndim < 2:
+
+            def _preprocess_time_series(_x: np.ndarray):
+                # Takes a 1d array and converts it to 2d (cant use reshape in numba)
+                x_size = _x.shape[0]
+                _process_x = np.zeros((1, x_size))
+                _process_x[0] = _x
+                return _preprocess_time_series_callback(_process_x)
+
+            if self._numba_distance is True:
+                _preprocess_time_series = njit(
+                    "(float64[:, :])(float64[:])",
+                    cache=self._cache,
+                    fastmath=self._fastmath,
+                )(_preprocess_time_series)
+        else:
+            _preprocess_time_series = _preprocess_time_series_callback
+
+        return _preprocess_time_series
+
     def _dependent_distance(
         self, x: np.ndarray, y: np.ndarray, **kwargs
     ) -> DistanceCallable:
@@ -394,47 +398,15 @@ class BaseDistance(ABC):
     ) -> DistanceCallable:
         ...
 
+# Metric
+class MetricInfo(NamedTuple):
+    """Define a registry entry for a metric."""
 
-class Example(BaseDistance):
-    _numba_distance = True
-    _has_cost_matrix = True
-
-    def _independent_distance(
-        self, x: np.ndarray, y: np.ndarray, **kwargs
-    ) -> DistanceCallable:
-        def independent_example(_x, _y):
-            return (
-                1.2345,
-                np.zeros((_x.shape[0], _y.shape[0])),
-            )
-
-        return independent_example
-
-    def _dependent_distance(
-        self, x: np.ndarray, y: np.ndarray, **kwargs
-    ) -> DistanceCallable:
-        def dependent_example(_x, _y):
-            return (
-                1.2345,
-                np.zeros((_x.shape[0], _y.shape[0])),
-            )
-
-        return dependent_example
-
-
-if __name__ == "__main__":
-    test = Example()
-
-    x = np.array([[1.0, 2.0, 3.0], [2.0, 3.0, 3.0]])
-    y = np.array([[1.0, 2.0, 3.0], [2.0, 3.0, 3.0]])
-
-    # ind = test.independent_distance(x, x)
-    dep_dist, cm_dep = test.dependent_distance(x, y, return_cost_matrix=True)
-    dep_only_dis = test.dependent_distance(x, x)
-
-    indep_dist, indep_cm = test.independent_distance(x, y, return_cost_matrix=True)
-    indep_only_dis = test.independent_distance(x, x)
-
-    # ind2, ind_cm = test.independent_distance(x, x, return_cost_matrix=True)
-    # dep2, dep_cm = test.dependent_distance(y, y, return_cost_matrix=True)
-    joe = ""
+    # Name of the distance
+    canonical_name: str
+    # All aliases, including canonical_name
+    aka: Set[str]
+    # Python distance function (can use numba inside but callable must be in python)
+    dist_func: DistanceCallable
+    # NumbaDistance class
+    dist_instance: BaseDistance

@@ -38,7 +38,6 @@ def average_of_slope(q: np.ndarray) -> np.ndarray:
 
 
 class _DdtwDistance(_DtwDistance):
-    _has_cost_matrix = True
     _numba_distance = True
     _cache = True
     _fastmath = True

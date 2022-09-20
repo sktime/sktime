@@ -2,6 +2,7 @@
 """Distance module."""
 __all__ = [
     "BaseDistance",
+    "ElasticDistance",
     "DistanceCallable",
     "_EuclideanDistance",
     "_SquaredDistance",
@@ -21,6 +22,7 @@ from sktime.distances.distance_rework._base import (
     BaseDistance,
     DistanceCallable,
     LocalDistanceCallable,
+    ElasticDistance,
 )
 from sktime.distances.distance_rework._ddtw import _DdtwDistance
 from sktime.distances.distance_rework._dtw import _DtwDistance

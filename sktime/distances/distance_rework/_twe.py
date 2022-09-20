@@ -3,12 +3,11 @@ from typing import Callable
 
 import numpy as np
 
-from sktime.distances.distance_rework import BaseDistance, DistanceCallable
+from sktime.distances.distance_rework import ElasticDistance, DistanceCallable
 from sktime.distances.lower_bounding import resolve_bounding_matrix
 
 
-class _TweDistance(BaseDistance):
-    _has_cost_matrix = True
+class _TweDistance(ElasticDistance):
     _numba_distance = True
     _cache = True
     _fastmath = True
@@ -44,10 +43,8 @@ class _TweDistance(BaseDistance):
             x[0], y[0], strategy="local"
         )
 
-        pad_ts = self._preprocessing_time_series_callback(**kwargs)
-
-        _bounding_matrix = resolve_bounding_matrix(
-            pad_ts(x), pad_ts(y), window, itakura_max_slope, bounding_matrix
+        _bounding_matrix = self._get_bounding_matrix(
+            x, y, window, itakura_max_slope, bounding_matrix
         )
 
         def _numba_twe(
@@ -103,10 +100,8 @@ class _TweDistance(BaseDistance):
         # Has to be here because circular import if at top
         from sktime.distances.distance_rework import _EuclideanDistance
 
-        pad_ts = self._preprocessing_time_series_callback(**kwargs)
-
-        _bounding_matrix = resolve_bounding_matrix(
-            pad_ts(x), pad_ts(y), window, itakura_max_slope, bounding_matrix
+        _bounding_matrix = self._get_bounding_matrix(
+            x, y, window, itakura_max_slope, bounding_matrix
         )
 
         _example_x = x[:, 0]

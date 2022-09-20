@@ -8,7 +8,6 @@ from sktime.distances.distance_rework._wdtw import _WdtwDistance
 
 
 class _WddtwDistance(_WdtwDistance):
-    _has_cost_matrix = True
     _numba_distance = True
     _cache = True
     _fastmath = True
