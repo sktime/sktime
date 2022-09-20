@@ -33,6 +33,10 @@ class EAGGLO(BaseTransformer):
     ...
     """
 
+    _tags = {
+        "fit_is_empty": False,
+    }
+
     def __init__(
         self,
         member=None,
