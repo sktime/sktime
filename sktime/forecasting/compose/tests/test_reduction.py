@@ -89,6 +89,7 @@ forecaster1 = make_reduction(
     transformers=[WindowSummarizer(**kwargs)],
     window_length=None,
     strategy="recursive",
+    pooling="global",
 )
 
 # forecaster1.fit(y=y_train_grp, X=y_train_grp)
@@ -100,6 +101,7 @@ forecaster2 = make_reduction(
     transformers=[WindowSummarizer(**kwargs, n_jobs=1)],
     window_length=None,
     strategy="recursive",
+    pooling="global",
 )
 
 y_numeric = y_train.copy()

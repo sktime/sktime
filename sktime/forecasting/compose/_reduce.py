@@ -177,11 +177,12 @@ class _Reducer(_BaseWindowForecaster):
 
     _tags = {"ignores-exogeneous-X": False}  # reduction uses X in non-trivial way
 
-    def __init__(self, estimator, window_length=10, transformers=None):
+    def __init__(self, estimator, window_length=10, transformers=None, pooling=None):
         super(_Reducer, self).__init__(window_length=window_length)
         self.transformers = transformers
         self.transformers_ = None
         self.estimator = estimator
+        self.pooling = None
         self._cv = None
 
     def _is_predictable(self, last_window):
@@ -1273,7 +1274,6 @@ def _create_fcst_df(target_date, origin_df, fill=None):
         idx = idx[instance_names].drop_duplicates()
 
         timeframe = pd.DataFrame(target_date, columns=[time_names])
-
         target_frame = idx.merge(timeframe, how="cross")
         if hasattr(target_date, "freq"):
             freq_inferred = target_date[0].freq
