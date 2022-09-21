@@ -37,6 +37,7 @@ def run_clustering_experiment(
     dataset_name=None,
     resample_id=0,
     overwrite=True,
+    exclude_parameters_from_output=None
 ):
     """
     Run a clustering experiment and save the results to file.
@@ -73,8 +74,12 @@ def run_clustering_experiment(
         Name of problem, written to the results file, ignored if None
     resample_id : int, default = 0
         Resample identifier, defaults to 0
+    exclude_parameters_from_output : list, default = None
+        List of parameters to exclude from the output file, if None, then none are excluded
 
     """
+    if exclude_parameters_from_output is None:
+        exclude_parameters_from_output = []
     if not overwrite:
         full_path = (
             results_path
@@ -133,7 +138,11 @@ def run_clustering_experiment(
     if "Composite" in cls_name:
         second = "Para info too long!"
     else:
-        second = str(clusterer.get_params())
+        second = clusterer.get_params()
+        for param in exclude_parameters_from_output:
+            if param in second:
+                del second[param]
+        second = str(second)
         second.replace("\n", " ")
         second.replace("\r", " ")
     third = "0," + str(build_time) + "," + str(test_time) + ",-1,-1," "" + str(

@@ -164,6 +164,8 @@ def test_kmeans_dba():
         distance_params={'strategy': 'dependent'},
         average_params={'strategy': 'dependent'}
     )
+    test = kmeans.get_params()
+    joe = ''
     train_predict = kmeans.fit_predict(X_train.head(num_test_values))
     train_mean_score = metrics.rand_score(y_train[0:num_test_values], train_predict)
 
