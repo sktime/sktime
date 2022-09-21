@@ -89,7 +89,7 @@ def check_pddataframe_series(obj, return_metadata=False, var_name="obj"):
         return ret(False, msg, None, return_metadata)
 
     # Check time index is ordered in time
-    if not index.is_monotonic:
+    if not index.is_monotonic_increasing:
         msg = (
             f"The (time) index of {var_name} must be sorted monotonically increasing, "
             f"but found: {index}"
@@ -146,7 +146,7 @@ def check_pdseries_series(obj, return_metadata=False, var_name="obj"):
         return ret(False, msg, None, return_metadata)
 
     # Check time index is ordered in time
-    if not index.is_monotonic:
+    if not index.is_monotonic_increasing:
         msg = (
             f"The (time) index of {var_name} must be sorted monotonically increasing, "
             f"but found: {index}"
@@ -283,7 +283,7 @@ if _check_soft_dependencies("xarray", severity="none"):
             return ret(False, msg, None, return_metadata)
 
         # Check time index is ordered in time
-        if not index.is_monotonic:
+        if not index.is_monotonic_increasing:
             msg = (
                 f"The (time) index of {var_name} must be sorted "
                 f"monotonically increasing, but found: {index}"
