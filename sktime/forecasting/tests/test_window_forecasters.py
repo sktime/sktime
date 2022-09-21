@@ -38,7 +38,11 @@ def test_last_window(Forecaster):
     # passing the same fh to both fit and predict works
     f.fit(y_train, fh=FH0)
 
-    actual, _ = f._get_last_window()
+    if hasattr(f, "_get_shifted_window"):
+        actual, _ = f._get_shifted_window()
+        actual = actual.squeeze()
+    else:
+        actual, _ = f._get_last_window()
     expected = y_train.iloc[-f.window_length_ :]
 
     np.testing.assert_array_equal(actual, expected)
