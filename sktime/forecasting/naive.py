@@ -420,8 +420,10 @@ class NaiveForecaster(_BaseWindowForecaster):
             # Slope equation from:
             # https://otexts.com/fpp3/simple-methods.html#drift-method
             slope = (y.iloc[-1] - y.iloc[0]) / (T - 1)
-            intercept = y.iloc[0]
-            y_res = y - (np.arange(1, T + 1) * slope + intercept)
+
+            # Fitted value = previous value + slope
+            # https://github.com/robjhyndman/forecast/blob/master/R/naive.R#L34
+            y_res = y - (y.shift(self.sp) + slope)
 
         # Residuals MSE and SE
         # + 1 degrees of freedom to estimate drift coefficient standard error
