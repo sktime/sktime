@@ -9,16 +9,11 @@ __all__ = []
 from warnings import warn
 
 import numpy as np
-import pytest
 
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.utils.validation.forecasting import check_sp, check_y
 
 
-@pytest.mark.skipif(
-    not _check_soft_dependencies("statsmodels", severity="none"),
-    reason="skip test if required soft dependency not available",
-)
 def autocorrelation_seasonality_test(y, sp):
     """Seasonality test used in M4 competition.
 
