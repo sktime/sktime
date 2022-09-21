@@ -35,7 +35,7 @@ copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 # todo: add any necessary imports here
 # todo: import your DL Network here
-from stkime.networks.mytimeseriesnetwork import MyTimeSeriesNetwork
+# from stkime.networks.mytimeseriesnetwork import MyTimeSeriesNetwork
 
 from sktime.classification.deep_learning.base import BaseDeepClassifier
 from sktime.utils.validation._dependencies import _check_dl_dependencies
@@ -94,7 +94,9 @@ class MyTimeSeriesClassifier(BaseDeepClassifier):
         self.parama = parama
         self.paramb = paramb
         self.paramc = paramc
-        self._network = MyTimeSeriesNetwork()
+
+        # todo: create an object of your specific network like:
+        # self._network = MyTimeSeriesNetwork()
 
         # todo: check if dependencies are satsified
         _check_dl_dependencies(severity="error")
