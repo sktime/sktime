@@ -370,7 +370,13 @@ class WindowSummarizer(BaseTransformer):
             }
         }
 
-        return [params1, params2, params3]
+        params4 = {
+            "lag_feature": {
+                "lag": [1, 2],
+            }
+        }
+
+        return [params1, params2, params3, params4]
 
 
 # List of native pandas rolling window function.

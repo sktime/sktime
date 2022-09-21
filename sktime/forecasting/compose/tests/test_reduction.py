@@ -13,8 +13,6 @@ from sktime.forecasting.compose import make_reduction
 from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.transformations.series.summarize import WindowSummarizer
 
-# from sktime.utils.estimator_checks import check_estimator
-
 # Load data that will be the basis of tests
 y = load_airline()
 y_multi = get_examples(mtype="pd-multiindex", as_scitype="Panel")[0]
@@ -78,6 +76,7 @@ y_test_grp = pd.concat([y_group1, y_group2])
 kwargs = WindowSummarizer.get_test_params()[0]
 kwargs_alternames = WindowSummarizer.get_test_params()[1]
 kwargs_variant = WindowSummarizer.get_test_params()[2]
+kwargs_short = WindowSummarizer.get_test_params()[3]
 
 regressor = make_pipeline(
     RandomForestRegressor(random_state=1),

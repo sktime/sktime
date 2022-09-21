@@ -63,7 +63,13 @@ def _check_fh(fh):
 
 
 def _sliding_window_transform(
-    y, window_length, fh, X=None, transformers=None, scitype="tabular-regressor"
+    y,
+    window_length,
+    fh,
+    X=None,
+    transformers=None,
+    scitype="tabular-regressor",
+    pooling="local",
 ):
     """Transform time series data using sliding window.
 
@@ -107,8 +113,7 @@ def _sliding_window_transform(
     ts_index = get_time_index(y)
     n_timepoints = ts_index.shape[0]
     window_length = check_window_length(window_length, n_timepoints)
-
-    if transformers is not None:
+    if pooling == "global":
         if len(transformers) == 1:
             tf_fit = transformers[0].fit(y)
         else:
@@ -460,6 +465,7 @@ class _RecursiveReducer(_Reducer):
             X=X,
             transformers=self.transformers_,
             scitype=self._estimator_scitype,
+            pooling=self.pooling,
         )
 
     def _fit(self, y, X=None, fh=None):
@@ -484,6 +490,11 @@ class _RecursiveReducer(_Reducer):
                 + " to derive reduction features. Window length will be"
                 + " inferred, please set to None"
             )
+        if self.transformers is not None and self.pooling == "local":
+            raise ValueError(
+                "Transformers currently cannot be provided"
+                + "for models that run locally"
+            )
         self.window_length_ = check_window_length(
             self.window_length, n_timepoints=len(y)
         )
@@ -505,6 +516,7 @@ class _RecursiveReducer(_Reducer):
             trafo = self.transformers_
             fit_trafo = [i.fit(y) for i in trafo]
             ts = [i.truncate_start for i in fit_trafo if hasattr(i, "truncate_start")]
+
             if len(ts) > 0:
                 self.window_length_ = max(ts)
             else:
@@ -513,6 +525,15 @@ class _RecursiveReducer(_Reducer):
                     + "or needs to have it passed by transformer via"
                     + "truncate_start"
                 )
+
+            n_timepoints = len(get_time_index(y))
+            if self.transformers is not None and n_timepoints < max(ts):
+                raise ValueError(
+                    "Not sufficient observations to calculate transformations"
+                    + "Please reduce window length / window lagging to match"
+                    + "observation size"
+                )
+
         yt, Xt = self._transform(y, X)
 
         # Make sure yt is 1d array to avoid DataConversion warning from scikit-learn.
@@ -959,7 +980,7 @@ class RecursiveTabularRegressionForecaster(_RecursiveReducer):
         estimator,
         window_length=10,
         transformers=None,
-        pooling="global",
+        pooling="local",
     ):
         super(_RecursiveReducer, self).__init__(
             estimator=estimator, window_length=window_length, transformers=transformers
