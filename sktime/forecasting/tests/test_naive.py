@@ -313,7 +313,62 @@ def test_naive_predict_var_backwards(strategy, sp, window_length):
     assert lower_bound < sigma_res < upper_bound
 
 
-# def test_naive_predict_quantiles_against_R_naive():
-#     # TODO: compare with results from R
-#     # https://github.com/robjhyndman/forecast/blob/master/R/naive.R
-#     pass
+@pytest.mark.parametrize(
+    "strategy,sp,lower,upper",
+    [
+        (
+            "last",
+            1,
+            [-22.07661, -31.71836, -39.11673, -45.35385, -50.84886],
+            [24.47787, 34.11962, 41.51799, 47.75511, 53.25012],
+        ),
+        (
+            "last",
+            24,
+            [-45.45926, -18.718647, -36.369212, -12.929395, -13.960794],
+            [1.025702, 27.766313, 10.115747, 33.555565, 32.524165],
+        ),
+        ("mean", 1, -16.45385, 16.47319),
+        (
+            "drift",
+            1,
+            [-22.07676, -31.71876, -39.11745, -45.35493, -50.85035],
+            [24.47795, 34.11987, 41.51848, 47.75589, 53.25123],
+        ),
+    ],
+)
+def test_naive_predict_interval_against_R_naive(strategy, sp, lower, upper):
+    """Checks naive prediction interval computations.
+
+    Compare prediction interval results with R implementation in [1]_.
+
+    Note:
+    - Seasonality is not applicable to "mean" strategy in R.
+    - Argument "window_length" is not available in R.
+
+    References
+    ----------
+    .. [1] https://github.com/robjhyndman/forecast/blob/master/R/naive.R
+    """
+    n_timepoints = 100000
+    mu, sigma = 0.0, 10.0
+    fake_idx = pd.date_range("1980", periods=n_timepoints + 1, freq="H")
+    np.random.seed(42)
+    y = pd.Series(np.random.normal(mu, sigma, size=n_timepoints), index=fake_idx[:-1])
+
+    h = list(range(1, 6))
+    coverage = 0.90
+    forecaster = NaiveForecaster(strategy, sp=sp)
+    y_pred_ints = forecaster.fit(y).predict_interval(fh=h, coverage=coverage)
+
+    expected = pd.DataFrame(
+        columns=pd.MultiIndex.from_product(
+            [["Coverage"], [coverage], ["lower", "upper"]]
+        ),
+        index=y_pred_ints.index,
+    )
+
+    expected[("Coverage", coverage, "lower")] = lower
+    expected[("Coverage", coverage, "upper")] = upper
+
+    pd.testing.assert_frame_equal(y_pred_ints, expected)
