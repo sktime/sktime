@@ -3,17 +3,22 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 # noqa: D100
 
-__author__ = ["Markus Löning"]
+__author__ = ["mloning"]
 __all__ = []
 
 from warnings import warn
 
 import numpy as np
-from statsmodels.tsa.stattools import acf
+import pytest
 
 from sktime.utils.validation.forecasting import check_sp, check_y
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("statsmodels", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
 def autocorrelation_seasonality_test(y, sp):
     """Seasonality test used in M4 competition.
 
@@ -32,6 +37,8 @@ def autocorrelation_seasonality_test(y, sp):
     .. [1]  https://github.com/Mcompetitions/M4-methods/blob/master
     /Benchmarks%20and%20Evaluation.R
     """
+    from statsmodels.tsa.stattools import acf
+
     y = check_y(y)
     sp = check_sp(sp)
 
