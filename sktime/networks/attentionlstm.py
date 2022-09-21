@@ -5,9 +5,6 @@ from __future__ import absolute_import
 
 import warnings
 
-from keras import activations
-from keras import backend as K
-from keras import constraints, initializers, regularizers
 from keras.layers import RNN, InputSpec, Layer
 
 from sktime.utils.validation._dependencies import _check_dl_dependencies
@@ -41,6 +38,8 @@ def _time_distributed_dense(
     # Returns
         Output tensor.
     """
+    from keras import backend as K
+
     if not input_dim:
         input_dim = K.shape(x)[2]
     if not timesteps:
@@ -182,6 +181,8 @@ class AttentionLSTMCell(Layer):
         implementation=1,
         **kwargs
     ):
+        from keras import activations, constraints, initializers, regularizers
+
         super(AttentionLSTMCell, self).__init__(**kwargs)
         self.input_spec = [InputSpec(ndim=2)]
         self.units = units
@@ -221,6 +222,9 @@ class AttentionLSTMCell(Layer):
 
     def build(self, input_shape):
         """Build the network."""
+        from keras import backend as K
+        from keras import initializers
+
         if hasattr(self, "timesteps") and self.timesteps is not None:
             self.timestep_dim = self.timesteps
         else:
@@ -343,6 +347,8 @@ class AttentionLSTMCell(Layer):
         self.built = True
 
     def _generate_dropout_mask(self, inputs, training=None):
+        from keras import backend as K
+
         if 0 < self.dropout < 1:
             ones = K.ones_like(K.squeeze(inputs[:, 0:1, :], axis=1))
 
@@ -357,6 +363,8 @@ class AttentionLSTMCell(Layer):
             self._dropout_mask = None
 
     def _generate_recurrent_dropout_mask(self, inputs, training=None):
+        from keras import backend as K
+
         if 0 < self.recurrent_dropout < 1:
             ones = K.ones_like(K.reshape(inputs[:, 0, 0], (-1, 1)))
             ones = K.tile(ones, (1, self.units))
@@ -373,6 +381,8 @@ class AttentionLSTMCell(Layer):
 
     def call(self, inputs, states, training=None):
         """Call the appropriate layers."""
+        from keras import backend as K
+
         # dropout matrices for input units
         dp_mask = self._dropout_mask
         # dropout matrices for recurrent units
@@ -627,6 +637,8 @@ class AttentionLSTM(RNN):
         unroll=False,
         **kwargs
     ):
+        from keras import backend as K
+
         if implementation == 0:
             warnings.warn(
                 "`implementation=0` has been deprecated, "
@@ -808,6 +820,8 @@ class AttentionLSTM(RNN):
 
     def get_config(self):
         """Return configuration of the class."""
+        from keras import activations, constraints, initializers, regularizers
+
         config = {
             "units": self.units,
             "activation": activations.serialize(self.activation),
