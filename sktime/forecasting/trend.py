@@ -466,6 +466,8 @@ class STLForecaster(BaseForecaster):
         -------
         self : reference to self
         """
+        from statsmodels.tsa.seasonal import STL as _STL
+
         self._stl = _STL(
             y.values,
             period=self.sp,
