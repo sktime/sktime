@@ -227,7 +227,7 @@ class Lag(BaseTransformer):
                 X_orig_idx_shifted = X_orig_idx + lag
             else:
                 if hasattr(X.index, "freq") and X.index.freq is None and freq is None:
-                    freq = X.index.infer_freq()
+                    freq = pd.infer_freq(X.index)
                 X_orig_idx_shifted = X_orig_idx.shift(periods=lag, freq=freq)
                 if isinstance(lag, int) and freq is None:
                     freq = "infer"
