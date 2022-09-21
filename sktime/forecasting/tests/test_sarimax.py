@@ -2,8 +2,8 @@
 """Tests the SARIMAX model."""
 __author__ = ["TNTran92"]
 
-from numpy.testing import assert_allclose
 import pytest
+from numpy.testing import assert_allclose
 
 from sktime.forecasting.sarimax import SARIMAX
 from sktime.utils._testing.forecasting import make_forecasting_problem

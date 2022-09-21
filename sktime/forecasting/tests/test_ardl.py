@@ -2,8 +2,8 @@
 """Tests the ARDL model."""
 __author__ = ["kcc-lion"]
 
-from numpy.testing import assert_allclose
 import pytest
+from numpy.testing import assert_allclose
 
 from sktime.datasets import load_macroeconomic
 from sktime.forecasting.ardl import ARDL
