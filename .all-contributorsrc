@@ -1739,7 +1739,7 @@
       "name": "Benedikt Heidrich",
       "profile": "https://github.com/benheid",
       "contributions": [
-        "code",
+        "code"
       ]
     },
     {
@@ -1766,6 +1766,24 @@
       "profile": "https://github.com/jasmineliaw",
       "contributions": [
         "code"
+      ]
+    },
+      "login": "bugslayer-332" ,
+      "name": "Arepalli Yashwanth Reddy",
+      "profile": "https://github.com/bugslayer-332",
+      "contributions": [
+        "code",
+        "bug",
+        "doc"
+      ]
+    },
+    {
+      "login": "shagn",
+      "name": "Sebastian Hagn",
+      "avatar_url": "https://avatars.githubusercontent.com/u/16029092?v=4",
+      "profile": "https://github.com/shagn",
+      "contributions": [
+        "doc",
       ]
     },
   ],
