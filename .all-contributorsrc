@@ -1760,6 +1760,14 @@
         "test"
       ]
     },
+    {
+      "login": "jasmineliaw",
+      "name": "Jasmine Liaw",
+      "profile": "https://github.com/jasmineliaw",
+      "contributions": [
+        "code"
+      ]
+    },
   ],
   "projectName": "sktime",
   "projectOwner": "alan-turing-institute",
