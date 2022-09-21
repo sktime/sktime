@@ -38,7 +38,7 @@ def test_last_window(Forecaster):
     # passing the same fh to both fit and predict works
     f.fit(y_train, fh=FH0)
 
-    if hasattr(f, "_get_shifted_window"):
+    if f.__class__.__name__ == "RecursiveTabularRegressionForecaster":
         actual, _ = f._get_shifted_window()
         actual = actual.squeeze()
     else:

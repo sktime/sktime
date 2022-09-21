@@ -635,7 +635,7 @@ class _RecursiveReducer(_Reducer):
                 X = pd.concat([X_from_y_cut, X_cut], axis=1)
             else:
                 X = X_from_y_cut
-            y = _cut_tail(y_raw, n_tail=self.window_length)
+            y = _cut_tail(y_raw, n_tail=self.window_length_)
         else:
             # Get the last window of the endogenous variable.
             y = self._y.loc[start:cutoff].to_numpy()
