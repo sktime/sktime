@@ -1761,13 +1761,6 @@
       ]
     },
     {
-      "login": "jasmineliaw",
-      "name": "Jasmine Liaw",
-      "profile": "https://github.com/jasmineliaw",
-      "contributions": [
-        "code"
-      ]
-    },
       "login": "bugslayer-332" ,
       "name": "Arepalli Yashwanth Reddy",
       "profile": "https://github.com/bugslayer-332",
@@ -1784,6 +1777,23 @@
       "profile": "https://github.com/shagn",
       "contributions": [
         "doc",
+      ]
+    },
+    {
+      "login": "jasmineliaw",
+      "name": "Jasmine Liaw",
+      "profile": "https://github.com/jasmineliaw",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "topher-lo",
+      "name": "Christopher Lo",
+      "profile": "https://github.com/topher-lo",
+      "contributions": [
+        "code",
+        "ideas"
       ]
     },
   ],
