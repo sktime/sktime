@@ -92,6 +92,9 @@ def _sliding_window_transform(
         y across the window length, suitable features will be generated directly from
         the past raw observations. Currently only supports WindowSummarizer to generate
         e.g. the mean of the past 7 observations.
+    pooling: str {"local", "global"}, optional
+        Specifies whether separate models will be fit at the level of each instance
+        (local) of if you wish to fit a single model to all instances ("global").
     scitype : str {"tabular-regressor", "time-series-regressor"}, optional
         Scitype of estimator to use with transformed data.
         - If "tabular-regressor", returns X as tabular 2d array
