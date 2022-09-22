@@ -1779,7 +1779,23 @@
         "doc",
       ]
     },
-
+    {
+      "login": "jasmineliaw",
+      "name": "Jasmine Liaw",
+      "profile": "https://github.com/jasmineliaw",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "topher-lo",
+      "name": "Christopher Lo",
+      "profile": "https://github.com/topher-lo",
+      "contributions": [
+        "code",
+        "ideas"
+      ]
+    },
   ],
   "projectName": "sktime",
   "projectOwner": "alan-turing-institute",
