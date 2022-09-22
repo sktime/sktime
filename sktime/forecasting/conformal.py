@@ -107,7 +107,7 @@ class ConformalIntervals(BaseForecaster):
         self,
         forecaster,
         method="empirical",
-        initial_window=1,
+        initial_window=None,
         sample_frac=None,
         verbose=False,
         n_jobs=None,
