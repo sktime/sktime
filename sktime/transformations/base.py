@@ -810,8 +810,12 @@ class BaseTransformer(BaseEstimator):
         ALLOWED_MTYPES = self.ALLOWED_INPUT_MTYPES
 
         # checking X
-        X_valid, _, X_metadata = check_is_scitype(
-            X, scitype=ALLOWED_SCITYPES, return_metadata=True, var_name="X"
+        X_valid, msg, X_metadata = check_is_scitype(
+            X,
+            scitype=ALLOWED_SCITYPES,
+            return_metadata=True,
+            var_name="X",
+            msg_legacy_interface=False,
         )
 
         msg_invalid_input = (
@@ -825,7 +829,10 @@ class BaseTransformer(BaseEstimator):
             f"If you think the data is already in an sktime supported input format, "
             f"run sktime.datatypes.check_raise(data, mtype) to diagnose the error, "
             f"where mtype is the string of the type specification you want. "
+            f"Error message for checked mtypes, in format mtype:message, as follows:"
         )
+        for mtype, err in msg.items():
+            msg_invalid_input += f" {mtype}: {err}"
         if not X_valid:
             raise TypeError("X " + msg_invalid_input)
 
