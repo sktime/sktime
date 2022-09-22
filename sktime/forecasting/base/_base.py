@@ -370,6 +370,55 @@ class BaseForecaster(BaseEstimator):
 
         return y_out
 
+    def simulate(self, fh=None, X=None, n_simulations=10):
+        """Simulate multiple forecasts at future horizon.
+
+        State required:
+            Requires state to be "fitted".
+
+        Accesses in self:
+            Fitted model attributes ending in "_".
+            self.cutoff, self._is_fitted
+
+        Writes to self:
+            Stores fh to self.fh if fh is passed and has not been passed previously.
+
+        Parameters
+        ----------
+        fh : int, list, np.array or ForecastingHorizon, optional (default=None)
+            The forecasting horizon encoding the time stamps to forecast at.
+            if has not been passed in fit, must be passed, not optional
+        X : time series in sktime compatible format, optional (default=None)
+                Exogeneous time series to fit to
+            Should be of same scitype (Series, Panel, or Hierarchical) as y in fit
+            if self.get_tag("X-y-must-have-same-index"), X.index must contain fh.index
+            there are no restrictions on number of columns (unlike for y)
+
+        Returns
+        -------
+        y_pred : time series in sktime compatible data container format
+            Point forecasts at fh, with same index as fh
+            y_pred has same type as the y that has been passed most recently:
+                Series, Panel, Hierarchical scitype, same format (see above)
+        """
+        # handle inputs
+
+        self.check_is_fitted()
+        fh = self._check_fh(fh)
+
+        # input check and conversion for X
+        X_inner = self._check_X(X=X)
+
+        # we call the ordinary _predict if no looping/vectorization needed
+        if not self._is_vectorized:
+            y_pred = self._simulate(fh=fh, X=X_inner, n_simulations=n_simulations)
+        else:
+            # otherwise we call the vectorized version of predict
+            raise NotImplementedError("Vectorized is not implemented for simulate")
+            # y_pred = self._vectorize("simulate", X=X_inner, fh=fh)
+
+        return y_pred
+
     def fit_predict(self, y, X=None, fh=None):
         """Fit and forecast time series at future horizon.
 

@@ -91,6 +91,59 @@ class _StatsModelsAdapter(BaseForecaster):
         y_pred.name = self._y.name
         return y_pred
 
+    def _simulate(self, fh, X=None, n_simulations=10):
+        """Make forecasts.
+
+        Parameters
+        ----------
+        fh : ForecastingHorizon
+            The forecasters horizon with the steps ahead to to predict.
+            Default is one-step ahead forecast,
+            i.e. np.array([1])
+        X : pd.DataFrame, optional (default=None)
+            Exogenous variables are ignored.
+
+        Returns
+        -------
+        y_pred : pd.Series
+            Returns series of predicted values.
+        """
+        # statsmodels requires zero-based indexing starting at the
+        # beginning of the training series when passing integers
+        start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
+
+        if "exog" in inspect.signature(self._forecaster.__init__).parameters.keys():
+            y_pred = self._fitted_forecaster.simulate(
+                nsimulations=len(fh),
+                anchor="end",
+                repetitions=n_simulations,
+                random_errors=None,
+                random_state=None,
+            )
+        else:
+            y_pred = self._fitted_forecaster.simulate(
+                nsimulations=len(fh),
+                anchor="end",
+                repetitions=n_simulations,
+                random_errors=None,
+                random_state=self.random_state,
+            )
+
+        # statsmodels forecasts all periods from start to end of forecasting
+        # horizon, but only return given time points in forecasting horizon
+        # TODO: this is redundant
+        y_pred = y_pred.loc[fh.to_absolute(self.cutoff).to_pandas()]
+
+        # TODO: clean this pandas mess up
+        y_pred = y_pred.stack()
+        if isinstance(y_pred, pd.Series):
+            y_pred = y_pred.to_frame()
+        y_pred = y_pred.swaplevel()
+        y_pred.columns = [self._y.name]
+        y_pred.index = y_pred.index.set_names(["simulation_id", "time_index"])
+        y_pred = y_pred.sort_index()
+        return y_pred
+
     def get_fitted_params(self):
         """Get fitted parameters.
 
