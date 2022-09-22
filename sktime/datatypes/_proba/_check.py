@@ -76,7 +76,7 @@ def check_pred_quantiles_proba(obj, return_metadata=False, var_name="obj"):
         return ret(False, msg, None, return_metadata)
 
     # Check time index is ordered in time
-    if not index.is_monotonic:
+    if not index.is_monotonic_increasing:
         msg = (
             f"The (time) index of {var_name} must be sorted monotonically increasing, "
             f"but found: {index}"
@@ -143,7 +143,7 @@ def check_pred_interval_proba(obj, return_metadata=False, var_name="obj"):
         return ret(False, msg, None, return_metadata)
 
     # Check time index is ordered in time
-    if not index.is_monotonic:
+    if not index.is_monotonic_increasing:
         msg = (
             f"The (time) index of {var_name} must be sorted monotonically increasing, "
             f"but found: {index}"
