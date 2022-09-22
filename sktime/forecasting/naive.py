@@ -48,6 +48,16 @@ class NaiveForecaster(_BaseWindowForecaster):
       - "mean": np.nanmean over rows
     - tile the predictions using the seasonal periodicity
 
+    To compute prediction quantiles, we first estimate the standard error
+    of prediction residuals under the assumption of uncorrelated residuals.
+    The forecast variance is then computed by multiplying the residual
+    variance by a constant. This constant is a small-sample bias adjustment
+    and each method (mean, last, drift) have different formulas for computing
+    the constant. These formulas can be found in the (Table 5.2) Forecasting:
+    Principles and Practice textbook [1]. Lastly, under the assumption that
+    residuals follow a normal distribution, we use the forecast variance and
+    z-scores of a normal distribution to estimate the prediction quantiles.
+
     Parameters
     ----------
     strategy : {"last", "mean", "drift"}, default="last"
@@ -77,6 +87,12 @@ class NaiveForecaster(_BaseWindowForecaster):
     window_length : int or None, default=None
         Window length to use in the `mean` strategy. If None, entire training
             series will be used.
+
+    References
+    ----------
+    .. [1] Hyndman, R.J., & Athanasopoulos, G. (2021) Forecasting:
+        principles and practice, 3rd edition, OTexts: Melbourne, Australia.
+        OTexts.com/fpp3. Accessed on 22 September 2022.
 
     Examples
     --------
