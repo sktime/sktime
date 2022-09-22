@@ -86,12 +86,13 @@ def _sliding_window_transform(
         Forecasting horizon for transformed target variable
     X : pd.DataFrame, optional (default=None)
         Exogenous series.
-    transformers: *experimental*
-        A suitable transformer that allows for using an en-bloc approach with
+    transformers: list of transformers (default = None)
+        A suitable list of transformers that allows for using an en-bloc approach with
         make_reduction. This means that instead of using the raw past observations of
         y across the window length, suitable features will be generated directly from
-        the past raw observations. Currently only supports WindowSummarizer to generate
-        e.g. the mean of the past 7 observations.
+        the past raw observations. Currently only supports WindowSummarizer (or a list
+        of WindowSummarizers) to generate features e.g. the mean of the past 7
+        observations.
     pooling: str {"local", "global"}, optional
         Specifies whether separate models will be fit at the level of each instance
         (local) of if you wish to fit a single model to all instances ("global").
@@ -991,6 +992,16 @@ class RecursiveTabularRegressionForecaster(_RecursiveReducer):
     window_length : int, optional (default=10)
         The length of the sliding window used to transform the series into
         a tabular matrix.
+    transformers: list of transformers (default = None)
+        A suitable list of transformers that allows for using an en-bloc approach with
+        make_reduction. This means that instead of using the raw past observations of
+        y across the window length, suitable features will be generated directly from
+        the past raw observations. Currently only supports WindowSummarizer (or a list
+        of WindowSummarizers) to generate features e.g. the mean of the past 7
+        observations.
+    pooling: str {"local", "global"}, optional
+        Specifies whether separate models will be fit at the level of each instance
+        (local) of if you wish to fit a single model to all instances ("global").
     """
 
     _tags = {
@@ -1164,6 +1175,18 @@ def make_reduction(
         Must be one of "infer", "tabular-regressor" or "time-series-regressor". If
         the scitype cannot be inferred, please specify it explicitly.
         See :term:`scitype`.
+    transformers: list of transformers (default = None)
+        A suitable list of transformers that allows for using an en-bloc approach with
+        make_reduction. This means that instead of using the raw past observations of
+        y across the window length, suitable features will be generated directly from
+        the past raw observations. Currently only supports WindowSummarizer (or a list
+        of WindowSummarizers) to generate features e.g. the mean of the past 7
+        observations.
+        Currently only works for RecursiveTimeSeriesRegressionForecaster.
+    pooling: str {"local", "global"}, optional
+        Specifies whether separate models will be fit at the level of each instance
+        (local) of if you wish to fit a single model to all instances ("global").
+        Currently only works for RecursiveTimeSeriesRegressionForecaster.
 
     Returns
     -------

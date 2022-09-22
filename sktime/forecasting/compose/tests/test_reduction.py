@@ -103,11 +103,21 @@ forecaster2 = make_reduction(
     pooling="global",
 )
 
+# forecaster3 = make_reduction(
+#     regressor,
+#     scitype="tabular-regressor",
+#     transformers=[WindowSummarizer(**kwargs, n_jobs=1),
+#                   WindowSummarizer(**kwargs_variant, n_jobs=1)],
+#     window_length=None,
+#     strategy="recursive",
+#     pooling="global",
+# )
+
 y_numeric = y_train.copy()
 y_numeric.index = pd.to_numeric(y_numeric.index)
 
-# forecaster2.fit(y_train, fh=[1, 2])
-# y_pred21 = forecaster2.predict(fh=[1, 2, 12])
+# forecaster3.fit(y_train, fh=[1, 2])
+# y_pred21 = forecaster3.predict(fh=[1, 2, 12])
 
 # forecaster2.fit(y_numeric, fh=[1, 2])
 # y_pred22 = forecaster2.predict(fh=[1, 2, 12])
