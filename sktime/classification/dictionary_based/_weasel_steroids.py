@@ -384,7 +384,7 @@ def _parallel_fit(
 
     all_transformers = []
     all_words = []
-    for first_difference in [True, False]:
+    for first_difference in use_first_differences:
         transformer = getSFAFast(
             alphabet_size,
             alphabet_sizes,
