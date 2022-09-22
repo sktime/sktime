@@ -113,6 +113,7 @@ def _sliding_window_transform(
     ts_index = get_time_index(y)
     n_timepoints = ts_index.shape[0]
     window_length = check_window_length(window_length, n_timepoints)
+
     if pooling == "global":
         if len(transformers) == 1:
             tf_fit = transformers[0].fit(y)
@@ -492,6 +493,11 @@ class _RecursiveReducer(_Reducer):
         -------
         self : returns an instance of self.
         """
+        if self.pooling not in ["local", "global"]:
+            raise ValueError(
+                "pooling must be one of local, global" + f" but found {self.pooling}"
+            )
+
         if self.window_length is not None and self.transformers is not None:
             raise ValueError(
                 "Transformers provided, suggesting en-bloc approach"
@@ -503,6 +509,16 @@ class _RecursiveReducer(_Reducer):
                 "Transformers currently cannot be provided"
                 + "for models that run locally"
             )
+        pd_format = isinstance(y, pd.Series) or isinstance(y, pd.DataFrame)
+        if self.pooling == "local":
+            if pd_format is True and isinstance(y, pd.MultiIndex):
+                warn(
+                    "Pooling has been changed by default to 'local', which"
+                    + " means that separate models will be fit at the level of"
+                    + " each instance. If you wish to fit a single model to"
+                    + " all instances, please specify pooling = 'global'.",
+                    DeprecationWarning,
+                )
         self.window_length_ = check_window_length(
             self.window_length, n_timepoints=len(y)
         )

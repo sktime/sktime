@@ -553,8 +553,3 @@ def test_dirrec_against_recursive_accumulated_error():
     assert mean_absolute_percentage_error(
         y_test, preds_dirrec
     ) < mean_absolute_percentage_error(y_test, preds_recursive)
-
-
-# test_reductions_airline_data(DirectTabularRegressionForecaster(LinearRegression()),
-#             EXPECTED_AIRLINE_LINEAR_DIRECT,
-#         )
