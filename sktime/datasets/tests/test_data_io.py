@@ -74,7 +74,7 @@ def test_load_basic_motions(return_X_y, return_type):
     if return_X_y:
         X, y = load_basic_motions("TRAIN", return_X_y, return_type)
     else:
-        X = load_basic_motions("UnitTest", "TRAIN", return_X_y, return_type)
+        X = load_basic_motions("TRAIN", return_X_y, return_type)
 
     # Check whether object is same mtype or not, via bool
     valid, check_msg, _ = check_is_mtype(X, return_type, return_metadata=True)
