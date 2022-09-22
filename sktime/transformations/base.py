@@ -831,9 +831,9 @@ class BaseTransformer(BaseEstimator):
             f"where mtype is the string of the type specification you want. "
             f"Error message for checked mtypes, in format mtype:message, as follows:"
         )
-        for mtype, err in msg.items():
-            msg_invalid_input += f" {mtype}: {err}"
         if not X_valid:
+            for mtype, err in msg.items():
+                msg_invalid_input += f" {mtype}: {err}"
             raise TypeError("X " + msg_invalid_input)
 
         X_scitype = X_metadata["scitype"]
