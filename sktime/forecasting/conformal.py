@@ -163,7 +163,7 @@ class ConformalIntervals(BaseForecaster):
     def _update(self, y, X=None, update_params=True):
         self.forecaster_.update(y, X, update_params=update_params)
 
-        if self.residuals_matrix_.index.max() < y.index.max():
+        if len(y.index.difference(self.residuals_matrix_.index)) > 2:
             self.residuals_matrix_ = self._compute_sliding_residuals(
                 y,
                 X,
@@ -298,7 +298,12 @@ class ConformalIntervals(BaseForecaster):
         n_samples = len(y)
 
         if initial_window is None:
-            initial_window = max(10, int(floor(0.1 * n_samples)))
+            if int(floor(0.1 * n_samples)) > 10:
+                initial_window = int(floor(0.1 * n_samples))
+            elif n_samples > 10:
+                initial_window = 10
+            else:
+                initial_window = n_samples - 1
 
         initial_window_type = np.asarray(initial_window).dtype.kind
 
@@ -375,7 +380,7 @@ class ConformalIntervals(BaseForecaster):
                 self.residuals_matrix_.index, self.residuals_matrix_.columns
             ] = self.residuals_matrix_
 
-        if sample_frac:
+        if sample_frac and len(y_index.to_series().sample(frac=sample_frac)) > 2:
             y_index = y_index.to_series().sample(frac=sample_frac)
 
         def _get_residuals_matrix_row(forecaster, y, X, id):
