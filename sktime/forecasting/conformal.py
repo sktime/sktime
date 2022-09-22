@@ -298,7 +298,7 @@ class ConformalIntervals(BaseForecaster):
         n_samples = len(y)
 
         if initial_window is None:
-            initial_window = max(10, 0.1 * n_samples)
+            initial_window = max(10, int(floor(0.1 * n_samples)))
 
         initial_window_type = np.asarray(initial_window).dtype.kind
 
