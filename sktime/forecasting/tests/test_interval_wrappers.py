@@ -8,14 +8,15 @@ import pandas as pd
 import pytest
 
 from sktime.datasets import load_airline
-from sktime.datatypes import MTYPE_LIST_SERIES, convert_to
+from sktime.datatypes import convert_to, scitype_to_mtype
 from sktime.forecasting.conformal import ConformalIntervals
 from sktime.forecasting.naive import NaiveForecaster, NaiveVariance
 
 INTERVAL_WRAPPERS = [ConformalIntervals, NaiveVariance]
+MTYPES_SERIES = scitype_to_mtype("Series", softdeps="present")
 
 
-@pytest.mark.parametrize("mtype", MTYPE_LIST_SERIES)
+@pytest.mark.parametrize("mtype", MTYPES_SERIES)
 @pytest.mark.parametrize("override_y_mtype", [True, False])
 @pytest.mark.parametrize("wrapper", INTERVAL_WRAPPERS)
 def test_wrapper_series_mtype(wrapper, override_y_mtype, mtype):
