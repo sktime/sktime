@@ -189,10 +189,10 @@ class WEASEL_STEROIDS(BaseClassifier):
         XX = X.squeeze(1)
 
         # avoid overfitting with too many features
-        if self.n_instances <= 250:
+        if self.n_instances < 250:
             self.max_window = 24
             self.ensemble_size = 50
-        elif self.series_length <= 100:
+        elif self.series_length < 100:
             self.max_window = 44
             self.ensemble_size = 100
         else:

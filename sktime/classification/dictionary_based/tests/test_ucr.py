@@ -353,7 +353,7 @@ if os.path.exists(DATA_PATH):
     DATA_PATH = "/Users/bzcschae/workspace/UCRArchive_2018/"
     used_dataset = dataset_names_excerpt
     # used_dataset = dataset_names_full
-    server = True
+    server = False
 # server
 else:
     DATA_PATH = "/vol/fob-wbib-vol2/wbi/schaefpa/sktime/datasets/UCRArchive_2018"
