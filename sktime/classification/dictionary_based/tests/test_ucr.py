@@ -34,7 +34,7 @@ from sktime.classification.dictionary_based import (
     Hydra,
     TemporalDictionaryEnsemble,
 )
-from sktime.transformations.panel.rocket import MiniRocket, Rocket
+from sktime.transformations.panel.rocket import MiniRocket, MultiRocket, Rocket
 
 sys.path.append("../../..")
 
@@ -231,41 +231,82 @@ dataset_names_excerpt = [
 def get_classifiers(threads_to_use):
     """Obtain the benchmark classifiers."""
     clfs = {
-        # "WEASEL": WEASEL(random_state=1379, n_jobs=threads_to_use),
-        # "BOSS": BOSSEnsemble(random_state=1379, n_jobs=threads_to_use),
-        # "cBOSS": ContractableBOSS(random_state=1379, n_jobs=threads_to_use),
-        # "TDE": TemporalDictionaryEnsemble(random_state=1379, n_jobs=threads_to_use),
-        "WEASEL (dilation;94;none)": WEASEL_STEROIDS(
+        # "WEASEL (dilation;24;50;chi2)": WEASEL_STEROIDS(
+        #     random_state=1379,
+        #     binning_strategies=["equi-depth"],
+        #     alphabet_sizes=[2],
+        #     min_window=4,
+        #     max_window=24,
+        #     max_feature_count=30_000,
+        #     word_lengths=[8],
+        #     variance=True,
+        #     ensemble_size=50,
+        #     use_first_differences=[True],
+        #     feature_selection="chi2",
+        #     # sections=1,
+        #     n_jobs=threads_to_use,
+        # ),
+        # "WEASEL (dilation;44;50;chi2)": WEASEL_STEROIDS(
+        #     random_state=1379,
+        #     binning_strategies=["equi-depth"],
+        #     alphabet_sizes=[2],
+        #     min_window=4,
+        #     max_window=44,
+        #     max_feature_count=30_000,
+        #     word_lengths=[8],
+        #     variance=True,
+        #     ensemble_size=50,
+        #     use_first_differences=[True],
+        #     feature_selection="chi2",
+        #     # sections=1,
+        #     n_jobs=threads_to_use,
+        # ),
+        # "WEASEL (dilation;44;100;chi2)": WEASEL_STEROIDS(
+        #     random_state=1379,
+        #     binning_strategies=["equi-depth"],
+        #     alphabet_sizes=[2],
+        #     min_window=4,
+        #     max_window=44,
+        #     max_feature_count=30_000,
+        #     word_lengths=[8],
+        #     variance=True,
+        #     ensemble_size=100,
+        #     use_first_differences=[True],
+        #     feature_selection="chi2",
+        #     # sections=1,
+        #     n_jobs=threads_to_use,
+        # ),
+        # "WEASEL (dilation;64;100;chi2)": WEASEL_STEROIDS(
+        #     random_state=1379,
+        #     binning_strategies=["equi-depth"],
+        #     alphabet_sizes=[2],
+        #     min_window=4,
+        #     max_window=64,
+        #     max_feature_count=30_000,
+        #     word_lengths=[8],
+        #     variance=True,
+        #     ensemble_size=100,
+        #     use_first_differences=[True],
+        #     feature_selection="chi2",
+        #     # sections=1,
+        #     n_jobs=threads_to_use,
+        # ),
+        "WEASEL (dilation;84;150;chi2)": WEASEL_STEROIDS(
             random_state=1379,
             binning_strategies=["equi-depth"],
             alphabet_sizes=[2],
             min_window=4,
-            max_window=94,
+            max_window=84,
             max_feature_count=30_000,
             word_lengths=[8],
             variance=True,
             ensemble_size=150,
             use_first_differences=[True],
-            feature_selection="none",
+            feature_selection="chi2",
             # sections=1,
             n_jobs=threads_to_use,
         ),
-        "WEASEL (dilation;74;none)": WEASEL_STEROIDS(
-            random_state=1379,
-            binning_strategies=["equi-depth"],
-            alphabet_sizes=[2],
-            min_window=4,
-            max_window=74,
-            max_feature_count=30_000,
-            word_lengths=[8],
-            variance=True,
-            ensemble_size=150,
-            use_first_differences=[True],
-            feature_selection="none",
-            # sections=1,
-            n_jobs=threads_to_use,
-        ),
-        "WEASEL (dilation;84;none)": WEASEL_STEROIDS(
+        "WEASEL (dilation;84;150;none)": WEASEL_STEROIDS(
             random_state=1379,
             binning_strategies=["equi-depth"],
             alphabet_sizes=[2],
@@ -280,6 +321,14 @@ def get_classifiers(threads_to_use):
             # sections=1,
             n_jobs=threads_to_use,
         ),
+        # "WEASEL": WEASEL(random_state=1379, n_jobs=threads_to_use),
+        # "BOSS": BOSSEnsemble(random_state=1379, n_jobs=threads_to_use),
+        # "cBOSS": ContractableBOSS(random_state=1379, n_jobs=threads_to_use),
+        # "TDE": TemporalDictionaryEnsemble(random_state=1379, n_jobs=threads_to_use),
+        # "MultiRocket": make_pipeline(
+        #    MultiRocket(random_state=1379, n_jobs=threads_to_use),
+        #    RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True),
+        # )
         # "Hydra": [],  # see below
         # "R_DST": R_DST_Ridge(random_state=1379),
         # "Rocket": make_pipeline(
@@ -304,7 +353,7 @@ if os.path.exists(DATA_PATH):
     DATA_PATH = "/Users/bzcschae/workspace/UCRArchive_2018/"
     used_dataset = dataset_names_excerpt
     # used_dataset = dataset_names_full
-    # server = True
+    server = True
 # server
 else:
     DATA_PATH = "/vol/fob-wbib-vol2/wbi/schaefpa/sktime/datasets/UCRArchive_2018"
@@ -330,8 +379,8 @@ if __name__ == "__main__":
         X_train = np.reshape(np.array(X_train), (len(X_train), 1, -1))
         X_test = np.reshape(np.array(X_test), (len(X_test), 1, -1))
 
-        X_train = zscore(X_train, axis=-1)
-        X_test = zscore(X_test, axis=-1)
+        # X_train = zscore(X_train, axis=-1)
+        # X_test = zscore(X_test, axis=-1)
 
         if server:
             try:  # catch exceptions
@@ -354,6 +403,7 @@ if __name__ == "__main__":
             clf_name: {
                 "dataset": [],
                 "all_scores": [],
+                "train_scores": [],
                 "all_fit": [],
                 "all_pred": [],
                 "fit_time": 0.0,
@@ -383,6 +433,7 @@ if __name__ == "__main__":
 
             pred_time = time.perf_counter()
             acc = clf.score(X_test, y_test)
+            train_acc = clf.cross_val_score if hasattr(clf, "cross_val_score") else 0
             pred_time = np.round(time.perf_counter() - pred_time, 5)
         print(
             f"{clf_name},{dataset_name},"
@@ -394,9 +445,11 @@ if __name__ == "__main__":
                 if hasattr(clf, "total_features_count")
                 else f""
             )
+            + (f",{train_acc}" if hasattr(clf, "cross_val_score") else f"")
         )
         sum_scores[clf_name]["dataset"].append(dataset_name)
         sum_scores[clf_name]["all_scores"].append(acc)
+        sum_scores[clf_name]["train_scores"].append(train_acc)
         sum_scores[clf_name]["all_fit"].append(fit_time)
         sum_scores[clf_name]["all_pred"].append(pred_time)
         sum_scores[clf_name]["fit_time"] += sum_scores[clf_name]["fit_time"] + fit_time
@@ -452,9 +505,10 @@ if __name__ == "__main__":
     csv_scores = []
     for name, _ in sum_scores.items():
         all_accs = sum_scores[name]["all_scores"]
+        all_train_accs = sum_scores[name]["train_scores"]
         all_datasets = sum_scores[name]["dataset"]
-        for acc, dataset_name in zip(all_accs, all_datasets):
-            csv_scores.append((name, dataset_name, acc))
+        for acc, train_acc, dataset_name in zip(all_accs, all_train_accs, all_datasets):
+            csv_scores.append((name, dataset_name, acc, train_acc))
 
         all_fit = np.round(sum_scores[name]["all_fit"], 2)
         all_pred = np.round(sum_scores[name]["all_pred"], 2)
@@ -468,8 +522,7 @@ if __name__ == "__main__":
                 "Classifier",
                 "Dataset",
                 "Accuracy",
-                # "Fit-Time",
-                # "Predict-Time",
+                "Train-Acc",
             ],
         ).to_csv("ucr-112-accuracy-sonic-dict-weasel.csv", index=None)
 

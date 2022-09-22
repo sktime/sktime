@@ -20,7 +20,8 @@ from scipy.sparse import hstack
 
 # from sklearn.feature_selection import SelectPercentile, chi2
 from sklearn.linear_model import RidgeClassifierCV
-from sklearn.pipeline import make_pipeline
+
+# from sklearn.pipeline import make_pipeline
 from sklearn.utils import check_random_state
 
 from sktime.classification.base import BaseClassifier
@@ -188,12 +189,15 @@ class WEASEL_STEROIDS(BaseClassifier):
         XX = X.squeeze(1)
 
         # avoid overfitting with too many features
-        if self.n_instances <= 40:
+        if self.n_instances <= 250:
             self.max_window = 24
             self.ensemble_size = 50
-        elif self.n_classes_ <= 2:
-            self.max_window = 64
+        elif self.series_length <= 100:
+            self.max_window = 44
             self.ensemble_size = 100
+        else:
+            self.max_window = 84
+            self.ensemble_size = 150
 
         self.max_window = int(min(self.series_length, self.max_window))
         if self.min_window > self.max_window:
@@ -242,21 +246,13 @@ class WEASEL_STEROIDS(BaseClassifier):
             self.SFA_transformers.extend(transformer)
             sfa_words.extend(words)
 
-        # self.rocket = MiniRocket(random_state=1379, n_jobs=self.n_jobs)
-        # X_features = self.rocket.fit_transform(X, y)
-
         # merging arrays from different threads
         if type(sfa_words[0]) is np.ndarray:
-            # sfa_words.append(X_features)
             all_words = np.concatenate(sfa_words, axis=1)
         else:
-            # sfa_words.append(csr_matrix(X_features.values))
             all_words = hstack(sfa_words)
 
-        self.clf = make_pipeline(
-            # SelectPercentile(chi2, percentile=50),
-            RidgeClassifierCV(alphas=np.logspace(-1, 5, 10)),
-        )
+        self.clf = RidgeClassifierCV(alphas=np.logspace(-1, 5, 10))
 
         self.clf.fit(all_words, y)
         self.total_features_count = all_words.shape[1]
