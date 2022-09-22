@@ -285,3 +285,18 @@ class _DelegatedForecaster(BaseForecaster):
         """
         estimator = self._get_delegate()
         return estimator.predict_proba(fh=fh, X=X, marginal=marginal)
+
+    def _get_fitted_params(self):
+        """Get fitted parameters.
+
+        private _get_fitted_params, called from get_fitted_params
+
+        State required:
+            Requires state to be "fitted".
+
+        Returns
+        -------
+        fitted_params : dict
+        """
+        estimator = self._get_delegate()
+        return estimator.get_fitted_params()

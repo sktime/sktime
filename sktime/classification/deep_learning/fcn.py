@@ -1,20 +1,20 @@
 # -*- coding: utf-8 -*-
-"""Multi Layer Perceptron Network (MLP) for classification."""
+"""Fully Connected Neural Network (CNN) for classification."""
 
 __author__ = ["James-Large", "AurumnPegasus"]
-__all__ = ["MLPClassifier"]
+__all__ = ["FCNClassifier"]
 
 from sklearn.utils import check_random_state
 
 from sktime.classification.deep_learning.base import BaseDeepClassifier
-from sktime.networks.mlp import MLPNetwork
+from sktime.networks.fcn import FCNNetwork
 from sktime.utils.validation._dependencies import _check_dl_dependencies
 
 _check_dl_dependencies(severity="warning")
 
 
-class MLPClassifier(BaseDeepClassifier):
-    """Multi Layer Perceptron Network (MLP), as described in [1].
+class FCNClassifier(BaseDeepClassifier):
+    """Fully Connected Neural Network (FCN), as described in [1].
 
     Parameters
     ----------
@@ -42,24 +42,22 @@ class MLPClassifier(BaseDeepClassifier):
 
     Notes
     -----
-    .. .. [1]  Network originally defined in:
-    @inproceedings{wang2017time, title={Time series classification from
-    scratch with deep neural networks: A strong baseline}, author={Wang,
-    Zhiguang and Yan, Weizhong and Oates, Tim}, booktitle={2017
-    International joint conference on neural networks (IJCNN)}, pages={
-    1578--1585}, year={2017}, organization={IEEE} }
+    .. [1] Zhao et. al, Convolutional neural networks for
+    time series classification, Journal of
+    Systems Engineering and Electronics, 28(1):2017.
 
-    Adapted from the implementation from source code
-    https://github.com/hfawaz/dl-4-tsc/blob/master/classifiers/mlp.py
+    Adapted from the implementation from Fawaz et. al
+    https://github.com/hfawaz/dl-4-tsc/blob/master/classifiers/cnn.py
 
     Examples
     --------
-    >>> from sktime.classification.deep_learning.mlp import MLPClassifier
+    >>> from sktime.classification.deep_learning.fcn import FCNClassifier
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    >>> mlp = MLPClassifier()  # doctest: +SKIP
-    >>> mlp.fit(X_train, y_train)  # doctest: +SKIP
-    MLPClassifier(...)
+    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
+    >>> fcn = FCNClassifier()
+    >>> fcn.fit(X_train, y_train)
+    FCNClassifier(...)
     """
 
     def __init__(
@@ -76,7 +74,7 @@ class MLPClassifier(BaseDeepClassifier):
         optimizer=None,
     ):
         _check_dl_dependencies(severity="error")
-        super(MLPClassifier, self).__init__()
+        super(FCNClassifier, self).__init__()
         self.callbacks = callbacks
         self.n_epochs = n_epochs
         self.batch_size = batch_size
@@ -88,7 +86,7 @@ class MLPClassifier(BaseDeepClassifier):
         self.use_bias = use_bias
         self.optimizer = optimizer
         self.history = None
-        self._network = MLPNetwork()
+        self._network = FCNNetwork()
 
     def build_model(self, input_shape, n_classes, **kwargs):
         """Construct a compiled, un-trained, keras model that is ready for training.

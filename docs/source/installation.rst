@@ -221,6 +221,7 @@ Virtual environments
 ~~~~~~~~~~~~~~~~~~~~
 
 Two good options for virtual environment managers are:
+
 * `conda <https://uoa-eresearch.github.io/eresearch-cookbook/recipe/2014/11/20/conda/>`_ (many sktime community members us this)
 * `venv <https://realpython.com/python-virtual-environments-a-primer/>`_ (also quite good!).
 

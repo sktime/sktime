@@ -4,6 +4,7 @@
 """Implements forecaster for selecting among different model classes."""
 
 from sktime.base import _HeterogenousMetaEstimator
+from sktime.datatypes import ALL_TIME_SERIES_MTYPES
 from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.base._delegate import _DelegatedForecaster
 
@@ -83,7 +84,8 @@ class MultiplexForecaster(_DelegatedForecaster, _HeterogenousMetaEstimator):
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
         "scitype:y": "both",
-        "y_inner_mtype": ["pd.DataFrame", "pd.Series"],
+        "y_inner_mtype": ALL_TIME_SERIES_MTYPES,
+        "X_inner_mtype": ALL_TIME_SERIES_MTYPES,
         "fit_is_empty": False,
     }
 
@@ -108,8 +110,12 @@ class MultiplexForecaster(_DelegatedForecaster, _HeterogenousMetaEstimator):
             clone_ests=False,
         )
         self._set_forecaster()
+
         self.clone_tags(self.forecaster_)
         self.set_tags(**{"fit_is_empty": False})
+        # this ensures that we convert in the inner estimator, not in the multiplexer
+        self.set_tags(**{"y_inner_mtype": ALL_TIME_SERIES_MTYPES})
+        self.set_tags(**{"X_inner_mtype": ALL_TIME_SERIES_MTYPES})
 
     @property
     def _forecasters(self):
