@@ -157,7 +157,7 @@ def check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj"):
         return _ret(False, msg, None, return_metadata)
 
     if not isinstance(obj.index, pd.MultiIndex):
-        msg = f"{var_name} have a MultiIndex, found {type(obj.index)}"
+        msg = f"{var_name} must have a MultiIndex, found {type(obj.index)}"
         return _ret(False, msg, None, return_metadata)
 
     # check that columns are unique
@@ -167,7 +167,7 @@ def check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj"):
     # check that there are precisely two index levels
     nlevels = obj.index.nlevels
     if not nlevels == 2:
-        msg = f"{var_name} have a MultiIndex with 2 levels, found {nlevels}"
+        msg = f"{var_name} must have a MultiIndex with 2 levels, found {nlevels}"
         return _ret(False, msg, None, return_metadata)
 
     # check instance index being integer or range index
