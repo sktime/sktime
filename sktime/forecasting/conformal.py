@@ -339,8 +339,13 @@ class ConformalIntervals(BaseForecaster):
             sktime compatible exogeneous time series to use in forecasts
         forecaster : sktime compatible forecaster
             forecaster to use in computing the sliding residuals
-        initial_window : int
-            minimum length of initial window to use in fitting
+        initial_window : float, int or None, optional (default=max(10, 0.1*len(y)))
+            Defines the size of the initial training window
+            If float, should be between 0.0 and 1.0 and represent the proportion
+            of the dataset to include for the initial window for the train split.
+            If int, represents the relative number of train samples in the
+            initial window.
+            If None, the value is set to the larger of 0.1*len(y) and 10
         sample_frac : float
             for speeding up computing of residuals matrix.
             sample value in range (0, 1) to obtain a fraction of y indices to
@@ -358,7 +363,9 @@ class ConformalIntervals(BaseForecaster):
         """
         y = convert_to(y, "pd.Series")
 
-        y_index = y.index[initial_window:]
+        n_initial_window = self._parse_initial_window(y, initial_window=initial_window)
+
+        y_index = y.iloc[n_initial_window:].index
 
         residuals_matrix = pd.DataFrame(columns=y_index, index=y_index, dtype="float")
 
