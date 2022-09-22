@@ -110,8 +110,9 @@ class NaiveForecaster(_BaseWindowForecaster):
         "requires-fh-in-fit": False,
         "handles-missing-data": True,
         "scitype:y": "univariate",
-        "capability:pred_var": True,
-        "capability:pred_int": True,
+        # variance formulae may be incorrect, see #3469
+        # "capability:pred_var": True,
+        # "capability:pred_int": True,
     }
 
     def __init__(self, strategy="last", window_length=None, sp=1):
