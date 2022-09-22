@@ -493,7 +493,7 @@ class _RecursiveReducer(_Reducer):
         -------
         self : returns an instance of self.
         """
-        if self.pooling not in ["local", "global"]:
+        if self.pooling is not None and self.pooling not in ["local", "global"]:
             raise ValueError(
                 "pooling must be one of local, global" + f" but found {self.pooling}"
             )
