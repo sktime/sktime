@@ -162,7 +162,16 @@ class ConformalIntervals(BaseForecaster):
 
     def _update(self, y, X=None, update_params=True):
         self.forecaster_.update(y, X, update_params=update_params)
-        return self
+
+        if self.residuals_matrix_.index.max() < y.index.max():
+            self.residuals_matrix_ = self._compute_sliding_residuals(
+                y,
+                X,
+                self.forecaster_,
+                self.initial_window,
+                self.sample_frac,
+                update=True,
+            )
 
     def _predict_interval(self, fh, X=None, coverage=None):
         """Compute/return prediction quantiles for a forecast.
@@ -317,7 +326,9 @@ class ConformalIntervals(BaseForecaster):
 
         return n_initial_window
 
-    def _compute_sliding_residuals(self, y, X, forecaster, initial_window, sample_frac):
+    def _compute_sliding_residuals(
+        self, y, X, forecaster, initial_window, sample_frac, update=False
+    ):
         """Compute sliding residuals used in uncertainty estimates.
 
         Parameters
@@ -328,17 +339,15 @@ class ConformalIntervals(BaseForecaster):
             sktime compatible exogeneous time series to use in forecasts
         forecaster : sktime compatible forecaster
             forecaster to use in computing the sliding residuals
-        initial_window : float, int or None, optional (default=max(10, 0.1*len(y)))
-            Defines the size of the initial training window
-            If float, should be between 0.0 and 1.0 and represent the proportion
-            of the dataset to include for the initial window for the train split.
-            If int, represents the relative number of train samples in the
-            initial window.
-            If None, the value is set to the larger of 0.1*len(y) and 10
+        initial_window : int
+            minimum length of initial window to use in fitting
         sample_frac : float
-            For speeding up computing of residuals matrix.
+            for speeding up computing of residuals matrix.
             sample value in range (0, 1) to obtain a fraction of y indices to
             compute residuals matrix for
+        update : bool
+            Whether residuals_matrix has been calculated previously and just
+            needs extending. Default = False
         Returns
         -------
         residuals_matrix : pd.DataFrame, row and column index = y.index[initial_window:]
@@ -349,11 +358,15 @@ class ConformalIntervals(BaseForecaster):
         """
         y = convert_to(y, "pd.Series")
 
-        n_initial_window = self._parse_initial_window(y, initial_window=initial_window)
-
-        y_index = y.iloc[n_initial_window:].index
+        y_index = y.index[initial_window:]
 
         residuals_matrix = pd.DataFrame(columns=y_index, index=y_index, dtype="float")
+
+        if update and hasattr(self, "residuals_matrix_"):
+            y_index = y_index.difference(self.residuals_matrix_.index)
+            residuals_matrix.loc[
+                self.residuals_matrix_.index, self.residuals_matrix_.columns
+            ] = self.residuals_matrix_
 
         if sample_frac:
             y_index = y_index.to_series().sample(frac=sample_frac)
@@ -364,7 +377,6 @@ class ConformalIntervals(BaseForecaster):
 
             X_train = get_slice(X, start=None, end=id)
             X_test = get_slice(X, start=id, end=None)
-
             forecaster.fit(y_train, X=X_train, fh=y_test.index)
 
             try:
@@ -380,7 +392,6 @@ class ConformalIntervals(BaseForecaster):
             delayed(_get_residuals_matrix_row)(forecaster.clone(), y, X, id)
             for id in y_index
         )
-
         for idx, id in enumerate(y_index):
             residuals_matrix.loc[id] = all_residuals[idx]
 
