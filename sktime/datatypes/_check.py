@@ -356,9 +356,9 @@ def check_is_scitype(
     Returns
     -------
     valid: bool - whether obj is a valid object of mtype/scitype
-    msg: str or list of str - error messages if object is not valid, otherwise None
-            str if mtype is str; list of len(mtype) with message per mtype if list
-            returned only if return_metadata is True
+    msg: dict[str, str] or None - error messages if object is not valid, otherwise None
+        keys are all mtypes tested, value for key is error message for that key
+        returned only if return_metadata is True
     metadata: dict - metadata about obj if valid, otherwise None
             returned only if return_metadata is True
         Fields depend on scitpe.
@@ -401,7 +401,7 @@ def check_is_scitype(
     keys = [x for x in valid_keys if x[1] in scitype and x[0] not in exclude_mtypes]
 
     # storing the msg retursn
-    msg = []
+    msg = {}
     found_mtype = []
     found_scitype = []
 
@@ -418,7 +418,7 @@ def check_is_scitype(
             found_mtype.append(key[0])
             found_scitype.append(key[1])
         elif return_metadata:
-            msg.append(res[1])
+            msg[key[0]] = res[1]
 
     # there are three options on the result of check_is_mtype:
     # a. two or more mtypes are found - this is unexpected and an error with checks
@@ -439,9 +439,6 @@ def check_is_scitype(
             return True
     # c. no mtype is found - then return False and all error messages if requested
     else:
-        if len(msg) == 1:
-            msg = msg[0]
-
         return _ret(False, msg, None, return_metadata)
 
 
