@@ -214,7 +214,7 @@ def check_time_index(
         )
 
     # Check time index is ordered in time
-    if not index.is_monotonic:
+    if not index.is_monotonic_increasing:
         raise ValueError(
             f"The (time) index of {var_name} must be sorted monotonically increasing, "
             f"but found: {index}"

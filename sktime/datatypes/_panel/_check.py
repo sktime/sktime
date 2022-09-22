@@ -278,9 +278,12 @@ def _nested_dataframe_has_nans(X: pd.DataFrame) -> bool:
     for i in range(cases):
         for j in range(dimensions):
             s = X.iloc[i, j]
-            for k in range(s.size):
-                if pd.isna(s.iloc[k]):
-                    return True
+            if hasattr(s, "size"):
+                for k in range(s.size):
+                    if pd.isna(s.iloc[k]):
+                        return True
+            elif pd.isna(s):
+                return True
     return False
 
 
