@@ -370,15 +370,21 @@ class ConformalIntervals(BaseForecaster):
 
         n_initial_window = self._parse_initial_window(y, initial_window=initial_window)
 
-        y_index = y.iloc[n_initial_window:].index
+        full_y_index = y.iloc[n_initial_window:].index
 
-        residuals_matrix = pd.DataFrame(columns=y_index, index=y_index, dtype="float")
+        residuals_matrix = pd.DataFrame(
+            columns=full_y_index, index=full_y_index, dtype="float"
+        )
 
         if update and hasattr(self, "residuals_matrix_"):
-            y_index = y_index.difference(self.residuals_matrix_.index)
-            residuals_matrix.loc[
-                self.residuals_matrix_.index, self.residuals_matrix_.columns
-            ] = self.residuals_matrix_
+            remaining_y_index = full_y_index.difference(self.residuals_matrix_.index)
+            if len(remaining_y_index) != len(full_y_index):
+                residuals_matrix.loc[
+                    self.residuals_matrix_.index, self.residuals_matrix_.columns
+                ] = self.residuals_matrix_
+            y_index = remaining_y_index
+        else:
+            y_index = full_y_index
 
         if sample_frac and len(y_index.to_series().sample(frac=sample_frac)) > 2:
             y_index = y_index.to_series().sample(frac=sample_frac)
