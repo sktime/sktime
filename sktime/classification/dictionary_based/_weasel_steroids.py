@@ -197,7 +197,7 @@ class WEASEL_STEROIDS(BaseClassifier):
             self.ensemble_size = 100
         else:
             self.max_window = 84
-            self.ensemble_size = 150
+            # self.ensemble_size = 150
 
         self.max_window = int(min(self.series_length, self.max_window))
         if self.min_window > self.max_window:
