@@ -26,9 +26,9 @@ class _LcssDistance(ElasticDistance):
         **kwargs: dict,
     ) -> DistanceCallable:
         # Has to be here because circular import if at top
-        from sktime.distances.distance_rework import _SquaredDistance
+        from sktime.distances.distance_rework import _EuclideanDistance
 
-        local_squared_distance = _SquaredDistance().distance_factory(
+        local_squared_distance = _EuclideanDistance().distance_factory(
             x[0], y[0], strategy="local"
         )
 
@@ -99,7 +99,7 @@ class _LcssDistance(ElasticDistance):
                                 cost_matrix[i, j - 1], cost_matrix[i - 1, j]
                             )
 
-            return cost_matrix[-1, -1], cost_matrix[1:, 1:]
+            return cost_matrix[-1, -1], cost_matrix
 
         return _numba_lcss
 
@@ -108,3 +108,44 @@ class _LcssDistance(ElasticDistance):
             return 1 - float(distance / min(x_size, y_size))
 
         return _result_callback
+
+    def _alignment_path_factory(
+            self,
+            x: np.ndarray,
+            y: np.ndarray,
+            strategy: str = 'independent',
+            epsilon: float = 1.0,
+            **kwargs
+    ) -> AlignmentPathCallable:
+        from sktime.distances.distance_rework import _EuclideanDistance
+
+        _example_x = x[-1]
+        _example_y = y[-1]
+        euclidean_distance = _EuclideanDistance().distance_factory(
+            _example_x, _example_y, strategy="independent", **kwargs
+        )
+
+        def _compute_min_return_path(
+                _x: np.ndarray,
+                _y: np.ndarray,
+                _cost_matrix: np.ndarray,
+                _bounding_matrix: np.ndarray
+        ) -> List[Tuple]:
+            x_size = _x.shape[1]
+            y_size = _y.shape[1]
+
+            i, j = (x_size, y_size)
+            path = []
+
+            while i > 0 and j > 0:
+                if np.isfinite(_bounding_matrix[i - 1, j - 1]):
+                    if euclidean_distance(_x[:, i - 1], _y[:, j - 1]) <= epsilon:
+                        path.append((i - 1, j - 1))
+                        i, j = (i - 1, j - 1)
+                    elif _cost_matrix[i - 1][j] > _cost_matrix[i][j - 1]:
+                        i = i - 1
+                    else:
+                        j = j - 1
+            return path[::-1]
+
+        return _compute_min_return_path

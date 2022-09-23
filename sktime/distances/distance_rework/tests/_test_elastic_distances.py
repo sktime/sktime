@@ -94,6 +94,6 @@ def test_twe():
     _alignment_test(_TweDistance(), x_2d, y_2d)
 
 
-# def test_lcss():
-#     _alignment_test(_LcssDistance(), x_1d, y_1d)
-#     _alignment_test(_LcssDistance(), x_2d, y_2d)
+def test_lcss():
+    _alignment_test(_LcssDistance(), x_1d, y_1d)
+    _alignment_test(_LcssDistance(), x_2d, y_2d)
