@@ -9,6 +9,7 @@ from sklearn import clone
 from sklearn.utils.metaestimators import if_delegate_has_method
 
 from sktime.base import _HeterogenousMetaEstimator
+from sktime.datatypes import ALL_TIME_SERIES_MTYPES
 from sktime.transformations._delegate import _DelegatedTransformer
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.multiindex import flatten_multiindex
@@ -62,39 +63,46 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
     """Pipeline of transformers compositor.
 
     The `TransformerPipeline` compositor allows to chain transformers.
-    The pipeline is constructed with a list of sktime transformers,
-        i.e., estimators following the BaseTransformer interface.
-    The list can be unnamed - a simple list of transformers -
-        or string named - a list of pairs of string, estimator.
+    The pipeline is constructed with a list of sktime transformers, i.e.
+    estimators following the BaseTransformer interface. The list can be
+    unnamed (a simple list of transformers) or string named (a list of
+    pairs of string, estimator).
 
     For a list of transformers `trafo1`, `trafo2`, ..., `trafoN`,
-        the pipeline behaves as follows:
-    `fit` - changes state by running `trafo1.fit_transform`, `trafo2.fit_transform`, etc
-        sequentially, with `trafo[i]` receiving the output of `trafo[i-1]`
-    `transform` - result is of executing `trafo1.transform`, `trafo2.transform`, etc
-        with `trafo[i].transform` input = output of `trafo[i-1].transform`,
+    the pipeline behaves as follows:
+
+    * `fit`
+        Changes state by running `trafo1.fit_transform`,
+        trafo2.fit_transform` etc sequentially, with
+        `trafo[i]` receiving the output of `trafo[i-1]`
+    * `transform`
+        Result is of executing `trafo1.transform`, `trafo2.transform`,
+        etc with `trafo[i].transform` input = output of `trafo[i-1].transform`,
         and returning the output of `trafoN.transform`
-    `inverse_transform` - result is of executing `trafo[i].inverse_transform`,
-        with `trafo[i].inverse_transform` input = output `trafo[i-1].inverse_transform`,
-        and returning the output of `trafoN.inverse_transform`
-    `update` - changes state by chaining `trafo1.update`, `trafo1.transform`,
+    * `inverse_transform`
+        Result is of executing `trafo[i].inverse_transform`,
+        with `trafo[i].inverse_transform` input = output
+        `trafo[i-1].inverse_transform`, and returning the output of
+        `trafoN.inverse_transform`
+    * `update`
+        Changes state by chaining `trafo1.update`, `trafo1.transform`,
         `trafo2.update`, `trafo2.transform`, ..., `trafoN.update`,
         where `trafo[i].update` and `trafo[i].transform` receive as input
-            the output of `trafo[i-1].transform`
+        the output of `trafo[i-1].transform`
 
-    `get_params`, `set_params` uses `sklearn` compatible nesting interface
-        if list is unnamed, names are generated as names of classes
-        if names are non-unique, `f"_{str(i)}"` is appended to each name string
-            where `i` is the total count of occurrence of a non-unique string
-            inside the list of names leading up to it (inclusive)
+    The `get_params`, `set_params` uses `sklearn` compatible nesting interface
+    if list is unnamed, names are generated as names of classes
+    if names are non-unique, `f"_{str(i)}"` is appended to each name string
+    where `i` is the total count of occurrence of a non-unique string
+    inside the list of names leading up to it (inclusive)
 
-    `TransformerPipeline` can also be created by using the magic multiplication
-        on any transformer, i.e., any estimator inheriting from `BaseTransformer`
-            for instance, `my_trafo1 * my_trafo2 * my_trafo3`
-            will result in the same object as  obtained from the constructor
-            `TransformerPipeline([my_trafo1, my_trafo2, my_trafo3])`
-        magic multiplication can also be used with (str, transformer) pairs,
-            as long as one element in the chain is a transformer
+    A `TransformerPipeline` can also be created by using the magic multiplication
+    on any transformer, i.e., any estimator inheriting from `BaseTransformer`
+    for instance, `my_trafo1 * my_trafo2 * my_trafo3`
+    will result in the same object as  obtained from the constructor
+    `TransformerPipeline([my_trafo1, my_trafo2, my_trafo3])`
+    A magic multiplication can also be used with (str, transformer) pairs,
+    as long as one element in the chain is a transformer
 
     Parameters
     ----------
@@ -112,17 +120,15 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
 
     Examples
     --------
-    We'll construct a pipeline from 2 transformers below, in three different ways
-    Preparing the transformers
     >>> from sktime.transformations.series.exponent import ExponentTransformer
     >>> t1 = ExponentTransformer(power=2)
     >>> t2 = ExponentTransformer(power=0.5)
 
-    Example 1, option A: construct without strings
+        Example 1, option A: construct without strings (unique names are generated for
+        the two components t1 and t2)
     >>> pipe = TransformerPipeline(steps = [t1, t2])
-    >>> # unique names are generated for the two components t1 and t2
 
-    Example 1, option B: construct with strings to give custom names to steps
+        Example 1, option B: construct with strings to give custom names to steps
     >>> pipe = TransformerPipeline(
     ...         steps = [
     ...             ("trafo1", t1),
@@ -130,22 +136,22 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
     ...         ]
     ...     )
 
-    Example 1, option C: for quick construction, the * dunder method can be used
+        Example 1, option C: for quick construction, the * dunder method can be used
     >>> pipe = t1 * t2
 
-    Example 2: sklearn transformers can be used in the pipeline.
-    If applied to Series, sklearn transformers are applied by series instance.
-    If applied to Table, sklearn transformers are applied to the table as a whole.
+        Example 2: sklearn transformers can be used in the pipeline.
+        If applied to Series, sklearn transformers are applied by series instance.
+        If applied to Table, sklearn transformers are applied to the table as a whole.
     >>> from sklearn.preprocessing import StandardScaler
     >>> from sktime.transformations.series.summarize import SummaryTransformer
 
-    This applies the scaler per series, then summarizes:
+        This applies the scaler per series, then summarizes:
     >>> pipe = StandardScaler() * SummaryTransformer()
 
-    This applies the sumamrization, then scales the full summary table:
+        This applies the sumamrization, then scales the full summary table:
     >>> pipe = SummaryTransformer() * StandardScaler()
 
-    This scales the series, then summarizes, then scales the full summary table:
+        This scales the series, then summarizes, then scales the full summary table:
     >>> pipe = StandardScaler() * SummaryTransformer() * StandardScaler()
     """
 
@@ -906,6 +912,7 @@ class MultiplexTransformer(_DelegatedTransformer, _HeterogenousMetaEstimator):
     _tags = {
         "fit_is_empty": False,
         "univariate-only": False,
+        "X_inner_mtype": ALL_TIME_SERIES_MTYPES,
     }
 
     _delegate_name = "transformer_"
@@ -928,6 +935,8 @@ class MultiplexTransformer(_DelegatedTransformer, _HeterogenousMetaEstimator):
         self._set_transformer()
         self.clone_tags(self.transformer_)
         self.set_tags(**{"fit_is_empty": False})
+        # this ensures that we convert in the inner estimator, not in the multiplexer
+        self.set_tags(**{"X_inner_mtype": ALL_TIME_SERIES_MTYPES})
 
     @property
     def _transformers(self):

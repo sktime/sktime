@@ -32,7 +32,7 @@ from sktime.datatypes._alignment import check_dict_Alignment
 from sktime.datatypes._hierarchical import check_dict_Hierarchical
 from sktime.datatypes._panel import check_dict_Panel
 from sktime.datatypes._proba import check_dict_Proba
-from sktime.datatypes._registry import SCITYPE_LIST, mtype_to_scitype
+from sktime.datatypes._registry import AMBIGUOUS_MTYPES, SCITYPE_LIST, mtype_to_scitype
 from sktime.datatypes._series import check_dict_Series
 from sktime.datatypes._table import check_dict_Table
 
@@ -44,10 +44,6 @@ check_dict.update(check_dict_Hierarchical)
 check_dict.update(check_dict_Alignment)
 check_dict.update(check_dict_Table)
 check_dict.update(check_dict_Proba)
-
-
-# mtypes to exclude
-AMBIGUOUS_MTYPES = ["numpyflat", "alignment_loc"]
 
 
 def _check_scitype_valid(scitype: str = None):
@@ -472,12 +468,30 @@ def scitype(obj, candidate_scitypes=SCITYPE_LIST, exclude_mtypes=AMBIGUOUS_MTYPE
     ------
     TypeError if no type can be identified, or more than one type is identified
     """
-    _, _, metadata = check_is_scitype(
-        obj,
-        scitype=candidate_scitypes,
-        return_metadata=True,
-        exclude_mtypes=exclude_mtypes,
+    candidate_scitypes = _coerce_list_of_str(
+        candidate_scitypes, var_name="candidate_scitypes"
     )
-    scitype = metadata["scitype"]
 
-    return scitype
+    valid_scitypes = []
+
+    for scitype in candidate_scitypes:
+        valid = check_is_scitype(
+            obj,
+            scitype=scitype,
+            return_metadata=False,
+            exclude_mtypes=exclude_mtypes,
+        )
+        if valid:
+            valid_scitypes += [scitype]
+
+    if len(valid_scitypes) > 1:
+        raise TypeError(
+            "Error in function scitype, more than one valid scitype identified:"
+            f"{ valid_scitypes}"
+        )
+    if len(valid_scitypes) == 0:
+        raise TypeError(
+            "Error in function scitype, no valid scitype could be identified."
+        )
+
+    return valid_scitypes[0]

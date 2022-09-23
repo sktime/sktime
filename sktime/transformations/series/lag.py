@@ -124,6 +124,7 @@ class Lag(BaseTransformer):
         "capability:unequal_length:removes": False,
         "handles-missing-data": True,  # can estimator handle missing data?
         "capability:missing_values:removes": False,
+        "remember_data": True,  # remember all data seen as _X
     }
 
     # todo: add any hyper-parameters and components to constructor
@@ -191,24 +192,6 @@ class Lag(BaseTransformer):
                 name = f"{lag}{freq}"
             name = "lag_" + name
             yield name
-
-    def _fit(self, X, y=None):
-        """Fit transformer to X and y.
-
-        private _fit containing the core logic, called from fit
-
-        Parameters
-        ----------
-        X : pd.DataFrame
-            Data to fit transform to
-        y : ignored, passed for interface compatibility
-
-        Returns
-        -------
-        self: reference to self
-        """
-        # remember X for lagging across past data indices
-        self._X = X
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
@@ -328,7 +311,7 @@ class Lag(BaseTransformer):
         -------
         self: reference to self
         """
-        self._X = X.combine_first(self._X)
+        return self
 
     # todo: return default parameters, so that a test instance can be created
     #   required for automated unit and integration testing of estimator

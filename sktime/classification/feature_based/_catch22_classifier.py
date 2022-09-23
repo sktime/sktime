@@ -146,5 +146,15 @@ class Catch22Classifier(_DelegatedClassifier):
                 "estimator": RandomForestClassifier(n_estimators=10),
                 "outlier_norm": True,
             }
-        else:
-            return {"estimator": RandomForestClassifier(n_estimators=2)}
+
+        from sklearn.dummy import DummyClassifier
+
+        param1 = {"estimator": RandomForestClassifier(n_estimators=2)}
+        param2 = {
+            "estimator": DummyClassifier(),
+            "outlier_norm": True,
+            "replace_nans": False,
+            "random_state": 42,
+        }
+
+        return [param1, param2]

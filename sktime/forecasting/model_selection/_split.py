@@ -352,7 +352,8 @@ class BaseSplitter(BaseObject):
 
         Parameters
         ----------
-        y : pd.Index or time series in sktime compatible time series format (any)
+        y : pd.Index or time series in sktime compatible time series format,
+                time series can be in any Series, Panel, or Hierarchical mtype format
             Index of time series to split, or time series to split
             If time series, considered as index of equivalent pandas type container:
                 pd.DataFrame, pd.Series, pd-multiindex, or pd_multiindex_hier mtype
@@ -462,7 +463,8 @@ class BaseSplitter(BaseObject):
 
         Parameters
         ----------
-        y : pd.Index or time series in sktime compatible time series format (any)
+        y : pd.Index or time series in sktime compatible time series format,
+                time series can be in any Series, Panel, or Hierarchical mtype format
             Time series to split, or index of time series to split
 
         Yields
@@ -482,8 +484,10 @@ class BaseSplitter(BaseObject):
 
         Parameters
         ----------
-        y : pd.Series, pd.DataFrame, or np.ndarray (1D or 2D), optional (default=None)
-            Time series to split, must conform with one of the sktime type conventions.
+        y : time series in sktime compatible time series format,
+                time series can be in any Series, Panel, or Hierarchical mtype format
+            e.g., pd.Series, pd.DataFrame, np.ndarray
+            Time series to split, or index of time series to split
 
         Yields
         ------
