@@ -174,7 +174,7 @@ dataset_names_full = [
     "UWaveGestureLibraryAll",
     "UWaveGestureLibraryX",
     "UWaveGestureLibraryY",
-    # "UWaveGestureLibraryZ",  # error???
+    "UWaveGestureLibraryZ",  # error???
     "Wafer",
     "Wine",
     "WordSynonyms",
@@ -291,7 +291,7 @@ def get_classifiers(threads_to_use):
         #     # sections=1,
         #     n_jobs=threads_to_use,
         # ),
-        "WEASEL (7-8)": WEASEL_STEROIDS(
+        "WEASEL (7-8;30k)": WEASEL_STEROIDS(
             random_state=1379,
             binning_strategies=["equi-depth", "equi-width"],
             alphabet_sizes=[2],
