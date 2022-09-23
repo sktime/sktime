@@ -197,7 +197,7 @@ class WEASEL_STEROIDS(BaseClassifier):
             self.ensemble_size = 100
         else:
             self.max_window = 84
-            # self.ensemble_size = 150
+            self.ensemble_size = 150
 
         self.max_window = int(min(self.series_length, self.max_window))
         if self.min_window > self.max_window:
@@ -291,7 +291,14 @@ class WEASEL_STEROIDS(BaseClassifier):
             Predicted probabilities using the ordering in classes_.
         """
         bag = self._transform_words(X)
-        return self.clf.predict_proba(bag)
+        scores = self.clf.decision_function(bag)
+        if len(scores.shape) == 1:
+            indices = (scores > 0).astype(np.int)
+        else:
+            indices = scores.argmax(axis=1)
+        return self.classes_[indices]
+
+        # return self.clf.predict_proba(bag)
 
     def _transform_words(self, X):
         XX = X.squeeze(1)

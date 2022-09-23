@@ -23,7 +23,8 @@ import torch
 from convst.classifiers import R_DST_Ridge
 from joblib import Parallel, delayed, parallel_backend
 from scipy.stats import zscore
-from sklearn.linear_model import RidgeClassifierCV
+from sklearn.ensemble import StackingClassifier, VotingClassifier
+from sklearn.linear_model import LogisticRegression, RidgeClassifierCV
 from sklearn.pipeline import make_pipeline
 
 from sktime.classification.dictionary_based import (
@@ -231,7 +232,36 @@ dataset_names_excerpt = [
 def get_classifiers(threads_to_use):
     """Obtain the benchmark classifiers."""
     clfs = {
-        "WEASEL (dilated)": WEASEL_STEROIDS(
+        # "Voting": VotingClassifier(
+        #     estimators=[
+        #         ("WS 24", WEASEL_STEROIDS(
+        #             random_state=1379,
+        #             max_window=24,
+        #             ensemble_size=50,
+        #             n_jobs=threads_to_use,
+        #         )),
+        #         ("WS 44", WEASEL_STEROIDS(
+        #             random_state=1379,
+        #             max_window=44,
+        #             ensemble_size=50,
+        #             n_jobs=threads_to_use,
+        #         )),
+        #         ("WS 64", WEASEL_STEROIDS(
+        #             random_state=1379,
+        #             max_window=64,
+        #             ensemble_size=100,
+        #             n_jobs=threads_to_use,
+        #         )),
+        #         ("WS 84", WEASEL_STEROIDS(
+        #             random_state=1379,
+        #             max_window=84,
+        #             ensemble_size=150,
+        #             n_jobs=threads_to_use,
+        #         )),
+        #     ],
+        #     voting="hard"
+        # )
+        "WEASEL (dilated;7-8)": WEASEL_STEROIDS(
             random_state=1379,
             binning_strategies=["equi-depth", "equi-width"],
             alphabet_sizes=[2],
