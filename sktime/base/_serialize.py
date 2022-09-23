@@ -6,23 +6,22 @@ __author__ = ["fkiraly", "achieveordie"]
 
 
 def load(serial):
-    """Load an object either from in-memory or from a location.
-
-    This location will be a file(for non-DL estimators) / folder(for DL estimators).
+    """Load an object either from in-memory or from a (.zip) file.
 
     Parameters
     ----------
-    serial : tuple or string or ZipFile or Path object
+    serial : tuple or string  or Path object
         if serial is a tuple:
             Contains two elements, first in-memory metadata and second
             the related object.
         if serial is a string:
-            Will be converted into a Path object, if resulting
-            object is a file then calls internal classical loader
-            if it is a folder then calls internal deep loader
-            otherwise throws an error.
-        if serial is a Zipfile:
-            Calls to load internal classical loader.
+            The name of the file without the extension, for e.g: if the file
+            is `estimator.zip`, `serial='estimator'`. It can also represent a
+            path, for eg: if location is `home/stored/models/estimator.zip`
+            then `serial='home/stored/models/estimator'`.
+        if serial is a Path object:
+            `serial` then points to the `.zip` file into which the
+            object was stored using class method `.save()` of an estimator.
 
     Returns
     -------
@@ -59,6 +58,7 @@ def load(serial):
     ...     # True
     >>> load_dl_example() # doctest: +SKIP
     """
+    import pickle
     from pathlib import Path
     from zipfile import ZipFile
 
@@ -66,21 +66,13 @@ def load(serial):
         cls = serial[0]
         stored = serial[1]
         return cls.load_from_serial(stored)
-
     elif isinstance(serial, (str, Path)):
-        path = Path(serial) if isinstance(serial, str) else serial
+        path = Path(serial + ".zip") if isinstance(serial, str) else serial
         if not path.exists():
             raise FileNotFoundError(f"The given save location: {serial}\nwas not found")
-        elif path.is_dir():
-            return _load_dl(path)
-        elif path.is_file():
-            return _load_classical(path)
-        else:
-            raise TypeError("Shouldn't reach here, adding for completion")
-
-    elif isinstance(serial, ZipFile):
-        return _load_classical(serial)
-
+        with ZipFile(path) as file:
+            cls = pickle.loads(file.open("_metadata", "r").read())
+        return cls.load_from_path(path)
     else:
         raise TypeError(
             "serial must either be a serialized in-memory sktime object, "
@@ -88,24 +80,3 @@ def load(serial):
             "object, created by save of an sktime object; but found serial "
             f"of type {serial}"
         )
-
-
-def _load_classical(serial):
-    """Call functionality to load Non-DL estimators."""
-    from pathlib import Path
-    from zipfile import ZipFile
-
-    zipfile = ZipFile(serial) if isinstance(serial, Path) else serial
-
-    with zipfile.open("metadata", mode="r") as metadata:
-        cls = metadata.read()
-    with zipfile.open("object", mode="r") as object:
-        return cls.load_from_path(object.read())
-
-
-def _load_dl(serial):
-    """Call functionality to load DL estimators."""
-    import pickle
-
-    cls = pickle.load(open(serial / "_metadata", "rb"))
-    return cls.load_from_path(serial)

@@ -171,37 +171,50 @@ class BaseDeepClassifier(BaseClassifier, ABC):
         self.__dict__["history"] = self.history
 
     def save(self, path=None):
-        """Save serialized self to bytes-like object or to folder.
+        """Save serialized self to bytes-like object or to (.zip) file.
 
         Behaviour:
         if `path` is None, returns an in-memory serialized self
-        if `path` is a file location, stores self at that location
-        saved folder contains the following contents:
-        metadata - contains class of self, i.e., type(self)
-        object - serialized self. This class uses the default serialization (pickle)
+        if `path` is a file, stores the zip with that name at the location.
+        The contents of the zip file are:
+        _metadata - contains class of self, i.e., type(self).
+        _obj - serialized self. This class uses the default serialization (pickle).
+        keras/ - model, optimizer and state stored inside this directory.
+        history - serialized history object.
+
 
         Parameters
         ----------
-        path : None or folder location (str or Path)
+        path : None or file location (str or Path)
             if None, self is saved to an in-memory object
-            if folder location, self is saved to that folder location
+            if file location, self is saved to that file location. For eg:
+                path="estimator" then a zip file `estimator.zip` will be made at cwd.
+                path="/home/stored/estimator" then a zip file `estimator.zip` will be
+                stored in `/home/stored/`.
 
         Returns
         -------
         if `path` is None - in-memory serialized self
-        if `path` is file location - None
+        if `path` is file location - ZipFile with reference to the file
         """
         import pickle
+        import shutil
         from pathlib import Path
+        from zipfile import ZipFile
 
         if path is None:
             return (type(self), pickle.dumps(self))
+        if not isinstance(path, (str, Path)):
+            raise TypeError(
+                "`path` is expected to either be a string or a Path object "
+                f"but found of type:{type(path)}."
+            )
 
         if self.model_ is None:
-            raise NotFittedError("Model not built yet, call it via `.build_model()`")
+            raise NotFittedError("Model not built yet, call it via `.fit()`")
 
-        path = Path(path)
-        path.mkdir(exist_ok=True)
+        path = Path(path) if isinstance(path, str) else path
+        path.mkdir()
 
         self.model_.save(path / "keras/")
         with open(path / "history", "wb") as history_writer:
@@ -210,24 +223,41 @@ class BaseDeepClassifier(BaseClassifier, ABC):
         pickle.dump(type(self), open(path / "_metadata", "wb"))
         pickle.dump(self, open(path / "_obj", "wb"))
 
+        shutil.make_archive(base_name=path, format="zip", root_dir=path)
+        shutil.rmtree(path)
+        return ZipFile(path.with_name(f"{path.stem}.zip"))
+
     @classmethod
     def load_from_path(cls, serial):
         """Load object from file location.
 
         Parameters
         ----------
-        serial : Name of the folder
+        serial : Name of the zip file.
 
         Returns
         -------
         deserialized self resulting in output at `path`, of `cls.save(path)`
         """
         import pickle
+        from shutil import rmtree
+        from zipfile import ZipFile
 
         from tensorflow import keras
 
-        cls.model_ = keras.models.load_model(serial / "keras/")
-        cls.history = keras.callbacks.History()
-        cls.history.set_params(pickle.load(open(serial / "history", "rb")))
+        temp_unzip_loc = serial.parent / "temp_unzip/"
+        temp_unzip_loc.mkdir()
 
-        return pickle.load(open(serial / "_obj", "rb"))
+        with ZipFile(serial, mode="r") as zip_file:
+            for file in zip_file.namelist():
+                if not file.startswith("keras/"):
+                    continue
+                zip_file.extract(file, temp_unzip_loc)
+
+        cls.model_ = keras.models.load_model(temp_unzip_loc / "keras/")
+        rmtree(temp_unzip_loc)
+
+        cls.history = keras.callbacks.History()
+        with ZipFile(serial, mode="r") as file:
+            cls.history.set_params(pickle.loads(file.open("history").read()))
+            return pickle.loads(file.open("_obj").read())
