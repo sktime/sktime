@@ -1064,29 +1064,33 @@ class BaseForecaster(BaseEstimator):
                 Series, Panel, Hierarchical scitype, same format (see above)
         """
         self.check_is_fitted()
+
+        # clone self to avoid any side-effects to self
+        self_copy = deepcopy(self)
+
         # if no y is passed, the so far observed y is used
         if y is None:
-            y = self._y
+            y = self_copy._y
 
         # we want residuals, so fh must be the index of y
         # if data frame: take directly from y
-        # to avoid issues with _set_fh, we convert to relative if self.fh is
+        # to avoid issues with _set_fh, we convert to relative if self_copy.fh is
         if isinstance(y, (pd.DataFrame, pd.Series)):
-            fh = ForecastingHorizon(y.index, is_relative=False, freq=self._cutoff)
-            if self._fh is not None and self.fh.is_relative:
-                fh = fh.to_relative(self._cutoff)
-            fh = self._check_fh(fh)
+            fh = ForecastingHorizon(y.index, is_relative=False, freq=self_copy._cutoff)
+            if self_copy._fh is not None and self_copy.fh.is_relative:
+                fh = fh.to_relative(self_copy._cutoff)
+            fh = self_copy._check_fh(fh)
         # if np.ndarray, rows are not indexed
         # so will be interpreted as range(len), or existing fh if it is stored
         elif isinstance(y, np.ndarray):
-            if self._fh is None:
+            if self_copy._fh is None:
                 fh = range(y.shape[0])
             else:
-                fh = self.fh
+                fh = self_copy.fh
         else:
             raise TypeError("y must be a supported Series mtype")
 
-        y_pred = self.predict(fh=fh, X=X)
+        y_pred = self_copy.predict(fh=fh, X=X)
 
         if not type(y_pred) == type(y):
             raise TypeError(
