@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
-from typing import Callable
+from typing import Callable, Tuple, List
 
 import numpy as np
 
 from sktime.distances.distance_rework import ElasticDistance, DistanceCallable
-from sktime.distances.lower_bounding import resolve_bounding_matrix
+from sktime.distances.distance_rework._base import AlignmentPathCallable
 
 
 class _TweDistance(ElasticDistance):
@@ -149,3 +149,75 @@ class _TweDistance(ElasticDistance):
             return cost_matrix[-1, -1], cost_matrix
 
         return _numba_twe
+
+    def _alignment_path_factory(
+            self,
+            x: np.ndarray,
+            y: np.ndarray,
+            strategy: str = 'independent',
+            lmbda: float = 1.0,
+            nu: float = 0.001,
+            p: int = 2,
+            **kwargs
+    ) -> AlignmentPathCallable:
+        from sktime.distances.distance_rework import _EuclideanDistance
+
+        _example_x = x[-1]
+        _example_y = y[-1]
+        euclidean_distance = _EuclideanDistance().distance_factory(
+            _example_x, _example_y, strategy="independent", **kwargs
+        )
+
+        def _compute_min_return_path(
+                _x: np.ndarray,
+                _y: np.ndarray,
+                _cost_matrix: np.ndarray,
+                _bounding_matrix: np.ndarray,
+        ) -> List[Tuple]:
+            # Adapted from:
+            # https://github.com/jzumer/pytwed/blob/master/pytwed/slow_twed.py
+
+            i = _cost_matrix.shape[0] - 1
+            j = _cost_matrix.shape[1] - 1
+
+            # The indices of the paths are save in opposite direction
+            # path = np.ones((i + j, 2 )) * np.inf;
+            best_path = []
+
+            steps = 0
+            while i != 0 or j != 0:
+                best_path.append((i - 1, j - 1))
+
+                C = np.ones((3, 1)) * np.inf
+
+                # Keep data points in both time series
+                C[0] = _cost_matrix[i - 1, j - 1]
+                # Deletion in A
+                C[1] = _cost_matrix[i - 1, j]
+                # Deletion in B
+                C[2] = _cost_matrix[i, j - 1]
+
+                # Find the index for the lowest cost
+                idx = np.argmin(C)
+
+                if idx == 0:
+                    # Keep data points in both time series
+                    i = i - 1
+                    j = j - 1
+                elif idx == 1:
+                    # Deletion in A
+                    i = i - 1
+                    j = j
+                else:
+                    # Deletion in B
+                    i = i
+                    j = j - 1
+                steps = steps + 1
+
+            best_path.append((i - 1, j - 1))
+
+            best_path.reverse()
+            return best_path[1:]
+
+        return _compute_min_return_path
+
