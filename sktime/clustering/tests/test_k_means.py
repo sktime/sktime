@@ -152,24 +152,33 @@ def test_kmeans_dba():
     X_train, y_train = load_basic_motions(split="train")
     X_test, y_test = load_basic_motions(split="test")
 
-    num_test_values = 5
+    num_test_values = 10
 
-    kmeans = TimeSeriesKMeans(
-        averaging_method="dba",
-        random_state=1,
-        n_init=2,
-        n_clusters=4,
-        init_algorithm="kmeans++",
-        metric="dtw",
-        distance_params={'strategy': 'dependent'},
-        average_params={'strategy': 'dependent'}
-    )
-    train_predict = kmeans.fit_predict(X_train.head(num_test_values))
-    train_mean_score = metrics.rand_score(y_train[0:num_test_values], train_predict)
+    metric_arr = ['dtw', 'ddtw', 'wdtw', 'wddtw', 'lcss', 'msm', 'erp', 'edr', 'twe']
+    doesnt_work = ['ddtw', 'wddtw', 'twe']
+    doesnt = []
+    num_centers = len(set(y_train))
+    for metric in doesnt_work:
+        try:
+            kmeans = TimeSeriesKMeans(
+                averaging_method="dba",
+                random_state=1,
+                n_init=2,
+                n_clusters=len(set(y_train)),
+                init_algorithm="kmeans++",
+                metric='euclidean',
+                distance_params={'strategy': 'independent'},
+                average_params={'strategy': 'independent', 'averaging_distance_metric': metric}
+            )
+            train_predict = kmeans.fit_predict(X_train.head(num_test_values))
+            train_mean_score = metrics.rand_score(y_train[0:num_test_values], train_predict)
 
-    test_mean_result = kmeans.predict(X_test.head(num_test_values))
-    mean_score = metrics.rand_score(y_test[0:num_test_values], test_mean_result)
-    proba = kmeans.predict_proba(X_test.head(num_test_values))
+            test_mean_result = kmeans.predict(X_test.head(num_test_values))
+            mean_score = metrics.rand_score(y_test[0:num_test_values], test_mean_result)
+            proba = kmeans.predict_proba(X_test.head(num_test_values))
+        except:
+            doesnt.append(metric)
+    done = ''
 
     assert np.array_equal(test_mean_result, expected_results["dba"])
     assert mean_score == expected_score["dba"]
