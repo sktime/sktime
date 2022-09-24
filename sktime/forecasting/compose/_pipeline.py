@@ -5,7 +5,6 @@
 __author__ = ["mloning", "aiwalter"]
 __all__ = ["TransformedTargetForecaster", "ForecastingPipeline", "ForecastX"]
 
-
 import pandas as pd
 
 from sktime.base import _HeterogenousMetaEstimator
@@ -28,7 +27,7 @@ class _Pipeline(
         """Get the index of the first forecaster in the list."""
         return self._get_pipeline_scitypes(estimators).index("forecaster")
 
-    def _check_steps(self, estimators, allow_postproc=False, permutation=None):
+    def _check_steps(self, estimators, allow_postproc=False):
         """Check Steps.
 
         Parameters
@@ -36,10 +35,6 @@ class _Pipeline(
         estimators : list of estimators, or list of (name, estimator) pairs
         allow_postproc : bool, optional, default=False
             whether transformers after the forecaster are allowed
-        permutation : list of str, optional, default=None
-            List with step names used to permutate the steps. This can be used in grid
-            search to find optimal step orderings by trying different permutation.
-
 
         Returns
         -------
@@ -79,29 +74,6 @@ class _Pipeline(
                 f"in {type(self).__name__}, last estimator must be a forecaster, "
                 f"but found a transformer"
             )
-
-        # sort steps by permutation
-        if permutation is not None:
-
-            # check that all permutation are str values
-            if not all(isinstance(item, str) for item in permutation):
-                raise ValueError("permutation must be a list of strings")
-
-            # check that permutation contains same step names as given in steps
-            if not sorted([x[0] for x in estimator_tuples]) == sorted(permutation):
-                raise ValueError(
-                    f"""Permutations must contain the same step names as the pipeline,
-                    found tuple names {sorted([x[0] for x in estimator_tuples])} but got
-                    permutation {sorted(permutation)}."""
-                )
-
-            # sort steps
-            estimator_tuples_permuted = []
-            for p in permutation:
-                for step in estimator_tuples:
-                    if p == step[0]:
-                        estimator_tuples_permuted.append(step)
-            estimator_tuples = estimator_tuples_permuted.copy()
 
         # Shallow copy
         return estimator_tuples
@@ -687,9 +659,6 @@ class TransformedTargetForecaster(_Pipeline):
             the list must contain exactly one forecaster
         these are "blueprint" transformers resp forecasters,
             forecaster/transformer states do not change when `fit` is called
-    permutation : list of str, optional, default=None
-        List with step names used to permutate the steps. This can be used in grid
-        search to find optimal step orderings by trying different permutation.
 
     Attributes
     ----------
@@ -749,13 +718,9 @@ class TransformedTargetForecaster(_Pipeline):
         "X-y-must-have-same-index": False,
     }
 
-    def __init__(self, steps, permutation=None):
+    def __init__(self, steps):
         self.steps = steps
-        self.permutation = permutation
-        # TODO: This attribute assignment should only happen in fit()
-        self.steps_ = self._check_steps(
-            estimators=self.steps, allow_postproc=True, permutation=self.permutation
-        )
+        self.steps_ = self._check_steps(steps, allow_postproc=True)
         super(TransformedTargetForecaster, self).__init__()
 
         # set the tags based on forecaster
@@ -908,9 +873,7 @@ class TransformedTargetForecaster(_Pipeline):
         -------
         self : returns an instance of self.
         """
-        self.steps_ = self._check_steps(
-            estimators=self.steps, allow_postproc=True, permutation=self.permutation
-        )
+        self.steps_ = self._get_estimator_tuples(self.steps, clone_ests=True)
 
         # transform pre
         yt = y
