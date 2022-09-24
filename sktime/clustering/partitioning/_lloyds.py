@@ -12,6 +12,7 @@ from sklearn.utils.extmath import stable_cumsum
 from sktime.clustering.base import BaseClusterer
 from sktime.clustering.metrics.averaging import mean_average
 from sktime.distances.distance_rework import distance_factory, pairwise_distance
+from sktime.distances._ddtw import average_of_slope_transform
 
 
 def _forgy_center_initializer(
@@ -300,9 +301,20 @@ class TimeSeriesLloyds(BaseClusterer, ABC):
             Fitted estimator.
         """
         self._check_params(X)
-        self._distance_metric = distance_factory(
-            X[0], X[1], metric=self.metric, **self._distance_params
-        )
+        if self.metric == "ddtw" or self.metric == "wddtw":
+            X = average_of_slope_transform(X)
+            if self.metric == "ddtw":
+                self._distance_metric = distance_factory(
+                    X[0], X[1], metric="dtw", **self._distance_params
+                )
+            else:
+                self._distance_metric = distance_factory(
+                    X[0], X[1], metric="wdtw", **self._distance_params
+                )
+        else:
+            self._distance_metric = distance_factory(
+                X[0], X[1], metric=self.metric, **self._distance_params
+            )
         best_centers = None
         best_inertia = np.inf
         best_labels = None
@@ -336,6 +348,8 @@ class TimeSeriesLloyds(BaseClusterer, ABC):
         np.ndarray (1d array of shape (n_instances,))
             Index of the cluster each time series in X belongs to.
         """
+        if self.metric == "ddtw" or self.metric == "wddtw":
+            X = average_of_slope_transform(X)
         return self._assign_clusters(X, self.cluster_centers_)[0]
 
     def _fit_one_init(self, X) -> Tuple[np.ndarray, np.ndarray, float, int]:
