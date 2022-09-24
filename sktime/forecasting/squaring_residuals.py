@@ -8,6 +8,7 @@ __author__ = ["kcc-lion"]
 from warnings import warn
 
 import pandas as pd
+import numpy as np
 
 from sktime.datatypes._convert import convert_to
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
@@ -86,7 +87,7 @@ class SquaringResiduals(BaseForecaster):
         "handles-missing-data": False,  # can estimator handle missing data?
         "y_inner_mtype": "pd.Series",  # which types do _fit, _predict, assume for y?
         "X_inner_mtype": "pd.DataFrame",  # which types do _fit, _predict, assume for X?
-        "requires-fh-in-fit": False,  # is forecasting horizon already required in fit?
+        "requires-fh-in-fit": True,  # is forecasting horizon already required in fit?
         "X-y-must-have-same-index": True,  # can estimator handle different X/y index?
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
         "capability:pred_int": True,  # does forecaster implement proba forecasts?
@@ -97,8 +98,7 @@ class SquaringResiduals(BaseForecaster):
         self,
         forecaster=None,
         residual_forecaster=None,
-        initial_window=1,
-        steps_ahead=1,
+        initial_window=5,
         strategy="square",
         distr="norm",
         distr_kwargs=None,
@@ -106,7 +106,6 @@ class SquaringResiduals(BaseForecaster):
         self.forecaster = forecaster
         self.residual_forecaster = residual_forecaster
         self.strategy = strategy
-        self.steps_ahead = steps_ahead
         self.initial_window = initial_window
         self.distr = distr
         self.distr_kwargs = distr_kwargs
@@ -114,7 +113,6 @@ class SquaringResiduals(BaseForecaster):
 
         assert self.distr in ["norm", "laplace", "t", "cauchy"]
         assert self.strategy in ["square", "abs"]
-        assert self.steps_ahead >= 1, "Steps ahead should be larger or equal to one"
         assert self.initial_window >= 1, (
             "Initial window should be larger or equal" " to one"
         )
@@ -153,24 +151,52 @@ class SquaringResiduals(BaseForecaster):
         -------
         self : reference to self
         """
+        fh_rel = fh.to_relative(self.cutoff)
+        self._res_forecasters = {}
         self._residual_forecaster_ = self.residual_forecaster.clone()
         self._forecaster_ = self.forecaster.clone()
 
         y = convert_to(y, "pd.Series")
         self.cv = ExpandingWindowSplitter(
-            initial_window=self.initial_window, fh=self.steps_ahead
+            initial_window=self.initial_window, fh=fh_rel
         )
-        self._forecaster_.fit(y=y.iloc[: self.initial_window], X=X)
+        self._forecaster_.fit(y=y.iloc[:self.initial_window], X=X)
         y_pred = self._forecaster_.update_predict(
             y=y, cv=self.cv, X=X, update_params=True
         )
-        residuals = y.iloc[self.initial_window :] - y_pred
-        if self.strategy == "square":
-            residuals = residuals**2
-        else:
-            residuals = residuals.abs()
 
-        self._residual_forecaster_.fit(y=residuals)
+        for step_ahead in fh_rel:
+            if isinstance(y.index, pd.DatetimeIndex):
+                fh_current = ForecastingHorizon(step_ahead, freq=y.index.freq)
+            else:
+                fh_current = ForecastingHorizon(step_ahead)
+            # create current prediction series
+            if len(fh_rel) == 1:
+                y_pred_current = y_pred
+            else:
+                y_pred_current = []
+                y_pred_current_index = []
+                for col in y_pred.columns:
+                    fh_current_abs = fh_current.to_absolute(col)
+                    y_pred_current.append(y_pred.at[fh_current_abs[0], col])
+                    y_pred_current_index.append(fh_current_abs[0])
+                y_pred_current = pd.Series(data=y_pred_current, index=y_pred_current_index)
+
+            # get residuals
+            y_step = y[y_pred_current.index]
+            residuals = y_step - y_pred_current
+            if self.strategy == "square":
+                residuals = residuals**2
+            else:
+                residuals = residuals.abs()
+            # residuals.index = y_step_index
+            if isinstance(residuals.index, pd.DatetimeIndex):
+                residuals = residuals.asfreq(y.index.freq)
+
+            # fit to residuals
+            self._res_step_forecaster_ = self.residual_forecaster.clone()
+            self._res_step_forecaster_.fit(y=residuals)
+            self._res_forecasters[step_ahead] = self._res_step_forecaster_
         return self
 
     def _predict(self, fh, X=None):
@@ -199,9 +225,48 @@ class SquaringResiduals(BaseForecaster):
         y_pred : pd.Series
             Point predictions
         """
-        fh_abs = fh.to_absolute(self.cutoff)
-        y_pred = self._forecaster_.predict(X=X, fh=fh_abs)
+        y_pred = self._forecaster_.predict(X=X, fh=fh)
         return y_pred
+
+    def _update(self, y, X=None, update_params=True):
+        """Update time series to incremental training data.
+
+        private _update containing the core logic, called from update
+
+        State required:
+            Requires state to be "fitted".
+
+        Accesses in self:
+            Fitted model attributes ending in "_"
+            self.cutoff
+
+        Writes to self:
+            Sets fitted model attributes ending in "_", if update_params=True.
+            Does not write to self if update_params=False.
+
+        Parameters
+        ----------
+        y : guaranteed to be of a type in self.get_tag("y_inner_mtype")
+            Time series with which to update the forecaster.
+            if self.get_tag("scitype:y")=="univariate":
+                guaranteed to have a single column/variable
+            if self.get_tag("scitype:y")=="multivariate":
+                guaranteed to have 2 or more columns
+            if self.get_tag("scitype:y")=="both": no restrictions apply
+        X : optional (default=None)
+            guaranteed to be of a type in self.get_tag("X_inner_mtype")
+            Exogeneous time series for the forecast
+        update_params : bool, optional (default=True)
+            whether model parameters should be updated
+
+        Returns
+        -------
+        self : reference to self
+        """
+        self._forecaster_.update(X=X, y=y, update_params=update_params)
+        for forecaster in self._res_forecasters.values():
+            forecaster.update(X=X, y=y, update_params=update_params)
+        return self
 
     def _predict_quantiles(self, fh, X=None, alpha=None):
         """Compute/return prediction quantiles for a forecast.
@@ -239,7 +304,7 @@ class SquaringResiduals(BaseForecaster):
         eval(f"exec('from scipy.stats import {self.distr}')")
         fh_abs = fh.to_absolute(self.cutoff)
         y_pred = self._forecaster_.predict(fh=fh_abs, X=X)
-        pred_var = self._predict_var(fh=fh_abs, X=X)
+        pred_var = self._predict_var(fh=fh, X=X)
         if self.distr_kwargs is not None:
             z_scores = eval(self.distr).ppf(alpha, **self.distr_kwargs)
         else:
@@ -281,57 +346,61 @@ class SquaringResiduals(BaseForecaster):
         """
         if cov:
             warn(f"cov={cov} is not supported. Defaulting to cov=False instead.")
-        pred_var = self._residual_forecaster_.predict(X=X, fh=fh)
-        pred_var = convert_to(pred_var, to_type="pd.Series")
+        fh_abs = fh.to_absolute(self.cutoff)
+        fh_rel = fh.to_relative(self.cutoff)
+        pred_var = pd.Series(index=fh_rel)
+        for el in fh_rel:
+            pred_var.at[el] = self._res_forecasters[el].predict(fh=el)[0]
         if self.strategy == "square":
             pred_var = pred_var**0.5
+        pred_var.index = fh_abs
         return pred_var
 
-    def _update(self, y, X=None, update_params=True):
-        """Update time series to incremental training data.
-
-        private _update containing the core logic, called from update
-
-        State required:
-            Requires state to be "fitted".
-
-        Accesses in self:
-            Fitted model attributes ending in "_"
-            self.cutoff
-
-        Writes to self:
-            Sets fitted model attributes ending in "_", if update_params=True.
-            Does not write to self if update_params=False.
-
-        Parameters
-        ----------
-        y : guaranteed to be of a type in self.get_tag("y_inner_mtype")
-            Time series with which to update the forecaster.
-            if self.get_tag("scitype:y")=="univariate":
-                guaranteed to have a single column/variable
-            if self.get_tag("scitype:y")=="multivariate":
-                guaranteed to have 2 or more columns
-            if self.get_tag("scitype:y")=="both": no restrictions apply
-        X : optional (default=None)
-            guaranteed to be of a type in self.get_tag("X_inner_mtype")
-            Exogeneous time series for the forecast
-        update_params : bool, optional (default=True)
-            whether model parameters should be updated
-
-        Returns
-        -------
-        self : reference to self
-        """
-        self._forecaster_._update(y=y, X=X, update_params=update_params)
-        fh = ForecastingHorizon(values=y.index, is_relative=False)
-        y_pred = self._forecaster_.predict(fh=fh, X=X)
-        residuals = y - y_pred
-        if self.strategy == "square":
-            residuals = residuals**2
-        else:
-            residuals = residuals.abs()
-        self._residual_forecaster_._update(y=residuals, update_params=update_params)
-        return self
+    # def _update(self, y, X=None, update_params=True):
+    #     """Update time series to incremental training data.
+    #
+    #     private _update containing the core logic, called from update
+    #
+    #     State required:
+    #         Requires state to be "fitted".
+    #
+    #     Accesses in self:
+    #         Fitted model attributes ending in "_"
+    #         self.cutoff
+    #
+    #     Writes to self:
+    #         Sets fitted model attributes ending in "_", if update_params=True.
+    #         Does not write to self if update_params=False.
+    #
+    #     Parameters
+    #     ----------
+    #     y : guaranteed to be of a type in self.get_tag("y_inner_mtype")
+    #         Time series with which to update the forecaster.
+    #         if self.get_tag("scitype:y")=="univariate":
+    #             guaranteed to have a single column/variable
+    #         if self.get_tag("scitype:y")=="multivariate":
+    #             guaranteed to have 2 or more columns
+    #         if self.get_tag("scitype:y")=="both": no restrictions apply
+    #     X : optional (default=None)
+    #         guaranteed to be of a type in self.get_tag("X_inner_mtype")
+    #         Exogeneous time series for the forecast
+    #     update_params : bool, optional (default=True)
+    #         whether model parameters should be updated
+    #
+    #     Returns
+    #     -------
+    #     self : reference to self
+    #     """
+    #     self._forecaster_._update(y=y, X=X, update_params=update_params)
+    #     fh = ForecastingHorizon(values=y.index, is_relative=False)
+    #     y_pred = self._forecaster_.predict(fh=fh, X=X)
+    #     residuals = y - y_pred
+    #     if self.strategy == "square":
+    #         residuals = residuals**2
+    #     else:
+    #         residuals = residuals.abs()
+    #     self._residual_forecaster_._update(y=residuals, update_params=update_params)
+    #     return self
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -356,19 +425,19 @@ class SquaringResiduals(BaseForecaster):
         from sktime.forecasting.naive import NaiveForecaster
 
         params = [
-            {
-                "forecaster": NaiveForecaster(),
-                "residual_forecaster": NaiveForecaster(),
-                "initial_window": 2,
-                "distr": "norm",
-            },
-            {
-                "forecaster": NaiveForecaster(),
-                "residual_forecaster": NaiveForecaster(),
-                "initial_window": 2,
-                "distr": "t",
-                "distr_kwargs": {"df": 21},
-            },
+            # {
+            #     "forecaster": NaiveForecaster(),
+            #     "residual_forecaster": ThetaForecaster(),
+            #     "initial_window": 2,
+            #     "distr": "norm",
+            # },
+            # {
+            #     "forecaster": NaiveForecaster(),
+            #     "residual_forecaster": ThetaForecaster(),
+            #     "initial_window": 2,
+            #     "distr": "t",
+            #     "distr_kwargs": {"df": 21},
+            # },
             {
                 "forecaster": Croston(),
                 "residual_forecaster": Croston(),
