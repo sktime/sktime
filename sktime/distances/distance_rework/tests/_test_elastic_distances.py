@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-from math import isclose
-
 import numpy as np
 
 from sktime.distances.distance_rework import (
