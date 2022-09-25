@@ -214,6 +214,7 @@ class _Pipeline(
         from sktime.forecasting.naive import NaiveForecaster
         from sktime.forecasting.sarimax import SARIMAX
         from sktime.transformations.series.adapt import TabularToSeriesAdaptor
+        from sktime.transformations.series.detrend import Detrender
         from sktime.transformations.series.exponent import ExponentTransformer
 
         # StandardScaler does not skip fit, NaiveForecaster is not probabilistic
@@ -230,7 +231,7 @@ class _Pipeline(
         ]
         params2 = {"steps": STEPS2}
 
-        params3 = {"steps": [ExponentTransformer(), SARIMAX()]}
+        params3 = {"steps": [Detrender(), SARIMAX()]}
 
         return [params1, params2, params3]
 
@@ -1128,8 +1129,8 @@ class ForecastX(BaseForecaster):
     """
 
     _tags = {
-        "X_inner_mtype": "pd.DataFrame",
-        "y_inner_mtype": "pd.DataFrame",
+        "X_inner_mtype": SUPPORTED_MTYPES,
+        "y_inner_mtype": SUPPORTED_MTYPES,
         "X-y-must-have-same-index": False,
         "fit_is_empty": False,
         "ignores-exogeneous-X": False,
