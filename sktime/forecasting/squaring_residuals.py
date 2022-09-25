@@ -421,6 +421,7 @@ class SquaringResiduals(BaseForecaster):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         from sktime.forecasting.croston import Croston
+
         # from sktime.forecasting.naive import NaiveForecaster
 
         params = [
