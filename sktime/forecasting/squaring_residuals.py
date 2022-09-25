@@ -7,7 +7,6 @@ __author__ = ["kcc-lion"]
 
 from warnings import warn
 
-import numpy as np
 import pandas as pd
 
 from sktime.datatypes._convert import convert_to
@@ -422,7 +421,7 @@ class SquaringResiduals(BaseForecaster):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         from sktime.forecasting.croston import Croston
-        from sktime.forecasting.naive import NaiveForecaster
+        # from sktime.forecasting.naive import NaiveForecaster
 
         params = [
             # {
