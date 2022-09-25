@@ -1,17 +1,18 @@
-#!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
+"""Tests for Deseasonalizer."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-__author__ = ["Markus Löning"]
+__author__ = ["mloning"]
 __all__ = []
 
 import numpy as np
 import pytest
+from statsmodels.tsa.seasonal import seasonal_decompose
+
 from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.forecasting.tests._config import TEST_SPS
 from sktime.transformations.series.detrend import Deseasonalizer
 from sktime.utils._testing.forecasting import make_forecasting_problem
-from statsmodels.tsa.seasonal import seasonal_decompose
 
 MODELS = ["additive", "multiplicative"]
 
@@ -56,3 +57,23 @@ def test_transform_inverse_transform_equivalence(sp, model):
     yit = transformer.inverse_transform(transformer.transform(y_train))
     np.testing.assert_array_equal(y_train.index, yit.index)
     np.testing.assert_array_almost_equal(y_train, yit)
+
+
+def test_deseasonalizer_in_pipeline():
+    """Test deseasonalizer in pipeline, see issue #3267."""
+    from sktime.datasets import load_airline
+    from sktime.forecasting.compose import TransformedTargetForecaster
+    from sktime.forecasting.theta import ThetaForecaster
+    from sktime.transformations.series.detrend import Deseasonalizer
+
+    all_df = load_airline().to_frame()
+
+    model = TransformedTargetForecaster(
+        [
+            ("deseasonalize", Deseasonalizer(model="additive", sp=12)),
+            ("forecast", ThetaForecaster()),
+        ]
+    )
+    train_df = all_df["1949":"1950"]
+    model.fit(train_df)
+    model.update(y=all_df["1951"])
