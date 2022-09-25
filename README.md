@@ -63,14 +63,14 @@ Questions and feedback are extremely welcome! Please understand that we won't be
 ## :dizzy: Features
 Our aim is to make the time series analysis ecosystem more interoperable and usable as a whole. sktime provides a __unified interface for distinct but related time series learning tasks__. It features [__dedicated time series algorithms__](https://www.sktime.org/en/stable/estimator_overview.html) and __tools for composite model building__ including pipelining, ensembling, tuning and reduction that enables users to apply an algorithm for one task to another.
 
-sktime also provides **interfaces to related libraries**, for example [scikit-learn], [statsmodels], [tsfresh], [PyOD] and [fbprophet], among others.
+sktime also provides **interfaces to related libraries**, for example [scikit-learn], [statsmodels], [tsfresh], [PyOD] and [fbprophet](https://facebook.github.io/prophet/), among others.
 
 For **deep learning**, see our companion package: [sktime-dl](https://github.com/sktime/sktime-dl).
 
 [statsmodels]: https://www.statsmodels.org/stable/index.html
 [tsfresh]: https://tsfresh.readthedocs.io/en/latest/
 [pyod]: https://pyod.readthedocs.io/en/latest/
-[prophet]: https://facebook.github.io/prophet/
+[fbprophet]: https://facebook.github.io/prophet/
 
 | Module | Status | Links |
 |---|---|---|
@@ -194,10 +194,10 @@ There are many ways to join the sktime community. We follow the [all-contributor
 
 ## :bulb: Project vision
 
-* **by the community, for the community** -- developed by a friendly and collaborative community.
-* the **right tool for the right task** -- helping users to diagnose their learning problem and suitable scientific model types.
-* **embedded in state-of-art ecosystems** and **provider of interoperable interfaces** -- interoperable with [scikit-learn], [statsmodels], [tsfresh], and other community favourites.
-* **rich model composition and reduction functionality** -- build tuning and feature extraction pipelines, solve forecasting tasks with [scikit-learn] regressors.
-* **clean, descriptive specification syntax** -- based on modern object-oriented design principles for data science.
-* **fair model assessment and benchmarking** -- build your models, inspect your models, check your models, avoid pitfalls.
-* **easily extensible** -- easy extension templates to add your own algorithms compatible with sktime's API.
+* **By the community, for the community** -- developed by a friendly and collaborative community.
+* The **right tool for the right task** -- helping users to diagnose their learning problem and suitable scientific model types.
+* **Embedded in state-of-art ecosystems** and **provider of interoperable interfaces** -- interoperable with [scikit-learn], [statsmodels], [tsfresh], and other community favourites.
+* **Rich model composition and reduction functionality** -- build tuning and feature extraction pipelines, solve forecasting tasks with [scikit-learn] regressors.
+* **Clean, descriptive specification syntax** -- based on modern object-oriented design principles for data science.
+* **Fair model assessment and benchmarking** -- build your models, inspect your models, check your models, avoid pitfalls.
+* **Easily extensible** -- easy extension templates to add your own algorithms compatible with sktime's API.
