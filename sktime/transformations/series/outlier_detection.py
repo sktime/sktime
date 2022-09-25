@@ -139,7 +139,7 @@ class HampelFilter(BaseTransformer):
 
         # data post-processing
         if self.return_bool:
-            Z = Z.apply(lambda x: True if np.isnan(x) else False)
+            Z = Z.apply(lambda x: bool(np.isnan(x)))
 
         return Z
 
