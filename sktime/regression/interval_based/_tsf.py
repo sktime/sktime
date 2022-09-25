@@ -73,6 +73,21 @@ class TimeSeriesForestRegressor(BaseTimeSeriesForest, ForestRegressor, BaseRegre
 
     _base_estimator = DecisionTreeRegressor()
 
+    def __init__(
+        self,
+        min_interval=3,
+        n_estimators=200,
+        n_jobs=1,
+        random_state=None,
+    ):
+        super(TimeSeriesForestRegressor, self).__init__(
+            min_interval=min_interval,
+            n_estimators=n_estimators,
+            n_jobs=n_jobs,
+            random_state=random_state,
+        )
+        BaseRegressor.__init__(self)
+
     def fit(self, X, y):
         """Override sklearn forest fit with BaseRegressor fit."""
         return BaseRegressor.fit(self, X, y)
