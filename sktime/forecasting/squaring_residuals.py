@@ -156,11 +156,9 @@ class SquaringResiduals(BaseForecaster):
         self._forecaster_ = self.forecaster.clone()
 
         y = convert_to(y, "pd.Series")
-        self.cv = ExpandingWindowSplitter(initial_window=self.initial_window, fh=fh_rel)
+        cv = ExpandingWindowSplitter(initial_window=self.initial_window, fh=fh_rel)
         self._forecaster_.fit(y=y.iloc[: self.initial_window], X=X)
-        y_pred = self._forecaster_.update_predict(
-            y=y, cv=self.cv, X=X, update_params=True
-        )
+        y_pred = self._forecaster_.update_predict(y=y, cv=cv, X=X, update_params=True)
 
         for step_ahead in fh_rel:
             if isinstance(y.index, pd.DatetimeIndex):
