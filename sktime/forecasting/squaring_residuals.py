@@ -8,7 +8,6 @@ __author__ = ["kcc-lion"]
 from warnings import warn
 
 import pandas as pd
-import numpy as np
 
 from sktime.datatypes._convert import convert_to
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
@@ -157,10 +156,8 @@ class SquaringResiduals(BaseForecaster):
         self._forecaster_ = self.forecaster.clone()
 
         y = convert_to(y, "pd.Series")
-        self.cv = ExpandingWindowSplitter(
-            initial_window=self.initial_window, fh=fh_rel
-        )
-        self._forecaster_.fit(y=y.iloc[:self.initial_window], X=X)
+        self.cv = ExpandingWindowSplitter(initial_window=self.initial_window, fh=fh_rel)
+        self._forecaster_.fit(y=y.iloc[: self.initial_window], X=X)
         y_pred = self._forecaster_.update_predict(
             y=y, cv=self.cv, X=X, update_params=True
         )
@@ -180,7 +177,9 @@ class SquaringResiduals(BaseForecaster):
                     fh_current_abs = fh_current.to_absolute(col)
                     y_pred_current.append(y_pred.at[fh_current_abs[0], col])
                     y_pred_current_index.append(fh_current_abs[0])
-                y_pred_current = pd.Series(data=y_pred_current, index=y_pred_current_index)
+                y_pred_current = pd.Series(
+                    data=y_pred_current, index=y_pred_current_index
+                )
 
             # get residuals
             y_step = y[y_pred_current.index]
@@ -356,52 +355,6 @@ class SquaringResiduals(BaseForecaster):
         pred_var.index = fh_abs
         return pred_var
 
-    # def _update(self, y, X=None, update_params=True):
-    #     """Update time series to incremental training data.
-    #
-    #     private _update containing the core logic, called from update
-    #
-    #     State required:
-    #         Requires state to be "fitted".
-    #
-    #     Accesses in self:
-    #         Fitted model attributes ending in "_"
-    #         self.cutoff
-    #
-    #     Writes to self:
-    #         Sets fitted model attributes ending in "_", if update_params=True.
-    #         Does not write to self if update_params=False.
-    #
-    #     Parameters
-    #     ----------
-    #     y : guaranteed to be of a type in self.get_tag("y_inner_mtype")
-    #         Time series with which to update the forecaster.
-    #         if self.get_tag("scitype:y")=="univariate":
-    #             guaranteed to have a single column/variable
-    #         if self.get_tag("scitype:y")=="multivariate":
-    #             guaranteed to have 2 or more columns
-    #         if self.get_tag("scitype:y")=="both": no restrictions apply
-    #     X : optional (default=None)
-    #         guaranteed to be of a type in self.get_tag("X_inner_mtype")
-    #         Exogeneous time series for the forecast
-    #     update_params : bool, optional (default=True)
-    #         whether model parameters should be updated
-    #
-    #     Returns
-    #     -------
-    #     self : reference to self
-    #     """
-    #     self._forecaster_._update(y=y, X=X, update_params=update_params)
-    #     fh = ForecastingHorizon(values=y.index, is_relative=False)
-    #     y_pred = self._forecaster_.predict(fh=fh, X=X)
-    #     residuals = y - y_pred
-    #     if self.strategy == "square":
-    #         residuals = residuals**2
-    #     else:
-    #         residuals = residuals.abs()
-    #     self._residual_forecaster_._update(y=residuals, update_params=update_params)
-    #     return self
-
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
@@ -422,22 +375,8 @@ class SquaringResiduals(BaseForecaster):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         from sktime.forecasting.croston import Croston
-        from sktime.forecasting.naive import NaiveForecaster
 
         params = [
-            # {
-            #     "forecaster": NaiveForecaster(),
-            #     "residual_forecaster": ThetaForecaster(),
-            #     "initial_window": 2,
-            #     "distr": "norm",
-            # },
-            # {
-            #     "forecaster": NaiveForecaster(),
-            #     "residual_forecaster": ThetaForecaster(),
-            #     "initial_window": 2,
-            #     "distr": "t",
-            #     "distr_kwargs": {"df": 21},
-            # },
             {
                 "forecaster": Croston(),
                 "residual_forecaster": Croston(),
