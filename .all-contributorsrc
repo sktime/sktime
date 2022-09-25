@@ -1761,6 +1761,16 @@
       ]
     },
     {
+      "login": "kcc-lion",
+      "name": "Kai Lion",
+      "profile": "https://github.com/kcc-lion",
+      "contributions": [
+        "code",
+        "test",
+        "doc"
+      ]
+    },
+    {
       "login": "bugslayer-332" ,
       "name": "Arepalli Yashwanth Reddy",
       "profile": "https://github.com/bugslayer-332",
