@@ -7,8 +7,8 @@ __author__ = ["kcc-lion"]
 
 from warnings import warn
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 
 from sktime.datatypes._convert import convert_to
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
@@ -157,10 +157,8 @@ class SquaringResiduals(BaseForecaster):
         self._forecaster_ = self.forecaster.clone()
 
         y = convert_to(y, "pd.Series")
-        self.cv = ExpandingWindowSplitter(
-            initial_window=self.initial_window, fh=fh_rel
-        )
-        self._forecaster_.fit(y=y.iloc[:self.initial_window], X=X)
+        self.cv = ExpandingWindowSplitter(initial_window=self.initial_window, fh=fh_rel)
+        self._forecaster_.fit(y=y.iloc[: self.initial_window], X=X)
         y_pred = self._forecaster_.update_predict(
             y=y, cv=self.cv, X=X, update_params=True
         )
@@ -180,7 +178,9 @@ class SquaringResiduals(BaseForecaster):
                     fh_current_abs = fh_current.to_absolute(col)
                     y_pred_current.append(y_pred.at[fh_current_abs[0], col])
                     y_pred_current_index.append(fh_current_abs[0])
-                y_pred_current = pd.Series(data=y_pred_current, index=y_pred_current_index)
+                y_pred_current = pd.Series(
+                    data=y_pred_current, index=y_pred_current_index
+                )
 
             # get residuals
             y_step = y[y_pred_current.index]
