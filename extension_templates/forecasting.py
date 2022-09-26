@@ -139,7 +139,7 @@ class MyForecaster(BaseForecaster):
         # handles-missing-data = can estimator handle missing data?
         "handles-missing-data": False,
         # valid values: boolean True (yes), False (no)
-        # no boilerplate effect, for inspection
+        # if False, raises exception if y or X passed contain missing data (nans)
         #
         # capability:pred_int = does forecaster implement probabilistic forecasts?
         "capability:pred_int": False,

@@ -174,7 +174,10 @@ def _sliding_window_transform(
 class _Reducer(_BaseWindowForecaster):
     """Base class for reducing forecasting to regression."""
 
-    _tags = {"ignores-exogeneous-X": False}  # reduction uses X in non-trivial way
+    _tags = {
+        "ignores-exogeneous-X": False,  # reduction uses X in non-trivial way
+        "handles-missing-data": True,
+    }
 
     def __init__(self, estimator, window_length=10, transformers=None):
         super(_Reducer, self).__init__(window_length=window_length)
@@ -182,6 +185,11 @@ class _Reducer(_BaseWindowForecaster):
         self.transformers_ = None
         self.estimator = estimator
         self._cv = None
+
+        # it seems that the sklearn tags are not fully reliable
+        # see discussion in PR #3405 and issue #3402
+        # therefore this is commented out until sktime and sklearn are better aligned
+        # self.set_tags(**{"handles-missing-data": estimator._get_tags()["allow_nan"]})
 
     def _is_predictable(self, last_window):
         """Check if we can make predictions from last window."""
@@ -1418,6 +1426,11 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
             )
         self.set_tags(**{"X_inner_mtype": mtypes})
         self.set_tags(**{"y_inner_mtype": mtypes})
+
+        # it seems that the sklearn tags are not fully reliable
+        # see discussion in PR #3405 and issue #3402
+        # therefore this is commented out until sktime and sklearn are better aligned
+        # self.set_tags(**{"handles-missing-data": estimator._get_tags()["allow_nan"]})
 
     def _fit(self, y, X=None, fh=None):
         """Fit dispatcher based on X_treatment."""

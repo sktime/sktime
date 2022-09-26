@@ -4,7 +4,7 @@
 
 > A unified interface for machine learning with time series
 
-:rocket: **Version 0.13.2 out now!** [Check out the release notes here](https://www.sktime.org/en/latest/changelog.html).
+:rocket: **Version 0.13.3 out now!** [Check out the release notes here](https://www.sktime.org/en/latest/changelog.html).
 
 sktime is a library for time series analysis in Python. It provides a unified interface for multiple time series learning tasks. Currently, this includes time series classification, regression, clustering, annotation and forecasting. It comes with [time series algorithms](https://www.sktime.org/en/stable/estimator_overview.html) and [scikit-learn] compatible tools to build, tune and validate time series models.
 
@@ -58,7 +58,7 @@ Questions and feedback are extremely welcome! Please understand that we won't be
 [github discussions]: https://github.com/alan-turing-institute/sktime/discussions
 [stack overflow]: https://stackoverflow.com/questions/tagged/sktime
 [discord]: https://discord.com/invite/gqSab2K
-[slack]: https://join.slack.com/t/sktime-group/shared_invite/zt-62i7aejn-vXc3nOWF26S_P3VXFPWisQ
+[slack]: https://join.slack.com/t/sktime-group/shared_invite/zt-1cghagwee-sqLJ~eHWGYgzWbqUX937ig
 
 ## :dizzy: Features
 Our aim is to make the time series analysis ecosystem more interoperable and usable as a whole. sktime provides a __unified interface for distinct but related time series learning tasks__. It features [__dedicated time series algorithms__](https://www.sktime.org/en/stable/estimator_overview.html) and __tools for composite model building__ including pipelining, ensembling, tuning and reduction that enables users to apply an algorithm for one task to another.
@@ -70,7 +70,7 @@ For **deep learning**, see our companion package: [sktime-dl](https://github.com
 [statsmodels]: https://www.statsmodels.org/stable/index.html
 [tsfresh]: https://tsfresh.readthedocs.io/en/latest/
 [pyod]: https://pyod.readthedocs.io/en/latest/
-[prophet]: https://facebook.github.io/prophet/
+[fbprophet]: https://facebook.github.io/prophet/
 
 | Module | Status | Links |
 |---|---|---|

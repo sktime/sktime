@@ -13,6 +13,192 @@ All notable changes to this project will be documented in this file. We keep tra
 For upcoming changes and next releases, see our `milestones <https://github.com/alan-turing-institute/sktime/milestones?direction=asc&sort=due_date&state=open>`_.
 For our long-term plan, see our :ref:`roadmap`.
 
+Version 0.13.3 - 2022-09-25
+---------------------------
+
+Highlights
+~~~~~~~~~~~~
+
+* new DL based time series classifiers: ``FCNClassifier``, ``MLPClassifier`` (:pr:`3232`, :pr:`3233`) :user:`AurumnPegasus`
+* new transformers: Fourier features, DOBIN basis features (:pr:`3373`, :pr:`3374`) :user:`KatieBuc`, :user:`ltsaprounis`
+* new annotation estimators: GGS, HIDAlgo, STRAY (:pr:`2744`, :pr:`3158`, :pr:`3338`) :user:`lmmentel`, :user:`KatieBuc`
+* annotation: ``hmmlearn`` interface (:pr:`3362`) :user:`miraep8`
+* fully documented tags in forecaster and transformer extension templates (:pr:`3334`, :pr:`3440`) :user:`fkiraly`
+
+Dependency changes
+~~~~~~~~~~~~~~~~~~
+
+* ``sktime`` is now compatible with ``pmdarima 2.0.0``, bound is relaxed to ``<3.0.0``
+* ``sktime`` is now compatible with ``pandas 1.5.0``, bound is relaxed to ``<1.6.0``
+
+Deprecations and removals
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Data types, checks, conversions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+``datatypes.check_is_scitype``: 2nd return argument (only returned if ``return_metadata=True``)
+will be changed from ``list`` to ``dict`` format (see docstring).
+``list`` format will be deprecated from 0.14.0, and replaced by ``dict`` in 0.15.0.
+The format will be determined by temporary additional arg ``msg_legacy_interface``, which will be
+introduced in 0.14.0, default changed to ``False`` in 0.15.0, and removed in 0.16.0.
+
+Enhancements
+~~~~~~~~~~~~
+
+Data types, checks, conversions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] support for ``xarray`` ``DataArray`` & mtypes (:pr:`3255`) :user:`benHeid`
+* [ENH] avoid metadata computation in ``scitype`` utility (:pr:`3357`) :user:`fkiraly`
+* [ENH] ``check_is_scitype`` error message return changed to ``dict`` (:pr:`3466`) :user:`fkiraly`
+* [ENH] soft dependency handling for mtypes (:pr:`3408`) :user:`fkiraly`
+* [ENH] Optimize ``from_3d_numpy_to_nested`` converter function (:pr:`3339`) :user:`paulbauriegel`
+* [ENH] simplify ``convert_to_scitype`` logic, fix export and docstring omissions in scitype converter module (:pr:`3358`) :user:`fkiraly`
+
+Data loaders
+^^^^^^^^^^^^
+
+* [ENH] test for correct return type of ``load_basic_motions`` (:pr:`3458`) :user:`fkiraly`
+
+Forecasting
+^^^^^^^^^^^
+
+* [ENH] ``pmdarima 2.0.0`` compatibility fix - use absolute index in return (:pr:`3302`) :user:`fkiraly`
+* [ENH] global/local setting for ``DirectReductionForecaster`` (:pr:`3327`) :user:`fkiraly`
+* [ENH] consistent ``sp`` handling in parameter estimators and ``AutoARIMA`` (:pr:`3367`) :user:`fkiraly`
+* [ENH] enable default ``get_fitted_params`` for forecasters and delegated estimators (:pr:`3381`) :user:`fkiraly`
+* [ENH] prevent vectorization in forecaster multiplexer (:pr:`3391`) :user:`fkiraly`
+* [ENH] prevent vectorization in update wrappers and ``ForecastX`` (:pr:`3393`) :user:`fkiraly`
+* [ENH] added missing data input check in forecasters (:pr:`3405`) :user:`fkiraly`
+* [ENH] Add parallel ``fit`` and ``predict_residuals`` for calculation of ``residuals_matrix`` in ``ConformalIntervals`` (:pr:`3414`) :user:`bethrice44`
+* [ENH] predictive variance and quantiles for naive forecaster (:pr:`3435`) :user:`topher-lo`
+
+Time series annotation
+^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] Greedy Gaussian Segmentation (:pr:`2744`) :user:`lmmentel`
+* [ENH] HIDAlgo annotation (:pr:`3158`) :user:`KatieBuc`
+* [ENH] ``hmmlearn`` interface (:pr:`3362`) :user:`miraep8`
+* [ENH] STRAY anomaly detection (:pr:`3338`) :user:`KatieBuc`
+
+Time series classification
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] Dictionary classifiers speedup (:pr:`3216`, :pr:`3360`) :user:`patrickzib`
+* [ENH] new classifier: ``MLPClassifier`` (:pr:`3232`) :user:`AurumnPegasus`
+* [ENH] new classifier: ``FCNClassifier`` (:pr:`3233`) :user:`AurumnPegasus`
+
+Time series distances and kernels
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENG] Weights in scipy distance (:pr:`1940`) :user:`stepinski`
+* [ENH] distance features transformer (:pr:`3356`) :user:`fkiraly`
+* [ENH] signature kernel from (Kiraly et al, 2016) (:pr:`3355`) :user:`fkiraly`
+
+Transformations
+^^^^^^^^^^^^^^^
+
+* [ENH] option to keep column names in ``Lag`` (:pr:`3343`) :user:`fkiraly`
+* [ENH] ``BaseTransformer`` data memory - enabled by tag (:pr:`3307`) :user:`fkiraly`
+* [ENH] Fourier features transformer (:pr:`3374`) :user:`ltsaprounis`
+* [ENH] prevent vectorization in tramsformer multiplexer (:pr:`3391`) :user:`fkiraly`
+* [ENH] added ``scale``, ``offset`` parameters to ``LogTransformer`` (:pr:`3354`) :user:`bugslayer-332`
+* [ENH] ``pandas 1.5.0`` compatibility fix: use ``infer_freq`` in ``Lag`` if no ``freq`` passed or specified (:pr:`3456`) :user:`fkiraly`
+* [ENH] refactor inheritance of ``PAA``, ``SAX``, ``SFA`` (:pr:`3308`) :user:`fkiraly`
+* [ENH] DOBIN basis transformation (:pr:`3373`) :user:`KatieBuc`
+
+Testing framework
+^^^^^^^^^^^^^^^^^
+
+* [ENH] testing transformers with ``transform`` data different from ``fit`` data (:pr:`3341`) :user:`fkiraly`
+* [ENH] reduce legacy logic in test framework and refactor to scenarios (:pr:`3342`) :user:`fkiraly`
+* [ENH] second param sets for selected estimators (:pr:`3428`) :user:`fkiraly`
+
+Fixes
+~~~~~
+
+Data types, checks, conversions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [BUG] ensure ``nested_univ`` metadata inference passes for scalar columns present (:pr:`3463`) :user:`fkiraly`
+
+Forecasting
+^^^^^^^^^^^
+
+* [BUG] Fix default conformal intervals ``initial_window`` parameter (:pr:`3383`) :user:`bethrice44`
+
+Time series annotation
+^^^^^^^^^^^^^^^^^^^^^^
+
+* [BUG] fixing HMM last read bug (:pr:`3366`) :user:`miraep8`
+* [BUG] Fix for hmm sporadic test failure (:pr:`3396`) :user:`miraep8`
+
+Time series classification
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [BUG] fixes missing ``super.__init__`` call in ``MLPNetwork`` (:pr:`3350`) :user:`fkiraly`
+
+Transformations
+^^^^^^^^^^^^^^^
+
+* [BUG] fixes incorrect warning condition in ``InvertTransform`` (:pr:`3352`) :user:`fkiraly`
+* [BUG] ensure ``Differencer`` always inverts properly (:pr:`3346`) :user:`fkiraly`, :user:`ilkersigirci`
+
+Maintenance
+~~~~~~~~~~~
+
+* [MNT] skip ``CNNClassifier`` doctest (:pr:`3305`) :user:`fkiraly`
+* [MNT] Retry url request after HTTPError (:pr:`3242`) :user:`khrapovs`
+* [MNT] skip ``ClearSky`` doctest to avoid ``load_solar`` crash (:pr:`3376`) :user:`fkiraly`
+* [MNT] skip sporadic failure in testing ``HMM`` (:pr:`3395`) :user:`fkiraly`
+* [MNT] isolate soft dependency in ``MLPClassifier`` doctest (:pr:`3409`) :user:`fkiraly`
+* [MNT] Small refactoring changes (:pr:`3418`) :user:`lmmentel`
+* [MNT] replaces deprecated ``pandas`` ``is_monotonic`` by ``is_monotonic_increasing`` (:pr:`3455`) :user:`fkiraly`
+* [MNT] update ``test_interpolate`` to be ``pandas 1.5.0`` compatible (:pr:`3467`) :user:`fkiraly`
+* [MNT] ``pandas 1.5.0`` compatibility (:pr:`3457`) :user:`fkiraly`
+
+Documentation
+~~~~~~~~~~~~~
+
+* [DOC] updated extension templates - tags explained, soft dependencies (:pr:`3334`) :user:`fkiraly`
+* [DOC] API reference for ``dists_kernels`` module (:pr:`3312`) :user:`fkiraly`
+* [DOC] fix notebook/example symlinks (:pr:`3379`) :user:`khrapovs`
+* [DOC] Some tips on getting virtual environments to work (:pr:`3331`) :user:`miraep8`
+* [DOC] changed wrong docstring default value of ``start_with_window`` in ``SlidingWindowSplitter`` to actual default value (:pr:`3340`) :user:`bugslayer-332`
+* [DOC] Correct minor typos in ``examples/AA_datatypes_and_datasets.ipynb`` (:pr:`3349`) :user:`achieveordie`
+* [DOC] updated extension templates - transformer tags explained (:pr:`3377`) :user:`fkiraly`
+* [DOC] correcting and clarifying ``BaseSplitter`` docstrings (:pr:`3440`) :user:`fkiraly`
+* [DOC] Fix docstring of TransformerPipeline (:pr:`3401`) :user:`aiwalter`
+* [DOC] Expired slack link under "Where to ask questions" (:pr:`3449`) :user:`topher-lo`
+* [DOC] Instructions for how to skip tests for new soft dependencies. (:pr:`3416`) :user:`miraep8`
+* [DOC] replace legacy estimator overview with links (:pr:`3407`) :user:`fkiraly`
+* [DOC] Update core dev list (:pr:`3415`) :user:`aiwalter`
+* [DOC] Expired slack link under "Where to ask questions" (:pr:`3449`) :user:`topher-lo`
+* [DOC] Added example to ``plot_series`` & fixed example for ``plot_lags`` (:pr:`3400`) :user:`shagn`
+
+Contributors
+~~~~~~~~~~~~
+
+:user:`achieveordie`,
+:user:`aiwalter`,
+:user:`AurumnPegasus`,
+:user:`benHeid`,
+:user:`bethrice44`,
+:user:`bugslayer-332`,
+:user:`fkiraly`,
+:user:`ilkersigirci`,
+:user:`KatieBuc`,
+:user:`khrapovs`,
+:user:`lmmentel`,
+:user:`ltsaprounis`,
+:user:`miraep8`,
+:user:`patrickzib`,
+:user:`paulbauriegel`,
+:user:`shagn`,
+:user:`stepinski`,
+:user:`topher-lo`
+
 Version 0.13.2 - 2022-08-23
 ---------------------------
 
