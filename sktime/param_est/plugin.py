@@ -3,12 +3,12 @@
 """Parameter estimators for seasonality."""
 
 __author__ = ["fkiraly"]
-__all__ = ["PluginParamsForecaster"]
+__all__ = ["InferParams"]
 
 from sktime.forecasting.base._delegate import _DelegatedForecaster
 
 
-class PluginParamsForecaster(_DelegatedForecaster):
+class InferParams(_DelegatedForecaster):
     """Plugs parameters from a parameter estimator into a forecaster.
 
     In `fit`, first fits `param_est` to data.
@@ -47,16 +47,16 @@ class PluginParamsForecaster(_DelegatedForecaster):
     --------
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.naive import NaiveForecaster
-    >>> from sktime.param_est.plugin import PluginParamsForecaster
+    >>> from sktime.param_est.plugin import InferParams
     >>> from sktime.param_est.seasonality import SeasonalityACF
     >>> from sktime.transformations.series.difference import Differencer
     >>>
     >>> y = load_airline()
     >>> sp_est = Differencer() * SeasonalityACF()
     >>> fcst = NaiveForecaster()
-    >>> sp_auto = PluginParamsForecaster(sp_est, fcst)
+    >>> sp_auto = InferParams(sp_est, fcst)
     >>> sp_auto.fit(y, fh=[1, 2, 3])
-    PluginParamsForecaster(...)
+    InferParams(...)
     >>> y_pred = sp_auto.predict()
     >>> sp_auto.forecaster_.get_params()["sp"]
     12
@@ -83,7 +83,7 @@ class PluginParamsForecaster(_DelegatedForecaster):
         self.params = params
         self.update_params = update_params
 
-        super(PluginParamsForecaster, self).__init__()
+        super(InferParams, self).__init__()
         self.clone_tags(self.forecaster_)
         self.set_tags(**{"fit_is_empty": False})
         # todo: only works for single series now
