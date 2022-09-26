@@ -21,7 +21,7 @@ Highlights
 
 * new DL based time series classifiers: ``FCNClassifier``, ``MLPClassifier`` (:pr:`3232`, :pr:`3233`) :user:`AurumnPegasus`
 * new transformers: Fourier features, DOBIN basis features (:pr:`3373`, :pr:`3374`) :user:`KatieBuc`, :user:`ltsaprounis`
-* new annotation estimators: GGS, HIDAlgo, STRAY (:pr:`2744`, :pr:`3158`, :pr:`3338`) :user:`lmmentel`, :user:`KatieBuc`
+* new annotation estimators: GGS, HIDAlgo, STRAY (:pr:`2744`, :pr:`3158`, :pr:`3338`) :user:`KatieBuc`
 * annotation: ``hmmlearn`` interface (:pr:`3362`) :user:`miraep8`
 * fully documented tags in forecaster and transformer extension tempaltes (:pr:`3334`, :pr:`3440`) :user:`fkiraly`
 
