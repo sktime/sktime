@@ -70,7 +70,7 @@ def compute_min_return_path(
 
 @njit(cache=True)
 def compute_twe_return_path(
-        cost_matrix: np.ndarray, bounding_matrix: np.ndarray
+    cost_matrix: np.ndarray, bounding_matrix: np.ndarray
 ) -> List[Tuple]:
     """Compute the twe cost path through the cost matrix.
 
@@ -78,6 +78,8 @@ def compute_twe_return_path(
     the min(cost_matrix[i - 1][j - 1], cost_matrix[i - 1][j], cost_matrix[i][j - 1]).
     This is ideal for dtw based distances or others where the objective is to minimise
     the cost.
+
+    Twe is padded with 0s so this is accounted for using this path function.
 
     Parameters
     ----------
