@@ -10,7 +10,10 @@ from sktime.utils.validation._dependencies import (
 )
 
 _check_dl_dependencies(severity="warning")
-_check_soft_dependencies(severity="warning")
+_check_soft_dependencies(
+    package_import_alias={"keras-self-attention": "keras_self_attention"},
+    severity="warning",
+)
 
 
 class CNTCNetwork(BaseDeepNetwork):
@@ -69,7 +72,10 @@ class CNTCNetwork(BaseDeepNetwork):
     ):
         super(CNTCNetwork, self).__init__()
         _check_dl_dependencies(severity="error")
-        _check_soft_dependencies(severity="error")
+        _check_soft_dependencies(
+            package_import_alias={"keras-self-attention": "keras_self_attention"},
+            severity="warning",
+        )
         self.random_state = random_state
         self.rnn_layer = rnn_layer
         self.filter_sizes = filter_sizes
