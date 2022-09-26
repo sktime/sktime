@@ -9,13 +9,13 @@ For this reason, we first need to deprecate functionality and change it only in 
 
 .. note::
 
-    For upcoming changes and next releases, see our `Milestones <https://github.com/alan-turing-institute/sktime/milestones?direction=asc&sort=due_date&state=open>`_.
+    For upcoming changes and next releases, see our `Milestones <https://github.com/sktime/sktime/milestones?direction=asc&sort=due_date&state=open>`_.
     For our long-term plan, see our :ref:`roadmap`.
 
 Deprecation policy
 ==================
 
-sktime `releases <https://github.com/alan-turing-institute/sktime/releases>`_ follow `semantic versioning <https://semver.org>`_.
+sktime `releases <https://github.com/sktime/sktime/releases>`_ follow `semantic versioning <https://semver.org>`_.
 A release number denotes <major>.<minor>.<patch> versions.
 
 Our current deprecation policy is that we remove functionality after one minor release cycle.

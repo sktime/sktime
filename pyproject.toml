@@ -112,7 +112,7 @@ dl = [
 
 [project.urls]
 homepage = "https://www.sktime.org"
-repository = "https://github.com/alan-turing-institute/sktime"
+repository = "https://github.com/sktime/sktime"
 documentation = "https://www.sktime.org"
 download = "https://pypi.org/project/sktime/#files"
 
