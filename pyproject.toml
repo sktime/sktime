@@ -107,7 +107,6 @@ docs = [
 ]
 
 dl = [
-    "keras-self-attention",
     "tensorflow",
     "tensorflow-probability",
 ]
