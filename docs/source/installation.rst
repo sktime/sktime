@@ -59,18 +59,6 @@ Note: currently this does not include the dependency ``catch-22``.
 As this package is not available on ``conda-forge``, it must be installed via ``pip`` if desired.
 Contributions to remedy this situation are appreciated.
 
-
-Release versions - troubleshooting
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Module not found
-""""""""""""""""
-
-The most frequent reason for *module not found* errors is installing ``sktime`` with
-minimum dependencies and using an estimator which interfaces a package that has not
-been installed in the environment. To resolve this, install the missing package, or
-install ``sktime`` with maximum dependencies (see above).
-
 Development versions
 --------------------
 To install the latest development version of ``sktime``, or earlier versions, the sequence of steps is as follows:
@@ -171,8 +159,9 @@ This section outlines the ``sktime`` build requirements. These are required for:
 
 
 Setting up a development environment
-""""""""""""""""""""""""""""""""""""
-You now need to set up a new python virtual environment. Our instructions will go through the commands to set up a ``conda`` environment which is recommended for sktime development.
+------------------------------------
+
+First set up a new virtual environment. Our instructions will go through the commands to set up a ``conda`` environment which is recommended for sktime development.
 This relies on an `anaconda installation <https://www.anaconda.com/products/individual#windows>`_. The process will be similar for ``venv`` or other virtual environment managers.
 
 In the ``anaconda prompt`` terminal:
@@ -207,6 +196,37 @@ Some users have experienced issues when installing NumPy, particularly version 1
     Another option under Windows is to follow the instructions for `Unix-like OS`_, using the Windows Subsystem for Linux (WSL).
     For installing WSL, follow the instructions `here <https://docs.microsoft.com/en-us/windows/wsl/install-win10#step-2---check-requirements-for-running-wsl-2>`_.
 
+Troubleshooting
+---------------
+
+Module not found
+~~~~~~~~~~~~~~~~
+
+The most frequent reason for *module not found* errors is installing ``sktime`` with
+minimum dependencies and using an estimator which interfaces a package that has not
+been installed in the environment. To resolve this, install the missing package, or
+install ``sktime`` with maximum dependencies (see above).
+
+ImportError
+~~~~~~~~~~~
+Import errors are often caused by an improperly linked virtual environment.  Make sure that
+your environment is activated and linked to whatever IDE you are using.  If you are using Jupyter
+Notebooks, follow `these instructions <https://janakiev.com/blog/jupyter-virtual-envs/>`_ for
+adding your virtual environment as a new kernel for your notebook.
+
+Other Startup Resources
+-----------------------
+
+Virtual environments
+~~~~~~~~~~~~~~~~~~~~
+
+Two good options for virtual environment managers are:
+
+* `conda <https://uoa-eresearch.github.io/eresearch-cookbook/recipe/2014/11/20/conda/>`_ (many sktime community members us this)
+* `venv <https://realpython.com/python-virtual-environments-a-primer/>`_ (also quite good!).
+
+Be sure to link your new virtual environment as the python kernel in whatever IDE you are using.  You can find the instructions for doing so
+in VScode `here <https://code.visualstudio.com/docs/python/environments>`_.
 
 References
 ----------

@@ -347,7 +347,11 @@ class BaseObject(_BaseEstimator):
         Changes object state by settting tag values in tag_dict as dynamic tags
         in self.
         """
-        self._tags_dynamic.update(deepcopy(tag_dict))
+        tag_update = deepcopy(tag_dict)
+        if hasattr(self, "_tags_dynamic"):
+            self._tags_dynamic.update(tag_update)
+        else:
+            self._tags_dynamic = tag_update
 
         return self
 
@@ -406,25 +410,8 @@ class BaseObject(_BaseEstimator):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        # imported inside the function to avoid circular imports
-        from sktime.tests._config import ESTIMATOR_TEST_PARAMS
-
-        # if non-default parameters are required, but none have been found,
-        # raise error
-        if hasattr(cls, "_required_parameters"):
-            required_parameters = getattr(cls, "required_parameters", [])
-            if len(required_parameters) > 0:
-                raise ValueError(
-                    f"Estimator: {cls} requires "
-                    f"non-default parameters for construction, "
-                    f"but none were given. Please set them "
-                    f"as given in the extension template"
-                )
-
-        # construct with parameter configuration for testing, otherwise construct with
-        # default parameters (empty dict)
-        params = ESTIMATOR_TEST_PARAMS.get(cls, {})
-        return params
+        # default parameters = empty dict
+        return {}
 
     @classmethod
     def create_test_instance(cls, parameter_set="default"):
@@ -829,7 +816,7 @@ class BaseEstimator(BaseObject):
         """
         if not self.is_fitted:
             raise NotFittedError(
-                f"parameter estimator of type {type(self).__name__} has not been "
+                f"estimator of type {type(self).__name__} has not been "
                 "fitted yet, please call fit on data before get_fitted_params"
             )
 
@@ -844,9 +831,11 @@ class BaseEstimator(BaseObject):
                 return x
 
         for c in c_dict.keys():
-            c_f_params = c_dict[c].get_fitted_params()
-            c_f_params = {f"{sh(c)}__{k}": c_f_params[k] for k in c_f_params.keys()}
-            fitted_params.update(c_f_params)
+            comp = c_dict[c]
+            if comp._is_fitted:
+                c_f_params = c_dict[c].get_fitted_params()
+                c_f_params = {f"{sh(c)}__{k}": c_f_params[k] for k in c_f_params.keys()}
+                fitted_params.update(c_f_params)
 
         fitted_params.update(self._get_fitted_params())
 
