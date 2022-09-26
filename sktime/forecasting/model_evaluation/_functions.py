@@ -23,6 +23,102 @@ from sktime.utils.validation.forecasting import (
 from sktime.utils.validation.series import check_series
 
 
+def _evaluate_window(
+    y,
+    X,
+    train,
+    test,
+    i,
+    fh,
+    forecaster,
+    strategy,
+    scoring,
+    return_data,
+    error_score,
+    score_name,
+):
+
+    # set default result values in case estimator fitting fails
+    score = error_score
+    fit_time = np.nan
+    pred_time = np.nan
+    cutoff = np.nan
+    y_pred = np.nan
+
+    # split data
+    y_train, y_test, X_train, X_test = _split(y, X, train, test, fh)
+
+    # create forecasting horizon
+    fh = ForecastingHorizon(y_test.index, is_relative=False)
+
+    try:
+        # fit/update
+        start_fit = time.perf_counter()
+        if i == 0 or strategy == "refit":
+            forecaster = forecaster.clone()
+            forecaster.fit(y_train, X_train, fh=fh)
+        else:  # if strategy in ["update", "no-update_params"]:
+            update_params = strategy == "update"
+            forecaster.update(y_train, X_train, update_params=update_params)
+        fit_time = time.perf_counter() - start_fit
+
+        pred_type = {
+            "pred_quantiles": "forecaster.predict_quantiles",
+            "pred_intervals": "forecaster.predict_interval",
+            "pred_proba": "forecaster.predict_proba",
+            None: "forecaster.predict",
+        }
+        # predict
+        start_pred = time.perf_counter()
+
+        if hasattr(scoring, "metric_args"):
+            metric_args = scoring.metric_args
+
+        try:
+            scitype = scoring.get_tag("scitype:y_pred")
+        except ValueError:
+            # If no scitype exists then metric is not proba and no args needed
+            scitype = None
+            metric_args = {}
+
+        y_pred = eval(pred_type[scitype])(fh, X_test, **metric_args)
+
+        pred_time = time.perf_counter() - start_pred
+
+        # score
+        score = scoring(y_test, y_pred, y_train=y_train)
+
+        # cutoff
+        cutoff = forecaster.cutoff
+
+    except Exception as e:
+        if error_score == "raise":
+            raise e
+        else:
+            warnings.warn(
+                f"""
+                Fitting of forecaster failed, you can set error_score='raise' to see
+                the exception message. Fit failed for len(y_train)={len(y_train)}.
+                The score will be set to {error_score}.
+                Failed forecaster: {forecaster}.
+                """,
+                FitFailedWarning,
+            )
+
+    else:
+        result = {
+            score_name: [score],
+            "fit_time": [fit_time],
+            "pred_time": [pred_time],
+            "len_train_window": [len(y_train)],
+            "cutoff": [cutoff],
+            "y_train": [y_train if return_data else np.nan],
+            "y_test": [y_test if return_data else np.nan],
+            "y_pred": [y_pred if return_data else np.nan],
+        }
+    return pd.DataFrame(result)
+
+
 def evaluate(
     forecaster,
     cv,
@@ -32,6 +128,9 @@ def evaluate(
     scoring=None,
     return_data=False,
     error_score=np.nan,
+    backend=None,
+    compute=False,
+    **kwargs,
 ):
     """Evaluate forecaster using timeseries cross-validation.
 
@@ -62,10 +161,18 @@ def evaluate(
         Value to assign to the score if an exception occurs in estimator fitting. If set
         to "raise", the exception is raised. If a numeric value is given,
         FitFailedWarning is raised.
+    backend : {"dask", "loky", "multiprocessing", "threading"}, by default None.
+        Runs parallel evaluate if specified.
+    compute : bool, default=True
+        Only applied if backend is to set "dask". If set to True, returns
+    **kwargs : Keyword arguments
+        Only relevant if backend is specified. Additional kwargs are passed into
+        `dask.distributed.get_client` or `dask.distributed.Client` if backend is
+        set to "dask", otherwise kwargs are passed into `joblib.Parallel`
 
     Returns
     -------
-    pd.DataFrame
+    pd.DataFrame or dd.DataFrame
         DataFrame that contains several columns with information regarding each
         refit/update and prediction of the forecaster.
 
@@ -112,98 +219,81 @@ def evaluate(
     )
     X = check_X(X)
 
-    # Define score name.
     score_name = "test_" + scoring.name
+    _evaluate_window_kwargs = {
+        "fh": cv.fh,
+        "forecaster": forecaster,
+        "scoring": scoring,
+        "strategy": strategy,
+        "return_data": return_data,
+        "error_score": error_score,
+        "score_name": score_name,
+    }
 
-    # Initialize dataframe.
-    results = []
+    if backend == "dask":
+        # Use Dask delayed instead of joblib,
+        # which uses Futures under the hood
+        import dask.dataframe as dd
+        from dask import delayed as dask_delayed
 
-    # Run temporal cross-validation.
-    for i, (train, test) in enumerate(cv.split(y)):
-
-        # set default result values in case estimator fitting fails
-        score = error_score
-        fit_time = np.nan
-        pred_time = np.nan
-        cutoff = np.nan
-        y_pred = np.nan
-
-        # split data
-        y_train, y_test, X_train, X_test = _split(y, X, train, test, cv.fh)
-
-        # create forecasting horizon
-        fh = ForecastingHorizon(y_test.index, is_relative=False)
-
-        try:
-            # fit/update
-            start_fit = time.perf_counter()
-            if i == 0 or strategy == "refit":
-                forecaster = forecaster.clone()
-                forecaster.fit(y_train, X_train, fh=fh)
-
-            else:  # if strategy in ["update", "no-update_params"]:
-                update_params = strategy == "update"
-                forecaster.update(y_train, X_train, update_params=update_params)
-            fit_time = time.perf_counter() - start_fit
-
-            pred_type = {
-                "pred_quantiles": "forecaster.predict_quantiles",
-                "pred_intervals": "forecaster.predict_interval",
-                "pred_proba": "forecaster.predict_proba",
-                None: "forecaster.predict",
-            }
-            # predict
-            start_pred = time.perf_counter()
-
-            if hasattr(scoring, "metric_args"):
-                metric_args = scoring.metric_args
-
-            try:
-                scitype = scoring.get_tag("scitype:y_pred")
-            except ValueError:
-                # If no scitype exists then metric is not proba and no args needed
-                scitype = None
-                metric_args = {}
-
-            y_pred = eval(pred_type[scitype])(fh, X_test, **metric_args)
-
-            pred_time = time.perf_counter() - start_pred
-
-            # score
-            score = scoring(y_test, y_pred, y_train=y_train)
-
-            # cutoff
-            cutoff = forecaster.cutoff
-
-        except Exception as e:
-            if error_score == "raise":
-                raise e
-            else:
-                warnings.warn(
-                    f"""
-                Fitting of forecaster failed, you can set error_score='raise' to see
-                the exception message. Fit failed for len(y_train)={len(y_train)}.
-                The score will be set to {error_score}.
-                Failed forecaster: {forecaster}.
-                """,
-                    FitFailedWarning,
+        results = []
+        for i, (train, test) in enumerate(cv.split(y)):
+            results.append(
+                dask_delayed(_evaluate_window)(
+                    y,
+                    X,
+                    train,
+                    test,
+                    i,
+                    **_evaluate_window_kwargs,
                 )
-
-        # save results
-        results.append(
-            {
-                score_name: score,
-                "fit_time": fit_time,
-                "pred_time": pred_time,
-                "len_train_window": len(y_train),
-                "cutoff": cutoff,
-                "y_train": y_train if return_data else np.nan,
-                "y_test": y_test if return_data else np.nan,
-                "y_pred": y_pred if return_data else np.nan,
-            }
+            )
+        results = dd.from_delayed(
+            results,
+            meta={
+                score_name: "float",
+                "fit_time": "float",
+                "pred_time": "float",
+                "len_train_window": "int",
+                "cutoff": "datetime64[ns]",
+                "y_train": "object" if return_data else "float",
+                "y_test": "object" if return_data else "float",
+                "y_pred": "object" if return_data else "float",
+            },
         )
+        if compute:
+            results = results.compute()
+    else:
+        if backend is None:
+            # Run temporal cross-validation sequentially
+            for i, (train, test) in enumerate(cv.split(y)):
+                result = _evaluate_window(
+                    y,
+                    X,
+                    train,
+                    test,
+                    i,
+                    **_evaluate_window_kwargs,
+                )
+                # save results
+                results.append(result)
+        else:
+            # Otherwise use joblib
+            from joblib import Parallel, delayed
 
-    results = pd.DataFrame(results)
+            results = Parallel(**kwargs)(
+                delayed(_evaluate_window)(
+                    y,
+                    X,
+                    train,
+                    test,
+                    i,
+                    **_evaluate_window_kwargs,
+                )
+                for i, (train, test) in enumerate(cv.split(y))
+            )
+        results = pd.concat(results)
+
     # post-processing of results
     if not return_data:
         results = results.drop(columns=["y_train", "y_test", "y_pred"])
@@ -251,3 +341,54 @@ def _check_strategy(strategy):
     valid_strategies = ("refit", "update", "no-update_params")
     if strategy not in valid_strategies:
         raise ValueError(f"`strategy` must be one of {valid_strategies}")
+
+
+# if __name__ == "__main__":
+
+#     import dask.dataframe as dd
+#     from dask.distributed import Client
+#     from statsmodels.tsa.arima_process import arma_generate_sample
+
+#     from sktime.forecasting.exp_smoothing import ExponentialSmoothing
+#     from sktime.forecasting.model_selection import ExpandingWindowSplitter
+
+#     # Generate 1,000 time series
+#     def generate_arma(i, nsample, ar=[0.5, 0.25, 0.1], ma=[0.5, 0.25, 0.1]):
+#         idx = pd.date_range("2000", periods=nsample)
+#         return pd.Series(
+#             arma_generate_sample(ar=ar, ma=ma, nsample=nsample),
+#             name=f"sample_{i}",
+#             index=idx,
+#         )
+
+#     def evaluate_fake_series(i, nsample):
+#         forecaster = ExponentialSmoothing()
+#         cv = ExpandingWindowSplitter()
+#         y = generate_arma(i, nsample)
+#         results = evaluate(
+#             cv=cv,
+#             forecaster=forecaster,
+#             y=y,
+#             backend="dask",
+#             compute=False,
+#         )
+#         return results.assign(series_name=y.name)  # Label results with series name
+
+#     n_series = 10
+#     nsamples = [np.random.randint(50, 500) for _ in range(n_series)]
+#     forecaster = ExponentialSmoothing()
+#     cv = ExpandingWindowSplitter()
+
+#     # Create Client with Local Dask Cluster
+#     # NOTE: Can be replaced with your desired Dask cluster
+#     # For maximal parallelism with Dask, we compute
+#     # all evaluate windows across all y samples together
+
+#     with Client() as client:
+#         results = dd.concat(
+#             [
+#                 evaluate_fake_series(i, nsample)
+#                 for i, nsample in list(enumerate(nsamples))
+#             ]
+#         )
+#         results.compute()
