@@ -181,38 +181,37 @@ class ElasticDistance(BaseDistance, ABC):
             x_size = _x.shape[-1]
             y_size = _y.shape[-1]
 
-            start = 0
-            # Means the cost matrix is padded (i.e. for twe)
-            if _cost_matrix.shape != _bounding_matrix.shape:
-                start = 1
             for i in range(x_size):
                 for j in range(y_size):
-                    if not np.isfinite(_bounding_matrix[i - start, j - start]):
+                    if not np.isfinite(_bounding_matrix[i, j]):
                         _cost_matrix[i, j] = np.inf
 
-            alignment = [(x_size - 1, y_size - 1)]
-            while alignment[-1] != (0, 0):
-                i, j = alignment[-1]
-                if i == 0:
-                    alignment.append((0, j - 1))
-                elif j == 0:
-                    alignment.append((i - 1, 0))
-                else:
-                    arr = np.array(
-                        [
-                            _cost_matrix[i - 1][j - 1],
-                            _cost_matrix[i - 1][j],
-                            _cost_matrix[i][j - 1],
-                        ]
-                    )
+            i = _cost_matrix.shape[0] - 1
+            j = _cost_matrix.shape[1] - 1
+            alignment = []
+            while True:
+                alignment.append((i, j))
 
-                    score = np.argmin(arr)
-                    if score == 0:
-                        alignment.append((i - 1, j - 1))
-                    elif score == 1:
-                        alignment.append((i - 1, j))
-                    else:
-                        alignment.append((i, j - 1))
+                if alignment[-1] == (0, 0):
+                    break
+
+                arr = np.array(
+                    [
+                        _cost_matrix[i - 1, j - 1],
+                        _cost_matrix[i - 1, j],
+                        _cost_matrix[i, j - 1],
+                    ]
+                )
+                min_index = np.argmin(arr)
+
+                if min_index == 0:
+                    i = i - 1
+                    j = j - 1
+                elif min_index == 1:
+                    i = i - 1
+                else:
+                    j = j - 1
+
             return alignment[::-1]
 
         return _compute_min_return_path
