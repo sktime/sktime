@@ -29,7 +29,7 @@ Dependency changes
 ~~~~~~~~~~~~~~~~~~
 
 * ``sktime`` is now compatible with ``pmdarima 2.0.0``, bound is relaxed to ``<3.0.0``
-* ``sktime`` is now compatible with ``pandas 1.5.0``. bound is relaxed to ``<1.6.0``
+* ``sktime`` is now compatible with ``pandas 1.5.0``, bound is relaxed to ``<1.6.0``
 
 Deprecations and removals
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -156,7 +156,7 @@ Maintenance
 * [MNT] Small refactoring changes (:pr:`3418`) :user:`lmmentel`
 * [MNT] replaces deprecated ``pandas`` ``is_monotonic`` by ``is_monotonic_increasing`` (:pr:`3455`) :user:`fkiraly`
 * [MNT] update ``test_interpolate`` to be ``pandas 1.5.0`` compatible (:pr:`3467`) :user:`fkiraly`
-* [MNT] ``pandas 1.5.0`` (:pr:`3457`) :user:`fkiraly`
+* [MNT] ``pandas 1.5.0`` compatibility (:pr:`3457`) :user:`fkiraly`
 
 Documentation
 ~~~~~~~~~~~~~
