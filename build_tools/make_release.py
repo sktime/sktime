@@ -9,7 +9,7 @@ This idea comes from here:
 -gradual-automation/
 
 The script is adapted from:
-- https://github.com/alan-turing-institute/CleverCSV/blob/master
+- https://github.com/sktime/CleverCSV/blob/master
 /make_release.py
 """
 

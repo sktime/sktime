@@ -315,7 +315,7 @@ will take Dr Franz Király's place if that resolves the conflict of interest. Ot
 ------------------
 
 This code is adapted from the `The Turing
-Way <https://github.com/alan-turing-institute/the-turing-way>`__ project
+Way <https://github.com/sktime/the-turing-way>`__ project
 with Dr Kirstie Whitaker as lead investigator and based on the
 `Carpentries Code of
 Conduct <https://docs.carpentries.org/topic_folders/policies/code-of-conduct.html>`__
@@ -353,7 +353,7 @@ This Code of Conduct is licensed under a `Creative Commons Attribution
 4.0 International <https://creativecommons.org/licenses/by/4.0/>`__ (CC
 BY 4.0 CA) license which means you are free to share and adapt the work
 so long as the attribution to `The Turing
-Way <https://github.com/alan-turing-institute/the-turing-way>`__ project
+Way <https://github.com/sktime/the-turing-way>`__ project
 with Dr Kirstie Whitaker as the principal investigator is retained,
 along with the attribution to the Carpentries, The Alan Turing Institute
 Data Study Group organising team, Citizen Lab and the other resources.

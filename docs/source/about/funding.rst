@@ -32,7 +32,7 @@ Markus Löning’s contributions between 2019 and 2021 were supported by:
 * the Enrichment Scheme at the `The Alan Turing Institute <https://turing.ac.uk>`_,
 * the JROST Rapid Response Fund, a community effort of `Invest in Open Infrastructure <https://investinopen.org>`_.
 
-.. image:: ../images/the-alan-turing-institute.png
+.. image:: ../images/the-sktime.png
   :width: 32 %
   :target: https://turing.ac.uk/
 

@@ -8,7 +8,7 @@ Forecasting
     The user guide is under development. We have created a basic
     structure and are looking for contributions to develop the user guide
     further. For more details, please go to issue `#361 <https://github
-    .com/alan-turing-institute/sktime/issues/361>`_ on GitHub.
+    .com/sktime/sktime/issues/361>`_ on GitHub.
 
 Introduction
 ------------
@@ -31,7 +31,7 @@ Examples.
 
 Example
 -------
-Predicting flights. See the `Tutorial on Forecasting <https://github.com/alan-turing-institute/sktime/blob/main/examples/01_forecasting.ipynb>`_.
+Predicting flights. See the `Tutorial on Forecasting <https://github.com/sktime/sktime/blob/main/examples/01_forecasting.ipynb>`_.
 
 Algorithms included in sktime
 -----------------------------

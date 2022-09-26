@@ -3,14 +3,14 @@
 Changelog
 =========
 
-All notable changes to this project will be documented in this file. We keep track of changes in this file since v0.4.0. The format is based on `Keep a Changelog <https://keepachangelog.com/en/1.0.0/>`_ and we adhere to `Semantic Versioning <https://semver.org/spec/v2.0.0.html>`_. The source code for all `releases <https://github.com/alan-turing-institute/sktime/releases>`_ is available on GitHub.
+All notable changes to this project will be documented in this file. We keep track of changes in this file since v0.4.0. The format is based on `Keep a Changelog <https://keepachangelog.com/en/1.0.0/>`_ and we adhere to `Semantic Versioning <https://semver.org/spec/v2.0.0.html>`_. The source code for all `releases <https://github.com/sktime/sktime/releases>`_ is available on GitHub.
 
 .. note::
 
     To stay up-to-date with sktime releases, subscribe to sktime `here
     <https://libraries.io/pypi/sktime>`_ or follow us on `Twitter <https://twitter.com/sktime_toolbox>`_.
 
-For upcoming changes and next releases, see our `milestones <https://github.com/alan-turing-institute/sktime/milestones?direction=asc&sort=due_date&state=open>`_.
+For upcoming changes and next releases, see our `milestones <https://github.com/sktime/sktime/milestones?direction=asc&sort=due_date&state=open>`_.
 For our long-term plan, see our :ref:`roadmap`.
 
 Version 0.13.0 - 2022-07-14
@@ -1885,7 +1885,7 @@ Contributors
 
 Full changelog
 ~~~~~~~~~~~~~~
-https://github.com/alan-turing-institute/sktime/compare/v0.8.1...v0.9.0
+https://github.com/sktime/sktime/compare/v0.8.1...v0.9.0
 
 
 [0.8.1] - 2021-10-28
@@ -2054,7 +2054,7 @@ BaseEstimator/BaseObject
 In-memory data types
 ^^^^^^^^^^^^^^^^^^^^
 
-* introduction of m(achine)types and scitypes for defining in-memory format conventions across all modules, see `in-memory data types tutorial <https://github.com/alan-turing-institute/sktime/blob/main/examples/AA_datatypes_and_datasets.ipynb>`_
+* introduction of m(achine)types and scitypes for defining in-memory format conventions across all modules, see `in-memory data types tutorial <https://github.com/sktime/sktime/blob/main/examples/AA_datatypes_and_datasets.ipynb>`_
 * loose conversion methods now in :code:`_convert` files in :code:`datatypes` will no longer be publicly accessible in 0.10.0
 
 Forecasting
