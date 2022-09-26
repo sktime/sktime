@@ -87,7 +87,7 @@ def dba(
     return center
 
 
-# @njit(fastmath=True)
+@njit(fastmath=True)
 def _dba_update(
     center: np.ndarray, X: np.ndarray, path_callable: AlignmentPathCallable
 ) -> Tuple[np.ndarray, float]:
