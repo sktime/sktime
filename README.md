@@ -70,7 +70,7 @@ For **deep learning**, see our companion package: [sktime-dl](https://github.com
 [statsmodels]: https://www.statsmodels.org/stable/index.html
 [tsfresh]: https://tsfresh.readthedocs.io/en/latest/
 [pyod]: https://pyod.readthedocs.io/en/latest/
-[fbprophet]: https://facebook.github.io/prophet/
+[prophet]: https://facebook.github.io/prophet/
 
 | Module | Status | Links |
 |---|---|---|
