@@ -16,7 +16,7 @@ For our long-term plan, see our :ref:`roadmap`.
 Version 0.13.4 - 2022-09-27
 ---------------------------
 
-Maintenance release - moved ``sktime`` repository to ``sktime`` org from ``alan-turing-institute`` org.
+Maintenance release - moved ``sktime`` repository to ``sktime`` org from ``alan-turing-institute`` org (:pr:`2926`)
 
 Forks and links should be redirected, governance remains unchanged.
 
