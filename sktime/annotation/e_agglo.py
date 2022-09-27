@@ -4,7 +4,6 @@
 import warnings
 
 import numpy as np
-import pandas as pd
 
 from sktime.transformations.base import BaseTransformer
 
@@ -81,9 +80,7 @@ class EAGGLO(BaseTransformer):
         ]
 
         # dataframe of between between-within distances
-        distances = pd.DataFrame(
-            index=range(2 * n_cluster), columns=range(2 * n_cluster)
-        )
+        distances = np.empty((2 * n_cluster, 2 * n_cluster))
 
         for i in range(n_cluster):
             for j in range(n_cluster):
@@ -96,11 +93,9 @@ class EAGGLO(BaseTransformer):
                     ],
                     self.alpha,
                 )
-                distances.iloc[i, j] = distances.iloc[j, i] = (
-                    2 * between - within[i] - within[j]
-                )
+                distances[i, j] = distances[j, i] = 2 * between - within[i] - within[j]
 
-        np.fill_diagonal(distances.values, 0)
+        np.fill_diagonal(distances, 0)
 
         # set up left and right neighbors
         # special case for clusters 0 and n_cluster-1 to allow for cyclic merging
@@ -117,14 +112,14 @@ class EAGGLO(BaseTransformer):
         open_ = np.array([True for _ in range(2 * n_cluster - 1)])
 
         # which clusters were merged at each step
-        merged_ = pd.DataFrame(index=range(n_cluster - 1), columns=range(2))
+        merged_ = np.empty((n_cluster - 1, 2))
 
         # set initial GOF value
         fit_ = np.array(
             [
                 sum(
                     [
-                        distances.iloc[i, left_[i]] + distances.iloc[i, right_[i]]
+                        distances[i, left_[i]] + distances[i, right_[i]]
                         for i in range(n_cluster)
                     ]
                 )
@@ -132,10 +127,8 @@ class EAGGLO(BaseTransformer):
         )
 
         # change point progression
-        progression_ = pd.DataFrame(
-            index=range(n_cluster), columns=range(n_cluster + 1)
-        )
-        progression_.iloc[0, :] = [
+        progression_ = np.empty((n_cluster, n_cluster + 1))
+        progression_[0, :] = [
             sum(sizes_[:i]) if i > 0 else 0 for i in range(n_cluster + 1)
         ]  # N + 1 for cyclic mergers
 
@@ -167,9 +160,7 @@ class EAGGLO(BaseTransformer):
 
         # remove unneeded values in the GOF
         fit -= 2 * (
-            self.distances.loc[i, j]
-            + self.distances.loc[i, ll]
-            + self.distances.loc[j, rr]
+            self.distances[i, j] + self.distances[i, ll] + self.distances[j, rr]
         )
 
         # get cluster sizes
@@ -179,18 +170,18 @@ class EAGGLO(BaseTransformer):
         # add distance to new left cluster
         n3 = self.sizes_[ll]
         k = (
-            (n1 + n3) * self.distances.loc[i, ll]
-            + (n2 + n3) * self.distances.loc[j, ll]
-            - n3 * self.distances.loc[i, j]
+            (n1 + n3) * self.distances[i, ll]
+            + (n2 + n3) * self.distances[j, ll]
+            - n3 * self.distances[i, j]
         ) / (n1 + n2 + n3)
         fit += 2 * k
 
         # add distance to new right
         n3 = self.sizes_[rr]
         k = (
-            (n1 + n3) * self.distances.loc[i, rr]
-            + (n2 + n3) * self.distances.loc[j, rr]
-            - n3 * self.distances.loc[i, j]
+            (n1 + n3) * self.distances[i, rr]
+            + (n2 + n3) * self.distances[j, rr]
+            - n3 * self.distances[i, j]
         ) / (n1 + n2 + n3)
         fit += 2 * k
 
@@ -215,10 +206,10 @@ class EAGGLO(BaseTransformer):
     def _update_distances(self, i, j, K):
         """Docstring."""
         # which clusters were merged, info only
-        self.merged_.loc[K - self.n_cluster + 1, 0] = (
+        self.merged_[K - self.n_cluster + 1, 0] = (
             -i if i <= self.n_cluster else i - self.n_cluster
         )
-        self.merged_.loc[K - self.n_cluster + 1, 1] = (
+        self.merged_[K - self.n_cluster + 1, 1] = (
             -j if j <= self.n_cluster else j - self.n_cluster
         )
 
@@ -240,10 +231,10 @@ class EAGGLO(BaseTransformer):
         self.sizes_[K + 1] = n1 + n2
 
         # update set of change points
-        self.progression_.loc[K - self.n_cluster + 2, :] = self.progression_.loc[
+        self.progression_[K - self.n_cluster + 2, :] = self.progression_[
             K - self.n_cluster + 1,
         ]
-        self.progression_.loc[K - self.n_cluster + 2, self.lm_[j]] = np.nan
+        self.progression_[K - self.n_cluster + 2, self.lm_[j]] = np.nan
         self.lm_[K + 1] = self.lm_[i]
 
         # update distances
@@ -252,12 +243,12 @@ class EAGGLO(BaseTransformer):
                 n3 = self.sizes_[k]
                 n = n1 + n2 + n3
                 val = (
-                    (n - n2) * self.distances.loc[i, k]
-                    + (n - n1) * self.distances.loc[j, k]
-                    - n3 * self.distances.loc[i, j]
+                    (n - n2) * self.distances[i, k]
+                    + (n - n1) * self.distances[j, k]
+                    - n3 * self.distances[i, j]
                 ) / n
-                self.distances.loc[K + 1, k] = val
-                self.distances.loc[k, K + 1] = val
+                self.distances[K + 1, k] = val
+                self.distances[k, K + 1] = val
 
     def _fit(self, X, y=None):
         """Find ....
@@ -295,11 +286,14 @@ class EAGGLO(BaseTransformer):
         if self.penalty is not None:
             penalty_func = get_penalty_func(self.penalty)
             cps = [
-                self.progression_.loc[
-                    i,
-                ]
-                .dropna()
-                .values.astype(float)
+                list(
+                    filter(
+                        lambda v: v == v,
+                        self.progression_[
+                            i,
+                        ],
+                    )
+                )
                 for i in range(len(self.progression_))
             ]
             self.fit_ += list(map(penalty_func, cps))
@@ -307,9 +301,14 @@ class EAGGLO(BaseTransformer):
         # get the set of change points for the "best" clustering
         idx = np.argmax(self.fit_)
         self.estimates_ = np.sort(
-            self.progression_.loc[
-                idx,
-            ].dropna()
+            list(
+                filter(
+                    lambda v: v == v,
+                    self.progression_[
+                        idx,
+                    ],
+                )
+            )
         )
 
         # remove change point N+1 if a cyclic merger was performed
