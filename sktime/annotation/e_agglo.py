@@ -13,32 +13,39 @@ __all__ = ["EAGGLO"]
 
 class EAGGLO(BaseTransformer):
     """
-    Hierarchical agglomerative estimation of multiple change points.
+    Hierarchical agglomerative estimation of multiple change points, outlined in [1]_.
 
     E-Agglo is a non-parametric clustering approach for multivariate timeseries, where
     neighboring segments are sequentially merged to maximize a goodness-of-fit
     statistic. Unlike most general purpose agglomerative clustering algorithms, this
     procedure preserves the time ordering of the observations.
 
+    This method can detect any distributional change within an independent sequence,
+    and does not make any distributional assumptions (beyond the existence of an
+    alpha-th moment). Estimation is performed in a manner that simultaneously
+    identifies both the number and locations of change points.
+
     Parameters
     ----------
-    member=None
-    alpha=1.0
-    penalty=None
+    member : array_like (default=None)
+        1D `array_like` representing the initial cluster membership for input
+        data, X.
+    alpha : float (default=1.0)
+        fixed constant alpha in (0, 2) used in the divergence measure, as the
+        alpha-th absolute moment, see equation (4) in [1]_.
+    penalty : functional (default=None)
+        function that defines a penalization of  the sequence of goodness-of-fit
+        statistics, when overfitting is a concern.
 
     Attributes
     ----------
-    n_cluster
-    sizes
-    distances
-    left
-    right
-    open
-    merged
-    gof
-    progression
-    lm
-    cluster
+    merged : array_like
+        2D `array_like` outlining which clusters were merged at each step.
+    gof : float
+        goodness-of-fit statistic for current clsutering.
+    cluster : array_like
+        1D `array_like` specifying which cluster each row of input data
+        X belongs to.
 
     Notes
     -----
@@ -84,7 +91,7 @@ class EAGGLO(BaseTransformer):
         super(EAGGLO, self).__init__()
 
     def _process_data(self, X):
-        """Docstring."""
+        """Initialize parameters and store to self."""
         _member = (
             self.member if self.member is not None else np.array(range(X.shape[0]))
         )
@@ -185,8 +192,8 @@ class EAGGLO(BaseTransformer):
         self.progression = progression
         self.lm = lm
 
-    def _gof_update(self, i):
-        """Docstring."""
+    def _gof_update(self, i: int):
+        """Compute the updated goodness-of-fit statistic, left cluster given by i."""
         fit = self.gof[-1]
         j = self.right[i]
 
@@ -223,12 +230,21 @@ class EAGGLO(BaseTransformer):
 
         return fit
 
-    def _find_closest(self, K):
-        """Docstring."""
+    def _find_closest(self, K: int):
+        """Determine which clusters will be merged, for K clusters.
+
+        Greedily optimize the goodness-of-fit statistic by merging the pair of adjacent
+        clusters that results in the largest increase of the statistic's value.
+
+        Returns
+        -------
+        result
+            tuple of left cluster and right cluster index values
+        """
         best_fit = -1e10
         result = (0, 0)
 
-        # iterate to see how the GOF value changes
+        # iterate through each cluster to see how the GOF value changes if merged
         for i in range(K + 1):
             if self.open[i]:
                 gof = self._gof_update(i)
@@ -239,8 +255,8 @@ class EAGGLO(BaseTransformer):
         self.gof = np.append(self.gof, best_fit)
         return result
 
-    def _update_distances(self, i, j, K):
-        """Docstring."""
+    def _update_distances(self, i: int, j: int, K: int):
+        """Update distance from new cluster to other clusters, store to self."""
         # which clusters were merged, info only
         self.merged[K - self.n_cluster + 1, 0] = (
             -i if i <= self.n_cluster else i - self.n_cluster
@@ -287,20 +303,20 @@ class EAGGLO(BaseTransformer):
                 self.distances[k, K + 1] = val
 
     def _fit(self, X, y=None):
-        """Find ....
+        """Find optimally clustered segments.
+
+        First, by determining which pairs of adjacent clusters will be merged. Then,
+        this process is repeated, recording the goodness-of-fit statistic at each step,
+        until all observations belong to a single cluster. Finally, the estimated number
+        of change points is estimated by the clustering that maximizes the goodness-of-
+        fit statistic over the entire merging sequence.
 
         Parameters
         ----------
-        X : np.ArrayLike
+        X : pd.DataFrame
             Data for anomaly detection (time series).
         y : pd.Series, optional
             Not used for this unsupervsed method.
-
-        Attributes
-        ----------
-        gof
-        cluster
-        TODO: change from public to private variables
 
         Returns
         -------

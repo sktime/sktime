@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Tests for EAGGLO."""
+"""Tests for E-Agglo (agglomerative clustering algorithm)."""
 
 __author__ = ["KatieBuc"]
 
