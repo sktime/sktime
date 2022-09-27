@@ -10,7 +10,16 @@ from sktime.annotation.e_agglo import EAGGLO
 
 
 def test_fit_default_params_univariate():
-    """Test data."""
+    """Test univariate data and defualt parameters.
+
+    These numbers are generated from the original implemention
+    in R, with the following code:
+
+    set.seed(1234)
+    X <- c(rnorm(15, mean = -6), 0, rnorm(16, mean = 6))
+    X <- as.matrix(X[c(1,2,17,18)])
+    ret = e.agglo(X)
+    """
     X = pd.DataFrame([-7.207066, -5.722571, 5.889715, 5.488990])
 
     cluster_expected = [0, 0, 1, 1]
@@ -27,7 +36,7 @@ def test_fit_default_params_univariate():
 
 
 def test_fit_other_params_univariate():
-    """Test data."""
+    """Test univariate data with alternative starting clusters."""
     X = pd.DataFrame([-7.207066, -5.722571, 5.889715, 5.488990])
 
     cluster_expected = [0, 0, 1, 1]
@@ -44,7 +53,16 @@ def test_fit_other_params_univariate():
 
 
 def test_fit_default_params_multivariate():
-    """Test data."""
+    """Test multivariate data with defauly parameters.
+
+    These numbers are generated from the original implemention
+    in R, with the following code:
+
+    set.seed(1234)
+    X <- c(rnorm(15, mean = -6), 0, rnorm(16, mean = 6))
+    X <- as.matrix(cbind(X[c(1,2,17,18,19)],X[c(3,4,5,6,7)]))
+    ret = e.agglo(X)
+    """
     X = pd.DataFrame(
         [
             [-7.207, -4.916],
@@ -69,7 +87,7 @@ def test_fit_default_params_multivariate():
 
 
 def test_penalty1():
-    """Test data."""
+    """Test multivariate data with penalty function as string input."""
     X = pd.DataFrame(
         [
             [-7.207, -4.916],
@@ -94,7 +112,7 @@ def test_penalty1():
 
 
 def test_penalty2():
-    """Test data."""
+    """Test multivariate data with functional input as penalty."""
     X = pd.DataFrame([-7.207066, -5.722571, 5.889715, 5.488990])
 
     cluster_expected = [0, 0, 1, 1]

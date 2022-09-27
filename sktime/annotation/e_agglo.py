@@ -55,37 +55,39 @@ class EAGGLO(BaseTransformer):
         )
 
         u = np.sort(np.unique(member_))  # unique array of cluster labels
-        N_ = len(u)  # number of clusters
+        n_cluster = len(u)  # number of clusters
 
         for i in range(
-            N_
+            n_cluster
         ):  # relabel clusters to be consecutive numbers (when user specified)
             member_[np.where(member_ == u[i])[0]] = i
 
         # check if sorted.
 
-        sizes_ = np.repeat(0, 2 * N_)
-        sizes_[:N_] = [
-            sum(member_ == i) for i in range(N_)
+        sizes_ = np.repeat(0, 2 * n_cluster)
+        sizes_[:n_cluster] = [
+            sum(member_ == i) for i in range(n_cluster)
         ]  # calculate initial cluster sizes_
 
         # array of within distances
         within = [
-            get_within(
+            get_within_distance(
                 X.loc[
                     member_ == i,
                 ],
                 self.alpha,
             )
-            for i in range(N_)
+            for i in range(n_cluster)
         ]
 
         # dataframe of between between-within distances
-        D_ = pd.DataFrame(index=range(2 * N_), columns=range(2 * N_))  # .fillna(np.Inf)
+        distances = pd.DataFrame(
+            index=range(2 * n_cluster), columns=range(2 * n_cluster)
+        )
 
-        for i in range(N_):
-            for j in range(N_):
-                between = get_between(
+        for i in range(n_cluster):
+            for j in range(n_cluster):
+                between = get_between_distance(
                     X.loc[
                         member_ == i,
                     ],
@@ -94,43 +96,58 @@ class EAGGLO(BaseTransformer):
                     ],
                     self.alpha,
                 )
-                D_.iloc[i, j] = D_.iloc[j, i] = 2 * between - within[i] - within[j]
+                distances.iloc[i, j] = distances.iloc[j, i] = (
+                    2 * between - within[i] - within[j]
+                )
 
-        np.fill_diagonal(D_.values, 0)
+        np.fill_diagonal(distances.values, 0)
 
         # set up left and right neighbors
-        # special case for clusters 0 and N_-1 to allow for cyclic merging
-        left_ = np.repeat(0, 2 * N_ - 1)
-        left_[:N_] = [i - 1 if i - 1 >= 0 else N_ - 1 for i in range(N_)]
-        right_ = np.repeat(0, 2 * N_ - 1)
-        right_[:N_] = [i + 1 if i + 1 < N_ else 0 for i in range(N_)]
+        # special case for clusters 0 and n_cluster-1 to allow for cyclic merging
+        left_ = np.repeat(0, 2 * n_cluster - 1)
+        left_[:n_cluster] = [
+            i - 1 if i - 1 >= 0 else n_cluster - 1 for i in range(n_cluster)
+        ]
+        right_ = np.repeat(0, 2 * n_cluster - 1)
+        right_[:n_cluster] = [
+            i + 1 if i + 1 < n_cluster else 0 for i in range(n_cluster)
+        ]
 
         # True means that a cluster has not been merged
-        open_ = np.array([True for _ in range(2 * N_ - 1)])
+        open_ = np.array([True for _ in range(2 * n_cluster - 1)])
 
         # which clusters were merged at each step
-        merged_ = pd.DataFrame(index=range(N_ - 1), columns=range(2))
+        merged_ = pd.DataFrame(index=range(n_cluster - 1), columns=range(2))
 
         # set initial GOF value
         fit_ = np.array(
-            [sum([D_.iloc[i, left_[i]] + D_.iloc[i, right_[i]] for i in range(N_)])]
+            [
+                sum(
+                    [
+                        distances.iloc[i, left_[i]] + distances.iloc[i, right_[i]]
+                        for i in range(n_cluster)
+                    ]
+                )
+            ]
         )
 
         # change point progression
-        progression_ = pd.DataFrame(index=range(N_), columns=range(N_ + 1))
+        progression_ = pd.DataFrame(
+            index=range(n_cluster), columns=range(n_cluster + 1)
+        )
         progression_.iloc[0, :] = [
-            sum(sizes_[:i]) if i > 0 else 0 for i in range(N_ + 1)
+            sum(sizes_[:i]) if i > 0 else 0 for i in range(n_cluster + 1)
         ]  # N + 1 for cyclic mergers
 
         # array to specify the starting point of a cluster
-        lm_ = np.repeat(0, 2 * N_ - 1)
-        lm_[:N_] = range(N_)
+        lm_ = np.repeat(0, 2 * n_cluster - 1)
+        lm_[:n_cluster] = range(n_cluster)
 
         # store to self
         self.member_ = member_
-        self.N_ = N_
+        self.n_cluster = n_cluster
         self.sizes_ = sizes_
-        self.D_ = D_
+        self.distances = distances
         self.left_ = left_
         self.right_ = right_
         self.open_ = open_
@@ -149,7 +166,11 @@ class EAGGLO(BaseTransformer):
         ll = self.left_[i]
 
         # remove unneeded values in the GOF
-        fit -= 2 * (self.D_.loc[i, j] + self.D_.loc[i, ll] + self.D_.loc[j, rr])
+        fit -= 2 * (
+            self.distances.loc[i, j]
+            + self.distances.loc[i, ll]
+            + self.distances.loc[j, rr]
+        )
 
         # get cluster sizes
         n1 = self.sizes_[i]
@@ -158,18 +179,18 @@ class EAGGLO(BaseTransformer):
         # add distance to new left cluster
         n3 = self.sizes_[ll]
         k = (
-            (n1 + n3) * self.D_.loc[i, ll]
-            + (n2 + n3) * self.D_.loc[j, ll]
-            - n3 * self.D_.loc[i, j]
+            (n1 + n3) * self.distances.loc[i, ll]
+            + (n2 + n3) * self.distances.loc[j, ll]
+            - n3 * self.distances.loc[i, j]
         ) / (n1 + n2 + n3)
         fit += 2 * k
 
         # add distance to new right
         n3 = self.sizes_[rr]
         k = (
-            (n1 + n3) * self.D_.loc[i, rr]
-            + (n2 + n3) * self.D_.loc[j, rr]
-            - n3 * self.D_.loc[i, j]
+            (n1 + n3) * self.distances.loc[i, rr]
+            + (n2 + n3) * self.distances.loc[j, rr]
+            - n3 * self.distances.loc[i, j]
         ) / (n1 + n2 + n3)
         fit += 2 * k
 
@@ -194,8 +215,12 @@ class EAGGLO(BaseTransformer):
     def _update_distances(self, i, j, K):
         """Docstring."""
         # which clusters were merged, info only
-        self.merged_.loc[K - self.N_ + 1, 0] = -i if i <= self.N_ else i - self.N_
-        self.merged_.loc[K - self.N_ + 1, 1] = -j if j <= self.N_ else j - self.N_
+        self.merged_.loc[K - self.n_cluster + 1, 0] = (
+            -i if i <= self.n_cluster else i - self.n_cluster
+        )
+        self.merged_.loc[K - self.n_cluster + 1, 1] = (
+            -j if j <= self.n_cluster else j - self.n_cluster
+        )
 
         # update left and right neighbors
         ll = self.left_[i]
@@ -215,10 +240,10 @@ class EAGGLO(BaseTransformer):
         self.sizes_[K + 1] = n1 + n2
 
         # update set of change points
-        self.progression_.loc[K - self.N_ + 2, :] = self.progression_.loc[
-            K - self.N_ + 1,
+        self.progression_.loc[K - self.n_cluster + 2, :] = self.progression_.loc[
+            K - self.n_cluster + 1,
         ]
-        self.progression_.loc[K - self.N_ + 2, self.lm_[j]] = np.nan
+        self.progression_.loc[K - self.n_cluster + 2, self.lm_[j]] = np.nan
         self.lm_[K + 1] = self.lm_[i]
 
         # update distances
@@ -227,12 +252,12 @@ class EAGGLO(BaseTransformer):
                 n3 = self.sizes_[k]
                 n = n1 + n2 + n3
                 val = (
-                    (n - n2) * self.D_.loc[i, k]
-                    + (n - n1) * self.D_.loc[j, k]
-                    - n3 * self.D_.loc[i, j]
+                    (n - n2) * self.distances.loc[i, k]
+                    + (n - n1) * self.distances.loc[j, k]
+                    - n3 * self.distances.loc[i, j]
                 ) / n
-                self.D_.loc[K + 1, k] = val
-                self.D_.loc[k, K + 1] = val
+                self.distances.loc[K + 1, k] = val
+                self.distances.loc[k, K + 1] = val
 
     def _fit(self, X, y=None):
         """Find ....
@@ -262,7 +287,7 @@ class EAGGLO(BaseTransformer):
         self._process_data(X)
 
         # find which clusters optimize the GOF and then update the distances
-        for K in range(self.N_ - 1, 2 * self.N_ - 2):
+        for K in range(self.n_cluster - 1, 2 * self.n_cluster - 2):
             i, j = self._find_closest(K)
             self._update_distances(i, j, K)
 
@@ -333,15 +358,16 @@ class EAGGLO(BaseTransformer):
             ).fit(X_full)
             warnings.warn(
                 "Warning: Input data X differs from that given to fit(). "
-                "Refitting with new input data, not storing updated public class "
-                "attributes. For this, explicitly use fit(X) or fit_transform(X)."
+                "Refitting with both the data in fit and new input data, not storing "
+                "updated public class attributes. For this, explicitly use fit(X) or "
+                "fit_transform(X)."
             )
             return new_eagglo.cluster_
 
         return self.cluster_
 
 
-def get_within(X, alpha):
+def get_within_distance(X, alpha):
     n = X.shape[0]
     return sum(
         np.power(
@@ -372,7 +398,7 @@ def get_within(X, alpha):
     ) / (n * n)
 
 
-def get_between(X, Y, alpha):
+def get_between_distance(X, Y, alpha):
     n = X.shape[0]
     m = Y.shape[0]
     return sum(
