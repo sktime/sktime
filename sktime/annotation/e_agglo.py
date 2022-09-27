@@ -68,8 +68,8 @@ class EAGGLO(BaseTransformer):
     Examples
     --------
     >>> from sktime.annotation.datagen import piecewise_normal_multivariate
-    >>> X = piecewise_normal_multivariate(means=[[1, 3], [4, 5]], lengths=[3, 4], \
-        random_state = 10)
+    >>> X = piecewise_normal_multivariate(means=[[1, 3], [4, 5]], lengths=[3, 4],
+    ... random_state = 10)
     >>> from sktime.annotation.e_agglo import EAGGLO
     >>> model = EAGGLO()
     >>> model.fit_transform(X)
