@@ -1,7 +1,11 @@
 # -*- coding: utf-8 -*-
-"""Vector Auto Regressor."""
+"""Implements VAR Model as interface to statsmodels."""
+
 __all__ = ["VAR"]
-__author__ = ["thayeylolu", "aiwalter"]
+__author__ = ["thayeylolu", "aiwalter", "lbventura"]
+
+import itertools
+from collections import OrderedDict
 
 import numpy as np
 import pandas as pd
@@ -14,6 +18,7 @@ class VAR(_StatsModelsAdapter):
     """
     A VAR model is a generalisation of the univariate autoregressive.
 
+    Direct interface for `statsmodels.tsa.vector_ar`
     A model for forecasting a vector of time series[1].
 
     Parameters
@@ -74,7 +79,8 @@ class VAR(_StatsModelsAdapter):
         "y_inner_mtype": "pd.DataFrame",
         "requires-fh-in-fit": False,
         "univariate-only": False,
-        "ignores-exogeneous-X": False,
+        "ignores-exogeneous-X": True,
+        "capability:pred_int": True,
     }
 
     def __init__(
@@ -183,6 +189,119 @@ class VAR(_StatsModelsAdapter):
             columns=self._y.columns,
         )
         return y_pred
+
+    def _predict_interval(self, fh, X=None, coverage: [float] = None):
+        """Compute/return prediction quantiles for a forecast.
+
+        private _predict_interval containing the core logic,
+            called from predict_interval and possibly predict_quantiles
+
+        State required:
+            Requires state to be "fitted".
+
+        Accesses in self:
+            Fitted model attributes ending in "_"
+            self.cutoff
+
+        Parameters
+        ----------
+        fh : guaranteed to be ForecastingHorizon
+            The forecasting horizon with the steps ahead to to predict.
+        X : optional (default=None)
+            guaranteed to be of a type in self.get_tag("X_inner_mtype")
+            Exogeneous time series for the forecast
+        coverage : list of float (guaranteed not None and floats in [0,1] interval)
+           nominal coverage(s) of predictive interval(s)
+
+        Returns
+        -------
+        pred_int : pd.DataFrame
+            Column has multi-index: first level is variable name from y in fit,
+                second level coverage fractions for which intervals were computed.
+                    in the same order as in input `coverage`.
+                Third level is string "lower" or "upper", for lower/upper interval end.
+            Row index is fh, with additional (upper) levels equal to instance levels,
+                from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
+            Entries are forecasts of lower/upper interval end,
+                for var in col index, at nominal coverage in second col index,
+                lower/upper depending on third col index, for the row index.
+                Upper/lower interval end forecasts are equivalent to
+                quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
+        """
+        model = self._fitted_forecaster
+        fh_int = fh.to_relative(self.cutoff)
+        steps = fh_int[-1]
+        n_lags = model.k_ar
+
+        y_cols_no_space = [str(col).replace(" ", "") for col in self._y.columns]
+
+        df_list = []
+
+        for cov in coverage:
+
+            alpha = 1 - cov
+
+            fcast_interval = model.forecast_interval(
+                self._y.values[-n_lags:], steps=steps, alpha=alpha
+            )
+            lower_int, upper_int = fcast_interval[1], fcast_interval[-1]
+
+            lower_df = pd.DataFrame(
+                lower_int,
+                columns=[
+                    col + " " + str(alpha) + " " + "lower" for col in y_cols_no_space
+                ],
+            )
+            upper_df = pd.DataFrame(
+                upper_int,
+                columns=[
+                    col + " " + str(alpha) + " " + "upper" for col in y_cols_no_space
+                ],
+            )
+
+            df_list.append(pd.concat((lower_df, upper_df), axis=1))
+
+        concat_df = pd.concat(df_list, axis=1)
+
+        concat_df_columns = list(
+            OrderedDict.fromkeys(
+                [
+                    col_df
+                    for col in y_cols_no_space
+                    for col_df in concat_df.columns
+                    if col in col_df
+                ]
+            )
+        )
+
+        pre_output_df = concat_df[concat_df_columns]
+
+        pre_output_df_2 = pd.DataFrame(
+            pre_output_df.values,
+            columns=pd.MultiIndex.from_tuples(
+                [col.split(" ") for col in pre_output_df]
+            ),
+        )
+
+        final_columns = list(
+            itertools.product(
+                *[
+                    self._y.columns,
+                    coverage,
+                    pre_output_df_2.columns.get_level_values(2).unique(),
+                ]
+            )
+        )
+
+        final_df = pd.DataFrame(
+            pre_output_df_2.iloc[fh.to_indexer(self.cutoff), :].values,
+            columns=pd.MultiIndex.from_tuples(final_columns),
+        )
+
+        final_df.index = fh.to_absolute(self.cutoff)
+        final_df.index.name = self._y.index.name
+
+        return final_df
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):

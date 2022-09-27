@@ -214,7 +214,7 @@ def check_time_index(
         )
 
     # Check time index is ordered in time
-    if not index.is_monotonic:
+    if not index.is_monotonic_increasing:
         raise ValueError(
             f"The (time) index of {var_name} must be sorted monotonically increasing, "
             f"but found: {index}"
@@ -252,6 +252,8 @@ def check_equal_time_index(*ys, mode="equal"):
             such that ys[i].index is not contained in ys[o].index
         np.ndarray are considered having (pandas) integer range index on axis 0
     """
+    from sktime.datatypes._utilities import get_index_for_series
+
     # None entries are ignored
     y_not_None = [y for y in ys if y is not None]
 
@@ -260,16 +262,10 @@ def check_equal_time_index(*ys, mode="equal"):
         return None
 
     # only validate indices if data is passed as pd.Series
-    if isinstance(y_not_None[0], np.ndarray):
-        first_index = pd.Index(range(len(y_not_None[0])))
-    else:
-        first_index = y_not_None[0].index
+    first_index = get_index_for_series(y_not_None[0])
 
     for i, y in enumerate(y_not_None[1:]):
-        if isinstance(y, np.ndarray):
-            y_index = pd.Index(y)
-        else:
-            y_index = y.index
+        y_index = get_index_for_series(y)
 
         if mode == "equal":
             failure_cond = not first_index.equals(y_index)

@@ -7,8 +7,6 @@ __author__ = ["aiwalter"]
 __all__ = ["Imputer"]
 
 
-from warnings import warn
-
 import numpy as np
 from sklearn.utils import check_random_state
 
@@ -93,9 +91,11 @@ class Imputer(BaseTransformer):
         "fit_is_empty": False,
         "handles-missing-data": True,
         "skip-inverse-transform": True,
+        "capability:inverse_transform": True,
         "univariate-only": False,
         "capability:missing_values:removes": True,
         # is transform result always guaranteed to contain no missing values?
+        "remember_data": False,  # remember all data seen as _X
     }
 
     def __init__(
@@ -113,6 +113,10 @@ class Imputer(BaseTransformer):
         self.forecaster = forecaster
         self.random_state = random_state
         super(Imputer, self).__init__()
+
+        # these methods require self._X remembered in _fit and _update
+        if method in ["drift", "forecaster", "random"]:
+            self.set_tags(**{"remember_data": True})
 
     def _fit(self, X, y=None):
         """Fit transformer to X and y.
@@ -136,8 +140,6 @@ class Imputer(BaseTransformer):
         # implemented here. Some methods dont need fit, so they are just
         # impleented in _transform
         if self.method in ["drift", "forecaster"]:
-            # save train data as needed for multivariate fitting int _fit()
-            self._X = X.copy()
             self._y = y.copy() if y is not None else None
             if self.method == "drift":
                 self._forecaster = PolynomialTrendForecaster(degree=1)
@@ -148,8 +150,7 @@ class Imputer(BaseTransformer):
         elif self.method == "median":
             self._median = X.median()
         elif self.method == "random":
-            # save train data to get min() and max() in transform() for each column
-            self._X = X.copy()
+            pass
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
@@ -170,16 +171,6 @@ class Imputer(BaseTransformer):
         """
         X = X.copy()
 
-        # TODO v0.13.0: Remove this if statement and warning
-        if self.method in ["drift", "mean", "median", "random"]:
-            warn(
-                """Imputer methods "drift", "mean", "median", "random" have been
-                moved to the fit() method, so usage via transform() is
-                deprecated. To still fit on the transform data only, please use the
-                new FitInTransform transformer.
-                """,
-                DeprecationWarning,
-            )
         # replace missing_values with np.nan
         if self.missing_values:
             X = X.replace(to_replace=self.missing_values, value=np.nan)
@@ -190,7 +181,7 @@ class Imputer(BaseTransformer):
         if self.method == "random":
             for col in X.columns:
                 X[col] = X[col].apply(
-                    lambda i: self._get_random(col) if np.isnan(i) else i
+                    lambda i: self._get_random(col) if np.isnan(i) else i  # noqa: B023
                 )
         elif self.method == "constant":
             X = X.fillna(value=self.value)

@@ -20,6 +20,7 @@ class _PmdArimaAdapter(BaseForecaster):
         "capability:pred_int": True,
         "requires-fh-in-fit": False,
         "handles-missing-data": True,
+        "python_dependencies": "pmdarima",
     }
 
     def __init__(self):
@@ -49,6 +50,26 @@ class _PmdArimaAdapter(BaseForecaster):
             X = X.loc[y.index]
         self._forecaster = self._instantiate_model()
         self._forecaster.fit(y, X=X)
+        return self
+
+    def _update(self, y, X=None, update_params=True):
+        """Update model with data.
+
+        Parameters
+        ----------
+        y : pd.Series
+            Target time series to which to fit the forecaster.
+        X : pd.DataFrame, optional (default=None)
+            Exogenous variables are ignored
+
+        Returns
+        -------
+        self : returns an instance of self.
+        """
+        if update_params:
+            if X is not None:
+                X = X.loc[y.index]
+            self._forecaster.update(y, X=X)
         return self
 
     def _predict(self, fh, X=None):
@@ -150,10 +171,12 @@ class _PmdArimaAdapter(BaseForecaster):
                 pred_int.loc[fh_abs] = result[1][fh_idx, :]
                 pred_ints.append(pred_int)
             # unpack results
-            y_pred.loc[fh_abs] = result[0][fh_idx]
+            result = pd.Series(result[0]).iloc[fh_idx]
+            y_pred.loc[fh_abs] = result
             return y_pred, pred_ints
         else:
-            y_pred.loc[fh_abs] = result[fh_idx]
+            result = pd.Series(result).iloc[fh_idx]
+            y_pred.loc[fh_abs] = result
             return y_pred
 
     def _predict_fixed_cutoff(
@@ -199,7 +222,9 @@ class _PmdArimaAdapter(BaseForecaster):
                 pred_ints.append(pred_int)
             return result[0], pred_ints
         else:
-            return pd.Series(result[fh_idx], index=fh_abs)
+            result = pd.Series(result).iloc[fh_idx]
+            result.index = fh_abs
+            return result
 
     def _predict_interval(self, fh, X=None, coverage=0.90):
         """Compute/return prediction quantiles for a forecast.

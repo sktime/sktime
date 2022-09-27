@@ -2,17 +2,16 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Class to iteratively apply differences to a time series."""
-__author__ = ["RNKuhns"]
+__author__ = ["RNKuhns", "fkiraly"]
 __all__ = ["Differencer"]
 
 from typing import Union
-from warnings import warn
 
 import numpy as np
 import pandas as pd
 from sklearn.utils import check_array
 
-from sktime.forecasting.base import ForecastingHorizon
+from sktime.datatypes._utilities import get_cutoff, update_data
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.validation import is_int
 
@@ -42,28 +41,135 @@ def _check_lags(lags):
     return lags
 
 
-def _diff_transform(Z: Union[pd.Series, pd.DataFrame], lags: np.array):
-    """Perform differencing on Series or DataFrame."""
-    Zt = Z.copy()
+def _diff_transform(X: Union[pd.Series, pd.DataFrame], lags: np.array):
+    """Perform differencing on Series or DataFrame.
 
-    if len(lags) != 0:
-        for lag in lags:
-            # converting lag to int since pandas complains if it's np.int64
-            Zt = Zt.diff(periods=int(lag))
+    Parameters
+    ----------
+    X : pd.DataFrame
+    lags : int or iterable of int, e.g., list of int
 
-    return Zt
+    Returns
+    -------
+    `X` differenced at lags `lags`, always a copy (no reference)
+    if `lags` is int, applies diff to X at period `lags`
+        returns X.diff(periods=lag)
+    if `lags` is list of int, loops over elements from start to end
+        and applies diff to X at period lags[value], for value in the list `lags`
+    """
+    if isinstance(lags, int):
+        lags = [lags]
+
+    Xt = X
+
+    for lag in lags:
+        # converting lag to int since pandas complains if it's np.int64
+        Xt = Xt.diff(periods=int(lag))
+
+    return Xt
 
 
-def _inverse_diff(Z, lag):
-    for i in range(lag):
-        Z.iloc[i::lag] = Z.iloc[i::lag].cumsum()
+def _diff_to_seq(X: Union[pd.Series, pd.DataFrame], lags: np.array):
+    """Difference a series multiple times and return intermediate results.
 
-    return Z
+    Parameters
+    ----------
+    X : pd.DataFrame
+    lags : int or iterable of int, e.g., list of int
+
+    Returns
+    -------
+    list, i-th element is _diff_transform(X, lags[0:i])
+    """
+    if X is None:
+        return None
+
+    if isinstance(lags, int):
+        lags = [lags]
+
+    ret = [X]
+    Xd = X
+    for lag in lags:
+        # converting lag to int since pandas complains if it's np.int64
+        Xd = Xd.diff(periods=int(lag))
+        ret += [Xd]
+    return ret
 
 
-# todo: deprecation in 0.13.0
-#   remove the drop_na *argument* and its handling
-#   change the default behaviour form "drop_na" to "fill_zero"
+def _shift(ix, periods):
+    """Shift pandas index by periods."""
+    if isinstance(ix, (pd.DatetimeIndex, pd.PeriodIndex, pd.TimedeltaIndex)):
+        return ix.shift(periods)
+    else:
+        return ix + periods
+
+
+def _inverse_diff(X, lags, X_diff_seq=None):
+    """Inverse to difference.
+
+    Parameters
+    ----------
+    X : pd.Series or pd.DataFrame
+    lags : int or iterable of int, e.g., list of int
+    X_diff_seq : list of pd.Series or pd.DataFrame
+        elements must match type, columns and index type of X
+        length must be equal or longer than length of lags
+
+    Returns
+    -------
+    `X` inverse differenced at lags `lags`, always a copy (no reference)
+    if `lags` is int, applies cumsum to X at period `lag`
+        for i in range(lag), X.iloc[i::lag] = X.iloc[i::lag].cumsum()
+    if `lags` is list of int, loops over elements from start to end
+        and applies cumsum to X at period lag[value], for value in the list `lag`
+    if `X_diff_seq` is provided, uses values stored for indices outside `X` to invert
+    """
+    if isinstance(lags, int):
+        lags = [lags]
+
+    # if lag is numpy, convert to list
+    if isinstance(lags, (np.ndarray, list, tuple)):
+        lags = list(lags)
+
+    # if lag is a list, recurse
+    if isinstance(lags, (list, tuple)):
+        if len(lags) == 0:
+            return X
+
+    lags = lags.copy()
+
+    # lag_first = pop last element of lags
+    lag_last = lags.pop()
+
+    # invert last lag index
+    if X_diff_seq is not None:
+        X_diff_orig = X_diff_seq[len(lags)]
+        X_ix_shift = X.index.shift(-lag_last)
+        X_update = X_diff_orig.loc[X_ix_shift.intersection(X_diff_orig.index)]
+
+        X = X.combine_first(X_update)
+
+    X_diff_last = X.copy()
+
+    if lag_last < 0:
+        X_diff_last = X_diff_last.iloc[::-1]
+
+    abs_lag = abs(lag_last)
+
+    for i in range(abs_lag):
+        X_diff_last.iloc[i::abs_lag] = X_diff_last.iloc[i::abs_lag].cumsum()
+
+    if lag_last < 0:
+        X_diff_last = X_diff_last.iloc[::-1]
+
+    # if any more lags, recurse
+    if len(lags) > 0:
+        return _inverse_diff(X_diff_last, lags, X_diff_seq=X_diff_seq)
+    # else return
+    else:
+        return X_diff_last
+
+
 class Differencer(BaseTransformer):
     """Apply iterative differences to a timeseries.
 
@@ -87,13 +193,7 @@ class Differencer(BaseTransformer):
         The lags used to difference the data.
         If a single `int` value is
 
-    drop_na : bool, default = True
-        deprecated from 0.12.0, to be removed in 0.13.0
-        Whether the differencer should drop the initial observations that
-        contain missing values as a result of the differencing operation(s).
-
-    na_handling : str, default = "drop_na"
-        default will change to "fill_zero" from 0.13.0
+    na_handling : str, optional, default = "fill_zero"
         How to handle the NaNs that appear at the start of the series from differencing
         Example: there are only 3 differences in a series of length 4,
             differencing [a, b, c, d] gives [?, b-a, c-b, d-c]
@@ -101,6 +201,13 @@ class Differencer(BaseTransformer):
         "drop_na" - unknown value(s) are dropped, the series is shortened
         "keep_na" - unknown value(s) is/are replaced by NaN
         "fill_zero" - unknown value(s) is/are replaced by zero
+
+    memory : str, optional, default = "all"
+        how much of previously seen X to remember, for exact reconstruction of inverse
+        "all" : estimator remembers all X, inverse is correct for all indices seen
+        "latest" : estimator only remembers latest X necessary for future reconstruction
+            inverses at any time stamps after fit are correct, but not past time stamps
+        "none" : estimator does not remember any X, inverse is direct cumsum
 
     Examples
     --------
@@ -128,38 +235,19 @@ class Differencer(BaseTransformer):
 
     VALID_NA_HANDLING_STR = ["drop_na", "keep_na", "fill_zero"]
 
-    def __init__(self, lags=1, drop_na=None, na_handling="drop_na"):
+    def __init__(self, lags=1, na_handling="fill_zero", memory="all"):
         self.lags = lags
-        self.drop_na = drop_na
         self.na_handling = self._check_na_handling(na_handling)
-        # note: internally, we will use self._na_handling
-        #   because we must never change input param saves for sklearn compatibility
-        #   and because we need to "translate" the old "drop_na" arg
-        #   this could, in certain cases, overwrite the self. parameter
-        #   and cause sklearn compatibility issues due to the point mentioned
+        self.memory = memory
 
-        translate_arg = {True: "drop_na", False: "keep_na"}
-
-        if drop_na is not None:
-            warn(
-                f"the drop_na parameter is deprecated and will be removed in 0.13.0, "
-                f'use na_handling="{translate_arg[drop_na]}" instead',
-                DeprecationWarning,
-            )
-            self._na_handling = translate_arg[drop_na]
-        else:
-            self._na_handling = na_handling
-
-        self._Z = None
-        self._lags = None
+        self._X = None
+        self._lags = _check_lags(self.lags)
         self._cumulative_lags = None
-        self._prior_cum_lags = None
-        self._prior_lags = None
         super(Differencer, self).__init__()
 
         # if the na_handling is "fill_zero" or "keep_na"
         #   then the returned indices are same to the passed indices
-        if self._na_handling in ["fill_zero", "keep_na"]:
+        if self.na_handling in ["fill_zero", "keep_na"]:
             self.set_tags(**{"transform-returns-same-time-index": True})
 
     def _check_na_handling(self, na_handling):
@@ -171,44 +259,6 @@ class Differencer(BaseTransformer):
             )
 
         return na_handling
-
-    def _check_inverse_transform_index(self, Z):
-        """Check fitted series contains indices needed in inverse_transform."""
-        first_idx = Z.index.min()
-        orig_first_idx, orig_last_idx = self._Z.index.min(), self._Z.index.max()
-
-        is_contained_by_fitted_z = False
-        is_future = False
-
-        if first_idx < orig_first_idx:
-            msg = [
-                "Some indices of `Z` are prior to timeseries used in `fit`.",
-                "Reconstruction via `inverse_transform` is not possible.",
-            ]
-            raise ValueError(" ".join(msg))
-
-        elif Z.index.difference(self._Z.index).shape[0] == 0:
-            is_contained_by_fitted_z = True
-
-        elif first_idx > orig_last_idx:
-            is_future = True
-
-        pad_z_inv = self.na_handling == "drop_na" or is_future
-
-        cutoff = Z.index[0] if pad_z_inv else Z.index[self._cumulative_lags[-1]]
-        fh = ForecastingHorizon(np.arange(-1, -(self._cumulative_lags[-1] + 1), -1))
-        index = fh.to_absolute(cutoff).to_pandas()
-        index_diff = index.difference(self._Z.index)
-
-        if index_diff.shape[0] != 0 and not is_contained_by_fitted_z:
-            msg = [
-                f"Inverse transform requires indices {index}",
-                "to have been stored in `fit()`,",
-                f"but the indices {index_diff} were not found.",
-            ]
-            raise ValueError(" ".join(msg))
-
-        return is_contained_by_fitted_z, pad_z_inv
 
     def _fit(self, X, y=None):
         """
@@ -227,14 +277,27 @@ class Differencer(BaseTransformer):
         -------
         self: a fitted instance of the estimator
         """
-        self._lags = _check_lags(self.lags)
-        self._prior_lags = np.roll(self._lags, shift=1)
-        self._prior_lags[0] = 0
-        self._cumulative_lags = self._lags.cumsum()
-        self._prior_cum_lags = np.zeros_like(self._cumulative_lags)
-        self._prior_cum_lags[1:] = self._cumulative_lags[:-1]
-        self._Z = X.copy()
+        memory = self.memory
+
+        lagsum = self._lags.cumsum()[-1]
+        self._lagsum = lagsum
+
+        # remember X or part of X
+        if memory == "all":
+            self._X = X
+        elif memory == "latest":
+            n_memory = min(len(X), lagsum)
+            self._X = X.iloc[-n_memory:]
+
+        self._freq = get_cutoff(X, return_index=True)
         return self
+
+    def _check_freq(self, X):
+        """Ensure X carries same freq as X seen in _fit."""
+        if self._freq is not None and hasattr(self._freq, "freq"):
+            if hasattr(X.index, "freq") and X.index.freq is None:
+                X.index.freq = self._freq.freq
+        return X
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
@@ -253,13 +316,21 @@ class Differencer(BaseTransformer):
         Xt : pd.Series or pd.DataFrame, same type as X
             transformed version of X
         """
+        X_orig_index = X.index
+
+        X = update_data(X=self._X, X_new=X)
+
+        X = self._check_freq(X)
+
         Xt = _diff_transform(X, self._lags)
 
-        na_handling = self._na_handling
+        Xt = Xt.loc[X_orig_index]
+
+        na_handling = self.na_handling
         if na_handling == "drop_na":
-            Xt = Xt.iloc[self._cumulative_lags[-1] :]
+            Xt = Xt.iloc[self._lagsum :]
         elif na_handling == "fill_zero":
-            Xt.iloc[: self._cumulative_lags[-1]] = 0
+            Xt.iloc[: self._lagsum] = 0
         elif na_handling == "keep_na":
             pass
         else:
@@ -267,6 +338,7 @@ class Differencer(BaseTransformer):
                 "unreachable condition, invalid na_handling value encountered: "
                 f"{na_handling}"
             )
+
         return Xt
 
     def _inverse_transform(self, X, y=None):
@@ -284,48 +356,17 @@ class Differencer(BaseTransformer):
         Xt : pd.Series or pd.DataFrame, same type as X
             inverse transformed version of X
         """
-        Z = X
-        is_df = isinstance(Z, pd.DataFrame)
-        is_contained_by_fit_z, pad_z_inv = self._check_inverse_transform_index(Z)
+        lags = self._lags
 
-        # If `Z` is entirely contained in fitted `_Z` we can just return
-        # the values from the timeseires stored in `fit` as a shortcut
-        if is_contained_by_fit_z:
-            Z_inv = self._Z.loc[Z.index, :] if is_df else self._Z.loc[Z.index]
+        X_diff_seq = _diff_to_seq(self._X, lags)
 
-        else:
-            Z_inv = Z.copy()
-            for i, lag_info in enumerate(
-                zip(self._lags[::-1], self._prior_cum_lags[::-1])
-            ):
-                lag, prior_cum_lag = lag_info
-                _lags = self._lags[::-1][i + 1 :]
-                _transformed = _diff_transform(self._Z, _lags)
+        X = self._check_freq(X)
 
-                # Determine index values for initial values needed to reverse
-                # the differencing for the specified lag
-                if pad_z_inv:
-                    cutoff = Z_inv.index[0]
-                else:
-                    cutoff = Z_inv.index[prior_cum_lag + lag]
-                fh = ForecastingHorizon(np.arange(-1, -(lag + 1), -1))
-                index = fh.to_absolute(cutoff).to_pandas()
+        X_orig_index = X.index
 
-                if is_df:
-                    prior_n_timepoint_values = _transformed.loc[index, :]
-                else:
-                    prior_n_timepoint_values = _transformed.loc[index]
-                if pad_z_inv:
-                    Z_inv = pd.concat([prior_n_timepoint_values, Z_inv])
-                else:
-                    Z_inv.update(prior_n_timepoint_values)
+        Xt = _inverse_diff(X, lags, X_diff_seq=X_diff_seq)
 
-                Z_inv = _inverse_diff(Z_inv, lag)
-
-        if pad_z_inv:
-            Z_inv = Z_inv.loc[Z.index, :] if is_df else Z_inv.loc[Z.index]
-
-        Xt = Z_inv
+        Xt = Xt.loc[X_orig_index]
 
         return Xt
 

@@ -103,6 +103,71 @@ GET_CUTOFF_SUPPORTED_MTYPES = [
 ]
 
 
+def _get_cutoff_from_index(idx, return_index=False, reverse_order=False):
+    """Get cutoff = latest time point of pandas index.
+
+    Assumptions on obj are not checked, these should be validated separately.
+    Function may return unexpected results without prior validation.
+
+    Parameters
+    ----------
+    obj : pd.Index, possibly MultiIndex, with last level assumed timelike or integer,
+        e.g., as in the pd.DataFrame, pd-multiindex, or pd_multiindex_hier mtypes
+    return_index : bool, optional, default=False
+        whether a pd.Index object should be returned (True)
+            or a pandas compatible index element (False)
+        note: return_index=True may set freq attribute of time types to None
+            return_index=False will typically preserve freq attribute
+    reverse_order : bool, optional, default=False
+        if False, returns largest time index. If True, returns smallest time index
+
+    Returns
+    -------
+    cutoff_index : pandas compatible index element (if return_index=False)
+        pd.Index of length 1 (if return_index=True)
+    """
+    if not isinstance(idx, pd.Index):
+        raise TypeError(f"idx must be a pd.Index, but found type {type(idx)}")
+
+    # define "first" or "last" index depending on which is desired
+    if reverse_order:
+        ix = 0
+        agg = min
+    else:
+        ix = -1
+        agg = max
+
+    if isinstance(idx, pd.MultiIndex):
+        tdf = pd.DataFrame(index=idx)
+        hix = idx.droplevel(-1)
+        freq = None
+        cutoff = None
+        for hi in hix:
+            ss = tdf.loc[hi].index
+            if hasattr(ss, "freq") and ss.freq is not None:
+                freq = ss.freq
+            if cutoff is not None:
+                cutoff = agg(cutoff, ss[ix])
+            else:
+                cutoff = ss[ix]
+        time_idx = idx.get_level_values(-1).sort_values()
+        time_idx = pd.Index([cutoff])
+        time_idx.freq = freq
+    else:
+        time_idx = idx
+        if hasattr(idx, "freq") and idx.freq is not None:
+            freq = idx.freq
+        else:
+            freq = None
+
+    if not return_index:
+        return time_idx[ix]
+    res = time_idx[[ix]]
+    if hasattr(time_idx, "freq") and time_idx.freq is not None:
+        res.freq = time_idx.freq
+    return res
+
+
 def get_cutoff(
     obj,
     cutoff=0,
@@ -118,10 +183,12 @@ def get_cutoff(
 
     Parameters
     ----------
-    obj : sktime compatible time series data container
-        must be of Series, Panel, or Hierarchical scitype
+    obj : sktime compatible time series data container or pandas.Index
+        if sktime time series, must be of Series, Panel, or Hierarchical scitype
         all mtypes are supported via conversion to internally supported types
         to avoid conversions, pass data in one of GET_CUTOFF_SUPPORTED_MTYPES
+        if pandas.Index, it is assumed that last level is time-like or integer,
+        e.g., as in the pd.DataFrame, pd-multiindex, or pd_multiindex_hier mtypes
     cutoff : int, optional, default=0
         current cutoff, used to offset index if obj is np.ndarray
     return_index : bool, optional, default=False
@@ -152,6 +219,11 @@ def get_cutoff(
     # deal with VectorizedDF
     if hasattr(obj, "X"):
         obj = obj.X
+
+    if isinstance(obj, pd.Index):
+        return _get_cutoff_from_index(
+            idx=obj, return_index=return_index, reverse_order=reverse_order
+        )
 
     if check_input:
         valid = check_is_scitype(obj, scitype=["Series", "Panel", "Hierarchical"])
@@ -224,7 +296,9 @@ def get_cutoff(
     # pd-multiindex (Panel) and pd_multiindex_hier (Hierarchical)
     if isinstance(obj, pd.DataFrame) and isinstance(obj.index, pd.MultiIndex):
         idx = obj.index
-        series_idx = [obj.loc[x].index.get_level_values(-1) for x in idx.droplevel(-1)]
+        series_idx = [
+            obj.loc[x].index.get_level_values(-1) for x in idx.droplevel(-1).unique()
+        ]
         cutoffs = [sub_idx(x, ix, return_index) for x in series_idx]
         return agg(cutoffs)
 
@@ -234,14 +308,26 @@ def get_cutoff(
         return agg(idxs)
 
 
+UPDATE_DATA_INTERNAL_MTYPES = [
+    "pd.DataFrame",
+    "pd.Series",
+    "np.ndarray",
+    "pd-multiindex",
+    "numpy3D",
+    "pd_multiindex_hier",
+]
+
+
 def update_data(X, X_new=None):
     """Update time series container with another one.
 
+    Coerces X, X_new to one of the assumed mtypes, if not already of that type.
+
     Parameters
     ----------
-    X : sktime data container, in one of the following mtype formats
+    X : None, or sktime data container, in one of the following mtype formats
         pd.DataFrame, pd.Series, np.ndarray, pd-multiindex, numpy3D,
-        pd_multiindex_hier
+        pd_multiindex_hier. If not of that format, coerced.
     X_new : None, or sktime data container, should be same mtype as X,
         or convert to same format when converting to format list via convert_to
 
@@ -250,30 +336,30 @@ def update_data(X, X_new=None):
     X updated with X_new, with rows/indices in X_new added
         entries in X_new overwrite X if at same index
         numpy based containers will always be interpreted as having new row index
+        if one of X, X_new is None, returns the other; if both are None, returns None
     """
     from sktime.datatypes._convert import convert_to
     from sktime.datatypes._vectorize import VectorizedDF
 
-    # we only need to modify _X if X is not None
+    # if X or X_new is vectorized, unwrap it first
+    if isinstance(X, VectorizedDF):
+        X = X.X
+    if isinstance(X_new, VectorizedDF):
+        X_new = X_new.X
+
+    # we want to ensure that X, X_new are either numpy (1D, 2D, 3D)
+    # or in one of the long pandas formats
+    X = convert_to(X, to_type=UPDATE_DATA_INTERNAL_MTYPES)
+    X_new = convert_to(X_new, to_type=UPDATE_DATA_INTERNAL_MTYPES)
+
+    # we only need to modify X if X_new is not None
     if X_new is None:
         return X
 
-    # if X is vectorized, unwrap it first
-    if isinstance(X, VectorizedDF):
-        X = X.X
-    # we want to ensure that X is either numpy (1D, 2D, 3D)
-    # or in one of the long pandas formats
-    X = convert_to(
-        X,
-        to_type=[
-            "pd.DataFrame",
-            "pd.Series",
-            "np.ndarray",
-            "pd-multiindex",
-            "numpy3D",
-            "pd_multiindex_hier",
-        ],
-    )
+    # if X is None, but X_new is not, return N_new
+    if X is None:
+        return X_new
+
     # update X with the new rows in X_new
     #  if X is np.ndarray, we assume all rows are new
     if isinstance(X, np.ndarray):

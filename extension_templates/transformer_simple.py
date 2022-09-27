@@ -87,33 +87,92 @@ class MyTransformer(BaseTransformer):
     #   y_inner_mtype must be changed to one or a list of compatible sktime mtypes
     #  the other tags are "safe defaults" which can usually be left as-is
     _tags = {
+        # to list all valid tags with description, use sktime.registry.all_tags
+        #   all_tags(estimator_types="transformer", as_dataframe=True)
+        #
+        #
+        # behavioural tags: transformer type
+        # ----------------------------------
+        #
+        # scitype:transform-input, scitype:transform-output, scitype:transform-labels
+        # control the input/output type of transform, in terms of scitype
+        #
+        # scitype:transform-input, scitype:transform-output should be the
+        # simplest scitype that describes the mapping, taking into account vectorization
+        # a transform that produces Series when given Series, Panel when given Panel
+        #   should have both transform-input and transform-output as "Series"
+        # a transform that produces a tabular DataFrame (Table)
+        #   when given Series or Panel should have transform-input "Series"
+        #       and transform-output as "Primitives"
         "scitype:transform-input": "Series",
-        # what is the scitype of X: Series, or Panel
+        # valid values: "Series", "Panel"
         "scitype:transform-output": "Series",
-        # what scitype is returned: Primitives, Series, Panel
+        # valid values: "Series", "Panel", "Primitives"
+        #
+        # scitype:instancewise = is fit_transform an instance-wise operation?
+        # instance-wise = only values of a given series instance are used to transform
+        #   that instance. Example: Fourier transform; non-example: series PCA
+        "scitype:instancewise": True,
+        #
+        # scitype:transform-labels types the y used in transform
+        #   if y is not used in transform, this should be "None"
         "scitype:transform-labels": "None",
-        # what is the scitype of y: None (not needed), Primitives, Series, Panel
-        "scitype:instancewise": True,  # is this an instance-wise transform?
-        "capability:inverse_transform": False,  # can the transformer inverse transform?
-        "univariate-only": False,  # can the transformer handle multivariate X?
-        "X_inner_mtype": "pd.DataFrame",  # which mtypes do _fit/_predict support for X?
-        # this can be a Panel mtype even if transform-input is Series, vectorized
-        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
-        "requires_y": False,  # does y need to be passed in fit?
-        "enforce_index_type": None,  # index type that needs to be enforced in X/y
-        "fit_is_empty": True,  # is fit empty and can be skipped? Yes = True
-        "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
-        "transform-returns-same-time-index": False,
-        # does transform return have the same time index as input X
-        "skip-inverse-transform": False,  # is inverse-transform skipped when called?
+        # valid values: "None" (not needed), "Primitives", "Series", "Panel"
+        #
+        #
+        # behavioural tags: internal type
+        # ----------------------------------
+        #
+        # X_inner_mtype, y_inner_mtype control which format X/y appears in
+        # in the inner functions _fit, _transform, etc
+        "X_inner_mtype": "pd.DataFrame",
+        "y_inner_mtype": "None",
+        # valid values: str and list of str
+        # if str, must be a valid mtype str, in sktime.datatypes.MTYPE_REGISTER
+        #   of scitype Series, Panel (panel data) or Hierarchical (hierarchical series)
+        #   y_inner_mtype can also be of scitype Table (one row/instance per series)
+        #   in that case, all inputs are converted to that one type
+        # if list of str, must be a list of valid str specifiers
+        #   in that case, X/y are passed through without conversion if on the list
+        #   if not on the list, converted to the first entry of the same scitype
+        #
+        # univariate-only controls whether internal X can be univariate/multivariate
+        # if True (only univariate), always applies vectorization over variables
+        "univariate-only": False,
+        # valid values: True = inner _fit, _transform receive only univariate serie
+        #   False = uni- and multivariate series are passed to inner methods
+        #
+        # requires_y = does y need to be passed in fit?
+        "requires_y": False,
+        # valid values: False (no), True = exception is raised if no y is seen in _fit
+        #   y can be passed or not in _transform for either value of requires_y
+        #
+        #
+        # capability tags: properties of the estimator
+        # --------------------------------------------
+        #
+        # fit_is_empty = is fit empty and can be skipped?
+        "fit_is_empty": True,
+        # valid values: True = _fit is considered empty and skipped, False = No
+        # CAUTION: default is "True", i.e., _fit will be skipped even if implemented
+        #
+        # capability:inverse_transform = is inverse_transform implemented?
+        "capability:inverse_transform": False,
+        # valid values: boolean True (yes), False (no)
+        # if True, _inverse_transform must be implemented
+        # if False, exception is raised if inverse_transform is called,
+        #   unless the skip-inverse-transform tag is set to True
+        #
+        # capability:unequal_length = can the transformer handle unequal length panels,
+        #   i.e., when passed unequal length instances in Panel or Hierarchical data
         "capability:unequal_length": True,
-        # can the transformer handle unequal length time series (if passed Panel)?
-        "capability:unequal_length:removes": False,
-        # is transform result always guaranteed to be equal length (and series)?
-        #   not relevant for transformers that return Primitives in transform-output
+        # valid values: boolean True (yes), False (no)
+        # if False, may raise exception when passed unequal length Panel/Hierarchical
+        #
+        # handles-missing-data = can the transformer handle missing data (np or pd.NA)?
         "handles-missing-data": False,  # can estimator handle missing data?
-        "capability:missing_values:removes": False,
-        # is transform result always guaranteed to contain no missing values?
+        # valid values: boolean True (yes), False (no)
+        # if False, may raise exception when passed time series with missing values
     }
 
     # todo: add any hyper-parameters and components to constructor
@@ -123,10 +182,13 @@ class MyTransformer(BaseTransformer):
         self.parama = parama
         self.paramb = paramb
         self.paramc = paramc
-        # important: no checking or other logic should happen here
 
         # todo: change "MyTransformer" to the name of the class
         super(MyTransformer, self).__init__()
+
+        # todo: optional, parameter checking logic (if applicable) should happen here
+        # if writes derived values to self, should *not* overwrite self.parama etc
+        # instead, write to self._parama, self._newparam (starting with _)
 
     # todo: implement this, mandatory (except in special case below)
     def _fit(self, X, y=None):

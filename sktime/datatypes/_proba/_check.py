@@ -62,13 +62,21 @@ def check_pred_quantiles_proba(obj, return_metadata=False, var_name="obj"):
     index = obj.index
     metadata["is_empty"] = len(index) < 1 or len(obj.columns) < 1
 
+    # check that column indices are unique
+    if not len(set(obj.columns)) == len(obj.columns):
+        msg = "column indices must be unique"
+        return ret(False, msg, None, return_metadata)
+
     # check that all cols are numeric
     if not np.all([is_numeric_dtype(obj[c]) for c in obj.columns]):
-        msg = f"{var_name} should only have numeric dtype columns"
+        msg = (
+            f"{var_name} should only have numeric dtype columns, "
+            f"but found dtypes {obj.dtypes}"
+        )
         return ret(False, msg, None, return_metadata)
 
     # Check time index is ordered in time
-    if not index.is_monotonic:
+    if not index.is_monotonic_increasing:
         msg = (
             f"The (time) index of {var_name} must be sorted monotonically increasing, "
             f"but found: {index}"
@@ -121,13 +129,21 @@ def check_pred_interval_proba(obj, return_metadata=False, var_name="obj"):
     index = obj.index
     metadata["is_empty"] = len(index) < 1 or len(obj.columns) < 1
 
+    # check that column indices are unique
+    if not len(set(obj.columns)) == len(obj.columns):
+        msg = "column indices must be unique"
+        return ret(False, msg, None, return_metadata)
+
     # check that all cols are numeric
     if not np.all([is_numeric_dtype(obj[c]) for c in obj.columns]):
-        msg = f"{var_name} should only have numeric dtype columns"
+        msg = (
+            f"{var_name} should only have numeric dtype columns, "
+            f"but found dtypes {obj.dtypes}"
+        )
         return ret(False, msg, None, return_metadata)
 
     # Check time index is ordered in time
-    if not index.is_monotonic:
+    if not index.is_monotonic_increasing:
         msg = (
             f"The (time) index of {var_name} must be sorted monotonically increasing, "
             f"but found: {index}"

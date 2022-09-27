@@ -3,13 +3,14 @@
 
 __author__ = ["James-Large", "TonyBagnall"]
 __all__ = ["CNNClassifier"]
+
 from sklearn.utils import check_random_state
 
 from sktime.classification.deep_learning.base import BaseDeepClassifier
 from sktime.networks.cnn import CNNNetwork
 from sktime.utils.validation._dependencies import _check_dl_dependencies
 
-_check_dl_dependencies("tensorflow", severity="warning")
+_check_dl_dependencies(severity="warning")
 
 
 class CNNClassifier(BaseDeepClassifier):
@@ -37,16 +38,36 @@ class CNNClassifier(BaseDeepClassifier):
         fit parameter for the keras model
     optimizer       : keras.optimizer, default=keras.optimizers.Adam(),
     metrics         : list of strings, default=["accuracy"],
+    activation      : string or a tf callable, default="sigmoid"
+        Activation function used in the output linear layer.
+        List of available activation functions:
+        https://keras.io/api/layers/activations/
+    use_bias        : boolean, default = True
+        whether the layer uses a bias vector.
+    optimizer       : keras.optimizers object, default = Adam(lr=0.01)
+        specify the optimizer and the learning rate to be used.
 
     Notes
     -----
-    ..[1] Zhao et. al, Convolutional neural networks for
+    .. [1] Zhao et. al, Convolutional neural networks for
     time series classification, Journal of
     Systems Engineering and Electronics, 28(1):2017.
 
     Adapted from the implementation from Fawaz et. al
     https://github.com/hfawaz/dl-4-tsc/blob/master/classifiers/cnn.py
+
+    Examples
+    --------
+    >>> from sktime.classification.deep_learning.cnn import CNNClassifier
+    >>> from sktime.datasets import load_unit_test
+    >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
+    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
+    >>> cnn = CNNClassifier()  # doctest: +SKIP
+    >>> cnn.fit(X_train, y_train)  # doctest: +SKIP
+    CNNClassifier(...)
     """
+
+    _tags = {"python_dependencies": "tensorflow"}
 
     def __init__(
         self,
@@ -59,8 +80,12 @@ class CNNClassifier(BaseDeepClassifier):
         verbose=False,
         loss="mean_squared_error",
         metrics=None,
+        random_state=None,
+        activation="sigmoid",
+        use_bias=True,
+        optimizer=None,
     ):
-        _check_dl_dependencies("tensorflow", severity="error")
+        _check_dl_dependencies(severity="error")
         super(CNNClassifier, self).__init__()
         self.n_conv_layers = n_conv_layers
         self.avg_pool_size = avg_pool_size
@@ -71,6 +96,11 @@ class CNNClassifier(BaseDeepClassifier):
         self.verbose = verbose
         self.loss = loss
         self.metrics = metrics
+        self.random_state = random_state
+        self.activation = activation
+        self.use_bias = use_bias
+        self.optimizer = optimizer
+        self.history = None
         self._network = CNNNetwork()
 
     def build_model(self, input_shape, n_classes, **kwargs):
@@ -92,7 +122,10 @@ class CNNClassifier(BaseDeepClassifier):
         -------
         output : a compiled Keras Model
         """
+        import tensorflow as tf
         from tensorflow import keras
+
+        tf.random.set_seed(self.random_state)
 
         if self.metrics is None:
             metrics = ["accuracy"]
@@ -100,14 +133,20 @@ class CNNClassifier(BaseDeepClassifier):
             metrics = self.metrics
         input_layer, output_layer = self._network.build_network(input_shape, **kwargs)
 
-        output_layer = keras.layers.Dense(units=n_classes, activation="sigmoid")(
-            output_layer
+        output_layer = keras.layers.Dense(
+            units=n_classes, activation=self.activation, use_bias=self.use_bias
+        )(output_layer)
+
+        self.optimizer_ = (
+            keras.optimizers.Adam(learning_rate=0.01)
+            if self.optimizer is None
+            else self.optimizer
         )
 
         model = keras.models.Model(inputs=input_layer, outputs=output_layer)
         model.compile(
             loss=self.loss,
-            optimizer=keras.optimizers.Adam(),
+            optimizer=self.optimizer_,
             metrics=metrics,
         )
         return model
@@ -128,6 +167,7 @@ class CNNClassifier(BaseDeepClassifier):
         """
         if self.callbacks is None:
             self._callbacks = []
+
         y_onehot = self.convert_y_to_keras(y)
         # Transpose to conform to Keras input style.
         X = X.transpose(0, 2, 1)
@@ -136,7 +176,7 @@ class CNNClassifier(BaseDeepClassifier):
         self.input_shape = X.shape[1:]
         self.model_ = self.build_model(self.input_shape, self.n_classes_)
         if self.verbose:
-            self.model.summary()
+            self.model_.summary()
         self.history = self.model_.fit(
             X,
             y_onehot,
