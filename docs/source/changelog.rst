@@ -20,7 +20,7 @@ Maintenance release - moved ``sktime`` repository to ``sktime`` org from ``alan-
 
 Forks and links should be redirected, governance remains unchanged.
 
-In case of any problems, please contact us via the [issue tracker](https://github.com/sktime/sktime/issues) or [discussion forum](https://github.com/sktime/sktime/discussions).
+In case of any problems, please contact us via the `issue tracker <https://github.com/sktime/sktime/issues>`_ or `discussion forum <https://github.com/sktime/sktime/discussions>`_.
 
 Version 0.13.3 - 2022-09-25
 ---------------------------
