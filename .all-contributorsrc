@@ -1798,7 +1798,7 @@
     },
   ],
   "projectName": "sktime",
-  "projectOwner": "alan-turing-institute",
+  "projectOwner": "sktime",
   "repoType": "github",
   "repoHost": "https://github.com",
   "commitConvention": "none"
