@@ -28,8 +28,8 @@ def test_fit_default_params_univariate():
     model = EAGGLO()
     fitted_model = model._fit(X)
 
-    cluster_actual = fitted_model.cluster_
-    fit_actual = fitted_model.fit_
+    cluster_actual = fitted_model.cluster
+    fit_actual = fitted_model.gof
 
     assert np.allclose(cluster_actual, cluster_expected)
     assert np.allclose(fit_actual, fit_expected)
@@ -45,8 +45,8 @@ def test_fit_other_params_univariate():
     model = EAGGLO(member=np.array([0, 0, 1, 2]), alpha=2)
     fitted_model = model._fit(X)
 
-    cluster_actual = fitted_model.cluster_
-    fit_actual = fitted_model.fit_
+    cluster_actual = fitted_model.cluster
+    fit_actual = fitted_model.gof
 
     assert np.allclose(cluster_actual, cluster_expected)
     assert np.allclose(fit_actual, fit_expected)
@@ -79,8 +79,8 @@ def test_fit_default_params_multivariate():
     model = EAGGLO()
     fitted_model = model._fit(X)
 
-    cluster_actual = fitted_model.cluster_
-    fit_actual = fitted_model.fit_
+    cluster_actual = fitted_model.cluster
+    fit_actual = fitted_model.gof
 
     assert np.allclose(cluster_actual, cluster_expected)
     assert np.allclose(fit_actual, fit_expected)
@@ -104,8 +104,8 @@ def test_penalty1():
     model = EAGGLO(penalty="penalty1")
     fitted_model = model._fit(X)
 
-    cluster_actual = fitted_model.cluster_
-    fit_actual = fitted_model.fit_
+    cluster_actual = fitted_model.cluster
+    fit_actual = fitted_model.gof
 
     assert np.allclose(cluster_actual, cluster_expected)
     assert np.allclose(fit_actual, fit_expected)
@@ -121,8 +121,8 @@ def test_penalty2():
     model = EAGGLO(penalty=lambda x: np.mean(np.diff(np.sort(x))))
     fitted_model = model._fit(X)
 
-    cluster_actual = fitted_model.cluster_
-    fit_actual = fitted_model.fit_
+    cluster_actual = fitted_model.cluster
+    fit_actual = fitted_model.gof
 
     assert np.allclose(cluster_actual, cluster_expected)
     assert np.allclose(fit_actual, fit_expected)
