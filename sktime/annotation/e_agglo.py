@@ -68,11 +68,12 @@ class EAGGLO(BaseTransformer):
     Examples
     --------
     >>> from sktime.annotation.datagen import piecewise_normal_multivariate
-    >>> X = piecewise_normal_multivariate(means=[[1, 3], [4, 5]], lengths=[3, 3])
+    >>> X = piecewise_normal_multivariate(means=[[1, 3], [4, 5]], lengths=[3, 4], \
+        random_state = 10)
     >>> from sktime.annotation.e_agglo import EAGGLO
     >>> model = EAGGLO()
     >>> model.fit_transform(X)
-    array([0, 0, 0, 1, 1, 1])
+    array([0, 0, 0, 1, 1, 1, 1])
     """
 
     _tags = {
@@ -396,8 +397,8 @@ class EAGGLO(BaseTransformer):
 
         Returns
         -------
-        transformed version of X, representing the original data on a new set of
-        coordinates, obtained by multiplying input data by the basis vectors.
+        cluster
+            numeric representation of cluster membership for each row of X.
         """
         # fit again if indices not seen, but don't store anything
         if not X.index.equals(self._X.index):
@@ -419,6 +420,7 @@ class EAGGLO(BaseTransformer):
 
 
 def get_within_distance(X, alpha):
+    """Calculate within cluster distance."""
     n = X.shape[0]
     return sum(
         np.power(
@@ -450,6 +452,7 @@ def get_within_distance(X, alpha):
 
 
 def get_between_distance(X, Y, alpha):
+    """Calculate between cluster distance."""
     n = X.shape[0]
     m = Y.shape[0]
     return sum(
@@ -482,14 +485,21 @@ def get_between_distance(X, Y, alpha):
 
 
 def penalty1(x):
+    """Penalize goodness-of-fit statistic for number of change points."""
     return -len(x)
 
 
 def penalty2(x):
+    """Penalize goodness-of-fit statistic.
+
+    Favors segmentations with larger sizes, while taking into consideration
+    the size of the new segments.
+    """
     return np.mean(np.diff(np.sort(x)))
 
 
 def get_penalty_func(penalty):
+    """Define penalty function given (possibly string) input."""
     PENALTIES = {"penalty1": penalty1, "penalty2": penalty2}
 
     if callable(penalty):
