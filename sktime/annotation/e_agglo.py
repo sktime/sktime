@@ -4,6 +4,7 @@
 import warnings
 
 import numpy as np
+from scipy.spatial.distance import cdist
 
 from sktime.transformations.base import BaseTransformer
 
@@ -114,7 +115,10 @@ class EAGGLO(BaseTransformer):
 
         # array of within distances
         within = [
-            get_within_distance(
+            get_distance(
+                X.loc[
+                    _member == i,
+                ],
                 X.loc[
                     _member == i,
                 ],
@@ -128,7 +132,7 @@ class EAGGLO(BaseTransformer):
 
         for i in range(n_cluster):
             for j in range(n_cluster):
-                between = get_between_distance(
+                between = get_distance(
                     X.loc[
                         _member == i,
                     ],
@@ -419,69 +423,9 @@ class EAGGLO(BaseTransformer):
         return self.cluster
 
 
-def get_within_distance(X, alpha):
-    """Calculate within cluster distance."""
-    n = X.shape[0]
-    return sum(
-        np.power(
-            np.sqrt(
-                sum(
-                    (
-                        X.iloc[
-                            i,
-                        ]
-                        - X.iloc[
-                            j,
-                        ]
-                    )
-                    * (
-                        X.iloc[
-                            i,
-                        ]
-                        - X.iloc[
-                            j,
-                        ]
-                    )
-                )
-            ),
-            alpha,
-        )
-        for j in range(n)
-        for i in range(n)
-    ) / (n * n)
-
-
-def get_between_distance(X, Y, alpha):
-    """Calculate between cluster distance."""
-    n = X.shape[0]
-    m = Y.shape[0]
-    return sum(
-        np.power(
-            np.sqrt(
-                sum(
-                    (
-                        X.iloc[
-                            i,
-                        ]
-                        - Y.iloc[
-                            j,
-                        ]
-                    )
-                    * (
-                        X.iloc[
-                            i,
-                        ]
-                        - Y.iloc[
-                            j,
-                        ]
-                    )
-                )
-            ),
-            alpha,
-        )
-        for j in range(m)
-        for i in range(n)
-    ) / (m * n)
+def get_distance(X, Y, alpha):
+    """Calculate within/between cluster distance."""
+    return np.power(cdist(X, Y, "euclidean"), alpha).mean()
 
 
 def penalty1(x):
