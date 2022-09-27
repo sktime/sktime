@@ -423,23 +423,49 @@ class NaiveForecaster(_BaseWindowForecaster):
         y = self._y
         y = convert_to(y, "pd.Series")
         T = len(y)
+        sp = self.sp
 
         # Compute "past" residuals
         if self.strategy == "last":
             y_res = y - y.shift(self.sp)
         elif self.strategy == "mean":
-            # Since this strategy returns a constant, just predict fh=1 and
-            # transform the constant into a repeated array
-            y_pred = np.repeat(np.squeeze(self.predict(fh=1)), T)
+            if not self.window_length:
+                if sp > 1:
+                    # Get the next sp predictions and repeat them
+                    # T / self.sp times to match the length of trained y
+                    reps = np.ceil(T // sp)
+                    seasonal_means = self.predict(fh=list(range(sp)))
+                    y_pred = np.tile(seasonal_means, reps)[0:T]
+                else:
+                    # Since this strategy returns a constant, just predict fh=1 and
+                    # transform the constant into a repeated array
+                    y_pred = np.repeat(np.squeeze(self.predict(fh=1)), T)
+            else:
+                if sp > 1:
+                    # Label index by seasonal period
+                    seasons = np.mod(np.arange(T), sp)
+                    # Compute rolling seasonal means
+                    y_pred = (
+                        y.to_frame()
+                        .assign(__sp__=seasons)
+                        .groupby("__sp__")
+                        .rolling(self.window_length)
+                        .mean()
+                        .droplevel("__sp__")
+                        .sort_index()
+                        .squeeze()
+                    )
+                else:
+                    # Compute rolling means
+                    y_pred = y.rolling(self.window_length).mean()
             y_res = y - y_pred
         else:
             # Slope equation from:
             # https://otexts.com/fpp3/simple-methods.html#drift-method
-            slope = (y.iloc[-1] - y.iloc[0]) / (T - 1)
-
+            slope = (y.iloc[-1] - y.iloc[-(self.window_length or 0)]) / (T - 1)
             # Fitted value = previous value + slope
             # https://github.com/robjhyndman/forecast/blob/master/R/naive.R#L34
-            y_res = y - (y.shift(self.sp) + slope)
+            y_res = y - (y.shift(sp) + slope)
 
         # Residuals MSE and SE
         # + 1 degrees of freedom to estimate drift coefficient standard error
@@ -448,7 +474,6 @@ class NaiveForecaster(_BaseWindowForecaster):
         mse_res = np.sum(np.square(y_res)) / (T - n_nans - (self.strategy == "drift"))
         se_res = np.sqrt(mse_res)
 
-        sp = self.sp
         window_length = self.window_length or T
         # Formulas from:
         # https://otexts.com/fpp3/prediction-intervals.html (Table 5.2)
