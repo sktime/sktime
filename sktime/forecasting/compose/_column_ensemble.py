@@ -8,6 +8,7 @@ __all__ = ["ColumnEnsembleForecaster"]
 
 import pandas as pd
 
+from sktime.base._meta import flatten
 from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
 
@@ -15,12 +16,23 @@ from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
 class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
     """Forecast each series with separate forecaster.
 
-    Applies different univariate forecasters by column.
+    Applies different forecasters by columns.
+
+    `ColumnEnsembleForecaster` is passed forecaster/index pairs, exact syntax below.
+    Index can be single pandas index element, pd.Index, int, str, or list thereof.
+    If iterable (pd.Index, list), refers to multiple columns.
+
+    Behaviour in `fit`, `predict`, `update`:
+    For index pairs f_i, ix_i passed, applies forecaster f_i to column(s) ix_i.
+    `predict` results are concatenated to one container with same columns as in `fit`.
 
     Parameters
     ----------
-    forecasters : sktime forecaster, or list of tuples (str, estimator, int or str)
-        if tuples, with name = str, estimator is forecaster, index as str or int
+    forecasters : sktime forecaster, or list of tuples (str, estimator, int or pd.index)
+        if tuples, with name = str, estimator is forecaster, index as int or index
+        if last element is index, it must be int, str, or pd.Index coercable
+        if last element is int x, and is not in columns, is interpreted as x-th column
+        all columns must be present in an index
 
         If forecaster, clones of forecaster are applied to all columns.
         If list of tuples, forecaster in tuple is applied to column with int/str index
@@ -40,6 +52,22 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
     >>> forecaster.fit(y, fh=[1, 2, 3])
     ColumnEnsembleForecaster(...)
     >>> y_pred = forecaster.predict()
+
+    Using strings for indexing:
+    >>> df = pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})
+    >>> fc = ColumnEnsembleForecaster(
+    ...     [(f"trans_{col}", NaiveForecaster(), col) for col in "ab"]
+    ... )
+    >>> fc.fit(df, fh=[1, 42])
+    >>> fc.predict()
+
+    Applying one forecaster ot multiple columns, multivariate:
+    >>>     df = pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6], "c": [7, 8, 9]})
+    >>> fc = ColumnEnsembleForecaster(
+    ...    [("ab", NaiveForecaster(), ["a", 1]), ("c", NaiveForecaster(), 2)]
+    ... )
+    >>> fc.fit(df, fh=[1, 42])
+    >>> fc.predict()
     """
 
     _tags = {
@@ -102,6 +130,9 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
 
     def _coerce_to_pd_index(self, obj):
         """Coerce obj to pandas Index."""
+        # replace ints by column names
+        obj = self._get_indices(self._y, obj)
+
         if isinstance(obj, (int, str)):
             return pd.Index([obj])
         else:
@@ -132,7 +163,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
             forecaster_ = forecaster.clone()
 
             pd_index = self._coerce_to_pd_index(index)
-            pd_index = self._get_indices(y, pd_index)
+
             forecaster_.fit(y.loc[:, pd_index], X, fh)
             self.forecasters_.append((name, forecaster_, index))
 
@@ -153,7 +184,6 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
         """
         for _, forecaster, index in self.forecasters_:
             pd_index = self._coerce_to_pd_index(index)
-            pd_index = self._get_indices(y, pd_index)
             forecaster.update(y.loc[:, pd_index], X, update_params=update_params)
         return self
 
@@ -367,13 +397,13 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
         """Convert integer indices if necessary."""
 
         def _get_index(y, ix):
-            if isinstance(ix, int) and ix in y.columns and ix < len(y.columns):
+            if isinstance(ix, int) and ix not in y.columns and ix < len(y.columns):
                 return y.columns[ix]
             else:
                 return ix
 
-        if isinstance(idx, list):
-            return [_get_index(y, ix) for ix in idx]
+        if isinstance(idx, (list, tuple)):
+            return [self._get_indices(y, ix) for ix in idx]
         else:
             return _get_index(y, idx)
 
@@ -410,7 +440,9 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
                     f"Forecaster."
                 )
 
-        not_in_y_idx = set(indices).difference(y.columns)
+        index_flat = flatten(indices)
+        index_set = set(index_flat)
+        not_in_y_idx = index_set.difference(y.columns)
 
         if len(not_in_y_idx) > 0:
             raise ValueError(
@@ -419,10 +451,10 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
                 f"but found column identifiers that are neither: {list(not_in_y_idx)}"
             )
 
-        if len(set(indices)) != len(indices):
+        if len(index_set) != len(index_flat):
             raise ValueError(
-                f"One estimator per column required. Found {len(set(indices))} unique"
-                f" column names in forecasters arg, required {len(indices)}"
+                f"One estimator per column required. Found {len(index_set)} unique"
+                f" column names in forecasters arg, required {len(index_flat)}"
             )
 
         return self.forecasters

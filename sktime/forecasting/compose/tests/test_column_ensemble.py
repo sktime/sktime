@@ -3,7 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file).
 """Unit tests of ColumnEnsembleForecaster functionality."""
 
-__author__ = ["GuzalBulatova"]
+__author__ = ["GuzalBulatova", "canbooo", "fkiraly"]
 
 import numpy as np
 import pandas as pd
@@ -61,6 +61,16 @@ def test_column_ensemble_string_cols():
     df = pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})
     fc = ColumnEnsembleForecaster(
         [(f"trans_{col}", NaiveForecaster(), col) for col in "ab"]
+    )
+    fc.fit(df, fh=[1, 42])
+    fc.predict()
+
+
+def test_column_ensemble_multivariate_and_int():
+    """Check that ColumnEnsembleForecaster works with string columns."""
+    df = pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6], "c": [7, 8, 9]})
+    fc = ColumnEnsembleForecaster(
+        [("ab", NaiveForecaster(), ["a", 1]), ("c", NaiveForecaster(), 2)]
     )
     fc.fit(df, fh=[1, 42])
     fc.predict()
