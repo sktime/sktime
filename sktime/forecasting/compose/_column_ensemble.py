@@ -56,12 +56,12 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
     Using strings for indexing:
     >>> df = pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})
     >>> fc = ColumnEnsembleForecaster(
-    ...     [(f"trans_{col}", NaiveForecaster(), col) for col in "ab"]
+    ...     [("foo", NaiveForecaster(), "a"), ("bar", NaiveForecaster(), "b")]
     ... )
     >>> fc.fit(df, fh=[1, 42])
     >>> fc.predict()
 
-    Applying one forecaster ot multiple columns, multivariate:
+    Applying one forecaster to multiple columns, multivariate:
     >>>     df = pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6], "c": [7, 8, 9]})
     >>> fc = ColumnEnsembleForecaster(
     ...    [("ab", NaiveForecaster(), ["a", 1]), ("c", NaiveForecaster(), 2)]
