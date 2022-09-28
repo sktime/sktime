@@ -3,10 +3,9 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file).
 """Implements forecaster for applying different univariates by column."""
 
-__author__ = ["GuzalBulatova", "mloning"]
+__author__ = ["GuzalBulatova", "mloning", "fkiraly"]
 __all__ = ["ColumnEnsembleForecaster"]
 
-import numpy as np
 import pandas as pd
 
 from sktime.forecasting.base._base import BaseForecaster
@@ -103,7 +102,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
 
     def _coerce_to_pd_index(self, obj):
         """Coerce obj to pandas Index."""
-        if isinstance(obj, int):
+        if isinstance(obj, (int, str)):
             return pd.Index([obj])
         else:
             return pd.Index(obj)
@@ -133,7 +132,8 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
             forecaster_ = forecaster.clone()
 
             pd_index = self._coerce_to_pd_index(index)
-            forecaster_.fit(y.iloc[:, pd_index], X, fh)
+            pd_index = self._get_indices(y, pd_index)
+            forecaster_.fit(y.loc[:, pd_index], X, fh)
             self.forecasters_.append((name, forecaster_, index))
 
         return self
@@ -153,7 +153,8 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
         """
         for _, forecaster, index in self.forecasters_:
             pd_index = self._coerce_to_pd_index(index)
-            forecaster.update(y.iloc[:, pd_index], X, update_params=update_params)
+            pd_index = self._get_indices(y, pd_index)
+            forecaster.update(y.loc[:, pd_index], X, update_params=update_params)
         return self
 
     def _by_column(self, methodname, **kwargs):
@@ -180,6 +181,8 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
         for _, forecaster, index in self.forecasters_:
             y_preds += [getattr(forecaster, methodname)(**kwargs)]
             keys += [index]
+
+        keys = self._get_indices(self._y, keys)
 
         if col_multiindex:
             y_pred = pd.concat(y_preds, axis=1, keys=keys)
@@ -360,6 +363,20 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
         self._set_params("_forecasters", **kwargs)
         return self
 
+    def _get_indices(self, y, idx):
+        """Convert integer indices if necessary."""
+
+        def _get_index(y, ix):
+            if isinstance(ix, int) and ix in y.columns and ix < len(y.columns):
+                return y.columns[ix]
+            else:
+                return ix
+
+        if isinstance(idx, list):
+            return [_get_index(y, ix) for ix in idx]
+        else:
+            return _get_index(y, idx)
+
     def _check_forecasters(self, y):
 
         # if a single estimator is passed, replicate across columns
@@ -379,8 +396,12 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
                 " of (string, estimator, int) tuples."
             )
         names, forecasters, indices = zip(*self.forecasters)
-        # defined by MetaEstimatorMixin
+
+        # check names, defined by _HeterogenousEnsembleForecaster
         self._check_names(names)
+
+        # coerce column names to indices in columns
+        indices = self._get_indices(y, indices)
 
         for forecaster in forecasters:
             if not isinstance(forecaster, BaseForecaster):
@@ -389,15 +410,21 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
                     f"Forecaster."
                 )
 
+        not_in_y_idx = set(indices).difference(y.columns)
+
+        if len(not_in_y_idx) > 0:
+            raise ValueError(
+                f"Column identifier must be indices in y.columns, or integers within "
+                f"the range of the total number of columns, "
+                f"but found column identifiers that are neither: {list(not_in_y_idx)}"
+            )
+
         if len(set(indices)) != len(indices):
             raise ValueError(
-                "One estimator per column required. Found %s unique"
-                " estimators" % len(set(indices))
+                f"One estimator per column required. Found {len(set(indices))} unique"
+                f" column names in forecasters arg, required {len(indices)}"
             )
-        elif not np.array_equal(np.sort(indices), np.arange(len(y.columns))):
-            raise ValueError(
-                "One estimator per column required. Found %s" % len(indices)
-            )
+
         return self.forecasters
 
     @classmethod

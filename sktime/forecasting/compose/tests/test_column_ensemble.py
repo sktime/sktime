@@ -54,3 +54,13 @@ def test_invalid_forecasters_indices(forecasters):
     forecaster = ColumnEnsembleForecaster(forecasters=forecasters)
     with pytest.raises(ValueError, match=r"estimator per column"):
         forecaster.fit(y, fh=[1, 2])
+
+
+def test_column_ensemble_string_cols():
+    """Check that ColumnEnsembleForecaster works with string columns."""
+    df = pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})
+    fc = ColumnEnsembleForecaster(
+        [(f"trans_{col}", NaiveForecaster(), col) for col in "ab"]
+    )
+    fc.fit(df, fh=[1, 42])
+    fc.predict()
