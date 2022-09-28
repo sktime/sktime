@@ -41,7 +41,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.utils.validation._dependencies import _check_soft_dependencies
-from sktime.utils.validation.series import is_in_valid_index_types
+from sktime.utils.validation.series import is_in_valid_index_types, is_integer_index
 
 VALID_INDEX_TYPES = (pd.RangeIndex, pd.PeriodIndex, pd.DatetimeIndex)
 
@@ -76,7 +76,7 @@ def check_pddataframe_series(obj, return_metadata=False, var_name="obj"):
     assert obj.columns.is_unique, msg
 
     # check whether the time index is of valid type
-    if not isinstance(index, VALID_INDEX_TYPES):
+    if not (isinstance(index, VALID_INDEX_TYPES) or is_integer_index(index)):
         msg = (
             f"{type(index)} is not supported for {var_name}, use "
             f"one of {VALID_INDEX_TYPES} or integer index instead."
