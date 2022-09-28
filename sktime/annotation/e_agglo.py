@@ -124,7 +124,7 @@ class EAGGLO(BaseTransformer):
 
         for i, xi in g:
             distances[:n_cluster, i] = (
-                2 * g.apply(lambda xj: get_distance(xi, xj, self.alpha))
+                2 * g.apply(lambda xj: get_distance(xi, xj, self.alpha))  # noqa
                 - within[i]
                 - within
             )
