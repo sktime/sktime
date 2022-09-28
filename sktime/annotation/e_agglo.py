@@ -35,8 +35,8 @@ class EAGGLO(BaseTransformer):
         fixed constant alpha in (0, 2) used in the divergence measure, as the
         alpha-th absolute moment, see equation (4) in [1]_.
     penalty : functional (default=None)
-        function that defines a penalization of  the sequence of goodness-of-fit
-        statistics, when overfitting is a concern.
+        function that defines a penalization of the sequence of goodness-of-fit
+        statistic, when overfitting is a concern.
 
     Attributes
     ----------
@@ -94,8 +94,8 @@ class EAGGLO(BaseTransformer):
 
     def _process_data(self, X):
         """Initialize parameters and store to self."""
-        _member = (
-            self.member if self.member is not None else np.array(range(X.shape[0]))
+        _member = np.array(
+            self.member if self.member is not None else range(X.shape[0])
         )
 
         u = np.sort(np.unique(_member))  # unique array of cluster labels
@@ -106,7 +106,8 @@ class EAGGLO(BaseTransformer):
         ):  # relabel clusters to be consecutive numbers (when user specified)
             _member[np.where(_member == u[i])[0]] = i
 
-        # check if sorted.
+        # check if sorted
+        assert all(sorted(_member) == _member)
 
         sizes = np.repeat(0, 2 * n_cluster)
         sizes[:n_cluster] = [
@@ -114,34 +115,19 @@ class EAGGLO(BaseTransformer):
         ]  # calculate initial cluster sizes
 
         # array of within distances
-        within = [
-            get_distance(
-                X.loc[
-                    _member == i,
-                ],
-                X.loc[
-                    _member == i,
-                ],
-                self.alpha,
-            )
-            for i in range(n_cluster)
-        ]
+        XX = X.copy().set_index(_member)
+        g = XX.groupby(level=0)
+        within = g.apply(lambda x: get_distance(x, x, self.alpha))
 
-        # dataframe of between between-within distances
+        # array of between between-within distances
         distances = np.empty((2 * n_cluster, 2 * n_cluster))
 
-        for i in range(n_cluster):
-            for j in range(n_cluster):
-                between = get_distance(
-                    X.loc[
-                        _member == i,
-                    ],
-                    X.loc[
-                        _member == j,
-                    ],
-                    self.alpha,
-                )
-                distances[i, j] = distances[j, i] = 2 * between - within[i] - within[j]
+        for i, xi in g:
+            distances[:n_cluster, i] = (
+                2 * g.apply(lambda xj: get_distance(xi, xj, self.alpha))
+                - within[i]
+                - within
+            )
 
         np.fill_diagonal(distances, 0)
 
@@ -339,34 +325,25 @@ class EAGGLO(BaseTransformer):
             i, j = self._find_closest(K)
             self._update_distances(i, j, K)
 
+        def filter_na(i):
+            return list(
+                filter(
+                    lambda v: v == v,
+                    self.progression[
+                        i,
+                    ],
+                )
+            )
+
         # penalize the GOF statistic
         if self.penalty is not None:
             penalty_func = get_penalty_func(self.penalty)
-            cps = [
-                list(
-                    filter(
-                        lambda v: v == v,
-                        self.progression[
-                            i,
-                        ],
-                    )
-                )
-                for i in range(len(self.progression))
-            ]
+            cps = [filter_na(i) for i in range(len(self.progression))]
             self.gof += list(map(penalty_func, cps))
 
         # get the set of change points for the "best" clustering
         idx = np.argmax(self.gof)
-        self._estimates = np.sort(
-            list(
-                filter(
-                    lambda v: v == v,
-                    self.progression[
-                        idx,
-                    ],
-                )
-            )
-        )
+        self._estimates = np.sort(filter_na(idx))
 
         # remove change point N+1 if a cyclic merger was performed
         self._estimates = (
