@@ -15,6 +15,7 @@ __author__ = [
     "bethrice44",
 ]
 
+import math
 from warnings import warn
 
 import numpy as np
@@ -433,8 +434,9 @@ class NaiveForecaster(_BaseWindowForecaster):
                 if sp > 1:
                     # Get the next sp predictions and repeat them
                     # T / self.sp times to match the length of trained y
-                    reps = np.ceil(T // sp)
-                    seasonal_means = self.predict(fh=list(range(sp)))
+                    # NOTE: +1 extra tile to defend against off-by-one errors
+                    reps = math.ceil(T / sp) + 1
+                    seasonal_means = self.predict(fh=list(range(1, sp + 1))).to_numpy()
                     y_pred = np.tile(seasonal_means, reps)[0:T]
                 else:
                     # Since this strategy returns a constant, just predict fh=1 and
@@ -448,7 +450,11 @@ class NaiveForecaster(_BaseWindowForecaster):
                     y_pred = (
                         y.to_frame()
                         .assign(__sp__=seasons)
+                        # Group observations by their
+                        # seasonal period position
                         .groupby("__sp__")
+                        # Compute rolling means per
+                        # seasonal period
                         .rolling(self.window_length)
                         .mean()
                         .droplevel("__sp__")
