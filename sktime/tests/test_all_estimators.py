@@ -142,13 +142,14 @@ class BaseFixtureGenerator:
         "estimator_class",
         "estimator_instance",
         "scenario",
+        "estimator_fitted",
         "method_nsc",
     ]
 
     # which fixtures are indirect, e.g., have an additional pytest.fixture block
     #   to generate an indirect fixture at runtime. Example: estimator_instance
     #   warning: direct fixtures retain state changes within the same test
-    indirect_fixtures = ["estimator_instance"]
+    indirect_fixtures = ["estimator_instance", "estimator_fitted"]
 
     def pytest_generate_tests(self, metafunc):
         """Test parameterization routine for pytest.
@@ -289,8 +290,12 @@ class BaseFixtureGenerator:
     @pytest.fixture(scope="function")
     def estimator_instance(self, request):
         """estimator_instance fixture definition for indirect use."""
-        # esetimator_instance is cloned at the start of every test
-        return request.param.clone()
+        # estimator_instance is cloned at the start of every test
+        # we need to make sure that the _test_param_id gets preserved
+        estimator_instance = request.param
+        estimator_clone = request.param.clone()
+        estimator_clone._test_param_id = estimator_instance._test_param_id
+        return estimator_clone
 
     def _generate_scenario(self, test_name, **kwargs):
         """Return estimator test scenario.
@@ -343,6 +348,58 @@ class BaseFixtureGenerator:
 
         return False
 
+    def _generate_estimator_fitted(self, test_name, **kwargs):
+        """Return fitted estimator instance.
+
+        Fixtures parameterized
+        ----------------------
+        estimator_fitted: fitted estimator instance
+            ranges over all estimator instances, fitted to all applicable scenarios
+            random_state of all estimator instances is set to 0
+        """
+        # for the caching to work, we need to hash/cache *classes*
+        if "estimator_instance" in kwargs.keys():
+            objs = [kwargs["estimator_instance"]]
+            was_class = False
+        elif "estimator_class" in kwargs.keys():
+            objs = kwargs["estimator_class"].create_test_instances_and_names()[0]
+            was_class = True
+        else:
+            return []
+
+        scenario = kwargs["scenario"]
+
+        # we pass this on unfitted, but paired with the scenario
+        # the fitting happens in the pytest fixture, at a session scope
+        cls_plus_scen = [(type(obj), scenario, obj._test_param_id) for obj in objs]
+
+        if was_class and len(cls_plus_scen) > 1:
+            fitted_est_names = [str(i) for i in range(len(cls_plus_scen))]
+        else:
+            fitted_est_names = ["" for i in range(len(cls_plus_scen))]
+
+        return cls_plus_scen, fitted_est_names
+
+    # this is executed before each test instance call
+    #   if this were not executed, estimator_instance would keep state changes
+    #   within executions of the same test with different parameters
+    @pytest.fixture(scope="session")
+    def estimator_fitted(self, request):
+        """estimator_fitted fixture definition for indirect use."""
+        estimator_class = request.param[0]
+        scenario = request.param[1]
+        test_param_id = request.param[2]
+        random_state = 0
+
+        estimator_instance_params = estimator_class.get_test_params()
+        if not isinstance(estimator_instance_params, dict):
+            estimator_instance_params = estimator_instance_params[test_param_id]
+        estimator_instance = estimator_class(**estimator_instance_params)
+        set_random_state(estimator_instance, random_state=random_state)
+        scenario.run(estimator_instance, method_sequence=["fit"])
+
+        return estimator_instance
+
     def _generate_method_nsc(self, test_name, **kwargs):
         """Return estimator test scenario.
 
@@ -357,6 +414,9 @@ class BaseFixtureGenerator:
             cls = obj
         elif "estimator_instance" in kwargs.keys():
             obj = kwargs["estimator_instance"]
+            cls = type(obj)
+        elif "estimator_fitted" in kwargs.keys():
+            obj = kwargs["estimator_fitted"]
             cls = type(obj)
         else:
             return []
@@ -1043,7 +1103,9 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
             # err_msg=f"Idempotency check failed for method {method}",
         )
 
-    def test_fit_does_not_overwrite_hyper_params(self, estimator_instance, scenario):
+    def test_fit_does_not_overwrite_hyper_params(
+        self, estimator_instance, scenario, estimator_fitted
+    ):
         """Check that we do not overwrite hyper-parameters in fit."""
         estimator = estimator_instance
         set_random_state(estimator)
@@ -1052,8 +1114,8 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
         params = estimator.get_params()
         original_params = deepcopy(params)
 
-        # Fit the model
-        fitted_est = scenario.run(estimator_instance, method_sequence=["fit"])
+        # Fit the model - get this from the fixture
+        fitted_est = estimator_fitted
 
         # Compare the state of the model parameters with the original parameters
         new_params = fitted_est.get_params()
@@ -1073,7 +1135,7 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
             )
 
     def test_methods_do_not_change_state(
-        self, estimator_instance, scenario, method_nsc
+        self, estimator_instance, scenario, estimator_fitted, method_nsc
     ):
         """Check that non-state-changing methods do not change state.
 
@@ -1081,11 +1143,8 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
         estimators do not change anything (including hyper-parameters and
         fitted parameters)
         """
-        estimator = estimator_instance
-        set_random_state(estimator)
-
         # dict_before = copy of dictionary of estimator before predict, post fit
-        _ = scenario.run(estimator, method_sequence=["fit"])
+        estimator = estimator_fitted
         dict_before = estimator.__dict__.copy()
 
         # skip test if vectorization would be necessary and method predict_proba
@@ -1112,7 +1171,6 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
     ):
         """Check that calling methods has no side effects on args."""
         estimator = estimator_instance
-
         set_random_state(estimator)
 
         # Fit the model, get args before and after
@@ -1145,7 +1203,9 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
             method_args_after, method_args_before
         ), f"Estimator: {estimator} has side effects on arguments of {method_nsc}"
 
-    def test_persistence_via_pickle(self, estimator_instance, scenario, method_nsc):
+    def test_persistence_via_pickle(
+        self, estimator_instance, scenario, method_nsc, estimator_fitted
+    ):
         """Check that we can pickle all estimators."""
         # escape predict_proba for forecasters, tfp distributions cannot be pickled
         if (
@@ -1154,10 +1214,7 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
         ):
             return None
 
-        estimator = estimator_instance
-        set_random_state(estimator)
-        # Fit the model, get args before and after
-        scenario.run(estimator, method_sequence=["fit"], return_args=True)
+        estimator = estimator_fitted
 
         # Generate results before pickling
         vanilla_result = scenario.run(estimator, method_sequence=[method_nsc])

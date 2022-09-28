@@ -67,7 +67,7 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
             with pytest.raises(ValueError, match=error_msg):
                 scenario.run(estimator_instance, method_sequence=["fit"])
 
-    def test_classifier_output(self, estimator_instance, scenario):
+    def test_classifier_output(self, estimator_instance, scenario, estimator_fitted):
         """Test classifier outputs the correct data types and values.
 
         Test predict produces a np.array or pd.Series with only values seen in the train
@@ -82,7 +82,7 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
         X_new_instances = X_new_metadata["n_instances"]
 
         # run fit and predict
-        y_pred = scenario.run(estimator_instance, method_sequence=["fit", "predict"])
+        y_pred = scenario.run(estimator_fitted, method_sequence=["predict"])
 
         # check predict
         assert isinstance(y_pred, np.ndarray)
