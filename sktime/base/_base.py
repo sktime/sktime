@@ -426,6 +426,7 @@ class BaseObject(_BaseEstimator):
         Returns
         -------
         instance : instance of the class with default parameters
+            and with additional attribute __test_param_id = 0
 
         Notes
         -----
@@ -452,7 +453,10 @@ class BaseObject(_BaseEstimator):
                 "get_test_params should either return a dict or list of dict."
             )
 
-        return cls(**params)
+        obj = cls(**params)
+        obj.__test_param_id = 0
+
+        return obj
 
     @classmethod
     def create_test_instances_and_names(cls, parameter_set="default"):
@@ -468,6 +472,7 @@ class BaseObject(_BaseEstimator):
         -------
         objs : list of instances of cls
             i-th instance is cls(**cls.get_test_params()[i])
+            with additional attribute __test_param_id = i
         names : list of str, same length as objs
             i-th element is name of i-th instance of obj in tests
             convention is {cls.__name__}-{i} if more than one instance
@@ -489,13 +494,15 @@ class BaseObject(_BaseEstimator):
             )
         if isinstance(param_list, dict):
             param_list = [param_list]
-        for params in param_list:
+        for i, params in enumerate(param_list):
             if not isinstance(params, dict):
                 raise RuntimeError(
                     f"Error in {cls.__name__}.get_test_params, "
                     "return must be param dict for class, or list thereof"
                 )
-            objs += [cls(**params)]
+            obj = cls(**params)
+            obj.__test_param_id = i
+            objs += [obj]
 
         num_instances = len(param_list)
         if num_instances > 1:
