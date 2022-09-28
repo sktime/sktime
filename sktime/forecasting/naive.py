@@ -436,8 +436,10 @@ class NaiveForecaster(_BaseWindowForecaster):
                     # T / self.sp times to match the length of trained y
                     # NOTE: +1 extra tile to defend against off-by-one errors
                     reps = math.ceil(T / sp) + 1
-                    seasonal_means = self.predict(fh=list(range(1, sp + 1))).to_numpy()
-                    y_pred = np.tile(seasonal_means, reps)[0:T]
+                    seasonal_means = self.predict(fh=list(range(1, sp + 1)))
+                    if isinstance(seasonal_means, pd.DataFrame):
+                        seasonal_means = seasonal_means.squeeze()
+                    y_pred = np.tile(seasonal_means.to_numpy(), reps)[0:T]
                 else:
                     # Since this strategy returns a constant, just predict fh=1 and
                     # transform the constant into a repeated array
