@@ -24,6 +24,7 @@ from scipy.stats import norm
 
 from sktime.datatypes._convert import convert, convert_to
 from sktime.datatypes._utilities import get_slice
+from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.base._base import DEFAULT_ALPHA, BaseForecaster
 from sktime.forecasting.base._sktime import _BaseWindowForecaster
 from sktime.utils.validation import check_window_length
@@ -436,14 +437,18 @@ class NaiveForecaster(_BaseWindowForecaster):
                     # T / self.sp times to match the length of trained y
                     # NOTE: +1 extra tile to defend against off-by-one errors
                     reps = math.ceil(T / sp) + 1
-                    seasonal_means = self.predict(fh=list(range(1, sp + 1)))
+                    past_fh = ForecastingHorizon(
+                        list(range(1, sp + 1)), is_relative=None, freq=self._cutoff
+                    )
+                    seasonal_means = self._predict(fh=past_fh)
                     if isinstance(seasonal_means, pd.DataFrame):
                         seasonal_means = seasonal_means.squeeze()
                     y_pred = np.tile(seasonal_means.to_numpy(), reps)[0:T]
                 else:
                     # Since this strategy returns a constant, just predict fh=1 and
                     # transform the constant into a repeated array
-                    y_pred = np.repeat(np.squeeze(self.predict(fh=1)), T)
+                    past_fh = ForecastingHorizon(1, is_relative=None, freq=self._cutoff)
+                    y_pred = np.repeat(np.squeeze(self._predict(fh=past_fh)), T)
             else:
                 if sp > 1:
                     # Label index by seasonal period
