@@ -267,11 +267,13 @@ def test_strategy_mean_and_last_seasonal_additional_combinations(
         ("mean", 1, None),
         ("mean", 24, None),
         ("mean", 1, 24),
-        ("mean", 24, 24),
+        ("mean", 24, 48),
         ("drift", 1, None),
+        ("drift", 1, 24),
     ],
 )
-def test_naive_predict_var_backwards(strategy, sp, window_length):
+@pytest.mark.parametrize("n_periods", [10000, 9999, 12128])
+def test_naive_predict_var_backwards(strategy, sp, window_length, n_periods):
     """Checks naive prediction variance computations.
 
     Test whether, given h=1 and large T, the forecast standard error
@@ -289,11 +291,10 @@ def test_naive_predict_var_backwards(strategy, sp, window_length):
     ----------
     .. [1] https://otexts.com/fpp3/prediction-intervals.html#benchmark-methods
     """
-    n_timepoints = 100000
     mu, sigma = 0.0, 10.0
-    fake_idx = pd.date_range("1980", periods=n_timepoints + 1, freq="H")
+    fake_idx = pd.date_range("1980", periods=n_periods + 1, freq="H")
     np.random.seed(42)
-    y = pd.Series(np.random.normal(mu, sigma, size=n_timepoints), index=fake_idx[:-1])
+    y = pd.Series(np.random.normal(mu, sigma, size=n_periods), index=fake_idx[:-1])
 
     h = 1
     forecaster = NaiveForecaster(strategy, sp=sp, window_length=window_length)
@@ -311,6 +312,38 @@ def test_naive_predict_var_backwards(strategy, sp, window_length):
 
     upper_bound, lower_bound = (sigma + 0.001), (sigma - 0.001)
     assert lower_bound < sigma_res < upper_bound
+
+
+@pytest.mark.parametrize(
+    "strategy,sp,window_length",
+    [
+        ("last", 1, None),
+        ("last", 24, None),
+        ("mean", 1, None),
+        ("mean", 24, None),
+        ("mean", 1, 24),
+        ("mean", 24, 48),
+        ("drift", 1, None),
+        ("drift", 1, 24),
+    ],
+)
+@pytest.mark.parametrize("fh", TEST_OOS_FHS)
+def test_naive_predict_interval_mean(strategy, sp, window_length, fh):
+    """Checks naive prediction interval means are equal to mean predictions.
+
+    Note: this is largely a smoke test to check the validity of tricky rolling
+    mean and seasonal mean array operations within pred_var.
+    """
+    n_timepoints = 100000
+    mu, sigma = 0.0, 10.0
+    fake_idx = pd.date_range("1980", periods=n_timepoints + 1, freq="H")
+    np.random.seed(42)
+    y = pd.Series(np.random.normal(mu, sigma, size=n_timepoints), index=fake_idx[:-1])
+
+    forecaster = NaiveForecaster(strategy, sp=sp, window_length=window_length).fit(y)
+    y_pred_interval = forecaster.predict_interval(fh=fh)
+    y_pred = forecaster.predict(fh=fh)
+    pd.testing.assert_series_equal(y_pred_interval.mean(axis=1), y_pred)
 
 
 @pytest.mark.parametrize(
