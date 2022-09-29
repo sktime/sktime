@@ -232,7 +232,7 @@ Anyone is eligible to be a CoC committee member.
 Appointment
 ^^^^^^^^^^^
 
-Membership of the CC is by nomination by a core developer and a vote by
+Membership of the CoC is by nomination by a core developer and a vote by
 all core developers. A nomination will result in discussion which will stay
 open for 5 days excluding weekends and then a vote by the core
 developers which will stay open for 5 days excluding weekends. CoC committee
@@ -319,6 +319,45 @@ The CC has regular public meetings that the full community is welcome to attend.
 For more details about our meetings, please go to our `community-council repository <https://github.com/sktime/community-council/>`__.
 
 To contact the CC directly, please send an email to info@sktime.org.
+
+.. _cc-observers:
+
+CC observers
+~~~~~~~~~~
+
+CC (community council) observers are core developers with additional rights and
+responsibilities. Current CC observers are listed in the `community-council
+observers <https://www.sktime.org/en/stable/about/team.html>`__ .
+
+.. _rights-and-responsibilities-4:
+
+Rights and responsibilities
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Observers have a full view of CC and participate in the decision making process
+during CC discussions to ensure that more members of the community have direct
+input on CC decisions.
+
+Eligibility
+^^^^^^^^^^^
+Only core developers are eligible for appointment as CC observers.
+Non-core-developers can be nominated, but this must be accompanied
+by a nomination for core developer, and a core developer appointment vote
+concurrent with the 5 day discussion period (see below).
+
+.. _appointment-4:
+
+Appointment
+^^^^^^^^^^^
+Membership of the CC observers is by nomination by a core developer and a vote by
+all core developers. A nomination will result in discussion which will stay
+open for 5 days excluding weekends and then a vote by the core
+developers which will stay open for 5 days excluding weekends. CoC committee
+membership votes are subject to:
+
+* a 2/3 majority of all cast votes, and
+* a simple majority approval of all the current CoC committee members.
+
+In case of ties, the CC member with shortest tenure breaks the tie.
 
 .. _decision-making:
 
