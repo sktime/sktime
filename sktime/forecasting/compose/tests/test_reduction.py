@@ -76,7 +76,6 @@ y_test_grp = pd.concat([y_group1, y_group2])
 kwargs = WindowSummarizer.get_test_params()[0]
 kwargs_alternames = WindowSummarizer.get_test_params()[1]
 kwargs_variant = WindowSummarizer.get_test_params()[2]
-kwargs_short = WindowSummarizer.get_test_params()[3]
 
 regressor = make_pipeline(
     RandomForestRegressor(random_state=1),
@@ -119,11 +118,11 @@ y_numeric.index = pd.to_numeric(y_numeric.index)
 # forecaster3.fit(y_train, fh=[1, 2])
 # y_pred21 = forecaster3.predict(fh=[1, 2, 12])
 
-# forecaster2.fit(y_numeric, fh=[1, 2])
-# y_pred22 = forecaster2.predict(fh=[1, 2, 12])
+forecaster2.fit(y_numeric, fh=[1, 2])
+y_pred22 = forecaster2.predict(fh=[1, 2, 12])
 
-# forecaster2.fit(y_train_hier_unequal, fh=[1, 2])
-# y_pred23 = forecaster2.predict(fh=[1, 2, 12])
+forecaster2.fit(y_train_hier_unequal, fh=[1, 2])
+y_pred23 = forecaster2.predict(fh=[1, 2, 12])
 
 # Multiindex Series is not supported
 # y_train_series = y_train_grp["y"]
