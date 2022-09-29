@@ -41,8 +41,11 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
     --------
     >>> from sktime.forecasting.compose import ColumnEnsembleForecaster
     >>> from sktime.forecasting.exp_smoothing import ExponentialSmoothing
+    >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.forecasting.trend import PolynomialTrendForecaster
     >>> from sktime.datasets import load_macroeconomic
+
+    Using integers (column iloc refernces= for indexing:
     >>> y = load_macroeconomic()[["realgdp", "realcons"]]
     >>> forecasters = [
     ...     ("trend", PolynomialTrendForecaster(), 0),
