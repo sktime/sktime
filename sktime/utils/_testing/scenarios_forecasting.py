@@ -179,7 +179,9 @@ class ForecasterFitPredictUnivariateWithX(ForecasterTestScenario):
 
     args = {
         "fit": {
-            "y": pd.DataFrame(_make_series(n_timepoints=20, random_state=RAND_SEED)),
+            "y": pd.DataFrame(
+                _make_series(n_timepoints=20, random_state=RAND_SEED, columns=["foo"])
+            ),
             "X": X.copy(),
             "fh": 1,
         },
