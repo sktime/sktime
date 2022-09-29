@@ -443,12 +443,18 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
         index_flat = flatten(indices)
         index_set = set(index_flat)
         not_in_y_idx = index_set.difference(y.columns)
+        y_cols_not_found = set(y.columns).difference(index_set)
 
         if len(not_in_y_idx) > 0:
             raise ValueError(
                 f"Column identifier must be indices in y.columns, or integers within "
                 f"the range of the total number of columns, "
                 f"but found column identifiers that are neither: {list(not_in_y_idx)}"
+            )
+        if len(y_cols_not_found) > 0:
+            raise ValueError(
+                f"All columns of y must be indexed by column identifiers, but "
+                f"the following columns of y are not indexed: {list(y_cols_not_found)}"
             )
 
         if len(index_set) != len(index_flat):

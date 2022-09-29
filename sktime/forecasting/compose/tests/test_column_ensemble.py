@@ -52,7 +52,7 @@ def test_invalid_forecasters_indices(forecasters):
     """Check if invalid forecaster indices return correct Error."""
     y = pd.DataFrame(np.random.randint(0, 100, size=(100, 3)), columns=list("ABC"))
     forecaster = ColumnEnsembleForecaster(forecasters=forecasters)
-    with pytest.raises(ValueError, match=r"estimator per column"):
+    with pytest.raises(ValueError, match=r"column"):
         forecaster.fit(y, fh=[1, 2])
 
 
