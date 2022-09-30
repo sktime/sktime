@@ -62,7 +62,8 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
     ...     [("foo", NaiveForecaster(), "a"), ("bar", NaiveForecaster(), "b")]
     ... )
     >>> fc.fit(df, fh=[1, 42])
-    >>> fc.predict()
+    ColumnEnsembleForecaster(...)
+    >>> y_pred = fc.predict()
 
     Applying one forecaster to multiple columns, multivariate:
     >>>     df = pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6], "c": [7, 8, 9]})
@@ -70,7 +71,8 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
     ...    [("ab", NaiveForecaster(), ["a", 1]), ("c", NaiveForecaster(), 2)]
     ... )
     >>> fc.fit(df, fh=[1, 42])
-    >>> fc.predict()
+    ColumnEnsembleForecaster(...)
+    >>> y_pred = fc.predict()
     """
 
     _tags = {
