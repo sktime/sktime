@@ -41,7 +41,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.utils.validation._dependencies import _check_soft_dependencies
-from sktime.utils.validation.series import is_in_valid_index_types, is_integer_index
+from sktime.utils.validation.series import is_in_valid_index_types
 
 VALID_INDEX_TYPES = (pd.RangeIndex, pd.PeriodIndex, pd.DatetimeIndex)
 
@@ -76,7 +76,7 @@ def check_pddataframe_series(obj, return_metadata=False, var_name="obj"):
     assert obj.columns.is_unique, msg
 
     # check whether the time index is of valid type
-    if not (isinstance(index, VALID_INDEX_TYPES) or is_integer_index(index)):
+    if not is_in_valid_index_types(index):
         msg = (
             f"{type(index)} is not supported for {var_name}, use "
             f"one of {VALID_INDEX_TYPES} or integer index instead."
@@ -103,7 +103,6 @@ def check_pddataframe_series(obj, return_metadata=False, var_name="obj"):
 
     # check whether index is equally spaced or if there are any nans
     #   compute only if needed
-
     if return_metadata:
         metadata["is_equally_spaced"] = _index_equally_spaced(index)
         metadata["has_nans"] = obj.isna().values.any()

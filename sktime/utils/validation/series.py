@@ -18,15 +18,9 @@ import pandas as pd
 
 # We currently support the following types for input data and time index types.
 VALID_DATA_TYPES = (pd.DataFrame, pd.Series, np.ndarray)
-VALID_INDEX_TYPES = (
-    pd.RangeIndex,
-    pd.PeriodIndex,
-    pd.DatetimeIndex,
-    pd.TimedeltaIndex,
-    pd.MultiIndex,
-)
+VALID_INDEX_TYPES = (pd.RangeIndex, pd.PeriodIndex, pd.DatetimeIndex, pd.TimedeltaIndex)
 RELATIVE_INDEX_TYPES = (pd.RangeIndex, pd.TimedeltaIndex)
-ABSOLUTE_INDEX_TYPES = (pd.RangeIndex, pd.DatetimeIndex, pd.PeriodIndex, pd.MultiIndex)
+ABSOLUTE_INDEX_TYPES = (pd.RangeIndex, pd.DatetimeIndex, pd.PeriodIndex)
 assert set(RELATIVE_INDEX_TYPES).issubset(VALID_INDEX_TYPES)
 assert set(ABSOLUTE_INDEX_TYPES).issubset(VALID_INDEX_TYPES)
 
@@ -173,9 +167,8 @@ def check_series(
             var_name=var_name,
         )
 
-    if not (hasattr(Z, "index") and isinstance(Z.index, pd.MultiIndex)):
-        if not allow_index_names and not isinstance(Z, np.ndarray):
-            Z.index.names = [None for name in Z.index.names]
+    if not allow_index_names and not isinstance(Z, np.ndarray):
+        Z.index.names = [None for name in Z.index.names]
 
     return Z
 
