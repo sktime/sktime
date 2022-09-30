@@ -12,6 +12,7 @@ import warnings
 import numpy as np
 import pandas as pd
 
+from sktime.datatypes._utilities import get_time_index
 from sktime.exceptions import FitFailedWarning
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.utils.validation.forecasting import (
@@ -131,8 +132,9 @@ def evaluate(
         # split data
         y_train, y_test, X_train, X_test = _split(y, X, train, test, cv.fh)
 
+        y_index = get_time_index(y_test)
         # create forecasting horizon
-        fh = ForecastingHorizon(y_test.index, is_relative=False)
+        fh = ForecastingHorizon(y_index, is_relative=False)
 
         try:
             # fit/update
