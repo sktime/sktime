@@ -5,6 +5,7 @@ __author__ = [
     "Emiliathewolf",
     "TonyBagnall",
     "jasonlines",
+    "achieveordie",
 ]
 
 __all__ = [
