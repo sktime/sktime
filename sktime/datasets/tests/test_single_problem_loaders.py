@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sktime._contrib.datasets import (  # Univariate; Unequal length; Multivariate
+from sktime.datasets import (  # Univariate; Unequal length; Multivariate
     load_acsf1,
     load_arrow_head,
     load_basic_motions,
