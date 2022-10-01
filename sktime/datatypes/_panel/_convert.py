@@ -34,6 +34,7 @@ __all__ = [
     "convert_dict",
 ]
 
+from sktime.datatypes._convert_utils._convert import _extend_conversions
 from sktime.datatypes._panel._registry import MTYPE_LIST_PANEL
 
 # dictionary indexed by triples of types
@@ -1059,27 +1060,6 @@ def from_numpyflat_to_numpy3d(obj, store=None):
 
 convert_dict[("numpyflat", "numpy3D", "Panel")] = from_numpyflat_to_numpy3d
 
-
-# obtain other conversions from/to numpyflat via concatenation to numpy3D
-def _concat(fun1, fun2):
-    def concat_fun(obj, store=None):
-        obj1 = fun1(obj, store=store)
-        obj2 = fun2(obj1, store=store)
-        return obj2
-
-    return concat_fun
-
-
-for tp in set(MTYPE_LIST_PANEL).difference(["numpyflat", "numpy3D"]):
-    if ("numpy3D", tp, "Panel") in convert_dict.keys():
-        if ("numpyflat", tp, "Panel") not in convert_dict.keys():
-            convert_dict[("numpyflat", tp, "Panel")] = _concat(
-                convert_dict[("numpyflat", "numpy3D", "Panel")],
-                convert_dict[("numpy3D", tp, "Panel")],
-            )
-    if (tp, "numpy3D", "Panel") in convert_dict.keys():
-        if (tp, "numpyflat", "Panel") not in convert_dict.keys():
-            convert_dict[(tp, "numpyflat", "Panel")] = _concat(
-                convert_dict[(tp, "numpy3D", "Panel")],
-                convert_dict[("numpy3D", "numpyflat", "Panel")],
-            )
+_extend_conversions(
+    "numpyflat", "numpy3D", convert_dict, mtype_universe=MTYPE_LIST_PANEL
+)
