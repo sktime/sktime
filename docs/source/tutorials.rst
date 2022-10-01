@@ -30,14 +30,15 @@ The user guide notebooks are always functional with the most recent stable versi
 
     +++
 
-    .. link-button:: https://github.com/sktime/sktime-tutorial-pydata-global-2021
-            :type: url
-            :text: Intro to sktime - repo
-            :classes: btn-block btn-secondary stretched-link
-
     .. link-button:: https://www.youtube.com/watch?v=ODspi8-uWgo
             :type: url
             :text: Intro to sktime - video
+            :classes: btn-block btn-secondary stretched-link
+
+    .. dropdown:: :fa:`eye,mr-1` test panel
+        .. link-button:: https://github.com/sktime/sktime-tutorial-pydata-global-2021
+            :type: url
+            :text: Intro to sktime - repo
             :classes: btn-block btn-secondary stretched-link
 
     ---
