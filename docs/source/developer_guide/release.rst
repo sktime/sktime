@@ -133,7 +133,7 @@ To run the legacy release workflow, e.g., for development purposes, run
    make release
 
 This calls
-`build_tools/make_release.py <https://github.com/alan-turing-institute/sktime/blob/main/build_tools/make_release.py>`__
+`build_tools/make_release.py <https://github.com/sktime/sktime/blob/main/build_tools/make_release.py>`__
 that will guide you through the release process.
 
 IMPORTANT: when running the legacy build tools, ensure to not accidentally push a release tag to the ``sktime`` repo.

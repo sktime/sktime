@@ -149,12 +149,13 @@ class SFA(BaseTransformer):
         self.word_length = word_length
         self.alphabet_size = alphabet_size
         self.window_size = window_size
+
+        self.norm = norm
         self.lower_bounding = lower_bounding
         self.inverse_sqrt_win_size = (
             1.0 / math.sqrt(window_size) if not lower_bounding else 1.0
         )
 
-        self.norm = norm
         self.remove_repeat_words = remove_repeat_words
 
         self.save_words = save_words

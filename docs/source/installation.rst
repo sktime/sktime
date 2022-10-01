@@ -79,7 +79,7 @@ Using the ``git`` command line, the sequence of commands to install the latest v
 
 .. code-block:: bash
 
-    git clone https://github.com/alan-turing-institute/sktime.git
+    git clone https://github.com/sktime/sktime.git
     cd sktime
     git checkout main
     git pull
@@ -94,7 +94,7 @@ To build a previous version, replace line 3 with:
 This will checkout the code for the version ``<VERSION>``, where ``<VERSION>`` is a valid version string.
 Valid version strings are the repository's ``git`` tags, which can be inspected by running ``git tag``.
 
-You can also `download <https://github.com/alan-turing-institute/sktime/releases>`_ a zip archive of the version from GitHub.
+You can also `download <https://github.com/sktime/sktime/releases>`_ a zip archive of the version from GitHub.
 
 
 Step 2 - satisfying build requirements
@@ -221,6 +221,7 @@ Virtual environments
 ~~~~~~~~~~~~~~~~~~~~
 
 Two good options for virtual environment managers are:
+
 * `conda <https://uoa-eresearch.github.io/eresearch-cookbook/recipe/2014/11/20/conda/>`_ (many sktime community members us this)
 * `venv <https://realpython.com/python-virtual-environments-a-primer/>`_ (also quite good!).
 

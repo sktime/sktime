@@ -171,7 +171,7 @@ class AutoETS(_StatsModelsAdapter):
         "ignores-exogeneous-X": True,
         "capability:pred_int": True,
         "requires-fh-in-fit": False,
-        "handles-missing-data": False,
+        "handles-missing-data": True,
     }
 
     def __init__(

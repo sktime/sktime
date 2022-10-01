@@ -13,7 +13,7 @@ from sktime.registry import (
 from sktime.transformations.base import BaseTransformer
 
 # The following estimators currently do not pass all unit tests
-# https://github.com/alan-turing-institute/sktime/issues/1627
+# https://github.com/sktime/sktime/issues/1627
 EXCLUDE_ESTIMATORS = [
     # SFA is non-compliant with any transformer interfaces, #2064
     "SFA",
@@ -52,6 +52,10 @@ EXCLUDED_TESTS = {
         "test_persistence_via_pickle",
     ],
     "MLPClassifier": [
+        "test_fit_idempotent",
+        "test_persistence_via_pickle",
+    ],
+    "FCNClassifier": [
         "test_fit_idempotent",
         "test_persistence_via_pickle",
     ],
