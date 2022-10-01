@@ -136,7 +136,29 @@ def _list_available_datasets(extract_path):
 
 
 def _load_dataset(name, split, return_X_y, return_type=None, extract_path=None):
-    """Load time series classification datasets (helper function)."""
+    """Load time series classification datasets (helper function).
+
+    Parameters
+    ----------
+    name : string, file name to load from
+    split: None or one of "TRAIN", "TEST", optional (default=None)
+        Whether to load the train or test instances of the problem.
+        By default it loads both train and test instances (in a single container).
+    return_X_y: bool, optional (default=True)
+        If True, returns (features, target) separately instead of a single
+        dataframe with columns for features and the target.
+    return_type : valid Panel mtype string, or None, default = None = "nested_univ"
+        valid mtype strings, with explanation, are in datatypes.MTYPE_REGISTER
+    extract_path : todo author: please fill in docstring
+
+    Returns
+    -------
+    X: sktime data container, following mtype specification `return_type`
+        The time series data for the problem, with n instances
+    y: 1D numpy array of length n, only returned if return_X_y if True
+        The class labels for each time series instance in X
+        If return_X_y is False, y is appended to X instead.
+    """
     # Allow user to have non standard extract path
     if extract_path is not None:
         local_module = os.path.dirname(extract_path)
@@ -191,12 +213,25 @@ def _load_provided_dataset(
 
     Parameters
     ----------
-        name : string, file name
-        split : string, default = None, or one of "TRAIN" or "TEST".
-        return_X_y : default = True, if true, returns X and y separately.
-        return_type : string or None, default = None.
-        local_module: default = os.path.dirname(__file__),
-        local_dirname: default = "data"
+    name : string, file name to load from
+    split: None or str{"TRAIN", "TEST"}, optional (default=None)
+        Whether to load the train or test instances of the problem.
+        By default it loads both train and test instances (in a single container).
+    return_X_y: bool, optional (default=True)
+        If True, returns (features, target) separately instead of a single
+        dataframe with columns for features and the target.
+    return_type : valid Panel mtype string, or None, default = None = "nested_univ"
+        valid mtype strings, with explanation, are in datatypes.MTYPE_REGISTER
+    local_module: default = os.path.dirname(__file__),
+    local_dirname: default = "data"
+
+    Returns
+    -------
+    X: sktime data container, following mtype specification `return_type`
+        The time series data for the problem, with n instances
+    y: 1D numpy array of length n, only returned if return_X_y if True
+        The class labels for each time series instance in X
+        If return_X_y is False, y is appended to X instead.
     """
     if isinstance(split, str):
         split = split.upper()

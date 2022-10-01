@@ -454,25 +454,27 @@ def load_arrow_head(split=None, return_X_y=True, return_type="nested_univ"):
     )
 
 
-def load_acsf1(split=None, return_X_y=True):
+def load_acsf1(split=None, return_X_y=True, return_type=None):
     """Load dataset on power consumption of typical appliances.
 
     Parameters
     ----------
-    split: None or str{"train", "test"}, optional (default=None)
-        Whether to load the train or test partition of the problem. By
-        default it loads both.
+    split: None or one of "TRAIN", "TEST", optional (default=None)
+        Whether to load the train or test instances of the problem.
+        By default it loads both train and test instances (in a single container).
     return_X_y: bool, optional (default=True)
         If True, returns (features, target) separately instead of a single
-        dataframe with columns for
-        features and the target.
+        dataframe with columns for features and the target.
+    return_type : valid Panel mtype string, or None, default = None = "nested_univ"
+        valid mtype strings, with explanation, are in datatypes.MTYPE_REGISTER
 
     Returns
     -------
-    X: pd.DataFrame with m rows and c columns
-        The time series data for the problem with m cases and c dimensions
-    y: numpy array
-        The class labels for each case in X
+    X: sktime data container, following mtype specification `return_type`
+        The time series data for the problem, with n instances
+    y: 1D numpy array of length n, only returned if return_X_y if True
+        The class labels for each time series instance in X
+        If return_X_y is False, y is appended to X instead.
 
     Examples
     --------
@@ -500,7 +502,7 @@ def load_acsf1(split=None, return_X_y=True):
     =ACSF1
     """
     name = "ACSF1"
-    return _load_dataset(name, split, return_X_y)
+    return _load_dataset(name, split, return_X_y, return_type=return_type)
 
 
 def load_basic_motions(split=None, return_X_y=True, return_type=None):
@@ -513,24 +515,22 @@ def load_basic_motions(split=None, return_X_y=True, return_type=None):
 
     Parameters
     ----------
-    split: None or str{"train", "test"}, optional (default=None)
-        Whether to load the train or test partition of the problem. By
-        default it loads both.
+    split: None or one of "TRAIN", "TEST", optional (default=None)
+        Whether to load the train or test instances of the problem.
+        By default it loads both train and test instances (in a single container).
     return_X_y: bool, optional (default=True)
-        If True, returns (time series, target) separately as X and y instead of a single
-        data structure.
-    return_type: None or str{"numpy3d", "nested_univ"},
-        optional (default=None). Controls the returned data structure.
+        If True, returns (features, target) separately instead of a single
+        dataframe with columns for features and the target.
+    return_type : valid Panel mtype string, or None, default = None = "nested_univ"
+        valid mtype strings, with explanation, are in datatypes.MTYPE_REGISTER
 
     Returns
     -------
-    X:  The time series data for the problem. If return_type is either
-        "numpy2d"/"numpyflat", it returns 2D numpy array of shape (n,m), if "numpy3d" it
-        returns 3D numpy array of shape (n,6,m) and if "nested_univ" or None it returns
-        a nested pandas DataFrame of shape (n,6), where each cell is a pd.Series of
-        length m.
-    y: (optional) numpy array shape (n,1). The class labels for each case in X.
-        If return_X_y is False, y is appended to X.
+    X: sktime data container, following mtype specification `return_type`
+        The time series data for the problem, with n instances
+    y: 1D numpy array of length n, only returned if return_X_y if True
+        The class labels for each time series instance in X
+        If return_X_y is False, y is appended to X instead.
 
     Raises
     ------
