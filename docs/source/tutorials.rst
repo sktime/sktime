@@ -28,9 +28,14 @@ The user guide notebooks are always functional with the most recent stable versi
 
     +++
 
+    .. link-button:: https://www.youtube.com/watch?v=ODspi8-uWgo
+            :type: url
+            :text: Intro to sktime - video
+            :classes: btn-block btn-secondary stretched-link
+
     .. link-button:: https://github.com/sktime/sktime-tutorial-pydata-global-2021
             :type: url
-            :text: Intro to sktime
+            :text: Intro to sktime - repo
             :classes: btn-block btn-secondary stretched-link
 
     ---
@@ -42,9 +47,14 @@ The user guide notebooks are always functional with the most recent stable versi
 
     +++
 
+    .. link-button:: https://youtu.be/S_3ewcvs_pg
+            :type: url
+            :text: Implementing estimators - video
+            :classes: btn-block btn-secondary stretched-link
+
     .. link-button:: https://github.com/sktime/sktime-workshop-pydata-london-2022
             :type: url
-            :text: Implementing estimators
+            :text: Implementing estimators - repo
             :classes: btn-block btn-secondary stretched-link
 
     ---
@@ -56,9 +66,14 @@ The user guide notebooks are always functional with the most recent stable versi
 
     +++
 
+    .. link-button:: https://www.youtube.com/watch?v=4Rf9euAhjNc
+            :type: url
+            :text: Advanced forecasting - video
+            :classes: btn-block btn-secondary stretched-link
+
     .. link-button:: https://github.com/sktime/sktime-tutorial-pydata-berlin-2022
             :type: url
-            :text: Advanced forecasting
+            :text: Advanced forecasting - repo
             :classes: btn-block btn-secondary stretched-link
 
     ---
