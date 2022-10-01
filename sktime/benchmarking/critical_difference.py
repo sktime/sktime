@@ -36,9 +36,8 @@ def _check_friedman(n_strategies, n_datasets, ranked_data, alpha):
     """
     if n_strategies < 3:
         raise ValueError(
-            "At least 3 sets of measurements must be given for Friedmann test, got{}.".format(
-                n_strategies
-            )
+            "At least 3 sets of measurements must be given for Friedmann test, "
+            f"got {n_strategies}."
         )
 
     # calculate c to correct chisq for ties:
@@ -117,12 +116,12 @@ def plot_critical_difference(
     import matplotlib.pyplot as plt
 
     # Helper Functions
-    def _nth(l, n):
+    def _nth(lst, n):
         """Return only nth element in a list."""
-        n = _lloc(l, n)
-        return [a[n] for a in l]
+        n = _lloc(lst, n)
+        return [a[n] for a in lst]
 
-    def _lloc(l, n):
+    def _lloc(lst, n):
         """
         List location in list of list structure.
 
@@ -130,7 +129,7 @@ def plot_critical_difference(
         -1 is the last element, -2 second last...
         """
         if n < 0:
-            return len(l[0]) + n
+            return len(lst[0]) + n
         else:
             return n
 
@@ -141,18 +140,18 @@ def plot_critical_difference(
             a = highv - rank
         return textspace + scalewidth / (highv - lowv) * a
 
-    def _line(l, color="k", **kwargs):
+    def _line(lst, color="k", **kwargs):
         """Input is a list of pairs of points."""
-        ax.plot(_wfl(_nth(l, 0)), _hfl(_nth(l, 1)), color=color, **kwargs)
+        ax.plot(_wfl(_nth(lst, 0)), _hfl(_nth(lst, 1)), color=color, **kwargs)
 
     def _text(x, y, s, *args, **kwargs):
         ax.text(wf * x, hf * y, s, *args, **kwargs)
 
-    def _hfl(l):
-        return [a * hf for a in l]
+    def _hfl(lst):
+        return [a * hf for a in lst]
 
-    def _wfl(l):
-        return [a * wf for a in l]
+    def _wfl(lst):
+        return [a * wf for a in lst]
 
     # get number of datasets and strategies:
     n_datasets, n_strategies = scores.shape[0], scores.shape[1]
