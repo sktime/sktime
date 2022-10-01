@@ -57,7 +57,6 @@ def convert_dask_to_pandas(obj):
 
         names = obj.index.names[:-1]
         new_names = mi_names(names)
-        # names = [mi_name(x) for x in names]
         new_names = new_names + [obj.index.names[-1]]
 
         obj.index.names = new_names
@@ -65,12 +64,18 @@ def convert_dask_to_pandas(obj):
     return obj
 
 
-def convert_pandas_to_dask(obj):
+def convert_pandas_to_dask(obj, npartitions=1, chunksize=None, sort=True):
     """Convert pandas DataFrame to dask DataFrame, preserving MultiIndex.
 
     Parameters
     ----------
     obj : dask DataFrame
+    npartitions : int or None, optional, default = 1
+        npartitions passed to dask from_pandas when converting obj to dask
+    chunksize : int or None, optional, default = None
+        chunksize passed to dask from_pandas when converting obj to dask
+    sort : bool, optional, default = True
+        sort passed to dask from_pandas when converting obj to dask
 
     Returns
     -------
@@ -98,6 +103,6 @@ def convert_pandas_to_dask(obj):
         obj.index.names = new_names
         obj = obj.reset_index(level=list(range(n_index)))
 
-    obj = from_pandas(obj, npartitions=1)
+    obj = from_pandas(obj, npartitions=npartitions, chunksize=chunksize, sort=sort)
 
     return obj
