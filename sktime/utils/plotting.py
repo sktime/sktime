@@ -279,9 +279,9 @@ def plot_correlations(
     >>> from sktime.utils.plotting import plot_correlations
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
-    >>> fig, ax = plot_correlations(y)
+    >>> fig, ax = plot_correlations(y)  # doctest: +SKIP
     """
-    _check_soft_dependencies(["matplotlib", "statsmodels"])
+    _check_soft_dependencies(("matplotlib", "statsmodels"))
     import matplotlib.pyplot as plt
     from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 
