@@ -16,6 +16,7 @@ def _concat(fun1, fun2):
     function in converter signature, see datatypes._convert
         concatenation fun2 o fun1, using the same store
     """
+
     def concat_fun(obj, store=None):
         obj1 = fun1(obj, store=store)
         obj2 = fun2(obj1, store=store)
