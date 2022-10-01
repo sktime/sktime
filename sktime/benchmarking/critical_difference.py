@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-"""Standalone function to plot critical difference diagram."""
+"""Standalone module to compute and plot critical difference diagrams."""
 
-__author__ = ["Svea Meyer"]
+__author__ = ["SveaMeyer13"]
 
 import math
 
@@ -588,18 +588,3 @@ def plot_critical_difference(
         )
         start += height
     plt.show()
-
-
-# if __name__ == "__main__":
-#   import csv
-#  scores = np.loadtxt("example_scores/TESTACC_MEANS.csv", delimiter=",")
-#  with open("example_scores/labels.csv", newline="") as f:
-#     reader = csv.reader(f)
-#    data = list(reader)
-# labels = []
-# for l in data:
-#   labels.append(l[0])
-# cliques = [[0, 1, 1, 1, 1, 1, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 1, 1]]
-# plot_critical_difference(
-#   scores=scores, labels=labels, cliques=None, alpha=0.05, is_errors=False
-# )
