@@ -266,8 +266,8 @@ def evaluate(
     else:
         if backend is None:
             # Run temporal cross-validation sequentially
-            for i, (train, test) in enumerate(cv.split(y)):
-                result = _evaluate_window(
+            results = [
+                _evaluate_window(
                     y,
                     X,
                     train,
@@ -275,8 +275,8 @@ def evaluate(
                     i,
                     **_evaluate_window_kwargs,
                 )
-                # save results
-                results.append(result)
+                for i, (train, test) in enumerate(cv.split(y))
+            ]
         else:
             # Otherwise use joblib
             from joblib import Parallel, delayed
