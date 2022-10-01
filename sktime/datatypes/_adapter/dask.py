@@ -40,7 +40,7 @@ def convert_dask_to_pandas(obj):
         return x.split("__index__")[1]
 
     def mi_names(names):
-        new_names = [mi_name("__index__") for x in names]
+        new_names = [mi_name(x) for x in names]
         for i, name in enumerate(new_names):
             if name == str(i):
                 new_names[i] = None
@@ -56,7 +56,7 @@ def convert_dask_to_pandas(obj):
         obj = obj.reorder_levels(order)
 
         names = obj.index.names[:-1]
-        new_names = names(names)
+        new_names = mi_names(names)
         # names = [mi_name(x) for x in names]
         new_names = new_names + [obj.index.names[-1]]
 
@@ -87,9 +87,9 @@ def convert_pandas_to_dask(obj):
         for i, name in enumerate(names):
             if name is None:
                 res[i] = str(i)
-        return [f"__index__{x}" for x in names]
+        return [f"__index__{x}" for x in res]
 
-    if isinstance(obj, pd.MultiIndex):
+    if isinstance(obj.index, pd.MultiIndex):
         names = obj.index.names[:-1]
         new_names = dask_mi_names(names) + [obj.index.names[-1]]
         n_index = len(names)
@@ -98,6 +98,6 @@ def convert_pandas_to_dask(obj):
         obj.index.names = new_names
         obj = obj.reset_index(level=list(range(n_index)))
 
-    obj = from_pandas(obj)
+    obj = from_pandas(obj, npartitions=1)
 
     return obj
