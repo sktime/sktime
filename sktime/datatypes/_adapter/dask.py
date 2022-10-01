@@ -56,7 +56,7 @@ def convert_dask_to_pandas(obj):
         obj = obj.reorder_levels(order)
 
         names = obj.index.names[:-1]
-        new_names = new_names(names)
+        new_names = names(names)
         # names = [mi_name(x) for x in names]
         new_names = new_names + [obj.index.names[-1]]
 
