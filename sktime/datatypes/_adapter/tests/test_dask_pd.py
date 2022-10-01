@@ -1,0 +1,52 @@
+# -*- coding: utf-8 -*-
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Tests for converter utilities between dask and pandas, with multiindex convention."""
+
+import pandas as pd
+import pytest
+
+from sktime.datatypes._adapter.dask import (
+    convert_dask_to_pandas, convert_pandas_to_dask
+)
+from sktime.utils.validation._dependencies import _check_soft_dependencies
+
+
+@pytest.mark.skipif(
+    not _check_soft_dependencies("dask", severity="none"),
+    reason="skip test if required soft dependency for dask not available",
+)
+def test_convert_dask_to_pd_multiindex():
+    """Tests back-conversion from dask to pandas is correct for MultiIndex."""
+    from dask.dataframe import from_pandas
+
+    pd_fixture = pd.DataFrame(
+        {"__index__a": [1, 2, 3], "__index__1": [1, 2, 3], "a": [2, 3, 4]}
+    )
+    dask_fixture = from_pandas(pd_fixture, npartitions=1)
+
+    result = convert_dask_to_pandas(dask_fixture)
+
+    assert result.index.names == ["a", None, None]
+    assert result.columns == ["a"]
+    assert (result.values == pd_fixture[["a"]].values).all()
+
+
+@pytest.mark.skipif(
+    not _check_soft_dependencies("dask", severity="none"),
+    reason="skip test if required soft dependency for dask not available",
+)
+def test_convert_pd_multiindex_to_dask():
+    """Tests back-conversion from dask to pandas is correct for MultiIndex."""
+    pd_fixture = pd.DataFrame(
+        {"a": [1, 2, 3], "b": [1, 2, 3], "foo": [2, 3, 4], "bar": [3, 4, 5]}
+    )
+    pd_fixture = pd_fixture.set_index(["a", "b"], append=True)
+    pd_fixture.index.names = ["a", None, "foo"]
+    pd_fixture.columns = ["a", "foo"]
+
+    result = convert_pandas_to_dask(pd_fixture)
+
+    expected_cols = ["__index__a", "__index__1", "a", "foo"]
+    assert list(result.columns) == expected_cols
+    result_values = result.loc[:, ["a", "foo"]].compute().values
+    assert (result_values == pd_fixture.values).all()
