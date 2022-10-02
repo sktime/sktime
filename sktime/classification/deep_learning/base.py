@@ -125,12 +125,46 @@ class BaseDeepClassifier(BaseClassifier, ABC):
         return y
 
     def __getstate__(self):
-        """Magic method called during serialization."""
+        """Get Dict config that will be used when a serialization method is called.
+
+        Returns
+        -------
+        copy : dict, the config to be serialized
+        """
         copy = self.__dict__.copy()
-        del copy["optimizer"]
-        del copy["model_"]
-        if copy.get("history") is not None:
-            del copy["history"]
-        if copy.get("optimizer_") is not None:
-            del copy["optimizer_"]
+        check_before_deletion = ["model_", "history", "optimizer_"]
+        # if attribute "optimizer" is not None, then it must
+        # have been supplied by the user and will be equal to "optimizer_"
+        # delete it normally with other non-serializable attributes
+        if copy["optimizer"] is not None:
+            check_before_deletion.append("optimizer")
+        # if it is None, then save it as 0, so it can be
+        # later correctly restored as None
+        else:
+            copy["optimizer"] = 0
+        for attribute in check_before_deletion:
+            if copy.get(attribute) is not None:
+                del copy[attribute]
         return copy
+
+    def __setstate__(self, state):
+        """Magic method called during deserialization.
+
+        Parameters
+        ----------
+        state : dict, as returned from __getstate__(), used for correct deserialization
+
+        Returns
+        -------
+        -
+        """
+        self.__dict__ = state
+        self.__dict__["model_"] = self.model_
+        # Having 0 as value implies "optimizer" attribute was None
+        # as per __getstate__()
+        if self.__dict__.get("optimizer") == 0:
+            self.__dict__["optimizer"] = None
+        else:
+            self.__dict__["optimizer"] = self.model_.optimizer
+        self.__dict__["optimizer_"] = self.model_.optimizer
+        self.__dict__["history"] = self.history
