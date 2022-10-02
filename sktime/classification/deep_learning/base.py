@@ -5,7 +5,7 @@ Abstract base class for the Keras neural network classifiers.
 The reason for this class between BaseClassifier and deep_learning classifiers is
 because we can generalise tags, _predict and _predict_proba
 """
-__author__ = ["James-Large", "ABostrom", "TonyBagnall", "achieveordie"]
+__author__ = ["James-Large", "ABostrom", "TonyBagnall", "aurunmpegasus", "achieveordie"]
 __all__ = ["BaseDeepClassifier"]
 
 from abc import ABC, abstractmethod
