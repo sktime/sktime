@@ -61,6 +61,10 @@ jobs:
         run: |
           python -m pip install .[dev]
 
+      - name: Install baseobject
+        run: |
+          python -m pip install git+https://github.com/sktime/BaseObject.git@main
+
       - name: Show dependencies
         run: python -m pip list
 
