@@ -114,7 +114,7 @@ def load_UCR_UEA_dataset(
     return _load_dataset(name, split, return_X_y, return_type, extract_path)
 
 
-def load_plaid(split=None, return_X_y=True):
+def load_plaid(split=None, return_X_y=True, return_type=None):
     """Load the PLAID time series classification problem and returns X and y.
 
     Example of a univariate problem with unequal length series.
@@ -140,10 +140,10 @@ def load_plaid(split=None, return_X_y=True):
     >>> X, y = load_plaid()
     """
     name = "PLAID"
-    return _load_dataset(name, split, return_X_y)
+    return _load_dataset(name, split, return_X_y, return_type=return_type)
 
 
-def load_gunpoint(split=None, return_X_y=True):
+def load_gunpoint(split=None, return_X_y=True, return_type=None):
     """Load the GunPoint time series classification problem and returns X and y.
 
     Parameters
@@ -196,28 +196,30 @@ def load_gunpoint(split=None, return_X_y=True):
     ?Dataset=GunPoint
     """
     name = "GunPoint"
-    return _load_dataset(name, split, return_X_y)
+    return _load_dataset(name, split, return_X_y, return_type=return_type)
 
 
-def load_osuleaf(split=None, return_X_y=True):
+def load_osuleaf(split=None, return_X_y=True, return_type=None):
     """Load the OSULeaf time series classification problem and returns X and y.
 
     Parameters
     ----------
-    split: None or str{"train", "test"}, optional (default=None)
-        Whether to load the train or test partition of the problem. By
-        default it loads both.
+    split: None or one of "TRAIN", "TEST", optional (default=None)
+        Whether to load the train or test instances of the problem.
+        By default it loads both train and test instances (in a single container).
     return_X_y: bool, optional (default=True)
         If True, returns (features, target) separately instead of a single
-        dataframe with columns for
-        features and the target.
+        dataframe with columns for features and the target.
+    return_type : valid Panel mtype string, or None, default = None = "nested_univ"
+        valid mtype strings, with explanation, are in datatypes.MTYPE_REGISTER
 
     Returns
     -------
-    X: pd.DataFrame with m rows and c columns
-        The time series data for the problem with m cases and c dimensions
-    y: numpy array
-        The class labels for each case in X
+    X: sktime data container, following mtype specification `return_type`
+        The time series data for the problem, with n instances
+    y: 1D numpy array of length n, only returned if return_X_y if True
+        The class labels for each time series instance in X
+        If return_X_y is False, y is appended to X instead.
 
     Examples
     --------
@@ -243,28 +245,30 @@ def load_osuleaf(split=None, return_X_y=True):
     ?Dataset=OSULeaf
     """
     name = "OSULeaf"
-    return _load_dataset(name, split, return_X_y)
+    return _load_dataset(name, split, return_X_y, return_type=return_type)
 
 
-def load_italy_power_demand(split=None, return_X_y=True):
+def load_italy_power_demand(split=None, return_X_y=True, return_type=None):
     """Load ItalyPowerDemand time series classification problem.
 
     Parameters
     ----------
-    split: None or str{"train", "test"}, optional (default=None)
-        Whether to load the train or test partition of the problem. By
-        default it loads both.
+    split: None or one of "TRAIN", "TEST", optional (default=None)
+        Whether to load the train or test instances of the problem.
+        By default it loads both train and test instances (in a single container).
     return_X_y: bool, optional (default=True)
         If True, returns (features, target) separately instead of a single
-        dataframe with columns for
-        features and the target.
+        dataframe with columns for features and the target.
+    return_type : valid Panel mtype string, or None, default = None = "nested_univ"
+        valid mtype strings, with explanation, are in datatypes.MTYPE_REGISTER
 
     Returns
     -------
-    X: pd.DataFrame with m rows and c columns
-        The time series data for the problem with m cases and c dimensions
-    y: numpy array
-        The class labels for each case in X
+    X: sktime data container, following mtype specification `return_type`
+        The time series data for the problem, with n instances
+    y: 1D numpy array of length n, only returned if return_X_y if True
+        The class labels for each time series instance in X
+        If return_X_y is False, y is appended to X instead.
 
     Examples
     --------
@@ -287,7 +291,7 @@ def load_italy_power_demand(split=None, return_X_y=True):
     http://timeseriesclassification.com/description.php?Dataset=ItalyPowerDemand
     """
     name = "ItalyPowerDemand"
-    return _load_dataset(name, split, return_X_y)
+    return _load_dataset(name, split, return_X_y, return_type=return_type)
 
 
 def load_unit_test(split=None, return_X_y=True, return_type=None):
@@ -343,7 +347,7 @@ def load_unit_test(split=None, return_X_y=True, return_type=None):
     return _load_provided_dataset(name, split, return_X_y, return_type)
 
 
-def load_japanese_vowels(split=None, return_X_y=True):
+def load_japanese_vowels(split=None, return_X_y=True, return_type=None):
     """Load the JapaneseVowels time series classification problem.
 
     Example of a multivariate problem with unequal length series.
@@ -396,29 +400,31 @@ def load_japanese_vowels(split=None, return_X_y=True):
     ?Dataset=JapaneseVowels
     """
     name = "JapaneseVowels"
-    return _load_dataset(name, split, return_X_y)
+    return _load_dataset(name, split, return_X_y, return_type=return_type)
 
 
-def load_arrow_head(split=None, return_X_y=True, return_type="nested_univ"):
+def load_arrow_head(split=None, return_X_y=True, return_type=None):
     """
     Load the ArrowHead time series classification problem and returns X and y.
 
     Parameters
     ----------
-    split: None or str{"train", "test"}, optional (default=None)
-        Whether to load the train or test partition of the problem. By
-        default it loads both.
+    split: None or one of "TRAIN", "TEST", optional (default=None)
+        Whether to load the train or test instances of the problem.
+        By default it loads both train and test instances (in a single container).
     return_X_y: bool, optional (default=True)
         If True, returns (features, target) separately instead of a single
-        dataframe with columns for
-        features and the target.
+        dataframe with columns for features and the target.
+    return_type : valid Panel mtype string, or None, default = None = "nested_univ"
+        valid mtype strings, with explanation, are in datatypes.MTYPE_REGISTER
 
     Returns
     -------
-    X: pd.DataFrame with m rows and c columns
-        The time series data for the problem with m cases and c dimensions
-    y: numpy array
-        The class labels for each case in X
+    X: sktime data container, following mtype specification `return_type`
+        The time series data for the problem, with n instances
+    y: 1D numpy array of length n, only returned if return_X_y if True
+        The class labels for each time series instance in X
+        If return_X_y is False, y is appended to X instead.
 
     Examples
     --------
