@@ -211,8 +211,17 @@ class BoxCoxTransformer(BaseTransformer):
 class LogTransformer(BaseTransformer):
     """Natural logarithm transformation.
 
-    The natural log transformation can used to make data more normally
+    The Natural logarithm transformation can be used to make the data more normally
     distributed and stabilize its variance.
+
+    Transforms each data point x to log(scale *(x+offset))
+
+    Parameters
+    ----------
+    offset : float , default = 0
+             Additive constant applied to all the data.
+    scale  : float , default = 1
+             Multiplicative scaling constant applied to all the data.
 
     See Also
     --------
@@ -253,6 +262,11 @@ class LogTransformer(BaseTransformer):
         "capability:inverse_transform": True,
     }
 
+    def __init__(self, offset=0, scale=1):
+        self.offset = offset
+        self.scale = scale
+        super(LogTransformer, self).__init__()
+
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
 
@@ -265,13 +279,14 @@ class LogTransformer(BaseTransformer):
         y : ignored argument for interface compatibility
             Additional data, e.g., labels for transformation
 
-
         Returns
         -------
         Xt : 2D np.ndarray
             transformed version of X
         """
-        Xt = np.log(X)
+        offset = self.offset
+        scale = self.scale
+        Xt = np.log(scale * (X + offset))
         return Xt
 
     def _inverse_transform(self, X, y=None):
@@ -286,13 +301,14 @@ class LogTransformer(BaseTransformer):
         y : ignored argument for interface compatibility
             Additional data, e.g., labels for transformation
 
-
         Returns
         -------
         Xt : 2D np.ndarray
             inverse transformed version of X
         """
-        Xt = np.exp(X)
+        offset = self.offset
+        scale = self.scale
+        Xt = (np.exp(X) / scale) - offset
         return Xt
 
 

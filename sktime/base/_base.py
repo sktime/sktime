@@ -897,7 +897,7 @@ class BaseEstimator(BaseObject):
         """
         if not self.is_fitted:
             raise NotFittedError(
-                f"parameter estimator of type {type(self).__name__} has not been "
+                f"estimator of type {type(self).__name__} has not been "
                 "fitted yet, please call fit on data before get_fitted_params"
             )
 
@@ -912,9 +912,11 @@ class BaseEstimator(BaseObject):
                 return x
 
         for c in c_dict.keys():
-            c_f_params = c_dict[c].get_fitted_params()
-            c_f_params = {f"{sh(c)}__{k}": c_f_params[k] for k in c_f_params.keys()}
-            fitted_params.update(c_f_params)
+            comp = c_dict[c]
+            if comp._is_fitted:
+                c_f_params = c_dict[c].get_fitted_params()
+                c_f_params = {f"{sh(c)}__{k}": c_f_params[k] for k in c_f_params.keys()}
+                fitted_params.update(c_f_params)
 
         fitted_params.update(self._get_fitted_params())
 

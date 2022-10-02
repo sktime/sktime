@@ -12,7 +12,6 @@ __author__ = ["afzal442"]
 __all__ = ["AutoCorrelationTransformer", "PartialAutoCorrelationTransformer"]
 
 import pandas as pd
-from statsmodels.tsa.stattools import acf, pacf
 
 from sktime.transformations.base import BaseTransformer
 
@@ -78,6 +77,7 @@ class AutoCorrelationTransformer(BaseTransformer):
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "univariate-only": True,
         "fit_is_empty": True,
+        "python_dependencies": "statsmodels",
     }
 
     def __init__(
@@ -109,6 +109,8 @@ class AutoCorrelationTransformer(BaseTransformer):
         -------
         transformed version of X
         """
+        from statsmodels.tsa.stattools import acf
+
         # Passing an alpha values other than None would return confidence intervals
         # and break the signature of the series-to-series transformer
         zt = acf(
@@ -234,6 +236,8 @@ class PartialAutoCorrelationTransformer(BaseTransformer):
         -------
         transformed version of X
         """
+        from statsmodels.tsa.stattools import pacf
+
         # Passing an alpha values other than None would return confidence intervals
         # and break the signature of the series-to-series transformer
         zt = pacf(X, nlags=self.n_lags, method=self.method, alpha=None)

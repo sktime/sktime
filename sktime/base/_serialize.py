@@ -29,34 +29,48 @@ def load(serial):
 
     Examples
     --------
-    >>> def load_classical_example():
-    ...     from sktime.base import load
-    ...     from sktime.datasets import load_airline
-    ...     from sktime.forecasting.naive import NaiveForecaster
-    ...     y = load_airline()
-    ...     forecaster = NaiveForecaster()
-    ...     forecaster.fit(y, fh=[1, 2, 3])
-    ...     pkl = forecaster.save()
-    ...     forecaster_loaded = load(pkl)
-    ...     y_pred = forecaster_loaded.predict()
-    >>> load_classical_example() # doctest: +SKIP
-    >>> def load_dl_example():
-    ...     from sktime.base import load
-    ...     import numpy as np
-    ...     from sktime.classification.deep_learning import CNNClassifier
-    ...     save_folder_location = "save_folder"
-    ...     sample_X = np.random.randn(15, 24, 16)
-    ...     sample_y = np.random.randint(0, 2, size=(15, ))
-    ...     sample_test_X = np.random.randn(5, 24, 16)
-    ...     cnn = CNNClassifier(n_epochs=1)
-    ...     cnn.fit(sample_X, sample_y)
-    ...     cnn.save(save_folder_location)
-    ...     loaded_cnn = load(save_folder_location)
-    ...     pred = cnn.predict(X=sample_test_X)
-    ...     loaded_pred = loaded_cnn.predict(X=sample_test_X)
-    ...     print(np.allclose(pred, loaded_pred))
-    ...     # True
-    >>> load_dl_example() # doctest: +SKIP
+    Example 1: saving an estimator as pickle and loading
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.naive import NaiveForecaster
+    >>>
+    >>> # 1. fit the estimator
+    >>> y = load_airline()
+    >>> forecaster = NaiveForecaster()
+    >>> forecaster.fit(y, fh=[1, 2, 3])
+    >>>
+    >>> # 2. save the fitted estimator
+    >>> pkl = forecaster.save()
+    >>>
+    >>> # 3. load the saved estimator (can do this on empty kernel)
+    >>> from sktime.base import load
+    >>> forecaster_loaded = load(pkl)
+    >>>
+    >>> # 4. continue using the loaded estimator
+    >>> y_pred = forecaster_loaded.predict()
+
+    Example 2: saving a deep learning estimator on the hard drive and loading
+    >>> import numpy as np
+    >>> from sktime.classification.deep_learning import CNNClassifier 
+    >>> 
+    >>> # 1. fit the estimator
+    >>> sample_X = np.random.randn(15, 24, 16) # doctest: +SKIP
+    >>> sample_y = np.random.randint(0, 2, size=(15, )) # doctest: +SKIP
+    >>> sample_test_X = np.random.randn(5, 24, 16) # doctest: +SKIP
+    >>> cnn = CNNClassifier(n_epochs=1) # doctest: +SKIP
+    >>> cnn.fit(sample_X, sample_y) # doctest: +SKIP
+    >>>
+    >>> # 2. save the fitted estimator
+    >>> save_folder_location = "save_folder" # doctest: +SKIP
+    >>> cnn.save(save_folder_location) # doctest: +SKIP
+    >>>
+    >>> # 3. load the saved estimator (can do this on empty kernel)
+    >>> from sktime.base import load
+    >>> save_folder_location = "save_folder" # doctest: +SKIP
+    >>> loaded_cnn = load(save_folder_location) # doctest: +SKIP
+    >>>
+    >>> # 4. continue using the loaded estimator
+    >>> pred = cnn.predict(X=sample_test_X) # doctest: +SKIP
+    >>> loaded_pred = loaded_cnn.predict(X=sample_test_X) # doctest: +SKIP
     """
     import pickle
     from pathlib import Path
