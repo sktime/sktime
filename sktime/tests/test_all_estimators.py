@@ -57,7 +57,7 @@ from sktime.utils.validation._dependencies import (
     _check_soft_dependencies,
 )
 
-_check_soft_dependencies("baseobject")
+_check_soft_dependencies("skbase")
 
 # whether to subsample estimators per os/version partition matrix design
 # default is False, can be set to True by pytest --matrixdesign True flag
