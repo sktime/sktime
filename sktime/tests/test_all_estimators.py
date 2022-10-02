@@ -54,7 +54,10 @@ from sktime.utils.sampling import random_partition
 from sktime.utils.validation._dependencies import (
     _check_dl_dependencies,
     _check_estimator_deps,
+    _check_soft_dependencies,
 )
+
+_check_soft_dependencies("baseobject")
 
 # whether to subsample estimators per os/version partition matrix design
 # default is False, can be set to True by pytest --matrixdesign True flag
