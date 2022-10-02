@@ -147,8 +147,17 @@ def _load_dataset(name, split, return_X_y, return_type=None, extract_path=None):
     return_X_y: bool, optional (default=True)
         If True, returns (features, target) separately instead of a single
         dataframe with columns for features and the target.
-    return_type : valid Panel mtype string, or None, default = None = "nested_univ"
-        valid mtype strings, with explanation, are in datatypes.MTYPE_REGISTER
+    return_type: valid Panel mtype str or None, optional (default=None="nested_univ")
+        Memory data format specification to return X in, None = "nested_univ" type.
+        str can be any supported sktime Panel mtype,
+            for list of mtypes, see datatypes.MTYPE_REGISTER
+            for specifications, see examples/AA_datatypes_and_datasets.ipynb
+        commonly used specifications:
+            "nested_univ: nested pd.DataFrame, pd.Series in cells
+            "numpy3D"/"numpy3d"/"np3D": 3D np.ndarray (instance, variable, time index)
+            "numpy2d"/"np2d"/"numpyflat": 2D np.ndarray (instance, time index)
+            "pd-multiindex": pd.DataFrame with 2-level (instance, time) MultiIndex
+        Exception is raised if the data cannot be stored in the requested type.
     extract_path : todo author: please fill in docstring
 
     Returns
@@ -214,14 +223,23 @@ def _load_provided_dataset(
     Parameters
     ----------
     name : string, file name to load from
-    split: None or str{"TRAIN", "TEST"}, optional (default=None)
+    split: None or one of "TRAIN", "TEST", optional (default=None)
         Whether to load the train or test instances of the problem.
         By default it loads both train and test instances (in a single container).
     return_X_y: bool, optional (default=True)
         If True, returns (features, target) separately instead of a single
         dataframe with columns for features and the target.
-    return_type : valid Panel mtype string, or None, default = None = "nested_univ"
-        valid mtype strings, with explanation, are in datatypes.MTYPE_REGISTER
+    return_type: valid Panel mtype str or None, optional (default=None="nested_univ")
+        Memory data format specification to return X in, None = "nested_univ" type.
+        str can be any supported sktime Panel mtype,
+            for list of mtypes, see datatypes.MTYPE_REGISTER
+            for specifications, see examples/AA_datatypes_and_datasets.ipynb
+        commonly used specifications:
+            "nested_univ: nested pd.DataFrame, pd.Series in cells
+            "numpy3D"/"numpy3d"/"np3D": 3D np.ndarray (instance, variable, time index)
+            "numpy2d"/"np2d"/"numpyflat": 2D np.ndarray (instance, time index)
+            "pd-multiindex": pd.DataFrame with 2-level (instance, time) MultiIndex
+        Exception is raised if the data cannot be stored in the requested type.
     local_module: default = os.path.dirname(__file__),
     local_dirname: default = "data"
 
