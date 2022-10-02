@@ -5,7 +5,7 @@
 IMPORTANT CAVEAT FOR DEVELOPERS:
 Do not add estimator specific functionality to the `load` utility.
 All estimator specific functionality should be in
-the class methoes `load_from_serial` and `load_from_path`.
+the class methods `load_from_serial` and `load_from_path`.
 """
 
 __author__ = ["fkiraly", "achieveordie"]
