@@ -601,8 +601,9 @@ class BaseObject(_BaseEstimator):
 
         Behaviour:
         if `path` is None, returns an in-memory serialized self
-        if `path` is a file, stores the zip with that name at the location.
-        The contents of the zip file are:
+        if `path` is a file location, stores self at that location as a zip file
+
+        saved files are zip files with following contents:
         _metadata - contains class of self, i.e., type(self)
         _obj - serialized self. This class uses the default serialization (pickle).
 
@@ -610,7 +611,7 @@ class BaseObject(_BaseEstimator):
         ----------
         path : None or file location (str or Path)
             if None, self is saved to an in-memory object
-            if file location, self is saved to that file location. For eg:
+            if file location, self is saved to that file location. If:
                 path="estimator" then a zip file `estimator.zip` will be made at cwd.
                 path="/home/stored/estimator" then a zip file `estimator.zip` will be
                 stored in `/home/stored/`.

@@ -12,20 +12,20 @@ __author__ = ["fkiraly", "achieveordie"]
 
 
 def load(serial):
-    """Load an object either from in-memory or from a (.zip) file.
+    """Load an object either from in-memory object or from a file location.
 
     Parameters
     ----------
-    serial : tuple or string  or Path object
-        if serial is a tuple:
+    serial : serialized container (tuple), str (path), or Path object (reference)
+        if serial is a tuple (serialized container):
             Contains two elements, first in-memory metadata and second
             the related object.
-        if serial is a string:
+        if serial is a string (path reference):
             The name of the file without the extension, for e.g: if the file
             is `estimator.zip`, `serial='estimator'`. It can also represent a
             path, for eg: if location is `home/stored/models/estimator.zip`
             then `serial='home/stored/models/estimator'`.
-        if serial is a Path object:
+        if serial is a Path object (path reference):
             `serial` then points to the `.zip` file into which the
             object was stored using class method `.save()` of an estimator.
 
