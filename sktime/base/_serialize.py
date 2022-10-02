@@ -1,6 +1,12 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Utilities for serializing and deserializing objects."""
+"""Utilities for serializing and deserializing objects.
+
+IMPORTANT CAVEAT FOR DEVELOPERS:
+Do not add estimator specific functionality to the `load` utility.
+All estimator specific functionality should be in
+the class methoes `load_from_serial` and `load_from_path`.
+"""
 
 __author__ = ["fkiraly", "achieveordie"]
 
@@ -50,8 +56,8 @@ def load(serial):
 
     Example 2: saving a deep learning estimator on the hard drive and loading
     >>> import numpy as np
-    >>> from sktime.classification.deep_learning import CNNClassifier 
-    >>> 
+    >>> from sktime.classification.deep_learning import CNNClassifier
+    >>>
     >>> # 1. fit the estimator
     >>> sample_X = np.random.randn(15, 24, 16) # doctest: +SKIP
     >>> sample_y = np.random.randint(0, 2, size=(15, )) # doctest: +SKIP
