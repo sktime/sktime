@@ -31,45 +31,43 @@ UNEQUAL_LENGTH_PROBLEMS = [
 ]
 
 
-def test_load_dataframe():
+@pytest.mark.parametrize(
+    "loader", UNIVARIATE_PROBLEMS + MULTIVARIATE_PROBLEMS + UNEQUAL_LENGTH_PROBLEMS
+)
+def test_load_dataframe(loader):
     """Test that we can load all baked in TSC problems into nested pd.DataFrames."""
     # should work for all
-    for loader in UNIVARIATE_PROBLEMS + MULTIVARIATE_PROBLEMS + UNEQUAL_LENGTH_PROBLEMS:
-        X, y = loader()
-        assert isinstance(X, pd.DataFrame)
-        assert isinstance(y, np.ndarray)
-        assert y.ndim == 1
-    for loader in UNIVARIATE_PROBLEMS + MULTIVARIATE_PROBLEMS + UNEQUAL_LENGTH_PROBLEMS:
-        X = loader(return_X_y=False)
-        assert isinstance(X, pd.DataFrame)
+    X, y = loader()
+    assert isinstance(X, pd.DataFrame)
+    assert isinstance(y, np.ndarray)
+    assert y.ndim == 1
+    X = loader(return_X_y=False)
+    assert isinstance(X, pd.DataFrame)
 
 
-def test_load_numpy3d():
+@pytest.mark.parametrize("loader", UNIVARIATE_PROBLEMS + MULTIVARIATE_PROBLEMS)
+@pytest.mark.parametrize("split", [None, "train", "test", "TRAIN", "TEST"])
+def test_load_numpy3d(loader, split):
     """Test that we can load equal length TSC problems into numpy3d."""
-    for loader in UNIVARIATE_PROBLEMS + MULTIVARIATE_PROBLEMS:
-        for spl in [None, "train", "test"]:
-            X, y = loader(split=spl, return_type="numpy3d")
-            assert isinstance(X, np.ndarray)
-            assert isinstance(y, np.ndarray)
-            assert X.ndim == 3
-            assert y.ndim == 1
+    X, y = loader(split=split, return_type="numpy3d")
+    assert isinstance(X, np.ndarray)
+    assert isinstance(y, np.ndarray)
+    assert X.ndim == 3
+    assert y.ndim == 1
 
 
-# should work for all
+@pytest.mark.parametrize("loader", UNIVARIATE_PROBLEMS)
+def test_load_numpy2d_univariate(loader):
+    """Test that we can load univariate equal length TSC problems into numpy2d."""
+    X, y = loader(return_type="numpy2d")
+    assert isinstance(X, np.ndarray)
+    assert isinstance(y, np.ndarray)
+    assert X.ndim == 2
+    assert y.ndim == 1
 
 
-def test_load_numpy2d():
-    """Test that we can load univariate equal length TSC problems into numpy2d.
-
-    Also test that multivariate and/or unequal length raise the correct error.
-    """
-    for loader in UNIVARIATE_PROBLEMS:
+@pytest.mark.parametrize("loader", MULTIVARIATE_PROBLEMS)
+def test_load_numpy2d_multivariate_raises(loader):
+    """Test that multivariate and/or unequal length raise the correct error."""
+    with pytest.raises(ValueError, match="attempting to load into a numpy2d"):
         X, y = loader(return_type="numpy2d")
-        assert isinstance(X, np.ndarray)
-        assert isinstance(y, np.ndarray)
-        assert X.ndim == 2
-        assert y.ndim == 1
-
-    for loader in MULTIVARIATE_PROBLEMS:
-        with pytest.raises(ValueError, match="attempting to load into a numpy2d"):
-            X, y = loader(return_type="numpy2d")
