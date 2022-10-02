@@ -8,7 +8,8 @@ import pytest
 from pandas.testing import assert_series_equal
 
 from sktime.datasets import load_airline
-from sktime.forecasting.structural import UnobservedComponents, _UnobservedComponents
+from sktime.forecasting.structural import UnobservedComponents
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 
 class ModelSpec:
@@ -183,10 +184,18 @@ def y_airlines():
     return load_airline()
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("statsmodels", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
 @pytest.mark.parametrize("level", [m.level for m in MODELS])
 @pytest.mark.parametrize("fh_length", [1, 3, 5, 10, 20])
 def test_results_consistency(level, fh_length, y_airlines):
     """Check consistency between wrapper and statsmodels original implementation."""
+    from statsmodels.tsa.statespace.structural import (
+        UnobservedComponents as _UnobservedComponents,
+    )
+
     fh = np.arange(fh_length) + 1
     # Fit and predict with forecaster.
     forecaster = UnobservedComponents(level=level)
@@ -196,15 +205,24 @@ def test_results_consistency(level, fh_length, y_airlines):
     model = _UnobservedComponents(level=level, endog=y_airlines)
     result = model.fit(disp=0)
     y_pred_base = result.forecast(steps=fh_length)
+    y_pred_base.name = y_airlines.name
     assert_series_equal(left=y_pred_forecaster, right=y_pred_base)
     assert len(fh) == y_pred_forecaster.shape[0]
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("statsmodels", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
 def test_result_consistency_exog(level_sample_data_split):
     """Check consistency between wrapper and statsmodels original implementation.
 
     We add external regressors and a seasonality component.
     """
+    from statsmodels.tsa.statespace.structural import (
+        UnobservedComponents as _UnobservedComponents,
+    )
+
     level, y_train, X_train, X_test, fh = level_sample_data_split
 
     model_spec = {
@@ -222,6 +240,7 @@ def test_result_consistency_exog(level_sample_data_split):
     result = model.fit(disp=0)
     n_test = X_test.shape[0]
     y_pred_base = result.forecast(steps=n_test, exog=X_test)
+    y_pred_base.name = y_train.name
     assert_series_equal(left=y_pred_forecaster, right=y_pred_base)
     assert len(fh) == y_pred_forecaster.shape[0]
 

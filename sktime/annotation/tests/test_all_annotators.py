@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 """Tests for sktime annotators."""
 
+import numpy as np
 import pandas as pd
 import pytest
 
 from sktime.registry import all_estimators
-from sktime.utils._testing.estimator_checks import _make_args
+from sktime.utils._testing.annotation import make_annotation_problem
 from sktime.utils.validation._dependencies import _check_estimator_deps
 
 ALL_ANNOTATORS = all_estimators(estimator_types="series-annotator", return_names=False)
@@ -19,8 +20,8 @@ def test_output_type(Estimator):
 
     estimator = Estimator.create_test_instance()
 
-    args = _make_args(estimator, "fit")
-    estimator.fit(*args)
-    args = _make_args(estimator, "predict")
-    y_pred = estimator.predict(*args)
-    assert isinstance(y_pred, pd.Series)
+    arg = make_annotation_problem(n_timepoints=50)
+    estimator.fit(arg)
+    arg = make_annotation_problem(n_timepoints=10)
+    y_pred = estimator.predict(arg)
+    assert isinstance(y_pred, (pd.Series, np.ndarray))

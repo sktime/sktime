@@ -20,7 +20,7 @@ from sklearn.model_selection import train_test_split as _train_test_split
 
 from sktime.base import BaseObject
 from sktime.datatypes import check_is_scitype, convert_to
-from sktime.datatypes._utilities import get_index_for_series, get_time_index
+from sktime.datatypes._utilities import get_index_for_series, get_time_index, get_window
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.base._fh import VALID_FORECASTING_HORIZON_TYPES
 from sktime.utils.validation import (
@@ -297,7 +297,7 @@ class BaseSplitter(BaseObject):
     and :math:`t(k)<t(k+1)` are ordered time indices.
     The exact set of indices depends on a concrete splitter.
     Method `.split` is used to generate a pair of index sets:
-    train :math:`\{t(1),\ldots,t(k)\}` and test :math:`\{t(k+1),\ldots,t(k+l)\}`.
+    train :math:`(t(1),\ldots,t(k))` and test :math:`(t(k+1),\ldots,t(k+l))`.
 
     In case `window_length` and `fh` are integer valued,
     they translate into :math:`k` and :math:`l`, respectively.
@@ -345,12 +345,15 @@ class BaseSplitter(BaseObject):
         self.window_length = window_length
         self.fh = fh
 
+        super(BaseSplitter, self).__init__()
+
     def split(self, y: ACCEPTED_Y_TYPES) -> SPLIT_GENERATOR_TYPE:
         """Get iloc references to train/test slits of `y`.
 
         Parameters
         ----------
-        y : pd.Index or time series in sktime compatible time series format (any)
+        y : pd.Index or time series in sktime compatible time series format,
+                time series can be in any Series, Panel, or Hierarchical mtype format
             Index of time series to split, or time series to split
             If time series, considered as index of equivalent pandas type container:
                 pd.DataFrame, pd.Series, pd-multiindex, or pd_multiindex_hier mtype
@@ -460,7 +463,8 @@ class BaseSplitter(BaseObject):
 
         Parameters
         ----------
-        y : pd.Index or time series in sktime compatible time series format (any)
+        y : pd.Index or time series in sktime compatible time series format,
+                time series can be in any Series, Panel, or Hierarchical mtype format
             Time series to split, or index of time series to split
 
         Yields
@@ -480,8 +484,10 @@ class BaseSplitter(BaseObject):
 
         Parameters
         ----------
-        y : pd.Series, pd.DataFrame, or np.ndarray (1D or 2D), optional (default=None)
-            Time series to split, must conform with one of the sktime type conventions.
+        y : time series in sktime compatible time series format,
+                time series can be in any Series, Panel, or Hierarchical mtype format
+            e.g., pd.Series, pd.DataFrame, np.ndarray
+            Time series to split, or index of time series to split
 
         Yields
         ------
@@ -671,25 +677,43 @@ class CutoffSplitter(BaseSplitter):
 
     Here the user is expected to provide a set of cutoffs (train set endpoints),
     which using the notation provided in :class:`BaseSplitter`,
-    can be written as :math:`\{k_1,\ldots,k_n\}` for integer based indexing,
-    or :math:`\{t(k_1),\ldots,t(k_n)\}` for datetime based indexing.
-    Training window's last point is equal to the cutoff,
-    while test window starts from the next observation in `y`.
+    can be written as :math:`(k_1,\ldots,k_n)` for integer based indexing,
+    or :math:`(t(k_1),\ldots,t(k_n))` for datetime based indexing.
+
+    For a cutoff :math:`k_i` and a `window_length` :math:`w`
+    the training window is :math:`(k_i-w+1,k_i-w+2,k_i-w+3,\ldots,k_i)`.
+    Training window's last point is equal to the cutoff.
+
+    Test window is defined by forecasting horizons
+    relative to the end of the training window.
+    It will contain as many indices
+    as there are forecasting horizons provided to the `fh` argument.
+    For a forecasating horizon :math:`(h_1,\ldots,h_H)`, the test window will
+    consist of the indices :math:`(k_n+h_1,\ldots, k_n+h_H)`.
 
     The number of splits returned by `.get_n_splits`
     is then trivially equal to :math:`n`.
 
     The sorted array of cutoffs returned by `.get_cutoffs` is then equal to
-    :math:`\{t(k_1),\ldots,t(k_n)\}` with :math:`k_i<k_{i+1}`.
+    :math:(t(k_1),\ldots,t(k_n))` with :math:`k_i<k_{i+1}`.
 
     Parameters
     ----------
-    cutoffs : np.array or pd.Index
+    cutoffs : list or np.ndarray or pd.Index
         Cutoff points, positive and integer- or datetime-index like.
         Type should match the type of `fh` input.
     fh : int, timedelta, list or np.ndarray of ints or timedeltas
         Type should match the type of `cutoffs` input.
     window_length : int or timedelta or pd.DateOffset
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sktime.forecasting.model_selection import CutoffSplitter
+    >>> ts = np.arange(10)
+    >>> splitter = CutoffSplitter(fh=[2, 4], cutoffs=np.array([3, 5]), window_length=3)
+    >>> list(splitter.split(ts)) # doctest: +SKIP
+    [(array([1, 2, 3]), array([5, 7])), (array([3, 4, 5]), array([7, 9]))]
     """
 
     def __init__(
@@ -709,34 +733,24 @@ class CutoffSplitter(BaseSplitter):
         window_length = check_window_length(
             window_length=self.window_length, n_timepoints=n_timepoints
         )
+        if isinstance(y, (pd.DatetimeIndex, pd.PeriodIndex)) and is_int(window_length):
+            window_length = y.freq * window_length
         _check_cutoffs_and_y(cutoffs=cutoffs, y=y)
         _check_cutoffs_fh_y(cutoffs=cutoffs, fh=fh, y=y)
-        max_fh = fh.max()
-        max_cutoff = np.max(cutoffs)
 
         for cutoff in cutoffs:
-            if is_int(x=window_length) and is_int(x=cutoff):
-                train_start = cutoff - window_length
-            elif is_timedelta_or_date_offset(x=window_length) and is_datetime(x=cutoff):
-                train_start = y.get_loc(max(y[0], cutoff - window_length))
+            null = 0 if is_int(cutoff) else pd.Timestamp(0)
+            if cutoff >= null:
+                train_end = y[cutoff] if is_int(cutoff) else cutoff
+                training_window = get_window(
+                    pd.Series(index=y[y <= train_end]), window_length=window_length
+                ).index
             else:
-                raise TypeError(
-                    f"Unsupported combination of types: "
-                    f"`window_length`: {type(window_length)}, "
-                    f"`cutoff`: {type(cutoff)}"
-                )
-
-            split_point = cutoff if is_int(x=cutoff) else y.get_loc(y[y <= cutoff][-1])
-            training_window = self._get_train_window(
-                y=y, train_start=train_start + 1, split_point=split_point + 1
-            )
-
+                training_window = []
+            training_window = y.get_indexer(training_window)
             test_window = cutoff + fh.to_numpy()
-            if is_datetime(x=max_cutoff) and is_timedelta(x=max_fh):
-                test_window = test_window[test_window >= y.min()]
-                test_window = np.array(
-                    [y.get_loc(timestamp) for timestamp in test_window]
-                )
+            if is_datetime(x=cutoff):
+                test_window = y.get_indexer(test_window[test_window >= y.min()])
             yield training_window, test_window
 
     def get_n_splits(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> int:
@@ -780,6 +794,27 @@ class CutoffSplitter(BaseSplitter):
             return check_cutoffs(self.cutoffs)
         else:
             return np.argwhere(y.index.isin(check_cutoffs(self.cutoffs))).flatten()
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the splitter.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        params = {"cutoffs": np.array([3, 7, 10])}
+        return params
 
 
 class BaseWindowSplitter(BaseSplitter):
@@ -1041,11 +1076,18 @@ class BaseWindowSplitter(BaseSplitter):
 
 
 class SlidingWindowSplitter(BaseWindowSplitter):
-    """Sliding window splitter.
+    r"""Sliding window splitter.
 
     Split time series repeatedly into a fixed-length training and test set.
 
-    For example for `window_length = 5`, `step_length = 1` and `fh = 3`
+    Test window is defined by forecasting horizons
+    relative to the end of the training window.
+    It will contain as many indices
+    as there are forecasting horizons provided to the `fh` argument.
+    For a forecasating horizon :math:`(h_1,\ldots,h_H)`, the training window will
+    consist of the indices :math:`(k_n+h_1,\ldots,k_n+h_H)`.
+
+    For example for `window_length = 5`, `step_length = 1` and `fh = [1, 2, 3]`
     here is a representation of the folds::
 
     |-----------------------|
@@ -1053,7 +1095,6 @@ class SlidingWindowSplitter(BaseWindowSplitter):
     | - * * * * * x x x - - |
     | - - * * * * * x x x - |
     | - - - * * * * * x x x |
-
 
     ``*`` = training fold.
 
@@ -1069,9 +1110,19 @@ class SlidingWindowSplitter(BaseWindowSplitter):
         Step length between windows
     initial_window : int or timedelta or pd.DateOffset, optional (default=None)
         Window length of first window
-    start_with_window : bool, optional (default=False)
+    start_with_window : bool, optional (default=True)
         - If True, starts with full window.
         - If False, starts with empty window.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sktime.forecasting.model_selection import SlidingWindowSplitter
+    >>> ts = np.arange(10)
+    >>> splitter = SlidingWindowSplitter(fh=[2, 4], window_length=3, step_length=2)
+    >>> list(splitter.split(ts)) # doctest: +SKIP
+    [(array([0, 1, 2]), array([4, 6])), (array([2, 3, 4]), array([6, 8]))]
+
     """
 
     def __init__(
@@ -1095,11 +1146,18 @@ class SlidingWindowSplitter(BaseWindowSplitter):
 
 
 class ExpandingWindowSplitter(BaseWindowSplitter):
-    """Expanding window splitter.
+    r"""Expanding window splitter.
 
     Split time series repeatedly into an growing training set and a fixed-size test set.
 
-    For example for `initial_window = 5`, `step_length = 1` and `fh = 3`
+    Test window is defined by forecasting horizons
+    relative to the end of the training window.
+    It will contain as many indices
+    as there are forecasting horizons provided to the `fh` argument.
+    For a forecasating horizon :math:`(h_1,\ldots,h_H)`, the training window will
+    consist of the indices :math:`(k_n+h_1,\ldots,k_n+h_H)`.
+
+    For example for `initial_window = 5`, `step_length = 1` and `fh = [1, 2, 3]`
     here is a representation of the folds::
 
     |-----------------------|
@@ -1124,6 +1182,16 @@ class ExpandingWindowSplitter(BaseWindowSplitter):
     start_with_window : bool, optional (default=True)
         - If True, starts with full window.
         - If False, starts with empty window.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sktime.forecasting.model_selection import ExpandingWindowSplitter
+    >>> ts = np.arange(10)
+    >>> splitter = ExpandingWindowSplitter(fh=[2, 4], initial_window=5, step_length=2)
+    >>> list(splitter.split(ts)) # doctest: +SKIP
+    '[(array([0, 1, 2, 3, 4]), array([6, 8]))]'
+
     """
 
     def __init__(
@@ -1158,10 +1226,17 @@ class ExpandingWindowSplitter(BaseWindowSplitter):
 
 
 class SingleWindowSplitter(BaseSplitter):
-    """Single window splitter.
+    r"""Single window splitter.
 
     Split time series once into a training and test set.
     See more details on what to expect from this splitter in :class:`BaseSplitter`.
+
+    Test window is defined by forecasting horizons
+    relative to the end of the training window.
+    It will contain as many indices
+    as there are forecasting horizons provided to the `fh` argument.
+    For a forecasating horizon :math:`(h_1,\ldots,h_H)`, the training window will
+    consist of the indices :math:`(k_n+h_1,\ldots,k_n+h_H)`.
 
     Parameters
     ----------
@@ -1169,6 +1244,16 @@ class SingleWindowSplitter(BaseSplitter):
         Forecasting horizon
     window_length : int or timedelta or pd.DateOffset
         Window length
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sktime.forecasting.model_selection import SingleWindowSplitter
+    >>> ts = np.arange(10)
+    >>> splitter = SingleWindowSplitter(fh=[2, 4], window_length=3)
+    >>> list(splitter.split(ts)) # doctest: +SKIP
+    [(array([3, 4, 5]), array([7, 9]))]
+
     """
 
     def __init__(
@@ -1182,24 +1267,21 @@ class SingleWindowSplitter(BaseSplitter):
     def _split(self, y: pd.Index) -> SPLIT_GENERATOR_TYPE:
         n_timepoints = y.shape[0]
         window_length = check_window_length(self.window_length, n_timepoints)
+        if isinstance(y, (pd.DatetimeIndex, pd.PeriodIndex)) and is_int(window_length):
+            window_length = y.freq * window_length
         fh = _check_fh(self.fh)
-        end = _get_end(y_index=y, fh=fh)
+        train_end = _get_end(y_index=y, fh=fh)
 
-        if window_length is None:
-            start = 0
-        elif is_int(window_length):
-            start = end - window_length + 1
-        else:
-            start = np.argwhere(y > y[end] - window_length).flatten()[0]
-
-        train = self._get_train_window(y=y, train_start=start, split_point=end + 1)
-
+        training_window = get_window(
+            pd.Series(index=y[y <= y[train_end]]), window_length=window_length
+        ).index
+        training_window = y.get_indexer(training_window)
         if array_is_int(fh):
-            test = end + fh.to_numpy()
+            test_window = train_end + fh.to_numpy()
         else:
-            test = np.array([y.get_loc(y[end] + x) for x in fh.to_pandas()])
+            test_window = y.get_indexer(y[train_end] + fh.to_pandas())
 
-        yield train, test
+        yield training_window, test_window
 
     def get_n_splits(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> int:
         """Return the number of splits.
@@ -1245,6 +1327,27 @@ class SingleWindowSplitter(BaseSplitter):
         end = _get_end(y_index=y, fh=fh)
         return np.array([end])
 
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the splitter.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        params = {"fh": 3}
+        return params
+
 
 def temporal_train_test_split(
     y: ACCEPTED_Y_TYPES,
@@ -1287,7 +1390,7 @@ def temporal_train_test_split(
 
     References
     ----------
-    ..[1]  adapted from https://github.com/alkaline-ml/pmdarima/
+    .. [1]  adapted from https://github.com/alkaline-ml/pmdarima/
     """
     if fh is not None:
         if test_size is not None or train_size is not None:

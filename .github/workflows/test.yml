@@ -45,8 +45,30 @@ jobs:
         run: build_tools/run_examples.sh
         shell: bash
 
-  test-windows:
+  test-nosoftdeps:
     needs: code-quality
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+      - name: Display Python version
+        run: python -c "import sys; print(sys.version)"
+
+      - name: Install sktime and dependencies
+        run: |
+          python -m pip install .[dev]
+
+      - name: Show dependencies
+        run: python -m pip list
+
+      - name: Run tests
+        run: make PYTESTOPTIONS="--cov --cov-report=xml --timeout=600" test_softdeps
+
+  test-windows:
+    needs: test-nosoftdeps
     runs-on: windows-2019
     strategy:
       matrix:
@@ -92,7 +114,7 @@ jobs:
         uses: codecov/codecov-action@v3
 
   test-unix:
-    needs: code-quality
+    needs: test-nosoftdeps
     strategy:
       matrix:
         python-version: [3.7, 3.8, 3.9, '3.10']
@@ -123,29 +145,3 @@ jobs:
 
       - name: Publish code coverage
         uses: codecov/codecov-action@v3
-
-  test-nosoftdeps:
-    needs: code-quality
-    runs-on: ubuntu-20.04
-    steps:
-      - uses: actions/checkout@v2
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.9
-      - name: Display Python version
-        run: python -c "import sys; print(sys.version)"
-
-      - name: Install sktime and dependencies
-        run: |
-          python -m pip install .[dev]
-
-      - name: Install baseobject
-        run: |
-          python -m pip install git+https://github.com/sktime/BaseObject.git@main
-
-      - name: Show dependencies
-        run: python -m pip list
-
-      - name: Run tests
-        run: make PYTESTOPTIONS="--cov --cov-report=xml --timeout=600" test_softdeps

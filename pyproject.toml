@@ -1,6 +1,6 @@
 [project]
 name = "sktime"
-version = "0.13.0"
+version = "0.13.4"
 description = "A unified framework for machine learning with time series"
 authors = [
     {name = "Franz Király", email = "f.kiraly@ucl.ac.uk"},
@@ -45,7 +45,7 @@ dependencies = [
     "deprecated>=1.2.13",
     "numba>=0.53",
     "numpy>=1.21.0,<1.23",
-    "pandas>=1.1.0,<1.5.0",
+    "pandas>=1.1.0,<1.6.0",
     "scikit-learn>=0.24.0,<1.2.0",
     "statsmodels>=0.12.1",
     "scipy<1.9.0",
@@ -56,8 +56,11 @@ all_extras = [
     "dtw-python",
     "esig==0.9.7; python_version < '3.10'",
     "filterpy>=1.4.5",
+    "hmmlearn>=0.2.7",
+    "gluonts>=0.9.0",
     "matplotlib>=3.3.2",
-    "pmdarima>=1.8.0,!=1.8.1",
+    "mne",
+    "pmdarima>=1.8.0,!=1.8.1,<3.0.0",
     "prophet>=1.1",
     "pykalman>=0.9.5",
     "pyod>=0.8.0",
@@ -70,14 +73,16 @@ all_extras = [
     "tensorflow",
     "tsfresh>=0.17.0; python_version < '3.10'",
     "tslearn>=0.5.2",
-    "gluonts>=0.9.0",
+    "xarray",
 ]
 
 dev = [
+    "backoff",
     "httpx",
     "pre-commit",
     "pytest",
     "pytest-cov",
+    "pytest-randomly",
     "pytest-timeout",
     "pytest-xdist",
     "wheel",
@@ -107,7 +112,7 @@ dl = [
 
 [project.urls]
 homepage = "https://www.sktime.org"
-repository = "https://github.com/alan-turing-institute/sktime"
+repository = "https://github.com/sktime/sktime"
 documentation = "https://www.sktime.org"
 download = "https://pypi.org/project/sktime/#files"
 
@@ -117,3 +122,8 @@ file = "LICENSE"
 [build-system]
 requires = ["setuptools", "wheel", "toml", "build"]
 build-backend = "setuptools.build_meta"
+
+[tool.nbqa.exclude]
+black = "^docs/source/examples/"
+flake8 = "^docs/source/examples/"
+isort = "^docs/source/examples/"

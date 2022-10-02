@@ -6,7 +6,6 @@ __author__ = ["KatieBuc"]
 import warnings
 
 import pandas as pd
-from statsmodels.tsa.statespace.varmax import VARMAX as _VARMAX
 
 from sktime.forecasting.base.adapters import _StatsModelsAdapter
 
@@ -299,6 +298,8 @@ class VARMAX(_StatsModelsAdapter):
         """
         if self.suppress_warnings:
             warnings.filterwarnings("ignore")
+
+        from statsmodels.tsa.statespace.varmax import VARMAX as _VARMAX
 
         self._forecaster = _VARMAX(
             endog=y,

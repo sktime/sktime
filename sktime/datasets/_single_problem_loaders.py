@@ -12,6 +12,7 @@ __author__ = [
     "patrickZIB",
     "aiwalter",
     "jasonlines",
+    "achieveordie",
 ]
 
 __all__ = [
@@ -35,9 +36,11 @@ __all__ = [
     "load_electric_devices_segmentation",
     "load_macroeconomic",
     "load_unit_test_tsf",
+    "load_covid_3month",
 ]
 
 import os
+from urllib.error import HTTPError
 
 import numpy as np
 import pandas as pd
@@ -53,7 +56,9 @@ DIRNAME = "data"
 MODULE = os.path.dirname(__file__)
 
 
-def load_UCR_UEA_dataset(name, split=None, return_X_y=True, extract_path=None):
+def load_UCR_UEA_dataset(
+    name, split=None, return_X_y=True, return_type=None, extract_path=None
+):
     """Load dataset from UCR UEA time series archive.
 
     Downloads and extracts dataset if not already downloaded. Data is assumed to be
@@ -76,6 +81,18 @@ def load_UCR_UEA_dataset(name, split=None, return_X_y=True, extract_path=None):
         format <name>_TRAIN.ts or <name>_TEST.ts.
     return_X_y : bool, optional (default=False)
         it returns two objects, if False, it appends the class labels to the dataframe.
+    return_type: None or str, optional (default=None)
+        Memory data format specification to return X in, if None then return the default
+        "nested_univ" type.
+        str can be any other supported Panel mtype,
+            for list of mtypes, see datatypes.SCITYPE_REGISTER
+            for specifications, see examples/AA_datatypes_and_datasets.ipynb
+        commonly used specifications:
+            "nested_univ: nested pd.DataFrame, pd.Series in cells
+            "numpy3D"/"numpy3d"/"np3D": 3D np.ndarray (instance, variable, time index)
+            "numpy2d"/"np2d"/"numpyflat": 2D np.ndarray (instance, time index)
+            "pd-multiindex": pd.DataFrame with 2-level (instance, time) MultiIndex
+        Exception is raised if the data cannot be stored in the requested type.
     extract_path : str, optional (default=None)
         the path to look for the data. If no path is provided, the function
         looks in `sktime/datasets/data/`.
@@ -96,7 +113,7 @@ def load_UCR_UEA_dataset(name, split=None, return_X_y=True, extract_path=None):
     >>> from sktime.datasets import load_UCR_UEA_dataset
     >>> X, y = load_UCR_UEA_dataset(name="ArrowHead")
     """
-    return _load_dataset(name, split, return_X_y, extract_path)
+    return _load_dataset(name, split, return_X_y, return_type, extract_path)
 
 
 def load_plaid(split=None, return_X_y=True):
@@ -1000,3 +1017,140 @@ def load_unit_test_tsf():
         contain_missing_values,
         contain_equal_length,
     )
+
+
+def load_solar(
+    start="2021-05-01",
+    end="2021-09-01",
+    normalise=True,
+    return_full_df=False,
+    api_version="v4",
+):
+    """Get national solar estimates for GB from Sheffield Solar PV_Live API.
+
+    This function calls the Sheffield Solar PV_Live API to extract national solar data
+    for the GB eletricity network. Note that these are estimates of the true solar
+    generation, since the true values are "behind the meter" and essentially
+    unknown.
+
+    The returned time series is half hourly. For more information please refer
+    to [1, 2]_.
+
+    Parameters
+    ----------
+    start : string, default="2021-05-01"
+        The start date of the time-series in "YYYY-MM-DD" format
+    end : string, default="2021-09-01"
+        The end date of the time-series in "YYYY-MM-DD" format
+    normalise : boolean, default=True
+        Normalise the returned time-series by installed capacity?
+    return_full_df : boolean, default=False
+        Return a pd.DataFrame with power, capacity, and normalised estimates?
+    api_version : string, default="v4"
+        API version to call
+
+    References
+    ----------
+    .. [1] https://www.solar.sheffield.ac.uk/pvlive/
+    .. [2] https://www.solar.sheffield.ac.uk/pvlive/api/
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_solar  # doctest: +SKIP
+    >>> y = load_solar()  # doctest: +SKIP
+    """
+    from sktime.utils.validation._dependencies import _check_soft_dependencies
+
+    _check_soft_dependencies("backoff")
+
+    import backoff
+
+    @backoff.on_exception(wait_gen=backoff.expo, exception=HTTPError, max_tries=5)
+    def _load_solar(
+        start="2021-05-01",
+        end="2021-09-01",
+        normalise=True,
+        return_full_df=False,
+        api_version="v4",
+    ):
+        """Private loader, for decoration with backoff."""
+        url = "https://api0.solar.sheffield.ac.uk/pvlive/api/"
+        url = url + api_version + "/gsp/0?"
+        url = url + "start=" + start + "T00:00:00&"
+        url = url + "end=" + end + "T00:00:00&"
+        url = url + "extra_fields=capacity_mwp&"
+        url = url + "data_format=csv"
+
+        df = (
+            pd.read_csv(
+                url, index_col=["gsp_id", "datetime_gmt"], parse_dates=["datetime_gmt"]
+            )
+            .droplevel(0)
+            .sort_index()
+        )
+        df = df.asfreq("30T")
+        df["generation_pu"] = df["generation_mw"] / df["capacity_mwp"]
+
+        if return_full_df:
+            df["generation_pu"] = df["generation_mw"] / df["capacity_mwp"]
+            return df
+        else:
+            if normalise:
+                return df["generation_pu"].rename("solar_gen")
+            else:
+                return df["generation_mw"].rename("solar_gen")
+
+    return _load_solar(
+        start=start,
+        end=end,
+        normalise=normalise,
+        return_full_df=return_full_df,
+        api_version=api_version,
+    )
+
+
+def load_covid_3month(split=None, return_X_y=True):
+    """Load dataset of last three months confirmed covid cases.
+
+    Parameters
+    ----------
+    split: None or str{"train", "test"}, optional (default=None)
+        Whether to load the train or test partition of the problem. By
+        default, it loads both.
+    return_X_y: bool, optional (default=True)
+        If True, returns (features, target) separately instead of a single
+        dataframe with columns for
+        features and the target.
+
+    Returns
+    -------
+    X: pd.DataFrame with m rows and c columns
+        The time series data for the problem with m cases and c dimensions
+    y: numpy array
+        The regression values for each case in X
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_covid_3month
+    >>> X, y = load_covid_3month()
+
+    Notes
+    -----
+    Dimensionality:     univariate
+    Series length:      84
+    Train cases:        140
+    Test cases:         61
+    Number of classes:  -
+
+    The goal of this dataset is to predict COVID-19's death rate on 1st April 2020 for
+    each country using daily confirmed cases for the last three months. This dataset
+    contains 201 time series with no missing values, where each time series is
+    the daily confirmed cases for a country.
+    The data was obtained from WHO's COVID-19 database.
+    Please refer to https://covid19.who.int/ for more details
+
+    Dataset details: https://zenodo.org/record/3902690#.Yy1z_HZBxEY
+    =Covid3Month
+    """
+    name = "Covid3Month"
+    return _load_dataset(name, split, return_X_y)

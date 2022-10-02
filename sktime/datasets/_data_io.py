@@ -44,6 +44,17 @@ DIRNAME = "data"
 MODULE = os.path.dirname(__file__)
 
 
+# Return appropriate return_type in case an alias was used
+def _alias_mtype_check(return_type):
+    if return_type is None:
+        return_type = "nested_univ"
+    if return_type in ["numpy2d", "numpy2D", "np2d", "np2D"]:
+        return_type = "numpyflat"
+    if return_type in ["numpy3d", "np3d", "np3D"]:
+        return_type = "numpy3D"
+    return return_type
+
+
 # time series classification data sets
 def _download_and_extract(url, extract_path=None):
     """
@@ -182,7 +193,7 @@ def _load_provided_dataset(
         name : string, file name
         split : string, default = None, or one of "TRAIN" or "TEST".
         return_X_y : default = True, if true, returns X and y separately.
-        return_type : default = None,
+        return_type : string or None, default = None.
         local_module: default = os.path.dirname(__file__),
         local_dirname: default = "data"
     """
@@ -192,36 +203,31 @@ def _load_provided_dataset(
     if split in ("TRAIN", "TEST"):
         fname = name + "_" + split + ".ts"
         abspath = os.path.join(local_module, local_dirname, name, fname)
-        X, y = load_from_tsfile(abspath, return_data_type=return_type)
+        X, y = load_from_tsfile(abspath, return_data_type="nested_univ")
     # if split is None, load both train and test set
     elif split is None:
         fname = name + "_TRAIN.ts"
         abspath = os.path.join(local_module, local_dirname, name, fname)
-        X_train, y_train = load_from_tsfile(abspath, return_data_type=return_type)
+        X_train, y_train = load_from_tsfile(abspath, return_data_type="nested_univ")
 
         fname = name + "_TEST.ts"
         abspath = os.path.join(local_module, local_dirname, name, fname)
-        X_test, y_test = load_from_tsfile(abspath, return_data_type=return_type)
+        X_test, y_test = load_from_tsfile(abspath, return_data_type="nested_univ")
 
-        if isinstance(X_train, np.ndarray):
-            X = np.concatenate([X_train, X_test])
-        elif isinstance(X_train, pd.DataFrame):
-            X = pd.concat([X_train, X_test])
-            X = X.reset_index(drop=True)
-        else:
-            raise IOError(
-                f"Invalid data structure type {type(X_train)} for loading "
-                f"classification problem "
-            )
+        X = pd.concat([X_train, X_test])
+        X = X.reset_index(drop=True)
         y = np.concatenate([y_train, y_test])
 
     else:
         raise ValueError("Invalid `split` value =", split)
-    # Return appropriately
+
+    return_type = _alias_mtype_check(return_type)
     if return_X_y:
+        X = convert(X, from_type="nested_univ", to_type=return_type)
         return X, y
     else:
         X["class_val"] = pd.Series(y)
+        X = convert(X, from_type="nested_univ", to_type=return_type)
         return X
 
 
@@ -275,7 +281,7 @@ def _read_header(file, full_file_path_and_name):
                 tokens = line.split(" ")
                 token_len = len(tokens)
                 if tokens[1] == "false":
-                    meta_data["class_labels"] = False
+                    meta_data["has_class_labels"] = False
                 elif tokens[1] != "true":
                     raise IOError(
                         "invalid classLabel value in file " f"{full_file_path_and_name}"
@@ -284,6 +290,22 @@ def _read_header(file, full_file_path_and_name):
                     raise IOError(
                         f"if the classlabel tag is true then class values must be "
                         f"supplied in file{full_file_path_and_name} but read {tokens}"
+                    )
+            elif line.startswith("@targetlabel"):
+                tokens = line.split(" ")
+                token_len = len(tokens)
+                if tokens[1] == "false":
+                    meta_data["has_class_labels"] = False
+                elif tokens[1] != "true":
+                    raise IOError(
+                        "invalid targetlabel value in file "
+                        f"{full_file_path_and_name}"
+                    )
+                if token_len > 2:
+                    raise IOError(
+                        "targetlabel tag should not be accompanied with info "
+                        "apart from true/false, but found "
+                        f"{tokens}"
                     )
             elif line.startswith("@data"):
                 return meta_data
@@ -324,7 +346,7 @@ def load_from_tsfile(
             "numpy3D"/"numpy3d"/"np3D": 3D np.ndarray (instance, variable, time index)
             "numpy2d"/"np2d"/"numpyflat": 2D np.ndarray (instance, time index)
             "pd-multiindex": pd.DataFrame with 2-level (instance, time) MultiIndex
-        Exception is raised if the data cannot be stored in therequested type.
+        Exception is raised if the data cannot be stored in the requested type.
 
     Returns
     -------
@@ -343,12 +365,7 @@ def load_from_tsfile(
     ValueError if return_data_type = numpy2d but the data are multivariate and/
     or unequal length series
     """
-    if return_data_type is None:
-        return_data_type = "nested_univ"
-    if return_data_type in ["numpy2d", "numpy2D", "np2d", "np2D"]:
-        return_data_type = "numpyflat"
-    if return_data_type in ["numpy3d", "np3d", "np3D"]:
-        return_data_type = "numpy3D"
+    return_data_type = _alias_mtype_check(return_data_type)
 
     if not isinstance(return_data_type, str):
         raise TypeError(
@@ -513,6 +530,29 @@ def load_from_tsfile_to_dataframe(
                     has_class_labels_tag = True
                     class_label_list = [token.strip() for token in tokens[2:]]
                     metadata_started = True
+                elif line.startswith("@targetlabel"):
+                    if data_started:
+                        raise IOError("metadata must come before data")
+                    tokens = line.split(" ")
+                    token_len = len(tokens)
+                    if token_len == 1:
+                        raise IOError(
+                            "targetlabel tag requires an associated Boolean value"
+                        )
+                    if tokens[1] == "true":
+                        class_labels = True
+                    elif tokens[1] == "false":
+                        class_labels = False
+                    else:
+                        raise IOError("invalid targetlabel value")
+                    if token_len > 2:
+                        raise IOError(
+                            "targetlabel tag should not be accompanied with info "
+                            "apart from true/false, but found "
+                            f"{tokens}"
+                        )
+                    has_class_labels_tag = True
+                    metadata_started = True
                 # Check if this line contains the start of data
                 elif line.startswith("@data"):
                     if line != "@data":
@@ -539,7 +579,7 @@ def load_from_tsfile_to_dataframe(
                         )
                     # Replace any missing values with the value specified
                     line = line.replace("?", replace_missing_vals_with)
-                    # Check if we dealing with data that has timestamps
+                    # Check if we are dealing with data that has timestamps
                     if timestamps:
                         # We're dealing with timestamps so cannot just split
                         # line on ':' as timestamps may contain one
@@ -1572,9 +1612,9 @@ def write_ndarray_to_tsfile(
     # write class label line
     if class_label is not None:
         space_separated_class_label = " ".join(str(label) for label in class_label)
-        file.write(f"@classLabel true {space_separated_class_label}\n")
+        file.write(f"@classlabel true {space_separated_class_label}\n")
     else:
-        file.write("@class_label false\n")
+        file.write("@classlabel false\n")
     # begin writing the core data for each case
     # which are the series and the class value list if there is any
     file.write("@data\n")
