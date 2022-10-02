@@ -973,7 +973,7 @@ class ProximityStump(BaseClassifier):
         return distributions
 
     @classmethod
-    def get_test_params(cls):
+    def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
 
         Returns
@@ -984,10 +984,11 @@ class ProximityStump(BaseClassifier):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        params = {
+        params1 = {
             "random_state": 0,
         }
-        return params
+        params2 = {"random_state": 42, "distance_measure": "dtw"}
+        return [params1, params2]
 
 
 class ProximityTree(BaseClassifier):
@@ -1226,7 +1227,9 @@ class ProximityTree(BaseClassifier):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
-        return {"max_depth": 1, "n_stump_evaluations": 1}
+        params1 = {"max_depth": 1, "n_stump_evaluations": 1}
+        params2 = {"max_depth": 5, "n_stump_evaluations": 2, "distance_measure": "dtw"}
+        return [params1, params2]
 
 
 class ProximityForest(BaseClassifier):
@@ -1504,7 +1507,14 @@ class ProximityForest(BaseClassifier):
         if parameter_set == "results_comparison":
             return {"n_estimators": 3, "max_depth": 2, "n_stump_evaluations": 2}
         else:
-            return {"n_estimators": 2, "max_depth": 1, "n_stump_evaluations": 1}
+            param1 = {"n_estimators": 2, "max_depth": 1, "n_stump_evaluations": 1}
+            param2 = {
+                "n_estimators": 4,
+                "max_depth": 2,
+                "n_stump_evaluations": 3,
+                "distance_measure": "dtw",
+            }
+            return [param1, param2]
 
 
 # start of util functions
