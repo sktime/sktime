@@ -82,13 +82,10 @@ def _evaluate_window(
             metric_args = {}
 
         y_pred = eval(pred_type[scitype])(fh, X_test, **metric_args)
-
         pred_time = time.perf_counter() - start_pred
-
         # score
         score = scoring(y_test, y_pred, y_train=y_train)
-
-        # cutoff
+        # get cutoff
         cutoff = forecaster.cutoff
 
     except Exception as e:
@@ -105,17 +102,16 @@ def _evaluate_window(
                 FitFailedWarning,
             )
 
-    else:
-        result = {
-            score_name: [score],
-            "fit_time": [fit_time],
-            "pred_time": [pred_time],
-            "len_train_window": [len(y_train)],
-            "cutoff": [cutoff],
-            "y_train": [y_train if return_data else np.nan],
-            "y_test": [y_test if return_data else np.nan],
-            "y_pred": [y_pred if return_data else np.nan],
-        }
+    result = {
+        score_name: [score],
+        "fit_time": [fit_time],
+        "pred_time": [pred_time],
+        "len_train_window": [len(y_train)],
+        "cutoff": [cutoff],
+        "y_train": [y_train if return_data else np.nan],
+        "y_test": [y_test if return_data else np.nan],
+        "y_pred": [y_pred if return_data else np.nan],
+    }
     return pd.DataFrame(result)
 
 
