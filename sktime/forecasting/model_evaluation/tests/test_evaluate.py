@@ -87,6 +87,7 @@ def _check_evaluate_output(out, cv, y, scoring):
 @pytest.mark.parametrize("window_length", [7, 10])
 @pytest.mark.parametrize("step_length", TEST_STEP_LENGTHS_INT)
 @pytest.mark.parametrize("strategy", ["refit", "update"])
+@pytest.mark.parametrize("backend", [None, "dask", "loky", "threading"])
 @pytest.mark.parametrize(
     "scoring",
     [
@@ -94,14 +95,21 @@ def _check_evaluate_output(out, cv, y, scoring):
         MeanAbsoluteScaledError(),
     ],
 )
-def test_evaluate_common_configs(CV, fh, window_length, step_length, strategy, scoring):
+def test_evaluate_common_configs(
+    CV, fh, window_length, step_length, strategy, scoring, backend
+):
     """Test evaluate common configs."""
     y = make_forecasting_problem(n_timepoints=30, index_type="int")
     forecaster = NaiveForecaster()
     cv = CV(fh, window_length, step_length=step_length)
 
     out = evaluate(
-        forecaster=forecaster, y=y, cv=cv, strategy=strategy, scoring=scoring
+        forecaster=forecaster,
+        y=y,
+        cv=cv,
+        strategy=strategy,
+        scoring=scoring,
+        backend=backend,
     )
     _check_evaluate_output(out, cv, y, scoring)
 
@@ -162,7 +170,8 @@ def test_evaluate_no_exog_against_with_exog():
 @pytest.mark.parametrize("error_score", [np.nan, "raise", 1000])
 @pytest.mark.parametrize("return_data", [True, False])
 @pytest.mark.parametrize("strategy", ["refit", "update"])
-def test_evaluate_error_score(error_score, return_data, strategy):
+@pytest.mark.parametrize("backend", [None, "dask", "loky", "threading"])
+def test_evaluate_error_score(error_score, return_data, strategy, backend):
     """Test evaluate to raise warnings and exceptions according to error_score value."""
     forecaster = ExponentialSmoothing(sp=12)
     y = load_airline()
@@ -181,6 +190,7 @@ def test_evaluate_error_score(error_score, return_data, strategy):
                 return_data=return_data,
                 error_score=error_score,
                 strategy=strategy,
+                backend=backend,
             )
         if isinstance(error_score, type(np.nan)):
             assert results["test_MeanAbsolutePercentageError"].isna().sum() > 0
