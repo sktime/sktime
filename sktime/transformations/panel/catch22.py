@@ -29,7 +29,8 @@ class Catch22(BaseTransformer):
     Parameters
     ----------
     features : str or List of str, optional, default="all"
-        The Catch22 features to extract by name. If "all", all features are extracted.
+        The Catch22 features to extract by name as a str for singular features or as a
+        list for multiple. If "all", all features are extracted.
         Valid features are as follows:
             ["DN_HistogramMode_5", "DN_HistogramMode_10",
             "SB_BinaryStats_diff_longstretch0", "DN_OutlierInclude_p_001_mdrmd",
@@ -78,7 +79,7 @@ class Catch22(BaseTransformer):
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Primitives",
         "scitype:instancewise": True,
-        "X_inner_mtype": "numpy3D",
+        "X_inner_mtype": "nested_univ",
         "y_inner_mtype": "None",
         "fit_is_empty": True,
     }

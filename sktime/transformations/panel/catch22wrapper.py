@@ -14,6 +14,9 @@ from joblib import Parallel, delayed
 
 from sktime.transformations.base import BaseTransformer
 from sktime.transformations.panel.catch22 import _normalise_series
+from sktime.utils.validation._dependencies import _check_soft_dependencies
+
+_check_soft_dependencies("pycatch22", severity="warning")
 
 
 class Catch22Wrapper(BaseTransformer):
@@ -29,7 +32,8 @@ class Catch22Wrapper(BaseTransformer):
     Parameters
     ----------
     features : str or List of str, optional, default="all"
-        The Catch22 features to extract by name. If "all", all features are extracted.
+        The Catch22 features to extract by name as a str for singular features or as a
+        list for multiple. If "all", all features are extracted.
         Valid features are as follows:
             ["DN_HistogramMode_5", "DN_HistogramMode_10",
             "SB_BinaryStats_diff_longstretch0", "DN_OutlierInclude_p_001_mdrmd",
@@ -69,7 +73,7 @@ class Catch22Wrapper(BaseTransformer):
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Primitives",
         "scitype:instancewise": True,
-        "X_inner_mtype": "numpy3D",
+        "X_inner_mtype": "nested_univ",
         "y_inner_mtype": "None",
         "fit_is_empty": True,
         "python_dependencies": "pycatch22",
@@ -104,7 +108,7 @@ class Catch22Wrapper(BaseTransformer):
         c22 : Pandas DataFrame of shape [n_instances, c*n_dimensions] where c is the
              number of features requested, containing Catch22 features for X.
         """
-        n_instances, n_dims, _ = X.shape
+        n_instances, n_dims = X.shape
 
         if isinstance(self.features, str):
             if self.features == "all":
