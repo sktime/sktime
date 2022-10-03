@@ -166,10 +166,9 @@ def _load_dataset(name, split, return_X_y, return_type=None, extract_path=None):
                 )
             except zipfile.BadZipFile as e:
                 raise ValueError(
-                    "Invalid dataset name. ",
-                    extract_path,
-                    "Please make sure the dataset "
-                    + "is available on http://timeseriesclassification.com/.",
+                    f"Invalid dataset name =. {name}Not available on extract path ="
+                    f"{extract_path}. Please make sure the dataset  is available on "
+                    f"https://timeseriesclassification.com/.",
                 ) from e
 
     return _load_provided_dataset(
