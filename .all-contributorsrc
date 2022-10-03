@@ -1,4 +1,9 @@
 {
+  "projectName": "sktime",
+  "projectOwner": "sktime",
+  "repoType": "github",
+  "repoHost": "https://github.com",
+  "commitConvention": "none",
   "files": [
     "CONTRIBUTORS.md"
   ],
@@ -1776,7 +1781,7 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/16029092?v=4",
       "profile": "https://github.com/shagn",
       "contributions": [
-        "doc",
+        "doc"
       ]
     },
     {
@@ -1795,11 +1800,6 @@
         "code",
         "ideas"
       ]
-    },
-  ],
-  "projectName": "sktime",
-  "projectOwner": "alan-turing-institute",
-  "repoType": "github",
-  "repoHost": "https://github.com",
-  "commitConvention": "none"
+    }
+  ]
 }
