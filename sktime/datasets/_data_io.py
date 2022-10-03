@@ -147,7 +147,8 @@ def _load_dataset(name, split, return_X_y, return_type=None, extract_path=None):
     if not os.path.exists(os.path.join(local_module, local_dirname)):
         os.makedirs(os.path.join(local_module, local_dirname))
     if name not in _list_available_datasets(extract_path):
-        local_dirname = "local_data"
+        if extract_path is None:
+            local_dirname = "local_data"
         if not os.path.exists(os.path.join(local_module, local_dirname)):
             os.makedirs(os.path.join(local_module, local_dirname))
         if name not in _list_available_datasets(
@@ -165,10 +166,9 @@ def _load_dataset(name, split, return_X_y, return_type=None, extract_path=None):
                 )
             except zipfile.BadZipFile as e:
                 raise ValueError(
-                    "Invalid dataset name. ",
-                    extract_path,
-                    "Please make sure the dataset "
-                    + "is available on http://timeseriesclassification.com/.",
+                    f"Invalid dataset name ={name} is not available on extract path ="
+                    f"{extract_path}. Nor is it available on "
+                    f"https://timeseriesclassification.com/.",
                 ) from e
 
     return _load_provided_dataset(

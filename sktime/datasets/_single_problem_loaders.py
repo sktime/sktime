@@ -95,7 +95,8 @@ def load_UCR_UEA_dataset(
         Exception is raised if the data cannot be stored in the requested type.
     extract_path : str, optional (default=None)
         the path to look for the data. If no path is provided, the function
-        looks in `sktime/datasets/data/`.
+        looks in `sktime/datasets/data/`. If a path is given, it can be absolute,
+        e.g. C:/Temp or relative, e.g. Temp or ./Temp.
 
     Returns
     -------
