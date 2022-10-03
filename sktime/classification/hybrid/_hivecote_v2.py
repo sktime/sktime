@@ -369,6 +369,8 @@ class HIVECOTEV2(BaseClassifier):
         """
         from sklearn.ensemble import RandomForestClassifier
 
+        from sktime.classification.sklearn import RotationForest
+
         if parameter_set == "results_comparison":
             return {
                 "stc_params": {
@@ -387,6 +389,27 @@ class HIVECOTEV2(BaseClassifier):
                     "n_parameter_samples": 5,
                     "max_ensemble_size": 3,
                     "randomly_selected_params": 3,
+                },
+            }
+        elif parameter_set == "contracting":
+            return {
+                "time_limit_in_minutes": 5,
+                "stc_params": {
+                    "estimator": RotationForest(contract_max_n_estimators=1),
+                    "contract_max_n_shapelet_samples": 5,
+                    "max_shapelets": 5,
+                    "batch_size": 5,
+                },
+                "drcif_params": {
+                    "contract_max_n_estimators": 1,
+                    "n_intervals": 2,
+                    "att_subsample_size": 2,
+                },
+                "arsenal_params": {"num_kernels": 5, "contract_max_n_estimators": 1},
+                "tde_params": {
+                    "contract_max_n_parameter_samples": 1,
+                    "max_ensemble_size": 1,
+                    "randomly_selected_params": 1,
                 },
             }
         else:

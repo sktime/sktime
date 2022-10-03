@@ -344,11 +344,26 @@ class ShapeletTransformClassifier(BaseClassifier):
                 "max_shapelets": 10,
                 "batch_size": 10,
             }
-        else:
+        elif parameter_set == "contracting":
+            return {
+                "time_limit_in_minutes": 5,
+                "estimator": RotationForest(contract_max_n_estimators=2),
+                "contract_max_n_shapelet_samples": 10,
+                "max_shapelets": 3,
+                "batch_size": 5,
+            }
+        elif parameter_set == "train_estimate":
             return {
                 "estimator": RotationForest(n_estimators=2),
                 "n_shapelet_samples": 10,
                 "max_shapelets": 3,
                 "batch_size": 5,
                 "save_transformed_data": True,
+            }
+        else:
+            return {
+                "estimator": RotationForest(n_estimators=2),
+                "n_shapelet_samples": 10,
+                "max_shapelets": 3,
+                "batch_size": 5,
             }

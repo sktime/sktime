@@ -567,12 +567,25 @@ class TemporalDictionaryEnsemble(BaseClassifier):
                 "max_ensemble_size": 5,
                 "randomly_selected_params": 5,
             }
-        else:
+        elif parameter_set == "contracting":
+            return {
+                "time_limit_in_minutes": 5,
+                "contract_max_n_parameter_samples": 5,
+                "max_ensemble_size": 2,
+                "randomly_selected_params": 3,
+            }
+        elif parameter_set == "train_estimate":
             return {
                 "n_parameter_samples": 5,
                 "max_ensemble_size": 2,
                 "randomly_selected_params": 3,
                 "save_train_predictions": True,
+            }
+        else:
+            return {
+                "n_parameter_samples": 5,
+                "max_ensemble_size": 2,
+                "randomly_selected_params": 3,
             }
 
 

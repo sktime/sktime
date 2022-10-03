@@ -437,12 +437,18 @@ class Arsenal(BaseClassifier):
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
         if parameter_set == "results_comparison":
-            params = {"num_kernels": 20, "n_estimators": 5}
-        else:
-            params = {
+            return {"num_kernels": 20, "n_estimators": 5}
+        elif parameter_set == "contracting":
+            return {
+                "time_limit_in_minutes": 5,
+                "num_kernels": 10,
+                "contract_max_n_estimators": 2,
+            }
+        elif parameter_set == "train_estimate":
+            return {
                 "num_kernels": 10,
                 "n_estimators": 2,
                 "save_transformed_data": True,
             }
-
-        return params
+        else:
+            return {"num_kernels": 10, "n_estimators": 2}

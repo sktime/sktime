@@ -480,10 +480,17 @@ class ContractableBOSS(BaseClassifier):
         """
         if parameter_set == "results_comparison":
             return {"n_parameter_samples": 10, "max_ensemble_size": 5}
-        else:
+        elif parameter_set == "contracting":
+            return {
+                "time_limit_in_minutes": 5,
+                "contract_max_n_parameter_samples": 4,
+                "max_ensemble_size": 2,
+            }
+        elif parameter_set == "train_estimate":
             return {
                 "n_parameter_samples": 4,
                 "max_ensemble_size": 2,
                 "save_train_predictions": True,
-                "feature_selection": "none",
             }
+        else:
+            return {"n_parameter_samples": 4, "max_ensemble_size": 2}

@@ -621,10 +621,19 @@ class DrCIF(BaseClassifier):
         """
         if parameter_set == "results_comparison":
             return {"n_estimators": 10, "n_intervals": 2, "att_subsample_size": 4}
-        else:
+        elif parameter_set == "contracting":
+            return {
+                "time_limit_in_minutes": 5,
+                "contract_max_n_estimators": 2,
+                "n_intervals": 2,
+                "att_subsample_size": 2,
+            }
+        elif parameter_set == "train_estimate":
             return {
                 "n_estimators": 2,
                 "n_intervals": 2,
                 "att_subsample_size": 2,
                 "save_transformed_data": True,
             }
+        else:
+            return {"n_estimators": 2, "n_intervals": 2, "att_subsample_size": 2}
