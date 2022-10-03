@@ -284,7 +284,7 @@ def evaluate(
                 "fit_time": "float",
                 "pred_time": "float",
                 "len_train_window": "int",
-                "cutoff": "datetime64[ns]",
+                "cutoff": str(y.index.dtype),
                 "y_train": "object" if return_data else "float",
                 "y_test": "object" if return_data else "float",
                 "y_pred": "object" if return_data else "float",
