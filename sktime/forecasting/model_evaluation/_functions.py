@@ -102,17 +102,24 @@ def _evaluate_window(
                 FitFailedWarning,
             )
 
-    result = {
-        score_name: [score],
-        "fit_time": [fit_time],
-        "pred_time": [pred_time],
-        "len_train_window": [len(y_train)],
-        "cutoff": [cutoff],
-        "y_train": [y_train if return_data else np.nan],
-        "y_test": [y_test if return_data else np.nan],
-        "y_pred": [y_pred if return_data else np.nan],
-    }
-    return pd.DataFrame(result)
+    result = pd.DataFrame(
+        {
+            score_name: [score],
+            "fit_time": [fit_time],
+            "pred_time": [pred_time],
+            "len_train_window": [len(y_train)],
+            "cutoff": [cutoff],
+            "y_train": [y_train if return_data else np.nan],
+            "y_test": [y_test if return_data else np.nan],
+            "y_pred": [y_pred if return_data else np.nan],
+        }
+    )
+
+    # Return forecaster if "update"
+    if strategy == "update":
+        return result, forecaster
+    else:
+        return result
 
 
 def evaluate(
@@ -226,7 +233,33 @@ def evaluate(
         "score_name": score_name,
     }
 
-    if backend == "dask":
+    if backend is None or strategy == "update":
+        # Run temporal cross-validation sequentially
+        results = []
+        for i, (train, test) in enumerate(cv.split(y)):
+            if strategy == "update":
+                result, forecaster = _evaluate_window(
+                    y,
+                    X,
+                    train,
+                    test,
+                    i,
+                    **_evaluate_window_kwargs,
+                )
+                _evaluate_window_kwargs["forecaster"] = forecaster
+            else:
+                result = _evaluate_window(
+                    y,
+                    X,
+                    train,
+                    test,
+                    i,
+                    **_evaluate_window_kwargs,
+                )
+            results.append(result)
+        results = pd.concat(results)
+
+    elif backend == "dask":
         # Use Dask delayed instead of joblib,
         # which uses Futures under the hood
         import dask.dataframe as dd
@@ -259,41 +292,27 @@ def evaluate(
         )
         if compute:
             results = results.compute()
-    else:
-        if backend is None:
-            # Run temporal cross-validation sequentially
-            results = [
-                _evaluate_window(
-                    y,
-                    X,
-                    train,
-                    test,
-                    i,
-                    **_evaluate_window_kwargs,
-                )
-                for i, (train, test) in enumerate(cv.split(y))
-            ]
-        else:
-            # Otherwise use joblib
-            from joblib import Parallel, delayed
 
-            results = Parallel(**kwargs)(
-                delayed(_evaluate_window)(
-                    y,
-                    X,
-                    train,
-                    test,
-                    i,
-                    **_evaluate_window_kwargs,
-                )
-                for i, (train, test) in enumerate(cv.split(y))
+    else:
+        # Otherwise use joblib
+        from joblib import Parallel, delayed
+
+        results = Parallel(**kwargs)(
+            delayed(_evaluate_window)(
+                y,
+                X,
+                train,
+                test,
+                i,
+                **_evaluate_window_kwargs,
             )
+            for i, (train, test) in enumerate(cv.split(y))
+        )
         results = pd.concat(results)
 
-    # post-processing of results
     if not return_data:
         results = results.drop(columns=["y_train", "y_test", "y_pred"])
-    results["len_train_window"] = results["len_train_window"].astype(int)
+    results = results.astype({"len_train_window": int}).reset_index(drop=True)
 
     return results
 
