@@ -132,7 +132,7 @@ def evaluate(
     return_data=False,
     error_score=np.nan,
     backend=None,
-    compute=False,
+    compute=True,
     **kwargs,
 ):
     """Evaluate forecaster using timeseries cross-validation.
