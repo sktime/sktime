@@ -73,10 +73,10 @@ def _reproduce_early_classification_unit_test(estimator):
     final_decisions = np.zeros(10)
 
     X_test = from_nested_to_3d_numpy(X_test)
-    states = None
     for i in estimator.classification_points:
         X = X_test[indices, :, :i]
-        probas, decisions, states = estimator.predict_proba(X, state_info=states)
+        # TODO there are different return types as of now
+        probas, decisions = estimator.predict_proba(X)
 
         for n in range(10):
             if decisions[n] and final_decisions[n] == 0:
@@ -125,7 +125,11 @@ if __name__ == "__main__":
                     (
                         "cBOSS",
                         ContractableBOSS(
-                            n_parameter_samples=4, max_ensemble_size=2, random_state=0
+                            n_parameter_samples=4,
+                            max_ensemble_size=2,
+                            random_state=0,
+                            save_train_predictions=True,
+                            feature_selection="none",
                         ),
                         [5],
                     ),
@@ -146,14 +150,16 @@ if __name__ == "__main__":
     _print_array(
         "BOSSEnsemble - UnitTest",
         _reproduce_classification_unit_test(
-            BOSSEnsemble(max_ensemble_size=5, random_state=0)
+            BOSSEnsemble(max_ensemble_size=5, feature_selection="none", random_state=0)
         ),
     )
     _print_array(
         "ContractableBOSS - UnitTest",
         _reproduce_classification_unit_test(
             ContractableBOSS(
-                n_parameter_samples=10, max_ensemble_size=5, random_state=0
+                n_parameter_samples=10,
+                max_ensemble_size=5,
+                random_state=0,
             )
         ),
     )
@@ -187,7 +193,15 @@ if __name__ == "__main__":
     )
     _print_array(
         "WEASEL - UnitTest",
-        _reproduce_classification_unit_test(WEASEL(window_inc=4, random_state=0)),
+        _reproduce_classification_unit_test(
+            WEASEL(
+                window_inc=4,
+                random_state=0,
+                support_probabilities=True,
+                bigrams=False,
+                feature_selection="none",
+            )
+        ),
     )
     _print_array(
         "ElasticEnsemble - UnitTest",
@@ -458,17 +472,17 @@ if __name__ == "__main__":
         ),
     )
 
-    _print_array(
-        "ProbabilityThresholdEarlyClassifier - UnitTest",
-        _reproduce_early_classification_unit_test(
-            ProbabilityThresholdEarlyClassifier(
-                random_state=0,
-                classification_points=[6, 16, 24],
-                probability_threshold=1,
-                estimator=TimeSeriesForestClassifier(n_estimators=10, random_state=0),
-            )
-        ),
-    )
+    # _print_array(
+    #     "ProbabilityThresholdEarlyClassifier - UnitTest",
+    #     _reproduce_early_classification_unit_test(
+    #         ProbabilityThresholdEarlyClassifier(
+    #             random_state=0,
+    #             classification_points=[6, 16, 24],
+    #             probability_threshold=1,
+    #             estimator=TimeSeriesForestClassifier(n_estimators=10, random_state=0),
+    #         )
+    #     ),
+    # )
     _print_array(
         "TEASER - UnitTest",
         _reproduce_early_classification_unit_test(

@@ -81,6 +81,16 @@ The release process is as follows, on high-level:
 8. If the release on ``pypi`` has succeeded, there should be an automated release PR created
   against the sktime conda-forge repo: https://github.com/conda-forge/sktime-feedstock.
 
+  .. note:: Manual creation of release pull request
+     In cases where the release PR is not created automatically it can be created and submitted manually. For general
+     guidelines related to maintaining conda feedstcok packages see `conda-forge package<https://conda-forge.org/docs/maintainer/updating_pkgs.html>`_.
+
+     After forking and cloning the repo, edit the ``meta.yml`` file and
+     
+     - increment the version in the line that contains ``{% set version = "0.X.Y" %}``
+     - paste the sha256 sum of the source archive from github in the ``source/sha256`` section
+     - submit PR and ask for review
+
 9. The conda release PR need to be reviewed and in dependencies should be checked against any changes in the main sktime repo.
   In case the dependencies (or python version support) have changes, the ``meta.yml`` file in the conda recipe need to updated to reflect those changes.
 
@@ -133,7 +143,7 @@ To run the legacy release workflow, e.g., for development purposes, run
    make release
 
 This calls
-`build_tools/make_release.py <https://github.com/alan-turing-institute/sktime/blob/main/build_tools/make_release.py>`__
+`build_tools/make_release.py <https://github.com/sktime/sktime/blob/main/build_tools/make_release.py>`__
 that will guide you through the release process.
 
 IMPORTANT: when running the legacy build tools, ensure to not accidentally push a release tag to the ``sktime`` repo.

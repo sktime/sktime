@@ -396,7 +396,7 @@ def test_to_relative(freq: str):
     """Test conversion to relative.
 
     Fixes bug in
-    https://github.com/alan-turing-institute/sktime/issues/1935#issue-1114814142
+    https://github.com/sktime/sktime/issues/1935#issue-1114814142
     """
     freq = "2H"
     t = pd.date_range(start="2021-01-01", freq=freq, periods=5)
@@ -474,7 +474,7 @@ def test_frequency_setter(freqstr):
 def test_auto_ets():
     """Fix bug in 1435.
 
-    https://github.com/alan-turing-institute/sktime/issues/1435#issue-1000175469
+    https://github.com/sktime/sktime/issues/1435#issue-1000175469
     """
     freq = "30T"
     _y = np.arange(50) + np.random.rand(50) + np.sin(np.arange(50) / 4) * 10
@@ -494,7 +494,7 @@ def test_auto_ets():
 def test_exponential_smoothing():
     """Test bug in 1876.
 
-    https://github.com/alan-turing-institute/sktime/issues/1876#issue-1103752402.
+    https://github.com/sktime/sktime/issues/1876#issue-1103752402.
     """
     y = load_airline()
     # Change index to 10 min interval
@@ -523,7 +523,7 @@ def test_exponential_smoothing():
 def test_auto_arima():
     """Test bug in 805.
 
-    https://github.com/alan-turing-institute/sktime/issues/805#issuecomment-891848228.
+    https://github.com/sktime/sktime/issues/805#issuecomment-891848228.
     """
     time_index = pd.date_range("January 1, 2021", periods=8, freq="1D")
     X = pd.DataFrame(

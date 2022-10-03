@@ -6,6 +6,8 @@
 __author__ = ["Ryan Kuhns"]
 __all__ = ["ExponentTransformer", "SqrtTransformer"]
 
+from warnings import warn
+
 import numpy as np
 import pandas as pd
 
@@ -101,6 +103,14 @@ class ExponentTransformer(BaseTransformer):
 
         super(ExponentTransformer, self).__init__()
 
+        if abs(power) < 1e-6:
+            warn(
+                "power close to zero passed to ExponentTransformer, "
+                "inverse_transform will default to identity "
+                "if called, in order to avoid division by zero"
+            )
+            self.set_tags(**{"skip-inverse-transform": True})
+
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
 
@@ -157,6 +167,27 @@ class ExponentTransformer(BaseTransformer):
 
         return offset
 
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            There are currently no reserved values for transformers.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        return [{"power": 2.5, "offset": 1}, {"power": 0}]
+
 
 class SqrtTransformer(ExponentTransformer):
     """Apply element-sise square root transformation to a time series.
@@ -210,3 +241,24 @@ class SqrtTransformer(ExponentTransformer):
 
     def __init__(self, offset="auto"):
         super().__init__(power=0.5, offset=offset)
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            There are currently no reserved values for transformers.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        return [{}, {"offset": 4.2}]
