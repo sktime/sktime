@@ -3,12 +3,12 @@
 
 """VECM Forecaster."""
 
+
 __all__ = ["VECM"]
 __author__ = ["thayeylolu", "AurumnPegasus"]
 
 import numpy as np
 import pandas as pd
-from statsmodels.tsa.vector_ar.vecm import VECM as _VECM
 
 from sktime.forecasting.base.adapters import _StatsModelsAdapter
 
@@ -84,6 +84,7 @@ class VECM(_StatsModelsAdapter):
         "requires-fh-in-fit": False,
         "univariate-only": False,
         "ignores-exogeneous-X": False,
+        "capability:pred_int": True,
     }
 
     def __init__(
@@ -136,6 +137,8 @@ class VECM(_StatsModelsAdapter):
         -------
         self : reference to self
         """
+        from statsmodels.tsa.vector_ar.vecm import VECM as _VECM
+
         self._forecaster = _VECM(
             endog=y,
             exog=X,
@@ -210,3 +213,70 @@ class VECM(_StatsModelsAdapter):
         )
 
         return y_pred
+
+    def _predict_interval(self, fh, X=None, coverage=None):
+        """
+        Compute/return prediction quantiles for a forecast.
+
+        private _predict_interval containing the core logic,
+            called from predict_interval and possibly predict_quantiles
+        State required:
+            Requires state to be "fitted".
+        Accesses in self:
+            Fitted model attributes ending in "_"
+            self.cutoff
+
+        Parameters
+        ----------
+        fh : guaranteed to be ForecastingHorizon
+            The forecasting horizon with the steps ahead to to predict.
+        X : optional (default=None)
+            guaranteed to be of a type in self.get_tag("X_inner_mtype")
+            Exogeneous time series for the forecast
+        coverage : list of float (guaranteed not None and floats in [0,1] interval)
+           nominal coverage(s) of predictive interval(s)
+
+        Returns
+        -------
+        pred_int : pd.DataFrame
+            Column has multi-index: first level is variable name from y in fit,
+                second level coverage fractions for which intervals were computed.
+                    in the same order as in input `coverage`.
+                Third level is string "lower" or "upper", for lower/upper interval end.
+            Row index is fh, with additional (upper) levels equal to instance levels,
+                from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
+            Entries are forecasts of lower/upper interval end,
+                for var in col index, at nominal coverage in second col index,
+                lower/upper depending on third col index, for the row index.
+                Upper/lower interval end forecasts are equivalent to
+                quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
+        """
+        exog_fc = X.values if X is not None else None
+        fh_oos = fh.to_out_of_sample(self.cutoff)
+        var_names = (
+            self._y.index.name
+            if self._y.index.name is not None
+            else self._y.columns.values
+        )
+        int_idx = pd.MultiIndex.from_product([var_names, coverage, ["lower", "upper"]])
+        # pred_int = pd.DataFrame(index=int_idx)
+
+        for c in coverage:
+            alpha = 1 - c
+            _, y_lower, y_upper = self._fitted_forecaster.predict(
+                steps=fh_oos[-1],
+                exog_fc=exog_fc,
+                exog_coint_fc=self.exog_coint_fc,
+                alpha=alpha,
+            )
+            values = []
+            for v_idx in range(len(var_names)):
+                values.append(y_lower[0][v_idx])
+                values.append(y_upper[0][v_idx])
+                # pred_int.loc[(var_names[v_idx], c, "lower"), :] = (y_lower[0][v_idx])
+                # pred_int.loc[(var_names[v_idx], c, "upper"), :] = (y_upper[0][v_idx])
+        pred_int = pd.DataFrame(
+            [values], index=fh.to_absolute(self.cutoff), columns=int_idx
+        )
+
+        return pred_int

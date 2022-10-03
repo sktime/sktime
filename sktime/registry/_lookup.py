@@ -125,6 +125,16 @@ def all_estimators(
             passed in return_tags will serve as column names for all columns of
             tags that were optionally requested.
 
+    Examples
+    --------
+    >>> from sktime.registry import all_estimators
+    >>> # return a complete list of estimators as pd.Dataframe
+    >>> all_estimators(as_dataframe=True)
+    >>> # return all forecasters by filtering for estimator type
+    >>> all_estimators("forecaster")
+    >>> # return all forecasters which handle missing data in the input by tag filtering
+    >>> all_estimators("forecaster", filter_tags={"handles-missing-data": True})
+
     References
     ----------
     Modified version from scikit-learn's `all_estimators()`.
@@ -133,7 +143,7 @@ def all_estimators(
     import sys
     import warnings
 
-    MODULES_TO_IGNORE = ("tests", "setup", "contrib", "benchmarking", "utils")
+    MODULES_TO_IGNORE = ("tests", "setup", "contrib", "benchmarking", "utils", "all")
 
     all_estimators = []
     ROOT = str(Path(__file__).parent.parent)  # sktime package root directory
@@ -148,10 +158,6 @@ def all_estimators(
     def _is_private_module(module):
         return "._" in module
 
-    def _is_ignored_module(module):
-        module_parts = module.split(".")
-        return any(part in MODULES_TO_IGNORE for part in module_parts)
-
     def _is_base_class(name):
         return name.startswith("_") or name.startswith("Base")
 
@@ -165,6 +171,43 @@ def all_estimators(
             and not _is_base_class(name)
         )
 
+    def _walk(root, exclude=None, prefix=""):
+        """Return all modules contained as sub-modules (recursive) as string list.
+
+        Unlike pkgutil.walk_packages, does not import modules on exclusion list.
+
+        Parameters
+        ----------
+        root : Path
+            root path in which to look for submodules
+        exclude : tuple of str or None, optional, default = None
+            list of sub-modules to ignore in the return, including sub-modules
+        prefix: str, optional, default = ""
+            this str is appended to all strings in the return
+
+        Yields
+        ------
+        str : sub-module strings
+            iterates over all sub-modules of root
+            that do not contain any of the strings on the `exclude` list
+            string is prefixed by the string `prefix`
+        """
+
+        def _is_ignored_module(module):
+            if exclude is None:
+                return False
+            module_parts = module.split(".")
+            return any(part in exclude for part in module_parts)
+
+        for _, module_name, is_pgk in pkgutil.iter_modules(path=[root]):
+            if not _is_ignored_module(module_name):
+                yield f"{prefix}{module_name}"
+                if is_pgk:
+                    yield from (
+                        f"{prefix}{module_name}.{x}"
+                        for x in _walk(f"{root}/{module_name}", exclude=exclude)
+                    )
+
     # Ignore deprecation warnings triggered at import time and from walking
     # packages
     with warnings.catch_warnings():
@@ -173,10 +216,12 @@ def all_estimators(
         warnings.filterwarnings(
             "ignore", category=UserWarning, message=".*has been moved to.*"
         )
-        for _, module_name, _ in pkgutil.walk_packages(path=[ROOT], prefix="sktime."):
+        for module_name in _walk(
+            root=ROOT, exclude=MODULES_TO_IGNORE, prefix="sktime."
+        ):
 
             # Filter modules
-            if _is_ignored_module(module_name) or _is_private_module(module_name):
+            if _is_private_module(module_name):
                 continue
 
             try:

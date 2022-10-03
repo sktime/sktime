@@ -22,6 +22,7 @@ class _StatsModelsAdapter(BaseForecaster):
         "ignores-exogeneous-X": True,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
+        "python_dependencies": "statsmodels",
     }
 
     def __init__(self, random_state=None):
@@ -85,7 +86,11 @@ class _StatsModelsAdapter(BaseForecaster):
 
         # statsmodels forecasts all periods from start to end of forecasting
         # horizon, but only return given time points in forecasting horizon
-        return y_pred.loc[fh.to_absolute(self.cutoff).to_pandas()]
+        y_pred = y_pred.loc[fh.to_absolute(self.cutoff).to_pandas()]
+        # ensure that name is not added nor removed
+        # otherwise this may upset conversion to pd.DataFrame
+        y_pred.name = self._y.name
+        return y_pred
 
     def get_fitted_params(self):
         """Get fitted parameters.

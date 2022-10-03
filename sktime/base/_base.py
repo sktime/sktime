@@ -347,7 +347,11 @@ class BaseObject(_BaseEstimator):
         Changes object state by settting tag values in tag_dict as dynamic tags
         in self.
         """
-        self._tags_dynamic.update(deepcopy(tag_dict))
+        tag_update = deepcopy(tag_dict)
+        if hasattr(self, "_tags_dynamic"):
+            self._tags_dynamic.update(tag_update)
+        else:
+            self._tags_dynamic = tag_update
 
         return self
 
@@ -406,25 +410,8 @@ class BaseObject(_BaseEstimator):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        # imported inside the function to avoid circular imports
-        from sktime.tests._config import ESTIMATOR_TEST_PARAMS
-
-        # if non-default parameters are required, but none have been found,
-        # raise error
-        if hasattr(cls, "_required_parameters"):
-            required_parameters = getattr(cls, "required_parameters", [])
-            if len(required_parameters) > 0:
-                raise ValueError(
-                    f"Estimator: {cls} requires "
-                    f"non-default parameters for construction, "
-                    f"but none were given. Please set them "
-                    f"as given in the extension template"
-                )
-
-        # construct with parameter configuration for testing, otherwise construct with
-        # default parameters (empty dict)
-        params = ESTIMATOR_TEST_PARAMS.get(cls, {})
-        return params
+        # default parameters = empty dict
+        return {}
 
     @classmethod
     def create_test_instance(cls, parameter_set="default"):
@@ -608,6 +595,75 @@ class BaseObject(_BaseEstimator):
         comp_dict = {x: y for (x, y) in comp_dict.items() if isinstance(y, base_class)}
 
         return comp_dict
+
+    def save(self, path=None):
+        """Save serialized self to bytes-like object or to file.
+
+        Behaviour:
+        if `path` is None, returns an in-memory serialized self
+        if `path` is a file location, stores self at that location
+
+        saved files are zip files with following contents:
+        metadata - contains class of self, i.e., type(self)
+        object - serialized self. This class uses the default serialization (pickle).
+
+        Parameters
+        ----------
+        path : None or file location (str or Path)
+            if None, self is saved to an in-memory object
+            if file location, self is saved to that file location
+
+        Returns
+        -------
+        if `path` is None - in-memory serialized self
+        if `path` is file location - ZipFile with reference to location
+        """
+        import pickle
+
+        if path is None:
+            return (type(self), pickle.dumps(self))
+
+        from zipfile import ZipFile
+
+        with ZipFile(path) as zipfile:
+            with zipfile.open("metadata", mode="w") as meta_file:
+                meta_file.write(type(self))
+            with zipfile.open("object", mode="w") as object:
+                object.write(pickle.dumps(self))
+
+        return ZipFile(path)
+
+    @classmethod
+    def load_from_serial(cls, serial):
+        """Load object from serialized memory container.
+
+        Parameters
+        ----------
+        serial : 1st element of output of `cls.save(None)`
+
+        Returns
+        -------
+        deserialized self resulting in output `serial`, of `cls.save(None)`
+        """
+        import pickle
+
+        return pickle.loads(serial)
+
+    @classmethod
+    def load_from_path(cls, serial):
+        """Load object from file location.
+
+        Parameters
+        ----------
+        serial : result of ZipFile(path).open("object)
+
+        Returns
+        -------
+        deserialized self resulting in output at `path`, of `cls.save(path)`
+        """
+        import pickle
+
+        return pickle.loads(serial)
 
 
 class TagAliaserMixin:
@@ -815,6 +871,64 @@ class BaseEstimator(BaseObject):
                 f"This instance of {self.__class__.__name__} has not "
                 f"been fitted yet; please call `fit` first."
             )
+
+    def get_fitted_params(self):
+        """Get fitted parameters.
+
+        State required:
+            Requires state to be "fitted".
+
+        Returns
+        -------
+        fitted_params : dict of fitted parameters, keys are str names of parameters
+            parameters of components are indexed as [componentname]__[paramname]
+        """
+        if not self.is_fitted:
+            raise NotFittedError(
+                f"estimator of type {type(self).__name__} has not been "
+                "fitted yet, please call fit on data before get_fitted_params"
+            )
+
+        fitted_params = dict()
+        c_dict = self._components()
+
+        def sh(x):
+            """Shorthand to remove all underscores at end of a string."""
+            if x.endswith("_"):
+                return sh(x[:-1])
+            else:
+                return x
+
+        for c in c_dict.keys():
+            comp = c_dict[c]
+            if comp._is_fitted:
+                c_f_params = c_dict[c].get_fitted_params()
+                c_f_params = {f"{sh(c)}__{k}": c_f_params[k] for k in c_f_params.keys()}
+                fitted_params.update(c_f_params)
+
+        fitted_params.update(self._get_fitted_params())
+
+        return fitted_params
+
+    def _get_fitted_params(self):
+        """Get fitted parameters.
+
+        private _get_fitted_params, called from get_fitted_params
+
+        State required:
+            Requires state to be "fitted".
+
+        Returns
+        -------
+        fitted_params : dict
+        """
+        # default retrieves all self attributes ending in "_"
+        # and returns them with keys that have the "_" removed
+        fitted_params = [attr for attr in dir(self) if attr.endswith("_")]
+        fitted_params = [x for x in fitted_params if not x.startswith("_")]
+        fitted_param_dict = {p[:-1]: getattr(self, p) for p in fitted_params}
+
+        return fitted_param_dict
 
 
 def _clone_estimator(base_estimator, random_state=None):
