@@ -57,6 +57,13 @@ class _StatsModelsAdapter(BaseForecaster):
         """Log used internally in fit."""
         raise NotImplementedError("abstract method")
 
+    def _update(self, y, X=None, update_params=True):
+        """Update used internally in update."""
+        if update_params or self.is_composite():
+            super()._update(y, X, update_params=update_params)
+        else:
+            self._fitted_forecaster = self._fitted_forecaster.append(y)
+
     def _predict(self, fh, X=None):
         """Make forecasts.
 
