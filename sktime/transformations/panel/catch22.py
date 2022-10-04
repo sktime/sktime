@@ -236,7 +236,7 @@ class Catch22(BaseTransformer):
 
     # todo remove in v0.15
     @deprecated(
-        version="0.13.2",
+        version="0.13.4",
         reason="The Catch22 transform_single_feature method will be removed in v0.15.0. Use the 'features' parameter for the class.",  # noqa: E501
         category=FutureWarning,
     )
