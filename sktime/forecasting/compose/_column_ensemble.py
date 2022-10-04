@@ -6,6 +6,7 @@
 __author__ = ["GuzalBulatova", "mloning", "fkiraly"]
 __all__ = ["ColumnEnsembleForecaster"]
 
+import numpy as np
 import pandas as pd
 
 from sktime.base._meta import flatten
@@ -138,6 +139,11 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
         # replace ints by column names
         obj = self._get_indices(self._y, obj)
 
+        # deal with numpy int by coercing to python int
+        if np.issubdtype(type(obj), np.integer):
+            obj = int(obj)
+
+        # coerce to pd.Index
         if isinstance(obj, (int, str)):
             return pd.Index([obj])
         else:
