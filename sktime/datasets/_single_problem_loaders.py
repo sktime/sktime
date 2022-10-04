@@ -12,6 +12,7 @@ __author__ = [
     "patrickZIB",
     "aiwalter",
     "jasonlines",
+    "achieveordie",
 ]
 
 __all__ = [
@@ -35,6 +36,7 @@ __all__ = [
     "load_electric_devices_segmentation",
     "load_macroeconomic",
     "load_unit_test_tsf",
+    "load_covid_3month",
 ]
 
 import os
@@ -1105,3 +1107,50 @@ def load_solar(
         return_full_df=return_full_df,
         api_version=api_version,
     )
+
+
+def load_covid_3month(split=None, return_X_y=True):
+    """Load dataset of last three months confirmed covid cases.
+
+    Parameters
+    ----------
+    split: None or str{"train", "test"}, optional (default=None)
+        Whether to load the train or test partition of the problem. By
+        default, it loads both.
+    return_X_y: bool, optional (default=True)
+        If True, returns (features, target) separately instead of a single
+        dataframe with columns for
+        features and the target.
+
+    Returns
+    -------
+    X: pd.DataFrame with m rows and c columns
+        The time series data for the problem with m cases and c dimensions
+    y: numpy array
+        The regression values for each case in X
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_covid_3month
+    >>> X, y = load_covid_3month()
+
+    Notes
+    -----
+    Dimensionality:     univariate
+    Series length:      84
+    Train cases:        140
+    Test cases:         61
+    Number of classes:  -
+
+    The goal of this dataset is to predict COVID-19's death rate on 1st April 2020 for
+    each country using daily confirmed cases for the last three months. This dataset
+    contains 201 time series with no missing values, where each time series is
+    the daily confirmed cases for a country.
+    The data was obtained from WHO's COVID-19 database.
+    Please refer to https://covid19.who.int/ for more details
+
+    Dataset details: https://zenodo.org/record/3902690#.Yy1z_HZBxEY
+    =Covid3Month
+    """
+    name = "Covid3Month"
+    return _load_dataset(name, split, return_X_y)
