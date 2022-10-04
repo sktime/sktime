@@ -35,7 +35,13 @@ from urllib.request import urlretrieve
 import numpy as np
 import pandas as pd
 
-from sktime.datatypes import MTYPE_LIST_HIERARCHICAL, MTYPE_LIST_PANEL, convert
+from sktime.datatypes import (
+    MTYPE_LIST_HIERARCHICAL,
+    MTYPE_LIST_PANEL,
+    check_is_scitype,
+    convert,
+    convert_to,
+)
 from sktime.datatypes._panel._convert import _make_column_names, from_long_to_nested
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.validation.panel import check_X, check_X_y
@@ -156,7 +162,7 @@ def _load_dataset(name, split, return_X_y, return_type=None, extract_path=None):
         ):
             # Dataset is not already present in the datasets directory provided.
             # If it is not there, download and install it.
-            url = "http://timeseriesclassification.com/Downloads/%s.zip" % name
+            url = "https://timeseriesclassification.com/Downloads/%s.zip" % name
             # This also tests the validitiy of the URL, can't rely on the html
             # status code as it always returns 200
             try:
@@ -1439,6 +1445,46 @@ def write_tabular_transformation_to_arff(
     file.close()
 
 
+def _write_header(
+    path,
+    problem_name,
+    univariate,
+    equal_length,
+    series_length,
+    class_label,
+    fold,
+    comment,
+):
+    # create path if not exist
+    dirt = f"{str(path)}/{str(problem_name)}/"
+    try:
+        os.makedirs(dirt)
+    except os.error:
+        pass  # raises os.error if path already exists
+    # create ts file in the path
+    file = open(f"{dirt}{str(problem_name)}{fold}.ts", "w")
+    # write comment if any as a block at start of file
+    if comment is not None:
+        file.write("\n# ".join(textwrap.wrap("# " + comment)))
+        file.write("\n")
+
+    """ Writes the header info for a ts file"""
+    file.write(f"@problemName {problem_name}\n")
+    file.write("@timestamps false\n")
+    file.write(f"@univariate {str(univariate).lower()}\n")
+    file.write(f"@equalLength {str(equal_length).lower()}\n")
+    if series_length > 0 and equal_length:
+        file.write(f"@seriesLength {series_length}\n")
+    # write class label line
+    if class_label is not None:
+        space_separated_class_label = " ".join(str(label) for label in class_label)
+        file.write(f"@classLabel true {space_separated_class_label}\n")
+    else:
+        file.write("@classLabel false\n")
+    file.write("@data\n")
+    return file
+
+
 def write_dataframe_to_tsfile(
     data,
     path,
@@ -1496,24 +1542,59 @@ def write_dataframe_to_tsfile(
     """
     # ensure data provided is a dataframe
     if not isinstance(data, pd.DataFrame):
-        raise ValueError("Data provided must be a DataFrame")
-    if class_value_list is not None:
-        data, class_value_list = check_X_y(data, class_value_list, coerce_to_numpy=True)
-    else:
-        data = check_X(data, coerce_to_numpy=True)
-    # ensure data provided is a dataframe
-    write_ndarray_to_tsfile(
-        data,
-        path,
-        problem_name=problem_name,
-        class_label=class_label,
-        class_value_list=class_value_list,
-        equal_length=equal_length,
-        series_length=series_length,
-        missing_values=missing_values,
-        comment=comment,
-        fold=fold,
+        raise ValueError(f"Data provided must be a DataFrame, passed a {type(data)}")
+    data_valid, _, metadata = check_is_scitype(
+        data, scitype="Panel", return_metadata=True
     )
+    if not data_valid:
+        raise ValueError("DataFrame provided is not a valid type")
+    metadata
+    if equal_length != metadata["is_equal_length"]:
+        raise ValueError(
+            f"Argument passed for equal length = {equal_length} is not "
+            f"true for the data passed"
+        )
+    if equal_length:
+        # Convert to [cases][dimensions][length] numpy.
+        data = convert_to(
+            data,
+            to_type="numpy3D",
+            as_scitype="Panel",
+            store_behaviour="freeze",
+        )
+        write_ndarray_to_tsfile(
+            data,
+            path,
+            problem_name=problem_name,
+            class_label=class_label,
+            class_value_list=class_value_list,
+            equal_length=equal_length,
+            series_length=data.shape[2],
+            missing_values=missing_values,
+            comment=comment,
+            fold=fold,
+        )
+    else:  # Write by iterating over dataframe
+        if class_value_list is not None and class_label is None:
+            class_label = np.unique(class_value_list)
+        file = _write_header(
+            path,
+            problem_name,
+            metadata["is_univariate"],
+            metadata["is_equal_length"],
+            series_length,
+            class_label,
+            fold,
+            comment,
+        )
+        n_cases, n_dimensions = data.shape
+        for i in range(0, n_cases):
+            for j in range(0, n_dimensions):
+                series = data.iloc[i, j]
+                for k in range(0, series.size - 1):
+                    file.write(f"{series[k]},")
+                file.write(f"{series[series.size-1]}:")
+            file.write(f"{class_value_list[i]}\n")
 
 
 def write_ndarray_to_tsfile(
@@ -1590,34 +1671,18 @@ def write_ndarray_to_tsfile(
         )
     if fold is None:
         fold = ""
-    # create path if not exist
-    dirt = f"{str(path)}/{str(problem_name)}/"
-    try:
-        os.makedirs(dirt)
-    except os.error:
-        pass  # raises os.error if path already exists
-    # create ts file in the path
-    file = open(f"{dirt}{str(problem_name)}{fold}.ts", "w")
-    # write comment if any as a block at start of file
-    if comment is not None:
-        file.write("\n# ".join(textwrap.wrap("# " + comment)))
-        file.write("\n")
-    # begin writing header information
-    file.write(f"@problemName {problem_name}\n")
-    file.write("@timestamps false\n")
-    file.write(f"@univariate {str(univariate).lower()}\n")
-    file.write(f"@equalLength {str(equal_length).lower()}\n")
-    if series_length > 0 and equal_length:
-        file.write(f"@seriesLength {series_length}\n")
-    # write class label line
-    if class_label is not None:
-        space_separated_class_label = " ".join(str(label) for label in class_label)
-        file.write(f"@classlabel true {space_separated_class_label}\n")
-    else:
-        file.write("@classlabel false\n")
+    file = _write_header(
+        path,
+        problem_name,
+        univariate,
+        equal_length,
+        series_length,
+        class_label,
+        fold,
+        comment,
+    )
     # begin writing the core data for each case
     # which are the series and the class value list if there is any
-    file.write("@data\n")
     for case, value in itertools.zip_longest(data, class_value_list):
         for dimension in case:
             # turn series into comma-separated row
