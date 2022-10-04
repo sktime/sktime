@@ -7,7 +7,7 @@ from copy import deepcopy
 import pandas as pd
 import pytest
 
-from sktime.datatypes._adapter.dask import (
+from sktime.datatypes._adapter.dask_to_pd import (
     convert_dask_to_pandas,
     convert_pandas_to_dask,
 )
