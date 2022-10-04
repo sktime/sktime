@@ -9,9 +9,10 @@ dask DataFrame
 If pd.DataFrame has ordinary index, converts using dask compute/from_pandas
 
 if pd.DataFrame has MultiIndex, converts and back-converts
-MultiIndex columns 0:-1 to DataFrame columns with the name:
+MultiIndex columns to DataFrame columns with the name:
     __index__[indexname], if level has a name indexname
     __index__[index_iloc], if level has no indexname and is index_iloc-th level
+index is replaced by a string index where tuples are replaced with str coerced elements
 """
 import pandas as pd
 
