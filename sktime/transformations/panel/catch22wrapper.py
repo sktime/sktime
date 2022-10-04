@@ -9,7 +9,6 @@ __all__ = ["Catch22Wrapper"]
 
 import numpy as np
 import pandas as pd
-import pycatch22
 from joblib import Parallel, delayed
 
 from sktime.transformations.base import BaseTransformer
@@ -129,10 +128,38 @@ class Catch22Wrapper(BaseTransformer):
         else:
             raise ValueError("Invalid feature selection.")
 
+        import pycatch22
+
+        features = [
+            pycatch22.DN_HistogramMode_5,
+            pycatch22.DN_HistogramMode_10,
+            pycatch22.SB_BinaryStats_diff_longstretch0,
+            pycatch22.DN_OutlierInclude_p_001_mdrmd,
+            pycatch22.DN_OutlierInclude_n_001_mdrmd,
+            pycatch22.CO_f1ecac,
+            pycatch22.CO_FirstMin_ac,
+            pycatch22.SP_Summaries_welch_rect_area_5_1,
+            pycatch22.SP_Summaries_welch_rect_centroid,
+            pycatch22.FC_LocalSimple_mean3_stderr,
+            pycatch22.CO_trev_1_num,
+            pycatch22.CO_HistogramAMI_even_2_5,
+            pycatch22.IN_AutoMutualInfoStats_40_gaussian_fmmi,
+            pycatch22.MD_hrv_classic_pnn40,
+            pycatch22.SB_BinaryStats_mean_longstretch1,
+            pycatch22.SB_MotifThree_quantile_hh,
+            pycatch22.FC_LocalSimple_mean1_tauresrat,
+            pycatch22.CO_Embed2_Dist_tau_d_expfit_meandiff,
+            pycatch22.SC_FluctAnal_2_dfa_50_1_2_logi_prop_r1,
+            pycatch22.SC_FluctAnal_2_rsrangefit_50_1_logi_prop_r1,
+            pycatch22.SB_TransitionMatrix_3ac_sumdiagcov,
+            pycatch22.PD_PeriodicityWang_th0_01,
+        ]
+
         c22_list = Parallel(n_jobs=self.n_jobs)(
             delayed(self._transform_case)(
                 X.iloc[i],
                 f_idx,
+                features,
             )
             for i in range(n_instances)
         )
@@ -142,7 +169,7 @@ class Catch22Wrapper(BaseTransformer):
 
         return pd.DataFrame(c22_list)
 
-    def _transform_case(self, X, f_idx):
+    def _transform_case(self, X, f_idx, features):
         c22 = np.zeros(len(f_idx) * len(X))
 
         for i in range(len(X)):
@@ -187,29 +214,4 @@ feature_names = [
     "SC_FluctAnal_2_rsrangefit_50_1_logi_prop_r1",
     "SB_TransitionMatrix_3ac_sumdiagcov",
     "PD_PeriodicityWang_th0_01",
-]
-
-features = [
-    pycatch22.DN_HistogramMode_5,
-    pycatch22.DN_HistogramMode_10,
-    pycatch22.SB_BinaryStats_diff_longstretch0,
-    pycatch22.DN_OutlierInclude_p_001_mdrmd,
-    pycatch22.DN_OutlierInclude_n_001_mdrmd,
-    pycatch22.CO_f1ecac,
-    pycatch22.CO_FirstMin_ac,
-    pycatch22.SP_Summaries_welch_rect_area_5_1,
-    pycatch22.SP_Summaries_welch_rect_centroid,
-    pycatch22.FC_LocalSimple_mean3_stderr,
-    pycatch22.CO_trev_1_num,
-    pycatch22.CO_HistogramAMI_even_2_5,
-    pycatch22.IN_AutoMutualInfoStats_40_gaussian_fmmi,
-    pycatch22.MD_hrv_classic_pnn40,
-    pycatch22.SB_BinaryStats_mean_longstretch1,
-    pycatch22.SB_MotifThree_quantile_hh,
-    pycatch22.FC_LocalSimple_mean1_tauresrat,
-    pycatch22.CO_Embed2_Dist_tau_d_expfit_meandiff,
-    pycatch22.SC_FluctAnal_2_dfa_50_1_2_logi_prop_r1,
-    pycatch22.SC_FluctAnal_2_rsrangefit_50_1_logi_prop_r1,
-    pycatch22.SB_TransitionMatrix_3ac_sumdiagcov,
-    pycatch22.PD_PeriodicityWang_th0_01,
 ]
