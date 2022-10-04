@@ -20,6 +20,20 @@ Community Council
    * - Martin Walter
      - :user:`aiwalter`
 
+Community Council Observers
+---------------------------
+
+.. list-table::
+   :header-rows: 1
+
+   * - Name
+     - GitHub ID
+   * - Leonidas Tsaprounis
+     - :user:`ltsaprounis`
+   * - Lovkush Agarwal
+     - :user:`lovkush-a`
+   * - Łukasz Mentel
+     - :user:`lmmentel`
 
 Code of Conduct Committee
 -------------------------
