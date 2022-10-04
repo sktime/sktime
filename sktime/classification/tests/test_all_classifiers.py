@@ -201,10 +201,10 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
                     "(classifiers should not contract by default)."
                 )
 
-            if vars(estimator_instance).get("time_limit_in_minutes", None) != 5:
+            if vars(estimator_instance).get("time_limit_in_minutes", None) < 5:
                 raise ValueError(
                     "Test parameters for test_contracted_classifier must set "
-                    "time_limit_in_minutes to 5."
+                    "time_limit_in_minutes to 5 or more."
                 )
 
             scenario = ClassifierFitPredict()
