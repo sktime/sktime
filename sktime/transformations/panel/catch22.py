@@ -148,7 +148,7 @@ class Catch22(BaseTransformer):
 
         c22_list = Parallel(n_jobs=self.n_jobs)(
             delayed(self._transform_case)(
-                X[i],
+                X.iloc[i],
                 f_idx,
             )
             for i in range(n_instances)
@@ -163,7 +163,7 @@ class Catch22(BaseTransformer):
         c22 = np.zeros(len(f_idx) * len(X))
 
         for i in range(len(X)):
-            series = X[i]
+            series = np.array(X[i])
             dim = i * len(f_idx)
             outlier_series = None
             smin = None

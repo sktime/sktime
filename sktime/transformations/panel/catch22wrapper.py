@@ -131,7 +131,7 @@ class Catch22Wrapper(BaseTransformer):
 
         c22_list = Parallel(n_jobs=self.n_jobs)(
             delayed(self._transform_case)(
-                X[i],
+                X.iloc[i],
                 f_idx,
             )
             for i in range(n_instances)
@@ -147,7 +147,7 @@ class Catch22Wrapper(BaseTransformer):
 
         for i in range(len(X)):
             dim = i * len(f_idx)
-            series = list(X[i, :])
+            series = list(X[i])
 
             if self.outlier_norm and (3 in f_idx or 4 in f_idx):
                 outlier_series = np.array(series)
@@ -157,9 +157,9 @@ class Catch22Wrapper(BaseTransformer):
 
             for n, f in enumerate(f_idx):
                 if self.outlier_norm and f in [3, 4]:
-                    c22[i][dim + n] = features[f](outlier_series)
+                    c22[dim + n] = features[f](outlier_series)
                 else:
-                    c22[i][dim + n] = features[f](series)
+                    c22[dim + n] = features[f](series)
 
         return c22
 
