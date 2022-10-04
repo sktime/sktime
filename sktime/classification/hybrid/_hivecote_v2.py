@@ -15,9 +15,9 @@ from sklearn.metrics import accuracy_score
 from sklearn.utils import check_random_state
 
 from sktime.classification.base import BaseClassifier
+from sktime.classification.convolution_based import Arsenal
 from sktime.classification.dictionary_based import TemporalDictionaryEnsemble
 from sktime.classification.interval_based._drcif import DrCIF
-from sktime.classification.kernel_based import Arsenal
 from sktime.classification.shapelet_based import ShapeletTransformClassifier
 
 

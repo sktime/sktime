@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Arsenal classifier.
 
-kernel based ensemble of ROCKET classifiers.
+convolution based ensemble of ROCKET classifiers.
 """
 
 __author__ = ["MatthewMiddlehurst", "kachayev"]
@@ -10,7 +10,6 @@ __all__ = ["Arsenal"]
 import time
 
 import numpy as np
-from deprecated.sphinx import deprecated
 from joblib import Parallel, delayed
 from sklearn.linear_model import RidgeClassifierCV
 from sklearn.pipeline import make_pipeline
@@ -29,12 +28,6 @@ from sktime.transformations.panel.rocket import (
 from sktime.utils.validation.panel import check_X_y
 
 
-# TODO: remove message in v0.15.0 and change base class
-@deprecated(
-    version="0.13.4",
-    reason="Arsenal has moved to the classification.convolution_based package. This version will be removed in v0.15.0.",  # noqa: E501
-    category=FutureWarning,
-)
 class Arsenal(BaseClassifier):
     """Arsenal ensemble.
 
@@ -108,7 +101,7 @@ class Arsenal(BaseClassifier):
 
     Examples
     --------
-    >>> from sktime.classification.kernel_based import Arsenal
+    >>> from sktime.classification.convolution_based import Arsenal
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
     >>> X_test, y_test =load_unit_test(split="test", return_X_y=True)

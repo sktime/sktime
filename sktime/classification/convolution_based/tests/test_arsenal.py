@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """Arsenal test code."""
-from sktime.classification.kernel_based import Arsenal
+from sktime.classification.convolution_based import Arsenal
 from sktime.datasets import load_unit_test
 
 
