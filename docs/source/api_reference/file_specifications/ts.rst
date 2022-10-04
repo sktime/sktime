@@ -26,7 +26,7 @@ Introduction
 ------------
 This document formalizes string identifiers used in ``.ts`` file format.
 Encoded in ``utf-8``, ``.ts`` files stores time-series dataset and its corresponding
-metadata(specified via string identifiers) and can be opened via any basic editor like notepad for visual inspection.
+metadata (specified via string identifiers) and can be opened via any basic editor like notepad for visual inspection.
 String identifiers refer to strings beginning with ``@`` in the file.
 
 ``.ts`` files contains information blocks in the following order:
@@ -40,7 +40,7 @@ String identifiers refer to strings beginning with ``@`` in the file.
       See :ref:`subsection on description block <comment description>` for more details.
 2. A metadata block.
       It contains continuous lines starting with ``@``.
-      Each ``@`` is directly followed a string identifier without whitespace(``@<identifier>``),
+      Each ``@`` is directly followed a string identifier without whitespace (``@<identifier>``),
       followed by an appropriate value for the identifier where the value depends on type of identifier.
       There is no strict order of occurrence for all string identifiers, except
       ``@data`` which must be at the end of this block.
@@ -49,10 +49,10 @@ String identifiers refer to strings beginning with ``@`` in the file.
       an additional line is required to specify number of dimensions)
       See :ref:`subsection on metadata block <metadata description>` for further details.
 3. A dataset block.
-      It contains list of float values that represent the dataset. In the simplest case(when timestamps are absent),
+      It contains list of float values that represent the dataset. In the simplest case (when timestamps are absent),
       the values for a series are expressed in a comma-seperated list and the index of each value is relative to its
       position in the list (0, 1, ..., m). An instance may contain 1 to many dimensions, where instances are
-      line-delimited and dimensions within an instance are colon-delimited(:). In case timestamps are present,
+      line-delimited and dimensions within an instance are colon-delimited (:). In case timestamps are present,
       individual data of the series is enclosed within round brackets as ``(YYYY-MM-DD HH:mm:ss,<value>)``.
       The response variable is at the end of each instance and is seperated via a colon.
       To understand data representation, visit `loading data`_.
