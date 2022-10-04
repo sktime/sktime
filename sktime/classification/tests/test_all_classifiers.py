@@ -177,7 +177,7 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
 
     def test_contracted_classifier(self, estimator_class):
         """Test classifiers that can be contracted."""
-        if estimator_class.get_tag("capability:contractable"):
+        if estimator_class.get_tag(tag_name="capability:contractable") is True:
             # if we have a train_estimate parameter set use it, else use default
             estimator_instance = estimator_class.create_test_instance(
                 parameter_set="contracting"
@@ -233,7 +233,7 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
 
     def test_classifier_train_estimate(self, estimator_class):
         """Test classifiers that can produce train set probability estimates."""
-        if estimator_class.get_tag("capability:train_estimate"):
+        if estimator_class.get_tag(tag_name="capability:train_estimate") is True:
             # if we have a train_estimate parameter set use it, else use default
             estimator_instance = estimator_class.create_test_instance(
                 parameter_set="train_estimate"
