@@ -50,14 +50,11 @@ def convert_dask_to_pandas(obj):
 
     # if has multi-index cols, move to pandas MultiIndex
     if len(multi_cols) > 0:
-        obj = obj.set_index(multi_cols, append=True)
-        nlevels = len(obj.index.names)
-        order = list(range(1, nlevels)) + [0]
-        obj = obj.reorder_levels(order)
+        obj = obj.set_index(multi_cols)
 
-        names = obj.index.names[:-1]
+        names = obj.index.names
         new_names = mi_names(names)
-        new_names = new_names + [obj.index.names[-1]]
+        new_names = new_names
 
         obj.index.names = new_names
 
@@ -95,13 +92,14 @@ def convert_pandas_to_dask(obj, npartitions=1, chunksize=None, sort=True):
         return [f"__index__{x}" for x in res]
 
     if isinstance(obj.index, pd.MultiIndex):
-        names = obj.index.names[:-1]
-        new_names = dask_mi_names(names) + [obj.index.names[-1]]
-        n_index = len(names)
+        names = obj.index.names
+        new_names = dask_mi_names(names)
+        new_index = [str(x) for x in obj.index]
 
         obj = obj.copy()
         obj.index.names = new_names
-        obj = obj.reset_index(level=list(range(n_index)))
+        obj = obj.reset_index()
+        obj.index = new_index
 
     obj = from_pandas(obj, npartitions=npartitions, chunksize=chunksize, sort=sort)
 

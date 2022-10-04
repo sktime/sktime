@@ -48,7 +48,7 @@ def test_convert_dask_to_pd_multiindex():
     assert pd_fixture.equals(pd_fixture_orig)
 
     # test expected output format
-    assert result.index.names == ["a", None, None]
+    assert result.index.names == ["a", None]
     assert result.columns == ["a"]
     assert (result.values == pd_fixture[["a"]].values).all()
 
@@ -67,7 +67,7 @@ def test_convert_pd_multiindex_to_dask():
     assert pd_fixture.equals(pd_fixture_orig)
 
     # test expected output format
-    expected_cols = ["__index__a", "__index__1", "a", "foo"]
+    expected_cols = ["__index__a", "__index__1", "__index__foo", "a", "foo"]
     assert list(result.columns) == expected_cols
     result_values = result.loc[:, ["a", "foo"]].compute().values
     assert (result_values == pd_fixture.values).all()
