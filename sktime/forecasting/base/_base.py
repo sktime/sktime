@@ -86,6 +86,7 @@ class BaseForecaster(BaseEstimator):
     """
 
     # default tag values - these typically make the "safest" assumption
+    # for more extensive documentation, see extension_templates/forecasting.py
     _tags = {
         "scitype:y": "univariate",  # which y are fine? univariate/multivariate/both
         "ignores-exogeneous-X": False,  # does estimator ignore the exogeneous X?
@@ -98,6 +99,7 @@ class BaseForecaster(BaseEstimator):
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
         "fit_is_empty": False,  # is fit empty and can be skipped?
         "python_version": None,  # PEP 440 python version specifier to limit versions
+        "python_dependencies": None,  # str or list of str, package soft dependencies
     }
 
     def __init__(self):
@@ -1039,7 +1041,7 @@ class BaseForecaster(BaseEstimator):
             self.cutoff, self._is_fitted
 
         Writes to self:
-            Stores y.index to self.fh if has not been passed previously.
+            Nothing.
 
         Parameters
         ----------
@@ -1062,6 +1064,14 @@ class BaseForecaster(BaseEstimator):
                 Series, Panel, Hierarchical scitype, same format (see above)
         """
         self.check_is_fitted()
+
+        # clone self._fh to avoid any side-effects to self due to calling _check_fh
+        # and predict()
+        if self._fh is not None:
+            fh_orig = deepcopy(self._fh)
+        else:
+            fh_orig = None
+
         # if no y is passed, the so far observed y is used
         if y is None:
             y = self._y
@@ -1093,6 +1103,10 @@ class BaseForecaster(BaseEstimator):
             )
 
         y_res = y - y_pred
+
+        # write fh back to self that was given before calling predict_residuals to
+        # avoid side-effects
+        self._fh = fh_orig
 
         return y_res
 
@@ -1135,14 +1149,40 @@ class BaseForecaster(BaseEstimator):
     def get_fitted_params(self):
         """Get fitted parameters.
 
+        Overrides BaseEstimator default in case of vectorization.
+
         State required:
             Requires state to be "fitted".
 
         Returns
         -------
-        fitted_params : dict
+        fitted_params : dict of fitted parameters, keys are str names of parameters
+            parameters of components are indexed as [componentname]__[paramname]
         """
-        raise NotImplementedError("abstract method")
+        # if self is not vectorized, run the default get_fitted_params
+        if not getattr(self, "_is_vectorized", False):
+            return super(BaseForecaster, self).get_fitted_params()
+
+        # otherwise, we delegate to the instances' get_fitted_params
+        # instances' parameters are returned at dataframe-slice-like keys
+        fitted_params = {}
+
+        # forecasters contains a pd.DataFrame with the individual forecasters
+        forecasters = self.forecasters_
+
+        # return forecasters in the "forecasters" param
+        fitted_params["forecasters"] = forecasters
+
+        # populate fitted_params with forecasters and their parameters
+        for ix, col in zip(forecasters.index, forecasters.columns):
+            fcst = forecasters.loc[ix, col]
+            fcst_key = f"forecasters.loc[{ix},{col}]"
+            fitted_params[fcst_key] = fcst
+            fcst_params = fcst.get_fitted_params()
+            for key, val in fcst_params.items():
+                fitted_params[f"{fcst_key}__{key}"] = val
+
+        return fitted_params
 
     def _check_X_y(self, X=None, y=None):
         """Check and coerce X/y for fit/predict/update functions.
@@ -1201,6 +1241,22 @@ class BaseForecaster(BaseEstimator):
             else:
                 raise ValueError("no series scitypes supported, bug in estimator")
 
+        def _check_missing(metadata, obj_name):
+            """Check input metadata against self's missing capability tag."""
+            if not self.get_tag("handles-missing-data"):
+                msg = (
+                    f"{type(self).__name__} cannot handle missing data (nans), "
+                    f"but {obj_name} passed contained missing data."
+                )
+                if self.get_class_tag("handles-missing-data"):
+                    msg = msg + (
+                        f" Whether instances of {type(self).__name__} can handle "
+                        "missing data depends on parameters of the instance, "
+                        "e.g., estimator components."
+                    )
+                if metadata["has_nans"]:
+                    raise ValueError(msg)
+
         # retrieve supported mtypes
         y_inner_mtype = _coerce_to_list(self.get_tag("y_inner_mtype"))
         X_inner_mtype = _coerce_to_list(self.get_tag("X_inner_mtype"))
@@ -1252,6 +1308,9 @@ class BaseForecaster(BaseEstimator):
                 raise ValueError(
                     "y must have two or more variables, but found only one"
                 )
+
+            _check_missing(y_metadata, "y")
+
         else:
             # y_scitype is used below - set to None if y is None
             y_scitype = None
@@ -1282,6 +1341,9 @@ class BaseForecaster(BaseEstimator):
             X_scitype = X_metadata["scitype"]
             X_requires_vectorization = X_scitype not in X_inner_scitype
             requires_vectorization = requires_vectorization or X_requires_vectorization
+
+            _check_missing(X_metadata, "X")
+
         else:
             # X_scitype is used below - set to None if X is None
             X_scitype = None
@@ -1776,14 +1838,16 @@ class BaseForecaster(BaseEstimator):
                 f"{self.__class__.__name__} will be refit each time "
                 f"`update` is called with update_params=True."
             )
-            # we need to overwrite the mtype last seen, since the _y
+            # we need to overwrite the mtype last seen and converter store, since the _y
             #    may have been converted
             mtype_last_seen = self._y_mtype_last_seen
+            _converter_store_y = self._converter_store_y
             # refit with updated data, not only passed data
             self.fit(y=self._y, X=self._X, fh=self._fh)
             # todo: should probably be self._fit, not self.fit
             # but looping to self.fit for now to avoid interface break
             self._y_mtype_last_seen = mtype_last_seen
+            self._converter_store_y = _converter_store_y
 
         # if update_params=False, and there are no components, do nothing
         # if update_params=False, and there are components, we update cutoffs

@@ -5,7 +5,7 @@ A transformer that selects a subset of channels/dimensions for time series
 classification using a scoring system with an elbow point method.
 """
 
-__author__ = ["haskarb", "a-pasos-ruiz", "TonyBagnall"]
+__author__ = ["haskarb", "a-pasos-ruiz", "TonyBagnall", "fkiraly"]
 __all__ = ["ElbowClassSum", "ElbowClassPairwise"]
 
 
@@ -17,6 +17,7 @@ import pandas as pd
 from scipy.spatial.distance import euclidean
 from sklearn.neighbors import NearestCentroid
 
+from sktime.datatypes import convert
 from sktime.datatypes._panel._convert import from_3d_numpy_to_nested
 from sktime.transformations.base import BaseTransformer
 
@@ -113,7 +114,7 @@ class _shrunk_centroid:
 
 
 class ElbowClassSum(BaseTransformer):
-    """Elbow Class Sum (ECS) transformer to select a subset of channels.
+    """Elbow Class Sum (ECS) transformer to select a subset of channels/variables.
 
     Overview: From the input of multivariate time series data, create a distance
     matrix [1] by calculating the distance between each class centroid. The
@@ -122,12 +123,24 @@ class ElbowClassSum(BaseTransformer):
     class pair across each channel.
 
     Note: Channels, variables, dimensions, features are used interchangeably in
-    literature.
+    literature. E.g., channel selection = variable selection.
+
+    Parameters
+    ----------
+    distance: sktime pairwise panel transform, str, or callable, optional, default=None
+        if panel transform, will be used directly as the distance in the algorithm
+        default None = euclidean distance on flattened series, FlatDist(ScipyDist())
+        if str, will behave as FlatDist(ScipyDist(distance)) = scipy dist on flat series
+        if callable, must be univariate nested_univ x nested_univ -> 2D float np.array
 
     Attributes
     ----------
-    channels_selected_ : list of integers; integer being the index of the channel
-        List of channels selected by the ECS.
+    channels_selected_ : list of integer
+        List of variables/channels selected by the estimator
+        integers (iloc reference), referring to variables/channels by order
+    channels_selected_idx_ : list of pandas compatible index elements
+        List of variables/channels selected by the estimator
+        if data are index-less (no channel/var names), identical to channels_selected
     distance_frame_ : DataFrame
         distance matrix of the class centroids pair and channels.
             ``shape = [n_channels, n_class_centroids_pairs]``
@@ -147,14 +160,20 @@ class ElbowClassSum(BaseTransformer):
     Examples
     --------
     >>> from sktime.transformations.panel.channel_selection import ElbowClassSum
-    >>> from sktime.datasets import load_UCR_UEA_dataset
+    >>> from sktime.utils._testing.panel import make_classification_problem
+    >>> X, y = make_classification_problem(n_columns=3, n_classes=3, random_state=42)
     >>> cs = ElbowClassSum()
-    >>> X_train, y_train = load_UCR_UEA_dataset(
-    ...     "Cricket", split="train", return_X_y=True
-    ... )
-    >>> cs.fit(X_train, y_train)
+    >>> cs.fit(X, y)
     ElbowClassSum(...)
-    >>> Xt = cs.transform(X_train)
+    >>> Xt = cs.transform(X)
+
+    Any sktime compatible distance can be used, e.g., DTW distance:
+    >>> from sktime.dists_kernels import DtwDist
+    >>>
+    >>> cs = ElbowClassSum(distance=DtwDist())
+    >>> cs.fit(X, y)
+    ElbowClassSum(...)
+    >>> Xt = cs.transform(X)
     """
 
     _tags = {
@@ -164,7 +183,7 @@ class ElbowClassSum(BaseTransformer):
         # what scitype is returned: Primitives, Series, Panel
         "scitype:instancewise": True,  # is this an instance-wise transform?
         "univariate-only": False,  # can the transformer handle multivariate X?
-        "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
+        "X_inner_mtype": "nested_univ",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "numpy1D",  # which mtypes do _fit/_predict support for y?
         "requires_y": True,  # does y need to be passed in fit?
         "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
@@ -173,9 +192,26 @@ class ElbowClassSum(BaseTransformer):
         # can the transformer handle unequal length time series (if passed Panel)?
     }
 
-    def __init__(self):
+    def __init__(self, distance=None):
+
+        self.distance = distance
 
         super(ElbowClassSum, self).__init__()
+
+        from sktime.dists_kernels import (
+            BasePairwiseTransformerPanel,
+            FlatDist,
+            ScipyDist,
+        )
+
+        if distance is None:
+            self.distance_ = FlatDist(ScipyDist())
+        elif isinstance(distance, str):
+            self.distance_ = FlatDist(ScipyDist(metric=distance))
+        elif isinstance(distance, BasePairwiseTransformerPanel):
+            self.distance_ = distance.clone()
+        else:
+            self.distance_ = distance
 
     def _fit(self, X, y):
         """Fit ECS to a specified X and y.
@@ -190,18 +226,31 @@ class ElbowClassSum(BaseTransformer):
         Returns
         -------
         self : reference to self.
-
         """
-        self.channels_selected_ = []
+        t = self.distance_
+
         start = int(round(time.time() * 1000))
         centroid_obj = _shrunk_centroid(0)
-        centroids = centroid_obj.create_centroid(X.copy(), y)
-        distances = _distance_matrix()
-        self.distance_frame_ = distances.distance(centroids)
-        distance = self.distance_frame_.sum(axis=1).sort_values(ascending=False).values
-        indices = self.distance_frame_.sum(axis=1).sort_values(ascending=False).index
-        self.channels_selected_.extend(_detect_knee_point(distance, indices)[0])
+
+        X_np = convert(X, "nested_univ", "numpy3D")
+        centroids = centroid_obj.create_centroid(X_np, y)
+        centroids_no_y = centroids.drop("class_vals", axis=1)
+        centroids_no_y.columns = X.columns
+
+        dists = [t(X[[c]]).sum() for c in X.columns]
+        dists = pd.Series(dists)
+        self.distance_frame_ = dists
+
+        distance = dists.sort_values(ascending=False).values
+        indices = dists.sort_values(ascending=False).index
+
+        idx = _detect_knee_point(distance, indices)[0]
+
+        self.channels_selected_ = idx
+        self.channels_selected_idx_ = [X.columns[i] for i in idx]
+
         self.train_time_ = int(round(time.time() * 1000)) - start
+
         return self
 
     def _transform(self, X, y=None):
@@ -218,7 +267,38 @@ class ElbowClassSum(BaseTransformer):
         output : pandas DataFrame
             X with a subset of channels
         """
-        return X[:, self.channels_selected_, :]
+        return X[self.channels_selected_idx_]
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        from sktime.dists_kernels import DtwDist
+
+        # default params
+        params1 = {}
+
+        # with custom distance
+        params2 = {"distance": DtwDist()}
+
+        # with string shorthand
+        params3 = {"distance": "cosine"}
+
+        return [params1, params2, params3]
 
 
 class ElbowClassPairwise(BaseTransformer):
@@ -255,14 +335,12 @@ class ElbowClassPairwise(BaseTransformer):
     Examples
     --------
     >>> from sktime.transformations.panel.channel_selection import ElbowClassPairwise
-    >>> from sktime.datasets import load_UCR_UEA_dataset
+    >>> from sktime.utils._testing.panel import make_classification_problem
+    >>> X, y = make_classification_problem(n_columns=3, n_classes=3, random_state=42)
     >>> cs = ElbowClassPairwise()
-    >>> X_train, y_train = load_UCR_UEA_dataset(
-    ...     "Cricket", split="train", return_X_y=True
-    ... )
-    >>> cs.fit(X_train, y_train)
+    >>> cs.fit(X, y)
     ElbowClassPairwise(...)
-    >>> Xt = cs.transform(X_train)
+    >>> Xt = cs.transform(X)
     """
 
     _tags = {
@@ -309,10 +387,11 @@ class ElbowClassPairwise(BaseTransformer):
         for pairdistance in self.distance_frame_.iteritems():
             distance = pairdistance[1].sort_values(ascending=False).values
             indices = pairdistance[1].sort_values(ascending=False).index
+
             self.channels_selected_.extend(_detect_knee_point(distance, indices)[0])
             self.channels_selected_ = list(set(self.channels_selected_))
         self.train_time_ = int(round(time.time() * 1000)) - start
-        # self._is_fitted = True
+
         return self
 
     def _transform(self, X, y=None):

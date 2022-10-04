@@ -8,7 +8,6 @@ adapted from scikit-learn's estimator_checks
 __author__ = ["mloning", "fkiraly"]
 
 import numbers
-import pickle
 import types
 from copy import deepcopy
 from inspect import getfullargspec, isclass, signature
@@ -21,7 +20,7 @@ from sklearn.utils.estimator_checks import (
     check_get_params_invariance as _check_get_params_invariance,
 )
 
-from sktime.base import BaseEstimator, BaseObject
+from sktime.base import BaseEstimator, BaseObject, load
 from sktime.dists_kernels._base import (
     BasePairwiseTransformer,
     BasePairwiseTransformerPanel,
@@ -682,6 +681,14 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
             f"found {type(estimator)}"
         )
 
+        msg = (
+            f"{estimator_class.__name__}.__init__ should call "
+            f"super({estimator_class.__name__}, self).__init__, "
+            "but that does not seem to be the case. Please ensure to call the "
+            f"parent class's constructor in {estimator_class.__name__}.__init__"
+        )
+        assert hasattr(estimator, "_tags_dynamic"), msg
+
     def test_create_test_instances_and_names(self, estimator_class):
         """Check that create_test_instances_and_names works."""
         estimators, names = estimator_class.create_test_instances_and_names()
@@ -951,10 +958,15 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
         attrs = ["_is_fitted", "is_fitted"]
 
         estimator = estimator_instance
+        estimator_class = type(estimator_instance)
 
-        assert hasattr(
-            estimator, "_is_fitted"
-        ), f"Estimator: {estimator.__name__} does not set_is_fitted in construction"
+        msg = (
+            f"{estimator_class.__name__}.__init__ should call "
+            f"super({estimator_class.__name__}, self).__init__, "
+            "but that does not seem to be the case. Please ensure to call the "
+            f"parent class's constructor in {estimator_class.__name__}.__init__"
+        )
+        assert hasattr(estimator, "_is_fitted"), msg
 
         # Check is_fitted attribute is set correctly to False before fit, at init
         for attr in attrs:
@@ -1149,12 +1161,12 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
         # Generate results before pickling
         vanilla_result = scenario.run(estimator, method_sequence=[method_nsc])
 
-        # Pickle and unpickle
-        pickled_estimator = pickle.dumps(estimator)
-        unpickled_estimator = pickle.loads(pickled_estimator)
+        # Serialize and unserialize
+        serialized_estimator = estimator.save()
+        deserialized_estimator = load(serialized_estimator)
 
-        unpickled_result = scenario.run(
-            unpickled_estimator, method_sequence=[method_nsc]
+        deserialized_result = scenario.run(
+            deserialized_estimator, method_sequence=[method_nsc]
         )
 
         msg = (
@@ -1163,7 +1175,7 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
         )
         _assert_array_almost_equal(
             vanilla_result,
-            unpickled_result,
+            deserialized_result,
             decimal=6,
             err_msg=msg,
         )

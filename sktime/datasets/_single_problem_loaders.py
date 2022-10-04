@@ -12,6 +12,7 @@ __author__ = [
     "patrickZIB",
     "aiwalter",
     "jasonlines",
+    "achieveordie",
 ]
 
 __all__ = [
@@ -35,9 +36,11 @@ __all__ = [
     "load_electric_devices_segmentation",
     "load_macroeconomic",
     "load_unit_test_tsf",
+    "load_covid_3month",
 ]
 
 import os
+from urllib.error import HTTPError
 
 import numpy as np
 import pandas as pd
@@ -1053,31 +1056,101 @@ def load_solar(
 
     Examples
     --------
-    >>> from sktime.datasets import load_solar
-    >>> y = load_solar()
+    >>> from sktime.datasets import load_solar  # doctest: +SKIP
+    >>> y = load_solar()  # doctest: +SKIP
     """
-    url = "https://api0.solar.sheffield.ac.uk/pvlive/api/"
-    url = url + api_version + "/gsp/0?"
-    url = url + "start=" + start + "T00:00:00&"
-    url = url + "end=" + end + "T00:00:00&"
-    url = url + "extra_fields=capacity_mwp&"
-    url = url + "data_format=csv"
+    from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-    df = (
-        pd.read_csv(
-            url, index_col=["gsp_id", "datetime_gmt"], parse_dates=["datetime_gmt"]
+    _check_soft_dependencies("backoff")
+
+    import backoff
+
+    @backoff.on_exception(wait_gen=backoff.expo, exception=HTTPError, max_tries=5)
+    def _load_solar(
+        start="2021-05-01",
+        end="2021-09-01",
+        normalise=True,
+        return_full_df=False,
+        api_version="v4",
+    ):
+        """Private loader, for decoration with backoff."""
+        url = "https://api0.solar.sheffield.ac.uk/pvlive/api/"
+        url = url + api_version + "/gsp/0?"
+        url = url + "start=" + start + "T00:00:00&"
+        url = url + "end=" + end + "T00:00:00&"
+        url = url + "extra_fields=capacity_mwp&"
+        url = url + "data_format=csv"
+
+        df = (
+            pd.read_csv(
+                url, index_col=["gsp_id", "datetime_gmt"], parse_dates=["datetime_gmt"]
+            )
+            .droplevel(0)
+            .sort_index()
         )
-        .droplevel(0)
-        .sort_index()
-    )
-    df = df.asfreq("30T")
-    df["generation_pu"] = df["generation_mw"] / df["capacity_mwp"]
-
-    if return_full_df:
+        df = df.asfreq("30T")
         df["generation_pu"] = df["generation_mw"] / df["capacity_mwp"]
-        return df
-    else:
-        if normalise:
-            return df["generation_pu"].rename("solar_gen")
+
+        if return_full_df:
+            df["generation_pu"] = df["generation_mw"] / df["capacity_mwp"]
+            return df
         else:
-            return df["generation_mw"].rename("solar_gen")
+            if normalise:
+                return df["generation_pu"].rename("solar_gen")
+            else:
+                return df["generation_mw"].rename("solar_gen")
+
+    return _load_solar(
+        start=start,
+        end=end,
+        normalise=normalise,
+        return_full_df=return_full_df,
+        api_version=api_version,
+    )
+
+
+def load_covid_3month(split=None, return_X_y=True):
+    """Load dataset of last three months confirmed covid cases.
+
+    Parameters
+    ----------
+    split: None or str{"train", "test"}, optional (default=None)
+        Whether to load the train or test partition of the problem. By
+        default, it loads both.
+    return_X_y: bool, optional (default=True)
+        If True, returns (features, target) separately instead of a single
+        dataframe with columns for
+        features and the target.
+
+    Returns
+    -------
+    X: pd.DataFrame with m rows and c columns
+        The time series data for the problem with m cases and c dimensions
+    y: numpy array
+        The regression values for each case in X
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_covid_3month
+    >>> X, y = load_covid_3month()
+
+    Notes
+    -----
+    Dimensionality:     univariate
+    Series length:      84
+    Train cases:        140
+    Test cases:         61
+    Number of classes:  -
+
+    The goal of this dataset is to predict COVID-19's death rate on 1st April 2020 for
+    each country using daily confirmed cases for the last three months. This dataset
+    contains 201 time series with no missing values, where each time series is
+    the daily confirmed cases for a country.
+    The data was obtained from WHO's COVID-19 database.
+    Please refer to https://covid19.who.int/ for more details
+
+    Dataset details: https://zenodo.org/record/3902690#.Yy1z_HZBxEY
+    =Covid3Month
+    """
+    name = "Covid3Month"
+    return _load_dataset(name, split, return_X_y)

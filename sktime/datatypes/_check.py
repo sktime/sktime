@@ -25,6 +25,7 @@ __all__ = [
 ]
 
 from typing import List, Union
+from warnings import warn
 
 import numpy as np
 
@@ -32,7 +33,7 @@ from sktime.datatypes._alignment import check_dict_Alignment
 from sktime.datatypes._hierarchical import check_dict_Hierarchical
 from sktime.datatypes._panel import check_dict_Panel
 from sktime.datatypes._proba import check_dict_Proba
-from sktime.datatypes._registry import SCITYPE_LIST, mtype_to_scitype
+from sktime.datatypes._registry import AMBIGUOUS_MTYPES, SCITYPE_LIST, mtype_to_scitype
 from sktime.datatypes._series import check_dict_Series
 from sktime.datatypes._table import check_dict_Table
 
@@ -44,10 +45,6 @@ check_dict.update(check_dict_Hierarchical)
 check_dict.update(check_dict_Alignment)
 check_dict.update(check_dict_Table)
 check_dict.update(check_dict_Proba)
-
-
-# mtypes to exclude
-AMBIGUOUS_MTYPES = ["numpyflat", "alignment_loc"]
 
 
 def _check_scitype_valid(scitype: str = None):
@@ -336,12 +333,15 @@ def mtype(
     return mtypes_positive[0]
 
 
+# todo 0.15.0: change msg_legacy_interface default to False
+# todo 0.16.0: remove msg_legacy_interface arg, and remove msg_legacy variable inside
 def check_is_scitype(
     obj,
     scitype: Union[str, List[str]],
     return_metadata=False,
     var_name="obj",
     exclude_mtypes=AMBIGUOUS_MTYPES,
+    msg_legacy_interface=True,
 ):
     """Check object for compliance with scitype specification, return metadata.
 
@@ -356,13 +356,21 @@ def check_is_scitype(
     var_name: str, optional, default="obj" - name of input in error messages
     exclude_mtypes : list of str, default = AMBIGUOUS_MTYPES
         which mtypes to ignore in inferring mtype, default = ambiguous ones
+    msg_legacy_interface : bool, default = True
+        whether the deprecated interface for msg return is used (True) or not (False)
+        False = msg is returned as dict; True = msg is returned as list (values only)
 
     Returns
     -------
     valid: bool - whether obj is a valid object of mtype/scitype
-    msg: str or list of str - error messages if object is not valid, otherwise None
-            str if mtype is str; list of len(mtype) with message per mtype if list
-            returned only if return_metadata is True
+    msg:
+        if legacy_interface=False:
+        dict[str, str] or None - error messages if object is not valid, otherwise None
+        keys are all mtypes tested, value for key is error message for that key
+        if legacy_interface=True:
+        str or list of str - error messages if object is not valid, otherwise None
+        str if mtype is str; list of len(mtype) with message per mtype if list
+        returned only if return_metadata is True
     metadata: dict - metadata about obj if valid, otherwise None
             returned only if return_metadata is True
         Fields depend on scitpe.
@@ -405,7 +413,8 @@ def check_is_scitype(
     keys = [x for x in valid_keys if x[1] in scitype and x[0] not in exclude_mtypes]
 
     # storing the msg retursn
-    msg = []
+    msg = {}
+    msg_legacy = []
     found_mtype = []
     found_scitype = []
 
@@ -422,7 +431,8 @@ def check_is_scitype(
             found_mtype.append(key[0])
             found_scitype.append(key[1])
         elif return_metadata:
-            msg.append(res[1])
+            msg[key[0]] = res[1]
+            msg_legacy.append(res[1])
 
     # there are three options on the result of check_is_mtype:
     # a. two or more mtypes are found - this is unexpected and an error with checks
@@ -443,8 +453,19 @@ def check_is_scitype(
             return True
     # c. no mtype is found - then return False and all error messages if requested
     else:
-        if len(msg) == 1:
-            msg = msg[0]
+        if len(msg_legacy) == 1:
+            msg_legacy = msg_legacy[0]
+
+        if msg_legacy_interface:
+            msg = msg_legacy
+            warn(
+                "return msg (2nd argument) of check_is_scitype will change to "
+                "dict from list type. Set msg_legacy_interface=False for "
+                "post-deprecation behaviour. Default msg_legacy_interface "
+                "will change to True in 0.15.0. Argument msg_legacy_interface "
+                "will be removed in 0.16.0.",
+                DeprecationWarning,
+            )
 
         return _ret(False, msg, None, return_metadata)
 
@@ -472,12 +493,30 @@ def scitype(obj, candidate_scitypes=SCITYPE_LIST, exclude_mtypes=AMBIGUOUS_MTYPE
     ------
     TypeError if no type can be identified, or more than one type is identified
     """
-    _, _, metadata = check_is_scitype(
-        obj,
-        scitype=candidate_scitypes,
-        return_metadata=True,
-        exclude_mtypes=exclude_mtypes,
+    candidate_scitypes = _coerce_list_of_str(
+        candidate_scitypes, var_name="candidate_scitypes"
     )
-    scitype = metadata["scitype"]
 
-    return scitype
+    valid_scitypes = []
+
+    for scitype in candidate_scitypes:
+        valid = check_is_scitype(
+            obj,
+            scitype=scitype,
+            return_metadata=False,
+            exclude_mtypes=exclude_mtypes,
+        )
+        if valid:
+            valid_scitypes += [scitype]
+
+    if len(valid_scitypes) > 1:
+        raise TypeError(
+            "Error in function scitype, more than one valid scitype identified:"
+            f"{ valid_scitypes}"
+        )
+    if len(valid_scitypes) == 0:
+        raise TypeError(
+            "Error in function scitype, no valid scitype could be identified."
+        )
+
+    return valid_scitypes[0]
