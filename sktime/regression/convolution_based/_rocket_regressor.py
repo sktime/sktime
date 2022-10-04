@@ -8,7 +8,6 @@ __author__ = ["fkiraly"]
 __all__ = ["RocketRegressor"]
 
 import numpy as np
-from deprecated.sphinx import deprecated
 from sklearn.linear_model import RidgeCV
 from sklearn.preprocessing import StandardScaler
 
@@ -24,12 +23,6 @@ from sktime.transformations.panel.rocket import (
 )
 
 
-# TODO: remove message in v0.15.0 and change base class
-@deprecated(
-    version="0.13.4",
-    reason="RocketRegressor has moved to the regression.convolution_based package. This version will be removed in v0.15.0.",  # noqa: E501
-    category=FutureWarning,
-)
 class RocketRegressor(_DelegatedRegressor, BaseRegressor):
     """Regressor wrapped for the Rocket transformer using RidgeCV regressor.
 
