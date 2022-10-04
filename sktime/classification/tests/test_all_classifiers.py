@@ -3,6 +3,7 @@
 
 __author__ = ["mloning", "TonyBagnall", "fkiraly"]
 
+import inspect
 
 import numpy as np
 import pytest
@@ -181,6 +182,24 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
             estimator_instance = estimator_class.create_test_instance(
                 parameter_set="contracting"
             )
+
+            # classifier must have a time_limit_in_minutes parameter
+            default_params = inspect.signature(estimator_class.__init__).parameters
+            if default_params.get(
+                "time_limit_in_minutes", None
+            ) is not None and default_params.get(
+                "time_limit_in_minutes", None
+            ).default not in (
+                0,
+                -1,
+                None,
+            ):
+                raise ValueError(
+                    "Classifier capability:contractable tag is set to "
+                    "true, but no time_limit_in_minutes argument is present in "
+                    "__init__ or the default value is not one of 0, -1 or None "
+                    "(classifiers should not contract by default)."
+                )
 
             scenario = ClassifierFitPredict()
 
