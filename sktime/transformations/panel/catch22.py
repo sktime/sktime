@@ -54,7 +54,7 @@ class Catch22(BaseTransformer):
 
     See Also
     --------
-    Catch22Wrapper Catch22Classifier
+    Catch22Classifier
 
     Notes
     -----
