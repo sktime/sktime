@@ -441,7 +441,12 @@ class ThetaModularForecaster(_HeterogenousEnsembleForecaster):
                 ("naive1", NaiveForecaster(), 1),
             ]
         }
-        params1 = {"forecasters": NaiveForecaster(), "theta_values": (-1, 0.5, 42)}
-        params2 = {"forecasters": [PolynomialTrendForecaster(), ExponentialSmoothing()]}
+        params1 = {"theta_values": (-1, 0.5, 42)}
+        params2 = {
+            "forecasters": [
+                ("trend", PolynomialTrendForecaster(), 0),
+                ("ses", ExponentialSmoothing(), 1),
+            ]
+        }
 
         return [params0, params1, params2]
