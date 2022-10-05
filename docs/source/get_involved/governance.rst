@@ -333,9 +333,16 @@ observers <https://www.sktime.org/en/stable/about/team.html>`__ .
 
 Rights and responsibilities
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Observers have a full view of CC and participate in the decision making process
-during CC discussions to ensure that more members of the community have direct
-input on CC decisions.
+CC observers have a full view of reserved CC proceedings, the private CC
+channels and the sktime email account. CC observers can participate in
+discussions on private CC channels to ensure that more members of the community
+have direct input on CC decisions.
+
+CC observers' responsibilities include to critically scrutinize CC decision
+making and give their input on what is of community's interest or benefit.
+
+CC observers do not possess the voting or decision making rights of full
+CC members.
 
 Eligibility
 ^^^^^^^^^^^
@@ -351,11 +358,11 @@ Appointment
 Membership of the CC observers is by nomination by a core developer and a vote by
 all core developers. A nomination will result in discussion which will stay
 open for 5 days excluding weekends and then a vote by the core
-developers which will stay open for 5 days excluding weekends. CoC committee
+developers which will stay open for 5 days excluding weekends. CC committee
 membership votes are subject to:
 
-* a 2/3 majority of all cast votes, and
-* a simple majority approval of all the current CoC committee members.
+* a 2/3 of all cast votes, and
+* a simple majority approval of all the current CC committee members.
 
 In case of ties, the CC member with shortest tenure breaks the tie.
 
