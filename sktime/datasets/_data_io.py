@@ -1990,3 +1990,40 @@ def _convert_tsf_to_hierarchical(
     df = df.astype({value_column_name: "float"}, errors="ignore")
 
     return df
+
+
+def write_panel_to_tsfile(
+    data, path, target=None, problem_name="sample_data", header=None
+):
+    data_valid, _, data_metadata = check_is_scitype(
+        data, scitype="Panel", return_metadata=True
+    )
+    if not data_valid:
+        raise TypeError(" Wrong input data type ", type(data))
+    if data_metadata["is_equal_length"]:
+        # check class labels
+        data = convert_to(
+            data,
+            to_type="numpy3D",
+            as_scitype="Panel",
+            store_behaviour="freeze",
+        )
+        series_length = data.shape[2]
+        write_ndarray_to_tsfile(
+            data,
+            path,
+            problem_name=problem_name,
+            class_value_list=target,
+            equal_length=True,
+            series_length=series_length,
+            comment=header,
+        )
+    else:
+        write_dataframe_to_tsfile(
+            data,
+            path,
+            problem_name=problem_name,
+            class_value_list=target,
+            equal_length=False,
+            comment=header,
+        )

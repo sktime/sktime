@@ -48,6 +48,7 @@ from sktime._contrib.datasets._data_io import (
     make_multi_index_dataframe,
     write_dataframe_to_tsfile,
     write_ndarray_to_tsfile,
+    write_panel_to_tsfile,
     write_results_to_uea_format,
     write_tabular_transformation_to_arff,
 )
