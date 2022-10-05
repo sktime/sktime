@@ -163,7 +163,7 @@ class ConformalIntervals(BaseForecaster):
     def _update(self, y, X=None, update_params=True):
         self.forecaster_.update(y, X, update_params=update_params)
 
-        if len(y.index.difference(self.residuals_matrix_.index)) > 2:
+        if update_params and len(y.index.difference(self.residuals_matrix_.index)) > 2:
             self.residuals_matrix_ = self._compute_sliding_residuals(
                 y,
                 X,
