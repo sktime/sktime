@@ -349,11 +349,11 @@ class ThetaModularForecaster(_HeterogenousEnsembleForecaster):
             _forecasters = []
             for i, theta in enumerate(self.theta_values):
                 if theta == 0:
-                    name = "trend" + str(i)
+                    name = f"trend{str(i)}"
                     forecaster = (name, PolynomialTrendForecaster(), i)
                 else:
-                    name = "ses" + str(i)
-                    forecaster = (name, ExponentialSmoothing(), i)
+                    name = f"ses{str(i)}"
+                    forecaster = name, ExponentialSmoothing(), i
                 _forecasters.append(forecaster)
         else:
             _forecasters = forecasters
@@ -382,23 +382,20 @@ class ThetaModularForecaster(_HeterogenousEnsembleForecaster):
         self.aggfunc = params.pop("aggfunc")
         self.weights = params.pop("weights")
         colens = ColumnEnsembleForecaster(forecasters=self.forecasters)
-        if "forecasters" in params.keys() and params["forecasters"] is None:
+        if "forecasters" in params and params["forecasters"] is None:
             params["forecasters"] = self._check_forecasters(None)
         colens.set_params(**params)
         self._colens = colens
-        # self.forecasters = self._colens.get_params(deep=True)["forecasters"]
         self.pipe_ = TransformedTargetForecaster(
             steps=[
                 ("transformer", ThetaLinesTransformer(theta=self.theta_values)),
                 ("forecaster", self._colens),
             ]
         )
+
         return self
 
-    # TODO: add forecaster checks
-
     def _fit(self, y, X=None, fh=None):
-
         self.pipe_.fit(y=y, X=X, fh=fh)
         return self
 
@@ -410,7 +407,7 @@ class ThetaModularForecaster(_HeterogenousEnsembleForecaster):
         return _aggregate(Y_pred, aggfunc=self.aggfunc, weights=self.weights)
 
     def _update(self, y, X=None, update_params=True):
-        self.pipe_._update(y, X=None, update_params=True)
+        self.pipe_._update(y, X=None, update_params=update_params)
         return self
 
     @classmethod
@@ -449,5 +446,4 @@ class ThetaModularForecaster(_HeterogenousEnsembleForecaster):
         # params2 = {"forecasters": [PolynomialTrendForecaster(),
         #                              ExponentialSmoothing()]}
 
-        # return [params1, params2]
-        return params0
+        return params0  # , params1, params2]
