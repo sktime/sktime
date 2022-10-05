@@ -70,6 +70,9 @@ responsibilities, and appointment process in more detail below.
    * - :ref:`cc-members`
      - Conflict resolution, technical leadership, project management
      - Nomination by core developers, vote by core developers, 2/3 majority and simple CC majority
+   * - :ref:`cc-observers`
+     - Full view of CC, direct input on CC decisions
+     - Nomination by core developers, vote by core developers, 2/3 of all cast votes and simple CC majority
 
 .. _contributors:
 
@@ -349,16 +352,15 @@ Eligibility
 Only core developers are eligible for appointment as CC observers.
 Non-core-developers can be nominated, but this must be accompanied
 by a nomination for core developer, and a core developer appointment vote
-concurrent with the 5 day discussion period (see below).
+(see below).
 
 .. _appointment-4:
 
 Appointment
 ^^^^^^^^^^^
 Membership of the CC observers is by nomination by a core developer and a vote by
-all core developers. A nomination will result in discussion which will stay
-open for 5 days excluding weekends and then a vote by the core
-developers which will stay open for 5 days excluding weekends. CC committee
+all core developers. A nomination will result in a vote by the core
+developers which will stay open for 5 days excluding weekends. CC observer
 membership votes are subject to:
 
 * a 2/3 of all cast votes, and
