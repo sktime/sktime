@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 """Testing sampling utilities."""
 
+import numpy as np
 import pytest
+from datasets import load_unit_test
 
 from sktime.utils._testing.deep_equals import deep_equals
-from sktime.utils.sampling import random_partition
+from sktime.utils.sampling import random_partition, stratified_resample
 
 NK_FIXTURES = [(10, 3), (15, 5), (19, 6), (3, 1), (1, 2)]
 SEED_FIXTURES = [42, 0, 100, -5]
@@ -42,3 +44,19 @@ def test_seed(n, k, seed):
     part2 = random_partition(n, k, seed)
 
     assert deep_equals(part, part2)
+
+
+def test_stratified_resample():
+    """Test resampling."""
+    trainX, trainy = load_unit_test(split="TRAIN")
+    testX, testy = load_unit_test(split="TEST")
+    new_trainX, new_trainy, new_testX, new_testy = stratified_resample(
+        trainX, testy, testX, testy, 0
+    )
+    # count class occurrences
+    unique_train, counts_train = np.unique(trainy, return_counts=True)
+    unique_test, counts_test = np.unique(testy, return_counts=True)
+    unique_train_new, counts_train_new = np.unique(new_trainy, return_counts=True)
+    unique_test_new, counts_test_new = np.unique(new_testy, return_counts=True)
+    assert list(counts_train_new) == list(counts_train)
+    assert list(counts_test_new) == list(counts_test)
