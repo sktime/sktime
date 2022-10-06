@@ -38,7 +38,7 @@ def test_truncation_paramterised_transformer():
 def test_truncation_pd_multiindex():
     """Test that column and index names in a pd-multiindex container are preserved."""
     # get a multiindex dataframe, ensure instance levels are string, not int
-    X = get_examples("pd-multiindex")[0]
+    X = get_examples("pd-multiindex")[0].copy()
     X.index = X.index.set_levels(["a", "b", "c"], level=0)
 
     t = TruncationTransformer(1, 2)
