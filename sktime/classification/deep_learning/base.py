@@ -203,7 +203,23 @@ class BaseDeepClassifier(BaseClassifier, ABC):
         from zipfile import ZipFile
 
         if path is None:
-            return (type(self), pickle.dumps(self))
+            import h5py
+
+            with h5py.File(
+                "disk_less", "w", driver="core", backing_store=False
+            ) as h5file:
+                self.model_.save(h5file)
+                h5file.flush()
+                in_memory_model = h5file.id.get_file_image()
+
+            in_memory_history = pickle.dumps(self.history.history)
+
+            return (
+                type(self),
+                pickle.dumps(self),
+                (in_memory_model, in_memory_history),
+            )
+
         if not isinstance(path, (str, Path)):
             raise TypeError(
                 "`path` is expected to either be a string or a Path object "
