@@ -3,7 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements functions to be used in evaluating forecasting models."""
 
-__author__ = ["aiwalter", "mloning"]
+__author__ = ["aiwalter", "mloning", "fkiraly"]
 __all__ = ["evaluate"]
 
 import time
@@ -12,15 +12,12 @@ import warnings
 import numpy as np
 import pandas as pd
 
+from sktime.datatypes import check_is_scitype, convert_to
 from sktime.exceptions import FitFailedWarning
 from sktime.forecasting.base import ForecastingHorizon
-from sktime.utils.validation.forecasting import (
-    check_cv,
-    check_fh,
-    check_scoring,
-    check_X,
-)
-from sktime.utils.validation.series import check_series
+from sktime.utils.validation.forecasting import check_cv, check_scoring
+
+PANDAS_MTYPES = ["pd.DataFrame", "pd.Series", "pd-multiindex", "pd_multiindex_hier"]
 
 
 def evaluate(
@@ -105,12 +102,21 @@ def evaluate(
     _check_strategy(strategy)
     cv = check_cv(cv, enforce_start_with_window=True)
     scoring = check_scoring(scoring)
-    y = check_series(
-        y,
-        enforce_univariate=forecaster.get_tag("scitype:y") == "univariate",
-        enforce_multivariate=forecaster.get_tag("scitype:y") == "multivariate",
-    )
-    X = check_X(X)
+
+    ALLOWED_SCITYPES = ["Series", "Panel", "Hierarchical"]
+
+    y_valid, _, _ = check_is_scitype(y, scitype=ALLOWED_SCITYPES, return_metadata=True)
+    # todo: more informative error message
+    assert y_valid
+
+    y_inner = convert_to(y, to_type=PANDAS_MTYPES)
+
+    if X is not None:
+        X_valid, _, _ = check_is_scitype(
+            X, scitype=ALLOWED_SCITYPES, return_metadata=True
+        )
+        assert X_valid
+        X_inner = convert_to(X, to_type=PANDAS_MTYPES)
 
     # Define score name.
     score_name = "test_" + scoring.name
@@ -119,7 +125,7 @@ def evaluate(
     results = []
 
     # Run temporal cross-validation.
-    for i, (train, test) in enumerate(cv.split(y)):
+    for i, (train, test) in enumerate(cv.split_loc(y)):
 
         # set default result values in case estimator fitting fails
         score = error_score
@@ -128,8 +134,16 @@ def evaluate(
         cutoff = np.nan
         y_pred = np.nan
 
-        # split data
-        y_train, y_test, X_train, X_test = _split(y, X, train, test, cv.fh)
+        # split data according to cv
+        y_train = y_inner.loc[train]
+        y_test = y_inner.loc[test]
+
+        if X is not None:
+            X_train = X_inner.loc[train]
+            X_test = X_inner.loc[test]
+        else:
+            X_train = None
+            X_test = None
 
         # create forecasting horizon
         fh = ForecastingHorizon(y_test.index, is_relative=False)
@@ -210,28 +224,6 @@ def evaluate(
     results["len_train_window"] = results["len_train_window"].astype(int)
 
     return results
-
-
-def _split(y, X, train, test, fh):
-    """Split y and X for given train and test set indices."""
-    y_train = y.iloc[train]
-    y_test = y.iloc[test]
-
-    cutoff = y_train.index[-1]
-    fh = check_fh(fh)
-    fh = fh.to_relative(cutoff)
-
-    if X is not None:
-        X_train = X.iloc[train, :]
-        # For test, we begin by returning the full range of test/train values.
-        # for those transformers that change the size of input.
-        test = np.arange(test[-1] + 1)
-        X_test = X.iloc[test, :]
-    else:
-        X_train = None
-        X_test = None
-
-    return y_train, y_test, X_train, X_test
 
 
 def _check_strategy(strategy):
