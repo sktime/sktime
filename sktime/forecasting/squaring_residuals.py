@@ -191,9 +191,9 @@ class SquaringResiduals(BaseForecaster):
                 residuals = residuals.asfreq(y.index.freq)
 
             # fit to residuals
-            self._res_step_forecaster_ = self.residual_forecaster.clone()
-            self._res_step_forecaster_.fit(y=residuals)
-            self._res_forecasters[step_ahead] = self._res_step_forecaster_
+            res_step_forecaster_ = self.residual_forecaster.clone()
+            res_step_forecaster_.fit(y=residuals)
+            self._res_forecasters[step_ahead] = res_step_forecaster_
         return self
 
     def _predict(self, fh, X=None):
@@ -222,7 +222,8 @@ class SquaringResiduals(BaseForecaster):
         y_pred : pd.Series
             Point predictions
         """
-        y_pred = self._forecaster_.predict(X=X, fh=fh)
+        fh_abs = fh.to_absolute(self.cutoff)
+        y_pred = self._forecaster_.predict(X=X, fh=fh_abs)
         return y_pred
 
     def _update(self, y, X=None, update_params=True):
@@ -373,6 +374,8 @@ class SquaringResiduals(BaseForecaster):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         from sktime.forecasting.croston import Croston
+        from sktime.forecasting.naive import NaiveForecaster
+        from sktime.forecasting.theta import ThetaForecaster
 
         params = [
             {
@@ -381,6 +384,12 @@ class SquaringResiduals(BaseForecaster):
                 "initial_window": 2,
                 "distr": "t",
                 "distr_kwargs": {"df": 21},
+            },
+            {
+                "forecaster": ThetaForecaster(),
+                "residual_forecaster": NaiveForecaster(),
+                "initial_window": 5,
+                "distr": "norm",
             },
         ]
         return params
