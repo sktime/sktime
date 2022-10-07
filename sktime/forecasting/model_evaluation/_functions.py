@@ -38,13 +38,13 @@ def evaluate(
     Parameters
     ----------
     forecaster : sktime.forecaster
-        Any forecaster
+        sktime forecaster (concrete BaseForecaster descendant)
     cv : Temporal cross-validation splitter
         Splitter of how to split the data into test data and train data
-    y : pd.Series
-        Target time series to which to fit the forecaster.
-    X : pd.DataFrame, default=None
-        Exogenous variables
+    y : sktime time series container
+        Target (endogeneous) time series used in the evaluation experiment
+    X : sktime time series container, of same mtype as y
+        Exogenous time series used in the evaluation experiment
     strategy : {"refit", "update", "no-update_params"}, optional, default="refit"
         defines the ingestion mode when the forecaster sees new data when window expands
         "refit" = forecaster is refitted to each training window
