@@ -83,37 +83,14 @@ def load(serial):
     from zipfile import ZipFile
 
     if isinstance(serial, tuple):
-        from tempfile import TemporaryFile
-
-        import h5py
-        from keras.models import load_model
-
         if len(serial) != 2:
             raise ValueError(
                 "`serial` should be a tuple of size 2 "
                 f"found, a tuple of size: {len(serial)}"
             )
         cls, stored = serial
-        if isinstance(stored, tuple):
-            if len(stored) != 3:
-                raise ValueError(
-                    "If `stored` is a tuple, it should have 3 elements. "
-                    "All 3 elements represent in-memory serialization "
-                    "of the estimator. "
-                    "The first element represents pickled instance. "
-                    "The second element represents in-memory `keras` model. "
-                    "The third element represents in-memory history. "
-                    f"Found a tuple of length: {len(stored)} instead."
-                )
-            stored, in_memory_model, in_memory_history = stored
-            with TemporaryFile() as store_:
-                store_.write(in_memory_model)
-                h5file = h5py.File(store_, "r")
-                cls.model_ = load_model(h5file)
-                cls.history = pickle.loads(in_memory_history)
-                h5file.close()
-
         return cls.load_from_serial(stored)
+
     elif isinstance(serial, (str, Path)):
         path = Path(serial + ".zip") if isinstance(serial, str) else serial
         if not path.exists():
