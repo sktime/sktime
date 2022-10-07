@@ -135,12 +135,12 @@ def evaluate(
         y_pred = np.nan
 
         # split data according to cv
-        y_train = y_inner.loc[train]
-        y_test = y_inner.loc[test]
+        y_train = _subset_keep_freq(y_inner, train)
+        y_test = _subset_keep_freq(y_inner, test)
 
         if X is not None:
-            X_train = X_inner.loc[train]
-            X_test = X_inner.loc[test]
+            X_train = _subset_keep_freq(X_inner, train)
+            X_test = _subset_keep_freq(X_inner, test)
         else:
             X_train = None
             X_test = None
@@ -190,6 +190,7 @@ def evaluate(
             cutoff = forecaster.cutoff
 
         except Exception as e:
+            raise e
             if error_score == "raise":
                 raise e
             else:
@@ -243,3 +244,10 @@ def _check_strategy(strategy):
     valid_strategies = ("refit", "update", "no-update_params")
     if strategy not in valid_strategies:
         raise ValueError(f"`strategy` must be one of {valid_strategies}")
+
+
+def _subset_keep_freq(y, idx):
+    y_idx = y.loc[idx]
+    if hasattr(y.index, "freq") and y.index.freq is not None:
+        y_idx.index.freq = y.index.freq
+    return y_idx
