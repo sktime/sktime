@@ -216,8 +216,11 @@ class BaseDeepClassifier(BaseClassifier, ABC):
 
             return (
                 type(self),
-                pickle.dumps(self),
-                (in_memory_model, in_memory_history),
+                (
+                    pickle.dumps(self),
+                    in_memory_model,
+                    in_memory_history,
+                ),
             )
 
         if not isinstance(path, (str, Path)):

@@ -88,28 +88,29 @@ def load(serial):
         import h5py
         from keras.models import load_model
 
-        if len(serial) != 3:
+        if len(serial) != 2:
             raise ValueError(
-                "`serial` should be a tuple of size 3 "
+                "`serial` should be a tuple of size 2 "
                 f"found, a tuple of size: {len(serial)}"
             )
-        cls, stored, in_memory_data = serial
-        # in_memory_data is a 2-element tuple that
-        # only exists when a keras model is in-memory serialized
-        # and contains model and fit history respectively
-        if in_memory_data is not None:
-            if len(in_memory_data) != 2:
+        cls, stored = serial
+        if isinstance(stored, tuple):
+            if len(stored) != 3:
                 raise ValueError(
-                    "`in_memory_data` should be a tuple of size 2 "
-                    "where first element represents in-memory keras "
-                    "model and second element represents in-memory "
-                    f"history. Instead found a tuple of size: {len(in_memory_data)}"
+                    "If `stored` is a tuple, it should have 3 elements. "
+                    "All 3 elements represent in-memory serialization "
+                    "of the estimator. "
+                    "The first element represents pickled instance. "
+                    "The second element represents in-memory `keras` model. "
+                    "The third element represents in-memory history. "
+                    f"Found a tuple of length: {len(stored)} instead."
                 )
+            stored, in_memory_model, in_memory_history = stored
             with TemporaryFile() as store_:
-                store_.write(in_memory_data[0])
+                store_.write(in_memory_model)
                 h5file = h5py.File(store_, "r")
                 cls.model_ = load_model(h5file)
-                cls.history = pickle.loads(in_memory_data[1])
+                cls.history = pickle.loads(in_memory_history)
                 h5file.close()
 
         return cls.load_from_serial(stored)
