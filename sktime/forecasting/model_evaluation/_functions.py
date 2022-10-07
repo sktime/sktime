@@ -248,5 +248,6 @@ def _check_strategy(strategy):
 def _subset_keep_freq(y, idx):
     y_idx = y.loc[idx]
     if hasattr(y.index, "freq") and y.index.freq is not None:
-        y_idx.index.freq = y.index.freq
+        if hasattr(y_idx.index, "freq") and y_idx.index.freq is None:
+            y_idx.index.freq = y.index.freq
     return y_idx
