@@ -190,7 +190,6 @@ def evaluate(
             cutoff = forecaster.cutoff
 
         except Exception as e:
-            raise e
             if error_score == "raise":
                 raise e
             else:
