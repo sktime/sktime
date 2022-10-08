@@ -134,8 +134,6 @@ class TapNetClassifier(BaseDeepClassifier):
         self.callbacks = callbacks
         self.verbose = verbose
 
-        self._is_fitted = False
-
         self.dropout = dropout
         self.use_lstm = use_lstm
         self.use_cnn = use_cnn
