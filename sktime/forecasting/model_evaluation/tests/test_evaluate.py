@@ -18,9 +18,11 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from sklearn.linear_model import LinearRegression
+
 from sktime.datasets import load_airline, load_longley
 from sktime.exceptions import FitFailedWarning
-from sktime.forecasting.arima import ARIMA
+from sktime.forecasting.compose._reduce import DirectReductionForecaster
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.model_evaluation import evaluate
 from sktime.forecasting.model_selection import (
@@ -34,7 +36,6 @@ from sktime.performance_metrics.forecasting import (
     MeanAbsoluteScaledError,
 )
 from sktime.utils._testing.forecasting import make_forecasting_problem
-from sktime.utils.validation._dependencies import _check_estimator_deps
 
 
 def _check_evaluate_output(out, cv, y, scoring):
@@ -141,14 +142,10 @@ def test_evaluate_initial_window():
     np.testing.assert_equal(actual, expected)
 
 
-@pytest.mark.skipif(
-    not _check_estimator_deps(ARIMA, severity="none"),
-    reason="skip test if required soft dependencies not available",
-)
 def test_evaluate_no_exog_against_with_exog():
     """Check that adding exogenous data produces different results."""
     y, X = load_longley()
-    forecaster = ARIMA(suppress_warnings=True)
+    forecaster = DirectReductionForecaster(LinearRegression())
     cv = SlidingWindowSplitter()
     scoring = MeanAbsolutePercentageError(symmetric=True)
 
