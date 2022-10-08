@@ -47,12 +47,17 @@ def test_seed(n, k, seed):
 
 
 def test_stratified_resample():
-    """Test stratified resampling maintains class distribution."""
+    """Test resampling returns valid data structure and maintains class distribution."""
     trainX, trainy = load_unit_test(split="TRAIN")
     testX, testy = load_unit_test(split="TEST")
     new_trainX, new_trainy, new_testX, new_testy = stratified_resample(
         trainX, trainy, testX, testy, 0
     )
+    from datatypes import check_is_scitype
+
+    valid_train = check_is_scitype(new_trainX, scitype="Panel")
+    valid_test = check_is_scitype(new_testX, scitype="Panel")
+    assert valid_test and valid_train
     # count class occurrences
     unique_train, counts_train = np.unique(trainy, return_counts=True)
     unique_test, counts_test = np.unique(testy, return_counts=True)
