@@ -50,14 +50,17 @@ EXCLUDED_TESTS = {
     "ProximityStump": [
         "test_persistence_via_pickle",
         "test_fit_does_not_overwrite_hyper_params",
+        "test_save_estimators_to_file",
     ],
     "ProximityTree": [
         "test_persistence_via_pickle",
         "test_fit_does_not_overwrite_hyper_params",
+        "test_save_estimators_to_file",
     ],
     "ProximityForest": [
         "test_persistence_via_pickle",
         "test_fit_does_not_overwrite_hyper_params",
+        "test_save_estimators_to_file",
     ],
     # sth is not quite right with the RowTransformer-s changing state,
     #   but these are anyway on their path to deprecation, see #2370
@@ -73,6 +76,7 @@ EXCLUDED_TESTS = {
         "test_methods_do_not_change_state",
         "test_fit_idempotent",
         "test_persistence_via_pickle",
+        "test_save_estimators_to_file",
     ],
     "CNNNetwork": "test_inheritance",  # not a registered base class, WiP, see #3028
     "VARMAX": [
