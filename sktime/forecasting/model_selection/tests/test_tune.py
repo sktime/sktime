@@ -142,8 +142,12 @@ def test_rscv(forecaster, param_grid, cv, scoring, error_score, n_iter, random_s
 @pytest.mark.parametrize("error_score", ERROR_SCORES)
 def test_gscv_hierarchical(forecaster, param_grid, cv, scoring, error_score):
     """Test ForecastingGridSearchCV."""
-    y = _make_hierarchical(random_state=0)
-    X = _make_hierarchical(random_state=42)
+    y = _make_hierarchical(
+        random_state=0, hierarchy_levels=(2, 2), min_timepoints=20, max_timepoints=20
+    )
+    X = _make_hierarchical(
+        random_state=42, hierarchy_levels=(2, 2), min_timepoints=20, max_timepoints=20
+    )
 
     gscv = ForecastingGridSearchCV(
         forecaster,
