@@ -47,7 +47,7 @@ def test_seed(n, k, seed):
 
 
 def test_stratified_resample():
-    """Test resampling."""
+    """Test stratified resampling maintains class distribution."""
     trainX, trainy = load_unit_test(split="TRAIN")
     testX, testy = load_unit_test(split="TEST")
     new_trainX, new_trainy, new_testX, new_testy = stratified_resample(
