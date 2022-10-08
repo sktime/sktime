@@ -3,8 +3,8 @@
 
 import numpy as np
 import pytest
-from datasets import load_unit_test
 
+from sktime.datasets import load_unit_test
 from sktime.utils._testing.deep_equals import deep_equals
 from sktime.utils.sampling import random_partition, stratified_resample
 
