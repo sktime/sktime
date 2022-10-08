@@ -17,13 +17,12 @@ __all__ = [
 import numpy as np
 import pandas as pd
 import pytest
-
 from sklearn.linear_model import LinearRegression
 
 from sktime.datasets import load_airline, load_longley
 from sktime.exceptions import FitFailedWarning
-from sktime.forecasting.compose._reduce import DirectReductionForecaster
 from sktime.forecasting.arima import ARIMA
+from sktime.forecasting.compose._reduce import DirectReductionForecaster
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.model_evaluation import evaluate
 from sktime.forecasting.model_selection import (
