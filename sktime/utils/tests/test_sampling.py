@@ -51,7 +51,7 @@ def test_stratified_resample():
     trainX, trainy = load_unit_test(split="TRAIN")
     testX, testy = load_unit_test(split="TEST")
     new_trainX, new_trainy, new_testX, new_testy = stratified_resample(
-        trainX, testy, testX, testy, 0
+        trainX, trainy, testX, testy, 0
     )
     # count class occurrences
     unique_train, counts_train = np.unique(trainy, return_counts=True)
