@@ -5,6 +5,7 @@ import numpy as np
 import pytest
 
 from sktime.datasets import load_unit_test
+from sktime.datatypes import check_is_scitype
 from sktime.utils._testing.deep_equals import deep_equals
 from sktime.utils.sampling import random_partition, stratified_resample
 
@@ -53,7 +54,6 @@ def test_stratified_resample():
     new_trainX, new_trainy, new_testX, new_testy = stratified_resample(
         trainX, trainy, testX, testy, 0
     )
-    from datatypes import check_is_scitype
 
     valid_train = check_is_scitype(new_trainX, scitype="Panel")
     valid_test = check_is_scitype(new_testX, scitype="Panel")
