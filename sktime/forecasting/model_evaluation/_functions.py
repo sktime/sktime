@@ -140,7 +140,10 @@ def evaluate(
 
         if X is not None:
             X_train = _subset_keep_freq(X_inner, train)
-            X_test = _subset_keep_freq(X_inner, test)
+            # For X_test, we select the full range of test/train values.
+            # for those transformers that change the size of input.
+            test_plus_train = train.union(test)
+            X_test = _subset_keep_freq(X_inner, test_plus_train)
         else:
             X_train = None
             X_test = None
