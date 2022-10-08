@@ -168,7 +168,7 @@ def evaluate(
     backend : {"dask", "loky", "multiprocessing", "threading"}, by default None.
         Runs parallel evaluate if specified.
     compute : bool, default=True
-        Only applied if backend is to set "dask". If set to True, returns
+        Only applied if backend is to set "dask". If set to True, returns `dd.DataFrame`
     **kwargs : Keyword arguments
         Only relevant if backend is specified. Additional kwargs are passed into
         `dask.distributed.get_client` or `dask.distributed.Client` if backend is
