@@ -217,3 +217,29 @@ if _check_soft_dependencies("xarray", severity="none"):
     _extend_conversions(
         "xr.DataArray", "pd.DataFrame", convert_dict, mtype_universe=MTYPE_LIST_SERIES
     )
+
+
+if _check_soft_dependencies("xarray", severity="none"):
+    import xarray as xr
+
+    from sktime.datatypes._adapter.dask_to_pd import (
+        convert_dask_to_pandas, convert_pandas_to_dask
+    )
+
+    def convert_dask_to_mvs_as_series(obj, store=None):
+        return convert_dask_to_pandas(obj)
+
+    convert_dict[
+        ("dask_series", "pd.DataFrame", "Series")
+    ] = convert_dask_to_mvs_as_series
+
+    def convert_mvs_to_dask_as_series(obj, store=None):
+        return convert_pandas_to_dask(obj)
+
+    convert_dict[
+        ("pd.DataFrame", "dask_series", "Series")
+    ] = convert_mvs_to_dask_as_series
+
+    _extend_conversions(
+        "dask_series", "pd.DataFrame", convert_dict, mtype_universe=MTYPE_LIST_SERIES
+    )
