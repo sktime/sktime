@@ -18,8 +18,11 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from sklearn.linear_model import LinearRegression
+
 from sktime.datasets import load_airline, load_longley
 from sktime.exceptions import FitFailedWarning
+from sktime.forecasting.compose._reduce import DirectReductionForecaster
 from sktime.forecasting.arima import ARIMA
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.model_evaluation import evaluate
@@ -211,7 +214,7 @@ def test_evaluate_hierarchical():
     y = y.sort_index()
     X = X.sort_index()
 
-    forecaster = NaiveForecaster()
+    forecaster = DirectReductionForecaster(LinearRegression())
 
     cv = SlidingWindowSplitter()
     scoring = MeanAbsolutePercentageError(symmetric=True)
