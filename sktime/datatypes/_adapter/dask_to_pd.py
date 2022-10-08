@@ -17,6 +17,26 @@ index is replaced by a string index where tuples are replaced with str coerced e
 import pandas as pd
 
 
+def _is_mi_col(x):
+    return isinstance(x, str) and x.startswith("__index__")
+
+
+def get_mi_cols(obj):
+    """Get multiindex cols from a dask object.
+
+    Parameters
+    ----------
+    obj : dask DataFrame
+
+    Returns
+    -------
+    list of pandas index elements
+        all column index elements of obj that start with __index__
+        i.e., columns that are interpreted as multiindex columns  in the correspondence
+    """
+    return [x for x in obj.columns if _is_mi_col(x)]
+
+
 def convert_dask_to_pandas(obj):
     """Convert dask DataFrame to pandas DataFrame, preserving MultiIndex.
 
@@ -34,9 +54,6 @@ def convert_dask_to_pandas(obj):
     """
     obj = obj.compute()
 
-    def is_mi_col(x):
-        return isinstance(x, str) and x.startswith("__index__")
-
     def mi_name(x):
         return x.split("__index__")[1]
 
@@ -47,7 +64,7 @@ def convert_dask_to_pandas(obj):
                 new_names[i] = None
         return new_names
 
-    multi_cols = [x for x in obj.columns if is_mi_col(x)]
+    multi_cols = get_mi_cols(obj)
 
     # if has multi-index cols, move to pandas MultiIndex
     if len(multi_cols) > 0:
