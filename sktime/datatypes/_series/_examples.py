@@ -67,6 +67,14 @@ if _check_soft_dependencies("xarray", severity="none"):
     example_dict[("xr.DataArray", "Series", 0)] = da
     example_dict_lossy[("xr.DataArray", "Series", 0)] = False
 
+if _check_soft_dependencies("dask", severity="none"):
+    from dask.dataframe import from_pandas
+
+    df_dask = from_pandas(example_dict[("pd.DataFrame", "Series", 0)])
+
+    example_dict[("dask_series", "Series", 0)] = df_dask
+    example_dict_lossy[("dask_series", "Series", 0)] = False
+
 
 example_dict_metadata[("Series", 0)] = {
     "is_univariate": True,
@@ -101,12 +109,21 @@ if _check_soft_dependencies("xarray", severity="none"):
     example_dict[("xr.DataArray", "Series", 1)] = da
     example_dict_lossy[("xr.DataArray", "Series", 1)] = False
 
+if _check_soft_dependencies("dask", severity="none"):
+    from dask.dataframe import from_pandas
+
+    df_dask = from_pandas(example_dict[("pd.DataFrame", "Series", 1)])
+
+    example_dict[("dask_series", "Series", 1)] = df_dask
+    example_dict_lossy[("dask_series", "Series", 1)] = False
+
 example_dict_metadata[("Series", 1)] = {
     "is_univariate": False,
     "is_equally_spaced": True,
     "is_empty": False,
     "has_nans": False,
 }
+
 
 ###
 # example 2: multivariate, positive
@@ -134,6 +151,14 @@ if _check_soft_dependencies("xarray", severity="none"):
 
     example_dict[("xr.DataArray", "Series", 2)] = da
     example_dict_lossy[("xr.DataArray", "Series", 2)] = False
+
+if _check_soft_dependencies("dask", severity="none"):
+    from dask.dataframe import from_pandas
+
+    df_dask = from_pandas(example_dict[("pd.DataFrame", "Series", 1)])
+
+    example_dict[("dask_series", "Series", 1)] = df_dask
+    example_dict_lossy[("dask_series", "Series", 1)] = False
 
 
 example_dict_metadata[("Series", 2)] = {
