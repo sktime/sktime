@@ -88,6 +88,10 @@ def check_pddataframe_series(obj, return_metadata=False, var_name="obj"):
         msg = f"{var_name} should not have column of 'object' dtype"
         return ret(False, msg, None, return_metadata)
 
+    # check that time (row) index is unique
+    msg = f"{var_name} must have unique row indices, but found {obj.index}"
+    assert obj.index.is_unique, msg
+
     # Check time index is ordered in time
     if not index.is_monotonic_increasing:
         msg = (

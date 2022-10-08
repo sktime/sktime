@@ -160,7 +160,15 @@ def check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj"):
         msg = f"{var_name} must have a MultiIndex, found {type(obj.index)}"
         return _ret(False, msg, None, return_metadata)
 
-    # check that columns are unique
+    # check that row index is unique
+    msg = f"{var_name} must have unique row indices, but found {obj.index}"
+    assert obj.index.is_unique, msg
+
+    # check that rows are sorted
+    msg = f"{var_name} must have lexsorted row index, but found {obj.index}"
+    assert obj.index.is_monotonic_increasing, msg
+
+    # check that column index is unique
     msg = f"{var_name} must have " f"unique column indices, but found {obj.columns}"
     assert obj.columns.is_unique, msg
 
