@@ -83,9 +83,14 @@ def load(serial):
     from zipfile import ZipFile
 
     if isinstance(serial, tuple):
-        cls = serial[0]
-        stored = serial[1]
+        if len(serial) != 2:
+            raise ValueError(
+                "`serial` should be a tuple of size 2 "
+                f"found, a tuple of size: {len(serial)}"
+            )
+        cls, stored = serial
         return cls.load_from_serial(stored)
+
     elif isinstance(serial, (str, Path)):
         path = Path(serial + ".zip") if isinstance(serial, str) else serial
         if not path.exists():

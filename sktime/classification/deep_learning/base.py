@@ -203,7 +203,26 @@ class BaseDeepClassifier(BaseClassifier, ABC):
         from zipfile import ZipFile
 
         if path is None:
-            return (type(self), pickle.dumps(self))
+            import h5py
+
+            with h5py.File(
+                "disk_less", "w", driver="core", backing_store=False
+            ) as h5file:
+                self.model_.save(h5file)
+                h5file.flush()
+                in_memory_model = h5file.id.get_file_image()
+
+            in_memory_history = pickle.dumps(self.history.history)
+
+            return (
+                type(self),
+                (
+                    pickle.dumps(self),
+                    in_memory_model,
+                    in_memory_history,
+                ),
+            )
+
         if not isinstance(path, (str, Path)):
             raise TypeError(
                 "`path` is expected to either be a string or a Path object "
@@ -226,6 +245,51 @@ class BaseDeepClassifier(BaseClassifier, ABC):
         shutil.make_archive(base_name=path, format="zip", root_dir=path)
         shutil.rmtree(path)
         return ZipFile(path.with_name(f"{path.stem}.zip"))
+
+    @classmethod
+    def load_from_serial(cls, serial):
+        """Load object from serialized memory container.
+
+        Parameters
+        ----------
+        serial: 1st element of output of `cls.save(None)`
+                This is a tuple of size 3.
+                The first element represents pickle-serialized instance.
+                The second element represents h5py-serialized `keras` model.
+                The third element represent pickle-serialized history of `.fit()`.
+
+        Returns
+        -------
+        Deserialized self resulting in output `serial`, of `cls.save(None)`
+        """
+        import pickle
+        from tempfile import TemporaryFile
+
+        import h5py
+        from keras.models import load_model
+
+        if not isinstance(serial, tuple):
+            raise TypeError(
+                "`serial` is expected to be a tuple, "
+                f"instead found of type: {type(serial)}"
+            )
+        if len(serial) != 3:
+            raise ValueError(
+                "`serial` should have 3 elements. "
+                "All 3 elements represent in-memory serialization "
+                "of the estimator. "
+                f"Found a tuple of length: {len(serial)} instead."
+            )
+
+        serial, in_memory_model, in_memory_history = serial
+        with TemporaryFile() as store_:
+            store_.write(in_memory_model)
+            h5file = h5py.File(store_, "r")
+            cls.model_ = load_model(h5file)
+            cls.history = pickle.loads(in_memory_history)
+            h5file.close()
+
+        return pickle.loads(serial)
 
     @classmethod
     def load_from_path(cls, serial):

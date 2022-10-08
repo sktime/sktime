@@ -5,12 +5,14 @@
 adapted from scikit-learn's estimator_checks
 """
 
-__author__ = ["mloning", "fkiraly"]
+__author__ = ["mloning", "fkiraly", "achieveordie"]
 
 import numbers
+import os
 import types
 from copy import deepcopy
 from inspect import getfullargspec, isclass, signature
+from tempfile import TemporaryDirectory
 
 import joblib
 import numpy as np
@@ -1179,6 +1181,42 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
             decimal=6,
             err_msg=msg,
         )
+
+    def test_save_estimators_to_file(self, estimator_instance, scenario, method_nsc):
+        """Check if saved estimators onto disk can be loaded correctly."""
+        # escape predict_proba for forecasters, tfp distributions cannot be pickled
+        if (
+            isinstance(estimator_instance, BaseForecaster)
+            and method_nsc == "predict_proba"
+        ):
+            return None
+
+        estimator = estimator_instance
+        set_random_state(estimator)
+        # Fit the model, get args before and after
+        scenario.run(estimator, method_sequence=["fit"], return_args=True)
+
+        # Generate results before saving
+        vanilla_result = scenario.run(estimator, method_sequence=[method_nsc])
+
+        with TemporaryDirectory() as tmp_dir:
+            save_loc = os.path.join(tmp_dir, "estimator")
+            estimator.save(save_loc)
+
+            loaded_estimator = load(save_loc)
+            loaded_result = scenario.run(loaded_estimator, method_sequence=[method_nsc])
+
+            msg = (
+                f"Results of {method_nsc} differ between saved and loaded "
+                f"estimator {type(estimator).__name__}"
+            )
+
+            _assert_array_almost_equal(
+                vanilla_result,
+                loaded_result,
+                decimal=6,
+                err_msg=msg,
+            )
 
     # todo: this needs to be diagnosed and fixed - temporary skip
     @pytest.mark.skip(reason="hangs on mac and unix remote tests")
