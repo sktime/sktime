@@ -44,13 +44,13 @@ from urllib.error import HTTPError
 
 import numpy as np
 import pandas as pd
-import statsmodels.api as sm
 
 from sktime.datasets._data_io import (
     _load_dataset,
     _load_provided_dataset,
     load_tsf_to_dataframe,
 )
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 DIRNAME = "data"
 MODULE = os.path.dirname(__file__)
@@ -1069,6 +1069,9 @@ def load_macroeconomic():
     .. [3] Data Source: Bureau of Labor Statistics, U.S. Department of Labor;
           http://www.bls.gov/data/; accessed December 15, 2009.
     """
+    _check_soft_dependencies("statsmodels")
+    import statsmodels.api as sm
+
     y = sm.datasets.macrodata.load_pandas().data
     y["year"] = y["year"].astype(int).astype(str)
     y["quarter"] = y["quarter"].astype(int).astype(str).apply(lambda x: "Q" + x)

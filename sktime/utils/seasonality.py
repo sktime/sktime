@@ -10,6 +10,7 @@ from warnings import warn
 
 import numpy as np
 
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.utils.validation.forecasting import check_sp, check_y
 
 
@@ -31,6 +32,7 @@ def autocorrelation_seasonality_test(y, sp):
     .. [1]  https://github.com/Mcompetitions/M4-methods/blob/master
     /Benchmarks%20and%20Evaluation.R
     """
+    _check_soft_dependencies("statsmodels")
     from statsmodels.tsa.stattools import acf
 
     y = check_y(y)
