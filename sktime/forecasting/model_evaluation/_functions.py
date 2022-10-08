@@ -34,16 +34,17 @@ def _evaluate_window(
     strategy,
     scoring,
     return_data,
-    error_score,
     score_name,
+    error_score,
+    cutoff_dtype,
 ):
 
     # set default result values in case estimator fitting fails
     score = error_score
     fit_time = np.nan
     pred_time = np.nan
-    cutoff = np.nan
-    y_pred = np.nan
+    cutoff = pd.Period(pd.NaT) if cutoff_dtype.startswith("period") else pd.NA
+    y_pred = pd.NA
 
     # split data
     y_train, y_test, X_train, X_test = _split(y, X, train, test, fh)
@@ -109,11 +110,11 @@ def _evaluate_window(
             "pred_time": [pred_time],
             "len_train_window": [len(y_train)],
             "cutoff": [cutoff],
-            "y_train": [y_train if return_data else np.nan],
-            "y_test": [y_test if return_data else np.nan],
-            "y_pred": [y_pred if return_data else np.nan],
+            "y_train": [y_train if return_data else pd.NA],
+            "y_test": [y_test if return_data else pd.NA],
+            "y_pred": [y_pred if return_data else pd.NA],
         }
-    )
+    ).astype({"cutoff": cutoff_dtype})
 
     # Return forecaster if "update"
     if strategy == "update":
@@ -223,6 +224,7 @@ def evaluate(
     X = check_X(X)
 
     score_name = "test_" + scoring.name
+    cutoff_dtype = str(y.index.dtype)
     _evaluate_window_kwargs = {
         "fh": cv.fh,
         "forecaster": forecaster,
@@ -231,6 +233,7 @@ def evaluate(
         "return_data": return_data,
         "error_score": error_score,
         "score_name": score_name,
+        "cutoff_dtype": cutoff_dtype,
     }
 
     if backend is None or strategy == "update":
@@ -284,10 +287,10 @@ def evaluate(
                 "fit_time": "float",
                 "pred_time": "float",
                 "len_train_window": "int",
-                "cutoff": str(y.index.dtype),
-                "y_train": "object" if return_data else "float",
-                "y_test": "object" if return_data else "float",
-                "y_pred": "object" if return_data else "float",
+                "cutoff": cutoff_dtype,
+                "y_train": "object",
+                "y_test": "object",
+                "y_pred": "object",
             },
         )
         if compute:
