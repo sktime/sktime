@@ -303,7 +303,7 @@ class ThetaModularForecaster(_HeterogenousEnsembleForecaster):
     Examples
     --------
     >>> from sktime.datasets import load_airline
-    >>> from sktime.forecasting.theta_new import ThetaModularForecaster
+    >>> from sktime.forecasting.theta import ThetaModularForecaster
     >>> y = load_airline()
     >>> forecaster = ThetaModularForecaster()
     >>> forecaster.fit(y)
