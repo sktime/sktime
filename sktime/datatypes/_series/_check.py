@@ -89,8 +89,9 @@ def check_pddataframe_series(obj, return_metadata=False, var_name="obj"):
         return ret(False, msg, None, return_metadata)
 
     # check that time (row) index is unique
-    msg = f"{var_name} must have unique row indices, but found {obj.index}"
-    assert obj.index.is_unique, msg
+    if not obj.index.is_unique:
+        msg = f"{var_name} must have unique row indices, but found {obj.index}"
+        return ret(False, msg, None, return_metadata)
 
     # Check time index is ordered in time
     if not index.is_monotonic_increasing:

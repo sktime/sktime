@@ -162,15 +162,18 @@ def check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj"):
 
     # check that row index is unique
     msg = f"{var_name} must have unique row indices, but found {obj.index}"
-    assert obj.index.is_unique, msg
+    if not obj.index.is_unique:
+        return _ret(False, msg, None, return_metadata)
 
     # check that rows are sorted
     msg = f"{var_name} must have lexsorted row index, but found {obj.index}"
-    assert obj.index.is_monotonic_increasing, msg
+    if not obj.index.is_monotonic_increasing:
+        return _ret(False, msg, None, return_metadata)
 
     # check that column index is unique
     msg = f"{var_name} must have " f"unique column indices, but found {obj.columns}"
-    assert obj.columns.is_unique, msg
+    if not obj.columns.is_unique:
+        return _ret(False, msg, None, return_metadata)
 
     # check that there are precisely two index levels
     nlevels = obj.index.nlevels
