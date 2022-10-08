@@ -208,14 +208,19 @@ def test_evaluate_hierarchical():
         random_state=42, hierarchy_levels=(2, 2), min_timepoints=20, max_timepoints=20
     )
 
+    y = y.sort_index()
+    X = X.sort_index()
+
     forecaster = NaiveForecaster()
 
     cv = SlidingWindowSplitter()
     scoring = MeanAbsolutePercentageError(symmetric=True)
 
-    out_exog = evaluate(forecaster, cv, y, X=X, scoring=scoring)
+    out_exog = evaluate(forecaster, cv, y, X=X, scoring=scoring, error_score="raise")
 
-    out_no_exog = evaluate(forecaster, cv, y, X=None, scoring=scoring)
+    out_no_exog = evaluate(
+        forecaster, cv, y, X=None, scoring=scoring, error_score="raise"
+    )
 
     scoring_name = f"test_{scoring.name}"
     assert np.all(out_exog[scoring_name] != out_no_exog[scoring_name])

@@ -149,7 +149,16 @@ def evaluate(
             X_test = None
 
         # create forecasting horizon
-        fh = ForecastingHorizon(y_test.index, is_relative=False)
+        # if cv object has fh, we use that
+        if hasattr(cv, "fh") and cv.fh is not None:
+            fh = cv.fh
+        # otherwise, if y_test is not hierarchical, we simply take the index of y_test
+        elif not isinstance(y_test.index, pd.MultiIndex):
+            fh = ForecastingHorizon(y_test.index, is_relative=False)
+        # otherwise, y_test is hierarchical, and we take its unique time indices
+        else:
+            fh_idx = y_test.index.get_level_values(-1).unique()
+            fh = ForecastingHorizon(fh_idx, is_relative=False)
 
         try:
             # fit/update
