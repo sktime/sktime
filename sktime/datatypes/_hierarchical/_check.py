@@ -92,7 +92,9 @@ def check_pdmultiindex_hierarchical(obj, return_metadata=False, var_name="obj"):
     # check that there are 3 or more index levels
     nlevels = obj.index.nlevels
     if not nlevels > 2:
-        msg = f"{var_name} have a MultiIndex with 3 or more levels, found {nlevels}"
+        msg = (
+            f"{var_name} must have a MultiIndex with 3 or more levels, found {nlevels}"
+        )
         return _ret(False, msg, None, return_metadata)
 
     inst_inds = obj.index.droplevel(-1).unique()

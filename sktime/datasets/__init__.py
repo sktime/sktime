@@ -36,6 +36,7 @@ __all__ = [
     "load_tsf_to_dataframe",
     "load_unit_test_tsf",
     "load_solar",
+    "load_covid_3month",
 ]
 
 from sktime.datasets._data_io import (
@@ -57,6 +58,7 @@ from sktime.datasets._single_problem_loaders import (
     load_airline,
     load_arrow_head,
     load_basic_motions,
+    load_covid_3month,
     load_electric_devices_segmentation,
     load_gun_point_segmentation,
     load_gunpoint,

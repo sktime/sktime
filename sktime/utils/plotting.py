@@ -11,7 +11,6 @@ from warnings import simplefilter
 
 import numpy as np
 import pandas as pd
-from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 
 from sktime.datatypes import convert_to
 from sktime.utils.validation._dependencies import _check_soft_dependencies
@@ -280,10 +279,11 @@ def plot_correlations(
     >>> from sktime.utils.plotting import plot_correlations
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
-    >>> fig, ax = plot_correlations(y)
+    >>> fig, ax = plot_correlations(y)  # doctest: +SKIP
     """
-    _check_soft_dependencies("matplotlib")
+    _check_soft_dependencies(("matplotlib", "statsmodels"))
     import matplotlib.pyplot as plt
+    from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 
     series = check_y(series)
     series = convert_to(series, "pd.Series", "Series")
