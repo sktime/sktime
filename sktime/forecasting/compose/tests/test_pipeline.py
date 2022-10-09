@@ -352,10 +352,8 @@ def test_tag_handles_missing_data():
     This test is based on bug issue #3547.
     """
     forecaster = MockForecaster()
-    forecaster.set_tags(**{"handles-missing-data": False})
-
     # make sure that test forecaster cant handle missing data
-    assert forecaster.get_tag("handles-missing-data") is False
+    forecaster.set_tags(**{"handles-missing-data": False})
 
     y = _make_series()
     y[10] = np.nan
