@@ -904,7 +904,7 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
         Assumes test_create_test_instance has passed and certified create_test_instance.
 
         Tests that:
-        * constructor has now varargs
+        * constructor has no varargs
         * tests that constructor constructs an instance of the class
         * tests that all parameters are set in init to an attribute of the same name
         * tests that parameter values are always copied to the attribute and not changed
