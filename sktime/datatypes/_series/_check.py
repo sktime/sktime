@@ -73,7 +73,7 @@ def check_pddataframe_series(obj, return_metadata=False, var_name="obj"):
 
     # check that columns are unique
     if not obj.columns.is_unique:
-        msg = f"{var_name} must have " f"unique column indices, but found {obj.columns}"
+        msg = f"{var_name} must have unique column indices, but found {obj.columns}"
         return ret(False, msg, None, return_metadata)
 
     # check whether the time index is of valid type
@@ -268,7 +268,7 @@ if _check_soft_dependencies("xarray", severity="none"):
 
         # check that columns are unique
         if not len(obj.dims) == len(set(obj.dims)):
-            msg = f"{var_name} must have " f"unique column indices, but found {obj.dims}"
+            msg = f"{var_name} must have unique column indices, but found {obj.dims}"
             return ret(False, msg, None, return_metadata)
 
         # check whether the time index is of valid type
