@@ -32,8 +32,6 @@ __all__ = ["InformationGainSegmentation"]
 __author__ = ["lmmentel"]
 
 
-
-
 @dataclass
 class ChangePointResult:
     k: int
