@@ -8,7 +8,6 @@ adapted from scikit-learn's estimator_checks
 __author__ = ["mloning", "fkiraly"]
 
 import numbers
-import pickle
 import types
 from copy import deepcopy
 from inspect import getfullargspec, isclass, signature
@@ -21,7 +20,7 @@ from sklearn.utils.estimator_checks import (
     check_get_params_invariance as _check_get_params_invariance,
 )
 
-from sktime.base import BaseEstimator, BaseObject
+from sktime.base import BaseEstimator, BaseObject, load
 from sktime.dists_kernels._base import (
     BasePairwiseTransformer,
     BasePairwiseTransformerPanel,
@@ -1178,12 +1177,12 @@ class _TestAllEstimators(BaseFixtureGenerator, QuickTester):
         # Generate results before pickling
         vanilla_result = scenario.run(estimator, method_sequence=[method_nsc])
 
-        # Pickle and unpickle
-        pickled_estimator = pickle.dumps(estimator)
-        unpickled_estimator = pickle.loads(pickled_estimator)
+        # Serialize and unserialize
+        serialized_estimator = estimator.save()
+        deserialized_estimator = load(serialized_estimator)
 
-        unpickled_result = scenario.run(
-            unpickled_estimator, method_sequence=[method_nsc]
+        deserialized_result = scenario.run(
+            deserialized_estimator, method_sequence=[method_nsc]
         )
 
         msg = (
@@ -1192,7 +1191,7 @@ class _TestAllEstimators(BaseFixtureGenerator, QuickTester):
         )
         _assert_array_almost_equal(
             vanilla_result,
-            unpickled_result,
+            deserialized_result,
             decimal=6,
             err_msg=msg,
         )

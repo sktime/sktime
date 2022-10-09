@@ -4,12 +4,13 @@ __author__ = ["KatieBuc"]
 
 import numpy as np
 import pandas as pd
+import pytest
 from numpy.testing import assert_allclose
-from statsmodels.tsa.api import VARMAX as _VARMAX
 
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.forecasting.varmax import VARMAX
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 np.random.seed(13455)
 index = pd.date_range(start="2020-01", end="2021-12", freq="M")
@@ -20,11 +21,17 @@ df = pd.DataFrame(
 )
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("statsmodels", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
 def test_VARMAX_against_statsmodels():
     """Compares Sktime's and Statsmodel's VARMAX.
 
     with default variables.
     """
+    from statsmodels.tsa.api import VARMAX as _VARMAX
+
     train, _ = temporal_train_test_split(df.astype("float64"))
     y = train[["A", "B"]]
 
@@ -42,11 +49,17 @@ def test_VARMAX_against_statsmodels():
     assert_allclose(y_pred, y_pred_stats)
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("statsmodels", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
 def test_VARMAX_against_statsmodels_with_exog():
     """Compares Sktime's and Statsmodel's VARMAX.
 
     with exogenous input.
     """
+    from statsmodels.tsa.api import VARMAX as _VARMAX
+
     train, test = temporal_train_test_split(df.astype("float64"))
     y_train, X_train = train[["A", "B"]], train[["C"]]
     _, X_test = test[["A", "B"]], test[["C"]]

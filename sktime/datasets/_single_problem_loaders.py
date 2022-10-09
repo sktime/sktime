@@ -12,6 +12,7 @@ __author__ = [
     "patrickZIB",
     "aiwalter",
     "jasonlines",
+    "achieveordie",
 ]
 
 __all__ = [
@@ -35,19 +36,21 @@ __all__ = [
     "load_electric_devices_segmentation",
     "load_macroeconomic",
     "load_unit_test_tsf",
+    "load_covid_3month",
 ]
 
 import os
+from urllib.error import HTTPError
 
 import numpy as np
 import pandas as pd
-import statsmodels.api as sm
 
 from sktime.datasets._data_io import (
     _load_dataset,
     _load_provided_dataset,
     load_tsf_to_dataframe,
 )
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 DIRNAME = "data"
 MODULE = os.path.dirname(__file__)
@@ -78,11 +81,10 @@ def load_UCR_UEA_dataset(
         format <name>_TRAIN.ts or <name>_TEST.ts.
     return_X_y : bool, optional (default=False)
         it returns two objects, if False, it appends the class labels to the dataframe.
-    return_type: None or str, optional (default=None)
-        Memory data format specification to return X in, if None then return the default
-        "nested_univ" type.
-        str can be any other supported Panel mtype,
-            for list of mtypes, see datatypes.SCITYPE_REGISTER
+    return_type: valid Panel mtype str or None, optional (default=None="nested_univ")
+        Memory data format specification to return X in, None = "nested_univ" type.
+        str can be any supported sktime Panel mtype,
+            for list of mtypes, see datatypes.MTYPE_REGISTER
             for specifications, see examples/AA_datatypes_and_datasets.ipynb
         commonly used specifications:
             "nested_univ: nested pd.DataFrame, pd.Series in cells
@@ -113,25 +115,38 @@ def load_UCR_UEA_dataset(
     return _load_dataset(name, split, return_X_y, return_type, extract_path)
 
 
-def load_plaid(split=None, return_X_y=True):
+def load_plaid(split=None, return_X_y=True, return_type=None):
     """Load the PLAID time series classification problem and returns X and y.
 
     Example of a univariate problem with unequal length series.
 
     Parameters
     ----------
-    split: None or str{"train", "test"}, optional (default=None)
-        Whether to load the train or test partition of the problem. By
-        default it loads both.
+    split: None or one of "TRAIN", "TEST", optional (default=None)
+        Whether to load the train or test instances of the problem.
+        By default it loads both train and test instances (in a single container).
     return_X_y: bool, optional (default=True)
         If True, returns (features, target) separately instead of a single
         dataframe with columns for features and the target.
+    return_type: valid Panel mtype str or None, optional (default=None="nested_univ")
+        Memory data format specification to return X in, None = "nested_univ" type.
+        str can be any supported sktime Panel mtype,
+            for list of mtypes, see datatypes.MTYPE_REGISTER
+            for specifications, see examples/AA_datatypes_and_datasets.ipynb
+        commonly used specifications:
+            "nested_univ: nested pd.DataFrame, pd.Series in cells
+            "numpy3D"/"numpy3d"/"np3D": 3D np.ndarray (instance, variable, time index)
+            "numpy2d"/"np2d"/"numpyflat": 2D np.ndarray (instance, time index)
+            "pd-multiindex": pd.DataFrame with 2-level (instance, time) MultiIndex
+        Exception is raised if the data cannot be stored in the requested type.
 
     Returns
     -------
-    X: pd.DataFrame with m rows and c columns
-        The time series data for the problem with m cases and c dimensions
-    y: numpy array The class labels for each case in X
+    X: sktime data container, following mtype specification `return_type`
+        The time series data for the problem, with n instances
+    y: 1D numpy array of length n, only returned if return_X_y if True
+        The class labels for each time series instance in X
+        If return_X_y is False, y is appended to X instead.
 
     Examples
     --------
@@ -139,27 +154,39 @@ def load_plaid(split=None, return_X_y=True):
     >>> X, y = load_plaid()
     """
     name = "PLAID"
-    return _load_dataset(name, split, return_X_y)
+    return _load_dataset(name, split, return_X_y, return_type=return_type)
 
 
-def load_gunpoint(split=None, return_X_y=True):
+def load_gunpoint(split=None, return_X_y=True, return_type=None):
     """Load the GunPoint time series classification problem and returns X and y.
 
     Parameters
     ----------
-    split: None or str{"train", "test"}, optional (default=None)
-        Whether to load the train or test partition of the problem. By default it
-        loads both.
+    split: None or one of "TRAIN", "TEST", optional (default=None)
+        Whether to load the train or test instances of the problem.
+        By default it loads both train and test instances (in a single container).
     return_X_y: bool, optional (default=True)
         If True, returns (features, target) separately instead of a single
         dataframe with columns for features and the target.
+    return_type: valid Panel mtype str or None, optional (default=None="nested_univ")
+        Memory data format specification to return X in, None = "nested_univ" type.
+        str can be any supported sktime Panel mtype,
+            for list of mtypes, see datatypes.MTYPE_REGISTER
+            for specifications, see examples/AA_datatypes_and_datasets.ipynb
+        commonly used specifications:
+            "nested_univ: nested pd.DataFrame, pd.Series in cells
+            "numpy3D"/"numpy3d"/"np3D": 3D np.ndarray (instance, variable, time index)
+            "numpy2d"/"np2d"/"numpyflat": 2D np.ndarray (instance, time index)
+            "pd-multiindex": pd.DataFrame with 2-level (instance, time) MultiIndex
+        Exception is raised if the data cannot be stored in the requested type.
 
     Returns
     -------
-    X: pd.DataFrame with m rows and c columns
-        The time series data for the problem with m cases and c dimensions
-    y: numpy array
-        The class labels for each case in X
+    X: sktime data container, following mtype specification `return_type`
+        The time series data for the problem, with n instances
+    y: 1D numpy array of length n, only returned if return_X_y if True
+        The class labels for each time series instance in X
+        If return_X_y is False, y is appended to X instead.
 
     Examples
     --------
@@ -195,28 +222,39 @@ def load_gunpoint(split=None, return_X_y=True):
     ?Dataset=GunPoint
     """
     name = "GunPoint"
-    return _load_dataset(name, split, return_X_y)
+    return _load_dataset(name, split, return_X_y, return_type=return_type)
 
 
-def load_osuleaf(split=None, return_X_y=True):
+def load_osuleaf(split=None, return_X_y=True, return_type=None):
     """Load the OSULeaf time series classification problem and returns X and y.
 
     Parameters
     ----------
-    split: None or str{"train", "test"}, optional (default=None)
-        Whether to load the train or test partition of the problem. By
-        default it loads both.
+    split: None or one of "TRAIN", "TEST", optional (default=None)
+        Whether to load the train or test instances of the problem.
+        By default it loads both train and test instances (in a single container).
     return_X_y: bool, optional (default=True)
         If True, returns (features, target) separately instead of a single
-        dataframe with columns for
-        features and the target.
+        dataframe with columns for features and the target.
+    return_type: valid Panel mtype str or None, optional (default=None="nested_univ")
+        Memory data format specification to return X in, None = "nested_univ" type.
+        str can be any supported sktime Panel mtype,
+            for list of mtypes, see datatypes.MTYPE_REGISTER
+            for specifications, see examples/AA_datatypes_and_datasets.ipynb
+        commonly used specifications:
+            "nested_univ: nested pd.DataFrame, pd.Series in cells
+            "numpy3D"/"numpy3d"/"np3D": 3D np.ndarray (instance, variable, time index)
+            "numpy2d"/"np2d"/"numpyflat": 2D np.ndarray (instance, time index)
+            "pd-multiindex": pd.DataFrame with 2-level (instance, time) MultiIndex
+        Exception is raised if the data cannot be stored in the requested type.
 
     Returns
     -------
-    X: pd.DataFrame with m rows and c columns
-        The time series data for the problem with m cases and c dimensions
-    y: numpy array
-        The class labels for each case in X
+    X: sktime data container, following mtype specification `return_type`
+        The time series data for the problem, with n instances
+    y: 1D numpy array of length n, only returned if return_X_y if True
+        The class labels for each time series instance in X
+        If return_X_y is False, y is appended to X instead.
 
     Examples
     --------
@@ -242,28 +280,39 @@ def load_osuleaf(split=None, return_X_y=True):
     ?Dataset=OSULeaf
     """
     name = "OSULeaf"
-    return _load_dataset(name, split, return_X_y)
+    return _load_dataset(name, split, return_X_y, return_type=return_type)
 
 
-def load_italy_power_demand(split=None, return_X_y=True):
+def load_italy_power_demand(split=None, return_X_y=True, return_type=None):
     """Load ItalyPowerDemand time series classification problem.
 
     Parameters
     ----------
-    split: None or str{"train", "test"}, optional (default=None)
-        Whether to load the train or test partition of the problem. By
-        default it loads both.
+    split: None or one of "TRAIN", "TEST", optional (default=None)
+        Whether to load the train or test instances of the problem.
+        By default it loads both train and test instances (in a single container).
     return_X_y: bool, optional (default=True)
         If True, returns (features, target) separately instead of a single
-        dataframe with columns for
-        features and the target.
+        dataframe with columns for features and the target.
+    return_type: valid Panel mtype str or None, optional (default=None="nested_univ")
+        Memory data format specification to return X in, None = "nested_univ" type.
+        str can be any supported sktime Panel mtype,
+            for list of mtypes, see datatypes.MTYPE_REGISTER
+            for specifications, see examples/AA_datatypes_and_datasets.ipynb
+        commonly used specifications:
+            "nested_univ: nested pd.DataFrame, pd.Series in cells
+            "numpy3D"/"numpy3d"/"np3D": 3D np.ndarray (instance, variable, time index)
+            "numpy2d"/"np2d"/"numpyflat": 2D np.ndarray (instance, time index)
+            "pd-multiindex": pd.DataFrame with 2-level (instance, time) MultiIndex
+        Exception is raised if the data cannot be stored in the requested type.
 
     Returns
     -------
-    X: pd.DataFrame with m rows and c columns
-        The time series data for the problem with m cases and c dimensions
-    y: numpy array
-        The class labels for each case in X
+    X: sktime data container, following mtype specification `return_type`
+        The time series data for the problem, with n instances
+    y: 1D numpy array of length n, only returned if return_X_y if True
+        The class labels for each time series instance in X
+        If return_X_y is False, y is appended to X instead.
 
     Examples
     --------
@@ -286,7 +335,7 @@ def load_italy_power_demand(split=None, return_X_y=True):
     http://timeseriesclassification.com/description.php?Dataset=ItalyPowerDemand
     """
     name = "ItalyPowerDemand"
-    return _load_dataset(name, split, return_X_y)
+    return _load_dataset(name, split, return_X_y, return_type=return_type)
 
 
 def load_unit_test(split=None, return_X_y=True, return_type=None):
@@ -301,14 +350,23 @@ def load_unit_test(split=None, return_X_y=True, return_type=None):
 
     Parameters
     ----------
-    split: None or str{"train", "test"}, optional (default=None)
-        Whether to load the train or test partition of the problem. By default it
-        loads both.
+    split: None or one of "TRAIN", "TEST", optional (default=None)
+        Whether to load the train or test instances of the problem.
+        By default it loads both train and test instances (in a single container).
     return_X_y: bool, optional (default=True)
-        If True, returns (features, target) separately instead of a concatenated data
-        structure.
-    return_type: None or str{"numpy2d", "numpyflat", "numpy3d", "nested_univ"},
-        optional (default=None). Controls the returned data structure.
+        If True, returns (features, target) separately instead of a single
+        dataframe with columns for features and the target.
+    return_type: valid Panel mtype str or None, optional (default=None="nested_univ")
+        Memory data format specification to return X in, None = "nested_univ" type.
+        str can be any supported sktime Panel mtype,
+            for list of mtypes, see datatypes.MTYPE_REGISTER
+            for specifications, see examples/AA_datatypes_and_datasets.ipynb
+        commonly used specifications:
+            "nested_univ: nested pd.DataFrame, pd.Series in cells
+            "numpy3D"/"numpy3d"/"np3D": 3D np.ndarray (instance, variable, time index)
+            "numpy2d"/"np2d"/"numpyflat": 2D np.ndarray (instance, time index)
+            "pd-multiindex": pd.DataFrame with 2-level (instance, time) MultiIndex
+        Exception is raised if the data cannot be stored in the requested type.
 
     Returns
     -------
@@ -342,19 +400,30 @@ def load_unit_test(split=None, return_X_y=True, return_type=None):
     return _load_provided_dataset(name, split, return_X_y, return_type)
 
 
-def load_japanese_vowels(split=None, return_X_y=True):
+def load_japanese_vowels(split=None, return_X_y=True, return_type=None):
     """Load the JapaneseVowels time series classification problem.
 
     Example of a multivariate problem with unequal length series.
 
     Parameters
     ----------
-    split: None or str{"train", "test"}, optional (default=None)
-        Whether to load the train or test partition of the problem. By
-    default it loads both.
+    split: None or one of "TRAIN", "TEST", optional (default=None)
+        Whether to load the train or test instances of the problem.
+        By default it loads both train and test instances (in a single container).
     return_X_y: bool, optional (default=True)
-        If True, returns (features, target) separately instead of a
-        single dataframe with columns for features and the target.
+        If True, returns (features, target) separately instead of a single
+        dataframe with columns for features and the target.
+    return_type: valid Panel mtype str or None, optional (default=None="nested_univ")
+        Memory data format specification to return X in, None = "nested_univ" type.
+        str can be any supported sktime Panel mtype,
+            for list of mtypes, see datatypes.MTYPE_REGISTER
+            for specifications, see examples/AA_datatypes_and_datasets.ipynb
+        commonly used specifications:
+            "nested_univ: nested pd.DataFrame, pd.Series in cells
+            "numpy3D"/"numpy3d"/"np3D": 3D np.ndarray (instance, variable, time index)
+            "numpy2d"/"np2d"/"numpyflat": 2D np.ndarray (instance, time index)
+            "pd-multiindex": pd.DataFrame with 2-level (instance, time) MultiIndex
+        Exception is raised if the data cannot be stored in the requested type.
 
     Returns
     -------
@@ -395,29 +464,40 @@ def load_japanese_vowels(split=None, return_X_y=True):
     ?Dataset=JapaneseVowels
     """
     name = "JapaneseVowels"
-    return _load_dataset(name, split, return_X_y)
+    return _load_dataset(name, split, return_X_y, return_type=return_type)
 
 
-def load_arrow_head(split=None, return_X_y=True, return_type="nested_univ"):
+def load_arrow_head(split=None, return_X_y=True, return_type=None):
     """
     Load the ArrowHead time series classification problem and returns X and y.
 
     Parameters
     ----------
-    split: None or str{"train", "test"}, optional (default=None)
-        Whether to load the train or test partition of the problem. By
-        default it loads both.
+    split: None or one of "TRAIN", "TEST", optional (default=None)
+        Whether to load the train or test instances of the problem.
+        By default it loads both train and test instances (in a single container).
     return_X_y: bool, optional (default=True)
         If True, returns (features, target) separately instead of a single
-        dataframe with columns for
-        features and the target.
+        dataframe with columns for features and the target.
+    return_type: valid Panel mtype str or None, optional (default=None="nested_univ")
+        Memory data format specification to return X in, None = "nested_univ" type.
+        str can be any supported sktime Panel mtype,
+            for list of mtypes, see datatypes.MTYPE_REGISTER
+            for specifications, see examples/AA_datatypes_and_datasets.ipynb
+        commonly used specifications:
+            "nested_univ: nested pd.DataFrame, pd.Series in cells
+            "numpy3D"/"numpy3d"/"np3D": 3D np.ndarray (instance, variable, time index)
+            "numpy2d"/"np2d"/"numpyflat": 2D np.ndarray (instance, time index)
+            "pd-multiindex": pd.DataFrame with 2-level (instance, time) MultiIndex
+        Exception is raised if the data cannot be stored in the requested type.
 
     Returns
     -------
-    X: pd.DataFrame with m rows and c columns
-        The time series data for the problem with m cases and c dimensions
-    y: numpy array
-        The class labels for each case in X
+    X: sktime data container, following mtype specification `return_type`
+        The time series data for the problem, with n instances
+    y: 1D numpy array of length n, only returned if return_X_y if True
+        The class labels for each time series instance in X
+        If return_X_y is False, y is appended to X instead.
 
     Examples
     --------
@@ -453,25 +533,36 @@ def load_arrow_head(split=None, return_X_y=True, return_type="nested_univ"):
     )
 
 
-def load_acsf1(split=None, return_X_y=True):
+def load_acsf1(split=None, return_X_y=True, return_type=None):
     """Load dataset on power consumption of typical appliances.
 
     Parameters
     ----------
-    split: None or str{"train", "test"}, optional (default=None)
-        Whether to load the train or test partition of the problem. By
-        default it loads both.
+    split: None or one of "TRAIN", "TEST", optional (default=None)
+        Whether to load the train or test instances of the problem.
+        By default it loads both train and test instances (in a single container).
     return_X_y: bool, optional (default=True)
         If True, returns (features, target) separately instead of a single
-        dataframe with columns for
-        features and the target.
+        dataframe with columns for features and the target.
+    return_type: valid Panel mtype str or None, optional (default=None="nested_univ")
+        Memory data format specification to return X in, None = "nested_univ" type.
+        str can be any supported sktime Panel mtype,
+            for list of mtypes, see datatypes.MTYPE_REGISTER
+            for specifications, see examples/AA_datatypes_and_datasets.ipynb
+        commonly used specifications:
+            "nested_univ: nested pd.DataFrame, pd.Series in cells
+            "numpy3D"/"numpy3d"/"np3D": 3D np.ndarray (instance, variable, time index)
+            "numpy2d"/"np2d"/"numpyflat": 2D np.ndarray (instance, time index)
+            "pd-multiindex": pd.DataFrame with 2-level (instance, time) MultiIndex
+        Exception is raised if the data cannot be stored in the requested type.
 
     Returns
     -------
-    X: pd.DataFrame with m rows and c columns
-        The time series data for the problem with m cases and c dimensions
-    y: numpy array
-        The class labels for each case in X
+    X: sktime data container, following mtype specification `return_type`
+        The time series data for the problem, with n instances
+    y: 1D numpy array of length n, only returned if return_X_y if True
+        The class labels for each time series instance in X
+        If return_X_y is False, y is appended to X instead.
 
     Examples
     --------
@@ -499,7 +590,7 @@ def load_acsf1(split=None, return_X_y=True):
     =ACSF1
     """
     name = "ACSF1"
-    return _load_dataset(name, split, return_X_y)
+    return _load_dataset(name, split, return_X_y, return_type=return_type)
 
 
 def load_basic_motions(split=None, return_X_y=True, return_type=None):
@@ -512,24 +603,31 @@ def load_basic_motions(split=None, return_X_y=True, return_type=None):
 
     Parameters
     ----------
-    split: None or str{"train", "test"}, optional (default=None)
-        Whether to load the train or test partition of the problem. By
-        default it loads both.
+    split: None or one of "TRAIN", "TEST", optional (default=None)
+        Whether to load the train or test instances of the problem.
+        By default it loads both train and test instances (in a single container).
     return_X_y: bool, optional (default=True)
-        If True, returns (time series, target) separately as X and y instead of a single
-        data structure.
-    return_type: None or str{"numpy3d", "nested_univ"},
-        optional (default=None). Controls the returned data structure.
+        If True, returns (features, target) separately instead of a single
+        dataframe with columns for features and the target.
+    return_type: valid Panel mtype str or None, optional (default=None="nested_univ")
+        Memory data format specification to return X in, None = "nested_univ" type.
+        str can be any supported sktime Panel mtype,
+            for list of mtypes, see datatypes.MTYPE_REGISTER
+            for specifications, see examples/AA_datatypes_and_datasets.ipynb
+        commonly used specifications:
+            "nested_univ: nested pd.DataFrame, pd.Series in cells
+            "numpy3D"/"numpy3d"/"np3D": 3D np.ndarray (instance, variable, time index)
+            "numpy2d"/"np2d"/"numpyflat": 2D np.ndarray (instance, time index)
+            "pd-multiindex": pd.DataFrame with 2-level (instance, time) MultiIndex
+        Exception is raised if the data cannot be stored in the requested type.
 
     Returns
     -------
-    X:  The time series data for the problem. If return_type is either
-        "numpy2d"/"numpyflat", it returns 2D numpy array of shape (n,m), if "numpy3d" it
-        returns 3D numpy array of shape (n,6,m) and if "nested_univ" or None it returns
-        a nested pandas DataFrame of shape (n,6), where each cell is a pd.Series of
-        length m.
-    y: (optional) numpy array shape (n,1). The class labels for each case in X.
-        If return_X_y is False, y is appended to X.
+    X: sktime data container, following mtype specification `return_type`
+        The time series data for the problem, with n instances
+    y: 1D numpy array of length n, only returned if return_X_y if True
+        The class labels for each time series instance in X
+        If return_X_y is False, y is appended to X instead.
 
     Raises
     ------
@@ -826,12 +924,12 @@ def load_gun_point_segmentation():
 
     Returns
     -------
-        X : pd.Series
-            Single time series for segmentation
-        period_length : int
-            The annotated period length by a human expert
-        change_points : numpy array
-            The change points annotated within the dataset
+    X : pd.Series
+        Single time series for segmentation
+    period_length : int
+        The annotated period length by a human expert
+    change_points : numpy array
+        The change points annotated within the dataset
 
     Examples
     --------
@@ -866,12 +964,12 @@ def load_electric_devices_segmentation():
 
     Returns
     -------
-        X : pd.Series
-            Single time series for segmentation
-        period_length : int
-            The annotated period length by a human expert
-        change_points : numpy array
-            The change points annotated within the dataset
+    X : pd.Series
+        Single time series for segmentation
+    period_length : int
+        The annotated period length by a human expert
+    change_points : numpy array
+        The change points annotated within the dataset
 
     Examples
     --------
@@ -971,6 +1069,9 @@ def load_macroeconomic():
     .. [3] Data Source: Bureau of Labor Statistics, U.S. Department of Labor;
           http://www.bls.gov/data/; accessed December 15, 2009.
     """
+    _check_soft_dependencies("statsmodels")
+    import statsmodels.api as sm
+
     y = sm.datasets.macrodata.load_pandas().data
     y["year"] = y["year"].astype(int).astype(str)
     y["quarter"] = y["quarter"].astype(int).astype(str).apply(lambda x: "Q" + x)
@@ -1053,31 +1154,101 @@ def load_solar(
 
     Examples
     --------
-    >>> from sktime.datasets import load_solar
-    >>> y = load_solar()
+    >>> from sktime.datasets import load_solar  # doctest: +SKIP
+    >>> y = load_solar()  # doctest: +SKIP
     """
-    url = "https://api0.solar.sheffield.ac.uk/pvlive/api/"
-    url = url + api_version + "/gsp/0?"
-    url = url + "start=" + start + "T00:00:00&"
-    url = url + "end=" + end + "T00:00:00&"
-    url = url + "extra_fields=capacity_mwp&"
-    url = url + "data_format=csv"
+    from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-    df = (
-        pd.read_csv(
-            url, index_col=["gsp_id", "datetime_gmt"], parse_dates=["datetime_gmt"]
+    _check_soft_dependencies("backoff")
+
+    import backoff
+
+    @backoff.on_exception(wait_gen=backoff.expo, exception=HTTPError, max_tries=5)
+    def _load_solar(
+        start="2021-05-01",
+        end="2021-09-01",
+        normalise=True,
+        return_full_df=False,
+        api_version="v4",
+    ):
+        """Private loader, for decoration with backoff."""
+        url = "https://api0.solar.sheffield.ac.uk/pvlive/api/"
+        url = url + api_version + "/gsp/0?"
+        url = url + "start=" + start + "T00:00:00&"
+        url = url + "end=" + end + "T00:00:00&"
+        url = url + "extra_fields=capacity_mwp&"
+        url = url + "data_format=csv"
+
+        df = (
+            pd.read_csv(
+                url, index_col=["gsp_id", "datetime_gmt"], parse_dates=["datetime_gmt"]
+            )
+            .droplevel(0)
+            .sort_index()
         )
-        .droplevel(0)
-        .sort_index()
-    )
-    df = df.asfreq("30T")
-    df["generation_pu"] = df["generation_mw"] / df["capacity_mwp"]
-
-    if return_full_df:
+        df = df.asfreq("30T")
         df["generation_pu"] = df["generation_mw"] / df["capacity_mwp"]
-        return df
-    else:
-        if normalise:
-            return df["generation_pu"].rename("solar_gen")
+
+        if return_full_df:
+            df["generation_pu"] = df["generation_mw"] / df["capacity_mwp"]
+            return df
         else:
-            return df["generation_mw"].rename("solar_gen")
+            if normalise:
+                return df["generation_pu"].rename("solar_gen")
+            else:
+                return df["generation_mw"].rename("solar_gen")
+
+    return _load_solar(
+        start=start,
+        end=end,
+        normalise=normalise,
+        return_full_df=return_full_df,
+        api_version=api_version,
+    )
+
+
+def load_covid_3month(split=None, return_X_y=True):
+    """Load dataset of last three months confirmed covid cases.
+
+    Parameters
+    ----------
+    split: None or str{"train", "test"}, optional (default=None)
+        Whether to load the train or test partition of the problem. By
+        default, it loads both.
+    return_X_y: bool, optional (default=True)
+        If True, returns (features, target) separately instead of a single
+        dataframe with columns for
+        features and the target.
+
+    Returns
+    -------
+    X: pd.DataFrame with m rows and c columns
+        The time series data for the problem with m cases and c dimensions
+    y: numpy array
+        The regression values for each case in X
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_covid_3month
+    >>> X, y = load_covid_3month()
+
+    Notes
+    -----
+    Dimensionality:     univariate
+    Series length:      84
+    Train cases:        140
+    Test cases:         61
+    Number of classes:  -
+
+    The goal of this dataset is to predict COVID-19's death rate on 1st April 2020 for
+    each country using daily confirmed cases for the last three months. This dataset
+    contains 201 time series with no missing values, where each time series is
+    the daily confirmed cases for a country.
+    The data was obtained from WHO's COVID-19 database.
+    Please refer to https://covid19.who.int/ for more details
+
+    Dataset details: https://zenodo.org/record/3902690#.Yy1z_HZBxEY
+    =Covid3Month
+    """
+    name = "Covid3Month"
+    return _load_dataset(name, split, return_X_y)

@@ -199,6 +199,7 @@ class WindowSummarizer(BaseTransformer):
         "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
         "transform-returns-same-time-index": False,
         # does transform return have the same time index as input X
+        "remember_data": True,  # remember all data seen as _X
     }
 
     def __init__(
@@ -238,8 +239,6 @@ class WindowSummarizer(BaseTransformer):
             The raw inputs to transformed columns will be dropped.
         self: reference to self
         """
-        self._X_memory = X
-
         X_name = get_name_list(X)
 
         if self.target_cols is not None:
@@ -299,7 +298,7 @@ class WindowSummarizer(BaseTransformer):
         transformed version of X
         """
         idx = X.index
-        X = X.combine_first(self._X_memory)
+        X = X.combine_first(self._X)
 
         func_dict = self._func_dict
         target_cols = self._target_cols
@@ -331,20 +330,6 @@ class WindowSummarizer(BaseTransformer):
 
         Xt_return = Xt_return.loc[idx]
         return Xt_return
-
-    def _update(self, X, y=None):
-        """Update X and return a transformed version.
-
-        Parameters
-        ----------
-        X : pd.DataFrame
-        y : None
-
-        Returns
-        -------
-        transformed version of X
-        """
-        self._X_memory = X.combine_first(self._X_memory)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):

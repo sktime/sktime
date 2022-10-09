@@ -1129,8 +1129,8 @@ class ForecastX(BaseForecaster):
     """
 
     _tags = {
-        "X_inner_mtype": "pd.DataFrame",
-        "y_inner_mtype": "pd.DataFrame",
+        "X_inner_mtype": SUPPORTED_MTYPES,
+        "y_inner_mtype": SUPPORTED_MTYPES,
         "X-y-must-have-same-index": False,
         "fit_is_empty": False,
         "ignores-exogeneous-X": False,

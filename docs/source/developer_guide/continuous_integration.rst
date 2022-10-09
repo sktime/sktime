@@ -75,7 +75,7 @@ integration services we use.
 | Platform      | Operation             | Configuration                       |
 +===============+=======================+=====================================+
 | `GitHub       | Build/test/           | `.github/workflows/ <https://gi     |
-| Actions       | distribute            | thub.com/alan-turing-institute/skti |
+| Actions       | distribute            | thub.com/sktime/skti |
 | <https:/      | on Linux, MacOS and   | me/blob/main/.github/workflows/>`__ |
 | /docs.github. | Windows,              |                                     |
 | com/en/free-p | run code quality      |                                     |
@@ -88,7 +88,7 @@ integration services we use.
 | edocs.org>`__ |                       | thub/workflows/code-quality.yml>`__ |
 +---------------+-----------------------+-------------------------------------+
 | `Codecov      | Test coverage         | `.codecov.yml <https                |
-| <https://c    |                       | ://github.com/alan-turing-institute |
+| <https://c    |                       | ://github.com/sktime |
 | odecov.io>`__ |                       | /sktime/blob/main/.codecov.yml>`__, |
 |               |                       | `.coveragerc <htt                   |
 |               |                       | ps://github.com/alan-turing-institu |
@@ -97,4 +97,4 @@ integration services we use.
 
 Additional scripts used for building, unit testing and distribution can
 be found in
-`build_tools/ <https://github.com/alan-turing-institute/sktime/tree/main/build_tools>`__.
+`build_tools/ <https://github.com/sktime/sktime/tree/main/build_tools>`__.
