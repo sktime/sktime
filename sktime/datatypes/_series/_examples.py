@@ -70,7 +70,7 @@ if _check_soft_dependencies("xarray", severity="none"):
 if _check_soft_dependencies("dask", severity="none"):
     from dask.dataframe import from_pandas
 
-    df_dask = from_pandas(example_dict[("pd.DataFrame", "Series", 0)])
+    df_dask = from_pandas(example_dict[("pd.DataFrame", "Series", 0)], n_partitions=1)
 
     example_dict[("dask_series", "Series", 0)] = df_dask
     example_dict_lossy[("dask_series", "Series", 0)] = False
@@ -112,7 +112,7 @@ if _check_soft_dependencies("xarray", severity="none"):
 if _check_soft_dependencies("dask", severity="none"):
     from dask.dataframe import from_pandas
 
-    df_dask = from_pandas(example_dict[("pd.DataFrame", "Series", 1)])
+    df_dask = from_pandas(example_dict[("pd.DataFrame", "Series", 1)], n_partitions=1)
 
     example_dict[("dask_series", "Series", 1)] = df_dask
     example_dict_lossy[("dask_series", "Series", 1)] = False
@@ -155,10 +155,10 @@ if _check_soft_dependencies("xarray", severity="none"):
 if _check_soft_dependencies("dask", severity="none"):
     from dask.dataframe import from_pandas
 
-    df_dask = from_pandas(example_dict[("pd.DataFrame", "Series", 1)])
+    df_dask = from_pandas(example_dict[("pd.DataFrame", "Series", 2)], n_partitions=1)
 
-    example_dict[("dask_series", "Series", 1)] = df_dask
-    example_dict_lossy[("dask_series", "Series", 1)] = False
+    example_dict[("dask_series", "Series", 2)] = df_dask
+    example_dict_lossy[("dask_series", "Series", 2)] = False
 
 
 example_dict_metadata[("Series", 2)] = {
