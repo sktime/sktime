@@ -251,10 +251,6 @@ class IGTS:
                 )
             )
 
-            # logger.info(
-            #     f"BEST {ig_max=:.5f} for {best_candidate=} "
-            #     + f"current {current_change_points=}"
-            # )
         return current_change_points
 
 
