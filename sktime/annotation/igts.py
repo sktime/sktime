@@ -342,9 +342,11 @@ class InformationGainSegmentation(SegmentationMixin, BaseEstimator):
     --------
     >>> from sktime.annotation.datagen import piecewise_normal_multivariate
     >>> from sklearn.preprocessing import MinMaxScaler
-    >>> X = piecewise_normal_multivariate(lengths=[10, 10, 10, 10],
+    >>> X = piecewise_normal_multivariate(
+    ... lengths=[10, 10, 10, 10],
     ... means=[[0.0, 1.0], [11.0, 10.0], [5.0, 3.0], [2.0, 2.0]],
-    ... variances=0.5)
+    ... variances=0.5,
+    ... )
     >>> X_scaled = MinMaxScaler(feature_range=(0, 1)).fit_transform(X)
     >>> from sktime.annotation.igts import InformationGainSegmentation
     >>> igts = InformationGainSegmentation(k_max=3, step=2)
