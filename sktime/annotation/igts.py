@@ -236,7 +236,6 @@ class IGTS:
                 try_change_points.update(current_change_points)
                 try_change_points = sorted(try_change_points)
                 ig = self.information_gain_score(X, try_change_points)
-                # logger.info(f"{ig=:.5f} for {candidate=} with {try_change_points=}")
                 if ig > ig_max:
                     ig_max = ig
                     best_candidate = candidate
