@@ -33,7 +33,6 @@ __all__ = ["InformationGainSegmentation"]
 __author__ = ["lmmentel"]
 
 
-# logger = logging.getLogger(__name__)
 
 
 @dataclass
