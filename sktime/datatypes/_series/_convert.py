@@ -223,7 +223,8 @@ if _check_soft_dependencies("xarray", severity="none"):
     import xarray as xr
 
     from sktime.datatypes._adapter.dask_to_pd import (
-        convert_dask_to_pandas, convert_pandas_to_dask
+        convert_dask_to_pandas,
+        convert_pandas_to_dask,
     )
 
     def convert_dask_to_mvs_as_series(obj, store=None):
