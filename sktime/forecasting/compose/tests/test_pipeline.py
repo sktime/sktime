@@ -38,6 +38,7 @@ from sktime.transformations.series.impute import Imputer
 from sktime.transformations.series.outlier_detection import HampelFilter
 from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
 from sktime.utils._testing.series import _make_series
+from sktime.utils.estimators import MockForecaster
 
 
 def test_pipeline():
@@ -342,3 +343,32 @@ def test_forecasting_pipeline_dunder_exog():
     expected = compute_expected_y_pred(y_train, X_train, X_test, fh)
     _assert_array_almost_equal(actual, expected, decimal=2)
     _assert_array_almost_equal(actual_alt, expected, decimal=2)
+
+
+def test_tag_handles_missing_data():
+    """Test missing data with Imputer in pipelines.
+
+    Make sure that no exception is raised when NaN and Imputer is given.
+    This test is based on bug issue #3547.
+    """
+    forecaster = MockForecaster()
+    forecaster.set_tags(**{"handles-missing-data": False})
+
+    # make sure that test forecaster cant handle missing data
+    assert forecaster.get_tag("handles-missing-data") is False
+
+    y = _make_series()
+    y[10] = np.nan
+
+    # test only TransformedTargetForecaster
+    y_pipe = TransformedTargetForecaster(
+        steps=[("transformer_y", Imputer()), ("model", forecaster)]
+    )
+    y_pipe.fit(y)
+
+    # test TransformedTargetForecaster and ForecastingPipeline nested
+    y_pipe = TransformedTargetForecaster(
+        steps=[("transformer_y", Imputer()), ("model", forecaster)]
+    )
+    X_pipe = ForecastingPipeline(steps=[("forecaster", y_pipe)])
+    X_pipe.fit(y)
