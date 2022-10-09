@@ -50,7 +50,7 @@ def convert_identity(obj, store=None):
 
 
 # assign identity function to type conversion to self
-for tp in ["pd.Series", "pd.DataFrame", "np.ndarray", "xr.DataArray"]:
+for tp in MTYPE_LIST_SERIES:
     convert_dict[(tp, tp, "Series")] = convert_identity
 
 
