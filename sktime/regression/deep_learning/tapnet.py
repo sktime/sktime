@@ -239,7 +239,7 @@ class TapNetRegressor(BaseDeepRegressor):
             "batch_size": 32,
             "padding": "valid",
             "filter_sizes": (64, 64, 64),
-            "kernel_sizes": (3, 3, 1),
+            "kernel_size": (3, 3, 1),
             "layers": (25, 50),
         }
 
