@@ -338,8 +338,8 @@ class InformationGainSegmentation(SegmentationMixin, BaseEstimator):
        Pervasive and Mobile Computing, 38, 92-109, (2017).
        https://www.sciencedirect.com/science/article/abs/pii/S1574119217300081
 
-    Example
-    -------
+    Examples
+    --------
     >>> from sktime.annotation.datagen import piecewise_normal_multivariate
     >>> from sklearn.preprocessing import MinMaxScaler
     >>> X = piecewise_normal_multivariate(lengths=[10, 10, 10, 10],
