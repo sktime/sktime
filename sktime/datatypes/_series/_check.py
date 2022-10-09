@@ -372,4 +372,4 @@ if _check_soft_dependencies("dask", severity="none"):
 
         return ret(True, None, metadata, return_metadata)
 
-    check_dict[("dask_series", "Series")] = check_xrdataarray_series
+    check_dict[("dask_series", "Series")] = check_dask_series
