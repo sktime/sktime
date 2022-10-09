@@ -888,7 +888,8 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
         est_clone = estimator_instance.clone()
         assert isinstance(est_clone, type(estimator_instance))
         assert est_clone is not estimator_instance
-        assert not est_clone.is_fitted
+        if hasattr(est_clone, "is_fitted"):
+            assert not est_clone.is_fitted
 
     def test_repr(self, estimator_instance):
         """Check that __repr__ call to instance does not raise exceptions."""
