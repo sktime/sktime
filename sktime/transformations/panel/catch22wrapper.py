@@ -12,7 +12,8 @@ import pandas as pd
 from joblib import Parallel, delayed
 
 from sktime.transformations.base import BaseTransformer
-from sktime.transformations.panel.catch22 import _normalise_series
+from sktime.transformations.panel import catch22
+from sktime.utils.validation import check_n_jobs
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 _check_soft_dependencies("pycatch22", severity="warning")
@@ -30,9 +31,10 @@ class Catch22Wrapper(BaseTransformer):
 
     Parameters
     ----------
-    features : str or List of str, optional, default="all"
-        The Catch22 features to extract by name as a str for singular features or as a
-        list for multiple. If "all", all features are extracted.
+    features : int/str or List of int/str, optional, default="all"
+        The Catch22 features to extract by feature index, feature name as a str or as a
+        list of names or indices for multiple features. If "all", all features are
+        extracted.
         Valid features are as follows:
             ["DN_HistogramMode_5", "DN_HistogramMode_10",
             "SB_BinaryStats_diff_longstretch0", "DN_OutlierInclude_p_001_mdrmd",
@@ -45,6 +47,10 @@ class Catch22Wrapper(BaseTransformer):
             "SC_FluctAnal_2_dfa_50_1_2_logi_prop_r1",
             "SC_FluctAnal_2_rsrangefit_50_1_logi_prop_r1",
             "SB_TransitionMatrix_3ac_sumdiagcov", "PD_PeriodicityWang_th0_01"]
+    catch24 : bool, optional, default=False
+        Extract the mean and standard deviation as well as the 22 Catch22 features if
+        true. If a List of specific features to extract is provided, "Mean" and/or
+        "StandardDeviation" must be added to the List to extract these features.
     outlier_norm : bool, optional, default=False
         Normalise each series during the two outlier Catch22 features, which can take a
         while to process for large values.
@@ -52,7 +58,7 @@ class Catch22Wrapper(BaseTransformer):
         Replace NaN or inf values from the Catch22 transform with 0.
     n_jobs : int, optional, default=1
         The number of jobs to run in parallel for transform. Requires multiple input
-        cases ``-1`` means using all processors.
+        cases. ``-1`` means using all processors.
 
     See Also
     --------
@@ -81,15 +87,18 @@ class Catch22Wrapper(BaseTransformer):
     def __init__(
         self,
         features="all",
+        catch24=False,
         outlier_norm=False,
         replace_nans=False,
         n_jobs=1,
     ):
         self.features = features
+        self.catch24 = catch24
         self.outlier_norm = outlier_norm
         self.replace_nans = replace_nans
-
         self.n_jobs = n_jobs
+
+        self._threads_to_use = 0
 
         super(Catch22Wrapper, self).__init__()
 
@@ -109,24 +118,7 @@ class Catch22Wrapper(BaseTransformer):
         """
         n_instances, n_dims = X.shape
 
-        if isinstance(self.features, str):
-            if self.features == "all":
-                f_idx = [i for i in range(22)]
-            elif self.features in feature_names:
-                f_idx = feature_names.index(self.features)
-            else:
-                raise ValueError("Invalid feature selection.")
-        elif isinstance(self.features, (list, tuple)):
-            if len(self.features) > 0 and all(
-                [f in feature_names for f in self.features]
-            ):
-                f_idx = list(
-                    dict.fromkeys([feature_names.index(f) for f in self.features])
-                )
-            else:
-                raise ValueError("Invalid feature selection.")
-        else:
-            raise ValueError("Invalid feature selection.")
+        f_idx = catch22.Catch22._verify_features()
 
         import pycatch22
 
@@ -155,7 +147,9 @@ class Catch22Wrapper(BaseTransformer):
             pycatch22.PD_PeriodicityWang_th0_01,
         ]
 
-        c22_list = Parallel(n_jobs=self.n_jobs)(
+        self._threads_to_use = check_n_jobs(self.n_jobs)
+
+        c22_list = Parallel(n_jobs=self._threads_to_use)(
             delayed(self._transform_case)(
                 X.iloc[i],
                 f_idx,
@@ -179,39 +173,20 @@ class Catch22Wrapper(BaseTransformer):
             if self.outlier_norm and (3 in f_idx or 4 in f_idx):
                 outlier_series = np.array(series)
                 outlier_series = list(
-                    _normalise_series(outlier_series, np.mean(outlier_series))
+                    catch22._normalise_series(outlier_series, np.mean(outlier_series))
                 )
 
-            for n, f in enumerate(f_idx):
-                if self.outlier_norm and f in [3, 4]:
-                    c22[dim + n] = features[f](outlier_series)
+            for n, feature in enumerate(f_idx):
+                if self.outlier_norm and feature in [3, 4]:
+                    c22[dim + n] = features[feature](outlier_series)
+                if feature == 22:
+                    c22[dim + n] = np.mean(series)
+                elif feature == 23:
+                    c22[dim + n] = np.std(series)
                 else:
-                    c22[dim + n] = features[f](series)
+                    c22[dim + n] = features[feature](series)
 
         return c22
 
 
-feature_names = [
-    "DN_HistogramMode_5",
-    "DN_HistogramMode_10",
-    "SB_BinaryStats_diff_longstretch0",
-    "DN_OutlierInclude_p_001_mdrmd",
-    "DN_OutlierInclude_n_001_mdrmd",
-    "CO_f1ecac",
-    "CO_FirstMin_ac",
-    "SP_Summaries_welch_rect_area_5_1",
-    "SP_Summaries_welch_rect_centroid",
-    "FC_LocalSimple_mean3_stderr",
-    "CO_trev_1_num",
-    "CO_HistogramAMI_even_2_5",
-    "IN_AutoMutualInfoStats_40_gaussian_fmmi",
-    "MD_hrv_classic_pnn40",
-    "SB_BinaryStats_mean_longstretch1",
-    "SB_MotifThree_quantile_hh",
-    "FC_LocalSimple_mean1_tauresrat",
-    "CO_Embed2_Dist_tau_d_expfit_meandiff",
-    "SC_FluctAnal_2_dfa_50_1_2_logi_prop_r1",
-    "SC_FluctAnal_2_rsrangefit_50_1_logi_prop_r1",
-    "SB_TransitionMatrix_3ac_sumdiagcov",
-    "PD_PeriodicityWang_th0_01",
-]
+feature_names = catch22.feature_names

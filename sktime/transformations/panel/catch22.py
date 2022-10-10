@@ -8,6 +8,7 @@ __author__ = ["MatthewMiddlehurst"]
 __all__ = ["Catch22"]
 
 import math
+import warnings
 
 import numpy as np
 import pandas as pd
@@ -17,6 +18,7 @@ from numba import njit
 
 from sktime.datatypes import convert_to
 from sktime.transformations.base import BaseTransformer
+from sktime.utils.validation import check_n_jobs
 
 
 class Catch22(BaseTransformer):
@@ -28,9 +30,10 @@ class Catch22(BaseTransformer):
 
     Parameters
     ----------
-    features : str or List of str, optional, default="all"
-        The Catch22 features to extract by name as a str for singular features or as a
-        list for multiple. If "all", all features are extracted.
+    features : int/str or List of int/str, optional, default="all"
+        The Catch22 features to extract by feature index, feature name as a str or as a
+        list of names or indices for multiple features. If "all", all features are
+        extracted.
         Valid features are as follows:
             ["DN_HistogramMode_5", "DN_HistogramMode_10",
             "SB_BinaryStats_diff_longstretch0", "DN_OutlierInclude_p_001_mdrmd",
@@ -43,6 +46,10 @@ class Catch22(BaseTransformer):
             "SC_FluctAnal_2_dfa_50_1_2_logi_prop_r1",
             "SC_FluctAnal_2_rsrangefit_50_1_logi_prop_r1",
             "SB_TransitionMatrix_3ac_sumdiagcov", "PD_PeriodicityWang_th0_01"]
+    catch24 : bool, optional, default=False
+        Extract the mean and standard deviation as well as the 22 Catch22 features if
+        true. If a List of specific features to extract is provided, "Mean" and/or
+        "StandardDeviation" must be added to the List to extract these features.
     outlier_norm : bool, optional, default=False
         Normalise each series during the two outlier Catch22 features, which can take a
         while to process for large values.
@@ -50,7 +57,12 @@ class Catch22(BaseTransformer):
         Replace NaN or inf values from the Catch22 transform with 0.
     n_jobs : int, optional, default=1
         The number of jobs to run in parallel for transform. Requires multiple input
-        cases ``-1`` means using all processors.
+        cases.
+
+        .. deprecated:: 0.13.4
+            the default = 4 was deprecated in version 0.13.3 and will be changed to
+            default = 2 in 0.15. Please use alphabet_size=2 due to its lower memory
+            footprint, better runtime at equal accuracy.
 
     See Also
     --------
@@ -87,15 +99,18 @@ class Catch22(BaseTransformer):
     def __init__(
         self,
         features="all",
+        catch24=False,
         outlier_norm=False,
         replace_nans=False,
         n_jobs=1,
     ):
         self.features = features
+        self.catch24 = catch24
         self.outlier_norm = outlier_norm
         self.replace_nans = replace_nans
-
         self.n_jobs = n_jobs
+
+        self._threads_to_use = 0
 
         # todo remove in v0.15
         self._case_id = None
@@ -127,26 +142,20 @@ class Catch22(BaseTransformer):
         """
         n_instances = X.shape[0]
 
-        if isinstance(self.features, str):
-            if self.features == "all":
-                f_idx = [i for i in range(22)]
-            elif self.features in feature_names:
-                f_idx = feature_names.index(self.features)
-            else:
-                raise ValueError("Invalid feature selection.")
-        elif isinstance(self.features, (list, tuple)):
-            if len(self.features) > 0 and all(
-                [f in feature_names for f in self.features]
-            ):
-                f_idx = list(
-                    dict.fromkeys([feature_names.index(f) for f in self.features])
-                )
-            else:
-                raise ValueError("Invalid feature selection.")
-        else:
-            raise ValueError("Invalid feature selection.")
+        f_idx = self._verify_features()
 
-        c22_list = Parallel(n_jobs=self.n_jobs)(
+        self._threads_to_use = check_n_jobs(self.n_jobs)
+
+        # todo remove in v0.15 and add to docstring: ``-1`` means using all processors.
+        if self.n_jobs == -1:
+            self._threads_to_use = 1
+            warnings.warn(
+                "``n_jobs`` default was changed to 1 from -1 in version 0.13.4. "
+                "In version 0.15 a value of -1 will use all CPU cores instead of the "
+                "current 1 CPU core."
+            )
+
+        c22_list = Parallel(n_jobs=self._threads_to_use)(
             delayed(self._transform_case)(
                 X.iloc[i],
                 f_idx,
@@ -173,8 +182,7 @@ class Catch22(BaseTransformer):
             ac = None
             acfz = None
 
-            for n in range(len(f_idx)):
-                feature = f_idx[n]
+            for n, feature in enumerate(f_idx):
                 args = [series]
 
                 if feature == 0 or feature == 1 or feature == 11:
@@ -183,7 +191,7 @@ class Catch22(BaseTransformer):
                     if smax is None:
                         smax = np.max(series)
                     args = [series, smin, smax]
-                elif feature == 2:
+                elif feature == 2 or feature == 22:
                     if smean is None:
                         smean = np.mean(series)
                     args = [series, smean]
@@ -230,7 +238,12 @@ class Catch22(BaseTransformer):
                         acfz = _ac_first_zero(ac)
                     args = [series, acfz]
 
-                c22[dim + n] = features[feature](*args)
+                if feature == 22:
+                    c22[dim + n] = smean
+                elif feature == 23:
+                    c22[dim + n] = np.std(series)
+                else:
+                    c22[dim + n] = features[feature](*args)
 
         return c22
 
@@ -309,7 +322,17 @@ class Catch22(BaseTransformer):
                         "feature transform."
                     )
 
-        c22_list = Parallel(n_jobs=self.n_jobs)(
+        self._threads_to_use = check_n_jobs(self.n_jobs)
+
+        if self.n_jobs == -1:
+            self._threads_to_use = 1
+            warnings.warn(
+                "``n_jobs`` default was changed to 1 from -1 in version 0.13.4. "
+                "In version 0.15 a value of -1 will use all CPU cores instead of the "
+                "current 1 CPU core."
+            )
+
+        c22_list = Parallel(n_jobs=self._threads_to_use)(
             delayed(self._transform_case_single)(
                 X[i],
                 feature,
@@ -418,6 +441,60 @@ class Catch22(BaseTransformer):
                 args = [series, self._acfz[inst_idx]]
 
         return features[feature](*args)
+
+    def _verify_features(self):
+        if isinstance(self.features, str):
+            if self.features == "all":
+                f_idx = [i for i in range(22)]
+                if self.catch24:
+                    f_idx += [22, 23]
+            elif self.features in feature_names:
+                f_idx = [feature_names.index(self.features)]
+            elif self.catch24 and self.features == "Mean":
+                f_idx = [22]
+            elif self.catch24 and self.features == "StandardDeviation":
+                f_idx = [23]
+            else:
+                raise ValueError("Invalid feature selection.")
+        elif isinstance(self.features, int):
+            if self.features >= 0 and self.features < 22:
+                f_idx = [self.features]
+            elif self.catch24 and self.features == 22:
+                f_idx = [22]
+            elif self.catch24 and self.features == 23:
+                f_idx = [23]
+            else:
+                raise ValueError("Invalid feature selection.")
+        elif isinstance(self.features, (list, tuple)):
+            if len(self.features) > 0:
+                f_idx = []
+                for f in self.features:
+                    if isinstance(f, str):
+                        if f in feature_names:
+                            f_idx.append(feature_names.index(f))
+                        elif self.catch24 and f == "Mean":
+                            f_idx.append(22)
+                        elif self.catch24 and f == "StandardDeviation":
+                            f_idx.append(23)
+                        else:
+                            raise ValueError("Invalid feature selection.")
+                    elif isinstance(f, int):
+                        if f >= 0 and f < 22:
+                            f_idx.append(f)
+                        elif self.catch24 and f == 22:
+                            f_idx.append(22)
+                        elif self.catch24 and f == 23:
+                            f_idx.append(23)
+                        else:
+                            raise ValueError("Invalid feature selection.")
+                    else:
+                        raise ValueError("Invalid feature selection.")
+            else:
+                raise ValueError("Invalid feature selection.")
+        else:
+            raise ValueError("Invalid feature selection.")
+
+        return f_idx
 
     @staticmethod
     def _DN_HistogramMode_5(X, smin, smax):
