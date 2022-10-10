@@ -65,7 +65,7 @@ class AggrDist(BasePairwiseTransformerPanel):
         super(AggrDist, self).__init__()
 
         if self.aggfunc_is_symm:
-            self.set_tag("symmetric", True)
+            self.set_tags(**{"symmetric": True})
 
     def _transform(self, X, X2=None):
         """Compute distance/kernel matrix.
