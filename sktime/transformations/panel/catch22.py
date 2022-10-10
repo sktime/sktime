@@ -142,7 +142,7 @@ class Catch22(BaseTransformer):
         """
         n_instances = X.shape[0]
 
-        f_idx = self._verify_features()
+        f_idx = _verify_features(self.features, self.catch24)
 
         self._threads_to_use = check_n_jobs(self.n_jobs)
 
@@ -442,59 +442,27 @@ class Catch22(BaseTransformer):
 
         return features[feature](*args)
 
-    def _verify_features(self):
-        if isinstance(self.features, str):
-            if self.features == "all":
-                f_idx = [i for i in range(22)]
-                if self.catch24:
-                    f_idx += [22, 23]
-            elif self.features in feature_names:
-                f_idx = [feature_names.index(self.features)]
-            elif self.catch24 and self.features == "Mean":
-                f_idx = [22]
-            elif self.catch24 and self.features == "StandardDeviation":
-                f_idx = [23]
-            else:
-                raise ValueError("Invalid feature selection.")
-        elif isinstance(self.features, int):
-            if self.features >= 0 and self.features < 22:
-                f_idx = [self.features]
-            elif self.catch24 and self.features == 22:
-                f_idx = [22]
-            elif self.catch24 and self.features == 23:
-                f_idx = [23]
-            else:
-                raise ValueError("Invalid feature selection.")
-        elif isinstance(self.features, (list, tuple)):
-            if len(self.features) > 0:
-                f_idx = []
-                for f in self.features:
-                    if isinstance(f, str):
-                        if f in feature_names:
-                            f_idx.append(feature_names.index(f))
-                        elif self.catch24 and f == "Mean":
-                            f_idx.append(22)
-                        elif self.catch24 and f == "StandardDeviation":
-                            f_idx.append(23)
-                        else:
-                            raise ValueError("Invalid feature selection.")
-                    elif isinstance(f, int):
-                        if f >= 0 and f < 22:
-                            f_idx.append(f)
-                        elif self.catch24 and f == 22:
-                            f_idx.append(22)
-                        elif self.catch24 and f == 23:
-                            f_idx.append(23)
-                        else:
-                            raise ValueError("Invalid feature selection.")
-                    else:
-                        raise ValueError("Invalid feature selection.")
-            else:
-                raise ValueError("Invalid feature selection.")
-        else:
-            raise ValueError("Invalid feature selection.")
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
 
-        return f_idx
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        param1 = {}
+        param2 = {"features": "DN_HistogramMode_5"}
+        return [param1, param2]
 
     @staticmethod
     def _DN_HistogramMode_5(X, smin, smax):
@@ -1369,6 +1337,61 @@ def _normalise_series(X, mean):
     if std > 0:
         return (X - mean) / std
     return X
+
+
+def _verify_features(features, catch24):
+    if isinstance(features, str):
+        if features == "all":
+            f_idx = [i for i in range(22)]
+            if catch24:
+                f_idx += [22, 23]
+        elif features in feature_names:
+            f_idx = [feature_names.index(features)]
+        elif catch24 and features == "Mean":
+            f_idx = [22]
+        elif catch24 and features == "StandardDeviation":
+            f_idx = [23]
+        else:
+            raise ValueError("Invalid feature selection.")
+    elif isinstance(features, int):
+        if features >= 0 and features < 22:
+            f_idx = [features]
+        elif catch24 and features == 22:
+            f_idx = [22]
+        elif catch24 and features == 23:
+            f_idx = [23]
+        else:
+            raise ValueError("Invalid feature selection.")
+    elif isinstance(features, (list, tuple)):
+        if len(features) > 0:
+            f_idx = []
+            for f in features:
+                if isinstance(f, str):
+                    if f in feature_names:
+                        f_idx.append(feature_names.index(f))
+                    elif catch24 and f == "Mean":
+                        f_idx.append(22)
+                    elif catch24 and f == "StandardDeviation":
+                        f_idx.append(23)
+                    else:
+                        raise ValueError("Invalid feature selection.")
+                elif isinstance(f, int):
+                    if f >= 0 and f < 22:
+                        f_idx.append(f)
+                    elif catch24 and f == 22:
+                        f_idx.append(22)
+                    elif catch24 and f == 23:
+                        f_idx.append(23)
+                    else:
+                        raise ValueError("Invalid feature selection.")
+                else:
+                    raise ValueError("Invalid feature selection.")
+        else:
+            raise ValueError("Invalid feature selection.")
+    else:
+        raise ValueError("Invalid feature selection.")
+
+    return f_idx
 
 
 feature_names = [

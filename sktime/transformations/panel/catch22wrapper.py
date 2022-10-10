@@ -118,7 +118,7 @@ class Catch22Wrapper(BaseTransformer):
         """
         n_instances, n_dims = X.shape
 
-        f_idx = catch22.Catch22._verify_features()
+        f_idx = catch22._verify_features(self.features, self.catch24)
 
         import pycatch22
 
@@ -187,6 +187,28 @@ class Catch22Wrapper(BaseTransformer):
                     c22[dim + n] = features[feature](series)
 
         return c22
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        param1 = {"catch24": True}
+        param2 = {"features": [1, 3, 7]}
+        return [param1, param2]
 
 
 feature_names = catch22.feature_names
