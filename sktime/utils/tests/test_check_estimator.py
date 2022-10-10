@@ -40,7 +40,8 @@ def test_check_estimator_subset_tests():
     tests_to_run = [
         "test_get_params",
         "test_set_params",
-        "test_clone", "test_repr",
+        "test_clone",
+        "test_repr",
         "test_capability_inverse_tag_is_correct",
         "test_remember_data_tag_is_correct",
     ]
