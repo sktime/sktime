@@ -93,14 +93,6 @@ forecaster1 = make_reduction(
 # forecaster1.fit(y=y_train_grp, X=y_train_grp)
 # check_estimator(forecaster1, return_exceptions=False)
 
-forecaster2 = make_reduction(
-    regressor,
-    scitype="tabular-regressor",
-    transformers=[WindowSummarizer(**kwargs, n_jobs=1)],
-    window_length=None,
-    strategy="recursive",
-    pooling="global",
-)
 
 # forecaster3 = make_reduction(
 #     regressor,
@@ -115,14 +107,16 @@ forecaster2 = make_reduction(
 y_numeric = y_train.copy()
 y_numeric.index = pd.to_numeric(y_numeric.index)
 
+# forecaster2.fit(y_train_grp, fh=[1, 2])
+# y_pred = forecaster2.predict(fh=[1, 2, 12])
 # forecaster3.fit(y_train, fh=[1, 2])
 # y_pred21 = forecaster3.predict(fh=[1, 2, 12])
 
-forecaster2.fit(y_numeric, fh=[1, 2])
-y_pred22 = forecaster2.predict(fh=[1, 2, 12])
+# forecaster2.fit(y_numeric, fh=[1, 2])
+# y_pred22 = forecaster2.predict(fh=[1, 2, 12])
 
-forecaster2.fit(y_train_hier_unequal, fh=[1, 2])
-y_pred23 = forecaster2.predict(fh=[1, 2, 12])
+# forecaster2.fit(y_train_hier_unequal, fh=[1, 2])
+# y_pred23 = forecaster2.predict(fh=[1, 2, 12])
 
 # Multiindex Series is not supported
 # y_train_series = y_train_grp["y"]
@@ -166,6 +160,52 @@ def check_eval(test_input, expected):
 )
 def test_reduction(y, index_names):
     """Test index columns match input."""
+    forecaster2 = make_reduction(
+        regressor,
+        scitype="tabular-regressor",
+        transformers=[WindowSummarizer(**kwargs, n_jobs=1)],
+        window_length=None,
+        strategy="recursive",
+        pooling="global",
+    )
+
+    forecaster2.fit(y, fh=[1, 2])
+    y_pred = forecaster2.predict(fh=[1, 2, 12])
+    check_eval(y_pred.index.names, index_names)
+
+
+@pytest.mark.parametrize(
+    "y, index_names",
+    [
+        (
+            y_train_grp,
+            ["instances", "timepoints"],
+        ),
+        (
+            y_train,
+            [None],
+        ),
+        (
+            y_numeric,
+            [None],
+        ),
+        (
+            y_train_hier_unequal,
+            ["foo", "bar", "Period"],
+        ),
+    ],
+)
+def test_list_reduction(y, index_names):
+    """Test index columns match input."""
+    forecaster2 = make_reduction(
+        regressor,
+        scitype="tabular-regressor",
+        transformers=[WindowSummarizer(**kwargs), WindowSummarizer(**kwargs_variant)],
+        window_length=None,
+        strategy="recursive",
+        pooling="global",
+    )
+
     forecaster2.fit(y, fh=[1, 2])
     y_pred = forecaster2.predict(fh=[1, 2, 12])
     check_eval(y_pred.index.names, index_names)

@@ -528,7 +528,6 @@ class _RecursiveReducer(_Reducer):
         )
         if self.transformers is not None:
             self.transformers_ = clone(self.transformers)
-            self.transformers = clone(self.transformers)
 
         if self.transformers is None and self.pooling == "global":
             kwargs = {
@@ -536,9 +535,7 @@ class _RecursiveReducer(_Reducer):
                     "lag": list(range(1, self.window_length + 1)),
                 }
             }
-            self.transformers = [WindowSummarizer(**kwargs)]
-            self.transformers_ = clone(self.transformers)
-            self.transformers = clone(self.transformers)
+            self.transformers_ = [WindowSummarizer(**kwargs)]
 
         if self.window_length is None:
             trafo = self.transformers_
