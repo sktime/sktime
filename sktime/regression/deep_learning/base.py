@@ -90,16 +90,26 @@ class BaseDeepRegressor(BaseRegressor, ABC):
         copy : dict, the config to be serialized
         """
         copy = self.__dict__.copy()
-        check_before_deletion = ["model_", "history", "optimizer_"]
-        # if attribute "optimizer" is not None, then it must
-        # have been supplied by the user and will be equal to "optimizer_"
-        # delete it normally with other non-serializable attributes
-        if copy["optimizer"] is not None:
-            check_before_deletion.append("optimizer")
-        # if it is None, then save it as 0, so it can be
-        # later correctly restored as None
-        else:
+
+        # Either optimizer might not exist at all(-1),
+        # or it does and takes a value(including None)
+        optimizer_attr = copy.get("optimizer", -1)
+        if optimizer_attr is None:
+            # if it is None, then save it as 0, so it can be
+            # later correctly restored as None
             copy["optimizer"] = 0
+        elif optimizer_attr == -1:
+            # if an `optimizer` parameter doesn't exist at all
+            # save it as -1
+            copy["optimizer"] = -1
+        else:
+            # if `optimizer` is not None, then it must
+            # have been supplied by the user and user
+            # and will be equal to `optimizer_`
+            # delete it normally with other non-serializable attributes
+            del copy["optimizer"]
+
+        check_before_deletion = ["model_", "history", "optimizer_"]
         for attribute in check_before_deletion:
             if copy.get(attribute) is not None:
                 del copy[attribute]
@@ -122,6 +132,9 @@ class BaseDeepRegressor(BaseRegressor, ABC):
         # as per __getstate__()
         if self.__dict__.get("optimizer") == 0:
             self.__dict__["optimizer"] = None
+        elif self.__dict__.get("optimizer") == -1:
+            # `optimizer` doesn't exist as a parameter alone, so delete it.
+            del self.__dict__["optimizer"]
         else:
             self.__dict__["optimizer"] = self.model_.optimizer
         self.__dict__["optimizer_"] = self.model_.optimizer
