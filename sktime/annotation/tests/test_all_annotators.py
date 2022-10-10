@@ -7,14 +7,10 @@ import pytest
 
 from sktime.registry import all_estimators
 from sktime.utils._testing.annotation import make_annotation_problem
-from sktime.utils.validation._dependencies import _check_estimator_deps, _check_soft_dependencies
+from sktime.utils.validation._dependencies import _check_estimator_deps
 
 ALL_ANNOTATORS = all_estimators(estimator_types="series-annotator", return_names=False)
 
-@pytest.mark.skipif(
-    not _check_soft_dependencies("hmmlearn", severity="none"),
-    reason="skip test if required soft dependency for hmmlearn not available",
-)
 @pytest.mark.parametrize("Estimator", ALL_ANNOTATORS)
 def test_output_type(Estimator):
     """Test annotator output type."""
