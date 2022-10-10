@@ -110,7 +110,7 @@ class CNNRegressor(BaseDeepRegressor):
         import tensorflow as tf
         from tensorflow import keras
 
-        tf.random.set_seed(self.random_seed)
+        tf.random.set_seed(self.random_state)
 
         if self.metrics is None:
             metrics = ["accuracy"]
