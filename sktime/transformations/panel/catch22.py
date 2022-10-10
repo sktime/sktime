@@ -110,8 +110,6 @@ class Catch22(BaseTransformer):
         self.replace_nans = replace_nans
         self.n_jobs = n_jobs
 
-        self._threads_to_use = 0
-
         # todo remove in v0.15
         self._case_id = None
         self._st_n_instances = 0
@@ -144,18 +142,18 @@ class Catch22(BaseTransformer):
 
         f_idx = _verify_features(self.features, self.catch24)
 
-        self._threads_to_use = check_n_jobs(self.n_jobs)
+        threads_to_use = check_n_jobs(self.n_jobs)
 
         # todo remove in v0.15 and add to docstring: ``-1`` means using all processors.
         if self.n_jobs == -1:
-            self._threads_to_use = 1
+            threads_to_use = 1
             warnings.warn(
                 "``n_jobs`` default was changed to 1 from -1 in version 0.13.4. "
                 "In version 0.15 a value of -1 will use all CPU cores instead of the "
                 "current 1 CPU core."
             )
 
-        c22_list = Parallel(n_jobs=self._threads_to_use)(
+        c22_list = Parallel(n_jobs=threads_to_use)(
             delayed(self._transform_case)(
                 X.iloc[i],
                 f_idx,
@@ -322,17 +320,17 @@ class Catch22(BaseTransformer):
                         "feature transform."
                     )
 
-        self._threads_to_use = check_n_jobs(self.n_jobs)
+        threads_to_use = check_n_jobs(self.n_jobs)
 
         if self.n_jobs == -1:
-            self._threads_to_use = 1
+            threads_to_use = 1
             warnings.warn(
                 "``n_jobs`` default was changed to 1 from -1 in version 0.13.4. "
                 "In version 0.15 a value of -1 will use all CPU cores instead of the "
                 "current 1 CPU core."
             )
 
-        c22_list = Parallel(n_jobs=self._threads_to_use)(
+        c22_list = Parallel(n_jobs=threads_to_use)(
             delayed(self._transform_case_single)(
                 X[i],
                 feature,

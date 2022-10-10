@@ -98,8 +98,6 @@ class Catch22Wrapper(BaseTransformer):
         self.replace_nans = replace_nans
         self.n_jobs = n_jobs
 
-        self._threads_to_use = 0
-
         super(Catch22Wrapper, self).__init__()
 
     def _transform(self, X, y=None):
@@ -147,9 +145,9 @@ class Catch22Wrapper(BaseTransformer):
             pycatch22.PD_PeriodicityWang_th0_01,
         ]
 
-        self._threads_to_use = check_n_jobs(self.n_jobs)
+        threads_to_use = check_n_jobs(self.n_jobs)
 
-        c22_list = Parallel(n_jobs=self._threads_to_use)(
+        c22_list = Parallel(n_jobs=threads_to_use)(
             delayed(self._transform_case)(
                 X.iloc[i],
                 f_idx,
