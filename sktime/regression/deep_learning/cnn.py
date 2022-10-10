@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 """Time Convolutional Neural Network (CNN) for regression."""
 
-__author__ = ["AurumnPegasus"]
+__author__ = ["AurumnPegasus", "achieveordie"]
 __all__ = ["CNNRegressor"]
+
+from sklearn.utils import check_random_state
 
 from sktime.networks.cnn import CNNNetwork
 from sktime.regression.deep_learning.base import BaseDeepRegressor
@@ -34,7 +36,12 @@ class CNNRegressor(BaseDeepRegressor):
         whether to output extra information
     loss            : string, default="mean_squared_error"
         fit parameter for the keras model
-    optimizer       : keras.optimizer, default=keras.optimizers.Adam(),
+    activation      : keras.activations or string, default `linear`
+        function to use in the output layer.
+    optimizer       : keras.optimizers or string, default `None`.
+        when `None`, internally uses `keras.optimizers.Adam(0.01)`
+    use_bias        : bool, default=True
+        whether to use bias in the output layer.
     metrics         : list of strings, default=["accuracy"],
 
     Notes
@@ -58,7 +65,10 @@ class CNNRegressor(BaseDeepRegressor):
         verbose=False,
         loss="mean_squared_error",
         metrics=None,
-        random_seed=0,
+        random_state=0,
+        activation="linear",
+        use_bias=True,
+        optimizer=None,
     ):
         _check_dl_dependencies(severity="error")
         super(CNNRegressor, self).__init__(
@@ -73,7 +83,11 @@ class CNNRegressor(BaseDeepRegressor):
         self.verbose = verbose
         self.loss = loss
         self.metrics = metrics
-        self.random_seed = random_seed
+        self.random_state = random_state
+        self.activation = activation
+        self.use_bias = use_bias
+        self.optimizer = optimizer
+        self.history = None
         self._network = CNNNetwork()
 
     def build_model(self, input_shape, **kwargs):
@@ -105,13 +119,23 @@ class CNNRegressor(BaseDeepRegressor):
 
         input_layer, output_layer = self._network.build_network(input_shape, **kwargs)
 
-        output_layer = keras.layers.Dense(units=1, activation="sigmoid")(output_layer)
+        output_layer = keras.layers.Dense(
+            units=1,
+            activation=self.activation,
+            use_bias=self.use_bias,
+        )(output_layer)
+
+        self.optimizer_ = (
+            keras.optimizers.Adam(learning_rate=0.01)
+            if self.optimizer is None
+            else self.optimizer
+        )
 
         model = keras.models.Model(inputs=input_layer, outputs=output_layer)
 
         model.compile(
             loss=self.loss,
-            optimizer=keras.optimizers.Adam(),
+            optimizer=self.optimizer_,
             metrics=metrics,
         )
         return model
@@ -136,6 +160,7 @@ class CNNRegressor(BaseDeepRegressor):
         # Transpose to conform to Keras input style.
         X = X.transpose(0, 2, 1)
 
+        check_random_state(self.random_state)
         self.input_shape = X.shape[1:]
         self.model_ = self.build_model(self.input_shape)
         if self.verbose:
