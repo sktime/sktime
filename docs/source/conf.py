@@ -48,7 +48,6 @@ extensions = [
     "nbsphinx",  # integrates example notebooks
     "sphinx_gallery.load_style",
     "myst_parser",
-    "sphinx_panels",
     "sphinx_design",
     "sphinx_issues",
 ]
