@@ -18,9 +18,9 @@ The user guide notebooks are always functional with the most recent stable versi
 
 .. grid:: 1 2 2 2
     :gutter: 2
-    :text-align: center
 
     .. grid-item-card::
+        :text-align: center
 
         Introductory tutorial
 
@@ -38,6 +38,7 @@ The user guide notebooks are always functional with the most recent stable versi
             Intro to sktime
 
     .. grid-item-card::
+        :text-align: center
 
         Implementing your own estimator
 
@@ -55,6 +56,7 @@ The user guide notebooks are always functional with the most recent stable versi
             Implementing estimators
 
     .. grid-item-card::
+        :text-align: center
 
         Advanced forecasting tutorial
 
