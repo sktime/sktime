@@ -219,9 +219,7 @@ if _check_soft_dependencies("xarray", severity="none"):
     )
 
 
-if _check_soft_dependencies("xarray", severity="none"):
-    import xarray as xr
-
+if _check_soft_dependencies("dask", severity="none"):
     from sktime.datatypes._adapter.dask_to_pd import (
         convert_dask_to_pandas,
         convert_pandas_to_dask,
