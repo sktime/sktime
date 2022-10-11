@@ -494,6 +494,10 @@ EXPECTED_AIRLINE_LINEAR_DIRECT = [
             EXPECTED_AIRLINE_LINEAR_RECURSIVE,
         ),
         (
+            RecursiveTabularRegressionForecaster(LinearRegression(), pooling="global"),
+            EXPECTED_AIRLINE_LINEAR_RECURSIVE,
+        ),
+        (
             DirectTimeSeriesRegressionForecaster(
                 make_pipeline(Tabularizer(), LinearRegression())
             ),

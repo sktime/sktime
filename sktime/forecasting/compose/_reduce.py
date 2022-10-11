@@ -552,7 +552,7 @@ class _RecursiveReducer(_Reducer):
                 )
 
             n_timepoints = len(get_time_index(y))
-            if self.transformers is not None and n_timepoints < max(ts):
+            if self.transformers_ is not None and n_timepoints < max(ts):
                 raise ValueError(
                     "Not sufficient observations to calculate transformations"
                     + "Please reduce window length / window lagging to match"
@@ -562,7 +562,7 @@ class _RecursiveReducer(_Reducer):
         yt, Xt = self._transform(y, X)
 
         # Make sure yt is 1d array to avoid DataConversion warning from scikit-learn.
-        if self.transformers is not None:
+        if self.transformers_ is not None:
             yt = yt.to_numpy().ravel()
         else:
             yt = yt.ravel()
@@ -626,67 +626,60 @@ class _RecursiveReducer(_Reducer):
             contains the y and X data prepared for the respective windows, see above.
 
         """
-        # shift and cutoff determine start and end of the window, respectively.
-        start = _shift(self._cutoff, by=shift - self.window_length_)
         cutoff = _shift(self._cutoff, by=shift)
 
-        if self.pooling == "global":
-            # Get the last window of the endogenous variable.
-            # If X is given, also get the last window of the exogenous variables.
-            # relative _int will give the integer indices of the window defined above
-            relative_int = pd.Index(list(map(int, range(-self.window_length_, 1))))
-            # index_range will give the same indices,
-            # but using the date format of cutoff
-            index_range = _index_range(relative_int, cutoff)
+        # Get the last window of the endogenous variable.
+        # If X is given, also get the last window of the exogenous variables.
+        # relative _int will give the integer indices of the window defined above
+        # Apart from the window_length, relative_int also contains the first
+        # observation after the window, because this is what the window
+        # is summarized to.
+        relative_int = pd.Index(list(map(int, range(-self.window_length_ + 1, 2))))
+        # index_range will give the same indices,
+        # but using the date format of cutoff
+        index_range = _index_range(relative_int, cutoff)
 
-            # y_raw is defined solely for the purpose of deriving a dataframe
-            # window_length forecasting steps into the past in order to calculate the
-            # new X from y features based on the transformer provided
-            y_raw = _create_fcst_df(index_range, self._y)
+        # y_raw is defined solely for the purpose of deriving a dataframe
+        # window_length forecasting steps into the past in order to calculate the
+        # new X from y features based on the transformer provided
 
-            # The y_raw dataframe will contain historical and / or recursively
-            # forecast value to calculate the new X features.
+        # Historical values are passed here for all time steps of y_raw that lie in
+        # the past .
+        y_raw = _create_fcst_df(index_range, self._y)
+        y_raw.update(self._y)
+        # The y_raw dataframe will contain historical and / or recursively
+        # forecast value to calculate the new X features.
+        # Forecast values are passed here for all time steps of y_raw that lie in
+        # the future and were forecast in previous iterations.
+        if y_update is not None:
+            y_raw.update(y_update)
 
-            # Historical values are passed here for all time steps of y_raw that lie in
-            # the past .
-            y_raw.update(self._y)
-
-            # Forecast values are passed here for all time steps of y_raw that lie in
-            # the future and were forecast in previous iterations.
-            if y_update is not None:
-                y_raw.update(y_update)
-
-            # After filling the empty y_raw frame with historic / forecast values
-            # X from y features can be calculated based on the passed transformer.
-            if len(self.transformers_) == 1:
-                X_from_y = self.transformers_[0].fit_transform(y_raw)
-            else:
-                ref = self.transformers_
-                feat = [("trafo_" + str(index), i) for index, i in enumerate(ref)]
-                X_from_y = FeatureUnion(feat).fit_transform(y_raw)
-            # We are only interested in the last observations, since only that one
-            # contains relevant value. In recursive forecasting, only one observations
-            # can be forecast at a time.
-            X_from_y_cut = _cut_tail(X_from_y)
-
-            # X_from_y_cut is added to X dataframe (unlike y_raw, the X dataframe can
-            # directly be created with one observation from the start,
-            # since no features need to be calculated).
-            if self._X is not None:
-                X = _create_fcst_df([index_range[-1]], self._X)
-                X.update(self._X)
-                if X_update is not None:
-                    X.update(X_update)
-                X_cut = _cut_tail(X)
-                X = pd.concat([X_from_y_cut, X_cut], axis=1)
-            else:
-                X = X_from_y_cut
-            y = _cut_tail(y_raw, n_tail=self.window_length_)
+        # After filling the empty y_raw frame with historic / forecast values
+        # X from y features can be calculated based on the passed transformer.
+        if len(self.transformers_) == 1:
+            X_from_y = self.transformers_[0].fit_transform(y_raw)
         else:
-            # Get the last window of the endogenous variable.
-            y = self._y.loc[start:cutoff].to_numpy()
-            # If X is given, also get the last window of the exogenous variables.
-            X = self._X.loc[start:cutoff].to_numpy() if self._X is not None else None
+            ref = self.transformers_
+            feat = [("trafo_" + str(index), i) for index, i in enumerate(ref)]
+            X_from_y = FeatureUnion(feat).fit_transform(y_raw)
+        # We are only interested in the last observations, since only that one
+        # contains relevant value. In recursive forecasting, only one observations
+        # can be forecast at a time.
+        X_from_y_cut = _cut_tail(X_from_y)
+
+        # X_from_y_cut is added to X dataframe (unlike y_raw, the X dataframe can
+        # directly be created with one observation from the start,
+        # since no features need to be calculated).
+        if self._X is not None:
+            X = _create_fcst_df([index_range[-1]], self._X)
+            X.update(self._X)
+            if X_update is not None:
+                X.update(X_update)
+            X_cut = _cut_tail(X)
+            X = pd.concat([X_from_y_cut, X_cut], axis=1)
+        else:
+            X = X_from_y_cut
+        y = _cut_tail(y_raw)
         return y, X
 
     def _predict_last_window(
@@ -719,18 +712,16 @@ class _RecursiveReducer(_Reducer):
             )
 
         # Get last window of available data.
-        if self.pooling == "global":
-            y_last, X_last = self._get_shifted_window(shift=1)
-        else:
-            y_last, X_last = self._get_last_window()
-
         # If we cannot generate a prediction from the available data, return nan.
-        if self.pooling != "global":
-            if not self._is_predictable(y_last):
-                return self._predict_nan(fh)
-        else:
+
+        if self.pooling == "global":
+            y_last, X_last = self._get_shifted_window()
             ys = np.array(y_last)
             if not np.sum(np.isnan(ys)) == 0 and np.sum(np.isinf(ys)) == 0:
+                return self._predict_nan(fh)
+        else:
+            y_last, X_last = self._get_last_window()
+            if not self._is_predictable(y_last):
                 return self._predict_nan(fh)
 
         if self.pooling == "global":
@@ -751,7 +742,7 @@ class _RecursiveReducer(_Reducer):
                 # # Update last window with previous prediction.
                 if i + 1 != fh_max:
                     y_last, X_last = self._get_shifted_window(
-                        y_update=y_pred, X_update=X, shift=i + 2
+                        y_update=y_pred, X_update=X, shift=i + 1
                     )
 
         else:
