@@ -17,7 +17,6 @@ For user guides specific to learning tasks, see our :ref:`user_guide` page.
 The user guide notebooks are always functional with the most recent stable version.
 
 .. grid:: 2
-    :card: + intro-card text-center
 
     .. grid-item-card::
 
