@@ -17,7 +17,7 @@ For user guides specific to learning tasks, see our :ref:`user_guide` page.
 The user guide notebooks are always functional with the most recent stable version.
 
 .. grid:: 1 2 2 2
-    :gutter: 2
+    :gutter: 3
 
     .. grid-item-card::
         :text-align: center
@@ -31,7 +31,7 @@ The user guide notebooks are always functional with the most recent stable versi
         +++
 
         .. button-link:: https://www.youtube.com/watch?v=ODspi8-uWgo
-            :color: secondary
+            :color: primary
             :click-parent:
             :expand:
 
@@ -49,7 +49,7 @@ The user guide notebooks are always functional with the most recent stable versi
         +++
 
         .. button-link:: https://youtu.be/S_3ewcvs_pg
-            :color: secondary
+            :color: primary
             :click-parent:
             :expand:
 
@@ -67,7 +67,7 @@ The user guide notebooks are always functional with the most recent stable versi
         +++
 
         .. button-link:: https://www.youtube.com/watch?v=4Rf9euAhjNc
-            :color: secondary
+            :color: primary
             :click-parent:
             :expand:
 
