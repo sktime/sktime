@@ -4,7 +4,7 @@
 Welcome to sktime
 =================
 
-  A unified framework for machine learning with time series. :)
+  A unified framework for machine learning with time series.
 
 
 Mission
