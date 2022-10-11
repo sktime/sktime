@@ -16,7 +16,8 @@ Each tutorial is located in its own repository, which contains notebooks and lin
 For user guides specific to learning tasks, see our :ref:`user_guide` page.
 The user guide notebooks are always functional with the most recent stable version.
 
-.. grid:: 2
+.. grid:: 1 2 2 2
+    :gutter: 2
 
     .. grid-item-card:: Introductory tutorial
 
@@ -48,7 +49,7 @@ The user guide notebooks are always functional with the most recent stable versi
 
         +++
 
-        Probabilistic and hierarchical forecasting with ``sktime``
+        Probabilistic and hierarchical forecasting with ``sktime``.
 
         +++
 
