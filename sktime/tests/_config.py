@@ -29,8 +29,6 @@ EXCLUDE_ESTIMATORS = [
     "RandomIntervalClassifier",
     "MiniRocket",
     "MatrixProfileTransformer",
-    # RandomShapeletTransform is breaking with empty lists, see #3138
-    "RandomShapeletTransform",
 ]
 
 
