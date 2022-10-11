@@ -19,41 +19,50 @@ The user guide notebooks are always functional with the most recent stable versi
 .. grid:: 1 2 2 2
     :gutter: 2
 
-    .. grid-item-card:: Introductory tutorial
+    .. grid-item-card::
 
-        +++
+        Introductory tutorial
+
+        ^^^
 
         A general introduction to ``sktime`` - for first time users.
 
         +++
 
         .. button-link:: https://www.youtube.com/watch?v=ODspi8-uWgo
-                Intro to sktime
-                :click-parent:
-                :expand:
+            :click-parent:
+            :expand:
 
-    .. grid-item-card:: Implementing your own estimator
+            Intro to sktime
 
-        +++
+    .. grid-item-card::
+
+        Implementing your own estimator
+
+        ^^^
 
         How to implement your own ``sktime`` compatible estimator and check its validity.
 
         +++
 
         .. button-link:: https://youtu.be/S_3ewcvs_pg
-                Implementing estimators
-                :click-parent:
-                :expand:
+            :click-parent:
+            :expand:
 
-    .. grid-item-card:: Advanced forecasting tutorial
+            Implementing estimators
 
-        +++
+    .. grid-item-card::
+
+        Advanced forecasting tutorial
+
+        ^^^
 
         Probabilistic and hierarchical forecasting with ``sktime``.
 
         +++
 
         .. button-link:: https://www.youtube.com/watch?v=4Rf9euAhjNc
-                Advanced forecasting
-                :click-parent:
-                :expand:
+            :click-parent:
+            :expand:
+
+            Advanced forecasting
