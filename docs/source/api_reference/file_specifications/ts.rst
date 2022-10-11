@@ -1,7 +1,7 @@
 .. _ts_format:
 
-``ts`` Format Specifications
-============================
+``ts`` File Format v1.0
+=======================
 
 .. toctree::
     :maxdepth: 1
@@ -21,6 +21,11 @@ This document has the following content:
 - Description: What are the individual components of a ``.ts`` file.
 - Instructions: How to create your own ``.ts`` file.
 - Illustrations: A running example to tie up the above sections.
+
+Version History
+---------------
+
+v1.0 - 2022-10-08 - author: Sagar Mishra
 
 Introduction
 ------------
