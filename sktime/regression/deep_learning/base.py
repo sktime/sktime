@@ -89,25 +89,33 @@ class BaseDeepRegressor(BaseRegressor, ABC):
         -------
         copy : dict, the config to be serialized
         """
+        from tensorflow.keras.optimizers import Optimizer, serialize
+
         copy = self.__dict__.copy()
 
         # Either optimizer might not exist at all(-1),
         # or it does and takes a value(including None)
         optimizer_attr = copy.get("optimizer", -1)
-        if optimizer_attr is None:
-            # if it is None, then save it as 0, so it can be
-            # later correctly restored as None
-            copy["optimizer"] = 0
-        elif optimizer_attr == -1:
-            # if an `optimizer` parameter doesn't exist at all
-            # save it as -1
-            copy["optimizer"] = -1
+        if not isinstance(optimizer_attr, str):
+            if optimizer_attr is None:
+                # if it is None, then save it as 0, so it can be
+                # later correctly restored as None
+                copy["optimizer"] = 0
+            elif optimizer_attr == -1:
+                # if an `optimizer` parameter doesn't exist at all
+                # save it as -1
+                copy["optimizer"] = -1
+            elif isinstance(optimizer_attr, Optimizer):
+                copy["optimizer"] = serialize(optimizer_attr)
+            else:
+                raise ValueError(
+                    f"`optimizer` of type {type(optimizer_attr)} cannot be "
+                    "serialized, it should either be absent/None/str/"
+                    "tf.keras.optimizers.Optimizer object"
+                )
         else:
-            # if `optimizer` is not None, then it must
-            # have been supplied by the user and user
-            # and will be equal to `optimizer_`
-            # delete it normally with other non-serializable attributes
-            del copy["optimizer"]
+            # if it was a string, don't touch since already serializable
+            pass
 
         check_before_deletion = ["model_", "history", "optimizer_"]
         for attribute in check_before_deletion:
@@ -126,19 +134,36 @@ class BaseDeepRegressor(BaseRegressor, ABC):
         -------
         -
         """
+        from tensorflow.keras.optimizers import deserialize
+
         self.__dict__ = state
-        self.__dict__["model_"] = self.model_
-        # Having 0 as value implies "optimizer" attribute was None
-        # as per __getstate__()
-        if self.__dict__.get("optimizer") == 0:
-            self.__dict__["optimizer"] = None
-        elif self.__dict__.get("optimizer") == -1:
-            # `optimizer` doesn't exist as a parameter alone, so delete it.
-            del self.__dict__["optimizer"]
+
+        if hasattr(self, "model_"):
+            self.__dict__["model_"] = self.model_
+            if hasattr(self, "model_.optimizer"):
+                self.__dict__["optimizer_"] = self.model_.optimizer
+
+        # if optimizer_ exists, set optimizer as optimizer_
+        if self.__dict__.get("optimizer_") is not None:
+            self.__dict__["optimizer"] = self.__dict__["optimizer_"]
+        # else model may not have been built, but an optimizer might be passed
         else:
-            self.__dict__["optimizer"] = self.model_.optimizer
-        self.__dict__["optimizer_"] = self.model_.optimizer
-        self.__dict__["history"] = self.history
+            # Having 0 as value implies "optimizer" attribute was None
+            # as per __getstate__()
+            if self.__dict__.get("optimizer") == 0:
+                self.__dict__["optimizer"] = None
+            elif self.__dict__.get("optimizer") == -1:
+                # `optimizer` doesn't exist as a parameter alone, so delete it.
+                del self.__dict__["optimizer"]
+            else:
+                if isinstance(self.optimizer, dict):
+                    self.__dict__["optimizer"] = deserialize(self.optimizer)
+                else:
+                    # must have been a string already, no need to set
+                    pass
+
+        if hasattr(self, "history"):
+            self.__dict__["history"] = self.history
 
     def save(self, path=None):
         """Save serialized self to bytes-like object or to (.zip) file.
