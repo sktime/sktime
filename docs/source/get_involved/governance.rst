@@ -291,7 +291,7 @@ Appointment
 ^^^^^^^^^^^
 
 Appointment to the CC is by nomination by a core developer and a vote by
-all core developers. A nomination will result in discussion which stay open
+all core developers. A nomination will result in discussion which stays open
 for 5 days excluding weekends and then a vote by core developers which will
 stay open for 5 days excluding weekends. Approval of appointment requires:
 
