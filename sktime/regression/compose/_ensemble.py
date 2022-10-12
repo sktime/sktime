@@ -1,26 +1,30 @@
+#!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
-__author__ = ["Markus Löning", "Ayushmaan Seth"]
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Implements a composite Time series Forest Regressor that accepts a pipeline."""
+
+__author__ = ["Markus Löning", "AyushmaanSeth"]
 __all__ = ["ComposableTimeSeriesForestRegressor"]
 
+import numbers
 from warnings import warn
 
 import numpy as np
 from joblib import Parallel, delayed
-import numbers
-
 from sklearn.ensemble._base import _partition_estimators
-from sklearn.tree import DecisionTreeRegressor
+from sklearn.ensemble._forest import (
+    _generate_unsampled_indices,
+    _get_n_samples_bootstrap,
+)
 from sklearn.metrics import r2_score
 from sklearn.pipeline import Pipeline
-from sktime.transformations.panel.summarize import (
-    RandomIntervalFeatureExtractor,
-)
-from sklearn.ensemble._forest import _generate_unsampled_indices
-from sklearn.ensemble._forest import _get_n_samples_bootstrap
-from sktime.utils.slope_and_trend import _slope
-from sktime.utils.validation.panel import check_X, check_X_y
+from sklearn.tree import DecisionTreeRegressor
+
 from sktime.regression.base import BaseRegressor
 from sktime.series_as_features.base.estimators._ensemble import BaseTimeSeriesForest
+from sktime.transformations.panel.summarize import RandomIntervalFeatureExtractor
+from sktime.utils.slope_and_trend import _slope
+from sktime.utils.validation.panel import check_X, check_X_y
 
 
 class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
@@ -283,16 +287,27 @@ class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
         for pname, pval in self.estimator_params.items():
             self.__setattr__(pname, pval)
 
+    def fit(self, X, y, **kwargs):
+        """Wrap BaseForest._fit.
+
+        This is a temporary measure prior to the BaseRegressor refactor.
+        """
+        X, y = check_X_y(X, y, coerce_to_numpy=True, enforce_univariate=True)
+        return BaseTimeSeriesForest._fit(self, X, y, **kwargs)
+
     def predict(self, X):
         """Predict regression target for X.
+
         The predicted regression target of an input sample is computed as the
         mean predicted regression targets of the trees in the forest.
+
         Parameters
         ----------
         X : array-like or sparse matrix of shape = [n_samples, n_features]
             The input samples. Internally, its dtype will be converted to
             ``dtype=np.float32``. If a sparse matrix is provided, it will be
             converted into a sparse ``csr_matrix``.
+
         Returns
         -------
         y : array of shape = [n_samples] or [n_samples, n_outputs]
@@ -314,8 +329,7 @@ class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
         return np.sum(y_hat, axis=0) / len(self.estimators_)
 
     def _set_oob_score(self, X, y):
-        """
-        Compute out-of-bag scores."""
+        """Compute out-of-bag scores."""
         X, y = check_X_y(X, y, enforce_univariate=True)
 
         n_samples = y.shape[0]
@@ -363,3 +377,29 @@ class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
         # in regression, we don't validate class weights
         # TODO remove from regression
         return y, None
+
+    def _fit(self, X, y):
+        """Empty method to satisfy abstract parent. Needs refactoring."""
+
+    def _predict(self, X):
+        """Empty method to satisfy abstract parent. Needs refactoring."""
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        return {"n_estimators": 3}

@@ -1,41 +1,91 @@
 .. _utils_ref:
 
-sktime.utils: Utility function
-==============================
+Utility functions
+=================
 
-The :mod:`sktime.utils` module contains utility functions.
+``sktime`` has a number of modules dedicated to utilities:
+
+* :mod:`sktime.datatypes`, which contains utilities for data format checks and conversion.
+* :mod:`sktime.registry`, which contains utilities for estimator and tag search.
+* :mod:`sktime.utils`, which contains generic utility functions.
+
+
+Data Format Checking and Conversion
+-----------------------------------
+
+:mod:`sktime.datatypes`
+
+.. automodule:: sktime.datatypes
+    :no-members:
+    :no-inherited-members:
+
+.. currentmodule:: sktime.datatypes
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: function.rst
+
+    convert_to
+    convert
+    check_raise
+    check_is_mtype
+    check_is_scitype
+    mtype
+    scitype
+    mtype_to_scitype
+    scitype_to_mtype
+
+Estimator Search and Retrieval, Estimator Tags
+----------------------------------------------
+
+:mod:`sktime.registry`
+
+.. automodule:: sktime.registry
+    :no-members:
+    :no-inherited-members:
+
+.. currentmodule:: sktime.registry
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: function.rst
+
+    all_estimators
+    all_tags
+    check_tag_is_valid
 
 Plotting
 --------
 
+:mod:`sktime.utils.plotting`
+
+.. automodule:: sktime.utils.plotting
+    :no-members:
+    :no-inherited-members:
+
 .. currentmodule:: sktime.utils.plotting
 
 .. autosummary::
-    :toctree: modules/auto_generated/
+    :toctree: auto_generated/
     :template: function.rst
 
     plot_series
+    plot_lags
     plot_correlations
 
-Data Processing
----------------
+Estimator Validity Checking
+---------------------------
 
-.. currentmodule:: sktime.datatypes._panel._convert
+:mod:`sktime.utils.estimator_checks`
+
+.. automodule:: sktime.utils.estimator_checks
+    :no-members:
+    :no-inherited-members:
+
+.. currentmodule:: sktime.utils.estimator_checks
 
 .. autosummary::
-    :toctree: modules/auto_generated/
+    :toctree: auto_generated/
     :template: function.rst
 
-    are_columns_nested
-    is_nested_dataframe
-    from_nested_to_2d_array
-    from_2d_array_to_nested
-    from_3d_numpy_to_2d_array
-    from_3d_numpy_to_nested
-    from_nested_to_3d_numpy
-    from_multi_index_to_3d_numpy
-    from_3d_numpy_to_multi_index
-    from_multi_index_to_nested
-    from_nested_to_multi_index
-    from_nested_to_long
-    from_long_to_nested
+    check_estimator

@@ -15,17 +15,13 @@ import sktime
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 
-# When we build the docs on readthedocs, we build the package and want to
-# use the built files in order for sphinx to be able to properly read the
-# Cython files. Hence, we do not add the source code path to the system
-# path.
 ON_READTHEDOCS = os.environ.get("READTHEDOCS") == "True"
 if not ON_READTHEDOCS:
     sys.path.insert(0, os.path.abspath("../.."))
 
 # -- Project information -----------------------------------------------------
 project = "sktime"
-copyright = "2019 - 2020 (BSD-3-Clause License)"
+copyright = "2019 - 2021 (BSD-3-Clause License)"
 author = "sktime developers"
 
 # The full version, including alpha/beta/rc tags
@@ -46,17 +42,18 @@ if ON_READTHEDOCS:
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
+    "numpydoc",
     "sphinx.ext.intersphinx",
-    "sphinx.ext.autosectionlabel",
-    "sphinx.ext.todo",
-    "sphinx.ext.mathjax",
-    # 'sphinx.ext.viewcode',  # link to auto-generated source code files (rst)
-    "sphinx.ext.githubpages",
     "sphinx.ext.linkcode",  # link to GitHub source code via linkcode_resolve()
-    "sphinx.ext.napoleon",
     "nbsphinx",  # integrates example notebooks
-    "m2r2",  # markdown rendering
+    "sphinx_gallery.load_style",
+    "myst_parser",
+    "sphinx_panels",
+    "sphinx_issues",
 ]
+
+# Use bootstrap CSS from theme.
+panels_add_bootstrap_css = False
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
@@ -81,22 +78,56 @@ language = None
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ["_build", ".ipynb_checkpoints", "Thumbs.db", ".DS_Store"]
+exclude_patterns = [
+    "_build",
+    ".ipynb_checkpoints",
+    "Thumbs.db",
+    ".DS_Store",
+]
+
+add_module_names = False
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = "sphinx"
 
 # see http://stackoverflow.com/q/12206334/562769
 numpydoc_show_class_members = True
+# this is needed for some reason...
+# see https://github.com/numpy/numpydoc/issues/69
 numpydoc_class_members_toctree = False
+
+numpydoc_validation_checks = {"all"}
 
 # generate autosummary even if no references
 autosummary_generate = True
-autodoc_default_flags = ["members", "inherited-members"]
+
+# Members and inherited-members default to showing methods and attributes from a
+# class or those inherited.
+# Member-order orders the documentation in the order of how the members are defined in
+# the source code.
+autodoc_default_options = {
+    "members": True,
+    "inherited-members": True,
+    "member-order": "bysource",
+}
+
+# If true, '()' will be appended to :func: etc. cross-reference text.
+add_function_parentheses = False
+
+# When building HTML using the sphinx.ext.mathjax (enabled by default),
+# Myst-Parser injects the tex2jax_ignore (MathJax v2) and mathjax_ignore (MathJax v3)
+# classes in to the top-level section of each MyST document, and adds some default
+# configuration. This ensures that MathJax processes only math, identified by the
+# dollarmath and amsmath extensions, or specified in math directives. We here silence
+# the corresponding warning that this override happens.
+suppress_warnings = ["myst.mathjax"]
+
+# Link to GitHub repo for github_issues extension
+issues_github_path = "sktime/sktime"
 
 
 def linkcode_resolve(domain, info):
-    """Return URL to source code correponding.
+    """Return URL to source code corresponding.
 
     Parameters
     ----------
@@ -128,7 +159,7 @@ def linkcode_resolve(domain, info):
         filename = "sktime/%s#L%d-L%d" % find_source()
     except Exception:
         filename = info["module"].replace(".", "/") + ".py"
-    return "https://github.com/alan-turing-institute/sktime/blob/%s/%s" % (
+    return "https://github.com/sktime/sktime/blob/%s/%s" % (
         CURRENT_VERSION,
         filename,
     )
@@ -139,23 +170,70 @@ def linkcode_resolve(domain, info):
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 
-html_theme = "sphinx_rtd_theme"
-# html_theme = 'bootstrap'
+html_theme = "pydata_sphinx_theme"
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
 
 html_theme_options = {
-    "prev_next_buttons_location": None,
+    "icon_links": [
+        {
+            "name": "GitHub",
+            "url": "https://github.com/sktime/sktime",
+            "icon": "fab fa-github",
+        },
+        {
+            "name": "Slack",
+            "url": "https://join.slack.com/t/sktime-group/shared_invite/zt-1cghagwee-sqLJ~eHWGYgzWbqUX937ig",  # noqa: E501
+            "icon": "fab fa-slack",
+        },
+        {
+            "name": "Discord",
+            "url": "https://discord.com/invite/gqSab2K",
+            "icon": "fab fa-discord",
+        },
+        {
+            "name": "LinkedIn",
+            "url": "https://www.linkedin.com/company/sktime/",
+            "icon": "fab fa-linkedin",
+        },
+        {
+            "name": "Twitter",
+            "url": "https://twitter.com/sktime_toolbox",
+            "icon": "fab fa-twitter",
+        },
+    ],
+    "favicons": [
+        {
+            "rel": "icon",
+            "sizes": "16x16",
+            "href": "images/sktime-favicon.ico",
+        }
+    ],
+    "show_prev_next": False,
+    "use_edit_page_button": False,
+    "navbar_start": ["navbar-logo"],
+    "navbar_center": ["navbar-nav"],
+    "navbar_end": ["navbar-icon-links"],
 }
-
+html_logo = "images/sktime-logo-text-horizontal.png"
+html_context = {
+    "github_user": "sktime",
+    "github_repo": "sktime",
+    "github_version": "main",
+    "doc_path": "docs/source/",
+}
 html_favicon = "images/sktime-favicon.ico"
+html_sidebars = {
+    "**": ["search-field.html", "sidebar-nav-bs.html", "sidebar-ethical-ads.html"]
+}
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
+html_css_files = ["css/custom.css"]
 html_js_files = [
     "js/dynamic_table.js",
 ]
@@ -224,6 +302,7 @@ texinfo_documents = [
 def _make_estimator_overview(app):
     """Make estimator overview table."""
     import pandas as pd
+
     from sktime.registry import all_estimators
 
     def _process_author_info(author_info):
@@ -281,7 +360,7 @@ def _make_estimator_overview(app):
         clean_path = ".".join(list(filter(_does_not_start_with_underscore, path_parts)))
         # adds html link reference
         modname = str(
-            '<a href="https://www.sktime.org/en/latest/api_reference/modules'
+            '<a href="https://www.sktime.org/en/latest/api_reference'
             + "/auto_generated/"
             + clean_path
             + '.html">'
@@ -289,10 +368,8 @@ def _make_estimator_overview(app):
             + "</a>"
         )
 
-        df = df.append(
-            pd.Series([modname, algorithm_type, author_info], index=COLNAMES),
-            ignore_index=True,
-        )
+        record = pd.DataFrame([modname, algorithm_type, author_info], index=COLNAMES).T
+        df = pd.concat([df, record], ignore_index=True)
     with open("estimator_overview_table.md", "w") as file:
         df.to_markdown(file, index=False)
 
@@ -306,7 +383,7 @@ def setup(app):
     """
 
     def adds(pth):
-        print("Adding stylesheet: %s" % pth)  # noqa: T001
+        print("Adding stylesheet: %s" % pth)  # noqa: T201, T001
         app.add_css_file(pth)
 
     adds("fields.css")  # for parameters, etc.
@@ -322,32 +399,43 @@ nbsphinx_allow_errors = False  # False
 nbsphinx_timeout = 600  # seconds, set to -1 to disable timeout
 
 # add Binder launch buttom at the top
-CURRENT_FILE = "{{ env.doc2path( env.docname, base=None) }}"
+current_file = "{{ env.doc2path( env.docname, base=None) }}"
 
 # make sure Binder points to latest stable release, not main
-BINDER_URL = f"https://mybinder.org/v2/gh/alan-turing-institute/sktime/{CURRENT_VERSION}?filepath={CURRENT_FILE}"  # noqa
+binder_url = f"https://mybinder.org/v2/gh/sktime/sktime/{CURRENT_VERSION}?filepath={current_file}"  # noqa
 nbsphinx_prolog = f"""
 .. |binder| image:: https://mybinder.org/badge_logo.svg
-.. _Binder: {BINDER_URL}
+.. _Binder: {binder_url}
 
 |Binder|_
 """
 
 # add link to original notebook at the bottom
-NOTEBOOK_URL = f"https://github.com/alan-turing-institute/sktime/tree/{CURRENT_VERSION}/{CURRENT_FILE}"  # noqa
+notebook_url = (
+    f"https://github.com/sktime/sktime/tree/{CURRENT_VERSION}/{current_file}"  # noqa
+)
 nbsphinx_epilog = f"""
 ----
 
-Generated by nbsphinx_. The Jupyter notebook can be found here_.
+Generated using nbsphinx_. The Jupyter notebook can be found here_.
 
-.. _here: {NOTEBOOK_URL}
+.. _here: {notebook_url}
 .. _nbsphinx: https://nbsphinx.readthedocs.io/
 """
 
 # -- Options for intersphinx extension ---------------------------------------
 
 # Example configuration for intersphinx: refer to the Python standard library.
-intersphinx_mapping = {"https://docs.python.org/": None}
+intersphinx_mapping = {
+    "python": ("https://docs.python.org/{.major}".format(sys.version_info), None),
+    "numpy": ("https://docs.scipy.org/doc/numpy/", None),
+    "scipy": ("https://docs.scipy.org/doc/scipy/reference", None),
+    "matplotlib": ("https://matplotlib.org/", None),
+    "pandas": ("https://pandas.pydata.org/pandas-docs/stable/", None),
+    "joblib": ("https://joblib.readthedocs.io/en/latest/", None),
+    "scikit-learn": ("https://scikit-learn.org/stable/", None),
+    "statsmodels": ("https://www.statsmodels.org/stable/", None),
+}
 
 # -- Options for _todo extension ----------------------------------------------
 todo_include_todos = False

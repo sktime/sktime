@@ -1,35 +1,21 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Common timeseries plotting functionality.
+"""Common timeseries plotting functionality."""
 
-Functions
----------
-plot_series(*series, labels=None, markers=None, ax=None)
-plot_correlations(
-    series,
-    lags=24,
-    alpha=0.05,
-    zero_lag=True,
-    acf_fft=False,
-    acf_adjusted=True,
-    pacf_method="ywadjusted",
-    suptitle=None,
-    series_title=None,
-    acf_title="Autocorrelation",
-    pacf_title="Partial Autocorrelation",
-)
-"""
-__all__ = ["plot_series", "plot_correlations"]
-__author__ = ["Markus Löning", "Ryan Kuhns", "Drishti Bhasin"]
+__all__ = ["plot_series", "plot_correlations", "plot_windows"]
+__author__ = ["mloning", "RNKuhns", "Drishti Bhasin"]
+
+import math
+from warnings import simplefilter
 
 import numpy as np
+import pandas as pd
 
+from sktime.datatypes import convert_to
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.utils.validation.forecasting import check_y
 from sktime.utils.validation.series import check_consistent_index_type
-
-from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 
 
 def plot_series(
@@ -39,7 +25,7 @@ def plot_series(
 
     Parameters
     ----------
-    series : pd.Series
+    series : pd.Series or iterable of pd.Series
         One or more time series
     labels : list, default = None
         Names of series, will be displayed in figure legend
@@ -51,15 +37,25 @@ def plot_series(
     -------
     fig : plt.Figure
     ax : plt.Axis
+
+    Examples
+    --------
+    >>> from sktime.utils.plotting import plot_series
+    >>> from sktime.datasets import load_airline
+    >>> y = load_airline()
+    >>> fig, ax = plot_series(y)
     """
     _check_soft_dependencies("matplotlib", "seaborn")
     import matplotlib.pyplot as plt
-    from matplotlib.ticker import FuncFormatter, MaxNLocator
-    from matplotlib.cbook import flatten
     import seaborn as sns
+    from matplotlib.cbook import flatten
+    from matplotlib.ticker import FuncFormatter, MaxNLocator
 
     for y in series:
         check_y(y)
+
+    series = list(series)
+    series = [convert_to(y, "pd.Series", "Series") for y in series]
 
     n_series = len(series)
     _ax_kwarg_is_none = True if ax is None else False
@@ -143,6 +139,80 @@ def plot_series(
         return ax
 
 
+def plot_lags(series, lags=1, suptitle=None):
+    """Plot one or more lagged versions of a time series.
+
+    Parameters
+    ----------
+    series : pd.Series
+        Time series for plotting lags.
+    lags : int or array-like, default=1
+        The lag or lags to plot.
+
+        - int plots the specified lag
+        - array-like  plots specified lags in the array/list
+
+    suptitle : str, default=None
+        The text to use as the Figure's suptitle. If None, then the title
+        will be "Plot of series against lags {lags}"
+
+    Returns
+    -------
+    fig : matplotlib.figure.Figure
+
+    axes : np.ndarray
+        Array of the figure's Axe objects
+
+    Examples
+    --------
+    >>> from sktime.utils.plotting import plot_lags
+    >>> from sktime.datasets import load_airline
+    >>> y = load_airline()
+    >>> fig, ax = plot_lags(y, lags=2) # plot of y(t) with y(t-2)  # doctest: +SKIP
+    >>> fig, ax = plot_lags(y, lags=[1,2,3]) # y(t) & y(t-1), y(t-2).. # doctest: +SKIP
+    """
+    _check_soft_dependencies("matplotlib")
+    import matplotlib.pyplot as plt
+
+    check_y(series)
+
+    if isinstance(lags, int):
+        single_lag = True
+        lags = [lags]
+    elif isinstance(lags, (tuple, list, np.ndarray)):
+        single_lag = False
+    else:
+        raise ValueError("`lags should be an integer, tuple, list, or np.ndarray.")
+
+    length = len(lags)
+    n_cols = min(3, length)
+    n_rows = math.ceil(length / n_cols)
+    fig, ax = plt.subplots(
+        nrows=n_rows,
+        ncols=n_cols,
+        figsize=(8, 6 * n_rows),
+        sharex=True,
+        sharey=True,
+    )
+    if single_lag:
+        axes = ax
+        pd.plotting.lag_plot(series, lag=lags[0], ax=axes)
+    else:
+        axes = ax.ravel()
+        for i, val in enumerate(lags):
+            pd.plotting.lag_plot(series, lag=val, ax=axes[i])
+
+    if suptitle is None:
+        fig.suptitle(
+            f"Plot of series against lags {', '.join([str(lag) for lag in lags])}",
+            size="xx-large",
+        )
+    else:
+        fig.suptitle(suptitle, size="xx-large")
+
+    return fig, np.array(fig.get_axes())
+
+
 def plot_correlations(
     series,
     lags=24,
@@ -203,11 +273,20 @@ def plot_correlations(
 
     axes : np.ndarray
         Array of the figure's Axe objects
+
+    Examples
+    --------
+    >>> from sktime.utils.plotting import plot_correlations
+    >>> from sktime.datasets import load_airline
+    >>> y = load_airline()
+    >>> fig, ax = plot_correlations(y)  # doctest: +SKIP
     """
-    _check_soft_dependencies("matplotlib")
+    _check_soft_dependencies(("matplotlib", "statsmodels"))
     import matplotlib.pyplot as plt
+    from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 
     series = check_y(series)
+    series = convert_to(series, "pd.Series", "Series")
 
     # Setup figure for plotting
     fig = plt.figure(constrained_layout=True, figsize=(12, 8))
@@ -243,3 +322,80 @@ def plot_correlations(
         fig.suptitle(suptitle, size="xx-large")
 
     return fig, np.array(fig.get_axes())
+
+
+def _get_windows(cv, y):
+    """Generate cv split windows, utility function."""
+    train_windows = []
+    test_windows = []
+    for train, test in cv.split(y):
+        train_windows.append(train)
+        test_windows.append(test)
+    return train_windows, test_windows
+
+
+def plot_windows(cv, y, title=""):
+    """Plot training and test windows.
+
+    Parameters
+    ----------
+    y : pd.Series
+        Time series to split
+    cv : temporal cross-validation iterator object
+        Temporal cross-validation iterator
+    title : str
+        Plot title
+    """
+    _check_soft_dependencies("matplotlib", "seaborn")
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+    from matplotlib.ticker import MaxNLocator
+
+    simplefilter("ignore", category=UserWarning)
+
+    train_windows, test_windows = _get_windows(cv, y)
+
+    def get_y(length, split):
+        # Create a constant vector based on the split for y-axis."""
+        return np.ones(length) * split
+
+    n_splits = len(train_windows)
+    n_timepoints = len(y)
+    len_test = len(test_windows[0])
+
+    train_color, test_color = sns.color_palette("colorblind")[:2]
+
+    fig, ax = plt.subplots(figsize=plt.figaspect(0.3))
+
+    for i in range(n_splits):
+        train = train_windows[i]
+        test = test_windows[i]
+
+        ax.plot(
+            np.arange(n_timepoints), get_y(n_timepoints, i), marker="o", c="lightgray"
+        )
+        ax.plot(
+            train,
+            get_y(len(train), i),
+            marker="o",
+            c=train_color,
+            label="Window",
+        )
+        ax.plot(
+            test,
+            get_y(len_test, i),
+            marker="o",
+            c=test_color,
+            label="Forecasting horizon",
+        )
+    ax.invert_yaxis()
+    ax.yaxis.set_major_locator(MaxNLocator(integer=True))
+    ax.set(
+        title=title,
+        ylabel="Window number",
+        xlabel="Time",
+        xticklabels=y.index,
+    )
+    # remove duplicate labels/handles
+    handles, labels = [(leg[:2]) for leg in ax.get_legend_handles_labels()]
+    ax.legend(handles, labels)

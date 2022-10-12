@@ -2,22 +2,19 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-__author__ = ["Markus Löning"]
+"""Implements meta forecaster for forecasters composed of other estimators."""
+
+__author__ = ["mloning"]
 __all__ = ["_HeterogenousEnsembleForecaster"]
 
-from joblib import Parallel
-from joblib import delayed
-from sklearn.base import clone
+from joblib import Parallel, delayed
 
 from sktime.base import _HeterogenousMetaEstimator
-from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._base import BaseForecaster
 
 
 class _HeterogenousEnsembleForecaster(BaseForecaster, _HeterogenousMetaEstimator):
-    """Base class for heterogenous ensemble forecasters"""
-
-    _required_parameters = ["forecasters"]
+    """Base class for heterogeneous ensemble forecasters."""
 
     def __init__(self, forecasters, n_jobs=None):
         self.forecasters = forecasters
@@ -57,32 +54,62 @@ class _HeterogenousEnsembleForecaster(BaseForecaster, _HeterogenousMetaEstimator
         return names, forecasters
 
     def _fit_forecasters(self, forecasters, y, X, fh):
-        """Fit all forecasters in parallel"""
+        """Fit all forecasters in parallel."""
 
         def _fit_forecaster(forecaster, y, X, fh):
-            """Fit single forecaster"""
+            """Fit single forecaster."""
             return forecaster.fit(y, X, fh)
 
         self.forecasters_ = Parallel(n_jobs=self.n_jobs)(
-            delayed(_fit_forecaster)(clone(forecaster), y, X, fh)
+            delayed(_fit_forecaster)(forecaster.clone(), y, X, fh)
             for forecaster in forecasters
         )
 
-    def _predict_forecasters(
-        self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA
-    ):
+    def _predict_forecasters(self, fh=None, X=None):
         """Collect results from forecaster.predict() calls."""
-        if return_pred_int:
-            raise NotImplementedError()
+        return [forecaster.predict(fh=fh, X=X) for forecaster in self.forecasters_]
 
-        return [
-            forecaster.predict(fh, X, return_pred_int=return_pred_int, alpha=alpha)
-            for forecaster in self.forecasters_
-        ]
+    def _update(self, y, X=None, update_params=True):
+        """Update fitted parameters.
+
+        Parameters
+        ----------
+        y : pd.Series
+        X : pd.DataFrame
+        update_params : bool, optional, default=True
+
+        Returns
+        -------
+        self : an instance of self.
+        """
+        for forecaster in self.forecasters_:
+            forecaster.update(y, X, update_params=update_params)
+        return self
 
     def get_params(self, deep=True):
+        """Get parameters for this estimator.
+
+        Parameters
+        ----------
+        deep : boolean, optional, default=True
+            If True, will return the parameters for this estimator and
+            contained sub-objects that are estimators.
+
+        Returns
+        -------
+        params : mapping of string to any
+            Parameter names mapped to their values.
+        """
         return self._get_params("forecasters", deep=deep)
 
     def set_params(self, **params):
+        """Set the parameters of this estimator.
+
+        Valid parameter keys can be listed with ``get_params()``.
+
+        Returns
+        -------
+        self
+        """
         self._set_params("forecasters", **params)
         return self

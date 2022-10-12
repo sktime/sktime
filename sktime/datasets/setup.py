@@ -1,15 +1,19 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Set up the datasets included in sktime."""
 
 __author__ = "Markus Löning"
 
+# The file is adapted from:
+# https://github.com/scikit-learn/scikit-learn/blob/master/sklearn/datasets/setup.py
 
-# adapted from https://github.com/scikit-learn/scikit-learn/blob/master
-# /sklearn/datasets/setup.py
+
+___author__ = ["mloning"]
 
 
 def configuration(parent_package="", top_path=None):
+    """Configure the imports."""
     from numpy.distutils.misc_util import Configuration
 
     config = Configuration("datasets", parent_package, top_path)
@@ -28,8 +32,11 @@ def configuration(parent_package="", top_path=None):
         "ShampooSales",
         "Airline",
         "ACSF1",
+        "UnitTest",
         "Uschange",
         "PBS_dataset",
+        "segmentation",
+        "Covid3Month",
     )
     for dataset in included_datasets:
         config.add_data_dir(f"data/{dataset}")

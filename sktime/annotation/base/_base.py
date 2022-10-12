@@ -1,6 +1,8 @@
+#!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
-Base class template for annotator base type for time series stream
+Base class template for annotator base type for time series stream.
 
     class name: BaseSeriesAnnotator
 
@@ -17,16 +19,13 @@ Inspection methods:
 State:
     fitted model/strategy   - by convention, any attributes ending in "_"
     fitted state flag       - check_is_fitted()
-
-copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
 
 __author__ = ["satya-pattnaik ", "fkiraly"]
+__all__ = ["BaseSeriesAnnotator"]
 
 from sktime.base import BaseEstimator
-from sktime.utils.validation.annotation import check_fmt
-from sktime.utils.validation.annotation import check_labels
-
+from sktime.utils.validation.annotation import check_fmt, check_labels
 from sktime.utils.validation.series import check_series
 
 
@@ -48,7 +47,7 @@ class BaseSeriesAnnotator(BaseEstimator):
     Notes
     -----
     Assumes "predict" data is temporal future of "fit"
-        single time series in both, no meta-data
+    Single time series in both, no meta-data.
 
     The base series annotator specifies the methods and method
     signatures that all annotators have to implement.
@@ -74,17 +73,19 @@ class BaseSeriesAnnotator(BaseEstimator):
         Parameters
         ----------
         X : pd.DataFrame
-            training data to fit model to, time series
+            Training data to fit model to (time series).
         Y : pd.Series, optional
-            ground truth annotations for training if annotator is supervised
+            Ground truth annotations for training if annotator is supervised.
+
         Returns
         -------
-        self : returns a reference to self
+        self :
+            Reference to self.
 
-        State change
-        ------------
-        creates fitted model (attributes ending in "_")
-        sets _is_fitted flag to true
+        Notes
+        -----
+        Creates fitted model that updates attributes ending in "_". Sets
+        _is_fitted flag to True.
         """
         check_labels(self.labels)
         check_fmt(self.fmt)
@@ -110,14 +111,14 @@ class BaseSeriesAnnotator(BaseEstimator):
 
         Parameters
         ----------
-        X : pd.DataFrame - data to annotate, time series
+        X : pd.DataFrame
+            Data to annotate (time series).
 
         Returns
         -------
-        Y : pd.Series - annotations for sequence X
-            exact format depends on annotation type
+        Y : pd.Series
+            Annotations for sequence X exact format depends on annotation type.
         """
-
         self.check_is_fitted()
 
         X = check_series(X)
@@ -128,24 +129,42 @@ class BaseSeriesAnnotator(BaseEstimator):
 
         return Y
 
-    def update(self, X, Y=None):
-        """update model with new data and optional ground truth annotations
+    def predict_scores(self, X):
+        """Return scores for predicted annotations on test/deployment data.
 
         Parameters
         ----------
         X : pd.DataFrame
-            training data to update model with, time series
-        Y : pd.Series, optional
-            ground truth annotations for training if annotator is supervised
+            Data to annotate (time series).
+
         Returns
         -------
-        self : returns a reference to self
-
-        State change
-        ------------
-        updates fitted model (attributes ending in "_")
+        Y : pd.Series
+            Scores for sequence X exact format depends on annotation type.
         """
+        self.check_is_fitted()
+        X = check_series(X)
+        return self._predict_scores(X)
 
+    def update(self, X, Y=None):
+        """Update model with new data and optional ground truth annotations.
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+            Training data to update model with (time series).
+        Y : pd.Series, optional
+            Ground truth annotations for training if annotator is supervised.
+
+        Returns
+        -------
+        self :
+            Reference to self.
+
+        Notes
+        -----
+        Updates fitted model that updates attributes ending in "_".
+        """
         self.check_is_fitted()
 
         X = check_series(X)
@@ -163,29 +182,50 @@ class BaseSeriesAnnotator(BaseEstimator):
         return self
 
     def update_predict(self, X):
-        """update model with new data and create annotations for it
+        """Update model with new data and create annotations for it.
 
         Parameters
         ----------
         X : pd.DataFrame
-            training data to update model with, time series
+            Training data to update model with, time series.
 
         Returns
         -------
-        Y : pd.Series - annotations for sequence X
-            exact format depends on annotation type
+        Y : pd.Series
+            Annotations for sequence X exact format depends on annotation type.
 
-        State change
-        ------------
-        updates fitted model (attributes ending in "_")
+        Notes
+        -----
+        Updates fitted model that updates attributes ending in "_".
         """
-
         X = check_series(X)
 
         self.update(X=X)
         Y = self.predict(X=X)
 
         return Y
+
+    def fit_predict(self, X, Y=None):
+        """Fit to data, then predict it.
+
+        Fits model to X and Y with given annotation parameters
+        and returns the annotations made by the model.
+
+        Parameters
+        ----------
+        X : pd.DataFrame, pd.Series or np.ndarray
+            Data to be transformed
+        Y : pd.Series or np.ndarray, optional (default=None)
+            Target values of data to be predicted.
+
+        Returns
+        -------
+        self : pd.Series
+            Annotations for sequence X exact format depends on annotation type.
+        """
+        # Non-optimized default implementation; override when a better
+        # method is possible for a given algorithm.
+        return self.fit(X, Y).predict(X)
 
     def _fit(self, X, Y=None):
         """Fit to training data.
@@ -195,16 +235,18 @@ class BaseSeriesAnnotator(BaseEstimator):
         Parameters
         ----------
         X : pd.DataFrame
-            training data to fit model to, time series
+            Training data to fit model to time series.
         Y : pd.Series, optional
-            ground truth annotations for training if annotator is supervised
+            Ground truth annotations for training if annotator is supervised.
+
         Returns
         -------
-        self : returns a reference to self
+        self :
+            Reference to self.
 
-        State change
-        ------------
-        creates fitted model (attributes ending in "_")
+        Notes
+        -----
+        Updates fitted model that updates attributes ending in "_".
         """
         raise NotImplementedError("abstract method")
 
@@ -215,35 +257,54 @@ class BaseSeriesAnnotator(BaseEstimator):
 
         Parameters
         ----------
-        X : pd.DataFrame - data to annotate, time series
+        X : pd.DataFrame
+            Data to annotate, time series.
 
         Returns
         -------
-        Y : pd.Series - annotations for sequence X
-            exact format depends on annotation type
+        Y : pd.Series
+            Annotations for sequence X exact format depends on annotation type.
         """
         raise NotImplementedError("abstract method")
 
-    def _update(self, X, Y=None):
-        """update model with new data and optional ground truth annotations
+    def _predict_scores(self, X):
+        """Return scores for predicted annotations on test/deployment data.
 
         core logic
 
         Parameters
         ----------
         X : pd.DataFrame
-            training data to update model with, time series
-        Y : pd.Series, optional
-            ground truth annotations for training if annotator is supervised
+            Data to annotate, time series.
+
         Returns
         -------
-        self : returns a reference to self
-
-        State change
-        ------------
-        updates fitted model (attributes ending in "_")
+        Y : pd.Series
+            Annotations for sequence X exact format depends on annotation type.
         """
+        raise NotImplementedError("abstract method")
 
+    def _update(self, X, Y=None):
+        """Update model with new data and optional ground truth annotations.
+
+        core logic
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+            Training data to update model with time series
+        Y : pd.Series, optional
+            Ground truth annotations for training if annotator is supervised.
+
+        Returns
+        -------
+        self :
+            Reference to self.
+
+        Notes
+        -----
+        Updates fitted model that updates attributes ending in "_".
+        """
         # default/fallback: re-fit to all data
         self._fit(self._X, self._Y)
 

@@ -1,30 +1,30 @@
 # -*- coding: utf-8 -*-
-"""
-Configurable time series ensembles
-"""
-__author__ = ["Markus Löning", "Ayushmaan Seth"]
+"""Configurable time series ensembles."""
+__author__ = ["mloning", "AyushmaanSeth", "fkiraly"]
 __all__ = ["ComposableTimeSeriesForestClassifier"]
 
-from warnings import warn
-import numpy as np
 import numbers
-from joblib import Parallel
-from joblib import delayed
+from warnings import warn
 
+import numpy as np
+from joblib import Parallel, delayed
 from sklearn.ensemble._base import _partition_estimators
+from sklearn.ensemble._forest import (
+    _generate_unsampled_indices,
+    _get_n_samples_bootstrap,
+)
+from sklearn.metrics import accuracy_score
+from sklearn.pipeline import Pipeline
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils import compute_sample_weight
 from sklearn.utils.multiclass import check_classification_targets
-from sklearn.pipeline import Pipeline
-from sklearn.ensemble._forest import _generate_unsampled_indices
-from sklearn.ensemble._forest import _get_n_samples_bootstrap
-from sktime.transformations.panel.summarize import (
-    RandomIntervalFeatureExtractor,
-)
-from sktime.utils.slope_and_trend import _slope
-from sktime.utils.validation.panel import check_X, check_X_y
+
+from sktime.base import _HeterogenousMetaEstimator
 from sktime.classification.base import BaseClassifier
 from sktime.series_as_features.base.estimators._ensemble import BaseTimeSeriesForest
+from sktime.transformations.panel.summarize import RandomIntervalFeatureExtractor
+from sktime.utils.slope_and_trend import _slope
+from sktime.utils.validation.panel import check_X, check_X_y
 
 
 class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier):
@@ -58,10 +58,6 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
         and a decision tree classifier as final estimator.
     n_estimators : integer, optional (default=200)
         The number of trees in the forest.
-    criterion : string, optional (default="entropy")
-        The function to measure the quality of a split. Supported criteria are
-        "gini" for the Gini impurity and "entropy" for the information gain.
-        Note: this parameter is tree-specific. Default is "entropy"
     max_depth : integer or None, optional (default=None)
         The maximum depth of the tree. If None, then nodes are expanded until
         all leaves are pure or until all leaves contain less than
@@ -114,9 +110,6 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
         left child, and ``N_t_R`` is the number of samples in the right child.
         ``N``, ``N_t``, ``N_t_R`` and ``N_t_L`` all refer to the weighted sum,
         if ``sample_weight`` is passed.
-    min_impurity_split : float or None, (default=None)
-        Threshold for early stopping in tree growth. A node will split
-        if its impurity is above the threshold, otherwise it is a leaf.
     bootstrap : boolean, optional (default=False)
         Whether bootstrap samples are used when building trees.
     oob_score : bool (default=False)
@@ -191,11 +184,14 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
         `oob_decision_function_` might contain NaN.
     """
 
+    _tags = {
+        "X_inner_mtype": "nested_univ",  # nested pd.DataFrame
+    }
+
     def __init__(
         self,
         estimator=None,
         n_estimators=100,
-        criterion="entropy",
         max_depth=None,
         min_samples_split=2,
         min_samples_leaf=1,
@@ -203,7 +199,6 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
         max_features=None,
         max_leaf_nodes=None,
         min_impurity_decrease=0.0,
-        min_impurity_split=None,
         bootstrap=False,
         oob_score=False,
         n_jobs=None,
@@ -218,7 +213,6 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
 
         # Assign values, even though passed on to base estimator below,
         # necessary here for cloning
-        self.criterion = criterion
         self.max_depth = max_depth
         self.min_samples_split = min_samples_split
         self.min_samples_leaf = min_samples_leaf
@@ -226,7 +220,6 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
         self.max_features = max_features
         self.max_leaf_nodes = max_leaf_nodes
         self.min_impurity_decrease = min_impurity_decrease
-        self.min_impurity_split = min_impurity_split
         self.max_samples = max_samples
 
         # Pass on params.
@@ -243,9 +236,31 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
             class_weight=class_weight,
             max_samples=max_samples,
         )
+        BaseClassifier.__init__(self)
 
         # We need to add is-fitted state when inheriting from scikit-learn
         self._is_fitted = False
+
+    def fit(self, X, y, **kwargs):
+        """Wrap fit to call BaseClassifier.fit.
+
+        This is a fix to get around the problem with multiple inheritance. The
+        problem is that if we just override _fit, this class inherits the fit from
+        the sklearn class BaseTimeSeriesForest. This is the simplest solution,
+        albeit a little hacky.
+        """
+        return BaseClassifier.fit(self, X=X, y=y, **kwargs)
+
+    def predict(self, X, **kwargs) -> np.ndarray:
+        """Wrap predict to call BaseClassifier.predict."""
+        return BaseClassifier.predict(self, X=X, **kwargs)
+
+    def predict_proba(self, X, **kwargs) -> np.ndarray:
+        """Wrap predict_proba to call BaseClassifier.predict_proba."""
+        return BaseClassifier.predict_proba(self, X=X, **kwargs)
+
+    def _fit(self, X, y):
+        BaseTimeSeriesForest._fit(self, X=X, y=y)
 
     def _validate_estimator(self):
 
@@ -291,7 +306,6 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
 
         # Set parameters according to naming in pipeline
         estimator_params = {
-            "criterion": self.criterion,
             "max_depth": self.max_depth,
             "min_samples_split": self.min_samples_split,
             "min_samples_leaf": self.min_samples_leaf,
@@ -299,7 +313,6 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
             "max_features": self.max_features,
             "max_leaf_nodes": self.max_leaf_nodes,
             "min_impurity_decrease": self.min_impurity_decrease,
-            "min_impurity_split": self.min_impurity_split,
         }
         final_estimator = self.estimator_.steps[-1][0]
         self.estimator_params = {
@@ -311,19 +324,21 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
         for pname, pval in self.estimator_params.items():
             self.__setattr__(pname, pval)
 
-    def predict(self, X):
-        """
-        Predict class for X.
+    def _predict(self, X):
+        """Predict class for X.
+
         The predicted class of an input sample is a vote by the trees in
         the forest, weighted by their probability estimates. That is,
         the predicted class is the one with highest mean probability
         estimate across the trees.
+
         Parameters
         ----------
         X : array-like or sparse matrix of shape (n_samples, n_features)
             The input samples. Internally, its dtype will be converted to
             ``dtype=np.float32``. If a sparse matrix is provided, it will be
             converted into a sparse ``csr_matrix``.
+
         Returns
         -------
         y : array-like of shape (n_samples,) or (n_samples, n_outputs)
@@ -348,17 +363,19 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
             return predictions
 
     def predict_log_proba(self, X):
-        """
-        Predict class log-probabilities for X.
+        """Predict class log-probabilities for X.
+
         The predicted class log-probabilities of an input sample is computed as
         the log of the mean predicted class probabilities of the trees in the
         forest.
+
         Parameters
         ----------
         X : array-like or sparse matrix of shape (n_samples, n_features)
             The input samples. Internally, its dtype will be converted to
             ``dtype=np.float32``. If a sparse matrix is provided, it will be
             converted into a sparse ``csr_matrix``.
+
         Returns
         -------
         p : array of shape (n_samples, n_classes), or a list of n_outputs
@@ -377,19 +394,21 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
 
             return proba
 
-    def predict_proba(self, X):
+    def _predict_proba(self, X):
         """Predict class probabilities for X.
+
         The predicted class probabilities of an input sample are computed as
         the mean predicted class probabilities of the trees in the forest. The
         class probability of a single tree is the fraction of samples of the
-        same
-        class in a leaf.
+        same class in a leaf.
+
         Parameters
         ----------
         X : array-like or sparse matrix of shape = [n_samples, n_features]
             The input samples. Internally, its dtype will be converted to
             ``dtype=np.float32``. If a sparse matrix is provided, it will be
             converted into a sparse ``csr_matrix``.
+
         Returns
         -------
         p : array of shape = [n_samples, n_classes], or a list of n_outputs
@@ -413,7 +432,7 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
         return np.sum(all_proba, axis=0) / len(self.estimators_)
 
     def _set_oob_score(self, X, y):
-        """Compute out-of-bag score"""
+        """Compute out-of-bag score."""
         check_X_y(X, y)
         check_X(X, enforce_univariate=True)
 
@@ -460,6 +479,10 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
 
         self.oob_score_ = oob_score / self.n_outputs_
 
+    # TODO - Implement this abstract method properly.
+    def _set_oob_score_and_attributes(self, X, y):
+        raise NotImplementedError("Not implemented.")
+
     def _validate_y_class_weight(self, y):
         check_classification_targets(y)
 
@@ -472,7 +495,7 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
         self.classes_ = []
         self.n_classes_ = []
 
-        y_store_unique_indices = np.zeros(y.shape, dtype=np.int)
+        y_store_unique_indices = np.zeros(y.shape, dtype=int)
         for k in range(self.n_outputs_):
             classes_k, y_store_unique_indices[:, k] = np.unique(
                 y[:, k], return_inverse=True
@@ -512,3 +535,303 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
                 expanded_class_weight = compute_sample_weight(class_weight, y_original)
 
         return y, expanded_class_weight
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            For classifiers, a "default" set of parameters should be provided for
+            general testing, and a "results_comparison" set for comparing against
+            previously recorded results if the general set does not produce suitable
+            probabilities to compare against.
+
+        Returns
+        -------
+        params : dict or list of dict, default={}
+            Parameters to create testing instances of the class.
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`.
+        """
+        return {"n_estimators": 2}
+
+
+class WeightedEnsembleClassifier(BaseClassifier, _HeterogenousMetaEstimator):
+    """Weighted ensemble of classifiers with fittable ensemble weight.
+
+    Produces a probabilistic prediction which is the weighted average of
+    predictions of individual classifiers.
+    Classifier with name `name` has ensemble weight in `weights_[name]`.
+    `weights_` is fitted in `fit`, if `weights` is a scalar, otherwise fixed.
+
+    If `weights` is a scalar, empirical training loss is computed for each classifier.
+    In this case, ensemble weights of classifier is empirical loss,
+    to the power of `weights` (a scalar).
+
+    The evaluation for the empirical training loss can be selected
+    through the `metric` and `metric_type` parameters.
+
+    The in-sample empirical training loss is computed in-sample or out-of-sample,
+    depending on the `cv` parameter. None = in-sample; other = cross-validated oos.
+
+    Parameters
+    ----------
+    classifiers : dict or None, default=None
+        Parameters for the ShapeletTransformClassifier module. If None, uses the
+        default parameters with a 2 hour transform contract.
+    weights : float, or iterable of float, optional, default=None
+        if float, ensemble weight for classifier i will be train score to this power
+        if iterable of float, must be equal length as classifiers
+            ensemble weight for classifier i will be weights[i]
+        if None, ensemble weights are equal (uniform average)
+    cv : None, int, or sklearn cross-validation object, optional, default=None
+        determines whether in-sample or which cross-validated predictions used in fit
+        None : predictions are in-sample, equivalent to fit(X, y).predict(X)
+        cv : predictions are equivalent to fit(X_train, y_train).predict(X_test)
+            where multiple X_train, y_train, X_test are obtained from cv folds
+            returned y is union over all test fold predictions
+            cv test folds must be non-intersecting
+        int : equivalent to cv=KFold(cv, shuffle=True, random_state=x),
+            i.e., k-fold cross-validation predictions out-of-sample
+            random_state x is taken from self if exists, otherwise x=None
+    metric : sklearn metric for computing training score, default=accuracy_score
+        only used if weights is a float
+    metric_type : str, one of "point" or "proba", default="point"
+        type of sklearn metric, point prediction ("point") or probabilistic ("proba")
+        if "point", most probable class is passed as y_pred
+        if "proba", probability of most probable class is passed as y_pred
+    random_state : int or None, default=None
+        Seed for random number generation.
+
+    Attributes
+    ----------
+    classifiers_ : list of tuples (str, classifier) of sktime classifiers
+        clones of classifies in `classifiers` which are fitted in the ensemble
+        is always in (str, classifier) format, even if `classifiers` is just a list
+        strings not passed in `classifiers` are replaced by unique generated strings
+        i-th classifier in `classifier_` is clone of i-th in `classifier`
+    weights_ : dict with str being classifier names as in `classifiers_`
+        value at key is ensemble weights of classifier with name key
+        ensemble weights are fitted in `fit` if `weights` is a scalar
+
+    Examples
+    --------
+    >>> from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
+    >>> from sktime.classification.kernel_based import RocketClassifier
+    >>> from sktime.datasets import load_unit_test
+    >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
+    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
+    >>> clf = WeightedEnsembleClassifier(
+    ...     [KNeighborsTimeSeriesClassifier(), RocketClassifier()],
+    ...     weights=2,
+    ... )
+    >>> clf.fit(X_train, y_train)
+    WeightedEnsembleClassifier(...)
+    >>> y_pred = clf.predict(X_test)
+    """
+
+    _tags = {
+        "capability:multivariate": True,
+        "capability:missing_values": True,
+        "X_inner_mtype": [
+            "pd-multiindex",
+            "df-list",
+            "nested_univ",
+            "numpy3D",
+        ],
+    }
+
+    def __init__(
+        self,
+        classifiers,
+        weights=None,
+        cv=None,
+        metric=None,
+        metric_type="point",
+        random_state=None,
+    ):
+        self.classifiers = classifiers
+        self.weights = weights
+        self.cv = cv
+        self.metric = metric
+        self.metric_type = metric_type
+        self.random_state = random_state
+
+        # make the copies that are being fitted
+        self.classifiers_ = self._check_estimators(
+            self.classifiers, cls_type=BaseClassifier
+        )
+
+        # pass on random state
+        for _, clf in self.classifiers_:
+            params = clf.get_params()
+            if "random_state" in params and params["random_state"] is None:
+                clf.set_params(random_state=random_state)
+
+        if weights is None:
+            self.weights_ = {x[0]: 1 for x in self.classifiers_}
+        elif isinstance(weights, (float, int)):
+            self.weights_ = dict()
+        elif isinstance(weights, dict):
+            self.weights_ = {x[0]: weights[x[0]] for x in self.classifiers_}
+        else:
+            self.weights_ = {x[0]: weights[i] for i, x in enumerate(self.classifiers_)}
+
+        if metric is None:
+            self._metric = accuracy_score
+        else:
+            self._metric = metric
+
+        super(WeightedEnsembleClassifier, self).__init__()
+
+        # set property tags based on tags of components
+        ests = self.classifiers_
+        self._anytagis_then_set("capability:multivariate", False, True, ests)
+        self._anytagis_then_set("capability:missing_values", False, True, ests)
+
+    @property
+    def _classifiers(self):
+        return self._get_estimator_tuples(self.classifiers, clone_ests=False)
+
+    @_classifiers.setter
+    def _classifiers(self, value):
+        self.classifiers = value
+
+    def get_params(self, deep=True):
+        """Get parameters of estimator in `classifiers`.
+
+        Parameters
+        ----------
+        deep : boolean, optional, default=True
+            If True, will return the parameters for this estimator and
+            contained sub-objects that are estimators.
+
+        Returns
+        -------
+        params : mapping of string to any
+            Parameter names mapped to their values.
+        """
+        return self._get_params("_classifiers", deep=deep)
+
+    def set_params(self, **kwargs):
+        """Set the parameters of estimator in `classifiers`.
+
+        Valid parameter keys can be listed with ``get_params()``.
+
+        Returns
+        -------
+        self : returns an instance of self.
+        """
+        self._set_params("_classifiers", **kwargs)
+        return self
+
+    def _fit(self, X, y):
+        """Fit time series classifier to training data.
+
+        Parameters
+        ----------
+        X : guaranteed to be of a type in self.get_tag("X_inner_mtype")
+            if self.get_tag("X_inner_mtype") = "numpy3D":
+                3D np.ndarray of shape = [n_instances, n_dimensions, series_length]
+            if self.get_tag("X_inner_mtype") = "nested_univ":
+                pd.DataFrame with each column a dimension, each cell a pd.Series
+            for list of other mtypes, see datatypes.SCITYPE_REGISTER
+            for specifications, see examples/AA_datatypes_and_datasets.ipynb
+        y : 1D np.array of int, of shape [n_instances] - class labels for fitting
+            indices correspond to instance indices in X
+
+        Returns
+        -------
+        self : Reference to self.
+        """
+        # if weights are fixed, we only fit
+        if not isinstance(self.weights, (float, int)):
+            for _, classifier in self.classifiers_:
+                classifier.fit(X=X, y=y)
+        # if weights are calculated by training loss, we fit_predict and evaluate
+        else:
+            exponent = self.weights
+            for clf_name, clf in self.classifiers_:
+                train_probs = clf.fit_predict_proba(X=X, y=y, cv=self.cv)
+                train_preds = clf.classes_[np.argmax(train_probs, axis=1)]
+                if self.metric_type == "proba":
+                    for i in range(len(train_preds)):
+                        train_preds[i] = train_probs[i, np.argmax(train_probs[i, :])]
+                metric = self._metric
+                self.weights_[clf_name] = metric(y, train_preds) ** exponent
+
+        return self
+
+    def _predict_proba(self, X) -> np.ndarray:
+        """Predicts labels probabilities for sequences in X.
+
+        Parameters
+        ----------
+        X : 3D np.array of shape = [n_instances, n_dimensions, series_length]
+            The data to make predict probabilities for.
+
+        Returns
+        -------
+        y : array-like, shape = [n_instances, n_classes_]
+            Predicted probabilities using the ordering in classes_.
+        """
+        dists = np.zeros((X.shape[0], self.n_classes_))
+
+        # Call predict proba on each classifier, multiply the probabilities by the
+        # classifiers weight then add them to the current HC2 probabilities
+        for clf_name, clf in self.classifiers_:
+            y_proba = clf.predict_proba(X=X)
+            dists += y_proba * self.weights_[clf_name]
+
+        # Make each instances probability array sum to 1 and return
+        y_proba = dists / dists.sum(axis=1, keepdims=True)
+
+        return y_proba
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            For classifiers, a "default" set of parameters should be provided for
+            general testing, and a "results_comparison" set for comparing against
+            previously recorded results if the general set does not produce suitable
+            probabilities to compare against.
+
+        Returns
+        -------
+        params : dict or list of dict, default={}
+            Parameters to create testing instances of the class.
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`.
+        """
+        from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
+        from sktime.classification.kernel_based import RocketClassifier
+
+        params1 = {
+            "classifiers": [
+                KNeighborsTimeSeriesClassifier.create_test_instance(),
+                RocketClassifier.create_test_instance(),
+            ],
+            "weights": [42, 1],
+        }
+
+        params2 = {
+            "classifiers": [
+                KNeighborsTimeSeriesClassifier.create_test_instance(),
+                RocketClassifier.create_test_instance(),
+            ],
+            "weights": 2,
+            "cv": 3,
+        }
+        return [params1, params2]

@@ -1,0 +1,336 @@
+# -*- coding: utf-8 -*-
+"""Testing utilities in the datatype module."""
+
+__author__ = ["fkiraly"]
+
+import numpy as np
+import pandas as pd
+import pytest
+
+from sktime.datatypes._check import check_is_mtype
+from sktime.datatypes._examples import get_examples
+from sktime.datatypes._utilities import (
+    _get_cutoff_from_index,
+    get_cutoff,
+    get_slice,
+    get_time_index,
+    get_window,
+)
+from sktime.utils._testing.hierarchical import _make_hierarchical
+
+SCITYPE_MTYPE_PAIRS = [
+    ("Series", "pd.Series"),
+    ("Series", "pd.DataFrame"),
+    ("Series", "np.ndarray"),
+    ("Panel", "pd-multiindex"),
+    ("Panel", "numpy3D"),
+    ("Panel", "nested_univ"),
+    ("Panel", "df-list"),
+    ("Hierarchical", "pd_multiindex_hier"),
+]
+
+
+@pytest.mark.parametrize("scitype,mtype", SCITYPE_MTYPE_PAIRS)
+def test_get_time_index(scitype, mtype):
+    """Tests that conversions for scitype agree with from/to example fixtures.
+
+    Parameters
+    ----------
+    scitype : str - scitype of input
+    mtype : str - mtype of input
+
+    Raises
+    ------
+    AssertionError if get_cutoff does not return a length 1 pandas.index
+        for any fixture example of given scitype, mtype
+    """
+    # get_time_index currently does not work for df-list type, skip
+    if mtype == "df-list":
+        return None
+
+    # retrieve example fixture
+    fixtures = get_examples(mtype=mtype, as_scitype=scitype, return_lossy=False)
+
+    for fixture in fixtures.values():
+        if fixture is None:
+            continue
+
+        idx = get_time_index(fixture)
+
+        msg = f"get_time_index should return pd.Index, but found {type(idx)}"
+        assert isinstance(idx, pd.Index), msg
+
+        if mtype in ["pd.Series", "pd.DataFrame"]:
+            assert (idx == fixture.index).all()
+
+        if mtype in ["np.ndarray", "numpy3D"]:
+            assert isinstance(idx, pd.RangeIndex)
+            if mtype == "np.ndarray":
+                assert len(idx) == fixture.shape[0]
+            else:
+                assert len(idx) == fixture.shape[-1]
+
+        if mtype in ["pd-multiindex", "pd_multiindex_hier"]:
+            exp_idx = fixture.index.get_level_values(-1).unique()
+            assert (idx == exp_idx).all()
+
+
+@pytest.mark.parametrize("convert_input", [True, False])
+@pytest.mark.parametrize("reverse_order", [True, False])
+@pytest.mark.parametrize("return_index", [True, False])
+@pytest.mark.parametrize("scitype,mtype", SCITYPE_MTYPE_PAIRS)
+def test_get_cutoff(scitype, mtype, return_index, reverse_order, convert_input):
+    """Tests that get_cutoff has correct output.
+
+    Parameters
+    ----------
+    scitype : str - scitype of input
+    mtype : str - mtype of input
+    return_index : bool - whether index (True) or index element is returned (False)
+    reverse_order : bool - whether first (True) or last index (False) is retrieved
+    convert_input : bool - whether input is converted (True) or passed through (False)
+
+    Raises
+    ------
+    AssertionError if get_cutoff does not return a length 1 pandas.index
+        for any fixture example of given scitype, mtype
+    """
+    # retrieve example fixture
+    fixtures = get_examples(mtype=mtype, as_scitype=scitype, return_lossy=False)
+
+    for fixture in fixtures.values():
+        if fixture is None:
+            continue
+
+        cutoff = get_cutoff(
+            fixture,
+            return_index=return_index,
+            reverse_order=reverse_order,
+            convert_input=convert_input,
+        )
+
+        if return_index:
+            expected_types = pd.Index
+            cutoff_val = cutoff[0]
+        else:
+            expected_types = (int, float, np.int64, pd.Timestamp)
+            cutoff_val = cutoff
+
+        msg = (
+            f"incorrect return type of get_cutoff"
+            f"expected {expected_types}, found {type(cutoff)}"
+        )
+
+        assert isinstance(cutoff, expected_types), msg
+
+        if return_index:
+            assert len(cutoff) == 1
+            if isinstance(cutoff_val, (pd.Period, pd.Timestamp)):
+                assert hasattr(cutoff, "freq") and cutoff.freq is not None
+
+        if isinstance(fixture, np.ndarray):
+            if reverse_order:
+                assert cutoff_val == 0
+            else:
+                assert cutoff_val > 0
+
+        if mtype in ["pd.Series", "pd.DataFrame"]:
+            if reverse_order:
+                assert cutoff_val == fixture.index[0]
+            else:
+                assert cutoff_val == fixture.index[-1]
+
+        if mtype in ["pd-multiindex", "pd_multiindex_hier"]:
+            time_idx = fixture.index.get_level_values(-1)
+            if reverse_order:
+                assert cutoff_val == time_idx.min()
+            else:
+                assert cutoff_val == time_idx.max()
+
+
+@pytest.mark.parametrize("reverse_order", [True, False])
+def test_get_cutoff_from_index(reverse_order):
+    """Tests that _get_cutoff_from_index has correct output.
+
+    Parameters
+    ----------
+    return_index : bool - whether index (True) or index element is returned (False)
+    reverse_order : bool - whether first (True) or last index (False) is retrieved
+
+    Raises
+    ------
+    AssertionError if _get_cutoff_from_index does not return a length 1 pandas.index
+    AssertionError if _get_cutoff_from_index does not return the correct cutoff value
+    """
+    hier_fixture = _make_hierarchical()
+    hier_idx = hier_fixture.index
+
+    cutoff = _get_cutoff_from_index(
+        hier_idx, return_index=True, reverse_order=reverse_order
+    )
+    idx = _get_cutoff_from_index(
+        hier_idx, return_index=False, reverse_order=reverse_order
+    )
+
+    assert isinstance(cutoff, pd.DatetimeIndex) and len(cutoff) == 1
+    assert cutoff.freq == "D"
+    assert idx == cutoff[0]
+
+    if reverse_order:
+        assert idx == pd.Timestamp("2000-01-01")
+    else:
+        assert idx == pd.Timestamp("2000-01-12")
+
+    series_fixture = get_examples("pd.Series")[0]
+    series_idx = series_fixture.index
+
+    cutoff = _get_cutoff_from_index(
+        series_idx, return_index=True, reverse_order=reverse_order
+    )
+    idx = _get_cutoff_from_index(
+        series_idx, return_index=False, reverse_order=reverse_order
+    )
+
+    assert isinstance(cutoff, pd.Index) and len(cutoff) == 1
+    assert cutoff.is_integer()
+    assert idx == cutoff[0]
+
+    if reverse_order:
+        assert idx == 0
+    else:
+        assert idx == 3
+
+
+@pytest.mark.parametrize("bad_inputs", ["foo", 12345, [[[]]]])
+def test_get_cutoff_wrong_input(bad_inputs):
+    """Tests that get_cutoff raises error on bad input when input checks are enabled.
+
+    Parameters
+    ----------
+    bad_inputs : inputs that should set off the input checks
+
+    Raises
+    ------
+    Exception (from pytest) if the error is not raised as expected
+    """
+    with pytest.raises(Exception, match="must be of Series, Panel, or Hierarchical"):
+        get_cutoff(bad_inputs, check_input=True)
+
+
+@pytest.mark.parametrize("window_length, lag", [(2, 0), (None, 0), (4, 1)])
+@pytest.mark.parametrize("scitype,mtype", SCITYPE_MTYPE_PAIRS)
+def test_get_window_output_type(scitype, mtype, window_length, lag):
+    """Tests that get_window runs for all mtypes, and returns output of same mtype.
+
+    Parameters
+    ----------
+    scitype : str - scitype of input
+    mtype : str - mtype of input
+    window_length : int, passed to get_window
+    lag : int, passed to get_window
+
+    Raises
+    ------
+    Exception if get_window raises one
+    """
+    # retrieve example fixture
+    fixture = get_examples(mtype=mtype, as_scitype=scitype, return_lossy=False)[0]
+    X = get_window(fixture, window_length=window_length, lag=lag)
+    valid, err, _ = check_is_mtype(X, mtype=mtype, return_metadata=True)
+
+    msg = (
+        f"get_window should return an output of mtype {mtype} for that type of input, "
+        f"but it returns an output not conformant with that mtype."
+        f"Error from mtype check: {err}"
+    )
+
+    assert valid, msg
+
+
+def test_get_window_expected_result():
+    """Tests that get_window produces return of the right length.
+
+    Raises
+    ------
+    Exception if get_window raises one
+    AssertionError if get_window output shape is not as expected
+    """
+    X_df = get_examples(mtype="pd.DataFrame")[0]
+    assert len(get_window(X_df, 2, 1)) == 2
+    assert len(get_window(X_df, 3, 1)) == 3
+    assert len(get_window(X_df, 1, 2)) == 1
+    assert len(get_window(X_df, 3, 4)) == 0
+    assert len(get_window(X_df, 3, None)) == 3
+    assert len(get_window(X_df, None, 2)) == 2
+    assert len(get_window(X_df, None, None)) == 4
+
+    X_mi = get_examples(mtype="pd-multiindex")[0]
+    assert len(get_window(X_mi, 3, 1)) == 6
+    assert len(get_window(X_mi, 2, 0)) == 6
+    assert len(get_window(X_mi, 2, 4)) == 0
+    assert len(get_window(X_mi, 1, 2)) == 3
+    assert len(get_window(X_mi, 2, None)) == 6
+    assert len(get_window(X_mi, None, 2)) == 3
+    assert len(get_window(X_mi, None, None)) == 9
+
+    X_hi = get_examples(mtype="pd_multiindex_hier")[0]
+    assert len(get_window(X_hi, 3, 1)) == 12
+    assert len(get_window(X_hi, 2, 0)) == 12
+    assert len(get_window(X_hi, 2, 4)) == 0
+    assert len(get_window(X_hi, 1, 2)) == 6
+    assert len(get_window(X_hi, 2, None)) == 12
+    assert len(get_window(X_hi, None, 2)) == 6
+    assert len(get_window(X_hi, None, None)) == 18
+
+    X_np3d = get_examples(mtype="numpy3D")[0]
+    assert get_window(X_np3d, 3, 1).shape == (2, 2, 3)
+    assert get_window(X_np3d, 2, 0).shape == (2, 2, 3)
+    assert get_window(X_np3d, 2, 4).shape == (0, 2, 3)
+    assert get_window(X_np3d, 1, 2).shape == (1, 2, 3)
+    assert get_window(X_np3d, 2, None).shape == (2, 2, 3)
+    assert get_window(X_np3d, None, 2).shape == (1, 2, 3)
+    assert get_window(X_np3d, None, None).shape == (3, 2, 3)
+
+
+@pytest.mark.parametrize("scitype,mtype", SCITYPE_MTYPE_PAIRS)
+def test_get_slice_output_type(scitype, mtype):
+    """Tests that get_slice runs for all mtypes, and returns output of same mtype.
+
+    Parameters
+    ----------
+    scitype : str - scitype of input
+    mtype : str - mtype of input
+
+    Raises
+    ------
+    Exception if get_slice raises one
+    """
+    # retrieve example fixture
+    fixture = get_examples(mtype=mtype, as_scitype=scitype, return_lossy=False)[0]
+    X = get_slice(fixture)
+    valid, err, _ = check_is_mtype(X, mtype=mtype, return_metadata=True)
+
+    msg = (
+        f"get_slice should return an output of mtype {mtype} for that type of input, "
+        f"but it returns an output not conformant with that mtype."
+        f"Error from mtype check: {err}"
+    )
+
+    assert valid, msg
+
+
+def test_get_slice_expected_result():
+    """Tests that get_slice produces return of the right length.
+
+    Raises
+    ------
+    Exception if get_slice raises one
+    """
+    X_df = get_examples(mtype="pd.DataFrame")[0]
+    assert len(get_slice(X_df, start=1, end=3)) == 2
+
+    X_s = get_examples(mtype="pd.Series")[0]
+    assert len(get_slice(X_s, start=1, end=3)) == 2
+
+    X_np = get_examples(mtype="numpy3D")[0]
+    assert get_slice(X_np, start=1, end=3).shape == (2, 2, 3)

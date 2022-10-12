@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
-__author__ = ["Markus Löning"]
+"""Utilities for validating panel data."""
+
+__author__ = ["mloning"]
 __all__ = [
     "check_X",
     "check_y",
@@ -10,11 +12,13 @@ import numpy as np
 import pandas as pd
 from sklearn.utils.validation import check_consistent_length
 
-from sktime.datatypes._panel._convert import from_3d_numpy_to_nested
-from sktime.datatypes._panel._convert import from_nested_to_3d_numpy
-from sktime.datatypes._panel._convert import is_nested_dataframe
+from sktime.datatypes._panel._check import is_nested_dataframe
+from sktime.datatypes._panel._convert import (
+    from_3d_numpy_to_nested,
+    from_nested_to_3d_numpy,
+)
 
-VALID_X_TYPES = (pd.DataFrame, np.ndarray)  # nested pd.DataFrame and 3d np.array
+VALID_X_TYPES = (pd.DataFrame, np.ndarray)  # nested pd.DataFrame, 2d or 3d np.array
 VALID_Y_TYPES = (pd.Series, np.ndarray)  # 1-d vector
 
 
@@ -27,6 +31,7 @@ def check_X(
     coerce_to_pandas=False,
 ):
     """Validate input data.
+
     Parameters
     ----------
     X : pd.DataFrame or np.array
@@ -41,10 +46,12 @@ def check_X(
         If True, X will be coerced to a 3-dimensional numpy array.
     coerce_to_pandas : bool, optional (default=False)
         If True, X will be coerced to a nested pandas DataFrame.
+
     Returns
     -------
     X : pd.DataFrame or np.array
         Checked and possibly converted input data
+
     Raises
     ------
     ValueError
@@ -65,9 +72,11 @@ def check_X(
     # check first if we have the right number of dimensions, otherwise we
     # may not be able to get the shape of the second dimension below
     if isinstance(X, np.ndarray):
-        if not X.ndim == 3:
+        if X.ndim == 2:
+            X = X.reshape(X.shape[0], 1, X.shape[1])
+        elif X.ndim == 1 or X.ndim > 3:
             raise ValueError(
-                f"If passed as a np.array, X must be a 3-dimensional "
+                f"If passed as a np.array, X must be a 2 or 3-dimensional "
                 f"array, but found shape: {X.shape}"
             )
         if coerce_to_pandas:
@@ -108,6 +117,7 @@ def check_X(
 
 def check_y(y, enforce_min_instances=1, coerce_to_numpy=False):
     """Validate input data.
+
     Parameters
     ----------
     y : pd.Series or np.array
@@ -149,11 +159,11 @@ def check_X_y(
     coerce_to_pandas=False,
 ):
     """Validate input data.
+
     Parameters
     ----------
     X : pd.DataFrame
     y : pd.Series or np.array
-
     enforce_univariate : bool, optional (default=False)
         Enforce that X is univariate.
     enforce_min_instances : int, optional (default=1)
@@ -164,6 +174,7 @@ def check_X_y(
         If True, X will be coerced to a 3-dimensional numpy array.
     coerce_to_pandas : bool, optional (default=False)
         If True, X will be coerced to a nested pandas DataFrame.
+
     Returns
     -------
     X : pd.DataFrame or np.array

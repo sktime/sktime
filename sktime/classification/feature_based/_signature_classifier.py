@@ -11,6 +11,7 @@ import numpy as np
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.pipeline import Pipeline
 
+from sktime.base._base import _clone_estimator
 from sktime.classification.base import BaseClassifier
 from sktime.transformations.panel.signature_based._checks import (
     _handle_sktime_signatures,
@@ -42,7 +43,7 @@ class SignatureClassifier(BaseClassifier):
 
     Parameters
     ----------
-    classifier : sklearn estimator, default=RandomForestClassifier
+    estimator : sklearn estimator, default=RandomForestClassifier
         This should be any sklearn-type estimator. Defaults to RandomForestClassifier.
     augmentation_list: list of tuple of strings, default=("basepoint", "addtime")
         List of augmentations to be applied before the signature transform is applied.
@@ -73,6 +74,10 @@ class SignatureClassifier(BaseClassifier):
     pipeline: sklearn.Pipeline
         The classifier appended to the `signature_method` pipeline to make a
         classification pipeline.
+    n_classes_ : int
+        Number of classes. Extracted from the data.
+    classes_ : ndarray of shape (n_classes_)
+        Holds the label for each class.
 
     References
     ----------
@@ -82,32 +87,19 @@ class SignatureClassifier(BaseClassifier):
 
     See Also
     --------
-    :py:class:`SignatureTransformer`
-
-    Example
-    -------
-    >>> from sktime.classification.feature_based import SignatureClassifier
-    >>> from sktime.datasets import load_italy_power_demand
-    >>> X_train, y_train = load_italy_power_demand(split="train", return_X_y=True)
-    >>> X_test, y_test = load_italy_power_demand(split="test", return_X_y=True)
-    >>> clf = SignatureClassifier()
-    >>> clf.fit(X_train, y_train)
-    SignatureClassifier(...)
-    >>> y_pred = clf.predict(X_test)
+    SignatureTransformer
     """
 
-    # Capability tags
-    capabilities = {
-        "multivariate": True,
-        "unequal_length": False,
-        "missing_values": False,
-        "train_estimate": False,
-        "contractable": False,
+    _tags = {
+        "capability:multivariate": True,
+        "classifier_type": "feature",
+        "python_dependencies": "esig",
+        "python_version": "<3.10",
     }
 
     def __init__(
         self,
-        classifier=None,
+        estimator=None,
         augmentation_list=("basepoint", "addtime"),
         window_name="dyadic",
         window_depth=3,
@@ -118,8 +110,7 @@ class SignatureClassifier(BaseClassifier):
         depth=4,
         random_state=None,
     ):
-        super(SignatureClassifier, self).__init__()
-        self.classifier = classifier
+        self.estimator = estimator
         self.augmentation_list = augmentation_list
         self.window_name = window_name
         self.window_depth = window_depth
@@ -129,7 +120,8 @@ class SignatureClassifier(BaseClassifier):
         self.sig_tfm = sig_tfm
         self.depth = depth
         self.random_state = random_state
-        np.random.seed(random_state)
+
+        super(SignatureClassifier, self).__init__()
 
         self.signature_method = SignatureTransformer(
             augmentation_list,
@@ -142,15 +134,14 @@ class SignatureClassifier(BaseClassifier):
             depth,
         ).signature_method
         self.pipeline = None
-        self.classes_ = []
 
     def _setup_classification_pipeline(self):
         """Set up the full signature method pipeline."""
         # Use rf if no classifier is set
-        if self.classifier is None:
+        if self.estimator is None:
             classifier = RandomForestClassifier(random_state=self.random_state)
         else:
-            classifier = self.classifier
+            classifier = _clone_estimator(self.estimator, self.random_state)
 
         # Main classification pipeline
         self.pipeline = Pipeline(
@@ -159,7 +150,7 @@ class SignatureClassifier(BaseClassifier):
 
     # Handle the sktime fit checks and convert to a tensor
     @_handle_sktime_signatures(check_fitted=False)
-    def fit(self, data, labels):
+    def _fit(self, X, y):
         """Fit an estimator using transformed data from the SignatureTransformer.
 
         Parameters
@@ -172,18 +163,17 @@ class SignatureClassifier(BaseClassifier):
         -------
         self : object
         """
-        self.classes_ = np.unique(labels)
         # Join the classifier onto the signature method pipeline
         self._setup_classification_pipeline()
 
         # Fit the pre-initialised classification pipeline
-        self.pipeline.fit(data, labels)
-        self._is_fitted = True
+        self.pipeline.fit(X, y)
+
         return self
 
     # Handle the sktime predict checks and convert to tensor format
     @_handle_sktime_signatures(check_fitted=True, force_numpy=True)
-    def predict(self, data):
+    def _predict(self, X) -> np.ndarray:
         """Predict class values of n_instances in X.
 
         Parameters
@@ -195,11 +185,11 @@ class SignatureClassifier(BaseClassifier):
         preds : np.ndarray of shape (n, 1)
             Predicted class.
         """
-        return self.pipeline.predict(data)
+        return self.pipeline.predict(X)
 
     # Handle the sktime predict checks and convert to tensor format
     @_handle_sktime_signatures(check_fitted=True, force_numpy=True)
-    def predict_proba(self, data):
+    def _predict_proba(self, X) -> np.ndarray:
         """Predict class probabilities for n_instances in X.
 
         Parameters
@@ -211,4 +201,36 @@ class SignatureClassifier(BaseClassifier):
         predicted_probs : array of shape (n_instances, n_classes)
             Predicted probability of each class.
         """
-        return self.pipeline.predict_proba(data)
+        return self.pipeline.predict_proba(X)
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            For classifiers, a "default" set of parameters should be provided for
+            general testing, and a "results_comparison" set for comparing against
+            previously recorded results if the general set does not produce suitable
+            probabilities to compare against.
+
+        Returns
+        -------
+        params : dict or list of dict, default={}
+            Parameters to create testing instances of the class.
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`.
+        """
+        if parameter_set == "results_comparison":
+            return {"estimator": RandomForestClassifier(n_estimators=10)}
+        else:
+            return {
+                "estimator": RandomForestClassifier(n_estimators=2),
+                "augmentation_list": ("basepoint", "addtime"),
+                "depth": 1,
+                "window_name": "global",
+            }

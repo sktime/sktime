@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
+"""Test function of elastic distance nearest neighbour classifiers."""
+import pytest
 
 from sktime.classification.distance_based._time_series_neighbors import (
     KNeighborsTimeSeriesClassifier,
 )
-from sktime.datasets import load_arrow_head
+from sktime.datasets import load_unit_test
 
 distance_functions = [
     "euclidean",
@@ -12,40 +14,62 @@ distance_functions = [
     "msm",
     "erp",
     "lcss",
+    "edr",
 ]
 
-# expected correct on test set using default parameters. Verified in tsml
-# tsml output:
-# Distance measure  Euclidean gets 140 correct out of 175
-# Distance measure  DTWDistance -ws "-1" gets 123 correct out of 175
-# Distance measure  WDTWDistance -g "0.05" gets 130 correct out of 175
-# Distance measure  MSMDistance -c "1.0" gets 139 correct out of 175
-# Distance measure  ERPDistance -g "0.0" -ws "-1" gets 138 correct out of 175
-# Distance measure  LCSSDistance -e "0.05" -ws "3" gets 137 correct out of 175,
-# but one tie, so expect 136 since sktime picks the first
-
+# expected correct on test set using default parameters.
 expected_correct = {
-    "euclidean": 140,
-    "dtw": 123,
-    "wdtw": 130,
-    "msm": 139,
-    "erp": 138,
-    "lcss": 136,
+    "euclidean": 19,
+    "dtw": 21,
+    "wdtw": 21,
+    "msm": 20,
+    "erp": 19,
+    "lcss": 12,
+    "edr": 20,
+}
+
+# expected correct on test set using window params.
+expected_correct_window = {
+    "euclidean": 19,
+    "dtw": 21,
+    "wdtw": 21,
+    "msm": 10,
+    "erp": 19,
+    "edr": 20,
+    "lcss": 12,
 }
 
 
-def test_knn_on_arrowhead():
+@pytest.mark.parametrize("distance_key", distance_functions)
+def test_knn_on_unit_test(distance_key):
+    """Test function for elastic knn, to be reinstated soon."""
     # load arrowhead data for unit tests
-    X_train, y_train = load_arrow_head(split="train", return_X_y=True)
-    X_test, y_test = load_arrow_head(split="test", return_X_y=True)
-    for i in range(0, len(distance_functions)):
-        knn = KNeighborsTimeSeriesClassifier(
-            distance=distance_functions[i],
-        )
-        knn.fit(X_train, y_train)
-        pred = knn.predict(X_test)
-        correct = 0
-        for j in range(0, len(pred)):
-            if pred[j] == y_test[j]:
-                correct = correct + 1
-        assert correct == expected_correct[distance_functions[i]]
+    X_train, y_train = load_unit_test(split="train", return_X_y=True)
+    X_test, y_test = load_unit_test(split="test", return_X_y=True)
+    knn = KNeighborsTimeSeriesClassifier(
+        distance=distance_key,
+    )
+    knn.fit(X_train, y_train)
+    pred = knn.predict(X_test)
+    correct = 0
+    for j in range(0, len(pred)):
+        if pred[j] == y_test[j]:
+            correct = correct + 1
+    assert correct == expected_correct[distance_key]
+
+
+@pytest.mark.parametrize("distance_key", distance_functions)
+def test_knn_bounding_matrix(distance_key):
+    """Test knn with custom bounding parameters."""
+    X_train, y_train = load_unit_test(split="train", return_X_y=True)
+    X_test, y_test = load_unit_test(split="test", return_X_y=True)
+    knn = KNeighborsTimeSeriesClassifier(
+        distance=distance_key, distance_params={"window": 0.5}
+    )
+    knn.fit(X_train, y_train)
+    pred = knn.predict(X_test)
+    correct = 0
+    for j in range(0, len(pred)):
+        if pred[j] == y_test[j]:
+            correct = correct + 1
+    assert correct == expected_correct_window[distance_key]

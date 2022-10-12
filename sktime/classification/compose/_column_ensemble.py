@@ -1,17 +1,16 @@
 # -*- coding: utf-8 -*-
-""" ColumnEnsembleClassifier: For Multivariate Time Series Classification.
-Builds classifiers on each dimension (column) independently
+"""ColumnEnsembleClassifier: For Multivariate Time Series Classification.
 
+Builds classifiers on each dimension (column) independently.
 """
 
-__author__ = ["Aaron Bostrom"]
+__author__ = ["abostrom"]
 __all__ = ["ColumnEnsembleClassifier"]
 
 from itertools import chain
 
 import numpy as np
 import pandas as pd
-from sklearn.base import clone
 from sklearn.preprocessing import LabelEncoder
 
 from sktime.base import _HeterogenousMetaEstimator
@@ -19,11 +18,24 @@ from sktime.classification.base import BaseClassifier
 
 
 class BaseColumnEnsembleClassifier(BaseClassifier, _HeterogenousMetaEstimator):
+    """Base Class for column ensemble."""
+
+    _tags = {
+        "capability:multivariate": True,
+        "X_inner_mtype": ["nested_univ", "pd-multiindex"],
+    }
+
     def __init__(self, estimators, verbose=False):
         self.verbose = verbose
         self.estimators = estimators
         self.remainder = "drop"
         super(BaseColumnEnsembleClassifier, self).__init__()
+        self._anytagis_then_set(
+            "capability:unequal_length", False, True, self._estimators
+        )
+        self._anytagis_then_set(
+            "capability:missing_values", False, True, self._estimators
+        )
 
     @property
     def _estimators(self):
@@ -57,9 +69,7 @@ class BaseColumnEnsembleClassifier(BaseClassifier, _HeterogenousMetaEstimator):
 
     # this check whether the column input was a slice object or a tuple.
     def _validate_column_callables(self, X):
-        """
-        Converts callable column specifications.
-        """
+        """Convert callable column specifications."""
         columns = []
         for _, _, column in self.estimators:
             if callable(column):
@@ -68,10 +78,7 @@ class BaseColumnEnsembleClassifier(BaseClassifier, _HeterogenousMetaEstimator):
         self._columns = columns
 
     def _validate_remainder(self, X):
-        """
-        Validates ``remainder`` and defines ``_remainder`` targeting
-        the remaining columns.
-        """
+        """Validate ``remainder`` and defines ``_remainder``."""
         is_estimator = hasattr(self.remainder, "fit") or hasattr(
             self.remainder, "predict_proba"
         )
@@ -90,15 +97,12 @@ class BaseColumnEnsembleClassifier(BaseClassifier, _HeterogenousMetaEstimator):
         self._remainder = ("remainder", self.remainder, remaining_idx)
 
     def _iter(self, replace_strings=False):
-        """
-        Generate (name, estimator, column) tuples.
+        """Generate (name, estimator, column) tuples.
 
         If fitted=True, use the fitted transformations, else use the
         user specified transformations updated with converted column names
         and potentially appended with transformer for remainder.
-
         """
-
         if self.is_fitted:
             estimators = self.estimators_
         else:
@@ -122,9 +126,9 @@ class BaseColumnEnsembleClassifier(BaseClassifier, _HeterogenousMetaEstimator):
 
             yield name, estimator, column
 
-    def fit(self, X, y):
+    def _fit(self, X, y):
         # the data passed in could be an array of dataframes?
-        """Fit all estimators, fit the data
+        """Fit all estimators, fit the data.
 
         Parameters
         ----------
@@ -155,12 +159,11 @@ class BaseColumnEnsembleClassifier(BaseClassifier, _HeterogenousMetaEstimator):
 
         estimators_ = []
         for name, estimator, column in self._iter(replace_strings=True):
-            estimator = clone(estimator)
+            estimator = estimator.clone()
             estimator.fit(_get_column(X, column), transformed_y)
             estimators_.append((name, estimator, column))
 
         self.estimators_ = estimators_
-        self._is_fitted = True
         return self
 
     def _collect_probas(self, X):
@@ -171,13 +174,12 @@ class BaseColumnEnsembleClassifier(BaseClassifier, _HeterogenousMetaEstimator):
             ]
         )
 
-    def predict_proba(self, X):
-        """Predict class probabilities for X in 'soft' voting """
-        self.check_is_fitted()
+    def _predict_proba(self, X) -> np.ndarray:
+        """Predict class probabilities for X using 'soft' voting."""
         avg = np.average(self._collect_probas(X), axis=0)
         return avg
 
-    def predict(self, X):
+    def _predict(self, X) -> np.ndarray:
         maj = np.argmax(self.predict_proba(X), axis=1)
         return self.le_.inverse_transform(maj)
 
@@ -185,47 +187,62 @@ class BaseColumnEnsembleClassifier(BaseClassifier, _HeterogenousMetaEstimator):
 class ColumnEnsembleClassifier(BaseColumnEnsembleClassifier):
     """Applies estimators to columns of an array or pandas DataFrame.
 
-        This estimator allows different columns or column subsets of the input
-        to be transformed separately and the features generated by each
-        transformer
-        will be ensembled to form a single output.
+    This estimator allows different columns or column subsets of the input
+    to be transformed separately and the features generated by each
+    transformer
+    will be ensembled to form a single output.
 
-        Parameters
-        ----------
-        estimators : list of tuples
-            List of (name, transformer, column(s)) tuples specifying the
-            transformer objects to be applied to subsets of the data.
+    Parameters
+    ----------
+    estimators : list of tuples
+        List of (name, estimator, column(s)) tuples specifying the
+        transformer objects to be applied to subsets of the data.
 
-            name : string
-                Like in Pipeline and FeatureUnion, this allows the
-                transformer and
-                its parameters to be set using ``set_params`` and searched
-                in grid
-                search.
-            Estimator : estimator or {'drop'}
-                Estimator must support `fit` and `predict_proba`. Special-cased
-                strings 'drop' and 'passthrough' are accepted as well, to
-                indicate to drop the columns
-            column(s) : string or int, array-like of string or int, slice, \
-                boolean mask array or callable
+        name : string
+            Like in Pipeline and FeatureUnion, this allows the
+            transformer and
+            its parameters to be set using ``set_params`` and searched
+            in grid
+            search.
+        estimator :  or {'drop'}
+            Estimator must support `fit` and `predict_proba`. Special-cased
+            strings 'drop' and 'passthrough' are accepted as well, to
+            indicate to drop the columns
+        column(s) : string or int, array-like of string or int, slice, \
+            boolean mask array or callable
 
+    remainder : {'drop', 'passthrough'} or estimator, default 'drop'
+        By default, only the specified columns in `transformations` are
+        transformed and combined in the output, and the non-specified
+        columns are dropped. (default of ``'drop'``).
+        By specifying ``remainder='passthrough'``, all remaining columns
+        that
+        were not specified in `transformations` will be automatically passed
+        through. This subset of columns is concatenated with the output of
+        the transformations.
+        By setting ``remainder`` to be an estimator, the remaining
+        non-specified columns will use the ``remainder`` estimator. The
+        estimator must support `fit` and `transform`.
 
-        remainder : {'drop', 'passthrough'} or estimator, default 'drop'
-            By default, only the specified columns in `transformations` are
-            transformed and combined in the output, and the non-specified
-            columns are dropped. (default of ``'drop'``).
-            By specifying ``remainder='passthrough'``, all remaining columns
-            that
-            were not specified in `transformations` will be automatically passed
-            through. This subset of columns is concatenated with the output of
-            the transformations.
-            By setting ``remainder`` to be an estimator, the remaining
-            non-specified columns will use the ``remainder`` estimator. The
-            estimator must support `fit` and `transform`.
-
+    Examples
+    --------
+    >>> from sktime.classification.dictionary_based import ContractableBOSS
+    >>> from sktime.classification.interval_based import CanonicalIntervalForest
+    >>> from sktime.datasets import load_basic_motions
+    >>> X_train, y_train = load_basic_motions(split="train")
+    >>> X_test, y_test = load_basic_motions(split="test")
+    >>> cboss = ContractableBOSS(
+    ...     n_parameter_samples=4, max_ensemble_size=2, random_state=0
+    ... )
+    >>> cif = CanonicalIntervalForest(
+    ...     n_estimators=2, n_intervals=4, att_subsample_size=4, random_state=0
+    ... )
+    >>> estimators = [("cBOSS", cboss, 5), ("CIF", cif, [3, 4])]
+    >>> col_ens = ColumnEnsembleClassifier(estimators=estimators)
+    >>> col_ens.fit(X_train, y_train)
+    ColumnEnsembleClassifier(...)
+    >>> y_pred = col_ens.predict(X_test)
     """
-
-    _required_parameters = ["estimators"]
 
     def __init__(self, estimators, remainder="drop", verbose=False):
         self.remainder = remainder
@@ -236,7 +253,7 @@ class ColumnEnsembleClassifier(BaseColumnEnsembleClassifier):
 
         Parameters
         ----------
-        deep : boolean, optional
+        deep : boolean, optional, default=True
             If True, will return the parameters for this estimator and
             contained subobjects that are estimators.
 
@@ -258,6 +275,50 @@ class ColumnEnsembleClassifier(BaseColumnEnsembleClassifier):
         """
         self._set_params("_estimators", **kwargs)
         return self
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            For classifiers, a "default" set of parameters should be provided for
+            general testing, and a "results_comparison" set for comparing against
+            previously recorded results if the general set does not produce suitable
+            probabilities to compare against.
+
+        Returns
+        -------
+        params : dict or list of dict, default={}
+            Parameters to create testing instances of the class.
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`.
+        """
+        from sktime.classification.dictionary_based import ContractableBOSS
+        from sktime.classification.interval_based import CanonicalIntervalForest
+        from sktime.classification.interval_based import (
+            TimeSeriesForestClassifier as TSFC,
+        )
+
+        if parameter_set == "results_comparison":
+            cboss = ContractableBOSS(
+                n_parameter_samples=4, max_ensemble_size=2, random_state=0
+            )
+            cif = CanonicalIntervalForest(
+                n_estimators=2, n_intervals=4, att_subsample_size=4, random_state=0
+            )
+            return {"estimators": [("cBOSS", cboss, 5), ("CIF", cif, [3, 4])]}
+        else:
+            return {
+                "estimators": [
+                    ("tsf1", TSFC(n_estimators=2), 0),
+                    ("tsf2", TSFC(n_estimators=2), 0),
+                ]
+            }
 
 
 def _get_column(X, key):
@@ -396,10 +457,9 @@ def _get_column_indices(X, key):
 
 
 def _is_empty_column_selection(column):
-    """
-    Return True if the column selection is empty (empty list or all-False
-    boolean array).
+    """Check if column selection is empty.
 
+    Both an empty list or all-False boolean array are considered empty.
     """
     if hasattr(column, "dtype") and np.issubdtype(column.dtype, np.bool_):
         return not column.any()

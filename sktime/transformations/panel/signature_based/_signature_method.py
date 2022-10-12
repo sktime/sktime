@@ -1,18 +1,18 @@
 # -*- coding: utf-8 -*-
+"""Signature transformer."""
+
 from sklearn.pipeline import Pipeline
-from sktime.transformations.base import _PanelToTabularTransformer
-from sktime.transformations.panel.signature_based._compute import (
-    _WindowSignatureTransform,
-)
+
+from sktime.transformations.base import BaseTransformer
 from sktime.transformations.panel.signature_based._augmentations import (
     _make_augmentation_pipeline,
 )
-from sktime.transformations.panel.signature_based._checks import (
-    _handle_sktime_signatures,
+from sktime.transformations.panel.signature_based._compute import (
+    _WindowSignatureTransform,
 )
 
 
-class SignatureTransformer(_PanelToTabularTransformer):
+class SignatureTransformer(BaseTransformer):
     """Transformation class from the signature method.
 
     Follows the methodology laid out in the paper:
@@ -40,6 +40,19 @@ class SignatureTransformer(_PanelToTabularTransformer):
         all the steps to extract the signature features.
     """
 
+    _tags = {
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
+        "scitype:transform-output": "Primitives",
+        # what is the scitype of y: None (not needed), Primitives, Series, Panel
+        "scitype:instancewise": True,  # is this an instance-wise transform?
+        "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?#
+        "fit_is_empty": False,
+        "python_dependencies": "esig",
+        "python_version": "<3.10",
+    }
+
     def __init__(
         self,
         augmentation_list=("basepoint", "addtime"),
@@ -51,7 +64,6 @@ class SignatureTransformer(_PanelToTabularTransformer):
         sig_tfm="signature",
         depth=4,
     ):
-        super(SignatureTransformer, self).__init__()
         self.augmentation_list = augmentation_list
         self.window_name = window_name
         self.window_depth = window_depth
@@ -61,16 +73,11 @@ class SignatureTransformer(_PanelToTabularTransformer):
         self.sig_tfm = sig_tfm
         self.depth = depth
 
+        super(SignatureTransformer, self).__init__()
         self.setup_feature_pipeline()
 
-    def _assertions(self):
-        """Some assertions to run on initialisation."""
-        assert not all(
-            [self.sig_tfm == "logsignature", self.rescaling == "post"]
-        ), "Cannot have post rescaling with the logsignature."
-
     def setup_feature_pipeline(self):
-        """Sets up the signature method as an sklearn pipeline."""
+        """Set up the signature method as an sklearn pipeline."""
         augmentation_step = _make_augmentation_pipeline(self.augmentation_list)
         transform_step = _WindowSignatureTransform(
             window_name=self.window_name,
@@ -90,12 +97,35 @@ class SignatureTransformer(_PanelToTabularTransformer):
             ]
         )
 
-    @_handle_sktime_signatures(check_fitted=False)
-    def fit(self, data, labels=None):
-        self.signature_method.fit(data, labels)
-        self._is_fitted = True
+    def _fit(self, X, y=None):
+        self.signature_method.fit(X)
         return self
 
-    @_handle_sktime_signatures(check_fitted=True)
-    def transform(self, data, labels=None):
-        return self.signature_method.transform(data)
+    def _transform(self, X, y=None):
+        return self.signature_method.transform(X)
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        params = {
+            "augmentation_list": ("basepoint", "addtime"),
+            "depth": 3,
+            "window_name": "global",
+        }
+        return params

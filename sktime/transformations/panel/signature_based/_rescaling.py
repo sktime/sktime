@@ -1,23 +1,26 @@
 # -*- coding: utf-8 -*-
-"""
+"""Signature rescaling methods.
+
 rescaling.py
 =========================
-Signature rescaling methods. This implements the pre- and post- signature
+This implements the pre- and post- signature
 rescaling methods along with generic scaling methods along feature
 dimensions of 3D tensors.
 Code for `rescale_path` and `rescale_signature` written by Patrick Kidger.
 """
 import math
+
 import numpy as np
+
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-_check_soft_dependencies("esig")
-import esig  # noqa: E402
+_check_soft_dependencies("esig", severity="warning")
 
 
 def _rescale_path(path, depth):
-    """Rescales the input path by depth! ** (1 / depth), so that the last
-    signature term should be roughly O(1).
+    """Rescale input path by depth! ** (1 / depth).
+
+    Ensures last signature term should be roughly O(1).
 
     Parameters
     ----------
@@ -36,8 +39,9 @@ def _rescale_path(path, depth):
 
 
 def _rescale_signature(signature, channels, depth):
-    """Rescales the output signature by multiplying the depth-d term by d!,
-    with the aim that every term become ~O(1).
+    """Rescals the output signature by multiplying the depth-d term by d!.
+
+    Ain is that every term become ~O(1).
 
     Parameters
     ----------
@@ -53,6 +57,8 @@ def _rescale_signature(signature, channels, depth):
     np.ndarray:
         The signature with factorial depth scaling.
     """
+    import esig
+
     # Needed for weird esig fails
     if depth == 1:
         sigdim = channels

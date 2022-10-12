@@ -1,56 +1,56 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Implements transformations to detrend a time series."""
 
 __all__ = ["Detrender"]
-__author__ = ["Markus Löning", "Svea Meyer"]
+__author__ = ["mloning", "SveaMeyer13"]
 
-from sklearn.base import clone
 import pandas as pd
 
 from sktime.forecasting.base._fh import ForecastingHorizon
-from sktime.transformations.base import _SeriesToSeriesTransformer
-from sktime.utils.validation.series import check_series
 from sktime.forecasting.trend import PolynomialTrendForecaster
+from sktime.transformations.base import BaseTransformer
 
 
-class Detrender(_SeriesToSeriesTransformer):
-    """
-    Remove a trend from a series.
+class Detrender(BaseTransformer):
+    """Remove a :term:`trend <Trend>` from a series.
+
     This transformer uses any forecaster and returns the in-sample residuals
     of the forecaster's predicted values.
 
-    The Detrender works by first fitting the forecaster to the input data.
-    To transform data, it uses the fitted forecaster to generate
-    forecasts for the time points of the passed data and returns the residuals
-     of the forecasts.
-    Depending on the passed data, this will require it to generate in-sample
-    or out-of-sample forecasts.
-
-    The detrender also works in a pipeline as a form of boosting,
-    by first detrending a time series and then fitting another forecaster on
-    the residuals.
+    The Detrender works as follows:
+    in "fit", the forecaster is fit to the input data.
+    in "transform", the forecast residuals are computed and return.
+    Depending on time indices, this can generate in-sample or out-of-sample residuals.
 
     For example, to remove the linear trend of a time series:
-    forecaster = PolynomialTrendForecaster(degree=1)
-    transformer = Detrender(forecaster=forecaster)
-    yt = transformer.fit_transform(y_train)
+        forecaster = PolynomialTrendForecaster(degree=1)
+        transformer = Detrender(forecaster=forecaster)
+        yt = transformer.fit_transform(y_train)
+
+    The detrender can also be used in a pipeline for residual boosting,
+    by first detrending and then fitting another forecaster on residuals.
 
     Parameters
     ----------
-    forecaster : estimator object, optional
-        default=None. If None, PolynomialTrendForecaster(degree=1) is used.
-
+    forecaster : sktime forecaster, follows BaseForecaster, default = None.
         The forecasting model to remove the trend with
-        (e.g. PolynomialTrendForecaster)
+            (e.g. PolynomialTrendForecaster).
+        If forecaster is None, PolynomialTrendForecaster(degree=1) is used.
 
     Attributes
     ----------
-    forecaster_ : estimator object
-        Model that defines the trend in the series
+    forecaster_ : Fitted forecaster
+        Forecaster that defines the trend in the series.
 
-    Example
-    ----------
+    See Also
+    --------
+    Deseasonalizer
+    STLTransformer
+
+    Examples
+    --------
     >>> from sktime.transformations.series.detrend import Detrender
     >>> from sktime.forecasting.trend import PolynomialTrendForecaster
     >>> from sktime.datasets import load_airline
@@ -59,161 +59,208 @@ class Detrender(_SeriesToSeriesTransformer):
     >>> y_hat = transformer.fit_transform(y)
     """
 
-    _required_parameters = ["forecaster"]
-    _tags = {"transform-returns-same-time-index": True}
+    _tags = {
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
+        "scitype:transform-output": "Series",
+        # what scitype is returned: Primitives, Series, Panel
+        "scitype:instancewise": True,  # is this an instance-wise transform?
+        "X_inner_mtype": ["pd.DataFrame", "pd.Series"],
+        # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "pd.DataFrame",  # which mtypes do _fit/_predict support for y?
+        "univariate-only": True,
+        "fit_is_empty": False,
+        "capability:inverse_transform": True,
+        "transform-returns-same-time-index": True,
+    }
 
     def __init__(self, forecaster=None):
         self.forecaster = forecaster
         self.forecaster_ = None
         super(Detrender, self).__init__()
 
-    def fit(self, Z, X=None):
-        """
-        Compute the trend in the series
+        # whether this transformer is univariate depends on the forecaster
+        #  this transformer is univariate iff the forecaster is univariate
+        if forecaster is not None:
+            fc_univ = forecaster.get_tag("scitype:y", "univariate") == "univariate"
+            self.set_tags(**{"univariate-only": fc_univ})
+
+    def _fit(self, X, y=None):
+        """Fit transformer to X and y.
+
+        private _fit containing the core logic, called from fit
 
         Parameters
         ----------
-        Y : pd.Series
-            Endogenous time series to fit a trend to.
-        X : pd.DataFrame, optional (default=None)
-            Exogenous variables
+        X : pd.Series or pd.DataFrame
+            Data to fit transform to
+        y : pd.DataFrame, default=None
+            Additional data, e.g., labels for transformation
 
         Returns
         -------
-        self : an instance of self
+        self: a fitted instance of the estimator
         """
-        self._is_fitted = False
-        z = check_series(Z)
         if self.forecaster is None:
             self.forecaster = PolynomialTrendForecaster(degree=1)
 
+        # univariate: X is pd.Series
+        if isinstance(X, pd.Series):
+            forecaster = self.forecaster.clone()
+            # note: the y in the transformer is exogeneous in the forecaster, i.e., X
+            self.forecaster_ = forecaster.fit(y=X, X=y)
         # multivariate
-        if isinstance(z, pd.DataFrame):
+        elif isinstance(X, pd.DataFrame):
             self.forecaster_ = {}
-            for colname in z.columns:
-                forecaster = clone(self.forecaster)
-                self.forecaster_[colname] = forecaster.fit(z[colname], X)
-        # univariate
+            for colname in X.columns:
+                forecaster = self.forecaster.clone()
+                self.forecaster_[colname] = forecaster.fit(y=X[colname], X=y)
         else:
-            forecaster = clone(self.forecaster)
-            self.forecaster_ = forecaster.fit(z, X)
-        self._is_fitted = True
+            raise TypeError("X must be pd.Series or pd.DataFrame")
+
         return self
 
-    def transform(self, Z, X=None):
-        """
-        Remove trend from the data.
+    def _transform(self, X, y=None):
+        """Transform X and return a transformed version.
+
+        private _transform containing the core logic, called from transform
 
         Parameters
         ----------
-        y : pd.Series
-            Time series to be detrended
-        X : pd.DataFrame, optional (default=False)
-            Exogenous variables
+        X : pd.Series or pd.DataFrame
+            Data to be transformed
+        y : pd.DataFrame, default=None
+            Additional data, e.g., labels for transformation
 
         Returns
         -------
-        y_hat : pd.Series
-            De-trended series
+        Xt : pd.Series or pd.DataFrame, same type as X
+            transformed version of X, detrended series
         """
-        self.check_is_fitted()
-        z = check_series(Z)
-        fh = ForecastingHorizon(z.index, is_relative=False)
+        fh = ForecastingHorizon(X.index, is_relative=False)
 
-        # multivariate
-        if isinstance(z, pd.DataFrame):
-            z = z.copy()
+        # univariate: X is pd.Series
+        if isinstance(X, pd.Series):
+            # note: the y in the transformer is exogeneous in the forecaster, i.e., X
+            X_pred = self.forecaster_.predict(fh=fh, X=y)
+            Xt = X - X_pred
+            return Xt
+        # multivariate: X is pd.DataFrame
+        elif isinstance(X, pd.DataFrame):
+            Xt = X.copy()
             # check if all columns are known
-            Z_fit_keys = set(self.forecaster_.keys())
-            Z_new_keys = set(z.columns)
-            difference = Z_new_keys.difference(Z_fit_keys)
+            X_fit_keys = set(self.forecaster_.keys())
+            X_new_keys = set(X.columns)
+            difference = X_new_keys.difference(X_fit_keys)
             if len(difference) != 0:
                 raise ValueError(
-                    "Z contains columns that have not been "
+                    "X contains columns that have not been "
                     "seen in fit: " + str(difference)
                 )
-            for colname in z.columns:
-                z_pred = self.forecaster_[colname].predict(fh, X)
-                z[colname] = z[colname] - z_pred
-            return z
-        # univariate
+            for colname in Xt.columns:
+                X_pred = self.forecaster_[colname].predict(fh=fh, X=y)
+                Xt[colname] = Xt[colname] - X_pred
+            return Xt
         else:
-            z_pred = self.forecaster_.predict(fh, X)
-            return z - z_pred
+            raise TypeError("X must be pd.Series or pd.DataFrame")
 
-    def inverse_transform(self, Z, X=None):
-        """
-        Add trend back to a time series
+    def _inverse_transform(self, X, y=None):
+        """Logic used by `inverse_transform` to reverse transformation on `X`.
 
         Parameters
         ----------
-        y : pd.Series, list
-            Detrended time series to revert
-        X : pd.DataFrame, optional (default=False)
-            Exogenous variables
+        X : pd.Series or pd.DataFrame
+            Data to be inverse transformed
+        y : pd.DataFrame, default=None
+            Additional data, e.g., labels for transformation
 
         Returns
         -------
-        y_hat : pd.Series
-            Series with the trend
+        Xt : pd.Series or pd.DataFrame, same type as X
+            inverse transformed version of X
         """
-        self.check_is_fitted()
-        z = check_series(Z)
-        fh = ForecastingHorizon(z.index, is_relative=False)
+        fh = ForecastingHorizon(X.index, is_relative=False)
 
-        # multivariate
-        if isinstance(z, pd.DataFrame):
-            z = z.copy()
+        # univariate: X is pd.Series
+        if isinstance(X, pd.Series):
+            # note: the y in the transformer is exogeneous in the forecaster, i.e., X
+            X_pred = self.forecaster_.predict(fh=fh, X=y)
+            return X + X_pred
+        # multivariate: X is pd.DataFrame
+        if isinstance(X, pd.DataFrame):
+            X = X.copy()
             # check if all columns are known
-            Z_fit_keys = set(self.forecaster_.keys())
-            Z_new_keys = set(z.columns)
-            difference = Z_new_keys.difference(Z_fit_keys)
+            X_fit_keys = set(self.forecaster_.keys())
+            X_new_keys = set(X.columns)
+            difference = X_new_keys.difference(X_fit_keys)
             if len(difference) != 0:
                 raise ValueError(
-                    "Z contains columns that have not been "
-                    "seen in fit: " + difference
+                    "X contains columns that have not been "
+                    "seen in fit: " + str(difference)
                 )
-            for colname in z.columns:
-                z_pred = self.forecaster_[colname].predict(fh, X)
-                z[colname] = z[colname] + z_pred
-            return z
-        # univariate
-        else:
-            z_pred = self.forecaster_.predict(fh, X)
-            return z + z_pred
+            for colname in X.columns:
+                X_pred = self.forecaster_[colname].predict(fh=fh, X=y)
+                X[colname] = X[colname] + X_pred
+            return X
 
-    def update(self, Z, X=None, update_params=True):
-        """
-        Update the parameters of the detrending estimator with new data
+    def _update(self, X, y=None, update_params=True):
+        """Update the parameters of the detrending estimator with new data.
+
+        private _update containing the core logic, called from update
 
         Parameters
         ----------
-        y_new : pd.Series
-            New time series
-        update_params : bool, optional (default=True)
-            Update the parameters of the detrender model with
+        X : pd.Series or pd.DataFrame
+            Data to fit transform to
+        y : pd.DataFrame, default=None
+            Additional data, e.g., labels for transformation
+        update_params : bool, default=True
+            whether the model is updated. Yes if true, if false, simply skips call.
+            argument exists for compatibility with forecasting module.
 
         Returns
         -------
         self : an instance of self
         """
-        z = check_series(Z, allow_empty=True)
         # multivariate
-        if isinstance(z, pd.DataFrame):
+        if isinstance(X, pd.DataFrame):
             # check if all columns are known
-            Z_fit_keys = set(self.forecaster_.keys())
-            Z_new_keys = set(z.columns)
-            difference = Z_new_keys.difference(Z_fit_keys)
+            X_fit_keys = set(self.forecaster_.keys())
+            X_new_keys = set(X.columns)
+            difference = X_new_keys.difference(X_fit_keys)
             if len(difference) != 0:
                 raise ValueError(
                     "Z contains columns that have not been "
                     "seen in fit: " + str(difference)
                 )
-            for colname in z.columns:
+            for colname in X.columns:
                 self.forecaster_[colname].update(
-                    z[colname], X, update_params=update_params
+                    y=X[colname], X=y, update_params=update_params
                 )
         # univariate
         else:
-            self.forecaster_.update(z, X, update_params=update_params)
+            self.forecaster_.update(y=X, X=y, update_params=update_params)
         return self
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        from sktime.forecasting.exp_smoothing import ExponentialSmoothing
+
+        return {"forecaster": ExponentialSmoothing()}

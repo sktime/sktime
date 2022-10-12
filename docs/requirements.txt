@@ -1,7 +1,0 @@
-jupyter
-m2r2
-nbsphinx
-numpydoc
-sphinx==3.2.*
-sphinx_rtd_theme
-tabulate

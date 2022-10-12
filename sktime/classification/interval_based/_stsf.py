@@ -1,78 +1,94 @@
 # -*- coding: utf-8 -*-
-"""Supervised Time Series Forest Classifier (STSF)."""
+"""Supervised Time Series Forest Classifier (STSF).
 
-__author__ = ["Matthew Middlehurst"]
+Interval based STSF classifier extracting summary features from intervals selected
+through a supervised process.
+"""
+
+__author__ = ["matthewmiddlehurst"]
 __all__ = ["SupervisedTimeSeriesForest"]
 
 import math
 
 import numpy as np
-from joblib import Parallel
-from joblib import delayed
-from scipy import stats, signal
+from joblib import Parallel, delayed
+from scipy import signal, stats
 from sklearn.base import clone
-from sklearn.ensemble._forest import ForestClassifier
 from sklearn.preprocessing import StandardScaler
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.utils.multiclass import class_distribution
 from sklearn.utils.validation import check_random_state
 
 from sktime.classification.base import BaseClassifier
 from sktime.utils.slope_and_trend import _slope
-from sktime.utils.validation.panel import check_X
-from sktime.utils.validation.panel import check_X_y
 
 
-class SupervisedTimeSeriesForest(ForestClassifier, BaseClassifier):
-    """Supervised Time Series Forest (STSF) classifier as described in [1].
+class SupervisedTimeSeriesForest(BaseClassifier):
+    """Supervised Time Series Forest (STSF).
 
-    A time series forest is an ensemble of decision trees built on intervals selected
-    through a supervised process.
+    An ensemble of decision trees built on intervals selected through a supervised
+    process as described in _[1].
     Overview: Input n series length m
-    for each tree
-        sample X using class-balanced bagging
-        sample intervals for all 3 representations and 7 features using supervised
-        method
-        find mean, median, std, slope, iqr, min and max using their corresponding
-        interval for each rperesentation, concatenate to form new data set
-        build decision tree on new data set
-    ensemble the trees with averaged probability estimates
+    For each tree
+        - sample X using class-balanced bagging
+        - sample intervals for all 3 representations and 7 features using supervised
+        - method
+        - find mean, median, std, slope, iqr, min and max using their corresponding
+        - interval for each rperesentation, concatenate to form new data set
+        - build decision tree on new data set
+    Ensemble the trees with averaged probability estimates.
 
     Parameters
     ----------
-    n_estimators    : int, ensemble size, optional (default = 200)
-    n_jobs          : int, optional (default=1)
-    The number of jobs to run in parallel for both `fit` and `predict`.
-    ``-1`` means using all processors.
-    random_state    : int, seed for random, optional (default = none)
+    n_estimators : int, default=200
+        Number of estimators to build for the ensemble.
+    n_jobs : int, default=1
+        The number of jobs to run in parallel for both `fit` and `predict`.
+        ``-1`` means using all processors.
+    random_state : int or None, default=None
+        Seed for random number generation.
 
     Attributes
     ----------
-    n_classes    : int, extracted from the data
-    classifiers  : array of shape = [n_estimators] of DecisionTree
-    classifiers
-    intervals    : array of shape = [n_estimators][3][7][n_intervals][2] stores
-    indexes of all start and end points for all classifiers for each representaion
-    and feature
+    n_classes_ : int
+        The number of classes.
+    n_instances_ : int
+        The number of train cases.
+    series_length_ : int
+        The length of each series.
+    classes_ : list
+        The classes labels.
+    intervals : array-like of shape [n_estimators][3][7][n_intervals][2]
+        Stores indexes of all start and end points for all estimators. Each estimator
+        contains indexes for each representaion and feature combination.
+    estimators_ : list of shape (n_estimators) of DecisionTreeClassifier
+        The collections of estimators trained in fit.
 
     Notes
     -----
-    ..[1] Cabello, Nestor, et al. "Fast and Accurate Time Series Classification
-     Through Supervised Interval Search." IEEE ICDM 2020
+    For the Java version, see
+    `TSML <https://github.com/uea-machine-learning/tsml/blob/master/src/main/
+     java/tsml/classifiers/interval_based/STSF.java>`_.
 
-     Java implementation
-     https://github.com/uea-machine-learning/tsml/blob/master/src/main/
-     java/tsml/classifiers/interval_based/STSF.java
+    References
+    ----------
+    .. [1] Cabello, Nestor, et al. "Fast and Accurate Time Series Classification
+       Through Supervised Interval Search." IEEE ICDM 2020
 
+    Examples
+    --------
+    >>> from sktime.classification.interval_based import SupervisedTimeSeriesForest
+    >>> from sktime.datasets import load_unit_test
+    >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
+    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
+    >>> clf = SupervisedTimeSeriesForest(n_estimators=5)
+    >>> clf.fit(X_train, y_train)
+    SupervisedTimeSeriesForest(...)
+    >>> y_pred = clf.predict(X_test)
     """
 
-    # Capability tags
-    capabilities = {
-        "multivariate": False,
-        "unequal_length": False,
-        "missing_values": False,
-        "train_estimate": False,
-        "contractable": False,
+    _tags = {
+        "capability:multithreading": True,
+        "classifier_type": "interval",
     }
 
     def __init__(
@@ -81,28 +97,22 @@ class SupervisedTimeSeriesForest(ForestClassifier, BaseClassifier):
         n_jobs=1,
         random_state=None,
     ):
-        super(SupervisedTimeSeriesForest, self).__init__(
-            base_estimator=DecisionTreeClassifier(criterion="entropy"),
-            n_estimators=n_estimators,
-        )
-
         self.random_state = random_state
         self.n_estimators = n_estimators
         self.n_jobs = n_jobs
 
-        self.stats = [np.mean, np.median, np.std, _slope, stats.iqr, np.min, np.max]
-
         # The following set in method fit
-        self.n_classes = 0
-        self.n_instances = 0
+        self.n_instances_ = 0
+        self.series_length_ = 0
         self.estimators_ = []
         self.intervals_ = []
-        self.classes_ = []
 
-        # We need to add is-fitted state when inheriting from scikit-learn
-        self._is_fitted = False
+        self._base_estimator = DecisionTreeClassifier(criterion="entropy")
+        self._stats = [np.mean, np.median, np.std, _slope, stats.iqr, np.min, np.max]
 
-    def fit(self, X, y):
+        super(SupervisedTimeSeriesForest, self).__init__()
+
+    def _fit(self, X, y):
         """Build a forest of trees from the training set (X, y).
 
         Uses supervised intervals and summary features
@@ -121,20 +131,11 @@ class SupervisedTimeSeriesForest(ForestClassifier, BaseClassifier):
         -------
         self : object
         """
-        X, y = check_X_y(
-            X,
-            y,
-            enforce_univariate=True,
-            coerce_to_numpy=True,
-        )
         X = X.squeeze(1)
-        self.n_instances, _ = X.shape
 
+        self.n_instances_, self.series_length_ = X.shape
         rng = check_random_state(self.random_state)
-
         cls, class_counts = np.unique(y, return_counts=True)
-        self.n_classes = class_counts.shape[0]
-        self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
 
         self.intervals_ = [[[] for _ in range(3)] for _ in range(self.n_estimators)]
 
@@ -142,7 +143,7 @@ class SupervisedTimeSeriesForest(ForestClassifier, BaseClassifier):
         X_d = np.diff(X, 1)
 
         balance_cases = np.zeros(0, dtype=np.int32)
-        average = math.floor(self.n_instances / self.n_classes)
+        average = math.floor(self.n_instances_ / self.n_classes_)
         for i, c in enumerate(cls):
             if class_counts[i] < average:
                 cls_idx = np.where(y == c)[0]
@@ -150,7 +151,7 @@ class SupervisedTimeSeriesForest(ForestClassifier, BaseClassifier):
                     (rng.choice(cls_idx, size=average - class_counts[i]), balance_cases)
                 )
 
-        fit = Parallel(n_jobs=self.n_jobs)(
+        fit = Parallel(n_jobs=self._threads_to_use)(
             delayed(self._fit_estimator)(
                 X,
                 X_p,
@@ -164,10 +165,9 @@ class SupervisedTimeSeriesForest(ForestClassifier, BaseClassifier):
 
         self.estimators_, self.intervals_ = zip(*fit)
 
-        self._is_fitted = True
         return self
 
-    def predict(self, X):
+    def _predict(self, X) -> np.ndarray:
         """Find predictions for all cases in X. Built on top of predict_proba.
 
         Parameters
@@ -186,11 +186,11 @@ class SupervisedTimeSeriesForest(ForestClassifier, BaseClassifier):
         return np.array(
             [
                 self.classes_[int(rng.choice(np.flatnonzero(prob == prob.max())))]
-                for prob in self.predict_proba(X)
+                for prob in self._predict_proba(X)
             ]
         )
 
-    def predict_proba(self, X):
+    def _predict_proba(self, X) -> np.ndarray:
         """Find probability estimates for each class for all cases in X.
 
         Parameters
@@ -208,14 +208,12 @@ class SupervisedTimeSeriesForest(ForestClassifier, BaseClassifier):
         output : nd.array of shape = (n_instances, n_classes)
             Predicted probabilities
         """
-        self.check_is_fitted()
-        X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
         X = X.squeeze(1)
 
         _, X_p = signal.periodogram(X)
         X_d = np.diff(X, 1)
 
-        y_probas = Parallel(n_jobs=self.n_jobs)(
+        y_probas = Parallel(n_jobs=self._threads_to_use)(
             delayed(self._predict_proba_for_estimator)(
                 X,
                 X_p,
@@ -227,7 +225,7 @@ class SupervisedTimeSeriesForest(ForestClassifier, BaseClassifier):
         )
 
         output = np.sum(y_probas, axis=0) / (
-            np.ones(self.n_classes) * self.n_estimators
+            np.ones(self.n_classes_) * self.n_estimators
         )
         return output
 
@@ -240,12 +238,12 @@ class SupervisedTimeSeriesForest(ForestClassifier, BaseClassifier):
         n_instances, _ = X.shape
         total_intervals = 0
 
-        for i in range(len(self.stats)):
+        for i in range(len(self._stats)):
             total_intervals += len(intervals[i])
         transformed_x = np.zeros((total_intervals, n_instances), dtype=np.float32)
 
         p = 0
-        for i, f in enumerate(self.stats):
+        for i, f in enumerate(self._stats):
             n_intervals = len(intervals[i])
 
             for j in range(n_intervals):
@@ -259,7 +257,7 @@ class SupervisedTimeSeriesForest(ForestClassifier, BaseClassifier):
         """Generate intervals using a recursive function and random split point."""
         n_instances, series_length = X.shape
         split_point = (
-            series_length / 2
+            int(series_length / 2)
             if series_length <= 8
             else rng.randint(4, series_length - 4)
         )
@@ -270,7 +268,7 @@ class SupervisedTimeSeriesForest(ForestClassifier, BaseClassifier):
         X_norm = s.fit_transform(X)
 
         intervals = []
-        for function in self.stats:
+        for function in self._stats:
             function_intervals = []
             self._supervised_interval_search(
                 X_norm,
@@ -309,13 +307,13 @@ class SupervisedTimeSeriesForest(ForestClassifier, BaseClassifier):
         if series_length < 4:
             return
 
-        e = start + math.floor(series_length / 2)
+        e = start + int(series_length / 2)
 
         X_l = function(X[:, start:e], axis=1)
         X_r = function(X[:, e:end], axis=1)
 
-        s1 = fisher_score(X_l, y, classes, class_counts)
-        s2 = fisher_score(X_r, y, classes, class_counts)
+        s1 = _fisher_score(X_l, y, classes, class_counts)
+        s2 = _fisher_score(X_r, y, classes, class_counts)
 
         if s2 < s1:
             function_intervals.append([start, e])
@@ -347,16 +345,20 @@ class SupervisedTimeSeriesForest(ForestClassifier, BaseClassifier):
 
         Transformed using the supervised intervals for each feature and representation.
         """
-        estimator = clone(self.base_estimator)
+        estimator = clone(self._base_estimator)
         rs = 5465 if self.random_state == 0 else self.random_state
-        rs = None if self.random_state is None else rs * 37 * (idx + 1)
+        rs = (
+            None
+            if self.random_state is None
+            else (rs * 37 * (idx + 1)) % np.iinfo(np.int32).max
+        )
         estimator.set_params(random_state=rs)
         rng = check_random_state(rs)
 
         class_counts = np.zeros(0)
-        while class_counts.shape[0] != self.n_classes:
+        while class_counts.shape[0] != self.n_classes_:
             bag = np.concatenate(
-                (rng.choice(self.n_instances, size=self.n_instances), balance_cases)
+                (rng.choice(self.n_instances_, size=self.n_instances_), balance_cases)
             )
             _, class_counts = np.unique(y[bag], return_counts=True)
         n_instances = bag.shape[0]
@@ -409,12 +411,36 @@ class SupervisedTimeSeriesForest(ForestClassifier, BaseClassifier):
 
         return estimator.predict_proba(transformed_x)
 
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
 
-def fisher_score(X, y, classes=None, class_counts=None):
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            For classifiers, a "default" set of parameters should be provided for
+            general testing, and a "results_comparison" set for comparing against
+            previously recorded results if the general set does not produce suitable
+            probabilities to compare against.
+
+        Returns
+        -------
+        params : dict or list of dict, default={}
+            Parameters to create testing instances of the class.
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`.
+        """
+        if parameter_set == "results_comparison":
+            return {"n_estimators": 10}
+        else:
+            return {"n_estimators": 2}
+
+
+def _fisher_score(X, y, classes, class_counts):
     """Fisher score for feature selection."""
-    if classes is None or class_counts is None:
-        classes, class_counts = np.unique(y, return_counts=True)
-
     a = 0
     b = 0
 
@@ -426,6 +452,6 @@ def fisher_score(X, y, classes=None, class_counts=None):
         xy_std = np.std(X_cls)
 
         a += class_counts[i] * (xy_mean - x_mean) ** 2
-        b += class_counts[i] * xy_std ** 2
+        b += class_counts[i] * xy_std**2
 
     return 0 if b == 0 else a / b

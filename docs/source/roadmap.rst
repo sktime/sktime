@@ -1,26 +1,28 @@
 .. _roadmap:
 
+=======
 Roadmap
 =======
 
-Contributors: @mloning, @fkiraly, @sveameyer13, @lovkush-a, @bilal-196, @GuzalBulatova, @chrisholder, @satya-pattnaik, @aiwalter
+Welcome to sktime's roadmap.
+
+Contributors: :user:`mloning`, :user:`fkiraly`, :user:`sveameyer13`, :user:`lovkush-a`, :user:`bilal-196`, :user:`GuzalBulatova`, :user:`chrisholder`, :user:`satya-pattnaik`, :user:`aiwalter`
 
 Created during the 2021 sktime dev days, 25/06/2021.
 
----
-
-Welcome to sktime's roadmap.
+----
 
 Project aims
 ------------
 The aim of sktime is to:
+
 * Develop a unified framework for machine learning with time series in Python
 * Advance research on algorithm development and software design for machine learning toolboxes
 * Build a more connected community of researchers and domain experts who work with time series
 * Create and deliver educational material including documentation and user guides
 
-Work packages
--------------
+Work streams
+------------
 
 Documentation
 ~~~~~~~~~~~~~
@@ -56,8 +58,8 @@ Refactoring and extending existing modules
 * Series annotation
     * implement more estimators for outlier anomaly/detection and segmentation
 
-New modules and algorithms
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+Adding new modules and algorithms
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * Panel annotation
 * Probabilistic interface, event modelling(time-to-event modeling, survival analysis)
 * Panel & supervised forecasting

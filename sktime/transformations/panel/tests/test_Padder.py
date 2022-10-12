@@ -1,60 +1,49 @@
 # -*- coding: utf-8 -*-
-# from sklearn.pipeline import Pipeline
-from sktime.datasets.base import _load_dataset
+"""Test the Padder transformer."""
+
+from sktime.datasets import load_basic_motions
 from sktime.transformations.panel.padder import PaddingTransformer
 
-# from sklearn.ensemble import RandomForestClassifier
 from sktime.datatypes._panel._convert import from_nested_to_2d_array
-
-# import pandas as pd
 
 
 def test_padding_transformer():
+    """Test the dimensions after padding."""
     # load data
-    name = "JapaneseVowels"
-    X_train, y_train = _load_dataset(name, split="train", return_X_y=True)
-    X_test, y_test = _load_dataset(name, split="test", return_X_y=True)
-
-    # print(X_train)
+    X_train, y_train = load_basic_motions(split="train", return_X_y=True)
 
     padding_transformer = PaddingTransformer()
     Xt = padding_transformer.fit_transform(X_train)
 
-    # when we tabulrize the data it has 12 dimensions
-    # and we've padded them to there normal length of 29
+    # when we tabularize the data it has 6 dimensions
+    # and we've padded them to there normal length of 100
     data = from_nested_to_2d_array(Xt)
-    assert len(data.columns) == 29 * 12
+    assert len(data.columns) == 100 * 6
 
 
-def test_padding_paramterised_transformer():
+def test_padding_parameterised_transformer():
+    """Test padding to user determined length."""
     # load data
-    name = "JapaneseVowels"
-    X_train, y_train = _load_dataset(name, split="train", return_X_y=True)
-    X_test, y_test = _load_dataset(name, split="test", return_X_y=True)
+    X_train, y_train = load_basic_motions(split="train", return_X_y=True)
 
-    # print(X_train)
-
-    padding_transformer = PaddingTransformer(pad_length=40)
+    padding_transformer = PaddingTransformer(pad_length=120)
     Xt = padding_transformer.fit_transform(X_train)
 
-    # when we tabulrize the data it has 12 dimensions
-    # and we've truncated them all to (10-2) long.
+    # when we tabularize the data it has 6 dimensions
+    # and we've padded them all to 120 long.
     data = from_nested_to_2d_array(Xt)
-    assert len(data.columns) == 40 * 12
+    assert len(data.columns) == 120 * 6
 
 
 def test_padding_fill_value_transformer():
+    """Test full fill padding."""
     # load data
-    name = "JapaneseVowels"
-    X_train, y_train = _load_dataset(name, split="train", return_X_y=True)
-    X_test, y_test = _load_dataset(name, split="test", return_X_y=True)
+    X_train, y_train = load_basic_motions(split="train", return_X_y=True)
 
-    # print(X_train)
-
-    padding_transformer = PaddingTransformer(pad_length=40, fill_value=1)
+    padding_transformer = PaddingTransformer(pad_length=120, fill_value=1)
     Xt = padding_transformer.fit_transform(X_train)
 
-    # when we tabulrize the data it has 12 dimensions
-    # and we've truncated them all to (10-2) long.
+    # when we tabularize the data it has 6 dimensions
+    # and we've padded them all to 120 long.
     data = from_nested_to_2d_array(Xt)
-    assert len(data.columns) == 40 * 12
+    assert len(data.columns) == 120 * 6

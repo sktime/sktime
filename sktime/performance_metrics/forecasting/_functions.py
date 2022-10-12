@@ -1,29 +1,29 @@
+#!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
-"""Metrics to assess performance on forecasting task.
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Metrics functions to assess performance on forecasting task.
 
-Functions named as ``*_score`` return a scalar value to maximize: the higher
-the better.
-Function named as ``*_error`` or ``*_loss`` return a scalar value to minimize:
+Functions named as ``*_score`` return a value to maximize: the higher the better.
+Function named as ``*_error`` or ``*_loss`` return a value to minimize:
 the lower the better.
 """
 
-# !/usr/bin/env python3 -u
-# -*- coding: utf-8 -*-
-# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 import numpy as np
 from scipy.stats import gmean
-from sklearn.utils.stats import _weighted_percentile
-from sklearn.utils.validation import check_consistent_length
-from sklearn.metrics._regression import _check_reg_targets
 from sklearn.metrics import mean_absolute_error as _mean_absolute_error
 from sklearn.metrics import mean_squared_error as _mean_squared_error
 from sklearn.metrics import median_absolute_error as _median_absolute_error
+from sklearn.metrics._regression import _check_reg_targets
+from sklearn.utils.stats import _weighted_percentile
+from sklearn.utils.validation import check_consistent_length
 
+from sktime.utils.stats import _weighted_geometric_mean
 from sktime.utils.validation.series import check_series
 
-__author__ = ["Markus Löning", "Tomasz Chodakowski", "Ryan Kuhns"]
+__author__ = ["mloning", "Tomasz Chodakowski", "RNKuhns"]
 __all__ = [
     "relative_loss",
+    "mean_linex_error",
     "mean_asymmetric_error",
     "mean_absolute_scaled_error",
     "median_absolute_scaled_error",
@@ -33,6 +33,8 @@ __all__ = [
     "mean_squared_error",
     "median_absolute_error",
     "median_squared_error",
+    "geometric_mean_absolute_error",
+    "geometric_mean_squared_error",
     "mean_absolute_percentage_error",
     "median_absolute_percentage_error",
     "mean_squared_percentage_error",
@@ -52,7 +54,7 @@ def _get_kwarg(kwarg, metric_name="Metric", **kwargs):
     if kwarg_ is None:
         msg = "".join(
             [
-                f"{metric_name} requires `{kwarg}`.",
+                f"{metric_name} requires `{kwarg}`. ",
                 f"Pass `{kwarg}` as a keyword argument when calling the metric.",
             ]
         )
@@ -60,82 +62,47 @@ def _get_kwarg(kwarg, metric_name="Metric", **kwargs):
     return kwarg_
 
 
-def _weighted_geometric_mean(x, sample_weight=None, axis=None):
-    """Calculate weighted version of geometric mean.
-
-    Parameters
-    ----------
-    array : np.ndarray
-        Values to take the weighted geometric mean of.
-    sample_weight: np.ndarray
-        Weights for each value in `array`. Must be same shape as `array` or
-        of shape `(array.shape[0],)`.
-
-    Returns
-    -------
-    geometric_mean : float
-        Weighted geometric mean
-    """
-    check_consistent_length(x, sample_weight)
-    return np.exp(
-        np.sum(sample_weight * np.log(x), axis=axis) / np.sum(sample_weight, axis=axis)
-    )
-
-
-def mean_asymmetric_error(
+def mean_linex_error(
     y_true,
     y_pred,
-    asymmetric_threshold=0.0,
-    left_error_function="squared",
-    right_error_function="absolute",
+    a=1.0,
+    b=1.0,
     horizon_weight=None,
     multioutput="uniform_average",
     **kwargs,
 ):
-    """Calculate mean of asymmetric loss function.
+    """Calculate mean linex error.
 
-    Error values that are less than the asymmetric threshold have
-    `left_error_function` applied. Error values greater than or equal to
-    asymmetric threshold  have `right_error_function` applied.
+    Output is non-negative floating point. The best value is 0.0.
 
-    Many forecasting loss functions assume that over- and under-
-    predictions should receive an equal penalty. However, this may not align
-    with the actual cost faced by users' of the forecasts. Asymmetric loss
-    functions are useful when the cost of under- and over- prediction are not
-    the same.
+    Many forecasting loss functions (like those discussed in [1]_) assume that
+    over- and under- predictions should receive an equal penalty. However, this
+    may not align with the actual cost faced by users' of the forecasts.
+    Asymmetric loss functions are useful when the cost of under- and over-
+    prediction are not the same.
 
-    Setting `asymmetric_threshold` to zero, `left_error_function` to 'squared'
-    and `right_error_function` to 'absolute` results in a greater penalty
-    applied to over-predictions (y_true - y_pred < 0). The opposite is true
-    for `left_error_function` set to 'absolute' and `right_error_function`
-    set to 'squared`.
+    The linex error function accounts for this by penalizing errors on one side
+    of a threshold approximately linearly, while penalizing errors on the other
+    side approximately exponentially.
 
     Parameters
     ----------
     y_true : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
              where fh is the forecasting horizon
         Ground truth (correct) target values.
-
     y_pred : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
              where fh is the forecasting horizon
         Forecasted values.
-
-    asymmetric_threshold : float, default = 0.0
-        The value used to threshold the asymmetric loss function. Error values
-        that are less than the asymmetric threshold have `left_error_function`
-        applied. Error values greater than or equal to asymmetric threshold
-        have `right_error_function` applied.
-
-    left_error_function : {'squared', 'absolute'}, default='squared'
-        Loss penalty to apply to error values less than the asymmetric threshold.
-
-    right_error_function : {'squared', 'absolute'}, default='absolute'
-        Loss penalty to apply to error values greater than or equal to the
-        asymmetric threshold.
-
+    a : int or float
+        Controls whether over- or under- predictions receive an approximately
+        linear or exponential penalty. If `a` > 0 then negative errors
+        (over-predictions) are penalized approximately linearly and positive errors
+        (under-predictions) are penalized approximately exponentially. If `a` < 0
+        the reverse is true.
+    b : int or float
+        Multiplicative penalty to apply to calculated errors.
     horizon_weight : array-like of shape (fh,), default=None
         Forecast horizon weights.
-
     multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
             (n_outputs,), default='uniform_average'
         Defines how to aggregate metric for multivariate (multioutput) data.
@@ -152,13 +119,157 @@ def mean_asymmetric_error(
         If multioutput is 'uniform_average' or an ndarray of weights, then the
         weighted average asymmetric loss of all output errors is returned.
 
+    See Also
+    --------
+    mean_asymmetric_error
+
+    Notes
+    -----
+    Calculated as b * (np.exp(a * error) - a * error - 1), where a != 0 and b > 0
+    according to formula in [2]_.
+
     References
     ----------
-    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
-    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
+    .. [1] Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
+       forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
 
-    Diebold, Francis X. (2007). "Elements of Forecasting (4th ed.)",
-    Thomson, South-Western: Ohio, US.
+    .. [1] Diebold, Francis X. (2007). "Elements of Forecasting (4th ed.)",
+       Thomson, South-Western: Ohio, US.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sktime.performance_metrics.forecasting import mean_linex_error
+    >>> y_true = np.array([3, -0.5, 2, 7, 2])
+    >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
+    >>> mean_linex_error(y_true, y_pred)
+    0.19802627763937575
+    >>> mean_linex_error(y_true, y_pred, b=2)
+    0.3960525552787515
+    >>> mean_linex_error(y_true, y_pred, a=-1)
+    0.2391800623225643
+    >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
+    >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
+    >>> mean_linex_error(y_true, y_pred)
+    0.2700398392309829
+    >>> mean_linex_error(y_true, y_pred, a=-1)
+    0.49660966225813563
+    >>> mean_linex_error(y_true, y_pred, multioutput='raw_values')
+    array([0.17220024, 0.36787944])
+    >>> mean_linex_error(y_true, y_pred, multioutput=[0.3, 0.7])
+    0.30917568000716666
+    """
+    _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
+    if horizon_weight is not None:
+        check_consistent_length(y_true, horizon_weight)
+
+    linex_error = _linex_error(y_true, y_pred, a=a, b=b)
+    output_errors = np.average(linex_error, weights=horizon_weight, axis=0)
+
+    if isinstance(multioutput, str):
+        if multioutput == "raw_values":
+            return output_errors
+        elif multioutput == "uniform_average":
+            # pass None as weights to np.average: uniform mean
+            multioutput = None
+
+    return np.average(output_errors, weights=multioutput)
+
+
+def mean_asymmetric_error(
+    y_true,
+    y_pred,
+    asymmetric_threshold=0.0,
+    left_error_function="squared",
+    right_error_function="absolute",
+    left_error_penalty=1.0,
+    right_error_penalty=1.0,
+    horizon_weight=None,
+    multioutput="uniform_average",
+    **kwargs,
+):
+    """Calculate mean of asymmetric loss function.
+
+    Output is non-negative floating point. The best value is 0.0.
+
+    Error values that are less than the asymmetric threshold have
+    `left_error_function` applied. Error values greater than or equal to
+    asymmetric threshold  have `right_error_function` applied.
+
+    Many forecasting loss functions (like those discussed in [1]_) assume that
+    over- and under- predictions should receive an equal penalty. However, this
+    may not align with the actual cost faced by users' of the forecasts.
+    Asymmetric loss functions are useful when the cost of under- and over-
+    prediction are not the same.
+
+    Setting `asymmetric_threshold` to zero, `left_error_function` to 'squared'
+    and `right_error_function` to 'absolute` results in a greater penalty
+    applied to over-predictions (y_true - y_pred < 0). The opposite is true
+    for `left_error_function` set to 'absolute' and `right_error_function`
+    set to 'squared`.
+
+    The left_error_penalty and right_error_penalty can be used to add differing
+    multiplicative penalties to over-predictions and under-predictions.
+
+    Parameters
+    ----------
+    y_true : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
+             where fh is the forecasting horizon
+        Ground truth (correct) target values.
+    y_pred : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
+             where fh is the forecasting horizon
+        Forecasted values.
+    asymmetric_threshold : float, default = 0.0
+        The value used to threshold the asymmetric loss function. Error values
+        that are less than the asymmetric threshold have `left_error_function`
+        applied. Error values greater than or equal to asymmetric threshold
+        have `right_error_function` applied.
+    left_error_function : {'squared', 'absolute'}, default='squared'
+        Loss penalty to apply to error values less than the asymmetric threshold.
+    right_error_function : {'squared', 'absolute'}, default='absolute'
+        Loss penalty to apply to error values greater than or equal to the
+        asymmetric threshold.
+    left_error_penalty : int or float, default=1.0
+        An additional multiplicative penalty to apply to error values less than
+        the asymetric threshold.
+    right_error_penalty : int or float, default=1.0
+        An additional multiplicative penalty to apply to error values greater
+        than the asymmetric threshold.
+    horizon_weight : array-like of shape (fh,), default=None
+        Forecast horizon weights.
+    multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
+            (n_outputs,), default='uniform_average'
+        Defines how to aggregate metric for multivariate (multioutput) data.
+        If array-like, values used as weights to average the errors.
+        If 'raw_values', returns a full set of errors in case of multioutput input.
+        If 'uniform_average', errors of all outputs are averaged with uniform weight.
+
+    Returns
+    -------
+    asymmetric_loss : float
+        Loss using asymmetric penalty of on errors.
+        If multioutput is 'raw_values', then asymmetric loss is returned for
+        each output separately.
+        If multioutput is 'uniform_average' or an ndarray of weights, then the
+        weighted average asymmetric loss of all output errors is returned.
+
+    See Also
+    --------
+    mean_linex_error
+
+    Notes
+    -----
+    Setting `left_error_function` and `right_error_function` to "aboslute", but
+    choosing different values for `left_error_penalty` and `right_error_penalty`
+    results in the "lin-lin" error function discussed in [2]_.
+
+    References
+    ----------
+    .. [1] Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
+       forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
+
+    .. [2] Diebold, Francis X. (2007). "Elements of Forecasting (4th ed.)",
+       Thomson, South-Western: Ohio, US.
 
     Examples
     --------
@@ -186,7 +297,6 @@ def mean_asymmetric_error(
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
 
     if horizon_weight is not None:
-
         check_consistent_length(y_true, horizon_weight)
 
     asymmetric_errors = _asymmetric_error(
@@ -195,6 +305,8 @@ def mean_asymmetric_error(
         asymmetric_threshold=asymmetric_threshold,
         left_error_function=left_error_function,
         right_error_function=right_error_function,
+        left_error_penalty=left_error_penalty,
+        right_error_penalty=right_error_penalty,
     )
     output_errors = np.average(asymmetric_errors, weights=horizon_weight, axis=0)
     if isinstance(multioutput, str):
@@ -387,26 +499,6 @@ def median_absolute_scaled_error(
     mean_squared_scaled_error
     median_squared_scaled_error
 
-    Examples
-    --------
-    >>> from sktime.performance_metrics.forecasting import median_absolute_scaled_error
-    >>> y_train = np.array([5, 0.5, 4, 6, 3, 5, 2])
-    >>> y_true = [3, -0.5, 2, 7]
-    >>> y_pred = [2.5, 0.0, 2, 8]
-    >>> median_absolute_scaled_error(y_true, y_pred, y_train=y_train)
-    0.16666666666666666
-    >>> y_train = np.array([[0.5, 1], [-1, 1], [7, -6]])
-    >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
-    >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
-    >>> median_absolute_scaled_error(y_true, y_pred, y_train=y_train)
-    0.18181818181818182
-    >>> median_absolute_scaled_error(y_true, y_pred, y_train=y_train, \
-    multioutput='raw_values')
-    array([0.10526316, 0.28571429])
-    >>> median_absolute_scaled_error( y_true, y_pred, y_train=y_train, \
-    multioutput=[0.3, 0.7])
-    0.21935483870967742
-
     Returns
     -------
     loss : float or ndarray of floats
@@ -427,6 +519,26 @@ def median_absolute_scaled_error(
     Makridakis, S., Spiliotis, E. and Assimakopoulos, V. (2020)
     "The M4 Competition: 100,000 time series and 61 forecasting methods",
     International Journal of Forecasting, Volume 3.
+
+    Examples
+    --------
+    >>> from sktime.performance_metrics.forecasting import median_absolute_scaled_error
+    >>> y_train = np.array([5, 0.5, 4, 6, 3, 5, 2])
+    >>> y_true = [3, -0.5, 2, 7]
+    >>> y_pred = [2.5, 0.0, 2, 8]
+    >>> median_absolute_scaled_error(y_true, y_pred, y_train=y_train)
+    0.16666666666666666
+    >>> y_train = np.array([[0.5, 1], [-1, 1], [7, -6]])
+    >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
+    >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
+    >>> median_absolute_scaled_error(y_true, y_pred, y_train=y_train)
+    0.18181818181818182
+    >>> median_absolute_scaled_error(y_true, y_pred, y_train=y_train, \
+    multioutput='raw_values')
+    array([0.10526316, 0.28571429])
+    >>> median_absolute_scaled_error( y_true, y_pred, y_train=y_train, \
+    multioutput=[0.3, 0.7])
+    0.21935483870967742
     """
     y_train = _get_kwarg(
         "y_train", metric_name="median_absolute_scaled_error", **kwargs
@@ -536,6 +648,14 @@ def mean_squared_scaled_error(
     median_absolute_scaled_error
     median_squared_scaled_error
 
+    References
+    ----------
+    M5 Competition Guidelines.
+    https://mofc.unic.ac.cy/wp-content/uploads/2020/03/M5-Competitors-Guide-Final-10-March-2020.docx
+
+    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
+    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
+
     Examples
     --------
     >>> from sktime.performance_metrics.forecasting import mean_squared_scaled_error
@@ -555,14 +675,6 @@ def mean_squared_scaled_error(
     >>> mean_squared_scaled_error(y_true, y_pred, y_train=y_train, \
     multioutput=[0.3, 0.7], square_root=True)
     0.17451891814894502
-
-    References
-    ----------
-    M5 Competition Guidelines.
-    https://mofc.unic.ac.cy/wp-content/uploads/2020/03/M5-Competitors-Guide-Final-10-March-2020.docx
-
-    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
-    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
     """
     y_train = _get_kwarg("y_train", metric_name="mean_squared_scaled_error", **kwargs)
 
@@ -632,21 +744,16 @@ def median_squared_scaled_error(
     y_true : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
              where fh is the forecasting horizon
         Ground truth (correct) target values.
-
     y_pred : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
              where fh is the forecasting horizon
         Forecasted values.
-
     y_train : pd.Series, pd.DataFrame or np.array of shape (n_timepoints,) or \
              (n_timepoints, n_outputs), default = None
         Observed training values.
-
     sp : int
         Seasonal periodicity of training data.
-
     horizon_weight : array-like of shape (fh,), default=None
         Forecast horizon weights.
-
     multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
             (n_outputs,), default='uniform_average'
         Defines how to aggregate metric for multivariate (multioutput) data.
@@ -669,6 +776,14 @@ def median_squared_scaled_error(
     median_absolute_scaled_error
     mean_squared_scaled_error
 
+    References
+    ----------
+    M5 Competition Guidelines.
+    https://mofc.unic.ac.cy/wp-content/uploads/2020/03/M5-Competitors-Guide-Final-10-March-2020.docx
+
+    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
+    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
+
     Examples
     --------
     >>> from sktime.performance_metrics.forecasting import median_squared_scaled_error
@@ -688,14 +803,6 @@ def median_squared_scaled_error(
     >>> median_squared_scaled_error(y_true, y_pred, y_train=y_train, \
     multioutput=[0.3, 0.7], square_root=True)
     0.16914781383660782
-
-    References
-    ----------
-    M5 Competition Guidelines.
-    https://mofc.unic.ac.cy/wp-content/uploads/2020/03/M5-Competitors-Guide-Final-10-March-2020.docx
-
-    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
-    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
     """
     y_train = _get_kwarg("y_train", metric_name="median_squared_scaled_error", **kwargs)
 
@@ -750,14 +857,11 @@ def mean_absolute_error(
     y_true : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
              where fh is the forecasting horizon
         Ground truth (correct) target values.
-
     y_pred : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
              where fh is the forecasting horizon
         Forecasted values.
-
     horizon_weight : array-like of shape (fh,), default=None
         Forecast horizon weights.
-
     multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
             (n_outputs,), default='uniform_average'
         Defines how to aggregate metric for multivariate (multioutput) data.
@@ -779,6 +883,13 @@ def mean_absolute_error(
     median_absolute_error
     mean_squared_error
     median_squared_error
+    geometric_mean_absolute_error
+    geometric_mean_squared_error
+
+    References
+    ----------
+    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
+    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
 
     Examples
     --------
@@ -795,11 +906,6 @@ def mean_absolute_error(
     array([0.5, 1. ])
     >>> mean_absolute_error(y_true, y_pred, multioutput=[0.3, 0.7])
     0.85
-
-    References
-    ----------
-    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
-    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
     """
     return _mean_absolute_error(
         y_true, y_pred, sample_weight=horizon_weight, multioutput=multioutput
@@ -864,6 +970,13 @@ def mean_squared_error(
     mean_absolute_error
     median_absolute_error
     median_squared_error
+    geometric_mean_absolute_error
+    geometric_mean_squared_error
+
+    References
+    ----------
+    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
+    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
 
     Examples
     --------
@@ -886,11 +999,6 @@ def mean_squared_error(
     0.825
     >>> mean_squared_error(y_true, y_pred, multioutput=[0.3, 0.7], square_root=True)
     0.8936491673103708
-
-    References
-    ----------
-    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
-    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
     """
     # Scikit-learn argument `squared` returns MSE when True and RMSE when False
     # Scikit-time argument `square_root` returns RMSE when True and MSE when False
@@ -955,6 +1063,13 @@ def median_absolute_error(
     mean_absolute_error
     mean_squared_error
     median_squared_error
+    geometric_mean_absolute_error
+    geometric_mean_squared_error
+
+    References
+    ----------
+    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
+    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
 
     Examples
     --------
@@ -971,11 +1086,6 @@ def median_absolute_error(
     array([0.5, 1. ])
     >>> median_absolute_error(y_true, y_pred, multioutput=[0.3, 0.7])
     0.85
-
-    References
-    ----------
-    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
-    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
     """
     return _median_absolute_error(
         y_true, y_pred, sample_weight=horizon_weight, multioutput=multioutput
@@ -1045,6 +1155,13 @@ def median_squared_error(
     mean_absolute_error
     median_absolute_error
     mean_squared_error
+    geometric_mean_absolute_error
+    geometric_mean_squared_error
+
+    References
+    ----------
+    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
+    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
 
     Examples
     --------
@@ -1069,12 +1186,6 @@ def median_squared_error(
     0.7749999999999999
     >>> median_squared_error(y_true, y_pred, multioutput=[0.3, 0.7], square_root=True)
     0.85
-
-
-    References
-    ----------
-    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
-    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
     """
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
     if horizon_weight is None:
@@ -1099,12 +1210,248 @@ def median_squared_error(
     return np.average(output_errors, weights=multioutput)
 
 
+def geometric_mean_absolute_error(
+    y_true,
+    y_pred,
+    horizon_weight=None,
+    multioutput="uniform_average",
+    **kwargs,
+):
+    """Geometric mean absolute error (GMAE).
+
+    GMAE output is non-negative floating point. The best value is approximately
+    zero, rather than zero.
+
+    Like MAE and MdAE, GMAE is measured in the same units as the input data.
+    Because GMAE takes the absolute value of the forecast error rather than
+    squaring it, MAE penalizes large errors to a lesser degree than squared error
+    varients like MSE, RMSE or GMSE or RGMSE.
+
+    Parameters
+    ----------
+    y_true : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
+             where fh is the forecasting horizon
+        Ground truth (correct) target values.
+
+    y_pred : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
+             where fh is the forecasting horizon
+        Forecasted values.
+
+    horizon_weight : array-like of shape (fh,), default=None
+        Forecast horizon weights.
+
+    multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
+            (n_outputs,), default='uniform_average'
+        Defines how to aggregate metric for multivariate (multioutput) data.
+        If array-like, values used as weights to average the errors.
+        If 'raw_values', returns a full set of errors in case of multioutput input.
+        If 'uniform_average', errors of all outputs are averaged with uniform weight.
+
+    Returns
+    -------
+    loss : float
+        GMAE loss. If multioutput is 'raw_values', then GMAE is returned for each
+        output separately. If multioutput is 'uniform_average' or an ndarray
+        of weights, then the weighted average GMAE of all output errors is returned.
+
+    See Also
+    --------
+    mean_absolute_error
+    median_absolute_error
+    mean_squared_error
+    median_squared_error
+    geometric_mean_squared_error
+
+    Notes
+    -----
+    The geometric mean uses the product of values in its calculation. The presence
+    of a zero value will result in the result being zero, even if all the other
+    values of large. To partially account for this in the case where elements
+    of `y_true` and `y_pred` are equal (zero error), the resulting zero error
+    values are replaced in the calculation with a small value. This results in
+    the smallest value the metric can take (when `y_true` equals `y_pred`)
+    being close to but not exactly zero.
+
+    References
+    ----------
+    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
+    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sktime.performance_metrics.forecasting import \
+    geometric_mean_absolute_error
+    >>> y_true = np.array([3, -0.5, 2, 7, 2])
+    >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
+    >>> geometric_mean_absolute_error(y_true, y_pred)
+    0.000529527232030127
+    >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
+    >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
+    >>> geometric_mean_absolute_error(y_true, y_pred)
+    0.5000024031086919
+    >>> geometric_mean_absolute_error(y_true, y_pred, multioutput='raw_values')
+    array([4.80621738e-06, 1.00000000e+00])
+    >>> geometric_mean_absolute_error(y_true, y_pred, multioutput=[0.3, 0.7])
+    0.7000014418652152
+    """
+    _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
+    errors = y_true - y_pred
+    errors = np.where(errors == 0.0, EPS, errors)
+    if horizon_weight is None:
+        output_errors = gmean(np.abs(errors), axis=0)
+    else:
+        check_consistent_length(y_true, horizon_weight)
+        output_errors = _weighted_geometric_mean(
+            np.abs(errors),
+            sample_weight=horizon_weight,
+            axis=0,
+        )
+
+    if isinstance(multioutput, str):
+        if multioutput == "raw_values":
+            return output_errors
+        elif multioutput == "uniform_average":
+            # pass None as weights to np.average: uniform mean
+            multioutput = None
+
+    return np.average(output_errors, weights=multioutput)
+
+
+def geometric_mean_squared_error(
+    y_true,
+    y_pred,
+    horizon_weight=None,
+    multioutput="uniform_average",
+    square_root=False,
+    **kwargs,
+):
+    """Geometric mean squared error (GMSE) or Root geometric mean squared error (RGMSE).
+
+    If `square_root` is False then calculates GMSE and if `square_root` is True
+    then RGMSE is calculated. Both GMSE and RGMSE return non-negative floating
+    point. The best value is approximately zero, rather than zero.
+
+    Like MSE and MdSE, GMSE is measured in squared units of the input data. RMdSE is
+    on the same scale as the input data like RMSE and RdMSE. Because GMSE and RGMSE
+    square the forecast error rather than taking the absolute value, they
+    penalize large errors more than GMAE.
+
+    Parameters
+    ----------
+    y_true : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
+                where fh is the forecasting horizon
+        Ground truth (correct) target values.
+
+    y_pred : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
+                where fh is the forecasting horizon
+        Forecasted values.
+
+    horizon_weight : array-like of shape (fh,), default=None
+        Forecast horizon weights.
+
+    multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
+            (n_outputs,), default='uniform_average'
+        Defines how to aggregate metric for multivariate (multioutput) data.
+        If array-like, values used as weights to average the errors.
+        If 'raw_values', returns a full set of errors in case of multioutput input.
+        If 'uniform_average', errors of all outputs are averaged with uniform weight.
+
+    square_root : bool, default=False
+        Whether to take the square root of the mean squared error.
+        If True, returns root geometric mean squared error (RGMSE)
+        If False, returns geometric mean squared error (GMSE)
+
+    Returns
+    -------
+    loss : float
+        GMSE or RGMSE loss. If multioutput is 'raw_values', then loss is returned
+        for each output separately. If multioutput is 'uniform_average' or an ndarray
+        of weights, then the weighted average MdSE of all output errors is returned.
+
+    See Also
+    --------
+    mean_absolute_error
+    median_absolute_error
+    mean_squared_error
+    median_squared_error
+    geometric_mean_absolute_error
+
+    Notes
+    -----
+    The geometric mean uses the product of values in its calculation. The presence
+    of a zero value will result in the result being zero, even if all the other
+    values of large. To partially account for this in the case where elements
+    of `y_true` and `y_pred` are equal (zero error), the resulting zero error
+    values are replaced in the calculation with a small value. This results in
+    the smallest value the metric can take (when `y_true` equals `y_pred`)
+    being close to but not exactly zero.
+
+    References
+    ----------
+    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
+    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sktime.performance_metrics.forecasting import \
+    geometric_mean_squared_error
+    >>> y_true = np.array([3, -0.5, 2, 7, 2])
+    >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
+    >>> geometric_mean_squared_error(y_true, y_pred)
+    2.80399089461488e-07
+    >>> geometric_mean_squared_error(y_true, y_pred, square_root=True)
+    0.000529527232030127
+    >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
+    >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
+    >>> geometric_mean_squared_error(y_true, y_pred)
+    0.5000000000115499
+    >>> geometric_mean_squared_error(y_true, y_pred, square_root=True)
+    0.5000024031086919
+    >>> geometric_mean_squared_error(y_true, y_pred, multioutput='raw_values')
+    array([2.30997255e-11, 1.00000000e+00])
+    >>> geometric_mean_squared_error(y_true, y_pred, multioutput='raw_values', \
+    square_root=True)
+    array([4.80621738e-06, 1.00000000e+00])
+    >>> geometric_mean_squared_error(y_true, y_pred, multioutput=[0.3, 0.7])
+    0.7000000000069299
+    >>> geometric_mean_squared_error(y_true, y_pred, multioutput=[0.3, 0.7], \
+    square_root=True)
+    0.7000014418652152
+    """
+    _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
+    errors = y_true - y_pred
+    errors = np.where(errors == 0.0, EPS, errors)
+    if horizon_weight is None:
+        output_errors = gmean(np.square(errors), axis=0)
+    else:
+        check_consistent_length(y_true, horizon_weight)
+        output_errors = _weighted_geometric_mean(
+            np.square(errors),
+            sample_weight=horizon_weight,
+            axis=0,
+        )
+
+    if square_root:
+        output_errors = np.sqrt(output_errors)
+
+    if isinstance(multioutput, str):
+        if multioutput == "raw_values":
+            return output_errors
+        elif multioutput == "uniform_average":
+            # pass None as weights to np.average: uniform mean
+            multioutput = None
+
+    return np.average(output_errors, weights=multioutput)
+
+
 def mean_absolute_percentage_error(
     y_true,
     y_pred,
     horizon_weight=None,
     multioutput="uniform_average",
-    symmetric=True,
+    symmetric=False,
     **kwargs,
 ):
     """Mean absolute percentage error (MAPE) or symmetric version.
@@ -1141,7 +1488,7 @@ def mean_absolute_percentage_error(
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
 
-    symmetric : bool, default=True
+    symmetric : bool, default=False
         Calculates symmetric version of metric if True.
 
     Returns
@@ -1159,6 +1506,11 @@ def mean_absolute_percentage_error(
     mean_squared_percentage_error
     median_squared_percentage_error
 
+    References
+    ----------
+    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
+    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
+
     Examples
     --------
     >>> from sktime.performance_metrics.forecasting import \
@@ -1167,29 +1519,26 @@ def mean_absolute_percentage_error(
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
     >>> mean_absolute_percentage_error(y_true, y_pred, symmetric=False)
     0.33690476190476193
-    >>> mean_absolute_percentage_error(y_true, y_pred)
+    >>> mean_absolute_percentage_error(y_true, y_pred, symmetric=True)
     0.5553379953379953
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> mean_absolute_percentage_error(y_true, y_pred, symmetric=False)
     0.5515873015873016
-    >>> mean_absolute_percentage_error(y_true, y_pred)
+    >>> mean_absolute_percentage_error(y_true, y_pred, symmetric=True)
     0.6080808080808081
     >>> mean_absolute_percentage_error(y_true, y_pred, multioutput='raw_values', \
         symmetric=False)
     array([0.38095238, 0.72222222])
-    >>> mean_absolute_percentage_error(y_true, y_pred, multioutput='raw_values')
+    >>> mean_absolute_percentage_error(y_true, y_pred, multioutput='raw_values', \
+        symmetric=True)
     array([0.71111111, 0.50505051])
     >>> mean_absolute_percentage_error(y_true, y_pred, multioutput=[0.3, 0.7], \
     symmetric=False)
     0.6198412698412699
-    >>> mean_absolute_percentage_error(y_true, y_pred, multioutput=[0.3, 0.7])
+    >>> mean_absolute_percentage_error(y_true, y_pred, multioutput=[0.3, 0.7], \
+    symmetric=True)
     0.5668686868686869
-
-    References
-    ----------
-    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
-    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
     """
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
     if horizon_weight is not None:
@@ -1216,7 +1565,7 @@ def median_absolute_percentage_error(
     y_pred,
     horizon_weight=None,
     multioutput="uniform_average",
-    symmetric=True,
+    symmetric=False,
     **kwargs,
 ):
     """Median absolute percentage error (MdAPE) or symmetric version.
@@ -1257,7 +1606,7 @@ def median_absolute_percentage_error(
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
 
-    symmetric : bool, default=True
+    symmetric : bool, default=False
         Calculates symmetric version of metric if True.
 
     Returns
@@ -1269,33 +1618,6 @@ def median_absolute_percentage_error(
         If multioutput is 'uniform_average' or an ndarray of weights, then the
         weighted average MdAPE or sMdAPE of all output errors is returned.
 
-    Examples
-    --------
-    >>> from sktime.performance_metrics.forecasting import \
-        median_absolute_percentage_error
-    >>> y_true = np.array([3, -0.5, 2, 7, 2])
-    >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
-    >>> median_absolute_percentage_error(y_true, y_pred, symmetric=False)
-    0.16666666666666666
-    >>> median_absolute_percentage_error(y_true, y_pred)
-    0.18181818181818182
-    >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
-    >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
-    >>> median_absolute_percentage_error(y_true, y_pred, symmetric=False)
-    0.5714285714285714
-    >>> median_absolute_percentage_error(y_true, y_pred)
-    0.39999999999999997
-    >>> median_absolute_percentage_error(y_true, y_pred, multioutput='raw_values', \
-    symmetric=False)
-    array([0.14285714, 1.        ])
-    >>> median_absolute_percentage_error(y_true, y_pred, multioutput='raw_values')
-    array([0.13333333, 0.66666667])
-    >>> median_absolute_percentage_error(y_true, y_pred, multioutput=[0.3, 0.7], \
-    symmetric=False)
-    0.7428571428571428
-    >>> median_absolute_percentage_error(y_true, y_pred, multioutput=[0.3, 0.7])
-    0.5066666666666666
-
     See Also
     --------
     mean_absolute_percentage_error
@@ -1306,6 +1628,35 @@ def median_absolute_percentage_error(
     ----------
     Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
     forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
+
+    Examples
+    --------
+    >>> from sktime.performance_metrics.forecasting import \
+        median_absolute_percentage_error
+    >>> y_true = np.array([3, -0.5, 2, 7, 2])
+    >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
+    >>> median_absolute_percentage_error(y_true, y_pred, symmetric=False)
+    0.16666666666666666
+    >>> median_absolute_percentage_error(y_true, y_pred, symmetric=True)
+    0.18181818181818182
+    >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
+    >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
+    >>> median_absolute_percentage_error(y_true, y_pred, symmetric=False)
+    0.5714285714285714
+    >>> median_absolute_percentage_error(y_true, y_pred, symmetric=True)
+    0.39999999999999997
+    >>> median_absolute_percentage_error(y_true, y_pred, multioutput='raw_values', \
+    symmetric=False)
+    array([0.14285714, 1.        ])
+    >>> median_absolute_percentage_error(y_true, y_pred, multioutput='raw_values', \
+    symmetric=True)
+    array([0.13333333, 0.66666667])
+    >>> median_absolute_percentage_error(y_true, y_pred, multioutput=[0.3, 0.7], \
+    symmetric=False)
+    0.7428571428571428
+    >>> median_absolute_percentage_error(y_true, y_pred, multioutput=[0.3, 0.7], \
+    symmetric=True)
+    0.5066666666666666
     """
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
     if horizon_weight is None:
@@ -1335,7 +1686,7 @@ def mean_squared_percentage_error(
     horizon_weight=None,
     multioutput="uniform_average",
     square_root=False,
-    symmetric=True,
+    symmetric=False,
     **kwargs,
 ):
     """Mean squared percentage error (MSPE) or square root version.
@@ -1398,6 +1749,11 @@ def mean_squared_percentage_error(
     median_absolute_percentage_error
     median_squared_percentage_error
 
+    References
+    ----------
+    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
+    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
+
     Examples
     --------
     >>> from sktime.performance_metrics.forecasting import mean_squared_percentage_error
@@ -1427,11 +1783,6 @@ def mean_squared_percentage_error(
     >>> mean_squared_percentage_error(y_true, y_pred, multioutput=[0.3, 0.7], \
     square_root=True, symmetric=False)
     0.7504665536595034
-
-    References
-    ----------
-    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
-    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
     """
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
     if horizon_weight is not None:
@@ -1462,7 +1813,7 @@ def median_squared_percentage_error(
     horizon_weight=None,
     multioutput="uniform_average",
     square_root=False,
-    symmetric=True,
+    symmetric=False,
     **kwargs,
 ):
     """Median squared percentage error (MdSPE)  or square root version.
@@ -1529,6 +1880,11 @@ def median_squared_percentage_error(
     median_absolute_percentage_error
     mean_squared_percentage_error
 
+    References
+    ----------
+    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
+    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
+
     Examples
     --------
     >>> from sktime.performance_metrics.forecasting import \
@@ -1559,11 +1915,6 @@ def median_squared_percentage_error(
     >>> median_squared_percentage_error(y_true, y_pred, multioutput=[0.3, 0.7], \
     square_root=True, symmetric=False)
     0.7428571428571428
-
-    References
-    ----------
-    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
-    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
     """
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
     perc_err = _percentage_error(y_true, y_pred, symmetric=symmetric)
@@ -1644,6 +1995,11 @@ def mean_relative_absolute_error(
     geometric_mean_relative_absolute_error
     geometric_mean_relative_squared_error
 
+    References
+    ----------
+    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
+    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
+
     Examples
     --------
     >>> from sktime.performance_metrics.forecasting import mean_relative_absolute_error
@@ -1665,11 +2021,6 @@ def mean_relative_absolute_error(
     >>> mean_relative_absolute_error(y_true, y_pred, \
     y_pred_benchmark=y_pred_benchmark, multioutput=[0.3, 0.7])
     1.0111111111111108
-
-    References
-    ----------
-    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
-    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
     """
     y_pred_benchmark = _get_kwarg(
         "y_pred_benchmark", metric_name="mean_relative_absolute_error", **kwargs
@@ -1752,6 +2103,11 @@ def median_relative_absolute_error(
     geometric_mean_relative_absolute_error
     geometric_mean_relative_squared_error
 
+    References
+    ----------
+    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
+    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
+
     Examples
     --------
     >>> from sktime.performance_metrics.forecasting import \
@@ -1774,11 +2130,6 @@ def median_relative_absolute_error(
     >>> median_relative_absolute_error(y_true, y_pred, \
     y_pred_benchmark=y_pred_benchmark, multioutput=[0.3, 0.7])
     0.7499999999999999
-
-    References
-    ----------
-    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
-    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
     """
     y_pred_benchmark = _get_kwarg(
         "y_pred_benchmark", metric_name="median_relative_absolute_error", **kwargs
@@ -1865,6 +2216,11 @@ def geometric_mean_relative_absolute_error(
     median_relative_absolute_error
     geometric_mean_relative_squared_error
 
+    References
+    ----------
+    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
+    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
+
     Examples
     --------
     >>> from sktime.performance_metrics.forecasting import \
@@ -1887,11 +2243,6 @@ def geometric_mean_relative_absolute_error(
     >>> geometric_mean_relative_absolute_error(y_true, y_pred, \
     y_pred_benchmark=y_pred_benchmark, multioutput=[0.3, 0.7])
     0.7810066018326863
-
-    References
-    ----------
-    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
-    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
     """
     y_pred_benchmark = _get_kwarg(
         "y_pred_benchmark",
@@ -1912,7 +2263,7 @@ def geometric_mean_relative_absolute_error(
         check_consistent_length(y_true, horizon_weight)
         output_errors = _weighted_geometric_mean(
             np.where(relative_errors == 0.0, EPS, relative_errors),
-            sample_weight=horizon_weight,
+            weights=horizon_weight,
             axis=0,
         )
 
@@ -1992,6 +2343,11 @@ def geometric_mean_relative_squared_error(
     median_relative_absolute_error
     geometric_mean_relative_absolute_error
 
+    References
+    ----------
+    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
+    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
+
     Examples
     --------
     >>> from sktime.performance_metrics.forecasting import \
@@ -2014,11 +2370,6 @@ def geometric_mean_relative_squared_error(
     >>> geometric_mean_relative_squared_error(y_true, y_pred, \
     y_pred_benchmark=y_pred_benchmark, multioutput=[0.3, 0.7])
     0.8713854839582426
-
-    References
-    ----------
-    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
-    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
     """
     y_pred_benchmark = _get_kwarg(
         "y_pred_benchmark",
@@ -2038,7 +2389,7 @@ def geometric_mean_relative_squared_error(
         check_consistent_length(y_true, horizon_weight)
         output_errors = _weighted_geometric_mean(
             np.where(relative_errors == 0.0, EPS, relative_errors),
-            sample_weight=horizon_weight,
+            weights=horizon_weight,
             axis=0,
         )
 
@@ -2182,6 +2533,8 @@ def _asymmetric_error(
     asymmetric_threshold=0.0,
     left_error_function="squared",
     right_error_function="absolute",
+    left_error_penalty=1.0,
+    right_error_penalty=1.0,
 ):
     """Calculate asymmetric error.
 
@@ -2190,23 +2543,25 @@ def _asymmetric_error(
     y_true : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
              where fh is the forecasting horizon
         Ground truth (correct) target values.
-
     y_pred : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
              where fh is the forecasting horizon
         Forecasted values.
-
     asymmetric_threshold : float, default = 0.0
         The value used to threshold the asymmetric loss function. Error values
         that are less than the asymmetric threshold have `left_error_function`
         applied. Error values greater than or equal to asymmetric threshold
         have `right_error_function` applied.
-
     left_error_function : {'squared', 'absolute'}, default='squared'
         Loss penalty to apply to error values less than the asymmetric threshold.
-
     right_error_function : {'squared', 'absolute'}, default='absolute'
         Loss penalty to apply to error values greater than or equal to the
         asymmetric threshold.
+    left_error_penalty : int or float, default=1.0
+        An additional multiplicative penalty to apply to error values less than
+        the asymetric threshold.
+    right_error_penalty : int or float, default=1.0
+        An additional multiplicative penalty to apply to error values greater
+        than the asymmetric threshold.
 
     Returns
     -------
@@ -2217,6 +2572,9 @@ def _asymmetric_error(
     ----------
     Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
     forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
+
+    Diebold, Francis X. (2007). "Elements of Forecasting (4th ed.)",
+    Thomson, South-Western: Ohio, US.
     """
     functions = {"squared": np.square, "absolute": np.abs}
     left_func, right_func = (
@@ -2224,12 +2582,61 @@ def _asymmetric_error(
         functions[right_error_function],
     )
 
+    if not (
+        isinstance(left_error_penalty, (int, float))
+        and isinstance(right_error_penalty, (int, float))
+    ):
+        msg = "`left_error_penalty` and `right_error_penalty` must be int or float."
+        raise ValueError(msg)
+
     errors = np.where(
         y_true - y_pred < asymmetric_threshold,
-        left_func(y_true - y_pred),
-        right_func(y_true - y_pred),
+        left_error_penalty * left_func(y_true - y_pred),
+        right_error_penalty * right_func(y_true - y_pred),
     )
     return errors
+
+
+def _linex_error(y_true, y_pred, a=1.0, b=1.0):
+    """Calculate mean linex error.
+
+    Output is non-negative floating point. The best value is 0.0.
+
+    Parameters
+    ----------
+    y_true : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
+             where fh is the forecasting horizon
+        Ground truth (correct) target values.
+    y_pred : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
+             where fh is the forecasting horizon
+        Forecasted values.
+    horizon_weight : array-like of shape (fh,), default=None
+        Forecast horizon weights.
+    multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
+            (n_outputs,), default='uniform_average'
+        Defines how to aggregate metric for multivariate (multioutput) data.
+        If array-like, values used as weights to average the errors.
+        If 'raw_values', returns a full set of errors in case of multioutput input.
+        If 'uniform_average', errors of all outputs are averaged with uniform weight.
+
+    Returns
+    -------
+    linex_error : float
+        Array of linex errors.
+
+    References
+    ----------
+    Diebold, Francis X. (2007). "Elements of Forecasting (4th ed.)",
+    Thomson, South-Western: Ohio, US.
+    """
+    if not (isinstance(a, (int, float)) and a != 0):
+        raise ValueError("`a` must be int or float not equal to zero.")
+    if not (isinstance(b, (int, float)) and b > 0):
+        raise ValueError("`b` must be an int or float greater than zero.")
+    error = y_true - y_pred
+    a_error = a * error
+    linex_error = b * (np.exp(a_error) - a_error - 1)
+    return linex_error
 
 
 def _relative_error(y_true, y_pred, y_pred_benchmark):
@@ -2267,7 +2674,7 @@ def _relative_error(y_true, y_pred, y_pred_benchmark):
     return (y_true - y_pred) / denominator
 
 
-def _percentage_error(y_true, y_pred, symmetric=True):
+def _percentage_error(y_true, y_pred, symmetric=False):
     """Percentage error.
 
     Parameters

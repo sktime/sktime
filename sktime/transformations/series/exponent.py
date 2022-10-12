@@ -1,25 +1,27 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Classes to raise timeseries to a user provied exponent."""
+"""Implements transformers raise time series to user provided exponent."""
 
 __author__ = ["Ryan Kuhns"]
 __all__ = ["ExponentTransformer", "SqrtTransformer"]
 
+from warnings import warn
+
 import numpy as np
 import pandas as pd
 
-from sktime.transformations.base import _SeriesToSeriesTransformer
-from sktime.utils.validation.series import check_series
+from sktime.transformations.base import BaseTransformer
 
 
-class ExponentTransformer(_SeriesToSeriesTransformer):
-    """Apply exponent transformation to a timeseries.
+class ExponentTransformer(BaseTransformer):
+    """Apply element-wise exponentiation transformation to a time series.
 
-    Transformation raises input series to the `power` provided. By default,
-    when offset="auto", a series with negative values is shifted prior to the
-    exponentiation to avoid potential errors of applying certain fractional
-    exponents to negative values.
+    Transformation performs the following operations element-wise:
+        * adds the constant `offset` (shift)
+        * raises to the `power` provided (exponentiation)
+    Offset="auto" computes offset as the smallest offset that ensure all elements
+    are non-negative before exponentiation.
 
     Parameters
     ----------
@@ -39,11 +41,29 @@ class ExponentTransformer(_SeriesToSeriesTransformer):
     power : int or float
         User supplied power.
 
-    offset : int or float
+    offset : int or float, or iterable.
         User supplied offset value.
+        Scalar or 1D iterable with as many values as X columns in transform.
 
-    Example
-    -------
+    See Also
+    --------
+    BoxCoxTransformer :
+        Applies Box-Cox power transformation. Can help normalize data and
+        compress variance of the series.
+    LogTransformer :
+        Transformer input data using natural log. Can help normalize data and
+        compress variance of the series.
+    sktime.transformations.series.exponent.SqrtTransformer :
+        Transform input data by taking its square root. Can help compress
+        variance of input series.
+
+    Notes
+    -----
+    For an input series `Z` the exponent transformation is defined as
+    :math:`(Z + offset)^{power}`.
+
+    Examples
+    --------
     >>> from sktime.transformations.series.exponent import ExponentTransformer
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
@@ -52,154 +72,131 @@ class ExponentTransformer(_SeriesToSeriesTransformer):
     """
 
     _tags = {
-        "fit-in-transform": False,
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
+        "scitype:transform-output": "Series",
+        # what scitype is returned: Primitives, Series, Panel
+        "scitype:instancewise": True,  # is this an instance-wise transform?
+        "X_inner_mtype": ["pd.DataFrame", "pd.Series"],
+        # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
+        "fit_is_empty": True,
         "transform-returns-same-time-index": True,
         "univariate-only": False,
+        "capability:inverse_transform": True,
     }
 
     def __init__(self, power=0.5, offset="auto"):
         self.power = power
         self.offset = offset
-        self._offset_value = None
-
-        super(ExponentTransformer, self).__init__()
-
-    def _fit(self, Z, X=None):
-        """Logic used by fit method on `Z`.
-
-        Parameters
-        ----------
-        Z : pd.Series or pd.DataFrame
-            A time series to apply the transformation on.
-
-        Returns
-        -------
-        self
-        """
 
         if not isinstance(self.power, (int, float)):
             raise ValueError(
                 f"Expected `power` to be int or float, but found {type(self.power)}."
             )
-        if self.offset == "auto":
-            if isinstance(Z, pd.Series):
-                min_values = Z.min()
-            else:
-                min_values = Z.min(axis=0).values.reshape(1, -1)
-            self._offset_value = np.where(min_values < 0, np.abs(min_values), 0)
 
-        elif isinstance(self.offset, (int, float)):
-            self._offset_value = self.offset
-
-        else:
+        offset_types = (int, float, pd.Series, np.ndarray)
+        if not isinstance(offset, offset_types) and offset != "auto":
             raise ValueError(
                 f"Expected `offset` to be int or float, but found {type(self.offset)}."
             )
 
-        return self
+        super(ExponentTransformer, self).__init__()
 
-    def _transform(self, Z, X=None):
-        """Logic used by `transform` to apply transformation to `Z`.
+        if abs(power) < 1e-6:
+            warn(
+                "power close to zero passed to ExponentTransformer, "
+                "inverse_transform will default to identity "
+                "if called, in order to avoid division by zero"
+            )
+            self.set_tags(**{"skip-inverse-transform": True})
 
-        Parameters
-        ----------
-        Z : pd.Series or pd.DataFrame
-            The timeseries to be transformed.
+    def _transform(self, X, y=None):
+        """Transform X and return a transformed version.
 
-        Returns
-        -------
-        Zt : pd.Series or pd.DataFrame
-            Transformed timeseries.
-        """
-        Zt = Z.copy()
-        Zt = np.power(Zt + self._offset_value, self.power)
-
-        return Zt
-
-    def _inverse_transform(self, Z, X=None):
-        """Logic used by `inverse_transform` to reverse transformation on  `Z`.
+        private _transform containing the core logic, called from transform
 
         Parameters
         ----------
-        Z : pd.Series or pd.DataFrame
-            A time series to apply reverse the transformation on.
+        X : pd.Series or pd.DataFrame
+            Data to be transformed
+        y : ignored argument for interface compatibility
+            Additional data, e.g., labels for transformation
 
         Returns
         -------
-        Z_inv : pd.Series or pd.DataFrame
-            The reconstructed timeseries after the transformation has been reversed.
+        Xt : pd.Series or pd.DataFrame, same type as X
+            transformed version of X
         """
-        Z_inv = Z.copy()
-        Z_inv = np.power(Z_inv, 1.0 / self.power) - self._offset_value
-        return Z_inv
+        offset = self._get_offset(X)
+        Xt = X.add(offset).pow(self.power)
+        return Xt
 
-    def fit(self, Z, X=None):
-        """Fit the transformation on input series `Z`.
+    def _inverse_transform(self, X, y=None):
+        """Logic used by `inverse_transform` to reverse transformation on `X`.
 
         Parameters
         ----------
-        Z : pd.Series or pd.DataFrame
-            A time series to apply the transformation on.
+        X : pd.Series or pd.DataFrame
+            Data to be inverse transformed
+        y : ignored argument for interface compatibility
+            Additional data, e.g., labels for transformation
 
         Returns
         -------
-        self
+        Xt : pd.Series or pd.DataFrame, same type as X
+            inverse transformed version of X
         """
-        Z = check_series(Z)
+        offset = self._get_offset(X)
+        Xt = X.pow(1.0 / self.power).add(-offset)
+        return Xt
 
-        self._fit(Z, X=X)
+    def _get_offset(self, X):
+        if self.offset == "auto":
+            Xmin = X.min()
+            offset = -Xmin * (Xmin < 0)
+        else:
+            offset = self.offset
 
-        self._is_fitted = True
-        return self
+        if isinstance(X, pd.DataFrame):
+            if isinstance(offset, (int, float)):
+                offset = pd.Series(offset, index=X.columns)
+            else:
+                offset = pd.Series(offset)
+                offset.index = X.columns
 
-    def transform(self, Z, X=None):
-        """Return transformed version of input series `Z`.
+        return offset
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
 
         Parameters
         ----------
-        Z : pd.Series or pd.DataFrame
-            A time series to apply the transformation on.
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            There are currently no reserved values for transformers.
 
         Returns
         -------
-        Zt : pd.Series or pd.DataFrame
-            Transformed version of input series `Z`.
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        self.check_is_fitted()
-        Z = check_series(Z)
-
-        Zt = self._transform(Z, X=X)
-
-        return Zt
-
-    def inverse_transform(self, Z, X=None):
-        """Reverse transformation on input series `Z`.
-
-        Parameters
-        ----------
-        Z : pd.Series or pd.DataFrame
-            A time series to reverse the transformation on.
-
-        Returns
-        -------
-        Z_inv : pd.Series or pd.DataFrame
-            The reconstructed timeseries after the transformation has been reversed.
-        """
-        self.check_is_fitted()
-        Z = check_series(Z)
-
-        Z_inv = self._inverse_transform(Z, X=X)
-
-        return Z_inv
+        return [{"power": 2.5, "offset": 1}, {"power": 0}]
 
 
 class SqrtTransformer(ExponentTransformer):
-    """Apply square root transformation to a timeseries.
+    """Apply element-sise square root transformation to a time series.
 
-    Transformation raises input series to the `power` provided. By default,
-    when offset="auto", a series with negative values is shifted prior to the
-    exponentiation to avoid potential errors of applying certain fractional
-    exponents to negative values.
+    Transformation performs the following operations element-wise:
+        * adds the constant `offset` (shift)
+        * applies the square root
+    Offset="auto" computes offset as the smallest offset that ensure all elements
+    are non-negative before taking the square root.
 
     Parameters
     ----------
@@ -216,8 +213,25 @@ class SqrtTransformer(ExponentTransformer):
     offset : int or float
         User supplied offset value.
 
-    Example
-    -------
+    See Also
+    --------
+    BoxCoxTransformer :
+        Applies Box-Cox power transformation. Can help normalize data and
+        compress variance of the series.
+    LogTransformer :
+        Transformer input data using natural log. Can help normalize data and
+        compress variance of the series.
+    sktime.transformations.series.exponent.ExponentTransformer :
+        Transform input data by raising it to an exponent. Can help compress
+        variance of series if a fractional exponent is supplied.
+
+    Notes
+    -----
+    For an input series `Z` the square root transformation is defined as
+    :math:`(Z + offset)^{0.5}`.
+
+    Examples
+    --------
     >>> from sktime.transformations.series.exponent import SqrtTransformer
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
@@ -225,11 +239,26 @@ class SqrtTransformer(ExponentTransformer):
     >>> y_transform = transformer.fit_transform(y)
     """
 
-    _tags = {
-        "fit-in-transform": False,
-        "transform-returns-same-time-index": True,
-        "univariate-only": False,
-    }
-
     def __init__(self, offset="auto"):
         super().__init__(power=0.5, offset=offset)
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            There are currently no reserved values for transformers.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        return [{}, {"offset": 4.2}]

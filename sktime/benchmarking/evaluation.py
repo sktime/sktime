@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+"""Evaluator class for analyzing results of a machine learning experiment."""
 __author__ = ["Viktor Kazakov", "Markus Löning", "Aaron Bostrom"]
 __all__ = ["Evaluator"]
 
@@ -7,25 +8,20 @@ import itertools
 import numpy as np
 import pandas as pd
 from scipy import stats
-from scipy.stats import ranksums
-from scipy.stats import ttest_ind
+from scipy.stats import ranksums, ttest_ind
 
 from sktime.benchmarking.base import BaseResults
 from sktime.exceptions import NotEvaluatedError
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-_check_soft_dependencies("matplotlib", "scikit_posthocs")
-import matplotlib.pyplot as plt  # noqa: E402
-
-plt.style.use("seaborn-ticks")
+_check_soft_dependencies("matplotlib", "scikit_posthocs", severity="warning")
 
 
 class Evaluator:
-    """
-    Analyze results of machine learning experiments.
-    """
+    """Analyze results of machine learning experiments."""
 
     def __init__(self, results):
+
         if not isinstance(results, BaseResults):
             raise ValueError("`results` must inherit from BaseResults")
         self.results = results
@@ -43,30 +39,34 @@ class Evaluator:
 
     @property
     def metric_names(self):
+        """Return metric names."""
         return self._metric_names
 
     @property
     def metrics(self):
+        """Return metrics."""
         self._check_is_evaluated()
         return self._metrics
 
     @property
     def metrics_by_strategy(self):
+        """Return metric by strategy."""
         self._check_is_evaluated()
         return self._metrics_by_strategy
 
     @property
     def metrics_by_strategy_dataset(self):
+        """Return metrics by strategy and dataset."""
         self._check_is_evaluated()
         return self._metrics_by_strategy_dataset
 
     def evaluate(self, metric, train_or_test="test", cv_fold="all"):
-        """
+        """Evaluate estimator performance.
+
         Calculates the average prediction error per estimator as well as the
         prediction error achieved by each
         estimator on individual datasets.
         """
-
         # check input
         if isinstance(cv_fold, int) and cv_fold >= 0:
             cv_folds = [cv_fold]  # if single fold, make iterable
@@ -135,7 +135,13 @@ class Evaluator:
         return self._metrics_by_strategy
 
     def plot_boxplots(self, metric_name=None, **kwargs):
-        """Box plot of metric"""
+        """Box plot of metric."""
+        _check_soft_dependencies("matplotlib")
+
+        import matplotlib.pyplot as plt  # noqa: E402
+
+        plt.style.use("seaborn-ticks")
+
         self._check_is_evaluated()
         metric_name = self._validate_metric_name(metric_name)
         column = self._get_column_name(metric_name, suffix="mean")
@@ -152,7 +158,8 @@ class Evaluator:
         return fig, ax
 
     def rank(self, metric_name=None, ascending=False):
-        """
+        """Determine estimator ranking.
+
         Calculates the average ranks based on the performance of each
         estimator on each dataset
         """
@@ -179,9 +186,7 @@ class Evaluator:
         return ranked
 
     def t_test(self, metric_name=None):
-        """
-        Runs t-test on all possible combinations between the estimators.
-        """
+        """T-test on all possible combinations between the estimators."""
         self._check_is_evaluated()
         metric_name = self._validate_metric_name(metric_name)
         metrics_per_estimator_dataset = self._get_metrics_per_estimator_dataset(
@@ -203,7 +208,7 @@ class Evaluator:
                 "p_val": p_val,
             }
 
-            t_df = t_df.append(t_test, ignore_index=True)
+            t_df = pd.concat([t_df, pd.DataFrame(t_test, index=[0])], ignore_index=True)
             values = np.append(values, t_stat)
             values = np.append(values, p_val)
 
@@ -219,9 +224,8 @@ class Evaluator:
         return t_df, values_df_multiindex
 
     def sign_test(self, metric_name=None):
-        """
-        Non-parametric test for test for consistent differences between
-        pairs of observations.
+        """Non-parametric test for consistent differences between observation pairs.
+
         See `<https://en.wikipedia.org/wiki/Sign_test>`_ for details about
         the test and
         `<https://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy
@@ -245,7 +249,9 @@ class Evaluator:
             p_val = stats.binom_test(signs, n)
             sign_test = {"estimator_1": perm[0], "estimator_2": perm[1], "p_val": p_val}
 
-            sign_df = sign_df.append(sign_test, ignore_index=True)
+            sign_df = pd.concat(
+                [sign_df, pd.DataFrame(sign_test, index=[0])], ignore_index=True
+            )
             sign_df_pivot = sign_df.pivot(
                 index="estimator_1", columns="estimator_2", values="p_val"
             )
@@ -253,9 +259,8 @@ class Evaluator:
         return sign_df, sign_df_pivot
 
     def ranksum_test(self, metric_name=None):
-        """
-        Non-parametric test for testing consistent differences between pairs
-        of observations.
+        """Non-parametric test of consistent differences between observation pairs.
+
         The test counts the number of observations that are greater, smaller
         and equal to the mean
         `<http://en.wikipedia.org/wiki/Wilcoxon_rank-sum_test>`_.
@@ -279,7 +284,9 @@ class Evaluator:
                 "t_stat": t_stat,
                 "p_val": p_val,
             }
-            ranksum_df = ranksum_df.append(ranksum, ignore_index=True)
+            ranksum_df = pd.concat(
+                [ranksum_df, pd.DataFrame(ranksum, index=[0])], ignore_index=True
+            )
             values = np.append(values, t_stat)
             values = np.append(values, p_val)
 
@@ -295,8 +302,8 @@ class Evaluator:
         return ranksum_df, values_df_multiindex
 
     def t_test_with_bonferroni_correction(self, metric_name=None, alpha=0.05):
-        """
-        correction used to counteract multiple comparisons
+        """T-test with correction used to counteract multiple comparisons.
+
         https://en.wikipedia.org/wiki/Bonferroni_correction
         """
         self._check_is_evaluated()
@@ -320,13 +327,14 @@ class Evaluator:
         return bonfer_df
 
     def wilcoxon_test(self, metric_name=None):
-        """http://en.wikipedia.org/wiki/Wilcoxon_signed-rank_test
+        """Wilcoxon signed-rank test.
+
+        http://en.wikipedia.org/wiki/Wilcoxon_signed-rank_test
         `Wilcoxon signed-rank test
         <https://en.wikipedia.org/wiki/Wilcoxon_signed-rank_test>`_.
         Tests whether two  related paired samples come from the same
-        distribution.
-        In particular, it tests whether the distribution of the differences
-        x-y is symmetric about zero
+        distribution. In particular, it tests whether the distribution of the
+        differences x-y is symmetric about zero
         """
         self._check_is_evaluated()
         metric_name = self._validate_metric_name(metric_name)
@@ -350,12 +358,15 @@ class Evaluator:
                 "p_val": p_val,
             }
 
-            wilcoxon_df = wilcoxon_df.append(w_test, ignore_index=True)
+            wilcoxon_df = pd.concat(
+                [wilcoxon_df, pd.DataFrame(w_test, index=[0])], ignore_index=True
+            )
 
         return wilcoxon_df
 
     def friedman_test(self, metric_name=None):
-        """
+        """Friedman test.
+
         The Friedman test is a non-parametric statistical test used to
         detect differences
         in treatments across multiple test attempts. The procedure involves
@@ -383,7 +394,8 @@ class Evaluator:
         return friedman_test, values_df
 
     def nemenyi(self, metric_name=None):
-        """
+        """Nemenyi test.
+
         Post-hoc test run if the `friedman_test` reveals statistical
         significance.
         For more information see `Nemenyi test
@@ -391,6 +403,8 @@ class Evaluator:
         Implementation used `scikit-posthocs
         <https://github.com/maximtrp/scikit-posthocs>`_.
         """
+        _check_soft_dependencies("scikit_posthocs")
+
         # lazy import to avoid hard dependency
         from scikit_posthocs import posthoc_nemenyi
 
@@ -406,8 +420,7 @@ class Evaluator:
         return nemenyi
 
     def fit_runtime(self, unit="s", train_or_test="test", cv_fold="all"):
-        """
-        Calculates the average time for fitting the strategy
+        """Calculate the average time for fitting the strategy.
 
         Parameters
         ----------
@@ -419,7 +432,6 @@ class Evaluator:
         run_times: Pandas DataFrame
             average run times per estimator and strategy
         """
-
         # check input
         if isinstance(cv_fold, int) and cv_fold >= 0:
             cv_folds = [cv_fold]  # if single fold, make iterable
@@ -465,7 +477,7 @@ class Evaluator:
                         "cv_fold": [cv_fold],
                     }
                 )
-                run_times = run_times.append(unwrapped, ignore_index=True)
+                run_times = pd.concat([run_times, unwrapped], ignore_index=True)
 
         # calculate run time difference
         run_times["fit_runtime"] = (
@@ -524,12 +536,16 @@ class Evaluator:
         # return self._metrics_by_strategy
 
     def plot_critical_difference_diagram(self, metric_name=None, alpha=0.1):
-        """Plot critical difference diagrams
+        """Plot critical difference diagrams.
 
-        References:
-        -----------
-        original implementation by Aaron Bostrom, modified by Markus Löning
+        References
+        ----------
+        original implementation by Aaron Bostrom, modified by Markus Löning.
         """
+        _check_soft_dependencies("matplotlib")
+
+        import matplotlib.pyplot as plt  # noqa: E402
+
         self._check_is_evaluated()
         metric_name = self._validate_metric_name(metric_name)
         column = self._get_column_name(metric_name, suffix="mean")
@@ -675,7 +691,7 @@ class Evaluator:
         clique = clique[n > 1, :]
         n = np.size(clique, 0)
 
-        for i in range(np.int(np.ceil(n_strategies / 2))):
+        for i in range(int(np.ceil(n_strategies / 2))):
             plt.plot(
                 [
                     (n_strategies - r[i]) / (n_strategies - 1),
@@ -706,7 +722,7 @@ class Evaluator:
             )
 
         # labels displayed on the left
-        for i in range(np.int(np.ceil(n_strategies / 2)), n_strategies):
+        for i in range(int(np.ceil(n_strategies / 2)), n_strategies):
             plt.plot(
                 [
                     (n_strategies - r[i]) / (n_strategies - 1),
@@ -752,11 +768,11 @@ class Evaluator:
         return fig, ax
 
     def _get_column_name(self, metric_name, suffix="mean"):
-        """Helper function to get column name in computed metrics dataframe"""
+        """Get column name in computed metrics dataframe."""
         return f"{metric_name}_{suffix}"
 
     def _check_is_evaluated(self):
-        """Check if evaluator has evaluated any metrics"""
+        """Check if evaluator has evaluated any metrics."""
         if len(self._metric_names) == 0:
             raise NotEvaluatedError(
                 "This evaluator has not evaluated any metric yet. Please call "
@@ -765,7 +781,7 @@ class Evaluator:
             )
 
     def _validate_metric_name(self, metric_name):
-        """Check if metric has already been evaluated"""
+        """Check if metric has already been evaluated."""
         if metric_name is None:
             metric_name = self._metric_names[
                 -1
@@ -780,7 +796,7 @@ class Evaluator:
         return metric_name
 
     def _get_metrics_per_estimator_dataset(self, metric_name):
-        """Helper function to get old format back, to be deprecated"""
+        """Get old format back, to be deprecated."""
         # TODO deprecate in favor of new pandas data frame based data
         #  representation
         column = f"{metric_name}_mean"
@@ -795,7 +811,7 @@ class Evaluator:
         return d
 
     def _get_metrics_per_estimator(self, metric_name):
-        """Helper function to get old format back, to be deprecated"""
+        """Get old format back, to be deprecated."""
         # TODO deprecate in favor of new pandas data frame based data
         #  representation
         columns = [

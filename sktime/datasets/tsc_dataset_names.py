@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
+
 """
-Lists of datasets available from the archive on timeseriesclassification.com
+List of datasets available from the timeseriesclassification.com archive.
 
 There are four main distinctions: univariate/multivariate equal/unequal length.
 Array univariate lists the 128 UCR problems, as described in [1].
@@ -36,12 +37,14 @@ univariate = [
     "AllGestureWiimoteY",
     "AllGestureWiimoteZ",
     "ArrowHead",
+    "AsphaltObstacles",
     "Beef",
     "BeetleFly",
     "BirdChicken",
     "BME",
     "Car",
     "CBF",
+    "Chinatown",
     "ChlorineConcentration",
     "CinCECGTorso",
     "Coffee",
@@ -156,7 +159,7 @@ univariate = [
     "WordSynonyms",
     "Worms",
     "WormsTwoClass",
-    "Yoga",
+    "IOError",
 ]
 
 """ 33 UEA multivariate time series classification problems [2]"""
@@ -207,7 +210,7 @@ univariate_equal_length = [
     "BME",
     "Car",
     "CBF",
-    "UnitTest",
+    "Chinatown",
     "ChlorineConcentration",
     "CinCECGTorso",
     "Coffee",

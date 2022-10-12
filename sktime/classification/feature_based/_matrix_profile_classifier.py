@@ -4,7 +4,7 @@
 Pipeline classifier using the Matrix Profile transformer and an estimator.
 """
 
-__author__ = ["Matthew Middlehurst"]
+__author__ = ["MatthewMiddlehurst"]
 __all__ = ["MatrixProfileClassifier"]
 
 import numpy as np
@@ -13,7 +13,6 @@ from sklearn.neighbors import KNeighborsClassifier
 from sktime.base._base import _clone_estimator
 from sktime.classification.base import BaseClassifier
 from sktime.transformations.panel.matrix_profile import MatrixProfile
-from sktime.utils.validation.panel import check_X, check_X_y
 
 
 class MatrixProfileClassifier(BaseClassifier):
@@ -31,20 +30,21 @@ class MatrixProfileClassifier(BaseClassifier):
         1-nearest neighbour classifier.
     n_jobs : int, default=1
         The number of jobs to run in parallel for both `fit` and `predict`.
-        ``-1`` means using all processors.
+        ``-1`` means using all processors. Currently available for the classifier
+        portion only.
     random_state : int or None, default=None
         Seed for random, integer.
 
     Attributes
     ----------
-    n_classes : int
+    n_classes_ : int
         Number of classes. Extracted from the data.
-    classes_ : ndarray of shape (n_classes)
+    classes_ : ndarray of shape (n_classes_)
         Holds the label for each class.
 
     See Also
     --------
-    :py:class:`MatrixProfile`
+    MatrixProfile
 
     References
     ----------
@@ -53,25 +53,21 @@ class MatrixProfileClassifier(BaseClassifier):
         Knowledge Discovery 32.1 (2018): 83-123.
         https://link.springer.com/article/10.1007/s10618-017-0519-9
 
-    Example
-    -------
+    Examples
+    --------
     >>> from sktime.classification.feature_based import MatrixProfileClassifier
-    >>> from sktime.datasets import load_italy_power_demand
-    >>> X_train, y_train = load_italy_power_demand(split="train", return_X_y=True)
-    >>> X_test, y_test = load_italy_power_demand(split="test", return_X_y=True)
+    >>> from sktime.datasets import load_unit_test
+    >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
+    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
     >>> clf = MatrixProfileClassifier()
     >>> clf.fit(X_train, y_train)
     MatrixProfileClassifier(...)
     >>> y_pred = clf.predict(X_test)
     """
 
-    # Capability tags
-    capabilities = {
-        "multivariate": False,
-        "unequal_length": False,
-        "missing_values": False,
-        "train_estimate": False,
-        "contractable": False,
+    _tags = {
+        "capability:multithreading": True,
+        "classifier_type": "distance",
     }
 
     def __init__(
@@ -89,28 +85,29 @@ class MatrixProfileClassifier(BaseClassifier):
 
         self._transformer = None
         self._estimator = None
-        self.n_classes = 0
-        self.classes_ = []
 
         super(MatrixProfileClassifier, self).__init__()
 
-    def fit(self, X, y):
-        """Fit an estimator using transformed data from the MatrixProfile transformer.
+    def _fit(self, X, y):
+        """Fit a pipeline on cases (X,y), where y is the target variable.
 
         Parameters
         ----------
-        X : nested pandas DataFrame of shape [n_instances, 1]
-            Nested dataframe with univariate time-series in cells.
-        y : array-like, shape = [n_instances] The class labels.
+        X : 3D np.array of shape = [n_instances, n_dimensions, series_length]
+            The training data.
+        y : array-like, shape = [n_instances]
+            The class labels.
 
         Returns
         -------
-        self : object
-        """
-        X, y = check_X_y(X, y, enforce_univariate=True)
-        self.classes_ = np.unique(y)
-        self.n_classes = self.classes_.shape[0]
+        self :
+            Reference to self.
 
+        Notes
+        -----
+        Changes state by creating a fitted model that updates attributes
+        ending in "_" and sets is_fitted flag to True.
+        """
         self._transformer = MatrixProfile(m=self.subsequence_length)
         self._estimator = _clone_estimator(
             KNeighborsClassifier(n_neighbors=1)
@@ -120,53 +117,72 @@ class MatrixProfileClassifier(BaseClassifier):
         )
 
         m = getattr(self._estimator, "n_jobs", None)
-        if callable(m):
-            self._estimator.n_jobs = self.n_jobs
+        if m is not None:
+            self._estimator.n_jobs = self._threads_to_use
 
         X_t = self._transformer.fit_transform(X, y)
         self._estimator.fit(X_t, y)
 
-        self._is_fitted = True
         return self
 
-    def predict(self, X):
-        """Predict class values of n_instances in X.
+    def _predict(self, X) -> np.ndarray:
+        """Predict class values of n instances in X.
 
         Parameters
         ----------
-        X : pd.DataFrame of shape (n_instances, 1)
+        X : 3D np.array of shape = [n_instances, n_dimensions, series_length]
+            The data to make predictions for.
 
         Returns
         -------
-        preds : np.ndarray of shape (n, 1)
-            Predicted class.
+        y : array-like, shape = [n_instances]
+            Predicted class labels.
         """
-        self.check_is_fitted()
-        X = check_X(X, enforce_univariate=True)
-
         return self._estimator.predict(self._transformer.transform(X))
 
-    def predict_proba(self, X):
-        """Predict class probabilities for n_instances in X.
+    def _predict_proba(self, X) -> np.ndarray:
+        """Predict class probabilities for n instances in X.
 
         Parameters
         ----------
-        X : pd.DataFrame of shape (n_instances, 1)
+        X : 3D np.array of shape = [n_instances, n_dimensions, series_length]
+            The data to make predict probabilities for.
 
         Returns
         -------
-        predicted_probs : array of shape (n_instances, n_classes)
-            Predicted probability of each class.
+        y : array-like, shape = [n_instances, n_classes_]
+            Predicted probabilities using the ordering in classes_.
         """
-        self.check_is_fitted()
-        X = check_X(X, enforce_univariate=True)
-
         m = getattr(self._estimator, "predict_proba", None)
         if callable(m):
             return self._estimator.predict_proba(self._transformer.transform(X))
         else:
-            dists = np.zeros((X.shape[0], self.n_classes))
+            dists = np.zeros((X.shape[0], self.n_classes_))
             preds = self._estimator.predict(self._transformer.transform(X))
             for i in range(0, X.shape[0]):
-                dists[i, np.where(self.classes_ == preds[i])] = 1
+                dists[i, self._class_dictionary[preds[i]]] = 1
             return dists
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            For classifiers, a "default" set of parameters should be provided for
+            general testing, and a "results_comparison" set for comparing against
+            previously recorded results if the general set does not produce suitable
+            probabilities to compare against.
+
+        Returns
+        -------
+        params : dict or list of dict, default={}
+            Parameters to create testing instances of the class.
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`.
+        """
+        return {"subsequence_length": 4}

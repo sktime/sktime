@@ -4,20 +4,28 @@
 API Reference
 =============
 
-This is the class and function reference for ``sktime``.
+Welcome to the API reference for ``sktime``.
 
-.. autosummary::
-    :toctree: modules/auto_generated/
+The API reference provides a technical manual.
+It describes the classes and functions included in sktime.
+For a scientific manual, see the :ref:`user_guide`.
 
 .. include:: includes/api_css.rst
 
-.. include:: api_reference/classification.rst
-.. include:: api_reference/regression.rst
-.. include:: api_reference/series_as_features.rst
-.. include:: api_reference/forecasting.rst
-.. include:: api_reference/annotation.rst
-.. include:: api_reference/transformations.rst
-.. include:: api_reference/performance_metrics.rst
-.. include:: api_reference/datasets.rst
-.. include:: api_reference/utils.rst
-.. include:: api_reference/exceptions.rst
+.. toctree::
+    :maxdepth: 1
+
+    api_reference/base
+    api_reference/forecasting
+    api_reference/transformations
+    api_reference/classification
+    api_reference/regression
+    api_reference/clustering
+    api_reference/dists_kernels
+    api_reference/performance_metrics
+    api_reference/series_as_features
+    api_reference/annotation
+    api_reference/datasets
+    api_reference/data_format
+    api_reference/utils
+    api_reference/exceptions

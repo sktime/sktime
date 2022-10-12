@@ -1,17 +1,19 @@
 # -*- coding: utf-8 -*-
+"""Data storage for benchmarking."""
+
 __all__ = ["UEADataset", "RAMDataset", "make_datasets"]
-__author__ = ["Viktor Kazakov", "Markus Löning"]
+__author__ = ["Viktor Kazakov", "mloning"]
 
 import os
 
 import pandas as pd
-from sktime.benchmarking.base import HDDBaseDataset
-from sktime.benchmarking.base import BaseDataset
-from sktime.utils.data_io import load_from_tsfile_to_dataframe
+
+from sktime.benchmarking.base import BaseDataset, HDDBaseDataset
+from sktime.datasets import load_from_tsfile_to_dataframe
 
 
 class UEADataset(HDDBaseDataset):
-    """Represent a dataset in UEA/UCR format on the hard-drive"""
+    """Represent a dataset in UEA/UCR format on the hard-drive."""
 
     def __init__(
         self,
@@ -40,7 +42,7 @@ class UEADataset(HDDBaseDataset):
         self._validate_path(self._test_path)
 
     def load(self):
-        """Load dataset"""
+        """Load dataset."""
         # load training and test set from separate files
 
         X_train, y_train = load_from_tsfile_to_dataframe(
@@ -64,20 +66,16 @@ class UEADataset(HDDBaseDataset):
 
         # concatenate the two dataframes, keeping training and test split in
         # index, necessary for later optional CV
-        data = pd.concat(
-            [data_train, data_test], axis=0, keys=["train", "test"]
-        ).reset_index(level=1, drop=True)
+        data = pd.concat([data_train, data_test], axis=0, keys=["train", "test"])
 
         return data
 
 
 class RAMDataset(BaseDataset):
-    """Represent a dataset in RAM"""
+    """Represent a dataset in RAM."""
 
     def __init__(self, dataset, name):
-        """
-        Container for storing a dataset in memory
-        """
+        """Container for storing a dataset in memory."""
         if not isinstance(dataset, pd.DataFrame):
             raise ValueError(
                 f"Dataset must be pandas DataFrame, but found: " f"{type(dataset)}"
@@ -86,12 +84,12 @@ class RAMDataset(BaseDataset):
         super(RAMDataset, self).__init__(name=name)
 
     def load(self):
-        """Load dataset"""
+        """Load dataset."""
         return self._dataset
 
 
 def make_datasets(path, dataset_cls, names=None, **kwargs):
-    """Make datasets"""
+    """Make datasets."""
     # check dataset class
     # if not isinstance(dataset_cls, BaseDataset):
     #     raise ValueError(f"dataset must inherit from BaseDataset, but found:"

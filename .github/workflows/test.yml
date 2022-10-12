@@ -1,0 +1,138 @@
+name: Install and test
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  code-quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v4
+      - id: file_changes
+        uses: trilom/file-changes-action@v1.2.4
+        with:
+          output: " "
+      - name: List changed files
+        run: echo '${{ steps.file_changes.outputs.files}}'
+      - uses: pre-commit/action@v3.0.0
+        with:
+          extra_args: --files ${{ steps.file_changes.outputs.files}}
+      - name: Check for missing init files
+        run: build_tools/fail_on_missing_init_files.sh
+        shell: bash
+
+  run-notebook-examples:
+    needs: code-quality
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.9
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install .[all_extras,binder,dev]
+      - name: Run example notebooks
+        run: build_tools/run_examples.sh
+        shell: bash
+
+  test-nosoftdeps:
+    needs: code-quality
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.9
+      - name: Display Python version
+        run: python -c "import sys; print(sys.version)"
+
+      - name: Install sktime and dependencies
+        run: |
+          python -m pip install .[dev]
+
+      - name: Show dependencies
+        run: python -m pip list
+
+      - name: Run tests
+        run: make PYTESTOPTIONS="--cov --cov-report=xml --timeout=600" test_softdeps
+
+  test-windows:
+    needs: test-nosoftdeps
+    runs-on: windows-2019
+    strategy:
+      matrix:
+        python-version: [3.7, 3.8, 3.9, '3.10']
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: conda-incubator/setup-miniconda@v2
+        with:
+          auto-update-conda: true
+          python-version: ${{ matrix.python-version }}
+          channels: anaconda, conda-forge,
+
+      - run: conda --version
+      - run: which python
+
+      - name: Fix windows paths
+        if: ${{ runner.os == 'Windows' }}
+        run: echo "C:\Program Files (x86)\Windows Kits\10\bin\10.0.18362.0\x64" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+      - name: Install conda libpython
+        run: conda install -c anaconda libpython
+
+      - name: Install sktime and dependencies
+        run: python -m pip install .[all_extras,dev]
+
+      - name: Show dependencies
+        run: python -m pip list
+
+      - name: Run tests
+        run: |
+          mkdir -p testdir/
+          cp .coveragerc testdir/
+          cp setup.cfg testdir/
+          python -m pytest
+
+      - name: Publish code coverage
+        uses: codecov/codecov-action@v3
+
+  test-unix:
+    needs: test-nosoftdeps
+    strategy:
+      matrix:
+        python-version: [3.7, 3.8, 3.9, '3.10']
+        os: [ubuntu-20.04, macOS-11]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Display Python version
+        run: python -c "import sys; print(sys.version)"
+
+      - name: Install sktime and dependencies
+        run: |
+          python -m pip install .[all_extras,dev]
+
+      - name: Show dependencies
+        run: python -m pip list
+
+      - name: Run tests
+        run: make test
+
+      - name: Publish code coverage
+        uses: codecov/codecov-action@v3

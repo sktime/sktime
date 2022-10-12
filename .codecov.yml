@@ -1,3 +1,16 @@
+# paths to ignore
+ignore:
+  - "docs/**/*"
+  - "build_tools/**/*"
+  - "examples/*"
+  - ".github/*"
+  - ".binder/*"
+  - "extension_templates/*"
+  - "sktime/_contrib/**/*"
+  - "*.md"
+  - "*.yml"
+  - "*.yaml"
+
 # PR status check
 coverage:
   status:

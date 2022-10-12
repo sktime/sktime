@@ -13,4 +13,4 @@ cd source/examples/ || return
 ln -s ../../../examples/* .
 
 # return to initial folder
-cd -
+cd - || exit

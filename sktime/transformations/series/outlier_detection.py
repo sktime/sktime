@@ -1,21 +1,24 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Implements transformers for detecting outliers in a time series."""
 
-__author__ = ["Martin Walter"]
+__author__ = ["aiwalter"]
 __all__ = ["HampelFilter"]
 
-from sktime.transformations.base import _SeriesToSeriesTransformer
-from sktime.utils.validation.series import check_series
-from sktime.forecasting.model_selection import SlidingWindowSplitter
+import warnings
 
 import numpy as np
-import warnings
 import pandas as pd
 
+from sktime.forecasting.model_selection import SlidingWindowSplitter
+from sktime.transformations.base import BaseTransformer
 
-class HampelFilter(_SeriesToSeriesTransformer):
-    """HampelFilter to detect outliers based on a sliding window. Correction
-    of outliers is recommended by means of the sktime.Imputer,
+
+class HampelFilter(BaseTransformer):
+    """Use HampelFilter to detect outliers based on a sliding window.
+
+    Correction of outliers is recommended by means of the sktime.Imputer,
     so both can be tuned separately.
 
     Parameters
@@ -31,13 +34,17 @@ class HampelFilter(_SeriesToSeriesTransformer):
         If True, outliers are filled with True and non-outliers with False.
         Else, outliers are filled with np.nan.
 
+    Notes
+    -----
+    Implementation is based on [1]_.
+
     References
     ----------
-    Hampel F. R., "The influence curve and its role in robust estimation",
-    Journal of the American Statistical Association, 69, 382–393, 1974
+    .. [1] Hampel F. R., "The influence curve and its role in robust estimation",
+       Journal of the American Statistical Association, 69, 382–393, 1974
 
-    Example
-    ----------
+    Examples
+    --------
     >>> from sktime.transformations.series.outlier_detection import HampelFilter
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
@@ -46,9 +53,18 @@ class HampelFilter(_SeriesToSeriesTransformer):
     """
 
     _tags = {
-        "fit-in-transform": True,
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
+        "scitype:transform-output": "Series",
+        # what scitype is returned: Primitives, Series, Panel
+        "scitype:instancewise": True,  # is this an instance-wise transform?
+        "X_inner_mtype": ["pd.DataFrame", "pd.Series"],
+        # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
+        "fit_is_empty": True,
         "handles-missing-data": True,
         "skip-inverse-transform": True,
+        "univariate-only": False,
     }
 
     def __init__(self, window_length=10, n_sigma=3, k=1.4826, return_bool=False):
@@ -59,22 +75,24 @@ class HampelFilter(_SeriesToSeriesTransformer):
         self.return_bool = return_bool
         super(HampelFilter, self).__init__()
 
-    def transform(self, Z, X=None):
-        """Transform data.
-        Returns a transformed version of Z.
+    def _transform(self, X, y=None):
+        """Transform X and return a transformed version.
+
+        private _transform containing the core logic, called from transform
 
         Parameters
         ----------
-        Z : pd.Series, pd.DataFrame
+        X : pd.Series or pd.DataFrame
+            Data to be transformed
+        y : ignored argument for interface compatibility
+            Additional data, e.g., labels for transformation
 
         Returns
         -------
-        Z : pd.Series, pd.DataFrame
-            Transformed time series(es).
+        Xt : pd.Series or pd.DataFrame, same type as X
+            transformed version of X
         """
-        self.check_is_fitted()
-        Z = check_series(Z)
-        Z = Z.copy()
+        Z = X.copy()
 
         # multivariate
         if isinstance(Z, pd.DataFrame):
@@ -83,10 +101,13 @@ class HampelFilter(_SeriesToSeriesTransformer):
         # univariate
         else:
             Z = self._transform_series(Z)
-        return Z
+
+        Xt = Z
+        return Xt
 
     def _transform_series(self, Z):
-        """
+        """Logic internal to the algorithm for transforming the input series.
+
         Parameters
         ----------
         Z : pd.Series
@@ -118,9 +139,30 @@ class HampelFilter(_SeriesToSeriesTransformer):
 
         # data post-processing
         if self.return_bool:
-            Z = Z.apply(lambda x: True if np.isnan(x) else False)
+            Z = Z.apply(lambda x: bool(np.isnan(x)))
 
         return Z
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        return {"window_length": 3}
 
 
 def _hampel_filter(Z, cv, n_sigma, half_window_length, k):
@@ -161,7 +203,7 @@ def _hampel_filter(Z, cv, n_sigma, half_window_length, k):
 
 
 def _compare(value, cv_median, cv_sigma, n_sigma):
-    """Function to identify an outlier
+    """Identify an outlier.
 
     Parameters
     ----------

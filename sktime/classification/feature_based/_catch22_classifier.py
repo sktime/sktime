@@ -4,51 +4,57 @@
 Pipeline classifier using the Catch22 transformer and an estimator.
 """
 
-__author__ = ["Matthew Middlehurst"]
+__author__ = ["MatthewMiddlehurst", "RavenRudi", "fkiraly"]
 __all__ = ["Catch22Classifier"]
 
-import numpy as np
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.utils.multiclass import class_distribution
 
 from sktime.base._base import _clone_estimator
-from sktime.classification.base import BaseClassifier
+from sktime.classification._delegate import _DelegatedClassifier
+from sktime.pipeline import make_pipeline
 from sktime.transformations.panel.catch22 import Catch22
-from sktime.utils.validation.panel import check_X_y, check_X
 
 
-class Catch22Classifier(BaseClassifier):
+class Catch22Classifier(_DelegatedClassifier):
     """Canonical Time-series Characteristics (catch22) classifier.
 
     This classifier simply transforms the input data using the Catch22 [1]
     transformer and builds a provided estimator using the transformed data.
 
+    Shorthand for the pipeline `Catch22(outlier_norm, replace_nans) * estimator`
+
     Parameters
     ----------
-    outlier_norm : bool, default=False
+    outlier_norm : bool, optional, default=False
         Normalise each series during the two outlier catch22 features, which can take a
         while to process for large values
-    estimator : sklearn classifier, default=None
-        An sklearn estimator to be built using the transformed data. Defaults to a
-        Random Forest with 200 trees.
-    n_jobs : int, default=1
+    replace_nans : bool, optional, default=True
+        Replace NaN or inf values from the catch22 transform with 0.
+    estimator : sklearn classifier, optional, default=None
+        An sklearn estimator to be built using the transformed data.
+        Defaults to sklearn RandomForestClassifier(n_estimators=200)
+    n_jobs : int, optional, default=1
         The number of jobs to run in parallel for both `fit` and `predict`.
         ``-1`` means using all processors.
-    random_state : int or None, default=None
+    random_state : int or None, optional, default=None
         Seed for random, integer.
 
     Attributes
     ----------
-    n_classes : int
+    n_classes_ : int
         Number of classes. Extracted from the data.
-    classes_ : ndarray of shape (n_classes)
+    classes_ : ndarray of shape (n_classes_)
         Holds the label for each class.
+    estimator_ : ClassifierPipeline
+        Catch22Classifier as a ClassifierPipeline, fitted to data internally
 
     See Also
     --------
-    :py:class:`Catch22`
+    Catch22
 
-    Authors 'catch22ForestClassifier <https://github.com/chlubba/sktime-catch22>`_.
+    Notes
+    -----
+    Authors `catch22ForestClassifier <https://github.com/chlubba/sktime-catch22>`_.
 
     For the Java version, see `tsml <https://github.com/uea-machine-learning/tsml/blob
     /master/src/main/java/tsml/classifiers/hybrids/Catch22Classifier.java>`_.
@@ -59,125 +65,96 @@ class Catch22Classifier(BaseClassifier):
         Data Mining and Knowledge Discovery 33.6 (2019): 1821-1852.
         https://link.springer.com/article/10.1007/s10618-019-00647-x
 
-    Example
-    -------
+    Examples
+    --------
     >>> from sktime.classification.feature_based import Catch22Classifier
-    >>> from sktime.datasets import load_italy_power_demand
-    >>> X_train, y_train = load_italy_power_demand(split="train", return_X_y=True)
-    >>> X_test, y_test = load_italy_power_demand(split="test", return_X_y=True)
-    >>> clf = Catch22Classifier()
+    >>> from sklearn.ensemble import RandomForestClassifier
+    >>> from sktime.datasets import load_unit_test
+    >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
+    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
+    >>> clf = Catch22Classifier(
+    ...     estimator=RandomForestClassifier(n_estimators=5),
+    ...     outlier_norm=True,
+    ... )
     >>> clf.fit(X_train, y_train)
     Catch22Classifier(...)
     >>> y_pred = clf.predict(X_test)
     """
 
-    # Capability tags
-    capabilities = {
-        "multivariate": True,
-        "unequal_length": False,
-        "missing_values": False,
-        "train_estimate": False,
-        "contractable": False,
+    _tags = {
+        "capability:multivariate": True,
+        "capability:multithreading": True,
+        "classifier_type": "feature",
     }
 
     def __init__(
         self,
         outlier_norm=False,
+        replace_nans=True,
         estimator=None,
         n_jobs=1,
         random_state=None,
     ):
         self.outlier_norm = outlier_norm
+        self.replace_nans = replace_nans
         self.estimator = estimator
 
         self.n_jobs = n_jobs
         self.random_state = random_state
 
-        self._transformer = None
-        self._estimator = None
-        self.n_classes = 0
-        self.classes_ = []
         super(Catch22Classifier, self).__init__()
 
-    def fit(self, X, y):
-        """Fit an estimator using transformed data from the Catch22 transformer.
-
-        Parameters
-        ----------
-        X : nested pandas DataFrame of shape [n_instances, n_dims]
-            Nested dataframe with univariate time-series in cells.
-        y : array-like, shape = [n_instances] The class labels.
-
-        Returns
-        -------
-        self : object
-        """
-        X, y = check_X_y(X, y)
-        self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
-        self.n_classes = np.unique(y).shape[0]
-
-        self._transformer = Catch22(outlier_norm=self.outlier_norm)
-        self._estimator = _clone_estimator(
-            RandomForestClassifier(n_estimators=200)
-            if self.estimator is None
-            else self.estimator,
-            self.random_state,
+        transformer = Catch22(
+            outlier_norm=self.outlier_norm, replace_nans=self.replace_nans
         )
 
-        m = getattr(self._estimator, "n_jobs", None)
-        if callable(m):
-            self._estimator.n_jobs = self.n_jobs
+        if estimator is None:
+            estimator = RandomForestClassifier(n_estimators=200)
 
-        X_t = self._transformer.fit_transform(X, y)
-        X_t = np.nan_to_num(X_t, False, 0, 0, 0)
-        self._estimator.fit(X_t, y)
+        estimator = _clone_estimator(estimator, random_state)
 
-        self._is_fitted = True
-        return self
+        m = getattr(estimator, "n_jobs", None)
+        if m is not None:
+            estimator.n_jobs = self._threads_to_use
 
-    def predict(self, X):
-        """Predict class values of n_instances in X.
+        self.estimator_ = make_pipeline(transformer, estimator)
 
-        Parameters
-        ----------
-        X : pd.DataFrame of shape (n_instances, n_dims)
-
-        Returns
-        -------
-        preds : np.ndarray of shape (n, 1)
-            Predicted class.
-        """
-        self.check_is_fitted()
-        X = check_X(X)
-
-        X_t = self._transformer.transform(X)
-        X_t = np.nan_to_num(X_t, False, 0, 0, 0)
-        return self._estimator.predict(X_t)
-
-    def predict_proba(self, X):
-        """Predict class probabilities for n_instances in X.
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
 
         Parameters
         ----------
-        X : pd.DataFrame of shape (n_instances, n_dims)
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            For classifiers, a "default" set of parameters should be provided for
+            general testing, and a "results_comparison" set for comparing against
+            previously recorded results if the general set does not produce suitable
+            probabilities to compare against.
 
         Returns
         -------
-        predicted_probs : array of shape (n_instances, n_classes)
-            Predicted probability of each class.
+        params : dict or list of dict, default={}
+            Parameters to create testing instances of the class.
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`.
         """
-        self.check_is_fitted()
-        X = check_X(X)
+        if parameter_set == "results_comparison":
+            return {
+                "estimator": RandomForestClassifier(n_estimators=10),
+                "outlier_norm": True,
+            }
 
-        X_t = self._transformer.transform(X)
-        X_t = np.nan_to_num(X_t, False, 0, 0, 0)
+        from sklearn.dummy import DummyClassifier
 
-        m = getattr(self._estimator, "predict_proba", None)
-        if callable(m):
-            return self._estimator.predict_proba(X_t)
-        else:
-            dists = np.zeros((X.shape[0], self.n_classes))
-            preds = self._estimator.predict(X_t)
-            for i in range(0, X.shape[0]):
-                dists[i, np.where(self.classes_ == preds[i])] = 1
-            return dists
+        param1 = {"estimator": RandomForestClassifier(n_estimators=2)}
+        param2 = {
+            "estimator": DummyClassifier(),
+            "outlier_norm": True,
+            "replace_nans": False,
+            "random_state": 42,
+        }
+
+        return [param1, param2]

@@ -6,6 +6,7 @@
 PACKAGE=sktime
 DOC_DIR=./docs
 BUILD_TOOLS=./build_tools
+TEST_DIR=testdir
 
 .PHONY: help release install test lint clean dist doc docs
 
@@ -23,12 +24,23 @@ install: ## Install for the current user using the default python command
 	python3 setup.py build_ext --inplace && python setup.py install --user
 
 test: ## Run unit tests
-	pytest --cov-report html --cov=sktime --showlocals --durations=20 --pyargs $(PACKAGE)
+	-rm -rf ${TEST_DIR}
+	mkdir -p ${TEST_DIR}
+	cp .coveragerc ${TEST_DIR}
+	cp setup.cfg ${TEST_DIR}
+	python -m pytest
+
+test_softdeps: ## Run unit tests
+	-rm -rf ${TEST_DIR}
+	mkdir -p ${TEST_DIR}
+	cp .coveragerc ${TEST_DIR}
+	cp setup.cfg ${TEST_DIR}
+	cd ${TEST_DIR}
+	python -m pytest -v -n auto --showlocals --durations=20 -k 'test_all_estimators' $(PYTESTOPTIONS) --pyargs sktime.registry
+	python -m pytest -v -n auto --showlocals --durations=20 -k 'test_check_estimator_does_not_raise' $(PYTESTOPTIONS) --pyargs sktime.utils
+	python -m pytest -v -n auto --showlocals --durations=20 $(PYTESTOPTIONS) --pyargs sktime.tests.test_softdeps
 
 tests: test
-
-lint:  ## Run linting
-	$(BUILD_TOOLS)/linting.sh
 
 clean: ## Clean build dist and egg directories left after install
 	rm -rf ./dist
@@ -37,17 +49,25 @@ clean: ## Clean build dist and egg directories left after install
 	rm -rf ./htmlcov
 	rm -rf ./junit
 	rm -rf ./$(PACKAGE).egg-info
-	rm -rf ./cover
 	rm -rf coverage.xml
 	rm -f MANIFEST
-	rm -f ./$(PACKAGE)/*.so
+	rm -rf ./wheelhouse/*
+	find . -type f -iname "*.so" -delete
 	find . -type f -iname '*.pyc' -delete
 	find . -type d -name '__pycache__' -empty -delete
 
 dist: ## Make Python source distribution
 	python3 setup.py sdist bdist_wheel
 
+build:
+	python -m build --sdist --wheel --outdir wheelhouse
+
 docs: doc
 
 doc: ## Build documentation with Sphinx
 	$(MAKE) -C $(DOC_DIR) html
+
+nb: clean
+	rm -rf .venv || true
+	python3 -m venv .venv
+	. .venv/bin/activate && python -m pip install .[all_extras,binder] && ./build_tools/run_examples.sh

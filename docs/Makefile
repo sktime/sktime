@@ -3,7 +3,7 @@
 # You can set these variables from the command line.
 PREPROCESS    = sphinx-apidoc
 APIDOCTEMPLATEDIR = source/_templates/apidoc
-AUTOGENDIR    = source/modules/auto_generated
+AUTOGENDIR    = source/api_reference/auto_generated
 SPHINXOPTS    =
 SPHINXBUILD   = sphinx-build
 SOURCEDIR     = source

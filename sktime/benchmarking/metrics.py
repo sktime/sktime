@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+"""Implements metrics for pairwise and aggregate comparison."""
 __all__ = ["PairwiseMetric", "AggregateMetric"]
 __author__ = ["Viktor Kazakov", "Markus Löning"]
 
@@ -7,6 +9,16 @@ from sktime.benchmarking.base import BaseMetric
 
 
 class PairwiseMetric(BaseMetric):
+    """Compute metric pairwise.
+
+    Parameters
+    ----------
+    func : function
+        Function that computes the pairwise metric.
+
+    name : str
+        Name of the metric
+    """
 
     def __init__(self, func, name=None, **kwargs):
         name = func.__name__ if name is None else name
@@ -14,27 +26,41 @@ class PairwiseMetric(BaseMetric):
         super(PairwiseMetric, self).__init__(name=name, **kwargs)
 
     def compute(self, y_true, y_pred):
+        """Compute metric and standard error."""
         # compute mean
         mean = self.func(y_true, y_pred)
 
         # compute stderr based on pairwise metrics
         n_instances = len(y_true)
         pointwise_metrics = np.array(
-            [self.func([y_true[i]], [y_pred[i]]) for i in range(n_instances)])
+            [self.func([y_true[i]], [y_pred[i]]) for i in range(n_instances)]
+        )
         stderr = np.std(pointwise_metrics) / np.sqrt(
-            n_instances - 1)  # sample standard error of the mean
+            n_instances - 1
+        )  # sample standard error of the mean
 
         return mean, stderr
 
 
 class AggregateMetric(BaseMetric):
+    """Compute metric pairwise.
+
+    Parameters
+    ----------
+    func : function
+        Function that computes the pairwise metric.
+
+    name : str
+        Name of the metric
+    """
 
     def __init__(self, func, method="jackknife", name=None, **kwargs):
         allowed_methods = ("jackknife",)
         if method not in allowed_methods:
             raise NotImplementedError(
                 f"Provided method is not implemented yet. "
-                f"Currently only: {allowed_methods} are implemented")
+                f"Currently only: {allowed_methods} are implemented"
+            )
         self.method = method
 
         name = func.__name__ if name is None else name
@@ -43,10 +69,10 @@ class AggregateMetric(BaseMetric):
         super(AggregateMetric, self).__init__(name=name, **kwargs)
 
     def compute(self, y_true, y_pred):
-        """Compute metric and standard error
+        """Compute metric and standard error.
 
-        References:
-        -----------
+        References
+        ----------
         .. [1] Efron and Stein, (1981), "The jackknife estimate of variance."
 
         .. [2] McIntosh, Avery. "The Jackknife Estimation Method".
@@ -72,8 +98,8 @@ class AggregateMetric(BaseMetric):
 
         # compute metrics on jackknife samples
         jack_pointwise_metric = np.array(
-            [self.func(y_true[idx], y_pred[idx], **self.kwargs)
-             for idx in jack_idx])
+            [self.func(y_true[idx], y_pred[idx], **self.kwargs) for idx in jack_idx]
+        )
 
         # compute standard error over jackknifed metrics
         jack_stderr = self._compute_jackknife_stderr(jack_pointwise_metric)
@@ -81,7 +107,7 @@ class AggregateMetric(BaseMetric):
 
     @staticmethod
     def _compute_jackknife_stderr(x):
-        """Compute standard error of jacknife samples
+        """Compute standard error of jacknife samples.
 
         References
         ----------
@@ -93,7 +119,7 @@ class AggregateMetric(BaseMetric):
 
     @staticmethod
     def _jackknife_resampling(x):
-        """Performs jackknife resampling on numpy arrays.
+        """Perform jackknife resampling on numpy arrays.
 
         Jackknife resampling is a technique to generate 'n' deterministic
         samples
