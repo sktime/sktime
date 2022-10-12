@@ -12,8 +12,13 @@ jobs:
   code-quality:
     runs-on: ubuntu-latest
     steps:
+<<<<<<< HEAD
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v4
+=======
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v2
+>>>>>>> bump checkout action from 2 to 3
       - id: file_changes
         uses: trilom/file-changes-action@v1.2.4
         with:
@@ -31,7 +36,7 @@ jobs:
     needs: code-quality
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
@@ -48,7 +53,7 @@ jobs:
     needs: code-quality
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
@@ -74,7 +79,7 @@ jobs:
         python-version: [3.7, 3.8, 3.9, '3.10']
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - uses: conda-incubator/setup-miniconda@v2
         with:
@@ -116,7 +121,7 @@ jobs:
         os: [ubuntu-20.04, macOS-11]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
