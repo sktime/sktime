@@ -62,13 +62,13 @@ def entropy(X: npt.ArrayLike) -> float:
 
 def generate_segments(X: npt.ArrayLike, change_points: List[int]) -> npt.ArrayLike:
     """Generate separate segments from time series based on change points.
-    
+
     Parameters
     ----------
     X: array_like
         Time series data as a 2D numpy array with sequence index along rows
         and value series in columns.
-    
+
     change_points: list of int
         Locations of change points as integer indexes. By convention change points
         include the identity segmentation, i.e. first and last index + 1 values.
@@ -84,13 +84,13 @@ def generate_segments(X: npt.ArrayLike, change_points: List[int]) -> npt.ArrayLi
 
 def generate_segments_pandas(X: npt.ArrayLike, change_points: List) -> npt.ArrayLike:
     """Generate separate segments from time series based on change points.
-    
+
     Parameters
     ----------
     X: array_like
         Time series data as a 2D numpy array with sequence index along rows
         and value series in columns.
-    
+
     change_points: list of int
         Locations of change points as integer indexes. By convention change points
         include the identity segmentation, i.e. first and last index + 1 values.
