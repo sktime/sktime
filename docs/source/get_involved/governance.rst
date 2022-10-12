@@ -302,7 +302,7 @@ The core developer vote takes place in private communication channels, visible o
 The CC members' vote takes place in private communication channels, visible only to CC members, and is anonymous.
 
 In case one or both of the core developer vote and the CC members' vote are tied,
-the CC member with the longest continuous tenure has a tie breaking privilege.
+the CC member with the shortest continuous tenure has a tie breaking privilege.
 
 End of tenure
 ^^^^^^^^^^^^^
