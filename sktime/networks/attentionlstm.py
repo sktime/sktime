@@ -68,7 +68,7 @@ def _time_distributed_dense(
     return x
 
 
-class AttentionLSTMCell(Layer):
+class _AttentionLSTMCell(Layer):
     """Long-Short Term Memory unit - with Attention.
 
     # Arguments
@@ -183,7 +183,7 @@ class AttentionLSTMCell(Layer):
     ):
         from keras import activations, constraints, initializers, regularizers
 
-        super(AttentionLSTMCell, self).__init__(**kwargs)
+        super(_AttentionLSTMCell, self).__init__(**kwargs)
         self.input_spec = [InputSpec(ndim=2)]
         self.units = units
         self.activation = activations.get(activation)
@@ -502,7 +502,7 @@ class AttentionLSTMCell(Layer):
         return h, [h, c]
 
 
-class AttentionLSTM(RNN):
+class _AttentionLSTM(RNN):
     """Long-Short Term Memory unit - with Attention.
 
     # Arguments
@@ -659,7 +659,7 @@ class AttentionLSTM(RNN):
                 dropout = 0.0
                 recurrent_dropout = 0.0
 
-        cell = AttentionLSTMCell(
+        cell = _AttentionLSTMCell(
             units,
             activation=activation,
             recurrent_activation=recurrent_activation,
@@ -684,7 +684,7 @@ class AttentionLSTM(RNN):
             return_attention=return_attention,
             implementation=implementation,
         )
-        super(AttentionLSTM, self).__init__(
+        super(_AttentionLSTM, self).__init__(
             cell,
             return_sequences=return_sequences,
             return_state=return_state,
@@ -704,7 +704,7 @@ class AttentionLSTM(RNN):
         """Call AttentionLSTM with appropriate dropouts per cell."""
         self.cell._generate_dropout_mask(inputs, training=training)
         self.cell._generate_recurrent_dropout_mask(inputs, training=training)
-        return super(AttentionLSTM, self).call(
+        return super(_AttentionLSTM, self).call(
             inputs, mask=mask, training=training, initial_state=initial_state
         )
 
@@ -846,7 +846,7 @@ class AttentionLSTM(RNN):
             "recurrent_dropout": self.recurrent_dropout,
             "return_attention": self.return_attention,
         }
-        base_config = super(AttentionLSTM, self).get_config()
+        base_config = super(_AttentionLSTM, self).get_config()
         del base_config["cell"]
         return dict(list(base_config.items()) + list(config.items()))
 

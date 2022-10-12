@@ -58,13 +58,13 @@ class LSTMFCNClassifier(BaseDeepClassifier):
 
     Examples
     --------
-    >>> from sktime.classification.deep_learning.cnn import CNNClassifier
+    >>> from sktime.classification.deep_learning.lstmfcn import LSTMFCNClassifier
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
     >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
-    >>> cnn = CNNClassifier()
-    >>> cnn.fit(X_train, y_train)
-    CNNClassifier(...)
+    >>> lstmfcn = LSTMFCNClassifier()
+    >>> lstmfcn.fit(X_train, y_train)
+    LSTMFCNClassifier(...)
     """
 
     def __init__(
