@@ -12,13 +12,8 @@ jobs:
   code-quality:
     runs-on: ubuntu-latest
     steps:
-<<<<<<< HEAD
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v4
-=======
       - uses: actions/checkout@v3
-      - uses: actions/setup-python@v2
->>>>>>> bump checkout action from 2 to 3
+      - uses: actions/setup-python@v4
       - id: file_changes
         uses: trilom/file-changes-action@v1.2.4
         with:
