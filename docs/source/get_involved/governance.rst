@@ -290,26 +290,30 @@ concurrent with the 5 day discussion period (see below).
 Appointment
 ^^^^^^^^^^^
 
-Membership of the CC is by nomination by a core developer and a vote by
+Appointment to the CC is by nomination by a core developer and a vote by
 all core developers. A nomination will result in discussion which stay open
 for 5 days excluding weekends and then a vote by core developers which will
-stay open for 5 days excluding weekends. CC membership votes are subject to:
+stay open for 5 days excluding weekends. Approval of appointment requires:
 
 * a 2/3 majority of all cast votes, and
 * a simple majority approval of all the current CC members.
 
-The vote will take place in private communication channels and will be
-anonymous.
+The core developer vote takes place in private communication channels, visible only to core developers, and is anonymous.
+The CC members' vote takes place in private communication channels, visible only to CC members, and is anonymous.
 
-In case of ties, the CC member with shortest tenure breaks the tie.
+In case one or both of the core developer vote and the CC members' vote are tied,
+the CC member with the longest continuous tenure has a tie breaking privilege.
 
 End of tenure
 ^^^^^^^^^^^^^
 
 CC members can resign voluntarily at any point in time, by informing the CC in writing.
 
-CC members who do not actively engage with the responsibilities are
-expected to resign.
+CC members who do not actively engage with their CC member role responsibilities are
+expected to resign voluntarily.
+
+Tenure also ends automatically when a CC member's tenure as core developer ends,
+e.g., through resignation or inactivity.
 
 Communications
 ^^^^^^^^^^^^^^
