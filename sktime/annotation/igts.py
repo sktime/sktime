@@ -76,7 +76,7 @@ def generate_segments(X: npt.ArrayLike, change_points: List[int]) -> npt.ArrayLi
     Yields
     ------
     segment: npt.ArrayLike
-        A segments from the input time series between two consecutive change points 
+        A segments from the input time series between two consecutive change points
     """
     for start, end in zip(change_points[:-1], change_points[1:]):
         yield X[start:end, :]
@@ -98,7 +98,7 @@ def generate_segments_pandas(X: npt.ArrayLike, change_points: List) -> npt.Array
     Yields
     ------
     segment: npt.ArrayLike
-        A segments from the input time series between two consecutive change points 
+        A segments from the input time series between two consecutive change points
     """
     for interval in pd.IntervalIndex.from_breaks(sorted(change_points), closed="both"):
         yield X[interval.left : interval.right, :]

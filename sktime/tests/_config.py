@@ -94,7 +94,9 @@ EXCLUDED_TESTS = {
     ],
     # GGS inherits from BaseEstimator which breaks this test
     "GreedyGaussianSegmentation": ["test_inheritance", "test_create_test_instance"],
-    "InformationGainSegmentation": ["test_inheritance", "test_create_test_instance",
+    "InformationGainSegmentation": [
+        "test_inheritance",
+        "test_create_test_instance",
     ],
     "SAX": "test_fit_transform_output",  # SAX returns strange output format
     # this needs to be fixed, was not tested previously due to legacy exception
