@@ -298,8 +298,8 @@ stay open for 5 days excluding weekends. Approval of appointment requires:
 * a 2/3 majority of all cast votes, and
 * a simple majority approval of all the current CC members.
 
-The core developer vote takes place in private communication channels, visible only to core developers, and is anonymous.
-The CC members' vote takes place in private communication channels, visible only to CC members, and is anonymous.
+The core developer vote takes place in private communication channels, visible to, and only to core developers, and is anonymous.
+The CC members' vote takes place in private communication channels, visibleto, and only to, CC members, and is anonymous.
 
 In case one or both of the core developer vote and the CC members' vote are tied,
 the CC member with the shortest continuous tenure has a tie breaking privilege.
