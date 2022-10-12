@@ -61,13 +61,45 @@ def entropy(X: npt.ArrayLike) -> float:
 
 
 def generate_segments(X: npt.ArrayLike, change_points: List[int]) -> npt.ArrayLike:
-    """Generate separate segments from time series based on change points."""
+    """Generate separate segments from time series based on change points.
+    
+    Parameters
+    ----------
+    X: array_like
+        Time series data as a 2D numpy array with sequence index along rows
+        and value series in columns.
+    
+    change_points: list of int
+        Locations of change points as integer indexes. By convention change points
+        include the identity segmentation, i.e. first and last index + 1 values.
+
+    Yields
+    ------
+    segment: npt.ArrayLike
+        A segments from the input time series between two consecutive change points 
+    """
     for start, end in zip(change_points[:-1], change_points[1:]):
         yield X[start:end, :]
 
 
 def generate_segments_pandas(X: npt.ArrayLike, change_points: List) -> npt.ArrayLike:
-    """Generate separate segments from time series based on change points."""
+    """Generate separate segments from time series based on change points.
+    
+    Parameters
+    ----------
+    X: array_like
+        Time series data as a 2D numpy array with sequence index along rows
+        and value series in columns.
+    
+    change_points: list of int
+        Locations of change points as integer indexes. By convention change points
+        include the identity segmentation, i.e. first and last index + 1 values.
+
+    Yields
+    ------
+    segment: npt.ArrayLike
+        A segments from the input time series between two consecutive change points 
+    """
     for interval in pd.IntervalIndex.from_breaks(sorted(change_points), closed="both"):
         yield X[interval.left : interval.right, :]
 
@@ -357,6 +389,8 @@ class InformationGainSegmentation(SegmentationMixin, BaseEstimator):
         k_max: int = 10,
         step: int = 5,
     ):
+        self.k_max = k_max
+        self.step = step
         self._adaptee_class = IGTS
         self._adaptee = self._adaptee_class(
             k_max=k_max,
