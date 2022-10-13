@@ -6,14 +6,14 @@ Related Software
 
 The Python ecosystem contains numerous packages that can be used to store
 and process time series data. The following list is by no means exhaustive.
-If you miss anything, feel free to open a `PR <https://github.com/alan-turing-institute/sktime/edit/main/docs/source/related_software.rst>`_.
+If you miss anything, feel free to open a `PR <https://github.com/sktime/sktime/edit/main/docs/source/related_software.rst>`_.
 
 **Table of contents**
 
 * `Packages for machine learning, statistics or analytics with time series <#machine-learning>`_,
 * `Other time series related frameworks or database systems <#time-series-databases-and-frameworks>`_.
 
-For time series data containers, see `our wiki entry <https://github.com/alan-turing-institute/sktime/wiki/Time-series-data-container>`_.
+For time series data containers, see `our wiki entry <https://github.com/sktime/sktime/wiki/Time-series-data-container>`_.
 
 Machine learning
 ================
@@ -130,7 +130,7 @@ Libraries
      - Extends the scikit-learn pipeline concept to time series annotation
    * - `seglearn <https://github.com/dmbee/seglearn>`_
      - Extends the scikit-learn pipeline concept to time series data for classification, regression and forecasting
-   * - `sktime <https://github.com/alan-turing-institute/sktime>`_
+   * - `sktime <https://github.com/sktime/sktime>`_
      - A scikit-learn compatible library for learning with time series/panel data including time series classification/regression and (supervised/panel) forecasting
    * - `statsforecast <https://github.com/Nixtla/statsforecast>`_
      - StatsForecast by Nixtla offers a collection of widely used univariate time series forecasting models optimized for high performance using numba

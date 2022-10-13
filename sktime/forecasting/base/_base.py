@@ -1041,7 +1041,7 @@ class BaseForecaster(BaseEstimator):
             self.cutoff, self._is_fitted
 
         Writes to self:
-            Stores y.index to self.fh if has not been passed previously.
+            Nothing.
 
         Parameters
         ----------
@@ -1064,6 +1064,14 @@ class BaseForecaster(BaseEstimator):
                 Series, Panel, Hierarchical scitype, same format (see above)
         """
         self.check_is_fitted()
+
+        # clone self._fh to avoid any side-effects to self due to calling _check_fh
+        # and predict()
+        if self._fh is not None:
+            fh_orig = deepcopy(self._fh)
+        else:
+            fh_orig = None
+
         # if no y is passed, the so far observed y is used
         if y is None:
             y = self._y
@@ -1095,6 +1103,10 @@ class BaseForecaster(BaseEstimator):
             )
 
         y_res = y - y_pred
+
+        # write fh back to self that was given before calling predict_residuals to
+        # avoid side-effects
+        self._fh = fh_orig
 
         return y_res
 
