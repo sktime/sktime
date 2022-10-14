@@ -71,8 +71,7 @@ responsibilities, and appointment process in more detail below.
      - Conflict resolution, technical leadership, project management
      - Nomination by core developers, vote by core developers, 2/3 majority and simple CC majority
    * - :ref:`cc-observers`
-     - Full view of CC, direct input on CC decisions
-     - Nomination by core developers, vote by core developers, 2/3 of all cast votes and simple CC majority
+     - Nomination by CC by simple CC majority
 
 .. _contributors:
 
