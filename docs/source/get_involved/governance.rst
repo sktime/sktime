@@ -358,10 +358,10 @@ by a nomination for core developer, and a core developer appointment vote
 
 Appointment
 ^^^^^^^^^^^
-Membership of the CC observers is by nomination by a core developer and a vote by
-CC members. A nomination will result in a vote by the CC members which will stay 
-open for 5 days excluding weekends. CC observer membership votes are subject to 
-a simple majority approval of all the current CC committee members.
+Membership of the CC observers is by nomination by a core developer and a vote
+by CC members. A nomination will result in a vote by the CC members which will
+stay open for 5 days excluding weekends. CC observer membership votes are
+subject to a simple majority approval of all the current CC committee members.
 
 In case of ties, the CC member with shortest tenure breaks the tie.
 
