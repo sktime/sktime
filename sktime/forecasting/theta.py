@@ -439,7 +439,6 @@ class ThetaModularForecaster(_HeterogenousEnsembleForecaster):
                 ("naive1", NaiveForecaster(), 1),
             ]
         }
-        params1 = {}
-        params2 = {"theta_values": (0, 42)}
+        params1 = {"theta_values": (0, 42)}
 
-        return [params0, params1, params2]
+        return [params0, params1]
