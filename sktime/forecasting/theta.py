@@ -431,9 +431,7 @@ class ThetaModularForecaster(_HeterogenousEnsembleForecaster):
             (or only) dictionary in `params`.
         """
         # imports
-        from sktime.forecasting.exp_smoothing import ExponentialSmoothing
         from sktime.forecasting.naive import NaiveForecaster
-        from sktime.forecasting.trend import PolynomialTrendForecaster
 
         params0 = {
             "forecasters": [
@@ -441,12 +439,7 @@ class ThetaModularForecaster(_HeterogenousEnsembleForecaster):
                 ("naive1", NaiveForecaster(), 1),
             ]
         }
-        params1 = {"theta_values": [(-1, 0.5, 42)]}
-        params2 = {
-            "forecasters": [
-                ("trend", PolynomialTrendForecaster(), 0),
-                ("ses", ExponentialSmoothing(), 1),
-            ]
-        }
+        params1 = {}
+        params2 = {"theta_values": (0, 42)}
 
         return [params0, params1, params2]
