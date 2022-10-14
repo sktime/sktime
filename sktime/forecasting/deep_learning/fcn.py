@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""FCN for forecasting."""
+"""FCN for forecasting tem."""
 from sktime.networks.fcn import FCNNetwork
 from sktime.utils.validation._dependencies import _check_dl_dependencies
 
