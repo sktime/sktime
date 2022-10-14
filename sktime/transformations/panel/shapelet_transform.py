@@ -1151,7 +1151,8 @@ class RandomShapeletTransform(BaseTransformer):
 
         if self.max_shapelets is None:
             self._max_shapelets = min(10 * self.n_instances, 1000)
-
+        if self._max_shapelets < self.n_classes:
+            self._max_shapelets = self.n_classes
         if self.max_shapelet_length is None:
             self._max_shapelet_length = self.series_length
 
