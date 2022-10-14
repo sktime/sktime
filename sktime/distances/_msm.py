@@ -207,30 +207,11 @@ class _MsmDistance(NumbaDistance):
         return numba_msm_distance
 
 
-@njit(cache=True)
-def _cost_function(x: float, y: float, z: float, c: float) -> float:
-    """Compute the cost function for the MSM algorithm.
-
-    Parameters
-    ----------
-    x: float
-        First value.
-    y: float
-        Second value.
-    z: float
-        Third value.
-    c: float
-        Parameter used in MSM (update later!)
-
-    Returns
-    -------
-    float
-        Cost function value.
-    """
-    if (y <= x <= z) or (y >= x >= z):
-        return c
-
-    return c + min(abs(x - y), abs(x - z))
+@njit(fastmath=True, cache=True)
+def _cost(_x: float, _y: float, _z: float, _c: float) -> float:
+    if (_y <= _x <= _z) or (_y >= _x >= _z):
+        return _c
+    return _c + min(abs(_x - _y), abs(_x - _z))
 
 
 @njit(cache=True)
@@ -239,7 +220,7 @@ def _cost_matrix(
     y: np.ndarray,
     bounding_matrix: np.ndarray,
     c: float,
-) -> float:
+) -> np.ndarray:
     """MSM distance compiled to no_python.
 
     Series should be shape (1, m), where m the series (m is currently univariate only).
@@ -257,28 +238,38 @@ def _cost_matrix(
 
     Returns
     -------
-    distance: float
-        MSM distance between the x and y time series.
+    np.ndarray (2d of size mxn where m is len(x) and n is len(y))
+        Erp cost matrix between x and y.
     """
     x_size = x.shape[1]
     y_size = y.shape[1]
-    cost = np.zeros((x_size, y_size))
+    cost_matrix = np.zeros((x_size, y_size))
     # init the first cell
     if x[0][0] > y[0][0]:
-        cost[0, 0] = x[0][0] - y[0][0]
+        cost_matrix[0, 0] = x[0][0] - y[0][0]
     else:
-        cost[0, 0] = y[0][0] - x[0][0]
+        cost_matrix[0, 0] = y[0][0] - x[0][0]
     # init the rest of the first row and column
     for i in range(1, x_size):
-        cost[i][0] = cost[i - 1][0] + _cost_function(x[0][i], x[0][i - 1], y[0][0], c)
+        cost = _cost(x[0, i], x[0, i - 1], y[0, 0], c)
+        cost_matrix[i][0] = cost_matrix[i - 1][0] + cost
     for i in range(1, y_size):
-        cost[0][i] = cost[0][i - 1] + _cost_function(y[0][i], y[0][i - 1], x[0][0], c)
+        cost = _cost(y[0, i], y[0, i - 1], x[0, 0], c)
+        cost_matrix[0][i] = cost_matrix[0][i - 1] + cost
+
     for i in range(1, x_size):
         for j in range(1, y_size):
             if np.isfinite(bounding_matrix[i, j]):
-                d1 = cost[i - 1, j - 1] + np.abs(x[0][i] - y[0][j])
-                d2 = cost[i - 1, j] + _cost_function(x[0][i], x[0][i - 1], y[0][j], c)
-                d3 = cost[i, j - 1] + _cost_function(y[0][j], x[0][i], y[0][j - 1], c)
-                cost[i][j] = min(d1, d2, d3)
+                d1 = cost_matrix[i - 1, j - 1] + np.abs(x[0][i] - y[0][j])
+                d2 = cost_matrix[i - 1, j] + _cost(x[0][i], x[0][i - 1], y[0][j], c)
+                d3 = cost_matrix[i, j - 1] + _cost(y[0][j], x[0][i], y[0][j - 1], c)
+                cost_matrix[i][j] = min(d1, d2, d3)
+    for i in range(1, x_size):
+        for j in range(1, y_size):
+            if np.isfinite(bounding_matrix[i, j]):
+                d1 = cost_matrix[i - 1, j - 1] + abs(x[0, i] - y[0, j])
+                d2 = cost_matrix[i - 1, j] + _cost(x[0, i], x[0, i - 1], y[0, j], c)
+                d3 = cost_matrix[i, j - 1] + _cost(y[0, j], x[0, i], y[0, j - 1], c)
+                cost_matrix[i, j] = min(d1, d2, d3)
 
-    return cost[0:, 0:]
+    return cost_matrix

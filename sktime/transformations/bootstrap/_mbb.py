@@ -10,7 +10,6 @@ from typing import Tuple, Union
 import numpy as np
 import pandas as pd
 from sklearn.utils import check_random_state
-from statsmodels.tsa.api import STL as _STL
 
 from sktime.transformations.base import BaseTransformer
 from sktime.transformations.series.boxcox import BoxCoxTransformer
@@ -185,6 +184,7 @@ class STLBootstrapTransformer(BaseTransformer):
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
         "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
         "transform-returns-same-time-index": False,
+        "python_dependencies": "statsmodels",
     }
 
     def __init__(
@@ -293,6 +293,8 @@ class STLBootstrapTransformer(BaseTransformer):
         -------
         transformed version of X
         """
+        from statsmodels.tsa.api import STL as _STL
+
         Xcol = X.columns
         X = X[X.columns[0]]
 

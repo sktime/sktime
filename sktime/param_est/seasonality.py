@@ -6,8 +6,6 @@ __author__ = ["fkiraly"]
 __all__ = ["SeasonalityACF"]
 
 import numpy as np
-from statsmodels.stats.multitest import multipletests
-from statsmodels.tsa.stattools import acf
 
 from sktime.param_est.base import BaseParamFitter
 
@@ -92,6 +90,7 @@ class SeasonalityACF(BaseParamFitter):
         "scitype:X": "Series",  # which X scitypes are supported natively?
         "capability:missing_values": True,  # can estimator handle missing data?
         "capability:multivariate": False,  # can estimator handle multivariate data?
+        "python_dependencies": "statsmodels",
     }
 
     def __init__(
@@ -128,6 +127,8 @@ class SeasonalityACF(BaseParamFitter):
         -------
         self : reference to self
         """
+        from statsmodels.tsa.stattools import acf
+
         p_threshold = self.p_threshold
         adjusted = self.adjusted
 
@@ -309,6 +310,9 @@ class SeasonalityACFqstat(BaseParamFitter):
         -------
         self : reference to self
         """
+        from statsmodels.stats.multitest import multipletests
+        from statsmodels.tsa.stattools import acf
+
         p_threshold = self.p_threshold
         p_adjust = self.p_adjust
         adjusted = self.adjusted
