@@ -355,9 +355,36 @@ class ThetaModularForecaster(_HeterogenousEnsembleForecaster):
                     name = f"ses{str(i)}"
                     forecaster = name, ExponentialSmoothing(), i
                 _forecasters.append(forecaster)
+        elif len(forecasters) != len(self.theta_values):
+            raise ValueError(
+                f"The N of forecasters should be the same as the N "
+                f"of theta_values, but found {len(forecasters)} forecasters and"
+                f"{len(self.theta_values)} theta values."
+            )
         else:
             _forecasters = forecasters
         return _forecasters
+
+    @classmethod
+    def get_param_defaults(cls):
+        """Overwrite BaseObject's method.
+
+        Get parameter defaults for the object and overwrite forecasters parameter.
+        Default `forecasters` is set to None, because its correct form is mutable.
+        (Should be list of [(name, estimatorclass(), index),]).
+
+        Returns
+        -------
+        default_dict: dict with str keys
+            keys are all parameters of cls that have a default defined in __init__
+            values are the defaults, as defined in __init__
+        """
+        default_dict = super(ThetaModularForecaster, cls).get_param_defaults()
+        default_dict["forecasters"] = [
+            ("trend0", PolynomialTrendForecaster(), 0),
+            ("ses1235145", ExponentialSmoothing(), 1),
+        ]
+        return default_dict
 
     def get_params(self, deep=True):
         """Overwrite parent's method.
