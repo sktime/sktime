@@ -26,7 +26,7 @@ def stratified_resample(X_train, y_train, X_test, y_test, random_state):
     X_test : pd.DataFrame
         test data attributes in sktime pandas format.
     y_test : np.array
-        test data class labes as np array.
+        test data class labels as np array.
     random_state : int
         seed to enable reproducable resamples
     Returns
@@ -71,12 +71,9 @@ def stratified_resample(X_train, y_train, X_test, y_test, random_state):
         X_test = pd.concat([X_test, test_instances])
         y_train = np.concatenate([y_train, train_labels], axis=None)
         y_test = np.concatenate([y_test, test_labels], axis=None)
-    # get the counts of the new train and test resample
-    unique_train_new, counts_train_new = np.unique(y_train, return_counts=True)
-    unique_test_new, counts_test_new = np.unique(y_test, return_counts=True)
-    # make sure they match the original distribution of data
-    assert list(counts_train_new) == list(counts_train)
-    assert list(counts_test_new) == list(counts_test)
+    # reset indexes to conform to sktime format.
+    X_train = X_train.reset_index(drop=True)
+    X_test = X_test.reset_index(drop=True)
     return X_train, y_train, X_test, y_test
 
 

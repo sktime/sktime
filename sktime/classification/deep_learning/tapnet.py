@@ -134,8 +134,6 @@ class TapNetClassifier(BaseDeepClassifier):
         self.callbacks = callbacks
         self.verbose = verbose
 
-        self._is_fitted = False
-
         self.dropout = dropout
         self.use_lstm = use_lstm
         self.use_cnn = use_cnn
@@ -255,10 +253,20 @@ class TapNetClassifier(BaseDeepClassifier):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
-        return {
+        param1 = {
             "n_epochs": 50,
             "batch_size": 32,
+            "use_lstm": False,
+            "use_att": False,
             "filter_sizes": (128, 128, 64),
             "dilation": 2,
-            "layers": (200, 100),
+            "layers": (50, 25),
         }
+
+        param2 = {
+            "n_epochs": 100,
+            "use_cnn": False,
+            "layers": (25, 25),
+        }
+
+        return [param1, param2]
