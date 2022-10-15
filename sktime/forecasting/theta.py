@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 from scipy.stats import norm
 
-from sktime.forecasting.base._delegate import _DelegatedForecaster
+from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.compose import ColumnEnsembleForecaster
 from sktime.forecasting.compose._ensemble import _aggregate
 from sktime.forecasting.compose._pipeline import TransformedTargetForecaster
@@ -270,7 +270,7 @@ def _zscore(level: float, two_tailed: bool = True) -> float:
     return -norm.ppf(alpha)
 
 
-class ThetaModularForecaster(_DelegatedForecaster):
+class ThetaModularForecaster(BaseForecaster):
     """Modular theta method for forecasting.
 
     Modularized implementation of Theta method as defined in [1]_ (TODO: add the
@@ -313,13 +313,11 @@ class ThetaModularForecaster(_DelegatedForecaster):
 
     _tags = {
         "univariate-only": False,
-        "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
+        "y_inner_mtype": "pd.Series",
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
         "python_version": ">3.7",
     }
-
-    _delegate_name = "pipe_"
 
     def __init__(
         self,
@@ -365,12 +363,20 @@ class ThetaModularForecaster(_DelegatedForecaster):
             _forecasters = forecasters
         return _forecasters
 
+    def _fit(self, y, X=None, fh=None):
+        self.pipe_.fit(y=y, X=X, fh=fh)
+        return self
+
     def _predict(self, fh, X=None, return_pred_int=False):
         # Call predict on the forecaster directly, not on the pipeline
         # because of output conversion
         Y_pred = self.pipe_.steps_[-1][-1].predict(fh, X)
 
         return _aggregate(Y_pred, aggfunc=self.aggfunc, weights=self.weights)
+
+    def _update(self, y, X=None, update_params=True):
+        self.pipe_._update(y, X=None, update_params=update_params)
+        return self
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
