@@ -12,7 +12,7 @@ __all__ = ["ForecastByLevel"]
 class ForecastByLevel(_DelegatedForecaster):
     """Forecast by instance or panel.
 
-    Used to apply multiple copies `forecaster` by instance or by panel.
+    Used to apply multiple copies of `forecaster` by instance or by panel.
 
     If `groupby="global"`, behaves like `forecaster`.
     If `groupby="local"`, fits a clone of `forecaster` per time series instance.
