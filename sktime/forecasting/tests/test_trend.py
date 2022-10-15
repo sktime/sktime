@@ -1,9 +1,9 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Trend and STL forecaster tests."""
 
-__author__ = ["Markus Löning"]
-__all__ = ["get_expected_polynomial_coefs"]
+__author__ = ["Markus Löning", "topher-lo"]
 
 import numpy as np
 import pandas as pd
@@ -14,50 +14,42 @@ from sktime.utils._testing.forecasting import make_forecasting_problem
 from sktime.utils.estimators._forecasters import MockForecaster
 
 
-def get_expected_polynomial_coefs(y, degree, with_intercept=True):
-    """Helper function to compute expected coefficients from polynomial regression."""
-    poly_matrix = np.vander(np.arange(len(y)), degree + 1)
-    if not with_intercept:
-        poly_matrix = poly_matrix[:, :-1]
-    return np.linalg.lstsq(poly_matrix, y.to_numpy(), rcond=None)[0]
-
-
-def _test_trend(degree, with_intercept):
-    """Helper function to check trend"""
+@pytest.mark.parametrize(
+    "degree,with_intercept",
+    [
+        (0, True),
+        (1, True),
+        (1, False),
+        (3, True),
+        (3, False),
+    ],
+)
+def test_trend(degree, with_intercept):
+    """Checks fitted coefficients of the PolynomialTrendForecaster."""
     y = make_forecasting_problem()
     forecaster = PolynomialTrendForecaster(degree=degree, with_intercept=with_intercept)
     forecaster.fit(y)
-
     # check coefficients
     # intercept is added in reverse order
-    actual = forecaster.regressor_.steps[-1][1].coef_[::-1]
-    expected = get_expected_polynomial_coefs(y, degree, with_intercept)
-    np.testing.assert_allclose(actual, expected)
-
-
-@pytest.mark.parametrize("degree", [1, 3])
-@pytest.mark.parametrize("with_intercept", [True, False])
-def test_trend(degree, with_intercept):
-    _test_trend(degree, with_intercept)
-
-
-# zero trend does not work without intercept
-def test_zero_trend():
-    _test_trend(degree=0, with_intercept=True)
+    result = forecaster.regressor_.steps[-1][1].coef_[::-1]
+    poly_matrix = np.vander(np.arange(len(y)), degree + 1)
+    if not with_intercept:
+        poly_matrix = poly_matrix[:, :-1]
+    expected = np.linalg.lstsq(poly_matrix, y.to_numpy(), rcond=None)[0]
+    np.testing.assert_allclose(result, expected)
 
 
 def test_constant_trend():
+    """Checks PolynomialTrendForecaster predict with constant trend."""
     y = pd.Series(np.arange(30))
     fh = -np.arange(30)  # in-sample fh
-
     forecaster = PolynomialTrendForecaster(degree=1)
     y_pred = forecaster.fit(y).predict(fh)
-
     np.testing.assert_array_almost_equal(y, y_pred)
 
 
 def test_stl_pred_var():
-
+    """Checks the predicted variance of STLForecaster."""
     y = pd.Series(np.arange(30))
     mock_forecaster = MockForecaster(prediction_constant=10)
     forecaster = STLForecaster(

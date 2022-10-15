@@ -3,7 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements trend based forecasters."""
 
-__author__ = ["tensorflow-as-tf", "mloning", "aiwalter"]
+__author__ = ["tensorflow-as-tf", "mloning", "aiwalter", "topher-lo"]
 __all__ = ["TrendForecaster", "PolynomialTrendForecaster", "STLForecaster"]
 
 import numpy as np
