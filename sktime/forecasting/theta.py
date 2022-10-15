@@ -333,9 +333,7 @@ class ThetaModularForecaster(_HeterogenousEnsembleForecaster):
         self.theta_values = theta_values
 
         forecasters_ = self._check_forecasters(forecasters)
-
         self._colens = ColumnEnsembleForecaster(forecasters=forecasters_)
-        # self.forecasters = self._colens.get_params(deep=True)["forecasters"]
 
         self.pipe_ = TransformedTargetForecaster(
             steps=[
@@ -370,19 +368,20 @@ class ThetaModularForecaster(_HeterogenousEnsembleForecaster):
         """Overwrite BaseObject's method.
 
         Get parameter defaults for the object and overwrite forecasters parameter.
-        Default `forecasters` is set to None, because its correct form is mutable.
-        (Should be list of [(name, estimatorclass(), index),]).
+        Default `forecasters` is by default set to None, because its correct
+        form is mutable: list of [(name, estimatorclass(), index),]).
 
         Returns
         -------
         default_dict: dict with str keys
             keys are all parameters of cls that have a default defined in __init__
-            values are the defaults, as defined in __init__
+            values are the defaults, as defined in __init__, forecasters are set
+            to list.
         """
         default_dict = super(ThetaModularForecaster, cls).get_param_defaults()
         default_dict["forecasters"] = [
             ("trend0", PolynomialTrendForecaster(), 0),
-            ("ses1235145", ExponentialSmoothing(), 1),
+            ("ses1", ExponentialSmoothing(), 1),
         ]
         return default_dict
 
@@ -460,12 +459,13 @@ class ThetaModularForecaster(_HeterogenousEnsembleForecaster):
         # imports
         from sktime.forecasting.naive import NaiveForecaster
 
-        params0 = {
+        params0 = {}
+        params1 = {
             "forecasters": [
                 ("naive", NaiveForecaster(), 0),
                 ("naive1", NaiveForecaster(), 1),
             ]
         }
-        params1 = {"theta_values": (0, 42)}
+        params2 = {"theta_values": (0, 3)}
 
-        return [params0, params1]
+        return [params0, params1, params2]
