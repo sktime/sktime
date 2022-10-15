@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 from scipy.stats import norm
 
-from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
+from sktime.forecasting.base._delegate import _DelegatedForecaster
 from sktime.forecasting.compose import ColumnEnsembleForecaster
 from sktime.forecasting.compose._ensemble import _aggregate
 from sktime.forecasting.compose._pipeline import TransformedTargetForecaster
@@ -270,7 +270,7 @@ def _zscore(level: float, two_tailed: bool = True) -> float:
     return -norm.ppf(alpha)
 
 
-class ThetaModularForecaster(_HeterogenousEnsembleForecaster):
+class ThetaModularForecaster(_DelegatedForecaster):
     """Modular theta method for forecasting.
 
     Modularized implementation of Theta method as defined in [1]_ (TODO: add the
@@ -313,11 +313,13 @@ class ThetaModularForecaster(_HeterogenousEnsembleForecaster):
 
     _tags = {
         "univariate-only": False,
-        "y_inner_mtype": "pd.Series",
+        "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
         "python_version": ">3.7",
     }
+
+    _delegate_name = "pipe_"
 
     def __init__(
         self,
@@ -326,7 +328,7 @@ class ThetaModularForecaster(_HeterogenousEnsembleForecaster):
         aggfunc="mean",
         weights=None,
     ):
-        super(ThetaModularForecaster, self).__init__(forecasters=forecasters)
+        super(ThetaModularForecaster, self).__init__()
         self.forecasters = forecasters
         self.aggfunc = aggfunc
         self.weights = weights
@@ -363,78 +365,12 @@ class ThetaModularForecaster(_HeterogenousEnsembleForecaster):
             _forecasters = forecasters
         return _forecasters
 
-    @classmethod
-    def get_param_defaults(cls):
-        """Overwrite BaseObject's method.
-
-        Get parameter defaults for the object and overwrite forecasters parameter.
-        Default `forecasters` is by default set to None, because its correct
-        form is mutable: list of [(name, estimatorclass(), index),]).
-
-        Returns
-        -------
-        default_dict: dict with str keys
-            keys are all parameters of cls that have a default defined in __init__
-            values are the defaults, as defined in __init__, forecasters are set
-            to list.
-        """
-        default_dict = super(ThetaModularForecaster, cls).get_param_defaults()
-        default_dict["forecasters"] = [
-            ("trend0", PolynomialTrendForecaster(), 0),
-            ("ses1", ExponentialSmoothing(), 1),
-        ]
-        return default_dict
-
-    def get_params(self, deep=True):
-        """Overwrite parent's method.
-
-        Get `'forecasters'` parameter from ColumnEnsemble in order to comply with
-        the implementation of get_params in  _HeterogenousMetaEstimator which
-        expects lists of tuples of len 2.
-        """
-        params = super(ThetaModularForecaster, self).get_params(deep=False)
-        del params["forecasters"]
-        params.update(self._colens.get_params(deep=deep))
-        return params
-
-    def set_params(self, **params):
-        """Overwrite parent's method.
-
-        Set `'forecasters'` parameter from ColumnEnsemble in order to comply with
-        the implementation of get_params in  _HeterogenousMetaEstimator which
-        expects lists of tuples of len 2.
-        """
-        self.theta_values = params.pop("theta_values")
-        self.aggfunc = params.pop("aggfunc")
-        self.weights = params.pop("weights")
-        colens = ColumnEnsembleForecaster(forecasters=self.forecasters)
-        if "forecasters" in params and params["forecasters"] is None:
-            params["forecasters"] = self._check_forecasters(None)
-        colens.set_params(**params)
-        self._colens = colens
-        self.pipe_ = TransformedTargetForecaster(
-            steps=[
-                ("transformer", ThetaLinesTransformer(theta=self.theta_values)),
-                ("forecaster", self._colens),
-            ]
-        )
-
-        return self
-
-    def _fit(self, y, X=None, fh=None):
-        self.pipe_.fit(y=y, X=X, fh=fh)
-        return self
-
     def _predict(self, fh, X=None, return_pred_int=False):
         # Call predict on the forecaster directly, not on the pipeline
         # because of output conversion
         Y_pred = self.pipe_.steps_[-1][-1].predict(fh, X)
 
         return _aggregate(Y_pred, aggfunc=self.aggfunc, weights=self.weights)
-
-    def _update(self, y, X=None, update_params=True):
-        self.pipe_._update(y, X=None, update_params=update_params)
-        return self
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
