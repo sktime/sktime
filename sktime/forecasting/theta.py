@@ -459,13 +459,12 @@ class ThetaModularForecaster(_HeterogenousEnsembleForecaster):
         # imports
         from sktime.forecasting.naive import NaiveForecaster
 
-        params0 = {}
-        params1 = {
+        params0 = {
             "forecasters": [
                 ("naive", NaiveForecaster(), 0),
                 ("naive1", NaiveForecaster(), 1),
             ]
         }
-        params2 = {"theta_values": (0, 3)}
+        params1 = {"theta_values": (0, 3)}
 
-        return [params0, params1, params2]
+        return [params0, params1]
