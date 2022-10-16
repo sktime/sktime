@@ -202,14 +202,14 @@ respectful and not include any harassing behaviours.
 4.1 The Code of Conduct Committee
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The Code of Conduct committee is:
+The sktime Code of Conduct committee currently consists of:
 
--  Dr Franz Király: f.kiraly@ucl.ac.uk
--  Dr Anthony Bagnall: anthony.bagnall@uea.ac.uk
--  Markus Löning: markus.loning@gmail.com
--  Martina Vilas: martinagonzalezvilas@gmail.com (external member)
+Dr Franz Király (f.kiraly@ucl.ac.uk)
 
-The first three members are part of sktime's core developer team. Martina Vilas is an external member. As the community grows, we will seek to build a more diverse committee.
+We encourage community members to step up to become a member of the committee.
+
+You can use the NumFOCUS CoC reporting process as an alternative entry point
+for reporting, see 3.2.
 
 4.2 Urgent Situations: Acting Unilaterally
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
