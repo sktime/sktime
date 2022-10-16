@@ -231,6 +231,9 @@ GitHub.
 
 Please report CoC incidents via the [reporting tool in the issue tracker](https://github.com/alan-turing-institute/sktime/issues/new/choose).
 
+If the reporting tool is unavailable, please contact the current chair of
+the code of conduct commitete directly by email, see 4.1.
+
 3.2 Alternate contact points
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -262,9 +265,13 @@ respectful and not include any harassing behaviours.
 4.1 The Code of Conduct Committee
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The sktime Code of Conduct committee is currently on hiatus and re-organizing.
+The sktime Code of Conduct committee is currently consists of
+Franz Kiraly (f.kiraly@ucl.ac.uk) only.
 
-Please use the NumFOCUS CoC reporting process in the transition period.
+We encourage community members to step up to become a member of the committee.
+
+You can use the NumFOCUS CoC reporting process as an alternative entry point
+for reporting.
 
 4.2 Urgent Situations: Acting Unilaterally
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
