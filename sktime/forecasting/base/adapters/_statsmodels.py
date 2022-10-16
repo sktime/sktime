@@ -70,6 +70,12 @@ class _StatsModelsAdapter(BaseForecaster):
                     f"Call with update_params=True to refit with new data."
                 )
             else:
+                # only append unseen data to fitted forecaster
+                index_diff = y.index.difference(
+                    self._fitted_forecaster.fittedvalues.index
+                )
+                if index_diff.isin(y.index).all():
+                    y = y.loc[index_diff]
                 self._fitted_forecaster = self._fitted_forecaster.append(y)
 
     def _predict(self, fh, X=None):
@@ -92,7 +98,6 @@ class _StatsModelsAdapter(BaseForecaster):
         # statsmodels requires zero-based indexing starting at the
         # beginning of the training series when passing integers
         start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
-
         if "exog" in inspect.signature(self._forecaster.__init__).parameters.keys():
             y_pred = self._fitted_forecaster.predict(start=start, end=end, exog=X)
         else:
