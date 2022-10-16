@@ -8,19 +8,22 @@ __all__ = ["evaluate"]
 
 import time
 import warnings
+from typing import Optional, Sequence, Tuple, Union
 
 import numpy as np
 import pandas as pd
 
 from sktime.datatypes import check_is_scitype, convert_to
 from sktime.exceptions import FitFailedWarning
-from sktime.forecasting.base import ForecastingHorizon
+from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
+from sktime.forecasting.model_selection import BaseSplitter
+from sktime.performance_metrics import BaseMetric
 from sktime.utils.validation.forecasting import check_cv, check_scoring
 
 PANDAS_MTYPES = ["pd.DataFrame", "pd.Series", "pd-multiindex", "pd_multiindex_hier"]
 
 
-def _check_strategy(strategy):
+def _check_strategy(strategy: str):
     """Assert strategy value.
 
     Parameters
@@ -39,7 +42,13 @@ def _check_strategy(strategy):
         raise ValueError(f"`strategy` must be one of {valid_strategies}")
 
 
-def _split(y, X, train, test, freq):
+def _split(
+    y: pd.Series,
+    X: pd.DataFrame,
+    train: np.ndarray,
+    test: np.ndarray,
+    freq: Union[pd.DateOffset, None],
+) -> Tuple[pd.Series, pd.Series, Union[pd.DataFrame, None], Union[pd.DataFrame, None]]:
     # split data according to cv
     y_train, y_test = y.iloc[train], y.iloc[test]
     X_train, X_test = None, None
@@ -80,7 +89,7 @@ def _split(y, X, train, test, freq):
     return y_train, y_test, X_train, X_test
 
 
-def _select_fh_from_y(y):
+def _select_fh_from_y(y: pd.Series) -> ForecastingHorizon:
     # create forecasting horizon
     # if cv object has fh, we use that
     idx = y.index
@@ -95,21 +104,25 @@ def _select_fh_from_y(y):
 
 
 def _evaluate_window(
-    y,
-    X,
-    train,
-    test,
-    i,
-    fh,
-    freq,
-    forecaster,
-    strategy,
-    scoring,
-    return_data,
-    score_name,
-    error_score,
-    cutoff_dtype,
-):
+    y: pd.Series,
+    X: Union[pd.DataFrame, None],
+    train: np.ndarray,
+    test: np.ndarray,
+    i: int,
+    fh: Union[
+        ForecastingHorizon,
+        Sequence,
+        int,
+    ],
+    freq: Union[pd.DateOffset, None],
+    forecaster: BaseForecaster,
+    strategy: str,
+    scoring: BaseMetric,
+    return_data: bool,
+    score_name: str,
+    error_score: Union[str, float],
+    cutoff_dtype: str,
+) -> Union[pd.DataFrame, Tuple[pd.DataFrame, BaseForecaster]]:
 
     # set default result values in case estimator fitting fails
     score = error_score
@@ -197,18 +210,18 @@ def _evaluate_window(
 
 
 def evaluate(
-    forecaster,
-    cv,
-    y,
-    X=None,
-    strategy="refit",
-    scoring=None,
-    return_data=False,
-    error_score=np.nan,
-    backend=None,
-    compute=True,
+    forecaster: BaseForecaster,
+    cv: BaseSplitter,
+    y: pd.Series,
+    X: Optional[pd.DataFrame] = None,
+    strategy: str = "refit",
+    scoring: Optional[BaseMetric] = None,
+    return_data: bool = False,
+    error_score: Union[str, float] = np.nan,
+    backend: Optional[str] = None,
+    compute: bool = True,
     **kwargs,
-):
+) -> pd.DataFrame:
     """Evaluate forecaster using timeseries cross-validation.
 
     Parameters
@@ -266,6 +279,7 @@ def evaluate(
     >>> cv = ExpandingWindowSplitter(initial_window=12, step_length=3,
     ... fh=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
     >>> results = evaluate(forecaster=forecaster, y=y, cv=cv)
+
         Optionally, users may select other metrics that can be supplied
         by `scoring` argument. These can be forecast metrics of any kind,
         i.e., point forecast metrics, interval metrics, quantile foreast metrics.
@@ -274,6 +288,7 @@ def evaluate(
     >>> from sktime.performance_metrics.forecasting import MeanAbsoluteError
     >>> loss = MeanAbsoluteError()
     >>> results = evaluate(forecaster=forecaster, y=y, cv=cv, scoring=loss)
+
         An example of an interval metric is the `PinballLoss`.
         It can be used with all probabilistic forecasters.
     >>> from sktime.forecasting.naive import NaiveVariance
