@@ -132,6 +132,7 @@ NON_STATE_CHANGING_METHODS = (
     # escaping this, since for some estimators
     #   the input format of inverse_transform assumes special col names
     # "inverse_transform",
+    "get_fitted_params",
 )
 
 # The following gives a list of valid estimator base classes.

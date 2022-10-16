@@ -11,6 +11,7 @@ import numbers
 import types
 from copy import deepcopy
 from inspect import getfullargspec, isclass, signature
+from warnings import warn
 
 import joblib
 import numpy as np
@@ -990,12 +991,21 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
         ), f"Estimator: {estimator_instance} does not return self when calling fit"
 
     def test_raises_not_fitted_error(self, estimator_instance, scenario, method_nsc):
-        """Check that we raise appropriate error for unfitted estimators."""
-        estimator = estimator_instance
+        """Check exception raised for non-fit method calls to unfitted estimators.
 
+        Tries to run all methods in NON_STATE_CHANGING_METHODS with valid scenario,
+        but before fit has been called on the estimator.
+
+        This should raise a NotFittedError if correctly caught,
+        normally by a self.check_is_fitted() call in the method's boilerplate.
+
+        Raises
+        ------
+        Exception if NotFittedError is not raised by non-state changing method
+        """
         # pairwise transformers are exempted from this test, since they have no fitting
         PWTRAFOS = (BasePairwiseTransformer, BasePairwiseTransformerPanel)
-        excepted = isinstance(estimator, PWTRAFOS)
+        excepted = isinstance(estimator_instance, PWTRAFOS)
         if excepted:
             return None
 
@@ -1074,12 +1084,21 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
     def test_methods_do_not_change_state(
         self, estimator_instance, scenario, method_nsc
     ):
-        """Check that non-state-changing methods do not change state.
+        """Check that non-state-changing methods behave as per interface contract.
 
-        Check that methods that are not supposed to change attributes of the
-        estimators do not change anything (including hyper-parameters and
-        fitted parameters)
+        Check the following contract on non-state-changing methods:
+        1. do not change state of the estimator, i.e., any attributes
+            (including hyper-parameters and fitted parameters)
+        2. expected output type of the method matches actual output type
+            - only for abstract BaseEstimator methods, common to all estimator scitypes
+            list of BaseEstimator methdos tested: get_fitted_params
+            scitype specific method outputs are tested in TestAll[estimatortype] class
         """
+        warn(
+            "name of test_methods_do_not_change_state will change to "
+            "test_non_state_changing_method_contract in 0.15.0",
+            DeprecationWarning,
+        )
         estimator = estimator_instance
         set_random_state(estimator)
 
@@ -1096,7 +1115,7 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
                 return None
 
         # dict_after = dictionary of estimator after predict and fit
-        _ = scenario.run(estimator, method_sequence=[method_nsc])
+        output = scenario.run(estimator, method_sequence=[method_nsc])
         dict_after = estimator.__dict__
 
         is_equal, msg = deep_equals(dict_after, dict_before, return_msg=True)
@@ -1105,6 +1124,20 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
             f"during {method_nsc}, "
             f"reason/location of discrepancy (x=after, y=before): {msg}"
         )
+
+        # once there are more methods, this may have to be factored out
+        # for now, there is only get_fitted_params and we test here to avoid fit calls
+        if method_nsc == "get_fitted_params":
+            msg = (
+                f"get_fitted_params of {type(estimator)} should return dict, "
+                f"but returns object of type {type(output)}"
+            )
+            assert isinstance(output, dict), msg
+            msg = (
+                f"get_fitted_params of {type(estimator)} should return dict with "
+                f"with str keys, but some keys are not str"
+            )
+            assert all([isinstance(x, str) for x in output.keys()])
 
     def test_methods_have_no_side_effects(
         self, estimator_instance, scenario, method_nsc
