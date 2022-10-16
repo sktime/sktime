@@ -13,11 +13,11 @@ from typing import Optional, Sequence, Tuple, Union
 import numpy as np
 import pandas as pd
 
+from sktime.benchmarking.base import BaseMetric
 from sktime.datatypes import check_is_scitype, convert_to
 from sktime.exceptions import FitFailedWarning
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
-from sktime.forecasting.model_selection import BaseSplitter
-from sktime.performance_metrics import BaseMetric
+from sktime.forecasting.model_selection._split import BaseSplitter
 from sktime.utils.validation.forecasting import check_cv, check_scoring
 
 PANDAS_MTYPES = ["pd.DataFrame", "pd.Series", "pd-multiindex", "pd_multiindex_hier"]
