@@ -8,37 +8,39 @@ __all__ = []
 import numpy as np
 import pandas as pd
 
-from sktime.forecasting.naive import NaiveForecaster
 from sktime.transformations.series.detrend import Detrender
+from sktime.utils.estimators._forecasters import MockForecaster
 
 
 def test_detrender_univariate():
-    """Checks detrended time series given naive(mean) forecaster returns y - mean(y)."""
-    y = pd.Series(np.arange(20) * 0.5) + np.random.normal(0, 1, size=20)
-    forecaster = NaiveForecaster(strategy="mean")
+    """Checks Detrender returns transformed y as residuals."""
+    y = pd.Series(np.arange(20) * 0.5)
+    prediction_constant = 10
+    forecaster = MockForecaster(prediction_constant)
     transformer = Detrender(forecaster)
     transformer.fit(y)
 
     # check residuals
     result = transformer.transform(y)
-    expected = y - y.mean()
-    np.testing.assert_array_almost_equal(result, expected)
+    expected = y - prediction_constant
+    pd.testing.assert_series_equal(result, expected)
 
 
 def test_detrender_multivariate():
-    """Checks detrended multivariate X given naive(mean) forecaster."""
+    """Checks Detrender returns transformed multivariate X as residuals."""
     y = pd.DataFrame(
         {
-            "a": np.arange(20) + np.random.normal(0, 1, size=20),
-            "b": np.arange(20) + np.random.normal(0, 2, size=20),
-            "c": np.arange(20) + np.random.normal(0, 3, size=20),
+            "a": np.arange(20),
+            "b": np.arange(20) * 0.5,
+            "c": np.arange(20) * 2,
         }
     )
-    forecaster = NaiveForecaster(strategy="mean")
+    prediction_constant = 10
+    forecaster = MockForecaster(prediction_constant)
     transformer = Detrender(forecaster)
     transformer.fit(y)
 
     # check residuals
     result = transformer.transform(y)
-    expected = y - y.mean()
-    np.testing.assert_array_almost_equal(result, expected)
+    expected = y - prediction_constant
+    pd.testing.assert_frame_equal(result, expected)
