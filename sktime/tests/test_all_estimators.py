@@ -33,6 +33,7 @@ from sktime.tests._config import (
     EXCLUDE_ESTIMATORS,
     EXCLUDED_TESTS,
     NON_STATE_CHANGING_METHODS,
+    NON_STATE_CHANGING_METHODS_ARRAYLIKE,
     VALID_ESTIMATOR_BASE_TYPES,
     VALID_ESTIMATOR_TAGS,
     VALID_ESTIMATOR_TYPES,
@@ -130,6 +131,9 @@ class BaseFixtureGenerator:
     method_nsc: string, name of estimator method
         ranges over all "predict"-like, non-state-changing methods
         of estimator_instance or estimator_class that the class/object implements
+    method_nsc_arraylike: string, for non-state-changing estimator methods
+        ranges over all "predict"-like, non-state-changing estimator methods,
+        which return an array-like output
     """
 
     # class variables which can be overridden by descendants
@@ -143,6 +147,7 @@ class BaseFixtureGenerator:
         "estimator_instance",
         "scenario",
         "method_nsc",
+        "method_nsc_arraylike",
     ]
 
     # which fixtures are indirect, e.g., have an additional pytest.fixture block
@@ -374,6 +379,23 @@ class BaseFixtureGenerator:
                 nsc_list = list(set(nsc_list).difference(["predict_proba"]))
 
         return nsc_list
+
+    def _generate_method_nsc_arraylike(self, test_name, **kwargs):
+        """Return estimator test scenario.
+
+        Fixtures parametrized
+        ---------------------
+        method_nsc_arraylike: string, for non-state-changing estimator methods
+            ranges over all "predict"-like, non-state-changing estimator methods,
+            which return an array-like output
+        """
+        method_nsc_list = self._generate_method_nsc(test_name=test_name, **kwargs)
+
+        # subset to the arraylike ones to avoid copy-paste
+        nsc_list_arraylike = set(method_nsc_list).intersection(
+            NON_STATE_CHANGING_METHODS_ARRAYLIKE
+        )
+        return list(nsc_list_arraylike)
 
 
 class QuickTester:
@@ -1013,7 +1035,7 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
         with pytest.raises(NotFittedError, match=r"has not been fitted"):
             scenario.run(estimator_instance, method_sequence=[method_nsc])
 
-    def test_fit_idempotent(self, estimator_instance, scenario, method_nsc):
+    def test_fit_idempotent(self, estimator_instance, scenario, method_nsc_arraylike):
         """Check that calling fit twice is equivalent to calling it once."""
         estimator = estimator_instance
 
@@ -1021,7 +1043,7 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
         #   does not work for tensorflow Distribution
         if (
             isinstance(estimator_instance, BaseForecaster)
-            and method_nsc == "predict_proba"
+            and method_nsc_arraylike == "predict_proba"
         ):
             return None
 
@@ -1029,7 +1051,7 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
         set_random_state(estimator)
         results = scenario.run(
             estimator,
-            method_sequence=["fit", method_nsc],
+            method_sequence=["fit", method_nsc_arraylike],
             return_all=True,
             deepcopy_return=True,
         )
@@ -1040,7 +1062,7 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
         # run fit plus method_nsc a second time
         results_2nd = scenario.run(
             estimator,
-            method_sequence=["fit", method_nsc],
+            method_sequence=["fit", method_nsc_arraylike],
             return_all=True,
             deepcopy_return=True,
         )
@@ -1145,6 +1167,10 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
         """Check that calling methods has no side effects on args."""
         estimator = estimator_instance
 
+        # skip test for get_fitted_params, as this does not have mutable arguments
+        if method_nsc == "get_fitted_params":
+            return None
+
         set_random_state(estimator)
 
         # Fit the model, get args before and after
@@ -1177,8 +1203,11 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
             method_args_after, method_args_before
         ), f"Estimator: {estimator} has side effects on arguments of {method_nsc}"
 
-    def test_persistence_via_pickle(self, estimator_instance, scenario, method_nsc):
+    def test_persistence_via_pickle(
+        self, estimator_instance, scenario, method_nsc_arraylike
+    ):
         """Check that we can pickle all estimators."""
+        method_nsc = method_nsc_arraylike
         # escape predict_proba for forecasters, tfp distributions cannot be pickled
         if (
             isinstance(estimator_instance, BaseForecaster)
@@ -1215,7 +1244,9 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
 
     # todo: this needs to be diagnosed and fixed - temporary skip
     @pytest.mark.skip(reason="hangs on mac and unix remote tests")
-    def test_multiprocessing_idempotent(self, estimator_instance, scenario, method_nsc):
+    def test_multiprocessing_idempotent(
+        self, estimator_instance, scenario, method_nsc_arraylike
+    ):
         """Test that single and multi-process run results are identical.
 
         Check that running an estimator on a single process is no different to running
@@ -1223,6 +1254,7 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
         of all CPUs. The test is not really necessary though, as we rely on joblib for
         parallelization and can trust that it works as expected.
         """
+        method_nsc = method_nsc_arraylike
         params = estimator_instance.get_params()
 
         if "n_jobs" in params:
