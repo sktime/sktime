@@ -70,8 +70,8 @@ def _split(
                 y_test.index.freq = freq
             else:
                 # See: https://github.com/pandas-dev/pandas/issues/33647
-                y_train.index.levels[0].freq = freq
-                y_test.index.levels[0].freq = freq
+                y_train.index.levels[-1].freq = freq
+                y_test.index.levels[-1].freq = freq
         except AttributeError:  # Can't set attribute for range or period index
             pass
 
@@ -81,8 +81,8 @@ def _split(
                     X_train.index.freq = freq
                     X_test.index.freq = freq
                 else:
-                    X_train.index.levels[0].freq = freq
-                    X_test.index.levels[0].freq = freq
+                    X_train.index.levels[-1].freq = freq
+                    X_test.index.levels[-1].freq = freq
             except AttributeError:  # Can't set attribute for range or period index
                 pass
 
