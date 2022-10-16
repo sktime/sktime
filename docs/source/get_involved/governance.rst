@@ -8,7 +8,7 @@ Overview
 
 sktime is a consensus-based community project. Anyone with an interest in the project can join the community, contribute to the project, and participate in the governance process. This document describes how that participation takes place, which roles we have in our community, how we make decisions, and how we acknowledge contributions.
 
-We are particularly motivated to support new and/or anxious contributors, people who are looking to learn and develop their skills, and members of groups underrepresented in the tech sector. Go to our `contributing guide <https://github.com/alan-turing-institute/sktime/blob/main/CONTRIBUTING.rst>`__ for more details.
+We are particularly motivated to support new and/or anxious contributors, people who are looking to learn and develop their skills, and members of groups underrepresented in the tech sector. Go to our `contributing guide <https://github.com/sktime/sktime/blob/main/CONTRIBUTING.rst>`__ for more details.
 
 .. list-table::
    :header-rows: 1
@@ -38,7 +38,7 @@ is expected to show respect and courtesy to other community members at
 all times.
 
 We ask all members of the community to conform to our `Code of
-Conduct <https://github.com/alan-turing-institute/sktime/blob/main/CODE_OF_CONDUCT.rst>`__.
+Conduct <https://github.com/sktime/sktime/blob/main/CODE_OF_CONDUCT.rst>`__.
 
 .. _roles:
 
@@ -79,11 +79,11 @@ Contributors
 Contributors are community members who have contributed in concrete ways
 to the project. Anyone can become a contributor, and contributions can
 take many forms – not only code – as detailed in the `contributing
-guide <https://github.com/alan-turing-institute/sktime/blob/main/CONTRIBUTING.rst>`__.
+guide <https://github.com/sktime/sktime/blob/main/CONTRIBUTING.rst>`__.
 
 For more details on how we acknowledge contributions, see :ref:`acknowledging-contributions` below.
 
-All contributors are listed in `CONTRIBUTORS.md <https://github.com/alan-turing-institute/sktime/blob/main/CONTRIBUTORS.md>`__.
+All contributors are listed in `CONTRIBUTORS.md <https://github.com/sktime/sktime/blob/main/CONTRIBUTORS.md>`__.
 
 .. _algorithm-maintainers:
 
@@ -125,7 +125,7 @@ When the maintainer resigns, they can appoint another contributor as the
 new maintainer. No vote is required.
 
 Maintainers are listed in the `CODEOWNERS <https://github
-.com/alan-turing-institute/sktime/blob/main/CODEOWNERS>`__ file.
+.com/sktime/sktime/blob/main/CODEOWNERS>`__ file.
 
 .. _core-developers:
 
@@ -290,26 +290,36 @@ concurrent with the 5 day discussion period (see below).
 Appointment
 ^^^^^^^^^^^
 
-Membership of the CC is by nomination by a core developer and a vote by
-all core developers. A nomination will result in discussion which stay open
+Appointment to the CC is by nomination by a core developer and a vote by
+all core developers. A nomination will result in discussion which stays open
 for 5 days excluding weekends and then a vote by core developers which will
-stay open for 5 days excluding weekends. CC membership votes are subject to:
+stay open for 5 days excluding weekends. Approval of appointment requires:
 
 * a 2/3 majority of all cast votes, and
 * a simple majority approval of all the current CC members.
 
-The vote will take place in private communication channels and will be
-anonymous.
+The core developer vote takes place in private communication channels,
+visible to, and only to, core developers, and is anonymous.
+The CC members' vote takes place in private communication channels,
+visible to, and only to, CC members, and is anonymous.
 
-In case of ties, the CC member with shortest tenure breaks the tie.
+In case the CC members' vote is tied,
+the CC member with the shortest continuous tenure has a tie breaking privilege.
+
+The tie breaking is by construction visible to CC members,
+does not require the tie breaking CC member to have voted in the anonymous vote,
+and need not follow their anonymous vote if they have voted.
 
 End of tenure
 ^^^^^^^^^^^^^
 
 CC members can resign voluntarily at any point in time, by informing the CC in writing.
 
-CC members who do not actively engage with the responsibilities are
-expected to resign.
+CC members who do not actively engage with their CC member role responsibilities are
+expected to resign voluntarily.
+
+Tenure also ends automatically when a CC member's tenure as core developer ends,
+e.g., through resignation or inactivity.
 
 Communications
 ^^^^^^^^^^^^^^
@@ -337,8 +347,8 @@ feedback from all community members and strives to find consensus, while
 avoiding deadlocks when no consensus can be found.
 
 All discussion and votes takes place on the project’s `issue
-tracker <https://github.com/alan-turing-institute/sktime/issues>`__,
-`pull requests <https://github.com/alan-turing-institute/sktime/pulls>`__ or an :ref:`steps`. Some
+tracker <https://github.com/sktime/sktime/issues>`__,
+`pull requests <https://github.com/sktime/sktime/pulls>`__ or an :ref:`steps`. Some
 sensitive discussions and appointment votes occur on private chats.
 
 The CC reserves the right to overrule decisions.
@@ -520,7 +530,7 @@ with sktime tools. You can implement your favorite algorithm in a sktime
 compatible way in one of `our companion
 repositories <https://github.com/sktime>`__ on GitHub. We will be happy
 to list it under `related
-software <https://github.com/alan-turing-institute/sktime/wiki/related-software>`__.
+software <https://github.com/sktime/sktime/wiki/related-software>`__.
 
 If algorithms require major dependencies, we encourage to create a
 separate companion repository. For smaller
@@ -540,15 +550,15 @@ of contributions and are committed to recognising each of them fairly.
 We follow the `all-contributors <https://allcontributors.org>`__
 specification to recognise all contributors, including those that don’t
 contribute code. Please see `our list of all
-contributors <https://github.com/alan-turing-institute/sktime/blob/main/CONTRIBUTORS.md>`__.
+contributors <https://github.com/sktime/sktime/blob/main/CONTRIBUTORS.md>`__.
 
 If you think, we’ve missed anything, please let us know or open a PR
 with the appropriate changes to
-`sktime/.all-contributorsrc <https://github.com/alan-turing-institute/sktime/blob/main/.all-contributorsrc>`__.
+`sktime/.all-contributorsrc <https://github.com/sktime/sktime/blob/main/.all-contributorsrc>`__.
 
 Note that contributors do not own their contributions. sktime is an
 open-source project, and all code is contributed under `our open-source
-license <https://github.com/alan-turing-institute/sktime/blob/main/LICENSE>`__.
+license <https://github.com/sktime/sktime/blob/main/LICENSE>`__.
 All contributors acknowledge that they have all the rights to the code
 they contribute to make it available under this license.
 

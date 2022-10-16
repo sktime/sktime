@@ -7,7 +7,6 @@ __author__ = ["mloning, fkiraly"]
 __all__ = ["_HeterogenousMetaEstimator"]
 
 import itertools
-from abc import ABCMeta
 from inspect import isclass
 from typing import List, Optional, Tuple
 
@@ -15,7 +14,7 @@ from sktime.base import BaseEstimator
 from sktime.transformations.base import BaseTransformer
 
 
-class _HeterogenousMetaEstimator(BaseEstimator, metaclass=ABCMeta):
+class _HeterogenousMetaEstimator(BaseEstimator):
     """Handles parameter management for estimators composed of named estimators.
 
     Partly adapted from sklearn utils.metaestimator.py.

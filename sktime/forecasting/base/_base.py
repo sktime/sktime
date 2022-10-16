@@ -1041,7 +1041,7 @@ class BaseForecaster(BaseEstimator):
             self.cutoff, self._is_fitted
 
         Writes to self:
-            Stores y.index to self.fh if has not been passed previously.
+            Nothing.
 
         Parameters
         ----------
@@ -1064,6 +1064,14 @@ class BaseForecaster(BaseEstimator):
                 Series, Panel, Hierarchical scitype, same format (see above)
         """
         self.check_is_fitted()
+
+        # clone self._fh to avoid any side-effects to self due to calling _check_fh
+        # and predict()
+        if self._fh is not None:
+            fh_orig = deepcopy(self._fh)
+        else:
+            fh_orig = None
+
         # if no y is passed, the so far observed y is used
         if y is None:
             y = self._y
@@ -1095,6 +1103,10 @@ class BaseForecaster(BaseEstimator):
             )
 
         y_res = y - y_pred
+
+        # write fh back to self that was given before calling predict_residuals to
+        # avoid side-effects
+        self._fh = fh_orig
 
         return y_res
 
@@ -1229,6 +1241,22 @@ class BaseForecaster(BaseEstimator):
             else:
                 raise ValueError("no series scitypes supported, bug in estimator")
 
+        def _check_missing(metadata, obj_name):
+            """Check input metadata against self's missing capability tag."""
+            if not self.get_tag("handles-missing-data"):
+                msg = (
+                    f"{type(self).__name__} cannot handle missing data (nans), "
+                    f"but {obj_name} passed contained missing data."
+                )
+                if self.get_class_tag("handles-missing-data"):
+                    msg = msg + (
+                        f" Whether instances of {type(self).__name__} can handle "
+                        "missing data depends on parameters of the instance, "
+                        "e.g., estimator components."
+                    )
+                if metadata["has_nans"]:
+                    raise ValueError(msg)
+
         # retrieve supported mtypes
         y_inner_mtype = _coerce_to_list(self.get_tag("y_inner_mtype"))
         X_inner_mtype = _coerce_to_list(self.get_tag("X_inner_mtype"))
@@ -1280,6 +1308,9 @@ class BaseForecaster(BaseEstimator):
                 raise ValueError(
                     "y must have two or more variables, but found only one"
                 )
+
+            _check_missing(y_metadata, "y")
+
         else:
             # y_scitype is used below - set to None if y is None
             y_scitype = None
@@ -1310,6 +1341,9 @@ class BaseForecaster(BaseEstimator):
             X_scitype = X_metadata["scitype"]
             X_requires_vectorization = X_scitype not in X_inner_scitype
             requires_vectorization = requires_vectorization or X_requires_vectorization
+
+            _check_missing(X_metadata, "X")
+
         else:
             # X_scitype is used below - set to None if X is None
             X_scitype = None
