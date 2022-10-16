@@ -359,8 +359,10 @@ class BaseFixtureGenerator:
         # ensure cls is a class
         if "estimator_class" in kwargs.keys():
             obj = kwargs["estimator_class"]
+            cls = obj
         elif "estimator_instance" in kwargs.keys():
             obj = kwargs["estimator_instance"]
+            cls = type(obj)
         else:
             return []
 
@@ -369,6 +371,12 @@ class BaseFixtureGenerator:
 
         # subset to the methods that x has implemented
         nsc_list = [x for x in nsc_list if _has_capability(obj, x)]
+
+        # remove predict_proba for forecasters, if tensorflow-proba is not installed
+        # this ensures that predict_proba, which requires it, is not called in testing
+        if issubclass(cls, BaseForecaster):
+            if not _check_dl_dependencies(severity="none"):
+                nsc_list = list(set(nsc_list).difference(["predict_proba"]))
 
         return nsc_list
 
@@ -381,29 +389,13 @@ class BaseFixtureGenerator:
             ranges over all "predict"-like, non-state-changing estimator methods,
             which return an array-like output
         """
-        # ensure cls is a class
-        if "estimator_class" in kwargs.keys():
-            obj = kwargs["estimator_class"]
-            cls = obj
-        elif "estimator_instance" in kwargs.keys():
-            obj = kwargs["estimator_instance"]
-            cls = type(obj)
-        else:
-            return []
+        method_nsc_list = self._generate_method_nsc(test_name=test_name, **kwargs)
 
-        # complete list of all non-state-changing methods
-        nsc_list = NON_STATE_CHANGING_METHODS_ARRAYLIKE
-
-        # subset to the methods that x has implemented
-        nsc_list = [x for x in nsc_list if _has_capability(obj, x)]
-
-        # remove predict_proba for forecasters, if tensorflow-proba is not installed
-        # this ensures that predict_proba, which requires it, is not called in testing
-        if issubclass(cls, BaseForecaster):
-            if not _check_dl_dependencies(severity="none"):
-                nsc_list = list(set(nsc_list).difference(["predict_proba"]))
-
-        return nsc_list
+        # subset to the arraylike ones to avoid copy-paste
+        nsc_list_arraylike = set(method_nsc_list).intersection(
+            NON_STATE_CHANGING_METHODS_ARRAYLIKE
+        )
+        return list(nsc_list_arraylike)
 
 
 class QuickTester:
