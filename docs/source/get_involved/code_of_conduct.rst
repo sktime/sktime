@@ -272,7 +272,7 @@ Dr Franz Király (f.kiraly@ucl.ac.uk)
 We encourage community members to step up to become a member of the committee.
 
 You can use the NumFOCUS CoC reporting process as an alternative entry point
-for reporting.
+for reporting, see 3.2.
 
 4.2 Urgent Situations: Acting Unilaterally
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
