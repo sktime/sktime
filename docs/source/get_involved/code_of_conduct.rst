@@ -260,10 +260,7 @@ reporter(s) with an update and projected timeline for resolution.
 The Code of Conduct committee will seek to agree on a resolution by
 consensus of all members investigating the report in question. If the
 committee cannot reach consensus and deadlocks for over a week, Dr Franz
-Király, as lead investigator of the sktime project, will break the tie.
-If Dr Franz Király is unable to take part in the discussion due to a
-conflict of interest, Dr Anthony Bagnall, as an external member of the Code
-of Conduct committee, will make the decision.
+Király, as currently longest serving CC member of the sktime project, will break the tie.
 
 Possible responses may include:
 
