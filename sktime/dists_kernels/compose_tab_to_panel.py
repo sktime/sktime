@@ -125,7 +125,10 @@ class AggrDist(BasePairwiseTransformerPanel):
         # importing inside to avoid circular dependencies
         from sktime.dists_kernels import ScipyDist
 
-        return {"transformer": ScipyDist(), "aggfunc_is_symm": [True, False]}
+        return [
+            {"transformer": ScipyDist(), "aggfunc_is_symm": True},
+            {"transformer": ScipyDist(), "aggfunc_is_symm": False},
+        ]
 
 
 class FlatDist(BasePairwiseTransformerPanel):
