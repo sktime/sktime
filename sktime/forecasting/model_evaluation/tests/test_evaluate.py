@@ -7,7 +7,7 @@ In particular, function `evaluate`, that performs time series
 cross-validation, is tested with various configurations for correct output.
 """
 
-__author__ = ["aiwalter", "mloning"]
+__author__ = ["aiwalter", "mloning", "fkiraly"]
 __all__ = [
     "test_evaluate_common_configs",
     "test_evaluate_initial_window",
@@ -17,10 +17,12 @@ __all__ = [
 import numpy as np
 import pandas as pd
 import pytest
+from sklearn.linear_model import LinearRegression
 
 from sktime.datasets import load_airline, load_longley
 from sktime.exceptions import FitFailedWarning
 from sktime.forecasting.arima import ARIMA
+from sktime.forecasting.compose._reduce import DirectReductionForecaster
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.model_evaluation import evaluate
 from sktime.forecasting.model_selection import (
@@ -34,6 +36,7 @@ from sktime.performance_metrics.forecasting import (
     MeanAbsoluteScaledError,
 )
 from sktime.utils._testing.forecasting import make_forecasting_problem
+from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils.validation._dependencies import _check_estimator_deps
 
 
@@ -196,3 +199,30 @@ def test_evaluate_error_score(error_score, return_data, strategy):
                 error_score=error_score,
                 strategy=strategy,
             )
+
+
+def test_evaluate_hierarchical():
+    """Check that adding exogenous data produces different results."""
+    y = _make_hierarchical(
+        random_state=0, hierarchy_levels=(2, 2), min_timepoints=20, max_timepoints=20
+    )
+    X = _make_hierarchical(
+        random_state=42, hierarchy_levels=(2, 2), min_timepoints=20, max_timepoints=20
+    )
+
+    y = y.sort_index()
+    X = X.sort_index()
+
+    forecaster = DirectReductionForecaster(LinearRegression())
+
+    cv = SlidingWindowSplitter()
+    scoring = MeanAbsolutePercentageError(symmetric=True)
+
+    out_exog = evaluate(forecaster, cv, y, X=X, scoring=scoring, error_score="raise")
+
+    out_no_exog = evaluate(
+        forecaster, cv, y, X=None, scoring=scoring, error_score="raise"
+    )
+
+    scoring_name = f"test_{scoring.name}"
+    assert np.all(out_exog[scoring_name] != out_no_exog[scoring_name])
