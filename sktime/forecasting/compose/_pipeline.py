@@ -80,29 +80,9 @@ class _Pipeline(
                 f"but found a transformer"
             )
 
-        # sort steps by permutation
-        if permutation is not None:
-
-            # check that all permutation are str values
-            if not all(isinstance(item, str) for item in permutation):
-                raise ValueError("permutation must be a list of strings")
-
-            # check that permutation contains same step names as given in steps
-            if not sorted([x[0] for x in estimator_tuples]) == sorted(permutation):
-                raise ValueError(
-                    f"""Permutations must contain the same step names as the pipeline,
-                    found tuple names {sorted([x[0] for x in estimator_tuples])} but got
-                    permutation {sorted(permutation)}."""
-                )
-
-            # sort steps
-            estimator_tuples_permuted = []
-            for p in permutation:
-                for step in estimator_tuples:
-                    if p == step[0]:
-                        estimator_tuples_permuted.append(step)
-            estimator_tuples = estimator_tuples_permuted.copy()
-
+        estimator_tuples = self._steps_permutation(
+            steps=estimator_tuples, permutation=permutation
+        )
         # Shallow copy
         return estimator_tuples
 
@@ -332,9 +312,11 @@ class ForecastingPipeline(_Pipeline):
         "X-y-must-have-same-index": False,
     }
 
-    def __init__(self, steps):
+    def __init__(self, steps, permutation=None):
         self.steps = steps
-        self.steps_ = self._check_steps(steps, allow_postproc=False)
+        self.steps_ = self._check_steps(
+            steps, allow_postproc=False, permutation=permutation
+        )
         super(ForecastingPipeline, self).__init__()
         tags_to_clone = [
             "ignores-exogeneous-X",  # does estimator ignore the exogeneous X?

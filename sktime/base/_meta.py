@@ -6,10 +6,13 @@
 __author__ = ["mloning, fkiraly"]
 __all__ = ["_HeterogenousMetaEstimator"]
 
+import itertools
 from abc import ABCMeta
 from inspect import isclass
+from typing import List, Optional, Tuple
 
 from sktime.base import BaseEstimator
+from sktime.transformations.base import BaseTransformer
 
 
 class _HeterogenousMetaEstimator(BaseEstimator, metaclass=ABCMeta):
@@ -585,6 +588,45 @@ class _HeterogenousMetaEstimator(BaseEstimator, metaclass=ABCMeta):
         else:
             self.set_tags(**{mid_tag_name: mid_tag_val_not})
 
+    def _steps_permutation(
+        self,
+        steps: List[Tuple[str, BaseEstimator]],
+        permutation: Optional[List[str]] = None,
+    ) -> List[Tuple[str, BaseEstimator]]:
+        # sort steps by permutation
+        if isinstance(permutation, list):
+
+            # check that all permutation are str values
+            if not all(isinstance(item, str) for item in permutation):
+                raise ValueError("permutation must be a list of strings")
+
+            # check that permutation contains same step names as given in steps
+            if not sorted([x[0] for x in steps]) == sorted(permutation):
+                raise ValueError(
+                    f"""Permutations must contain the same step names as the pipeline,
+                    found tuple names {sorted([x[0] for x in steps])} but got
+                    permutation {sorted(permutation)}."""
+                )
+
+            # sort steps
+            steps_permuted = []
+            for p in permutation:
+                for s in steps:
+                    if p == s[0]:
+                        steps_permuted.append(s)
+            steps = steps_permuted.copy()
+
+        elif permutation == "all":
+            steps = _get_all_permutations(steps)
+        elif isinstance(steps, type(None)):
+            pass
+        else:
+            raise ValueError(
+                f"""permutations must be a list, 'all' or None but
+                found type {type(steps)}"""
+            )
+        return steps
+
 
 def flatten(obj):
     """Flatten nested list/tuple structure.
@@ -654,3 +696,27 @@ def unflat_len(obj):
 def is_flat(obj):
     """Check whether list or tuple is flat, returns true if yes, false if nested."""
     return not any(isinstance(x, (list, tuple)) for x in obj)
+
+
+def _get_all_permutations(steps: List[Tuple[str, BaseEstimator]]) -> List[str]:
+    steps_preprocess = []
+    steps_postprocess = []
+
+    names, estimators = zip(*steps)
+    for name, est in zip(names, estimators):
+        if isinstance(est, BaseTransformer):
+            steps_preprocess.append(name)
+        else:
+            steps_postprocess = list(set(names) - set(steps_preprocess))
+            break
+
+    # create permutations of pre-preocessing steps
+    tuples = list(itertools.permutations(steps_preprocess))
+    permutations = [list(x) for x in tuples]
+    permutations = [x for x in permutations if len(x) == len(set(x))]
+
+    # append forecaster and post-processing steps to permutations
+    for i in range(len(permutations)):
+        permutations[i] = permutations[i] + steps_postprocess
+
+    return permutations
