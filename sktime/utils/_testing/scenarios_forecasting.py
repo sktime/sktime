@@ -106,7 +106,7 @@ class ForecasterTestScenario(TestScenario, BaseObject):
         if key in PREDICT_LIKE_FUNCTIONS:
             key = "predict"
 
-        args = self.args[key]
+        args = self.args.get(key, {})
 
         if deepcopy_args:
             args = deepcopy(args)

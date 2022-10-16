@@ -44,7 +44,7 @@ class ClustererTestScenario(TestScenario, BaseObject):
         if key in ["predict_proba"]:
             key = "predict"
 
-        args = self.args[key]
+        args = self.args.get(key, {})
 
         if deepcopy_args:
             args = deepcopy(args)
