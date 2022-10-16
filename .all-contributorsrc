@@ -1760,17 +1760,6 @@
         "test"
       ]
     },
-    {
-      "login": "chillerobscuro",
-      "name": "Logan Duffy",
-      "avatar_url": "https://avatars.githubusercontent.com/u/5232872?v=4",
-      "profile": "https://github.com/chillerobscuro",
-      "contributions": [
-        "code",
-        "ideas",
-        "bug"
-      ]
-    },
   ],
   "projectName": "sktime",
   "projectOwner": "alan-turing-institute",
