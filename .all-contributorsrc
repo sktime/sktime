@@ -1,4 +1,9 @@
 {
+  "projectName": "sktime",
+  "projectOwner": "sktime",
+  "repoType": "github",
+  "repoHost": "https://github.com",
+  "commitConvention": "none",
   "files": [
     "CONTRIBUTORS.md"
   ],
@@ -1761,6 +1766,16 @@
       ]
     },
     {
+      "login": "kcc-lion",
+      "name": "Kai Lion",
+      "profile": "https://github.com/kcc-lion",
+      "contributions": [
+        "code",
+        "test",
+        "doc"
+      ]
+    },
+    {
       "login": "bugslayer-332" ,
       "name": "Arepalli Yashwanth Reddy",
       "profile": "https://github.com/bugslayer-332",
@@ -1776,7 +1791,7 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/16029092?v=4",
       "profile": "https://github.com/shagn",
       "contributions": [
-        "doc",
+        "doc"
       ]
     },
     {
@@ -1796,10 +1811,13 @@
         "ideas"
       ]
     },
-  ],
-  "projectName": "sktime",
-  "projectOwner": "alan-turing-institute",
-  "repoType": "github",
-  "repoHost": "https://github.com",
-  "commitConvention": "none"
+    {
+      "login": "arampuria19",
+      "name": "Akshat Rampuria",
+      "profile": "https://github.com/arampuria19",
+      "contributions": [
+        "doc"
+      ]
+    }
+  ]
 }

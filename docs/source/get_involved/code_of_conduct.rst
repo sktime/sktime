@@ -321,7 +321,7 @@ reporter(s) with an update and projected timeline for resolution.
 The Code of Conduct committee will seek to agree on a resolution by
 consensus of all members investigating the report in question. If the
 committee cannot reach consensus and deadlocks for over a week, Dr Franz
-Király, as currently longest serving CC member of the sktime project, will break the tie.
+Király, as currently longest serving committee member, will break the tie.
 
 Possible responses may include:
 

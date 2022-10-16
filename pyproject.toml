@@ -1,6 +1,6 @@
 [project]
 name = "sktime"
-version = "0.13.2"
+version = "0.13.4"
 description = "A unified framework for machine learning with time series"
 authors = [
     {name = "Franz Király", email = "f.kiraly@ucl.ac.uk"},
@@ -45,7 +45,7 @@ dependencies = [
     "deprecated>=1.2.13",
     "numba>=0.53",
     "numpy>=1.21.0,<1.23",
-    "pandas>=1.1.0,<1.5.0",
+    "pandas>=1.1.0,<1.6.0",
     "scikit-learn>=0.24.0,<1.2.0",
     "statsmodels>=0.12.1",
     "scipy<1.9.0",
@@ -58,6 +58,7 @@ all_extras = [
     "filterpy>=1.4.5",
     "hmmlearn>=0.2.7",
     "gluonts>=0.9.0",
+    "keras-self-attention",
     "matplotlib>=3.3.2",
     "mne",
     "pmdarima>=1.8.0,!=1.8.1,<3.0.0",
@@ -112,7 +113,7 @@ dl = [
 
 [project.urls]
 homepage = "https://www.sktime.org"
-repository = "https://github.com/alan-turing-institute/sktime"
+repository = "https://github.com/sktime/sktime"
 documentation = "https://www.sktime.org"
 download = "https://pypi.org/project/sktime/#files"
 

@@ -48,14 +48,14 @@ Soft dependencies in sktime should usually be restricted to estimators.
 When adding a new soft dependency or changing the version of an existing one,
 the following files need to be updated:
 
-*  `pyproject.toml <https://github.com/alan-turing-institute/sktime/blob/main/pyproject.toml>`__,
+*  `pyproject.toml <https://github.com/sktime/sktime/blob/main/pyproject.toml>`__,
    adding the dependency or version bounds in the ``all_extras`` dependency set.
    Following the `PEP 621 <https://www.python.org/dev/peps/pep-0621/>`_ convention, all dependencies
    including build time dependencies and optional dependencies are specified in this file.
 
 Informative warnings or error messages for missing soft dependencies should be raised, in a situation where a user would need them.
 This is handled through our ``_check_soft_dependencies`` utility
-`here <https://github.com/alan-turing-institute/sktime/blob/main/sktime/utils/validation/_dependencies.py>`__.
+`here <https://github.com/sktime/sktime/blob/main/sktime/utils/validation/_dependencies.py>`__.
 
 There are specific conventions to add such warnings in estimators, as below.
 To add an estimator with a soft dependency, ensure the following:
@@ -68,7 +68,7 @@ To add an estimator with a soft dependency, ensure the following:
    in an environment without the required packages.
 *  in the python module containing the estimator, the ``_check_soft_dependencies`` utility is called
    at the top of the module, with ``severity="warning"``. This will raise an informative warning message already at module import.
-   See `here <https://github.com/alan-turing-institute/sktime/blob/main/sktime/utils/validation/_dependencies.py>`__
+   See `here <https://github.com/sktime/sktime/blob/main/sktime/utils/validation/_dependencies.py>`__
 *  In a case where the package import differs from the package name, i.e., ``import package_string`` is different from
    ``pip install different-package-string`` (usually the case for packages containing a dash in the name), the ``_check_soft_dependencies``
    utility should be used in ``__init__``. Both the warning and constructor call should use the ``package_import_alias`` argument for this.
@@ -91,11 +91,11 @@ Core or developer dependencies can be added only by core developers after discus
 When adding a new core dependency or changing the version of an existing one,
 the following files need to be updated:
 
-*  `pyproject.toml <https://github.com/alan-turing-institute/sktime/blob/main/pyproject.toml>`__,
+*  `pyproject.toml <https://github.com/sktime/sktime/blob/main/pyproject.toml>`__,
    adding the dependency or version bounds in the ``dependencies`` dependency set.
 
 When adding a new developer dependency or changing the version of an existing one,
 the following files need to be updated:
 
-*  `pyproject.toml <https://github.com/alan-turing-institute/sktime/blob/main/pyproject.toml>`__,
+*  `pyproject.toml <https://github.com/sktime/sktime/blob/main/pyproject.toml>`__,
    adding the dependency or version bounds in the ``dev`` dependency set.

@@ -7,9 +7,6 @@ __all__ = ["UnobservedComponents"]
 __author__ = ["juanitorduz"]
 
 import pandas as pd
-from statsmodels.tsa.statespace.structural import (
-    UnobservedComponents as _UnobservedComponents,
-)
 
 from sktime.forecasting.base.adapters import _StatsModelsAdapter
 
@@ -291,6 +288,10 @@ class UnobservedComponents(_StatsModelsAdapter):
         X : pd.DataFrame, optional (default=None)
             Exogenous variables.
         """
+        from statsmodels.tsa.statespace.structural import (
+            UnobservedComponents as _UnobservedComponents,
+        )
+
         self._forecaster = _UnobservedComponents(
             endog=y,
             exog=X,
