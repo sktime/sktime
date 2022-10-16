@@ -168,10 +168,7 @@ GitHub.
 3.1 Contact points
 ~~~~~~~~~~~~~~~~~~
 
-Please report CoC incidents via the [reporting tool in the issue tracker](https://github.com/alan-turing-institute/sktime/issues/new/choose).
-
-If the reporting tool is unavailable, please contact the current chair of
-the code of conduct committee directly by email, see 4.1.
+Please contact the current chair of the code of conduct committee directly by email, see 4.1.
 
 3.2 Alternate contact points
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -263,10 +260,7 @@ reporter(s) with an update and projected timeline for resolution.
 The Code of Conduct committee will seek to agree on a resolution by
 consensus of all members investigating the report in question. If the
 committee cannot reach consensus and deadlocks for over a week, Dr Franz
-Király, as lead investigator of the sktime project, will break the tie.
-If Dr Franz Király is unable to take part in the discussion due to a
-conflict of interest, Dr Anthony Bagnall, as an external member of the Code
-of Conduct committee, will make the decision.
+Király, as currently longest serving committee member, will break the tie.
 
 Possible responses may include:
 
@@ -309,9 +303,9 @@ committee is not required to act on this feedback.
 4.5 Conflicts of Interest
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-In the event of any conflict of interest such that Dr Franz Király is
-not able to evaluate or enforce the reported violation, Dr Anthony Bagnall
-will take Dr Franz Király's place if that resolves the conflict of interest. Otherwise Martina Vilas will take Dr Franz Király's place.
+In case of conflict of interest of sktime CoC committee members, you can report
+through the [NumFOCUS CoC process](https://numfocus.org/code-of-conduct),
+or, in case of events, to the organisation at which the event is taking place (e.g., a university).
 
 5 Acknowledgements
 ------------------
