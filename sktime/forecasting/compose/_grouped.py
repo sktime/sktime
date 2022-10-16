@@ -50,7 +50,7 @@ class ForecastByLevel(_DelegatedForecaster):
     >>> f.fit(y)
     ForecastByLevel(...)
     >>> fitted_forecasters = f.forecasters_
-    >>> fitted_forecasters_alt = f.get_fitted_params("forecasters")
+    >>> fitted_forecasters_alt = f.get_fitted_params()["forecasters"]
     """
 
     _tags = {
