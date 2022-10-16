@@ -31,7 +31,7 @@ Optional implements:
     OR predicting intervals     - _predict_interval(self, fh, X=None, coverage=None)
     predicting variance         - _predict_var(self, fh, X=None, cov=False)
     distribution forecast       - _predict_proba(self, fh, X=None)
-    fitted parameter inspection - get_fitted_params()
+    fitted parameter inspection - _get_fitted_params()
 
 Testing - implement if sktime forecaster (not needed locally):
     get default parameters for test instance(s) - get_test_params()

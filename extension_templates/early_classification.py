@@ -26,7 +26,7 @@ Mandatory implements:
 
 Optional implements:
     data conversion and capabilities tags - _tags
-    fitted parameter inspection           - get_fitted_params()
+    fitted parameter inspection           - _get_fitted_params()
     predicting class probabilities        - _predict_proba(self, X)
     updating probability predictions      - _update_predict_proba(self, X)
 
