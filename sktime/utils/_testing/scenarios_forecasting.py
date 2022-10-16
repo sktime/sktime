@@ -13,7 +13,6 @@ __all__ = [
 ]
 
 
-from copy import deepcopy
 from inspect import isclass
 
 import pandas as pd
@@ -106,12 +105,9 @@ class ForecasterTestScenario(TestScenario, BaseObject):
         if key in PREDICT_LIKE_FUNCTIONS:
             key = "predict"
 
-        args = self.args.get(key, {})
-
-        if deepcopy_args:
-            args = deepcopy(args)
-
-        return args
+        return super(ForecasterTestScenario, self).get_args(
+            key=key, obj=obj, deepcopy_args=deepcopy_args
+        )
 
 
 class ForecasterFitPredictUnivariateNoX(ForecasterTestScenario):
