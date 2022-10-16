@@ -168,15 +168,17 @@ GitHub.
 3.1 Contact points
 ~~~~~~~~~~~~~~~~~~
 
-If you feel able to, please contact Dr Franz Király by email at
-f.kiraly@ucl.ac.uk.
+Please report CoC incidents via the [reporting tool in the issue tracker](https://github.com/alan-turing-institute/sktime/issues/new/choose).
+
+If the reporting tool is unavailable, please contact the current chair of
+the code of conduct commitete directly by email, see 4.1.
 
 3.2 Alternate contact points
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If you do not feel comfortable contacting Dr Franz Király, please report
-an incident to [Martina Vilas](https://martinagvilas.github.io/) who
-is not part of the core developer team.
+In case of conflict of interest of sktime CoC committee members, you can report
+through the [NumFOCUS CoC process](https://numfocus.org/code-of-conduct),
+or, in case of events, to the organisation at which the event is taking place (e.g., a university).
 
 3.3 What to do if someone is in physical danger
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
