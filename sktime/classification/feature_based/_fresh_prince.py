@@ -203,10 +203,13 @@ class FreshPRINCE(BaseClassifier):
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
             special parameters are defined for a value, will return `"default"` set.
-            For classifiers, a "default" set of parameters should be provided for
-            general testing, and a "results_comparison" set for comparing against
-            previously recorded results if the general set does not produce suitable
-            probabilities to compare against.
+            FreshPRINCE provides the following special sets:
+                 "results_comparison" - used in some classifiers to compare against
+                    previously generated results where the default set of parameters
+                    cannot produce suitable probability estimates
+                "train_estimate" - used in some classifiers that set the
+                    "capability:train_estimate" tag to True to allow for more efficient
+                    testing when relevant parameters are available
 
         Returns
         -------
@@ -221,9 +224,14 @@ class FreshPRINCE(BaseClassifier):
                 "n_estimators": 10,
                 "default_fc_parameters": "minimal",
             }
-        else:
+        elif parameter_set == "train_estimate":
             return {
                 "n_estimators": 2,
                 "default_fc_parameters": "minimal",
                 "save_transformed_data": True,
+            }
+        else:
+            return {
+                "n_estimators": 2,
+                "default_fc_parameters": "minimal",
             }
