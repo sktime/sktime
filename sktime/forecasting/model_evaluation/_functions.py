@@ -3,7 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements functions to be used in evaluating forecasting models."""
 
-__author__ = ["aiwalter", "mloning", "fkiraly"]
+__author__ = ["aiwalter", "mloning", "fkiraly", "topher-lo"]
 __all__ = ["evaluate"]
 
 import time
@@ -20,6 +20,80 @@ from sktime.utils.validation.forecasting import check_cv, check_scoring
 PANDAS_MTYPES = ["pd.DataFrame", "pd.Series", "pd-multiindex", "pd_multiindex_hier"]
 
 
+def _check_strategy(strategy):
+    """Assert strategy value.
+
+    Parameters
+    ----------
+    strategy : str
+        strategy of how to evaluate a forecaster
+        must be in "refit", "update" , "no-update_params"
+
+    Raises
+    ------
+    ValueError
+        If strategy value is not in expected values, raise error.
+    """
+    valid_strategies = ("refit", "update", "no-update_params")
+    if strategy not in valid_strategies:
+        raise ValueError(f"`strategy` must be one of {valid_strategies}")
+
+
+def _split(y, X, train, test, freq):
+    # split data according to cv
+    y_train, y_test = y.iloc[train], y.iloc[test]
+    X_train, X_test = None, None
+
+    if X is not None:
+        # For X_test, we select the full range of test/train values.
+        # for those transformers that change the size of input.
+        test_plus_train = np.append(train, test)
+        X_train, X_test = (
+            X.iloc[train].sort_index(),
+            X.iloc[test_plus_train].sort_index(),
+        )  # Defensive sort
+
+    # Defensive assignment of freq
+    if freq is not None:
+        try:
+            if y_train.index.nlevels == 1:
+                y_train.index.freq = freq
+                y_test.index.freq = freq
+            else:
+                # See: https://github.com/pandas-dev/pandas/issues/33647
+                y_train.index.levels[0].freq = freq
+                y_test.index.levels[0].freq = freq
+        except AttributeError:  # Can't set attribute for range or period index
+            pass
+
+        if X is not None:
+            try:
+                if X.index.nlevels == 1:
+                    X_train.index.freq = freq
+                    X_test.index.freq = freq
+                else:
+                    X_train.index.levels[0].freq = freq
+                    X_test.index.levels[0].freq = freq
+            except AttributeError:  # Can't set attribute for range or period index
+                pass
+
+    return y_train, y_test, X_train, X_test
+
+
+def _select_fh_from_y(y):
+    # create forecasting horizon
+    # if cv object has fh, we use that
+    idx = y.index
+    # otherwise, if y_test is not hierarchical, we simply take the index of y_test
+    if y.index.nlevels == 1:
+        fh = ForecastingHorizon(idx, is_relative=False)
+    # otherwise, y_test is hierarchical, and we take its unique time indices
+    else:
+        fh_idx = idx.get_level_values(-1).unique()
+        fh = ForecastingHorizon(fh_idx, is_relative=False)
+    return fh
+
+
 def _evaluate_window(
     y,
     X,
@@ -27,6 +101,7 @@ def _evaluate_window(
     test,
     i,
     fh,
+    freq,
     forecaster,
     strategy,
     scoring,
@@ -44,10 +119,11 @@ def _evaluate_window(
     y_pred = pd.NA
 
     # split data
-    y_train, y_test, X_train, X_test = _split(y, X, train, test, fh)
-
-    # create forecasting horizon
-    fh = ForecastingHorizon(y_test.index, is_relative=False)
+    y_train, y_test, X_train, X_test = _split(
+        y=y, X=X, train=train, test=test, freq=freq
+    )
+    if fh is None:
+        fh = _select_fh_from_y(y_test)
 
     try:
         # fit/update
@@ -173,7 +249,7 @@ def evaluate(
 
     Returns
     -------
-    pd.DataFrame or dd.DataFrame
+    pd.DataFrame
         DataFrame that contains several columns with information regarding each
         refit/update and prediction of the forecaster.
 
@@ -190,17 +266,14 @@ def evaluate(
     >>> cv = ExpandingWindowSplitter(initial_window=12, step_length=3,
     ... fh=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
     >>> results = evaluate(forecaster=forecaster, y=y, cv=cv)
-
         Optionally, users may select other metrics that can be supplied
         by `scoring` argument. These can be forecast metrics of any kind,
         i.e., point forecast metrics, interval metrics, quantile foreast metrics.
         https://www.sktime.org/en/stable/api_reference/performance_metrics.html?highlight=metrics
-
         To evaluate estimators using a specific metric, provide them to the scoring arg.
     >>> from sktime.performance_metrics.forecasting import MeanAbsoluteError
     >>> loss = MeanAbsoluteError()
     >>> results = evaluate(forecaster=forecaster, y=y, cv=cv, scoring=loss)
-
         An example of an interval metric is the `PinballLoss`.
         It can be used with all probabilistic forecasters.
     >>> from sktime.forecasting.naive import NaiveVariance
@@ -217,22 +290,37 @@ def evaluate(
     ALLOWED_SCITYPES = ["Series", "Panel", "Hierarchical"]
 
     y_valid, _, _ = check_is_scitype(y, scitype=ALLOWED_SCITYPES, return_metadata=True)
-    # todo: more informative error message
-    assert y_valid
+    if not y_valid:
+        raise TypeError(
+            f"Expected y dtype {ALLOWED_SCITYPES!r}. Got {type(y)} instead."
+        )
 
-    y_inner = convert_to(y, to_type=PANDAS_MTYPES)
+    y = convert_to(y, to_type=PANDAS_MTYPES)
+
+    freq = None
+    try:
+        if y.index.nlevels == 1:
+            freq = y.index.freq
+        else:
+            freq = y.index.levels[0].freq
+    except AttributeError:
+        pass
 
     if X is not None:
         X_valid, _, _ = check_is_scitype(
             X, scitype=ALLOWED_SCITYPES, return_metadata=True
         )
-        assert X_valid
-        X_inner = convert_to(X, to_type=PANDAS_MTYPES)
+        if not X_valid:
+            raise TypeError(
+                f"Expected X dtype {ALLOWED_SCITYPES!r}. Got {type(X)} instead."
+            )
+        X = convert_to(X, to_type=PANDAS_MTYPES)
 
     score_name = "test_" + scoring.name
     cutoff_dtype = str(y.index.dtype)
     _evaluate_window_kwargs = {
         "fh": cv.fh,
+        "freq": freq,
         "forecaster": forecaster,
         "scoring": scoring,
         "strategy": strategy,
@@ -256,90 +344,6 @@ def evaluate(
                     **_evaluate_window_kwargs,
                 )
                 _evaluate_window_kwargs["forecaster"] = forecaster
-
-    # Initialize dataframe.
-    results = []
-
-    # Run temporal cross-validation.
-    for i, (train, test) in enumerate(cv.split_loc(y)):
-
-        # set default result values in case estimator fitting fails
-        score = error_score
-        fit_time = np.nan
-        pred_time = np.nan
-        cutoff = np.nan
-        y_pred = np.nan
-
-        # split data according to cv
-        y_train = _subset_keep_freq(y_inner, train)
-        y_test = _subset_keep_freq(y_inner, test)
-
-        if X is not None:
-            X_train = _subset_keep_freq(X_inner, train)
-            # For X_test, we select the full range of test/train values.
-            # for those transformers that change the size of input.
-            test_plus_train = train.union(test)
-            X_test = _subset_keep_freq(X_inner, test_plus_train)
-        else:
-            X_train = None
-            X_test = None
-
-        # create forecasting horizon
-        # if cv object has fh, we use that
-        if hasattr(cv, "fh") and cv.fh is not None:
-            fh = cv.fh
-        # otherwise, if y_test is not hierarchical, we simply take the index of y_test
-        elif not isinstance(y_test.index, pd.MultiIndex):
-            fh = ForecastingHorizon(y_test.index, is_relative=False)
-        # otherwise, y_test is hierarchical, and we take its unique time indices
-        else:
-            fh_idx = y_test.index.get_level_values(-1).unique()
-            fh = ForecastingHorizon(fh_idx, is_relative=False)
-
-        try:
-            # fit/update
-            start_fit = time.perf_counter()
-            if i == 0 or strategy == "refit":
-                forecaster = forecaster.clone()
-                forecaster.fit(y_train, X_train, fh=fh)
-
-            else:  # if strategy in ["update", "no-update_params"]:
-                update_params = strategy == "update"
-                forecaster.update(y_train, X_train, update_params=update_params)
-            fit_time = time.perf_counter() - start_fit
-
-            pred_type = {
-                "pred_quantiles": "forecaster.predict_quantiles",
-                "pred_intervals": "forecaster.predict_interval",
-                "pred_proba": "forecaster.predict_proba",
-                None: "forecaster.predict",
-            }
-            # predict
-            start_pred = time.perf_counter()
-
-            if hasattr(scoring, "metric_args"):
-                metric_args = scoring.metric_args
-
-            try:
-                scitype = scoring.get_tag("scitype:y_pred")
-            except ValueError:
-                # If no scitype exists then metric is not proba and no args needed
-                scitype = None
-                metric_args = {}
-
-            y_pred = eval(pred_type[scitype])(fh, X_test, **metric_args)
-
-            pred_time = time.perf_counter() - start_pred
-
-            # score
-            score = scoring(y_test, y_pred, y_train=y_train)
-
-            # cutoff
-            cutoff = forecaster.cutoff
-
-        except Exception as e:
-            if error_score == "raise":
-                raise e
             else:
                 result = _evaluate_window(
                     y,
@@ -408,31 +412,3 @@ def evaluate(
     results = results.astype({"len_train_window": int}).reset_index(drop=True)
 
     return results
-
-
-def _check_strategy(strategy):
-    """Assert strategy value.
-
-    Parameters
-    ----------
-    strategy : str
-        strategy of how to evaluate a forecaster
-        must be in "refit", "update" , "no-update_params"
-
-    Raises
-    ------
-    ValueError
-        If strategy value is not in expected values, raise error.
-    """
-    valid_strategies = ("refit", "update", "no-update_params")
-    if strategy not in valid_strategies:
-        raise ValueError(f"`strategy` must be one of {valid_strategies}")
-
-
-def _subset_keep_freq(y, idx):
-    """Subset y using y.loc[idx] but ensure that index.freq preserved."""
-    y_idx = y.loc[idx]
-    if hasattr(y.index, "freq") and y.index.freq is not None:
-        if hasattr(y_idx.index, "freq") and y_idx.index.freq is None:
-            y_idx.index.freq = y.index.freq
-    return y_idx

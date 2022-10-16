@@ -211,7 +211,8 @@ def test_evaluate_error_score(error_score, return_data, strategy, backend):
             )
 
 
-def test_evaluate_hierarchical():
+@pytest.mark.parametrize("backend", [None, "dask", "loky", "threading"])
+def test_evaluate_hierarchical(backend):
     """Check that adding exogenous data produces different results."""
     y = _make_hierarchical(
         random_state=0, hierarchy_levels=(2, 2), min_timepoints=20, max_timepoints=20
@@ -219,19 +220,17 @@ def test_evaluate_hierarchical():
     X = _make_hierarchical(
         random_state=42, hierarchy_levels=(2, 2), min_timepoints=20, max_timepoints=20
     )
-
     y = y.sort_index()
     X = X.sort_index()
 
     forecaster = DirectReductionForecaster(LinearRegression())
-
     cv = SlidingWindowSplitter()
     scoring = MeanAbsolutePercentageError(symmetric=True)
-
-    out_exog = evaluate(forecaster, cv, y, X=X, scoring=scoring, error_score="raise")
-
+    out_exog = evaluate(
+        forecaster, cv, y, X=X, scoring=scoring, error_score="raise", backend=backend
+    )
     out_no_exog = evaluate(
-        forecaster, cv, y, X=None, scoring=scoring, error_score="raise"
+        forecaster, cv, y, X=None, scoring=scoring, error_score="raise", backend=backend
     )
 
     scoring_name = f"test_{scoring.name}"
