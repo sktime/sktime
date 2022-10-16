@@ -303,9 +303,9 @@ committee is not required to act on this feedback.
 4.5 Conflicts of Interest
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-In the event of any conflict of interest such that Dr Franz Király is
-not able to evaluate or enforce the reported violation, Dr Anthony Bagnall
-will take Dr Franz Király's place if that resolves the conflict of interest. Otherwise Martina Vilas will take Dr Franz Király's place.
+In case of conflict of interest of sktime CoC committee members, you can report
+through the [NumFOCUS CoC process](https://numfocus.org/code-of-conduct),
+or, in case of events, to the organisation at which the event is taking place (e.g., a university).
 
 5 Acknowledgements
 ------------------
