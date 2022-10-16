@@ -1025,6 +1025,10 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
         ):
             return None
 
+        # skip test for get_fitted_params, as this does not return array-like
+        if method_nsc == "get_fitted_params":
+            return None
+
         # run fit plus method_nsc once, save results
         set_random_state(estimator)
         results = scenario.run(
