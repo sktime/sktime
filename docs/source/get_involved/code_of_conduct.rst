@@ -171,7 +171,7 @@ GitHub.
 Please report CoC incidents via the [reporting tool in the issue tracker](https://github.com/alan-turing-institute/sktime/issues/new/choose).
 
 If the reporting tool is unavailable, please contact the current chair of
-the code of conduct commitete directly by email, see 4.1.
+the code of conduct committee directly by email, see 4.1.
 
 3.2 Alternate contact points
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
