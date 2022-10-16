@@ -265,8 +265,9 @@ respectful and not include any harassing behaviours.
 4.1 The Code of Conduct Committee
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The sktime Code of Conduct committee is currently consists of
-Franz Kiraly (f.kiraly@ucl.ac.uk) only.
+The sktime Code of Conduct committee currently consists of:
+
+Dr Franz Király (f.kiraly@ucl.ac.uk)
 
 We encourage community members to step up to become a member of the committee.
 
