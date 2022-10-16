@@ -168,15 +168,17 @@ GitHub.
 3.1 Contact points
 ~~~~~~~~~~~~~~~~~~
 
-If you feel able to, please contact Dr Franz Király by email at
-f.kiraly@ucl.ac.uk.
+Please report CoC incidents via the [reporting tool in the issue tracker](https://github.com/alan-turing-institute/sktime/issues/new/choose).
+
+If the reporting tool is unavailable, please contact the current chair of
+the code of conduct committee directly by email, see 4.1.
 
 3.2 Alternate contact points
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If you do not feel comfortable contacting Dr Franz Király, please report
-an incident to [Martina Vilas](https://martinagvilas.github.io/) who
-is not part of the core developer team.
+In case of conflict of interest of sktime CoC committee members, you can report
+through the [NumFOCUS CoC process](https://numfocus.org/code-of-conduct),
+or, in case of events, to the organisation at which the event is taking place (e.g., a university).
 
 3.3 What to do if someone is in physical danger
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -202,14 +204,14 @@ respectful and not include any harassing behaviours.
 4.1 The Code of Conduct Committee
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The Code of Conduct committee is:
+The sktime Code of Conduct committee currently consists of:
 
--  Dr Franz Király: f.kiraly@ucl.ac.uk
--  Dr Anthony Bagnall: anthony.bagnall@uea.ac.uk
--  Markus Löning: markus.loning@gmail.com
--  Martina Vilas: martinagonzalezvilas@gmail.com (external member)
+Dr Franz Király (f.kiraly@ucl.ac.uk)
 
-The first three members are part of sktime's core developer team. Martina Vilas is an external member. As the community grows, we will seek to build a more diverse committee.
+We encourage community members to step up to become a member of the committee.
+
+You can use the NumFOCUS CoC reporting process as an alternative entry point
+for reporting, see 3.2.
 
 4.2 Urgent Situations: Acting Unilaterally
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
