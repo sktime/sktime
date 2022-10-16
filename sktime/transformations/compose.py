@@ -792,7 +792,7 @@ class FitInTransform(BaseTransformer):
         """
         return clone(self.transformer).fit(X=X, y=y).inverse_transform(X=X, y=y)
 
-    def get_fitted_params(self):
+    def _get_fitted_params(self):
         """Get fitted parameters.
 
         Returns
