@@ -25,7 +25,7 @@ Tag inspection and setter methods
     inspect tags (one tag)        - get_tag(tag_name: str, tag_value_default=None)
     inspect tags (class method)   - get_class_tags()
     inspect tags (one tag, class) - get_class_tag(tag_name:str, tag_value_default=None)
-    setting dynamic tags          - set_tag(**tag_dict: dict)
+    setting dynamic tags          - set_tags(**tag_dict: dict)
     set/clone dynamic tags        - clone_tags(estimator, tag_names=None)
 
 Blueprinting: resetting and cloning, post-init state with same hyper-parameters
