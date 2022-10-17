@@ -3,8 +3,8 @@
 
 __author__ = ["miraep8"]
 
+import numpy as np
 import pytest
-from numpy import array_equal
 
 from sktime.annotation.datagen import piecewise_normal
 from sktime.utils.validation._dependencies import _check_soft_dependencies
@@ -30,7 +30,7 @@ def test_GaussianHMM_wrapper():
     sktime_model.fit(X=data)
     hmmlearn_predict = hmmlearn_model.predict(X=data)
     sktime_predict = sktime_model.predict(X=data)
-    assert array_equal(hmmlearn_predict, sktime_predict)
+    assert np.array_equal(hmmlearn_predict, sktime_predict)
 
 
 @pytest.mark.skipif(
@@ -53,4 +53,25 @@ def test_GMMHMM_wrapper():
     sktime_model.fit(X=data)
     hmmlearn_predict = hmmlearn_model.predict(X=data)
     sktime_predict = sktime_model.predict(X=data)
-    assert array_equal(hmmlearn_predict, sktime_predict)
+    assert np.array_equal(hmmlearn_predict, sktime_predict)
+
+
+@pytest.mark.skipif(
+    not _check_soft_dependencies("hmmlearn", severity="none"),
+    reason="skip test if required soft dependency for hmmlearn not available",
+)
+def test_CategoricalHMM_wrapper():
+    """Verify that the wrapped CategoricalHMM estimator agrees with hmmlearn."""
+    # moved all potential soft dependency import inside the test:
+    from hmmlearn.hmm import CategoricalHMM as _CategoricalHMM
+
+    from sktime.annotation.hmm_learn import CategoricalHMM
+
+    data = np.array([[0], [1], [2]]).reshape((-1, 1))
+    hmmlearn_model = _CategoricalHMM(n_components=3, random_state=7)
+    sktime_model = CategoricalHMM(n_components=3, random_state=7)
+    hmmlearn_model.fit(X=data)
+    sktime_model.fit(X=data)
+    hmmlearn_predict = hmmlearn_model.predict(X=data)
+    sktime_predict = sktime_model.predict(X=data)
+    assert np.array_equal(hmmlearn_predict, sktime_predict)

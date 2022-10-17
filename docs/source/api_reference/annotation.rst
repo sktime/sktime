@@ -18,6 +18,14 @@ Time Series Segmentation
 
     ClaSPSegmentation
 
+.. currentmodule:: sktime.annotation.hmm_learn.categorical
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    CategoricalHMM
+
 .. currentmodule:: sktime.annotation.hmm_learn.gaussian
 
 .. autosummary::
