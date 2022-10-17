@@ -161,4 +161,3 @@ def _fit_estimator(estimator, X, y, intervals):
     """Fit an estimator on input data (X, y)."""
     transformed_x = _transform(X, intervals)
     return estimator.fit(transformed_x, y)
-
