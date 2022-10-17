@@ -172,7 +172,7 @@ class TimeSeriesForestClassifier(
 
     def _get_fitted_params(self):
         params = super(TimeSeriesForestClassifier, self)._get_fitted_params()
-        params.update({"n_classes": self.n_classes_, "fit_time": self.fit_time_,})
+        params.update({"n_classes": self.n_classes_, "fit_time": self.fit_time_})
         return params
 
     @classmethod
