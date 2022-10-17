@@ -3,7 +3,7 @@
 
 __author__ = ["Jack Russon", "AurumnPegasus"]
 
-from sktime.networks.attentionlstm import _AttentionLSTM
+from sktime.networks.attentionlstm import _getAttentionLSTM
 from sktime.networks.base import BaseDeepNetwork
 from sktime.utils.validation._dependencies import _check_dl_dependencies
 
@@ -90,7 +90,7 @@ class LSTMFCNNetwork(BaseDeepNetwork):
 
         x = keras.layers.Permute((2, 1))(input_layer)
         if self.attention:
-            x = _AttentionLSTM(self.num_cells)(x)
+            x = _getAttentionLSTM(self.num_cells)(x)
         else:
             x = keras.layers.LSTM(self.num_cells)(x)
         x = keras.layers.Dropout(self.dropout)(x)
