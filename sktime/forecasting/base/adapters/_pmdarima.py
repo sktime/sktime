@@ -310,7 +310,7 @@ class _PmdArimaAdapter(BaseForecaster):
         """
         names = self._get_fitted_param_names()
         params = self._get_fitted_params_arima_res()
-        fitted_params = {name: param for name, param in zip(names, params)}
+        fitted_params = {str(name): param for name, param in zip(names, params)}
 
         if hasattr(self._forecaster, "model_"):  # AutoARIMA
             fitted_params["order"] = self._forecaster.model_.order

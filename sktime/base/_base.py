@@ -25,7 +25,7 @@ Tag inspection and setter methods
     inspect tags (one tag)        - get_tag(tag_name: str, tag_value_default=None)
     inspect tags (class method)   - get_class_tags()
     inspect tags (one tag, class) - get_class_tag(tag_name:str, tag_value_default=None)
-    setting dynamic tags          - set_tag(**tag_dict: dict)
+    setting dynamic tags          - set_tags(**tag_dict: dict)
     set/clone dynamic tags        - clone_tags(estimator, tag_names=None)
 
 Blueprinting: resetting and cloning, post-init state with same hyper-parameters
@@ -901,7 +901,7 @@ class BaseEstimator(BaseObject):
 
         for c in c_dict.keys():
             comp = c_dict[c]
-            if comp._is_fitted:
+            if isinstance(comp, BaseEstimator) and comp._is_fitted:
                 c_f_params = c_dict[c].get_fitted_params()
                 c_f_params = {f"{sh(c)}__{k}": c_f_params[k] for k in c_f_params.keys()}
                 fitted_params.update(c_f_params)
