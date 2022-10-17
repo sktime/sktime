@@ -1159,7 +1159,10 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
                 f"get_fitted_params of {type(estimator)} should return dict with "
                 f"with str keys, but some keys are not str"
             )
-            assert all([isinstance(x, str) for x in output.keys()])
+            nonstr = [x for x in output.keys() if not isinstance(x, str)]
+            if not len(nonstr) == 0:
+                msg = f"found non-str keys in get_fitted_params return: {nonstr}"
+                raise AssertionError(msg)
 
     def test_methods_have_no_side_effects(
         self, estimator_instance, scenario, method_nsc
