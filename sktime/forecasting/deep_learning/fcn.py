@@ -48,8 +48,8 @@ class FCNForecaster:
         output_layer = keras.layers.Dense(units=1, activation="sigmoid")(output_layer)
 
         self.optimizer_ = (
-            keras.optimiqzers.Adam(learning_rate=0.001)
-            if self.optimzer is None
+            keras.optimizers.Adam(learning_rate=0.001)
+            if self.optimizer is None
             else self.optimizer
         )
 
@@ -61,7 +61,7 @@ class FCNForecaster:
         """Temp docstring."""
         X = X.transpose(0, 2, 1)
         self.input_shape = X.shape[1:]
-        self.model_ = self.build_model(self.input_shape, 1)
+        self.model_ = self.build_model(self.input_shape)
         self.model_.fit(
             X,
             y,
