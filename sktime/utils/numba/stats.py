@@ -11,9 +11,18 @@ def mean(X):
     return np.mean(X)
 
 
-@njit(fastmath=True, cache=True)
 def median(X):
     """Numba median function for a single time series."""
+    if X.flags.writeable:
+        return _median(X)
+    else:
+        X = X.copy()
+        X.setflags(write=True)
+        return _median(X)
+
+
+@njit(fastmath=True, cache=True)
+def _median(X):
     return np.median(X)
 
 
