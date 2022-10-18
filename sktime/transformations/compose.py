@@ -1287,6 +1287,20 @@ class Id(_DelegatedTransformer):
         """
         return X
 
+    def _get_fitted_params(self):
+        """Get fitted parameters.
+
+        private _get_fitted_params, called from get_fitted_params
+
+        State required:
+            Requires state to be "fitted".
+
+        Returns
+        -------
+        fitted_params : dict
+        """
+        return {}
+
 
 class OptionalPassthrough(_DelegatedTransformer):
     """Wrap an existing transformer to tune whether to include it in a pipeline.
