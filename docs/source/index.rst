@@ -18,7 +18,7 @@ for existing members to share what we have been up to! Please register
 
 .. raw:: html
 
-    <iframe width="560" height="315" src="https://drive.google.com/file/d/1hhYk1P_y5FHWip_EYqTY6EipkKRdMEM-/view?usp=sharing" frameborder="0" allowfullscreen></iframe>
+    <iframe src="https://drive.google.com/file/d/1DgxrUsstn3oDv-bzthwJR4t4JbhxSeHo/preview" width="640" height="480" allow="autoplay"></iframe>
 
 
 Mission
