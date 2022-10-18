@@ -1238,7 +1238,7 @@ class InvertTransform(_DelegatedTransformer):
         return [params1, params2]
 
 
-class Id(_DelegatedTransformer):
+class Id(BaseTransformer):
     """Identity transformer, returns data unchanged in transform/inverse_transform."""
 
     _tags = {
