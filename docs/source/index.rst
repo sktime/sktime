@@ -7,14 +7,8 @@ Welcome to sktime
   A unified framework for machine learning with time series
 
 
-Mission
-=======
-
-.. include:: about/_mission.rst
-
-
-Upcoming Event
-==============
+sktime Fall dev days
+====================
 
 Please join the sktime community Nov 9 - 10 2022 for our virtual Fall dev days.  There will be an additional in-person social
 option in regions with enough participants. Our core hours will be 10-12 UTC, with additional meeting before/after these core hours!
@@ -22,9 +16,15 @@ This is a great opportunity for new community members to learn more about how to
 for existing members to share what we have been up to! Please register
 `here <https://docs.google.com/forms/d/e/1FAIpQLScQkrSZfNiZiQKPuBcFMtHAlL10RBZ3QSBo-I3klUHeL7Vg0A/viewform>`_!
 
-raw::html
-<video controls src="./videos/sktime_fall_dev_days_promo_video.mp4"></video>
+.. raw:: html
 
+    <iframe width="560" height="315" src="https://drive.google.com/file/d/1hhYk1P_y5FHWip_EYqTY6EipkKRdMEM-/view?usp=sharing" frameborder="0" allowfullscreen></iframe>
+
+
+Mission
+=======
+
+.. include:: about/_mission.rst
 
 Scope
 =====
