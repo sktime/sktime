@@ -45,6 +45,11 @@ class FourierFeatures(BaseTransformer):
         For example, if sp_list = [7, 365] and fourier_terms_list = [3, 9], the seasonal
         frequency of 7 will have 3 fourier terms and the seasonal frequency of 365
         will have 9 fourier terms.
+    freq : str, optional, default = None
+        Only used when X has a pd.DatetimeIndex without a specified frequency.
+        Specifies the frequency of the index of your data. The string should
+        match a pandas offset alias:
+        https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#offset-aliases
 
     References
     ----------
@@ -97,9 +102,12 @@ class FourierFeatures(BaseTransformer):
         "python_version": None,  # PEP 440 python version specifier to limit versions
     }
 
-    def __init__(self, sp_list: List[Union[int, float]], fourier_terms_list: List[int]):
+    def __init__(
+        self, sp_list: List[Union[int, float]], fourier_terms_list: List[int], freq=None
+    ):
         self.sp_list = sp_list
         self.fourier_terms_list = fourier_terms_list
+        self.freq = freq
 
         if len(self.sp_list) != len(self.fourier_terms_list):
             raise ValueError(
@@ -115,7 +123,7 @@ class FourierFeatures(BaseTransformer):
 
         super(FourierFeatures, self).__init__()
 
-    def _fit(self, X, y=None):
+    def _fit(self, X, y=None, freq=None):
         """Fit transformer to X and y.
 
         private _fit containing the core logic, called from fit
@@ -127,6 +135,11 @@ class FourierFeatures(BaseTransformer):
             Data to fit transform to
         y : Series or Panel of mtype y_inner_mtype, default=None
             Additional data, e.g., labels for transformation
+        freq : str, optional, default = None
+            Only used when X has a pd.DatetimeIndex without a specified frequency.
+            Specifies the frequency of the index of your data. The string should
+            match a pandas offset alias:
+            https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#offset-aliases
 
         Returns
         -------
@@ -152,6 +165,15 @@ class FourierFeatures(BaseTransformer):
         # store the integer form of the minimum date in the prediod index
         # this is used to make sure that time t is calculated with reference to
         # the data passed on fit
+        if isinstance(X.index, pd.DatetimeIndex):
+            if X.index.freq is None:
+                if self.freq is None:
+                    ValueError("X has no known frequency and none is supplied")
+                else:
+                    X.index = X.index.to_period(self.freq)
+            else:
+                self.freq = X.index.freq
+                X.index = X.index.to_period(self.freq)
         self.min_t_ = np.min(X.index.astype(int))
 
         return self
@@ -174,6 +196,10 @@ class FourierFeatures(BaseTransformer):
         transformed version of X
         """
         X_transformed = deepcopy(X)
+
+        if isinstance(X.index, pd.DatetimeIndex):
+            X.index = X.index.to_period(self.freq)
+
         # get the integer form of the PeriodIndex
         int_index = X_transformed.index.astype(int) - self.min_t_
 
