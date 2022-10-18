@@ -16,7 +16,8 @@ def median(X):
 
     This function clones the data if the array passed is not writable before finding
     the median. This is because of a known bug in the interaction between numba and
-    numpy np.median function. See
+    numpy np.median function that causes an error with threaded jobs with large
+    datasets. See
     https://github.com/numba/numba/issues/3070
     and
     https://github.com/sktime/sktime/issues/3582
