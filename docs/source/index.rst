@@ -19,7 +19,8 @@ Upcoming Event
 Please join the sktime community Nov 9 - 10 2022 for our virtual Fall dev days.  There will be an additional in-person social
 option in regions with enough participants. Our core hours will be 10-12 UTC, with additional meeting before/after these core hours!
 This is a great opportunity for new community members to learn more about how to contribute to sktime as well as a good opportunity
-for existing members to share what we have been up to! Please register here!
+for existing members to share what we have been up to! Please register
+`here <https://docs.google.com/forms/d/e/1FAIpQLScQkrSZfNiZiQKPuBcFMtHAlL10RBZ3QSBo-I3klUHeL7Vg0A/viewform>`_!
 
 raw::html
 <video controls src="./videos/sktime_fall_dev_days_promo_video.mp4"></video>
