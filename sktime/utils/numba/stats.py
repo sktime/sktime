@@ -11,30 +11,6 @@ def mean(X):
     return np.mean(X)
 
 
-def median(X):
-    """Numba median function for a single time series.
-
-    This function clones the data if the array passed is not writable before finding
-    the median. This is because of a known bug in the interaction between numba and
-    numpy np.median function that causes an error with threaded jobs with large
-    datasets. See
-    https://github.com/numba/numba/issues/3070
-    and
-    https://github.com/sktime/sktime/issues/3582
-    """
-    if X.flags.writeable:
-        return _median(X)
-    else:
-        X = X.copy()
-        X.setflags(write=True)
-        return _median(X)
-
-
-@njit(fastmath=True, cache=True)
-def _median(X):
-    return np.median(X)
-
-
 @njit(fastmath=True, cache=True)
 def std(X):
     """Numba standard deviation function for a single time series."""
