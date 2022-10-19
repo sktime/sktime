@@ -34,6 +34,6 @@ def z_normalise_series(X):
     if std > 0:
         X_n = (X - np.mean(X)) / std
     else:
-        X_n = np.zeros(len(X))
+        X_n = X - np.mean(X)
 
     return X_n

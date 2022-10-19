@@ -228,7 +228,7 @@ def debug_load_and_save():
 from sktime.datasets._data_io import _load_provided_dataset
 
 
-def debug_testing_load_and_save():
+def debug_testing_load_and_save_3499():
     """Test load and save, related to https://github.com/sktime/sktime/issues/3499."""
     from datasets import write_panel_to_tsfile
 
@@ -244,7 +244,7 @@ def debug_testing_load_and_save():
     shutil.rmtree("./Temp")
 
 
-def debug_numba_stc_2397():
+def debug_numba_stc_2397(type):
     """See https://github.com/sktime/sktime/issues/2397."""
     import warnings
 
@@ -256,7 +256,7 @@ def debug_numba_stc_2397():
     from sktime.classification.sklearn import RotationForest
 
     # make fake data
-    data = pd.DataFrame(np.random.random((500, 25))).astype(np.float64)
+    data = pd.DataFrame(np.random.random((500, 25))).astype(type)
 
     # reshape to input into Shapelet Classifier
     data4train = data.apply(
@@ -275,6 +275,77 @@ def debug_numba_stc_2397():
     clf = ShapeletTransformClassifier(n_shapelet_samples=100)
 
     clf.fit(X_train, y_train)
+
+
+from numba import njit
+
+
+@njit(
+    fastmath=True,
+    cache=True,
+)
+def z_normalise_debug(X):
+    """Numba z-normalisation function for a single time series."""
+    print("HEREEEEE: type of X = ", type(X[0]), " x.dtype = ", X.dtype)
+    std = np.std(X)
+    if std > 0:
+        X_n = (X - np.mean(X)) / std
+    else:
+        X_n = X - np.mean(X)
+    return X_n
+
+
+def debug_numba2_2397():
+    """Docstring."""
+    #    d = z_normalise_series(data)
+    #    print(" normed = ", d)
+    data = np.zeros(10, dtype="int64")
+    print(
+        f"{type(data[0])} mean = {np.mean(data)} type mean = {type(np.mean(data))},returned "
+        f"type {type((data -np.mean(data))[0])} type of zeros = {type(np.zeros(10)[0])}"
+    )
+    #    d = z_normalise_debug(data)
+    #    print(" normed = ", d)
+    data[0] = 100
+    d = z_normalise_debug(data)
+    print(" normed = ", d)
+
+
+def debug_callibration_2662():
+    """Issue 2662 https://github.com/sktime/sktime/issues/2662."""
+    import sklearn.calibration
+    import sklearn.pipeline
+
+    from sktime.datasets import load_arrow_head, load_basic_motions
+    from sktime.transformations.panel import rocket
+    from sktime.transformations.panel.padder import PaddingTransformer
+
+    X, y = load_basic_motions(return_X_y=True)
+    n_jobs = -1
+
+    featurizer_rocket = rocket.MiniRocket(n_jobs=n_jobs)
+    featurizer_rocket = rocket.Rocket(n_jobs=n_jobs)
+    featurizer_rocket = rocket.MultiRocket(n_jobs=n_jobs)
+    featurizer_rocket = rocket.MiniRocketMultivariate(n_jobs=n_jobs)
+    featurizer_rocket = rocket.MultiRocketMultivariate(n_jobs=n_jobs)
+    classifier = sklearn.ensemble.HistGradientBoostingClassifier(
+        loss="categorical_crossentropy"
+    )
+
+    base_estimator = sklearn.pipeline.Pipeline(
+        [
+            ("featurizer_rocket", featurizer_rocket),
+            ("classifier", classifier),
+        ],
+    )
+
+    calibrated_model = sklearn.calibration.CalibratedClassifierCV(
+        base_estimator,
+        cv=2,
+        n_jobs=n_jobs,
+    )
+
+    calibrated_model.fit(X, y)
 
 
 def debug_signatures_2374():
@@ -322,49 +393,11 @@ def debug_signatures2_2374():
     print(" Predictions = ", trainP)
 
 
-def debug_callibration_2662():
-    """Issue 2662 https://github.com/sktime/sktime/issues/2662."""
-    import sklearn.calibration
-    import sklearn.pipeline
-
-    from sktime.datasets import load_arrow_head, load_basic_motions
-    from sktime.transformations.panel import rocket
-    from sktime.transformations.panel.padder import PaddingTransformer
-
-    X, y = load_basic_motions(return_X_y=True)
-    n_jobs = -1
-
-    featurizer_rocket = rocket.MiniRocket(n_jobs=n_jobs)
-    featurizer_rocket = rocket.Rocket(n_jobs=n_jobs)
-    featurizer_rocket = rocket.MultiRocket(n_jobs=n_jobs)
-    featurizer_rocket = rocket.MiniRocketMultivariate(n_jobs=n_jobs)
-    featurizer_rocket = rocket.MultiRocketMultivariate(n_jobs=n_jobs)
-    classifier = sklearn.ensemble.HistGradientBoostingClassifier(
-        loss="categorical_crossentropy"
-    )
-
-    base_estimator = sklearn.pipeline.Pipeline(
-        [
-            ("featurizer_rocket", featurizer_rocket),
-            ("classifier", classifier),
-        ],
-    )
-
-    calibrated_model = sklearn.calibration.CalibratedClassifierCV(
-        base_estimator,
-        cv=2,
-        n_jobs=n_jobs,
-    )
-
-    calibrated_model.fit(X, y)
-
-
-def debug_sktime_pipeline():
-    """Investigate insertion of leading zero."""
-
-
 if __name__ == "__main__":
     # 2662 is a problem with n_jobs in the ROCKET transformer
     # debug_callibration_2662()
-    debug_signatures_2374()
-    debug_signatures2_2374()
+    debug_numba_stc_2397("int32")
+    debug_numba_stc_2397("float64")
+    debug_numba_stc_2397("float32")
+    debug_numba_stc_2397("int64")
+    # debug_numba2_2397()
