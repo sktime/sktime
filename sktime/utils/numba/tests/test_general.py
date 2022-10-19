@@ -6,7 +6,8 @@ __author__ = ["TonyBagnall"]
 import numpy as np
 import pytest
 from numpy.testing import assert_array_equal
-from utils.numba.general import z_normalise_series
+
+from sktime.utils.numba.general import z_normalise_series
 
 DATATYPES = ["int32", "int64", "float32", "float64"]
 
