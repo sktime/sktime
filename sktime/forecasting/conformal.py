@@ -386,8 +386,10 @@ class ConformalIntervals(BaseForecaster):
         else:
             y_index = full_y_index
 
-        if sample_frac and len(y_index.to_series().sample(frac=sample_frac)) > 2:
-            y_index = y_index.to_series().sample(frac=sample_frac)
+        if sample_frac:
+            y_sample = y_index.to_series().sample(frac=sample_frac)
+            if len(y_sample) > 2:
+                y_index = y_sample
 
         def _get_residuals_matrix_row(forecaster, y, X, id):
             y_train = get_slice(y, start=None, end=id)  # subset on which we fit
