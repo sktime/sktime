@@ -320,32 +320,6 @@ def debug_signatures2_2374():
     print("Type transX = ", type(transX), " shape transX = ", transX.shape)
     print("Type of entry = ", type(transX.iloc[0, 0]), " shape transX = ", transX.shape)
     print(" Predictions = ", trainP)
-    ## Test 2D numpy
-
-
-#    trainX = np.random.rand(40, 100).astype('float32')
-#    print("Input type ", type(trainX)," Shape ",trainX.shape)
-
-
-#    sig1.fit(trainX)
-#    transX=sig1.transform(trainX)
-#    print("Type transX = ", type(transX)," shape transX = ",transX.shape)
-#    trainX, trainy = load_UCR_UEA_dataset(name="UnitTest", return_type="nested_univ",
-#                                split="TRAIN")
-#    sig1.fit(trainX)
-#    transX = sig1.transform(trainX)
-#    print("UnitTest type transX = ", type(transX)," shape transX = ",transX.shape)
-#    trainX2, trainy2 = load_UCR_UEA_dataset(name="UnitTest", return_type="numpy3D",
-#                                split="TRAIN")
-#    sig1.fit(trainX2)
-#    transX2 = sig1.transform(trainX2)
-#    print("UnitTest type transX2 = ", type(transX2)," shape transX2 = ",transX2.shape)
-#    trainX3, trainy3 = load_UCR_UEA_dataset(name="UnitTest", return_type="numpy2D",
-#                                split="TRAIN")
-#    sig1.fit(trainX3)
-
-#    transX = sig1.transform(trainX3)
-#    print("UnitTest type transX3 = ", type(transX)," shape transX3 = ",transX.shape)
 
 
 def debug_callibration_2662():
@@ -385,6 +359,12 @@ def debug_callibration_2662():
     calibrated_model.fit(X, y)
 
 
+def debug_sktime_pipeline():
+    """Investigate insertion of leading zero."""
+
+
 if __name__ == "__main__":
     # 2662 is a problem with n_jobs in the ROCKET transformer
-    debug_callibration_2662()
+    # debug_callibration_2662()
+    debug_signatures_2374()
+    debug_signatures2_2374()
