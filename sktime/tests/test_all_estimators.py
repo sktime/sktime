@@ -23,6 +23,7 @@ from sklearn.utils.estimator_checks import (
 )
 
 from sktime.base import BaseEstimator, BaseObject, load
+from sktime.classification.deep_learning.base import BaseDeepClassifier
 from sktime.dists_kernels._base import (
     BasePairwiseTransformer,
     BasePairwiseTransformerPanel,
@@ -30,6 +31,7 @@ from sktime.dists_kernels._base import (
 from sktime.exceptions import NotFittedError
 from sktime.forecasting.base import BaseForecaster
 from sktime.registry import all_estimators
+from sktime.regression.deep_learning.base import BaseDeepRegressor
 from sktime.tests._config import (
     EXCLUDE_ESTIMATORS,
     EXCLUDED_TESTS,
@@ -1153,6 +1155,9 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
             isinstance(estimator_instance, BaseForecaster)
             and method_nsc == "predict_proba"
         ):
+            return None
+        # escape Deep estimators if soft-dep `h5py` isn't installed
+        if isinstance(estimator_instance, (BaseDeepClassifier, BaseDeepRegressor)):
             return None
 
         estimator = estimator_instance
