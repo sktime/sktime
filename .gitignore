@@ -158,7 +158,7 @@ build_doc_site/
 # dev files
 envs/
 *.html
-sktime/_contrib/debug.py
+sktime/_contrib/debug_current.py
 sktime/_contrib/local_code.py
 sktime/_contrib/main.py
 sktime/_contrib/temp/
