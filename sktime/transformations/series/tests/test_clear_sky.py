@@ -7,8 +7,8 @@ __author__ = ["ciaran-g"]
 
 import numpy as np
 
-from sktime.transformations.series.clear_sky import ClearSky
 from sktime.datasets import load_solar
+from sktime.transformations.series.clear_sky import ClearSky
 
 
 def test_clearsky_trafo_vals():
