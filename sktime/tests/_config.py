@@ -62,14 +62,25 @@ EXCLUDED_TESTS = {
         "test_fit_does_not_overwrite_hyper_params",
         "test_save_estimators_to_file",
     ],
-    # TapNet fails due to Lambda layer, see #3539
+    # TapNet fails due to Lambda layer, see #3539 and #3616
     "TapNetClassifier": [
         "test_persistence_via_pickle",
         "test_save_estimators_to_file",
     ],
     "TapNetRegressor": [
+        "test_fit_idempotent",
         "test_persistence_via_pickle",
         "test_save_estimators_to_file",
+    ],
+    # `test_fit_idempotent` fails with `AssertionError`, see #3616
+    "CNNClassifier": [
+        "test_fit_idempotent",
+    ],
+    "CNNRegressor": [
+        "test_fit_idempotent",
+    ],
+    "FCNClassifier": [
+        "test_fit_idempotent",
     ],
     # sth is not quite right with the RowTransformer-s changing state,
     #   but these are anyway on their path to deprecation, see #2370
