@@ -57,6 +57,7 @@ from sktime.utils.sampling import random_partition
 from sktime.utils.validation._dependencies import (
     _check_dl_dependencies,
     _check_estimator_deps,
+    _check_soft_dependencies,
 )
 
 # whether to subsample estimators per os/version partition matrix design
@@ -1157,7 +1158,9 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
         ):
             return None
         # escape Deep estimators if soft-dep `h5py` isn't installed
-        if isinstance(estimator_instance, (BaseDeepClassifier, BaseDeepRegressor)):
+        if isinstance(
+            estimator_instance, (BaseDeepClassifier, BaseDeepRegressor)
+        ) and not _check_soft_dependencies("h5py", severity="warning"):
             return None
 
         estimator = estimator_instance
@@ -1168,7 +1171,7 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
         # Generate results before pickling
         vanilla_result = scenario.run(estimator, method_sequence=[method_nsc])
 
-        # Serialize and unserialize
+        # Serialize and deserialize
         serialized_estimator = estimator.save()
         deserialized_estimator = load(serialized_estimator)
 
