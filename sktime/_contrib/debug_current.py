@@ -244,7 +244,7 @@ def debug_testing_load_and_save():
     shutil.rmtree("./Temp")
 
 
-def debug_numba_stc():
+def debug_numba_stc_2397():
     """See https://github.com/sktime/sktime/issues/2397."""
     import warnings
 
@@ -277,7 +277,7 @@ def debug_numba_stc():
     clf.fit(X_train, y_train)
 
 
-def debug_signatures():
+def debug_signatures_2374():
     """See #2374 https://github.com/sktime/sktime/issues/2374.
 
     Note in metaestimators.pt seems to add a trailing zero, wtf?
@@ -305,7 +305,7 @@ def debug_signatures():
     print(" Predictions = ", trainP)
 
 
-def debug_signatures2():
+def debug_signatures2_2374():
     """See #2374 https://github.com/sktime/sktime/issues/2374."""
     trainX, trainY = load_UCR_UEA_dataset(
         name="BasicMotions", return_type="numpy3D", split="TRAIN"
@@ -348,7 +348,7 @@ def debug_signatures2():
 #    print("UnitTest type transX3 = ", type(transX)," shape transX3 = ",transX.shape)
 
 
-def debug_callibration():
+def debug_callibration_2662():
     """Issue 2662 https://github.com/sktime/sktime/issues/2662."""
     import sklearn.calibration
     import sklearn.pipeline
@@ -363,8 +363,8 @@ def debug_callibration():
     featurizer_rocket = rocket.MiniRocket(n_jobs=n_jobs)
     featurizer_rocket = rocket.Rocket(n_jobs=n_jobs)
     featurizer_rocket = rocket.MultiRocket(n_jobs=n_jobs)
+    featurizer_rocket = rocket.MiniRocketMultivariate(n_jobs=n_jobs)
     featurizer_rocket = rocket.MultiRocketMultivariate(n_jobs=n_jobs)
-    #    featurizer_rocket=PaddingTransformer()
     classifier = sklearn.ensemble.HistGradientBoostingClassifier(
         loss="categorical_crossentropy"
     )
@@ -385,4 +385,6 @@ def debug_callibration():
     calibrated_model.fit(X, y)
 
 
-debug_callibration()
+if __name__ == "__main__":
+    # 2662 is a problem with n_jobs in the ROCKET transformer
+    debug_callibration_2662()
