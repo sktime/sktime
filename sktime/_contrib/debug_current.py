@@ -27,7 +27,7 @@ from sktime.utils.sampling import stratified_resample
 # debug_load_uea_dataset(return_type="numpy3d")
 
 
-def debug_write_dataframe_to_ts_file(name, extract_path=None):
+def debug_write_dataframe_to_ts_file_3499(name, extract_path=None):
     """See https://github.com/sktime/sktime/issues/3499."""
     from sktime.datatypes import check_is_scitype
 
@@ -48,8 +48,8 @@ def debug_write_dataframe_to_ts_file(name, extract_path=None):
     )
 
 
-def debug_load_and_save():
-    """Issue?."""
+def debug_load_and_save_3499():
+    """See https://github.com/sktime/sktime/issues/3499."""
     X1, y1 = load_gunpoint()
     write_dataframe_to_tsfile(
         X1,
@@ -110,6 +110,9 @@ def debug_testing_load_and_save_3499():
     )
     assert np.array_equal(y, newy)
     shutil.rmtree("./Temp")
+
+
+############## 2662 https://github.com/sktime/sktime/issues/2662
 
 
 def debug_callibration_2662():
