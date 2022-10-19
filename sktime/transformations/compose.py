@@ -799,7 +799,7 @@ class FitInTransform(BaseTransformer):
         -------
         fitted_params : dict
         """
-        return self.transformer_.get_fitted_params()
+        return {}
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
