@@ -256,7 +256,10 @@ def debug_numba_stc_2397(type):
     from sktime.classification.sklearn import RotationForest
 
     # make fake data
-    data = pd.DataFrame(np.random.random((500, 25))).astype(type)
+    if type == "int32" or type == "int64":
+        data = pd.DataFrame(100 * np.random.random((500, 25))).astype(type)
+    else:
+        data = pd.DataFrame(np.random.random((500, 25))).astype(type)
 
     # reshape to input into Shapelet Classifier
     data4train = data.apply(
