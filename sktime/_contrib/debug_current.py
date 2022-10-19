@@ -249,14 +249,13 @@ def debug_numba_stc_2397(type):
     import warnings
 
     warnings.simplefilter("ignore", category=FutureWarning)
-
     from sklearn.model_selection import train_test_split
 
     from sktime.classification.shapelet_based import ShapeletTransformClassifier
     from sktime.classification.sklearn import RotationForest
 
     # make fake data
-    if type == "int32" or type == "int64":
+    if type == "int32" or type == "int64":  # Ensure not all zeros
         data = pd.DataFrame(100 * np.random.random((500, 25))).astype(type)
     else:
         data = pd.DataFrame(np.random.random((500, 25))).astype(type)
