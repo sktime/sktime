@@ -15,6 +15,7 @@ import numpy as np
 
 from sktime.exceptions import NotFittedError
 from sktime.regression.base import BaseRegressor
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 
 class BaseDeepRegressor(BaseRegressor, ABC):
@@ -198,6 +199,7 @@ class BaseDeepRegressor(BaseRegressor, ABC):
         from zipfile import ZipFile
 
         if path is None:
+            _check_soft_dependencies("h5py")
             import h5py
 
             with h5py.File(
@@ -257,11 +259,12 @@ class BaseDeepRegressor(BaseRegressor, ABC):
         -------
         Deserialized self resulting in output `serial`, of `cls.save(None)`
         """
+        _check_soft_dependencies("h5py")
         import pickle
         from tempfile import TemporaryFile
 
         import h5py
-        from keras.models import load_model
+        from tensorflow.keras.models import load_model
 
         if not isinstance(serial, tuple):
             raise TypeError(
