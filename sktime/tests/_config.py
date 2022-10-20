@@ -29,12 +29,12 @@ EXCLUDE_ESTIMATORS = [
     "RandomIntervalClassifier",
     "MiniRocket",
     "MatrixProfileTransformer",
-    # RandomShapeletTransform is breaking with empty lists, see #3138
-    "RandomShapeletTransform",
 ]
 
 
 EXCLUDED_TESTS = {
+    # issue when predicting residuals, see #3479
+    "SquaringResiduals": ["test_predict_residuals"],
     # known issue when X is passed, wrong time indices are returned, #1364
     "StackingForecaster": ["test_predict_time_index_with_X"],
     # known side effects on multivariate arguments, #2072
@@ -106,6 +106,10 @@ EXCLUDED_TESTS = {
     ],
     # GGS inherits from BaseEstimator which breaks this test
     "GreedyGaussianSegmentation": ["test_inheritance", "test_create_test_instance"],
+    "InformationGainSegmentation": [
+        "test_inheritance",
+        "test_create_test_instance",
+    ],
     "SAX": "test_fit_transform_output",  # SAX returns strange output format
     # this needs to be fixed, was not tested previously due to legacy exception
 }

@@ -209,6 +209,7 @@ class PartialAutoCorrelationTransformer(BaseTransformer):
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "univariate-only": True,
         "fit_is_empty": True,
+        "python_dependencies": "statsmodels",
     }
 
     def __init__(
