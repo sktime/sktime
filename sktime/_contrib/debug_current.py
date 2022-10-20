@@ -120,22 +120,23 @@ def debug_callibration_2662():
     import sklearn.calibration
     import sklearn.pipeline
 
-    from sktime.datasets import load_arrow_head, load_basic_motions
+    from sktime.datasets import load_arrow_head, load_basic_motions, load_unit_test
     from sktime.transformations.panel import rocket
     from sktime.transformations.panel.padder import PaddingTransformer
 
     X, y = load_basic_motions(return_X_y=True)
-    n_jobs = -1
+    X, y = load_unit_test(return_X_y=True)
+    n_jobs = 2
 
-    featurizer_rocket = rocket.MiniRocket(n_jobs=n_jobs)
     featurizer_rocket = rocket.Rocket(n_jobs=n_jobs)
     featurizer_rocket = rocket.MultiRocket(n_jobs=n_jobs)
     featurizer_rocket = rocket.MiniRocketMultivariate(n_jobs=n_jobs)
     featurizer_rocket = rocket.MultiRocketMultivariate(n_jobs=n_jobs)
+    featurizer_rocket = rocket.MiniRocket(n_jobs=n_jobs)
     classifier = sklearn.ensemble.HistGradientBoostingClassifier(
         loss="categorical_crossentropy"
     )
-
+    classifier = sklearn.ensemble.AdaBoostClassifier()
     base_estimator = sklearn.pipeline.Pipeline(
         [
             ("featurizer_rocket", featurizer_rocket),
@@ -145,10 +146,10 @@ def debug_callibration_2662():
 
     calibrated_model = sklearn.calibration.CalibratedClassifierCV(
         base_estimator,
-        cv=2,
-        n_jobs=n_jobs,
+        cv=4,
+#        n_jobs=n_jobs,
     )
-
+#    featurizer_rocket.fit(X, y)
     calibrated_model.fit(X, y)
 
 
