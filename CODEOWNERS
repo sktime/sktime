@@ -3,40 +3,42 @@
 
 * @fkiraly @aiwalter
 
-sktime/classification/dummy/ @ZiyaoWei
+sktime/alignment/
+
+sktime/annotation/clasp.py @patrickzib @ermshaua
+sktime/annotation/igts.py @lmmentel
+sktime/annotation/ggs.py @lmmentel
+sktime/annotation/datagen.py @lmmentel
+
+sktime/benchmarking/
+
+sktime/classification/compose/_column_ensemble
+sktime/classification/compose/_ensemble
+sktime/classification/compose/_pipeline
+sktime/classification/deep_learning/cnn @TonyBagnall
+sktime/classification/deep_learning/fcn
+sktime/classification/deep_learning/mlp
+sktime/classification/deep_learning/tapnet
 sktime/classification/dictionary_based/ @patrickzib @MatthewMiddlehurst @TonyBagnall
 sktime/classification/distance_based/ @jasonlines @goaster @TonyBagnall
+sktime/classification/dummy/ @ZiyaoWei
 sktime/classification/early_classification/ @MatthewMiddlehurst @TonyBagnall
 sktime/classification/early_classification/_teaser.py @patrickzib @MatthewMiddlehurst @TonyBagnall
 sktime/classification/feature_based/ @MatthewMiddlehurst @TonyBagnall
-sktime/classification/feature_based/_signature_classifier.py @jambo6
+sktime/classification/feature_based/_signature_classifier.py @jambo6 @TonyBagnall
 sktime/classification/hybrid/ @MatthewMiddlehurst @TonyBagnall
 sktime/classification/interval_based/ @MatthewMiddlehurst @TonyBagnall
 sktime/classification/kernel_based/ @MatthewMiddlehurst @TonyBagnall
-sktime/classification/shapelet_based/ @jasonlines @ABostrom @TonyBagnall
-sktime/classification/shapelet_based/_stc.py @jasonlines @ABostrom @MatthewMiddlehurst @TonyBagnall
+sktime/classification/plotting/temporal_importance_diagram.py
+sktime/classification/shapelet_based/ @jasonlines @TonyBagnall
+sktime/classification/shapelet_based/_stc.py @jasonlines @MatthewMiddlehurst @TonyBagnall
+sktime/classification/sklearn @MatthewMiddlehurst @TonyBagnall
 
-sktime/transformations/panel/dictionary_based/ @patrickzib @MatthewMiddlehurst
-sktime/transformations/panel/catch22.py @MatthewMiddlehurst
-sktime/transformations/panel/shapelet_transform.py @MatthewMiddlehurst @TonyBagnall
-sktime/transformations/panel/shapelets.py @jasonlines @ABostrom @TonyBagnall
-sktime/transformations/panel/rocket/ @angus924
-sktime/transformations/panel/rocket/_multirocket.py @ChangWeiTan @fstinner @angus924
-sktime/transformations/panel/rocket/_multirocket_multivariate.py @ChangWeiTan @fstinner @angus924
-sktime/transformations/series/impute.py @aiwalter
-sktime/transformations/series/outlier_detection.py @aiwalter
-sktime/transformations/series/compose.py @aiwalter
-sktime/transformations/series/feature_selection.py @aiwalter
-sktime/transformations/panel/signature_based/ @jambo6
-sktime/transformations/series/theta.py @GuzalBulatova
-sktime/transformations/series/difference.py @rnkuhns
-sktime/transformations/series/exponent.py @rnkuhns
-sktime/transformations/series/scaledlogit.py @ltsaprounis
-sktime/transformations/series/kalman_filter.py @NoaBenAmi
-sktime/transformations/panel/augmenter.py @MrPr3ntice @iljamaurer
-sktime/transformations/multiplex.py @miraep8
-sktime/transformations/tests/test_multiplexer.py @miraep8
-sktime/transformations/panel/channel_selection.py @haskarb @a-pasos-ruiz @TonyBagnall
+sktime/clustering/ @chrisholder @TonyBagnall
+sktime/datasets/ @TonyBagnall
+sktime/datatypes/
+sktime/distances/ @chrisholder @TonyBagnall
+sktime/dists_kernels/
 
 sktime/forecasting/base/ @fkiraly @mloning @aiwalter
 sktime/forecasting/base/adapters/_statsforecast.py @FedericoGarza
@@ -57,14 +59,45 @@ sktime/forecasting/compose/_ensemble.py @aiwalter
 sktime/forecasting/online_learning/ @magittan
 sktime/forecasting/sarimax.py @TNTran92
 
+sktime/networks/
+
+sktime/param_est/
+
 sktime/performance_metrics/forecasting/_functions.py @aiwalter @rnkuhns
 sktime/performance_metrics/forecasting/_classes.py @rnkuhns
 sktime/performance_metrics/annotation @lmmentel
 
-sktime/annotation/clasp.py @patrickzib @ermshaua
-sktime/annotation/igts.py @lmmentel
-sktime/annotation/ggs.py @lmmentel
-sktime/annotation/datagen.py @lmmentel
+sktime/pipeline
+
+sktime/registry
+
+sktime/regression
+
+sktime/series_as_features
+
+sktime/tests
+
 sktime/transformations/series/clasp.py @patrickzib @ermshaua
+sktime/transformations/panel/dictionary_based/ @patrickzib @MatthewMiddlehurst
+sktime/transformations/panel/catch22.py @MatthewMiddlehurst
+sktime/transformations/panel/shapelet_transform.py @MatthewMiddlehurst @TonyBagnall
+sktime/transformations/panel/shapelets.py @jasonlines @TonyBagnall
+sktime/transformations/panel/rocket/ @angus924
+sktime/transformations/panel/rocket/_multirocket.py @ChangWeiTan @fstinner @angus924
+sktime/transformations/panel/rocket/_multirocket_multivariate.py @ChangWeiTan @fstinner @angus924
+sktime/transformations/series/impute.py @aiwalter
+sktime/transformations/series/outlier_detection.py @aiwalter
+sktime/transformations/series/compose.py @aiwalter
+sktime/transformations/series/feature_selection.py @aiwalter
+sktime/transformations/panel/signature_based/ @jambo6
+sktime/transformations/series/theta.py @GuzalBulatova
+sktime/transformations/series/difference.py @rnkuhns
+sktime/transformations/series/exponent.py @rnkuhns
+sktime/transformations/series/scaledlogit.py @ltsaprounis
+sktime/transformations/series/kalman_filter.py @NoaBenAmi
+sktime/transformations/panel/augmenter.py @MrPr3ntice @iljamaurer
+sktime/transformations/multiplex.py @miraep8
+sktime/transformations/tests/test_multiplexer.py @miraep8
+sktime/transformations/panel/channel_selection.py @haskarb @a-pasos-ruiz @TonyBagnall
 
 .github/workflows/* @lmmentel @freddyaboulton
