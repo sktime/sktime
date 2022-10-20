@@ -799,7 +799,7 @@ class FitInTransform(BaseTransformer):
         -------
         fitted_params : dict
         """
-        return self.transformer_.get_fitted_params()
+        return {}
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -1238,7 +1238,7 @@ class InvertTransform(_DelegatedTransformer):
         return [params1, params2]
 
 
-class Id(_DelegatedTransformer):
+class Id(BaseTransformer):
     """Identity transformer, returns data unchanged in transform/inverse_transform."""
 
     _tags = {
@@ -1286,6 +1286,20 @@ class Id(_DelegatedTransformer):
         X, identical to input
         """
         return X
+
+    def _get_fitted_params(self):
+        """Get fitted parameters.
+
+        private _get_fitted_params, called from get_fitted_params
+
+        State required:
+            Requires state to be "fitted".
+
+        Returns
+        -------
+        fitted_params : dict
+        """
+        return {}
 
 
 class OptionalPassthrough(_DelegatedTransformer):
