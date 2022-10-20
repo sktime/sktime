@@ -1598,7 +1598,7 @@ def write_dataframe_to_tsfile(
     """
     # ensure data provided is a dataframe
     if not isinstance(data, pd.DataFrame):
-        raise ValueError(f"Data provided must be a DataFrame, but passed a {type(data)}")
+        raise ValueError(f"Data provided must be a DataFrame, passed a {type(data)}")
     data_valid, _, metadata = check_is_scitype(
         data, scitype="Panel", return_metadata=True
     )
