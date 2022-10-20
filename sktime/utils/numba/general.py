@@ -101,7 +101,7 @@ def z_normalise_series(X):
     if s > 0:
         arr = (X - stats.mean(X)) / s
     else:
-        arr = X - np.mean(X)
+        arr = X - stats.mean(X)
     return arr
 
 
