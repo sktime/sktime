@@ -23,7 +23,7 @@ from sklearn.utils import check_random_state
 from sklearn.utils.multiclass import class_distribution
 
 from sktime.transformations.base import BaseTransformer
-from sktime.utils.numba.general import z_normalise_series
+from sktime.utils.numba.general import znorm
 from sktime.utils.validation import check_n_jobs
 
 
@@ -1242,7 +1242,7 @@ class RandomShapeletTransform(BaseTransformer):
                 s[3],
                 s[4],
                 self.classes_[s[5]],
-                z_normalise_series(X[s[4], s[3], s[2] : s[2] + s[1]]),
+                znorm(X[s[4], s[3], s[2] : s[2] + s[1]]),
             )
             for class_shapelets in shapelets
             for s in class_shapelets
@@ -1337,7 +1337,7 @@ class RandomShapeletTransform(BaseTransformer):
         position = rng.randint(0, self.series_length - length)
         dim = rng.randint(0, self.n_dims)
 
-        shapelet = z_normalise_series(X[inst_idx, dim, position : position + length])
+        shapelet = znorm(X[inst_idx, dim, position : position + length])
         sabs = np.abs(shapelet)
         sorted_indicies = sorted(range(length), reverse=True, key=lambda i: sabs[i])
 

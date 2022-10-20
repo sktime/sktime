@@ -4,15 +4,30 @@
 import numpy as np
 from numba import njit
 
+import sktime.utils.numba.stats as stats
+
 
 @njit(fastmath=True, cache=True)
 def unique_count(X):
-    """Numba unique count function for a 1D array."""
-    if len(X) > 0:
+    """Numba unique value count function for a 1d numpy array.
+
+    Parameters
+    ----------
+    X : 1d numpy array
+        A 1d numpy array of values
+
+    Returns
+    -------
+    unique : 1d numpy array
+        The unique values in X
+    counts : 1d numpy array
+        The occurrence count for each unique value in X
+    """
+    if X.shape[0] > 0:
         X = np.sort(X)
-        unique = np.zeros(len(X))
+        unique = np.zeros(X.shape[0])
         unique[0] = X[0]
-        counts = np.zeros(len(X), dtype=np.int_)
+        counts = np.zeros(X.shape[0], dtype=np.int_)
         counts[0] = 1
         unique_count = 0
 
@@ -28,12 +43,104 @@ def unique_count(X):
 
 
 @njit(fastmath=True, cache=True)
-def z_normalise_series(X):
-    """Numba z-normalisation function for a single time series."""
-    std = np.std(X)
-    if std > 0:
-        X_n = (X - np.mean(X)) / std
-    else:
-        X_n = np.zeros(len(X))
+def first_order_differences(X):
+    """Numba first order differences function for a 1d numpy array.
 
-    return X_n
+    Parameters
+    ----------
+    X : 1d numpy array
+        A 1d numpy array of values
+
+    Returns
+    -------
+    arr : 1d numpy array of size (X.shape[0] - 1)
+        The first order differences of X
+    """
+    arr = np.zeros(X.shape[0] - 1)
+    for i in range(X.shape[0] - 1):
+        arr[i] = X[i + 1] - X[i]
+    return arr
+
+
+@njit(fastmath=True, cache=True)
+def row_first_order_differences(X):
+    """Numba first order differences function for a 2d numpy array.
+
+    Parameters
+    ----------
+    X : 2d numpy array
+        A 2d numpy array of values
+
+    Returns
+    -------
+    arr : 2d numpy array of shape (X.shape[0], X.shape[1] - 1)
+        The first order differences for axis 0 of the input array
+    """
+    arr = np.zeros((X.shape[0], X.shape[1] - 1))
+    for i in range(X.shape[0]):
+        for n in range(X.shape[1] - 1):
+            arr[i, n] = X[i, n + 1] - X[i, n]
+    return arr
+
+
+@njit(fastmath=True, cache=True)
+def znorm(X):
+    """Numba series normalization function for a 1d numpy array.
+
+    Parameters
+    ----------
+    X : 1d numpy array
+        A 1d numpy array of values
+
+    Returns
+    -------
+    arr : 1d numpy array
+        The normalised series
+    """
+    s = stats.std(X)
+    if s > 0:
+        arr = (X - stats.mean(X)) / s
+    else:
+        arr = np.zeros(X.shape[0])
+    return arr
+
+
+@njit(fastmath=True, cache=True)
+def znorm_2d(X):
+    """Numba series normalization function for a 2d numpy array.
+
+    Parameters
+    ----------
+    X : 2d numpy array
+        A 2d numpy array of values
+
+    Returns
+    -------
+    arr : 2d numpy array
+        The normalised series
+    """
+    arr = np.zeros(X.shape)
+    for i in range(X.shape[0]):
+        arr[i] = znorm(X[i])
+    return arr
+
+
+@njit(fastmath=True, cache=True)
+def znorm_3d(X):
+    """Numba series normalization function for a 3d numpy array.
+
+    Parameters
+    ----------
+    X : 3d numpy array
+        A 3d numpy array of values
+
+    Returns
+    -------
+    arr : 3d numpy array
+        The normalised series
+    """
+    arr = np.zeros(X.shape)
+    for i in range(X.shape[0]):
+        for n in range(X.shape[1]):
+            arr[i, n] = znorm(X[i, n])
+    return arr
