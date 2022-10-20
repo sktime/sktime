@@ -84,7 +84,7 @@ def row_first_order_differences(X):
 
 
 @njit(fastmath=True, cache=True)
-def znorm(X):
+def z_normalise_series(X):
     """Numba series normalization function for a 1d numpy array.
 
     Parameters
@@ -101,12 +101,12 @@ def znorm(X):
     if s > 0:
         arr = (X - stats.mean(X)) / s
     else:
-        arr = np.zeros(X.shape[0])
+        arr = X - np.mean(X)
     return arr
 
 
 @njit(fastmath=True, cache=True)
-def znorm_2d(X):
+def z_normalise_series_2d(X):
     """Numba series normalization function for a 2d numpy array.
 
     Parameters
@@ -121,12 +121,12 @@ def znorm_2d(X):
     """
     arr = np.zeros(X.shape)
     for i in range(X.shape[0]):
-        arr[i] = znorm(X[i])
+        arr[i] = z_normalise_series(X[i])
     return arr
 
 
 @njit(fastmath=True, cache=True)
-def znorm_3d(X):
+def z_normalise_series_3d(X):
     """Numba series normalization function for a 3d numpy array.
 
     Parameters
@@ -142,5 +142,5 @@ def znorm_3d(X):
     arr = np.zeros(X.shape)
     for i in range(X.shape[0]):
         for n in range(X.shape[1]):
-            arr[i, n] = znorm(X[i, n])
+            arr[i, n] = z_normalise_series(X[i, n])
     return arr
