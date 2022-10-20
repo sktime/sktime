@@ -64,6 +64,7 @@ EXCLUDED_TESTS = {
     ],
     # TapNet fails due to Lambda layer, see #3539 and #3616
     "TapNetClassifier": [
+        "test_fit_idempotent",
         "test_persistence_via_pickle",
         "test_save_estimators_to_file",
     ],
@@ -80,6 +81,9 @@ EXCLUDED_TESTS = {
         "test_fit_idempotent",
     ],
     "FCNClassifier": [
+        "test_fit_idempotent",
+    ],
+    "MLPClassifier": [
         "test_fit_idempotent",
     ],
     # sth is not quite right with the RowTransformer-s changing state,
