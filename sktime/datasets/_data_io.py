@@ -11,15 +11,16 @@ __author__ = [
 __all__ = [
     "generate_example_long_table",
     "make_multi_index_dataframe",
-    "write_dataframe_to_tsfile",
-    "write_ndarray_to_tsfile",
-    "write_results_to_uea_format",
-    "write_tabular_transformation_to_arff",
     "load_from_tsfile",
     "load_from_tsfile_to_dataframe",
     "load_from_arff_to_dataframe",
     "load_from_long_to_dataframe",
     "load_from_ucr_tsv_to_dataframe",
+    "write_dataframe_to_tsfile",
+    "write_ndarray_to_tsfile",
+    "write_panel_to_tsfile",
+    "write_results_to_uea_format",
+    "write_tabular_transformation_to_arff",
 ]
 
 import itertools
@@ -1506,6 +1507,7 @@ def _write_header(
     equal_length,
     series_length,
     class_label,
+    target_label,
     fold,
     comment,
 ):
@@ -1602,7 +1604,6 @@ def write_dataframe_to_tsfile(
     )
     if not data_valid:
         raise ValueError("DataFrame provided is not a valid type")
-    metadata
     if equal_length != metadata["is_equal_length"]:
         raise ValueError(
             f"Argument passed for equal length = {equal_length} is not "
@@ -1638,6 +1639,7 @@ def write_dataframe_to_tsfile(
             metadata["is_equal_length"],
             series_length,
             class_label,
+            target_label,
             fold,
             comment,
         )
