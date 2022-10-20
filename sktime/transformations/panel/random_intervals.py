@@ -40,6 +40,10 @@ class RandomIntervals(BaseTransformer):
         ``-1`` means using all processors.
     random_state : int or None, default=None
         Seed for random, integer.
+
+    See Also
+    --------
+    SupervisedIntervals
     """
 
     _tags = {
