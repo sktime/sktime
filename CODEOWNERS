@@ -35,9 +35,13 @@ sktime/classification/shapelet_based/_stc.py @jasonlines @MatthewMiddlehurst @To
 sktime/classification/sklearn @MatthewMiddlehurst @TonyBagnall
 
 sktime/clustering/ @chrisholder @TonyBagnall
+
 sktime/datasets/ @TonyBagnall
+
 sktime/datatypes/
+
 sktime/distances/ @chrisholder @TonyBagnall
+
 sktime/dists_kernels/
 
 sktime/forecasting/base/ @fkiraly @mloning @aiwalter
@@ -69,13 +73,9 @@ sktime/performance_metrics/annotation @lmmentel
 
 sktime/pipeline
 
-sktime/registry
-
 sktime/regression
 
 sktime/series_as_features
-
-sktime/tests
 
 sktime/transformations/series/clasp.py @patrickzib @ermshaua
 sktime/transformations/panel/dictionary_based/ @patrickzib @MatthewMiddlehurst
