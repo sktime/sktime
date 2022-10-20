@@ -14,7 +14,7 @@ from sklearn import preprocessing
 from sklearn.utils import check_random_state
 
 from sktime.transformations.base import BaseTransformer
-from sktime.utils.numba.general import znorm_3d
+from sktime.utils.numba.general import z_normalise_series_3d
 from sktime.utils.numba.stats import (
     fisher_score,
     row_count_above_mean,
@@ -84,7 +84,7 @@ class SupervisedIntervals(BaseTransformer):
 
     Notes
     -----
-    Based on the authors code: https://github.com/stevcabello/r-STSF/
+    Based on the authors (stevcabello) code: https://github.com/stevcabello/r-STSF/
 
     References
     ----------
@@ -196,7 +196,7 @@ class SupervisedIntervals(BaseTransformer):
         X, y = self._check_X_y(X=X, y=y)
 
         y = self._fit_setup(X, y)
-        X_norm = znorm_3d(X)
+        X_norm = z_normalise_series_3d(X)
 
         fit = Parallel(n_jobs=self._threads_to_use)(
             delayed(self._generate_intervals)(
@@ -229,7 +229,7 @@ class SupervisedIntervals(BaseTransformer):
 
     def _fit(self, X, y=None):
         y = self._fit_setup(X, y)
-        X_norm = znorm_3d(X)
+        X_norm = z_normalise_series_3d(X)
 
         fit = Parallel(n_jobs=self._threads_to_use)(
             delayed(self._generate_intervals)(
