@@ -20,7 +20,7 @@ sktime/classification/deep_learning/fcn
 sktime/classification/deep_learning/mlp
 sktime/classification/deep_learning/tapnet
 sktime/classification/dictionary_based/ @patrickzib @MatthewMiddlehurst @TonyBagnall
-sktime/classification/distance_based/ @jasonlines @goaster @TonyBagnall
+sktime/classification/distance_based/ @TonyBagnall
 sktime/classification/dummy/ @ZiyaoWei
 sktime/classification/early_classification/ @MatthewMiddlehurst @TonyBagnall
 sktime/classification/early_classification/_teaser.py @patrickzib @MatthewMiddlehurst @TonyBagnall
@@ -30,8 +30,8 @@ sktime/classification/hybrid/ @MatthewMiddlehurst @TonyBagnall
 sktime/classification/interval_based/ @MatthewMiddlehurst @TonyBagnall
 sktime/classification/kernel_based/ @MatthewMiddlehurst @TonyBagnall
 sktime/classification/plotting/temporal_importance_diagram.py
-sktime/classification/shapelet_based/ @jasonlines @TonyBagnall
-sktime/classification/shapelet_based/_stc.py @jasonlines @MatthewMiddlehurst @TonyBagnall
+sktime/classification/shapelet_based/ @MatthewMiddlehurst @TonyBagnall
+sktime/classification/shapelet_based/_stc.py @MatthewMiddlehurst @TonyBagnall
 sktime/classification/sklearn @MatthewMiddlehurst @TonyBagnall
 
 sktime/clustering/ @chrisholder @TonyBagnall
@@ -81,7 +81,6 @@ sktime/transformations/series/clasp.py @patrickzib @ermshaua
 sktime/transformations/panel/dictionary_based/ @patrickzib @MatthewMiddlehurst
 sktime/transformations/panel/catch22.py @MatthewMiddlehurst
 sktime/transformations/panel/shapelet_transform.py @MatthewMiddlehurst @TonyBagnall
-sktime/transformations/panel/shapelets.py @jasonlines @TonyBagnall
 sktime/transformations/panel/rocket/ @angus924
 sktime/transformations/panel/rocket/_multirocket.py @ChangWeiTan @fstinner @angus924
 sktime/transformations/panel/rocket/_multirocket_multivariate.py @ChangWeiTan @fstinner @angus924
