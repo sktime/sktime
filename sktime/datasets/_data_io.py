@@ -2059,12 +2059,14 @@ def write_panel_to_tsfile(
     Parameters
     ----------
     data : Panel.
-        dataset containing multiple time series instances, referred to as a Panel in sktime.
+        dataset containing multiple time series instances, referred to as a Panel in
+        sktime.
         Series can univariate, multivariate, equal or unequal length
     path : String.
         Location of the directory to write file
     target: None or ndarray, default = None
-        Response variable, discrete for classification, continuous for regression, None if clustering.
+        Response variable, discrete for classification, continuous for regression 
+        None if clustering.
     problem_name : String, default = "sample_data"
         The file is written to <path>/<problem_name>/<problem_name>.ts
     header: String, default = None
