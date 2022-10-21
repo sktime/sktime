@@ -2049,8 +2049,27 @@ def _convert_tsf_to_hierarchical(
 
 
 def write_panel_to_tsfile(
-    data, path, target=None, problem_name="sample_data", header=None
+        data, path, target=None, problem_name="sample_data", header=None
 ):
+    """Write an sktime multi-instance dataset to text file in .ts format.
+
+    Write metadata and data stored in sktime compatible data set to file.
+    A description of the ts format is here.
+
+    Parameters
+    ----------
+    data : Panel.
+        dataset containing multiple time series instances, referred to as a Panel in sktime.
+        Series can univariate, multivariate, equal or unequal length
+    path : String.
+        Location of the directory to write file
+    target: None or ndarray, default = None
+        Response variable, discrete for classification, continuous for regression, None if clustering.
+    problem_name : String, default = "sample_data"
+        The file is written to <path>/<problem_name>/<problem_name>.ts
+    header: String, default = None
+        Optional text at the top of the file that is ignored when loading.
+    """
     data_valid, _, data_metadata = check_is_scitype(
         data, scitype="Panel", return_metadata=True
     )
