@@ -95,7 +95,6 @@ def debug_numba_stc_2397(type):
     from sklearn.model_selection import train_test_split
 
     from sktime.classification.shapelet_based import ShapeletTransformClassifier
-    from sktime.classification.sklearn import RotationForest
 
     # make fake data
     if type == "int32" or type == "int64":  # Ensure not all zeros
@@ -286,6 +285,42 @@ def debug_load_uea_dataset(return_type=None, split=None):
         " size = ",
         X.shape,
     )
+
+
+def debug_callibration_2662():
+    """Issue 2662 https://github.com/sktime/sktime/issues/2662."""
+    import sklearn.pipeline
+
+    from sktime.datasets import load_basic_motions, load_unit_test
+    from sktime.transformations.panel import rocket
+
+    X, y = load_basic_motions(return_X_y=True)
+    X, y = load_unit_test(return_X_y=True)
+    n_jobs = 2
+
+    featurizer_rocket = rocket.Rocket(n_jobs=n_jobs)
+    featurizer_rocket = rocket.MultiRocket(n_jobs=n_jobs)
+    featurizer_rocket = rocket.MiniRocketMultivariate(n_jobs=n_jobs)
+    featurizer_rocket = rocket.MultiRocketMultivariate(n_jobs=n_jobs)
+    featurizer_rocket = rocket.MiniRocket(n_jobs=n_jobs)
+    classifier = sklearn.ensemble.HistGradientBoostingClassifier(
+        loss="categorical_crossentropy"
+    )
+    classifier = sklearn.ensemble.AdaBoostClassifier()
+    base_estimator = sklearn.pipeline.Pipeline(
+        [
+            ("featurizer_rocket", featurizer_rocket),
+            ("classifier", classifier),
+        ],
+    )
+
+    calibrated_model = sklearn.calibration.CalibratedClassifierCV(
+        base_estimator,
+        cv=4,
+        #        n_jobs=n_jobs,
+    )
+    #    featurizer_rocket.fit(X, y)
+    calibrated_model.fit(X, y)
 
 
 if __name__ == "__main__":

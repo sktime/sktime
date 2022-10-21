@@ -3,10 +3,7 @@
 import shutil
 
 import numpy as np
-import pandas as pd
 
-from sktime.classification.dummy import DummyClassifier
-from sktime.classification.feature_based import SignatureClassifier
 from sktime.datasets import (
     load_from_tsfile,
     load_gunpoint,
@@ -15,16 +12,7 @@ from sktime.datasets import (
     load_UCR_UEA_dataset,
     write_dataframe_to_tsfile,
 )
-from sktime.transformations.panel.shapelet_transform import RandomShapeletTransform
-from sktime.transformations.panel.signature_based._signature_method import (
-    SignatureTransformer,
-)
-from sktime.utils._testing.panel import _make_panel_X
-from sktime.utils.sampling import stratified_resample
-
-# debug_load_uea_dataset(split="TRAIN")
-# debug_load_uea_dataset(split="TEST")
-# debug_load_uea_dataset(return_type="numpy3d")
+from sktime.datasets._data_io import _load_provided_dataset
 
 
 def debug_write_dataframe_to_ts_file_3499(name, extract_path=None):
@@ -93,9 +81,6 @@ def debug_load_and_save_3499():
     assert np.array_equal(y1, y2)
 
 
-from sktime.datasets._data_io import _load_provided_dataset
-
-
 def debug_testing_load_and_save_3499():
     """Test load and save, related to https://github.com/sktime/sktime/issues/3499."""
     from datasets import write_panel_to_tsfile
@@ -112,46 +97,17 @@ def debug_testing_load_and_save_3499():
     shutil.rmtree("./Temp")
 
 
-############## 2662 https://github.com/sktime/sktime/issues/2662
-
-
-def debug_callibration_2662():
-    """Issue 2662 https://github.com/sktime/sktime/issues/2662."""
-    import sklearn.calibration
-    import sklearn.pipeline
-
-    from sktime.datasets import load_arrow_head, load_basic_motions, load_unit_test
-    from sktime.transformations.panel import rocket
-    from sktime.transformations.panel.padder import PaddingTransformer
-
-    X, y = load_basic_motions(return_X_y=True)
-    X, y = load_unit_test(return_X_y=True)
-    n_jobs = 2
-
-    featurizer_rocket = rocket.Rocket(n_jobs=n_jobs)
-    featurizer_rocket = rocket.MultiRocket(n_jobs=n_jobs)
-    featurizer_rocket = rocket.MiniRocketMultivariate(n_jobs=n_jobs)
-    featurizer_rocket = rocket.MultiRocketMultivariate(n_jobs=n_jobs)
-    featurizer_rocket = rocket.MiniRocket(n_jobs=n_jobs)
-    classifier = sklearn.ensemble.HistGradientBoostingClassifier(
-        loss="categorical_crossentropy"
-    )
-    classifier = sklearn.ensemble.AdaBoostClassifier()
-    base_estimator = sklearn.pipeline.Pipeline(
-        [
-            ("featurizer_rocket", featurizer_rocket),
-            ("classifier", classifier),
-        ],
-    )
-
-    calibrated_model = sklearn.calibration.CalibratedClassifierCV(
-        base_estimator,
-        cv=4,
-#        n_jobs=n_jobs,
-    )
-#    featurizer_rocket.fit(X, y)
-    calibrated_model.fit(X, y)
+## https://github.com/sktime/sktime/issues/2774
+def debug_knn_2774():
+    from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
+    from sktime.datasets import load_unit_test
+    knn = KNeighborsTimeSeriesClassifier()
+    trainX, trainy = load_unit_test()
+    knn.fit(trainX, trainy)
+    #    'kd_tree’,'ball_tree'
+    knn = KNeighborsTimeSeriesClassifier(algorithm="kd_tree")
+    knn.fit(trainX, trainy)
 
 
 if __name__ == "__main__":
-    debug_callibration_2662()
+    debug_knn_2774()
