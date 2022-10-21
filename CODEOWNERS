@@ -19,24 +19,23 @@ sktime/classification/deep_learning/cnn @TonyBagnall
 sktime/classification/deep_learning/fcn
 sktime/classification/deep_learning/mlp
 sktime/classification/deep_learning/tapnet
-sktime/classification/dictionary_based/ @patrickzib @MatthewMiddlehurst @TonyBagnall
-sktime/classification/distance_based/ @TonyBagnall
+sktime/classification/dictionary_based/ @patrickzib @MatthewMiddlehurst
+sktime/classification/distance_based/
 sktime/classification/dummy/ @ZiyaoWei
-sktime/classification/early_classification/ @MatthewMiddlehurst @TonyBagnall
-sktime/classification/early_classification/_teaser.py @patrickzib @MatthewMiddlehurst @TonyBagnall
+sktime/classification/early_classification/ @MatthewMiddlehurst
+sktime/classification/early_classification/_teaser.py @patrickzib @MatthewMiddlehurst
 sktime/classification/feature_based/ @MatthewMiddlehurst @TonyBagnall
-sktime/classification/feature_based/_signature_classifier.py @jambo6 @TonyBagnall
+sktime/classification/feature_based/_signature_classifier.py @jambo6
 sktime/classification/hybrid/ @MatthewMiddlehurst @TonyBagnall
 sktime/classification/interval_based/ @MatthewMiddlehurst @TonyBagnall
 sktime/classification/kernel_based/ @MatthewMiddlehurst @TonyBagnall
 sktime/classification/plotting/temporal_importance_diagram.py
 sktime/classification/shapelet_based/ @MatthewMiddlehurst @TonyBagnall
-sktime/classification/shapelet_based/_stc.py @MatthewMiddlehurst @TonyBagnall
 sktime/classification/sklearn @MatthewMiddlehurst @TonyBagnall
 
 sktime/clustering/ @chrisholder @TonyBagnall
 
-sktime/datasets/ @TonyBagnall
+sktime/datasets/
 
 sktime/datatypes/
 
