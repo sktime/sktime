@@ -715,7 +715,7 @@ class _RecursiveReducer(_Reducer):
         # If we cannot generate a prediction from the available data, return nan.
 
         if self.pooling == "global":
-            y_last, X_last = self._get_shifted_window()
+            y_last, X_last = self._get_shifted_window(X_update=X)
             ys = np.array(y_last)
             if not np.sum(np.isnan(ys)) == 0 and np.sum(np.isinf(ys)) == 0:
                 return self._predict_nan(fh)
