@@ -67,7 +67,7 @@ from sktime.base._tagmanager import _TagManager
 from sktime.exceptions import NotFittedError
 
 
-class BaseObject(_BaseEstimator, _TagManager):
+class BaseObject(_TagManager, _BaseEstimator):
     """Base class for parametric objects with tags sktime.
 
     Extends scikit-learn's BaseEstimator to include sktime interface for tags.
