@@ -521,9 +521,9 @@ class ForecastingGridSearchCV(BaseGridSearch):
         -------
         params : dict or list of dict
         """
-        from sktime.forecasting.exp_smoothing import ExponentialSmoothing
         from sktime.forecasting.model_selection._split import SingleWindowSplitter
         from sktime.forecasting.naive import NaiveForecaster
+        from sktime.forecasting.trend import TrendForecaster
         from sktime.performance_metrics.forecasting import MeanAbsolutePercentageError
 
         params = {
@@ -533,7 +533,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
             "scoring": MeanAbsolutePercentageError(symmetric=True),
         }
         params2 = {
-            "forecaster": ExponentialSmoothing(),
+            "forecaster": TrendForecaster(),
             "cv": SingleWindowSplitter(fh=1),
             "param_grid": {"initialization_method": ["estimated", "heuristic"]},
             "scoring": MeanAbsolutePercentageError(symmetric=True),
