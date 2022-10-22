@@ -227,11 +227,13 @@ class _Pipeline(
         # ARIMA has probabilistic methods, ExponentTransformer skips fit
         STEPS2 = [
             ("transformer", ExponentTransformer()),
-            ("forecaster", DirectReductionForecaster()),
+            ("forecaster", DirectReductionForecaster.create_test_instance()),
         ]
         params2 = {"steps": STEPS2}
 
-        params3 = {"steps": [Detrender(), DirectReductionForecaster()]}
+        params3 = {
+            "steps": [Detrender(), DirectReductionForecaster.create_test_instance()]
+        }
 
         return [params1, params2, params3]
 
@@ -1442,7 +1444,7 @@ class ForecastX(BaseForecaster):
         from sktime.forecasting.compose import DirectTabularRegressionForecaster
         from sktime.forecasting.compose._reduce import DirectReductionForecaster
 
-        fx = DirectReductionForecaster().create_test_instance()
+        fx = DirectReductionForecaster.create_test_instance()
         fy = DirectTabularRegressionForecaster.create_test_instance()
 
         params = {"forecaster_X": fx, "forecaster_y": fy}
