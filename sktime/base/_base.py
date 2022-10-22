@@ -63,11 +63,11 @@ from sklearn import clone
 from sklearn.base import BaseEstimator as _BaseEstimator
 from sklearn.ensemble._base import _set_random_states
 
-from sktime.base._tagmanager import _TagManager
+from sktime.base._tagmanager import _FlagManager
 from sktime.exceptions import NotFittedError
 
 
-class BaseObject(_TagManager, _BaseEstimator):
+class BaseObject(_FlagManager, _BaseEstimator):
     """Base class for parametric objects with tags sktime.
 
     Extends scikit-learn's BaseEstimator to include sktime interface for tags.
@@ -246,7 +246,7 @@ class BaseObject(_TagManager, _BaseEstimator):
             class attribute via nested inheritance. NOT overridden by dynamic
             tags set by set_tags or mirror_tags.
         """
-        return cls._get_class_tags(tag_attr_name="_tags")
+        return cls._get_class_flags(flag_attr_name="_tags")
 
     @classmethod
     def get_class_tag(cls, tag_name, tag_value_default=None):
@@ -264,10 +264,10 @@ class BaseObject(_TagManager, _BaseEstimator):
         tag_value :
             Value of `tag_name` tag in self. If not found, returns `tag_value_default`.
         """
-        return cls._get_class_tag(
-            tag_name=tag_name,
-            tag_value_default=tag_value_default,
-            tag_attr_name="_tags",
+        return cls._get_class_flag(
+            flag_name=tag_name,
+            flag_value_default=tag_value_default,
+            flag_attr_name="_tags",
         )
 
     def get_tags(self):
@@ -280,7 +280,7 @@ class BaseObject(_TagManager, _BaseEstimator):
             class attribute via nested inheritance and then any overrides
             and new tags from _tags_dynamic object attribute.
         """
-        return self._get_tags(tag_attr_name="_tags")
+        return self._get_flags(flag_attr_name="_tags")
 
     def get_tag(self, tag_name, tag_value_default=None, raise_error=True):
         """Get tag value from estimator class and dynamic tag overrides.
@@ -305,11 +305,11 @@ class BaseObject(_TagManager, _BaseEstimator):
         ValueError if raise_error is True i.e. if tag_name is not in self.get_tags(
         ).keys()
         """
-        return self._get_tag(
-            tag_name=tag_name,
-            tag_value_default=tag_value_default,
+        return self._get_flag(
+            flag_name=tag_name,
+            flag_value_default=tag_value_default,
             raise_error=raise_error,
-            tag_attr_name="_tags",
+            flag_attr_name="_tags",
         )
 
     def set_tags(self, **tag_dict):
@@ -330,7 +330,7 @@ class BaseObject(_TagManager, _BaseEstimator):
         Changes object state by settting tag values in tag_dict as dynamic tags
         in self.
         """
-        self._set_tags(tag_attr_name="_tags", **tag_dict)
+        self._set_flags(flag_attr_name="_tags", **tag_dict)
 
         return self
 
@@ -354,8 +354,8 @@ class BaseObject(_TagManager, _BaseEstimator):
         Changes object state by setting tag values in tag_set from estimator as
         dynamic tags in self.
         """
-        self._clone_tags(
-            estimator=estimator, tag_names=tag_names, tag_attr_name="_tags"
+        self._clone_flags(
+            estimator=estimator, flag_names=tag_names, flag_attr_name="_tags"
         )
 
         return self
