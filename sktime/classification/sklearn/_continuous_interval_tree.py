@@ -144,7 +144,7 @@ class ContinuousIntervalTree(BaseEstimator):
         for i in range(len(y)):
             distribution[y[i]] += 1
 
-        entropy = _TreeNode._entropy(distribution, distribution.sum())
+        entropy = _entropy(distribution, distribution.sum())
 
         self._root.build_tree(
             X,
@@ -587,9 +587,9 @@ class _TreeNode:
         for v in dist_right:
             sum_right += v
 
-        entropy_left = _TreeNode._entropy(dist_left, sum_left)
-        entropy_right = _TreeNode._entropy(dist_right, sum_right)
-        entropy_missing = _TreeNode._entropy(dist_missing, sum_missing)
+        entropy_left = _entropy(dist_left, sum_left)
+        entropy_right = _entropy(dist_right, sum_right)
+        entropy_missing = _entropy(dist_missing, sum_missing)
 
         num_cases = X.shape[0]
         info_gain = (
@@ -646,13 +646,20 @@ class _TreeNode:
                 remaining_classes += 1
         return remaining_classes > 1
 
+
+def _entropy(x, s):
+
+    from numba import njit
+
     @njit(fastmath=True, cache=True)
-    def _entropy(x, s):
+    def _entropy_numba(x, s):
         e = 0
         for i in x:
             p = i / s if s > 0 else 0
             e += -(p * math.log(p) / 0.6931471805599453) if p > 0 else 0
         return e
+
+    return _entropy_numba(x=x, s=s)
 
 
 def _drcif_feature(X, interval, dim, att, c22, case_id=None):
