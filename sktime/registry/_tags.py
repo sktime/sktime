@@ -46,6 +46,12 @@ import pandas as pd
 
 ESTIMATOR_TAG_REGISTER = [
     (
+        "sktime_version",
+        "object",
+        "str",
+        "sktime version with which the estimator was released",
+    ),
+    (
         "ignores-exogeneous-X",
         "forecaster",
         "bool",
