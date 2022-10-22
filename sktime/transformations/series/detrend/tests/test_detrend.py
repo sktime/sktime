@@ -1,5 +1,5 @@
-#!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
+"""Test detrenders."""
 
 __author__ = ["mloning"]
 __all__ = []
