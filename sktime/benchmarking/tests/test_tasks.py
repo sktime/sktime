@@ -1,3 +1,7 @@
+#! /usr/bin/env python
+"""Tests for benchmarking tasks."""
+# -*- coding: utf-8 -*-
+
 __author__ = "mloning"
 
 import pytest
@@ -19,7 +23,8 @@ BASE_READONLY_ATTRS = ("target", "features", "metadata")
 # Test read-only attributes of base task
 @pytest.mark.parametrize("attr", BASE_READONLY_ATTRS)
 def test_readonly_attributes(attr):
-    task = BaseTask(target='class_val', metadata=gunpoint)
+    """Test read-only attributes."""
+    task = BaseTask(target="class_val", metadata=gunpoint)
     with raises(AttributeError):
         task.__setattr__(attr, "val")
 
@@ -27,13 +32,15 @@ def test_readonly_attributes(attr):
 # Test data compatibility checks
 @pytest.mark.parametrize("task", TASKS)
 def test_check_data_compatibility(task):
-    task = task(target='target')
+    """Check data compatibility."""
+    task = task(target="target")
     with raises(ValueError):
         task.set_metadata(gunpoint)
 
 
 # Test setting of metadata
 def check_set_metadata(task, target, metadata):
+    """Check set_metadata."""
     task = task(target=target)
     assert task.metadata is None
 
@@ -47,4 +54,5 @@ def check_set_metadata(task, target, metadata):
 
 @pytest.mark.parametrize("task", [TSRTask, TSCTask])
 def test_set_metadata_supervised(task):
-    check_set_metadata(task, 'class_val', gunpoint)
+    """Test check_set_metadata."""
+    check_set_metadata(task, "class_val", gunpoint)
