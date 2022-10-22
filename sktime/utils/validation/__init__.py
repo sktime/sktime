@@ -12,7 +12,7 @@ __all__ = [
     "check_n_jobs",
     "check_window_length",
 ]
-__author__ = ["Markus Löning", "Taiwo Owoseni", "khrapovs"]
+__author__ = ["mloning", "Taiwo Owoseni", "khrapovs"]
 
 import os
 from datetime import timedelta

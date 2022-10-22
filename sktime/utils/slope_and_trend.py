@@ -4,7 +4,7 @@ __all__ = [
     "_slope",
     "_fit_trend",
 ]
-__author__ = ["Markus Löning"]
+__author__ = ["mloning"]
 
 import numpy as np
 from sklearn.utils import check_array
