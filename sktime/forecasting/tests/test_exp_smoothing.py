@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+"""Test exponential smoothing forecasters."""
+
 __author__ = ["mloning", "@big-o"]
 __all__ = ["test_set_params"]
 
@@ -16,6 +18,7 @@ y_train, y_test = temporal_train_test_split(y, train_size=0.75)
 
 @pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_set_params():
+    """Test set_params."""
     params = {"trend": "additive"}
 
     f = ExponentialSmoothing(**params)
