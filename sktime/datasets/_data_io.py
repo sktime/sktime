@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Utilities for loading datasets."""
+"""Utilities for loading panel datasets."""
 
 __author__ = [
     "Emiliathewolf",
@@ -1507,7 +1507,6 @@ def _write_header(
     equal_length,
     series_length,
     class_label,
-    target_label,
     fold,
     comment,
 ):
@@ -1639,7 +1638,6 @@ def write_dataframe_to_tsfile(
             metadata["is_equal_length"],
             series_length,
             class_label,
-            target_label,
             fold,
             comment,
         )
@@ -2049,7 +2047,7 @@ def _convert_tsf_to_hierarchical(
 
 
 def write_panel_to_tsfile(
-        data, path, target=None, problem_name="sample_data", header=None
+    data, path, target=None, problem_name="sample_data", header=None
 ):
     """Write an sktime multi-instance dataset to text file in .ts format.
 
@@ -2065,7 +2063,7 @@ def write_panel_to_tsfile(
     path : String.
         Location of the directory to write file
     target: None or ndarray, default = None
-        Response variable, discrete for classification, continuous for regression 
+        Response variable, discrete for classification, continuous for regression
         None if clustering.
     problem_name : String, default = "sample_data"
         The file is written to <path>/<problem_name>/<problem_name>.ts
