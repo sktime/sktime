@@ -12,7 +12,6 @@ import warnings
 
 import numpy as np
 from joblib import Parallel, delayed
-from numba import set_num_threads
 from scipy.sparse import hstack
 from sklearn.linear_model import LogisticRegression, RidgeClassifierCV
 from sklearn.utils import check_random_state
@@ -132,6 +131,7 @@ class WEASEL(BaseClassifier):
     _tags = {
         "capability:multithreading": True,
         "classifier_type": "dictionary",
+        "python_dependencies": "numba",
     }
 
     def __init__(
@@ -178,9 +178,11 @@ class WEASEL(BaseClassifier):
         self.n_jobs = n_jobs
         self.support_probabilities = support_probabilities
 
-        set_num_threads(n_jobs)
-
         super(WEASEL, self).__init__()
+
+        from numba import set_num_threads
+
+        set_num_threads(n_jobs)
 
     def _fit(self, X, y):
         """Build a WEASEL classifiers from the training set (X, y).
