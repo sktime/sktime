@@ -144,7 +144,7 @@ class ContinuousIntervalTree(BaseEstimator):
         for i in range(len(y)):
             distribution[y[i]] += 1
 
-        entropy = self._entropy(distribution, distribution.sum())
+        entropy = _TreeNode._entropy(distribution, distribution.sum())
 
         self._root.build_tree(
             X,
@@ -587,9 +587,9 @@ class _TreeNode:
         for v in dist_right:
             sum_right += v
 
-        entropy_left = ContinuousIntervalTree._entropy(dist_left, sum_left)
-        entropy_right = ContinuousIntervalTree._entropy(dist_right, sum_right)
-        entropy_missing = ContinuousIntervalTree._entropy(dist_missing, sum_missing)
+        entropy_left = _TreeNode._entropy(dist_left, sum_left)
+        entropy_right = _TreeNode._entropy(dist_right, sum_right)
+        entropy_missing = _TreeNode._entropy(dist_missing, sum_missing)
 
         num_cases = X.shape[0]
         info_gain = (
