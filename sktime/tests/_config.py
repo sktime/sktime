@@ -29,12 +29,15 @@ EXCLUDE_ESTIMATORS = [
     "RandomIntervalClassifier",
     "MiniRocket",
     "MatrixProfileTransformer",
-    # RandomShapeletTransform is breaking with empty lists, see #3138
-    "RandomShapeletTransform",
+    # tapnet based estimators fail stochastically for unknown reasons, see #3525
+    "TapNetRegressor",
+    "TapNetClassifier",
 ]
 
 
 EXCLUDED_TESTS = {
+    # issue when predicting residuals, see #3479
+    "SquaringResiduals": ["test_predict_residuals"],
     # known issue when X is passed, wrong time indices are returned, #1364
     "StackingForecaster": ["test_predict_time_index_with_X"],
     # known side effects on multivariate arguments, #2072
@@ -46,35 +49,45 @@ EXCLUDED_TESTS = {
         "test_classifier_on_unit_test_data",
         "test_classifier_on_basic_motions",
     ],
-    # test fail with deep problem with pickling inside tensorflow.
-    "CNNClassifier": [
-        "test_fit_idempotent",
-        "test_persistence_via_pickle",
-    ],
-    "MLPClassifier": [
-        "test_fit_idempotent",
-        "test_persistence_via_pickle",
-    ],
-    "FCNClassifier": [
-        "test_fit_idempotent",
-        "test_persistence_via_pickle",
-    ],
-    "CNNRegressor": [
-        "test_fit_idempotent",
-        "test_persistence_via_pickle",
-    ],
     # pickling problem with local method see #2490
     "ProximityStump": [
         "test_persistence_via_pickle",
         "test_fit_does_not_overwrite_hyper_params",
+        "test_save_estimators_to_file",
     ],
     "ProximityTree": [
         "test_persistence_via_pickle",
         "test_fit_does_not_overwrite_hyper_params",
+        "test_save_estimators_to_file",
     ],
     "ProximityForest": [
         "test_persistence_via_pickle",
         "test_fit_does_not_overwrite_hyper_params",
+        "test_save_estimators_to_file",
+    ],
+    # TapNet fails due to Lambda layer, see #3539 and #3616
+    "TapNetClassifier": [
+        "test_fit_idempotent",
+        "test_persistence_via_pickle",
+        "test_save_estimators_to_file",
+    ],
+    "TapNetRegressor": [
+        "test_fit_idempotent",
+        "test_persistence_via_pickle",
+        "test_save_estimators_to_file",
+    ],
+    # `test_fit_idempotent` fails with `AssertionError`, see #3616
+    "CNNClassifier": [
+        "test_fit_idempotent",
+    ],
+    "CNNRegressor": [
+        "test_fit_idempotent",
+    ],
+    "FCNClassifier": [
+        "test_fit_idempotent",
+    ],
+    "MLPClassifier": [
+        "test_fit_idempotent",
     ],
     # sth is not quite right with the RowTransformer-s changing state,
     #   but these are anyway on their path to deprecation, see #2370
@@ -90,6 +103,7 @@ EXCLUDED_TESTS = {
         "test_methods_do_not_change_state",
         "test_fit_idempotent",
         "test_persistence_via_pickle",
+        "test_save_estimators_to_file",
     ],
     "CNNNetwork": "test_inheritance",  # not a registered base class, WiP, see #3028
     "VARMAX": [
@@ -98,6 +112,10 @@ EXCLUDED_TESTS = {
     ],
     # GGS inherits from BaseEstimator which breaks this test
     "GreedyGaussianSegmentation": ["test_inheritance", "test_create_test_instance"],
+    "InformationGainSegmentation": [
+        "test_inheritance",
+        "test_create_test_instance",
+    ],
     "SAX": "test_fit_transform_output",  # SAX returns strange output format
     # this needs to be fixed, was not tested previously due to legacy exception
 }

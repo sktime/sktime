@@ -47,7 +47,7 @@ dependencies = [
     "numpy>=1.21.0,<1.23",
     "pandas>=1.1.0,<1.6.0",
     "scikit-learn>=0.24.0,<1.2.0",
-    "scipy<1.9.0",
+    "scipy<2.0.0",
 ]
 
 [project.optional-dependencies]
@@ -55,8 +55,10 @@ all_extras = [
     "dtw-python",
     "esig==0.9.7; python_version < '3.10'",
     "filterpy>=1.4.5",
+    "h5py",
     "hmmlearn>=0.2.7",
     "gluonts>=0.9.0",
+    "keras-self-attention",
     "matplotlib>=3.3.2",
     "mne",
     "pmdarima>=1.8.0,!=1.8.1,<3.0.0",
