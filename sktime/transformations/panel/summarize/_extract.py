@@ -449,7 +449,8 @@ class FittedParamExtractor(BaseTransformer):
 
         if _check_estimator_deps(ExponentialSmoothing, severity="none"):
             return {
-                "forecaster": ExponentialSmoothing(), "param_names": ["initial_level"]
+                "forecaster": ExponentialSmoothing(),
+                "param_names": ["initial_level"],
             }
         else:
             return {}
