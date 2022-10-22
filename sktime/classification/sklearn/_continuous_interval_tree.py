@@ -12,6 +12,7 @@ import math
 import sys
 
 import numpy as np
+from numba import njit
 from sklearn import preprocessing
 from sklearn.base import BaseEstimator
 from sklearn.utils import check_random_state
@@ -78,8 +79,6 @@ class ContinuousIntervalTree(BaseEstimator):
     ContinuousIntervalTree(...)
     >>> y_pred = clf.predict(X_test)
     """
-
-    _tags = {"python_dependencies": "numba"}
 
     def __init__(
         self,
@@ -294,8 +293,6 @@ class ContinuousIntervalTree(BaseEstimator):
 
 class _TreeNode:
     """ContinuousIntervalTree tree node."""
-
-    from numba import njit
 
     def __init__(
         self,
@@ -647,19 +644,13 @@ class _TreeNode:
         return remaining_classes > 1
 
 
+@njit(fastmath=True, cache=True)
 def _entropy(x, s):
-
-    from numba import njit
-
-    @njit(fastmath=True, cache=True)
-    def _entropy_numba(x, s):
-        e = 0
-        for i in x:
-            p = i / s if s > 0 else 0
-            e += -(p * math.log(p) / 0.6931471805599453) if p > 0 else 0
-        return e
-
-    return _entropy_numba(x=x, s=s)
+    e = 0
+    for i in x:
+        p = i / s if s > 0 else 0
+        e += -(p * math.log(p) / 0.6931471805599453) if p > 0 else 0
+    return e
 
 
 def _drcif_feature(X, interval, dim, att, c22, case_id=None):
