@@ -15,8 +15,6 @@ from collections import defaultdict
 
 import numpy as np
 from joblib import Parallel, delayed
-from numba import njit, types
-from numba.typed import Dict
 from sklearn import preprocessing
 from sklearn.kernel_ridge import KernelRidge
 from sklearn.utils import check_random_state
@@ -154,6 +152,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         "capability:contractable": True,
         "capability:multithreading": True,
         "classifier_type": "dictionary",
+        "python_dependencies": "numba",
     }
 
     def __init__(
@@ -732,6 +731,9 @@ class IndividualTDE(BaseClassifier):
 
     def __setstate__(self, state):
         """Set current state using input pickling, required for typed Dict objects."""
+        from numba import types
+        from numba.typed import Dict
+
         self.__dict__.update(state)
         if self.typed_dict:
             nl = [None] * len(self._transformed_data)
@@ -768,6 +770,9 @@ class IndividualTDE(BaseClassifier):
         Changes state by creating a fitted model that updates attributes
         ending in "_" and sets is_fitted flag to True.
         """
+        from numba import types
+        from numba.typed import Dict
+
         self.n_instances_, self.n_dims_, self.series_length_ = X.shape
         self._class_vals = y
 
@@ -839,6 +844,9 @@ class IndividualTDE(BaseClassifier):
         y : array-like, shape = [n_instances]
             Predicted class labels.
         """
+        from numba import types
+        from numba.typed import Dict
+
         num_cases = X.shape[0]
 
         if self.n_dims_ > 1:
@@ -1000,6 +1008,17 @@ def histogram_intersection(first, second):
     dist : float
         The histogram intersection distance between the first and second dictionaries.
     """
+    from numba import njit, types
+    from numba.typed import Dict
+
+    @njit(fastmath=True, cache=True)
+    def _histogram_intersection_dict(first, second):
+        sim = 0
+        for word, val_a in first.items():
+            val_b = second.get(word, types.uint32(0))
+            sim += min(val_a, val_b)
+        return sim
+
     if isinstance(first, dict):
         sim = 0
         for word, val_a in first.items():
@@ -1015,12 +1034,3 @@ def histogram_intersection(first, second):
                 for n in range(len(first))
             ]
         )
-
-
-@njit(fastmath=True, cache=True)
-def _histogram_intersection_dict(first, second):
-    sim = 0
-    for word, val_a in first.items():
-        val_b = second.get(word, types.uint32(0))
-        sim += min(val_a, val_b)
-    return sim
