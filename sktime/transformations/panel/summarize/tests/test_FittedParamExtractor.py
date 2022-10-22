@@ -1,11 +1,12 @@
-#!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
+"""Tests for FittedParamExtractor."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["mloning"]
 __all__ = []
 
 import pytest
+
 from sktime.datasets import load_gunpoint
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.transformations.panel.summarize import FittedParamExtractor

@@ -7,6 +7,7 @@ __author__ = ["mloning"]
 import numpy as np
 from scipy.stats import boxcox
 from sklearn.preprocessing import PowerTransformer
+
 from sktime.datasets import load_airline
 from sktime.transformations.series.adapt import TabularToSeriesAdaptor
 

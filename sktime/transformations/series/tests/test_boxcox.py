@@ -8,6 +8,7 @@ __all__ = []
 import numpy as np
 import pytest
 from scipy.stats import boxcox
+
 from sktime.datasets import load_airline
 from sktime.transformations.series.boxcox import BoxCoxTransformer
 
