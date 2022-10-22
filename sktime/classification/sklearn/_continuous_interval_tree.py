@@ -12,7 +12,6 @@ import math
 import sys
 
 import numpy as np
-from numba import njit
 from sklearn import preprocessing
 from sklearn.base import BaseEstimator
 from sklearn.utils import check_random_state
@@ -80,6 +79,8 @@ class ContinuousIntervalTree(BaseEstimator):
     >>> y_pred = clf.predict(X_test)
     """
 
+    _tags = {"python_dependencies": "numba"}
+
     def __init__(
         self,
         max_depth=sys.maxsize,
@@ -143,7 +144,7 @@ class ContinuousIntervalTree(BaseEstimator):
         for i in range(len(y)):
             distribution[y[i]] += 1
 
-        entropy = _entropy(distribution, distribution.sum())
+        entropy = self._entropy(distribution, distribution.sum())
 
         self._root.build_tree(
             X,
@@ -293,6 +294,8 @@ class ContinuousIntervalTree(BaseEstimator):
 
 class _TreeNode:
     """ContinuousIntervalTree tree node."""
+
+    from numba import njit
 
     def __init__(
         self,
@@ -584,9 +587,9 @@ class _TreeNode:
         for v in dist_right:
             sum_right += v
 
-        entropy_left = _entropy(dist_left, sum_left)
-        entropy_right = _entropy(dist_right, sum_right)
-        entropy_missing = _entropy(dist_missing, sum_missing)
+        entropy_left = ContinuousIntervalTree._entropy(dist_left, sum_left)
+        entropy_right = ContinuousIntervalTree._entropy(dist_right, sum_right)
+        entropy_missing = ContinuousIntervalTree._entropy(dist_missing, sum_missing)
 
         num_cases = X.shape[0]
         info_gain = (
@@ -643,14 +646,13 @@ class _TreeNode:
                 remaining_classes += 1
         return remaining_classes > 1
 
-
-@njit(fastmath=True, cache=True)
-def _entropy(x, s):
-    e = 0
-    for i in x:
-        p = i / s if s > 0 else 0
-        e += -(p * math.log(p) / 0.6931471805599453) if p > 0 else 0
-    return e
+    @njit(fastmath=True, cache=True)
+    def _entropy(x, s):
+        e = 0
+        for i in x:
+            p = i / s if s > 0 else 0
+            e += -(p * math.log(p) / 0.6931471805599453) if p > 0 else 0
+        return e
 
 
 def _drcif_feature(X, interval, dim, att, c22, case_id=None):
