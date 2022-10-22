@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-__author__ = ["Markus Löning"]
+__author__ = ["mloning"]
 __all__ = []
 
 import numpy as np

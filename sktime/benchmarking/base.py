@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-__author__ = ["Markus Löning", "Viktor Kazakov"]
+__author__ = ["mloning", "viktorkaz"]
 __all__ = ["BaseDataset", "HDDBaseDataset", "BaseResults", "HDDBaseResults"]
 
 import os

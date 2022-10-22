@@ -3,7 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements base classes for adapting other forecasters to sktime framework."""
 
-__author__ = ["Markus Löning"]
+__author__ = ["mloning"]
 __all__ = [
     "_ProphetAdapter",
     "_StatsModelsAdapter",

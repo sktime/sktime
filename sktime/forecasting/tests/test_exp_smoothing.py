@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-__author__ = ["Markus Löning", "@big-o"]
+__author__ = ["mloning", "@big-o"]
 __all__ = ["test_set_params"]
 
 import pytest

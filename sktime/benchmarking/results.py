@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 __all__ = ["HDDResults", "RAMResults"]
-__author__ = ["Viktor Kazakov", "Markus Löning"]
+__author__ = ["viktorkaz", "mloning"]
 
 import os
 

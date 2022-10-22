@@ -1,4 +1,4 @@
-__author__ = "Markus Löning"
+__author__ = "mloning"
 
 import pytest
 from pytest import raises

@@ -13,7 +13,7 @@ The script is adapted from:
 /make_release.py
 """
 
-__author__ = ["Markus Löning"]
+__author__ = ["mloning"]
 
 import codecs
 import os

@@ -7,7 +7,7 @@
 adapted from :func:`sklearn.show_versions`
 """
 
-__author__ = ["Markus Löning"]
+__author__ = ["mloning"]
 __all__ = ["show_versions"]
 
 import importlib
