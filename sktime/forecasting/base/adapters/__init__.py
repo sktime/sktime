@@ -1,4 +1,4 @@
-# !/usr/bin/env python3 -u
+# -*- coding: utf-8 -*-
 """Base classes for adapting other forecasters to sktime framework."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
@@ -11,7 +11,7 @@ __all__ = [
 ]
 
 from sktime.forecasting.base.adapters._fbprophet import _ProphetAdapter
-from sktime.forecasting.base.adapters._statsmodels import _StatsModelsAdapter
-from sktime.forecasting.base.adapters._tbats import _TbatsAdapter
 from sktime.forecasting.base.adapters._pmdarima import _PmdArimaAdapter
 from sktime.forecasting.base.adapters._statsforecast import _StatsForecastAdapter
+from sktime.forecasting.base.adapters._statsmodels import _StatsModelsAdapter
+from sktime.forecasting.base.adapters._tbats import _TbatsAdapter

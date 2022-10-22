@@ -1,6 +1,5 @@
-#! /usr/bin/env python
-"""Tests for benchmarking tasks."""
 # -*- coding: utf-8 -*-
+"""Tests for benchmarking tasks."""
 
 __author__ = "mloning"
 
