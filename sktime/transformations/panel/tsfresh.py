@@ -33,7 +33,7 @@ class _TSFreshFeatureExtractor(BaseTransformer):
 
     def __init__(
         self,
-        default_fc_parameters="efficient",
+        default_fc_parameters=None,
         kind_to_fc_parameters=None,
         chunksize=None,
         n_jobs=1,
@@ -83,6 +83,7 @@ class _TSFreshFeatureExtractor(BaseTransformer):
             ComprehensiveFCParameters,
             EfficientFCParameters,
             MinimalFCParameters,
+            from_columns,
         )
         from tsfresh.utilities.dataframe_functions import impute
 
@@ -127,15 +128,99 @@ class _TSFreshFeatureExtractor(BaseTransformer):
             fc_parameters = self.default_fc_parameters
         extraction_params["default_fc_parameters"] = fc_parameters
 
+        # creates mapping from kind names to fc_parameter objects
+        if self.kind_to_fc_parameters is not None:
+            self.kind_to_fc_parameters_ = from_columns(self.kind_to_fc_parameters)
+        else:
+            self.kind_to_fc_parameters_ = self.kind_to_fc_parameters
+        extraction_params["kind_to_fc_parameters"] = self.kind_to_fc_parameters_
         return extraction_params
 
 
 class TSFreshFeatureExtractor(_TSFreshFeatureExtractor):
     """Transformer for extracting time series features.
 
+    Parameters
+    ----------
+    default_fc_parameters : string, FCParameters object or None
+        Specifies pre-defined feature sets to be extracted
+        If string should be in ["minimal", "efficient", "comprehensive"]
+        See [3] for more details.
+    kind_to_fc_parameters : list or None
+        containing strings specifying selected features to be extracted.
+        The naming convention from tsfresh applies, i.e. the strings
+        should be structured as:
+        {time_series_name}__{feature_name}__{param name 1}_
+        {param value 1}__[..]__{param name k}_{param value k}.
+        See [2] for more details and [4] for viable options.
+        Either default_fc_parameters or kind_to_fc_parameters
+        should be passed. If both are passed, only features specified
+        in kind_to_fc_parameters are extracted.
+    n_jobs : int
+        The number of processes to use for parallelization.
+        If zero, no parallelization is used.
+    chunksize : None or int
+        The size of one chunk that is submitted to the worker
+        process for the parallelisation.  Where one chunk is defined as a
+        singular time series for one id and one kind. If you set the chunksize
+        to 10, then it means that one task is to calculate all features for 10
+        time series.  If it is set it to None, depending on distributor,
+        heuristics are used to find the optimal chunksize. If you get out of
+        memory exceptions, you can try it with the dask distributor and a
+        smaller chunksize.
+    show_warnings : bool
+        Show warnings during the feature extraction
+         (needed for debugging of calculators).
+    disable_progressbar : bool
+        Do not show a progressbar while doing the calculation.
+    impute_function : None or Callable
+        None, if no imputing should happen or the function to call for
+        imputing the result dataframe. Imputing will never happen on the input data.
+    profiling : bool
+        Turn on profiling during feature extraction
+    profiling_sorting : basestring
+        How to sort the profiling results (see the documentation
+        of the profiling package for more information)
+    profiling_filename : basestring
+        Where to save the profiling results.
+    distributor : distributor class
+        Advanced parameter: set this to a class name that you want to use as a
+        distributor. See the utilities/distribution.py for more information.
+        Leave to None, if you want TSFresh to choose the best distributor.
+
+    Returns
+    -------
+    DataFrame containing extracted features
+
     References
     ----------
     .. [1]  https://github.com/blue-yonder/tsfresh
+    .. [2]  https://tsfresh.readthedocs.io/en/v0.1.2/text/feature_naming.html
+    .. [3]  https://tsfresh.readthedocs.io/en/latest/text/
+            feature_extraction_settings.html
+    .. [4]  https://tsfresh.readthedocs.io/en/latest/api/tsfresh.feature_extraction.html
+            #module-tsfresh.feature_extraction.feature_calculators
+
+    Examples
+    --------
+    >>> from sklearn.model_selection import train_test_split
+    >>> from sktime.datasets import load_arrow_head
+    >>> from sktime.transformations.panel.tsfresh import TSFreshFeatureExtractor
+    >>> X, y = load_arrow_head(return_X_y=True)
+    >>> X_train, X_test, y_train, y_test = train_test_split(X, y)
+    >>> ts_eff = TSFreshFeatureExtractor(
+    >>>     default_fc_parameters="efficient", disable_progressbar=True
+    >>> )
+    >>> X_transform1 = ts_eff.fit_transform(X_train)
+    >>> features_to_calc = [
+    >>>     "dim_0__quantile__q_0.6",
+    >>>     "dim_0__longest_strike_above_mean",
+    >>>     "dim_0__variance",
+    >>> ]
+    >>> ts_custom = TSFreshFeatureExtractor(
+    >>>     kind_to_fc_parameters=features_to_calc, disable_progressbar=True
+    >>> )
+    >>> X_transform2 = ts_custom.fit_transform(X_train)
     """
 
     _tags = {
@@ -210,7 +295,24 @@ class TSFreshFeatureExtractor(_TSFreshFeatureExtractor):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        return {"disable_progressbar": True, "show_warnings": False}
+        features_to_calc = [
+            "dim_0__quantile__q_0.6",
+            "dim_0__longest_strike_above_mean",
+            "dim_0__variance",
+        ]
+
+        return [
+            {
+                "disable_progressbar": True,
+                "show_warnings": False,
+                "default_fc_parameters": "efficient",
+            },
+            {
+                "disable_progressbar": True,
+                "show_warnings": False,
+                "kind_to_fc_parameters": features_to_calc,
+            },
+        ]
 
 
 class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
@@ -390,3 +492,7 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
             "fdr_level": 0.01,
         }
         return params
+
+if __name__ == '__main__':
+    from sktime.utils.estimator_checks import check_estimator
+    check_estimator(TSFreshFeatureExtractor, fixtures_to_run='test_clone[Error:estimator_instance]', return_exceptions=False)
