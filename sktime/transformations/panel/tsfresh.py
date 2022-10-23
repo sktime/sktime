@@ -492,7 +492,3 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
             "fdr_level": 0.01,
         }
         return params
-
-if __name__ == '__main__':
-    from sktime.utils.estimator_checks import check_estimator
-    check_estimator(TSFreshFeatureExtractor, fixtures_to_run='test_clone[Error:estimator_instance]', return_exceptions=False)
