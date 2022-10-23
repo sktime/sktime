@@ -523,7 +523,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
         """
         from sktime.forecasting.model_selection._split import SingleWindowSplitter
         from sktime.forecasting.naive import NaiveForecaster
-        from sktime.forecasting.trend import TrendForecaster
+        from sktime.forecasting.trend import PolynomialTrendForecaster
         from sktime.performance_metrics.forecasting import MeanAbsolutePercentageError
 
         params = {
@@ -533,9 +533,9 @@ class ForecastingGridSearchCV(BaseGridSearch):
             "scoring": MeanAbsolutePercentageError(symmetric=True),
         }
         params2 = {
-            "forecaster": TrendForecaster(),
+            "forecaster": PolynomialTrendForecaster(),
             "cv": SingleWindowSplitter(fh=1),
-            "param_grid": {"initialization_method": ["estimated", "heuristic"]},
+            "param_grid": {"degree": [1, 2]},
             "scoring": MeanAbsolutePercentageError(symmetric=True),
             "update_behaviour": "inner_only",
         }
