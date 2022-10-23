@@ -26,13 +26,16 @@ The user guide notebooks are always functional with the most recent stable versi
 
     A general introduction to ``sktime`` - for first time users.
 
+    :link-badge:`https://github.com/sktime/sktime-tutorial-pydata-global-2021,"repository link",cls=badge-dark text-white`
+
     +++
 
     .. link-button:: https://www.youtube.com/watch?v=ODspi8-uWgo
             :type: url
-            :text: Intro to sktime
+            :text: Intro to sktime - video
             :classes: btn-block btn-secondary stretched-link
 
+    repository link: https://github.com/sktime/sktime-tutorial-pydata-global-2021
     ---
 
     Implementing your own estimator
@@ -40,11 +43,16 @@ The user guide notebooks are always functional with the most recent stable versi
 
     How to implement your own ``sktime`` compatible estimator and check its validity.
 
-    +++
-
     .. link-button:: https://youtu.be/S_3ewcvs_pg
             :type: url
-            :text: Implementing estimators
+            :text: Implementing estimators - video
+            :classes: btn-block btn-secondary stretched-link
+
+    +++
+
+    .. link-button:: https://github.com/sktime/sktime-workshop-pydata-london-2022
+            :type: url
+            :text: Implementing estimators - repo
             :classes: btn-block btn-secondary stretched-link
 
     ---
@@ -54,11 +62,16 @@ The user guide notebooks are always functional with the most recent stable versi
 
     Probabilistic and hierarchical forecasting with ``sktime``
 
-    +++
-
     .. link-button:: https://www.youtube.com/watch?v=4Rf9euAhjNc
             :type: url
-            :text: Advanced forecasting
+            :text: Advanced forecasting - video
+            :classes: btn-block btn-secondary stretched-link
+
+    +++
+
+    .. link-button:: https://github.com/sktime/sktime-tutorial-pydata-berlin-2022
+            :type: url
+            :text: Advanced forecasting - repo
             :classes: btn-block btn-secondary stretched-link
 
     ---
