@@ -60,7 +60,7 @@ class FixedParams(BaseParamFitter):
         "scitype:X": ["Series", "Panel", "Hierarchical"],
         # which X scitypes are supported natively?
         "capability:missing_values": True,  # can estimator handle missing data?
-        "capability:True": False,  # can estimator handle multivariate data?
+        "capability:multivariate": True,  # can estimator handle multivariate data?
     }
 
     def __init__(self, param_dict):
