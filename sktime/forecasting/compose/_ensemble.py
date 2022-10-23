@@ -368,17 +368,16 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         -------
         params : dict or list of dict
         """
+        from sktime.forecasting.compose._reduce import DirectReductionForecaster
         from sktime.forecasting.naive import NaiveForecaster
-        from sktime.forecasting.var import VAR
-        from sktime.utils.validation._dependencies import _check_estimator_deps
 
         # univariate case
         FORECASTER = NaiveForecaster()
         params = [{"forecasters": [("f1", FORECASTER), ("f2", FORECASTER)]}]
 
         # test multivariate case, i.e., ensembling multiple variables at same time
-        if _check_estimator_deps(VAR, severity="none"):
-            params = params + [{"forecasters": [("f1", VAR()), ("f2", VAR())]}]
+        FORECASTER = DirectReductionForecaster()
+        params = params + [{"forecasters": [("f1", FORECASTER), ("f2", FORECASTER)]}]
 
         return params
 
