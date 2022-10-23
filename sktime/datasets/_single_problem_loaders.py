@@ -13,6 +13,7 @@ __author__ = [
     "aiwalter",
     "jasonlines",
     "achieveordie",
+    "ciaran-g",
 ]
 
 __all__ = [
@@ -24,6 +25,7 @@ __all__ = [
     "load_italy_power_demand",
     "load_basic_motions",
     "load_japanese_vowels",
+    "load_solar",
     "load_shampoo_sales",
     "load_longley",
     "load_lynx",
