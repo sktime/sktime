@@ -11,7 +11,6 @@ from joblib import Parallel, delayed
 from sktime.datatypes import convert_to
 from sktime.transformations.base import BaseTransformer
 from sktime.transformations.panel.segment import RandomIntervalSegmenter
-from sktime.utils.validation._dependencies import _check_estimator_deps
 
 
 class PlateauFinder(BaseTransformer):
@@ -447,10 +446,4 @@ class FittedParamExtractor(BaseTransformer):
         """
         from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 
-        if _check_estimator_deps(ExponentialSmoothing, severity="none"):
-            return {
-                "forecaster": ExponentialSmoothing(),
-                "param_names": ["initial_level"],
-            }
-        else:
-            return {}
+        return {"forecaster": ExponentialSmoothing(), "param_names": ["initial_level"]}
