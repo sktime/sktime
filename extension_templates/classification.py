@@ -252,8 +252,9 @@ class MyTimeSeriesClassifier(BaseClassifier):
         -------
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
-            Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            Each dict are parameters to construct an "interesting"
+            and viable test instance, i.e., `MyClass(**params)` or
+            `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
 
@@ -272,6 +273,14 @@ class MyTimeSeriesClassifier(BaseClassifier):
         #       such as published in benchmarking studies, or for identity testing.
         # A parameter dictionary must be returned *for all values* of parameter_set,
         #   i.e., "parameter_set not available" errors should never be raised.
+        #
+        # A good parameter set should primarily satisfy two criteria,
+        #   1. Chosen set of parameters should reduce the testing time.
+        #       This is vital for the case of Deep Classifiers where default values
+        #       lead of "big" models which not only increases test time but also
+        #       run into the risk of test workers crashing.
+        #   2. There should be minimum two such parameter set with different values
+        #      to ensure maximum code coverage.
         #
         # example 1: specify params as dictionary
         # any number of params can be specified
