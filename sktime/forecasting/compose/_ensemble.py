@@ -7,7 +7,7 @@ Creates univariate (optionally weighted)
 combination of the predictions from underlying forecasts.
 """
 
-__author__ = ["mloning", "GuzalBulatova", "aiwalter", "RNKuhns"]
+__author__ = ["mloning", "GuzalBulatova", "aiwalter", "RNKuhns", "AnH0ang"]
 __all__ = ["EnsembleForecaster", "AutoEnsembleForecaster"]
 
 import numpy as np
@@ -304,7 +304,8 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         "ignores-exogeneous-X": False,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
-        "scitype:y": "univariate",
+        "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
+        "scitype:y": "both",
     }
 
     def __init__(self, forecasters, n_jobs=None, aggfunc="mean", weights=None):
@@ -345,9 +346,11 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         y_pred : pd.Series
             Aggregated predictions.
         """
-        y_pred = pd.concat(self._predict_forecasters(fh, X), axis=1)
-        y_pred = _aggregate(y=y_pred, aggfunc=self.aggfunc, weights=self.weights)
-
+        names, _ = self._check_forecasters()
+        y_pred = pd.concat(self._predict_forecasters(fh, X), axis=1, keys=names)
+        y_pred = y_pred.groupby(level=1, axis=1).agg(
+            _aggregate, self.aggfunc, self.weights
+        )
         return y_pred
 
     @classmethod
@@ -366,9 +369,17 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         params : dict or list of dict
         """
         from sktime.forecasting.naive import NaiveForecaster
+        from sktime.forecasting.var import VAR
+        from sktime.utils.validation._dependencies import _check_estimator_deps
 
+        # univariate case
         FORECASTER = NaiveForecaster()
-        params = {"forecasters": [("f1", FORECASTER), ("f2", FORECASTER)]}
+        params = [{"forecasters": [("f1", FORECASTER), ("f2", FORECASTER)]}]
+
+        # test multivariate case, i.e., ensembling multiple variables at same time
+        if _check_estimator_deps(VAR, severity="none"):
+            params = params + [{"forecasters": [("f1", VAR()), ("f2", VAR())]}]
+
         return params
 
 
