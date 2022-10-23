@@ -376,7 +376,7 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         params = [{"forecasters": [("f1", FORECASTER), ("f2", FORECASTER)]}]
 
         # test multivariate case, i.e., ensembling multiple variables at same time
-        FORECASTER = DirectReductionForecaster()
+        FORECASTER = DirectReductionForecaster.create_test_instance()
         params = params + [{"forecasters": [("f1", FORECASTER), ("f2", FORECASTER)]}]
 
         return params
