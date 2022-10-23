@@ -10,4 +10,4 @@ from sktime.classification.early_classification._probability_threshold import (
     ProbabilityThresholdEarlyClassifier,
 )
 from sktime.classification.early_classification._teaser import TEASER
-from sktime.classification.early_classification.base import BaseEarlyClassifier
+from sktime.classification.early_classification.old_base import BaseEarlyClassifier

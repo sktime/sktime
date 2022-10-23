@@ -39,7 +39,7 @@ from typing import Tuple
 
 import numpy as np
 
-from sktime.classification.early_classification import BaseEarlyClassifier
+from sktime.classification.early_classification.base import BaseEarlyClassifier
 
 # todo: add any necessary imports here
 

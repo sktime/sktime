@@ -17,7 +17,7 @@ from inspect import isclass
 
 from sktime.base import BaseObject
 from sktime.classification.base import BaseClassifier
-from sktime.classification.early_classification import BaseEarlyClassifier
+from sktime.classification.early_classification.base import BaseEarlyClassifier
 from sktime.regression.base import BaseRegressor
 from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils._testing.panel import _make_classification_y, _make_panel_X
