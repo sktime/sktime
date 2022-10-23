@@ -1255,8 +1255,11 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
             err_msg=msg,
         )
 
-    def test_save_estimators_to_file(self, estimator_instance, scenario, method_nsc):
+    def test_save_estimators_to_file(
+        self, estimator_instance, scenario, method_nsc_arraylike
+    ):
         """Check if saved estimators onto disk can be loaded correctly."""
+        method_nsc = method_nsc_arraylike
         # escape predict_proba for forecasters, tfp distributions cannot be pickled
         if (
             isinstance(estimator_instance, BaseForecaster)
