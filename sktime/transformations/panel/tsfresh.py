@@ -205,22 +205,24 @@ class TSFreshFeatureExtractor(_TSFreshFeatureExtractor):
     --------
     >>> from sklearn.model_selection import train_test_split
     >>> from sktime.datasets import load_arrow_head
-    >>> from sktime.transformations.panel.tsfresh import TSFreshFeatureExtractor
+    >>> from sktime.transformations.panel.tsfresh import (
+    ... TSFreshFeatureExtractor
+    ... )
     >>> X, y = load_arrow_head(return_X_y=True)
     >>> X_train, X_test, y_train, y_test = train_test_split(X, y)
     >>> ts_eff = TSFreshFeatureExtractor(
-    >>>     default_fc_parameters="efficient", disable_progressbar=True
-    >>> )
-    >>> X_transform1 = ts_eff.fit_transform(X_train)
+    ...     default_fc_parameters="efficient", disable_progressbar=True
+    ... ) # doctest: +SKIP
+    >>> X_transform1 = ts_eff.fit_transform(X_train) # doctest: +SKIP
     >>> features_to_calc = [
-    >>>     "dim_0__quantile__q_0.6",
-    >>>     "dim_0__longest_strike_above_mean",
-    >>>     "dim_0__variance",
-    >>> ]
+    ...     "dim_0__quantile__q_0.6",
+    ...     "dim_0__longest_strike_above_mean",
+    ...     "dim_0__variance",
+    ... ]
     >>> ts_custom = TSFreshFeatureExtractor(
-    >>>     kind_to_fc_parameters=features_to_calc, disable_progressbar=True
-    >>> )
-    >>> X_transform2 = ts_custom.fit_transform(X_train)
+    ...     kind_to_fc_parameters=features_to_calc, disable_progressbar=True
+    ... ) # doctest: +SKIP
+    >>> X_transform2 = ts_custom.fit_transform(X_train) # doctest: +SKIP
     """
 
     _tags = {
