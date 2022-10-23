@@ -4,4 +4,4 @@ __all__ = [
     "BaseEarlyClassifier",
 ]
 
-from sktime.classification.early_classification.base.base import BaseEarlyClassifier
+from sktime.classification.early_classification.base._base import BaseEarlyClassifier
