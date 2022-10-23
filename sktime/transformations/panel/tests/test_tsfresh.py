@@ -35,7 +35,7 @@ def test_tsfresh_extractor(default_fc_parameters):
 
 
 def test_docs_tsfresh_extractor():
-    """Test whether doc example runs through"""
+    """Test whether doc example runs through."""
     X, y = load_arrow_head(return_X_y=True)
     X_train, X_test, y_train, y_test = train_test_split(X, y)
     ts_eff = TSFreshFeatureExtractor(
