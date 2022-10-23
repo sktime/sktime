@@ -597,41 +597,52 @@ class BaseObject(_BaseEstimator):
         return comp_dict
 
     def save(self, path=None):
-        """Save serialized self to bytes-like object or to file.
+        """Save serialized self to bytes-like object or to (.zip) file.
 
         Behaviour:
         if `path` is None, returns an in-memory serialized self
-        if `path` is a file location, stores self at that location
+        if `path` is a file location, stores self at that location as a zip file
 
         saved files are zip files with following contents:
-        metadata - contains class of self, i.e., type(self)
-        object - serialized self. This class uses the default serialization (pickle).
+        _metadata - contains class of self, i.e., type(self)
+        _obj - serialized self. This class uses the default serialization (pickle).
 
         Parameters
         ----------
         path : None or file location (str or Path)
             if None, self is saved to an in-memory object
-            if file location, self is saved to that file location
+            if file location, self is saved to that file location. If:
+                path="estimator" then a zip file `estimator.zip` will be made at cwd.
+                path="/home/stored/estimator" then a zip file `estimator.zip` will be
+                stored in `/home/stored/`.
 
         Returns
         -------
         if `path` is None - in-memory serialized self
-        if `path` is file location - ZipFile with reference to location
+        if `path` is file location - ZipFile with reference to the file
         """
         import pickle
+        import shutil
+        from pathlib import Path
+        from zipfile import ZipFile
 
         if path is None:
             return (type(self), pickle.dumps(self))
+        if not isinstance(path, (str, Path)):
+            raise TypeError(
+                "`path` is expected to either be a string or a Path object "
+                f"but found of type:{type(path)}."
+            )
 
-        from zipfile import ZipFile
+        path = Path(path) if isinstance(path, str) else path
+        path.mkdir()
 
-        with ZipFile(path) as zipfile:
-            with zipfile.open("metadata", mode="w") as meta_file:
-                meta_file.write(type(self))
-            with zipfile.open("object", mode="w") as object:
-                object.write(pickle.dumps(self))
+        pickle.dump(type(self), open(path / "_metadata", "wb"))
+        pickle.dump(self, open(path / "_obj", "wb"))
 
-        return ZipFile(path)
+        shutil.make_archive(base_name=path, format="zip", root_dir=path)
+        shutil.rmtree(path)
+        return ZipFile(path.with_name(f"{path.stem}.zip"))
 
     @classmethod
     def load_from_serial(cls, serial):
@@ -662,8 +673,10 @@ class BaseObject(_BaseEstimator):
         deserialized self resulting in output at `path`, of `cls.save(path)`
         """
         import pickle
+        from zipfile import ZipFile
 
-        return pickle.loads(serial)
+        with ZipFile(serial, "r") as file:
+            return pickle.loads(file.open("_obj").read())
 
 
 class TagAliaserMixin:
