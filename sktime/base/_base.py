@@ -566,8 +566,8 @@ class BaseObject(_BaseEstimator):
 
         Parameters
         ----------
-        base_class : class, optional, default=None
-            if None, `base_class` is interpreted as `BaseObject`
+        base_class : class, optional, default=None, must be subclass of BaseObject
+            if None, behaves the same as `base_class=BaseObject`
             if not None, return dict collects descendants of `base_class`
 
         Returns
