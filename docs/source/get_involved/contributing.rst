@@ -37,78 +37,98 @@ Recommended steps for first time contributors, or to get started with regular co
 
    If you get stuck, chat with us on `Slack`_, or join one of the community sessions on `Discord`_.
 
-.. panels::
-    :card: + intro-card text-center
+.. grid:: 1 2 2 2
+    :gutter: 3
 
-    ---
+    .. grid-item-card::
+        :text-align: center
 
-    Developer Guide
-    ^^^^^^^^^^^^^^^
+        Developer Guide
 
-    ``sktime`` developer guide.
+        ^^^
 
-    +++
+        ``sktime`` developer guide.
 
-    .. link-button:: developer_guide
-            :type: ref
-            :text: Developer Guide
-            :classes: btn-block btn-secondary stretched-link
+        +++
 
-    ---
+        .. button-ref:: developer_guide
+            :color: primary
+            :click-parent:
+            :expand:
 
-    Installation
-    ^^^^^^^^^^^^
+            Developer Guide
 
-    ``sktime`` developer installation guide.
+    .. grid-item-card::
+        :text-align: center
 
-    +++
+        Installation
 
-    .. link-button:: installation
-            :type: ref
-            :text: Developer Installation
-            :classes: btn-block btn-secondary stretched-link
+        ^^^
 
-    ---
+        ``sktime`` developer installation guide.
 
-    Enhancement Proposals
-    ^^^^^^^^^^^^^^^^^^^^^
+        +++
 
-    ``sktime`` enhancement proposals.
+        .. button-ref:: installation
+            :color: primary
+            :click-parent:
+            :expand:
 
-    +++
+            Developer Installation
 
-    .. link-button:: enhancement_proposals
-            :type: ref
-            :text: Enhancement Proposals
-            :classes: btn-block btn-secondary stretched-link
+    .. grid-item-card::
+        :text-align: center
 
-    ---
+        Enhancement Proposals
 
-    Reporting Bugs
-    ^^^^^^^^^^^^^^
+        ^^^
 
-    ``sktime`` reporting bugs.
+        ``sktime`` enhancement proposals.
 
-    +++
+        +++
 
-    .. link-button:: reporting_bugs
-            :type: ref
-            :text: Reporting Bugs
-            :classes: btn-block btn-secondary stretched-link
+        .. button-ref:: enhancement_proposals
+            :color: primary
+            :click-parent:
+            :expand:
 
-    ---
+            Enhancement Proposals
 
-    Reviewer Guide
-    ^^^^^^^^^^^^^^
+    .. grid-item-card::
+        :text-align: center
 
-    ``sktime`` reviewer guide.
+        Reporting Bugs
 
-    +++
+        ^^^
 
-    .. link-button:: reviewer_guide
-            :type: ref
-            :text: Reporting Bugs
-            :classes: btn-block btn-secondary stretched-link
+        ``sktime`` reporting bugs.
+
+        +++
+
+        .. button-ref:: reporting_bugs
+            :color: primary
+            :click-parent:
+            :expand:
+
+            Reporting Bugs
+
+    .. grid-item-card::
+        :text-align: center
+
+        Reviewer Guide
+
+        ^^^
+
+        ``sktime`` reviewer guide.
+
+        +++
+
+        .. button-ref:: reviewer_guide
+            :color: primary
+            :click-parent:
+            :expand:
+
+            Reviewer Guide
 
 Acknowledging contributions
 ---------------------------
