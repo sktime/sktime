@@ -916,15 +916,15 @@ class BaseEstimator(BaseObject):
         c_dict = self._components()
         for c, comp in c_dict.items():
             if comp._is_fitted:
-                c_f_params = c_dict[c].get_fitted_params()
-                c_f_params = {f"{sh(c)}__{k}": c_f_params[k] for k in c_f_params.keys()}
+                c_f_params = comp.get_fitted_params()
+                c_f_params = {f"{sh(c)}__{k}": v for k, v in c_f_params.items()}
                 fitted_params.update(c_f_params)
 
         # add all nested parameters from components that are sklearn estimators
         sklearn_c_dict = self._components(base_class=_BaseEstimator)
         for c, comp in sklearn_c_dict.items():
             c_f_params = self._get_fitted_params_default(comp)
-            c_f_params = {f"{sh(c)}__{k}": c_f_params[k] for k in c_f_params.keys()}
+            c_f_params = {f"{sh(c)}__{k}": v for k, v in c_f_params.items()}
             fitted_params.update(c_f_params)
 
         # finally, add non-nested fitted params of self
