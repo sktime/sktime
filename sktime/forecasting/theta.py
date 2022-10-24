@@ -279,12 +279,27 @@ class ThetaModularForecaster(BaseForecaster):
     Overview: Input :term:`univariate series <Univariate time series>` of length
     "n" and decompose with :class:`ThetaLinesTransformer
     <sktime.transformations.series.theta>` by modifying the local curvature of
-    the time series using Theta-coefficient values - `theta` parameter.
+    the time series using Theta-coefficient values - `theta_values` parameter.
     Thansformation gives a pd.DataFrame of shape `len(input series) * len(theta)`.
 
     The resulting transformed series (Theta-lines) are extrapolated separately.
     The forecasts are then aggregated into one prediction - aunivariate series,
     of `len(fh)`.
+
+    Parameters
+    ----------
+    forecasters: list of tuples (str, estimator, int or pd.index), default=None
+        Forecasters to apply to each Theta-line. If None, will apply
+        PolynomialTrendForecaster (linear regression) the the Theta-lines
+        where theta_value equals 0, and ExponentialSmoothing - where theta_value
+        is different from 0.
+    theta_values: sequence of float, default=(0,2)
+        Theta-coefficients to use in transformation.
+    aggfunc: str, default="mean"
+        Aggregation function to apply to results of theta-lines predictions
+        (multivariate) in order to get resulting prediction (univariate).
+    weights: lsit of floats, default=None
+        Weights to apply in aggregation.
 
     References
     ----------
