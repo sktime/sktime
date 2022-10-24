@@ -7,6 +7,7 @@ __author__ = ["mloning"]
 __all__ = ["_StatsModelsAdapter"]
 
 import inspect
+from warnings import warn
 
 import numpy as np
 import pandas as pd
@@ -57,6 +58,26 @@ class _StatsModelsAdapter(BaseForecaster):
     def _fit_forecaster(self, y_train, X_train=None):
         """Log used internally in fit."""
         raise NotImplementedError("abstract method")
+
+    def _update(self, y, X=None, update_params=True):
+        """Update used internally in update."""
+        if update_params or self.is_composite():
+            super()._update(y, X, update_params=update_params)
+        else:
+            if not hasattr(self._fitted_forecaster, "append"):
+                warn(
+                    f"NotImplementedWarning: {self.__class__.__name__} "
+                    f"can not accept new data when update_params=False. "
+                    f"Call with update_params=True to refit with new data."
+                )
+            else:
+                # only append unseen data to fitted forecaster
+                index_diff = y.index.difference(
+                    self._fitted_forecaster.fittedvalues.index
+                )
+                if index_diff.isin(y.index).all():
+                    y = y.loc[index_diff]
+                self._fitted_forecaster = self._fitted_forecaster.append(y)
 
     def _predict(self, fh, X=None):
         """Make forecasts.
