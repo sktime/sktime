@@ -11,6 +11,8 @@ import sktime.utils.numba.stats as stats
 def unique_count(X):
     """Numba unique value count function for a 1d numpy array.
 
+    np.unique() is supported by numba, but the return_counts parameter is not.
+
     Parameters
     ----------
     X : 1d numpy array
@@ -56,10 +58,7 @@ def first_order_differences(X):
     arr : 1d numpy array of size (X.shape[0] - 1)
         The first order differences of X
     """
-    arr = np.zeros(X.shape[0] - 1)
-    for i in range(X.shape[0] - 1):
-        arr[i] = X[i + 1] - X[i]
-    return arr
+    return X[1:] - X[:-1]
 
 
 @njit(fastmath=True, cache=True)
@@ -76,11 +75,7 @@ def row_first_order_differences(X):
     arr : 2d numpy array of shape (X.shape[0], X.shape[1] - 1)
         The first order differences for axis 0 of the input array
     """
-    arr = np.zeros((X.shape[0], X.shape[1] - 1))
-    for i in range(X.shape[0]):
-        for n in range(X.shape[1] - 1):
-            arr[i, n] = X[i, n + 1] - X[i, n]
-    return arr
+    return X[:, 1:] - X[:, :-1]
 
 
 @njit(fastmath=True, cache=True)
@@ -141,6 +136,5 @@ def z_normalise_series_3d(X):
     """
     arr = np.zeros(X.shape)
     for i in range(X.shape[0]):
-        for n in range(X.shape[1]):
-            arr[i, n] = z_normalise_series(X[i, n])
+        arr[i] = z_normalise_series_2d(X[i])
     return arr

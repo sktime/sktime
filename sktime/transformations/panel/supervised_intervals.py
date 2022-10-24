@@ -57,7 +57,7 @@ class SupervisedIntervals(BaseTransformer):
     features : function with a single 2d array-like parameter or list of said functions,
             default=None
         Functions used to extract features from selected intervals. If None, defaults to
-        the following statstics used in [2]:
+        the following statistics used in [2]:
         [mean, median, std, slope, min, max, iqr, count_mean_crossing,
         count_above_mean].
     randomised_split_point : bool, default=True
@@ -131,6 +131,7 @@ class SupervisedIntervals(BaseTransformer):
         self._features = features
         self._intervals = []
         self._transform_features = []
+        self._n_jobs = n_jobs
 
         super(SupervisedIntervals, self).__init__()
 
@@ -198,7 +199,7 @@ class SupervisedIntervals(BaseTransformer):
         y = self._fit_setup(X, y)
         X_norm = z_normalise_series_3d(X)
 
-        fit = Parallel(n_jobs=self._threads_to_use)(
+        fit = Parallel(n_jobs=self._n_jobs)(
             delayed(self._generate_intervals)(
                 X,
                 X_norm,
@@ -231,7 +232,7 @@ class SupervisedIntervals(BaseTransformer):
         y = self._fit_setup(X, y)
         X_norm = z_normalise_series_3d(X)
 
-        fit = Parallel(n_jobs=self._threads_to_use)(
+        fit = Parallel(n_jobs=self._n_jobs)(
             delayed(self._generate_intervals)(
                 X,
                 X_norm,
@@ -256,7 +257,7 @@ class SupervisedIntervals(BaseTransformer):
         return self
 
     def _transform(self, X, y=None):
-        transform = Parallel(n_jobs=self._threads_to_use)(
+        transform = Parallel(n_jobs=self._n_jobs)(
             delayed(self._transform_intervals)(
                 X,
                 i,
@@ -305,7 +306,7 @@ class SupervisedIntervals(BaseTransformer):
         if not isinstance(self._features, list):
             self._features = [self._features]
 
-        self._threads_to_use = check_n_jobs(self.n_jobs)
+        self._n_jobs = check_n_jobs(self.n_jobs)
 
         le = preprocessing.LabelEncoder()
         return le.fit_transform(y)
