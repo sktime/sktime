@@ -447,5 +447,6 @@ class FittedParamExtractor(BaseTransformer):
         from sktime.forecasting.trend import TrendForecaster
 
         return {
-            "forecaster": TrendForecaster(), "param_names": ["regressor__intercept"]
+            "forecaster": TrendForecaster(),
+            "param_names": ["regressor__intercept"],
         }
