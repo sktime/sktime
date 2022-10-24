@@ -557,7 +557,7 @@ class BaseObject(_BaseEstimator):
         return composite
 
     def _components(self, base_class=None):
-        """Retirn references to all state changing BaseObject type attributes.
+        """Return references to all state changing BaseObject type attributes.
 
         This *excludes* the blue-print-like components passed in the __init__.
 
@@ -566,22 +566,23 @@ class BaseObject(_BaseEstimator):
 
         Parameters
         ----------
-        base_class : class, optional, default=None, must be subclass of BaseObject
-            if not None, sub-sets return dict to only descendants of base_class
+        base_class : class, optional, default=None
+            if None, `base_class` is interpreted as `BaseObject`
+            if not None, return dict collects descendants of `base_class`
 
         Returns
         -------
-        dict with key = attribute name, value = reference to that BaseObject attribute
-        dict contains all attributes of self that inherit from BaseObjects, and:
+        dict with key = attribute name, value = reference to attribute
+        dict contains all attributes of `self` that inherit from `base_class`, and:
             whose names do not contain the string "__", e.g., hidden attributes
-            are not class attributes, and are not hyper-parameters (__init__ args)
+            are not class attributes, and are not hyper-parameters (`__init__` args)
         """
         if base_class is None:
             base_class = BaseObject
         if base_class is not None and not inspect.isclass(base_class):
             raise TypeError(f"base_class must be a class, but found {type(base_class)}")
-        if base_class is not None and not issubclass(base_class, BaseObject):
-            raise TypeError("base_class must be a subclass of BaseObject")
+        # if base_class is not None and not issubclass(base_class, BaseObject):
+        #     raise TypeError("base_class must be a subclass of BaseObject")
 
         # retrieve parameter names to exclude them later
         param_names = self.get_params(deep=False).keys()
@@ -903,7 +904,6 @@ class BaseEstimator(BaseObject):
             )
 
         fitted_params = dict()
-        c_dict = self._components()
 
         def sh(x):
             """Shorthand to remove all underscores at end of a string."""
@@ -912,16 +912,53 @@ class BaseEstimator(BaseObject):
             else:
                 return x
 
-        for c in c_dict.keys():
-            comp = c_dict[c]
+        # add all nested parameters from components that are sktime BaseObject
+        c_dict = self._components()
+        for c, comp in c_dict.items():
             if comp._is_fitted:
                 c_f_params = c_dict[c].get_fitted_params()
                 c_f_params = {f"{sh(c)}__{k}": c_f_params[k] for k in c_f_params.keys()}
                 fitted_params.update(c_f_params)
 
+        # add all nested parameters from components that are sklearn estimators
+        sklearn_c_dict = self._components(base_class=_BaseEstimator)
+        for c, comp in sklearn_c_dict.items():
+            c_f_params = self._get_fitted_params_default(comp)
+            c_f_params = {f"{sh(c)}__{k}": c_f_params[k] for k in c_f_params.keys()}
+            fitted_params.update(c_f_params)
+
+        # finally, add non-nested fitted params of self
         fitted_params.update(self._get_fitted_params())
 
         return fitted_params
+
+    def _get_fitted_params_default(self, obj=None):
+        """Obtain fitted params of object, per sklearn convention.
+
+        Extracts a dict with {paramstr : paramvalue} contents,
+        where paramstr are all string names of "fitted parameters".
+
+        A "fitted attribute" of obj is one that ends in "_" but does not start with "_".
+        "fitted parameters" are names of fitted attributes, minus the "_" at the end.
+
+        Parameters
+        ----------
+        obj : any object, optional, default=self
+
+        Returns
+        -------
+        fitted_params : dict with str keys
+            fitted parameters, keyed by names of fitted parameter
+        """
+        obj = obj if obj else self
+
+        # default retrieves all self attributes ending in "_"
+        # and returns them with keys that have the "_" removed
+        fitted_params = [attr for attr in dir(obj) if attr.endswith("_")]
+        fitted_params = [x for x in fitted_params if not x.startswith("_")]
+        fitted_param_dict = {p[:-1]: getattr(obj, p) for p in fitted_params}
+
+        return fitted_param_dict
 
     def _get_fitted_params(self):
         """Get fitted parameters.
@@ -936,13 +973,7 @@ class BaseEstimator(BaseObject):
         fitted_params : dict with str keys
             fitted parameters, keyed by names of fitted parameter
         """
-        # default retrieves all self attributes ending in "_"
-        # and returns them with keys that have the "_" removed
-        fitted_params = [attr for attr in dir(self) if attr.endswith("_")]
-        fitted_params = [x for x in fitted_params if not x.startswith("_")]
-        fitted_param_dict = {p[:-1]: getattr(self, p) for p in fitted_params}
-
-        return fitted_param_dict
+        return self._get_fitted_params_default()
 
 
 def _clone_estimator(base_estimator, random_state=None):
