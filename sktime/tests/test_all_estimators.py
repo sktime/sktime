@@ -5,12 +5,14 @@
 adapted from scikit-learn's estimator_checks
 """
 
-__author__ = ["mloning", "fkiraly"]
+__author__ = ["mloning", "fkiraly", "achieveordie"]
 
 import numbers
+import os
 import types
 from copy import deepcopy
 from inspect import getfullargspec, isclass, signature
+from tempfile import TemporaryDirectory
 
 import joblib
 import numpy as np
@@ -21,6 +23,7 @@ from sklearn.utils.estimator_checks import (
 )
 
 from sktime.base import BaseEstimator, BaseObject, load
+from sktime.classification.deep_learning.base import BaseDeepClassifier
 from sktime.dists_kernels._base import (
     BasePairwiseTransformer,
     BasePairwiseTransformerPanel,
@@ -28,6 +31,7 @@ from sktime.dists_kernels._base import (
 from sktime.exceptions import NotFittedError
 from sktime.forecasting.base import BaseForecaster
 from sktime.registry import all_estimators
+from sktime.regression.deep_learning.base import BaseDeepRegressor
 from sktime.tests._config import (
     EXCLUDE_ESTIMATORS,
     EXCLUDED_TESTS,
@@ -53,6 +57,7 @@ from sktime.utils.sampling import random_partition
 from sktime.utils.validation._dependencies import (
     _check_dl_dependencies,
     _check_estimator_deps,
+    _check_soft_dependencies,
 )
 
 # whether to subsample estimators per os/version partition matrix design
@@ -1152,6 +1157,11 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
             and method_nsc == "predict_proba"
         ):
             return None
+        # escape Deep estimators if soft-dep `h5py` isn't installed
+        if isinstance(
+            estimator_instance, (BaseDeepClassifier, BaseDeepRegressor)
+        ) and not _check_soft_dependencies("h5py", severity="warning"):
+            return None
 
         estimator = estimator_instance
         set_random_state(estimator)
@@ -1161,7 +1171,7 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
         # Generate results before pickling
         vanilla_result = scenario.run(estimator, method_sequence=[method_nsc])
 
-        # Serialize and unserialize
+        # Serialize and deserialize
         serialized_estimator = estimator.save()
         deserialized_estimator = load(serialized_estimator)
 
@@ -1179,6 +1189,42 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
             decimal=6,
             err_msg=msg,
         )
+
+    def test_save_estimators_to_file(self, estimator_instance, scenario, method_nsc):
+        """Check if saved estimators onto disk can be loaded correctly."""
+        # escape predict_proba for forecasters, tfp distributions cannot be pickled
+        if (
+            isinstance(estimator_instance, BaseForecaster)
+            and method_nsc == "predict_proba"
+        ):
+            return None
+
+        estimator = estimator_instance
+        set_random_state(estimator)
+        # Fit the model, get args before and after
+        scenario.run(estimator, method_sequence=["fit"], return_args=True)
+
+        # Generate results before saving
+        vanilla_result = scenario.run(estimator, method_sequence=[method_nsc])
+
+        with TemporaryDirectory() as tmp_dir:
+            save_loc = os.path.join(tmp_dir, "estimator")
+            estimator.save(save_loc)
+
+            loaded_estimator = load(save_loc)
+            loaded_result = scenario.run(loaded_estimator, method_sequence=[method_nsc])
+
+            msg = (
+                f"Results of {method_nsc} differ between saved and loaded "
+                f"estimator {type(estimator).__name__}"
+            )
+
+            _assert_array_almost_equal(
+                vanilla_result,
+                loaded_result,
+                decimal=6,
+                err_msg=msg,
+            )
 
     # todo: this needs to be diagnosed and fixed - temporary skip
     @pytest.mark.skip(reason="hangs on mac and unix remote tests")
