@@ -19,7 +19,7 @@ def test_get_fitted_params_sklearn():
     y = load_airline()
     f = TrendForecaster().fit(y)
 
-    params = f.get_fitted_params
+    params = f.get_fitted_params()
 
     assert "regressor__coef" in params.keys()
     assert "regressor" in params.keys()
