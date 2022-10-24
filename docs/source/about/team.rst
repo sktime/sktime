@@ -19,6 +19,8 @@ Community Council
      - :user:`fkiraly`
    * - Martin Walter
      - :user:`aiwalter`
+   * - Guzal Bulatova
+    - :user: `GuzalBulatova`
 
 Community Council Observers
 ---------------------------
