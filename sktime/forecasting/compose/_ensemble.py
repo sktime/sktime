@@ -313,6 +313,10 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         self.aggfunc = aggfunc
         self.weights = weights
 
+        # the ensemble requires fh in fit
+        # iff any of the component forecasters require fh in fit
+        self._anytagis_then_set("requires-fh-in-fit", True, False, self.forecasters)
+
     def _fit(self, y, X=None, fh=None):
         """Fit to training data.
 
