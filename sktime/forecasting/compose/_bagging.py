@@ -301,13 +301,19 @@ class BaggingForecaster(BaseForecaster):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
+        from sktime.utils.validation._dependencies import _check_soft_dependencies
+
         params = [
-            {},
             {
                 "bootstrap_transformer": MovingBlockBootstrapTransformer(),
                 "forecaster": MockForecaster(),
             },
         ]
+
+        # the default param set causes a statsmodels based estimator
+        # to be created as bootstrap_transformer
+        if _check_soft_dependencies("statsmodels", severity="none"):
+            params += [{}]
 
         return params
 
