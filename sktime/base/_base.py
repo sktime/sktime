@@ -920,15 +920,23 @@ class BaseEstimator(BaseObject):
                 c_f_params = {f"{sh(c)}__{k}": v for k, v in c_f_params.items()}
                 fitted_params.update(c_f_params)
 
-        # add all nested parameters from components that are sklearn estimators
-        sklearn_c_dict = self._components(base_class=_BaseEstimator)
-        for c, comp in sklearn_c_dict.items():
-            c_f_params = self._get_fitted_params_default(comp)
-            c_f_params = {f"{sh(c)}__{k}": v for k, v in c_f_params.items()}
-            fitted_params.update(c_f_params)
-
-        # finally, add non-nested fitted params of self
+        # add non-nested fitted params of self
         fitted_params.update(self._get_fitted_params())
+
+        # add all nested parameters from components that are sklearn estimators
+        # we do this recursively as we have to reach into nested sklearn estimators
+        n_new_params = 42
+        old_new_params = fitted_params
+        while n_new_params > 0:
+            new_params = dict()
+            for c, comp in old_new_params.items():
+                if isinstance(comp, _BaseEstimator):
+                    c_f_params = self._get_fitted_params_default(comp)
+                    c_f_params = {f"{sh(c)}__{k}": v for k, v in c_f_params.items()}
+                    new_params.update(c_f_params)
+            fitted_params.update(new_params)
+            old_new_params = new_params.copy()
+            n_new_params = len(new_params)
 
         return fitted_params
 
@@ -956,6 +964,7 @@ class BaseEstimator(BaseObject):
         # and returns them with keys that have the "_" removed
         fitted_params = [attr for attr in dir(obj) if attr.endswith("_")]
         fitted_params = [x for x in fitted_params if not x.startswith("_")]
+        fitted_params = [x for x in fitted_params if hasattr(obj, x)]
         fitted_param_dict = {p[:-1]: getattr(obj, p) for p in fitted_params}
 
         return fitted_param_dict
