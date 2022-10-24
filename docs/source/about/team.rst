@@ -32,8 +32,6 @@ Community Council Observers
      - :user:`ltsaprounis`
    * - Lovkush Agarwal
      - :user:`lovkush-a`
-   * - Łukasz Mentel
-     - :user:`lmmentel`
 
 Code of Conduct Committee
 -------------------------
