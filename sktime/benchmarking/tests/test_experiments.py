@@ -65,25 +65,3 @@ def test_run_classification_experiment(tmp_path):
     # remove files
     test_path.unlink()
     train_path.unlink()
-
-
-# def test_load_and_run_clustering_experiment():
-#     """Test loading, running and saving.
-#
-#     Currently it just checks that the files have been created, then deletes them.
-#     Later it can be enhanced to check the results can be loaded.
-#     """
-#     load_and_run_clustering_experiment(
-#         overwrite=True,
-#         problem_path="../../datasets/data/",
-#         results_path="../Temp/",
-#         cls_name="kmeans",
-#         dataset="UnitTest",
-#         resample_id=0,
-#         train_file=True,
-#     )
-#     assert os.path.isfile("../Temp/kmeans/Predictions/UnitTest/testResample0.csv")
-#     assert os.path.isfile("../Temp/kmeans/Predictions/UnitTest/trainResample0.csv")
-#     os.remove("../Temp/kmeans/Predictions/UnitTest/testResample0.csv")
-#     os.remove("../Temp/kmeans/Predictions/UnitTest/trainResample0.csv")
-#

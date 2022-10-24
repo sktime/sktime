@@ -12,12 +12,6 @@ def mean(X):
 
 
 @njit(fastmath=True, cache=True)
-def median(X):
-    """Numba median function for a single time series."""
-    return np.median(X)
-
-
-@njit(fastmath=True, cache=True)
 def std(X):
     """Numba standard deviation function for a single time series."""
     return np.std(X)
