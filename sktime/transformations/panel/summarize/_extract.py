@@ -449,17 +449,17 @@ class FittedParamExtractor(BaseTransformer):
         from sktime.utils.validation._dependencies import _check_estimator_deps
 
         # accessing a nested parameter
-        params = {
+        params = [{
             "forecaster": TrendForecaster(),
             "param_names": ["regressor__intercept"],
-        }
+        }]
 
         # ExponentialSmoothing requires statsmodels
         if _check_estimator_deps(ExponentialSmoothing):
             # accessing a top level parameter
-            params = params + {
+            params = params + [{
                 "forecaster": ExponentialSmoothing(),
                 "param_names": ["initial_level"],
-            }
+            }]
 
         return params
