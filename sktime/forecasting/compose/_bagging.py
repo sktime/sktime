@@ -112,6 +112,13 @@ class BaggingForecaster(BaseForecaster):
         self.sp = sp
         self.random_state = random_state
 
+        if bootstrap_transformer is None:
+            # if the transformer is None, this uses the statsmodels dependent
+            # sktime.transformations.bootstrap.STLBootstrapTransformer
+            #
+            # done before the super call to trigger exceptions
+            self.set_tags(**{"python_dependencies": "statsmodels"})
+
         super(BaggingForecaster, self).__init__()
 
         # set the tags based on forecaster
