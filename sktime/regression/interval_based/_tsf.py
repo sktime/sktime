@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Time Series Forest Regressor (TSF)."""
 
-__author__ = ["Tony Bagnall", "kkoziara", "luiszugasti", "kanand77", "Markus Löning"]
+__author__ = ["Tony Bagnall", "kkoziara", "luiszugasti", "kanand77", "mloning"]
 __all__ = ["TimeSeriesForestRegressor"]
 
 import numpy as np

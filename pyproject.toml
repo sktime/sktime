@@ -102,7 +102,7 @@ docs = [
     "pydata-sphinx-theme",
     "sphinx_issues==1.2.0",
     "sphinx-gallery==0.6.0",
-    "sphinx-panels==0.6.0",
+    "sphinx-design==0.3.0",
     "sphinx==4.1.1",
     "tabulate",
 ]
