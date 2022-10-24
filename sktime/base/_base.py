@@ -581,8 +581,8 @@ class BaseObject(_BaseEstimator):
             base_class = BaseObject
         if base_class is not None and not inspect.isclass(base_class):
             raise TypeError(f"base_class must be a class, but found {type(base_class)}")
-        # if base_class is not None and not issubclass(base_class, BaseObject):
-        #     raise TypeError("base_class must be a subclass of BaseObject")
+        if base_class is not None and not issubclass(base_class, BaseObject):
+            raise TypeError("base_class must be a subclass of BaseObject")
 
         # retrieve parameter names to exclude them later
         param_names = self.get_params(deep=False).keys()
