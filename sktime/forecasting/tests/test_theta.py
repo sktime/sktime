@@ -94,7 +94,7 @@ def test_theta_and_thetamodular():
     AssertionError - if point forecasts of Theta and ThetaModular do not lie
     close to each other.
     """
-    y = load_airline()
+    y = np.log1p(load_airline())
     y_train, y_test = temporal_train_test_split(y)
     fh = np.arange(len(y_test)) + 1
 
