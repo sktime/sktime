@@ -933,7 +933,8 @@ class BaseEstimator(BaseObject):
 
         Returns
         -------
-        fitted_params : dict
+        fitted_params : dict with str keys
+            fitted parameters, keyed by names of fitted parameter
         """
         # default retrieves all self attributes ending in "_"
         # and returns them with keys that have the "_" removed
