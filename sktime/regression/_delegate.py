@@ -102,7 +102,8 @@ class _DelegatedRegressor(BaseRegressor):
 
         Returns
         -------
-        fitted_params : dict
+        fitted_params : dict with str keys
+            fitted parameters, keyed by names of fitted parameter
         """
         estimator = self._get_delegate()
         return estimator.get_fitted_params()

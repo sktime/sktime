@@ -40,7 +40,11 @@ def is_array(x) -> bool:
 def is_int(x) -> bool:
     """Check if x is of integer type, but not boolean."""
     # boolean are subclasses of integers in Python, so explicitly exclude them
-    return isinstance(x, (int, np.integer)) and not isinstance(x, bool)
+    return (
+        isinstance(x, (int, np.integer))
+        and not isinstance(x, bool)
+        and not isinstance(x, np.timedelta64)
+    )
 
 
 def is_float(x) -> bool:
