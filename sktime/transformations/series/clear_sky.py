@@ -7,7 +7,7 @@ __author__ = ["ciaran-g"]
 import numpy as np
 import pandas as pd
 from scipy.stats import vonmises
-
+from joblib import Parallel, delayed
 from sktime.transformations.base import BaseTransformer
 
 # todo: update function?
@@ -133,9 +133,24 @@ class ClearSky(BaseTransformer):
         yday = pd.RangeIndex(start=1, stop=367)
 
         indx = pd.MultiIndex.from_product([yday, tod], names=["yday", "tod"])
+        
+        n_jobs=-1
+        backend="loky"
+        parallel = Parallel(
+            n_jobs=n_jobs, backend=backend
+        )
 
         # csp look up table
         csp = pd.Series(index=indx, dtype="float64")
+
+        csp = csp.reset_index().groupby(["yday", "tod"])
+        parallel_thing = parallel(
+            delayed(for _name, group in csp:
+            
+            )
+        )
+        for _name, group in X:
+
         self.clearskypower = (
             csp.reset_index()
             .groupby(["yday", "tod"])
