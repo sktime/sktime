@@ -1452,7 +1452,7 @@ def _split_by_fh(
     Handles both relative and absolute horizons.
     """
     if X is not None:
-        check_equal_time_index(y, X)
+        check_equal_time_index(X,y)
     index = y.index
     fh = check_fh(fh, freq=index)
     idx = fh.to_pandas()
