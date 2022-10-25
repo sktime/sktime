@@ -413,9 +413,7 @@ class BaseForecaster(BaseEstimator):
         if not self._is_vectorized:
             y_pred = self._simulate(fh=fh, X=X_inner, n_simulations=n_simulations)
         else:
-            # otherwise we call the vectorized version of predict
-            raise NotImplementedError("Vectorized is not implemented for simulate")
-            # y_pred = self._vectorize("simulate", X=X_inner, fh=fh)
+            y_pred = self._vectorize("simulate", X=X_inner, fh=fh)
 
         return y_pred
 
@@ -1681,6 +1679,7 @@ class BaseForecaster(BaseEstimator):
             "predict_quantiles",
             "predict_interval",
             "predict_var",
+            "simulate",
         ]
 
         # retrieve data arguments
