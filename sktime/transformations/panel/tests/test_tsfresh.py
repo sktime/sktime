@@ -34,6 +34,10 @@ def test_tsfresh_extractor(default_fc_parameters):
     np.testing.assert_allclose(actual, expected)
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("tsfresh", severity="none"),
+    reason="skip test if required soft dependency tsfresh not available",
+)
 def test_docs_tsfresh_extractor():
     """Test whether doc example runs through."""
     X, y = load_arrow_head(return_X_y=True)
