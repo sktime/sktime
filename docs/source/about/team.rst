@@ -66,6 +66,8 @@ Core Developers
      - :user:`mattewmiddlehurst`
    * - Martin Walter
      - :user:`aiwalter`
+   * - Mirae Parker
+     - :user:`miraep8`
    * - Patrick Schäfer
      - :user:`patrickzib`
    * - Stanislav Khrapov

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """Install script for sktime."""
 
-__author__ = ["Markus Löning", "lmmentel"]
+__author__ = ["mloning", "lmmentel"]
 
 import codecs
 
