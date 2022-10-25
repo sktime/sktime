@@ -336,7 +336,7 @@ To contact the CC directly, please send an email to info@sktime.org.
 .. _cc-observers:
 
 CC observers
-~~~~~~~~~~
+~~~~~~~~~~~~
 
 CC (community council) observers are core developers with additional rights and
 responsibilities. Current CC observers are listed in the `community-council

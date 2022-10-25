@@ -17,10 +17,10 @@ Community Council
      - GitHub ID
    * - Franz Kiraly
      - :user:`fkiraly`
-   * - Martin Walter
-     - :user:`aiwalter`
    * - Guzal Bulatova
     - :user: `GuzalBulatova`
+   * - Martin Walter
+     - :user:`aiwalter`
 
 Community Council Observers
 ---------------------------
