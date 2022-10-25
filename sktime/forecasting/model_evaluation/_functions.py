@@ -8,22 +8,19 @@ __all__ = ["evaluate"]
 
 import time
 import warnings
-from typing import Optional, Sequence, Tuple, Union
 
 import numpy as np
 import pandas as pd
 
-from sktime.benchmarking.base import BaseMetric
 from sktime.datatypes import check_is_scitype, convert_to
 from sktime.exceptions import FitFailedWarning
-from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
-from sktime.forecasting.model_selection._split import BaseSplitter
+from sktime.forecasting.base import ForecastingHorizon
 from sktime.utils.validation.forecasting import check_cv, check_scoring
 
 PANDAS_MTYPES = ["pd.DataFrame", "pd.Series", "pd-multiindex", "pd_multiindex_hier"]
 
 
-def _check_strategy(strategy: str):
+def _check_strategy(strategy):
     """Assert strategy value.
 
     Parameters
@@ -43,12 +40,12 @@ def _check_strategy(strategy: str):
 
 
 def _split(
-    y: pd.Series,
-    X: pd.DataFrame,
-    train: np.ndarray,
-    test: np.ndarray,
-    freq: Union[pd.DateOffset, None],
-) -> Tuple[pd.Series, pd.Series, Union[pd.DataFrame, None], Union[pd.DataFrame, None]]:
+    y,
+    X,
+    train,
+    test,
+    freq = None,
+):
     # split data according to cv
     y_train, y_test = y.iloc[train], y.iloc[test]
     X_train, X_test = None, None
@@ -89,7 +86,7 @@ def _split(
     return y_train, y_test, X_train, X_test
 
 
-def _select_fh_from_y(y: pd.Series) -> ForecastingHorizon:
+def _select_fh_from_y(y):
     # create forecasting horizon
     # if cv object has fh, we use that
     idx = y.index
@@ -104,25 +101,21 @@ def _select_fh_from_y(y: pd.Series) -> ForecastingHorizon:
 
 
 def _evaluate_window(
-    y: pd.Series,
-    X: Union[pd.DataFrame, None],
-    train: np.ndarray,
-    test: np.ndarray,
-    i: int,
-    fh: Union[
-        ForecastingHorizon,
-        Sequence,
-        int,
-    ],
-    freq: Union[pd.DateOffset, None],
-    forecaster: BaseForecaster,
-    strategy: str,
-    scoring: BaseMetric,
-    return_data: bool,
-    score_name: str,
-    error_score: Union[str, float],
-    cutoff_dtype: str,
-) -> Union[pd.DataFrame, Tuple[pd.DataFrame, BaseForecaster]]:
+    y,
+    X,
+    train,
+    test,
+    i,
+    fh,
+    freq,
+    forecaster,
+    strategy,
+    scoring,
+    return_data,
+    score_name,
+    error_score,
+    cutoff_dtype,
+):
 
     # set default result values in case estimator fitting fails
     score = error_score
@@ -210,18 +203,18 @@ def _evaluate_window(
 
 
 def evaluate(
-    forecaster: BaseForecaster,
-    cv: BaseSplitter,
-    y: pd.Series,
-    X: Optional[pd.DataFrame] = None,
-    strategy: str = "refit",
-    scoring: Optional[BaseMetric] = None,
-    return_data: bool = False,
-    error_score: Union[str, float] = np.nan,
-    backend: Optional[str] = None,
-    compute: bool = True,
+    forecaster,
+    cv,
+    y,
+    X = None,
+    strategy = "refit",
+    scoring = None,
+    return_data = False,
+    error_score = np.nan,
+    backend = None,
+    compute = True,
     **kwargs,
-) -> pd.DataFrame:
+):
     """Evaluate forecaster using timeseries cross-validation.
 
     Parameters
