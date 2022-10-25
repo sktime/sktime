@@ -7,7 +7,6 @@ __author__ = ["ciaran-g"]
 import numpy as np
 import pandas as pd
 from scipy.stats import vonmises
-from statsmodels.stats.weightstats import DescrStatsW
 
 from sktime.transformations.base import BaseTransformer
 
@@ -91,6 +90,7 @@ class ClearSky(BaseTransformer):
         "handles-missing-data": False,
         "capability:missing_values:removes": True,
         "python_version": None,  # PEP 440 python version specifier to limit versions
+        "python_dependencies": "statsmodels",
     }
 
     def __init__(
@@ -181,7 +181,7 @@ class ClearSky(BaseTransformer):
         X_trafo = X / csp
 
         # threshold for small morning/evening values
-        X_trafo[csp <= self.min_thresh] = 0
+        X_trafo[(csp <= self.min_thresh) & (X.notnull())] = 0
 
         return X_trafo
 
@@ -271,6 +271,8 @@ def _clearskypower(y, q, tod_i, doy_i, tod_vec, doy_vec, bw_tod, bw_doy):
     csp : float
         The clear sky power at tod_i and doy_i
     """
+    from statsmodels.stats.weightstats import DescrStatsW
+
     wts_tod = vonmises.pdf(
         x=tod_i * 2 * np.pi / 24, kappa=bw_tod, loc=tod_vec * 2 * np.pi / 24
     )

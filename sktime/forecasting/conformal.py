@@ -13,6 +13,7 @@ from warnings import warn
 
 import numpy as np
 import pandas as pd
+from joblib import Parallel, delayed
 from sklearn.base import clone
 
 from sktime.datatypes import convert, convert_to
@@ -65,6 +66,9 @@ class ConformalIntervals(BaseForecaster):
         residuals matrix values for (for speeding up calculation)
     verbose : bool, optional, default=False
         whether to print warnings if windows with too few data points occur
+    n_jobs : int or None, optional, default=1
+        The number of jobs to run in parallel for fit.
+        -1 means using all processors.
 
     References
     ----------
@@ -106,6 +110,7 @@ class ConformalIntervals(BaseForecaster):
         initial_window=1,
         sample_frac=None,
         verbose=False,
+        n_jobs=None,
     ):
 
         if not isinstance(method, str):
@@ -121,6 +126,7 @@ class ConformalIntervals(BaseForecaster):
         self.verbose = verbose
         self.initial_window = initial_window
         self.sample_frac = sample_frac
+        self.n_jobs = n_jobs
 
         super(ConformalIntervals, self).__init__()
 
@@ -352,29 +358,31 @@ class ConformalIntervals(BaseForecaster):
         if sample_frac:
             y_index = y_index.to_series().sample(frac=sample_frac)
 
-        for id in y_index:
-            forecaster = clone(forecaster)
+        def _get_residuals_matrix_row(forecaster, y, X, id):
             y_train = get_slice(y, start=None, end=id)  # subset on which we fit
             y_test = get_slice(y, start=id, end=None)  # subset on which we predict
 
             X_train = get_slice(X, start=None, end=id)
             X_test = get_slice(X, start=id, end=None)
 
+            forecaster.fit(y_train, X=X_train, fh=y_test.index)
+
             try:
-                forecaster.fit(y_train, X=X_train, fh=y_test.index)
-            except ValueError:
-                warn(
-                    f"Couldn't fit the model on "
-                    f"time series window length {len(y_train)}.\n"
-                )
-                continue
-            try:
-                residuals_matrix.loc[id] = forecaster.predict_residuals(y_test, X_test)
+                residuals = forecaster.predict_residuals(y_test, X_test)
             except IndexError:
                 warn(
                     f"Couldn't predict after fitting on time series of length \
-                     {len(y_train)}.\n"
+                                 {len(y_train)}.\n"
                 )
+            return residuals
+
+        all_residuals = Parallel(n_jobs=self.n_jobs)(
+            delayed(_get_residuals_matrix_row)(forecaster.clone(), y, X, id)
+            for id in y_index
+        )
+
+        for idx, id in enumerate(y_index):
+            residuals_matrix.loc[id] = all_residuals[idx]
 
         return residuals_matrix
 

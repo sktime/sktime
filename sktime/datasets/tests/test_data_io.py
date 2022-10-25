@@ -16,6 +16,7 @@ from pandas._testing import assert_frame_equal
 import sktime
 from sktime.datasets import (
     generate_example_long_table,
+    load_basic_motions,
     load_from_long_to_dataframe,
     load_from_tsfile,
     load_from_tsfile_to_dataframe,
@@ -44,7 +45,7 @@ _TO_DISABLE = ["pd-long", "pd-wide", "numpyflat"]
 def test_load_provided_dataset(return_X_y, return_type):
     """Test function to check for proper loading.
 
-    Check this via permutating between all possibilities of return_X_y and return_type.
+    Check all possibilities of return_X_y and return_type.
     """
     if return_X_y:
         X, y = _load_provided_dataset("UnitTest", "TRAIN", return_X_y, return_type)
@@ -52,7 +53,37 @@ def test_load_provided_dataset(return_X_y, return_type):
         X = _load_provided_dataset("UnitTest", "TRAIN", return_X_y, return_type)
 
     # Check whether object is same mtype or not, via bool
-    assert check_is_mtype(X, return_type)
+    valid, check_msg, _ = check_is_mtype(X, return_type, return_metadata=True)
+    msg = (
+        "load_basic_motions return has unexpected type on "
+        f"return_X_y = {return_X_y}, return_type = {return_type}. "
+        f"Error message returned by check_is_mtype: {check_msg}"
+    )
+    assert valid, msg
+
+
+@pytest.mark.parametrize("return_X_y", [True, False])
+@pytest.mark.parametrize(
+    "return_type", [mtype for mtype in MTYPE_LIST_PANEL if mtype not in _TO_DISABLE]
+)
+def test_load_basic_motions(return_X_y, return_type):
+    """Test load_basic_motions function to check for proper loading.
+
+    Check all possibilities of return_X_y and return_type.
+    """
+    if return_X_y:
+        X, y = load_basic_motions("TRAIN", return_X_y, return_type)
+    else:
+        X = load_basic_motions("TRAIN", return_X_y, return_type)
+
+    # Check whether object is same mtype or not, via bool
+    valid, check_msg, _ = check_is_mtype(X, return_type, return_metadata=True)
+    msg = (
+        "load_basic_motions return has unexpected type on "
+        f"return_X_y = {return_X_y}, return_type = {return_type}. "
+        f"Error message returned by check_is_mtype: {check_msg}"
+    )
+    assert valid, msg
 
 
 def test_load_from_tsfile():
