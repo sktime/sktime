@@ -1123,7 +1123,9 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
         """
         warn(
             "name of test_methods_do_not_change_state will change to "
-            "test_non_state_changing_method_contract in 0.15.0",
+            "test_non_state_changing_method_contract in 0.15.0. "
+            "For a safe transition when using the name in `check_estimator`, use "
+            "both the new and the old name in test/fixture exclusion or inclusion. ",
             DeprecationWarning,
         )
         estimator = estimator_instance
