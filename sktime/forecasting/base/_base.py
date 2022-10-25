@@ -415,7 +415,20 @@ class BaseForecaster(BaseEstimator):
         else:
             y_pred = self._vectorize("simulate", X=X_inner, fh=fh)
 
-        return y_pred
+        # convert to output mtype, identical with last y mtype seen
+        convert_to_mtype = (
+            "pd_multiindex_hier" if len(y_pred.index.levels) > 2 else "pd-multiindex"
+        )
+
+        # this might be redundant!
+        y_out = convert_to(
+            y_pred,
+            convert_to_mtype,
+            store=self._converter_store_y,
+            store_behaviour="freeze",
+        )
+
+        return y_out
 
     def fit_predict(self, y, X=None, fh=None):
         """Fit and forecast time series at future horizon.

@@ -130,14 +130,11 @@ class _StatsModelsAdapter(BaseForecaster):
         y_pred : pd.Series
             Returns series of predicted values.
         """
-        # statsmodels requires zero-based indexing starting at the
-        # beginning of the training series when passing integers
-        start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
-
         if "exog" in inspect.signature(self._forecaster.__init__).parameters.keys():
             y_pred = self._fitted_forecaster.simulate(
                 nsimulations=len(fh),
                 anchor="end",
+                exog=X,
                 repetitions=n_simulations,
                 random_errors=None,
                 random_state=None,
@@ -161,9 +158,9 @@ class _StatsModelsAdapter(BaseForecaster):
         if isinstance(y_pred, pd.Series):
             y_pred = y_pred.to_frame()
         y_pred = y_pred.swaplevel()
-        y_pred.columns = [self._y.name]
         y_pred.index = y_pred.index.set_names(["simulation_id", "time_index"])
         y_pred = y_pred.sort_index()
+        # TODO: Series name is ntpo preserved, fix it!
         return y_pred
 
     def get_fitted_params(self):
