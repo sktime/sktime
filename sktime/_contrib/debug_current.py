@@ -108,6 +108,13 @@ def debug_knn_2774():
     knn = KNeighborsTimeSeriesClassifier(algorithm="kd_tree")
     knn.fit(trainX, trainy)
 
+def debug_pf():
+    from sktime import show_versions; show_versions()
+    from sktime.classification.distance_based import ProximityForest
+    from sktime.datasets import load_unit_test
+    pf = ProximityForest()
+    trainX, trainy = load_unit_test()
+    pf.fit(trainX, trainy)
 
 if __name__ == "__main__":
-    debug_knn_2774()
+    debug_pf()
