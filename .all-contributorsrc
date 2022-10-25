@@ -1819,6 +1819,14 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "lucaguarro",
+      "name": "Luca Guarro",
+      "profile": "https://github.com/lucaguarro",
+      "contributions": [
+        "code"
+      ]
     }
   ]
 }
