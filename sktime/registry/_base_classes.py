@@ -62,7 +62,7 @@ from sktime.alignment.base import BaseAligner
 from sktime.annotation.base import BaseSeriesAnnotator
 from sktime.base import BaseEstimator, BaseObject
 from sktime.classification.base import BaseClassifier
-from sktime.classification.early_classification.base import BaseEarlyClassifier
+from sktime.classification.early_classification_base import BaseEarlyClassifier
 from sktime.clustering.base import BaseClusterer
 from sktime.dists_kernels._base import (
     BasePairwiseTransformer,

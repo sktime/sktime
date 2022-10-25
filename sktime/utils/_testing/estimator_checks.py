@@ -16,7 +16,7 @@ from sklearn.utils.validation import check_random_state
 from sktime.alignment.base import BaseAligner
 from sktime.base import BaseEstimator, BaseObject
 from sktime.classification.base import BaseClassifier
-from sktime.classification.early_classification.base import BaseEarlyClassifier
+from sktime.classification.early_classification_base import BaseEarlyClassifier
 from sktime.clustering.base import BaseClusterer
 from sktime.datatypes._panel._check import is_nested_dataframe
 from sktime.dists_kernels import BasePairwiseTransformer, BasePairwiseTransformerPanel

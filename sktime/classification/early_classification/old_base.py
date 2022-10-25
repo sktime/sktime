@@ -30,7 +30,7 @@ __author__ = ["mloning", "fkiraly", "TonyBagnall", "MatthewMiddlehurst"]
 
 from deprecated.sphinx import deprecated
 
-from sktime.classification.early_classification.base import (
+from sktime.classification.early_classification_base import (
     BaseEarlyClassifier as new_base,
 )
 
@@ -38,7 +38,7 @@ from sktime.classification.early_classification.base import (
 # TODO: remove message in v0.15.0 and change base class
 @deprecated(
     version="0.13.4",
-    reason="BaseEarlyClassifier has moved and this import will be removed in 1.15.0. Import from sktime.classification.early_classification.base",  # noqa: E501
+    reason="BaseEarlyClassifier has moved and this import will be removed in 1.15.0. Import from sktime.classification",  # noqa: E501
     category=FutureWarning,
 )
 class BaseEarlyClassifier(new_base):

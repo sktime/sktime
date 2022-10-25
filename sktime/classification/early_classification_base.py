@@ -34,7 +34,7 @@ from typing import Tuple
 import numpy as np
 
 from sktime.base import BaseEstimator
-from sktime.classification import BaseClassifier
+from sktime.classification.base import BaseClassifier
 
 
 class BaseEarlyClassifier(BaseEstimator, ABC):

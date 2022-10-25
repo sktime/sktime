@@ -20,7 +20,7 @@ from sklearn.utils import check_random_state
 
 from sktime.base._base import _clone_estimator
 from sktime.classification.dictionary_based import MUSE, WEASEL
-from sktime.classification.early_classification.base import BaseEarlyClassifier
+from sktime.classification.early_classification_base import BaseEarlyClassifier
 
 
 class TEASER(BaseEarlyClassifier):
