@@ -457,7 +457,7 @@ class FittedParamExtractor(BaseTransformer):
         ]
 
         # ExponentialSmoothing requires statsmodels
-        if _check_estimator_deps(ExponentialSmoothing):
+        if _check_estimator_deps(ExponentialSmoothing, severity="none"):
             # accessing a top level parameter
             params = params + [
                 {
