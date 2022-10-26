@@ -59,6 +59,7 @@ Contents
    get_involved
    developers
    about
+   examples
 
 .. grid:: 1 2 2 2
     :gutter: 3

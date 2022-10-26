@@ -55,6 +55,11 @@ extensions = [
 # Recommended by sphinx_design when using the MyST Parser
 myst_enable_extensions = ["colon_fence"]
 
+# Notebook thumbnails
+nbsphinx_thumbnails = {
+    "examples/02_classification": "examples/img/tsc.png",
+}
+
 # Use bootstrap CSS from theme.
 panels_add_bootstrap_css = False
 
