@@ -401,7 +401,15 @@ class BaseForecaster(BaseEstimator):
             y_pred has same type as the y that has been passed most recently:
                 Series, Panel, Hierarchical scitype, same format (see above)
         """
+        # TODO: clean-up legacy comments
         # handle inputs
+        if not self.get_tag("capability:simulate"):
+            raise NotImplementedError(
+                f"{self.__class__.__name__} does not have the capability to return "
+                "simulated forecasts. If you "
+                "think this estimator should have the capability, please open "
+                "an issue on sktime."
+            )
 
         self.check_is_fitted()
         fh = self._check_fh(fh)
