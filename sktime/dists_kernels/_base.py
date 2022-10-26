@@ -33,8 +33,6 @@ Inspection methods:
 
 __author__ = ["fkiraly"]
 
-from abc import ABC
-
 from sktime._dists_kernels_base._base import BasePairwiseTransformer as temp_base
 from sktime._dists_kernels_base._base import (
     BasePairwiseTransformerPanel as temp_base_panel,
@@ -43,7 +41,7 @@ from sktime._dists_kernels_base._base import (
 
 # todo replace with original in sktime._dists_kernels_base when distances move is
 #  complete
-class BasePairwiseTransformer(temp_base, ABC):
+class BasePairwiseTransformer(temp_base):
     """Base pairwise transformer for tabular or series data template class.
 
     The base pairwise transformer specifies the methods and method
@@ -58,7 +56,7 @@ class BasePairwiseTransformer(temp_base, ABC):
 
 # todo replace with original in sktime._dists_kernels_base when distances move is
 #  complete
-class BasePairwiseTransformerPanel(temp_base_panel, ABC):
+class BasePairwiseTransformerPanel(temp_base_panel):
     """Base pairwise transformer for panel data template class.
 
     The base pairwise transformer specifies the methods and method

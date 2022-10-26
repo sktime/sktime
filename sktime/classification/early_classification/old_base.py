@@ -28,8 +28,6 @@ __all__ = [
 ]
 __author__ = ["mloning", "fkiraly", "TonyBagnall", "MatthewMiddlehurst"]
 
-from abc import ABC
-
 from deprecated.sphinx import deprecated
 
 from sktime.classification.early_classification_base import (
@@ -43,7 +41,7 @@ from sktime.classification.early_classification_base import (
     reason="BaseEarlyClassifier has moved and this import will be removed in 0.15.0. Import from sktime.classification",  # noqa: E501
     category=FutureWarning,
 )
-class BaseEarlyClassifier(new_base, ABC):
+class BaseEarlyClassifier(new_base):
     """Abstract base class for early time series classifiers.
 
     The base classifier specifies the methods and method signatures that all
