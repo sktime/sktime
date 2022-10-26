@@ -18,75 +18,95 @@ Development
    roadmap
    governance
 
-.. panels::
-    :card: + intro-card text-center
+.. grid:: 1 2 2 2
+    :gutter: 3
 
-    ---
+    .. grid-item-card::
+        :text-align: center
 
-    Developer Guide
-    ^^^^^^^^^^^^^^^
+        Developer Guide
 
-    Learn our development conventions.
+        ^^^
 
-    +++
+        Learn our development conventions.
 
-    .. link-button:: developer_guide
-            :type: ref
-            :text: Developer Guide
-            :classes: btn-block btn-secondary stretched-link
+        +++
 
-    ---
+        .. button-ref:: developer_guide
+            :color: primary
+            :click-parent:
+            :expand:
 
-    Reviewer Guide
-    ^^^^^^^^^^^^^^
+            Developer Guide
 
-    How we review contributions.
+    .. grid-item-card::
+        :text-align: center
 
-    +++
+        Reviewer Guide
 
-    .. link-button:: reviewer_guide
-            :type: ref
-            :text: Reviewer Guide
-            :classes: btn-block btn-secondary stretched-link
+        ^^^
 
-    ---
+        How we review contributions.
 
-    Enhancement Proposals
-    ^^^^^^^^^^^^^^^^^^^^^
+        +++
 
-    Thought of a project enhancement? See when and how to submit a proposal.
+        .. button-ref:: reviewer_guide
+            :color: primary
+            :click-parent:
+            :expand:
 
-    +++
+            Reviewer Guide
 
-    .. link-button:: enhancement_proposals
-            :type: ref
-            :text: Enhancement Proposals
-            :classes: btn-block btn-secondary stretched-link
+    .. grid-item-card::
+        :text-align: center
 
-    ---
+        Enhancement Proposals
 
-    Roadmap
-    ^^^^^^^
+        ^^^
 
-    What's on the development horizon?
+        Thought of a project enhancement? See when and how to submit a proposal.
 
-    +++
+        +++
 
-    .. link-button:: roadmap
-            :type: ref
-            :text: Roadmap
-            :classes: btn-block btn-secondary stretched-link
+        .. button-ref:: enhancement_proposals
+            :color: primary
+            :click-parent:
+            :expand:
 
-    ---
+            Enhancement Proposals
 
-    Governance
-    ^^^^^^^^^^
+    .. grid-item-card::
+        :text-align: center
 
-    How ``sktime`` is run.
+        Roadmap
 
-    +++
+        ^^^
 
-    .. link-button:: governance
-            :type: ref
-            :text: Governance
-            :classes: btn-block btn-secondary stretched-link
+        What's on the development horizon?
+
+        +++
+
+        .. button-ref:: roadmap
+            :color: primary
+            :click-parent:
+            :expand:
+
+            Roadmap
+
+    .. grid-item-card::
+        :text-align: center
+
+        Governance
+
+        ^^^
+
+        How ``sktime`` is run.
+
+        +++
+
+        .. button-ref:: governance
+            :color: primary
+            :click-parent:
+            :expand:
+
+            Governance
