@@ -13,13 +13,16 @@ import pandas as pd
 from pandas.testing import assert_frame_equal
 from sklearn.utils.validation import check_random_state
 
+from sktime._dists_kernels_base._base import (
+    BasePairwiseTransformer,
+    BasePairwiseTransformerPanel,
+)
 from sktime.alignment.base import BaseAligner
 from sktime.base import BaseEstimator, BaseObject
 from sktime.classification.base import BaseClassifier
 from sktime.classification.early_classification_base import BaseEarlyClassifier
 from sktime.clustering.base import BaseClusterer
 from sktime.datatypes._panel._check import is_nested_dataframe
-from sktime.dists_kernels import BasePairwiseTransformer, BasePairwiseTransformerPanel
 from sktime.forecasting.base import BaseForecaster
 from sktime.regression.base import BaseRegressor
 from sktime.tests._config import VALID_ESTIMATOR_TYPES

@@ -5,7 +5,7 @@ __author__ = ["fkiraly"]
 
 import numpy as np
 
-from sktime.dists_kernels._base import BasePairwiseTransformerPanel
+from sktime._dists_kernels_base._base import BasePairwiseTransformerPanel
 
 SUPPORTED_MTYPES = ["df-list", "nested_univ", "numpy3D"]
 

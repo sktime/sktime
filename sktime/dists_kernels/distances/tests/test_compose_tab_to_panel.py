@@ -3,8 +3,8 @@
 import numpy as np
 
 from sktime.datatypes import convert_to
-from sktime.dists_kernels.compose_tab_to_panel import AggrDist
-from sktime.dists_kernels.scipy_dist import ScipyDist
+from sktime.dists_kernels.distances.compose_tab_to_panel import AggrDist
+from sktime.dists_kernels.distances.scipy_dist import ScipyDist
 from sktime.registry import all_estimators
 from sktime.utils._testing.panel import make_transformer_problem
 

@@ -10,7 +10,7 @@ import numpy as np
 from scipy.sparse.linalg import svds
 from sklearn.base import BaseEstimator, TransformerMixin
 
-from sktime.dists_kernels._base import BasePairwiseTransformerPanel
+from sktime._dists_kernels_base._base import BasePairwiseTransformerPanel
 
 # cumsum varia
 # ------------

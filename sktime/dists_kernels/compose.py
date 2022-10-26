@@ -3,8 +3,8 @@
 
 __author__ = ["fkiraly"]
 
+from sktime._dists_kernels_base._base import BasePairwiseTransformerPanel
 from sktime.base import _HeterogenousMetaEstimator
-from sktime.dists_kernels._base import BasePairwiseTransformerPanel
 from sktime.transformations.base import BaseTransformer
 from sktime.transformations.compose import TransformerPipeline
 
@@ -49,7 +49,7 @@ class PwTrafoPanelPipeline(BasePairwiseTransformerPanel, _HeterogenousMetaEstima
     Examples
     --------
     >>> from sktime.dists_kernels.compose import PwTrafoPanelPipeline
-    >>> from sktime.dists_kernels.dtw import DtwDist
+    >>> from sktime.dists_kernels.distances.dtw import DtwDist
     >>> from sktime.transformations.series.exponent import ExponentTransformer
     >>> from sktime.datasets import load_unit_test
     >>>
@@ -210,7 +210,7 @@ class PwTrafoPanelPipeline(BasePairwiseTransformerPanel, _HeterogenousMetaEstima
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Test parameters for DistFromAligner."""
-        from sktime.dists_kernels.compose_tab_to_panel import AggrDist
+        from sktime.dists_kernels.distances.compose_tab_to_panel import AggrDist
         from sktime.transformations.series.exponent import ExponentTransformer
 
         params = {

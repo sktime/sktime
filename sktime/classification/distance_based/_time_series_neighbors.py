@@ -329,7 +329,7 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
         params2 = {"distance": "dtw", "distance_params": {"epsilon": 0.1}}
 
         # testing that callables/classes can be passed
-        from sktime.dists_kernels.compose_tab_to_panel import AggrDist
+        from sktime.dists_kernels.distances.compose_tab_to_panel import AggrDist
 
         dist = AggrDist.create_test_instance()
         params3 = {"distance": dist}

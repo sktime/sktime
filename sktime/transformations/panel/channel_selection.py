@@ -168,7 +168,7 @@ class ElbowClassSum(BaseTransformer):
     >>> Xt = cs.transform(X)
 
     Any sktime compatible distance can be used, e.g., DTW distance:
-    >>> from sktime.dists_kernels import DtwDist
+    >>> from sktime.dists_kernels.distances.dtw import DtwDist
     >>>
     >>> cs = ElbowClassSum(distance=DtwDist())
     >>> cs.fit(X, y)
@@ -198,11 +198,8 @@ class ElbowClassSum(BaseTransformer):
 
         super(ElbowClassSum, self).__init__()
 
-        from sktime.dists_kernels import (
-            BasePairwiseTransformerPanel,
-            FlatDist,
-            ScipyDist,
-        )
+        from sktime.dists_kernels import BasePairwiseTransformerPanel
+        from sktime.dists_kernels.distances import FlatDist, ScipyDist
 
         if distance is None:
             self.distance_ = FlatDist(ScipyDist())
@@ -287,7 +284,7 @@ class ElbowClassSum(BaseTransformer):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        from sktime.dists_kernels import DtwDist
+        from sktime.dists_kernels.distances.dtw import DtwDist
 
         # default params
         params1 = {}

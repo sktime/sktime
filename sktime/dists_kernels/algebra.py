@@ -44,7 +44,7 @@ class CombinedDistance(new_class_loc.CombinedDistance):
     Examples
     --------
     >>> from sktime.dists_kernels.algebra import CombinedDistance
-    >>> from sktime.dists_kernels.dtw import DtwDist
+    >>> from sktime.dists_kernels.distances.dtw import DtwDist
     >>> from sktime.datasets import load_unit_test
     >>>
     >>> X, _ = load_unit_test()

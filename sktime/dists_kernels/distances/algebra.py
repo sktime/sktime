@@ -38,8 +38,8 @@ class CombinedDistance(BasePairwiseTransformerPanel, _HeterogenousMetaEstimator)
 
     Examples
     --------
-    >>> from sktime.dists_kernels.algebra import CombinedDistance
-    >>> from sktime.dists_kernels.dtw import DtwDist
+    >>> from sktime.dists_kernels.distances.algebra import CombinedDistance
+    >>> from sktime.dists_kernels.distances.dtw import DtwDist
     >>> from sktime.datasets import load_unit_test
     >>>
     >>> X, _ = load_unit_test()
@@ -177,8 +177,8 @@ class CombinedDistance(BasePairwiseTransformerPanel, _HeterogenousMetaEstimator)
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
-        from sktime.dists_kernels.compose_tab_to_panel import AggrDist
-        from sktime.dists_kernels.dtw import DtwDist
+        from sktime.dists_kernels.distances.compose_tab_to_panel import AggrDist
+        from sktime.dists_kernels.distances.dtw import DtwDist
 
         params1 = {"pw_trafos": [AggrDist.create_test_instance()]}
         params2 = {

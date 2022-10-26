@@ -363,6 +363,6 @@ class AlignerDTWfromDist(BaseAligner):
     def get_test_params(cls, parameter_set="default"):
         """Test parameters for AlignerDTWdist."""
         # importing inside to avoid circular dependencies
-        from sktime.dists_kernels import ScipyDist
+        from sktime.dists_kernels.distances.scipy_dist import ScipyDist
 
         return {"dist_trafo": ScipyDist()}

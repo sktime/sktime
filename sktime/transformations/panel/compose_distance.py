@@ -76,11 +76,8 @@ class DistanceFeatures(BaseTransformer):
 
         super(DistanceFeatures, self).__init__()
 
-        from sktime.dists_kernels import (
-            BasePairwiseTransformerPanel,
-            FlatDist,
-            ScipyDist,
-        )
+        from sktime.dists_kernels import BasePairwiseTransformerPanel
+        from sktime.dists_kernels.distances import FlatDist, ScipyDist
 
         if distance is None:
             self.distance_ = FlatDist(ScipyDist())

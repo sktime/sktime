@@ -22,12 +22,12 @@ from sklearn.utils.estimator_checks import (
     check_get_params_invariance as _check_get_params_invariance,
 )
 
-from sktime.base import BaseEstimator, BaseObject, load
-from sktime.classification.deep_learning.base import BaseDeepClassifier
-from sktime.dists_kernels._base import (
+from sktime._dists_kernels_base._base import (
     BasePairwiseTransformer,
     BasePairwiseTransformerPanel,
 )
+from sktime.base import BaseEstimator, BaseObject, load
+from sktime.classification.deep_learning.base import BaseDeepClassifier
 from sktime.exceptions import NotFittedError
 from sktime.forecasting.base import BaseForecaster
 from sktime.registry import all_estimators
