@@ -5,7 +5,7 @@ __author__ = ["fkiraly"]
 
 from deprecated.sphinx import deprecated
 
-from sktime.dists_kernels.distances.algebra import CombinedDistance as new_class
+import sktime.dists_kernels.distances.algebra as new_class_loc
 
 SUPPORTED_MTYPES = ["pd-multiindex", "nested_univ", "df-list", "numpy3D"]
 
@@ -16,7 +16,7 @@ SUPPORTED_MTYPES = ["pd-multiindex", "nested_univ", "df-list", "numpy3D"]
     reason="CombinedDistance has moved and this import will be removed in 0.15.0. Import from sktime.dists_kernels.distances",  # noqa: E501
     category=FutureWarning,
 )
-class CombinedDistance(new_class):
+class CombinedDistance(new_class_loc.CombinedDistance):
     """Distances combined via arithmetic operation, e.g., addition, multiplication.
 
     `CombinedDistance` creates a pairwise trafo from multiple other pairwise trafos,

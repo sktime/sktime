@@ -8,7 +8,7 @@ from typing import Union
 import numpy as np
 from deprecated.sphinx import deprecated
 
-from sktime.dists_kernels.distances.dtw import DtwDist as new_class
+import sktime.dists_kernels.distances.dtw as new_class_loc
 
 
 # TODO: remove file in v0.15.0
@@ -17,7 +17,7 @@ from sktime.dists_kernels.distances.dtw import DtwDist as new_class
     reason="DtwDist has moved and this import will be removed in 0.15.0. Import from sktime.dists_kernels.distances",  # noqa: E501
     category=FutureWarning,
 )
-class DtwDist(new_class):
+class DtwDist(new_class_loc.DtwDist):
     r"""Interface to sktime native dtw distances, with derivative or weighting.
 
     Interface to simple dynamic time warping (DTW) distance,

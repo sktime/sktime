@@ -5,9 +5,7 @@ __author__ = ["fkiraly"]
 
 from deprecated.sphinx import deprecated
 
-from sktime.dists_kernels.distances.compose_from_align import (
-    DistFromAligner as new_class,
-)
+import sktime.dists_kernels.distances.compose_from_align as new_class_loc
 
 
 # TODO: remove file in v0.15.0
@@ -16,7 +14,7 @@ from sktime.dists_kernels.distances.compose_from_align import (
     reason="DistFromAligner has moved and this import will be removed in 0.15.0. Import from sktime.dists_kernels.distances",  # noqa: E501
     category=FutureWarning,
 )
-class DistFromAligner(new_class):
+class DistFromAligner(new_class_loc.DistFromAligner):
     """Distance transformer from aligner.
 
     Behaviour: uses aligner.get_distance on pairs to obtain distance matrix.

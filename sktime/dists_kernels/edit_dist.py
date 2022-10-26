@@ -8,7 +8,7 @@ from typing import Union
 import numpy as np
 from deprecated.sphinx import deprecated
 
-from sktime.dists_kernels.distances.edit_dist import EditDist as new_class
+import sktime.dists_kernels.distances.edit_dist as new_class_loc
 
 
 # TODO: remove file in v0.15.0
@@ -17,7 +17,7 @@ from sktime.dists_kernels.distances.edit_dist import EditDist as new_class
     reason="EditDist has moved and this import will be removed in 0.15.0. Import from sktime.dists_kernels.distances",  # noqa: E501
     category=FutureWarning,
 )
-class EditDist(new_class):
+class EditDist(new_class_loc.EditDist):
     r"""Interface to sktime native edit distances.
 
     Interface to the following edit distances:

@@ -12,12 +12,7 @@ __author__ = ["fkiraly"]
 
 from deprecated.sphinx import deprecated
 
-from sktime.dists_kernels.distances.compose_tab_to_panel import (
-    AggrDist as new_aggr_class,
-)
-from sktime.dists_kernels.distances.compose_tab_to_panel import (
-    FlatDist as new_flat_class,
-)
+import sktime.dists_kernels.distances.compose_tab_to_panel as new_class_loc
 
 
 # TODO: remove file in v0.15.0
@@ -26,7 +21,7 @@ from sktime.dists_kernels.distances.compose_tab_to_panel import (
     reason="AggrDist has moved and this import will be removed in 0.15.0. Import from sktime.dists_kernels.distances",  # noqa: E501
     category=FutureWarning,
 )
-class AggrDist(new_aggr_class):
+class AggrDist(new_class_loc.AggrDist):
     r"""Panel distance from tabular distance aggregation.
 
     panel distance obtained by applying aggregation function to tabular distance matrix
@@ -78,7 +73,7 @@ class AggrDist(new_aggr_class):
     reason="FlatDist has moved and this import will be removed in 0.15.0. Import from sktime.dists_kernels.distances",  # noqa: E501
     category=FutureWarning,
 )
-class FlatDist(new_flat_class):
+class FlatDist(new_class_loc.FlatDist):
     r"""Panel distance from applying tabular distance to flattened time series.
 
     Applies the wrapped tabular distance to flattened series.
