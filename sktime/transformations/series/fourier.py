@@ -6,6 +6,7 @@ __author__ = ["ltsaprounis"]
 
 import warnings
 from copy import deepcopy
+from distutils.log import warn
 from typing import List, Union
 
 import numpy as np
@@ -123,7 +124,7 @@ class FourierFeatures(BaseTransformer):
 
         super(FourierFeatures, self).__init__()
 
-    def _fit(self, X, y=None, freq=None):
+    def _fit(self, X, y=None):
         """Fit transformer to X and y.
 
         private _fit containing the core logic, called from fit
@@ -162,18 +163,21 @@ class FourierFeatures(BaseTransformer):
                         "exists from other seasonal period, fourier term pairs."
                     )
 
-        # store the integer form of the minimum date in the prediod index
         # this is used to make sure that time t is calculated with reference to
         # the data passed on fit
         if isinstance(X.index, pd.DatetimeIndex):
-            if X.index.freq is None:
-                if self.freq is None:
-                    ValueError("X has no known frequency and none is supplied")
-                else:
-                    X.index = X.index.to_period(self.freq)
-            else:
-                self.freq = X.index.freq
-                X.index = X.index.to_period(self.freq)
+            # Chooses first non None value
+            freq = X.index.freq or self.freq or pd.infer_freq(X.index)
+            if freq is None:
+                ValueError("X has no known frequency and none is supplied")
+            if freq == X.index.freq and freq != self.freq:
+                warn(
+                    f"Using frequency from index: {X.index.freq}, which \
+                     does not match the frequency given:{self.freq}."
+                )
+            X.index = X.index.to_period(freq)
+
+        # store the integer form of the minimum date in the prediod index
         self.min_t_ = np.min(X.index.astype(int))
 
         return self
