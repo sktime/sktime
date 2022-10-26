@@ -170,6 +170,11 @@ class TimeSeriesForestClassifier(
         )
         return output
 
+    def _get_fitted_params(self):
+        params = super(TimeSeriesForestClassifier, self)._get_fitted_params()
+        params.update({"n_classes": self.n_classes_, "fit_time": self.fit_time_})
+        return params
+
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
