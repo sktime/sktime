@@ -104,6 +104,14 @@ class BaseTimeSeriesForest:
         self._is_fitted = True
         return self
 
+    def _get_fitted_params(self):
+
+        return {
+            "classes": self.classes_,
+            "intervals": self.intervals_,
+            "estimators": self.estimators_,
+        }
+
 
 def _transform(X, intervals):
     """Transform X for given intervals.

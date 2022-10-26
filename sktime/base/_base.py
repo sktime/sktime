@@ -914,7 +914,7 @@ class BaseEstimator(BaseObject):
 
         for c in c_dict.keys():
             comp = c_dict[c]
-            if comp._is_fitted:
+            if isinstance(comp, BaseEstimator) and comp._is_fitted:
                 c_f_params = c_dict[c].get_fitted_params()
                 c_f_params = {f"{sh(c)}__{k}": c_f_params[k] for k in c_f_params.keys()}
                 fitted_params.update(c_f_params)
