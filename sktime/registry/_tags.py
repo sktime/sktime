@@ -188,12 +188,6 @@ ESTIMATOR_TAG_REGISTER = [
         "is the transformer capable of carrying out an inverse transform?",
     ),
     (
-        "capability:simulate",
-        "forecaster",
-        "bool",
-        "does the forecaster implement simulate",
-    ),
-    (
         "capability:pred_int",
         "forecaster",
         "bool",
@@ -204,6 +198,12 @@ ESTIMATOR_TAG_REGISTER = [
         "forecaster",
         "bool",
         "does the forecaster implement predict_variance?",
+    ),
+    (
+        "capability:simulate",
+        "forecaster",
+        "bool",
+        "does the forecaster implement simulate",
     ),
     (
         "capability:multivariate",
