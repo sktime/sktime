@@ -229,6 +229,46 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         except NotImplementedError:
             pass
 
+    # todo: refactor with scenarios. Need to override fh and scenario args for this.
+    @pytest.mark.parametrize(
+        "index_fh_comb", VALID_INDEX_FH_COMBINATIONS, ids=index_fh_comb_names
+    )
+    @pytest.mark.parametrize("fh_int", TEST_FHS, ids=[f"fh={fh}" for fh in TEST_FHS])
+    def test_simulate_index(self, estimator_instance, n_columns, index_fh_comb, fh_int):
+        """Check that simulations' time index matches forecasting horizon."""
+        # TODO: add  test for simulate feature
+        index_type, fh_type, is_relative = index_fh_comb
+        if fh_type == "timedelta":
+            return None
+            # todo: ensure check_estimator works with pytest.skip like below
+            # pytest.skip(
+            #    "ForecastingHorizon with timedelta values "
+            #     "is currently experimental and not supported everywhere"
+            # )
+
+        y_train = _make_series(
+            n_columns=n_columns, index_type=index_type, n_timepoints=50
+        )
+        cutoff = get_cutoff(y_train, return_index=True)
+        fh = _make_fh(cutoff, fh_int, fh_type, is_relative)
+
+        try:
+            estimator_instance.fit(y_train, fh=fh)
+            y_pred = estimator_instance.simulate(3)
+            assert check_is_mtype(y_pred, ["pd_multiindex", "Hierarchical"])
+            count = 0
+            for _, group in y_pred.groupby(
+                level=[i for i in range(y_pred.index.nlevels - 1)]
+            ):
+                _assert_correct_pred_time_index(
+                    group.index.get_level_values(-1), cutoff, fh=fh_int
+                )
+                count += 1
+                # _assert_correct_columns(group, y_train)
+            assert count == 3
+        except NotImplementedError:
+            pass
+
     @pytest.mark.parametrize(
         "index_fh_comb", VALID_INDEX_FH_COMBINATIONS, ids=index_fh_comb_names
     )
