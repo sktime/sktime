@@ -13,6 +13,7 @@ import pandas as pd
 from joblib import Parallel, delayed
 from sklearn.model_selection import ParameterGrid, ParameterSampler, check_cv
 
+from sktime.datatypes import mtype_to_scitype
 from sktime.exceptions import NotFittedError
 from sktime.forecasting.base._delegate import _DelegatedForecaster
 from sktime.forecasting.model_evaluation import evaluate
@@ -70,10 +71,38 @@ class BaseGridSearch(_DelegatedForecaster):
             "enforce_index_type",
         ]
         self.clone_tags(forecaster, tags_to_clone)
+        self._extend_to_all_scitypes("y_inner_mtype")
+        self._extend_to_all_scitypes("X_inner_mtype")
 
     _delegate_name = "best_forecaster_"
 
-    def get_fitted_params(self):
+    def _extend_to_all_scitypes(self, tagname):
+        """Ensure mtypes for all scitypes are in the tag with tagname.
+
+        Mutates self tag with name `tagname`.
+        If no mtypes are present of a time series scitype, adds a pandas based one.
+
+        Parameters
+        ----------
+        tagname : str, name of the tag. Should be "y_inner_mtype" or "X_inner_mtype".
+
+        Returns
+        -------
+        None (mutates tag in self)
+        """
+        tagval = self.get_tag(tagname)
+        if not isinstance(tagval, list):
+            tagval = [tagval]
+        scitypes = mtype_to_scitype(tagval, return_unique=True)
+        if "Series" not in scitypes:
+            tagval = tagval + ["pd.DataFrame"]
+        if "Panel" not in scitypes:
+            tagval = tagval + ["pd-multiindex"]
+        if "Hierarchical" not in scitypes:
+            tagval = tagval + ["pd_multiindex_hier"]
+        self.set_tags(**{tagname: tagval})
+
+    def _get_fitted_params(self):
         """Get fitted parameters.
 
         Returns
@@ -83,12 +112,6 @@ class BaseGridSearch(_DelegatedForecaster):
             the best estimator (if available), merged together with the former
             taking precedence.
         """
-        if not self.is_fitted:
-            raise NotFittedError
-
-        if self._is_vectorized:
-            return {"forecasters_": self.forecasters_}
-
         fitted_params = {}
         try:
             fitted_params = self.best_forecaster_.get_fitted_params()

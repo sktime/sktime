@@ -412,7 +412,7 @@ def check_is_scitype(
     # find all the mtype keys corresponding to the scitypes
     keys = [x for x in valid_keys if x[1] in scitype and x[0] not in exclude_mtypes]
 
-    # storing the msg retursn
+    # storing the msg return
     msg = {}
     msg_legacy = []
     found_mtype = []
