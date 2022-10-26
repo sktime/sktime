@@ -10,13 +10,23 @@ Currently implemented composers in this module:
 
 __author__ = ["fkiraly"]
 
-import numpy as np
+from deprecated.sphinx import deprecated
 
-from sktime.dists_kernels._base import BasePairwiseTransformerPanel
-from sktime.utils._testing.deep_equals import deep_equals
+from sktime.dists_kernels.distances.compose_tab_to_panel import (
+    AggrDist as new_aggr_class,
+)
+from sktime.dists_kernels.distances.compose_tab_to_panel import (
+    FlatDist as new_flat_class,
+)
 
 
-class AggrDist(BasePairwiseTransformerPanel):
+# TODO: remove file in v0.15.0
+@deprecated(
+    version="0.13.4",
+    reason="AggrDist has moved and this import will be removed in 0.15.0. Import from sktime.dists_kernels.distances",  # noqa: E501
+    category=FutureWarning,
+)
+class AggrDist(new_aggr_class):
     r"""Panel distance from tabular distance aggregation.
 
     panel distance obtained by applying aggregation function to tabular distance matrix
@@ -57,81 +67,18 @@ class AggrDist(BasePairwiseTransformerPanel):
         aggfunc=None,
         aggfunc_is_symm=False,  # False for safety, but set True later if aggfunc=None
     ):
-
-        self.aggfunc = aggfunc
-        self.aggfunc_is_symm = aggfunc_is_symm
-        self.transformer = transformer
-
-        super(AggrDist, self).__init__()
-
-        if self.aggfunc_is_symm:
-            self.set_tags(**{"symmetric": True})
-
-    def _transform(self, X, X2=None):
-        """Compute distance/kernel matrix.
-
-            Core logic.
-
-        Behaviour: returns pairwise distance/kernel matrix
-            between samples in X and X2
-                if X2 is not passed, is equal to X
-                if X/X2 is a pd.DataFrame and contains non-numeric columns,
-                    these are removed before computation
-
-        Parameters
-        ----------
-        X: pd.DataFrame of length n, or 2D np.array with n rows
-        X2: pd.DataFrame of length m, or 2D np.array with m rows, optional
-            default X2 = X
-
-        Returns
-        -------
-        distmat: np.array of shape [n, m]
-            (i,j)-th entry contains distance/kernel between X.iloc[i] and X2.iloc[j]
-        """
-        n = len(X)
-        m = len(X2)
-
-        X_equals_X2 = deep_equals(X, X2)
-
-        aggfunc = self.aggfunc
-        aggfunc_is_symm = self.aggfunc_is_symm
-        if aggfunc is None:
-            aggfunc = np.mean
-            aggfunc_is_symm = True
-
-        transformer_symm = self.transformer.get_tag("symmetric", False)
-
-        # whether we know that resulting matrix must be symmetric
-        # a sufficient condition for this:
-        # transformer is symmetric; X equals X2; and aggfunc is symmetric
-        all_symm = aggfunc_is_symm and transformer_symm and X_equals_X2
-
-        distmat = np.zeros((n, m), dtype="float")
-
-        for i in range(n):
-            for j in range(m):
-
-                if all_symm and j < i:
-                    distmat[i, j] = distmat[j, i]
-                else:
-                    distmat[i, j] = aggfunc(self.transformer.transform(X[i], X2[j]))
-
-        return distmat
-
-    @classmethod
-    def get_test_params(cls, parameter_set="default"):
-        """Test parameters for AggrDist."""
-        # importing inside to avoid circular dependencies
-        from sktime.dists_kernels import ScipyDist
-
-        return [
-            {"transformer": ScipyDist(), "aggfunc_is_symm": True},
-            {"transformer": ScipyDist(), "aggfunc_is_symm": False},
-        ]
+        super(AggrDist, self).__init__(
+            transformer=transformer, aggfunc=aggfunc, aggfunc_is_symm=aggfunc_is_symm
+        )
 
 
-class FlatDist(BasePairwiseTransformerPanel):
+# TODO: remove file in v0.15.0
+@deprecated(
+    version="0.13.4",
+    reason="FlatDist has moved and this import will be removed in 0.15.0. Import from sktime.dists_kernels.distances",  # noqa: E501
+    category=FutureWarning,
+)
+class FlatDist(new_flat_class):
     r"""Panel distance from applying tabular distance to flattened time series.
 
     Applies the wrapped tabular distance to flattened series.
@@ -157,53 +104,5 @@ class FlatDist(BasePairwiseTransformerPanel):
     transformer: pairwise transformer of BasePairwiseTransformer scitype
     """
 
-    _tags = {
-        "X_inner_mtype": "numpy3D",  # which mtype is used internally in _transform?
-    }
-
     def __init__(self, transformer):
-
-        self.transformer = transformer
-
-        super(FlatDist, self).__init__()
-
-    def _transform(self, X, X2=None):
-        """Compute distance/kernel matrix.
-
-            Core logic.
-
-        Behaviour: returns pairwise distance/kernel matrix
-            between samples in X and X2
-                if X2 is not passed, is equal to X
-                if X/X2 is a pd.DataFrame and contains non-numeric columns,
-                    these are removed before computation
-
-        Parameters
-        ----------
-        X: pd.DataFrame of length n, or 2D np.array with n rows
-        X2: pd.DataFrame of length m, or 2D np.array with m rows, optional
-            default X2 = X
-
-        Returns
-        -------
-        distmat: np.array of shape [n, m]
-            (i,j)-th entry contains distance/kernel between X.iloc[i] and X2.iloc[j]
-        """
-        n_inst, n_vars, n_tts = X.shape
-        X = X.reshape(n_inst, n_vars * n_tts)
-
-        n_inst2, n_vars2, n_tts2 = X2.shape
-        X2 = X2.reshape(n_inst2, n_vars2 * n_tts2)
-
-        if deep_equals(X, X2):
-            return self.transformer.transform(X)
-        else:
-            return self.transformer.transform(X, X2)
-
-    @classmethod
-    def get_test_params(cls, parameter_set="default"):
-        """Test parameters for FlatDist."""
-        # importing inside to avoid circular dependencies
-        from sktime.dists_kernels import ScipyDist
-
-        return {"transformer": ScipyDist()}
+        super(FlatDist, self).__init__(transformer=transformer)

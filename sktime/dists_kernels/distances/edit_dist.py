@@ -6,18 +6,12 @@ __author__ = ["fkiraly"]
 from typing import Union
 
 import numpy as np
-from deprecated.sphinx import deprecated
 
-from sktime.dists_kernels.distances.edit_dist import EditDist as new_class
+from sktime.distances import pairwise_distance
+from sktime.dists_kernels._base import BasePairwiseTransformerPanel
 
 
-# TODO: remove file in v0.15.0
-@deprecated(
-    version="0.13.4",
-    reason="EditDist has moved and this import will be removed in 0.15.0. Import from sktime.dists_kernels.distances",  # noqa: E501
-    category=FutureWarning,
-)
-class EditDist(new_class):
+class EditDist(BasePairwiseTransformerPanel):
     r"""Interface to sktime native edit distances.
 
     Interface to the following edit distances:
@@ -108,6 +102,13 @@ class EditDist(new_class):
         Intelligence. 31 (2): 306–318.
     """
 
+    _tags = {
+        "symmetric": True,  # all the distances are symmetric
+        "X_inner_mtype": "numpy3D",
+    }
+
+    ALLOWED_DISTANCE_STR = ["lcss", "edr", "erp", "twe"]
+
     def __init__(
         self,
         distance: str = "lcss",
@@ -120,14 +121,79 @@ class EditDist(new_class):
         nu: float = 0.001,
         p: int = 2,
     ):
-        super(EditDist, self).__init__(
-            distance=distance,
-            window=window,
-            itakura_max_slope=itakura_max_slope,
-            bounding_matrix=bounding_matrix,
-            epsilon=epsilon,
-            g=g,
-            lmbda=lmbda,
-            nu=nu,
-            p=p,
-        )
+        self.distance = distance
+        self.window = window
+        self.itakura_max_slope = itakura_max_slope
+        self.bounding_matrix = bounding_matrix
+        self.epsilon = epsilon
+        self.g = g
+        self.lmbda = lmbda
+        self.nu = nu
+        self.p = p
+
+        super(EditDist, self).__init__()
+
+        kwargs = {
+            "window": window,
+            "itakura_max_slope": itakura_max_slope,
+            "bounding_matrix": bounding_matrix,
+        }
+
+        if distance not in self.ALLOWED_DISTANCE_STR:
+            raise ValueError(
+                "distance must be one of the strings"
+                f"{self.ALLOWED_DISTANCE_STR}, but found"
+                f" {distance}"
+            )
+
+        # epsilon is used only for lcss, edr, erp
+        if distance in ["lcss", "edr", "erp"]:
+            kwargs["epsilon"] = epsilon
+
+        # g is used only for erp
+        if distance == "erp":
+            kwargs["g"] = g
+
+        # twe has three unique params
+        if distance == "twe":
+            kwargs["lmbda"] = lmbda
+            kwargs["nu"] = nu
+            kwargs["p"] = p
+
+        self.kwargs = kwargs
+
+    def _transform(self, X, X2=None):
+        """Compute distance/kernel matrix.
+
+        private _transform containing core logic, called from public transform
+
+        Behaviour: returns pairwise distance/kernel matrix
+            between samples in X and X2
+                if X2 is not passed, is equal to X
+                if X/X2 is a pd.DataFrame and contains non-numeric columns,
+                    these are removed before computation
+
+        Parameters
+        ----------
+        X: 3D np.array of shape [num_instances, num_vars, num_time_points]
+        X2: 3D np.array of shape [num_instances, num_vars, num_time_points], optional
+            default X2 = X
+
+        Returns
+        -------
+        distmat: np.array of shape [n, m]
+            (i,j)-th entry contains distance/kernel between X[i] and X2[j]
+        """
+        metric_key = self.distance
+        kwargs = self.kwargs
+
+        distmat = pairwise_distance(X, X2, metric=metric_key, **kwargs)
+
+        return distmat
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Test parameters for EditDist."""
+        param_list = [{"distance": x} for x in cls.ALLOWED_DISTANCE_STR]
+
+        return param_list

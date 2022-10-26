@@ -6,18 +6,12 @@ __author__ = ["fkiraly"]
 from typing import Union
 
 import numpy as np
-from deprecated.sphinx import deprecated
 
-from sktime.dists_kernels.distances.dtw import DtwDist as new_class
+from sktime.distances import pairwise_distance
+from sktime.dists_kernels._base import BasePairwiseTransformerPanel
 
 
-# TODO: remove file in v0.15.0
-@deprecated(
-    version="0.13.4",
-    reason="DtwDist has moved and this import will be removed in 0.15.0. Import from sktime.dists_kernels.distances",  # noqa: E501
-    category=FutureWarning,
-)
-class DtwDist(new_class):
+class DtwDist(BasePairwiseTransformerPanel):
     r"""Interface to sktime native dtw distances, with derivative or weighting.
 
     Interface to simple dynamic time warping (DTW) distance,
@@ -88,6 +82,11 @@ class DtwDist(new_class):
     2011, Pages 2231-2240, ISSN 0031-3203, https://doi.org/10.1016/j.patcog.2010.09.022.
     """
 
+    _tags = {
+        "symmetric": True,  # all the distances are symmetric
+        "X_inner_mtype": "numpy3D",
+    }
+
     def __init__(
         self,
         weighted: bool = False,
@@ -97,11 +96,64 @@ class DtwDist(new_class):
         bounding_matrix: np.ndarray = None,
         g: float = 0.0,
     ):
-        super(DtwDist, self).__init__(
-            weighted=weighted,
-            derivative=derivative,
-            window=window,
-            itakura_max_slope=itakura_max_slope,
-            bounding_matrix=bounding_matrix,
-            g=g,
-        )
+
+        self.weighted = weighted
+        self.derivative = derivative
+        self.window = window
+        self.itakura_max_slope = itakura_max_slope
+        self.bounding_matrix = bounding_matrix
+        self.g = g
+
+        if not weighted and not derivative:
+            metric_key = "dtw"
+        elif not weighted and derivative:
+            metric_key = "ddtw"
+        elif weighted and not derivative:
+            metric_key = "wdtw"
+        elif weighted and derivative:
+            metric_key = "wddtw"
+
+        self.metric_key = metric_key
+
+        kwargs = {
+            "window": window,
+            "itakura_max_slope": itakura_max_slope,
+            "bounding_matrix": bounding_matrix,
+        }
+
+        # g is used only for weighted dtw
+        if weighted:
+            kwargs["g"] = g
+
+        self.kwargs = kwargs
+
+        super(DtwDist, self).__init__()
+
+    def _transform(self, X, X2=None):
+        """Compute distance/kernel matrix.
+
+            Core logic
+
+        Behaviour: returns pairwise distance/kernel matrix
+            between samples in X and X2
+                if X2 is not passed, is equal to X
+                if X/X2 is a pd.DataFrame and contains non-numeric columns,
+                    these are removed before computation
+
+        Parameters
+        ----------
+        X: 3D np.array of shape [num_instances, num_vars, num_time_points]
+        X2: 3D np.array of shape [num_instances, num_vars, num_time_points], optional
+            default X2 = X
+
+        Returns
+        -------
+        distmat: np.array of shape [n, m]
+            (i,j)-th entry contains distance/kernel between X[i] and X2[j]
+        """
+        metric_key = self.metric_key
+        kwargs = self.kwargs
+
+        distmat = pairwise_distance(X, X2, metric=metric_key, **kwargs)
+
+        return distmat
