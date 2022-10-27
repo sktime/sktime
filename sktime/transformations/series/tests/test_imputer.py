@@ -20,12 +20,23 @@ X.iloc[3, 1] = np.nan
 X.iloc[0, 1] = np.nan
 X.iloc[-1, 1] = np.nan
 
+X_inf = X.copy()
+X_inf.iloc[3, 0] = np.inf
+X_inf.iloc[0, 1] = np.inf
+
 y.iloc[3] = np.nan
 y.iloc[0] = np.nan
 y.iloc[-1] = np.nan
 
 
-@pytest.mark.parametrize("Z", [y, X])
+@pytest.mark.parametrize(
+    "X,missing_values",
+    [
+        (y, None),
+        (X, None),
+        (X_inf, [np.inf]),
+    ],
+)
 @pytest.mark.parametrize(
     "method",
     [
@@ -41,10 +52,12 @@ y.iloc[-1] = np.nan
         "forecaster",
     ],
 )
-def test_imputer(method, Z):
+def test_imputer(method, X, missing_values):
     """Test univariate and multivariate Imputer with all methods."""
     forecaster = ExponentialSmoothing() if method == "forecaster" else None
     value = 3 if method == "constant" else None
-    t = Imputer(method=method, forecaster=forecaster, value=value)
-    y_hat = t.fit_transform(Z)
+    t = Imputer(
+        method=method, forecaster=forecaster, value=value, missing_values=missing_values
+    )
+    y_hat = t.fit_transform(X)
     assert not y_hat.isnull().to_numpy().any()
