@@ -24,6 +24,11 @@ Classification
     examples/02_classification.ipynb
     examples/classification/*
 
+Regression
+=============
+
+To come!
+
 Clustering
 =============
 
@@ -31,11 +36,6 @@ Clustering
     :glob:
 
     examples/clustering/*
-
-Regression
-=============
-
-To come!
 
 Annotation
 =============
