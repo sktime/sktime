@@ -390,7 +390,7 @@ core developers.
    - approval by at least one core developer (lazy consensus), no rejection by a core developer (veto right)
    - be authored by a core developer, and not require a STEP (i.e., changes to this governance document, or core interfaces)
 -  For a proposed change to be rejected via lazy consensus, it needs to receive a
-   rejection by at least one core developer, and no acceptance or authorship by a core developer.
+   rejection by at least one core developer, and no acceptance by a core developer, and not be authored by a core developer.
 -  Approvals must be in the form of a GitHub PR approval of the PR in question.
    Rejections can be expressed as -1 comments, or any written comments
    containing "I formally reject" in the PR, in reference to it.
