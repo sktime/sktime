@@ -401,7 +401,7 @@ core developers.
    The period resets at every new change made to the PR.
    It starts only when all GitHub checks pass.
 -  During this period, the PR can be merged if it has an approval and no rejection after two working days excluding week-ends,
-   or if five working days excluding week-ends have passed (without any additional condition).
+   or if five working days excluding week-ends have passed in a case where it has received neither approval nor rejection.
    Such a merge should be reverted if the merged PR receives a rejection.
 -  If the "reasonable time" period elapses for a PR not authored by a core developer,
    and no approval or rejection has been expressed on a PR,
