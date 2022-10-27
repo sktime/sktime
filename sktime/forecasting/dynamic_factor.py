@@ -388,88 +388,90 @@ class DynamicFactor(_StatsModelsAdapter):
         """Get a summary of the fitted forecaster."""
         return self._fitted_forecaster.summary()
 
-    def simulate(
-        self,
-        nsimulations,
-        measurement_shocks=None,
-        state_shocks=None,
-        initial_state=None,
-        anchor=None,
-        repetitions=None,
-        X=None,
-        extend_model=None,
-        extend_kwargs=None,
-        transformed=True,
-        includes_fixed=False,
-        **kwargs,
-    ):
-        r"""Simulate a new time series following the state space model.
+    # def simulate(
+    #     self,
+    #     nsimulations,
+    #     measurement_shocks=None,
+    #     state_shocks=None,
+    #     initial_state=None,
+    #     anchor=None,
+    #     repetitions=None,
+    #     X=None,
+    #     extend_model=None,
+    #     extend_kwargs=None,
+    #     transformed=True,
+    #     includes_fixed=False,
+    #     **kwargs,
+    # ):
+    #     r"""Simulate a new time series following the state space model.
 
-        Taken from original statsmodels implementation.
+    #     Taken from original statsmodels implementation.
 
-        Parameters
-        ----------
-        nsimulations : int
-            The number of observations to simulate. If the model is time-invariant
-            this can be any number. If the model is time-varying, then this number
-            must be less than or equal to the number.
-        measurement_shocks : array_like , optional
-            If specified, these are the shocks to the measurement equation,.
-            If unspecified, these are automatically generated using a
-            pseudo-random number generator. If specified, must be shaped
-            nsimulations x k_endog, where k_endog is the same as in
-            the state space model.
-        state_shocks : array_like , optional
-            If specified, these are the shocks to the state equation, .
-            If unspecified, these are automatically generated using a
-            pseudo-random number generator. If specified, must be shaped
-            nsimulations x k_posdef where k_posdef is the same as in the
-            state space model.
-        initial_state : array_like , optional
-            If specified, this is the initial state vector to use in
-            simulation,which should be shaped (k_states x 1), where
-            k_states is the same as in the state space model.
-            If unspecified, but the model has been initialized,
-            then that initialization is used.
-            This must be specified if anchor is anything
-            other than “start” or 0.
-        anchor : int,str,or datetime , optional
-            Starting point from which to begin the simulations; type depends
-            on the index of the given endog model.
-            Two special cases are the strings ‘start’ and ‘end’,
-            which refer to starting at the beginning and end of the sample,
-            respectively. If a date/time index was provided to the model,
-            then this argument can be a date string to parse or a datetime type.
-            Otherwise, an integer index should be given. Default is ‘start’.
-        repetitions : int , optional
-            Number of simulated paths to generate. Default is 1 simulated path
+    #     Parameters
+    #     ----------
+    #     nsimulations : int
+    #         The number of observations to simulate. If the model is time-invariant
+    #         this can be any number. If the model is time-varying, then this number
+    #         must be less than or equal to the number.
+    #     measurement_shocks : array_like , optional
+    #         If specified, these are the shocks to the measurement equation,.
+    #         If unspecified, these are automatically generated using a
+    #         pseudo-random number generator. If specified, must be shaped
+    #         nsimulations x k_endog, where k_endog is the same as in
+    #         the state space model.
+    #     state_shocks : array_like , optional
+    #         If specified, these are the shocks to the state equation, .
+    #         If unspecified, these are automatically generated using a
+    #         pseudo-random number generator. If specified, must be shaped
+    #         nsimulations x k_posdef where k_posdef is the same as in the
+    #         state space model.
+    #     initial_state : array_like , optional
+    #         If specified, this is the initial state vector to use in
+    #         simulation,which should be shaped (k_states x 1), where
+    #         k_states is the same as in the state space model.
+    #         If unspecified, but the model has been initialized,
+    #         then that initialization is used.
+    #         This must be specified if anchor is anything
+    #         other than “start” or 0.
+    #     anchor : int,str,or datetime , optional
+    #         Starting point from which to begin the simulations; type depends
+    #         on the index of the given endog model.
+    #         Two special cases are the strings ‘start’ and ‘end’,
+    #         which refer to starting at the beginning and end of the sample,
+    #         respectively. If a date/time index was provided to the model,
+    #         then this argument can be a date string to parse or a datetime type.
+    #         Otherwise, an integer index should be given. Default is ‘start’.
+    #     repetitions : int , optional
+    #         Number of simulated paths to generate. Default is 1 simulated path
 
-        Returns
-        -------
-        simulated_obs : ndarray
-            An array of simulated observations. If repetitions=None, then it will
-            be shaped (nsimulations x k_endog) or (nsimulations,) if k_endog=1.
-            Otherwise it will be shaped (nsimulations x k_endog x repetitions).
-            If the model was given Pandas input then the output will be a Pandas object.
-            If k_endog > 1 and repetitions is not None, then the output will be a Pandas
-            DataFrame that has a MultiIndex for the columns, with the first level
-            containing the names of the endog variables and the second level
-            containing the repetition number.
-        """
-        return self._fitted_forecaster.simulate(
-            nsimulations=nsimulations,
-            measurement_shocks=measurement_shocks,
-            state_shocks=state_shocks,
-            initial_state=initial_state,
-            anchor=anchor,
-            repetitions=repetitions,
-            exog=X,
-            extend_model=extend_model,
-            extend_kwargs=extend_kwargs,
-            transformed=transformed,
-            includes_fixed=includes_fixed,
-            **kwargs,
-        )
+    #     Returns
+    #     -------
+    #     simulated_obs : ndarray
+    #         An array of simulated observations. If repetitions=None, then it will
+    #         be shaped (nsimulations x k_endog) or (nsimulations,) if k_endog=1.
+    #         Otherwise it will be shaped (nsimulations x k_endog x repetitions).
+    #         If the model was given Pandas input then the output will be a Pandas
+    # object.
+    #         If k_endog > 1 and repetitions is not None, then the output will be a
+    # Pandas
+    #         DataFrame that has a MultiIndex for the columns, with the first level
+    #         containing the names of the endog variables and the second level
+    #         containing the repetition number.
+    #     """
+    #     return self._fitted_forecaster.simulate(
+    #         nsimulations=nsimulations,
+    #         measurement_shocks=measurement_shocks,
+    #         state_shocks=state_shocks,
+    #         initial_state=initial_state,
+    #         anchor=anchor,
+    #         repetitions=repetitions,
+    #         exog=X,
+    #         extend_model=extend_model,
+    #         extend_kwargs=extend_kwargs,
+    #         transformed=transformed,
+    #         includes_fixed=includes_fixed,
+    #         **kwargs,
+    #     )
 
     def plot_diagnostics(
         self,
