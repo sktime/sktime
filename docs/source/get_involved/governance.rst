@@ -386,9 +386,9 @@ core developers.
 -  Proposed changes should be in the form of GitHub pull requests (PR).
    Some changes also require a worked out :ref:`steps`. This depends on the type of change, see
    `decision making process <#Decision-making>`__ above.
--  For a proposed change to be approved via lazy consensus, it needs to
-   approval by at least one core developer (lazy consensus), no rejection by a core developer (veto right),
-   or be authored by a core developer.
+-  For a proposed change to be approved via lazy consensus, it needs to satisfy one of two conditions:
+   - approval by at least one core developer (lazy consensus), no rejection by a core developer (veto right)
+   - be authored by a core developer, and not require a STEP (i.e., changes to this governance document, or core interfaces)
 -  For a proposed change to be rejected via lazy consensus, it needs to receive a
    rejection by at least one core developer, and no acceptance or authorship by a core developer.
 -  Approvals must be in the form of a GitHub PR approval of the PR in question.
@@ -466,7 +466,8 @@ sktime enhancement proposal
 
 sktime enhancement proposals (STEPs) are required for:
 
-* certain types of proposed changes, by default, see `decision making process <#Decision-making>`__
+* certain types of proposed changes, by default, see `decision making process <#Decision-making>`__.
+  This includes changes to this governance document, and core software interfaces.
 * for all stage 3 decisions
 
 If a STEP is required by a vote, it must have been made public at least 5 working days (excluding week-ends) before that vote.
@@ -476,14 +477,14 @@ problem statement, a clear description of the proposed solution and a
 comparison with alternative solutions, as outlined in our
 `template <https://github.com/sktime/enhancement-proposals/blob/master/TEMPLATE.md>`__.
 
-A complete STEP must always include at least a high-level design for the proposed change,
-not just a wishlist of features.
+In case of software interface changes, a complete STEP must always include at least a
+high-level design for the proposed change, not just a wishlist of features.
 
 Usually, we collect and discuss proposals in sktime’s `repository for
 enhancement-proposals <https://github.com/sktime/enhancement-proposals>`__.
 
 For smaller changes, such as punctual changes to the API or governance documents,
-the STEP can also be be part of an issue or pull request.
+the STEP can also be be part of an issue or pull request header.
 
 .. _algorithm-inclusion-guidelines:
 
