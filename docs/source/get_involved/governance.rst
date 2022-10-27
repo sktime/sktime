@@ -386,7 +386,7 @@ core developers.
 -  Proposed changes should be in the form of GitHub pull requests (PR).
    Some changes also require a worked out :ref:`steps`. This depends on the type of change, see
    `decision making process <#Decision-making>`__ above.
--  For a proposed change to be approved via lazy consensus, it needs to satisfy one of two conditions:
+-  For a proposed change to be approved via lazy consensus, it needs to satisfy at least one of these two conditions:
    - approval by at least one core developer (lazy consensus), no rejection by a core developer (veto right)
    - be authored by a core developer, and not require a STEP (i.e., changes to this governance document, or core interfaces)
 -  For a proposed change to be rejected via lazy consensus, it needs to receive a
