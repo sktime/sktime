@@ -91,7 +91,7 @@ class BaseForecaster(BaseEstimator):
         "scitype:y": "univariate",  # which y are fine? univariate/multivariate/both
         "ignores-exogeneous-X": False,  # does estimator ignore the exogeneous X?
         "capability:pred_int": False,  # can the estimator produce prediction intervals?
-        "capabiltiy:simulate": False,  # can the estimator produce simulated forecasts?
+        "capability:simulate": False,  # can the estimator produce simulated forecasts?
         "handles-missing-data": False,  # can estimator handle missing data?
         "y_inner_mtype": "pd.Series",  # which types do _fit/_predict, support for y?
         "X_inner_mtype": "pd.DataFrame",  # which types do _fit/_predict, support for X?

@@ -203,7 +203,7 @@ ESTIMATOR_TAG_REGISTER = [
         "capability:simulate",
         "forecaster",
         "bool",
-        "does the forecaster implement simulate",
+        "does the forecaster implement simulate?",
     ),
     (
         "capability:multivariate",

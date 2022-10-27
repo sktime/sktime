@@ -114,6 +114,7 @@ class SARIMAX(_StatsModelsAdapter):
 
     _tags = {
         "ignores-exogeneous-X": False,
+        "capability:simulate": True,
     }
 
     def __init__(

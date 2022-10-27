@@ -24,7 +24,7 @@ class _StatsModelsAdapter(BaseForecaster):
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
         "python_dependencies": "statsmodels",
-        "capability:simulate": True,
+        "capability:simulate": False,
     }
 
     def __init__(self, random_state=None):
