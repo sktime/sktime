@@ -254,7 +254,8 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
 
         try:
             estimator_instance.fit(y_train, fh=fh)
-            y_pred = estimator_instance.simulate(3)
+            n_sims = 3
+            y_pred = estimator_instance.simulate(fh=fh, n_simulations=n_sims)
             assert check_is_mtype(y_pred, ["pd_multiindex", "Hierarchical"])
             count = 0
             for _, group in y_pred.groupby(
@@ -265,7 +266,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
                 )
                 count += 1
                 # _assert_correct_columns(group, y_train)
-            assert count == 3
+            assert count == n_sims
         except NotImplementedError:
             pass
 

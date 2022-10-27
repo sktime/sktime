@@ -114,7 +114,7 @@ class _StatsModelsAdapter(BaseForecaster):
         y_pred.name = self._y.name
         return y_pred
 
-    def _simulate(self, fh, X=None, n_simulations=10):
+    def _simulate(self, fh, n_simulations, X=None):
         """Make forecasts.
 
         Parameters
