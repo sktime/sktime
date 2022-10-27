@@ -3,7 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Transformer to impute missing values in series."""
 
-__author__ = ["aiwalter"]
+__author__ = ["aiwalter", "AnH0ang"]
 __all__ = ["Imputer"]
 
 
@@ -50,7 +50,7 @@ class Imputer(BaseTransformer):
         "drift", "mean", "median", "random". For all other methods, the
         transform data is sufficient to compute the impute values.
 
-    missing_values : int/float/str, default=None
+    missing_values : int/float/str/list, default=None
         The placeholder for the missing values. All occurrences of
         missing_values will be imputed, in addition to np.nan.
         If None, then only np.nan values are imputed.
@@ -135,10 +135,16 @@ class Imputer(BaseTransformer):
         -------
         self: reference to self
         """
+        X = X.copy()
+
+        # replace missing_values with np.nan
+        if self.missing_values:
+            X = X.replace(to_replace=self.missing_values, value=np.nan)
+
         self._check_method()
         # all methods of Imputer that are actually doing a fit are
         # implemented here. Some methods dont need fit, so they are just
-        # impleented in _transform
+        # implemented in _transform
         if self.method in ["drift", "forecaster"]:
             self._y = y.copy() if y is not None else None
             if self.method == "drift":
@@ -258,11 +264,15 @@ class Imputer(BaseTransformer):
             Random int or float between min and max of X
         """
         rng = check_random_state(self.random_state)
+
+        # replace np.inf with np.nan to remove it from min/max calculation
+        X = self._X.copy().replace([-np.inf, np.inf], np.nan)
+
         # check if series contains only int or int-like values (e.g. 3.0)
-        if (self._X[col].dropna() % 1 == 0).all():
-            return rng.randint(self._X[col].min(), self._X[col].max())
+        if (X[col].dropna() % 1 == 0).all():
+            return rng.randint(X[col].min(), X[col].max())
         else:
-            return rng.uniform(self._X[col].min(), self._X[col].max())
+            return rng.uniform(X[col].min(), X[col].max())
 
     def _impute_with_forecaster(self, X, y):
         """Use a given forecaster for imputation by in-sample predictions.
@@ -285,12 +295,23 @@ class Imputer(BaseTransformer):
                 na_index = X[col].index[X[col].isna()]
                 fh = ForecastingHorizon(values=na_index, is_relative=False)
 
-                # fill NaN before fitting with ffill and backfill (heuristic)
+                # replace missing values with np.nan is they are set
+                if self.missing_values is not None:
+                    X_col = self._X[col].replace(self.missing_values, np.nan)
+                    y_col = (
+                        self._y[col].replace(self.missing_values, np.nan)
+                        if self._y is not None
+                        else None
+                    )
+                else:
+                    X_col = self._X[col]
+                    y_col = self._y[col] if self._y is not None else None
 
+                # fill NaN and `missing_values` before fitting with ffill and backfill
                 self._forecaster.fit(
-                    y=self._X[col].fillna(method="ffill").fillna(method="backfill"),
-                    X=self._y[col].fillna(method="ffill").fillna(method="backfill")
-                    if self._y is not None
+                    y=X_col.fillna(method="ffill").fillna(method="backfill"),
+                    X=y_col.fillna(method="ffill").fillna(method="backfill")
+                    if y_col is not None
                     else None,
                 )
 
