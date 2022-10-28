@@ -131,6 +131,9 @@ class _StatsModelsAdapter(BaseForecaster):
         y_pred : pd.Series
             Returns series of predicted values.
         """
+        # check if there is a private attribute _simulate_kwargs
+        simulate_kwargs = getattr(self, "_simulate_kwargs", None) or {}
+
         max_fh = np.max(fh.to_relative(self.cutoff))
 
         if "exog" in inspect.signature(self._forecaster.__init__).parameters.keys():
@@ -139,16 +142,16 @@ class _StatsModelsAdapter(BaseForecaster):
                 anchor="end",
                 exog=X,
                 repetitions=n_simulations,
-                random_errors=None,
-                random_state=None,
+                random_state=self.random_state,
+                **simulate_kwargs,
             )
         else:
             y_pred = self._fitted_forecaster.simulate(
                 nsimulations=max_fh,
                 anchor="end",
                 repetitions=n_simulations,
-                random_errors=None,
                 random_state=self.random_state,
+                **simulate_kwargs,
             )
 
         # statsmodels forecasts all periods from start to end of forecasting
@@ -163,7 +166,6 @@ class _StatsModelsAdapter(BaseForecaster):
         y_pred.index = y_pred.index.set_names(["simulation_id", "time_index"])
         y_pred = y_pred.sort_index()
 
-        # TODO: Series name is not preserved, fix it!
         return y_pred
 
     def get_fitted_params(self):

@@ -388,22 +388,23 @@ class BaseForecaster(BaseEstimator):
         ----------
         fh : int, list, np.array or ForecastingHorizon, optional (default=None)
             The forecasting horizon encoding the time stamps to forecast at.
-            if has not been passed in fit, must be passed, not optional
+            if has not been passed in fit, must be passed, not optional.
         X : time series in sktime compatible format, optional (default=None)
                 Exogeneous time series to fit to
             Should be of same scitype (Series, Panel, or Hierarchical) as y in fit
             if self.get_tag("X-y-must-have-same-index"), X.index must contain fh.index
             there are no restrictions on number of columns (unlike for y)
+        n_simulations: int, optional (default=10)
+            number of simulated time series that will be generated.
 
         Returns
         -------
-        y_pred : time series in sktime compatible data container format
-            Point forecasts at fh, with same index as fh
-            y_pred has same type as the y that has been passed most recently:
-                Series, Panel, Hierarchical scitype, same format (see above)
+        y_pred : Multiple time series in a Panel or Hierarchical sktime format
+            Simulated point forecasts at fh, with same index as fh
+            y_pred a ""pd-multiindex"" mtype if y is a Series scitype and a
+            "pd_multiindex_hier" if y is a Panel or Hierarchicla scitype.
+            the last two levels of the multiindex are "simulation_id" and "time_index"
         """
-        # TODO: clean-up legacy comments
-        # handle inputs
         if not self.get_tag("capability:simulate"):
             raise NotImplementedError(
                 f"{self.__class__.__name__} does not have the capability to return "
@@ -416,9 +417,8 @@ class BaseForecaster(BaseEstimator):
 
         if len(fh.to_in_sample(cutoff=self.cutoff)) > 0:
             raise NotImplementedError(
-                f"{self.__class__.__name__} does not have the capability to return "
-                "simulated forecasts for in-sample horizons (i.e. negative realtive"
-                " horizons)"
+                f"{self.__class__.__name__} currently does support simulated forecasts "
+                "for in-sample horizons (i.e. negative realtive  horizons)."
             )
 
         self.check_is_fitted()
@@ -426,7 +426,7 @@ class BaseForecaster(BaseEstimator):
         # input check and conversion for X
         X_inner = self._check_X(X=X)
 
-        # we call the ordinary _predict if no looping/vectorization needed
+        # we call the ordinary _simulate if no looping/vectorization needed
         if not self._is_vectorized:
             y_pred = self._simulate(fh=fh, X=X_inner, n_simulations=n_simulations)
         else:
@@ -447,7 +447,7 @@ class BaseForecaster(BaseEstimator):
         )
 
         # name is not added though this operation.
-        # TODO: move this to converter
+        # TODO: move this to converter, if possible
         if "columns" in self._converter_store_y.keys():
             y_out.columns = self._converter_store_y["columns"]
 

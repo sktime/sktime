@@ -236,7 +236,6 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
     @pytest.mark.parametrize("fh_int", TEST_FHS, ids=[f"fh={fh}" for fh in TEST_FHS])
     def test_simulate_index(self, estimator_instance, n_columns, index_fh_comb, fh_int):
         """Check that simulations' time index matches forecasting horizon."""
-        # TODO: add  test for simulate feature
         index_type, fh_type, is_relative = index_fh_comb
         if fh_type == "timedelta":
             return None
@@ -256,6 +255,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             estimator_instance.fit(y_train, fh=fh)
             n_sims = 3
             y_pred = estimator_instance.simulate(fh=fh, n_simulations=n_sims)
+            # Assert that the output is the right mtype
             assert check_is_mtype(y_pred, ["pd-multiindex", "pd_multiindex_hier"])
             count = 0
             for _, group in y_pred.groupby(
@@ -266,6 +266,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
                 )
                 count += 1
                 _assert_correct_columns(group, y_train)
+            # Assert that the output has the right number of simulated series
             assert count == n_sims
         except NotImplementedError:
             pass
