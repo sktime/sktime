@@ -489,18 +489,18 @@ Examples of not acceptable behaviour
   soft refusal to make budgets, invoives, or spending records transparent to the ``sktime`` community
 * attempts to suppress criticism of bad practice through invoking the code of conduct, e.g., tone policing
 
-Investigating CoC violations
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Investigating potential resource allocation violations
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 CoC violations in the resource allocation domain are rarely accompanied by violation of communicative norms.
 
-CoC violations on resource allocation can be committed by an individual, or by a networked group of individuals
+CoC violations on resource allocation can be committed by an individual, or by a networked group of individuals.
 
 DARVO, intimidation, noise generation, and plausible deniability may be common tactics found in an investigation.
 
 It is hence crucial to establish the facts.
 
-It is also crucial to investigate circumstantial evidence, as facts may be obuscated.
+It is also crucial to investigate circumstantial evidence, as facts may be obfuscated.
 Important pieces of circumstantial evidence for a CoC violation are:
 
 * cui bono - the individual or group influencing the decision being a direct or indirect
