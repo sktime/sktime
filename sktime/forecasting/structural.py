@@ -14,7 +14,7 @@ from sktime.forecasting.base.adapters import _StatsModelsAdapter
 class UnobservedComponents(_StatsModelsAdapter):
     r"""Wrapper class of the UnobservedComponents model from statsmodels.
 
-    Input parameters and doc-stringsare taken from the original implementation.
+    Input parameters and doc-strings are taken from the original implementation.
 
     Parameters
     ----------
@@ -166,6 +166,29 @@ class UnobservedComponents(_StatsModelsAdapter):
         not be available (including smoothed results and in-sample
         prediction), although out-of-sample forecasting is possible.
         Default is False.
+    simulations_measurement_shocks : array_like, optional
+        Only relevant for the simulate method.
+        If specified, these are the shocks to the measurement equation,
+        :math:`\varepsilon_t`. If unspecified, these are automatically
+        generated using a pseudo-random number generator. If specified,
+        must be shaped `nsimulations` x `k_endog`, where `k_endog` is the
+        same as in the state space model.
+    simulations_state_shocks : array_like, optional
+        Only relevant for the simulate method.
+        If specified, these are the shocks to the state equation,
+        :math:`\eta_t`. If unspecified, these are automatically
+        generated using a pseudo-random number generator. If specified,
+        must be shaped `nsimulations` x `k_posdef` where `k_posdef` is the
+        same as in the state space model.
+    simulations_initial_state : array_like, optional
+        Only relevant for the simulate method.
+        If specified, this is the initial state vector to use in
+        simulation, which should be shaped (`k_states` x 1), where
+        `k_states` is the same as in the state space model. If unspecified,
+        but the model has been initialized, then that initialization is
+        used. This must be specified if `anchor` is anything other than
+        "start" or 0 (or else you can use the `simulate` method on a
+        results object rather than on the model object).
     random_state : int, RandomState instance or None, optional ,
         default=None – If int, random_state is the seed used by the random
         number generator; If RandomState instance, random_state is the random
@@ -202,6 +225,7 @@ class UnobservedComponents(_StatsModelsAdapter):
         "capability:pred_int": True,
         "handles-missing-data": False,
         "ignores-exogeneous-X": False,
+        "capability:simulate": True,
     }
 
     def __init__(
@@ -238,6 +262,9 @@ class UnobservedComponents(_StatsModelsAdapter):
         optim_hessian=None,
         flags=None,
         low_memory=False,
+        simulations_measurement_shocks=None,
+        simulations_state_shocks=None,
+        simulations_initial_state=None,
         random_state=None,
     ):
         # Model params
@@ -275,6 +302,18 @@ class UnobservedComponents(_StatsModelsAdapter):
         self.optim_hessian = optim_hessian
         self.flags = flags
         self.low_memory = low_memory
+
+        # Simulation params
+        self.simulations_measurement_shocks = simulations_measurement_shocks
+        self.simulations_state_shocks = simulations_state_shocks
+        self.simulations_initial_state = simulations_initial_state
+
+        # dictionary for simulation kwargs, part of the statsmodels adapter logic
+        self._simulate_kwargs = {
+            "measurement_shocks": simulations_measurement_shocks,
+            "state_shocks": simulations_state_shocks,
+            "initial_state": simulations_initial_state,
+        }
 
         super(UnobservedComponents, self).__init__(random_state=random_state)
 
@@ -391,92 +430,6 @@ class UnobservedComponents(_StatsModelsAdapter):
         https://www.statsmodels.org/dev/examples/notebooks/generated/statespace_structural_harvey_jaeger.html
         """
         return self._fitted_forecaster.summary()
-
-    # def simulate(
-    #     self,
-    #     nsimulations,
-    #     X=None,
-    #     measurement_shocks=None,
-    #     state_shocks=None,
-    #     initial_state=None,
-    #     anchor=None,
-    #     repetitions=None,
-    #     **kwargs
-    # ):
-    #     r"""Simulate a new time series following the state space model.
-
-    #     Taken from the original statsmodels implementation.
-
-    #     Parameters
-    #     ----------
-    #     nsimulations : int
-    #         The number of observations to simulate. If the model is
-    #         time-invariant this can be any number. If the model is
-    #         time-varying, then this number must be less than or equal to the
-    #         number of observations.
-    #     X : pd.DataFrame, optional (default=None)
-    #         Exogenous variables.
-    #     measurement_shocks : array_like, optional
-    #         If specified, these are the shocks to the measurement equation,
-    #         :math:`\varepsilon_t`. If unspecified, these are automatically
-    #         generated using a pseudo-random number generator. If specified,
-    #         must be shaped `nsimulations` x `k_endog`, where `k_endog` is the
-    #         same as in the state space model.
-    #     state_shocks : array_like, optional
-    #         If specified, these are the shocks to the state equation,
-    #         :math:`\eta_t`. If unspecified, these are automatically
-    #         generated using a pseudo-random number generator. If specified,
-    #         must be shaped `nsimulations` x `k_posdef` where `k_posdef` is the
-    #         same as in the state space model.
-    #     initial_state : array_like, optional
-    #         If specified, this is the initial state vector to use in
-    #         simulation, which should be shaped (`k_states` x 1), where
-    #         `k_states` is the same as in the state space model. If unspecified,
-    #         but the model has been initialized, then that initialization is
-    #         used. This must be specified if `anchor` is anything other than
-    #         "start" or 0 (or else you can use the `simulate` method on a
-    #         results object rather than on the model object).
-    #     anchor : int, str, or datetime, optional
-    #         First period for simulation. The simulation will be conditional on
-    #         all existing datapoints prior to the `anchor`.  Type depends on the
-    #         index of the given `endog` in the model. Two special cases are the
-    #         strings 'start' and 'end'. `start` refers to beginning the
-    #         simulation at the first period of the sample, and `end` refers to
-    #         beginning the simulation at the first period after the sample.
-    #         Integer values can run from 0 to `nobs`, or can be negative to
-    #         apply negative indexing. Finally, if a date/time index was provided
-    #         to the model, then this argument can be a date string to parse or a
-    #         datetime type. Default is 'start'.
-    #     repetitions : int, optional
-    #         Number of simulated paths to generate. Default is 1 simulated path.
-
-    #     See Also
-    #     --------
-    #     statsmodels.tsa.statespace.mlemodel.MLEResults
-
-    #     Returns
-    #     -------
-    #     simulated_obs : ndarray
-    #         An array of simulated observations. If `repetitions=None`, then it
-    #         will be shaped (nsimulations x k_endog) or (nsimulations,) if
-    #         `k_endog=1`. Otherwise it will be shaped
-    #         (nsimulations x k_endog x repetitions). If the model was given
-    #         Pandas input then the output will be a Pandas object. If
-    #         `k_endog > 1` and `repetitions` is not None, then the output will
-    #         be a Pandas DataFrame that has a MultiIndex for the columns, with
-    #         the first level containing the names of the `endog` variables and
-    #         the second level containing the repetition number.
-    #     """
-    #     return self._fitted_forecaster.simulate(
-    #         nsimulations=nsimulations,
-    #         measurement_shocks=measurement_shocks,
-    #         state_shocks=state_shocks,
-    #         initial_state=initial_state,
-    #         anchor=anchor,
-    #         repetitions=repetitions,
-    #         exog=X,
-    #         **kwargs
-    #     )
 
     def plot_diagnostics(
         self,

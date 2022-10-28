@@ -87,8 +87,6 @@ class _StatsModelsAdapter(BaseForecaster):
         ----------
         fh : ForecastingHorizon
             The forecasters horizon with the steps ahead to to predict.
-            Default is one-step ahead forecast,
-            i.e. np.array([1])
         X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored.
 
@@ -121,15 +119,13 @@ class _StatsModelsAdapter(BaseForecaster):
         ----------
         fh : ForecastingHorizon
             The forecasters horizon with the steps ahead to to predict.
-            Default is one-step ahead forecast,
-            i.e. np.array([1])
         X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored.
 
         Returns
         -------
-        y_pred : pd.Series
-            Returns series of predicted values.
+        y_pred : pd.DataFrame
+            Returns multiindex dataframe of simulated forecasts.
         """
         # check if there is a private attribute _simulate_kwargs
         simulate_kwargs = getattr(self, "_simulate_kwargs", None) or {}
@@ -158,7 +154,7 @@ class _StatsModelsAdapter(BaseForecaster):
         # horizon, but only return given time points in forecasting horizon
         y_pred = y_pred.loc[fh.to_absolute(self.cutoff).to_pandas()]
 
-        # TODO: clean this pandas mess up
+        # convert the outputs to a "pd_multiindex" mtype
         y_pred = y_pred.stack()
         if isinstance(y_pred, pd.Series):
             y_pred = y_pred.to_frame()
