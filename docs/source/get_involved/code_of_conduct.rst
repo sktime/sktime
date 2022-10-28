@@ -503,12 +503,12 @@ It is hence crucial to establish the facts.
 It is also crucial to investigate circumstantial evidence, as facts may be obuscated.
 Important pieces of circumstantial evidence for a CoC violation are:
 
+* cui bono - the individual or group influencing the decision being a direct or indirect
+  beneficiary of the changed/influenced resource allocation decision
 * premeditation, i.e., indication of substantial, careful consideration and planning to change the outcome of decision making to one's benefit,
   or prevent/hinder decision making by the ``sktime`` community
 * removing the decision making capacity from the ``sktime`` community,
   e.g., by creating accomplished facts or not complying with ``sktime`` community decisions.
-* cui bono - the individual or group influencing the decision being a direct or indirect
-  beneficiary of the changed/influenced resource allocation decision
 * obfuscation of the paper trail, e.g., soft refusal or inability to provide paper documentation such as budgets, invoices or reports.
 * hindering of the investigation itself, e.g., by not engaging with it to the fullest extent possible, creating community dissent around it, etc
 * promoting decision making on ``sktime`` governance that would weaken accountability,
