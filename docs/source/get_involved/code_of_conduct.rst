@@ -174,36 +174,9 @@ project event or platform include:
 -  invoking the code of conduct dishonestly, or as a form of bullying,
    especially from a position of power
 
-2.3 Common precedent rules
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+Some more principled guidance is given in the appendix "Guidance in applying the CoC".
 
-Sometimes, CoC requirements end up in conflict with each other.
-We outline a few precedent examples in how these are traded off.
-
-Examples:
-
-* contributor criticizing leadership for handing resources to personal network, leadership invoking "discomfort"
-* passionate disagreement on technical content between contributors
-* accidental violations of CoC causally due to protected characteristics of the person violating the CoC
-* systemic discrimination issues whose resolution would cause discomfort in the community
-
-Precedent rules:
-
-* the less powerful party should be protected, i.e., CoC cannot be invoked by lead community member to silence critique of how funds are spent.
-  But, CoC should protect new contributors or early career members from more powerful community members, e.g., in operational or technical disputes.
-* technical content is not invalidated by tone, but tone must remain civil at all times.
-  I.e., valid arguments are not discarded because of tone, but participants in a technical
-  dispute may be punished for tone that is unwelcoming, e.g., name calling etc.
-* conditions that make compliance with certain aspects of CoC more difficult should be taken into account,
-  especially in parties that are the less powerful in a dynamic. Common examples are certain forms of neuroatypicality.
-  A more illustrative but very rare example would be Tourette's with the rare swearing tic that cannot be "turned off".
-* issues of systemic exclusion or discrimination should be addressed when apparent, even at the cost of some community discomfort.
-  E.g., meetings should be moved to less convenient times, or processes made more "formal",
-  if not doing so would exclude others in a discriminatory fashion.
-
-Behaviour that is clearly racist, sexist, etc, is always a CoC violation, and never part of trade-offs.
-
-2.4 Consequences of Unacceptable Behaviour
+2.3 Consequences of Unacceptable Behaviour
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Participants who are asked to stop any inappropriate behaviour are
@@ -215,7 +188,7 @@ event or platform (without refund), or impose any other appropriate
 sanctions (see the `enforcement manual <#enforcement-manual>`__ for
 details).
 
-2.5 Feedback
+2.4 Feedback
 ~~~~~~~~~~~~
 
 This Code of Conduct is not intended as a static set of rules by which
@@ -291,8 +264,8 @@ In situations where an individual community member acts unilaterally,
 they must inform the sktime community council via info@sktime.org
 as soon as possible, and report their actions for review within 24 hours.
 
-4.3 Less-Urgent Situations
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+4.3 Code of Conduct Investigation Process
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Upon receiving a report of an incident, the Code of Conduct committee
 will review the incident and determine, to the best of her ability:
@@ -415,3 +388,128 @@ Way <https://github.com/alan-turing-institute/the-turing-way>`__ project
 with Dr Kirstie Whitaker as the principal investigator is retained,
 along with the attribution to the Carpentries, The Alan Turing Institute
 Data Study Group organising team, Citizen Lab and the other resources.
+
+
+Appendix: Guidance in applying the CoC
+--------------------------------------
+
+This appendix provides some concrete guidance in applying the CoC.
+It contains sections on:
+
+* how to apply the CoC in some common situations where principles might conflict o
+* investigating CoC violations in resource allocation
+
+Resolving conflicting CoC principles
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Sometimes, CoC requirements end up in a trade-off, or in conflict with each other.
+We outline a few guiding examples in how these should be traded off.
+
+Examples:
+
+* contributor criticizing leadership for handing resources to personal network, leadership invoking "discomfort"
+* passionate disagreement on technical content between contributors
+* accidental violations of CoC causally due to protected characteristics of the person violating the CoC
+* systemic discrimination issues whose resolution would cause discomfort in the community
+
+Guidance rules:
+
+* the less powerful party should be protected, i.e., CoC cannot be invoked by lead community member to silence critique of how funds are spent.
+  But, CoC should protect new contributors or early career members from more powerful community members, e.g., in operational or technical disputes.
+* technical content is not invalidated by tone, but tone must remain civil at all times.
+  I.e., valid arguments are not discarded because of tone, but participants in a technical
+  dispute may be punished for tone that is unwelcoming, e.g., name calling etc.
+* conditions that make compliance with certain aspects of CoC more difficult should be taken into account,
+  especially in parties that are the less powerful in a dynamic. Common examples are certain forms of neuroatypicality.
+  A more illustrative but very rare example would be Tourette's with the rare swearing tic that cannot be "turned off".
+* issues of systemic exclusion or discrimination should be addressed when apparent, even at the cost of some community discomfort.
+  E.g., meetings should be moved to less convenient times, or processes made more "formal",
+  if not doing so would exclude others in a discriminatory fashion.
+
+Behaviour that is clearly racist, sexist, etc, is always a CoC violation, and never part of trade-offs.
+
+
+Guidance on resource allocation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This section deals with resource allocation decisions by sktime community members,
+and criteria for decision making on resource allocation violating the code of conduct.
+
+Scope
+^^^^^
+
+In scope for this section are all resource allocation decisions:
+
+* any decisions that allocate resources primarily obtained due to the ``sktime`` project and the volunteer contributions of the community.
+  This includes research grants awarded directly for the benefit of the ``sktime`` project,
+  commercial opportunities arising from or directly directed to the ``sktime`` project,
+  and any activities that use the ``sktime`` brand as a primary branding.
+  This includes decisions made in personal roles, or roles other than ``sktime`` official roles.
+* any decisions by members of the ``sktime`` developer community, in their execution of core developer or community council roles.
+
+Examples for in-scope:
+
+* an academic allocating grant monies from a grant, or a data science consultant providing consultancy services, with a primary ``sktime`` branding
+* hiring decisions for roles that are advertised with a primary ``sktime`` branding
+* spending decisions from ``sktime`` community administered accounts
+* decisions arising from academic collaboration or commercial requests directed to the ``sktime`` community,
+  e.g., via official email, or via digital ``sktime`` discussion tools (slack, GitHub discussion etc)
+
+Best practice
+^^^^^^^^^^^^^
+
+To ensure decision making in line with the code of conduct, decision making must be:
+
+* by the ``sktime`` community, through ``sktime`` community decision making mechanisms.
+  E.g., following decision making outlined in the ``sktime`` governance document.
+* in communication transparent to the ``sktime`` community, following communication requirements outlined in the ``sktime`` governance document.
+* pursuant of and in line with the charitable mission of ``sktime`` and NumFOCUS.
+  For-profit activities must feed back the majority of benefits obtained through it
+  to the ``sktime`` community and its charitable entities.
+
+Adherence to widely accepted guidelines of anti-corruption and anti-bribery practice (e.g., transparency international) is strictly expected,
+especially for resource allocation decisions of major magnitude, e.g., in hiring processes,
+or decisions in the 5-digit dollar range and upwards.
+
+This strict requirement for best practice remains unchanged even if a local context may require less,
+e.g., university administrations,
+company policies, national anti-corruption and anti-bribery laws (or their absence), etc.
+
+For instance, it is in-principle possible to misappropriate ``sktime`` resource, while
+being in formal compliance with national laws, institutional laws, and local policies.
+
+Examples of not acceptable behaviour
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* obtaining a resource opportunity through ``sktime``,
+  then resigning ``sktime`` roles and then declaring that the opportunity is now in a personal role and not on behalf of ``sktime``.
+* pretending to communicate on behalf of ``sktime``, or unauthorized use of the ``sktime`` brand,
+  including but not limited to violations of the BSD 3-clause license
+* soft refusal to implement best anti-corruption practice, e.g., making budgets, invoives, or spending records transparent
+* attempts to suppress criticism of bad practice through invoking the code of conduct, e.g., tone policing
+
+Investigating CoC violations
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+CoC violations in the resource allocation domain are rarely accompanied by violation of communicative norms.
+
+CoC violations on resource allocation can be committed by an individual, or by a networked group of individuals
+
+DARVO tactics, intimidation, noise generation, and plausible deniability may be common tactics found in an investigation.
+
+It is hence crucial to establish the facts.
+
+It is also crucial to investigate circumstantial evidence, as facts may be obuscated.
+Important pieces of circumstantial evidence for a CoC violation are:
+
+* premeditation, i.e., indication of substantial, careful consideration and planning to change the outcome of decision making to one's benefit,
+  or prevent/hinder decision making by the ``sktime`` community
+* removing the decision making capacity from the ``sktime`` community,
+  e.g., by creating accomplished facts or not complying with ``sktime`` community decisions.
+* cui bono - the individual or group influencing the decision being a direct or indirect
+  beneficiary of the changed/influenced resource allocation decision
+* obfuscation of the paper trail, e.g., soft refusal or inability to provide paper documentation such as budgets, invoices or reports.
+* hindering of the investigation itself, e.g., by not engaging with it to the fullest extent possible, creating community dissent around it, etc
+* promoting decision making on ``sktime`` governance that would weaken accountability,
+  transparency, decision making capacity, investigation practices, or adherence to best practice in resource allocation
+* substantial "value" of the resource allocation decision in question, e.g., in the order of a month's living wages or above
