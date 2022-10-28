@@ -39,7 +39,8 @@ for them.
 
 We are committed to scientific quality and strive to be an open forum on matters
 of technical content and open community governance. All community members are expected
-to adhere to the principle of free speech in academia and science, in order to create
+to adhere to the principle of free speech in academia and science, and, to the best
+of their abilities, contribute to jointly creating
 the best possible science and the best possible open community.
 
 We are committed to creating a friendly and respectful place for learning,
