@@ -3,6 +3,7 @@
 """Implements DynamicFactor Model as interface to statsmodels."""
 
 import inspect
+from typing import List
 
 import numpy as np
 import pandas as pd
@@ -223,7 +224,7 @@ class DynamicFactor(_StatsModelsAdapter):
             )
         return y_pred.loc[fh.to_absolute(self.cutoff).to_pandas()]
 
-    def _predict_interval(self, fh, X=None, coverage: [float] = None):
+    def _predict_interval(self, fh, X=None, coverage: List[float] = None):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_interval containing the core logic,

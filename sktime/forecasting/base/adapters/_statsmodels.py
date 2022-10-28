@@ -161,6 +161,7 @@ class _StatsModelsAdapter(BaseForecaster):
         y_pred = y_pred.swaplevel()
         y_pred.index = y_pred.index.set_names(["simulation_id", "time_index"])
         y_pred = y_pred.sort_index()
+
         # TODO: Series name is ntpo preserved, fix it!
         return y_pred
 

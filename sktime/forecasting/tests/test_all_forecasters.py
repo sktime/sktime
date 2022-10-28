@@ -256,7 +256,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             estimator_instance.fit(y_train, fh=fh)
             n_sims = 3
             y_pred = estimator_instance.simulate(fh=fh, n_simulations=n_sims)
-            assert check_is_mtype(y_pred, ["pd_multiindex", "Hierarchical"])
+            assert check_is_mtype(y_pred, ["pd-multiindex", "pd_multiindex_hier"])
             count = 0
             for _, group in y_pred.groupby(
                 level=[i for i in range(y_pred.index.nlevels - 1)]
