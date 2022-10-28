@@ -265,7 +265,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
                     group.index.get_level_values(-1), cutoff, fh=fh_int
                 )
                 count += 1
-                # _assert_correct_columns(group, y_train)
+                _assert_correct_columns(group, y_train)
             assert count == n_sims
         except NotImplementedError:
             pass
