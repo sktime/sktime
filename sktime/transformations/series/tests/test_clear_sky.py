@@ -64,8 +64,7 @@ output_chk = [
 
 def test_clearsky_trafo_vals():
     """Tests clear sky trafo with and without missing values."""
-    y = load_solar(start="2021-05-01", end="2021-05-07")
-
+    y = load_solar(api_version=None)
     cs_model = ClearSky()
     y_trafo = cs_model.fit_transform(y)
 
