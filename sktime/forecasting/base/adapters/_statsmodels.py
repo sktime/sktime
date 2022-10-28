@@ -131,9 +131,11 @@ class _StatsModelsAdapter(BaseForecaster):
         y_pred : pd.Series
             Returns series of predicted values.
         """
+        max_fh = np.max(fh.to_relative(self.cutoff))
+
         if "exog" in inspect.signature(self._forecaster.__init__).parameters.keys():
             y_pred = self._fitted_forecaster.simulate(
-                nsimulations=len(fh),
+                nsimulations=max_fh,
                 anchor="end",
                 exog=X,
                 repetitions=n_simulations,
@@ -142,7 +144,7 @@ class _StatsModelsAdapter(BaseForecaster):
             )
         else:
             y_pred = self._fitted_forecaster.simulate(
-                nsimulations=len(fh),
+                nsimulations=max_fh,
                 anchor="end",
                 repetitions=n_simulations,
                 random_errors=None,
@@ -151,7 +153,6 @@ class _StatsModelsAdapter(BaseForecaster):
 
         # statsmodels forecasts all periods from start to end of forecasting
         # horizon, but only return given time points in forecasting horizon
-        # TODO: this is redundant
         y_pred = y_pred.loc[fh.to_absolute(self.cutoff).to_pandas()]
 
         # TODO: clean this pandas mess up
@@ -162,7 +163,7 @@ class _StatsModelsAdapter(BaseForecaster):
         y_pred.index = y_pred.index.set_names(["simulation_id", "time_index"])
         y_pred = y_pred.sort_index()
 
-        # TODO: Series name is ntpo preserved, fix it!
+        # TODO: Series name is not preserved, fix it!
         return y_pred
 
     def get_fitted_params(self):

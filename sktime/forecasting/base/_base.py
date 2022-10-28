@@ -412,6 +412,8 @@ class BaseForecaster(BaseEstimator):
                 "an issue on sktime."
             )
 
+        fh = self._check_fh(fh)
+
         if len(fh.to_in_sample(cutoff=self.cutoff)) > 0:
             raise NotImplementedError(
                 f"{self.__class__.__name__} does not have the capability to return "
@@ -420,7 +422,6 @@ class BaseForecaster(BaseEstimator):
             )
 
         self.check_is_fitted()
-        fh = self._check_fh(fh)
 
         # input check and conversion for X
         X_inner = self._check_X(X=X)
@@ -430,7 +431,7 @@ class BaseForecaster(BaseEstimator):
             y_pred = self._simulate(fh=fh, X=X_inner, n_simulations=n_simulations)
         else:
             y_pred = self._vectorize(
-                "simulate", X=X_inner, fh=fh, n_simulations=n_simulations
+                "simulate", fh=fh, X=X_inner, n_simulations=n_simulations
             )
 
         # convert to output mtype, identical with last y mtype seen
