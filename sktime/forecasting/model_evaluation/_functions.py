@@ -44,7 +44,7 @@ def _split(
     X,
     train,
     test,
-    freq = None,
+    freq=None,
 ):
     # split data according to cv
     y_train, y_test = y.iloc[train], y.iloc[test]
@@ -206,13 +206,13 @@ def evaluate(
     forecaster,
     cv,
     y,
-    X = None,
-    strategy = "refit",
-    scoring = None,
-    return_data = False,
-    error_score = np.nan,
-    backend = None,
-    compute = True,
+    X=None,
+    strategy="refit",
+    scoring=None,
+    return_data=False,
+    error_score=np.nan,
+    backend=None,
+    compute=True,
     **kwargs,
 ):
     """Evaluate forecaster using timeseries cross-validation.
