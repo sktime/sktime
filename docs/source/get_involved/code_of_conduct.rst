@@ -276,6 +276,14 @@ the currently longest serving committee member will break ties.
 informed of the outcome, in writing. The Code of Conduct committee will produce a
 written case summary of the for its own use.
 
+11. **Enforcement.** As the main ``sktime`` executive body, the ``sktime``
+community council ensures that resolutions are enforced.
+
+12. **Appeals.** Appeals can be directed to the ``sktime`` Code of Conduct committee,
+or the NumFOCUS code of conduct process.
+The ``sktime`` Code of Conduct committee accepts appeals resolutions
+arising from the NumFOCUS code of conduct process to supersede ``sktime`` resolutions.
+
 Timelines:
 
 * In case of reported CoC violations, the Code of Conduct committee
