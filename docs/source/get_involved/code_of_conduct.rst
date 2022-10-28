@@ -177,11 +177,14 @@ In case of conflict of interest of sktime CoC committee members, you can report
 through the [NumFOCUS CoC process](https://numfocus.org/code-of-conduct),
 or, in case of events, to the organisation at which the event is taking place (e.g., a university).
 
-3.3 What to do if someone is in physical danger
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+3.3 What to do if urgent action is needed, e.g., physical danger
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If you believe someone is in physical danger, please contact the
-appropriate emergency responders.
+appropriate emergency responders asap.
+
+If you believe urgent action is necessary,
+proceed as per Section 4.3 - Acting Unilaterally.
 
 3.4 Code of Conduct Enforcement
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
