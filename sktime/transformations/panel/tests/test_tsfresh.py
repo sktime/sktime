@@ -55,3 +55,23 @@ def test_docs_tsfresh_extractor():
         kind_to_fc_parameters=features_to_calc, disable_progressbar=True
     )
     ts_custom.fit_transform(X_train)
+
+
+@pytest.mark.skipif(
+    not _check_soft_dependencies("tsfresh", severity="none"),
+    reason="skip test if required soft dependency tsfresh not available",
+)
+def test_kind_tsfresh_extractor():
+    """Test extractor returns an array of expected num of cols."""
+    X, y = load_arrow_head(return_X_y=True)
+    X_train, X_test, y_train, y_test = train_test_split(X, y)
+    features_to_calc = [
+        "dim_0__quantile__q_0.6",
+        "dim_0__longest_strike_above_mean",
+        "dim_0__variance",
+    ]
+    ts_custom = TSFreshFeatureExtractor(
+        kind_to_fc_parameters=features_to_calc, disable_progressbar=True
+    )
+    Xts_custom = ts_custom.fit_transform(X_train)
+    assert Xts_custom.shape[1] == len(features_to_calc)

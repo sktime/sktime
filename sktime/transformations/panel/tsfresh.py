@@ -89,7 +89,6 @@ class _TSFreshFeatureExtractor(BaseTransformer):
 
         # Set defaults from tsfresh
         extraction_params = {
-            "kind_to_fc_parameters": self.kind_to_fc_parameters,
             "n_jobs": N_PROCESSES,
             "chunksize": CHUNKSIZE,
             "show_warnings": SHOW_WARNINGS,
@@ -142,11 +141,14 @@ class TSFreshFeatureExtractor(_TSFreshFeatureExtractor):
 
     Parameters
     ----------
-    default_fc_parameters : string, FCParameters object or None
+    default_fc_parameters : string, FCParameters object or None,
+        default=None
         Specifies pre-defined feature sets to be extracted
         If string should be in ["minimal", "efficient", "comprehensive"]
         See [3] for more details.
-    kind_to_fc_parameters : list or None
+        If None and kind_to_fc_parameters is None as well,
+        it calculates the "comprehensive" set
+    kind_to_fc_parameters : list or None, default=None
         containing strings specifying selected features to be extracted.
         The naming convention from tsfresh applies, i.e. the strings
         should be structured as:
@@ -155,11 +157,11 @@ class TSFreshFeatureExtractor(_TSFreshFeatureExtractor):
         See [2] for more details and [4] for viable options.
         Either default_fc_parameters or kind_to_fc_parameters
         should be passed. If both are passed, only features specified
-        in kind_to_fc_parameters are extracted.
-    n_jobs : int
+        in kind_to_fc_parameters are extracted. If neither
+    n_jobs : int, default=1
         The number of processes to use for parallelization.
         If zero, no parallelization is used.
-    chunksize : None or int
+    chunksize : None or int, default=None
         The size of one chunk that is submitted to the worker
         process for the parallelisation.  Where one chunk is defined as a
         singular time series for one id and one kind. If you set the chunksize
@@ -168,22 +170,22 @@ class TSFreshFeatureExtractor(_TSFreshFeatureExtractor):
         heuristics are used to find the optimal chunksize. If you get out of
         memory exceptions, you can try it with the dask distributor and a
         smaller chunksize.
-    show_warnings : bool
+    show_warnings : bool, default=True
         Show warnings during the feature extraction
          (needed for debugging of calculators).
-    disable_progressbar : bool
+    disable_progressbar : bool, default=False
         Do not show a progressbar while doing the calculation.
-    impute_function : None or Callable
+    impute_function : None or Callable, default=None
         None, if no imputing should happen or the function to call for
         imputing the result dataframe. Imputing will never happen on the input data.
-    profiling : bool
+    profiling : bool, default=None
         Turn on profiling during feature extraction
-    profiling_sorting : basestring
+    profiling_sorting : basestring, default=None
         How to sort the profiling results (see the documentation
         of the profiling package for more information)
-    profiling_filename : basestring
+    profiling_filename : basestring, default=None
         Where to save the profiling results.
-    distributor : distributor class
+    distributor : distributor class, default=None
         Advanced parameter: set this to a class name that you want to use as a
         distributor. See the utilities/distribution.py for more information.
         Leave to None, if you want TSFresh to choose the best distributor.
