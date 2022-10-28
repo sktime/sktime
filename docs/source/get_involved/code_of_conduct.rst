@@ -262,7 +262,7 @@ If yes, the process proceeds to formal investigation.
 If not, the suspicion of being a bad actor is formally dropped,
 and the process moves on to part 9 - decision on the outcome.
 
-7. **Formal investigation**. If probable cause is found, the Code of Conduct committee proceeds
+7. **Formal investigation**. If probable cause is found, the Code of Conduct committee
 proceeds with the formal investigation. Besides the means available in an initial investigation,
 the Code of Conduct committee may make requests to potential witnesses and suspected bad actors
 to provide information.
@@ -277,7 +277,8 @@ the currently longest serving committee member will break ties.
 
 10. **Outcome reporting.** any reporters, complainants, and bad actors are
 informed of the outcome, in writing. The Code of Conduct committee will produce a
-written case summary of the for its own use.
+written case summary of the entire proceedings for its own use, which include any
+investigation reports as appendices.
 
 11. **Enforcement.** As the main ``sktime`` executive body, the ``sktime``
 community council ensures that resolutions are enforced.
