@@ -327,7 +327,7 @@ local personnel), or speaking on behalf of the ``sktime`` team,
 without prior community consensus.
 
 If the act is ongoing, any community member may act immediately, before
-reaching consensus, to diffuse the situation. In ongoing situations, any
+reaching consensus, to defuse the situation. In ongoing situations, any
 member may at their discretion employ any of the tools available in this
 enforcement manual, including bans and blocks online, or removal from a
 physical space.
