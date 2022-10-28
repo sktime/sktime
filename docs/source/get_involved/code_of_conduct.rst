@@ -482,10 +482,11 @@ Examples of not acceptable behaviour
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * obtaining a resource opportunity through ``sktime``,
-  then resigning ``sktime`` roles and then declaring that the opportunity is now in a personal role and not on behalf of ``sktime``.
+  then retreating or resigning ``sktime`` roles to declare that the opportunity is now in a personal role and not on behalf of ``sktime``.
 * pretending to communicate on behalf of ``sktime``, or unauthorized use of the ``sktime`` brand,
   including but not limited to violations of the BSD 3-clause license
-* soft refusal to implement best anti-corruption practice, e.g., making budgets, invoives, or spending records transparent
+* soft refusal to implement best anti-corruption practice, e.g.,
+  soft refusal to make budgets, invoives, or spending records transparent to the ``sktime`` community
 * attempts to suppress criticism of bad practice through invoking the code of conduct, e.g., tone policing
 
 Investigating CoC violations
