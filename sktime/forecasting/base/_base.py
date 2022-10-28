@@ -439,13 +439,17 @@ class BaseForecaster(BaseEstimator):
             "pd_multiindex_hier" if len(y_pred.index.levels) > 2 else "pd-multiindex"
         )
 
-        # this might be redundant!
         y_out = convert_to(
             y_pred,
             convert_to_mtype,
             store=self._converter_store_y,
             store_behaviour="freeze",
         )
+
+        # name is not added though this operation.
+        # TODO: move this to converter
+        if "columns" in self._converter_store_y.keys():
+            y_out.columns = self._converter_store_y["columns"]
 
         return y_out
 
