@@ -496,7 +496,7 @@ CoC violations in the resource allocation domain are rarely accompanied by viola
 
 CoC violations on resource allocation can be committed by an individual, or by a networked group of individuals
 
-DARVO tactics, intimidation, noise generation, and plausible deniability may be common tactics found in an investigation.
+DARVO, intimidation, noise generation, and plausible deniability may be common tactics found in an investigation.
 
 It is hence crucial to establish the facts.
 
