@@ -41,22 +41,22 @@ class ClearSky(BaseTransformer):
 
     Parameters
     ----------
-    quantile_prob: float, default=0.95
+    quantile_prob : float, default=0.95
         The probability level used to calculate the weighted quantile
-    bw_diurnal: float, default=100
+    bw_diurnal : float, default=100
         The bandwidth of the diurnal kernel. This is the kappa value of the
         von mises kernel for time of day.
-    bw_annual: float, default=10
+    bw_annual : float, default=10
         The bandwidth of the annual kernel. This is the kappa value of the
         von mises kernel for day of year.
-    min_thresh: float, default=0
+    min_thresh : float, default=0
         The threshold of the clear sky power below which values are
         set to zero in the transformed domain.
-    n_jobs: int or None, default=None
+    n_jobs : int or None, default=None
         Number of jobs to run in parallel.
         None means 1 unless in a joblib.parallel_backend context.
         -1 means using all processors.
-    backend: str, default="loky"
+    backend : str, default="loky"
         Specify the parallelisation backend implementation in joblib, where
         "loky" is used by default.
 
