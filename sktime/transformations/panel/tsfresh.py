@@ -130,7 +130,7 @@ class _TSFreshFeatureExtractor(BaseTransformer):
                 "Passing None to default_fc_parameters defaults "
                 "to 'efficient'. In the 0.16.0 release, "
                 "this will change to 'comprehensive'",
-                DeprecationWarning,
+                FutureWarning,
             )
         else:
             fc_parameters = self.default_fc_parameters
