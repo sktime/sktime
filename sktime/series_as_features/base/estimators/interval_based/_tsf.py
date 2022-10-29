@@ -6,7 +6,7 @@ __author__ = [
     "kkoziara",
     "luiszugasti",
     "kanand77",
-    "Markus Löning",
+    "mloning",
     "Oleksii Kachaiev",
 ]
 __all__ = [

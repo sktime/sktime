@@ -24,8 +24,8 @@ Mandatory implements:
     fitting            - _fit(self, X)
 
 Optional implements:
-    cluster assignment - _predict(self, X)
-    fitted parameter inspection - get_fitted_params()
+    cluster assignment          -  _predict(self, X)
+    fitted parameter inspection -  _get_fitted_params()
 
 Testing - implement if sktime forecaster (not needed locally):
     get default parameters for test instance(s) - get_test_params()
@@ -135,18 +135,34 @@ class MyClusterer(BaseClusterer):
         # IMPORTANT: avoid side effects to X
 
     # todo: consider implementing this, optional
+    # implement only if different from default:
+    #   default retrieves all self attributes ending in "_"
+    #   and returns them with keys that have the "_" removed
+    # if not implementing, delete the method
+    #   avoid overriding get_fitted_params
     # this is typically important for clustering
-    # at least one of _predict and _get_fitted_params should be implemented
+    #   at least one of _predict and _get_fitted_params should be functional
     def _get_fitted_params(self):
-        """Retrieve fitted parameters of cluster model.
+        """Get fitted parameters.
 
-            core logic
+        private _get_fitted_params, called from get_fitted_params
+
+        State required:
+            Requires state to be "fitted".
 
         Returns
         -------
-        param_dict: dictionary of fitted parameters
+        fitted_params : dict with str keys
+            fitted parameters, keyed by names of fitted parameter
         """
         # implement here
+        #
+        # when this function is reached, it is already guaranteed that self is fitted
+        #   this does not need to be checked separately
+        #
+        # parameters of components should follow the sklearn convention:
+        #   separate component name from parameter name by double-underscore
+        #   e.g., componentname__paramname
 
     # todo: return default parameters, so that a test instance can be created
     #   required for automated unit and integration testing of estimator
