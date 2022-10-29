@@ -227,7 +227,7 @@ def test_evaluate_hierarchical():
 
 
 # ARIMA models from statsmodels, pmdarima
-ARIMA_MODELS = [ARIMA,  AutoARIMA, SARIMAX]
+ARIMA_MODELS = [ARIMA, AutoARIMA, SARIMAX]
 
 
 @pytest.mark.parametrize("cls", ARIMA_MODELS)
@@ -246,4 +246,4 @@ def test_evaluate_bigger_X(cls):
     loss = MeanAbsoluteError()
 
     # check that this does not break
-    evaluate(forecaster=f, y=y, X=X, cv=cv, error_score='raise', scoring=loss)
+    evaluate(forecaster=f, y=y, X=X, cv=cv, error_score="raise", scoring=loss)
