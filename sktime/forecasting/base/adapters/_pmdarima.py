@@ -87,6 +87,10 @@ class _PmdArimaAdapter(BaseForecaster):
         y_pred : pandas.Series
             Returns series of predicted values.
         """
+        fh_abs = fh.to_absolute(self.cutoff).to_pandas()
+        if X is not None:
+            X = X.loc[fh_abs]
+
         # distinguish between in-sample and out-of-sample prediction
         fh_oos = fh.to_out_of_sample(self.cutoff)
         fh_ins = fh.to_in_sample(self.cutoff)
