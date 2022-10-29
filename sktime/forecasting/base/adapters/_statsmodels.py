@@ -52,8 +52,6 @@ class _StatsModelsAdapter(BaseForecaster):
         # so we coerce them here to pd.RangeIndex
         if isinstance(y, pd.Series) and y.index.is_integer():
             y, X = _coerce_int_to_range_index(y, X)
-        if X is not None:
-            X = X.loc[y.index]
         self._fit_forecaster(y, X)
         return self
 
@@ -63,8 +61,6 @@ class _StatsModelsAdapter(BaseForecaster):
 
     def _update(self, y, X=None, update_params=True):
         """Update used internally in update."""
-        if X is not None:
-            X = X.loc[y.index]
         if update_params or self.is_composite():
             super()._update(y, X, update_params=update_params)
         else:
@@ -103,18 +99,15 @@ class _StatsModelsAdapter(BaseForecaster):
         # statsmodels requires zero-based indexing starting at the
         # beginning of the training series when passing integers
         start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
-        fh_abs = fh.to_absolute(self.cutoff).to_pandas()
 
         if "exog" in inspect.signature(self._forecaster.__init__).parameters.keys():
-            if X is not None:
-                X = X.loc[fh_abs]
             y_pred = self._fitted_forecaster.predict(start=start, end=end, exog=X)
         else:
             y_pred = self._fitted_forecaster.predict(start=start, end=end)
 
         # statsmodels forecasts all periods from start to end of forecasting
         # horizon, but only return given time points in forecasting horizon
-        y_pred = y_pred.loc[fh_abs]
+        y_pred = y_pred.loc[fh.to_absolute(self.cutoff).to_pandas()]
         # ensure that name is not added nor removed
         # otherwise this may upset conversion to pd.DataFrame
         y_pred.name = self._y.name
