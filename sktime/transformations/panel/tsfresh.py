@@ -123,6 +123,15 @@ class _TSFreshFeatureExtractor(BaseTransformer):
                 )
             else:
                 fc_parameters = fc_param_lookup[self.default_fc_parameters]
+        # TODO: remove elif in v0.16.0
+        elif self.default_fc_parameters is None:
+            fc_parameters = fc_param_lookup["efficient"]
+            warn(
+                "Passing None to default_fc_parameters defaults "
+                "to 'efficient'. In the 0.16.0 release, "
+                "this will change to 'comprehensive'",
+                DeprecationWarning,
+            )
         else:
             fc_parameters = self.default_fc_parameters
         extraction_params["default_fc_parameters"] = fc_parameters
