@@ -144,10 +144,8 @@ class TSFreshFeatureExtractor(_TSFreshFeatureExtractor):
     default_fc_parameters : string, FCParameters object or None,
         default=None
         Specifies pre-defined feature sets to be extracted
-        If string should be in ["minimal", "efficient", "comprehensive"]
+        If string, should be in ["minimal", "efficient", "comprehensive"]
         See [3] for more details.
-        If None and kind_to_fc_parameters is None as well,
-        it calculates the "comprehensive" set
     kind_to_fc_parameters : list or None, default=None
         containing strings specifying selected features to be extracted.
         The naming convention from tsfresh applies, i.e. the strings
@@ -158,6 +156,8 @@ class TSFreshFeatureExtractor(_TSFreshFeatureExtractor):
         Either default_fc_parameters or kind_to_fc_parameters
         should be passed. If both are passed, only features specified
         in kind_to_fc_parameters are extracted. If neither
+        is passed, it calculates the "comprehensive"
+        feature set.
     n_jobs : int, default=1
         The number of processes to use for parallelization.
         If zero, no parallelization is used.
