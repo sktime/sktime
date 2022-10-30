@@ -1512,7 +1512,7 @@ class BaseForecaster(BaseEstimator):
         if self._cutoff is None:
             return None
         else:
-            return self._cutoff[0]
+            return self._cutoff
 
     def _set_cutoff(self, cutoff):
         """Set and update cutoff.
