@@ -449,7 +449,7 @@ In scope for this section are all resource allocation decisions that satisfy at 
   This includes research grants awarded directly for the benefit of the ``sktime`` project,
   commercial opportunities arising from or directly directed to the ``sktime`` project,
   and any activities that use the ``sktime`` brand as a primary branding.
-  This includes decisions made in personal roles, or roles other than ``sktime`` official roles.
+  This condition applies even if relevant decisions are made in personal roles, or roles other than ``sktime`` official roles.
 * any decisions by members of the ``sktime`` developer community, in their execution of core developer or Community Council roles.
 
 Examples for in-scope:
