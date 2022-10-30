@@ -505,12 +505,12 @@ Examples of not acceptable behaviour
   soft refusal to make budgets, invoives, or spending records transparent to the ``sktime`` community
 * attempts to suppress criticism of bad practice through invoking the code of conduct, e.g., tone policing or DARVO
 
-Investigating potential resource allocation violations
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Investigating CoC violations in resource allocation decisions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-CoC violations in the resource allocation domain are rarely accompanied by violation of communicative norms.
+CoC violations when making resource allocation decisions are rarely accompanied by violation of communicative norms.
 
-CoC violations on resource allocation can be committed by an individual, or by a networked group of individuals.
+Such CoC violations can be committed by an individual, or by a networked group of individuals.
 
 DARVO, intimidation, noise generation, and plausible deniability may be common tactics found in an investigation.
 
