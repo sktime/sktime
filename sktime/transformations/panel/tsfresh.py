@@ -123,14 +123,16 @@ class _TSFreshFeatureExtractor(BaseTransformer):
                 )
             else:
                 fc_parameters = fc_param_lookup[self.default_fc_parameters]
-        # TODO: remove elif in v0.16.0
+        # TODO: remove elif in v0.15.0
+        # this will pass None to tsfresh, and hence default to "comprehensive"
         elif self.default_fc_parameters is None:
             fc_parameters = fc_param_lookup["efficient"]
             warn(
-                "Passing None to default_fc_parameters defaults "
-                "to 'efficient'. In the 0.16.0 release, "
-                "this will change to 'comprehensive'",
-                FutureWarning,
+                "Passing None to default_fc_parameters currently defaults "
+                "to 'efficient', this behaviour has been is deprecated. From 0.15.0, "
+                "this will change to passing default_fc_parameters directly to tsfresh,"
+                " which in turn defaults to 'comprehensive'.",
+                DeprecationWarning,
             )
         else:
             fc_parameters = self.default_fc_parameters
@@ -145,13 +147,14 @@ class _TSFreshFeatureExtractor(BaseTransformer):
         return extraction_params
 
 
+# todo 0.15.0: change default_fc_parameters docstring to "comprehensive" default"
 class TSFreshFeatureExtractor(_TSFreshFeatureExtractor):
     """Transformer for extracting time series features.
 
     Parameters
     ----------
     default_fc_parameters : string, FCParameters object or None,
-        default=None
+        default=None = "efficient"
         Specifies pre-defined feature sets to be extracted
         If string, should be in ["minimal", "efficient", "comprehensive"]
         See [3] for more details.
