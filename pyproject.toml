@@ -1,6 +1,6 @@
 [project]
 name = "sktime"
-version = "0.13.4"
+version = "0.14.0"
 description = "A unified framework for machine learning with time series"
 authors = [
     {name = "Franz Király", email = "f.kiraly@ucl.ac.uk"},
@@ -10,6 +10,7 @@ authors = [
 ]
 maintainers = [
     {name = "Franz Király", email = "f.kiraly@ucl.ac.uk"},
+    {name = "Guzal Bulatova"},
     {name = "Martin Walter"},
 ]
 readme = "README.md"
