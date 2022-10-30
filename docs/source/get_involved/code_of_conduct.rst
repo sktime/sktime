@@ -492,7 +492,7 @@ company policies, national anti-corruption and anti-bribery laws (or their absen
 
 For instance, it is in-principle possible to misappropriate ``sktime`` resource, while
 being in formal compliance with national laws, institutional laws, and local policies.
-Irrespective of the this, such an action would still count as a severe CoC violation.
+Irrespective of this, such an action would still count as a severe CoC violation.
 
 Examples of not acceptable behaviour
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
