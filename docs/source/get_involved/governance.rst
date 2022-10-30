@@ -162,6 +162,21 @@ Rights and responsibilities
    * - Nomination
      - They can nominate new core developers, CoC committee members and CC members.
 
+Expectations
+^^^^^^^^^^^^
+
+Without any restriction of eligibility, common expectations on newly appointed core developers are a history of:
+
+* sustained contributions to ``sktime``, over a period of at 3 months or longer
+* contributions that go substantially beyond "algorithm maintainer" responsibilities.
+  In particular, contributions that go substantially beyond work on a single algorithm or a small set thereof.
+* openness to make valuable non-code contributions, e.g., helping new contributors, helping organize events, running project boards
+* responsiveness to issues, bug reports, decision making procedures
+* participation in community meetings and events, e.g., dev sprints, monthly developer meetings
+* an active commitment to the ``sktime`` community beyond immediate personal networks, being welcoming to all contributors
+
+To clarify, the above are common expectations and not formal prerequisities for appointment or eligibility.
+
 Eligibility
 ^^^^^^^^^^^
 
@@ -177,12 +192,14 @@ they have been nominated, there will be a vote by the current core
 developers.
 
 Voting on appointments is one of the few activities that takes
-place on the project’s private communication channels. The vote will be
-anonymous.
+place on the project's private communication channels. The vote will be
+anonymous and should be set up by a member of the community council.
 
 While it is expected that most votes will be unanimous, a 2/3 majority of
 the cast votes is enough. The vote needs to be open for five days excluding
 weekends.
+
+For details on the voting procedure, see :ref:`decision-making` below.
 
 End of tenure
 ^^^^^^^^^^^^^
@@ -200,17 +217,23 @@ Becoming inactive in the above sense means not contributing for the period via:
 * commenting on pull requests or issues
 * attending one of the regular meetings
 
-Becoming active (after becoming inactive) in the above sense requires one of:
+of a scope that goes beyond algorithm maintainer expectations - i.e., PR or issues related to owned algorithms do not count.
 
-* an approved pull request authored by the core developer
-* a contribution to the community that is minuted in one of the regular meetings
+Becoming active (after becoming inactive) in the above sense requires:
+
+* a contribution within the last month that goes beyond algorithm maintainer expectations, e.g.:
+  * an approved pull request authored by the core developer
+  * a substantial contribution to the community that is minuted in one of the regular meetings
+* success via the same voting procedure as for new core developers, with the exception that former core developers can also self-nominate
 
 .. _coc-committee-members:
 
 CoC committee members
 ~~~~~~~~~~~~~~~~~~~~~
 
-CoC members are contributors with special rights and responsibilities.
+CoC committee members are contributors with special rights and responsibilities.
+The CoC committee is the main judicative body of ``sktime``.
+
 The current members of the CoC committee are listed in the
 `CoC <https://www.sktime.org/en/stable/about/team.html>`__.
 
@@ -225,6 +248,16 @@ They are the point of contact for reporting potential CoC incidents.
 
 In addition, they are responsible for maintaining and improving the CoC.
 
+Expectations
+^^^^^^^^^^^^
+
+Without restriction of eligibility:
+* it is generally expected that CoC committee members
+  maintain a high degree of independence of day-to-day matters in the ``sktime`` community,
+  as well as high personal and professional standards of fairness.
+* it is highly advisable that CoC committee members are specifically selected for
+  being unaffected by any potential power dynamics within the ``sktime`` community.
+
 Eligibility
 ^^^^^^^^^^^
 
@@ -235,7 +268,7 @@ Anyone is eligible to be a CoC committee member.
 Appointment
 ^^^^^^^^^^^
 
-Membership of the CoC is by nomination by a core developer and a vote by
+Membership of the CoC committee is by nomination by a core developer and a vote by
 all core developers. A nomination will result in discussion which will stay
 open for 5 days excluding weekends and then a vote by the core
 developers which will stay open for 5 days excluding weekends. CoC committee
@@ -252,12 +285,12 @@ of them will have a tie breaking privilege.
 
 .. _cc-members:
 
-CC members
-~~~~~~~~~~
+Community council members
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 CC (community council) members are core developers with additional rights and
-responsibilities to avoid deadlocks and ensure a smooth progress of the
-project.
+responsibilities. The CC is the main executive body of ``sktime``.
+CC members also help avoid deadlocks and ensure a smooth progress of the project.
 
 Current CC members are listed in the `community-council
 team <https://www.sktime.org/en/stable/about/team.html>`__
@@ -324,6 +357,8 @@ expected to resign voluntarily.
 Tenure also ends automatically when a CC member's tenure as core developer ends,
 e.g., through resignation or inactivity.
 
+CC members can be removed from the CC by an 80% majority of CC members.
+
 Communications
 ^^^^^^^^^^^^^^
 
@@ -387,7 +422,7 @@ used by the sktime project. We clarify:
 * how decisions are made, and
 * who participates in the decision making.
 
-sktime’s decision-making process is designed to take into account
+sktime's decision-making process is designed to take into account
 feedback from all community members and strives to find consensus, while
 avoiding deadlocks when no consensus can be found.
 
@@ -396,7 +431,7 @@ tracker <https://github.com/sktime/sktime/issues>`__,
 `pull requests <https://github.com/sktime/sktime/pulls>`__ or an :ref:`steps`. Some
 sensitive discussions and appointment votes occur on private chats.
 
-The CC reserves the right to overrule decisions.
+The CC reserves the right to overrule decisions with a simple CC majority.
 
 We distinguish between the following types of proposed changes. The
 corresponding decision making process is described in more detail below.
@@ -501,6 +536,20 @@ the CC tries to resolve the deadlock.
    members.
 -  Any proposal reaching stage 3 must be supported by an :ref:`steps`,
    which has been made public at least 5 days, excluding weekends, before the vote.
+
+Judication
+~~~~~~~~~~
+
+Besides its primary remit, the code of conduct, the CoC committee is empowered to
+judicate in contentious cases of application of the following rules by the CC:
+
+* voting rules, vote counts, start/end times
+* determining activity/inactivity of a core developer
+* determining unresponsiveness of an algorithm maintainer
+* inclusion and exclusion criteria for algorithms
+
+Judication is upon written appeal of core developers and algorithm maintainers to the CoC committee.
+A ruling by the CoC committee does not halt timelines, but can reverse decisions made.
 
 .. _steps:
 
