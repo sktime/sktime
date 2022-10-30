@@ -472,7 +472,8 @@ To ensure decision making in line with the code of conduct, decision making must
   For-profit activities must feed back the majority of benefits obtained through it
   to the ``sktime`` community and its charitable entities.
 
-Adherence to widely accepted guidelines of anti-corruption and anti-bribery practice (e.g., transparency international) is strictly expected,
+Adherence to widely accepted guidelines of anti-corruption and anti-bribery practice
+(e.g., United Nations Anti-Corruption Guidelines) is strictly expected,
 especially for resource allocation decisions of major magnitude, e.g., in hiring processes,
 or decisions in the 5-digit dollar range and upwards.
 
