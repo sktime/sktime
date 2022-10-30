@@ -30,7 +30,6 @@ from sktime.forecasting.model_selection import (
     SlidingWindowSplitter,
 )
 from sktime.forecasting.naive import NaiveForecaster
-# from sktime.forecasting.sarimax import SARIMAX
 from sktime.forecasting.tests._config import TEST_FHS, TEST_STEP_LENGTHS_INT
 from sktime.performance_metrics.forecasting import (
     MeanAbsoluteError,
