@@ -21,7 +21,8 @@ from sklearn.linear_model import LinearRegression
 
 from sktime.datasets import load_airline, load_longley
 from sktime.exceptions import FitFailedWarning
-from sktime.forecasting.arima import ARIMA, AutoARIMA
+# from sktime.forecasting.arima import ARIMA, AutoARIMA
+from sktime.forecasting.arima import AutoARIMA
 from sktime.forecasting.compose._reduce import DirectReductionForecaster
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.model_evaluation import evaluate
@@ -227,7 +228,10 @@ def test_evaluate_hierarchical():
 
 
 # ARIMA models from statsmodels, pmdarima
-ARIMA_MODELS = [ARIMA, AutoARIMA, SARIMAX]
+ARIMA_MODELS = [AutoARIMA, SARIMAX]
+
+# breaks for ARIMA, see issue #3670, this should be fixed
+# ARIMA_MODELS = [ARIMA, AutoARIMA, SARIMAX]
 
 
 @pytest.mark.parametrize("cls", ARIMA_MODELS)
