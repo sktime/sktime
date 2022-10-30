@@ -53,12 +53,14 @@ of Conduct. This Code of Conduct applies to all spaces managed by the
 sktime project including, but not limited to, in-person focus groups and
 workshops, and communications online via GitHub.
 
-The communicty council of sktime (see current composition on "roles")
-is responsible for defining the Code of Conduct,
-and can be contacted under info@sktime.org.
+The Code of Conduct Committee of sktime is responsible for defining and
+enforcing the Code of Conduct, according to Section 4 below.
+Reports of Code of Conduct Committee can be made as outlined in Section 3.
 
-The Code of Conduct Committee of sktime is responsible for enforcing the Code of Conduct.
-Reports can be made via the sktime issue tracker, and will be kept confidential.
+The community council of sktime (see current composition on "roles")
+is responsible for ensuring that resolutions of the Code of Conduct committee
+are adhered to, and can be contacted under info@sktime.org.
+
 
 2 Code of Conduct
 -----------------
