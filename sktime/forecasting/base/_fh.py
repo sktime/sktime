@@ -697,7 +697,7 @@ def _to_relative(fh: ForecastingHorizon, cutoff=None) -> ForecastingHorizon:
         # Out: Index([<0 * Hours>, <4 * Hours>, <8 * Hours>], dtype = 'object')
         # [v - periods[0] for v in periods]
         # Out: Index([<0 * Hours>, <2 * Hours>, <4 * Hours>], dtype='object')
-        # TODO: 0.14.0: Check if this comment below can be removed,
+        # TODO: 0.15.0: Check if this comment below can be removed,
         # so check if pandas has released the fix to PyPI:
         # This bug was reported: https://github.com/pandas-dev/pandas/issues/45999
         # and fixed: https://github.com/pandas-dev/pandas/pull/46006
