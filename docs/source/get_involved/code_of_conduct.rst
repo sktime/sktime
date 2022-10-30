@@ -443,7 +443,7 @@ and criteria for decision making on resource allocation violating the code of co
 Scope
 ^^^^^
 
-In scope for this section are all resource allocation decisions:
+In scope for this section are all resource allocation decisions that satisfy at least one of the following criteria:
 
 * any decisions that allocate resources primarily obtained due to the ``sktime`` project and the volunteer contributions of the community.
   This includes research grants awarded directly for the benefit of the ``sktime`` project,
