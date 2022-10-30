@@ -9,7 +9,7 @@ experience. Accordingly, everyone who participates in the sktime project
 is expected to show respect and courtesy to other community members at
 all times.
 
-The sktime community council, and all project members,
+The sktime Community Council, and all project members,
 are dedicated to a **harassment-free experience for
 everyone**, regardless of gender, gender identity and expression,
 sexual orientation, disability, physical appearance, body size, race,
@@ -207,12 +207,12 @@ GitHub.
 3.1 Contact points
 ~~~~~~~~~~~~~~~~~~
 
-Please contact the current chair of the code of conduct committee directly by email, see 4.1.
+Please contact the current chair of the Code of Conduct Committee directly by email, see 4.1.
 
 3.2 Alternate contact points
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-In case of conflict of interest of sktime CoC committee members, you can report
+In case of conflict of interest of sktime CoC Committee members, you can report
 through the [NumFOCUS CoC process](https://numfocus.org/code-of-conduct),
 or, in case of events, to the organisation at which the event is taking place (e.g., a university).
 
@@ -265,8 +265,9 @@ enforcement manual, including bans and blocks online, or removal from a
 physical space.
 
 In situations where an individual community member acts unilaterally,
-they must inform the sktime community council via info@sktime.org
-as soon as possible, and report their actions for review within 24 hours.
+they must inform the sktime Community Council and Code of Conduct Committee
+via info@sktime.org as soon as possible,
+and report their actions for review within 24 hours.
 
 4.3 Code of Conduct Investigation Process
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -449,7 +450,7 @@ In scope for this section are all resource allocation decisions:
   commercial opportunities arising from or directly directed to the ``sktime`` project,
   and any activities that use the ``sktime`` brand as a primary branding.
   This includes decisions made in personal roles, or roles other than ``sktime`` official roles.
-* any decisions by members of the ``sktime`` developer community, in their execution of core developer or community council roles.
+* any decisions by members of the ``sktime`` developer community, in their execution of core developer or Community Council roles.
 
 Examples for in-scope:
 
