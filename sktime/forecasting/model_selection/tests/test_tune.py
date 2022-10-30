@@ -32,6 +32,7 @@ from sktime.performance_metrics.forecasting import (
     MeanSquaredError,
 )
 from sktime.transformations.series.detrend import Detrender
+from sktime.utils._testing.hierarchical import _make_hierarchical
 
 TEST_METRICS = [MeanAbsolutePercentageError(symmetric=True), MeanSquaredError()]
 
@@ -76,6 +77,7 @@ CVs = [
     *[SingleWindowSplitter(fh=fh) for fh in TEST_OOS_FHS],
     SlidingWindowSplitter(fh=1, initial_window=15),
 ]
+ERROR_SCORES = [np.nan, "raise", 1000]
 
 
 @pytest.mark.parametrize(
@@ -83,11 +85,16 @@ CVs = [
 )
 @pytest.mark.parametrize("scoring", TEST_METRICS)
 @pytest.mark.parametrize("cv", CVs)
-def test_gscv(forecaster, param_grid, cv, scoring):
+@pytest.mark.parametrize("error_score", ERROR_SCORES)
+def test_gscv(forecaster, param_grid, cv, scoring, error_score):
     """Test ForecastingGridSearchCV."""
     y, X = load_longley()
     gscv = ForecastingGridSearchCV(
-        forecaster, param_grid=param_grid, cv=cv, scoring=scoring
+        forecaster,
+        param_grid=param_grid,
+        cv=cv,
+        scoring=scoring,
+        error_score=error_score,
     )
     gscv.fit(y, X)
 
@@ -99,10 +106,11 @@ def test_gscv(forecaster, param_grid, cv, scoring):
     "forecaster, param_grid", [(NAIVE, NAIVE_GRID), (PIPE, PIPE_GRID)]
 )
 @pytest.mark.parametrize("scoring", TEST_METRICS)
+@pytest.mark.parametrize("error_score", ERROR_SCORES)
 @pytest.mark.parametrize("cv", CVs)
 @pytest.mark.parametrize("n_iter", TEST_N_ITERS)
 @pytest.mark.parametrize("random_state", TEST_RANDOM_SEEDS)
-def test_rscv(forecaster, param_grid, cv, scoring, n_iter, random_state):
+def test_rscv(forecaster, param_grid, cv, scoring, error_score, n_iter, random_state):
     """Test ForecastingRandomizedSearchCV.
 
     Tests that ForecastingRandomizedSearchCV successfully searches the
@@ -114,6 +122,7 @@ def test_rscv(forecaster, param_grid, cv, scoring, n_iter, random_state):
         param_distributions=param_grid,
         cv=cv,
         scoring=scoring,
+        error_score=error_score,
         n_iter=n_iter,
         random_state=random_state,
     )
@@ -123,3 +132,31 @@ def test_rscv(forecaster, param_grid, cv, scoring, n_iter, random_state):
         ParameterSampler(param_grid, n_iter, random_state=random_state)
     )
     _check_cv(forecaster, rscv, cv, param_distributions, y, X, scoring)
+
+
+@pytest.mark.parametrize(
+    "forecaster, param_grid", [(NAIVE, NAIVE_GRID), (PIPE, PIPE_GRID)]
+)
+@pytest.mark.parametrize("scoring", TEST_METRICS)
+@pytest.mark.parametrize("cv", CVs)
+@pytest.mark.parametrize("error_score", ERROR_SCORES)
+def test_gscv_hierarchical(forecaster, param_grid, cv, scoring, error_score):
+    """Test ForecastingGridSearchCV."""
+    y = _make_hierarchical(
+        random_state=0, hierarchy_levels=(2, 2), min_timepoints=20, max_timepoints=20
+    )
+    X = _make_hierarchical(
+        random_state=42, hierarchy_levels=(2, 2), min_timepoints=20, max_timepoints=20
+    )
+
+    gscv = ForecastingGridSearchCV(
+        forecaster,
+        param_grid=param_grid,
+        cv=cv,
+        scoring=scoring,
+        error_score=error_score,
+    )
+    gscv.fit(y, X)
+
+    param_grid = ParameterGrid(param_grid)
+    _check_cv(forecaster, gscv, cv, param_grid, y, X, scoring)

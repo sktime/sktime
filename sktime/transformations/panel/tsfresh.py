@@ -2,7 +2,7 @@
 """tsfresh interface class."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-__author__ = ["AyushmaanSeth", "Markus Löning", "Alwin Wang"]
+__author__ = ["AyushmaanSeth", "mloning", "Alwin Wang"]
 __all__ = ["TSFreshFeatureExtractor", "TSFreshRelevantFeatureExtractor"]
 
 from warnings import warn
@@ -135,7 +135,7 @@ class TSFreshFeatureExtractor(_TSFreshFeatureExtractor):
 
     References
     ----------
-    ..[1]  https://github.com/blue-yonder/tsfresh
+    .. [1]  https://github.com/blue-yonder/tsfresh
     """
 
     _tags = {
@@ -218,7 +218,7 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
 
     References
     ----------
-    ..[1]  https://github.com/blue-yonder/tsfresh
+    .. [1]  https://github.com/blue-yonder/tsfresh
     """
 
     _tags = {

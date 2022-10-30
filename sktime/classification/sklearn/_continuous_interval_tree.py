@@ -18,7 +18,7 @@ from sklearn.base import BaseEstimator
 from sklearn.utils import check_random_state
 
 from sktime.exceptions import NotFittedError
-from sktime.utils.numba.stats import iqr, mean, median, numba_max, numba_min, slope, std
+from sktime.utils.numba.stats import iqr, mean, numba_max, numba_min, slope, std
 from sktime.utils.validation.panel import check_X
 
 
@@ -126,8 +126,10 @@ class ContinuousIntervalTree(BaseEstimator):
         for index, classVal in enumerate(self.classes_):
             self._class_dictionary[classVal] = index
 
+        # escape if only one class seen
         if self.n_classes_ == 1:
-            raise ValueError("fit input y must contain more than one class")
+            self._is_fitted = True
+            return self
 
         le = preprocessing.LabelEncoder()
         y = le.fit_transform(y)
@@ -196,6 +198,12 @@ class ContinuousIntervalTree(BaseEstimator):
                 f"This instance of {self.__class__.__name__} has not "
                 f"been fitted yet; please call `fit` first."
             )
+
+        # treat case of single class seen in fit
+        if self.n_classes_ == 1:
+            n_instances = len(X)
+            return np.repeat([[1]], n_instances, axis=0)
+
         if isinstance(X, np.ndarray) and len(X.shape) == 3 and X.shape[1] == 1:
             X = np.reshape(X, (X.shape[0], -1))
         elif not isinstance(X, np.ndarray) or len(X.shape) > 2:
@@ -662,7 +670,7 @@ def _summary_stat(X, att):
     elif att == 24:
         function = slope
     elif att == 25:
-        function = median
+        function = np.median
     elif att == 26:
         function = iqr
     elif att == 27:

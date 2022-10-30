@@ -1,24 +1,26 @@
 # -*- coding: utf-8 -*-
 """Unit tests for classifier base class functionality."""
 
-__author__ = ["mloning", "fkiraly", "TonyBagnall", "MatthewMiddlehurst"]
+__author__ = ["mloning", "fkiraly", "TonyBagnall", "MatthewMiddlehurst", "achieveordie"]
+
+import pickle
 
 import numpy as np
 import pandas as pd
 import pytest
+from keras.optimizers import Adamax
+from sklearn.model_selection import KFold
 
-from sktime.classification.base import (
-    BaseClassifier,
-    _check_classifier_input,
-    _internal_convert,
-)
+from sktime.classification.base import BaseClassifier
+from sktime.classification.deep_learning.base import BaseDeepClassifier
 from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
 from sktime.classification.feature_based import Catch22Classifier
-from sktime.utils._testing.estimator_checks import (
-    _assert_array_almost_equal,
+from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
+from sktime.utils._testing.panel import (
+    _make_classification_y,
+    _make_panel,
     make_classification_problem,
 )
-from sktime.utils._testing.panel import _make_classification_y, _make_panel
 
 
 class _DummyClassifier(BaseClassifier):
@@ -42,6 +44,36 @@ class _DummyComposite(_DummyClassifier):
 
     def __init__(self, foo):
         self.foo = foo
+
+
+class _DummyDeepClassifierEmpty(BaseDeepClassifier):
+    """Dummy Deep Classifier for testing empty base deep class save utilities."""
+
+    def __init__(self):
+        super(_DummyDeepClassifierEmpty, self).__init__()
+
+    def build_model(self, input_shape, n_classes, **kwargs):
+        return None
+
+    def _fit(self, X, y):
+        return self
+
+
+class _DummyDeepClassifierFull(BaseDeepClassifier):
+    """Dummy Deep Classifier to test serialization capabilities."""
+
+    def __init__(
+        self,
+        optimizer,
+    ):
+        super(_DummyDeepClassifierFull, self).__init__()
+        self.optimizer = optimizer
+
+    def build_model(self, input_shape, n_classes, **kwargs):
+        return None
+
+    def _fit(self, X, y):
+        return self
 
 
 class _DummyHandlesAllInput(BaseClassifier):
@@ -188,6 +220,10 @@ def test_convert_input():
     4. Pass a pd.Series y, get a pd.Series back
     5. Pass a np.ndarray y, get a pd.Series back
     """
+
+    def _internal_convert(X, y=None):
+        return BaseClassifier._internal_convert(None, X, y)
+
     cases = 5
     length = 10
     test_X1 = np.random.uniform(-1, 1, size=(cases, length))
@@ -226,6 +262,10 @@ def test__check_classifier_input():
     4. Test incorrect: y as a list
     5. Test incorrect: too few cases or too short a series
     """
+
+    def _check_classifier_input(X, y=None, enforce_min_instances=1):
+        return BaseClassifier._check_classifier_input(None, X, y, enforce_min_instances)
+
     # 1. Test correct: X: np.array of 2 and 3 dimensions vs y:np.array and np.Series
     test_X1 = np.random.uniform(-1, 1, size=(5, 10))
     test_X2 = np.random.uniform(-1, 1, size=(5, 2, 10))
@@ -343,8 +383,6 @@ def test_fit_predict_change_state(method):
 @pytest.mark.parametrize("method", ["fit_predict", "fit_predict_proba"])
 def test_fit_predict_cv(method):
     """Test cv argument in fit_predict, fit_predict_proba."""
-    from sklearn.model_selection import KFold
-
     X, y = make_classification_problem()
 
     clf = KNeighborsTimeSeriesClassifier()
@@ -373,3 +411,91 @@ def test_fit_predict_cv(method):
     y_pred_normal = getattr(clf.fit(X, y), normal_method)(X)
 
     _assert_array_almost_equal(y_pred_normal, y_pred_cv_obj_fit)
+
+
+@pytest.mark.parametrize("method", ["predict", "predict_proba"])
+def test_predict_single_class(method):
+    """Test return of predict/_proba in case only single class seen in fit."""
+    X, y = make_classification_problem()
+    y[:] = 42
+    n_instances = 10
+    X_test = X[:n_instances]
+
+    clf = KNeighborsTimeSeriesClassifier()
+
+    clf.fit(X, y)
+    y_pred = getattr(clf, method)(X_test)
+
+    if method == "predict":
+        assert isinstance(y_pred, np.ndarray)
+        assert y_pred.ndim == 1
+        assert y_pred.shape == (n_instances,)
+        assert all(list(y_pred == 42))
+    if method == "predict_proba":
+        assert isinstance(y_pred, np.ndarray)
+        assert y_pred.ndim == 2
+        assert y_pred.shape == (n_instances, 1)
+        assert all(list(y_pred == 1))
+
+
+@pytest.mark.parametrize("cv", [None, KFold(3, random_state=42, shuffle=True)])
+@pytest.mark.parametrize("method", ["fit_predict", "fit_predict_proba"])
+def test_fit_predict_single_class(method, cv):
+    """Test return of fit_predict/_proba in case only single class seen in fit."""
+    X, y = make_classification_problem()
+    y[:] = 42
+    n_instances = len(X)
+
+    clf = KNeighborsTimeSeriesClassifier()
+
+    y_pred = getattr(clf, method)(X, y, cv=cv, change_state=False)
+
+    if method == "fit_predict":
+        assert isinstance(y_pred, np.ndarray)
+        assert y_pred.ndim == 1
+        assert y_pred.shape == (n_instances,)
+        assert all(list(y_pred == 42))
+    if method == "fit_predict_proba":
+        assert isinstance(y_pred, np.ndarray)
+        assert y_pred.ndim == 2
+        assert y_pred.shape == (n_instances, 1)
+        assert all(list(y_pred == 1))
+
+
+def test_deep_estimator_empty():
+    """Check if serialization works for empty dummy."""
+    empty_dummy = _DummyDeepClassifierEmpty()
+    serialized_empty = pickle.dumps(empty_dummy)
+    deserialized_empty = pickle.loads(serialized_empty)
+    assert empty_dummy.__dict__ == deserialized_empty.__dict__
+
+
+@pytest.mark.parametrize("optimizer", [None, "adam", Adamax()])
+def test_deep_estimator_full(optimizer):
+    """Check if serialization works for full dummy."""
+    from tensorflow.keras.optimizers import Optimizer, serialize
+
+    full_dummy = _DummyDeepClassifierFull(optimizer)
+    serialized_full = pickle.dumps(full_dummy)
+    deserialized_full = pickle.loads(serialized_full)
+
+    if isinstance(optimizer, Optimizer):
+        # assert same configuration of optimizer
+        assert serialize(full_dummy.__dict__["optimizer"]) == serialize(
+            deserialized_full.__dict__["optimizer"]
+        )
+        assert serialize(full_dummy.optimizer) == serialize(deserialized_full.optimizer)
+
+        # assert weights of optimizers are same
+        assert (
+            full_dummy.optimizer.get_weights()
+            == deserialized_full.optimizer.get_weights()
+        )
+
+        # remove optimizers from both to do full dict check,
+        # since two different objects
+        del full_dummy.__dict__["optimizer"]
+        del deserialized_full.__dict__["optimizer"]
+
+    # check if components are same
+    assert full_dummy.__dict__ == deserialized_full.__dict__

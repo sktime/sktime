@@ -1,38 +1,22 @@
 # -*- coding: utf-8 -*-
 
 __author__ = ["mloning"]
-__all__ = ["ESTIMATOR_TEST_PARAMS", "EXCLUDE_ESTIMATORS", "EXCLUDED_TESTS"]
+__all__ = ["EXCLUDE_ESTIMATORS", "EXCLUDED_TESTS"]
 
-import numpy as np
-from sklearn.preprocessing import FunctionTransformer, StandardScaler
-
-from sktime.annotation.clasp import ClaSPSegmentation
-from sktime.base import BaseEstimator
-from sktime.forecasting.structural import UnobservedComponents
+from sktime.base import BaseEstimator, BaseObject
 from sktime.registry import (
     BASE_CLASS_LIST,
     BASE_CLASS_LOOKUP,
     ESTIMATOR_TAG_LIST,
     TRANSFORMER_MIXIN_LIST,
 )
-from sktime.regression.compose import ComposableTimeSeriesForestRegressor
 from sktime.transformations.base import BaseTransformer
-from sktime.transformations.panel.compose import (
-    SeriesToPrimitivesRowTransformer,
-    SeriesToSeriesRowTransformer,
-)
-from sktime.transformations.panel.random_intervals import RandomIntervals
-from sktime.transformations.panel.shapelet_transform import RandomShapeletTransform
 
 # The following estimators currently do not pass all unit tests
-# https://github.com/alan-turing-institute/sktime/issues/1627
+# https://github.com/sktime/sktime/issues/1627
 EXCLUDE_ESTIMATORS = [
     # SFA is non-compliant with any transformer interfaces, #2064
     "SFA",
-    # requires y in fit, this is incompatible with the old testing framework
-    #    unless it inherits from the old mixins, which hard coded the y
-    #    should be removed once test_all_transformers has been refactored to scenarios
-    "TSFreshRelevantFeatureExtractor",
     # PlateauFinder seems to be broken, see #2259
     "PlateauFinder",
     # below are removed due to mac failures we don't fully understand, see #3103
@@ -45,12 +29,15 @@ EXCLUDE_ESTIMATORS = [
     "RandomIntervalClassifier",
     "MiniRocket",
     "MatrixProfileTransformer",
-    # RandomShapeletTransform is breaking with empty lists, see #3138
-    "RandomShapeletTransform",
+    # tapnet based estimators fail stochastically for unknown reasons, see #3525
+    "TapNetRegressor",
+    "TapNetClassifier",
 ]
 
 
 EXCLUDED_TESTS = {
+    # issue when predicting residuals, see #3479
+    "SquaringResiduals": ["test_predict_residuals"],
     # known issue when X is passed, wrong time indices are returned, #1364
     "StackingForecaster": ["test_predict_time_index_with_X"],
     # known side effects on multivariate arguments, #2072
@@ -62,27 +49,45 @@ EXCLUDED_TESTS = {
         "test_classifier_on_unit_test_data",
         "test_classifier_on_basic_motions",
     ],
-    # test fail with deep problem with pickling inside tensorflow.
-    "CNNClassifier": [
-        "test_fit_idempotent",
-        "test_persistence_via_pickle",
-    ],
-    "CNNRegressor": [
-        "test_fit_idempotent",
-        "test_persistence_via_pickle",
-    ],
     # pickling problem with local method see #2490
     "ProximityStump": [
         "test_persistence_via_pickle",
         "test_fit_does_not_overwrite_hyper_params",
+        "test_save_estimators_to_file",
     ],
     "ProximityTree": [
         "test_persistence_via_pickle",
         "test_fit_does_not_overwrite_hyper_params",
+        "test_save_estimators_to_file",
     ],
     "ProximityForest": [
         "test_persistence_via_pickle",
         "test_fit_does_not_overwrite_hyper_params",
+        "test_save_estimators_to_file",
+    ],
+    # TapNet fails due to Lambda layer, see #3539 and #3616
+    "TapNetClassifier": [
+        "test_fit_idempotent",
+        "test_persistence_via_pickle",
+        "test_save_estimators_to_file",
+    ],
+    "TapNetRegressor": [
+        "test_fit_idempotent",
+        "test_persistence_via_pickle",
+        "test_save_estimators_to_file",
+    ],
+    # `test_fit_idempotent` fails with `AssertionError`, see #3616
+    "CNNClassifier": [
+        "test_fit_idempotent",
+    ],
+    "CNNRegressor": [
+        "test_fit_idempotent",
+    ],
+    "FCNClassifier": [
+        "test_fit_idempotent",
+    ],
+    "MLPClassifier": [
+        "test_fit_idempotent",
     ],
     # sth is not quite right with the RowTransformer-s changing state,
     #   but these are anyway on their path to deprecation, see #2370
@@ -98,37 +103,21 @@ EXCLUDED_TESTS = {
         "test_methods_do_not_change_state",
         "test_fit_idempotent",
         "test_persistence_via_pickle",
+        "test_save_estimators_to_file",
     ],
-    "VARMAX": "test_update_predict_single",  # see 2997, sporadic failure, unknown cause
-}
-
-# We here configure estimators for basic unit testing, including setting of
-# required hyper-parameters and setting of hyper-parameters for faster training.
-SERIES_TO_SERIES_TRANSFORMER = StandardScaler()
-SERIES_TO_PRIMITIVES_TRANSFORMER = FunctionTransformer(
-    np.mean, kw_args={"axis": 0}, check_inverse=False
-)
-
-ESTIMATOR_TEST_PARAMS = {
-    SeriesToPrimitivesRowTransformer: {
-        "transformer": SERIES_TO_PRIMITIVES_TRANSFORMER,
-        "check_transformer": False,
-    },
-    SeriesToSeriesRowTransformer: {
-        "transformer": SERIES_TO_SERIES_TRANSFORMER,
-        "check_transformer": False,
-    },
-    RandomShapeletTransform: {
-        "max_shapelets": 5,
-        "n_shapelet_samples": 50,
-        "batch_size": 20,
-    },
-    RandomIntervals: {
-        "n_intervals": 3,
-    },
-    ComposableTimeSeriesForestRegressor: {"n_estimators": 3},
-    UnobservedComponents: {"level": "local level"},
-    ClaSPSegmentation: {"period_length": 5, "n_cps": 1},
+    "CNNNetwork": "test_inheritance",  # not a registered base class, WiP, see #3028
+    "VARMAX": [
+        "test_update_predict_single",  # see 2997, sporadic failure, unknown cause
+        "test__y_when_refitting",  # see 3176
+    ],
+    # GGS inherits from BaseEstimator which breaks this test
+    "GreedyGaussianSegmentation": ["test_inheritance", "test_create_test_instance"],
+    "InformationGainSegmentation": [
+        "test_inheritance",
+        "test_create_test_instance",
+    ],
+    "SAX": "test_fit_transform_output",  # SAX returns strange output format
+    # this needs to be fixed, was not tested previously due to legacy exception
 }
 
 # We use estimator tags in addition to class hierarchies to further distinguish
@@ -136,10 +125,14 @@ ESTIMATOR_TEST_PARAMS = {
 # common tests for estimators with the same tags.
 VALID_ESTIMATOR_TAGS = tuple(ESTIMATOR_TAG_LIST)
 
-# These methods should not change the state of the estimator, that is, they should
+# NON_STATE_CHANGING_METHODS =
+# methods that should not change the state of the estimator, that is, they should
 # not change fitted parameters or hyper-parameters. They are also the methods that
 # "apply" the fitted estimator to data and useful for checking results.
-NON_STATE_CHANGING_METHODS = (
+# NON_STATE_CHANGING_METHODS_ARRAYLIK =
+# non-state-changing methods that return an array-like output
+
+NON_STATE_CHANGING_METHODS_ARRAYLIKE = (
     "predict",
     "predict_var",
     "predict_proba",
@@ -151,10 +144,15 @@ NON_STATE_CHANGING_METHODS = (
     # "inverse_transform",
 )
 
+NON_STATE_CHANGING_METHODS = NON_STATE_CHANGING_METHODS_ARRAYLIKE + (
+    "get_fitted_params",
+)
+
 # The following gives a list of valid estimator base classes.
 VALID_TRANSFORMER_TYPES = tuple(TRANSFORMER_MIXIN_LIST) + (BaseTransformer,)
 
-VALID_ESTIMATOR_BASE_TYPES = tuple(BASE_CLASS_LIST)
+BASE_BASE_TYPES = (BaseEstimator, BaseObject)
+VALID_ESTIMATOR_BASE_TYPES = tuple(set(BASE_CLASS_LIST).difference(BASE_BASE_TYPES))
 
 VALID_ESTIMATOR_TYPES = (
     BaseEstimator,

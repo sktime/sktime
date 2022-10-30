@@ -13,6 +13,7 @@ import pandas as pd
 from joblib import Parallel, delayed
 from sklearn.model_selection import ParameterGrid, ParameterSampler, check_cv
 
+from sktime.datatypes import mtype_to_scitype
 from sktime.exceptions import NotFittedError
 from sktime.forecasting.base._delegate import _DelegatedForecaster
 from sktime.forecasting.model_evaluation import evaluate
@@ -42,6 +43,7 @@ class BaseGridSearch(_DelegatedForecaster):
         verbose=0,
         return_n_best_forecasters=1,
         update_behaviour="full_refit",
+        error_score=np.nan,
     ):
 
         self.forecaster = forecaster
@@ -55,6 +57,7 @@ class BaseGridSearch(_DelegatedForecaster):
         self.verbose = verbose
         self.return_n_best_forecasters = return_n_best_forecasters
         self.update_behaviour = update_behaviour
+        self.error_score = error_score
         super(BaseGridSearch, self).__init__()
         tags_to_clone = [
             "requires-fh-in-fit",
@@ -68,10 +71,38 @@ class BaseGridSearch(_DelegatedForecaster):
             "enforce_index_type",
         ]
         self.clone_tags(forecaster, tags_to_clone)
+        self._extend_to_all_scitypes("y_inner_mtype")
+        self._extend_to_all_scitypes("X_inner_mtype")
 
     _delegate_name = "best_forecaster_"
 
-    def get_fitted_params(self):
+    def _extend_to_all_scitypes(self, tagname):
+        """Ensure mtypes for all scitypes are in the tag with tagname.
+
+        Mutates self tag with name `tagname`.
+        If no mtypes are present of a time series scitype, adds a pandas based one.
+
+        Parameters
+        ----------
+        tagname : str, name of the tag. Should be "y_inner_mtype" or "X_inner_mtype".
+
+        Returns
+        -------
+        None (mutates tag in self)
+        """
+        tagval = self.get_tag(tagname)
+        if not isinstance(tagval, list):
+            tagval = [tagval]
+        scitypes = mtype_to_scitype(tagval, return_unique=True)
+        if "Series" not in scitypes:
+            tagval = tagval + ["pd.DataFrame"]
+        if "Panel" not in scitypes:
+            tagval = tagval + ["pd-multiindex"]
+        if "Hierarchical" not in scitypes:
+            tagval = tagval + ["pd_multiindex_hier"]
+        self.set_tags(**{tagname: tagval})
+
+    def _get_fitted_params(self):
         """Get fitted parameters.
 
         Returns
@@ -81,12 +112,6 @@ class BaseGridSearch(_DelegatedForecaster):
             the best estimator (if available), merged together with the former
             taking precedence.
         """
-        if not self.is_fitted:
-            raise NotFittedError
-
-        if self._is_vectorized:
-            return {"forecasters_": self.forecasters_}
-
         fitted_params = {}
         try:
             fitted_params = self.best_forecaster_.get_fitted_params()
@@ -138,6 +163,7 @@ class BaseGridSearch(_DelegatedForecaster):
                 X,
                 strategy=self.strategy,
                 scoring=scoring,
+                error_score=self.error_score,
             )
 
             # Filter columns.
@@ -192,6 +218,12 @@ class BaseGridSearch(_DelegatedForecaster):
 
         # Select best parameters.
         self.best_index_ = results.loc[:, f"rank_{scoring_name}"].argmin()
+        # Raise error if all fits in evaluate failed because all score values are NaN.
+        if self.best_index_ == -1:
+            raise NotFittedError(
+                f"""All fits of forecaster failed, set error_score='raise' to see the exceptions.
+                Failed forecaster: {self.forecaster}"""
+            )
         self.best_score_ = results.loc[self.best_index_, f"mean_{scoring_name}"]
         self.best_params_ = results.loc[self.best_index_, "params"]
         self.best_forecaster_ = self.forecaster.clone().set_params(**self.best_params_)
@@ -315,6 +347,10 @@ class ForecastingGridSearchCV(BaseGridSearch):
     backend: str, optional (default="loky")
         Specify the parallelisation backend implementation in joblib, where
         "loky" is used by default.
+    error_score : "raise" or numeric, default=np.nan
+        Value to assign to the score if an exception occurs in estimator fitting. If set
+        to "raise", the exception is raised. If a numeric value is given,
+        FitFailedWarning is raised.
 
     Attributes
     ----------
@@ -404,8 +440,6 @@ class ForecastingGridSearchCV(BaseGridSearch):
     >>> y_pred = gscv.predict(fh=[1,2,3])
     """
 
-    _required_parameters = ["forecaster", "cv", "param_grid"]
-
     def __init__(
         self,
         forecaster,
@@ -420,6 +454,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
         pre_dispatch="2*n_jobs",
         backend="loky",
         update_behaviour="full_refit",
+        error_score=np.nan,
     ):
         super(ForecastingGridSearchCV, self).__init__(
             forecaster=forecaster,
@@ -433,6 +468,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
             pre_dispatch=pre_dispatch,
             backend=backend,
             update_behaviour=update_behaviour,
+            error_score=error_score,
         )
         self.param_grid = param_grid
 
@@ -566,6 +602,10 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
     backend: str, optional (default="loky")
         Specify the parallelisation backend implementation in joblib, where
         "loky" is used by default.
+    error_score : "raise" or numeric, default=np.nan
+        Value to assign to the score if an exception occurs in estimator fitting. If set
+        to "raise", the exception is raised. If a numeric value is given,
+        FitFailedWarning is raised.
 
     Attributes
     ----------
@@ -585,8 +625,6 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         score of forecasters
     """
 
-    _required_parameters = ["forecaster", "cv", "param_distributions"]
-
     def __init__(
         self,
         forecaster,
@@ -603,6 +641,7 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         pre_dispatch="2*n_jobs",
         backend="loky",
         update_behaviour="full_refit",
+        error_score=np.nan,
     ):
         super(ForecastingRandomizedSearchCV, self).__init__(
             forecaster=forecaster,
@@ -616,6 +655,7 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
             pre_dispatch=pre_dispatch,
             backend=backend,
             update_behaviour=update_behaviour,
+            error_score=error_score,
         )
         self.param_distributions = param_distributions
         self.n_iter = n_iter

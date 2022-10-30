@@ -15,103 +15,131 @@ Documentation
    changelog
    related_software
 
-.. panels::
-    :card: + intro-card text-center
+.. grid:: 1 2 2 2
+    :gutter: 3
 
-    ---
+    .. grid-item-card::
+        :text-align: center
 
-    Installation
-    ^^^^^^^^^^^^
+        Installation
 
-    Stable version, developer version, and build requirements.
+        ^^^
 
-    +++
+        Stable version, developer version, and build requirements.
 
-    .. link-button:: installation
-            :type: ref
-            :text: Installation Guide
-            :classes: btn-block btn-secondary stretched-link
+        +++
 
-    ---
+        .. button-ref:: installation
+            :color: primary
+            :click-parent:
+            :expand:
 
-    Tutorials
-    ^^^^^^^^^
+            Installation Guide
 
-    `sktime` tutorials.
+    .. grid-item-card::
+        :text-align: center
 
-    +++
+        Tutorials
 
-    .. link-button:: tutorials
-            :type: ref
-            :text: Tutorials
-            :classes: btn-block btn-secondary stretched-link
+        ^^^
 
-    ---
+        `sktime` tutorials.
 
-    User Guide
-    ^^^^^^^^^^
+        +++
 
-    `sktime` user guide.
+        .. button-ref:: tutorials
+            :color: primary
+            :click-parent:
+            :expand:
 
-    +++
+            Tutorials
 
-    .. link-button:: user_guide
-            :type: ref
-            :text: User Guide
-            :classes: btn-block btn-secondary stretched-link
+    .. grid-item-card::
+        :text-align: center
 
-    ---
+        User Guide
 
-    Estimator Overview
-    ^^^^^^^^^^^^^^^^^^
+        ^^^
 
-    Overview of all estimators in `sktime`.
+        `sktime` user guide.
 
-    +++
+        +++
 
-    .. link-button:: estimator_overview
-            :type: ref
-            :text: Estimator Overview
-            :classes: btn-block btn-secondary stretched-link
+        .. button-ref:: user_guide
+            :color: primary
+            :click-parent:
+            :expand:
 
-    ---
+            User Guide
 
-    Glossary
-    ^^^^^^^^
+    .. grid-item-card::
+        :text-align: center
 
-    Glossary of common terms and API elements in `sktime`.
+        Estimator Overview
 
-    +++
+        ^^^
 
-    .. link-button:: glossary
-            :type: ref
-            :text: Glossary
-            :classes: btn-block btn-secondary stretched-link
+        Overview of all estimators in `sktime`.
 
-    ---
+        +++
 
-    Change Logs
-    ^^^^^^^^^^^
+        .. button-ref:: estimator_overview
+            :color: primary
+            :click-parent:
+            :expand:
 
-    Version change logs.
+            Estimator Overview
 
-    +++
+    .. grid-item-card::
+        :text-align: center
 
-    .. link-button:: changelog
-            :type: ref
-            :text: Change Logs
-            :classes: btn-block btn-secondary stretched-link
+        Glossary
 
-    ---
+        ^^^
 
-    Related Software
-    ^^^^^^^^^^^^^^^^
+        Glossary of common terms and API elements in `sktime`.
 
-    Software related to `sktime` and time series.
+        +++
 
-    +++
+        .. button-ref:: glossary
+            :color: primary
+            :click-parent:
+            :expand:
 
-    .. link-button:: related_software
-            :type: ref
-            :text: Related Software
-            :classes: btn-block btn-secondary stretched-link
+            Glossary
+
+    .. grid-item-card::
+        :text-align: center
+
+        Change Logs
+
+        ^^^
+
+        Version change logs.
+
+        +++
+
+        .. button-ref:: changelog
+            :color: primary
+            :click-parent:
+            :expand:
+
+            Change Logs
+
+    .. grid-item-card::
+        :text-align: center
+
+        Related Software
+
+        ^^^
+
+        Software related to `sktime` and time series.
+
+        +++
+
+        .. button-ref:: related_software
+            :color: primary
+            :click-parent:
+            :expand:
+
+            Related Software

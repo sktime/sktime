@@ -48,9 +48,12 @@ extensions = [
     "nbsphinx",  # integrates example notebooks
     "sphinx_gallery.load_style",
     "myst_parser",
-    "sphinx_panels",
+    "sphinx_design",
     "sphinx_issues",
 ]
+
+# Recommended by sphinx_design when using the MyST Parser
+myst_enable_extensions = ["colon_fence"]
 
 # Use bootstrap CSS from theme.
 panels_add_bootstrap_css = False
@@ -123,7 +126,7 @@ add_function_parentheses = False
 suppress_warnings = ["myst.mathjax"]
 
 # Link to GitHub repo for github_issues extension
-issues_github_path = "alan-turing-institute/sktime"
+issues_github_path = "sktime/sktime"
 
 
 def linkcode_resolve(domain, info):
@@ -159,7 +162,7 @@ def linkcode_resolve(domain, info):
         filename = "sktime/%s#L%d-L%d" % find_source()
     except Exception:
         filename = info["module"].replace(".", "/") + ".py"
-    return "https://github.com/alan-turing-institute/sktime/blob/%s/%s" % (
+    return "https://github.com/sktime/sktime/blob/%s/%s" % (
         CURRENT_VERSION,
         filename,
     )
@@ -180,18 +183,28 @@ html_theme_options = {
     "icon_links": [
         {
             "name": "GitHub",
-            "url": "https://github.com/alan-turing-institute/sktime",
+            "url": "https://github.com/sktime/sktime",
             "icon": "fab fa-github",
         },
         {
-            "name": "Twitter",
-            "url": "https://twitter.com/sktime_toolbox",
-            "icon": "fab fa-twitter",
+            "name": "Slack",
+            "url": "https://join.slack.com/t/sktime-group/shared_invite/zt-1cghagwee-sqLJ~eHWGYgzWbqUX937ig",  # noqa: E501
+            "icon": "fab fa-slack",
         },
         {
             "name": "Discord",
             "url": "https://discord.com/invite/gqSab2K",
             "icon": "fab fa-discord",
+        },
+        {
+            "name": "LinkedIn",
+            "url": "https://www.linkedin.com/company/sktime/",
+            "icon": "fab fa-linkedin",
+        },
+        {
+            "name": "Twitter",
+            "url": "https://twitter.com/sktime_toolbox",
+            "icon": "fab fa-twitter",
         },
     ],
     "favicons": [
@@ -206,10 +219,11 @@ html_theme_options = {
     "navbar_start": ["navbar-logo"],
     "navbar_center": ["navbar-nav"],
     "navbar_end": ["navbar-icon-links"],
+    "announcement": "<p><a href=https://docs.google.com/forms/d/e/1FAIpQLScQkrSZfNiZiQKPuBcFMtHAlL10RBZ3QSBo-I3klUHeL7Vg0A/viewform>Sign up</a> for the sktime Fall Dev days Nov 9 - 10 2022</p>",  # noqa: E501
 }
 html_logo = "images/sktime-logo-text-horizontal.png"
 html_context = {
-    "github_user": "alan-turing-institute",
+    "github_user": "sktime",
     "github_repo": "sktime",
     "github_version": "main",
     "doc_path": "docs/source/",
@@ -392,7 +406,7 @@ nbsphinx_timeout = 600  # seconds, set to -1 to disable timeout
 current_file = "{{ env.doc2path( env.docname, base=None) }}"
 
 # make sure Binder points to latest stable release, not main
-binder_url = f"https://mybinder.org/v2/gh/alan-turing-institute/sktime/{CURRENT_VERSION}?filepath={current_file}"  # noqa
+binder_url = f"https://mybinder.org/v2/gh/sktime/sktime/{CURRENT_VERSION}?filepath={current_file}"  # noqa
 nbsphinx_prolog = f"""
 .. |binder| image:: https://mybinder.org/badge_logo.svg
 .. _Binder: {binder_url}
@@ -401,7 +415,9 @@ nbsphinx_prolog = f"""
 """
 
 # add link to original notebook at the bottom
-notebook_url = f"https://github.com/alan-turing-institute/sktime/tree/{CURRENT_VERSION}/{current_file}"  # noqa
+notebook_url = (
+    f"https://github.com/sktime/sktime/tree/{CURRENT_VERSION}/{current_file}"  # noqa
+)
 nbsphinx_epilog = f"""
 ----
 

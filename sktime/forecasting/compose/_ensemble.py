@@ -7,7 +7,7 @@ Creates univariate (optionally weighted)
 combination of the predictions from underlying forecasts.
 """
 
-__author__ = ["mloning", "GuzalBulatova", "aiwalter", "RNKuhns"]
+__author__ = ["mloning", "GuzalBulatova", "aiwalter", "RNKuhns", "AnH0ang"]
 __all__ = ["EnsembleForecaster", "AutoEnsembleForecaster"]
 
 import numpy as np
@@ -105,7 +105,6 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
     >>> y_pred = forecaster.predict()
     """
 
-    _required_parameters = ["forecasters"]
     _tags = {
         "ignores-exogeneous-X": False,
         "requires-fh-in-fit": False,
@@ -187,7 +186,7 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
             inv_var = np.array(
                 [
                     1 / np.var(y_test - y_pred_test)
-                    for y_pred_test in self._predict_forecasters(fh_test, X)
+                    for y_pred_test in self._predict_forecasters(fh_test, X_test)
                 ]
             )
             # standardize the inverse variance
@@ -301,12 +300,12 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
     >>> y_pred = forecaster.predict()
     """
 
-    _required_parameters = ["forecasters"]
     _tags = {
         "ignores-exogeneous-X": False,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
-        "scitype:y": "univariate",
+        "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
+        "scitype:y": "both",
     }
 
     def __init__(self, forecasters, n_jobs=None, aggfunc="mean", weights=None):
@@ -347,9 +346,11 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         y_pred : pd.Series
             Aggregated predictions.
         """
-        y_pred = pd.concat(self._predict_forecasters(fh, X), axis=1)
-        y_pred = _aggregate(y=y_pred, aggfunc=self.aggfunc, weights=self.weights)
-
+        names, _ = self._check_forecasters()
+        y_pred = pd.concat(self._predict_forecasters(fh, X), axis=1, keys=names)
+        y_pred = y_pred.groupby(level=1, axis=1).agg(
+            _aggregate, self.aggfunc, self.weights
+        )
         return y_pred
 
     @classmethod

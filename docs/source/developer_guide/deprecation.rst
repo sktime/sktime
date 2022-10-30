@@ -9,18 +9,35 @@ For this reason, we first need to deprecate functionality and change it only in 
 
 .. note::
 
-    For upcoming changes and next releases, see our `Milestones <https://github.com/alan-turing-institute/sktime/milestones?direction=asc&sort=due_date&state=open>`_.
+    For upcoming changes and next releases, see our `Milestones <https://github.com/sktime/sktime/milestones?direction=asc&sort=due_date&state=open>`_.
     For our long-term plan, see our :ref:`roadmap`.
 
 Deprecation policy
 ==================
 
-sktime `releases <https://github.com/alan-turing-institute/sktime/releases>`_ follow `semantic versioning <https://semver.org>`_.
+sktime `releases <https://github.com/sktime/sktime/releases>`_ follow `semantic versioning <https://semver.org>`_.
 A release number denotes <major>.<minor>.<patch> versions.
 
-Our current deprecation policy is that we remove functionality after one minor release cycle.
-For example, if some functionality has been deprecated in v0.9.0 or any patch of that minor version, we will raise a warning throughout the next minor version v0.10.* and all of its patches.
-The functionality will then be removed in v0.11.0.
+Our current deprecation policy is as follows:
+
+* all interface breaking (not downwards compatible) changes to public interfaces must be accompanied by deprecation.
+  Examples: changes to defaults of existing parameters, removal of parameters.
+  Non-examples: new parameters with a default value that leads to prior behaviour.
+* such changes or removals happen only at MINOR or MAJOR versions, not at PATCH versions.
+* deprecation warnings must be included for at least one full MINOR version cycle before change or removal.
+  Therefore, typically, the change or removal happens at the *second* next MINOR release.
+
+Example process:
+1. developer A resolves, at current state v0.9.3, to remove functionality X at some point in the near future.
+2. therefore, by the above, we should introduce a deprecation message, visible from next release (e.g., v0.9.4),
+  which says that functionality will be removed at v0.11.0
+3. developer A makes a pull request to remove functionality X which includes that deprecation warning.
+  The pull request is reviewed by core developers, with the suggestion by developer A accepted or rejected.
+4. If accepted and merged before v0.10.0 release, the PR goes in the next release, with a deprecation note in the release notes.
+  If PR acceptance takes until after v0.10.0 but before v0.11.0, the planned removal moves to v0.12.0 and the warning needs to be updated.
+5. an additional PR to remove deprecation warning and functionality X is prepared by developer A, for v0.12.0 but not merged
+6. a release manager merges the PR in part 5 as part of the release v0.12.0, effecting the removal.
+  Release notes of v0.12.0 includes a removal note.
 
 Deprecation process
 ===================

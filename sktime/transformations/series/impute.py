@@ -91,9 +91,11 @@ class Imputer(BaseTransformer):
         "fit_is_empty": False,
         "handles-missing-data": True,
         "skip-inverse-transform": True,
+        "capability:inverse_transform": True,
         "univariate-only": False,
         "capability:missing_values:removes": True,
         # is transform result always guaranteed to contain no missing values?
+        "remember_data": False,  # remember all data seen as _X
     }
 
     def __init__(
@@ -111,6 +113,10 @@ class Imputer(BaseTransformer):
         self.forecaster = forecaster
         self.random_state = random_state
         super(Imputer, self).__init__()
+
+        # these methods require self._X remembered in _fit and _update
+        if method in ["drift", "forecaster", "random"]:
+            self.set_tags(**{"remember_data": True})
 
     def _fit(self, X, y=None):
         """Fit transformer to X and y.
@@ -134,8 +140,6 @@ class Imputer(BaseTransformer):
         # implemented here. Some methods dont need fit, so they are just
         # impleented in _transform
         if self.method in ["drift", "forecaster"]:
-            # save train data as needed for multivariate fitting int _fit()
-            self._X = X.copy()
             self._y = y.copy() if y is not None else None
             if self.method == "drift":
                 self._forecaster = PolynomialTrendForecaster(degree=1)
@@ -146,8 +150,7 @@ class Imputer(BaseTransformer):
         elif self.method == "median":
             self._median = X.median()
         elif self.method == "random":
-            # save train data to get min() and max() in transform() for each column
-            self._X = X.copy()
+            pass
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.

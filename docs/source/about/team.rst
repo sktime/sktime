@@ -17,9 +17,23 @@ Community Council
      - GitHub ID
    * - Franz Kiraly
      - :user:`fkiraly`
+   * - Guzal Bulatova
+    - :user: `GuzalBulatova`
    * - Martin Walter
      - :user:`aiwalter`
 
+Community Council Observers
+---------------------------
+
+.. list-table::
+   :header-rows: 1
+
+   * - Name
+     - GitHub ID
+   * - Leonidas Tsaprounis
+     - :user:`ltsaprounis`
+   * - Lovkush Agarwal
+     - :user:`lovkush-a`
 
 Code of Conduct Committee
 -------------------------
@@ -42,8 +56,6 @@ Core Developers
 
    * - Name
      - GitHub ID
-   * - Aaron Bostrom
-     - :user:`abostrom`
    * - Anthony Bagnall
      - :user:`TonyBagnall`
    * - Chris Holder
@@ -54,12 +66,8 @@ Core Developers
      - :user:`fkiraly`
    * - Freddy A Boulton
      - :user:`freddyaboulton`
-   * - George Oastler
-     - :user:`goastler`
    * - Guzal Bulatova
      - :user:`GuzalBulatova`
-   * - James Large
-     - :user:`james-large`
    * - Leonidas Tsaprounis
      - :user:`ltsaprounis`
    * - Lovkush Agarwal
@@ -72,6 +80,8 @@ Core Developers
      - :user:`mattewmiddlehurst`
    * - Martin Walter
      - :user:`aiwalter`
+   * - Mirae Parker
+     - :user:`miraep8`
    * - Patrick Schäfer
      - :user:`patrickzib`
    * - Stanislav Khrapov
@@ -87,10 +97,16 @@ Former Core Developers (inactive)
 
    * - Name
      - GitHub ID
+   * - Aaron Bostrom
+     - :user:`abostrom`
    * - Ayushmaan Seth
      - :user:`ayushmaanseth`
+   * - George Oastler
+     - :user:`goastler`
    * - Hongyi Yang
      - :user:`hyang1996`
+   * - James Large
+     - :user:`james-large`
    * - Jason Lines
      - :user:`jasonlines`
    * - Mathew Smith

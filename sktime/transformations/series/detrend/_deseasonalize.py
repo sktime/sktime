@@ -8,8 +8,6 @@ __all__ = ["Deseasonalizer", "ConditionalDeseasonalizer", "STLTransformer"]
 
 import numpy as np
 import pandas as pd
-from statsmodels.tsa.seasonal import STL as _STL
-from statsmodels.tsa.seasonal import seasonal_decompose
 
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.datetime import _get_duration, _get_freq
@@ -20,10 +18,14 @@ from sktime.utils.validation.forecasting import check_sp
 class Deseasonalizer(BaseTransformer):
     """Remove seasonal components from a time series.
 
-    Fit computes :term:`seasonal components <Seasonality>` and
-    stores them in `seasonal_`.
+    Applies `statsmodels.tsa.seasonal.seasonal_compose` and removes the `seasonal`
+    component in `transform`. Adds seasonal component back again in `inverse_transform`.
+    Seasonality removal can be additive or multiplicative.
 
-    Transform aligns seasonal components stored in `_seasonal` with
+    `fit` computes :term:`seasonal components <Seasonality>` and
+    stores them in `seasonal_` attribute.
+
+    `transform` aligns seasonal components stored in `seasonal_` with
     the time index of the passed :term:`series <Time series>` and then
     substracts them ("additive" model) from the passed :term:`series <Time series>`
     or divides the passed series by them ("multiplicative" model).
@@ -74,6 +76,7 @@ class Deseasonalizer(BaseTransformer):
         "capability:inverse_transform": True,
         "transform-returns-same-time-index": True,
         "univariate-only": True,
+        "python_dependencies": "statsmodels",
     }
 
     def __init__(self, sp=1, model="additive"):
@@ -116,6 +119,8 @@ class Deseasonalizer(BaseTransformer):
         -------
         self: a fitted instance of the estimator
         """
+        from statsmodels.tsa.seasonal import seasonal_decompose
+
         self._X = X
         sp = self.sp
 
@@ -200,7 +205,9 @@ class Deseasonalizer(BaseTransformer):
         """
         X_full = X.combine_first(self._X)
         self._X = X_full
-        return self._fit(X_full, update_params=update_params)
+        if update_params:
+            self._fit(X_full, update_params=update_params)
+        return self
 
 
 class ConditionalDeseasonalizer(Deseasonalizer):
@@ -296,6 +303,8 @@ class ConditionalDeseasonalizer(Deseasonalizer):
         -------
         self: a fitted instance of the estimator
         """
+        from statsmodels.tsa.seasonal import seasonal_decompose
+
         self._X = X
         sp = self.sp
 
@@ -480,6 +489,8 @@ class STLTransformer(BaseTransformer):
         -------
         self: a fitted instance of the estimator
         """
+        from statsmodels.tsa.seasonal import STL as _STL
+
         # remember X for transform
         self._X = X
         sp = self.sp
@@ -506,6 +517,8 @@ class STLTransformer(BaseTransformer):
         return self
 
     def _transform(self, X, y=None):
+
+        from statsmodels.tsa.seasonal import STL as _STL
 
         # fit again if indices not seen, but don't store anything
         if not X.index.equals(self._X.index):
