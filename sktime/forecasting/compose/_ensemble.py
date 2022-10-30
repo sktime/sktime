@@ -313,6 +313,10 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         self.aggfunc = aggfunc
         self.weights = weights
 
+        # the ensemble requires fh in fit
+        # iff any of the component forecasters require fh in fit
+        self._anytagis_then_set("requires-fh-in-fit", True, False, self.forecasters)
+
     def _fit(self, y, X=None, fh=None):
         """Fit to training data.
 
@@ -368,10 +372,17 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         -------
         params : dict or list of dict
         """
+        from sktime.forecasting.compose._reduce import DirectReductionForecaster
         from sktime.forecasting.naive import NaiveForecaster
 
+        # univariate case
         FORECASTER = NaiveForecaster()
-        params = {"forecasters": [("f1", FORECASTER), ("f2", FORECASTER)]}
+        params = [{"forecasters": [("f1", FORECASTER), ("f2", FORECASTER)]}]
+
+        # test multivariate case, i.e., ensembling multiple variables at same time
+        FORECASTER = DirectReductionForecaster.create_test_instance()
+        params = params + [{"forecasters": [("f1", FORECASTER), ("f2", FORECASTER)]}]
+
         return params
 
 

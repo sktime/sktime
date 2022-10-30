@@ -29,14 +29,15 @@ __all__ = [
     "load_from_tsfile_to_dataframe",
     "load_from_ucr_tsv_to_dataframe",
     "make_multi_index_dataframe",
-    "write_dataframe_to_tsfile",
-    "write_ndarray_to_tsfile",
-    "write_results_to_uea_format",
-    "write_tabular_transformation_to_arff",
     "load_tsf_to_dataframe",
     "load_unit_test_tsf",
     "load_solar",
     "load_covid_3month",
+    "write_panel_to_tsfile",
+    "write_dataframe_to_tsfile",
+    "write_ndarray_to_tsfile",
+    "write_results_to_uea_format",
+    "write_tabular_transformation_to_arff",
 ]
 
 from sktime.datasets._data_io import (
@@ -50,6 +51,7 @@ from sktime.datasets._data_io import (
     make_multi_index_dataframe,
     write_dataframe_to_tsfile,
     write_ndarray_to_tsfile,
+    write_panel_to_tsfile,
     write_results_to_uea_format,
     write_tabular_transformation_to_arff,
 )
