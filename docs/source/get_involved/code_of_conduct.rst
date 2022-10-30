@@ -55,7 +55,9 @@ workshops, and communications online via GitHub.
 
 The Code of Conduct Committee of sktime is responsible for defining and
 enforcing the Code of Conduct, according to Section 4 below.
-Reports of Code of Conduct Committee can be made as outlined in Section 3.
+
+Incidents can be reported to the Code of Conduct Committee as outlined in Section 3, and
+are handled in accordance with Sections 3 and 4.
 
 The community council of sktime (see current composition on "roles")
 is responsible for ensuring that resolutions of the Code of Conduct committee
