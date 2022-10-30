@@ -70,6 +70,7 @@ are adhered to, and can be contacted under info@sktime.org.
 The sktime team are dedicated to providing a welcoming and supportive
 environment for all people, regardless of background or identity. As
 such, we do not tolerate:
+
 * behaviour that is disrespectful to our
   community members or that excludes, intimidates, or causes discomfort to others.
 * discrimination or harassment based on protected characteristics, including
@@ -403,8 +404,8 @@ so long as attribution is maintained to substantial sources of contribution:
 * other sources and influences mentioned above
 
 
-Appendix: Guidance in applying the CoC
---------------------------------------
+Appendix A: Guidance in applying the CoC
+----------------------------------------
 
 This appendix provides some additional guidance in applying the CoC.
 It contains sections on:
@@ -412,8 +413,8 @@ It contains sections on:
 * how to apply the CoC in some common situations where principles might conflict
 * investigating CoC violations in resource allocation
 
-Resolving conflicting CoC principles
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+A.1 Resolving conflicting CoC principles
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Sometimes, CoC requirements end up in a trade-off, or in conflict with each other.
 We outline a few guiding examples in how these should be traded off.
@@ -442,10 +443,10 @@ Guidance rules:
 Behaviour that is clearly racist, sexist, etc, is always a CoC violation, and never part of trade-offs.
 
 
-Guidance on resource allocation
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+A.2 Guidance on applying the CoC for resource allocation decisions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This section deals with resource allocation decisions by sktime community members,
+This section deals with resource allocation decisions by ``sktime`` community members,
 and criteria for decision making on resource allocation violating the code of conduct.
 
 Scope
