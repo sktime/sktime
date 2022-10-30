@@ -214,7 +214,7 @@ Please contact the current chair of the Code of Conduct Committee directly by em
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 In case of conflict of interest of sktime CoC Committee members, you can report
-through the [NumFOCUS CoC process](https://numfocus.org/code-of-conduct),
+through the `NumFOCUS CoC process <https://numfocus.org/code-of-conduct>`__,
 or, in case of events, to the organisation at which the event is taking place (e.g., a university).
 
 3.3 What to do if someone is in physical danger
@@ -247,7 +247,7 @@ Dr Franz Király (f.kiraly@ucl.ac.uk)
 
 We encourage community members to step up to become a member of the committee.
 
-You can use the NumFOCUS CoC reporting process as an alternative entry point
+You can use the `NumFOCUS CoC process <https://numfocus.org/code-of-conduct>`__ as an alternative entry point
 for reporting, see 3.2.
 
 4.2 Urgent Situations: Acting Unilaterally
@@ -345,7 +345,7 @@ committee is not required to act on this feedback.
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 In case of conflict of interest of sktime CoC committee members, you can report
-through the [NumFOCUS CoC process](https://numfocus.org/code-of-conduct),
+through the `NumFOCUS CoC process <https://numfocus.org/code-of-conduct>`__,
 or, in case of events, to the organisation at which the event is taking place (e.g., a university).
 
 5 Acknowledgements
