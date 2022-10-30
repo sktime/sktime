@@ -406,10 +406,10 @@ so long as attribution is maintained to substantial sources of contribution:
 Appendix: Guidance in applying the CoC
 --------------------------------------
 
-This appendix provides some concrete guidance in applying the CoC.
+This appendix provides some additional guidance in applying the CoC.
 It contains sections on:
 
-* how to apply the CoC in some common situations where principles might conflict o
+* how to apply the CoC in some common situations where principles might conflict
 * investigating CoC violations in resource allocation
 
 Resolving conflicting CoC principles
