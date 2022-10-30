@@ -503,7 +503,7 @@ Examples of not acceptable behaviour
   including but not limited to violations of the BSD 3-clause license
 * soft refusal to implement best anti-corruption and anti-bribery practice, e.g.,
   soft refusal to make budgets, invoives, or spending records transparent to the ``sktime`` community
-* attempts to suppress criticism of bad practice through invoking the code of conduct, e.g., tone policing
+* attempts to suppress criticism of bad practice through invoking the code of conduct, e.g., tone policing or DARVO
 
 Investigating potential resource allocation violations
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
