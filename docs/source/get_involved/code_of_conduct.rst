@@ -350,7 +350,10 @@ or, in case of events, to the organisation at which the event is taking place (e
 5 Acknowledgements
 ------------------
 
-This code is adapted from the `The Turing
+This Code of Conduct is a living document,
+maintanined and developed by the ``sktime`` project and its contributors.
+
+Its original form is adapted from the `The Turing
 Way <https://github.com/alan-turing-institute/the-turing-way>`__ project
 with Dr Kirstie Whitaker as lead investigator and based on the
 `Carpentries Code of
@@ -382,17 +385,21 @@ Guide <https://www.djangoproject.com/conduct/>`__ and we are also
 grateful for `this guidance from Ada
 Initiative <http://geekfeminism.wikia.com/wiki/Conference_anti-harassment/Responding_to_reports>`__.
 
-We really appreciate the work that all of the communities linked above
-have put into creating such a well considered process.
+We highly appreciate the work that all of the communities linked above
+have put into creating code of conduct documents and processes.
 
 This Code of Conduct is licensed under a `Creative Commons Attribution
 4.0 International <https://creativecommons.org/licenses/by/4.0/>`__ (CC
 BY 4.0 CA) license which means you are free to share and adapt the work
-so long as the attribution to `The Turing
-Way <https://github.com/alan-turing-institute/the-turing-way>`__ project
-with Dr Kirstie Whitaker as the principal investigator is retained,
-along with the attribution to the Carpentries, The Alan Turing Institute
-Data Study Group organising team, Citizen Lab and the other resources.
+so long as attribution is maintained to substantial sources of contribution:
+
+* The `Django project <https://www.djangoproject.com/>`__
+* The `Citizen Lab <https://citizenlab.ca/>`__
+* The `Alan Turing Institute Data Study Groups <https://www.turing.ac.uk/collaborate-turing/data-study-groups>`__ organising team
+* `The Turing Way <https://github.com/alan-turing-institute/the-turing-way>`__ project
+* `The Carpentries <https://carpentries.org/>`__
+* The ``sktime`` project
+* other sources and influences mentioned above
 
 
 Appendix: Guidance in applying the CoC
