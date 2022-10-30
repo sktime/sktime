@@ -394,6 +394,7 @@ BY 4.0 CA) license which means you are free to share and adapt the work
 so long as attribution is maintained to substantial sources of contribution:
 
 * The `Django project <https://www.djangoproject.com/>`__
+* The `Contributor Covenant <http://contributor-covenant.org/>`__,
 * The `Citizen Lab <https://citizenlab.ca/>`__
 * The `Alan Turing Institute Data Study Groups <https://www.turing.ac.uk/collaborate-turing/data-study-groups>`__ organising team
 * `The Turing Way <https://github.com/alan-turing-institute/the-turing-way>`__ project
