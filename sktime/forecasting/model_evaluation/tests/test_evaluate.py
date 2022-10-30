@@ -37,7 +37,10 @@ from sktime.performance_metrics.forecasting import (
 )
 from sktime.utils._testing.forecasting import make_forecasting_problem
 from sktime.utils._testing.hierarchical import _make_hierarchical
-from sktime.utils.validation._dependencies import _check_estimator_deps
+from sktime.utils.validation._dependencies import (
+    _check_estimator_deps,
+    _check_soft_dependencies,
+)
 
 
 def _check_evaluate_output(out, cv, y, scoring):
@@ -102,6 +105,10 @@ def test_evaluate_common_configs(
     CV, fh, window_length, step_length, strategy, scoring, backend
 ):
     """Test evaluate common configs."""
+    # skip test for dask backend if dask is not installed
+    if backend == "dask" and not _check_soft_dependencies("dask", severity="none"):
+        return None
+
     y = make_forecasting_problem(n_timepoints=30, index_type="int")
     forecaster = NaiveForecaster()
     cv = CV(fh, window_length, step_length=step_length)

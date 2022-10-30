@@ -15,6 +15,7 @@ import pandas as pd
 from sktime.datatypes import check_is_scitype, convert_to
 from sktime.exceptions import FitFailedWarning
 from sktime.forecasting.base import ForecastingHorizon
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.utils.validation.forecasting import check_cv, check_scoring
 
 PANDAS_MTYPES = ["pd.DataFrame", "pd.Series", "pd-multiindex", "pd_multiindex_hier"]
@@ -246,8 +247,12 @@ def evaluate(
         FitFailedWarning is raised.
     backend : {"dask", "loky", "multiprocessing", "threading"}, by default None.
         Runs parallel evaluate if specified.
+        "loky" ???
+        "multiprocessing" ???
+        "dask": uses `dask`, requires `dask` package in environment
     compute : bool, default=True
-        Only applied if backend is to set "dask". If set to True, returns `dd.DataFrame`
+        if backend="dask", whether returned DataFrame is computed.
+        If set to True, returns `pd.DataFrame`, otherwise `dask` `DataFrame`.
     **kwargs : Keyword arguments
         Only relevant if backend is specified. Additional kwargs are passed into
         `dask.distributed.get_client` or `dask.distributed.Client` if backend is
@@ -291,6 +296,12 @@ def evaluate(
     >>> results = evaluate(forecaster=NaiveVariance(forecaster),
     ... y=y, cv=cv, scoring=loss)
     """
+    if backend == "dask" and not _check_soft_dependencies("dask", severity="none"):
+        raise RuntimeError(
+            "running evaluate with backend='dask' requires the dask package installed,"
+            "but dask is not present in the python environment"
+        )
+
     _check_strategy(strategy)
     cv = check_cv(cv, enforce_start_with_window=True)
     scoring = check_scoring(scoring)
