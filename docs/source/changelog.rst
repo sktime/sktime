@@ -19,6 +19,15 @@ Version 0.14.0 - 2022-10-30
 Highlights
 ~~~~~~~~~~~~
 
+Core interface changes
+~~~~~~~~~~~~~~~~~~~~~~
+
+Forecasting
+^^^^^^^^^^^
+
+* the public ``cutoff`` attribute of forecasters has changed to ``pd.Index`` type, from index element t
+
+
 Deprecations and removals
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -52,11 +61,6 @@ Dependency changes
 
 Deprecations and removals
 ~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Forecasting
-^^^^^^^^^^^
-
-* the public ``cutoff`` attribute of forecasters has changed to ``pd.Index`` type, from index element type
 
 Data types, checks, conversions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
