@@ -301,17 +301,16 @@ class _PmdArimaAdapter(BaseForecaster):
 
         return pred_int
 
-    def get_fitted_params(self):
+    def _get_fitted_params(self):
         """Get fitted parameters.
 
         Returns
         -------
         fitted_params : dict
         """
-        self.check_is_fitted()
         names = self._get_fitted_param_names()
-        params = self._get_fitted_params()
-        fitted_params = {name: param for name, param in zip(names, params)}
+        params = self._get_fitted_params_arima_res()
+        fitted_params = {str(name): param for name, param in zip(names, params)}
 
         if hasattr(self._forecaster, "model_"):  # AutoARIMA
             fitted_params["order"] = self._forecaster.model_.order
@@ -327,8 +326,8 @@ class _PmdArimaAdapter(BaseForecaster):
 
         return fitted_params
 
-    def _get_fitted_params(self):
-        # Return parameter values under `arima_res_`
+    def _get_fitted_params_arima_res(self):
+        """Return parameter values under `arima_res_`."""
         if hasattr(self._forecaster, "model_"):  # AutoARIMA
             return self._forecaster.model_.arima_res_._results.params
         elif hasattr(self._forecaster, "arima_res_"):  # ARIMA
@@ -337,7 +336,7 @@ class _PmdArimaAdapter(BaseForecaster):
             raise NotImplementedError()
 
     def _get_fitted_param_names(self):
-        # Return parameter names under `arima_res_`
+        """Return parameter names under `arima_res_`."""
         if hasattr(self._forecaster, "model_"):  # AutoARIMA
             return self._forecaster.model_.arima_res_._results.param_names
         elif hasattr(self._forecaster, "arima_res_"):  # ARIMA
