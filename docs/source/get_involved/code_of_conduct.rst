@@ -197,7 +197,7 @@ details).
 
 This Code of Conduct is not intended as a static set of rules by which
 everyone must abide. Rather, you are invited to make suggestions for
-updates or clarifications by contacting the sktime community council at
+updates or clarifications by contacting the sktime Code of Conduct Committee via
 info@sktime.org, or by making a pull request to this document on
 GitHub.
 
