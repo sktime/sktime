@@ -1160,8 +1160,9 @@ def load_solar(
     >>> y = load_solar()  # doctest: +SKIP
     """
     if api_version is None:
-        name = "solar\\solar.csv"
-        path = os.path.join(MODULE, DIRNAME, name)
+        name = "solar"
+        fname = name + ".csv"
+        path = os.path.join(MODULE, DIRNAME, name, fname)
         y = pd.read_csv(
             path, index_col=0, parse_dates=["datetime_gmt"], dtype={1: float}
         )
