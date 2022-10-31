@@ -336,7 +336,7 @@ class _PmdArimaAdapter(BaseForecaster):
             raise NotImplementedError()
 
     def _get_fitted_param_names(self):
-        # Return parameter names under `arima_res_`
+        """Return parameter names under `arima_res_`."""
         if hasattr(self._forecaster, "model_"):  # AutoARIMA
             return self._forecaster.model_.arima_res_._results.param_names
         elif hasattr(self._forecaster, "arima_res_"):  # ARIMA
