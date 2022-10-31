@@ -153,9 +153,18 @@ class _StatsModelsAdapter(BaseForecaster):
         # add an offset to the index in the special case where the y passed in fit has
         # an integer index with
         if not isinstance(self._y.index, pd.RangeIndex) and (
-            isinstance(y_pred.index, pd.Index) and (y_pred.index.dtype == int)
+            isinstance(y_pred.index, pd.Index)
+            and (y_pred.index.dtype == int)
+            and (self._y.index.min() != 0)
         ):
-            warn("The index is modified due to an issue in statsmodels simulate")
+            warn(
+                (
+                    "Integer index not starting from zero is not supported by "
+                    "statsmodels. An offset will be added to the statsmodels "
+                    "predictions to ensure the index is correct."
+                ),
+                RuntimeWarning,
+            )
             y_pred.index = y_pred.index + int(self._y.index.min())
 
         # statsmodels forecasts all periods from start to end of forecasting
