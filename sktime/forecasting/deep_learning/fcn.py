@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """FCN for forecasting tem."""
+
 from sktime.networks.fcn import FCNNetwork
 from sktime.utils.validation._dependencies import _check_dl_dependencies
 
@@ -57,7 +58,7 @@ class FCNForecaster:
         model.compile(loss=self.loss, optimizer=self.optimizer_, metrics=self.metrics)
         return model
 
-    def _fit(self, X, y):
+    def _fit(self, y, X=None):
         """Temp docstring."""
         X = X.transpose(0, 2, 1)
         self.input_shape = X.shape[1:]
