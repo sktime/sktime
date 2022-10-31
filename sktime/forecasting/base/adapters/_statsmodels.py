@@ -150,12 +150,21 @@ class _StatsModelsAdapter(BaseForecaster):
                 **simulate_kwargs,
             )
 
+        # add an offset to the index in the special case where the y passed in fit has
+        # an integer index with
+        if not isinstance(self._y.index, pd.RangeIndex) and (
+            isinstance(y_pred.index, pd.Index) and (y_pred.index.dtype == int)
+        ):
+            warn("The index is modified due to an issue in statsmodels simulate")
+            y_pred.index = y_pred.index + int(self._y.index.min())
+
         # statsmodels forecasts all periods from start to end of forecasting
         # horizon, but only return given time points in forecasting horizon
         y_pred = y_pred.loc[fh.to_absolute(self.cutoff).to_pandas()]
 
         # convert the outputs to a "pd_multiindex" mtype
         y_pred = y_pred.stack()
+
         if isinstance(y_pred, pd.Series):
             y_pred = y_pred.to_frame()
         y_pred = y_pred.swaplevel()

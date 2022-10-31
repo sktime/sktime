@@ -10,6 +10,9 @@ import pandas as pd
 
 from sktime.forecasting.base.adapters import _StatsModelsAdapter
 
+# TODO: Add more simulation parameters from:
+# https://www.statsmodels.org/dev/generated/statsmodels.tsa.statespace.structural.UnobservedComponentsResults.simulate.html#statsmodels.tsa.statespace.structural.UnobservedComponentsResults.simulate
+
 
 class UnobservedComponents(_StatsModelsAdapter):
     r"""Wrapper class of the UnobservedComponents model from statsmodels.

@@ -13,9 +13,12 @@ from sktime.forecasting.base.adapters import _StatsModelsAdapter
 _all_ = ["DynamicFactor"]
 __author__ = ["Ris-Bali", "lbventura"]
 
+# TODO: Add more simulation parameters from:
+# https://www.statsmodels.org/dev/generated/statsmodels.tsa.statespace.dynamic_factor.DynamicFactorResults.simulate.html#statsmodels.tsa.statespace.dynamic_factor.DynamicFactorResults.simulate
+
 
 class DynamicFactor(_StatsModelsAdapter):
-    """Dynamic Factor Foracster.
+    r"""Dynamic Factor Foracster.
 
     Direct interface for `statsmodels.tsa.statespace.dynamic_factor
 
@@ -103,6 +106,34 @@ class DynamicFactor(_StatsModelsAdapter):
         If used, some features of the results object will not be available
         (including smoothed results and in-sample prediction),
         although out-of-sample forecasting is possible.
+    simulations_measurement_shocks : array_like, optional
+        Only relevant for the simulate method.
+        If specified, these are the shocks to the measurement equation,
+        :math:`\varepsilon_t`. If unspecified, these are automatically
+        generated using a pseudo-random number generator. If specified,
+        must be shaped `nsimulations` x `k_endog`, where `k_endog` is the
+        same as in the state space model.
+    simulations_state_shocks : array_like, optional
+        Only relevant for the simulate method.
+        If specified, these are the shocks to the state equation,
+        :math:`\eta_t`. If unspecified, these are automatically
+        generated using a pseudo-random number generator. If specified,
+        must be shaped `nsimulations` x `k_posdef` where `k_posdef` is the
+        same as in the state space model.
+    simulations_initial_state : array_like, optional
+        Only relevant for the simulate method.
+        If specified, this is the initial state vector to use in
+        simulation, which should be shaped (`k_states` x 1), where
+        `k_states` is the same as in the state space model. If unspecified,
+        but the model has been initialized, then that initialization is
+        used. This must be specified if `anchor` is anything other than
+        "start" or 0 (or else you can use the `simulate` method on a
+        results object rather than on the model object).
+    random_state : int, RandomState instance or None, optional ,
+        default=None – If int, random_state is the seed used by the random
+        number generator; If RandomState instance, random_state is the random
+        number generator; If None, the random number generator is the
+        RandomState instance used by np.random.
 
     See Also
     --------
@@ -135,6 +166,7 @@ class DynamicFactor(_StatsModelsAdapter):
         "X-y-must-have-same-index": True,
         "enforce_index_type": None,
         "capability:pred_int": True,
+        "capability:simulate": True,
     }
 
     def __init__(
@@ -161,6 +193,10 @@ class DynamicFactor(_StatsModelsAdapter):
         optim_hessian=None,
         flags=None,
         low_memory=False,
+        simulations_measurement_shocks=None,
+        simulations_state_shocks=None,
+        simulations_initial_state=None,
+        random_state=None,
     ):
         # Model Params
         self.k_factors = k_factors
@@ -187,6 +223,19 @@ class DynamicFactor(_StatsModelsAdapter):
         self.optim_hessian = optim_hessian
         self.flags = flags
         self.low_memory = low_memory
+        self.random_state = random_state
+
+        # Simulation params
+        self.simulations_measurement_shocks = simulations_measurement_shocks
+        self.simulations_state_shocks = simulations_state_shocks
+        self.simulations_initial_state = simulations_initial_state
+
+        # dictionary for simulation kwargs, part of the statsmodels adapter logic
+        self._simulate_kwargs = {
+            "measurement_shocks": simulations_measurement_shocks,
+            "state_shocks": simulations_state_shocks,
+            "initial_state": simulations_initial_state,
+        }
 
         super(DynamicFactor, self).__init__()
 
