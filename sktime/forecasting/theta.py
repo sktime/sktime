@@ -289,17 +289,26 @@ class ThetaModularForecaster(BaseForecaster):
     Parameters
     ----------
     forecasters: list of tuples (str, estimator, int or pd.index), default=None
-        Forecasters to apply to each Theta-line. If None, will apply
-        PolynomialTrendForecaster (linear regression) the the Theta-lines
-        where theta_value equals 0, and ExponentialSmoothing - where theta_value
-        is different from 0.
+        Forecasters to apply to each Theta-line based on the third element
+        (the index). Indices must correspond to the theta_values, see Examples.
+        If None, will apply PolynomialTrendForecaster (linear regression) to the
+        Theta-lines where theta_value equals 0, and ExponentialSmoothing - where
+        theta_value is different from 0.
     theta_values: sequence of float, default=(0,2)
-        Theta-coefficients to use in transformation.
+        Theta-coefficients to use in transformation. If `forecasters` parameter
+        is passed, must be the same length as `forecasters`.
     aggfunc: str, default="mean"
-        Aggregation function to apply to results of theta-lines predictions
-        (multivariate) in order to get resulting prediction (univariate).
-    weights: lsit of floats, default=None
-        Weights to apply in aggregation.
+        Must be one of ["mean", "median", "min", "max", "gmean"].
+        Calls :func:`_aggregate` of
+        :class:`EnsembleForecaster<sktime.forecasting.compose._ensemble>` to
+        apply to results of multivariate theta-lines predictions (pd.DataFrame)
+        in order to get resulting univariate prediction (pd.Series).
+        The aggregation takes place across different theta-lines (row-wise), for
+        given time stamps and hierarchy indices, if present.
+    weights: list of floats, default=None
+        Weights to apply in aggregation. Weights are passed as a parameter to
+        the aggregation function, must correspond to each theta-line. None will
+        result in non-weighted aggregation.
 
     References
     ----------
@@ -319,8 +328,14 @@ class ThetaModularForecaster(BaseForecaster):
     --------
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.theta import ThetaModularForecaster
+    >>> from sktime.forecasting.arima import AutoARIMA
+    >>> from sktime.forecasting.trend import PolynomialTrendForecaster
     >>> y = load_airline()
-    >>> forecaster = ThetaModularForecaster()
+    >>> forecaster = ThetaModularForecaster(forecasters= [
+                ("trend", PolynomialTrendForecaster(), 0),
+                ("arima", AutoARIMA(), 3),],
+                theta_values=(0, 3)
+                )
     >>> forecaster.fit(y)
     ThetaModularForecaster(...)
     >>> y_pred = forecaster.predict(fh=[1,2,3])
@@ -386,7 +401,6 @@ class ThetaModularForecaster(BaseForecaster):
         # Call predict on the forecaster directly, not on the pipeline
         # because of output conversion
         Y_pred = self.pipe_.steps_[-1][-1].predict(fh, X)
-
         return _aggregate(Y_pred, aggfunc=self.aggfunc, weights=self.weights)
 
     def _update(self, y, X=None, update_params=True):
@@ -423,5 +437,5 @@ class ThetaModularForecaster(BaseForecaster):
             ]
         }
         params1 = {"theta_values": (0, 3)}
-
-        return [params0, params1]
+        params2 = {"weights": [1.0, 0.8]}
+        return [params0, params1, params2]
