@@ -416,7 +416,7 @@ def evaluate(
         # Otherwise use joblib
         from joblib import Parallel, delayed
 
-        results = Parallel(**kwargs)(
+        results = Parallel(backend=backend, **kwargs)(
             delayed(_evaluate_window)(
                 y,
                 X,
