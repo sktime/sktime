@@ -247,16 +247,19 @@ def evaluate(
         FitFailedWarning is raised.
     backend : {"dask", "loky", "multiprocessing", "threading"}, by default None.
         Runs parallel evaluate if specified.
-        "loky" ???
-        "multiprocessing" ???
-        "dask": uses `dask`, requires `dask` package in environment
+        - "loky", "multiprocessing" and "threading": uses `joblib` Parallel loops
+        - "dask": uses `dask`, requires `dask` package in environment
+        Recommendation: Use "dask" or "loky" for parallel evaluate.
+        "threading" is unlikely to see speed ups due to the GIL and the serialization
+        backend (`cloudpickle`) for "dask" and "loky" is generally more robust than the
+        standard `pickle` library used in "multiprocessing".
     compute : bool, default=True
-        if backend="dask", whether returned DataFrame is computed.
-        If set to True, returns `pd.DataFrame`, otherwise `dask` `DataFrame`.
+        If backend="dask", whether returned DataFrame is computed.
+        If set to True, returns `pd.DataFrame`, otherwise `dask.dataframe.DataFrame`.
     **kwargs : Keyword arguments
         Only relevant if backend is specified. Additional kwargs are passed into
         `dask.distributed.get_client` or `dask.distributed.Client` if backend is
-        set to "dask", otherwise kwargs are passed into `joblib.Parallel`
+        set to "dask", otherwise kwargs are passed into `joblib.Parallel`.
 
     Returns
     -------
