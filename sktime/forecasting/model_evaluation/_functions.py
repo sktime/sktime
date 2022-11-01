@@ -3,7 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements functions to be used in evaluating forecasting models."""
 
-__author__ = ["aiwalter", "mloning"]
+__author__ = ["aiwalter", "mloning", "fkiraly"]
 __all__ = ["evaluate"]
 
 import time
@@ -12,15 +12,12 @@ import warnings
 import numpy as np
 import pandas as pd
 
+from sktime.datatypes import check_is_scitype, convert_to
 from sktime.exceptions import FitFailedWarning
 from sktime.forecasting.base import ForecastingHorizon
-from sktime.utils.validation.forecasting import (
-    check_cv,
-    check_fh,
-    check_scoring,
-    check_X,
-)
-from sktime.utils.validation.series import check_series
+from sktime.utils.validation.forecasting import check_cv, check_scoring
+
+PANDAS_MTYPES = ["pd.DataFrame", "pd.Series", "pd-multiindex", "pd_multiindex_hier"]
 
 
 def evaluate(
@@ -38,13 +35,13 @@ def evaluate(
     Parameters
     ----------
     forecaster : sktime.forecaster
-        Any forecaster
+        sktime forecaster (concrete BaseForecaster descendant)
     cv : Temporal cross-validation splitter
         Splitter of how to split the data into test data and train data
-    y : pd.Series
-        Target time series to which to fit the forecaster.
-    X : pd.DataFrame, default=None
-        Exogenous variables
+    y : sktime time series container
+        Target (endogeneous) time series used in the evaluation experiment
+    X : sktime time series container, of same mtype as y
+        Exogenous time series used in the evaluation experiment
     strategy : {"refit", "update", "no-update_params"}, optional, default="refit"
         defines the ingestion mode when the forecaster sees new data when window expands
         "refit" = forecaster is refitted to each training window
@@ -105,12 +102,21 @@ def evaluate(
     _check_strategy(strategy)
     cv = check_cv(cv, enforce_start_with_window=True)
     scoring = check_scoring(scoring)
-    y = check_series(
-        y,
-        enforce_univariate=forecaster.get_tag("scitype:y") == "univariate",
-        enforce_multivariate=forecaster.get_tag("scitype:y") == "multivariate",
-    )
-    X = check_X(X)
+
+    ALLOWED_SCITYPES = ["Series", "Panel", "Hierarchical"]
+
+    y_valid, _, _ = check_is_scitype(y, scitype=ALLOWED_SCITYPES, return_metadata=True)
+    # todo: more informative error message
+    assert y_valid
+
+    y_inner = convert_to(y, to_type=PANDAS_MTYPES)
+
+    if X is not None:
+        X_valid, _, _ = check_is_scitype(
+            X, scitype=ALLOWED_SCITYPES, return_metadata=True
+        )
+        assert X_valid
+        X_inner = convert_to(X, to_type=PANDAS_MTYPES)
 
     # Define score name.
     score_name = "test_" + scoring.name
@@ -119,7 +125,7 @@ def evaluate(
     results = []
 
     # Run temporal cross-validation.
-    for i, (train, test) in enumerate(cv.split(y)):
+    for i, (train, test) in enumerate(cv.split_loc(y)):
 
         # set default result values in case estimator fitting fails
         score = error_score
@@ -128,11 +134,31 @@ def evaluate(
         cutoff = np.nan
         y_pred = np.nan
 
-        # split data
-        y_train, y_test, X_train, X_test = _split(y, X, train, test, cv.fh)
+        # split data according to cv
+        y_train = _subset_keep_freq(y_inner, train)
+        y_test = _subset_keep_freq(y_inner, test)
+
+        if X is not None:
+            X_train = _subset_keep_freq(X_inner, train)
+            # For X_test, we select the full range of test/train values.
+            # for those transformers that change the size of input.
+            test_plus_train = train.union(test)
+            X_test = _subset_keep_freq(X_inner, test_plus_train)
+        else:
+            X_train = None
+            X_test = None
 
         # create forecasting horizon
-        fh = ForecastingHorizon(y_test.index, is_relative=False)
+        # if cv object has fh, we use that
+        if hasattr(cv, "fh") and cv.fh is not None:
+            fh = cv.fh
+        # otherwise, if y_test is not hierarchical, we simply take the index of y_test
+        elif not isinstance(y_test.index, pd.MultiIndex):
+            fh = ForecastingHorizon(y_test.index, is_relative=False)
+        # otherwise, y_test is hierarchical, and we take its unique time indices
+        else:
+            fh_idx = y_test.index.get_level_values(-1).unique()
+            fh = ForecastingHorizon(fh_idx, is_relative=False)
 
         try:
             # fit/update
@@ -212,29 +238,6 @@ def evaluate(
     return results
 
 
-def _split(y, X, train, test, fh):
-    """Split y and X for given train and test set indices."""
-    y_train = y.iloc[train]
-    y_test = y.iloc[test]
-
-    cutoff = y_train.index[-1]
-    fh = check_fh(fh)
-    fh = fh.to_relative(cutoff)
-
-    if X is not None:
-        X_train = X.iloc[train, :]
-
-        # We need to expand test indices to a full range, since some forecasters
-        # require the full range of exogenous values.
-        test = np.arange(test[0] - fh.min(), test[-1]) + 1
-        X_test = X.iloc[test, :]
-    else:
-        X_train = None
-        X_test = None
-
-    return y_train, y_test, X_train, X_test
-
-
 def _check_strategy(strategy):
     """Assert strategy value.
 
@@ -252,3 +255,12 @@ def _check_strategy(strategy):
     valid_strategies = ("refit", "update", "no-update_params")
     if strategy not in valid_strategies:
         raise ValueError(f"`strategy` must be one of {valid_strategies}")
+
+
+def _subset_keep_freq(y, idx):
+    """Subset y using y.loc[idx] but ensure that index.freq preserved."""
+    y_idx = y.loc[idx]
+    if hasattr(y.index, "freq") and y.index.freq is not None:
+        if hasattr(y_idx.index, "freq") and y_idx.index.freq is None:
+            y_idx.index.freq = y.index.freq
+    return y_idx

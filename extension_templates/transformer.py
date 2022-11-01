@@ -28,7 +28,7 @@ Mandatory implements:
 Optional implements:
     inverse transformation      - _inverse_transform(self, X, y=None)
     update                      - _update(self, X, y=None)
-    fitted parameter inspection - get_fitted_params()
+    fitted parameter inspection - _get_fitted_params()
 
 Testing - implement if sktime transformer (not needed locally):
     get default parameters for test instance(s) - get_test_params()
@@ -46,6 +46,13 @@ Testing - implement if sktime transformer (not needed locally):
 from sktime.transformations.base import BaseTransformer
 
 # todo: add any necessary sktime internal imports here
+
+# todo: if any imports are sktime soft dependencies:
+#  * make sure to fill in the "python_dependencies" tag with the package import name
+#  * add a _check_soft_dependencies warning here, example:
+#
+# from sktime.utils.validation._dependencies import check_soft_dependencies
+# _check_soft_dependencies("soft_dependency_name", severity="warning")
 
 
 class MyTransformer(BaseTransformer):
@@ -92,35 +99,150 @@ class MyTransformer(BaseTransformer):
     #   y_inner_mtype must be changed to one or a list of compatible sktime mtypes
     #  the other tags are "safe defaults" which can usually be left as-is
     _tags = {
+        # to list all valid tags with description, use sktime.registry.all_tags
+        #   all_tags(estimator_types="transformer", as_dataframe=True)
+        #
+        #
+        # behavioural tags: transformer type
+        # ----------------------------------
+        #
+        # scitype:transform-input, scitype:transform-output, scitype:transform-labels
+        # control the input/output type of transform, in terms of scitype
+        #
+        # scitype:transform-input, scitype:transform-output should be the
+        # simplest scitype that describes the mapping, taking into account vectorization
+        # a transform that produces Series when given Series, Panel when given Panel
+        #   should have both transform-input and transform-output as "Series"
+        # a transform that produces a tabular DataFrame (Table)
+        #   when given Series or Panel should have transform-input "Series"
+        #       and transform-output as "Primitives"
         "scitype:transform-input": "Series",
-        # what is the scitype of X: Series, or Panel
+        # valid values: "Series", "Panel"
         "scitype:transform-output": "Series",
-        # what scitype is returned: Primitives, Series, Panel
+        # valid values: "Series", "Panel", "Primitives"
+        #
+        # scitype:instancewise = is fit_transform an instance-wise operation?
+        # instance-wise = only values of a given series instance are used to transform
+        #   that instance. Example: Fourier transform; non-example: series PCA
+        "scitype:instancewise": True,
+        #
+        # scitype:transform-labels types the y used in transform
+        #   if y is not used in transform, this should be "None"
         "scitype:transform-labels": "None",
-        # what is the scitype of y: None (not needed), Primitives, Series, Panel
-        "scitype:instancewise": True,  # is this an instance-wise transform?
-        "capability:inverse_transform": False,  # can the transformer inverse transform?
-        "univariate-only": False,  # can the transformer handle multivariate X?
-        "X_inner_mtype": "pd.DataFrame",  # which mtypes do _fit/_predict support for X?
-        # this can be a Panel mtype even if transform-input is Series, vectorized
-        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
-        "requires_y": False,  # does y need to be passed in fit?
-        "enforce_index_type": None,  # index type that needs to be enforced in X/y
-        "fit_is_empty": True,  # is fit empty and can be skipped? Yes = True
-        "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
+        # valid values: "None" (not needed), "Primitives", "Series", "Panel"
+        #
+        #
+        # behavioural tags: internal type
+        # ----------------------------------
+        #
+        # X_inner_mtype, y_inner_mtype control which format X/y appears in
+        # in the inner functions _fit, _transform, etc
+        "X_inner_mtype": "pd.DataFrame",
+        "y_inner_mtype": "None",
+        # valid values: str and list of str
+        # if str, must be a valid mtype str, in sktime.datatypes.MTYPE_REGISTER
+        #   of scitype Series, Panel (panel data) or Hierarchical (hierarchical series)
+        #   y_inner_mtype can also be of scitype Table (one row/instance per series)
+        #   in that case, all inputs are converted to that one type
+        # if list of str, must be a list of valid str specifiers
+        #   in that case, X/y are passed through without conversion if on the list
+        #   if not on the list, converted to the first entry of the same scitype
+        #
+        # univariate-only controls whether internal X can be univariate/multivariate
+        # if True (only univariate), always applies vectorization over variables
+        "univariate-only": False,
+        # valid values: True = inner _fit, _transform receive only univariate serie
+        #   False = uni- and multivariate series are passed to inner methods
+        #
+        # requires_y = does y need to be passed in fit?
+        "requires_y": False,
+        # valid values: False (no), True = exception is raised if no y is seen in _fit
+        #   y can be passed or not in _transform for either value of requires_y
+        #
+        # remember_data = whether all data seen is remembered as self._X
+        "remember_data": False,
+        # valid vales: False (no), True = self._X is created/update in fit/update
+        #   self._X is all X passed via fit or update, updated via update_data
+        #   self._X is of mtype seen in fit, update adds more data to the same container
+        #   self._X can be used (readonly) by the estimator in _fit, _transform, _update
+        #   if set to True, fit-is-empty must be set to False
+        #
+        # capability tags: properties of the estimator
+        # --------------------------------------------
+        #
+        # fit_is_empty = is fit empty and can be skipped?
+        "fit_is_empty": True,
+        # valid values: True = _fit is considered empty and skipped, False = No
+        # CAUTION: default is "True", i.e., _fit will be skipped even if implemented
+        #
+        # X-y-must-have-same-index = can estimator handle different X/y index?
+        "X-y-must-have-same-index": False,
+        # valid values: boolean True (yes), False (no)
+        # if True, raises exception if X.index is not contained in y.index
+        #
+        # enforce_index_type = index type that needs to be enforced in X/y
+        "enforce_index_type": None,
+        # valid values: pd.Index subtype, or list of pd.Index subtype
+        # if not None, raises exception if X.index, y.index level -1 is not of that type
+        #
+        # transform-returns-same-time-index = does transform return same index as input?
         "transform-returns-same-time-index": False,
-        # does transform return have the same time index as input X
-        "skip-inverse-transform": False,  # is inverse-transform skipped when called?
+        # valid values: boolean True (yes), False (no)
+        # if True, transform and inverse_transform returns should have
+        #   same length and same index (if pandas) as inputs
+        # no exception is raised if this tag is incorrectly set
+        #
+        # capability:inverse_transform = is inverse_transform implemented?
+        "capability:inverse_transform": False,
+        # valid values: boolean True (yes), False (no)
+        # if True, _inverse_transform must be implemented
+        # if False, exception is raised if inverse_transform is called,
+        #   unless the skip-inverse-transform tag is set to True
+        #
+        # skip-inverse-transform = is inverse-transform skipped when called?
+        "skip-inverse-transform": False,
+        # if False, capability:inverse_transform tag behaviour is as per devault
+        # if True, inverse_transform is the identity transform and raises no exception
+        #   this is useful for transformers where inverse_transform
+        #   may be called but should behave as the identity, e.g., imputers
+        #
+        # capability:unequal_length = can the transformer handle unequal length panels,
+        #   i.e., when passed unequal length instances in Panel or Hierarchical data
         "capability:unequal_length": True,
-        # can the transformer handle unequal length time series (if passed Panel)?
+        # valid values: boolean True (yes), False (no)
+        # if False, may raise exception when passed unequal length Panel/Hierarchical
+        #
+        # capability:unequal_length:removes = if passed Panel/Hierarchical,
+        #   is transform result always guaranteed to be equal length (and series)?
         "capability:unequal_length:removes": False,
-        # is transform result always guaranteed to be equal length (and series)?
-        #   not relevant for transformers that return Primitives in transform-output
+        # valid values: boolean True (yes), False (no)
+        # applicable only if scitype:transform-output is not "Primitives"
+        # used for search index and validity checking, does not raise direct exception
+        #
+        # handles-missing-data = can the transformer handle missing data (np or pd.NA)?
         "handles-missing-data": False,  # can estimator handle missing data?
-        # todo: rename to capability:missing_values
+        # valid values: boolean True (yes), False (no)
+        # if False, may raise exception when passed time series with missing values
+        #
+        # capability:missing_values:removes = if passed time series
+        #   is transform result always guaranteed to contain no missing values?
         "capability:missing_values:removes": False,
-        # is transform result always guaranteed to contain no missing values?
-        "python_version": None,  # PEP 440 python version specifier to limit versions
+        # valid values: boolean True (yes), False (no)
+        # used for search index and validity checking, does not raise direct exception
+        #
+        #
+        # dependency tags: python version and soft dependencies
+        # -----------------------------------------------------
+        #
+        # python version requirement
+        "python_version": None,
+        # valid values: str, PEP 440 valid python version specifiers
+        # raises exception at construction if local python veresion is incompatible
+        #
+        # soft dependency requirement
+        "python_dependencies": None
+        # valid values: str or list of str
+        # raises exception at construction if modules at strings cannot be imported
     }
     # in case of inheritance, concrete class should typically set tags
     #  alternatively, descendants can set tags in __init__
@@ -302,15 +424,32 @@ class MyTransformer(BaseTransformer):
         #  the clones, not the originals, should be used or fitted if needed
 
     # todo: consider implementing this, optional
+    # implement only if different from default:
+    #   default retrieves all self attributes ending in "_"
+    #   and returns them with keys that have the "_" removed
     # if not implementing, delete the method
-    def get_fitted_params(self):
+    #   avoid overriding get_fitted_params
+    def _get_fitted_params(self):
         """Get fitted parameters.
+
+        private _get_fitted_params, called from get_fitted_params
+
+        State required:
+            Requires state to be "fitted".
 
         Returns
         -------
-        fitted_params : dict
+        fitted_params : dict with str keys
+            fitted parameters, keyed by names of fitted parameter
         """
         # implement here
+        #
+        # when this function is reached, it is already guaranteed that self is fitted
+        #   this does not need to be checked separately
+        #
+        # parameters of components should follow the sklearn convention:
+        #   separate component name from parameter name by double-underscore
+        #   e.g., componentname__paramname
 
     # todo: return default parameters, so that a test instance can be created
     #   required for automated unit and integration testing of estimator

@@ -18,7 +18,7 @@ from sklearn.base import BaseEstimator
 from sklearn.utils import check_random_state
 
 from sktime.exceptions import NotFittedError
-from sktime.utils.numba.stats import iqr, mean, median, numba_max, numba_min, slope, std
+from sktime.utils.numba.stats import iqr, mean, numba_max, numba_min, slope, std
 from sktime.utils.validation.panel import check_X
 
 
@@ -670,7 +670,7 @@ def _summary_stat(X, att):
     elif att == 24:
         function = slope
     elif att == 25:
-        function = median
+        function = np.median
     elif att == 26:
         function = iqr
     elif att == 27:

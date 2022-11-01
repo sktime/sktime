@@ -8,24 +8,37 @@ __all__ = []
 
 import numpy as np
 import pandas as pd
-from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import MinMaxScaler, StandardScaler
+from sklearn.svm import SVR
 
-from sktime.datasets import load_airline
+from sktime.datasets import load_airline, load_longley
 from sktime.datatypes import get_examples
 from sktime.datatypes._utilities import get_window
-from sktime.forecasting.compose import ForecastingPipeline, TransformedTargetForecaster
-from sktime.forecasting.model_selection import temporal_train_test_split
+from sktime.forecasting.compose import (
+    ForecastingPipeline,
+    TransformedTargetForecaster,
+    make_reduction,
+)
+from sktime.forecasting.model_selection import (
+    ExpandingWindowSplitter,
+    ForecastingGridSearchCV,
+    temporal_train_test_split,
+)
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.sarimax import SARIMAX
 from sktime.forecasting.trend import PolynomialTrendForecaster
 from sktime.transformations.hierarchical.aggregate import Aggregator
 from sktime.transformations.series.adapt import TabularToSeriesAdaptor
+from sktime.transformations.series.boxcox import LogTransformer
+from sktime.transformations.series.compose import OptionalPassthrough
 from sktime.transformations.series.detrend import Detrender
+from sktime.transformations.series.difference import Differencer
 from sktime.transformations.series.exponent import ExponentTransformer
 from sktime.transformations.series.impute import Imputer
 from sktime.transformations.series.outlier_detection import HampelFilter
 from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
 from sktime.utils._testing.series import _make_series
+from sktime.utils.estimators import MockForecaster
 
 
 def test_pipeline():
@@ -128,6 +141,73 @@ def test_pipeline_with_detrender():
     )
     trans_fc.fit(y)
     trans_fc.predict(1)
+
+
+def test_pipeline_with_dimension_changing_transformer():
+    """Example of pipeline with dimension changing transformer.
+
+    The code below should run without generating any errors.  Issues
+    can arise from using Differencer in the pipeline.
+    """
+    y, X = load_longley()
+
+    # split train/test both y and X
+    fh = [1, 2, 3]
+    train_model, test_model = temporal_train_test_split(y, fh=fh)
+    X_train = X[X.index.isin(train_model.index)]
+
+    # pipeline
+    pipe = TransformedTargetForecaster(
+        steps=[
+            ("log", OptionalPassthrough(LogTransformer())),
+            ("differencer", Differencer(na_handling="drop_na")),
+            ("scaler", TabularToSeriesAdaptor(StandardScaler())),
+            (
+                "myforecasterpipe",
+                ForecastingPipeline(
+                    steps=[
+                        ("logX", OptionalPassthrough(LogTransformer())),
+                        ("differencerX", Differencer(na_handling="drop_na")),
+                        ("scalerX", TabularToSeriesAdaptor(StandardScaler())),
+                        ("myforecaster", make_reduction(SVR())),
+                    ]
+                ),
+            ),
+        ]
+    )
+
+    # cv setup
+    N_cv_fold = 1
+    step_cv = 1
+    cv = ExpandingWindowSplitter(
+        initial_window=len(train_model) - (N_cv_fold - 1) * step_cv - len(fh),
+        start_with_window=True,
+        step_length=step_cv,
+        fh=fh,
+    )
+
+    param_grid = [
+        {
+            "log__passthrough": [False],
+            "myforecasterpipe__logX__passthrough": [False],
+            "myforecasterpipe__myforecaster__window_length": [2, 3],
+            "myforecasterpipe__myforecaster__estimator__C": [10, 100],
+        },
+        {
+            "log__passthrough": [True],
+            "myforecasterpipe__logX__passthrough": [True],
+            "myforecasterpipe__myforecaster__window_length": [2, 3],
+            "myforecasterpipe__myforecaster__estimator__C": [10, 100],
+        },
+    ]
+
+    # grid search
+    gscv = ForecastingGridSearchCV(
+        forecaster=pipe, cv=cv, param_grid=param_grid, verbose=1
+    )
+
+    # fit
+    gscv.fit(train_model, X=X_train)
 
 
 def test_nested_pipeline_with_index_creation_y_before_X():
@@ -263,3 +343,30 @@ def test_forecasting_pipeline_dunder_exog():
     expected = compute_expected_y_pred(y_train, X_train, X_test, fh)
     _assert_array_almost_equal(actual, expected, decimal=2)
     _assert_array_almost_equal(actual_alt, expected, decimal=2)
+
+
+def test_tag_handles_missing_data():
+    """Test missing data with Imputer in pipelines.
+
+    Make sure that no exception is raised when NaN and Imputer is given.
+    This test is based on bug issue #3547.
+    """
+    forecaster = MockForecaster()
+    # make sure that test forecaster cant handle missing data
+    forecaster.set_tags(**{"handles-missing-data": False})
+
+    y = _make_series()
+    y[10] = np.nan
+
+    # test only TransformedTargetForecaster
+    y_pipe = TransformedTargetForecaster(
+        steps=[("transformer_y", Imputer()), ("model", forecaster)]
+    )
+    y_pipe.fit(y)
+
+    # test TransformedTargetForecaster and ForecastingPipeline nested
+    y_pipe = TransformedTargetForecaster(
+        steps=[("transformer_y", Imputer()), ("model", forecaster)]
+    )
+    X_pipe = ForecastingPipeline(steps=[("forecaster", y_pipe)])
+    X_pipe.fit(y)
