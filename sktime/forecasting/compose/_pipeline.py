@@ -1572,7 +1572,7 @@ class Permute(_DelegatedForecaster, _HeterogenousMetaEstimator):
                     ("foobar", NaiveForecaster()),
                 ]
             ),
-            "permutation": ["bar", "foo", "foobar"]
+            "permutation": ["bar", "foo", "foobar"],
         }
 
         # transformers have no fit, TransformedTargetForecaster
