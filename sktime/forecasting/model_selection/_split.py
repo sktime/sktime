@@ -13,6 +13,7 @@ __all__ = [
 __author__ = ["mloning", "kkoralturk", "khrapovs"]
 
 from typing import Iterator, Optional, Tuple, Union
+from warnings import warn
 
 import numpy as np
 import pandas as pd
@@ -879,8 +880,10 @@ class BaseWindowSplitter(BaseSplitter):
             raise ValueError(
                 "`start_with_window` must be True if `initial_window` is given"
             )
-        if self._initial_window <= self.window_length:
-            raise ValueError("`initial_window` must greater than `window_length`")
+        if self._initial_window != 0 and self._initial_window <= self.window_length:
+            raise ValueError(
+                "`initial_window` must be either 0 or greater than `window_length`"
+            )
         if is_int(x=self._initial_window):
             end = self._initial_window
         else:
@@ -1173,7 +1176,7 @@ class ExpandingWindowSplitter(BaseWindowSplitter):
         Window length
     step_length : int or timedelta or pd.DateOffset, optional (default=1)
         Step length between windows
-    start_with_window : bool, optional (default=True)
+    start_with_window : bool, optional (default=True)  # TODO: remove in 0.15.0
         - If True, starts with full window.
         - If False, starts with empty window.
 
@@ -1193,8 +1196,16 @@ class ExpandingWindowSplitter(BaseWindowSplitter):
         fh: FORECASTING_HORIZON_TYPES = DEFAULT_FH,
         initial_window: ACCEPTED_WINDOW_LENGTH_TYPES = DEFAULT_WINDOW_LENGTH,
         step_length: NON_FLOAT_WINDOW_LENGTH_TYPES = DEFAULT_STEP_LENGTH,
-        start_with_window: bool = True,
+        start_with_window: bool = True,  # TODO: remove in 0.15.0
     ) -> None:
+
+        if not start_with_window:  # TODO: remove 0.15.0
+            warn(
+                '"start_with_window" will be depreciated in 0.15.0, '
+                "use initial_window=0 instead"
+            )
+            initial_window = 0
+
         # Note that we pass the initial window as the window_length below. This
         # allows us to use the common logic from the parent class, while at the same
         # time expose the more intuitive name for the ExpandingWindowSplitter.
@@ -1203,7 +1214,7 @@ class ExpandingWindowSplitter(BaseWindowSplitter):
             window_length=initial_window,
             initial_window=None,
             step_length=step_length,
-            start_with_window=start_with_window,
+            start_with_window=start_with_window,  # TODO: remove in 0.15.0
         )
 
         # initial_window needs to be written to self for sklearn compatibility

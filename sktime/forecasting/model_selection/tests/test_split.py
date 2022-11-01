@@ -122,7 +122,6 @@ def _check_cv(cv, y, allow_empty_window=False):
     n_splits = cv.get_n_splits(y)
     _check_n_splits(n_splits)
     assert n_splits == len(train_windows) == len(test_windows) == len(cutoffs)
-
     return train_windows, test_windows, cutoffs, n_splits
 
 
@@ -346,7 +345,7 @@ def test_sliding_window_splitter_initial_window_smaller_than_window_raise_error(
         window_length=10,
         initial_window=5,
     )
-    message = "`initial_window` must greater than `window_length`"
+    message = "`initial_window` must be either 0 or greater than `window_length`"
     with pytest.raises(ValueError, match=message):
         next(cv.split(y))
 
