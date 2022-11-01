@@ -380,13 +380,6 @@ def test_expanding_window_splitter_start_with_initial_window_zero(y, fh, step_le
 
         assert np.vstack(test_windows).shape == (n_splits, len(check_fh(fh)))
 
-        # n_incomplete = _get_n_incomplete_windows(window_length, step_length)
-        # train_windows = train_windows[n_incomplete:]
-        #
-        # assert np.vstack(train_windows).shape == (
-        #     n_splits - n_incomplete,
-        #     _coerce_duration_to_int(duration=window_length, freq="D"),
-        # )
     else:
         match = "Unsupported combination of types"
         with pytest.raises(TypeError, match=match):
