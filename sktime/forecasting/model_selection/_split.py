@@ -1207,7 +1207,6 @@ class ExpandingWindowSplitter(BaseWindowSplitter):
                 '"start_with_window" will be depreciated in 0.15.0, '
                 "use initial_window=0 instead"
             )
-            initial_window = 0
 
         # Note that we pass the initial window as the window_length below. This
         # allows us to use the common logic from the parent class, while at the same
