@@ -122,6 +122,7 @@ def _check_cv(cv, y, allow_empty_window=False):
     n_splits = cv.get_n_splits(y)
     _check_n_splits(n_splits)
     assert n_splits == len(train_windows) == len(test_windows) == len(cutoffs)
+
     return train_windows, test_windows, cutoffs, n_splits
 
 
