@@ -1534,7 +1534,7 @@ class Permute(_DelegatedForecaster, _HeterogenousMetaEstimator):
                     permutation {set(permutation)}."""
                 )
 
-            estimator_tuples_permuted = [(k, v) for k, v in estimator_dict.items()]
+            estimator_tuples_permuted = [(k, estimator_dict[k]) for k in permutation]
 
             self.estimator_ = estimator.clone()
             self.estimator_.set_params({steps_arg: estimator_tuples_permuted})
