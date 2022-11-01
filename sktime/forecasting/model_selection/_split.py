@@ -829,6 +829,9 @@ class BaseWindowSplitter(BaseSplitter):
         self.step_length = step_length
         self.start_with_window = start_with_window
         self.initial_window = initial_window
+        if self.initial_window == 0:
+            self.start_with_window = False
+            self.initial_window = None
         super(BaseWindowSplitter, self).__init__(fh=fh, window_length=window_length)
 
     @property
