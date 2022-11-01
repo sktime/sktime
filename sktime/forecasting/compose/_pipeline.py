@@ -8,7 +8,9 @@ __all__ = ["TransformedTargetForecaster", "ForecastingPipeline", "ForecastX"]
 import pandas as pd
 
 from sktime.base import _HeterogenousMetaEstimator
+from sktime.datatypes import ALL_TIME_SERIES_MTYPES
 from sktime.forecasting.base._base import BaseForecaster
+from sktime.forecasting.base._delegate import _DelegatedForecaster
 from sktime.registry import scitype
 from sktime.utils.validation.series import check_series
 
@@ -1448,3 +1450,142 @@ class ForecastX(BaseForecaster):
         params = {"forecaster_X": fx, "forecaster_y": fy}
 
         return params
+
+
+class Permute(_DelegatedForecaster, _HeterogenousMetaEstimator):
+    """Permutation compositor for permuting pipeline steps.
+
+    todo: describe your custom forecaster here
+
+    Parameters
+    ----------
+    estimator : sktime forecaster, inheriting from BaseForecaster
+        must have parameter with name `steps_arg`
+        estimator whose steps are being permuted
+    permutation : list of str, or None, optional, default = None
+        if not None, must be equal length as getattr(estimator, steps_arg)
+        and elements must be equal to names of estimator.steps_arg estimators
+        names are unique names as created by _get_estimator_tuples (if unnamed list),
+        or first string element of tuples, of estimator.steps_arg
+        list is interpreted as range of permutation of names
+        if None, is interpreted as the identity permutation
+    steps_arg : string, optional, default="steps"
+        name of the steps parameter. getattr(estimator, steps_arg) must be
+        list of estimators, or list of (str, estimator) pairs
+    """
+
+    _tags = {
+        "scitype:y": "both",
+        "y_inner_mtype": ALL_TIME_SERIES_MTYPES,
+        "X_inner_mtype": ALL_TIME_SERIES_MTYPES,
+        "ignores-exogeneous-X": False,
+        "requires-fh-in-fit": False,
+        "handles-missing-data": True,
+        "capability:pred_int": True,
+        "X-y-must-have-same-index": False,
+    }
+
+    _delegate_name = "estimator_"
+
+    def __init__(self, estimator, permutation, steps_arg="steps"):
+        self.estimator = estimator
+        self.permutation = permutation
+        self.steps_arg = steps_arg
+
+        super(Permute, self).__init__()
+        tags_to_clone = [
+            "ignores-exogeneous-X",  # does estimator ignore the exogeneous X?
+            "capability:pred_int",  # can the estimator produce prediction intervals?
+            "requires-fh-in-fit",  # is forecasting horizon already required in fit?
+            "enforce_index_type",  # index type that needs to be enforced in X/y
+            "fit_is_empty",
+        ]
+
+        self.clone_tags(self.estimator, tags_to_clone)
+
+        self._set_permuted_estimator()
+
+    def _set_permuted_estimator(self):
+        """Set self.estimator_ based on permutation arg."""
+        estimator = self.estimator
+        permutation = self.permutation
+        steps_arg = self.steps_arg
+
+        if permutation is None:
+            self.estimator_ = estimator.clone()
+
+        else:
+
+            inner_estimators = getattr(estimator, steps_arg)
+            estimator_tuples = self._get_estimator_tuples(inner_estimators)
+
+            estimator_dict = {x[0]: x[1] for x in estimator_tuples}
+
+            # check that all permutation are str values
+            if not all(isinstance(item, str) for item in permutation):
+                raise ValueError("permutation must be None or a list of strings")
+
+            # check that permutation contains same step names as given in steps
+            if not set(estimator_dict.keys()) == set(permutation):
+                raise ValueError(
+                    f"""Permutations must contain exactly the same step names as
+                    the names of steps in getattr(estimator, steps_arg),
+                    found tuple names {set(estimator_dict.keys())} but got
+                    permutation {set(permutation)}."""
+                )
+
+            estimator_tuples_permuted = [(k, v) for k, v in estimator_dict.items()]
+
+            self.estimator_ = estimator.clone()
+            self.estimator_.set_params({steps_arg: estimator_tuples_permuted})
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            There are currently no reserved values for forecasters.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        from sktime.forecasting.naive import NaiveForecaster
+        from sktime.transformations.series.boxcox import BoxCoxTransformer
+        from sktime.transformations.series.exponent import ExponentTransformer
+
+        # transformers mixed with-without fit, ForecastingPipeline
+        # steps are (str, estimator)
+        params1 = {
+            "estimator": ForecastingPipeline(
+                [
+                    ("foo", BoxCoxTransformer()),
+                    ("bar", ExponentTransformer(3)),
+                    ("foobar", NaiveForecaster()),
+                ]
+            ),
+            "permutation": ["bar", "foo", "foobar"]
+        }
+
+        # transformers have no fit, TransformedTargetForecaster
+        # steps are only estimator
+        params2 = {
+            "estimator": TransformedTargetForecaster(
+                [ExponentTransformer(0.5), NaiveForecaster(), ExponentTransformer(3)]
+            ),
+            "permutation": [
+                "NaiveForecaster",
+                "ExponentTransformer1",
+                "ExponentTransformer2",
+            ],
+        }
+
+        return [params1, params2]
