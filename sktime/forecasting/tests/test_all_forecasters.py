@@ -252,7 +252,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         fh = _make_fh(cutoff, fh_int, fh_type, is_relative)
         try:
             estimator_instance.fit(y_train, fh=fh)
-            n_sims = 3
+            n_sims = 2
             y_pred = estimator_instance.simulate(fh=fh, n_simulations=n_sims)
             # Assert that the output is the right mtype
             assert check_is_mtype(y_pred, ["pd-multiindex", "pd_multiindex_hier"])

@@ -151,7 +151,7 @@ class _StatsModelsAdapter(BaseForecaster):
             )
 
         # add an offset to the index in the special case where the y passed in fit has
-        # an integer index with
+        # an integer index not equal to 0.
         if not isinstance(self._y.index, pd.RangeIndex) and (
             isinstance(y_pred.index, pd.Index)
             and (y_pred.index.dtype == int)

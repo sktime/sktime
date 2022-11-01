@@ -169,6 +169,8 @@ class AutoETS(_StatsModelsAdapter):
     _fitted_param_names = ("aic", "aicc", "bic", "hqic")
     _tags = {
         "ignores-exogeneous-X": True,
+        "scitype:y": "univariate",
+        "y_inner_mtype": "pd.Series",
         "capability:pred_int": True,
         "requires-fh-in-fit": False,
         "handles-missing-data": True,
