@@ -154,7 +154,7 @@ class _StatsModelsAdapter(BaseForecaster):
         # an integer index not equal to 0.
         if not isinstance(self._y.index, pd.RangeIndex) and (
             isinstance(y_pred.index, pd.Index)
-            and (y_pred.index.dtype == int)
+            and (y_pred.index.is_integer())
             and (self._y.index.min() != 0)
         ):
             warn(
