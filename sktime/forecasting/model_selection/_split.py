@@ -1352,7 +1352,7 @@ class SingleWindowSplitter(BaseSplitter):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        params = {"fh": 3, "initial_window": 0}
+        params = {"fh": 3}
         return params
 
 
