@@ -163,9 +163,9 @@ def _sliding_window_transform(
             Zt[i:j, :, k] = z
 
         # Truncate data, selecting only full windows, discarding incomplete ones.
-        # Zt = Zt[effective_window_length:-effective_window_length]
-        Zt = Zt[effective_window_length : -(window_length - 1)]
-
+        #Zt = Zt[effective_window_length:-effective_window_length]
+        Zt = Zt[effective_window_length : - window_length]
+        #Zt = Zt[effective_window_length : -(effective_window_length)]
         # Return transformed feature and target variables separately. This
         # excludes contemporaneous values of the exogenous variables. Including them
         # would lead to unequal-length data, with more time points for
