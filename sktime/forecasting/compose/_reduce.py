@@ -306,8 +306,12 @@ class _DirectReducer(_Reducer):
         # Iterate over forecasting horizon, fitting a separate estimator for each step.
         self.estimators_ = []
         for i in range(len(self.fh)):
+            fh_rel = fh.to_relative(self.cutoff)
             estimator = clone(self.estimator)
-            estimator.fit(Xt[: (-i - 1)], yt[: (-i - 1), i])
+            if (fh_rel[i] - 1) == 0:
+                estimator.fit(Xt, yt[:, i])
+            else:
+                estimator.fit(Xt[: -(fh_rel[i] - 1)], yt[: -(fh_rel[i] - 1), i])
             self.estimators_.append(estimator)
         return self
 
