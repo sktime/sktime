@@ -64,6 +64,7 @@ def test_sliding_window_transform_against_cv(n_timepoints, window_length, fh, sc
 
     np.testing.assert_array_equal(xa, xb)
 
+
 def _make_y_X(n_timepoints, n_variables):
     # We generate y and X values so that the y should always be greater
     # than its lagged values and the lagged and contemporaneous values of the
@@ -560,5 +561,7 @@ def test_dirrec_against_recursive_accumulated_error():
 
 # test_sliding_window_transform_against_cv(13, 1, FH, "tabular-regressor")
 # test_sliding_window_transform_against_cv(17, 1, FH, "tabular-regressor")
-#test_dirrec_against_recursive_accumulated_error()
-test_consistent_data_passing_to_component_estimators_in_fit_and_predict(_TestTabularRegressor(), 3, "direct")
+# test_dirrec_against_recursive_accumulated_error()
+test_consistent_data_passing_to_component_estimators_in_fit_and_predict(
+    _TestTabularRegressor(), 3, "direct"
+)
