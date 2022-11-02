@@ -6,6 +6,7 @@ from copy import deepcopy
 import numpy as np
 import pandas as pd
 import pytest
+from pandas.testing import assert_index_equal
 from pandas.util.testing import assert_frame_equal
 
 from sktime.datasets import load_airline
@@ -80,6 +81,7 @@ def test_fit_transform_datetime_outputs():
         .assign(cos_12_2=[np.cos(4 * np.pi * i / 12) for i in range(3)])
     )
     assert_frame_equal(y_transformed, expected)
+    assert_index_equal(y_transformed, y)
 
 
 def test_fit_transform_behaviour():

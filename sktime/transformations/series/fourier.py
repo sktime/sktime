@@ -219,6 +219,8 @@ class FourierFeatures(BaseTransformer):
             X_transformed[f"sin_{sp}_{k}"] = np.sin(int_index * 2 * k * np.pi / sp)
             X_transformed[f"cos_{sp}_{k}"] = np.cos(int_index * 2 * k * np.pi / sp)
 
+        # Ensure transformed X has same index
+        X_transformed.index = X.index
         return X_transformed
 
     @classmethod
