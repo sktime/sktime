@@ -166,20 +166,22 @@ class FourierFeatures(BaseTransformer):
                         "exists from other seasonal period, fourier term pairs."
                     )
 
-        # this is used to make sure that time t is calculated with reference to
-        # the data passed on fit
+        # Copy X to avoid global side effects
+        X = deepcopy(X)
+
         if isinstance(X.index, pd.DatetimeIndex):
             # Chooses first non None value
-            freq = X.index.freq or self.freq or pd.infer_freq(X.index)
-            if freq is None:
+            self.freq_ = X.index.freq or self.freq or pd.infer_freq(X.index)
+            if self.freq_ is None:
                 ValueError("X has no known frequency and none is supplied")
-            if freq == X.index.freq and freq != self.freq:
+            if self.freq_ == X.index.freq and self.freq_ != self.freq:
                 warn(
                     f"Using frequency from index: {X.index.freq}, which \
                      does not match the frequency given:{self.freq}."
                 )
-            X.index = X.index.to_period(freq)
-
+            X.index = X.index.to_period(self.freq_)
+        # this is used to make sure that time t is calculated with reference to
+        # the data passed on fit
         # store the integer form of the minimum date in the prediod index
         self.min_t_ = np.min(X.index.astype(int))
 
@@ -205,7 +207,7 @@ class FourierFeatures(BaseTransformer):
         X_transformed = deepcopy(X)
 
         if isinstance(X.index, pd.DatetimeIndex):
-            X.index = X.index.to_period(self.freq)
+            X_transformed.index = X_transformed.index.to_period(self.freq_)
 
         # get the integer form of the PeriodIndex
         int_index = X_transformed.index.astype(int) - self.min_t_
