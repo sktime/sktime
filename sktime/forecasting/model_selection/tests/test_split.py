@@ -345,7 +345,9 @@ def test_expanding_window_splitter_start_with_initial_window_zero(y, fh, step_le
     else:
         match = "Unsupported combination of types"
         with pytest.raises(TypeError, match=match):
-            ExpandingWindowSplitter(fh=fh, initial_window=0, step_length=step_length)
+            ExpandingWindowSplitter(
+                fh=fh, initial_window=initial_window, step_length=step_length
+            )
 
 
 def test_sliding_window_splitter_initial_window_start_with_empty_window_raises_error():
