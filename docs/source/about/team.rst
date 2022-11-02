@@ -17,9 +17,23 @@ Community Council
      - GitHub ID
    * - Franz Kiraly
      - :user:`fkiraly`
+   * - Guzal Bulatova
+    - :user: `GuzalBulatova`
    * - Martin Walter
      - :user:`aiwalter`
 
+Community Council Observers
+---------------------------
+
+.. list-table::
+   :header-rows: 1
+
+   * - Name
+     - GitHub ID
+   * - Leonidas Tsaprounis
+     - :user:`ltsaprounis`
+   * - Lovkush Agarwal
+     - :user:`lovkush-a`
 
 Code of Conduct Committee
 -------------------------
@@ -66,6 +80,8 @@ Core Developers
      - :user:`mattewmiddlehurst`
    * - Martin Walter
      - :user:`aiwalter`
+   * - Mirae Parker
+     - :user:`miraep8`
    * - Patrick Schäfer
      - :user:`patrickzib`
    * - Stanislav Khrapov

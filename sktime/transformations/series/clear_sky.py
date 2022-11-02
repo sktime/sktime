@@ -181,7 +181,7 @@ class ClearSky(BaseTransformer):
         X_trafo = X / csp
 
         # threshold for small morning/evening values
-        X_trafo[csp <= self.min_thresh] = 0
+        X_trafo[(csp <= self.min_thresh) & (X.notnull())] = 0
 
         return X_trafo
 
