@@ -10,7 +10,7 @@ __all__ = [
     "SingleWindowSplitter",
     "temporal_train_test_split",
 ]
-__author__ = ["mloning", "kkoralturk", "khrapovs"]
+__author__ = ["mloning", "kkoralturk", "khrapovs", "chillerobscuro"]
 
 from typing import Iterator, Optional, Tuple, Union
 from warnings import warn
