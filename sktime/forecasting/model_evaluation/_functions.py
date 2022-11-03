@@ -352,7 +352,7 @@ def evaluate(
         "cutoff_dtype": cutoff_dtype,
     }
 
-    if backend is None or strategy == "update":
+    if backend is None or strategy in ["update", "no-update_params"]:
         # Run temporal cross-validation sequentially
         results = []
         for i, (train, test) in enumerate(cv.split(y)):
