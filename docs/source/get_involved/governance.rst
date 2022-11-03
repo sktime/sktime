@@ -271,7 +271,7 @@ of a scope that goes beyond algorithm maintainer expectations - i.e., PR or issu
 
 Becoming active (after becoming inactive) in the above sense requires both:
 
-* a contribution within the last month that goes beyond algorithm maintainer expectations, e.g.:
+* a contribution within the month before nomination that goes beyond algorithm maintainer expectations, e.g.:
   * an approved pull request authored by the core developer
   * a substantial contribution to the community that is minuted in one of the regular meetings
 * success via the same voting procedure as for new core developers, with the exception that former core developers can also self-nominate
