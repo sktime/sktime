@@ -259,8 +259,7 @@ Core developers can resign voluntarily at any point in time, by informing the CC
 
 Core developers that have not contributed to the project in the past
 one-year-period will automatically become *inactive*
-and give up their rights and responsibilities. When they become active
-again, they can retake their role without having to be appointed.
+and give up their rights and responsibilities.
 
 Becoming inactive in the above sense means not contributing for the period via:
 
