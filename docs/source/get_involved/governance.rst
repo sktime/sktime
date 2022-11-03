@@ -357,8 +357,6 @@ expected to resign voluntarily.
 Tenure also ends automatically when a CC member's tenure as core developer ends,
 e.g., through resignation or inactivity.
 
-CC members can be removed from the CC by an 80% majority of CC members.
-
 Communications
 ^^^^^^^^^^^^^^
 
