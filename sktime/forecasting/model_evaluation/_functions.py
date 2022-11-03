@@ -246,7 +246,7 @@ def evaluate(
         to "raise", the exception is raised. If a numeric value is given,
         FitFailedWarning is raised.
     backend : {"dask", "loky", "multiprocessing", "threading"}, by default None.
-        Runs parallel evaluate if specified.
+        Runs parallel evaluate if specified and `strategy` is set as "refit".
         - "loky", "multiprocessing" and "threading": uses `joblib` Parallel loops
         - "dask": uses `dask`, requires `dask` package in environment
         Recommendation: Use "dask" or "loky" for parallel evaluate.
