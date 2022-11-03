@@ -14,6 +14,7 @@ class FCNForecaster:
         self,
         n_epochs=2000,
         batch_size=16,
+        steps=3,
         callbacks=None,
         verbose=False,
         loss="categorical_crossentropy",
@@ -28,6 +29,7 @@ class FCNForecaster:
         self.callbacks = callbacks
         self.n_epochs = n_epochs
         self.batch_size = batch_size
+        self.steps = steps
         self.verbose = verbose
         self.loss = loss
         self.metrics = metrics
@@ -58,17 +60,56 @@ class FCNForecaster:
         model.compile(loss=self.loss, optimizer=self.optimizer_, metrics=self.metrics)
         return model
 
-    def _fit(self, y, X=None):
+    def _fit(self, y, fh=None, X=None):
         """Temp docstring."""
-        X = X.transpose(0, 2, 1)
-        self.input_shape = X.shape[1:]
+        import numpy as np
+
+        source, target = self.splitSeq(self.steps, y)
+        if X is not None:
+            src_x, _ = self.splitSeq(self.steps, X)
+            # currently takes care of cases where exog data is
+            # greater than 1 in length
+            source = [
+                [_sx + [_sy] for _sx, _sy in zip(sx, sy)]
+                for sx, sy in zip(src_x, source)
+            ]
+
+        source, target = np.array(source), np.array(target)
+        source = source.transpose(0, 2, 1)
+        self.input_shape = source.shape[1:]
+
         self.model_ = self.build_model(self.input_shape)
-        self.model_.fit(
-            X,
-            y,
+        if self.verbose:
+            self.model_.summary()
+
+        self.history = self.model_.fit(
+            source,
+            target,
             batch_size=self.batch_size,
             epochs=self.n_epochs,
             verbose=self.verbose,
             callbacks=self.callbacks,
         )
         return self
+
+    def splitSeq(self, steps, seq):
+        """Temp."""
+        source, target = [], []
+        for i in range(len(seq)):
+            end_idx = i + steps
+            if end_idx > len(seq) - 1:
+                break
+            seq_src, seq_tgt = seq[i:end_idx], seq[end_idx]
+            source.append(seq_src)
+            target.append(seq_tgt)
+        return source, target
+
+
+if __name__ == "__main__":
+
+    raw_seq = [10, 20, 30, 40, 50, 60, 70, 80, 90]
+    exog = []
+    for i in range(len(raw_seq)):
+        exog.append([i, i + 1])
+    fcn = FCNForecaster()
+    model = fcn._fit(y=raw_seq, X=exog)
