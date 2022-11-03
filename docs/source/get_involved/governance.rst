@@ -324,7 +324,10 @@ expected to resign voluntarily.
 Tenure also ends automatically when a CC member's tenure as core developer ends,
 e.g., through resignation or inactivity.
 
-CC members can be removed from the CC by an 80% majority of CC members.
+CC members can be removed from the CC by an 80% majority of all core developers,
+i.e., non-participation abstention counts as against.
+This vote requires a 5 working day (excl week-ends) discussion period, followed
+by vote which is open for 5 working days (excl week-ends)
 
 Communications
 ^^^^^^^^^^^^^^
