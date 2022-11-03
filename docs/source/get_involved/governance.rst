@@ -269,7 +269,7 @@ Becoming inactive in the above sense means not contributing for the period via:
 
 of a scope that goes beyond algorithm maintainer expectations - i.e., PR or issues related to owned algorithms do not count.
 
-Becoming active (after becoming inactive) in the above sense requires:
+Becoming active (after becoming inactive) in the above sense requires both:
 
 * a contribution within the last month that goes beyond algorithm maintainer expectations, e.g.:
   * an approved pull request authored by the core developer
