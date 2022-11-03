@@ -34,38 +34,99 @@ def compute_min_return_path(
     """
     x_size, y_size = cost_matrix.shape
 
-    start = 0
-    # Means the cost matrix is padded (i.e. for twe)
-    if cost_matrix.shape != bounding_matrix.shape:
-        start = 1
     for i in range(x_size):
         for j in range(y_size):
-            if not np.isfinite(bounding_matrix[i - start, j - start]):
+            if not np.isfinite(bounding_matrix[i, j]):
                 cost_matrix[i, j] = np.inf
 
-    alignment = [(x_size - 1, y_size - 1)]
-    while alignment[-1] != (0, 0):
-        i, j = alignment[-1]
-        if i == 0:
-            alignment.append((0, j - 1))
-        elif j == 0:
-            alignment.append((i - 1, 0))
-        else:
-            arr = np.array(
-                [
-                    cost_matrix[i - 1][j - 1],
-                    cost_matrix[i - 1][j],
-                    cost_matrix[i][j - 1],
-                ]
-            )
+    i = x_size - 1
+    j = y_size - 1
+    alignment = []
+    while True:
+        alignment.append((i, j))
 
-            score = np.argmin(arr)
-            if score == 0:
-                alignment.append((i - 1, j - 1))
-            elif score == 1:
-                alignment.append((i - 1, j))
-            else:
-                alignment.append((i, j - 1))
+        if alignment[-1] == (0, 0):
+            break
+
+        arr = np.array(
+            [
+                cost_matrix[i - 1, j - 1],
+                cost_matrix[i - 1, j],
+                cost_matrix[i, j - 1],
+            ]
+        )
+        min_index = np.argmin(arr)
+
+        if min_index == 0:
+            i = i - 1
+            j = j - 1
+        elif min_index == 1:
+            i = i - 1
+        else:
+            j = j - 1
+
+    return alignment[::-1]
+
+
+@njit(cache=True)
+def compute_twe_return_path(
+    cost_matrix: np.ndarray, bounding_matrix: np.ndarray
+) -> List[Tuple]:
+    """Compute the twe cost path through the cost matrix.
+
+    The return path is computed by finding a path through the cost matrix by taking
+    the min(cost_matrix[i - 1][j - 1], cost_matrix[i - 1][j], cost_matrix[i][j - 1]).
+    This is ideal for dtw based distances or others where the objective is to minimise
+    the cost.
+
+    Twe is padded with 0s so this is accounted for using this path function.
+
+    Parameters
+    ----------
+    cost_matrix: np.ndarray (of size (n, m) where n is the length of the first time
+                    series and m is the length of the second time series)
+        Cost matrix used to compute the distance.
+    bounding_matrix: np.ndarray (of size (n, m) where n is the length of the first
+                    time series and m is the length of the second time series)
+        The bounding matrix that restricts the warping path.
+
+    Returns
+    -------
+    list[tuple]
+        List containing tuples that is the path through the cost matrix.
+    """
+    x_size, y_size = cost_matrix.shape
+    for i in range(x_size):
+        for j in range(y_size):
+            if not np.isfinite(bounding_matrix[i, j]):
+                cost_matrix[i, j] = np.inf
+
+    i = cost_matrix.shape[0] - 1
+    j = cost_matrix.shape[1] - 1
+    alignment = []
+    while True:
+        alignment.append((i - 1, j - 1))
+
+        if alignment[-1] == (0, 0):
+            break
+
+        arr = np.array(
+            [
+                cost_matrix[i - 1, j - 1],
+                cost_matrix[i - 1, j],
+                cost_matrix[i, j - 1],
+            ]
+        )
+        min_index = np.argmin(arr)
+
+        if min_index == 0:
+            i = i - 1
+            j = j - 1
+        elif min_index == 1:
+            i = i - 1
+        else:
+            j = j - 1
+
     return alignment[::-1]
 
 

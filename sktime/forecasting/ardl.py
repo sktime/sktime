@@ -486,7 +486,7 @@ class ARDL(_StatsModelsAdapter):
 
         return self
 
-    def get_fitted_params(self):
+    def _get_fitted_params(self):
         """Get fitted parameters.
 
         State required:
@@ -496,8 +496,6 @@ class ARDL(_StatsModelsAdapter):
         -------
         fitted_params : dict
         """
-        self.check_is_fitted()
-
         from statsmodels.tsa.ardl import ARDL as _ARDL
 
         fitted_params = {}
