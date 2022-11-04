@@ -102,7 +102,7 @@ class BaseGridSearch(_DelegatedForecaster):
             tagval = tagval + ["pd_multiindex_hier"]
         self.set_tags(**{tagname: tagval})
 
-    def get_fitted_params(self):
+    def _get_fitted_params(self):
         """Get fitted parameters.
 
         Returns
@@ -112,12 +112,6 @@ class BaseGridSearch(_DelegatedForecaster):
             the best estimator (if available), merged together with the former
             taking precedence.
         """
-        if not self.is_fitted:
-            raise NotFittedError
-
-        if self._is_vectorized:
-            return {"forecasters_": self.forecasters_}
-
         fitted_params = {}
         try:
             fitted_params = self.best_forecaster_.get_fitted_params()

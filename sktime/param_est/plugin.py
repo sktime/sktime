@@ -31,8 +31,8 @@ class PluginParamsForecaster(_DelegatedForecaster):
         list of str: parameters in the list are plugged into parameters of the same name
             only parameters present in both `forecaster` and `param_est` are plugged in
         str: considered as a one-element list of str with the string as single element
-        dict: parameters of values are plugged into parameters of respective keys
-            only keys present in `forecaster` and values in `param_est` are plugged in
+        dict: parameter with name of key is plugged into parameter with name of value
+            only keys present in `param_est` and values in `forecaster` are plugged in
     update_params : bool, optional, default=False
         whether fitted parameters by param_est_ are to be updated in self.update
 
@@ -60,6 +60,12 @@ class PluginParamsForecaster(_DelegatedForecaster):
     >>> y_pred = sp_auto.predict()
     >>> sp_auto.forecaster_.get_params()["sp"]
     12
+
+    using dictionary to plug "foo" parameter into "sp"
+    >>> from sktime.param_est.fixed import FixedParams
+    >>> sp_plugin = PluginParamsForecaster(
+    ...     FixedParams({"foo": 12}), NaiveForecaster(), params={"foo": "sp"}
+    ... )
     """
 
     _tags = {

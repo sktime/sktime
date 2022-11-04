@@ -566,8 +566,8 @@ class BaseObject(_BaseEstimator):
 
         Parameters
         ----------
-        base_class : class, optional, default=None
-            if None, `base_class` is interpreted as `BaseObject`
+        base_class : class, optional, default=None, must be subclass of BaseObject
+            if None, behaves the same as `base_class=BaseObject`
             if not None, return dict collects descendants of `base_class`
 
         Returns
@@ -915,7 +915,7 @@ class BaseEstimator(BaseObject):
         # add all nested parameters from components that are sktime BaseObject
         c_dict = self._components()
         for c, comp in c_dict.items():
-            if comp._is_fitted:
+            if isinstance(comp, BaseEstimator) and comp._is_fitted:
                 c_f_params = comp.get_fitted_params()
                 c_f_params = {f"{sh(c)}__{k}": v for k, v in c_f_params.items()}
                 fitted_params.update(c_f_params)
