@@ -1,4 +1,9 @@
 {
+  "projectName": "sktime",
+  "projectOwner": "sktime",
+  "repoType": "github",
+  "repoHost": "https://github.com",
+  "commitConvention": "none",
   "files": [
     "CONTRIBUTORS.md"
   ],
@@ -1747,7 +1752,8 @@
       "name": "An Hoang",
       "profile": "https://github.com/AnH0ang",
       "contributions": [
-        "bug"
+        "bug",
+        "code"
       ]
     },
     {
@@ -1758,6 +1764,16 @@
       "contributions": [
         "code",
         "test"
+      ]
+    },
+    {
+      "login": "kcc-lion",
+      "name": "Kai Lion",
+      "profile": "https://github.com/kcc-lion",
+      "contributions": [
+        "code",
+        "test",
+        "doc"
       ]
     },
     {
@@ -1776,14 +1792,46 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/16029092?v=4",
       "profile": "https://github.com/shagn",
       "contributions": [
-        "doc",
+        "doc"
       ]
     },
-
-  ],
-  "projectName": "sktime",
-  "projectOwner": "alan-turing-institute",
-  "repoType": "github",
-  "repoHost": "https://github.com",
-  "commitConvention": "none"
+    {
+      "login": "jasmineliaw",
+      "name": "Jasmine Liaw",
+      "profile": "https://github.com/jasmineliaw",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "topher-lo",
+      "name": "Christopher Lo",
+      "profile": "https://github.com/topher-lo",
+      "contributions": [
+        "code",
+        "ideas"
+      ]
+    },
+    {
+      "login": "arampuria19",
+      "name": "Akshat Rampuria",
+      "profile": "https://github.com/arampuria19",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "chillerobscuro",
+      "name": "Logan Duffy",
+      "avatar_url": "https://avatars.githubusercontent.com/u/5232872?v=4",
+      "profile": "https://github.com/chillerobscuro",
+      "contributions": [
+        "code",
+        "doc",
+        "test",
+        "bug",
+        "ideas"
+      ]
+    }
+  ]
 }

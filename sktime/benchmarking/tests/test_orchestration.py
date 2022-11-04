@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """Test orchestration."""
-__author__ = ["Viktor Kazakov", "mloning"]
+__author__ = ["viktorkaz", "mloning"]
 
 import os
 

@@ -23,7 +23,7 @@ Triage
 Code
 ====
 
-* Unit testing: Are the code changes tested? Are the tests understandable? Are all changes covered by tests? We usually aim for a test coverage of at least 90%. Code coverage will be reported as part of the automated CI checks on GitHub and on the `Codecov website <https://app.codecov.io/gh/alan-turing-institute/sktime>`_.
+* Unit testing: Are the code changes tested? Are the tests understandable? Are all changes covered by tests? We usually aim for a test coverage of at least 90%. Code coverage will be reported as part of the automated CI checks on GitHub and on the `Codecov website <https://app.codecov.io/gh/sktime/sktime>`_.
 * Test changes locally: Does everything work as expected?
 * Deprecation warnings: Has the public API changed? Have deprecation warnings been added before making the changes?
 
