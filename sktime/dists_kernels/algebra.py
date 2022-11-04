@@ -11,7 +11,7 @@ from sktime.dists_kernels._base import BasePairwiseTransformerPanel
 SUPPORTED_MTYPES = ["pd-multiindex", "nested_univ", "df-list", "numpy3D"]
 
 
-class CombinedDistance(BasePairwiseTransformerPanel, _HeterogenousMetaEstimator):
+class CombinedDistance(_HeterogenousMetaEstimator, BasePairwiseTransformerPanel):
     """Distances combined via arithmetic operation, e.g., addition, multiplication.
 
     `CombinedDistance` creates a pairwise trafo from multiple other pairwise trafos,

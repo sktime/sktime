@@ -561,7 +561,7 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
         return {"n_estimators": 2}
 
 
-class WeightedEnsembleClassifier(BaseClassifier, _HeterogenousMetaEstimator):
+class WeightedEnsembleClassifier(_HeterogenousMetaEstimator, BaseClassifier):
     """Weighted ensemble of classifiers with fittable ensemble weight.
 
     Produces a probabilistic prediction which is the weighted average of

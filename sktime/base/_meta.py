@@ -11,7 +11,7 @@ from inspect import isclass
 from sktime.base import BaseEstimator
 
 
-class _HeterogenousMetaEstimator(BaseEstimator):
+class _HeterogenousMetaEstimator:
     """Handles parameter management for estimators composed of named estimators.
 
     Partly adapted from sklearn utils.metaestimator.py.

@@ -13,7 +13,7 @@ from sktime.base import _HeterogenousMetaEstimator
 from sktime.forecasting.base._base import BaseForecaster
 
 
-class _HeterogenousEnsembleForecaster(BaseForecaster, _HeterogenousMetaEstimator):
+class _HeterogenousEnsembleForecaster(_HeterogenousMetaEstimator, BaseForecaster):
     """Base class for heterogeneous ensemble forecasters."""
 
     # for default get_params/set_params from _HeterogenousMetaEstimator

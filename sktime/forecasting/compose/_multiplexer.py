@@ -12,7 +12,7 @@ __author__ = ["kkoralturk", "aiwalter", "fkiraly", "miraep8"]
 __all__ = ["MultiplexForecaster"]
 
 
-class MultiplexForecaster(_DelegatedForecaster, _HeterogenousMetaEstimator):
+class MultiplexForecaster(_HeterogenousMetaEstimator, _DelegatedForecaster):
     """MultiplexForecaster for selecting among different models.
 
     MultiplexForecaster facilitates a framework for performing

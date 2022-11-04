@@ -13,10 +13,7 @@ from sktime.registry import scitype
 from sktime.utils.validation.series import check_series
 
 
-class _Pipeline(
-    BaseForecaster,
-    _HeterogenousMetaEstimator,
-):
+class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
     """Abstract class for forecasting pipelines."""
 
     # for default get_params/set_params from _HeterogenousMetaEstimator

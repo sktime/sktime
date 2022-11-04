@@ -17,7 +17,7 @@ from sktime.base import _HeterogenousMetaEstimator
 from sktime.classification.base import BaseClassifier
 
 
-class BaseColumnEnsembleClassifier(BaseClassifier, _HeterogenousMetaEstimator):
+class BaseColumnEnsembleClassifier(_HeterogenousMetaEstimator, BaseClassifier):
     """Base Class for column ensemble."""
 
     _tags = {

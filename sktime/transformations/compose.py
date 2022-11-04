@@ -59,7 +59,7 @@ def _coerce_to_sktime(other):
     return other
 
 
-class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
+class TransformerPipeline(_HeterogenousMetaEstimator, BaseTransformer):
     """Pipeline of transformers compositor.
 
     The `TransformerPipeline` compositor allows to chain transformers.
@@ -428,7 +428,7 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         return [params1, params2, params3]
 
 
-class FeatureUnion(BaseTransformer, _HeterogenousMetaEstimator):
+class FeatureUnion(_HeterogenousMetaEstimator, BaseTransformer):
     """Concatenates results of multiple transformer objects.
 
     This estimator applies a list of transformer objects in parallel to the
@@ -785,7 +785,7 @@ class FitInTransform(BaseTransformer):
         return params
 
 
-class MultiplexTransformer(_DelegatedTransformer, _HeterogenousMetaEstimator):
+class MultiplexTransformer(_HeterogenousMetaEstimator, _DelegatedTransformer):
     """Facilitate an AutoML based selection of the best transformer.
 
     When used in combination with either TransformedTargetForecaster or
