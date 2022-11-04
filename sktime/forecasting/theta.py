@@ -273,8 +273,8 @@ def _zscore(level: float, two_tailed: bool = True) -> float:
 class ThetaModularForecaster(BaseForecaster):
     """Modular theta method for forecasting.
 
-    Modularized implementation of Theta method as defined in [1]_ (TODO: add the
-    auto-theta method as described in [2]_).
+    Modularized implementation of Theta method as defined in [1]_.
+    Also see auto-theta method as described in [2]_ *not contained in this estimator).
 
     Overview: Input :term:`univariate series <Univariate time series>` of length
     "n" and decompose with :class:`ThetaLinesTransformer
