@@ -11,4 +11,12 @@ from sktime.classification.sklearn import ContinuousIntervalTree, RotationForest
 @parametrize_with_checks([RotationForest(n_estimators=3), ContinuousIntervalTree()])
 def test_sklearn_compatible_estimator(estimator, check):
     """Test that sklearn estimators adhere to sklearn conventions."""
-    check(estimator)
+    try:
+        check(estimator)
+    except AssertionError as error:
+        # ContinuousIntervalTree can handle NaN values
+        if (
+            str(error)
+            != "Estimator ContinuousIntervalTree doesn't check for NaN and inf in fit."
+        ):
+            raise error
