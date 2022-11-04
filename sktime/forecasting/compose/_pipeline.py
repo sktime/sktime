@@ -1633,8 +1633,8 @@ class Permute(_DelegatedForecaster, _HeterogenousMetaEstimator):
             ),
             "permutation": [
                 "NaiveForecaster",
-                "ExponentTransformer1",
-                "ExponentTransformer2",
+                "ExponentTransformer_1",
+                "ExponentTransformer_2",
             ],
         }
 

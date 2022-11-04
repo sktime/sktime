@@ -17,14 +17,6 @@ class _HeterogenousMetaEstimator(BaseEstimator):
     Partly adapted from sklearn utils.metaestimator.py.
     """
 
-    def get_params(self, deep=True):
-        """Return estimator parameters."""
-        raise NotImplementedError("abstract method")
-
-    def set_params(self, **params):
-        """Set estimator parameters."""
-        raise NotImplementedError("abstract method")
-
     def is_composite(self):
         """Check if the object is composite.
 
