@@ -17,13 +17,41 @@ class _HeterogenousMetaEstimator(BaseEstimator):
     Partly adapted from sklearn utils.metaestimator.py.
     """
 
-    def get_params(self, deep=True):
-        """Return estimator parameters."""
-        raise NotImplementedError("abstract method")
+    # for default get_params/set_params
+    # _steps_attr points to the attribute of self
+    # which contains the heterogeneous set of estimators
+    # this must be an iterable of (name: str, estimator) pairs for the default
+    _steps_attr = "steps_"
 
-    def set_params(self, **params):
-        """Set estimator parameters."""
-        raise NotImplementedError("abstract method")
+    def get_params(self, deep=True):
+        """Get parameters of estimator in `_forecasters`.
+
+        Parameters
+        ----------
+        deep : boolean, optional
+            If True, will return the parameters for this estimator and
+            contained sub-objects that are estimators.
+
+        Returns
+        -------
+        params : mapping of string to any
+            Parameter names mapped to their values.
+        """
+        steps = getattr(self, self._steps_attr)
+        return self._get_params(steps, deep=deep)
+
+    def set_params(self, **kwargs):
+        """Set the parameters of estimator in `_forecasters`.
+
+        Valid parameter keys can be listed with ``get_params()``.
+
+        Returns
+        -------
+        self : returns an instance of self.
+        """
+        steps_attr = getattr(self, self._steps_attr)
+        self._set_params(steps_attr, **kwargs)
+        return self
 
     def is_composite(self):
         """Check if the object is composite.
