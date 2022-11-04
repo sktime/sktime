@@ -375,7 +375,7 @@ class SquaringResiduals(BaseForecaster):
         """
         from sktime.forecasting.croston import Croston
         from sktime.forecasting.naive import NaiveForecaster
-        from sktime.forecasting.theta import ThetaForecaster
+        from sktime.forecasting.trend import TrendForecaster
 
         params = [
             {
@@ -386,7 +386,7 @@ class SquaringResiduals(BaseForecaster):
                 "distr_kwargs": {"df": 21},
             },
             {
-                "forecaster": ThetaForecaster(),
+                "forecaster": TrendForecaster(),
                 "residual_forecaster": NaiveForecaster(),
                 "initial_window": 5,
                 "distr": "norm",
