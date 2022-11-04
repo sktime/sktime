@@ -1455,7 +1455,14 @@ class ForecastX(BaseForecaster):
 class Permute(_DelegatedForecaster, _HeterogenousMetaEstimator):
     """Permutation compositor for permuting pipeline steps.
 
-    todo: describe your custom forecaster here
+    The compositor can be used to permute the sequence of any meta-estimator,
+    including ForecastingPipeline and TransformedTargetForecaster.
+
+    The `steps_arg` parameter needs to be pointed to the "steps"-like parameter
+    of the wrapped forecaster and `permutation` switches the sequence of steps.
+
+    Not very useful on its own, but
+    useful in combination with tuning or auto-ML wrappers on top of this.
 
     Parameters
     ----------
@@ -1472,6 +1479,50 @@ class Permute(_DelegatedForecaster, _HeterogenousMetaEstimator):
     steps_arg : string, optional, default="steps"
         name of the steps parameter. getattr(estimator, steps_arg) must be
         list of estimators, or list of (str, estimator) pairs
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.base import ForecastingHorizon
+    >>> from sktime.forecasting.compose import ForecastingPipeline
+    >>> from sktime.forecasting.naive import NaiveForecaster
+    >>> from sktime.transformations.series.boxcox import BoxCoxTransformer
+    >>> from sktime.transformations.series.exponent import ExponentTransformer
+
+    Simple example: permute sequence of estimator in forecasting pipeline
+    >>> y = load_airline()
+    >>> fh = ForecastingHorizon([1, 2, 3])
+    >>> pipe = ForecastingPipeline(
+    ...     [
+    ...         ("boxcox", BoxCoxTransformer()),
+    ...         ("exp", ExponentTransformer(3)),
+    ...         ("naive", NaiveForecaster()),
+    ...     ]
+    ... )
+    >>> # this results in the pipeline with sequence "exp", "boxcox", "naive"
+    >>> permuted = Permute(pipe, ["exp", "boxcox", "naive"])
+    >>> pipe = pipe.fit(y, X=X, fh=fh)
+    >>> y_pred = pipe.predict(fh=fh)
+
+    The permuter is useful in combination with grid search (toy example):
+    >>> from sktime.datasets import load_shampoo_sales
+    >>> from sktime.forecasting.model_selection import (
+    ...     ExpandingWindowSplitter,
+    ...     ForecastingGridSearchCV,
+    ... )
+    >>> fh = [1,2,3]
+    >>> cv = ExpandingWindowSplitter(
+    ...     start_with_window=True,
+    ...     fh=fh)
+    >>> forecaster = NaiveForecaster()
+    >>> # check which of the two sequences of transformers is better
+    >>> param_grid = {
+    ...     "permutation" : [["boxcox", "exp", "naive"], ["exp", "boxcox", "naive]]
+    ... }
+    >>> gscv = ForecastingGridSearchCV(
+    ...     forecaster=forecaster,
+    ...     param_grid=param_grid,
+    ...     cv=cv)
     """
 
     _tags = {
