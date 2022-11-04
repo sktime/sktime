@@ -1162,7 +1162,7 @@ def make_reduction(
     scitype="infer",
     transformers=None,
     pooling="local",
-    discard_fh="max",
+    direct_truncate="fh_max",
 ):
     """Make forecaster based on reduction to tabular or time-series regression.
 
@@ -1275,7 +1275,7 @@ def make_reduction(
         window_length=window_length,
         transformers=transformers,
         pooling=pooling,
-        direct_truncate="fh_max",
+        direct_truncate=direct_truncate,
     )
 
 
