@@ -1,6 +1,6 @@
-#!/usr/bin/env python3 -u
-# coding: utf-8
+# -*- coding: utf-8 -*-
+"""Tests for the forecaster base module."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-__author__ = ["Markus Löning"]
+__author__ = ["mloning"]
 __all__ = []

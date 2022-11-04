@@ -408,6 +408,10 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
         """Convert integer indices if necessary."""
 
         def _get_index(y, ix):
+            # deal with numpy int by coercing to python int
+            if np.issubdtype(type(ix), np.integer):
+                ix = int(ix)
+
             if isinstance(ix, int) and ix not in y.columns and ix < len(y.columns):
                 return y.columns[ix]
             else:

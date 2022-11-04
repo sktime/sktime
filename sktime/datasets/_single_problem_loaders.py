@@ -13,6 +13,7 @@ __author__ = [
     "aiwalter",
     "jasonlines",
     "achieveordie",
+    "ciaran-g",
 ]
 
 __all__ = [
@@ -24,6 +25,7 @@ __all__ = [
     "load_italy_power_demand",
     "load_basic_motions",
     "load_japanese_vowels",
+    "load_solar",
     "load_shampoo_sales",
     "load_longley",
     "load_lynx",
@@ -94,7 +96,8 @@ def load_UCR_UEA_dataset(
         Exception is raised if the data cannot be stored in the requested type.
     extract_path : str, optional (default=None)
         the path to look for the data. If no path is provided, the function
-        looks in `sktime/datasets/data/`.
+        looks in `sktime/datasets/data/`. If a path is given, it can be absolute,
+        e.g. C:/Temp or relative, e.g. Temp or ./Temp.
 
     Returns
     -------

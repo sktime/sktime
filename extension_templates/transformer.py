@@ -28,7 +28,7 @@ Mandatory implements:
 Optional implements:
     inverse transformation      - _inverse_transform(self, X, y=None)
     update                      - _update(self, X, y=None)
-    fitted parameter inspection - get_fitted_params()
+    fitted parameter inspection - _get_fitted_params()
 
 Testing - implement if sktime transformer (not needed locally):
     get default parameters for test instance(s) - get_test_params()
@@ -424,15 +424,32 @@ class MyTransformer(BaseTransformer):
         #  the clones, not the originals, should be used or fitted if needed
 
     # todo: consider implementing this, optional
+    # implement only if different from default:
+    #   default retrieves all self attributes ending in "_"
+    #   and returns them with keys that have the "_" removed
     # if not implementing, delete the method
-    def get_fitted_params(self):
+    #   avoid overriding get_fitted_params
+    def _get_fitted_params(self):
         """Get fitted parameters.
+
+        private _get_fitted_params, called from get_fitted_params
+
+        State required:
+            Requires state to be "fitted".
 
         Returns
         -------
-        fitted_params : dict
+        fitted_params : dict with str keys
+            fitted parameters, keyed by names of fitted parameter
         """
         # implement here
+        #
+        # when this function is reached, it is already guaranteed that self is fitted
+        #   this does not need to be checked separately
+        #
+        # parameters of components should follow the sklearn convention:
+        #   separate component name from parameter name by double-underscore
+        #   e.g., componentname__paramname
 
     # todo: return default parameters, so that a test instance can be created
     #   required for automated unit and integration testing of estimator
