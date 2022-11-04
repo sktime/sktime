@@ -234,10 +234,12 @@ class ConformalIntervals(BaseForecaster):
             resids = resids[~np.isnan(resids)]
             abs_resids = np.abs(resids)
             coverage2 = np.repeat(coverage, 2)
-            if self.method == "empirical":
+            if coverage[0] == 0:
+                pred_int_row = [0.0, 0.0]
+            elif self.method == "empirical":
                 quantiles = 0.5 + np.tile([-0.5, 0.5], len(coverage)) * coverage2
                 pred_int_row = np.quantile(resids, quantiles)
-            if self.method == "empirical_residual":
+            elif self.method == "empirical_residual":
                 quantiles = 0.5 - 0.5 * coverage2
                 pred_int_row = np.quantile(abs_resids, quantiles)
             elif self.method == "conformal_bonferroni":
