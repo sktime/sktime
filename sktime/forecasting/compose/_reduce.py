@@ -1237,6 +1237,7 @@ def make_reduction(
         | * * * * * * * * * x x x y x|
         | x * * * * * * * * * x x x y|
         |----------------------------|
+        So 2 obs. to forecast for  `fh = 1` and `fh = 4`
 
 
     Returns
