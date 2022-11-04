@@ -327,13 +327,13 @@ class ThetaModularForecaster(BaseForecaster):
     --------
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.theta import ThetaModularForecaster
-    >>> from sktime.forecasting.arima import AutoARIMA
+    >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.forecasting.trend import PolynomialTrendForecaster
     >>> y = load_airline()
     >>> forecaster = ThetaModularForecaster(
     ...     forecasters=[
     ...         ("trend", PolynomialTrendForecaster(), 0),
-    ...         ("arima", AutoARIMA(), 3),
+    ...         ("arima", NaiveForecaster(), 3),
     ...     ],
     ...     theta_values=(0, 3),
     ... )
