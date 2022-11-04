@@ -1011,7 +1011,7 @@ def histogram_intersection(first, second):
     from numba.typed import Dict
 
     from sktime.classification.dictionary_based._tde_numba import (
-        _histogram_intersection_dict
+        _histogram_intersection_dict,
     )
 
     if isinstance(first, dict):
