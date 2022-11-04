@@ -1162,7 +1162,7 @@ def make_reduction(
     scitype="infer",
     transformers=None,
     pooling="local",
-    direct_truncate="fh_max",
+    dir_obs="fh_max",
 ):
     """Make forecaster based on reduction to tabular or time-series regression.
 
@@ -1197,7 +1197,7 @@ def make_reduction(
         Specifies whether separate models will be fit at the level of each instance
         (local) of if you wish to fit a single model to all instances ("global").
         Currently only works for RecursiveTimeSeriesRegressionForecaster.
-    direct_truncate: str {"fh_max", "fh_specific"}, optional
+    dir_obs: str {"fh_max", "fh_specific"}, optional
         Direct forecasting only.
         Specifies whether all models trained for each forecasting horizon in fh will
         have the same number of observations (based on the maximum forecasting horizon)
@@ -1210,7 +1210,7 @@ def make_reduction(
         Assume we have the following training data:
         | x x x x x x x x x y x x x x|
         And want to forecast with `window_length = 9` and `fh = [1, 4]`
-        With setting `direct_truncate = fh_specific` we have:
+        With setting `dir_obs = fh_specific` we have:
         `fh = 1`
         |--------------------------- |
         | * * * * * * * * * y x x x x|
@@ -1226,7 +1226,7 @@ def make_reduction(
         |----------------------------|
         So 5 obs. to forecast for  `fh = 1` and 2 obs. to forecast `fh = 4`
 
-        With setting `direct_truncate = fh_max` we have instead:
+        With setting `dir_obs = fh_max` we have instead:
         `fh = 1`
         |--------------------------- |
         | * * * * * * * * * y x x x x|
@@ -1275,7 +1275,7 @@ def make_reduction(
         window_length=window_length,
         transformers=transformers,
         pooling=pooling,
-        direct_truncate=direct_truncate,
+        dir_obs=dir_obs,
     )
 
 
