@@ -284,8 +284,7 @@ class RotationForest(BaseEstimator):
 
         # treat case of single class seen in fit
         if self.n_classes_ == 1:
-            n_instances = len(X)
-            return np.repeat([[1]], n_instances, axis=0)
+            return np.full(X.shape[0], self.classes_[0])
 
         if isinstance(X, np.ndarray) and len(X.shape) == 3 and X.shape[1] == 1:
             X = np.reshape(X, (X.shape[0], -1))
@@ -432,6 +431,7 @@ class RotationForest(BaseEstimator):
         X_t = np.concatenate(
             [pcas[i].transform(X[:, group]) for i, group in enumerate(groups)], axis=1
         )
+        X_t = np.nan_to_num(X_t, False, 0, 0, 0)
         tree = _clone_estimator(self._base_estimator, random_state=rs)
         tree.fit(X_t, y)
 
@@ -441,6 +441,7 @@ class RotationForest(BaseEstimator):
         X_t = np.concatenate(
             [pcas[i].transform(X[:, group]) for i, group in enumerate(groups)], axis=1
         )
+        X_t = np.nan_to_num(X_t, False, 0, 0, 0)
         probas = clf.predict_proba(X_t)
 
         if probas.shape[1] != self.n_classes_:
