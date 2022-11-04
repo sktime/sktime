@@ -85,6 +85,12 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
         "capability:pred_int": True,
     }
 
+    # for default get_params/set_params
+    # _steps_attr points to the attribute of self
+    # which contains the heterogeneous set of estimators
+    # this must be an iterable of (name: str, estimator) pairs for the default
+    _steps_attr = "_forecasters"
+
     def __init__(self, forecasters):
         self.forecasters = forecasters
         super(ColumnEnsembleForecaster, self).__init__(forecasters=forecasters)
@@ -375,34 +381,6 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
                     covariance between time index in row and col.
         """
         return self._by_column("predict_var", fh=fh, X=X, cov=cov, col_multiindex=True)
-
-    def get_params(self, deep=True):
-        """Get parameters of estimator in `_forecasters`.
-
-        Parameters
-        ----------
-        deep : boolean, optional
-            If True, will return the parameters for this estimator and
-            contained sub-objects that are estimators.
-
-        Returns
-        -------
-        params : mapping of string to any
-            Parameter names mapped to their values.
-        """
-        return self._get_params("_forecasters", deep=deep)
-
-    def set_params(self, **kwargs):
-        """Set the parameters of estimator in `_forecasters`.
-
-        Valid parameter keys can be listed with ``get_params()``.
-
-        Returns
-        -------
-        self : returns an instance of self.
-        """
-        self._set_params("_forecasters", **kwargs)
-        return self
 
     def _get_indices(self, y, idx):
         """Convert integer indices if necessary."""

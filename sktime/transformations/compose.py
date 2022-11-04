@@ -163,6 +163,12 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
 
     # no further default tag values - these are set dynamically below
 
+    # for default get_params/set_params from _HeterogenousMetaEstimator
+    # _steps_attr points to the attribute of self
+    # which contains the heterogeneous set of estimators
+    # this must be an iterable of (name: str, estimator) pairs for the default
+    _steps_attr = "_steps"
+
     def __init__(self, steps):
 
         self.steps = steps
@@ -385,34 +391,6 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
 
         return self
 
-    def get_params(self, deep=True):
-        """Get parameters of estimator in `steps`.
-
-        Parameters
-        ----------
-        deep : boolean, optional, default=True
-            If True, will return the parameters for this estimator and
-            contained sub-objects that are estimators.
-
-        Returns
-        -------
-        params : mapping of string to any
-            Parameter names mapped to their values.
-        """
-        return self._get_params("_steps", deep=deep)
-
-    def set_params(self, **kwargs):
-        """Set the parameters of estimator in `steps`.
-
-        Valid parameter keys can be listed with ``get_params()``.
-
-        Returns
-        -------
-        self : returns an instance of self.
-        """
-        self._set_params("_steps", **kwargs)
-        return self
-
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
@@ -498,6 +476,12 @@ class FeatureUnion(BaseTransformer, _HeterogenousMetaEstimator):
         # unclear what inverse transform should be, since multiple inverse_transform
         #   would have to inverse transform to one
     }
+
+    # for default get_params/set_params from _HeterogenousMetaEstimator
+    # _steps_attr points to the attribute of self
+    # which contains the heterogeneous set of estimators
+    # this must be an iterable of (name: str, estimator) pairs for the default
+    _steps_attr = "transformer_list"
 
     def __init__(
         self,
@@ -651,34 +635,6 @@ class FeatureUnion(BaseTransformer, _HeterogenousMetaEstimator):
             Xt.columns = flatten_multiindex(Xt.columns)
 
         return Xt
-
-    def get_params(self, deep=True):
-        """Get parameters of estimator in `_forecasters`.
-
-        Parameters
-        ----------
-        deep : boolean, optional, default=True
-            If True, will return the parameters for this estimator and
-            contained sub-objects that are estimators.
-
-        Returns
-        -------
-        params : mapping of string to any
-            Parameter names mapped to their values.
-        """
-        return self._get_params("transformer_list", deep=deep)
-
-    def set_params(self, **kwargs):
-        """Set the parameters of estimator in `_forecasters`.
-
-        Valid parameter keys can be listed with ``get_params()``.
-
-        Returns
-        -------
-        self : returns an instance of self.
-        """
-        self._set_params("transformer_list", **kwargs)
-        return self
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -915,7 +871,16 @@ class MultiplexTransformer(_DelegatedTransformer, _HeterogenousMetaEstimator):
         "X_inner_mtype": ALL_TIME_SERIES_MTYPES,
     }
 
+    # attribute for _DelegatedTransformer, which then delegates
+    #     all non-overridden methods are same as of getattr(self, _delegate_name)
+    #     see further details in _DelegatedTransformer docstring
     _delegate_name = "transformer_"
+
+    # for default get_params/set_params from _HeterogenousMetaEstimator
+    # _steps_attr points to the attribute of self
+    # which contains the heterogeneous set of estimators
+    # this must be an iterable of (name: str, estimator) pairs for the default
+    _steps_attr = "_transformers"
 
     def __init__(
         self,
@@ -969,34 +934,6 @@ class MultiplexTransformer(_DelegatedTransformer, _HeterogenousMetaEstimator):
         else:
             # if None, simply clone the first transformer to self.transformer_
             self.transformer_ = self._get_estimator_list(self.transformers)[0].clone()
-
-    def get_params(self, deep=True):
-        """Get parameters for this estimator.
-
-        Parameters
-        ----------
-        deep : boolean, optional
-            If True, will return the parameters for this estimator and
-            contained subobjects that are estimators.
-
-        Returns
-        -------
-        params : mapping of string to any
-            Parameter names mapped to their values.
-        """
-        return self._get_params("_transformers", deep=deep)
-
-    def set_params(self, **kwargs):
-        """Set the parameters of this estimator.
-
-        Valid parameter keys can be listed with ``get_params()``.
-
-        Returns
-        -------
-        self
-        """
-        self._set_params("_transformers", **kwargs)
-        return self
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -1163,6 +1100,9 @@ class InvertTransform(_DelegatedTransformer):
                 " this transformer will likely crash on input."
             )
 
+    # attribute for _DelegatedTransformer, which then delegates
+    #     all non-overridden methods are same as of getattr(self, _delegate_name)
+    #     see further details in _DelegatedTransformer docstring
     _delegate_name = "transformer_"
 
     def _transform(self, X, y=None):
@@ -1405,6 +1345,9 @@ class OptionalPassthrough(_DelegatedTransformer):
         else:
             self.transformer_ = transformer.clone()
 
+    # attribute for _DelegatedTransformer, which then delegates
+    #     all non-overridden methods are same as of getattr(self, _delegate_name)
+    #     see further details in _DelegatedTransformer docstring
     _delegate_name = "transformer_"
 
     @classmethod

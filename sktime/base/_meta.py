@@ -17,11 +17,11 @@ class _HeterogenousMetaEstimator(BaseEstimator):
     Partly adapted from sklearn utils.metaestimator.py.
     """
 
-    # for default get_params/set_params
+    # for default get_params/set_params from _HeterogenousMetaEstimator
     # _steps_attr points to the attribute of self
     # which contains the heterogeneous set of estimators
     # this must be an iterable of (name: str, estimator) pairs for the default
-    _steps_attr = "steps_"
+    _steps_attr = "_steps"
 
     def get_params(self, deep=True):
         """Get parameters of estimator in `_forecasters`.
