@@ -1484,7 +1484,7 @@ class Permute(_DelegatedForecaster, _HeterogenousMetaEstimator):
     --------
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.base import ForecastingHorizon
-    >>> from sktime.forecasting.compose import ForecastingPipeline
+    >>> from sktime.forecasting.compose import ForecastingPipeline, Permute
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.transformations.series.boxcox import BoxCoxTransformer
     >>> from sktime.transformations.series.exponent import ExponentTransformer
@@ -1501,8 +1501,8 @@ class Permute(_DelegatedForecaster, _HeterogenousMetaEstimator):
     ... )
     >>> # this results in the pipeline with sequence "exp", "boxcox", "naive"
     >>> permuted = Permute(pipe, ["exp", "boxcox", "naive"])
-    >>> pipe = pipe.fit(y, X=X, fh=fh)
-    >>> y_pred = pipe.predict(fh=fh)
+    >>> pipe = pipe.fit(y, fh=fh)
+    >>> y_pred = pipe.predict()
 
     The permuter is useful in combination with grid search (toy example):
     >>> from sktime.datasets import load_shampoo_sales
@@ -1562,10 +1562,9 @@ class Permute(_DelegatedForecaster, _HeterogenousMetaEstimator):
         permutation = self.permutation
         steps_arg = self.steps_arg
 
-        if permutation is None:
-            self.estimator_ = estimator.clone()
+        self.estimator_ = estimator.clone()
 
-        else:
+        if permutation is not None:
 
             inner_estimators = getattr(estimator, steps_arg)
             estimator_tuples = self._get_estimator_tuples(inner_estimators)
@@ -1588,7 +1587,7 @@ class Permute(_DelegatedForecaster, _HeterogenousMetaEstimator):
             estimator_tuples_permuted = [(k, estimator_dict[k]) for k in permutation]
 
             self.estimator_ = estimator.clone()
-            self.estimator_.set_params({steps_arg: estimator_tuples_permuted})
+            self.estimator_.set_params(**{steps_arg: estimator_tuples_permuted})
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
