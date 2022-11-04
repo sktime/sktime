@@ -1008,16 +1008,11 @@ def histogram_intersection(first, second):
     dist : float
         The histogram intersection distance between the first and second dictionaries.
     """
-    from numba import njit, types
     from numba.typed import Dict
 
-    @njit(fastmath=True, cache=True)
-    def _histogram_intersection_dict(first, second):
-        sim = 0
-        for word, val_a in first.items():
-            val_b = second.get(word, types.uint32(0))
-            sim += min(val_a, val_b)
-        return sim
+    from sktime.classification.dictionary_based._tde_numba import (
+        _histogram_intersection_dict
+    )
 
     if isinstance(first, dict):
         sim = 0
