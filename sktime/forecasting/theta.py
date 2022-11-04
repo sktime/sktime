@@ -319,7 +319,6 @@ class ThetaModularForecaster(BaseForecaster):
        automatic forecasting ", European Journal of Operational
        Research, vol. 284, pp. 550-558, 2020.
 
-
     See Also
     --------
     ThetaForecaster, ThetaLinesTransformer
@@ -331,11 +330,13 @@ class ThetaModularForecaster(BaseForecaster):
     >>> from sktime.forecasting.arima import AutoARIMA
     >>> from sktime.forecasting.trend import PolynomialTrendForecaster
     >>> y = load_airline()
-    >>> forecaster = ThetaModularForecaster(forecasters= [
-                ("trend", PolynomialTrendForecaster(), 0),
-                ("arima", AutoARIMA(), 3),],
-                theta_values=(0, 3)
-                )
+    >>> forecaster = ThetaModularForecaster(
+    ...     forecasters=[
+    ...         ("trend", PolynomialTrendForecaster(), 0),
+    ...         ("arima", AutoARIMA(), 3),
+    ...     ],
+    ...     theta_values=(0, 3),
+    ... )
     >>> forecaster.fit(y)
     ThetaModularForecaster(...)
     >>> y_pred = forecaster.predict(fh=[1,2,3])
