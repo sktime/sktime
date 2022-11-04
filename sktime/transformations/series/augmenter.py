@@ -64,6 +64,7 @@ class WhiteNoiseAugmenter(_AugmenterTags, BaseTransformer):
         [3]: https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.rv_continuous.random_state.html # noqa
 
     """
+
     _tags = {"python_dependencies": "scipy"}
 
     _allowed_statistics = [np.std]
