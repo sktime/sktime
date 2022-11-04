@@ -202,7 +202,7 @@ class ContinuousIntervalTree(BaseEstimator):
 
         # treat case of single class seen in fit
         if self.n_classes_ == 1:
-            return np.full(X.shape[0], self.classes_[0])
+            return np.repeat([[1]], X.shape[0], axis=0)
 
         if isinstance(X, np.ndarray) and len(X.shape) == 3 and X.shape[1] == 1:
             X = np.reshape(X, (X.shape[0], -1))
