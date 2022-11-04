@@ -70,6 +70,7 @@ def _sliding_window_transform(
     transformers=None,
     scitype="tabular-regressor",
     pooling="local",
+    discard_fh="fh_max",
 ):
     """Transform time series data using sliding window.
 
@@ -164,7 +165,10 @@ def _sliding_window_transform(
 
         # Truncate data, selecting only full windows, discarding incomplete ones.
         # Zt = Zt[effective_window_length:-effective_window_length]
-        Zt = Zt[effective_window_length:-window_length]
+        if discard_fh == "fh_max":
+            Zt = Zt[effective_window_length:-effective_window_length]
+        else:
+            Zt = Zt[effective_window_length:-window_length]
         # Zt = Zt[effective_window_length : -(effective_window_length)]
         # Return transformed feature and target variables separately. This
         # excludes contemporaneous values of the exogenous variables. Including them
@@ -191,12 +195,20 @@ class _Reducer(_BaseWindowForecaster):
         "handles-missing-data": True,
     }
 
-    def __init__(self, estimator, window_length=10, transformers=None, pooling=None):
+    def __init__(
+        self,
+        estimator,
+        window_length=10,
+        transformers=None,
+        pooling=None,
+        discard_fh=None,
+    ):
         super(_Reducer, self).__init__(window_length=window_length)
         self.transformers = transformers
         self.transformers_ = None
         self.estimator = estimator
         self.pooling = None
+        self.discard_fh = None
         self._cv = None
 
         # it seems that the sklearn tags are not fully reliable
@@ -308,10 +320,13 @@ class _DirectReducer(_Reducer):
         for i in range(len(self.fh)):
             fh_rel = fh.to_relative(self.cutoff)
             estimator = clone(self.estimator)
-            if (fh_rel[i] - 1) == 0:
+            if self.discard_fh == "fh_max":
                 estimator.fit(Xt, yt[:, i])
             else:
-                estimator.fit(Xt[: -(fh_rel[i] - 1)], yt[: -(fh_rel[i] - 1), i])
+                if (fh_rel[i] - 1) == 0:
+                    estimator.fit(Xt, yt[:, i])
+                else:
+                    estimator.fit(Xt[: -(fh_rel[i] - 1)], yt[: -(fh_rel[i] - 1), i])
             self.estimators_.append(estimator)
         return self
 
@@ -821,6 +836,7 @@ class _DirRecReducer(_Reducer):
             fh=fh,
             X=X,
             scitype=self._estimator_scitype,
+            discard_fh=self.discard_fh,
         )
 
     def _fit(self, y, X=None, fh=None):
@@ -1146,6 +1162,7 @@ def make_reduction(
     scitype="infer",
     transformers=None,
     pooling="local",
+    discard_fh="max",
 ):
     """Make forecaster based on reduction to tabular or time-series regression.
 
@@ -1180,6 +1197,47 @@ def make_reduction(
         Specifies whether separate models will be fit at the level of each instance
         (local) of if you wish to fit a single model to all instances ("global").
         Currently only works for RecursiveTimeSeriesRegressionForecaster.
+    direct_truncate: str {"fh_max", "fh_specific"}, optional
+        Direct forecasting only.
+        Specifies whether all models trained for each forecasting horizon in fh will
+        have the same number of observations (based on the maximum forecasting horizon)
+        or instead have the optimal number of observations that differs for each
+        forecasting horizon.
+        To illustrate the parameter, consider the following example
+        ``x`` = observations in the training data set, not part of window
+        ``*`` = observations in the training data set, part of the window
+        ``y`` = target observations.
+        Assume we have the following training data:
+        | x x x x x x x x x y x x x x|
+        And want to forecast with `window_length = 9` and `fh = [1, 4]`
+        With setting `direct_truncate = fh_specific` we have:
+        `fh = 1`
+        |--------------------------- |
+        | * * * * * * * * * y x x x x|
+        | x * * * * * * * * * y x x x|
+        | x x * * * * * * * * * y x x|
+        | x x x * * * * * * * * * y x|
+        | x x x x * * * * * * * * * y|
+        |----------------------------|
+        `fh = 4`
+        |--------------------------- |
+        | * * * * * * * * * x x x y x|
+        | x * * * * * * * * * x x x y|
+        |----------------------------|
+        So 5 obs. to forecast for  `fh = 1` and 2 obs. to forecast `fh = 4`
+
+        With setting `direct_truncate = fh_max` we have instead:
+        `fh = 1`
+        |--------------------------- |
+        | * * * * * * * * * y x x x x|
+        | x * * * * * * * * * y x x x|
+        |----------------------------|
+        `fh = 4`
+        |--------------------------- |
+        | * * * * * * * * * x x x y x|
+        | x * * * * * * * * * x x x y|
+        |----------------------------|
+
 
     Returns
     -------
@@ -1216,6 +1274,7 @@ def make_reduction(
         window_length=window_length,
         transformers=transformers,
         pooling=pooling,
+        direct_truncate="fh_max",
     )
 
 
