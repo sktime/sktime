@@ -13,7 +13,6 @@ __all__ = [
 
 import numpy as np
 import pandas as pd
-from scipy.stats import norm
 from sklearn.utils import check_random_state
 
 from sktime.transformations.base import BaseTransformer
@@ -65,6 +64,7 @@ class WhiteNoiseAugmenter(_AugmenterTags, BaseTransformer):
         [3]: https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.rv_continuous.random_state.html # noqa
 
     """
+    _tags = {"python_dependencies": "scipy"}
 
     _allowed_statistics = [np.std]
 
@@ -74,6 +74,8 @@ class WhiteNoiseAugmenter(_AugmenterTags, BaseTransformer):
         super().__init__()
 
     def _transform(self, X, y=None):
+        from scipy.stats import norm
+
         if self.scale in self._allowed_statistics:
             scale = self.scale(X)
         elif isinstance(self.scale, (int, float)):
