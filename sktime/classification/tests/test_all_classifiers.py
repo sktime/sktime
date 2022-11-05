@@ -183,7 +183,9 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
                 parameter_set="contracting"
             )
 
-            # classifier must have a time_limit_in_minutes parameter
+            # The "capability:contractable" has not been fully implemented yet.
+            # Most uses currently have a time_limit_in_minutes parameter, but we won't
+            # fail those that don't.
             default_params = inspect.signature(estimator_class.__init__).parameters
             if default_params.get(
                 "time_limit_in_minutes", None
@@ -194,13 +196,9 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
                 -1,
                 None,
             ):
-                raise ValueError(
-                    "Classifier capability:contractable tag is set to "
-                    "true, but no time_limit_in_minutes argument is present in "
-                    "__init__ or the default value is not one of 0, -1 or None "
-                    "(classifiers should not contract by default)."
-                )
+                return None
 
+            # too short of a contract time can lead to test failures
             if vars(estimator_instance).get("time_limit_in_minutes", None) < 5:
                 raise ValueError(
                     "Test parameters for test_contracted_classifier must set "
@@ -239,13 +237,11 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
                 parameter_set="train_estimate"
             )
 
-            # classifier must have a _get_train_probs method
+            # The "capability:train_estimate" has not been fully implemented yet.
+            # Most uses currently have the below method, but we won't fail those that
+            # don't.
             if not hasattr(estimator_instance, "_get_train_probs"):
                 return None
-                # raise ValueError(
-                #     "Classifier capability:train_estimate tag is set to "
-                #     "true, but no _get_train_probs method is present."
-                # )
 
             # fit classifier
             scenario = ClassifierFitPredict()
