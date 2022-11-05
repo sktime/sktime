@@ -37,7 +37,7 @@ class _HeterogenousMetaEstimator:
         params : mapping of string to any
             Parameter names mapped to their values.
         """
-        steps = getattr(self, self._steps_attr)
+        steps = self._steps_attr
         return self._get_params(steps, deep=deep)
 
     def set_params(self, **kwargs):
@@ -49,7 +49,7 @@ class _HeterogenousMetaEstimator:
         -------
         self : returns an instance of self.
         """
-        steps_attr = getattr(self, self._steps_attr)
+        steps_attr = self._steps_attr
         self._set_params(steps_attr, **kwargs)
         return self
 
