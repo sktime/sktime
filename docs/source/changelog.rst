@@ -68,7 +68,7 @@ BaseObject
 Data loaders
 ^^^^^^^^^^^^
 
-* [ENH] support for `@targetlabel` identifier for `.ts` files in `load_from_tsfile` (:pr:`3436`) :user:`achieveordie`
+* [ENH] support for ``@targetlabel`` identifier for ``.ts`` files in ``load_from_tsfile`` (:pr:`3436`) :user:`achieveordie`
 * [ENH] refactor/integrate ``_contrib`` - ``datasets`` (:pr:`3518`) :user:`fkiraly`
 
 Data types, checks, conversions
@@ -122,7 +122,7 @@ Time series distances and kernels
 Time series regression
 ^^^^^^^^^^^^^^^^^^^^^^
 
-* [ENH] TapNet DL Model for regression from sktime-dl (:pr:`3481`) :user:`achieveordie`
+* [ENH] TapNet DL Model for regression from ``sktime-dl`` (:pr:`3481`) :user:`achieveordie`
 * [ENH] allow ``KNeighborsTimeSeriesRegressor`` to handle distances between unequal length series(:pr:`3654`) :user:`fkiraly`
 
 
