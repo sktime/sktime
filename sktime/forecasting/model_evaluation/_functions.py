@@ -266,15 +266,20 @@ def evaluate(
     results : pd.DataFrame or dask.dataframe.DataFrame
         DataFrame that contains several columns with information regarding each
         refit/update and prediction of the forecaster.
-        Returned DataFrame has the following columns:
-        - test_{scoring.name}: (float) Model performance scores.
-        - fit_time: (float) Time in seconds to fit estimator on train window.
-        - pred_time: (float) Time in seconds to get forecasts from fitted estimator.
+        Row index is splitter index of train/test fold in `cv`.
+        Entries in the i-th row are for the i-th train/test split in `cv`.
+        Columns are as follows:
+        - test_{scoring.name}: (float) Model performance score.
+        - fit_time: (float) Time in sec for `fit` or `update` on train fold.
+        - pred_time: (float) Time in sec to `predict` from fitted estimator.
         - len_train_window: (int) Length of train window.
-        - cutoff: (int, pd.Timestamp, pd.Period) Last time point of train window.
-        - y_train: (pd.Series) Optional, see `return_data`; data used to train forecaster at n-th window.
-        - y_pred: (pd.Series) Optional, see `return_data`; forecasts from fitted forecaster at n-th window.
-        - y_test: (pd.Series) Optional, see `return_data`; testing data at n-th window.
+        - cutoff: (int, pd.Timestamp, pd.Period) cutoff = last time index in train fold.
+        - y_train: (pd.Series) only present if see `return_data=True`
+          train fold of the i-th split in `cv`, used to fit/update the forecaster.
+        - y_pred: (pd.Series) present if see `return_data=True`
+          forecasts from fitted forecaster for the i-th test fold indices of `cv`.
+        - y_test: (pd.Series) present if see `return_data=True`
+          testing fold of the i-th split in `cv`, used to compute the metric.
 
     Examples
     --------
