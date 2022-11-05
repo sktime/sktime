@@ -125,10 +125,14 @@ EXCLUDED_TESTS = {
 # common tests for estimators with the same tags.
 VALID_ESTIMATOR_TAGS = tuple(ESTIMATOR_TAG_LIST)
 
-# These methods should not change the state of the estimator, that is, they should
+# NON_STATE_CHANGING_METHODS =
+# methods that should not change the state of the estimator, that is, they should
 # not change fitted parameters or hyper-parameters. They are also the methods that
 # "apply" the fitted estimator to data and useful for checking results.
-NON_STATE_CHANGING_METHODS = (
+# NON_STATE_CHANGING_METHODS_ARRAYLIK =
+# non-state-changing methods that return an array-like output
+
+NON_STATE_CHANGING_METHODS_ARRAYLIKE = (
     "predict",
     "predict_var",
     "predict_proba",
@@ -138,6 +142,10 @@ NON_STATE_CHANGING_METHODS = (
     # escaping this, since for some estimators
     #   the input format of inverse_transform assumes special col names
     # "inverse_transform",
+)
+
+NON_STATE_CHANGING_METHODS = NON_STATE_CHANGING_METHODS_ARRAYLIKE + (
+    "get_fitted_params",
 )
 
 # The following gives a list of valid estimator base classes.
