@@ -466,7 +466,7 @@ corresponding decision making process is described in more detail below.
    * - Changes to the API design, hard dependencies, or supported versions
      - Lazy consensus, requires a :ref:`steps`
    * - Changes to sktime's governance (this document and the CoC)
-     - No lazy consensus, requires at least two approvals by core-developers
+     - Lazy consensus, requires a :ref:`steps`
    * - Appointment
      - Directly starts with voting (stage 2)
 
