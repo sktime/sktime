@@ -273,8 +273,8 @@ def evaluate(
         - len_train_window: (int) Length of train window.
         - cutoff: (int, pd.Timestamp, pd.Period) Last time point of train window.
         - y_train: (pd.Series) Optional, see `return_data`; data used to train forecaster at n-th window.
-        - y_pred: (pd.Series) Optional; see `return_data`.
-        - y_test: (pd.Series) Optional; see `return_data`.
+        - y_pred: (pd.Series) Optional, see `return_data`; forecasts from fitted forecaster at n-th window.
+        - y_test: (pd.Series) Optional, see `return_data`; testing data at n-th window.
 
     Examples
     --------
