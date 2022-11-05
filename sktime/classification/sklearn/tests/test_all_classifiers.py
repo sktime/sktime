@@ -15,8 +15,7 @@ def test_sklearn_compatible_estimator(estimator, check):
         check(estimator)
     except AssertionError as error:
         # ContinuousIntervalTree can handle NaN values
-        if (
-            str(error)
-            != "Estimator ContinuousIntervalTree doesn't check for NaN and inf in fit."
-        ):
+        if not isinstance(
+            estimator, ContinuousIntervalTree
+        ) or "check for NaN and inf" not in str(error):
             raise error
