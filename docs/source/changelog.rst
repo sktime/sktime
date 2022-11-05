@@ -19,6 +19,8 @@ Version 0.14.0 - 2022-10-30
 Highlights
 ~~~~~~~~~~~~
 
+* serialization and deserialization of all ``sktime`` objects via ``save`` method & ``base.load`` :user:`achieveordie` :user:`fkiraly`
+* documented format specification for ``.ts`` files (:pr:`3380`) :user:`achieveordie`
 * new forecaster: modular/configurable Theta forecaster (:pr:`1300`) :user:`GuzalBulatova`
 * new probabilistic prediction adder for forecasters: squaring residuals (:pr:`3378`) :user:`kcc-lion`
 * forecasting ``evaluate`` now supports hierarchical and panel data and parallelism via ``dask`` and ``joblib``  (:pr:`3511`, :pr:`3542`) :user:`topher-lo` :user:`fkiraly`
@@ -40,6 +42,9 @@ Deprecations and removals
 Forecasting
 ^^^^^^^^^^^
 
+* ``ExpanidingWindowSplitter`` parameter ``start_with_window`` is deprecated and will be removed in 0.15.0.
+  For continued functionality of ``start_with_window=True``, use ``start_with_window=0`` instead.
+  Other values of ``start_with_window`` will behave as in the case ``start_with_window=False``.
 * Isolated ``pd.timedelta`` elements should no longer be passed to splitters and ``ForecastingHorizon``,
   as ``pandas`` has deprecated ``freq`` for ``pd.delta``.
   Exceptions will be raised in corner cases where ``freq`` as not been passed and cannot be inferred.
@@ -53,6 +58,7 @@ BaseObject
 * [ENH] ``get_args`` default handling for keys not present (:pr:`3595`) :user:`fkiraly`
 * [ENH] improve base class test docstrings and clone test (:pr:`3555`) :user:`fkiraly`
 * [ENH] ``get_fitted_params`` for nested ``sklearn`` components (:pr:`3645`) :user:`fkiraly`
+* [ENH] Serialization and deserialization of estimators (:pr:`3425`) :user:`achieveordie`
 
 
 Data loaders
@@ -72,12 +78,16 @@ Forecasting
 
 * [ENH] modular/configurable Theta forecaster (:pr:`1300`) :user:`GuzalBulatova`
 * [ENH] Squaring residuals estimator (:pr:`3378`) :user:`kcc-lion`
+* [ENH] extend recursive strategy in ``make_reduction`` to allow global pooling on panel data  (:pr:`3451`) :user:`danbartl`
 * [EHN] Parallelized ``evaluate`` with ``{joblib, dask}`` (:pr:`3511`) :user:`topher-lo`
+* [ENH] use ``statsmodels`` ``append`` in ``_StatsModelsAdapter._update`` (:pr:`3527`) :user:`chillerobscuro`
 * [ENH] extend ``evaluate`` to hierarchical and panel data (:pr:`3542`) :user:`fkiraly`
 * [ENH] ``numpy`` integer support for ``ColumnEnsembleForecaster`` (:pr:`3557`) :user:`fkiraly`
 * [ENG] forecast-by-level wrapper (:pr:`3585`) :user:`fkiraly`
 * [ENH] multivariate test case for ``EnsembleForecaster`` (:pr:`3637`) :user:`fkiraly`
 * [ENH] add forecaster test case with string columns (:pr:`3506`) :user:`fkiraly`
+* [ENH] extend forecasting grid/random search to hierarchical and panel data (:pr:`3548`) :user:`fkiraly`
+* [ENH] ``ExpandingWindowSplitter`` fix for ``initial_window=0`` and deprecating ``"start_with_window"`` (:pr:`3690`) :user:`chillerobscuro`
 
 Parameter estimation
 ^^^^^^^^^^^^^^^^^^^^
@@ -95,9 +105,9 @@ Time series classification
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * [ENH] refactor/integrate ``_contrib`` - ``diagram_code`` (:pr:`3519`) :user:`fkiraly`
-* [ENH] allow ``KNeighborsTimeSeriesClassifier`` to handle distances between unequal length series (:pr:`3654`) :user:`fkiraly`
 * [ENH] fast test parameters for ``TapNet`` estimators and docstring/interface cleanup (:pr:`3544`) :user:`achieveordie`
 * [ENH] more relevant parameters to ``CNNRegressor`` for user flexibility (:pr:`3561`) :user:`achieveordie`
+* [ENH] allow ``KNeighborsTimeSeriesClassifier`` to handle distances between unequal length series (:pr:`3654`) :user:`fkiraly`
 
 
 Time series distances and kernels
@@ -112,6 +122,7 @@ Time series regression
 Transformations
 ^^^^^^^^^^^^^^^
 
+* [ENH] test that ``TruncationTransformer`` preserves index and column names in ``pd-multiindex`` (:pr:`3535`) :user:`fkiraly`
 * [ENH] replace inplace sort by non-inplace sort in ``Reconciler`` (:pr:`3553`) :user:`fkiraly`
 * [ENH] ``SupervisedIntervals`` transformer and cleaned ``numba`` functions (:pr:`3622`) :user:`MatthewMiddlehurst`
 * [ENH] Option to fit ``Clearsky`` transformer in parallel (:pr:`3652`) :user:`ciaran-g`
@@ -120,27 +131,31 @@ Transformations
 Testing framework
 ^^^^^^^^^^^^^^^^^
 
+* [ENH] tests for ``get_fitted_params`` interface contract by estimator (:pr:`3590`) :user:`fkiraly`
+
 
 Governance
 ^^^^^^^^^^
 
-* [GOV] CC observers role, update to role holders, add Guzal to CC (:pr:`3505`) :user:`GuzalBulatova`
+* [GOV] add :user:`GuzalBulatova` to CC (:pr:`3505`) :user:`GuzalBulatova`
+* [GOV] add :user:`miraep8` to core developers (:pr:`3610`) :user:`miraep8`
+* [GOV] CC observers role, update to role holders (:pr:`3505`) :user:`GuzalBulatova`
 * [GOV] minor clarifications of governance (:pr:`3581`) :user:`fkiraly`
-* [GOV] Lazy consensus on GOV PRs (:pr:`3684`) :user:`aiwalter`
 * [GOV] clarifications on algorithm maintainers (:pr:`3676`) :user:`fkiraly`
-
 
 Documentation
 ~~~~~~~~~~~~~
 
+* [DOC] Add Format Specification for ``.ts`` files. (:pr:`3380`) :user:`achieveordie`
 * [DOC] ``sklearn`` usage examples in classifier notebook (:pr:`3523`) :user:`MatthewMiddlehurst`
 * [DOC] fixes outdated points of contact in code of conduct (:pr:`3593`) :user:`fkiraly`
 * [DOC] fixes incorrect coc issue reporting link in issue tracker and remaining references in coc (:pr:`3594`) :user:`fkiraly`
-* [DOC] Add API documentation for the annotation subpackage (:pr:`3603`) :user:`lmmentel`
 * [DOC] update extension templates and docstrings for ``_get_fitted_params`` (:pr:`3589`) :user:`fkiraly`
 * [DOC] Replace ``sphinx-panels`` with ``sphinx-design`` (:pr:`3575`) :user:`MatthewMiddlehurst`
 * [DOC] fixes outdated points of contact in code of conduct (:pr:`3593`) :user:`fkiraly`
 * [DOC] fixes incorrect coc issue reporting link in issue tracker and remaining references in coc (:pr:`3594`) :user:`fkiraly`
+* [DOC] Add API documentation for the annotation subpackage (:pr:`3603`) :user:`lmmentel`
+* [DOC] invite to fall dev days on website landing page (:pr:`3607`) :user:`miraep8`
 * [DOC] add recommendations for ``get_test_params`` in extension templates (:pr:`3635`) :user:`achieveordie`
 
 
@@ -189,10 +204,10 @@ Data types, checks, conversions
 Forecasting
 ^^^^^^^^^^^
 
+* [BUG] fix ``ConformalIntervals`` update does not update ``residuals_matrix`` (:pr:`3460`) :user:`bethrice44`
 * [BUG] Fix residuals formula in ``NaiveForecaster.predict_var`` for non-null ``window_length`` (:pr:`3495`) :user:`topher-lo`
 * [BUG] Fix pipeline tags for NaN values (:pr:`3549`) :user:`aiwalter`
 * [BUG] fix conditional ``requires-fh-in-fit`` tag in ``EnsembleForecaster`` (:pr:`3642`) :user:`fkiraly`
-
 
 Parameter estimation
 ^^^^^^^^^^^^^^^^^^^^
@@ -210,7 +225,8 @@ Time series classification
 
 * [BUG] fix ``KNeighborsTimeSeriesClassifier`` tag handling dependent on distance component  (:pr:`3654`) :user:`fkiraly`
 * [BUG] Add missing ``get_test_params`` to ``TapNet`` estimators (:pr:`3541`) :user:`achieveordie`
-
+* [BUG] ``numba`` / ``np.median`` interaction raises error for large data sets run with ``n_jobs>1`` (:pr:`3602`) :user:`TonyBagnall`
+* [BUG] bug in the interaction between ``numba`` and ``np.zeros`` identified in #2397 (:pr:`3618`) :user:`TonyBagnall`
 
 Time series distances and kernels
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -227,6 +243,7 @@ Time series regression
 Transformations
 ^^^^^^^^^^^^^^^
 
+* [BUG] ``RandomShapeletTransform``: floor the maximum number of shapelets to number of classes (:pr:`3564`) :user:`TonyBagnall`
 * [BUG]  ``TSFreshFeatureExtractor`` cleanup, tests, and docstring (:pr:`3636`) :user:`kcc-lion`
 
 Testing framework
@@ -235,27 +252,14 @@ Testing framework
 raw cl from python
 
 
-* [DOC] Add Format Specification for ``.ts`` files. (:pr:`3380`) :user:`achieveordie`
-* [BUG] RandomShapeletTransform: floor the maximum number of shapelets to be the number of classes (:pr:`3564`) :user:`TonyBagnall`
-* [ENH] extend forecasting grid/random search to hierarchical and panel data (:pr:`3548`) :user:`fkiraly`
-* [ENH] test that ``TruncationTransformer`` preserves index and column names in ``pd-multiindex`` (:pr:`3535`) :user:`fkiraly`
-* [BUG] Numba/np.median interaction raises error for large data sets run with n_jobs>1 issue #3582 (:pr:`3602`) :user:`TonyBagnall`
-* [DOCS] Adding myself to list of core developers (:pr:`3610`) :user:`miraep8`
-* [DOCS] Adding invite to fall dev days to website landing page. (:pr:`3607`) :user:`miraep8`
-* [BUG] bug in the interaction between Numba and np.zeros identified in #2397 (:pr:`3618`) :user:`TonyBagnall`
-* [ENH] Save/Load Functionality for both Classical and DL Estimators (:pr:`3425`) :user:`achieveordie`
 * [BUG] Exclude ``np.timedelta64`` from ``is_int`` check (:pr:`3627`) :user:`khrapovs`
 * [BUG] ``ClearSky`` fix missing value problem after transform (:pr:`3579`) :user:`ciaran-g`
 * [BUG] Make EnsembleForecaster work with multivariate data (:pr:`3623`) :user:`AnH0ang`
-* [BUG] Fixes 1788 - Add statsmodels append() to _update() in _StatsModelsAdapter (:pr:`3527`) :user:`chillerobscuro`
-* [ENH/BUG] extend recursive strategy in ``make_reduction`` to allow global pooling on panel data  (:pr:`3451`) :user:`danbartl`
-* [BUG] writing datasets to file in ts format (:pr:`3532`) :user:`TonyBagnall`
-* [ENH] tests for ``get_fitted_params`` interface contract by estimator (:pr:`3590`) :user:`fkiraly`
-* [BUG] twe alignment path fix and refactor (:pr:`3485`) :user:`chrisholder`
-* [BUG] fix ``get_cutoff`` for numpy format (:pr:`3442`) :user:`fkiraly`
-* [BUG] Fix ``ConformalIntervals`` update does not update residuals_matrix (:pr:`3460`) :user:`bethrice44`
 
-* [ENH] ExpandingWindowSplittter fix for initial_window=0 and depreciating "start_with_window"  (:pr:`3690`) :user:`chillerobscuro`
+* [BUG] writing datasets to file in ts format (:pr:`3532`) :user:`TonyBagnall`
+* [BUG] twe alignment path fix and refactor (:pr:`3485`) :user:`chrisholder`
+* [BUG] fix ``get_cutoff`` for ``numpy`` format (:pr:`3442`) :user:`fkiraly`
+
 
 
 * [ENH] global/local recursive reduction prototype by @fkiraly in https://github.com/sktime/sktime/pull/3333
@@ -343,13 +347,6 @@ raw cl from python
 * [BUG] fix `get_cutoff` for numpy format by @fkiraly in https://github.com/sktime/sktime/pull/3442
 * [BUG] Fix `ConformalIntervals` update does not update residuals_matrix by @bethrice44 in https://github.com/sktime/sktime/pull/3460
 * [GOV] Lazy consensus on GOV PRs by @aiwalter in https://github.com/sktime/sktime/pull/3684
-* [ENH] ExpandingWindowSplittter fix for initial_window=0 and depreciating "start_with_window"  by @chillerobscuro in https://github.com/sktime/sktime/pull/3690
-* [GOV] clarifications on algorithm maintainers by @fkiraly in https://github.com/sktime/sktime/pull/3676
-* [ENH] Add important information about `get_test_params()` in the extension template by @achieveordie in https://github.com/sktime/sktime/pull/3635
-* [MNT] isolate `statsmodels`, part 3: replace dependent estimators in test parameters by @fkiraly in https://github.com/sktime/sktime/pull/3632
-* [EHN] Parallelized `evaluate` with {joblib, dask} by @topher-lo in https://github.com/sktime/sktime/pull/3511
-* [ENH] modular/configurable Theta forecaster by @GuzalBulatova in https://github.com/sktime/sktime/pull/1300
-* [MNT] 0.14.0 deprecation actions by @fkiraly in https://github.com/sktime/sktime/pull/3677
 
 
 **Full Changelog**: https://github.com/sktime/sktime/compare/v0.13.4...v0.14.0
