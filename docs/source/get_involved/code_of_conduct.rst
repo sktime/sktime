@@ -479,8 +479,6 @@ To ensure decision making in line with the code of conduct, decision making must
   E.g., following decision making outlined in the ``sktime`` governance document.
 * in communication transparent to the ``sktime`` community, following communication requirements outlined in the ``sktime`` governance document.
 * pursuant of and in line with the charitable mission of ``sktime`` and NumFOCUS.
-  For-profit activities must feed back the majority of benefits obtained through it
-  to the ``sktime`` community and its charitable entities.
 
 Adherence to widely accepted guidelines of anti-corruption and anti-bribery practice
 (e.g., United Nations Anti-Corruption Guidelines) is strictly expected,
