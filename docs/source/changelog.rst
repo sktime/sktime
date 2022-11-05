@@ -23,7 +23,7 @@ Highlights
 * documented format specification for ``.ts`` files (:pr:`3380`) :user:`achieveordie`
 * new forecaster: modular/configurable Theta forecaster (:pr:`1300`) :user:`GuzalBulatova`
 * new probabilistic prediction adder for forecasters: squaring residuals (:pr:`3378`) :user:`kcc-lion`
-* forecasting ``evaluate`` now supports hierarchical and panel data and parallelism via ``dask`` and ``joblib``  (:pr:`3511`, :pr:`3542`) :user:`topher-lo` :user:`fkiraly`
+* forecasting ``evaluate`` now supports hierarchical and panel data and parallelism via ``dask`` and ``joblib`` (:pr:`3511`, :pr:`3542`) :user:`topher-lo` :user:`fkiraly`
 * ``get_fitted_params`` now supported for all estimators via defaults (:pr:`3645`) :user:`fkiraly`
 
 Core interface changes
