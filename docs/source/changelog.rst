@@ -44,7 +44,7 @@ Deprecations and removals
 Forecasting
 ^^^^^^^^^^^
 
-* ``ExpanidingWindowSplitter`` parameter ``start_with_window`` is deprecated and will be removed in 0.15.0.
+* ``ExpandingWindowSplitter`` parameter ``start_with_window`` is deprecated and will be removed in 0.15.0.
   For continued functionality of ``start_with_window=True``, use ``start_with_window=0`` instead.
   Other values of ``start_with_window`` will behave as in the case ``start_with_window=False``.
 * Isolated ``pd.timedelta`` elements should no longer be passed to splitters and ``ForecastingHorizon``,
