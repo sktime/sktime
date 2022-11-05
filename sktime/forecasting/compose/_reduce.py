@@ -1166,8 +1166,6 @@ class DirectTabularRegressionForecaster(_DirectReducer):
         a tabular matrix.
     """
 
-    _tags = {"requires-fh-in-fit": False}  # is the forecasting horizon required in fit?
-
     def __init__(
         self,
         estimator,
