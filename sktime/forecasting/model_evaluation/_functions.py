@@ -263,9 +263,18 @@ def evaluate(
 
     Returns
     -------
-    pd.DataFrame
+    results : pd.DataFrame or dask.dataframe.DataFrame
         DataFrame that contains several columns with information regarding each
         refit/update and prediction of the forecaster.
+        Returned DataFrame contains following columns:
+        - test_{scoring.name}: (float) Model performance scores.
+        - fit_time: (float) Time in seconds to fit estimator on train window.
+        - pred_time: (float) Time in seconds to get forecasts from fitted estimator.
+        - len_train_window: (int) Length of train window.
+        - cutoff: (int, pd.Timestamp, pd.Period) Last time point of train window.
+        - y_train: (pd.Series) Optional; see `return_data`.
+        - y_pred: (pd.Series) Optional; see `return_data`.
+        - y_test: (pd.Series) Optional; see `return_data`.
 
     Examples
     --------
@@ -338,7 +347,7 @@ def evaluate(
             )
         X = convert_to(X, to_type=PANDAS_MTYPES)
 
-    score_name = "test_" + scoring.name
+    score_name = f"test_{scoring.name}"
     cutoff_dtype = str(y.index.dtype)
     _evaluate_window_kwargs = {
         "fh": cv.fh,
