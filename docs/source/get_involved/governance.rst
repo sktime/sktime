@@ -102,6 +102,15 @@ interface requirements and are called estimators. To faciliate
 maintainership questions, we try to write algorithms in separate files
 when possible.
 
+To clarify, "algorithm" in the above sense means "implemented estimator class".
+That is, algorithm maintainers gain rights and responsibilities with respect to
+that python code.
+They do not gain any rights on abstract methodology, e.g., in a case where
+the class implements methodology invented by third parties.
+
+In particular, algorithm maintainers do not gain rights or responsibilities on other,
+potential implementations of the same methodology in their estimator class.
+
 Rights and responsibilities
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -117,18 +126,60 @@ Rights and responsibilities
   * - Support
     - They are the first point of contact for users and other contributors for all questions, issues and proposals regarding their algorithm.
 
+Recall, "algorithm" refers to estimator classes.
+
+Therefore, the above rights and responsibilities exclude any power on further, potential implementations of the same or similar methodology.
+
+For instance, an algorithm maintainer of algorithm A implemented in class X cannot prohibit implementation of algorithm A in class Y.
+They can only make decisions about changes on class X. Class Y can be owned by a different algorithm maintainer.
+
+In particular, there can be multiple classes implementing algorithm A, and the algorithm maintainer of class X cannot prohibit implementation of, or make decisions on class Y.
+
+Expectations
+^^^^^^^^^^^^
+
+Without restriction to eligibility, it is generally expected that algorithm maintainers
+have a very good technical and methodological understanding of the algorithm they maintain.
+
+This understanding is typically present in inventors or proponents of said algorithm,
+but it is not necessary to be the inventor of an algorithm to be its maintainer.
+
+Eligibility
+^^^^^^^^^^^
+
+Anyone is eligible to be an algorithm maintainer.
+
+Anyone is eligible to be an algorithm maintainer of a specific algorithm that does not already have an algorithm maintainer.
+
+The presence of a specific implementation of a given abstract algorithm does not prevent anyone from becoming
+the algorithm maintainer of a different implementation of the same (or similar) abstract algorithm.
+
 Appointment
 ^^^^^^^^^^^
 
 The contributor who contributes an algorithm is automatically appointed
-as its first maintainer. If they can no longer fulfil their maintenance
+as its first maintainer.
+
+Algorithm maintainers are listed in the `CODEOWNERS <https://github
+.com/alan-turing-institute/sktime/blob/main/CODEOWNERS>`__ file.
+
+When an algorithm maintainer resigns, they can appoint another contributor as the
+new algorithm maintainer. No vote is required. This change should be reflected in the ``CODEOWNERS`` file.
+
+Algorithm maintainers can be appointed by CC simple majority for any algorithm without maintainers.
+
+End of tenure
+^^^^^^^^^^^^^
+
+If algorithm maintainers can no longer fulfil their maintenance
 responsibilities, maintainers are expected to resign.
 
-When the maintainer resigns, they can appoint another contributor as the
-new maintainer. No vote is required.
+Algorithm maintainers that have been unresponsive for a 3 month period automatically
+give up their rights and responsibilities as algorithm maintainers.
 
-Maintainers are listed in the `CODEOWNERS <https://github
-.com/sktime/sktime/blob/main/CODEOWNERS>`__ file.
+Unresponsiveness is defined as:
+* not engaging with decision making procedures within the reasonably time frames defined there
+* not reacting to issues or bug reports related to the algorithm, within ten working days
 
 .. _core-developers:
 
@@ -415,7 +466,7 @@ corresponding decision making process is described in more detail below.
    * - Changes to the API design, hard dependencies, or supported versions
      - Lazy consensus, requires a :ref:`steps`
    * - Changes to sktime's governance (this document and the CoC)
-     - Lazy consensus, requires a :ref:`steps`
+     - No lazy consensus, requires at least two approvals by core-developers
    * - Appointment
      - Directly starts with voting (stage 2)
 

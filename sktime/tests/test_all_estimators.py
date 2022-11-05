@@ -700,7 +700,19 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
     estimator_type_filter = "object"
 
     def test_create_test_instance(self, estimator_class):
-        """Check first that create_test_instance logic works."""
+        """Check create_test_instance logic and basic constructor functionality.
+
+        create_test_instance and create_test_instances_and_names are the
+        key methods used to create test instances in testing.
+        If this test does not pass, validity of the other tests cannot be guaranteed.
+
+        Also tests inheritance and super call logic in the constructor.
+
+        Tests that:
+        * create_test_instance results in an instance of estimator_class
+        * __init__ calls super.__init__
+        * _tags_dynamic attribute for tag inspection is present after construction
+        """
         estimator = estimator_class.create_test_instance()
 
         # Check that init does not construct object of other class than itself
@@ -718,7 +730,14 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
         assert hasattr(estimator, "_tags_dynamic"), msg
 
     def test_create_test_instances_and_names(self, estimator_class):
-        """Check that create_test_instances_and_names works."""
+        """Check that create_test_instances_and_names works.
+
+        create_test_instance and create_test_instances_and_names are the
+        key methods used to create test instances in testing.
+        If this test does not pass, validity of the other tests cannot be guaranteed.
+
+        Tests expected function signature of create_test_instances_and_names.
+        """
         estimators, names = estimator_class.create_test_instances_and_names()
 
         assert isinstance(estimators, list), (
@@ -887,17 +906,41 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
             assert is_equal, msg
 
     def test_clone(self, estimator_instance):
-        """Check we can call clone from scikit-learn."""
-        estimator = estimator_instance
-        estimator.clone()
+        """Check that clone method does not raise exceptions and results in a clone.
+
+        A clone of an object x is an object that:
+        * has same class and parameters as x
+        * is not identical with x
+        * is unfitted (even if x was fitted)
+        """
+        est_clone = estimator_instance.clone()
+        assert isinstance(est_clone, type(estimator_instance))
+        assert est_clone is not estimator_instance
+        if hasattr(est_clone, "is_fitted"):
+            assert not est_clone.is_fitted
 
     def test_repr(self, estimator_instance):
-        """Check we can call repr."""
+        """Check that __repr__ call to instance does not raise exceptions."""
         estimator = estimator_instance
         repr(estimator)
 
     def test_constructor(self, estimator_class):
-        """Check that the constructor has correct signature and behaves correctly."""
+        """Check that the constructor has sklearn compatible signature and behaviour.
+
+        Based on sklearn check_estimator testing of __init__ logic.
+        Uses create_test_instance to create an instance.
+        Assumes test_create_test_instance has passed and certified create_test_instance.
+
+        Tests that:
+        * constructor has no varargs
+        * tests that constructor constructs an instance of the class
+        * tests that all parameters are set in init to an attribute of the same name
+        * tests that parameter values are always copied to the attribute and not changed
+        * tests that default parameters are one of the following:
+            None, str, int, float, bool, tuple, function, joblib memory, numpy primitive
+            (other type parameters should be None, default handling should be by writing
+            the default to attribute of a different name, e.g., my_param_ not my_param)
+        """
         msg = "constructor __init__ should have no varargs"
         assert getfullargspec(estimator_class.__init__).varkw is None, msg
 

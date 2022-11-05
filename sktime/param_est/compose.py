@@ -282,12 +282,24 @@ class ParamFitterPipeline(BaseParamFitter, _HeterogenousMetaEstimator):
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
         # imports
+        from sktime.param_est.fixed import FixedParams
         from sktime.param_est.seasonality import SeasonalityACF
         from sktime.transformations.series.exponent import ExponentTransformer
+        from sktime.utils.validation._dependencies import _check_estimator_deps
 
         t1 = ExponentTransformer(power=2)
         t2 = ExponentTransformer(power=0.5)
-        p = SeasonalityACF()
+        p0 = FixedParams({"a": 2, 3: 42})
 
-        # construct without names
-        return {"transformers": [t1, t2], "param_est": p}
+        # construct with name/estimator tuples
+        params = [{"transformers": [("foo", t1), ("bar", t2)], "param_est": p0}]
+
+        # test case 2 depends on statsmodels, requires statsmodels
+        if _check_estimator_deps(SeasonalityACF, severity="none"):
+
+            p = SeasonalityACF()
+
+            # construct without names
+            params = params + [{"transformers": [t1, t2], "param_est": p}]
+
+        return params
