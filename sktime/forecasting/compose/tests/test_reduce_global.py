@@ -116,7 +116,48 @@ def check_eval(test_input, expected):
         ),
     ],
 )
-def test_reduction(y, index_names):
+def test_recursive_reduction(y, index_names):
+    """Test index columns match input."""
+    regressor = make_pipeline(
+        RandomForestRegressor(random_state=1),
+    )
+
+    forecaster2 = make_reduction(
+        regressor,
+        scitype="tabular-regressor",
+        transformers=[WindowSummarizer(**kwargs, n_jobs=1)],
+        window_length=None,
+        strategy="recursive",
+        pooling="global",
+    )
+
+    forecaster2.fit(y, fh=[1, 2])
+    y_pred = forecaster2.predict(fh=[1, 2, 12])
+    check_eval(y_pred.index.names, index_names)
+
+
+@pytest.mark.parametrize(
+    "y, index_names",
+    [
+        (
+            y_train_grp,
+            ["instances", "timepoints"],
+        ),
+        (
+            y_train,
+            [None],
+        ),
+        (
+            y_numeric,
+            [None],
+        ),
+        (
+            y_train_hier_unequal,
+            ["foo", "bar", "Period"],
+        ),
+    ],
+)
+def test_direct_reduction(y, index_names):
     """Test index columns match input."""
     regressor = make_pipeline(
         RandomForestRegressor(random_state=1),

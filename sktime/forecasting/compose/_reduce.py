@@ -531,7 +531,7 @@ class _DirectReducer(_Reducer):
                 return self._predict_nan(fh)
 
         if self.pooling == "global":
-            fh_abs = fh.to_absolute(self.cutoff)
+            fh_abs = fh.to_absolute(self.cutoff).to_pandas()
             y_pred = _create_fcst_df(fh_abs, self._y)
 
             for i, estimator in enumerate(self.estimators_):
