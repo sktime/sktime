@@ -1517,7 +1517,7 @@ class Permute(_DelegatedForecaster, _HeterogenousMetaEstimator):
     >>> forecaster = NaiveForecaster()
     >>> # check which of the two sequences of transformers is better
     >>> param_grid = {
-    ...     "permutation" : [["boxcox", "exp", "naive"], ["exp", "boxcox", "naive]]
+    ...     "permutation" : [["boxcox", "exp", "naive"], ["exp", "boxcox", "naive"]]
     ... }
     >>> gscv = ForecastingGridSearchCV(
     ...     forecaster=forecaster,
