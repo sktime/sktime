@@ -465,8 +465,10 @@ corresponding decision making process is described in more detail below.
      - Lazy consensus
    * - Changes to the API design, hard dependencies, or supported versions
      - Lazy consensus, requires a :ref:`steps`
-   * - Changes to sktime's governance (this document and the CoC)
-     - No lazy consensus, requires at least two approvals by core-developers
+   * - Changes to sktime's governance rules (this document) 
+     - No lazy consensus, requires a :ref:`steps`, requires additional approval by CC member
+   * - Changes to sktime's code of conduct
+     - No lazy consensus, requires a :ref:`steps`, requires additional approval by CoC committee member
    * - Appointment
      - Directly starts with voting (stage 2)
 
@@ -501,6 +503,10 @@ core developers.
 -  If the "reasonable time" period elapses and no approval or rejection has been expressed on a PR,
    the PR is scheduled at the top of agenda for the next developer meetup.
    In that meeting, a core developer is assigned to review the PR and either approve or reject within five days of the meeting excluding weekends.
+-  Proposed changes to ``sktime``'s governance or CoC cannot be accepted by lazy consensus.
+   They require at least one approval by a CC member (governance changes) or a CoC member (CoC changes).
+-  Changes to ``sktime``'s governance or CoC can be made only by a core developer, require a STEP, and must have been listed in one of the regular bi-weekly CC meetings,
+   under an agenda item "proposed changes to ``sktime``'s governance or CoC".
 
 Failure of lazy consensus, in the above sense, can arise only under the following condition:
 at least one approval and at least one rejection in the PR.
