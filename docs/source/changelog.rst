@@ -242,6 +242,7 @@ Time series classification
 * [BUG] Add missing ``get_test_params`` to ``TapNet`` estimators (:pr:`3541`) :user:`achieveordie`
 * [BUG] ``numba`` / ``np.median`` interaction raises error for large data sets run with ``n_jobs>1`` (:pr:`3602`) :user:`TonyBagnall`
 * [BUG] bug in the interaction between ``numba`` and ``np.zeros`` identified in #2397 (:pr:`3618`) :user:`TonyBagnall`
+* [BUG] various small bugfixes (:pr:`3706`) :user:`MatthewMiddlehurst`
 
 Time series distances and kernels
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
