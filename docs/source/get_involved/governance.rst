@@ -498,8 +498,9 @@ core developers.
    Ten working days excluding week-ends constitute "reasonable time" in the above sense.
    The period resets at every new change made to the PR.
    It starts only when all GitHub checks pass.
--  During this period, the PR can be merged if it has an approval and no rejection, but should be
+-  During the "reasonable time" period, the PR can be merged if it has an approval and no rejection, but should be
    reverted if it receives a rejection in addition.
+   Policies and decisions are considered accepted only after the "reasonable time" period has passed.
 -  If the "reasonable time" period elapses and no approval or rejection has been expressed on a PR,
    the PR is scheduled at the top of agenda for the next developer meetup.
    In that meeting, a core developer is assigned to review the PR and either approve or reject within five days of the meeting excluding weekends.
