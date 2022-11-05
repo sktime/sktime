@@ -1028,6 +1028,7 @@ class RecursiveTabularRegressionForecaster(_RecursiveReducer):
         window_length=10,
         transformers=None,
         pooling="local",
+        dir_obs=None,
     ):
         super(_RecursiveReducer, self).__init__(
             estimator=estimator, window_length=window_length, transformers=transformers
