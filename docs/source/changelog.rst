@@ -50,6 +50,8 @@ Forecasting
 * Isolated ``pd.timedelta`` elements should no longer be passed to splitters and ``ForecastingHorizon``,
   as ``pandas`` has deprecated ``freq`` for ``pd.delta``.
   Exceptions will be raised in corner cases where ``freq`` as not been passed and cannot be inferred.
+* change to public ``cutoff`` attribute delayed to 0.15.0:
+  public ``cutoff`` attribute of forecasters will change to ``pd.Index`` subtype, from index element.
 
 Enhancements
 ~~~~~~~~~~~~
