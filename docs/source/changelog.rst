@@ -19,7 +19,7 @@ Version 0.14.0 - 2022-10-30
 Highlights
 ~~~~~~~~~~~~
 
-* serialization and deserialization of all ``sktime`` objects via ``save`` method & ``base.load`` :user:`achieveordie` :user:`fkiraly`
+* serialization and deserialization of all ``sktime`` objects via ``save`` method & ``base.load`` (:pr:`3336`, :pr:`3425`) :user:`achieveordie` :user:`fkiraly`
 * documented format specification for ``.ts`` files (:pr:`3380`) :user:`achieveordie`
 * new forecaster: modular/configurable Theta forecaster (:pr:`1300`) :user:`GuzalBulatova`
 * new probabilistic prediction adder for forecasters: squaring residuals (:pr:`3378`) :user:`kcc-lion`
@@ -29,12 +29,14 @@ Highlights
 Core interface changes
 ~~~~~~~~~~~~~~~~~~~~~~
 
-BaseObject
-^^^^^^^^^^
+BaseObject & BaseEstimator
+^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* all objects and estimators now possess a ``save`` method for serialization to memory or file.
+* all objects and estimators (``BaseObject`` descendants) now possess a ``save`` method for serialization to memory or file.
   Serialized objects can be deserialized by ``base.load``.
-
+  Interface contracts on ``save`` and ``load`` are now tested by the standard test suite (e.g., ``check_estimator``).
+* all fittable objects ("estimators", ``BaseEstimator`` descendants) now have a functioning default implementation of ``get_fitted_params``.
+  Interface contracts on ``get_fitted_params`` are now tested by the standard test suite (e.g., ``check_estimator``).
 
 Deprecations and removals
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -58,12 +60,13 @@ BaseObject
 * [ENH] ``get_args`` default handling for keys not present (:pr:`3595`) :user:`fkiraly`
 * [ENH] improve base class test docstrings and clone test (:pr:`3555`) :user:`fkiraly`
 * [ENH] ``get_fitted_params`` for nested ``sklearn`` components (:pr:`3645`) :user:`fkiraly`
-* [ENH] Serialization and deserialization of estimators (:pr:`3425`) :user:`achieveordie`
-
+* [ENH] Serialization and deserialization of estimators (:pr:`3336`) :user:`fkiraly`
+* [ENH] Serialization and deserialization of deep learning estimators (:pr:`3425`) :user:`achieveordie`
 
 Data loaders
 ^^^^^^^^^^^^
 
+* [ENH] support for `@targetlabel` identifier for `.ts` files in `load_from_tsfile` (:pr:`3436`) :user:`achieveordie`
 * [ENH] refactor/integrate ``_contrib`` - ``datasets`` (:pr:`3518`) :user:`fkiraly`
 
 Data types, checks, conversions
@@ -72,11 +75,11 @@ Data types, checks, conversions
 * [ENH] ``dask`` conversion adapters for multi-indexed ``pandas.DataFrame`` (:pr:`3513`) :user:`fkiraly`
 * [ENH] refactor mtype conversion extension utils into one location (:pr:`3514`) :user:`fkiraly`
 
-
 Forecasting
 ^^^^^^^^^^^
 
 * [ENH] modular/configurable Theta forecaster (:pr:`1300`) :user:`GuzalBulatova`
+* [ENH] global/local recursive reduction prototype (:pr:`3333`) :user:`fkiraly`
 * [ENH] Squaring residuals estimator (:pr:`3378`) :user:`kcc-lion`
 * [ENH] extend recursive strategy in ``make_reduction`` to allow global pooling on panel data  (:pr:`3451`) :user:`danbartl`
 * [EHN] Parallelized ``evaluate`` with ``{joblib, dask}`` (:pr:`3511`) :user:`topher-lo`
@@ -85,8 +88,10 @@ Forecasting
 * [ENH] ``numpy`` integer support for ``ColumnEnsembleForecaster`` (:pr:`3557`) :user:`fkiraly`
 * [ENG] forecast-by-level wrapper (:pr:`3585`) :user:`fkiraly`
 * [ENH] multivariate test case for ``EnsembleForecaster`` (:pr:`3637`) :user:`fkiraly`
+* [ENH] extend ``ColumnEnsembleForecaster`` to allow application of multivariate forecasters (:pr:`3504`) :user:`fkiraly`
 * [ENH] add forecaster test case with string columns (:pr:`3506`) :user:`fkiraly`
 * [ENH] extend forecasting grid/random search to hierarchical and panel data (:pr:`3548`) :user:`fkiraly`
+* [ENH] Make ``EnsembleForecaster`` work with multivariate data (:pr:`3623`) :user:`AnH0ang`
 * [ENH] ``ExpandingWindowSplitter`` fix for ``initial_window=0`` and deprecating ``"start_with_window"`` (:pr:`3690`) :user:`chillerobscuro`
 
 Parameter estimation
@@ -94,21 +99,20 @@ Parameter estimation
 
 * [ENH] fixed parameter setter estimator (:pr:`3639`) :user:`fkiraly`
 
-
 Time series annotation
 ^^^^^^^^^^^^^^^^^^^^^^
 
 * [ENH] Information Gain Temporal Segmentation Estimator (:pr:`3399`) :user:`lmmentel`
-
+* [ENH] Segmentation metrics (:pr:`3403`) :user:`lmmentel`
 
 Time series classification
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+* [ENH] TapNet DL Model for classification (:pr:`3386`) :user:`achieveordie`
 * [ENH] refactor/integrate ``_contrib`` - ``diagram_code`` (:pr:`3519`) :user:`fkiraly`
 * [ENH] fast test parameters for ``TapNet`` estimators and docstring/interface cleanup (:pr:`3544`) :user:`achieveordie`
 * [ENH] more relevant parameters to ``CNNRegressor`` for user flexibility (:pr:`3561`) :user:`achieveordie`
 * [ENH] allow ``KNeighborsTimeSeriesClassifier`` to handle distances between unequal length series (:pr:`3654`) :user:`fkiraly`
-
 
 Time series distances and kernels
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -116,6 +120,7 @@ Time series distances and kernels
 Time series regression
 ^^^^^^^^^^^^^^^^^^^^^^
 
+* [ENH] TapNet DL Model for regression from sktime-dl (:pr:`3481`) :user:`achieveordie`
 * [ENH] allow ``KNeighborsTimeSeriesRegressor`` to handle distances between unequal length series(:pr:`3654`) :user:`fkiraly`
 
 
@@ -125,31 +130,31 @@ Transformations
 * [ENH] test that ``TruncationTransformer`` preserves index and column names in ``pd-multiindex`` (:pr:`3535`) :user:`fkiraly`
 * [ENH] replace inplace sort by non-inplace sort in ``Reconciler`` (:pr:`3553`) :user:`fkiraly`
 * [ENH] ``SupervisedIntervals`` transformer and cleaned ``numba`` functions (:pr:`3622`) :user:`MatthewMiddlehurst`
+* [ENH] ``TSFreshFeatureExtractor`` cleanup, tests, and docstring (:pr:`3636`) :user:`kcc-lion`
 * [ENH] Option to fit ``Clearsky`` transformer in parallel (:pr:`3652`) :user:`ciaran-g`
-
 
 Testing framework
 ^^^^^^^^^^^^^^^^^
 
 * [ENH] tests for ``get_fitted_params`` interface contract by estimator (:pr:`3590`) :user:`fkiraly`
 
-
 Governance
 ^^^^^^^^^^
 
 * [GOV] add :user:`GuzalBulatova` to CC (:pr:`3505`) :user:`GuzalBulatova`
 * [GOV] add :user:`miraep8` to core developers (:pr:`3610`) :user:`miraep8`
-* [GOV] CC observers role, update to role holders (:pr:`3505`) :user:`GuzalBulatova`
+* [GOV] new CC observers role, update to role holders list (:pr:`3505`) :user:`GuzalBulatova`
 * [GOV] minor clarifications of governance (:pr:`3581`) :user:`fkiraly`
-* [GOV] clarifications on algorithm maintainers (:pr:`3676`) :user:`fkiraly`
+* [GOV] clarifications on algorithm maintainer role (:pr:`3676`) :user:`fkiraly`
 
 Documentation
 ~~~~~~~~~~~~~
 
+* [DOC] update docs on releasing conda packages (:pr:`3279`) :user:`lmmentel`
 * [DOC] Add Format Specification for ``.ts`` files. (:pr:`3380`) :user:`achieveordie`
+* [DOC] clarifications on deprecation notes (:pr:`3411`) :user:`fkiraly`
+* [DOC] Update CONTRIBUTORS.md (:pr:`3503`) :user:`shagn`
 * [DOC] ``sklearn`` usage examples in classifier notebook (:pr:`3523`) :user:`MatthewMiddlehurst`
-* [DOC] fixes outdated points of contact in code of conduct (:pr:`3593`) :user:`fkiraly`
-* [DOC] fixes incorrect coc issue reporting link in issue tracker and remaining references in coc (:pr:`3594`) :user:`fkiraly`
 * [DOC] update extension templates and docstrings for ``_get_fitted_params`` (:pr:`3589`) :user:`fkiraly`
 * [DOC] Replace ``sphinx-panels`` with ``sphinx-design`` (:pr:`3575`) :user:`MatthewMiddlehurst`
 * [DOC] fixes outdated points of contact in code of conduct (:pr:`3593`) :user:`fkiraly`
@@ -157,7 +162,6 @@ Documentation
 * [DOC] Add API documentation for the annotation subpackage (:pr:`3603`) :user:`lmmentel`
 * [DOC] invite to fall dev days on website landing page (:pr:`3607`) :user:`miraep8`
 * [DOC] add recommendations for ``get_test_params`` in extension templates (:pr:`3635`) :user:`achieveordie`
-
 
 Maintenance
 ~~~~~~~~~~~
@@ -167,12 +171,15 @@ Maintenance
 * [MNT] Bump setup-python action from 2 to 4 (:pr:`3577`) :user:`lmmentel`
 * [MNT] Remove ``ABCMeta`` inheritance from ``_HeterogeneousMetaEstimator`` (:pr:`3569`) :user:`fkiraly`
 * [MNT] loosen ``scipy`` bound to <2.0.0 (:pr:`3587`) :user:`fkiraly`
+* [MNT] Replace deprecated ``sphinx-panels`` with ``sphinx-design`` (:pr:`3575`) :user:`MatthewMiddlehurst`
 * [MNT] Bump checkout action from 2 to 3 (:pr:`3578`) :user:`lmmentel`
 * [MNT] temporarily remove stochastically failing tapnet from tests (:pr:`3624`) :user:`fkiraly`
 * [MNT] replace ``ARIMA`` used in tests by reducer to remove soft dependency in tests (:pr:`3552`) :user:`fkiraly`
 * [MNT] replace author names by GitHub ID in author fields, linting (:pr:`3628`) :user:`fkiraly`
+* [ENH] isolate ``statsmodels`` imports (:pr:`3445`) :user:`fkiraly`
 * [MNT] isolate ``statsmodels`` imports, part 2 (:pr:`3515`) :user:`fkiraly`
 * [MNT] isolate ``statsmodels``, part 3: replace dependent estimators in test parameters (:pr:`3632`) :user:`fkiraly`
+* [MNT] replace author names by GitHub ID in author fields, linting (:pr:`3628`) :user:`fkiraly`
 
 Refactored
 ~~~~~~~~~~
@@ -192,6 +199,7 @@ Data loaders
 ^^^^^^^^^^^^
 
 * [BUG] fix bug with data loading from timeseriesclassification.com when ``extract_path`` is not ``None`` (:pr:`3021`) :user:`TonyBagnall`
+* [BUG] fix error in writing datasets to file in ts format (:pr:`3532`) :user:`TonyBagnall`
 
 Data types, checks, conversions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -199,13 +207,16 @@ Data types, checks, conversions
 * [BUG] fix ``pd.concat`` in stratified resampling causing error in ``check_is_scitype`` (:pr:`3546`) :user:`TonyBagnall`
 * [BUG] fix ``check_estimator`` exclude arguments not working for non-base scitype tests (:pr:`3566`) :user:`fkiraly`
 * [BUG] fix erroneous asserts in input checkers (:pr:`3556`) :user:`fkiraly`
-
+* [BUG] Exclude ``np.timedelta64`` from ``is_int`` check (:pr:`3627`) :user:`khrapovs`
+* [BUG] fix ``get_cutoff`` for ``numpy`` format (:pr:`3442`) :user:`fkiraly`
 
 Forecasting
 ^^^^^^^^^^^
 
 * [BUG] fix ``ConformalIntervals`` update does not update ``residuals_matrix`` (:pr:`3460`) :user:`bethrice44`
+* [BUG] Fix side effect of ``predict_residuals`` (:pr:`3475`) :user:`aiwalter`
 * [BUG] Fix residuals formula in ``NaiveForecaster.predict_var`` for non-null ``window_length`` (:pr:`3495`) :user:`topher-lo`
+* [BUG] fix ``ColumnEnsembleForecaster`` for ``str`` index (:pr:`3504`) :user:`canbooo` :user:`fkiraly`
 * [BUG] Fix pipeline tags for NaN values (:pr:`3549`) :user:`aiwalter`
 * [BUG] fix conditional ``requires-fh-in-fit`` tag in ``EnsembleForecaster`` (:pr:`3642`) :user:`fkiraly`
 
@@ -219,6 +230,10 @@ Time series annotation
 
 * [BUG] Fixing tags typo in ``BaseHmmLearn`` (:pr:`3563`) :user:`guzalbulatova` :user:`miraep8`
 
+Time series clustering
+^^^^^^^^^^^^^^^^^^^^^^
+
+* [BUG] Pass all average params to kmeans (:pr:`3486`) :user:`chrisholder`
 
 Time series classification
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -231,125 +246,20 @@ Time series classification
 Time series distances and kernels
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+* [BUG] Fixed msm alignment path (:pr:`3484`) :user:`chrisholder`
+* [BUG] TWE alignment path fix and refactor (:pr:`3485`) :user:`chrisholder`
 * [BUG] Fix typo in ``set_tags`` call in ``AggrDist.__init__`` (:pr:`3562`) :user:`aiwalter`
-
 
 Time series regression
 ^^^^^^^^^^^^^^^^^^^^^^
 
 * [BUG] fix ``KNeighborsTimeSeriesRegressor`` tag handling dependent on distance component (:pr:`3654`) :user:`fkiraly`
 
-
 Transformations
 ^^^^^^^^^^^^^^^
 
 * [BUG] ``RandomShapeletTransform``: floor the maximum number of shapelets to number of classes (:pr:`3564`) :user:`TonyBagnall`
-* [BUG]  ``TSFreshFeatureExtractor`` cleanup, tests, and docstring (:pr:`3636`) :user:`kcc-lion`
-
-Testing framework
-^^^^^^^^^^^^^^^^^
-
-raw cl from python
-
-
-* [BUG] Exclude ``np.timedelta64`` from ``is_int`` check (:pr:`3627`) :user:`khrapovs`
-* [BUG] ``ClearSky`` fix missing value problem after transform (:pr:`3579`) :user:`ciaran-g`
-* [BUG] Make EnsembleForecaster work with multivariate data (:pr:`3623`) :user:`AnH0ang`
-
-* [BUG] writing datasets to file in ts format (:pr:`3532`) :user:`TonyBagnall`
-* [BUG] twe alignment path fix and refactor (:pr:`3485`) :user:`chrisholder`
-* [BUG] fix ``get_cutoff`` for ``numpy`` format (:pr:`3442`) :user:`fkiraly`
-
-
-
-* [ENH] global/local recursive reduction prototype by @fkiraly in https://github.com/sktime/sktime/pull/3333
-* [ENH] Segmentation metrics by @lmmentel in https://github.com/sktime/sktime/pull/3403
-* [ENH] `dask` conversion adapters for multi-indexed `pandas.DataFrame` by @fkiraly in https://github.com/sktime/sktime/pull/3513
-* [ENH] extend `evaluate` to hierarchical and panel data by @fkiraly in https://github.com/sktime/sktime/pull/3542
-* [ENH] Add Information Gain Temporal Segmentation Estimator by @lmmentel in https://github.com/sktime/sktime/pull/3399
-* [DOC] fixes outdated points of contact in code of conduct by @fkiraly in https://github.com/sktime/sktime/pull/3593
-* [ENH] `get_args` default handling for keys not present by @fkiraly in https://github.com/sktime/sktime/pull/3595
-* [ENH] `numpy` integer support for `ColumnEnsembleForecaster` by @fkiraly in https://github.com/sktime/sktime/pull/3557
-* [ENG] forecast-by-level wrapper by @fkiraly in https://github.com/sktime/sktime/pull/3585
-* [GOV] proposed code of conduct update - mature sktime structure and decision making on resources by @fkiraly in https://github.com/sktime/sktime/pull/3095
-* [ENH] refactor remaining `get_fitted_params` overrides to `_get_fitted_params` by @fkiraly in https://github.com/sktime/sktime/pull/3591
-* [ENH] fixed parameter setter estimator by @fkiraly in https://github.com/sktime/sktime/pull/3639
-* [ENH] multivariate test case for `EnsembleForecaster` by @fkiraly in https://github.com/sktime/sktime/pull/3637
-* [ENH] improve base class test docstrings and clone test by @fkiraly in https://github.com/sktime/sktime/pull/3555
-* [ENH] `get_fitted_params` for nested `sklearn` components by @fkiraly in https://github.com/sktime/sktime/pull/3645
-* [ENH] Option to fit `Clearsky` transformer in parallel by @ciaran-g in https://github.com/sktime/sktime/pull/3652
-* [ENH/BUG] knn estimators for unequal length distances by @fkiraly in https://github.com/sktime/sktime/pull/3654
-* [ENH] SupervisedIntervals transformer and cleaned numba functions by @MatthewMiddlehurst in https://github.com/sktime/sktime/pull/3622
-### 🐛 Bug Fixes
-* [BUG] Fix side-effect of predict_residuals by @aiwalter in https://github.com/sktime/sktime/pull/3475
-* & canbooo [BUG] fix `ColumnEnsembleForecaster` for str index; extend `ColumnEnsembleForecaster` to allow application of multivariate forecasters by @fkiraly in https://github.com/sktime/sktime/pull/3504
-* [BUG] Fix residuals formula in NaiveForecaster predict_var for non-null window_length by @topher-lo in https://github.com/sktime/sktime/pull/3495
-* [BUG] use of pd.concat in stratified resampling raises error in check_is_scitype by @TonyBagnall in https://github.com/sktime/sktime/pull/3546
-* [BUG] Fix pipeline tag for NaN values by @aiwalter in https://github.com/sktime/sktime/pull/3549
-* [BUG] fix `check_estimator` exclude arguments not working for non-base scitype tests by @fkiraly in https://github.com/sktime/sktime/pull/3566
-* [DOC] fixes incorrect coc issue reporting link in issue tracker and remaining references in coc by @fkiraly in https://github.com/sktime/sktime/pull/3594
-* [BUG] Fix typo in `set_tags` call in `AggrDist.__init__` by @aiwalter in https://github.com/sktime/sktime/pull/3562
-* [BUG] fix `get_fitted_params` default for unfittable components by @fkiraly in https://github.com/sktime/sktime/pull/3598
-* [BUG] fix `get_fitted_params` for non-conformant estimators by @fkiraly in https://github.com/sktime/sktime/pull/3599
-* [ENH] fix conditional `requires-fh-in-fit` tag in `EnsembleForecaster` by @fkiraly in https://github.com/sktime/sktime/pull/3642
-* [BUG] fix bug with data loading from timeseriesclassification when extract_path is not None by @TonyBagnall in https://github.com/sktime/sktime/pull/3021
-* [BUG] fix erroneous asserts in input checkers by @fkiraly in https://github.com/sktime/sktime/pull/3556
-* [BUG] Fix `PluginParamsForecaster` docstring and add dict use example by @fkiraly in https://github.com/sktime/sktime/pull/3643
-* [ENH]  `TSFreshFeatureExtractor` cleanup, tests, and docstring by @kcc-lion in https://github.com/sktime/sktime/pull/3636
-### Other Changes
-* [DOC] Update CONTRIBUTORS.md by @shagn in https://github.com/sktime/sktime/pull/3503
-* [ENH] isolate `statsmodels` imports by @fkiraly in https://github.com/sktime/sktime/pull/3445
-* [DOC] clarifications on deprecation notes by @fkiraly in https://github.com/sktime/sktime/pull/3411
-* [ENH] support for `@targetlabel` identifier for `.ts` files in `load_from_tsfile` by @achieveordie in https://github.com/sktime/sktime/pull/3436
-* [DOCS] Update docs on releasing conda packages by @lmmentel in https://github.com/sktime/sktime/pull/3279
-* [ENH] Add TapNet DL Model for Classification by @achieveordie in https://github.com/sktime/sktime/pull/3386
-* [ENH] TapNet DL Model for regression from sktime-dl by @achieveordie in https://github.com/sktime/sktime/pull/3481
-* [ENH] save/load aka serialization/deserialization for estimators by @fkiraly in https://github.com/sktime/sktime/pull/3336
-* [BUG] Pass all average params to kmeans by @chrisholder in https://github.com/sktime/sktime/pull/3486
-* [BUG] Fixed msm alignment path by @chrisholder in https://github.com/sktime/sktime/pull/3484
-
-* [BUG] Fixing the tags typo that was causing issues with all estimators by @miraep8 in https://github.com/sktime/sktime/pull/3563
-* [ENH] replace inplace sort by non-inplace sort in `Reconciler` by @fkiraly in https://github.com/sktime/sktime/pull/3553
-* [ENH] Add more relevant parameters to `CNNRegressor` for user flexibility by @achieveordie in https://github.com/sktime/sktime/pull/3561
-* [ENH] Add Format Specification for `.ts` files. by @achieveordie in https://github.com/sktime/sktime/pull/3380
-* [BUG] RandomShapeletTransform: floor the maximum number of shapelets to be the number of classes by @TonyBagnall in https://github.com/sktime/sktime/pull/3564
-* [ENH] extend forecasting grid/random search to hierarchical and panel data by @fkiraly in https://github.com/sktime/sktime/pull/3548
-* [MNT] Bump pre-commit action from 2 to 3 by @lmmentel in https://github.com/sktime/sktime/pull/3576
-* [MNT] Bump setup-python action from 2 to 4 by @lmmentel in https://github.com/sktime/sktime/pull/3577
-* [DOC] minor clarifications of governance by @fkiraly in https://github.com/sktime/sktime/pull/3581
-* [MNT] Remove `ABCMeta` inheritance from `_HeterogeneousMetaEstimator` by @fkiraly in https://github.com/sktime/sktime/pull/3569
-* [ENH] test that `TruncationTransformer` preserves index and column names in `pd-multiindex` by @fkiraly in https://github.com/sktime/sktime/pull/3535
-* [MNT] loosen `scipy` bound to <2.0.0 by @fkiraly in https://github.com/sktime/sktime/pull/3587
-* [BUG] Numba/np.median interaction raises error for large data sets run with n_jobs>1 issue #3582 by @TonyBagnall in https://github.com/sktime/sktime/pull/3602
-* [DOCS] Adding myself to list of core developers by @miraep8 in https://github.com/sktime/sktime/pull/3610
-* [DOC] Add API documentation for the annotation subpackage by @lmmentel in https://github.com/sktime/sktime/pull/3603
-* [DOCS] Adding invite to fall dev days to website landing page. by @miraep8 in https://github.com/sktime/sktime/pull/3607
-* [BUG] bug in the interaction between Numba and np.zeros identified in #2397 by @TonyBagnall in https://github.com/sktime/sktime/pull/3618
-* [MNT] Bump checkout action from 2 to 3 by @lmmentel in https://github.com/sktime/sktime/pull/3578
-* [MNT] temporarily remove stochastically failing tapnet from tests by @fkiraly in https://github.com/sktime/sktime/pull/3624
-* [MNT] replace `ARIMA` used in tests by reducer to remove soft dependency in tests by @fkiraly in https://github.com/sktime/sktime/pull/3552
-* [ENH] Save/Load Functionality for both Classical and DL Estimators by @achieveordie in https://github.com/sktime/sktime/pull/3425
-* [BUG] Exclude `np.timedelta64` from `is_int` check by @khrapovs in https://github.com/sktime/sktime/pull/3627
-* [BUG] `ClearSky` fix missing value problem after transform by @ciaran-g in https://github.com/sktime/sktime/pull/3579
-* [BUG] Make EnsembleForecaster work with multivariate data by @AnH0ang in https://github.com/sktime/sktime/pull/3623
-* [DOC] update extension templates and docstrings for `_get_fitted_params` by @fkiraly in https://github.com/sktime/sktime/pull/3589
-* [BUG] Fixes 1788 - Add statsmodels append() to _update() in _StatsModelsAdapter by @chillerobscuro in https://github.com/sktime/sktime/pull/3527
-* [DOC] Replace `sphinx-panels` with `sphinx-design` by @MatthewMiddlehurst in https://github.com/sktime/sktime/pull/3575
-* [MNT] replace author names by GitHub ID in author fields, linting by @fkiraly in https://github.com/sktime/sktime/pull/3628
-* [ENH] Classifier Notebook sklearn Examples by @MatthewMiddlehurst in https://github.com/sktime/sktime/pull/3523
-* [ENH/BUG] extend recursive strategy in `make_reduction` to allow global pooling on panel data  by @danbartl in https://github.com/sktime/sktime/pull/3451
-* [BUG] writing datasets to file in ts format by @TonyBagnall in https://github.com/sktime/sktime/pull/3532
-* [GOV] CC observers role, update to role holders, add Guzal to CC by @GuzalBulatova in https://github.com/sktime/sktime/pull/3505
-* [ENH] tests for `get_fitted_params` interface contract by estimator by @fkiraly in https://github.com/sktime/sktime/pull/3590
-* Revert "[GOV] proposed code of conduct update - mature sktime structure and decision making on resources" by @aiwalter in https://github.com/sktime/sktime/pull/3673
-* [ENH] add forecaster test case with string columns by @fkiraly in https://github.com/sktime/sktime/pull/3506
-* [BUG] twe alignment path fix and refactor by @chrisholder in https://github.com/sktime/sktime/pull/3485
-* [BUG] fix `get_cutoff` for numpy format by @fkiraly in https://github.com/sktime/sktime/pull/3442
-* [BUG] Fix `ConformalIntervals` update does not update residuals_matrix by @bethrice44 in https://github.com/sktime/sktime/pull/3460
-* [GOV] Lazy consensus on GOV PRs by @aiwalter in https://github.com/sktime/sktime/pull/3684
-
-
-**Full Changelog**: https://github.com/sktime/sktime/compare/v0.13.4...v0.14.0
+* [BUG] ``ClearSky`` transformer: fix missing value problem after transform (:pr:`3579`) :user:`ciaran-g`
 
 Contributors
 ~~~~~~~~~~~~
@@ -359,6 +269,7 @@ Contributors
 :user:`AnH0ang`,
 :user:`arampuria19`,
 :user:`bethrice44`,
+:user:`canbooo`,
 :user:`chillerobscuro`,
 :user:`chrisholder`,
 :user:`ciaran-g`,
@@ -370,6 +281,7 @@ Contributors
 :user:`lmmentel`,
 :user:`MatthewMiddlehurst`,
 :user:`miraep8`,
+:user:`shagn`,
 :user:`TonyBagnall`,
 :user:`topher-lo`
 
