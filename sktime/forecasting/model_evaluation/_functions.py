@@ -266,13 +266,13 @@ def evaluate(
     results : pd.DataFrame or dask.dataframe.DataFrame
         DataFrame that contains several columns with information regarding each
         refit/update and prediction of the forecaster.
-        Returned DataFrame contains following columns:
+        Returned DataFrame has the following columns:
         - test_{scoring.name}: (float) Model performance scores.
         - fit_time: (float) Time in seconds to fit estimator on train window.
         - pred_time: (float) Time in seconds to get forecasts from fitted estimator.
         - len_train_window: (int) Length of train window.
         - cutoff: (int, pd.Timestamp, pd.Period) Last time point of train window.
-        - y_train: (pd.Series) Optional; see `return_data`.
+        - y_train: (pd.Series) Optional, see `return_data`; data used to train forecaster at n-th window.
         - y_pred: (pd.Series) Optional; see `return_data`.
         - y_test: (pd.Series) Optional; see `return_data`.
 
