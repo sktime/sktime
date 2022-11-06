@@ -8,7 +8,7 @@ import numpy as np
 from numba import njit
 from numba.core.errors import NumbaWarning
 
-from sktime.distances._distance_alignment_paths import compute_min_return_path
+from sktime.distances._distance_alignment_paths import compute_twe_return_path
 from sktime.distances.base import DistanceCallable, NumbaDistance
 from sktime.distances.lower_bounding import resolve_bounding_matrix
 
@@ -105,7 +105,7 @@ class _TweDistance(NumbaDistance):
                 _y: np.ndarray,
             ) -> Tuple[List, float, np.ndarray]:
                 cost_matrix = _twe_cost_matrix(_x, _y, _bounding_matrix, lmbda, nu, p)
-                path = compute_min_return_path(cost_matrix, _bounding_matrix)
+                path = compute_twe_return_path(cost_matrix, _bounding_matrix)
                 return path, cost_matrix[-1, -1], cost_matrix
 
         else:
@@ -116,7 +116,7 @@ class _TweDistance(NumbaDistance):
                 _y: np.ndarray,
             ) -> Tuple[List, float]:
                 cost_matrix = _twe_cost_matrix(_x, _y, _bounding_matrix, lmbda, nu, p)
-                path = compute_min_return_path(cost_matrix, _bounding_matrix)
+                path = compute_twe_return_path(cost_matrix, _bounding_matrix)
                 return path, cost_matrix[-1, -1]
 
         return numba_twe_distance_alignment_path

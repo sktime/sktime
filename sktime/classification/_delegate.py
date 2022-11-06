@@ -122,3 +122,19 @@ class _DelegatedClassifier(BaseClassifier):
         """
         estimator = self._get_delegate()
         return estimator.predict_proba(X=X)
+
+    def _get_fitted_params(self):
+        """Get fitted parameters.
+
+        private _get_fitted_params, called from get_fitted_params
+
+        State required:
+            Requires state to be "fitted".
+
+        Returns
+        -------
+        fitted_params : dict with str keys
+            fitted parameters, keyed by names of fitted parameter
+        """
+        estimator = self._get_delegate()
+        return estimator.get_fitted_params()

@@ -6,8 +6,6 @@ __author__ = ["fkiraly"]
 __all__ = ["SeasonalityACF"]
 
 import numpy as np
-from statsmodels.stats.multitest import multipletests
-from statsmodels.tsa.stattools import acf
 
 from sktime.param_est.base import BaseParamFitter
 
@@ -50,6 +48,13 @@ class SeasonalityACF(BaseParamFitter):
             estimate the autocovariance. When using "conservative",
             n is set to the number of non-missing observations.
 
+    Attributes
+    ----------
+    sp_ : int, seasonality period at lowest p-level, if any sub-threshold, else 1
+        if `candidate_sp` is passed, will be in `candidate_sp` or 1
+    sp_significant_ : list of int, seasonality periods with sub-threshold p-levels
+        ordered increasingly by p-level. Empty list, not [1], if none are sub-threshold
+
     Examples
     --------
     >>> from sktime.datasets import load_airline
@@ -85,6 +90,7 @@ class SeasonalityACF(BaseParamFitter):
         "scitype:X": "Series",  # which X scitypes are supported natively?
         "capability:missing_values": True,  # can estimator handle missing data?
         "capability:multivariate": False,  # can estimator handle multivariate data?
+        "python_dependencies": "statsmodels",
     }
 
     def __init__(
@@ -121,6 +127,8 @@ class SeasonalityACF(BaseParamFitter):
         -------
         self : reference to self
         """
+        from statsmodels.tsa.stattools import acf
+
         p_threshold = self.p_threshold
         adjusted = self.adjusted
 
@@ -162,8 +170,8 @@ class SeasonalityACF(BaseParamFitter):
             self.sp_ = sp_significant[0]
             self.sp_significant_ = sp_significant
         else:
-            self.sp_ = None
-            self.sp_significant_ = None
+            self.sp_ = 1
+            self.sp_significant_ = []
 
         return self
 
@@ -240,6 +248,13 @@ class SeasonalityACFqstat(BaseParamFitter):
             estimate the autocovariance. When using "conservative",
             n is set to the number of non-missing observations.
 
+    Attributes
+    ----------
+    sp_ : int, seasonality period at lowest p-level, if any sub-threshold, else 1
+        if `candidate_sp` is passed, will be in `candidate_sp` or 1
+    sp_significant_ : list of int, seasonality periods with sub-threshold p-levels
+        ordered increasingly by p-level. Empty list, not [1], if none are sub-threshold
+
     Examples
     --------
     >>> from sktime.datasets import load_airline
@@ -295,6 +310,9 @@ class SeasonalityACFqstat(BaseParamFitter):
         -------
         self : reference to self
         """
+        from statsmodels.stats.multitest import multipletests
+        from statsmodels.tsa.stattools import acf
+
         p_threshold = self.p_threshold
         p_adjust = self.p_adjust
         adjusted = self.adjusted
@@ -358,8 +376,8 @@ class SeasonalityACFqstat(BaseParamFitter):
             self.sp_ = sp_significant[0]
             self.sp_significant_ = sp_significant
         else:
-            self.sp_ = None
-            self.sp_significant_ = None
+            self.sp_ = 1
+            self.sp_significant_ = []
 
         return self
 

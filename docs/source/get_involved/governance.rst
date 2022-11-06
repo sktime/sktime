@@ -8,7 +8,7 @@ Overview
 
 sktime is a consensus-based community project. Anyone with an interest in the project can join the community, contribute to the project, and participate in the governance process. This document describes how that participation takes place, which roles we have in our community, how we make decisions, and how we acknowledge contributions.
 
-We are particularly motivated to support new and/or anxious contributors, people who are looking to learn and develop their skills, and members of groups underrepresented in the tech sector. Go to our `contributing guide <https://github.com/alan-turing-institute/sktime/blob/main/CONTRIBUTING.rst>`__ for more details.
+We are particularly motivated to support new and/or anxious contributors, people who are looking to learn and develop their skills, and members of groups underrepresented in the tech sector. Go to our `contributing guide <https://github.com/sktime/sktime/blob/main/CONTRIBUTING.rst>`__ for more details.
 
 .. list-table::
    :header-rows: 1
@@ -38,7 +38,7 @@ is expected to show respect and courtesy to other community members at
 all times.
 
 We ask all members of the community to conform to our `Code of
-Conduct <https://github.com/alan-turing-institute/sktime/blob/main/CODE_OF_CONDUCT.rst>`__.
+Conduct <https://github.com/sktime/sktime/blob/main/CODE_OF_CONDUCT.rst>`__.
 
 .. _roles:
 
@@ -70,6 +70,9 @@ responsibilities, and appointment process in more detail below.
    * - :ref:`cc-members`
      - Conflict resolution, technical leadership, project management
      - Nomination by core developers, vote by core developers, 2/3 majority and simple CC majority
+   * - :ref:`cc-observers`
+     - Full view of CC communication, direct input on CC decisions
+     - Nomination by core developers, vote by CC members, simple CC majority
 
 .. _contributors:
 
@@ -79,11 +82,11 @@ Contributors
 Contributors are community members who have contributed in concrete ways
 to the project. Anyone can become a contributor, and contributions can
 take many forms – not only code – as detailed in the `contributing
-guide <https://github.com/alan-turing-institute/sktime/blob/main/CONTRIBUTING.rst>`__.
+guide <https://github.com/sktime/sktime/blob/main/CONTRIBUTING.rst>`__.
 
 For more details on how we acknowledge contributions, see :ref:`acknowledging-contributions` below.
 
-All contributors are listed in `CONTRIBUTORS.md <https://github.com/alan-turing-institute/sktime/blob/main/CONTRIBUTORS.md>`__.
+All contributors are listed in `CONTRIBUTORS.md <https://github.com/sktime/sktime/blob/main/CONTRIBUTORS.md>`__.
 
 .. _algorithm-maintainers:
 
@@ -98,6 +101,15 @@ In sktime, algorithms are encapsulated in classes with specific
 interface requirements and are called estimators. To faciliate
 maintainership questions, we try to write algorithms in separate files
 when possible.
+
+To clarify, "algorithm" in the above sense means "implemented estimator class".
+That is, algorithm maintainers gain rights and responsibilities with respect to
+that python code.
+They do not gain any rights on abstract methodology, e.g., in a case where
+the class implements methodology invented by third parties.
+
+In particular, algorithm maintainers do not gain rights or responsibilities on other,
+potential implementations of the same methodology in their estimator class.
 
 Rights and responsibilities
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -114,18 +126,60 @@ Rights and responsibilities
   * - Support
     - They are the first point of contact for users and other contributors for all questions, issues and proposals regarding their algorithm.
 
+Recall, "algorithm" refers to estimator classes.
+
+Therefore, the above rights and responsibilities exclude any power on further, potential implementations of the same or similar methodology.
+
+For instance, an algorithm maintainer of algorithm A implemented in class X cannot prohibit implementation of algorithm A in class Y.
+They can only make decisions about changes on class X. Class Y can be owned by a different algorithm maintainer.
+
+In particular, there can be multiple classes implementing algorithm A, and the algorithm maintainer of class X cannot prohibit implementation of, or make decisions on class Y.
+
+Expectations
+^^^^^^^^^^^^
+
+Without restriction to eligibility, it is generally expected that algorithm maintainers
+have a very good technical and methodological understanding of the algorithm they maintain.
+
+This understanding is typically present in inventors or proponents of said algorithm,
+but it is not necessary to be the inventor of an algorithm to be its maintainer.
+
+Eligibility
+^^^^^^^^^^^
+
+Anyone is eligible to be an algorithm maintainer.
+
+Anyone is eligible to be an algorithm maintainer of a specific algorithm that does not already have an algorithm maintainer.
+
+The presence of a specific implementation of a given abstract algorithm does not prevent anyone from becoming
+the algorithm maintainer of a different implementation of the same (or similar) abstract algorithm.
+
 Appointment
 ^^^^^^^^^^^
 
 The contributor who contributes an algorithm is automatically appointed
-as its first maintainer. If they can no longer fulfil their maintenance
+as its first maintainer.
+
+Algorithm maintainers are listed in the `CODEOWNERS <https://github
+.com/alan-turing-institute/sktime/blob/main/CODEOWNERS>`__ file.
+
+When an algorithm maintainer resigns, they can appoint another contributor as the
+new algorithm maintainer. No vote is required. This change should be reflected in the ``CODEOWNERS`` file.
+
+Algorithm maintainers can be appointed by CC simple majority for any algorithm without maintainers.
+
+End of tenure
+^^^^^^^^^^^^^
+
+If algorithm maintainers can no longer fulfil their maintenance
 responsibilities, maintainers are expected to resign.
 
-When the maintainer resigns, they can appoint another contributor as the
-new maintainer. No vote is required.
+Algorithm maintainers that have been unresponsive for a 3 month period automatically
+give up their rights and responsibilities as algorithm maintainers.
 
-Maintainers are listed in the `CODEOWNERS <https://github
-.com/alan-turing-institute/sktime/blob/main/CODEOWNERS>`__ file.
+Unresponsiveness is defined as:
+* not engaging with decision making procedures within the reasonably time frames defined there
+* not reacting to issues or bug reports related to the algorithm, within ten working days
 
 .. _core-developers:
 
@@ -232,7 +286,7 @@ Anyone is eligible to be a CoC committee member.
 Appointment
 ^^^^^^^^^^^
 
-Membership of the CC is by nomination by a core developer and a vote by
+Membership of the CoC is by nomination by a core developer and a vote by
 all core developers. A nomination will result in discussion which will stay
 open for 5 days excluding weekends and then a vote by the core
 developers which will stay open for 5 days excluding weekends. CoC committee
@@ -290,26 +344,36 @@ concurrent with the 5 day discussion period (see below).
 Appointment
 ^^^^^^^^^^^
 
-Membership of the CC is by nomination by a core developer and a vote by
-all core developers. A nomination will result in discussion which stay open
+Appointment to the CC is by nomination by a core developer and a vote by
+all core developers. A nomination will result in discussion which stays open
 for 5 days excluding weekends and then a vote by core developers which will
-stay open for 5 days excluding weekends. CC membership votes are subject to:
+stay open for 5 days excluding weekends. Approval of appointment requires:
 
 * a 2/3 majority of all cast votes, and
 * a simple majority approval of all the current CC members.
 
-The vote will take place in private communication channels and will be
-anonymous.
+The core developer vote takes place in private communication channels,
+visible to, and only to, core developers, and is anonymous.
+The CC members' vote takes place in private communication channels,
+visible to, and only to, CC members, and is anonymous.
 
-In case of ties, the CC member with shortest tenure breaks the tie.
+In case the CC members' vote is tied,
+the CC member with the shortest continuous tenure has a tie breaking privilege.
+
+The tie breaking is by construction visible to CC members,
+does not require the tie breaking CC member to have voted in the anonymous vote,
+and need not follow their anonymous vote if they have voted.
 
 End of tenure
 ^^^^^^^^^^^^^
 
 CC members can resign voluntarily at any point in time, by informing the CC in writing.
 
-CC members who do not actively engage with the responsibilities are
-expected to resign.
+CC members who do not actively engage with their CC member role responsibilities are
+expected to resign voluntarily.
+
+Tenure also ends automatically when a CC member's tenure as core developer ends,
+e.g., through resignation or inactivity.
 
 Communications
 ^^^^^^^^^^^^^^
@@ -319,6 +383,48 @@ The CC has regular public meetings that the full community is welcome to attend.
 For more details about our meetings, please go to our `community-council repository <https://github.com/sktime/community-council/>`__.
 
 To contact the CC directly, please send an email to info@sktime.org.
+
+.. _cc-observers:
+
+CC observers
+~~~~~~~~~~~~
+
+CC (community council) observers are core developers with additional rights and
+responsibilities. Current CC observers are listed in the `community-council
+observers <https://www.sktime.org/en/stable/about/team.html>`__ .
+
+.. _rights-and-responsibilities-4:
+
+Rights and responsibilities
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+CC observers have a full view of reserved CC proceedings, the private CC
+channels and the sktime email account. CC observers can participate in
+discussions on private CC channels to ensure that more members of the community
+have direct input on CC decisions.
+
+CC observers' responsibilities include to critically scrutinize CC decision
+making and give their input on what is of community's interest or benefit.
+
+CC observers do not possess the voting or decision making rights of full
+CC members.
+
+Eligibility
+^^^^^^^^^^^
+Only core developers are eligible for appointment as CC observers.
+Non-core-developers can be nominated, but this must be accompanied
+by a nomination for core developer, and a core developer appointment vote
+(see below).
+
+.. _appointment-4:
+
+Appointment
+^^^^^^^^^^^
+Membership of the CC observers is by nomination by a core developer and a vote
+by CC members. A nomination will result in a vote by the CC members which will
+stay open for 5 days excluding weekends. CC observer membership votes are
+subject to a simple majority approval of all the current CC committee members.
+
+In case of ties, the CC member with shortest tenure breaks the tie.
 
 .. _decision-making:
 
@@ -337,8 +443,8 @@ feedback from all community members and strives to find consensus, while
 avoiding deadlocks when no consensus can be found.
 
 All discussion and votes takes place on the project’s `issue
-tracker <https://github.com/alan-turing-institute/sktime/issues>`__,
-`pull requests <https://github.com/alan-turing-institute/sktime/pulls>`__ or an :ref:`steps`. Some
+tracker <https://github.com/sktime/sktime/issues>`__,
+`pull requests <https://github.com/sktime/sktime/pulls>`__ or an :ref:`steps`. Some
 sensitive discussions and appointment votes occur on private chats.
 
 The CC reserves the right to overrule decisions.
@@ -520,7 +626,7 @@ with sktime tools. You can implement your favorite algorithm in a sktime
 compatible way in one of `our companion
 repositories <https://github.com/sktime>`__ on GitHub. We will be happy
 to list it under `related
-software <https://github.com/alan-turing-institute/sktime/wiki/related-software>`__.
+software <https://github.com/sktime/sktime/wiki/related-software>`__.
 
 If algorithms require major dependencies, we encourage to create a
 separate companion repository. For smaller
@@ -540,15 +646,15 @@ of contributions and are committed to recognising each of them fairly.
 We follow the `all-contributors <https://allcontributors.org>`__
 specification to recognise all contributors, including those that don’t
 contribute code. Please see `our list of all
-contributors <https://github.com/alan-turing-institute/sktime/blob/main/CONTRIBUTORS.md>`__.
+contributors <https://github.com/sktime/sktime/blob/main/CONTRIBUTORS.md>`__.
 
 If you think, we’ve missed anything, please let us know or open a PR
 with the appropriate changes to
-`sktime/.all-contributorsrc <https://github.com/alan-turing-institute/sktime/blob/main/.all-contributorsrc>`__.
+`sktime/.all-contributorsrc <https://github.com/sktime/sktime/blob/main/.all-contributorsrc>`__.
 
 Note that contributors do not own their contributions. sktime is an
 open-source project, and all code is contributed under `our open-source
-license <https://github.com/alan-turing-institute/sktime/blob/main/LICENSE>`__.
+license <https://github.com/sktime/sktime/blob/main/LICENSE>`__.
 All contributors acknowledge that they have all the rights to the code
 they contribute to make it available under this license.
 

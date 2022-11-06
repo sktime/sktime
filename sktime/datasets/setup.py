@@ -3,7 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Set up the datasets included in sktime."""
 
-__author__ = "Markus Löning"
+__author__ = "mloning"
 
 # The file is adapted from:
 # https://github.com/scikit-learn/scikit-learn/blob/master/sklearn/datasets/setup.py
@@ -36,6 +36,7 @@ def configuration(parent_package="", top_path=None):
         "Uschange",
         "PBS_dataset",
         "segmentation",
+        "Covid3Month",
     )
     for dataset in included_datasets:
         config.add_data_dir(f"data/{dataset}")
