@@ -38,7 +38,7 @@ BaseObject & BaseEstimator
 * all fittable objects ("estimators", ``BaseEstimator`` descendants) now have a functioning default implementation of ``get_fitted_params``.
   Interface contracts on ``get_fitted_params`` are now tested by the standard test suite (e.g., ``check_estimator``).
 * the extender contract for ``get_fitted_params`` has changed. For new implementations of ``sktime`` estimators,
-  dvelopers should implement ``_get_fitted_params`` rather than ``get_fitted_params`` directly, similar to ``fit`` and ``_fit``.
+  developers should implement ``_get_fitted_params`` rather than ``get_fitted_params`` directly, similar to ``fit`` and ``_fit``.
   The extension templates have been updated accordingly. Estimators following the old extension contract are still compatible
   for the time being and will remain compatible at least until 0.15.0.
 
