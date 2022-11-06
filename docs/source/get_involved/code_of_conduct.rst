@@ -74,8 +74,7 @@ such, we do not tolerate:
   community members or that excludes, intimidates, or causes discomfort to others.
 * discrimination or harassment based on protected characteristics, including
   restriction of fair opportunities based on protected characteristics
-* silencing of reasonable opinions and stifling of free speech on topics within
-  the project scope (science and open community operations)
+* stifling of free speech on topics within the project scope (science and open community operations)
 
 In the rare cases where our ideals are in conflict, we strive to protect,
 in the context of power dynamics, the less powerful party or parties.
