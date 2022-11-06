@@ -63,7 +63,6 @@ The community council of sktime (see current composition on "roles")
 is responsible for ensuring that resolutions of the Code of Conduct committee
 are adhered to, and can be contacted under info@sktime.org.
 
-
 2 Code of Conduct
 -----------------
 
@@ -295,6 +294,8 @@ within one week. In the event that a resolution can't be determined in
 that time, a member of the Code of Conduct committee will respond to the
 reporter(s) with an update and projected timeline for resolution.
 
+Reports of code of conduct committee case proceedings will be kept confidential.
+
 4.4 Resolutions
 ~~~~~~~~~~~~~~~
 
@@ -347,6 +348,17 @@ committee is not required to act on this feedback.
 In case of conflict of interest of sktime CoC committee members, you can report
 through the `NumFOCUS CoC process <https://numfocus.org/code-of-conduct>`__,
 or, in case of events, to the organisation at which the event is taking place (e.g., a university).
+
+4.6 Audit of Investigation Process
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+At any point in time, core developers may request the number of ongoing and concluded
+investigations over the last year before the date of the query.
+Any group of three core developers may also request access to all investigation reports
+in a time period, or reports to cases with specified properties.
+If there is no conflict of interest (as determined by the Code of Conduct Committee),
+access will be shared to anonymized reports for a period of 2 weeks, and the reports
+must not be copied or otherwise proliferated.
 
 5 Acknowledgements
 ------------------
