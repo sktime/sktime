@@ -284,6 +284,7 @@ class _DirectReducer(_Reducer):
             X=X,
             transformers=self.transformers_,
             scitype=self._estimator_scitype,
+            dir_obs=self.dir_obs,
         )
 
     def _fit(self, y, X=None, fh=None):
