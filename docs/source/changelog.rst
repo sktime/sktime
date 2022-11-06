@@ -37,6 +37,10 @@ BaseObject & BaseEstimator
   Interface contracts on ``save`` and ``load`` are now tested by the standard test suite (e.g., ``check_estimator``).
 * all fittable objects ("estimators", ``BaseEstimator`` descendants) now have a functioning default implementation of ``get_fitted_params``.
   Interface contracts on ``get_fitted_params`` are now tested by the standard test suite (e.g., ``check_estimator``).
+* the extender contract for ``get_fitted_params`` has changed. For new implementations of ``sktime`` estimators,
+  developers should implement ``_get_fitted_params`` rather than ``get_fitted_params`` directly, similar to ``fit`` and ``_fit``.
+  The extension templates have been updated accordingly. Estimators following the old extension contract are still compatible
+  for the time being and will remain compatible at least until 0.15.0.
 
 Deprecations and removals
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -52,6 +56,27 @@ Forecasting
   Exceptions will be raised in corner cases where ``freq`` as not been passed and cannot be inferred.
 * change to public ``cutoff`` attribute delayed to 0.15.0:
   public ``cutoff`` attribute of forecasters will change to ``pd.Index`` subtype, from index element.
+
+Time series classification
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* The base class of ``ProbabilityThresholdEarlyClassifier`` will be changed to ``BaseEarlyClassifier`` in 0.15.0.
+  This will change how classification safety decisions are made and returned, see ``BaseEarlyClassifier`` or ``TEASER`` for the new interface.
+
+Transformations
+^^^^^^^^^^^^^^^
+
+* The default of ``default_fc_parameters`` in ``TSFreshFeatureExtractor`` and ``TSFreshRelevantFeatureExtractor``
+  will change from ``"efficient"`` to ``"comprehensive"`` in 0.15.0.
+
+Testing framework
+^^^^^^^^^^^^^^^^^
+
+* The name of the test ``test_methods_do_not_change_state`` will change to
+  ``test_non_state_changing_method_contract`` in 0.15.0.
+  For a safe transition in a case where the old name
+  has been used as part of an argument in ``check_estimator``, use
+  both the new and the old name (in a list) in test/fixture exclusion or inclusion.
 
 Enhancements
 ~~~~~~~~~~~~
