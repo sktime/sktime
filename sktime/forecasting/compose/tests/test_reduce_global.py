@@ -172,6 +172,6 @@ def test_list_reduction(y, index_names):
         pooling="global",
     )
 
-    forecaster2.fit(y, fh=[1, 2])
+    forecaster2.fit(y, fh=[1, 2, 12])
     y_pred = forecaster2.predict(fh=[1, 2, 12])
     check_eval(y_pred.index.names, index_names)
