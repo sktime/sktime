@@ -356,7 +356,7 @@ investigations over the last year before the date of the query.
 Any group of three core developers may also request access to all investigation reports
 in a time period, or reports to cases with specified properties.
 If there is no conflict of interest (as determined by the Code of Conduct Committee),
-access will be shared to anonymized reports for a period of 2 weeks, and the reports
+access to anonymized reports will be shared for a period of 2 weeks. Shared reports
 must not be copied or otherwise proliferated.
 
 5 Acknowledgements
