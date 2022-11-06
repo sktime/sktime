@@ -1735,15 +1735,15 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         y_lags = list(fh_rel)
         y_abs = list(fh_abs)
 
-        Xt = lagger_y_to_X.transform(self._y)
         y_pred_list = []
 
-        for i in range(len(y_lags)):
+        for i, lag in enumerate(y_lags):
 
-            lag = y_lags[i]
             predict_idx = y_abs[i]
 
             lag_plus = Lag(lag, index_out="extend", keep_column_names=True)
+
+            Xt = lagger_y_to_X[-lag].transform(self._y)
             Xtt = lag_plus.fit_transform(Xt)
             Xtt_predrow = slice_at_ix(Xtt, predict_idx)
             if X_pool is not None:
