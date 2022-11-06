@@ -70,7 +70,7 @@ def _sliding_window_transform(
     transformers=None,
     scitype="tabular-regressor",
     pooling="local",
-    discard_fh="fh_max",
+    dir_obs="fh_max",
 ):
     """Transform time series data using sliding window.
 
@@ -165,7 +165,7 @@ def _sliding_window_transform(
 
         # Truncate data, selecting only full windows, discarding incomplete ones.
         # Zt = Zt[effective_window_length:-effective_window_length]
-        if discard_fh == "fh_max":
+        if dir_obs == "fh_max":
             Zt = Zt[effective_window_length:-effective_window_length]
         else:
             Zt = Zt[effective_window_length:-window_length]
@@ -201,14 +201,14 @@ class _Reducer(_BaseWindowForecaster):
         window_length=10,
         transformers=None,
         pooling=None,
-        discard_fh=None,
+        dir_obs=None,
     ):
         super(_Reducer, self).__init__(window_length=window_length)
         self.transformers = transformers
         self.transformers_ = None
         self.estimator = estimator
         self.pooling = None
-        self.discard_fh = None
+        self.dir_obs = None
         self._cv = None
 
         # it seems that the sklearn tags are not fully reliable
@@ -279,7 +279,7 @@ class _DirectReducer(_Reducer):
         fh = self.fh.to_relative(self.cutoff)
         return _sliding_window_transform(
             y,
-            window_length=self.window_length,
+            window_length=self.window_length_,
             fh=fh,
             X=X,
             transformers=self.transformers_,
@@ -320,7 +320,7 @@ class _DirectReducer(_Reducer):
         for i in range(len(self.fh)):
             fh_rel = fh.to_relative(self.cutoff)
             estimator = clone(self.estimator)
-            if self.discard_fh == "fh_max":
+            if self.dir_obs == "fh_max":
                 estimator.fit(Xt, yt[:, i])
             else:
                 if (fh_rel[i] - 1) == 0:
@@ -836,7 +836,7 @@ class _DirRecReducer(_Reducer):
             fh=fh,
             X=X,
             scitype=self._estimator_scitype,
-            discard_fh=self.discard_fh,
+            dir_obs=self.dir_obs,
         )
 
     def _fit(self, y, X=None, fh=None):
@@ -1034,6 +1034,7 @@ class RecursiveTabularRegressionForecaster(_RecursiveReducer):
             estimator=estimator, window_length=window_length, transformers=transformers
         )
         self.pooling = pooling
+        self.dir_obs = dir_obs
 
         if pooling == "local":
             mtypes_y = "pd.Series"
