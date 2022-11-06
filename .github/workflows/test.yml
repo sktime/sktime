@@ -40,6 +40,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install .[all_extras,binder,dev]
+          python -m pip install git+https://github.com/sktime/BaseObject.git@main
       - name: Run example notebooks
         run: build_tools/run_examples.sh
         shell: bash
@@ -59,6 +60,10 @@ jobs:
       - name: Install sktime and dependencies
         run: |
           python -m pip install .[dev]
+
+      - name: Install baseobject
+        run: |
+          python -m pip install git+https://github.com/sktime/BaseObject.git@main
 
       - name: Show dependencies
         run: python -m pip list
@@ -95,6 +100,10 @@ jobs:
       - name: Install sktime and dependencies
         run: python -m pip install .[all_extras,dev]
 
+      - name: Install baseobject
+        run: |
+          python -m pip install git+https://github.com/sktime/BaseObject.git@main
+
       - name: Show dependencies
         run: python -m pip list
 
@@ -127,6 +136,10 @@ jobs:
       - name: Install sktime and dependencies
         run: |
           python -m pip install .[all_extras,dev]
+
+      - name: Install baseobject
+        run: |
+          python -m pip install git+https://github.com/sktime/BaseObject.git@main
 
       - name: Show dependencies
         run: python -m pip list
