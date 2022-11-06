@@ -200,15 +200,15 @@ class _Reducer(_BaseWindowForecaster):
         estimator,
         window_length=10,
         transformers=None,
-        pooling=None,
-        dir_obs=None,
+        pooling="local",
+        dir_obs="fh_max",
     ):
         super(_Reducer, self).__init__(window_length=window_length)
         self.transformers = transformers
         self.transformers_ = None
         self.estimator = estimator
-        self.pooling = None
-        self.dir_obs = None
+        self.pooling = pooling
+        self.dir_obs = dir_obs
         self._cv = None
 
         # it seems that the sklearn tags are not fully reliable
