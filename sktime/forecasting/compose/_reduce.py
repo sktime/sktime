@@ -1397,6 +1397,24 @@ def slice_at_ix(df, ix):
         return df.loc[[ix]]
 
 
+def _get_notna_idx(df):
+    """Get sub-index of df that contains rows without nans.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+
+    Returns
+    -------
+    df_notna_idx : pd.Index
+        sub-set of df.index that contains rows of df without nans
+        index is in same order as of df
+    """
+    df_notna_bool = df.notnull().all(axis=1)
+    df_notna_idx = df.index[df_notna_bool]
+    return df_notna_idx
+
+
 class _ReducerMixin:
     """Common utilities for reducers."""
 
@@ -1573,8 +1591,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         self.lagger_y_to_y_ = lagger_y_to_y
 
         yt = lagger_y_to_y.fit_transform(X=y)
-        y_notna = yt.notnull().all(axis=1)
-        y_notna_idx = y_notna.index[y_notna]
+        y_notna_idx = _get_notna_idx(yt)
 
         # we now check whether the set of full lags is empty
         # if yes, we set a flag, since we cannot fit the reducer
@@ -1675,10 +1692,9 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
             )
 
             Xtt = lagger_y_to_X[lag].fit_transform(X=y, y=X)
-            Xtt_notna_idx = Xtt.notnull().all(axis=1).index
-
-            y_notna_idx = yt.notnull().all(axis=1).index
-            notna_idx = Xtt_notna_idx.intersection(y_notna_idx)
+            Xtt_notna_idx = _get_notna_idx(Xtt)
+            yt_notna_idx = _get_notna_idx(yt)
+            notna_idx = Xtt_notna_idx.intersection(yt_notna_idx)
 
             yt = yt.loc[notna_idx]
             Xtt = Xtt.loc[notna_idx]
@@ -1919,20 +1935,20 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         # lag is 1, since we want to do recursive forecasting with 1 step ahead
         lag_plus = Lag(lags=1, index_out="extend")
         Xtt = lag_plus.fit_transform(Xt)
-        Xtt_notna = Xtt.notnull().all(axis=1)
-        Xtt_notna_idx = Xtt_notna.index[Xtt_notna].intersection(y.index)
+        Xtt_notna_idx = _get_notna_idx(Xtt)
+        notna_idx = Xtt_notna_idx.intersection(y.index)
 
-        yt = y.loc[Xtt_notna_idx]
-        Xtt = Xtt.loc[Xtt_notna_idx]
+        yt = y.loc[notna_idx]
+        Xtt = Xtt.loc[notna_idx]
 
         # we now check whether the set of full lags is empty
         # if yes, we set a flag, since we cannot fit the reducer
         # instead, later, we return a dummy prediction
-        if len(Xtt_notna_idx) == 0:
+        if len(notna_idx) == 0:
             self.estimator_ = y.mean()
         else:
             if X is not None:
-                Xtt = pd.concat([X.loc[Xtt_notna_idx], Xtt], axis=1)
+                Xtt = pd.concat([X.loc[notna_idx], Xtt], axis=1)
 
             Xtt = _coerce_col_str(Xtt)
             yt = _coerce_col_str(yt)
