@@ -6,7 +6,7 @@ authors = [
     "Franz Király <f.kiraly@ucl.ac.uk>",
     "Tony Bagnall <ajb@uea.ac.uk>",
     "Markus Löning",
-    "Martin Walter <mwalter@sktime.org> ",
+    "Martin Walter <mwalter@sktime.org>",
 ]
 maintainers = [
     "Franz Király <f.kiraly@ucl.ac.uk>",
