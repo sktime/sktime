@@ -12,15 +12,15 @@ class FCNForecaster:
 
     def __init__(
         self,
-        n_epochs=2000,
-        batch_size=16,
+        n_epochs=200,
+        batch_size=4,
         steps=3,
         callbacks=None,
         verbose=False,
-        loss="categorical_crossentropy",
+        loss="mse",
         metrics=None,
         random_state=None,
-        activation="sigmoid",
+        activation="relu",
         use_bias=True,
         optimizer=None,
     ):
@@ -60,6 +60,26 @@ class FCNForecaster:
         model.compile(loss=self.loss, optimizer=self.optimizer_, metrics=self.metrics)
         return model
 
+    def _predict(self, fh, X=None):
+        """Temp docstring."""
+        import numpy as np
+
+        currentPred = 1
+        lastPred = max(fh)
+        fvalues = []
+        fh = set(fh)
+        source = self.source[-1]
+        source = source[np.newaxis, :, :]
+        while currentPred <= lastPred:
+            yhat = self.model_.predict(source)
+            source = np.delete(source, axis=2, obj=0)
+            source = np.insert(source, obj=source.shape[-1], values=yhat, axis=-1)
+            if currentPred in fh:
+                fvalues.append(yhat)
+
+            currentPred += 1
+        return fvalues
+
     def _fit(self, y, fh=None, X=None):
         """Temp docstring."""
         import numpy as np
@@ -75,8 +95,11 @@ class FCNForecaster:
             ]
 
         source, target = np.array(source), np.array(target)
+        if X is None:
+            source = source.reshape((*source.shape, 1))
         source = source.transpose(0, 2, 1)
         self.input_shape = source.shape[1:]
+        self.source, self.target = source, target
 
         self.model_ = self.build_model(self.input_shape)
         if self.verbose:
@@ -103,13 +126,3 @@ class FCNForecaster:
             source.append(seq_src)
             target.append(seq_tgt)
         return source, target
-
-
-if __name__ == "__main__":
-
-    raw_seq = [10, 20, 30, 40, 50, 60, 70, 80, 90]
-    exog = []
-    for i in range(len(raw_seq)):
-        exog.append([i, i + 1])
-    fcn = FCNForecaster()
-    model = fcn._fit(y=raw_seq, X=exog)
