@@ -3,8 +3,6 @@
 
 __author__ = "Jack Russon"
 
-from tensorflow import keras
-
 from sktime.networks.base import BaseDeepNetwork
 from sktime.utils.layers import AttentionLSTM
 from sktime.utils.validation._dependencies import _check_dl_dependencies
@@ -81,6 +79,8 @@ class LSTMFCNNetwork(BaseDeepNetwork):
         input_layers : keras layers
         output_layer : a keras layer
         """
+        from tensorflow import keras
+
         input_layer = keras.layers.Input(shape=input_shape)
 
         x = keras.layers.Permute((2, 1))(input_layer)
