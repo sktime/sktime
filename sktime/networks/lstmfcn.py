@@ -4,7 +4,6 @@
 __author__ = "Jack Russon"
 
 from sktime.networks.base import BaseDeepNetwork
-from sktime.utils.layers import AttentionLSTM
 from sktime.utils.validation._dependencies import _check_dl_dependencies
 
 _check_dl_dependencies(severity="warning")
@@ -81,14 +80,17 @@ class LSTMFCNNetwork(BaseDeepNetwork):
         """
         from tensorflow import keras
 
+        from sktime.utils.layers import AttentionLSTM
+
         input_layer = keras.layers.Input(shape=input_shape)
 
         x = keras.layers.Permute((2, 1))(input_layer)
-        if self.attention:
 
+        if self.attention:
             x = AttentionLSTM(self.lstm_size)(x)
         else:
             x = keras.layers.LSTM(self.lstm_size)(x)
+
         x = keras.layers.Dropout(self.dropout)(x)
 
         y = keras.layers.Conv1D(
