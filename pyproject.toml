@@ -6,12 +6,12 @@ authors = [
     "Franz Király <f.kiraly@ucl.ac.uk>",
     "Tony Bagnall <ajb@uea.ac.uk>",
     "Markus Löning",
-    "Martin Walter",
+    "Martin Walter <mwalter@sktime.org> ",
 ]
 maintainers = [
     "Franz Király <f.kiraly@ucl.ac.uk>",
     "Guzal Bulatova",
-    "Martin Walter",
+    "Martin Walter <mwalter@sktime.org>",
 ]
 readme = "README.md"
 keywords = [
