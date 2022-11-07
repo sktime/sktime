@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+"""Attention Layers used in by the LSTM-FCN Network. Ported over from sktime-dl."""
+
 from tensorflow.keras import activations
 from tensorflow.keras import backend as K
 from tensorflow.keras import constraints, initializers, regularizers
@@ -17,6 +20,7 @@ def _time_distributed_dense(
     training=None,
 ):
     """Apply `y . w + b` for every temporal slice y of x.
+
     # Arguments
         x: input tensor.
         w: weight matrix.
@@ -60,6 +64,7 @@ def _time_distributed_dense(
 
 class AttentionLSTMCell(Layer):
     """Long-Short Term Memory unit - with Attention.
+
     # Arguments
         units: Positive integer, dimensionality of the output space.
         activation: Activation function to use
@@ -89,7 +94,8 @@ class AttentionLSTMCell(Layer):
         use_chrono_initialization: Boolean.
             If True, add 1 to the bias of the forget gate at initialization.
             Setting it to true will also force `bias_initializer="zeros"`.
-            This is recommended in [Jozefowicz et al.](http://www.jmlr.org/proceedings/papers/v37/jozefowicz15.pdf)
+            This is recommended in [Jozefowicz et al.]
+            (http://www.jmlr.org/proceedings/papers/v37/jozefowicz15.pdf)
         kernel_regularizer: Regularizer function applied to
             the `kernel` weights matrix
             (see [regularizer](../regularizers.md)).
@@ -124,12 +130,21 @@ class AttentionLSTMCell(Layer):
         return_attention: Returns the attention vector instead of
             the internal state.
     # References
-        - [Long short-term memory](http://deeplearning.cs.cmu.edu/pdfs/Hochreiter97_lstm.pdf) (original 1997 paper)
-        - [Learning to forget: Continual prediction with LSTM](http://www.mitpressjournals.org/doi/pdf/10.1162/089976600300015015)
-        - [Supervised sequence labeling with recurrent neural networks](http://www.cs.toronto.edu/~graves/preprint.pdf)
-        - [A Theoretically Grounded Application of Dropout in Recurrent Neural Networks](http://arxiv.org/abs/1512.05287)
-        - [Bahdanau, Cho & Bengio (2014), "Neural Machine Translation by Jointly Learning to Align and Translate"](https://arxiv.org/pdf/1409.0473.pdf)
-        - [Xu, Ba, Kiros, Cho, Courville, Salakhutdinov, Zemel & Bengio (2016), "Show, Attend and Tell: Neural Image Caption Generation with Visual Attention"](http://arxiv.org/pdf/1502.03044.pdf)
+        - [Long short-term memory]
+        (http://deeplearning.cs.cmu.edu/pdfs/Hochreiter97_lstm.pdf)
+        (original 1997 paper)
+        - [Learning to forget: Continual prediction with LSTM]
+        (http://www.mitpressjournals.org/doi/pdf/10.1162/089976600300015015)
+        - [Supervised sequence labeling with recurrent neural networks]
+        (http://www.cs.toronto.edu/~graves/preprint.pdf)
+        - [A Theoretically Grounded Application of Dropout in Recurrent Neural Networks]
+        (http://arxiv.org/abs/1512.05287)
+        - [Bahdanau, Cho & Bengio (2014),
+        "Neural Machine Translation by Jointly Learning to Align and Translate"]
+        (https://arxiv.org/pdf/1409.0473.pdf)
+        - [Xu, Ba, Kiros, Cho, Courville, Salakhutdinov, Zemel & Bengio (2016)
+        "Show, Attend and Tell: Neural Image Caption Generation with Visual Attention"]
+        (http://arxiv.org/pdf/1502.03044.pdf)
     """
 
     def __init__(
@@ -197,7 +212,7 @@ class AttentionLSTMCell(Layer):
         self.state_size = (self.units, self.units)
 
     def build(self, input_shape):
-
+        """Build the AttentionLSTMCell object."""
         if hasattr(self, "timesteps") and self.timesteps is not None:
             self.timestep_dim = self.timesteps
         else:
@@ -349,6 +364,7 @@ class AttentionLSTMCell(Layer):
             self._recurrent_dropout_mask = None
 
     def call(self, inputs, states, training=None):
+        """Call the AttentionLSTMCell."""
         # dropout matrices for input units
         dp_mask = self._dropout_mask
         # dropout matrices for recurrent units
@@ -385,7 +401,7 @@ class AttentionLSTMCell(Layer):
 
         # make context vector (soft attention after Bahdanau et al.)
         z_hat = inputs * alpha_r
-        context_sequence = z_hat
+        # context_sequence = z_hat
         z_hat = K.sum(z_hat, axis=1)
 
         if self.implementation == 1:
@@ -470,6 +486,7 @@ class AttentionLSTMCell(Layer):
 
 class AttentionLSTM(RNN):
     """Long-Short Term Memory unit - with Attention.
+
     # Arguments
         units: Positive integer, dimensionality of the output space.
         activation: Activation function to use
@@ -499,7 +516,8 @@ class AttentionLSTM(RNN):
         use_chrono_initialization: Boolean.
             If True, add 1 to the bias of the forget gate at initialization.
             Setting it to true will also force `bias_initializer="zeros"`.
-            This is recommended in [Jozefowicz et al.](http://www.jmlr.org/proceedings/papers/v37/jozefowicz15.pdf)
+            This is recommended in [Jozefowicz et al.]
+            (http://www.jmlr.org/proceedings/papers/v37/jozefowicz15.pdf)
         kernel_regularizer: Regularizer function applied to
             the `kernel` weights matrix
             (see [regularizer](../regularizers.md)).
@@ -551,15 +569,24 @@ class AttentionLSTM(RNN):
             although it tends to be more memory-intensive.
             Unrolling is only suitable for short sequences.
     # References
-        - [Long short-term memory](http://deeplearning.cs.cmu.edu/pdfs/Hochreiter97_lstm.pdf) (original 1997 paper)
-        - [Learning to forget: Continual prediction with LSTM](http://www.mitpressjournals.org/doi/pdf/10.1162/089976600300015015)
-        - [Supervised sequence labeling with recurrent neural networks](http://www.cs.toronto.edu/~graves/preprint.pdf)
-        - [A Theoretically Grounded Application of Dropout in Recurrent Neural Networks](http://arxiv.org/abs/1512.05287)
-        - [Bahdanau, Cho & Bengio (2014), "Neural Machine Translation by Jointly Learning to Align and Translate"](https://arxiv.org/pdf/1409.0473.pdf)
-        - [Xu, Ba, Kiros, Cho, Courville, Salakhutdinov, Zemel & Bengio (2016), "Show, Attend and Tell: Neural Image Caption Generation with Visual Attention"](http://arxiv.org/pdf/1502.03044.pdf)
+        - [Long short-term memory]
+        (http://deeplearning.cs.cmu.edu/pdfs/Hochreiter97_lstm.pdf)
+        (original 1997 paper)
+        - [Learning to forget: Continual prediction with LSTM]
+        (http://www.mitpressjournals.org/doi/pdf/10.1162/089976600300015015)
+        - [Supervised sequence labeling with recurrent neural networks]
+        (http://www.cs.toronto.edu/~graves/preprint.pdf)
+        - [A Theoretically Grounded Application of Dropout in Recurrent Neural Networks]
+        (http://arxiv.org/abs/1512.05287)
+        - [Bahdanau, Cho & Bengio (2014)
+        "Neural Machine Translation by Jointly Learning to Align and Translate"]
+        (https://arxiv.org/pdf/1409.0473.pdf)
+        - [Xu, Ba, Kiros, Cho, Courville, Salakhutdinov, Zemel & Bengio (2016)
+        "Show, Attend and Tell: Neural Image Caption Generation with Visual Attention"]
+        (http://arxiv.org/pdf/1502.03044.pdf)
     """
 
-    #'@interfaces.legacy_recurrent_support
+    # '@interfaces.legacy_recurrent_support
     def __init__(
         self,
         units,
@@ -592,6 +619,8 @@ class AttentionLSTM(RNN):
         unroll=False,
         **kwargs
     ):
+        import warnings
+
         if implementation == 0:
             warnings.warn(
                 "`implementation=0` has been deprecated, "
@@ -649,10 +678,12 @@ class AttentionLSTM(RNN):
         self.return_attention = return_attention
 
     def build(self, input_shape):
+        """Build the AttentionLSTM object."""
         self.cell.timesteps = input_shape[1]
         self.cell.build(input_shape)
 
     def call(self, inputs, mask=None, training=None, initial_state=None):
+        """Call the AttentionLSTM object."""
         self.cell._generate_dropout_mask(inputs, training=training)
         self.cell._generate_recurrent_dropout_mask(inputs, training=training)
         return super(AttentionLSTM, self).call(
@@ -661,93 +692,116 @@ class AttentionLSTM(RNN):
 
     @property
     def units(self):
+        """Return property units."""
         return self.cell.units
 
     @property
     def activation(self):
+        """Return property activation."""
         return self.cell.activation
 
     @property
     def recurrent_activation(self):
+        """Return property recurrent_activation."""
         return self.cell.recurrent_activation
 
     @property
     def attention_activation(self):
+        """Return property attention_activation."""
         return self.cell.attention_activation
 
     @property
     def use_bias(self):
+        """Return property use_bias."""
         return self.cell.use_bias
 
     @property
     def kernel_initializer(self):
+        """Return property kernel_initializer."""
         return self.cell.kernel_initializer
 
     @property
     def recurrent_initializer(self):
+        """Return property recurrent_initializer."""
         return self.cell.recurrent_initializer
 
     @property
     def attention_initializer(self):
+        """Return property attention_initializer."""
         return self.cell.attention_initializer
 
     @property
     def bias_initializer(self):
+        """Return property bias_initializer."""
         return self.cell.bias_initializer
 
     @property
     def unit_forget_bias(self):
+        """Return property unit_forget_bias."""
         return self.cell.unit_forget_bias
 
     @property
     def kernel_regularizer(self):
+        """Return property kernel_regularizer."""
         return self.cell.kernel_regularizer
 
     @property
     def recurrent_regularizer(self):
+        """Return property recurrent_regularizer."""
         return self.cell.recurrent_regularizer
 
     @property
     def bias_regularizer(self):
+        """Return property bias_regularizer."""
         return self.cell.bias_regularizer
 
     @property
     def activity_regularizer(self):
+        """Return property activity_regularizer."""
         return self.cell.activity_regularizer
 
     @property
     def attention_regularizer(self):
+        """Return property attention_regularizer."""
         return self.cell.attention_regularizer
 
     @property
     def kernel_constraint(self):
+        """Return property kernel_constraint."""
         return self.cell.kernel_constraint
 
     @property
     def recurrent_constraint(self):
+        """Return property recurrent_constraint."""
         return self.cell.recurrent_constraint
 
     @property
     def bias_constraint(self):
+        """Return property bias_constraint."""
         return self.cell.bias_constraint
 
     @property
     def attention_constraint(self):
+        """Return property attention_constraint."""
         return self.cell.attention_constraint
 
     @property
     def dropout(self):
+        """Return property dropout."""
         return self.cell.dropout
 
     @property
     def recurrent_dropout(self):
+        """Return property recurrent_dropout."""
         return self.cell.recurrent_dropout
 
     @property
     def implementation(self):
+        """Return property implementation."""
         return self.cell.implementation
 
     def get_config(self):
+        """Return configuration dict of the AttentionLSTM object."""
         config = {
             "units": self.units,
             "activation": activations.serialize(self.activation),
@@ -778,6 +832,7 @@ class AttentionLSTM(RNN):
 
     @classmethod
     def from_config(cls, config):
+        """Create a new AttentionLSTM object from a configuration dict."""
         if "implementation" in config and config["implementation"] == 0:
             config["implementation"] = 1
         return cls(**config)

@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+"""LongShort Term Memory Fully Convolutional Network (LSTM-FCN)."""
+
 __author__ = "Jack Russon"
 
 from tensorflow import keras
@@ -11,7 +14,7 @@ _check_dl_dependencies(severity="warning")
 
 class LSTMFCNNetwork(BaseDeepNetwork):
     """
-    Implementation of LSTMFCNClassifier from Karim et al (2019). [1]
+    Implementation of LSTMFCNClassifier from Karim et al (2019) [1].
 
     Overview
     --------
@@ -31,14 +34,18 @@ class LSTMFCNNetwork(BaseDeepNetwork):
 
     def __init__(
         self,
-        kernel_sizes=[8, 5, 3],
-        filter_sizes=[128, 256, 128],
+        kernel_sizes=(8, 5, 3),
+        filter_sizes=(128, 256, 128),
         random_state=0,
         lstm_size=8,
         dropout=0.8,
         attention=False,
     ):
         """
+        Initialize a new LSTMFCNNetwork object.
+
+        Parameters
+        ----------
         kernel_sizes: List[int], default=[8, 5, 3]
             specifying the length of the 1D convolution
          windows
@@ -53,7 +60,6 @@ class LSTMFCNNetwork(BaseDeepNetwork):
         attention: boolean, default=False
             If True, uses custom attention LSTM layer
         """
-
         self.random_state = random_state
         self.kernel_sizes = kernel_sizes
         self.filter_sizes = filter_sizes
@@ -63,10 +69,13 @@ class LSTMFCNNetwork(BaseDeepNetwork):
 
     def build_network(self, input_shape, **kwargs):
         """
-        Construct a network and return its input and output layers
+        Construct a network and return its input and output layers.
+
+        Parameters
         ----------
         input_shape : tuple
             The shape of the data fed into the input layer
+
         Returns
         -------
         input_layers : keras layers

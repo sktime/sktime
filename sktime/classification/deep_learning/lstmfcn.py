@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+"""LongShort Term Memory Fully Convolutional Network (LSTM-FCN)."""
 __author__ = ["Jack Russon", "solen0id"]
 
 __all__ = ["LSTMFCNClassifier"]
@@ -11,12 +13,12 @@ from sktime.networks.lstmfcn import LSTMFCNNetwork
 class LSTMFCNClassifier(BaseDeepClassifier):
     """
 
-    Implementation of LSTMFCNClassifier from Karim et al (2019). [1]
+    Implementation of LSTMFCNClassifier from Karim et al (2019) [1].
 
     Overview
     --------
-     Combines an LSTM arm with a CNN arm. Optionally uses an attention mechanism in the LSTM which the
-     author indicates provides improved performance.
+     Combines an LSTM arm with a CNN arm. Optionally uses an attention mechanism in the
+     LSTM which the author indicates provides improved performance.
 
 
     Parameters
@@ -36,7 +38,8 @@ class LSTMFCNClassifier(BaseDeepClassifier):
     attention: boolean, default=False
         If True, uses custom attention LSTM layer
     callbacks: keras callbacks, default=ReduceLRonPlateau
-        Keras callbacks to use such as learning rate reduction or saving best model based on validation error
+        Keras callbacks to use such as learning rate reduction or saving best model
+        based on validation error
     random_state: int,
         seed to any needed random actions
     verbose: 'auto', 0, 1, or 2. Verbosity mode.
@@ -67,8 +70,8 @@ class LSTMFCNClassifier(BaseDeepClassifier):
         n_epochs=2000,
         batch_size=128,
         dropout=0.8,
-        kernel_sizes=[8, 5, 3],
-        filter_sizes=[128, 256, 128],
+        kernel_sizes=(8, 5, 3),
+        filter_sizes=(128, 256, 128),
         lstm_size=8,
         attention=False,
         callbacks=None,
@@ -102,8 +105,8 @@ class LSTMFCNClassifier(BaseDeepClassifier):
 
     def build_model(self, input_shape, n_classes, **kwargs):
         """
-        Construct a compiled, un-trained, keras model that is ready for
-        training
+        Construct a compiled, un-trained, keras model that is ready for training.
+
         ----------
         input_shape : tuple
             The shape of the data fed into the input layer
@@ -130,7 +133,7 @@ class LSTMFCNClassifier(BaseDeepClassifier):
             metrics=["accuracy"],
         )
 
-        if self.callbacks == None:
+        if self.callbacks is None:
             reduce_lr = keras.callbacks.ReduceLROnPlateau(
                 monitor="loss", factor=0.7, patience=50, min_lr=0.0001
             )
@@ -142,7 +145,8 @@ class LSTMFCNClassifier(BaseDeepClassifier):
 
     def _fit(self, X, y):
         """
-        Fit the classifier on the training set (X, y)
+        Fit the classifier on the training set (X, y).
+
         ----------
         X : a nested pd.Dataframe, or (if input_checks=False) array-like of
         shape = (n_instances, series_length, n_dimensions)
@@ -162,6 +166,7 @@ class LSTMFCNClassifier(BaseDeepClassifier):
             are stored in the model's fit history.
         validation_y : array-like, shape = [n_instances]
             The validation class labels.
+
         Returns
         -------
         self : object
@@ -199,6 +204,7 @@ class LSTMFCNClassifier(BaseDeepClassifier):
     def predict_proba(self, X, **kwargs):
         """
         Find probability estimates for each class for all cases in X.
+
         Parameters
         ----------
         X : a nested pd.Dataframe, or (if input_checks=False) array-like of
