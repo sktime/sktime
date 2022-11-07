@@ -534,9 +534,9 @@ class _HeterogenousMetaEstimator(BaseEstimator):
                 there is an occurrence of `mid_tag_name` with value `mid_tag_val`
         """
         for _, est in estimators:
-            if est.get_tag(mid_tag_name) == mid_tag_val:
+            if est.get_tag(mid_tag_name, raise_error=False) == mid_tag_val:
                 return True, True
-            if not est.get_tag(left_tag_name) == left_tag_val:
+            if not est.get_tag(left_tag_name, raise_error=False) == left_tag_val:
                 return False, False
         return True, False
 
