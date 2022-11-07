@@ -1200,7 +1200,7 @@ def make_reduction(
         Specifies whether separate models will be fit at the level of each instance
         (local) of if you wish to fit a single model to all instances ("global").
         Currently only works for RecursiveTimeSeriesRegressionForecaster.
-    discard_maxfh: str {True, False}, optional
+    discard_maxfh: str {True, False}, (default = True)
         Direct forecasting only.
         Specifies whether all models trained for each forecasting horizon in fh will
         have the same number of observations (based on the maximum forecasting horizon)
@@ -1211,9 +1211,9 @@ def make_reduction(
         ``*`` = observations in the training data set, part of the window
         ``y`` = target observations.
         Assume we have the following training data:
-        | x x x x x x x x x y x x x x|
+        | x x x x x x x x x x x x x x|
         And want to forecast with `window_length = 9` and `fh = [1, 4]`
-        With setting `discard_maxfh = fh_specific` we have:
+        With setting `discard_maxfh = False` we have:
         `fh = 1`
         |--------------------------- |
         | * * * * * * * * * y x x x x|
@@ -1229,7 +1229,7 @@ def make_reduction(
         |----------------------------|
         So 5 obs. to forecast for  `fh = 1` and 2 obs. to forecast `fh = 4`
 
-        With setting `discard_maxfh = fh_max` we have instead:
+        With setting `discard_maxfh = True` we have instead:
         `fh = 1`
         |--------------------------- |
         | * * * * * * * * * y x x x x|
