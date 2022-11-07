@@ -1,4 +1,4 @@
-__author__ = ["Jack Russon", 'solen0id']
+__author__ = ["Jack Russon", "solen0id"]
 
 __all__ = ["LSTMFCNClassifier"]
 
@@ -114,8 +114,8 @@ class LSTMFCNClassifier(BaseDeepClassifier):
         -------
         output : a compiled Keras Model
         """
-        import keras 
-        
+        import keras
+
         input_layers, output_layer = self._network.build_network(input_shape, **kwargs)
 
         output_layer = keras.layers.Dense(units=n_classes, activation="softmax")(
@@ -129,7 +129,6 @@ class LSTMFCNClassifier(BaseDeepClassifier):
             optimizer="adam",
             metrics=["accuracy"],
         )
-
 
         if self.callbacks == None:
             reduce_lr = keras.callbacks.ReduceLROnPlateau(
@@ -174,7 +173,6 @@ class LSTMFCNClassifier(BaseDeepClassifier):
         # Remove?
         # Transpose to conform to Keras input style.
         X = X.transpose(0, 2, 1)
-
 
         # ignore the number of instances, X.shape[0],
         # just want the shape of each instance
@@ -223,7 +221,6 @@ class LSTMFCNClassifier(BaseDeepClassifier):
             probs = np.hstack([1 - probs, probs])
 
         return probs
-
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):

@@ -8,6 +8,7 @@ from sktime.utils.validation._dependencies import _check_dl_dependencies
 
 _check_dl_dependencies(severity="warning")
 
+
 class LSTMFCNNetwork(BaseDeepNetwork):
     """
     Implementation of LSTMFCNClassifier from Karim et al (2019). [1]
