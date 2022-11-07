@@ -74,6 +74,8 @@ The release process is as follows, on high-level:
   If the install does not succeed or wheels have not been uploaded, urgent action to diagnose and remedy must be taken.
   All core developers should be urgently informed of such a situation through mail-all in the core developer channel on slack.
   In the most common case, the install instructions need to be updated.
+  If wheel upload has failed, the tag in 5. needs to be deleted and recreated.
+  The tag can be deleted using the ``git`` command ``git push --delete origin tagname`` from a local repo.
 
 ``conda`` release and release validation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
