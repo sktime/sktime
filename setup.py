@@ -29,8 +29,8 @@ def setup_package():
     """Set up package."""
     projectname = pyproject["project"]["name"]
     setup(
-        author_email="info@sktime.org",
-        author=f"{projectname} developers",
+        author=pyproject["project"]["authors"][0],
+        maintainer=pyproject["project"]["maintainers"][0],
         classifiers=pyproject["project"]["classifiers"],
         description=pyproject["project"]["description"],
         download_url=pyproject["project"]["urls"]["download"],
@@ -40,8 +40,6 @@ def setup_package():
         keywords=pyproject["project"]["keywords"],
         license=pyproject["project"]["license"],
         long_description=long_description(),
-        maintainer_email="info@sktime.org",
-        maintainer=f"{projectname} developers",
         name=projectname,
         package_data={
             "sktime": [

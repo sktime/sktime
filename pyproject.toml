@@ -3,15 +3,15 @@ name = "sktime"
 version = "0.14.0"
 description = "A unified framework for machine learning with time series"
 authors = [
-    {name = "Franz Király"},
-    {name = "Tony Bagnall"},
-    {name = "Markus Löning"},
-    {name = "Martin Walter"},
+    "Franz Király <f.kiraly@ucl.ac.uk>",
+    "Tony Bagnall <ajb@uea.ac.uk>",
+    "Markus Löning",
+    "Martin Walter",
 ]
 maintainers = [
-    {name = "Franz Király"},
-    {name = "Guzal Bulatova"},
-    {name = "Martin Walter"},
+    "Franz Király <f.kiraly@ucl.ac.uk>",
+    "Guzal Bulatova",
+    "Martin Walter",
 ]
 readme = "README.md"
 keywords = [
