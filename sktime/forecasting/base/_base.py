@@ -1836,7 +1836,9 @@ class BaseForecaster(BaseEstimator):
                 f"NotImplementedWarning: {self.__class__.__name__} "
                 f"does not have a custom `update` method implemented. "
                 f"{self.__class__.__name__} will be refit each time "
-                f"`update` is called with update_params=True."
+                f"`update` is called with update_params=True. "
+                "To refit less often, use the wrappers in the "
+                "forecasting.stream module, e.g., UpdateEvery."
             )
             # we need to overwrite the mtype last seen and converter store, since the _y
             #    may have been converted

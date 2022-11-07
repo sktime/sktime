@@ -501,9 +501,9 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
         """
         # imports
         from sktime.forecasting.naive import NaiveForecaster
-        from sktime.forecasting.theta import ThetaForecaster
+        from sktime.forecasting.trend import TrendForecaster
 
         params1 = {"forecasters": NaiveForecaster()}
-        params2 = {"forecasters": ThetaForecaster()}
+        params2 = {"forecasters": TrendForecaster()}
 
         return [params1, params2]

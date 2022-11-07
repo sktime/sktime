@@ -1,15 +1,16 @@
 [project]
 name = "sktime"
-version = "0.13.4"
+version = "0.14.0"
 description = "A unified framework for machine learning with time series"
 authors = [
-    {name = "Franz Király", email = "f.kiraly@ucl.ac.uk"},
-    {name = "Tony Bagnall", email = "ajb@uea.ac.uk"},
+    {name = "Franz Király"},
+    {name = "Tony Bagnall"},
     {name = "Markus Löning"},
     {name = "Martin Walter"},
 ]
 maintainers = [
-    {name = "Franz Király", email = "f.kiraly@ucl.ac.uk"},
+    {name = "Franz Király"},
+    {name = "Guzal Bulatova"},
     {name = "Martin Walter"},
 ]
 readme = "README.md"
@@ -77,6 +78,7 @@ all_extras = [
     "tsfresh>=0.17.0; python_version < '3.10'",
     "tslearn>=0.5.2",
     "xarray",
+    "dask",
 ]
 
 dev = [

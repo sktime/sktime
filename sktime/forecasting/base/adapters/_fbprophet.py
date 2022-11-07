@@ -258,7 +258,7 @@ class _ProphetAdapter(BaseForecaster):
 
         return pred_int
 
-    def get_fitted_params(self):
+    def _get_fitted_params(self):
         """Get fitted parameters.
 
         Returns
@@ -269,11 +269,6 @@ class _ProphetAdapter(BaseForecaster):
         ----------
         https://facebook.github.io/prophet/docs/additional_topics.html
         """
-        self.check_is_fitted()
-
-        if hasattr(self, "_is_vectorized") and self._is_vectorized:
-            return {"forecasters": self.forecasters_}
-
         fitted_params = {}
         for name in ["k", "m", "sigma_obs"]:
             fitted_params[name] = self._forecaster.params[name][0][0]
