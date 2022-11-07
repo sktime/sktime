@@ -27,9 +27,10 @@ pyproject = toml.load("pyproject.toml")
 
 def setup_package():
     """Set up package."""
+    projectname = pyproject["project"]["name"]
     setup(
-        author_email=pyproject["project"]["authors"][0]["email"],
-        author=pyproject["project"]["authors"][0]["name"],
+        author_email="info@sktime.com",
+        author=f"{projectname} developers",
         classifiers=pyproject["project"]["classifiers"],
         description=pyproject["project"]["description"],
         download_url=pyproject["project"]["urls"]["download"],
@@ -39,9 +40,9 @@ def setup_package():
         keywords=pyproject["project"]["keywords"],
         license=pyproject["project"]["license"],
         long_description=long_description(),
-        maintainer_email=pyproject["project"]["maintainers"][0]["email"],
-        maintainer=pyproject["project"]["maintainers"][0]["name"],
-        name=pyproject["project"]["name"],
+        maintainer_email="info@sktime.com",
+        maintainer=f"{projectname} developers",
+        name=projectname,
         package_data={
             "sktime": [
                 "*.csv",
