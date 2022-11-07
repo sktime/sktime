@@ -88,7 +88,7 @@ The release process is as follows, on high-level:
      guidelines related to maintaining conda feedstcok packages see `conda-forge package<https://conda-forge.org/docs/maintainer/updating_pkgs.html>`_.
 
      After forking and cloning the repo, edit the ``meta.yml`` file and
-     
+
      - increment the version in the line that contains ``{% set version = "0.X.Y" %}``
      - paste the sha256 sum of the source archive from github in the ``source/sha256`` section
      - submit PR and ask for review
