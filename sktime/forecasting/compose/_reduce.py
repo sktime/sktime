@@ -1743,14 +1743,9 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
 
             lag_plus = Lag(lag, index_out="extend", keep_column_names=True)
 
-            Xt = lagger_y_to_X[-lag].transform(self._y)
+            Xt = lagger_y_to_X[-lag].transform(X=self._y, y=X_pool)
             Xtt = lag_plus.fit_transform(Xt)
             Xtt_predrow = slice_at_ix(Xtt, predict_idx)
-            if X_pool is not None:
-                Xtt_predrow = pd.concat(
-                    [slice_at_ix(X_pool, predict_idx), Xtt_predrow], axis=1
-                )
-
             Xtt_predrow = _coerce_col_str(Xtt_predrow)
 
             estimator = self.estimators_[i]
