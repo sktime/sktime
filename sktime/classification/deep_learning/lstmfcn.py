@@ -65,6 +65,8 @@ class LSTMFCNClassifier(BaseDeepClassifier):
 
     """
 
+    _tags = {"python_dependencies": "tensorflow"}
+
     def __init__(
         self,
         n_epochs=2000,
