@@ -1752,7 +1752,8 @@
       "name": "An Hoang",
       "profile": "https://github.com/AnH0ang",
       "contributions": [
-        "bug"
+        "bug",
+        "code"
       ]
     },
     {
@@ -1817,6 +1818,19 @@
       "profile": "https://github.com/arampuria19",
       "contributions": [
         "doc"
+      ]
+    },
+    {
+      "login": "chillerobscuro",
+      "name": "Logan Duffy",
+      "avatar_url": "https://avatars.githubusercontent.com/u/5232872?v=4",
+      "profile": "https://github.com/chillerobscuro",
+      "contributions": [
+        "code",
+        "doc",
+        "test",
+        "bug",
+        "ideas"
       ]
     }
   ]

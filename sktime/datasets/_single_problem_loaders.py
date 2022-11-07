@@ -13,6 +13,7 @@ __author__ = [
     "aiwalter",
     "jasonlines",
     "achieveordie",
+    "ciaran-g",
 ]
 
 __all__ = [
@@ -24,6 +25,7 @@ __all__ = [
     "load_italy_power_demand",
     "load_basic_motions",
     "load_japanese_vowels",
+    "load_solar",
     "load_shampoo_sales",
     "load_longley",
     "load_lynx",
@@ -94,7 +96,8 @@ def load_UCR_UEA_dataset(
         Exception is raised if the data cannot be stored in the requested type.
     extract_path : str, optional (default=None)
         the path to look for the data. If no path is provided, the function
-        looks in `sktime/datasets/data/`.
+        looks in `sktime/datasets/data/`. If a path is given, it can be absolute,
+        e.g. C:/Temp or relative, e.g. Temp or ./Temp.
 
     Returns
     -------
@@ -1144,8 +1147,8 @@ def load_solar(
         Normalise the returned time-series by installed capacity?
     return_full_df : boolean, default=False
         Return a pd.DataFrame with power, capacity, and normalised estimates?
-    api_version : string, default="v4"
-        API version to call
+    api_version : string or None, default="v4"
+        API version to call. If None then a stored sample of the data is loaded.
 
     References
     ----------
@@ -1157,6 +1160,16 @@ def load_solar(
     >>> from sktime.datasets import load_solar  # doctest: +SKIP
     >>> y = load_solar()  # doctest: +SKIP
     """
+    if api_version is None:
+        name = "solar"
+        fname = name + ".csv"
+        path = os.path.join(MODULE, DIRNAME, name, fname)
+        y = pd.read_csv(
+            path, index_col=0, parse_dates=["datetime_gmt"], dtype={1: float}
+        )
+        y = y.asfreq("30T")
+        return y.squeeze("columns")
+
     from sktime.utils.validation._dependencies import _check_soft_dependencies
 
     _check_soft_dependencies("backoff")
