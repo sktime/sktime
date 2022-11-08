@@ -98,6 +98,28 @@ class Catch22Wrapper(BaseTransformer):
         self.replace_nans = replace_nans
         self.n_jobs = n_jobs
 
+        self.features_arguments = (
+            features
+            if features != "all"
+            else (
+                feature_names + ["Mean", "StandardDeviation"]
+                if catch24
+                else feature_names
+            )
+        )
+
+        if isinstance(features, str):
+            if features == "all":
+                self.n_transformed_features = 24 if catch24 else 22
+            else:
+                self.n_transformed_features = 1
+        elif isinstance(features, (list, tuple)):
+            self.n_transformed_features = len(features)
+        else:
+            raise ValueError("features must be a str, list or tuple")
+
+        self._transform_features = None
+
         super(Catch22Wrapper, self).__init__()
 
     def _transform(self, X, y=None):
@@ -164,6 +186,14 @@ class Catch22Wrapper(BaseTransformer):
     def _transform_case(self, X, f_idx, features):
         c22 = np.zeros(len(f_idx) * len(X))
 
+        if self._transform_features is not None and len(
+            self._transform_features
+        ) == len(c22):
+            transform_feature = self._transform_features
+        else:
+            transform_feature = [True] * len(c22)
+
+        f_count = -1
         for i in range(len(X)):
             dim = i * len(f_idx)
             series = list(X[i])
@@ -175,6 +205,10 @@ class Catch22Wrapper(BaseTransformer):
                 )
 
             for n, feature in enumerate(f_idx):
+                f_count += 1
+                if not transform_feature[f_count]:
+                    continue
+
                 if self.outlier_norm and feature in [3, 4]:
                     c22[dim + n] = features[feature](outlier_series)
                 if feature == 22:

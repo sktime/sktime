@@ -110,7 +110,29 @@ class Catch22(BaseTransformer):
         self.replace_nans = replace_nans
         self.n_jobs = n_jobs
 
-        # todo remove in v0.15
+        self.features_arguments = (
+            features
+            if features != "all"
+            else (
+                feature_names + ["Mean", "StandardDeviation"]
+                if catch24
+                else feature_names
+            )
+        )
+
+        if isinstance(features, str):
+            if features == "all":
+                self.n_transformed_features = 24 if catch24 else 22
+            else:
+                self.n_transformed_features = 1
+        elif isinstance(features, (list, tuple)):
+            self.n_transformed_features = len(features)
+        else:
+            raise ValueError("features must be a str, list or tuple")
+
+        self._transform_features = None
+
+        # todo remove in v0.16
         self._case_id = None
         self._st_n_instances = 0
         self._st_series_length = 0
@@ -144,12 +166,12 @@ class Catch22(BaseTransformer):
 
         threads_to_use = check_n_jobs(self.n_jobs)
 
-        # todo remove in v0.15 and add to docstring: ``-1`` means using all processors.
+        # todo remove in v0.16 and add to docstring: ``-1`` means using all processors.
         if self.n_jobs == -1:
             threads_to_use = 1
             warnings.warn(
-                "``n_jobs`` default was changed to 1 from -1 in version 0.13.4. "
-                "In version 0.15 a value of -1 will use all CPU cores instead of the "
+                "``n_jobs`` default was changed to 1 from -1 in version 0.14.0. "
+                "In version 0.16.0 a value of -1 will use all CPU cores instead of the "
                 "current 1 CPU core."
             )
 
@@ -169,6 +191,14 @@ class Catch22(BaseTransformer):
     def _transform_case(self, X, f_idx):
         c22 = np.zeros(len(f_idx) * len(X))
 
+        if self._transform_features is not None and len(
+            self._transform_features
+        ) == len(c22):
+            transform_feature = self._transform_features
+        else:
+            transform_feature = [True] * len(c22)
+
+        f_count = -1
         for i in range(len(X)):
             series = np.array(X[i])
             dim = i * len(f_idx)
@@ -181,6 +211,10 @@ class Catch22(BaseTransformer):
             acfz = None
 
             for n, feature in enumerate(f_idx):
+                f_count += 1
+                if not transform_feature[f_count]:
+                    continue
+
                 args = [series]
 
                 if feature == 0 or feature == 1 or feature == 11:
@@ -245,10 +279,10 @@ class Catch22(BaseTransformer):
 
         return c22
 
-    # todo remove in v0.15
+    # todo remove in v0.16
     @deprecated(
-        version="0.13.4",
-        reason="The Catch22 transform_single_feature method will be removed in v0.15.0. Use the 'features' parameter for the class.",  # noqa: E501
+        version="0.14.0",
+        reason="The Catch22 transform_single_feature method will be removed in v0.16.0. Use the 'features' parameter for the class.",  # noqa: E501
         category=FutureWarning,
     )
     def transform_single_feature(self, X, feature, case_id=None):
@@ -345,7 +379,7 @@ class Catch22(BaseTransformer):
 
         return np.asarray(c22_list)
 
-    # todo remove in v0.15
+    # todo remove in v0.16.0
     def _transform_case_single(self, series, feature, case_id, inst_idx):
         args = [series]
 
