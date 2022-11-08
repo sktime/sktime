@@ -265,13 +265,17 @@ class Imputer(BaseTransformer):
         """
         rng = check_random_state(self.random_state)
 
-        # check if series contains only int or int-like values (e.g. 3.0)
-        if (self._X[col].dropna() % 1 == 0).all():
-            return rng.randint(np.nanmin(self._X[col]), np.nanmax(self._X[col].max()))
+        # get column value
+        if self.missing_values:
+            X_col = self._X[col].replace(to_replace=self.missing_values, value=np.nan)
         else:
-            return rng.uniform(
-                np.nanmin(self._X[col].min()), np.nanmax(self._X[col].max())
-            )
+            X_col = self._X[col]
+
+        # check if series contains only int or int-like values (e.g. 3.0)
+        if (X_col.dropna() % 1 == 0).all():
+            return rng.randint(np.nanmin(X_col), np.nanmax(X_col.max()))
+        else:
+            return rng.uniform(np.nanmin(X_col.min()), np.nanmax(X_col.max()))
 
     def _impute_with_forecaster(self, X, y):
         """Use a given forecaster for imputation by in-sample predictions.
