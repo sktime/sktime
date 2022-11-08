@@ -8,6 +8,10 @@ from tensorflow.keras import constraints, initializers, regularizers
 # from keras.legacy import interfaces
 from tensorflow.keras.layers import RNN, InputSpec, Layer
 
+from sktime.utils.validation._dependencies import _check_dl_dependencies
+
+_check_dl_dependencies(severity="warning")
+
 
 def _time_distributed_dense(
     x,
@@ -146,6 +150,8 @@ class AttentionLSTMCell(Layer):
         "Show, Attend and Tell: Neural Image Caption Generation with Visual Attention"]
         (http://arxiv.org/pdf/1502.03044.pdf)
     """
+
+    _tags = {"python_dependencies": "tensorflow"}
 
     def __init__(
         self,
@@ -585,6 +591,8 @@ class AttentionLSTM(RNN):
         "Show, Attend and Tell: Neural Image Caption Generation with Visual Attention"]
         (http://arxiv.org/pdf/1502.03044.pdf)
     """
+
+    _tags = {"python_dependencies": "tensorflow"}
 
     # '@interfaces.legacy_recurrent_support
     def __init__(
