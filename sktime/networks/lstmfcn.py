@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """LongShort Term Memory Fully Convolutional Network (LSTM-FCN)."""
 
-__author__ = ["Jack Russon", "solen0id"]
+__author__ = ["jnrusson1", "solen0id"]
 
 from sktime.networks.base import BaseDeepNetwork
 from sktime.utils.validation._dependencies import _check_dl_dependencies
