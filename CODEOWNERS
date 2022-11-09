@@ -10,8 +10,8 @@ sktime/classification/dictionary_based/_tde.py @patrickzib @MatthewMiddlehurst @
 sktime/classification/dictionary_based/_weasel.py @patrickzib @MatthewMiddlehurst @TonyBagnall
 sktime/classification/distance_based/ @jasonlines @goaster @TonyBagnall
 sktime/classification/dummy/ @ZiyaoWei
-sktime/classification/early_classification/_probability_threshold.py @MatthewMiddlehurst @TonyBagnall
-sktime/classification/early_classification/_teaser.py @patrickzib @MatthewMiddlehurst @TonyBagnall
+sktime/classification/early_classification/_probability_threshold.py @MatthewMiddlehurst
+sktime/classification/early_classification/_teaser.py @patrickzib @MatthewMiddlehurst
 sktime/classification/feature_based/_catch22_classifier.py @MatthewMiddlehurst @TonyBagnall
 sktime/classification/feature_based/_fresh_prince.py @MatthewMiddlehurst @TonyBagnall
 sktime/classification/feature_based/_matrix_profile_classifier.py @MatthewMiddlehurst @TonyBagnall
