@@ -25,7 +25,7 @@ sktime/classification/interval_based/_cif.py @MatthewMiddlehurst @TonyBagnall
 sktime/classification/interval_based/_drcif.py @MatthewMiddlehurst @TonyBagnall
 sktime/classification/interval_based/_rise.py @MatthewMiddlehurst @TonyBagnall
 sktime/classification/interval_based/_stsf.py @MatthewMiddlehurst @TonyBagnall
-sktime/classification/interval_based/_tsf.py @TonyBagnall
+sktime/classification/interval_based/_tsf.py @MatthewMiddlehurst @TonyBagnall
 sktime/classification/kernel_based/_arsenal.py @MatthewMiddlehurst @TonyBagnall
 sktime/classification/kernel_based/_rocket_classifier.py @MatthewMiddlehurst @TonyBagnall
 sktime/classification/shapelet_based/_stc.py @jasonlines @ABostrom @MatthewMiddlehurst @TonyBagnall
