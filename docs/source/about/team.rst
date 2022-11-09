@@ -18,7 +18,7 @@ Community Council
    * - Franz Kiraly
      - :user:`fkiraly`
    * - Guzal Bulatova
-    - :user: `GuzalBulatova`
+     - :user: `GuzalBulatova`
    * - Martin Walter
      - :user:`aiwalter`
 
@@ -45,8 +45,6 @@ Code of Conduct Committee
      - GitHub ID
    * - Franz Kiraly
      - :user:`fkiraly`
-   * - Martina Vilas
-     - :user:`martinagvilas`
 
 Core Developers
 ---------------
