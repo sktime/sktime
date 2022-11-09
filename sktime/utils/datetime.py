@@ -90,19 +90,18 @@ def _get_freq(x):
 
 
 def set_hier_freq(x):
-    """Set frequency for dataframes without frequency.
+    """Set frequency for multiindex dataframes without frequency.
 
     Parameters
     ----------
     y : Panel, or Hierarchical object, or VectorizedDF with timeindex as
         pd.DatetimeIndex or pd.PeriodIndex
-    to_freq: freqstr that should be set to pd.DatetimeIndex or pd.PeriodIndex
 
     Returns
     -------
     Series, Panel, or Hierarchical object, or VectorizedDF with pd.PeriodIndex as
-    time index and freq set. Note: currently only pd.PeriodIndex can have freq in
-    pandas.
+    time index and freq set. Note: As of pandas 1.5.1 only a pd.PeriodIndex time index
+    can have freq other None in pandas multiindex data set.
     """
     if not isinstance(x.index, pd.MultiIndex):
         raise ValueError("Only intended for use with MultiIndex.")
