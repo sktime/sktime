@@ -23,7 +23,7 @@ sktime/classification/hybrid/_hivecote_v1.py @MatthewMiddlehurst @TonyBagnall
 sktime/classification/hybrid/_hivecote_v2.py @MatthewMiddlehurst @TonyBagnall
 sktime/classification/interval_based/_cif.py @MatthewMiddlehurst @TonyBagnall
 sktime/classification/interval_based/_drcif.py @MatthewMiddlehurst @TonyBagnall
-sktime/classification/interval_based/_rise.py @TonyBagnall
+sktime/classification/interval_based/_rise.py @MatthewMiddlehurst @TonyBagnall
 sktime/classification/interval_based/_stsf.py @MatthewMiddlehurst @TonyBagnall
 sktime/classification/interval_based/_tsf.py @TonyBagnall
 sktime/classification/kernel_based/_arsenal.py @MatthewMiddlehurst @TonyBagnall
@@ -38,7 +38,7 @@ sktime/transformations/panel/dictionary_based/_sfa.py @patrickzib @MatthewMiddle
 sktime/transformations/panel/dictionary_based/_sfa_fast.py @patrickzib @MatthewMiddlehurst
 sktime/transformations/panel/catch22.py @MatthewMiddlehurst
 sktime/transformations/panel/random_intervals.py @MatthewMiddlehurst
-sktime/transformations/panel/shapelet_transform.py @MatthewMiddlehurst @TonyBagnall @jasonlines @ABostrom
+sktime/transformations/panel/shapelet_transform.py @jasonlines @ABostrom @MatthewMiddlehurst @TonyBagnall
 sktime/transformations/panel/supervised_intervals.py @MatthewMiddlehurst
 sktime/transformations/panel/rocket/ @angus924
 sktime/transformations/panel/rocket/_multirocket.py @ChangWeiTan @fstinner @angus924
