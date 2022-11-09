@@ -166,8 +166,6 @@ class FourierFeatures(BaseTransformer):
                         "exists from other seasonal period, fourier term pairs."
                     )
 
-        # Copy X to avoid global side effects
-        temp_idx = X.index
         X = deepcopy(X)
 
         if isinstance(X.index, pd.DatetimeIndex):
@@ -185,7 +183,7 @@ class FourierFeatures(BaseTransformer):
         # the data passed on fit
         # store the integer form of the minimum date in the prediod index
         self.min_t_ = np.min(X.index.astype(int))
-        X.index = temp_idx
+
         return self
 
     def _transform(self, X, y=None):
@@ -221,7 +219,7 @@ class FourierFeatures(BaseTransformer):
             X_transformed[f"cos_{sp}_{k}"] = np.cos(int_index * 2 * k * np.pi / sp)
 
         # Ensure transformed X has same index
-        X_transformed.index = X.index
+        X_transformed.index = deepcopy(X.index)
         return X_transformed
 
     @classmethod
