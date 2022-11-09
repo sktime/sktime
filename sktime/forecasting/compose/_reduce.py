@@ -564,7 +564,9 @@ class _RecursiveReducer(_Reducer):
             if isinstance(timepoints, (pd.DatetimeIndex, pd.PeriodIndex)):
                 if timepoints.freq is None:
                     raise ValueError(
-                        "Please set frequency for DatetimeIndex or " + "PeriodIndex."
+                        "Please set frequency for DatetimeIndex or PeriodIndex. You "
+                        + "can use set_freq_hier function from sktime.utils.datetime "
+                        + "for this purpose (will convert DatetimeIndex to  PeriodIndex"
                     )
 
         yt, Xt = self._transform(y, X)
