@@ -14,7 +14,7 @@ Community Council
 
    * - Name
      - GitHub ID
-   * - Franz Kiraly
+   * - Franz Király
      - :user:`fkiraly`
    * - Guzal Bulatova
      - :user:`GuzalBulatova`
@@ -42,7 +42,7 @@ Code of Conduct Committee
 
    * - Name
      - GitHub ID
-   * - Franz Kiraly
+   * - Franz Király
      - :user:`fkiraly`
 
 Core Developers
@@ -59,7 +59,7 @@ Core Developers
      - :user:`chrisholder`
    * - Daniel Bartling
      - :user:`danbartl`
-   * - Franz Kiraly
+   * - Franz Király
      - :user:`fkiraly`
    * - Freddy A Boulton
      - :user:`freddyaboulton`
