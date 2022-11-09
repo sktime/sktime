@@ -5,6 +5,7 @@
 __author__ = ["mloning", "xiaobenbenecho", "khrapovs"]
 __all__ = []
 
+import warnings
 from functools import singledispatch
 from typing import Optional, Tuple, Union
 
@@ -86,6 +87,45 @@ def _get_freq(x):
             return x.freqstr
     else:
         return None
+
+
+def set_hier_freq(x):
+    """Set frequency for dataframes without frequency.
+
+    Parameters
+    ----------
+    y : Panel, or Hierarchical object, or VectorizedDF with timeindex as
+        pd.DatetimeIndex or pd.PeriodIndex
+    to_freq: freqstr that should be set to pd.DatetimeIndex or pd.PeriodIndex
+
+    Returns
+    -------
+    Series, Panel, or Hierarchical object, or VectorizedDF with pd.PeriodIndex as
+    time index and freq set. Note: currently only pd.PeriodIndex can have freq in
+    pandas.
+    """
+    if not isinstance(x.index, pd.MultiIndex):
+        raise ValueError("Only intended for use with MultiIndex.")
+
+    timepoints = get_time_index(x)
+    if not isinstance(timepoints, (pd.DatetimeIndex)):
+        raise ValueError("Set_freq only supported for DatetimeIndex.")
+
+    if timepoints.freq is not None:
+        warnings.warn("Frequency already set.")
+    else:
+        instance_names = list(x.index.names[0:-1])
+        time_names = x.index.names[-1]
+        x = (
+            x.reset_index()
+            .groupby(instance_names, as_index=True)
+            .apply(
+                lambda df: df.drop(instance_names, axis=1)
+                .set_index([time_names])
+                .to_period()
+            )
+        )
+    return x
 
 
 @singledispatch
