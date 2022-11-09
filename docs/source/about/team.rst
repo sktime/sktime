@@ -9,7 +9,6 @@ A list of all contributors can be found `here <contributors.md>`_.
 
 Community Council
 -----------------
-
 .. list-table::
    :header-rows: 1
 
@@ -20,7 +19,7 @@ Community Council
    * - Guzal Bulatova
      - :user: `GuzalBulatova`
    * - Martin Walter
-     - :user:`aiwalter`
+     - :user: `aiwalter`
 
 Community Council Observers
 ---------------------------
