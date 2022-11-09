@@ -17,9 +17,9 @@ Community Council
    * - Franz Kiraly
      - :user:`fkiraly`
    * - Guzal Bulatova
-     - :user: `GuzalBulatova`
+     - :user:`GuzalBulatova`
    * - Martin Walter
-     - :user: `aiwalter`
+     - :user:`aiwalter`
 
 Community Council Observers
 ---------------------------
@@ -81,6 +81,8 @@ Core Developers
      - :user:`miraep8`
    * - Patrick Schäfer
      - :user:`patrickzib`
+   * - Ryan Kuhns
+     - :user:`rnkuhns`
    * - Stanislav Khrapov
      - :user:`khrapovs`
    * - Svea Marie Meyer
@@ -110,9 +112,7 @@ Former Core Developers (inactive)
      - :user:`matteogales`
    * - Patrick Rockenschaub
      - :user:`prockenschaub`
-   * - Ryan Kuhns
-     - :user:`rnkuhns`
    * - Sajaysurya Ganesh
      - :user:`sajaysurya`
-   * -
+   * - Anonymous upon contributor's request
      - :user:`big-o`
