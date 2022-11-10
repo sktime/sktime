@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
-"""A rotation forest vector classifier.
+"""A rotation forest (RotF) vector classifier.
 
 A rotation Forest sktime implementation for continuous values only. Fits sklearn
-conventions
+conventions.
 """
 
 __author__ = ["MatthewMiddlehurst"]
@@ -24,7 +24,7 @@ from sktime.utils.validation import check_n_jobs
 
 
 class RotationForest(BaseEstimator):
-    """A rotation forest vector classifier.
+    """A rotation forest (RotF) vector classifier.
 
     Implementation of the Rotation Forest classifier described in Rodriguez et al
     (2013) [1]. Builds a forest of trees build on random portions of the data
@@ -45,7 +45,7 @@ class RotationForest(BaseEstimator):
     remove_proportion : float, default=0.5
         The proportion of cases to be removed per group.
     base_estimator : BaseEstimator or None, default="None"
-        Base estimator for the ensemble. By default uses the sklearn
+        Base estimator for the ensemble. By default, uses the sklearn
         `DecisionTreeClassifier` using entropy as a splitting measure.
     time_limit_in_minutes : int, default=0
         Time contract to limit build time in minutes, overriding ``n_estimators``.

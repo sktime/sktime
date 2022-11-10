@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
-"""CIT vector classifier.
+"""Continuous interval tree (CIT) vector classifier (aka Time Series Tree).
 
-Continuous Interval Tree aka Time Series Tree (TST), base classifier originally used
-in the TimeSeriesForest interval based classification algorithm.
+Continuous Interval Tree aka Time Series Tree, base classifier originally used
+in the time series forest interval based classification algorithm. Fits sklearn
+conventions.
 """
 
 __author__ = ["MatthewMiddlehurst"]
@@ -22,41 +23,47 @@ from sktime.utils.numba.stats import iqr, mean, numba_max, numba_min, slope, std
 
 
 class ContinuousIntervalTree(BaseEstimator):
-    """Continuous Interval Tree (CIT).
+    """Continuous interval tree (CIT) vector classifier (aka Time Series Tree).
 
-    The 'Time Series Tree' described in the Time Series Forest (TSF) paper Deng et al
-    (2013). [1]_
-    A simple information gain based tree for continuous attributes using a bespoke
-    margin gain metric for tie breaking.
-    Implemented for interval based time series classifiers such as
-    CanonicalIntervalForest and DrCIF.
+    The `Time Series Tree` described in the Time Series Forest (TSF) paper Deng et al
+    (2013) [1]. A simple information gain based tree for continuous attributes using a
+    bespoke margin gain metric for tie breaking.
+
+    Implemented as a bade classifier for interval based time series classifiers such as
+    `CanonicalIntervalForest` and `DrCIF`.
 
     Parameters
     ----------
     max_depth : int, default=sys.maxsize
         Maximum depth for the tree.
     thresholds : int, default=20
-        Number of thresholds to split attributes on at tree nodes.
-    random_state : int or None, default=None
-        Seed for random number generation.
+        Number of thresholds to split continous attributes on at tree nodes.
+    random_state : int, RandomState instance or None, default=None
+        If `int`, random_state is the seed used by the random number generator;
+        If `RandomState` instance, random_state is the random number generator;
+        If `None`, the random number generator is the `RandomState` instance used
+        by `np.random`.
 
     Attributes
     ----------
-    n_classes_ : int
-        The number of classes.
     classes_ : list
-        The classes labels.
-    _root : _TreeNode
-        Tree root node.
+        The unique class labels in the training set.
+    n_classes_ : int
+        The number of unique classes in the training set.
+    n_instances_ : int
+        The number of train cases in the training set.
+    n_atts_ : int
+        The number of attributes in the training set.
 
     See Also
     --------
-    CanonicalIntervalForest, DrCIF
+    CanonicalIntervalForest
+    DrCIF
 
     Notes
     -----
     For the Java version, see
-    `TSML <https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/
+    `tsml <https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/
     machine_learning/classifiers/ContinuousIntervalTree.java>`_.
 
     References
@@ -87,8 +94,17 @@ class ContinuousIntervalTree(BaseEstimator):
     ):
         self.max_depth = max_depth
         self.thresholds = thresholds
-
         self.random_state = random_state
+
+        self.classes_ = []
+        self.n_classes_ = 0
+        self.n_instances_ = 0
+        self.n_atts_ = 0
+
+        self._class_dictionary = {}
+        self._root = None
+
+        self._is_fitted = False
 
         super(ContinuousIntervalTree, self).__init__()
 
@@ -100,13 +116,20 @@ class ContinuousIntervalTree(BaseEstimator):
 
         Parameters
         ----------
-        X : array-like or sparse matrix of shape = [n_instances,n_attributes]
-        The training input samples.
-        y : array-like, shape =  [n_instances]    The class labels.
+        X : 2d ndarray or DataFrame of shape = [n_instances, n_attributes]
+            The training data.
+        y : array-like, shape = [n_instances]
+            The class labels.
 
         Returns
         -------
-        self : object
+        self :
+            Reference to self.
+
+        Notes
+        -----
+        Changes state by creating a fitted model that updates attributes
+        ending in "_".
         """
         if isinstance(X, np.ndarray) and len(X.shape) == 3 and X.shape[1] == 1:
             X = np.reshape(X, (X.shape[0], -1))
@@ -166,12 +189,13 @@ class ContinuousIntervalTree(BaseEstimator):
 
         Parameters
         ----------
-        X : The training input samples. array-like or sparse matrix of shape
-        = [n_test_instances,n_attributes]
+        X : 2d ndarray or DataFrame of shape = [n_instances, n_attributes]
+            The data to make predictions for.
 
         Returns
         -------
-        output : array of shape = [n_test_instances]
+        y : array-like, shape = [n_instances]
+            Predicted class labels.
         """
         rng = check_random_state(self.random_state)
         return np.array(
@@ -186,13 +210,13 @@ class ContinuousIntervalTree(BaseEstimator):
 
         Parameters
         ----------
-        X : The training input samples. array-like or sparse matrix of shape
-        = [n_test_instances,n_attributes]
+        X : 2d ndarray or DataFrame of shape = [n_instances, n_attributes]
+            The data to make predictions for.
 
         Returns
         -------
-        output : array of shape = [n_test_instances, num_classes] of
-        probabilities
+        y : array-like, shape = [n_instances, n_classes_]
+            Predicted probabilities using the ordering in classes_.
         """
         if not self._is_fitted:
             raise NotFittedError(
