@@ -46,7 +46,7 @@ Composition
     ComposableTimeSeriesForestClassifier
     SklearnClassifierPipeline
 
-Dictionary-based
+Deep learning
 ----------------
 
 .. currentmodule:: sktime.classification.deep_learning
