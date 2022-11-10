@@ -11,7 +11,6 @@ respect to the data length and always yields locally optimal choice.
 
 Notes
 -----
-
 Based on the work from [1]_.
 
 - source code adapted based on: https://github.com/cvxgrp/GGS
@@ -59,7 +58,7 @@ class GGS:
     where a new breakpoint is added and then adjusting all breakpoints to
     (approximately) maximize the objective. It is similar to the top-down
     search used in other change point detection problems.
-    
+
     Parameters
     ----------
     k_max: int, default=10
@@ -375,7 +374,7 @@ class GreedyGaussianSegmentation(BaseEstimator):
     where a new breakpoint is added and then adjusting all breakpoints to
     (approximately) maximize the objective. It is similar to the top-down
     search used in other change point detection problems.
-    
+
     Parameters
     ----------
     k_max: int, default=10
@@ -473,7 +472,7 @@ class GreedyGaussianSegmentation(BaseEstimator):
             1D array with predicted segmentation of the same size as the first
             dimension of X. The numerical values represent distinct segments
             labels for each of the data points.
-        """    
+        """
         self.change_points_ = self._adaptee.find_change_points(X)
 
         labels = np.zeros(X.shape[0], dtype=np.int32)
