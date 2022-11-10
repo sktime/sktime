@@ -5,33 +5,6 @@ Time series classification
 
 The :mod:`sktime.classification` module contains algorithms and composition tools for time series classification.
 
-Base
-----
-
-.. currentmodule:: sktime.classification
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    BaseClassifier
-
-.. currentmodule:: sktime.classification.deep_learning.base
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    BaseDeepClassifier
-
-.. currentmodule:: sktime.classification.early_classification.base
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    BaseEarlyClassifier
-
 Composition
 -----------
 
@@ -194,3 +167,30 @@ sklearn
 
     ContinuousIntervalTree
     RotationForest
+
+Base
+----
+
+.. currentmodule:: sktime.classification
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    BaseClassifier
+
+.. currentmodule:: sktime.classification.deep_learning.base
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    BaseDeepClassifier
+
+.. currentmodule:: sktime.classification.early_classification.base
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    BaseEarlyClassifier
