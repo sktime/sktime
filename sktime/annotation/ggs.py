@@ -185,7 +185,7 @@ class GGS:
         m, n = data.shape
         orig_mean = np.mean(data, axis=0)
         orig_cov = np.cov(data.T, bias=True)
-        orig_ll = self.log_likelihood(orig_cov, m, n)
+        orig_ll = self.log_likelihood(data)
         total_sum = m * (orig_cov + np.outer(orig_mean, orig_mean))
         mu_left = data[0, :] / n
         mu_right = (m * orig_mean - data[0, :]) / (m - 1)
