@@ -15,6 +15,7 @@ __author__ = [
     "bethrice44",
 ]
 
+import math
 from warnings import warn
 
 import numpy as np
@@ -23,6 +24,7 @@ from scipy.stats import norm
 
 from sktime.datatypes._convert import convert, convert_to
 from sktime.datatypes._utilities import get_slice
+from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.base._base import DEFAULT_ALPHA, BaseForecaster
 from sktime.forecasting.base._sktime import _BaseWindowForecaster
 from sktime.utils.validation import check_window_length
@@ -423,23 +425,60 @@ class NaiveForecaster(_BaseWindowForecaster):
         y = self._y
         y = convert_to(y, "pd.Series")
         T = len(y)
+        sp = self.sp
 
         # Compute "past" residuals
         if self.strategy == "last":
             y_res = y - y.shift(self.sp)
         elif self.strategy == "mean":
-            # Since this strategy returns a constant, just predict fh=1 and
-            # transform the constant into a repeated array
-            y_pred = np.repeat(np.squeeze(self.predict(fh=1)), T)
+            if not self.window_length:
+                if sp > 1:
+                    # Get the next sp predictions and repeat them
+                    # T / self.sp times to match the length of trained y
+                    # NOTE: +1 extra tile to defend against off-by-one errors
+                    reps = math.ceil(T / sp) + 1
+                    past_fh = ForecastingHorizon(
+                        list(range(1, sp + 1)), is_relative=None, freq=self._cutoff
+                    )
+                    seasonal_means = self._predict(fh=past_fh)
+                    if isinstance(seasonal_means, pd.DataFrame):
+                        seasonal_means = seasonal_means.squeeze()
+                    y_pred = np.tile(seasonal_means.to_numpy(), reps)[0:T]
+                else:
+                    # Since this strategy returns a constant, just predict fh=1 and
+                    # transform the constant into a repeated array
+                    past_fh = ForecastingHorizon(1, is_relative=None, freq=self._cutoff)
+                    y_pred = np.repeat(np.squeeze(self._predict(fh=past_fh)), T)
+            else:
+                if sp > 1:
+                    # Label index by seasonal period
+                    seasons = np.mod(np.arange(T), sp)
+                    # Compute rolling seasonal means
+                    y_pred = (
+                        y.to_frame()
+                        .assign(__sp__=seasons)
+                        # Group observations by their
+                        # seasonal period position
+                        .groupby("__sp__")
+                        # Compute rolling means per
+                        # seasonal period
+                        .rolling(self.window_length)
+                        .mean()
+                        .droplevel("__sp__")
+                        .sort_index()
+                        .squeeze()
+                    )
+                else:
+                    # Compute rolling means
+                    y_pred = y.rolling(self.window_length).mean()
             y_res = y - y_pred
         else:
             # Slope equation from:
             # https://otexts.com/fpp3/simple-methods.html#drift-method
-            slope = (y.iloc[-1] - y.iloc[0]) / (T - 1)
-
+            slope = (y.iloc[-1] - y.iloc[-(self.window_length or 0)]) / (T - 1)
             # Fitted value = previous value + slope
             # https://github.com/robjhyndman/forecast/blob/master/R/naive.R#L34
-            y_res = y - (y.shift(self.sp) + slope)
+            y_res = y - (y.shift(sp) + slope)
 
         # Residuals MSE and SE
         # + 1 degrees of freedom to estimate drift coefficient standard error
@@ -448,7 +487,6 @@ class NaiveForecaster(_BaseWindowForecaster):
         mse_res = np.sum(np.square(y_res)) / (T - n_nans - (self.strategy == "drift"))
         se_res = np.sqrt(mse_res)
 
-        sp = self.sp
         window_length = self.window_length or T
         # Formulas from:
         # https://otexts.com/fpp3/prediction-intervals.html (Table 5.2)

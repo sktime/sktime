@@ -41,6 +41,7 @@ from sktime.datatypes._panel._convert import from_nested_to_3d_numpy
 from sktime.transformations.panel.catch22 import Catch22
 from sktime.transformations.panel.random_intervals import RandomIntervals
 from sktime.transformations.panel.shapelet_transform import RandomShapeletTransform
+from sktime.transformations.panel.supervised_intervals import SupervisedIntervals
 from sktime.transformations.series.summarize import SummaryTransformer
 
 
@@ -90,16 +91,18 @@ def _reproduce_transform_unit_test(estimator):
     X_train, y_train = load_unit_test(split="train")
     indices = np.random.RandomState(0).choice(len(y_train), 5, replace=False)
 
-    estimator.fit(X_train.iloc[indices], y_train[indices])
-    return np.nan_to_num(estimator.transform(X_train.iloc[indices]), False, 0, 0, 0)
+    return np.nan_to_num(
+        estimator.fit_transform(X_train.iloc[indices], y_train[indices]), False, 0, 0, 0
+    )
 
 
 def _reproduce_transform_basic_motions(estimator):
     X_train, y_train = load_basic_motions(split="train")
     indices = np.random.RandomState(4).choice(len(y_train), 5, replace=False)
 
-    estimator.fit(X_train.iloc[indices], y_train[indices])
-    return np.nan_to_num(estimator.transform(X_train.iloc[indices]), False, 0, 0, 0)
+    return np.nan_to_num(
+        estimator.fit_transform(X_train.iloc[indices], y_train[indices]), False, 0, 0, 0
+    )
 
 
 # flake8: noqa: T001
@@ -515,13 +518,17 @@ if __name__ == "__main__":
         _reproduce_transform_basic_motions(Catch22()),
     )
     _print_array(
-        "RandomIntervals - UnitTest",
-        _reproduce_transform_unit_test(RandomIntervals(random_state=0, n_intervals=3)),
-    )
-    _print_array(
         "RandomIntervals - BasicMotions",
         _reproduce_transform_basic_motions(
             RandomIntervals(random_state=0, n_intervals=3)
+        ),
+    )
+    _print_array(
+        "SupervisedIntervals - BasicMotions",
+        _reproduce_transform_basic_motions(
+            SupervisedIntervals(
+                random_state=0, n_intervals=1, randomised_split_point=True
+            )
         ),
     )
     _print_array(

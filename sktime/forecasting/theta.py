@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
-"""Theta forecaster."""
+"""Theta forecasters."""
 
-__all__ = ["ThetaForecaster"]
-__author__ = ["big-o", "mloning", "kejsitake", "fkiraly"]
+__all__ = ["ThetaForecaster", "ThetaModularForecaster"]
+__author__ = ["big-o", "mloning", "kejsitake", "fkiraly", "GuzalBulatova"]
 
 from warnings import warn
 
@@ -11,8 +11,14 @@ import numpy as np
 import pandas as pd
 from scipy.stats import norm
 
+from sktime.forecasting.base import BaseForecaster
+from sktime.forecasting.compose import ColumnEnsembleForecaster
+from sktime.forecasting.compose._ensemble import _aggregate
+from sktime.forecasting.compose._pipeline import TransformedTargetForecaster
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
+from sktime.forecasting.trend import PolynomialTrendForecaster
 from sktime.transformations.series.detrend import Deseasonalizer
+from sktime.transformations.series.theta import ThetaLinesTransformer
 from sktime.utils.slope_and_trend import _fit_trend
 from sktime.utils.validation.forecasting import check_sp
 
@@ -262,3 +268,175 @@ def _zscore(level: float, two_tailed: bool = True) -> float:
     if two_tailed:
         alpha /= 2
     return -norm.ppf(alpha)
+
+
+class ThetaModularForecaster(BaseForecaster):
+    """Modular theta method for forecasting.
+
+    Modularized implementation of Theta method as defined in [1]_.
+    Also see auto-theta method as described in [2]_ *not contained in this estimator).
+
+    Overview: Input :term:`univariate series <Univariate time series>` of length
+    "n" and decompose with :class:`ThetaLinesTransformer
+    <sktime.transformations.series.theta>` by modifying the local curvature of
+    the time series using Theta-coefficient values - `theta_values` parameter.
+    Thansformation gives a pd.DataFrame of shape `len(input series) * len(theta)`.
+
+    The resulting transformed series (Theta-lines) are extrapolated separately.
+    The forecasts are then aggregated into one prediction - aunivariate series,
+    of `len(fh)`.
+
+    Parameters
+    ----------
+    forecasters: list of tuples (str, estimator, int or pd.index), default=None
+        Forecasters to apply to each Theta-line based on the third element
+        (the index). Indices must correspond to the theta_values, see Examples.
+        If None, will apply PolynomialTrendForecaster (linear regression) to the
+        Theta-lines where theta_value equals 0, and ExponentialSmoothing - where
+        theta_value is different from 0.
+    theta_values: sequence of float, default=(0,2)
+        Theta-coefficients to use in transformation. If `forecasters` parameter
+        is passed, must be the same length as `forecasters`.
+    aggfunc: str, default="mean"
+        Must be one of ["mean", "median", "min", "max", "gmean"].
+        Calls :func:`_aggregate` of
+        :class:`EnsembleForecaster<sktime.forecasting.compose._ensemble>` to
+        apply to results of multivariate theta-lines predictions (pd.DataFrame)
+        in order to get resulting univariate prediction (pd.Series).
+        The aggregation takes place across different theta-lines (row-wise), for
+        given time stamps and hierarchy indices, if present.
+    weights: list of floats, default=None
+        Weights to apply in aggregation. Weights are passed as a parameter to
+        the aggregation function, must correspond to each theta-line. None will
+        result in non-weighted aggregation.
+
+    References
+    ----------
+    .. [1] V.Assimakopoulos et al., "The theta model: a decomposition approach
+       to forecasting", International Journal of Forecasting, vol. 16, pp. 521-530,
+       2000.
+    .. [2] E.Spiliotis et al., "Generalizing the Theta method for
+       automatic forecasting ", European Journal of Operational
+       Research, vol. 284, pp. 550-558, 2020.
+
+    See Also
+    --------
+    ThetaForecaster, ThetaLinesTransformer
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.theta import ThetaModularForecaster
+    >>> from sktime.forecasting.naive import NaiveForecaster
+    >>> from sktime.forecasting.trend import PolynomialTrendForecaster
+    >>> y = load_airline()
+    >>> forecaster = ThetaModularForecaster(
+    ...     forecasters=[
+    ...         ("trend", PolynomialTrendForecaster(), 0),
+    ...         ("arima", NaiveForecaster(), 3),
+    ...     ],
+    ...     theta_values=(0, 3),
+    ... )
+    >>> forecaster.fit(y)
+    ThetaModularForecaster(...)
+    >>> y_pred = forecaster.predict(fh=[1,2,3])
+    """
+
+    _tags = {
+        "univariate-only": False,
+        "y_inner_mtype": "pd.Series",
+        "requires-fh-in-fit": False,
+        "handles-missing-data": False,
+        "python_version": ">3.7",
+    }
+
+    def __init__(
+        self,
+        forecasters=None,
+        theta_values=(0, 2),
+        aggfunc="mean",
+        weights=None,
+    ):
+        super(ThetaModularForecaster, self).__init__()
+        self.forecasters = forecasters
+        self.aggfunc = aggfunc
+        self.weights = weights
+        self.theta_values = theta_values
+
+        forecasters_ = self._check_forecasters(forecasters)
+        self._colens = ColumnEnsembleForecaster(forecasters=forecasters_)
+
+        self.pipe_ = TransformedTargetForecaster(
+            steps=[
+                ("transformer", ThetaLinesTransformer(theta=self.theta_values)),
+                ("forecaster", self._colens),
+            ]
+        )
+
+    def _check_forecasters(self, forecasters):
+        if forecasters is None:
+            _forecasters = []
+            for i, theta in enumerate(self.theta_values):
+                if theta == 0:
+                    name = f"trend{str(i)}"
+                    forecaster = (name, PolynomialTrendForecaster(), i)
+                else:
+                    name = f"ses{str(i)}"
+                    forecaster = name, ExponentialSmoothing(), i
+                _forecasters.append(forecaster)
+        elif len(forecasters) != len(self.theta_values):
+            raise ValueError(
+                f"The N of forecasters should be the same as the N "
+                f"of theta_values, but found {len(forecasters)} forecasters and"
+                f"{len(self.theta_values)} theta values."
+            )
+        else:
+            _forecasters = forecasters
+        return _forecasters
+
+    def _fit(self, y, X=None, fh=None):
+        self.pipe_.fit(y=y, X=X, fh=fh)
+        return self
+
+    def _predict(self, fh, X=None, return_pred_int=False):
+        # Call predict on the forecaster directly, not on the pipeline
+        # because of output conversion
+        Y_pred = self.pipe_.steps_[-1][-1].predict(fh, X)
+        return _aggregate(Y_pred, aggfunc=self.aggfunc, weights=self.weights)
+
+    def _update(self, y, X=None, update_params=True):
+        self.pipe_._update(y, X=None, update_params=update_params)
+        return self
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If
+            no special parameters are defined for a value, will return
+            `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default={}
+            Parameters to create testing instances of the class.
+            Each dict are parameters to construct an "interesting" test
+            instance, i.e., `MyClass(**params)` or `MyClass(**params[i])`
+            creates a valid test instance. `create_test_instance` uses the first
+            (or only) dictionary in `params`.
+        """
+        # imports
+        from sktime.forecasting.naive import NaiveForecaster
+
+        params0 = {
+            "forecasters": [
+                ("naive", NaiveForecaster(), 0),
+                ("naive1", NaiveForecaster(), 1),
+            ]
+        }
+        params1 = {"theta_values": (0, 3)}
+        params2 = {"weights": [1.0, 0.8]}
+        return [params0, params1, params2]

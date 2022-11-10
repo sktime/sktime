@@ -133,6 +133,8 @@ def check_estimator(
             return_exceptions=return_exceptions,
             tests_to_run=tests_to_run,
             fixtures_to_run=fixtures_to_run,
+            tests_to_exclude=tests_to_exclude,
+            fixtures_to_exclude=fixtures_to_exclude,
         )
         results.update(results_scitype)
 
