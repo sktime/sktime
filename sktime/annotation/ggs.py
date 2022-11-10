@@ -115,7 +115,7 @@ class GGS:
 
     def log_likelihood(self, data: npt.ArrayLike) -> float:
         """
-        Compute the GGS log-likelihoo of the segmented Gaussian model.
+        Compute the GGS log-likelihood of the segmented Gaussian model.
 
         Parameters
         ----------
