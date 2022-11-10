@@ -8,7 +8,6 @@ import pickle
 import numpy as np
 import pandas as pd
 import pytest
-from keras.optimizers import Adamax
 from sklearn.model_selection import KFold
 
 from sktime.classification.base import BaseClassifier
@@ -470,10 +469,14 @@ def test_deep_estimator_empty():
     assert empty_dummy.__dict__ == deserialized_empty.__dict__
 
 
-@pytest.mark.parametrize("optimizer", [None, "adam", Adamax()])
+@pytest.mark.parametrize("optimizer", [None, "adam", "keras-adamax"])
 def test_deep_estimator_full(optimizer):
     """Check if serialization works for full dummy."""
+    from keras.optimizers import Adamax
     from tensorflow.keras.optimizers import Optimizer, serialize
+
+    if optimizer == "keras-adamax":
+        optimizer = Adamax()
 
     full_dummy = _DummyDeepClassifierFull(optimizer)
     serialized_full = pickle.dumps(full_dummy)
