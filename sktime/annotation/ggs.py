@@ -341,7 +341,7 @@ class GGS:
             change_points.append(new_index)
             change_points.sort()
             if self.verbose:
-                logger.info(f"Change point occurs at: {new_index=}, LL: {new_value=}")
+                logger.info(f"Change point occurs at: {new_index}, LL: {new_value}")
 
             # Adjust current locations of the change points
             change_points = self.adjust_change_points(data, change_points, [new_index])[
