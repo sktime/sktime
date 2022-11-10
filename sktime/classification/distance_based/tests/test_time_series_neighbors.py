@@ -1,11 +1,14 @@
 # -*- coding: utf-8 -*-
 """Test function of elastic distance nearest neighbour classifiers."""
+import numpy as np
 import pytest
 
+from sktime.alignment.dtw_python import AlignerDTW
 from sktime.classification.distance_based._time_series_neighbors import (
     KNeighborsTimeSeriesClassifier,
 )
 from sktime.datasets import load_unit_test
+from sktime.utils.validation._dependencies import _check_estimator_deps
 
 distance_functions = [
     "euclidean",
@@ -73,3 +76,36 @@ def test_knn_bounding_matrix(distance_key):
         if pred[j] == y_test[j]:
             correct = correct + 1
     assert correct == expected_correct_window[distance_key]
+
+
+@pytest.mark.skipif(
+    not _check_estimator_deps(AlignerDTW, severity="none"),
+    reason="skip test if required soft dependencies not available",
+)
+def test_knn_with_aligner():
+    """Tests KNN classifer with alignment distance on unequal length data."""
+    from sktime.dists_kernels.compose_from_align import DistFromAligner
+    from sktime.utils._testing.hierarchical import _make_hierarchical
+
+    X = _make_hierarchical((3,), min_timepoints=5, max_timepoints=10, random_state=0)
+    y = np.array([0, 1, 1])
+
+    dtw_dist = DistFromAligner(AlignerDTW())
+    clf = KNeighborsTimeSeriesClassifier(distance=dtw_dist)
+
+    clf.fit(X, y)
+
+
+def test_knn_with_aggrdistance():
+    """Tests KNN classifer with alignment distance on unequal length data."""
+    from sktime.dists_kernels import AggrDist, ScipyDist
+    from sktime.utils._testing.hierarchical import _make_hierarchical
+
+    X = _make_hierarchical((3,), min_timepoints=5, max_timepoints=10, random_state=0)
+    y = np.array([0, 1, 1])
+
+    eucl_dist = ScipyDist()
+    aggr_dist = AggrDist(eucl_dist)
+    clf = KNeighborsTimeSeriesClassifier(distance=aggr_dist)
+
+    clf.fit(X, y)

@@ -48,9 +48,12 @@ extensions = [
     "nbsphinx",  # integrates example notebooks
     "sphinx_gallery.load_style",
     "myst_parser",
-    "sphinx_panels",
+    "sphinx_design",
     "sphinx_issues",
 ]
+
+# Recommended by sphinx_design when using the MyST Parser
+myst_enable_extensions = ["colon_fence"]
 
 # Use bootstrap CSS from theme.
 panels_add_bootstrap_css = False

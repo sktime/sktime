@@ -4,6 +4,8 @@
 
 __author__ = ["mloning", "khrapovs"]
 
+from datetime import timedelta
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -202,7 +204,9 @@ def test_check_fh_absolute_values_input_conversion_to_pandas_index(arg):
 
 
 GOOD_RELATIVE_INPUT_ARGS = [
-    pd.timedelta_range(pd.to_timedelta(1, unit="D"), periods=3, freq="D")
+    pd.timedelta_range(pd.to_timedelta(1, unit="D"), periods=3, freq="D"),
+    [np.timedelta64(x, "D") for x in range(3)],
+    [timedelta(days=x) for x in range(3)],
 ]
 
 

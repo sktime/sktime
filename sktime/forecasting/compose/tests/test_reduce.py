@@ -4,7 +4,7 @@
 
 """Test reduce."""
 
-__author__ = ["Lovkush Agarwal", "Markus Löning", "Luis Zugasti", "AyushmaanSeth"]
+__author__ = ["Lovkush Agarwal", "mloning", "Luis Zugasti", "AyushmaanSeth"]
 
 import numpy as np
 import pandas as pd
@@ -491,6 +491,10 @@ EXPECTED_AIRLINE_LINEAR_DIRECT = [
         ),
         (
             RecursiveTabularRegressionForecaster(LinearRegression()),
+            EXPECTED_AIRLINE_LINEAR_RECURSIVE,
+        ),
+        (
+            RecursiveTabularRegressionForecaster(LinearRegression(), pooling="global"),
             EXPECTED_AIRLINE_LINEAR_RECURSIVE,
         ),
         (

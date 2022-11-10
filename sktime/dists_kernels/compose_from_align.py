@@ -21,6 +21,7 @@ class DistFromAligner(BasePairwiseTransformerPanel):
 
     _tags = {
         "symmetric": True,  # all the distances are symmetric
+        "capability:unequal_length": True,  # aligners can usually handle unequal length
     }
 
     def __init__(self, aligner=None):

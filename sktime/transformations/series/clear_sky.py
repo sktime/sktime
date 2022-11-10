@@ -6,6 +6,7 @@ __author__ = ["ciaran-g"]
 
 import numpy as np
 import pandas as pd
+from joblib import Parallel, delayed
 from scipy.stats import vonmises
 
 from sktime.transformations.base import BaseTransformer
@@ -51,6 +52,13 @@ class ClearSky(BaseTransformer):
     min_thresh : float, default=0
         The threshold of the clear sky power below which values are
         set to zero in the transformed domain.
+    n_jobs : int or None, default=None
+        Number of jobs to run in parallel.
+        None means 1 unless in a joblib.parallel_backend context.
+        -1 means using all processors.
+    backend : str, default="loky"
+        Specify the parallelisation backend implementation in joblib, where
+        "loky" is used by default.
 
     References
     ----------
@@ -99,12 +107,16 @@ class ClearSky(BaseTransformer):
         bw_diurnal=100,
         bw_annual=10,
         min_thresh=0,
+        n_jobs=None,
+        backend="loky",
     ):
 
         self.quantile_prob = quantile_prob
         self.bw_diurnal = bw_diurnal
         self.bw_annual = bw_annual
         self.min_thresh = min_thresh
+        self.n_jobs = n_jobs
+        self.backend = backend
 
         super(ClearSky, self).__init__()
 
@@ -131,27 +143,29 @@ class ClearSky(BaseTransformer):
         tod = pd.timedelta_range(start="0T", end="1D", freq=df.index.freq)[:-1]
         tod = [(x.total_seconds() / (60 * 60)) for x in tod.to_pytimedelta()]
         yday = pd.RangeIndex(start=1, stop=367)
-
         indx = pd.MultiIndex.from_product([yday, tod], names=["yday", "tod"])
 
-        # csp look up table
-        csp = pd.Series(index=indx, dtype="float64")
-        self.clearskypower = (
-            csp.reset_index()
-            .groupby(["yday", "tod"])
-            .apply(
-                lambda x: _clearskypower(
-                    y=X,
-                    q=self.quantile_prob,
-                    tod_i=x.tod,
-                    doy_i=x.yday,
-                    tod_vec=df["tod"],
-                    doy_vec=df["yday"],
-                    bw_tod=self.bw_diurnal,
-                    bw_doy=self.bw_annual,
-                )
+        # set up parallel function and backend
+        parallel = Parallel(n_jobs=self.n_jobs, backend=self.backend)
+
+        def par_csp(x):
+            res = _clearskypower(
+                y=X,
+                q=self.quantile_prob,
+                tod_i=x[1],
+                doy_i=x[0],
+                tod_vec=df["tod"],
+                doy_vec=df["yday"],
+                bw_tod=self.bw_diurnal,
+                bw_doy=self.bw_annual,
             )
-        )
+
+            return res
+
+        # calculate the csp
+        csp = parallel(delayed(par_csp)(name) for name in indx)
+        csp = pd.Series(csp, index=indx, dtype="float64")
+        self.clearskypower = csp.sort_index()
 
         return self
 
@@ -181,7 +195,7 @@ class ClearSky(BaseTransformer):
         X_trafo = X / csp
 
         # threshold for small morning/evening values
-        X_trafo[csp <= self.min_thresh] = 0
+        X_trafo[(csp <= self.min_thresh) & (X.notnull())] = 0
 
         return X_trafo
 
