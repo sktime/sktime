@@ -175,6 +175,9 @@ def test_evaluate_no_exog_against_with_exog():
 @pytest.mark.parametrize("backend", [None, "dask", "loky", "threading"])
 def test_evaluate_error_score(error_score, return_data, strategy, backend):
     """Test evaluate to raise warnings and exceptions according to error_score value."""
+    # skip testing dask if dask is not installed
+    if backend == "dask":
+        return None
     forecaster = ExponentialSmoothing(sp=12)
     y = load_airline()
     # add NaN to make ExponentialSmoothing fail
