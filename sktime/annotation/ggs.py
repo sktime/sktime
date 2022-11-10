@@ -2,7 +2,7 @@
 """
 Greedy Gaussian Segmentation (GGS).
 
-The method apprixmates solutions for the problem of breaking a
+The method approximates solutions for the problem of breaking a
 multivariate time series into segments, where the data in each segment
 could be modeled as independent samples from a multivariate Gaussian
 distribution. It uses a dynamic programming search algorithm with
