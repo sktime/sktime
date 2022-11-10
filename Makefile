@@ -30,15 +30,21 @@ test: ## Run unit tests
 	cp setup.cfg ${TEST_DIR}
 	python -m pytest
 
-test_softdeps: ## Run unit tests
+test_softdeps: ## Run unit tests to check soft dependency handling in estimators
 	-rm -rf ${TEST_DIR}
 	mkdir -p ${TEST_DIR}
-	cp .coveragerc ${TEST_DIR}
 	cp setup.cfg ${TEST_DIR}
 	cd ${TEST_DIR}
 	python -m pytest -v -n auto --showlocals --durations=20 -k 'test_all_estimators' $(PYTESTOPTIONS) --pyargs sktime.registry
 	python -m pytest -v -n auto --showlocals --durations=20 -k 'test_check_estimator_does_not_raise' $(PYTESTOPTIONS) --pyargs sktime.utils
 	python -m pytest -v -n auto --showlocals --durations=20 $(PYTESTOPTIONS) --pyargs sktime.tests.test_softdeps
+
+test_softdeps_full: ## Run all non-suite unit tests without soft dependencies
+	-rm -rf ${TEST_DIR}
+	mkdir -p ${TEST_DIR}
+	cp setup.cfg ${TEST_DIR}
+	cd ${TEST_DIR}
+	python -m pytest -v --showlocals --durations=20 -k 'not TestAll' $(PYTESTOPTIONS)
 
 tests: test
 
