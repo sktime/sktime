@@ -20,6 +20,11 @@ Composition
 
     ComposableTimeSeriesForestRegressor
 
+Deep Learning-based
+-------------------
+
+
+
 Interval-based
 --------------
 
@@ -30,3 +35,7 @@ Interval-based
     :template: class.rst
 
     TimeSeriesForestRegressor
+
+
+Kernel-based
+--------------
