@@ -5,10 +5,6 @@ Time series regression
 
 The :mod:`sktime.regression` module contains algorithms and composition tools for time series regression.
 
-.. automodule:: sktime.regression
-    :no-members:
-    :no-inherited-members:
-
 Composition
 -----------
 
