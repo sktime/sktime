@@ -9,16 +9,16 @@ __all__ = ["RocketClassifier"]
 
 from deprecated.sphinx import deprecated
 
-from sktime.classification.convolution_based import RocketClassifier as new_rc
+from sktime.classification import convolution_based
 
 
-# TODO: remove message in v0.15.0 and change base class
+# TODO: remove message package in v0.16.0
 @deprecated(
-    version="0.13.4",
-    reason="RocketClassifier has moved to the classification.convolution_based package. This version will be removed in v0.15.0.",  # noqa: E501
+    version="0.14.0",
+    reason="RocketClassifier has moved to the classification.convolution_based package. This version will be removed in v0.16.0.",  # noqa: E501
     category=FutureWarning,
 )
-class RocketClassifier(new_rc):
+class RocketClassifier(convolution_based.RocketClassifier):
     """Classifier wrapped for the Rocket transformer using RidgeClassifierCV.
 
     This classifier simply transforms the input data using the Rocket [1]_

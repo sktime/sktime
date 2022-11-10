@@ -9,16 +9,16 @@ __all__ = ["RocketRegressor"]
 
 from deprecated.sphinx import deprecated
 
-from sktime.regression.convolution_based import RocketRegressor as new_rr
+from sktime.regression import convolution_based
 
 
-# TODO: remove message in v0.15.0 and change base class
+# TODO: remove message package in v0.16.0
 @deprecated(
-    version="0.13.4",
-    reason="RocketRegressor has moved to the regression.convolution_based package. This version will be removed in v0.15.0.",  # noqa: E501
+    version="0.14.0",
+    reason="RocketRegressor has moved to the regression.convolution_based package. This version will be removed in v0.16.0.",  # noqa: E501
     category=FutureWarning,
 )
-class RocketRegressor(new_rr):
+class RocketRegressor(convolution_based.RocketRegressor):
     """Regressor wrapped for the Rocket transformer using RidgeCV regressor.
 
     This regressor simply transforms the input data using the Rocket [1]_

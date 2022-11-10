@@ -10,16 +10,16 @@ __all__ = ["Arsenal"]
 
 from deprecated.sphinx import deprecated
 
-from sktime.classification.convolution_based import Arsenal as new_ar
+from sktime.classification import convolution_based
 
 
-# TODO: remove message in v0.15.0 and change base class
+# TODO: remove message package in v0.16.0
 @deprecated(
-    version="0.13.4",
-    reason="Arsenal has moved to the classification.convolution_based package. This version will be removed in v0.15.0.",  # noqa: E501
+    version="0.14.0",
+    reason="Arsenal has moved to the classification.convolution_based package. This version will be removed in v0.16.0.",  # noqa: E501
     category=FutureWarning,
 )
-class Arsenal(new_ar):
+class Arsenal(convolution_based.Arsenal):
     """Arsenal ensemble.
 
     Overview: an ensemble of ROCKET transformers using RidgeClassifierCV base
