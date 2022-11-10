@@ -47,7 +47,7 @@ Composition
     SklearnClassifierPipeline
 
 Deep learning
-----------------
+-------------
 
 .. currentmodule:: sktime.classification.deep_learning
 
