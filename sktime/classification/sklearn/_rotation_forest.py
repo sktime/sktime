@@ -132,31 +132,11 @@ class RotationForest(BaseEstimator):
         self.max_group = max_group
         self.remove_proportion = remove_proportion
         self.base_estimator = base_estimator
-
         self.time_limit_in_minutes = time_limit_in_minutes
         self.contract_max_n_estimators = contract_max_n_estimators
         self.save_transformed_data = save_transformed_data
-
         self.n_jobs = n_jobs
         self.random_state = random_state
-
-        self.classes_ = []
-        self.n_classes_ = 0
-        self.n_instances_ = 0
-        self.n_atts_ = 0
-        self.estimators_ = []
-        self.transformed_data_ = []
-
-        self._n_jobs = n_jobs
-        self._n_estimators = n_estimators
-        self._class_dictionary = {}
-        self._useful_atts = []
-        self._min = []
-        self._ptp = []
-        self._pcas = []
-        self._groups = []
-
-        self._is_fitted = False
 
         super(RotationForest, self).__init__()
 

@@ -96,16 +96,6 @@ class ContinuousIntervalTree(BaseEstimator):
         self.thresholds = thresholds
         self.random_state = random_state
 
-        self.classes_ = []
-        self.n_classes_ = 0
-        self.n_instances_ = 0
-        self.n_atts_ = 0
-
-        self._class_dictionary = {}
-        self._root = None
-
-        self._is_fitted = False
-
         super(ContinuousIntervalTree, self).__init__()
 
     def fit(self, X, y):
