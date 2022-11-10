@@ -24,6 +24,7 @@ __all__ = [
     "MultiplexForecaster",
     "make_reduction",
     "BaggingForecaster",
+    "ForecastByLevel",
 ]
 
 from sktime.forecasting.compose._bagging import BaggingForecaster
@@ -32,6 +33,7 @@ from sktime.forecasting.compose._ensemble import (
     AutoEnsembleForecaster,
     EnsembleForecaster,
 )
+from sktime.forecasting.compose._grouped import ForecastByLevel
 from sktime.forecasting.compose._multiplexer import MultiplexForecaster
 from sktime.forecasting.compose._pipeline import (
     ForecastingPipeline,

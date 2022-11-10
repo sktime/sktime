@@ -8,8 +8,6 @@ __all__ = ["Deseasonalizer", "ConditionalDeseasonalizer", "STLTransformer"]
 
 import numpy as np
 import pandas as pd
-from statsmodels.tsa.seasonal import STL as _STL
-from statsmodels.tsa.seasonal import seasonal_decompose
 
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.datetime import _get_duration, _get_freq
@@ -78,6 +76,7 @@ class Deseasonalizer(BaseTransformer):
         "capability:inverse_transform": True,
         "transform-returns-same-time-index": True,
         "univariate-only": True,
+        "python_dependencies": "statsmodels",
     }
 
     def __init__(self, sp=1, model="additive"):
@@ -120,6 +119,8 @@ class Deseasonalizer(BaseTransformer):
         -------
         self: a fitted instance of the estimator
         """
+        from statsmodels.tsa.seasonal import seasonal_decompose
+
         self._X = X
         sp = self.sp
 
@@ -302,6 +303,8 @@ class ConditionalDeseasonalizer(Deseasonalizer):
         -------
         self: a fitted instance of the estimator
         """
+        from statsmodels.tsa.seasonal import seasonal_decompose
+
         self._X = X
         sp = self.sp
 
@@ -434,6 +437,7 @@ class STLTransformer(BaseTransformer):
         "transform-returns-same-time-index": True,
         "univariate-only": True,
         "fit_is_empty": False,
+        "python_dependencies": "statsmodels",
     }
 
     def __init__(
@@ -486,6 +490,8 @@ class STLTransformer(BaseTransformer):
         -------
         self: a fitted instance of the estimator
         """
+        from statsmodels.tsa.seasonal import STL as _STL
+
         # remember X for transform
         self._X = X
         sp = self.sp
@@ -512,6 +518,8 @@ class STLTransformer(BaseTransformer):
         return self
 
     def _transform(self, X, y=None):
+
+        from statsmodels.tsa.seasonal import STL as _STL
 
         # fit again if indices not seen, but don't store anything
         if not X.index.equals(self._X.index):

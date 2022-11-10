@@ -4,8 +4,6 @@
 import warnings
 
 import pandas as pd
-from statsmodels.tsa.ardl import ARDL as _ARDL
-from statsmodels.tsa.ardl import ardl_select_order as _ardl_select_order
 
 from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.base.adapters import _StatsModelsAdapter
@@ -317,6 +315,9 @@ class ARDL(_StatsModelsAdapter):
         -------
         self : reference to self
         """
+        from statsmodels.tsa.ardl import ARDL as _ARDL
+        from statsmodels.tsa.ardl import ardl_select_order as _ardl_select_order
+
         # statsmodels does not support the pd.Int64Index as required,
         # so we coerce them here to pd.RangeIndex
         if isinstance(y, pd.Series) and y.index.is_integer():
@@ -485,7 +486,7 @@ class ARDL(_StatsModelsAdapter):
 
         return self
 
-    def get_fitted_params(self):
+    def _get_fitted_params(self):
         """Get fitted parameters.
 
         State required:
@@ -495,7 +496,8 @@ class ARDL(_StatsModelsAdapter):
         -------
         fitted_params : dict
         """
-        self.check_is_fitted()
+        from statsmodels.tsa.ardl import ARDL as _ARDL
+
         fitted_params = {}
         if isinstance(self._forecaster, _ARDL):
             fitted_params["score"] = self._forecaster.score(

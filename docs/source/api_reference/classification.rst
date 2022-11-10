@@ -15,6 +15,9 @@ Composition
     :template: class.rst
 
     ColumnEnsembleClassifier
+    ComposableTimeSeriesForestClassifier
+    ClassifierPipeline
+    SklearnClassifierPipeline
 
 Dictionary-based
 ----------------
@@ -25,13 +28,13 @@ Dictionary-based
     :toctree: auto_generated/
     :template: class.rst
 
-    IndividualBOSS
     BOSSEnsemble
+    IndividualBOSS
     ContractableBOSS
-    WEASEL
     MUSE
-    IndividualTDE
     TemporalDictionaryEnsemble
+    IndividualTDE
+    WEASEL
 
 Distance-based
 --------------
@@ -42,11 +45,12 @@ Distance-based
     :toctree: auto_generated/
     :template: class.rst
 
-    KNeighborsTimeSeriesClassifier
     ElasticEnsemble
     ProximityForest
     ProximityTree
     ProximityStump
+    ShapeDTW
+    KNeighborsTimeSeriesClassifier
 
 Dummy
 -----
@@ -58,6 +62,35 @@ Dummy
     :template: class.rst
 
     DummyClassifier
+
+Early classification
+--------------------
+
+.. currentmodule:: sktime.classification.early_classification
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ProbabilityThresholdEarlyClassifier
+    TEASER
+
+Feature-based
+-------------
+
+.. currentmodule:: sktime.classification.feature_based
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    Catch22Classifier
+    FreshPRINCE
+    MatrixProfileClassifier
+    RandomIntervalClassifier
+    SignatureClassifier
+    SummaryClassifier
+    TSFreshClassifier
 
 Hybrid
 ------
@@ -80,23 +113,11 @@ Interval-based
     :toctree: auto_generated/
     :template: class.rst
 
-    TimeSeriesForestClassifier
-    SupervisedTimeSeriesForest
     CanonicalIntervalForest
     DrCIF
     RandomIntervalSpectralEnsemble
-
-
-Shapelet-based
---------------
-
-.. currentmodule:: sktime.classification.shapelet_based
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    ShapeletTransformClassifier
+    SupervisedTimeSeriesForest
+    TimeSeriesForestClassifier
 
 Kernel-based
 ------------
@@ -110,19 +131,44 @@ Kernel-based
     RocketClassifier
     Arsenal
 
-Feature-based
--------------
+Shapelet-based
+--------------
 
-.. currentmodule:: sktime.classification.feature_based
+.. currentmodule:: sktime.classification.shapelet_based
 
 .. autosummary::
     :toctree: auto_generated/
     :template: class.rst
 
-    Catch22Classifier
-    MatrixProfileClassifier
-    TSFreshClassifier
-    SignatureClassifier
-    FreshPRINCE
-    SummaryClassifier
-    RandomIntervalClassifier
+    ShapeletTransformClassifier
+
+sklearn
+-------
+
+.. currentmodule:: sktime.classification.sklearn
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ContinuousIntervalTree
+    RotationForest
+
+Base
+----
+
+.. currentmodule:: sktime.classification
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    BaseClassifier
+
+.. currentmodule:: sktime.classification.early_classification
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    BaseEarlyClassifier

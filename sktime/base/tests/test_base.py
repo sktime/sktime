@@ -13,6 +13,9 @@ tests in this module:
 
     test_reset           - tests reset logic on a simple, non-composite estimator
     test_reset_composite - tests reset logic on a composite estimator
+
+    test_components         - tests retrieval of list of components via _components
+    test_get_fitted_params  - tests get_fitted_params logic, nested and non-nested
 """
 
 __author__ = ["fkiraly"]
