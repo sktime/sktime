@@ -5,6 +5,33 @@ Time series classification
 
 The :mod:`sktime.classification` module contains algorithms and composition tools for time series classification.
 
+Base
+----
+
+.. currentmodule:: sktime.classification
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    BaseClassifier
+
+.. currentmodule:: sktime.classification.deep_learning.base
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    BaseDeepClassifier
+
+.. currentmodule:: sktime.classification.early_classification.base
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    BaseEarlyClassifier
+
 Composition
 -----------
 
@@ -14,10 +41,24 @@ Composition
     :toctree: auto_generated/
     :template: class.rst
 
+    ClassifierPipeline
     ColumnEnsembleClassifier
     ComposableTimeSeriesForestClassifier
-    ClassifierPipeline
     SklearnClassifierPipeline
+
+Dictionary-based
+----------------
+
+.. currentmodule:: sktime.classification.deep_learning
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    CNNClassifier
+    FCNClassifier
+    MLPClassifier
+    TapNetClassifier
 
 Dictionary-based
 ----------------
@@ -29,11 +70,11 @@ Dictionary-based
     :template: class.rst
 
     BOSSEnsemble
-    IndividualBOSS
     ContractableBOSS
+    IndividualBOSS
+    IndividualTDE
     MUSE
     TemporalDictionaryEnsemble
-    IndividualTDE
     WEASEL
 
 Distance-based
@@ -46,11 +87,11 @@ Distance-based
     :template: class.rst
 
     ElasticEnsemble
-    ProximityForest
-    ProximityTree
-    ProximityStump
-    ShapeDTW
     KNeighborsTimeSeriesClassifier
+    ProximityForest
+    ProximityStump
+    ProximityTree
+    ShapeDTW
 
 Dummy
 -----
@@ -128,8 +169,8 @@ Kernel-based
     :toctree: auto_generated/
     :template: class.rst
 
-    RocketClassifier
     Arsenal
+    RocketClassifier
 
 Shapelet-based
 --------------
@@ -153,22 +194,3 @@ sklearn
 
     ContinuousIntervalTree
     RotationForest
-
-Base
-----
-
-.. currentmodule:: sktime.classification
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    BaseClassifier
-
-.. currentmodule:: sktime.classification.early_classification
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    BaseEarlyClassifier
