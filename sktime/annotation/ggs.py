@@ -65,7 +65,10 @@ class GGS:
         Maximum number of change points to find. The number of segments is thus k+1.
     lamb: : float, default=1.0
         Regularization parameter lambda (>= 0), which controls the amount of
-        (inverse) covariance regularization, see Eq (1) in [1]_.
+        (inverse) covariance regularization, see Eq (1) in [1]_. Regularization
+        is introduced to reduce issues for high-dimensional problems. Setting 
+        ``lamb`` to zero will ignore regularization, whereas large values of
+        lambda will favour simpler models.
     max_shuffles: int, default=250
         Maximum number of shuffles
     verbose: bool, default=False
@@ -381,7 +384,10 @@ class GreedyGaussianSegmentation(BaseEstimator):
         Maximum number of change points to find. The number of segments is thus k+1.
     lamb: : float, default=1.0
         Regularization parameter lambda (>= 0), which controls the amount of
-        (inverse) covariance regularization, see Eq (1) in [1]_.
+        (inverse) covariance regularization, see Eq (1) in [1]_. Regularization
+        is introduced to reduce issues for high-dimensional problems. Setting 
+        ``lamb`` to zero will ignore regularization, whereas large values of
+        lambda will favour simpler models.
     max_shuffles: int, default=250
         Maximum number of shuffles
     verbose: bool, default=False
