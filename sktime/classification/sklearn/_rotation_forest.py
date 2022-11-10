@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
-"""RotationForest vector classifier.
+"""A rotation forest vector classifier.
 
-Rotation Forest, sktime implementation for continuous values only.
+A rotation Forest sktime implementation for continuous values only. Fits sklearn
+conventions
 """
 
 __author__ = ["MatthewMiddlehurst"]
@@ -23,10 +24,12 @@ from sktime.utils.validation import check_n_jobs
 
 
 class RotationForest(BaseEstimator):
-    """Rotation Forest Classifier.
+    """A rotation forest vector classifier.
 
     Implementation of the Rotation Forest classifier described in Rodriguez et al
-    (2013). [1]_
+    (2013) [1]. Builds a forest of trees build on random portions of the data
+    transformed using PCA.
+
     Intended as a benchmark for time series data and a base classifier for
     transformation based appraoches such as ShapeletTransformClassifier, this sktime
     implementation only works with continuous attributes.
@@ -36,51 +39,55 @@ class RotationForest(BaseEstimator):
     n_estimators : int, default=200
         Number of estimators to build for the ensemble.
     min_group : int, default=3
-        The minimum size of a group.
+        The minimum size of an attribute subsample group.
     max_group : int, default=3
-        The maximum size of a group.
+        The maximum size of an attribute subsample group.
     remove_proportion : float, default=0.5
-        The proportion of cases to be removed.
+        The proportion of cases to be removed per group.
     base_estimator : BaseEstimator or None, default="None"
         Base estimator for the ensemble. By default uses the sklearn
-        DecisionTreeClassifier using entropy as a splitting measure.
+        `DecisionTreeClassifier` using entropy as a splitting measure.
     time_limit_in_minutes : int, default=0
-        Time contract to limit build time in minutes, overriding n_estimators.
-        Default of 0 means n_estimators is used.
+        Time contract to limit build time in minutes, overriding ``n_estimators``.
+        Default of `0` means ``n_estimators`` is used.
     contract_max_n_estimators : int, default=500
-        Max number of estimators when time_limit_in_minutes is set.
+        Max number of estimators to build when ``time_limit_in_minutes`` is set.
     save_transformed_data : bool, default=False
-        Save the data transformed in fit for use in _get_train_probs.
+        Save the data transformed in fit in ``transformed_data_`` for use in
+        ``_get_train_probs``.
     n_jobs : int, default=1
-        The number of jobs to run in parallel for both `fit` and `predict`.
-        ``-1`` means using all processors.
-    random_state : int or None, default=None
-        Seed for random number generation.
+        The number of jobs to run in parallel for both ``fit`` and ``predict``.
+        `-1` means using all processors.
+    random_state : int, RandomState instance or None, default=None
+        If `int`, random_state is the seed used by the random number generator;
+        If `RandomState` instance, random_state is the random number generator;
+        If `None`, the random number generator is the `RandomState` instance used
+        by `np.random`.
 
     Attributes
     ----------
-    n_classes_ : int
-        The number of classes.
-    n_instances_ : int
-        The number of train cases.
-    n_atts_ : int
-        The number of attributes in each train case.
     classes_ : list
-        The classes labels.
+        The unique class labels in the training set.
+    n_classes_ : int
+        The number of unique classes in the training set.
+    n_instances_ : int
+        The number of train cases in the training set.
+    n_atts_ : int
+        The number of attributes in the training set.
+    transformed_data_ : list of shape (n_estimators) of ndarray
+        The transformed training dataset for all classifiers. Only saved when
+        ``save_transformed_data`` is `True`.
     estimators_ : list of shape (n_estimators) of BaseEstimator
         The collections of estimators trained in fit.
-    transformed_data_ : list of shape (n_estimators) of ndarray
-        The transformed dataset for all classifiers. Only saved when
-        save_transformed_data is true.
 
     See Also
     --------
-    ShapeletTransformClassifier
+    ShapeletTransformClassifier: A shapelet-based classifier using Rotation Forest.
 
     Notes
     -----
     For the Java version, see
-    `TSML <https://github.com/uea-machine-learning/tsml/blob/master/src/main/java
+    `tsml <https://github.com/uea-machine-learning/tsml/blob/master/src/main/java
     /weka/classifiers/meta/RotationForest.java>`_.
 
     References
@@ -133,6 +140,24 @@ class RotationForest(BaseEstimator):
         self.n_jobs = n_jobs
         self.random_state = random_state
 
+        self.classes_ = []
+        self.n_classes_ = 0
+        self.n_instances_ = 0
+        self.n_atts_ = 0
+        self.estimators_ = []
+        self.transformed_data_ = []
+
+        self._n_jobs = n_jobs
+        self._n_estimators = n_estimators
+        self._class_dictionary = {}
+        self._useful_atts = []
+        self._min = []
+        self._ptp = []
+        self._pcas = []
+        self._groups = []
+
+        self._is_fitted = False
+
         super(RotationForest, self).__init__()
 
     def fit(self, X, y):
@@ -140,14 +165,20 @@ class RotationForest(BaseEstimator):
 
         Parameters
         ----------
-        X : ndarray of shape = [n_instances,n_attributes]
-            The training input samples.
+        X : 2d ndarray or DataFrame of shape = [n_instances, n_attributes]
+            The training data.
         y : array-like, shape = [n_instances]
             The class labels.
 
         Returns
         -------
-        self : object
+        self :
+            Reference to self.
+
+        Notes
+        -----
+        Changes state by creating a fitted model that updates attributes
+        ending in "_".
         """
         if isinstance(X, np.ndarray) and len(X.shape) == 3 and X.shape[1] == 1:
             X = np.reshape(X, (X.shape[0], -1))
@@ -185,8 +216,6 @@ class RotationForest(BaseEstimator):
         # remove useless attributes
         self._useful_atts = ~np.all(X[1:] == X[:-1], axis=0)
         X = X[:, self._useful_atts]
-
-        self._n_atts = X.shape[1]
 
         # normalise attributes
         self._min = X.min(axis=0)
@@ -250,11 +279,13 @@ class RotationForest(BaseEstimator):
 
         Parameters
         ----------
-        X : ndarray of shape = [n_instances,n_attributes]
+        X : 2d ndarray or DataFrame of shape = [n_instances, n_attributes]
+            The data to make predictions for.
 
         Returns
         -------
-        output : array of shape = [n_test_instances]
+        y : array-like, shape = [n_instances]
+            Predicted class labels.
         """
         rng = check_random_state(self.random_state)
         return np.array(
@@ -269,12 +300,13 @@ class RotationForest(BaseEstimator):
 
         Parameters
         ----------
-        X : ndarray of shape = [n_instances,n_attributes]
+        X : 2d ndarray or DataFrame of shape = [n_instances, n_attributes]
+            The data to make predictions for.
 
         Returns
         -------
-        output : array of shape = [n_test_instances, num_classes] of
-        probabilities
+        y : array-like, shape = [n_instances, n_classes_]
+            Predicted probabilities using the ordering in classes_.
         """
         if not self._is_fitted:
             raise NotFittedError(
@@ -487,13 +519,13 @@ class RotationForest(BaseEstimator):
         return [results, oob]
 
     def _generate_groups(self, rng):
-        permutation = rng.permutation((np.arange(0, self._n_atts)))
+        permutation = rng.permutation((np.arange(0, self.n_atts_)))
 
         # select the size of each group.
         group_size_count = np.zeros(self.max_group - self.min_group + 1)
         n_attributes = 0
         n_groups = 0
-        while n_attributes < self._n_atts:
+        while n_attributes < self.n_atts_:
             n = rng.randint(group_size_count.shape[0])
             group_size_count[n] += 1
             n_attributes += self.min_group + n
