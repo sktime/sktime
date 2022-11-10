@@ -476,7 +476,7 @@ def test_deep_estimator_full(optimizer):
     from tensorflow.keras.optimizers import Optimizer, serialize
 
     if optimizer == "keras-adamax":
-        optimizer = Adamax
+        optimizer = Adamax()
 
     full_dummy = _DummyDeepClassifierFull(optimizer)
     serialized_full = pickle.dumps(full_dummy)
