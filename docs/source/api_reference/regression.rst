@@ -20,8 +20,8 @@ Composition
 
     ComposableTimeSeriesForestRegressor
 
-Deep Learning-based
--------------------
+Deep learning
+-------------
 
 .. currentmodule:: sktime.regression.deep_learning
 
