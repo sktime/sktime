@@ -4,7 +4,7 @@
 Extension template for transformers.
 
 Purpose of this implementation template:
-    quick implementation of new estimators following the template
+    quick implementation of new transformers following the template
     NOT a concrete class to import! This is NOT a base class or concrete class!
     This is to be used as a "fill-in" coding template.
 
