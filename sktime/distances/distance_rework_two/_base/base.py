@@ -47,10 +47,19 @@ class BaseDistance(ABC):
                 independent_distance_callable
             )
         else:
+            preprocess_ts = self._preprocess_timeseries
             if self._numba_distance:
-                distance_callable = njit(cache=self._cache, fastmath=self._fastmath)(
-                    distance_callable
-                )
+                distance_callable = njit(cache=self._cache, fastmath=self._fastmath)\
+                    (distance_callable)
+
+            def _preprocess_callable(x, y, *args):
+                _preprocess_x = preprocess_ts(x)
+                _preprocess_y = preprocess_ts(y)
+                return distance_callable(_preprocess_x, _preprocess_y, *args)
+
+            if self._numba_distance:
+                distance_callable = njit(cache=self._cache, fastmath=self._fastmath)\
+                    (_preprocess_callable)
 
         return self._create_preprocess_distance_callable(distance_callable)
 
@@ -166,12 +175,30 @@ class BaseDistance(ABC):
                 _distance_callable
             )
 
+        if type(self)._preprocess_timeseries != BaseDistance._preprocess_timeseries:
+            _preprocess_timeseries = self._preprocess_timeseries
+
+            def _distance_callable_with_user_preprocess_hook(
+                _x: np.ndarray, _y: np.ndarray, *args
+            ):
+                _preprocess_x = _preprocess_timeseries(_x)
+                _preprocess_y = _preprocess_timeseries(_y)
+                return _distance_callable(_preprocess_x, _preprocess_y, *args)
+
+            if self._numba_distance:
+                _distance_callable_with_user_preprocess_hook = \
+                    njit(cache=self._cache, fastmath=self._fastmath)(
+                        _distance_callable_with_user_preprocess_hook
+                    )
+        else:
+            _distance_callable_with_user_preprocess_hook = _distance_callable
+
         # If base distance not overwritten then need to add additional dim so that
         # dependent distance can be used.
         def _preprocessing_callable(_x: np.ndarray, _y: np.ndarray, *args):
             _x_preprocess = _x.reshape((_x.shape[0], 1, _x.shape[1]))
             _y_preprocess = _y.reshape((_y.shape[0], 1, _y.shape[1]))
-            return _distance_callable(_x_preprocess, _y_preprocess, *args)
+            return _distance_callable_with_user_preprocess_hook(_x_preprocess, _y_preprocess, *args)
 
         if self._numba_distance:
             _preprocessing_callable = njit(cache=self._cache, fastmath=self._fastmath)(
@@ -179,6 +206,22 @@ class BaseDistance(ABC):
             )
 
         return _preprocessing_callable
+
+    @staticmethod
+    def _preprocess_timeseries(x):
+        """Hook to change time series processing behaviour.
+
+        Parameters
+        ----------
+        x : np.ndarray
+            Time series.
+
+        Returns
+        -------
+        np.ndarray
+            Preprocessed time series.
+        """
+        return x
 
     @staticmethod
     def _independent_factory(distance_callable: Callable):
