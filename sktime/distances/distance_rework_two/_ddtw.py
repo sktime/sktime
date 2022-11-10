@@ -10,6 +10,7 @@ from sktime.distances.distance_rework_two._squared import _SquaredDistance
 
 squared_distance = _SquaredDistance().distance_factory()
 
+
 def average_of_slope(q: np.ndarray) -> np.ndarray:
     r"""Compute the average of a slope between points.
 
@@ -53,12 +54,12 @@ class _DdtwDistance(ElasticDistance):
 
     @staticmethod
     def _distance(
-            x: np.ndarray,
-            y: np.ndarray,
-            window: float = None,
-            itakura_max_slope: float = None,
-            bounding_matrix: np.ndarray = None,
-            *args
+        x: np.ndarray,
+        y: np.ndarray,
+        window: float = None,
+        itakura_max_slope: float = None,
+        bounding_matrix: np.ndarray = None,
+        *args
     ) -> ElasticDistanceReturn:
         x_size = x.shape[1]
         y_size = y.shape[1]
