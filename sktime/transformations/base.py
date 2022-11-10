@@ -1029,8 +1029,9 @@ class BaseTransformer(BaseEstimator):
                 if not valid:
                     raise TypeError(
                         f"_transform output of {type(self)} does not comply "
-                        "with sktime mtype specifications. Returned error message:"
-                        f" {msg} Returned object: {Xt}"
+                        "with sktime mtype specifications. See datatypes.MTYPE_REGISTER"
+                        " for mtype specifications. Returned error message:"
+                        f" {msg}. Returned object: {Xt}"
                     )
                 if not metadata["is_univariate"] and X_input_mtype == "pd.Series":
                     X_output_mtype = "pd.DataFrame"
