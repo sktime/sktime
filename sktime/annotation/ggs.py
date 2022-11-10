@@ -303,7 +303,7 @@ class GGS:
 
     def find_change_points(self, data: npt.ArrayLike) -> List[int]:
         """
-        Iteratively search for up to ``k_max`` change points.
+        Search iteratively  for up to ``k_max`` change points.
 
         Parameters
         ----------
