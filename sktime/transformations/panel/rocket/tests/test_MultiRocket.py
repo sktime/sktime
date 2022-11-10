@@ -16,7 +16,7 @@ def test_multirocket_on_gunpoint():
     X_training, Y_training = load_gunpoint(split="train", return_X_y=True)
 
     # 'fit' MultiRocket -> infer data dimensions, generate random kernels
-    multirocket = MultiRocket()
+    multirocket = MultiRocket(random_state=0)
     multirocket.fit(X_training)
 
     # transform training data

@@ -74,12 +74,24 @@ The release process is as follows, on high-level:
   If the install does not succeed or wheels have not been uploaded, urgent action to diagnose and remedy must be taken.
   All core developers should be urgently informed of such a situation through mail-all in the core developer channel on slack.
   In the most common case, the install instructions need to be updated.
+  If wheel upload has failed, the tag in 5. needs to be deleted and recreated.
+  The tag can be deleted using the ``git`` command ``git push --delete origin tagname`` from a local repo.
 
 ``conda`` release and release validation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 8. If the release on ``pypi`` has succeeded, there should be an automated release PR created
   against the sktime conda-forge repo: https://github.com/conda-forge/sktime-feedstock.
+
+  .. note:: Manual creation of release pull request
+     In cases where the release PR is not created automatically it can be created and submitted manually. For general
+     guidelines related to maintaining conda feedstcok packages see `conda-forge package<https://conda-forge.org/docs/maintainer/updating_pkgs.html>`_.
+
+     After forking and cloning the repo, edit the ``meta.yml`` file and
+
+     - increment the version in the line that contains ``{% set version = "0.X.Y" %}``
+     - paste the sha256 sum of the source archive from github in the ``source/sha256`` section
+     - submit PR and ask for review
 
 9. The conda release PR need to be reviewed and in dependencies should be checked against any changes in the main sktime repo.
   In case the dependencies (or python version support) have changes, the ``meta.yml`` file in the conda recipe need to updated to reflect those changes.

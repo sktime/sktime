@@ -211,8 +211,8 @@ class _Pipeline(
         """
         from sklearn.preprocessing import StandardScaler
 
+        from sktime.forecasting.compose._reduce import DirectReductionForecaster
         from sktime.forecasting.naive import NaiveForecaster
-        from sktime.forecasting.sarimax import SARIMAX
         from sktime.transformations.series.adapt import TabularToSeriesAdaptor
         from sktime.transformations.series.detrend import Detrender
         from sktime.transformations.series.exponent import ExponentTransformer
@@ -227,11 +227,13 @@ class _Pipeline(
         # ARIMA has probabilistic methods, ExponentTransformer skips fit
         STEPS2 = [
             ("transformer", ExponentTransformer()),
-            ("forecaster", SARIMAX()),
+            ("forecaster", DirectReductionForecaster.create_test_instance()),
         ]
         params2 = {"steps": STEPS2}
 
-        params3 = {"steps": [Detrender(), SARIMAX()]}
+        params3 = {
+            "steps": [Detrender(), DirectReductionForecaster.create_test_instance()]
+        }
 
         return [params1, params2, params3]
 
@@ -299,7 +301,7 @@ class ForecastingPipeline(_Pipeline):
         "X_inner_mtype": SUPPORTED_MTYPES,
         "ignores-exogeneous-X": False,
         "requires-fh-in-fit": False,
-        "handles-missing-data": False,
+        "handles-missing-data": True,
         "capability:pred_int": True,
         "X-y-must-have-same-index": False,
     }
@@ -311,7 +313,6 @@ class ForecastingPipeline(_Pipeline):
         tags_to_clone = [
             "ignores-exogeneous-X",  # does estimator ignore the exogeneous X?
             "capability:pred_int",  # can the estimator produce prediction intervals?
-            "handles-missing-data",  # can estimator handle missing data?
             "requires-fh-in-fit",  # is forecasting horizon already required in fit?
             "enforce_index_type",  # index type that needs to be enforced in X/y
         ]
@@ -713,7 +714,7 @@ class TransformedTargetForecaster(_Pipeline):
         "X_inner_mtype": SUPPORTED_MTYPES,
         "ignores-exogeneous-X": False,
         "requires-fh-in-fit": False,
-        "handles-missing-data": False,
+        "handles-missing-data": True,
         "capability:pred_int": True,
         "X-y-must-have-same-index": False,
     }
@@ -727,7 +728,6 @@ class TransformedTargetForecaster(_Pipeline):
         tags_to_clone = [
             "ignores-exogeneous-X",  # does estimator ignore the exogeneous X?
             "capability:pred_int",  # can the estimator produce prediction intervals?
-            "handles-missing-data",  # can estimator handle missing data?
             "requires-fh-in-fit",  # is forecasting horizon already required in fit?
             "enforce_index_type",  # index type that needs to be enforced in X/y
         ]
@@ -1442,9 +1442,9 @@ class ForecastX(BaseForecaster):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         from sktime.forecasting.compose import DirectTabularRegressionForecaster
-        from sktime.forecasting.var import VAR
+        from sktime.forecasting.compose._reduce import DirectReductionForecaster
 
-        fx = VAR()
+        fx = DirectReductionForecaster.create_test_instance()
         fy = DirectTabularRegressionForecaster.create_test_instance()
 
         params = {"forecaster_X": fx, "forecaster_y": fy}
