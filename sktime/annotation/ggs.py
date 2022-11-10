@@ -76,7 +76,7 @@ class GGS:
     lamb: : float, default=1.0
         Regularization parameter lambda (>= 0), which controls the amount of
         (inverse) covariance regularization, see Eq (1) in [1]_. Regularization
-        is introduced to reduce issues for high-dimensional problems. Setting 
+        is introduced to reduce issues for high-dimensional problems. Setting
         ``lamb`` to zero will ignore regularization, whereas large values of
         lambda will favour simpler models.
     max_shuffles: int, default=250
@@ -395,7 +395,7 @@ class GreedyGaussianSegmentation(BaseEstimator):
     lamb: : float, default=1.0
         Regularization parameter lambda (>= 0), which controls the amount of
         (inverse) covariance regularization, see Eq (1) in [1]_. Regularization
-        is introduced to reduce issues for high-dimensional problems. Setting 
+        is introduced to reduce issues for high-dimensional problems. Setting
         ``lamb`` to zero will ignore regularization, whereas large values of
         lambda will favour simpler models.
     max_shuffles: int, default=250
