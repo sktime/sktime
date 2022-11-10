@@ -14,7 +14,7 @@ _check_dl_dependencies(severity="warning")
 
 
 class CNNRegressor(BaseDeepRegressor):
-    """Time Convolutional Neural Network (CNN), as described in [1].
+    """Time Series Convolutional Neural Network (CNN), as described in [1].
 
     Parameters
     ----------
