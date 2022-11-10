@@ -9,7 +9,7 @@ from sktime.transformations.panel.reduce import TimeBinner
 
 
 def test_timebinner():
-    """ "Test TimeBinner."""
+    """Test TimeBinner."""
     X, y = load_basic_motions(return_X_y=True)
 
     def aggfunc(x):
@@ -24,7 +24,7 @@ def test_timebinner():
 
 
 def test_timebinner2():
-    """ "Test TimeBinner."""
+    """Test TimeBinner."""
     X, y = load_basic_motions(return_X_y=True)
 
     def aggfunc(x):
@@ -36,3 +36,23 @@ def test_timebinner2():
     tb.fit(X)
     Xtb = tb.transform(X)
     assert np.isclose(np.sum(X.iloc[3, 5][8 * 10 : 9 * 10]), Xtb.iloc[3, 58])
+
+
+def test_timebinner3():
+    """Test TimeBinner."""
+    X, y = load_basic_motions(return_X_y=True)
+
+    def aggfunc(x):
+        return sum(x)
+
+    freq = 5
+    idx = pd.interval_range(start=0, end=100, freq=freq, closed="right")
+    tb = TimeBinner(idx=idx, aggfunc=aggfunc)
+    row = 1
+    col = 3
+    tb.fit(X)
+    Xtb = tb.transform(X)
+    assert np.isclose(
+        np.sum(X.iloc[row, 0][col * freq + 1 : ((col + 1) * freq) + 1]),
+        Xtb.iloc[row, col],
+    )
