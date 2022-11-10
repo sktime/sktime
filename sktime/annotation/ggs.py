@@ -43,7 +43,7 @@ class GGS:
     """
     Greedy Gaussian Segmentation.
 
-    The method apprixmates solutions for the problem of breaking a
+    The method approxmates solutions for the problem of breaking a
     multivariate time series into segments, where the data in each segment
     could be modeled as independent samples from a multivariate Gaussian
     distribution. It uses a dynamic programming search algorithm with
@@ -51,7 +51,7 @@ class GGS:
     respect to the data length and always yields locally optimal choice.
 
     Greedy Gaussian Segmentation (GGS) fits a segmented gaussian model (SGM)
-    to the data by computing the appriximate solution to the combinatorial
+    to the data by computing the approximate solution to the combinatorial
     problem of finding the approximate covariance-regularized  maximum
     log-likelihood for fixed number of change points and a reagularization
     strength. It follows an interative procedure
@@ -359,7 +359,7 @@ class GGS:
 class GreedyGaussianSegmentation(BaseEstimator):
     """Greedy Gaussian Segmentation Estimator.
 
-    The method apprixmates solutions for the problem of breaking a
+    The method approxmates solutions for the problem of breaking a
     multivariate time series into segments, where the data in each segment
     could be modeled as independent samples from a multivariate Gaussian
     distribution. It uses a dynamic programming search algorithm with
@@ -367,7 +367,7 @@ class GreedyGaussianSegmentation(BaseEstimator):
     respect to the data length and always yields locally optimal choice.
 
     Greedy Gaussian Segmentation (GGS) fits a segmented gaussian model (SGM)
-    to the data by computing the appriximate solution to the combinatorial
+    to the data by computing the approximate solution to the combinatorial
     problem of finding the approximate covariance-regularized  maximum
     log-likelihood for fixed number of change points and a reagularization
     strength. It follows an interative procedure
