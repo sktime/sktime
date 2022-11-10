@@ -53,3 +53,20 @@ Kernel-based
     :template: class.rst
 
     RocketRegressor
+
+Base
+----
+.. currentmodule:: sktime.regression
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    BaseRegressor
+
+.. currentmodule:: sktime.regression.deep_learning
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    BaseDeepRegressor
