@@ -23,7 +23,14 @@ Composition
 Deep Learning-based
 -------------------
 
+.. currentmodule:: sktime.regression.deep_learning
 
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    CNNRegressor
+    TapNetRegressor
 
 Interval-based
 --------------
@@ -36,6 +43,13 @@ Interval-based
 
     TimeSeriesForestRegressor
 
-
 Kernel-based
---------------
+------------
+
+.. currentmodule:: sktime.regression.kernel_based
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    RocketRegressor
