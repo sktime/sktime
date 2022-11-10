@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""A shapelet transform pipeline classifier.
+"""A shapelet transform classifier (STC).
 
 Shapelet transform classifier pipeline that simply performs a (configurable) shapelet
 transform then builds (by default) a rotation forest classifier on the output.
@@ -19,9 +19,9 @@ from sktime.utils.validation.panel import check_X_y
 
 
 class ShapeletTransformClassifier(BaseClassifier):
-    """A shapelet transform pipeline classifier.
+    """A shapelet transform classifier (STC).
 
-    Implementation of the binary shapelet transform classifier along the lines
+    Implementation of the binary shapelet transform classifier pipeline along the lines
     of [1][2] but with random shapelet sampling. Transforms the data using the
     configurable `RandomShapeletTransform` and then builds a `RotationForest`
     classifier.
