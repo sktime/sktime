@@ -1213,6 +1213,18 @@ def make_reduction(
         Assume we have the following training data:
         | x x x x x x x x x x x x x x|
         And want to forecast with `window_length = 9` and `fh = [1, 4]`
+        With the deaulft setting `discard_maxfh = True` we have instead:
+        `fh = 1`
+        |--------------------------- |
+        | * * * * * * * * * y x x x x|
+        | x * * * * * * * * * y x x x|
+        |----------------------------|
+        `fh = 4`
+        |--------------------------- |
+        | * * * * * * * * * x x x y x|
+        | x * * * * * * * * * x x x y|
+        |----------------------------|
+        So 2 obs. to forecast for  `fh = 1` and `fh = 4`.
         With setting `discard_maxfh = False` we have:
         `fh = 1`
         |--------------------------- |
@@ -1229,18 +1241,7 @@ def make_reduction(
         |----------------------------|
         So 5 obs. to forecast for  `fh = 1` and 2 obs. to forecast `fh = 4`
 
-        With setting `discard_maxfh = True` we have instead:
-        `fh = 1`
-        |--------------------------- |
-        | * * * * * * * * * y x x x x|
-        | x * * * * * * * * * y x x x|
-        |----------------------------|
-        `fh = 4`
-        |--------------------------- |
-        | * * * * * * * * * x x x y x|
-        | x * * * * * * * * * x x x y|
-        |----------------------------|
-        So 2 obs. to forecast for  `fh = 1` and `fh = 4`
+
 
 
     Returns
