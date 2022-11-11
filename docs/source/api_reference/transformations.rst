@@ -538,8 +538,6 @@ Dimension reduction
     PCATransformer
     
 
-
-
 Series-to-Panel transformers
 ----------------------------
 
