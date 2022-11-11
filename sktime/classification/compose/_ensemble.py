@@ -621,13 +621,13 @@ class WeightedEnsembleClassifier(BaseClassifier, _HeterogenousMetaEstimator):
 
     Examples
     --------
-    >>> from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
+    >>> from sktime.classification.dummy import DummyClassifier
     >>> from sktime.classification.kernel_based import RocketClassifier
     >>> from sktime.datasets import load_unit_test
-    >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
+    >>> X_train, y_train = load_unit_test(split="train")
+    >>> X_test, y_test = load_unit_test(split="test")
     >>> clf = WeightedEnsembleClassifier(
-    ...     [KNeighborsTimeSeriesClassifier(), RocketClassifier()],
+    ...     [DummyClassifier(), RocketClassifier()],
     ...     weights=2,
     ... )
     >>> clf.fit(X_train, y_train)

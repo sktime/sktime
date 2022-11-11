@@ -95,8 +95,7 @@ def test_equivalent_model_specifications(n_intervals, n_estimators):
     np.array_equal(a, b)
 
 
-# Compare TimeSeriesForest ensemble predictions using pipeline as
-# estimator
+# Compare TimeSeriesForest ensemble predictions using pipeline as estimator
 @pytest.mark.parametrize("n_intervals", ["sqrt", 1])
 @pytest.mark.parametrize("n_estimators", [1, 3])
 def test_tsf_predictions(n_estimators, n_intervals):
