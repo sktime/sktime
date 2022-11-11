@@ -20,7 +20,7 @@ _check_dl_dependencies(severity="warning")
 
 
 class TapNetClassifier(BaseDeepClassifier):
-    """Implementation of TapNetClassifier, as described in [1].
+    """Time series attentional prototype network (TapNet), as described in [1]_.
 
     Parameters
     ----------

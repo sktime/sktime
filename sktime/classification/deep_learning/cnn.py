@@ -14,7 +14,7 @@ _check_dl_dependencies(severity="warning")
 
 
 class CNNClassifier(BaseDeepClassifier):
-    """Time Convolutional Neural Network (CNN), as described in [1].
+    """Time Convolutional Neural Network (CNN), as described in [1]_.
 
     Parameters
     ----------
@@ -49,12 +49,13 @@ class CNNClassifier(BaseDeepClassifier):
 
     Notes
     -----
-    .. [1] Zhao et. al, Convolutional neural networks for
-    time series classification, Journal of
-    Systems Engineering and Electronics, 28(1):2017.
-
     Adapted from the implementation from Fawaz et. al
     https://github.com/hfawaz/dl-4-tsc/blob/master/classifiers/cnn.py
+
+    References
+    ----------
+    .. [1] Zhao et. al, Convolutional neural networks for time series classification,
+    Journal of Systems Engineering and Electronics, 28(1):2017.
 
     Examples
     --------
