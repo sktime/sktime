@@ -627,7 +627,7 @@ class WeightedEnsembleClassifier(BaseClassifier, _HeterogenousMetaEstimator):
     >>> X_train, y_train = load_unit_test(split="train")
     >>> X_test, y_test = load_unit_test(split="test")
     >>> clf = WeightedEnsembleClassifier(
-    ...     [DummyClassifier(), RocketClassifier()],
+    ...     [DummyClassifier(), RocketClassifier(num_kernels=100)],
     ...     weights=2,
     ... )
     >>> clf.fit(X_train, y_train)
