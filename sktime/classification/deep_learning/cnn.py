@@ -210,4 +210,17 @@ class CNNClassifier(BaseDeepClassifier):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
-        return {"n_epochs": 20, "n_conv_layers": 2}
+        param1 = {
+            "n_epochs": 10,
+            "batch_size": 4,
+            "avg_pool_size": 4,
+        }
+
+        param2 = {
+            "n_epochs": 12,
+            "batch_size": 6,
+            "kernel_size": 2,
+            "n_conv_layers": 1,
+        }
+
+        return [param1, param2]
