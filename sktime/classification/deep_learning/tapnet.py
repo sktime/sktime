@@ -255,7 +255,7 @@ class TapNetClassifier(BaseDeepClassifier):
         """
         param1 = {
             "n_epochs": 10,
-            "batch_size": 32,
+            "batch_size": 4,
             "use_lstm": False,
             "use_att": False,
             "filter_sizes": (64, 64, 32),
