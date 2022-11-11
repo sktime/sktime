@@ -17,13 +17,17 @@ from sktime.utils._testing.hierarchical import _bottom_hier_datagen
 
 # get all the methods
 METHOD_LIST = Reconciler.METHOD_LIST
+bottom_list = [10, 100]
+level_list = [1, 3, 6]
 
 
 # test the reconciled predictions are actually hierarchical
 # test the index/columns on the g and s matrices match
 # test it works for named and unnamed indexes
 @pytest.mark.parametrize("method", METHOD_LIST)
-def test_reconciler_fit_transform(method):
+@pytest.mark.parametrize("no_bottom_nodes", bottom_list)
+@pytest.mark.parametrize("no_levels", level_list)
+def test_reconciler_fit_transform(method, no_bottom_nodes, no_levels):
     """Tests fit_trasnform and output of reconciler.
 
     Raises
@@ -36,8 +40,9 @@ def test_reconciler_fit_transform(method):
     agg = Aggregator(flatten_single_levels=True)
 
     X = _bottom_hier_datagen(
-        no_bottom_nodes=3,
-        no_levels=1,
+        no_bottom_nodes=no_bottom_nodes,
+        no_levels=no_levels,
+        random_seed=123,
     )
     # add aggregate levels
     X = agg.fit_transform(X)
