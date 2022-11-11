@@ -30,8 +30,8 @@ EXCLUDE_ESTIMATORS = [
     "MiniRocket",
     "MatrixProfileTransformer",
     # tapnet based estimators fail stochastically for unknown reasons, see #3525
-    "TapNetRegressor",
-    "TapNetClassifier",
+    # "TapNetRegressor",
+    # "TapNetClassifier",
 ]
 
 
