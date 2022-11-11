@@ -14,7 +14,7 @@ _check_dl_dependencies(severity="warning")
 
 
 class FCNClassifier(BaseDeepClassifier):
-    """Fully Connected Neural Network (FCN), as described in [1].
+    """Fully Connected Neural Network (FCN), as described in [1]_.
 
     Parameters
     ----------
@@ -42,12 +42,13 @@ class FCNClassifier(BaseDeepClassifier):
 
     Notes
     -----
-    .. [1] Zhao et. al, Convolutional neural networks for
-    time series classification, Journal of
-    Systems Engineering and Electronics, 28(1):2017.
-
     Adapted from the implementation from Fawaz et. al
-    https://github.com/hfawaz/dl-4-tsc/blob/master/classifiers/cnn.py
+    https://github.com/hfawaz/dl-4-tsc/blob/master/classifiers/fcn.py
+
+    References
+    ----------
+    .. [1] Zhao et. al, Convolutional neural networks for time series classification,
+    Journal of Systems Engineering and Electronics, 28(1):2017.
 
     Examples
     --------
@@ -56,7 +57,7 @@ class FCNClassifier(BaseDeepClassifier):
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
     >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
     >>> fcn = FCNClassifier()
-    >>> fcn.fit(X_train, y_train)
+    >>> fcn.fit(X_train, y_train)  # doctest: +SKIP
     FCNClassifier(...)
     """
 

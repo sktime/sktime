@@ -462,6 +462,10 @@ def test_fit_predict_single_class(method, cv):
         assert all(list(y_pred == 1))
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("tensorflow", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
 def test_deep_estimator_empty():
     """Check if serialization works for empty dummy."""
     empty_dummy = _DummyDeepClassifierEmpty()
@@ -472,7 +476,7 @@ def test_deep_estimator_empty():
 
 @pytest.mark.skipif(
     not _check_soft_dependencies("keras", severity="none"),
-    reason="skip test if required soft dependency for dask not available",
+    reason="skip test if required soft dependency not available",
 )
 @pytest.mark.parametrize("optimizer", [None, "adam", "keras-adamax"])
 def test_deep_estimator_full(optimizer):
