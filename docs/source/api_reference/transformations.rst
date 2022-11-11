@@ -527,6 +527,15 @@ Dimension reduction
     :template: class.rst
 
     PCATransformer
+    
+
+.. currentmodule:: sktime.transformations.panel.channel_selection
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    Channel Selection
 
 Series-to-Panel transformers
 ----------------------------
