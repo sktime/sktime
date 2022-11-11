@@ -254,17 +254,17 @@ class TapNetClassifier(BaseDeepClassifier):
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
         param1 = {
-            "n_epochs": 50,
+            "n_epochs": 10,
             "batch_size": 32,
             "use_lstm": False,
             "use_att": False,
-            "filter_sizes": (128, 128, 64),
+            "filter_sizes": (64, 64, 32),
             "dilation": 2,
             "layers": (50, 25),
         }
 
         param2 = {
-            "n_epochs": 100,
+            "n_epochs": 10,
             "use_cnn": False,
             "layers": (25, 25),
         }
