@@ -19,7 +19,6 @@ from sklearn.utils import check_random_state
 
 from sktime.exceptions import NotFittedError
 from sktime.utils.numba.stats import iqr, mean, numba_max, numba_min, slope, std
-from sktime.utils.validation.panel import check_X
 
 
 class ContinuousIntervalTree(BaseEstimator):
@@ -117,7 +116,9 @@ class ContinuousIntervalTree(BaseEstimator):
                 "A valid sklearn input such as a 2d numpy array is required."
                 "Sparse input formats are currently not supported."
             )
-        X, y = self._validate_data(X=X, y=y, ensure_min_samples=2)
+        X, y = self._validate_data(
+            X=X, y=y, ensure_min_samples=2, force_all_finite="allow-nan"
+        )
 
         self.n_instances_, self.n_atts_ = X.shape
         self.classes_ = np.unique(y)
@@ -201,8 +202,7 @@ class ContinuousIntervalTree(BaseEstimator):
 
         # treat case of single class seen in fit
         if self.n_classes_ == 1:
-            n_instances = len(X)
-            return np.repeat([[1]], n_instances, axis=0)
+            return np.repeat([[1]], X.shape[0], axis=0)
 
         if isinstance(X, np.ndarray) and len(X.shape) == 3 and X.shape[1] == 1:
             X = np.reshape(X, (X.shape[0], -1))
@@ -212,7 +212,7 @@ class ContinuousIntervalTree(BaseEstimator):
                 "A valid sklearn input such as a 2d numpy array is required."
                 "Sparse input formats are currently not supported."
             )
-        X = self._validate_data(X=X, reset=False)
+        X = self._validate_data(X=X, reset=False, force_all_finite="allow-nan")
 
         dists = np.zeros((X.shape[0], self.n_classes_))
         for i in range(X.shape[0]):
@@ -226,7 +226,6 @@ class ContinuousIntervalTree(BaseEstimator):
                 f"This instance of {self.__class__.__name__} has not "
                 f"been fitted yet; please call `fit` first."
             )
-        X = check_X(X, coerce_to_numpy=True)
         n_instances, n_dims, series_length = X.shape
 
         dists = np.zeros((n_instances, self.n_classes_))
@@ -250,7 +249,6 @@ class ContinuousIntervalTree(BaseEstimator):
                 f"This instance of {self.__class__.__name__} has not "
                 f"been fitted yet; please call `fit` first."
             )
-        X = check_X(X, coerce_to_numpy=True)
         n_instances, n_dims, series_length = X.shape
 
         dists = np.zeros((n_instances, self.n_classes_))

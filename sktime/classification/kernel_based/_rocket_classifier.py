@@ -49,7 +49,7 @@ class RocketClassifier(_DelegatedClassifier):
     Parameters
     ----------
     num_kernels : int, optional, default=10,000
-        The number of kernels the for Rocket transform.
+        The number of kernels for the Rocket transform.
     rocket_transform : str, optional, default="rocket"
         The type of Rocket transformer to use.
         Valid inputs = ["rocket", "minirocket", "multirocket"]

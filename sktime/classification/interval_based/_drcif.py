@@ -515,7 +515,7 @@ class DrCIF(BaseClassifier):
         tree = _clone_estimator(self._base_estimator, random_state=rs)
         transformed_x = transformed_x.T
         transformed_x = transformed_x.round(8)
-        if self.base_estimator == "CIT":
+        if isinstance(self._base_estimator, ContinuousIntervalTree):
             transformed_x = np.nan_to_num(
                 transformed_x, False, posinf=np.nan, neginf=np.nan
             )
