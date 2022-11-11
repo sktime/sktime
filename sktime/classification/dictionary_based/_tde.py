@@ -236,8 +236,9 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         """
         if self.n_parameter_samples <= self.randomly_selected_params:
             warnings.warn(
-                "TDE Warning: n_parameter_samples <= randomly_selected_params, "
-                + "ensemble member parameters will be fully randomly selected."
+                "TemporalDictionaryEnsemble warning: n_parameter_samples <= "
+                "randomly_selected_params, ensemble member parameters will be fully "
+                "randomly selected."
             )
 
         self.n_instances_, self.n_dims_, self.series_length_ = X.shape
@@ -254,8 +255,8 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         if self.min_window >= max_window:
             self._min_window = max_window
             warnings.warn(
-                f"Error in TemporalDictionaryEnsemble, min_window ="
-                f" {self.min_window} is larger than max_window = {max_window}."
+                f"TemporalDictionaryEnsemble warning: min_window = "
+                f"{self.min_window} is larger than max_window = {max_window}."
                 f" min_window has been set to {max_window}."
             )
 
