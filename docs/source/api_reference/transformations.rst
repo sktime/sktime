@@ -535,7 +535,7 @@ Dimension reduction
     :toctree: auto_generated/
     :template: class.rst
 
-    Channel Selection
+    Channel Selection for MTSC
 
 Series-to-Panel transformers
 ----------------------------
