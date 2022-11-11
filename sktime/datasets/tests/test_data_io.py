@@ -1484,17 +1484,13 @@ def test_convert_tsf_to_multiindex(freq):
     not _check_soft_dependencies("backoff", severity="none"),
     reason="load_solar requires backoff in the environment",
 )
-@pytest.mark.parametrize("return_df", [False, True])
-def test_load_solar(return_df):
+def test_load_solar():
     """Test function for loading solar data through the Sheffiled Solar API."""
     # get static dataset
     test_equals = load_solar(api_version=None).to_numpy()
     # get matching data from API
-    y = load_solar(start="2021-05-01", end="2021-05-07", return_full_df=return_df)
+    y = load_solar(start="2021-05-01", end="2021-05-07", return_full_df=False)
 
-    if return_df:
-        assert isinstance(y, pd.DataFrame)
-    else:
-        assert isinstance(y, pd.Series)
-        y = y.round(5).to_numpy()
-        assert np.all(y == test_equals)
+    assert isinstance(y, pd.Series)
+    y = y.round(5).to_numpy()
+    assert np.all(y == test_equals)
