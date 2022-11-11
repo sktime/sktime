@@ -61,9 +61,9 @@ class CNNClassifier(BaseDeepClassifier):
     --------
     >>> from sktime.classification.deep_learning.cnn import CNNClassifier
     >>> from sktime.datasets import load_unit_test
-    >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
-    >>> cnn = CNNClassifier()  # doctest: +SKIP
+    >>> X_train, y_train = load_unit_test(split="train")
+    >>> X_test, y_test = load_unit_test(split="test")
+    >>> cnn = CNNClassifier(n_epochs=20,batch_size=4)  # doctest: +SKIP
     >>> cnn.fit(X_train, y_train)  # doctest: +SKIP
     CNNClassifier(...)
     """

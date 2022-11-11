@@ -55,8 +55,8 @@ class MLPClassifier(BaseDeepClassifier):
     --------
     >>> from sktime.classification.deep_learning.mlp import MLPClassifier
     >>> from sktime.datasets import load_unit_test
-    >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    >>> mlp = MLPClassifier()  # doctest: +SKIP
+    >>> X_train, y_train = load_unit_test(split="train")
+    >>> mlp = MLPClassifier(n_epochs=20,batch_size=4)  # doctest: +SKIP
     >>> mlp.fit(X_train, y_train)  # doctest: +SKIP
     MLPClassifier(...)
     """

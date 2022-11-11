@@ -79,9 +79,9 @@ class TapNetClassifier(BaseDeepClassifier):
     --------
     >>> from sktime.classification.deep_learning.tapnet import TapNetClassifier
     >>> from sktime.datasets import load_unit_test
-    >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
-    >>> tapnet = TapNetClassifier()  # doctest: +SKIP
+    >>> X_train, y_train = load_unit_test(split="train")
+    >>> X_test, y_test = load_unit_test(split="test")
+    >>> tapnet = TapNetClassifier(n_epochs=20,batch_size=4)  # doctest: +SKIP
     >>> tapnet.fit(X_train, y_train) # doctest: +SKIP
     TapNetClassifier(...)
     """
@@ -254,16 +254,16 @@ class TapNetClassifier(BaseDeepClassifier):
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
         param1 = {
-            "n_epochs": 10,
+            "n_epochs": 20,
             "batch_size": 4,
             "use_lstm": False,
             "use_att": False,
-            "filter_sizes": (64, 64, 32),
+            "filter_sizes": (16, 16, 16),
             "dilation": 2,
-            "layers": (50, 25),
+            "layers": (32, 16),
         }
         param2 = {
-            "n_epochs": 12,
+            "n_epochs": 20,
             "batch_size": 6,
             "use_rp": False,
             "kernel_size": (2, 2, 2),

@@ -44,12 +44,14 @@ class CNNRegressor(BaseDeepRegressor):
         whether to use bias in the output layer.
     metrics         : list of strings, default=["accuracy"],
 
-    Notes
-    -----
+    References
+    ----------
     .. [1] Zhao et. al, Convolutional neural networks for
     time series classification, Journal of
     Systems Engineering and Electronics, 28(1):2017.
 
+    Notes
+    -----
     Adapted from the implementation from Fawaz et. al
     https://github.com/hfawaz/dl-4-tsc/blob/master/classifiers/cnn.py
     """
