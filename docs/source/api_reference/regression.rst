@@ -5,6 +5,15 @@ Time series regression
 
 The :mod:`sktime.regression` module contains algorithms and composition tools for time series regression.
 
+All current sktime Regressors can be listed as follows
+
+```
+from sktime.registry import all_estimators
+cls = all_estimators(estimator_types="regressor")
+names = [i for i, _ in cls]
+print(names)
+```
+
 Composition
 -----------
 
