@@ -242,13 +242,10 @@ class TapNetRegressor(BaseDeepRegressor):
             "kernel_size": (3, 3, 1),
             "layers": (25, 50),
         }
-
         param2 = {
-            "n_epochs": 12,
-            "batch_size": 6,
-            "use_rp": False,
-            "kernel_size": (2, 2, 2),
-            "layers": (10, 10),
+            "n_epochs": 20,
+            "use_cnn": False,
+            "layers": (25, 25),
         }
 
         return [param1, param2]
