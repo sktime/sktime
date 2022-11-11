@@ -197,6 +197,8 @@ class RotationForest(BaseEstimator):
         self._useful_atts = ~np.all(X[1:] == X[:-1], axis=0)
         X = X[:, self._useful_atts]
 
+        self._n_atts = X.shape[1]
+
         # normalise attributes
         self._min = X.min(axis=0)
         self._ptp = X.max(axis=0) - self._min
@@ -499,13 +501,13 @@ class RotationForest(BaseEstimator):
         return [results, oob]
 
     def _generate_groups(self, rng):
-        permutation = rng.permutation((np.arange(0, self.n_atts_)))
+        permutation = rng.permutation((np.arange(0, self._n_atts)))
 
         # select the size of each group.
         group_size_count = np.zeros(self.max_group - self.min_group + 1)
         n_attributes = 0
         n_groups = 0
-        while n_attributes < self.n_atts_:
+        while n_attributes < self._n_atts:
             n = rng.randint(group_size_count.shape[0])
             group_size_count[n] += 1
             n_attributes += self.min_group + n
