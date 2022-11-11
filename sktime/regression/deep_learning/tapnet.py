@@ -235,18 +235,20 @@ class TapNetRegressor(BaseDeepRegressor):
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
         param1 = {
-            "n_epochs": 25,
-            "batch_size": 32,
+            "n_epochs": 10,
+            "batch_size": 4,
             "padding": "valid",
-            "filter_sizes": (64, 64, 64),
+            "filter_sizes": (64, 64, 32),
             "kernel_size": (3, 3, 1),
             "layers": (25, 50),
         }
 
         param2 = {
-            "n_epochs": 75,
+            "n_epochs": 12,
+            "batch_size": 6,
             "use_rp": False,
-            "layers": (50, 25),
+            "kernel_size": (2, 2, 2),
+            "layers": (10, 10),
         }
 
         return [param1, param2]
