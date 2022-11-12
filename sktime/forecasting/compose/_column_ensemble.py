@@ -13,10 +13,10 @@ from sktime.base._meta import flatten
 from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
 
-
 # mtypes that are native pandas
 # ColumnEnsembleForecaster uses these internally, since we need (pandas) columns
 PANDAS_MTYPES = ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"]
+
 
 class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
     """Forecast each series with separate forecaster.
