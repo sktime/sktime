@@ -42,9 +42,9 @@ class MiniRocketMultivariateVariable(BaseTransformer):
     reference_length         : int or str, length of reference, default "max"
     n_jobs                   : int, optional (default=1) The number of jobs to run in
     parallel for `transform`. ``-1`` means using all processors.
-    random_state             : int, random seed (optional, default None)
     add_padding_short_series : int | None, padding series with len<9 to value
                                     (optional, default 0, None to disable)
+    random_state             : int, random seed (optional, default None)
     """
 
     _tags = {
@@ -67,7 +67,7 @@ class MiniRocketMultivariateVariable(BaseTransformer):
         num_kernels=10000,
         max_dilations_per_kernel=32,
         reference_length="max",
-        add_padding_short_series=0
+        add_padding_short_series=None,
         n_jobs=1,
         random_state=None,
     ):
@@ -75,10 +75,10 @@ class MiniRocketMultivariateVariable(BaseTransformer):
         self.max_dilations_per_kernel = max_dilations_per_kernel
         self.reference_length = reference_length
         self.add_padding_short_series = add_padding_short_series
-        
+
         self.n_jobs = n_jobs
         self.random_state = random_state
-        
+
         if random_state is None:
             self.random_state_ = random_state
         elif isinstance(random_state, int):
@@ -89,18 +89,20 @@ class MiniRocketMultivariateVariable(BaseTransformer):
                 f"but found <{type(random_state)} {random_state}>"
             )
 
-        
         self._reference_modes = ["max", "mean", "median", "min"]
-        if not (isinstance(reference_length, int) and reference_length >= 9) \
-           and not (isinstance(reference_length, str) and (reference_length in self._reference_modes)):
+        if not (isinstance(reference_length, int) and reference_length >= 9) and not (
+            isinstance(reference_length, str) and
+            (reference_length in self._reference_modes)
+        ):
             raise ValueError(
-                    "reference_length in MiniRocketMultivariateVariable must be int>=9 or 'max', 'mean', 'median', "
-                    f"but found reference_length={reference_length}"
+                "reference_length in MiniRocketMultivariateVariable must be int>=9 or 'max', 'mean', 'median', "
+                f"but found reference_length={reference_length}"
             )
-        
+
+        warnings.warn(
+            f"MiniRocket - Multivariate + Variable length is an experimental feature."
+        )
         super(MiniRocketMultivariateVariable, self).__init__()
-        
-        warnings.warn(f"MiniRocket - Multivariate + Variable length is an experimental feature.") 
 
     def _fit(self, X: List[pd.DataFrame], y=None):
         """Fits dilations and biases to input time series.
@@ -113,22 +115,22 @@ class MiniRocketMultivariateVariable(BaseTransformer):
         Returns
         -------
         self
-        """      
-        X_2D, lenghts_1darray = _nested_dataframe_to_2D_array_and_list(X, pad=self.add_padding_short_series)
-        
+        """
+        X_2D, lenghts_1darray = _nested_dataframe_to_2D_array_and_list(
+            X, pad=self.add_padding_short_series
+        )
+
         if isinstance(self.reference_length, int):
             _reference_length = self.reference_length
         elif self.reference_length in self._reference_modes:
             # mean, max, median, min ..
-            _reference_length = int(
-                getattr(np, self.reference_length)(lenghts_1darray)
-            )
+            _reference_length = int(getattr(np, self.reference_length)(lenghts_1darray))
         else:
             raise ValueError(
                 f"reference_length in MiniRocketMultivariate must be int or 'max', 'mean', 'median', "
                 f"but found {type(self.reference_length)}"
             )
-        
+
         if lenghts_1darray.min() < 9:
             failed_index = np.where(lenghts_1darray < 9)[0]
             raise ValueError(
@@ -138,7 +140,7 @@ class MiniRocketMultivariateVariable(BaseTransformer):
                     "so that n_timepoints >= 9 for all samples."
                 )
             )
-        
+
         if lenghts_1darray.min() == lenghts_1darray.max():
             warnings.warn(
                 "X is of equal length, consider using MiniRocketMultivariate for speedup and stability instead.."
@@ -147,12 +149,14 @@ class MiniRocketMultivariateVariable(BaseTransformer):
             warnings.warn(
                 "X is univariate, consider using MiniRocket as Univariante for speedup and stability instead."
             )
-            
-        
+
         self.parameters = _fit_multi_var(
-            X_2D, L=lenghts_1darray, reference_length=_reference_length,
-            num_features=self.num_kernels, max_dilations_per_kernel=self.max_dilations_per_kernel,
-            seed=self.random_state_
+            X_2D,
+            L=lenghts_1darray,
+            reference_length=_reference_length,
+            num_features=self.num_kernels,
+            max_dilations_per_kernel=self.max_dilations_per_kernel,
+            seed=self.random_state_,
         )
         return self
 
@@ -162,16 +166,18 @@ class MiniRocketMultivariateVariable(BaseTransformer):
         Parameters
         ----------
         X : pd.DataFrame with nested columns
-            Dataframe with n_instances-rows and n_dimensions-columns, 
+            Dataframe with n_instances-rows and n_dimensions-columns,
             each cell containing a series_length-long array
-            
+
         y : ignored argument for interface compatibility
 
         Returns
         -------
         pandas DataFrame, transformed features
         """
-        X_2D, L = _nested_dataframe_to_2D_array_and_list(X, pad=self.add_padding_short_series)
+        X_2D, L = _nested_dataframe_to_2D_array_and_list(
+            X, pad=self.add_padding_short_series
+        )
         # change n_jobs dependend on value and existing cores
         prev_threads = get_num_threads()
         if self.n_jobs < 1 or self.n_jobs > multiprocessing.cpu_count():
@@ -183,36 +189,39 @@ class MiniRocketMultivariateVariable(BaseTransformer):
         set_num_threads(prev_threads)
         return pd.DataFrame(X_)
 
-def _nested_dataframe_to_2D_array_and_list(X: List[pd.DataFrame], pad: Union[int, None] = 0):
+
+def _nested_dataframe_to_2D_array_and_list(
+    X: List[pd.DataFrame], pad: Union[int, None]=0
+):
     """Fits dilations and biases to input time series.
 
     Parameters
     ----------
     X : List of dataframes
-            List of length n_instances, with 
+            List of length n_instances, with
             dataframes of series_length-rows and n_dimensions-columns
-    pad : in, None, pads multivariate series 
-        
+    pad : in, None, pads multivariate series
+
     Returns
         np.array: 2D array of shape = [n_dimensions, sum(length_series(i) for i in n_instances)], np.float32
         np.array: 1D array of shape = [n_instances] with length of each series, np.int32
-    """   
+    """
     if not len(X):
         raise ValueError("X is empty")
-      
+
     if isinstance(X, (tuple, list)) and isinstance(X[0], (pd.DataFrame, np.array)):
         pass
     else:
-        raise ValueError(
-            "X must be List of pd.DataFrame"
-        )
-    
+        raise ValueError("X must be List of pd.DataFrame")
+
     if not all(X[0].shape[1] == _x.shape[1] for _x in X):
         raise ValueError(
             "X must be nested pd.DataFrame or List of pd.DataFrame with n_dimensions"
         )
-    
-    vec, lenghts, = [], []
+
+    vec = []
+    lenghts = []
+
     for _x in X:
         _x_shape = _x.shape
         if _x_shape[0] < 9:
@@ -220,10 +229,7 @@ def _nested_dataframe_to_2D_array_and_list(X: List[pd.DataFrame], pad: Union[int
                 # emergency: pad with zeros up to 9.
                 lenghts.append(9)
                 vec.append(
-                    np.vstack([
-                        _x.values,
-                        np.full([9 - _x_shape[0], _x_shape[1]], pad)]
-                    )  
+                    np.vstack([_x.values, np.full([9 - _x_shape[0], _x_shape[1]], pad)])
                 )
             else:
                 raise ValueError(
@@ -234,29 +240,35 @@ def _nested_dataframe_to_2D_array_and_list(X: List[pd.DataFrame], pad: Union[int
         else:
             lenghts.append(_x_shape[0])
             vec.append(_x.values)
-        
+
     X_2D = np.vstack(vec).T.astype(dtype=np.float32)
-    lengths = np.array(lenghts, dtype=np.int32)       
-    
+    lengths = np.array(lenghts, dtype=np.int32)
+
     if not lengths.sum() == X_2D.shape[1]:
         raise ValueError("X_new and lengths do not match. check input dimension")
-    
+
     return X_2D, lengths
-    
+
 
 # Angus Dempster, Daniel F Schmidt, Geoffrey I Webb
 
 # MiniRocket: A Very Fast (Almost) Deterministic Transform for Time Series
 # Classification
-# 
+#
 
 # ** This is an experimental extension of MiniRocket to variable-length,
 #    multivariate input.  It may be inefficient in terms of both storage and computation. **
 
-@njit("float32[:](float32[:,:],int32[:],int32[:],int32[:],int32[:],int32[:],float32[:],optional(int32))", fastmath = True, parallel = False, cache = True)
+
+@njit(
+    "float32[:](float32[:,:],int32[:],int32[:],int32[:],int32[:],int32[:],float32[:],optional(int32))",
+    fastmath=True,
+    parallel=False,
+    cache=True,
+)
 def _fit_biases_multi_var(
-    X, 
-    L, 
+    X,
+    L,
     num_channels_per_combination,
     channel_indices,
     dilations,
@@ -273,20 +285,23 @@ def _fit_biases_multi_var(
     # equivalent to:
     # >>> from itertools import combinations
     # >>> indices = np.array([_ for _ in combinations(np.arange(9), 3)], dtype = np.int32)
-    indices = np.array((
-        0,1,2,0,1,3,0,1,4,0,1,5,0,1,6,0,1,7,0,1,8,
-        0,2,3,0,2,4,0,2,5,0,2,6,0,2,7,0,2,8,0,3,4,
-        0,3,5,0,3,6,0,3,7,0,3,8,0,4,5,0,4,6,0,4,7,
-        0,4,8,0,5,6,0,5,7,0,5,8,0,6,7,0,6,8,0,7,8,
-        1,2,3,1,2,4,1,2,5,1,2,6,1,2,7,1,2,8,1,3,4,
-        1,3,5,1,3,6,1,3,7,1,3,8,1,4,5,1,4,6,1,4,7,
-        1,4,8,1,5,6,1,5,7,1,5,8,1,6,7,1,6,8,1,7,8,
-        2,3,4,2,3,5,2,3,6,2,3,7,2,3,8,2,4,5,2,4,6,
-        2,4,7,2,4,8,2,5,6,2,5,7,2,5,8,2,6,7,2,6,8,
-        2,7,8,3,4,5,3,4,6,3,4,7,3,4,8,3,5,6,3,5,7,
-        3,5,8,3,6,7,3,6,8,3,7,8,4,5,6,4,5,7,4,5,8,
-        4,6,7,4,6,8,4,7,8,5,6,7,5,6,8,5,7,8,6,7,8
-    ), dtype = np.int32).reshape(84, 3)
+    indices = np.array(
+        (
+            0, 1, 2, 0, 1, 3, 0, 1, 4, 0, 1, 5, 0, 1, 6, 0, 1, 7, 0, 1, 8,
+            0, 2, 3, 0, 2, 4, 0, 2, 5, 0, 2, 6, 0, 2, 7, 0, 2, 8, 0, 3, 4,
+            0, 3, 5, 0, 3, 6, 0, 3, 7, 0, 3, 8, 0, 4, 5, 0, 4, 6, 0, 4, 7,
+            0, 4, 8, 0, 5, 6, 0, 5, 7, 0, 5, 8, 0, 6, 7, 0, 6, 8, 0, 7, 8,
+            1, 2, 3, 1, 2, 4, 1, 2, 5, 1, 2, 6, 1, 2, 7, 1, 2, 8, 1, 3, 4,
+            1, 3, 5, 1, 3, 6, 1, 3, 7, 1, 3, 8, 1, 4, 5, 1, 4, 6, 1, 4, 7,
+            1, 4, 8, 1, 5, 6, 1, 5, 7, 1, 5, 8, 1, 6, 7, 1, 6, 8, 1, 7, 8,
+            2, 3, 4, 2, 3, 5, 2, 3, 6, 2, 3, 7, 2, 3, 8, 2, 4, 5, 2, 4, 6,
+            2, 4, 7, 2, 4, 8, 2, 5, 6, 2, 5, 7, 2, 5, 8, 2, 6, 7, 2, 6, 8,
+            2, 7, 8, 3, 4, 5, 3, 4, 6, 3, 4, 7, 3, 4, 8, 3, 5, 6, 3, 5, 7,
+            3, 5, 8, 3, 6, 7, 3, 6, 8, 3, 7, 8, 4, 5, 6, 4, 5, 7, 4, 5, 8,
+            4, 6, 7, 4, 6, 8, 4, 7, 8, 5, 6, 7, 5, 6, 8, 5, 7, 8, 6, 7, 8
+        ),
+        dtype=np.int32,
+    ).reshape(84, 3)
 
     num_kernels = len(indices)
     num_dilations = len(dilations)
@@ -330,10 +345,12 @@ def _fit_biases_multi_var(
 
             _X = X[channels_this_combination, a:b]
 
-            A = -_X          # A = alpha * X = -X
-            G = _X + _X + _X # G = gamma * X = 3X
+            A = -_X  # A = alpha * X = -X
+            G = _X + _X + _X  # G = gamma * X = 3X
 
-            C_alpha = np.zeros((num_channels_this_combination, input_length), dtype = np.float32)
+            C_alpha = np.zeros(
+                (num_channels_this_combination, input_length), dtype=np.float32
+            )
             C_alpha[:] = A
 
             C_gamma = np.zeros(
@@ -379,6 +396,7 @@ def _fit_biases_multi_var(
 
     return biases
 
+
 def _fit_dilations_multi_var(reference_length, num_features, max_dilations_per_kernel):
 
     num_kernels = 84
@@ -390,9 +408,15 @@ def _fit_dilations_multi_var(reference_length, num_features, max_dilations_per_k
     multiplier = num_features_per_kernel / true_max_dilations_per_kernel
 
     max_exponent = np.log2((reference_length - 1) / (9 - 1))
-    dilations, num_features_per_dilation = \
-    np.unique(np.logspace(0, max_exponent, true_max_dilations_per_kernel, base = 2).astype(np.int32), return_counts = True)
-    num_features_per_dilation = (num_features_per_dilation * multiplier).astype(np.int32) # this is a vector
+    dilations, num_features_per_dilation = np.unique(
+        np.logspace(0, max_exponent, true_max_dilations_per_kernel, base=2).astype(
+            np.int32
+        ),
+        return_counts=True,
+    )
+    num_features_per_dilation = (num_features_per_dilation * multiplier).astype(
+        np.int32
+    )  # this is a vector
 
     remainder = num_features_per_kernel - np.sum(num_features_per_dilation)
     i = 0
@@ -403,13 +427,22 @@ def _fit_dilations_multi_var(reference_length, num_features, max_dilations_per_k
 
     return dilations, num_features_per_dilation
 
+
 # low-discrepancy sequence to assign quantiles to kernel/dilation combinations
 def _quantiles_multi_var(n):
     return np.array(
         [(_ * ((np.sqrt(5) + 1) / 2)) % 1 for _ in range(1, n + 1)], dtype=np.float32
     )
 
-def _fit_multi_var(X, L, reference_length = None, num_features = 10_000, max_dilations_per_kernel = 32, seed = None):
+
+def _fit_multi_var(
+    X,
+    L,
+    reference_length=None,
+    num_features=10_000,
+    max_dilations_per_kernel=32,
+    seed=None,
+):
     if seed is not None:
         np.random.seed(seed)
     # note in relation to dilation:
@@ -418,7 +451,7 @@ def _fit_multi_var(X, L, reference_length = None, num_features = 10_000, max_dil
     # * use _fit_multi_var(...) with an appropriate subset of time series, e.g., for
     #   reference_length = L.mean(), call _fit_multi_var(...) using only time series of at
     #   least length L.mean() [see filter_by_length(...)]
-    if reference_length == None:
+    if reference_length is None:
         reference_length = L.max()
 
     num_channels, _ = X.shape
@@ -439,9 +472,11 @@ def _fit_multi_var(X, L, reference_length = None, num_features = 10_000, max_dil
     max_num_channels = min(num_channels, 9)
     max_exponent = np.log2(max_num_channels + 1)
 
-    num_channels_per_combination = (2 ** np.random.uniform(0, max_exponent, num_combinations)).astype(np.int32)
+    num_channels_per_combination = (
+        2 ** np.random.uniform(0, max_exponent, num_combinations)
+    ).astype(np.int32)
 
-    channel_indices = np.zeros(num_channels_per_combination.sum(), dtype = np.int32)
+    channel_indices = np.zeros(num_channels_per_combination.sum(), dtype=np.int32)
 
     num_channels_start = 0
     for combination_index in range(num_combinations):
@@ -457,13 +492,20 @@ def _fit_multi_var(X, L, reference_length = None, num_features = 10_000, max_dil
         X,
         L,
         num_channels_per_combination,
-        channel_indices, dilations,
+        channel_indices,
+        dilations,
         num_features_per_dilation,
         quantiles,
         seed,
     )
 
-    return num_channels_per_combination, channel_indices, dilations, num_features_per_dilation, biases
+    return (
+        num_channels_per_combination,
+        channel_indices,
+        dilations,
+        num_features_per_dilation,
+        biases,
+    )
 
 
 @vectorize("float32(float32,float32)", nopython=True, cache=True)
@@ -473,32 +515,47 @@ def _PPV(a, b):
     else:
         return 0
 
-@njit("float32[:,:](float32[:,:],int32[:],Tuple((int32[:],int32[:],int32[:],int32[:],float32[:])))", fastmath = True, parallel = True, cache = True)
+
+@njit(
+    "float32[:,:](float32[:,:],int32[:],Tuple((int32[:],int32[:],int32[:],int32[:],float32[:])))",
+    fastmath=True,
+    parallel=True,
+    cache=True,
+)
 def _transform_multi_var(X, L, parameters):
 
     num_examples = len(L)
 
     num_channels, _ = X.shape
 
-    num_channels_per_combination, channel_indices, dilations, num_features_per_dilation, biases = parameters
+    (
+        num_channels_per_combination,
+        channel_indices,
+        dilations,
+        num_features_per_dilation,
+        biases,
+    ) = parameters
 
     # equivalent to:
     # >>> from itertools import combinations
     # >>> indices = np.array([_ for _ in combinations(np.arange(9), 3)], dtype = np.int32)
-    indices = np.array((
-        0,1,2,0,1,3,0,1,4,0,1,5,0,1,6,0,1,7,0,1,8,
-        0,2,3,0,2,4,0,2,5,0,2,6,0,2,7,0,2,8,0,3,4,
-        0,3,5,0,3,6,0,3,7,0,3,8,0,4,5,0,4,6,0,4,7,
-        0,4,8,0,5,6,0,5,7,0,5,8,0,6,7,0,6,8,0,7,8,
-        1,2,3,1,2,4,1,2,5,1,2,6,1,2,7,1,2,8,1,3,4,
-        1,3,5,1,3,6,1,3,7,1,3,8,1,4,5,1,4,6,1,4,7,
-        1,4,8,1,5,6,1,5,7,1,5,8,1,6,7,1,6,8,1,7,8,
-        2,3,4,2,3,5,2,3,6,2,3,7,2,3,8,2,4,5,2,4,6,
-        2,4,7,2,4,8,2,5,6,2,5,7,2,5,8,2,6,7,2,6,8,
-        2,7,8,3,4,5,3,4,6,3,4,7,3,4,8,3,5,6,3,5,7,
-        3,5,8,3,6,7,3,6,8,3,7,8,4,5,6,4,5,7,4,5,8,
-        4,6,7,4,6,8,4,7,8,5,6,7,5,6,8,5,7,8,6,7,8
-    ), dtype = np.int32).reshape(84, 3)
+    indices = np.array(
+        (
+            0, 1, 2, 0, 1, 3, 0, 1, 4, 0, 1, 5, 0, 1, 6, 0, 1, 7, 0, 1, 8,
+            0, 2, 3, 0, 2, 4, 0, 2, 5, 0, 2, 6, 0, 2, 7, 0, 2, 8, 0, 3, 4,
+            0, 3, 5, 0, 3, 6, 0, 3, 7, 0, 3, 8, 0, 4, 5, 0, 4, 6, 0, 4, 7,
+            0, 4, 8, 0, 5, 6, 0, 5, 7, 0, 5, 8, 0, 6, 7, 0, 6, 8, 0, 7, 8,
+            1, 2, 3, 1, 2, 4, 1, 2, 5, 1, 2, 6, 1, 2, 7, 1, 2, 8, 1, 3, 4,
+            1, 3, 5, 1, 3, 6, 1, 3, 7, 1, 3, 8, 1, 4, 5, 1, 4, 6, 1, 4, 7,
+            1, 4, 8, 1, 5, 6, 1, 5, 7, 1, 5, 8, 1, 6, 7, 1, 6, 8, 1, 7, 8,
+            2, 3, 4, 2, 3, 5, 2, 3, 6, 2, 3, 7, 2, 3, 8, 2, 4, 5, 2, 4, 6,
+            2, 4, 7, 2, 4, 8, 2, 5, 6, 2, 5, 7, 2, 5, 8, 2, 6, 7, 2, 6, 8,
+            2, 7, 8, 3, 4, 5, 3, 4, 6, 3, 4, 7, 3, 4, 8, 3, 5, 6, 3, 5, 7,
+            3, 5, 8, 3, 6, 7, 3, 6, 8, 3, 7, 8, 4, 5, 6, 4, 5, 7, 4, 5, 8,
+            4, 6, 7, 4, 6, 8, 4, 7, 8, 5, 6, 7, 5, 6, 8, 5, 7, 8, 6, 7, 8
+        ),
+        dtype=np.int32,
+    ).reshape(84, 3)
 
     num_kernels = len(indices)
     num_dilations = len(dilations)
@@ -516,8 +573,8 @@ def _transform_multi_var(X, L, parameters):
 
         _X = X[:, a:b]
 
-        A = -_X          # A = alpha * X = -X
-        G = _X + _X + _X # G = gamma * X = 3X
+        A = -_X  # A = alpha * X = -X
+        G = _X + _X + _X  # G = gamma * X = 3X
 
         feature_index_start = 0
 
@@ -531,10 +588,10 @@ def _transform_multi_var(X, L, parameters):
 
             num_features_this_dilation = num_features_per_dilation[dilation_index]
 
-            C_alpha = np.zeros((num_channels, input_length), dtype = np.float32)
+            C_alpha = np.zeros((num_channels, input_length), dtype=np.float32)
             C_alpha[:] = A
 
-            C_gamma = np.zeros((9, num_channels, input_length), dtype = np.float32)
+            C_gamma = np.zeros((9, num_channels, input_length), dtype=np.float32)
             C_gamma[9 // 2] = G
 
             start = dilation
@@ -561,24 +618,30 @@ def _transform_multi_var(X, L, parameters):
 
                 feature_index_end = feature_index_start + num_features_this_dilation
 
-                num_channels_this_combination = num_channels_per_combination[combination_index]
+                num_channels_this_combination = num_channels_per_combination[
+                    combination_index
+                ]
 
                 num_channels_end = num_channels_start + num_channels_this_combination
 
-                channels_this_combination = channel_indices[num_channels_start:num_channels_end]
+                channels_this_combination = channel_indices[
+                    num_channels_start:num_channels_end
+                ]
 
                 index_0, index_1, index_2 = indices[kernel_index]
 
                 C = (
-                    C_alpha[channels_this_combination]
-                    + C_gamma[index_0][channels_this_combination]
-                    + C_gamma[index_1][channels_this_combination]
-                    + C_gamma[index_2][channels_this_combination]
+                    C_alpha[channels_this_combination] +
+                    C_gamma[index_0][channels_this_combination] +
+                    C_gamma[index_1][channels_this_combination] +
+                    C_gamma[index_2][channels_this_combination]
                 )
                 C = np.sum(C, axis=0)
 
                 for feature_count in range(num_features_this_dilation):
-                    features[example_index, feature_index_start + feature_count] = _PPV(C, biases[feature_index_start + feature_count]).mean()
+                    features[example_index, feature_index_start + feature_count] = _PPV(
+                        C, biases[feature_index_start + feature_count]
+                    ).mean()
 
                 feature_index_start = feature_index_end
 
