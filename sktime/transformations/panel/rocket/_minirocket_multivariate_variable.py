@@ -16,15 +16,15 @@ from sktime.transformations.base import BaseTransformer
 
 
 class MiniRocketMultivariateVariable(BaseTransformer):
-    """MINIROCKET (Multivariate).
+    """MINIROCKET (Multivariate, unequal length).
 
     MINImally RandOm Convolutional KErnel Transform
 
     **Multivariate**
     **unequal length**
 
-    A provisional and naive extension of MINIROCKET to multivariate input with variable length.  Use
-    class MiniRocket for univariate input, and MiniRocketMultivariateVariable to multivariate input.
+    A provisional and naive extension of MINIROCKET to multivariate input with unequal length.  Use
+    class MiniRocket for univariate input, and MiniRocketMultivariate to equal length multivariate input.
 
     @article{dempster_etal_2020,
       author  = {Dempster, Angus and Schmidt, Daniel F and Webb, Geoffrey I},
@@ -37,7 +37,7 @@ class MiniRocketMultivariateVariable(BaseTransformer):
     Parameters
     ----------
     num_kernels              : int, number of random convolutional kernels
-    (default 10,000)
+                               (default 10_000)
     max_dilations_per_kernel : int, maximum number of dilations per kernel (default 32)
     reference_length         : int or str, length of reference, default "max"
     n_jobs                   : int, optional (default=1) The number of jobs to run in
@@ -74,6 +74,7 @@ class MiniRocketMultivariateVariable(BaseTransformer):
         self.num_kernels = num_kernels
         self.max_dilations_per_kernel = max_dilations_per_kernel
         self.reference_length = reference_length
+        self.fitted_reference_length = None
         self.add_padding_short_series = add_padding_short_series
 
         self.n_jobs = n_jobs
@@ -99,9 +100,6 @@ class MiniRocketMultivariateVariable(BaseTransformer):
                 f"but found reference_length={reference_length}"
             )
 
-        warnings.warn(
-            f"MiniRocket - Multivariate + Variable length is an experimental feature."
-        )
         super(MiniRocketMultivariateVariable, self).__init__()
 
     def _fit(self, X: List[pd.DataFrame], y=None):
@@ -123,13 +121,14 @@ class MiniRocketMultivariateVariable(BaseTransformer):
         if isinstance(self.reference_length, int):
             _reference_length = self.reference_length
         elif self.reference_length in self._reference_modes:
-            # mean, max, median, min ..
-            _reference_length = int(getattr(np, self.reference_length)(lenghts_1darray))
+            # np.mean, np.max, np.median, np.min ..
+            _reference_length = getattr(np, self.reference_length)(lenghts_1darray)
         else:
             raise ValueError(
                 f"reference_length in MiniRocketMultivariate must be int or 'max', 'mean', 'median', "
                 f"but found {type(self.reference_length)}"
             )
+        self.fitted_reference_length = int(max(9, _reference_length))        
 
         if lenghts_1darray.min() < 9:
             failed_index = np.where(lenghts_1darray < 9)[0]
@@ -153,7 +152,7 @@ class MiniRocketMultivariateVariable(BaseTransformer):
         self.parameters = _fit_multi_var(
             X_2D,
             L=lenghts_1darray,
-            reference_length=_reference_length,
+            reference_length= self.fitted_reference_length,
             num_features=self.num_kernels,
             max_dilations_per_kernel=self.max_dilations_per_kernel,
             seed=self.random_state_,
@@ -173,7 +172,7 @@ class MiniRocketMultivariateVariable(BaseTransformer):
 
         Returns
         -------
-        pandas DataFrame, transformed features
+            pandas DataFrame, size (n_instances, num_kernels)
         """
         X_2D, L = _nested_dataframe_to_2D_array_and_list(
             X, pad=self.add_padding_short_series
