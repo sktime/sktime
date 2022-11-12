@@ -536,7 +536,6 @@ Dimension reduction
     :template: class.rst
 
     PCATransformer
-    
 
 Series-to-Panel transformers
 ----------------------------
