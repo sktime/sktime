@@ -31,7 +31,7 @@ Optional implements:
     OR predicting intervals     - _predict_interval(self, fh, X=None, coverage=None)
     predicting variance         - _predict_var(self, fh, X=None, cov=False)
     distribution forecast       - _predict_proba(self, fh, X=None)
-    fitted parameter inspection - get_fitted_params()
+    fitted parameter inspection - _get_fitted_params()
 
 Testing - implement if sktime forecaster (not needed locally):
     get default parameters for test instance(s) - get_test_params()
@@ -48,6 +48,13 @@ Testing - implement if sktime forecaster (not needed locally):
 from sktime.forecasting.base import BaseForecaster
 
 # todo: add any necessary imports here
+
+# todo: if any imports are sktime soft dependencies:
+#  * make sure to fill in the "python_dependencies" tag with the package import name
+#  * add a _check_soft_dependencies warning here, example:
+#
+# from sktime.utils.validation._dependencies import check_soft_dependencies
+# _check_soft_dependencies("soft_dependency_name", severity="warning")
 
 
 class MyForecaster(BaseForecaster):
@@ -80,16 +87,78 @@ class MyForecaster(BaseForecaster):
     #   y_inner_mtype should be changed to pd.DataFrame
     # other tags are "safe defaults" which can usually be left as-is
     _tags = {
-        "scitype:y": "univariate",  # which y are fine? univariate/multivariate/both
-        "ignores-exogeneous-X": True,  # does estimator ignore the exogeneous X?
-        "handles-missing-data": False,  # can estimator handle missing data?
-        "y_inner_mtype": "pd.Series",  # which types do _fit, _predict, assume for y?
-        "X_inner_mtype": "pd.DataFrame",  # which types do _fit, _predict, assume for X?
-        "requires-fh-in-fit": True,  # is forecasting horizon already required in fit?
-        "X-y-must-have-same-index": True,  # can estimator handle different X/y index?
-        "enforce_index_type": None,  # index type that needs to be enforced in X/y
-        "capability:pred_int": False,  # does forecaster implement proba forecasts?
-        "python_version": None,  # PEP 440 python version specifier to limit versions
+        # to list all valid tags with description, use sktime.registry.all_tags
+        #   all_tags(estimator_types="forecaster", as_dataframe=True)
+        #
+        # behavioural tags: internal type
+        # -------------------------------
+        #
+        # y_inner_mtype, X_inner_mtype control which format X/y appears in
+        # in the inner functions _fit, _predict, etc
+        "y_inner_mtype": "pd.Series",
+        "X_inner_mtype": "pd.DataFrame",
+        # valid values: str and list of str
+        # if str, must be a valid mtype str, in sktime.datatypes.MTYPE_REGISTER
+        #   of scitype Series, Panel (panel data) or Hierarchical (hierarchical series)
+        #   in that case, all inputs are converted to that one type
+        # if list of str, must be a list of valid str specifiers
+        #   in that case, X/y are passed through without conversion if on the list
+        #   if not on the list, converted to the first entry of the same scitype
+        #
+        # scitype:y controls whether internal y can be univariate/multivariate
+        # if multivariate is not valid, applies vectorization over variables
+        "scitype:y": "univariate",
+        # valid values: "univariate", "multivariate", "both"
+        #   "univariate": inner _fit, _predict, etc, receive only univariate series
+        #   "multivariate": inner methods receive only series with 2 or more variables
+        #   "both": inner methods can see series with any number of variables
+        #
+        # capability tags: properties of the estimator
+        # --------------------------------------------
+        #
+        # ignores-exogeneous-X = does estimator ignore the exogeneous X?
+        "ignores-exogeneous-X": False,
+        # valid values: boolean True (ignores X), False (uses X in non-trivial manner)
+        # CAVEAT: if tag is set to True, inner methods always see X=None
+        #
+        # requires-fh-in-fit = is forecasting horizon always required in fit?
+        "requires-fh-in-fit": True,
+        # valid values: boolean True (yes), False (no)
+        # if True, raises exception in fit if fh has not been passed
+        #
+        # X-y-must-have-same-index = can estimator handle different X/y index?
+        "X-y-must-have-same-index": True,
+        # valid values: boolean True (yes), False (no)
+        # if True, raises exception if X.index is not contained in y.index
+        #
+        # enforce_index_type = index type that needs to be enforced in X/y
+        "enforce_index_type": None,
+        # valid values: pd.Index subtype, or list of pd.Index subtype
+        # if not None, raises exception if X.index, y.index level -1 is not of that type
+        #
+        # handles-missing-data = can estimator handle missing data?
+        "handles-missing-data": False,
+        # valid values: boolean True (yes), False (no)
+        # if False, raises exception if y or X passed contain missing data (nans)
+        #
+        # capability:pred_int = does forecaster implement probabilistic forecasts?
+        "capability:pred_int": False,
+        # valid values: boolean True (yes), False (no)
+        # if False, exception raised if proba methods are called (predict_interval etc)
+        #
+        #
+        # dependency tags: python version and soft dependencies
+        # -----------------------------------------------------
+        #
+        # python version requirement
+        "python_version": None,
+        # valid values: str, PEP 440 valid python version specifiers
+        # raises exception at construction if local python veresion is incompatible
+        #
+        # soft dependency requirement
+        "python_dependencies": None
+        # valid values: str or list of str
+        # raises exception at construction if modules at strings cannot be imported
     }
     #  in case of inheritance, concrete class should typically set tags
     #  alternatively, descendants can set tags in __init__ (avoid this if possible)
@@ -139,7 +208,8 @@ class MyForecaster(BaseForecaster):
 
         Parameters
         ----------
-        y : guaranteed to be of a type in self.get_tag("y_inner_mtype")
+        y : sktime time series object
+            guaranteed to be of an mtype in self.get_tag("y_inner_mtype")
             Time series to which to fit the forecaster.
             if self.get_tag("scitype:y")=="univariate":
                 guaranteed to have a single column/variable
@@ -150,8 +220,8 @@ class MyForecaster(BaseForecaster):
             The forecasting horizon with the steps ahead to to predict.
             Required (non-optional) here if self.get_tag("requires-fh-in-fit")==True
             Otherwise, if not passed in _fit, guaranteed to be passed in _predict
-        X : optional (default=None)
-            guaranteed to be of a type in self.get_tag("X_inner_mtype")
+        X :  sktime time series object, optional (default=None)
+            guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
             Exogeneous time series to fit to.
 
         Returns
@@ -191,13 +261,14 @@ class MyForecaster(BaseForecaster):
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
             The forecasting horizon with the steps ahead to to predict.
             If not passed in _fit, guaranteed to be passed here
-        X : optional (default=None)
-            guaranteed to be of a type in self.get_tag("X_inner_mtype")
+        X : sktime time series object, optional (default=None)
+            guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
             Exogeneous time series for the forecast
 
         Returns
         -------
-        y_pred : pd.Series
+        y_pred : sktime time series object
+            should be of the same type as seen in _fit, as in "y_inner_mtype" tag
             Point predictions
         """
 
@@ -224,15 +295,16 @@ class MyForecaster(BaseForecaster):
 
         Parameters
         ----------
-        y : guaranteed to be of a type in self.get_tag("y_inner_mtype")
+        y : sktime time series object
+            guaranteed to be of an mtype in self.get_tag("y_inner_mtype")
             Time series with which to update the forecaster.
             if self.get_tag("scitype:y")=="univariate":
                 guaranteed to have a single column/variable
             if self.get_tag("scitype:y")=="multivariate":
                 guaranteed to have 2 or more columns
             if self.get_tag("scitype:y")=="both": no restrictions apply
-        X : optional (default=None)
-            guaranteed to be of a type in self.get_tag("X_inner_mtype")
+        X :  sktime time series object, optional (default=None)
+            guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
             Exogeneous time series for the forecast
         update_params : bool, optional (default=True)
             whether model parameters should be updated
@@ -286,8 +358,8 @@ class MyForecaster(BaseForecaster):
         ----------
         fh : guaranteed to be ForecastingHorizon
             The forecasting horizon with the steps ahead to to predict.
-        X : optional (default=None)
-            guaranteed to be of a type in self.get_tag("X_inner_mtype")
+        X :  sktime time series object, optional (default=None)
+            guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
             Exogeneous time series for the forecast
         alpha : list of float (guaranteed not None and floats in [0,1] interval)
             A list of probabilities at which quantile forecasts are computed.
@@ -329,8 +401,8 @@ class MyForecaster(BaseForecaster):
         ----------
         fh : guaranteed to be ForecastingHorizon
             The forecasting horizon with the steps ahead to to predict.
-        X : optional (default=None)
-            guaranteed to be of a type in self.get_tag("X_inner_mtype")
+        X :  sktime time series object, optional (default=None)
+            guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
             Exogeneous time series for the forecast
         coverage : list of float (guaranteed not None and floats in [0,1] interval)
            nominal coverage(s) of predictive interval(s)
@@ -372,8 +444,8 @@ class MyForecaster(BaseForecaster):
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
             The forecasting horizon with the steps ahead to to predict.
             If not passed in _fit, guaranteed to be passed here
-        X : optional (default=None)
-            guaranteed to be of a type in self.get_tag("X_inner_mtype")
+        X :  sktime time series object, optional (default=None)
+            guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
             Exogeneous time series for the forecast
         cov : bool, optional (default=False)
             if True, computes covariance matrix forecast.
@@ -418,7 +490,7 @@ class MyForecaster(BaseForecaster):
         fh : int, list, np.array or ForecastingHorizon (not optional)
             The forecasting horizon encoding the time stamps to forecast at.
             if has not been passed in fit, must be passed, not optional
-        X : time series in sktime compatible format, optional (default=None)
+        X : sktime time series object, optional (default=None)
                 Exogeneous time series for the forecast
             Should be of same scitype (Series, Panel, or Hierarchical) as y in fit
             if self.get_tag("X-y-must-have-same-index"),
@@ -467,15 +539,32 @@ class MyForecaster(BaseForecaster):
         # IMPORTANT: avoid side effects to y, X, cv
 
     # todo: consider implementing this, optional
-    # if not implementing, delete the get_fitted_params method
-    def get_fitted_params(self):
+    # implement only if different from default:
+    #   default retrieves all self attributes ending in "_"
+    #   and returns them with keys that have the "_" removed
+    # if not implementing, delete the method
+    #   avoid overriding get_fitted_params
+    def _get_fitted_params(self):
         """Get fitted parameters.
+
+        private _get_fitted_params, called from get_fitted_params
+
+        State required:
+            Requires state to be "fitted".
 
         Returns
         -------
-        fitted_params : dict
+        fitted_params : dict with str keys
+            fitted parameters, keyed by names of fitted parameter
         """
         # implement here
+        #
+        # when this function is reached, it is already guaranteed that self is fitted
+        #   this does not need to be checked separately
+        #
+        # parameters of components should follow the sklearn convention:
+        #   separate component name from parameter name by double-underscore
+        #   e.g., componentname__paramname
 
     # todo: implement this if this is an estimator contributed to sktime
     #   or to run local automated unit and integration testing of estimator
@@ -514,6 +603,15 @@ class MyForecaster(BaseForecaster):
         #   It can be used in custom, estimator specific tests, for "special" settings.
         # A parameter dictionary must be returned *for all values* of parameter_set,
         #   i.e., "parameter_set not available" errors should never be raised.
+        #
+        # A good parameter set should primarily satisfy two criteria,
+        #   1. Chosen set of parameters should have a low testing time,
+        #      ideally in the magnitude of few seconds for the entire test suite.
+        #       This is vital for the cases where default values result in
+        #       "big" models which not only increases test time but also
+        #       run into the risk of test workers crashing.
+        #   2. There should be a minimum two such parameter sets with different
+        #      sets of values to ensure a wide range of code coverage is provided.
         #
         # example 1: specify params as dictionary
         # any number of params can be specified

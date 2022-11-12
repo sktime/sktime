@@ -28,6 +28,13 @@ from sktime.dists_kernels import BasePairwiseTransformerPanel
 
 # todo: add any necessary imports here
 
+# todo: if any imports are sktime soft dependencies:
+#  * make sure to fill in the "python_dependencies" tag with the package import name
+#  * add a _check_soft_dependencies warning here, example:
+#
+# from sktime.utils.validation._dependencies import check_soft_dependencies
+# _check_soft_dependencies("soft_dependency_name", severity="warning")
+
 
 class MyTrafoPwPanel(BasePairwiseTransformerPanel):
     """Custom time series distance/kernel. todo: write docstring.
@@ -156,6 +163,15 @@ class MyTrafoPwPanel(BasePairwiseTransformerPanel):
         #   It can be used in custom, estimator specific tests, for "special" settings.
         # A parameter dictionary must be returned *for all values* of parameter_set,
         #   i.e., "parameter_set not available" errors should never be raised.
+        #
+        # A good parameter set should primarily satisfy two criteria,
+        #   1. Chosen set of parameters should have a low testing time,
+        #      ideally in the magnitude of few seconds for the entire test suite.
+        #       This is vital for the cases where default values result in
+        #       "big" models which not only increases test time but also
+        #       run into the risk of test workers crashing.
+        #   2. There should be a minimum two such parameter sets with different
+        #      sets of values to ensure a wide range of code coverage is provided.
         #
         # example 1: specify params as dictionary
         # any number of params can be specified

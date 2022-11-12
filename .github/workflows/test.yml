@@ -12,15 +12,15 @@ jobs:
   code-quality:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
       - id: file_changes
         uses: trilom/file-changes-action@v1.2.4
         with:
           output: " "
       - name: List changed files
         run: echo '${{ steps.file_changes.outputs.files}}'
-      - uses: pre-commit/action@v2.0.0
+      - uses: pre-commit/action@v3.0.0
         with:
           extra_args: --files ${{ steps.file_changes.outputs.files}}
       - name: Check for missing init files
@@ -31,9 +31,9 @@ jobs:
     needs: code-quality
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: 3.9
       - name: Install dependencies
@@ -45,15 +45,37 @@ jobs:
         run: build_tools/run_examples.sh
         shell: bash
 
-  test-windows:
+  test-nosoftdeps:
     needs: code-quality
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.9
+      - name: Display Python version
+        run: python -c "import sys; print(sys.version)"
+
+      - name: Install sktime and dependencies
+        run: |
+          python -m pip install .[dev]
+
+      - name: Show dependencies
+        run: python -m pip list
+
+      - name: Run tests
+        run: make PYTESTOPTIONS="--cov --cov-report=xml --timeout=600" test_softdeps
+
+  test-windows:
+    needs: test-nosoftdeps
     runs-on: windows-2019
     strategy:
       matrix:
         python-version: [3.7, 3.8, 3.9, '3.10']
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - uses: conda-incubator/setup-miniconda@v2
         with:
@@ -92,16 +114,16 @@ jobs:
         uses: codecov/codecov-action@v3
 
   test-unix:
-    needs: code-quality
+    needs: test-nosoftdeps
     strategy:
       matrix:
         python-version: [3.7, 3.8, 3.9, '3.10']
         os: [ubuntu-20.04, macOS-11]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
       - name: Display Python version
@@ -123,29 +145,3 @@ jobs:
 
       - name: Publish code coverage
         uses: codecov/codecov-action@v3
-
-  test-nosoftdeps:
-    needs: code-quality
-    runs-on: ubuntu-20.04
-    steps:
-      - uses: actions/checkout@v2
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.9
-      - name: Display Python version
-        run: python -c "import sys; print(sys.version)"
-
-      - name: Install sktime and dependencies
-        run: |
-          python -m pip install .[dev]
-
-      - name: Install baseobject
-        run: |
-          python -m pip install git+https://github.com/sktime/BaseObject.git@main
-
-      - name: Show dependencies
-        run: python -m pip list
-
-      - name: Run tests
-        run: make PYTESTOPTIONS="--cov --cov-report=xml --timeout=600" test_softdeps

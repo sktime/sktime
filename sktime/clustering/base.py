@@ -306,9 +306,8 @@ class BaseClusterer(BaseEstimator, ABC):
         X: np.ndarray (at least 2d) or pd.Dataframe or List[pd.Dataframe]
             Converted X.
         """
-        if isinstance(X, np.ndarray):
-            if X.ndim == 2:
-                X = X.reshape(X.shape[0], 1, X.shape[1])
+        if isinstance(X, np.ndarray) and X.ndim == 2:
+            X = X.reshape(X.shape[0], 1, X.shape[1])
         return X
 
     def _check_clusterer_input(

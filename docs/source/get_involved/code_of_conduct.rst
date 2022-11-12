@@ -168,15 +168,14 @@ GitHub.
 3.1 Contact points
 ~~~~~~~~~~~~~~~~~~
 
-If you feel able to, please contact Dr Franz Király by email at
-f.kiraly@ucl.ac.uk.
+Please contact the current chair of the code of conduct committee directly by email, see 4.1.
 
 3.2 Alternate contact points
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If you do not feel comfortable contacting Dr Franz Király, please report
-an incident to [Martina Vilas](https://martinagvilas.github.io/) who
-is not part of the core developer team.
+In case of conflict of interest of sktime CoC committee members, you can report
+through the [NumFOCUS CoC process](https://numfocus.org/code-of-conduct),
+or, in case of events, to the organisation at which the event is taking place (e.g., a university).
 
 3.3 What to do if someone is in physical danger
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -202,14 +201,14 @@ respectful and not include any harassing behaviours.
 4.1 The Code of Conduct Committee
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The Code of Conduct committee is:
+The sktime Code of Conduct committee currently consists of:
 
--  Dr Franz Király: f.kiraly@ucl.ac.uk
--  Dr Anthony Bagnall: anthony.bagnall@uea.ac.uk
--  Markus Löning: markus.loning@gmail.com
--  Martina Vilas: martinagonzalezvilas@gmail.com (external member)
+Dr Franz Király (f.kiraly@ucl.ac.uk)
 
-The first three members are part of sktime's core developer team. Martina Vilas is an external member. As the community grows, we will seek to build a more diverse committee.
+We encourage community members to step up to become a member of the committee.
+
+You can use the NumFOCUS CoC reporting process as an alternative entry point
+for reporting, see 3.2.
 
 4.2 Urgent Situations: Acting Unilaterally
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -261,10 +260,7 @@ reporter(s) with an update and projected timeline for resolution.
 The Code of Conduct committee will seek to agree on a resolution by
 consensus of all members investigating the report in question. If the
 committee cannot reach consensus and deadlocks for over a week, Dr Franz
-Király, as lead investigator of the sktime project, will break the tie.
-If Dr Franz Király is unable to take part in the discussion due to a
-conflict of interest, Dr Anthony Bagnall, as an external member of the Code
-of Conduct committee, will make the decision.
+Király, as currently longest serving committee member, will break the tie.
 
 Possible responses may include:
 
@@ -307,9 +303,9 @@ committee is not required to act on this feedback.
 4.5 Conflicts of Interest
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-In the event of any conflict of interest such that Dr Franz Király is
-not able to evaluate or enforce the reported violation, Dr Anthony Bagnall
-will take Dr Franz Király's place if that resolves the conflict of interest. Otherwise Martina Vilas will take Dr Franz Király's place.
+In case of conflict of interest of sktime CoC committee members, you can report
+through the [NumFOCUS CoC process](https://numfocus.org/code-of-conduct),
+or, in case of events, to the organisation at which the event is taking place (e.g., a university).
 
 5 Acknowledgements
 ------------------

@@ -15,6 +15,7 @@ __author__ = [
     "bethrice44",
 ]
 
+import math
 from warnings import warn
 
 import numpy as np
@@ -23,6 +24,7 @@ from scipy.stats import norm
 
 from sktime.datatypes._convert import convert, convert_to
 from sktime.datatypes._utilities import get_slice
+from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.base._base import DEFAULT_ALPHA, BaseForecaster
 from sktime.forecasting.base._sktime import _BaseWindowForecaster
 from sktime.utils.validation import check_window_length
@@ -47,6 +49,16 @@ class NaiveForecaster(_BaseWindowForecaster):
       - "last": last non-NaN row
       - "mean": np.nanmean over rows
     - tile the predictions using the seasonal periodicity
+
+    To compute prediction quantiles, we first estimate the standard error
+    of prediction residuals under the assumption of uncorrelated residuals.
+    The forecast variance is then computed by multiplying the residual
+    variance by a constant. This constant is a small-sample bias adjustment
+    and each method (mean, last, drift) have different formulas for computing
+    the constant. These formulas can be found in the Forecasting:
+    Principles and Practice textbook (Table 5.2) [1]_. Lastly, under the assumption that
+    residuals follow a normal distribution, we use the forecast variance and
+    z-scores of a normal distribution to estimate the prediction quantiles.
 
     Parameters
     ----------
@@ -78,6 +90,12 @@ class NaiveForecaster(_BaseWindowForecaster):
         Window length to use in the `mean` strategy. If None, entire training
             series will be used.
 
+    References
+    ----------
+    .. [1] Hyndman, R.J., & Athanasopoulos, G. (2021) Forecasting:
+        principles and practice, 3rd edition, OTexts: Melbourne, Australia.
+        OTexts.com/fpp3. Accessed on 22 September 2022.
+
     Examples
     --------
     >>> from sktime.datasets import load_airline
@@ -94,6 +112,8 @@ class NaiveForecaster(_BaseWindowForecaster):
         "requires-fh-in-fit": False,
         "handles-missing-data": True,
         "scitype:y": "univariate",
+        "capability:pred_var": True,
+        "capability:pred_int": True,
     }
 
     def __init__(self, strategy="last", window_length=None, sp=1):
@@ -330,6 +350,170 @@ class NaiveForecaster(_BaseWindowForecaster):
 
         return y_pred
 
+    def _predict_quantiles(self, fh, X=None, alpha=0.5):
+        """Compute/return prediction quantiles for a forecast.
+
+        Uses normal distribution as predictive distribution to compute the
+        quantiles.
+
+        Parameters
+        ----------
+        fh : int, list, np.array or ForecastingHorizon
+            Forecasting horizon
+        X : pd.DataFrame, optional (default=None)
+            Exogenous variables are ignored.
+        alpha : float or list of float, optional (default=0.5)
+            A probability or list of, at which quantile forecasts are computed.
+
+        Returns
+        -------
+        pred_quantiles : pd.DataFrame
+            Column has multi-index: first level is variable name from y in fit,
+                second level being the quantile forecasts for each alpha.
+                Quantile forecasts are calculated for each a in alpha.
+            Row index is fh. Entries are quantile forecasts, for var in col index,
+                at quantile probability in second-level col index, for each row index.
+        """
+        y_pred = self.predict(fh)
+        y_pred = convert(y_pred, from_type=self._y_mtype_last_seen, to_type="pd.Series")
+
+        pred_var = self.predict_var(fh)
+        z_scores = norm.ppf(alpha)
+
+        errors = (
+            np.sqrt(pred_var.to_numpy().reshape(len(pred_var), 1)) * z_scores
+        ).reshape(len(y_pred), len(alpha))
+
+        pred_quantiles = pd.DataFrame(
+            errors + y_pred.values.reshape(len(y_pred), 1),
+            columns=pd.MultiIndex.from_product([["Quantiles"], alpha]),
+            index=fh.to_absolute(self.cutoff).to_pandas(),
+        )
+
+        return pred_quantiles
+
+    def _predict_var(self, fh, X=None, cov=False):
+        """Compute/return prediction variance for naive forecasts.
+
+        Variance are computed according to formulas from (Table 5.2)
+        Forecasting: Principles and Practice textbook [1]_.
+
+        Must be run *after* the forecaster has been fitted.
+
+        Parameters
+        ----------
+        fh : int, list, np.array or ForecastingHorizon
+            Forecasting horizon
+        X : pd.DataFrame, optional (default=None)
+            Exogenous variables are ignored.
+        cov : bool, optional (default=False)
+            If True, return the covariance matrix.
+            If False, return the marginal variance.
+
+        Returns
+        -------
+        pred_var :
+            if cov=False, pd.DataFrame with index fh.
+                a vector of same length as fh with predictive marginal variances;
+            if cov=True, pd.DataFrame with index fh and columns fh.
+                a square matrix of size len(fh) with predictive covariance matrix.
+
+        References
+        ----------
+        .. [1] https://otexts.com/fpp3/prediction-intervals.html#benchmark-methods
+        """
+        y = self._y
+        y = convert_to(y, "pd.Series")
+        T = len(y)
+        sp = self.sp
+
+        # Compute "past" residuals
+        if self.strategy == "last":
+            y_res = y - y.shift(self.sp)
+        elif self.strategy == "mean":
+            if not self.window_length:
+                if sp > 1:
+                    # Get the next sp predictions and repeat them
+                    # T / self.sp times to match the length of trained y
+                    # NOTE: +1 extra tile to defend against off-by-one errors
+                    reps = math.ceil(T / sp) + 1
+                    past_fh = ForecastingHorizon(
+                        list(range(1, sp + 1)), is_relative=None, freq=self._cutoff
+                    )
+                    seasonal_means = self._predict(fh=past_fh)
+                    if isinstance(seasonal_means, pd.DataFrame):
+                        seasonal_means = seasonal_means.squeeze()
+                    y_pred = np.tile(seasonal_means.to_numpy(), reps)[0:T]
+                else:
+                    # Since this strategy returns a constant, just predict fh=1 and
+                    # transform the constant into a repeated array
+                    past_fh = ForecastingHorizon(1, is_relative=None, freq=self._cutoff)
+                    y_pred = np.repeat(np.squeeze(self._predict(fh=past_fh)), T)
+            else:
+                if sp > 1:
+                    # Label index by seasonal period
+                    seasons = np.mod(np.arange(T), sp)
+                    # Compute rolling seasonal means
+                    y_pred = (
+                        y.to_frame()
+                        .assign(__sp__=seasons)
+                        # Group observations by their
+                        # seasonal period position
+                        .groupby("__sp__")
+                        # Compute rolling means per
+                        # seasonal period
+                        .rolling(self.window_length)
+                        .mean()
+                        .droplevel("__sp__")
+                        .sort_index()
+                        .squeeze()
+                    )
+                else:
+                    # Compute rolling means
+                    y_pred = y.rolling(self.window_length).mean()
+            y_res = y - y_pred
+        else:
+            # Slope equation from:
+            # https://otexts.com/fpp3/simple-methods.html#drift-method
+            slope = (y.iloc[-1] - y.iloc[-(self.window_length or 0)]) / (T - 1)
+            # Fitted value = previous value + slope
+            # https://github.com/robjhyndman/forecast/blob/master/R/naive.R#L34
+            y_res = y - (y.shift(sp) + slope)
+
+        # Residuals MSE and SE
+        # + 1 degrees of freedom to estimate drift coefficient standard error
+        # https://github.com/robjhyndman/forecast/blob/master/R/naive.R#L79
+        n_nans = np.sum(pd.isna(y_res))
+        mse_res = np.sum(np.square(y_res)) / (T - n_nans - (self.strategy == "drift"))
+        se_res = np.sqrt(mse_res)
+
+        window_length = self.window_length or T
+        # Formulas from:
+        # https://otexts.com/fpp3/prediction-intervals.html (Table 5.2)
+        partial_se_formulas = {
+            "last": lambda h: np.sqrt(h)
+            if sp == 1
+            else np.sqrt(np.floor((h - 1) / sp) + 1),
+            "mean": lambda h: np.repeat(np.sqrt(1 + (1 / window_length)), len(h)),
+            "drift": lambda h: np.sqrt(h * (1 + (h / (T - 1)))),
+        }
+
+        fh_periods = np.array(fh.to_relative(self.cutoff))
+        marginal_se = se_res * partial_se_formulas[self.strategy](fh_periods)
+        marginal_vars = marginal_se**2
+
+        fh_idx = fh.to_absolute(self.cutoff).to_pandas()
+        if cov:
+            fh_size = len(fh)
+            cov_matrix = np.fill_diagonal(
+                np.zeros(shape=(fh_size, fh_size)), marginal_vars
+            )
+            pred_var = pd.DataFrame(cov_matrix, columns=fh_idx, index=fh_idx)
+        else:
+            pred_var = pd.DataFrame(marginal_vars, index=fh_idx)
+
+        return pred_var
+
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
@@ -402,7 +586,6 @@ class NaiveVariance(BaseForecaster):
     >>> var_pred = variance_forecaster.predict_var(fh=[1,2,3])
     """
 
-    _required_parameters = ["forecaster"]
     _tags = {
         "scitype:y": "univariate",
         "requires-fh-in-fit": False,

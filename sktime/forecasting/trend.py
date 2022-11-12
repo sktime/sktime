@@ -12,10 +12,8 @@ from sklearn.base import clone
 from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import PolynomialFeatures
-from statsmodels.tsa.seasonal import STL as _STL
 
 from sktime.forecasting.base import BaseForecaster
-from sktime.forecasting.naive import NaiveForecaster
 from sktime.utils.datetime import _get_duration
 
 
@@ -206,60 +204,71 @@ class PolynomialTrendForecaster(BaseForecaster):
 class STLForecaster(BaseForecaster):
     """Implements STLForecaster based on statsmodels.tsa.seasonal.STL implementation.
 
-    The STLForecaster is using an STL to decompose the given
-    series y into the three components trend, season and residuals [1]_. Then,
-    the forecaster_trend, forecaster_seasonal and forecaster_resid are fitted
-    on the components individually to forecast them also individually. The
-    final forecast is then the sum of the three component forecasts. The STL
-    decomposition is done by means of using the package statsmodels [2]_.
+    The STLForecaster applies the following algorithm, also see [1]_.
+
+    in `fit`:
+    1. use `statsmodels` `STL` [2]_ to decompose the given series `y` into
+        the three components: `trend`, `season` and `residuals`.
+    2. fit clones of `forecaster_trend` to `trend`, `forecaster_seasonal` to `season`,
+        and `forecaster_resid` to `residuals`, using `y`, `X`, `fh` from `fit`.
+        The forecasters are fitted as clones, stored in the attributes
+        `forecaster_trend_`, `forecaster_seasonal_`, `forecaster_resid_`.
+
+    In `predict`, forecasts as follows:
+    1. obtain forecasts `y_pred_trend` from `forecaster_trend_`,
+        `y_pred_seasonal` from `forecaster_seasonal_`, and
+        `y_pred_residual` from `forecaster_resid_`, using `X`, `fh`, from `predict`.
+    2. recompose `y_pred` as `y_pred = y_pred_trend + y_pred_seasonal + y_pred_residual`
+    3. return `y_pred`
+
+    `update` refits entirely, i.e., behaves as `fit` on all data seen so far.
 
     Parameters
     ----------
-    sp : int, optional
-        Length of the seasonal period for STL, by default 2.
-        It's also the default sp for the forecasters
+    sp : int, optional, default=2. Passed to `statsmodels` `STL`.
+        Length of the seasonal period passed to `statsmodels` `STL`.
         (forecaster_seasonal, forecaster_resid) that are None. The
         default forecaster_trend does not get sp as trend is independent
         to seasonality.
-    seasonal : int, optional
+    seasonal : int, optional., default=7. Passed to `statsmodels` `STL`.
         Length of the seasonal smoother. Must be an odd integer, and should
         normally be >= 7 (default).
-    trend : {int, None}, optional
+    trend : {int, None}, optional, default=None. Passed to `statsmodels` `STL`.
         Length of the trend smoother. Must be an odd integer. If not provided
         uses the smallest odd integer greater than
         1.5 * period / (1 - 1.5 / seasonal), following the suggestion in
         the original implementation.
-    low_pass : {int, None}, optional
+    low_pass : {int, None}, optional, default=None. Passed to `statsmodels` `STL`.
         Length of the low-pass filter. Must be an odd integer >=3. If not
         provided, uses the smallest odd integer > period.
-    seasonal_deg : int, optional
+    seasonal_deg : int, optional, default=1. Passed to `statsmodels` `STL`.
         Degree of seasonal LOESS. 0 (constant) or 1 (constant and trend).
-    trend_deg : int, optional
+    trend_deg : int, optional, default=1. Passed to `statsmodels` `STL`.
         Degree of trend LOESS. 0 (constant) or 1 (constant and trend).
-    low_pass_deg : int, optional
+    low_pass_deg : int, optional, default=1. Passed to `statsmodels` `STL`.
         Degree of low pass LOESS. 0 (constant) or 1 (constant and trend).
-    robust : bool, optional
+    robust : bool, optional, default=False. Passed to `statsmodels` `STL`.
         Flag indicating whether to use a weighted version that is robust to
         some forms of outliers.
-    seasonal_jump : int, optional
+    seasonal_jump : int, optional, default=1. Passed to `statsmodels` `STL`.
         Positive integer determining the linear interpolation step. If larger
         than 1, the LOESS is used every seasonal_jump points and linear
         interpolation is between fitted points. Higher values reduce
         estimation time.
-    trend_jump : int, optional
+    trend_jump : int, optional, default=1. Passed to `statsmodels` `STL`.
         Positive integer determining the linear interpolation step. If larger
         than 1, the LOESS is used every trend_jump points and values between
         the two are linearly interpolated. Higher values reduce estimation
         time.
-    low_pass_jump : int, optional
+    low_pass_jump : int, optional, default=1. Passed to `statsmodels` `STL`.
         Positive integer determining the linear interpolation step. If larger
         than 1, the LOESS is used every low_pass_jump points and values between
         the two are linearly interpolated. Higher values reduce estimation
         time.
-    inner_iter: int, optional
+    inner_iter: int or None, optional, default=None. Passed to `statsmodels` `STL`.
         Number of iterations to perform in the inner loop. If not provided uses 2 if
         robust is True, or 5 if not. This param goes into STL.fit() from statsmodels.
-    outer_iter: int, optional
+    outer_iter: int or None, optional, default=None. Passed to `statsmodels` `STL`.
         Number of iterations to perform in the outer loop. If not provided uses 15 if
         robust is True, or 0 if not. This param goes into STL.fit() from statsmodels.
     forecaster_trend : sktime forecaster, optional
@@ -320,6 +329,7 @@ class STLForecaster(BaseForecaster):
         "y_inner_mtype": "pd.Series",  # which types do _fit, _predict, assume for y?
         "X_inner_mtype": "pd.DataFrame",  # which types do _fit, _predict, assume for X?
         "requires-fh-in-fit": False,  # is forecasting horizon already required in fit?
+        "python_dependencies": "statsmodels",
     }
 
     def __init__(
@@ -374,6 +384,10 @@ class STLForecaster(BaseForecaster):
         -------
         self : returns an instance of self.
         """
+        from statsmodels.tsa.seasonal import STL as _STL
+
+        from sktime.forecasting.naive import NaiveForecaster
+
         self._stl = _STL(
             y.values,
             period=self.sp,
@@ -452,6 +466,8 @@ class STLForecaster(BaseForecaster):
         -------
         self : reference to self
         """
+        from statsmodels.tsa.seasonal import STL as _STL
+
         self._stl = _STL(
             y.values,
             period=self.sp,

@@ -106,6 +106,12 @@ ESTIMATOR_TAG_REGISTER = [
         "is the transformer symmetric, i.e., t(x,y)=t(y,x) always?",
     ),
     (
+        "scitype:X",
+        "param_est",
+        "str",
+        "which scitypes does X internally support?",
+    ),
+    (
         "scitype:y",
         "forecaster",
         ("str", ["univariate", "multivariate", "both"]),
@@ -130,7 +136,7 @@ ESTIMATOR_TAG_REGISTER = [
     ),
     (
         "X_inner_mtype",
-        ["forecaster", "transformer", "transformer-pairwise-panel"],
+        ["forecaster", "transformer", "transformer-pairwise-panel", "param_est"],
         (
             "list",
             [
@@ -195,13 +201,26 @@ ESTIMATOR_TAG_REGISTER = [
     ),
     (
         "capability:multivariate",
-        ["classifier", "early_classifier"],
+        [
+            "classifier",
+            "early_classifier",
+            "param_est",
+            "regressor",
+            "transformer-pairwise",
+            "transformer-pairwise-panel",
+        ],
         "bool",
         "can the classifier classify time series with 2 or more variables?",
     ),
     (
         "capability:unequal_length",
-        ["classifier", "early_classifier", "transformer"],
+        [
+            "classifier",
+            "early_classifier",
+            "regressor",
+            "transformer",
+            "transformer-pairwise-panel",
+        ],
         "bool",
         "can the estimator handle unequal length time series?",
     ),
@@ -210,7 +229,14 @@ ESTIMATOR_TAG_REGISTER = [
     # Will be merged after refactor completion.
     (
         "capability:missing_values",
-        ["classifier", "early_classifier"],
+        [
+            "classifier",
+            "early_classifier",
+            "param_est",
+            "regressor",
+            "transformer-pairwise",
+            "transformer-pairwise-panel",
+        ],
         "bool",
         "can the classifier handle missing data (NA, np.nan) in inputs?",
     ),
@@ -237,14 +263,6 @@ ESTIMATOR_TAG_REGISTER = [
         "classifier",
         "bool",
         "contract time setting, does the estimator support limiting max fit time?",
-    ),
-    (
-        "capability:early_prediction",
-        "classifier",
-        "bool",
-        "is the classifier an early classification algorithm? Can predict make "
-        "classifications on incomplete time series and make a decision on if the "
-        "prediction is trustworthy?",
     ),
     (
         "capability:multithreading",
@@ -335,6 +353,12 @@ ESTIMATOR_TAG_REGISTER = [
         "estimator",
         ("list", "str"),
         "python dependencies of estimator as str or list of str",
+    ),
+    (
+        "remember_data",
+        ["forecaster", "transformer"],
+        "bool",
+        "whether estimator remembers all data seen as self._X, self._y, etc",
     ),
 ]
 

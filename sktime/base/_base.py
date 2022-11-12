@@ -25,7 +25,7 @@ Tag inspection and setter methods
     inspect tags (one tag)        - get_tag(tag_name: str, tag_value_default=None)
     inspect tags (class method)   - get_class_tags()
     inspect tags (one tag, class) - get_class_tag(tag_name:str, tag_value_default=None)
-    setting dynamic tags          - set_tag(**tag_dict: dict)
+    setting dynamic tags          - set_tags(**tag_dict: dict)
     set/clone dynamic tags        - clone_tags(estimator, tag_names=None)
 
 Blueprinting: resetting and cloning, post-init state with same hyper-parameters
@@ -57,11 +57,101 @@ __all__ = ["BaseEstimator", "BaseObject"]
 import warnings
 from copy import deepcopy
 
-from baseobject import BaseObject
+from skbase import BaseObject as _BaseObject
+from sklearn import BaseEstimator as _BaseEstimator
 from sklearn import clone
 from sklearn.ensemble._base import _set_random_states
 
 from sktime.exceptions import NotFittedError
+
+
+class BaseObject(_BaseObject):
+    """Base class for parametric objects with tags sktime.
+
+    Extends skbase BaseObject with additional features.
+    """
+
+    def save(self, path=None):
+        """Save serialized self to bytes-like object or to (.zip) file.
+
+        Behaviour:
+        if `path` is None, returns an in-memory serialized self
+        if `path` is a file location, stores self at that location as a zip file
+
+        saved files are zip files with following contents:
+        _metadata - contains class of self, i.e., type(self)
+        _obj - serialized self. This class uses the default serialization (pickle).
+
+        Parameters
+        ----------
+        path : None or file location (str or Path)
+            if None, self is saved to an in-memory object
+            if file location, self is saved to that file location. If:
+                path="estimator" then a zip file `estimator.zip` will be made at cwd.
+                path="/home/stored/estimator" then a zip file `estimator.zip` will be
+                stored in `/home/stored/`.
+
+        Returns
+        -------
+        if `path` is None - in-memory serialized self
+        if `path` is file location - ZipFile with reference to the file
+        """
+        import pickle
+        import shutil
+        from pathlib import Path
+        from zipfile import ZipFile
+
+        if path is None:
+            return (type(self), pickle.dumps(self))
+        if not isinstance(path, (str, Path)):
+            raise TypeError(
+                "`path` is expected to either be a string or a Path object "
+                f"but found of type:{type(path)}."
+            )
+
+        path = Path(path) if isinstance(path, str) else path
+        path.mkdir()
+
+        pickle.dump(type(self), open(path / "_metadata", "wb"))
+        pickle.dump(self, open(path / "_obj", "wb"))
+
+        shutil.make_archive(base_name=path, format="zip", root_dir=path)
+        shutil.rmtree(path)
+        return ZipFile(path.with_name(f"{path.stem}.zip"))
+
+    @classmethod
+    def load_from_serial(cls, serial):
+        """Load object from serialized memory container.
+
+        Parameters
+        ----------
+        serial : 1st element of output of `cls.save(None)`
+
+        Returns
+        -------
+        deserialized self resulting in output `serial`, of `cls.save(None)`
+        """
+        import pickle
+
+        return pickle.loads(serial)
+
+    @classmethod
+    def load_from_path(cls, serial):
+        """Load object from file location.
+
+        Parameters
+        ----------
+        serial : result of ZipFile(path).open("object)
+
+        Returns
+        -------
+        deserialized self resulting in output at `path`, of `cls.save(path)`
+        """
+        import pickle
+        from zipfile import ZipFile
+
+        with ZipFile(serial, "r") as file:
+            return pickle.loads(file.open("_obj").read())
 
 
 class TagAliaserMixin:
@@ -283,12 +373,11 @@ class BaseEstimator(BaseObject):
         """
         if not self.is_fitted:
             raise NotFittedError(
-                f"parameter estimator of type {type(self).__name__} has not been "
+                f"estimator of type {type(self).__name__} has not been "
                 "fitted yet, please call fit on data before get_fitted_params"
             )
 
         fitted_params = dict()
-        c_dict = self._components()
 
         def sh(x):
             """Shorthand to remove all underscores at end of a string."""
@@ -297,14 +386,62 @@ class BaseEstimator(BaseObject):
             else:
                 return x
 
-        for c in c_dict.keys():
-            c_f_params = c_dict[c].get_fitted_params()
-            c_f_params = {f"{sh(c)}__{k}": c_f_params[k] for k in c_f_params.keys()}
-            fitted_params.update(c_f_params)
+        # add all nested parameters from components that are sktime BaseObject
+        c_dict = self._components()
+        for c, comp in c_dict.items():
+            if isinstance(comp, BaseEstimator) and comp._is_fitted:
+                c_f_params = comp.get_fitted_params()
+                c_f_params = {f"{sh(c)}__{k}": v for k, v in c_f_params.items()}
+                fitted_params.update(c_f_params)
 
+        # add non-nested fitted params of self
         fitted_params.update(self._get_fitted_params())
 
+        # add all nested parameters from components that are sklearn estimators
+        # we do this recursively as we have to reach into nested sklearn estimators
+        n_new_params = 42
+        old_new_params = fitted_params
+        while n_new_params > 0:
+            new_params = dict()
+            for c, comp in old_new_params.items():
+                if isinstance(comp, _BaseEstimator):
+                    c_f_params = self._get_fitted_params_default(comp)
+                    c_f_params = {f"{sh(c)}__{k}": v for k, v in c_f_params.items()}
+                    new_params.update(c_f_params)
+            fitted_params.update(new_params)
+            old_new_params = new_params.copy()
+            n_new_params = len(new_params)
+
         return fitted_params
+
+    def _get_fitted_params_default(self, obj=None):
+        """Obtain fitted params of object, per sklearn convention.
+
+        Extracts a dict with {paramstr : paramvalue} contents,
+        where paramstr are all string names of "fitted parameters".
+
+        A "fitted attribute" of obj is one that ends in "_" but does not start with "_".
+        "fitted parameters" are names of fitted attributes, minus the "_" at the end.
+
+        Parameters
+        ----------
+        obj : any object, optional, default=self
+
+        Returns
+        -------
+        fitted_params : dict with str keys
+            fitted parameters, keyed by names of fitted parameter
+        """
+        obj = obj if obj else self
+
+        # default retrieves all self attributes ending in "_"
+        # and returns them with keys that have the "_" removed
+        fitted_params = [attr for attr in dir(obj) if attr.endswith("_")]
+        fitted_params = [x for x in fitted_params if not x.startswith("_")]
+        fitted_params = [x for x in fitted_params if hasattr(obj, x)]
+        fitted_param_dict = {p[:-1]: getattr(obj, p) for p in fitted_params}
+
+        return fitted_param_dict
 
     def _get_fitted_params(self):
         """Get fitted parameters.
@@ -316,15 +453,10 @@ class BaseEstimator(BaseObject):
 
         Returns
         -------
-        fitted_params : dict
+        fitted_params : dict with str keys
+            fitted parameters, keyed by names of fitted parameter
         """
-        # default retrieves all self attributes ending in "_"
-        # and returns them with keys that have the "_" removed
-        fitted_params = [attr for attr in dir(self) if attr.endswith("_")]
-        fitted_params = [x for x in fitted_params if not x.startswith("_")]
-        fitted_param_dict = {p[:-1]: getattr(self, p) for p in fitted_params}
-
-        return fitted_param_dict
+        return self._get_fitted_params_default()
 
 
 def _clone_estimator(base_estimator, random_state=None):
