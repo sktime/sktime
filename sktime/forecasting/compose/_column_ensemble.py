@@ -6,6 +6,7 @@
 __author__ = ["GuzalBulatova", "mloning", "fkiraly"]
 __all__ = ["ColumnEnsembleForecaster"]
 
+import numpy as np
 import pandas as pd
 
 from sktime.base._meta import flatten
@@ -138,6 +139,11 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
         # replace ints by column names
         obj = self._get_indices(self._y, obj)
 
+        # deal with numpy int by coercing to python int
+        if np.issubdtype(type(obj), np.integer):
+            obj = int(obj)
+
+        # coerce to pd.Index
         if isinstance(obj, (int, str)):
             return pd.Index([obj])
         else:
@@ -402,6 +408,10 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
         """Convert integer indices if necessary."""
 
         def _get_index(y, ix):
+            # deal with numpy int by coercing to python int
+            if np.issubdtype(type(ix), np.integer):
+                ix = int(ix)
+
             if isinstance(ix, int) and ix not in y.columns and ix < len(y.columns):
                 return y.columns[ix]
             else:
@@ -491,9 +501,9 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
         """
         # imports
         from sktime.forecasting.naive import NaiveForecaster
-        from sktime.forecasting.theta import ThetaForecaster
+        from sktime.forecasting.trend import TrendForecaster
 
         params1 = {"forecasters": NaiveForecaster()}
-        params2 = {"forecasters": ThetaForecaster()}
+        params2 = {"forecasters": TrendForecaster()}
 
         return [params1, params2]
