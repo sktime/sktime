@@ -58,8 +58,8 @@ import warnings
 from copy import deepcopy
 
 from skbase import BaseObject as _BaseObject
-from sklearn import BaseEstimator as _BaseEstimator
 from sklearn import clone
+from sklearn.base import BaseEstimator as _BaseEstimator
 from sklearn.ensemble._base import _set_random_states
 
 from sktime.exceptions import NotFittedError
