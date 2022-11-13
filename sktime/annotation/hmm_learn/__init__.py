@@ -7,8 +7,10 @@ __all__ = [
     "BaseHMMLearn",
     "GaussianHMM",
     "GMMHMM",
+    "CategoricalHMM",
 ]
 
 from sktime.annotation.hmm_learn.base import BaseHMMLearn
+from sktime.annotation.hmm_learn.categorical import CategoricalHMM
 from sktime.annotation.hmm_learn.gaussian import GaussianHMM
 from sktime.annotation.hmm_learn.gmm import GMMHMM
