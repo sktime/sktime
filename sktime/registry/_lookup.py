@@ -154,7 +154,7 @@ def all_estimators(
         return_names=return_names,
         as_dataframe=as_dataframe,
         return_tags=return_tags,
-        suppress_import_stdout=suppress_import_sdout,
+        suppress_import_stdout=suppress_import_stdout,
         package_name="sktime",
         path=ROOT,
         ignore_modules=MODULES_TO_IGNORE,
