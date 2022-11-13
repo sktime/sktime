@@ -143,6 +143,8 @@ def all_estimators(
 
     if estimator_types:
         clsses = _check_estimator_types(estimator_types)
+        if not isinstance(estimator_types, list):
+            estimator_types = [estimator_types]
         CLASS_LOOKUP = {x: y for x, y in zip(estimator_types, clsses)}
     else:
         CLASS_LOOKUP = None
