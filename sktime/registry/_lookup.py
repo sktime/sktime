@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""
-Registry lookup methods.
+"""Registry lookup methods.
 
 This module exports the following methods for registry lookup:
 
@@ -16,14 +15,12 @@ __author__ = ["fkiraly", "mloning", "katiebuc", "miraep8", "xloem"]
 # all_estimators is also based on the sklearn utility of the same name
 
 
-import inspect
-import pkgutil
 from copy import deepcopy
-from importlib import import_module
 from operator import itemgetter
 from pathlib import Path
 
 import pandas as pd
+from skbase import all_objects
 
 from sktime.base import BaseEstimator
 from sktime.registry._base_classes import (
@@ -139,182 +136,30 @@ def all_estimators(
     ----------
     Modified version from scikit-learn's `all_estimators()`.
     """
-    import io
-    import sys
-    import warnings
-
     MODULES_TO_IGNORE = ("tests", "setup", "contrib", "benchmarking", "utils", "all")
 
     all_estimators = []
     ROOT = str(Path(__file__).parent.parent)  # sktime package root directory
 
-    def _is_abstract(klass):
-        if not (hasattr(klass, "__abstractmethods__")):
-            return False
-        if not len(klass.__abstractmethods__):
-            return False
-        return True
-
-    def _is_private_module(module):
-        return "._" in module
-
-    def _is_base_class(name):
-        return name.startswith("_") or name.startswith("Base")
-
-    def _is_estimator(name, klass):
-        # Check if klass is subclass of base estimators, not an base class itself and
-        # not an abstract class
-        return (
-            issubclass(klass, VALID_ESTIMATOR_TYPES)
-            and klass not in VALID_ESTIMATOR_TYPES
-            and not _is_abstract(klass)
-            and not _is_base_class(name)
-        )
-
-    def _walk(root, exclude=None, prefix=""):
-        """Return all modules contained as sub-modules (recursive) as string list.
-
-        Unlike pkgutil.walk_packages, does not import modules on exclusion list.
-
-        Parameters
-        ----------
-        root : Path
-            root path in which to look for submodules
-        exclude : tuple of str or None, optional, default = None
-            list of sub-modules to ignore in the return, including sub-modules
-        prefix: str, optional, default = ""
-            this str is appended to all strings in the return
-
-        Yields
-        ------
-        str : sub-module strings
-            iterates over all sub-modules of root
-            that do not contain any of the strings on the `exclude` list
-            string is prefixed by the string `prefix`
-        """
-
-        def _is_ignored_module(module):
-            if exclude is None:
-                return False
-            module_parts = module.split(".")
-            return any(part in exclude for part in module_parts)
-
-        for _, module_name, is_pgk in pkgutil.iter_modules(path=[root]):
-            if not _is_ignored_module(module_name):
-                yield f"{prefix}{module_name}"
-                if is_pgk:
-                    yield from (
-                        f"{prefix}{module_name}.{x}"
-                        for x in _walk(f"{root}/{module_name}", exclude=exclude)
-                    )
-
-    # Ignore deprecation warnings triggered at import time and from walking
-    # packages
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", category=FutureWarning)
-        warnings.simplefilter("module", category=ImportWarning)
-        warnings.filterwarnings(
-            "ignore", category=UserWarning, message=".*has been moved to.*"
-        )
-        for module_name in _walk(
-            root=ROOT, exclude=MODULES_TO_IGNORE, prefix="sktime."
-        ):
-
-            # Filter modules
-            if _is_private_module(module_name):
-                continue
-
-            try:
-                if suppress_import_stdout:
-                    # setup text trap, import, then restore
-                    sys.stdout = io.StringIO()
-                    module = import_module(module_name)
-                    sys.stdout = sys.__stdout__
-                else:
-                    module = import_module(module_name)
-                classes = inspect.getmembers(module, inspect.isclass)
-
-                # Filter classes
-                estimators = [
-                    (name, klass)
-                    for name, klass in classes
-                    if _is_estimator(name, klass)
-                ]
-                all_estimators.extend(estimators)
-            except ModuleNotFoundError as e:
-                # Skip missing soft dependencies
-                if "soft dependency" not in str(e):
-                    raise e
-                warnings.warn(str(e), ImportWarning)
-
-    # Drop duplicates
-    all_estimators = set(all_estimators)
-
-    # Filter based on given estimator types
-    def _is_in_estimator_types(estimator, estimator_types):
-        return any(
-            [
-                issubclass(estimator, estimator_type)
-                for estimator_type in estimator_types
-            ]
-        )
-
     if estimator_types:
-        estimator_types = _check_estimator_types(estimator_types)
-        all_estimators = [
-            (name, estimator)
-            for name, estimator in all_estimators
-            if _is_in_estimator_types(estimator, estimator_types)
-        ]
-
-    # Filter based on given exclude list
-    if exclude_estimators:
-        exclude_estimators = _check_list_of_str_or_error(
-            exclude_estimators, "exclude_estimators"
-        )
-        all_estimators = [
-            (name, estimator)
-            for name, estimator in all_estimators
-            if name not in exclude_estimators
-        ]
-
-    # Drop duplicates, sort for reproducibility
-    # itemgetter is used to ensure the sort does not extend to the 2nd item of
-    # the tuple
-    all_estimators = sorted(all_estimators, key=itemgetter(0))
-
-    if filter_tags:
-        all_estimators = [
-            (n, est) for (n, est) in all_estimators if _check_tag_cond(est, filter_tags)
-        ]
-
-    # remove names if return_names=False
-    if not return_names:
-        all_estimators = [estimator for (name, estimator) in all_estimators]
-        columns = ["estimator"]
+        clsses = _check_estimator_types(estimator_types)
+        CLASS_LOOKUP = {x : y for x, y in zip(estimator_types, clsses)}
     else:
-        columns = ["name", "estimator"]
+        CLASS_LOOKUP = None
 
-    # add new tuple entries to all_estimators for each tag in return_tags:
-    if return_tags:
-        return_tags = _check_list_of_str_or_error(return_tags, "return_tags")
-        # enrich all_estimators by adding the values for all return_tags tags:
-        if all_estimators:
-            if isinstance(all_estimators[0], tuple):
-                all_estimators = [
-                    (name, est) + _get_return_tags(est, return_tags)
-                    for (name, est) in all_estimators
-                ]
-            else:
-                all_estimators = [
-                    tuple([est]) + _get_return_tags(est, return_tags)
-                    for est in all_estimators
-                ]
-        columns = columns + return_tags
-
-    # convert to pandas.DataFrame if as_dataframe=True
-    if as_dataframe:
-        all_estimators = pd.DataFrame(all_estimators, columns=columns)
+    all_estimators = all_objects(
+        object_types=estimator_types,
+        filter_tags=filter_tags,
+        exclude_estimators=exclude_estimators,
+        return_names=return_names,
+        as_dataframe=as_dataframe,
+        return_tags=return_tags,
+        suppress_import_stdout=suppress_import_sdout,
+        package_name="sktime",
+        path=ROOT,
+        ignore_modules=MODULES_TO_IGNORE,
+        class_lookup=CLASS_LOOKUP,
+    )
 
     return all_estimators
 
