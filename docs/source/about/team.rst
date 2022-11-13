@@ -9,16 +9,15 @@ A list of all contributors can be found `here <contributors.md>`_.
 
 Community Council
 -----------------
-
 .. list-table::
    :header-rows: 1
 
    * - Name
      - GitHub ID
-   * - Franz Kiraly
+   * - Franz Király
      - :user:`fkiraly`
    * - Guzal Bulatova
-    - :user: `GuzalBulatova`
+     - :user:`GuzalBulatova`
    * - Martin Walter
      - :user:`aiwalter`
 
@@ -43,10 +42,8 @@ Code of Conduct Committee
 
    * - Name
      - GitHub ID
-   * - Franz Kiraly
+   * - Franz Király
      - :user:`fkiraly`
-   * - Martina Vilas
-     - :user:`martinagvilas`
 
 Core Developers
 ---------------
@@ -62,7 +59,7 @@ Core Developers
      - :user:`chrisholder`
    * - Daniel Bartling
      - :user:`danbartl`
-   * - Franz Kiraly
+   * - Franz Király
      - :user:`fkiraly`
    * - Freddy A Boulton
      - :user:`freddyaboulton`
@@ -84,6 +81,8 @@ Core Developers
      - :user:`miraep8`
    * - Patrick Schäfer
      - :user:`patrickzib`
+   * - Ryan Kuhns
+     - :user:`rnkuhns`
    * - Stanislav Khrapov
      - :user:`khrapovs`
    * - Svea Marie Meyer
@@ -113,9 +112,7 @@ Former Core Developers (inactive)
      - :user:`matteogales`
    * - Patrick Rockenschaub
      - :user:`prockenschaub`
-   * - Ryan Kuhns
-     - :user:`rnkuhns`
    * - Sajaysurya Ganesh
      - :user:`sajaysurya`
-   * -
+   * - Anonymous upon contributor's request
      - :user:`big-o`

@@ -596,7 +596,10 @@
       "contributions": [
         "bug",
         "code",
-        "doc"
+        "data",
+        "doc",
+        "review",
+        "test"
       ]
     },
     {
