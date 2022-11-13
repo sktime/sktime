@@ -138,7 +138,7 @@ def all_estimators(
     """
     MODULES_TO_IGNORE = ("tests", "setup", "contrib", "benchmarking", "utils", "all")
 
-    all_estimators = []
+    result = []
     ROOT = str(Path(__file__).parent.parent)  # sktime package root directory
 
     if estimator_types:
@@ -149,7 +149,7 @@ def all_estimators(
     else:
         CLASS_LOOKUP = None
 
-    all_estimators = all_objects(
+    result = all_objects(
         object_types=estimator_types,
         filter_tags=filter_tags,
         exclude_estimators=exclude_estimators,
@@ -163,7 +163,7 @@ def all_estimators(
         class_lookup=CLASS_LOOKUP,
     )
 
-    return all_estimators
+    return result
 
 
 def _check_list_of_str_or_error(arg_to_check, arg_name):
