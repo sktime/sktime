@@ -1835,6 +1835,17 @@
         "bug",
         "ideas"
       ]
+    },
+    {
+      "login": "michaelfeil",
+      "name": "Michael Feil",
+      "avatar_url": "https://avatars.githubusercontent.com/u/63565275?v=4",
+      "profile": "michaelfeil.eu",
+      "contributions": [
+        "code",
+        "test",
+        "ideas"
+      ]
     }
   ]
 }
