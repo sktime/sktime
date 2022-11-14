@@ -82,7 +82,7 @@ class LSTMFCNNetwork(BaseDeepNetwork):
         """
         from tensorflow import keras
 
-        from sktime.utils.layers import AttentionLSTM
+        from sktime.networks.lstmfcn_layers import AttentionLSTM
 
         input_layer = keras.layers.Input(shape=input_shape)
 
