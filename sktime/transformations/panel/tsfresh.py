@@ -2,7 +2,7 @@
 """tsfresh interface class."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-__author__ = ["AyushmaanSeth", "mloning", "Alwin Wang"]
+__author__ = ["AyushmaanSeth", "mloning", "Alwin Wang", "MatthewMiddlehurst"]
 __all__ = ["TSFreshFeatureExtractor", "TSFreshRelevantFeatureExtractor"]
 
 from warnings import warn
@@ -26,7 +26,7 @@ class _TSFreshFeatureExtractor(BaseTransformer):
         "scitype:instancewise": True,  # is this an instance-wise transform?
         "X_inner_mtype": "nested_univ",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
-        "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
+        "fit_is_empty": True,  # is fit empty and can be skipped? Yes = True
         "python_dependencies": "tsfresh",
         "python_version": "<3.10",
     }
@@ -61,12 +61,12 @@ class _TSFreshFeatureExtractor(BaseTransformer):
 
         # _get_extraction_params should be after the init because this imports tsfresh
         # and the init checks for python version and tsfresh being present
-        self.default_fc_parameters_ = None
         self.default_fc_parameters_ = self._get_extraction_params()
 
     def _get_extraction_params(self):
         """Set default parameters from tsfresh."""
         # make n_jobs compatible with scikit-learn
+        n_jobs = self.n_jobs
         self.n_jobs = check_n_jobs(self.n_jobs)
 
         # lazy imports to avoid hard dependency
@@ -106,6 +106,8 @@ class _TSFreshFeatureExtractor(BaseTransformer):
                 if value is not None:
                     extraction_params[name] = value
 
+        self.n_jobs = n_jobs
+
         # Convert convenience string arguments to tsfresh parameters classes
         fc_param_lookup = {
             "minimal": MinimalFCParameters(),
@@ -144,6 +146,7 @@ class _TSFreshFeatureExtractor(BaseTransformer):
         else:
             self.kind_to_fc_parameters_ = self.kind_to_fc_parameters
         extraction_params["kind_to_fc_parameters"] = self.kind_to_fc_parameters_
+
         return extraction_params
 
 
@@ -241,10 +244,33 @@ class TSFreshFeatureExtractor(_TSFreshFeatureExtractor):
     >>> X_transform2 = ts_custom.fit_transform(X_train) # doctest: +SKIP
     """
 
-    _tags = {
-        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
-        "fit_is_empty": True,  # is fit empty and can be skipped? Yes = True
-    }
+    def __init__(
+        self,
+        default_fc_parameters="efficient",
+        kind_to_fc_parameters=None,
+        chunksize=None,
+        n_jobs=1,
+        show_warnings=True,
+        disable_progressbar=False,
+        impute_function=None,
+        profiling=None,
+        profiling_filename=None,
+        profiling_sorting=None,
+        distributor=None,
+    ):
+        super(TSFreshFeatureExtractor, self).__init__(
+            default_fc_parameters=default_fc_parameters,
+            kind_to_fc_parameters=kind_to_fc_parameters,
+            chunksize=chunksize,
+            n_jobs=n_jobs,
+            show_warnings=show_warnings,
+            disable_progressbar=disable_progressbar,
+            impute_function=impute_function,
+            profiling=profiling,
+            profiling_filename=profiling_filename,
+            profiling_sorting=profiling_sorting,
+            distributor=distributor,
+        )
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
@@ -279,14 +305,13 @@ class TSFreshFeatureExtractor(_TSFreshFeatureExtractor):
         # lazy imports to avoid hard dependency
         from tsfresh import extract_features
 
-        extraction_params = self._get_extraction_params()
         Xt = extract_features(
             Xt,
             column_id="index",
             column_value="value",
             column_kind="column",
             column_sort="time_index",
-            **extraction_params,
+            **self.default_fc_parameters_,
         )
 
         # When using the long input format, tsfresh seems to sort the index,
@@ -323,7 +348,7 @@ class TSFreshFeatureExtractor(_TSFreshFeatureExtractor):
             {
                 "disable_progressbar": True,
                 "show_warnings": False,
-                "default_fc_parameters": "efficient",
+                "default_fc_parameters": "minimal",
             },
             {
                 "disable_progressbar": True,
@@ -333,6 +358,7 @@ class TSFreshFeatureExtractor(_TSFreshFeatureExtractor):
         ]
 
 
+# todo 0.15.0: change default_fc_parameters docstring to "comprehensive" default"
 class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
     """Transformer for extracting and selecting features.
 
@@ -342,6 +368,7 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
     """
 
     _tags = {
+        "scitype:instancewise": False,  # is this an instance-wise transform?
         "requires_y": True,  # does y need to be passed in fit?
         "X_inner_mtype": "nested_univ",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "pd_Series_Table",
@@ -370,7 +397,6 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
         hypotheses_independent=None,
         ml_task="auto",
     ):
-
         super(TSFreshRelevantFeatureExtractor, self).__init__(
             default_fc_parameters=default_fc_parameters,
             kind_to_fc_parameters=kind_to_fc_parameters,
@@ -384,6 +410,7 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
             profiling_sorting=profiling_sorting,
             distributor=distributor,
         )
+
         self.test_for_binary_target_binary_feature = (
             test_for_binary_target_binary_feature
         )
@@ -393,6 +420,8 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
         self.fdr_level = fdr_level
         self.hypotheses_independent = hypotheses_independent
         self.ml_task = ml_task
+
+        self.default_fs_parameters_ = self._get_selection_params()
 
     def _get_selection_params(self):
         """Set default values from tsfresh."""
@@ -424,6 +453,101 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
 
         return selection_params
 
+    def fit_transform(self, X, y=None):
+        """Fit to data, then transform it.
+
+        Fits the transformer to X and y and returns a transformed version of X.
+
+        State change:
+            Changes state to "fitted".
+
+        Writes to self:
+        _is_fitted : flag is set to True.
+        _X : X, coerced copy of X, if remember_data tag is True
+            possibly coerced to inner type or update_data compatible type
+            by reference, when possible
+        model attributes (ending in "_") : dependent on estimator
+
+        Parameters
+        ----------
+        X : Series or Panel, any supported mtype
+            Data to be transformed, of python type as follows:
+                Series: pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
+                Panel: pd.DataFrame with 2-level MultiIndex, list of pd.DataFrame,
+                    nested pd.DataFrame, or pd.DataFrame in long/wide format
+                subject to sktime mtype format specifications, for further details see
+                    examples/AA_datatypes_and_datasets.ipynb
+        y : Series or Panel, default=None
+            Additional data, e.g., labels for transformation
+
+        Returns
+        -------
+        transformed version of X
+        type depends on type of X and scitype:transform-output tag:
+            |   `X`    | `tf-output`  |     type of return     |
+            |----------|--------------|------------------------|
+            | `Series` | `Primitives` | `pd.DataFrame` (1-row) |
+            | `Panel`  | `Primitives` | `pd.DataFrame`         |
+            | `Series` | `Series`     | `Series`               |
+            | `Panel`  | `Series`     | `Panel`                |
+            | `Series` | `Panel`      | `Panel`                |
+        instances in return correspond to instances in `X`
+        combinations not in the table are currently not supported
+
+        Explicitly, with examples:
+            if `X` is `Series` (e.g., `pd.DataFrame`) and `transform-output` is `Series`
+                then the return is a single `Series` of the same mtype
+                Example: detrending a single series
+            if `X` is `Panel` (e.g., `pd-multiindex`) and `transform-output` is `Series`
+                then the return is `Panel` with same number of instances as `X`
+                    (the transformer is applied to each input Series instance)
+                Example: all series in the panel are detrended individually
+            if `X` is `Series` or `Panel` and `transform-output` is `Primitives`
+                then the return is `pd.DataFrame` with as many rows as instances in `X`
+                Example: i-th row of the return has mean and variance of the i-th series
+            if `X` is `Series` and `transform-output` is `Panel`
+                then the return is a `Panel` object of type `pd-multiindex`
+                Example: i-th instance of the output is the i-th window running over `X`
+        """
+        self.reset()
+        if y is None:
+            raise ValueError("SupervisedIntervals requires `y` in `fit`.")
+        X, y, metadata = self._check_X_y(X=X, y=y, return_metadata=True)
+
+        # lazy imports to avoid hard dependency
+        from tsfresh.transformers.feature_selector import FeatureSelector
+
+        self.extractor_ = TSFreshFeatureExtractor(
+            default_fc_parameters=self.default_fc_parameters,
+            kind_to_fc_parameters=self.kind_to_fc_parameters,
+            chunksize=self.chunksize,
+            n_jobs=self.n_jobs,
+            show_warnings=self.show_warnings,
+            disable_progressbar=self.disable_progressbar,
+            profiling=self.profiling,
+            profiling_filename=self.profiling_filename,
+            profiling_sorting=self.profiling_sorting,
+        )
+
+        self.selector_ = FeatureSelector(
+            n_jobs=self.default_fc_parameters_["n_jobs"],
+            chunksize=self.default_fc_parameters_["chunksize"],
+            ml_task=self.ml_task,
+            **self.default_fs_parameters_,
+        )
+
+        Xt = self.extractor_.fit_transform(X)
+        Xt = self.selector_.fit_transform(Xt, y)
+        Xt = Xt.reindex(X.index)
+
+        self._is_fitted = True
+
+        if not hasattr(self, "_output_convert") or self._output_convert == "auto":
+            X_out = self._convert_output(Xt, metadata=metadata)
+        else:
+            X_out = Xt
+        return X_out
+
     def _fit(self, X, y=None):
         """Fit.
 
@@ -453,13 +577,11 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
             profiling_sorting=self.profiling_sorting,
         )
 
-        selection_params = self._get_selection_params()
-        extraction_param = self._get_extraction_params()
         self.selector_ = FeatureSelector(
-            n_jobs=extraction_param["n_jobs"],
-            chunksize=extraction_param["chunksize"],
+            n_jobs=self.default_fc_parameters_["n_jobs"],
+            chunksize=self.default_fc_parameters_["chunksize"],
             ml_task=self.ml_task,
-            **selection_params,
+            **self.default_fs_parameters_,
         )
 
         Xt = self.extractor_.fit_transform(X)
@@ -505,6 +627,7 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         params = {
+            "default_fc_parameters": "efficient",
             "disable_progressbar": True,
             "show_warnings": False,
             "fdr_level": 0.01,
