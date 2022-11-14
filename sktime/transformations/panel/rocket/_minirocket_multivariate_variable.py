@@ -18,16 +18,46 @@ from sktime.transformations.base import BaseTransformer
 class MiniRocketMultivariateVariable(BaseTransformer):
     """MINIROCKET (Multivariate, unequal length).
 
-    MINImally RandOm Convolutional KErnel Transform
+    MINImally RandOm Convolutional KErnel Transform. [1]_
 
     **Multivariate**
     **unequal length**
 
     A provisional and naive extension of MINIROCKET to multivariate input
-    with unequal length.  Use class MiniRocket for univariate input, and
-    MiniRocketMultivariate to equal length multivariate input.
+    with unequal length provided by the authors [2]_ .  For better
+    performance, use the sktime class MiniRocket for univariate input,
+    and MiniRocketMultivariate to equal length multivariate input.
 
-    @article{dempster_etal_2020,
+    Parameters
+    ----------
+    num_kernels              : int, number of random convolutional kernels
+                               (default 10_000).
+                               Reduced to the closest multiple of 84.
+    max_dilations_per_kernel : int, maximum number of dilations per kernel (default 32)
+    reference_length         : int or str, length of reference, (default `'max'`), str
+                               options are `'max'`, `'mean'`, `'median'`, `'min'`
+    n_jobs                   : int, optional (default=1) The number of jobs to run in
+    parallel for `transform`. ``-1`` means using all processors.
+    pad_value_short_series   : float or None, padding series with len<9 to value
+                                    (default None)
+    random_state             : int, random seed (optional, default None)
+
+    Examples
+    --------
+    >>> from sktime.transformations.panel.rocket import MiniRocketMultivariateVariable
+    >>> from sktime.datasets import load_japanese_vowels
+    >>> # load multivariate and unequal length dataset
+    >>> X_train, _ = load_japanese_vowels(split="train", return_X_y=True)
+    >>> X_test, _ = load_japanese_vowels(split="test", return_X_y=True)
+    >>> pre_clf = MiniRocketMultivariateVariable(
+    num_kernels=9996, pad_value_short_series=0.0)
+    >>> pre_clf.fit(X_train, y=None)
+    MiniRocketMultivariateVariable(...)
+    >>> X_transformed = pre_clf.transform(X_test)
+
+    References
+    ----------
+    .. [1] @article{dempster_etal_2020,
       author  = {Dempster, Angus and Schmidt, Daniel F and Webb, Geoffrey I},
       title   = {{MINIROCKET}: A Very Fast (Almost) Deterministic Transform for
                  Time Series Classification},
@@ -35,17 +65,8 @@ class MiniRocketMultivariateVariable(BaseTransformer):
       journal = {arXiv:2012.08791}
     }
 
-    Parameters
-    ----------
-    num_kernels              : int, number of random convolutional kernels
-                               (default 10_000)
-    max_dilations_per_kernel : int, maximum number of dilations per kernel (default 32)
-    reference_length         : int or str, length of reference, default "max"
-    n_jobs                   : int, optional (default=1) The number of jobs to run in
-    parallel for `transform`. ``-1`` means using all processors.
-    pad_value_short_series : float | None, padding series with len<9 to value
-                                    (optional, default None)
-    random_state             : int, random seed (optional, default None)
+    .. [2] Angus Dempster, Daniel F Schmidt, Geoffrey I Webb
+           https://github.com/angus924/minirocket
     """
 
     _tags = {
@@ -107,14 +128,24 @@ class MiniRocketMultivariateVariable(BaseTransformer):
 
         Parameters
         ----------
-        X : pd.DataFrame of shape, nested
+        X : pd.DataFrame
+            Dataframe with n_instances-rows and n_dimensions-columns,
+            each cell containing a series_length-long array.
+            n_dimensions is equal across all instances in `X`, and
+            series_length is constant within each instance.
         y : ignored argument for interface compatibility
 
         Returns
         -------
         self
+
+        Raises
+        ------
+        ValueError
+            If any multivariate series_length in X is < 9 and
+            pad_value_short_series is set to None
         """
-        X_2D, lenghts_1darray = _nested_dataframe_to_transposed2D_array_and_len_list(
+        X_2d_t, lenghts_1darray = _nested_dataframe_to_transposed2D_array_and_len_list(
             X, pad=self.pad_value_short_series
         )
 
@@ -146,14 +177,14 @@ class MiniRocketMultivariateVariable(BaseTransformer):
                 "X is of equal length, consider using MiniRocketMultivariate for "
                 "speedup and stability instead."
             )
-        if X_2D.shape[0] == 1:
+        if X_2d_t.shape[0] == 1:
             warnings.warn(
                 "X is univariate, consider using MiniRocket as Univariante for "
                 "speedup and stability instead."
             )
 
         self.parameters = _fit_multi_var(
-            X_2D,
+            X_2d_t,
             L=lenghts_1darray,
             reference_length=self._fitted_reference_length,
             num_features=self.num_kernels,
@@ -175,9 +206,15 @@ class MiniRocketMultivariateVariable(BaseTransformer):
 
         Returns
         -------
-            pandas DataFrame, size (n_instances, num_kernels)
+            pandas.DataFrame, size (n_instances, num_kernels)
+
+        Raises
+        ------
+        ValueError
+            If any multivariate series_length in X is < 9 and
+            pad_value_short_series is set to None
         """
-        X_2D, L = _nested_dataframe_to_transposed2D_array_and_len_list(
+        X_2d_t, L = _nested_dataframe_to_transposed2D_array_and_len_list(
             X, pad=self.pad_value_short_series
         )
         # change n_jobs dependend on value and existing cores
@@ -187,7 +224,7 @@ class MiniRocketMultivariateVariable(BaseTransformer):
         else:
             n_jobs = self.n_jobs
         set_num_threads(n_jobs)
-        X_ = _transform_multi_var(X_2D, L, self.parameters)
+        X_ = _transform_multi_var(X_2d_t, L, self.parameters)
         set_num_threads(prev_threads)
         return pd.DataFrame(X_)
 
@@ -195,25 +232,30 @@ class MiniRocketMultivariateVariable(BaseTransformer):
 def _nested_dataframe_to_transposed2D_array_and_len_list(
     X: List[pd.DataFrame], pad: Union[int, float, None]=0
 ):
-    """Fits dilations and biases to input time series.
+    """converts a nested dataframe to a 2D array and a list of lengths
 
     Parameters
     ----------
     X : List of dataframes
-            List of length n_instances, with
-            dataframes of series_length-rows and n_dimensions-columns
+        List of length n_instances, with
+        dataframes of series_length-rows and n_dimensions-columns
     pad : float or None. if float/int,pads multivariate series with 'pad',
-           so that each series has at least length 9.
-           if None, no padding is applied.
-
+        so that each series has at least length 9.
+        if None, no padding is applied.
 
     Returns
-        np.array: 2D array of shape =
-         [n_dimensions, sum(length_series(i) for i in n_instances)],
-         np.float32
-        np.array: 1D array of shape = [n_instances]
-          with length of each series,
-          np.int32
+    ----------
+    np.array: 2D array of shape =
+        [n_dimensions, sum(length_series(i) for i in n_instances)],
+        np.float32
+    np.array: 1D array of shape = [n_instances]
+        with length of each series, np.int32
+
+    Raises
+        ------
+        ValueError
+            If any multivariate series_length in X is < 9 and
+            pad_value_short_series is set to None
     """
     if not len(X):
         raise ValueError("X is empty")
@@ -252,20 +294,16 @@ def _nested_dataframe_to_transposed2D_array_and_len_list(
             lenghts.append(_x_shape[0])
             vec.append(_x.values)
 
-    X_2D = np.vstack(vec).T.astype(dtype=np.float32)
+    X_2d_t = np.vstack(vec).T.astype(dtype=np.float32)
     lengths = np.array(lenghts, dtype=np.int32)
 
-    if not lengths.sum() == X_2D.shape[1]:
+    if not lengths.sum() == X_2d_t.shape[1]:
         raise ValueError("X_new and lengths do not match. check input dimension")
 
-    return X_2D, lengths
+    return X_2d_t, lengths
 
 
-# code below from https://github.com/angus924/minirocket
-# Angus Dempster, Daniel F Schmidt, Geoffrey I Webb
-
-# MiniRocket: A Very Fast (Almost) Deterministic Transform for Time Series
-# Classification
+# code below from the orignal authors: https://github.com/angus924/minirocket
 
 
 @njit(

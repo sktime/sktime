@@ -226,6 +226,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
     <tr>
       <td align="center"><a href="https://github.com/vollmersj"><img src="https://avatars2.githubusercontent.com/u/12613127?v=4?s=100" width="100px;" alt="vollmersj"/><br /><sub><b>vollmersj</b></sub></a><br /><a href="https://github.com/sktime/sktime/commits?author=vollmersj" title="Documentation">📖</a></td>
       <td align="center"><a href="https://github.com/xiaobenbenecho"><img src="https://avatars.githubusercontent.com/u/17461849?v=4?s=100" width="100px;" alt="xiaobenbenecho"/><br /><sub><b>xiaobenbenecho</b></sub></a><br /><a href="https://github.com/sktime/sktime/commits?author=xiaobenbenecho" title="Code">💻</a></td>
+      <td align="center"><a href="https://github.com/michaelfeil"><img src="https://avatars.githubusercontent.com/u/63565275?v=4?s=100" width="100px;" alt="Michael Feil"/><br /><sub><b>Michael Feil</b></sub></a><br /><a href="https://github.com/sktime/sktime/commits?author=michaelfeil" title="Code">💻</a> <a href="https://github.com/sktime/sktime/commits?author=michaelfeil" title="Tests">⚠️</a></td>
     </tr>
   </tbody>
 </table>
