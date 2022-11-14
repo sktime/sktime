@@ -23,8 +23,9 @@ class MiniRocketMultivariateVariable(BaseTransformer):
     **Multivariate**
     **unequal length**
 
-    A provisional and naive extension of MINIROCKET to multivariate input with unequal length.  Use
-    class MiniRocket for univariate input, and MiniRocketMultivariate to equal length multivariate input.
+    A provisional and naive extension of MINIROCKET to multivariate input
+    with unequal length.  Use class MiniRocket for univariate input, and
+    MiniRocketMultivariate to equal length multivariate input.
 
     @article{dempster_etal_2020,
       author  = {Dempster, Angus and Schmidt, Daniel F and Webb, Geoffrey I},
@@ -42,8 +43,8 @@ class MiniRocketMultivariateVariable(BaseTransformer):
     reference_length         : int or str, length of reference, default "max"
     n_jobs                   : int, optional (default=1) The number of jobs to run in
     parallel for `transform`. ``-1`` means using all processors.
-    add_padding_short_series : int | None, padding series with len<9 to value
-                                    (optional, default 0, None to disable)
+    pad_value_short_series : float | None, padding series with len<9 to value
+                                    (optional, default None)
     random_state             : int, random seed (optional, default None)
     """
 
@@ -51,9 +52,7 @@ class MiniRocketMultivariateVariable(BaseTransformer):
         "univariate-only": False,
         "fit_is_empty": False,
         "scitype:transform-input": "Panel",
-        # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Panel",
-        # what is the scitype of y: None (not needed), Primitives, Series, Panel
         "capability:unequal_length": True,
         "scitype:transform-labels": "None",
         "scitype:instancewise": False,  # is this an instance-wise transform?
@@ -67,15 +66,15 @@ class MiniRocketMultivariateVariable(BaseTransformer):
         num_kernels=10000,
         max_dilations_per_kernel=32,
         reference_length="max",
-        add_padding_short_series=None,
+        pad_value_short_series=None,
         n_jobs=1,
         random_state=None,
     ):
         self.num_kernels = num_kernels
         self.max_dilations_per_kernel = max_dilations_per_kernel
         self.reference_length = reference_length
-        self.fitted_reference_length = None
-        self.add_padding_short_series = add_padding_short_series
+        self._fitted_reference_length = None
+        self.pad_value_short_series = pad_value_short_series
 
         self.n_jobs = n_jobs
         self.random_state = random_state
@@ -96,8 +95,9 @@ class MiniRocketMultivariateVariable(BaseTransformer):
             (reference_length in self._reference_modes)
         ):
             raise ValueError(
-                "reference_length in MiniRocketMultivariateVariable must be int>=9 or 'max', 'mean', 'median', "
-                f"but found reference_length={reference_length}"
+                "reference_length in MiniRocketMultivariateVariable must be int>=9 or "
+                "'max', 'mean', 'median', but found reference_length="
+                f"{reference_length}"
             )
 
         super(MiniRocketMultivariateVariable, self).__init__()
@@ -114,8 +114,8 @@ class MiniRocketMultivariateVariable(BaseTransformer):
         -------
         self
         """
-        X_2D, lenghts_1darray = _nested_dataframe_to_2D_array_and_list(
-            X, pad=self.add_padding_short_series
+        X_2D, lenghts_1darray = _nested_dataframe_to_transposed2D_array_and_len_list(
+            X, pad=self.pad_value_short_series
         )
 
         if isinstance(self.reference_length, int):
@@ -125,34 +125,37 @@ class MiniRocketMultivariateVariable(BaseTransformer):
             _reference_length = getattr(np, self.reference_length)(lenghts_1darray)
         else:
             raise ValueError(
-                f"reference_length in MiniRocketMultivariate must be int or 'max', 'mean', 'median', "
-                f"but found {type(self.reference_length)}"
+                "reference_length in MiniRocketMultivariateVariable must be int>=9 or "
+                "'max', 'mean', 'median', but found reference_length="
+                f"{self.reference_length}"
             )
-        self.fitted_reference_length = int(max(9, _reference_length))        
+        self._fitted_reference_length = int(max(9, _reference_length))
 
         if lenghts_1darray.min() < 9:
             failed_index = np.where(lenghts_1darray < 9)[0]
             raise ValueError(
                 (
-                    f"X must be >= 9 for all samples, but found miniumum to be {lenghts_1darray.min()};"
-                    f"at index {failed_index}, pad shorter series "
-                    "so that n_timepoints >= 9 for all samples."
+                    f"X must be >= 9 for all samples, but found miniumum to be "
+                    f"{lenghts_1darray.min()}; at index {failed_index}, pad shorter "
+                    "series so that n_timepoints >= 9 for all samples."
                 )
             )
 
         if lenghts_1darray.min() == lenghts_1darray.max():
             warnings.warn(
-                "X is of equal length, consider using MiniRocketMultivariate for speedup and stability instead.."
+                "X is of equal length, consider using MiniRocketMultivariate for "
+                "speedup and stability instead."
             )
         if X_2D.shape[0] == 1:
             warnings.warn(
-                "X is univariate, consider using MiniRocket as Univariante for speedup and stability instead."
+                "X is univariate, consider using MiniRocket as Univariante for "
+                "speedup and stability instead."
             )
 
         self.parameters = _fit_multi_var(
             X_2D,
             L=lenghts_1darray,
-            reference_length= self.fitted_reference_length,
+            reference_length=self._fitted_reference_length,
             num_features=self.num_kernels,
             max_dilations_per_kernel=self.max_dilations_per_kernel,
             seed=self.random_state_,
@@ -174,8 +177,8 @@ class MiniRocketMultivariateVariable(BaseTransformer):
         -------
             pandas DataFrame, size (n_instances, num_kernels)
         """
-        X_2D, L = _nested_dataframe_to_2D_array_and_list(
-            X, pad=self.add_padding_short_series
+        X_2D, L = _nested_dataframe_to_transposed2D_array_and_len_list(
+            X, pad=self.pad_value_short_series
         )
         # change n_jobs dependend on value and existing cores
         prev_threads = get_num_threads()
@@ -189,8 +192,8 @@ class MiniRocketMultivariateVariable(BaseTransformer):
         return pd.DataFrame(X_)
 
 
-def _nested_dataframe_to_2D_array_and_list(
-    X: List[pd.DataFrame], pad: Union[int, None]=0
+def _nested_dataframe_to_transposed2D_array_and_len_list(
+    X: List[pd.DataFrame], pad: Union[int, float, None]=0
 ):
     """Fits dilations and biases to input time series.
 
@@ -199,11 +202,18 @@ def _nested_dataframe_to_2D_array_and_list(
     X : List of dataframes
             List of length n_instances, with
             dataframes of series_length-rows and n_dimensions-columns
-    pad : in, None, pads multivariate series
+    pad : float or None. if float/int,pads multivariate series with 'pad',
+           so that each series has at least length 9.
+           if None, no padding is applied.
+
 
     Returns
-        np.array: 2D array of shape = [n_dimensions, sum(length_series(i) for i in n_instances)], np.float32
-        np.array: 1D array of shape = [n_instances] with length of each series, np.int32
+        np.array: 2D array of shape =
+         [n_dimensions, sum(length_series(i) for i in n_instances)],
+         np.float32
+        np.array: 1D array of shape = [n_instances]
+          with length of each series,
+          np.int32
     """
     if not len(X):
         raise ValueError("X is empty")
@@ -228,13 +238,15 @@ def _nested_dataframe_to_2D_array_and_list(
                 # emergency: pad with zeros up to 9.
                 lenghts.append(9)
                 vec.append(
-                    np.vstack([_x.values, np.full([9 - _x_shape[0], _x_shape[1]], pad)])
+                    np.vstack(
+                        [_x.values, np.full([9 - _x_shape[0], _x_shape[1]], float(pad))]
+                    )
                 )
             else:
                 raise ValueError(
                     "X series_length must be >= 9 for all samples"
-                    f"but sample with series_length {_x_shape[0]} found."
-                    "Consider padding, discard, or setting a add_padding_short_series value"
+                    f"but sample with series_length {_x_shape[0]} found. Consider"
+                    " padding, discard, or setting a pad_value_short_series value"
                 )
         else:
             lenghts.append(_x_shape[0])
@@ -249,14 +261,11 @@ def _nested_dataframe_to_2D_array_and_list(
     return X_2D, lengths
 
 
+# code below from https://github.com/angus924/minirocket
 # Angus Dempster, Daniel F Schmidt, Geoffrey I Webb
 
 # MiniRocket: A Very Fast (Almost) Deterministic Transform for Time Series
 # Classification
-#
-
-# ** This is an experimental extension of MiniRocket to variable-length,
-#    multivariate input.  It may be inefficient in terms of both storage and computation. **
 
 
 @njit(
@@ -277,13 +286,15 @@ def _fit_biases_multi_var(
 ):
     if seed is not None:
         np.random.seed(seed)
-    num_examples = len(L)
+    n_instances = len(L)
 
     num_channels, _ = X.shape
 
     # equivalent to:
     # >>> from itertools import combinations
-    # >>> indices = np.array([_ for _ in combinations(np.arange(9), 3)], dtype = np.int32)
+    # >>> indices = np.array(
+    # >>>    [_ for _ in combinations(np.arange(9), 3)], dtype = np.int32
+    # >>> )
     indices = np.array(
         (
             0, 1, 2, 0, 1, 3, 0, 1, 4, 0, 1, 5, 0, 1, 6, 0, 1, 7, 0, 1, 8,
@@ -335,11 +346,11 @@ def _fit_biases_multi_var(
                 num_channels_start:num_channels_end
             ]
 
-            example_index = np.random.randint(num_examples)
+            example_index = np.random.randint(n_instances)
 
             input_length = np.int64(L[example_index])
 
-            b = np.sum(L[0:example_index + 1])
+            b = np.sum(L[0: example_index + 1])
             a = b - input_length
 
             _X = X[channels_this_combination, a:b]
@@ -437,7 +448,7 @@ def _quantiles_multi_var(n):
 def _fit_multi_var(
     X,
     L,
-    reference_length=None,
+    reference_length: int,
     num_features=10_000,
     max_dilations_per_kernel=32,
     seed=None,
@@ -448,10 +459,10 @@ def _fit_multi_var(
     # * change *reference_length* according to what is appropriate for your
     #   application, e.g., L.max(), L.mean(), np.median(L)
     # * use _fit_multi_var(...) with an appropriate subset of time series, e.g., for
-    #   reference_length = L.mean(), call _fit_multi_var(...) using only time series of at
-    #   least length L.mean() [see filter_by_length(...)]
+    #   reference_length = L.mean(), call _fit_multi_var(...) using only time series
+    #   of at least length L.mean() [see filter_by_length(...)]
     if reference_length is None:
-        reference_length = L.max()
+        raise ValueError("reference_length must be specified")
 
     num_channels, _ = X.shape
 
@@ -523,7 +534,7 @@ def _PPV(a, b):
 )
 def _transform_multi_var(X, L, parameters):
 
-    num_examples = len(L)
+    n_instances = len(L)
 
     num_channels, _ = X.shape
 
@@ -537,7 +548,9 @@ def _transform_multi_var(X, L, parameters):
 
     # equivalent to:
     # >>> from itertools import combinations
-    # >>> indices = np.array([_ for _ in combinations(np.arange(9), 3)], dtype = np.int32)
+    # >>> indices = np.array(
+    # >>>     [_ for _ in combinations(np.arange(9), 3)], dtype = np.int32
+    # >>> )
     indices = np.array(
         (
             0, 1, 2, 0, 1, 3, 0, 1, 4, 0, 1, 5, 0, 1, 6, 0, 1, 7, 0, 1, 8,
@@ -561,13 +574,13 @@ def _transform_multi_var(X, L, parameters):
 
     num_features = num_kernels * np.sum(num_features_per_dilation)
 
-    features = np.zeros((num_examples, num_features), dtype=np.float32)
+    features = np.zeros((n_instances, num_features), dtype=np.float32)
 
-    for example_index in prange(num_examples):
+    for example_index in prange(n_instances):
 
         input_length = np.int64(L[example_index])
 
-        b = np.sum(L[0:example_index + 1])
+        b = np.sum(L[0: example_index + 1])
         a = b - input_length
 
         _X = X[:, a:b]

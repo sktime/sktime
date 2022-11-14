@@ -19,7 +19,7 @@ def test_minirocket_multivariate_variable_on_japanese_vowels():
     num_kernels = 10_000
     minirocket_mv_var = MiniRocketMultivariateVariable(
         num_kernels=num_kernels, 
-        add_padding_short_series=0,
+        pad_value_short_series=0,
         reference_length="max",
         max_dilations_per_kernel=32,
         n_jobs=1, 
