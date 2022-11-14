@@ -31,7 +31,7 @@ Recommended steps for first time contributors, or to get started with regular co
 4. Once your first PR is merged and you’ve seen how things work, you could consider contributing more regularly: optionally, continue attending the Friday community collaboration sessions and stand-ups; or, optionally, `apply for mentoring <https://www.sktime.org/en/stable/get_involved/mentoring.html#mentoring>`_
 
 .. _Discord: https://discord.com/invite/gqSab2K
-.. _Slack: https://join.slack.com/t/sktime-group/shared_invite/zt-62i7aejn-vXc3nOWF26S_P3VXFPWisQ
+.. _Slack: https://join.slack.com/t/sktime-group/shared_invite/zt-1jphqjpnk-AfxAR8IEfIVkf4By8cT7tQ
 
 .. note::
 
