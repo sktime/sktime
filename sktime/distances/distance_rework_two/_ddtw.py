@@ -1,16 +1,11 @@
 # -*- coding: utf-8 -*-
 import numpy as np
+from numba import njit
 
-from sktime.distances.distance_rework_two._base import (
-    ElasticDistance,
-    ElasticDistanceReturn,
-    get_bounding_matrix,
-)
-from sktime.distances.distance_rework_two._squared import _SquaredDistance
-
-squared_distance = _SquaredDistance().distance_factory()
+from sktime.distances.distance_rework_two._dtw import _DtwDistance
 
 
+@njit(fastmath=True, cache=True)
 def average_of_slope(q: np.ndarray) -> np.ndarray:
     r"""Compute the average of a slope between points.
 
@@ -42,7 +37,7 @@ def average_of_slope(q: np.ndarray) -> np.ndarray:
     return 0.25 * q[:, 2:] + 0.5 * q[:, 1:-1] - 0.75 * q[:, :-2]
 
 
-class _DdtwDistance(ElasticDistance):
+class _DdtwDistance(_DtwDistance):
 
     _numba_distance = True
     _cache = True
@@ -51,32 +46,3 @@ class _DdtwDistance(ElasticDistance):
     @staticmethod
     def _preprocess_timeseries(x, *args):
         return average_of_slope(x)
-
-    @staticmethod
-    def _distance(
-        x: np.ndarray,
-        y: np.ndarray,
-        window: float = None,
-        itakura_max_slope: float = None,
-        bounding_matrix: np.ndarray = None,
-        *args
-    ) -> ElasticDistanceReturn:
-        x_size = x.shape[1]
-        y_size = y.shape[1]
-        bounding_matrix = get_bounding_matrix(
-            x, y, window, itakura_max_slope, bounding_matrix
-        )
-        cost_matrix = np.full((x_size + 1, y_size + 1), np.inf)
-        cost_matrix[0, 0] = 0.0
-
-        for i in range(x_size):
-            for j in range(y_size):
-                if np.isfinite(bounding_matrix[i, j]):
-                    squared_dist = squared_distance(x[:, i], y[:, j])
-                    cost_matrix[i + 1, j + 1] = squared_dist + min(
-                        cost_matrix[i, j + 1],
-                        cost_matrix[i + 1, j],
-                        cost_matrix[i, j],
-                    )
-
-        return cost_matrix[-1, -1], cost_matrix[1:, 1:]

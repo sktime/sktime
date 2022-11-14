@@ -18,52 +18,113 @@ class BaseDistance(ABC):
     _cache = False
     _fastmath = False
 
-    def distance_factory(
-        self,
-        strategy: str = "dependent",
-    ) -> DistanceCallable:
-        """Create a distance callable.
+    def distance_factory(self, strategy: str = "dependent"):
+        """Create a distance function.
 
         Parameters
         ----------
-        strategy : str
+        strategy : str, default="dependent"
             Strategy to use for distance calculation. Either "dependent" or
             "independent".
 
         Returns
         -------
         Callable
-            Distance callable.
+            Distance function.
         """
-        distance_callable = self._distance
+        distance_callable = self._convert_to_numba(self._distance)
+
         if strategy == "independent":
-            independent_distance_callable = distance_callable
-            if (
-                not type(self)._independent_distance
-                == BaseDistance._independent_distance
-            ):
-                independent_distance_callable = self._independent_distance
-            distance_callable = self._create_independent_callable(
-                independent_distance_callable
-            )
+            independent = self._independent_factory(distance_callable)
+            _distance_callable = self._convert_to_numba(independent)
         else:
-            preprocess_ts = self._preprocess_timeseries
-            if self._numba_distance:
-                distance_callable = njit(cache=self._cache, fastmath=self._fastmath)(
-                    distance_callable
-                )
+            _distance_callable = distance_callable
 
-            def _preprocess_callable(x, y, *args):
-                _preprocess_x = preprocess_ts(x)
-                _preprocess_y = preprocess_ts(y)
-                return distance_callable(_preprocess_x, _preprocess_y, *args)
+        preprocess_ts = self._preprocess_ts_factory(strategy=strategy)
 
-            if self._numba_distance:
-                distance_callable = njit(cache=self._cache, fastmath=self._fastmath)(
-                    _preprocess_callable
-                )
+        def _preprocess_distance_callable(x: np.ndarray, y: np.ndarray, *args):
+            _x = preprocess_ts(x, *args)
+            _y = preprocess_ts(y, *args)
+            return _distance_callable(_x, _y, *args)
 
-        return self._create_preprocess_distance_callable(distance_callable)
+        preprocess_distance_callable = self._convert_to_numba(
+            _preprocess_distance_callable
+        )
+
+        return self._result_process_factory(preprocess_distance_callable)
+
+    def _result_process_factory(self, distance_callable: Callable):
+        """Create a function to process the distance result.
+
+        Parameters
+        ----------
+        distance_callable: Callable
+            Distance function to process.
+
+        Returns
+        -------
+        Callable
+            Processed distance function.
+        """
+        if type(self)._result_process != BaseDistance._result_process:
+            result_callback = self._convert_to_numba(self._result_process)
+
+            def _result_process(x, y, *args):
+                return result_callback(distance_callable(x, y, *args), *args)
+
+            return self._convert_to_numba(_result_process)
+
+        return distance_callable
+
+    def _preprocess_ts_factory(self, strategy: str = "dependent"):
+        """Create a function to preprocess time series.
+
+        Parameters
+        ----------
+        strategy : str, default="dependent"
+            Strategy to use for preprocessing time series. Either "dependent"
+            or "independent".
+
+        Returns
+        -------
+        Callable
+            Preprocessing function.
+        """
+
+        def _convert_2d(x: np.ndarray, *args):
+            if x.ndim == 1:
+                # Use this instead of numpy because weird numba errors sometimes with
+                # np.reshape
+                x_size = x.shape[0]
+                _process_x = np.zeros((1, x_size))
+                _process_x[0] = x
+                return _process_x
+            return x
+
+        convert_2d = self._convert_to_numba(_convert_2d)
+
+        # If preprocessing overwritten then add it to preprocessing function
+        if type(self)._preprocess_timeseries != BaseDistance._preprocess_timeseries:
+            _preprocess_timeseries = self._convert_to_numba(self._preprocess_timeseries)
+
+            def _convert_ts(x: np.ndarray, *args):
+                _x = convert_2d(x, *args)
+                return _preprocess_timeseries(_x, *args)
+
+            convert_ts = self._convert_to_numba(_convert_ts)
+
+        else:
+            convert_ts = convert_2d
+
+        if strategy == "independent":
+
+            def _independent_preprocess_ts(x: np.ndarray, *args):
+                _x = convert_ts(x)
+                return _x.reshape((_x.shape[0], 1, _x.shape[1]))
+
+            return self._convert_to_numba(_independent_preprocess_ts)
+
+        return convert_ts
 
     def distance(self, x: np.ndarray, y: np.ndarray, *args, **kwargs):
         """Compute the distance between two time series.
@@ -105,114 +166,26 @@ class BaseDistance(ABC):
         """
         ...
 
-    def _create_preprocess_distance_callable(
-        self, distance_callable: Callable
-    ) -> DistanceCallable:
-        """Create a distance callable that preprocesses the data.
-
-        For the distance functions to work it is assumed a 2d array is given. This
-        function inserts in checks and formatting to ensure the ts is in the
-        correct format.
+    def _convert_to_numba(self, func: Callable):
+        """Check if needed to convert to numba function.
 
         Parameters
         ----------
-        distance_callable: Callable
-            Distance callable.
+        func : Callable
+            Function to convert to numba.
 
         Returns
         -------
         Callable
-            Preprocessed distance callable.
-        """
-
-        def _preprocess_ts(x: np.ndarray):
-            if x.ndim == 1:
-                x_size = x.shape[0]
-                _process_x = np.zeros((1, x_size))
-                _process_x[0] = x
-                return _process_x
-            return x
-
-        if self._numba_distance:
-            _preprocess_ts = njit(cache=self._cache, fastmath=self._fastmath)(
-                _preprocess_ts
-            )
-
-        def _formatted_ts_distance(_x: np.ndarray, _y: np.ndarray, *args):
-            _x = _preprocess_ts(_x)
-            _y = _preprocess_ts(_y)
-            return distance_callable(_x, _y, *args)
-
-        if self._numba_distance:
-            _formatted_ts_distance = njit(cache=self._cache, fastmath=self._fastmath)(
-                _formatted_ts_distance
-            )
-
-        return _formatted_ts_distance
-
-    def _create_independent_callable(
-        self, distance_callable: Callable
-    ) -> DistanceCallable:
-        """Create independent distance callable.
-
-        Parameters
-        ----------
-        distance_callable: Callable
-            Independent distance callable.
-
-        Returns
-        -------
-        Callable
-            Independent distance callable.
+            Numba function.
         """
         if self._numba_distance:
-            distance_callable = njit(cache=self._cache, fastmath=self._fastmath)(
-                distance_callable
-            )
-
-        _distance_callable = self._independent_factory(distance_callable)
-
-        if self._numba_distance:
-            _distance_callable = njit(cache=self._cache, fastmath=self._fastmath)(
-                _distance_callable
-            )
-
-        if type(self)._preprocess_timeseries != BaseDistance._preprocess_timeseries:
-            _preprocess_timeseries = self._preprocess_timeseries
-
-            def _distance_callable_with_user_preprocess_hook(
-                _x: np.ndarray, _y: np.ndarray, *args
-            ):
-                _preprocess_x = _preprocess_timeseries(_x)
-                _preprocess_y = _preprocess_timeseries(_y)
-                return _distance_callable(_preprocess_x, _preprocess_y, *args)
-
-            if self._numba_distance:
-                _distance_callable_with_user_preprocess_hook = njit(
-                    cache=self._cache, fastmath=self._fastmath
-                )(_distance_callable_with_user_preprocess_hook)
-        else:
-            _distance_callable_with_user_preprocess_hook = _distance_callable
-
-        # If base distance not overwritten then need to add additional dim so that
-        # dependent distance can be used.
-        def _preprocessing_callable(_x: np.ndarray, _y: np.ndarray, *args):
-            _x_preprocess = _x.reshape((_x.shape[0], 1, _x.shape[1]))
-            _y_preprocess = _y.reshape((_y.shape[0], 1, _y.shape[1]))
-            return _distance_callable_with_user_preprocess_hook(
-                _x_preprocess, _y_preprocess, *args
-            )
-
-        if self._numba_distance:
-            _preprocessing_callable = njit(cache=self._cache, fastmath=self._fastmath)(
-                _preprocessing_callable
-            )
-
-        return _preprocessing_callable
+            return njit(cache=self._cache, fastmath=self._fastmath)(func)
+        return func
 
     @staticmethod
-    def _preprocess_timeseries(x):
-        """Hook to change time series processing behaviour.
+    def _preprocess_timeseries(x, *args):
+        """Change time series processing behaviour.
 
         Parameters
         ----------
@@ -225,6 +198,22 @@ class BaseDistance(ABC):
             Preprocessed time series.
         """
         return x
+
+    @staticmethod
+    def _result_process(result: float, *args):
+        """Change the result of the distance calculation.
+
+        Parameters
+        ----------
+        result : float
+            Distance.
+
+        Returns
+        -------
+        float
+            Distance.
+        """
+        return result
 
     @staticmethod
     def _independent_factory(distance_callable: Callable):
