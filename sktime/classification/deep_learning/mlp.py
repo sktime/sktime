@@ -14,7 +14,7 @@ _check_dl_dependencies(severity="warning")
 
 
 class MLPClassifier(BaseDeepClassifier):
-    """Multi Layer Perceptron Network (MLP), as described in [1].
+    """Multi Layer Perceptron Network (MLP), as described in [1]_.
 
     Parameters
     ----------
@@ -42,15 +42,14 @@ class MLPClassifier(BaseDeepClassifier):
 
     Notes
     -----
-    .. .. [1]  Network originally defined in:
-    @inproceedings{wang2017time, title={Time series classification from
-    scratch with deep neural networks: A strong baseline}, author={Wang,
-    Zhiguang and Yan, Weizhong and Oates, Tim}, booktitle={2017
-    International joint conference on neural networks (IJCNN)}, pages={
-    1578--1585}, year={2017}, organization={IEEE} }
-
     Adapted from the implementation from source code
     https://github.com/hfawaz/dl-4-tsc/blob/master/classifiers/mlp.py
+
+    References
+    ----------
+    .. [1] Wang et. al, Time series classification from
+    scratch with deep neural networks: A strong baseline,
+    International joint conference on neural networks (IJCNN), 2017.
 
     Examples
     --------

@@ -149,7 +149,9 @@ class _TSFreshFeatureExtractor(BaseTransformer):
 
 # todo 0.15.0: change default_fc_parameters docstring to "comprehensive" default"
 class TSFreshFeatureExtractor(_TSFreshFeatureExtractor):
-    """Transformer for extracting time series features.
+    """Transformer for extracting time series features via `tsfresh.extract_features`.
+
+    Direct interface to `tsfresh.extract_features` [1] as an `sktime` transformer.
 
     Parameters
     ----------
