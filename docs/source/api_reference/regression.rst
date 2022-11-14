@@ -20,6 +20,29 @@ Composition
 
     ComposableTimeSeriesForestRegressor
 
+Deep-Learning
+-------------
+
+.. currentmodule:: sktime.regression.deep_learning
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    CNNRegressor
+    TapNetRegressor
+
+Distance-based
+--------------
+
+.. currentmodule:: sktime.regression.distance_based
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    KNeighborsTimeSeriesRegressor
+
 Interval-based
 --------------
 
@@ -30,3 +53,14 @@ Interval-based
     :template: class.rst
 
     TimeSeriesForestRegressor
+
+Kernel-based
+------------
+
+.. currentmodule:: sktime.regression.kernel_based
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    RocketRegressor

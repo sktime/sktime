@@ -16,6 +16,20 @@ Composition
 
     ColumnEnsembleClassifier
 
+Deep-Learning
+-------------
+
+.. current-module:: sktime.classification.deep_learning
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    CNNClassifier
+    FCNClassifier
+    MLPClassifier
+    TapNetClassifier
+
 Dictionary-based
 ----------------
 
@@ -58,6 +72,35 @@ Dummy
     :template: class.rst
 
     DummyClassifier
+
+Early-Classification
+--------------------
+
+.. currentmodule:: sktime.classification.early_classification
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ProbabilityThresholdEarlyClassifier
+    TEASER
+
+Feature-based
+-------------
+
+.. currentmodule:: sktime.classification.feature_based
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    Catch22Classifier
+    MatrixProfileClassifier
+    TSFreshClassifier
+    SignatureClassifier
+    FreshPRINCE
+    SummaryClassifier
+    RandomIntervalClassifier
 
 Hybrid
 ------
@@ -110,19 +153,3 @@ Kernel-based
     RocketClassifier
     Arsenal
 
-Feature-based
--------------
-
-.. currentmodule:: sktime.classification.feature_based
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    Catch22Classifier
-    MatrixProfileClassifier
-    TSFreshClassifier
-    SignatureClassifier
-    FreshPRINCE
-    SummaryClassifier
-    RandomIntervalClassifier
