@@ -481,7 +481,7 @@ class FeatureUnion(_HeterogenousMetaEstimator, BaseTransformer):
     # _steps_attr points to the attribute of self
     # which contains the heterogeneous set of estimators
     # this must be an iterable of (name: str, estimator) pairs for the default
-    _steps_attr = "transformer_list"
+    _steps_attr = "_transformer_list"
 
     def __init__(
         self,
