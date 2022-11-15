@@ -351,15 +351,16 @@ class TempAgg(BaseTransformer):
         This will groupby the specified frequency. 
         For full specification of available frequencies, see pandas.Grouper.
 
-    level, name/number, defaults to 0
-        The level for the target index.
-
     closed{'left' or 'right'}, defaults to 'left'
         Closed end of interval.
 
-    reverse, default False
-        In effect, executes a reverse transform.
-        Used to clean up operation.
+    label, interval boundary to use for labeling.
+       Only when freq parameter is passed.
+
+    level, name/number, defaults to 0
+        The level for the target index.
+ 
+
 
     Examples
     --------
@@ -399,11 +400,8 @@ class TempAgg(BaseTransformer):
         "transform-returns-same-time-index": False,
     }
 
-    def __init__(self, freq='W-MON', closed='left', label='left', level=0,
-                 dropincmp=True):
+    def __init__(self, freq='W-MON', closed='left', label='left', level=0):
         super(TempAgg, self).__init__()
-        self.dropincmp = dropincmp
-
         self.freq = freq
         self.closed = closed
         self.label = label
