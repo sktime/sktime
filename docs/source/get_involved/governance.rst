@@ -244,7 +244,7 @@ developers.
 
 Voting on appointments is one of the few activities that takes
 place on the project's private communication channels. The vote will be
-anonymous and should be set up by a member of the community council.
+anonymous and should be set up by a core developer.
 
 While it is expected that most votes will be unanimous, a 2/3 majority of
 the cast votes is enough. The vote needs to be open for five days excluding
@@ -296,22 +296,30 @@ CoC committee members are responsible for investigating potential CoC
 incidents and enforcing the CoC.
 They are the point of contact for reporting potential CoC incidents.
 
-In addition, they are responsible for maintaining and improving the CoC.
+In addition, they:
+
+* are responsible for maintaining and improving the CoC.
+* are members of ``sktime``'s main judicative body with scope as below.
 
 Expectations
 ^^^^^^^^^^^^
 
-Without restriction of eligibility:
+Without restriction of eligibility or implications on end of tenure:
 * it is generally expected that CoC committee members
-  maintain a high degree of independence of day-to-day matters in the ``sktime`` community,
-  as well as high personal and professional standards of fairness.
-* it is highly advisable that CoC committee members are specifically selected for
-  being unaffected by any potential power dynamics within the ``sktime`` community.
+  maintain a high degree of independence of day-to-day matters in the ``sktime`` community.
+* in particular, CoC committee members should not also be members of CC,
+  to prevent conflicts of interest.
 
 Eligibility
 ^^^^^^^^^^^
 
 Anyone is eligible to be a CoC committee member.
+
+End of tenure
+^^^^^^^^^^^^^
+
+Code of Conduct committee members can resign voluntarily at any point in time,
+by informing the CoC committee and the CC in writing.
 
 .. _appointment-2:
 
@@ -479,7 +487,7 @@ tracker <https://github.com/sktime/sktime/issues>`__,
 `pull requests <https://github.com/sktime/sktime/pulls>`__ or an :ref:`steps`. Some
 sensitive discussions and appointment votes occur on private chats.
 
-The CC reserves the right to overrule decisions with a simple CC majority.
+The CC reserves the right to overrule decisions.
 
 We distinguish between the following types of proposed changes. The
 corresponding decision making process is described in more detail below.
