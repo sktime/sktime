@@ -17,7 +17,8 @@ from operator import itemgetter
 import numpy as np
 import pandas as pd
 from joblib import Parallel, delayed
-from numba import NumbaPendingDeprecationWarning, njit
+from numba import njit
+from numba.typed.typedlist import List
 from sklearn import preprocessing
 from sklearn.utils import check_random_state
 from sklearn.utils.multiclass import class_distribution
@@ -999,6 +1000,9 @@ class RandomShapeletTransform(BaseTransformer):
     n_jobs : int, default=1
         The number of jobs to run in parallel for both `fit` and `transform`.
         ``-1`` means using all processors.
+    parallel_backend : str, default=None
+        Specify the parallelisation backend implementation in joblib, where
+        "threads" is used by default.
     batch_size : int or None, default=100
         Number of shapelet candidates processed before being merged into the set of best
         shapelets.
@@ -1084,6 +1088,7 @@ class RandomShapeletTransform(BaseTransformer):
         time_limit_in_minutes=0.0,
         contract_max_n_shapelet_samples=np.inf,
         n_jobs=1,
+        parallel_backend=None,
         batch_size=100,
         random_state=None,
     ):
@@ -1097,6 +1102,7 @@ class RandomShapeletTransform(BaseTransformer):
         self.contract_max_n_shapelet_samples = contract_max_n_shapelet_samples
 
         self.n_jobs = n_jobs
+        self.parallel_backend = parallel_backend
         self.batch_size = batch_size
         self.random_state = random_state
 
@@ -1134,9 +1140,6 @@ class RandomShapeletTransform(BaseTransformer):
         self : RandomShapeletTransform
             This estimator.
         """
-        # this is a few versions away currently, and heaps dont support the replacement
-        warnings.simplefilter("ignore", category=NumbaPendingDeprecationWarning)
-
         self._n_jobs = check_n_jobs(self.n_jobs)
 
         self.classes_, self._class_counts = np.unique(y, return_counts=True)
@@ -1161,7 +1164,9 @@ class RandomShapeletTransform(BaseTransformer):
         fit_time = 0
 
         max_shapelets_per_class = self._max_shapelets / self.n_classes
-        shapelets = [[(-1.0, -1, -1, -1, -1, -1)] for _ in range(self.n_classes)]
+        shapelets = List(
+            [List([(-1.0, -1, -1, -1, -1, -1)]) for _ in range(self.n_classes)]
+        )
         n_shapelets_extracted = 0
 
         if time_limit > 0:
@@ -1169,7 +1174,9 @@ class RandomShapeletTransform(BaseTransformer):
                 fit_time < time_limit
                 and n_shapelets_extracted < self.contract_max_n_shapelet_samples
             ):
-                candidate_shapelets = Parallel(n_jobs=self._n_jobs)(
+                candidate_shapelets = Parallel(
+                    n_jobs=self._n_jobs, backend=self.parallel_backend, prefer="threads"
+                )(
                     delayed(self._extract_random_shapelet)(
                         X,
                         y,
@@ -1183,7 +1190,7 @@ class RandomShapeletTransform(BaseTransformer):
                 for i, heap in enumerate(shapelets):
                     RandomShapeletTransform._merge_shapelets(
                         heap,
-                        candidate_shapelets,
+                        List(candidate_shapelets),
                         max_shapelets_per_class,
                         i,
                     )
@@ -1193,7 +1200,7 @@ class RandomShapeletTransform(BaseTransformer):
                         to_keep = (
                             RandomShapeletTransform._remove_self_similar_shapelets(heap)
                         )
-                        shapelets[i] = [n for (n, b) in zip(heap, to_keep) if b]
+                        shapelets[i] = List([n for (n, b) in zip(heap, to_keep) if b])
 
                 n_shapelets_extracted += self._batch_size
                 fit_time = time.time() - start_time
@@ -1206,7 +1213,9 @@ class RandomShapeletTransform(BaseTransformer):
                     else self._n_shapelet_samples - n_shapelets_extracted
                 )
 
-                candidate_shapelets = Parallel(n_jobs=self._n_jobs)(
+                candidate_shapelets = Parallel(
+                    n_jobs=self._n_jobs, backend=self.parallel_backend, prefer="threads"
+                )(
                     delayed(self._extract_random_shapelet)(
                         X,
                         y,
@@ -1218,19 +1227,17 @@ class RandomShapeletTransform(BaseTransformer):
                 )
 
                 for i, heap in enumerate(shapelets):
-                    RandomShapeletTransform._merge_shapelets(
+                    self._merge_shapelets(
                         heap,
-                        candidate_shapelets,
+                        List(candidate_shapelets),
                         max_shapelets_per_class,
                         i,
                     )
 
                 if self.remove_self_similar:
                     for i, heap in enumerate(shapelets):
-                        to_keep = (
-                            RandomShapeletTransform._remove_self_similar_shapelets(heap)
-                        )
-                        shapelets[i] = [n for (n, b) in zip(heap, to_keep) if b]
+                        to_keep = self._remove_self_similar_shapelets(heap)
+                        shapelets[i] = List([n for (n, b) in zip(heap, to_keep) if b])
 
                 n_shapelets_extracted += n_shapelets_to_extract
 
@@ -1250,14 +1257,16 @@ class RandomShapeletTransform(BaseTransformer):
         ]
         self.shapelets.sort(reverse=True, key=lambda s: (s[0], s[1], s[2], s[3], s[4]))
 
-        to_keep = RandomShapeletTransform._remove_identical_shapelets(self.shapelets)
-        self.shapelets = [n for (n, b) in zip(self.shapelets, to_keep) if b]
+        to_keep = RandomShapeletTransform._remove_identical_shapelets(
+            List(self.shapelets)
+        )
+        self.shapelets = List([n for (n, b) in zip(self.shapelets, to_keep) if b])
 
         self._sorted_indicies = []
         for s in self.shapelets:
             sabs = np.abs(s[6])
             self._sorted_indicies.append(
-                sorted(range(s[1]), reverse=True, key=lambda i: sabs[i])  # noqa B023
+                List(sorted(range(s[1]), reverse=True, key=lambda i: sabs[i]))
             )
         return self
 
@@ -1274,13 +1283,12 @@ class RandomShapeletTransform(BaseTransformer):
         output : pandas DataFrame
             The transformed dataframe in tabular format.
         """
-        # this is a few versions away currently, and heaps dont support the replacement
-        warnings.simplefilter("ignore", category=NumbaPendingDeprecationWarning)
-
         output = np.zeros((len(X), len(self.shapelets)))
 
         for i, series in enumerate(X):
-            dists = Parallel(n_jobs=self._n_jobs)(
+            dists = Parallel(
+                n_jobs=self._n_jobs, backend=self.parallel_backend, prefer="threads"
+            )(
                 delayed(_online_shapelet_distance)(
                     series[shapelet[3]],
                     shapelet[6],
@@ -1339,7 +1347,9 @@ class RandomShapeletTransform(BaseTransformer):
 
         shapelet = z_normalise_series(X[inst_idx, dim, position : position + length])
         sabs = np.abs(shapelet)
-        sorted_indicies = sorted(range(length), reverse=True, key=lambda i: sabs[i])
+        sorted_indicies = List(
+            sorted(range(length), reverse=True, key=lambda i: sabs[i])
+        )
 
         quality = RandomShapeletTransform._find_shapelet_quality(
             X,
@@ -1565,8 +1575,9 @@ def _calc_early_binary_ig(
         left_prop = (split + 1 + c1_to_add) / total_all
         ent_left = _binary_entropy(c1_count + c1_to_add, c2_count)
 
-        right_prop = 1 - left_prop  # because right side must
-        # optimistically contain everything else
+        # because right side must optimistically contain everything else
+        right_prop = 1 - left_prop
+
         ent_right = _binary_entropy(
             c1_traversed - c1_count,
             c2_traversed - c2_count + c2_to_add,
@@ -1579,8 +1590,9 @@ def _calc_early_binary_ig(
         left_prop = (split + 1 + c2_to_add) / total_all
         ent_left = _binary_entropy(c1_count, c2_count + c2_to_add)
 
-        right_prop = 1 - left_prop  # because right side must
-        # optimistically contain everything else
+        # because right side must optimistically contain everything else
+        right_prop = 1 - left_prop
+
         ent_right = _binary_entropy(
             c1_traversed - c1_count + c1_to_add,
             c2_traversed - c2_count,

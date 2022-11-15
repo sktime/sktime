@@ -302,6 +302,9 @@ class Catch22(BaseTransformer):
         -------
         Numpy array containing a catch22 feature for each input series.
         """
+        self._transform_single_feature(X, feature, case_id)
+
+    def _transform_single_feature(self, X, feature, case_id=None):
         if isinstance(feature, (int, np.integer)) or isinstance(
             feature, (float, float)
         ):
