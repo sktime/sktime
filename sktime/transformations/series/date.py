@@ -333,3 +333,169 @@ def _prep_dummies(DUMMIES):
     )
 
     return DUMMIES
+
+
+class TempAgg(BaseTransformer):
+    """Temporal aggregator for reconciliation at different intervals.
+
+    Temporal aggregator uses a date index to create a hierachical index
+    by grouping and summing the values to create a lower sampling frequency.
+    Only, one lower sampling frequency is supported.
+    Due to sampling at lower frequencies groups can be incomplete.
+    These groups are removed. A forecast begins at the latest
+    at the latest group.
+
+    Parameters
+    ----------
+    freq : str / frequency object, defaults to 'W-MON'
+        This will groupby the specified frequency. 
+        For full specification of available frequencies, see pandas.Grouper.
+
+    level, name/number, defaults to 0
+        The level for the target index.
+
+    closed{'left' or 'right'}, defaults to 'left'
+        Closed end of interval.
+
+    reverse, default False
+        In effect, executes a reverse transform.
+        Used to clean up operation.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> from sktime.forecasting.reconcile import ReconcilerForecaster
+    >>> from sktime.transformations.series.date import TempAgg
+    >>> from sktime.forecasting.naive import NaiveForecaster
+    >>> from sktime.datasets import load_airline
+    >>> y = pd.DataFrame(load_airline())
+    >>> # get a day timestamp
+    >>> y.index = pd.DatetimeIndex(pd.date_range(y.index.min().to_timestamp(),
+                                   periods=len(y)))
+    >>> f = (TempAgg(freq='W-MON')*ReconcilerForecaster(NaiveForecaster(),
+                                                        method='td_fcst'))
+    >>> f.fit(y=y)
+    >>> f.predict([1,2]) # predicts 2 weeks
+    """
+    _tags = {
+        "scitype:transform-input": "Series",
+        "scitype:transform-output": "pd_multiindex_hier",
+        "scitype:transform-labels": "None",
+        "fit_is_empty": False,
+        "_output_convert": False,
+        "scitype:instancewise": True,
+        "X_inner_mtype": [
+            "pd.Series",
+            "pd.DataFrame",
+            "pd-multiindex",
+            "pd_multiindex_hier",
+        ],
+        "y_inner_mtype": "None",
+        "capability:inverse_transform": False,
+        "skip-inverse-transform": False,
+        "univariate-only": False,
+        "handles-missing-data": False,
+        "X-y-must-have-same-index": False,
+        "transform-returns-same-time-index": False,
+    }
+
+    def __init__(self, freq='W-MON', closed='left', label='left', level=0,
+                 dropincmp=True):
+        super(TempAgg, self).__init__()
+        self.dropincmp = dropincmp
+
+        self.freq = freq
+        self.closed = closed
+        self.label = label
+        self.level = level
+
+    def _helper(self, X_hat):
+        """used to create groups"""
+        grpsett = {'freq': self.freq,
+                   'closed': self.closed,
+                   'label': self.label,
+                   'level': self.level}
+        # calculate typical number of samples in group
+        # to facilitate removal of incomplete groups
+        # the sum is needed in the case you have
+        # multilevel column index
+        med_obsv = (X_hat.groupby(pd.Grouper(**grpsett))
+                         .count()
+                         .median()
+                         .sum())
+        X_hat = (X_hat.groupby([pd.Grouper(**grpsett)])
+                      .filter(lambda x:
+                              x.count().sum() == med_obsv))
+        return X_hat, grpsett
+
+    def _fit(self, X, y=None):
+        """fits transformer
+
+        Latest date seen is stored, so prediction continues
+        from this date.
+        Values which are removed due to grouping are stored
+        so they can be reused.
+        """
+        X_hat = X.copy()
+        self.index_name = X.index.name
+
+        X_hat, _ = self._helper(X_hat)
+
+        X_hat = (X_hat.groupby([pd.Grouper(level=0)])
+                      .first())
+        self.pred_date = (X_hat.index.max() +
+                          (X_hat.index[1] - X_hat.index[0]))
+        self.removed = X[self.pred_date:]
+        # overwriting columns prevents duplication
+        # in multilevel column dataframes
+        self.columns = X.columns
+        return self
+
+    def _transform(self, X, y=None):
+        X_hat = X.copy()
+        X_hat, grpsett = self._helper(X_hat)
+        ind_name = X.index.name
+        grp_name = grpsett['freq']
+        X_hat = (X_hat.groupby([pd.Grouper(**grpsett),
+                               pd.Grouper(level=0)])
+                      .first())
+        X_hat.index.set_names([grp_name, ind_name],
+                              inplace=True)
+        grp_cnt = (X_hat.index
+                        .get_level_values(grp_name)
+                        .unique()
+                        .size)
+        # to_numpy needed for multi-level column dataframes
+        ind_cnt = int((X_hat.groupby(pd.Grouper(**grpsett))
+                            .count()
+                            .median()
+                            .to_numpy()[0]))
+        new_index = (pd.MultiIndex
+                       .from_product([range(grp_cnt), range(ind_cnt)],
+                                     names=[grp_name, ind_name]))
+        X_hat = (X_hat.set_index(new_index)
+                      .reorder_levels([ind_name, grp_name])
+                      .sort_index(level=ind_name))
+        return X_hat
+
+    def inverse_transform(self, X, y=None):
+        X_hat = X.copy()
+        X_hat = (X_hat.groupby(level=[1, 0])
+                      .first()
+                      .reset_index(level=0,
+                                   drop=True)
+                      .drop(index=['__total'],
+                            errors=['ignore']))
+        X_hat.set_index(pd.date_range(self.pred_date,
+                                      periods=len(X_hat)),
+                        inplace=True)
+        X_hat.columns = self.columns
+        # replace if intersection
+        intersec = (X_hat.index
+                         .intersection(self.removed.index))
+        if len(intersec) > 0:
+            X_hat.loc[intersec] = self.removed.loc[intersec]
+
+        self.pred_date = (pd.date_range(self.pred_date,
+                                        periods=len(X_hat)+1)[-1])
+        return X_hat
