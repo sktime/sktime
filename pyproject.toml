@@ -10,8 +10,8 @@ authors = [
 ]
 maintainers = [
     {name = "sktime developers", email = "info@sktime.org"},
-    {name = "Franz Király", email = "f.kiraly@ucl.ac.uk"},
-    {name = "Guzal Bulatova"},
+    {name = "Franz Király", email = "fkiraly@sktime.org"},
+    {name = "Guzal Bulatova", email = "gbulatova@sktime.org},
     {name = "Martin Walter", email = "mwalter@sktime.org"},
 ]
 readme = "README.md"
