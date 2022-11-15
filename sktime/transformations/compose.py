@@ -698,7 +698,7 @@ class FeatureUnion(BaseTransformer, _HeterogenousMetaEstimator):
             "transformer_list": [
                 ExponentTransformer(power=4),
                 ExponentTransformer(power=0.25),
-                BoxCoxTransformer()
+                BoxCoxTransformer(),
             ]
         }
 
