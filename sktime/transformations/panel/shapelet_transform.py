@@ -1262,7 +1262,9 @@ class RandomShapeletTransform(BaseTransformer):
         for s in self.shapelets:
             sabs = np.abs(s[6])
             self._sorted_indicies.append(
-                List(sorted(range(s[1]), reverse=True, key=lambda j: sabs[j]))
+                List(
+                    sorted(range(s[1]), reverse=True, key=lambda j, sabs=sabs: sabs[j])
+                )
             )
         return self
 
