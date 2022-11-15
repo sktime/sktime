@@ -19,8 +19,9 @@ def test_timebinner():
     idx = pd.interval_range(start=0, end=100, freq=freq, closed="left")
     tb = TimeBinner(idx=idx, aggfunc=aggfunc)
     tb.fit(X)
+    row = 1
     Xtb = tb.transform(X)
-    assert np.isclose(np.sum(X.iloc[0, 0][freq : (2 * freq)]), Xtb.iloc[1, 1])
+    assert np.isclose(np.sum(X.iloc[row, 0][freq : (2 * freq)]), Xtb.iloc[row, 1])
 
 
 def test_timebinner2():
@@ -34,8 +35,9 @@ def test_timebinner2():
     idx = pd.interval_range(start=0, end=100, freq=freq, closed="left")
     tb = TimeBinner(idx=idx, aggfunc=aggfunc)
     tb.fit(X)
+    row = 3
     Xtb = tb.transform(X)
-    assert np.isclose(np.sum(X.iloc[3, 5][8 * 10 : 9 * 10]), Xtb.iloc[3, 58])
+    assert np.isclose(np.sum(X.iloc[row, 5][8 * 10 : 9 * 10]), Xtb.iloc[row, 58])
 
 
 def test_timebinner3():
