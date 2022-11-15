@@ -1188,7 +1188,7 @@ class RandomShapeletTransform(BaseTransformer):
                 )
 
                 for i, heap in enumerate(shapelets):
-                    RandomShapeletTransform._merge_shapelets(
+                    self._merge_shapelets(
                         heap,
                         List(candidate_shapelets),
                         max_shapelets_per_class,
@@ -1197,9 +1197,7 @@ class RandomShapeletTransform(BaseTransformer):
 
                 if self.remove_self_similar:
                     for i, heap in enumerate(shapelets):
-                        to_keep = (
-                            RandomShapeletTransform._remove_self_similar_shapelets(heap)
-                        )
+                        to_keep = self._remove_self_similar_shapelets(heap)
                         shapelets[i] = List([n for (n, b) in zip(heap, to_keep) if b])
 
                 n_shapelets_extracted += self._batch_size
@@ -1257,16 +1255,14 @@ class RandomShapeletTransform(BaseTransformer):
         ]
         self.shapelets.sort(reverse=True, key=lambda s: (s[0], s[1], s[2], s[3], s[4]))
 
-        to_keep = RandomShapeletTransform._remove_identical_shapelets(
-            List(self.shapelets)
-        )
+        to_keep = self._remove_identical_shapelets(List(self.shapelets))
         self.shapelets = List([n for (n, b) in zip(self.shapelets, to_keep) if b])
 
         self._sorted_indicies = []
         for s in self.shapelets:
             sabs = np.abs(s[6])
             self._sorted_indicies.append(
-                List(sorted(range(s[1]), reverse=True, key=lambda i: sabs[i]))
+                List(sorted(range(s[1]), reverse=True, key=lambda j: sabs[j]))
             )
         return self
 
@@ -1348,10 +1344,10 @@ class RandomShapeletTransform(BaseTransformer):
         shapelet = z_normalise_series(X[inst_idx, dim, position : position + length])
         sabs = np.abs(shapelet)
         sorted_indicies = List(
-            sorted(range(length), reverse=True, key=lambda i: sabs[i])
+            sorted(range(length), reverse=True, key=lambda j: sabs[j])
         )
 
-        quality = RandomShapeletTransform._find_shapelet_quality(
+        quality = self._find_shapelet_quality(
             X,
             y,
             shapelet,
