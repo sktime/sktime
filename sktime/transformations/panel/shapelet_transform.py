@@ -1163,7 +1163,10 @@ class RandomShapeletTransform(BaseTransformer):
         start_time = time.time()
         fit_time = 0
 
-        max_shapelets_per_class = self._max_shapelets / self.n_classes
+        max_shapelets_per_class = int(self._max_shapelets / self.n_classes)
+        if max_shapelets_per_class < 1:
+            max_shapelets_per_class = 1
+
         shapelets = List(
             [List([(-1.0, -1, -1, -1, -1, -1)]) for _ in range(self.n_classes)]
         )
@@ -1256,13 +1259,13 @@ class RandomShapeletTransform(BaseTransformer):
         self.shapelets.sort(reverse=True, key=lambda s: (s[0], s[1], s[2], s[3], s[4]))
 
         to_keep = self._remove_identical_shapelets(List(self.shapelets))
-        self.shapelets = List([n for (n, b) in zip(self.shapelets, to_keep) if b])
+        self.shapelets = [n for (n, b) in zip(self.shapelets, to_keep) if b]
 
         self._sorted_indicies = []
         for s in self.shapelets:
             sabs = np.abs(s[6])
             self._sorted_indicies.append(
-                List(
+                np.array(
                     sorted(range(s[1]), reverse=True, key=lambda j, sabs=sabs: sabs[j])
                 )
             )
@@ -1333,7 +1336,9 @@ class RandomShapeletTransform(BaseTransformer):
         inst_idx = i % self.n_instances
         cls_idx = int(y[inst_idx])
         worst_quality = (
-            shapelets[cls_idx][0][0] if shapelets == max_shapelets_per_class else -1
+            shapelets[cls_idx][0][0]
+            if len(shapelets[cls_idx]) == max_shapelets_per_class
+            else -1
         )
 
         length = (
@@ -1345,7 +1350,7 @@ class RandomShapeletTransform(BaseTransformer):
 
         shapelet = z_normalise_series(X[inst_idx, dim, position : position + length])
         sabs = np.abs(shapelet)
-        sorted_indicies = List(
+        sorted_indicies = np.array(
             sorted(range(length), reverse=True, key=lambda j: sabs[j])
         )
 
