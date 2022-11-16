@@ -6,8 +6,6 @@
 __all__ = ["SARIMAX"]
 __author__ = ["TNTran92"]
 
-from statsmodels.tsa.api import SARIMAX as _SARIMAX
-
 from sktime.forecasting.base.adapters import _StatsModelsAdapter
 
 
@@ -161,6 +159,8 @@ class SARIMAX(_StatsModelsAdapter):
         super().__init__(random_state=random_state)
 
     def _fit_forecaster(self, y, X=None):
+        from statsmodels.tsa.api import SARIMAX as _SARIMAX
+
         self._forecaster = _SARIMAX(
             endog=y,
             exog=X,

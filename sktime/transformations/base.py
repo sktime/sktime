@@ -407,6 +407,7 @@ class BaseTransformer(BaseEstimator):
         # checks and conversions complete, pass to inner fit
         #####################################################
         vectorization_needed = isinstance(X_inner, VectorizedDF)
+        self._is_vectorized = vectorization_needed
         # we call the ordinary _fit if no looping/vectorization needed
         if not vectorization_needed:
             self._fit(X=X_inner, y=y_inner)
@@ -678,6 +679,44 @@ class BaseTransformer(BaseEstimator):
 
         return self
 
+    def get_fitted_params(self):
+        """Get fitted parameters.
+
+        Overrides BaseEstimator default in case of vectorization.
+
+        State required:
+            Requires state to be "fitted".
+
+        Returns
+        -------
+        fitted_params : dict of fitted parameters, keys are str names of parameters
+            parameters of components are indexed as [componentname]__[paramname]
+        """
+        # if self is not vectorized, run the default get_fitted_params
+        if not getattr(self, "_is_vectorized", False):
+            return super(BaseTransformer, self).get_fitted_params()
+
+        # otherwise, we delegate to the instances' get_fitted_params
+        # instances' parameters are returned at dataframe-slice-like keys
+        fitted_params = {}
+
+        # transformers contains a pd.DataFrame with the individual transformers
+        transformers = self.transformers_
+
+        # return forecasters in the "forecasters" param
+        fitted_params["transformers"] = transformers
+
+        # populate fitted_params with ftransformers and their parameters
+        for ix, col in zip(transformers.index, transformers.columns):
+            fcst = transformers.loc[ix, col]
+            fcst_key = f"transformers.loc[{ix},{col}]"
+            fitted_params[fcst_key] = fcst
+            fcst_params = fcst.get_fitted_params()
+            for key, val in fcst_params.items():
+                fitted_params[f"{fcst_key}__{key}"] = val
+
+        return fitted_params
+
     def _check_X_y(self, X=None, y=None, return_metadata=False):
         """Check and coerce X/y for fit/transform functions.
 
@@ -771,8 +810,12 @@ class BaseTransformer(BaseEstimator):
         ALLOWED_MTYPES = self.ALLOWED_INPUT_MTYPES
 
         # checking X
-        X_valid, _, X_metadata = check_is_scitype(
-            X, scitype=ALLOWED_SCITYPES, return_metadata=True, var_name="X"
+        X_valid, msg, X_metadata = check_is_scitype(
+            X,
+            scitype=ALLOWED_SCITYPES,
+            return_metadata=True,
+            var_name="X",
+            msg_legacy_interface=False,
         )
 
         msg_invalid_input = (
@@ -780,14 +823,17 @@ class BaseTransformer(BaseEstimator):
             f"of scitype Series, Panel or Hierarchical, "
             f"for instance a pandas.DataFrame with sktime compatible time indices, "
             f"or with MultiIndex and last(-1) level an sktime compatible time index. "
-            f"Allowed compatible mtype format specifications are: {ALLOWED_MTYPES}"
+            f"Allowed compatible mtype format specifications are: {ALLOWED_MTYPES} ."
             # f"See the transformers tutorial examples/05_transformers.ipynb, or"
-            f" See the data format tutorial examples/AA_datatypes_and_datasets.ipynb, "
+            f" See the data format tutorial examples/AA_datatypes_and_datasets.ipynb. "
             f"If you think the data is already in an sktime supported input format, "
             f"run sktime.datatypes.check_raise(data, mtype) to diagnose the error, "
             f"where mtype is the string of the type specification you want. "
+            f"Error message for checked mtypes, in format [mtype: message], as follows:"
         )
         if not X_valid:
+            for mtype, err in msg.items():
+                msg_invalid_input += f" [{mtype}: {err}] "
             raise TypeError("X " + msg_invalid_input)
 
         X_scitype = X_metadata["scitype"]
@@ -975,11 +1021,18 @@ class BaseTransformer(BaseEstimator):
             #   we cannot convert back to pd.Series, do pd.DataFrame instead then
             #   this happens only for Series, not Panel
             if X_input_scitype == "Series":
-                _, _, metadata = check_is_mtype(
+                valid, msg, metadata = check_is_mtype(
                     Xt,
                     ["pd.DataFrame", "pd.Series", "np.ndarray"],
                     return_metadata=True,
                 )
+                if not valid:
+                    raise TypeError(
+                        f"_transform output of {type(self)} does not comply "
+                        "with sktime mtype specifications. See datatypes.MTYPE_REGISTER"
+                        " for mtype specifications. Returned error message:"
+                        f" {msg}. Returned object: {Xt}"
+                    )
                 if not metadata["is_univariate"] and X_input_mtype == "pd.Series":
                     X_output_mtype = "pd.DataFrame"
 
