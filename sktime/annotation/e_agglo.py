@@ -2,6 +2,7 @@
 """E-Agglo: agglomerative clustering algorithm that preserves observation order."""
 
 import warnings
+from typing import Tuple
 
 import numpy as np
 from scipy.spatial.distance import cdist
@@ -14,14 +15,14 @@ __all__ = ["EAGGLO"]
 
 class EAGGLO(BaseTransformer):
     """
-    Hierarchical agglomerative estimation of multiple change points, outlined in [1]_.
+    Hierarchical agglomerative estimation of multiple change points.
 
-    E-Agglo is a non-parametric clustering approach for multivariate timeseries, where
-    neighboring segments are sequentially merged to maximize a goodness-of-fit
+    E-Agglo is a non-parametric clustering approach for multivariate timeseries[1]_,
+    where neighboring segments are sequentially merged_ to maximize a goodness-of-fit
     statistic. Unlike most general purpose agglomerative clustering algorithms, this
     procedure preserves the time ordering of the observations.
 
-    This method can detect any distributional change within an independent sequence,
+    This method can detect distributional change within an independent sequence,
     and does not make any distributional assumptions (beyond the existence of an
     alpha-th moment). Estimation is performed in a manner that simultaneously
     identifies both the number and locations of change points.
@@ -29,22 +30,23 @@ class EAGGLO(BaseTransformer):
     Parameters
     ----------
     member : array_like (default=None)
-        1D `array_like` representing the initial cluster membership for input
-        data, X.
+        Assigns points to to the initial cluster membership, therefore the first
+        dimension should be the same as for data. If `None` it will be initialized
+        to dummy vector where each point is assigned to separate cluster.
     alpha : float (default=1.0)
-        fixed constant alpha in (0, 2] used in the divergence measure, as the
+        Fixed constant alpha in (0, 2] used in the divergence measure, as the
         alpha-th absolute moment, see equation (4) in [1]_.
     penalty : functional (default=None)
-        function that defines a penalization of the sequence of goodness-of-fit
-        statistic, when overfitting is a concern.
+        Function that defines a penalization of the sequence of goodness-of-fit
+        statistic, when overfitting is a concern. If `None` not penalty is applied.
 
     Attributes
     ----------
-    merged : array_like
-        2D `array_like` outlining which clusters were merged at each step.
-    gof : float
+    merged_ : array_like
+        2D `array_like` outlining which clusters were merged_ at each step.
+    gof_ : float
         goodness-of-fit statistic for current clsutering.
-    cluster : array_like
+    cluster_ : array_like
         1D `array_like` specifying which cluster each row of input data
         X belongs to.
 
@@ -92,107 +94,92 @@ class EAGGLO(BaseTransformer):
         self.penalty = penalty
         super(EAGGLO, self).__init__()
 
-    def _process_data(self, X):
+    def _initialized_params(self, X) -> None:
         """Initialize parameters and store to self."""
-        _member = np.array(
+        self._member = np.array(
             self.member if self.member is not None else range(X.shape[0])
         )
 
-        u = np.sort(np.unique(_member))  # unique array of cluster labels
-        n_cluster = len(u)
+        unique_labels = np.sort(np.unique(self._member))
+        self.n_cluster = len(unique_labels)
 
         for i in range(
-            n_cluster
+            self.n_cluster
         ):  # relabel clusters to be consecutive numbers (when user specified)
-            _member[np.where(_member == u[i])[0]] = i
+            self._member[np.where(self._member == unique_labels[i])[0]] = i
 
         # check if sorted
-        assert all(sorted(_member) == _member)
+        assert all(sorted(self._member) == self._member)
 
-        sizes = np.zeros(2 * n_cluster)
-        sizes[:n_cluster] = [
-            sum(_member == i) for i in range(n_cluster)
+        self.sizes = np.zeros(2 * self.n_cluster)
+        self.sizes[: self.n_cluster] = [
+            sum(self._member == i) for i in range(self.n_cluster)
         ]  # calculate initial cluster sizes
 
         # array of within distances
-        XX = X.copy().set_index(_member)
-        g = XX.groupby(level=0)
-        within = g.apply(lambda x: get_distance(x, x, self.alpha))
+        grouped = X.copy().set_index(self._member).groupby(level=0)
+        within = grouped.apply(lambda x: get_distance(x, x, self.alpha))
 
-        # array of between between-within distances
-        distances = np.empty((2 * n_cluster, 2 * n_cluster))
+        # array of between-within distances
+        self.distances = np.empty((2 * self.n_cluster, 2 * self.n_cluster))
 
-        for i, xi in g:
-            distances[:n_cluster, i] = (
-                2 * g.apply(lambda xj: get_distance(xi, xj, self.alpha))  # noqa
+        for i, xi in grouped:
+            self.distances[: self.n_cluster, i] = (
+                2 * grouped.apply(lambda xj: get_distance(xi, xj, self.alpha))  # noqa
                 - within[i]
                 - within
             )
 
-        np.fill_diagonal(distances, 0)
+        np.fill_diagonal(self.distances, 0)
 
         # set up left and right neighbors
         # special case for clusters 0 and n_cluster-1 to allow for cyclic merging
-        left = np.zeros(2 * n_cluster - 1)
-        left[:n_cluster] = [
-            i - 1 if i - 1 >= 0 else n_cluster - 1 for i in range(n_cluster)
-        ]
-        right = np.repeat(0, 2 * n_cluster - 1)
-        right[:n_cluster] = [
-            i + 1 if i + 1 < n_cluster else 0 for i in range(n_cluster)
+        self.left = np.zeros(2 * self.n_cluster - 1)
+        self.left[: self.n_cluster] = [
+            i - 1 if i >= 1 else self.n_cluster - 1 for i in range(self.n_cluster)
         ]
 
-        # True means that a cluster has not been merged
-        open = np.ones(2 * n_cluster - 1, dtype=bool)
+        self.right = np.repeat(0, 2 * self.n_cluster - 1)
+        self.right[: self.n_cluster] = [
+            i + 1 if i + 1 < self.n_cluster else 0 for i in range(self.n_cluster)
+        ]
 
-        # which clusters were merged at each step
-        merged = np.empty((n_cluster - 1, 2))
+        # True means that a cluster has not been merged_
+        self.open = np.ones(2 * self.n_cluster - 1, dtype=bool)
 
-        # set initial GOF value
-        gof = np.array(
+        # which clusters were merged_ at each step
+        self.merged_ = np.empty((self.n_cluster - 1, 2))
+
+        # set initial gof_ value
+        self.gof_ = np.array(
             [
                 sum(
-                    [
-                        distances[i, left[i]] + distances[i, right[i]]
-                        for i in range(n_cluster)
-                    ]
+                    self.distances[i, self.left[i]] + self.distances[i, self.right[i]]
+                    for i in range(self.n_cluster)
                 )
             ]
         )
 
         # change point progression
-        progression = np.empty((n_cluster, n_cluster + 1))
-        progression[0, :] = [
-            sum(sizes[:i]) if i > 0 else 0 for i in range(n_cluster + 1)
+        self.progression = np.empty((self.n_cluster, self.n_cluster + 1))
+        self.progression[0, :] = [
+            sum(self.sizes[:i]) if i > 0 else 0 for i in range(self.n_cluster + 1)
         ]  # N + 1 for cyclic mergers
 
         # array to specify the starting point of a cluster
-        lm = np.zeros(2 * n_cluster - 1)
-        lm[:n_cluster] = range(n_cluster)
-
-        # store to self
-        self._member = _member
-        self.n_cluster = n_cluster
-        self.sizes = sizes
-        self.distances = distances
-        self.left = left
-        self.right = right
-        self.open = open
-        self.merged = merged
-        self.gof = gof
-        self.progression = progression
-        self.lm = lm
+        self.lm = np.zeros(2 * self.n_cluster - 1)
+        self.lm[: self.n_cluster] = range(self.n_cluster)
 
     def _gof_update(self, i: int):
         """Compute the updated goodness-of-fit statistic, left cluster given by i."""
-        fit = self.gof[-1]
+        fit = self.gof_[-1]
         j = self.right[i]
 
         # get new left and right clusters
         rr = self.right[j]
         ll = self.left[i]
 
-        # remove unneeded values in the GOF
+        # remove unneeded values in the gof_
         fit -= 2 * (
             self.distances[i, j] + self.distances[i, ll] + self.distances[j, rr]
         )
@@ -222,7 +209,7 @@ class EAGGLO(BaseTransformer):
         return fit
 
     def _find_closest(self, K: int) -> Tuple[int, int]:
-        """Determine which clusters will be merged, for K clusters.
+        """Determine which clusters will be merged_, for K clusters.
 
         Greedily optimize the goodness-of-fit statistic by merging the pair of adjacent
         clusters that results in the largest increase of the statistic's value.
@@ -235,24 +222,24 @@ class EAGGLO(BaseTransformer):
         best_fit = -1e10
         result = (0, 0)
 
-        # iterate through each cluster to see how the GOF value changes if merged
+        # iterate through each cluster to see how the gof_ value changes if merged_
         for i in range(K + 1):
             if self.open[i]:
-                gof = self._gof_update(i)
-                if gof > best_fit:
-                    best_fit = gof
+                gof_ = self._gof_update(i)
+                if gof_ > best_fit:
+                    best_fit = gof_
                     result = (i, self.right[i])
 
-        self.gof = np.append(self.gof, best_fit)
+        self.gof_ = np.append(self.gof_, best_fit)
         return result
 
-    def _update_distances(self, i: int, j: int, K: int):
+    def _update_distances(self, i: int, j: int, K: int) -> None:
         """Update distance from new cluster to other clusters, store to self."""
-        # which clusters were merged, info only
-        self.merged[K - self.n_cluster + 1, 0] = (
+        # which clusters were merged_, info only
+        self.merged_[K - self.n_cluster + 1, 0] = (
             -i if i <= self.n_cluster else i - self.n_cluster
         )
-        self.merged[K - self.n_cluster + 1, 1] = (
+        self.merged_[K - self.n_cluster + 1, 1] = (
             -j if j <= self.n_cluster else j - self.n_cluster
         )
 
@@ -264,7 +251,7 @@ class EAGGLO(BaseTransformer):
         self.right[ll] = K + 1
         self.left[rr] = K + 1
 
-        # update information about which clusters have been merged
+        # update information about which clusters have been merged_
         self.open[i] = False
         self.open[j] = False
 
@@ -296,7 +283,7 @@ class EAGGLO(BaseTransformer):
     def _fit(self, X, y=None):
         """Find optimally clustered segments.
 
-        First, by determining which pairs of adjacent clusters will be merged. Then,
+        First, by determining which pairs of adjacent clusters will be merged_. Then,
         this process is repeated, recording the goodness-of-fit statistic at each step,
         until all observations belong to a single cluster. Finally, the estimated number
         of change points is estimated by the clustering that maximizes the goodness-of-
@@ -318,9 +305,9 @@ class EAGGLO(BaseTransformer):
 
         assert self.alpha > 0 and self.alpha <= 2
 
-        self._process_data(X)
+        self._initialized_params(X)
 
-        # find which clusters optimize the GOF and then update the distances
+        # find which clusters optimize the gof_ and then update the distances
         for K in range(self.n_cluster - 1, 2 * self.n_cluster - 2):
             i, j = self._find_closest(K)
             self._update_distances(i, j, K)
@@ -335,14 +322,14 @@ class EAGGLO(BaseTransformer):
                 )
             )
 
-        # penalize the GOF statistic
+        # penalize the gof_ statistic
         if self.penalty is not None:
             penalty_func = get_penalty_func(self.penalty)
             cps = [filter_na(i) for i in range(len(self.progression))]
-            self.gof += list(map(penalty_func, cps))
+            self.gof_ += list(map(penalty_func, cps))
 
         # get the set of change points for the "best" clustering
-        idx = np.argmax(self.gof)
+        idx = np.argmax(self.gof_)
         self._estimates = np.sort(filter_na(idx))
 
         # remove change point N+1 if a cyclic merger was performed
@@ -357,10 +344,10 @@ class EAGGLO(BaseTransformer):
             )
 
         if self._estimates[0] == 0:
-            self.cluster = get_cluster(self._estimates)
+            self.cluster_ = get_cluster(self._estimates)
         else:
             tmp = get_cluster(np.append([0], self._estimates))
-            self.cluster = np.append(tmp, np.repeat(0, X.shape[0] - len(tmp)))
+            self.cluster_ = np.append(tmp, np.repeat(0, X.shape[0] - len(tmp)))
 
         return self
 
@@ -395,9 +382,9 @@ class EAGGLO(BaseTransformer):
                 "updated public class attributes. For this, explicitly use fit(X) or "
                 "fit_transform(X)."
             )
-            return new_eagglo.cluster
+            return new_eagglo.cluster_
 
-        return self.cluster
+        return self.cluster_
 
 
 def get_distance(X, Y, alpha):
@@ -405,12 +392,12 @@ def get_distance(X, Y, alpha):
     return np.power(cdist(X, Y, "euclidean"), alpha).mean()
 
 
-def penalty1(x):
+def len_penalty(x):
     """Penalize goodness-of-fit statistic for number of change points."""
     return -len(x)
 
 
-def penalty2(x):
+def mean_diff_penalty(x):
     """Penalize goodness-of-fit statistic.
 
     Favors segmentations with larger sizes, while taking into consideration
@@ -419,15 +406,15 @@ def penalty2(x):
     return np.mean(np.diff(np.sort(x)))
 
 
-def get_penalty_func(penalty):
+def get_penalty_func(penalty):  # sourcery skip: raise-specific-error
     """Define penalty function given (possibly string) input."""
-    PENALTIES = {"penalty1": penalty1, "penalty2": penalty2}
+    PENALTIES = {"len_penalty": len_penalty, "mean_diff_penalty": mean_diff_penalty}
 
     if callable(penalty):
         return penalty
 
     elif isinstance(penalty, str):
-        if penalty in PENALTIES.keys():
+        if penalty in PENALTIES:
             return PENALTIES[penalty]
 
     raise Exception(
