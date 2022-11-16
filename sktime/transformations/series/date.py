@@ -378,6 +378,7 @@ class TempAgg(BaseTransformer):
     >>> f.fit(y=y)
     >>> f.predict([1,2]) # predicts 2 weeks
     """
+
     _tags = {
         "scitype:transform-input": "Series",
         "scitype:transform-output": "pd_multiindex_hier",
@@ -408,7 +409,7 @@ class TempAgg(BaseTransformer):
         self.level = level
 
     def _helper(self, X_hat):
-        """used to create groups"""
+        """Filter series by only considering groups with median count."""
         grpsett = {'freq': self.freq,
                    'closed': self.closed,
                    'label': self.label,
@@ -427,7 +428,7 @@ class TempAgg(BaseTransformer):
         return X_hat, grpsett
 
     def _fit(self, X, y=None):
-        """fits transformer
+        """Fit transformer.
 
         Latest date seen is stored, so prediction continues
         from this date.
