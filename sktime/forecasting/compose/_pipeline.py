@@ -18,6 +18,11 @@ class _Pipeline(
     _HeterogenousMetaEstimator,
 ):
     """Abstract class for forecasting pipelines."""
+    _tags = {
+        "X-y-must-have-same-scitype": False,
+    }
+    def __init__(self):
+        super(_Pipeline, self).__init__()
 
     def _get_pipeline_scitypes(self, estimators):
         """Get list of scityes (str) from names/estimator list."""

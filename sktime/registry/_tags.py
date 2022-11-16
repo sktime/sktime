@@ -82,6 +82,12 @@ ESTIMATOR_TAG_REGISTER = [
         "behaviour flag: skips inverse_transform when called yes/no",
     ),
     (
+        "X-y-must-have-same-scitype",
+        "forecaster",
+        "bool",
+        "does forecaster needs X-y type of the same scitype? yes/no",
+    ),
+    (
         "requires-fh-in-fit",
         "forecaster",
         "bool",
