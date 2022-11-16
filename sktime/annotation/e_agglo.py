@@ -99,7 +99,7 @@ class EAGGLO(BaseTransformer):
         )
 
         u = np.sort(np.unique(_member))  # unique array of cluster labels
-        n_cluster = len(u)  # number of clusters
+        n_cluster = len(u)
 
         for i in range(
             n_cluster
@@ -109,7 +109,7 @@ class EAGGLO(BaseTransformer):
         # check if sorted
         assert all(sorted(_member) == _member)
 
-        sizes = np.repeat(0, 2 * n_cluster)
+        sizes = np.zeros(2 * n_cluster)
         sizes[:n_cluster] = [
             sum(_member == i) for i in range(n_cluster)
         ]  # calculate initial cluster sizes
@@ -133,7 +133,7 @@ class EAGGLO(BaseTransformer):
 
         # set up left and right neighbors
         # special case for clusters 0 and n_cluster-1 to allow for cyclic merging
-        left = np.repeat(0, 2 * n_cluster - 1)
+        left = np.zeros(2 * n_cluster - 1)
         left[:n_cluster] = [
             i - 1 if i - 1 >= 0 else n_cluster - 1 for i in range(n_cluster)
         ]
@@ -143,7 +143,7 @@ class EAGGLO(BaseTransformer):
         ]
 
         # True means that a cluster has not been merged
-        open = np.array([True for _ in range(2 * n_cluster - 1)])
+        open = np.ones(2 * n_cluster - 1, dtype=bool)
 
         # which clusters were merged at each step
         merged = np.empty((n_cluster - 1, 2))
@@ -167,7 +167,7 @@ class EAGGLO(BaseTransformer):
         ]  # N + 1 for cyclic mergers
 
         # array to specify the starting point of a cluster
-        lm = np.repeat(0, 2 * n_cluster - 1)
+        lm = np.zeros(2 * n_cluster - 1)
         lm[:n_cluster] = range(n_cluster)
 
         # store to self
@@ -221,7 +221,7 @@ class EAGGLO(BaseTransformer):
 
         return fit
 
-    def _find_closest(self, K: int):
+    def _find_closest(self, K: int) -> Tuple[int, int]:
         """Determine which clusters will be merged, for K clusters.
 
         Greedily optimize the goodness-of-fit statistic by merging the pair of adjacent
@@ -229,7 +229,7 @@ class EAGGLO(BaseTransformer):
 
         Returns
         -------
-        result
+        result : Tuple[int, int]
             tuple of left cluster and right cluster index values
         """
         best_fit = -1e10
