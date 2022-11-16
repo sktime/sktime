@@ -94,7 +94,7 @@ class EAGGLO(BaseTransformer):
         self.penalty = penalty
         super(EAGGLO, self).__init__()
 
-    def _initialized_params(self, X) -> None:
+    def _initialize_params(self, X) -> None:
         """Initialize parameters and store to self."""
         self._member = np.array(
             self.member if self.member is not None else range(X.shape[0])
@@ -303,9 +303,9 @@ class EAGGLO(BaseTransformer):
         """
         self._X = X
 
-        assert self.alpha > 0 and self.alpha <= 2
+        assert self.alpha > 0 and self.alpha <= 2, "alowed values for alpha are (0, 2]"
 
-        self._initialized_params(X)
+        self._initialize_params(X)
 
         # find which clusters optimize the gof_ and then update the distances
         for K in range(self.n_cluster - 1, 2 * self.n_cluster - 2):
