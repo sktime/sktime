@@ -481,6 +481,19 @@ Examples for in-scope:
 * decisions arising from academic collaboration or commercial requests directed to the ``sktime`` community,
   e.g., via official email, or via digital ``sktime`` discussion tools (slack, GitHub discussion etc)
 
+"resources" in the above context are to be interpreted in the usual sense of the word,
+i.e., valuable possessions, opportunities, qualities, that can be accessed and allocated.
+
+Examples include but are not limited to:
+
+* budget, money, financial credit
+* job opportunities, business opportunities
+* decision making power, soft or hard influence
+* dedicated work time of subordinates or dependents
+* material possessions of value
+* information of value
+* access to any of the above
+
 Best practice
 ^^^^^^^^^^^^^
 
