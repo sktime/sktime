@@ -6,11 +6,16 @@
 __author__ = ["GuzalBulatova", "mloning", "fkiraly"]
 __all__ = ["ColumnEnsembleForecaster"]
 
+import numpy as np
 import pandas as pd
 
 from sktime.base._meta import flatten
 from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
+
+# mtypes that are native pandas
+# ColumnEnsembleForecaster uses these internally, since we need (pandas) columns
+PANDAS_MTYPES = ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"]
 
 
 class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
@@ -78,7 +83,8 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
     _tags = {
         "scitype:y": "both",
         "ignores-exogeneous-X": False,
-        "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
+        "y_inner_mtype": PANDAS_MTYPES,
+        "X_inner_mtype": PANDAS_MTYPES,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
         "capability:pred_int": True,
@@ -138,6 +144,11 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
         # replace ints by column names
         obj = self._get_indices(self._y, obj)
 
+        # deal with numpy int by coercing to python int
+        if np.issubdtype(type(obj), np.integer):
+            obj = int(obj)
+
+        # coerce to pd.Index
         if isinstance(obj, (int, str)):
             return pd.Index([obj])
         else:
@@ -402,6 +413,10 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
         """Convert integer indices if necessary."""
 
         def _get_index(y, ix):
+            # deal with numpy int by coercing to python int
+            if np.issubdtype(type(ix), np.integer):
+                ix = int(ix)
+
             if isinstance(ix, int) and ix not in y.columns and ix < len(y.columns):
                 return y.columns[ix]
             else:
@@ -491,9 +506,9 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
         """
         # imports
         from sktime.forecasting.naive import NaiveForecaster
-        from sktime.forecasting.theta import ThetaForecaster
+        from sktime.forecasting.trend import TrendForecaster
 
         params1 = {"forecasters": NaiveForecaster()}
-        params2 = {"forecasters": ThetaForecaster()}
+        params2 = {"forecasters": TrendForecaster()}
 
         return [params1, params2]

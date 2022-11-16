@@ -24,8 +24,8 @@ Mandatory implements:
     fitting            - _fit(self, X)
 
 Optional implements:
-    cluster assignment - _predict(self, X)
-    fitted parameter inspection - get_fitted_params()
+    cluster assignment          -  _predict(self, X)
+    fitted parameter inspection -  _get_fitted_params()
 
 Testing - implement if sktime forecaster (not needed locally):
     get default parameters for test instance(s) - get_test_params()
@@ -135,18 +135,34 @@ class MyClusterer(BaseClusterer):
         # IMPORTANT: avoid side effects to X
 
     # todo: consider implementing this, optional
+    # implement only if different from default:
+    #   default retrieves all self attributes ending in "_"
+    #   and returns them with keys that have the "_" removed
+    # if not implementing, delete the method
+    #   avoid overriding get_fitted_params
     # this is typically important for clustering
-    # at least one of _predict and _get_fitted_params should be implemented
+    #   at least one of _predict and _get_fitted_params should be functional
     def _get_fitted_params(self):
-        """Retrieve fitted parameters of cluster model.
+        """Get fitted parameters.
 
-            core logic
+        private _get_fitted_params, called from get_fitted_params
+
+        State required:
+            Requires state to be "fitted".
 
         Returns
         -------
-        param_dict: dictionary of fitted parameters
+        fitted_params : dict with str keys
+            fitted parameters, keyed by names of fitted parameter
         """
         # implement here
+        #
+        # when this function is reached, it is already guaranteed that self is fitted
+        #   this does not need to be checked separately
+        #
+        # parameters of components should follow the sklearn convention:
+        #   separate component name from parameter name by double-underscore
+        #   e.g., componentname__paramname
 
     # todo: return default parameters, so that a test instance can be created
     #   required for automated unit and integration testing of estimator
@@ -184,6 +200,15 @@ class MyClusterer(BaseClusterer):
         #   It can be used in custom, estimator specific tests, for "special" settings.
         # A parameter dictionary must be returned *for all values* of parameter_set,
         #   i.e., "parameter_set not available" errors should never be raised.
+        #
+        # A good parameter set should primarily satisfy two criteria,
+        #   1. Chosen set of parameters should have a low testing time,
+        #      ideally in the magnitude of few seconds for the entire test suite.
+        #       This is vital for the cases where default values result in
+        #       "big" models which not only increases test time but also
+        #       run into the risk of test workers crashing.
+        #   2. There should be a minimum two such parameter sets with different
+        #      sets of values to ensure a wide range of code coverage is provided.
         #
         # example 1: specify params as dictionary
         # any number of params can be specified

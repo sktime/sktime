@@ -102,7 +102,7 @@ class BaseGridSearch(_DelegatedForecaster):
             tagval = tagval + ["pd_multiindex_hier"]
         self.set_tags(**{tagname: tagval})
 
-    def get_fitted_params(self):
+    def _get_fitted_params(self):
         """Get fitted parameters.
 
         Returns
@@ -112,12 +112,6 @@ class BaseGridSearch(_DelegatedForecaster):
             the best estimator (if available), merged together with the former
             taking precedence.
         """
-        if not self.is_fitted:
-            raise NotFittedError
-
-        if self._is_vectorized:
-            return {"forecasters_": self.forecasters_}
-
         fitted_params = {}
         try:
             fitted_params = self.best_forecaster_.get_fitted_params()
@@ -521,9 +515,9 @@ class ForecastingGridSearchCV(BaseGridSearch):
         -------
         params : dict or list of dict
         """
-        from sktime.forecasting.exp_smoothing import ExponentialSmoothing
         from sktime.forecasting.model_selection._split import SingleWindowSplitter
         from sktime.forecasting.naive import NaiveForecaster
+        from sktime.forecasting.trend import PolynomialTrendForecaster
         from sktime.performance_metrics.forecasting import MeanAbsolutePercentageError
 
         params = {
@@ -533,9 +527,9 @@ class ForecastingGridSearchCV(BaseGridSearch):
             "scoring": MeanAbsolutePercentageError(symmetric=True),
         }
         params2 = {
-            "forecaster": ExponentialSmoothing(),
+            "forecaster": PolynomialTrendForecaster(),
             "cv": SingleWindowSplitter(fh=1),
-            "param_grid": {"initialization_method": ["estimated", "heuristic"]},
+            "param_grid": {"degree": [1, 2]},
             "scoring": MeanAbsolutePercentageError(symmetric=True),
             "update_behaviour": "inner_only",
         }

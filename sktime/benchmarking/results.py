@@ -1,18 +1,21 @@
 # -*- coding: utf-8 -*-
+"""Benchmark results classes."""
+
 __all__ = ["HDDResults", "RAMResults"]
-__author__ = ["Viktor Kazakov", "Markus Löning"]
+__author__ = ["viktorkaz", "mloning"]
 
 import os
 
 import numpy as np
 import pandas as pd
 from joblib import load
-from sktime.benchmarking.base import BaseResults
-from sktime.benchmarking.base import HDDBaseResults
-from sktime.benchmarking.base import _PredictionsWrapper
+
+from sktime.benchmarking.base import BaseResults, HDDBaseResults, _PredictionsWrapper
 
 
 class RAMResults(BaseResults):
+    """In-memory results."""
+
     def __init__(self):
         self.results = {}
         super(RAMResults, self).__init__()
@@ -32,8 +35,7 @@ class RAMResults(BaseResults):
         predict_estimator_start_time=None,
         predict_estimator_end_time=None,
     ):
-        """
-        Saves the predictions of trained estimators.
+        """Save the predictions of trained estimators.
 
         Parameters
         ----------
@@ -79,7 +81,7 @@ class RAMResults(BaseResults):
         self._append_key(strategy_name, dataset_name)
 
     def load_predictions(self, cv_fold, train_or_test):
-        """Loads predictions for all datasets and strategies iteratively"""
+        """Load predictions for all datasets and strategies iteratively."""
         for strategy_name, dataset_name in self._iter():
             key = self._generate_key(
                 strategy_name, dataset_name, cv_fold, train_or_test
@@ -87,30 +89,36 @@ class RAMResults(BaseResults):
             yield self.results[key]
 
     def check_predictions_exist(self, strategy, dataset_name, cv_fold, train_or_test):
+        """Check that predictions exist."""
         # for in-memory results, always false, results are always overwritten
         return False
 
     def save_fitted_strategy(self, strategy, dataset_name, cv_fold):
+        """Save fitted strategy."""
         raise NotImplementedError()
 
     def load_fitted_strategy(self, strategy_name, dataset_name, cv_fold):
+        """Load fitted strategy."""
         raise NotImplementedError()
 
     def check_fitted_strategy_exists(self, strategy, dataset_name, cv_fold):
+        """Check that fitted strategy exists."""
         # for in-memory results, always false, results are always overwritten
         return False
 
     def save(self):
+        """Save self. Method present for interface consistency."""
         # in-memory results are currently not persisted (i.e saved to the disk)
         pass
 
     def _generate_key(self, strategy_name, dataset_name, cv_fold, train_or_test):
-        """Function to get paths for files, this basically encapsulate the
-        storage logic of the class"""
+        """Get paths for files, encapsulates the storage logic of the class."""
         return f"{strategy_name}_{dataset_name}_{train_or_test}_{str(cv_fold)}"
 
 
 class HDDResults(HDDBaseResults):
+    """HDD results."""
+
     def save_predictions(
         self,
         strategy_name,
@@ -126,8 +134,7 @@ class HDDResults(HDDBaseResults):
         predict_estimator_start_time=None,
         predict_estimator_end_time=None,
     ):
-        """
-        Saves the predictions of trained estimators.
+        """Save the predictions of trained estimators.
 
         Parameters
         ----------
@@ -173,8 +180,7 @@ class HDDResults(HDDBaseResults):
         self._append_key(strategy_name, dataset_name)
 
     def load_predictions(self, cv_fold, train_or_test):
-        """Load saved predictions"""
-
+        """Load saved predictions."""
         for strategy_name, dataset_name in self._iter():
             key = (
                 self._generate_key(
@@ -205,7 +211,7 @@ class HDDResults(HDDBaseResults):
             )
 
     def save_fitted_strategy(self, strategy, dataset_name, cv_fold):
-        """Save fitted strategy"""
+        """Save fitted strategy."""
         path = (
             self._generate_key(
                 strategy.name, dataset_name, cv_fold, train_or_test="train"
@@ -216,7 +222,7 @@ class HDDResults(HDDBaseResults):
         self._append_key(strategy.name, dataset_name)
 
     def load_fitted_strategy(self, strategy_name, dataset_name, cv_fold):
-        """Load saved (fitted) strategy"""
+        """Load saved (fitted) strategy."""
         for strategy_name, dataset_name in self._iter():
             key = (
                 self._generate_key(
@@ -229,6 +235,7 @@ class HDDResults(HDDBaseResults):
             return load(key)
 
     def check_fitted_strategy_exists(self, strategy_name, dataset_name, cv_fold):
+        """Check that fitted strategy exists."""
         path = (
             self._generate_key(
                 strategy_name, dataset_name, cv_fold, train_or_test="train"
@@ -243,6 +250,7 @@ class HDDResults(HDDBaseResults):
     def check_predictions_exist(
         self, strategy_name, dataset_name, cv_fold, train_or_test
     ):
+        """Check that predictions exist."""
         path = (
             self._generate_key(strategy_name, dataset_name, cv_fold, train_or_test)
             + ".csv"
@@ -253,8 +261,7 @@ class HDDResults(HDDBaseResults):
             return False
 
     def _generate_key(self, strategy_name, dataset_name, cv_fold, train_or_test):
-        """Function to get paths for files, this basically encapsulate
-        the storage logic of the class"""
+        """Get paths for files, encapsulates the storage logic of the class."""
         filepath = os.path.join(self.path, strategy_name, dataset_name)
         if not os.path.exists(filepath):
             # recursively create directory including intermediate-level folders
