@@ -32,7 +32,7 @@ class EAGGLO(BaseTransformer):
         1D `array_like` representing the initial cluster membership for input
         data, X.
     alpha : float (default=1.0)
-        fixed constant alpha in (0, 2) used in the divergence measure, as the
+        fixed constant alpha in (0, 2] used in the divergence measure, as the
         alpha-th absolute moment, see equation (4) in [1]_.
     penalty : functional (default=None)
         function that defines a penalization of the sequence of goodness-of-fit
