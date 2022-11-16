@@ -596,7 +596,10 @@
       "contributions": [
         "bug",
         "code",
-        "doc"
+        "data",
+        "doc",
+        "review",
+        "test"
       ]
     },
     {
@@ -1829,6 +1832,22 @@
         "test",
         "bug",
         "ideas"
+      ]
+    },
+    {
+      "login": "jorenham",
+      "name": "Joren Hammudoglu",
+      "profile": "https://github.com/jorenham",
+      "contributions": [
+        "build"
+      ]
+    },
+    {
+      "login": "wolph",
+      "name": "Rick van Hattem",
+      "profile": "https://github.com/wolph",
+      "contributions": [
+        "build"
       ]
     },
     {
