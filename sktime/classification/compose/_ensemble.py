@@ -28,24 +28,10 @@ from sktime.utils.validation.panel import check_X, check_X_y
 
 
 class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier):
-    """Time-Series Forest Classifier.
+    """Time Series Forest Classifier as described in [1]_.
 
-    @article{DENG2013142,
-        title = {A time series forest for classification and feature extraction},
-        journal = {Information Sciences},
-        volume = {239},
-        pages = {142 - 153},
-        year = {2013},
-        issn = {0020-0255},
-        doi = {https://doi.org/10.1016/j.ins.2013.02.030},
-        url = {http://www.sciencedirect.com/science/article/pii/S0020025513001473},
-        author = {Houtao Deng and George Runger and Eugene Tuv and Martyanov Vladimir},
-        keywords = {Decision tree, Ensemble, Entrance gain, Interpretability,
-                    Large margin, Time series classification}
-    }
-
-    A time series forest is a meta estimator and an adaptation of the random
-    forest for time-series/panel data that fits a number of decision tree
+    A time series forest is an adaptation of the random
+    forest for time-series data. It that fits a number of decision tree
     classifiers on various sub-samples of a transformed dataset and uses
     averaging to improve the predictive accuracy and control over-fitting.
     The sub-sample size is always the same as the original input sample size
@@ -182,6 +168,11 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
         set. If n_estimators is small it might be possible that a data point
         was never left out during the bootstrap. In this case,
         `oob_decision_function_` might contain NaN.
+
+    References
+    ----------
+    .. [1] Deng et. al, A time series forest for classification and feature extraction,
+    Information Sciences, 239:2013.
     """
 
     _tags = {
@@ -621,13 +612,13 @@ class WeightedEnsembleClassifier(BaseClassifier, _HeterogenousMetaEstimator):
 
     Examples
     --------
-    >>> from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
+    >>> from sktime.classification.dummy import DummyClassifier
     >>> from sktime.classification.kernel_based import RocketClassifier
     >>> from sktime.datasets import load_unit_test
-    >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
+    >>> X_train, y_train = load_unit_test(split="train")
+    >>> X_test, y_test = load_unit_test(split="test")
     >>> clf = WeightedEnsembleClassifier(
-    ...     [KNeighborsTimeSeriesClassifier(), RocketClassifier()],
+    ...     [DummyClassifier(), RocketClassifier(num_kernels=100)],
     ...     weights=2,
     ... )
     >>> clf.fit(X_train, y_train)

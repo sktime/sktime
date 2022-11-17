@@ -42,7 +42,8 @@ __all__ = [
 ]
 
 import os
-from urllib.error import HTTPError
+from urllib.error import HTTPError, URLError
+from warnings import warn
 
 import numpy as np
 import pandas as pd
@@ -1160,23 +1161,15 @@ def load_solar(
     >>> from sktime.datasets import load_solar  # doctest: +SKIP
     >>> y = load_solar()  # doctest: +SKIP
     """
+    name = "solar"
+    fname = name + ".csv"
+    path = os.path.join(MODULE, DIRNAME, name, fname)
+    y = pd.read_csv(path, index_col=0, parse_dates=["datetime_gmt"], dtype={1: float})
+    y = y.asfreq("30T")
+    y = y.squeeze("columns")
     if api_version is None:
-        name = "solar"
-        fname = name + ".csv"
-        path = os.path.join(MODULE, DIRNAME, name, fname)
-        y = pd.read_csv(
-            path, index_col=0, parse_dates=["datetime_gmt"], dtype={1: float}
-        )
-        y = y.asfreq("30T")
-        return y.squeeze("columns")
+        return y
 
-    from sktime.utils.validation._dependencies import _check_soft_dependencies
-
-    _check_soft_dependencies("backoff")
-
-    import backoff
-
-    @backoff.on_exception(wait_gen=backoff.expo, exception=HTTPError, max_tries=5)
     def _load_solar(
         start="2021-05-01",
         end="2021-09-01",
@@ -1211,13 +1204,28 @@ def load_solar(
             else:
                 return df["generation_mw"].rename("solar_gen")
 
-    return _load_solar(
-        start=start,
-        end=end,
-        normalise=normalise,
-        return_full_df=return_full_df,
-        api_version=api_version,
-    )
+    tries = 5
+    for i in range(tries):
+        try:
+            return _load_solar(
+                start=start,
+                end=end,
+                normalise=normalise,
+                return_full_df=return_full_df,
+                api_version=api_version,
+            )
+        except (URLError, HTTPError):
+            if i < tries - 1:
+                continue
+            else:
+                warn(
+                    """
+                    Error detected using API. Check connection, input arguments, and
+                    API status here https://www.solar.sheffield.ac.uk/pvlive/api/.
+                    Loading stored sample data instead.
+                    """
+                )
+                return y
 
 
 def load_covid_3month(split=None, return_X_y=True):

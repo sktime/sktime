@@ -21,7 +21,6 @@ from sktime.datasets import (
     load_from_long_to_dataframe,
     load_from_tsfile,
     load_from_tsfile_to_dataframe,
-    load_solar,
     load_tsf_to_dataframe,
     load_UCR_UEA_dataset,
     load_uschange,
@@ -34,7 +33,6 @@ from sktime.datasets._data_io import (
     _load_provided_dataset,
 )
 from sktime.datatypes import MTYPE_LIST_PANEL, check_is_mtype
-from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 # Disabling test for these mtypes since they don't support certain functionality yet
 _TO_DISABLE = ["pd-long", "pd-wide", "numpyflat"]
@@ -1478,23 +1476,3 @@ def test_convert_tsf_to_multiindex(freq):
         _convert_tsf_to_hierarchical(input_df, metadata, freq=freq),
         check_dtype=False,
     )
-
-
-@pytest.mark.skipif(
-    not _check_soft_dependencies("backoff", severity="none"),
-    reason="load_solar requires backoff in the environment",
-)
-@pytest.mark.parametrize("return_df", [False, True])
-def test_load_solar(return_df):
-    """Test function for loading solar data through the Sheffiled Solar API."""
-    # get static dataset
-    test_equals = load_solar(api_version=None).to_numpy()
-    # get matching data from API
-    y = load_solar(start="2021-05-01", end="2021-05-07", return_full_df=return_df)
-
-    if return_df:
-        assert isinstance(y, pd.DataFrame)
-    else:
-        assert isinstance(y, pd.Series)
-        y = y.round(5).to_numpy()
-        assert np.all(y == test_equals)
