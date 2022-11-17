@@ -17,8 +17,8 @@ age or religion. **We do not tolerate harassment by and/or of members of
 our community in any form**.
 
 We are dedicated to a **fair and equal opportunities environment** for everyone,
-and therefore are particularly motivated to support new and/or anxious
-collaborators, people who are looking to learn and develop their skills,
+and therefore are particularly motivated to support new collaborators,
+people who are looking to learn and develop their skills,
 and anyone who has experienced discrimination in the past.
 
 To make clear what is expected, we ask all members of the community to
