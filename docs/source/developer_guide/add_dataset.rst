@@ -5,6 +5,7 @@ Adding a New Dataset
 To add a new dataset into :code:`sktime` internal dataset repository, please proceed with the following steps:
 
 1. From the root of your :code:`sktime` local repository, create a :code:`<dataset-name>` folder:
+   
    .. code-block:: shell
     
       mkdir ./datasets/data/<dataset-name>
