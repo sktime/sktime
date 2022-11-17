@@ -28,17 +28,20 @@ def _debug_knn_2774():
     knn.fit(trainX, trainy)
 
 
-def _debug_threaded_tde_3788_numpy(n_cases=20, n_dims=20, series_length=20):
+def _debug_threaded_tde_3788_numpy(n_cases=20, n_dims=2, series_length=20):
     from sktime.classification.dictionary_based import TemporalDictionaryEnsemble
     from sktime.classification.hybrid import HIVECOTEV2
 
     trainX = np.random.rand(n_cases, n_dims, series_length)
     trainY = np.random.randint(0, 2, n_cases)
     print(trainY)
-    tde = HIVECOTEV2(n_jobs=2, time_limit_in_minutes=1)
+    hc2 = HIVECOTEV2(n_jobs=2, time_limit_in_minutes=1)
+    tde = TemporalDictionaryEnsemble(n_jobs=10, time_limit_in_minutes=1)
     print(" beginning fit numpy")
+    hc2.fit(trainX, trainY)
     tde.fit(trainX, trainY)
     print(" beginning predict numpy")
+    preds = hc2.predict(trainX)
     preds = tde.predict(trainX)
     print(" end predict numpy")
 
