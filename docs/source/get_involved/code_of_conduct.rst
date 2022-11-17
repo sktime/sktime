@@ -557,11 +557,10 @@ CoC violations when making resource allocation decisions are rarely accompanied 
 
 Such CoC violations can be committed by an individual, or by a networked group of individuals.
 
-DARVO, intimidation, noise generation, and plausible deniability may be common tactics found in an investigation.
+CoC investigations must focus on the facts.
+For this, it is helpful to be aware of common obfuscation and misinformation tactics such as:
+DARVO, intimidation, noise generation, and plausible deniability.
 
-It is hence crucial to establish the facts.
-
-It is also crucial to investigate circumstantial evidence, as facts may be obfuscated.
 Important pieces of circumstantial evidence for a CoC violation are:
 
 * cui bono - the individual or group influencing the decision being a direct or indirect
