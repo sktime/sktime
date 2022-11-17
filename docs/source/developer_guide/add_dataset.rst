@@ -2,15 +2,26 @@
 Adding a New Dataset
 ====================
 
-Follow these steps to add a new dataset to sktime:
+To add a new dataset into :code:`sktime` internal dataset repository, please proceed with the following steps:
 
-*  Include CSV file or other supported format under :code:`sktime/datasets/data/<dataset-name>`
-*  Add :code:`load_<dataset-name>(...)` function in file
-:code:`sktime/datasets/_single_problem_loaders.py`
-*  Add :code:`<dataset-name>` to the list :code:`__all__ = [...]` in file :code:`sktime/datasets/__init__.py`
-*  Add :code:`<dataset-name>` as argument to method :code:`included_datasets = (...` in file :code:`sktime/sktime/datasets/setup.py`
-*  Add :code:`<dataset-name>` to the list of included problems in file :code:`sktime/sktime/datasets/setup.py`
+1. From the root of your :code:`sktime` local repository, create a :code:`<dataset-name>` folder:
+   .. code-block:: shell
+    
+      mkdir ./datasets/data/<dataset-name>
 
-you may need to comment out this line in .gitignore in order to commit new datasets
-#downloaded datasets
-sktime/datasets/data/
+2. In the above directory, add the file :code:`<dataset-name>.<EXT>`, where :code:`<EXT>` is the extension of the file, in a supported format (*e.g.*, :code:`.csv`, :code:`.txt`):
+   
+   * The list of supported file formats is available in the :code:`sktime/MANIFEST.in` file.
+   * If your file format ``<EXT>`` does not figure in the list, simply add it in the :code:`sktime/MANIFEST.in` file:
+   ::
+   
+      "sktime/MANIFEST.in"
+      ...
+      recursive-include sktime/datasets *.csv ... *.<EXT>
+      ...
+
+3. In ``sktime/datasets/_single_problem_loaders.py``, declare a :code:`load_<dataset-name>(...)` function. Feel free to use any other delared functions as templates for either classification or regression datasets.
+
+4. In ``sktime/datasets/__init__.py``, append :code:`"load_<dataset-name>"` to the list :code:`__all__`.
+
+5. In ``sktime/datasets/setup.py``, append :code:`"<dataset-name>"` to the tuple :code:`included_datasets`.
