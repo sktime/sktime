@@ -167,10 +167,10 @@ class EAGGLO(BaseTransformer):
         ]  # N + 1 for cyclic mergers
 
         # array to specify the starting point of a cluster
-        self.lm = np.zeros(2 * self.n_cluster - 1)
+        self.lm = np.zeros(2 * self.n_cluster - 1, dtype=int)
         self.lm[: self.n_cluster] = range(self.n_cluster)
 
-    def _gof_update(self, i: int):
+    def _gof_update(self, i: int) -> float:
         """Compute the updated goodness-of-fit statistic, left cluster given by i."""
         fit = self.gof_[-1]
         j = self.right[i]
