@@ -48,7 +48,7 @@ teaching and contributing. All participants in our in-person events and online
 communications are expected to show respect and courtesy to others at all times.
 
 To make clear what is expected, everyone participating in activities
-associated with the sktime project is required to conform to this Code
+associated with the ``sktime`` project is required to conform to this Code
 of Conduct. This Code of Conduct applies to all spaces managed by the
 sktime project including, but not limited to, in-person focus groups and
 workshops, and communications online via GitHub.
@@ -460,16 +460,38 @@ A.2 Guidance on applying the CoC for resource allocation decisions
 This section deals with resource allocation decisions by ``sktime`` community members,
 and criteria for decision making on resource allocation violating the code of conduct.
 
-Scope
-^^^^^
+Legal status
+^^^^^^^^^^^^
 
-In scope for this section are all resource allocation decisions that satisfy at least one of the following criteria:
+This guidance of applying the CoC for resource allocation decisions impacts only
+adjudication by the CoC committee within the jurisdiction of the CoC committee.
+
+It does not impact the terms of the license by
+which ``sktime`` - the software package - is distributed.
+
+Out-Of-Scope
+^^^^^^^^^^^^
+
+Out of scope are spaces outside ``sktime`` jurisdiction as per Section 1.
+
+In-Scope
+^^^^^^^^
+
+In scope for this section are all resource allocation decisions that are made
+within ``sktime`` jurisdiction as per Section 1, including decisions that are:
+
+* made by elected members of the ``sktime`` community, i.e., core developers,
+  Community Council members, Code of Conduct committee members, or
+* made as part of an ``sktime`` activity or event.
+
+A resource allocation is in scope if it satisfies at least one of the following criteria:
 
 * any decisions that allocate resources primarily obtained due to the ``sktime`` project and the volunteer contributions of the community.
   This includes research grants awarded directly for the benefit of the ``sktime`` project,
   commercial opportunities arising from or directly directed to the ``sktime`` project,
   and any activities that use the ``sktime`` brand as a primary branding.
-  This condition applies even if relevant decisions are made in personal roles, or roles other than ``sktime`` official roles.
+  This condition applies even if relevant decisions are made in personal roles,
+  or roles other than ``sktime`` official roles, as long as it falls within the general jurisdiction scope outlined above.
 * any decisions by members of the ``sktime`` developer community, in their execution of an official ``sktime`` role.
   This especially includes core developer, Community Council, and Code of Conduct Committee roles.
 
