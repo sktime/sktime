@@ -169,10 +169,10 @@ project event or platform include:
 -  continuing to initiate interaction (including photography or
    recording) with someone after being asked to stop
 -  publication of private communication without consent
--  decision making on resource allocation which has the effect of excluding people
-   on the basis of protected characteristics, or other forms of systemic discrimination
--  decision making on resource allocation that confers advantages to personal networks,
-   and excludes others, e.g., preventing advertising of opportunities, not applying best practice in recruitment
+-  discrimination in resource allocation, decision making that excludes people
+   on the basis of protected characteristics
+-  favouritism in resource allocation, decision making that confers advantages to personal networks,
+   and/or excludes others, such as preventing advertising of opportunities, not applying best practice in recruitment
 -  reducing transparency of operations of sktime, e.g., by obfuscation of the paper trail
 -  invoking the code of conduct dishonestly, or as a form of bullying,
    especially from a position of power
