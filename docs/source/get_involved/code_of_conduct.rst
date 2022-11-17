@@ -576,3 +576,4 @@ Important pieces of circumstantial evidence for a CoC violation are:
   transparency, decision making capacity, investigation practices, or adherence to best practice in resource allocation
 * despite better knowledge - evidence that the decision maker is aware of best practice and nonetheless acts against it.
   E.g., if best practice has been pointed out clearly and explicitly to the decision maker prior to the decision.
+  Note: this does not affect the general point that ignorance of the CoC is no excuse.
