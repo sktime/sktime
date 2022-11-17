@@ -28,7 +28,7 @@ def test_fit_default_params_univariate():
     model = EAGGLO()
     fitted_model = model._fit(X)
 
-    cluster_actual = fitted_model.cluster
+    cluster_actual = fitted_model.cluster_
     fit_actual = fitted_model.gof
 
     assert np.allclose(cluster_actual, cluster_expected)
@@ -45,7 +45,7 @@ def test_fit_other_params_univariate():
     model = EAGGLO(member=np.array([0, 0, 1, 2]), alpha=2)
     fitted_model = model._fit(X)
 
-    cluster_actual = fitted_model.cluster
+    cluster_actual = fitted_model.cluster_
     fit_actual = fitted_model.gof
 
     assert np.allclose(cluster_actual, cluster_expected)
@@ -79,14 +79,14 @@ def test_fit_default_params_multivariate():
     model = EAGGLO()
     fitted_model = model._fit(X)
 
-    cluster_actual = fitted_model.cluster
+    cluster_actual = fitted_model.cluster_
     fit_actual = fitted_model.gof
 
     assert np.allclose(cluster_actual, cluster_expected)
     assert np.allclose(fit_actual, fit_expected)
 
 
-def test_penalty1():
+def test_len_penalty():
     """Test multivariate data with penalty function as string input."""
     X = pd.DataFrame(
         [
@@ -101,17 +101,17 @@ def test_penalty1():
     cluster_expected = [0, 0, 1, 1, 1]
     fit_expected = [112.58235, 127.67919, 152.54531, 205.61512, -35.52743]
 
-    model = EAGGLO(penalty="penalty1")
+    model = EAGGLO(penalty="len_penalty")
     fitted_model = model._fit(X)
 
-    cluster_actual = fitted_model.cluster
+    cluster_actual = fitted_model.cluster_
     fit_actual = fitted_model.gof
 
     assert np.allclose(cluster_actual, cluster_expected)
     assert np.allclose(fit_actual, fit_expected)
 
 
-def test_penalty2():
+def test_custom_penalty():
     """Test multivariate data with functional input as penalty."""
     X = pd.DataFrame([-7.207066, -5.722571, 5.889715, 5.488990])
 
