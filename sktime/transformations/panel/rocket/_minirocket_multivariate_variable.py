@@ -20,8 +20,7 @@ class MiniRocketMultivariateVariable(BaseTransformer):
 
     MINImally RandOm Convolutional KErnel Transform. [1]_
 
-    **Multivariate**
-    **unequal length**
+    **Multivariate** and **unequal length**
 
     A provisional and naive extension of MINIROCKET to multivariate input
     with unequal length provided by the authors [2]_ .  For better
@@ -30,17 +29,23 @@ class MiniRocketMultivariateVariable(BaseTransformer):
 
     Parameters
     ----------
-    num_kernels              : int, number of random convolutional kernels
-                               (default 10_000).
-                               Reduced to the closest multiple of 84.
-    max_dilations_per_kernel : int, maximum number of dilations per kernel (default 32)
-    reference_length         : int or str, length of reference, (default `'max'`), str
-                               options are `'max'`, `'mean'`, `'median'`, `'min'`
-    n_jobs                   : int, optional (default=1) The number of jobs to run in
-    parallel for `transform`. ``-1`` means using all processors.
-    pad_value_short_series   : float or None, padding series with len<9 to value
-                                    (default None)
-    random_state             : int, random seed (optional, default None)
+    num_kernels              : int, (default 10_000)
+                                number of random convolutional kernels.
+                                Reduced to the closest multiple of 84.
+    max_dilations_per_kernel : int, (default 32)
+                                maximum number of dilations per kernel
+    reference_length         : int or str, (default `'max'`)
+                                series-length of reference, str defines
+                                how to infer from X during 'fit'.
+                                options are `'max'`, `'mean'`, `'median'`, `'min'`
+    n_jobs                   : int, (default=1)
+                                The number of jobs to run in parallel
+                                for `transform`. ``-1`` means using all processors.
+    pad_value_short_series   : float or None, (default: None)
+                                if padding series with len<9 to value.
+                                if None, not padding is performed.
+    random_state             : int,
+                                random seed (optional, default None)
 
     Examples
     --------
@@ -56,16 +61,17 @@ class MiniRocketMultivariateVariable(BaseTransformer):
     >>> X_transformed.shape
     (370, 9996)
 
+    Raises
+    ------
+    ValueError
+        If any multivariate series_length in X is < 9 and
+        pad_value_short_series is set to None
 
     References
     ----------
-    .. [1] @article{dempster_etal_2020,
-      author  = {Dempster, Angus and Schmidt, Daniel F and Webb, Geoffrey I},
-      title   = {{MINIROCKET}: A Very Fast (Almost) Deterministic Transform for
-                 Time Series Classification},
-      year    = {2020},
-      journal = {arXiv:2012.08791}
-    }
+    .. [1] Angus Dempster, Daniel F Schmidt, Geoffrey I Webb
+        MINIROCKET: A Very Fast (Almost) Deterministic Transform for
+        Time Series Classification, 2020, arXiv:2012.08791
 
     .. [2] Angus Dempster, Daniel F Schmidt, Geoffrey I Webb
            https://github.com/angus924/minirocket
@@ -75,7 +81,7 @@ class MiniRocketMultivariateVariable(BaseTransformer):
         "univariate-only": False,
         "fit_is_empty": False,
         "scitype:transform-input": "Panel",
-        "scitype:transform-output": "Panel",
+        "scitype:transform-output": "Primitives",
         "capability:unequal_length": True,
         "scitype:transform-labels": "None",
         "scitype:instancewise": False,  # is this an instance-wise transform?
