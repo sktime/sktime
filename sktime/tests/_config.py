@@ -29,8 +29,6 @@ EXCLUDE_ESTIMATORS = [
     "RandomIntervalClassifier",
     "MiniRocket",
     "MatrixProfileTransformer",
-    # RandomShapeletTransform is breaking with empty lists, see #3138
-    "RandomShapeletTransform",
 ]
 
 
@@ -48,43 +46,45 @@ EXCLUDED_TESTS = {
         "test_classifier_on_unit_test_data",
         "test_classifier_on_basic_motions",
     ],
-    # test fail with deep problem with pickling inside tensorflow.
-    "CNNClassifier": [
-        "test_fit_idempotent",
-        "test_persistence_via_pickle",
-    ],
-    "MLPClassifier": [
-        "test_fit_idempotent",
-        "test_persistence_via_pickle",
-    ],
-    "TapNetClassifier": [
-        "test_fit_idempotent",
-        "test_persistence_via_pickle",
-    ],
-    "FCNClassifier": [
-        "test_fit_idempotent",
-        "test_persistence_via_pickle",
-    ],
-    "CNNRegressor": [
-        "test_fit_idempotent",
-        "test_persistence_via_pickle",
-    ],
-    "TapNetRegressor": [
-        "test_fit_idempotent",
-        "test_persistence_via_pickle",
-    ],
     # pickling problem with local method see #2490
     "ProximityStump": [
         "test_persistence_via_pickle",
         "test_fit_does_not_overwrite_hyper_params",
+        "test_save_estimators_to_file",
     ],
     "ProximityTree": [
         "test_persistence_via_pickle",
         "test_fit_does_not_overwrite_hyper_params",
+        "test_save_estimators_to_file",
     ],
     "ProximityForest": [
         "test_persistence_via_pickle",
         "test_fit_does_not_overwrite_hyper_params",
+        "test_save_estimators_to_file",
+    ],
+    # TapNet fails due to Lambda layer, see #3539 and #3616
+    "TapNetClassifier": [
+        "test_fit_idempotent",
+        "test_persistence_via_pickle",
+        "test_save_estimators_to_file",
+    ],
+    "TapNetRegressor": [
+        "test_fit_idempotent",
+        "test_persistence_via_pickle",
+        "test_save_estimators_to_file",
+    ],
+    # `test_fit_idempotent` fails with `AssertionError`, see #3616
+    "CNNClassifier": [
+        "test_fit_idempotent",
+    ],
+    "CNNRegressor": [
+        "test_fit_idempotent",
+    ],
+    "FCNClassifier": [
+        "test_fit_idempotent",
+    ],
+    "MLPClassifier": [
+        "test_fit_idempotent",
     ],
     # sth is not quite right with the RowTransformer-s changing state,
     #   but these are anyway on their path to deprecation, see #2370
@@ -92,7 +92,7 @@ EXCLUDED_TESTS = {
     "SeriesToSeriesRowTransformer": ["test_methods_do_not_change_state"],
     # ColumnTransformer still needs to be refactored, see #2537
     "ColumnTransformer": ["test_methods_do_not_change_state"],
-    # Early classifiers intentionally retain information from pervious predict calls
+    # Early classifiers intentionally retain information from previous predict calls
     #   for #1.
     # #2 amd #3 are due to predict/predict_proba returning two items and that breaking
     #   assert_array_equal
@@ -100,6 +100,7 @@ EXCLUDED_TESTS = {
         "test_methods_do_not_change_state",
         "test_fit_idempotent",
         "test_persistence_via_pickle",
+        "test_save_estimators_to_file",
     ],
     "CNNNetwork": "test_inheritance",  # not a registered base class, WiP, see #3028
     "VARMAX": [
@@ -108,6 +109,10 @@ EXCLUDED_TESTS = {
     ],
     # GGS inherits from BaseEstimator which breaks this test
     "GreedyGaussianSegmentation": ["test_inheritance", "test_create_test_instance"],
+    "InformationGainSegmentation": [
+        "test_inheritance",
+        "test_create_test_instance",
+    ],
     "SAX": "test_fit_transform_output",  # SAX returns strange output format
     # this needs to be fixed, was not tested previously due to legacy exception
 }
@@ -117,10 +122,14 @@ EXCLUDED_TESTS = {
 # common tests for estimators with the same tags.
 VALID_ESTIMATOR_TAGS = tuple(ESTIMATOR_TAG_LIST)
 
-# These methods should not change the state of the estimator, that is, they should
+# NON_STATE_CHANGING_METHODS =
+# methods that should not change the state of the estimator, that is, they should
 # not change fitted parameters or hyper-parameters. They are also the methods that
 # "apply" the fitted estimator to data and useful for checking results.
-NON_STATE_CHANGING_METHODS = (
+# NON_STATE_CHANGING_METHODS_ARRAYLIK =
+# non-state-changing methods that return an array-like output
+
+NON_STATE_CHANGING_METHODS_ARRAYLIKE = (
     "predict",
     "predict_var",
     "predict_proba",
@@ -130,6 +139,10 @@ NON_STATE_CHANGING_METHODS = (
     # escaping this, since for some estimators
     #   the input format of inverse_transform assumes special col names
     # "inverse_transform",
+)
+
+NON_STATE_CHANGING_METHODS = NON_STATE_CHANGING_METHODS_ARRAYLIKE + (
+    "get_fitted_params",
 )
 
 # The following gives a list of valid estimator base classes.

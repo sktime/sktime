@@ -792,14 +792,14 @@ class FitInTransform(BaseTransformer):
         """
         return clone(self.transformer).fit(X=X, y=y).inverse_transform(X=X, y=y)
 
-    def get_fitted_params(self):
+    def _get_fitted_params(self):
         """Get fitted parameters.
 
         Returns
         -------
         fitted_params : dict
         """
-        return self.transformer_.get_fitted_params()
+        return {}
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -1238,7 +1238,7 @@ class InvertTransform(_DelegatedTransformer):
         return [params1, params2]
 
 
-class Id(_DelegatedTransformer):
+class Id(BaseTransformer):
     """Identity transformer, returns data unchanged in transform/inverse_transform."""
 
     _tags = {
@@ -1286,6 +1286,20 @@ class Id(_DelegatedTransformer):
         X, identical to input
         """
         return X
+
+    def _get_fitted_params(self):
+        """Get fitted parameters.
+
+        private _get_fitted_params, called from get_fitted_params
+
+        State required:
+            Requires state to be "fitted".
+
+        Returns
+        -------
+        fitted_params : dict
+        """
+        return {}
 
 
 class OptionalPassthrough(_DelegatedTransformer):
@@ -1663,7 +1677,9 @@ class YtoX(BaseTransformer):
 
     Parameters
     ----------
-    no parameters
+    subset_index : boolean, optional, default=False
+        if True, subsets the output of `transform` to `X.index`,
+        i.e., outputs `y.loc[X.index]`
     """
 
     _tags = {
@@ -1677,7 +1693,10 @@ class YtoX(BaseTransformer):
         "requires_y": True,
     }
 
-    def __init__(self):
+    def __init__(self, subset_index=False):
+
+        self.subset_index = subset_index
+
         super(YtoX, self).__init__()
 
     def _transform(self, X, y=None):
@@ -1696,7 +1715,10 @@ class YtoX(BaseTransformer):
         -------
         y, as a transformed version of X
         """
-        return y
+        if self.subset_index:
+            return y.loc[X.index.intersection(y.index)]
+        else:
+            return y
 
     def _inverse_transform(self, X, y=None):
         """Inverse transform, inverse operation to transform.
@@ -1715,4 +1737,7 @@ class YtoX(BaseTransformer):
         -------
         inverse transformed version of X
         """
-        return y
+        if self.subset_index:
+            return y.loc[X.index.intersection(y.index)]
+        else:
+            return y

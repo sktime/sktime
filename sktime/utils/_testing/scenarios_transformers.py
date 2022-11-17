@@ -170,7 +170,7 @@ class TransformerTestScenario(TestScenario, BaseObject):
 
         else:
             # default behaviour, happens except when key = "inverse_transform"
-            args = self.args[key]
+            args = self.args.get(key, {})
 
         if deepcopy_args:
             args = deepcopy(args)
