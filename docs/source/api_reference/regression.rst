@@ -57,7 +57,7 @@ Kernel-based
 Base
 ----
 
-.. currentmodule:: sktime.regression
+.. currentmodule:: sktime.regression.base
 
 .. autosummary::
     :toctree: auto_generated/
@@ -65,7 +65,7 @@ Base
 
     BaseRegressor
 
-.. currentmodule:: sktime.regression.deep_learning
+.. currentmodule:: sktime.regression.deep_learning.base
 
 .. autosummary::
     :toctree: auto_generated/
