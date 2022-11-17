@@ -136,6 +136,8 @@ class MultiRocketMultivariate(BaseTransformer):
             X = _X1
             del _X1
 
+        X = X.astype(np.float64)
+
         self.parameter = self._get_parameter(X)
         _X1 = np.diff(X, 1)
 
