@@ -1000,9 +1000,11 @@ class RandomShapeletTransform(BaseTransformer):
     n_jobs : int, default=1
         The number of jobs to run in parallel for both `fit` and `transform`.
         ``-1`` means using all processors.
-    parallel_backend : str, default=None
-        Specify the parallelisation backend implementation in joblib, where
-        "threads" is used by default.
+    parallel_backend : str, ParallelBackendBase instance or None, default=None
+        Specify the parallelisation backend implementation in joblib, if None a 'prefer'
+        value of "threads" is used by default.
+        Valid options are "loky", "multiprocessing", "threading" or a custom backend.
+        See the joblib Parallel documentation for more details.
     batch_size : int or None, default=100
         Number of shapelet candidates processed before being merged into the set of best
         shapelets.

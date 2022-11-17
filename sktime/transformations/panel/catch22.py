@@ -59,10 +59,10 @@ class Catch22(BaseTransformer):
         The number of jobs to run in parallel for transform. Requires multiple input
         cases.
 
-        .. deprecated:: 0.13.4
-            the default = 4 was deprecated in version 0.13.3 and will be changed to
-            default = 2 in 0.15. Please use alphabet_size=2 due to its lower memory
-            footprint, better runtime at equal accuracy.
+        .. deprecated:: 0.14.0
+            ``n_jobs`` default was changed to 1 from -1 in version 0.14.0. In version
+            0.16.0 a value of -1 will use all CPU cores instead of the current 1
+            CPU core.
 
     See Also
     --------
