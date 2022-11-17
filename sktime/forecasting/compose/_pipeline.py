@@ -1501,8 +1501,8 @@ class Permute(_DelegatedForecaster, _HeterogenousMetaEstimator):
     ... )
     >>> # this results in the pipeline with sequence "exp", "boxcox", "naive"
     >>> permuted = Permute(pipe, ["exp", "boxcox", "naive"])
-    >>> pipe = pipe.fit(y, fh=fh)
-    >>> y_pred = pipe.predict()
+    >>> permuted = permuted.fit(y, fh=fh)
+    >>> y_pred = permuted.predict()
 
     The permuter is useful in combination with grid search (toy example):
     >>> from sktime.datasets import load_shampoo_sales
@@ -1520,7 +1520,7 @@ class Permute(_DelegatedForecaster, _HeterogenousMetaEstimator):
     ...     "permutation" : [["boxcox", "exp", "naive"], ["exp", "boxcox", "naive"]]
     ... }
     >>> gscv = ForecastingGridSearchCV(
-    ...     forecaster=forecaster,
+    ...     forecaster=permuted,
     ...     param_grid=param_grid,
     ...     cv=cv)
     """
