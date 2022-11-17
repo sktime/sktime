@@ -10,9 +10,9 @@ To add a new dataset into :code:`sktime` internal dataset repository, please pro
     
       mkdir ./datasets/data/<dataset-name>
 
-2. In the above directory, add the file :code:`<dataset-name>.<EXT>`, where :code:`<EXT>` is the extension of the file, in a supported format (*e.g.*, :code:`.csv`, :code:`.txt`):
+2. In the above directory, add the your dataset file :code:`<dataset-name>.<EXT>`, where :code:`<EXT>` is the file extension:
    
-   * The list of supported file formats is available in the :code:`sktime/MANIFEST.in` file.
+   * The list of supported file formats is available in the :code:`sktime/MANIFEST.in` file (*e.g.*, :code:`.csv`, :code:`.txt`).
    * If your file format ``<EXT>`` does not figure in the list, simply add it in the :code:`sktime/MANIFEST.in` file:
    ::
    
@@ -21,7 +21,7 @@ To add a new dataset into :code:`sktime` internal dataset repository, please pro
       recursive-include sktime/datasets *.csv ... *.<EXT>
       ...
 
-3. In ``sktime/datasets/_single_problem_loaders.py``, declare a :code:`load_<dataset-name>(...)` function. Feel free to use any other delared functions as templates for either classification or regression datasets.
+3. In ``sktime/datasets/_single_problem_loaders.py``, declare a :code:`load_<dataset-name>(...)` function. Feel free to use any other declared functions as templates for either classification or regression datasets.
 
 4. In ``sktime/datasets/__init__.py``, append :code:`"load_<dataset-name>"` to the list :code:`__all__`.
 
