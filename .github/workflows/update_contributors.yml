@@ -1,0 +1,50 @@
+name: Update Contributors
+
+on:
+  push:
+    branches:
+      - main
+    path:
+      - '.all-contributorsrc'
+  pull_request:
+    branches:
+      - main
+    path:
+      - '.all-contributorsrc'
+  pull_request_target:
+    branches:
+      - main
+    path:
+      - '.all-contributorsrc'
+
+jobs:
+  generate-markdown:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.head_ref }}
+      - name: Set up Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+      - name: Set up tool
+        run: npm install all-contributors-cli
+      - name: Generate file
+        id: generate
+        run: npx all-contributors generate
+
+  commit-and-push:
+    needs: generate-markdown
+    runs-on: ubuntu-latest
+    steps:
+      - name: commit-and-push
+        id: candp
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: '[AUTOMATED] update CONTRIBUTORS.md'
+          file_pattern: 'CONTRIBUTORS.md'
+          commit_user_name: github-actions[bot]
+      - name: Echo Results
+        if: steps.candp.outputs.changes_detected == 'true'
+        run: echo "changes detected and committed."
