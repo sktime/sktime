@@ -18,6 +18,14 @@ Time Series Segmentation
 
     ClaSPSegmentation
 
+.. currentmodule:: sktime.annotation.eagglo
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    EAGGLO
+
 .. currentmodule:: sktime.annotation.hmm_learn.gaussian
 
 .. autosummary::
