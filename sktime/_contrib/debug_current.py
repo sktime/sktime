@@ -28,7 +28,40 @@ def _debug_knn_2774():
     knn.fit(trainX, trainy)
 
 
-def debug_pf():
+def _debug_threaded_tde_3788_numpy(n_cases=20, n_dims=20, series_length=20):
+    from sktime.classification.dictionary_based import TemporalDictionaryEnsemble
+    from sktime.classification.hybrid import HIVECOTEV2
+
+    trainX = np.random.rand(n_cases, n_dims, series_length)
+    trainY = np.random.randint(0, 2, n_cases)
+    print(trainY)
+    tde = HIVECOTEV2(n_jobs=2, time_limit_in_minutes=1)
+    print(" beginning fit numpy")
+    tde.fit(trainX, trainY)
+    print(" beginning predict numpy")
+    preds = tde.predict(trainX)
+    print(" end predict numpy")
+
+
+def _debug_threaded_tde_3788_pandas():
+    from sktime.classification.dictionary_based import TemporalDictionaryEnsemble
+
+    n_cases = 100
+    n_dims = 10
+    series_length = 100
+    trainX = np.random.rand(n_cases, n_dims, series_length)
+    from datatypes import convert_to
+
+    pd_trainX = convert_to(trainX, to_type="nested_univ", as_scitype="Panel")
+    trainY = np.random.randint(0, 2, n_cases)
+    tde = TemporalDictionaryEnsemble(n_jobs=2, time_limit_in_minutes=1)
+    print(" beginning fit pandas")
+    tde.fit(pd_trainX, trainY)
+    print(" beginning predict pandas")
+    pred = tde.predict(pd_trainX)
+
+
+def _debug_pf():
     """PF just broken."""
     from sktime import show_versions
 
@@ -42,4 +75,5 @@ def debug_pf():
 
 
 if __name__ == "__main__":
-    debug_pf()
+    _debug_threaded_tde_3788_numpy()
+#    _debug_threaded_tde_3788_pandas()
