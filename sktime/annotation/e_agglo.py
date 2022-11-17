@@ -347,7 +347,7 @@ class EAGGLO(BaseTransformer):
             self.cluster_ = get_cluster(self._estimates)
         else:
             tmp = get_cluster(np.append([0], self._estimates))
-            self.cluster_ = np.append(tmp, np.repeat(0, X.shape[0] - len(tmp)))
+            self.cluster_ = np.append(tmp, np.zeros(X.shape[0] - len(tmp)))
 
         return self
 
