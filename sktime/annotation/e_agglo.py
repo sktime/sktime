@@ -134,12 +134,12 @@ class EAGGLO(BaseTransformer):
 
         # set up left and right neighbors
         # special case for clusters 0 and n_cluster-1 to allow for cyclic merging
-        self.left = np.zeros(2 * self.n_cluster - 1)
+        self.left = np.zeros(2 * self.n_cluster - 1, dtype=int)
         self.left[: self.n_cluster] = [
             i - 1 if i >= 1 else self.n_cluster - 1 for i in range(self.n_cluster)
         ]
 
-        self.right = np.repeat(0, 2 * self.n_cluster - 1)
+        self.right = np.zeros(2 * self.n_cluster - 1, dtype=int)
         self.right[: self.n_cluster] = [
             i + 1 if i + 1 < self.n_cluster else 0 for i in range(self.n_cluster)
         ]
