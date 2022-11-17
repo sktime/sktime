@@ -58,6 +58,7 @@ Base
 ----
 
 .. currentmodule:: sktime.regression
+
 .. autosummary::
     :toctree: auto_generated/
     :template: class.rst
