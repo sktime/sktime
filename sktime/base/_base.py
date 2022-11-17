@@ -993,7 +993,7 @@ class BaseDeepEstimator(BaseEstimator):
 
         Extends sktime's BaseEstimator to include basic functionality for DL estimators.
         """
-        super(BaseEstimator, self).__init__()
+        super(BaseDeepEstimator, self).__init__()
         self.model_ = None
 
     def summary(self):
