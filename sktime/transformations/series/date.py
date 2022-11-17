@@ -488,6 +488,7 @@ class TempAgg(BaseTransformer):
         X_hat.set_index(pd.date_range(self.pred_date,
                                       periods=len(X_hat)),
                         inplace=True)
+        X_hat.index.name = self.index_name
         X_hat.columns = self.columns
         # replace if intersection
         intersec = (X_hat.index
