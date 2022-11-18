@@ -29,9 +29,6 @@ EXCLUDE_ESTIMATORS = [
     "RandomIntervalClassifier",
     "MiniRocket",
     "MatrixProfileTransformer",
-    # tapnet based estimators fail stochastically for unknown reasons, see #3525
-    "TapNetRegressor",
-    "TapNetClassifier",
 ]
 
 
