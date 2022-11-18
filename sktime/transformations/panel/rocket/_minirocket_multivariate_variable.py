@@ -81,7 +81,7 @@ class MiniRocketMultivariateVariable(BaseTransformer):
         "univariate-only": False,
         "fit_is_empty": False,
         "scitype:transform-input": "Panel",
-        "scitype:transform-output": "Primitives",
+        "scitype:transform-output": "Panel",
         "capability:unequal_length": True,
         "scitype:transform-labels": "None",
         "scitype:instancewise": False,  # is this an instance-wise transform?
