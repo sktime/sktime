@@ -10,7 +10,7 @@ To add a new dataset into :code:`sktime` internal dataset repository, please pro
     
       mkdir ./datasets/data/<dataset-name>
 
-2. In the above directory, add the your dataset file :code:`<dataset-name>.<EXT>`, where :code:`<EXT>` is the file extension:
+2. In the above directory, add your dataset file :code:`<dataset-name>.<EXT>`, where :code:`<EXT>` is the file extension:
    
    * The list of supported file formats is available in the :code:`sktime/MANIFEST.in` file (*e.g.*, :code:`.csv`, :code:`.txt`).
    * If your file format ``<EXT>`` does not figure in the list, simply add it in the :code:`sktime/MANIFEST.in` file:
