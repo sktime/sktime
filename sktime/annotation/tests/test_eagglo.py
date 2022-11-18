@@ -6,7 +6,7 @@ __author__ = ["KatieBuc"]
 import numpy as np
 import pandas as pd
 
-from sktime.annotation.e_agglo import EAGGLO
+from sktime.annotation.eagglo import EAGGLO
 
 
 def test_fit_default_params_univariate():
