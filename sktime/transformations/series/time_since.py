@@ -15,27 +15,27 @@ from sktime.transformations.base import BaseTransformer
 
 
 class TimeSince(BaseTransformer):
-    """Computes element-wise time elapsed since a reference start time.
+    """Computes element-wise time elapsed between the time index and a reference start time.
 
     Creates a column(s) which represents: `t` - `start`, where `start` is
-    a reference time and `t` is the time index. The type of `start`
-    must be compatible with the index of `X` used in `.fit()` and
-    `.transform()`.
+    a reference time and `t` is the time index. The type of `start` must be
+    compatible with the index of `X` used in `.fit()` and `.transform()`.
 
     The output can be converted to an integer representing the number of periods
     elapsed since the start time by setting `to_numeric=True`. The period is
     determined by the frequency of the index. For example, if the `freq` of
     the index is "MS" or "M" then the output is the integer number of months
-    elapsed between `t` and `start`.
+    between `t` and `start`.
 
     Parameters
     ----------
-    start : a list of start times, optional, default=None (use earliest in index)
-        a "start time" can be on of the following:
-        int - The start time to compute the time elapsed, use when index is integer
+    start : a list of start times, optional, default=None (use earliest time in index)
+        a "start time" can be one of the following types:
+        int - Start time to compute the time elapsed, use when index is integer
         time-like: `Period` or `datetime`
-            The start time to compute the time elapsed since
-        str - Is converted to datetime/period using pd.to_datetime()/pd.Period()
+            Start time to compute the time elapsed.
+        str - String is converted to datetime/period using pd.to_datetime()/pd.Period()
+              to give the start time.
     to_numeric : string, optional (default=False)
         Return the integer number of periods elapsed since `start`; the period
         is defined by the frequency of the data. Converts datetime types to
@@ -212,10 +212,10 @@ class TimeSince(BaseTransformer):
                     start_period = pd.Period(start_, freq=freq_period)
                     X_idx_period = X.index.to_period(freq_period)
                     time_deltas_period = X_idx_period - start_period
-                    time_deltas = self._period_to_int(time_deltas_period)
+                    time_deltas = _period_to_int(time_deltas_period)
                 elif isinstance(X.index, pd.PeriodIndex):
                     time_deltas_period = X.index - start_
-                    time_deltas = self._period_to_int(time_deltas_period)
+                    time_deltas = _period_to_int(time_deltas_period)
                 elif X.index.is_numeric():
                     time_deltas = X.index - start_
             else:
@@ -255,5 +255,5 @@ class TimeSince(BaseTransformer):
         return {"start": None, "to_numeric": True}
 
 
-def _period_to_int(x: pd.PeriodIndex) -> int:
+def _period_to_int(x: pd.PeriodIndex | list[pd.offsets.DateOffset]) -> int:
     return x.map(lambda y: y.n)
