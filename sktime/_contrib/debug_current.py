@@ -28,7 +28,7 @@ def _debug_knn_2774():
     knn.fit(trainX, trainy)
 
 
-def _debug_threaded_tde_3788_numpy(n_cases=20, n_dims=2, series_length=20):
+def _debug_threaded_tde_3788(n_cases=20, n_dims=2, series_length=20):
     from sktime.classification.dictionary_based import TemporalDictionaryEnsemble
     from sktime.classification.hybrid import HIVECOTEV2
 
@@ -46,22 +46,27 @@ def _debug_threaded_tde_3788_numpy(n_cases=20, n_dims=2, series_length=20):
     print(" end predict numpy")
 
 
-def _debug_threaded_tde_3788_pandas():
-    from sktime.classification.dictionary_based import TemporalDictionaryEnsemble
+def _debug_cnn_not_fitting_3806(n_cases=20, n_dims=2, series_length=20):
+    from sktime.classification.deep_learning import CNNClassifier
 
-    n_cases = 100
-    n_dims = 10
-    series_length = 100
     trainX = np.random.rand(n_cases, n_dims, series_length)
-    from datatypes import convert_to
-
-    pd_trainX = convert_to(trainX, to_type="nested_univ", as_scitype="Panel")
     trainY = np.random.randint(0, 2, n_cases)
-    tde = TemporalDictionaryEnsemble(n_jobs=2, time_limit_in_minutes=1)
-    print(" beginning fit pandas")
-    tde.fit(pd_trainX, trainY)
-    print(" beginning predict pandas")
-    pred = tde.predict(pd_trainX)
+    testX = np.random.rand(n_cases, n_dims, series_length)
+    testY = np.random.randint(0, 2, n_cases)
+    print(trainY)
+    cnn = CNNClassifier(n_epochs=250, verbose=True)
+    print(" beginning fit to random")
+    cnn.fit(trainX, trainY)
+    d = cnn.score(testX, testY)
+    print(" score =", d)
+    from datasets import load_basic_motions
+
+    trainX, trainY = load_basic_motions(split="train")
+    testX, testY = load_basic_motions(split="test")
+    print(" beginning fit to basic motions")
+    cnn.fit(trainX, trainY)
+    d = cnn.score(testX, testY)
+    print(" score =", d)
 
 
 def _debug_pf():
@@ -78,5 +83,6 @@ def _debug_pf():
 
 
 if __name__ == "__main__":
-    _debug_threaded_tde_3788_numpy()
+    _debug_cnn_not_fitting_3806()
+#    _debug_threaded_tde_3788()
 #    _debug_threaded_tde_3788_pandas()
