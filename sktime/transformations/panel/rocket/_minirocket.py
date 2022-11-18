@@ -14,22 +14,10 @@ from sktime.transformations.base import BaseTransformer
 
 
 class MiniRocket(BaseTransformer):
-    """MINIROCKET.
+    """MINImally RandOm Convolutional KErnel Transform (MiniRocket).
 
-    MINImally RandOm Convolutional KErnel Transform
-
-    **Univariate**
-
-    Unviariate input only.  Use class MiniRocketMultivariate for multivariate
-    input.
-
-    @article{dempster_etal_2020,
-      author  = {Dempster, Angus and Schmidt, Daniel F and Webb, Geoffrey I},
-      title   = {{MINIROCKET}: A Very Fast (Almost) Deterministic Transform for
-                 Time Series Classification},
-      year    = {2020},
-      journal = {arXiv:2012.08791}
-    }
+    MiniRocket is for unviariate time series onlyy.  Use class
+    MiniRocketMultivariate for multivariate time series.
 
     Parameters
     ----------
@@ -39,6 +27,30 @@ class MiniRocket(BaseTransformer):
     n_jobs                   : int, optional (default=1) The number of jobs to run in
     parallel for `transform`. ``-1`` means using all processors.
     random_state             : int, random seed (optional, default None)
+
+    See Also
+    --------
+    MultiRocketMultivariate, MiniRocket, MiniRocketMultivariate, Rocket
+
+    References
+    ----------
+    .. [1] Dempster, Angus and Schmidt, Daniel F and Webb, Geoffrey I,
+        "MINIROCKET: A Very Fast (Almost) Deterministic Transform for Time Series
+        Classification",2020,
+        https://dl.acm.org/doi/abs/10.1145/3447548.3467231,
+        https://arxiv.org/abs/2012.08791
+
+    Examples
+    --------
+     >>> from sktime.transformations.panel.rocket import Rocket
+     >>> from sktime.datasets import load_unit_test
+     >>> X_train, y_train = load_unit_test(split="train")
+     >>> X_test, y_test = load_unit_test(split="test")
+     >>> trf = MiniRocket(num_kernels=512)
+     >>> trf.fit(X_train)
+     MiniRocket(...)
+     >>> X_train = trf.transform(X_train)
+     >>> X_test = trf.transform(X_test)
     """
 
     _tags = {
