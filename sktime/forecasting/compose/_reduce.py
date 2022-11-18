@@ -566,7 +566,7 @@ class _RecursiveReducer(_Reducer):
                     raise ValueError(
                         "Please set frequency for DatetimeIndex or PeriodIndex. You "
                         + "can use set_freq_hier function from sktime.utils.datetime "
-                        + "for this purpose (will convert DatetimeIndex to  PeriodIndex"
+                        + "for this purpose (will convert DatetimeIndex to PeriodIndex)"
                     )
 
         yt, Xt = self._transform(y, X)

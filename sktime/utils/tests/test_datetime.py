@@ -145,6 +145,8 @@ def test_set_freq_hier():
 
     y_train_grp = pd.concat([y_group1, y_group2])
 
+    assert get_time_index(y_train_grp).freq is None
+
     y_train_grp = set_hier_freq(y_train_grp)
 
     assert get_time_index(y_train_grp).freq is not None
