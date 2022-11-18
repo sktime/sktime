@@ -94,6 +94,112 @@ class EAGGLO(BaseTransformer):
         self.penalty = penalty
         super(EAGGLO, self).__init__()
 
+    def _fit(self, X, y=None):
+        """Find optimally clustered segments.
+
+        First, by determining which pairs of adjacent clusters will be merged_. Then,
+        this process is repeated, recording the goodness-of-fit statistic at each step,
+        until all observations belong to a single cluster. Finally, the estimated number
+        of change points is estimated by the clustering that maximizes the goodness-of-
+        fit statistic over the entire merging sequence.
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+            Data for anomaly detection (time series).
+        y : pd.Series, optional
+            Not used for this unsupervsed method.
+
+        Returns
+        -------
+        self :
+            Reference to self.
+        """
+        self._X = X
+
+        assert self.alpha > 0 and self.alpha <= 2, "alowed values for alpha are (0, 2]"
+
+        self._initialize_params(X)
+
+        # find which clusters optimize the gof_ and then update the distances
+        for K in range(self.n_cluster - 1, 2 * self.n_cluster - 2):
+            i, j = self._find_closest(K)
+            self._update_distances(i, j, K)
+
+        def filter_na(i):
+            return list(
+                filter(
+                    lambda v: v == v,
+                    self.progression[
+                        i,
+                    ],
+                )
+            )
+
+        # penalize the gof_ statistic
+        if self.penalty is not None:
+            penalty_func = get_penalty_func(self.penalty)
+            cps = [filter_na(i) for i in range(len(self.progression))]
+            self.gof_ += list(map(penalty_func, cps))
+
+        # get the set of change points for the "best" clustering
+        idx = np.argmax(self.gof_)
+        self._estimates = np.sort(filter_na(idx))
+
+        # remove change point N+1 if a cyclic merger was performed
+        self._estimates = (
+            self._estimates[:-1] if self._estimates[0] != 0 else self._estimates
+        )
+
+        # create final membership vector
+        def get_cluster(estimates):
+            return np.repeat(
+                range(len(np.diff(estimates))), np.diff(estimates).astype(int)
+            )
+
+        if self._estimates[0] == 0:
+            self.cluster_ = get_cluster(self._estimates)
+        else:
+            tmp = get_cluster(np.append([0], self._estimates))
+            self.cluster_ = np.append(tmp, np.zeros(X.shape[0] - len(tmp)))
+
+        return self
+
+    def _transform(self, X, y=None):
+        """Transform X and return a transformed version.
+
+        private _transform containing core logic, called from transform
+
+        Parameters
+        ----------
+        X : Series of mtype X_inner_mtype
+            Data to be transformed
+        y : Series of mtype y_inner_mtype, default=None
+            Not required for this unsupervised transform.
+
+        Returns
+        -------
+        cluster
+            numeric representation of cluster membership for each row of X.
+        """
+        # fit again if indices not seen, but don't store anything
+        if not X.index.equals(self._X.index):
+            X_full = X.combine_first(self._X)
+            new_eagglo = EAGGLO(
+                member=self.member,
+                alpha=self.alpha,
+                penalty=self.penalty,
+            ).fit(X_full)
+            warnings.warn(
+                "Warning: Input data X differs from that given to fit(). "
+                "Refitting with both the data in fit and new input data, not storing "
+                "updated public class attributes. For this, explicitly use fit(X) or "
+                "fit_transform(X)."
+            )
+            return new_eagglo.cluster_
+
+        return self.cluster_
+
     def _initialize_params(self, X) -> None:
         """Initialize parameters and store to self."""
         self._member = np.array(
@@ -279,112 +385,6 @@ class EAGGLO(BaseTransformer):
                 ) / n
                 self.distances[K + 1, k] = val
                 self.distances[k, K + 1] = val
-
-    def _fit(self, X, y=None):
-        """Find optimally clustered segments.
-
-        First, by determining which pairs of adjacent clusters will be merged_. Then,
-        this process is repeated, recording the goodness-of-fit statistic at each step,
-        until all observations belong to a single cluster. Finally, the estimated number
-        of change points is estimated by the clustering that maximizes the goodness-of-
-        fit statistic over the entire merging sequence.
-
-        Parameters
-        ----------
-        X : pd.DataFrame
-            Data for anomaly detection (time series).
-        y : pd.Series, optional
-            Not used for this unsupervsed method.
-
-        Returns
-        -------
-        self :
-            Reference to self.
-        """
-        self._X = X
-
-        assert self.alpha > 0 and self.alpha <= 2, "alowed values for alpha are (0, 2]"
-
-        self._initialize_params(X)
-
-        # find which clusters optimize the gof_ and then update the distances
-        for K in range(self.n_cluster - 1, 2 * self.n_cluster - 2):
-            i, j = self._find_closest(K)
-            self._update_distances(i, j, K)
-
-        def filter_na(i):
-            return list(
-                filter(
-                    lambda v: v == v,
-                    self.progression[
-                        i,
-                    ],
-                )
-            )
-
-        # penalize the gof_ statistic
-        if self.penalty is not None:
-            penalty_func = get_penalty_func(self.penalty)
-            cps = [filter_na(i) for i in range(len(self.progression))]
-            self.gof_ += list(map(penalty_func, cps))
-
-        # get the set of change points for the "best" clustering
-        idx = np.argmax(self.gof_)
-        self._estimates = np.sort(filter_na(idx))
-
-        # remove change point N+1 if a cyclic merger was performed
-        self._estimates = (
-            self._estimates[:-1] if self._estimates[0] != 0 else self._estimates
-        )
-
-        # create final membership vector
-        def get_cluster(estimates):
-            return np.repeat(
-                range(len(np.diff(estimates))), np.diff(estimates).astype(int)
-            )
-
-        if self._estimates[0] == 0:
-            self.cluster_ = get_cluster(self._estimates)
-        else:
-            tmp = get_cluster(np.append([0], self._estimates))
-            self.cluster_ = np.append(tmp, np.zeros(X.shape[0] - len(tmp)))
-
-        return self
-
-    def _transform(self, X, y=None):
-        """Transform X and return a transformed version.
-
-        private _transform containing core logic, called from transform
-
-        Parameters
-        ----------
-        X : Series of mtype X_inner_mtype
-            Data to be transformed
-        y : Series of mtype y_inner_mtype, default=None
-            Not required for this unsupervised transform.
-
-        Returns
-        -------
-        cluster
-            numeric representation of cluster membership for each row of X.
-        """
-        # fit again if indices not seen, but don't store anything
-        if not X.index.equals(self._X.index):
-            X_full = X.combine_first(self._X)
-            new_eagglo = EAGGLO(
-                member=self.member,
-                alpha=self.alpha,
-                penalty=self.penalty,
-            ).fit(X_full)
-            warnings.warn(
-                "Warning: Input data X differs from that given to fit(). "
-                "Refitting with both the data in fit and new input data, not storing "
-                "updated public class attributes. For this, explicitly use fit(X) or "
-                "fit_transform(X)."
-            )
-            return new_eagglo.cluster_
-
-        return self.cluster_
 
 
 def get_distance(X, Y, alpha):
