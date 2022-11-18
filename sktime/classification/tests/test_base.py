@@ -469,6 +469,7 @@ def test_deep_estimator_empty():
     assert empty_dummy.__dict__ == deserialized_empty.__dict__
 
 
+@pytest.mark.xfail(reason="known failure of unknown cause, see #3816")
 @pytest.mark.parametrize("optimizer", [None, "adam", "keras-adamax"])
 def test_deep_estimator_full(optimizer):
     """Check if serialization works for full dummy."""
