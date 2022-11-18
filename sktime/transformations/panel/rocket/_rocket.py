@@ -23,11 +23,11 @@ class Rocket(BaseTransformer):
 
     Parameters
     ----------
-    num_kernels : int, optional, default=10,000
+    num_kernels : int, default=10,000
        number of random convolutional kernels.
-    normalise : boolean, optional, default True
+    normalise : boolean, default True
        whether or not to normalise the input time series per instance.
-    n_jobs : int, optional, default=1
+    n_jobs : int, default=1
        The number of jobs to run in parallel for `transform`. ``-1`` means use all
        processors.
     random_state : None or int, optional, default = None

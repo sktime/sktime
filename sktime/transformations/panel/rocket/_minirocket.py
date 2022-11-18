@@ -16,19 +16,22 @@ from sktime.transformations.base import BaseTransformer
 class MiniRocket(BaseTransformer):
     """MINImally RandOm Convolutional KErnel Transform (MiniRocket).
 
-    MiniRocket is for unviariate time series only.  Use class
-    MiniRocketMultivariate for multivariate time series.
+    MiniRocket is an almost deterministic version of Rocket. If creates convolutions
+    of length of 9 with weights restricted to two values, and uses 84 fixed
+    convolutions with six of one weight, three of the second weight to seed dilations.
+    MiniRocket is for unviariate time series only.  Use class MiniRocketMultivariate
+    for multivariate time series.
 
     Parameters
     ----------
-    num_kernels : int, optional, default=10,000
+    num_kernels : int, default=10,000
        number of random convolutional kernels.
-    max_dilations_per_kernel : int, optional, default=32
+    max_dilations_per_kernel : int, default=32
         maximum number of dilations per kernel.
-    n_jobs : int, optional, default=1
+    n_jobs : int, default=1
         The number of jobs to run in parallel for `transform`. ``-1`` means using all
         processors.
-    random_state : None or int, optional, default = None
+    random_state : None or int, default = None
 
     See Also
     --------
