@@ -418,5 +418,5 @@ def get_penalty_func(penalty):  # sourcery skip: raise-specific-error
             return PENALTIES[penalty]
 
     raise Exception(
-        "penalty must be callable or string values 'penalty1' or 'penalty2'."
+        f"'penalty' must be callable or one of {PENALTIES.keys()}"
     )

@@ -29,7 +29,7 @@ def test_fit_default_params_univariate():
     fitted_model = model._fit(X)
 
     cluster_actual = fitted_model.cluster_
-    fit_actual = fitted_model.gof
+    fit_actual = fitted_model.gof_
 
     assert np.allclose(cluster_actual, cluster_expected)
     assert np.allclose(fit_actual, fit_expected)
@@ -46,7 +46,7 @@ def test_fit_other_params_univariate():
     fitted_model = model._fit(X)
 
     cluster_actual = fitted_model.cluster_
-    fit_actual = fitted_model.gof
+    fit_actual = fitted_model.gof_
 
     assert np.allclose(cluster_actual, cluster_expected)
     assert np.allclose(fit_actual, fit_expected)
@@ -80,7 +80,7 @@ def test_fit_default_params_multivariate():
     fitted_model = model._fit(X)
 
     cluster_actual = fitted_model.cluster_
-    fit_actual = fitted_model.gof
+    fit_actual = fitted_model.gof_
 
     assert np.allclose(cluster_actual, cluster_expected)
     assert np.allclose(fit_actual, fit_expected)
@@ -121,7 +121,7 @@ def test_custom_penalty():
     model = EAGGLO(penalty=lambda x: np.mean(np.diff(np.sort(x))))
     fitted_model = model._fit(X)
 
-    cluster_actual = fitted_model.cluster
+    cluster_actual = fitted_model.cluster_
     fit_actual = fitted_model.gof
 
     assert np.allclose(cluster_actual, cluster_expected)
