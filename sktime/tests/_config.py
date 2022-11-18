@@ -29,7 +29,7 @@ EXCLUDE_ESTIMATORS = [
     "RandomIntervalClassifier",
     "MiniRocket",
     "MatrixProfileTransformer",
-    # TapNet excluded to test CI
+    # tapnet based estimators fail stochastically for unknown reasons, see #3525
     "TapNetRegressor",
     "TapNetClassifier",
 ]
