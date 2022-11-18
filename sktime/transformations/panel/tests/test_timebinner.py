@@ -29,15 +29,17 @@ def test_timebinner2():
     X, y = load_basic_motions(return_X_y=True)
 
     def aggfunc(x):
-        return min(x)
+        return sum(x)
 
     freq = 10
-    idx = pd.interval_range(start=0, end=100, freq=freq, closed="left")
+    idx = pd.interval_range(start=0, end=100, freq=freq, closed="right")
     tb = TimeBinner(idx=idx, aggfunc=aggfunc)
     tb.fit(X)
     row = 3
     Xtb = tb.transform(X)
-    assert np.isclose(np.sum(X.iloc[row, 5][8 * 10 : 9 * 10]), Xtb.iloc[row, 58])
+    assert np.isclose(
+        np.sum(X.iloc[row, 5][8 * 10 + 1 : 9 * 10 + 1]), Xtb.iloc[row, 58]
+    )
 
 
 def test_timebinner3():
@@ -45,7 +47,7 @@ def test_timebinner3():
     X, y = load_basic_motions(return_X_y=True)
 
     def aggfunc(x):
-        return sum(x)
+        return max(x)
 
     freq = 5
     idx = pd.interval_range(start=0, end=100, freq=freq, closed="right")
@@ -55,6 +57,6 @@ def test_timebinner3():
     tb.fit(X)
     Xtb = tb.transform(X)
     assert np.isclose(
-        np.sum(X.iloc[row, 0][col * freq + 1 : ((col + 1) * freq) + 1]),
+        np.max(X.iloc[row, 0][col * freq + 1 : ((col + 1) * freq) + 1]),
         Xtb.iloc[row, col],
     )
