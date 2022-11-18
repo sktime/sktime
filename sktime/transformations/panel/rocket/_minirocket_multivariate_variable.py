@@ -29,10 +29,10 @@ class MiniRocketMultivariateVariable(BaseTransformer):
 
     Parameters
     ----------
-    num_kernels              : int, (default 10_000)
+    num_kernels              : int, (default=10_000)
                                 number of random convolutional kernels.
                                 Reduced to the closest multiple of 84.
-    max_dilations_per_kernel : int, (default 32)
+    max_dilations_per_kernel : int, (default=32)
                                 maximum number of dilations per kernel
     reference_length         : int or str, (default `'max'`)
                                 series-length of reference, str defines
@@ -41,11 +41,11 @@ class MiniRocketMultivariateVariable(BaseTransformer):
     n_jobs                   : int, (default=1)
                                 The number of jobs to run in parallel
                                 for `transform`. ``-1`` means using all processors.
-    pad_value_short_series   : float or None, (default: None)
+    pad_value_short_series   : float or None, (default=None)
                                 if padding series with len<9 to value.
                                 if None, not padding is performed.
-    random_state             : int,
-                                random seed (optional, default None)
+    random_state             : int, (default=None)
+                                random seed, not set by default
 
     Examples
     --------
@@ -66,6 +66,10 @@ class MiniRocketMultivariateVariable(BaseTransformer):
     ValueError
         If any multivariate series_length in X is < 9 and
         pad_value_short_series is set to None
+
+    See Also
+    --------
+    MultiRocket, MiniRocket, MiniRocketMultivariate, Rocket
 
     References
     ----------
