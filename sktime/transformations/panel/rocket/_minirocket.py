@@ -16,8 +16,8 @@ from sktime.transformations.base import BaseTransformer
 class MiniRocket(BaseTransformer):
     """MINImally RandOm Convolutional KErnel Transform (MiniRocket).
 
-    MiniRocket is an almost deterministic version of Rocket. If creates convolutions
-    of length of 9 with weights restricted to two values, and uses 84 fixed
+    MiniRocket [1]_ is an almost deterministic version of Rocket. If creates
+    convolutions of length of 9 with weights restricted to two values, and uses 84 fixed
     convolutions with six of one weight, three of the second weight to seed dilations.
     MiniRocket is for unviariate time series only.  Use class MiniRocketMultivariate
     for multivariate time series.
