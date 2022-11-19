@@ -33,7 +33,7 @@ jobs:
         run: npx all-contributors generate
       - name: commit-and-push
         id: candp
-        uses: stefanweifel/git-auto-commit-action@v4
+        uses: stefanzweifel/git-auto-commit-action@v4
         with:
           commit_message: '[AUTOMATED] update CONTRIBUTORS.md'
           file_pattern: 'CONTRIBUTORS.md'
