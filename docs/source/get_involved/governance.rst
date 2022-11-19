@@ -212,6 +212,19 @@ Rights and responsibilities
      - They can participate in the decision making process by vetoing changes and casting votes.
    * - Nomination
      - They can nominate new core developers, CoC committee members and CC members.
+   * - Fiscal reporting
+     - Core developers are expected to conform to public fiscal reporting requirements as below.
+
+Fiscal reporting requirements:
+
+* at the start of every calendar quarter, core developers must report openly and publicly whether
+  they have been administering funds on behalf of ``sktime`` in the past calendar quarter.
+* if the answer to the above is "yes", they must further provide a public description of
+  scope, purpose, and source of funds. They also must publish monthly budget reports on
+  the funds administered.
+* Publication of materials above happens in a location prescribed by the ``sktime`` community.
+  Monthly budget reports must be published no longer than three calendar months
+  after the end of the reported month.
 
 Eligibility
 ^^^^^^^^^^^
@@ -255,6 +268,11 @@ Becoming active (after becoming inactive) in the above sense requires one of:
 
 * an approved pull request authored by the core developer
 * a contribution to the community that is minuted in one of the regular meetings
+
+Core developers found in breach of fiscal reporting requirements are removed from their role,
+and they must transfer control of funds administered to the ``sktime`` project.
+Removal through this rule does not void any reporting requirements
+for funds administered on behalf of ``sktime``.
 
 .. _coc-committee-members:
 
