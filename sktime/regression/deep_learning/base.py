@@ -198,6 +198,9 @@ class BaseDeepRegressor(BaseRegressor, ABC):
         from pathlib import Path
         from zipfile import ZipFile
 
+        if self.model_ is None:
+            raise NotFittedError("Model not built yet, call it via `.fit()`")
+
         if path is None:
             _check_soft_dependencies("h5py")
             import h5py
@@ -225,9 +228,6 @@ class BaseDeepRegressor(BaseRegressor, ABC):
                 "`path` is expected to either be a string or a Path object "
                 f"but found of type:{type(path)}."
             )
-
-        if self.model_ is None:
-            raise NotFittedError("Model not built yet, call it via `.fit()`")
 
         path = Path(path) if isinstance(path, str) else path
         path.mkdir()
