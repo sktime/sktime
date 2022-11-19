@@ -4,21 +4,21 @@ on:
   push:
     branches:
       - main
-    path:
+    paths:
       - '.all-contributorsrc'
   pull_request:
     branches:
       - main
-    path:
+    paths:
       - '.all-contributorsrc'
   pull_request_target:
     branches:
       - main
-    path:
+    paths:
       - '.all-contributorsrc'
 
 jobs:
-  generate-markdown:
+  generate-markdown-and-commit:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -31,14 +31,9 @@ jobs:
       - name: Generate file
         id: generate
         run: npx all-contributors generate
-
-  commit-and-push:
-    needs: generate-markdown
-    runs-on: ubuntu-latest
-    steps:
       - name: commit-and-push
         id: candp
-        uses: stefanzweifel/git-auto-commit-action@v4
+        uses: stefanweifel/git-auto-commit-action@v4
         with:
           commit_message: '[AUTOMATED] update CONTRIBUTORS.md'
           file_pattern: 'CONTRIBUTORS.md'
