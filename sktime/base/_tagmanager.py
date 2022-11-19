@@ -80,8 +80,10 @@ class _FlagManager:
 
         Returns
         -------
-        None
+        self : reference to self
         """
+        setattr(self, f"{flag_attr_name}_dynamic", dict())
+        return self
 
     def _get_flags(self, flag_attr_name="_flags"):
         """Get flags from estimator class and dynamic flag overrides.
