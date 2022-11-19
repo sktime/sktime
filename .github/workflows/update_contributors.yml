@@ -6,11 +6,6 @@ on:
       - main
     paths:
       - '.all-contributorsrc'
-  pull_request:
-    branches:
-      - main
-    paths:
-      - '.all-contributorsrc'
   pull_request_target:
     branches:
       - main
