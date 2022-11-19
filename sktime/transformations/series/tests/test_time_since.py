@@ -45,7 +45,7 @@ def df_period_monthly_idx():
     )
 
 
-def test_fit_transform_int_idx(df_int_idx):
+def test_fit_transform_int_idx_output(df_int_idx):
     """Tests that we get the expected outputs."""
     transformer = TimeSince(
         start=None, to_numeric=True, keep_original_columns=False, positive_only=False
@@ -137,7 +137,9 @@ def test_fit_transform_datetime_monthly_idx_period_output(df_period_monthly_idx)
     assert_frame_equal(Xt, expected)
 
 
-def test_fit_transform_datetime_monthly_idx_multiple_starts(df_datetime_monthly_idx):
+def test_fit_transform_datetime_monthly_idx_multiple_starts_output(
+    df_datetime_monthly_idx,
+):
     """Tests that we get the expected outputs."""
     transformer = TimeSince(
         start=["2000-01-01", "2000-02-01"],
