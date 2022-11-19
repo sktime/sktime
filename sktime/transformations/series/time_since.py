@@ -36,7 +36,7 @@ class TimeSince(BaseTransformer):
             Start time to compute the time elapsed.
         str - String is converted to datetime/period using pd.to_datetime()/pd.Period()
               to give the start time.
-    to_numeric : string, optional (default=False)
+    to_numeric : string, optional (default=True)
         Return the integer number of periods elapsed since `start`; the period
         is defined by the frequency of the data. Converts datetime types to
         pd.Period before calculating time differences.
@@ -56,16 +56,19 @@ class TimeSince(BaseTransformer):
     >>> from sktime.transformations.series.time_since import TimeSince
     >>> X = load_airline()
 
-    Create a single column with time elapsed since start date of time series
+    Create a single column with time elapsed since start date of time series.
+    The output is in units of integer number of months, same as the index `freq`.
     >>> transformer = TimeSince()
     >>> Xt = transformer.fit_transform(X)
 
-    Create multiple columns with different start times
+    Create multiple columns with different start times. The output is in units
+    of integer number of months, same as the index `freq`.
     >>> transformer = TimeSince(["2000-01", "2000-02"])
     >>> Xt = transformer.fit_transform(X)
 
-    Return output in terms of the integer number of months, same as index `freq`
-    >>> transformer = TimeSince(["2000-01", "2000-02"], to_numeric=True)
+    Create multiple columns with different start times. Return a time-like
+    output by setting `to_numeric=False`.
+    >>> transformer = TimeSince(["2000-01", "2000-02"], to_numeric=False)
     >>> Xt = transformer.fit_transform(X)
     """
 
@@ -163,14 +166,22 @@ class TimeSince(BaseTransformer):
             if isinstance(X.index, pd.DatetimeIndex) and not isinstance(
                 start_, datetime.datetime
             ):
-                raise ValueError(f"{start_=} incompatible with a " f"datetime index.")
+                raise ValueError(
+                    f"start_={start_} incompatible with a "
+                    f"datetime index. Check that `start` is of type "
+                    f"datetime or a pd.Datetime parsable string."
+                )
             elif isinstance(X.index, pd.PeriodIndex) and not isinstance(
                 start_, pd.Period
             ):
-                raise ValueError(f"{start_=} incompatible with a " f"period index.")
+                raise ValueError(
+                    f"start_={start_} incompatible with a "
+                    f"Period index. Check that `start` is of type "
+                    f"pd.Period or a pd.Period parsable string."
+                )
             elif X.index.is_numeric() and not isinstance(start_, (int, np.integer)):
                 raise ValueError(
-                    f"{start_=} incompatible with a numeric index."
+                    f"start_={start_} incompatible with a numeric index."
                     f"Check that `start` is an integer."
                 )
 
