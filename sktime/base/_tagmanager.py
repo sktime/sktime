@@ -67,6 +67,22 @@ class _FlagManager:
 
         return collected_flags.get(flag_name, flag_value_default)
 
+    def _init_flags(self, flag_attr_name="_flags"):
+        """Create dynamic flag dictionary in self.
+
+        Should be called in __init__ of the host class.
+        Creates attribute [flag_attr_name]_dynamic containing an empty dict.
+
+        Parameters
+        ----------
+        flag_attr_name : str, optional, default = "_flags"
+            name of the flag attribute that is read
+
+        Returns
+        -------
+        None
+        """
+
     def _get_flags(self, flag_attr_name="_flags"):
         """Get flags from estimator class and dynamic flag overrides.
 
