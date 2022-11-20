@@ -359,4 +359,4 @@ def test_set_get_config():
     assert set(config_end.keys()) == set(["foo_config", "bar", "foobar"])
     assert config_end["foo_config"] == 42
     assert config_end["bar"] == "b"
-    assert config_end["foobar"] == "126"
+    assert config_end["foobar"] == 126
