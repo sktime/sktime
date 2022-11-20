@@ -263,7 +263,14 @@ class TimeSince(BaseTransformer):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        return {"start": None, "to_numeric": True}
+        return [
+            {"start": None, "to_numeric": True},
+            {
+                "start": ["2000-01-01", "2000-01-02"],
+                "to_numeric": False,
+                "positive_only": True,
+            },
+        ]
 
 
 def _period_to_int(x: pd.PeriodIndex | list[pd.offsets.DateOffset]) -> int:
