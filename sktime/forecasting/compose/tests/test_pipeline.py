@@ -370,3 +370,45 @@ def test_tag_handles_missing_data():
     )
     X_pipe = ForecastingPipeline(steps=[("forecaster", y_pipe)])
     X_pipe.fit(y)
+
+
+def test_subset_getitem():
+    """Test subsetting using the [ ] dunder, __getitem__."""
+    y = _make_series(n_columns=3)
+    y.columns = ["x", "y", "z"]
+    y_train, _ = temporal_train_test_split(y)
+    X = _make_series(n_columns=3)
+    X.columns = ["a", "b", "c"]
+    X_train, X_test = temporal_train_test_split(X)
+
+    f = SARIMAX(random_state=3)
+
+    f_before = f[["a", "b"]]
+    f_before_with_colon = f[["a", "b"], :]
+    f_after_with_colon = f[:, ["x", "y"]]
+    f_both = f[["a", "b"], ["y", "z"]]
+    f_none = f[:, :]
+
+    assert isinstance(f_before, ForecastingPipeline)
+    assert isinstance(f_after_with_colon, TransformedTargetForecaster)
+    assert isinstance(f_before_with_colon, ForecastingPipeline)
+    assert isinstance(f_both, TransformedTargetForecaster)
+    assert isinstance(f_none, SARIMAX)
+
+    y_pred = f.fit(y_train, X_train, fh=X_test.index).predict(X=X_test)
+
+    y_pred_f_before = f_before.fit(y_train, X_train, fh=X_test.index).predict(X=X_test)
+    y_pred_f_before_with_colon = f_before_with_colon.fit(
+        y_train, X_train, fh=X_test.index
+    ).predict(X=X_test)
+    y_pred_f_after_with_colon = f_after_with_colon.fit(
+        y_train, X_train, fh=X_test.index
+    ).predict(X=X_test)
+    y_pred_f_both = f_both.fit(y_train, X_train, fh=X_test.index).predict(X=X_test)
+    y_pred_f_none = f_none.fit(y_train, X_train, fh=X_test.index).predict(X=X_test)
+
+    _assert_array_almost_equal(y_pred, y_pred_f_none)
+    _assert_array_almost_equal(y_pred_f_before, y_pred_f_before_with_colon)
+    _assert_array_almost_equal(y_pred_f_before, y_pred_f_both[["y", "z"]])
+    _assert_array_almost_equal(y_pred_f_after_with_colon, y_pred_f_none[["x", "y"]])
+    _assert_array_almost_equal(y_pred_f_before_with_colon, y_pred_f_both[["y", "z"]])
