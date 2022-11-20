@@ -480,7 +480,7 @@ def test_frequency_setter(freqstr):
     reason="skip test if required soft dependency for hmmlearn not available",
 )
 def test_auto_ets():
-    """Fix bug in 1435.
+    """Test failure case from #1435.
 
     https://github.com/sktime/sktime/issues/1435#issue-1000175469
     """
@@ -504,7 +504,7 @@ def test_auto_ets():
     reason="skip test if required soft dependency for hmmlearn not available",
 )
 def test_exponential_smoothing():
-    """Test bug in 1876.
+    """Test failure case from #1876.
 
     https://github.com/sktime/sktime/issues/1876#issue-1103752402.
     """
@@ -533,7 +533,7 @@ def test_exponential_smoothing():
     reason="skip test if required soft dependencies not available",
 )
 def test_auto_arima():
-    """Test bug in 805.
+    """Test failure case from #805.
 
     https://github.com/sktime/sktime/issues/805#issuecomment-891848228.
     """
