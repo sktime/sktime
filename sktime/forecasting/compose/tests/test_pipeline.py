@@ -100,6 +100,10 @@ def test_skip_inverse_transform():
     assert isinstance(y_pred, pd.Series)
 
 
+@pytest.mark.skipif(
+    not _check_estimator_deps(AutoETS, severity="none"),
+    reason="skip test if required soft dependency is not available",
+)
 def test_nesting_pipelines():
     """Test that nesting of pipelines works."""
     from sktime.forecasting.ets import AutoETS
