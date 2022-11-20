@@ -65,7 +65,7 @@ output_chk = [
 
 
 @pytest.mark.skipif(
-    not _check_soft_dependencies("hmmlearn", severity="none"),
+    not _check_soft_dependencies("statsmodels", severity="none"),
     reason="skip test if required soft dependency for hmmlearn not available",
 )
 def test_clearsky_trafo_vals():
