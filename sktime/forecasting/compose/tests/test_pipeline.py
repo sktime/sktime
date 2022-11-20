@@ -8,6 +8,7 @@ __all__ = []
 
 import numpy as np
 import pandas as pd
+import pytest
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 from sklearn.svm import SVR
 
@@ -39,6 +40,7 @@ from sktime.transformations.series.outlier_detection import HampelFilter
 from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
 from sktime.utils._testing.series import _make_series
 from sktime.utils.estimators import MockForecaster
+from sktime.utils.validation._dependencies import _check_estimator_deps
 
 
 def test_pipeline():
@@ -210,6 +212,10 @@ def test_pipeline_with_dimension_changing_transformer():
     gscv.fit(train_model, X=X_train)
 
 
+@pytest.mark.skipif(
+    not _check_estimator_deps(SARIMAX, severity="none"),
+    reason="skip test if required soft dependency is not available",
+)
 def test_nested_pipeline_with_index_creation_y_before_X():
     """Tests a nested pipeline where y indices are created before X indices.
 
@@ -235,6 +241,10 @@ def test_nested_pipeline_with_index_creation_y_before_X():
     assert len(y_pred) == 9
 
 
+@pytest.mark.skipif(
+    not _check_estimator_deps(SARIMAX, severity="none"),
+    reason="skip test if required soft dependency is not available",
+)
 def test_nested_pipeline_with_index_creation_X_before_y():
     """Tests a nested pipeline where X indices are created before y indices.
 
@@ -296,6 +306,10 @@ def test_forecasting_pipeline_dunder_endog():
     np.testing.assert_array_equal(actual, expected)
 
 
+@pytest.mark.skipif(
+    not _check_estimator_deps(SARIMAX, severity="none"),
+    reason="skip test if required soft dependency is not available",
+)
 def test_forecasting_pipeline_dunder_exog():
     """Test forecasting pipeline dunder for exogeneous transformation."""
     y = _make_series()
@@ -372,6 +386,10 @@ def test_tag_handles_missing_data():
     X_pipe.fit(y)
 
 
+@pytest.mark.skipif(
+    not _check_estimator_deps(SARIMAX, severity="none"),
+    reason="skip test if required soft dependency is not available",
+)
 def test_subset_getitem():
     """Test subsetting using the [ ] dunder, __getitem__."""
     y = _make_series(n_columns=3)

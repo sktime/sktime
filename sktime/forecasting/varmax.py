@@ -199,11 +199,11 @@ class VARMAX(_StatsModelsAdapter):
     >>> from sktime.forecasting.varmax import VARMAX
     >>> from sktime.datasets import load_macroeconomic
     >>> from sktime.forecasting.model_selection import temporal_train_test_split
-    >>> y = load_macroeconomic()
-    >>> forecaster = VARMAX(suppress_warnings=True)
-    >>> forecaster.fit(y[['realgdp', 'unemp']])
+    >>> y = load_macroeconomic()  # doctest: +SKIP
+    >>> forecaster = VARMAX(suppress_warnings=True)  # doctest: +SKIP
+    >>> forecaster.fit(y[['realgdp', 'unemp']])  # doctest: +SKIP
     VARMAX(...)
-    >>> y_pred = forecaster.predict(fh=[1,4,12])
+    >>> y_pred = forecaster.predict(fh=[1,4,12])  # doctest: +SKIP
     """
 
     _tags = {
