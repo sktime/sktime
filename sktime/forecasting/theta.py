@@ -82,10 +82,10 @@ class ThetaForecaster(ExponentialSmoothing):
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.theta import ThetaForecaster
     >>> y = load_airline()
-    >>> forecaster = ThetaForecaster(sp=12)
-    >>> forecaster.fit(y)
+    >>> forecaster = ThetaForecaster(sp=12)  # doctest: +SKIP
+    >>> forecaster.fit(y)  # doctest: +SKIP
     ThetaForecaster(...)
-    >>> y_pred = forecaster.predict(fh=[1,2,3])
+    >>> y_pred = forecaster.predict(fh=[1,2,3])  # doctest: +SKIP
     """
 
     _fitted_param_names = ("initial_level", "smoothing_level")
