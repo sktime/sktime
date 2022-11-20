@@ -17,6 +17,10 @@ from sktime.utils.validation._dependencies import _check_soft_dependencies
 y = load_airline()
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("statsmodels", severity="none"),
+    reason="skip test if required soft dependency for hmmlearn not available",
+)
 @pytest.mark.parametrize("transformer", [LogTransformer, NaiveForecaster])
 def test_bagging_forecaster_transformer_type_error(transformer):
     """Test that the right exception is raised for invalid transformer."""
