@@ -74,8 +74,8 @@ class SquaringResiduals(BaseForecaster):
     >>> fc = NaiveForecaster()
     >>> var_fc = ThetaForecaster()  # doctest: +SKIP
     >>> y = load_macroeconomic().realgdp  # doctest: +SKIP
-    >>> sqr = SquaringResiduals(forecaster=fc, residual_forecaster=var_fc)\
-        # doctest: +SKIP
+    >>> sqr = SquaringResiduals(forecaster=fc, residual_forecaster=var_fc)
+    ... # doctest: +SKIP
     >>> fh = ForecastingHorizon(values=[1, 2, 3])  # doctest: +SKIP
     >>> sqr = sqr.fit(y, fh=fh)  # doctest: +SKIP
     >>> pred_interval = sqr.predict_interval(coverage=0.95)  # doctest: +SKIP
