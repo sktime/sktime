@@ -89,7 +89,8 @@ class SAX(BaseTransformer):
         self.return_pandas_data_series = return_pandas_data_series
         self.words = []
 
-        super(SAX, self).__init__(_output_convert="off")
+        super(SAX, self).__init__()
+        self.set_config(**{"output_conversion": "off"})
 
     # todo: looks like this just loops over series instances
     # so should be refactored to work on Series directly
