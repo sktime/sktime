@@ -104,9 +104,10 @@ class ExponentialSmoothing(_StatsModelsAdapter):
     >>> from sktime.forecasting.exp_smoothing import ExponentialSmoothing
     >>> y = load_airline()
     >>> forecaster = ExponentialSmoothing(trend='add', seasonal='multiplicative', sp=12)
-    >>> forecaster.fit(y)
+    # doctest: +SKIP
+    >>> forecaster.fit(y)  # doctest: +SKIP
     ExponentialSmoothing(...)
-    >>> y_pred = forecaster.predict(fh=[1,2,3])
+    >>> y_pred = forecaster.predict(fh=[1,2,3])  # doctest: +SKIP
     """
 
     _fitted_param_names = (
