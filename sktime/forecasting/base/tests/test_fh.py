@@ -475,6 +475,10 @@ def test_frequency_setter(freqstr):
 
 
 # TODO: Replace this long running test with fast unit test
+@pytest.mark.skipif(
+    not _check_estimator_deps(AutoETS, severity="none"),
+    reason="skip test if required soft dependency for hmmlearn not available",
+)
 def test_auto_ets():
     """Fix bug in 1435.
 
@@ -495,6 +499,10 @@ def test_auto_ets():
 
 
 # TODO: Replace this long running test with fast unit test
+@pytest.mark.skipif(
+    not _check_estimator_deps(ExponentialSmoothing, severity="none"),
+    reason="skip test if required soft dependency for hmmlearn not available",
+)
 def test_exponential_smoothing():
     """Test bug in 1876.
 
