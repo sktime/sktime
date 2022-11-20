@@ -132,6 +132,22 @@ class BaseTransformer(BaseEstimator):
         "remember_data": False,  # whether all data seen is remembered as self._X
     }
 
+    # default config values
+    _config = {
+        "input_conversion": "on",
+        # controls input checks and conversions,
+        #  for _fit, _transform, _inverse_transform, _update
+        # valid values:
+        # "on" - input check and conversion is carried out
+        # "off" - input check and conversion is not done before passing to inner methods
+        "output_conversion": "on"
+        # controls output conversion for _transform, _inverse_transform
+        # valid values:
+        # "on" - if input_conversion is "on", output conversion is carried out
+        # "off" - output of _transform, _inverse_transform is directly returned
+        # valid mtype string - output is converted to specified mtype
+    }
+
     # allowed mtypes for transformers - Series and Panel
     ALLOWED_INPUT_MTYPES = [
         "pd.Series",
@@ -485,8 +501,13 @@ class BaseTransformer(BaseEstimator):
             # otherwise we call the vectorized version of predict
             Xt = self._vectorize("transform", X=X_inner, y=y_inner)
 
+        # obtain configs to control input and output control
+        configs = self.get_config()
+        input_conv = configs["input_conversion"]
+        output_conv = configs["output_conversion"]
+
         # convert to output mtype
-        if not hasattr(self, "_output_convert") or self._output_convert == "auto":
+        if input_conv and output_conv:
             X_out = self._convert_output(Xt, metadata=metadata)
         else:
             X_out = Xt
@@ -606,10 +627,7 @@ class BaseTransformer(BaseEstimator):
             Xt = self._vectorize("inverse_transform", X=X_inner, y=y_inner)
 
         # convert to output mtype
-        if self._output_convert == "auto":
-            X_out = self._convert_output(Xt, metadata=metadata, inverse=True)
-        else:
-            X_out = Xt
+        X_out = self._convert_output(Xt, metadata=metadata, inverse=True)
 
         return X_out
 
@@ -773,6 +791,13 @@ class BaseTransformer(BaseEstimator):
         """
         if X is None:
             raise TypeError("X cannot be None, but found None")
+
+        # skip conversion if it is turned off
+        if self.get_config()["input_conversion"] != "on":
+            if return_metadata:
+                return X, y, None
+            else:
+                return X, y
 
         metadata = dict()
         metadata["_converter_store_X"] = dict()
@@ -981,6 +1006,13 @@ class BaseTransformer(BaseEstimator):
         -------
         Xt : final output of transform or inverse_transform
         """
+        # skip conversion if not both conversions are switched on
+        configs = self.get_config()
+        input_conv = configs["input_conversion"]
+        output_conv = configs["output_conversion"]
+        if input_conv != "on" or output_conv != "on":
+            return X
+
         Xt = X
         X_input_mtype = metadata["_X_mtype_last_seen"]
         X_input_scitype = metadata["_X_input_scitype"]
