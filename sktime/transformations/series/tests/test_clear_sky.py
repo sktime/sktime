@@ -6,9 +6,11 @@
 __author__ = ["ciaran-g"]
 
 import numpy as np
+import pytest
 
 from sktime.datasets import load_solar
 from sktime.transformations.series.clear_sky import ClearSky
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 output_chk = [
     0.0,
@@ -62,6 +64,10 @@ output_chk = [
 ]
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("statsmodels", severity="none"),
+    reason="skip test if required soft dependency for hmmlearn not available",
+)
 def test_clearsky_trafo_vals():
     """Tests clear sky trafo with and without missing values."""
     y = load_solar(api_version=None)
