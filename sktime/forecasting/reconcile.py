@@ -75,7 +75,7 @@ class ReconcilerForecaster(BaseForecaster):
     ...     random_seed=123,
     ... )
     >>> y = agg.fit_transform(y)
-    >>> forecaster = NaiveForecaster(strategy="drift)
+    >>> forecaster = NaiveForecaster(strategy="drift")
     >>> reconciler = ReconcilerForecaster(forecaster, method="mint_shrink")
     >>> reconciler.fit(y)
     ReconcilerForecaster(...)
