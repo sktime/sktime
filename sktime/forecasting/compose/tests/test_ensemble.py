@@ -14,7 +14,6 @@ from sktime.forecasting.compose import EnsembleForecaster
 from sktime.forecasting.compose._ensemble import VALID_AGG_FUNCS
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.trend import PolynomialTrendForecaster
-from sktime.forecasting.var import VAR
 from sktime.utils._testing.forecasting import make_forecasting_problem
 
 
@@ -90,7 +89,7 @@ def test_aggregation_unweighted(forecasters, y, aggfunc):
             pd.DataFrame(make_forecasting_problem()),
         ),
         (
-            [("var", VAR()), ("naive", NaiveForecaster())],
+            [("var", NaiveForecaster(strategy="drift")), ("naive", NaiveForecaster())],
             make_forecasting_problem(n_columns=3),
         ),
     ],

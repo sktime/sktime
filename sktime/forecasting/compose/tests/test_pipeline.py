@@ -40,7 +40,10 @@ from sktime.transformations.series.outlier_detection import HampelFilter
 from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
 from sktime.utils._testing.series import _make_series
 from sktime.utils.estimators import MockForecaster
-from sktime.utils.validation._dependencies import _check_estimator_deps
+from sktime.utils.validation._dependencies import (
+    _check_estimator_deps,
+    _check_soft_dependencies,
+)
 
 
 def test_pipeline():
@@ -100,6 +103,10 @@ def test_skip_inverse_transform():
     assert isinstance(y_pred, pd.Series)
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("statsmodels", severity="none"),
+    reason="skip test if required soft dependency is not available",
+)
 def test_nesting_pipelines():
     """Test that nesting of pipelines works."""
     from sktime.forecasting.ets import AutoETS

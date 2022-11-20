@@ -59,8 +59,8 @@ class Deseasonalizer(BaseTransformer):
     >>> from sktime.transformations.series.detrend import Deseasonalizer
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
-    >>> transformer = Deseasonalizer()
-    >>> y_hat = transformer.fit_transform(y)
+    >>> transformer = Deseasonalizer()  # doctest: +SKIP
+    >>> y_hat = transformer.fit_transform(y)  # doctest: +SKIP
     """
 
     _tags = {

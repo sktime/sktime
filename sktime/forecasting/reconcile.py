@@ -64,7 +64,7 @@ class ReconcilerForecaster(BaseForecaster):
 
     Examples
     --------
-    >>> from sktime.forecasting.exp_smoothing import ExponentialSmoothing
+    >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.forecasting.reconcile import ReconcilerForecaster
     >>> from sktime.transformations.hierarchical.aggregate import Aggregator
     >>> from sktime.utils._testing.hierarchical import _bottom_hier_datagen
@@ -75,7 +75,7 @@ class ReconcilerForecaster(BaseForecaster):
     ...     random_seed=123,
     ... )
     >>> y = agg.fit_transform(y)
-    >>> forecaster = ExponentialSmoothing()
+    >>> forecaster = NaiveForecaster(strategy="drift)
     >>> reconciler = ReconcilerForecaster(forecaster, method="mint_shrink")
     >>> reconciler.fit(y)
     ReconcilerForecaster(...)
