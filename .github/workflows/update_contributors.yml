@@ -7,7 +7,7 @@ on:
     paths:
       - '.all-contributorsrc'
   pull_request_target:
-    types: [edited, opened, reopened]
+    types: [edited, opened, reopened, synchronize]
     paths:
       - '.all-contributorsrc'
 
