@@ -190,7 +190,7 @@ class SFA(BaseTransformer):
         super(SFA, self).__init__()
 
         if not return_pandas_data_series:
-            self._output_convert = "off"
+            self.set_config(**{"output_conversion": "off"})
 
     def fit(self, X, y=None):
         """Calculate word breakpoints using MCB or IGB.

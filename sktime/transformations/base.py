@@ -163,10 +163,9 @@ class BaseTransformer(BaseEstimator):
         "pd_multiindex_hier",
     ]
 
-    def __init__(self, _output_convert="auto"):
+    def __init__(self):
 
         self._converter_store_X = dict()  # storage dictionary for in/output conversion
-        self._output_convert = _output_convert
 
         super(BaseTransformer, self).__init__()
         _check_estimator_deps(self)
