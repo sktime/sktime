@@ -20,6 +20,7 @@ from sktime.forecasting.trend import PolynomialTrendForecaster
 from sktime.transformations.series.detrend import Deseasonalizer
 from sktime.transformations.series.theta import ThetaLinesTransformer
 from sktime.utils.slope_and_trend import _fit_trend
+from sktime.utils.validation._dependencies import _check_estimator_deps
 from sktime.utils.validation.forecasting import check_sp
 
 
@@ -380,9 +381,16 @@ class ThetaModularForecaster(BaseForecaster):
                 if theta == 0:
                     name = f"trend{str(i)}"
                     forecaster = (name, PolynomialTrendForecaster(), i)
-                else:
+                elif _check_estimator_deps(ExponentialSmoothing, severity="none"):
                     name = f"ses{str(i)}"
                     forecaster = name, ExponentialSmoothing(), i
+                else:
+                    raise RuntimeError(
+                        "Constructing ThetaModularForecaster without forecasters "
+                        "results in using ExponentialSmoothing for non-zero theta "
+                        "components. Ensure that statsmodels package is available "
+                        "when constructing ThetaModularForecaster with this default."
+                    )
                 _forecasters.append(forecaster)
         elif len(forecasters) != len(self.theta_values):
             raise ValueError(
