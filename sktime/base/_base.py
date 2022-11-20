@@ -392,7 +392,7 @@ class BaseObject(_FlagManager, _BaseEstimator):
             class attribute via nested inheritance and then any overrides
             and new tags from _onfig_dynamic object attribute.
         """
-        return self._get_flags(flag_attr_name="_tags")
+        return self._get_flags(flag_attr_name="_config")
 
     def set_config(self, **config_dict):
         """Set config flags to given values.

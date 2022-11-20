@@ -357,6 +357,6 @@ def test_set_get_config():
     config_end = obj.get_config()
     assert isinstance(config_end, dict)
     assert set(config_end.keys()) == set(["foo_config", "bar", "foobar"])
-    assert config_start["foo_config"] == 42
-    assert config_start["bar"] == "b"
-    assert config_start["foobar"] == "126"
+    assert config_end["foo_config"] == 42
+    assert config_end["bar"] == "b"
+    assert config_end["foobar"] == "126"
