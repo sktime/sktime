@@ -14,7 +14,7 @@ __all__ = ["ParamFitterPipeline"]
 SUPPORTED_MTYPES = ["pd.DataFrame", "pd.Series", "pd-multiindex", "pd_multiindex_hier"]
 
 
-class ParamFitterPipeline(BaseParamFitter, _HeterogenousMetaEstimator):
+class ParamFitterPipeline(_HeterogenousMetaEstimator, BaseParamFitter):
     """Pipeline of transformers and a parameter estimator.
 
     The `ParamFitterPipeline` compositor chains transformers and a single estimator.
