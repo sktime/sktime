@@ -435,6 +435,10 @@ def test_to_absolute_int_fh_with_freq(idx: int, freq: str):
     assert_array_equal(fh + idx, absolute_int)
 
 
+@pytest.mark.skipif(
+    not _check_estimator_deps(AutoETS, severity="none"),
+    reason="skip test if required soft dependency for hmmlearn not available",
+)
 @pytest.mark.parametrize("freqstr", ["W-WED", "W-SUN", "W-SAT"])
 def test_estimator_fh(freqstr):
     """Test model fitting with anchored frequency."""
