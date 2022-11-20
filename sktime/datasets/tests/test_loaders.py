@@ -18,4 +18,5 @@ from sktime.utils.validation._dependencies import _check_soft_dependencies
 def test_load_macroeconomic():
     """Test that load_macroeconomic runs."""
     from sktime.datasets import load_macroeconomic
+
     load_macroeconomic()
