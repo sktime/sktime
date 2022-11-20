@@ -19,7 +19,6 @@ from sktime.transformations.bootstrap._mbb import (
 )
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-
 y = load_airline()
 y_index = y.index
 
