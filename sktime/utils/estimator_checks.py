@@ -75,8 +75,9 @@ def check_estimator(
     All tests PASSED!
 
     Running specific test (all fixtures) for ExponentTransformer
-    >>> check_estimator(ExponentTransformer, tests_to_run="test_clone")
+    >>> results = check_estimator(ExponentTransformer, tests_to_run="test_clone")
     All tests PASSED!
+
     {'test_clone[ExponentTransformer-0]': 'PASSED',
     'test_clone[ExponentTransformer-1]': 'PASSED'}
 
