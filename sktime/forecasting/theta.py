@@ -447,4 +447,11 @@ class ThetaModularForecaster(BaseForecaster):
         }
         params1 = {"theta_values": (0, 3)}
         params2 = {"weights": [1.0, 0.8]}
-        return [params0, params1, params2]
+
+        # params1 and params2 invoke ExpoentialSmoothing which requires statsmodels
+        if _check_estimator_deps(ExponentialSmoothing, severity="none"):
+            params = [params0, params1, params2]
+        else:
+            params = params0
+
+        return params
