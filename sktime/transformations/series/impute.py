@@ -175,8 +175,6 @@ class Imputer(BaseTransformer):
         X : pd.Series or pd.DataFrame, same type as X
             transformed version of X
         """
-        X = X.copy()
-
         # replace missing_values with np.nan
         if self.missing_values:
             X = X.replace(to_replace=self.missing_values, value=np.nan)
