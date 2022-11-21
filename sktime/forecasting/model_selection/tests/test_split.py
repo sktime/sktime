@@ -325,6 +325,31 @@ def test_sliding_window_splitter_start_with_empty_window(
             )
 
 
+@pytest.mark.parametrize("y", TEST_YS)
+@pytest.mark.parametrize("fh", [*TEST_FHS, *TEST_FHS_TIMEDELTA])
+@pytest.mark.parametrize("step_length", TEST_STEP_LENGTHS)
+def test_expanding_window_splitter_start_with_initial_window_zero(y, fh, step_length):
+    """Test ExpandingWindowSplitter."""
+    initial_window = 0
+    if _inputs_are_supported([fh, step_length, initial_window]):
+        cv = ExpandingWindowSplitter(
+            fh=fh,
+            step_length=step_length,
+            initial_window=initial_window,
+        )
+        train_windows, test_windows, _, n_splits = _check_cv(
+            cv, y, allow_empty_window=True
+        )
+
+        assert np.vstack(test_windows).shape == (n_splits, len(check_fh(fh)))
+    else:
+        match = "Unsupported combination of types"
+        with pytest.raises(TypeError, match=match):
+            ExpandingWindowSplitter(
+                fh=fh, initial_window=initial_window, step_length=step_length
+            )
+
+
 def test_sliding_window_splitter_initial_window_start_with_empty_window_raises_error():
     """Test SlidingWindowSplitter."""
     y = _make_series()

@@ -16,7 +16,7 @@ def test_minirocket_on_gunpoint():
     X_training, Y_training = load_gunpoint(split="train", return_X_y=True)
 
     # 'fit' MINIROCKET -> infer data dimensions, generate random kernels
-    minirocket = MiniRocket()
+    minirocket = MiniRocket(random_state=0)
     minirocket.fit(X_training)
 
     # transform training data

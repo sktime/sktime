@@ -14,7 +14,7 @@ __author__ = ["fkiraly"]
 __all__ = ["ClassifierPipeline", "SklearnClassifierPipeline"]
 
 
-class ClassifierPipeline(BaseClassifier, _HeterogenousMetaEstimator):
+class ClassifierPipeline(_HeterogenousMetaEstimator, BaseClassifier):
     """Pipeline of transformers and a classifier.
 
     The `ClassifierPipeline` compositor chains transformers and a single classifier.
