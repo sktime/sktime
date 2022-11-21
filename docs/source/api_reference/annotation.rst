@@ -34,7 +34,7 @@ Time Series Segmentation
 
     GMMHMM
 
-.. currentmodule:: sktime.annotation.ggc
+.. currentmodule:: sktime.annotation.ggs
 
 .. autosummary::
     :toctree: auto_generated/
