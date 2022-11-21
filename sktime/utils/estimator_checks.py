@@ -72,6 +72,7 @@ def check_estimator(
     Running all tests for a specific ExponentTransformer
     this uses the instance that is passed and compatible scenarios
     >>> results = check_estimator(ExponentTransformer(42))
+    All tests PASSED!
 
     Running specific test (all fixtures) for ExponentTransformer
     >>> check_estimator(ExponentTransformer, tests_to_run="test_clone")
