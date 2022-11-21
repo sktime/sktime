@@ -37,6 +37,7 @@ sktime/transformations/panel/dictionary_based/_sax.py @patrickzib @MatthewMiddle
 sktime/transformations/panel/dictionary_based/_sfa.py @patrickzib @MatthewMiddlehurst
 sktime/transformations/panel/dictionary_based/_sfa_fast.py @patrickzib @MatthewMiddlehurst
 sktime/transformations/panel/catch22.py @MatthewMiddlehurst
+sktime/transformations/panel/catch22wrapper.py @MatthewMiddlehurst
 sktime/transformations/panel/random_intervals.py @MatthewMiddlehurst
 sktime/transformations/panel/shapelet_transform.py @jasonlines @ABostrom @MatthewMiddlehurst @TonyBagnall
 sktime/transformations/panel/supervised_intervals.py @MatthewMiddlehurst

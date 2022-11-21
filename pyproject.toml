@@ -45,7 +45,7 @@ classifiers = [
 requires-python = ">=3.7,<3.11"
 dependencies = [
     "deprecated>=1.2.13",
-    "numba>=0.53",
+    "numba>=0.55",
     "numpy>=1.21.0,<1.23",
     "pandas>=1.1.0,<1.6.0",
     "scikit-learn>=0.24.0,<1.2.0",
