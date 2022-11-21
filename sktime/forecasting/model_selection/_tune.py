@@ -74,6 +74,9 @@ class BaseGridSearch(_DelegatedForecaster):
         self._extend_to_all_scitypes("y_inner_mtype")
         self._extend_to_all_scitypes("X_inner_mtype")
 
+    # attribute for _DelegatedForecaster, which then delegates
+    #     all non-overridden methods are same as of getattr(self, _delegate_name)
+    #     see further details in _DelegatedForecaster docstring
     _delegate_name = "best_forecaster_"
 
     def _extend_to_all_scitypes(self, tagname):
