@@ -12,7 +12,7 @@ __author__ = ["kkoralturk", "aiwalter", "fkiraly", "miraep8"]
 __all__ = ["MultiplexForecaster"]
 
 
-class MultiplexForecaster(_DelegatedForecaster, _HeterogenousMetaEstimator):
+class MultiplexForecaster(_HeterogenousMetaEstimator, _DelegatedForecaster):
     """MultiplexForecaster for selecting among different models.
 
     MultiplexForecaster facilitates a framework for performing
@@ -93,6 +93,12 @@ class MultiplexForecaster(_DelegatedForecaster, _HeterogenousMetaEstimator):
     #     all non-overridden methods to those of same name in self.forecaster_
     #     see further details in _DelegatedForecaster docstring
     _delegate_name = "forecaster_"
+
+    # for default get_params/set_params from _HeterogenousMetaEstimator
+    # _steps_attr points to the attribute of self
+    # which contains the heterogeneous set of estimators
+    # this must be an iterable of (name: str, estimator) pairs for the default
+    _steps_attr = "_forecasters"
 
     def __init__(
         self,
@@ -196,34 +202,6 @@ class MultiplexForecaster(_DelegatedForecaster, _HeterogenousMetaEstimator):
         else:
             # if None, simply clone the first forecaster to self.forecaster_
             self.forecaster_ = self._get_estimator_list(self.forecasters)[0].clone()
-
-    def get_params(self, deep=True):
-        """Get parameters for this estimator.
-
-        Parameters
-        ----------
-        deep : boolean, optional, default=True
-            If True, will return the parameters for this estimator and
-            contained subobjects that are estimators.
-
-        Returns
-        -------
-        params : mapping of string to any
-            Parameter names mapped to their values.
-        """
-        return self._get_params("_forecasters", deep=deep)
-
-    def set_params(self, **kwargs):
-        """Set the parameters of this estimator.
-
-        Valid parameter keys can be listed with ``get_params()``.
-
-        Returns
-        -------
-        self
-        """
-        self._set_params("_forecasters", **kwargs)
-        return self
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
