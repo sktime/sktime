@@ -65,11 +65,6 @@ class TimeSince(BaseTransformer):
     of integer number of months, same as the index `freq`.
     >>> transformer = TimeSince(["2000-01", "2000-02"])
     >>> Xt = transformer.fit_transform(X)
-
-    Create multiple columns with different start times. Return a time-like
-    output by setting `to_numeric=False`.
-    >>> transformer = TimeSince(["2000-01", "2000-02"], to_numeric=False)
-    >>> Xt = transformer.fit_transform(X)
     """
 
     _tags = {
