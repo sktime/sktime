@@ -470,8 +470,8 @@ def check_interval_df(interval_df):
     if interval_df.empty:
         raise TypeError("`interval_df` is empty, can not plot intervals")
     levels = interval_df.columns.levels
-    if not (levels[0] == ["Coverage"]).all():
-        raise ValueError("`interval_df` must have top level column `Coverage`")
+    if len(levels[0]) != 1:
+        raise ValueError("`interval_df` must only contain one variable with interval")
     if len(levels) != 3:
         raise ValueError("`interval_df` must have 3 column levels")
     cov_level = levels[1][0]

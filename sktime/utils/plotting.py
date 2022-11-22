@@ -4,7 +4,7 @@
 """Common timeseries plotting functionality."""
 
 __all__ = ["plot_series", "plot_correlations", "plot_windows"]
-__author__ = ["mloning", "RNKuhns", "Drishti Bhasin"]
+__author__ = ["mloning", "RNKuhns", "Drishti Bhasin", "chillerobscuro"]
 
 import math
 from warnings import simplefilter
