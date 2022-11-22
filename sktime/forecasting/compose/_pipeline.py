@@ -1572,15 +1572,19 @@ class Permute(_DelegatedForecaster, _HeterogenousMetaEstimator):
 
             estimator_dict = {x[0]: x[1] for x in estimator_tuples}
 
-            # check that all permutation are str values
+            # check that permutation is list of str
+            msg = "Error in Permutation, permutation must be None or a list of strings"
+            if not isinstance(permutation, list):
+                raise ValueError(msg)
             if not all(isinstance(item, str) for item in permutation):
-                raise ValueError("permutation must be None or a list of strings")
+                raise ValueError(msg)
 
             # check that permutation contains same step names as given in steps
             if not set(estimator_dict.keys()) == set(permutation):
                 raise ValueError(
-                    f"""Permutations must contain exactly the same step names as
-                    the names of steps in getattr(estimator, steps_arg),
+                    f"""Permutation hyperparameter permutation must contain exactly
+                    the same step names as
+                    the names of steps in getattr(estimator, steps_arg), but
                     found tuple names {set(estimator_dict.keys())} but got
                     permutation {set(permutation)}."""
                 )
