@@ -40,7 +40,7 @@ def plot_series(
         The length of the list has to match with the number of series.
     pred_interval: pd.DataFrame, default = None
         Output of `forecaster.predict_interval()`. Contains columns for lower
-        and upper boundaries of confidence interval
+        and upper boundaries of confidence interval.
 
     Returns
     -------
