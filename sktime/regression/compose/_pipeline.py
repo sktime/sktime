@@ -14,7 +14,7 @@ __author__ = ["fkiraly"]
 __all__ = ["RegressorPipeline", "SklearnRegressorPipeline"]
 
 
-class RegressorPipeline(BaseRegressor, _HeterogenousMetaEstimator):
+class RegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
     """Pipeline of transformers and a regressor.
 
     The `RegressorPipeline` compositor chains transformers and a single regressor.
