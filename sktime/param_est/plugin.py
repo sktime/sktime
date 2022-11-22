@@ -51,21 +51,21 @@ class PluginParamsForecaster(_DelegatedForecaster):
     >>> from sktime.param_est.seasonality import SeasonalityACF
     >>> from sktime.transformations.series.difference import Differencer
     >>>
-    >>> y = load_airline()
-    >>> sp_est = Differencer() * SeasonalityACF()
-    >>> fcst = NaiveForecaster()
-    >>> sp_auto = PluginParamsForecaster(sp_est, fcst)
-    >>> sp_auto.fit(y, fh=[1, 2, 3])
+    >>> y = load_airline()  # doctest: +SKIP
+    >>> sp_est = Differencer() * SeasonalityACF()  # doctest: +SKIP
+    >>> fcst = NaiveForecaster()  # doctest: +SKIP
+    >>> sp_auto = PluginParamsForecaster(sp_est, fcst)  # doctest: +SKIP
+    >>> sp_auto.fit(y, fh=[1, 2, 3])  # doctest: +SKIP
     PluginParamsForecaster(...)
-    >>> y_pred = sp_auto.predict()
-    >>> sp_auto.forecaster_.get_params()["sp"]
+    >>> y_pred = sp_auto.predict()  # doctest: +SKIP
+    >>> sp_auto.forecaster_.get_params()["sp"]  # doctest: +SKIP
     12
 
     using dictionary to plug "foo" parameter into "sp"
     >>> from sktime.param_est.fixed import FixedParams
     >>> sp_plugin = PluginParamsForecaster(
     ...     FixedParams({"foo": 12}), NaiveForecaster(), params={"foo": "sp"}
-    ... )
+    ... )  # doctest: +SKIP
     """
 
     _tags = {
