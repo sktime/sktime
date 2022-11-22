@@ -86,7 +86,7 @@ def check_estimator(
     ...    ExponentTransformer, fixtures_to_run="test_clone[ExponentTransformer-1]"
     ... )
     All tests PASSED!
-    {'test_score['test_clone[ExponentTransformer-1]']': 'PASSED'}
+    {'test_clone[ExponentTransformer-1]': 'PASSED'}
     """
     from sktime.base import BaseEstimator
     from sktime.classification.early_classification.tests.test_all_early_classifiers import (  # noqa E501
