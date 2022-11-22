@@ -309,7 +309,7 @@ class BaseTransformer(BaseEstimator):
     def __getitem__(self, key):
         """Magic [...] method, return column subsetted transformer.
 
-        First index does output subsetting, second index does input subsetting.
+        First index does intput subsetting, second index does output subsetting.
 
         Keys must be valid inputs for `columns` in `ColumnSubset`.
 
@@ -1021,11 +1021,18 @@ class BaseTransformer(BaseEstimator):
             #   we cannot convert back to pd.Series, do pd.DataFrame instead then
             #   this happens only for Series, not Panel
             if X_input_scitype == "Series":
-                _, _, metadata = check_is_mtype(
+                valid, msg, metadata = check_is_mtype(
                     Xt,
                     ["pd.DataFrame", "pd.Series", "np.ndarray"],
                     return_metadata=True,
                 )
+                if not valid:
+                    raise TypeError(
+                        f"_transform output of {type(self)} does not comply "
+                        "with sktime mtype specifications. See datatypes.MTYPE_REGISTER"
+                        " for mtype specifications. Returned error message:"
+                        f" {msg}. Returned object: {Xt}"
+                    )
                 if not metadata["is_univariate"] and X_input_mtype == "pd.Series":
                     X_output_mtype = "pd.DataFrame"
 
