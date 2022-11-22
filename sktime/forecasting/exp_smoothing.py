@@ -7,7 +7,7 @@ __all__ = ["ExponentialSmoothing"]
 __author__ = ["mloning", "big-o"]
 
 from sktime.forecasting.base.adapters import _StatsModelsAdapter
-
+import pandas as pd
 
 class ExponentialSmoothing(_StatsModelsAdapter):
     """Holt-Winters exponential smoothing forecaster.
