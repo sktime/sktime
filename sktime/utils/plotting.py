@@ -38,8 +38,8 @@ def plot_series(
     markers: list, default = None
         Markers of data points, if None the marker "o" is used by default.
         The length of the list has to match with the number of series.
-    pred_interval: pd.DataFrame
-        Output of forecaster.predict_interval(). Contains columns for lower
+    pred_interval: pd.DataFrame, default = None
+        Output of `forecaster.predict_interval()`. Contains columns for lower
         and upper boundaries of confidence interval
 
     Returns
@@ -153,14 +153,20 @@ def plot_series(
 
 def plot_interval(ax, interval_df):
     cov = interval_df.columns.levels[1][0]
-    ax.fill_between(
-        ax.get_lines()[-1].get_xdata(),
-        interval_df["Coverage"][cov]["lower"].astype("float64"),
-        interval_df["Coverage"][cov]["upper"].astype("float64"),
-        alpha=0.2,
-        color=ax.get_lines()[-1].get_c(),
-        label=f"{int(cov * 100)}% prediction intervals",
-    )
+    try:
+        ax.fill_between(
+            ax.get_lines()[-1].get_xdata(),
+            interval_df["Coverage"][cov]["lower"].astype("float64"),
+            interval_df["Coverage"][cov]["upper"].astype("float64"),
+            alpha=0.2,
+            color=ax.get_lines()[-1].get_c(),
+            label=f"{int(cov * 100)}% prediction interval",
+        )
+    except ValueError as v:
+        raise ValueError(
+            f"Prediction interval index must match at least one Series index."
+            f"Original exception: {v}"
+        )
     ax.legend()
     return ax
 
