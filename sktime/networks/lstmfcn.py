@@ -32,8 +32,6 @@ class LSTMFCNNetwork(BaseDeepNetwork):
     -----
     Implementation of LSTMFCNClassifier from Karim et al (2019).
 
-    References
-    ----------
     .. [1] @article{Karim_2019,
     title={Multivariate LSTM-FCNs for time series classification},
     volume={116},
