@@ -79,7 +79,7 @@ class ScaledLogitTransformer(BaseTransformer):
     >>> y = load_airline()
     >>> fcaster = TransformedTargetForecaster([
     ...     ("scaled_logit", ScaledLogitTransformer(0, 650)),
-    ...     ("poly", PolynomialTrendForecaster(2))
+    ...     ("poly", PolynomialTrendForecaster(degree=2))
     ... ])
     >>> fcaster.fit(y)
     TransformedTargetForecaster(...)
