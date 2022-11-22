@@ -1539,7 +1539,7 @@ class Permute(_DelegatedForecaster, _HeterogenousMetaEstimator):
 
     _delegate_name = "estimator_"
 
-    def __init__(self, estimator, permutation, steps_arg="steps"):
+    def __init__(self, estimator, permutation=None, steps_arg="steps"):
         self.estimator = estimator
         self.permutation = permutation
         self.steps_arg = steps_arg
