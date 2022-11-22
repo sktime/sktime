@@ -15,7 +15,6 @@ from sklearn.preprocessing import LabelEncoder, OneHotEncoder
 from sklearn.utils import check_random_state
 
 from sktime.classification.base import BaseClassifier
-from sktime.exceptions import NotFittedError
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 
@@ -241,19 +240,18 @@ class BaseDeepClassifier(BaseClassifier, ABC):
         from pathlib import Path
         from zipfile import ZipFile
 
-        if self.model_ is None:
-            raise NotFittedError("Model not built yet, call it via `.fit()`")
-
         if path is None:
             _check_soft_dependencies("h5py")
             import h5py
 
-            with h5py.File(
-                "disk_less", "w", driver="core", backing_store=False
-            ) as h5file:
-                self.model_.save(h5file)
-                h5file.flush()
-                in_memory_model = h5file.id.get_file_image()
+            in_memory_model = None
+            if self.model is not None:
+                with h5py.File(
+                    "disk_less", "w", driver="core", backing_store=False
+                ) as h5file:
+                    self.model_.save(h5file)
+                    h5file.flush()
+                    in_memory_model = h5file.id.get_file_image()
 
             in_memory_history = pickle.dumps(self.history.history)
 
@@ -275,7 +273,9 @@ class BaseDeepClassifier(BaseClassifier, ABC):
         path = Path(path) if isinstance(path, str) else path
         path.mkdir()
 
-        self.model_.save(path / "keras/")
+        if self.model_ is not None:
+            self.model_.save(path / "keras/")
+
         with open(path / "history", "wb") as history_writer:
             pickle.dump(self.history.history, history_writer)
 
@@ -323,13 +323,16 @@ class BaseDeepClassifier(BaseClassifier, ABC):
             )
 
         serial, in_memory_model, in_memory_history = serial
-        with TemporaryFile() as store_:
-            store_.write(in_memory_model)
-            h5file = h5py.File(store_, "r")
-            cls.model_ = load_model(h5file)
-            cls.history = pickle.loads(in_memory_history)
-            h5file.close()
+        if in_memory_model is None:
+            cls.model_ = None
+        else:
+            with TemporaryFile() as store_:
+                store_.write(in_memory_model)
+                h5file = h5py.File(store_, "r")
+                cls.model_ = load_model(h5file)
+                h5file.close()
 
+        cls.history = pickle.loads(in_memory_history)
         return pickle.loads(serial)
 
     @classmethod
@@ -359,9 +362,13 @@ class BaseDeepClassifier(BaseClassifier, ABC):
                     continue
                 zip_file.extract(file, temp_unzip_loc)
 
-        cls.model_ = keras.models.load_model(temp_unzip_loc / "keras/")
-        rmtree(temp_unzip_loc)
+        keras_location = temp_unzip_loc / "keras"
+        if keras_location.exist():
+            cls.model_ = keras.models.load_model(keras_location)
+        else:
+            cls.model_ = None
 
+        rmtree(temp_unzip_loc)
         cls.history = keras.callbacks.History()
         with ZipFile(serial, mode="r") as file:
             cls.history.set_params(pickle.loads(file.open("history").read()))
