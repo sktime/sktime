@@ -662,7 +662,7 @@ class FeatureUnion(_HeterogenousMetaEstimator, BaseTransformer):
 
 
 class FitInTransform(BaseTransformer):
-    """Transformer composition to always fit a given transformer on the transform data only.
+    """Transformer wrapper to delay fit to the transform phase.
 
     In panel settings, e.g., time series classification, it can be preferable
     (or, necessary) to fit and transform on the test set, e.g., interpolate within the
