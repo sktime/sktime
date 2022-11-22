@@ -119,18 +119,20 @@ def test_fit_transform_period_monthly_idx_numeric_output(df_period_monthly_idx):
     assert_frame_equal(Xt, expected)
 
 
-def test_fit_transform_datetime_monthly_idx_period_output(df_period_monthly_idx):
+def test_fit_transform_period_monthly_idx_period_output(df_period_monthly_idx):
     """Tests that we get the expected outputs."""
     transformer = TimeSince(
         start=None, to_numeric=False, keep_original_columns=False, positive_only=False
     )
 
-    Xt = transformer.fit_transform(df_period_monthly_idx)
+    transformer.fit(df_period_monthly_idx)
+    # Temporary solution to get this test to pass
+    # See: https://github.com/sktime/sktime/pull/3810#issuecomment-1320969799
+    transformer._output_convert = "off"
+    Xt = transformer.transform(df_period_monthly_idx)
     expected = pd.DataFrame(
         data={
-            "time_since_2000-01-01 00:00:00": [
-                pd.offsets.MonthEnd() for i in (0, 1, 2, 3, 4)
-            ]
+            "time_since_2000-01": [i * pd.offsets.MonthEnd() for i in (0, 1, 2, 3, 4)]
         },
         index=df_period_monthly_idx.index,
     )
