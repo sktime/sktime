@@ -79,6 +79,7 @@ class MiniRocketMultivariateVariable(BaseTransformer):
 
     .. [2] Angus Dempster, Daniel F Schmidt, Geoffrey I Webb
            https://github.com/angus924/minirocket
+
     """
 
     _tags = {
