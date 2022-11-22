@@ -475,7 +475,7 @@ def check_interval_df(interval_df):
     if len(levels) != 3:
         raise ValueError("`interval_df` must have 3 column levels")
     cov_level = levels[1][0]
-    if not (isinstance(cov_level, float) and 0 < interval_df.columns.levels[1][0] < 1):
+    if not (isinstance(cov_level, float) and 0 < levels[1][0] < 1):
         raise ValueError(
             "`interval_df` must have second level column of type float between 0 and 1"
         )
