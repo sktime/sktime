@@ -272,6 +272,7 @@ class SeasonalityACFqstat(BaseParamFitter):
         "scitype:X": "Series",  # which X scitypes are supported natively?
         "capability:missing_values": True,  # can estimator handle missing data?
         "capability:multivariate": False,  # can estimator handle multivariate data?
+        "python_dependencies": "statsmodels",
     }
 
     def __init__(
