@@ -108,7 +108,7 @@ class RocketClassifier(_DelegatedClassifier):
     _tags = {
         "capability:multivariate": True,
         "capability:multithreading": True,
-        "classifier_type": "kernel",
+        "classifier_type": "convolution",
     }
 
     # valid rocket strings for input validity checking

@@ -281,7 +281,7 @@ ESTIMATOR_TAG_REGISTER = [
                 "feature",
                 "hybrid",
                 "interval",
-                "kernel",
+                "convolution",
                 "shapelet",
             ],
         ),

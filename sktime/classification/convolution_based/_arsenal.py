@@ -116,7 +116,7 @@ class Arsenal(BaseClassifier):
         "capability:train_estimate": True,
         "capability:contractable": True,
         "capability:multithreading": True,
-        "classifier_type": "kernel",
+        "classifier_type": "convolution",
     }
 
     def __init__(
