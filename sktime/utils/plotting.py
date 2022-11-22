@@ -143,6 +143,10 @@ def plot_series(
     if legend:
         ax.legend()
     if pred_interval is not None:
+        if not (series[-1].index == pred_interval.index).all():
+            raise ValueError(
+                "Prediction interval index must match the final Series index."
+            )
         check_interval_df(pred_interval)
         ax = plot_interval(ax, pred_interval)
     if _ax_kwarg_is_none:
@@ -153,20 +157,14 @@ def plot_series(
 
 def plot_interval(ax, interval_df):
     cov = interval_df.columns.levels[1][0]
-    try:
-        ax.fill_between(
-            ax.get_lines()[-1].get_xdata(),
-            interval_df["Coverage"][cov]["lower"].astype("float64"),
-            interval_df["Coverage"][cov]["upper"].astype("float64"),
-            alpha=0.2,
-            color=ax.get_lines()[-1].get_c(),
-            label=f"{int(cov * 100)}% prediction interval",
-        )
-    except ValueError as v:
-        raise ValueError(
-            f"Prediction interval index must match at least one Series index."
-            f"Original exception: {v}"
-        )
+    ax.fill_between(
+        ax.get_lines()[-1].get_xdata(),
+        interval_df["Coverage"][cov]["lower"].astype("float64"),
+        interval_df["Coverage"][cov]["upper"].astype("float64"),
+        alpha=0.2,
+        color=ax.get_lines()[-1].get_c(),
+        label=f"{int(cov * 100)}% prediction interval",
+    )
     ax.legend()
     return ax
 
