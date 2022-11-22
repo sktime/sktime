@@ -457,18 +457,22 @@ def check_regressor(regressor=None, random_state=None):
     return regressor
 
 
-def check_interval_df(interval_df):
+def check_interval_df(interval_df, index_to_match):
     """
     Verify that a predicted interval DataFrame is formatted correctly.
 
     Parameters
     ----------
     interval_df : pandas DataFrame outputted from forecaster.predict_interval()
+    index_to_match : Index object that must match interval_df.index
     """
     if not isinstance(interval_df, pd.DataFrame):
-        raise TypeError("`interval_df` must be instance type pd.DataFrame")
+        raise TypeError("`interval_df` must be of type pd.DataFrame")
     if interval_df.empty:
         raise ValueError("`interval_df` is empty, can not plot intervals")
+    df_idx = interval_df.index
+    if len(index_to_match) != len(df_idx) or not (index_to_match == df_idx).all():
+        raise ValueError("Prediction interval index must match the final Series index.")
     levels = interval_df.columns.levels
     if len(levels[0]) != 1:
         raise ValueError("`interval_df` must only contain one variable with interval")
