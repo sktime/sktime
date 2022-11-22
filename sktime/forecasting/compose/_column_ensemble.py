@@ -50,7 +50,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
     >>> from sktime.datasets import load_longley
 
     Using integers (column iloc references) for indexing:
-    >>> y = load_longley()[["GNP", "UNEMP"]]
+    >>> y = load_longley()[1][["GNP", "UNEMP"]]
     >>> forecasters = [
     ...     ("trend", PolynomialTrendForecaster(), 0),
     ...     ("naive", NaiveForecaster(), 1),
