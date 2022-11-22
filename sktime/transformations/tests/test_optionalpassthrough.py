@@ -11,7 +11,10 @@ from sktime.utils.validation._dependencies import _check_soft_dependencies
     reason="skip test if required soft dependency is not available",
 )
 def test_optionalpassthrough():
-    """Test for OptionalPassthrough used within grid search and with pipeline."""
+    """Test for OptionalPassthrough used within grid search and with pipeline.
+
+    Same as docstring example of OptionalPassthrough.
+    """
     from sklearn.preprocessing import StandardScaler
 
     from sktime.datasets import load_airline
