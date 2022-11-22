@@ -40,7 +40,7 @@ def plot_series(
         The length of the list has to match with the number of series.
     pred_interval: pd.DataFrame
         Output of forecaster.predict_interval(). Contains columns for lower
-        and upper boundarries of confidence interval
+        and upper boundaries of confidence interval
 
     Returns
     -------
@@ -161,6 +161,7 @@ def plot_interval(ax, interval_df):
         color=ax.get_lines()[-1].get_c(),
         label=f"{int(cov * 100)}% prediction intervals",
     )
+    ax.legend()
     return ax
 
 
