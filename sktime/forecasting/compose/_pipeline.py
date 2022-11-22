@@ -1453,11 +1453,10 @@ class ForecastX(BaseForecaster):
 
 
 class Permute(_DelegatedForecaster, _HeterogenousMetaEstimator):
-    """Permutation compositor for permuting pipeline steps.
+    """Permutation compositor for permuting forecasting pipeline steps.
 
-    The compositor can be used to permute the sequence of any meta-estimator,
-    including ForecastingPipeline, TransformedTargetForecaster and
-    TransformerPipeline
+    The compositor can be used to permute the sequence of any meta-forecaster,
+    including ForecastingPipeline, TransformedTargetForecaster.
 
     The `steps_arg` parameter needs to be pointed to the "steps"-like parameter
     of the wrapped forecaster and `permutation` switches the sequence of steps.
