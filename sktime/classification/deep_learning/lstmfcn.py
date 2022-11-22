@@ -48,22 +48,8 @@ class LSTMFCNClassifier(BaseDeepClassifier):
 
     Notes
     -----
-    Implementation of LSTMFCNClassifier from Karim et al (2019).
-
-    .. [1] @article{Karim_2019,
-    title={Multivariate LSTM-FCNs for time series classification},
-    volume={116},
-    ISSN={0893-6080},
-    url={http://dx.doi.org/10.1016/j.neunet.2019.04.014},
-    DOI={10.1016/j.neunet.2019.04.014},
-    journal={Neural Networks},
-    publisher={Elsevier BV},
-    author={Karim, Fazle and Majumdar, Somshubra and Darabi,
-     Houshang and Harford, Samuel},
-    year={2019},
-    month={Aug},
-    pages={237–245}
-    }
+    .. [1] Karim et. al, Multivariate LSTM-FCNs for time series
+    classification, Journal of Neural Networks vol 116, August 2019.
 
     Adapted from the implementation from Fawaz et. al
     https://github.com/hfawaz/dl-4-tsc/blob/master/classifiers/cnn.py
