@@ -437,6 +437,7 @@ class STLTransformer(BaseTransformer):
         "transform-returns-same-time-index": True,
         "univariate-only": True,
         "fit_is_empty": False,
+        "python_dependencies": "statsmodels",
     }
 
     def __init__(

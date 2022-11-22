@@ -30,6 +30,9 @@ class _DelegatedRegressor(BaseRegressor):
     Does NOT delegate or copy tags, this should be done in a child class if required.
     """
 
+    # attribute for _DelegatedRegressor, which then delegates
+    #     all non-overridden methods are same as of getattr(self, _delegate_name)
+    #     see further details in _DelegatedRegressor docstring
     _delegate_name = "estimator_"
 
     def _get_delegate(self):

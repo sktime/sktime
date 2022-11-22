@@ -14,7 +14,7 @@ _check_dl_dependencies(severity="warning")
 
 
 class FCNClassifier(BaseDeepClassifier):
-    """Fully Connected Neural Network (FCN), as described in [1].
+    """Fully Connected Neural Network (FCN), as described in [1]_.
 
     Parameters
     ----------
@@ -42,12 +42,13 @@ class FCNClassifier(BaseDeepClassifier):
 
     Notes
     -----
-    .. [1] Zhao et. al, Convolutional neural networks for
-    time series classification, Journal of
-    Systems Engineering and Electronics, 28(1):2017.
-
     Adapted from the implementation from Fawaz et. al
-    https://github.com/hfawaz/dl-4-tsc/blob/master/classifiers/cnn.py
+    https://github.com/hfawaz/dl-4-tsc/blob/master/classifiers/fcn.py
+
+    References
+    ----------
+    .. [1] Zhao et. al, Convolutional neural networks for time series classification,
+    Journal of Systems Engineering and Electronics, 28(1):2017.
 
     Examples
     --------
@@ -55,8 +56,8 @@ class FCNClassifier(BaseDeepClassifier):
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
     >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
-    >>> fcn = FCNClassifier()
-    >>> fcn.fit(X_train, y_train)
+    >>> fcn = FCNClassifier(n_epochs=20,batch_size=4)  # doctest: +SKIP
+    >>> fcn.fit(X_train, y_train)  # doctest: +SKIP
     FCNClassifier(...)
     """
 
@@ -171,3 +172,39 @@ class FCNClassifier(BaseDeepClassifier):
             callbacks=self._callbacks,
         )
         return self
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            For classifiers, a "default" set of parameters should be provided for
+            general testing, and a "results_comparison" set for comparing against
+            previously recorded results if the general set does not produce suitable
+            probabilities to compare against.
+
+        Returns
+        -------
+        params : dict or list of dict, default={}
+            Parameters to create testing instances of the class.
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`.
+        """
+        param1 = {
+            "n_epochs": 10,
+            "batch_size": 4,
+            "use_bias": False,
+        }
+
+        param2 = {
+            "n_epochs": 12,
+            "batch_size": 6,
+            "use_bias": True,
+        }
+
+        return [param1, param2]
