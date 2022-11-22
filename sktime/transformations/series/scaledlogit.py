@@ -69,19 +69,17 @@ class ScaledLogitTransformer(BaseTransformer):
         practice, 3rd edition, OTexts: Melbourne, Australia. OTexts.com/fpp3.
         Accessed on January 24th 2022.
 
-
-
     Examples
     --------
     >>> import numpy as np
     >>> from sktime.datasets import load_airline
     >>> from sktime.transformations.series.scaledlogit import ScaledLogitTransformer
-    >>> from sktime.forecasting.ets import AutoETS
+    >>> from sktime.forecasting.trend import PolynomialForecaster
     >>> from sktime.forecasting.compose import TransformedTargetForecaster
     >>> y = load_airline()
     >>> fcaster = TransformedTargetForecaster([
     ...     ("scaled_logit", ScaledLogitTransformer(0, 650)),
-    ...     ("ets", AutoETS(sp=12, auto=True))
+    ...     ("poly", PolynomialForecaster(2))
     ... ])
     >>> fcaster.fit(y)
     TransformedTargetForecaster(...)
