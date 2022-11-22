@@ -143,6 +143,8 @@ def plot_series(
     if legend:
         ax.legend()
     if pred_interval is not None:
+        if not isinstance(pred_interval, pd.DataFrame):
+            raise ValueError("Prediction interval must be of type pd.DataFrame.")
         if not (series[-1].index == pred_interval.index).all():
             raise ValueError(
                 "Prediction interval index must match the final Series index."
