@@ -45,7 +45,6 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
     Examples
     --------
     >>> from sktime.forecasting.compose import ColumnEnsembleForecaster
-    >>> from sktime.forecasting.exp_smoothing import ExponentialSmoothing
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.forecasting.trend import PolynomialTrendForecaster
     >>> from sktime.datasets import load_macroeconomic
@@ -54,7 +53,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
     >>> y = load_macroeconomic()[["realgdp", "realcons"]]
     >>> forecasters = [
     ...     ("trend", PolynomialTrendForecaster(), 0),
-    ...     ("ses", ExponentialSmoothing(trend='add'), 1),
+    ...     ("naive", NaiveForecaster(), 1),
     ... ]
     >>> forecaster = ColumnEnsembleForecaster(forecasters=forecasters)
     >>> forecaster.fit(y, fh=[1, 2, 3])

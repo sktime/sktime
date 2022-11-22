@@ -74,12 +74,12 @@ class ScaledLogitTransformer(BaseTransformer):
     >>> import numpy as np
     >>> from sktime.datasets import load_airline
     >>> from sktime.transformations.series.scaledlogit import ScaledLogitTransformer
-    >>> from sktime.forecasting.trend import PolynomialForecaster
+    >>> from sktime.forecasting.trend import PolynomialTrendForecaster
     >>> from sktime.forecasting.compose import TransformedTargetForecaster
     >>> y = load_airline()
     >>> fcaster = TransformedTargetForecaster([
     ...     ("scaled_logit", ScaledLogitTransformer(0, 650)),
-    ...     ("poly", PolynomialForecaster(2))
+    ...     ("poly", PolynomialTrendForecaster(2))
     ... ])
     >>> fcaster.fit(y)
     TransformedTargetForecaster(...)
