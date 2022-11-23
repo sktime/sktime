@@ -13,11 +13,14 @@ from sktime.transformations.base import BaseTransformer
 from sktime.utils.validation.series import check_series
 
 
-class _Pipeline(
-    BaseForecaster,
-    _HeterogenousMetaEstimator,
-):
+class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
     """Abstract class for forecasting pipelines."""
+
+    # for default get_params/set_params from _HeterogenousMetaEstimator
+    # _steps_attr points to the attribute of self
+    # which contains the heterogeneous set of estimators
+    # this must be an iterable of (name: str, estimator) pairs for the default
+    _steps_attr = "_steps"
 
     def _get_pipeline_scitypes(self, estimators):
         """Get list of scityes (str) from names/estimator list."""
@@ -171,34 +174,6 @@ class _Pipeline(
     @_steps.setter
     def _steps(self, value):
         self.steps = value
-
-    def get_params(self, deep=True):
-        """Get parameters for this estimator.
-
-        Parameters
-        ----------
-        deep : boolean, optional, default=True
-            If True, will return the parameters for this estimator and
-            contained subobjects that are estimators.
-
-        Returns
-        -------
-        params : mapping of string to any
-            Parameter names mapped to their values.
-        """
-        return self._get_params("_steps", deep=deep)
-
-    def set_params(self, **kwargs):
-        """Set the parameters of this estimator.
-
-        Valid parameter keys can be listed with ``get_params()``.
-
-        Returns
-        -------
-        self
-        """
-        self._set_params("_steps", **kwargs)
-        return self
 
     # both children use the same step params for testing, so putting it here
     @classmethod
