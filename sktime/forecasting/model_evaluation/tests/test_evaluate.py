@@ -175,6 +175,10 @@ def test_evaluate_no_exog_against_with_exog():
 @pytest.mark.parametrize("backend", [None, "dask", "loky", "threading"])
 def test_evaluate_error_score(error_score, return_data, strategy, backend):
     """Test evaluate to raise warnings and exceptions according to error_score value."""
+    # skip test for dask backend if dask is not installed
+    if backend == "dask" and not _check_soft_dependencies("dask", severity="none"):
+        return None
+
     forecaster = ExponentialSmoothing(sp=12)
     y = load_airline()
     # add NaN to make ExponentialSmoothing fail
@@ -213,6 +217,10 @@ def test_evaluate_error_score(error_score, return_data, strategy, backend):
 @pytest.mark.parametrize("backend", [None, "dask", "loky", "threading"])
 def test_evaluate_hierarchical(backend):
     """Check that adding exogenous data produces different results."""
+    # skip test for dask backend if dask is not installed
+    if backend == "dask" and not _check_soft_dependencies("dask", severity="none"):
+        return None
+
     y = _make_hierarchical(
         random_state=0, hierarchy_levels=(2, 2), min_timepoints=20, max_timepoints=20
     )
