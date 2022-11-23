@@ -245,7 +245,7 @@ class BaseDeepClassifier(BaseClassifier, ABC):
             import h5py
 
             in_memory_model = None
-            if self.model is not None:
+            if self.model_ is not None:
                 with h5py.File(
                     "disk_less", "w", driver="core", backing_store=False
                 ) as h5file:
@@ -363,7 +363,7 @@ class BaseDeepClassifier(BaseClassifier, ABC):
                 zip_file.extract(file, temp_unzip_loc)
 
         keras_location = temp_unzip_loc / "keras"
-        if keras_location.exist():
+        if keras_location.exists():
             cls.model_ = keras.models.load_model(keras_location)
         else:
             cls.model_ = None
