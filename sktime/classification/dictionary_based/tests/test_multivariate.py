@@ -26,7 +26,7 @@ from joblib import Parallel, delayed, parallel_backend
 from sklearn.linear_model import RidgeClassifierCV
 from sklearn.pipeline import make_pipeline
 
-from sktime.classification.dictionary_based import MUSE, MUSE_STEROIDS
+from sktime.classification.dictionary_based import MUSE, MUSE_DILATION
 from sktime.classification.feature_based import FreshPRINCE, TSFreshClassifier
 from sktime.classification.interval_based import CanonicalIntervalForest, DrCIF
 from sktime.transformations.panel.rocket import (
@@ -104,7 +104,7 @@ def get_classifiers(threads_to_use):
         #    random_state=1379,
         #    n_jobs=threads_to_use,
         # ),
-        "MUSE (dilation,104)": MUSE_STEROIDS(
+        "MUSE (dilation,104)": MUSE_DILATION(
             random_state=1379,
             use_first_differences=True,
             binning_strategies=["equi-depth"],

@@ -6,7 +6,7 @@ and logistic regression.
 """
 
 __author__ = ["patrickzib"]
-__all__ = ["MUSE_STEROIDS"]
+__all__ = ["MUSE_DILATION"]
 
 import math
 import warnings
@@ -24,7 +24,7 @@ from sktime.classification.base import BaseClassifier
 from sktime.transformations.panel.dictionary_based import SFAFast
 
 
-class MUSE_STEROIDS(BaseClassifier):
+class MUSE_DILATION(BaseClassifier):
     """MUSE (MUltivariate Symbolic Extension).
 
     Also known as WEASLE-MUSE: implementation of multivariate version of WEASEL,
@@ -114,7 +114,7 @@ class MUSE_STEROIDS(BaseClassifier):
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
     >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
-    >>> clf = MUSE_STEROIDS(window_inc=4, use_first_order_differences=False)
+    >>> clf = MUSE_DILATION(window_inc=4, use_first_order_differences=False)
     >>> clf.fit(X_train, y_train)
     MUSE_STEROIDS(...)
     >>> y_pred = clf.predict(X_test)
@@ -175,7 +175,7 @@ class MUSE_STEROIDS(BaseClassifier):
         self.total_features_count = 0
         self.feature_selection = feature_selection
 
-        super(MUSE_STEROIDS, self).__init__()
+        super(MUSE_DILATION, self).__init__()
 
     def _fit(self, X, y):
         """Build a WEASEL+MUSE classifiers from the training set (X, y).

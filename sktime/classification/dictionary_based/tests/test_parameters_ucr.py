@@ -12,7 +12,7 @@ import numpy as np
 import pandas as pd
 from joblib import Parallel, delayed
 
-from sktime.classification.dictionary_based import WEASEL_STEROIDS
+from sktime.classification.dictionary_based import WEASEL_DILATION
 
 sys.path.append("../../../")
 
@@ -189,7 +189,7 @@ def get_classifiers(
 ):
     """Obtain the benchmark classifiers."""
     clfs = {
-        "WEASEL 2.0": WEASEL_STEROIDS(
+        "WEASEL 2.0": WEASEL_DILATION(
             random_state=1379,
             binning_strategies=binning_strategies,
             variance=True,

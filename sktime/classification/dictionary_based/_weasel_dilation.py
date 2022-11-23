@@ -12,7 +12,7 @@ Rocket-Science on WEASEL
 """
 
 __author__ = ["patrickzib"]
-__all__ = ["WEASEL_STEROIDS"]
+__all__ = ["WEASEL_DILATION"]
 
 import numpy as np
 from joblib import Parallel, delayed
@@ -30,7 +30,7 @@ from sktime.transformations.panel.dictionary_based import SFAFast
 # from sktime.transformations.panel.rocket import MiniRocket
 
 
-class WEASEL_STEROIDS(BaseClassifier):
+class WEASEL_DILATION(BaseClassifier):
     """Word Extraction for Time Series Classification (WEASEL).
 
     Overview: Input n series length m
@@ -98,11 +98,11 @@ class WEASEL_STEROIDS(BaseClassifier):
 
     Examples
     --------
-    >>> from sktime.classification.dictionary_based import WEASEL_STEROIDS
+    >>> from sktime.classification.dictionary_based import WEASEL_DILATION
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
     >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
-    >>> clf = WEASEL_STEROIDS(window_inc=4)
+    >>> clf = WEASEL_DILATION(window_inc=4)
     >>> clf.fit(X_train, y_train)
     WEASEL_STEROIDS(...)
     >>> y_pred = clf.predict(X_test)
@@ -167,7 +167,7 @@ class WEASEL_STEROIDS(BaseClassifier):
 
         # set_num_threads(n_jobs)
 
-        super(WEASEL_STEROIDS, self).__init__()
+        super(WEASEL_DILATION, self).__init__()
 
     def _fit(self, X, y):
         """Build a WEASEL classifiers from the training set (X, y).
@@ -189,7 +189,7 @@ class WEASEL_STEROIDS(BaseClassifier):
         XX = X.squeeze(1)
 
         # avoid overfitting with too many features
-        if self.n_instances < 250:
+        if self.n_instances < 250:  # TODO 150??
             self.max_window = 24
             self.ensemble_size = 50
         elif self.series_length < 100:

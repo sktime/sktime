@@ -29,7 +29,7 @@ from sklearn.pipeline import make_pipeline
 
 from sktime.classification.dictionary_based import (
     WEASEL,
-    WEASEL_STEROIDS,
+    WEASEL_DILATION,
     BOSSEnsemble,
     ContractableBOSS,
     Hydra,
@@ -232,36 +232,7 @@ dataset_names_excerpt = [
 def get_classifiers(threads_to_use):
     """Obtain the benchmark classifiers."""
     clfs = {
-        # "Voting": VotingClassifier(
-        #     estimators=[
-        #         ("WS 24", WEASEL_STEROIDS(
-        #             random_state=1379,
-        #             max_window=24,
-        #             ensemble_size=50,
-        #             n_jobs=threads_to_use,
-        #         )),
-        #         ("WS 44", WEASEL_STEROIDS(
-        #             random_state=1379,
-        #             max_window=44,
-        #             ensemble_size=50,
-        #             n_jobs=threads_to_use,
-        #         )),
-        #         ("WS 64", WEASEL_STEROIDS(
-        #             random_state=1379,
-        #             max_window=64,
-        #             ensemble_size=100,
-        #             n_jobs=threads_to_use,
-        #         )),
-        #         ("WS 84", WEASEL_STEROIDS(
-        #             random_state=1379,
-        #             max_window=84,
-        #             ensemble_size=150,
-        #             n_jobs=threads_to_use,
-        #         )),
-        #     ],
-        #     voting="hard"
-        # )
-        "WEASEL (dilated;7-8)": WEASEL_STEROIDS(
+        "WEASEL (dilated;7-8)": WEASEL_DILATION(
             random_state=1379,
             binning_strategies=["equi-depth", "equi-width"],
             alphabet_sizes=[2],
@@ -276,6 +247,36 @@ def get_classifiers(threads_to_use):
             # sections=1,
             n_jobs=threads_to_use,
         ),
+        # "WEASEL (dilated;ed+ig)": WEASEL_DILATION(
+        #     random_state=1379,
+        #     binning_strategies=["equi-depth", "information-gain"],
+        #     n_jobs=threads_to_use,
+        # ),
+        # "WEASEL (dilated;ig)": WEASEL_DILATION(
+        #     random_state=1379,
+        #     binning_strategies=["information-gain"],
+        #     n_jobs=threads_to_use,
+        # ),
+        # "WEASEL (dilated;ig+ew)": WEASEL_DILATION(
+        #     random_state=1379,
+        #     binning_strategies=["information-gain", "equi-width"],
+        #     n_jobs=threads_to_use,
+        # ),
+        # "WEASEL (dilated;ig+ew+ed)": WEASEL_DILATION(
+        #     random_state=1379,
+        #     binning_strategies=["information-gain", "equi-width", "equi-depth"],
+        #     n_jobs=threads_to_use,
+        # ),
+        # "WEASEL (dilated;ed+quan)": WEASEL_DILATION(
+        #     random_state=1379,
+        #     binning_strategies=["equi-depth", "quantile"],
+        #     n_jobs=threads_to_use,
+        # ),
+        # "WEASEL (dilated;quan+ig)": WEASEL_DILATION(
+        #     random_state=1379,
+        #     binning_strategies=["information-gain", "quantile"],
+        #     n_jobs=threads_to_use,
+        # ),
         # "WEASEL": WEASEL(random_state=1379, n_jobs=threads_to_use),
         # "BOSS": BOSSEnsemble(random_state=1379, n_jobs=threads_to_use),
         # "cBOSS": ContractableBOSS(random_state=1379, n_jobs=threads_to_use),
