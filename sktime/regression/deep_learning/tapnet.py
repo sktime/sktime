@@ -16,7 +16,12 @@ from sktime.utils.validation._dependencies import _check_dl_dependencies
 
 
 class TapNetRegressor(BaseDeepRegressor):
-    """Implementation of TapNetRegressor, as described in [1].
+    """Time series attentional prototype network (TapNet), as described in [1].
+
+     TapNet was initially proposed for multivariate time series
+     classification. The is an adaptation for time series regression. TapNet comprises
+     these components: random dimension permutation, multivariate time series
+     encoding, and attentional prototype learning.
 
     Parameters
     ----------
