@@ -4,7 +4,7 @@ from typing import Callable
 import numpy as np
 from numba import njit
 
-from sktime.distances.distance_rework import ElasticDistance, DistanceCallable
+from sktime.distances.distance_rework import DistanceCallable, ElasticDistance
 
 
 class _ErpDistance(ElasticDistance):
@@ -109,11 +109,11 @@ class _ErpDistance(ElasticDistance):
         **kwargs
     ) -> DistanceCallable:
         # Has to be here because circular import if at top
-        from sktime.distances.distance_rework import _EuclideanDistance
+        from sktime.distances.distance_rework import _SquaredDistance
 
         _example_x = x[:, 0]
         _example_y = y[:, 0]
-        euclidean_distance = _EuclideanDistance().distance_factory(
+        euclidean_distance = _SquaredDistance().distance_factory(
             _example_x, _example_y, strategy="independent", **kwargs
         )
 

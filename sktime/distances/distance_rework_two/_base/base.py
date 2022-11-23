@@ -35,6 +35,8 @@ class BaseDistance(ABC):
         distance_callable = self._convert_to_numba(self._distance)
 
         if strategy == "independent":
+            if type(self)._independent_distance != BaseDistance._independent_distance:
+                distance_callable = self._convert_to_numba(self._independent_distance)
             independent = self._independent_factory(distance_callable)
             _distance_callable = self._convert_to_numba(independent)
         else:
@@ -164,7 +166,7 @@ class BaseDistance(ABC):
         **kwargs : dict
             Additional keyword arguments.
         """
-        ...
+        raise ValueError("Not implemented")
 
     def _convert_to_numba(self, func: Callable):
         """Check if needed to convert to numba function.

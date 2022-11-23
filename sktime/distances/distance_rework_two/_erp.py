@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from typing import Union
+
 import numpy as np
 from numba import njit
 
@@ -13,16 +15,16 @@ squared_distance = _SquaredDistance().distance_factory()
 
 
 @njit(cache=True, fastmath=True)
-def _precompute_g(_x: np.ndarray, _g: float):
-    _gx_distance = np.zeros(_x.shape[1])
-    _g_arr = np.full(_x.shape[0], _g)
-    _x_sum = 0
+def _precompute_g(x: np.ndarray, g: float):
+    gx_distance = np.zeros(x.shape[1])
+    g_arr = np.full(x.shape[0], g)
+    x_sum = 0
 
-    for i in range(_x.shape[1]):
-        temp = squared_distance(_x[:, i], _g_arr)
-        _gx_distance[i] = temp
-        _x_sum += temp
-    return _gx_distance, _x_sum
+    for i in range(x.shape[1]):
+        temp = squared_distance(x[:, i], g_arr)
+        gx_distance[i] = temp
+        x_sum += temp
+    return gx_distance, x_sum
 
 
 class _ErpDistance(ElasticDistance):
@@ -34,14 +36,14 @@ class _ErpDistance(ElasticDistance):
     def _distance(
         x: np.ndarray,
         y: np.ndarray,
-        window: float = None,
-        itakura_max_slope: float = None,
-        bounding_matrix: np.ndarray = None,
+        window: Union[float, None] = None,
+        itakura_max_slope: Union[float, None] = None,
+        bounding_matrix: Union[np.ndarray, None] = None,
         g: float = 0.0,
         *args
     ) -> ElasticDistanceReturn:
-        x_size = x.shape[0]
-        y_size = y.shape[0]
+        x_size = x.shape[1]
+        y_size = y.shape[1]
         bounding_matrix = get_bounding_matrix(
             x, y, window, itakura_max_slope, bounding_matrix
         )
@@ -57,7 +59,7 @@ class _ErpDistance(ElasticDistance):
         for i in range(1, x_size + 1):
             for j in range(1, y_size + 1):
                 if np.isfinite(bounding_matrix[i - 1, j - 1]):
-                    squared_dist = squared_distance(x[i - 1], y[j - 1])
+                    squared_dist = squared_distance(x[:, i - 1], y[:, j - 1])
 
                     cost_matrix[i, j] = min(
                         cost_matrix[i - 1, j - 1] + squared_dist,

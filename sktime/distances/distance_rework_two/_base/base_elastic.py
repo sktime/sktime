@@ -154,9 +154,9 @@ class ElasticDistance(BaseDistance):
 def get_bounding_matrix(
     x: np.ndarray,
     y: np.ndarray,
-    window: float = None,
-    itakura_max_slope: float = None,
-    bounding_matrix: np.ndarray = None,
+    window: Union[float, None] = None,
+    itakura_max_slope: Union[float, None] = None,
+    bounding_matrix: Union[np.ndarray, None] = None,
 ) -> np.ndarray:
     """Get bounding matrix for elastic distance.
 

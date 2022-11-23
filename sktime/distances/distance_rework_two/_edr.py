@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from typing import Union
+
 import numpy as np
 
 from sktime.distances.distance_rework_two._base import (
@@ -21,10 +23,10 @@ class _EdrDistance(ElasticDistance):
     def _distance(
         x: np.ndarray,
         y: np.ndarray,
-        window: float = None,
-        itakura_max_slope: float = None,
-        bounding_matrix: np.ndarray = None,
-        epsilon: float = None,
+        window: Union[float, None] = None,
+        itakura_max_slope: Union[float, None] = None,
+        bounding_matrix: Union[np.ndarray, None] = None,
+        epsilon: Union[float, None] = None,
         *args
     ) -> ElasticDistanceReturn:
         x_size = x.shape[1]
@@ -36,10 +38,10 @@ class _EdrDistance(ElasticDistance):
 
         if np.array_equal(x, y):
             return 0.0, cost_matrix[1:, 1:]
+
+        _epsilon = epsilon
         if epsilon is None:
             _epsilon = max(np.std(x), np.std(y)) / 4
-        else:
-            _epsilon = epsilon
 
         for i in range(1, x_size + 1):
             for j in range(1, y_size + 1):

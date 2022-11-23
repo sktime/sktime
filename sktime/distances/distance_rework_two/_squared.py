@@ -28,7 +28,3 @@ class _SquaredDistance(BaseLocalDistance):
     @staticmethod
     def _local_distance(x: float, y: float, *args) -> float:
         return (x - y) ** 2
-
-    @staticmethod
-    def _result_process(result: float):
-        return result * 2

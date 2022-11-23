@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from typing import Union
+
 import numpy as np
 
 from sktime.distances.distance_rework_two._base import (
@@ -21,9 +23,9 @@ class _WdtwDistance(ElasticDistance):
     def _distance(
         x: np.ndarray,
         y: np.ndarray,
-        window: float = None,
-        itakura_max_slope: float = None,
-        bounding_matrix: np.ndarray = None,
+        window: Union[float, None] = None,
+        itakura_max_slope: Union[float, None] = None,
+        bounding_matrix: Union[np.ndarray, None] = None,
         g: float = 0.05,
         *args
     ) -> ElasticDistanceReturn:
