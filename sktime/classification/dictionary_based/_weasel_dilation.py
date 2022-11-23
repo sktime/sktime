@@ -25,7 +25,7 @@ from sklearn.linear_model import RidgeClassifierCV
 from sklearn.utils import check_random_state
 
 from sktime.classification.base import BaseClassifier
-from sktime.transformations.panel.dictionary_based import SFAFast
+from sktime.transformations.panel.dictionary_based import SFADilation
 
 # from sktime.transformations.panel.rocket import MiniRocket
 
@@ -442,7 +442,7 @@ def getSFAFast(
     window_size,
     word_length,
 ):
-    transformer = SFAFast(
+    transformer = SFADilation(
         variance=variance,
         word_length=word_length,
         alphabet_size=alphabet_size,

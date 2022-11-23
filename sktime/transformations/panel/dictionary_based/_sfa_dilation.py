@@ -6,7 +6,7 @@ Configurable SFA transform for discretising time series into words.
 """
 
 __author__ = ["patrickzib"]
-__all__ = ["SFAFast"]
+__all__ = ["SFADilation"]
 
 import math
 import sys
@@ -39,7 +39,7 @@ simplefilter(action="ignore", category=NumbaPendingDeprecationWarning)
 simplefilter(action="ignore", category=NumbaTypeSafetyWarning)
 
 
-class SFAFast(BaseTransformer):
+class SFADilation(BaseTransformer):
     """Symbolic Fourier Approximation (SFA) Transformer.
 
     Overview: for each series:
@@ -229,7 +229,7 @@ class SFAFast(BaseTransformer):
         #     n_jobs = self.n_jobs
         # set_num_threads(n_jobs)
 
-        super(SFAFast, self).__init__()
+        super(SFADilation, self).__init__()
 
         if not return_pandas_data_series:
             self._output_convert = "off"

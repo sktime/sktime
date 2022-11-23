@@ -21,7 +21,7 @@ from sklearn.utils.sparsefuncs_fast import csr_row_norms
 from sklearn.utils.validation import _num_samples
 
 from sktime.classification.base import BaseClassifier
-from sktime.transformations.panel.dictionary_based import SFAFast
+from sktime.transformations.panel.dictionary_based import SFADilation
 from sktime.utils.validation.panel import check_X_y
 
 
@@ -598,7 +598,7 @@ class IndividualBOSS(BaseClassifier):
         Changes state by creating a fitted model that updates attributes
         ending in "_" and sets is_fitted flag to True.
         """
-        self._transformer = SFAFast(
+        self._transformer = SFADilation(
             word_length=self.word_length,
             alphabet_size=self.alphabet_size,
             window_size=self.window_size,

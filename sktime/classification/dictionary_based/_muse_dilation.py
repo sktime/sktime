@@ -21,7 +21,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.utils import check_random_state
 
 from sktime.classification.base import BaseClassifier
-from sktime.transformations.panel.dictionary_based import SFAFast
+from sktime.transformations.panel.dictionary_based import SFADilation
 
 
 class MUSE_DILATION(BaseClassifier):
@@ -435,7 +435,7 @@ def _parallel_fit(
     for dim in range(X.shape[1]):
         X_dim = X[:, dim]
 
-        transformer = SFAFast(
+        transformer = SFADilation(
             variance=variance,
             word_length=word_length,
             alphabet_size=alphabet_size,

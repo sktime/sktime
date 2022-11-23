@@ -18,7 +18,7 @@ from sklearn.linear_model import LogisticRegression, RidgeClassifierCV
 from sklearn.utils import check_random_state
 
 from sktime.classification.base import BaseClassifier
-from sktime.transformations.panel.dictionary_based import SFAFast
+from sktime.transformations.panel.dictionary_based import SFADilation
 
 
 class WEASEL(BaseClassifier):
@@ -367,7 +367,7 @@ def _parallel_fit(
     n_jobs,
 ):
     rng = check_random_state(window_size)
-    transformer = SFAFast(
+    transformer = SFADilation(
         word_length=rng.choice(word_lengths),
         alphabet_size=alphabet_size,
         window_size=window_size,
