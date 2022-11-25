@@ -230,7 +230,7 @@ class Deseasonalizer(BaseTransformer):
         """
         params = {}
 
-        params2 = {"sp": 12}
+        params2 = {"sp": 2}
 
         return [params, params2]
 
