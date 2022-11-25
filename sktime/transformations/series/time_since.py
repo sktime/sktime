@@ -7,6 +7,7 @@ __author__ = ["KishManani"]
 
 import datetime
 import warnings
+from string import digits
 
 import numpy as np
 import pandas as pd
@@ -210,9 +211,16 @@ class TimeSince(BaseTransformer):
 
                     # Infer the freq needed to convert to period
                     if X.index.freq is None:
-                        freq_period = X.asfreq(self.freq_).index.to_period().freq
+                        freq_period = X.asfreq(self.freq_).index.to_period().freqstr
                     else:
-                        freq_period = X.index.to_period().freq
+                        freq_period = X.index.to_period().freqstr
+
+                    if pd.__version__ < "1.5.0":
+                        # Earlier versions of pandas returned incorrect result
+                        # when taking a difference between Periods when the frequency
+                        # is a multiple of a unit (e.g. "15T"). Solution is to
+                        # cast to lowest frequency when taking difference (e.g., "T").
+                        freq_period = _remove_digits_from_str(freq_period)
 
                     # Convert `start` and datetime index to period
                     start_period = pd.Period(start_, freq=freq_period)
@@ -220,7 +228,17 @@ class TimeSince(BaseTransformer):
                     time_deltas_period = X_idx_period - start_period
                     time_deltas = _period_to_int(time_deltas_period)
                 elif isinstance(X.index, pd.PeriodIndex):
-                    time_deltas_period = X.index - start_
+                    if pd.__version__ < "1.5.0":
+                        # Earlier versions of pandas returned incorrect result
+                        # when taking a difference between Periods when the frequency
+                        # is a multiple of a unit (e.g. "15T"). Solution is to
+                        # cast to lowest frequency when taking difference (e.g., "T").
+                        freq_ = _remove_digits_from_str(X.index.freqstr)
+                        time_deltas_period = X.index.to_timestamp().to_period(
+                            freq_
+                        ) - start_.to_timestamp().to_period(freq_)
+                    else:
+                        time_deltas_period = X.index - start_
                     time_deltas = _period_to_int(time_deltas_period)
                 elif X.index.is_numeric():
                     time_deltas = X.index - start_
@@ -270,3 +288,7 @@ class TimeSince(BaseTransformer):
 
 def _period_to_int(x: pd.PeriodIndex | list[pd.offsets.DateOffset]) -> int:
     return x.map(lambda y: y.n)
+
+
+def _remove_digits_from_str(x: str):
+    return x.translate({ord(k): None for k in digits})
