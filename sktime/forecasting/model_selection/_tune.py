@@ -224,7 +224,8 @@ class BaseGridSearch(_DelegatedForecaster):
         # Raise error if all fits in evaluate failed because all score values are NaN.
         if self.best_index_ == -1:
             raise NotFittedError(
-                f"""All fits of forecaster failed, set error_score='raise' to see the exceptions.
+                f"""All fits of forecaster failed,
+                set error_score='raise' to see the exceptions.
                 Failed forecaster: {self.forecaster}"""
             )
         self.best_score_ = results.loc[self.best_index_, f"mean_{scoring_name}"]
@@ -437,10 +438,10 @@ class ForecastingGridSearchCV(BaseGridSearch):
     ...     },
     ...     ],
     ...     cv=cv,
-    ...     n_jobs=-1)
-    >>> gscv.fit(y)
+    ...     n_jobs=-1)  # doctest: +SKIP
+    >>> gscv.fit(y)  # doctest: +SKIP
     ForecastingGridSearchCV(...)
-    >>> y_pred = gscv.predict(fh=[1,2,3])
+    >>> y_pred = gscv.predict(fh=[1,2,3])  # doctest: +SKIP
     """
 
     def __init__(

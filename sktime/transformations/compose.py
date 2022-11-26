@@ -662,7 +662,7 @@ class FeatureUnion(_HeterogenousMetaEstimator, BaseTransformer):
 
 
 class FitInTransform(BaseTransformer):
-    """Transformer composition to always fit a given transformer on the transform data only.
+    """Transformer wrapper to delay fit to the transform phase.
 
     In panel settings, e.g., time series classification, it can be preferable
     (or, necessary) to fit and transform on the test set, e.g., interpolate within the
@@ -1296,24 +1296,24 @@ class OptionalPassthrough(_DelegatedTransformer):
     >>> pipe = TransformedTargetForecaster(steps=[
     ...     ("deseasonalizer", OptionalPassthrough(Deseasonalizer())),
     ...     ("scaler", OptionalPassthrough(TabularToSeriesAdaptor(StandardScaler()))),
-    ...     ("forecaster", NaiveForecaster())])
+    ...     ("forecaster", NaiveForecaster())])  # doctest: +SKIP
     >>> # putting it all together in a grid search
     >>> cv = SlidingWindowSplitter(
     ...     initial_window=60,
     ...     window_length=24,
     ...     start_with_window=True,
-    ...     step_length=48)
+    ...     step_length=48)  # doctest: +SKIP
     >>> param_grid = {
     ...     "deseasonalizer__passthrough" : [True, False],
     ...     "scaler__transformer__transformer__with_mean": [True, False],
     ...     "scaler__passthrough" : [True, False],
-    ...     "forecaster__strategy": ["drift", "mean", "last"]}
+    ...     "forecaster__strategy": ["drift", "mean", "last"]}  # doctest: +SKIP
     >>> gscv = ForecastingGridSearchCV(
     ...     forecaster=pipe,
     ...     param_grid=param_grid,
     ...     cv=cv,
-    ...     n_jobs=-1)
-    >>> gscv_fitted = gscv.fit(load_airline())
+    ...     n_jobs=-1)  # doctest: +SKIP
+    >>> gscv_fitted = gscv.fit(load_airline())  # doctest: +SKIP
     """
 
     _tags = {
