@@ -48,7 +48,7 @@ class TimeSince(BaseTransformer):
         https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#offset-aliases
     keep_original_columns :  boolean, optional, default=False
         Keep original columns in X passed to `.transform()`
-    positive only :  boolean, optional, default=False
+    positive_only :  boolean, optional, default=False
         Clips negative values to zero when `to_numeric` is True.
 
     Examples
