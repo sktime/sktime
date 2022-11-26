@@ -1851,6 +1851,15 @@
       "contributions": [
         "build"
       ]
+    },
+    {
+      "login": "templierw",
+      "name": "William Templier",
+      "avatar_url": "https://github.com/templierw.png",
+      "profile": "https://www.linkedin.com/in/templierw/",
+      "contributions": [
+        "doc"
+      ]
     }
   ]
 }
