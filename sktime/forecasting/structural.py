@@ -6,10 +6,9 @@
 __all__ = ["UnobservedComponents"]
 __author__ = ["juanitorduz"]
 
+import pandas as pd
+
 from sktime.forecasting.base.adapters import _StatsModelsAdapter
-from statsmodels.tsa.statespace.structural import (
-    UnobservedComponents as _UnobservedComponents,
-)
 
 
 class UnobservedComponents(_StatsModelsAdapter):
@@ -98,6 +97,7 @@ class UnobservedComponents(_StatsModelsAdapter):
         - 'robust_approx' is the same as 'robust' except that the
             intermediate calculations use the 'approx' method.
         - 'none' for no covariance matrix calculation.
+
         Default is 'opg' unless memory conservation is used to avoid
         computing the loglikelihood values for each observation, in which
         case the default is 'approx'.
@@ -166,6 +166,11 @@ class UnobservedComponents(_StatsModelsAdapter):
         not be available (including smoothed results and in-sample
         prediction), although out-of-sample forecasting is possible.
         Default is False.
+    random_state : int, RandomState instance or None, optional ,
+        default=None – If int, random_state is the seed used by the random
+        number generator; If RandomState instance, random_state is the random
+        number generator; If None, the random number generator is the
+        RandomState instance used by np.random.
 
     See Also
     --------
@@ -192,6 +197,12 @@ class UnobservedComponents(_StatsModelsAdapter):
     UnobservedComponents(...)
     >>> y_pred = forecaster.predict(fh=[1, 2, 3])
     """
+
+    _tags = {
+        "capability:pred_int": True,
+        "handles-missing-data": False,
+        "ignores-exogeneous-X": False,
+    }
 
     def __init__(
         self,
@@ -227,7 +238,7 @@ class UnobservedComponents(_StatsModelsAdapter):
         optim_hessian=None,
         flags=None,
         low_memory=False,
-        **kwargs
+        random_state=None,
     ):
         # Model params
         self.level = level
@@ -265,7 +276,7 @@ class UnobservedComponents(_StatsModelsAdapter):
         self.flags = flags
         self.low_memory = low_memory
 
-        super(UnobservedComponents, self).__init__()
+        super(UnobservedComponents, self).__init__(random_state=random_state)
 
     def _fit_forecaster(self, y, X=None):
         """Fit to training data.
@@ -277,6 +288,10 @@ class UnobservedComponents(_StatsModelsAdapter):
         X : pd.DataFrame, optional (default=None)
             Exogenous variables.
         """
+        from statsmodels.tsa.statespace.structural import (
+            UnobservedComponents as _UnobservedComponents,
+        )
+
         self._forecaster = _UnobservedComponents(
             endog=y,
             exog=X,
@@ -316,6 +331,58 @@ class UnobservedComponents(_StatsModelsAdapter):
             flags=self.flags,
             low_memory=self.low_memory,
         )
+
+    def _predict_interval(self, fh, X=None, coverage=None):
+        """Compute/return prediction quantiles for a forecast.
+
+        private _predict_interval containing the core logic,
+            called from predict_interval and possibly predict_quantiles
+
+        Parameters
+        ----------
+        fh : int, list, np.array or ForecastingHorizon
+            Forecasting horizon, default = y.index (in-sample forecast)
+        X : pd.DataFrame, optional (default=None)
+            Exogenous time series
+        coverage : list of float (guaranteed not None and floats in [0,1] interval)
+           nominal coverage(s) of predictive interval(s)
+
+        Returns
+        -------
+        pred_int : pd.DataFrame
+            Column has multi-index: first level is variable name from y in fit,
+                second level coverage fractions for which intervals were computed.
+                    in the same order as in input `coverage`.
+                Third level is string "lower" or "upper", for lower/upper interval end.
+            Row index is fh. Entries are forecasts of lower/upper interval end,
+                for var in col index, at nominal coverage in second col index,
+                lower/upper depending on third col index, for the row index.
+                Upper/lower interval end forecasts are equivalent to
+                quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
+
+        See Also
+        --------
+        statsmodels.tsa.statespace.mlemodel.PredictionResults.summary_frame
+        """
+        valid_indices = fh.to_absolute(self.cutoff).to_pandas()
+
+        start, end = valid_indices[[0, -1]]
+        prediction_results = self._fitted_forecaster.get_prediction(
+            start=start, end=end, exog=X
+        )
+        pred_int = pd.DataFrame()
+        for c in coverage:
+            alpha = 1 - c
+            pred_statsmodels = prediction_results.summary_frame(alpha=alpha)
+            pred_int[(c, "lower")] = pred_statsmodels["mean_ci_lower"].loc[
+                valid_indices
+            ]
+            pred_int[(c, "upper")] = pred_statsmodels["mean_ci_upper"].loc[
+                valid_indices
+            ]
+        index = pd.MultiIndex.from_product([["Coverage"], coverage, ["lower", "upper"]])
+        pred_int.columns = index
+        return pred_int
 
     def summary(self):
         """Get a summary of the fitted forecaster.
@@ -455,36 +522,22 @@ class UnobservedComponents(_StatsModelsAdapter):
             truncate_endog_names=truncate_endog_names,
         )
 
-    # TODO: This plot function generates an error:
-    # "TypeError: float() argument must be a string or a number, not 'Period'"
-    #
-    # def plot_components(
-    #     self,
-    #     which=None,
-    #     alpha=0.05,
-    #     observed=True,
-    #     level=True,
-    #     trend=True,
-    #     seasonal=True,
-    #     freq_seasonal=True,
-    #     cycle=True,
-    #     autoregressive=True,
-    #     legend_loc="upper right",
-    #     fig=None,
-    #     figsize=None,
-    # ):
-    #     """TODO: Add docstrings."""
-    #     self._fitted_forecaster.plot_components(
-    #         which=which,
-    #         alpha=alpha,
-    #         observed=observed,
-    #         level=level,
-    #         trend=trend,
-    #         seasonal=seasonal,
-    #         freq_seasonal=freq_seasonal,
-    #         cycle=cycle,
-    #         autoregressive=autoregressive,
-    #         legend_loc=legend_loc,
-    #         fig=fig,
-    #         figsize=figsize,
-    #     )
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        return {"level": "local level"}

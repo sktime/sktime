@@ -1,25 +1,28 @@
 # -*- coding: utf-8 -*-
+"""Symbolic Aggregate approXimation (SAX) transformer."""
+
 import sys
 
 import numpy as np
 import pandas as pd
 import scipy.stats
 
-from sktime.transformations.base import _PanelToPanelTransformer
+from sktime.transformations.base import BaseTransformer
 from sktime.transformations.panel.dictionary_based import PAA
 
 #    TO DO: verify this returned pandas is consistent with sktime
 #    definition. Timestamps?
-from sktime.utils.validation.panel import check_X
 
 # from numba import types
 # from numba.experimental import jitclass
 
-__author__ = "Matthew Middlehurst"
+__author__ = "MatthewMiddlehurst"
 
 
-class SAX(_PanelToPanelTransformer):
-    """SAX (Symbolic Aggregate approXimation) Transformer, as described in
+class SAX(BaseTransformer):
+    """Symbolic Aggregate approXimation (SAX) transformer.
+
+    as described in
     Jessica Lin, Eamonn Keogh, Li Wei and Stefano Lonardi,
     "Experiencing SAX: a novel symbolic representation of time series"
     Data Mining and Knowledge Discovery, 15(2):107-144
@@ -36,29 +39,38 @@ class SAX(_PanelToPanelTransformer):
 
     Parameters
     ----------
-        word_length:         int, length of word to shorten window to (using
-        PAA) (default 8)
-        alphabet_size:       int, number of values to discretise each value
-        to (default to 4)
-        window_size:         int, size of window for sliding. Input series
-        length for whole series transform (default to 12)
-        remove_repeat_words: boolean, whether to use numerosity reduction (
-        default False)
-        save_words:          boolean, whether to use numerosity reduction (
-        default False)
+    word_length:         int, length of word to shorten window to (using
+    PAA) (default 8)
+    alphabet_size:       int, number of values to discretise each value
+    to (default to 4)
+    window_size:         int, size of window for sliding. Input series
+    length for whole series transform (default to 12)
+    remove_repeat_words: boolean, whether to use numerosity reduction (
+    default False)
+    save_words:          boolean, whether to use numerosity reduction (
+    default False)
 
-        return_pandas_data_series:          boolean, default = True
-            set to true to return Pandas Series as a result of transform.
-            setting to true reduces speed significantly but is required for
-            automatic test.
+    return_pandas_data_series:          boolean, default = True
+        set to true to return Pandas Series as a result of transform.
+        setting to true reduces speed significantly but is required for
+        automatic test.
 
     Attributes
     ----------
-        words:      history = []
-
+    words:      history = []
     """
 
-    _tags = {"univariate-only": True, "fit-in-transform": True}
+    _tags = {
+        "univariate-only": True,
+        "fit_is_empty": True,
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
+        "scitype:transform-output": "Series",
+        # what scitype is returned: Primitives, Series, Panel
+        "scitype:instancewise": True,  # is this an instance-wise transform?
+        "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "None",  # which mtypes do _fit/_predict require for y?
+    }
 
     def __init__(
         self,
@@ -77,10 +89,12 @@ class SAX(_PanelToPanelTransformer):
         self.return_pandas_data_series = return_pandas_data_series
         self.words = []
 
-        super(SAX, self).__init__()
+        super(SAX, self).__init__(_output_convert="off")
 
-    def transform(self, X, y=None):
-        """
+    # todo: looks like this just loops over series instances
+    # so should be refactored to work on Series directly
+    def _transform(self, X, y=None):
+        """Transform data.
 
         Parameters
         ----------
@@ -91,8 +105,6 @@ class SAX(_PanelToPanelTransformer):
         -------
         dims: Pandas data frame with first dimension in column zero
         """
-        self.check_is_fitted()
-        X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
         X = X.squeeze(1)
 
         if self.alphabet_size < 2 or self.alphabet_size > 4:
@@ -184,3 +196,26 @@ class SAX(_PanelToPanelTransformer):
                 sys.float_info.max,
             ],
         }[self.alphabet_size]
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        # small word length, window size for testing
+        params = {"word_length": 2, "window_size": 4}
+        return params

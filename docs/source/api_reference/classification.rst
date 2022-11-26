@@ -5,11 +5,6 @@ Time series classification
 
 The :mod:`sktime.classification` module contains algorithms and composition tools for time series classification.
 
-.. automodule:: sktime.classification
-    :no-members:
-    :no-inherited-members:
-
-
 Composition
 -----------
 
@@ -19,7 +14,24 @@ Composition
     :toctree: auto_generated/
     :template: class.rst
 
+    ClassifierPipeline
     ColumnEnsembleClassifier
+    ComposableTimeSeriesForestClassifier
+    SklearnClassifierPipeline
+
+Deep learning
+-------------
+
+.. currentmodule:: sktime.classification.deep_learning
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    CNNClassifier
+    FCNClassifier
+    MLPClassifier
+    TapNetClassifier
 
 Dictionary-based
 ----------------
@@ -30,13 +42,13 @@ Dictionary-based
     :toctree: auto_generated/
     :template: class.rst
 
-    IndividualBOSS
     BOSSEnsemble
     ContractableBOSS
-    WEASEL
-    MUSE
+    IndividualBOSS
     IndividualTDE
+    MUSE
     TemporalDictionaryEnsemble
+    WEASEL
 
 Distance-based
 --------------
@@ -47,14 +59,55 @@ Distance-based
     :toctree: auto_generated/
     :template: class.rst
 
-    KNeighborsTimeSeriesClassifier
     ElasticEnsemble
+    KNeighborsTimeSeriesClassifier
     ProximityForest
-    ProximityTree
     ProximityStump
+    ProximityTree
+    ShapeDTW
+
+Dummy
+-----
+
+.. currentmodule:: sktime.classification.dummy
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    DummyClassifier
+
+Early classification
+--------------------
+
+.. currentmodule:: sktime.classification.early_classification
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ProbabilityThresholdEarlyClassifier
+    TEASER
+
+Feature-based
+-------------
+
+.. currentmodule:: sktime.classification.feature_based
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    Catch22Classifier
+    FreshPRINCE
+    MatrixProfileClassifier
+    RandomIntervalClassifier
+    SignatureClassifier
+    SummaryClassifier
+    TSFreshClassifier
 
 Hybrid
---------------
+------
 
 .. currentmodule:: sktime.classification.hybrid
 
@@ -63,6 +116,7 @@ Hybrid
     :template: class.rst
 
     HIVECOTEV1
+    HIVECOTEV2
 
 Interval-based
 --------------
@@ -73,11 +127,23 @@ Interval-based
     :toctree: auto_generated/
     :template: class.rst
 
-    TimeSeriesForestClassifier
-    RandomIntervalSpectralForest
-    SupervisedTimeSeriesForest
     CanonicalIntervalForest
     DrCIF
+    RandomIntervalSpectralEnsemble
+    SupervisedTimeSeriesForest
+    TimeSeriesForestClassifier
+
+Kernel-based
+------------
+
+.. currentmodule:: sktime.classification.kernel_based
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    Arsenal
+    RocketClassifier
 
 Shapelet-based
 --------------
@@ -89,30 +155,42 @@ Shapelet-based
     :template: class.rst
 
     ShapeletTransformClassifier
-    MrSEQLClassifier
 
-Kernel-based
-------------
+sklearn
+-------
 
-.. currentmodule:: sktime.classification.kernel_based
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    ROCKETClassifier
-    Arsenal
-
-Feature-based
----------------
-
-.. currentmodule:: sktime.classification.feature_based
+.. currentmodule:: sktime.classification.sklearn
 
 .. autosummary::
     :toctree: auto_generated/
     :template: class.rst
 
-    Catch22Classifier
-    MatrixProfileClassifier
-    TSFreshClassifier
-    SignatureClassifier
+    ContinuousIntervalTree
+    RotationForest
+
+Base
+----
+
+.. currentmodule:: sktime.classification
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    BaseClassifier
+
+.. currentmodule:: sktime.classification.deep_learning.base
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    BaseDeepClassifier
+
+.. currentmodule:: sktime.classification.early_classification.base
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    BaseEarlyClassifier

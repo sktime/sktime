@@ -28,7 +28,12 @@ class HIVECOTEV1(BaseClassifier):
     """Hierarchical Vote Collective of Transformation-based Ensembles (HIVE-COTE) V1.
 
     An ensemble of the STC, TSF, RISE and cBOSS classifiers from different feature
-    representations using the CAWPE structure as described in [1]_.
+    representations using the CAWPE structure as described in [1]_. The default
+    implementation differs from the one described in [1]_, in that the STC component
+    uses the out of bag error (OOB) estimates for weights (described in [2]_) rather
+    than the cross validation estimate. OOB is an order of magnitude faster and on
+    average as good as CV. This means that this version of HIVE COTE is a bit faster
+    than HC2, although less accurate on average.
 
     Parameters
     ----------
@@ -84,32 +89,14 @@ class HIVECOTEV1(BaseClassifier):
        Matthew Middlehurst. "On the usage and performance of the Hierarchical Vote
        Collective of Transformation-based Ensembles version 1.0 (hive-cote v1.0)"
        International Workshop on Advanced Analytics and Learning on Temporal Data 2020
-
-    Examples
-    --------
-    >>> from sktime.classification.hybrid import HIVECOTEV1
-    >>> from sktime.contrib.vector_classifiers._rotation_forest import RotationForest
-    >>> from sktime.datasets import load_unit_test
-    >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
-    >>> clf = HIVECOTEV1(
-    ...     stc_params={
-    ...         "estimator": RotationForest(n_estimators=3),
-    ...         "n_shapelet_samples": 500,
-    ...         "max_shapelets": 20,
-    ...         "batch_size": 100,
-    ...     },
-    ...     tsf_params={"n_estimators": 10},
-    ...     rise_params={"n_estimators": 10},
-    ...     cboss_params={"n_parameter_samples": 25, "max_ensemble_size": 5},
-    ... )
-    >>> clf.fit(X_train, y_train)
-    HIVECOTEV1(...)
-    >>> y_pred = clf.predict(X_test)
+    .. [2] Middlehurst, Matthew, James Large, Michael Flynn, Jason Lines, Aaron Bostrom,
+       and Anthony Bagnall. "HIVE-COTE 2.0: a new meta ensemble for time series
+       classification." Machine Learning (2021).
     """
 
     _tags = {
         "capability:multithreading": True,
+        "classifier_type": "hybrid",
     }
 
     def __init__(
@@ -291,7 +278,7 @@ class HIVECOTEV1(BaseClassifier):
 
         return self
 
-    def _predict(self, X):
+    def _predict(self, X) -> np.ndarray:
         """Predicts labels for sequences in X.
 
         Parameters
@@ -312,7 +299,7 @@ class HIVECOTEV1(BaseClassifier):
             ]
         )
 
-    def _predict_proba(self, X):
+    def _predict_proba(self, X) -> np.ndarray:
         """Predicts labels probabilities for sequences in X.
 
         Parameters
@@ -350,3 +337,52 @@ class HIVECOTEV1(BaseClassifier):
 
         # Make each instances probability array sum to 1 and return
         return dists / dists.sum(axis=1, keepdims=True)
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            For classifiers, a "default" set of parameters should be provided for
+            general testing, and a "results_comparison" set for comparing against
+            previously recorded results if the general set does not produce suitable
+            probabilities to compare against.
+
+        Returns
+        -------
+        params : dict or list of dict, default={}
+            Parameters to create testing instances of the class.
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`.
+        """
+        from sklearn.ensemble import RandomForestClassifier
+
+        if parameter_set == "results_comparison":
+            return {
+                "stc_params": {
+                    "estimator": RandomForestClassifier(n_estimators=3),
+                    "n_shapelet_samples": 50,
+                    "max_shapelets": 5,
+                    "batch_size": 10,
+                },
+                "tsf_params": {"n_estimators": 3},
+                "rise_params": {"n_estimators": 3},
+                "cboss_params": {"n_parameter_samples": 5, "max_ensemble_size": 3},
+            }
+        else:
+            return {
+                "stc_params": {
+                    "estimator": RandomForestClassifier(n_estimators=1),
+                    "n_shapelet_samples": 5,
+                    "max_shapelets": 5,
+                    "batch_size": 5,
+                },
+                "tsf_params": {"n_estimators": 1},
+                "rise_params": {"n_estimators": 1},
+                "cboss_params": {"n_parameter_samples": 1, "max_ensemble_size": 1},
+            }

@@ -54,7 +54,7 @@ def _get_kwarg(kwarg, metric_name="Metric", **kwargs):
     if kwarg_ is None:
         msg = "".join(
             [
-                f"{metric_name} requires `{kwarg}`.",
+                f"{metric_name} requires `{kwarg}`. ",
                 f"Pass `{kwarg}` as a keyword argument when calling the metric.",
             ]
         )
@@ -1215,6 +1215,7 @@ def geometric_mean_absolute_error(
     y_pred,
     horizon_weight=None,
     multioutput="uniform_average",
+    **kwargs,
 ):
     """Geometric mean absolute error (GMAE).
 
@@ -1323,6 +1324,7 @@ def geometric_mean_squared_error(
     horizon_weight=None,
     multioutput="uniform_average",
     square_root=False,
+    **kwargs,
 ):
     """Geometric mean squared error (GMSE) or Root geometric mean squared error (RGMSE).
 
@@ -1449,7 +1451,7 @@ def mean_absolute_percentage_error(
     y_pred,
     horizon_weight=None,
     multioutput="uniform_average",
-    symmetric=True,
+    symmetric=False,
     **kwargs,
 ):
     """Mean absolute percentage error (MAPE) or symmetric version.
@@ -1486,7 +1488,7 @@ def mean_absolute_percentage_error(
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
 
-    symmetric : bool, default=True
+    symmetric : bool, default=False
         Calculates symmetric version of metric if True.
 
     Returns
@@ -1517,23 +1519,25 @@ def mean_absolute_percentage_error(
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
     >>> mean_absolute_percentage_error(y_true, y_pred, symmetric=False)
     0.33690476190476193
-    >>> mean_absolute_percentage_error(y_true, y_pred)
+    >>> mean_absolute_percentage_error(y_true, y_pred, symmetric=True)
     0.5553379953379953
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> mean_absolute_percentage_error(y_true, y_pred, symmetric=False)
     0.5515873015873016
-    >>> mean_absolute_percentage_error(y_true, y_pred)
+    >>> mean_absolute_percentage_error(y_true, y_pred, symmetric=True)
     0.6080808080808081
     >>> mean_absolute_percentage_error(y_true, y_pred, multioutput='raw_values', \
         symmetric=False)
     array([0.38095238, 0.72222222])
-    >>> mean_absolute_percentage_error(y_true, y_pred, multioutput='raw_values')
+    >>> mean_absolute_percentage_error(y_true, y_pred, multioutput='raw_values', \
+        symmetric=True)
     array([0.71111111, 0.50505051])
     >>> mean_absolute_percentage_error(y_true, y_pred, multioutput=[0.3, 0.7], \
     symmetric=False)
     0.6198412698412699
-    >>> mean_absolute_percentage_error(y_true, y_pred, multioutput=[0.3, 0.7])
+    >>> mean_absolute_percentage_error(y_true, y_pred, multioutput=[0.3, 0.7], \
+    symmetric=True)
     0.5668686868686869
     """
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
@@ -1561,7 +1565,7 @@ def median_absolute_percentage_error(
     y_pred,
     horizon_weight=None,
     multioutput="uniform_average",
-    symmetric=True,
+    symmetric=False,
     **kwargs,
 ):
     """Median absolute percentage error (MdAPE) or symmetric version.
@@ -1602,7 +1606,7 @@ def median_absolute_percentage_error(
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
 
-    symmetric : bool, default=True
+    symmetric : bool, default=False
         Calculates symmetric version of metric if True.
 
     Returns
@@ -1633,23 +1637,25 @@ def median_absolute_percentage_error(
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
     >>> median_absolute_percentage_error(y_true, y_pred, symmetric=False)
     0.16666666666666666
-    >>> median_absolute_percentage_error(y_true, y_pred)
+    >>> median_absolute_percentage_error(y_true, y_pred, symmetric=True)
     0.18181818181818182
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> median_absolute_percentage_error(y_true, y_pred, symmetric=False)
     0.5714285714285714
-    >>> median_absolute_percentage_error(y_true, y_pred)
+    >>> median_absolute_percentage_error(y_true, y_pred, symmetric=True)
     0.39999999999999997
     >>> median_absolute_percentage_error(y_true, y_pred, multioutput='raw_values', \
     symmetric=False)
     array([0.14285714, 1.        ])
-    >>> median_absolute_percentage_error(y_true, y_pred, multioutput='raw_values')
+    >>> median_absolute_percentage_error(y_true, y_pred, multioutput='raw_values', \
+    symmetric=True)
     array([0.13333333, 0.66666667])
     >>> median_absolute_percentage_error(y_true, y_pred, multioutput=[0.3, 0.7], \
     symmetric=False)
     0.7428571428571428
-    >>> median_absolute_percentage_error(y_true, y_pred, multioutput=[0.3, 0.7])
+    >>> median_absolute_percentage_error(y_true, y_pred, multioutput=[0.3, 0.7], \
+    symmetric=True)
     0.5066666666666666
     """
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
@@ -1680,7 +1686,7 @@ def mean_squared_percentage_error(
     horizon_weight=None,
     multioutput="uniform_average",
     square_root=False,
-    symmetric=True,
+    symmetric=False,
     **kwargs,
 ):
     """Mean squared percentage error (MSPE) or square root version.
@@ -1807,7 +1813,7 @@ def median_squared_percentage_error(
     horizon_weight=None,
     multioutput="uniform_average",
     square_root=False,
-    symmetric=True,
+    symmetric=False,
     **kwargs,
 ):
     """Median squared percentage error (MdSPE)  or square root version.
@@ -2668,7 +2674,7 @@ def _relative_error(y_true, y_pred, y_pred_benchmark):
     return (y_true - y_pred) / denominator
 
 
-def _percentage_error(y_true, y_pred, symmetric=True):
+def _percentage_error(y_true, y_pred, symmetric=False):
     """Percentage error.
 
     Parameters

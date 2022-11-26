@@ -4,7 +4,8 @@
 Welcome to sktime
 =================
 
-  A unified framework for machine learning with time series
+  A unified framework for machine learning with time series.
+
 
 Mission
 =======
@@ -16,8 +17,8 @@ Scope
 =====
 
 sktime features a unified interface for multiple time series learning tasks.
-Currently, we support :ref:`forecasting <forecasting_ref>`, :ref:`time series classification <classification_ref>` and :ref:`time series regression <regression_ref>`.
-We have experimental support for time series clustering and time series annotation.
+Currently, we support :ref:`forecasting <forecasting_ref>`, :ref:`time series classification <classification_ref>`, :ref:`time series regression <regression_ref>` and :ref:`time series clustering <clustering_ref>`.
+We have experimental support for time series annotation.
 
 Features:
 
@@ -40,94 +41,138 @@ Contents
 
    get_started
    users
+   installation
    api_reference
    get_involved
    developers
    about
+   examples
 
-.. panels::
-    :card: + intro-card text-center
+.. grid:: 1 2 2 2
+    :gutter: 3
 
-    ---
+    .. grid-item-card::
+        :text-align: center
 
-    Get Started
-    ^^^^^^^^^^^
+        Get Started
 
-    Get started using ``sktime`` quickly.
+        ^^^
 
-    +++
+        Get started using ``sktime`` quickly.
 
-    .. link-button:: get_started
-            :type: ref
-            :text: Get Started
-            :classes: btn-block btn-secondary stretched-link
+        +++
 
-    ---
+        .. button-ref:: get_started
+            :color: primary
+            :click-parent:
+            :expand:
 
-    Users
-    ^^^^^
+            Get Started
 
-    Find user documentation.
+    .. grid-item-card::
+        :text-align: center
 
-    +++
+        User Guide
 
-    .. link-button:: users
-            :type: ref
-            :text: Users
-            :classes: btn-block btn-secondary stretched-link
+        ^^^
 
-    ---
+        Find user documentation.
 
-    API Reference
-    ^^^^^^^^^^^^^
+        +++
 
-    Understand sktime's API.
+        .. button-ref:: users
+            :color: primary
+            :click-parent:
+            :expand:
 
-    +++
+            User Guide
 
-    .. link-button:: api_reference
-            :type: ref
-            :text: API Reference
-            :classes: btn-block btn-secondary stretched-link
+    .. grid-item-card::
+        :text-align: center
 
-    ---
+        Installation
 
-    Get Involved
-    ^^^^^^^^^^^^
+        ^^^
 
-    Find out how you can contribute.
+        Installation Guide.
 
-    +++
+        +++
 
-    .. link-button:: get_involved
-            :type: ref
-            :text: Get Involved
-            :classes: btn-block btn-secondary stretched-link
+        .. button-ref:: installation
+            :color: primary
+            :click-parent:
+            :expand:
 
-    ---
+            Installation
 
-    Developers
-    ^^^^^^^^^^
+    .. grid-item-card::
+        :text-align: center
 
-    Information for developers.
+        API Reference
 
-    +++
+        ^^^
 
-    .. link-button:: developers
-            :type: ref
-            :text: Developers
-            :classes: btn-block btn-secondary stretched-link
+        Understand sktime's API.
 
-    ---
+        +++
 
-    About
-    ^^^^^
+        .. button-ref:: api_reference
+            :color: primary
+            :click-parent:
+            :expand:
 
-    Learn more about ``sktime``.
+            API Reference
 
-    +++
+    .. grid-item-card::
+        :text-align: center
 
-    .. link-button:: about
-            :type: ref
-            :text: Learn More
-            :classes: btn-block btn-secondary stretched-link
+        Get Involved
+
+        ^^^
+
+        Find out how you can contribute.
+
+        +++
+
+        .. button-ref:: get_involved
+            :color: primary
+            :click-parent:
+            :expand:
+
+            Get Involved
+
+    .. grid-item-card::
+        :text-align: center
+
+        Developers
+
+        ^^^
+
+        Information for developers.
+
+        +++
+
+        .. button-ref:: developers
+            :color: primary
+            :click-parent:
+            :expand:
+
+            Developers
+
+    .. grid-item-card::
+        :text-align: center
+
+        About
+
+        ^^^
+
+        Learn more about ``sktime``.
+
+        +++
+
+        .. button-ref:: about
+            :color: primary
+            :click-parent:
+            :expand:
+
+            Learn More

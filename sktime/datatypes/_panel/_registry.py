@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
+"""Registry of mtypes for Panel scitype. See datatypes._registry for API."""
 
 import pandas as pd
 
 __all__ = [
     "MTYPE_REGISTER_PANEL",
     "MTYPE_LIST_PANEL",
+    "MTYPE_SOFT_DEPS_PANEL",
 ]
 
 
@@ -22,6 +24,7 @@ MTYPE_REGISTER_PANEL = [
     (
         "numpyflat",
         "Panel",
+        "WARNING: only for internal use, not a fully supported Panel mtype. "
         "2D np.array of format (n_instances, n_columns*n_timepoints)",
     ),
     ("pd-multiindex", "Panel", "pd.DataFrame with multi-index (instances, timepoints)"),
@@ -33,5 +36,7 @@ MTYPE_REGISTER_PANEL = [
     ),
     ("df-list", "Panel", "list of pd.DataFrame"),
 ]
+
+MTYPE_SOFT_DEPS_PANEL = {"xr.DataArray": "xarray"}
 
 MTYPE_LIST_PANEL = pd.DataFrame(MTYPE_REGISTER_PANEL)[0].values

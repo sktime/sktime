@@ -11,34 +11,11 @@ Installation
 
 ``sktime`` currently supports:
 
-* environments with python version 3.6, 3.7, or 3.8.
+* environments with python version 3.7, 3.8, or 3.9.
 * operating systems Mac OS X, Unix-like OS, Windows 8.1 and higher
 * installation via ``PyPi`` or ``conda``
 
-To install ``sktime`` with its core dependencies via ``pip`` use:
-
-.. code-block:: bash
-
-    pip install sktime
-
-To install ``sktime`` via ``pip`` with maximum dependencies, including soft dependencies, install using the `all_extras` modifier:
-
-.. code-block:: bash
-
-    pip install sktime[all_extras]
-
-
-To install ``sktime`` with its core dependencies via ``conda`` from ``conda-forge`` use:
-
-.. code-block:: bash
-
-    conda install -c conda-forge sktime
-
-To install ``sktime`` via ``conda`` with maximum dependencies, including soft dependencies, install using the `all-extras` conda recipe:
-
-.. code-block:: bash
-
-    conda install -c conda-forge sktime-all-extras
+Please see the :ref:`installation <installation>` guide for step-by-step instructions on the package installation.
 
 Key Concepts
 ------------
@@ -121,7 +98,7 @@ Time Series Classification
     >>> from sklearn.model_selection import train_test_split
     >>> from sklearn.metrics import accuracy_score
 
-    >>> X, y = load_arrow_head(return_X_y=True)
+    >>> X, y = load_arrow_head()
     >>> X_train, X_test, y_train, y_test = train_test_split(X, y)
     >>> classifier = TimeSeriesForestClassifier()
     >>> classifier.fit(X_train, y_train)
@@ -143,19 +120,14 @@ Time Series Regression
 Time Series Clustering
 ~~~~~~~~~~~~~~~~~~~~~~
 
-.. warning::
-
-   The time series clustering API is still experimental. Features may change
-   in future releases.
-
 .. code-block:: python
 
     >>> from sklearn.model_selection import train_test_split
-    >>> from sktime.clustering import TimeSeriesKMeans
+    >>> from sktime.clustering.k_means import TimeSeriesKMeans
     >>> from sktime.clustering.evaluation._plot_clustering import plot_cluster_algorithm
     >>> from sktime.datasets import load_arrow_head
 
-    >>> X, y = load_arrow_head(return_X_y=True)
+    >>> X, y = load_arrow_head()
     >>> X_train, X_test, y_train, y_test = train_test_split(X, y)
 
     >>> k_means = TimeSeriesKMeans(n_clusters=5, init_algorithm="forgy", metric="dtw")

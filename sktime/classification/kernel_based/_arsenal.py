@@ -13,6 +13,7 @@ import numpy as np
 from joblib import Parallel, delayed
 from sklearn.linear_model import RidgeClassifierCV
 from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
 from sklearn.utils import check_random_state
 
 from sktime.base._base import _clone_estimator
@@ -33,7 +34,7 @@ class Arsenal(BaseClassifier):
     Overview: an ensemble of ROCKET transformers using RidgeClassifierCV base
     classifier. Weights each classifier using the accuracy from the ridge
     cross-validation. Allows for generation of probability estimates at the
-    expense of scalability compared to ROCKETClassifier.
+    expense of scalability compared to RocketClassifier.
 
     Parameters
     ----------
@@ -84,7 +85,7 @@ class Arsenal(BaseClassifier):
 
     See Also
     --------
-    ROCKETClassifier
+    RocketClassifier
 
     Notes
     -----
@@ -104,7 +105,7 @@ class Arsenal(BaseClassifier):
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
     >>> X_test, y_test =load_unit_test(split="test", return_X_y=True)
-    >>> clf = Arsenal(num_kernels=200, n_estimators=5)
+    >>> clf = Arsenal(num_kernels=100, n_estimators=5)
     >>> clf.fit(X_train, y_train)
     Arsenal(...)
     >>> y_pred = clf.predict(X_test)
@@ -115,6 +116,7 @@ class Arsenal(BaseClassifier):
         "capability:train_estimate": True,
         "capability:contractable": True,
         "capability:multithreading": True,
+        "classifier_type": "kernel",
     }
 
     def __init__(
@@ -175,7 +177,6 @@ class Arsenal(BaseClassifier):
         ending in "_" and sets is_fitted flag to True.
         """
         self.n_instances_, self.n_dims_, self.series_length_ = X.shape
-
         time_limit = self.time_limit_in_minutes * 60
         start_time = time.time()
         train_time = 0
@@ -263,13 +264,13 @@ class Arsenal(BaseClassifier):
         self.weights_ = []
         self._weight_sum = 0
         for rocket_pipeline in self.estimators_:
-            weight = rocket_pipeline.steps[1][1].best_score_
+            weight = rocket_pipeline.steps[2][1].best_score_
             self.weights_.append(weight)
             self._weight_sum += weight
 
         return self
 
-    def _predict(self, X):
+    def _predict(self, X) -> np.ndarray:
         """Predicts labels for sequences in X.
 
         Parameters
@@ -290,7 +291,7 @@ class Arsenal(BaseClassifier):
             ]
         )
 
-    def _predict_proba(self, X):
+    def _predict_proba(self, X) -> np.ndarray:
         """Predicts labels probabilities for sequences in X.
 
         Parameters
@@ -316,9 +317,13 @@ class Arsenal(BaseClassifier):
             np.sum(y_probas, axis=0) / (np.ones(self.n_classes_) * self._weight_sum), 8
         )
 
-    def _get_train_probs(self, X, y):
+    def _get_train_probs(self, X, y) -> np.ndarray:
         self.check_is_fitted()
         X, y = check_X_y(X, y, coerce_to_numpy=True)
+
+        # handle the single-class-label case
+        if len(self._class_dictionary) == 1:
+            return self._single_class_y_pred(X, method="predict_proba")
 
         n_instances, n_dims, series_length = X.shape
 
@@ -343,13 +348,13 @@ class Arsenal(BaseClassifier):
             )
             for i in range(self.n_estimators)
         )
-        y_probas, oobs = zip(*p)
+        y_probas, weights, oobs = zip(*p)
 
         results = np.sum(y_probas, axis=0)
         divisors = np.zeros(n_instances)
         for n, oob in enumerate(oobs):
             for inst in oob:
-                divisors[inst] += self.weights_[n]
+                divisors[inst] += weights[n]
 
         for i in range(n_instances):
             results[i] = (
@@ -362,10 +367,12 @@ class Arsenal(BaseClassifier):
 
     def _fit_estimator(self, rocket, X, y):
         transformed_x = rocket.fit_transform(X)
-        ridge = RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True)
-        ridge.fit(transformed_x, y)
+        scaler = StandardScaler(with_mean=False)
+        scaler.fit(transformed_x, y)
+        ridge = RidgeClassifierCV(alphas=np.logspace(-3, 3, 10))
+        ridge.fit(scaler.transform(transformed_x), y)
         return [
-            make_pipeline(rocket, ridge),
+            make_pipeline(rocket, scaler, ridge),
             transformed_x if self.save_transformed_data else None,
         ]
 
@@ -378,19 +385,64 @@ class Arsenal(BaseClassifier):
 
     def _train_probas_for_estimator(self, y, idx):
         rs = 255 if self.random_state == 0 else self.random_state
-        rs = None if self.random_state is None else rs * 37 * (idx + 1)
+        rs = (
+            None
+            if self.random_state is None
+            else (rs * 37 * (idx + 1)) % np.iinfo(np.int32).max
+        )
         rng = check_random_state(rs)
 
         indices = range(self.n_instances_)
         subsample = rng.choice(self.n_instances_, size=self.n_instances_)
         oob = [n for n in indices if n not in subsample]
 
-        clf = RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True)
+        results = np.zeros((self.n_instances_, self.n_classes_))
+        if len(oob) == 0:
+            return results, 1, oob
+
+        clf = make_pipeline(
+            StandardScaler(with_mean=False),
+            RidgeClassifierCV(alphas=np.logspace(-3, 3, 10)),
+        )
         clf.fit(self.transformed_data_[idx].iloc[subsample], y[subsample])
         preds = clf.predict(self.transformed_data_[idx].iloc[oob])
 
-        results = np.zeros((self.n_instances_, self.n_classes_))
-        for n, pred in enumerate(preds):
-            results[oob[n]][self._class_dictionary[pred]] += self.weights_[idx]
+        weight = clf.steps[1][1].best_score_
 
-        return results, oob
+        for n, pred in enumerate(preds):
+            results[oob[n]][self._class_dictionary[pred]] += weight
+
+        return results, weight, oob
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            For classifiers, a "default" set of parameters should be provided for
+            general testing, and a "results_comparison" set for comparing against
+            previously recorded results if the general set does not produce suitable
+            probabilities to compare against.
+
+        Returns
+        -------
+        params : dict or list of dict, default={}
+            Parameters to create testing instances of the class.
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`.
+        """
+        if parameter_set == "results_comparison":
+            params = {"num_kernels": 20, "n_estimators": 5}
+        else:
+            params = {
+                "num_kernels": 10,
+                "n_estimators": 2,
+                "save_transformed_data": True,
+            }
+
+        return params

@@ -3,38 +3,55 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file).
 """Implements forecaster for applying different univariates by column."""
 
-__author__ = ["GuzalBulatova", "mloning"]
+__author__ = ["GuzalBulatova", "mloning", "fkiraly"]
 __all__ = ["ColumnEnsembleForecaster"]
 
 import numpy as np
 import pandas as pd
-from sklearn.base import clone
 
-from sktime.forecasting.base._base import DEFAULT_ALPHA, BaseForecaster
+from sktime.base._meta import flatten
+from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
+
+# mtypes that are native pandas
+# ColumnEnsembleForecaster uses these internally, since we need (pandas) columns
+PANDAS_MTYPES = ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"]
 
 
 class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
     """Forecast each series with separate forecaster.
 
-    Applies different univariate forecasters by column.
+    Applies different forecasters by columns.
+
+    `ColumnEnsembleForecaster` is passed forecaster/index pairs, exact syntax below.
+    Index can be single pandas index element, pd.Index, int, str, or list thereof.
+    If iterable (pd.Index, list), refers to multiple columns.
+
+    Behaviour in `fit`, `predict`, `update`:
+    For index pairs f_i, ix_i passed, applies forecaster f_i to column(s) ix_i.
+    `predict` results are concatenated to one container with same columns as in `fit`.
 
     Parameters
     ----------
-    forecasters: forecaster, or list of tuples (str, estimator, int or str)
-        if tuples, with name = str, estimator is forecaster, index as str or int
+    forecasters : sktime forecaster, or list of tuples (str, estimator, int or pd.index)
+        if tuples, with name = str, estimator is forecaster, index as int or index
+        if last element is index, it must be int, str, or pd.Index coercable
+        if last element is int x, and is not in columns, is interpreted as x-th column
+        all columns must be present in an index
 
-    If forecaster, clones of forecaster are applied to all columns.
-    If list of tuples, forecaster in tuple is applied to column with the int/str index
+        If forecaster, clones of forecaster are applied to all columns.
+        If list of tuples, forecaster in tuple is applied to column with int/str index
 
     Examples
     --------
     >>> from sktime.forecasting.compose import ColumnEnsembleForecaster
     >>> from sktime.forecasting.exp_smoothing import ExponentialSmoothing
+    >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.forecasting.trend import PolynomialTrendForecaster
-    >>> from sktime.datasets import load_longley
-    >>> _, y = load_longley()
-    >>> y = y.drop(columns=["UNEMP", "ARMED", "POP"])
+    >>> from sktime.datasets import load_macroeconomic
+
+    Using integers (column iloc refernces= for indexing:
+    >>> y = load_macroeconomic()[["realgdp", "realcons"]]
     >>> forecasters = [
     ...     ("trend", PolynomialTrendForecaster(), 0),
     ...     ("ses", ExponentialSmoothing(trend='add'), 1),
@@ -43,16 +60,41 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
     >>> forecaster.fit(y, fh=[1, 2, 3])
     ColumnEnsembleForecaster(...)
     >>> y_pred = forecaster.predict()
+
+    Using strings for indexing:
+    >>> df = pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})
+    >>> fc = ColumnEnsembleForecaster(
+    ...     [("foo", NaiveForecaster(), "a"), ("bar", NaiveForecaster(), "b")]
+    ... )
+    >>> fc.fit(df, fh=[1, 42])
+    ColumnEnsembleForecaster(...)
+    >>> y_pred = fc.predict()
+
+    Applying one forecaster to multiple columns, multivariate:
+    >>> df = pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6], "c": [7, 8, 9]})
+    >>> fc = ColumnEnsembleForecaster(
+    ...    [("ab", NaiveForecaster(), ["a", 1]), ("c", NaiveForecaster(), 2)]
+    ... )
+    >>> fc.fit(df, fh=[1, 42])
+    ColumnEnsembleForecaster(...)
+    >>> y_pred = fc.predict()
     """
 
-    _required_parameters = ["forecasters"]
     _tags = {
         "scitype:y": "both",
         "ignores-exogeneous-X": False,
-        "y_inner_mtype": "pd.DataFrame",
+        "y_inner_mtype": PANDAS_MTYPES,
+        "X_inner_mtype": PANDAS_MTYPES,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
+        "capability:pred_int": True,
     }
+
+    # for default get_params/set_params
+    # _steps_attr points to the attribute of self
+    # which contains the heterogeneous set of estimators
+    # this must be an iterable of (name: str, estimator) pairs for the default
+    _steps_attr = "_forecasters"
 
     def __init__(self, forecasters):
         self.forecasters = forecasters
@@ -60,14 +102,19 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
 
         # set requires-fh-in-fit depending on forecasters
         if isinstance(forecasters, BaseForecaster):
-            self.clone_tags(forecasters, "requires-fh-in-fit")
+            tags_to_clone = [
+                "requires-fh-in-fit",
+                "capability:pred_int",
+                "ignores-exogeneous-X",
+                "handles-missing-data",
+            ]
+            self.clone_tags(forecasters, tags_to_clone)
         else:
-            forecaster_requires_fh_in_fit = (
-                forecaster.get_tag("requires-fh-in-fit")
-                for _, forecaster, _ in self.forecasters
-            )
-            at_least_one_requires_fh = any(forecaster_requires_fh_in_fit)
-            self.set_tags(tag_dict={"requires-fh-in-fit": at_least_one_requires_fh})
+            l_forecasters = [(x[0], x[1]) for x in forecasters]
+            self._anytagis_then_set("requires-fh-in-fit", True, False, l_forecasters)
+            self._anytagis_then_set("capability:pred_int", False, True, l_forecasters)
+            self._anytagis_then_set("ignores-exogeneous-X", False, True, l_forecasters)
+            self._anytagis_then_set("handles-missing-data", False, True, l_forecasters)
 
     @property
     def _forecasters(self):
@@ -98,6 +145,21 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
                 )
             ]
 
+    def _coerce_to_pd_index(self, obj):
+        """Coerce obj to pandas Index."""
+        # replace ints by column names
+        obj = self._get_indices(self._y, obj)
+
+        # deal with numpy int by coercing to python int
+        if np.issubdtype(type(obj), np.integer):
+            obj = int(obj)
+
+        # coerce to pd.Index
+        if isinstance(obj, (int, str)):
+            return pd.Index([obj])
+        else:
+            return pd.Index(obj)
+
     def _fit(self, y, X=None, fh=None):
         """Fit to training data.
 
@@ -120,9 +182,11 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
         self.y_columns = list(y.columns)
 
         for (name, forecaster, index) in forecasters:
-            forecaster_ = clone(forecaster)
+            forecaster_ = forecaster.clone()
 
-            forecaster_.fit(y.iloc[:, index], X, fh)
+            pd_index = self._coerce_to_pd_index(index)
+
+            forecaster_.fit(y.loc[:, pd_index], X, fh)
             self.forecasters_.append((name, forecaster_, index))
 
         return self
@@ -141,46 +205,205 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
         self : an instance of self.
         """
         for _, forecaster, index in self.forecasters_:
-            forecaster.update(y.iloc[:, index], X, update_params=update_params)
+            pd_index = self._coerce_to_pd_index(index)
+            forecaster.update(y.loc[:, pd_index], X, update_params=update_params)
         return self
 
-    def _predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
-
-        y_pred = np.zeros((len(fh), len(self.forecasters_)))
-        for (_, forecaster, index) in self.forecasters_:
-            y_pred[:, index] = forecaster.predict(fh)
-
-        y_pred = pd.DataFrame(data=y_pred, columns=self.y_columns)
-        y_pred.index = self.fh.to_absolute(self.cutoff)
-        return y_pred
-
-    def get_params(self, deep=True):
-        """Get parameters of estimator in `_forecasters`.
+    def _by_column(self, methodname, **kwargs):
+        """Apply self.methdoname to kwargs by column, then column-concatenate.
 
         Parameters
         ----------
-        deep : boolean, optional
-            If True, will return the parameters for this estimator and
-            contained sub-objects that are estimators.
+        methodname : str, one of the methods of self
+            assumed to take kwargs and return pd.DataFrame
+        col_multiindex : bool, optional, default=False
+            if True, will add an additional column multiindex at top, entries = index
 
         Returns
         -------
-        params : mapping of string to any
-            Parameter names mapped to their values.
+        y_pred : pd.DataFrame
+            result of [f.methodname(**kwargs) for _, f, _ in self.forecsaters_]
+            column-concatenated with keys being the variable names last seen in y
         """
-        return self._get_params("_forecasters", deep=deep)
+        # get col_multiindex arg from kwargs
+        col_multiindex = kwargs.pop("col_multiindex", False)
 
-    def set_params(self, **kwargs):
-        """Set the parameters of estimator in `_forecasters`.
+        y_preds = []
+        keys = []
+        for _, forecaster, index in self.forecasters_:
+            y_preds += [getattr(forecaster, methodname)(**kwargs)]
+            keys += [index]
 
-        Valid parameter keys can be listed with ``get_params()``.
+        keys = self._get_indices(self._y, keys)
+
+        if col_multiindex:
+            y_pred = pd.concat(y_preds, axis=1, keys=keys)
+        else:
+            y_pred = pd.concat(y_preds, axis=1)
+        return y_pred
+
+    def _predict(self, fh=None, X=None):
+        """Forecast time series at future horizon.
+
+        private _predict containing the core logic, called from predict
+
+        State required:
+            Requires state to be "fitted".
+
+        Accesses in self:
+            Fitted model attributes ending in "_"
+            self.cutoff
+
+        Parameters
+        ----------
+        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
+            The forecasting horizon with the steps ahead to to predict.
+            If not passed in _fit, guaranteed to be passed here
+        X : pd.DataFrame, optional (default=None)
+            Exogenous time series
 
         Returns
         -------
-        self : returns an instance of self.
+        y_pred : pd.Series
+            Point predictions
         """
-        self._set_params("_forecasters", **kwargs)
-        return self
+        return self._by_column("predict", fh=fh, X=X)
+
+    def _predict_quantiles(self, fh=None, X=None, alpha=None):
+        """Compute/return prediction quantiles for a forecast.
+
+        private _predict_quantiles containing the core logic,
+            called from predict_quantiles and possibly predict_interval
+
+        State required:
+            Requires state to be "fitted".
+
+        Accesses in self:
+            Fitted model attributes ending in "_"
+            self.cutoff
+
+        Parameters
+        ----------
+        fh : guaranteed to be ForecastingHorizon
+            The forecasting horizon with the steps ahead to to predict.
+        X : optional (default=None)
+            guaranteed to be of a type in self.get_tag("X_inner_mtype")
+            Exogeneous time series to predict from.
+        alpha : list of float (guaranteed not None and floats in [0,1] interval)
+            A list of probabilities at which quantile forecasts are computed.
+
+        Returns
+        -------
+        pred_quantiles : pd.DataFrame
+            Column has multi-index: first level is variable name from y in fit,
+                second level being the quantile forecasts for each alpha.
+                Quantile forecasts are calculated for each a in alpha.
+            Row index is fh. Entries are quantile forecasts, for var in col index,
+                at quantile probability in second-level col index, for each row index.
+        """
+        out = self._by_column(
+            "predict_quantiles", fh=fh, X=X, alpha=alpha, col_multiindex=True
+        )
+        if len(out.columns.get_level_values(0).unique()) == 1:
+            out.columns = out.columns.droplevel(level=0)
+        else:
+            out.columns = out.columns.droplevel(level=1)
+        return out
+
+    def _predict_interval(self, fh=None, X=None, coverage=None):
+        """Compute/return prediction quantiles for a forecast.
+
+        private _predict_interval containing the core logic,
+            called from predict_interval and possibly predict_quantiles
+
+        State required:
+            Requires state to be "fitted".
+
+        Accesses in self:
+            Fitted model attributes ending in "_"
+            self.cutoff
+
+        Parameters
+        ----------
+        fh : guaranteed to be ForecastingHorizon
+            The forecasting horizon with the steps ahead to to predict.
+        X : optional (default=None)
+            guaranteed to be of a type in self.get_tag("X_inner_mtype")
+            Exogeneous time series to predict from.
+        coverage : list of float (guaranteed not None and floats in [0,1] interval)
+           nominal coverage(s) of predictive interval(s)
+
+        Returns
+        -------
+        pred_int : pd.DataFrame
+            Column has multi-index: first level is variable name from y in fit,
+                second level coverage fractions for which intervals were computed.
+                    in the same order as in input `coverage`.
+                Third level is string "lower" or "upper", for lower/upper interval end.
+            Row index is fh. Entries are forecasts of lower/upper interval end,
+                for var in col index, at nominal coverage in second col index,
+                lower/upper depending on third col index, for the row index.
+                Upper/lower interval end forecasts are equivalent to
+                quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
+        """
+        out = self._by_column(
+            "predict_interval", fh=fh, X=X, coverage=coverage, col_multiindex=True
+        )
+        if len(out.columns.get_level_values(0).unique()) == 1:
+            out.columns = out.columns.droplevel(level=0)
+        else:
+            out.columns = out.columns.droplevel(level=1)
+        return out
+
+    def _predict_var(self, fh, X=None, cov=False):
+        """Forecast variance at future horizon.
+
+        private _predict_var containing the core logic, called from predict_var
+
+        Parameters
+        ----------
+        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
+            The forecasting horizon with the steps ahead to to predict.
+            If not passed in _fit, guaranteed to be passed here
+        X : pd.DataFrame, optional (default=None)
+            Exogenous time series
+        cov : bool, optional (default=False)
+            if True, computes covariance matrix forecast.
+            if False, computes marginal variance forecasts.
+
+        Returns
+        -------
+        pred_var : pd.DataFrame, format dependent on `cov` variable
+            If cov=False:
+                Column names are exactly those of `y` passed in `fit`/`update`.
+                    For nameless formats, column index will be a RangeIndex.
+                Row index is fh. Entries are variance forecasts, for var in col index.
+            If cov=True:
+                Column index is a multiindex: 1st level is variable names (as above)
+                    2nd level is fh.
+                Row index is fh.
+                Entries are (co-)variance forecasts, for var in col index, and
+                    covariance between time index in row and col.
+        """
+        return self._by_column("predict_var", fh=fh, X=X, cov=cov, col_multiindex=True)
+
+    def _get_indices(self, y, idx):
+        """Convert integer indices if necessary."""
+
+        def _get_index(y, ix):
+            # deal with numpy int by coercing to python int
+            if np.issubdtype(type(ix), np.integer):
+                ix = int(ix)
+
+            if isinstance(ix, int) and ix not in y.columns and ix < len(y.columns):
+                return y.columns[ix]
+            else:
+                return ix
+
+        if isinstance(idx, (list, tuple)):
+            return [self._get_indices(y, ix) for ix in idx]
+        else:
+            return _get_index(y, idx)
 
     def _check_forecasters(self, y):
 
@@ -188,7 +411,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
         if isinstance(self.forecasters, BaseForecaster):
             ycols = [str(col) for col in y.columns]
             colrange = range(len(ycols))
-            forecaster_list = [clone(self.forecasters) for _ in colrange]
+            forecaster_list = [self.forecasters.clone() for _ in colrange]
             return list(zip(ycols, forecaster_list, colrange))
 
         if (
@@ -201,8 +424,12 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
                 " of (string, estimator, int) tuples."
             )
         names, forecasters, indices = zip(*self.forecasters)
-        # defined by MetaEstimatorMixin
+
+        # check names, defined by _HeterogenousEnsembleForecaster
         self._check_names(names)
+
+        # coerce column names to indices in columns
+        indices = self._get_indices(y, indices)
 
         for forecaster in forecasters:
             if not isinstance(forecaster, BaseForecaster):
@@ -211,13 +438,55 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
                     f"Forecaster."
                 )
 
-        if len(set(indices)) != len(indices):
+        index_flat = flatten(indices)
+        index_set = set(index_flat)
+        not_in_y_idx = index_set.difference(y.columns)
+        y_cols_not_found = set(y.columns).difference(index_set)
+
+        if len(not_in_y_idx) > 0:
             raise ValueError(
-                "One estimator per column required. Found %s unique"
-                " estimators" % len(set(indices))
+                f"Column identifier must be indices in y.columns, or integers within "
+                f"the range of the total number of columns, "
+                f"but found column identifiers that are neither: {list(not_in_y_idx)}"
             )
-        elif not np.array_equal(np.sort(indices), np.arange(len(y.columns))):
+        if len(y_cols_not_found) > 0:
             raise ValueError(
-                "One estimator per column required. Found %s" % len(indices)
+                f"All columns of y must be indexed by column identifiers, but "
+                f"the following columns of y are not indexed: {list(y_cols_not_found)}"
             )
+
+        if len(index_set) != len(index_flat):
+            raise ValueError(
+                f"One estimator per column required. Found {len(index_set)} unique"
+                f" column names in forecasters arg, required {len(index_flat)}"
+            )
+
         return self.forecasters
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+
+        Returns
+        -------
+        params : dict or list of dict, default={}
+            Parameters to create testing instances of the class.
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`.
+        """
+        # imports
+        from sktime.forecasting.naive import NaiveForecaster
+        from sktime.forecasting.trend import TrendForecaster
+
+        params1 = {"forecasters": NaiveForecaster()}
+        params2 = {"forecasters": TrendForecaster()}
+
+        return [params1, params2]

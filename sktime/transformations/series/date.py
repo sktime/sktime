@@ -10,8 +10,7 @@ import warnings
 import numpy as np
 import pandas as pd
 
-from sktime.transformations.base import _SeriesToSeriesTransformer
-from sktime.utils.validation.series import check_series
+from sktime.transformations.base import BaseTransformer
 
 _RAW_DUMMIES = [
     ["child", "parent", "dummy_func", "feature_scope"],
@@ -19,7 +18,7 @@ _RAW_DUMMIES = [
     ["quarter", "year", "quarter", "efficient"],
     ["month", "year", "month", "minimal"],
     ["week", "year", "week_of_year", "efficient"],
-    ["day", "year", "day", "efficient"],
+    ["day", "year", "day_of_year", "efficient"],
     ["month", "quarter", "month_of_quarter", "comprehensive"],
     ["week", "quarter", "week_of_quarter", "comprehensive"],
     ["day", "quarter", "day_of_quarter", "comprehensive"],
@@ -33,7 +32,7 @@ _RAW_DUMMIES = [
 ]
 
 
-class DateTimeFeatures(_SeriesToSeriesTransformer):
+class DateTimeFeatures(BaseTransformer):
     """DateTime Feature  Extraction for use in e.g. tree based models.
 
     DateTimeFeatures uses a date index column and generates date features
@@ -91,10 +90,19 @@ class DateTimeFeatures(_SeriesToSeriesTransformer):
     """
 
     _tags = {
-        "fit-in-transform": True,
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
+        "scitype:transform-output": "Series",
+        # what scitype is returned: Primitives, Series, Panel
+        "scitype:instancewise": True,  # is this an instance-wise transform?
+        "X_inner_mtype": ["pd.DataFrame", "pd.Series"],
+        # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
+        "univariate-only": False,
+        "fit_is_empty": True,
+        "transform-returns-same-time-index": True,
         "enforce_index_type": [pd.DatetimeIndex, pd.PeriodIndex],
         "skip-inverse-transform": True,
-        "univariate-only": False,
     }
 
     def __init__(self, ts_freq=None, feature_scope="minimal", manual_selection=None):
@@ -105,28 +113,28 @@ class DateTimeFeatures(_SeriesToSeriesTransformer):
         self.dummies = _prep_dummies(_RAW_DUMMIES)
         super(DateTimeFeatures, self).__init__()
 
-    def transform(self, Z, X=None):
-        """Transform data.
+    def _transform(self, X, y=None):
+        """Transform X and return a transformed version.
 
-        Returns a transformed version of Z.
+        private _transform containing the core logic, called from transform
 
         Parameters
         ----------
-        Z : pd.Series, pd.DataFrame
+        X : pd.Series or pd.DataFrame
+            Data to be transformed
+        y : ignored argument for interface compatibility
+            Additional data, e.g., labels for transformation
 
         Returns
         -------
-        Z : pd.Series, pd.DataFrame
-            Transformed time series(es).
+        Xt : pd.Series or pd.DataFrame, same type as X
+            transformed version of X
         """
-        self.check_is_fitted()
-
         _check_ts_freq(self.ts_freq, self.dummies)
         _check_feature_scope(self.feature_scope)
         _check_manual_selection(self.manual_selection, self.dummies)
 
-        Z = check_series(Z)
-        Z = Z.copy()
+        Z = X.copy()
 
         x_df = pd.DataFrame(index=Z.index)
         if isinstance(x_df.index, pd.PeriodIndex):
@@ -140,12 +148,12 @@ class DateTimeFeatures(_SeriesToSeriesTransformer):
             if self.ts_freq is not None:
                 supported = _get_supported_calendar(self.ts_freq, DUMMIES=self.dummies)
                 supported = supported[supported["feature_scope"] <= self.feature_scope]
-                calendar_dummies = supported["dummy_func"].to_list()
+                calendar_dummies = supported[["dummy_func", "dummy"]]
             else:
                 supported = self.dummies[
                     self.dummies["feature_scope"] <= self.feature_scope
                 ]
-                calendar_dummies = supported["dummy_func"].to_list()
+                calendar_dummies = supported[["dummy_func", "dummy"]]
         else:
             if self.ts_freq is not None:
                 supported = _get_supported_calendar(self.ts_freq, DUMMIES=self.dummies)
@@ -156,20 +164,27 @@ class DateTimeFeatures(_SeriesToSeriesTransformer):
                         "Level of selected dummy variable "
                         + " lower level than base ts_frequency."
                     )
-                calendar_dummies = supported.loc[
-                    supported["dummy"].isin(self.manual_selection), "dummy_func"
+                calendar_dummies = self.dummies.loc[
+                    self.dummies["dummy"].isin(self.manual_selection),
+                    ["dummy_func", "dummy"],
                 ]
             else:
                 calendar_dummies = self.dummies.loc[
-                    self.dummies["dummy"].isin(self.manual_selection), "dummy_func"
+                    self.dummies["dummy"].isin(self.manual_selection),
+                    ["dummy_func", "dummy"],
                 ]
 
-        df = [_calendar_dummies(x_df, dummy) for dummy in calendar_dummies]
+        df = [
+            _calendar_dummies(x_df, dummy) for dummy in calendar_dummies["dummy_func"]
+        ]
         df = pd.concat(df, axis=1)
+        df.columns = calendar_dummies["dummy"]
+        if self.manual_selection is not None:
+            df = df[self.manual_selection]
 
-        Z = pd.concat([Z, df], axis=1)
+        Xt = pd.concat([Z, df], axis=1)
 
-        return Z
+        return Xt
 
 
 def _check_manual_selection(manual_selection, DUMMIES):
@@ -206,14 +221,11 @@ def _calendar_dummies(x, funcs):
         # calendar week of a year containing a Thursday.
         # So it is possible that a week in the new year is still
         # indexed starting in last year (week 52 or 53)
-        x[funcs] = date_sequence.isocalendar()["week"]
-        return x[funcs]
+        cd = date_sequence.isocalendar()["week"]
     elif funcs == "week_of_month":
-        x[funcs] = (date_sequence.day - 1) // 7 + 1
-        return x[funcs]
+        cd = (date_sequence.day - 1) // 7 + 1
     elif funcs == "month_of_quarter":
-        x[funcs] = (np.floor(date_sequence.month / 4) + 1).astype(np.int64)
-        return x[funcs]
+        cd = (np.floor(date_sequence.month / 4) + 1).astype(np.int64)
     elif funcs == "week_of_quarter":
         col_names = x.columns
         x_columns = col_names.intersection(["year", "quarter", "week"]).to_list()
@@ -231,11 +243,9 @@ def _calendar_dummies(x, funcs):
         ) - pd.tseries.offsets.QuarterBegin(startingMonth=1)
         df["qweek"] = df["qdate"].dt.isocalendar()["week"]
         df.loc[(df["quarter"] == 1) & (df["week"] < 52), "qweek"] = 0
-        df["week_of_quarter"] = df["week"] - df["qweek"] + 1
-        return df["week_of_quarter"]
+        cd = df["week"] - df["qweek"] + 1
     elif funcs == "millisecond":
-        x[funcs] = date_sequence.microsecond * 1000
-        return x[funcs]
+        cd = date_sequence.microsecond * 1000
     elif funcs == "day_of_quarter":
         quarter = date_sequence.quarter
         quarter_start = pd.DatetimeIndex(
@@ -247,11 +257,13 @@ def _calendar_dummies(x, funcs):
         values = (
             (x["date_sequence"] - quarter_start) / pd.to_timedelta("1D") + 1
         ).astype(int)
-        x[funcs] = values
-        return x[funcs]
+        cd = values
     else:
-        x[funcs] = getattr(date_sequence, funcs)
-        return x[funcs]
+        cd = getattr(date_sequence, funcs)
+    cd = pd.DataFrame(cd)
+    cd = cd.rename(columns={cd.columns[0]: funcs})
+    cd[funcs] = np.int64(cd[funcs])
+    return cd
 
 
 def _get_supported_calendar(ts_freq, DUMMIES):

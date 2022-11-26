@@ -3,20 +3,16 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements matrix profile transformation."""
 
-__author__ = ["Markus Löning"]
+__author__ = ["mloning"]
 __all__ = ["MatrixProfileTransformer"]
 
-import pandas as pd
-from sktime.transformations.base import _SeriesToSeriesTransformer
-from sktime.utils.validation.series import check_series
+from sktime.transformations.base import BaseTransformer
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-_check_soft_dependencies("stumpy")
-
-import stumpy  # noqa: E402
+_check_soft_dependencies("stumpy", severity="warning")
 
 
-class MatrixProfileTransformer(_SeriesToSeriesTransformer):
+class MatrixProfileTransformer(BaseTransformer):
     """Calculate the matrix profile of a time series.
 
     Takes as input a single time series dataset and returns the matrix profile
@@ -42,31 +38,50 @@ class MatrixProfileTransformer(_SeriesToSeriesTransformer):
     MatrixProfileTransformer
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
-    >>> transformer = MatrixProfileTransformer()
-    >>> y_hat = transformer.fit_transform(y)
+    >>> transformer = MatrixProfileTransformer()  # doctest: +SKIP
+    >>> y_hat = transformer.fit_transform(y)  # doctest: +SKIP
     """
 
-    _tags = {"univariate-only": True, "fit-in-transform": True}  # for unit test cases
+    _tags = {
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
+        "scitype:transform-output": "Series",
+        # what scitype is returned: Primitives, Series, Panel
+        "scitype:instancewise": True,  # is this an instance-wise transform?
+        "X_inner_mtype": ["np.ndarray"],
+        # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?,
+        "univariate-only": True,
+        "fit_is_empty": True,  # for unit test cases
+        "python_dependencies": "stumpy",
+    }
 
     def __init__(self, window_length=3):
         self.window_length = window_length
         super(MatrixProfileTransformer, self).__init__()
 
-    def transform(self, Z, X=None):
-        """Tranform data.
+    def _transform(self, X, y=None):
+        """Transform X and return a transformed version.
+
+        private _transform containing the core logic, called from transform
 
         Parameters
         ----------
-        Z: pd.Series
-            Time series of length n_timepoints
+        X : 2D np.ndarray
+            Data to be transformed
+        y : ignored argument for interface compatibility
+            Additional data, e.g., labels for transformation
 
         Returns
         -------
-        Z: pd.Series
+        Xt : 1D np.ndarray
+            transformed version of X
             Matrix Profile of time series as output with length as
             (n_timepoints-window_length+1)
         """
-        self.check_is_fitted()
-        Z = check_series(Z, enforce_univariate=True)
-        Z = stumpy.stump(Z, self.window_length)
-        return pd.Series(Z[:, 0])
+        import stumpy
+
+        X = X.flatten()
+        Xt = stumpy.stump(X, self.window_length)
+        Xt = Xt[:, 0].astype("float")
+        return Xt

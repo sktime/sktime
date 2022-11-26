@@ -1,61 +1,69 @@
 repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.0.1
+    hooks:
+      - id: check-added-large-files
+        args: ["--maxkb=1000"]
+      - id: check-case-conflict
+      - id: check-merge-conflict
+      - id: check-symlinks
+      - id: check-yaml
+      - id: debug-statements
+      - id: end-of-file-fixer
+        exclude: "^docs/source/examples/"
+      - id: fix-encoding-pragma
+      - id: requirements-txt-fixer
+      - id: trailing-whitespace
 
-- repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v4.0.1
-  hooks:
-  - id: check-added-large-files
-    args: ['--maxkb=1000']
-  - id: check-case-conflict
-  - id: check-merge-conflict
-  - id: check-symlinks
-  - id: check-yaml
-  - id: debug-statements
-  - id: end-of-file-fixer
-  - id: fix-encoding-pragma
-  - id: requirements-txt-fixer
-  - id: trailing-whitespace
+  - repo: https://github.com/pycqa/isort
+    rev: 5.10.1
+    hooks:
+      - id: isort
+        name: isort
 
-- repo: https://github.com/pycqa/isort
-  rev: 5.8.0
-  hooks:
-    - id: isort
-      name: isort (python)
+  - repo: https://github.com/psf/black
+    rev: 22.3.0
+    hooks:
+      - id: black
+        language_version: python3
+        # args: [--line-length 79]
 
-- repo: https://github.com/psf/black
-  rev: 21.5b1
-  hooks:
-  - id: black
-    language_version: python3
-    # args: [--line-length 79]
+  - repo: https://github.com/pycqa/flake8
+    rev: 4.0.1
+    hooks:
+      - id: flake8
+        exclude: docs/conf.py
+        additional_dependencies: [flake8-bugbear, flake8-print]
 
-- repo: https://github.com/pycqa/flake8
-  rev: 3.9.2
-  hooks:
-  - id: flake8
-    exclude: docs/conf.py
-    additional_dependencies: [flake8-bugbear, flake8-print]
+  - repo: https://github.com/mgedmin/check-manifest
+    rev: "0.47"
+    hooks:
+      - id: check-manifest
+        stages: [manual]
 
-- repo: https://github.com/mgedmin/check-manifest
-  rev: "0.46"
-  hooks:
-  - id: check-manifest
-    stages: [manual]
+  - repo: https://github.com/nbQA-dev/nbQA
+    rev: 1.2.2
+    hooks:
+      - id: nbqa-black
+        args: [--nbqa-mutate, --nbqa-dont-skip-bad-cells]
+        additional_dependencies: [black==22.3.0]
+      - id: nbqa-isort
+        args: [--nbqa-mutate, --nbqa-dont-skip-bad-cells]
+        additional_dependencies: [isort==5.6.4]
+      - id: nbqa-flake8
+        args: [--nbqa-dont-skip-bad-cells, "--extend-ignore=E402,E203"]
+        additional_dependencies: [flake8==3.8.3]
 
-- repo: https://github.com/nbQA-dev/nbQA
-  rev: 0.13.0
-  hooks:
-  - id: nbqa-black
-    args: [--nbqa-mutate, --nbqa-dont-skip-bad-cells]
-    additional_dependencies: [black==20.8b1]
-  - id: nbqa-isort
-    args: [--nbqa-mutate, --nbqa-dont-skip-bad-cells]
-    additional_dependencies: [isort==5.6.4]
-  - id: nbqa-flake8
-    args: [--nbqa-dont-skip-bad-cells, "--extend-ignore=E402,E203"]
-    additional_dependencies: [flake8==3.8.3]
+  - repo: https://github.com/pycqa/pydocstyle
+    rev: 6.1.1
+    hooks:
+      - id: pydocstyle
+        args: ["--config=setup.cfg"]
 
-- repo: https://github.com/pycqa/pydocstyle
-  rev: 6.1.1
-  hooks:
-  - id: pydocstyle
-    args: ["--config=setup.cfg"]
+  # We use the Python version instead of the original version which seems to require Docker
+  # https://github.com/koalaman/shellcheck-precommit
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.8.0.4
+    hooks:
+      - id: shellcheck
+        name: shellcheck

@@ -1,5 +1,10 @@
 # -*- coding: utf-8 -*-
-__author__ = ["Matthew Middlehurst", "Patrick Schäfer"]
+"""Symbolic Fourier Approximation (SFA) Transformer.
+
+Configurable SFA transform for discretising time series into words.
+"""
+
+__author__ = ["MatthewMiddlehurst", "patrickzib"]
 __all__ = ["SFA"]
 
 import math
@@ -9,13 +14,13 @@ import warnings
 import numpy as np
 import pandas as pd
 from joblib import Parallel, delayed
-from numba import njit, types, NumbaTypeSafetyWarning
+from numba import NumbaTypeSafetyWarning, njit, types
 from numba.typed import Dict
 from sklearn.feature_selection import f_classif
 from sklearn.preprocessing import KBinsDiscretizer
 from sklearn.tree import DecisionTreeClassifier
 
-from sktime.transformations.base import _PanelToPanelTransformer
+from sktime.transformations.base import BaseTransformer
 from sktime.utils.validation.panel import check_X
 
 # The binning methods to use: equi-depth, equi-width, information gain or kmeans
@@ -24,19 +29,8 @@ binning_methods = {"equi-depth", "equi-width", "information-gain", "kmeans"}
 # TODO remove imag-part from dc-component component
 
 
-class SFA(_PanelToPanelTransformer):
-    """SFA (Symbolic Fourier Approximation) Transformer, as described in
-
-    @inproceedings{schafer2012sfa,
-      title={SFA: a symbolic fourier approximation and index for similarity
-      search in high dimensional datasets},
-      author={Sch{\"a}fer, Patrick and H{\"o}gqvist, Mikael},
-      booktitle={Proceedings of the 15th International Conference on
-      Extending Database Technology},
-      pages={516--527},
-      year={2012},
-      organization={ACM}
-    }
+class SFA(BaseTransformer):
+    """Symbolic Fourier Approximation (SFA) Transformer.
 
     Overview: for each series:
         run a sliding window across the series
@@ -49,61 +43,77 @@ class SFA(_PanelToPanelTransformer):
 
     Parameters
     ----------
-        word_length:         int, default = 8
-            length of word to shorten window to (using PAA)
+    word_length:         int, default = 8
+        length of word to shorten window to (using PAA)
 
-        alphabet_size:       int, default = 4
-            number of values to discretise each value to
+    alphabet_size:       int, default = 4
+        number of values to discretise each value to
 
-        window_size:         int, default = 12
-            size of window for sliding. Input series
-            length for whole series transform
+    window_size:         int, default = 12
+        size of window for sliding. Input series
+        length for whole series transform
 
-        norm:                boolean, default = False
-            mean normalise words by dropping first fourier coefficient
+    norm:                boolean, default = False
+        mean normalise words by dropping first fourier coefficient
 
-        binning_method:      {"equi-depth", "equi-width", "information-gain", "kmeans"},
-                             default="equi-depth"
-            the binning method used to derive the breakpoints.
+    binning_method:      {"equi-depth", "equi-width", "information-gain", "kmeans"},
+                            default="equi-depth"
+        the binning method used to derive the breakpoints.
 
-        anova:               boolean, default = False
-            If True, the Fourier coefficient selection is done via a one-way
-            ANOVA test. If False, the first Fourier coefficients are selected.
-            Only applicable if labels are given
+    anova:               boolean, default = False
+        If True, the Fourier coefficient selection is done via a one-way
+        ANOVA test. If False, the first Fourier coefficients are selected.
+        Only applicable if labels are given
 
-        bigrams:             boolean, default = False
-            whether to create bigrams of SFA words
+    bigrams:             boolean, default = False
+        whether to create bigrams of SFA words
 
-        skip_grams:          boolean, default = False
-            whether to create skip-grams of SFA words
+    skip_grams:          boolean, default = False
+        whether to create skip-grams of SFA words
 
-        remove_repeat_words: boolean, default = False
-            whether to use numerosity reduction (default False)
+    remove_repeat_words: boolean, default = False
+        whether to use numerosity reduction (default False)
 
-        levels:              int, default = 1
-            Number of spatial pyramid levels
+    levels:              int, default = 1
+        Number of spatial pyramid levels
 
-        save_words:          boolean, default = False
-            whether to save the words generated for each series (default False)
+    save_words:          boolean, default = False
+        whether to save the words generated for each series (default False)
 
-        return_pandas_data_series:          boolean, default = False
-            set to true to return Pandas Series as a result of transform.
-            setting to true reduces speed significantly but is required for
-            automatic test.
+    return_pandas_data_series:          boolean, default = False
+        set to true to return Pandas Series as a result of transform.
+        setting to true reduces speed significantly but is required for
+        automatic test.
 
-        n_jobs:              int, optional, default = 1
-            The number of jobs to run in parallel for both `transform`.
-            ``-1`` means using all processors.
+    n_jobs:              int, optional, default = 1
+        The number of jobs to run in parallel for both `transform`.
+        ``-1`` means using all processors.
 
     Attributes
     ----------
-        words: []
-        breakpoints: = []
-        num_insts = 0
-        num_atts = 0
+    words: []
+    breakpoints: = []
+    num_insts = 0
+    num_atts = 0
+
+    References
+    ----------
+    .. [1] Schäfer, Patrick, and Mikael Högqvist. "SFA: a symbolic fourier approximation
+    and  index for similarity search in high dimensional datasets." Proceedings of the
+    15th international conference on extending database technology. 2012.
     """
 
-    _tags = {"univariate-only": True}
+    _tags = {
+        "univariate-only": True,
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
+        "scitype:transform-output": "Series",
+        # what scitype is returned: Primitives, Series, Panel
+        "scitype:instancewise": False,  # is this an instance-wise transform?
+        "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "pd_Series_Table",  # which mtypes does y require?
+        "requires_y": True,  # does y need to be passed in fit?
+    }
 
     def __init__(
         self,
@@ -139,12 +149,13 @@ class SFA(_PanelToPanelTransformer):
         self.word_length = word_length
         self.alphabet_size = alphabet_size
         self.window_size = window_size
+
+        self.norm = norm
         self.lower_bounding = lower_bounding
         self.inverse_sqrt_win_size = (
             1.0 / math.sqrt(window_size) if not lower_bounding else 1.0
         )
 
-        self.norm = norm
         self.remove_repeat_words = remove_repeat_words
 
         self.save_words = save_words
@@ -159,7 +170,8 @@ class SFA(_PanelToPanelTransformer):
         self.skip_grams = skip_grams
 
         self.return_pandas_data_series = return_pandas_data_series
-        self.use_fallback_dft = (
+        self.use_fallback_dft = use_fallback_dft
+        self._use_fallback_dft = (
             use_fallback_dft if word_length < window_size - offset else True
         )
         self.typed_dict = typed_dict
@@ -177,21 +189,21 @@ class SFA(_PanelToPanelTransformer):
 
         super(SFA, self).__init__()
 
+        if not return_pandas_data_series:
+            self._output_convert = "off"
+
     def fit(self, X, y=None):
-        """Calculate word breakpoints using _mcb
+        """Calculate word breakpoints using MCB or IGB.
 
         Parameters
         ----------
-        X: nested pandas DataFrame of shape [n_instances, 1]
-            Nested dataframe with univariate time-series in cells.
-        y: array-like, shape = [n_samples] or [n_samples, n_outputs]
-            The class labels.
+        X : pandas DataFrame or 3d numpy array, input time series.
+        y : array_like, target values (optional, ignored).
 
         Returns
         -------
         self: object
         """
-
         if self.alphabet_size < 2:
             raise ValueError("Alphabet size must be an integer greater than 2")
 
@@ -217,7 +229,8 @@ class SFA(_PanelToPanelTransformer):
             raise ValueError(
                 "Typed Dictionaries can only handle 64 bit words. "
                 "ceil(log2(alphabet_size)) * word_length must be less than or equal "
-                "to 64"
+                "to 64."
+                "With bi-grams or skip-grams enabled, this bit limit is 32."
             )
 
         if self.typed_dict and self.levels > 15:
@@ -242,25 +255,50 @@ class SFA(_PanelToPanelTransformer):
         self._is_fitted = True
         return self
 
-    def transform(self, X, y=None):
-        self.check_is_fitted()
-        X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
+    def _transform(self, X, y=None):
+        """Transform data into SFA words.
+
+        Parameters
+        ----------
+        X : pandas DataFrame or 3d numpy array, input time series.
+        y : array_like, target values (optional, ignored).
+
+        Returns
+        -------
+        List of dictionaries containing SFA words
+        """
         X = X.squeeze(1)
 
-        if self.typed_dict:
+        with warnings.catch_warnings():
             warnings.simplefilter("ignore", category=NumbaTypeSafetyWarning)
-
-        transform = Parallel(n_jobs=self.n_jobs)(
-            delayed(self._transform_case)(
-                X[i, :],
-                supplied_dft=self.binning_dft[i] if self.keep_binning_dft else None,
+            transform = Parallel(n_jobs=self.n_jobs)(
+                delayed(self._transform_case)(
+                    X[i, :],
+                    supplied_dft=self.binning_dft[i] if self.keep_binning_dft else None,
+                )
+                for i in range(X.shape[0])
             )
-            for i in range(X.shape[0])
-        )
 
         dim, words = zip(*transform)
         if self.save_words:
             self.words = list(words)
+
+        # cant pickle typed dict
+        if self.typed_dict and self.n_jobs != 1:
+            nl = [None] * len(dim)
+            for i, pdict in enumerate(dim):
+                ndict = (
+                    Dict.empty(
+                        key_type=types.UniTuple(types.int64, 2), value_type=types.uint32
+                    )
+                    if self.levels > 1
+                    else Dict.empty(key_type=types.int64, value_type=types.uint32)
+                )
+                for key, val in pdict.items():
+                    ndict[key] = val
+                nl[i] = pdict
+            dim = nl
+
         bags = pd.DataFrame() if self.return_pandas_data_series else [None]
         bags[0] = list(dim)
 
@@ -349,6 +387,13 @@ class SFA(_PanelToPanelTransformer):
                                 skip_gram = (skip_gram << self.level_bits) | 0
                         bag[skip_gram] = bag.get(skip_gram, 0) + 1
 
+        # cant pickle typed dict
+        if self.typed_dict and self.n_jobs != 1:
+            pdict = dict()
+            for key, val in bag.items():
+                pdict[key] = val
+            bag = pdict
+
         return [
             pd.Series(bag) if self.return_pandas_data_series else bag,
             words if self.save_words else [],
@@ -390,11 +435,11 @@ class SFA(_PanelToPanelTransformer):
         if self.binning_method == "information-gain":
             return self._igb(dft, y)
         elif self.binning_method == "kmeans":
-            return self._KBinsDiscretizer(dft)
+            return self._k_bins_discretizer(dft)
         else:
             return self._mcb(dft)
 
-    def _KBinsDiscretizer(self, dft):
+    def _k_bins_discretizer(self, dft):
         encoder = KBinsDiscretizer(
             n_bins=self.alphabet_size, strategy=self.binning_method
         )
@@ -442,7 +487,7 @@ class SFA(_PanelToPanelTransformer):
         breakpoints = np.zeros((self.word_length, self.alphabet_size))
         clf = DecisionTreeClassifier(
             criterion="entropy",
-            max_depth=np.log2(self.alphabet_size),
+            max_depth=int(np.floor(np.log2(self.alphabet_size))),
             max_leaf_nodes=self.alphabet_size,
             random_state=1,
         )
@@ -483,15 +528,15 @@ class SFA(_PanelToPanelTransformer):
                     self.inverse_sqrt_win_size,
                     self.lower_bounding,
                 )
-                if self.use_fallback_dft
+                if self._use_fallback_dft
                 else self._fast_fourier_transform(row)
             )
 
         return result
 
     def _fast_fourier_transform(self, series):
-        """Performs a discrete fourier transform using the fast fourier
-        transform
+        """Perform a discrete fourier transform using the fast fourier transform.
+
         if self.norm is True, then the first term of the DFT is ignored
 
         Input
@@ -535,8 +580,8 @@ class SFA(_PanelToPanelTransformer):
         apply_normalising_factor=True,
         cut_start_if_norm=True,
     ):
-        """Performs a discrete fourier transform using standard O(n^2)
-        transform
+        """Perform a discrete fourier transform using standard O(n^2) transform.
+
         if self.norm is True, then the first term of the DFT is ignored
 
         Input
@@ -581,11 +626,6 @@ class SFA(_PanelToPanelTransformer):
         return dft
 
     def _mft(self, series):
-        """
-
-        :param series:
-        :return:
-        """
         start_offset = 2 if self.norm else 0
         length = self.dft_length + start_offset + self.dft_length % 2
         end = max(1, len(series) - self.window_size + 1)
@@ -595,7 +635,7 @@ class SFA(_PanelToPanelTransformer):
         transformed = np.zeros((end, length))
 
         # first run with dft
-        if self.use_fallback_dft:
+        if self._use_fallback_dft:
             mft_data = self._discrete_fourier_transform(
                 series[0 : self.window_size],
                 self.dft_length,
@@ -677,6 +717,22 @@ class SFA(_PanelToPanelTransformer):
             delayed(self._shorten_case)(word_len, i) for i in range(len(self.words))
         )
 
+        # cant pickle typed dict
+        if self.typed_dict and self.n_jobs != 1:
+            nl = [None] * len(dim)
+            for i, pdict in enumerate(dim):
+                ndict = (
+                    Dict.empty(
+                        key_type=types.UniTuple(types.int64, 2), value_type=types.uint32
+                    )
+                    if self.levels > 1
+                    else Dict.empty(key_type=types.int64, value_type=types.uint32)
+                )
+                for key, val in pdict.items():
+                    ndict[key] = val
+                nl[i] = pdict
+            dim = nl
+
         new_bags = pd.DataFrame() if self.return_pandas_data_series else [None]
         new_bags[0] = list(dim)
 
@@ -749,6 +805,13 @@ class SFA(_PanelToPanelTransformer):
                             else:
                                 skip_gram = (skip_gram << self.level_bits) | 0
                         new_bag[skip_gram] = new_bag.get(skip_gram, 0) + 1
+
+        # cant pickle typed dict
+        if self.typed_dict and self.n_jobs != 1:
+            pdict = dict()
+            for key, val in new_bag.items():
+                pdict[key] = val
+            new_bag = pdict
 
         return pd.Series(new_bag) if self.return_pandas_data_series else new_bag
 
@@ -910,6 +973,7 @@ class SFA(_PanelToPanelTransformer):
         return word >> amount * self.letter_bits
 
     def bag_to_string(self, bag):
+        """Convert a bag of SFA words into a string."""
         s = "{"
         for word, value in bag.items():
             s += "{0}: {1}, ".format(
@@ -920,8 +984,7 @@ class SFA(_PanelToPanelTransformer):
         return s + "}"
 
     def word_list(self, word):
-        # list of input integers to obtain current word
-
+        """Find list of integers to obtain input word."""
         letters = []
         word_bits = self.word_bits + self.level_bits
         shift = word_bits - self.letter_bits
@@ -946,8 +1009,7 @@ class SFA(_PanelToPanelTransformer):
         return letters
 
     def word_list_typed(self, word):
-        # list of input integers to obtain current word
-
+        """Find list of integers to obtain input word."""
         letters = []
         shift = self.word_bits - self.letter_bits
 
@@ -972,3 +1034,26 @@ class SFA(_PanelToPanelTransformer):
             letters = (letters, level)
 
         return letters
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        # small window size for testing
+        params = {"window_size": 4, "return_pandas_data_series": True}
+        return params

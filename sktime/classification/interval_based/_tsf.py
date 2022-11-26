@@ -4,7 +4,7 @@
 Interval based TSF classifier, extracts basic summary features from random intervals.
 """
 
-__author__ = ["Tony Bagnall", "kkoziara", "luiszugasti", "kanand77"]
+__author__ = ["kkoziara", "luiszugasti", "kanand77"]
 __all__ = ["TimeSeriesForestClassifier"]
 
 import numpy as np
@@ -17,7 +17,6 @@ from sktime.series_as_features.base.estimators.interval_based import (
     BaseTimeSeriesForest,
 )
 from sktime.series_as_features.base.estimators.interval_based._tsf import _transform
-from sktime.utils.validation.panel import check_X
 
 
 class TimeSeriesForestClassifier(
@@ -78,7 +77,7 @@ class TimeSeriesForestClassifier(
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
     >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
-    >>> clf = TimeSeriesForestClassifier(n_estimators=10)
+    >>> clf = TimeSeriesForestClassifier(n_estimators=5)
     >>> clf.fit(X_train, y_train)
     TimeSeriesForestClassifier(...)
     >>> y_pred = clf.predict(X_test)
@@ -86,7 +85,43 @@ class TimeSeriesForestClassifier(
 
     _base_estimator = DecisionTreeClassifier(criterion="entropy")
 
-    def predict(self, X):
+    def __init__(
+        self,
+        min_interval=3,
+        n_estimators=200,
+        n_jobs=1,
+        random_state=None,
+    ):
+        super(TimeSeriesForestClassifier, self).__init__(
+            min_interval=min_interval,
+            n_estimators=n_estimators,
+            n_jobs=n_jobs,
+            random_state=random_state,
+        )
+        BaseClassifier.__init__(self)
+
+    def fit(self, X, y, **kwargs):
+        """Wrap fit to call BaseClassifier.fit.
+
+        This is a fix to get around the problem with multiple inheritance. The
+        problem is that if we just override _fit, this class inherits the fit from
+        the sklearn class BaseTimeSeriesForest. This is the simplest solution,
+        albeit a little hacky.
+        """
+        return BaseClassifier.fit(self, X=X, y=y, **kwargs)
+
+    def predict(self, X, **kwargs) -> np.ndarray:
+        """Wrap predict to call BaseClassifier.predict."""
+        return BaseClassifier.predict(self, X=X, **kwargs)
+
+    def predict_proba(self, X, **kwargs) -> np.ndarray:
+        """Wrap predict_proba to call BaseClassifier.predict_proba."""
+        return BaseClassifier.predict_proba(self, X=X, **kwargs)
+
+    def _fit(self, X, y):
+        BaseTimeSeriesForest._fit(self, X=X, y=y)
+
+    def _predict(self, X) -> np.ndarray:
         """Find predictions for all cases in X. Built on top of predict_proba.
 
         Parameters
@@ -104,7 +139,7 @@ class TimeSeriesForestClassifier(
         proba = self.predict_proba(X)
         return np.asarray([self.classes_[np.argmax(prob)] for prob in proba])
 
-    def predict_proba(self, X):
+    def _predict_proba(self, X) -> np.ndarray:
         """Find probability estimates for each class for all cases in X.
 
         Parameters
@@ -122,18 +157,11 @@ class TimeSeriesForestClassifier(
         output : nd.array of shape = (n_instances, n_classes)
             Predicted probabilities
         """
-        self.check_is_fitted()
-        X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
         X = X.squeeze(1)
-
-        _, series_length = X.shape
-        if series_length != self.series_length:
-            raise ValueError(
-                "The number of time points in the training data does not match "
-                "that in the test data."
-            )
         y_probas = Parallel(n_jobs=self.n_jobs)(
-            delayed(_predict_proba)(X, self.estimators_[i], self.intervals_[i])
+            delayed(_predict_single_classifier_proba)(
+                X, self.estimators_[i], self.intervals_[i]
+            )
             for i in range(self.n_estimators)
         )
 
@@ -142,8 +170,40 @@ class TimeSeriesForestClassifier(
         )
         return output
 
+    def _get_fitted_params(self):
+        params = super(TimeSeriesForestClassifier, self)._get_fitted_params()
+        params.update({"n_classes": self.n_classes_, "fit_time": self.fit_time_})
+        return params
 
-def _predict_proba(X, estimator, intervals):
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            For classifiers, a "default" set of parameters should be provided for
+            general testing, and a "results_comparison" set for comparing against
+            previously recorded results if the general set does not produce suitable
+            probabilities to compare against.
+
+        Returns
+        -------
+        params : dict or list of dict, default={}
+            Parameters to create testing instances of the class.
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`.
+        """
+        if parameter_set == "results_comparison":
+            return {"n_estimators": 10}
+        else:
+            return {"n_estimators": 2}
+
+
+def _predict_single_classifier_proba(X, estimator, intervals):
     """Find probability estimates for each class for all cases in X."""
     Xt = _transform(X, intervals)
     return estimator.predict_proba(Xt)

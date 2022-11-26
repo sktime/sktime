@@ -23,9 +23,8 @@ import numpy as np
 import pandas as pd
 from numba import njit
 
-from sktime.transformations.base import _SeriesToSeriesTransformer
+from sktime.transformations.base import BaseTransformer
 from sktime.transformations.panel.matrix_profile import _sliding_dot_products
-from sktime.utils.validation.series import check_series
 
 
 def _sliding_window(X, m):
@@ -64,7 +63,7 @@ def _sliding_mean_std(X, m):
         The moving mean and moving std
     """
     s = np.insert(np.cumsum(X), 0, 0)
-    sSq = np.insert(np.cumsum(X ** 2), 0, 0)
+    sSq = np.insert(np.cumsum(X**2), 0, 0)
     segSum = s[m:] - s[:-m]
     segSumSq = sSq[m:] - sSq[:-m]
     movmean = segSum / m
@@ -350,7 +349,7 @@ def clasp(
     return profile, knn_mask
 
 
-class ClaSPTransformer(_SeriesToSeriesTransformer):
+class ClaSPTransformer(BaseTransformer):
     """ClaSP (Classification Score Profile) Transformer.
 
     Implementation of the Classification Score Profile of a time series.
@@ -365,6 +364,8 @@ class ClaSPTransformer(_SeriesToSeriesTransformer):
         size of window for sliding.
     scoring_metric :      string, default = ROC_AUC
         the scoring metric to use in ClaSP - choose from ROC_AUC or F1
+    exclusion_radius : int
+        Exclusion Radius for change points to be non-trivial matches
 
     Notes
     -----
@@ -387,15 +388,27 @@ class ClaSPTransformer(_SeriesToSeriesTransformer):
     >>> profile = clasp.transform(X)
     """
 
-    _tags = {"univariate-only": True, "fit-in-transform": True}  # for unit test cases
+    _tags = {
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
+        "scitype:transform-output": "Series",
+        # what scitype is returned: Primitives, Series, Panel
+        "scitype:instancewise": True,  # is this an instance-wise transform?
+        "X_inner_mtype": "np.ndarray",  # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
+        "univariate-only": True,
+        "fit_is_empty": True,
+    }
 
-    def __init__(self, window_length=10, scoring_metric="ROC_AUC"):
+    def __init__(
+        self, window_length=10, scoring_metric="ROC_AUC", exclusion_radius=0.05
+    ):
         self.window_length = int(window_length)
-        self.knn_mask = None
         self.scoring_metric = scoring_metric
+        self.exclusion_radius = exclusion_radius
         super(ClaSPTransformer, self).__init__()
 
-    def transform(self, X, y=None):
+    def _transform(self, X, y=None):
         """Compute ClaSP.
 
         Takes as input a single time series dataset and returns the
@@ -403,25 +416,29 @@ class ClaSPTransformer(_SeriesToSeriesTransformer):
 
         Parameters
         ----------
-        X : pandas.Series
+        X : 2D numpy.ndarray
            A single pandas series or a 1d numpy array
+        y : ignored argument for interface compatibility
+            Additional data, e.g., labels for transformation
 
         Returns
         -------
-        Xt : pandas.Series
+        Xt : 1D numpy.ndarray
+            transformed version of X
             ClaSP of the single time series as output
             with length as (n-window_length+1)
         """
-        self.check_is_fitted()
-        X = check_series(X, enforce_univariate=True, allow_numpy=True)
-        self._check_scoring_metric(self.scoring_metric)
+        scoring_metric_call = self._check_scoring_metric(self.scoring_metric)
 
-        if isinstance(X, pd.Series):
-            X = X.to_numpy()
+        X = X.flatten()
+        Xt, _ = clasp(
+            X,
+            self.window_length,
+            score=scoring_metric_call,
+            exclusion_radius=self.exclusion_radius,
+        )
 
-        Xt, self.knn_mask = clasp(X, self.window_length, score=self.scoring_metric_call)
-
-        return pd.Series(Xt)
+        return Xt
 
     def _check_scoring_metric(self, scoring_metric):
         """Check which scoring metric to use.
@@ -430,6 +447,12 @@ class ClaSPTransformer(_SeriesToSeriesTransformer):
         ----------
         scoring_metric : string
             Choose from "ROC_AUC" or "F1"
+
+        Returns
+        -------
+        scoring_metric_call : a callable, keyed by the `scoring_metric` input
+            _roc_auc_score, if scoring_metric = "ROC_AUC"
+            _binary_f1_score, if scoring_metric = "F1"
         """
         valid_scores = ("ROC_AUC", "F1")
 
@@ -437,6 +460,27 @@ class ClaSPTransformer(_SeriesToSeriesTransformer):
             raise ValueError(f"invalid input, please use one of {valid_scores}")
 
         if scoring_metric == "ROC_AUC":
-            self.scoring_metric_call = _roc_auc_score
+            return _roc_auc_score
         elif scoring_metric == "F1":
-            self.scoring_metric_call = _binary_f1_score
+            return _binary_f1_score
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        return {"window_length": 5}

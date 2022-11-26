@@ -4,100 +4,133 @@ __author__ = ["juanitorduz"]
 
 import numpy as np
 import pandas as pd
-from sktime.forecasting.structural import UnobservedComponents, _UnobservedComponents
-from sktime.datasets import load_airline
+import pytest
 from pandas.testing import assert_series_equal
+
+from sktime.datasets import load_airline
+from sktime.forecasting.structural import UnobservedComponents
+from sktime.utils.validation._dependencies import _check_soft_dependencies
+
+
+class ModelSpec:
+    """Model specification."""
+
+    def __init__(self, level, params):
+        self.level = level
+        self.params = params
+
+    def generate_parametrized_sample_data(
+        self, n, sigma_zeta=0.1, sigma_eta=0.1, sigma_epsilon=0.1
+    ):
+        """Generate sample data given the state model specification."""
+        # Initialize variables
+        y = np.zeros(n)
+        mu = np.zeros(n)
+        beta = np.zeros(n)
+        epsilon = np.zeros(n)
+        eta = np.zeros(n)
+        zeta = np.zeros(n)
+
+        # Sample from model parameters.
+        for t in range(1, n):
+
+            zeta[t] = self.params["zeta"] * np.random.normal(loc=0.0, scale=sigma_zeta)
+            beta[t] = self.params["beta_1"] * beta[t - 1] + zeta[t]
+
+            eta[t] = self.params["eta"] * np.random.normal(loc=0.0, scale=sigma_eta)
+            mu[t] = (
+                self.params["mu_1"] * mu[t - 1]
+                + self.params["beta_1"] * beta[t - 1]
+                + eta[t]
+            )
+
+            epsilon[t] = self.params["epsilon"] * np.random.normal(
+                loc=0.0, scale=sigma_epsilon
+            )
+            y[t] = self.params["mu"] * mu[t] + epsilon[t]
+
+        return y, mu, beta
 
 
 # Parameters to generate sample data depending of the model type.
-structure_params = {
-    "irregular": {
-        "zeta": 0,
-        "beta": 0,
-        "beta_1": 0,
-        "eta": 0,
-        "epsilon": 1,
-        "mu_1": 0,
-        "mu": 0,
-    },
-    "fixed intercept": {
-        "zeta": 0,
-        "beta": 0,
-        "beta_1": 0,
-        "eta": 0,
-        "epsilon": 0,
-        "mu_1": 0,
-        "mu": 1,
-    },
-    "random walk": {
-        "zeta": 0,
-        "beta": 0,
-        "beta_1": 0,
-        "eta": 1,
-        "epsilon": 0,
-        "mu_1": 1,
-        "mu": 1,
-    },
-    "local level": {
-        "zeta": 0,
-        "beta": 0,
-        "beta_1": 0,
-        "eta": 1,
-        "epsilon": 1,
-        "mu_1": 1,
-        "mu": 1,
-    },
-    "smooth trend": {
-        "zeta": 1,
-        "beta": 0,
-        "beta_1": 1,
-        "eta": 0,
-        "epsilon": 1,
-        "mu_1": 1,
-        "mu": 1,
-    },
-    "local linear trend": {
-        "zeta": 1,
-        "beta": 0,
-        "beta_1": 1,
-        "eta": 1,
-        "epsilon": 1,
-        "mu_1": 1,
-        "mu": 1,
-    },
-}
-
-levels = structure_params.keys()
-
-
-def generate_parametrized_sample_data(
-    n, params, sigma_zeta=0.1, sigma_eta=0.1, sigma_epsilon=0.1
-):
-    """Generate sample data given the state model specification."""
-    # Initialize variables
-    y = np.zeros(n)
-    mu = np.zeros(n)
-    beta = np.zeros(n)
-    epsilon = np.zeros(n)
-    eta = np.zeros(n)
-    zeta = np.zeros(n)
-
-    # Sample from model parameters.
-    for t in range(1, n):
-
-        zeta[t] = params["zeta"] * np.random.normal(loc=0.0, scale=sigma_zeta)
-        beta[t] = params["beta_1"] * beta[t - 1] + zeta[t]
-
-        eta[t] = params["eta"] * np.random.normal(loc=0.0, scale=sigma_eta)
-        mu[t] = params["mu_1"] * mu[t - 1] + params["beta_1"] * beta[t - 1] + eta[t]
-
-        epsilon[t] = params["epsilon"] * np.random.normal(loc=0.0, scale=sigma_epsilon)
-        y[t] = params["mu"] * mu[t] + epsilon[t]
-
-    return y, mu, beta
+MODELS = [
+    ModelSpec(
+        level="irregular",
+        params={
+            "zeta": 0,
+            "beta": 0,
+            "beta_1": 0,
+            "eta": 0,
+            "epsilon": 1,
+            "mu_1": 0,
+            "mu": 0,
+        },
+    ),
+    ModelSpec(
+        level="fixed intercept",
+        params={
+            "zeta": 0,
+            "beta": 0,
+            "beta_1": 0,
+            "eta": 0,
+            "epsilon": 0,
+            "mu_1": 0,
+            "mu": 1,
+        },
+    ),
+    ModelSpec(
+        level="random walk",
+        params={
+            "zeta": 0,
+            "beta": 0,
+            "beta_1": 0,
+            "eta": 1,
+            "epsilon": 0,
+            "mu_1": 1,
+            "mu": 1,
+        },
+    ),
+    ModelSpec(
+        level="local level",
+        params={
+            "zeta": 0,
+            "beta": 0,
+            "beta_1": 0,
+            "eta": 1,
+            "epsilon": 1,
+            "mu_1": 1,
+            "mu": 1,
+        },
+    ),
+    ModelSpec(
+        level="smooth trend",
+        params={
+            "zeta": 1,
+            "beta": 0,
+            "beta_1": 1,
+            "eta": 0,
+            "epsilon": 1,
+            "mu_1": 1,
+            "mu": 1,
+        },
+    ),
+    ModelSpec(
+        level="local linear trend",
+        params={
+            "zeta": 1,
+            "beta": 0,
+            "beta_1": 1,
+            "eta": 1,
+            "epsilon": 1,
+            "mu_1": 1,
+            "mu": 1,
+        },
+    ),
+]
 
 
-def generate_sample_data(params):
+@pytest.fixture(params=MODELS, ids=[m.level for m in MODELS])
+def level_sample_data(request):
     """Generate sample data for a given model specification.
 
     We add external regressors and a seasonality component.
@@ -110,7 +143,8 @@ def generate_sample_data(params):
     )
 
     n = data_df.shape[0]
-    y, _, _ = generate_parametrized_sample_data(n=n, params=params)
+    model_spec = request.param
+    y, _, _ = model_spec.generate_parametrized_sample_data(n=n)
 
     data_df["y"] = y
     # Add external regressor.
@@ -122,64 +156,143 @@ def generate_sample_data(params):
     data_df["s"] = data_df["cs"] + data_df["cc"]
     # Construct target variable.
     data_df["z"] = data_df["y"] + data_df["x"] + data_df["s"]
-    return data_df
+    return model_spec.level, data_df
 
 
-def test_results_consistency(levels=levels):
+@pytest.fixture
+def level_sample_data_split(level_sample_data):
+    """Split sample data into train and test sets."""
+    train_test_ratio = 0.80
+    level, data_df = level_sample_data
+    n = data_df.shape[0]
+    n_train = int(n * train_test_ratio)
+    n_test = n - n_train
+
+    data_train_df = data_df[:n_train]
+    data_test_df = data_df[-n_test:]
+
+    y_train = data_train_df["z"]
+    X_train = data_train_df[["x"]]
+    X_test = data_test_df[["x"]]
+    fh = np.arange(X_test.shape[0]) + 1
+    return level, y_train, X_train, X_test, fh
+
+
+@pytest.fixture
+def y_airlines():
+    """Load sample data from the airlines dataset."""
+    return load_airline()
+
+
+@pytest.mark.skipif(
+    not _check_soft_dependencies("statsmodels", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
+@pytest.mark.parametrize("level", [m.level for m in MODELS])
+@pytest.mark.parametrize("fh_length", [1, 3, 5, 10, 20])
+def test_results_consistency(level, fh_length, y_airlines):
     """Check consistency between wrapper and statsmodels original implementation."""
-    y = load_airline()
-    fh_length = [3, 5, 10]
-    for n in fh_length:
-        fh = np.arange(n) + 1
-        for level in levels:
-            # Fit and predict with forecaster.
-            forecaster = UnobservedComponents(level=level)
-            forecaster.fit(y)
-            y_pred_forecaster = forecaster.predict(fh=fh)
-            # Fit train statsmodels original model.
-            model = _UnobservedComponents(level=level, endog=y)
-            result = model.fit(disp=0)
-            y_pred_base = result.forecast(steps=n)
-            assert_series_equal(left=y_pred_forecaster, right=y_pred_base)
-            assert len(fh) == y_pred_forecaster.shape[0]
+    from statsmodels.tsa.statespace.structural import (
+        UnobservedComponents as _UnobservedComponents,
+    )
+
+    fh = np.arange(fh_length) + 1
+    # Fit and predict with forecaster.
+    forecaster = UnobservedComponents(level=level)
+    forecaster.fit(y_airlines)
+    y_pred_forecaster = forecaster.predict(fh=fh)
+    # Fit train statsmodels original model.
+    model = _UnobservedComponents(level=level, endog=y_airlines)
+    result = model.fit(disp=0)
+    y_pred_base = result.forecast(steps=fh_length)
+    y_pred_base.name = y_airlines.name
+    assert_series_equal(left=y_pred_forecaster, right=y_pred_base)
+    assert len(fh) == y_pred_forecaster.shape[0]
 
 
-def test_result_consistency_exog(structure_params=structure_params, levels=levels):
+@pytest.mark.skipif(
+    not _check_soft_dependencies("statsmodels", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
+def test_result_consistency_exog(level_sample_data_split):
     """Check consistency between wrapper and statsmodels original implementation.
 
     We add external regressors and a seasonality component.
     """
-    train_test_ratio = 0.80
+    from statsmodels.tsa.statespace.structural import (
+        UnobservedComponents as _UnobservedComponents,
+    )
 
-    for level in levels:
-        # Prepare data.
-        data_df = generate_sample_data(structure_params[level])
-        n = data_df.shape[0]
+    level, y_train, X_train, X_test, fh = level_sample_data_split
 
-        n_train = int(n * train_test_ratio)
-        n_test = n - n_train
+    model_spec = {
+        "level": level,
+        "freq_seasonal": [{"period": 12, "harmonics": 4}],
+        "autoregressive": 1,
+        "mle_regression": False,
+    }
+    # Fit and predict with forecaster.
+    forecaster = UnobservedComponents(**model_spec)
+    forecaster.fit(y=y_train, X=X_train)
+    y_pred_forecaster = forecaster.predict(fh=fh, X=X_test)
+    # Fit train statsmodels original model.
+    model = _UnobservedComponents(endog=y_train, exog=X_train, **model_spec)
+    result = model.fit(disp=0)
+    n_test = X_test.shape[0]
+    y_pred_base = result.forecast(steps=n_test, exog=X_test)
+    y_pred_base.name = y_train.name
+    assert_series_equal(left=y_pred_forecaster, right=y_pred_base)
+    assert len(fh) == y_pred_forecaster.shape[0]
 
-        data_train_df = data_df[:n_train]
-        data_test_df = data_df[-n_test:]
 
-        y_train = data_train_df["z"]
-        X_train = data_train_df[["x"]]
-        X_test = data_test_df[["x"]]
-        fh = np.arange(X_test.shape[0]) + 1
+@pytest.mark.parametrize("alpha", [0.01, 0.05, [0.01, 0.05]])
+@pytest.mark.parametrize("coverage", [0.6, 0.99, [0.9, 0.95]])
+@pytest.mark.parametrize("fh_length", [1, 3, 5, 10, 20])
+def test_prediction_intervals_no_exog(alpha, coverage, fh_length, y_airlines):
+    """Test prediction intervals when no exogenous regressors are present."""
+    fh = np.arange(fh_length) + 1
+    forecaster = UnobservedComponents()
+    forecaster.fit(y_airlines)
+    quantiles_df = forecaster.predict_quantiles(fh=fh, alpha=alpha)
+    intervals_df = forecaster.predict_interval(fh=fh, coverage=coverage)
+    if isinstance(alpha, list):
+        assert quantiles_df.shape == (fh_length, len(alpha))
+    else:
+        assert quantiles_df.shape == (fh_length, 1)
 
-        model_spec = {
-            "level": level,
-            "freq_seasonal": [{"period": 12, "harmonics": 4}],
-            "autoregressive": 1,
-            "mle_regression": False,
-        }
-        # Fit and predict with forecaster.
-        forecaster = UnobservedComponents(**model_spec)
-        forecaster.fit(y=y_train, X=X_train)
-        y_pred_forecaster = forecaster.predict(fh=fh, X=X_test)
-        # Fit train statsmodels original model.
-        model = _UnobservedComponents(endog=y_train, exog=X_train, **model_spec)
-        result = model.fit(disp=0)
-        y_pred_base = result.forecast(steps=n_test, exog=X_test)
-        assert_series_equal(left=y_pred_forecaster, right=y_pred_base)
-        assert len(fh) == y_pred_forecaster.shape[0]
+    if isinstance(coverage, list):
+        assert intervals_df.shape == (fh_length, 2 * len(coverage))
+    else:
+        intervals_np = intervals_df.to_numpy().flatten()
+        assert intervals_df.shape == (fh_length, 2)
+        assert intervals_np[0] < intervals_np[1]
+
+
+@pytest.mark.parametrize("alpha", [0.01, 0.05, [0.01, 0.05]])
+@pytest.mark.parametrize("coverage", [0.6, 0.99, [0.9, 0.95]])
+def test_prediction_intervals_exog(alpha, coverage, level_sample_data_split):
+    """Test prediction intervals when exogenous regressors are present."""
+    level, y_train, X_train, X_test, fh = level_sample_data_split
+    fh_length = X_test.shape[0]
+    model_spec = {
+        "level": level,
+        "freq_seasonal": [{"period": 12, "harmonics": 4}],
+        "autoregressive": 1,
+        "mle_regression": False,
+    }
+    forecaster = UnobservedComponents(**model_spec)
+    forecaster.fit(y=y_train, X=X_train)
+    quantiles_df = forecaster.predict_quantiles(fh=fh, X=X_test, alpha=alpha)
+    intervals_df = forecaster.predict_interval(fh=fh, X=X_test, coverage=coverage)
+
+    if isinstance(alpha, list):
+        assert quantiles_df.shape == (fh_length, len(alpha))
+    else:
+        assert quantiles_df.shape == (fh_length, 1)
+
+    if isinstance(coverage, list):
+        assert intervals_df.shape == (fh_length, 2 * len(coverage))
+    else:
+        intervals_np = intervals_df.to_numpy().flatten()
+        assert intervals_df.shape == (fh_length, 2)
+        assert intervals_np[0] < intervals_np[1]

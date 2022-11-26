@@ -19,7 +19,7 @@ from sklearn.utils import check_random_state
 
 from sktime.base._base import _clone_estimator
 from sktime.classification.base import BaseClassifier
-from sktime.contrib.vector_classifiers._continuous_interval_tree import (
+from sktime.classification.sklearn._continuous_interval_tree import (
     ContinuousIntervalTree,
     _drcif_feature,
 )
@@ -132,7 +132,7 @@ class DrCIF(BaseClassifier):
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
     >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
-    >>> clf = DrCIF(n_estimators=10)
+    >>> clf = DrCIF(n_estimators=3, n_intervals=2, att_subsample_size=2)
     >>> clf.fit(X_train, y_train)
     DrCIF(...)
     >>> y_pred = clf.predict(X_test)
@@ -143,6 +143,7 @@ class DrCIF(BaseClassifier):
         "capability:train_estimate": True,
         "capability:contractable": True,
         "capability:multithreading": True,
+        "classifier_type": "interval",
     }
 
     def __init__(
@@ -152,7 +153,7 @@ class DrCIF(BaseClassifier):
         att_subsample_size=10,
         min_interval=4,
         max_interval=None,
-        base_estimator="DTC",
+        base_estimator="CIT",
         time_limit_in_minutes=0.0,
         contract_max_n_estimators=500,
         save_transformed_data=False,
@@ -200,9 +201,9 @@ class DrCIF(BaseClassifier):
         start_time = time.time()
         train_time = 0
 
-        if self.base_estimator == "DTC":
+        if self.base_estimator.lower() == "dtc":
             self._base_estimator = DecisionTreeClassifier(criterion="entropy")
-        elif self.base_estimator == "CIT":
+        elif self.base_estimator.lower() == "cit":
             self._base_estimator = ContinuousIntervalTree()
         elif isinstance(self.base_estimator, BaseEstimator):
             self._base_estimator = self.base_estimator
@@ -245,8 +246,8 @@ class DrCIF(BaseClassifier):
             if n <= 0:
                 self._n_intervals[i] = 1
 
-        if self.att_subsample_size > 25:
-            self._att_subsample_size = 25
+        if self.att_subsample_size > 29:
+            self._att_subsample_size = 29
 
         if isinstance(self.min_interval, int):
             self._min_interval = [
@@ -258,18 +259,18 @@ class DrCIF(BaseClassifier):
             self._min_interval = self.min_interval
         else:
             raise ValueError("DrCIF min_interval must be an int or list of length 3.")
-        if self.series_length_ < self._min_interval[0]:
-            self._min_interval[0] = self.series_length_
-        if X_p.shape[2] < self._min_interval[1]:
-            self._min_interval[1] = X_p.shape[2]
-        if X_d.shape[2] < self._min_interval[2]:
-            self._min_interval[2] = X_d.shape[2]
+        if self.series_length_ <= self._min_interval[0]:
+            self._min_interval[0] = self.series_length_ - 1
+        if X_p.shape[2] <= self._min_interval[1]:
+            self._min_interval[1] = X_p.shape[2] - 1
+        if X_d.shape[2] <= self._min_interval[2]:
+            self._min_interval[2] = X_d.shape[2] - 1
 
         if self.max_interval is None:
             self._max_interval = [
-                self.series_length_ / 2,
-                X_p.shape[2] / 2,
-                X_d.shape[2] / 2,
+                int(self.series_length_ / 2),
+                int(X_p.shape[2] / 2),
+                int(X_d.shape[2] / 2),
             ]
         elif isinstance(self.max_interval, int):
             self._max_interval = [
@@ -348,7 +349,7 @@ class DrCIF(BaseClassifier):
 
         return self
 
-    def _predict(self, X):
+    def _predict(self, X) -> np.ndarray:
         rng = check_random_state(self.random_state)
         return np.array(
             [
@@ -357,7 +358,7 @@ class DrCIF(BaseClassifier):
             ]
         )
 
-    def _predict_proba(self, X):
+    def _predict_proba(self, X) -> np.ndarray:
         n_test_instances, _, series_length = X.shape
         if series_length != self.series_length_:
             raise ValueError(
@@ -398,9 +399,13 @@ class DrCIF(BaseClassifier):
         )
         return output
 
-    def _get_train_probs(self, X, y):
+    def _get_train_probs(self, X, y) -> np.ndarray:
         self.check_is_fitted()
         X, y = check_X_y(X, y, coerce_to_numpy=True)
+
+        # handle the single-class-label case
+        if len(self._class_dictionary) == 1:
+            return self._single_class_y_pred(X, method="predict_proba")
 
         n_instances, n_dims, series_length = X.shape
 
@@ -446,7 +451,11 @@ class DrCIF(BaseClassifier):
         c22 = Catch22(outlier_norm=True)
         T = [X, X_p, X_d]
         rs = 255 if self.random_state == 0 else self.random_state
-        rs = None if self.random_state is None else rs * 37 * (idx + 1)
+        rs = (
+            None
+            if self.random_state is None
+            else (rs * 37 * (idx + 1)) % np.iinfo(np.int32).max
+        )
         rng = check_random_state(rs)
 
         transformed_x = np.empty(
@@ -497,7 +506,7 @@ class DrCIF(BaseClassifier):
 
                 for a in range(0, self._att_subsample_size):
                     transformed_x[p] = _drcif_feature(
-                        T[r], intervals[j], dims[j], atts[a], c22
+                        T[r], intervals[j], dims[j], atts[a], c22, case_id=j
                     )
                     p += 1
 
@@ -506,7 +515,12 @@ class DrCIF(BaseClassifier):
         tree = _clone_estimator(self._base_estimator, random_state=rs)
         transformed_x = transformed_x.T
         transformed_x = transformed_x.round(8)
-        transformed_x = np.nan_to_num(transformed_x, False, 0, 0, 0)
+        if isinstance(self._base_estimator, ContinuousIntervalTree):
+            transformed_x = np.nan_to_num(
+                transformed_x, False, posinf=np.nan, neginf=np.nan
+            )
+        else:
+            transformed_x = np.nan_to_num(transformed_x, False, 0, 0, 0)
         tree.fit(transformed_x, y)
 
         return [
@@ -539,7 +553,7 @@ class DrCIF(BaseClassifier):
                 for _ in range(0, self._n_intervals[r]):
                     for a in range(0, self._att_subsample_size):
                         transformed_x[p] = _drcif_feature(
-                            T[r], intervals[j], dims[j], atts[a], c22
+                            T[r], intervals[j], dims[j], atts[a], c22, case_id=j
                         )
                         p += 1
                     j += 1
@@ -552,12 +566,20 @@ class DrCIF(BaseClassifier):
 
     def _train_probas_for_estimator(self, y, idx):
         rs = 255 if self.random_state == 0 else self.random_state
-        rs = None if self.random_state is None else rs * 37 * (idx + 1)
+        rs = (
+            None
+            if self.random_state is None
+            else (rs * 37 * (idx + 1)) % np.iinfo(np.int32).max
+        )
         rng = check_random_state(rs)
 
         indices = range(self.n_instances_)
         subsample = rng.choice(self.n_instances_, size=self.n_instances_)
         oob = [n for n in indices if n not in subsample]
+
+        results = np.zeros((self.n_instances_, self.n_classes_))
+        if len(oob) == 0:
+            return [results, oob]
 
         clf = _clone_estimator(self._base_estimator, rs)
         clf.fit(self.transformed_data_[idx][subsample], y[subsample])
@@ -570,8 +592,39 @@ class DrCIF(BaseClassifier):
                 new_probas[:, cls_idx] = probas[:, i]
             probas = new_probas
 
-        results = np.zeros((self.n_instances_, self.n_classes_))
         for n, proba in enumerate(probas):
             results[oob[n]] += proba
 
         return [results, oob]
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            For classifiers, a "default" set of parameters should be provided for
+            general testing, and a "results_comparison" set for comparing against
+            previously recorded results if the general set does not produce suitable
+            probabilities to compare against.
+
+        Returns
+        -------
+        params : dict or list of dict, default={}
+            Parameters to create testing instances of the class.
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`.
+        """
+        if parameter_set == "results_comparison":
+            return {"n_estimators": 10, "n_intervals": 2, "att_subsample_size": 4}
+        else:
+            return {
+                "n_estimators": 2,
+                "n_intervals": 2,
+                "att_subsample_size": 2,
+                "save_transformed_data": True,
+            }

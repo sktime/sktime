@@ -2,38 +2,42 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-__author__ = ["Lovkush Agarwal", "Markus Löning", "Luis Zugasti", "Ayushmaan Seth"]
+"""Test reduce."""
+
+__author__ = ["Lovkush Agarwal", "mloning", "Luis Zugasti", "AyushmaanSeth"]
 
 import numpy as np
 import pandas as pd
 import pytest
-from sklearn.base import BaseEstimator
-from sklearn.base import RegressorMixin
+from sklearn.base import BaseEstimator, RegressorMixin
 from sklearn.dummy import DummyRegressor
 from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import make_pipeline
-from sktime.datasets import load_airline
 
+from sktime.datasets import load_airline
 from sktime.forecasting.base import ForecastingHorizon
-from sktime.forecasting.compose import DirectTabularRegressionForecaster
-from sktime.forecasting.compose import MultioutputTabularRegressionForecaster
-from sktime.forecasting.compose import MultioutputTimeSeriesRegressionForecaster
-from sktime.forecasting.compose import RecursiveTabularRegressionForecaster
-from sktime.forecasting.compose import make_reduction
+from sktime.forecasting.compose import (
+    DirectTabularRegressionForecaster,
+    DirectTimeSeriesRegressionForecaster,
+    DirRecTabularRegressionForecaster,
+    DirRecTimeSeriesRegressionForecaster,
+    MultioutputTabularRegressionForecaster,
+    MultioutputTimeSeriesRegressionForecaster,
+    RecursiveTabularRegressionForecaster,
+    RecursiveTimeSeriesRegressionForecaster,
+    make_reduction,
+)
 from sktime.forecasting.compose._reduce import _sliding_window_transform
-from sktime.forecasting.model_selection import SlidingWindowSplitter
-from sktime.forecasting.model_selection import temporal_train_test_split
+from sktime.forecasting.model_selection import (
+    SlidingWindowSplitter,
+    temporal_train_test_split,
+)
 from sktime.forecasting.model_selection.tests.test_split import _get_windows
-from sktime.forecasting.tests._config import TEST_OOS_FHS
-from sktime.forecasting.tests._config import TEST_WINDOW_LENGTHS
+from sktime.forecasting.tests._config import TEST_OOS_FHS, TEST_WINDOW_LENGTHS_INT
+from sktime.performance_metrics.forecasting import mean_absolute_percentage_error
 from sktime.regression.base import BaseRegressor
 from sktime.regression.interval_based import TimeSeriesForestRegressor
 from sktime.transformations.panel.reduce import Tabularizer
-from sktime.forecasting.compose import DirRecTabularRegressionForecaster
-from sktime.forecasting.compose import DirRecTimeSeriesRegressionForecaster
-from sktime.forecasting.compose import RecursiveTimeSeriesRegressionForecaster
-from sktime.forecasting.compose import DirectTimeSeriesRegressionForecaster
-from sktime.performance_metrics.forecasting import mean_absolute_percentage_error
 from sktime.utils._testing.forecasting import make_forecasting_problem
 from sktime.utils.validation.forecasting import check_fh
 
@@ -44,10 +48,11 @@ FH = ForecastingHorizon(1)
 
 
 @pytest.mark.parametrize("n_timepoints", N_TIMEPOINTS)
-@pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
+@pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS_INT)
 @pytest.mark.parametrize("fh", TEST_OOS_FHS)
 @pytest.mark.parametrize("scitype", ["tabular-regressor", "time-series-regressor"])
 def test_sliding_window_transform_against_cv(n_timepoints, window_length, fh, scitype):
+    """Test sliding window transform against cv."""
     fh = check_fh(fh)
     y = pd.Series(_make_y(0, n_timepoints))
     cv = SlidingWindowSplitter(fh=fh, window_length=window_length)
@@ -79,9 +84,10 @@ def _make_y_X(n_timepoints, n_variables):
 
 @pytest.mark.parametrize("n_timepoints", N_TIMEPOINTS)
 @pytest.mark.parametrize("n_variables", N_VARIABLES)
-@pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
+@pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS_INT)
 @pytest.mark.parametrize("fh", TEST_OOS_FHS)
-def test_sliding_window_tranform_tabular(n_timepoints, window_length, n_variables, fh):
+def test_sliding_window_transform_tabular(n_timepoints, window_length, n_variables, fh):
+    """Test sliding window transform tabular."""
     y, X = _make_y_X(n_timepoints=n_timepoints, n_variables=n_variables)
     fh = check_fh(fh, enforce_relative=True)
     fh_max = fh[-1]
@@ -108,9 +114,10 @@ def test_sliding_window_tranform_tabular(n_timepoints, window_length, n_variable
 
 @pytest.mark.parametrize("n_timepoints", N_TIMEPOINTS)
 @pytest.mark.parametrize("n_variables", N_VARIABLES)
-@pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
+@pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS_INT)
 @pytest.mark.parametrize("fh", TEST_OOS_FHS)
-def test_sliding_window_tranform_panel(n_timepoints, window_length, n_variables, fh):
+def test_sliding_window_transform_panel(n_timepoints, window_length, n_variables, fh):
+    """Test sliding window transform panel."""
     y, X = _make_y_X(n_timepoints=n_timepoints, n_variables=n_variables)
     fh = check_fh(fh, enforce_relative=True)
     fh_max = fh[-1]
@@ -135,7 +142,8 @@ def test_sliding_window_tranform_panel(n_timepoints, window_length, n_variables,
 
 
 def test_sliding_window_transform_explicit():
-    """
+    """Test sliding window transform explicit.
+
     testing with explicitly written down expected outputs
     intended to help future contributors understand the transformation
     """
@@ -186,7 +194,7 @@ def _make_y(start, end, method="linear-trend", slope=1):
 
 
 @pytest.mark.parametrize("fh", TEST_OOS_FHS)
-@pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
+@pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS_INT)
 @pytest.mark.parametrize("strategy", STRATEGIES)
 @pytest.mark.parametrize(
     "regressor, scitype",
@@ -206,6 +214,7 @@ def _make_y(start, end, method="linear-trend", slope=1):
 def test_linear_extrapolation_endogenous_only(
     fh, window_length, strategy, method, slope, regressor, scitype
 ):
+    """Test linear extrapolation endogenous only."""
     n_timepoints = 13
     y = _make_y(0, n_timepoints, method=method, slope=slope)
     y = pd.Series(y)
@@ -223,15 +232,18 @@ def test_linear_extrapolation_endogenous_only(
 
 
 @pytest.mark.parametrize("fh", [1, 3, 5])
-@pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
+@pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS_INT)
 @pytest.mark.parametrize("strategy", STRATEGIES)
 @pytest.mark.parametrize("scitype", ["time-series-regressor", "tabular-regressor"])
 def test_dummy_regressor_mean_prediction_endogenous_only(
     fh, window_length, strategy, scitype
 ):
-    # The DummyRegressor ignores the input feature data X, hence we can use it for
-    # testing reduction from forecasting to both tabular and time series regression.
-    # The DummyRegressor also supports the 'multioutput' strategy.
+    """Test dummy regressor mean prediction endogenous_only.
+
+    The DummyRegressor ignores the input feature data X, hence we can use it for
+    testing reduction from forecasting to both tabular and time series regression.
+    The DummyRegressor also supports the 'multioutput' strategy.
+    """
     y = make_forecasting_problem()
     fh = check_fh(fh)
     y_train, y_test = temporal_train_test_split(y, fh=fh)
@@ -291,17 +303,26 @@ class _TestTabularRegressor(BaseEstimator, RegressorMixin, _Recorder):
 class _TestTimeSeriesRegressor(_Recorder, BaseRegressor):
     pass
 
+    def _fit(self, X, y):
+        """Empty method to satisfy abstract parent. Needs refactoring."""
+
+    def _predict(self, X):
+        """Empty method to satisfy abstract parent. Needs refactoring."""
+
 
 @pytest.mark.parametrize(
     "estimator", [_TestTabularRegressor(), _TestTimeSeriesRegressor()]
 )
-@pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
+@pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS_INT)
 @pytest.mark.parametrize("strategy", ["recursive", "direct", "multioutput"])
 def test_consistent_data_passing_to_component_estimators_in_fit_and_predict(
     estimator, window_length, strategy
 ):
-    # We generate data that represents time points in its values, i.e. an array of
-    # values that increase in unit steps for each time point.
+    """Test consistent data passing to component estimators in fit and predict.
+
+    We generate data that represents time points in its values, i.e. an array of
+    values that increase in unit steps for each time point.
+    """
     n_variables = 3
     n_timepoints = 10
     y, X = _make_y_X(n_timepoints, n_variables)
@@ -342,8 +363,9 @@ def test_consistent_data_passing_to_component_estimators_in_fit_and_predict(
 
 
 @pytest.mark.parametrize("scitype, strategy, klass", _REGISTRY)
-@pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
+@pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS_INT)
 def test_make_reduction_construct_instance(scitype, strategy, klass, window_length):
+    """Test make_reduction."""
     estimator = DummyRegressor()
     forecaster = make_reduction(
         estimator, window_length=window_length, scitype=scitype, strategy=strategy
@@ -360,13 +382,17 @@ def test_make_reduction_construct_instance(scitype, strategy, klass, window_leng
     ],
 )
 def test_make_reduction_infer_scitype(estimator, scitype):
+    """Test make_reduction."""
     forecaster = make_reduction(estimator, scitype="infer")
     assert forecaster._estimator_scitype == scitype
 
 
 def test_make_reduction_infer_scitype_raises_error():
-    # The scitype of pipeline cannot be inferred here, as it may be used together
-    # with a tabular or time series regressor.
+    """Test make_reduction.
+
+    The scitype of pipeline cannot be inferred here, as it may be used together
+    with a tabular or time series regressor.
+    """
     estimator = make_pipeline(Tabularizer(), LinearRegression())
     with pytest.raises(ValueError):
         make_reduction(estimator, scitype="infer")
@@ -374,8 +400,10 @@ def test_make_reduction_infer_scitype_raises_error():
 
 @pytest.mark.parametrize("fh", TEST_OOS_FHS)
 def test_multioutput_direct_equivalence_tabular_linear_regression(fh):
-    # multioutput and direct strategies with linear regression
-    # regressor should produce same predictions
+    """Test multioutput and direct strategies with linear regression.
+
+    Regressor should produce same predictions
+    """
     y, X = make_forecasting_problem(make_X=True)
     y_train, y_test, X_train, X_test = temporal_train_test_split(y, X, fh=fh)
 
@@ -466,6 +494,10 @@ EXPECTED_AIRLINE_LINEAR_DIRECT = [
             EXPECTED_AIRLINE_LINEAR_RECURSIVE,
         ),
         (
+            RecursiveTabularRegressionForecaster(LinearRegression(), pooling="global"),
+            EXPECTED_AIRLINE_LINEAR_RECURSIVE,
+        ),
+        (
             DirectTimeSeriesRegressionForecaster(
                 make_pipeline(Tabularizer(), LinearRegression())
             ),
@@ -488,9 +520,11 @@ EXPECTED_AIRLINE_LINEAR_DIRECT = [
     ],
 )
 def test_reductions_airline_data(forecaster, expected):
-    """
-    test reduction forecasters by making prediction on airline dataset
-    using linear estimators. predictions compared with values calculated by Lovkush
+    """Test reduction forecasters.
+
+    Test reduction forecasters by making prediction
+    on airline dataset using linear estimators.
+    Predictions compared with values calculated by Lovkush
     Agarwal on their local machine in Mar 2021
     """
     y = load_airline()
@@ -503,8 +537,10 @@ def test_reductions_airline_data(forecaster, expected):
 
 
 def test_dirrec_against_recursive_accumulated_error():
-    # recursive and dirrec regressor strategies
-    # dirrec regressor should produce lower error due to less cumulative error
+    """Test recursive and dirrec regressor strategies.
+
+    dirrec regressor should produce lower error due to less cumulative error
+    """
     y = load_airline()
     y_train, y_test = temporal_train_test_split(y, test_size=24)
     fh = ForecastingHorizon(y_test.index, is_relative=False)

@@ -1,19 +1,20 @@
 # -*- coding: utf-8 -*-
+"""Discrete wavelet transform."""
+import math
+
 import numpy as np
 import pandas as pd
-import math
-from sktime.transformations.base import _PanelToPanelTransformer
-from sktime.datatypes._panel._convert import from_nested_to_2d_array
-from sktime.utils.validation.panel import check_X
+
+from sktime.datatypes import convert
+from sktime.transformations.base import BaseTransformer
 
 __author__ = "Vincent Nicholson"
 
 
-class DWTTransformer(_PanelToPanelTransformer):
+class DWTTransformer(BaseTransformer):
+    """Discrete Wavelet Transform Transformer.
 
-    """
-    The Discrete Wavelet Transform Transformer. This class performs
-    the Haar wavelet transformation on a time series.
+    Performs the Haar wavelet transformation on a time series.
 
     Parameters
     ----------
@@ -21,36 +22,54 @@ class DWTTransformer(_PanelToPanelTransformer):
                  transformation.
     """
 
+    _tags = {
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
+        "scitype:transform-output": "Series",
+        # what scitype is returned: Primitives, Series, Panel
+        "scitype:instancewise": False,  # is this an instance-wise transform?
+        "X_inner_mtype": "nested_univ",  # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
+        "fit_is_empty": True,
+    }
+
     def __init__(self, num_levels=3):
         self.num_levels = num_levels
         super(DWTTransformer, self).__init__()
 
-    def transform(self, X, y=None):
-        """
+    def _transform(self, X, y=None):
+        """Transform X and return a transformed version.
+
+        private _transform containing core logic, called from transform
+
         Parameters
         ----------
-        X : a pandas dataframe of shape = [n_samples, num_dims]
-            The training input samples.
+        X : nested pandas DataFrame of shape [n_instances, n_features]
+            each cell of X must contain pandas.Series
+            Data to fit transform to
+        y : ignored argument for interface compatibility
+            Additional data, e.g., labels for transformation
 
         Returns
         -------
-        dims: a pandas data frame of shape
-              = [n_samples, num_dims]
+        Xt : nested pandas DataFrame of shape [n_instances, n_features]
+            each cell of Xt contains pandas.Series
+            transformed version of X
         """
-
-        # Check the data
-        self.check_is_fitted()
-        X = check_X(X, enforce_univariate=False, coerce_to_pandas=True)
-
         self._check_parameters()
 
         # Get information about the dataframe
         col_names = X.columns
 
-        df = pd.DataFrame()
+        Xt = pd.DataFrame()
         for x in col_names:
             # Convert one of the columns in the dataframe to numpy array
-            arr = from_nested_to_2d_array(pd.DataFrame(X[x]), return_numpy=True)
+            arr = convert(
+                pd.DataFrame(X[x]),
+                from_type="nested_univ",
+                to_type="numpyflat",
+                as_scitype="Panel",
+            )
 
             transformedData = self._extract_wavelet_coefficients(arr)
 
@@ -63,14 +82,12 @@ class DWTTransformer(_PanelToPanelTransformer):
                 inst = transformedData[i]
                 colToAdd.append(pd.Series(inst))
 
-            df[x] = colToAdd
+            Xt[x] = colToAdd
 
-        return df
+        return Xt
 
     def _extract_wavelet_coefficients(self, data):
-        """
-        Function to extract the wavelet coefficients
-        of a 2d array of time series.
+        """Extract wavelet coefficients of a 2d array of time series.
 
         The coefficients correspond to the wavelet coefficients
         from levels 1 to num_levels followed by the approximation
@@ -100,8 +117,7 @@ class DWTTransformer(_PanelToPanelTransformer):
         return res
 
     def _check_parameters(self):
-        """
-        Function for checking the values of parameters inserted into DWT.
+        """Check the values of parameters passed to DWT.
 
         Throws
         ------
@@ -119,9 +135,7 @@ class DWTTransformer(_PanelToPanelTransformer):
             )
 
     def _get_approx_coefficients(self, arr):
-        """
-        Function to get the approximate coefficients at a given level.
-        """
+        """Get the approximate coefficients at a given level."""
         new = []
         if len(arr) == 1:
             return [arr[0]]
@@ -130,9 +144,7 @@ class DWTTransformer(_PanelToPanelTransformer):
         return new
 
     def _get_wavelet_coefficients(self, arr):
-        """
-        Function to get the wavelet coefficients at a given level.
-        """
+        """Get the wavelet coefficients at a given level."""
         new = []
         # if length is 1, just return the list back
         if len(arr) == 1:

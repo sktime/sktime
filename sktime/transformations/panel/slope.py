@@ -1,15 +1,21 @@
 # -*- coding: utf-8 -*-
-import numpy as np
-import pandas as pd
+"""Slope transformer."""
 import math
 import statistics
-from sktime.transformations.base import _PanelToPanelTransformer
-from sktime.datatypes._panel._convert import from_nested_to_2d_array
-from sktime.utils.validation.panel import check_X
+
+import numpy as np
+import pandas as pd
+
+from sktime.datatypes import convert
+from sktime.transformations.base import BaseTransformer
+
+__all__ = ["SlopeTransformer"]
+__author__ = ["mloning"]
 
 
-class SlopeTransformer(_PanelToPanelTransformer):
-    """
+class SlopeTransformer(BaseTransformer):
+    """Slope-by-segment transformation.
+
     Class to perform the Slope transformation on a time series
     dataframe. It splits a time series into num_intervals segments.
     Then within each segment, it performs a total least
@@ -17,31 +23,46 @@ class SlopeTransformer(_PanelToPanelTransformer):
 
     Parameters
     ----------
-    num_intervals   :   int, number of approx equal segments
-                        to split the time series into.
+    num_intervals : int, number of approx equal segments
+                    to split the time series into.
     """
+
+    _tags = {
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
+        "scitype:transform-output": "Series",
+        # what scitype is returned: Primitives, Series, Panel
+        "scitype:instancewise": False,  # is this an instance-wise transform?
+        "X_inner_mtype": "nested_univ",  # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
+        "fit_is_empty": True,
+        "capability:unequal_length:removes": True,
+        # is transform result always guaranteed to be equal length (and series)?
+    }
 
     def __init__(self, num_intervals=8):
         self.num_intervals = num_intervals
         super(SlopeTransformer, self).__init__()
 
-    def transform(self, X, y=None):
+    def _transform(self, X, y=None):
+        """Transform X and return a transformed version.
 
-        """
+        private _transform containing core logic, called from transform
+
         Parameters
         ----------
-        X : a pandas dataframe of shape = [n_samples, num_dims]
-            The training input samples.
+        X : nested pandas DataFrame of shape [n_instances, n_features]
+            each cell of X must contain pandas.Series
+            Data to fit transform to
+        y : ignored argument for interface compatibility
+            Additional data, e.g., labels for transformation
 
         Returns
         -------
-        df: a pandas data frame of shape = [num_intervals, num_dims]
+        Xt : nested pandas DataFrame of shape [n_instances, n_features]
+            each cell of Xt contains pandas.Series
+            transformed version of X
         """
-
-        # Check the data
-        self.check_is_fitted()
-        X = check_X(X, coerce_to_pandas=True)
-
         # Get information about the dataframe
         n_timepoints = len(X.iloc[0, 0])
         num_instances = X.shape[0]
@@ -49,11 +70,16 @@ class SlopeTransformer(_PanelToPanelTransformer):
 
         self._check_parameters(n_timepoints)
 
-        df = pd.DataFrame()
+        Xt = pd.DataFrame()
 
         for x in col_names:
             # Convert one of the columns in the dataframe to numpy array
-            arr = from_nested_to_2d_array(pd.DataFrame(X[x]), return_numpy=True)
+            arr = convert(
+                pd.DataFrame(X[x]),
+                from_type="nested_univ",
+                to_type="numpyflat",
+                as_scitype="Panel",
+            )
 
             # Calculate gradients
             transformedData = []
@@ -70,13 +96,13 @@ class SlopeTransformer(_PanelToPanelTransformer):
                 inst = transformedData[i]
                 colToAdd.append(pd.Series(inst))
 
-            df[x] = colToAdd
+            Xt[x] = colToAdd
 
-        return df
+        return Xt
 
     def _get_gradients_of_lines(self, X):
+        """Get gradients of lines.
 
-        """
         Function to get the gradients of the line of best fits
         given a time series.
 
@@ -90,7 +116,6 @@ class SlopeTransformer(_PanelToPanelTransformer):
                     It contains the gradients of the line of best fit
                     for each interval in a time series.
         """
-
         # Firstly, split the time series into approx equal length intervals
         splitTimeSeries = self._split_time_series(X)
         gradients = []
@@ -101,8 +126,8 @@ class SlopeTransformer(_PanelToPanelTransformer):
         return gradients
 
     def _get_gradient(self, Y):
+        """Get gradient of lines.
 
-        """
         Function to get the gradient of the line of best fit given a
         section of a time series.
 
@@ -117,7 +142,6 @@ class SlopeTransformer(_PanelToPanelTransformer):
         -------
         m : an int corresponding to the gradient of the best fit line.
         """
-
         # Create a list that contains 1,2,3,4,...,len(Y) for the x coordinates.
         X = [(i + 1) for i in range(len(Y))]
 
@@ -146,13 +170,12 @@ class SlopeTransformer(_PanelToPanelTransformer):
             m = 0
         else:
             # Gradient is defined as (w+sqrt(w^2+r^2))/r
-            m = (w + math.sqrt(w ** 2 + r ** 2)) / r
+            m = (w + math.sqrt(w**2 + r**2)) / r
 
         return m
 
     def _split_time_series(self, X):
-        """
-        Function to split a time series into approximately equal intervals.
+        """Split a time series into approximately equal intervals.
 
         Adopted from = https://stackoverflow.com/questions/2130016/
                        splitting-a-list-into-n-parts-of-approximately
@@ -177,8 +200,7 @@ class SlopeTransformer(_PanelToPanelTransformer):
         return output
 
     def _check_parameters(self, n_timepoints):
-        """
-        Function for checking the values of parameters inserted into Slope.
+        """Check values of parameters for Slope transformer.
 
         Throws
         ------

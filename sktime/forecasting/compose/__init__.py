@@ -11,6 +11,7 @@ __all__ = [
     "AutoEnsembleForecaster",
     "TransformedTargetForecaster",
     "ForecastingPipeline",
+    "ForecastX",
     "DirectTabularRegressionForecaster",
     "DirectTimeSeriesRegressionForecaster",
     "MultioutputTabularRegressionForecaster",
@@ -22,16 +23,21 @@ __all__ = [
     "StackingForecaster",
     "MultiplexForecaster",
     "make_reduction",
+    "BaggingForecaster",
+    "ForecastByLevel",
 ]
 
+from sktime.forecasting.compose._bagging import BaggingForecaster
 from sktime.forecasting.compose._column_ensemble import ColumnEnsembleForecaster
 from sktime.forecasting.compose._ensemble import (
     AutoEnsembleForecaster,
     EnsembleForecaster,
 )
+from sktime.forecasting.compose._grouped import ForecastByLevel
 from sktime.forecasting.compose._multiplexer import MultiplexForecaster
 from sktime.forecasting.compose._pipeline import (
     ForecastingPipeline,
+    ForecastX,
     TransformedTargetForecaster,
 )
 from sktime.forecasting.compose._reduce import (

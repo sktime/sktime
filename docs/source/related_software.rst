@@ -6,14 +6,14 @@ Related Software
 
 The Python ecosystem contains numerous packages that can be used to store
 and process time series data. The following list is by no means exhaustive.
-If you miss anything, feel free to open a `PR <https://github.com/alan-turing-institute/sktime/edit/main/docs/source/related_software.rst>`_.
+If you miss anything, feel free to open a `PR <https://github.com/sktime/sktime/edit/main/docs/source/related_software.rst>`_.
 
 **Table of contents**
 
 * `Packages for machine learning, statistics or analytics with time series <#machine-learning>`_,
 * `Other time series related frameworks or database systems <#time-series-databases-and-frameworks>`_.
 
-For time series data containers, see `our wiki entry <https://github.com/alan-turing-institute/sktime/wiki/Time-series-data-container>`_.
+For time series data containers, see `our wiki entry <https://github.com/sktime/sktime/wiki/Time-series-data-container>`_.
 
 Machine learning
 ================
@@ -44,6 +44,8 @@ Libraries
      - Library for unsupervised learning with time series including dimensionality reduction, clustering, and Markov model estimation
    * - `deltapy <https://github.com/firmai/deltapy>`_
      - Collection of data augmentation tools, including feature extraction from time series, wraps existing toolkits like tsfresh
+   * - `diviner <https://github.com/databricks/diviner>`_
+     - Diviner by Databricks enables large-scale time series forecasting and serves as a wrapper around other open source forecasting libraries
    * - `dtaidistance <https://github.com/wannesm/dtaidistance>`_
      - Time series distances
    * - `dtw <https://github.com/pierre-rouanet/dtw>`_
@@ -114,6 +116,8 @@ Libraries
      - Contains time series preprocessing, transformation as well as classification techniques
    * - `ruptures <https://github.com/deepcharles/ruptures>`_
      - time series annotation: change point detection, segmentation
+   * - `salesforce-merlion <https://github.com/salesforce/Merlion/>`_
+     - Library from salesforce for forecasting, anomaly detection, and change point detection
    * - `scikit-fda <https://github.com/GAA-UAM/scikit-fda>`_
      - A Python library to perform Functional Data Analysis, compatible with scikit-learn, including representation, preprocessing, exploratory analysis and machine learning methods
    * - `scikit-multiflow <https://scikit-multiflow.github.io>`_
@@ -126,8 +130,10 @@ Libraries
      - Extends the scikit-learn pipeline concept to time series annotation
    * - `seglearn <https://github.com/dmbee/seglearn>`_
      - Extends the scikit-learn pipeline concept to time series data for classification, regression and forecasting
-   * - `sktime <https://github.com/alan-turing-institute/sktime>`_
+   * - `sktime <https://github.com/sktime/sktime>`_
      - A scikit-learn compatible library for learning with time series/panel data including time series classification/regression and (supervised/panel) forecasting
+   * - `statsforecast <https://github.com/Nixtla/statsforecast>`_
+     - StatsForecast by Nixtla offers a collection of widely used univariate time series forecasting models optimized for high performance using numba
    * - `statsmodels <https://github.com/statsmodels/statsmodels>`_
      - Contains a submodule for classical time series models and hypothesis tests
    * - `stumpy <https://github.com/TDAmeritrade/stumpy>`_

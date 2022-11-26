@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # Helper script to download and install sktime from test PyPI to check wheel
 # and upload prior to new release
@@ -15,7 +15,9 @@ cd "$HOME"/testdir
 
 # Create test environment
 echo "Creating test environment ..."
-source $(conda info --base)/etc/profile.d/conda.sh  # set up conda
+
+# shellcheck disable=SC1091
+source "$(conda info --base)"/etc/profile.d/conda.sh  # set up conda
 conda create -n sktime_testenv python=3.7
 conda activate sktime_testenv
 

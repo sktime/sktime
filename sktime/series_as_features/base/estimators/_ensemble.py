@@ -3,7 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements base class for time series forests."""
 
-__author__ = ["Markus Löning", "Ayushmaan Seth"]
+__author__ = ["mloning", "AyushmaanSeth"]
 __all__ = ["BaseTimeSeriesForest"]
 
 from abc import abstractmethod
@@ -26,7 +26,6 @@ from sklearn.exceptions import DataConversionWarning
 from sklearn.utils import check_array, check_random_state, compute_sample_weight
 
 from sktime.transformations.panel.summarize import RandomIntervalFeatureExtractor
-from sktime.utils.validation.panel import check_X_y
 
 
 def _parallel_build_trees(
@@ -43,11 +42,10 @@ def _parallel_build_trees(
 ):
     """Private function used to fit a single tree in parallel."""
     if verbose > 1:
-        print("building tree %d of %d" % (tree_idx + 1, n_trees))  # noqa: T001
+        print("building tree %d of %d" % (tree_idx + 1, n_trees))  # noqa: T201
 
     # name of step of final estimator in pipeline
     final_estimator = tree.steps[-1][1]
-    final_estimator_name = tree.steps[-1][0]
 
     if forest.bootstrap:
         n_samples = X.shape[0]
@@ -68,11 +66,9 @@ def _parallel_build_trees(
                 curr_sample_weight *= compute_sample_weight("auto", y, indices)
         elif class_weight == "balanced_subsample":
             curr_sample_weight *= compute_sample_weight("balanced", y, indices)
-        fit_params = {f"{final_estimator_name}__sample_weight": curr_sample_weight}
-        tree.fit(X, y, **fit_params)
+        tree.fit(X, y)
     else:
-        fit_params = {f"{final_estimator_name}__sample_weight": sample_weight}
-        tree.fit(X, y, **fit_params)
+        tree.fit(X, y)
 
     return tree
 
@@ -124,7 +120,7 @@ class BaseTimeSeriesForest(BaseForest):
 
         return estimator
 
-    def fit(self, X, y, sample_weight=None):
+    def _fit(self, X, y, sample_weight=None):
         """Build a forest of trees from the training set (X, y).
 
         Parameters
@@ -147,7 +143,7 @@ class BaseTimeSeriesForest(BaseForest):
         -------
         self : object
         """
-        X, y = check_X_y(X, y, enforce_univariate=True)
+        #        X, y = check_X_y(X, y, enforce_univariate=True)
 
         # Validate or convert input data
         if sample_weight is not None:
@@ -372,3 +368,10 @@ class BaseTimeSeriesForest(BaseForest):
             fis /= fis_count
 
         return fis
+
+    def _get_fitted_params(self):
+
+        return {
+            "classes": self.classes_,
+            "estimators": self.estimators_,
+        }

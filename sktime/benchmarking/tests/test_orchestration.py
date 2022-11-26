@@ -1,35 +1,29 @@
 # -*- coding: utf-8 -*-
-__author__ = ["Viktor Kazakov", "Markus Löning"]
+"""Test orchestration."""
+__author__ = ["viktorkaz", "mloning"]
 
 import os
 
 import numpy as np
 import pytest
+from sklearn.dummy import DummyClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score, f1_score, make_scorer
+from sklearn.model_selection import StratifiedKFold, cross_val_score
+from sklearn.pipeline import Pipeline
 
 # get data path for testing dataset loading from hard drive
 import sktime
-from sklearn.dummy import DummyClassifier
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score
-from sklearn.metrics import f1_score
-from sklearn.metrics import make_scorer
-from sklearn.model_selection import StratifiedKFold
-from sklearn.model_selection import cross_val_score
-from sklearn.pipeline import Pipeline
-from sktime.benchmarking.data import RAMDataset
-from sktime.benchmarking.data import UEADataset
+from sktime.benchmarking.data import RAMDataset, UEADataset
 from sktime.benchmarking.evaluation import Evaluator
-from sktime.benchmarking.metrics import AggregateMetric
-from sktime.benchmarking.metrics import PairwiseMetric
+from sktime.benchmarking.metrics import AggregateMetric, PairwiseMetric
 from sktime.benchmarking.orchestration import Orchestrator
-from sktime.benchmarking.results import HDDResults
-from sktime.benchmarking.results import RAMResults
+from sktime.benchmarking.results import HDDResults, RAMResults
 from sktime.benchmarking.strategies import TSCStrategy
 from sktime.benchmarking.tasks import TSCTask
-from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
-from sktime.datasets import load_arrow_head
-from sktime.datasets import load_gunpoint
 from sktime.classification.compose import ComposableTimeSeriesForestClassifier
+from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
+from sktime.datasets import load_arrow_head, load_gunpoint
 from sktime.series_as_features.model_selection import SingleSplit
 from sktime.transformations.panel.reduce import Tabularizer
 
@@ -38,7 +32,7 @@ DATAPATH = os.path.join(REPOPATH, "datasets/data/")
 
 
 def make_reduction_pipeline(estimator):
-    """Helper function to use tabular estimators in time series setting"""
+    """Use tabular estimators in time series setting."""
     pipeline = Pipeline([("transform", Tabularizer()), ("clf", estimator)])
     return pipeline
 
@@ -46,7 +40,8 @@ def make_reduction_pipeline(estimator):
 # simple test of orchestration and metric evaluation
 @pytest.mark.parametrize("data_loader", [load_gunpoint, load_arrow_head])
 def test_automated_orchestration_vs_manual(data_loader):
-    data = data_loader()
+    """Test orchestration."""
+    data = data_loader(return_X_y=False)
 
     dataset = RAMDataset(dataset=data, name="data")
     task = TSCTask(target="class_val")
@@ -90,7 +85,7 @@ def test_automated_orchestration_vs_manual(data_loader):
 @pytest.mark.parametrize(
     "dataset",
     [
-        RAMDataset(dataset=load_arrow_head(), name="ArrowHead"),
+        RAMDataset(dataset=load_arrow_head(return_X_y=False), name="ArrowHead"),
         UEADataset(path=DATAPATH, name="GunPoint", target_name="class_val"),
     ],
 )
@@ -111,6 +106,7 @@ def test_automated_orchestration_vs_manual(data_loader):
 def test_single_dataset_single_strategy_against_sklearn(
     dataset, cv, metric_func, estimator, results_cls, tmpdir
 ):
+    """Test against sklearn."""
     # set up orchestration
     task = TSCTask(target="class_val")
 
@@ -164,7 +160,8 @@ def test_single_dataset_single_strategy_against_sklearn(
 
 # simple test of sign test and ranks
 def test_stat():
-    data = load_gunpoint(split="train")
+    """Test sign ranks."""
+    data = load_gunpoint(split="train", return_X_y=False)
     dataset = RAMDataset(dataset=data, name="gunpoint")
     task = TSCTask(target="class_val")
 

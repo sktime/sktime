@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Class to iteratively apply differences to a time series."""
-__author__ = ["Ryan Kuhns"]
+__author__ = ["RNKuhns", "fkiraly"]
 __all__ = ["Differencer"]
 
 from typing import Union
@@ -11,10 +11,9 @@ import numpy as np
 import pandas as pd
 from sklearn.utils import check_array
 
-from sktime.forecasting.base import ForecastingHorizon
-from sktime.transformations.base import _SeriesToSeriesTransformer
+from sktime.datatypes._utilities import get_cutoff, update_data
+from sktime.transformations.base import BaseTransformer
 from sktime.utils.validation import is_int
-from sktime.utils.validation.series import check_series
 
 
 def _check_lags(lags):
@@ -42,33 +41,142 @@ def _check_lags(lags):
     return lags
 
 
-def _diff_transform(Z: Union[pd.Series, pd.DataFrame], lags: np.array):
-    """Perform differencing on Series or DataFrame."""
-    Zt = Z.copy()
+def _diff_transform(X: Union[pd.Series, pd.DataFrame], lags: np.array):
+    """Perform differencing on Series or DataFrame.
 
-    if len(lags) != 0:
-        for lag in lags:
-            # converting lag to int since pandas complains if it's np.int64
-            Zt = Zt.diff(periods=int(lag))
+    Parameters
+    ----------
+    X : pd.DataFrame
+    lags : int or iterable of int, e.g., list of int
 
-    return Zt
+    Returns
+    -------
+    `X` differenced at lags `lags`, always a copy (no reference)
+    if `lags` is int, applies diff to X at period `lags`
+        returns X.diff(periods=lag)
+    if `lags` is list of int, loops over elements from start to end
+        and applies diff to X at period lags[value], for value in the list `lags`
+    """
+    if isinstance(lags, int):
+        lags = [lags]
+
+    Xt = X
+
+    for lag in lags:
+        # converting lag to int since pandas complains if it's np.int64
+        Xt = Xt.diff(periods=int(lag))
+
+    return Xt
 
 
-def _inverse_diff(Z, lag):
-    for i in range(lag):
-        Z.iloc[i::lag] = Z.iloc[i::lag].cumsum()
+def _diff_to_seq(X: Union[pd.Series, pd.DataFrame], lags: np.array):
+    """Difference a series multiple times and return intermediate results.
 
-    return Z
+    Parameters
+    ----------
+    X : pd.DataFrame
+    lags : int or iterable of int, e.g., list of int
+
+    Returns
+    -------
+    list, i-th element is _diff_transform(X, lags[0:i])
+    """
+    if X is None:
+        return None
+
+    if isinstance(lags, int):
+        lags = [lags]
+
+    ret = [X]
+    Xd = X
+    for lag in lags:
+        # converting lag to int since pandas complains if it's np.int64
+        Xd = Xd.diff(periods=int(lag))
+        ret += [Xd]
+    return ret
 
 
-class Differencer(_SeriesToSeriesTransformer):
+def _shift(ix, periods):
+    """Shift pandas index by periods."""
+    if isinstance(ix, (pd.DatetimeIndex, pd.PeriodIndex, pd.TimedeltaIndex)):
+        return ix.shift(periods)
+    else:
+        return ix + periods
+
+
+def _inverse_diff(X, lags, X_diff_seq=None):
+    """Inverse to difference.
+
+    Parameters
+    ----------
+    X : pd.Series or pd.DataFrame
+    lags : int or iterable of int, e.g., list of int
+    X_diff_seq : list of pd.Series or pd.DataFrame
+        elements must match type, columns and index type of X
+        length must be equal or longer than length of lags
+
+    Returns
+    -------
+    `X` inverse differenced at lags `lags`, always a copy (no reference)
+    if `lags` is int, applies cumsum to X at period `lag`
+        for i in range(lag), X.iloc[i::lag] = X.iloc[i::lag].cumsum()
+    if `lags` is list of int, loops over elements from start to end
+        and applies cumsum to X at period lag[value], for value in the list `lag`
+    if `X_diff_seq` is provided, uses values stored for indices outside `X` to invert
+    """
+    if isinstance(lags, int):
+        lags = [lags]
+
+    # if lag is numpy, convert to list
+    if isinstance(lags, (np.ndarray, list, tuple)):
+        lags = list(lags)
+
+    # if lag is a list, recurse
+    if isinstance(lags, (list, tuple)):
+        if len(lags) == 0:
+            return X
+
+    lags = lags.copy()
+
+    # lag_first = pop last element of lags
+    lag_last = lags.pop()
+
+    # invert last lag index
+    if X_diff_seq is not None:
+        X_diff_orig = X_diff_seq[len(lags)]
+        X_ix_shift = X.index.shift(-lag_last)
+        X_update = X_diff_orig.loc[X_ix_shift.intersection(X_diff_orig.index)]
+
+        X = X.combine_first(X_update)
+
+    X_diff_last = X.copy()
+
+    if lag_last < 0:
+        X_diff_last = X_diff_last.iloc[::-1]
+
+    abs_lag = abs(lag_last)
+
+    for i in range(abs_lag):
+        X_diff_last.iloc[i::abs_lag] = X_diff_last.iloc[i::abs_lag].cumsum()
+
+    if lag_last < 0:
+        X_diff_last = X_diff_last.iloc[::-1]
+
+    # if any more lags, recurse
+    if len(lags) > 0:
+        return _inverse_diff(X_diff_last, lags, X_diff_seq=X_diff_seq)
+    # else return
+    else:
+        return X_diff_last
+
+
+class Differencer(BaseTransformer):
     """Apply iterative differences to a timeseries.
 
     The transformation works for univariate and multivariate timeseries. However,
     the multivariate case applies the same differencing to every series.
 
-    Difference transformations are applied at the specified lags in the order
-    provided.
+    Difference transformations are applied at the specified lags in the order provided.
 
     For example, given a timeseries with monthly periodicity, using lags=[1, 12]
     corresponds to applying a standard first difference to handle trend, and
@@ -85,18 +193,21 @@ class Differencer(_SeriesToSeriesTransformer):
         The lags used to difference the data.
         If a single `int` value is
 
-    drop_na : bool, default = True
-        Whether the differencer should drop the initial observations that
-        contain missing values as a result of the differencing operation(s).
+    na_handling : str, optional, default = "fill_zero"
+        How to handle the NaNs that appear at the start of the series from differencing
+        Example: there are only 3 differences in a series of length 4,
+            differencing [a, b, c, d] gives [?, b-a, c-b, d-c]
+            so we need to determine what happens with the "?" (= unknown value)
+        "drop_na" - unknown value(s) are dropped, the series is shortened
+        "keep_na" - unknown value(s) is/are replaced by NaN
+        "fill_zero" - unknown value(s) is/are replaced by zero
 
-    Attributes
-    ----------
-    lags : int or array-like
-        Lags used to perform the differencing of the input series.
-
-    drop_na : bool
-        Stores whether the Differencer drops the initial observations that contain
-        missing values as a result of the differencing operation(s).
+    memory : str, optional, default = "all"
+        how much of previously seen X to remember, for exact reconstruction of inverse
+        "all" : estimator remembers all X, inverse is correct for all indices seen
+        "latest" : estimator only remembers latest X necessary for future reconstruction
+            inverses at any time stamps after fit are correct, but not past time stamps
+        "none" : estimator does not remember any X, inverse is direct cumsum
 
     Examples
     --------
@@ -108,206 +219,174 @@ class Differencer(_SeriesToSeriesTransformer):
     """
 
     _tags = {
-        "fit-in-transform": False,
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
+        "scitype:transform-output": "Series",
+        # what scitype is returned: Primitives, Series, Panel
+        "scitype:instancewise": True,  # is this an instance-wise transform?
+        "X_inner_mtype": ["pd.DataFrame", "pd.Series"],
+        # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
+        "fit_is_empty": False,
         "transform-returns-same-time-index": False,
         "univariate-only": False,
+        "capability:inverse_transform": True,
     }
 
-    def __init__(self, lags=1, drop_na=True):
+    VALID_NA_HANDLING_STR = ["drop_na", "keep_na", "fill_zero"]
+
+    def __init__(self, lags=1, na_handling="fill_zero", memory="all"):
         self.lags = lags
-        self.drop_na = drop_na
-        self._Z = None
-        self._lags = None
+        self.na_handling = self._check_na_handling(na_handling)
+        self.memory = memory
+
+        self._X = None
+        self._lags = _check_lags(self.lags)
         self._cumulative_lags = None
-        self._prior_cum_lags = None
-        self._prior_lags = None
         super(Differencer, self).__init__()
 
-    def _check_inverse_transform_index(self, Z):
-        """Check fitted series contains indices needed in inverse_transform."""
-        first_idx = Z.index.min()
-        orig_first_idx, orig_last_idx = self._Z.index.min(), self._Z.index.max()
+        # if the na_handling is "fill_zero" or "keep_na"
+        #   then the returned indices are same to the passed indices
+        if self.na_handling in ["fill_zero", "keep_na"]:
+            self.set_tags(**{"transform-returns-same-time-index": True})
 
-        is_contained_by_fitted_z = False
-        is_future = False
+    def _check_na_handling(self, na_handling):
+        """Check na_handling parameter, should be a valid string as per docstring."""
+        if na_handling not in self.VALID_NA_HANDLING_STR:
+            raise ValueError(
+                f'invalid na_handling parameter value encountered: "{na_handling}", '
+                f"na_handling must be one of: {self.VALID_NA_HANDLING_STR}"
+            )
 
-        if first_idx < orig_first_idx:
-            msg = [
-                "Some indices of `Z` are prior to timeseries used in `fit`.",
-                "Reconstruction via `inverse_transform` is not possible.",
-            ]
-            raise ValueError(" ".join(msg))
+        return na_handling
 
-        elif Z.index.difference(self._Z.index).shape[0] == 0:
-            is_contained_by_fitted_z = True
+    def _fit(self, X, y=None):
+        """
+        Fit transformer to X and y.
 
-        elif first_idx > orig_last_idx:
-            is_future = True
-
-        pad_z_inv = self.drop_na or is_future
-
-        cutoff = Z.index[0] if pad_z_inv else Z.index[self._cumulative_lags[-1]]
-        fh = ForecastingHorizon(np.arange(-1, -(self._cumulative_lags[-1] + 1), -1))
-        index = fh.to_absolute(cutoff).to_pandas()
-        index_diff = index.difference(self._Z.index)
-
-        if index_diff.shape[0] != 0 and not is_contained_by_fitted_z:
-            msg = [
-                f"Inverse transform requires indices {index}",
-                "to have been stored in `fit()`,",
-                f"but the indices {index_diff} were not found.",
-            ]
-            raise ValueError(" ".join(msg))
-
-        return is_contained_by_fitted_z, pad_z_inv
-
-    def _fit(self, Z, X=None):
-        """Logic used by fit method on `Z`.
+        private _fit containing the core logic, called from fit
 
         Parameters
         ----------
-        Z : pd.Series or pd.DataFrame
-            A timeseries to apply the specified transformation on.
+        X : pd.Series or pd.DataFrame
+            Data to fit transform to
+        y : ignored argument for interface compatibility
+            Additional data, e.g., labels for transformation
 
         Returns
         -------
-        self
+        self: a fitted instance of the estimator
         """
-        self._lags = _check_lags(self.lags)
-        self._prior_lags = np.roll(self._lags, shift=1)
-        self._prior_lags[0] = 0
-        self._cumulative_lags = self._lags.cumsum()
-        self._prior_cum_lags = np.zeros_like(self._cumulative_lags)
-        self._prior_cum_lags[1:] = self._cumulative_lags[:-1]
-        self._Z = Z.copy()
+        memory = self.memory
+
+        lagsum = self._lags.cumsum()[-1]
+        self._lagsum = lagsum
+
+        # remember X or part of X
+        if memory == "all":
+            self._X = X
+        elif memory == "latest":
+            n_memory = min(len(X), lagsum)
+            self._X = X.iloc[-n_memory:]
+
+        self._freq = get_cutoff(X, return_index=True)
         return self
 
-    def _transform(self, Z, X=None):
-        """Logic used by `transform` to apply transformation to `Z`.
+    def _check_freq(self, X):
+        """Ensure X carries same freq as X seen in _fit."""
+        if self._freq is not None and hasattr(self._freq, "freq"):
+            if hasattr(X.index, "freq") and X.index.freq is None:
+                X.index.freq = self._freq.freq
+        return X
 
-        Differences are applied at lags specified in `lags`.
+    def _transform(self, X, y=None):
+        """Transform X and return a transformed version.
 
-        Parameters
-        ----------
-        Z : pd.Series or pd.DataFrame
-            The timeseries to apply the specified transformation on.
-
-        Returns
-        -------
-        Zt : pd.Series or pd.DataFrame
-            The transformed timeseries.
-        """
-        Zt = _diff_transform(Z, self._lags)
-        if self.drop_na:
-            Zt = Zt.iloc[self._cumulative_lags[-1] :]
-        return Zt
-
-    def _inverse_transform(self, Z, X=None):
-        """Logic used by `inverse_transform` to reverse transformation on  `Z`.
+        private _transform containing the core logic, called from transform
 
         Parameters
         ----------
-        Z : pd.Series or pd.DataFrame
-            A time series to reverse the transformation on.
+        X : pd.Series or pd.DataFrame
+            Data to be transformed
+        y : ignored argument for interface compatibility
+            Additional data, e.g., labels for transformation
 
         Returns
         -------
-        Z_inv : pd.Series or pd.DataFrame
-            The reconstructed timeseries after the transformation has been reversed.
+        Xt : pd.Series or pd.DataFrame, same type as X
+            transformed version of X
         """
-        is_df = isinstance(Z, pd.DataFrame)
-        is_contained_by_fit_z, pad_z_inv = self._check_inverse_transform_index(Z)
+        X_orig_index = X.index
 
-        # If `Z` is entirely contained in fitted `_Z` we can just return
-        # the values from the timeseires stored in `fit` as a shortcut
-        if is_contained_by_fit_z:
-            Z_inv = self._Z.loc[Z.index, :] if is_df else self._Z.loc[Z.index]
+        X = update_data(X=self._X, X_new=X)
 
+        X = self._check_freq(X)
+
+        Xt = _diff_transform(X, self._lags)
+
+        Xt = Xt.loc[X_orig_index]
+
+        na_handling = self.na_handling
+        if na_handling == "drop_na":
+            Xt = Xt.iloc[self._lagsum :]
+        elif na_handling == "fill_zero":
+            Xt.iloc[: self._lagsum] = 0
+        elif na_handling == "keep_na":
+            pass
         else:
-            Z_inv = Z.copy()
-            for i, lag_info in enumerate(
-                zip(self._lags[::-1], self._prior_cum_lags[::-1])
-            ):
-                lag, prior_cum_lag = lag_info
-                _lags = self._lags[::-1][i + 1 :]
-                _transformed = _diff_transform(self._Z, _lags)
+            raise RuntimeError(
+                "unreachable condition, invalid na_handling value encountered: "
+                f"{na_handling}"
+            )
 
-                # Determine index values for initial values needed to reverse
-                # the differencing for the specified lag
-                if pad_z_inv:
-                    cutoff = Z_inv.index[0]
-                else:
-                    cutoff = Z_inv.index[prior_cum_lag + lag]
-                fh = ForecastingHorizon(np.arange(-1, -(lag + 1), -1))
-                index = fh.to_absolute(cutoff).to_pandas()
+        return Xt
 
-                if is_df:
-                    prior_n_timepoint_values = _transformed.loc[index, :]
-                else:
-                    prior_n_timepoint_values = _transformed.loc[index]
-                if pad_z_inv:
-                    Z_inv = pd.concat([prior_n_timepoint_values, Z_inv])
-                else:
-                    Z_inv.update(prior_n_timepoint_values)
-
-                Z_inv = _inverse_diff(Z_inv, lag)
-
-        if pad_z_inv:
-            Z_inv = Z_inv.loc[Z.index, :] if is_df else Z_inv.loc[Z.index]
-
-        return Z_inv
-
-    def fit(self, Z, X=None):
-        """Fit the transformation on input series `Z`.
+    def _inverse_transform(self, X, y=None):
+        """Logic used by `inverse_transform` to reverse transformation on `X`.
 
         Parameters
         ----------
-        Z : pd.Series or pd.DataFrame
-            A time series to apply the specified transformation on.
+        X : pd.Series or pd.DataFrame
+            Data to be inverse transformed
+        y : ignored argument for interface compatibility
+            Additional data, e.g., labels for transformation
 
         Returns
         -------
-        self
+        Xt : pd.Series or pd.DataFrame, same type as X
+            inverse transformed version of X
         """
-        Z = check_series(Z)
+        lags = self._lags
 
-        self._fit(Z, X=X)
+        X_diff_seq = _diff_to_seq(self._X, lags)
 
-        self._is_fitted = True
-        return self
+        X = self._check_freq(X)
 
-    def transform(self, Z, X=None):
-        """Return transformed version of input series `Z`.
+        X_orig_index = X.index
 
-        Parameters
-        ----------
-        Z : pd.Series or pd.DataFrame
-            A time series to apply the specified transformation on.
+        Xt = _inverse_diff(X, lags, X_diff_seq=X_diff_seq)
+
+        Xt = Xt.loc[X_orig_index]
+
+        return Xt
+
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
 
         Returns
         -------
-        Zt : pd.Series or pd.DataFrame
-            Transformed version of input series `Z`.
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        self.check_is_fitted()
-        Z = check_series(Z)
-
-        return self._transform(Z, X=X)
-
-    def inverse_transform(self, Z, X=None):
-        """Reverse transformation on input series `Z`.
-
-        Parameters
-        ----------
-        Z : pd.Series or pd.DataFrame
-            A time series to reverse the transformation on.
-
-        Returns
-        -------
-        Z_inv : pd.Series or pd.DataFrame
-            The reconstructed timeseries after the transformation has been reversed.
-        """
-        self.check_is_fitted()
-        Z = check_series(Z)
-
-        return self._inverse_transform(Z, X=X)
+        params = [{"na_handling": x} for x in cls.VALID_NA_HANDLING_STR]
+        # we're testing that inverse_transform is inverse to transform
+        #   and that is only correct if the first observation is not dropped
+        # todo: ensure that we have proper tests or escapes for "incomplete inverses"
+        params = params[1:]
+        #   this removes "drop_na" setting where the inverse has problems
+        #   need to deal with this in a better way in testing
+        return params

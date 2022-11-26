@@ -2,21 +2,23 @@
 # -*- coding: utf-8 -*-
 # License: BSD 3 clause
 
-"""
-Utility methods to print system info for debugging
+"""Utility methods to print system info for debugging.
+
 adapted from :func:`sklearn.show_versions`
 """
 
-__author__ = ["Markus Löning"]
+__author__ = ["mloning"]
 __all__ = ["show_versions"]
 
+import importlib
 import platform
 import sys
-import importlib
 
 
 def _get_sys_info():
-    """System information
+    """
+    System information.
+
     Return
     ------
     sys_info : dict
@@ -34,7 +36,9 @@ def _get_sys_info():
 
 
 def _get_deps_info():
-    """Overview of the installed version of main dependencies
+    """
+    Overview of the installed version of main dependencies.
+
     Returns
     -------
     deps_info: dict
@@ -48,7 +52,6 @@ def _get_deps_info():
         "statsmodels",
         "numpy",
         "scipy",
-        "Cython",
         "pandas",
         "matplotlib",
         "joblib",
@@ -77,15 +80,14 @@ def _get_deps_info():
 
 
 def show_versions():
-    """Print useful debugging information"""
-
+    """Print useful debugging information."""
     sys_info = _get_sys_info()
     deps_info = _get_deps_info()
 
-    print("\nSystem:")  # noqa: T001
+    print("\nSystem:")  # noqa: T001, T201
     for k, stat in sys_info.items():
-        print("{k:>10}: {stat}".format(k=k, stat=stat))  # noqa: T001
+        print("{k:>10}: {stat}".format(k=k, stat=stat))  # noqa: T001, T201
 
-    print("\nPython dependencies:")  # noqa: T001
+    print("\nPython dependencies:")  # noqa: T001, T201
     for k, stat in deps_info.items():
-        print("{k:>13}: {stat}".format(k=k, stat=stat))  # noqa: T001
+        print("{k:>13}: {stat}".format(k=k, stat=stat))  # noqa: T001, T201

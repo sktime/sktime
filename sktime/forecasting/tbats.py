@@ -15,7 +15,7 @@ __all__ = ["TBATS"]
 from sktime.forecasting.base.adapters import _TbatsAdapter
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-_check_soft_dependencies("tbats")
+_check_soft_dependencies("tbats", severity="warning")
 
 
 class TBATS(_TbatsAdapter):
@@ -101,22 +101,49 @@ class TBATS(_TbatsAdapter):
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.tbats import TBATS
     >>> y = load_airline()
-    >>> forecaster = TBATS(
+    >>> forecaster = TBATS(  # doctest: +SKIP
     ...     use_box_cox=False,
     ...     use_trend=False,
     ...     use_damped_trend=False,
     ...     sp=12,
     ...     use_arma_errors=False,
     ...     n_jobs=1)
-    >>> forecaster.fit(y)
+    >>> forecaster.fit(y)  # doctest: +SKIP
     TBATS(...)
-    >>> y_pred = forecaster.predict(fh=[1,2,3])
+    >>> y_pred = forecaster.predict(fh=[1,2,3])  # doctest: +SKIP
     """  # noqa: E501
 
     _fitted_param_names = "aic"
 
-    # both bats and tbats inherit the same interface from the base class and only
-    # instantiate a different model class internally
-    from tbats import TBATS as _TBATS
+    def _create_model_class(self):
+        """Create model class."""
+        # both bats and tbats inherit the same interface from the base class and only
+        # instantiate a different model class internally
+        from tbats import TBATS as _TBATS
 
-    _ModelClass = _TBATS
+        self._ModelClass = _TBATS
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+
+        Returns
+        -------
+        params : dict or list of dict
+        """
+        params = {
+            "use_box_cox": False,
+            "use_trend": False,
+            "use_damped_trend": False,
+            "sp": [],
+            "use_arma_errors": False,
+            "n_jobs": 1,
+        }
+        return params

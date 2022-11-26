@@ -37,6 +37,9 @@ import pandas as pd
 ##############################################################
 # methods to convert one machine type to another machine type
 ##############################################################
+from sktime.datatypes._convert_utils._convert import _extend_conversions
+from sktime.datatypes._registry import MTYPE_LIST_SERIES
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 convert_dict = dict()
 
@@ -47,7 +50,7 @@ def convert_identity(obj, store=None):
 
 
 # assign identity function to type conversion to self
-for tp in ["pd.Series", "pd.DataFrame", "np.ndarray"]:
+for tp in ["pd.Series", "pd.DataFrame", "np.ndarray", "xr.DataArray"]:
     convert_dict[(tp, tp, "Series")] = convert_identity
 
 
@@ -56,14 +59,14 @@ def convert_UvS_to_MvS_as_Series(obj: pd.Series, store=None) -> pd.DataFrame:
     if not isinstance(obj, pd.Series):
         raise TypeError("input must be a pd.Series")
 
+    res = pd.DataFrame(obj)
+
     if (
         isinstance(store, dict)
         and "columns" in store.keys()
         and len(store["columns"]) == 1
     ):
-        res = pd.DataFrame(obj, columns=store["columns"])
-    else:
-        res = pd.DataFrame(obj)
+        res.columns = store["columns"]
 
     return res
 
@@ -98,8 +101,9 @@ def convert_MvS_to_np_as_Series(obj: pd.DataFrame, store=None) -> np.ndarray:
 
     if isinstance(store, dict):
         store["columns"] = obj.columns
+        store["index"] = obj.index
 
-    return obj.to_numpy()
+    return obj.to_numpy(dtype="float")
 
 
 convert_dict[("pd.DataFrame", "np.ndarray", "Series")] = convert_MvS_to_np_as_Series
@@ -110,7 +114,10 @@ def convert_UvS_to_np_as_Series(obj: pd.Series, store=None) -> np.ndarray:
     if not isinstance(obj, pd.Series):
         raise TypeError("input must be a pd.Series")
 
-    return pd.DataFrame(obj).to_numpy()
+    if isinstance(store, dict):
+        store["index"] = obj.index
+
+    return pd.DataFrame(obj).to_numpy(dtype="float")
 
 
 convert_dict[("pd.Series", "np.ndarray", "Series")] = convert_UvS_to_np_as_Series
@@ -124,14 +131,21 @@ def convert_np_to_MvS_as_Series(obj: np.ndarray, store=None) -> pd.DataFrame:
     if len(obj.shape) == 1:
         obj = np.reshape(obj, (-1, 1))
 
+    res = pd.DataFrame(obj)
+
+    # add column names or index from store if stored and length fits
     if (
         isinstance(store, dict)
         and "columns" in store.keys()
         and len(store["columns"]) == obj.shape[1]
     ):
-        res = pd.DataFrame(obj, columns=store["columns"])
-    else:
-        res = pd.DataFrame(obj)
+        res.columns = store["columns"]
+    if (
+        isinstance(store, dict)
+        and "index" in store.keys()
+        and len(store["index"]) == obj.shape[0]
+    ):
+        res.index = store["index"]
 
     return res
 
@@ -147,7 +161,59 @@ def convert_np_to_UvS_as_Series(obj: np.ndarray, store=None) -> pd.Series:
     if obj.ndim == 2 and obj.shape[1] != 1:
         raise TypeError("input must be a one-column np.ndarray of dim 1 or 2")
 
-    return pd.Series(obj.flatten())
+    res = pd.Series(obj.flatten())
+
+    # add index from store if stored and length fits
+    if (
+        isinstance(store, dict)
+        and "index" in store.keys()
+        and len(store["index"]) == obj.shape[0]
+    ):
+        res.index = store["index"]
+
+    return res
 
 
 convert_dict[("np.ndarray", "pd.Series", "Series")] = convert_np_to_UvS_as_Series
+
+
+if _check_soft_dependencies("xarray", severity="none"):
+    import xarray as xr
+
+    def convert_xrdataarray_to_Mvs_as_Series(
+        obj: xr.DataArray, store=None
+    ) -> pd.DataFrame:
+        if not isinstance(obj, xr.DataArray):
+            raise TypeError("input must be a xr.DataArray")
+
+        if isinstance(store, dict):
+            store["coords"] = list(obj.coords.keys())
+
+        index = obj.indexes[obj.dims[0]]
+        columns = obj.indexes[obj.dims[1]] if len(obj.dims) == 2 else None
+        return pd.DataFrame(obj.values, index=index, columns=columns)
+
+    convert_dict[
+        ("xr.DataArray", "pd.DataFrame", "Series")
+    ] = convert_xrdataarray_to_Mvs_as_Series
+
+    def convert_Mvs_to_xrdatarray_as_Series(
+        obj: pd.DataFrame, store=None
+    ) -> xr.DataArray:
+        if not isinstance(obj, pd.DataFrame):
+            raise TypeError("input must be a xr.DataArray")
+
+        result = xr.DataArray(obj.values, coords=[obj.index, obj.columns])
+        if isinstance(store, dict) and "coords" in store:
+            result = result.rename(
+                dict(zip(list(result.coords.keys()), store["coords"]))
+            )
+        return result
+
+    convert_dict[
+        ("pd.DataFrame", "xr.DataArray", "Series")
+    ] = convert_Mvs_to_xrdatarray_as_Series
+
+    _extend_conversions(
+        "xr.DataArray", "pd.DataFrame", convert_dict, mtype_universe=MTYPE_LIST_SERIES
+    )

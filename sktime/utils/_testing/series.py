@@ -1,7 +1,7 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
 
-__author__ = ["Markus Löning"]
+__author__ = ["mloning"]
 __all__ = []
 
 import numpy as np
@@ -58,7 +58,7 @@ def _make_index(n_timepoints, index_type=None):
 
     elif index_type == "int":
         start = 3
-        return pd.Int64Index(np.arange(start, start + n_timepoints))
+        return pd.Index(np.arange(start, start + n_timepoints), dtype=int)
 
     else:
         raise ValueError(f"index_class: {index_type} is not supported")

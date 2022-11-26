@@ -8,45 +8,44 @@ __author__ = ["patrickzib", "Arik Ermshaus"]
 __all__ = ["WEASEL"]
 
 import math
+import warnings
 
 import numpy as np
 from joblib import Parallel, delayed
-from numba import njit
-from sklearn.feature_extraction import DictVectorizer
-from sklearn.feature_selection import chi2
-from sklearn.linear_model import LogisticRegression
-from sklearn.pipeline import make_pipeline
+from numba import set_num_threads
+from scipy.sparse import hstack
+from sklearn.linear_model import LogisticRegression, RidgeClassifierCV
 from sklearn.utils import check_random_state
 
 from sktime.classification.base import BaseClassifier
-from sktime.transformations.panel.dictionary_based import SFA
+from sktime.transformations.panel.dictionary_based import SFAFast
 
 
 class WEASEL(BaseClassifier):
     """Word Extraction for Time Series Classification (WEASEL).
 
-    Overview: Input n series length m
+    Overview: Input *n* series length *m*
     WEASEL is a dictionary classifier that builds a bag-of-patterns using SFA
     for different window lengths and learns a logistic regression classifier
     on this bag.
 
     There are these primary parameters:
-            alphabet_size: alphabet size
-            chi2-threshold: used for feature selection to select best words
-            anova: select best l/2 fourier coefficients other than first ones
-            bigrams: using bigrams of SFA words
-            binning_strategy: the binning strategy used to discretise into
-                             SFA words.
-    WEASEL slides a window length w along the series. The w length window
-    is shortened to an l length word through taking a Fourier transform and
-    keeping the best l/2 complex coefficients using an anova one-sided
-    test. These l coefficients are then discretised into alpha possible
-    symbols, to form a word of length l. A histogram of words for each
+            - alphabet_size: alphabet size
+            - p-threshold: threshold used for chi^2-feature selection to
+                        select best words.
+            - anova: select best l/2 fourier coefficients other than first ones
+            - bigrams: using bigrams of SFA words
+            - binning_strategy: the binning strategy used to discretise into SFA words.
+    WEASEL slides a window length *w* along the series. The *w* length window
+    is shortened to an *l* length word through taking a Fourier transform and
+    keeping the best *l/2* complex coefficients using an anova one-sided
+    test. These *l* coefficients are then discretised into alpha possible
+    symbols, to form a word of length *l*. A histogram of words for each
     series is formed and stored.
     For each window-length a bag is created and all words are joint into
     one bag-of-patterns. Words from different window-lengths are
     discriminated by different prefixes.
-    fit involves training a logistic regression classifier on the single
+    *fit* involves training a logistic regression classifier on the single
     bag-of-patterns.
 
     predict uses the logistic regression classifier
@@ -62,7 +61,7 @@ class WEASEL(BaseClassifier):
     binning_strategy: {"equi-depth", "equi-width", "information-gain"},
     default="information-gain"
         The binning method used to derive the breakpoints.
-    window_inc: int, default=4
+    window_inc: int, default=2
         WEASEL create a BoP model for each window sizes. This is the
         increment used to determine the next window size.
     p_threshold:  int, default=0.05 (disabled by default)
@@ -70,6 +69,27 @@ class WEASEL(BaseClassifier):
         This is the p-value threshold to use for chi-squared test on bag-of-words
         (lower means more strict). 1 indicates that the test
         should not be performed.
+    alphabet_size : default = 4
+        Number of possible letters (values) for each word.
+
+        .. deprecated:: 0.13.3
+            the default = 4 was deprecated in version 0.13.3 and will be changed to
+            default = 2 in 0.15. Please use alphabet_size=2 due to its lower memory
+            footprint, better runtime at equal accuracy.
+
+    feature_selection: {"chi2", "none", "random"}, default: chi2
+        Sets the feature selections strategy to be used. *Chi2* reduces the number
+        of words significantly and is thus much faster (preferred). If set to chi2,
+         p_threshold is applied.  *Random* also reduces the number significantly.
+         *None* applies not feature selectiona and yields large bag of words,
+         e.g. much memory may be needed.
+    support_probabilities: bool, default: False
+        If set to False, a RidgeClassifierCV will be trained, which has higher accuracy
+        and is faster, yet does not support predict_proba.
+        If set to True, a LogisticRegression will be trained, which does support
+        predict_proba(), yet is slower and typically less accuracy. predict_proba() is
+        needed for example in Early-Classification like TEASER.
+
     random_state: int or None, default=None
         Seed for random, integer
 
@@ -93,7 +113,8 @@ class WEASEL(BaseClassifier):
     Notes
     -----
     For the Java version, see
-    `TSML <https://github.com/uea-machine-learning/tsml/blob/master/src/main/java
+    - `Original Publication <https://github.com/patrickzib/SFA>`_.
+    - `TSML <https://github.com/uea-machine-learning/tsml/blob/master/src/main/java
     /tsml/classifiers/dictionary_based/WEASEL.java>`_.
 
     Examples
@@ -110,6 +131,7 @@ class WEASEL(BaseClassifier):
 
     _tags = {
         "capability:multithreading": True,
+        "classifier_type": "dictionary",
     }
 
     def __init__(
@@ -119,12 +141,14 @@ class WEASEL(BaseClassifier):
         binning_strategy="information-gain",
         window_inc=2,
         p_threshold=0.05,
+        alphabet_size=4,  # TODO set default alphabet_size=2 in v0.15
         n_jobs=1,
+        feature_selection="chi2",
+        support_probabilities=False,
         random_state=None,
     ):
 
-        # currently greater values than 4 are not supported.
-        self.alphabet_size = 4
+        self.alphabet_size = alphabet_size
 
         # feature selection is applied based on the chi-squared test.
         self.p_threshold = p_threshold
@@ -141,6 +165,7 @@ class WEASEL(BaseClassifier):
         self.min_window = 6
         self.max_window = 100
 
+        self.feature_selection = feature_selection
         self.window_inc = window_inc
         self.highest_bit = -1
         self.window_sizes = []
@@ -151,6 +176,9 @@ class WEASEL(BaseClassifier):
         self.SFA_transformers = []
         self.clf = None
         self.n_jobs = n_jobs
+        self.support_probabilities = support_probabilities
+
+        set_num_threads(n_jobs)
 
         super(WEASEL, self).__init__()
 
@@ -172,8 +200,15 @@ class WEASEL(BaseClassifier):
         # Window length parameter space dependent on series length
         self.n_instances, self.series_length = X.shape[0], X.shape[-1]
 
-        win_inc = self._compute_window_inc()
+        if self.alphabet_size == 4:
+            warnings.warn(
+                "``alphabet_size=4`` was deprecated in version 0.13.3 and "
+                "will be changed to ``alphabet_size=2`` in 0.15."
+                "Please use alphabet_size=2 due to its lower memory "
+                "footprint, better runtime at equal accuracy."
+            )
 
+        win_inc = self._compute_window_inc()
         self.max_window = int(min(self.series_length, self.max_window))
         if self.min_window > self.max_window:
             raise ValueError(
@@ -188,98 +223,50 @@ class WEASEL(BaseClassifier):
         self.window_sizes = list(range(self.min_window, self.max_window, win_inc))
         self.highest_bit = (math.ceil(math.log2(self.max_window))) + 1
 
-        def _parallel_fit(
-            window_size,
-        ):
-            rng = check_random_state(window_size)
-            all_words = [dict() for x in range(len(X))]
-            relevant_features_count = 0
-
-            # for window_size in self.window_sizes:
-            transformer = SFA(
-                word_length=rng.choice(self.word_lengths),
-                alphabet_size=self.alphabet_size,
-                window_size=window_size,
-                norm=rng.choice(self.norm_options),
-                anova=self.anova,
-                # levels=rng.choice([1, 2, 3]),
-                binning_method=self.binning_strategy,
-                bigrams=self.bigrams,
-                remove_repeat_words=False,
-                lower_bounding=False,
-                save_words=False,
+        parallel_res = Parallel(n_jobs=self.n_jobs, backend="threading")(
+            delayed(_parallel_fit)(
+                X,
+                y,
+                window_size,
+                self.word_lengths,
+                self.alphabet_size,
+                self.norm_options,
+                self.anova,
+                self.binning_strategy,
+                self.feature_selection,
+                self.bigrams,
+                self.n_jobs,
             )
+            for window_size in self.window_sizes
+        )
 
-            sfa_words = transformer.fit_transform(X, y)
-
-            # self.SFA_transformers.append(transformer)
-            bag = sfa_words[0]
-            apply_chi_squared = self.p_threshold < 1
-
-            # chi-squared test to keep only relevant features
-            if apply_chi_squared:
-                vectorizer = DictVectorizer(sparse=True, dtype=np.int32, sort=False)
-                bag_vec = vectorizer.fit_transform(bag)
-
-                chi2_statistics, p = chi2(bag_vec, y)
-                relevant_features_idx = np.where(p <= self.p_threshold)[0]
-                relevant_features = set(
-                    np.array(vectorizer.feature_names_)[relevant_features_idx]
-                )
-                relevant_features_count += len(relevant_features_idx)
-
-                # merging bag-of-patterns of different window_sizes
-                # to single bag-of-patterns with prefix indicating
-                # the used window-length
-                for j in range(len(bag)):
-                    for (key, value) in bag[j].items():
-                        # chi-squared test
-                        if (not apply_chi_squared) or (key in relevant_features):
-                            # append the prefixes to the words to
-                            # distinguish between window-sizes
-                            word = WEASEL._shift_left(
-                                key, self.highest_bit, window_size
-                            )
-                            all_words[j][word] = value
-
-                return all_words, transformer, relevant_features_count
-
-        parallel_res = Parallel(n_jobs=self._threads_to_use)(
-            delayed(_parallel_fit)(window_size) for window_size in self.window_sizes
-        )  # , verbose=self.verbose
-
-        relevant_features_count = 0
-        all_words = [dict() for x in range(len(X))]
-
-        for sfa_words, transformer, rel_features_count in parallel_res:
-            transformer.n_jobs = self._threads_to_use
+        all_words = []
+        for sfa_words, transformer in parallel_res:
             self.SFA_transformers.append(transformer)
-            relevant_features_count += rel_features_count
+            all_words.append(sfa_words)
+        if type(all_words[0]) is np.ndarray:
+            all_words = np.concatenate(all_words, axis=1)
+        else:
+            all_words = hstack((all_words))
 
-            for idx, bag in enumerate(sfa_words):
-                for word, count in bag.items():
-                    all_words[idx][word] = count
-
-        self.clf = make_pipeline(
-            DictVectorizer(sparse=True, sort=False),
-            # StandardScaler(copy=False),
-            LogisticRegression(
+        # Ridge Classifier does not give probabilities
+        if not self.support_probabilities:
+            self.clf = RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=False)
+        else:
+            self.clf = LogisticRegression(
                 max_iter=5000,
                 solver="liblinear",
                 dual=True,
                 # class_weight="balanced",
                 penalty="l2",
                 random_state=self.random_state,
-                n_jobs=self._threads_to_use,
-            ),
-        )
+                n_jobs=self.n_jobs,
+            )
 
-        # print("Size of dict", relevant_features_count)
         self.clf.fit(all_words, y)
-
         return self
 
-    def _predict(self, X):
+    def _predict(self, X) -> np.ndarray:
         """Predict class values of n instances in X.
 
         Parameters
@@ -295,7 +282,7 @@ class WEASEL(BaseClassifier):
         bag = self._transform_words(X)
         return self.clf.predict(bag)
 
-    def _predict_proba(self, X):
+    def _predict_proba(self, X) -> np.ndarray:
         """Predict class probabilities for n instances in X.
 
         Parameters
@@ -309,28 +296,27 @@ class WEASEL(BaseClassifier):
             Predicted probabilities using the ordering in classes_.
         """
         bag = self._transform_words(X)
-        return self.clf.predict_proba(bag)
+        if self.support_probabilities:
+            return self.clf.predict_proba(bag)
+        else:
+            raise ValueError(
+                "Error in WEASEL, please set support_probabilities=True, to"
+                + "allow for probabilities to be computed."
+            )
 
     def _transform_words(self, X):
-        bag_all_words = [dict() for _ in range(len(X))]
-        for transformer in self.SFA_transformers:
-            # SFA transform
-            sfa_words = transformer.transform(X)
-            bag = sfa_words[0]
+        parallel_res = Parallel(n_jobs=self._threads_to_use, backend="threading")(
+            delayed(transformer.transform)(X) for transformer in self.SFA_transformers
+        )
+        all_words = []
+        for sfa_words in parallel_res:
+            all_words.append(sfa_words)
+        if type(all_words[0]) is np.ndarray:
+            all_words = np.concatenate(all_words, axis=1)
+        else:
+            all_words = hstack((all_words))
 
-            # merging bag-of-patterns of different window_sizes
-            # to single bag-of-patterns with prefix indicating
-            # the used window-length
-            for j in range(len(bag)):
-                for (key, value) in bag[j].items():
-                    # append the prefices to the words to distinguish
-                    # between window-sizes
-                    word = WEASEL._shift_left(
-                        key, self.highest_bit, transformer.window_size
-                    )
-                    bag_all_words[j][word] = value
-
-        return bag_all_words
+        return all_words
 
     def _compute_window_inc(self):
         win_inc = self.window_inc
@@ -338,7 +324,64 @@ class WEASEL(BaseClassifier):
             win_inc = 1  # less than 100 is ok runtime-wise
         return win_inc
 
-    @staticmethod
-    @njit("int64(int64,int64,int64)", fastmath=True, cache=True)
-    def _shift_left(key, highest_bit, window_size):
-        return (key << highest_bit) | window_size
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            For classifiers, a "default" set of parameters should be provided for
+            general testing, and a "results_comparison" set for comparing against
+            previously recorded results if the general set does not produce suitable
+            probabilities to compare against.
+
+        Returns
+        -------
+        params : dict or list of dict, default={}
+            Parameters to create testing instances of the class.
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`.
+        """
+        return {
+            "window_inc": 4,
+            "support_probabilities": True,
+            "bigrams": False,
+            "feature_selection": "none",
+            "alphabet_size": 2,
+        }
+
+
+def _parallel_fit(
+    X,
+    y,
+    window_size,
+    word_lengths,
+    alphabet_size,
+    norm_options,
+    anova,
+    binning_strategy,
+    feature_selection,
+    bigrams,
+    n_jobs,
+):
+    rng = check_random_state(window_size)
+    transformer = SFAFast(
+        word_length=rng.choice(word_lengths),
+        alphabet_size=alphabet_size,
+        window_size=window_size,
+        norm=rng.choice(norm_options),
+        anova=anova,
+        binning_method=binning_strategy,
+        bigrams=bigrams,
+        feature_selection=feature_selection,
+        remove_repeat_words=False,
+        save_words=False,
+        n_jobs=n_jobs,
+    )
+
+    all_words = transformer.fit_transform(X, y)
+    return all_words, transformer

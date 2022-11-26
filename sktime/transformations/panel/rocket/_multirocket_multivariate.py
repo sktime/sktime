@@ -5,11 +5,10 @@ import numpy as np
 import pandas as pd
 from numba import get_num_threads, njit, prange, set_num_threads
 
-from sktime.transformations.base import _PanelToTabularTransformer
-from sktime.utils.validation.panel import check_X
+from sktime.transformations.base import BaseTransformer
 
 
-class MultiRocketMultivariate(_PanelToTabularTransformer):
+class MultiRocketMultivariate(BaseTransformer):
     """
     MultiRocket multivariate version.
 
@@ -67,15 +66,27 @@ class MultiRocketMultivariate(_PanelToTabularTransformer):
     Examples
     --------
     >>> from sktime.transformations.panel.rocket._multirocket import MultiRocket
-    >>> from sktime.datasets import load_italy_power_demand
-    >>> X_train, y_train = load_italy_power_demand(split="train", return_X_y=True)
-    >>> X_test, y_test = load_italy_power_demand(split="test", return_X_y=True)
-    >>> trf = MultiRocket()
+    >>> from sktime.datasets import load_basic_motions
+    >>> X_train, y_train = load_basic_motions(split="train")
+    >>> X_test, y_test = load_basic_motions(split="test")
+    >>> trf = MultiRocket(num_kernels=512)
     >>> trf.fit(X_train)
     MultiRocket(...)
     >>> X_train = trf.transform(X_train)
     >>> X_test = trf.transform(X_test)
     """
+
+    _tags = {
+        "univariate-only": False,
+        "fit_is_empty": False,
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
+        "scitype:transform-output": "Primitives",
+        # what is the scitype of y: None (not needed), Primitives, Series, Panel
+        "scitype:instancewise": False,  # is this an instance-wise transform?
+        "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
+    }
 
     def __init__(
         self,
@@ -99,64 +110,58 @@ class MultiRocketMultivariate(_PanelToTabularTransformer):
 
         super(MultiRocketMultivariate, self).__init__()
 
-    def fit(self, X, y=None):
+    def _fit(self, X, y=None):
         """Fit dilations and biases to input time series.
 
         Parameters
         ----------
-        X : pandas DataFrame, input time series (sktime format)
-        y : array_like, target values (optional, ignored as irrelevant)
+        X : 3D np.ndarray of shape = [n_instances, n_dimensions, series_length]
+            panel of time series to transform
+        y : ignored argument for interface compatibility
 
         Returns
         -------
         self
         """
-        _X = check_X(X, coerce_to_numpy=True)
-
         if self.normalise:
-            _X = (_X - _X.mean(axis=-1, keepdims=True)) / (
-                _X.std(axis=-1, keepdims=True) + 1e-8
+            X = (X - X.mean(axis=-1, keepdims=True)) / (
+                X.std(axis=-1, keepdims=True) + 1e-8
             )
 
-        if _X.shape[2] < 10:
+        if X.shape[2] < 10:
             # handling very short series (like PensDigit from the MTSC archive)
             # series have to be at least a length of 10 (including differencing)
-            _X1 = np.zeros((_X.shape[0], _X.shape[1], 10), dtype=_X.dtype)
-            _X1[:, :, : _X.shape[2]] = _X
-            _X = _X1
+            _X1 = np.zeros((X.shape[0], X.shape[1], 10), dtype=X.dtype)
+            _X1[:, :, : X.shape[2]] = X
+            X = _X1
             del _X1
 
-        self.parameter = self._get_parameter(_X)
-        _X1 = np.diff(_X, 1)
+        self.parameter = self._get_parameter(X)
+        _X1 = np.diff(X, 1)
 
         self.parameter1 = self._get_parameter(_X1)
 
-        self._is_fitted = True
-
         return self
 
-    def transform(self, X, y=None):
+    def _transform(self, X, y=None):
         """Transform input time series using random convolutional kernels.
 
         Parameters
         ----------
-        X : pandas DataFrame, input time series (sktime format)
-        y : array_like, target values (optional, ignored as irrelevant)
+        X : 3D np.ndarray of shape = [n_instances, n_dimensions, series_length]
+            panel of time series to transform
+        y : ignored argument for interface compatibility
 
         Returns
         -------
         pandas DataFrame, transformed features
         """
-        self.check_is_fitted()
-
-        _X = check_X(X, coerce_to_numpy=True)
-
         if self.normalise:
-            _X = (_X - _X.mean(axis=-1, keepdims=True)) / (
-                _X.std(axis=-1, keepdims=True) + 1e-8
+            X = (X - X.mean(axis=-1, keepdims=True)) / (
+                X.std(axis=-1, keepdims=True) + 1e-8
             )
 
-        _X1 = np.diff(_X, 1)
+        _X1 = np.diff(X, 1)
 
         # change n_jobs dependend on value and existing cores
         prev_threads = get_num_threads()
@@ -166,18 +171,18 @@ class MultiRocketMultivariate(_PanelToTabularTransformer):
             n_jobs = self.n_jobs
         set_num_threads(n_jobs)
 
-        _X = _transform(
-            _X,
+        X = _transform(
+            X,
             _X1,
             self.parameter,
             self.parameter1,
             self.n_features_per_kernel,
         )
-        _X = np.nan_to_num(_X)
+        X = np.nan_to_num(X)
 
         set_num_threads(prev_threads)
 
-        return pd.DataFrame(_X)
+        return pd.DataFrame(X)
 
     def _get_parameter(self, X):
         _, num_channels, input_length = X.shape

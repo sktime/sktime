@@ -8,18 +8,15 @@ Module :mod:`sktime.transformations.series` implements auto-correlation
 transformers.
 """
 
-__author__ = ["Afzal Ansari"]
+__author__ = ["afzal442"]
 __all__ = ["AutoCorrelationTransformer", "PartialAutoCorrelationTransformer"]
 
 import pandas as pd
-from statsmodels.tsa.stattools import acf
-from statsmodels.tsa.stattools import pacf
 
-from sktime.transformations.base import _SeriesToSeriesTransformer
-from sktime.utils.validation.series import check_series
+from sktime.transformations.base import BaseTransformer
 
 
-class AutoCorrelationTransformer(_SeriesToSeriesTransformer):
+class AutoCorrelationTransformer(BaseTransformer):
     """Auto-correlation transformer.
 
     The autocorrelation function measures how correlated a timeseries is
@@ -70,7 +67,18 @@ class AutoCorrelationTransformer(_SeriesToSeriesTransformer):
     >>> y_hat = transformer.fit_transform(y)
     """
 
-    _tags = {"univariate-only": True, "fit-in-transform": True}
+    _tags = {
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
+        "scitype:transform-output": "Series",
+        # what scitype is returned: Primitives, Series, Panel
+        "scitype:instancewise": True,  # is this an instance-wise transform?
+        "X_inner_mtype": "pd.Series",  # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
+        "univariate-only": True,
+        "fit_is_empty": True,
+        "python_dependencies": "statsmodels",
+    }
 
     def __init__(
         self,
@@ -85,28 +93,28 @@ class AutoCorrelationTransformer(_SeriesToSeriesTransformer):
         self.missing = missing
         super(AutoCorrelationTransformer, self).__init__()
 
-    def transform(self, Z, X=None):
-        """Transform data.
+    def _transform(self, X, y=None):
+        """Transform X and return a transformed version.
+
+        private _transform containing the core logic, called from transform
 
         Parameters
         ----------
-        Z : pd.Series
-            Series to transform
-        X : pd.DataFrame, optional (default=None)
-            Exogenous data used in transformation
+        X : pd.Series
+            Data to be transformed
+        y : ignored argument for interface compatibility
+            Additional data, e.g., labels for transformation
 
         Returns
         -------
-        Zt : pd.Series
-            Transformed series
+        transformed version of X
         """
-        self.check_is_fitted()
-        z = check_series(Z, enforce_univariate=True)
+        from statsmodels.tsa.stattools import acf
 
         # Passing an alpha values other than None would return confidence intervals
         # and break the signature of the series-to-series transformer
         zt = acf(
-            z,
+            X,
             adjusted=self.adjusted,
             nlags=self.n_lags,
             qstat=False,
@@ -116,8 +124,29 @@ class AutoCorrelationTransformer(_SeriesToSeriesTransformer):
         )
         return pd.Series(zt)
 
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
 
-class PartialAutoCorrelationTransformer(_SeriesToSeriesTransformer):
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        return {"n_lags": 1}
+
+
+class PartialAutoCorrelationTransformer(BaseTransformer):
     """Partial auto-correlation transformer.
 
     The partial autocorrelation function measures the conditional correlation
@@ -170,7 +199,18 @@ class PartialAutoCorrelationTransformer(_SeriesToSeriesTransformer):
     >>> y_hat = transformer.fit_transform(y)
     """
 
-    _tags = {"univariate-only": True, "fit-in-transform": True}
+    _tags = {
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
+        "scitype:transform-output": "Series",
+        # what scitype is returned: Primitives, Series, Panel
+        "scitype:instancewise": True,  # is this an instance-wise transform?
+        "X_inner_mtype": "pd.Series",  # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
+        "univariate-only": True,
+        "fit_is_empty": True,
+        "python_dependencies": "statsmodels",
+    }
 
     def __init__(
         self,
@@ -181,25 +221,46 @@ class PartialAutoCorrelationTransformer(_SeriesToSeriesTransformer):
         self.method = method
         super(PartialAutoCorrelationTransformer, self).__init__()
 
-    def transform(self, Z, X=None):
-        """Transform data.
+    def _transform(self, X, y=None):
+        """Transform X and return a transformed version.
+
+        private _transform containing the core logic, called from transform
 
         Parameters
         ----------
-        Z : pd.Series
-            Series to transform
-        X : pd.DataFrame, optional (default=None)
-            Exogenous data used in transformation
+        X : pd.Series
+            Data to be transformed
+        y : ignored argument for interface compatibility
+            Additional data, e.g., labels for transformation
 
         Returns
         -------
-        Zt : pd.Series
-            Transformed series
+        transformed version of X
         """
-        self.check_is_fitted()
-        z = check_series(Z, enforce_univariate=True)
+        from statsmodels.tsa.stattools import pacf
 
         # Passing an alpha values other than None would return confidence intervals
         # and break the signature of the series-to-series transformer
-        zt = pacf(z, nlags=self.n_lags, method=self.method, alpha=None)
+        zt = pacf(X, nlags=self.n_lags, method=self.method, alpha=None)
         return pd.Series(zt)
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        return {"n_lags": 1}

@@ -11,12 +11,10 @@ import warnings
 from itertools import product
 
 import numpy as np
+import pandas as pd
 from joblib import Parallel, delayed
-from statsmodels.tsa.exponential_smoothing.ets import ETSModel as _ETSModel
 
-from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base.adapters import _StatsModelsAdapter
-from sktime.utils.validation.forecasting import check_alpha
 
 
 class AutoETS(_StatsModelsAdapter):
@@ -141,6 +139,11 @@ class AutoETS(_StatsModelsAdapter):
         The number of jobs to run in parallel for automatic model fitting.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors.
+    random_state : int, RandomState instance or None, optional ,
+        default=None – If int, random_state is the seed used by the random
+        number generator; If RandomState instance, random_state is the random
+        number generator; If None, the random number generator is the
+        RandomState instance used by np.random.
 
     References
     ----------
@@ -168,7 +171,7 @@ class AutoETS(_StatsModelsAdapter):
         "ignores-exogeneous-X": True,
         "capability:pred_int": True,
         "requires-fh-in-fit": False,
-        "handles-missing-data": False,
+        "handles-missing-data": True,
     }
 
     def __init__(
@@ -199,7 +202,7 @@ class AutoETS(_StatsModelsAdapter):
         additive_only=False,
         ignore_inf_ic=True,
         n_jobs=None,
-        **kwargs
+        random_state=None,
     ):
         # Model params
         self.error = error
@@ -231,21 +234,25 @@ class AutoETS(_StatsModelsAdapter):
         self.ignore_inf_ic = ignore_inf_ic
         self.n_jobs = n_jobs
 
-        super(AutoETS, self).__init__()
+        super(AutoETS, self).__init__(random_state=random_state)
 
     def _fit_forecaster(self, y, X=None):
+        from statsmodels.tsa.exponential_smoothing.ets import ETSModel as _ETSModel
 
         # Select model automatically
         if self.auto:
             # Initialise parameter ranges
-            if (y > 0).all():
-                error_range = ["add", "mul"]
-            else:
-                warnings.warn(
-                    "Warning: time series is not strictly positive,"
-                    "multiplicative components are ommitted"
-                )
+            if self.additive_only:
                 error_range = ["add"]
+            else:
+                if (y > 0).all():
+                    error_range = ["add", "mul"]
+                else:
+                    warnings.warn(
+                        "Warning: time series is not strictly positive, "
+                        "multiplicative components are ommitted"
+                    )
+                    error_range = ["add"]
 
             if self.allow_multiplicative_trend and (y > 0).all():
                 trend_range = ["add", "mul", None]
@@ -378,49 +385,7 @@ class AutoETS(_StatsModelsAdapter):
                 return_params=self.return_params,
             )
 
-    def compute_pred_int(self, valid_indices, alpha, **simulate_kwargs):
-        """Compute/return prediction intervals for AutoETS.
-
-        Must be run *after* the forecaster has been fitted.
-        If alpha is iterable, multiple intervals will be calculated.
-
-        Parameters
-        ----------
-        valid_indices : pd.PeriodIndex
-            indices to compute the prediction intervals for
-        alpha : float or list, optional (default=0.95)
-            A significance level or list of significance levels.
-        simulate_kwargs : see statsmodels ETSResults.get_prediction
-
-        Returns
-        -------
-        intervals : pd.DataFrame
-            A table of upper and lower bounds for each point prediction in
-            ``y_pred``. If ``alpha`` was iterable, then ``intervals`` will be a
-            list of such tables.
-        """
-        self.check_is_fitted()
-        alphas = check_alpha(alpha)
-
-        start, end = valid_indices[[0, -1]]
-        prediction_results = self._fitted_forecaster.get_prediction(
-            start=start, end=end, **simulate_kwargs
-        )
-
-        pred_ints = []
-        for alpha_iter in alphas:
-            pred_int = prediction_results.pred_int(alpha_iter)
-            pred_int.columns = ["lower", "upper"]
-            pred_ints.append(pred_int.loc[valid_indices])
-
-        if isinstance(alpha, float):
-            pred_ints = pred_ints[0]
-
-        return pred_ints
-
-    def _predict(
-        self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA, **simulate_kwargs
-    ):
+    def _predict(self, fh, X=None, **simulate_kwargs):
         """Make forecasts.
 
         Parameters
@@ -431,8 +396,6 @@ class AutoETS(_StatsModelsAdapter):
             i.e. np.array([1])
         X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored.
-        return_pred_int : bool, optional (default=False)
-        alpha : int or list, optional (default=0.95)
         **simulate_kwargs : see statsmodels ETSResults.get_prediction
 
         Returns
@@ -447,15 +410,60 @@ class AutoETS(_StatsModelsAdapter):
         valid_indices = fh.to_absolute(self.cutoff).to_pandas()
 
         y_pred = self._fitted_forecaster.predict(start=start, end=end)
+        return y_pred.loc[valid_indices]
 
-        if return_pred_int:
-            pred_int = self.compute_pred_int(
-                valid_indices, alpha=alpha, **simulate_kwargs
-            )
+    def _predict_interval(self, fh, X=None, coverage=None):
+        """Compute/return prediction quantiles for a forecast.
 
-            return y_pred.loc[valid_indices], pred_int
-        else:
-            return y_pred.loc[valid_indices]
+        private _predict_interval containing the core logic,
+            called from predict_interval and possibly predict_quantiles
+
+        State required:
+            Requires state to be "fitted".
+
+        Accesses in self:
+            Fitted model attributes ending in "_"
+            self.cutoff
+
+        Parameters
+        ----------
+        fh : guaranteed to be ForecastingHorizon
+            The forecasting horizon with the steps ahead to to predict.
+        X : optional (default=None)
+            guaranteed to be of a type in self.get_tag("X_inner_mtype")
+            Exogeneous time series to predict from.
+        coverage : list of float (guaranteed not None and floats in [0,1] interval)
+           nominal coverage(s) of predictive interval(s)
+
+        Returns
+        -------
+        pred_int : pd.DataFrame
+            Column has multi-index: first level is variable name from y in fit,
+                second level coverage fractions for which intervals were computed.
+                    in the same order as in input `coverage`.
+                Third level is string "lower" or "upper", for lower/upper interval end.
+            Row index is fh. Entries are forecasts of lower/upper interval end,
+                for var in col index, at nominal coverage in second col index,
+                lower/upper depending on third col index, for the row index.
+                Upper/lower interval end forecasts are equivalent to
+                quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
+        """
+        valid_indices = fh.to_absolute(self.cutoff).to_pandas()
+
+        start, end = valid_indices[[0, -1]]
+        prediction_results = self._fitted_forecaster.get_prediction(
+            start=start, end=end, random_state=self.random_state
+        )
+
+        pred_int = pd.DataFrame()
+        for c in coverage:
+            pred_statsmodels = prediction_results.pred_int(1 - c)
+            pred_statsmodels.columns = ["lower", "upper"]
+            pred_int[(c, "lower")] = pred_statsmodels["lower"].loc[valid_indices]
+            pred_int[(c, "upper")] = pred_statsmodels["upper"].loc[valid_indices]
+        index = pd.MultiIndex.from_product([["Coverage"], coverage, ["lower", "upper"]])
+        pred_int.columns = index
+        return pred_int
 
     def summary(self):
         """Get a summary of the fitted forecaster.

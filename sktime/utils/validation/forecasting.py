@@ -15,17 +15,27 @@ __all__ = [
     "check_sp",
     "check_regressor",
 ]
-__author__ = ["Markus Löning", "@big-o"]
+__author__ = ["mloning", "@big-o", "khrapovs"]
+
+from datetime import timedelta
+from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
-
 from sklearn.base import clone, is_regressor
 from sklearn.ensemble import GradientBoostingRegressor
 
-from sktime.utils.validation import is_int
-from sktime.utils.validation.series import check_equal_time_index
-from sktime.utils.validation.series import check_series
+from sktime.utils.validation import (
+    array_is_datetime64,
+    array_is_int,
+    is_date_offset,
+    is_int,
+    is_timedelta,
+)
+from sktime.utils.validation.series import check_equal_time_index, check_series
+
+ACCEPTED_CUTOFF_TYPES = list, np.ndarray, pd.Index
+VALID_CUTOFF_TYPES = Union[ACCEPTED_CUTOFF_TYPES]
 
 
 def check_y_X(
@@ -171,7 +181,7 @@ def check_cv(cv, enforce_start_with_window=False):
     return cv
 
 
-def check_step_length(step_length):
+def check_step_length(step_length) -> Optional[int]:
     """Validate window length.
 
     Parameters
@@ -188,13 +198,40 @@ def check_step_length(step_length):
     ValueError
         if step_length is negative or not an integer or is None.
     """
-    if step_length is not None:
-        if not is_int(step_length) or step_length < 1:
+    if step_length is None:
+        return None
+
+    elif is_int(step_length):
+        if step_length < 1:
             raise ValueError(
-                f"`step_length` must be a positive integer >= 1 or None, "
+                f"`step_length` must be a integer >= 1, " f"but found: {step_length}"
+            )
+        else:
+            return step_length
+
+    elif is_timedelta(step_length):
+        if step_length <= timedelta(0):
+            raise ValueError(
+                f"`step_length` must be a positive timedelta, "
                 f"but found: {step_length}"
             )
-    return step_length
+        else:
+            return step_length
+
+    elif is_date_offset(step_length):
+        if step_length + pd.Timestamp(0) <= pd.Timestamp(0):
+            raise ValueError(
+                f"`step_length` must be a positive pd.DateOffset, "
+                f"but found: {step_length}"
+            )
+        else:
+            return step_length
+
+    else:
+        raise ValueError(
+            f"`step_length` must be an integer, timedelta, pd.DateOffset, or None, "
+            f"but found: {type(step_length)}"
+        )
 
 
 def check_sp(sp, enforce_list=False):
@@ -204,7 +241,7 @@ def check_sp(sp, enforce_list=False):
     ----------
     sp : int or [int/float]
         Seasonal periodicity
-    emforce_list : bool, optional (default=False)
+    enforce_list : bool, optional (default=False)
         If true, convert sp to list if not list.
 
     Returns
@@ -225,8 +262,8 @@ def check_sp(sp, enforce_list=False):
     return sp
 
 
-def check_fh(fh, enforce_relative=False):
-    """Validate forecasting horizon.
+def check_fh(fh, enforce_relative: bool = False, freq=None):
+    """Coerce to ForecastingHorizon object and validate inputs.
 
     Parameters
     ----------
@@ -234,17 +271,29 @@ def check_fh(fh, enforce_relative=False):
         Forecasting horizon specifying the time points to predict.
     enforce_relative : bool, optional (default=False)
         If True, checks if fh is relative.
+    freq : str, or pd.Index, optional (default=None)
+        object carrying frequency information on values
+        ignored unless values is without inferrable freq
+        Frequency string or pd.Index
 
     Returns
     -------
     fh : ForecastingHorizon
         Validated forecasting horizon.
+
+    Raises
+    ------
+    ValueError
+        If passed fh is of length zero
+        If enforce_relative is True, but fh.is_relative is False
     """
     # Convert to ForecastingHorizon
     from sktime.forecasting.base import ForecastingHorizon
 
     if not isinstance(fh, ForecastingHorizon):
-        fh = ForecastingHorizon(fh, is_relative=None)
+        fh = ForecastingHorizon(fh, is_relative=None, freq=freq)
+    else:
+        fh.freq = freq
 
     # Check if non-empty, note we check for empty values here, rather than
     # during construction of ForecastingHorizon because ForecastingHorizon
@@ -259,19 +308,28 @@ def check_fh(fh, enforce_relative=False):
     return fh
 
 
-def check_alpha(alpha):
-    """Check that a confidence level alpha (or list of alphas) is valid.
+def check_alpha(alpha, name="alpha"):
+    """Check that quantile or confidence level value, or list of values, is valid.
 
-    All alpha values must lie in the open interval (0, 1).
+    Checks:
+    alpha must be a float, or list of float, all in the open interval (0, 1).
+    values in alpha must be unique.
 
     Parameters
     ----------
     alpha : float, list of float
+    name : str, optional, default="alpha"
+        the name reference to alpha displayed in the error message
+
+    Returns
+    -------
+    alpha coerced to a list, i.e.: [alpha], if alpha was a float; alpha otherwise
 
     Raises
     ------
     ValueError
-        If alpha is outside the range (0, 1).
+        If alpha (float) or any value in alpha (list) is outside the range (0, 1).
+        If values in alpha (list) are non-unique.
     """
     # check type
     if isinstance(alpha, list):
@@ -287,13 +345,18 @@ def check_alpha(alpha):
     for a in alpha:
         if not 0 < a < 1:
             raise ValueError(
-                f"`alpha` must lie in the open interval (0, 1), " f"but found: {a}."
+                f"values in {name} must lie in the open interval (0, 1), "
+                f"but found value: {a}."
             )
+
+    # check uniqueness
+    if len(set(alpha)) < len(alpha):
+        raise ValueError(f"values in {name} must be unique, but found duplicates")
 
     return alpha
 
 
-def check_cutoffs(cutoffs):
+def check_cutoffs(cutoffs: VALID_CUTOFF_TYPES) -> np.ndarray:
     """Validate the cutoff.
 
     Parameters
@@ -311,11 +374,11 @@ def check_cutoffs(cutoffs):
         If cutoffs array is empty.
 
     """
-    if not isinstance(cutoffs, (np.ndarray, pd.Index)):
+    if not isinstance(cutoffs, ACCEPTED_CUTOFF_TYPES):
         raise ValueError(
-            f"`cutoffs` must be a np.array or pd.Index, " f"but found: {type(cutoffs)}"
+            f"`cutoffs` must be a np.array or pd.Index, but found: {type(cutoffs)}"
         )
-    assert np.issubdtype(cutoffs.dtype, np.integer)
+    assert array_is_int(cutoffs) or array_is_datetime64(cutoffs)
 
     if len(cutoffs) == 0:
         raise ValueError("Found empty `cutoff` array")
@@ -325,7 +388,7 @@ def check_cutoffs(cutoffs):
 
 def check_scoring(scoring, allow_y_pred_benchmark=False):
     """
-    Validate the performace scoring.
+    Validate the performance scoring.
 
     Parameters
     ----------

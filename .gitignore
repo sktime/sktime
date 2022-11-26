@@ -6,7 +6,6 @@ __pycache__/
 # C extensions
 *.so
 *.c
-*mrseql.cpp
 
 # Distribution / packaging
 .Python
@@ -33,7 +32,7 @@ results/
 MANIFEST
 
 #downloaded datasets
-sktime/datasets/data/
+sktime/datasets/local_data/
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
@@ -44,6 +43,10 @@ sktime/datasets/data/
 # Installer logs
 pip-log.txt
 pip-delete-this-directory.txt
+pip-wheel-metadata/
+
+# folder created by `make test`
+testdir/
 
 # Unit test / coverage reports
 htmlcov/
@@ -52,7 +55,6 @@ htmlcov/
 .coverage
 .coverage.*
 .cache
-nosetests.xml
 coverage.xml
 *.cover
 .hypothesis/
@@ -78,7 +80,6 @@ instance/
 docs/_build/
 docs/source/api_reference/auto_generated/
 docs/estimator_overview_table.md
-docs/source/examples
 
 # PyBuilder
 target/
@@ -107,6 +108,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+sktime-dev/
 
 # mkdocs documentation
 /site
@@ -155,9 +157,8 @@ build_doc_site/
 
 # dev files
 envs/
-sktime/contrib/distance_based/tempy.py
-sktime/contrib/nothing_to_see_here.py
-sktime/distances/elastic_cython.html
 *.html
-sktime/contrib/distance_based/old_time_series_neighbors.py
-sktime/contrib/debug.py
+sktime/_contrib/debug.py
+sktime/_contrib/local_code.py
+sktime/_contrib/main.py
+sktime/_contrib/temp/

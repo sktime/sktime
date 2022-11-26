@@ -1,28 +1,39 @@
-#!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
+"""tsfresh interface class."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-__author__ = ["Ayushmaan Seth", "Markus Löning", "Alwin Wang"]
+__author__ = ["AyushmaanSeth", "mloning", "Alwin Wang"]
 __all__ = ["TSFreshFeatureExtractor", "TSFreshRelevantFeatureExtractor"]
 
 from warnings import warn
 
-from sktime.transformations.base import _PanelToTabularTransformer
-from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.datatypes._panel._convert import from_nested_to_long
+from sktime.transformations.base import BaseTransformer
 from sktime.utils.validation import check_n_jobs
-from sktime.utils.validation.panel import check_X
-from sktime.utils.validation.panel import check_X_y
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-_check_soft_dependencies("tsfresh")
+_check_soft_dependencies("tsfresh", severity="warning")
 
 
-class _TSFreshFeatureExtractor(_PanelToTabularTransformer):
-    """Base adapter class for tsfresh transformations"""
+class _TSFreshFeatureExtractor(BaseTransformer):
+    """Base adapter class for tsfresh transformations."""
+
+    _tags = {
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
+        "scitype:transform-output": "Primitives",
+        # what scitype is returned: Primitives, Series, Panel
+        "scitype:instancewise": True,  # is this an instance-wise transform?
+        "X_inner_mtype": "nested_univ",  # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
+        "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
+        "python_dependencies": "tsfresh",
+        "python_version": "<3.10",
+    }
 
     def __init__(
         self,
-        default_fc_parameters="efficient",
+        default_fc_parameters=None,
         kind_to_fc_parameters=None,
         chunksize=None,
         n_jobs=1,
@@ -46,50 +57,38 @@ class _TSFreshFeatureExtractor(_PanelToTabularTransformer):
         self.profiling_filename = profiling_filename
         self.distributor = distributor
 
-        self.default_fc_parameters_ = None
-
         super(_TSFreshFeatureExtractor, self).__init__()
 
-    def fit(self, X, y=None):
-        """Fit.
-
-        Parameters
-        ----------
-        X : pd.DataFrame
-            nested pandas DataFrame of shape [n_samples, n_columns]
-        y : pd.Series or np.array
-            Target variable
-
-        Returns
-        -------
-        self : an instance of self
-        """
-        check_X(X, coerce_to_pandas=True)
+        # _get_extraction_params should be after the init because this imports tsfresh
+        # and the init checks for python version and tsfresh being present
+        self.default_fc_parameters_ = None
         self.default_fc_parameters_ = self._get_extraction_params()
-        self._is_fitted = True
-        return self
 
     def _get_extraction_params(self):
-        """Helper function to set default parameters from tsfresh"""
+        """Set default parameters from tsfresh."""
         # make n_jobs compatible with scikit-learn
         self.n_jobs = check_n_jobs(self.n_jobs)
 
         # lazy imports to avoid hard dependency
-        from tsfresh.defaults import CHUNKSIZE
-        from tsfresh.defaults import DISABLE_PROGRESSBAR
+        from tsfresh.defaults import (
+            CHUNKSIZE,
+            DISABLE_PROGRESSBAR,
+            N_PROCESSES,
+            PROFILING,
+            PROFILING_FILENAME,
+            PROFILING_SORTING,
+            SHOW_WARNINGS,
+        )
+        from tsfresh.feature_extraction.settings import (
+            ComprehensiveFCParameters,
+            EfficientFCParameters,
+            MinimalFCParameters,
+            from_columns,
+        )
         from tsfresh.utilities.dataframe_functions import impute
-        from tsfresh.defaults import N_PROCESSES
-        from tsfresh.defaults import PROFILING
-        from tsfresh.defaults import PROFILING_FILENAME
-        from tsfresh.defaults import PROFILING_SORTING
-        from tsfresh.defaults import SHOW_WARNINGS
-        from tsfresh.feature_extraction.settings import ComprehensiveFCParameters
-        from tsfresh.feature_extraction.settings import EfficientFCParameters
-        from tsfresh.feature_extraction.settings import MinimalFCParameters
 
         # Set defaults from tsfresh
         extraction_params = {
-            "kind_to_fc_parameters": self.kind_to_fc_parameters,
             "n_jobs": N_PROCESSES,
             "chunksize": CHUNKSIZE,
             "show_warnings": SHOW_WARNINGS,
@@ -124,39 +123,147 @@ class _TSFreshFeatureExtractor(_PanelToTabularTransformer):
                 )
             else:
                 fc_parameters = fc_param_lookup[self.default_fc_parameters]
+        # TODO: remove elif in v0.15.0
+        # this will pass None to tsfresh, and hence default to "comprehensive"
+        elif self.default_fc_parameters is None:
+            fc_parameters = fc_param_lookup["efficient"]
+            warn(
+                "Passing None to default_fc_parameters currently defaults "
+                "to 'efficient', this behaviour has been is deprecated. From 0.15.0, "
+                "this will change to passing default_fc_parameters directly to tsfresh,"
+                " which in turn defaults to 'comprehensive'.",
+                DeprecationWarning,
+            )
         else:
             fc_parameters = self.default_fc_parameters
         extraction_params["default_fc_parameters"] = fc_parameters
 
+        # creates mapping from kind names to fc_parameter objects
+        if self.kind_to_fc_parameters is not None:
+            self.kind_to_fc_parameters_ = from_columns(self.kind_to_fc_parameters)
+        else:
+            self.kind_to_fc_parameters_ = self.kind_to_fc_parameters
+        extraction_params["kind_to_fc_parameters"] = self.kind_to_fc_parameters_
         return extraction_params
 
 
+# todo 0.15.0: change default_fc_parameters docstring to "comprehensive" default"
 class TSFreshFeatureExtractor(_TSFreshFeatureExtractor):
-    """Transformer for extracting time series features
+    """Transformer for extracting time series features via `tsfresh.extract_features`.
+
+    Direct interface to `tsfresh.extract_features` [1] as an `sktime` transformer.
+
+    Parameters
+    ----------
+    default_fc_parameters : string, FCParameters object or None,
+        default=None = "efficient"
+        Specifies pre-defined feature sets to be extracted
+        If string, should be in ["minimal", "efficient", "comprehensive"]
+        See [3] for more details.
+    kind_to_fc_parameters : list or None, default=None
+        containing strings specifying selected features to be extracted.
+        The naming convention from tsfresh applies, i.e. the strings
+        should be structured as:
+        {time_series_name}__{feature_name}__{param name 1}_
+        {param value 1}__[..]__{param name k}_{param value k}.
+        See [2] for more details and [4] for viable options.
+        Either default_fc_parameters or kind_to_fc_parameters
+        should be passed. If both are passed, only features specified
+        in kind_to_fc_parameters are extracted. If neither
+        is passed, it calculates the "comprehensive"
+        feature set.
+    n_jobs : int, default=1
+        The number of processes to use for parallelization.
+        If zero, no parallelization is used.
+    chunksize : None or int, default=None
+        The size of one chunk that is submitted to the worker
+        process for the parallelisation.  Where one chunk is defined as a
+        singular time series for one id and one kind. If you set the chunksize
+        to 10, then it means that one task is to calculate all features for 10
+        time series.  If it is set it to None, depending on distributor,
+        heuristics are used to find the optimal chunksize. If you get out of
+        memory exceptions, you can try it with the dask distributor and a
+        smaller chunksize.
+    show_warnings : bool, default=True
+        Show warnings during the feature extraction
+         (needed for debugging of calculators).
+    disable_progressbar : bool, default=False
+        Do not show a progressbar while doing the calculation.
+    impute_function : None or Callable, default=None
+        None, if no imputing should happen or the function to call for
+        imputing the result dataframe. Imputing will never happen on the input data.
+    profiling : bool, default=None
+        Turn on profiling during feature extraction
+    profiling_sorting : basestring, default=None
+        How to sort the profiling results (see the documentation
+        of the profiling package for more information)
+    profiling_filename : basestring, default=None
+        Where to save the profiling results.
+    distributor : distributor class, default=None
+        Advanced parameter: set this to a class name that you want to use as a
+        distributor. See the utilities/distribution.py for more information.
+        Leave to None, if you want TSFresh to choose the best distributor.
+
+    Returns
+    -------
+    DataFrame containing extracted features
 
     References
     ----------
-    ..[1]  https://github.com/blue-yonder/tsfresh
+    .. [1]  https://github.com/blue-yonder/tsfresh
+    .. [2]  https://tsfresh.readthedocs.io/en/v0.1.2/text/feature_naming.html
+    .. [3]  https://tsfresh.readthedocs.io/en/latest/text/
+            feature_extraction_settings.html
+    .. [4]  https://tsfresh.readthedocs.io/en/latest/api/tsfresh.feature_extraction.html
+            #module-tsfresh.feature_extraction.feature_calculators
+
+    Examples
+    --------
+    >>> from sklearn.model_selection import train_test_split
+    >>> from sktime.datasets import load_arrow_head
+    >>> from sktime.transformations.panel.tsfresh import (
+    ... TSFreshFeatureExtractor
+    ... )
+    >>> X, y = load_arrow_head(return_X_y=True)
+    >>> X_train, X_test, y_train, y_test = train_test_split(X, y)
+    >>> ts_eff = TSFreshFeatureExtractor(
+    ...     default_fc_parameters="efficient", disable_progressbar=True
+    ... ) # doctest: +SKIP
+    >>> X_transform1 = ts_eff.fit_transform(X_train) # doctest: +SKIP
+    >>> features_to_calc = [
+    ...     "dim_0__quantile__q_0.6",
+    ...     "dim_0__longest_strike_above_mean",
+    ...     "dim_0__variance",
+    ... ]
+    >>> ts_custom = TSFreshFeatureExtractor(
+    ...     kind_to_fc_parameters=features_to_calc, disable_progressbar=True
+    ... ) # doctest: +SKIP
+    >>> X_transform2 = ts_custom.fit_transform(X_train) # doctest: +SKIP
     """
 
-    def transform(self, X, y=None):
-        """Transform X.
+    _tags = {
+        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
+        "fit_is_empty": True,  # is fit empty and can be skipped? Yes = True
+    }
+
+    def _transform(self, X, y=None):
+        """Transform X and return a transformed version.
+
+        private _transform containing core logic, called from transform
 
         Parameters
         ----------
-        X : pd.DataFrame
-            nested pandas DataFrame of shape [n_samples, n_columns]
-        y : pd.Series, optional (default=None)
+        X : nested pandas DataFrame of shape [n_instances, n_features]
+            each cell of X must contain pandas.Series
+            Data to transform
+        y : ignored argument for interface compatibility
 
         Returns
         -------
-        Xt : pandas DataFrame
-          Transformed pandas DataFrame
+        Xt : nested pandas DataFrame of shape [n_instances, n_features]
+            each cell of Xt contains pandas.Series
+            transformed version of X
         """
-        # input checks
-        self.check_is_fitted()
-        X = check_X(X, coerce_to_pandas=True)
-
         # tsfresh requires unique index, returns only values for
         # unique index values
         if X.index.nunique() < X.shape[0]:
@@ -187,14 +294,60 @@ class TSFreshFeatureExtractor(_TSFreshFeatureExtractor):
         # input data
         return Xt.reindex(X.index)
 
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        features_to_calc = [
+            "dim_0__quantile__q_0.6",
+            "dim_0__longest_strike_above_mean",
+            "dim_0__variance",
+        ]
+
+        return [
+            {
+                "disable_progressbar": True,
+                "show_warnings": False,
+                "default_fc_parameters": "efficient",
+            },
+            {
+                "disable_progressbar": True,
+                "show_warnings": False,
+                "kind_to_fc_parameters": features_to_calc,
+            },
+        ]
+
 
 class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
     """Transformer for extracting and selecting features.
 
     References
     ----------
-    ..[1]  https://github.com/blue-yonder/tsfresh
+    .. [1]  https://github.com/blue-yonder/tsfresh
     """
+
+    _tags = {
+        "requires_y": True,  # does y need to be passed in fit?
+        "X_inner_mtype": "nested_univ",  # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "pd_Series_Table",
+        # which mtypes do _fit/_predict support for X?
+        "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
+    }
 
     def __init__(
         self,
@@ -242,14 +395,16 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
         self.ml_task = ml_task
 
     def _get_selection_params(self):
-        """Helper function to set default values from tsfresh"""
+        """Set default values from tsfresh."""
         # lazy imports to avoid hard dependency
-        from tsfresh.defaults import TEST_FOR_BINARY_TARGET_BINARY_FEATURE
-        from tsfresh.defaults import TEST_FOR_BINARY_TARGET_REAL_FEATURE
-        from tsfresh.defaults import TEST_FOR_REAL_TARGET_BINARY_FEATURE
-        from tsfresh.defaults import TEST_FOR_REAL_TARGET_REAL_FEATURE
-        from tsfresh.defaults import FDR_LEVEL
-        from tsfresh.defaults import HYPOTHESES_INDEPENDENT
+        from tsfresh.defaults import (
+            FDR_LEVEL,
+            HYPOTHESES_INDEPENDENT,
+            TEST_FOR_BINARY_TARGET_BINARY_FEATURE,
+            TEST_FOR_BINARY_TARGET_REAL_FEATURE,
+            TEST_FOR_REAL_TARGET_BINARY_FEATURE,
+            TEST_FOR_REAL_TARGET_REAL_FEATURE,
+        )
 
         # Set defaults
         selection_params = {
@@ -269,7 +424,7 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
 
         return selection_params
 
-    def fit(self, X, y=None):
+    def _fit(self, X, y=None):
         """Fit.
 
         Parameters
@@ -285,11 +440,6 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
         """
         # lazy imports to avoid hard dependency
         from tsfresh.transformers.feature_selector import FeatureSelector
-
-        # input checks
-        if y is None:
-            raise ValueError(f"{self.__class__.__name__} requires `y` in `fit`.")
-        X, y = check_X_y(X, y, coerce_to_pandas=True)
 
         self.extractor_ = TSFreshFeatureExtractor(
             default_fc_parameters=self.default_fc_parameters,
@@ -314,10 +464,9 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
 
         Xt = self.extractor_.fit_transform(X)
         self.selector_.fit(Xt, y)
-        self._is_fitted = True
         return self
 
-    def transform(self, X, y=None):
+    def _transform(self, X, y=None):
         """Transform X.
 
         Parameters
@@ -332,8 +481,32 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
         Xt : pandas DataFrame
           Transformed pandas DataFrame
         """
-        self.check_is_fitted()
-        X = check_X(X, coerce_to_pandas=True)
         Xt = self.extractor_.transform(X)
         Xt = self.selector_.transform(Xt)
         return Xt.reindex(X.index)
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        params = {
+            "disable_progressbar": True,
+            "show_warnings": False,
+            "fdr_level": 0.01,
+        }
+        return params

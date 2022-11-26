@@ -77,11 +77,16 @@ class TemporalDictionaryEnsemble(BaseClassifier):
     max_dims : int, default=20
         Max number of dimensions per classifier for multivariate data.
     time_limit_in_minutes : int, default=0
-        Time contract to limit build time in minutes, overriding n_estimators.
-        Default of 0 means n_estimators is used.
+        Time contract to limit build time in minutes, overriding n_parameter_samples.
+        Default of 0 means n_parameter_samples is used.
     contract_max_n_parameter_samples : int, default=np.inf
         Max number of parameter combinations to consider when time_limit_in_minutes is
         set.
+    typed_dict : bool, default=True
+        Use a numba typed Dict to store word counts. May increase memory usage, but will
+        be faster for larger datasets. As the Dict cannot be pickled currently, there
+        will be some overhead converting it to a python dict with multiple threads and
+        pickling.
     save_train_predictions : bool, default=False
         Save the ensemble member train predictions in fit for use in _get_train_probs
         leave-one-out cross-validation.
@@ -135,7 +140,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
     >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
     >>> clf = TemporalDictionaryEnsemble(
     ...     n_parameter_samples=10,
-    ...     max_ensemble_size=5,
+    ...     max_ensemble_size=3,
     ...     randomly_selected_params=5,
     ... )
     >>> clf.fit(X_train, y_train)
@@ -148,6 +153,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         "capability:train_estimate": True,
         "capability:contractable": True,
         "capability:multithreading": True,
+        "classifier_type": "dictionary",
     }
 
     def __init__(
@@ -162,6 +168,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         max_dims=20,
         time_limit_in_minutes=0.0,
         contract_max_n_parameter_samples=np.inf,
+        typed_dict=True,
         save_train_predictions=False,
         n_jobs=1,
         random_state=None,
@@ -179,8 +186,8 @@ class TemporalDictionaryEnsemble(BaseClassifier):
 
         self.time_limit_in_minutes = time_limit_in_minutes
         self.contract_max_n_parameter_samples = contract_max_n_parameter_samples
+        self.typed_dict = typed_dict
         self.save_train_predictions = save_train_predictions
-
         self.random_state = random_state
         self.n_jobs = n_jobs
 
@@ -199,6 +206,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         self._weight_sum = 0
         self._prev_parameters_x = []
         self._prev_parameters_y = []
+        self._min_window = min_window
 
         super(TemporalDictionaryEnsemble, self).__init__()
 
@@ -228,8 +236,9 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         """
         if self.n_parameter_samples <= self.randomly_selected_params:
             warnings.warn(
-                "TDE Warning: n_parameter_samples <= randomly_selected_params, "
-                + "ensemble member parameters will be fully randomly selected."
+                "TemporalDictionaryEnsemble warning: n_parameter_samples <= "
+                "randomly_selected_params, ensemble member parameters will be fully "
+                "randomly selected."
             )
 
         self.n_instances_, self.n_dims_, self.series_length_ = X.shape
@@ -242,18 +251,18 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         # Window length parameter space dependent on series length
         max_window_searches = self.series_length_ / 4
         max_window = int(self.series_length_ * self.max_win_len_prop)
-        win_inc = int((max_window - self.min_window) / max_window_searches)
+
+        if self.min_window >= max_window:
+            self._min_window = max_window
+            warnings.warn(
+                f"TemporalDictionaryEnsemble warning: min_window = "
+                f"{self.min_window} is larger than max_window = {max_window}."
+                f" min_window has been set to {max_window}."
+            )
+
+        win_inc = int((max_window - self._min_window) / max_window_searches)
         if win_inc < 1:
             win_inc = 1
-        if self.min_window > max_window + 1:
-            raise ValueError(
-                f"Error in TemporalDictionaryEnsemble, min_window ="
-                f"{self.min_window} is bigger"
-                f" than max_window ={max_window}."
-                f" Try set min_window to be smaller than series length in "
-                f"the constructor, but the classifier may not work at "
-                f"all with very short series"
-            )
 
         possible_parameters = self._unique_parameters(max_window, win_inc)
         num_classifiers = 0
@@ -317,6 +326,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
                 bigrams=use_bigrams,
                 dim_threshold=self.dim_threshold,
                 max_dims=self.max_dims,
+                typed_dict=self.typed_dict,
                 n_jobs=self._threads_to_use,
                 random_state=self.random_state,
             )
@@ -356,7 +366,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
 
         return self
 
-    def _predict(self, X):
+    def _predict(self, X) -> np.ndarray:
         """Predict class values of n instances in X.
 
         Parameters
@@ -377,7 +387,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
             ]
         )
 
-    def _predict_proba(self, X):
+    def _predict_proba(self, X) -> np.ndarray:
         """Predict class probabilities for n instances in X.
 
         Parameters
@@ -421,7 +431,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         possible_parameters = [
             [win_size, word_len, normalise, levels, igb]
             for normalise in self._norm_options
-            for win_size in range(self.min_window, max_window + 1, win_inc)
+            for win_size in range(self._min_window, max_window + 1, win_inc)
             for word_len in self._word_lengths
             for levels in self._levels
             for igb in self._igb_options
@@ -429,7 +439,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
 
         return possible_parameters
 
-    def _get_train_probs(self, X, y, train_estimate_method="loocv"):
+    def _get_train_probs(self, X, y, train_estimate_method="loocv") -> np.ndarray:
         self.check_is_fitted()
         X, y = check_X_y(X, y, coerce_to_numpy=True)
 
@@ -455,7 +465,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
                 preds = (
                     clf._train_predictions
                     if self.save_train_predictions
-                    else Parallel(n_jobs=self._threads_to_use)(
+                    else Parallel(n_jobs=self._threads_to_use, prefer="threads")(
                         delayed(clf._train_predict)(
                             i,
                         )
@@ -472,6 +482,10 @@ class TemporalDictionaryEnsemble(BaseClassifier):
             indices = range(n_instances)
             for i, clf in enumerate(self.estimators_):
                 oob = [n for n in indices if n not in clf._subsample]
+
+                if len(oob) == 0:
+                    continue
+
                 preds = clf.predict(X[oob])
 
                 for n, pred in enumerate(preds):
@@ -496,7 +510,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         required_correct = int(lowest_acc * train_size)
 
         if self._threads_to_use > 1:
-            c = Parallel(n_jobs=self._threads_to_use)(
+            c = Parallel(n_jobs=self._threads_to_use, prefer="threads")(
                 delayed(tde._train_predict)(
                     i,
                 )
@@ -526,6 +540,42 @@ class TemporalDictionaryEnsemble(BaseClassifier):
                     tde._train_predictions.append(c)
 
         return correct / train_size
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            For classifiers, a "default" set of parameters should be provided for
+            general testing, and a "results_comparison" set for comparing against
+            previously recorded results if the general set does not produce suitable
+            probabilities to compare against.
+
+        Returns
+        -------
+        params : dict or list of dict, default={}
+            Parameters to create testing instances of the class.
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`.
+        """
+        if parameter_set == "results_comparison":
+            return {
+                "n_parameter_samples": 10,
+                "max_ensemble_size": 5,
+                "randomly_selected_params": 5,
+            }
+        else:
+            return {
+                "n_parameter_samples": 5,
+                "max_ensemble_size": 2,
+                "randomly_selected_params": 3,
+                "save_train_predictions": True,
+            }
 
 
 class IndividualTDE(BaseClassifier):
@@ -566,6 +616,9 @@ class IndividualTDE(BaseClassifier):
     max_dims : int, default=20
         Maximum number of dimensions words are extracted from. Only applicable for
         multivariate data.
+    typed_dict : bool, default=True
+        Use a numba TypedDict to store word counts. May increase memory usage, but will
+        be faster for larger datasets.
     n_jobs : int, default=1
         The number of jobs to run in parallel for both `fit` and `predict`.
         ``-1`` means using all processors.
@@ -630,6 +683,7 @@ class IndividualTDE(BaseClassifier):
         bigrams=True,
         dim_threshold=0.85,
         max_dims=20,
+        typed_dict=True,
         n_jobs=1,
         random_state=None,
     ):
@@ -645,6 +699,7 @@ class IndividualTDE(BaseClassifier):
         self.dim_threshold = dim_threshold
         self.max_dims = max_dims
 
+        self.typed_dict = typed_dict
         self.n_jobs = n_jobs
         self.random_state = random_state
 
@@ -662,6 +717,38 @@ class IndividualTDE(BaseClassifier):
         self._train_predictions = []
 
         super(IndividualTDE, self).__init__()
+
+    # todo remove along with BOSS and SFA workarounds when Dict becomes serialisable.
+    def __getstate__(self):
+        """Return state as dictionary for pickling, required for typed Dict objects."""
+        state = self.__dict__.copy()
+        if self.typed_dict:
+            nl = [None] * len(self._transformed_data)
+            for i, ndict in enumerate(state["_transformed_data"]):
+                pdict = dict()
+                for key, val in ndict.items():
+                    pdict[key] = val
+                nl[i] = pdict
+            state["_transformed_data"] = nl
+        return state
+
+    def __setstate__(self, state):
+        """Set current state using input pickling, required for typed Dict objects."""
+        self.__dict__.update(state)
+        if self.typed_dict:
+            nl = [None] * len(self._transformed_data)
+            for i, pdict in enumerate(self._transformed_data):
+                ndict = (
+                    Dict.empty(
+                        key_type=types.UniTuple(types.int64, 2), value_type=types.uint32
+                    )
+                    if self.levels > 1 or self.n_dims_ > 1
+                    else Dict.empty(key_type=types.int64, value_type=types.uint32)
+                )
+                for key, val in pdict.items():
+                    ndict[key] = val
+                nl[i] = ndict
+            self._transformed_data = nl
 
     def _fit(self, X, y):
         """Fit a single base TDE classifier on n_instances cases (X,y).
@@ -690,7 +777,16 @@ class IndividualTDE(BaseClassifier):
         if self.n_dims_ > 1:
             self._dims, self._transformers = self._select_dims(X, y)
 
-            words = [defaultdict(int) for _ in range(self.n_instances_)]
+            words = (
+                [
+                    Dict.empty(
+                        key_type=types.UniTuple(types.int64, 2), value_type=types.uint32
+                    )
+                    for _ in range(self.n_instances_)
+                ]
+                if self.typed_dict
+                else [defaultdict(int) for _ in range(self.n_instances_)]
+            )
 
             for i, dim in enumerate(self._dims):
                 X_dim = X[:, dim, :].reshape(self.n_instances_, 1, self.series_length_)
@@ -698,8 +794,17 @@ class IndividualTDE(BaseClassifier):
                 dim_words = dim_words[0]
 
                 for n in range(self.n_instances_):
-                    for word, count in dim_words[n].items():
-                        words[n][word << self._highest_dim_bit | dim] = count
+                    if self.typed_dict:
+                        for word, count in dim_words[n].items():
+                            if self.levels > 1:
+                                words[n][
+                                    (word[0], word[1] << self._highest_dim_bit | dim)
+                                ] = count
+                            else:
+                                words[n][(word, dim)] = count
+                    else:
+                        for word, count in dim_words[n].items():
+                            words[n][word << self._highest_dim_bit | dim] = count
 
             self._transformed_data = words
         else:
@@ -716,6 +821,7 @@ class IndividualTDE(BaseClassifier):
                     lower_bounding=False,
                     save_words=False,
                     use_fallback_dft=True,
+                    typed_dict=self.typed_dict,
                     n_jobs=self._threads_to_use,
                 )
             )
@@ -738,7 +844,16 @@ class IndividualTDE(BaseClassifier):
         num_cases = X.shape[0]
 
         if self.n_dims_ > 1:
-            words = [defaultdict(int) for _ in range(num_cases)]
+            words = (
+                [
+                    Dict.empty(
+                        key_type=types.UniTuple(types.int64, 2), value_type=types.uint32
+                    )
+                    for _ in range(num_cases)
+                ]
+                if self.typed_dict
+                else [defaultdict(int) for _ in range(num_cases)]
+            )
 
             for i, dim in enumerate(self._dims):
                 X_dim = X[:, dim, :].reshape(num_cases, 1, self.series_length_)
@@ -746,15 +861,24 @@ class IndividualTDE(BaseClassifier):
                 dim_words = dim_words[0]
 
                 for n in range(num_cases):
-                    for word, count in dim_words[n].items():
-                        words[n][word << self._highest_dim_bit | dim] = count
+                    if self.typed_dict:
+                        for word, count in dim_words[n].items():
+                            if self.levels > 1:
+                                words[n][
+                                    (word[0], word[1] << self._highest_dim_bit | dim)
+                                ] = count
+                            else:
+                                words[n][(word, dim)] = count
+                    else:
+                        for word, count in dim_words[n].items():
+                            words[n][word << self._highest_dim_bit | dim] = count
 
             test_bags = words
         else:
             test_bags = self._transformers[0].transform(X)
             test_bags = test_bags[0]
 
-        classes = Parallel(n_jobs=self._threads_to_use)(
+        classes = Parallel(n_jobs=self._threads_to_use, prefer="threads")(
             delayed(self._test_nn)(
                 test_bag,
             )
@@ -800,6 +924,7 @@ class IndividualTDE(BaseClassifier):
                     save_words=False,
                     keep_binning_dft=True,
                     use_fallback_dft=True,
+                    typed_dict=self.typed_dict,
                     n_jobs=self._threads_to_use,
                 )
             )
@@ -831,11 +956,8 @@ class IndividualTDE(BaseClassifier):
                 fin_transformers.append(transformers[i])
 
         if len(dims) > self.max_dims:
-            idx = self.random_state.choice(
-                len(dims),
-                self.max_dims,
-                replace=False,
-            ).tolist()
+            rng = check_random_state(self.random_state)
+            idx = rng.choice(len(dims), self.max_dims, replace=False).tolist()
             dims = [dims[i] for i in idx]
             fin_transformers = [fin_transformers[i] for i in idx]
 
@@ -897,7 +1019,7 @@ def histogram_intersection(first, second):
         )
 
 
-@njit(fastmath=True)
+@njit(fastmath=True, cache=True)
 def _histogram_intersection_dict(first, second):
     sim = 0
     for word, val_a in first.items():

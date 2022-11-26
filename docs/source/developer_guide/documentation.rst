@@ -1,7 +1,7 @@
 .. _developer_guide_documentation:
 
 =============
-Documentation
+Developing Documentation
 =============
 
 Providing instructive documentation is a key part of ``sktime's`` mission. In order to meet this,
@@ -15,8 +15,11 @@ These include:
 
 More detailed information on ``sktime's`` documentation format is provided below.
 
+.. contents::
+   :local:
+
 Docstring Conventions
-=====================
+---------------------
 
 sktime uses the numpydoc_ Sphinx extension and follows
 `NumPy docstring format <https://numpydoc.readthedocs.io/en/latest/format.html>`_.
@@ -107,7 +110,7 @@ Notes
 The notes section can include several types of information, including:
 
 - Mathematical details of a code object or other important implementation details (using ..math or :math:`` functionality)
-- Links to alternative implementations of the code artifact that are external to ``sktime`` (e.g. the Java implementation of a sktime time series classifier)
+- Links to alternative implementations of the code artifact that are external to ``sktime`` (e.g. the Java implementation of an sktime time series classifier)
 - state changing methods (sktime estimator classes)
 
 References
@@ -145,7 +148,7 @@ Examples
 ~~~~~~~~
 
 Most code artifacts in sktime should include an examples section. At a minimum this should include a single example that illustrates basic functionality.
-The examples should use either a built-in sktime dataset or other simple data (e.g. randomly generated data, etc) generated using a sktime dependency
+The examples should use either a built-in sktime dataset or other simple data (e.g. randomly generated data, etc) generated using an sktime dependency
 (e.g. NumPy, pandas, etc) and whereever possible only depend on sktime or its core dependencies. Examples should also be designed to run quickly where possible.
 For quick running code artifacts, additional examples can be included to illustrate the affect of different parameter settings.
 
@@ -171,3 +174,38 @@ MeanAbsoluteScaledError_
 .. _BOSSEnsemble: https://www.sktime.org/en/latest/api_reference/auto_generated/sktime.classification.dictionary_based.BOSSEnsemble.html#sktime.classification.dictionary_based.BOSSEnsemble
 .. _ContractableBOSS: https://www.sktime.org/en/latest/api_reference/auto_generated/sktime.classification.dictionary_based.ContractableBOSS.html#sktime.classification.dictionary_based.ContractableBOSS
 .. _MeanAbsoluteScaledError: https://www.sktime.org/en/latest/api_reference/auto_generated/sktime.performance_metrics.forecasting.MeanAbsoluteScaledError.html
+
+.. _sphinx: https://www.sphinx-doc.org/
+.. _readthedocs: https://readthedocs.org/projects/sktime/
+
+Documentation Build
+-------------------
+
+We use `sphinx`_ to build our documentation and `readthedocs`_ to host it.
+You can find our latest documentation `here <https://www.sktime.org/en/latest/>`_.
+
+The source files can be found
+in `docs/source/ <https://github.com/sktime/sktime/tree/main/docs/source>`_.
+The main configuration file for sphinx is
+`conf.py <https://github.com/sktime/sktime/blob/main/docs/source/conf.py>`__
+and the main page is
+`index.rst <https://github.com/sktime/sktime/blob/main/docs/source/index.rst>`__.
+To add new pages, you need to add a new ``.rst`` file and include it in
+the ``index.rst`` file.
+
+To build the documentation locally, you need to install a few extra
+dependencies listed in
+`pyproject.toml <https://github.com/sktime/sktime/blob/main/pyproject.toml>`__.
+
+1. To install extra dependencies from the root directory, run:
+
+   .. code:: bash
+
+      pip install .[docs]
+
+2. To build the website locally, run:
+
+   .. code:: bash
+
+      cd docs
+      make html

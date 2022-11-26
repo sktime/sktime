@@ -17,9 +17,9 @@ from sklearn.utils import check_random_state
 
 from sktime.base._base import _clone_estimator
 from sktime.classification.base import BaseClassifier
-from sktime.contrib.vector_classifiers._continuous_interval_tree import (
+from sktime.classification.sklearn._continuous_interval_tree import (
     ContinuousIntervalTree,
-    _cif_feature,
+    _drcif_feature,
 )
 from sktime.transformations.panel.catch22 import Catch22
 
@@ -110,7 +110,9 @@ class CanonicalIntervalForest(BaseClassifier):
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
     >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
-    >>> clf = CanonicalIntervalForest(n_estimators=10)
+    >>> clf = CanonicalIntervalForest(
+    ...     n_estimators=3, n_intervals=2, att_subsample_size=2
+    ... )
     >>> clf.fit(X_train, y_train)
     CanonicalIntervalForest(...)
     >>> y_pred = clf.predict(X_test)
@@ -119,6 +121,7 @@ class CanonicalIntervalForest(BaseClassifier):
     _tags = {
         "capability:multivariate": True,
         "capability:multithreading": True,
+        "classifier_type": "interval",
     }
 
     def __init__(
@@ -128,7 +131,7 @@ class CanonicalIntervalForest(BaseClassifier):
         att_subsample_size=8,
         min_interval=3,
         max_interval=None,
-        base_estimator="DTC",
+        base_estimator="CIT",
         n_jobs=1,
         random_state=None,
     ):
@@ -162,9 +165,9 @@ class CanonicalIntervalForest(BaseClassifier):
     def _fit(self, X, y):
         self.n_instances_, self.n_dims_, self.series_length_ = X.shape
 
-        if self.base_estimator == "DTC":
+        if self.base_estimator.lower() == "dtc":
             self._base_estimator = DecisionTreeClassifier(criterion="entropy")
-        elif self.base_estimator == "CIT":
+        elif self.base_estimator.lower() == "cit":
             self._base_estimator = ContinuousIntervalTree()
         elif isinstance(self.base_estimator, BaseEstimator):
             self._base_estimator = self.base_estimator
@@ -181,8 +184,8 @@ class CanonicalIntervalForest(BaseClassifier):
         if self.att_subsample_size > 25:
             self._att_subsample_size = 25
 
-        if self.series_length_ < self.min_interval:
-            self._min_interval = self.series_length_
+        if self.series_length_ <= self.min_interval:
+            self._min_interval = self.series_length_ - 1
         elif self.min_interval < 3:
             self._min_interval = 3
 
@@ -204,7 +207,7 @@ class CanonicalIntervalForest(BaseClassifier):
 
         return self
 
-    def _predict(self, X):
+    def _predict(self, X) -> np.ndarray:
         rng = check_random_state(self.random_state)
         return np.array(
             [
@@ -213,7 +216,7 @@ class CanonicalIntervalForest(BaseClassifier):
             ]
         )
 
-    def _predict_proba(self, X):
+    def _predict_proba(self, X) -> np.ndarray:
         n_test_instances, _, series_length = X.shape
         if series_length != self.series_length_:
             raise ValueError(
@@ -240,7 +243,11 @@ class CanonicalIntervalForest(BaseClassifier):
     def _fit_estimator(self, X, y, idx):
         c22 = Catch22(outlier_norm=True)
         rs = 255 if self.random_state == 0 else self.random_state
-        rs = None if self.random_state is None else rs * 37 * (idx + 1)
+        rs = (
+            None
+            if self.random_state is None
+            else (rs * 37 * (idx + 1)) % np.iinfo(np.int32).max
+        )
         rng = check_random_state(rs)
 
         transformed_x = np.empty(
@@ -283,14 +290,19 @@ class CanonicalIntervalForest(BaseClassifier):
                 intervals[j][0] = intervals[j][1] - length
 
             for a in range(0, self._att_subsample_size):
-                transformed_x[self._att_subsample_size * j + a] = _cif_feature(
-                    X, intervals[j], dims[j], atts[a], c22
+                transformed_x[self._att_subsample_size * j + a] = _drcif_feature(
+                    X, intervals[j], dims[j], atts[a], c22, case_id=j
                 )
 
         tree = _clone_estimator(self._base_estimator, random_state=rs)
         transformed_x = transformed_x.T
         transformed_x = transformed_x.round(8)
-        transformed_x = np.nan_to_num(transformed_x, False, 0, 0, 0)
+        if self.base_estimator == "CIT":
+            transformed_x = np.nan_to_num(
+                transformed_x, False, posinf=np.nan, neginf=np.nan
+            )
+        else:
+            transformed_x = np.nan_to_num(transformed_x, False, 0, 0, 0)
         tree.fit(transformed_x, y)
 
         return [tree, intervals, dims, atts]
@@ -307,8 +319,8 @@ class CanonicalIntervalForest(BaseClassifier):
 
             for j in range(0, self._n_intervals):
                 for a in range(0, self._att_subsample_size):
-                    transformed_x[self._att_subsample_size * j + a] = _cif_feature(
-                        X, intervals[j], dims[j], atts[a], c22
+                    transformed_x[self._att_subsample_size * j + a] = _drcif_feature(
+                        X, intervals[j], dims[j], atts[a], c22, case_id=j
                     )
 
             transformed_x = transformed_x.T
@@ -349,3 +361,30 @@ class CanonicalIntervalForest(BaseClassifier):
             curves /= counts
 
         return curves
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            For classifiers, a "default" set of parameters should be provided for
+            general testing, and a "results_comparison" set for comparing against
+            previously recorded results if the general set does not produce suitable
+            probabilities to compare against.
+
+        Returns
+        -------
+        params : dict or list of dict, default={}
+            Parameters to create testing instances of the class.
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`.
+        """
+        if parameter_set == "results_comparison":
+            return {"n_estimators": 10, "n_intervals": 2, "att_subsample_size": 4}
+        else:
+            return {"n_estimators": 2, "n_intervals": 2, "att_subsample_size": 2}

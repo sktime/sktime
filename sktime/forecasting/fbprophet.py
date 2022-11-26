@@ -6,19 +6,31 @@
 __author__ = ["aiwalter"]
 __all__ = ["Prophet"]
 
+
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base.adapters import _ProphetAdapter
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-_check_soft_dependencies("fbprophet")
+_check_soft_dependencies("prophet", severity="warning")
 
 
 class Prophet(_ProphetAdapter):
     """Prophet forecaster by wrapping Facebook's prophet algorithm [1]_.
 
+    Direct interface to Facebook prophet, using the sktime interface.
+    All hyper-parameters are exposed via the constructor.
+
+    Data can be passed in one of the sktime compatible formats,
+    naming a column `ds` such as in the prophet package is not necessary.
+
+    Integer indices can also be passed, in which case internally a conversion
+    to days since Jan 1, 2000 is carried out before passing to prophet.
+
     Parameters
     ----------
-    freq: String of DatetimeIndex frequency. Refer [2]_ for possible values:
+    freq: str, default=None
+        A DatetimeIndex frequency. For possible values see
+        https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html
     add_seasonality: dict or None, default=None
         Dict with args for Prophet.add_seasonality().
         Dict can have the following keys/values:
@@ -34,7 +46,15 @@ class Prophet(_ProphetAdapter):
             country_name: Name of the country, like 'UnitedStates' or 'US'
     growth: str, default="linear"
         String 'linear' or 'logistic' to specify a linear or logistic
-        trend.
+        trend. If 'logistic' specified float for 'growth_cap' must be provided.
+    growth_floor: float, default=0
+        Growth saturation minimum value.
+        Used only if  `growth="logistic"`, has no effect otherwise
+        (if `growth` is not `"logistic"`).
+    growth_cap: float, default=None
+        Growth saturation maximum aka carrying capacity.
+        Mandatory (float) iff `growth="logistic"`, has no effect and is optional,
+        otherwise (if `growth` is not `"logistic"`).
     changepoints: list or None, default=None
         List of dates at which to include potential changepoints. If
         not specified, potential changepoints are selected automatically.
@@ -98,7 +118,6 @@ class Prophet(_ProphetAdapter):
     References
     ----------
     .. [1] https://facebook.github.io/prophet
-    .. [2] https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html
 
     Examples
     --------
@@ -106,14 +125,14 @@ class Prophet(_ProphetAdapter):
     >>> from sktime.forecasting.fbprophet import Prophet
     >>> # Prophet requires to have data with a pandas.DatetimeIndex
     >>> y = load_airline().to_timestamp(freq='M')
-    >>> forecaster = Prophet(
+    >>> forecaster = Prophet(  # doctest: +SKIP
     ...     seasonality_mode='multiplicative',
     ...     n_changepoints=int(len(y) / 12),
     ...     add_country_holidays={'country_name': 'Germany'},
     ...     yearly_seasonality=True)
-    >>> forecaster.fit(y)
+    >>> forecaster.fit(y)  # doctest: +SKIP
     Prophet(...)
-    >>> y_pred = forecaster.predict(fh=[1,2,3])
+    >>> y_pred = forecaster.predict(fh=[1,2,3])  # doctest: +SKIP
     """
 
     def __init__(
@@ -124,6 +143,8 @@ class Prophet(_ProphetAdapter):
         add_country_holidays=None,
         # Args of fbprophet
         growth="linear",
+        growth_floor=0.0,
+        growth_cap=None,
         changepoints=None,
         n_changepoints=25,
         changepoint_range=0.8,
@@ -146,6 +167,8 @@ class Prophet(_ProphetAdapter):
         self.add_country_holidays = add_country_holidays
 
         self.growth = growth
+        self.growth_floor = growth_floor
+        self.growth_cap = growth_cap
         self.changepoints = changepoints
         self.n_changepoints = n_changepoints
         self.changepoint_range = changepoint_range
@@ -163,12 +186,12 @@ class Prophet(_ProphetAdapter):
         self.stan_backend = stan_backend
         self.verbose = verbose
 
+        super(Prophet, self).__init__()
+
         # import inside method to avoid hard dependency
-        from fbprophet.forecaster import Prophet as _Prophet
+        from prophet.forecaster import Prophet as _Prophet
 
         self._ModelClass = _Prophet
-
-        super(Prophet, self).__init__()
 
     def _instantiate_model(self):
         self._forecaster = self._ModelClass(
@@ -190,3 +213,28 @@ class Prophet(_ProphetAdapter):
             stan_backend=self.stan_backend,
         )
         return self
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+
+        Returns
+        -------
+        params : dict or list of dict
+        """
+        params = {
+            "n_changepoints": 0,
+            "yearly_seasonality": False,
+            "weekly_seasonality": False,
+            "daily_seasonality": False,
+            "uncertainty_samples": 10,
+            "verbose": False,
+        }
+        return params

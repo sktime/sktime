@@ -7,7 +7,7 @@ Creates univariate (optionally weighted)
 combination of the predictions from underlying forecasts.
 """
 
-__author__ = ["mloning", "GuzalBulatova", "aiwalter", "RNKuhns"]
+__author__ = ["mloning", "GuzalBulatova", "aiwalter", "RNKuhns", "AnH0ang"]
 __all__ = ["EnsembleForecaster", "AutoEnsembleForecaster"]
 
 import numpy as np
@@ -16,7 +16,6 @@ from scipy.stats import gmean
 from sklearn.pipeline import Pipeline
 
 from sktime.forecasting.base import ForecastingHorizon
-from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
 from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.utils.stats import (
@@ -39,15 +38,27 @@ VALID_AGG_FUNCS = {
 class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
     """Automatically find best weights for the ensembled forecasters.
 
-    The AutoEnsembleForecaster uses a meta-model (regressor) to calculate the optimal
-    weights for ensemble aggregation with mean. The regressor has to be sklearn-like
-    and needs to have either an attribute `feature_importances_` or `coef_`, as this
-    is used as weights. Regressor can also be a sklearn.Pipeline.
+    The AutoEnsembleForecaster finds optimal weights for the ensembled forecasters
+    using given method or a meta-model (regressor) .
+    The regressor has to be sklearn-like and needs to have either an attribute
+    ``feature_importances_`` or ``coef_``, as this is used as weights.
+    Regressor can also be a sklearn.Pipeline.
 
     Parameters
     ----------
     forecasters : list of (str, estimator) tuples
         Estimators to apply to the input series.
+    method : str, optional, default="feature-importance"
+        Strategy used to compute weights. Available choices:
+
+        - feature-importance:
+            use the ``feature_importances_`` or ``coef_`` from
+            given ``regressor`` as optimal weights.
+        - inverse-variance:
+            use the inverse variance of the forecasting error
+            (based on the internal train-test-split) to compute optimal
+            weights, a given ``regressor`` will be omitted.
+
     regressor : sklearn-like regressor, optional, default=None.
         Used to infer optimal weights from coefficients (linear models) or from
         feature importance scores (decision tree-based models). If None, then
@@ -70,8 +81,8 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
     regressor_ : sklearn-like regressor
         Fitted regressor.
     weights_ : np.array
-        The weights based on either regressor.feature_importances_ or
-        regressor.coef_ values.
+        The weights based on either ``regressor.feature_importances_`` or
+        ``regressor.coef_`` values.
 
     See Also
     --------
@@ -94,7 +105,6 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
     >>> y_pred = forecaster.predict()
     """
 
-    _required_parameters = ["forecasters"]
     _tags = {
         "ignores-exogeneous-X": False,
         "requires-fh-in-fit": False,
@@ -105,6 +115,7 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
     def __init__(
         self,
         forecasters,
+        method="feature-importance",
         regressor=None,
         test_size=None,
         random_state=None,
@@ -114,6 +125,7 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
             forecasters=forecasters,
             n_jobs=n_jobs,
         )
+        self.method = method
         self.regressor = regressor
         self.test_size = test_size
         self.random_state = random_state
@@ -135,9 +147,6 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         self : returns an instance of self.
         """
         _, forecasters = self._check_forecasters()
-        self.regressor_ = check_regressor(
-            regressor=self.regressor, random_state=self.random_state
-        )
 
         # get training data for meta-model
         if X is not None:
@@ -149,35 +158,55 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
             X_train, X_test = None, None
 
         # fit ensemble models
-        fh_regressor = ForecastingHorizon(y_test.index, is_relative=False)
-        self._fit_forecasters(forecasters, y_train, X_train, fh_regressor)
-        X_meta = pd.concat(self._predict_forecasters(fh_regressor, X_test), axis=1)
+        fh_test = ForecastingHorizon(y_test.index, is_relative=False)
+        self._fit_forecasters(forecasters, y_train, X_train, fh_test)
 
-        # fit meta-model (regressor) on predictions of ensemble models
-        # with y_test as endog/target
-        self.regressor_.fit(X=X_meta, y=y_test)
+        if self.method == "feature-importance":
 
-        # check if regressor is a sklearn.Pipeline
-        if isinstance(self.regressor_, Pipeline):
-            # extract regressor from pipeline to access its attributes
-            self.weights_ = _get_weights(self.regressor_.steps[-1][1])
+            self.regressor_ = check_regressor(
+                regressor=self.regressor, random_state=self.random_state
+            )
+            X_meta = pd.concat(self._predict_forecasters(fh_test, X_test), axis=1)
+
+            # fit meta-model (regressor) on predictions of ensemble models
+            # with y_test as endog/target
+            self.regressor_.fit(X=X_meta, y=y_test)
+
+            # check if regressor is a sklearn.Pipeline
+            if isinstance(self.regressor_, Pipeline):
+                # extract regressor from pipeline to access its attributes
+                self.weights_ = _get_weights(self.regressor_.steps[-1][1])
+            else:
+                self.weights_ = _get_weights(self.regressor_)
+
+        elif self.method == "inverse-variance":
+            # get in-sample forecasts
+            if self.regressor is not None:
+                Warning(f"regressor will not be used because ${self.method} is set.")
+            inv_var = np.array(
+                [
+                    1 / np.var(y_test - y_pred_test)
+                    for y_pred_test in self._predict_forecasters(fh_test, X_test)
+                ]
+            )
+            # standardize the inverse variance
+            self.weights_ = list(inv_var / np.sum(inv_var))
         else:
-            self.weights_ = _get_weights(self.regressor_)
+            raise NotImplementedError(
+                f"Given method {self.method} does not exist, "
+                f"please provide valid method parameter."
+            )
 
-        # fit forecasters with all data
         self._fit_forecasters(forecasters, y, X, fh)
-
         return self
 
-    def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+    def _predict(self, fh, X=None):
         """Return the predicted reduction.
 
         Parameters
         ----------
         fh : int, list or np.array, optional, default=None
         X : pd.DataFrame
-        return_pred_int : boolean, optional, default=False
-        alpha : fh : float, default=DEFAULT_ALPHA
 
         Returns
         -------
@@ -188,6 +217,27 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         # apply weights
         y_pred = y_pred_df.apply(lambda x: np.average(x, weights=self.weights_), axis=1)
         return y_pred
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+
+        Returns
+        -------
+        params : dict or list of dict
+        """
+        from sktime.forecasting.naive import NaiveForecaster
+
+        FORECASTER = NaiveForecaster()
+        params = {"forecasters": [("f1", FORECASTER), ("f2", FORECASTER)]}
+        return params
 
 
 def _get_weights(regressor):
@@ -250,18 +300,22 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
     >>> y_pred = forecaster.predict()
     """
 
-    _required_parameters = ["forecasters"]
     _tags = {
         "ignores-exogeneous-X": False,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
-        "scitype:y": "univariate",
+        "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
+        "scitype:y": "both",
     }
 
     def __init__(self, forecasters, n_jobs=None, aggfunc="mean", weights=None):
         super(EnsembleForecaster, self).__init__(forecasters=forecasters, n_jobs=n_jobs)
         self.aggfunc = aggfunc
         self.weights = weights
+
+        # the ensemble requires fh in fit
+        # iff any of the component forecasters require fh in fit
+        self._anytagis_then_set("requires-fh-in-fit", True, False, self.forecasters)
 
     def _fit(self, y, X=None, fh=None):
         """Fit to training data.
@@ -283,25 +337,53 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         self._fit_forecasters(forecasters, y, X, fh)
         return self
 
-    def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+    def _predict(self, fh, X=None):
         """Return the predicted reduction.
 
         Parameters
         ----------
         fh : int, list or np.array, optional, default=None
         X : pd.DataFrame
-        return_pred_int : boolean, optional, default=False
-        alpha : fh : float, default=DEFAULT_ALPHA
 
         Returns
         -------
         y_pred : pd.Series
             Aggregated predictions.
         """
-        y_pred = pd.concat(self._predict_forecasters(fh, X), axis=1)
-        y_pred = _aggregate(y=y_pred, aggfunc=self.aggfunc, weights=self.weights)
-
+        names, _ = self._check_forecasters()
+        y_pred = pd.concat(self._predict_forecasters(fh, X), axis=1, keys=names)
+        y_pred = y_pred.groupby(level=1, axis=1).agg(
+            _aggregate, self.aggfunc, self.weights
+        )
         return y_pred
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+
+        Returns
+        -------
+        params : dict or list of dict
+        """
+        from sktime.forecasting.compose._reduce import DirectReductionForecaster
+        from sktime.forecasting.naive import NaiveForecaster
+
+        # univariate case
+        FORECASTER = NaiveForecaster()
+        params = [{"forecasters": [("f1", FORECASTER), ("f2", FORECASTER)]}]
+
+        # test multivariate case, i.e., ensembling multiple variables at same time
+        FORECASTER = DirectReductionForecaster.create_test_instance()
+        params = params + [{"forecasters": [("f1", FORECASTER), ("f2", FORECASTER)]}]
+
+        return params
 
 
 def _aggregate(y, aggfunc, weights):

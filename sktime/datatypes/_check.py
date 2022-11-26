@@ -25,13 +25,15 @@ __all__ = [
 ]
 
 from typing import List, Union
+from warnings import warn
 
 import numpy as np
-from deprecated.sphinx import deprecated
 
 from sktime.datatypes._alignment import check_dict_Alignment
+from sktime.datatypes._hierarchical import check_dict_Hierarchical
 from sktime.datatypes._panel import check_dict_Panel
-from sktime.datatypes._registry import mtype_to_scitype
+from sktime.datatypes._proba import check_dict_Proba
+from sktime.datatypes._registry import AMBIGUOUS_MTYPES, SCITYPE_LIST, mtype_to_scitype
 from sktime.datatypes._series import check_dict_Series
 from sktime.datatypes._table import check_dict_Table
 
@@ -39,8 +41,10 @@ from sktime.datatypes._table import check_dict_Table
 check_dict = dict()
 check_dict.update(check_dict_Series)
 check_dict.update(check_dict_Panel)
+check_dict.update(check_dict_Hierarchical)
 check_dict.update(check_dict_Alignment)
 check_dict.update(check_dict_Table)
+check_dict.update(check_dict_Proba)
 
 
 def _check_scitype_valid(scitype: str = None):
@@ -59,62 +63,6 @@ def _ret(valid, msg, metadata, return_metadata):
         return valid, msg, metadata
     else:
         return valid
-
-
-#  TODO: remove in v0.11.0
-@deprecated(
-    version="v0.10.0",
-    reason=(
-        "check_is has been deprecated and will be removed in v0.11.0."
-        "Please use check_is_mtype instead."
-    ),
-    category=FutureWarning,
-)
-def check_is(
-    obj,
-    mtype: Union[str, List[str]],
-    scitype: str = None,
-    return_metadata=False,
-    var_name="obj",
-):
-    """Check object for compliance with mtype specification, return metadata.
-
-    Parameters
-    ----------
-    obj - object to check
-    mtype: str or list of str, mtype to check obj as
-    scitype: str, optional, scitype to check obj as; default = inferred from mtype
-        if inferred from mtype, list elements of mtype need not have same scitype
-    return_metadata - bool, optional, default=False
-        if False, returns only "valid" return
-        if True, returns all three return objects
-    var_name: str, optional, default="obj" - name of input in error messages
-
-    Returns
-    -------
-    valid: bool - whether obj is a valid object of mtype/scitype
-    msg: str or list of str - error messages if object is not valid, otherwise None
-            str if mtype is str; list of len(mtype) with message per mtype if list
-            returned only if return_metadata is True
-    metadata: dict - metadata about obj if valid, otherwise None
-            returned only if return_metadata is True
-        fields:
-            "is_univariate": bool, True iff series has one variable
-            "is_equally_spaced": bool, True iff series index is equally spaced
-            "mtype": str, mtype of obj if inferred
-
-    Raises
-    ------
-    TypeError if no checks defined for mtype/scitype combination
-    ValueError if mtype input argument is not of expected type
-    """
-    return check_is_mtype(
-        obj=obj,
-        mtype=mtype,
-        scitype=scitype,
-        return_metadata=return_metadata,
-        var_name=var_name,
-    )
 
 
 def _coerce_list_of_str(obj, var_name="obj"):
@@ -159,8 +107,10 @@ def check_is_mtype(
     ----------
     obj - object to check
     mtype: str or list of str, mtype to check obj as
+        valid mtype strings are in datatypes.MTYPE_REGISTER (1st column)
     scitype: str, optional, scitype to check obj as; default = inferred from mtype
         if inferred from mtype, list elements of mtype need not have same scitype
+        valid mtype strings are in datatypes.SCITYPE_REGISTER (1st column)
     return_metadata - bool, optional, default=False
         if False, returns only "valid" return
         if True, returns all three return objects
@@ -174,10 +124,30 @@ def check_is_mtype(
             returned only if return_metadata is True
     metadata: dict - metadata about obj if valid, otherwise None
             returned only if return_metadata is True
-        fields:
+        Keys populated depend on (assumed, otherwise identified) scitype of obj.
+        Always returned:
+            "mtype": str, mtype of obj (assumed or inferred)
+            "scitype": str, scitype of obj (assumed or inferred)
+        For scitype "Series":
             "is_univariate": bool, True iff series has one variable
             "is_equally_spaced": bool, True iff series index is equally spaced
-            "mtype": str, mtype of obj if inferred
+            "is_empty": bool, True iff series has no variables or no instances
+            "has_nans": bool, True iff the series contains NaN values
+        For scitype "Panel":
+            "is_univariate": bool, True iff all series in panel have one variable
+            "is_equally_spaced": bool, True iff all series indices are equally spaced
+            "is_equal_length": bool, True iff all series in panel are of equal length
+            "is_empty": bool, True iff one or more of the series in the panel are empty
+            "is_one_series": bool, True iff there is only one series in the panel
+            "has_nans": bool, True iff the panel contains NaN values
+            "n_instances": int, number of instances in the panel
+        For scitype "Table":
+            "is_univariate": bool, True iff table has one variable
+            "is_empty": bool, True iff table has no variables or no instances
+            "has_nans": bool, True iff the panel contains NaN values
+            "n_instances": int, number of instances/rows in the table
+        For scitype "Alignment":
+            currently none
 
     Raises
     ------
@@ -192,6 +162,7 @@ def check_is_mtype(
     #  for each check we remember whether it passed and what it returned
     msg = []
     found_mtype = []
+    found_scitype = []
 
     for m in mtype:
         if scitype is None:
@@ -212,6 +183,7 @@ def check_is_mtype(
 
         if check_passed:
             found_mtype.append(m)
+            found_scitype.append(scitype_of_m)
             final_result = res
         elif return_metadata:
             msg.append(res[1])
@@ -227,6 +199,7 @@ def check_is_mtype(
         if return_metadata:
             # add the mtype return to the metadata
             final_result[2]["mtype"] = found_mtype[0]
+            final_result[2]["scitype"] = found_scitype[0]
             # final_result already has right shape and dependency on return_metadata
             return final_result
         else:
@@ -246,8 +219,10 @@ def check_raise(obj, mtype: str, scitype: str = None, var_name: str = "input"):
     ----------
     obj - object to check
     mtype: str or list of str, mtype to check obj as
+        valid mtype strings are in datatypes.MTYPE_REGISTER (1st column)
     scitype: str, optional, scitype to check obj as; default = inferred from mtype
         if inferred from mtype, list elements of mtype need not have same scitype
+        valid mtype strings are in datatypes.SCITYPE_REGISTER (1st column)
     var_name: str, optional, default="input" - name of input in error messages
 
     Returns
@@ -277,22 +252,30 @@ def check_raise(obj, mtype: str, scitype: str = None, var_name: str = "input"):
         raise TypeError(msg)
 
 
-def mtype(obj, as_scitype: Union[str, List[str]] = None):
+def mtype(
+    obj,
+    as_scitype: Union[str, List[str]] = None,
+    exclude_mtypes=AMBIGUOUS_MTYPES,
+):
     """Infer the mtype of an object considered as a specific scitype.
 
     Parameters
     ----------
-    obj : object to infer type of - any type, should comply with and mtype spec
+    obj : object to infer type of - any type, should comply with some mtype spec
         if as_scitype is provided, this needs to be mtype belonging to scitype
     as_scitype : str, list of str, or None, optional, default=None
         name of scitype(s) the object "obj" is considered as, finds mtype for that
         if None (default), does not assume a specific as_scitype and tests all mtypes
             generally, as_scitype should be provided for maximum efficiency
+        valid scitype type strings are in datatypes.SCITYPE_REGISTER (1st column)
+    exclude_mtypes : list of str, default = AMBIGUOUS_MTYPES
+        which mtypes to ignore in inferring mtype, default = ambiguous ones
 
     Returns
     -------
     str - the inferred mtype of "obj", a valid mtype string
-        or None, if obj is None
+            or None, if obj is None
+        mtype strings with explanation are in datatypes.MTYPE_REGISTER
 
     Raises
     ------
@@ -306,59 +289,115 @@ def mtype(obj, as_scitype: Union[str, List[str]] = None):
         for scitype in as_scitype:
             _check_scitype_valid(scitype)
 
-    if as_scitype is None:
-        m_plus_scitypes = [(x[0], x[1]) for x in check_dict.keys()]
-    else:
-        m_plus_scitypes = [
-            (x[0], x[1]) for x in check_dict.keys() if x[1] in as_scitype
-        ]
-
-    res = [
-        m_plus_scitype[0]
-        for m_plus_scitype in m_plus_scitypes
-        if check_is_mtype(obj, mtype=m_plus_scitype[0], scitype=m_plus_scitype[1])
+    m_plus_scitypes = [
+        (x[0], x[1]) for x in check_dict.keys() if x[0] not in exclude_mtypes
     ]
 
-    if len(res) > 1:
+    if as_scitype is not None:
+        m_plus_scitypes = [(x[0], x[1]) for x in m_plus_scitypes if x[1] in as_scitype]
+
+    # collects mtypes that are tested as valid for obj
+    mtypes_positive = []
+
+    # collects error messages from mtypes that are tested as invalid for obj
+    mtypes_negative = dict()
+
+    for m_plus_scitype in m_plus_scitypes:
+        valid, msg, _ = check_is_mtype(
+            obj,
+            mtype=m_plus_scitype[0],
+            scitype=m_plus_scitype[1],
+            return_metadata=True,
+        )
+        if valid:
+            mtypes_positive += [m_plus_scitype[0]]
+        else:
+            mtypes_negative[m_plus_scitype[0]] = msg
+
+    if len(mtypes_positive) > 1:
         raise TypeError(
-            f"Error in check_is_mtype, more than one mtype identified: {res}"
+            f"Error in check_is_mtype, more than one mtype identified:"
+            f" {mtypes_positive}"
         )
 
-    if len(res) < 1:
-        raise TypeError("No valid mtype could be identified")
+    if len(mtypes_positive) < 1:
+        msg = ""
+        for mtype, error in mtypes_negative.items():
+            msg += f"{mtype}: {error}\r\n"
+        msg = (
+            f"No valid mtype could be identified for object of type {type(obj)}. "
+            f"Errors returned are as follows, in format [mtype]: [error message] \r\n"
+        ) + msg
+        raise TypeError(msg)
 
-    return res[0]
+    return mtypes_positive[0]
 
 
+# todo 0.15.0: change msg_legacy_interface default to False
+# todo 0.16.0: remove msg_legacy_interface arg, and remove msg_legacy variable inside
 def check_is_scitype(
     obj,
     scitype: Union[str, List[str]],
     return_metadata=False,
     var_name="obj",
+    exclude_mtypes=AMBIGUOUS_MTYPES,
+    msg_legacy_interface=True,
 ):
-    """Check object for compliance with mtype specification, return metadata.
+    """Check object for compliance with scitype specification, return metadata.
 
     Parameters
     ----------
     obj - object to check
     scitype: str or list of str, scitype to check obj as
+        valid mtype strings are in datatypes.SCITYPE_REGISTER
     return_metadata - bool, optional, default=False
         if False, returns only "valid" return
         if True, returns all three return objects
     var_name: str, optional, default="obj" - name of input in error messages
+    exclude_mtypes : list of str, default = AMBIGUOUS_MTYPES
+        which mtypes to ignore in inferring mtype, default = ambiguous ones
+    msg_legacy_interface : bool, default = True
+        whether the deprecated interface for msg return is used (True) or not (False)
+        False = msg is returned as dict; True = msg is returned as list (values only)
 
     Returns
     -------
     valid: bool - whether obj is a valid object of mtype/scitype
-    msg: str or list of str - error messages if object is not valid, otherwise None
-            str if mtype is str; list of len(mtype) with message per mtype if list
-            returned only if return_metadata is True
+    msg:
+        if legacy_interface=False:
+        dict[str, str] or None - error messages if object is not valid, otherwise None
+        keys are all mtypes tested, value for key is error message for that key
+        if legacy_interface=True:
+        str or list of str - error messages if object is not valid, otherwise None
+        str if mtype is str; list of len(mtype) with message per mtype if list
+        returned only if return_metadata is True
     metadata: dict - metadata about obj if valid, otherwise None
             returned only if return_metadata is True
-        fields:
-            "mtype": str, mtype of obj if inferred
-            "scitype": str, scitype of obj if inferred
-
+        Fields depend on scitpe.
+        Always returned:
+            "mtype": str, mtype of obj (assumed or inferred)
+                mtype strings with explanation are in datatypes.MTYPE_REGISTER
+            "scitype": str, scitype of obj (assumed or inferred)
+                scitype strings with explanation are in datatypes.SCITYPE_REGISTER
+        For scitype "Series":
+            "is_univariate": bool, True iff series has one variable
+            "is_equally_spaced": bool, True iff series index is equally spaced
+            "is_empty": bool, True iff series has no variables or no instances
+            "has_nans": bool, True iff the series contains NaN values
+        For scitype "Panel":
+            "is_univariate": bool, True iff all series in panel have one variable
+            "is_equally_spaced": bool, True iff all series indices are equally spaced
+            "is_equal_length": bool, True iff all series in panel are of equal length
+            "is_empty": bool, True iff one or more of the series in the panel are empty
+            "is_one_series": bool, True iff there is only one series in the panel
+            "has_nans": bool, True iff the panel contains NaN values
+            "n_instances": int, number of instances in the panel
+        For scitype "Table":
+            "is_univariate": bool, True iff table has one variable
+            "is_empty": bool, True iff table has no variables or no instances
+            "has_nans": bool, True iff the panel contains NaN values
+        For scitype "Alignment":
+            currently none
     Raises
     ------
     TypeError if scitype input argument is not of expected type
@@ -371,10 +410,11 @@ def check_is_scitype(
     valid_keys = check_dict.keys()
 
     # find all the mtype keys corresponding to the scitypes
-    keys = [x for x in valid_keys if x[1] in scitype]
+    keys = [x for x in valid_keys if x[1] in scitype and x[0] not in exclude_mtypes]
 
-    # storing the msg retursn
-    msg = []
+    # storing the msg return
+    msg = {}
+    msg_legacy = []
     found_mtype = []
     found_scitype = []
 
@@ -388,10 +428,11 @@ def check_is_scitype(
 
         if check_passed:
             final_result = res
-            found_mtype.append([0])
+            found_mtype.append(key[0])
             found_scitype.append(key[1])
         elif return_metadata:
-            msg.append(res[1])
+            msg[key[0]] = res[1]
+            msg_legacy.append(res[1])
 
     # there are three options on the result of check_is_mtype:
     # a. two or more mtypes are found - this is unexpected and an error with checks
@@ -412,7 +453,70 @@ def check_is_scitype(
             return True
     # c. no mtype is found - then return False and all error messages if requested
     else:
-        if len(msg) == 1:
-            msg = msg[0]
+        if len(msg_legacy) == 1:
+            msg_legacy = msg_legacy[0]
+
+        if msg_legacy_interface:
+            msg = msg_legacy
+            warn(
+                "return msg (2nd argument) of check_is_scitype will change to "
+                "dict from list type. Set msg_legacy_interface=False for "
+                "post-deprecation behaviour. Default msg_legacy_interface "
+                "will change to True in 0.15.0. Argument msg_legacy_interface "
+                "will be removed in 0.16.0.",
+                DeprecationWarning,
+            )
 
         return _ret(False, msg, None, return_metadata)
+
+
+def scitype(obj, candidate_scitypes=SCITYPE_LIST, exclude_mtypes=AMBIGUOUS_MTYPES):
+    """Infer the scitype of an object.
+
+    Parameters
+    ----------
+    obj : object to infer type of - any type, should comply with some mtype spec
+        if as_scitype is provided, this needs to be mtype belonging to scitype
+    candidate_scitypes: str or list of str, scitypes to pick from
+        valid scitype strings are in datatypes.SCITYPE_REGISTER
+    exclude_mtypes : list of str, default = AMBIGUOUS_MTYPES
+        which mtypes to ignore in inferring mtype, default = ambiguous ones
+        valid mtype strings are in datatypes.MTYPE_REGISTER
+
+    Returns
+    -------
+    str - the inferred sciype of "obj", a valid scitype string
+            or None, if obj is None
+        scitype strings with explanation are in datatypes.SCITYPE_REGISTER
+
+    Raises
+    ------
+    TypeError if no type can be identified, or more than one type is identified
+    """
+    candidate_scitypes = _coerce_list_of_str(
+        candidate_scitypes, var_name="candidate_scitypes"
+    )
+
+    valid_scitypes = []
+
+    for scitype in candidate_scitypes:
+        valid = check_is_scitype(
+            obj,
+            scitype=scitype,
+            return_metadata=False,
+            exclude_mtypes=exclude_mtypes,
+        )
+        if valid:
+            valid_scitypes += [scitype]
+
+    if len(valid_scitypes) > 1:
+        raise TypeError(
+            "Error in function scitype, more than one valid scitype identified:"
+            f"{ valid_scitypes}"
+        )
+    if len(valid_scitypes) == 0:
+        raise TypeError(
+            "Error in function scitype, no valid scitype could be identified."
+        )
+
+    return valid_scitypes[0]

@@ -1,14 +1,16 @@
 # -*- coding: utf-8 -*-
+"""Matrix profile transformer."""
+
+__author__ = ["Claudia Rincon Sanchez"]
+
 import numpy as np
 import pandas as pd
 
-from sktime.transformations.base import _PanelToTabularTransformer
-from sktime.utils.validation.panel import check_X
+from sktime.transformations.base import BaseTransformer
 
 
 def _sliding_dot_products(q, t, q_len, t_len):
-    """
-    Computes the sliding dot products between a query and a time series.
+    """Compute the sliding dot products between a query and a time series.
 
     Parameters
     ----------
@@ -26,7 +28,6 @@ def _sliding_dot_products(q, t, q_len, t_len):
     dot_prod: numpy.array
                 Sliding dot products between q and t.
     """
-
     # Reversing query and padding both query and time series
     t_padded = np.pad(t, (0, t_len))
     q_reversed = np.flipud(q)
@@ -50,34 +51,32 @@ def _sliding_dot_products(q, t, q_len, t_len):
 def _calculate_distance_profile(
     dot_prod, q_mean, q_std, t_mean, t_std, q_len, n_t_subs
 ):
-    """
-    Calculates the distance profile for the given query.
+    """Calculate the distance profile for the given query.
 
     Parameters
     ----------
-        dot_prod: numpy.array
-            Sliding dot products between the time series and the query.
-        q_mean: float
-            Mean of the elements of the query.
-        q_std: float
-            Standard deviation of elements of the query.
-        t_mean: numpy.array
-            Array with the mean of the elements from each subsequence of
-            length(query) from the time series.
-        t_std: numpy.array
-            Array with the standard deviation of the elements from each
-            subsequence of length(query) from the time series.
-        q_len: int
-            Length of the query.
-        n_t_subs: int
-            Number of subsequences in the time series.
+    dot_prod: numpy.array
+        Sliding dot products between the time series and the query.
+    q_mean: float
+        Mean of the elements of the query.
+    q_std: float
+        Standard deviation of elements of the query.
+    t_mean: numpy.array
+        Array with the mean of the elements from each subsequence of
+        length(query) from the time series.
+    t_std: numpy.array
+        Array with the standard deviation of the elements from each
+        subsequence of length(query) from the time series.
+    q_len: int
+        Length of the query.
+    n_t_subs: int
+        Number of subsequences in the time series.
 
     Output
     ------
         d: numpy.array
             Distance profile of query q.
     """
-
     d = [
         2
         * q_len
@@ -94,35 +93,32 @@ def _calculate_distance_profile(
 
 
 def _minimum_distance(mp, ip, dp, i, m, dp_len):
-    """
-    Finds the minimum distance in the distance profile, considering the
-    exclusion zone.
+    """Find the minimum distance in the distance profile, considering exclusion zone.
 
     Parameters
     ----------
-        mp: numpy.array
-            Matrix profile.
-        ip: numpy.array
-            Index profile.
-        dp: numpy.array
-            Distance profile.
-        i: int
-            Index of the element to be compared from the matrix profile.
-        m: int
-            Length of the subsequences.
-        dp_len: int
-            Length of the distance profile.
+    mp: numpy.array
+        Matrix profile.
+    ip: numpy.array
+        Index profile.
+    dp: numpy.array
+        Distance profile.
+    i: int
+        Index of the element to be compared from the matrix profile.
+    m: int
+        Length of the subsequences.
+    dp_len: int
+        Length of the distance profile.
 
     Output
     ------
-        mp: numpy.array
-            Array with the distance between every subsequence and its
-            nearest neighbor from the same time series.
-        ip: numpy.array
-            Array with the indexes of the nearest neighbors of each
-            subsequence.
+    mp: numpy.array
+        Array with the distance between every subsequence and its
+        nearest neighbor from the same time series.
+    ip: numpy.array
+        Array with the indexes of the nearest neighbors of each
+        subsequence.
     """
-
     # Initialization
     min_value = float("inf")
     min_index = -1
@@ -138,8 +134,7 @@ def _minimum_distance(mp, ip, dp, i, m, dp_len):
 
 
 def _stomp_self(ts, m):
-    """
-    STOMP implementation for self-similarity join.
+    """STOMP implementation for self-similarity join.
 
     Parameters
     ----------
@@ -156,7 +151,6 @@ def _stomp_self(ts, m):
         ip: numpy.array
             Array with the index of the nearest neighbor of ts1 in ts2.
     """
-
     ts = ts.flatten()
 
     ts_len = ts.shape[0]
@@ -200,10 +194,8 @@ def _stomp_self(ts, m):
     return mp
 
 
-class MatrixProfile(_PanelToTabularTransformer):
-    """
-    Takes as input a time series dataset and returns the matrix profile and
-    index profile for each time series of the dataset.
+class MatrixProfile(BaseTransformer):
+    """Return the matrix profile and index profile for each time series of a dataset.
 
     Example of use:
     # Xt = MatrixProfile(m).transform(X)
@@ -214,32 +206,39 @@ class MatrixProfile(_PanelToTabularTransformer):
     corresponding time series.
     """
 
-    _tags = {"univariate-only": True, "fit-in-transform": True}
+    _tags = {
+        "univariate-only": True,
+        "fit_is_empty": True,
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
+        "scitype:transform-output": "Primitives",
+        # what is the scitype of y: None (not needed), Primitives, Series, Panel
+        "scitype:instancewise": False,  # is this an instance-wise transform?
+        "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
+    }
 
     def __init__(self, m=10):
         self.m = m  # subsequence length
         super(MatrixProfile, self).__init__()
 
-    def transform(self, X, y=None):
-        """
-        Takes as input a time series dataset and returns the matrix profile
-        for each single time series of the dataset.
+    def _transform(self, X, y=None):
+        """Return the matrix profile for each single time series of the dataset.
 
         Parameters
         ----------
-        X: pandas.DataFrame
-           Time series dataset.
+        X : 3D np.ndarray of shape = [n_instances, n_dimensions, series_length]
+            panel of time series to transform
+        y : ignored argument for interface compatibility
 
         Returns
         -------
-        Xt: pandas.DataFrame
-            Dataframe with the same number of rows as the input.
+        Xt : pandas.DataFrame in nested_univ mtype format
+            Dataframe with the n_instances rows as the input.
             The number of columns equals the number of subsequences
             of the desired length in each time series.
         """
         # Input checks
-        self.check_is_fitted()
-        X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
         n_instances = X.shape[0]
         Xt = pd.DataFrame([_stomp_self(X[i], self.m) for i in range(n_instances)])
         return Xt

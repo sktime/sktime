@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
-"""Theta forecaster."""
+"""Theta forecasters."""
 
-__all__ = ["ThetaForecaster"]
-__author__ = ["big-o", "mloning"]
+__all__ = ["ThetaForecaster", "ThetaModularForecaster"]
+__author__ = ["big-o", "mloning", "kejsitake", "fkiraly", "GuzalBulatova"]
 
 from warnings import warn
 
@@ -11,11 +11,16 @@ import numpy as np
 import pandas as pd
 from scipy.stats import norm
 
-from sktime.forecasting.base._base import DEFAULT_ALPHA
+from sktime.forecasting.base import BaseForecaster
+from sktime.forecasting.compose import ColumnEnsembleForecaster
+from sktime.forecasting.compose._ensemble import _aggregate
+from sktime.forecasting.compose._pipeline import TransformedTargetForecaster
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
+from sktime.forecasting.trend import PolynomialTrendForecaster
 from sktime.transformations.series.detrend import Deseasonalizer
+from sktime.transformations.series.theta import ThetaLinesTransformer
 from sktime.utils.slope_and_trend import _fit_trend
-from sktime.utils.validation.forecasting import check_alpha, check_sp
+from sktime.utils.validation.forecasting import check_sp
 
 
 class ThetaForecaster(ExponentialSmoothing):
@@ -85,6 +90,7 @@ class ThetaForecaster(ExponentialSmoothing):
 
     _fitted_param_names = ("initial_level", "smoothing_level")
     _tags = {
+        "scitype:y": "univariate",
         "ignores-exogeneous-X": True,
         "capability:pred_int": True,
         "requires-fh-in-fit": False,
@@ -132,11 +138,15 @@ class ThetaForecaster(ExponentialSmoothing):
         super(ThetaForecaster, self)._fit(y, fh=fh)
         self.initial_level_ = self._fitted_forecaster.params["smoothing_level"]
 
+        # compute and store historical residual standard error
+        self.sigma_ = np.sqrt(self._fitted_forecaster.sse / (len(y) - 1))
+
         # compute trend
         self.trend_ = self._compute_trend(y)
+
         return self
 
-    def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+    def _predict(self, fh, X=None):
         """Make forecasts.
 
         Parameters
@@ -145,15 +155,15 @@ class ThetaForecaster(ExponentialSmoothing):
             The forecasters horizon with the steps ahead to to predict.
             Default is
             one-step ahead forecast, i.e. np.array([1]).
+        X : pd.DataFrame, optional (default=None)
+            Exogenous time series
 
         Returns
         -------
         y_pred : pandas.Series
             Returns series of predicted values.
         """
-        y_pred = super(ThetaForecaster, self)._predict(
-            fh, X, return_pred_int=False, alpha=alpha
-        )
+        y_pred = super(ThetaForecaster, self)._predict(fh, X)
 
         # Add drift.
         drift = self._compute_drift()
@@ -161,10 +171,6 @@ class ThetaForecaster(ExponentialSmoothing):
 
         if self.deseasonalize:
             y_pred = self.deseasonalizer_.inverse_transform(y_pred)
-
-        if return_pred_int:
-            pred_int = self.compute_pred_int(y_pred=y_pred, alpha=alpha)
-            return y_pred, pred_int
 
         return y_pred
 
@@ -189,66 +195,47 @@ class ThetaForecaster(ExponentialSmoothing):
 
         return drift
 
-    def compute_pred_int(self, y_pred, alpha=DEFAULT_ALPHA):
-        """
-        Compute/return prediction intervals for a forecast.
+    def _predict_quantiles(self, fh, X=None, alpha=None):
+        """Compute/return prediction quantiles for a forecast.
 
-        Must be run *after* the forecaster has been fitted.
-
-        If alpha is iterable, multiple intervals will be calculated.
-
-        public method including checks & utility
-        dispatches to core logic in _compute_pred_int
+        private _predict_quantiles containing the core logic,
+            called from predict_quantiles and predict_interval
 
         Parameters
         ----------
-        y_pred : pd.Series
-            Point predictions.
-        alpha : float or list, optional (default=0.95)
-            A significance level or list of significance levels.
+        fh : int, list, np.array or ForecastingHorizon
+            Forecasting horizon
+        X : pd.DataFrame, optional (default=None)
+            Exogenous time series
+        alpha : list of float, optional (default=[0.5])
+            A list of probabilities at which quantile forecasts are computed.
 
         Returns
         -------
-        intervals : pd.DataFrame
-            A table of upper and lower bounds for each point prediction in
-            ``y_pred``. If ``alpha`` was iterable, then ``intervals`` will be a
-            list of such tables.
+        quantiles : pd.DataFrame
+            Column has multi-index: first level is variable name from y in fit,
+                second level being the values of alpha passed to the function.
+            Row index is fh. Entries are quantile forecasts, for var in col index,
+                at quantile probability in second col index, for the row index.
         """
-        self.check_is_fitted()
-        alphas = check_alpha(alpha)
-        errors = self._compute_pred_err(alphas)
+        # prepare return data frame
+        index = pd.MultiIndex.from_product([["Quantiles"], alpha])
+        pred_quantiles = pd.DataFrame(columns=index)
 
-        # compute prediction intervals
-        pred_int = [
-            pd.DataFrame({"lower": y_pred - error, "upper": y_pred + error})
-            for error in errors
-        ]
-
-        # for a single alpha, return single pd.DataFrame
-        if isinstance(alpha, float):
-            return pred_int[0]
-
-        # otherwise return list of pd.DataFrames
-        return pred_int
-
-    def _compute_pred_err(self, alphas):
-        """Get the prediction errors for the forecast."""
-        self.check_is_fitted()
-
-        n_timepoints = len(self._y)
-
-        self.sigma_ = np.sqrt(self._fitted_forecaster.sse / (n_timepoints - 1))
         sem = self.sigma_ * np.sqrt(
-            self.fh.to_relative(self.cutoff) * self.initial_level_ ** 2 + 1
+            self.fh.to_relative(self.cutoff) * self.initial_level_**2 + 1
         )
 
-        errors = []
-        for alpha in alphas:
-            z = _zscore(1 - alpha)
-            error = z * sem
-            errors.append(pd.Series(error, index=self.fh.to_absolute(self.cutoff)))
+        y_pred = self._predict(fh, X)
 
-        return errors
+        # we assume normal additive noise with sem variance
+        for a in alpha:
+            pred_quantiles[("Quantiles", a)] = y_pred + norm.ppf(a) * sem
+        # todo: should this not increase with the horizon?
+        # i.e., sth like norm.ppf(a) * sem * fh.to_absolute(cutoff) ?
+        # I've just refactored this so will leave it for now
+
+        return pred_quantiles
 
     def _update(self, y, X=None, update_params=True):
         super(ThetaForecaster, self)._update(
@@ -281,3 +268,175 @@ def _zscore(level: float, two_tailed: bool = True) -> float:
     if two_tailed:
         alpha /= 2
     return -norm.ppf(alpha)
+
+
+class ThetaModularForecaster(BaseForecaster):
+    """Modular theta method for forecasting.
+
+    Modularized implementation of Theta method as defined in [1]_.
+    Also see auto-theta method as described in [2]_ *not contained in this estimator).
+
+    Overview: Input :term:`univariate series <Univariate time series>` of length
+    "n" and decompose with :class:`ThetaLinesTransformer
+    <sktime.transformations.series.theta>` by modifying the local curvature of
+    the time series using Theta-coefficient values - `theta_values` parameter.
+    Thansformation gives a pd.DataFrame of shape `len(input series) * len(theta)`.
+
+    The resulting transformed series (Theta-lines) are extrapolated separately.
+    The forecasts are then aggregated into one prediction - aunivariate series,
+    of `len(fh)`.
+
+    Parameters
+    ----------
+    forecasters: list of tuples (str, estimator, int or pd.index), default=None
+        Forecasters to apply to each Theta-line based on the third element
+        (the index). Indices must correspond to the theta_values, see Examples.
+        If None, will apply PolynomialTrendForecaster (linear regression) to the
+        Theta-lines where theta_value equals 0, and ExponentialSmoothing - where
+        theta_value is different from 0.
+    theta_values: sequence of float, default=(0,2)
+        Theta-coefficients to use in transformation. If `forecasters` parameter
+        is passed, must be the same length as `forecasters`.
+    aggfunc: str, default="mean"
+        Must be one of ["mean", "median", "min", "max", "gmean"].
+        Calls :func:`_aggregate` of
+        :class:`EnsembleForecaster<sktime.forecasting.compose._ensemble>` to
+        apply to results of multivariate theta-lines predictions (pd.DataFrame)
+        in order to get resulting univariate prediction (pd.Series).
+        The aggregation takes place across different theta-lines (row-wise), for
+        given time stamps and hierarchy indices, if present.
+    weights: list of floats, default=None
+        Weights to apply in aggregation. Weights are passed as a parameter to
+        the aggregation function, must correspond to each theta-line. None will
+        result in non-weighted aggregation.
+
+    References
+    ----------
+    .. [1] V.Assimakopoulos et al., "The theta model: a decomposition approach
+       to forecasting", International Journal of Forecasting, vol. 16, pp. 521-530,
+       2000.
+    .. [2] E.Spiliotis et al., "Generalizing the Theta method for
+       automatic forecasting ", European Journal of Operational
+       Research, vol. 284, pp. 550-558, 2020.
+
+    See Also
+    --------
+    ThetaForecaster, ThetaLinesTransformer
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.theta import ThetaModularForecaster
+    >>> from sktime.forecasting.naive import NaiveForecaster
+    >>> from sktime.forecasting.trend import PolynomialTrendForecaster
+    >>> y = load_airline()
+    >>> forecaster = ThetaModularForecaster(
+    ...     forecasters=[
+    ...         ("trend", PolynomialTrendForecaster(), 0),
+    ...         ("arima", NaiveForecaster(), 3),
+    ...     ],
+    ...     theta_values=(0, 3),
+    ... )
+    >>> forecaster.fit(y)
+    ThetaModularForecaster(...)
+    >>> y_pred = forecaster.predict(fh=[1,2,3])
+    """
+
+    _tags = {
+        "univariate-only": False,
+        "y_inner_mtype": "pd.Series",
+        "requires-fh-in-fit": False,
+        "handles-missing-data": False,
+        "python_version": ">3.7",
+    }
+
+    def __init__(
+        self,
+        forecasters=None,
+        theta_values=(0, 2),
+        aggfunc="mean",
+        weights=None,
+    ):
+        super(ThetaModularForecaster, self).__init__()
+        self.forecasters = forecasters
+        self.aggfunc = aggfunc
+        self.weights = weights
+        self.theta_values = theta_values
+
+        forecasters_ = self._check_forecasters(forecasters)
+        self._colens = ColumnEnsembleForecaster(forecasters=forecasters_)
+
+        self.pipe_ = TransformedTargetForecaster(
+            steps=[
+                ("transformer", ThetaLinesTransformer(theta=self.theta_values)),
+                ("forecaster", self._colens),
+            ]
+        )
+
+    def _check_forecasters(self, forecasters):
+        if forecasters is None:
+            _forecasters = []
+            for i, theta in enumerate(self.theta_values):
+                if theta == 0:
+                    name = f"trend{str(i)}"
+                    forecaster = (name, PolynomialTrendForecaster(), i)
+                else:
+                    name = f"ses{str(i)}"
+                    forecaster = name, ExponentialSmoothing(), i
+                _forecasters.append(forecaster)
+        elif len(forecasters) != len(self.theta_values):
+            raise ValueError(
+                f"The N of forecasters should be the same as the N "
+                f"of theta_values, but found {len(forecasters)} forecasters and"
+                f"{len(self.theta_values)} theta values."
+            )
+        else:
+            _forecasters = forecasters
+        return _forecasters
+
+    def _fit(self, y, X=None, fh=None):
+        self.pipe_.fit(y=y, X=X, fh=fh)
+        return self
+
+    def _predict(self, fh, X=None, return_pred_int=False):
+        # Call predict on the forecaster directly, not on the pipeline
+        # because of output conversion
+        Y_pred = self.pipe_.steps_[-1][-1].predict(fh, X)
+        return _aggregate(Y_pred, aggfunc=self.aggfunc, weights=self.weights)
+
+    def _update(self, y, X=None, update_params=True):
+        self.pipe_._update(y, X=None, update_params=update_params)
+        return self
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If
+            no special parameters are defined for a value, will return
+            `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default={}
+            Parameters to create testing instances of the class.
+            Each dict are parameters to construct an "interesting" test
+            instance, i.e., `MyClass(**params)` or `MyClass(**params[i])`
+            creates a valid test instance. `create_test_instance` uses the first
+            (or only) dictionary in `params`.
+        """
+        # imports
+        from sktime.forecasting.naive import NaiveForecaster
+
+        params0 = {
+            "forecasters": [
+                ("naive", NaiveForecaster(), 0),
+                ("naive1", NaiveForecaster(), 1),
+            ]
+        }
+        params1 = {"theta_values": (0, 3)}
+        params2 = {"weights": [1.0, 0.8]}
+        return [params0, params1, params2]
