@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from typing import Union
+from typing import List, Tuple, Union
 
 import numpy as np
 
@@ -73,3 +73,43 @@ class _TweDistance(ElasticDistance):
                     cost_matrix[i, j] = min(del_x, del_y, match)
 
         return cost_matrix[-1, -1], cost_matrix
+
+    @staticmethod
+    def _alignment_path(
+        x: np.ndarray, y: np.ndarray, cost_matrix: np.ndarray, bounding_matrix, *args
+    ) -> List[Tuple]:
+        x_size = x.shape[-1]
+        y_size = y.shape[-1]
+
+        for i in range(x_size):
+            for j in range(y_size):
+                if not np.isfinite(bounding_matrix[i, j]):
+                    cost_matrix[i, j] = np.inf
+
+        i = cost_matrix.shape[0] - 1
+        j = cost_matrix.shape[1] - 1
+        alignment = []
+        while True:
+            alignment.append((i - 1, j - 1))
+
+            if alignment[-1] == (0, 0):
+                break
+
+            arr = np.array(
+                [
+                    cost_matrix[i - 1, j - 1],
+                    cost_matrix[i - 1, j],
+                    cost_matrix[i, j - 1],
+                ]
+            )
+            min_index = np.argmin(arr)
+
+            if min_index == 0:
+                i = i - 1
+                j = j - 1
+            elif min_index == 1:
+                i = i - 1
+            else:
+                j = j - 1
+
+        return alignment[::-1]

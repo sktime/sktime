@@ -100,6 +100,7 @@ class BaseDistance(ABC):
                 x_size = x.shape[0]
                 _process_x = np.zeros((1, x_size))
                 _process_x[0] = x
+                return_val = _process_x
                 return _process_x
             return x
 
