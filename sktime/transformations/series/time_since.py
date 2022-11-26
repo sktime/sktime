@@ -290,5 +290,5 @@ def _period_to_int(x: pd.PeriodIndex | list[pd.offsets.DateOffset]) -> int:
     return x.map(lambda y: y.n)
 
 
-def _remove_digits_from_str(x: str):
+def _remove_digits_from_str(x: str) -> str:
     return x.translate({ord(k): None for k in digits})
