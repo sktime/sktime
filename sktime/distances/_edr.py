@@ -1,21 +1,15 @@
 # -*- coding: utf-8 -*-
 __author__ = ["chrisholder", "TonyBagnall"]
 
-import warnings
 from typing import Any, List, Tuple
 
 import numpy as np
-from numba import njit
-from numba.core.errors import NumbaWarning
 
 from sktime.distances.base import (
     DistanceAlignmentPathCallable,
     DistanceCallable,
     NumbaDistance,
 )
-
-# Warning occurs when using large time series (i.e. 1000x1000)
-warnings.simplefilter("ignore", category=NumbaWarning)
 
 
 class _EdrDistance(NumbaDistance):
@@ -90,7 +84,10 @@ class _EdrDistance(NumbaDistance):
             If the itakura_max_slope is not a float or int.
             If epsilon is not a float.
         """
+        from numba import njit
+
         from sktime.distances._distance_alignment_paths import compute_min_return_path
+        from sktime.distances._edr_numba import _edr_cost_matrix
         from sktime.distances.lower_bounding import resolve_bounding_matrix
 
         _bounding_matrix = resolve_bounding_matrix(
@@ -185,6 +182,9 @@ class _EdrDistance(NumbaDistance):
             If the itakura_max_slope is not a float or int.
             If epsilon is not a float.
         """
+        from numba import njit
+
+        from sktime.distances._edr_numba import _edr_cost_matrix
         from sktime.distances.lower_bounding import resolve_bounding_matrix
 
         _bounding_matrix = resolve_bounding_matrix(
@@ -206,55 +206,3 @@ class _EdrDistance(NumbaDistance):
             return float(cost_matrix[-1, -1] / max(_x.shape[1], _y.shape[1]))
 
         return numba_edr_distance
-
-
-@njit(cache=True)
-def _edr_cost_matrix(
-    x: np.ndarray,
-    y: np.ndarray,
-    bounding_matrix: np.ndarray,
-    epsilon: float,
-):
-    """Compute the edr cost matrix between two time series.
-
-    Parameters
-    ----------
-    x: np.ndarray, 2d shape (d (n_dimensions),m (series_length))
-        First time series.
-    y: np.ndarray, 2d array shape (d, m)
-        Second time series.
-    bounding_matrix: np.ndarray (2d of size mxn where m is len(x) and n is len(y))
-        Bounding matrix where the values in bound are marked by finite values and
-        outside bound points are infinite values.
-    epsilon : float
-        Matching threshold to determine if distance between two subsequences are
-        considered similar (similar if distance less than the threshold).
-
-    Returns
-    -------
-    np.ndarray (2d of size mxn where m is len(x) and n is len(y))
-        Edr cost matrix between x and y.
-    """
-    dimensions = x.shape[0]
-    x_size = x.shape[1]
-    y_size = y.shape[1]
-    cost_matrix = np.zeros((x_size + 1, y_size + 1))
-    for i in range(1, x_size + 1):
-        for j in range(1, y_size + 1):
-            if np.isfinite(bounding_matrix[i - 1, j - 1]):
-                curr_dist = 0
-                for k in range(dimensions):
-                    curr_dist += (x[k][i - 1] - y[k][j - 1]) * (
-                        x[k][i - 1] - y[k][j - 1]
-                    )
-                curr_dist = np.sqrt(curr_dist)
-                if curr_dist < epsilon:
-                    cost = 0
-                else:
-                    cost = 1
-                cost_matrix[i, j] = min(
-                    cost_matrix[i - 1, j - 1] + cost,
-                    cost_matrix[i - 1, j] + 1,
-                    cost_matrix[i, j - 1] + 1,
-                )
-    return cost_matrix[1:, 1:]
