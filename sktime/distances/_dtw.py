@@ -1,19 +1,13 @@
 # -*- coding: utf-8 -*-
 __author__ = ["chrisholder", "TonyBagnall"]
 
-import warnings
 from typing import Any, List, Tuple
 
 import numpy as np
-from numba import njit
-from numba.core.errors import NumbaWarning
 
 from sktime.distances.base import DistanceCallable, NumbaDistance
 from sktime.distances.base._types import DistanceAlignmentPathCallable
 from sktime.distances.lower_bounding import resolve_bounding_matrix
-
-# Warning occurs when using large time series (i.e. 1000x1000)
-warnings.simplefilter("ignore", category=NumbaWarning)
 
 
 class _DtwDistance(NumbaDistance):
@@ -109,7 +103,10 @@ class _DtwDistance(NumbaDistance):
             If the sakoe_chiba_window_radius is not an integer.
             If the itakura_max_slope is not a float or int.
         """
+        from numba import njit
+
         from sktime.distances._distance_alignment_paths import compute_min_return_path
+        from sktime.distances._dtw_numba import _cost_matrix
 
         _bounding_matrix = resolve_bounding_matrix(
             x, y, window, itakura_max_slope, bounding_matrix
@@ -186,6 +183,10 @@ class _DtwDistance(NumbaDistance):
             If the sakoe_chiba_window_radius is not an integer.
             If the itakura_max_slope is not a float or int.
         """
+        from numba import njit
+
+        from sktime.distances._dtw_numba import _cost_matrix
+
         _bounding_matrix = resolve_bounding_matrix(
             x, y, window, itakura_max_slope, bounding_matrix
         )
@@ -199,49 +200,3 @@ class _DtwDistance(NumbaDistance):
             return cost_matrix[-1, -1]
 
         return numba_dtw_distance
-
-
-@njit(cache=True)
-def _cost_matrix(
-    x: np.ndarray,
-    y: np.ndarray,
-    bounding_matrix: np.ndarray,
-) -> np.ndarray:
-    """Dtw distance compiled to no_python.
-
-    Series should be shape (d, m), where d is the number of dimensions, m the series
-    length. Series can be different lengths.
-
-    Parameters
-    ----------
-    x: np.ndarray (2d array of shape dxm1).
-        First time series.
-    y: np.ndarray (2d array of shape dxm1).
-        Second time series.
-    bounding_matrix: np.ndarray (2d array of shape m1xm2)
-        Bounding matrix where the index in bound finite values (0.) and indexes
-        outside bound points are infinite values (non finite).
-
-    Returns
-    -------
-    cost_matrix: np.ndarray (of shape (n, m) where n is the len(x) and m is len(y))
-        The dtw cost matrix.
-    """
-    dimensions = x.shape[0]
-    x_size = x.shape[1]
-    y_size = y.shape[1]
-    cost_matrix = np.full((x_size + 1, y_size + 1), np.inf)
-    cost_matrix[0, 0] = 0.0
-
-    for i in range(x_size):
-        for j in range(y_size):
-            if np.isfinite(bounding_matrix[i, j]):
-                sum = 0
-                for k in range(dimensions):
-                    sum += (x[k][i] - y[k][j]) ** 2
-                cost_matrix[i + 1, j + 1] = sum
-                cost_matrix[i + 1, j + 1] += min(
-                    cost_matrix[i, j + 1], cost_matrix[i + 1, j], cost_matrix[i, j]
-                )
-
-    return cost_matrix[1:, 1:]
