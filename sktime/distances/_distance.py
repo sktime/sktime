@@ -6,7 +6,7 @@ from typing import Any, Callable, Union
 
 import numpy as np
 
-from sktime.distances._ddtw import DerivativeCallable, _DdtwDistance, average_of_slope
+from sktime.distances._ddtw import _DdtwDistance
 from sktime.distances._dtw import _DtwDistance
 from sktime.distances._edr import _EdrDistance
 from sktime.distances._erp import _ErpDistance
@@ -305,7 +305,7 @@ def wddtw_distance(
     window: Union[float, None] = None,
     itakura_max_slope: Union[float, None] = None,
     bounding_matrix: Union[np.ndarray, None] = None,
-    compute_derivative: DerivativeCallable = average_of_slope,
+    compute_derivative=None,
     g: float = 0.0,
     **kwargs: Any,
 ) -> float:
@@ -392,6 +392,11 @@ def wddtw_distance(
     warping for time series classification, Pattern Recognition, Volume 44, Issue 9,
     2011, Pages 2231-2240, ISSN 0031-3203, https://doi.org/10.1016/j.patcog.2010.09.022.
     """
+    if compute_derivative is None:
+        from sktime.distances._ddtw_numba import average_of_slope
+
+        compute_derivative = average_of_slope
+
     format_kwargs = {
         "window": window,
         "itakura_max_slope": itakura_max_slope,
@@ -507,7 +512,7 @@ def ddtw_distance(
     window: Union[float, None] = None,
     itakura_max_slope: Union[float, None] = None,
     bounding_matrix: np.ndarray = None,
-    compute_derivative: DerivativeCallable = average_of_slope,
+    compute_derivative=None,
     **kwargs: Any,
 ) -> float:
     r"""Compute the derivative dynamic time warping (DDTW) distance between time series.
@@ -589,6 +594,11 @@ def ddtw_distance(
         First SIAM International Conference on Data Mining.
         1. 10.1137/1.9781611972719.1.
     """
+    if compute_derivative is None:
+        from sktime.distances._ddtw_numba import average_of_slope
+
+        compute_derivative = average_of_slope
+
     format_kwargs = {
         "window": window,
         "itakura_max_slope": itakura_max_slope,
@@ -1154,7 +1164,7 @@ def ddtw_alignment_path(
     window: Union[float, None] = None,
     itakura_max_slope: Union[float, None] = None,
     bounding_matrix: np.ndarray = None,
-    compute_derivative: DerivativeCallable = average_of_slope,
+    compute_derivative=None,
     **kwargs: Any,
 ) -> AlignmentPathReturn:
     r"""Compute the derivative dynamic time warping (DDTW) alignment path.
@@ -1230,6 +1240,11 @@ def ddtw_alignment_path(
         First SIAM International Conference on Data Mining.
         1. 10.1137/1.9781611972719.1.
     """
+    if compute_derivative is None:
+        from sktime.distances._ddtw_numba import average_of_slope
+
+        compute_derivative = average_of_slope
+
     format_kwargs = {
         "window": window,
         "itakura_max_slope": itakura_max_slope,
@@ -1250,7 +1265,7 @@ def wddtw_alignment_path(
     window: Union[float, None] = None,
     itakura_max_slope: Union[float, None] = None,
     bounding_matrix: Union[np.ndarray, None] = None,
-    compute_derivative: DerivativeCallable = average_of_slope,
+    compute_derivative=None,
     g: float = 0.0,
     **kwargs: Any,
 ) -> AlignmentPathReturn:
@@ -1332,6 +1347,11 @@ def wddtw_alignment_path(
     warping for time series classification, Pattern Recognition, Volume 44, Issue 9,
     2011, Pages 2231-2240, ISSN 0031-3203, https://doi.org/10.1016/j.patcog.2010.09.022.
     """
+    if compute_derivative is None:
+        from sktime.distances._ddtw_numba import average_of_slope
+
+        compute_derivative = average_of_slope
+
     format_kwargs = {
         "window": window,
         "itakura_max_slope": itakura_max_slope,
