@@ -5,7 +5,6 @@ from typing import Any, List, Tuple
 
 import numpy as np
 
-from sktime.distances._wdtw import _weighted_cost_matrix
 from sktime.distances.base import (
     DistanceAlignmentPathCallable,
     DistanceCallable,
@@ -87,6 +86,7 @@ class _WddtwDistance(NumbaDistance):
 
         from sktime.distances._distance_alignment_paths import compute_min_return_path
         from sktime.distances._numba_utils import is_no_python_compiled_callable
+        from sktime.distances._wdtw import _weighted_cost_matrix
 
         if compute_derivative is None:
             from sktime.distances._ddtw_numba import average_of_slope
@@ -199,6 +199,7 @@ class _WddtwDistance(NumbaDistance):
         from numba import njit
 
         from sktime.distances._numba_utils import is_no_python_compiled_callable
+        from sktime.distances._wdtw import _weighted_cost_matrix
 
         if compute_derivative is None:
             from sktime.distances._ddtw_numba import average_of_slope
