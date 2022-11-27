@@ -11,7 +11,6 @@ from sktime.distances.base import (
     DistanceCallable,
     NumbaDistance,
 )
-from sktime.distances.lower_bounding import resolve_bounding_matrix
 
 DerivativeCallable = Callable[[np.ndarray], np.ndarray]
 
@@ -105,6 +104,7 @@ class _DdtwDistance(NumbaDistance):
 
         from sktime.distances._distance_alignment_paths import compute_min_return_path
         from sktime.distances._dtw_numba import _cost_matrix
+        from sktime.distances._lower_bounding_numba import resolve_bounding_matrix
         from sktime.distances._numba_utils import is_no_python_compiled_callable
 
         if compute_derivative is None:
@@ -207,6 +207,7 @@ class _DdtwDistance(NumbaDistance):
         from numba import njit
 
         from sktime.distances._dtw_numba import _cost_matrix
+        from sktime.distances._lower_bounding_numba import resolve_bounding_matrix
         from sktime.distances._numba_utils import is_no_python_compiled_callable
 
         if compute_derivative is None:
