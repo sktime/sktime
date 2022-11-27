@@ -417,7 +417,7 @@ def ps(x, sign=1, n=None, pad="mean"):
     y : array-like shape = [len(x)/2]
     """
     from sktime.classification.interval_based._rise_numba import (
-        _round_to_nearest_power_of_two
+        _round_to_nearest_power_of_two,
     )
 
     x_len = x.shape[-1]
