@@ -6,7 +6,6 @@ from typing import Any, Callable, List, Tuple
 
 import numpy as np
 
-from sktime.distances._dtw import _cost_matrix
 from sktime.distances._numba_utils import is_no_python_compiled_callable
 from sktime.distances.base import (
     DistanceAlignmentPathCallable,
@@ -105,6 +104,7 @@ class _DdtwDistance(NumbaDistance):
         """
         from numba import njit
 
+        from sktime.distances._dtw_numba import _cost_matrix
         from sktime.distances._distance_alignment_paths import compute_min_return_path
 
         if compute_derivative is None:
