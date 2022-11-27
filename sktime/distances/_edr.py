@@ -91,7 +91,7 @@ class _EdrDistance(NumbaDistance):
             If epsilon is not a float.
         """
         from sktime.distances._distance_alignment_paths import compute_min_return_path
-        from sktime.distances._lower_bounding_numba import resolve_bounding_matrix
+        from sktime.distances.lower_bounding import resolve_bounding_matrix
 
         _bounding_matrix = resolve_bounding_matrix(
             x, y, window, itakura_max_slope, bounding_matrix
@@ -185,7 +185,7 @@ class _EdrDistance(NumbaDistance):
             If the itakura_max_slope is not a float or int.
             If epsilon is not a float.
         """
-        from sktime.distances._lower_bounding_numba import resolve_bounding_matrix
+        from sktime.distances.lower_bounding import resolve_bounding_matrix
 
         _bounding_matrix = resolve_bounding_matrix(
             x, y, window, itakura_max_slope, bounding_matrix
