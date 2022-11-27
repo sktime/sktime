@@ -8,7 +8,6 @@ import numpy as np
 from numba import njit
 from numba.core.errors import NumbaWarning
 
-from sktime.distances._distance_alignment_paths import compute_min_return_path
 from sktime.distances.base import DistanceCallable, NumbaDistance
 from sktime.distances.base._types import DistanceAlignmentPathCallable
 from sktime.distances.lower_bounding import resolve_bounding_matrix
@@ -110,6 +109,8 @@ class _DtwDistance(NumbaDistance):
             If the sakoe_chiba_window_radius is not an integer.
             If the itakura_max_slope is not a float or int.
         """
+        from sktime.distances._distance_alignment_paths import compute_min_return_path
+
         _bounding_matrix = resolve_bounding_matrix(
             x, y, window, itakura_max_slope, bounding_matrix
         )

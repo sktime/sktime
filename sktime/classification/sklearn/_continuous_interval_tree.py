@@ -333,11 +333,15 @@ class _TreeNode:
         n_classes,
         leaf,
     ):
+        from sktime.classification.sklearn._continuous_interval_tree_numba import (
+            remaining_classes,
+        )
+
         self.depth = depth
         best_distributions = []
         best_entropies = []
 
-        if leaf is False and self.remaining_classes(distribution) and depth < max_depth:
+        if leaf is False and remaining_classes(distribution) and depth < max_depth:
             for (_, att), threshold in np.ndenumerate(thresholds):
                 (
                     info_gain,

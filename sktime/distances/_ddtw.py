@@ -6,7 +6,6 @@ from typing import Any, Callable, List, Tuple
 
 import numpy as np
 
-from sktime.distances._distance_alignment_paths import compute_min_return_path
 from sktime.distances._dtw import _cost_matrix
 from sktime.distances._numba_utils import is_no_python_compiled_callable
 from sktime.distances.base import (
@@ -105,6 +104,8 @@ class _DdtwDistance(NumbaDistance):
             If the compute derivative callable is not no_python compiled.
         """
         from numba import njit
+
+        from sktime.distances._distance_alignment_paths import compute_min_return_path
 
         if compute_derivative is None:
             from sktime.distances._ddtw_numba import average_of_slope
