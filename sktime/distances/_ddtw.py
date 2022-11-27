@@ -104,7 +104,7 @@ class _DdtwDistance(NumbaDistance):
         """
         from numba import njit
 
-        from sktime.distances._ddtw import _cost_matrix
+        from sktime.distances._dtw_numba import _cost_matrix
         from sktime.distances._distance_alignment_paths import compute_min_return_path
 
         if compute_derivative is None:
