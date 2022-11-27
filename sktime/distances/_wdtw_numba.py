@@ -9,7 +9,6 @@ import numpy as np
 from numba import njit
 from numba.core.errors import NumbaWarning
 
-
 # Warning occurs when using large time series (i.e. 1000x1000)
 warnings.simplefilter("ignore", category=NumbaWarning)
 
