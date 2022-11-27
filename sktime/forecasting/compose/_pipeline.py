@@ -241,6 +241,14 @@ class ForecastingPipeline(_Pipeline):
     steps : list
         List of tuples like ("name", forecaster/transformer)
 
+    Attributes
+    ----------
+    cutoff : Cut-off = “present time” state of forecaster.
+    fh : Forecasting horizon that was passed.
+    forecaster_ : Return reference to the forecaster in the pipeline.
+    is_fitted : Whether fit has been called.
+    named_steps : Map the steps to a dictionary.
+
     Examples
     --------
     >>> from sktime.datasets import load_longley
