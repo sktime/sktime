@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 __author__ = ["chrisholder", "TonyBagnall"]
 
-import warnings
 from typing import Any, List, Tuple
 
 import numpy as np
