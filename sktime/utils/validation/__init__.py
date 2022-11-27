@@ -12,7 +12,7 @@ __all__ = [
     "check_n_jobs",
     "check_window_length",
 ]
-__author__ = ["Markus Löning", "Taiwo Owoseni", "khrapovs"]
+__author__ = ["mloning", "Taiwo Owoseni", "khrapovs"]
 
 import os
 from datetime import timedelta
@@ -178,7 +178,7 @@ def check_window_length(
     if window_length is None:
         return window_length
 
-    elif is_int(window_length) and window_length >= 1:
+    elif is_int(window_length) and window_length >= 0:
         return window_length
 
     elif is_float(window_length) and 0 < window_length < 1:
@@ -202,6 +202,6 @@ def check_window_length(
 
     else:
         raise ValueError(
-            f"`{name}` must be a positive integer >= 1, or"
+            f"`{name}` must be a positive integer >= 0, or "
             f"float in (0, 1) or None, but found: {window_length}."
         )

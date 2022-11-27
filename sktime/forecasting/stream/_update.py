@@ -45,6 +45,9 @@ class UpdateRefitsEvery(_DelegatedForecaster):
         default = 0, i.e., refit window ends with and includes cutoff
     """
 
+    # attribute for _DelegatedForecaster, which then delegates
+    #     all non-overridden methods are same as of getattr(self, _delegate_name)
+    #     see further details in _DelegatedForecaster docstring
     _delegate_name = "forecaster_"
 
     _tags = {
@@ -227,6 +230,9 @@ class UpdateEvery(_DelegatedForecaster):
             if int, will be interpreted as number of time stamps seen since last update
     """
 
+    # attribute for _DelegatedForecaster, which then delegates
+    #     all non-overridden methods are same as of getattr(self, _delegate_name)
+    #     see further details in _DelegatedForecaster docstring
     _delegate_name = "forecaster_"
 
     _tags = {
@@ -389,6 +395,9 @@ class DontUpdate(_DelegatedForecaster):
         default = 0, i.e., refit window ends with and includes cutoff
     """
 
+    # attribute for _DelegatedForecaster, which then delegates
+    #     all non-overridden methods are same as of getattr(self, _delegate_name)
+    #     see further details in _DelegatedForecaster docstring
     _delegate_name = "forecaster_"
 
     _tags = {

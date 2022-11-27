@@ -12,7 +12,6 @@ import pytest
 
 from sktime.forecasting.compose import EnsembleForecaster
 from sktime.forecasting.compose._ensemble import VALID_AGG_FUNCS
-from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.trend import PolynomialTrendForecaster
 from sktime.utils._testing.forecasting import make_forecasting_problem
@@ -22,7 +21,7 @@ from sktime.utils._testing.forecasting import make_forecasting_problem
     "forecasters",
     [
         [("trend", PolynomialTrendForecaster()), ("naive", NaiveForecaster())],
-        [("trend", PolynomialTrendForecaster()), ("ses", ExponentialSmoothing())],
+        [("trend", PolynomialTrendForecaster(degree=2)), ("naive", NaiveForecaster())],
     ],
 )
 def test_avg_mean(forecasters):
@@ -41,43 +40,63 @@ def test_avg_mean(forecasters):
 
 @pytest.mark.parametrize("aggfunc", [*VALID_AGG_FUNCS.keys()])
 @pytest.mark.parametrize(
-    "forecasters",
+    "forecasters,y",
     [
-        [("trend", PolynomialTrendForecaster()), ("naive", NaiveForecaster())],
+        (
+            [("trend", PolynomialTrendForecaster()), ("naive", NaiveForecaster())],
+            pd.DataFrame(make_forecasting_problem()),
+        ),
+        (
+            [("var", NaiveForecaster(strategy="drift")), ("naive", NaiveForecaster())],
+            make_forecasting_problem(n_columns=3),
+        ),
     ],
 )
-def test_aggregation_unweighted(forecasters, aggfunc):
+def test_aggregation_unweighted(forecasters, y, aggfunc):
     """Assert aggfunc returns the correct values."""
-    y = make_forecasting_problem()
     forecaster = EnsembleForecaster(forecasters=forecasters, aggfunc=aggfunc)
     forecaster.fit(y, fh=[1, 2, 3])
     actual_pred = forecaster.predict()
 
     predictions = []
+
     _aggfunc = VALID_AGG_FUNCS[aggfunc]["unweighted"]
     for _, forecaster in forecasters:
         f = forecaster
         f.fit(y)
         f_pred = f.predict(fh=[1, 2, 3])
         predictions.append(f_pred)
-    predictions = pd.DataFrame(predictions).T
-    expected_pred = predictions.apply(func=_aggfunc, axis=1)
 
-    pd.testing.assert_series_equal(actual_pred, expected_pred)
+    expected_pred = pd.DataFrame()
+    for col in predictions[0].columns:
+        column_preds = pd.concat([p[col] for p in predictions], axis=1)
+        expected_pred.loc[:, col] = pd.Series(
+            _aggfunc(column_preds, axis=1),
+            index=column_preds.index,
+        )
+
+    # expected_pred = predictions.apply(func=_aggfunc, axis=1, weights=weights)
+    pd.testing.assert_frame_equal(actual_pred, expected_pred)
 
 
 @pytest.mark.parametrize("aggfunc", [*VALID_AGG_FUNCS.keys()])
 @pytest.mark.parametrize("weights", [[1.44, 1.2]])
 @pytest.mark.parametrize(
-    "forecasters",
+    "forecasters,y",
     [
-        [("trend", PolynomialTrendForecaster()), ("naive", NaiveForecaster())],
+        (
+            [("trend", PolynomialTrendForecaster()), ("naive", NaiveForecaster())],
+            pd.DataFrame(make_forecasting_problem()),
+        ),
+        (
+            [("var", NaiveForecaster(strategy="drift")), ("naive", NaiveForecaster())],
+            make_forecasting_problem(n_columns=3),
+        ),
     ],
 )
 @pytest.mark.skipif(sys.version_info < (3, 7), reason="requires python3.7 or higher")
-def test_aggregation_weighted(forecasters, aggfunc, weights):
+def test_aggregation_weighted(forecasters, y, aggfunc, weights):
     """Assert weighted aggfunc returns the correct values."""
-    y = make_forecasting_problem()
     forecaster = EnsembleForecaster(
         forecasters=forecasters, aggfunc=aggfunc, weights=weights
     )
@@ -90,14 +109,19 @@ def test_aggregation_weighted(forecasters, aggfunc, weights):
         f.fit(y)
         f_pred = f.predict(fh=[1, 2, 3])
         predictions.append(f_pred)
-    predictions = pd.DataFrame(predictions).T
+
     _aggfunc = VALID_AGG_FUNCS[aggfunc]["weighted"]
-    expected_pred = pd.Series(
-        _aggfunc(predictions, axis=1, weights=np.array(weights)),
-        index=predictions.index,
-    )
+
+    expected_pred = pd.DataFrame()
+    for col in predictions[0].columns:
+        column_preds = pd.concat([p[col] for p in predictions], axis=1)
+        expected_pred.loc[:, col] = pd.Series(
+            _aggfunc(column_preds, axis=1, weights=np.array(weights)),
+            index=column_preds.index,
+        )
+
     # expected_pred = predictions.apply(func=_aggfunc, axis=1, weights=weights)
-    pd.testing.assert_series_equal(actual_pred, expected_pred)
+    pd.testing.assert_frame_equal(actual_pred, expected_pred)
 
 
 @pytest.mark.parametrize("aggfunc", ["miin", "maximum", ""])
