@@ -143,6 +143,7 @@ class DrCIF(BaseClassifier):
         "capability:contractable": True,
         "capability:multithreading": True,
         "classifier_type": "interval",
+        "python_dependencies": "numba",
     }
 
     def __init__(

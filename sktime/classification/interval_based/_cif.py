@@ -121,6 +121,7 @@ class CanonicalIntervalForest(BaseClassifier):
         "capability:multivariate": True,
         "capability:multithreading": True,
         "classifier_type": "interval",
+        "python_dependencies": "numba",
     }
 
     def __init__(
