@@ -1,14 +1,10 @@
 # -*- coding: utf-8 -*-
 __author__ = ["chrisholder"]
 
-from typing import Tuple
-
 import numpy as np
-from numba import njit
 
 from sktime.clustering.metrics.medoids import medoids
 from sktime.distances import distance_alignment_path_factory
-from sktime.distances.base import DistanceAlignmentPathCallable
 
 
 def dba(
@@ -24,7 +20,6 @@ def dba(
     """Compute the dtw barycenter average of time series.
 
     This implements the'petitjean' version (orginal) DBA algorithm [1]_.
-
 
     Parameters
     ----------
@@ -58,6 +53,8 @@ def dba(
        for dynamic time warping, with applications to clustering. Pattern
        Recognition, Elsevier, 2011, Vol. 44, Num. 3, pp. 678-693
     """
+    from sktime.clustering.metrics.averaging._dba_numba import _dba_update
+
     if len(X) <= 1:
         return X
 
@@ -85,42 +82,3 @@ def dba(
         if verbose is True:
             print(f"[DBA sktime] epoch {i}, cost {cost}")  # noqa: T001
     return center
-
-
-@njit(fastmath=True)
-def _dba_update(
-    center: np.ndarray, X: np.ndarray, path_callable: DistanceAlignmentPathCallable
-) -> Tuple[np.ndarray, float]:
-    """Perform an update iteration for dba.
-
-    Parameters
-    ----------
-    center: np.ndarray (2d array of shape (m, p) where m is the number of dimensions
-                        and p is the number of time point)
-        Time series that is the current center (or average).
-    X : np.ndarray (3d array of shape (n, m, p) where n is number of instances, m
-                    is the dimensions and p is the timepoints))
-        Time series instances compute average from.
-    path_callable: Callable[Union[np.ndarray, np.ndarray], tuple[list[tuple], float]]
-        Callable that returns the distance path.
-
-    Returns
-    -------
-    np.ndarray (2d array of shape (m, p) where m is the number of dimensions and p is
-                the number of time points.)
-        The time series that is the computed average series.
-    """
-    X_size, X_dims, X_timepoints = X.shape
-    sum = np.zeros((X_timepoints))
-
-    alignment = np.zeros((X_dims, X_timepoints))
-    cost = 0.0
-    for i in range(X_size):
-        curr_ts = X[i]
-        curr_alignment, _ = path_callable(curr_ts, center)
-        for j, k in curr_alignment:
-            alignment[:, k] += curr_ts[:, j]
-            sum[k] += 1
-            cost += np.linalg.norm(curr_ts[:, j] - center[:, k]) ** 2
-
-    return alignment / sum, cost / X_timepoints
