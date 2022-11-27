@@ -5,7 +5,6 @@ __author__ = ["chrisholder", "TonyBagnall"]
 from typing import Any, Callable, Union
 
 import numpy as np
-from numba import njit
 
 from sktime.distances._ddtw import DerivativeCallable, _DdtwDistance, average_of_slope
 from sktime.distances._dtw import _DtwDistance
@@ -1939,6 +1938,8 @@ def distance_factory(
         If a resolved metric is not no_python compiled.
         If the metric type cannot be determined.
     """
+    from numba import njit
+
     if x is None:
         x = np.zeros((1, 10))
     if y is None:
@@ -2201,6 +2202,8 @@ def distance_alignment_path_factory(
     Callable[[np.ndarray, np.ndarray], Union[np.ndarray, np.ndarray]]
         Callable for the distance path.
     """
+    from numba import njit
+
     if x is None:
         x = np.zeros((1, 10))
     if y is None:
