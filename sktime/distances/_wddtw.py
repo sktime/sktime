@@ -5,10 +5,7 @@ import warnings
 from typing import Any, List, Tuple
 
 import numpy as np
-from numba import njit
-from numba.core.errors import NumbaWarning
 
-from sktime.distances._ddtw import DerivativeCallable, average_of_slope
 from sktime.distances._distance_alignment_paths import compute_min_return_path
 from sktime.distances._numba_utils import is_no_python_compiled_callable
 from sktime.distances._wdtw import _weighted_cost_matrix
@@ -18,9 +15,6 @@ from sktime.distances.base import (
     NumbaDistance,
 )
 from sktime.distances.lower_bounding import resolve_bounding_matrix
-
-# Warning occurs when using large time series (i.e. 1000x1000)
-warnings.simplefilter("ignore", category=NumbaWarning)
 
 
 class _WddtwDistance(NumbaDistance):
@@ -38,7 +32,7 @@ class _WddtwDistance(NumbaDistance):
         window: int = None,
         itakura_max_slope: float = None,
         bounding_matrix: np.ndarray = None,
-        compute_derivative: DerivativeCallable = average_of_slope,
+        compute_derivative=None,
         g: float = 0.0,
         **kwargs: Any,
     ) -> DistanceAlignmentPathCallable:
@@ -92,6 +86,13 @@ class _WddtwDistance(NumbaDistance):
             If the compute derivative callable is not no_python compiled.
             If the value of g is not a float
         """
+        from numba import njit
+
+        if compute_derivative is None:
+            from sktime.distances._ddtw_numba import average_of_slope
+
+            compute_derivative = average_of_slope
+
         _bounding_matrix = resolve_bounding_matrix(
             x, y, window, itakura_max_slope, bounding_matrix
         )
@@ -143,7 +144,7 @@ class _WddtwDistance(NumbaDistance):
         window: int = None,
         itakura_max_slope: float = None,
         bounding_matrix: np.ndarray = None,
-        compute_derivative: DerivativeCallable = average_of_slope,
+        compute_derivative=None,
         g: float = 0.0,
         **kwargs: Any,
     ) -> DistanceCallable:
@@ -195,6 +196,13 @@ class _WddtwDistance(NumbaDistance):
             If the compute derivative callable is not no_python compiled.
             If the value of g is not a float
         """
+        from numba import njit
+
+        if compute_derivative is None:
+            from sktime.distances._ddtw_numba import average_of_slope
+
+            compute_derivative = average_of_slope
+
         _bounding_matrix = resolve_bounding_matrix(
             x, y, window, itakura_max_slope, bounding_matrix
         )
