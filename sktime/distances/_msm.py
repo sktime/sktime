@@ -8,7 +8,6 @@ import numpy as np
 from numba import njit
 from numba.core.errors import NumbaWarning
 
-from sktime.distances._distance_alignment_paths import compute_min_return_path
 from sktime.distances.base import (
     DistanceAlignmentPathCallable,
     DistanceCallable,
@@ -99,6 +98,8 @@ class _MsmDistance(NumbaDistance):
             If the itakura_max_slope is not a float or int.
             If epsilon is not a float.
         """
+        from sktime.distances._distance_alignment_paths import compute_min_return_path
+
         if x.shape[0] > 1 or y.shape[0] > 1:
             raise ValueError(
                 f"ERROR, MSM distance currently only works with "
