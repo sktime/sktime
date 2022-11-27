@@ -19,7 +19,6 @@ from sktime.base._base import _clone_estimator
 from sktime.classification.base import BaseClassifier
 from sktime.classification.sklearn._continuous_interval_tree import (
     ContinuousIntervalTree,
-    _drcif_feature,
 )
 from sktime.transformations.panel.catch22 import Catch22
 
@@ -241,6 +240,10 @@ class CanonicalIntervalForest(BaseClassifier):
         return output
 
     def _fit_estimator(self, X, y, idx):
+        from sktime.classification.sklearn._continuous_interval_tree_numba import (
+            _drcif_feature,
+        )
+
         c22 = Catch22(outlier_norm=True)
         rs = 255 if self.random_state == 0 else self.random_state
         rs = (
@@ -308,6 +311,10 @@ class CanonicalIntervalForest(BaseClassifier):
         return [tree, intervals, dims, atts]
 
     def _predict_proba_for_estimator(self, X, classifier, intervals, dims, atts):
+        from sktime.classification.sklearn._continuous_interval_tree_numba import (
+            _drcif_feature,
+        )
+
         c22 = Catch22(outlier_norm=True)
         if isinstance(self._base_estimator, ContinuousIntervalTree):
             return classifier._predict_proba_cif(X, c22, intervals, dims, atts)
