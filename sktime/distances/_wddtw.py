@@ -84,7 +84,7 @@ class _WddtwDistance(NumbaDistance):
         from numba import njit
 
         from sktime.distances._distance_alignment_paths import compute_min_return_path
-        from sktime.distances._lower_bounding_numba import resolve_bounding_matrix
+        from sktime.distances.lower_bounding import resolve_bounding_matrix
         from sktime.distances._numba_utils import is_no_python_compiled_callable
         from sktime.distances._wdtw import _weighted_cost_matrix
 
@@ -198,7 +198,7 @@ class _WddtwDistance(NumbaDistance):
         """
         from numba import njit
 
-        from sktime.distances._lower_bounding_numba import resolve_bounding_matrix
+        from sktime.distances.lower_bounding import resolve_bounding_matrix
         from sktime.distances._numba_utils import is_no_python_compiled_callable
         from sktime.distances._wdtw import _weighted_cost_matrix
 

@@ -98,7 +98,7 @@ class _MsmDistance(NumbaDistance):
             If epsilon is not a float.
         """
         from sktime.distances._distance_alignment_paths import compute_min_return_path
-        from sktime.distances._lower_bounding_numba import resolve_bounding_matrix
+        from sktime.distances.lower_bounding import resolve_bounding_matrix
 
         if x.shape[0] > 1 or y.shape[0] > 1:
             raise ValueError(
@@ -187,7 +187,7 @@ class _MsmDistance(NumbaDistance):
             If the itakura_max_slope is not a float or int.
             If epsilon is not a float.
         """
-        from sktime.distances._lower_bounding_numba import resolve_bounding_matrix
+        from sktime.distances.lower_bounding import resolve_bounding_matrix
 
         if x.shape[0] > 1 or y.shape[0] > 1:
             raise ValueError(
