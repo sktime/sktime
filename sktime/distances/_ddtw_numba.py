@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+"""Isolated numba imports for _ddtw."""
+
 __author__ = ["chrisholder", "TonyBagnall"]
 
 import numpy as np

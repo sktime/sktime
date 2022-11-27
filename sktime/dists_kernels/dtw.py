@@ -85,6 +85,7 @@ class DtwDist(BasePairwiseTransformerPanel):
     _tags = {
         "symmetric": True,  # all the distances are symmetric
         "X_inner_mtype": "numpy3D",
+        "python_dependencies": "numba",
     }
 
     def __init__(
