@@ -334,7 +334,10 @@ class _TreeNode:
         leaf,
     ):
         from sktime.classification.sklearn._continuous_interval_tree_numba import (
+            information_gain,
+            margin_gain,
             remaining_classes,
+            split_data,
         )
 
         self.depth = depth
@@ -347,7 +350,7 @@ class _TreeNode:
                     info_gain,
                     distributions,
                     entropies,
-                ) = self.information_gain(X, y, att, threshold, entropy, n_classes)
+                ) = information_gain(X, y, att, threshold, entropy, n_classes)
 
                 if info_gain > self.best_gain:
                     self.best_split = att
@@ -357,9 +360,9 @@ class _TreeNode:
                     best_distributions = distributions
                     best_entropies = entropies
                 elif info_gain == self.best_gain and info_gain > 0.000001:
-                    margin = self.margin_gain(X, att, threshold)
+                    margin = margin_gain(X, att, threshold)
                     if self.best_margin == -1:
-                        self.best_margin = self.margin_gain(
+                        self.best_margin = margin_gain(
                             X, self.best_split, self.best_threshold
                         )
 
@@ -376,7 +379,7 @@ class _TreeNode:
         if self.best_split > -1:
             self.children = [None, None, None]
 
-            left_idx, right_idx, missing_idx = self.split_data(
+            left_idx, right_idx, missing_idx = split_data(
                 X, self.best_split, self.best_threshold
             )
 
