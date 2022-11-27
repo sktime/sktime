@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Rocket transformer."""
+"""Isolated numba imports for Rocket."""
 
 __author__ = "angus924"
 
