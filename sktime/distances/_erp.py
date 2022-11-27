@@ -13,7 +13,6 @@ from sktime.distances.base import (
     DistanceCallable,
     NumbaDistance,
 )
-from sktime.distances.lower_bounding import resolve_bounding_matrix
 
 # Warning occurs when using large time series (i.e. 1000x1000)
 warnings.simplefilter("ignore", category=NumbaWarning)
@@ -78,6 +77,7 @@ class _ErpDistance(NumbaDistance):
             If g is not a float.
         """
         from sktime.distances._distance_alignment_paths import compute_min_return_path
+        from sktime.distances._lower_bounding_numba import resolve_bounding_matrix
 
         _bounding_matrix = resolve_bounding_matrix(
             x, y, window, itakura_max_slope, bounding_matrix
@@ -159,6 +159,8 @@ class _ErpDistance(NumbaDistance):
             If the itakura_max_slope is not a float or int.
             If g is not a float.
         """
+        from sktime.distances._lower_bounding_numba import resolve_bounding_matrix
+
         _bounding_matrix = resolve_bounding_matrix(
             x, y, window, itakura_max_slope, bounding_matrix
         )
