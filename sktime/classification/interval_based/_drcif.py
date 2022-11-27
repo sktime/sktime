@@ -21,7 +21,6 @@ from sktime.base._base import _clone_estimator
 from sktime.classification.base import BaseClassifier
 from sktime.classification.sklearn._continuous_interval_tree import (
     ContinuousIntervalTree,
-    _drcif_feature,
 )
 from sktime.transformations.panel.catch22 import Catch22
 from sktime.utils.validation.panel import check_X_y
@@ -448,6 +447,10 @@ class DrCIF(BaseClassifier):
         return results
 
     def _fit_estimator(self, X, X_p, X_d, y, idx):
+        from sktime.classification.sklearn._continuous_interval_tree_numba import (
+            _drcif_feature,
+        )
+
         c22 = Catch22(outlier_norm=True)
         T = [X, X_p, X_d]
         rs = 255 if self.random_state == 0 else self.random_state
@@ -534,6 +537,10 @@ class DrCIF(BaseClassifier):
     def _predict_proba_for_estimator(
         self, X, X_p, X_d, classifier, intervals, dims, atts
     ):
+        from sktime.classification.sklearn._continuous_interval_tree_numba import (
+            _drcif_feature,
+        )
+
         c22 = Catch22(outlier_norm=True)
         if isinstance(self._base_estimator, ContinuousIntervalTree):
             return classifier._predict_proba_drcif(
