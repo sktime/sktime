@@ -435,6 +435,10 @@ def test_to_absolute_int_fh_with_freq(idx: int, freq: str):
     assert_array_equal(fh + idx, absolute_int)
 
 
+@pytest.mark.skipif(
+    not _check_estimator_deps(AutoETS, severity="none"),
+    reason="skip test if required soft dependency for hmmlearn not available",
+)
 @pytest.mark.parametrize("freqstr", ["W-WED", "W-SUN", "W-SAT"])
 def test_estimator_fh(freqstr):
     """Test model fitting with anchored frequency."""
@@ -475,8 +479,12 @@ def test_frequency_setter(freqstr):
 
 
 # TODO: Replace this long running test with fast unit test
+@pytest.mark.skipif(
+    not _check_estimator_deps(AutoETS, severity="none"),
+    reason="skip test if required soft dependency for hmmlearn not available",
+)
 def test_auto_ets():
-    """Fix bug in 1435.
+    """Test failure case from #1435.
 
     https://github.com/sktime/sktime/issues/1435#issue-1000175469
     """
@@ -495,8 +503,12 @@ def test_auto_ets():
 
 
 # TODO: Replace this long running test with fast unit test
+@pytest.mark.skipif(
+    not _check_estimator_deps(ExponentialSmoothing, severity="none"),
+    reason="skip test if required soft dependency for hmmlearn not available",
+)
 def test_exponential_smoothing():
-    """Test bug in 1876.
+    """Test failure case from #1876.
 
     https://github.com/sktime/sktime/issues/1876#issue-1103752402.
     """
@@ -525,7 +537,7 @@ def test_exponential_smoothing():
     reason="skip test if required soft dependencies not available",
 )
 def test_auto_arima():
-    """Test bug in 805.
+    """Test failure case from #805.
 
     https://github.com/sktime/sktime/issues/805#issuecomment-891848228.
     """
