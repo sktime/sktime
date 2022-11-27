@@ -104,8 +104,8 @@ class _DdtwDistance(NumbaDistance):
         """
         from numba import njit
 
-        from sktime.distances._dtw_numba import _cost_matrix
         from sktime.distances._distance_alignment_paths import compute_min_return_path
+        from sktime.distances._dtw_numba import _cost_matrix
 
         if compute_derivative is None:
             from sktime.distances._ddtw_numba import average_of_slope
