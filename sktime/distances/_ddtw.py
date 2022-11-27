@@ -2,12 +2,9 @@
 __author__ = ["chrisholder", "TonyBagnall"]
 
 
-import warnings
 from typing import Any, Callable, List, Tuple
 
 import numpy as np
-from numba import njit
-from numba.core.errors import NumbaWarning
 
 from sktime.distances._distance_alignment_paths import compute_min_return_path
 from sktime.distances._dtw import _cost_matrix
@@ -18,9 +15,6 @@ from sktime.distances.base import (
     NumbaDistance,
 )
 from sktime.distances.lower_bounding import resolve_bounding_matrix
-
-# Warning occurs when using large time series (i.e. 1000x1000)
-warnings.simplefilter("ignore", category=NumbaWarning)
 
 DerivativeCallable = Callable[[np.ndarray], np.ndarray]
 
@@ -110,6 +104,8 @@ class _DdtwDistance(NumbaDistance):
             If the itakura_max_slope is not a float or int.
             If the compute derivative callable is not no_python compiled.
         """
+        from numba import njit
+
         if compute_derivative is None:
             from sktime.distances._ddtw_numba import average_of_slope
 
@@ -207,6 +203,8 @@ class _DdtwDistance(NumbaDistance):
             If the itakura_max_slope is not a float or int.
             If the compute derivative callable is not no_python compiled.
         """
+        from numba import njit
+
         if compute_derivative is None:
             from sktime.distances._ddtw_numba import average_of_slope
 
