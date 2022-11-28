@@ -1835,6 +1835,19 @@
       ]
     },
     {
+      "login": "KishManani",
+      "name": "Kishan Manani",
+      "avatar_url": "https://avatars.githubusercontent.com/u/30973056?v=4",
+      "profile": "https://github.com/kishmanani",
+      "contributions": [
+        "code",
+        "doc",
+        "test",
+        "bug",
+        "ideas"
+      ]
+    },
+    {
       "login": "jorenham",
       "name": "Joren Hammudoglu",
       "profile": "https://github.com/jorenham",
@@ -1848,6 +1861,15 @@
       "profile": "https://github.com/wolph",
       "contributions": [
         "build"
+      ]
+    },
+    {
+      "login": "templierw",
+      "name": "William Templier",
+      "avatar_url": "https://github.com/templierw.png",
+      "profile": "https://www.linkedin.com/in/templierw/",
+      "contributions": [
+        "doc"
       ]
     },
     {

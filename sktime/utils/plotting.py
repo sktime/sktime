@@ -43,7 +43,7 @@ def plot_series(
     >>> from sktime.utils.plotting import plot_series
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
-    >>> fig, ax = plot_series(y)
+    >>> fig, ax = plot_series(y)  # doctest: +SKIP
     """
     _check_soft_dependencies("matplotlib", "seaborn")
     import matplotlib.pyplot as plt
