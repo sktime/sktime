@@ -51,9 +51,7 @@ def _discrete_fourier_transform(
     dft = np.zeros(output_length - start)
     for i in range(c, int(output_length / 2)):
         for n in range(len(series)):
-            dft[(i - c) * 2] += series[n] * math.cos(
-                2 * math.pi * n * i / len(series)
-            )
+            dft[(i - c) * 2] += series[n] * math.cos(2 * math.pi * n * i / len(series))
             dft[(i - c) * 2 + 1] += -series[n] * math.sin(
                 2 * math.pi * n * i / len(series)
             )
@@ -96,9 +94,7 @@ def _iterate_mft(
 
 
 @njit(fastmath=True, cache=True)
-def _add_level(
-    word, start, level, window_ind, window_size, series_length, level_bits
-):
+def _add_level(word, start, level, window_ind, window_size, series_length, level_bits):
     num_quadrants = pow(2, level)
     quadrant = start + int(
         (window_ind + int(window_size / 2)) / int(series_length / num_quadrants)
