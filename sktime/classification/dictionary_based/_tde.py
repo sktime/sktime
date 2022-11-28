@@ -825,7 +825,8 @@ class IndividualTDE(BaseClassifier):
                     n_jobs=self._threads_to_use,
                 )
             )
-            sfa = self._transformers[0].fit_transform(X, y)
+            self._transformers[0].fit(X, y)
+            sfa = self._transformers[0].transform(X, y)
             self._transformed_data = sfa[0]
 
     def _predict(self, X):

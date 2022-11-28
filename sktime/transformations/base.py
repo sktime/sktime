@@ -1285,7 +1285,8 @@ class BaseTransformer(BaseEstimator):
         """
         # Non-optimized default implementation; override when a better
         # method is possible for a given algorithm.
-        return self._fit(X, y)._transform(X, y)
+        self._fit(X, y)
+        return self._transform(X, y)
 
     def _inverse_transform(self, X, y=None):
         """Inverse transform X and return an inverse transformed version.
