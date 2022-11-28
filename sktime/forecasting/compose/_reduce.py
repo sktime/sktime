@@ -103,44 +103,11 @@ def _sliding_window_transform(
         - If "time-series-regressor", returns X as panel 3d array
     discard_maxfh: str {True, False}, (default = True)
         Direct forecasting only.
-        Specifies whether all models trained for each forecasting horizon in fh will
-        have the same number of observations (based on the maximum forecasting horizon)
-        or instead have the optimal number of observations that differs for each
-        forecasting horizon.
-        To illustrate the parameter, consider the following example
-        ``x`` = observations in the training data set, not part of window
-        ``*`` = observations in the training data set, part of the window
-        ``y`` = target observations.
-        Assume we have the following training data:
-        | x x x x x x x x x x x x x x|
-        And want to forecast with `window_length = 9` and `fh = [1, 4]`
-        With the deaulft setting `discard_maxfh = True` we have instead:
-        `fh = 1`
-        |--------------------------- |
-        | * * * * * * * * * y x x x x|
-        | x * * * * * * * * * y x x x|
-        |----------------------------|
-        `fh = 4`
-        |--------------------------- |
-        | * * * * * * * * * x x x y x|
-        | x * * * * * * * * * x x x y|
-        |----------------------------|
-        So 2 obs. to forecast for  `fh = 1` and `fh = 4`.
-        With setting `discard_maxfh = False` we have:
-        `fh = 1`
-        |--------------------------- |
-        | * * * * * * * * * y x x x x|
-        | x * * * * * * * * * y x x x|
-        | x x * * * * * * * * * y x x|
-        | x x x * * * * * * * * * y x|
-        | x x x x * * * * * * * * * y|
-        |----------------------------|
-        `fh = 4`
-        |--------------------------- |
-        | * * * * * * * * * x x x y x|
-        | x * * * * * * * * * x x x y|
-        |----------------------------|
-        So 5 obs. to forecast for  `fh = 1` and 2 obs. to forecast `fh = 4`
+        Specifies whether all direct models use the same number of observations
+        (True: Total observations + 1 - window_length - maximum forecasting horizon)
+        or a different number of observations (False: Total observations + 1
+        - window_length - forecasting horizon).
+
     Returns
     -------
     yt : np.ndarray, shape = (n_timepoints - window_length, 1)
@@ -1053,44 +1020,6 @@ class RecursiveTabularRegressionForecaster(_RecursiveReducer):
         (local) of if you wish to fit a single model to all instances ("global").
     discard_maxfh: str {True, False}, (default = True)
         Direct forecasting only.
-        Specifies whether all models trained for each forecasting horizon in fh will
-        have the same number of observations (based on the maximum forecasting horizon)
-        or instead have the optimal number of observations that differs for each
-        forecasting horizon.
-        To illustrate the parameter, consider the following example
-        ``x`` = observations in the training data set, not part of window
-        ``*`` = observations in the training data set, part of the window
-        ``y`` = target observations.
-        Assume we have the following training data:
-        | x x x x x x x x x x x x x x|
-        And want to forecast with `window_length = 9` and `fh = [1, 4]`
-        With the deaulft setting `discard_maxfh = True` we have instead:
-        `fh = 1`
-        |--------------------------- |
-        | * * * * * * * * * y x x x x|
-        | x * * * * * * * * * y x x x|
-        |----------------------------|
-        `fh = 4`
-        |--------------------------- |
-        | * * * * * * * * * x x x y x|
-        | x * * * * * * * * * x x x y|
-        |----------------------------|
-        So 2 obs. to forecast for  `fh = 1` and `fh = 4`.
-        With setting `discard_maxfh = False` we have:
-        `fh = 1`
-        |--------------------------- |
-        | * * * * * * * * * y x x x x|
-        | x * * * * * * * * * y x x x|
-        | x x * * * * * * * * * y x x|
-        | x x x * * * * * * * * * y x|
-        | x x x x * * * * * * * * * y|
-        |----------------------------|
-        `fh = 4`
-        |--------------------------- |
-        | * * * * * * * * * x x x y x|
-        | x * * * * * * * * * x x x y|
-        |----------------------------|
-        So 5 obs. to forecast for  `fh = 1` and 2 obs. to forecast `fh = 4`
     """
 
     _tags = {
@@ -1281,46 +1210,10 @@ def make_reduction(
         Currently only works for RecursiveTimeSeriesRegressionForecaster.
     discard_maxfh: str {True, False}, (default = True)
         Direct forecasting only.
-        Specifies whether all models trained for each forecasting horizon in fh will
-        have the same number of observations (based on the maximum forecasting horizon)
-        or instead have the optimal number of observations that differs for each
-        forecasting horizon.
-        To illustrate the parameter, consider the following example
-        ``x`` = observations in the training data set, not part of window
-        ``*`` = observations in the training data set, part of the window
-        ``y`` = target observations.
-        Assume we have the following training data:
-        | x x x x x x x x x x x x x x|
-        And want to forecast with `window_length = 9` and `fh = [1, 4]`
-        With the deaulft setting `discard_maxfh = True` we have instead:
-        `fh = 1`
-        |--------------------------- |
-        | * * * * * * * * * y x x x x|
-        | x * * * * * * * * * y x x x|
-        |----------------------------|
-        `fh = 4`
-        |--------------------------- |
-        | * * * * * * * * * x x x y x|
-        | x * * * * * * * * * x x x y|
-        |----------------------------|
-        So 2 obs. to forecast for  `fh = 1` and `fh = 4`.
-        With setting `discard_maxfh = False` we have:
-        `fh = 1`
-        |--------------------------- |
-        | * * * * * * * * * y x x x x|
-        | x * * * * * * * * * y x x x|
-        | x x * * * * * * * * * y x x|
-        | x x x * * * * * * * * * y x|
-        | x x x x * * * * * * * * * y|
-        |----------------------------|
-        `fh = 4`
-        |--------------------------- |
-        | * * * * * * * * * x x x y x|
-        | x * * * * * * * * * x x x y|
-        |----------------------------|
-        So 5 obs. to forecast for  `fh = 1` and 2 obs. to forecast `fh = 4`
-
-
+        Specifies whether all direct models use the same number of observations
+        (True: Total observations + 1 - window_length - maximum forecasting horizon)
+        or a different number of observations (False: Total observations + 1
+        - window_length - forecasting horizon).
 
 
     Returns
