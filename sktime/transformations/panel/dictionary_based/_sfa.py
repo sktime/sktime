@@ -838,7 +838,7 @@ class SFA(BaseTransformer):
         return (
             _create_bigram_word(word, word_raw, self.word_bits)
             if self.max_bits <= 64
-            else SFA._create_bigram_word_large(word, word_raw)
+            else self._create_bigram_word_large(word, word_raw)
         )
 
     def _create_bigram_word_large(self, word, other_word):
