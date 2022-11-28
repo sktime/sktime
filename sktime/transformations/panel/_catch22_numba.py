@@ -596,9 +596,7 @@ def _CO_HistogramAMI_even_2_5(X, smin, smax):
     for i in range(5):
         for n in range(5):
             if histogram[i][n] > 0:
-                nsum += histogram[i][n] * np.log(
-                    histogram[i][n] / sumx[i] / sumy[n]
-                )
+                nsum += histogram[i][n] * np.log(histogram[i][n] / sumx[i] / sumy[n])
 
     return nsum
 
