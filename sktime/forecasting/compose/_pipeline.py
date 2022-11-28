@@ -236,6 +236,20 @@ class ForecastingPipeline(_Pipeline):
     to X. The forecaster can also be a TransformedTargetForecaster containing
     transformers to transform y.
 
+	For a list `t1`, `t2`, ..., `tN`, where `t[i]` is transformer in 		pipeline, the pipeline behaves as follows:
+    
+	`fit(y, X, fh)`  - chnages state to `fitted`. Then writes to self: Sets self._is_fitted flag to True. Writes self._y and self._X with y and X, respectively. Sets self.cutoff and self._cutoff to last index seen in y. Sets fitted model attributes ending in “_”. Stores fh to self.fh if fh is passed.
+
+	`predict(fh, X)` - Forecast time series at future horizon. Requires state to be “fitted”.
+	Access in self:
+		Fitted model attributes ending in “_”. self.cutoff, self._is_fitted
+	Writes to self:
+		Stores fh to self.fh if fh is passed and has not been passed previously.
+	Result is of executing `self.transform` with `X` = `X` and then running `f.predict`, with `fh=fh`, `X=X`.
+
+	`predict_interval(X, fh)`, `predict_quantiles(X, fh)` - as `predict(X, fh)`, with `predict_interval` or `predict_quantiles` substituted for `predict`, `predict_var`, `predict_proba` - uses base class default to obtain crude estimates from `predict_quantiles`.
+        Recommended to replace with better custom implementations if needed.
+	
     Parameters
     ----------
     steps : list
