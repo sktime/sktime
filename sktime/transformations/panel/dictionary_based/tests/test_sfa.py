@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+"""Tests for SFA utilities."""
+
 import sys
 
 import numpy as np
@@ -14,6 +16,7 @@ from sktime.datatypes._panel._convert import from_nested_to_2d_array
     "binning_method", ["equi-depth", "equi-width", "information-gain", "kmeans"]
 )
 def test_transformer(binning_method):
+    """Test SFA transformer expected output."""
     # load training data
     X, y = load_gunpoint(split="train", return_X_y=True)
 
@@ -36,6 +39,7 @@ def test_transformer(binning_method):
 @pytest.mark.parametrize("use_fallback_dft", [True, False])
 @pytest.mark.parametrize("norm", [True, False])
 def test_dft_mft(use_fallback_dft, norm):
+    """Test DFT and MFT functions."""
     # load training data
     X, y = load_gunpoint(split="train", return_X_y=True)
     X_tab = from_nested_to_2d_array(X, return_numpy=True)
@@ -55,7 +59,11 @@ def test_dft_mft(use_fallback_dft, norm):
     ).fit(X, y)
 
     if use_fallback_dft:
-        dft = p._discrete_fourier_transform(X_tab[0], word_length, norm, 1, True)
+        from sktime.transformations.panel.dictionary_based._sfa_numba import (
+            _discrete_fourier_transform,
+        )
+
+        dft = _discrete_fourier_transform(X_tab[0], word_length, norm, 1, True)
     else:
         dft = p._fast_fourier_transform(X_tab[0])
 
@@ -91,6 +99,7 @@ def test_dft_mft(use_fallback_dft, norm):
 
 @pytest.mark.parametrize("binning_method", ["equi-depth", "information-gain"])
 def test_sfa_anova(binning_method):
+    """Test SFA expected breakpoints."""
     # load training data
     X, y = load_gunpoint(split="train", return_X_y=True)
 
@@ -134,6 +143,7 @@ def test_sfa_anova(binning_method):
 def test_word_lengths(
     word_length, alphabet_size, window_size, bigrams, levels, use_fallback_dft
 ):
+    """Test expected word lengths."""
     # load training data
     X, y = load_gunpoint(split="train", return_X_y=True)
 
@@ -151,6 +161,7 @@ def test_word_lengths(
 
 
 def test_bit_size():
+    """Test expected bit size on training data."""
     # load training data
     X, y = load_gunpoint(split="train", return_X_y=True)
 
@@ -174,6 +185,7 @@ def test_bit_size():
 
 
 def test_typed_dict():
+    """Test word list from typed dict."""
     # load training data
     X, y = load_gunpoint(split="train", return_X_y=True)
 
