@@ -10,6 +10,7 @@ Types of dependencies
 ---------------------
 
 There are three types of dependencies in ``sktime``:
+
 * "core" dependencies
 * "soft" dependencies
 * "developer" dependencies
