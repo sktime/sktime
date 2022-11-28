@@ -466,10 +466,11 @@ def check_interval_df(interval_df, index_to_match):
     interval_df : pandas DataFrame outputted from forecaster.predict_interval()
     index_to_match : Index object that must match interval_df.index
     """
-    if not isinstance(interval_df, pd.DataFrame):
-        raise TypeError("`interval_df` must be of type pd.DataFrame")
-    if interval_df.empty:
-        raise ValueError("`interval_df` is empty, can not plot intervals")
+    from sktime.datatypes import check_is_mtype
+
+    checked = check_is_mtype(interval_df, "pred_interval", return_metadata=True)
+    if not checked[0]:
+        raise ValueError(checked[1])
     df_idx = interval_df.index
     if len(index_to_match) != len(df_idx) or not (index_to_match == df_idx).all():
         raise ValueError("Prediction interval index must match the final Series index.")
@@ -478,12 +479,3 @@ def check_interval_df(interval_df, index_to_match):
         raise ValueError("`interval_df` must only contain one variable with interval")
     if not (levels[0] == "Coverage")[0]:
         raise ValueError("`interval_df` must have 'Coverage' column label")
-    if len(levels) != 3:
-        raise ValueError("`interval_df` must have 3 column levels")
-    cov_level = levels[1][0]
-    if not (isinstance(cov_level, float) and 0 < levels[1][0] < 1):
-        raise ValueError(
-            "`interval_df` must have second level column of type float between 0 and 1"
-        )
-    if not (levels[2] == ["lower", "upper"]).all():
-        raise ValueError("`interval_df` must have both `lower` and `upper` columns")
