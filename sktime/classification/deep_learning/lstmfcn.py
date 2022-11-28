@@ -72,7 +72,7 @@ class LSTMFCNClassifier(BaseDeepClassifier):
 
     def __init__(
         self,
-        n_epochs=2000,
+        n_epochs=100,
         batch_size=128,
         dropout=0.8,
         kernel_sizes=(8, 5, 3),
@@ -139,12 +139,7 @@ class LSTMFCNClassifier(BaseDeepClassifier):
         )
 
         if self.callbacks is None:
-            reduce_lr = keras.callbacks.ReduceLROnPlateau(
-                monitor="loss", factor=0.7, patience=50, min_lr=0.0001
-            )
-            self.callbacks = [reduce_lr]
-        else:
-            pass
+            self.callbacks = []
 
         return model
 
@@ -205,33 +200,6 @@ class LSTMFCNClassifier(BaseDeepClassifier):
         self._is_fitted = True
 
         return self
-
-    def predict_proba(self, X, **kwargs):
-        """
-        Find probability estimates for each class for all cases in X.
-
-        Parameters
-        ----------
-        X : a nested pd.Dataframe, or (if input_checks=False) array-like of
-        shape = (n_instances, series_length, n_dimensions)
-            The training input samples. If a 2D array-like is passed,
-            n_dimensions is assumed to be 1.
-        input_checks: boolean
-            whether to check the X parameter
-        Returns
-        -------
-        output : array of shape = [n_instances, n_classes] of probabilities
-        """
-        import numpy as np
-
-        probs = self.model_.predict(X, **kwargs)
-
-        # check if binary classification
-        if probs.shape[1] == 1:
-            # first column is probability of class 0 and second is of class 1
-            probs = np.hstack([1 - probs, probs])
-
-        return probs
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
