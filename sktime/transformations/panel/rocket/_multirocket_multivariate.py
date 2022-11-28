@@ -72,10 +72,10 @@ class MultiRocketMultivariate(BaseTransformer):
     Examples
     --------
     >>> from sktime.transformations.panel.rocket._multirocket import MultiRocket
-    >>> from sktime.datasets import load_italy_power_demand
-    >>> X_train, y_train = load_italy_power_demand(split="train", return_X_y=True)
-    >>> X_test, y_test = load_italy_power_demand(split="test", return_X_y=True)
-    >>> trf = MultiRocket()
+    >>> from sktime.datasets import load_basic_motions
+    >>> X_train, y_train = load_basic_motions(split="train")
+    >>> X_test, y_test = load_basic_motions(split="test")
+    >>> trf = MultiRocket(num_kernels=512)
     >>> trf.fit(X_train)
     MultiRocket(...)
     >>> X_train = trf.transform(X_train)

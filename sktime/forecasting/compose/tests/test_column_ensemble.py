@@ -10,7 +10,6 @@ import pandas as pd
 import pytest
 
 from sktime.forecasting.compose import ColumnEnsembleForecaster
-from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.trend import PolynomialTrendForecaster
 from sktime.utils.validation._dependencies import _check_soft_dependencies
@@ -22,7 +21,7 @@ from sktime.utils.validation._dependencies import _check_soft_dependencies
         [
             ("trend", PolynomialTrendForecaster(), 0),
             ("naive", NaiveForecaster(), 1),
-            ("ses", ExponentialSmoothing(), 2),
+            ("ses", NaiveForecaster(strategy="mean"), 2),
         ]
     ],
 )
