@@ -832,17 +832,13 @@ class SFA(BaseTransformer):
 
     def _create_bigram_words(self, word_raw, word):
         from sktime.transformations.panel.dictionary_based._sfa_numba import (
-            _create_bigram_word_large,
+            _create_bigram_word,
         )
 
         return (
-            SFA._create_bigram_word(
-                word,
-                word_raw,
-                self.word_bits,
-            )
+            _create_bigram_word(word, word_raw, self.word_bits)
             if self.max_bits <= 64
-            else _create_bigram_word_large(word, word_raw)
+            else SFA._create_bigram_word_large(word, word_raw)
         )
 
     def _create_bigram_word_large(self, word, other_word):
