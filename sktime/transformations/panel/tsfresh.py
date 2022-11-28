@@ -560,7 +560,7 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
 
         return selection_params
 
-    def fit_transform(self, X, y=None):
+    def _fit_transform(self, X, y=None):
         """Fit to data, then transform it.
 
         Fits the transformer to X and y and returns a transformed version of X.
@@ -616,9 +616,6 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
                 then the return is a `Panel` object of type `pd-multiindex`
                 Example: i-th instance of the output is the i-th window running over `X`
         """
-        self.reset()
-        if y is None:
-            raise ValueError("SupervisedIntervals requires `y` in `fit`.")
         X, y, metadata = self._check_X_y(X=X, y=y, return_metadata=True)
 
         # lazy imports to avoid hard dependency
@@ -647,13 +644,7 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
         Xt = self.selector_.fit_transform(Xt, y)
         Xt = Xt.reindex(X.index)
 
-        self._is_fitted = True
-
-        if not hasattr(self, "_output_convert") or self._output_convert == "auto":
-            X_out = self._convert_output(Xt, metadata=metadata)
-        else:
-            X_out = Xt
-        return X_out
+        return Xt
 
     def _fit(self, X, y=None):
         """Fit.
