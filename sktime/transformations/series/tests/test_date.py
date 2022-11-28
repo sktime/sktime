@@ -178,7 +178,7 @@ def test_eval(test_input, expected):
 
 
 def test_manual_selection_is_weekend(df_datetime_daily_idx):
-    """Tests that "weekend" returns correct result in `manual_selection`."""
+    """Tests that "is_weekend" returns correct result in `manual_selection`."""
     transformer = DateTimeFeatures(manual_selection=["is_weekend"])
 
     Xt = transformer.fit_transform(df_datetime_daily_idx)
