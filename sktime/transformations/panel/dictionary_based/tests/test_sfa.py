@@ -7,8 +7,8 @@ import numpy as np
 import pytest
 
 from sktime.datasets import load_gunpoint
-from sktime.transformations.panel.dictionary_based._sfa import SFA
 from sktime.datatypes._panel._convert import from_nested_to_2d_array
+from sktime.transformations.panel.dictionary_based._sfa import SFA
 
 
 # Check the transformer has changed the data correctly.
