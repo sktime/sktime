@@ -75,7 +75,7 @@ test_types = pipe.transform(y_train).select_dtypes(include=["int64"]).columns.to
 # Test `is_weekend` works in manual selection
 @pytest.fixture
 def df_datetime_daily_idx():
-    """Create timeseries with Datetime index, month start frequency."""
+    """Create timeseries with Datetime index, daily frequency."""
     return pd.DataFrame(
         data={"y": [1, 1, 1, 1, 1, 1, 1]},
         index=pd.date_range(start="2000-01-01", freq="D", periods=7),
