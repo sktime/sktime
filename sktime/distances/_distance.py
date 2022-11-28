@@ -13,12 +13,6 @@ from sktime.distances._erp import _ErpDistance
 from sktime.distances._euclidean import _EuclideanDistance
 from sktime.distances._lcss import _LcssDistance
 from sktime.distances._msm import _MsmDistance
-from sktime.distances._numba_utils import (
-    _compute_pairwise_distance,
-    _make_3d_series,
-    _numba_to_timeseries,
-    to_numba_timeseries,
-)
 from sktime.distances._resolve_metric import (
     _resolve_dist_instance,
     _resolve_metric_to_factory,
@@ -1892,6 +1886,8 @@ def distance(
     float
         Distance between the x and y.
     """
+    from sktime.distances._numba_utils import to_numba_timeseries
+
     _x = to_numba_timeseries(x)
     _y = to_numba_timeseries(y)
 
@@ -1959,6 +1955,8 @@ def distance_factory(
         If the metric type cannot be determined.
     """
     from numba import njit
+
+    from sktime.distances._numba_utils import _numba_to_timeseries, to_numba_timeseries
 
     if x is None:
         x = np.zeros((1, 10))
@@ -2068,6 +2066,11 @@ def pairwise_distance(
     array([[256., 576.],
            [ 58., 256.]])
     """
+    from sktime.distances._numba_utils import (
+        _compute_pairwise_distance,
+        _make_3d_series,
+    )
+
     _x = _make_3d_series(x)
     if y is None:
         y = x
@@ -2148,6 +2151,8 @@ def distance_alignment_path(
         Optional return only given if return_cost_matrix = True.
         Cost matrix used to compute the distance.
     """
+    from sktime.distances._numba_utils import to_numba_timeseries
+
     _x = to_numba_timeseries(x)
     _y = to_numba_timeseries(y)
 
@@ -2223,6 +2228,8 @@ def distance_alignment_path_factory(
         Callable for the distance path.
     """
     from numba import njit
+
+    from sktime.distances._numba_utils import _numba_to_timeseries, to_numba_timeseries
 
     if x is None:
         x = np.zeros((1, 10))
