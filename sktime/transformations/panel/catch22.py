@@ -18,7 +18,6 @@ from sktime.datatypes import convert_to
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.validation import check_n_jobs
 
-
 feature_names = [
     "DN_HistogramMode_5",
     "DN_HistogramMode_10",
@@ -271,28 +270,28 @@ class Catch22(BaseTransformer):
     def _get_feature_fun(self, idx):
         """Get the idx-th feature generation function from catch22_numba."""
         from sktime.transformations.panel._catch22_numba import (
-            _DN_HistogramMode_5,
-            _DN_HistogramMode_10,
-            _SB_BinaryStats_diff_longstretch0,
-            _DN_OutlierInclude_p_001_mdrmd,
-            _DN_OutlierInclude_n_001_mdrmd,
+            _CO_Embed2_Dist_tau_d_expfit_meandiff,
             _CO_f1ecac,
             _CO_FirstMin_ac,
-            _SP_Summaries_welch_rect_area_5_1,
-            _SP_Summaries_welch_rect_centroid,
-            _FC_LocalSimple_mean3_stderr,
-            _CO_trev_1_num,
             _CO_HistogramAMI_even_2_5,
+            _CO_trev_1_num,
+            _DN_HistogramMode_5,
+            _DN_HistogramMode_10,
+            _DN_OutlierInclude_n_001_mdrmd,
+            _DN_OutlierInclude_p_001_mdrmd,
+            _FC_LocalSimple_mean1_tauresrat,
+            _FC_LocalSimple_mean3_stderr,
             _IN_AutoMutualInfoStats_40_gaussian_fmmi,
             _MD_hrv_classic_pnn40,
+            _PD_PeriodicityWang_th0_01,
+            _SB_BinaryStats_diff_longstretch0,
             _SB_BinaryStats_mean_longstretch1,
             _SB_MotifThree_quantile_hh,
-            _FC_LocalSimple_mean1_tauresrat,
-            _CO_Embed2_Dist_tau_d_expfit_meandiff,
+            _SB_TransitionMatrix_3ac_sumdiagcov,
             _SC_FluctAnal_2_dfa_50_1_2_logi_prop_r1,
             _SC_FluctAnal_2_rsrangefit_50_1_logi_prop_r1,
-            _SB_TransitionMatrix_3ac_sumdiagcov,
-            _PD_PeriodicityWang_th0_01,
+            _SP_Summaries_welch_rect_area_5_1,
+            _SP_Summaries_welch_rect_centroid,
         )
 
         features = [
