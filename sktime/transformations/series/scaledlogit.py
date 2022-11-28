@@ -25,11 +25,15 @@ class ScaledLogitTransformer(BaseTransformer):
     Combined with an sktime.forecasting.compose.TransformedTargetForecaster, it ensures
     that the forecast stays between the specified bounds (lower_bound, upper_bound).
 
+    Default is lower_bound = upper_bound = None, i.e., the identity transform.
+
+    The logarithm transform is obtained for lower_bound = 0, upper_bound = None.
+
     Parameters
     ----------
-    lower_bound : float
+    lower_bound : float, optional, default=None
         lower bound of inverse transform function
-    upper_bound : float
+    upper_bound : float, optional, default=None
         upper bound of inverse transform function
 
     See Also
