@@ -59,7 +59,8 @@ def _is_ignored(module):
 
 
 def _is_private(module):
-    return module.startswith("_")
+    module_parts = module.split(".")
+    return any(part.startswith("_") for part in module_parts)
 
 
 def _extract_dependency_from_error_msg(msg):
