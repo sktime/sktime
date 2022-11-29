@@ -224,7 +224,6 @@ html_theme_options = {
     "navbar_start": ["navbar-logo"],
     "navbar_center": ["navbar-nav"],
     "navbar_end": ["navbar-icon-links"],
-    "announcement": "<p><a href=https://docs.google.com/forms/d/e/1FAIpQLScQkrSZfNiZiQKPuBcFMtHAlL10RBZ3QSBo-I3klUHeL7Vg0A/viewform>Sign up</a> for the sktime Fall Dev days Nov 9 - 10 2022</p>",  # noqa: E501
 }
 html_logo = "images/sktime-logo-text-horizontal.png"
 html_context = {

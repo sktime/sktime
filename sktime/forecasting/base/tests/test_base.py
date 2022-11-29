@@ -274,6 +274,10 @@ def test_vectorization_multivariate(mtype, exogeneous):
     assert y_pred_equal_length, msg
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("statsmodels", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
 def test_dynamic_tags_reset_properly():
     """Test that dynamic tags are being reset properly."""
     from sktime.forecasting.compose import MultiplexForecaster
@@ -290,6 +294,10 @@ def test_dynamic_tags_reset_properly():
     f.fit(X_multivariate)
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("statsmodels", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
 def test_predict_residuals():
     """Test that predict_residuals has no side-effect."""
     from sktime.forecasting.base import ForecastingHorizon

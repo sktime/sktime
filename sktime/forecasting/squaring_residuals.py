@@ -72,12 +72,13 @@ class SquaringResiduals(BaseForecaster):
     >>> from sktime.forecasting.theta import ThetaForecaster
     >>> from sktime.forecasting.squaring_residuals import SquaringResiduals
     >>> fc = NaiveForecaster()
-    >>> var_fc = ThetaForecaster()
-    >>> y = load_macroeconomic().realgdp
+    >>> var_fc = ThetaForecaster()  # doctest: +SKIP
+    >>> y = load_macroeconomic().realgdp  # doctest: +SKIP
     >>> sqr = SquaringResiduals(forecaster=fc, residual_forecaster=var_fc)
-    >>> fh = ForecastingHorizon(values=[1, 2, 3])
-    >>> sqr = sqr.fit(y, fh=fh)
-    >>> pred_interval = sqr.predict_interval(coverage=0.95)
+    ... # doctest: +SKIP
+    >>> fh = ForecastingHorizon(values=[1, 2, 3])  # doctest: +SKIP
+    >>> sqr = sqr.fit(y, fh=fh)  # doctest: +SKIP
+    >>> pred_interval = sqr.predict_interval(coverage=0.95)  # doctest: +SKIP
     """
 
     _tags = {
@@ -375,7 +376,7 @@ class SquaringResiduals(BaseForecaster):
         """
         from sktime.forecasting.croston import Croston
         from sktime.forecasting.naive import NaiveForecaster
-        from sktime.forecasting.theta import ThetaForecaster
+        from sktime.forecasting.trend import TrendForecaster
 
         params = [
             {
@@ -386,7 +387,7 @@ class SquaringResiduals(BaseForecaster):
                 "distr_kwargs": {"df": 21},
             },
             {
-                "forecaster": ThetaForecaster(),
+                "forecaster": TrendForecaster(),
                 "residual_forecaster": NaiveForecaster(),
                 "initial_window": 5,
                 "distr": "norm",
