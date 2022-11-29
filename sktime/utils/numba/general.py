@@ -4,7 +4,7 @@
 import numpy as np
 from numba import njit
 
-import sktime.utils._numba.stats as stats
+import sktime.utils.numba.stats as stats
 
 
 @njit(fastmath=True, cache=True)
