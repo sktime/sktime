@@ -85,6 +85,7 @@ class Catch22Classifier(_DelegatedClassifier):
         "capability:multivariate": True,
         "capability:multithreading": True,
         "classifier_type": "feature",
+        "python_dependencies": "numba",
     }
 
     def __init__(
