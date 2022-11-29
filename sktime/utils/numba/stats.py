@@ -5,6 +5,9 @@ import numpy as np
 from numba import njit
 
 import sktime.utils.numba.general as general_numba
+from sktime.utils.validation._dependencies import _check_soft_dependencies
+
+_check_soft_dependencies("numba", severity="warning")
 
 
 @njit(fastmath=True, cache=True)
