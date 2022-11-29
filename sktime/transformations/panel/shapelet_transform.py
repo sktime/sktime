@@ -21,7 +21,6 @@ from sklearn.utils import check_random_state
 from sklearn.utils.multiclass import class_distribution
 
 from sktime.transformations.base import BaseTransformer
-from sktime.utils.numba.general import z_normalise_series
 from sktime.utils.validation import check_n_jobs
 
 
@@ -1146,6 +1145,7 @@ class RandomShapeletTransform(BaseTransformer):
             _remove_identical_shapelets,
             _remove_self_similar_shapelets,
         )
+        from sktime.utils.numba.general import z_normalise_series
 
         self._n_jobs = check_n_jobs(self.n_jobs)
 
@@ -1339,6 +1339,7 @@ class RandomShapeletTransform(BaseTransformer):
         from sktime.transformations.panel._shapelet_transform_numba import (
             _find_shapelet_quality,
         )
+        from sktime.utils.numba.general import z_normalise_series
 
         rs = 255 if self.random_state == 0 else self.random_state
         rs = (
