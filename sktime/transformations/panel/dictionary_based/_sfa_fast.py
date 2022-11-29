@@ -227,6 +227,7 @@ class SFAFast(BaseTransformer):
             _transform_case,
             remove_repeating_words,
         )
+
         if self.alphabet_size < 2:
             raise ValueError("Alphabet size must be an integer greater than 2")
 
