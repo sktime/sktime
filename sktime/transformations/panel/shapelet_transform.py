@@ -135,6 +135,7 @@ class ShapeletTransform(BaseTransformer):
         "requires_y": True,
         "univariate-only": True,
         "fit_is_empty": False,
+        "python_dependencies": "numba",
     }
 
     def __init__(
