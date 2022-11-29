@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+"""Tests for TSInterpolator."""
 import pandas as pd
 
 from sktime.datasets import load_basic_motions
@@ -6,19 +7,22 @@ from sktime.transformations.panel.interpolate import TSInterpolator
 
 
 def cut_X_ts(X):
+    """Cut X values to different lengths across variables."""
     for row_i in range(X.shape[0]):
         for dim_i in range(X.shape[1]):
-            ts = X.at[row_i, f"dim_{dim_i}"]
-            X.at[row_i, f"dim_{dim_i}"] = pd.Series(ts.tolist()[: len(ts) - dim_i - 1])
+            ts = X.iloc[row_i, dim_i]
+            X.values[row_i][dim_i] = pd.Series(ts.tolist()[: len(ts) - dim_i - 1])
 
 
 def test_resizing():
-    # 1) all lengths are equal
-    # 2) cut lengths and check that they are really different
-    # 3) use transformer for resizing to resize time series to equal length
-    # 4) check that result length are equal to length that was set for
-    #       transformer
+    """Test TSInterpolator resizing.
 
+    Test that:
+    1) all lengths are equal
+    2) cut lengths and check that they are really different
+    3) use transformer for resizing to resize time series to equal length
+    4) result lengths are equal to length that was set for transformer
+    """
     X, _ = load_basic_motions(split="train", return_X_y=True)
 
     # 1) Check that lengths of all time series (all via the axis=1 - for

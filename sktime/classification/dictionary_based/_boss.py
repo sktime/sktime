@@ -26,23 +26,23 @@ from sktime.utils.validation.panel import check_X_y
 
 
 class BOSSEnsemble(BaseClassifier):
-    """Ensemble of bag of Symbolic Fourier Approximation Symbols (BOSS).
+    """Ensemble of Bag of Symbolic Fourier Approximation Symbols (BOSS).
 
     Implementation of BOSS Ensemble from Schäfer (2015). [1]_
 
-    Overview: Input "n" series of length "m" and BOSS performs a grid search over
+    Overview: Input *n* series of length *m* and BOSS performs a grid search over
     a set of parameter values, evaluating each with a LOOCV. It then retains
     all ensemble members within 92% of the best by default for use in the ensemble.
     There are three primary parameters:
-        - alpha: alphabet size
-        - w: window length
-        - l: word length.
+        - *alpha*: alphabet size
+        - *w*: window length
+        - *l*: word length.
 
-    For any combination, a single BOSS slides a window length "w" along the
-    series. The w length window is shortened to an "l" length word through
-    taking a Fourier transform and keeping the first l/2 complex coefficients.
-    These "l" coefficients are then discretized into alpha possible values,
-    to form a word length "l". A histogram of words for each
+    For any combination, a single BOSS slides a window length *w* along the
+    series. The w length window is shortened to an *l* length word through
+    taking a Fourier transform and keeping the first *l/2* complex coefficients.
+    These *l* coefficients are then discretized into alpha possible values,
+    to form a word length *l*. A histogram of words for each
     series is formed and stored.
 
     Fit involves finding "n" histograms.
@@ -112,8 +112,10 @@ class BOSSEnsemble(BaseClassifier):
     Notes
     -----
     For the Java version, see
-    `TSML <https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/
+    - `Original Publication <https://github.com/patrickzib/SFA>`_.
+    - `TSML <https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/
     tsml/classifiers/dictionary_based/BOSS.java>`_.
+
 
     References
     ----------
@@ -501,6 +503,14 @@ class IndividualBOSS(BaseClassifier):
         the dictionary of words is returned. If True, the array is saved, which
         can shorten the time to calculate dictionaries using a shorter
         `word_length` (since the last "n" letters can be removed).
+    typed_dict : bool, default="deprecated"
+        Use a numba TypedDict to store word counts. May increase memory usage, but will
+        be faster for larger datasets. As the Dict cannot be pickled currently, there
+        will be some overhead converting it to a python dict with multiple threads and
+        pickling.
+
+        .. deprecated:: 0.13.3
+            ``typed_dict`` was deprecated in version 0.13.3 and will be removed in 0.15.
     n_jobs : int, default=1
         The number of jobs to run in parallel for both `fit` and `predict`.
         ``-1`` means using all processors.
@@ -553,6 +563,7 @@ class IndividualBOSS(BaseClassifier):
         norm=False,
         alphabet_size=4,
         save_words=False,
+        typed_dict="deprecated",
         use_boss_distance=True,
         feature_selection="none",
         n_jobs=1,
@@ -566,6 +577,7 @@ class IndividualBOSS(BaseClassifier):
         self.use_boss_distance = use_boss_distance
 
         self.save_words = save_words
+        self.typed_dict = typed_dict
         self.n_jobs = n_jobs
         self.random_state = random_state
 

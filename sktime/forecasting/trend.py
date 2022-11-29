@@ -12,7 +12,6 @@ from sklearn.base import clone
 from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import PolynomialFeatures
-from statsmodels.tsa.seasonal import STL as _STL
 
 from sktime.forecasting.base import BaseForecaster
 from sktime.utils.datetime import _get_duration
@@ -305,10 +304,10 @@ class STLForecaster(BaseForecaster):
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.trend import STLForecaster
     >>> y = load_airline()
-    >>> forecaster = STLForecaster(sp=12)
-    >>> forecaster.fit(y)
+    >>> forecaster = STLForecaster(sp=12)  # doctest: +SKIP
+    >>> forecaster.fit(y)  # doctest: +SKIP
     STLForecaster(...)
-    >>> y_pred = forecaster.predict(fh=[1,2,3])
+    >>> y_pred = forecaster.predict(fh=[1,2,3])  # doctest: +SKIP
 
     See Also
     --------
@@ -330,6 +329,7 @@ class STLForecaster(BaseForecaster):
         "y_inner_mtype": "pd.Series",  # which types do _fit, _predict, assume for y?
         "X_inner_mtype": "pd.DataFrame",  # which types do _fit, _predict, assume for X?
         "requires-fh-in-fit": False,  # is forecasting horizon already required in fit?
+        "python_dependencies": "statsmodels",
     }
 
     def __init__(
@@ -384,6 +384,8 @@ class STLForecaster(BaseForecaster):
         -------
         self : returns an instance of self.
         """
+        from statsmodels.tsa.seasonal import STL as _STL
+
         from sktime.forecasting.naive import NaiveForecaster
 
         self._stl = _STL(
@@ -464,6 +466,8 @@ class STLForecaster(BaseForecaster):
         -------
         self : reference to self
         """
+        from statsmodels.tsa.seasonal import STL as _STL
+
         self._stl = _STL(
             y.values,
             period=self.sp,

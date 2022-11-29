@@ -13,6 +13,7 @@ import pandas as pd
 from joblib import Parallel, delayed
 from sklearn.model_selection import ParameterGrid, ParameterSampler, check_cv
 
+from sktime.datatypes import mtype_to_scitype
 from sktime.exceptions import NotFittedError
 from sktime.forecasting.base._delegate import _DelegatedForecaster
 from sktime.forecasting.model_evaluation import evaluate
@@ -70,10 +71,41 @@ class BaseGridSearch(_DelegatedForecaster):
             "enforce_index_type",
         ]
         self.clone_tags(forecaster, tags_to_clone)
+        self._extend_to_all_scitypes("y_inner_mtype")
+        self._extend_to_all_scitypes("X_inner_mtype")
 
+    # attribute for _DelegatedForecaster, which then delegates
+    #     all non-overridden methods are same as of getattr(self, _delegate_name)
+    #     see further details in _DelegatedForecaster docstring
     _delegate_name = "best_forecaster_"
 
-    def get_fitted_params(self):
+    def _extend_to_all_scitypes(self, tagname):
+        """Ensure mtypes for all scitypes are in the tag with tagname.
+
+        Mutates self tag with name `tagname`.
+        If no mtypes are present of a time series scitype, adds a pandas based one.
+
+        Parameters
+        ----------
+        tagname : str, name of the tag. Should be "y_inner_mtype" or "X_inner_mtype".
+
+        Returns
+        -------
+        None (mutates tag in self)
+        """
+        tagval = self.get_tag(tagname)
+        if not isinstance(tagval, list):
+            tagval = [tagval]
+        scitypes = mtype_to_scitype(tagval, return_unique=True)
+        if "Series" not in scitypes:
+            tagval = tagval + ["pd.DataFrame"]
+        if "Panel" not in scitypes:
+            tagval = tagval + ["pd-multiindex"]
+        if "Hierarchical" not in scitypes:
+            tagval = tagval + ["pd_multiindex_hier"]
+        self.set_tags(**{tagname: tagval})
+
+    def _get_fitted_params(self):
         """Get fitted parameters.
 
         Returns
@@ -83,12 +115,6 @@ class BaseGridSearch(_DelegatedForecaster):
             the best estimator (if available), merged together with the former
             taking precedence.
         """
-        if not self.is_fitted:
-            raise NotFittedError
-
-        if self._is_vectorized:
-            return {"forecasters_": self.forecasters_}
-
         fitted_params = {}
         try:
             fitted_params = self.best_forecaster_.get_fitted_params()
@@ -198,7 +224,8 @@ class BaseGridSearch(_DelegatedForecaster):
         # Raise error if all fits in evaluate failed because all score values are NaN.
         if self.best_index_ == -1:
             raise NotFittedError(
-                f"""All fits of forecaster failed, set error_score='raise' to see the exceptions.
+                f"""All fits of forecaster failed,
+                set error_score='raise' to see the exceptions.
                 Failed forecaster: {self.forecaster}"""
             )
         self.best_score_ = results.loc[self.best_index_, f"mean_{scoring_name}"]
@@ -411,10 +438,10 @@ class ForecastingGridSearchCV(BaseGridSearch):
     ...     },
     ...     ],
     ...     cv=cv,
-    ...     n_jobs=-1)
-    >>> gscv.fit(y)
+    ...     n_jobs=-1)  # doctest: +SKIP
+    >>> gscv.fit(y)  # doctest: +SKIP
     ForecastingGridSearchCV(...)
-    >>> y_pred = gscv.predict(fh=[1,2,3])
+    >>> y_pred = gscv.predict(fh=[1,2,3])  # doctest: +SKIP
     """
 
     def __init__(
@@ -492,9 +519,9 @@ class ForecastingGridSearchCV(BaseGridSearch):
         -------
         params : dict or list of dict
         """
-        from sktime.forecasting.exp_smoothing import ExponentialSmoothing
         from sktime.forecasting.model_selection._split import SingleWindowSplitter
         from sktime.forecasting.naive import NaiveForecaster
+        from sktime.forecasting.trend import PolynomialTrendForecaster
         from sktime.performance_metrics.forecasting import MeanAbsolutePercentageError
 
         params = {
@@ -504,9 +531,9 @@ class ForecastingGridSearchCV(BaseGridSearch):
             "scoring": MeanAbsolutePercentageError(symmetric=True),
         }
         params2 = {
-            "forecaster": ExponentialSmoothing(),
+            "forecaster": PolynomialTrendForecaster(),
             "cv": SingleWindowSplitter(fh=1),
-            "param_grid": {"initialization_method": ["estimated", "heuristic"]},
+            "param_grid": {"degree": [1, 2]},
             "scoring": MeanAbsolutePercentageError(symmetric=True),
             "update_behaviour": "inner_only",
         }

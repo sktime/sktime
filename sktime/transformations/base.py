@@ -62,6 +62,7 @@ from sktime.datatypes import (
     check_is_scitype,
     convert_to,
     mtype_to_scitype,
+    update_data,
 )
 from sktime.datatypes._series_as_panel import convert_to_scitype
 from sktime.utils.sklearn import (
@@ -128,6 +129,7 @@ class BaseTransformer(BaseEstimator):
         "capability:missing_values:removes": False,
         # is transform result always guaranteed to contain no missing values?
         "python_version": None,  # PEP 440 python version specifier to limit versions
+        "remember_data": False,  # whether all data seen is remembered as self._X
     }
 
     # allowed mtypes for transformers - Series and Panel
@@ -307,7 +309,7 @@ class BaseTransformer(BaseEstimator):
     def __getitem__(self, key):
         """Magic [...] method, return column subsetted transformer.
 
-        First index does output subsetting, second index does input subsetting.
+        First index does intput subsetting, second index does output subsetting.
 
         Keys must be valid inputs for `columns` in `ColumnSubset`.
 
@@ -356,8 +358,11 @@ class BaseTransformer(BaseEstimator):
             Changes state to "fitted".
 
         Writes to self:
-            Sets is_fitted flag to True.
-            Sets fitted model attributes ending in "_".
+        _is_fitted : flag is set to True.
+        _X : X, coerced copy of X, if remember_data tag is True
+            possibly coerced to inner type or update_data compatible type
+            by reference, when possible
+        model attributes (ending in "_") : dependent on estimator
 
         Parameters
         ----------
@@ -378,8 +383,8 @@ class BaseTransformer(BaseEstimator):
         # if fit is called, estimator is reset, including fitted state
         self.reset()
 
-        # skip everything if fit_is_empty is True
-        if self.get_tag("fit_is_empty"):
+        # skip everything if fit_is_empty is True and we do not need to remember data
+        if self.get_tag("fit_is_empty") and not self.get_tag("remember_data", False):
             self._is_fitted = True
             return self
 
@@ -390,9 +395,19 @@ class BaseTransformer(BaseEstimator):
         # check and convert X/y
         X_inner, y_inner = self._check_X_y(X=X, y=y)
 
+        # memorize X as self._X, if remember_data tag is set to True
+        if self.get_tag("remember_data", False):
+            self._X = update_data(None, X_new=X_inner)
+
+        # skip the rest if fit_is_empty is True
+        if self.get_tag("fit_is_empty"):
+            self._is_fitted = True
+            return self
+
         # checks and conversions complete, pass to inner fit
         #####################################################
         vectorization_needed = isinstance(X_inner, VectorizedDF)
+        self._is_vectorized = vectorization_needed
         # we call the ordinary _fit if no looping/vectorization needed
         if not vectorization_needed:
             self._fit(X=X_inner, y=y_inner)
@@ -412,8 +427,9 @@ class BaseTransformer(BaseEstimator):
             Requires state to be "fitted".
 
         Accesses in self:
-            Fitted model attributes ending in "_".
-            self._is_fitted
+        _is_fitted : must be True
+        _X : optionally accessed, only available if remember_data tag is True
+        fitted model attributes (ending in "_") : must be set, accessed by _transform
 
         Parameters
         ----------
@@ -486,8 +502,11 @@ class BaseTransformer(BaseEstimator):
             Changes state to "fitted".
 
         Writes to self:
-            Sets is_fitted flag to True.
-            Sets fitted model attributes ending in "_".
+        _is_fitted : flag is set to True.
+        _X : X, coerced copy of X, if remember_data tag is True
+            possibly coerced to inner type or update_data compatible type
+            by reference, when possible
+        model attributes (ending in "_") : dependent on estimator
 
         Parameters
         ----------
@@ -545,8 +564,9 @@ class BaseTransformer(BaseEstimator):
             Requires state to be "fitted".
 
         Accesses in self:
-            Fitted model attributes ending in "_".
-            self._is_fitted
+        _is_fitted : must be True
+        _X : optionally accessed, only available if remember_data tag is True
+        fitted model attributes (ending in "_") : accessed by _inverse_transform
 
         Parameters
         ----------
@@ -600,11 +620,14 @@ class BaseTransformer(BaseEstimator):
             Requires state to be "fitted".
 
         Accesses in self:
-            Fitted model attributes ending in "_".
-            self._is_fitted
+        _is_fitted : must be True
+        _X : accessed by _update and by update_data, if remember_data tag is True
+        fitted model attributes (ending in "_") : must be set, accessed by _update
 
         Writes to self:
-            May update fitted model attributes ending in "_".
+        _X : updated by values in X, via update_data, if remember_data tag is True
+        fitted model attributes (ending in "_") : only if update_params=True
+            type and nature of update are dependent on estimator
 
         Parameters
         ----------
@@ -628,20 +651,21 @@ class BaseTransformer(BaseEstimator):
         # check whether is fitted
         self.check_is_fitted()
 
-        # skip everything if update_params is False
-        if not update_params:
-            return self
-
-        # skip everything if fit_is_empty is True
-        if self.get_tag("fit_is_empty"):
-            return self
-
         # if requires_y is set, y is required in fit and update
         if self.get_tag("requires_y") and y is None:
             raise ValueError(f"{self.__class__.__name__} requires `y` in `update`.")
 
         # check and convert X/y
         X_inner, y_inner = self._check_X_y(X=X, y=y)
+
+        # update memory of X, if remember_data tag is set to True
+        if self.get_tag("remember_data", False):
+            self._X = update_data(None, X_new=X_inner)
+
+        # skip everything if update_params is False
+        # skip everything if fit_is_empty is True
+        if not update_params or self.get_tag("fit_is_empty", False):
+            return self
 
         # checks and conversions complete, pass to inner fit
         #####################################################
@@ -654,6 +678,44 @@ class BaseTransformer(BaseEstimator):
             self._vectorize("update", X=X_inner, y=y_inner)
 
         return self
+
+    def get_fitted_params(self):
+        """Get fitted parameters.
+
+        Overrides BaseEstimator default in case of vectorization.
+
+        State required:
+            Requires state to be "fitted".
+
+        Returns
+        -------
+        fitted_params : dict of fitted parameters, keys are str names of parameters
+            parameters of components are indexed as [componentname]__[paramname]
+        """
+        # if self is not vectorized, run the default get_fitted_params
+        if not getattr(self, "_is_vectorized", False):
+            return super(BaseTransformer, self).get_fitted_params()
+
+        # otherwise, we delegate to the instances' get_fitted_params
+        # instances' parameters are returned at dataframe-slice-like keys
+        fitted_params = {}
+
+        # transformers contains a pd.DataFrame with the individual transformers
+        transformers = self.transformers_
+
+        # return forecasters in the "forecasters" param
+        fitted_params["transformers"] = transformers
+
+        # populate fitted_params with ftransformers and their parameters
+        for ix, col in zip(transformers.index, transformers.columns):
+            fcst = transformers.loc[ix, col]
+            fcst_key = f"transformers.loc[{ix},{col}]"
+            fitted_params[fcst_key] = fcst
+            fcst_params = fcst.get_fitted_params()
+            for key, val in fcst_params.items():
+                fitted_params[f"{fcst_key}__{key}"] = val
+
+        return fitted_params
 
     def _check_X_y(self, X=None, y=None, return_metadata=False):
         """Check and coerce X/y for fit/transform functions.
@@ -748,8 +810,12 @@ class BaseTransformer(BaseEstimator):
         ALLOWED_MTYPES = self.ALLOWED_INPUT_MTYPES
 
         # checking X
-        X_valid, _, X_metadata = check_is_scitype(
-            X, scitype=ALLOWED_SCITYPES, return_metadata=True, var_name="X"
+        X_valid, msg, X_metadata = check_is_scitype(
+            X,
+            scitype=ALLOWED_SCITYPES,
+            return_metadata=True,
+            var_name="X",
+            msg_legacy_interface=False,
         )
 
         msg_invalid_input = (
@@ -757,14 +823,17 @@ class BaseTransformer(BaseEstimator):
             f"of scitype Series, Panel or Hierarchical, "
             f"for instance a pandas.DataFrame with sktime compatible time indices, "
             f"or with MultiIndex and last(-1) level an sktime compatible time index. "
-            f"Allowed compatible mtype format specifications are: {ALLOWED_MTYPES}"
+            f"Allowed compatible mtype format specifications are: {ALLOWED_MTYPES} ."
             # f"See the transformers tutorial examples/05_transformers.ipynb, or"
-            f" See the data format tutorial examples/AA_datatypes_and_datasets.ipynb, "
+            f" See the data format tutorial examples/AA_datatypes_and_datasets.ipynb. "
             f"If you think the data is already in an sktime supported input format, "
             f"run sktime.datatypes.check_raise(data, mtype) to diagnose the error, "
             f"where mtype is the string of the type specification you want. "
+            f"Error message for checked mtypes, in format [mtype: message], as follows:"
         )
         if not X_valid:
+            for mtype, err in msg.items():
+                msg_invalid_input += f" [{mtype}: {err}] "
             raise TypeError("X " + msg_invalid_input)
 
         X_scitype = X_metadata["scitype"]
@@ -952,11 +1021,18 @@ class BaseTransformer(BaseEstimator):
             #   we cannot convert back to pd.Series, do pd.DataFrame instead then
             #   this happens only for Series, not Panel
             if X_input_scitype == "Series":
-                _, _, metadata = check_is_mtype(
+                valid, msg, metadata = check_is_mtype(
                     Xt,
                     ["pd.DataFrame", "pd.Series", "np.ndarray"],
                     return_metadata=True,
                 )
+                if not valid:
+                    raise TypeError(
+                        f"_transform output of {type(self)} does not comply "
+                        "with sktime mtype specifications. See datatypes.MTYPE_REGISTER"
+                        " for mtype specifications. Returned error message:"
+                        f" {msg}. Returned object: {Xt}"
+                    )
                 if not metadata["is_univariate"] and X_input_mtype == "pd.Series":
                     X_output_mtype = "pd.DataFrame"
 

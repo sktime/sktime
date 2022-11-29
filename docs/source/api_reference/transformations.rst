@@ -382,8 +382,8 @@ Missing value imputation
 
     Imputer
 
-Datetime feature generation
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Seasonality and Date-Time Features
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: sktime.transformations.series.date
 
@@ -392,6 +392,14 @@ Datetime feature generation
     :template: class.rst
 
     DateTimeFeatures
+
+.. currentmodule:: sktime.transformations.series.fourier
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    FourierFeatures
 
 Auto-correlation series
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -465,6 +473,15 @@ These transformers select features in `X` based on `y`.
     :template: class.rst
 
     FeatureSelection
+
+.. currentmodule:: sktime.transformations.panel.channel_selection
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ElbowClassSum
+    ElbowClassPairwise
 
 Subsetting time points and variables
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -241,6 +241,8 @@ def get_cutoff(
                 "if cutoff is a pd.Index, its length must be 1, but"
                 f" found a pd.Index with length {len(cutoff)}"
             )
+        if len(obj) == 0 and return_index:
+            return cutoff
         cutoff = cutoff[0]
 
     if len(obj) == 0:
@@ -253,7 +255,7 @@ def get_cutoff(
         if obj.ndim < 3 and obj.ndim > 0:
             cutoff_ind = obj.shape[0] + cutoff - 1
         if reverse_order:
-            cutoff_ind = 0
+            cutoff_ind = cutoff
         if return_index:
             return pd.RangeIndex(cutoff_ind, cutoff_ind + 1)
         else:
@@ -308,14 +310,26 @@ def get_cutoff(
         return agg(idxs)
 
 
+UPDATE_DATA_INTERNAL_MTYPES = [
+    "pd.DataFrame",
+    "pd.Series",
+    "np.ndarray",
+    "pd-multiindex",
+    "numpy3D",
+    "pd_multiindex_hier",
+]
+
+
 def update_data(X, X_new=None):
     """Update time series container with another one.
 
+    Coerces X, X_new to one of the assumed mtypes, if not already of that type.
+
     Parameters
     ----------
-    X : sktime data container, in one of the following mtype formats
+    X : None, or sktime data container, in one of the following mtype formats
         pd.DataFrame, pd.Series, np.ndarray, pd-multiindex, numpy3D,
-        pd_multiindex_hier
+        pd_multiindex_hier. If not of that format, coerced.
     X_new : None, or sktime data container, should be same mtype as X,
         or convert to same format when converting to format list via convert_to
 
@@ -324,41 +338,39 @@ def update_data(X, X_new=None):
     X updated with X_new, with rows/indices in X_new added
         entries in X_new overwrite X if at same index
         numpy based containers will always be interpreted as having new row index
+        if one of X, X_new is None, returns the other; if both are None, returns None
     """
     from sktime.datatypes._convert import convert_to
     from sktime.datatypes._vectorize import VectorizedDF
-
-    # we only need to modify _X if X is not None
-    if X_new is None:
-        return X
 
     # if X or X_new is vectorized, unwrap it first
     if isinstance(X, VectorizedDF):
         X = X.X
     if isinstance(X_new, VectorizedDF):
         X_new = X_new.X
-    # we want to ensure that X is either numpy (1D, 2D, 3D)
+
+    # we want to ensure that X, X_new are either numpy (1D, 2D, 3D)
     # or in one of the long pandas formats
-    X = convert_to(
-        X,
-        to_type=[
-            "pd.DataFrame",
-            "pd.Series",
-            "np.ndarray",
-            "pd-multiindex",
-            "numpy3D",
-            "pd_multiindex_hier",
-        ],
-    )
+    X = convert_to(X, to_type=UPDATE_DATA_INTERNAL_MTYPES)
+    X_new = convert_to(X_new, to_type=UPDATE_DATA_INTERNAL_MTYPES)
+
+    # we only need to modify X if X_new is not None
+    if X_new is None:
+        return X
+
+    # if X is None, but X_new is not, return N_new
+    if X is None:
+        return X_new
+
     # update X with the new rows in X_new
     #  if X is np.ndarray, we assume all rows are new
     if isinstance(X, np.ndarray):
         # if 1D or 2D, axis 0 is "time"
         if X_new.ndim in [1, 2]:
-            return np.concatenate(X, X_new, axis=0)
+            return np.concatenate([X, X_new], axis=0)
         # if 3D, axis 2 is "time"
         elif X_new.ndim == 3:
-            return np.concatenate(X, X_new, axis=2)
+            return np.concatenate([X, X_new], axis=2)
     #  if y is pandas, we use combine_first to update
     elif isinstance(X_new, (pd.Series, pd.DataFrame)) and len(X_new) > 0:
         return X_new.combine_first(X)

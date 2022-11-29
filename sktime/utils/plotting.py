@@ -11,7 +11,6 @@ from warnings import simplefilter
 
 import numpy as np
 import pandas as pd
-from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 
 from sktime.datatypes import convert_to
 from sktime.utils.validation._dependencies import _check_soft_dependencies
@@ -38,6 +37,13 @@ def plot_series(
     -------
     fig : plt.Figure
     ax : plt.Axis
+
+    Examples
+    --------
+    >>> from sktime.utils.plotting import plot_series
+    >>> from sktime.datasets import load_airline
+    >>> y = load_airline()
+    >>> fig, ax = plot_series(y)  # doctest: +SKIP
     """
     _check_soft_dependencies("matplotlib", "seaborn")
     import matplotlib.pyplot as plt
@@ -159,6 +165,7 @@ def plot_lags(series, lags=1, suptitle=None):
 
     Examples
     --------
+    >>> from sktime.utils.plotting import plot_lags
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
     >>> fig, ax = plot_lags(y, lags=2) # plot of y(t) with y(t-2)  # doctest: +SKIP
@@ -266,9 +273,17 @@ def plot_correlations(
 
     axes : np.ndarray
         Array of the figure's Axe objects
+
+    Examples
+    --------
+    >>> from sktime.utils.plotting import plot_correlations
+    >>> from sktime.datasets import load_airline
+    >>> y = load_airline()
+    >>> fig, ax = plot_correlations(y)  # doctest: +SKIP
     """
-    _check_soft_dependencies("matplotlib")
+    _check_soft_dependencies(("matplotlib", "statsmodels"))
     import matplotlib.pyplot as plt
+    from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 
     series = check_y(series)
     series = convert_to(series, "pd.Series", "Series")

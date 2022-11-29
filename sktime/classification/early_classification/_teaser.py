@@ -355,7 +355,7 @@ class TEASER(BaseEarlyClassifier):
         rng = check_random_state(rs)
 
         default = (
-            MUSE()
+            MUSE(support_probabilities=True, alphabet_size=4)
             if X.shape[1] > 1
             else WEASEL(support_probabilities=True, alphabet_size=4)
         )
