@@ -133,6 +133,7 @@ class ShapeletTransformClassifier(BaseClassifier):
         "capability:contractable": True,
         "capability:multithreading": True,
         "classifier_type": "shapelet",
+        "python_dependencies": "numba",
     }
 
     def __init__(

@@ -1044,6 +1044,7 @@ class ProximityTree(BaseClassifier):
     _tags = {
         "capability:multithreading": True,
         "X_inner_mtype": "nested_univ",
+        "python_dependencies": "numba",
     }
 
     def __init__(
