@@ -30,6 +30,8 @@ SOFT_DEPENDENCIES = {
     "sktime.regression.deep_learning": ["tensorflow"],
     "sktime.networks": ["tensorflow"],
     "sktime.clustering.evaluation._plot_clustering": ["matplotlib"],
+    "sktime.utils.numba.general": ["numba"],
+    "sktime.utils.numba.stats": ["numba"],
 }
 
 MODULES_TO_IGNORE = ("sktime._contrib", "sktime.utils._testing")
