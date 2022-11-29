@@ -395,17 +395,17 @@ class EAGGLO(BaseTransformer):
                 self.distances[k, K + 1] = val
 
 
-def get_distance(X: pd.DateFrame, Y: pd.DateFrame, alpha: float) -> float:
+def get_distance(X: pd.DataFrame, Y: pd.DataFrame, alpha: float) -> float:
     """Calculate within/between cluster distance."""
     return np.power(cdist(X, Y, "euclidean"), alpha).mean()
 
 
-def len_penalty(x: pd.DateFrame) -> int:
+def len_penalty(x: pd.DataFrame) -> int:
     """Penalize goodness-of-fit statistic for number of change points."""
     return -len(x)
 
 
-def mean_diff_penalty(x: pd.DateFrame) -> float:
+def mean_diff_penalty(x: pd.DataFrame) -> float:
     """Penalize goodness-of-fit statistic.
 
     Favors segmentations with larger sizes, while taking into consideration
