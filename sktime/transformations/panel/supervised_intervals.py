@@ -114,6 +114,7 @@ class SupervisedIntervals(BaseTransformer):
         "fit_is_empty": False,
         "capability:unequal_length": False,
         "requires_y": True,
+        "python_dependencies": "numba",
     }
 
     def __init__(
