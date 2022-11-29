@@ -28,11 +28,11 @@ from sklearn.linear_model import LogisticRegression, RidgeClassifierCV
 from sklearn.pipeline import make_pipeline
 
 from sktime.classification.dictionary_based import (
+    HYDRA,
     WEASEL,
     WEASEL_DILATION,
     BOSSEnsemble,
     ContractableBOSS,
-    Hydra,
     TemporalDictionaryEnsemble,
 )
 from sktime.transformations.panel.rocket import MiniRocket, MultiRocket, Rocket
@@ -232,21 +232,22 @@ dataset_names_excerpt = [
 def get_classifiers(threads_to_use):
     """Obtain the benchmark classifiers."""
     clfs = {
-        "WEASEL (dilated;7-8)": WEASEL_DILATION(
-            random_state=1379,
-            binning_strategies=["equi-depth", "equi-width"],
-            alphabet_sizes=[2],
-            min_window=4,
-            max_window=84,
-            max_feature_count=30_000,
-            word_lengths=[7, 8],
-            variance=True,
-            ensemble_size=150,
-            use_first_differences=[True, False],
-            feature_selection="chi2",
-            # sections=1,
-            n_jobs=threads_to_use,
-        ),
+        "Hydra": HYDRA()
+        # "WEASEL (dilated;7-8)": WEASEL_DILATION(
+        #     random_state=1379,
+        #     binning_strategies=["equi-depth", "equi-width"],
+        #     alphabet_sizes=[2],
+        #     min_window=4,
+        #     max_window=84,
+        #     max_feature_count=30_000,
+        #     word_lengths=[7, 8],
+        #     variance=True,
+        #     ensemble_size=150,
+        #     use_first_differences=[True, False],
+        #     feature_selection="chi2",
+        #     # sections=1,
+        #     n_jobs=threads_to_use,
+        # ),
         # "WEASEL (dilated;ed+ig)": WEASEL_DILATION(
         #     random_state=1379,
         #     binning_strategies=["equi-depth", "information-gain"],
@@ -367,30 +368,30 @@ if __name__ == "__main__":
             }
         }
 
-        if clf_name == "Hydra":
-            # print(torch.get_num_threads())
-            fit_time = time.perf_counter()
-            transform = Hydra(X_train.shape[-1])
-            X_training_transform = transform(torch.tensor(X_train).float())
+        # if clf_name == "Hydra":
+        #     # print(torch.get_num_threads())
+        #     fit_time = time.perf_counter()
+        #     transform = Hydra(X_train.shape[-1])
+        #     X_training_transform = transform(torch.tensor(X_train).float())
+        #
+        #     clf = RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True)
+        #     clf.fit(X_training_transform, y_train)
+        #     fit_time = np.round(time.perf_counter() - fit_time, 5)
+        #
+        #     pred_time = time.perf_counter()
+        #     X_test_transform = transform(torch.tensor(X_test).float())
+        #     acc = clf.score(X_test_transform, y_test)
+        #     pred_time = np.round(time.perf_counter() - pred_time, 5)
+        # else:
+        clf = get_classifiers(threads_to_use)[clf_name]
+        fit_time = time.perf_counter()
+        clf.fit(X_train, y_train)
+        fit_time = np.round(time.perf_counter() - fit_time, 5)
 
-            clf = RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True)
-            clf.fit(X_training_transform, y_train)
-            fit_time = np.round(time.perf_counter() - fit_time, 5)
-
-            pred_time = time.perf_counter()
-            X_test_transform = transform(torch.tensor(X_test).float())
-            acc = clf.score(X_test_transform, y_test)
-            pred_time = np.round(time.perf_counter() - pred_time, 5)
-        else:
-            clf = get_classifiers(threads_to_use)[clf_name]
-            fit_time = time.perf_counter()
-            clf.fit(X_train, y_train)
-            fit_time = np.round(time.perf_counter() - fit_time, 5)
-
-            pred_time = time.perf_counter()
-            acc = clf.score(X_test, y_test)
-            train_acc = clf.cross_val_score if hasattr(clf, "cross_val_score") else 0
-            pred_time = np.round(time.perf_counter() - pred_time, 5)
+        pred_time = time.perf_counter()
+        acc = clf.score(X_test, y_test)
+        train_acc = clf.cross_val_score if hasattr(clf, "cross_val_score") else 0
+        pred_time = np.round(time.perf_counter() - pred_time, 5)
         print(
             f"{clf_name},{dataset_name},"
             + f"{np.round(acc, 3)},"

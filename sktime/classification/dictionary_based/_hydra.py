@@ -6,13 +6,46 @@ By Angus Dempster, Daniel F. Schmidt, Geoffrey I. Webb
 https://arxiv.org/abs/2203.13652
 """
 
+__author__ = ["patrickzib", "Arik Ermshaus"]
+__all__ = ["HYDRA"]
+
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from sklearn.linear_model import RidgeClassifierCV
+
+from sktime.classification.base import BaseClassifier
 
 
-class Hydra(nn.Module):
+class HYDRA(BaseClassifier):
+    """Sktime-HYDRA classifier-adaptor."""
+
+    _tags = {
+        "capability:multithreading": False,
+        "classifier_type": "dictionary",
+    }
+
+    def __init__(self, k=8, g=64):
+
+        self.k = k
+        self.g = g
+
+        super(HYDRA, self).__init__()
+
+    def _fit(self, X, y):
+        self.transform = HydraInternal(X.shape[-1])
+        X_training_transform = self.transform(torch.tensor(X).float())
+
+        self.clf = RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True)
+        self.clf.fit(X_training_transform, y)
+
+    def _predict(self, X) -> np.ndarray:
+        X_test_transform = self.transform(torch.tensor(X).float())
+        return self.clf.predict(X_test_transform)
+
+
+class HydraInternal(nn.Module):
     """HYDRA classifier."""
 
     def __init__(self, input_length, k=8, g=64):
