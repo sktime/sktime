@@ -24,6 +24,7 @@ For a scientific manual, see the :ref:`user_guide`.
     api_reference/dists_kernels
     api_reference/performance_metrics
     api_reference/series_as_features
+    api_reference/distances
     api_reference/annotation
     api_reference/datasets
     api_reference/data_format

@@ -1,7 +1,7 @@
 .. _distances_ref:
 
-Time series distance measures
-============================
+Distance functions
+==================
 
 The :mod:`sktime.distances` module contains time series distance measures.
 
