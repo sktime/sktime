@@ -2,9 +2,10 @@
 """E-Agglo: agglomerative clustering algorithm that preserves observation order."""
 
 import warnings
-from typing import Tuple
+from typing import Callable, Tuple, Union
 
 import numpy as np
+import pandas as pd
 from scipy.spatial.distance import cdist
 
 from sktime.transformations.base import BaseTransformer
@@ -94,7 +95,7 @@ class EAGGLO(BaseTransformer):
         self.penalty = penalty
         super(EAGGLO, self).__init__()
 
-    def _fit(self, X, y=None):
+    def _fit(self, X: pd.DataFrame, y=None):
         """Find optimally clustered segments.
 
         First, by determining which pairs of adjacent clusters will be merged_. Then,
@@ -117,7 +118,8 @@ class EAGGLO(BaseTransformer):
         """
         self._X = X
 
-        assert self.alpha > 0 and self.alpha <= 2, "alowed values for alpha are (0, 2]"
+        if self.alpha <= 0 or self.alpha > 2:
+            raise ValueError(f"alowed values for 'alpha' are (0, 2], got: {self.alpha}")
 
         self._initialize_params(X)
 
@@ -165,7 +167,7 @@ class EAGGLO(BaseTransformer):
 
         return self
 
-    def _transform(self, X, y=None):
+    def _transform(self, X: pd.DataFrame, y=None):
         """Transform X and return a transformed version.
 
         private _transform containing core logic, called from transform
@@ -200,7 +202,7 @@ class EAGGLO(BaseTransformer):
 
         return self.cluster_
 
-    def _initialize_params(self, X) -> None:
+    def _initialize_params(self, X: pd.DataFrame) -> None:
         """Initialize parameters and store to self."""
         self._member = np.array(
             self.member if self.member is not None else range(X.shape[0])
@@ -215,7 +217,8 @@ class EAGGLO(BaseTransformer):
             self._member[np.where(self._member == unique_labels[i])[0]] = i
 
         # check if sorted
-        assert all(sorted(self._member) == self._member)
+        if not all(sorted(self._member) == self._member):
+            raise ValueError("'_member' should be sorted")
 
         self.sizes = np.zeros(2 * self.n_cluster)
         self.sizes[: self.n_cluster] = [
@@ -320,10 +323,15 @@ class EAGGLO(BaseTransformer):
         Greedily optimize the goodness-of-fit statistic by merging the pair of adjacent
         clusters that results in the largest increase of the statistic's value.
 
+        Parameters
+        ----------
+        K: int
+            Number of clusters
+
         Returns
         -------
         result : Tuple[int, int]
-            tuple of left cluster and right cluster index values
+            Tuple of left cluster and right cluster index values
         """
         best_fit = -1e10
         result = (0, 0)
@@ -387,17 +395,17 @@ class EAGGLO(BaseTransformer):
                 self.distances[k, K + 1] = val
 
 
-def get_distance(X, Y, alpha):
+def get_distance(X: pd.DateFrame, Y: pd.DateFrame, alpha: float) -> float:
     """Calculate within/between cluster distance."""
     return np.power(cdist(X, Y, "euclidean"), alpha).mean()
 
 
-def len_penalty(x):
+def len_penalty(x: pd.DateFrame) -> int:
     """Penalize goodness-of-fit statistic for number of change points."""
     return -len(x)
 
 
-def mean_diff_penalty(x):
+def mean_diff_penalty(x: pd.DateFrame) -> float:
     """Penalize goodness-of-fit statistic.
 
     Favors segmentations with larger sizes, while taking into consideration
@@ -406,7 +414,9 @@ def mean_diff_penalty(x):
     return np.mean(np.diff(np.sort(x)))
 
 
-def get_penalty_func(penalty):  # sourcery skip: raise-specific-error
+def get_penalty_func(
+    penalty: Union[str, Callable]
+) -> Callable:  # sourcery skip: raise-specific-error
     """Define penalty function given (possibly string) input."""
     PENALTIES = {"len_penalty": len_penalty, "mean_diff_penalty": mean_diff_penalty}
 
@@ -417,6 +427,4 @@ def get_penalty_func(penalty):  # sourcery skip: raise-specific-error
         if penalty in PENALTIES:
             return PENALTIES[penalty]
 
-    raise Exception(
-        f"'penalty' must be callable or one of {PENALTIES.keys()}"
-    )
+    raise Exception(f"'penalty' must be callable or one of {PENALTIES.keys()}")
