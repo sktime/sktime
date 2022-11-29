@@ -24,7 +24,7 @@ jobs:
         with:
           node-version: 18
       - name: Set up tool
-        run: npm install all-contributors-cli
+        run: npm install all-contributors-cli@6.24.0
       - name: Generate file
         id: generate
         run: npx all-contributors generate
