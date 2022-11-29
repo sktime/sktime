@@ -7,7 +7,7 @@ from numba import njit
 import sktime.utils.numba.stats as stats
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-_check_soft_dependencies("numba", severity="warning")
+_check_soft_dependencies("numba")
 
 
 @njit(fastmath=True, cache=True)
