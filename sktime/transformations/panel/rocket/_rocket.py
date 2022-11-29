@@ -17,24 +17,40 @@ class Rocket(BaseTransformer):
 
     RandOm Convolutional KErnel Transform
 
-    @article{dempster_etal_2019,
-      author  = {Dempster, Angus and Petitjean, Francois and Webb,
-      Geoffrey I},
-      title   = {ROCKET: Exceptionally fast and accurate time series
-      classification using random convolutional kernels},
-      year    = {2019},
-      journal = {arXiv:1910.13051}
-    }
-
     Parameters
     ----------
-    num_kernels  : int, number of random convolutional kernels (default 10,000)
-    normalise    : boolean, whether or not to normalise the input time
-    series per instance (default True)
-    n_jobs             : int, optional (default=1) The number of jobs to run in
-    parallel for `transform`. ``-1`` means using all processors.
-    random_state : int (ignored unless int due to compatability with Numba),
-    random seed (optional, default None)
+    num_kernels              : int, (default=10,000)
+                                number of random convolutional kernels
+    normalise                : boolean, (default=True)
+                                whether or not to normalise the input time
+                                series per instance
+    n_jobs                   : int, (default=1)
+                                The number of jobs to run in parallel
+                                for `transform`. ``-1`` means using all processors.
+    random_state             : int or None, (default=None)
+                                random seed, not set by default
+
+    References
+    ----------
+    .. [1] Dempster, Angus and Petitjean, Francois and Webb, Geoffrey I
+        ROCKET: Exceptionally fast and accurate time series
+        classification using random convolutional kernels,
+        2019, arXiv:1910.13051
+
+
+    Examples
+    --------
+    >>> from sktime.transformations.panel.rocket import Rocket
+    >>> from sktime.datasets import load_gunpoint
+    >>> # load univariate dataset
+    >>> X_train, _ = load_gunpoint(split="train", return_X_y=True)
+    >>> X_test, _ = load_gunpoint(split="test", return_X_y=True)
+    >>> pre_clf = Rocket()
+    >>> pre_clf.fit(X_train, y=None)
+    Rocket(...)
+    >>> X_transformed = pre_clf.transform(X_test)
+    >>> X_transformed.shape
+    (150, 20000)
     """
 
     _tags = {

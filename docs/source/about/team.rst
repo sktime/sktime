@@ -83,6 +83,8 @@ Core Developers
      - :user:`patrickzib`
    * - Ryan Kuhns
      - :user:`rnkuhns`
+   * - Sagar Mishra
+     - :user:`achieveordie`
    * - Stanislav Khrapov
      - :user:`khrapovs`
    * - Svea Marie Meyer
