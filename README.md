@@ -18,6 +18,16 @@ sktime is a library for time series analysis in Python. It provides a unified in
 | **Community** | [![!slack](https://img.shields.io/static/v1?logo=slack&label=slack&message=chat&color=lightgreen)](https://join.slack.com/t/sktime-group/shared_invite/zt-1cghagwee-sqLJ~eHWGYgzWbqUX937ig) [![!discord](https://img.shields.io/static/v1?logo=discord&label=discord&message=chat&color=lightgreen)](https://discord.com/invite/gqSab2K) [![!slack](https://img.shields.io/static/v1?logo=linkedin&label=LinkedIn&message=news&color=lightblue)](https://www.linkedin.com/company/sktime/) [![!twitter](https://img.shields.io/static/v1?logo=twitter&label=Twitter&message=news&color=lightblue)](https://twitter.com/sktime_toolbox) [![!youtube](https://img.shields.io/static/v1?logo=youtube&label=YouTube&message=tutorials&color=red)](https://www.youtube.com/playlist?list=PLKs3UgGjlWHqNzu0LEOeLKvnjvvest2d0) |
 | **Citation** | [![!zenodo](https://zenodo.org/badge/DOI/10.5281/zenodo.3749000.svg)](https://doi.org/10.5281/zenodo.3749000) |
 
+## Table of Contents
+
+- [Documentation](#documentation)
+- [Where to ask questions](#where-to-ask-questions)
+- [Features](#features)
+- [Install Sktime](#install-sktime)
+- [Quickstart](#quickstart)
+- [How to get involved](#how-to-get-involved)
+- [Project Vision](#project-vision)
+
 ## :books: Documentation
 
 | Documentation              |                                                                |
@@ -91,7 +101,7 @@ For **deep learning**, see our companion package: [sktime-dl](https://github.com
 [transformations]: https://github.com/sktime/sktime/tree/main/sktime/transformations
 
 
-## :hourglass_flowing_sand: Install sktime
+## :hourglass_flowing_sand: Install Sktime
 For trouble shooting and detailed installation instructions, see the [documentation](https://www.sktime.org/en/latest/installation.html).
 
 - **Operating system**: macOS X · Linux · Windows 8.1 or higher
@@ -192,7 +202,7 @@ There are many ways to join the sktime community. We follow the [all-contributor
 [enhancement proposals]: https://github.com/sktime/enhancement-proposals
 [roles]: https://www.sktime.org/en/latest/about/team.html
 
-## :bulb: Project vision
+## :bulb: Project Vision
 
 * **by the community, for the community** -- developed by a friendly and collaborative community.
 * the **right tool for the right task** -- helping users to diagnose their learning problem and suitable scientific model types.
