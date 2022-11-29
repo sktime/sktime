@@ -1141,6 +1141,12 @@ class RandomShapeletTransform(BaseTransformer):
         """
         from numba.typed.typedlist import List
 
+        from sktime.transformations.panel._shapelet_transform_numba import (
+            _merge_shapelets,
+            _remove_identical_shapelets,
+            _remove_self_similar_shapelets,
+        )
+
         self._n_jobs = check_n_jobs(self.n_jobs)
 
         self.classes_, self._class_counts = np.unique(y, return_counts=True)
@@ -1192,7 +1198,7 @@ class RandomShapeletTransform(BaseTransformer):
                 )
 
                 for i, heap in enumerate(shapelets):
-                    self._merge_shapelets(
+                    _merge_shapelets(
                         heap,
                         List(candidate_shapelets),
                         max_shapelets_per_class,
@@ -1201,7 +1207,7 @@ class RandomShapeletTransform(BaseTransformer):
 
                 if self.remove_self_similar:
                     for i, heap in enumerate(shapelets):
-                        to_keep = self._remove_self_similar_shapelets(heap)
+                        to_keep = _remove_self_similar_shapelets(heap)
                         shapelets[i] = List([n for (n, b) in zip(heap, to_keep) if b])
 
                 n_shapelets_extracted += self._batch_size
@@ -1229,7 +1235,7 @@ class RandomShapeletTransform(BaseTransformer):
                 )
 
                 for i, heap in enumerate(shapelets):
-                    self._merge_shapelets(
+                    _merge_shapelets(
                         heap,
                         List(candidate_shapelets),
                         max_shapelets_per_class,
@@ -1238,7 +1244,7 @@ class RandomShapeletTransform(BaseTransformer):
 
                 if self.remove_self_similar:
                     for i, heap in enumerate(shapelets):
-                        to_keep = self._remove_self_similar_shapelets(heap)
+                        to_keep = _remove_self_similar_shapelets(heap)
                         shapelets[i] = List([n for (n, b) in zip(heap, to_keep) if b])
 
                 n_shapelets_extracted += n_shapelets_to_extract
@@ -1259,7 +1265,7 @@ class RandomShapeletTransform(BaseTransformer):
         ]
         self.shapelets.sort(reverse=True, key=lambda s: (s[0], s[1], s[2], s[3], s[4]))
 
-        to_keep = self._remove_identical_shapelets(List(self.shapelets))
+        to_keep = _remove_identical_shapelets(List(self.shapelets))
         self.shapelets = [n for (n, b) in zip(self.shapelets, to_keep) if b]
 
         self._sorted_indicies = []
@@ -1330,6 +1336,10 @@ class RandomShapeletTransform(BaseTransformer):
         return {"max_shapelets": 5, "n_shapelet_samples": 50, "batch_size": 20}
 
     def _extract_random_shapelet(self, X, y, i, shapelets, max_shapelets_per_class):
+        from sktime.transformations.panel._shapelet_transform_numba import (
+            _find_shapelet_quality,
+        )
+
         rs = 255 if self.random_state == 0 else self.random_state
         rs = (
             None
@@ -1359,7 +1369,7 @@ class RandomShapeletTransform(BaseTransformer):
             sorted(range(length), reverse=True, key=lambda j: sabs[j])
         )
 
-        quality = self._find_shapelet_quality(
+        quality = _find_shapelet_quality(
             X,
             y,
             shapelet,
