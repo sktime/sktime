@@ -505,21 +505,29 @@ class SupervisedIntervals(BaseTransformer):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        from sktime.utils.numba.stats import (
-            row_mean,
-            row_median,
-            row_numba_max,
-            row_numba_min,
-        )
+        from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-        params1 = {
-            "n_intervals": 1,
-            "features": [row_mean, row_numba_min, row_numba_max],
-            "min_interval_length": 4,
-        }
-        params2 = {
-            "n_intervals": 2,
-            "randomised_split_point": False,
-            "features": row_median,
-        }
-        return [params1, params2]
+        params0 = {}
+
+        if _check_soft_dependencies("numba", severity="none"):
+            from sktime.utils.numba.stats import (
+                row_mean,
+                row_median,
+                row_numba_max,
+                row_numba_min,
+            )
+
+            params1 = {
+                "n_intervals": 1,
+                "features": [row_mean, row_numba_min, row_numba_max],
+                "min_interval_length": 4,
+            }
+            params2 = {
+                "n_intervals": 2,
+                "randomised_split_point": False,
+                "features": row_median,
+            }
+            return [params0, params1, params2]
+
+        else:
+            return params0
