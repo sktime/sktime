@@ -85,7 +85,7 @@ def test_dft_mft(use_fallback_dft, norm):
     mft = p._mft(X_tab[0])
     for i in range(len(X_tab[0]) - window_size + 1):
         if use_fallback_dft:
-            dft = p._discrete_fourier_transform(
+            dft = _discrete_fourier_transform(
                 X_tab[0, i : window_size + i], word_length, norm, 1, True
             )
         else:
