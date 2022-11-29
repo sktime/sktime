@@ -13,6 +13,12 @@ All notable changes to this project will be documented in this file. We keep tra
 For upcoming changes and next releases, see our `milestones <https://github.com/sktime/sktime/milestones?direction=asc&sort=due_date&state=open>`_.
 For our long-term plan, see our :ref:`roadmap`.
 
+
+Version 0.14.1 - 2022-11-30
+---------------------------
+
+
+
 Version 0.14.0 - 2022-11-05
 ---------------------------
 
