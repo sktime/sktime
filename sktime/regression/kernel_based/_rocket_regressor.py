@@ -103,6 +103,7 @@ class RocketRegressor(_DelegatedRegressor, BaseRegressor):
     _tags = {
         "capability:multivariate": True,
         "capability:multithreading": True,
+        "python_dependencies": "numba",
     }
 
     # valid rocket strings for input validity checking

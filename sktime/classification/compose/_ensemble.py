@@ -784,23 +784,33 @@ class WeightedEnsembleClassifier(_HeterogenousMetaEstimator, BaseClassifier):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
-        from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
-        from sktime.classification.kernel_based import RocketClassifier
+        from sktime.classification.dummy import DummyClassifier
+        from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-        params1 = {
-            "classifiers": [
-                KNeighborsTimeSeriesClassifier.create_test_instance(),
-                RocketClassifier.create_test_instance(),
-            ],
-            "weights": [42, 1],
-        }
+        params0 = {"classifiers": [DummyClassifier()]}
 
-        params2 = {
-            "classifiers": [
-                KNeighborsTimeSeriesClassifier.create_test_instance(),
-                RocketClassifier.create_test_instance(),
-            ],
-            "weights": 2,
-            "cv": 3,
-        }
-        return [params1, params2]
+        if _check_soft_dependencies("numba", severity="none"):
+            from sktime.classification.distance_based import (
+                KNeighborsTimeSeriesClassifier,
+            )
+            from sktime.classification.kernel_based import RocketClassifier
+
+            params1 = {
+                "classifiers": [
+                    KNeighborsTimeSeriesClassifier.create_test_instance(),
+                    RocketClassifier.create_test_instance(),
+                ],
+                "weights": [42, 1],
+            }
+
+            params2 = {
+                "classifiers": [
+                    KNeighborsTimeSeriesClassifier.create_test_instance(),
+                    RocketClassifier.create_test_instance(),
+                ],
+                "weights": 2,
+                "cv": 3,
+            }
+            return [params0, params1, params2]
+        else:
+            return params0

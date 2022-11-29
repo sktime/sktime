@@ -139,6 +139,7 @@ class BOSSEnsemble(BaseClassifier):
         "capability:train_estimate": True,
         "capability:multithreading": True,
         "classifier_type": "dictionary",
+        "python_dependencies": "numba",
     }
 
     def __init__(
@@ -554,6 +555,7 @@ class IndividualBOSS(BaseClassifier):
 
     _tags = {
         "capability:multithreading": True,
+        "python_dependencies": "numba",
     }
 
     def __init__(

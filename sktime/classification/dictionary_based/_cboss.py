@@ -143,6 +143,7 @@ class ContractableBOSS(BaseClassifier):
         "capability:contractable": True,
         "capability:multithreading": True,
         "classifier_type": "dictionary",
+        "python_dependencies": "numba",
     }
 
     def __init__(

@@ -109,6 +109,7 @@ class RocketClassifier(_DelegatedClassifier):
         "capability:multivariate": True,
         "capability:multithreading": True,
         "classifier_type": "kernel",
+        "python_dependencies": "numba",
     }
 
     # valid rocket strings for input validity checking

@@ -1283,6 +1283,7 @@ class ProximityForest(BaseClassifier):
         "X_inner_mtype": "nested_univ",
         "capability:multithreading": True,
         "classifier_type": "distance",
+        "python_dependencies": "numba",
     }
 
     def __init__(
