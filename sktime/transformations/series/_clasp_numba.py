@@ -5,7 +5,6 @@
 __author__ = ["ermshaua", "patrickzib"]
 
 import numpy as np
-
 import pandas as pd
 from numba import njit
 
