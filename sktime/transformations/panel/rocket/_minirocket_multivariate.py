@@ -17,27 +17,46 @@ class MiniRocketMultivariate(BaseTransformer):
 
     MINImally RandOm Convolutional KErnel Transform
 
-    **Multivariate**
+    **Multivariate** and **equal length**
 
     A provisional and naive extension of MINIROCKET to multivariate input.  Use
-    class MiniRocket for univariate input.
-
-    @article{dempster_etal_2020,
-      author  = {Dempster, Angus and Schmidt, Daniel F and Webb, Geoffrey I},
-      title   = {{MINIROCKET}: A Very Fast (Almost) Deterministic Transform for
-                 Time Series Classification},
-      year    = {2020},
-      journal = {arXiv:2012.08791}
-    }
+    class MiniRocket for univariate input. [1]_
 
     Parameters
     ----------
-    num_kernels              : int, number of random convolutional kernels
-    (default 10,000)
-    max_dilations_per_kernel : int, maximum number of dilations per kernel (default 32)
-    n_jobs                   : int, optional (default=1) The number of jobs to run in
-    parallel for `transform`. ``-1`` means using all processors.
-    random_state             : int, random seed (optional, default None)
+    num_kernels              : int, (default=10,000)
+                                number of random convolutional kernels
+    max_dilations_per_kernel : int, (default=32)
+                                maximum number of dilations per kernel
+    n_jobs                   : int, (default=1)
+                                The number of jobs to run in parallel
+                                 for `transform`. ``-1`` means using all processors.
+    random_state             : int or None, (default=None)
+                                random seed, not set by default
+
+    References
+    ----------
+    .. [1] Angus Dempster, Daniel F Schmidt, Geoffrey I Webb
+        MINIROCKET: A Very Fast (Almost) Deterministic Transform for
+        Time Series Classification, 2020, arXiv:2012.08791
+
+    See Also
+    --------
+    MultiRocket, MiniRocket, MiniRocketMultivariateVariable, Rocket
+
+    Examples
+    --------
+    >>> from sktime.transformations.panel.rocket import MiniRocketMultivariate
+    >>> from sktime.datasets import load_basic_motions
+    >>> # load multivariate and equal length dataset
+    >>> X_train, _ = load_basic_motions(split="train", return_X_y=True)
+    >>> X_test, _ = load_basic_motions(split="test", return_X_y=True)
+    >>> pre_clf = MiniRocketMultivariate()
+    >>> pre_clf.fit(X_train, y=None)
+    MiniRocketMultivariate(...)
+    >>> X_transformed = pre_clf.transform(X_test)
+    >>> X_transformed.shape
+    (40, 9996)
     """
 
     _tags = {
@@ -55,7 +74,7 @@ class MiniRocketMultivariate(BaseTransformer):
 
     def __init__(
         self,
-        num_kernels=10000,
+        num_kernels=10_000,
         max_dilations_per_kernel=32,
         n_jobs=1,
         random_state=None,
