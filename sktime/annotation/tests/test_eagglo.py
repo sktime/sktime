@@ -105,7 +105,7 @@ def test_len_penalty():
     fitted_model = model._fit(X)
 
     cluster_actual = fitted_model.cluster_
-    fit_actual = fitted_model.gof
+    fit_actual = fitted_model.gof_
 
     assert np.allclose(cluster_actual, cluster_expected)
     assert np.allclose(fit_actual, fit_expected)
@@ -122,7 +122,7 @@ def test_custom_penalty():
     fitted_model = model._fit(X)
 
     cluster_actual = fitted_model.cluster_
-    fit_actual = fitted_model.gof
+    fit_actual = fitted_model.gof_
 
     assert np.allclose(cluster_actual, cluster_expected)
     assert np.allclose(fit_actual, fit_expected)
