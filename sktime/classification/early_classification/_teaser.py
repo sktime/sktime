@@ -107,6 +107,7 @@ class TEASER(BaseEarlyClassifier):
     _tags = {
         "capability:multivariate": True,
         "capability:multithreading": True,
+        "python_dependencies": "numba",
     }
 
     def __init__(

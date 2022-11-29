@@ -124,6 +124,7 @@ class MUSE(BaseClassifier):
         "capability:multithreading": True,
         "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
         "classifier_type": "dictionary",
+        "python_dependencies": "numba",
     }
 
     def __init__(

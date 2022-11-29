@@ -92,6 +92,7 @@ class MiniRocketMultivariateVariable(BaseTransformer):
         "X_inner_mtype": "df-list",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
         "requires_y": False,
+        "python_dependencies": "numba",
     }
 
     def __init__(

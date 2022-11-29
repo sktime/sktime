@@ -117,6 +117,7 @@ class Arsenal(BaseClassifier):
         "capability:contractable": True,
         "capability:multithreading": True,
         "classifier_type": "kernel",
+        "python_dependencies": "numba",
     }
 
     def __init__(
