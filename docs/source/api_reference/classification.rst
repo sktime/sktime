@@ -5,6 +5,9 @@ Time series classification
 
 The :mod:`sktime.classification` module contains algorithms and composition tools for time series classification.
 
+All current sktime Classifiers can be listed using the ``sktime.registry import
+all_estimators`` function, with parameters to filter by type and tag.
+
 Composition
 -----------
 

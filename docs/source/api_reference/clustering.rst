@@ -6,24 +6,8 @@ Time series clustering
 
 The :mod:`sktime.clustering` module contains algorithms for time series clustering.
 
-Base
-----
-
-.. currentmodule:: sktime.clustering.base
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    BaseClusterer
-
-.. currentmodule:: sktime.clustering.partitioning
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    TimeSeriesLloyds
+All current sktime Clusterers can be listed using the ``sktime.registry import
+all_estimators`` function, with parameters to filter by type and tag.
 
 Clustering models
 -----------------
@@ -59,3 +43,22 @@ Clustering models
     :template: class.rst
 
     TimeSeriesKernelKMeans
+
+Base
+----
+
+.. currentmodule:: sktime.clustering.base
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    BaseClusterer
+
+.. currentmodule:: sktime.clustering.partitioning
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TimeSeriesLloyds

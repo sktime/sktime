@@ -6,7 +6,7 @@ Time series regression
 The :mod:`sktime.regression` module contains algorithms and composition tools for time series regression.
 
 All current sktime Regressors can be listed using the ``sktime.registry import
-all_estimators`` function.
+all_estimators`` function, with parameters to filter by type and tag.
 
 
 Composition
