@@ -3,15 +3,16 @@ name = "sktime"
 version = "0.14.0"
 description = "A unified framework for machine learning with time series"
 authors = [
-    {name = "Franz Király"},
-    {name = "Tony Bagnall"},
+    {name = "Franz Király", email = "f.kiraly@ucl.ac.uk"},
+    {name = "Tony Bagnall", email = "ajb@uea.ac.uk"},
     {name = "Markus Löning"},
-    {name = "Martin Walter"},
+    {name = "Martin Walter", email = "mwalter@sktime.org"},
 ]
 maintainers = [
-    {name = "Franz Király"},
-    {name = "Guzal Bulatova"},
-    {name = "Martin Walter"},
+    {name = "sktime developers", email = "info@sktime.org"},
+    {name = "Franz Király", email = "fkiraly@sktime.org"},
+    {name = "Guzal Bulatova", email = "gbulatova@sktime.org"},
+    {name = "Martin Walter", email = "mwalter@sktime.org"},
 ]
 readme = "README.md"
 keywords = [
@@ -45,7 +46,7 @@ classifiers = [
 requires-python = ">=3.7,<3.12"
 dependencies = [
     "deprecated>=1.2.13",
-    "numba>=0.53",
+    "numba>=0.55",
     "numpy>=1.21.0,<1.23",
     "pandas>=1.1.0,<1.6.0",
     "scikit-learn>=0.24.0,<1.2.0",
@@ -66,6 +67,7 @@ all_extras = [
     "mne",
     "pmdarima>=1.8.0,!=1.8.1,<3.0.0",
     "prophet>=1.1",
+    "pycatch22",
     "pykalman>=0.9.5",
     "pyod>=0.8.0",
     "scikit_posthocs>=0.6.5",
@@ -125,10 +127,27 @@ download = "https://pypi.org/project/sktime/#files"
 file = "LICENSE"
 
 [build-system]
-requires = ["setuptools", "wheel", "toml", "build"]
+requires = ["setuptools>61", "wheel", "toml", "build"]
 build-backend = "setuptools.build_meta"
 
 [tool.nbqa.exclude]
 black = "^docs/source/examples/"
 flake8 = "^docs/source/examples/"
 isort = "^docs/source/examples/"
+
+[tool.setuptools]
+zip-safe = true
+
+[tool.setuptools.package-data]
+sktime = [
+    "*.csv",
+    "*.csv.gz",
+    "*.arff",
+    "*.arff.gz",
+    "*.txt",
+    "*.ts",
+    "*.tsv",
+]
+
+[tool.setuptools.packages.find]
+exclude = ["tests", "tests.*"]

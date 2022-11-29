@@ -30,17 +30,23 @@ class MultiRocketMultivariate(BaseTransformer):
 
     Parameters
     ----------
-    num_kernels              : int, number of random convolutional kernels
-    (default 6,250)
-    calculated number of features is the nearest multiple of
-    n_features_per_kernel(default 4)*84=336 < 50,000
-    (2*n_features_per_kernel(default 4)*num_kernels(default 6,250))
-    max_dilations_per_kernel : int, maximum number of dilations per kernel (default 32)
-    n_features_per_kernel    : int, number of features per kernel (default 4)
-    normalise                : int, normalise the data (default False)
-    n_jobs                   : int, optional (default=1) The number of jobs to run in
-    parallel for `transform`. ``-1`` means using all processors.
-    random_state             : int, random seed (optional, default None)
+    num_kernels              : int, (default=6,250)
+                                number of random convolutional kernels
+                                calculated number of features is the nearest multiple of
+                                n_features_per_kernel
+                                (default is 4)*84=336 < 50,000
+                                (2*n_features_per_kernel*num_kernels)
+    max_dilations_per_kernel : int, (default=32)
+                                maximum number of dilations per kernel
+    n_features_per_kernel    : int, (default=4)
+                                number of features per kernel
+    normalise                : int, (default=False)
+                                normalise the data
+    n_jobs                   : int, (default=1)
+                                The number of jobs to run in parallel
+                                for `transform`. ``-1`` means using all processors.
+    random_state             : int, (default=None)
+                                random seed
 
     Attributes
     ----------
@@ -53,7 +59,7 @@ class MultiRocketMultivariate(BaseTransformer):
 
     See Also
     --------
-    MultiRocket, MiniRocket, MiniRocketMultivariate, Rocket
+    MultiRocket, MiniRocket, MiniRocketMultivariateVariable, Rocket
 
     References
     ----------
@@ -66,10 +72,10 @@ class MultiRocketMultivariate(BaseTransformer):
     Examples
     --------
     >>> from sktime.transformations.panel.rocket._multirocket import MultiRocket
-    >>> from sktime.datasets import load_italy_power_demand
-    >>> X_train, y_train = load_italy_power_demand(split="train", return_X_y=True)
-    >>> X_test, y_test = load_italy_power_demand(split="test", return_X_y=True)
-    >>> trf = MultiRocket()
+    >>> from sktime.datasets import load_basic_motions
+    >>> X_train, y_train = load_basic_motions(split="train")
+    >>> X_test, y_test = load_basic_motions(split="test")
+    >>> trf = MultiRocket(num_kernels=512)
     >>> trf.fit(X_train)
     MultiRocket(...)
     >>> X_train = trf.transform(X_train)
@@ -135,6 +141,8 @@ class MultiRocketMultivariate(BaseTransformer):
             _X1[:, :, : X.shape[2]] = X
             X = _X1
             del _X1
+
+        X = X.astype(np.float64)
 
         self.parameter = self._get_parameter(X)
         _X1 = np.diff(X, 1)
