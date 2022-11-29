@@ -392,7 +392,7 @@ def _parallel_fit(
     all_transformers = []
     all_words = []
     for first_difference in use_first_differences:
-        transformer = getSFAFast(
+        transformer = getSFADilated(
             alphabet_size,
             alphabet_sizes,
             anova,
@@ -421,7 +421,7 @@ def _parallel_fit(
     return all_words, all_transformers
 
 
-def getSFAFast(
+def getSFADilated(
     alphabet_size,
     alphabet_sizes,
     anova,
