@@ -380,24 +380,8 @@ class BaseTransformer(BaseEstimator):
         -------
         self : a fitted instance of the estimator
         """
-        # if fit is called, estimator is reset, including fitted state
-        self.reset()
-
-        # skip everything if fit_is_empty is True and we do not need to remember data
-        if self.get_tag("fit_is_empty") and not self.get_tag("remember_data", False):
-            self._is_fitted = True
-            return self
-
-        # if requires_y is set, y is required in fit and update
-        if self.get_tag("requires_y") and y is None:
-            raise ValueError(f"{self.__class__.__name__} requires `y` in `fit`.")
-
-        # check and convert X/y
-        X_inner, y_inner = self._check_X_y(X=X, y=y)
-
-        # memorize X as self._X, if remember_data tag is set to True
-        if self.get_tag("remember_data", False):
-            self._X = update_data(None, X_new=X_inner)
+        # input checks and datatype conversion
+        X_inner, y_inner = self._fit_checks(X, y)
 
         # skip the rest if fit_is_empty is True
         if self.get_tag("fit_is_empty"):
@@ -549,26 +533,13 @@ class BaseTransformer(BaseEstimator):
                 then the return is a `Panel` object of type `pd-multiindex`
                 Example: i-th instance of the output is the i-th window running over `X`
         """
-        # if fit is called, estimator is reset, including fitted state
-        self.reset()
-
-        # if requires_y is set, y is required in fit and update
-        if self.get_tag("requires_y") and y is None:
-            raise ValueError(f"{self.__class__.__name__} requires `y` in `fit`.")
-
-        # check and convert X/y
-        X_inner, y_inner, metadata = self._check_X_y(X=X, y=y, return_metadata=True)
-
-        # memorize X as self._X, if remember_data tag is set to True
-        if self.get_tag("remember_data", False):
-            self._X = update_data(None, X_new=X_inner)
+        # input checks and datatype conversion
+        X_inner, y_inner, metadata = self._fit_checks(X, y, False, True)
 
         # checks and conversions complete, pass to inner fit_transform
-        #####################################################
-
+        ####################################################
         vectorization_needed = isinstance(X_inner, VectorizedDF)
         self._is_vectorized = vectorization_needed
-
         # we call the ordinary _fit_transform if no looping/vectorization needed
         if not vectorization_needed:
             Xt = self._fit_transform(X=X_inner, y=y_inner)
@@ -1331,6 +1302,36 @@ class BaseTransformer(BaseEstimator):
         """
         # standard behaviour: no update takes place, new data is ignored
         return self
+
+    def _fit_checks(self, X, y, early_abandon=True, return_metadata=False):
+        """Input checks and conversions for fit and fit_transform."""
+        self.reset()
+
+        X_inner = None
+        y_inner = None
+        metadata = None
+
+        # skip everything if fit_is_empty is True and we do not need to remember data
+        if (
+            not early_abandon
+            or not self.get_tag("fit_is_empty")
+            or self.get_tag("remember_data", False)
+        ):
+            # if requires_y is set, y is required in fit and update
+            if self.get_tag("requires_y") and y is None:
+                raise ValueError(f"{self.__class__.__name__} requires `y` in `fit`.")
+
+            # check and convert X/y
+            X_inner, y_inner, metadata = self._check_X_y(X=X, y=y, return_metadata=True)
+
+            # memorize X as self._X, if remember_data tag is set to True
+            if self.get_tag("remember_data", False):
+                self._X = update_data(None, X_new=X_inner)
+
+        if return_metadata:
+            return X_inner, y_inner, metadata
+        else:
+            return X_inner, y_inner
 
 
 class _SeriesToPrimitivesTransformer(BaseTransformer):
