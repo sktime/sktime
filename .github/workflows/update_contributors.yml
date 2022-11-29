@@ -6,6 +6,9 @@ on:
       - main
     paths:
       - '.all-contributorsrc'
+  pull_request:
+    paths:
+      - '.all-contributorsrc'
   pull_request_target:
     types: [edited, opened, reopened, synchronize]
     paths:
