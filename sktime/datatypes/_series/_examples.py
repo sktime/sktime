@@ -142,3 +142,39 @@ example_dict_metadata[("Series", 2)] = {
     "is_empty": False,
     "has_nans": False,
 }
+
+###
+# example 3: univariate, positive
+
+s = pd.Series([1, 4, 0.5, 3], dtype=np.float64, name="a")
+
+example_dict[("pd.Series", "Series", 3)] = s
+example_dict_lossy[("pd.Series", "Series", 3)] = False
+
+df = pd.DataFrame({"a": [1, 4, 0.5, 3]})
+
+example_dict[("pd.DataFrame", "Series", 3)] = df
+example_dict_lossy[("pd.DataFrame", "Series", 3)] = False
+
+arr = np.array([[1], [4], [0.5], [3]])
+
+example_dict[("np.ndarray", "Series", 3)] = arr
+example_dict_lossy[("np.ndarray", "Series", 3)] = True
+
+if _check_soft_dependencies("xarray", severity="none"):
+    import xarray as xr
+
+    da = xr.DataArray(
+        [[1], [4], [0.5], [3]],
+        coords=[[0, 1, 2, 3], ["a"]],
+    )
+
+    example_dict[("xr.DataArray", "Series", 3)] = da
+    example_dict_lossy[("xr.DataArray", "Series", 3)] = False
+
+example_dict_metadata[("Series", 3)] = {
+    "is_univariate": True,
+    "is_equally_spaced": True,
+    "is_empty": False,
+    "has_nans": False,
+}

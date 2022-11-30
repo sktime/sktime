@@ -14,6 +14,7 @@ from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.transformations.hierarchical.aggregate import Aggregator
 from sktime.transformations.hierarchical.reconcile import Reconciler
 from sktime.utils._testing.hierarchical import _bottom_hier_datagen
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 # get all the methods
 METHOD_LIST = Reconciler.METHOD_LIST
@@ -24,6 +25,10 @@ level_list = [1, 3, 6]
 # test the reconciled predictions are actually hierarchical
 # test the index/columns on the g and s matrices match
 # test it works for named and unnamed indexes
+@pytest.mark.skipif(
+    not _check_soft_dependencies("statsmodels", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
 @pytest.mark.parametrize("method", METHOD_LIST)
 @pytest.mark.parametrize("no_bottom_nodes", bottom_list)
 @pytest.mark.parametrize("no_levels", level_list)

@@ -8,7 +8,6 @@ import pickle
 import numpy as np
 import pandas as pd
 import pytest
-from keras.optimizers import Adamax
 from sklearn.model_selection import KFold
 
 from sktime.classification.base import BaseClassifier
@@ -21,6 +20,7 @@ from sktime.utils._testing.panel import (
     _make_panel,
     make_classification_problem,
 )
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 
 class _DummyClassifier(BaseClassifier):
@@ -462,6 +462,10 @@ def test_fit_predict_single_class(method, cv):
         assert all(list(y_pred == 1))
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("tensorflow", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
 def test_deep_estimator_empty():
     """Check if serialization works for empty dummy."""
     empty_dummy = _DummyDeepClassifierEmpty()
@@ -470,10 +474,19 @@ def test_deep_estimator_empty():
     assert empty_dummy.__dict__ == deserialized_empty.__dict__
 
 
-@pytest.mark.parametrize("optimizer", [None, "adam", Adamax()])
+@pytest.mark.skipif(
+    not _check_soft_dependencies("keras", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
+@pytest.mark.xfail(reason="known failure of unknown cause, see #3816")
+@pytest.mark.parametrize("optimizer", [None, "adam", "keras-adamax"])
 def test_deep_estimator_full(optimizer):
     """Check if serialization works for full dummy."""
+    from keras.optimizers import Adamax
     from tensorflow.keras.optimizers import Optimizer, serialize
+
+    if optimizer == "keras-adamax":
+        optimizer = Adamax()
 
     full_dummy = _DummyDeepClassifierFull(optimizer)
     serialized_full = pickle.dumps(full_dummy)

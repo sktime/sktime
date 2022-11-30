@@ -596,7 +596,10 @@
       "contributions": [
         "bug",
         "code",
-        "doc"
+        "data",
+        "doc",
+        "review",
+        "test"
       ]
     },
     {
@@ -1831,6 +1834,54 @@
         "test",
         "bug",
         "ideas"
+      ]
+    },
+    {
+      "login": "michaelfeil",
+      "name": "Michael Feil",
+      "avatar_url": "https://avatars.githubusercontent.com/u/63565275?v=4",
+      "profile": "michaelfeil.eu",
+      "contributions": [
+        "code",
+        "test",
+        "ideas"
+       ]
+    },
+    {
+      "login": "KishManani",
+      "name": "Kishan Manani",
+      "avatar_url": "https://avatars.githubusercontent.com/u/30973056?v=4",
+      "profile": "https://github.com/kishmanani",
+      "contributions": [
+        "code",
+        "doc",
+        "test",
+        "bug",
+        "ideas"
+     },
+     {
+      "login": "jorenham",
+      "name": "Joren Hammudoglu",
+      "profile": "https://github.com/jorenham",
+      "contributions": [
+        "build"
+      ]
+    },
+    {
+      "login": "wolph",
+      "name": "Rick van Hattem",
+      "profile": "https://github.com/wolph",
+      "contributions": [
+        "build"
+      ]
+    },
+    {
+      "login": "templierw",
+      "name": "William Templier",
+      "avatar_url": "https://github.com/templierw.png",
+      "profile": "https://www.linkedin.com/in/templierw/",
+      "contributions": [
+        "doc"
       ]
     }
   ]
