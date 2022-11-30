@@ -57,7 +57,7 @@ Time series classification
 
 * [ENH] ``Catch22Transformer`` update and ``Catch22Wrapper`` for ``pycatch22`` (:pr:`3431`) :user:`MatthewMiddlehurst`
 * [ENH] ``MinirocketMultivariateVariable`` transformer, miniROCKET for unequal length time series (:pr:`3786`) :user:`michaelfeil`
-* [ENH] slightly speed up the tests for ``ComposableTimeSeriesForestClassifier``  (:pr:`3762`) :user:`TonyBagnall`
+* [ENH] slightly speed up the tests for ``ComposableTimeSeriesForestClassifier`` (:pr:`3762`) :user:`TonyBagnall`
 * [ENH] Warning rather than error for TDE small series (:pr:`3767`) :user:`MatthewMiddlehurst`
 * [ENH] Add some ``get_test_params`` values to deep learning classifiers and regressors (:pr:`3761`) :user:`TonyBagnall`
 
@@ -167,6 +167,8 @@ Contributors
 :user:`hoesler`,
 :user:`jorenham`,
 :user:`KishManani`,
+:user:`lmmentel`,
+:user:`matt-wisdom`,
 :user:`MatthewMiddlehurst`,
 :user:`michaelfeil`,
 :user:`RikStarmans`,
