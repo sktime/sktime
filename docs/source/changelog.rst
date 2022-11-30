@@ -17,13 +17,151 @@ For our long-term plan, see our :ref:`roadmap`.
 Version 0.14.1 - 2022-11-30
 ---------------------------
 
+Highlights
+~~~~~~~~~~
+
+* new transformer: ``Catch22Wrapper``, direct interface for ``pycatch22`` (:pr:`3431`) :user:`MatthewMiddlehurst`
+* new transformer: ``TimeSince`` for feature engineering, time since fixed date/index (:pr:`3810`) :user:`KishManani`
+* permutation wrapper ``Permute`` for tuning of estimator order in forecatsing pipelines (:pr:`3689`) :user:`aiwalter` :user:`fkiraly`
+* all soft dependencies are now isolated in tests, all tests now run with minimal dependencies (:pr:`3760`) :user:`fkiraly`
+
+Core interface changes
+~~~~~~~~~~~~~~~~~~~~~~
+
+Forecasting
+^^^^^^^^^^^
+
+* dunder method for variable subsetting exogeneous data: ``my_forecaster[variables]`` will create a ``ForecastingPipeline``
+  that subsets the exogeneous data to ``variables``
+
+Enhancements
+~~~~~~~~~~~~
+
+BaseObject
+^^^^^^^^^^
+
+* [ENH] default ``get_params`` / ``set_params`` for ``_HeterogenousMetaEstimator`` & [BUG] fix infinite loop in ``get_params`` for ``FeatureUnion``, with hoesler (:pr:`3708`) :user:`fkiraly`
+
+Forecasting
+^^^^^^^^^^^
+
+* [ENH] direct reducer prototype rework based on feedback (:pr:`3382`) :user:`fkiraly`
+* [ENH] getitem / square brackets dunder for forecasting (:pr:`3740`) :user:`fkiraly`
+* [ENH] Add test for global forecasting case (:pr:`3728`) :user:`danbartl`
+
+Time series classification
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] ``Catch22Transformer`` update and ``Catch22Wrapper`` for ``pycatch22`` (:pr:`3431`) :user:`MatthewMiddlehurst`
+* [ENH] ``MinirocketMultivariateVariable`` transformer, miniROCKET for unequal length time series (:pr:`3786`) :user:`michaelfeil`
+* [ENH] slightly speed up the tests for ``ComposableTimeSeriesForestClassifier``  (:pr:`3762`) :user:`TonyBagnall`
+* [ENH] Warning rather than error for TDE small series (:pr:`3767`) :user:`MatthewMiddlehurst`
+* [ENH] Add some ``get_test_params`` values to deep learning classifiers and regressors (:pr:`3761`) :user:`TonyBagnall`
+
+Time series regression
+^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] Add some ``get_test_params`` values to deep learning classifiers and regressors (:pr:`3761`) :user:`TonyBagnall`
+
+Transformations
+^^^^^^^^^^^^^^^
+
+* [ENH] better error message on transform output check fail (:pr:`3724`) :user:`fkiraly`
+* [ENH] second test case for ``FeatureUnion``, construction without names (:pr:`3792`) :user:`fkiraly`
+* [ENH] permutation wrapper ``Permute`` for tuning of pipeline sequence (:pr:`3689`) :user:`aiwalter` :user:`fkiraly`
+* [ENH] ``fit_transform`` for ``TSFreshRelevantFeatureExtractor`` (:pr:`3785`) :user:`MatthewMiddlehurst`
+* [ENH] ``TimeSince`` transformer for feature engineering, time since fixed date/index (:pr:`3810`) :user:`KishManani`
+
+Governance
+^^^^^^^^^^
+
+* [GOV] Add :user:`achieveordie` as a core developer (:pr:`3851`) :user:`achieveordie`
+
+Fixes
+~~~~~
+
+Data loaders
+^^^^^^^^^^^^
+
+* [BUG] remove test and add warning to ``load_solar`` (:pr:`3771`) :user:`ciaran-g`
+
+Forecasting
+^^^^^^^^^^^
+
+* [BUG] fix ``ColumnEnsembleForecaster`` for hierarchical ``X`` (:pr:`3768`) :user:`RikStarmans` :user:`fkiraly`
+* [BUG] decouple forecasting pipeline module from registry (:pr:`3799`) :user:`fkiraly`
+
+Time series classification
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [BUG] in ``TemporalDictionaryEnsemble``, set ``Parallel`` ``prefer="threads"``, fixes #3788 (:pr:`3808`) :user:`TonyBagnall`
+
+Transformations
+^^^^^^^^^^^^^^^
+
+* [BUG] fix infinite loop in ``get_params`` for ``FeatureUnion`` (:pr:`3708`) :user:`hoesler` :user:`fkiraly`
+* [BUG] ``SupervisedIntervals`` bugfixes and clean up (:pr:`3727`) :user:`MatthewMiddlehurst`
+* [BUG] Reduce size of ``MultiRocket`` test example to avoid sporadic ``MemoryError`` in testing (:pr:`3813`) :user:`TonyBagnall`
+* [BUG] fix return index for transformers' ``Primitives`` output in row vectorization case (:pr:`3839`) :user:`fkiraly`
+
+Documentation
+~~~~~~~~~~~~~
+
+* [DOC] Compose and deep learning classifier doc tidy (:pr:`3756`) :user:`TonyBagnall`
+* [DOC] added new slack link (:pr:`3747`) :user:`hadifawaz1999`
+* [DOC] Updates documentation for channel selection (:pr:`3770`) :user:`haskarb`
+* [DOC] Update File Format Specifications page to show list of hyperlinked formats (:pr:`3775`) :user:`achieveordie`
+* [DOC] Examples webpage (:pr:`3653`) :user:`MatthewMiddlehurst`
+* [DOC] Improve ShapeletTransformClassifier docstring (:pr:`3737`) :user:`MatthewMiddlehurst`
+* [DOC] Improve sklearn classifier docstrings (:pr:`3754`) :user:`MatthewMiddlehurst`
+* [DOC] Add missing estimators to classification API page (:pr:`3742`) :user:`MatthewMiddlehurst`
+* [DOC] Regression api (:pr:`3751`) :user:`TonyBagnall`
+* [DOC] Include section on unequal length data in classification notebook (:pr:`3809`) :user:`MatthewMiddlehurst`
+* [DOC] documentation on workflow of adding a new dataset loader (:pr:`3805`) :user:`templierw`
+* [DOC] add defaults in ``ScaledLogitTransformer`` docstring (:pr:`3845`) :user:`fkiraly`
+* [DOC] Added ``ForecastByLevel`` to API docs (:pr:`3837`) :user:`aiwalter`
+* [DOC] Update CONTRIBUTORS.md (:pr:`3781`) :user:`achieveordie`
+* [DOC] Docstring improvements to ``TSFreshRelevantFeatureExtractor`` (:pr:`3785`) :user:`MatthewMiddlehurst`
+
+Maintenance
+~~~~~~~~~~~
+
+* [MNT] Converted ``setup.py`` to ``pyproject.toml``. Depends on ``setuptools>61.0.0`` (:pr:`3723`) :user:`jorenham` :user:`wolph`
+* [MNT] decouple forecasting pipeline module from registry (:pr:`3799`) :user:`fkiraly`
+* [MNT] temporary skip of new failure ``test_deep_estimator_full[keras-adamax]`` (:pr:`3817`) :user:`fkiraly`
+* [MNT] isolate soft dependencies in tests (:pr:`3760`) :user:`fkiraly`
+* [MNT] fix ``pyproject.toml`` broken string (:pr:`3797`) :user:`TonyBagnall`
+* [MNT] exclude ``TapNet`` from tests (:pr:`3812`) :user:`TonyBagnall`
+* [MNT] test soft dependency isolation in non-suite tests (:pr:`3750`) :user:`fkiraly`
+* [MNT] Address ``ContinuousIntervalTree`` and ``RandomShapeletTransform`` deprecation warnings (:pr:`3796`) :user:`MatthewMiddlehurst`
+* [MNT] isolate ``statsmodels``, part 4: isolating ``statsmodels`` in non-suite tests (:pr:`3821`) :user:`fkiraly`
+
+Contributors
+~~~~~~~~~~~~
+
+:user:`achieveordie`,
+:user:`aiwalter`,
+:user:`ciaran-g`,
+:user:`danbartl`,
+:user:`fkiraly`,
+:user:`hadifawaz1999`,
+:user:`haskarb`,
+:user:`hoesler`,
+:user:`jorenham`,
+:user:`KishManani`,
+:user:`MatthewMiddlehurst`,
+:user:`michaelfeil`,
+:user:`RikStarmans`,
+:user:`templierw`,
+:user:`TonyBagnall`,
+:user:`wolph`
 
 
 Version 0.14.0 - 2022-11-05
 ---------------------------
 
 Highlights
-~~~~~~~~~~~~
+~~~~~~~~~~
 
 * serialization and deserialization of all ``sktime`` objects via ``save`` method & ``base.load`` (:pr:`3336`, :pr:`3425`) :user:`achieveordie` :user:`fkiraly`
 * documented format specification for ``.ts`` files (:pr:`3380`) :user:`achieveordie`
