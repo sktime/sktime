@@ -11,6 +11,7 @@ __author__ = ["fkiraly"]
 
 __all__ = ["deep_equals"]
 
+from inspect import isclass
 
 import numpy as np
 import pandas as pd
@@ -116,6 +117,8 @@ def deep_equals(x, y, return_msg=False):
         return ret(
             isinstance(y, type(np.nan)), f"type(x)={type(x)} != type(y)={type(y)}"
         )
+    elif isclass(x) or isclass(y):
+        return ret(x != y, f"type(x)={type(x)} != type(y)={type(y)}")
     elif hasattr(x, "get_params") and hasattr(y, "get_params"):
         res, msg = deep_equals(
             x.get_params(deep=False), y.get_params(deep=False), return_msg=True
