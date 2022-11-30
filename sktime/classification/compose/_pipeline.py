@@ -264,9 +264,6 @@ class ClassifierPipeline(_HeterogenousMetaEstimator, BaseClassifier):
         -------
         self : returns an instance of self.
         """
-        kwargs = kwargs.copy()
-        current_params = self.get_params(deep=False)
-        kwargs.update(current_params)
         if "classifier" in kwargs.keys():
             if not isinstance(kwargs["classifier"], BaseClassifier):
                 raise TypeError('"classifier" arg must be an sktime classifier')

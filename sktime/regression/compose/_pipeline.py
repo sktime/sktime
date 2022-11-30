@@ -522,9 +522,6 @@ class SklearnRegressorPipeline(RegressorPipeline):
         -------
         self : returns an instance of self.
         """
-        kwargs = kwargs.copy()
-        current_params = self.get_params(deep=False)
-        kwargs.update(current_params)
         if "regressor" in kwargs.keys():
             if not is_sklearn_regressor(kwargs["regressor"]):
                 raise TypeError('"regressor" arg must be an sklearn regressor')
