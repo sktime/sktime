@@ -20,6 +20,8 @@ Version 0.14.1 - 2022-11-30
 Highlights
 ~~~~~~~~~~
 
+* dedicated notebook tutorial for transformers and feature engineering - stay tuned for more at pydata global 2022! (:pr:`1705`) :user:`fkiraly`
+* documentation & step-by-step guide to add a new dataset loader (:pr:`3805`) :user:`templierw`
 * new transformer: ``Catch22Wrapper``, direct interface for ``pycatch22`` (:pr:`3431`) :user:`MatthewMiddlehurst`
 * new transformer: ``TimeSince`` for feature engineering, time since fixed date/index (:pr:`3810`) :user:`KishManani`
 * permutation wrapper ``Permute`` for tuning of estimator order in forecatsing pipelines (:pr:`3689`) :user:`aiwalter` :user:`fkiraly`
@@ -46,6 +48,7 @@ Forecasting
 ^^^^^^^^^^^
 
 * [ENH] direct reducer prototype rework based on feedback (:pr:`3382`) :user:`fkiraly`
+* [ENH] forecast default update warning to point to stream forecasting wrappers (:pr:`3410`) :user:`fkiraly`
 * [ENH] getitem / square brackets dunder for forecasting (:pr:`3740`) :user:`fkiraly`
 * [ENH] Add test for global forecasting case (:pr:`3728`) :user:`danbartl`
 
@@ -94,11 +97,13 @@ Forecasting
 Time series classification
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+* [BUG] ``keras`` import quick-fix (:pr:`3744`) :user:`ltsaprounis`
 * [BUG] in ``TemporalDictionaryEnsemble``, set ``Parallel`` ``prefer="threads"``, fixes #3788 (:pr:`3808`) :user:`TonyBagnall`
 
 Transformations
 ^^^^^^^^^^^^^^^
 
+* [BUG] fix behaviour of `FourierFeatures` with `pd.DatetimeIndex` (:pr:`3606`) :user:`eenticott-shell`
 * [BUG] fix infinite loop in ``get_params`` for ``FeatureUnion`` (:pr:`3708`) :user:`hoesler` :user:`fkiraly`
 * [BUG] ``SupervisedIntervals`` bugfixes and clean up (:pr:`3727`) :user:`MatthewMiddlehurst`
 * [BUG] Reduce size of ``MultiRocket`` test example to avoid sporadic ``MemoryError`` in testing (:pr:`3813`) :user:`TonyBagnall`
@@ -107,21 +112,26 @@ Transformations
 Documentation
 ~~~~~~~~~~~~~
 
+* [DOC] transformers tutorial (:pr:`1705`) :user:`fkiraly`
+* [DOC] Update documentation for Greedy Gaussian Segmentation (:pr:`3739`) :user:`lmmentel`
 * [DOC] Compose and deep learning classifier doc tidy (:pr:`3756`) :user:`TonyBagnall`
 * [DOC] added new slack link (:pr:`3747`) :user:`hadifawaz1999`
 * [DOC] Updates documentation for channel selection (:pr:`3770`) :user:`haskarb`
 * [DOC] Update File Format Specifications page to show list of hyperlinked formats (:pr:`3775`) :user:`achieveordie`
 * [DOC] Examples webpage (:pr:`3653`) :user:`MatthewMiddlehurst`
+* [DOC] Update CC and CoC and active core-devs lists in ``team.rst`` (:pr:`3733`) :user:`GuzalBulatova`
 * [DOC] Improve ShapeletTransformClassifier docstring (:pr:`3737`) :user:`MatthewMiddlehurst`
 * [DOC] Improve sklearn classifier docstrings (:pr:`3754`) :user:`MatthewMiddlehurst`
 * [DOC] Add missing estimators to classification API page (:pr:`3742`) :user:`MatthewMiddlehurst`
-* [DOC] Regression api (:pr:`3751`) :user:`TonyBagnall`
+* [DOC] Updates to regression API reference (:pr:`3751`) :user:`TonyBagnall`
+* [DOC] Fixed doc typo in ``RocketClassifier`` docstring (:pr:`3759`) :user:`matt-wisdom`
 * [DOC] Include section on unequal length data in classification notebook (:pr:`3809`) :user:`MatthewMiddlehurst`
 * [DOC] documentation on workflow of adding a new dataset loader (:pr:`3805`) :user:`templierw`
 * [DOC] add defaults in ``ScaledLogitTransformer`` docstring (:pr:`3845`) :user:`fkiraly`
 * [DOC] Added ``ForecastByLevel`` to API docs (:pr:`3837`) :user:`aiwalter`
 * [DOC] Update CONTRIBUTORS.md (:pr:`3781`) :user:`achieveordie`
 * [DOC] Docstring improvements to ``TSFreshRelevantFeatureExtractor`` (:pr:`3785`) :user:`MatthewMiddlehurst`
+
 
 Maintenance
 ~~~~~~~~~~~
@@ -143,6 +153,7 @@ Contributors
 :user:`aiwalter`,
 :user:`ciaran-g`,
 :user:`danbartl`,
+:user:`eenticott-shell`,
 :user:`fkiraly`,
 :user:`hadifawaz1999`,
 :user:`haskarb`,
@@ -155,7 +166,6 @@ Contributors
 :user:`templierw`,
 :user:`TonyBagnall`,
 :user:`wolph`
-
 
 Version 0.14.0 - 2022-11-05
 ---------------------------
