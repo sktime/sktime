@@ -99,6 +99,7 @@ Time series classification
 
 * [BUG] ``keras`` import quick-fix (:pr:`3744`) :user:`ltsaprounis`
 * [BUG] in ``TemporalDictionaryEnsemble``, set ``Parallel`` ``prefer="threads"``, fixes #3788 (:pr:`3808`) :user:`TonyBagnall`
+* [BUG] in ``DummyClassifier``, fix incorrectly set ``capability:multivariate`` tag (:pr:`3858`) :user:`fkiraly`
 
 Transformations
 ^^^^^^^^^^^^^^^
@@ -108,6 +109,12 @@ Transformations
 * [BUG] ``SupervisedIntervals`` bugfixes and clean up (:pr:`3727`) :user:`MatthewMiddlehurst`
 * [BUG] Reduce size of ``MultiRocket`` test example to avoid sporadic ``MemoryError`` in testing (:pr:`3813`) :user:`TonyBagnall`
 * [BUG] fix return index for transformers' ``Primitives`` output in row vectorization case (:pr:`3839`) :user:`fkiraly`
+* [BUG] in ``Reconciler``, fix summation matrix bug for small hierarchies with one unique ID in outer index (:pr:`3859`) :user:`ciaran-g`
+
+Testing framework
+^^^^^^^^^^^^^^^
+
+* [BUG] Update ``test_deep_estimator_full`` to incorporate new versions of ``tensorflow`` / ``keras`` (:pr:`3820`) :user:`achieveordie`
 
 Documentation
 ~~~~~~~~~~~~~
@@ -295,9 +302,6 @@ Time series classification
 * [ENH] more relevant parameters to ``CNNRegressor`` for user flexibility (:pr:`3561`) :user:`achieveordie`
 * [ENH] allow ``KNeighborsTimeSeriesClassifier`` to handle distances between unequal length series (:pr:`3654`) :user:`fkiraly`
 
-Time series distances and kernels
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
 Time series regression
 ^^^^^^^^^^^^^^^^^^^^^^
 
@@ -419,7 +423,7 @@ Time series clustering
 Time series classification
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* [BUG] fix ``KNeighborsTimeSeriesClassifier`` tag handling dependent on distance component  (:pr:`3654`) :user:`fkiraly`
+* [BUG] fix ``KNeighborsTimeSeriesClassifier`` tag handling dependent on distance component (:pr:`3654`) :user:`fkiraly`
 * [BUG] Add missing ``get_test_params`` to ``TapNet`` estimators (:pr:`3541`) :user:`achieveordie`
 * [BUG] ``numba`` / ``np.median`` interaction raises error for large data sets run with ``n_jobs>1`` (:pr:`3602`) :user:`TonyBagnall`
 * [BUG] bug in the interaction between ``numba`` and ``np.zeros`` identified in #2397 (:pr:`3618`) :user:`TonyBagnall`
