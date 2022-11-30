@@ -116,6 +116,11 @@ def deep_equals(x, y, return_msg=False):
         return ret(
             isinstance(y, type(np.nan)), f"type(x)={type(x)} != type(y)={type(y)}"
         )
+    elif hasattr(x, "get_params") and hasattr(y, "get_params"):
+        res, msg = deep_equals(
+            x.get_params(deep=False), y.get_params(deep=False), return_msg=True
+        )
+        return ret(res, f"params, {msg}")
     elif type(x).__name__ == "ForecastingHorizon":
         return ret(*_fh_equals(x, y, return_msg=True))
     elif isinstance(x != y, bool) and x != y:
