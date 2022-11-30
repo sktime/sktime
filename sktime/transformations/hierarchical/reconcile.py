@@ -298,8 +298,7 @@ def _get_s_matrix(X):
             s_matrix.loc["__total", i] = 1.0
 
     # drop new levels not present in orginal matrix
-    # s_matrix = s_matrix.loc[s_matrix.index.isin(al_inds)]
-    s_matrix.dropna(inplace=True)
+    s_matrix = s_matrix.loc[s_matrix.index.isin(al_inds)]
 
     return s_matrix
 

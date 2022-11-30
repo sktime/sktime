@@ -18,8 +18,8 @@ from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 # get all the methods
 METHOD_LIST = Reconciler.METHOD_LIST
-bottom_list = [10, 100]
-level_list = [1, 3, 6]
+level_list = [1, 2, 3]
+flatten_list = [True, False]
 
 
 # test the reconciled predictions are actually hierarchical
@@ -30,9 +30,9 @@ level_list = [1, 3, 6]
     reason="skip test if required soft dependency not available",
 )
 @pytest.mark.parametrize("method", METHOD_LIST)
-@pytest.mark.parametrize("no_bottom_nodes", bottom_list)
+@pytest.mark.parametrize("flatten", flatten_list)
 @pytest.mark.parametrize("no_levels", level_list)
-def test_reconciler_fit_transform(method, no_bottom_nodes, no_levels):
+def test_reconciler_fit_transform(method, flatten, no_levels):
     """Tests fit_trasnform and output of reconciler.
 
     Raises
@@ -42,10 +42,10 @@ def test_reconciler_fit_transform(method, no_bottom_nodes, no_levels):
     and columns of the fitted s and g matrix from each method and finally tests
     if the method works for both named and unnamed indexes
     """
-    agg = Aggregator(flatten_single_levels=True)
+    agg = Aggregator(flatten_single_levels=flatten)
 
     X = _bottom_hier_datagen(
-        no_bottom_nodes=no_bottom_nodes,
+        no_bottom_nodes=5,
         no_levels=no_levels,
         random_seed=123,
     )
