@@ -279,8 +279,8 @@ class RegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
-        # imports
-        from sktime.regression.distance_based import KNeighborsTimeSeriesRegressor
+        from sklearn.dummy import DummyRegressor
+        
         from sktime.transformations.series.exponent import ExponentTransformer
 
         t1 = ExponentTransformer(power=2)
@@ -512,6 +512,9 @@ class SklearnRegressorPipeline(RegressorPipeline):
         -------
         self : returns an instance of self.
         """
+        kwargs = kwargs.copy()
+        current_params = self.get_params(deep=False)
+        kwargs.update(current_params)
         if "regressor" in kwargs.keys():
             if not is_sklearn_regressor(kwargs["regressor"]):
                 raise TypeError('"regressor" arg must be an sklearn regressor')

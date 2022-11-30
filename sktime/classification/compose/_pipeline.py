@@ -264,6 +264,9 @@ class ClassifierPipeline(_HeterogenousMetaEstimator, BaseClassifier):
         -------
         self : returns an instance of self.
         """
+        kwargs = kwargs.copy()
+        current_params = self.get_params(deep=False)
+        kwargs.update(current_params)
         if "classifier" in kwargs.keys():
             if not isinstance(kwargs["classifier"], BaseClassifier):
                 raise TypeError('"classifier" arg must be an sktime classifier')
@@ -301,14 +304,19 @@ class ClassifierPipeline(_HeterogenousMetaEstimator, BaseClassifier):
         """
         # imports
         from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
+        from sktime.classification.dummy import DummyClassifier
         from sktime.transformations.series.exponent import ExponentTransformer
 
         t1 = ExponentTransformer(power=2)
         t2 = ExponentTransformer(power=0.5)
         c = KNeighborsTimeSeriesClassifier()
 
-        # construct without names
-        return {"transformers": [t1, t2], "classifier": c}
+        another_c = DummyClassifier()
+
+        params1 = {"transformers": [t1, t2], "classifier": c}
+        params2 = {"transformers": [t1], "classifier": another_c}
+
+        return [params1, params2]
 
 
 class SklearnClassifierPipeline(ClassifierPipeline):
