@@ -291,7 +291,6 @@ def _get_s_matrix(X):
             agg_ind = list(i)[::-1]
             for j in range(len(agg_ind)):
                 agg_ind[j] = "__total"
-                # ptint()
                 # insert indicator
                 s_matrix.loc[tuple(agg_ind[::-1]), i] = 1.0
         else:
