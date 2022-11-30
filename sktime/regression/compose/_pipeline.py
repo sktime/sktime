@@ -279,16 +279,26 @@ class RegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
-        from sklearn.dummy import DummyRegressor
-        
         from sktime.transformations.series.exponent import ExponentTransformer
+        from sktime.utils.validation._dependencies import _check_soft_dependencies
 
         t1 = ExponentTransformer(power=2)
         t2 = ExponentTransformer(power=0.5)
-        c = KNeighborsTimeSeriesRegressor()
 
-        # construct without names
-        return {"transformers": [t1, t2], "regressor": c}
+        r = SklearnRegressorPipeline.create_test_instance()
+
+        params1 = {"transformers": [t1, t2], "regressor": r}
+
+        if _check_soft_dependencies("numba", severity="none"):
+            from sktime.regression.distance_based import KNeighborsTimeSeriesRegressor
+
+            c = KNeighborsTimeSeriesRegressor()
+
+            # construct without names
+            params2 = {"transformers": [t1, t2], "regressor": c}
+            return [params1, params2]
+        else:
+            return params1
 
 
 class SklearnRegressorPipeline(RegressorPipeline):
