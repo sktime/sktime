@@ -7,7 +7,7 @@ __all__ = ["ExponentialSmoothing"]
 __author__ = ["mloning", "big-o"]
 
 from sktime.forecasting.base.adapters import _StatsModelsAdapter
-
+import pandas as pd
 
 class ExponentialSmoothing(_StatsModelsAdapter):
     """Holt-Winters exponential smoothing forecaster.
@@ -166,33 +166,36 @@ class ExponentialSmoothing(_StatsModelsAdapter):
 
         super().__init__(random_state=random_state)
 
-    def _fit_forecaster(self, y, X=None):
-        from statsmodels.tsa.holtwinters import (
-            ExponentialSmoothing as _ExponentialSmoothing,
-        )
+   def _fit_forecaster(self, y, X=None):
+        if isinstance(y.index, pandas.MultiIndex):
+            raise TypeError("MultiIndex not supported currently ")
+        else:
+            from statsmodels.tsa.holtwinters import (
+                ExponentialSmoothing as _ExponentialSmoothing,
+            )
 
-        self._forecaster = _ExponentialSmoothing(
-            y,
-            trend=self.trend,
-            damped_trend=self.damped_trend,
-            seasonal=self.seasonal,
-            seasonal_periods=self.sp,
-            use_boxcox=self.use_boxcox,
-            initial_level=self.initial_level,
-            initial_trend=self.initial_trend,
-            initial_seasonal=self.initial_seasonal,
-            initialization_method=self.initialization_method,
-        )
+            self._forecaster = _ExponentialSmoothing(
+                y,
+                trend=self.trend,
+                damped_trend=self.damped_trend,
+                seasonal=self.seasonal,
+                seasonal_periods=self.sp,
+                use_boxcox=self.use_boxcox,
+                initial_level=self.initial_level,
+                initial_trend=self.initial_trend,
+                initial_seasonal=self.initial_seasonal,
+                initialization_method=self.initialization_method,
+            )
 
-        self._fitted_forecaster = self._forecaster.fit(
-            smoothing_level=self.smoothing_level,
-            smoothing_trend=self.smoothing_trend,
-            smoothing_seasonal=self.smoothing_seasonal,
-            damping_trend=self.damping_trend,
-            optimized=self.optimized,
-            remove_bias=self.remove_bias,
-            start_params=self.start_params,
-            method=self.method,
-            minimize_kwargs=self.minimize_kwargs,
-            use_brute=self.use_brute,
-        )
+            self._fitted_forecaster = self._forecaster.fit(
+                smoothing_level=self.smoothing_level,
+                smoothing_trend=self.smoothing_trend,
+                smoothing_seasonal=self.smoothing_seasonal,
+                damping_trend=self.damping_trend,
+                optimized=self.optimized,
+                remove_bias=self.remove_bias,
+                start_params=self.start_params,
+                method=self.method,
+                minimize_kwargs=self.minimize_kwargs,
+                use_brute=self.use_brute,
+            )
