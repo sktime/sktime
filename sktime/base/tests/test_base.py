@@ -281,8 +281,8 @@ def test_components():
 
     assert isinstance(comp_comps, dict)
     assert set(comp_comps.keys()) == set(["foo_"])
-    assert comp_comps["foo_"] == composite.foo_
-    assert comp_comps["foo_"] != composite.foo
+    assert comp_comps["foo_"] is composite.foo_
+    assert comp_comps["foo_"] is not composite.foo
 
 
 class FittableCompositionDummy(BaseEstimator):
@@ -322,8 +322,8 @@ def test_get_fitted_params():
 
     assert isinstance(comp_f_params, dict)
     assert set(comp_f_params) == set(["foo", "foo__foo"])
-    assert comp_f_params["foo"] == composite.foo_
-    assert comp_f_params["foo"] != composite.foo
+    assert comp_f_params["foo"] is composite.foo_
+    assert comp_f_params["foo"] is not composite.foo
 
 
 def test_eq_dunder():
