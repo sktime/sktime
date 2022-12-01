@@ -546,7 +546,6 @@ class SklearnRegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
         """
         if "regressor" in kwargs.keys():
             if not is_sklearn_regressor(kwargs["regressor"]):
-                print(kwargs["regressor"])
                 raise TypeError('"regressor" arg must be an sklearn regressor')
         trafo_keys = self._get_params("_transformers", deep=True).keys()
         regr_keys = self.regressor.get_params(deep=True).keys()
