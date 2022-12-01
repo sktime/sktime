@@ -104,9 +104,6 @@ class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
         left child, and ``N_t_R`` is the number of samples in the right child.
         ``N``, ``N_t``, ``N_t_R`` and ``N_t_L`` all refer to the weighted sum,
         if ``sample_weight`` is passed.
-    min_impurity_split : float, (default=1e-7)
-        Threshold for early stopping in tree growth. A node will split
-        if its impurity is above the threshold, otherwise it is a leaf.
     bootstrap : boolean, optional (default=True)
         Whether bootstrap samples are used when building trees.
     oob_score : bool (default=False)
@@ -182,7 +179,6 @@ class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
         max_features=None,
         max_leaf_nodes=None,
         min_impurity_decrease=0.0,
-        min_impurity_split=None,
         bootstrap=False,
         oob_score=False,
         n_jobs=None,
@@ -203,7 +199,6 @@ class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
         self.max_features = max_features
         self.max_leaf_nodes = max_leaf_nodes
         self.min_impurity_decrease = min_impurity_decrease
-        self.min_impurity_split = min_impurity_split
         self.max_samples = max_samples
 
         # Pass on params.
@@ -275,7 +270,6 @@ class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
             "max_features": self.max_features,
             "max_leaf_nodes": self.max_leaf_nodes,
             "min_impurity_decrease": self.min_impurity_decrease,
-            "min_impurity_split": self.min_impurity_split,
         }
         final_estimator = self.estimator_.steps[-1][0]
         self.estimator_params = {
