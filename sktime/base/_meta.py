@@ -120,10 +120,41 @@ class _HeterogenousMetaEstimator:
                 "{0!r}".format(invalid_names)
             )
 
-    def _subset_dict_keys(self, dict_to_subset, keys):
-        """Subset dictionary d to keys in keys."""
+    def _subset_dict_keys(self, dict_to_subset, keys, prefix=None):
+        """Subset dictionary d to keys in keys.
+
+        Subsets `dict_to_subset` to keys in iterable `keys`.
+
+        If `prefix` is passed, subsets to `f"{prefix}__{key}"` for all `key` in `keys`.
+        The prefix is then removed from the keys of the return dict, i.e.,
+        return has keys `{key}` where `f"{prefix}__{key}"` was key in `dict_to_subset`.
+        Note that passing `prefix` will turn non-str keys into str keys.
+
+        Parameters
+        ----------
+        dict_to_subset : dict
+            dictionary to subset by keys
+        keys : iterable
+        prefix : str or None, optional
+
+        Returns
+        -------
+        `subsetted_dict` : dict
+            `dict_to_subset` subset to keys in `keys` described as above
+        """
+        def rem_prefix(x):
+            if prefix is None:
+                return x
+            prefix__ = f"{prefix}__"
+            if x.startswith(prefix__):
+                return x[len(prefix__):]
+            else:
+                return x
+
+        if prefix is not None:
+            keys = [f"{prefix}__{key}" for key in keys]
         keys_in_both = set(keys).intersection(dict_to_subset.keys())
-        subsetted_dict = dict((k, dict_to_subset[k]) for k in keys_in_both)
+        subsetted_dict = dict((rem_prefix(k), dict_to_subset[k]) for k in keys_in_both)
         return subsetted_dict
 
     @staticmethod

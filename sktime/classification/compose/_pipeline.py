@@ -270,7 +270,9 @@ class ClassifierPipeline(_HeterogenousMetaEstimator, BaseClassifier):
         trafo_keys = self._get_params("_transformers", deep=True).keys()
         classif_keys = self.classifier.get_params(deep=True).keys()
         trafo_args = self._subset_dict_keys(dict_to_subset=kwargs, keys=trafo_keys)
-        classif_args = self._subset_dict_keys(dict_to_subset=kwargs, keys=classif_keys)
+        classif_args = self._subset_dict_keys(
+            dict_to_subset=kwargs, keys=classif_keys, prefix="classifier"
+        )
         if len(classif_args) > 0:
             self.classifier.set_params(**classif_args)
         if len(trafo_args) > 0:
@@ -316,7 +318,7 @@ class ClassifierPipeline(_HeterogenousMetaEstimator, BaseClassifier):
         return [params1, params2]
 
 
-class SklearnClassifierPipeline(ClassifierPipeline):
+class SklearnClassifierPipeline(_HeterogenousMetaEstimator, BaseClassifier):
     """Pipeline of transformers and a classifier.
 
     The `SklearnClassifierPipeline` chains transformers and an single classifier.
@@ -446,6 +448,14 @@ class SklearnClassifierPipeline(ClassifierPipeline):
         }
         self.set_tags(**tags_to_set)
 
+    @property
+    def _transformers(self):
+        return self.transformers_._steps
+
+    @_transformers.setter
+    def _transformers(self, value):
+        self.transformers_._steps = value
+
     def __rmul__(self, other):
         """Magic * method, return concatenated ClassifierPipeline, transformers on left.
 
@@ -554,6 +564,26 @@ class SklearnClassifierPipeline(ClassifierPipeline):
             # if sklearn classifier does not have predict_proba
             return BaseClassifier._predict_proba(self, X)
 
+    def get_params(self, deep=True):
+        """Get parameters of estimator in `transformers`.
+
+        Parameters
+        ----------
+        deep : boolean, optional, default=True
+            If True, will return the parameters for this estimator and
+            contained sub-objects that are estimators.
+
+        Returns
+        -------
+        params : mapping of string to any
+            Parameter names mapped to their values.
+        """
+        params = dict()
+        trafo_params = self._get_params("_transformers", deep=deep)
+        params.update(trafo_params)
+
+        return params
+
     def set_params(self, **kwargs):
         """Set the parameters of estimator in `transformers`.
 
@@ -569,7 +599,9 @@ class SklearnClassifierPipeline(ClassifierPipeline):
         trafo_keys = self._get_params("_transformers", deep=True).keys()
         classif_keys = self.classifier.get_params(deep=True).keys()
         trafo_args = self._subset_dict_keys(dict_to_subset=kwargs, keys=trafo_keys)
-        classif_args = self._subset_dict_keys(dict_to_subset=kwargs, keys=classif_keys)
+        classif_args = self._subset_dict_keys(
+            dict_to_subset=kwargs, keys=classif_keys, prefix="classifier"
+        )
         if len(classif_args) > 0:
             self.classifier.set_params(**classif_args)
         if len(trafo_args) > 0:
