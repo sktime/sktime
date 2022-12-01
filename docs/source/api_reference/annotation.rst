@@ -24,7 +24,7 @@ Time Series Segmentation
     :toctree: auto_generated/
     :template: class.rst
 
-    EAGGLO
+    EAgglo
 
 .. currentmodule:: sktime.annotation.hmm_learn.gaussian
 

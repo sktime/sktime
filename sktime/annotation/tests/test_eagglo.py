@@ -6,7 +6,7 @@ __author__ = ["KatieBuc"]
 import numpy as np
 import pandas as pd
 
-from sktime.annotation.eagglo import EAGGLO
+from sktime.annotation.eagglo import EAgglo
 
 
 def test_fit_default_params_univariate():
@@ -25,7 +25,7 @@ def test_fit_default_params_univariate():
     cluster_expected = [0, 0, 1, 1]
     fit_expected = [104.77424, 134.51387, 186.92586, -31.15431]
 
-    model = EAGGLO()
+    model = EAgglo()
     fitted_model = model._fit(X)
 
     cluster_actual = fitted_model.cluster_
@@ -42,7 +42,7 @@ def test_fit_other_params_univariate():
     cluster_expected = [0, 0, 1, 1]
     fit_expected = [1182.754, 1772.526, -295.421]
 
-    model = EAGGLO(member=np.array([0, 0, 1, 2]), alpha=2)
+    model = EAgglo(member=np.array([0, 0, 1, 2]), alpha=2)
     fitted_model = model._fit(X)
 
     cluster_actual = fitted_model.cluster_
@@ -76,7 +76,7 @@ def test_fit_default_params_multivariate():
     cluster_expected = [0, 0, 1, 1, 1]
     fit_expected = [118.58235, 132.67919, 156.54531, 208.61512, -33.52743]
 
-    model = EAGGLO()
+    model = EAgglo()
     fitted_model = model._fit(X)
 
     cluster_actual = fitted_model.cluster_
@@ -101,7 +101,7 @@ def test_len_penalty():
     cluster_expected = [0, 0, 1, 1, 1]
     fit_expected = [112.58235, 127.67919, 152.54531, 205.61512, -35.52743]
 
-    model = EAGGLO(penalty="len_penalty")
+    model = EAgglo(penalty="len_penalty")
     fitted_model = model._fit(X)
 
     cluster_actual = fitted_model.cluster_
@@ -118,7 +118,7 @@ def test_custom_penalty():
     cluster_expected = [0, 0, 1, 1]
     fit_expected = [105.77424, 135.84720, 188.92586, -29.15431]
 
-    model = EAGGLO(penalty=lambda x: np.mean(np.diff(np.sort(x))))
+    model = EAgglo(penalty=lambda x: np.mean(np.diff(np.sort(x))))
     fitted_model = model._fit(X)
 
     cluster_actual = fitted_model.cluster_

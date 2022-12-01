@@ -2,7 +2,7 @@
 """E-Agglo: agglomerative clustering algorithm that preserves observation order."""
 
 import warnings
-from typing import Callable, Tuple, Union
+from typing import Callable, Tuple, List, Dict
 
 import numpy as np
 import pandas as pd
@@ -11,10 +11,10 @@ from scipy.spatial.distance import cdist
 from sktime.transformations.base import BaseTransformer
 
 __author__ = ["KatieBuc"]
-__all__ = ["EAGGLO"]
+__all__ = ["EAgglo"]
 
 
-class EAGGLO(BaseTransformer):
+class EAgglo(BaseTransformer):
     """
     Hierarchical agglomerative estimation of multiple change points.
 
@@ -37,9 +37,10 @@ class EAGGLO(BaseTransformer):
     alpha : float (default=1.0)
         Fixed constant alpha in (0, 2] used in the divergence measure, as the
         alpha-th absolute moment, see equation (4) in [1]_.
-    penalty : functional (default=None)
+    penalty : str or callable or None (default=None)
         Function that defines a penalization of the sequence of goodness-of-fit
         statistic, when overfitting is a concern. If `None` not penalty is applied.
+        Could also be an existing penalty name, either `len_penalty` or `mean_diff_penalty`.
 
     Attributes
     ----------
@@ -74,8 +75,8 @@ class EAGGLO(BaseTransformer):
     >>> from sktime.annotation.datagen import piecewise_normal_multivariate
     >>> X = piecewise_normal_multivariate(means=[[1, 3], [4, 5]], lengths=[3, 4],
     ... random_state = 10)
-    >>> from sktime.annotation.eagglo import EAGGLO
-    >>> model = EAGGLO()
+    >>> from sktime.annotation.eagglo import EAgglo
+    >>> model = EAgglo()
     >>> model.fit_transform(X)
     array([0, 0, 0, 1, 1, 1, 1])
     """
@@ -93,7 +94,7 @@ class EAGGLO(BaseTransformer):
         self.member = member
         self.alpha = alpha
         self.penalty = penalty
-        super(EAGGLO, self).__init__()
+        super(EAgglo, self).__init__()
 
     def _fit(self, X: pd.DataFrame, y=None):
         """Find optimally clustered segments.
@@ -140,7 +141,7 @@ class EAGGLO(BaseTransformer):
 
         # penalize the gof_ statistic
         if self.penalty is not None:
-            penalty_func = get_penalty_func(self.penalty)
+            penalty_func = self._get_penalty_func()
             cps = [filter_na(i) for i in range(len(self.progression))]
             self.gof_ += list(map(penalty_func, cps))
 
@@ -187,7 +188,7 @@ class EAGGLO(BaseTransformer):
         # fit again if indices not seen, but don't store anything
         if not X.index.equals(self._X.index):
             X_full = X.combine_first(self._X)
-            new_eagglo = EAGGLO(
+            new_eagglo = EAgglo(
                 member=self.member,
                 alpha=self.alpha,
                 penalty=self.penalty,
@@ -211,9 +212,8 @@ class EAGGLO(BaseTransformer):
         unique_labels = np.sort(np.unique(self._member))
         self.n_cluster = len(unique_labels)
 
-        for i in range(
-            self.n_cluster
-        ):  # relabel clusters to be consecutive numbers (when user specified)
+        # relabel clusters to be consecutive numbers (when user specified)
+        for i in range(self.n_cluster):
             self._member[np.where(self._member == unique_labels[i])[0]] = i
 
         # check if sorted
@@ -394,6 +394,28 @@ class EAGGLO(BaseTransformer):
                 self.distances[K + 1, k] = val
                 self.distances[k, K + 1] = val
 
+    def _get_penalty_func(self) -> Callable:  # sourcery skip: raise-specific-error
+        """Define penalty function given (possibly string) input."""
+        PENALTIES = {"len_penalty": len_penalty, "mean_diff_penalty": mean_diff_penalty}
+
+        if callable(self.penalty):
+            return self.penalty
+
+        elif isinstance(self.penalty, str):
+            if self.penalty in PENALTIES:
+                return PENALTIES[self.penalty]
+
+        raise Exception(
+            f"'penalty' must be callable or one of {PENALTIES.keys()}, got {self.penalty}"
+        )
+
+    def get_test_params(self) -> List[Dict]:
+        """Test parameters."""
+        return [
+            {"alpha": 1.0, "penalty": None},
+            {"alpha": 2.0, "penalty": "len_penalty"},
+        ]
+
 
 def get_distance(X: pd.DataFrame, Y: pd.DataFrame, alpha: float) -> float:
     """Calculate within/between cluster distance."""
@@ -412,19 +434,3 @@ def mean_diff_penalty(x: pd.DataFrame) -> float:
     the size of the new segments.
     """
     return np.mean(np.diff(np.sort(x)))
-
-
-def get_penalty_func(
-    penalty: Union[str, Callable]
-) -> Callable:  # sourcery skip: raise-specific-error
-    """Define penalty function given (possibly string) input."""
-    PENALTIES = {"len_penalty": len_penalty, "mean_diff_penalty": mean_diff_penalty}
-
-    if callable(penalty):
-        return penalty
-
-    elif isinstance(penalty, str):
-        if penalty in PENALTIES:
-            return PENALTIES[penalty]
-
-    raise Exception(f"'penalty' must be callable or one of {PENALTIES.keys()}")
