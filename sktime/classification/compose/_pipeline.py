@@ -422,7 +422,7 @@ class SklearnClassifierPipeline(_HeterogenousMetaEstimator, BaseClassifier):
         self.transformers = transformers
         self.transformers_ = TransformerPipeline(transformers)
 
-        super(ClassifierPipeline, self).__init__()
+        super(SklearnClassifierPipeline, self).__init__()
 
         # can handle multivariate iff all transformers can
         # sklearn transformers always support multivariate
