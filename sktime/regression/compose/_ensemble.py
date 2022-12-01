@@ -214,6 +214,7 @@ class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
             warm_start=warm_start,
             max_samples=max_samples,
         )
+        BaseRegressor.__init__(self)
 
         # We need to add is-fitted state when inheriting from scikit-learn
         self._is_fitted = False
