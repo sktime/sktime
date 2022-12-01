@@ -117,8 +117,8 @@ def deep_equals(x, y, return_msg=False):
         return ret(
             isinstance(y, type(np.nan)), f"type(x)={type(x)} != type(y)={type(y)}"
         )
-    elif isclass(x) or isclass(y):
-        return ret(x != y, f"type(x)={type(x)} != type(y)={type(y)}")
+    elif isclass(x):
+        return ret(x == y, f".class, x={x.__name__} != y={y.__name__}")
     elif hasattr(x, "get_params") and hasattr(y, "get_params"):
         res, msg = deep_equals(
             x.get_params(deep=False), y.get_params(deep=False), return_msg=True
