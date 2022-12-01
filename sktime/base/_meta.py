@@ -142,12 +142,13 @@ class _HeterogenousMetaEstimator:
         `subsetted_dict` : dict
             `dict_to_subset` subset to keys in `keys` described as above
         """
+
         def rem_prefix(x):
             if prefix is None:
                 return x
             prefix__ = f"{prefix}__"
             if x.startswith(prefix__):
-                return x[len(prefix__):]
+                return x[len(prefix__) :]
             else:
                 return x
 
