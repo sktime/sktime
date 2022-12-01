@@ -119,11 +119,6 @@ def deep_equals(x, y, return_msg=False):
         )
     elif isclass(x):
         return ret(x == y, f".class, x={x.__name__} != y={y.__name__}")
-    elif hasattr(x, "get_params") and hasattr(y, "get_params"):
-        res, msg = deep_equals(
-            x.get_params(deep=False), y.get_params(deep=False), return_msg=True
-        )
-        return ret(res, f"params, {msg}")
     elif type(x).__name__ == "ForecastingHorizon":
         return ret(*_fh_equals(x, y, return_msg=True))
     elif isinstance(x != y, bool) and x != y:
