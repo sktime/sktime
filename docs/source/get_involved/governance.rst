@@ -297,9 +297,6 @@ membership votes are subject to:
 The vote will take place in private communication channels and will be
 anonymous.
 
-To avoid deadlocks if there is an even number of CoC committee members, one
-of them will have a tie breaking privilege.
-
 .. _cc-members:
 
 CC members
