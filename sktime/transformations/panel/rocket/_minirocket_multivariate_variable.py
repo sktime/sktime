@@ -52,10 +52,11 @@ class MiniRocketMultivariateVariable(BaseTransformer):
     >>> # load multivariate and unequal length dataset
     >>> X_train, _ = load_japanese_vowels(split="train", return_X_y=True)
     >>> X_test, _ = load_japanese_vowels(split="test", return_X_y=True)
-    >>> pre_clf = MiniRocketMultivariateVariable(num_kernels=512)
+    >>> pre_clf = MiniRocketMultivariateVariable(pad_value_short_series=0.0)
     >>> pre_clf.fit(X_train, y=None)
     MiniRocketMultivariateVariable(...)
     >>> X_transformed = pre_clf.transform(X_test)
+    >>> X_transformed.shape
 
     Raises
     ------
