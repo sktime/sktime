@@ -93,8 +93,8 @@ def check_X(
     # enforce univariate data
     if enforce_univariate and n_columns > 1:
         raise ValueError(
-            f"X must be univariate with X.shape[1] == 1, but found: "
-            f"X.shape[1] == {n_columns}."
+            f"X must be univariate with X.shape[1] == 1, but found a multivariate "
+            f"series: X.shape[1] == {n_columns}."
         )
 
     # enforce minimum number of instances
