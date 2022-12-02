@@ -355,13 +355,6 @@ visible to, and only to, core developers, and is anonymous.
 The CC members' vote takes place in private communication channels,
 visible to, and only to, CC members, and is anonymous.
 
-In case the CC members' vote is tied,
-the CC member with the shortest continuous tenure has a tie breaking privilege.
-
-The tie breaking is by construction visible to CC members,
-does not require the tie breaking CC member to have voted in the anonymous vote,
-and need not follow their anonymous vote if they have voted.
-
 End of tenure
 ^^^^^^^^^^^^^
 
