@@ -5,9 +5,9 @@ import warnings
 from typing import Callable, Dict, List, Tuple
 
 import numpy as np
+import pandas as pd
 from scipy.spatial.distance import cdist
 
-import pandas as pd
 from sktime.transformations.base import BaseTransformer
 
 __author__ = ["KatieBuc"]
