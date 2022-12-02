@@ -27,7 +27,7 @@ jobs:
         run: npm install -g all-contributors-cli@6.24.0
       - name: Generate file
         id: generate
-        run: yarn all-contributors generate
+        run: npx all-contributors generate
       - name: commit-and-push
         id: candp
         uses: stefanzweifel/git-auto-commit-action@v4
