@@ -306,7 +306,7 @@ End of tenure
 
 CoC members can resign voluntarily at any point in time, by informing the CoC or core developers in writing.
 
-CoC membership ends automatically after a person has been in this role for 2 calendar years. If the person would like to continue the membership of CoC, a new nomination vote has to happen following the procedure as for nomination of a new CoC member.
+CoC membership ends automatically after a person has been in this role for 2 years. If the person would like to continue the membership of CoC, a new nomination vote has to happen following the procedure as for nomination of a new CoC member.
 The vote can be requested by the affected CoC member or by any core developer.
 
 .. _cc-members:
@@ -383,7 +383,7 @@ expected to resign voluntarily.
 Tenure also ends automatically when a CC member's tenure as core developer ends,
 e.g., through resignation or inactivity.
 
-CC membership ends automatically after a person has been in this role for 2 calendar years. If the person would like to continue the membership of CC, a new nomination vote has to happen following the procedure as for nomination of a new CC member.
+CC membership ends automatically after a person has been in this role for 2 years. If the person would like to continue the membership of CC, a new nomination vote has to happen following the procedure as for nomination of a new CC member.
 The vote can be requested by the affected CC member or by any core developer.
 
 Communications
