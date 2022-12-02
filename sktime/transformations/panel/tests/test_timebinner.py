@@ -12,9 +12,7 @@ def test_timebinner():
     """Test TimeBinner."""
     X, y = load_basic_motions(return_X_y=True)
 
-    def aggfunc(x):
-        return sum(x)
-
+    aggfunc = "sum"
     freq = 8
     idx = pd.interval_range(start=0, end=100, freq=freq, closed="left")
     tb = TimeBinner(idx=idx, aggfunc=aggfunc)
@@ -28,9 +26,7 @@ def test_timebinner2():
     """Test TimeBinner."""
     X, y = load_basic_motions(return_X_y=True)
 
-    def aggfunc(x):
-        return sum(x)
-
+    aggfunc = "sum"
     freq = 10
     idx = pd.interval_range(start=0, end=100, freq=freq, closed="right")
     tb = TimeBinner(idx=idx, aggfunc=aggfunc)
@@ -46,9 +42,7 @@ def test_timebinner3():
     """Test TimeBinner."""
     X, y = load_basic_motions(return_X_y=True)
 
-    def aggfunc(x):
-        return max(x)
-
+    aggfunc = "max"
     freq = 5
     idx = pd.interval_range(start=0, end=100, freq=freq, closed="right")
     tb = TimeBinner(idx=idx, aggfunc=aggfunc)

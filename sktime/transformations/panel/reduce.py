@@ -2,7 +2,7 @@
 """Tabularizer transform, for pipelining."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-__author__ = ["mloning", "fkiraly"]
+__author__ = ["mloning", "fkiraly", "kcc-lion"]
 __all__ = ["Tabularizer"]
 
 import pandas as pd
@@ -88,9 +88,9 @@ class TimeBinner(BaseTransformer):
     ----------
     idx : pd.IntervalIndex
         IntervalIndex defining intervals considered by aggfunc
-    aggfunc : callable
+    aggfunc : string
         Function used to aggregate the values in intervals.
-        Should have signature 1D iterable -> float
+        Should be one of ["sum", "min", "max", "median", "std"]
     """
 
     _tags = {
@@ -101,24 +101,20 @@ class TimeBinner(BaseTransformer):
         "scitype:transform-output": "Primitives",
         # what is the scitype of y: None (not needed), Primitives, Series, Panel
         "scitype:instancewise": True,  # is this an instance-wise transform?
-        "X_inner_mtype": ["nested_univ", "numpy3D"],
+        "X_inner_mtype": ["nested_univ"],
         # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # and for y?
     }
 
-    def __init__(self, idx, aggfunc):
-
-        self.idx = idx
-        self.aggfunc = aggfunc
-
-        super(TimeBinner, self).__init__()
+    def __init__(self, idx, aggfunc="sum"):
 
         assert isinstance(
             self.idx, pd.IntervalIndex
         ), "idx should be of type pd.IntervalIndex"
-        assert callable(self.aggfunc), "aggfunc should be a function"
-        # if writes derived values to self, should *not* overwrite self.parama etc
-        # instead, write to self._parama, self._newparam (starting with _)
+        self.idx = idx
+        assert aggfunc in ["sum", "min", "max", "median", "std"]
+        self.aggfunc = aggfunc
+        super(TimeBinner, self).__init__()
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
@@ -138,7 +134,20 @@ class TimeBinner(BaseTransformer):
         transformed version of X
         """
         idx = pd.cut(X.iloc[0, 0].index, bins=self.idx, include_lowest=True)
-        Xt = X.applymap(lambda x: x.groupby(idx).aggregate(self.aggfunc))
+
+        if self.aggfunc == "mean":
+            Xt = X.applymap(lambda x: x.groupby(idx).mean())
+        elif self.aggfunc == "sum":
+            Xt = X.applymap(lambda x: x.groupby(idx).sum())
+        elif self.aggfunc == "min":
+            Xt = X.applymap(lambda x: x.groupby(idx).min())
+        elif self.aggfunc == "max":
+            Xt = X.applymap(lambda x: x.groupby(idx).max())
+        elif self.aggfunc == "median":
+            Xt = X.applymap(lambda x: x.groupby(idx).median())
+        elif self.aggfunc == "std":
+            Xt = X.applymap(lambda x: x.groupby(idx).std())
+
         Xt = convert_to(Xt, to_type="numpyflat", as_scitype="Panel")
         return Xt
 
@@ -164,9 +173,6 @@ class TimeBinner(BaseTransformer):
         import pandas as pd
 
         idx = pd.interval_range(start=0, end=100, freq=10, closed="left")
-
-        def aggfunc(x):
-            return sum(x)
-
-        params = {"idx": idx, "aggfunc": aggfunc}
+        aggfuncs = ["sum", "min", "max", "median", "std"]
+        params = [{"idx": idx, "aggfunc": aggfunc} for aggfunc in aggfuncs]
         return params
