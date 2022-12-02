@@ -155,7 +155,7 @@ class MiniRocketMultivariateVariable(BaseTransformer):
             If any multivariate series_length in X is < 9 and
             pad_value_short_series is set to None
         """
-        X_2d_t, lenghts_1darray = _nested_dataframe_to_transposed2D_array_and_len_list(
+        X_2d_t, lengths_1darray = _nested_dataframe_to_transposed2D_array_and_len_list(
             X, pad=self.pad_value_short_series
         )
 
@@ -163,7 +163,7 @@ class MiniRocketMultivariateVariable(BaseTransformer):
             _reference_length = self.reference_length
         elif self.reference_length in self._reference_modes:
             # np.mean, np.max, np.median, np.min ..
-            _reference_length = getattr(np, self.reference_length)(lenghts_1darray)
+            _reference_length = getattr(np, self.reference_length)(lengths_1darray)
         else:
             raise ValueError(
                 "reference_length in MiniRocketMultivariateVariable must be int>=9 or "
@@ -172,17 +172,17 @@ class MiniRocketMultivariateVariable(BaseTransformer):
             )
         self._fitted_reference_length = int(max(9, _reference_length))
 
-        if lenghts_1darray.min() < 9:
-            failed_index = np.where(lenghts_1darray < 9)[0]
+        if lengths_1darray.min() < 9:
+            failed_index = np.where(lengths_1darray < 9)[0]
             raise ValueError(
                 (
                     f"X must be >= 9 for all samples, but found miniumum to be "
-                    f"{lenghts_1darray.min()}; at index {failed_index}, pad shorter "
+                    f"{lengths_1darray.min()}; at index {failed_index}, pad shorter "
                     "series so that n_timepoints >= 9 for all samples."
                 )
             )
 
-        if lenghts_1darray.min() == lenghts_1darray.max():
+        if lengths_1darray.min() == lengths_1darray.max():
             warnings.warn(
                 "X is of equal length, consider using MiniRocketMultivariate for "
                 "speedup and stability instead."
@@ -195,7 +195,7 @@ class MiniRocketMultivariateVariable(BaseTransformer):
 
         self.parameters = _fit_multi_var(
             X_2d_t,
-            L=lenghts_1darray,
+            L=lengths_1darray,
             reference_length=self._fitted_reference_length,
             num_features=self.num_kernels,
             max_dilations_per_kernel=self.max_dilations_per_kernel,
