@@ -29,23 +29,21 @@ class MiniRocketMultivariateVariable(BaseTransformer):
 
     Parameters
     ----------
-    num_kernels              : int, (default=10_000)
-                                number of random convolutional kernels.
-                                Reduced to the closest multiple of 84.
-    max_dilations_per_kernel : int, (default=32)
-                                maximum number of dilations per kernel
-    reference_length         : int or str, (default `'max'`)
-                                series-length of reference, str defines
-                                how to infer from X during 'fit'.
-                                options are `'max'`, `'mean'`, `'median'`, `'min'`
-    n_jobs                   : int, (default=1)
-                                The number of jobs to run in parallel
-                                for `transform`. ``-1`` means using all processors.
-    pad_value_short_series   : float or None, (default=None)
-                                if padding series with len<9 to value.
-                                if None, not padding is performed.
-    random_state             : int, (default=None)
-                                random seed, not set by default
+    num_kernels : int, default=10,000
+       number of random convolutional kernels. The calculated number of features is the
+       nearest multiple of n_features_per_kernel(default 4)*84=336 < 50,000
+       (2*n_features_per_kernel(default 4)*num_kernels(default 10,000)).
+    max_dilations_per_kernel : int, default=32
+        maximum number of dilations per kernel.
+    reference_length : int or str, default = `'max'`
+        series-length of reference, str defines how to infer from X during 'fit'.
+        options are `'max'`, `'mean'`, `'median'`, `'min'`.
+    pad_value_short_series : float or None, default=None
+        if padding series with len<9 to value. if None, not padding is performed.
+    n_jobs : int, default=1
+        The number of jobs to run in parallel for `transform`. ``-1`` means using all
+        processors.
+    random_state : None or int, default = None
 
     Examples
     --------
@@ -54,12 +52,10 @@ class MiniRocketMultivariateVariable(BaseTransformer):
     >>> # load multivariate and unequal length dataset
     >>> X_train, _ = load_japanese_vowels(split="train", return_X_y=True)
     >>> X_test, _ = load_japanese_vowels(split="test", return_X_y=True)
-    >>> pre_clf = MiniRocketMultivariateVariable(pad_value_short_series=0.0)
+    >>> pre_clf = MiniRocketMultivariateVariable(num_kernels=512)
     >>> pre_clf.fit(X_train, y=None)
     MiniRocketMultivariateVariable(...)
     >>> X_transformed = pre_clf.transform(X_test)
-    >>> X_transformed.shape
-    (370, 9996)
 
     Raises
     ------
