@@ -57,6 +57,7 @@ class MiniRocketMultivariateVariable(BaseTransformer):
     MiniRocketMultivariateVariable(...)
     >>> X_transformed = pre_clf.transform(X_test)
     >>> X_transformed.shape
+    (370, 9996)
 
     Raises
     ------
