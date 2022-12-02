@@ -410,7 +410,8 @@ class EAgglo(BaseTransformer):
             f"'penalty' must be callable or {PENALTIES.keys()}, got {self.penalty}"
         )
 
-    def get_test_params(self) -> List[Dict]:
+    @classmethod
+    def get_test_params(cls) -> List[Dict]:
         """Test parameters."""
         return [
             {"alpha": 1.0, "penalty": None},
