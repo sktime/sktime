@@ -108,10 +108,11 @@ class TimeBinner(BaseTransformer):
 
     def __init__(self, idx, aggfunc="sum"):
 
+        self.idx = idx
         assert isinstance(
             self.idx, pd.IntervalIndex
         ), "idx should be of type pd.IntervalIndex"
-        self.idx = idx
+
         assert aggfunc in ["sum", "min", "max", "median", "std"]
         self.aggfunc = aggfunc
         super(TimeBinner, self).__init__()
