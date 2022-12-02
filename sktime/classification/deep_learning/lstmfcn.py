@@ -43,8 +43,6 @@ class LSTMFCNClassifier(BaseDeepClassifier):
     callbacks: keras callbacks, default=ReduceLRonPlateau
         Keras callbacks to use such as learning rate reduction or saving best model
         based on validation error
-    random_state: int,
-        seed to any needed random actions
     verbose: 'auto', 0, 1, or 2. Verbosity mode.
         0 = silent, 1 = progress bar, 2 = one line per epoch.
         'auto' defaults to 1 for most cases, but 2 when used with
@@ -80,7 +78,7 @@ class LSTMFCNClassifier(BaseDeepClassifier):
         lstm_size=8,
         attention=False,
         callbacks=None,
-        random_state=0,
+        random_state=None,
         verbose=0,
     ):
 
@@ -122,7 +120,10 @@ class LSTMFCNClassifier(BaseDeepClassifier):
         -------
         output : a compiled Keras Model
         """
-        import keras
+        import tensorflow as tf
+        from tensorflow import keras
+
+        tf.random.set_seed(self.random_state)
 
         input_layers, output_layer = self._network.build_network(input_shape, **kwargs)
 
@@ -139,7 +140,7 @@ class LSTMFCNClassifier(BaseDeepClassifier):
         )
 
         if self.callbacks is None:
-            self.callbacks = []
+            self._callbacks = []
 
         return model
 
@@ -171,7 +172,7 @@ class LSTMFCNClassifier(BaseDeepClassifier):
         -------
         self : object
         """
-        self.random_state = check_random_state(self.random_state)
+        check_random_state(self.random_state)
 
         y_onehot = self.convert_y_to_keras(y)
 
@@ -194,7 +195,7 @@ class LSTMFCNClassifier(BaseDeepClassifier):
             batch_size=self.batch_size,
             epochs=self.n_epochs,
             verbose=self.verbose,
-            callbacks=self.callbacks,
+            callbacks=self._callbacks,
         )
 
         self._is_fitted = True
