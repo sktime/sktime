@@ -40,7 +40,8 @@ class EAgglo(BaseTransformer):
     penalty : str or callable or None (default=None)
         Function that defines a penalization of the sequence of goodness-of-fit
         statistic, when overfitting is a concern. If `None` not penalty is applied.
-        Could also be an existing penalty name, either `len_penalty` or `mean_diff_penalty`.
+        Could also be an existing penalty name, either `len_penalty` or
+        `mean_diff_penalty`.
 
     Attributes
     ----------
@@ -406,7 +407,7 @@ class EAgglo(BaseTransformer):
                 return PENALTIES[self.penalty]
 
         raise Exception(
-            f"'penalty' must be callable or one of {PENALTIES.keys()}, got {self.penalty}"
+            f"'penalty' must be callable or {PENALTIES.keys()}, got {self.penalty}"
         )
 
     def get_test_params(self) -> List[Dict]:
