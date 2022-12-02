@@ -293,7 +293,6 @@ developers which will stay open for 5 days excluding weekends. CoC committee
 membership votes are subject to:
 
 * a 2/3 majority of all cast votes, and
-* a simple majority approval of all the current CoC committee members.
 
 The vote will take place in private communication channels and will be
 anonymous.
@@ -350,7 +349,6 @@ for 5 days excluding weekends and then a vote by core developers which will
 stay open for 5 days excluding weekends. Approval of appointment requires:
 
 * a 2/3 majority of all cast votes, and
-* a simple majority approval of all the current CC members.
 
 The core developer vote takes place in private communication channels,
 visible to, and only to, core developers, and is anonymous.
