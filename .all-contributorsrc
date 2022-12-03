@@ -1652,7 +1652,6 @@
       ]
     },
     {
-
       "login": "AurumnPegasus",
       "name": "Shivansh Subramanian",
       "avatar_url": "https://avatars.githubusercontent.com/u/54315149?v=4",
@@ -1702,7 +1701,6 @@
       "profile": "https://github.com/mariamjabara",
       "contributions": [
         "code"
-
       ]
     },
     {
@@ -1780,7 +1778,7 @@
       ]
     },
     {
-      "login": "bugslayer-332" ,
+      "login": "bugslayer-332",
       "name": "Arepalli Yashwanth Reddy",
       "profile": "https://github.com/bugslayer-332",
       "contributions": [
@@ -1845,7 +1843,7 @@
         "code",
         "test",
         "ideas"
-       ]
+      ]
     },
     {
       "login": "KishManani",
@@ -1858,31 +1856,40 @@
         "test",
         "bug",
         "ideas"
-     },
-     {
-      "login": "jorenham",
-      "name": "Joren Hammudoglu",
-      "profile": "https://github.com/jorenham",
-      "contributions": [
-        "build"
-      ]
-    },
-    {
-      "login": "wolph",
-      "name": "Rick van Hattem",
-      "profile": "https://github.com/wolph",
-      "contributions": [
-        "build"
-      ]
-    },
-    {
-      "login": "templierw",
-      "name": "William Templier",
-      "avatar_url": "https://github.com/templierw.png",
-      "profile": "https://www.linkedin.com/in/templierw/",
-      "contributions": [
-        "doc"
-      ]
-    }
-  ]
-}
+      },
+      {
+        "login": "jorenham",
+        "name": "Joren Hammudoglu",
+        "profile": "https://github.com/jorenham",
+        "contributions": [
+          "build"
+        ]
+      },
+      {
+        "login": "wolph",
+        "name": "Rick van Hattem",
+        "profile": "https://github.com/wolph",
+        "contributions": [
+          "build"
+        ]
+      },
+      {
+        "login": "templierw",
+        "name": "William Templier",
+        "avatar_url": "https://github.com/templierw.png",
+        "profile": "https://www.linkedin.com/in/templierw/",
+        "contributions": [
+          "doc"
+        ]
+      },
+      {
+        "login": "nshahpazov",
+        "name": "Nikola Shahpazov",
+        "avatar_url": "https://avatars.githubusercontent.com/nshahpazov",
+        "profile": "https://www.linkedin.com/in/nshahpazov/",
+        "contributions": [
+          "doc"
+        ]
+      }
+    ]
+  }
