@@ -219,7 +219,7 @@ class Arsenal(BaseClassifier):
                 train_time < time_limit
                 and self.n_estimators < self.contract_max_n_estimators
             ):
-                fit = Parallel(n_jobs=self._threads_to_use)(
+                fit = Parallel(n_jobs=self._threads_to_use, prefer="threads")(
                     delayed(self._fit_estimator)(
                         _clone_estimator(
                             base_rocket,
@@ -243,7 +243,7 @@ class Arsenal(BaseClassifier):
                 self.n_estimators += self._threads_to_use
                 train_time = time.time() - start_time
         else:
-            fit = Parallel(n_jobs=self._threads_to_use)(
+            fit = Parallel(n_jobs=self._threads_to_use, prefer="threads")(
                 delayed(self._fit_estimator)(
                     _clone_estimator(
                         base_rocket,
@@ -304,7 +304,7 @@ class Arsenal(BaseClassifier):
         y : array-like, shape = [n_instances, n_classes_]
             Predicted probabilities using the ordering in classes_.
         """
-        y_probas = Parallel(n_jobs=self._threads_to_use)(
+        y_probas = Parallel(n_jobs=self._threads_to_use, prefer="threads")(
             delayed(self._predict_proba_for_estimator)(
                 X,
                 self.estimators_[i],
@@ -341,7 +341,7 @@ class Arsenal(BaseClassifier):
         if not self.save_transformed_data:
             raise ValueError("Currently only works with saved transform data from fit.")
 
-        p = Parallel(n_jobs=self._threads_to_use)(
+        p = Parallel(n_jobs=self._threads_to_use, prefer="threads")(
             delayed(self._train_probas_for_estimator)(
                 y,
                 i,

@@ -151,7 +151,7 @@ class SupervisedTimeSeriesForest(BaseClassifier):
                     (rng.choice(cls_idx, size=average - class_counts[i]), balance_cases)
                 )
 
-        fit = Parallel(n_jobs=self._threads_to_use)(
+        fit = Parallel(n_jobs=self._threads_to_use, prefer="threads")(
             delayed(self._fit_estimator)(
                 X,
                 X_p,
@@ -213,7 +213,7 @@ class SupervisedTimeSeriesForest(BaseClassifier):
         _, X_p = signal.periodogram(X)
         X_d = np.diff(X, 1)
 
-        y_probas = Parallel(n_jobs=self._threads_to_use)(
+        y_probas = Parallel(n_jobs=self._threads_to_use, prefer="threads")(
             delayed(self._predict_proba_for_estimator)(
                 X,
                 X_p,

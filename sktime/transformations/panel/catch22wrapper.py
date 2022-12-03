@@ -169,7 +169,7 @@ class Catch22Wrapper(BaseTransformer):
 
         threads_to_use = check_n_jobs(self.n_jobs)
 
-        c22_list = Parallel(n_jobs=threads_to_use)(
+        c22_list = Parallel(n_jobs=threads_to_use, prefer="threads")(
             delayed(self._transform_case)(
                 X.iloc[i],
                 f_idx,

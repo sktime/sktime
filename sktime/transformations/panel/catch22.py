@@ -175,7 +175,7 @@ class Catch22(BaseTransformer):
                 "current 1 CPU core."
             )
 
-        c22_list = Parallel(n_jobs=threads_to_use)(
+        c22_list = Parallel(n_jobs=threads_to_use, prefer="threads")(
             delayed(self._transform_case)(
                 X.iloc[i],
                 f_idx,
@@ -367,7 +367,7 @@ class Catch22(BaseTransformer):
                 "current 1 CPU core."
             )
 
-        c22_list = Parallel(n_jobs=threads_to_use)(
+        c22_list = Parallel(n_jobs=threads_to_use, prefer="threads")(
             delayed(self._transform_case_single)(
                 X[i],
                 feature,

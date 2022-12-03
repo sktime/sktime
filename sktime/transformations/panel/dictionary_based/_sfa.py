@@ -271,7 +271,7 @@ class SFA(BaseTransformer):
 
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", category=NumbaTypeSafetyWarning)
-            transform = Parallel(n_jobs=self.n_jobs)(
+            transform = Parallel(n_jobs=self.n_jobs, prefer="threads")(
                 delayed(self._transform_case)(
                     X[i, :],
                     supplied_dft=self.binning_dft[i] if self.keep_binning_dft else None,
@@ -713,7 +713,7 @@ class SFA(BaseTransformer):
         if self.typed_dict:
             warnings.simplefilter("ignore", category=NumbaTypeSafetyWarning)
 
-        dim = Parallel(n_jobs=self.n_jobs)(
+        dim = Parallel(n_jobs=self.n_jobs, prefer="threads")(
             delayed(self._shorten_case)(word_len, i) for i in range(len(self.words))
         )
 

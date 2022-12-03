@@ -300,7 +300,7 @@ class DrCIF(BaseClassifier):
                 train_time < time_limit
                 and self._n_estimators < self.contract_max_n_estimators
             ):
-                fit = Parallel(n_jobs=self._threads_to_use)(
+                fit = Parallel(n_jobs=self._threads_to_use, prefer="threads")(
                     delayed(self._fit_estimator)(
                         X,
                         X_p,
@@ -328,7 +328,7 @@ class DrCIF(BaseClassifier):
                 self._n_estimators += self._threads_to_use
                 train_time = time.time() - start_time
         else:
-            fit = Parallel(n_jobs=self._threads_to_use)(
+            fit = Parallel(n_jobs=self._threads_to_use, prefer="threads")(
                 delayed(self._fit_estimator)(
                     X,
                     X_p,
@@ -381,7 +381,7 @@ class DrCIF(BaseClassifier):
 
         X_d = np.diff(X, 1)
 
-        y_probas = Parallel(n_jobs=self._threads_to_use)(
+        y_probas = Parallel(n_jobs=self._threads_to_use, prefer="threads")(
             delayed(self._predict_proba_for_estimator)(
                 X,
                 X_p,
@@ -423,7 +423,7 @@ class DrCIF(BaseClassifier):
         if not self.save_transformed_data:
             raise ValueError("Currently only works with saved transform data from fit.")
 
-        p = Parallel(n_jobs=self._threads_to_use)(
+        p = Parallel(n_jobs=self._threads_to_use, prefer="threads")(
             delayed(self._train_probas_for_estimator)(
                 y,
                 i,

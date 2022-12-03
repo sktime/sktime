@@ -158,7 +158,7 @@ class TimeSeriesForestClassifier(
             Predicted probabilities
         """
         X = X.squeeze(1)
-        y_probas = Parallel(n_jobs=self.n_jobs)(
+        y_probas = Parallel(n_jobs=self.n_jobs, prefer="threads")(
             delayed(_predict_single_classifier_proba)(
                 X, self.estimators_[i], self.intervals_[i]
             )

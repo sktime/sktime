@@ -721,7 +721,7 @@ def pairwise_distances(X, Y=None, use_boss_distance=False, n_jobs=1):
         distance_matrix = np.zeros((X.shape[0], Y.shape[0]))
 
         if effective_n_jobs(n_jobs) > 1:
-            Parallel(n_jobs=n_jobs, backend="threading")(
+            Parallel(n_jobs=n_jobs, prefer="threads")(
                 delayed(_dist_wrapper)(distance_matrix, X, Y, s, XX_row_norms, XY)
                 for s in gen_even_slices(_num_samples(X), effective_n_jobs(n_jobs))
             )
