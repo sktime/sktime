@@ -164,6 +164,7 @@ Shapelets, wavelets, and convolution
     Rocket
     MiniRocket
     MiniRocketMultivariate
+    MiniRocketMultivariateVariable
 
 .. currentmodule:: sktime.transformations.panel.dwt
 
@@ -473,6 +474,15 @@ These transformers select features in `X` based on `y`.
     :template: class.rst
 
     FeatureSelection
+
+.. currentmodule:: sktime.transformations.panel.channel_selection
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ElbowClassSum
+    ElbowClassPairwise
 
 Subsetting time points and variables
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

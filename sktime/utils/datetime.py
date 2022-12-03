@@ -7,7 +7,6 @@ __all__ = []
 
 from functools import singledispatch
 from typing import Optional, Tuple, Union
-from warnings import warn
 
 import numpy as np
 import pandas as pd
@@ -145,7 +144,7 @@ def _shift(x, by=1, return_index=False):
 
     Parameters
     ----------
-    x : pd.Index, pd.Period, int. If pd.Index or pd.Peeriod, must have `freq` attribute.
+    x : pd.Index, pd.Period, int. If pd.Index or pd.Period, must have `freq` attribute.
         If pd.Index, must be of integer type, PeriodIndex, or DateTimeIndex
         Time point to shift
     by : int, optional, default=1
@@ -161,12 +160,8 @@ def _shift(x, by=1, return_index=False):
             if `x` is index, is coerced to index element by selecting first element
         Period shift is integer for `x: int`, and `freq` if `x` is temporal with `freq`
     """
-    # deprecate in 0.13.0 and remove in 0.14.0, pd.Timestamp will not have freq
     if isinstance(x, pd.Timestamp):
-        warn("_shift no longer supports x: pd.Timestamp fom 0.14.0", DeprecationWarning)
-        if not hasattr(x, "freq") or x.freq is None:
-            raise ValueError("No `freq` information available")
-        # raise TypeError("_shift no longer supports x: pd.Timestamp")
+        raise TypeError("_shift does not support x of type pd.Timestamp")
 
     # we ensure idx is pd.Index, x is first (and usually only) element
     if isinstance(x, pd.Index):

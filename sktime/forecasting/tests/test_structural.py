@@ -245,6 +245,10 @@ def test_result_consistency_exog(level_sample_data_split):
     assert len(fh) == y_pred_forecaster.shape[0]
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("statsmodels", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
 @pytest.mark.parametrize("alpha", [0.01, 0.05, [0.01, 0.05]])
 @pytest.mark.parametrize("coverage", [0.6, 0.99, [0.9, 0.95]])
 @pytest.mark.parametrize("fh_length", [1, 3, 5, 10, 20])
@@ -268,6 +272,10 @@ def test_prediction_intervals_no_exog(alpha, coverage, fh_length, y_airlines):
         assert intervals_np[0] < intervals_np[1]
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("statsmodels", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
 @pytest.mark.parametrize("alpha", [0.01, 0.05, [0.01, 0.05]])
 @pytest.mark.parametrize("coverage", [0.6, 0.99, [0.9, 0.95]])
 def test_prediction_intervals_exog(alpha, coverage, level_sample_data_split):
