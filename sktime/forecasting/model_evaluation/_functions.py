@@ -8,7 +8,7 @@ __all__ = ["evaluate"]
 
 import time
 import warnings
-from typing import List, Optional, Union
+from typing import Any, List, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -208,8 +208,8 @@ def _evaluate_window(
 def evaluate(
     forecaster: BaseForecaster,
     cv: BaseSplitter,
-    y,
-    X=None,
+    y: Any,
+    X: Optional[Any] = None,
     strategy: str = "refit",
     scoring: Optional[Union[callable, List[callable]]] = None,
     return_data: bool = False,
