@@ -6,11 +6,12 @@
 __author__ = ["mloning", "RNKuhns", "danbartl", "grzegorzrut"]
 __all__ = ["SummaryTransformer", "WindowSummarizer"]
 
+import warnings
+
 import pandas as pd
 from joblib import Parallel, delayed
 
 from sktime.transformations.base import BaseTransformer
-from sktime.utils.multiindex import flatten_multiindex
 
 
 class WindowSummarizer(BaseTransformer):
@@ -31,12 +32,29 @@ class WindowSummarizer(BaseTransformer):
     lag_feature: dict of str and list, optional (default = dict containing first lag)
         Dictionary specifying as key the type of function to be used and as value
         the argument `window`.
-        For all keys other than `lag`, the argument `window` is a length 2 list
-        containing the integer `lag`, which specifies how far back
-        in the past the window will start, and the integer `window length`,
-        which will give the length of the window across which to apply the function.
-        For ease of notation, for the key "lag", only a single integer
+
+        For all keys other than `lag`, the argument `window` is a length 2 list.
+        The window elements can be either integers indicate the number of
+        observations, or strings specifying a time period (an offset).
+
+        The first element of the `window` is the `lag`, which specifies how far back
+        in the past the window will start. The second element, `window length`,
+        is the length of the window across which to apply the function.
+
+        For ease of notation, for the key "lag", only a single integer or offset
         specifying the `lag` argument will be provided.
+
+        The offsets work only with datasets with time index (either pd.DateimeIndex,
+        pd.RangeIndex, or pd.TimedeltaIndex) are expected to have a format of
+        'NUMBER'+'UNIT', where NUMBER is an integer and UNIT is one of the following:
+        * D - day,
+        * H - hour,
+        * T - minute,
+        * S - second,
+        * L - milisecond,
+        * U - microsecond,
+        * N - nanosecond.
+        For instance, the following offsets would be acceptable: '1D', '2H', '30S'.
 
         Please see below a graphical representation of the logic using the following
         symbols:
@@ -51,14 +69,14 @@ class WindowSummarizer(BaseTransformer):
         potentially z.
 
         For `window = [1, 3]`, we have a `lag` of 1 and
-        `window_length` of 3 to target the three last days (exclusive z) that were
+        `window_length` of 3 to target the three last records (exclusive z) that were
         observed. Summarization is done across windows like this:
         |-------------------------- |
         | x x x x x x x x * * * z x |
         |---------------------------|
 
         For `window = [0, 3]`, we have a `lag` of 0 and
-        `window_length` of 3 to target the three last days (inclusive z) that
+        `window_length` of 3 to target the three last records (inclusive z) that
         were observed. Summarization is done across windows like this:
         |-------------------------- |
         | x x x x x x x x * * z x x |
@@ -80,8 +98,15 @@ class WindowSummarizer(BaseTransformer):
         | x x x x x x x * x x * z x |
         |---------------------------|
 
-        key: either custom function call (to be
-                provided by user) or str corresponding to native pandas window function:
+
+        If, for instance, the time series would have a daily frequency and the window
+        function would be specified as  `window = ['1D','4D']`, the logic with
+        the offsets would be exactly the same. Note that it is possible that the time
+        difference between consecutive records is not constant or the offset is
+        not equal to a multiple of a time series frequency.
+
+        key: either custom function call (to be provided by user)
+        or str corresponding to native pandas window function:
                 * "sum",
                 * "mean",
                 * "median",
@@ -142,17 +167,37 @@ class WindowSummarizer(BaseTransformer):
     >>> y = load_airline()
     >>> kwargs = {
     ...     "lag_feature": {
-    ...         "lag": [1],
-    ...         "mean": [[1, 3], [3, 6]],
+    ...         "lag": [1,'30D'],
+    ...         "mean": [[1, 3], ['30D', '60D']],
     ...         "std": [[1, 4]],
     ...     }
     ... }
     >>> transformer = WindowSummarizer(**kwargs)
     >>> y_transformed = transformer.fit_transform(y)
 
+        Example where we transform on a different, later test set:
+    >>> y = load_airline()
+    >>> y_train, y_test = temporal_train_test_split(y)
+    >>> kwargs = {
+    ...     "lag_config": {
+    ...         "lag": ["lag", [[1, 0],['60D', 0]]],
+    ...         "mean": ["mean", [[3, 0], ['30D', '60D']]],
+    ...         "std": ["std", [[4, 0],['30D','90D']]],
+    ...     }
+    ... }
+    >>> transformer = WindowSummarizer(**kwargs)
+    >>> y_test_transformed = transformer.fit(y_train).transform(y_test)
+
         Example with transforming multiple columns of exogeneous features
     >>> y, X = load_longley()
     >>> y_train, y_test, X_train, X_test = temporal_train_test_split(y, X)
+    >>> kwargs = {
+    ...     "lag_config": {
+    ...         "lag": ["lag", [[1, 0]]],
+    ...         "mean": ["mean", [[3, 0]]],
+    ...         "std": ["std", [[4, 0]]],
+    ...     }
+    ... }
     >>> fh = ForecastingHorizon(X_test.index, is_relative=False)
     >>> # Example transforming only X
     >>> pipe = ForecastingPipeline(
@@ -204,16 +249,39 @@ class WindowSummarizer(BaseTransformer):
 
     def __init__(
         self,
+        lag_config=None,
         lag_feature=None,
         n_jobs=-1,
         target_cols=None,
         truncate=None,
     ):
 
+        # self._converter_store_X = dict()
+        self.lag_config = lag_config
         self.lag_feature = lag_feature
         self.n_jobs = n_jobs
         self.target_cols = target_cols
         self.truncate = truncate
+
+        # if lag config has input other than ints,
+        # pd-multiindex is disabled
+        lag_conf = None
+        if lag_config is not None:
+            lag_conf = [x[1:] for x in lag_config.values()]
+        if lag_feature is not None:
+            lag_conf = lag_feature.values()
+        if lag_conf is not None:
+            if len([x for x in lag_conf if not isinstance(x, int)]) > 0:
+                WindowSummarizer._tags["X_inner_mtype"] = [
+                    # pd-multiindex", not compatible with panels
+                    "pd.DataFrame"
+                ]
+
+                WindowSummarizer._tags["enforce_index_type"] = [
+                    "pd.DatetimeIndex",
+                    "pd.RangeIndex",
+                    "pd.TimedeltaIndex",
+                ]
 
         super(WindowSummarizer, self).__init__()
 
@@ -256,33 +324,51 @@ class WindowSummarizer(BaseTransformer):
             self._target_cols = self.target_cols
 
         # Convert lag config dictionary to pandas dataframe
-        if self.lag_feature is None:
-            func_dict = pd.DataFrame(
-                {
-                    "lag": [1],
-                }
-            ).T.reset_index()
+        if self.lag_config is not None:
+            func_dict = pd.DataFrame(self.lag_config).T.reset_index()
+            func_dict.rename(
+                columns={"index": "name", 0: "summarizer", 1: "window"},
+                inplace=True,
+            )
+            func_dict = func_dict.explode("window")
+            func_dict["window"] = func_dict["window"].apply(lambda x: [x[1] + 1, x[0]])
+            func_dict.drop("name", inplace=True, axis=1)
+            warnings.warn(
+                "Specifying lag features via lag_config is deprecated since 0.12.0,"
+                + " and will be removed in 0.13.0. Please use the lag_feature notation"
+                + " (see the documentation for the new notation)."
+            )
         else:
-            func_dict = pd.DataFrame.from_dict(
-                self.lag_feature, orient="index"
-            ).reset_index()
+            if self.lag_feature is None:
+                func_dict = pd.DataFrame(
+                    {
+                        "lag": [1],
+                    }
+                ).T.reset_index()
+            else:
+                func_dict = pd.DataFrame.from_dict(
+                    self.lag_feature, orient="index"
+                ).reset_index()
 
-        func_dict = pd.melt(
-            func_dict, id_vars="index", value_name="window", ignore_index=False
-        )
-        func_dict.sort_index(inplace=True)
-        func_dict.drop("variable", axis=1, inplace=True)
-        func_dict.rename(
-            columns={"index": "summarizer"},
-            inplace=True,
-        )
-        func_dict = func_dict.dropna(axis=0, how="any")
-        # Identify lags (since they can follow special notation)
-        lags = func_dict["summarizer"] == "lag"
-        # Convert lags to default list notation with window_length 1
-        boost_lag = func_dict.loc[lags, "window"].apply(lambda x: [int(x), 1])
-        func_dict.loc[lags, "window"] = boost_lag
-        self.truncate_start = func_dict["window"].apply(lambda x: x[0] + x[1] - 1).max()
+            func_dict = pd.melt(
+                func_dict, id_vars="index", value_name="window", ignore_index=False
+            )
+            func_dict.sort_index(inplace=True)
+            func_dict.drop("variable", axis=1, inplace=True)
+            func_dict.rename(
+                columns={"index": "summarizer"},
+                inplace=True,
+            )
+            func_dict = func_dict.dropna(axis=0, how="any")
+            # Identify lags (since they can follow special notation)
+            lags = func_dict["summarizer"] == "lag"
+            # Convert lags to default list notation with window_length 1
+            boost_lag = func_dict.loc[lags, "window"].apply(lambda x: [x, 1])
+            func_dict.loc[lags, "window"] = boost_lag
+
+        # self.truncate_start = func_dict["window"]\
+        # .apply(lambda x: x[0] + x[1] - 1).max()
+
         self._func_dict = func_dict
 
     def _transform(self, X, y=None):
@@ -404,6 +490,31 @@ def get_name_list(Z):
     return Z_name
 
 
+def find_timedelta_unit_value(timedelta):
+    """Extract the number of time units and the time unit itself.
+
+    Parameters
+    ----------
+    timedelta : pd.Timedelta
+
+    Returns
+    -------
+    value : int
+        Number of time units.
+    unit : str
+        Character describing the timedelta unit.
+    """
+    time_units = ["D", "H", "T", "S", "L", "U", "N"]
+    unit = timedelta.resolution_string
+    if unit in time_units:
+        pass
+    else:
+        raise ValueError("passed incompatible time span")
+    value = round(timedelta.asm8 / pd.Timedelta(1, unit))
+
+    return value, unit
+
+
 def _window_feature(Z, summarizer=None, window=None, bfill=False):
     """Compute window features and lag.
 
@@ -429,39 +540,85 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False):
          or custom function call. See for the native window functions also
          https://pandas.pydata.org/docs/reference/window.html.
     window: list of integers
-        List containg window_length and lag parameters, see WindowSummarizer
+        List containing window_length and lag parameters, see WindowSummarizer
         class description for in-depth explanation.
     """
     lag = window[0]
     window_length = window[1]
 
+    # this could be moved to _fit in WindowSummarizer
+    if isinstance(lag, str):
+        lag = pd.Timedelta(lag)
+
+    # this could be moved to _fit in WindowSummarizer
+    if isinstance(window_length, str):
+        window_length = pd.Timedelta(window_length)
+
+    # this could be moved to _fit in WindowSummarizer
+    timedelta_lag = isinstance(lag, pd.Timedelta)
+    timedelta_window = isinstance(window_length, pd.Timedelta)
+    freq = None
+    if timedelta_lag or timedelta_window:
+
+        if timedelta_lag:
+            if isinstance(Z, pd.core.groupby.generic.SeriesGroupBy):
+                raise TypeError(
+                    "Timedelta lags are not compatible with SeriesGroupBy objects."
+                )
+
+            lag_value, freq = find_timedelta_unit_value(lag)
+
+            # to have similar behavior as for numerical lags?
+            lag = int(lag_value)
+        Z_index = Z.index
+        # this could be moved to _fit in WindowSummarizer
+        period_index_flag = isinstance(Z_index, pd.PeriodIndex)
+        if period_index_flag:
+            org_freq = Z_index.freq
+            try:
+                Z_index = Z_index.to_timestamp()
+                Z.index = Z_index
+            except Exception:
+                raise TypeError("Index has to be transformable to DatetimeIndex.")
+        Z_index = pd.DataFrame(index=Z_index)
+        Z = Z_index.shift(-lag, freq).join(Z, how="outer")
+        if timedelta_window:
+            window_value, window_freq = find_timedelta_unit_value(window_length)
+    if not timedelta_lag:
+        # procedure for integer lags
+        lag = int(lag)
+
     if summarizer in pd_rolling:
         if isinstance(Z, pd.core.groupby.generic.SeriesGroupBy):
             if bfill is False:
-                feat = getattr(Z.shift(lag).rolling(window_length), summarizer)()
+                feat = getattr(Z.shift(lag, freq).rolling(window_length), summarizer)()
             else:
                 feat = getattr(
-                    Z.shift(lag).fillna(method="bfill").rolling(window_length),
+                    Z.shift(lag, freq).fillna(method="bfill").rolling(window_length),
                     summarizer,
                 )()
             feat = pd.DataFrame(feat)
         else:
             if bfill is False:
                 feat = Z.apply(
-                    lambda x: getattr(x.shift(lag).rolling(window_length), summarizer)()
+                    lambda x: getattr(
+                        x.shift(lag, freq).rolling(window_length), summarizer
+                    )()
                 )
             else:
                 feat = Z.apply(
                     lambda x: getattr(
-                        x.shift(lag).fillna(method="bfill").rolling(window_length),
+                        x.shift(lag, freq)
+                        .fillna(method="bfill")
+                        .rolling(window_length),
                         summarizer,
                     )()
                 )
     else:
         if bfill is False:
-            feat = Z.shift(lag)
+            feat = Z.shift(lag, freq)
         else:
-            feat = Z.shift(lag).fillna(method="bfill")
+            feat = Z.shift(lag, freq).fillna(method="bfill")
         if isinstance(Z, pd.core.groupby.generic.SeriesGroupBy) and callable(
             summarizer
         ):
@@ -493,6 +650,24 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False):
             },
             inplace=True,
         )
+
+    if timedelta_lag or timedelta_window:
+
+        feat = Z_index.join(feat, how="left")
+
+        # if timedelta_window:
+        #  mask = [
+        #  x < min(Z_index.shift(lag, freq).shift(window_value, window_freq).index)
+        #  for x in feat.index
+        #  ]
+        # else:
+        #  # mark cases in the index that are not in the Z_index.shift(lag, freq) index
+        #     mask = [x < min(Z_index.shift(lag, freq).index) for x in feat.index]
+        # feat.loc[mask] = np.nan
+        # returning initial PeriodIndex frequency
+        if period_index_flag:
+            feat = feat.to_period(org_freq)
+
     return feat
 
 
@@ -595,13 +770,11 @@ class SummaryTransformer(BaseTransformer):
     quantiles : str, list, tuple or None, default=(0.1, 0.25, 0.5, 0.75, 0.9)
         Optional list of series quantiles to calculate. If None, no quantiles
         are calculated.
-    flatten_transform_index : bool, optional (default=True)
-        if True, columns of return DataFrame are flat, by "variablename__feature"
-        if False, columns are MultiIndex (variablename__feature)
-        has no effect if return mtype is one without column names
 
     See Also
     --------
+    MeanTransformer :
+        Calculate the mean of a timeseries.
     WindowSummarizer:
         Extracting features across (shifted) windows from series
 
@@ -635,12 +808,9 @@ class SummaryTransformer(BaseTransformer):
         self,
         summary_function=("mean", "std", "min", "max"),
         quantiles=(0.1, 0.25, 0.5, 0.75, 0.9),
-        flatten_transform_index=True,
     ):
         self.summary_function = summary_function
         self.quantiles = quantiles
-        self.flatten_transform_index = flatten_transform_index
-
         super(SummaryTransformer, self).__init__()
 
     def _transform(self, X, y=None):
@@ -661,6 +831,8 @@ class SummaryTransformer(BaseTransformer):
             If `series_or_df` is univariate then a scalar is returned. Otherwise,
             a pd.Series is returned.
         """
+        Z = X
+
         if self.summary_function is None and self.quantiles is None:
             raise ValueError(
                 "One of `summary_function` and `quantiles` must not be None."
@@ -668,22 +840,14 @@ class SummaryTransformer(BaseTransformer):
         summary_function = _check_summary_function(self.summary_function)
         quantiles = _check_quantiles(self.quantiles)
 
-        summary_value = X.agg(summary_function)
+        summary_value = Z.agg(summary_function)
         if quantiles is not None:
-            quantile_value = X.quantile(quantiles)
+            quantile_value = Z.quantile(quantiles)
             quantile_value.index = [str(s) for s in quantile_value.index]
             summary_value = pd.concat([summary_value, quantile_value])
 
-        if isinstance(X, pd.Series):
-            summary_value.name = X.name
+        if isinstance(Z, pd.Series):
+            summary_value.name = Z.name
             summary_value = pd.DataFrame(summary_value)
 
-        Xt = summary_value.T
-
-        if len(Xt) > 1:
-            # move the row index as second level to column
-            Xt = pd.DataFrame(Xt.T.unstack()).T
-            if self.flatten_transform_index:
-                Xt.columns = flatten_multiindex(Xt.columns)
-
-        return Xt
+        return summary_value.T
