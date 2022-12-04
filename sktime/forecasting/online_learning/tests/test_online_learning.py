@@ -6,6 +6,7 @@
 __author__ = ["magittan"]
 
 import numpy as np
+import pytest
 from sklearn.metrics import mean_squared_error
 
 from sktime.datasets import load_airline
@@ -20,10 +21,15 @@ from sktime.forecasting.online_learning._prediction_weighted_ensembler import (
     NNLSEnsemble,
     NormalHedgeEnsemble,
 )
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 cv = SlidingWindowSplitter(start_with_window=True, window_length=1, fh=1)
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("statsmodels", severity="none"),
+    reason="skip test if required soft dependency for hmmlearn not available",
+)
 def test_weights_for_airline_averaging():
     """Test weights."""
     y = load_airline()

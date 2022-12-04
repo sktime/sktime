@@ -669,7 +669,7 @@ def _drcif_feature(X, interval, dim, att, c22, case_id=None):
     if att > 21:
         return _summary_stat(X[:, dim, interval[0] : interval[1]], att)
     else:
-        return c22.transform_single_feature(
+        return c22._transform_single_feature(
             X[:, dim, interval[0] : interval[1]], att, case_id=case_id
         )
 

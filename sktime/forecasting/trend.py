@@ -304,10 +304,10 @@ class STLForecaster(BaseForecaster):
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.trend import STLForecaster
     >>> y = load_airline()
-    >>> forecaster = STLForecaster(sp=12)
-    >>> forecaster.fit(y)
+    >>> forecaster = STLForecaster(sp=12)  # doctest: +SKIP
+    >>> forecaster.fit(y)  # doctest: +SKIP
     STLForecaster(...)
-    >>> y_pred = forecaster.predict(fh=[1,2,3])
+    >>> y_pred = forecaster.predict(fh=[1,2,3])  # doctest: +SKIP
 
     See Also
     --------
