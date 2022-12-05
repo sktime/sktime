@@ -97,7 +97,7 @@ def test_infer_freq() -> None:
     assert infer_freq(y) == "M"
 
 
-def set_freq() -> None:
+def test_set_freq() -> None:
     """Test frequency inference."""
     assert infer_freq(None) is None
 
