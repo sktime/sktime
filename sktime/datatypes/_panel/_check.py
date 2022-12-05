@@ -42,6 +42,7 @@ __all__ = ["check_dict"]
 
 import numpy as np
 import pandas as pd
+from pandas.core.dtypes.cast import is_nested_object
 
 from sktime.datatypes._series._check import (
     _index_equally_spaced,
@@ -257,14 +258,6 @@ def check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj", panel=T
 check_dict[("pd-multiindex", "Panel")] = check_pdmultiindex_panel
 
 
-def _cell_is_series(cell):
-    return isinstance(cell, pd.Series)
-
-
-def _nested_cell_mask(X):
-    return X.applymap(_cell_is_series)
-
-
 def are_columns_nested(X):
     """Check whether any cells have nested structure in each DataFrame column.
 
@@ -279,7 +272,7 @@ def are_columns_nested(X):
         If True, at least one column is nested.
         If False, no nested columns.
     """
-    any_nested = _nested_cell_mask(X).any().values
+    any_nested = any(is_nested_object(series) for _, series in X.items())
     return any_nested
 
 
@@ -359,7 +352,7 @@ def is_nested_dataframe(obj, return_metadata=False, var_name="obj"):
             msg = f"{var_name} All columns must be object, found {type(obj)}"
             return _ret(False, msg, None, return_metadata)
 
-        if not are_columns_nested(obj).any():
+        if not are_columns_nested(obj):
             msg = f"{var_name} entries must be pd.Series"
             return _ret(False, msg, None, return_metadata)
 
