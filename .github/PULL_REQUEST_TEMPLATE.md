@@ -43,6 +43,7 @@ Please go through the checklist below. Please feel free to remove points if they
 - [ ] Optionally, I've updated sktime's [CODEOWNERS](https://github.com/sktime/sktime/blob/main/CODEOWNERS) to receive notifications about future changes to these files.
 - [ ] I've added unit tests and made sure they pass locally.
 - [ ] The PR title starts with either [ENH], [MNT], [DOC], or [BUG] indicating whether the PR topic is related to enhancement, maintenance, documentation, or bug.
+- [ ] I have added parameter type hints via `typing` to functions and methods that were changed.
 
 ##### For new estimators
 - [ ] I've added the estimator to the online documentation.
