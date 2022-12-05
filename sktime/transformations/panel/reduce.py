@@ -5,6 +5,9 @@
 __author__ = ["mloning", "fkiraly", "kcc-lion"]
 __all__ = ["Tabularizer"]
 
+import warnings
+
+import numpy as np
 import pandas as pd
 
 from sktime.datatypes import convert, convert_to
@@ -88,9 +91,10 @@ class TimeBinner(BaseTransformer):
     ----------
     idx : pd.IntervalIndex
         IntervalIndex defining intervals considered by aggfunc
-    aggfunc : string
+    aggfunc : callable
         Function used to aggregate the values in intervals.
-        Should be one of ["sum", "min", "max", "median", "std"]
+        Should have signature 1D -> float and defaults
+        to mean if None
     """
 
     _tags = {
@@ -106,15 +110,24 @@ class TimeBinner(BaseTransformer):
         "y_inner_mtype": "None",  # and for y?
     }
 
-    def __init__(self, idx, aggfunc="sum"):
+    def __init__(self, idx, aggfunc=None):
 
-        self.idx = idx
         assert isinstance(
-            self.idx, pd.IntervalIndex
+            idx, pd.IntervalIndex
         ), "idx should be of type pd.IntervalIndex"
-
-        assert aggfunc in ["sum", "min", "max", "median", "std"]
         self.aggfunc = aggfunc
+        if self.aggfunc is None:
+            self._aggfunc = np.mean
+            warnings.warn("No aggfunc was passed, defaulting to mean")
+        else:
+            assert callable(aggfunc), (
+                "aggfunc should be callable with" "signature 1D -> float"
+            )
+            if aggfunc.__name__ == "<lambda>":
+                warnings.warn("Save and load will not work with lambda functions")
+            self._aggfunc = self.aggfunc
+        self.idx = idx
+
         super(TimeBinner, self).__init__()
 
     def _transform(self, X, y=None):
@@ -135,20 +148,7 @@ class TimeBinner(BaseTransformer):
         transformed version of X
         """
         idx = pd.cut(X.iloc[0, 0].index, bins=self.idx, include_lowest=True)
-
-        if self.aggfunc == "mean":
-            Xt = X.applymap(lambda x: x.groupby(idx).mean())
-        elif self.aggfunc == "sum":
-            Xt = X.applymap(lambda x: x.groupby(idx).sum())
-        elif self.aggfunc == "min":
-            Xt = X.applymap(lambda x: x.groupby(idx).min())
-        elif self.aggfunc == "max":
-            Xt = X.applymap(lambda x: x.groupby(idx).max())
-        elif self.aggfunc == "median":
-            Xt = X.applymap(lambda x: x.groupby(idx).median())
-        elif self.aggfunc == "std":
-            Xt = X.applymap(lambda x: x.groupby(idx).std())
-
+        Xt = X.applymap(lambda x: x.groupby(idx).apply(self._aggfunc))
         Xt = convert_to(Xt, to_type="numpyflat", as_scitype="Panel")
         return Xt
 
@@ -174,6 +174,5 @@ class TimeBinner(BaseTransformer):
         import pandas as pd
 
         idx = pd.interval_range(start=0, end=100, freq=10, closed="left")
-        aggfuncs = ["sum", "min", "max", "median", "std"]
-        params = [{"idx": idx, "aggfunc": aggfunc} for aggfunc in aggfuncs]
+        params = {"idx": idx}
         return params
