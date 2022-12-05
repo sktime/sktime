@@ -8,9 +8,10 @@ __all__ = ["evaluate"]
 
 import time
 import warnings
-from typing import Any, List, Optional, Union
+from typing import List, Optional, Union
 
 import numpy as np
+import numpy.typing as npt
 import pandas as pd
 
 from sktime.datatypes import check_is_scitype, convert_to
@@ -208,13 +209,13 @@ def _evaluate_window(
 def evaluate(
     forecaster: BaseForecaster,
     cv: BaseSplitter,
-    y: Any,
-    X: Optional[Any] = None,
+    y: npt.ArrayLike,
+    X: Optional[npt.ArrayLike] = None,
     strategy: str = "refit",
     scoring: Optional[Union[callable, List[callable]]] = None,
     return_data: bool = False,
     error_score: Union[str, int, float] = np.nan,
-    backend: str = None,
+    backend: Optional[str] = None,
     compute: bool = True,
     **kwargs,
 ):
