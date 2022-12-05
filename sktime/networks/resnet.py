@@ -4,16 +4,7 @@
 __author__ = ["James Large", "Withington", "nilesh05apr"]
 
 from sktime.networks.base import BaseDeepNetwork
-from sktime.utils.validation._dependencies import (
-    _check_dl_dependencies,
-    _check_soft_dependencies,
-)
-
-_check_soft_dependencies(
-    "keras-self-attention",
-    package_import_alias={"keras-self-attention": "keras_self_attention"},
-    severity="warning",
-)
+from sktime.utils.validation._dependencies import _check_dl_dependencies
 
 
 class ResNetNetwork(BaseDeepNetwork):
@@ -50,15 +41,10 @@ class ResNetNetwork(BaseDeepNetwork):
 
     def __init__(self, random_state=0):
         _check_dl_dependencies(severity="error")
-        _check_soft_dependencies(
-            "keras-self-attention",
-            package_import_alias={"keras-self-attention": "keras_self_attention"},
-            severity="error",
-        )
         super(ResNetNetwork).__init__()
         self.random_state = random_state
 
-    def build_model(self, input_shape, **kwargs):
+    def build_network(self, input_shape, **kwargs):
         """
         Construct a network and return its input and output layers.
 

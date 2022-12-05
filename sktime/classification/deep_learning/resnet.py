@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Multi Layer Perceptron Network (MLP) for classification."""
+"""Residual Network (ResNet) for classification."""
 
 __author__ = ["James-Large", "AurumnPegasus", "nilesh05apr"]
 __all__ = ["ResNetClassifier"]
