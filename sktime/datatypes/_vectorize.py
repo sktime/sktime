@@ -285,9 +285,9 @@ class VectorizedDF:
         elif row_ind is None:
             res = X[col_ind]
         else:
-            res = X[col_ind].loc[row_ind]
+            res = X.loc[row_ind, col_ind]
         res = _enforce_index_freq(res)
-        return res
+        return res.copy()
 
     def _get_item_indexer(self, i: int, X=None):
         """Get the i-th indexer from _iter_indices.
