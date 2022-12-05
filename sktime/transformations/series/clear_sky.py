@@ -357,12 +357,12 @@ def _check_index(X):
 
     tod = pd.timedelta_range(start="0T", end="1D", freq=freq_ind)
     # checck frequency of tod
-    if (tod.freq >= pd.offsets.Day(1)) | (tod.freq < pd.offsets.Second(1)):
+    if (tod.freq > pd.offsets.Day(1)) | (tod.freq < pd.offsets.Second(1)):
         raise ValueError(
             """
             Transformer intended to be used with input frequency of greater than
-            one day and with a frequency of less or equal to than 1 second.
-            Contributions welcome on adapting for these use cases.
+            or equal to one day and with a frequency of less or equal to than
+            1 second. Contributions welcome on adapting for these use cases.
             """
         )
     return freq_ind
