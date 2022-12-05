@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from typing import Union
+from typing import Union, List, Tuple
 
 import numpy as np
 
@@ -7,6 +7,7 @@ from sktime.distances.distance_rework_two._base import (
     ElasticDistance,
     ElasticDistanceReturn,
     get_bounding_matrix,
+    _convert_2d
 )
 from sktime.distances.distance_rework_two._squared import _SquaredDistance
 
@@ -63,3 +64,29 @@ class _EdrDistance(ElasticDistance):
     @staticmethod
     def _result_process(result: float, *args):
         return float(result / max(args[0].shape[-1], args[1].shape[-1]))
+
+    @staticmethod
+    def _alignment_path(
+        x: np.ndarray, y: np.ndarray, cost_matrix: np.ndarray, bounding_matrix, *args
+    ) -> List[Tuple]:
+        x = _convert_2d(x, *args)
+        y = _convert_2d(y, *args)
+
+        epsilon = 1.0
+        if len(args) > 4:
+            epsilon = args[4]
+        x_size = x.shape[1]
+        y_size = y.shape[1]
+        i, j = (x_size - 1, y_size - 1)
+        path = []
+
+        while i > 0 and j > 0:
+            if np.isfinite(bounding_matrix[i - 1, j - 1]):
+                if cost_matrix[i - 1, j - 1] <= epsilon:
+                    path.append((i - 1, j - 1))
+                    i, j = (i - 1, j - 1)
+                elif cost_matrix[i - 1][j] > cost_matrix[i][j - 1]:
+                    i = i - 1
+                else:
+                    j = j - 1
+        return path[::-1]

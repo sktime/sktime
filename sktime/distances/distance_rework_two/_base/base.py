@@ -256,3 +256,17 @@ class BaseDistance(ABC):
             Additional arguments.
         """
         ...
+
+@njit(cache=True, fastmath=True)
+def _convert_2d(x: np.ndarray, *args):
+    if x.ndim == 1:
+        # Use this instead of numpy because weird numba errors sometimes with
+        # np.reshape
+        x_size = x.shape[0]
+        _process_x = np.zeros((1, x_size))
+        _process_x[0] = x
+        return_val = _process_x
+        return _process_x
+    return x
+
+

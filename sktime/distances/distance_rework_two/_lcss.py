@@ -8,23 +8,11 @@ from sktime.distances.distance_rework_two._base import (
     ElasticDistance,
     ElasticDistanceReturn,
     get_bounding_matrix,
+    _convert_2d
 )
 from sktime.distances.distance_rework_two._squared import _SquaredDistance
 
 squared_distance = _SquaredDistance().distance_factory()
-
-
-@njit(cache=True, fastmath=True)
-def _convert_2d(x: np.ndarray, *args):
-    if x.ndim == 1:
-        # Use this instead of numpy because weird numba errors sometimes with
-        # np.reshape
-        x_size = x.shape[0]
-        _process_x = np.zeros((1, x_size))
-        _process_x[0] = x
-        return_val = _process_x
-        return _process_x
-    return x
 
 
 class _LcssDistance(ElasticDistance):
@@ -72,8 +60,8 @@ class _LcssDistance(ElasticDistance):
     def _alignment_path(
         x: np.ndarray, y: np.ndarray, cost_matrix: np.ndarray, bounding_matrix, *args
     ) -> List[Tuple]:
-        x = _convert_2d(x)
-        y = _convert_2d(y)
+        x = _convert_2d(x, *args)
+        y = _convert_2d(y, *args)
 
         epsilon = 1.0
         if len(args) > 4:
@@ -85,7 +73,7 @@ class _LcssDistance(ElasticDistance):
 
         while i > 0 and j > 0:
             if np.isfinite(bounding_matrix[i - 1, j - 1]):
-                if squared_distance(x[:, i - 1], y[:, j - 1]) <= epsilon:
+                if cost_matrix[i - 1, j - 1] <= epsilon:
                     path.append((i - 1, j - 1))
                     i, j = (i - 1, j - 1)
                 elif cost_matrix[i - 1][j] > cost_matrix[i][j - 1]:

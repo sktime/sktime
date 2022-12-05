@@ -488,10 +488,13 @@ def test_lcss_distance():
     """Test lcss alignment."""
     dist = _LcssDistance()
     dist._numba_distance = False
-    ind_1d = dist.alignment_path(x_1d, y_1d, strategy="independent")
-    dep_1d = dist.alignment_path(x_1d, y_1d, strategy="dependent")
+    # ind_1d = dist.alignment_path(x_1d, y_1d, strategy="independent")
+    # dep_1d = dist.alignment_path(x_1d, y_1d, strategy="dependent")
     ind_2d = dist.alignment_path(x_2d, y_2d, strategy="independent")
     dep_2d = dist.alignment_path(x_2d, y_2d, strategy="dependent")
+    from tslearn.metrics import lcss_path
+    test = lcss_path(x_2d, y_2d)
+
 
     make_assertions(ind_1d, dep_1d, ind_2d, dep_2d)
 
