@@ -57,10 +57,12 @@ class ResNetClassifier(BaseDeepClassifier):
     >>> from sktime.classification.deep_learning.resnet import ResNetClassifier
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train")
-    >>> clf = ResNetClassifier(n_epochs=20, bacth_size=4) # docktest: +SKIP
-    >>> clf.fit(X_train, Y_train) # docktest: +SKIP
+    >>> clf = ResNetClassifier(n_epochs=20, bacth_size=4) # doctest: +SKIP
+    >>> clf.fit(X_train, Y_train) # doctest: +SKIP
     ResNetClassifier(...)
     """
+
+    _tags = {"python_dependencies": ["tensorflow"]}
 
     def __init__(
         self,

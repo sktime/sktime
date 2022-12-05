@@ -46,6 +46,8 @@ class ResNetNetwork(BaseDeepNetwork):
 
     """
 
+    _tags = {"python_dependencies": ["tensorflow", "keras-self-attention"]}
+
     def __init__(self, random_state=0):
         _check_dl_dependencies(severity="error")
         _check_soft_dependencies(
