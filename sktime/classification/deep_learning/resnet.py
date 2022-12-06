@@ -117,8 +117,11 @@ class ResNetClassifier(BaseDeepClassifier):
 
         tf.random.set_seed(self.random_state)
 
-        if self.optimizer is None:
-            self.optimizer = keras.optimizers.Adam(lr=0.01)
+        self.optimizer_ = (
+            keras.optimizers.Adam(learning_rate=0.01)
+            if self.optimizer is None
+            else self.optimizer
+        )
 
         if self.metrics is None:
             metrics = ["accuracy"]
@@ -134,7 +137,7 @@ class ResNetClassifier(BaseDeepClassifier):
         model = keras.models.Model(inputs=input_layer, outputs=output_layer)
         model.compile(
             loss=self.loss,
-            optimizer=self.optimizer,
+            optimizer=self.optimizer_,
             metrics=metrics,
         )
 
