@@ -79,7 +79,7 @@ class ResNetClassifier(BaseDeepClassifier):
         **kwargs
     ):
         _check_dl_dependencies(severity="error")
-        super(ResNetClassifier).__init__()
+        super(ResNetClassifier, self).__init__()
         self.n_epochs = n_epochs
         self.callbacks = callbacks
         self.verbose = verbose
