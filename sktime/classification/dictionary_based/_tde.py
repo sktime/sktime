@@ -465,7 +465,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
                 preds = (
                     clf._train_predictions
                     if self.save_train_predictions
-                    else Parallel(n_jobs=self._threads_to_use)(
+                    else Parallel(n_jobs=self._threads_to_use, prefer="threads")(
                         delayed(clf._train_predict)(
                             i,
                         )
@@ -510,7 +510,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         required_correct = int(lowest_acc * train_size)
 
         if self._threads_to_use > 1:
-            c = Parallel(n_jobs=self._threads_to_use)(
+            c = Parallel(n_jobs=self._threads_to_use, prefer="threads")(
                 delayed(tde._train_predict)(
                     i,
                 )
@@ -878,7 +878,7 @@ class IndividualTDE(BaseClassifier):
             test_bags = self._transformers[0].transform(X)
             test_bags = test_bags[0]
 
-        classes = Parallel(n_jobs=self._threads_to_use)(
+        classes = Parallel(n_jobs=self._threads_to_use, prefer="threads")(
             delayed(self._test_nn)(
                 test_bag,
             )

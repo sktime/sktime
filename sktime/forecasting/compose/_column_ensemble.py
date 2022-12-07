@@ -45,16 +45,15 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
     Examples
     --------
     >>> from sktime.forecasting.compose import ColumnEnsembleForecaster
-    >>> from sktime.forecasting.exp_smoothing import ExponentialSmoothing
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.forecasting.trend import PolynomialTrendForecaster
-    >>> from sktime.datasets import load_macroeconomic
+    >>> from sktime.datasets import load_longley
 
-    Using integers (column iloc refernces= for indexing:
-    >>> y = load_macroeconomic()[["realgdp", "realcons"]]
+    Using integers (column iloc references) for indexing:
+    >>> y = load_longley()[1][["GNP", "UNEMP"]]
     >>> forecasters = [
     ...     ("trend", PolynomialTrendForecaster(), 0),
-    ...     ("ses", ExponentialSmoothing(trend='add'), 1),
+    ...     ("naive", NaiveForecaster(), 1),
     ... ]
     >>> forecaster = ColumnEnsembleForecaster(forecasters=forecasters)
     >>> forecaster.fit(y, fh=[1, 2, 3])

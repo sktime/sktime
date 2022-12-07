@@ -1050,7 +1050,7 @@ def load_macroeconomic():
     Examples
     --------
     >>> from sktime.datasets import load_macroeconomic
-    >>> y = load_macroeconomic()
+    >>> y = load_macroeconomic()  # doctest: +SKIP
 
     Notes
     -----
