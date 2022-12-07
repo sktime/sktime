@@ -10,7 +10,6 @@ from collections.abc import Sequence
 
 import numpy as np
 import pandas as pd
-from joblib import Parallel, delayed
 from sklearn.model_selection import ParameterGrid, ParameterSampler, check_cv
 
 from sktime.datatypes import mtype_to_scitype
@@ -44,6 +43,7 @@ class BaseGridSearch(_DelegatedForecaster):
         return_n_best_forecasters=1,
         update_behaviour="full_refit",
         error_score=np.nan,
+        **kwargs,
     ):
 
         self.forecaster = forecaster
@@ -58,6 +58,7 @@ class BaseGridSearch(_DelegatedForecaster):
         self.return_n_best_forecasters = return_n_best_forecasters
         self.update_behaviour = update_behaviour
         self.error_score = error_score
+        self.kwargs = kwargs
         super(BaseGridSearch, self).__init__()
         tags_to_clone = [
             "requires-fh-in-fit",
@@ -147,10 +148,6 @@ class BaseGridSearch(_DelegatedForecaster):
         scoring = check_scoring(self.scoring)
         scoring_name = f"test_{scoring.name}"
 
-        parallel = Parallel(
-            n_jobs=self.n_jobs, pre_dispatch=self.pre_dispatch, backend=self.backend
-        )
-
         def _fit_and_score(params):
             # Clone forecaster.
             forecaster = self.forecaster.clone()
@@ -167,6 +164,8 @@ class BaseGridSearch(_DelegatedForecaster):
                 strategy=self.strategy,
                 scoring=scoring,
                 error_score=self.error_score,
+                backend=self.backend,
+                **self.kwargs,
             )
 
             # Filter columns.
@@ -193,10 +192,13 @@ class BaseGridSearch(_DelegatedForecaster):
                         n_splits, n_candidates, n_candidates * n_splits
                     )
                 )
-
-            out = parallel(
-                delayed(_fit_and_score)(params) for params in candidate_params
-            )
+            out = None
+            for params in candidate_params:
+                results = _fit_and_score(params)
+                if out is None:
+                    out = results.copy()
+                else:
+                    out = out.append(results, ignore_index=True)
 
             if len(out) < 1:
                 raise ValueError(
@@ -334,7 +336,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
     scoring: function, optional (default=None)
         Function to score models for evaluation of optimal parameters
     n_jobs: int, optional (default=None)
-        Number of jobs to run in parallel.
+        Number of jobs to run in parallel if backend="joblib".
         None means 1 unless in a joblib.parallel_backend context.
         -1 means using all processors.
     refit: bool, optional (default=True)
@@ -355,6 +357,10 @@ class ForecastingGridSearchCV(BaseGridSearch):
         Value to assign to the score if an exception occurs in estimator fitting. If set
         to "raise", the exception is raised. If a numeric value is given,
         FitFailedWarning is raised.
+    **kwargs : Keyword arguments
+        Only relevant if backend is specified. Additional kwargs are passed into
+        `dask.distributed.get_client` or `dask.distributed.Client` if backend is
+        set to "dask", otherwise kwargs are passed into `joblib.Parallel`.
 
     Attributes
     ----------
@@ -459,6 +465,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
         backend="loky",
         update_behaviour="full_refit",
         error_score=np.nan,
+        **kwargs,
     ):
         super(ForecastingGridSearchCV, self).__init__(
             forecaster=forecaster,
@@ -473,6 +480,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
             backend=backend,
             update_behaviour=update_behaviour,
             error_score=error_score,
+            **kwargs,
         )
         self.param_grid = param_grid
 
@@ -610,6 +618,10 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         Value to assign to the score if an exception occurs in estimator fitting. If set
         to "raise", the exception is raised. If a numeric value is given,
         FitFailedWarning is raised.
+    **kwargs : Keyword arguments
+        Only relevant if backend is specified. Additional kwargs are passed into
+        `dask.distributed.get_client` or `dask.distributed.Client` if backend is
+        set to "dask", otherwise kwargs are passed into `joblib.Parallel`.
 
     Attributes
     ----------
@@ -646,6 +658,7 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         backend="loky",
         update_behaviour="full_refit",
         error_score=np.nan,
+        **kwargs,
     ):
         super(ForecastingRandomizedSearchCV, self).__init__(
             forecaster=forecaster,
@@ -660,6 +673,7 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
             backend=backend,
             update_behaviour=update_behaviour,
             error_score=error_score,
+            **kwargs,
         )
         self.param_distributions = param_distributions
         self.n_iter = n_iter
