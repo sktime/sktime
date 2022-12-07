@@ -644,6 +644,7 @@ def dtw_distance(
     calculated over dimensions :math:'d', i.e. :math:'M_{i,j}=  \sum_{k=i} (a_{k,
     i}-b_{k,j})^2'. This is commonly called the dependent version of DTW, DTW_D,
     a term first used in [5]_.
+
     Parameters
     ----------
     x: np.ndarray (1d or 2d array)
