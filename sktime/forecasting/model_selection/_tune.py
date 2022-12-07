@@ -192,13 +192,9 @@ class BaseGridSearch(_DelegatedForecaster):
                         n_splits, n_candidates, n_candidates * n_splits
                     )
                 )
-            out = None
+            out = []
             for params in candidate_params:
-                results = _fit_and_score(params)
-                if out is None:
-                    out = results.copy()
-                else:
-                    out = out.append(results, ignore_index=True)
+                out.append(_fit_and_score(params))
 
             if len(out) < 1:
                 raise ValueError(
