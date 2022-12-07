@@ -35,8 +35,7 @@ class BaseGridSearch(_DelegatedForecaster):
         cv,
         strategy="refit",
         n_jobs=None,
-        pre_dispatch=None,
-        backend="loky",
+        backend=None,
         refit=False,
         scoring=None,
         verbose=0,
@@ -50,7 +49,6 @@ class BaseGridSearch(_DelegatedForecaster):
         self.cv = cv
         self.strategy = strategy
         self.n_jobs = n_jobs
-        self.pre_dispatch = pre_dispatch
         self.backend = backend
         self.refit = refit
         self.scoring = scoring
@@ -332,7 +330,8 @@ class ForecastingGridSearchCV(BaseGridSearch):
     scoring: function, optional (default=None)
         Function to score models for evaluation of optimal parameters
     n_jobs: int, optional (default=None)
-        Number of jobs to run in parallel if backend="joblib".
+        Number of jobs to run in parallel if backend either "loky",
+        "multiprocessing" or "threading".
         None means 1 unless in a joblib.parallel_backend context.
         -1 means using all processors.
     refit: bool, optional (default=True)
@@ -342,13 +341,17 @@ class ForecastingGridSearchCV(BaseGridSearch):
     return_n_best_forecasters: int, default=1
         In case the n best forecaster should be returned, this value can be set
         and the n best forecasters will be assigned to n_best_forecasters_
-    pre_dispatch: str, optional (default='2*n_jobs')
     error_score: numeric value or the str 'raise', optional (default=np.nan)
         The test score returned when a forecaster fails to be fitted.
     return_train_score: bool, optional (default=False)
-    backend: str, optional (default="loky")
-        Specify the parallelisation backend implementation in joblib, where
-        "loky" is used by default.
+    backend : {"dask", "loky", "multiprocessing", "threading"}, by default None.
+        Runs parallel evaluate if specified and `strategy` is set as "refit".
+        - "loky", "multiprocessing" and "threading": uses `joblib` Parallel loops
+        - "dask": uses `dask`, requires `dask` package in environment
+        Recommendation: Use "dask" or "loky" for parallel evaluate.
+        "threading" is unlikely to see speed ups due to the GIL and the serialization
+        backend (`cloudpickle`) for "dask" and "loky" is generally more robust than the
+        standard `pickle` library used in "multiprocessing".
     error_score : "raise" or numeric, default=np.nan
         Value to assign to the score if an exception occurs in estimator fitting. If set
         to "raise", the exception is raised. If a numeric value is given,
@@ -457,7 +460,6 @@ class ForecastingGridSearchCV(BaseGridSearch):
         refit=True,
         verbose=0,
         return_n_best_forecasters=1,
-        pre_dispatch="2*n_jobs",
         backend="loky",
         update_behaviour="full_refit",
         error_score=np.nan,
@@ -472,7 +474,6 @@ class ForecastingGridSearchCV(BaseGridSearch):
             strategy=strategy,
             verbose=verbose,
             return_n_best_forecasters=return_n_best_forecasters,
-            pre_dispatch=pre_dispatch,
             backend=backend,
             update_behaviour=update_behaviour,
             error_score=error_score,
@@ -590,7 +591,8 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
     scoring: function, optional (default=None)
         Function to score models for evaluation of optimal parameters
     n_jobs: int, optional (default=None)
-        Number of jobs to run in parallel.
+        Number of jobs to run in parallel if backend either "loky",
+        "multiprocessing" or "threading".
         None means 1 unless in a joblib.parallel_backend context.
         -1 means using all processors.
     refit: bool, optional (default=True)
@@ -600,16 +602,19 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
     return_n_best_forecasters: int, default=1
         In case the n best forecaster should be returned, this value can be set
         and the n best forecasters will be assigned to n_best_forecasters_
-    pre_dispatch: str, optional (default='2*n_jobs')
     random_state : int, RandomState instance or None, default=None
         Pseudo random number generator state used for random uniform sampling
         from lists of possible values instead of scipy.stats distributions.
         Pass an int for reproducible output across multiple
         function calls.
-    pre_dispatch: str, optional (default='2*n_jobs')
-    backend: str, optional (default="loky")
-        Specify the parallelisation backend implementation in joblib, where
-        "loky" is used by default.
+    backend : {"dask", "loky", "multiprocessing", "threading"}, by default None.
+        Runs parallel evaluate if specified and `strategy` is set as "refit".
+        - "loky", "multiprocessing" and "threading": uses `joblib` Parallel loops
+        - "dask": uses `dask`, requires `dask` package in environment
+        Recommendation: Use "dask" or "loky" for parallel evaluate.
+        "threading" is unlikely to see speed ups due to the GIL and the serialization
+        backend (`cloudpickle`) for "dask" and "loky" is generally more robust than the
+        standard `pickle` library used in "multiprocessing".
     error_score : "raise" or numeric, default=np.nan
         Value to assign to the score if an exception occurs in estimator fitting. If set
         to "raise", the exception is raised. If a numeric value is given,
@@ -650,8 +655,7 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         verbose=0,
         return_n_best_forecasters=1,
         random_state=None,
-        pre_dispatch="2*n_jobs",
-        backend="loky",
+        backend=None,
         update_behaviour="full_refit",
         error_score=np.nan,
         **kwargs,
@@ -665,7 +669,6 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
             cv=cv,
             verbose=verbose,
             return_n_best_forecasters=return_n_best_forecasters,
-            pre_dispatch=pre_dispatch,
             backend=backend,
             update_behaviour=update_behaviour,
             error_score=error_score,
