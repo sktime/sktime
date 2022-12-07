@@ -76,7 +76,6 @@ class ResNetClassifier(BaseDeepClassifier):
         activation="sigmoid",
         use_bias=True,
         optimizer=None,
-        **kwargs
     ):
         _check_dl_dependencies(severity="error")
         super(ResNetClassifier, self).__init__()
