@@ -160,7 +160,7 @@ def test_sklearn_after_primitives():
     X_out = t.fit_transform(X)
     X_summary = SummaryTransformer().fit_transform(X)
 
-    assert deep_equals(X_out.index, X_summary.index)
+    assert (X_out.index == X_summary.index).all()
     assert deep_equals(X_out.columns, X_summary.columns)
     # var_0 is the same for all three instances
     # so summary statistics are all the same, thus StandardScaler transforms to 0
