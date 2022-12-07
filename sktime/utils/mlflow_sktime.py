@@ -516,32 +516,6 @@ class _SktimeModelWrapper:
                 lambda x: "".join(str(x))
             )
 
-        # # TODO: "predict_proba" is currently not robust across estimators
-        #     (fails for VAR and possibly other estimators)
-        #     remove "predict_proba" or modify logic to be robust across estimators
-        # if predict_method == "predict_proba":
-        #     marginal = attrs.get("marginal", True)
-        #     quantiles = attrs.get("quantiles", None)
-        #
-        #     if not quantiles:
-        #         raise MlflowException(
-        #             f"The provided `quantiles` value {quantiles} must be provided.",
-        #             error_code=INVALID_PARAMETER_VALUE,
-        #         )
-        #
-        #     y_pred_dist = self.sktime_model.predict_proba(
-        #           fh=fh, X=X, marginal=marginal)
-        #
-        #     y_pred_dist_quantiles = pd.DataFrame(y_pred_dist.quantile(quantiles))
-        #     y_pred_dist_quantiles.columns = [f"(Quantile, {q})" for q in quantiles]
-        #     y_pred_dist_quantiles.index = y_pred_dist.parameters['loc'].index
-        #
-        #     y_pred_dist_parameters = pd.DataFrame()
-        #     for k, v in y_pred_dist.parameters.items():
-        #         y_pred_dist_parameters[k] = v
-        #
-        #     y_pred = y_pred_dist_parameters.join(y_pred_dist_quantiles)
-
         if predict_method == "predict_quantiles":
             alpha = attrs.get("alpha", None)
             y_pred = self.sktime_model.predict_quantiles(fh=fh, X=X, alpha=alpha)
@@ -549,10 +523,6 @@ class _SktimeModelWrapper:
             y_pred.columns = y_pred.columns.to_flat_index().map(
                 lambda x: "".join(str(x))
             )
-
-        # if predict_method == "predict_residuals":
-        #     y = attrs.get("y", None)
-        #     y_pred = self.sktime_model.predict_residuals(y=y, X=X)
 
         if predict_method == "predict_var":
             cov = attrs.get("cov", False)
