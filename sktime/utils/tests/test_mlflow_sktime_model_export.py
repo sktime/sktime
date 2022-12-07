@@ -7,7 +7,6 @@ import os
 from pathlib import Path
 from unittest import mock
 
-# import mlflow.pyfunc.scoring_server as pyfunc_scoring_server
 import numpy as np
 import pandas as pd
 import pytest
@@ -19,20 +18,6 @@ from sktime.forecasting.arima import AutoARIMA
 from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.utils.validation._dependencies import _check_soft_dependencies
-
-# from tests.helper_functions import (
-#     _compare_conda_env_requirements,
-#     _assert_pip_requirements,
-#     pyfunc_serve_and_score_model,
-#     _is_available_on_pypi,
-#     _compare_logged_code_paths,
-#     _mlflow_major_version_string,
-# )
-
-
-# EXTRA_PYFUNC_SERVING_TEST_ARGS = (
-#     [] if _is_available_on_pypi("pmdarima") else ["--env-manager", "local"]
-# )
 
 
 @pytest.fixture
@@ -561,161 +546,6 @@ def test_model_save_persists_specified_conda_env_in_mlflow_model_directory(
     assert saved_conda_env_parsed == sktime_custom_env_parsed
 
 
-# def test_model_save_persists_requirements_in_mlflow_model_directory(
-#     auto_arima_model, model_path, sktime_custom_env
-# ):
-#     mlflow.pmdarima.save_model(
-#         pmdarima_model=auto_arima_model,
-#         path=model_path,
-#         conda_env=str(sktime_custom_env)
-#     )
-#     saved_pip_req_path = model_path.joinpath("requirements.txt")
-#     _compare_conda_env_requirements(sktime_custom_env, str(saved_pip_req_path))
-
-
-# def test_pmdarima_log_model_with_pip_requirements(auto_arima_model, tmp_path):
-#     expected_mlflow_version = _mlflow_major_version_string()
-#     req_file = tmp_path.joinpath("requirements.txt")
-#     req_file.write_text("a")
-#     with mlflow.start_run():
-#         mlflow.pmdarima.log_model(
-#           auto_arima_model,
-#           "model",
-#           pip_requirements=str(req_file)
-#         )
-#         _assert_pip_requirements(
-#             mlflow.get_artifact_uri("model"),
-#             [expected_mlflow_version, "a"],
-#             strict=True
-#         )
-#
-#     # List of requirements
-#     with mlflow.start_run():
-#         mlflow.pmdarima.log_model(
-#             auto_arima_model,
-#             "model",
-#             pip_requirements=[f"-r {req_file}", "b"]
-#         )
-#         _assert_pip_requirements(
-#             mlflow.get_artifact_uri("model"),
-#             [expected_mlflow_version, "a", "b"],
-#             strict=True
-#         )
-#
-#     # Constraints file
-#     with mlflow.start_run():
-#         mlflow.pmdarima.log_model(
-#             auto_arima_model,
-#             "model",
-#             pip_requirements=[f"-c {req_file}", "b"]
-#         )
-#         _assert_pip_requirements(
-#             mlflow.get_artifact_uri("model"),
-#             [expected_mlflow_version, "b", "-c constraints.txt"],
-#             ["a"],
-#             strict=True,
-#         )
-#
-
-# def test_pmdarima_log_model_with_extra_pip_requirements(auto_arima_model, tmp_path):
-#     expected_mlflow_version = _mlflow_major_version_string()
-#     default_reqs = mlflow.pmdarima.get_default_pip_requirements()
-#
-#     # Path to a requirements file
-#     req_file = tmp_path.joinpath("requirements.txt")
-#     req_file.write_text("a")
-#     with mlflow.start_run():
-#         mlflow.pmdarima.log_model(
-#           auto_arima_model,
-#           "model",
-#           extra_pip_requirements=str(req_file)
-#         )
-#         _assert_pip_requirements(
-#             mlflow.get_artifact_uri("model"),
-#             [expected_mlflow_version, *default_reqs, "a"]
-#         )
-#
-#     # List of requirements
-#     with mlflow.start_run():
-#         mlflow.pmdarima.log_model(
-#             auto_arima_model,
-#             "model",
-#             extra_pip_requirements=[f"-r {req_file}", "b"]
-#         )
-#         _assert_pip_requirements(
-#             mlflow.get_artifact_uri("model"),
-#             [expected_mlflow_version, *default_reqs, "a", "b"]
-#         )
-#
-#     # Constraints file
-#     with mlflow.start_run():
-#         mlflow.pmdarima.log_model(
-#             auto_arima_model,
-#             "model",
-#             extra_pip_requirements=[f"-c {req_file}", "b"]
-#         )
-#         _assert_pip_requirements(
-#             model_uri=mlflow.get_artifact_uri("model"),
-#             requirements=[expected_mlflow_version,
-#             *default_reqs, "b", "-c constraints.txt"],
-#             constraints=["a"],
-#             strict=False,
-#         )
-#
-
-# def test_model_save_without_conda_env_uses_default_env_with_expected_dependencies(
-#     auto_arima_model, model_path
-# ):
-#     mlflow.pmdarima.save_model(auto_arima_model, model_path)
-#     _assert_pip_requirements(
-#       model_path,
-#       mlflow.pmdarima.get_default_pip_requirements()
-#     )
-#
-
-# def test_model_log_without_conda_env_uses_default_env_with_expected_dependencies(
-#     auto_arima_model,
-# ):
-#     artifact_path = "model"
-#     with mlflow.start_run():
-#         mlflow.pmdarima.log_model(auto_arima_model, artifact_path)
-#         model_uri = mlflow.get_artifact_uri(artifact_path)
-#     _assert_pip_requirements(
-#       model_uri,
-#       mlflow.pmdarima.get_default_pip_requirements()
-#     )
-#
-#
-# def test_pyfunc_serve_and_score(auto_arima_model):
-#
-#     import mlflow
-#     import sktime.utils.mlflow_sktime
-#
-#     artifact_path = "model"
-#     with mlflow.start_run():
-#         mlflow_sktime.log_model(
-#             auto_arima_model,
-#             artifact_path,
-#         )
-#         model_uri = mlflow.get_artifact_uri(artifact_path)
-#     local_predict = auto_arima_model.predict(30)
-#
-#     inference_data = pd.DataFrame({"n_periods": 30}, index=[0])
-#
-#     resp = pyfunc_serve_and_score_model(
-#         model_uri,
-#         data=inference_data,
-#         content_type=pyfunc_scoring_server.CONTENT_TYPE_JSON,
-#         extra_args=EXTRA_PYFUNC_SERVING_TEST_ARGS,
-#     )
-#     scores = (
-#         pd.DataFrame(data=json.loads(resp.content.decode("utf-8"))["predictions"])
-#         .to_numpy()
-#         .flatten()
-#     )
-#     np.testing.assert_array_almost_equal(scores, local_predict)
-
-
 @pytest.mark.skipif(
     not _check_soft_dependencies("mlflow", severity="none"),
     reason="skip test if required soft dependency not available",
@@ -791,31 +621,8 @@ def test_pyfunc_return_auto_arima_model(auto_arima_model, model_path):
     assert isinstance(pyfunc_predict_var, pd.DataFrame)
     assert len(pyfunc_predict_var) == 3
     assert len(pyfunc_predict_var.columns.values) == 1
-    #
-    # predict_residuals_conf = pd.DataFrame(
-    #     [{"predict_method": "predict_residuals"}]
-    # )
-    # forecast_residuals = loaded_pyfunc.predict(predict_residuals_conf)
-    # TODO:check why this assert fails:
-    # # assert isinstance(forecast_residuals, pd.Series)
-    # assert len(forecast_residuals) == 144
 
 
-# def test_log_model_with_code_paths(auto_arima_model):
-#     artifact_path = "model"
-#     with mlflow.start_run(), mock.patch(
-#         "mlflow.pmdarima._add_code_from_conf_to_system_path"
-#     ) as add_mock:
-#         mlflow.pmdarima.log_model(
-#           auto_arima_model,
-#           artifact_path,
-#           code_paths=[__file__]
-#         )
-#         model_uri = mlflow.get_artifact_uri(artifact_path)
-#         _compare_logged_code_paths(__file__, model_uri, mlflow.pmdarima.FLAVOR_NAME)
-#         mlflow.pmdarima.load_model(model_uri)
-#         add_mock.assert_called()
-#
 @pytest.mark.skipif(
     not _check_soft_dependencies("mlflow", severity="none"),
     reason="skip test if required soft dependency not available",
