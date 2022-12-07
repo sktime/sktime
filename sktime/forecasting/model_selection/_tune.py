@@ -163,6 +163,7 @@ class BaseGridSearch(_DelegatedForecaster):
                 scoring=scoring,
                 error_score=self.error_score,
                 backend=self.backend,
+                n_jobs=self.n_jobs,
                 **self.kwargs,
             )
 
