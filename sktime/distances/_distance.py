@@ -611,17 +611,39 @@ def dtw_distance(
 ) -> float:
     r"""Compute the dynamic time warping (DTW) distance between two time series.
 
-    Originally proposed in [1]_ DTW computes the distance between two time series by
-    considering their alignments during the calculation. This is done by measuring
-    the pointwise distance (normally using Euclidean) between all elements of the two
-    time series and then using dynamic programming to find the warping path
-    that minimises the total pointwise distance between realigned series.
+    Originally proposed in [1]_, DTW is the most widely researched and used elastic
+    distance measure. It mitigates
+    distortions in the time axis by realligning (warping) the series to best match
+    each other. A good background into DTW can be found in [2]_. For two series
+    :math:'\mathbf{a}=\{a_1,a_2,\ldots,a_m\}' and :math:'\mathbf{b}=\{b_1,b_2,\ldots,
+    b_m\}',  (assumed equal length for simplicity), DTW first calculates  :math:'M(
+    \mathbf{a},\mathbf{b})', the :math:'m \times m'
+    pointwise distance matrix between series :math:'\mathbf{a}' and :math:'\mathbf{b}',
+    where :math:'M_{i,j}=   (a_i-b_j)^2'. A warping path
+    .. math::  P=<(e_1,f_1),(e_2,f_2),\ldots, (e_s,f_s)>
+    is a set of pairs of indices that  define a traversal of matrix :math:'M'. A
+    valid warping path must start at location :math:'(1,1)' and end at point :math:'(
+    m,m)' and not backtrack, i.e. :math:'0 \leq e_{i+1}-e_{i} \leq 1' and :math:'0
+    \leq f_{i+1}- f_i \leq 1' for all :math:'1< i < m'. The DTW distance between
+    series is the path through :math:'M' that minimizes the total distance. The
+    distance for any path :math:'P' of length :math:'s' is
+    .. math::  D_P(\mathbf{a},\mathbf{b}, M) =\sum_{i=1}^s M_{e_i,f_i}.
+    If :math:'\mathcal{P}' is the space of all possible paths, the DTW path :math:'P^*'
+    is the path that has the minimum distance, hence the DTW distance between series is
+    .. math::  d_{dtw}(\mathbf{a}, \mathbf{b}) =D_{P*}(\mathbf{a},\mathbf{b}, M).
+    The optimal warping path $P^*$ can be found exactly through a dynamic programming
+    formulation. This can be a time consuming operation, and it is common to put a
+    restriction on the amount of warping allowed. This is implemented through
+    the bounding_matrix structure, that supplies a mask for allowable warpings.
+    Common bounding strategies include the Sakoe-Chiba band [3]_ and the Itakura
+    parallelogram [4_]. The Sakoe-Chiba band creates a warping path window that has
+    the same width along the diagonal of :math:'M'. The Itakura paralleogram allows
+    for less warping at the start or end of the series than in the middle.
 
-    Mathematically dtw can be defined as:
-
-    .. math::
-        dtw(x, y) = \sqrt{\sum_{(i, j) \in \pi} \|x_{i} - y_{j}\|^2}
-
+    If the function is called with multivariate series, the matrix :math:'M' is
+    calculated over dimensions :math:'d', i.e. :math:'M_{i,j}=  \sum_{k=i} (a_{k,
+    i}-b_{k,j})^2'. This is commonly called the dependent version of DTW, DTW_D,
+    a term first used in [5]_.
     Parameters
     ----------
     x: np.ndarray (1d or 2d array)
@@ -680,6 +702,16 @@ def dtw_distance(
     .. [1] H. Sakoe, S. Chiba, "Dynamic programming algorithm optimization for
            spoken word recognition," IEEE Transactions on Acoustics, Speech and
            Signal Processing, vol. 26(1), pp. 43--49, 1978.
+    .. [2] Ratanamahatana C and Keogh E.: Three myths about dynamic time warping data
+    mining Proceedings of 5th SIAM International Conference on Data Mining, 2005
+    .. [3] Sakoe H. and Chiba S.: Dynamic programming algorithm optimization for
+    spoken word recognition. IEEE Transactions on Acoustics, Speech, and Signal
+    Processing 26(1):43–49, 1978.
+    .. [4] Itakura F: Minimum prediction residual principle applied to speech
+    recognition. IEEE Transactions on Acoustics, Speech, and Signal Processing 23(
+    1):67–72, 1975.
+    .. [5] Shokoohi-Yekta M et al.: Generalizing DTW to the multi-dimensional case
+    requires an adaptive approach. Data Mining and Knowledge Discovery, 31, 1–31 (2017).
     """
     format_kwargs = {
         "window": window,
