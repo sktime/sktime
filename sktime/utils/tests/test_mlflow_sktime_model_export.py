@@ -56,12 +56,7 @@ def mock_s3_bucket():
 )
 @pytest.fixture
 def sktime_custom_env(tmp_path):
-    """Create a conda environment and returns path to conda environment yml file.
-
-    Returns
-    -------
-    string with path to conda environment yml file
-    """
+    """Create a conda environment and returns path to conda environment yml file."""
     from mlflow.utils.environment import _mlflow_conda_env
 
     conda_env = tmp_path.joinpath("conda_env.yml")
