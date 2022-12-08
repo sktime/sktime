@@ -13,6 +13,10 @@ from sktime.base._meta import flatten
 from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
 
+# mtypes that are native pandas
+# ColumnEnsembleForecaster uses these internally, since we need (pandas) columns
+PANDAS_MTYPES = ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"]
+
 
 class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
     """Forecast each series with separate forecaster.
@@ -41,16 +45,15 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
     Examples
     --------
     >>> from sktime.forecasting.compose import ColumnEnsembleForecaster
-    >>> from sktime.forecasting.exp_smoothing import ExponentialSmoothing
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.forecasting.trend import PolynomialTrendForecaster
-    >>> from sktime.datasets import load_macroeconomic
+    >>> from sktime.datasets import load_longley
 
-    Using integers (column iloc refernces= for indexing:
-    >>> y = load_macroeconomic()[["realgdp", "realcons"]]
+    Using integers (column iloc references) for indexing:
+    >>> y = load_longley()[1][["GNP", "UNEMP"]]
     >>> forecasters = [
     ...     ("trend", PolynomialTrendForecaster(), 0),
-    ...     ("ses", ExponentialSmoothing(trend='add'), 1),
+    ...     ("naive", NaiveForecaster(), 1),
     ... ]
     >>> forecaster = ColumnEnsembleForecaster(forecasters=forecasters)
     >>> forecaster.fit(y, fh=[1, 2, 3])
@@ -79,11 +82,18 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
     _tags = {
         "scitype:y": "both",
         "ignores-exogeneous-X": False,
-        "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
+        "y_inner_mtype": PANDAS_MTYPES,
+        "X_inner_mtype": PANDAS_MTYPES,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
         "capability:pred_int": True,
     }
+
+    # for default get_params/set_params
+    # _steps_attr points to the attribute of self
+    # which contains the heterogeneous set of estimators
+    # this must be an iterable of (name: str, estimator) pairs for the default
+    _steps_attr = "_forecasters"
 
     def __init__(self, forecasters):
         self.forecasters = forecasters
@@ -375,34 +385,6 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
                     covariance between time index in row and col.
         """
         return self._by_column("predict_var", fh=fh, X=X, cov=cov, col_multiindex=True)
-
-    def get_params(self, deep=True):
-        """Get parameters of estimator in `_forecasters`.
-
-        Parameters
-        ----------
-        deep : boolean, optional
-            If True, will return the parameters for this estimator and
-            contained sub-objects that are estimators.
-
-        Returns
-        -------
-        params : mapping of string to any
-            Parameter names mapped to their values.
-        """
-        return self._get_params("_forecasters", deep=deep)
-
-    def set_params(self, **kwargs):
-        """Set the parameters of estimator in `_forecasters`.
-
-        Valid parameter keys can be listed with ``get_params()``.
-
-        Returns
-        -------
-        self : returns an instance of self.
-        """
-        self._set_params("_forecasters", **kwargs)
-        return self
 
     def _get_indices(self, y, idx):
         """Convert integer indices if necessary."""

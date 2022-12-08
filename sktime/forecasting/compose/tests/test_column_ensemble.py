@@ -10,9 +10,9 @@ import pandas as pd
 import pytest
 
 from sktime.forecasting.compose import ColumnEnsembleForecaster
-from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.trend import PolynomialTrendForecaster
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 
 @pytest.mark.parametrize(
@@ -21,7 +21,7 @@ from sktime.forecasting.trend import PolynomialTrendForecaster
         [
             ("trend", PolynomialTrendForecaster(), 0),
             ("naive", NaiveForecaster(), 1),
-            ("ses", ExponentialSmoothing(), 2),
+            ("ses", NaiveForecaster(strategy="mean"), 2),
         ]
     ],
 )
@@ -74,3 +74,27 @@ def test_column_ensemble_multivariate_and_int():
     )
     fc.fit(df, fh=[1, 42])
     fc.predict()
+
+
+@pytest.mark.skipif(
+    not _check_soft_dependencies("statsmodels", severity="none"),
+    reason="skip test if required soft dependencies not available",
+)
+def test_column_ensemble_hierarchical():
+    """Tests column ensemble with hierarchical reconciliation, see bug #3784."""
+    from sktime.datatypes import get_examples
+    from sktime.datatypes._utilities import get_window
+    from sktime.forecasting.sarimax import SARIMAX
+    from sktime.transformations.hierarchical.aggregate import Aggregator
+    from sktime.transformations.hierarchical.reconcile import Reconciler
+
+    X = get_examples("pd_multiindex_hier")[0]
+    y = get_examples("pd_multiindex_hier")[1]
+
+    X_train = get_window(X, lag=1)
+    y_train = get_window(y, lag=1)
+
+    f = Aggregator() * (Aggregator() ** SARIMAX()) * Reconciler()
+
+    f_hat = ColumnEnsembleForecaster(f)
+    f_hat.fit(y=y_train, X=X_train, fh=1)
