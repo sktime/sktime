@@ -26,6 +26,7 @@ __all__ = [
     "make_reduction",
     "BaggingForecaster",
     "ForecastByLevel",
+    "Permute",
 ]
 
 from sktime.forecasting.compose._bagging import BaggingForecaster
@@ -40,6 +41,7 @@ from sktime.forecasting.compose._multiplexer import MultiplexForecaster
 from sktime.forecasting.compose._pipeline import (
     ForecastingPipeline,
     ForecastX,
+    Permute,
     TransformedTargetForecaster,
 )
 from sktime.forecasting.compose._reduce import (
