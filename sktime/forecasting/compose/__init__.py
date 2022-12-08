@@ -6,6 +6,7 @@
 __author__ = ["mloning"]
 
 __all__ = [
+    "HierarchyEnsembleForecaster",
     "ColumnEnsembleForecaster",
     "EnsembleForecaster",
     "AutoEnsembleForecaster",
@@ -34,6 +35,7 @@ from sktime.forecasting.compose._ensemble import (
     EnsembleForecaster,
 )
 from sktime.forecasting.compose._grouped import ForecastByLevel
+from sktime.forecasting.compose._hierarchy_ensemble import HierarchyEnsembleForecaster
 from sktime.forecasting.compose._multiplexer import MultiplexForecaster
 from sktime.forecasting.compose._pipeline import (
     ForecastingPipeline,
