@@ -379,9 +379,12 @@ class ConformalIntervals(BaseForecaster):
         if update and hasattr(self, "residuals_matrix_"):
             remaining_y_index = full_y_index.difference(self.residuals_matrix_.index)
             if len(remaining_y_index) != len(full_y_index):
+                overlapping_index = pd.Index(
+                    self.residuals_matrix_.index.intersection(full_y_index)
+                ).sort_values()
                 residuals_matrix.loc[
-                    self.residuals_matrix_.index, self.residuals_matrix_.columns
-                ] = self.residuals_matrix_
+                    overlapping_index, overlapping_index
+                ] = self.residuals_matrix_.loc[overlapping_index, overlapping_index]
             y_index = remaining_y_index
         else:
             y_index = full_y_index
