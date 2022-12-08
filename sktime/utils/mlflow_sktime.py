@@ -9,6 +9,10 @@ sktime (native) format
     internally to serialize a model.
 mlflow.pyfunc
     Produced for use by generic pyfunc-based deployment tools and batch inference.
+
+    The ``pyfunc`` flavor of the model supports sktime predict methods ``predict``,
+    ``predict_interval``, ``predict_quantiles`` and ``predict_var`` (``predict_proba``
+    and ``predict_residuals`` are currently not supported).
 """
 
 __author__ = ["benjaminbluhm"]
@@ -120,10 +124,7 @@ def save_model(
           on the returned prediction object will not be correctly inferred due
           to the Pandas MultiIndex column type when using the these methods.
           ``infer_schema`` will function correctly if using the ``pyfunc`` flavor
-          of the model, though. The ``pyfunc`` flavor of the model supports sktime
-          predict methods ``predict``, ``predict_interval``, ``predict_quantiles``
-          and ``predict_var`` while ``predict_proba`` and ``predict_residuals`` are
-          currently not supported.
+          of the model, though.
     input_example : Union[pandas.core.frame.DataFrame, numpy.ndarray, dict, list, csr_matrix, csc_matrix], optional (default=None)
         Input example provides one or several instances of valid model input.
         The example can be used as a hint of what data to feed the model. The given
