@@ -34,6 +34,7 @@ from mlflow import pyfunc  # noqa: F401
 from mlflow.tracking._model_registry import DEFAULT_AWAIT_MAX_SLEEP_SECONDS
 from mlflow.utils.docstring_utils import LOG_MODEL_PARAM_DOCS, format_docstring
 
+import sktime
 from sktime import utils
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
@@ -182,8 +183,6 @@ def save_model(
         _validate_and_copy_code_paths,
         _validate_and_prepare_target_save_path,
     )
-
-    import sktime
 
     _validate_env_arguments(conda_env, pip_requirements, extra_pip_requirements)
 
