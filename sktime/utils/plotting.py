@@ -7,7 +7,7 @@ __all__ = ["plot_series", "plot_correlations", "plot_windows"]
 __author__ = ["mloning", "RNKuhns", "Drishti Bhasin", "chillerobscuro"]
 
 import math
-from warnings import simplefilter
+from warnings import simplefilter, warn
 
 import numpy as np
 import pandas as pd
@@ -22,6 +22,7 @@ def plot_series(
     *series,
     labels=None,
     markers=None,
+    colors=None,
     x_label=None,
     y_label=None,
     ax=None,
@@ -38,6 +39,8 @@ def plot_series(
     markers: list, default = None
         Markers of data points, if None the marker "o" is used by default.
         The length of the list has to match with the number of series.
+    colors: list, default = None
+        The colors to use for plotting each series. Must contain one color per series
     pred_interval: pd.DataFrame, default = None
         Output of `forecaster.predict_interval()`. Contains columns for lower
         and upper boundaries of confidence interval.
@@ -106,7 +109,9 @@ def plot_series(
     if _ax_kwarg_is_none:
         fig, ax = plt.subplots(1, figsize=plt.figaspect(0.25))
 
-    colors = sns.color_palette("colorblind", n_colors=n_series)
+    # colors
+    if colors is None or not _check_colors(colors, n_series):
+        colors = sns.color_palette("colorblind", n_colors=n_series)
 
     # plot series
     for x, y, color, label, marker in zip(xs, series, colors, labels, markers):
@@ -348,6 +353,18 @@ def plot_correlations(
         fig.suptitle(suptitle, size="xx-large")
 
     return fig, np.array(fig.get_axes())
+
+
+def _check_colors(colors, n_series):
+    """Verify color list is correct length and contains only colors."""
+    from matplotlib.colors import is_color_like
+
+    if n_series == len(colors) and all([is_color_like(c) for c in colors]):
+        return True
+    warn(
+        "Color list must be same length as `series` and contain only matplotlib colors"
+    )
+    return False
 
 
 def _get_windows(cv, y):
