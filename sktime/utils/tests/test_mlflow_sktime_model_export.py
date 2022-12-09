@@ -7,10 +7,13 @@ import os
 from pathlib import Path
 from unittest import mock
 
+import boto3
+import moto
 import numpy as np
 import pandas as pd
 import pytest
 import yaml
+from botocore.config import Config
 
 from sktime.datasets import load_airline, load_longley
 from sktime.datatypes import convert
@@ -26,10 +29,6 @@ def model_path(tmp_path):
     return tmp_path.joinpath("model")
 
 
-@pytest.mark.skipif(
-    not _check_soft_dependencies("boto3", "moto", severity="none"),
-    reason="skip test if required soft dependency not available",
-)
 @pytest.fixture(scope="module")
 def mock_s3_bucket():
     """Create a mock S3 bucket using moto.
@@ -38,10 +37,6 @@ def mock_s3_bucket():
     -------
     string with name of mock S3 bucket
     """
-    import boto3
-    import moto
-    from botocore.config import Config
-
     with moto.mock_s3():
         bucket_name = "mock-bucket"
         my_config = Config(region_name="us-east-1")
