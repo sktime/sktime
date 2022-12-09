@@ -312,7 +312,10 @@ class VectorizedDF:
 
     def as_list(self):
         """Shorthand to retrieve self (iterator) as list."""
-        return list(self)
+        return [
+            _enforce_index_freq(item[1].droplevel(level=self.X_multiindex.index.names[:-1])) for item in
+            self.X_multiindex.groupby(level=self.X_multiindex.index.names[:-1])
+        ]
 
     def reconstruct(
         self,
