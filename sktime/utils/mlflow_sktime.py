@@ -420,6 +420,7 @@ def load_model(model_uri, dst_path=None):
     >>> mlflow_sktime.save_model(sktime_model=forecaster, path=model_path)  # doctest: +SKIP
     >>> loaded_model = mlflow_sktime.load_model(model_uri=model_path)  # doctest: +SKIP
     """  # noqa: E501
+    _check_soft_dependencies("mlflow", severity="error")
     from mlflow.tracking.artifact_utils import _download_artifact_from_uri
     from mlflow.utils.model_utils import (
         _add_code_from_conf_to_system_path,
