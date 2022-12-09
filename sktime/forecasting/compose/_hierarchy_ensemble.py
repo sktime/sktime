@@ -87,9 +87,12 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
         "scitype:y": "both",
         "ignores-exogeneous-X": False,
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
+        "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
-        "capability:pred_int": True,
+        "capability:pred_int": False,
+        "fit_is_empty": False,
+        "enforce_index_type": None,
     }
 
     BY_LIST = ["level", "node"]
@@ -109,6 +112,8 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
                 "capability:pred_int",
                 "ignores-exogeneous-X",
                 "handles-missing-data",
+                "fit_is_empty",
+                "enforce_index_type",
             ]
             self.clone_tags(forecasters, tags_to_clone)
         else:
@@ -119,11 +124,16 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
             self._anytagis_then_set("capability:pred_int", False, True, l_forecasters)
             self._anytagis_then_set("ignores-exogeneous-X", False, True, l_forecasters)
             self._anytagis_then_set("handles-missing-data", False, True, l_forecasters)
+            self._anytagis_then_set("fit_is_empty", False, True, l_forecasters)
+            self._anytagis_then_set("enforce_index_type", False, True, l_forecasters)
 
-    def _fit(self, y, X=None, fh=None):
-
+    def _aggregate(self, y):
+        """Add total levels to y, using Aggregate."""
         from sktime.transformations.hierarchical.aggregate import Aggregator
 
+        return Aggregator().fit_transform(y)
+
+    def _fit(self, y, X=None, fh=None):
         """Fit to training data.
 
         Parameters
@@ -139,10 +149,11 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
         -------
         self : returns an instance of self.
         """
-
         # Creating  aggregated levels in data
-        agg = Aggregator()
-        z = agg.fit_transform(y)
+        z = self._aggregate(y)
+
+        if X is not None:
+            X = self._aggregate(X)
 
         # check forecasters
         self.forecasters_ = self._check_forecasters(y, z)
@@ -156,8 +167,12 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
                 if level in hier_dict.keys():
                     frcstr = forecaster.clone()
                     df = z[z.index.droplevel(-1).isin(hier_dict[level])]
-                    frcstr.fit(df, fh=fh, X=X)
-                    self.fitted_list.append(frcstr)
+                    if X is not None:
+                        x = X.loc[df.index]
+                        frcstr.fit(df, fh=fh, X=x)
+                    else:
+                        frcstr.fit(df, fh=fh, X=X)
+                    self.fitted_list.append([frcstr, df.index])
 
         else:
             node_dict = self._get_node_dict(z)
@@ -167,9 +182,12 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
                     df = z.loc[node]
                     df[hier_nm[:-1]] = list(node)
                     df = df.set_index(hier_nm[:-1], append=True).reorder_levels(hier_nm)
-                    frcstr.fit(df, fh=fh, X=X)
-                    self.fitted_list.append(frcstr)
-
+                    if X is not None:
+                        x = X.loc[df.index]
+                        frcstr.fit(df, fh=fh, X=x)
+                    else:
+                        frcstr.fit(df, fh=fh, X=X)
+                    self.fitted_list.append([frcstr, df.index])
         return self
 
     def _get_hier_dict(self, z):
@@ -241,8 +259,16 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
             Point predictions
         """
         preds = []
+
+        if X is not None:
+            X = self._aggregate(X)
+
         for i in range(len(self.fitted_list)):
-            pred = self.fitted_list[i].predict(fh=fh, X=X)
+            if X is not None:
+                x = X.loc[self.fitted_list[i][1]]
+                pred = self.fitted_list[i][0].predict(fh=fh, X=x)
+            else:
+                pred = self.fitted_list[i][0].predict(fh=fh, X=X)
             preds.append(pred)
 
         preds = pd.concat(preds, axis=0)
