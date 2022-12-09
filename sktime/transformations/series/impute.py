@@ -54,7 +54,7 @@ class Imputer(BaseTransformer):
         The placeholder for the missing values. All occurrences of
         missing_values will be imputed, in addition to np.nan.
         If None, then only np.nan values are imputed.
-    value : int/float, default=None
+    value : int/float, default=0
         Value to use to fill missing values when method="constant".
     forecaster : Any Forecaster based on sktime.BaseForecaster, default=None
         Use a given Forecaster to impute by insample predictions when
@@ -102,7 +102,7 @@ class Imputer(BaseTransformer):
         self,
         method="drift",
         random_state=None,
-        value=None,
+        value=0,
         forecaster=None,
         missing_values=None,
     ):
@@ -222,16 +222,6 @@ class Imputer(BaseTransformer):
         ]:
             raise ValueError(f"Given method {method} is not an allowed method.")
         if (
-            self.value is not None
-            and method != "constant"
-            or method == "constant"
-            and self.value is None
-        ):
-            raise ValueError(
-                """Imputing with a value can only be
-                used if method="constant" and if parameter "value" is not None"""
-            )
-        elif (
             self.forecaster is not None
             and method != "forecaster"
             or method == "forecaster"
