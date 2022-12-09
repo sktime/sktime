@@ -169,6 +169,10 @@ def test_evaluate_no_exog_against_with_exog():
     assert np.all(out_exog[scoring_name] != out_no_exog[scoring_name])
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("statsmodels", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
 @pytest.mark.parametrize("error_score", [np.nan, "raise", 1000])
 @pytest.mark.parametrize("return_data", [True, False])
 @pytest.mark.parametrize("strategy", ["refit", "update"])
