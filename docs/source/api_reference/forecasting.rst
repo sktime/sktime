@@ -274,6 +274,7 @@ Ensembles and stacking
     EnsembleForecaster
     AutoEnsembleForecaster
     StackingForecaster
+    HierarchyEnsembleForecaster
 
 Hierarchical reconciliation
 ---------------------------
