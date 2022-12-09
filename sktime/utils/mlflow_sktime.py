@@ -58,6 +58,7 @@ def get_default_pip_requirements():
     Calls to :func:`save_model()` and :func:`log_model()` produce a pip environment
     that, at a minimum, contains these requirements.
     """
+    _check_soft_dependencies("mlflow", severity="error")
     from mlflow.utils.requirements_utils import _get_pinned_requirement
 
     return [_get_pinned_requirement("sktime")]
@@ -71,6 +72,7 @@ def get_default_conda_env():
     The default Conda environment for MLflow Models produced by calls to
     :func:`save_model()` and :func:`log_model()`
     """
+    _check_soft_dependencies("mlflow", severity="error")
     from mlflow.utils.environment import _mlflow_conda_env
 
     return _mlflow_conda_env(additional_pip_deps=get_default_pip_requirements())
@@ -164,6 +166,7 @@ def save_model(
     >>> model_path = "model"
     >>> mlflow_sktime.save_model(sktime_model=forecaster, path=model_path)  # doctest: +SKIP
     """  # noqa: E501
+    _check_soft_dependencies("mlflow", severity="error")
     import mlflow
     from mlflow.models import Model
     from mlflow.models.model import MLMODEL_FILE_NAME
@@ -355,6 +358,7 @@ def log_model(
     ...     sktime_model=forecaster,
     ...     artifact_path=artifact_path)
     """  # noqa: E501
+    _check_soft_dependencies("mlflow", severity="error")
     from mlflow.models import Model
 
     return Model.log(
@@ -478,6 +482,7 @@ def _load_pyfunc(path):
 
 class _SktimeModelWrapper:
     def __init__(self, sktime_model):
+        _check_soft_dependencies("mlflow", severity="error")
         self.sktime_model = sktime_model
 
     def predict(self, dataframe) -> pd.DataFrame:
