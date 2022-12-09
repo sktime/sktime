@@ -155,11 +155,11 @@ def save_model(
     >>> from sktime.forecasting.arima import ARIMA
     >>> from sktime.utils import mlflow_sktime
     >>> y = load_airline()
-    >>> forecaster = ARIMA(  # doctest: +SKIP
+    >>> forecaster = ARIMA(
     ...     order=(1, 1, 0),
     ...     seasonal_order=(0, 1, 0, 12),
     ...     suppress_warnings=True)
-    >>> forecaster.fit(y)  # doctest: +SKIP
+    >>> forecaster.fit(y)
     ARIMA(...)
     >>> model_path = "model"
     >>> mlflow_sktime.save_model(
@@ -348,17 +348,17 @@ def log_model(
     >>> from sktime.forecasting.arima import ARIMA
     >>> from sktime.utils import mlflow_sktime
     >>> y = load_airline()
-    >>> forecaster = ARIMA(  # doctest: +SKIP
+    >>> forecaster = ARIMA(
     ...     order=(1, 1, 0),
     ...     seasonal_order=(0, 1, 0, 12),
     ...     suppress_warnings=True)
-    >>> forecaster.fit(y)  # doctest: +SKIP
+    >>> forecaster.fit(y)
     ARIMA(...)
-    >>> mlflow.start_run()  # doctest: +SKIP
+    >>> mlflow.start_run()
     >>> artifact_path = "model"
-    >>> model_info = mlflow_sktime.log_model(  # doctest: +SKIP
+    >>> model_info = mlflow_sktime.log_model(
     ...     sktime_model=forecaster,
-    ...     artifact_path=artifact_path)
+    ...     artifact_path=artifact_path)  # doctest: +SKIP
     """  # noqa: E501
     _check_soft_dependencies("mlflow", severity="error")
     from mlflow.models import Model
@@ -416,16 +416,16 @@ def load_model(model_uri, dst_path=None):
     >>> from sktime.forecasting.arima import ARIMA
     >>> from sktime.utils import mlflow_sktime
     >>> y = load_airline()
-    >>> forecaster = ARIMA(  # doctest: +SKIP
+    >>> forecaster = ARIMA(
     ...     order=(1, 1, 0),
     ...     seasonal_order=(0, 1, 0, 12),
     ...     suppress_warnings=True)
-    >>> forecaster.fit(y)  # doctest: +SKIP
+    >>> forecaster.fit(y)
     ARIMA(...)
     >>> model_path = "model"
     >>> mlflow_sktime.save_model(
     ...     sktime_model=forecaster,
-    ...     path=model_path)  # doctest: +SKIP
+    ...     path=model_path)
     >>> loaded_model = mlflow_sktime.load_model(model_uri=model_path)  # doctest: +SKIP
     """  # noqa: E501
     _check_soft_dependencies("mlflow", severity="error")
