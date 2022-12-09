@@ -143,10 +143,6 @@ def save_model(
         path to a pip requirements file on the local filesystem (e.g. "requirements.txt")
 
 
-    See Also
-    --------
-    MLflow
-
     References
     ----------
     .. [1] https://www.mlflow.org/docs/latest/python_api/mlflow.models.html#mlflow.models.Model.save
@@ -403,10 +399,6 @@ def load_model(model_uri, dst_path=None):
     Returns
     -------
     A sktime model instance.
-
-    See Also
-    --------
-    MLflow
 
     References
     ----------
