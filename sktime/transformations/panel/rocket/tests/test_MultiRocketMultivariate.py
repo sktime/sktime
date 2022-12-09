@@ -16,7 +16,7 @@ def test_multirocket_multivariate_on_basic_motions():
     X_training, Y_training = load_basic_motions(split="train", return_X_y=True)
 
     # 'fit' MultiRocket -> infer data dimensions, generate random kernels
-    multirocket = MultiRocketMultivariate()
+    multirocket = MultiRocketMultivariate(random_state=0)
     multirocket.fit(X_training)
 
     # transform training data

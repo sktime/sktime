@@ -74,6 +74,9 @@ class BaseGridSearch(_DelegatedForecaster):
         self._extend_to_all_scitypes("y_inner_mtype")
         self._extend_to_all_scitypes("X_inner_mtype")
 
+    # attribute for _DelegatedForecaster, which then delegates
+    #     all non-overridden methods are same as of getattr(self, _delegate_name)
+    #     see further details in _DelegatedForecaster docstring
     _delegate_name = "best_forecaster_"
 
     def _extend_to_all_scitypes(self, tagname):
@@ -221,7 +224,8 @@ class BaseGridSearch(_DelegatedForecaster):
         # Raise error if all fits in evaluate failed because all score values are NaN.
         if self.best_index_ == -1:
             raise NotFittedError(
-                f"""All fits of forecaster failed, set error_score='raise' to see the exceptions.
+                f"""All fits of forecaster failed,
+                set error_score='raise' to see the exceptions.
                 Failed forecaster: {self.forecaster}"""
             )
         self.best_score_ = results.loc[self.best_index_, f"mean_{scoring_name}"]
@@ -434,10 +438,10 @@ class ForecastingGridSearchCV(BaseGridSearch):
     ...     },
     ...     ],
     ...     cv=cv,
-    ...     n_jobs=-1)
-    >>> gscv.fit(y)
+    ...     n_jobs=-1)  # doctest: +SKIP
+    >>> gscv.fit(y)  # doctest: +SKIP
     ForecastingGridSearchCV(...)
-    >>> y_pred = gscv.predict(fh=[1,2,3])
+    >>> y_pred = gscv.predict(fh=[1,2,3])  # doctest: +SKIP
     """
 
     def __init__(
@@ -515,9 +519,9 @@ class ForecastingGridSearchCV(BaseGridSearch):
         -------
         params : dict or list of dict
         """
-        from sktime.forecasting.exp_smoothing import ExponentialSmoothing
         from sktime.forecasting.model_selection._split import SingleWindowSplitter
         from sktime.forecasting.naive import NaiveForecaster
+        from sktime.forecasting.trend import PolynomialTrendForecaster
         from sktime.performance_metrics.forecasting import MeanAbsolutePercentageError
 
         params = {
@@ -527,9 +531,9 @@ class ForecastingGridSearchCV(BaseGridSearch):
             "scoring": MeanAbsolutePercentageError(symmetric=True),
         }
         params2 = {
-            "forecaster": ExponentialSmoothing(),
+            "forecaster": PolynomialTrendForecaster(),
             "cv": SingleWindowSplitter(fh=1),
-            "param_grid": {"initialization_method": ["estimated", "heuristic"]},
+            "param_grid": {"degree": [1, 2]},
             "scoring": MeanAbsolutePercentageError(symmetric=True),
             "update_behaviour": "inner_only",
         }

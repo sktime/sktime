@@ -65,10 +65,10 @@ class VAR(_StatsModelsAdapter):
     >>> from sktime.forecasting.var import VAR
     >>> from sktime.datasets import load_longley
     >>> _, y = load_longley()
-    >>> forecaster = VAR()
-    >>> forecaster.fit(y)
+    >>> forecaster = VAR()  # doctest: +SKIP
+    >>> forecaster.fit(y)  # doctest: +SKIP
     VAR(...)
-    >>> y_pred = forecaster.predict(fh=[1,2,3])
+    >>> y_pred = forecaster.predict(fh=[1,2,3])  # doctest: +SKIP
     """
 
     _fitted_param_names = ("aic", "fpe", "hqic", "bic")

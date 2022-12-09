@@ -93,6 +93,8 @@ class KNeighborsTimeSeriesRegressor(BaseRegressor):
 
     _tags = {
         "capability:multivariate": True,
+        "capability:unequal_length": True,
+        "capability:missing_values": True,
         "X_inner_mtype": ["pd-multiindex", "numpy3D"],
     }
 
@@ -138,8 +140,21 @@ class KNeighborsTimeSeriesRegressor(BaseRegressor):
         #   otherwise all Panel formats are ok
         if isinstance(self.distance, str):
             self.set_tags(X_inner_mtype="numpy3D")
+            self.set_tags(**{"capability:unequal_length": False})
+            self.set_tags(**{"capability:missing_values": False})
         elif distance_mtype is not None:
             self.set_tags(X_inner_mtype=distance_mtype)
+
+        from sktime.dists_kernels import BasePairwiseTransformerPanel
+
+        # inherit capability tags from distance, if it is an estimator
+        if isinstance(distance, BasePairwiseTransformerPanel):
+            inherit_tags = [
+                "capability:missing_values",
+                "capability:unequal_length",
+                "capability:multivariate",
+            ]
+            self.clone_tags(distance, inherit_tags)
 
     def _distance(self, X, X2):
         """Compute distance - unified interface to str code and callable."""
