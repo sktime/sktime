@@ -30,7 +30,7 @@ import pickle
 
 import pandas as pd
 import yaml
-from mlflow import pyfunc  # noqa: F401
+from mlflow import pyfunc
 from mlflow.tracking._model_registry import DEFAULT_AWAIT_MAX_SLEEP_SECONDS
 from mlflow.utils.docstring_utils import LOG_MODEL_PARAM_DOCS, format_docstring
 
@@ -136,11 +136,13 @@ def save_model(
     pip_requirements : Union[Iterable, str], optional (default=None)
         Either an iterable of pip requirement strings
         (e.g. ["sktime", "-r requirements.txt", "-c constraints.txt"]) or the string
-        path to a pip requirements file on the local filesystem (e.g. "requirements.txt")
+        path to a pip requirements file on the local filesystem
+        (e.g. "requirements.txt")
     extra_pip_requirements : Union[Iterable, str], optional (default=None)
         Either an iterable of pip requirement strings
         (e.g. ["pandas", "-r requirements.txt", "-c constraints.txt"]) or the string
-        path to a pip requirements file on the local filesystem (e.g. "requirements.txt")
+        path to a pip requirements file on the local filesystem
+        (e.g. "requirements.txt")
 
 
     References
@@ -160,7 +162,9 @@ def save_model(
     >>> forecaster.fit(y)  # doctest: +SKIP
     ARIMA(...)
     >>> model_path = "model"
-    >>> mlflow_sktime.save_model(sktime_model=forecaster, path=model_path)  # doctest: +SKIP
+    >>> mlflow_sktime.save_model(
+    ...     sktime_model=forecaster,
+    ...     path=model_path)  # doctest: +SKIP
     """  # noqa: E501
     _check_soft_dependencies("mlflow", severity="error")
     import mlflow
@@ -315,11 +319,13 @@ def log_model(
     pip_requirements : Union[Iterable, str], optional (default=None)
         Either an iterable of pip requirement strings
         (e.g. ["sktime", "-r requirements.txt", "-c constraints.txt"]) or the string
-        path to a pip requirements file on the local filesystem (e.g. "requirements.txt")
+        path to a pip requirements file on the local filesystem
+        (e.g. "requirements.txt")
     extra_pip_requirements : Union[Iterable, str], optional (default=None)
         Either an iterable of pip requirement strings
         (e.g. ["pandas", "-r requirements.txt", "-c constraints.txt"]) or the string
-        path to a pip requirements file on the local filesystem (e.g. "requirements.txt")
+        path to a pip requirements file on the local filesystem
+        (e.g. "requirements.txt")
     kwargs:
         Additional arguments for :py:class:`mlflow.models.model.Model`
 
@@ -417,7 +423,9 @@ def load_model(model_uri, dst_path=None):
     >>> forecaster.fit(y)  # doctest: +SKIP
     ARIMA(...)
     >>> model_path = "model"
-    >>> mlflow_sktime.save_model(sktime_model=forecaster, path=model_path)  # doctest: +SKIP
+    >>> mlflow_sktime.save_model(
+    ...     sktime_model=forecaster,
+    ...     path=model_path)  # doctest: +SKIP
     >>> loaded_model = mlflow_sktime.load_model(model_uri=model_path)  # doctest: +SKIP
     """  # noqa: E501
     _check_soft_dependencies("mlflow", severity="error")
