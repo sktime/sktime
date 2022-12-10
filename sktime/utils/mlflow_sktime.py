@@ -30,9 +30,6 @@ import pickle
 
 import pandas as pd
 import yaml
-from mlflow import pyfunc
-from mlflow.tracking._model_registry import DEFAULT_AWAIT_MAX_SLEEP_SECONDS
-from mlflow.utils.docstring_utils import LOG_MODEL_PARAM_DOCS, format_docstring
 
 import sktime
 from sktime import utils
@@ -78,7 +75,6 @@ def get_default_conda_env():
     return _mlflow_conda_env(additional_pip_deps=get_default_pip_requirements())
 
 
-@format_docstring(LOG_MODEL_PARAM_DOCS.format(package_name=FLAVOR_NAME))
 def save_model(
     sktime_model,
     path,
@@ -168,6 +164,7 @@ def save_model(
     """  # noqa: E501
     _check_soft_dependencies("mlflow", severity="error")
     import mlflow
+    from mlflow import pyfunc
     from mlflow.models import Model
     from mlflow.models.model import MLMODEL_FILE_NAME
     from mlflow.models.utils import _save_example
@@ -250,7 +247,6 @@ def save_model(
     _PythonEnv.current().to_yaml(os.path.join(path, _PYTHON_ENV_FILE_NAME))
 
 
-@format_docstring(LOG_MODEL_PARAM_DOCS.format(package_name=FLAVOR_NAME))
 def log_model(
     sktime_model,
     artifact_path,
@@ -259,7 +255,7 @@ def log_model(
     registered_model_name=None,
     signature=None,
     input_example=None,
-    await_registration_for=DEFAULT_AWAIT_MAX_SLEEP_SECONDS,
+    await_registration_for=None,
     pip_requirements=None,
     extra_pip_requirements=None,
     **kwargs,
@@ -362,6 +358,11 @@ def log_model(
     """  # noqa: E501
     _check_soft_dependencies("mlflow", severity="error")
     from mlflow.models import Model
+
+    if await_registration_for is None:
+        from mlflow.tracking._model_registry import DEFAULT_AWAIT_MAX_SLEEP_SECONDS
+
+        await_registration_for = DEFAULT_AWAIT_MAX_SLEEP_SECONDS
 
     return Model.log(
         artifact_path=artifact_path,
