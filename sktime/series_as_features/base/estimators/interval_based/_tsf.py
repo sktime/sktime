@@ -64,13 +64,12 @@ class BaseTimeSeriesForest:
 
         The attribute was renamed from base_estimator to estimator in sklearn 1.2.0.
         """
-        from packaging.specifiers import SpecifierSet
-
         import sklearn
+        from packaging.specifiers import SpecifierSet
 
         sklearn_version = sklearn.__version__
 
-        if sklearn_version in SpecifierSet(">1.2.0"):
+        if sklearn_version in SpecifierSet(">=1.2.0"):
             return self.estimator
         else:
             return self.base_estimator
