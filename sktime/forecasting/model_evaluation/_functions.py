@@ -258,8 +258,7 @@ def evaluate(
         If set to True, returns `pd.DataFrame`, otherwise `dask.dataframe.DataFrame`.
     **kwargs : Keyword arguments
         Only relevant if backend is specified. Additional kwargs are passed into
-        `dask.distributed.get_client` or `dask.distributed.Client` if backend is
-        set to "dask", otherwise kwargs are passed into `joblib.Parallel`.
+        into `joblib.Parallel` if backend is "loky", "multiprocessing" or "threading".
 
     Returns
     -------

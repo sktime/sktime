@@ -42,7 +42,6 @@ class BaseGridSearch(_DelegatedForecaster):
         return_n_best_forecasters=1,
         update_behaviour="full_refit",
         error_score=np.nan,
-        **kwargs,
     ):
 
         self.forecaster = forecaster
@@ -56,7 +55,6 @@ class BaseGridSearch(_DelegatedForecaster):
         self.return_n_best_forecasters = return_n_best_forecasters
         self.update_behaviour = update_behaviour
         self.error_score = error_score
-        self.kwargs = kwargs
         super(BaseGridSearch, self).__init__()
         tags_to_clone = [
             "requires-fh-in-fit",
@@ -164,7 +162,6 @@ class BaseGridSearch(_DelegatedForecaster):
                 error_score=self.error_score,
                 backend=self.backend,
                 n_jobs=self.n_jobs,
-                **self.kwargs,
             )
 
             # Filter columns.
@@ -357,10 +354,6 @@ class ForecastingGridSearchCV(BaseGridSearch):
         Value to assign to the score if an exception occurs in estimator fitting. If set
         to "raise", the exception is raised. If a numeric value is given,
         FitFailedWarning is raised.
-    **kwargs : Keyword arguments
-        Only relevant if backend is specified. Additional kwargs are passed into
-        `dask.distributed.get_client` or `dask.distributed.Client` if backend is
-        set to "dask", otherwise kwargs are passed into `joblib.Parallel`.
 
     Attributes
     ----------
@@ -464,7 +457,6 @@ class ForecastingGridSearchCV(BaseGridSearch):
         backend="loky",
         update_behaviour="full_refit",
         error_score=np.nan,
-        **kwargs,
     ):
         super(ForecastingGridSearchCV, self).__init__(
             forecaster=forecaster,
@@ -478,7 +470,6 @@ class ForecastingGridSearchCV(BaseGridSearch):
             backend=backend,
             update_behaviour=update_behaviour,
             error_score=error_score,
-            **kwargs,
         )
         self.param_grid = param_grid
 
@@ -620,10 +611,6 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         Value to assign to the score if an exception occurs in estimator fitting. If set
         to "raise", the exception is raised. If a numeric value is given,
         FitFailedWarning is raised.
-    **kwargs : Keyword arguments
-        Only relevant if backend is specified. Additional kwargs are passed into
-        `dask.distributed.get_client` or `dask.distributed.Client` if backend is
-        set to "dask", otherwise kwargs are passed into `joblib.Parallel`.
 
     Attributes
     ----------
@@ -659,7 +646,6 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         backend=None,
         update_behaviour="full_refit",
         error_score=np.nan,
-        **kwargs,
     ):
         super(ForecastingRandomizedSearchCV, self).__init__(
             forecaster=forecaster,
@@ -673,7 +659,6 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
             backend=backend,
             update_behaviour=update_behaviour,
             error_score=error_score,
-            **kwargs,
         )
         self.param_distributions = param_distributions
         self.n_iter = n_iter
