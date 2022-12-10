@@ -171,6 +171,8 @@ def check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj", panel=T
         msg = f"{var_name} must have a MultiIndex, found {type(obj.index)}"
         return _ret(False, msg, None, return_metadata)
 
+    index = obj.index
+
     # check that columns are unique
     col_names = obj.columns
     if not col_names.is_unique:
@@ -178,7 +180,7 @@ def check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj", panel=T
         return _ret(False, msg, None, return_metadata)
 
     # check that there are precisely two index levels
-    nlevels = obj.index.nlevels
+    nlevels = index.nlevels
     if panel is True and not nlevels == 2:
         msg = f"{var_name} must have a MultiIndex with 2 levels, found {nlevels}"
         return _ret(False, msg, None, return_metadata)
@@ -201,9 +203,7 @@ def check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj", panel=T
         )
         return _ret(False, msg, None, return_metadata)
 
-    time_obj = obj.reset_index(-1).drop(obj.columns, axis=1)
-    time_grp = time_obj.groupby(level=0, group_keys=True, as_index=True)
-    inst_inds = time_obj.index.unique()
+    inst_inds = index.get_level_values(0)
 
     # check instance index being integer or range index
     if not is_in_valid_multiindex_types(inst_inds):
@@ -213,45 +213,27 @@ def check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj", panel=T
         )
         return _ret(False, msg, None, return_metadata)
 
-    if pd.__version__ < "1.5.0":
-        # Earlier versions of pandas are very slow for this type of operation.
-        is_equally_list = [_index_equally_spaced(obj.loc[i].index) for i in inst_inds]
-        is_equally_spaced = all(is_equally_list)
-        montonic_list = [obj.loc[i].index.is_monotonic for i in inst_inds]
-        time_is_monotonic = len([i for i in montonic_list if i is False]) == 0
-    else:
-        timedelta_by_grp = (
-            time_grp.diff().groupby(level=0, group_keys=True, as_index=True).nunique()
-        )
-        timedelta_unique = timedelta_by_grp.iloc[:, 0].unique()
-        is_equally_spaced = len(timedelta_unique) == 1
-        time_is_monotonic = all(timedelta_unique >= 0)
-
-    is_equal_length = time_grp.count()
-
-    # Check time index is ordered in time
-    if not time_is_monotonic:
-        msg = (
-            f"The (time) index of {var_name} must be sorted monotonically increasing, "
-            f"but found: {obj.index.get_level_values(-1)}"
-        )
-        return _ret(False, msg, None, return_metadata)
-
-    if panel is True:
-        panel_inds = [1]
-    else:
-        panel_inds = inst_inds.droplevel(-1).unique()
-
     metadata = dict()
-    metadata["is_univariate"] = len(obj.columns) < 2
-    metadata["is_equally_spaced"] = is_equally_spaced
-    metadata["is_empty"] = len(obj.index) < 1 or len(obj.columns) < 1
-    metadata["n_panels"] = len(panel_inds)
-    metadata["is_one_panel"] = len(panel_inds) == 1
-    metadata["n_instances"] = len(inst_inds)
-    metadata["is_one_series"] = len(inst_inds) == 1
-    metadata["has_nans"] = obj.isna().values.any()
-    metadata["is_equal_length"] = is_equal_length.nunique().shape[0] == 1
+
+    # check whether index is equally spaced or if there are any nans
+    #   compute only if needed
+    if return_metadata:
+        series_groups = obj.groupby(level=obj.index.names[:-1])
+        n_series = series_groups.ngroups
+        panel_groups = obj.groupby(level=obj.index.names[:-2])
+        n_panels = panel_groups.ngroups
+
+        metadata["is_empty"] = len(index) < 1 or len(obj.columns) < 1
+        metadata["is_univariate"] = len(obj.columns) < 2
+
+        metadata["is_equally_spaced"] = all(_index_equally_spaced(group) for _, group in series_groups)
+        metadata["n_instances"] = n_series
+        metadata["n_panels"] = n_panels
+        metadata["is_one_series"] = n_series == 1
+        metadata["is_one_panel"] = n_panels == 1
+        metadata["has_nans"] = obj.isna().values.any()
+        metadata["is_equal_length"] = _list_all_equal(series_groups.size())
+
     return _ret(True, None, metadata, return_metadata)
 
 
