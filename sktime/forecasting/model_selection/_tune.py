@@ -396,7 +396,9 @@ class ForecastingGridSearchCV(BaseGridSearch):
     >>> gscv = ForecastingGridSearchCV(
     ...     forecaster=forecaster,
     ...     param_grid=param_grid,
-    ...     cv=cv)
+    ...     cv=cv,
+    ...     backend="multiprocessing",
+    ...     n_jobs=-1)
     >>> gscv.fit(y)
     ForecastingGridSearchCV(...)
     >>> y_pred = gscv.predict(fh)
@@ -437,6 +439,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
     ...     },
     ...     ],
     ...     cv=cv,
+    ...     backend="multiprocessing",
     ...     n_jobs=-1)  # doctest: +SKIP
     >>> gscv.fit(y)  # doctest: +SKIP
     ForecastingGridSearchCV(...)
