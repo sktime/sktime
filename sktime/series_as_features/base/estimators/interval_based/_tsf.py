@@ -69,7 +69,7 @@ class BaseTimeSeriesForest:
 
         sklearn_version = sklearn.__version__
 
-        if sklearn_version in SpecifierSet(">1.2.0"):
+        if sklearn_version in SpecifierSet(">=1.2.0"):
             return self.estimator
         else:
             return self.base_estimator
