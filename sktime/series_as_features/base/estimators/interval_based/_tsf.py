@@ -39,7 +39,7 @@ class BaseTimeSeriesForest:
         random_state=None,
     ):
         super(BaseTimeSeriesForest, self).__init__(
-            base_estimator=self._base_estimator,
+            self._base_estimator,
             n_estimators=n_estimators,
         )
 
