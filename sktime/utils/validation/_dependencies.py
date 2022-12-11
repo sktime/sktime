@@ -25,7 +25,7 @@ def _check_soft_dependencies(
     Parameters
     ----------
     packages : str or tuple of str
-        One or more package names to check.
+        One or more package names and/or package version specifications to check.
         Each tuple element must be a PEP 440 compatibe specifier string,
         for a single package.
         For instance, the PEP 440 compatible package name such as "pandas";
