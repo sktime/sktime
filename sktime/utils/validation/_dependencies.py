@@ -78,8 +78,8 @@ def _check_soft_dependencies(
         except InvalidRequirement:
             msg_version = (
                 f"wrong format for package requirement string, "
-                f'must be PEP 440 compatible requirement string, e.g., "pandas>1.1",'
-                f' but found "{package}"'
+                f'must be PEP 440 compatible requirement string, e.g., "pandas"'
+                f' or "pandas>1.1", but found "{package}"'
             )
             raise InvalidRequirement(msg_version)
 
@@ -158,17 +158,19 @@ def _check_soft_dependencies(
                     f"to the module, class or object with name {obj}."
                 )
 
-        if severity == "error":
-            raise ModuleNotFoundError(msg)
-        elif severity == "warning":
-            warnings.warn(msg)
-        elif severity == "none":
-            return False
-        else:
-            raise RuntimeError(
-                "Error in calling _check_soft_dependencies, severity "
-                f'argument must be "error", "warning", or "none", found "{severity}".'
-            )
+            # raise error/warning or return False if version is incompatible
+            if pkg_env_version not in package_version_req:
+                if severity == "error":
+                    raise ModuleNotFoundError(msg)
+                elif severity == "warning":
+                    warnings.warn(msg)
+                elif severity == "none":
+                    return False
+                else:
+                    raise RuntimeError(
+                        "Error in calling _check_soft_dependencies, severity argument"
+                        f' must be "error", "warning", or "none", found "{severity}".'
+                    )
 
     # if package can be imported and no version issue was caught for any string,
     # then obj is compatible with the requirements and we should return True
