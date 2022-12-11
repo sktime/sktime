@@ -312,10 +312,18 @@ class VectorizedDF:
 
     def as_list(self):
         """Shorthand to retrieve self (iterator) as list."""
-        return [
-            _enforce_index_freq(item[1].droplevel(level=self.X_multiindex.index.names[:-1])) for item in
-            self.X_multiindex.groupby(level=self.X_multiindex.index.names[:-1])
-        ]
+        if isinstance(self.X_multiindex.index, pd.MultiIndex) and self.iterate_as == "Series" and not self.iterate_cols:
+            def _convert(series):
+                series = series.droplevel(list(range(self.X_multiindex.index.nlevels - 1)))
+                series = _enforce_index_freq(series)
+                return series
+
+            return [
+                _convert(series) for _, series in
+                self.X_multiindex.groupby(level=list(range(self.X_multiindex.index.nlevels - 1)))
+            ]
+        else:
+            return list(self)
 
     def reconstruct(
         self,

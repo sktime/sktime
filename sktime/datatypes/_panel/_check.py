@@ -179,6 +179,11 @@ def check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj", panel=T
         msg = f"{var_name} must have unique column indices, but found {col_names}"
         return _ret(False, msg, None, return_metadata)
 
+    # check that no dtype is object
+    if "object" in obj.dtypes.values:
+        msg = f"{var_name} should not have column of 'object' dtype"
+        return _ret(False, msg, None, return_metadata)
+
     # check that there are precisely two index levels
     nlevels = index.nlevels
     if panel is True and not nlevels == 2:
@@ -213,24 +218,28 @@ def check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj", panel=T
         )
         return _ret(False, msg, None, return_metadata)
 
+    # Check time index is ordered in time
+    index_frame = obj.index.to_frame()
+    if not index_frame.groupby(level=list(range(obj.index.nlevels - 1)))[index_frame.columns[-1]].is_monotonic_increasing.all():
+        msg = (
+            f"The (time) index of {var_name} must be sorted monotonically increasing, "
+            f"but found: {index}"
+        )
+        return _ret(False, msg, None, return_metadata)
+
     metadata = dict()
 
     # check whether index is equally spaced or if there are any nans
     #   compute only if needed
     if return_metadata:
-        series_groups = obj.groupby(level=obj.index.names[:-1])
+        series_groups = obj.groupby(level=list(range(obj.index.nlevels - 1)))
         n_series = series_groups.ngroups
-        panel_groups = obj.groupby(level=obj.index.names[:-2])
-        n_panels = panel_groups.ngroups
 
-        metadata["is_empty"] = len(index) < 1 or len(obj.columns) < 1
         metadata["is_univariate"] = len(obj.columns) < 2
-
-        metadata["is_equally_spaced"] = all(_index_equally_spaced(group) for _, group in series_groups)
+        metadata["is_equally_spaced"] = all(_index_equally_spaced(group.index.levels[-1]) for _, group in series_groups)
+        metadata["is_empty"] = len(index) < 1 or len(obj.columns) < 1
         metadata["n_instances"] = n_series
-        metadata["n_panels"] = n_panels
         metadata["is_one_series"] = n_series == 1
-        metadata["is_one_panel"] = n_panels == 1
         metadata["has_nans"] = obj.isna().values.any()
         metadata["is_equal_length"] = _list_all_equal(series_groups.size())
 

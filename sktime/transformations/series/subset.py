@@ -207,10 +207,7 @@ class ColumnSelect(BaseTransformer):
         if index_treatment == "remove":
             Xt = X[col_X_and_cols]
         elif index_treatment == "keep":
-            Xt = X[col_X_and_cols]
-            X_idx_frame = type(X)(columns=columns)
-            Xt = Xt.combine_first(X_idx_frame)
-            Xt = Xt[columns]
+            Xt = X.reindex(columns=columns)
         else:
             raise ValueError(
                 f'index_treatment must be one of "remove", "keep", but found'

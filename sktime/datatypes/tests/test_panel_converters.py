@@ -41,8 +41,8 @@ def test_are_columns_nested(n_instances, n_columns, n_timepoints):
     nested_heterogenous2["primitive_col"] = 1.0
 
     assert are_columns_nested(nested) is True
-    assert are_columns_nested(nested_heterogenous1) is False
-    assert are_columns_nested(nested_heterogenous2) is False
+    assert are_columns_nested(nested_heterogenous1) is True
+    assert are_columns_nested(nested_heterogenous2) is True
 
 
 @pytest.mark.parametrize("n_instances", N_INSTANCES)
