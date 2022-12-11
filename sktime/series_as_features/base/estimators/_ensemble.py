@@ -103,13 +103,29 @@ class BaseTimeSeriesForest(BaseForest):
         self.class_weight = class_weight
         self.max_samples = max_samples
 
+    @property
+    def _estimator(self):
+        """Access first parameter in self, self inheriting from sklearn BaseForest.
+
+        The attribute was renamed from base_estimator to estimator in sklearn 1.2.0.
+        """
+        import sklearn
+        from packaging.specifiers import SpecifierSet
+
+        sklearn_version = sklearn.__version__
+
+        if sklearn_version in SpecifierSet(">=1.2.0"):
+            return self.estimator
+        else:
+            return self.base_estimator
+
     def _make_estimator(self, append=True, random_state=None):
-        """Make and configure a copy of the `estimator_` attribute.
+        """Make and configure a copy of the `_estimator` attribute.
 
         Warning: This method should be used to properly instantiate new
         sub-estimators.
         """
-        estimator = clone(self.estimator_)
+        estimator = clone(self._estimator)
         estimator.set_params(**{p: getattr(self, p) for p in self.estimator_params})
 
         if random_state is not None:
