@@ -297,7 +297,17 @@ def get_cutoff(
     # pd-multiindex (Panel) and pd_multiindex_hier (Hierarchical)
     if isinstance(obj, pd.DataFrame) and isinstance(obj.index, pd.MultiIndex):
         from pandas.core.indexes.base import ensure_index
-        return ensure_index([obj.index.to_frame().groupby(level=obj.index.names[:-1])[obj.index.names[-1]].nth(ix).agg(agg)])
+        inst_levels = list(range(obj.index.nlevels - 1))
+        cutoff = obj.index.to_frame().groupby(level=inst_levels, sort=False).nth(ix).iloc[:, -1].agg(agg)
+        if return_index:
+            cuttoff_idx = ensure_index([cutoff])
+            time_idx = obj.index.levels[-1]
+            if hasattr(time_idx, "freq") and time_idx.freq is not None:
+                if cuttoff_idx.freq != time_idx.freq:
+                    cuttoff_idx.freq = time_idx.freq
+            return cuttoff_idx
+        else:
+            return cutoff
 
     # df-list (Panel)
     if isinstance(obj, list):
