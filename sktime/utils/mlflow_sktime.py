@@ -148,18 +148,18 @@ def save_model(
 
     Examples
     --------
-    >>> from sktime.datasets import load_airline
-    >>> from sktime.forecasting.arima import ARIMA
-    >>> from sktime.utils import mlflow_sktime
-    >>> y = load_airline()
-    >>> forecaster = ARIMA(
+    >>> from sktime.datasets import load_airline  # doctest: +SKIP
+    >>> from sktime.forecasting.arima import ARIMA  # doctest: +SKIP
+    >>> from sktime.utils import mlflow_sktime  # doctest: +SKIP
+    >>> y = load_airline()  # doctest: +SKIP
+    >>> forecaster = ARIMA(  # doctest: +SKIP
     ...     order=(1, 1, 0),
     ...     seasonal_order=(0, 1, 0, 12),
     ...     suppress_warnings=True)
-    >>> forecaster.fit(y)
+    >>> forecaster.fit(y)  # doctest: +SKIP
     ARIMA(...)
-    >>> model_path = "model"
-    >>> mlflow_sktime.save_model(
+    >>> model_path = "model"  # doctest: +SKIP
+    >>> mlflow_sktime.save_model(  # doctest: +SKIP
     ...     sktime_model=forecaster,
     ...     path=model_path)  # doctest: +SKIP
     """  # noqa: E501
@@ -338,20 +338,20 @@ def log_model(
     ----------
     .. [1] https://www.mlflow.org/docs/latest/python_api/mlflow.models.html#mlflow.models.Model.log
 
-    >>> import mlflow
-    >>> from mlflow.utils.environment import _mlflow_conda_env
-    >>> from sktime.datasets import load_airline
-    >>> from sktime.forecasting.arima import ARIMA
-    >>> from sktime.utils import mlflow_sktime
-    >>> y = load_airline()
-    >>> forecaster = ARIMA(
+    >>> import mlflow  # doctest: +SKIP
+    >>> from mlflow.utils.environment import _mlflow_conda_env  # doctest: +SKIP
+    >>> from sktime.datasets import load_airline  # doctest: +SKIP
+    >>> from sktime.forecasting.arima import ARIMA  # doctest: +SKIP
+    >>> from sktime.utils import mlflow_sktime  # doctest: +SKIP
+    >>> y = load_airline()  # doctest: +SKIP
+    >>> forecaster = ARIMA(  # doctest: +SKIP
     ...     order=(1, 1, 0),
     ...     seasonal_order=(0, 1, 0, 12),
     ...     suppress_warnings=True)
-    >>> forecaster.fit(y)
+    >>> forecaster.fit(y)  # doctest: +SKIP
     ARIMA(...)
-    >>> mlflow.start_run()
-    >>> artifact_path = "model"
+    >>> mlflow.start_run()  # doctest: +SKIP
+    >>> artifact_path = "model"  # doctest: +SKIP
     >>> model_info = mlflow_sktime.log_model(
     ...     sktime_model=forecaster,
     ...     artifact_path=artifact_path)  # doctest: +SKIP
@@ -415,16 +415,16 @@ def load_model(model_uri, dst_path=None):
     --------
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.arima import ARIMA
-    >>> from sktime.utils import mlflow_sktime
-    >>> y = load_airline()
-    >>> forecaster = ARIMA(
+    >>> from sktime.utils import mlflow_sktime  # doctest: +SKIP
+    >>> y = load_airline()  # doctest: +SKIP
+    >>> forecaster = ARIMA(  # doctest: +SKIP
     ...     order=(1, 1, 0),
     ...     seasonal_order=(0, 1, 0, 12),
     ...     suppress_warnings=True)
-    >>> forecaster.fit(y)
+    >>> forecaster.fit(y)  # doctest: +SKIP
     ARIMA(...)
-    >>> model_path = "model"
-    >>> mlflow_sktime.save_model(
+    >>> model_path = "model"  # doctest: +SKIP
+    >>> mlflow_sktime.save_model(  # doctest: +SKIP
     ...     sktime_model=forecaster,
     ...     path=model_path)
     >>> loaded_model = mlflow_sktime.load_model(model_uri=model_path)  # doctest: +SKIP
