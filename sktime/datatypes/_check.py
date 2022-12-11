@@ -237,18 +237,18 @@ def check_raise(obj, mtype: str, scitype: str = None, var_name: str = "input"):
     ValueError if mtype input argument is not of expected type
     """
     obj_long_name_for_avoiding_linter_clash = obj
-    valid, msg, _ = check_is_mtype(
+    valid = check_is_mtype(
         obj=obj_long_name_for_avoiding_linter_clash,
         mtype=mtype,
         scitype=scitype,
-        return_metadata=True,
+        return_metadata=False,
         var_name=var_name,
     )
 
     if valid:
         return True
     else:
-        raise TypeError(msg)
+        raise TypeError(f"Expected object mtype to be one of {list(mtype)}, was {type(obj)}")
 
 
 def mtype(
@@ -302,16 +302,16 @@ def mtype(
     mtypes_negative = dict()
 
     for m_plus_scitype in m_plus_scitypes:
-        valid, msg, _ = check_is_mtype(
+        valid = check_is_mtype(
             obj,
             mtype=m_plus_scitype[0],
             scitype=m_plus_scitype[1],
-            return_metadata=True,
+            return_metadata=False,
         )
         if valid:
             mtypes_positive += [m_plus_scitype[0]]
         else:
-            mtypes_negative[m_plus_scitype[0]] = msg
+            mtypes_negative[m_plus_scitype[0]] = ""
 
     if len(mtypes_positive) > 1:
         raise TypeError(
