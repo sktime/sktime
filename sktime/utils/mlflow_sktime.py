@@ -35,7 +35,8 @@ import sktime
 from sktime import utils
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-_check_soft_dependencies("mlflow", severity="warning")
+if _check_soft_dependencies("mlflow", severity="warning"):
+    from mlflow import pyfunc
 
 FLAVOR_NAME = "mlflow_sktime"
 _MODEL_BINARY_KEY = "data"
@@ -164,7 +165,6 @@ def save_model(
     """  # noqa: E501
     _check_soft_dependencies("mlflow", severity="error")
     import mlflow
-    from mlflow import pyfunc
     from mlflow.models import Model
     from mlflow.models.model import MLMODEL_FILE_NAME
     from mlflow.models.utils import _save_example
