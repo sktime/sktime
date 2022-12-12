@@ -213,6 +213,9 @@ class KNeighborsTimeSeriesRegressor(BaseRegressor):
         # self._X should be the stored _X
         dist_mat = self._distance(X, self._X)
 
+        # boilerplate input checks for predict-like methods
+        X = self._check_convert_X_for_predict(X)
+
         neigh_ind = self.knn_estimator_.kneighbors(
             dist_mat, n_neighbors=n_neighbors, return_distance=return_distance
         )
