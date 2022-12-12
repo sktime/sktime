@@ -4,6 +4,7 @@
 __author__ = ["benjaminbluhm"]
 
 import os
+import sys
 from pathlib import Path
 from unittest import mock
 
@@ -20,6 +21,9 @@ from sktime.forecasting.arima import AutoARIMA
 from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.utils.validation._dependencies import _check_soft_dependencies
+
+if not sys.platform.startswith("linux"):
+    pytest.skip("Skipping MLflow tests for Windows and macOS", allow_module_level=True)
 
 
 @pytest.fixture
