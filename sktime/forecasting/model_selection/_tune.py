@@ -164,7 +164,7 @@ class BaseGridSearch(_DelegatedForecaster):
                 error_score=self.error_score,
                 backend=self.backend,
                 n_jobs=self.n_jobs,
-                *self.pre_dispatch,
+                pre_dispatch=self.pre_dispatch,
             )
 
             # Filter columns.
