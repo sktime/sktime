@@ -127,6 +127,7 @@ class ConformalIntervals(BaseForecaster):
         self.initial_window = initial_window
         self.sample_frac = sample_frac
         self.n_jobs = n_jobs
+        self.forecasters_ = []
 
         super(ConformalIntervals, self).__init__()
 
@@ -401,6 +402,8 @@ class ConformalIntervals(BaseForecaster):
             X_train = get_slice(X, start=None, end=id)
             X_test = get_slice(X, start=id, end=None)
             forecaster.fit(y_train, X=X_train, fh=y_test.index)
+            # Append fitted forecaster to list for extending for update
+            self.forecasters_.append({"id": str(id), "forecaster": forecaster})
 
             try:
                 residuals = forecaster.predict_residuals(y_test, X_test)
@@ -417,6 +420,34 @@ class ConformalIntervals(BaseForecaster):
         )
         for idx, id in enumerate(y_index):
             residuals_matrix.loc[id] = all_residuals[idx]
+
+        if update:
+
+            def _extend_residuals_matrix_row(y, X, id):
+                forecasters_df = pd.DataFrame(self.forecasters_)
+                forecaster_to_extend = forecasters_df.loc[
+                    forecasters_df["id"] == str(id)
+                ]["forecaster"].values[0]
+
+                y_test = get_slice(y, start=id, end=None)
+                X_test = get_slice(X, start=id, end=None)
+
+                try:
+                    residuals = forecaster_to_extend.predict_residuals(y_test, X_test)
+                except IndexError:
+                    warn(
+                        f"Couldn't predict with existing forecaster for cutoff {id} \
+                         with existing forecaster.\n"
+                    )
+                return residuals
+
+            extend_residuals = Parallel(n_jobs=self.n_jobs)(
+                delayed(_extend_residuals_matrix_row)(y, X, id)
+                for id in overlapping_index
+            )
+
+            for idx, id in enumerate(overlapping_index):
+                residuals_matrix.loc[id] = extend_residuals[idx]
 
         return residuals_matrix
 
