@@ -119,7 +119,7 @@ def test_knn_kneighbors():
     Xtrain = _make_hierarchical(hierarchy_levels=(3,), n_columns=3)
     Xtest = _make_hierarchical(hierarchy_levels=(5,), n_columns=3)
 
-    ytrain = pd.Series(['label_1', 'label_2', 'label_3'])
+    ytrain = pd.Series(["label_1", "label_2", "label_3"])
 
     kntsc = KNeighborsTimeSeriesClassifier(n_neighbors=1)
     kntsc.fit(Xtrain, ytrain)
