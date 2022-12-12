@@ -75,7 +75,7 @@ class Tabularizer(BaseTransformer):
 
 
 class TimeBinner(BaseTransformer):
-    """A transformer that turns time series/panel data into tabular data.
+    """Turns time series/panel data into tabular data based on intervals.
 
     This estimator converts nested pandas dataframe containing
     time-series/panel data with numpy arrays or pandas Series in

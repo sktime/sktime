@@ -100,6 +100,7 @@ Sklearn and pandas adapters
     :template: class.rst
 
     Tabularizer
+    TimeBinner
 
 .. currentmodule:: sktime.transformations.series.adapt
 
