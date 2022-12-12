@@ -49,7 +49,7 @@ class BaseGridSearch(_DelegatedForecaster):
         self.cv = cv
         self.strategy = strategy
         self.n_jobs = n_jobs
-        self.pre_dispatch = (pre_dispatch,)
+        self.pre_dispatch = pre_dispatch
         self.backend = backend
         self.refit = refit
         self.scoring = scoring
