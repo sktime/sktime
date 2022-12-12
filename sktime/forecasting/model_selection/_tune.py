@@ -326,7 +326,8 @@ class ForecastingGridSearchCV(BaseGridSearch):
     param_grid : dict or list of dictionaries
         Model tuning parameters of the forecaster to evaluate
     scoring: function, optional (default=None)
-        Function to score models for evaluation of optimal parameters
+        Function to score models for evaluation of optimal parameters. If None,
+        then MeanAbsolutePercentageError() is used.
     n_jobs: int, optional (default=None)
         Number of jobs to run in parallel if backend either "loky",
         "multiprocessing" or "threading".
@@ -584,7 +585,8 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         Number of parameter settings that are sampled. n_iter trades
         off runtime vs quality of the solution.
     scoring: function, optional (default=None)
-        Function to score models for evaluation of optimal parameters
+        Function to score models for evaluation of optimal parameters. If None,
+        then MeanAbsolutePercentageError() is used.
     n_jobs: int, optional (default=None)
         Number of jobs to run in parallel if backend either "loky",
         "multiprocessing" or "threading".

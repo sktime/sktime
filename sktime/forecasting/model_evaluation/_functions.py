@@ -236,7 +236,7 @@ def evaluate(
     scoring : subclass of sktime.performance_metrics.BaseMetric, default=None.
         Used to get a score function that takes y_pred and y_test arguments
         and accept y_train as keyword argument.
-        If None, then uses scoring = MeanAbsolutePercentageError(symmetric=True).
+        If None, then uses scoring = MeanAbsolutePercentageError().
     return_data : bool, default=False
         Returns three additional columns in the DataFrame, by default False.
         The cells of the columns contain each a pd.Series for y_train,
