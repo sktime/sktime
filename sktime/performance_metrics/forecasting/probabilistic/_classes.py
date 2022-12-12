@@ -256,7 +256,7 @@ class _BaseProbaForecastingErrorMetric(BaseForecastingErrorMetric):
         if not isinstance(y_pred, pd.DataFrame):
             raise ValueError("y_pred should be a dataframe.")
 
-        if not all(y_pred.dtypes == float):
+        if not all(y_pred.dtypes == float) and not all(y_pred.dtypes == "Float64"):
             raise ValueError("Data should be numeric.")
 
         if y_true.ndim == 1:
