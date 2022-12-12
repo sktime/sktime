@@ -35,6 +35,7 @@ class BaseGridSearch(_DelegatedForecaster):
         cv,
         strategy="refit",
         n_jobs=None,
+        pre_dispatch=None,
         backend=None,
         refit=False,
         scoring=None,
@@ -48,6 +49,7 @@ class BaseGridSearch(_DelegatedForecaster):
         self.cv = cv
         self.strategy = strategy
         self.n_jobs = n_jobs
+        self.pre_dispatch = (pre_dispatch,)
         self.backend = backend
         self.refit = refit
         self.scoring = scoring
@@ -162,6 +164,7 @@ class BaseGridSearch(_DelegatedForecaster):
                 error_score=self.error_score,
                 backend=self.backend,
                 n_jobs=self.n_jobs,
+                *self.pre_dispatch,
             )
 
             # Filter columns.
@@ -340,6 +343,9 @@ class ForecastingGridSearchCV(BaseGridSearch):
     return_n_best_forecasters: int, default=1
         In case the n best forecaster should be returned, this value can be set
         and the n best forecasters will be assigned to n_best_forecasters_
+    pre_dispatch: str, optional (default='2*n_jobs').
+        Controls the number of jobs that get dispatched during parallel execution when
+        using the "loky", "threading", or "multiprocessing" backend.
     error_score: numeric value or the str 'raise', optional (default=np.nan)
         The test score returned when a forecaster fails to be fitted.
     return_train_score: bool, optional (default=False)
@@ -351,6 +357,9 @@ class ForecastingGridSearchCV(BaseGridSearch):
         "threading" is unlikely to see speed ups due to the GIL and the serialization
         backend (`cloudpickle`) for "dask" and "loky" is generally more robust than the
         standard `pickle` library used in "multiprocessing".
+    pre_dispatch: str, optional (default='2*n_jobs').
+        Controls the number of jobs that get dispatched during parallel execution when
+        using the "loky", "threading", or "multiprocessing" backend.
     error_score : "raise" or numeric, default=np.nan
         Value to assign to the score if an exception occurs in estimator fitting. If set
         to "raise", the exception is raised. If a numeric value is given,
@@ -458,6 +467,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
         refit=True,
         verbose=0,
         return_n_best_forecasters=1,
+        pre_dispatch="2*n_jobs",
         backend="loky",
         update_behaviour="full_refit",
         error_score=np.nan,
@@ -471,6 +481,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
             strategy=strategy,
             verbose=verbose,
             return_n_best_forecasters=return_n_best_forecasters,
+            pre_dispatch=pre_dispatch,
             backend=backend,
             update_behaviour=update_behaviour,
             error_score=error_score,
@@ -599,6 +610,9 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
     return_n_best_forecasters: int, default=1
         In case the n best forecaster should be returned, this value can be set
         and the n best forecasters will be assigned to n_best_forecasters_
+    pre_dispatch: str, optional (default='2*n_jobs').
+        Controls the number of jobs that get dispatched during parallel execution when
+        using the "loky", "threading", or "multiprocessing" backend.
     random_state : int, RandomState instance or None, default=None
         Pseudo random number generator state used for random uniform sampling
         from lists of possible values instead of scipy.stats distributions.
@@ -648,6 +662,7 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         verbose=0,
         return_n_best_forecasters=1,
         random_state=None,
+        pre_dispatch="2*n_jobs",
         backend=None,
         update_behaviour="full_refit",
         error_score=np.nan,
@@ -661,6 +676,7 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
             cv=cv,
             verbose=verbose,
             return_n_best_forecasters=return_n_best_forecasters,
+            pre_dispatch=pre_dispatch,
             backend=backend,
             update_behaviour=update_behaviour,
             error_score=error_score,
