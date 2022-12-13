@@ -28,6 +28,7 @@ import logging
 import os
 import pickle
 
+import cloudpickle
 import pandas as pd
 import yaml
 
@@ -86,6 +87,7 @@ def save_model(
     input_example=None,
     pip_requirements=None,
     extra_pip_requirements=None,
+    use_cloudpickle=True,
 ):  # TODO: can we specify a type for fitted instance of sktime model below?
     """Save a sktime model to a path on the local file system.
 
@@ -140,7 +142,8 @@ def save_model(
         (e.g. ["pandas", "-r requirements.txt", "-c constraints.txt"]) or the string
         path to a pip requirements file on the local filesystem
         (e.g. "requirements.txt")
-
+    use_cloudpickle : boolean, optional (default=True)
+        Whether to serialize the model using cloudpickle (default) or pickle.
 
     References
     ----------
@@ -200,7 +203,7 @@ def save_model(
         _save_example(mlflow_model, input_example, path)
 
     model_data_path = os.path.join(path, _MODEL_BINARY_FILE_NAME)
-    _save_model(sktime_model, model_data_path)
+    _save_model(sktime_model, model_data_path, use_cloudpickle=use_cloudpickle)
 
     model_bin_kwargs = {_MODEL_BINARY_KEY: _MODEL_BINARY_FILE_NAME}
     pyfunc.add_to_model(
@@ -382,7 +385,7 @@ def log_model(
     )
 
 
-def load_model(model_uri, dst_path=None):
+def load_model(model_uri, dst_path=None, use_cloudpickle=True):
     """
     Load a sktime model from a local file or a run.
 
@@ -404,6 +407,8 @@ def load_model(model_uri, dst_path=None):
         The local filesystem path to which to download the model artifact.This
         directory must already exist. If unspecified, a local output path will
         be created.
+    use_cloudpickle : boolean, optional (default=True)
+        Whether to serialize the model using cloudpickle (default) or pickle.
 
     Returns
     -------
@@ -449,19 +454,28 @@ def load_model(model_uri, dst_path=None):
         local_model_path, flavor_conf.get(_MODEL_BINARY_KEY, _MODEL_BINARY_FILE_NAME)
     )
 
-    return _load_model(sktime_model_file_path)
+    return _load_model(sktime_model_file_path, use_cloudpickle=use_cloudpickle)
 
 
-def _save_model(model, path):
+def _save_model(model, path, use_cloudpickle=True):
 
-    with open(path, "wb") as f:
-        pickle.dump(model, f)
+    if use_cloudpickle:
+        with open(path, "wb") as f:
+            cloudpickle.dump(model, f)
+    else:
+        with open(path, "wb") as f:
+            pickle.dump(model, f)
 
 
-def _load_model(path):
+def _load_model(path, use_cloudpickle=True):
 
-    with open(path, "rb") as pickled_model:
-        model = pickle.load(pickled_model)
+    if use_cloudpickle:
+        with open(path, "rb") as pickled_model:
+            model = cloudpickle.load(pickled_model)
+    else:
+        with open(path, "rb") as pickled_model:
+            model = pickle.load(pickled_model)
+
     return model
 
 
