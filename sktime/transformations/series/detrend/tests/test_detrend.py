@@ -87,7 +87,7 @@ def test_multiplicative_detrending_dataframe(y_dataframe):
 
 
 def test_additive_detrending_series(y_series):
-    """Tests we get the expected result when setting `model=multiplicative`."""
+    """Tests we get the expected result when setting `model=additive`."""
     # Load test dataset
     y = y_series
 
@@ -106,7 +106,7 @@ def test_additive_detrending_series(y_series):
 
 
 def test_additive_detrending_dataframe(y_dataframe):
-    """Tests we get the expected result when setting `model=multiplicative`."""
+    """Tests we get the expected result when setting `model=additive`."""
     # Load test dataset
     y = y_dataframe
 
