@@ -80,6 +80,9 @@ EXCLUDED_TESTS = {
     "ResNetClassifier": [
         "test_fit_idempotent",
     ],
+    "ResNetRegressor": [
+        "test_fit_idempotent",
+    ],
     "CNNClassifier": [
         "test_fit_idempotent",
     ],
