@@ -364,7 +364,7 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
         return self.forecasters
 
     @classmethod
-    def get_test_params(cls, parameter_set="default"):
+    def get_test_params(cls):
         """Return testing parameter settings for the estimator.
 
         Parameters
@@ -386,7 +386,25 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
         from sktime.forecasting.naive import NaiveForecaster
         from sktime.forecasting.trend import TrendForecaster
 
-        params1 = {"forecasters": NaiveForecaster()}
-        params2 = {"forecasters": TrendForecaster()}
+        params1 = {
+            "forecasters": [(NaiveForecaster(), 0), (TrendForecaster(), 1)],
+            "by": "level",
+            "default": None,
+        }
+        params2 = {
+            "forecasters": [(NaiveForecaster(), 0), (TrendForecaster(), 1)],
+            "by": "level",
+            "default": NaiveForecaster(),
+        }
+        params3 = {
+            "forecasters": [(TrendForecaster(), ("__total", "__total"))],
+            "by": "node",
+            "default": None,
+        }
+        params4 = {
+            "forecasters": [(TrendForecaster(), ("__total", "__total"))],
+            "by": "node",
+            "default": NaiveForecaster(),
+        }
 
-        return [params1, params2]
+        return [params1, params2, params3, params4]
