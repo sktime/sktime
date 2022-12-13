@@ -164,6 +164,7 @@ Shapelets, wavelets, and convolution
     Rocket
     MiniRocket
     MiniRocketMultivariate
+    MiniRocketMultivariateVariable
 
 .. currentmodule:: sktime.transformations.panel.dwt
 
