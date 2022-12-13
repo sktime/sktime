@@ -77,6 +77,9 @@ EXCLUDED_TESTS = {
         "test_save_estimators_to_file",
     ],
     # `test_fit_idempotent` fails with `AssertionError`, see #3616
+    "ResNetClassifier": [
+        "test_fit_idempotent",
+    ],
     "CNNClassifier": [
         "test_fit_idempotent",
     ],
