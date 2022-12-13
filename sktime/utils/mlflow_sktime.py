@@ -28,7 +28,6 @@ import logging
 import os
 import pickle
 
-import cloudpickle
 import pandas as pd
 import yaml
 
@@ -459,6 +458,9 @@ def load_model(model_uri, dst_path=None, use_cloudpickle=True):
 
 def _save_model(model, path, use_cloudpickle=True):
 
+    _check_soft_dependencies("cloudpickle", severity="error")
+    import cloudpickle
+
     if use_cloudpickle:
         with open(path, "wb") as f:
             cloudpickle.dump(model, f)
@@ -468,6 +470,9 @@ def _save_model(model, path, use_cloudpickle=True):
 
 
 def _load_model(path, use_cloudpickle=True):
+
+    _check_soft_dependencies("cloudpickle", severity="error")
+    import cloudpickle
 
     if use_cloudpickle:
         with open(path, "rb") as pickled_model:
