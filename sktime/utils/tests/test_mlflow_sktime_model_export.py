@@ -96,12 +96,17 @@ def naive_forecaster_model_with_regressor(test_data_longley):
     not _check_soft_dependencies("mlflow", severity="none"),
     reason="skip test if required soft dependency not available",
 )
-def test_auto_arima_model_save_and_load(auto_arima_model, model_path):
+@pytest.mark.parametrize("use_cloudpickle", [True, False])
+def test_auto_arima_model_save_and_load(auto_arima_model, model_path, use_cloudpickle):
     """Test saving and loading of native sktime auto_arima_model."""
     from sktime.utils import mlflow_sktime
 
-    mlflow_sktime.save_model(sktime_model=auto_arima_model, path=model_path)
-    loaded_model = mlflow_sktime.load_model(model_uri=model_path)
+    mlflow_sktime.save_model(
+        sktime_model=auto_arima_model, path=model_path, use_cloudpickle=use_cloudpickle
+    )
+    loaded_model = mlflow_sktime.load_model(
+        model_uri=model_path, use_cloudpickle=use_cloudpickle
+    )
 
     np.testing.assert_array_equal(
         auto_arima_model.predict(fh=[1, 2, 3]), loaded_model.predict(fh=[1, 2, 3])
@@ -112,11 +117,14 @@ def test_auto_arima_model_save_and_load(auto_arima_model, model_path):
     not _check_soft_dependencies("mlflow", severity="none"),
     reason="skip test if required soft dependency not available",
 )
-def test_auto_arima_model_pyfunc_output(auto_arima_model, model_path):
+@pytest.mark.parametrize("use_cloudpickle", [True, False])
+def test_auto_arima_model_pyfunc_output(auto_arima_model, model_path, use_cloudpickle):
     """Test auto arima prediction of loaded pyfunc model."""
     from sktime.utils import mlflow_sktime
 
-    mlflow_sktime.save_model(sktime_model=auto_arima_model, path=model_path)
+    mlflow_sktime.save_model(
+        sktime_model=auto_arima_model, path=model_path, use_cloudpickle=use_cloudpickle
+    )
     loaded_pyfunc = mlflow_sktime.pyfunc.load_model(model_uri=model_path)
 
     model_predict = auto_arima_model.predict(fh=[1, 2, 3])
