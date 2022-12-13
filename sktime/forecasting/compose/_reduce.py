@@ -70,7 +70,7 @@ def _sliding_window_transform(
     transformers=None,
     scitype="tabular-regressor",
     pooling="local",
-    discard_maxfh=True,
+    windows_identical=True,
 ):
     """Transform time series data using sliding window.
 
@@ -101,7 +101,7 @@ def _sliding_window_transform(
         Scitype of estimator to use with transformed data.
         - If "tabular-regressor", returns X as tabular 2d array
         - If "time-series-regressor", returns X as panel 3d array
-    discard_maxfh: str {True, False}, (default = True)
+    windows_identical: str {True, False}, (default = True)
         Direct forecasting only.
         Specifies whether all direct models use the same number of observations
         (True: Total observations + 1 - window_length - maximum forecasting horizon)
@@ -171,7 +171,7 @@ def _sliding_window_transform(
 
         # Truncate data, selecting only full windows, discarding incomplete ones.
         # Zt = Zt[effective_window_length:-effective_window_length]
-        if discard_maxfh is True:
+        if windows_identical is True:
             Zt = Zt[effective_window_length:-effective_window_length]
         else:
             Zt = Zt[effective_window_length:-window_length]
@@ -207,14 +207,14 @@ class _Reducer(_BaseWindowForecaster):
         window_length=10,
         transformers=None,
         pooling="local",
-        discard_maxfh=True,
+        windows_identical=True,
     ):
         super(_Reducer, self).__init__(window_length=window_length)
         self.transformers = transformers
         self.transformers_ = None
         self.estimator = estimator
         self.pooling = pooling
-        self.discard_maxfh = discard_maxfh
+        self.windows_identical = windows_identical
         self._cv = None
 
         # it seems that the sklearn tags are not fully reliable
@@ -290,7 +290,7 @@ class _DirectReducer(_Reducer):
             X=X,
             transformers=self.transformers_,
             scitype=self._estimator_scitype,
-            discard_maxfh=self.discard_maxfh,
+            windows_identical=self.windows_identical,
         )
 
     def _fit(self, y, X=None, fh=None):
@@ -327,7 +327,7 @@ class _DirectReducer(_Reducer):
         for i in range(len(self.fh)):
             fh_rel = fh.to_relative(self.cutoff)
             estimator = clone(self.estimator)
-            if self.discard_maxfh is True:
+            if self.windows_identical is True:
                 estimator.fit(Xt, yt[:, i])
             else:
                 if (fh_rel[i] - 1) == 0:
@@ -843,7 +843,7 @@ class _DirRecReducer(_Reducer):
             fh=fh,
             X=X,
             scitype=self._estimator_scitype,
-            discard_maxfh=self.discard_maxfh,
+            windows_identical=self.windows_identical,
         )
 
     def _fit(self, y, X=None, fh=None):
@@ -1018,7 +1018,7 @@ class RecursiveTabularRegressionForecaster(_RecursiveReducer):
     pooling: str {"local", "global"}, optional
         Specifies whether separate models will be fit at the level of each instance
         (local) of if you wish to fit a single model to all instances ("global").
-    discard_maxfh: str {True, False}, (default = True)
+    windows_identical: str {True, False}, (default = True)
         Direct forecasting only.
     """
 
@@ -1037,13 +1037,13 @@ class RecursiveTabularRegressionForecaster(_RecursiveReducer):
         window_length=10,
         transformers=None,
         pooling="local",
-        discard_maxfh=None,
+        windows_identical=None,
     ):
         super(_RecursiveReducer, self).__init__(
             estimator=estimator, window_length=window_length, transformers=transformers
         )
         self.pooling = pooling
-        self.discard_maxfh = discard_maxfh
+        self.windows_identical = windows_identical
 
         if pooling == "local":
             mtypes_y = "pd.Series"
@@ -1173,7 +1173,7 @@ def make_reduction(
     scitype="infer",
     transformers=None,
     pooling="local",
-    discard_maxfh=True,
+    windows_identical=True,
 ):
     """Make forecaster based on reduction to tabular or time-series regression.
 
@@ -1202,19 +1202,78 @@ def make_reduction(
         y across the window length, suitable features will be generated directly from
         the past raw observations. Currently only supports WindowSummarizer (or a list
         of WindowSummarizers) to generate features e.g. the mean of the past 7
-        observations.
-        Currently only works for RecursiveTimeSeriesRegressionForecaster.
+        observations. Currently only works for RecursiveTimeSeriesRegressionForecaster.
     pooling: str {"local", "global"}, optional
         Specifies whether separate models will be fit at the level of each instance
         (local) of if you wish to fit a single model to all instances ("global").
         Currently only works for RecursiveTimeSeriesRegressionForecaster.
-    discard_maxfh: str {True, False}, (default = True)
+    windows_identical: str {True, False}, (default = True)
         Direct forecasting only.
-        Specifies whether all direct models use the same number of observations
-        (True: Total observations + 1 - window_length - maximum forecasting horizon)
-        or a different number of observations (False: Total observations + 1
-        - window_length - forecasting horizon).
+        Specifies whether all direct models use the same X windows from y (True: Number
+        of windows = total observations + 1 - window_length - maximum forecasting
+        horizon) or a different number of X windows depending on the forecasting horizon
+        (False: Number of windows = total observations + 1 - window_length
+        - forecasting horizon). See pictionary below for more information.
 
+    Please see below a graphical representation of the make_reduction logic using the
+    following symbols:
+        ``y`` = forecast target.
+        ``x`` = past values of y that are used as features (X) to forecast y
+        ``*`` = observations, past or future, neither part of window nor forecast.
+
+        Assume we have the following training data (14 observations):
+        |----------------------------|
+        | * * * * * * * * * * * * * *|
+        |----------------------------|
+
+        And want to forecast with `window_length = 9` and `fh = [2, 4]`.
+
+        By construction, a recursive reducer always targets the first data point after
+        the window, irrespective of the forecasting horizons requested.
+        In the example the following 5 windows are created:
+        |--------------------------- |
+        | x x x x x x x x x y * * * *|
+        | * x x x x x x x x x y * * *|
+        | * * x x x x x x x x x y * *|
+        | * * * x x x x x x x x x y *|
+        | * * * * x x x x x x x x x y|
+        |----------------------------|
+
+        Direct Reducers will create multiple models, one for each forecasting horizon.
+        With the argument `windows_identical = True` (default) the windows used to train
+        the model are defined by the maximum forecasting horizon.
+        Only two complete windows can be defined in this example:
+        `fh = 4` (maxium of `fh = [2, 4]`)
+        |--------------------------- |
+        | x x x x x x x x x * * * y *|
+        | * x x x x x x x x x * * * y|
+        |----------------------------|
+        All other forecasting horizon will also use those two windows.
+        `fh = 2`
+        |--------------------------- |
+        | x x x x x x x x x * y * * *|
+        | * x x x x x x x x x * y * *|
+        |----------------------------|
+        With `windows_identical = False` we drop the requirement to use the same windows
+        for each of the direct models, so more windows can be created for horizons other
+        than the maximum forecasting horizon:
+        `fh = 2`
+        |--------------------------- |
+        | x x x x x x x x x * y * * *|
+        | * x x x x x x x x x * y * *|
+        | * * x x x x x x x x x * y *|
+        | * * * x x x x x x x x x * y|
+        |----------------------------|
+        `fh = 4`
+        |--------------------------- |
+        | x x x x x x x x x * * * y *|
+        | * x x x x x x x x x * * * y|
+        |----------------------------|
+
+        Use `windows_identical = True` if you want to compare the forecasting
+        performance across different horizons, since all models trained will use the
+        same windows. Use `windows_identical = False` if you want to have the highest
+        forecasting accuracy for each forecasting horizon.
 
     Returns
     -------
@@ -1251,7 +1310,7 @@ def make_reduction(
         window_length=window_length,
         transformers=transformers,
         pooling=pooling,
-        discard_maxfh=discard_maxfh,
+        windows_identical=windows_identical,
     )
 
 
