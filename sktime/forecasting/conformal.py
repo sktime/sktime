@@ -386,9 +386,12 @@ class ConformalIntervals(BaseForecaster):
                 residuals_matrix.loc[
                     overlapping_index, overlapping_index
                 ] = self.residuals_matrix_.loc[overlapping_index, overlapping_index]
+            else:
+                overlapping_index = None
             y_index = remaining_y_index
         else:
             y_index = full_y_index
+            overlapping_index = None
 
         if sample_frac:
             y_sample = y_index.to_series().sample(frac=sample_frac)
@@ -421,7 +424,7 @@ class ConformalIntervals(BaseForecaster):
         for idx, id in enumerate(y_index):
             residuals_matrix.loc[id] = all_residuals[idx]
 
-        if update:
+        if overlapping_index is not None:
 
             def _extend_residuals_matrix_row(y, X, id):
                 forecasters_df = pd.DataFrame(self.forecasters_)
