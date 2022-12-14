@@ -306,7 +306,7 @@ End of tenure
 
 CoC members can resign voluntarily at any point in time, by informing the CoC or core developers in writing.
 
-CoC membership ends automatically after a person has been in this role for 2 years. If the person would like to continue the membership of CoC, a new nomination vote has to happen following the procedure as for nomination of a new CoC member.
+CoC membership ends automatically after a person has been in this role for 2 years. If the person would like to continue the membership of CoC, a new appointment vote has to happen following the procedure as for appointment of a new CoC member.
 The vote can be requested by the affected CoC member or by any core developer.
 
 .. _cc-members:
