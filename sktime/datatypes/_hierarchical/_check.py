@@ -101,9 +101,10 @@ def check_pdmultiindex_hierarchical(obj, return_metadata=False, var_name="obj"):
     inst_inds = obj.index.droplevel(-1).unique()
     panel_inds = inst_inds.droplevel(-1).unique()
 
-    idx = obj.index.names[0:-1]
-    check_res = obj.groupby(level=idx, group_keys=False, as_index=True).apply(
-        lambda x: check_pddataframe_series(x.droplevel(idx), return_metadata=True)
+    idx_len = list(range(len(obj.index.names) - 1))
+
+    check_res = obj.groupby(level=idx_len, group_keys=False, as_index=True).apply(
+        lambda x: check_pddataframe_series(x.droplevel(idx_len), return_metadata=True)
     )
 
     bad_inds = check_res.apply(pd.Series)
