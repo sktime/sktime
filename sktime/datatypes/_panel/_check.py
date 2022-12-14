@@ -181,26 +181,23 @@ def check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj"):
         return _ret(False, msg, None, return_metadata)
 
     inst_inds = obj.index.get_level_values(0).unique()
-    # inst_inds = np.unique(obj.index.get_level_values(0))
 
-    check_res = [
-        check_pddataframe_series(obj.loc[i], return_metadata=True) for i in inst_inds
-    ]
-    bad_inds = [i for i in range(len(inst_inds)) if not check_res[i][0]]
+    check_res = obj.groupby(
+        level=obj.index.names[0:-1], group_keys=False, as_index=True
+    ).apply(lambda df: check_pddataframe_series(df.droplevel(0), return_metadata=True))
 
-    if len(bad_inds) > 0:
-        msg = (
-            f"{var_name}.loc[i] must be Series of mtype pd.DataFrame,"
-            f" not at i={bad_inds}"
-        )
+    bad_inds = check_res.apply(pd.Series)
+    bad_inds = pd.concat([bad_inds[[0, 1]], bad_inds[2].apply(pd.Series)], axis=1)
+    bad_inds = bad_inds.rename(columns={0: "check"})
+
+    if not all(bad_inds["check"]):
+        msg = f"{var_name}.loc[i] must be Series of mtype pd.DataFrame," f" not at i"
         return _ret(False, msg, None, return_metadata)
 
     metadata = dict()
-    metadata["is_univariate"] = np.all([res[2]["is_univariate"] for res in check_res])
-    metadata["is_equally_spaced"] = np.all(
-        [res[2]["is_equally_spaced"] for res in check_res]
-    )
-    metadata["is_empty"] = np.any([res[2]["is_empty"] for res in check_res])
+    metadata["is_univariate"] = all(bad_inds["is_univariate"])
+    metadata["is_equally_spaced"] = all(bad_inds["is_equally_spaced"])
+    metadata["is_empty"] = all(bad_inds["is_empty"])
     metadata["n_instances"] = len(inst_inds)
     metadata["is_one_series"] = len(inst_inds) == 1
     metadata["has_nans"] = obj.isna().values.any()
