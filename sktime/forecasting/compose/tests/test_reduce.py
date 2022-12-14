@@ -564,25 +564,25 @@ def test_direct_vs_recursive():
 
     Test reduction forecasters by making prediction
     on airline dataset using linear estimators.
-    Wenn discard_maxfh = False, all observations should be considered (see
+    Wenn windows_identical = False, all observations should be considered (see
     documenation in make_reduction function), so results for direct and recursive
     forecasting should match for the first forecasting horizon.
-    With the discard_maxfh
+    With the windows_identical
     """
     y = load_airline()
     y_train, y_test = temporal_train_test_split(y, test_size=24)
     fh = ForecastingHorizon(y_test.index, is_relative=False)
     forecaster_dir_max = DirectTabularRegressionForecaster(
-        LinearRegression(), discard_maxfh=False
+        LinearRegression(), windows_identical=False
     )
     forecaster_dir_spec = DirectTabularRegressionForecaster(
-        LinearRegression(), discard_maxfh=True
+        LinearRegression(), windows_identical=True
     )
     forecaster_rec_max = RecursiveTabularRegressionForecaster(
-        LinearRegression(), discard_maxfh=False
+        LinearRegression(), windows_identical=False
     )
     forecaster_rec_spec = RecursiveTabularRegressionForecaster(
-        LinearRegression(), discard_maxfh=True
+        LinearRegression(), windows_identical=True
     )
 
     pred_dir_max = forecaster_dir_max.fit(y_train, fh=fh).predict(fh)

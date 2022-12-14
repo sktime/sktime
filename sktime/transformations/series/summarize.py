@@ -31,12 +31,12 @@ class WindowSummarizer(BaseTransformer):
     lag_feature: dict of str and list, optional (default = dict containing first lag)
         Dictionary specifying as key the type of function to be used and as value
         the argument `window`.
-        For all keys other than `lag`, the argument `window` is a length 2 list
-        containing the integer `lag`, which specifies how far back
-        in the past the window will start, and the integer `window length`,
-        which will give the length of the window across which to apply the function.
-        For ease of notation, for the key "lag", only a single integer
-        specifying the `lag` argument will be provided.
+        For the function `lag`, the argument `window` is an integer or a list of
+        integers giving the `lag` values to be used.
+        For all other functions, the argument `window` is a list with the arguments
+        `lag` and `window length`. `lag` defines how far back in the past the window
+        starts, `window length` gives the length of the window across which to apply the
+        function. For multiple different windows, provide a list of lists.
 
         Please see below a graphical representation of the logic using the following
         symbols:
@@ -44,40 +44,39 @@ class WindowSummarizer(BaseTransformer):
         ``z`` = time stamp that the window is summarized *to*.
         Part of the window if `lag` is between 0 and `1-window_length`, otherwise
         not part of the window.
-        ``*`` = (other) time stamps in the window which is summarized
-        ``x`` = observations, past or future, not part of the window
+        ``x`` = (other) time stamps in the window which is summarized
+        ``*`` = observations, past or future, not part of the window
 
-        The summarization function is applied to the window consisting of * and
+        The summarization function is applied to the window consisting of x and
         potentially z.
 
         For `window = [1, 3]`, we have a `lag` of 1 and
         `window_length` of 3 to target the three last days (exclusive z) that were
         observed. Summarization is done across windows like this:
         |-------------------------- |
-        | x x x x x x x x * * * z x |
+        | * * * * * * * * x x x z * |
         |---------------------------|
 
         For `window = [0, 3]`, we have a `lag` of 0 and
         `window_length` of 3 to target the three last days (inclusive z) that
         were observed. Summarization is done across windows like this:
         |-------------------------- |
-        | x x x x x x x x * * z x x |
+        | * * * * * * * * x x z * * |
         |---------------------------|
 
 
         Special case ´lag´: Since lags are frequently used and window length is
-        redundant, a special notation will be used for lags. You need to provide a list
-        of `lag` values, and `window_length` is not available.
+        redundant, you only need to provide a list of `lag` values.
         So `window = [1]` will result in the first lag:
 
         |-------------------------- |
-        | x x x x x x x x x x * z x |
+        | * * * * * * * * * * x z * |
         |---------------------------|
 
         And `window = [1, 4]` will result in the first and fourth lag:
 
         |-------------------------- |
-        | x x x x x x x * x x * z x |
+        | * * * * * * * x * * x z * |
         |---------------------------|
 
         key: either custom function call (to be
