@@ -182,9 +182,10 @@ def check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj"):
 
     inst_inds = obj.index.get_level_values(0).unique()
 
-    check_res = obj.groupby(
-        level=obj.index.names[0:-1], group_keys=False, as_index=True
-    ).apply(lambda df: check_pddataframe_series(df.droplevel(0), return_metadata=True))
+    idx = obj.index.names[0:-1]
+    check_res = obj.groupby(level=idx, group_keys=False, as_index=True).apply(
+        lambda x: check_pddataframe_series(x.droplevel(idx), return_metadata=True)
+    )
 
     bad_inds = check_res.apply(pd.Series)
     bad_inds = pd.concat([bad_inds[[0, 1]], bad_inds[2].apply(pd.Series)], axis=1)
