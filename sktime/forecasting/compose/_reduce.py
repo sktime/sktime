@@ -327,10 +327,13 @@ class _Reducer(_BaseWindowForecaster):
             contains the y and X data prepared for the respective windows, see above.
 
         """
-        if get_time_index(self._y).freq is None:
-            freq_inferred = pd.infer_freq(get_time_index(self._y))
-            cutoff_with_freq = self._cutoff
-            cutoff_with_freq.freq = freq_inferred
+        if hasattr(self._y, "freq"):
+            if get_time_index(self._y).freq is None:
+                freq_inferred = pd.infer_freq(get_time_index(self._y))
+                cutoff_with_freq = self._cutoff
+                cutoff_with_freq.freq = freq_inferred
+            else:
+                cutoff_with_freq = self._cutoff
         else:
             cutoff_with_freq = self._cutoff
         cutoff = _shift(cutoff_with_freq, by=shift)
