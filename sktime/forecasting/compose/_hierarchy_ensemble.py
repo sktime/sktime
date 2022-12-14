@@ -161,6 +161,12 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
         self.fitted_list = []
         hier_nm = z.index.names
 
+        if y.index.nlevels == 1:
+            frcstr = self.forecasters_[0][0].clone()
+            frcstr.fit(y, fh=fh, X=X)
+            self.fitted_list.append([frcstr, y.index])
+            return self
+
         if self.by == "level":
             hier_dict = self._get_hier_dict(z)
             for (forecaster, level) in self.forecasters_:
@@ -280,9 +286,9 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
         if self.by not in self.BY_LIST:
             raise ValueError(f"""BY must be one of {self.BY_LIST}.""")
 
-        if y.index.nlevels < 2:
+        if y.index.nlevels < 1:
             raise ValueError(
-                "Data should have multiindex with levels greater than or equal to 2."
+                "Data should have multiindex with levels greater than or equal to 1."
             )
 
         # if a single estimator is passed, replicate across levels
@@ -301,6 +307,7 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
                 "Invalid 'forecasters' attribute, 'forecasters' should be a list"
                 " of (estimator, int or tuple) tuples."
             )
+
         if not isinstance(self.default, BaseForecaster) and self.default is not None:
             raise ValueError(
                 "Invalid 'default' attribute, 'default' should be a Forecaster"
@@ -311,6 +318,14 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
                     self.forecasters[i] = list(self.forecasters[i])
                 if type(self.forecasters[i][1]) == tuple:
                     self.forecasters[i][1] = [self.forecasters[i][1]]
+
+        if y.index.nlevels == 1:
+            if isinstance(self.forecasters[0], BaseForecaster):
+                return [(self.forecasters[0], 0)]
+            elif isinstance(self.forecasters[0][0], BaseForecaster):
+                return [(self.forecasters[0][0], 0)]
+            else:
+                raise ValueError("Incorrect format of input forecaster being passed.")
 
         forecasters, level_nd = zip(*self.forecasters)
 
