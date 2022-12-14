@@ -4,7 +4,7 @@
 """Common timeseries plotting functionality."""
 
 __all__ = ["plot_series", "plot_correlations", "plot_windows"]
-__author__ = ["mloning", "RNKuhns", "Drishti Bhasin"]
+__author__ = ["mloning", "RNKuhns", "Drishti Bhasin", "chillerobscuro"]
 
 import math
 from warnings import simplefilter
@@ -14,12 +14,18 @@ import pandas as pd
 
 from sktime.datatypes import convert_to
 from sktime.utils.validation._dependencies import _check_soft_dependencies
-from sktime.utils.validation.forecasting import check_y
+from sktime.utils.validation.forecasting import check_interval_df, check_y
 from sktime.utils.validation.series import check_consistent_index_type
 
 
 def plot_series(
-    *series, labels=None, markers=None, x_label=None, y_label=None, ax=None
+    *series,
+    labels=None,
+    markers=None,
+    x_label=None,
+    y_label=None,
+    ax=None,
+    pred_interval=None,
 ):
     """Plot one or more time series.
 
@@ -32,6 +38,9 @@ def plot_series(
     markers: list, default = None
         Markers of data points, if None the marker "o" is used by default.
         The length of the list has to match with the number of series.
+    pred_interval: pd.DataFrame, default = None
+        Output of `forecaster.predict_interval()`. Contains columns for lower
+        and upper boundaries of confidence interval.
 
     Returns
     -------
@@ -133,10 +142,27 @@ def plot_series(
 
     if legend:
         ax.legend()
+    if pred_interval is not None:
+        check_interval_df(pred_interval, series[-1].index)
+        ax = plot_interval(ax, pred_interval)
     if _ax_kwarg_is_none:
         return fig, ax
     else:
         return ax
+
+
+def plot_interval(ax, interval_df):
+    cov = interval_df.columns.levels[1][0]
+    ax.fill_between(
+        ax.get_lines()[-1].get_xdata(),
+        interval_df["Coverage"][cov]["lower"].astype("float64"),
+        interval_df["Coverage"][cov]["upper"].astype("float64"),
+        alpha=0.2,
+        color=ax.get_lines()[-1].get_c(),
+        label=f"{int(cov * 100)}% prediction interval",
+    )
+    ax.legend()
+    return ax
 
 
 def plot_lags(series, lags=1, suptitle=None):

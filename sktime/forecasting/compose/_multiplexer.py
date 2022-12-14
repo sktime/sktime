@@ -68,15 +68,15 @@ class MultiplexForecaster(_HeterogenousMetaEstimator, _DelegatedForecaster):
     >>> forecaster = MultiplexForecaster(forecasters=[
     ...     ("ets", AutoETS()),
     ...     ("theta", ThetaForecaster()),
-    ...     ("naive", NaiveForecaster())])
+    ...     ("naive", NaiveForecaster())])  # doctest: +SKIP
     >>> cv = ExpandingWindowSplitter(
     ...     start_with_window=True,
-    ...     step_length=12)
+    ...     step_length=12)  # doctest: +SKIP
     >>> gscv = ForecastingGridSearchCV(
     ...     cv=cv,
     ...     param_grid={"selected_forecaster":["ets", "theta", "naive"]},
-    ...     forecaster=forecaster)
-    >>> gscv.fit(y)
+    ...     forecaster=forecaster)  # doctest: +SKIP
+    >>> gscv.fit(y)  # doctest: +SKIP
     ForecastingGridSearchCV(...)
     """
 
