@@ -435,6 +435,8 @@ tracker <https://github.com/sktime/sktime/issues>`__,
 `pull requests <https://github.com/sktime/sktime/pulls>`__ or an :ref:`steps`. Some
 sensitive discussions and appointment votes occur on private chats.
 
+The CC reserves the right to overrule decisions.
+
 We distinguish between the following types of proposed changes. The
 corresponding decision making process is described in more detail below.
 
