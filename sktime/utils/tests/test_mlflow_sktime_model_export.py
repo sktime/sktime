@@ -96,16 +96,20 @@ def naive_forecaster_model_with_regressor(test_data_longley):
     not _check_soft_dependencies("mlflow", severity="none"),
     reason="skip test if required soft dependency not available",
 )
-@pytest.mark.parametrize("use_cloudpickle", [True, False])
-def test_auto_arima_model_save_and_load(auto_arima_model, model_path, use_cloudpickle):
+@pytest.mark.parametrize("serialization_format", ["pickle", "cloudpickle"])
+def test_auto_arima_model_save_and_load(
+    auto_arima_model, model_path, serialization_format
+):
     """Test saving and loading of native sktime auto_arima_model."""
     from sktime.utils import mlflow_sktime
 
     mlflow_sktime.save_model(
-        sktime_model=auto_arima_model, path=model_path, use_cloudpickle=use_cloudpickle
+        sktime_model=auto_arima_model,
+        path=model_path,
+        serialization_format=serialization_format,
     )
     loaded_model = mlflow_sktime.load_model(
-        model_uri=model_path, use_cloudpickle=use_cloudpickle
+        model_uri=model_path, serialization_format=serialization_format
     )
 
     np.testing.assert_array_equal(
@@ -117,13 +121,17 @@ def test_auto_arima_model_save_and_load(auto_arima_model, model_path, use_cloudp
     not _check_soft_dependencies("mlflow", severity="none"),
     reason="skip test if required soft dependency not available",
 )
-@pytest.mark.parametrize("use_cloudpickle", [True, False])
-def test_auto_arima_model_pyfunc_output(auto_arima_model, model_path, use_cloudpickle):
+@pytest.mark.parametrize("serialization_format", ["pickle", "cloudpickle"])
+def test_auto_arima_model_pyfunc_output(
+    auto_arima_model, model_path, serialization_format
+):
     """Test auto arima prediction of loaded pyfunc model."""
     from sktime.utils import mlflow_sktime
 
     mlflow_sktime.save_model(
-        sktime_model=auto_arima_model, path=model_path, use_cloudpickle=use_cloudpickle
+        sktime_model=auto_arima_model,
+        path=model_path,
+        serialization_format=serialization_format,
     )
     loaded_pyfunc = mlflow_sktime.pyfunc.load_model(model_uri=model_path)
 
@@ -427,7 +435,8 @@ def test_load_from_remote_uri_succeeds(auto_arima_model, model_path, mock_s3_buc
     reason="skip test if required soft dependency not available",
 )
 @pytest.mark.parametrize("should_start_run", [True, False])
-def test_log_model(auto_arima_model, tmp_path, should_start_run):
+@pytest.mark.parametrize("serialization_format", ["pickle", "cloudpickle"])
+def test_log_model(auto_arima_model, tmp_path, should_start_run, serialization_format):
     """Test logging and reloading sktime model."""
     import mlflow
     from mlflow import pyfunc
@@ -447,10 +456,14 @@ def test_log_model(auto_arima_model, tmp_path, should_start_run):
             sktime_model=auto_arima_model,
             artifact_path=artifact_path,
             conda_env=str(conda_env),
+            serialization_format=serialization_format,
         )
         model_uri = f"runs:/{mlflow.active_run().info.run_id}/{artifact_path}"
         assert model_info.model_uri == model_uri
-        reloaded_model = mlflow_sktime.load_model(model_uri=model_uri)
+        reloaded_model = mlflow_sktime.load_model(
+            model_uri=model_uri,
+            serialization_format=serialization_format,
+        )
         np.testing.assert_array_equal(
             auto_arima_model.predict(fh=[1, 2, 3]), reloaded_model.predict(fh=[1, 2, 3])
         )
