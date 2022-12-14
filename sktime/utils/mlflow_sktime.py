@@ -43,11 +43,17 @@ _MODEL_BINARY_KEY = "data"
 _MODEL_BINARY_FILE_NAME = "model.skt"
 _MODEL_TYPE_KEY = "model_type"
 PREDICT_METHODS = ["predict", "predict_interval", "predict_quantiles", "predict_var"]
+SERIALIZATION_FORMAT_PICKLE = "pickle"
+SERIALIZATION_FORMAT_CLOUDPICKLE = "cloudpickle"
+SUPPORTED_SERIALIZATION_FORMATS = [
+    SERIALIZATION_FORMAT_PICKLE,
+    SERIALIZATION_FORMAT_CLOUDPICKLE,
+]
 
 _logger = logging.getLogger(__name__)
 
 
-def get_default_pip_requirements():
+def get_default_pip_requirements(include_cloudpickle=False):
     """Create list of default pip requirements for MLflow Models.
 
     Returns
@@ -59,10 +65,14 @@ def get_default_pip_requirements():
     _check_soft_dependencies("mlflow", severity="error")
     from mlflow.utils.requirements_utils import _get_pinned_requirement
 
-    return [_get_pinned_requirement("sktime")]
+    pip_deps = [_get_pinned_requirement("sktime")]
+    if include_cloudpickle:
+        pip_deps += [_get_pinned_requirement("cloudpickle")]
+
+    return pip_deps
 
 
-def get_default_conda_env():
+def get_default_conda_env(include_cloudpickle=False):
     """Return default Conda environment for MLflow Models.
 
     Returns
@@ -73,7 +83,9 @@ def get_default_conda_env():
     _check_soft_dependencies("mlflow", severity="error")
     from mlflow.utils.environment import _mlflow_conda_env
 
-    return _mlflow_conda_env(additional_pip_deps=get_default_pip_requirements())
+    return _mlflow_conda_env(
+        additional_pip_deps=get_default_pip_requirements(include_cloudpickle)
+    )
 
 
 def save_model(
@@ -86,7 +98,7 @@ def save_model(
     input_example=None,
     pip_requirements=None,
     extra_pip_requirements=None,
-    use_cloudpickle=True,
+    serialization_format=SERIALIZATION_FORMAT_PICKLE,
 ):  # TODO: can we specify a type for fitted instance of sktime model below?
     """Save a sktime model to a path on the local file system.
 
@@ -141,8 +153,9 @@ def save_model(
         (e.g. ["pandas", "-r requirements.txt", "-c constraints.txt"]) or the string
         path to a pip requirements file on the local filesystem
         (e.g. "requirements.txt")
-    use_cloudpickle : boolean, optional (default=True)
-        Whether to serialize the model using cloudpickle (default) or pickle.
+    serialization_format : str, optional (default="pickle")
+        The format in which to serialize the model. This should be one of the formats
+        "pickle" or "cloudpickle"
 
     References
     ----------
@@ -169,9 +182,11 @@ def save_model(
     """  # noqa: E501
     _check_soft_dependencies("mlflow", severity="error")
     import mlflow
+    from mlflow.exceptions import MlflowException
     from mlflow.models import Model
     from mlflow.models.model import MLMODEL_FILE_NAME
     from mlflow.models.utils import _save_example
+    from mlflow.protos.databricks_pb2 import INVALID_PARAMETER_VALUE
     from mlflow.utils.environment import (
         _CONDA_ENV_FILE_NAME,
         _CONSTRAINTS_FILE_NAME,
@@ -190,6 +205,19 @@ def save_model(
 
     _validate_env_arguments(conda_env, pip_requirements, extra_pip_requirements)
 
+    if serialization_format not in SUPPORTED_SERIALIZATION_FORMATS:
+        raise MlflowException(
+            message=(
+                "Unrecognized serialization format: {serialization_format}. "
+                "Please specify one of the following supported formats: "
+                "{supported_formats}.".format(
+                    serialization_format=serialization_format,
+                    supported_formats=SUPPORTED_SERIALIZATION_FORMATS,
+                )
+            ),
+            error_code=INVALID_PARAMETER_VALUE,
+        )
+
     path = os.path.abspath(path)
     _validate_and_prepare_target_save_path(path)
     code_dir_subpath = _validate_and_copy_code_paths(code_paths, path)
@@ -202,7 +230,9 @@ def save_model(
         _save_example(mlflow_model, input_example, path)
 
     model_data_path = os.path.join(path, _MODEL_BINARY_FILE_NAME)
-    _save_model(sktime_model, model_data_path, use_cloudpickle=use_cloudpickle)
+    _save_model(
+        sktime_model, model_data_path, serialization_format=serialization_format
+    )
 
     model_bin_kwargs = {_MODEL_BINARY_KEY: _MODEL_BINARY_FILE_NAME}
     pyfunc.add_to_model(
@@ -221,13 +251,17 @@ def save_model(
         FLAVOR_NAME,
         sktime_version=sktime.__version__,
         code=code_dir_subpath,
+        serialization_format=serialization_format,
         **flavor_conf,
     )
     mlflow_model.save(os.path.join(path, MLMODEL_FILE_NAME))
 
     if conda_env is None:
         if pip_requirements is None:
-            default_reqs = get_default_pip_requirements()
+            include_cloudpickle = (
+                serialization_format == SERIALIZATION_FORMAT_CLOUDPICKLE
+            )
+            default_reqs = get_default_pip_requirements(include_cloudpickle)
             inferred_reqs = mlflow.models.infer_pip_requirements(
                 path, FLAVOR_NAME, fallback=default_reqs
             )
@@ -262,6 +296,7 @@ def log_model(
     await_registration_for=None,
     pip_requirements=None,
     extra_pip_requirements=None,
+    serialization_format=SERIALIZATION_FORMAT_PICKLE,
     **kwargs,
 ):  # TODO: can we specify a type for fitted instance of sktime model below?
     """
@@ -326,6 +361,9 @@ def log_model(
         (e.g. ["pandas", "-r requirements.txt", "-c constraints.txt"]) or the string
         path to a pip requirements file on the local filesystem
         (e.g. "requirements.txt")
+    serialization_format : str, optional (default="pickle")
+        The format in which to serialize the model. This should be one of the formats
+        "pickle" or "cloudpickle"
     kwargs:
         Additional arguments for :py:class:`mlflow.models.model.Model`
 
@@ -380,11 +418,14 @@ def log_model(
         await_registration_for=await_registration_for,
         pip_requirements=pip_requirements,
         extra_pip_requirements=extra_pip_requirements,
+        serialization_format=serialization_format,
         **kwargs,
     )
 
 
-def load_model(model_uri, dst_path=None, use_cloudpickle=True):
+def load_model(
+    model_uri, dst_path=None, serialization_format=SERIALIZATION_FORMAT_PICKLE
+):
     """
     Load a sktime model from a local file or a run.
 
@@ -406,8 +447,9 @@ def load_model(model_uri, dst_path=None, use_cloudpickle=True):
         The local filesystem path to which to download the model artifact.This
         directory must already exist. If unspecified, a local output path will
         be created.
-    use_cloudpickle : boolean, optional (default=True)
-        Whether to serialize the model using cloudpickle (default) or pickle.
+    serialization_format : str, optional (default="pickle")
+        The format in which to serialize the model. This should be one of the formats
+        "pickle" or "cloudpickle"
 
     Returns
     -------
@@ -453,35 +495,62 @@ def load_model(model_uri, dst_path=None, use_cloudpickle=True):
         local_model_path, flavor_conf.get(_MODEL_BINARY_KEY, _MODEL_BINARY_FILE_NAME)
     )
 
-    return _load_model(sktime_model_file_path, use_cloudpickle=use_cloudpickle)
+    return _load_model(
+        sktime_model_file_path, serialization_format=serialization_format
+    )
 
 
-def _save_model(model, path, use_cloudpickle=True):
+def _save_model(model, path, serialization_format=SERIALIZATION_FORMAT_PICKLE):
 
-    _check_soft_dependencies("cloudpickle", severity="error")
-    import cloudpickle
+    _check_soft_dependencies("mlflow", severity="error")
+    from mlflow.exceptions import MlflowException
+    from mlflow.protos.databricks_pb2 import INTERNAL_ERROR
 
-    if use_cloudpickle:
-        with open(path, "wb") as f:
-            cloudpickle.dump(model, f)
-    else:
-        with open(path, "wb") as f:
-            pickle.dump(model, f)
+    with open(path, "wb") as out:
+        if serialization_format == SERIALIZATION_FORMAT_PICKLE:
+            pickle.dump(model, out)
+        elif serialization_format == SERIALIZATION_FORMAT_CLOUDPICKLE:
+            _check_soft_dependencies("cloudpickle", severity="error")
+            import cloudpickle
+
+            cloudpickle.dump(model, out)
+        else:
+            raise MlflowException(
+                message="Unrecognized serialization format: "
+                "{serialization_format}".format(
+                    serialization_format=serialization_format
+                ),
+                error_code=INTERNAL_ERROR,
+            )
 
 
-def _load_model(path, use_cloudpickle=True):
+def _load_model(path, serialization_format=SERIALIZATION_FORMAT_PICKLE):
 
-    _check_soft_dependencies("cloudpickle", severity="error")
-    import cloudpickle
+    _check_soft_dependencies("mlflow", severity="error")
+    from mlflow.exceptions import MlflowException
+    from mlflow.protos.databricks_pb2 import INVALID_PARAMETER_VALUE
 
-    if use_cloudpickle:
-        with open(path, "rb") as pickled_model:
-            model = cloudpickle.load(pickled_model)
-    else:
-        with open(path, "rb") as pickled_model:
-            model = pickle.load(pickled_model)
+    if serialization_format not in SUPPORTED_SERIALIZATION_FORMATS:
+        raise MlflowException(
+            message=(
+                "Unrecognized serialization format: {serialization_format}. "
+                "Please specify one of the following supported formats: "
+                "{supported_formats}.".format(
+                    serialization_format=serialization_format,
+                    supported_formats=SUPPORTED_SERIALIZATION_FORMATS,
+                )
+            ),
+            error_code=INVALID_PARAMETER_VALUE,
+        )
 
-    return model
+    with open(path, "rb") as pickled_model:
+        if serialization_format == SERIALIZATION_FORMAT_PICKLE:
+            return pickle.load(pickled_model)
+        elif serialization_format == SERIALIZATION_FORMAT_CLOUDPICKLE:
+            _check_soft_dependencies("cloudpickle", severity="error")
+            import cloudpickle
+
+            return cloudpickle.load(pickled_model)
 
 
 def _load_pyfunc(path):
