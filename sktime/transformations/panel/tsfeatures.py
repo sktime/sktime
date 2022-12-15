@@ -79,13 +79,12 @@ class TSFeaturesExtractor(BaseTransformer):
         #  X_transformed : Series of mtype pd.DataFrame
         #       transformed version of X
 
+        import pandas as pd
         from tsfeatures import tsfeatures
 
         df = X.copy()
         df = df.stack().reset_index()
         df.columns = ["ds", "unique_id", "y"]
-
-        import pandas as pd
 
         if self.freq is None:
             try:
