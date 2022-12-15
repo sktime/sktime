@@ -39,8 +39,10 @@ class Detrender(BaseTransformer):
             (e.g. PolynomialTrendForecaster).
         If forecaster is None, PolynomialTrendForecaster(degree=1) is used.
     model : {"additive", "multiplicative"}, default="additive"
-        Determines whether to subtract or divide to remove the trend component.
-
+        If `model="additive"` the `forecaster` is fit to the original time
+        series and the `transform` method subtracts the trend from the time series.
+        If `model="multiplicative"` the `forecaster` is fit to the original time
+        series and the `transform` method divides the trend from the time series.
 
     Attributes
     ----------
