@@ -76,6 +76,7 @@ all_extras = [
     "tbats>=1.1.0",
     "tensorflow-probability",
     "tensorflow",
+    "tsfeatures>=0.4.0",
     "tsfresh>=0.17.0; python_version < '3.10'",
     "tslearn>=0.5.2",
     "xarray",

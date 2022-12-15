@@ -12,12 +12,11 @@ __all__ = ["TSFeaturesExtractor"]
 #       estimators contributed to sktime should have the copyright notice at the top
 #       estimators of your own do not need to have permissive or BSD-3 copyright
 
-from tsfeatures import tsfeatures
 
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-_check_soft_dependencies("tsfeatures", severity="error")
+_check_soft_dependencies("tsfeatures", severity="warning")
 
 
 class TSFeaturesExtractor(BaseTransformer):
@@ -30,41 +29,11 @@ class TSFeaturesExtractor(BaseTransformer):
         If None then freq will be inferred using pd.infer_freq()
     """
 
-    # todo: fill out estimator tags here
-    #  tags are inherited from parent class if they are not set
-    #
-    # todo: define internal types for X, y in _fit/_transform by setting the tags
-    #   X_inner_mtype - the internal mtype used for X in _fit and _transform
-    #   y_inner_mtype - if y is used, the internal mtype used for y; usually "None"
-    #   setting this guarantees that X, y passed to _fit, _transform are of above types
-    #   for possible mtypes see datatypes.MTYPE_REGISTER, or the datatypes tutorial
-    #
-    #  when scitype:transform-input is set to Panel:
-    #   X_inner_mtype must be changed to one or a list of sktime Panel mtypes
-    #  when scitype:transform-labels is set to Series or Panel:
-    #   y_inner_mtype must be changed to one or a list of compatible sktime mtypes
-    #  the other tags are "safe defaults" which can usually be left as-is
     _tags = {
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Panel",
-        # valid values: "Series", "Panel", "Primitives"
-        #
-        # scitype:instancewise = is fit_transform an instance-wise operation?
-        # instance-wise = only values of a given series instance are used to transform
-        #   that instance. Example: Fourier transform; non-example: series PCA
         "scitype:instancewise": True,
-        #
-        # scitype:transform-labels types the y used in transform
-        #   if y is not used in transform, this should be "None"
         "scitype:transform-labels": "None",
-        # valid values: "None" (not needed), "Primitives", "Series", "Panel"
-        #
-        #
-        # behavioural tags: internal type
-        # ----------------------------------
-        #
-        # X_inner_mtype, y_inner_mtype control which format X/y appears in
-        # in the inner functions _fit, _transform, etc
         "X_inner_mtype": "pd.DataFrame",
         "y_inner_mtype": "None",
         "univariate-only": False,
@@ -73,6 +42,7 @@ class TSFeaturesExtractor(BaseTransformer):
         "capability:inverse_transform": False,
         "capability:unequal_length": True,
         "handles-missing-data": False,  # todo - maybe true?
+        "python_dependencies": "tsfeatures",
     }
 
     # todo: add any hyper-parameters and components to constructor
@@ -108,6 +78,8 @@ class TSFeaturesExtractor(BaseTransformer):
         #  -------
         #  X_transformed : Series of mtype pd.DataFrame
         #       transformed version of X
+
+        from tsfeatures import tsfeatures
 
         df = X.copy()
         df = df.stack().reset_index()
