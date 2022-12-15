@@ -2,7 +2,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Tests the conformal interval wrapper."""
 
-__author__ = ["fkiraly"]
+__author__ = ["fkiraly", "bethrice44"]
 
 import numpy as np
 import pandas as pd
