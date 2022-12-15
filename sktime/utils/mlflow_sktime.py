@@ -423,9 +423,7 @@ def log_model(
     )
 
 
-def load_model(
-    model_uri, dst_path=None, serialization_format=SERIALIZATION_FORMAT_PICKLE
-):
+def load_model(model_uri, dst_path=None):
     """
     Load a sktime model from a local file or a run.
 
@@ -447,9 +445,6 @@ def load_model(
         The local filesystem path to which to download the model artifact.This
         directory must already exist. If unspecified, a local output path will
         be created.
-    serialization_format : str, optional (default="pickle")
-        The format in which to serialize the model. This should be one of the formats
-        "pickle" or "cloudpickle"
 
     Returns
     -------
@@ -494,7 +489,9 @@ def load_model(
     sktime_model_file_path = os.path.join(
         local_model_path, flavor_conf.get(_MODEL_BINARY_KEY, _MODEL_BINARY_FILE_NAME)
     )
-
+    serialization_format = flavor_conf.get(
+        "serialization_format", SERIALIZATION_FORMAT_PICKLE
+    )
     return _load_model(
         sktime_model_file_path, serialization_format=serialization_format
     )
@@ -569,7 +566,28 @@ def _load_pyfunc(path):
     ----------
     .. [1] https://www.mlflow.org/docs/latest/python_api/mlflow.pyfunc.html#mlflow.pyfunc.load_model
     """  # noqa: E501
-    return _SktimeModelWrapper(_load_model(path))
+    _check_soft_dependencies("mlflow", severity="error")
+    from mlflow.exceptions import MlflowException
+    from mlflow.utils.model_utils import _get_flavor_configuration
+
+    try:
+        flavor_conf = _get_flavor_configuration(
+            model_path=path, flavor_name=FLAVOR_NAME
+        )
+        serialization_format = flavor_conf.get(
+            "serialization_format", SERIALIZATION_FORMAT_PICKLE
+        )
+
+    except MlflowException:
+        _logger.warning(
+            "Could not find sktime flavor configuration during model loading process."
+            " Assuming 'pickle' serialization format."
+        )
+        serialization_format = SERIALIZATION_FORMAT_PICKLE
+
+    return _SktimeModelWrapper(
+        _load_model(path, serialization_format=serialization_format)
+    )
 
 
 class _SktimeModelWrapper:

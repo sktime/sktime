@@ -109,7 +109,7 @@ def test_auto_arima_model_save_and_load(
         serialization_format=serialization_format,
     )
     loaded_model = mlflow_sktime.load_model(
-        model_uri=model_path, serialization_format=serialization_format
+        model_uri=model_path,
     )
 
     np.testing.assert_array_equal(
@@ -462,7 +462,6 @@ def test_log_model(auto_arima_model, tmp_path, should_start_run, serialization_f
         assert model_info.model_uri == model_uri
         reloaded_model = mlflow_sktime.load_model(
             model_uri=model_uri,
-            serialization_format=serialization_format,
         )
         np.testing.assert_array_equal(
             auto_arima_model.predict(fh=[1, 2, 3]), reloaded_model.predict(fh=[1, 2, 3])
