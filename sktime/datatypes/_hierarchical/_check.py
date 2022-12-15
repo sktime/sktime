@@ -108,8 +108,15 @@ def check_pdmultiindex_hierarchical(obj, return_metadata=False, var_name="obj"):
     )
 
     bad_inds = check_res.apply(pd.Series)
-    bad_inds = pd.concat([bad_inds[[0, 1]], bad_inds[2].apply(pd.Series)], axis=1)
-    bad_inds = bad_inds.rename(columns={0: "check"})
+
+    if check_res.shape[0] == 0:
+        bad_inds["is_univariate"] = np.nan
+        bad_inds["is_equally_spaced"] = np.nan
+        bad_inds["is_empty"] = np.nan
+        bad_inds["check"] = np.nan
+    else:
+        bad_inds = pd.concat([bad_inds[[0, 1]], bad_inds[2].apply(pd.Series)], axis=1)
+        bad_inds = bad_inds.rename(columns={0: "check"})
 
     if not all(bad_inds["check"]):
         msg = f"{var_name}.loc[i] must be Series of mtype pd.DataFrame," f" not at i"
