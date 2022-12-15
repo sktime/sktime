@@ -7,6 +7,7 @@ __all__ = [
     "TemporalDictionaryEnsemble",
     "IndividualTDE",
     "HYDRA",
+    "MPDist",
     "WEASEL",
     "WEASEL_DILATION",
     "MUSE",
@@ -16,6 +17,7 @@ __all__ = [
 from sktime.classification.dictionary_based._boss import BOSSEnsemble, IndividualBOSS
 from sktime.classification.dictionary_based._cboss import ContractableBOSS
 from sktime.classification.dictionary_based._hydra import HYDRA
+from sktime.classification.dictionary_based._mpdist import MPDist
 from sktime.classification.dictionary_based._muse import MUSE
 from sktime.classification.dictionary_based._muse_dilation import MUSE_DILATION
 from sktime.classification.dictionary_based._tde import (
