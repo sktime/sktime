@@ -77,12 +77,6 @@ EXCLUDED_TESTS = {
         "test_save_estimators_to_file",
     ],
     # `test_fit_idempotent` fails with `AssertionError`, see #3616
-    "ResNetClassifier": [
-        "test_fit_idempotent",
-    ],
-    "ResNetRegressor": [
-        "test_fit_idempotent",
-    ],
     "CNNClassifier": [
         "test_fit_idempotent",
     ],
@@ -93,6 +87,12 @@ EXCLUDED_TESTS = {
         "test_fit_idempotent",
     ],
     "MLPClassifier": [
+        "test_fit_idempotent",
+    ],
+    "ResNetClassifier": [
+        "test_fit_idempotent",
+    ],
+    "ResNetRegressor": [
         "test_fit_idempotent",
     ],
     # sth is not quite right with the RowTransformer-s changing state,
