@@ -177,11 +177,14 @@ In case of conflict of interest of sktime CoC committee members, you can report
 through the [NumFOCUS CoC process](https://numfocus.org/code-of-conduct),
 or, in case of events, to the organisation at which the event is taking place (e.g., a university).
 
-3.3 What to do if someone is in physical danger
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+3.3 What to do if urgent action is needed, e.g., physical danger
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If you believe someone is in physical danger, please contact the
-appropriate emergency responders.
+appropriate emergency responders asap.
+
+If you believe urgent action is necessary,
+proceed as per Section 4.3 - Acting Unilaterally.
 
 3.4 Code of Conduct Enforcement
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -210,57 +213,131 @@ We encourage community members to step up to become a member of the committee.
 You can use the NumFOCUS CoC reporting process as an alternative entry point
 for reporting, see 3.2.
 
-4.2 Urgent Situations: Acting Unilaterally
+4.2 Code of Conduct Investigation Process
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The CoC investigation process involves the following steps:
+
+1. **Urgent action.** Upon obtaining knowledge of an incident, receiving a report,
+or an allegation of misconduct (either called "report" in the below),
+the Code of Conduct committee will make an initial assessment on whether the situation is urgent.
+The Code of Conduct committee will assess:
+
+-  whether this is an ongoing situation and likely timelines are urgent
+-  whether there is a threat to anyone's safety or health
+-  what happened
+-  whether this event likely constitutes a Code of Conduct violation
+-  who, if anyone, was the bad actor
+
+If it seems likely that swift action is needed to prevent or mitigate harm,
+the process proceeds as in Section 4.3, Urgent Situations.
+"Swift action" means, action on a time scale shorter than the >10 days in the process below. 
+
+2. **Initial investigation.** If the situation is not deemed urgent, the Code of Conduct committee
+proceeds with an initial investigation of the situation, collecting information in person or in writing.
+This should include asking any reporters or complainants (persons making allegations of misconduct)
+for relevant evidence. Complainants, if applicable, should be asked for evidence backing allegations.
+
+The investigation may also include requesting information from potential witnesses and potential bad actors.
+Identifying information of reporters, complainants, potential witnesses or bad actors should not be shared in the process.
+
+At this stage, no one should assumed to be a bad actor, and suspicions should not be communicated.
+
+3. **Initial investigation report.** The Code of Conduct committee will produce a written summary of the
+information surrounding the report and initial investigation for its own use.
+
+4. **Decision: formal suspicion.** The Code of Conduct committee will decide whether the evidence and information
+in the summary report justifies formal suspicion of any individuals having been bad actors.
+If not, the process moves on to part 9 - decision on the outcome.
+
+5. **Preliminary hearing.** If suspicion is upheld, the Code of Conduct committee will inform supsected
+bad actors of the precise nature of the formal suspicion, with a reasonable timeline given
+to suspected bad actors to respond in writing. This includes the opportunity to summarize
+a defense to the Code of Conduct committee, including potential counter-evidence
+or extenuating conditions.
+
+6. **Decision: probable cause.** The Code of Conduct committee will decide whether the sum of initial investigation findings
+and the responses by suspected bad actor justify probable cause, for each suspected bad actor.
+If yes, the process proceeds to formal investigation.
+If not, the suspicion of being a bad actor is formally dropped,
+and the process moves on to part 9 - decision on the outcome.
+
+7. **Formal investigation**. If probable cause is found, the Code of Conduct committee
+proceeds with the formal investigation. Besides the means available in an initial investigation,
+the Code of Conduct committee may make requests to potential witnesses and suspected bad actors
+to provide information.
+
+8. **Formal investigation report.** The Code of Conduct committee will produce a written summary of the
+information surrounding the formal investigation for its own use.
+
+9. **Decision: outcome**. The Code of Conduct committee will seek to agree on a resolution by
+consensus of all members investigating the report in question.
+If the committee cannot reach consensus and deadlocks for over 5 working days excluding week-ends,
+the currently longest serving committee member will break ties.
+
+10. **Outcome reporting.** any reporters, complainants, and bad actors are
+informed of the outcome, in writing. The Code of Conduct committee will produce a
+written case summary of the entire proceedings for its own use, which include any
+investigation reports as appendices.
+
+11. **Enforcement.** As the main ``sktime`` executive body, the ``sktime``
+community council ensures that resolutions are enforced.
+
+12. **Appeals.** Appeals can be directed to the ``sktime`` Code of Conduct committee,
+or the NumFOCUS code of conduct process.
+The ``sktime`` Code of Conduct committee accepts appeals resolutions
+arising from the NumFOCUS code of conduct process to supersede ``sktime`` resolutions.
+
+Timelines:
+
+* In case of reported CoC violations, the Code of Conduct committee
+will aim to have a resolution agreed upon
+within 10 working days, excluding week-ends.
+In the event that a resolution cannot be determined in
+that time, a member of the Code of Conduct committee will respond to the
+reporter(s) with an update and projected timeline for resolution.
+* individuals under suspicion of being bad actors should be given 10 working days,
+excluding week-ends, to respond in their own defense, in the preliminary hearing phase.
+
+Special considerations:
+
+* Where possible, identities of reporters, complainants, bad actors, witnesses, should
+  be kept anonymous.
+* if an urgent situation arises in the process of investigation, e.g.,
+  reprisals by a bad actor or other ramifications, action should be taken as in
+  Section 4.3, Acting Unilaterally.
+* In reports, all participants will be anonymised, i.e.,
+  referred to as "Community Member 1",
+  "Community Member 2", or "Research Team Member 1". The "de-anonymising
+  key" will be kept in a separate file and only accessed to link repeated
+  reports against the same person over time.
+* the standard of proof is "on the balance of probabilities"
+* new information on issues not under investigation brought to light by the initial
+  or formal investigation is to be treated as a new report or incident
+* absence of response in a given timeline counts as a response
+
+4.3 Urgent Situations: Acting Unilaterally
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If the incident involves physical danger, or involves a threat to
 anyone's safety (e.g. threats of violence), any member of the community
 may -- and should -- act unilaterally to protect the safety of any
 community member. This can include contacting law enforcement (or other
-local personnel) and speaking on behalf of the sktime team.
+local personnel), or speaking on behalf of the ``sktime`` team,
+without prior community consensus.
 
 If the act is ongoing, any community member may act immediately, before
-reaching consensus, to diffuse the situation. In ongoing situations, any
+reaching consensus, to defuse the situation. In ongoing situations, any
 member may at their discretion employ any of the tools available in this
 enforcement manual, including bans and blocks online, or removal from a
 physical space.
 
 In situations where an individual community member acts unilaterally,
-they must inform Dr Franz Király as soon as possible, and report their
-actions for review within 24 hours.
-
-4.3 Less-Urgent Situations
-~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Upon receiving a report of an incident, the Code of Conduct committee
-will review the incident and determine, to the best of her ability:
-
--  whether this is an ongoing situation
--  whether there is a threat to anyone's physical safety
--  what happened
--  whether this event constitutes a Code of Conduct violation
--  who, if anyone, was the bad actor
-
-This information will be collected either in person or in writing. The
-Code of Conduct committee will provide a written summary of the
-information surrounding the incident. All participants will be
-anonymised in the summary report, referred to as "Community Member 1",
-"Community Member 2", or "Research Team Member 1". The "de-anonymising
-key" will be kept in a separate file and only accessed to link repeated
-reports against the same person over time.
-
-The Code of Conduct committee will aim to have a resolution agreed upon
-within one week. In the event that a resolution can't be determined in
-that time, a member of the Code of Conduct committee will respond to the
-reporter(s) with an update and projected timeline for resolution.
+they must inform the sktime community council via info@sktime.org
+as soon as possible, and report their actions for review within 24 hours.
 
 4.4 Resolutions
 ~~~~~~~~~~~~~~~
-
-The Code of Conduct committee will seek to agree on a resolution by
-consensus of all members investigating the report in question. If the
-committee cannot reach consensus and deadlocks for over a week, Dr Franz
-Király, as currently longest serving committee member, will break the tie.
 
 Possible responses may include:
 
