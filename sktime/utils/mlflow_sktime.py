@@ -33,6 +33,7 @@ import yaml
 
 import sktime
 from sktime import utils
+from sktime.utils.multiindex import flatten_multiindex
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 if _check_soft_dependencies("mlflow", severity="warning"):
@@ -42,7 +43,22 @@ FLAVOR_NAME = "mlflow_sktime"
 _MODEL_BINARY_KEY = "data"
 _MODEL_BINARY_FILE_NAME = "model.skt"
 _MODEL_TYPE_KEY = "model_type"
+
+PYFUNC_PREDICT_CONF = "pyfunc_predict_conf"
+PYFUNC_PREDICT_CONF_KEY = "predict_method"
+SKTIME_PREDICT = "predict"
+SKTIME_PREDICT_INTERVAL = "predict_interval"
+SKTIME_PREDICT_QUANTILES = "predict_quantiles"
+SKTIME_PREDICT_VAR = "predict_var"
+SUPPORTED_SKTIME_PREDICT_METHODS = [
+    SKTIME_PREDICT,
+    SKTIME_PREDICT_INTERVAL,
+    SKTIME_PREDICT_QUANTILES,
+    SKTIME_PREDICT_VAR,
+]
+
 PREDICT_METHODS = ["predict", "predict_interval", "predict_quantiles", "predict_var"]
+
 SERIALIZATION_FORMAT_PICKLE = "pickle"
 SERIALIZATION_FORMAT_CLOUDPICKLE = "cloudpickle"
 SUPPORTED_SERIALIZATION_FORMATS = [
@@ -595,55 +611,115 @@ class _SktimeModelWrapper:
         _check_soft_dependencies("mlflow", severity="error")
         self.sktime_model = sktime_model
 
-    def predict(self, dataframe) -> pd.DataFrame:
+    def predict(self, X):
 
         from mlflow.exceptions import MlflowException
         from mlflow.protos.databricks_pb2 import INVALID_PARAMETER_VALUE
 
-        if len(dataframe) > 1:
+        if not hasattr(self.sktime_model, "pyfunc_predict_conf"):
             raise MlflowException(
-                f"The provided prediction pd.DataFrame contains {len(dataframe)} rows. "
-                "Only 1 row should be supplied.",
+                f"The fitted model instance must have an attribute "
+                f"{PYFUNC_PREDICT_CONF} with prediction configuration",
                 error_code=INVALID_PARAMETER_VALUE,
             )
 
-        attrs = dataframe.to_dict(orient="index").get(0)
-        fh = attrs.get("fh", None)
-        X = attrs.get("X", None)
-
-        predict_method = attrs.get("predict_method", "predict")
-
-        if predict_method not in PREDICT_METHODS:
+        if not isinstance(self.sktime_model.pyfunc_predict_conf, dict):
             raise MlflowException(
-                f"The provided `predict_method` value {predict_method} "
-                f"must be one of {PREDICT_METHODS}.",
+                f"Attribute {PYFUNC_PREDICT_CONF} must be of type dict.",
                 error_code=INVALID_PARAMETER_VALUE,
             )
 
-        if predict_method == "predict":
-            y_pred = self.sktime_model.predict(fh=fh, X=X)
-
-        if predict_method == "predict_interval":
-            coverage = attrs.get("coverage", 0.9)
-            y_pred = self.sktime_model.predict_interval(fh=fh, X=X, coverage=coverage)
-            # Signature inference does not support pandas MultiIndex column format
-            y_pred.columns = y_pred.columns.to_flat_index().map(
-                lambda x: "".join(str(x))
+        if PYFUNC_PREDICT_CONF_KEY not in self.sktime_model.pyfunc_predict_conf:
+            raise MlflowException(
+                f"Attribute {PYFUNC_PREDICT_CONF} must contain "
+                f"a dictionary key {PYFUNC_PREDICT_CONF_KEY}.",
+                error_code=INVALID_PARAMETER_VALUE,
             )
 
-        if predict_method == "predict_quantiles":
-            alpha = attrs.get("alpha", None)
-            y_pred = self.sktime_model.predict_quantiles(fh=fh, X=X, alpha=alpha)
-            # Signature inference does not support pandas MultiIndex column format
-            y_pred.columns = y_pred.columns.to_flat_index().map(
-                lambda x: "".join(str(x))
+        if isinstance(
+            self.sktime_model.pyfunc_predict_conf[PYFUNC_PREDICT_CONF_KEY], list
+        ):
+            predict_methods = self.sktime_model.pyfunc_predict_conf[
+                PYFUNC_PREDICT_CONF_KEY
+            ]
+            predict_params = False
+        elif isinstance(
+            self.sktime_model.pyfunc_predict_conf[PYFUNC_PREDICT_CONF_KEY], dict
+        ):
+            predict_methods = list(
+                self.sktime_model.pyfunc_predict_conf[PYFUNC_PREDICT_CONF_KEY].keys()
+            )
+            predict_params = True
+        else:
+            raise MlflowException(
+                "Dictionary value must be of type dict or list.",
+                error_code=INVALID_PARAMETER_VALUE,
             )
 
-        if predict_method == "predict_var":
-            cov = attrs.get("cov", False)
-            y_pred = self.sktime_model.predict_var(fh=fh, X=X, cov=cov)
+        if not set(predict_methods).issubset(set(SUPPORTED_SKTIME_PREDICT_METHODS)):
+            raise MlflowException(
+                f"The provided {PYFUNC_PREDICT_CONF_KEY} values must be "
+                f"a subset of {SUPPORTED_SKTIME_PREDICT_METHODS}",
+                error_code=INVALID_PARAMETER_VALUE,
+            )
 
-        return y_pred
+        X = None if X.empty else X
+        raw_predictions = {}
+
+        if SKTIME_PREDICT in predict_methods:
+            raw_predictions[SKTIME_PREDICT] = self.sktime_model.predict(X=X)
+
+        if SKTIME_PREDICT_INTERVAL in predict_methods:
+            coverage = (
+                self.sktime_model.pyfunc_predict_conf[PYFUNC_PREDICT_CONF_KEY][
+                    SKTIME_PREDICT_INTERVAL
+                ]["coverage"]
+                if predict_params
+                else 0.9
+            )
+            raw_predictions[
+                SKTIME_PREDICT_INTERVAL
+            ] = self.sktime_model.predict_interval(X=X, coverage=coverage)
+
+        if SKTIME_PREDICT_QUANTILES in predict_methods:
+            alpha = (
+                self.sktime_model.pyfunc_predict_conf[PYFUNC_PREDICT_CONF_KEY][
+                    SKTIME_PREDICT_QUANTILES
+                ]["alpha"]
+                if predict_params
+                else None
+            )
+            raw_predictions[
+                SKTIME_PREDICT_QUANTILES
+            ] = self.sktime_model.predict_quantiles(X=X, alpha=alpha)
+
+        if SKTIME_PREDICT_VAR in predict_methods:
+            cov = (
+                self.sktime_model.pyfunc_predict_conf[PYFUNC_PREDICT_CONF_KEY][
+                    SKTIME_PREDICT_VAR
+                ]["cov"]
+                if predict_params
+                else False
+            )
+            raw_predictions[SKTIME_PREDICT_VAR] = self.sktime_model.predict_var(
+                X=X, cov=cov
+            )
+
+        for k, v in raw_predictions.items():
+            if hasattr(v, "columns") and isinstance(v.columns, pd.MultiIndex):
+                raw_predictions[k].columns = flatten_multiindex(v)
+
+        if len(raw_predictions) > 1:
+            predictions = pd.concat(
+                list(raw_predictions.values()),
+                axis=1,
+                keys=list(raw_predictions.keys()),
+            )
+            predictions.columns = flatten_multiindex(predictions)
+        else:
+            predictions = raw_predictions[list(raw_predictions.keys())[0]]
+
+        return predictions
 
 
 # TODO: Add support for autologging
