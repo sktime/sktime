@@ -255,18 +255,18 @@ def test_get_window_expected_result():
     Exception if get_window raises one
     AssertionError if get_window output shape is not as expected
     """
-    # X_df = get_examples(mtype="pd.DataFrame")[0]
-    # assert len(get_window(X_df, 2, 1)) == 2
-    # assert len(get_window(X_df, 3, 1)) == 3
-    # assert len(get_window(X_df, 1, 2)) == 1
-    # assert len(get_window(X_df, 3, 4)) == 0
-    # assert len(get_window(X_df, 3, None)) == 3
-    # assert len(get_window(X_df, None, 2)) == 2
-    # assert len(get_window(X_df, None, None)) == 4
+    X_df = get_examples(mtype="pd.DataFrame")[0]
+    assert len(get_window(X_df, 2, 1)) == 2
+    assert len(get_window(X_df, 3, 1)) == 3
+    assert len(get_window(X_df, 1, 2)) == 1
+    assert len(get_window(X_df, 3, 4)) == 0
+    assert len(get_window(X_df, 3, None)) == 3
+    assert len(get_window(X_df, None, 2)) == 2
+    assert len(get_window(X_df, None, None)) == 4
 
     X_mi = get_examples(mtype="pd-multiindex")[0]
-    # assert len(get_window(X_mi, 3, 1)) == 6
-    # assert len(get_window(X_mi, 2, 0)) == 6
+    assert len(get_window(X_mi, 3, 1)) == 6
+    assert len(get_window(X_mi, 2, 0)) == 6
     assert len(get_window(X_mi, 2, 4)) == 0
     assert len(get_window(X_mi, 1, 2)) == 3
     assert len(get_window(X_mi, 2, None)) == 6
