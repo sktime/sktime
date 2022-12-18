@@ -6,6 +6,7 @@ __author__ = ["fkiraly"]
 import numpy as np
 
 from sktime.dists_kernels.algebra import CombinedDistance
+from sktime.dists_kernels.compose import PwTrafoPanelPipeline
 from sktime.dists_kernels.edit_dist import EditDist
 from sktime.utils._testing.panel import _make_panel_X
 
@@ -104,3 +105,26 @@ def test_mixed_algebra_dunders():
 
     m123 = t123.transform(X1, X2)
     assert np.allclose(m123, m1 * m2 + m3)
+
+
+def test_pw_trafo_pipeline_mul_dunder():
+    """Tests creation of pairwise panel trafo pipeliens using mul dunder."""
+    from sktime.transformations.series.exponent import ExponentTransformer
+
+    t3 = EditDist()
+    t1 = ExponentTransformer()
+    t2 = ExponentTransformer(2)
+
+    m3 = t3.transform(X1, X2)
+
+    t23 = t2 * t3
+    assert isinstance(t23, PwTrafoPanelPipeline)
+    assert len(t23.transformers) == 1
+
+    t123 = t1 * t2 * t3
+    assert isinstance(t123, PwTrafoPanelPipeline)
+    assert len(t23.transformers) == 2
+
+    m123 = t123.transform(X1, X2)
+
+    assert np.allclose(m123, m3)
