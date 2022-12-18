@@ -28,9 +28,7 @@ def test_gmse_class():
     gmse = GeometricMeanSquaredError(multioutput="raw_values")
     assert np.allclose(gmse(y_true, y_pred), np.array([2.30997255e-11, 1.00000000e00]))
     rgmse = GeometricMeanSquaredError(multioutput="raw_values", square_root=True)
-    assert np.allclose(
-        rgmse(y_true, y_pred), np.array([4.80621738e-06, 1.00000000e00])
-    )
+    assert np.allclose(rgmse(y_true, y_pred), np.array([4.80621738e-06, 1.00000000e00]))
     gmse = GeometricMeanSquaredError(multioutput=[0.3, 0.7])
     assert np.allclose(gmse(y_true, y_pred), 0.7000000000069299)
     rgmse = GeometricMeanSquaredError(multioutput=[0.3, 0.7], square_root=True)
