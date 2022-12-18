@@ -182,6 +182,7 @@ def check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj"):
 
     inst_inds = obj.index.get_level_values(0).unique()
     from time import perf_counter
+
     t1_start = perf_counter()
     idx_len = list(range(len(obj.index.names) - 1))
 
@@ -214,9 +215,9 @@ def check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj"):
     metadata["is_equal_length"] = _list_all_equal([len(obj.loc[i]) for i in inst_inds])
 
     t1_stop = perf_counter()
-#print("Elapsed time:", t1_stop, t1_start)
- 
-    print("Elapsed time during the whole program in seconds:", t1_stop-t1_start)
+    # print("Elapsed time:", t1_stop, t1_start)
+
+    print("Elapsed time during the whole program in seconds:", t1_stop - t1_start)
     return _ret(True, None, metadata, return_metadata)
 
 
