@@ -167,7 +167,7 @@ class TimeSeriesSVC(BaseClassifier):
             self.clone_tags(kernel, inherit_tags)
 
     def _kernel(self, X, X2=None):
-        """Compute distance - unified interface to str code and callable."""
+        """Compute distance - unified interface to kernel callable."""
         kernel = self.kernel
         kernel_params = self.kernel_params
         if kernel_params is None:
