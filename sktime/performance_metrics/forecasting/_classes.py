@@ -2101,26 +2101,26 @@ class MeanAsymmetricError(BaseForecastingErrorMetricFunc):
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
     >>> asymmetric_error = MeanAsymmetricError()
-    >>> asymmetric_error(y_true, y_pred)
+    >>> asymmetric_error(y_true, y_pred)  # doctest: +SKIP
     0.5
     >>> asymmetric_error = MeanAsymmetricError(left_error_function='absolute', \
     right_error_function='squared')
-    >>> asymmetric_error(y_true, y_pred)
+    >>> asymmetric_error(y_true, y_pred)  # doctest: +SKIP
     0.4625
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> asymmetric_error = MeanAsymmetricError()
-    >>> asymmetric_error(y_true, y_pred)
+    >>> asymmetric_error(y_true, y_pred)  # doctest: +SKIP
     0.75
     >>> asymmetric_error = MeanAsymmetricError(left_error_function='absolute', \
     right_error_function='squared')
-    >>> asymmetric_error(y_true, y_pred)
+    >>> asymmetric_error(y_true, y_pred)  # doctest: +SKIP
     0.7083333333333334
     >>> asymmetric_error = MeanAsymmetricError(multioutput='raw_values')
-    >>> asymmetric_error(y_true, y_pred)
+    >>> asymmetric_error(y_true, y_pred)  # doctest: +SKIP
     array([0.5, 1. ])
     >>> asymmetric_error = MeanAsymmetricError(multioutput=[0.3, 0.7])
-    >>> asymmetric_error(y_true, y_pred)
+    >>> asymmetric_error(y_true, y_pred)  # doctest: +SKIP
     0.85
     """
 
