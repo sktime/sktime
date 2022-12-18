@@ -246,6 +246,11 @@ class BasePairwiseTransformerPanel(BaseEstimator):
             not nested, contains only non-CombinedDistance `sktime` transformers
         """
         from sktime.dists_kernels.algebra import CombinedDistance
+        from sktime.dists_kernels.dummy import ConstantPwTrafoPanel
+
+        # when other is an integer or float, treat it as constant distance/kernel
+        if isinstance(other, (int, float)):
+            other = ConstantPwTrafoPanel(constant=other)
 
         # we wrap self in a CombinedDistance, and concatenate with the other
         #   the CombinedDistance does the rest, e.g., dispatch on other
@@ -278,10 +283,15 @@ class BasePairwiseTransformerPanel(BaseEstimator):
             not nested, contains only non-TransformerPipeline `sktime` steps
         """
         from sktime.dists_kernels.compose import PwTrafoPanelPipeline
+        from sktime.dists_kernels.dummy import ConstantPwTrafoPanel
         from sktime.transformations.base import BaseTransformer
         from sktime.transformations.compose import TransformerPipeline
         from sktime.transformations.series.adapt import TabularToSeriesAdaptor
         from sktime.utils.sklearn import is_sklearn_transformer
+
+        # when other is an integer or float, treat it as constant distance/kernel
+        if isinstance(other, (int, float)):
+            other = ConstantPwTrafoPanel(constant=other)
 
         # behaviour is implemented only if other inherits from BaseTransformer
         #  in that case, distinctions arise from whether self or other is a pipeline
@@ -320,6 +330,11 @@ class BasePairwiseTransformerPanel(BaseEstimator):
             not nested, contains only non-CombinedDistance `sktime` transformers
         """
         from sktime.dists_kernels.algebra import CombinedDistance
+        from sktime.dists_kernels.dummy import ConstantPwTrafoPanel
+
+        # when other is an integer or float, treat it as constant distance/kernel
+        if isinstance(other, (int, float)):
+            other = ConstantPwTrafoPanel(constant=other)
 
         # we wrap self in a CombinedDistance, and concatenate with the other
         #   the CombinedDistance does the rest, e.g., dispatch on other
