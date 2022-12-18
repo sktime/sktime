@@ -109,7 +109,7 @@ class CombinedDistance(_HeterogenousMetaEstimator, BasePairwiseTransformerPanel)
         self.pw_trafos = value
 
     def _algebra_dunder_concat(self, other, operation):
-        """Common boilerplate for magic methods return (right) concat CombinedDistance.
+        """Return (right) concat CombinedDistance, common boilerplate for dunders.
 
         Implemented for `other` being a transformer, otherwise returns `NotImplemented`.
 
