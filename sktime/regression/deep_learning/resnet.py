@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 """Residual Network (ResNet) for Regression."""
 
-__author__ = [
-    "James Large", "Withington", "nilesh05apr"
-]
+__author__ = ["James Large", "Withington", "nilesh05apr"]
 __all__ = [
     "ResNetRegressor",
 ]
@@ -12,8 +10,9 @@ from sktime.networks.resnet import ResNetNetwork
 from sktime.regression.deep_learning.base import BaseDeepRegressor
 from sktime.utils.validation._dependencies import _check_dl_dependencies
 
+
 class ResNetRegressor(BaseDeepRegressor):
-    """ Residual Network (ResNet) for Regression, as described in [1].
+    """Residual Network (ResNet) for Regression, as described in [1].
 
     Parameters
     ----------
@@ -37,7 +36,7 @@ class ResNetRegressor(BaseDeepRegressor):
         whether to use random projections
     metrics             : list, default = ['mean_squared_error']
         list of metrics to evaluate the model on
-    
+
     Notes
     -----
     Adapted from the implementation from source code
@@ -63,7 +62,7 @@ class ResNetRegressor(BaseDeepRegressor):
         activation=None,
         use_bias=True,
         callbacks=None,
-        ):
+    ):
         _check_dl_dependencies(severity="error")
         super(ResNetRegressor, self).__init__()
         self.n_epochs = n_epochs
@@ -76,7 +75,7 @@ class ResNetRegressor(BaseDeepRegressor):
         self.use_bias = use_bias
         self.callbacks = callbacks
         self._network = ResNetNetwork()
-    
+
     def build_model(self, input_shape, **kwargs):
         """Construct a complied, un-trained, keras model that is ready for training.
 
@@ -101,9 +100,13 @@ class ResNetRegressor(BaseDeepRegressor):
 
         metrics = ["mean_squared_error"] if self.metrics is None else self.metrics
 
-        input_layer, output_layer = self._network.build_network(input_shape=input_shape, **kwargs)
+        input_layer, output_layer = self._network.build_network(
+            input_shape=input_shape, **kwargs
+        )
 
-        output_layer = keras.layers.Dense(units=1, activation=self.activation, use_bias=self.use_bias)(output_layer)
+        output_layer = keras.layers.Dense(
+            units=1, activation=self.activation, use_bias=self.use_bias
+        )(output_layer)
 
         self.optimizer_ = (
             keras.optimizers.Adam(lr=0.01) if self.optimizer is None else self.optimizer
@@ -118,21 +121,21 @@ class ResNetRegressor(BaseDeepRegressor):
         )
 
         return model
-    
+
     def _fit(self, X, y):
-        """
-        Fit the regressor on the training set (X, y).
+        """Fit the regressor on the training set (X, y).
+
         Parameters
         ----------
         X   : np.ndarray of shape = (n_instances(n), n_dimensions(d), series_length(m))
             Input training samples
         y   : np.ndarray of shape n
             Input training responses
+
         Returns
         -------
         self: object
         """
-
         if self.callbacks is None:
             self.callbacks = []
 
@@ -143,7 +146,7 @@ class ResNetRegressor(BaseDeepRegressor):
 
         if self.verbose:
             self.model_.summary()
-        
+
         self.history = self.model_.fit(
             X,
             y,
@@ -154,7 +157,7 @@ class ResNetRegressor(BaseDeepRegressor):
         )
 
         return self
-    
+
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
@@ -189,5 +192,3 @@ class ResNetRegressor(BaseDeepRegressor):
         }
 
         return [params1, params2]
-
-
