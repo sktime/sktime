@@ -108,6 +108,54 @@ class CombinedDistance(_HeterogenousMetaEstimator, BasePairwiseTransformerPanel)
     def _pw_trafos(self, value):
         self.pw_trafos = value
 
+    def __mul__(self, other):
+        """Magic * method, return (right) multiplied CombinedDistance.
+
+        Implemented for `other` being a transformer, otherwise returns `NotImplemented`.
+
+        Parameters
+        ----------
+        other: `sktime` pairwise transformer, must inherit BasePairwiseTransformerPanel
+            otherwise, `NotImplemented` is returned
+
+        Returns
+        -------
+        CombinedDistance object, algebraic * of `self` (first) with `other` (last).
+            not nested, contains only non-CombinedDistance `sktime` transformers
+        """
+        return self._dunder_concat(
+            other=other,
+            base_class=BasePairwiseTransformerPanel,
+            composite_class=CombinedDistance,
+            attr_name="pw_trafos",
+            concat_order="left",
+            composite_params={"operation": "*"},
+        )
+
+    def __add__(self, other):
+        """Magic + method, return (right) multiplied CombinedDistance.
+
+        Implemented for `other` being a transformer, otherwise returns `NotImplemented`.
+
+        Parameters
+        ----------
+        other: `sktime` pairwise transformer, must inherit BasePairwiseTransformerPanel
+            otherwise, `NotImplemented` is returned
+
+        Returns
+        -------
+        CombinedDistance object, algebraic + of `self` (first) with `other` (last).
+            not nested, contains only non-CombinedDistance `sktime` transformers
+        """
+        return self._dunder_concat(
+            other=other,
+            base_class=BasePairwiseTransformerPanel,
+            composite_class=CombinedDistance,
+            attr_name="pw_trafos",
+            concat_order="left",
+            composite_params={"operation": "+"},
+        )
+
     def _transform(self, X, X2=None):
         """Compute distance/kernel matrix.
 
