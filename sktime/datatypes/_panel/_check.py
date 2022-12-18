@@ -181,7 +181,8 @@ def check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj"):
         return _ret(False, msg, None, return_metadata)
 
     inst_inds = obj.index.get_level_values(0).unique()
-
+    from time import perf_counter
+    t1_start = perf_counter()
     idx_len = list(range(len(obj.index.names) - 1))
 
     check_res = obj.groupby(level=idx_len, group_keys=False, as_index=True).apply(
@@ -212,6 +213,10 @@ def check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj"):
     metadata["has_nans"] = obj.isna().values.any()
     metadata["is_equal_length"] = _list_all_equal([len(obj.loc[i]) for i in inst_inds])
 
+    t1_stop = perf_counter()
+#print("Elapsed time:", t1_stop, t1_start)
+ 
+    print("Elapsed time during the whole program in seconds:", t1_stop-t1_start)
     return _ret(True, None, metadata, return_metadata)
 
 
