@@ -4,6 +4,8 @@
 
 def njit(*args, **kwargs):
     """Identity decorator for replacing njit by passthrough."""
+
     def decorator(func):
         return func
+
     return decorator
