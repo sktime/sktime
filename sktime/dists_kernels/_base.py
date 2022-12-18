@@ -251,7 +251,7 @@ class BasePairwiseTransformerPanel(BaseEstimator):
         #   the CombinedDistance does the rest, e.g., dispatch on other
         if isinstance(other, BasePairwiseTransformerPanel):
             if not isinstance(self, CombinedDistance):
-                self_as_pipeline = CombinedDistance(steps=[self], operation="*")
+                self_as_pipeline = CombinedDistance(pw_trafos=[self], operation="*")
             else:
                 self_as_pipeline = self
             return self_as_pipeline * other
