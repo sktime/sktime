@@ -231,7 +231,7 @@ class BasePairwiseTransformerPanel(BaseEstimator):
         """Magic * method, return (right) multiplied CombinedDistance.
 
         Implemented for `other` being:
-        * a pairwise panel transformer, then `CombinedDistance([other, self], *)`
+        * a pairwise panel transformer, then `CombinedDistance([other, self], "*")`
 
         Parameters
         ----------
@@ -298,6 +298,38 @@ class BasePairwiseTransformerPanel(BaseEstimator):
                 return PwTrafoPanelPipeline(pw_trafo=self, transformers=[other])
         elif is_sklearn_transformer(other):
             return TabularToSeriesAdaptor(other) * self
+        else:
+            return NotImplemented
+
+    def __add__(self, other):
+        """Magic + method, return (right) added CombinedDistance.
+
+        Implemented for `other` being:
+        * a pairwise panel transformer, then `CombinedDistance([other, self], "+")`
+
+        Parameters
+        ----------
+        other: one of:
+            * `sktime` transformer, must inherit from BaseTransformer,
+            otherwise, `NotImplemented` is returned (leads to further dispatch by rmul)
+
+        Returns
+        -------
+        CombinedDistance object,
+            algebraic addition of `self` (first) with `other` (last).
+            not nested, contains only non-CombinedDistance `sktime` transformers
+        """
+        from sktime.dists_kernels.algebra import CombinedDistance
+
+        # we wrap self in a CombinedDistance, and concatenate with the other
+        #   the CombinedDistance does the rest, e.g., dispatch on other
+        if isinstance(other, BasePairwiseTransformerPanel):
+            if not isinstance(self, CombinedDistance):
+                self_as_pipeline = CombinedDistance(pw_trafos=[self], operation="+")
+            else:
+                self_as_pipeline = self
+            return self_as_pipeline + other
+        # otherwise, we let the right operation handle the remaining dispatch
         else:
             return NotImplemented
 
