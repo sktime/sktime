@@ -2204,27 +2204,27 @@ class MeanLinexError(BaseForecastingErrorMetricFunc):
     >>> linex_error = MeanLinexError()
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
-    >>> linex_error(y_true, y_pred)
+    >>> linex_error(y_true, y_pred)  # doctest: +SKIP
     0.19802627763937575
     >>> linex_error = MeanLinexError(b=2)
-    >>> linex_error(y_true, y_pred)
+    >>> linex_error(y_true, y_pred)  # doctest: +SKIP
     0.3960525552787515
     >>> linex_error = MeanLinexError(a=-1)
-    >>> linex_error(y_true, y_pred)
+    >>> linex_error(y_true, y_pred)  # doctest: +SKIP
     0.2391800623225643
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> linex_error = MeanLinexError()
-    >>> linex_error(y_true, y_pred)
+    >>> linex_error(y_true, y_pred)  # doctest: +SKIP
     0.2700398392309829
     >>> linex_error = MeanLinexError(a=-1)
-    >>> linex_error(y_true, y_pred)
+    >>> linex_error(y_true, y_pred)  # doctest: +SKIP
     0.49660966225813563
     >>> linex_error = MeanLinexError(multioutput='raw_values')
-    >>> linex_error(y_true, y_pred)
+    >>> linex_error(y_true, y_pred)  # doctest: +SKIP
     array([0.17220024, 0.36787944])
     >>> linex_error = MeanLinexError(multioutput=[0.3, 0.7])
-    >>> linex_error(y_true, y_pred)
+    >>> linex_error(y_true, y_pred)  # doctest: +SKIP
     0.30917568000716666
     """
 
