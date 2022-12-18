@@ -89,13 +89,14 @@ class TimeSeriesSVC(BaseClassifier):
 
     Examples
     --------
-    >>> from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
+    >>> from sktime.classification.distance_based import TimeSeriesSVC
+    >>> from sktime.dists_kernels.signature_kernel import SignatureKernel
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(return_X_y=True, split="train")
     >>> X_test, y_test = load_unit_test(return_X_y=True, split="test")
-    >>> classifier = KNeighborsTimeSeriesClassifier(distance="euclidean")
+    >>> classifier = TimeSeriesSVC(kernel=SignatureKernel())
     >>> classifier.fit(X_train, y_train)
-    KNeighborsTimeSeriesClassifier(...)
+    TimeSeriesSVC(...)
     >>> y_pred = classifier.predict(X_test)
     """
 
