@@ -210,6 +210,11 @@ class KNeighborsTimeSeriesRegressor(BaseRegressor):
         ind : array
             Indices of the nearest points in the population matrix.
         """
+        self.check_is_fitted()
+
+        # boilerplate input checks for predict-like methods
+        X = self._check_convert_X_for_predict(X)
+
         # self._X should be the stored _X
         dist_mat = self._distance(X, self._X)
 
