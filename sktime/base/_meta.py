@@ -400,7 +400,7 @@ class _HeterogenousMetaEstimator:
         concat_order : str, one of "left" and "right", optional, default="left"
             if "left", result attr_name will be like self.attr_name + other.attr_name
             if "right", result attr_name will be like other.attr_name + self.attr_name
-        composite_params : dict, optional, default=None
+        composite_params : dict, optional, default=None; else, pairs strname-value
             if not None, parameters of the composite are always set accordingly
             i.e., contains key-value pairs, and composite_class has key set to value
 
