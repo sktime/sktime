@@ -26,10 +26,10 @@ def test_gmse_class():
     rgmse = GeometricMeanSquaredError(square_root=True)
     assert np.allclose(rgmse(y_true, y_pred), 0.5000024031086919)
     gmse = GeometricMeanSquaredError(multioutput="raw_values")
-    assert np.allclose(gmse(y_true, y_pred), np.array([2.30997255e-11, 1.00000000e+00]))
+    assert np.allclose(gmse(y_true, y_pred), np.array([2.30997255e-11, 1.00000000e00]))
     rgmse = GeometricMeanSquaredError(multioutput="raw_values", square_root=True)
     assert np.allclose(
-        rgmse(y_true, y_pred), np.array([4.80621738e-06, 1.00000000e+00])
+        rgmse(y_true, y_pred), np.array([4.80621738e-06, 1.00000000e00])
     )
     gmse = GeometricMeanSquaredError(multioutput=[0.3, 0.7])
     assert np.allclose(gmse(y_true, y_pred), 0.7000000000069299)
@@ -52,11 +52,11 @@ def test_gmse_function():
     assert np.allclose(gmse(y_true, y_pred, square_root=True), 0.5000024031086919)
     assert np.allclose(
         gmse(y_true, y_pred, multioutput="raw_values"),
-        np.array([2.30997255e-11, 1.00000000e+00]),
+        np.array([2.30997255e-11, 1.00000000e00]),
     )
     assert np.allclose(
         gmse(y_true, y_pred, multioutput="raw_values", square_root=True),
-        np.array([4.80621738e-06, 1.00000000e+00]),
+        np.array([4.80621738e-06, 1.00000000e00]),
     )
     assert np.allclose(gmse(y_true, y_pred, multioutput=[0.3, 0.7]), 0.7000000000069299)
     assert np.allclose(
