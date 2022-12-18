@@ -25,9 +25,9 @@ def test_gmse_class():
     assert np.allclose(gmse(y_true, y_pred), 0.5000000000115499)
     rgmse = GeometricMeanSquaredError(square_root=True)
     assert np.allclose(rgmse(y_true, y_pred), 0.5000024031086919)
-    gmse = GeometricMeanSquaredError(multioutput='raw_values')
+    gmse = GeometricMeanSquaredError(multioutput="raw_values")
     assert np.allclose(gmse(y_true, y_pred), np.array([2.30997255e-11, 1.00000000e+00]))
-    rgmse = GeometricMeanSquaredError(multioutput='raw_values', square_root=True)
+    rgmse = GeometricMeanSquaredError(multioutput="raw_values", square_root=True)
     assert np.allclose(
         rgmse(y_true, y_pred), np.array([4.80621738e-06, 1.00000000e+00])
     )
@@ -51,11 +51,11 @@ def test_gmse_function():
     assert np.allclose(gmse(y_true, y_pred), 0.5000000000115499)
     assert np.allclose(gmse(y_true, y_pred, square_root=True), 0.5000024031086919)
     assert np.allclose(
-        gmse(y_true, y_pred, multioutput='raw_values'),
+        gmse(y_true, y_pred, multioutput="raw_values"),
         np.array([2.30997255e-11, 1.00000000e+00]),
     )
     assert np.allclose(
-        gmse(y_true, y_pred, multioutput='raw_values', square_root=True),
+        gmse(y_true, y_pred, multioutput="raw_values", square_root=True),
         np.array([4.80621738e-06, 1.00000000e+00]),
     )
     assert np.allclose(gmse(y_true, y_pred, multioutput=[0.3, 0.7]), 0.7000000000069299)
@@ -83,7 +83,7 @@ def test_linex_class():
     assert np.allclose(linex_error(y_true, y_pred), 0.2700398392309829)
     linex_error = MeanLinexError(a=-1)
     assert np.allclose(linex_error(y_true, y_pred), 0.49660966225813563)
-    linex_error = MeanLinexError(multioutput='raw_values')
+    linex_error = MeanLinexError(multioutput="raw_values")
     assert np.allclose(linex_error(y_true, y_pred), np.array([0.17220024, 0.36787944]))
     linex_error = MeanLinexError(multioutput=[0.3, 0.7])
     assert np.allclose(linex_error(y_true, y_pred), 0.30917568000716666)
@@ -103,7 +103,7 @@ def test_linex_function():
     assert np.allclose(mean_linex_error(y_true, y_pred), 0.2700398392309829)
     assert np.allclose(mean_linex_error(y_true, y_pred, a=-1), 0.49660966225813563)
     assert np.allclose(
-        mean_linex_error(y_true, y_pred, multioutput='raw_values'),
+        mean_linex_error(y_true, y_pred, multioutput="raw_values"),
         np.array([0.17220024, 0.36787944]),
     )
     assert np.allclose(
