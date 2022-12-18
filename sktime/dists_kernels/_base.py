@@ -227,6 +227,80 @@ class BasePairwiseTransformerPanel(BaseEstimator):
         # this just defines __call__ as an alias for transform
         return self.transform(X=X, X2=X2)
 
+    def __mul__(self, other):
+        """Magic * method, return (right) multiplied CombinedDistance.
+
+        Implemented for `other` being:
+        * a pairwise panel transformer, then `CombinedDistance([other, self], *)`
+
+        Parameters
+        ----------
+        other: one of:
+            * `sktime` transformer, must inherit from BaseTransformer,
+            otherwise, `NotImplemented` is returned (leads to further dispatch by rmul)
+
+        Returns
+        -------
+        CombinedDistance object,
+            algebraic multiplication of `self` (first) with `other` (last).
+            not nested, contains only non-CombinedDistance `sktime` transformers
+        """
+        from sktime.dists_kernels.algebra import CombinedDistance
+
+        # we wrap self in a CombinedDistance, and concatenate with the other
+        #   the CombinedDistance does the rest, e.g., dispatch on other
+        if isinstance(other, BasePairwiseTransformerPanel):
+            if not isinstance(self, CombinedDistance):
+                self_as_pipeline = CombinedDistance(steps=[self], operation="*")
+            else:
+                self_as_pipeline = self
+            return self_as_pipeline * other
+        # otherwise, we let the right operation handle the remaining dispatch
+        else:
+            return NotImplemented
+
+    def __rmul__(self, other):
+        """Magic * method, return (right) PwTrafoPanelPipeline or CombinedDistance.
+
+        Implemented for `other` being:
+        * a transformer, then `PwTrafoPanelPipeline([other, self])` is returned
+        * sklearn transformers are coerced via TabularToSeriesAdaptor
+
+        Parameters
+        ----------
+        other: `sktime` transformer, must inherit from BaseTransformer
+            otherwise, `NotImplemented` is returned
+
+        Returns
+        -------
+        PwTrafoPanelPipeline object,
+            concatenation of `other` (first) with `self` (last).
+            not nested, contains only non-TransformerPipeline `sktime` steps
+        """
+        from sktime.dists_kernels.compose import PwTrafoPanelPipeline
+        from sktime.transformations.base import BaseTransformer
+        from sktime.transformations.compose import TransformerPipeline
+        from sktime.transformations.series.adapt import TabularToSeriesAdaptor
+        from sktime.utils.sklearn import is_sklearn_transformer
+
+        # behaviour is implemented only if other inherits from BaseTransformer
+        #  in that case, distinctions arise from whether self or other is a pipeline
+        #  todo: this can probably be simplified further with "zero length" pipelines
+        if isinstance(other, BaseTransformer):
+            # PwTrafoPanelPipeline already has the dunder method defined
+            if isinstance(self, PwTrafoPanelPipeline):
+                return other * self
+            # if other is a TransformerPipeline but self is not, first unwrap it
+            elif isinstance(other, TransformerPipeline):
+                return PwTrafoPanelPipeline(pw_trafo=self, transformers=other.steps)
+            # if neither self nor other are a pipeline, construct a PwTrafoPanelPipeline
+            else:
+                return PwTrafoPanelPipeline(pw_trafo=self, transformers=[other])
+        elif is_sklearn_transformer(other):
+            return TabularToSeriesAdaptor(other) * self
+        else:
+            return NotImplemented
+
     def transform(self, X, X2=None):
         """Compute distance/kernel matrix.
 
