@@ -104,7 +104,7 @@ class TimeSeriesSVC(BaseClassifier):
         "capability:unequal_length": True,
         "capability:missing_values": True,
         "X_inner_mtype": ["pd-multiindex", "numpy3D"],
-        "classifier_type": "distance",
+        "classifier_type": "kernel",
     }
 
     DELEGATED_PARAMS = [
