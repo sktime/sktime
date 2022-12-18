@@ -89,7 +89,7 @@ class TimeSeriesSVC(BaseClassifier):
 
     Examples
     --------
-    >>> from sktime.classification.distance_based import TimeSeriesSVC
+    >>> from sktime.classification.kernel_based import TimeSeriesSVC
     >>> from sktime.dists_kernels.signature_kernel import SignatureKernel
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(return_X_y=True, split="train")
