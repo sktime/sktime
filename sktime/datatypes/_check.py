@@ -340,7 +340,7 @@ def check_is_scitype(
     return_metadata=False,
     var_name="obj",
     exclude_mtypes=AMBIGUOUS_MTYPES,
-    msg_legacy_interface=True,
+    msg_legacy_interface=False,
 ):
     """Check object for compliance with scitype specification, return metadata.
 
@@ -460,8 +460,7 @@ def check_is_scitype(
             warn(
                 "return msg (2nd argument) of check_is_scitype will change to "
                 "dict from list type. Set msg_legacy_interface=False for "
-                "post-deprecation behaviour. Default msg_legacy_interface "
-                "will change to True in 0.15.0. Argument msg_legacy_interface "
+                "post-deprecation behaviour. Argument msg_legacy_interface "
                 "will be removed in 0.16.0.",
                 DeprecationWarning,
             )
