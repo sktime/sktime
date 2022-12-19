@@ -1208,6 +1208,7 @@ class ExpandingWindowSplitter(BaseWindowSplitter):
             window_length=initial_window,
             initial_window=None,
             step_length=step_length,
+            start_with_window=start_with_window,
         )
 
         # initial_window needs to be written to self for sklearn compatibility
