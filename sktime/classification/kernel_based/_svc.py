@@ -90,11 +90,14 @@ class TimeSeriesSVC(BaseClassifier):
     Examples
     --------
     >>> from sktime.classification.kernel_based import TimeSeriesSVC
-    >>> from sktime.dists_kernels.signature_kernel import SignatureKernel
+    >>> from sklearn.gaussian_process.kernels import RBF
+    >>> from sktime.dists_kernels import AggrDist
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(return_X_y=True, split="train")
     >>> X_test, y_test = load_unit_test(return_X_y=True, split="test")
-    >>> classifier = TimeSeriesSVC(kernel=SignatureKernel())
+    >>>
+    >>> mean_gaussian_tskernel = AggrDist(RBF())
+    >>> classifier = TimeSeriesSVC(kernel=mean_gaussian_tskernel)
     >>> classifier.fit(X_train, y_train)
     TimeSeriesSVC(...)
     >>> y_pred = classifier.predict(X_test)
