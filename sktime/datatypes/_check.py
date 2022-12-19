@@ -333,7 +333,6 @@ def mtype(
     return mtypes_positive[0]
 
 
-# todo 0.15.0: change msg_legacy_interface default to False
 # todo 0.16.0: remove msg_legacy_interface arg, and remove msg_legacy variable inside
 def check_is_scitype(
     obj,
