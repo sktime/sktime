@@ -154,7 +154,18 @@ class FlatDist(BasePairwiseTransformerPanel):
 
     Parameters
     ----------
-    transformer: pairwise transformer of BasePairwiseTransformer scitype
+    transformer: pairwise transformer of BasePairwiseTransformer scitype, or
+        callable np.ndarray (n_samples, d) x (n_samples, d) -> (n_samples x n_samples)
+
+    Examples
+    --------
+    Euclidean distance between time series of equal length, considered as vectors
+    >>> from sktime.dists_kernels import FlatDist, ScipyDist
+    >>> euc_tsdist = FlatDist(ScipyDist())
+
+    Gaussian kernel between time series of equal length, considered as vectors
+    >>> from sklearn.gaussian_process.kernels import RBF
+    >>> flat_gaussian_tskernel = FlatDist(RBF())
     """
 
     _tags = {
@@ -196,14 +207,21 @@ class FlatDist(BasePairwiseTransformerPanel):
         X2 = X2.reshape(n_inst2, n_vars2 * n_tts2)
 
         if deep_equals(X, X2):
-            return self.transformer.transform(X)
+            return self.transformer(X)
         else:
-            return self.transformer.transform(X, X2)
+            return self.transformer(X, X2)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Test parameters for FlatDist."""
-        # importing inside to avoid circular dependencies
+        from sklearn.gaussian_process.kernels import RBF
+
         from sktime.dists_kernels import ScipyDist
 
-        return {"transformer": ScipyDist()}
+        # using sktime pairwise transformer
+        params1 = {"transformer": ScipyDist()}
+
+        # using callable from sklearn
+        params2 = {"transformer": RBF()}
+
+        return [params1, params2]
