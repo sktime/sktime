@@ -1,17 +1,14 @@
 # -*- coding: utf-8 -*-
 """Numba statistics utilities."""
 
-import numpy as np  # noqa E402
-
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-if _check_soft_dependencies("numba", severity="warning"):
-    from numba import njit  # noqa E402
+_check_soft_dependencies("numba", severity="warning")
 
-    import sktime.utils.numba.general as general_numba  # noqa E402
+import numpy as np  # noqa E402
 
-else:
-    from sktime.utils.numba.dummy_njit import njit
+import sktime.utils.numba.general as general_numba  # noqa E402
+from sktime.utils.numba.njit import njit  # noqa E402
 
 
 @njit(fastmath=True, cache=True)
