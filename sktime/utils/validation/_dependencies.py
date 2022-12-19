@@ -24,7 +24,7 @@ def _check_soft_dependencies(
     Parameters
     ----------
     packages : str or list/tuple of str, or length-1-tuple containing list/tuple of str
-        that is, following calls are ok:
+        that is, following calls are valid:
         `_check_soft_dependencies("package1")`
         `_check_soft_dependencies("package1", "package2")`
         `_check_soft_dependencies(("package1", "package2"))`
