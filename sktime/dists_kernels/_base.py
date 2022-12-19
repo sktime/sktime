@@ -16,6 +16,7 @@ Interface specifications below.
 Scitype defining methods:
     computing distance/kernel matrix (shorthand) - __call__(self, X, X2=X)
     computing distance/kernel matrix             - transform(self, X, X2=X)
+    computing diagonal of distance/kernel matrix - transform_diag(self, X)
 
 Inspection methods:
     hyper-parameter inspection  - get_params()
@@ -290,6 +291,40 @@ class BasePairwiseTransformerPanel(BaseEstimator):
             (i,j)-th entry contains distance/kernel between X[i] and X2[j]
         """
         raise NotImplementedError
+
+    def transform_diag(self, X):
+        """Compute diagonal of distance/kernel matrix.
+
+        Behaviour: returns diagonal of distance/kernel matrix for samples in X
+
+        Parameters
+        ----------
+        X : Series or Panel, any supported mtype, of n instances
+            Data to transform, of python type as follows:
+                Series: pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
+                Panel: pd.DataFrame with 2-level MultiIndex, list of pd.DataFrame,
+                    nested pd.DataFrame, or pd.DataFrame in long/wide format
+                subject to sktime mtype format specifications, for further details see
+                    examples/AA_datatypes_and_datasets.ipynb
+
+        Returns
+        -------
+        diag: np.array of shape [n]
+            i-th entry contains distance/kernel between X[i] and X[i]
+        """
+        import numpy as np
+
+        from sktime.datatypes._vectorize import VectorizedDF
+
+        X = self._pairwise_panel_x_check(X)
+        X_spl = VectorizedDF(X, iterate_as="Series")
+
+        diag = np.zeros(len(X_spl))
+
+        for i, X_instance in enumerate(X_spl):
+            diag[i] = self.transform(X=X_instance)
+
+        return diag
 
     def fit(self, X=None, X2=None):
         """Fit method for interface compatibility (no logic inside)."""
