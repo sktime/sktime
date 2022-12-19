@@ -157,6 +157,15 @@
       ]
     },
     {
+      "login": "nilesh05apr",
+      "name": "Nilesh Kumar",
+      "avatar_url": "https://avatars.githubusercontent.com/u/65773314?v=4",
+      "profile": "https://github.com/nilesh05apr"
+      "contributions": [
+      "code",
+      ]
+    },
+    {
       "login": "MatthewMiddlehurst",
       "name": "Matthew Middlehurst",
       "avatar_url": "https://avatars0.githubusercontent.com/u/25731235?v=4",
@@ -1837,6 +1846,29 @@
       ]
     },
     {
+      "login": "michaelfeil",
+      "name": "Michael Feil",
+      "avatar_url": "https://avatars.githubusercontent.com/u/63565275?v=4",
+      "profile": "michaelfeil.eu",
+      "contributions": [
+        "code",
+        "test",
+        "ideas"
+       ]
+    },
+    {
+      "login": "KishManani",
+      "name": "Kishan Manani",
+      "avatar_url": "https://avatars.githubusercontent.com/u/30973056?v=4",
+      "profile": "https://github.com/kishmanani",
+      "contributions": [
+        "code",
+        "doc",
+        "test",
+        "bug",
+        "ideas"
+     },
+     {
       "login": "jorenham",
       "name": "Joren Hammudoglu",
       "profile": "https://github.com/jorenham",
@@ -1850,6 +1882,15 @@
       "profile": "https://github.com/wolph",
       "contributions": [
         "build"
+      ]
+    },
+    {
+      "login": "templierw",
+      "name": "William Templier",
+      "avatar_url": "https://github.com/templierw.png",
+      "profile": "https://www.linkedin.com/in/templierw/",
+      "contributions": [
+        "doc"
       ]
     }
   ]
