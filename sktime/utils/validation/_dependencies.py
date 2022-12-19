@@ -23,16 +23,21 @@ def _check_soft_dependencies(
 
     Parameters
     ----------
-    packages : str or tuple of str
+    packages : str or list/tuple of str, or length-1-tuple containing list/tuple of str
+        that is, following calls are ok:
+        `_check_soft_dependencies("package1")`
+        `_check_soft_dependencies("package1", "package2")`
+        `_check_soft_dependencies(("package1", "package2"))`
+        `_check_soft_dependencies(["package1", "package2"])`
         One or more package names to check. This needs to be the *package* name,
-        i.e., the name of the package on pypi, installed by pip install package
+        i.e., the name of the package on pypi, installed by `pip install packagename`
     package_import_alias : dict with str keys and values, optional, default=empty
         key-value pairs are package name, import name
         import name is str used in python import, i.e., from import_name import ...
         should be provided if import name differs from package name
     severity : str, "error" (default), "warning", "none"
         behaviour for raising errors or warnings
-        "error" - raises a ModuleNotFoundException if one of packages is not installed
+        "error" - raises a `ModuleNotFoundException` if one of packages is not installed
         "warning" - raises a warning if one of packages is not installed
             function returns False if one of packages is not installed, otherwise True
         "none" - does not raise exception or warning
@@ -54,6 +59,8 @@ def _check_soft_dependencies(
     -------
     boolean - whether all packages are installed, only if no exception is raised
     """
+    if len(packages) == 1 and isinstance(packages[0], (tuple, list)):
+        packages = packages[0]
     if not all(isinstance(x, str) for x in packages):
         raise TypeError("packages must be str or tuple of str")
 
