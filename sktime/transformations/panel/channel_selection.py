@@ -230,7 +230,7 @@ class ElbowClassSum(BaseTransformer):
         t = self.distance_
 
         start = int(round(time.time() * 1000))
-        centroid_obj = _shrunk_centroid(0)
+        centroid_obj = _shrunk_centroid(1e-5)
 
         X_np = convert(X, "nested_univ", "numpy3D")
         centroids = centroid_obj.create_centroid(X_np, y)
@@ -379,7 +379,7 @@ class ElbowClassPairwise(BaseTransformer):
         """
         self.channels_selected_ = []
         start = int(round(time.time() * 1000))
-        centroid_obj = _shrunk_centroid(0)
+        centroid_obj = _shrunk_centroid(1e-5)
         df = centroid_obj.create_centroid(X.copy(), y)
         obj = _distance_matrix()
         self.distance_frame_ = obj.distance(df)

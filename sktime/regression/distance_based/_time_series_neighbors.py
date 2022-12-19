@@ -13,7 +13,6 @@ __author__ = ["fkiraly"]
 __all__ = ["KNeighborsTimeSeriesRegressor"]
 
 from sklearn.neighbors import KNeighborsRegressor
-from sklearn.neighbors._base import _check_weights
 
 from sktime.distances import pairwise_distance
 from sktime.regression.base import BaseRegressor
@@ -132,7 +131,7 @@ class KNeighborsTimeSeriesRegressor(BaseRegressor):
             leaf_size=leaf_size,
             n_jobs=n_jobs,
         )
-        self.weights = _check_weights(weights)
+        self.weights = weights
 
         super(KNeighborsTimeSeriesRegressor, self).__init__()
 
@@ -210,6 +209,11 @@ class KNeighborsTimeSeriesRegressor(BaseRegressor):
         ind : array
             Indices of the nearest points in the population matrix.
         """
+        self.check_is_fitted()
+
+        # boilerplate input checks for predict-like methods
+        X = self._check_convert_X_for_predict(X)
+
         # self._X should be the stored _X
         dist_mat = self._distance(X, self._X)
 

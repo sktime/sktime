@@ -307,7 +307,7 @@ def plot_correlations(
     >>> y = load_airline()
     >>> fig, ax = plot_correlations(y)  # doctest: +SKIP
     """
-    _check_soft_dependencies(("matplotlib", "statsmodels"))
+    _check_soft_dependencies("matplotlib", "statsmodels")
     import matplotlib.pyplot as plt
     from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 
