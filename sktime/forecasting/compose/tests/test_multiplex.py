@@ -90,7 +90,7 @@ def test_multiplex_with_grid_search():
     ]
     multiplex_forecaster = MultiplexForecaster(forecasters=forecasters)
     forecaster_names = [name for name, _ in forecasters]
-    cv = ExpandingWindowSplitter(start_with_window=True, step_length=12)
+    cv = ExpandingWindowSplitter(step_length=12)
     gscv = ForecastingGridSearchCV(
         cv=cv,
         param_grid={"selected_forecaster": forecaster_names},

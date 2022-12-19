@@ -1498,9 +1498,7 @@ class Permute(_DelegatedForecaster, BaseForecaster, _HeterogenousMetaEstimator):
     ...     ForecastingGridSearchCV,
     ... )
     >>> fh = [1,2,3]
-    >>> cv = ExpandingWindowSplitter(
-    ...     start_with_window=True,
-    ...     fh=fh)
+    >>> cv = ExpandingWindowSplitter(fh=fh)
     >>> forecaster = NaiveForecaster()
     >>> # check which of the two sequences of transformers is better
     >>> param_grid = {

@@ -400,7 +400,6 @@ def test_expanding_window_splitter_start_with_empty_window(
             fh=fh,
             initial_window=initial_window,
             step_length=step_length,
-            start_with_window=True,
         )
         train_windows, test_windows, _, n_splits = _check_cv(cv, y)
         assert np.vstack(test_windows).shape == (n_splits, len(check_fh(fh)))
@@ -415,7 +414,6 @@ def test_expanding_window_splitter_start_with_empty_window(
                 fh=fh,
                 initial_window=initial_window,
                 step_length=step_length,
-                start_with_window=True,
             )
 
 
@@ -430,7 +428,6 @@ def test_expanding_window_splitter(y, fh, initial_window, step_length):
             fh=fh,
             initial_window=initial_window,
             step_length=step_length,
-            start_with_window=True,
         )
         train_windows, test_windows, _, n_splits = _check_cv(cv, y)
         assert np.vstack(test_windows).shape == (n_splits, len(check_fh(fh)))
