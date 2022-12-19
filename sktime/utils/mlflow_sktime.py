@@ -10,9 +10,28 @@ sktime (native) format
 mlflow.pyfunc
     Produced for use by generic pyfunc-based deployment tools and batch inference.
 
-    The ``pyfunc`` flavor of the model supports sktime predict methods ``predict``,
-    ``predict_interval``, ``predict_quantiles`` and ``predict_var`` (``predict_proba``
-    and ``predict_residuals`` are currently not supported).
+    The `pyfunc` flavor of the model supports sktime predict methods `predict`,
+    `predict_interval`, `predict_proba`, `predict_quantiles`, `predict_var`.
+
+    The interface for utilizing a sktime model loaded as a `pyfunc` type for
+    generating forecasts requires passing an exogenous regressor as Pandas
+    DataFrame to the `pyfunc.predict()` method (an empty DataFrame must be
+    passed if no exogenous regressor is used). The configuration of predict
+    methods and parameter values passed to the predict methods is defined by
+    a dictionary to be saved as an attribute of the fitted sktime model
+    instance. If no prediction configuration is defined `pyfunc.predict()`
+    will return output from sktime `predict` method. Note that for `pyfunc`
+    flavor the forecasting horizon `fh` must be passed to the fit method.
+
+    Predict methods and parameter values for `pyfunc` flavor can be defined
+    in two ways: `Dict[str, dict]` if parameter values are passed to
+    `pyfunc.predict()`, for example
+    `{"predict_method": {"predict": {}, "predict_interval": {"coverage": [0.1, 0.9]}}`.
+    `Dict[str, list]`, with default parameters in predict method, for example
+    `{"predict_method": ["predict", "predict_interval"}` (Note: when including
+    `predict_proba` method the former appraoch must be followed as `quantiles`
+    parameter has to be provided by the user). If no prediction config is defined
+    `pyfunc.predict()` will return output from sktime `predict()` method.
 """
 
 __author__ = ["benjaminbluhm"]
@@ -40,24 +59,21 @@ if _check_soft_dependencies("mlflow", severity="warning"):
     from mlflow import pyfunc
 
 FLAVOR_NAME = "mlflow_sktime"
-_MODEL_BINARY_KEY = "data"
-_MODEL_BINARY_FILE_NAME = "model.skt"
-_MODEL_TYPE_KEY = "model_type"
 
 PYFUNC_PREDICT_CONF = "pyfunc_predict_conf"
 PYFUNC_PREDICT_CONF_KEY = "predict_method"
 SKTIME_PREDICT = "predict"
 SKTIME_PREDICT_INTERVAL = "predict_interval"
+SKTIME_PREDICT_PROBA = "predict_proba"
 SKTIME_PREDICT_QUANTILES = "predict_quantiles"
 SKTIME_PREDICT_VAR = "predict_var"
 SUPPORTED_SKTIME_PREDICT_METHODS = [
     SKTIME_PREDICT,
     SKTIME_PREDICT_INTERVAL,
+    SKTIME_PREDICT_PROBA,
     SKTIME_PREDICT_QUANTILES,
     SKTIME_PREDICT_VAR,
 ]
-
-PREDICT_METHODS = ["predict", "predict_interval", "predict_quantiles", "predict_var"]
 
 SERIALIZATION_FORMAT_PICKLE = "pickle"
 SERIALIZATION_FORMAT_CLOUDPICKLE = "cloudpickle"
@@ -197,7 +213,6 @@ def save_model(
     >>> loaded_model.predict(fh=[1, 2, 3])  # doctest: +SKIP
     """  # noqa: E501
     _check_soft_dependencies("mlflow", severity="error")
-    import mlflow
     from mlflow.exceptions import MlflowException
     from mlflow.models import Model
     from mlflow.models.model import MLMODEL_FILE_NAME
@@ -234,7 +249,6 @@ def save_model(
             error_code=INVALID_PARAMETER_VALUE,
         )
 
-    path = os.path.abspath(path)
     _validate_and_prepare_target_save_path(path)
     code_dir_subpath = _validate_and_copy_code_paths(code_paths, path)
 
@@ -245,30 +259,27 @@ def save_model(
     if input_example is not None:
         _save_example(mlflow_model, input_example, path)
 
-    model_data_path = os.path.join(path, _MODEL_BINARY_FILE_NAME)
+    model_data_subpath = "model.pkl"
+    model_data_path = os.path.join(path, model_data_subpath)
     _save_model(
         sktime_model, model_data_path, serialization_format=serialization_format
     )
 
-    model_bin_kwargs = {_MODEL_BINARY_KEY: _MODEL_BINARY_FILE_NAME}
     pyfunc.add_to_model(
         mlflow_model,
         loader_module="sktime.utils.mlflow_sktime",
+        model_path=model_data_subpath,
         conda_env=_CONDA_ENV_FILE_NAME,
         python_env=_PYTHON_ENV_FILE_NAME,
         code=code_dir_subpath,
-        **model_bin_kwargs,
     )
-    flavor_conf = {
-        _MODEL_TYPE_KEY: sktime_model.__class__.__name__,
-        **model_bin_kwargs,
-    }
+
     mlflow_model.add_flavor(
         FLAVOR_NAME,
+        pickled_model=model_data_subpath,
         sktime_version=sktime.__version__,
-        code=code_dir_subpath,
         serialization_format=serialization_format,
-        **flavor_conf,
+        code=code_dir_subpath,
     )
     mlflow_model.save(os.path.join(path, MLMODEL_FILE_NAME))
 
@@ -278,10 +289,7 @@ def save_model(
                 serialization_format == SERIALIZATION_FORMAT_CLOUDPICKLE
             )
             default_reqs = get_default_pip_requirements(include_cloudpickle)
-            inferred_reqs = mlflow.models.infer_pip_requirements(
-                path, FLAVOR_NAME, fallback=default_reqs
-            )
-            default_reqs = sorted(set(inferred_reqs).union(default_reqs))
+            default_reqs = sorted(default_reqs)
         else:
             default_reqs = None
         conda_env, pip_requirements, pip_constraints = _process_pip_requirements(
@@ -503,17 +511,17 @@ def load_model(model_uri, dst_path=None):
     )
     _add_code_from_conf_to_system_path(local_model_path, flavor_conf)
     sktime_model_file_path = os.path.join(
-        local_model_path, flavor_conf.get(_MODEL_BINARY_KEY, _MODEL_BINARY_FILE_NAME)
+        local_model_path, flavor_conf["pickled_model"]
     )
     serialization_format = flavor_conf.get(
         "serialization_format", SERIALIZATION_FORMAT_PICKLE
     )
     return _load_model(
-        sktime_model_file_path, serialization_format=serialization_format
+        path=sktime_model_file_path, serialization_format=serialization_format
     )
 
 
-def _save_model(model, path, serialization_format=SERIALIZATION_FORMAT_PICKLE):
+def _save_model(model, path, serialization_format):
 
     _check_soft_dependencies("mlflow", severity="error")
     from mlflow.exceptions import MlflowException
@@ -537,7 +545,7 @@ def _save_model(model, path, serialization_format=SERIALIZATION_FORMAT_PICKLE):
             )
 
 
-def _load_model(path, serialization_format=SERIALIZATION_FORMAT_PICKLE):
+def _load_model(path, serialization_format):
 
     _check_soft_dependencies("mlflow", severity="error")
     from mlflow.exceptions import MlflowException
@@ -586,20 +594,30 @@ def _load_pyfunc(path):
     from mlflow.exceptions import MlflowException
     from mlflow.utils.model_utils import _get_flavor_configuration
 
-    try:
-        flavor_conf = _get_flavor_configuration(
-            model_path=path, flavor_name=FLAVOR_NAME
-        )
-        serialization_format = flavor_conf.get(
-            "serialization_format", SERIALIZATION_FORMAT_PICKLE
-        )
-
-    except MlflowException:
-        _logger.warning(
-            "Could not find sktime flavor configuration during model loading process."
-            " Assuming 'pickle' serialization format."
-        )
+    if os.path.isfile(path):
         serialization_format = SERIALIZATION_FORMAT_PICKLE
+        _logger.warning(
+            "Loading procedure in older versions of MLflow using pickle.load()"
+        )
+    else:
+        try:
+            sktime_flavor_conf = _get_flavor_configuration(
+                model_path=path, flavor_name=FLAVOR_NAME
+            )
+            serialization_format = sktime_flavor_conf.get(
+                "serialization_format", SERIALIZATION_FORMAT_PICKLE
+            )
+        except MlflowException:
+            _logger.warning(
+                "Could not find sktime flavor configuration during model "
+                "loading process. Assuming 'pickle' serialization format."
+            )
+            serialization_format = SERIALIZATION_FORMAT_PICKLE
+
+        pyfunc_flavor_conf = _get_flavor_configuration(
+            model_path=path, flavor_name=pyfunc.FLAVOR_NAME
+        )
+        path = os.path.join(path, pyfunc_flavor_conf["model_path"])
 
     return _SktimeModelWrapper(
         _load_model(path, serialization_format=serialization_format)
@@ -616,94 +634,155 @@ class _SktimeModelWrapper:
         from mlflow.exceptions import MlflowException
         from mlflow.protos.databricks_pb2 import INVALID_PARAMETER_VALUE
 
-        if not hasattr(self.sktime_model, "pyfunc_predict_conf"):
-            raise MlflowException(
-                f"The fitted model instance must have an attribute "
-                f"{PYFUNC_PREDICT_CONF} with prediction configuration",
-                error_code=INVALID_PARAMETER_VALUE,
-            )
-
-        if not isinstance(self.sktime_model.pyfunc_predict_conf, dict):
-            raise MlflowException(
-                f"Attribute {PYFUNC_PREDICT_CONF} must be of type dict.",
-                error_code=INVALID_PARAMETER_VALUE,
-            )
-
-        if PYFUNC_PREDICT_CONF_KEY not in self.sktime_model.pyfunc_predict_conf:
-            raise MlflowException(
-                f"Attribute {PYFUNC_PREDICT_CONF} must contain "
-                f"a dictionary key {PYFUNC_PREDICT_CONF_KEY}.",
-                error_code=INVALID_PARAMETER_VALUE,
-            )
-
-        if isinstance(
-            self.sktime_model.pyfunc_predict_conf[PYFUNC_PREDICT_CONF_KEY], list
-        ):
-            predict_methods = self.sktime_model.pyfunc_predict_conf[
-                PYFUNC_PREDICT_CONF_KEY
-            ]
-            predict_params = False
-        elif isinstance(
-            self.sktime_model.pyfunc_predict_conf[PYFUNC_PREDICT_CONF_KEY], dict
-        ):
-            predict_methods = list(
-                self.sktime_model.pyfunc_predict_conf[PYFUNC_PREDICT_CONF_KEY].keys()
-            )
-            predict_params = True
-        else:
-            raise MlflowException(
-                "Dictionary value must be of type dict or list.",
-                error_code=INVALID_PARAMETER_VALUE,
-            )
-
-        if not set(predict_methods).issubset(set(SUPPORTED_SKTIME_PREDICT_METHODS)):
-            raise MlflowException(
-                f"The provided {PYFUNC_PREDICT_CONF_KEY} values must be "
-                f"a subset of {SUPPORTED_SKTIME_PREDICT_METHODS}",
-                error_code=INVALID_PARAMETER_VALUE,
-            )
-
         X = None if X.empty else X
         raw_predictions = {}
 
-        if SKTIME_PREDICT in predict_methods:
+        if not hasattr(self.sktime_model, "pyfunc_predict_conf"):
             raw_predictions[SKTIME_PREDICT] = self.sktime_model.predict(X=X)
 
-        if SKTIME_PREDICT_INTERVAL in predict_methods:
-            coverage = (
-                self.sktime_model.pyfunc_predict_conf[PYFUNC_PREDICT_CONF_KEY][
+        else:
+
+            if not isinstance(self.sktime_model.pyfunc_predict_conf, dict):
+                raise MlflowException(
+                    f"Attribute {PYFUNC_PREDICT_CONF} must be of type dict.",
+                    error_code=INVALID_PARAMETER_VALUE,
+                )
+
+            if PYFUNC_PREDICT_CONF_KEY not in self.sktime_model.pyfunc_predict_conf:
+                raise MlflowException(
+                    f"Attribute {PYFUNC_PREDICT_CONF} must contain "
+                    f"a dictionary key {PYFUNC_PREDICT_CONF_KEY}.",
+                    error_code=INVALID_PARAMETER_VALUE,
+                )
+
+            if isinstance(
+                self.sktime_model.pyfunc_predict_conf[PYFUNC_PREDICT_CONF_KEY], list
+            ):
+                predict_methods = self.sktime_model.pyfunc_predict_conf[
+                    PYFUNC_PREDICT_CONF_KEY
+                ]
+                predict_params = False
+            elif isinstance(
+                self.sktime_model.pyfunc_predict_conf[PYFUNC_PREDICT_CONF_KEY], dict
+            ):
+                predict_methods = list(
+                    self.sktime_model.pyfunc_predict_conf[
+                        PYFUNC_PREDICT_CONF_KEY
+                    ].keys()
+                )
+                predict_params = True
+            else:
+                raise MlflowException(
+                    "Dictionary value must be of type dict or list.",
+                    error_code=INVALID_PARAMETER_VALUE,
+                )
+
+            if not set(predict_methods).issubset(set(SUPPORTED_SKTIME_PREDICT_METHODS)):
+                raise MlflowException(
+                    f"The provided {PYFUNC_PREDICT_CONF_KEY} values must be "
+                    f"a subset of {SUPPORTED_SKTIME_PREDICT_METHODS}",
+                    error_code=INVALID_PARAMETER_VALUE,
+                )
+
+            if SKTIME_PREDICT in predict_methods:
+                raw_predictions[SKTIME_PREDICT] = self.sktime_model.predict(X=X)
+
+            if SKTIME_PREDICT_INTERVAL in predict_methods:
+                if predict_params:
+                    coverage = (
+                        0.9
+                        if "coverage"
+                        not in self.sktime_model.pyfunc_predict_conf[
+                            PYFUNC_PREDICT_CONF_KEY
+                        ][SKTIME_PREDICT_INTERVAL]
+                        else self.sktime_model.pyfunc_predict_conf[
+                            PYFUNC_PREDICT_CONF_KEY
+                        ][SKTIME_PREDICT_INTERVAL]["coverage"]
+                    )
+                else:
+                    coverage = 0.9
+
+                raw_predictions[
                     SKTIME_PREDICT_INTERVAL
-                ]["coverage"]
-                if predict_params
-                else 0.9
-            )
-            raw_predictions[
-                SKTIME_PREDICT_INTERVAL
-            ] = self.sktime_model.predict_interval(X=X, coverage=coverage)
+                ] = self.sktime_model.predict_interval(X=X, coverage=coverage)
 
-        if SKTIME_PREDICT_QUANTILES in predict_methods:
-            alpha = (
-                self.sktime_model.pyfunc_predict_conf[PYFUNC_PREDICT_CONF_KEY][
+            if SKTIME_PREDICT_PROBA in predict_methods:
+                if not isinstance(
+                    self.sktime_model.pyfunc_predict_conf[PYFUNC_PREDICT_CONF_KEY], dict
+                ):
+                    raise MlflowException(
+                        f"Method {SKTIME_PREDICT_PROBA} requires passing a dictionary.",
+                        error_code=INVALID_PARAMETER_VALUE,
+                    )
+
+                if (
+                    "quantiles"
+                    not in self.sktime_model.pyfunc_predict_conf[
+                        PYFUNC_PREDICT_CONF_KEY
+                    ][SKTIME_PREDICT_PROBA]
+                ):
+                    raise MlflowException(
+                        f"Method {SKTIME_PREDICT_PROBA} requires passing "
+                        f"quantile values.",
+                        error_code=INVALID_PARAMETER_VALUE,
+                    )
+
+                quantiles = self.sktime_model.pyfunc_predict_conf[
+                    PYFUNC_PREDICT_CONF_KEY
+                ][SKTIME_PREDICT_PROBA]["quantiles"]
+                marginal = (
+                    True
+                    if "marginal"
+                    not in self.sktime_model.pyfunc_predict_conf[
+                        PYFUNC_PREDICT_CONF_KEY
+                    ][SKTIME_PREDICT_PROBA]
+                    else self.sktime_model.pyfunc_predict_conf[PYFUNC_PREDICT_CONF_KEY][
+                        SKTIME_PREDICT_PROBA
+                    ]["marginal"]
+                )
+
+                y_pred_dist = self.sktime_model.predict_proba(X=X, marginal=marginal)
+                y_pred_dist_quantiles = pd.DataFrame(y_pred_dist.quantile(quantiles))
+                y_pred_dist_quantiles.columns = [f"Quantiles_{q}" for q in quantiles]
+                y_pred_dist_quantiles.index = y_pred_dist.parameters["loc"].index
+
+                raw_predictions[SKTIME_PREDICT_PROBA] = y_pred_dist_quantiles
+
+            if SKTIME_PREDICT_QUANTILES in predict_methods:
+                if predict_params:
+                    alpha = (
+                        None
+                        if "alpha"
+                        not in self.sktime_model.pyfunc_predict_conf[
+                            PYFUNC_PREDICT_CONF_KEY
+                        ][SKTIME_PREDICT_QUANTILES]
+                        else self.sktime_model.pyfunc_predict_conf[
+                            PYFUNC_PREDICT_CONF_KEY
+                        ][SKTIME_PREDICT_QUANTILES]["alpha"]
+                    )
+                else:
+                    alpha = None
+                raw_predictions[
                     SKTIME_PREDICT_QUANTILES
-                ]["alpha"]
-                if predict_params
-                else None
-            )
-            raw_predictions[
-                SKTIME_PREDICT_QUANTILES
-            ] = self.sktime_model.predict_quantiles(X=X, alpha=alpha)
+                ] = self.sktime_model.predict_quantiles(X=X, alpha=alpha)
 
-        if SKTIME_PREDICT_VAR in predict_methods:
-            cov = (
-                self.sktime_model.pyfunc_predict_conf[PYFUNC_PREDICT_CONF_KEY][
-                    SKTIME_PREDICT_VAR
-                ]["cov"]
-                if predict_params
-                else False
-            )
-            raw_predictions[SKTIME_PREDICT_VAR] = self.sktime_model.predict_var(
-                X=X, cov=cov
-            )
+            if SKTIME_PREDICT_VAR in predict_methods:
+                if predict_params:
+                    cov = (
+                        False
+                        if "cov"
+                        not in self.sktime_model.pyfunc_predict_conf[
+                            PYFUNC_PREDICT_CONF_KEY
+                        ][SKTIME_PREDICT_VAR]
+                        else self.sktime_model.pyfunc_predict_conf[
+                            PYFUNC_PREDICT_CONF_KEY
+                        ][SKTIME_PREDICT_VAR]["cov"]
+                    )
+                else:
+                    cov = False
+                raw_predictions[SKTIME_PREDICT_VAR] = self.sktime_model.predict_var(
+                    X=X, cov=cov
+                )
 
         for k, v in raw_predictions.items():
             if hasattr(v, "columns") and isinstance(v.columns, pd.MultiIndex):
