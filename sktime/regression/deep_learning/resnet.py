@@ -58,6 +58,7 @@ class ResNetRegressor(BaseDeepRegressor):
         random_state=None,
         verbose=False,
         optimizer=None,
+        metrics="mean_squared_error",
         loss="mean_squared_error",
         activation=None,
         use_bias=True,
@@ -71,6 +72,7 @@ class ResNetRegressor(BaseDeepRegressor):
         self.verbose = verbose
         self.optimizer = optimizer
         self.loss = loss
+        self.metrics = metrics
         self.activation = activation
         self.use_bias = use_bias
         self.callbacks = callbacks
@@ -117,7 +119,7 @@ class ResNetRegressor(BaseDeepRegressor):
         model.compile(
             loss=self.loss,
             optimizer=self.optimizer_,
-            metrics=metrics,
+            metrics=self.metrics,
         )
 
         return model
