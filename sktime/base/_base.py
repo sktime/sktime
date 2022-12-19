@@ -63,6 +63,7 @@ from sklearn import clone
 from sklearn.base import BaseEstimator as _BaseEstimator
 from sklearn.ensemble._base import _set_random_states
 
+from sktime import __version__ as SKTIME_VERSION
 from sktime.exceptions import NotFittedError
 
 
@@ -71,6 +72,8 @@ class BaseObject(_BaseEstimator):
 
     Extends scikit-learn's BaseEstimator to include sktime interface for tags.
     """
+
+    _tags = {"sktime_version": SKTIME_VERSION}
 
     def __init__(self):
         self._tags_dynamic = dict()
