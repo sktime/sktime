@@ -132,14 +132,15 @@ class AggrDist(BasePairwiseTransformerPanel):
 
 
 class FlatDist(BasePairwiseTransformerPanel):
-    r"""Panel distance from applying tabular distance to flattened time series.
+    r"""Panel distance or kernel from applying tabular trafo to flattened time series.
 
-    Applies the wrapped tabular distance to flattened series.
+    Applies the wrapped tabular distance or kernel to flattened series.
     Flattening is done to a 2D numpy array of shape (n_instances, (n_vars, n_timepts))
 
     Formal details (for real valued objects, mixed typed rows in analogy):
     Let :math:`d:\mathbb{R}^k \times \mathbb{R}^{k}\rightarrow \mathbb{R}`
-    be the pairwise function in `transformer`, when applied to `k`-vectors.
+    be the pairwise function in `transformer`, when applied to `k`-vectors
+    (here, :math:`d` could be a distance function or a kernel function).
     Let :math:`x_1, \dots, x_N\in \mathbb{R}^{n \times \ell}`,
     :math:`y_1, \dots y_M \in \mathbb{R}^{n \times \ell}` be collections of matrices,
     representing time series panel valued inputs `X` and `X2`, as follows:
