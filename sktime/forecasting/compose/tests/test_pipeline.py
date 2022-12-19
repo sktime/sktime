@@ -28,10 +28,10 @@ from sktime.forecasting.model_selection import (
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.sarimax import SARIMAX
 from sktime.forecasting.trend import PolynomialTrendForecaster
+from sktime.transformations.compose import OptionalPassthrough
 from sktime.transformations.hierarchical.aggregate import Aggregator
 from sktime.transformations.series.adapt import TabularToSeriesAdaptor
 from sktime.transformations.series.boxcox import LogTransformer
-from sktime.transformations.series.compose import OptionalPassthrough
 from sktime.transformations.series.detrend import Detrender
 from sktime.transformations.series.difference import Differencer
 from sktime.transformations.series.exponent import ExponentTransformer
@@ -110,8 +110,8 @@ def test_skip_inverse_transform():
 def test_nesting_pipelines():
     """Test that nesting of pipelines works."""
     from sktime.forecasting.ets import AutoETS
+    from sktime.transformations.compose import OptionalPassthrough
     from sktime.transformations.series.boxcox import LogTransformer
-    from sktime.transformations.series.compose import OptionalPassthrough
     from sktime.transformations.series.detrend import Detrender
     from sktime.utils._testing.scenarios_forecasting import (
         ForecasterFitPredictUnivariateWithX,
