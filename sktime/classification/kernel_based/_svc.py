@@ -125,8 +125,8 @@ class TimeSeriesSVC(BaseClassifier):
     def __init__(
         self,
         kernel,
-        kernel_params,
-        kernel_mtype,
+        kernel_params=None,
+        kernel_mtype=None,
         C=1,
         shrinking=True,
         probability=False,
