@@ -181,14 +181,16 @@ def check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj"):
         return _ret(False, msg, None, return_metadata)
 
     inst_inds = obj.index.get_level_values(0).unique()
+    
     from time import perf_counter
 
     from sktime.datatypes._series._check import _index_equally_spaced
+    index = obj.index
 
     t1_start = perf_counter()
-    idx_len = list(range(len(obj.index.names) - 1))
+    idx_len = list(range(len(index.names) - 1))
     import timeit
-
+    
     # timeit.timeit(lambda: obj.groupby(level=idx_len, group_keys=False, as_index=True).apply(
     #     lambda x: pd.DataFrame(check_pddataframe_series(x.droplevel(idx_len), return_metadata=True))
     # ), number =1)
@@ -198,11 +200,44 @@ def check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj"):
             [check_pddataframe_series(obj, return_metadata=False)], columns=["check"]
         )
         #    df = pd.concat([df[["check", "one"]], df["two"].apply(pd.Series)], axis=1)
-        df["is_equal_length"] = obj.shape[0]
-        df["is_empty"] = len(obj.index) < 1 or len(obj.columns) < 1
-        df["is_univariate"] = len(obj.columns) < 2
-        df["is_equally_spaced"] = _index_equally_spaced(obj.index)
         return df
+
+    def ret(valid, msg, metadata, return_metadata):
+        if return_metadata:
+            return valid, msg, metadata
+        else:
+            return valid
+
+    # check that columns are unique
+    if not obj.columns.is_unique:
+        msg = f"{var_name} must have unique column indices, but found {obj.columns}"
+        return ret(False, msg, None, return_metadata)
+
+    from sktime.utils.validation.series import is_in_valid_index_types
+    VALID_INDEX_TYPES = (pd.RangeIndex, pd.PeriodIndex, pd.DatetimeIndex)
+    from sktime.datatypes._utilities import get_time_index
+    time_index =get_time_index(obj)
+    # check whether the time index is of valid type
+    if not is_in_valid_index_types(time_index):
+        msg = (
+            f"{type(index)} is not supported for {var_name}, use "
+            f"one of {VALID_INDEX_TYPES} or integer index instead."
+        )
+        return ret(False, msg, None, return_metadata)
+
+    # check that no dtype is object
+    if "object" in obj.dtypes.values:
+        msg = f"{var_name} should not have column of 'object' dtype"
+        return ret(False, msg, None, return_metadata)
+
+    
+    # Check time index is ordered in time
+    if not time_index.is_monotonic_increasing:
+        msg = (
+            f"The (time) index of {var_name} must be sorted monotonically increasing, "
+            f"but found: {obj.index}"
+        )
+        return ret(False, msg, None, return_metadata)
 
     # timeit.timeit(lambda: obj.groupby(level=idx_len, group_keys=True, as_index=True).apply(
     #     lambda x: pd.DataFrame(check_pddataframe_series(x.droplevel(idx_len), return_metadata=True))
@@ -214,9 +249,26 @@ def check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj"):
     # timeit.timeit(lambda: obj.groupby(level=idx_len, group_keys=True, as_index=True).apply(
     #     lambda x: return_df(x.droplevel(idx_len))), number =1)
 
-    check_res = obj.groupby(level=idx_len, group_keys=True, as_index=True).apply(
-        lambda x: return_df(x.droplevel(idx_len))
-    )
+    # check_res = obj.groupby(level=idx_len, group_keys=True, as_index=True).apply(
+    #     lambda x: pd.DataFrame(return_df(x.droplevel(idx_len)))
+    # )
+    # check_res = check_res.droplevel(-1)
+    is_equally_spaced = obj.reset_index(-1).drop("c0",axis=1).groupby(level=idx_len, group_keys=True, as_index=True).diff().groupby(level=idx_len, group_keys=True, as_index=True).nunique()
+    is_equal_length = obj.groupby(level=idx_len, group_keys=True, as_index=True).count()
+    
+    # obj.reset_index(-1).drop("c0",axis=1).groupby(level=idx_len, group_keys=True, as_index=True).diff()
+    
+    # t1_start = perf_counter()
+    # obj2 = obj.reset_index().drop("c0",axis=1)
+    # obj3 = obj2.index.names[0]
+    # obj2.groupby(["h0"], group_keys=True, as_index=True).diff().groupby("h0").nunique()
+    # t1_end = perf_counter() 
+    # tout = t1_end-t1_start
+    
+    # t1_start = perf_counter()
+    # obj.reset_index(-1).drop("c0",axis=1).groupby(level=idx_len, group_keys=True, as_index=True).diff().groupby(level=idx_len, group_keys=True, as_index=True).nunique()
+    # t1_end = perf_counter() 
+    # tout = t1_end-t1_start
 
     # timeit.timeit(lambda: obj.groupby(level=idx_len, group_keys=True, as_index=True).apply(lambda x: return_df(x.droplevel(idx_len))), number=1)
 
@@ -237,27 +289,22 @@ def check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj"):
 
     # bad_inds = check_res.apply(pd.Series)
 
-    if check_res.shape[0] == 0:
-        check_res["is_univariate"] = np.nan
-        check_res["is_equally_spaced"] = np.nan
-        check_res["is_empty"] = np.nan
-        check_res["check"] = np.nan
-    # else:
-    #     check_res = pd.concat([check_res[[0, 1]], check_res[2].apply(pd.Series)], axis=1)
-    #     check_res = check_res.rename(columns={0: "check"})
+    # if check_res.shape[0] == 0:
+    #     check_res["is_equally_spaced"] = np.nan
+    #     check_res["check"] = np.nan
 
-    if not all(check_res["check"]):
-        msg = f"{var_name}.loc[i] must be Series of mtype pd.DataFrame," f" not at i"
-        return _ret(False, msg, None, return_metadata)
+    # if not all(check_res["check"]):
+    #     msg = f"{var_name}.loc[i] must be Series of mtype pd.DataFrame," f" not at i"
+    #     return _ret(False, msg, None, return_metadata)
 
     metadata = dict()
-    metadata["is_univariate"] = all(check_res["is_univariate"])
-    metadata["is_equally_spaced"] = all(check_res["is_equally_spaced"])
-    metadata["is_empty"] = all(check_res["is_empty"])
+    metadata["is_univariate"] = len(obj.columns) < 2    
+    metadata["is_equally_spaced"] = all(is_equally_spaced==1)
+    metadata["is_empty"] = len(obj.index) < 1 or len(obj.columns) < 1
     metadata["n_instances"] = len(inst_inds)
     metadata["is_one_series"] = len(inst_inds) == 1
     metadata["has_nans"] = obj.isna().values.any()
-    metadata["is_equal_length"] = all(check_res["is_equal_length"])
+    metadata["is_equal_length"] = is_equal_length.nunique().shape[0]==1
     t1_stop = perf_counter()
     # # print("Elapsed time:", t1_stop, t1_start)
 
