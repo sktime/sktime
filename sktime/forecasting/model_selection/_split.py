@@ -1176,12 +1176,9 @@ class ExpandingWindowSplitter(BaseWindowSplitter):
     fh : int, list or np.array, optional (default=1)
         Forecasting horizon
     initial_window : int or timedelta or pd.DateOffset, optional (default=10)
-        Window length
+        Window length of initial training fold. If =0, initial training fold is empty.
     step_length : int or timedelta or pd.DateOffset, optional (default=1)
         Step length between windows
-    start_with_window : bool, optional (default=True)
-        - If True, starts with full window.
-        - If False, starts with empty window.
 
     Examples
     --------
@@ -1200,6 +1197,9 @@ class ExpandingWindowSplitter(BaseWindowSplitter):
         initial_window: ACCEPTED_WINDOW_LENGTH_TYPES = DEFAULT_WINDOW_LENGTH,
         step_length: NON_FLOAT_WINDOW_LENGTH_TYPES = DEFAULT_STEP_LENGTH,
     ) -> None:
+
+        start_with_window = initial_window == 0
+
         # Note that we pass the initial window as the window_length below. This
         # allows us to use the common logic from the parent class, while at the same
         # time expose the more intuitive name for the ExpandingWindowSplitter.
@@ -1208,6 +1208,7 @@ class ExpandingWindowSplitter(BaseWindowSplitter):
             window_length=initial_window,
             initial_window=None,
             step_length=step_length,
+            start_with_window=start_with_window,
         )
 
         # initial_window needs to be written to self for sklearn compatibility
