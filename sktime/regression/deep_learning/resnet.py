@@ -119,7 +119,7 @@ class ResNetRegressor(BaseDeepRegressor):
         model.compile(
             loss=self.loss,
             optimizer=self.optimizer_,
-            metrics=self.metrics,
+            metrics=metrics,
         )
 
         return model
