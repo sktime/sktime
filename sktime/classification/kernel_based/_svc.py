@@ -143,7 +143,10 @@ class TimeSeriesSVC(BaseClassifier):
         self.kernel_params = kernel_params
         self.kernel_mtype = kernel_mtype
 
-        delegated_param_dict = {key: eval(key) for key in self.DELEGATED_PARAMS}
+        # naive dict comprehension does not work due to context of eval
+        delegated_param_dict = {}
+        for key in self.DELEGATED_PARAMS:
+            delegated_param_dict[key] = eval(key)
 
         for key, val in delegated_param_dict.items():
             setattr(self, key, val)
