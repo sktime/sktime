@@ -100,7 +100,7 @@ class ResNetRegressor(BaseDeepRegressor):
 
         tf.random.set_seed(self.random_state)
 
-        metrics = ["mean_squared_error"] if self.metrics is None else self.metrics
+        self.metrics_ = ["mean_squared_error"] if self.metrics is None else self.metrics
 
         input_layer, output_layer = self._network.build_network(
             input_shape=input_shape, **kwargs
@@ -119,7 +119,7 @@ class ResNetRegressor(BaseDeepRegressor):
         model.compile(
             loss=self.loss,
             optimizer=self.optimizer_,
-            metrics=metrics,
+            metrics=self.metrics_,
         )
 
         return model
