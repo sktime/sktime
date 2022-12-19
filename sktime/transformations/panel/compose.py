@@ -4,28 +4,17 @@
 This module has meta-transformations that is build using the pre-existing
 transformations as building blocks.
 """
-from warnings import warn
-
 import numpy as np
 import pandas as pd
-from deprecated.sphinx import deprecated
 from scipy import sparse
-from sklearn.base import clone
 from sklearn.compose import ColumnTransformer as _ColumnTransformer
 
 from sktime.transformations.base import BaseTransformer, _PanelToPanelTransformer
-from sktime.transformations.series.adapt import TabularToSeriesAdaptor
 from sktime.utils.multiindex import flatten_multiindex
-from sktime.utils.sklearn import is_sklearn_estimator
 from sktime.utils.validation.panel import check_X
 
 __author__ = ["mloning", "sajaysurya", "fkiraly"]
-__all__ = [
-    "ColumnTransformer",
-    "SeriesToPrimitivesRowTransformer",
-    "SeriesToSeriesRowTransformer",
-    "ColumnConcatenator",
-]
+__all__ = ["ColumnTransformer", "ColumnConcatenator"]
 
 
 class ColumnTransformer(_ColumnTransformer, _PanelToPanelTransformer):

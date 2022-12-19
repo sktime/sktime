@@ -13,7 +13,6 @@ __all__ = [
 __author__ = ["mloning", "kkoralturk", "khrapovs", "chillerobscuro"]
 
 from typing import Iterator, Optional, Tuple, Union
-from warnings import warn
 
 import numpy as np
 import pandas as pd

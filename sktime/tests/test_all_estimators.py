@@ -13,7 +13,6 @@ import types
 from copy import deepcopy
 from inspect import getfullargspec, isclass, signature
 from tempfile import TemporaryDirectory
-from warnings import warn
 
 import joblib
 import numpy as np
