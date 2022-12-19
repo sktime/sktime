@@ -183,39 +183,82 @@ def check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj"):
     inst_inds = obj.index.get_level_values(0).unique()
     from time import perf_counter
 
-    t1_start = perf_counter()
+    from sktime.datatypes._series._check import _index_equally_spaced
+    t1_start = perf_counter()       
     idx_len = list(range(len(obj.index.names) - 1))
+    import timeit
+    # timeit.timeit(lambda: obj.groupby(level=idx_len, group_keys=False, as_index=True).apply(
+    #     lambda x: pd.DataFrame(check_pddataframe_series(x.droplevel(idx_len), return_metadata=True))
+    # ), number =1) 
 
-    check_res = obj.groupby(level=idx_len, group_keys=False, as_index=True).apply(
-        lambda x: check_pddataframe_series(x.droplevel(idx_len), return_metadata=True)
-    )
+    def return_df(obj):
+        df = pd.DataFrame([check_pddataframe_series(obj, return_metadata=False)],columns=["check"])
+    #    df = pd.concat([df[["check", "one"]], df["two"].apply(pd.Series)], axis=1)
+        df["is_equal_length"] = obj.shape[0]
+        df["is_empty"] = len(obj.index) < 1 or len(obj.columns) < 1
+        df["is_univariate"] = len(obj.columns) < 2
+        df["is_equally_spaced"] = _index_equally_spaced(obj.index)
+        return df
+                                              
+    # timeit.timeit(lambda: obj.groupby(level=idx_len, group_keys=True, as_index=True).apply(
+    #     lambda x: pd.DataFrame(check_pddataframe_series(x.droplevel(idx_len), return_metadata=True))
+    # ), number =1) 
 
-    bad_inds = check_res.apply(pd.Series)
+    # check_res = obj.groupby(level=idx_len, group_keys=True, as_index=True).apply(
+    #     lambda x: pd.DataFrame(check_pddataframe_series(x.droplevel(idx_len), return_metadata=True)
+        
+    # timeit.timeit(lambda: obj.groupby(level=idx_len, group_keys=True, as_index=True).apply(
+    #     lambda x: return_df(x.droplevel(idx_len))), number =1) 
+    
+    check_res = obj.groupby(level=idx_len, group_keys=True, as_index=True).apply(
+        lambda x: return_df(x.droplevel(idx_len)))
 
+
+    #timeit.timeit(lambda: obj.groupby(level=idx_len, group_keys=True, as_index=True).apply(lambda x: return_df(x.droplevel(idx_len))), number=1)
+
+    #check_res = pd.concat([check_res[[0, 1]], check_res[2].apply(pd.Series)], axis=1)
+    
+    # timeit.timeit(lambda: [_index_equally_spaced(obj.loc[i].index) for i in inst_inds], number =1)
+    
+    # timeit.timeit(lambda: obj.groupby(level=idx_len, group_keys=False, as_index=True).apply(
+    #     lambda x: _index_equally_spaced(x.droplevel(idx_len).index)), number =1) 
+        
+    # from sktime.datatypes._utilities import get_time_index
+      
+    # timeit.timeit(lambda: [check_pddataframe_series(obj.loc[i], return_metadata=True) for i in inst_inds], number =1)
+        
+    # check_res = obj.groupby(level=idx_len, group_keys=False, as_index=True).apply(
+    #     lambda x: pd.Series(check_pddataframe_series(x.droplevel(idx_len), return_metadata=True))
+    # )
+
+    #bad_inds = check_res.apply(pd.Series)
+
+
+    
     if check_res.shape[0] == 0:
-        bad_inds["is_univariate"] = np.nan
-        bad_inds["is_equally_spaced"] = np.nan
-        bad_inds["is_empty"] = np.nan
-        bad_inds["check"] = np.nan
-    else:
-        bad_inds = pd.concat([bad_inds[[0, 1]], bad_inds[2].apply(pd.Series)], axis=1)
-        bad_inds = bad_inds.rename(columns={0: "check"})
+        check_res["is_univariate"] = np.nan
+        check_res["is_equally_spaced"] = np.nan
+        check_res["is_empty"] = np.nan
+        check_res["check"] = np.nan
+    # else:
+    #     check_res = pd.concat([check_res[[0, 1]], check_res[2].apply(pd.Series)], axis=1)
+    #     check_res = check_res.rename(columns={0: "check"})
 
-    if not all(bad_inds["check"]):
+
+    if not all(check_res["check"]):
         msg = f"{var_name}.loc[i] must be Series of mtype pd.DataFrame," f" not at i"
         return _ret(False, msg, None, return_metadata)
 
     metadata = dict()
-    metadata["is_univariate"] = all(bad_inds["is_univariate"])
-    metadata["is_equally_spaced"] = all(bad_inds["is_equally_spaced"])
-    metadata["is_empty"] = all(bad_inds["is_empty"])
+    metadata["is_univariate"] = all(check_res["is_univariate"])
+    metadata["is_equally_spaced"] = all(check_res["is_equally_spaced"])
+    metadata["is_empty"] = all(check_res["is_empty"])
     metadata["n_instances"] = len(inst_inds)
     metadata["is_one_series"] = len(inst_inds) == 1
-    metadata["has_nans"] = obj.isna().values.any()
-    metadata["is_equal_length"] = _list_all_equal([len(obj.loc[i]) for i in inst_inds])
-
+    metadata["has_nans"] = obj.isna().values.any()  
+    metadata["is_equal_length"] =  all(check_res["is_equal_length"])
     t1_stop = perf_counter()
-    # print("Elapsed time:", t1_stop, t1_start)
+    # # print("Elapsed time:", t1_stop, t1_start)
 
     print("Elapsed time during the whole program in seconds:", t1_stop - t1_start)
     return _ret(True, None, metadata, return_metadata)
