@@ -1200,7 +1200,6 @@ class ExpandingWindowSplitter(BaseWindowSplitter):
         fh: FORECASTING_HORIZON_TYPES = DEFAULT_FH,
         initial_window: ACCEPTED_WINDOW_LENGTH_TYPES = DEFAULT_WINDOW_LENGTH,
         step_length: NON_FLOAT_WINDOW_LENGTH_TYPES = DEFAULT_STEP_LENGTH,
-        start_with_window: bool = True,  # TODO: remove 0.15.0
     ) -> None:
         # Note that we pass the initial window as the window_length below. This
         # allows us to use the common logic from the parent class, while at the same
@@ -1210,14 +1209,7 @@ class ExpandingWindowSplitter(BaseWindowSplitter):
             window_length=initial_window,
             initial_window=None,
             step_length=step_length,
-            start_with_window=start_with_window,  # TODO: remove 0.15.0
         )
-
-        if not start_with_window:  # TODO: remove 0.15.0
-            warn(
-                '"start_with_window" will be depreciated in 0.15.0, '
-                "use initial_window=0 instead"
-            )
 
         # initial_window needs to be written to self for sklearn compatibility
         self.initial_window = initial_window
