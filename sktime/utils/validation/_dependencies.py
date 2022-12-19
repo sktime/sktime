@@ -59,7 +59,7 @@ def _check_soft_dependencies(
     -------
     boolean - whether all packages are installed, only if no exception is raised
     """
-    if isinstance(packages, (tuple, list)) and len(packages) == 1:
+    if len(packages) == 1 and isinstance(packages[0], (tuple, list)):
         packages = packages[0]
     if not all(isinstance(x, str) for x in packages):
         raise TypeError("packages must be str or tuple of str")
