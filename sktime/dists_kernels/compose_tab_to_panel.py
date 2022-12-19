@@ -12,7 +12,10 @@ __author__ = ["fkiraly"]
 
 import numpy as np
 
-from sktime.dists_kernels._base import BasePairwiseTransformerPanel
+from sktime.dists_kernels._base import (
+    BasePairwiseTransformer,
+    BasePairwiseTransformerPanel,
+)
 from sktime.utils._testing.deep_equals import deep_equals
 
 
@@ -49,6 +52,16 @@ class AggrDist(BasePairwiseTransformerPanel):
                 aggfunc(matrix) = aggfunc(np.transpose(matrix))
             used for fast computation of the resultant matrix (if symmetric)
             if unknown, False is the "safe" option that ensures correctness
+
+    Examples
+    --------
+    Mean pairwise euclidean distance between between time series
+    >>> from sktime.dists_kernels import AggrDist, ScipyDist
+    >>> mean_euc_tsdist = AggrDist(ScipyDist())
+
+    Mean pairwise Gaussian kernel between time series
+    >>> from sklearn.gaussian_process.kernels import RBF
+    >>> mean_gaussian_tskernel = AggrDist(RBF())
     """
 
     def __init__(
@@ -96,11 +109,15 @@ class AggrDist(BasePairwiseTransformerPanel):
 
         aggfunc = self.aggfunc
         aggfunc_is_symm = self.aggfunc_is_symm
+        transformer = self.transformer
         if aggfunc is None:
             aggfunc = np.mean
             aggfunc_is_symm = True
 
-        transformer_symm = self.transformer.get_tag("symmetric", False)
+        if isinstance(transformer, BasePairwiseTransformer):
+            transformer_symm = transformer.get_tag("symmetric", False)
+        else:
+            transformer_symm = False
 
         # whether we know that resulting matrix must be symmetric
         # a sufficient condition for this:
@@ -115,20 +132,24 @@ class AggrDist(BasePairwiseTransformerPanel):
                 if all_symm and j < i:
                     distmat[i, j] = distmat[j, i]
                 else:
-                    distmat[i, j] = aggfunc(self.transformer.transform(X[i], X2[j]))
+                    distmat[i, j] = aggfunc(self.transformer(X[i], X2[j]))
 
         return distmat
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Test parameters for AggrDist."""
-        # importing inside to avoid circular dependencies
+        from sklearn.gaussian_process.kernels import RBF
+
         from sktime.dists_kernels import ScipyDist
 
-        return [
-            {"transformer": ScipyDist(), "aggfunc_is_symm": True},
-            {"transformer": ScipyDist(), "aggfunc_is_symm": False},
-        ]
+        params1 = {"transformer": ScipyDist(), "aggfunc_is_symm": True}
+        params2 = {"transformer": ScipyDist(), "aggfunc_is_symm": False}
+
+        # using callable from sklearn
+        params3 = {"transformer": RBF()}
+
+        return [params1, params2, params3]
 
 
 class FlatDist(BasePairwiseTransformerPanel):
