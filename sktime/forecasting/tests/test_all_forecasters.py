@@ -649,7 +649,19 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             f.predict(fh=FH0 + 1)
 
     def test_hierarchical_with_exogeneous(self, estimator_instance, n_columns):
-        """Check that hierarchical forecasting works, also see bug #3961."""
+        """Check that hierarchical forecasting works, also see bug #3961.
+
+        Arguments
+        ---------
+        estimator_instance : instance of BaseForecaster
+        n_columns : number of columns, of the endogeneous data y_train
+
+        Raises
+        ------
+        Exception - if fit/predict does not complete without error
+        AssertionError - if forecast is not expected mtype pd_multiindex_hier,
+            and does not have expected row and column indices
+        """
         from sktime.datatypes import check_is_mtype
         from sktime.datatypes._utilities import get_window
         from sktime.utils._testing.hierarchical import _make_hierarchical
@@ -663,7 +675,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         )
         X = _make_hierarchical(
             hierarchy_levels=(2, 4),
-            n_columns=n_columns,
+            n_columns=2,
             min_timepoints=24,
             max_timepoints=24,
             index_type="period",
