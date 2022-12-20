@@ -7,7 +7,7 @@ from sktime.datasets import load_unit_test
 
 
 def test_dummy_regressor():
-    """Test function for DummyClassifier."""
+    """Test function for DummyRegressor."""
     X_train, y_train = load_unit_test(split="train", return_type="numpy3D")
     X_test, _ = load_unit_test(split="test", return_type="numpy3D")
     dummy = DummyRegressor()
