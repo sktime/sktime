@@ -55,13 +55,15 @@ class Imputer(BaseTransformer):
         missing_values will be imputed, in addition to np.nan.
         If None, then only np.nan values are imputed.
     value : int/float, default=None
-        Value to use to fill missing values when method="constant".
+        Value to use to fill missing values when method="constant". Value
+        is only applied if method="constant", otherwise its ignored.
     forecaster : Any Forecaster based on sktime.BaseForecaster, default=None
         Use a given Forecaster to impute by insample predictions when
         method="forecaster". Before fitting, missing data is imputed with
         method="ffill" or "bfill" as heuristic. in case of multivariate X,
         the forecaster is applied separete to each column like a
-        ColumnEnsembleForecaster.
+        ColumnEnsembleForecaster. Forecaster is only applied if the param
+        method="forecaster" is set, otherwise forecaster is ignored.
     random_state : int/float/str, optional
         Value to set random.seed() if method="random", default None
 
