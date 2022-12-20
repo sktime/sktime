@@ -442,7 +442,6 @@ def test_expanding_window_splitter(y, fh, initial_window, step_length):
                 fh=fh,
                 initial_window=initial_window,
                 step_length=step_length,
-                start_with_window=True,
             )
 
 
