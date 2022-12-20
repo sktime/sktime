@@ -58,7 +58,7 @@ class ResNetRegressor(BaseDeepRegressor):
         random_state=None,
         verbose=False,
         optimizer=None,
-        metrics="mean_squared_error",
+        metrics=None,
         loss="mean_squared_error",
         activation=None,
         use_bias=True,
@@ -100,7 +100,7 @@ class ResNetRegressor(BaseDeepRegressor):
 
         tf.random.set_seed(self.random_state)
 
-        self.metrics_ = ["mean_squared_error"] if self.metrics is None else self.metrics
+        metrics_ = ["mean_squared_error"] if self.metrics is None else self.metrics
 
         input_layer, output_layer = self._network.build_network(
             input_shape=input_shape, **kwargs
@@ -119,7 +119,7 @@ class ResNetRegressor(BaseDeepRegressor):
         model.compile(
             loss=self.loss,
             optimizer=self.optimizer_,
-            metrics=self.metrics_,
+            metrics=metrics_,
         )
 
         return model
@@ -139,7 +139,7 @@ class ResNetRegressor(BaseDeepRegressor):
         self: object
         """
         if self.callbacks is None:
-            self.callbacks = []
+            self._callbacks = []
 
         X = X.transpose(0, 2, 1)
         self.input_shape_ = X.shape[1:]
@@ -155,7 +155,7 @@ class ResNetRegressor(BaseDeepRegressor):
             epochs=self.n_epochs,
             batch_size=self.batch_size,
             verbose=self.verbose,
-            callbacks=self.callbacks,
+            callbacks=self._callbacks,
         )
 
         return self
