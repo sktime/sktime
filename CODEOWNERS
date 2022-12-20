@@ -3,6 +3,9 @@
 
 * @fkiraly @aiwalter @guzalbulatova
 
+
+sktime/regression/dummy/ @badrmarani
+
 sktime/classification/dictionary_based/_boss.py @patrickzib @MatthewMiddlehurst @TonyBagnall
 sktime/classification/dictionary_based/_cboss.py @patrickzib @MatthewMiddlehurst @TonyBagnall
 sktime/classification/dictionary_based/_muse.py @patrickzib @MatthewMiddlehurst @TonyBagnall
