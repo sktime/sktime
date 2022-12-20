@@ -42,6 +42,7 @@ from sktime.regression.base import BaseRegressor
 from sktime.transformations.compose import FeatureUnion
 from sktime.transformations.series.summarize import WindowSummarizer
 from sktime.utils.datetime import _shift
+from sktime.utils.estimators.dispatch import construct_dispatch
 from sktime.utils.validation import check_window_length
 
 
@@ -205,14 +206,12 @@ class _Reducer(_BaseWindowForecaster):
         window_length=10,
         transformers=None,
         pooling="local",
-        windows_identical=True,
     ):
         super(_Reducer, self).__init__(window_length=window_length)
         self.transformers = transformers
         self.transformers_ = None
         self.estimator = estimator
         self.pooling = pooling
-        self.windows_identical = windows_identical
         self._cv = None
 
         # it seems that the sklearn tags are not fully reliable
@@ -390,6 +389,22 @@ class _DirectReducer(_Reducer):
     _tags = {
         "requires-fh-in-fit": True,  # is the forecasting horizon required in fit?
     }
+
+    def __init__(
+        self,
+        estimator,
+        window_length=10,
+        transformers=None,
+        pooling="local",
+        windows_identical=True,
+    ):
+        self.windows_identical = windows_identical
+        super(_DirectReducer, self).__init__(
+            estimator=estimator,
+            window_length=window_length,
+            transformers=transformers,
+            pooling=pooling,
+        )
 
     def _transform(self, y, X=None):
         fh = self.fh.to_relative(self.cutoff)
@@ -935,7 +950,6 @@ class _DirRecReducer(_Reducer):
             fh=fh,
             X=X,
             scitype=self._estimator_scitype,
-            windows_identical=self.windows_identical,
         )
 
     def _fit(self, y, X=None, fh=None):
@@ -1142,8 +1156,6 @@ class RecursiveTabularRegressionForecaster(_RecursiveReducer):
     pooling: str {"local", "global"}, optional
         Specifies whether separate models will be fit at the level of each instance
         (local) of if you wish to fit a single model to all instances ("global").
-    windows_identical: bool, (default = True)
-        Direct forecasting only.
     """
 
     _tags = {
@@ -1156,13 +1168,11 @@ class RecursiveTabularRegressionForecaster(_RecursiveReducer):
         window_length=10,
         transformers=None,
         pooling="local",
-        windows_identical=True,
     ):
         super(_RecursiveReducer, self).__init__(
             estimator=estimator, window_length=window_length, transformers=transformers
         )
         self.pooling = pooling
-        self.windows_identical = windows_identical
 
         if pooling == "local":
             mtypes_y = "pd.Series"
@@ -1424,13 +1434,16 @@ def make_reduction(
         scitype = _infer_scitype(estimator)
 
     Forecaster = _get_forecaster(scitype, strategy)
-    return Forecaster(
-        estimator=estimator,
-        window_length=window_length,
-        transformers=transformers,
-        pooling=pooling,
-        windows_identical=windows_identical,
-    )
+
+    dispatch_params = {
+        "estimator": estimator,
+        "window_length": window_length,
+        "transformers": transformers,
+        "pooling": pooling,
+        "windows_identical": windows_identical,
+    }
+
+    return construct_dispatch(Forecaster, dispatch_params)
 
 
 def _check_scitype(scitype):
