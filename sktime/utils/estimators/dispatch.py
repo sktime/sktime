@@ -3,11 +3,6 @@
 
 __author__ = ["fkiraly"]
 
-import pandas as pd
-
-from sktime.forecasting.base import BaseForecaster
-from sktime.utils.estimators._base import _method_logger, _MockEstimatorMixin
-
 
 def construct_dispatch(cls, params=None):
     """Construct an estimator with an overspecified parameter dictionary.
