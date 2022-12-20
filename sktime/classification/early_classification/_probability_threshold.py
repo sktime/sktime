@@ -11,24 +11,17 @@ __all__ = ["ProbabilityThresholdEarlyClassifier"]
 import copy
 
 import numpy as np
-from deprecated.sphinx import deprecated
 from joblib import Parallel, delayed
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.utils import check_random_state
 
 from sktime.base._base import _clone_estimator
-from sktime.classification.base import BaseClassifier
+from sktime.classification.early_classification.base import BaseEarlyClassifier
 from sktime.classification.interval_based import CanonicalIntervalForest
 from sktime.utils.validation.panel import check_X
 
 
-# TODO: remove message in v0.15.0 and change base class
-@deprecated(
-    version="0.13.0",
-    reason="The base class of ProbabilityThresholdEarlyClassifier will be changed to BaseEarlyClassifier in v0.15.0. This will change how classification safety decisions are made and returned, see BaseEarlyClassifier or TEASER for the new interface.",  # noqa: E501
-    category=FutureWarning,
-)
-class ProbabilityThresholdEarlyClassifier(BaseClassifier):
+class ProbabilityThresholdEarlyClassifier(BaseEarlyClassifier):
     """Probability Threshold Early Classifier.
 
     An early classifier which uses a threshold of prediction probability to determine
@@ -84,7 +77,7 @@ class ProbabilityThresholdEarlyClassifier(BaseClassifier):
     ... )
     >>> clf.fit(X_train, y_train)
     ProbabilityThresholdEarlyClassifier(...)
-    >>> y_pred = clf.predict(X_test)
+    >>> y_pred, decisions = clf.predict(X_test)
     """
 
     _tags = {
@@ -111,6 +104,7 @@ class ProbabilityThresholdEarlyClassifier(BaseClassifier):
 
         self._estimators = []
         self._classification_points = []
+        self._state_info = None
 
         super(ProbabilityThresholdEarlyClassifier, self).__init__()
 
@@ -155,12 +149,14 @@ class ProbabilityThresholdEarlyClassifier(BaseClassifier):
 
     def _predict(self, X) -> np.ndarray:
         rng = check_random_state(self.random_state)
-        return np.array(
+        proba_preds, decisions = self._predict_proba(X)
+        predictions = np.array(
             [
                 self.classes_[int(rng.choice(np.flatnonzero(prob == prob.max())))]
-                for prob in self._predict_proba(X)
+                for prob in proba_preds
             ]
         )
+        return predictions, decisions
 
     def _predict_proba(self, X) -> np.ndarray:
         _, _, series_length = X.shape
@@ -171,7 +167,13 @@ class ProbabilityThresholdEarlyClassifier(BaseClassifier):
                 f" in fit. Current classification points: {self._classification_points}"
             )
 
-        return self._estimators[idx].predict_proba(X)
+        predictions = self._estimators[idx].predict_proba(X)
+        decisions, new_state_info = self.decide_prediction_safety(
+            X, predictions, self._state_info
+        )
+        self._state_info = new_state_info
+
+        return predictions, decisions
 
     def decide_prediction_safety(self, X, X_probabilities, state_info):
         """Decide on the safety of an early classification.
