@@ -82,23 +82,25 @@ class Lag(BaseTransformer):
     >>> from sktime.transformations.series.lag import Lag
     >>> X = load_airline()
 
-    Single lag will yield a time series with the same variables:
+        Single lag will yield a time series with the same variables:
     >>> t = Lag(2)
     >>> Xt = t.fit_transform(X)
 
-    Multiple lags can be provided, this will result in multiple columns:
+        Multiple lags can be provided, this will result in multiple columns:
     >>> t = Lag([2, 4, -1])
     >>> Xt = t.fit_transform(X)
 
-    The default setting of index_out will extend indices either side.
-    To ensure that the index remains the same after transform, use index_out="original"
+        The default setting of index_out will extend indices either side.
+        To ensure that the index remains the same after transform,
+        use index_out="original"
     >>> t = Lag([2, 4, -1], index_out="original")
     >>> Xt = t.fit_transform(X)
 
-    The lag transformer may (and usually will) create NAs.
-    (except when index_out="shift" and there is only a single lag, or in trivial cases)
-    This may need to be handled, e.g., if a subsequent pipeline step does not accept NA.
-    To deal with the NAs, pipeline with the Imputer:
+        The lag transformer may (and usually will) create NAs.
+        (except when index_out="shift" and there is only a single lag, or in
+        trivial cases). This may need to be handled, e.g., if a subsequent
+        pipeline step does not accept NA.cTo deal with the NAs,
+        pipeline with the Imputer:
     >>> from sktime.datasets import load_airline
     >>> from sktime.transformations.series.impute import Imputer
     >>> from sktime.transformations.series.lag import Lag
