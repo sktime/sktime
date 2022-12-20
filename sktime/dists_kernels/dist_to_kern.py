@@ -20,11 +20,11 @@ class KernelFromDist(BasePairwiseTransformerPanel):
     Let :math:`d: \mathbb{R}^D \times \mathbb{R}^D\rightarrow \mathbb{R}`
     be the pairwise function in `dist`, when applied to `D`-vectors.
     If `dist_diag=None`, then `KernelFromDist(dist)` corresponds to the kernel function
-    :math:`k(x, y) := d(x, x) + d(y, y) - 0.5 \cdot d(x, y)`.
+    :math:`k(x, y) := d(x, x)^2 + d(y, y)^2 - 0.5 \cdot d(x, y)^2`.
     If `dist_diag` is provided,
     and corresponds to a function :math:`f:\mathbb{R}^D \rightarrow \mathbb{R}`,
     then `KernelFromDist(dist)` corresponds to the kernel function
-    :math:`k(x, y) := f(x, x) + f(y, y) - 0.5 \cdot d(x, y)`.
+    :math:`k(x, y) := f(x, x)^2 + f(y, y)^2 - 0.5 \cdot d(x, y)^2`.
 
     It should be noted that :math:`k` is, in general, not positive semi-definite.
 
@@ -95,7 +95,7 @@ class KernelFromDist(BasePairwiseTransformerPanel):
         else:
             diagfun = dist_diag
 
-        distmat = dist(X, X2)
+        distmat = dist(X, X2) ** 2
 
         diag1 = diagfun(X)
         if X2 is None:
@@ -103,8 +103,8 @@ class KernelFromDist(BasePairwiseTransformerPanel):
         else:
             diag2 = diagfun(X2)
 
-        diag1 = np.array(diag1).flatten()
-        diag2 = np.array(diag2).flatten()
+        diag1 = np.array(diag1).flatten() ** 2
+        diag2 = np.array(diag2).flatten() ** 2
 
         n, m = distmat.shape
 
@@ -150,7 +150,7 @@ class DistFromKernel(BasePairwiseTransformerPanel):
     Let :math:`k: \mathbb{R}^D \times \mathbb{R}^D\rightarrow \mathbb{R}`
     be the pairwise function in `kernel`, when applied to `D`-vectors.
     If `dist_diag=None`, then `KernelFromDist(dist)` corresponds to the kernel function
-    :math:`d(x, y) := k(x, x) + k(y, y) - 2 \cdot k(x, y)`.
+    :math:`d(x, y) := \sqrt{k(x, x) + k(y, y) - 2 \cdot k(x, y)}`.
 
     It should be noted that if :math:`k` is positive semi-definite,
     then :math:`d` will be a metric and satisfy the triangle inequality.
@@ -219,6 +219,7 @@ class DistFromKernel(BasePairwiseTransformerPanel):
         mat2 = mat2.transpose()
 
         kernmat = mat1 + mat2 - 2 * distmat
+        kernmat = np.sqrt(kernmat)
 
         return kernmat
 
