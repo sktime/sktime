@@ -28,6 +28,7 @@ __all__ = [
 ]
 __author__ = ["mloning", "fkiraly", "TonyBagnall", "MatthewMiddlehurst"]
 
+from abc import ABC, abstractmethod
 from typing import Tuple
 
 import numpy as np
@@ -36,7 +37,7 @@ from sktime.base import BaseEstimator
 from sktime.classification import BaseClassifier
 
 
-class BaseEarlyClassifier(BaseEstimator):
+class BaseEarlyClassifier(BaseEstimator, ABC):
     """Abstract base class for early time series classifiers.
 
     The base classifier specifies the methods and method signatures that all
@@ -352,6 +353,7 @@ class BaseEarlyClassifier(BaseEstimator):
         inv_dec = np.invert(decisions)
         return X[inv_dec], indices[inv_dec], indices[decisions]
 
+    @abstractmethod
     def _fit(self, X, y):
         """Fit time series classifier to training data.
 
@@ -381,6 +383,7 @@ class BaseEarlyClassifier(BaseEstimator):
         """
         ...
 
+    @abstractmethod
     def _predict(self, X) -> Tuple[np.ndarray, np.ndarray]:
         """Predicts labels for sequences in X.
 
@@ -412,6 +415,7 @@ class BaseEarlyClassifier(BaseEstimator):
         """
         ...
 
+    @abstractmethod
     def _update_predict(self, X) -> Tuple[np.ndarray, np.ndarray]:
         """Update label prediction for sequences in X at a larger series length.
 
@@ -531,6 +535,7 @@ class BaseEarlyClassifier(BaseEstimator):
 
         return dists, decisions
 
+    @abstractmethod
     def _score(self, X, y) -> Tuple[float, float, float]:
         """Scores predicted labels against ground truth labels on X.
 
