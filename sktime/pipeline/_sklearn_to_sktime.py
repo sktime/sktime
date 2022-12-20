@@ -8,10 +8,13 @@ from sktime.pipeline._make_pipeline import make_pipeline
 
 
 def sklearn_to_sktime(estimator):
-    """Coerces an sklearn estimator to the sktime interface.
+    """Coerces an sklearn estimator to the sktime pipeline interface.
 
-    Under the hood, creates a pipeline with the identity transformer and the estimator.
-    The dispatch logic is in the transformer base class, in the `__mul__` dunder.
+    Creates a pipeline of two elements, the identity transformer and the estimator.
+    The identity transformer acts as adapter and holds sktime base class logic.
+
+    Developer note:
+    Type dispatch logic is in the transformer base class, in the `__mul__` dunder.
 
     Parameters
     ----------
