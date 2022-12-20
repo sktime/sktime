@@ -11,17 +11,24 @@ __all__ = ["ProbabilityThresholdEarlyClassifier"]
 import copy
 
 import numpy as np
+from deprecated.sphinx import deprecated
 from joblib import Parallel, delayed
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.utils import check_random_state
 
 from sktime.base._base import _clone_estimator
-from sktime.classification.early_classification.base import BaseEarlyClassifier
+from sktime.classification.base import BaseClassifier
 from sktime.classification.interval_based import CanonicalIntervalForest
 from sktime.utils.validation.panel import check_X
 
 
-class ProbabilityThresholdEarlyClassifier(BaseEarlyClassifier):
+# TODO: remove message in v0.16.0 and change base class
+@deprecated(
+    version="0.13.0",
+    reason="The base class of ProbabilityThresholdEarlyClassifier will be changed to BaseEarlyClassifier in v0.16.0. This will change how classification safety decisions are made and returned, see BaseEarlyClassifier or TEASER for the new interface.",  # noqa: E501
+    category=FutureWarning,
+)
+class ProbabilityThresholdEarlyClassifier(BaseClassifier):
     """Probability Threshold Early Classifier.
 
     An early classifier which uses a threshold of prediction probability to determine
