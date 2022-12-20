@@ -86,6 +86,6 @@ class DummyRegressor(BaseRegressor):
 
         Returns
         -------
-        y : predictions of target values for X, np.ndarray        
+        y : predictions of target values for X, np.ndarray
         """
         return self.sklearn_dummy_regressor.predict(np.zeros(X.shape))

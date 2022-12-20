@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 """Test function of DummyRegressor."""
-import numpy as np
 
-from sktime.regression.dummy import DummyRegressor
 from sktime.datasets import load_unit_test
+from sktime.regression.dummy import DummyRegressor
 
 
 def test_dummy_regressor():
