@@ -9,6 +9,17 @@ All current sktime Regressors can be listed using the ``sktime.registry import
 all_estimators`` function.
 
 
+Dummy
+-----
+
+.. currentmodule:: sktime.regression.dummy
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    DummyRegressor
+
 Composition
 -----------
 
