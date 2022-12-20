@@ -647,3 +647,36 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         # changing fh during predict should raise error
         with pytest.raises(ValueError):
             f.predict(fh=FH0 + 1)
+
+    def test_hierarchical_with_exogeneous(self, estimator_instance, n_columns):
+        """Check that hierarchical forecasting works, also see bug #3961."""
+        from sktime.datatypes import check_is_mtype
+        from sktime.datatypes._utilities import get_window
+        from sktime.utils._testing.hierarchical import _make_hierarchical
+
+        y_train = _make_hierarchical(
+            hierarchy_levels=(2, 4),
+            n_columns=n_columns,
+            min_timepoints=22,
+            max_timepoints=22,
+            index_type="period",
+        )
+        X = _make_hierarchical(
+            hierarchy_levels=(2, 4),
+            n_columns=n_columns,
+            min_timepoints=24,
+            max_timepoints=24,
+            index_type="period",
+        )
+        X.columns = ["foo", "bar"]
+        X_train = get_window(X, lag=2)
+        X_test = get_window(X, window_length=2)
+        fh = [1, 2]
+
+        estimator_instance.fit(y=y_train, X=X_train, fh=fh)
+        y_pred = estimator_instance.predict(X=X_test)
+
+        assert isinstance(y_pred, pd.DataFrame)
+        assert check_is_mtype(y_pred, "pd_multiindex_hier")
+        assert np.all(y_pred.index == X_test.index)
+        assert np.all(y_pred.columns == y_train.columns)
