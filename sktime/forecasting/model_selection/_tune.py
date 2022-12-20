@@ -417,7 +417,6 @@ class ForecastingGridSearchCV(BaseGridSearch):
     >>> cv = ExpandingWindowSplitter(
     ...     initial_window=24,
     ...     step_length=12,
-    ...     start_with_window=True,
     ...     fh=[1,2,3])
     >>> gscv = ForecastingGridSearchCV(
     ...     forecaster=pipe,
