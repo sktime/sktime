@@ -71,6 +71,7 @@ class TransformerPairwiseTransformSymm(TransformerPairwiseTestScenario):
     args = {
         "fit": {"X": None, "X2": None},
         "transform": {"X": d},
+        "transform_diag": {"X": d},
     }
     default_method_sequence = ["fit", "transform"]
 
@@ -83,6 +84,7 @@ class TransformerPairwiseTransformAsymm(TransformerPairwiseTestScenario):
     args = {
         "fit": {"X": None, "X2": None},
         "transform": {"X": d, "X2": d2},
+        "transform_diag": {"X": d},
     }
     default_method_sequence = ["fit", "transform"]
 
@@ -95,6 +97,7 @@ class TransformerPairwiseTransformNumpy(TransformerPairwiseTestScenario):
     args = {
         "fit": {"X": None, "X2": None},
         "transform": {"X": X1_np, "X2": X2_np},
+        "transform_diag": {"X": X1_np},
     }
     default_method_sequence = ["fit", "transform"]
 
