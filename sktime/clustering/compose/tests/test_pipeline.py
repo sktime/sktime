@@ -19,7 +19,7 @@ from sktime.utils._testing.panel import _make_panel_X
 def test_dunder_mul():
     """Test the mul dunder method."""
     RAND_SEED = 42
-    X = _make_panel_X(n_instances=10, n_timepoints=20, random_state=RAND_SEED, y=y)
+    X = _make_panel_X(n_instances=10, n_timepoints=20, random_state=RAND_SEED)
     X_test = _make_panel_X(n_instances=5, n_timepoints=20, random_state=RAND_SEED)
 
     t1 = ExponentTransformer(power=4)
@@ -44,7 +44,7 @@ def test_dunder_mul():
 def test_mul_sklearn_autoadapt():
     """Test auto-adapter for sklearn in mul."""
     RAND_SEED = 42
-    X = _make_panel_X(n_instances=10, n_timepoints=20, random_state=RAND_SEED, y=y)
+    X = _make_panel_X(n_instances=10, n_timepoints=20, random_state=RAND_SEED)
     X_test = _make_panel_X(n_instances=10, n_timepoints=20, random_state=RAND_SEED)
 
     t1 = ExponentTransformer(power=2)
