@@ -14,7 +14,7 @@ class DummyRegressor(BaseRegressor):
     """DummyRegressor makes predictions that ignore the input features.
 
     This regressor serves as a simple baseline to compare against other more
-    complex classifiers.
+    complex regressors.
     The specific behavior of the baseline is selected with the `strategy` parameter.
 
     All strategies make predictions that ignore the input feature values passed
