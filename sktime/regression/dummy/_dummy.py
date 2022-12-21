@@ -15,13 +15,15 @@ class DummyRegressor(BaseRegressor):
 
     This regressor serves as a simple baseline to compare against other more
     complex regressors.
-    The specific behavior of the baseline is selected with the `strategy` parameter.
+    The specific behavior of the baseline is selected with the `strategy`
+    parameter.
 
     All strategies make predictions that ignore the input feature values passed
     as the `X` argument to `fit` and `predict`. The predictions, however,
     typically depend on values observed in the `y` parameter passed to `fit`.
 
-    Function-identical to `sklearn.dummy.DummyRegressor`, which is called inside.
+    Function-identical to `sklearn.dummy.DummyRegressor`, which is called
+    inside.
 
     Parameters
     ----------
