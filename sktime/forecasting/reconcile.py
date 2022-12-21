@@ -43,15 +43,15 @@ class ReconcilerForecaster(BaseForecaster):
     forecaster : estimator
         Estimator to generate base forecasts which are then reconciled
     method : {"mint_cov", "mint_shrink", "ols", "wls_var", "wls_str",
-                "bu", "td_fcst"}, default="mint_shrink"
+        "bu", "td_fcst"}, default="mint_shrink"
         The reconciliation approach applied to the forecasts based on
-            "mint_cov" - sample covariance
-            "mint_shrink" - covariance with shrinkage
-            "ols" - ordinary least squares
-            "wls_var" - weighted least squares (variance)
-            "wls_str" - weighted least squares (structural)
-            "bu" - bottom-up
-            "td_fcst" - top down based on forecast proportions
+            - "mint_cov" - sample covariance
+            - "mint_shrink" - covariance with shrinkage
+            - "ols" - ordinary least squares
+            - "wls_var" - weighted least squares (variance)
+            - "wls_str" - weighted least squares (structural)
+            - "bu" - bottom-up
+            - "td_fcst" - top down based on forecast proportions
 
     See Also
     --------
@@ -148,10 +148,12 @@ class ReconcilerForecaster(BaseForecaster):
         # check index for no "__total", if not add totals to y
         if _check_index_no_total(y):
             y = self._add_totals(y)
+            self._y = y.copy()
 
         if X is not None:
             if _check_index_no_total(X):
                 X = self._add_totals(X)
+                self._X = X.copy()
 
         # if transformer just fit pipline and return
         if np.isin(self.method, self.TRFORM_LIST):
@@ -206,6 +208,10 @@ class ReconcilerForecaster(BaseForecaster):
         y_pred : pd.Series
             Point predictions
         """
+        if X is not None:
+            if _check_index_no_total(X):
+                X = self._add_totals(X)
+
         base_fc = self.forecaster_.predict(fh=fh, X=X)
 
         if base_fc.index.nlevels < 2:
@@ -250,6 +256,18 @@ class ReconcilerForecaster(BaseForecaster):
         -------
         self : reference to self
         """
+        # check index for no "__total", if not add totals to y
+        if _check_index_no_total(y):
+            y = self._add_totals(y)
+            self._y = pd.concat([self._y, y]).sort_index()
+            self._y = self._y.drop_duplicates()
+
+        if X is not None:
+            if _check_index_no_total(X):
+                X = self._add_totals(X)
+                self._X = pd.concat([self._X, X]).sort_index()
+                self._X = self._X.drop_duplicates()
+
         self.forecaster_.update(y, X, update_params=update_params)
 
         if y.index.nlevels < 2 or np.isin(self.method, self.TRFORM_LIST):
