@@ -256,9 +256,9 @@ class TransformerPipeline(_HeterogenousMetaEstimator, BaseTransformer):
         if is_sklearn_classifier(other):
             return SklearnClassifierPipeline(classifier=other, transformers=self.steps)
 
-        # if sklearn clusterer, use sklearn classifier pipeline
+        # if sklearn clusterer, use sklearn clusterer pipeline
         if is_sklearn_clusterer(other):
-            return SklearnClustererPipeline(classifier=other, transformers=self.steps)
+            return SklearnClustererPipeline(clusterer=other, transformers=self.steps)
 
         # if sklearn regressor, use sklearn regressor pipeline
         if is_sklearn_regressor(other):
