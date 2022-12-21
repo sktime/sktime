@@ -176,7 +176,7 @@ class ClustererPipeline(_HeterogenousMetaEstimator, BaseClusterer):
         else:
             return NotImplemented
 
-    def _fit(self, X, y):
+    def _fit(self, X, y=None):
         """Fit time series clusterer to training data.
 
         core logic
@@ -184,7 +184,7 @@ class ClustererPipeline(_HeterogenousMetaEstimator, BaseClusterer):
         Parameters
         ----------
         X : Training data of type self.get_tag("X_inner_mtype")
-        y : array-like, shape = [n_instances] - the class labels
+        y: ignored, present for API consistency
 
         Returns
         -------
@@ -488,7 +488,7 @@ class SklearnClustererPipeline(ClustererPipeline):
 
         return Xt
 
-    def _fit(self, X, y):
+    def _fit(self, X, y=None):
         """Fit time series clusterer to training data.
 
         core logic
@@ -496,7 +496,7 @@ class SklearnClustererPipeline(ClustererPipeline):
         Parameters
         ----------
         X : Training data of type self.get_tag("X_inner_mtype")
-        y : array-like, shape = [n_instances] - the class labels
+        y: ignored, present for API consistency
 
         Returns
         -------
