@@ -5,7 +5,7 @@ Deployment and MLOps
 
 This reference lists ``sktime`` integrations with deployment and MLOps solutions.
 
-Currently, ``sktime`` natively supports integration with ``mlflow`` only.
+Currently, ``sktime`` natively supports integration with ``mlflow``.
 
 See ``examples/mlflow`` for a notebook tutorial.
 
