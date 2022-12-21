@@ -103,7 +103,7 @@ EXCLUDED_TESTS = {
     # #2 amd #3 are due to predict/predict_proba returning two items and that breaking
     #   assert_array_equal
     "TEASER": [
-        "test_methods_do_not_change_state",
+        "test_non_state_changing_method_contract",
         "test_fit_idempotent",
         "test_persistence_via_pickle",
         "test_save_estimators_to_file",
