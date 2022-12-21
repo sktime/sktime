@@ -100,6 +100,13 @@ class _StatsModelsAdapter(BaseForecaster):
         # beginning of the training series when passing integers
         start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
 
+        # bug fix for evaluate function as test_plus_train indices are passed
+        # statsmodels exog must contain test indices only.
+        # For discussion see https://github.com/sktime/sktime/issues/3830
+        if X is not None:
+            ind_drop = self._X.index
+            X = X.loc[~X.index.isin(ind_drop)]
+
         if "exog" in inspect.signature(self._forecaster.__init__).parameters.keys():
             y_pred = self._fitted_forecaster.predict(start=start, end=end, exog=X)
         else:
