@@ -20,7 +20,7 @@ from sktime.forecasting.naive import NaiveForecaster
 from sktime.utils.multiindex import flatten_multiindex
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-if _check_soft_dependencies("mlflow", "boto3", "moto", "botocore" severity="none"):
+if _check_soft_dependencies("mlflow", "boto3", "moto", "botocore", severity="none"):
     import boto3
     import moto
     from botocore.config import Config
