@@ -276,10 +276,11 @@ class TimeSeriesSVC(BaseClassifier):
         # testing that callables/classes can be passed
         from sktime.dists_kernels.compose_tab_to_panel import AggrDist, FlatDist
 
+        # probability must be True, or predict_proba will not work
         dist1 = FlatDist.create_test_instance()
-        params1 = {"kernel": dist1}
+        params1 = {"kernel": dist1, "probability": True}
 
         dist2 = AggrDist.create_test_instance()
-        params2 = {"kernel": dist2}
+        params2 = {"kernel": dist2, "probability": True}
 
         return [params1, params2]
