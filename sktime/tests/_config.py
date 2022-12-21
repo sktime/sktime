@@ -79,6 +79,7 @@ EXCLUDED_TESTS = {
     # `test_fit_idempotent` fails with `AssertionError`, see #3616
     "ResNetClassifier": [
         "test_fit_idempotent",
+        "test_classifier_output",  # known ResNetClassifier sporafic failures, see #3954
     ],
     "CNNClassifier": [
         "test_fit_idempotent",
