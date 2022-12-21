@@ -12,7 +12,10 @@ __author__ = ["fkiraly"]
 
 import numpy as np
 
-from sktime.dists_kernels._base import BasePairwiseTransformerPanel
+from sktime.dists_kernels._base import (
+    BasePairwiseTransformer,
+    BasePairwiseTransformerPanel,
+)
 from sktime.utils._testing.deep_equals import deep_equals
 
 
@@ -66,6 +69,10 @@ class AggrDist(BasePairwiseTransformerPanel):
 
         if self.aggfunc_is_symm:
             self.set_tags(**{"symmetric": True})
+
+        if isinstance(transformer, BasePairwiseTransformer):
+            tags_to_clone = ["capability:missing_values"]
+            self.clone_tags(transformer, tags_to_clone)
 
     def _transform(self, X, X2=None):
         """Compute distance/kernel matrix.
