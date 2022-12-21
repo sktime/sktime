@@ -25,7 +25,7 @@ def test_dunder_mul():
     t1 = ExponentTransformer(power=4)
     t2 = ExponentTransformer(power=0.25)
 
-    c = TimeSeriesKMeans()
+    c = TimeSeriesKMeans(random_state=RAND_SEED)
     t12c_1 = t1 * (t2 * c)
     t12c_2 = (t1 * t2) * c
     t12c_3 = t1 * t2 * c
@@ -49,7 +49,7 @@ def test_mul_sklearn_autoadapt():
 
     t1 = ExponentTransformer(power=2)
     t2 = StandardScaler()
-    c = TimeSeriesKMeans()
+    c = TimeSeriesKMeans(random_state=RAND_SEED)
 
     t12c_1 = t1 * (t2 * c)
     t12c_2 = (t1 * t2) * c
