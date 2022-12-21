@@ -18,7 +18,7 @@ from sklearn.linear_model import LogisticRegression, RidgeClassifierCV
 from sklearn.utils import check_random_state
 
 from sktime.classification.base import BaseClassifier
-from sktime.transformations.panel.dictionary_based import SFADilation
+from sktime.transformations.panel.dictionary_based import SFAFast
 
 
 class WEASEL(BaseClassifier):
@@ -264,6 +264,11 @@ class WEASEL(BaseClassifier):
             )
 
         self.clf.fit(all_words, y)
+
+        self.total_features_count = all_words.shape[1]
+        if hasattr(self.clf, "best_score_"):
+            self.cross_val_score = self.clf.best_score_
+
         return self
 
     def _predict(self, X) -> np.ndarray:
@@ -369,7 +374,7 @@ def _parallel_fit(
     n_jobs,
 ):
     rng = check_random_state(window_size)
-    transformer = SFADilation(
+    transformer = SFAFast(
         word_length=rng.choice(word_lengths),
         alphabet_size=alphabet_size,
         window_size=window_size,

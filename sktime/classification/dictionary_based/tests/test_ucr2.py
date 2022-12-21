@@ -235,55 +235,13 @@ dataset_names_excerpt = [
 def get_classifiers(threads_to_use):
     """Obtain the benchmark classifiers."""
     clfs = {
-        "HC 2.0": HIVECOTEV2(random_state=1379, n_jobs=threads_to_use)
+        # "HC 2.0": HIVECOTEV2()
         # "Hydra": HYDRA(),
         # "MPDist": MPDist()
-        # "WEASEL (dilated;7-8)": WEASEL_DILATION(
-        #     random_state=1379,
-        #     binning_strategies=["equi-depth", "equi-width"],
-        #     alphabet_sizes=[2],
-        #     min_window=4,
-        #     max_window=84,
-        #     max_feature_count=30_000,
-        #     word_lengths=[7, 8],
-        #     variance=True,
-        #     ensemble_size=150,
-        #     use_first_differences=[True, False],
-        #     feature_selection="chi2",
-        #     # sections=1,
-        #     n_jobs=threads_to_use,
-        # ),
-        # "WEASEL (dilated;ed+ig)": WEASEL_DILATION(
-        #     random_state=1379,
-        #     binning_strategies=["equi-depth", "information-gain"],
-        #     n_jobs=threads_to_use,
-        # ),
-        # "WEASEL (dilated;ig)": WEASEL_DILATION(
-        #     random_state=1379,
-        #     binning_strategies=["information-gain"],
-        #     n_jobs=threads_to_use,
-        # ),
-        # "WEASEL (dilated;ig+ew)": WEASEL_DILATION(
-        #     random_state=1379,
-        #     binning_strategies=["information-gain", "equi-width"],
-        #     n_jobs=threads_to_use,
-        # ),
-        # "WEASEL (dilated;ig+ew+ed)": WEASEL_DILATION(
-        #     random_state=1379,
-        #     binning_strategies=["information-gain", "equi-width", "equi-depth"],
-        #     n_jobs=threads_to_use,
-        # ),
-        # "WEASEL (dilated;ed+quan)": WEASEL_DILATION(
-        #     random_state=1379,
-        #     binning_strategies=["equi-depth", "quantile"],
-        #     n_jobs=threads_to_use,
-        # ),
-        # "WEASEL (dilated;quan+ig)": WEASEL_DILATION(
-        #     random_state=1379,
-        #     binning_strategies=["information-gain", "quantile"],
-        #     n_jobs=threads_to_use,
-        # ),
-        # "WEASEL": WEASEL(random_state=1379, n_jobs=threads_to_use),
+        "WEASEL 2.0": WEASEL_DILATION(
+            feature_selection="none", random_state=1379, n_jobs=threads_to_use
+        ),
+        "WEASEL 1.0": WEASEL(random_state=1379, n_jobs=threads_to_use),
         # "BOSS": BOSSEnsemble(random_state=1379, n_jobs=threads_to_use),
         # "cBOSS": ContractableBOSS(random_state=1379, n_jobs=threads_to_use),
         # "TDE": TemporalDictionaryEnsemble(random_state=1379, n_jobs=threads_to_use),
@@ -291,7 +249,6 @@ def get_classifiers(threads_to_use):
         #    MultiRocket(random_state=1379, n_jobs=threads_to_use),
         #    RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True),
         # )
-        # "Hydra": [],  # see below
         # "R_DST": R_DST_Ridge(random_state=1379),
         # "Rocket": make_pipeline(
         #     Rocket(random_state=1379, n_jobs=threads_to_use),
@@ -319,7 +276,7 @@ if os.path.exists(DATA_PATH):
 # server
 else:
     DATA_PATH = "/vol/fob-wbib-vol2/wbi/schaefpa/sktime/datasets/UCRArchive_2018"
-    parallel_jobs = 20
+    parallel_jobs = 30
     threads_to_use = 1
     server = True
     used_dataset = dataset_names_full
@@ -472,7 +429,7 @@ if __name__ == "__main__":
                 "Accuracy",
                 "Train-Acc",
             ],
-        ).to_csv("ucr-112-accuracy-sonic-dict-weasel.csv", index=None)
+        ).to_csv("ucr-112-accuracy-sonic-weasel.csv", index=None)
 
         pd.DataFrame.from_records(
             csv_timings,
@@ -482,4 +439,4 @@ if __name__ == "__main__":
                 "Fit-Time",
                 "Predict-Time",
             ],
-        ).to_csv("ucr-112-runtime-sonic-dict-weasel.csv", index=None)
+        ).to_csv("ucr-112-runtime-sonic-weasel.csv", index=None)
