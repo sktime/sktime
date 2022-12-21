@@ -690,5 +690,14 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
 
         assert isinstance(y_pred, pd.DataFrame)
         assert check_is_mtype(y_pred, "pd_multiindex_hier")
-        assert np.all(y_pred.index == X_test.index)
         assert np.all(y_pred.columns == y_train.columns)
+
+        # check consistency of forecast hierarchy with training data
+        # some forecasters add __total levels, e.g., ReconcilerForecaster
+        # if = not such a forecaster; else = levels are added
+        if len(y_pred.index) == len(X_test.index):
+            # the indices should be equal iff no levels are added
+            assert np.all(y_pred.index == X_test.index)
+        else:
+            # if levels are added, all expected levels and times should be contained
+            assert set(X_test.index).issubset(y_pred.index)
