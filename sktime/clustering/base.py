@@ -50,7 +50,7 @@ class BaseClusterer(BaseEstimator, ABC):
     def __rmul__(self, other):
         """Magic * method, return concatenated ClustererPipeline, transformers on left.
 
-        Overloaded multiplication operation for classifiers. Implemented for `other`
+        Overloaded multiplication operation for clusterers. Implemented for `other`
         being a transformer, otherwise returns `NotImplemented`.
 
         Parameters
@@ -76,10 +76,10 @@ class BaseClusterer(BaseEstimator, ABC):
                 return other * self
             # if other is a TransformerPipeline but self is not, first unwrap it
             elif isinstance(other, TransformerPipeline):
-                return ClustererPipeline(classifier=self, transformers=other.steps)
+                return ClustererPipeline(clusterer=self, transformers=other.steps)
             # if neither self nor other are a pipeline, construct a ClustererPipeline
             else:
-                return ClustererPipeline(classifier=self, transformers=[other])
+                return ClustererPipeline(clusterer=self, transformers=[other])
         elif is_sklearn_transformer(other):
             return TabularToSeriesAdaptor(other) * self
         else:
