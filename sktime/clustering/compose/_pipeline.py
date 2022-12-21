@@ -233,6 +233,11 @@ class ClustererPipeline(_HeterogenousMetaEstimator, BaseClusterer):
         Xt = self.transformers_.transform(X)
         return self.clusterer_.predict_proba(Xt)
 
+    def _score(self, X, y=None):
+        """Score the clustering result."""
+        Xt = self.transformers_.transform(X=X)
+        return self.clusterer_.score(X=Xt)
+
     def get_params(self, deep=True):
         """Get parameters of estimator in `transformers`.
 
