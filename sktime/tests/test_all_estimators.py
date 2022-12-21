@@ -13,7 +13,6 @@ import types
 from copy import deepcopy
 from inspect import getfullargspec, isclass, signature
 from tempfile import TemporaryDirectory
-from warnings import warn
 
 import joblib
 import numpy as np
@@ -1151,7 +1150,7 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
                 % (estimator.__class__.__name__, param_name, original_value, new_value)
             )
 
-    def test_methods_do_not_change_state(
+    def test_non_state_changing_method_contract(
         self, estimator_instance, scenario, method_nsc
     ):
         """Check that non-state-changing methods behave as per interface contract.
@@ -1164,14 +1163,6 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
             list of BaseEstimator methdos tested: get_fitted_params
             scitype specific method outputs are tested in TestAll[estimatortype] class
         """
-        warn(
-            "name of test_methods_do_not_change_state will change to "
-            "test_non_state_changing_method_contract in 0.15.0. "
-            "For a safe transition in a case where the old name "
-            "has been used as part of an argument in `check_estimator`, use "
-            "both the new and the old name in test/fixture exclusion or inclusion. ",
-            DeprecationWarning,
-        )
         estimator = estimator_instance
         set_random_state(estimator)
 
