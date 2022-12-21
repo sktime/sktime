@@ -1899,6 +1899,15 @@
         "contributions": [
           "doc"
         ]
+      },
+      {
+      "login": "adoherty21",
+      "name": "adoherty21",
+      "avatar_url": "https://avatars.githubusercontent.com/u/52799751?s=400&v=4",
+      "profile": "https://github.com/adoherty21",
+      "contributions": [
+        "bug"
+        ]
       }
     ]
   }
