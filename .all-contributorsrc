@@ -157,6 +157,15 @@
       ]
     },
     {
+      "login": "nilesh05apr",
+      "name": "Nilesh Kumar",
+      "avatar_url": "https://avatars.githubusercontent.com/u/65773314?v=4",
+      "profile": "https://github.com/nilesh05apr",
+      "contributions": [
+      "code"
+      ]
+    },
+    {
       "login": "MatthewMiddlehurst",
       "name": "Matthew Middlehurst",
       "avatar_url": "https://avatars0.githubusercontent.com/u/25731235?v=4",
@@ -1652,7 +1661,6 @@
       ]
     },
     {
-
       "login": "AurumnPegasus",
       "name": "Shivansh Subramanian",
       "avatar_url": "https://avatars.githubusercontent.com/u/54315149?v=4",
@@ -1702,7 +1710,6 @@
       "profile": "https://github.com/mariamjabara",
       "contributions": [
         "code"
-
       ]
     },
     {
@@ -1780,7 +1787,7 @@
       ]
     },
     {
-      "login": "bugslayer-332" ,
+      "login": "bugslayer-332",
       "name": "Arepalli Yashwanth Reddy",
       "profile": "https://github.com/bugslayer-332",
       "contributions": [
@@ -1845,7 +1852,7 @@
         "code",
         "test",
         "ideas"
-       ]
+      ]
     },
     {
       "login": "KishManani",
@@ -1858,8 +1865,9 @@
         "test",
         "bug",
         "ideas"
-     },
-     {
+      ]
+    },
+    {
       "login": "jorenham",
       "name": "Joren Hammudoglu",
       "profile": "https://github.com/jorenham",
@@ -1891,6 +1899,15 @@
       "contributions": [
         "code",
         "example"
+      ]
+    },
+    {
+      "login": "nshahpazov",
+      "name": "Nikola Shahpazov",
+      "avatar_url": "https://avatars.githubusercontent.com/nshahpazov",
+      "profile": "https://www.linkedin.com/in/nshahpazov/",
+      "contributions": [
+        "doc"
       ]
     }
   ]

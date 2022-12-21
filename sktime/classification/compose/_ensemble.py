@@ -282,7 +282,7 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
                 ),
                 ("clf", DecisionTreeClassifier(random_state=self.random_state)),
             ]
-            self.estimator_ = Pipeline(steps)
+            self._estimator = Pipeline(steps)
 
         else:
             # else check given estimator is a pipeline with prior
@@ -293,7 +293,7 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
                 raise ValueError(
                     "Last step in `estimator` must be DecisionTreeClassifier."
                 )
-            self.estimator_ = self.estimator
+            self._estimator = self.estimator
 
         # Set parameters according to naming in pipeline
         estimator_params = {
@@ -305,7 +305,7 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
             "max_leaf_nodes": self.max_leaf_nodes,
             "min_impurity_decrease": self.min_impurity_decrease,
         }
-        final_estimator = self.estimator_.steps[-1][0]
+        final_estimator = self._estimator.steps[-1][0]
         self.estimator_params = {
             f"{final_estimator}__{pname}": pval
             for pname, pval in estimator_params.items()
