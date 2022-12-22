@@ -9,6 +9,7 @@ from sklearn.preprocessing import StandardScaler
 
 from sktime.clustering.compose import ClustererPipeline
 from sktime.clustering.k_means import TimeSeriesKMeans
+from sktime.clustering.k_shapes import TimeSeriesKShapes
 from sktime.transformations.panel.padder import PaddingTransformer
 from sktime.transformations.series.exponent import ExponentTransformer
 from sktime.transformations.series.impute import Imputer
@@ -25,7 +26,7 @@ def test_dunder_mul():
     t1 = ExponentTransformer(power=4)
     t2 = ExponentTransformer(power=0.25)
 
-    c = TimeSeriesKMeans(random_state=RAND_SEED)
+    c = TimeSeriesKShapes(random_state=RAND_SEED)
     t12c_1 = t1 * (t2 * c)
     t12c_2 = (t1 * t2) * c
     t12c_3 = t1 * t2 * c
