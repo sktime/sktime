@@ -1858,9 +1858,8 @@
         "test",
         "bug",
         "ideas"
-      ]
-    },
-    {
+     },
+     {
       "login": "jorenham",
       "name": "Joren Hammudoglu",
       "profile": "https://github.com/jorenham",
@@ -1890,7 +1889,8 @@
       "name": "Vyomkesh Vyas",
       "profile": "https://github.com/VyomkeshVyas",
       "contributions": [
-        "code"
+        "code",
+        "test"
       ]
     }
   ]

@@ -71,6 +71,7 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
     ... ]
     >>> forecaster = HierarchyEnsembleForecaster(forecasters=forecasters,by='level')
     >>> forecaster.fit(y, fh=[1, 2, 3])
+    HierarchyEnsembleForecaster(...)
     >>> y_pred = forecaster.predict()
 
     >>> # Example of by = 'node'
@@ -80,6 +81,7 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
     ... ]
     >>> forecaster = HierarchyEnsembleForecaster(forecasters=forecasters,by='node')
     >>> forecaster.fit(y, fh=[1, 2, 3])
+    HierarchyEnsembleForecaster(...)
     >>> y_pred = forecaster.predict()
     """
 
