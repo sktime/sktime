@@ -47,7 +47,7 @@ Deprecations and removals
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Dependencies
-~~~~~~~~~~~~
+^^^^^^^^^^^^
 
 * ``statsmodels`` will change from core dependency to soft dependency in ``sktime 0.16.0``.
   To ensure functioning of setups of ``sktime`` code dependent on ``statsmodels`` based estimators
