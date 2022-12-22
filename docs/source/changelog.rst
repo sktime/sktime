@@ -31,7 +31,8 @@ Dependency changes
 
 * ``sktime`` is now compatible with ``numpy 1.24``, bound is relaxed to ``<1.25``
 * ``sktime`` is now compatible with ``sklearn 1.2.0``, bound is relaxed to ``<1.3.0``
-* ``pycatch22`` is no longer a soft dependency of ``sktime``
+* ``pycatch22`` is no longer a soft dependency of ``sktime``, due to installation issues.
+  ``pycatch22`` based transformers are still functional if the dependency is installed in the python environment.
 * ``statsmodels`` will change from core dependency to soft dependency in ``sktime 0.16.0``
 
 Core interface changes
@@ -41,7 +42,7 @@ BaseObject
 ^^^^^^^^^^
 
 Comparison by equality for any ``sktime`` object now compares identity of parameters,
-as obtained via ``get_params``, with recursive application if objects/estimators are nested.f
+as obtained via ``get_params``, with recursive application if objects/estimators are nested.
 
 Deprecations and removals
 ~~~~~~~~~~~~~~~~~~~~~~~~~
