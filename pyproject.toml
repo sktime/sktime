@@ -55,6 +55,7 @@ dependencies = [
 
 [project.optional-dependencies]
 all_extras = [
+    "cloudpickle",
     "dtw-python",
     "esig==0.9.7; python_version < '3.10'",
     "filterpy>=1.4.5",
@@ -93,6 +94,13 @@ dev = [
     "wheel",
 ]
 
+mlflow = [
+    "boto3",
+    "botocore",
+    "mlflow",
+    "moto",
+]
+
 binder = [
     "jupyter",
 ]
@@ -116,10 +124,12 @@ dl = [
 ]
 
 [project.urls]
-homepage = "https://www.sktime.org"
-repository = "https://github.com/sktime/sktime"
-documentation = "https://www.sktime.org"
-download = "https://pypi.org/project/sktime/#files"
+Homepage = "https://www.sktime.org"
+Repository = "https://github.com/sktime/sktime"
+Documentation = "https://www.sktime.org"
+Download = "https://pypi.org/project/sktime/#files"
+"API Reference" = "https://www.sktime.org/en/stable/api_reference.html"
+"Release Notes" = "https://www.sktime.org/en/stable/changelog.html"
 
 [project.license]
 file = "LICENSE"
