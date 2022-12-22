@@ -60,6 +60,7 @@ BaseObject
 Forecasting
 ^^^^^^^^^^^
 
+* [ENH] Check for frequency in hierarchical data, provide utility function to set frequency for hierarchical data (:pr:`3729`) :user:`danbartl`
 * [ENH] forecasting pipeline ``get_fitted_params`` (:pr:`3863`) :user:`fkiraly`
 
 Time series classification
@@ -148,6 +149,7 @@ Contributors
 :user:`bethrice44`,
 :user:`chillerobscuro`,
 :user:`ciaran-g`,
+:user:`danbartl`,
 :user:`dsanr`,
 :user:`fkiraly`,
 :user:`GianFree`,
