@@ -9,7 +9,6 @@ __all__ = ["ColumnEnsembleForecaster"]
 import numpy as np
 import pandas as pd
 
-from sktime.base._meta import flatten
 from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
 
