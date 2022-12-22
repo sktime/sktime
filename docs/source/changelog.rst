@@ -23,6 +23,7 @@ Highlights
 * compatibility with most recent versions of core dependencies ``sktime 1.2.0``and ``numpy 1.24`` (:pr:`3922`) :user:`fkiraly`
 * ``TimeBinner`` transformation for temporal bin aggregation (:pr:`3745`) :user:`kcc-lion`
 * week-end dummy ``is_weekend`` in ``DateTimeFeatures`` transformation (:pr:`3844`) :user:`KishManani`
+* deep learning classifiers migrated ``sktime-dl`` to ``sktime``: ResNet, LSTM-FCN (:pr:`3714`, :pr:`3881`) :user:`nilesh05apr`, :user:`solen0id`
 
 Dependency changes
 ~~~~~~~~~~~~~~~~~~
@@ -64,7 +65,8 @@ Forecasting
 Time series classification
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* [ENH] Migrate ``ResNetClassifier`` from ``sktime-dl`` to ``sktime``  (:pr:`3881`) :user:`nilesh05apr`
+* [ENH] Migrate LSTM-FCN classifier  from ``sktime-dl`` to ``sktime`` (:pr:`3714`) :user:`solen0id`
+* [ENH] Migrate ``ResNetClassifier`` from ``sktime-dl`` to ``sktime`` (:pr:`3881`) :user:`nilesh05apr`
 
 Transformations
 ^^^^^^^^^^^^^^^
@@ -154,6 +156,7 @@ Contributors
 :user:`lmmentel`,
 :user:`nilesh05apr`,
 :user:`nshahpazov`,
+:user:`solen0id`,
 :user:`templierw`,
 :user:`TonyBagnall`
 
