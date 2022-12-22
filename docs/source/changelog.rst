@@ -22,6 +22,7 @@ Highlights
 * ``MLflow`` custom flavor for ``sktime`` forecasting (:pr:`3912`, :pr:`3915`) :user:`benjaminbluhm`
 * compatibility with most recent versions of core dependencies ``sktime 1.2.0``and ``numpy 1.24`` (:pr:`3922`) :user:`fkiraly`
 * ``TimeBinner`` transformation for temporal bin aggregation (:pr:`3745`) :user:`kcc-lion`
+* E-Agglo estimator for hierarchical agglomerative cluster estimation (:pr:`3430`) :user:`KatieBuc`
 * week-end dummy ``is_weekend`` in ``DateTimeFeatures`` transformation (:pr:`3844`) :user:`KishManani`
 * deep learning classifiers migrated ``sktime-dl`` to ``sktime``: ResNet, LSTM-FCN (:pr:`3714`, :pr:`3881`) :user:`nilesh05apr`, :user:`solen0id`
 
@@ -42,7 +43,51 @@ Deprecations and removals
 Dependencies
 ~~~~~~~~~~~~
 
-* ``statsmodels`` will change from core dependency to soft dependency in ``sktime 0.16.0``
+* ``statsmodels`` will change from core dependency to soft dependency in ``sktime 0.16.0``.
+  To ensure functioning of setups of ``sktime`` code dependent on ``statsmodels`` based estimators
+  after the deprecation period, ensure to install ``statsmodels`` in the environment explicitly,
+  or install the ``all_extras`` soft dependency set which will continue to contain ``statsmodels``.
+
+Data types, checks, conversions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+``datatypes.check_is_scitype``: 2nd return argument (only returned if ``return_metadata=True``)
+will be changed from ``list`` to ``dict`` format (see docstring).
+The ``list`` format is deprecated since 0.14.0, and replaced by ``dict`` in 0.15.0.
+The format is determined by temporary additional arg ``msg_legacy_interface``, which will be
+the default has now changed to ``False`` (``dict`` format).
+The ``msg_legacy_interface`` argument and the option to return the legacy ``list`` format will be removed in 0.16.0.
+
+Forecasting
+^^^^^^^^^^^
+
+* ``ExpandingWindowSplitter`` had ``start_with_window`` argument removed. From now on, ``initial_window=0`` should be used instead of ``start_with_window=False``.
+* the row transformers, ``SeriesToSeriesRowTransformer`` and ``SeriesToPrimitivesRowTransformer`` have been removed.
+  Row/instance vectorization functionality is natively supported by ``sktime`` since 0.11.0 and does not need to be added by these wrappers anymore.
+  Both transformers will be removed in 0.15.0. To migrate, simply remove the row transformer wrappers.
+  In some rarer, ambiguous vectorization cases (e.g., using wrapped functions that are vectorized, such as ``np.mean``),
+  ``FunctionTransformer`` may have to be used instead of ``SeriesToPrimitivesRowTransformer``.
+* change to public ``cutoff`` attribute delayed to 0.16.0:
+  public ``cutoff`` attribute of forecasters will change to ``pd.Index`` subtype, from index element.
+
+Time series classification
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* Delayed: the base class of ``ProbabilityThresholdEarlyClassifier`` will be changed to ``BaseEarlyClassifier`` in 0.16.0.
+  This will change how classification safety decisions are made and returned, see ``BaseEarlyClassifier`` or ``TEASER`` for the new interface.
+
+Transformations
+^^^^^^^^^^^^^^^
+
+* ``transformations.series.compose`` has been removed in favour of ``transformations.compose``.
+  All estimators in the former have been moved to the latter.
+* The default of ``default_fc_parameters`` in ``TSFreshFeatureExtractor`` and ``TSFreshRelevantFeatureExtractor``
+  has beenchanged from ``"efficient"`` to ``"comprehensive"``.
+
+Testing framework
+^^^^^^^^^^^^^^^^^
+
+* The general interface contract test ``test_methods_do_not_change_state` `has been renamed to ``test_non_state_changing_method_contract``
 
 Enhancements
 ~~~~~~~~~~~~
@@ -62,6 +107,11 @@ Forecasting
 
 * [ENH] Check for frequency in hierarchical data, provide utility function to set frequency for hierarchical data (:pr:`3729`) :user:`danbartl`
 * [ENH] forecasting pipeline ``get_fitted_params`` (:pr:`3863`) :user:`fkiraly`
+
+Time series annotation
+^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] E-Agglo estimator for hierarchical agglomerative cluster estimation (:pr:`3430`) :user:`KatieBuc`
 
 Time series classification
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -153,6 +203,7 @@ Contributors
 :user:`dsanr`,
 :user:`fkiraly`,
 :user:`GianFree`,
+ :user:`KatieBuc`,
 :user:`kcc-lion`,
 :user:`KishManani`,
 :user:`lmmentel`,
@@ -260,7 +311,7 @@ Transformations
 * [BUG] in ``Reconciler``, fix summation matrix bug for small hierarchies with one unique ID in outer index (:pr:`3859`) :user:`ciaran-g`
 
 Testing framework
-^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^
 
 * [BUG] Update ``test_deep_estimator_full`` to incorporate new versions of ``tensorflow`` / ``keras`` (:pr:`3820`) :user:`achieveordie`
 
