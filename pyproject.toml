@@ -1,6 +1,6 @@
 [project]
 name = "sktime"
-version = "0.14.0"
+version = "0.14.1"
 description = "A unified framework for machine learning with time series"
 authors = [
     {name = "Franz Király", email = "f.kiraly@ucl.ac.uk"},
@@ -46,15 +46,16 @@ requires-python = ">=3.7,<3.11"
 dependencies = [
     "deprecated>=1.2.13",
     "numba>=0.55",
-    "numpy>=1.21.0,<1.23",
+    "numpy>=1.21.0,<1.25",
     "pandas>=1.1.0,<1.6.0",
-    "scikit-learn>=0.24.0,<1.2.0",
+    "scikit-learn>=0.24.0,<1.3.0",
     "statsmodels>=0.12.1",
     "scipy<2.0.0",
 ]
 
 [project.optional-dependencies]
 all_extras = [
+    "cloudpickle",
     "dtw-python",
     "esig==0.9.7; python_version < '3.10'",
     "filterpy>=1.4.5",
@@ -63,10 +64,10 @@ all_extras = [
     "gluonts>=0.9.0",
     "keras-self-attention",
     "matplotlib>=3.3.2",
+    "mlflow",
     "mne",
     "pmdarima>=1.8.0,!=1.8.1,<3.0.0",
     "prophet>=1.1",
-    "pycatch22",
     "pykalman>=0.9.5",
     "pyod>=0.8.0",
     "scikit_posthocs>=0.6.5",
@@ -84,7 +85,10 @@ all_extras = [
 
 dev = [
     "backoff",
+    "boto3",
+    "botocore",
     "httpx",
+    "moto",
     "pre-commit",
     "pytest",
     "pytest-cov",
