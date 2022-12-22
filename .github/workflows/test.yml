@@ -102,7 +102,7 @@ jobs:
 
       - name: Install sktime and dependencies
         run: |
-          python -m pip install .[all_extras,dev,mlflow] --no-cache-dir
+          python -m pip install .[all_extras,dev,mlflow_tests] --no-cache-dir
 
       - name: Show dependencies
         run: python -m pip list
