@@ -24,7 +24,7 @@ Highlights
 * ``TimeBinner`` transformation for temporal bin aggregation (:pr:`3745`) :user:`kcc-lion`
 * E-Agglo estimator for hierarchical agglomerative cluster estimation (:pr:`3430`) :user:`KatieBuc`
 * week-end dummy ``is_weekend`` in ``DateTimeFeatures`` transformation (:pr:`3844`) :user:`KishManani`
-* deep learning classifiers migrated ``sktime-dl`` to ``sktime``: ResNet, LSTM-FCN (:pr:`3714`, :pr:`3881`) :user:`nilesh05apr`, :user:`solen0id`
+* deep learning classifiers migrated from ``sktime-dl`` to ``sktime``: CNTC, ResNet, LSTM-FCN ((:pr:`3171`, :pr:`3714`, :pr:`3881`) :user:`AurumnPegasus`, :user:`nilesh05apr`, :user:`solen0id`
 
 Dependency changes
 ~~~~~~~~~~~~~~~~~~
@@ -116,6 +116,7 @@ Time series annotation
 Time series classification
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+* [ENH] Migrate CNTC network classifier from ``sktime-dl`` to ``sktime`` (:pr:`3171`) :user:`AurumnPegasus`
 * [ENH] Migrate LSTM-FCN classifier  from ``sktime-dl`` to ``sktime`` (:pr:`3714`) :user:`solen0id`
 * [ENH] Migrate ``ResNetClassifier`` from ``sktime-dl`` to ``sktime`` (:pr:`3881`) :user:`nilesh05apr`
 
@@ -195,6 +196,7 @@ Contributors
 
 :user:`aiwalter`,
 :user:`aquemy`,
+:user:`AurumnPegasus`,
 :user:`benjaminbluhm`,
 :user:`bethrice44`,
 :user:`chillerobscuro`,
