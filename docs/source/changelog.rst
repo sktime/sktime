@@ -203,7 +203,7 @@ Contributors
 :user:`dsanr`,
 :user:`fkiraly`,
 :user:`GianFree`,
- :user:`KatieBuc`,
+:user:`KatieBuc`,
 :user:`kcc-lion`,
 :user:`KishManani`,
 :user:`lmmentel`,
