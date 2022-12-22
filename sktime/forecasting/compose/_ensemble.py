@@ -304,6 +304,7 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         "ignores-exogeneous-X": False,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
+        "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "scitype:y": "both",
     }
@@ -322,12 +323,12 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
 
         Parameters
         ----------
-        y : pd.Series
+        y : pd.DataFrame - Series, Panel, or Hierarchical mtype format.
             Target time series to which to fit the forecaster.
-        fh : int, list or np.array, optional, default=None
+        fh : ForecastingHorizon, optional, default=None
             The forecasters horizon with the steps ahead to to predict.
-        X : pd.DataFrame, optional, default=None
-            Exogenous variables are ignored.
+        X : pd.DataFrame, optional, default=None, must be of same mtype as y
+            Exogenous data to which to fit the forecaster.
 
         Returns
         -------
@@ -342,13 +343,15 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
 
         Parameters
         ----------
-        fh : int, list or np.array, optional, default=None
-        X : pd.DataFrame
+        fh : ForecastingHorizon, optional, default=None
+        X : pd.DataFrame, optional, default=None, must be of same mtype as y
+            Exogenous data to which to fit the forecaster.
 
         Returns
         -------
-        y_pred : pd.Series
-            Aggregated predictions.
+        y_pred : pd.DataFrame - Series, Panel, or Hierarchical mtype format,
+            will be of same mtype as y in _fit
+            Ensembled predictions
         """
         names, _ = self._check_forecasters()
         y_pred = pd.concat(self._predict_forecasters(fh, X), axis=1, keys=names)
