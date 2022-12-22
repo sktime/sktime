@@ -5,6 +5,7 @@
 __author__ = ["fkiraly"]
 __all__ = []
 
+import pytest
 from sklearn.preprocessing import StandardScaler
 
 from sktime.clustering.compose import ClustererPipeline
@@ -15,8 +16,13 @@ from sktime.transformations.series.exponent import ExponentTransformer
 from sktime.transformations.series.impute import Imputer
 from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
 from sktime.utils._testing.panel import _make_panel_X
+from sktime.utils.validation._dependencies import _check_estimator_deps
 
 
+@pytest.mark.skipif(
+    not _check_estimator_deps(TimeSeriesKernelKMeans, severity="none"),
+    reason="skip test if required soft dependencies not available",
+)
 def test_dunder_mul():
     """Test the mul dunder method."""
     RAND_SEED = 42
