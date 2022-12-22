@@ -90,6 +90,9 @@ EXCLUDED_TESTS = {
     "FCNClassifier": [
         "test_fit_idempotent",
     ],
+    "LSTMFCNClassifier": [
+        "test_fit_idempotent",
+    ],
     "MLPClassifier": [
         "test_fit_idempotent",
     ],
