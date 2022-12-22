@@ -12,4 +12,4 @@ def test_dummy_regressor():
     dummy = DummyRegressor()
     dummy.fit(X_train, y_train)
     pred = dummy.predict(X_test)
-    assert all(i == 1.5 for i in pred)
+    assert (pred == 1.5).all()
