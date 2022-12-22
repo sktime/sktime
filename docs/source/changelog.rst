@@ -126,6 +126,11 @@ Time series classification
 * [ENH] Migrate LSTM-FCN classifier  from ``sktime-dl`` to ``sktime`` (:pr:`3714`) :user:`solen0id`
 * [ENH] Migrate ``ResNetClassifier`` from ``sktime-dl`` to ``sktime`` (:pr:`3881`) :user:`nilesh05apr`
 
+Time series regression
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] ``DummyRegressor`` for time series regression (:pr:`3968`) :user:`badrmarani`
+
 Transformations
 ^^^^^^^^^^^^^^^
 
@@ -202,6 +207,7 @@ Contributors
 
 :user:`aiwalter`,
 :user:`aquemy`,
+:user:`badrmarani`,
 :user:`benjaminbluhm`,
 :user:`bethrice44`,
 :user:`chillerobscuro`,
