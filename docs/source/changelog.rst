@@ -13,6 +13,149 @@ All notable changes to this project will be documented in this file. We keep tra
 For upcoming changes and next releases, see our `milestones <https://github.com/sktime/sktime/milestones?direction=asc&sort=due_date&state=open>`_.
 For our long-term plan, see our :ref:`roadmap`.
 
+Version 0.15.0 - 2022-12-22
+---------------------------
+
+Highlights
+~~~~~~~~~~~~
+
+* ``MLflow`` custom flavor for ``sktime`` forecasting (:pr:`3912`, :pr:`3915`) :user:`benjaminbluhm`
+* compatibility with most recent versions of core dependencies ``sktime 1.2.0``and ``numpy 1.24`` (:pr:`3922`) :user:`fkiraly`
+* ``TimeBinner`` transformation for temporal bin aggregation (:pr:`3745`) :user:`kcc-lion`
+* week-end dummy ``is_weekend`` in ``DateTimeFeatures`` transformation (:pr:`3844`) :user:`KishManani`
+
+Dependency changes
+~~~~~~~~~~~~~~~~~~
+
+* ``sktime`` is now compatible with ``numpy 1.24``, bound is relaxed to ``<1.25``
+* ``sktime`` is now compatible with ``sklearn 1.2.0``, bound is relaxed to ``<1.3.0``
+* ``pycatch22`` is no longer a soft dependency of ``sktime``
+* ``statsmodels`` will change from core dependency to soft dependency in ``sktime 0.16.0``
+
+Core interface changes
+~~~~~~~~~~~~~~~~~~~~~~
+
+Deprecations and removals
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Dependencies
+~~~~~~~~~~~~
+
+* ``statsmodels`` will change from core dependency to soft dependency in ``sktime 0.16.0``
+
+Enhancements
+~~~~~~~~~~~~
+
+MLOps & Deployment
+~~~~~~~~~~~~~~~~~~
+
+* [ENH] MLflow custom flavor for ``sktime`` forecasting (:pr:`3912`) :user:`benjaminbluhm`
+
+BaseObject
+^^^^^^^^^^
+
+* [ENH] equality dunder for ``BaseObject`` to compare blueprint (:pr:`3862`) :user:`fkiraly`
+
+Forecasting
+^^^^^^^^^^^
+
+* [ENH] forecasting pipeline ``get_fitted_params`` (:pr:`3863`) :user:`fkiraly`
+
+Time series classification
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] Migrate ``ResNetClassifier`` from ``sktime-dl`` to ``sktime``  (:pr:`3881`) :user:`nilesh05apr`
+
+Transformations
+^^^^^^^^^^^^^^^
+
+* [ENH] ``TimeBinner`` transformation for temporal bin aggregation (:pr:`3745`) :user:`kcc-lion`
+* [ENH] Add ``is_weekend`` option to ``DateTimeFeatures`` trafo (:pr:`3844`) :user:`KishManani`
+* [ENH] Add multiplicative option to ``Detrender`` (:pr:`3931`) :user:`KishManani`
+
+Visualisations
+^^^^^^^^^^^^^^
+
+* [ENH] Add support for plotting intervals in ``plot_series`` (:pr:`3825`) :user:`chillerobscuro`
+* [ENH] Add ``colors`` argument to ``plot_series`` (:pr:`3908`) :user:`chillerobscuro`
+
+Fixes
+~~~~~
+
+Forecasting
+^^^^^^^^^^^
+
+* [BUG] in ``ConformalIntervals``, fix update of residuals matrix for sliding window splitter (:pr:`3914`) :user:`bethrice44`
+* [BUG] fix ``start_with_window`` deprecation in ``ExpandingWindowSplitter`` (:pr:`3953`) :user:`fkiraly`
+* [BUG] fix ``EnsembleForecaster`` erroneous broadcasting and attribute clash (:pr:`3964`) :user:`fkiraly`
+
+Time series classification
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [BUG] fix unreported ``set_params`` bug in ``ClassifierPipeline`` and ``RegressorPipeline`` (:pr:`3857`) :user:`fkiraly`
+* [BUG] fixes KNN estimators' ``kneighbors`` methods to work with all mtypes (:pr:`3927`) :user:`fkiraly`
+
+Time series regression
+^^^^^^^^^^^^^^^^^^^^^^
+
+* [BUG] fix unreported ``set_params`` bug in ``ClassifierPipeline`` and ``RegressorPipeline`` (:pr:`3857`) :user:`fkiraly`
+* [BUG] fixes KNN estimators' ``kneighbors`` methods to work with all mtypes (:pr:`3927`) :user:`fkiraly`
+
+Transformations
+^^^^^^^^^^^^^^^
+
+* [BUG] ``ClearSky`` doesn't raise error for range indexes and when ``X`` has no set frequency (:pr:`3872`) :user:`ciaran-g`
+* [BUG] ``sklearn 1.2.0`` compatibility - fix invalid elbow variable selection shrinkage parameter passed to ``sklearn`` ``NearestCentroid`` (:pr:`3921`) :user:`fkiraly`
+
+Visualisations
+^^^^^^^^^^^^^^
+
+* [BUG] fix soft dependency check in ``plotting.plot_correlations`` (:pr:`3887`) :user:`dsanr`
+
+
+Documentation
+~~~~~~~~~~~~~
+
+* [DOC] fixed rendering in dependencies doc (:pr:`3846`) :user:`templierw`
+* [DOC] update transformers extension section in transformers tutorial (:pr:`3860`) :user:`fkiraly`
+* [DOC] tidying Rocket docstrings (:pr:`3860`) :user:`TonyBagnall`
+* [DOC] added post-processing in pipelines to forecasting tutorial (:pr:`3878`) :user:`nshahpazov`
+* [DOC] changing import path for ``plot_cluster_algorithm`` (:pr:`3945`) :user:`GianFree`
+
+Maintenance
+~~~~~~~~~~~
+
+* [MNT] Additional project urls in ``pyproject.toml`` (#3864) :user:`lmmentel`
+* [MNT] ``sklearn 1.2.0`` compatibility - remove private ``_check_weights`` import in ``KNeighborsTimeSeriesClassifier`` and -``Regressor`` (:pr:`3918`) :user:`fkiraly`
+* [MNT] ``sklearn 1.2.0`` compatibility - cover ``BaseForest`` parameter change (:pr:`3919`) :user:`fkiraly`
+* [MNT] ``sklearn 1.2.0`` compatibility - decouple ``sklearn.base._pprint`` (:pr:`3923`) :user:`fkiraly`
+* [MNT] ``sklearn 1.2.0`` compatibility - remove ``normalize=False`` args from ``RidgeClassifierCV`` (:pr:`3924`) :user:`fkiraly`
+* [MNT] ``sklearn 1.2.0`` compatibility - ``ComposableTimeSeriesForest`` reserved attribute fix (:pr:`3926`) :user:`fkiraly`
+* [MNT] remove ``pycatch22`` as a soft dependency (:pr:`3917`) :user:`fkiraly`
+* [MNT] Update ``sklearn`` compatibility to ``1.2.x``, version bound to ``<1.3`` (:pr:`3922`) :user:`fkiraly`
+* [MNT] bump ``numpy`` version bound to ``<1.25`` and fix compatibility issues (:pr:`3915`) :user:`aquemy`, :user:`fkiraly`
+* [MNT] ``0.15.0`` deprecation actions (:pr:`3952`) :user:`fkiraly`
+* [MNT] skip sporadic ``ResNetClassifier`` failures (:pr:`3974`) :user:`fkiraly`
+
+Contributors
+~~~~~~~~~~~~
+
+:user:`aiwalter`,
+:user:`aquemy`,
+:user:`benjaminbluhm`,
+:user:`bethrice44`,
+:user:`chillerobscuro`,
+:user:`ciaran-g`,
+:user:`dsanr`,
+:user:`fkiraly`,
+:user:`GianFree`,
+:user:`kcc-lion`,
+:user:`KishManani`,
+:user:`lmmentel`,
+:user:`nilesh05apr`,
+:user:`nshahpazov`,
+:user:`templierw`,
+:user:`TonyBagnall`
 
 Version 0.14.1 - 2022-11-30
 ---------------------------
