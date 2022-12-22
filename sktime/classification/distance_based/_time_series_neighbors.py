@@ -24,7 +24,6 @@ from inspect import signature
 
 import numpy as np
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.neighbors._base import _check_weights
 
 from sktime.classification.base import BaseClassifier
 from sktime.datatypes import check_is_mtype
@@ -120,6 +119,8 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
 
     _tags = {
         "capability:multivariate": True,
+        "capability:unequal_length": True,
+        "capability:missing_values": True,
         "X_inner_mtype": ["pd-multiindex", "numpy3D"],
         "classifier_type": "distance",
     }
@@ -137,7 +138,7 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
         n_jobs=None,
     ):
         self.n_neighbors = n_neighbors
-        self.weights = _check_weights(weights)
+        self.weights = weights
         self.algorithm = algorithm
         self.distance = distance
         self.distance_params = distance_params
@@ -168,10 +169,23 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
 
         # the distances in sktime.distances want numpy3D
         #   otherwise all Panel formats are ok
-        if isinstance(self.distance, str):
+        if isinstance(distance, str):
             self.set_tags(X_inner_mtype="numpy3D")
+            self.set_tags(**{"capability:unequal_length": False})
+            self.set_tags(**{"capability:missing_values": False})
         elif distance_mtype is not None:
             self.set_tags(X_inner_mtype=distance_mtype)
+
+        from sktime.dists_kernels import BasePairwiseTransformerPanel
+
+        # inherit capability tags from distance, if it is an estimator
+        if isinstance(distance, BasePairwiseTransformerPanel):
+            inherit_tags = [
+                "capability:missing_values",
+                "capability:unequal_length",
+                "capability:multivariate",
+            ]
+            self.clone_tags(distance, inherit_tags)
 
     def _distance(self, X, X2=None):
         """Compute distance - unified interface to str code and callable."""
@@ -247,6 +261,9 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
             Indices of the nearest points in the population matrix.
         """
         self.check_is_fitted()
+
+        # boilerplate input checks for predict-like methods
+        X = self._check_convert_X_for_predict(X)
 
         # self._X should be the stored _X
         dist_mat = self._distance(X, self._X)

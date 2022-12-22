@@ -9,7 +9,6 @@ __author__ = ["thayeylolu", "AurumnPegasus"]
 
 import numpy as np
 import pandas as pd
-from statsmodels.tsa.vector_ar.vecm import VECM as _VECM
 
 from sktime.forecasting.base.adapters import _StatsModelsAdapter
 
@@ -72,10 +71,10 @@ class VECM(_StatsModelsAdapter):
     ... columns=list("AB"),
     ... index=pd.PeriodIndex(index))
     >>> train, test = temporal_train_test_split(df)
-    >>> sktime_model = VECM()
+    >>> sktime_model = VECM()  # doctest: +SKIP
     >>> fh = ForecastingHorizon([1, 3, 4, 5, 7, 9])
-    >>> _ = sktime_model.fit(train, fh=fh)
-    >>> fc2 = sktime_model.predict(fh=fh)
+    >>> _ = sktime_model.fit(train, fh=fh)  # doctest: +SKIP
+    >>> fc2 = sktime_model.predict(fh=fh)  # doctest: +SKIP
     """
 
     _tags = {
@@ -138,6 +137,8 @@ class VECM(_StatsModelsAdapter):
         -------
         self : reference to self
         """
+        from statsmodels.tsa.vector_ar.vecm import VECM as _VECM
+
         self._forecaster = _VECM(
             endog=y,
             exog=X,

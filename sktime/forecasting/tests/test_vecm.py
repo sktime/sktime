@@ -3,12 +3,13 @@
 __author__ = ["thayeylolu", "AurumnPegasus"]
 import numpy as np
 import pandas as pd
+import pytest
 from numpy.testing import assert_allclose
-from statsmodels.tsa.api import VECM as _VECM
 
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.forecasting.vecm import VECM
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 index = pd.date_range(start="2005", end="2006-12", freq="M")
 df = pd.DataFrame(
@@ -18,8 +19,14 @@ df = pd.DataFrame(
 )
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("statsmodels", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
 def test_VAR_against_statsmodels():
     """Compares Sktime's and Statsmodel's VECM."""
+    from statsmodels.tsa.api import VECM as _VECM
+
     train, test = temporal_train_test_split(df)
     sktime_model = VECM()
     fh = ForecastingHorizon([1, 3, 4, 5, 7, 9])

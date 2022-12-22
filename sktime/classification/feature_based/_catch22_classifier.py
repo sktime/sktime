@@ -26,10 +26,10 @@ class Catch22Classifier(_DelegatedClassifier):
     Parameters
     ----------
     outlier_norm : bool, optional, default=False
-        Normalise each series during the two outlier catch22 features, which can take a
-        while to process for large values
+        Normalise each series during the two outlier Catch22 features, which can take a
+        while to process for large values.
     replace_nans : bool, optional, default=True
-        Replace NaN or inf values from the catch22 transform with 0.
+        Replace NaN or inf values from the Catch22 transform with 0.
     estimator : sklearn classifier, optional, default=None
         An sklearn estimator to be built using the transformed data.
         Defaults to sklearn RandomForestClassifier(n_estimators=200)
@@ -146,5 +146,15 @@ class Catch22Classifier(_DelegatedClassifier):
                 "estimator": RandomForestClassifier(n_estimators=10),
                 "outlier_norm": True,
             }
-        else:
-            return {"estimator": RandomForestClassifier(n_estimators=2)}
+
+        from sklearn.dummy import DummyClassifier
+
+        param1 = {"estimator": RandomForestClassifier(n_estimators=2)}
+        param2 = {
+            "estimator": DummyClassifier(),
+            "outlier_norm": True,
+            "replace_nans": False,
+            "random_state": 42,
+        }
+
+        return [param1, param2]

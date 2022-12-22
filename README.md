@@ -1,10 +1,10 @@
-<a href="https://sktime.org"><img src="https://github.com/alan-turing-institute/sktime/blob/main/docs/source/images/sktime-logo.jpg?raw=true)" width="175" align="right" /></a>
+<a href="https://sktime.org"><img src="https://github.com/sktime/sktime/blob/main/docs/source/images/sktime-logo.jpg?raw=true)" width="175" align="right" /></a>
 
 # Welcome to sktime
 
 > A unified interface for machine learning with time series
 
-:rocket: **Version 0.13.2 out now!** [Check out the release notes here](https://www.sktime.org/en/latest/changelog.html).
+:rocket: **Version 0.14.1 out now!** [Check out the release notes here](https://www.sktime.org/en/latest/changelog.html).
 
 sktime is a library for time series analysis in Python. It provides a unified interface for multiple time series learning tasks. Currently, this includes time series classification, regression, clustering, annotation and forecasting. It comes with [time series algorithms](https://www.sktime.org/en/stable/estimator_overview.html) and [scikit-learn] compatible tools to build, tune and validate time series models.
 
@@ -12,8 +12,8 @@ sktime is a library for time series analysis in Python. It provides a unified in
 
 | Overview | |
 |---|---|
-| **CI/CD** | [![github-actions](https://img.shields.io/github/workflow/status/alan-turing-institute/sktime/build-and-test?logo=github)](https://github.com/alan-turing-institute/sktime/actions?query=workflow%3Abuild-and-test) [![!codecov](https://img.shields.io/codecov/c/github/alan-turing-institute/sktime?label=codecov&logo=codecov)](https://codecov.io/gh/alan-turing-institute/sktime) [![readthedocs](https://img.shields.io/readthedocs/sktime?logo=readthedocs)](https://www.sktime.org/en/latest/?badge=latest) [![platform](https://img.shields.io/conda/pn/conda-forge/sktime)](https://github.com/alan-turing-institute/sktime) |
-| **Code** |  [![!pypi](https://img.shields.io/pypi/v/sktime?color=orange)](https://pypi.org/project/sktime/) [![!conda](https://img.shields.io/conda/vn/conda-forge/sktime)](https://anaconda.org/conda-forge/sktime) [![!python-versions](https://img.shields.io/pypi/pyversions/sktime)](https://www.python.org/) [![!black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black) [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/alan-turing-institute/sktime/main?filepath=examples) |
+| **CI/CD** | [![github-actions](https://img.shields.io/github/workflow/status/sktime/sktime/build-and-test?logo=github)](https://github.com/sktime/sktime/actions?query=workflow%3Abuild-and-test) [![!codecov](https://img.shields.io/codecov/c/github/sktime/sktime?label=codecov&logo=codecov)](https://codecov.io/gh/sktime/sktime) [![readthedocs](https://img.shields.io/readthedocs/sktime?logo=readthedocs)](https://www.sktime.org/en/latest/?badge=latest) [![platform](https://img.shields.io/conda/pn/conda-forge/sktime)](https://github.com/sktime/sktime) |
+| **Code** |  [![!pypi](https://img.shields.io/pypi/v/sktime?color=orange)](https://pypi.org/project/sktime/) [![!conda](https://img.shields.io/conda/vn/conda-forge/sktime)](https://anaconda.org/conda-forge/sktime) [![!python-versions](https://img.shields.io/pypi/pyversions/sktime)](https://www.python.org/) [![!black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black) [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/sktime/sktime/main?filepath=examples) |
 | **Downloads**| [![Downloads](https://static.pepy.tech/personalized-badge/sktime?period=week&units=international_system&left_color=grey&right_color=blue&left_text=weekly%20(pypi))](https://pepy.tech/project/sktime) [![Downloads](https://static.pepy.tech/personalized-badge/sktime?period=month&units=international_system&left_color=grey&right_color=blue&left_text=monthly%20(pypi))](https://pepy.tech/project/sktime) [![Downloads](https://static.pepy.tech/personalized-badge/sktime?period=total&units=international_system&left_color=grey&right_color=blue&left_text=cumulative%20(pypi))](https://pepy.tech/project/sktime) |
 | **Community** | [![!slack](https://img.shields.io/static/v1?logo=slack&label=slack&message=chat&color=lightgreen)](https://join.slack.com/t/sktime-group/shared_invite/zt-1cghagwee-sqLJ~eHWGYgzWbqUX937ig) [![!discord](https://img.shields.io/static/v1?logo=discord&label=discord&message=chat&color=lightgreen)](https://discord.com/invite/gqSab2K) [![!slack](https://img.shields.io/static/v1?logo=linkedin&label=LinkedIn&message=news&color=lightblue)](https://www.linkedin.com/company/sktime/) [![!twitter](https://img.shields.io/static/v1?logo=twitter&label=Twitter&message=news&color=lightblue)](https://twitter.com/sktime_toolbox) [![!youtube](https://img.shields.io/static/v1?logo=youtube&label=YouTube&message=tutorials&color=red)](https://www.youtube.com/playlist?list=PLKs3UgGjlWHqNzu0LEOeLKvnjvvest2d0) |
 | **Citation** | [![!zenodo](https://zenodo.org/badge/DOI/10.5281/zenodo.3749000.svg)](https://doi.org/10.5281/zenodo.3749000) |
@@ -33,7 +33,7 @@ sktime is a library for time series analysis in Python. It provides a unified in
 | :pencil: **[Related Software]**          | A list of related software. |
 
 [tutorials]: https://www.sktime.org/en/latest/tutorials.html
-[binder notebooks]: https://mybinder.org/v2/gh/alan-turing-institute/sktime/main?filepath=examples
+[binder notebooks]: https://mybinder.org/v2/gh/sktime/sktime/main?filepath=examples
 [user guides]: https://www.sktime.org/en/latest/user_guide.html
 [video tutorial]: https://github.com/sktime/sktime-tutorial-pydata-global-2021
 [api reference]: https://www.sktime.org/en/latest/api_reference.html
@@ -54,11 +54,11 @@ Questions and feedback are extremely welcome! Please understand that we won't be
 | :factory: **Contribution & Development** | [Slack], contributors channel · [Discord] |
 | :globe_with_meridians: **Community collaboration session** | [Discord] - Fridays 1pm UTC, dev/meet-ups channel |
 
-[github issue tracker]: https://github.com/alan-turing-institute/sktime/issues
-[github discussions]: https://github.com/alan-turing-institute/sktime/discussions
+[github issue tracker]: https://github.com/sktime/sktime/issues
+[github discussions]: https://github.com/sktime/sktime/discussions
 [stack overflow]: https://stackoverflow.com/questions/tagged/sktime
 [discord]: https://discord.com/invite/gqSab2K
-[slack]: https://join.slack.com/t/sktime-group/shared_invite/zt-62i7aejn-vXc3nOWF26S_P3VXFPWisQ
+[slack]: https://join.slack.com/t/sktime-group/shared_invite/zt-1cghagwee-sqLJ~eHWGYgzWbqUX937ig
 
 ## :dizzy: Features
 Our aim is to make the time series analysis ecosystem more interoperable and usable as a whole. sktime provides a __unified interface for distinct but related time series learning tasks__. It features [__dedicated time series algorithms__](https://www.sktime.org/en/stable/estimator_overview.html) and __tools for composite model building__ including pipelining, ensembling, tuning and reduction that enables users to apply an algorithm for one task to another.
@@ -70,25 +70,25 @@ For **deep learning**, see our companion package: [sktime-dl](https://github.com
 [statsmodels]: https://www.statsmodels.org/stable/index.html
 [tsfresh]: https://tsfresh.readthedocs.io/en/latest/
 [pyod]: https://pyod.readthedocs.io/en/latest/
-[prophet]: https://facebook.github.io/prophet/
+[fbprophet]: https://facebook.github.io/prophet/
 
 | Module | Status | Links |
 |---|---|---|
-| **[Forecasting]** | stable | [Tutorial](https://www.sktime.org/en/latest/examples/01_forecasting.html) · [API Reference](https://www.sktime.org/en/latest/api_reference.html#sktime-forecasting-time-series-forecasting) · [Extension Template](https://github.com/alan-turing-institute/sktime/blob/main/extension_templates/forecasting.py)  |
-| **[Time Series Classification]** | stable | [Tutorial](https://github.com/alan-turing-institute/sktime/blob/main/examples/02_classification.ipynb) · [API Reference](https://www.sktime.org/en/latest/api_reference.html#sktime-classification-time-series-classification) · [Extension Template](https://github.com/alan-turing-institute/sktime/blob/main/extension_templates/classification.py) |
+| **[Forecasting]** | stable | [Tutorial](https://www.sktime.org/en/latest/examples/01_forecasting.html) · [API Reference](https://www.sktime.org/en/latest/api_reference.html#sktime-forecasting-time-series-forecasting) · [Extension Template](https://github.com/sktime/sktime/blob/main/extension_templates/forecasting.py)  |
+| **[Time Series Classification]** | stable | [Tutorial](https://github.com/sktime/sktime/blob/main/examples/02_classification.ipynb) · [API Reference](https://www.sktime.org/en/latest/api_reference.html#sktime-classification-time-series-classification) · [Extension Template](https://github.com/sktime/sktime/blob/main/extension_templates/classification.py) |
 | **[Time Series Regression]** | stable | [API Reference](https://www.sktime.org/en/latest/api_reference.html#sktime-classification-time-series-regression) |
-| **[Transformations]** | stable | [API Reference](https://www.sktime.org/en/latest/api_reference.html#sktime-transformations-time-series-transformers) · [Extension Template](https://github.com/alan-turing-institute/sktime/blob/main/extension_templates/transformer.py)  |
-| **[Time Series Clustering]** | maturing | [Extension Template](https://github.com/alan-turing-institute/sktime/blob/main/extension_templates/clustering.py) |
-| **[Time Series Distances/Kernels]** | experimental | [Extension Template](https://github.com/alan-turing-institute/sktime/blob/main/extension_templates/dist_kern_panel.py) |
-| **[Annotation]** | experimental | [Extension Template](https://github.com/alan-turing-institute/sktime/blob/main/extension_templates/annotation.py) |
+| **[Transformations]** | stable | [API Reference](https://www.sktime.org/en/latest/api_reference.html#sktime-transformations-time-series-transformers) · [Extension Template](https://github.com/sktime/sktime/blob/main/extension_templates/transformer.py)  |
+| **[Time Series Clustering]** | maturing | [Extension Template](https://github.com/sktime/sktime/blob/main/extension_templates/clustering.py) |
+| **[Time Series Distances/Kernels]** | experimental | [Extension Template](https://github.com/sktime/sktime/blob/main/extension_templates/dist_kern_panel.py) |
+| **[Annotation]** | experimental | [Extension Template](https://github.com/sktime/sktime/blob/main/extension_templates/annotation.py) |
 
-[forecasting]: https://github.com/alan-turing-institute/sktime/tree/main/sktime/forecasting
-[time series classification]: https://github.com/alan-turing-institute/sktime/tree/main/sktime/classification
-[time series regression]: https://github.com/alan-turing-institute/sktime/tree/main/sktime/regression
-[time series clustering]: https://github.com/alan-turing-institute/sktime/tree/main/sktime/clustering
-[annotation]: https://github.com/alan-turing-institute/sktime/tree/main/sktime/annotation
-[time series distances/kernels]: https://github.com/alan-turing-institute/sktime/tree/main/sktime/dists_kernels
-[transformations]: https://github.com/alan-turing-institute/sktime/tree/main/sktime/transformations
+[forecasting]: https://github.com/sktime/sktime/tree/main/sktime/forecasting
+[time series classification]: https://github.com/sktime/sktime/tree/main/sktime/classification
+[time series regression]: https://github.com/sktime/sktime/tree/main/sktime/regression
+[time series clustering]: https://github.com/sktime/sktime/tree/main/sktime/clustering
+[annotation]: https://github.com/sktime/sktime/tree/main/sktime/annotation
+[time series distances/kernels]: https://github.com/sktime/sktime/tree/main/sktime/dists_kernels
+[transformations]: https://github.com/sktime/sktime/tree/main/sktime/transformations
 
 
 ## :hourglass_flowing_sand: Install sktime
@@ -183,9 +183,9 @@ There are many ways to join the sktime community. We follow the [all-contributor
 
 [contribute]: https://www.sktime.org/en/latest/get_involved/contributing.html
 [donate]: https://opencollective.com/sktime
-[extension templates]: https://github.com/alan-turing-institute/sktime/tree/main/extension_templates
+[extension templates]: https://github.com/sktime/sktime/tree/main/extension_templates
 [developer guides]: https://www.sktime.org/en/latest/developer_guide.html
-[contributors]: https://github.com/alan-turing-institute/sktime/blob/main/CONTRIBUTORS.md
+[contributors]: https://github.com/sktime/sktime/blob/main/CONTRIBUTORS.md
 [governance]: https://www.sktime.org/en/latest/governance.html
 [mentoring]: https://github.com/sktime/mentoring
 [meetings]: https://calendar.google.com/calendar/u/0/embed?src=sktime.toolbox@gmail.com&ctz=UTC

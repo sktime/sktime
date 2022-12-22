@@ -29,11 +29,12 @@ _RAW_DUMMIES = [
     ["minute", "hour", "minute", "minimal"],
     ["second", "minute", "second", "minimal"],
     ["millisecond", "second", "millisecond", "minimal"],
+    ["day", "week", "is_weekend", "comprehensive"],
 ]
 
 
 class DateTimeFeatures(BaseTransformer):
-    """DateTime Feature  Extraction for use in e.g. tree based models.
+    """DateTime feature extraction for use in e.g. tree based models.
 
     DateTimeFeatures uses a date index column and generates date features
     identifying e.g. year, week of the year, day of the week.
@@ -73,11 +74,12 @@ class DateTimeFeatures(BaseTransformer):
         Manual selection of dummys. Notation is child of parent for precise notation.
         Will ignore specified feature_scope, but will still check with warning against
         a specified ts_freq.
-        Examples for Possible values:
+        Examples for possible values:
         * None
         * day_of_year
         * day_of_month
         * day_of_quarter
+        * is_weekend
         * year (special case with no lower frequency).
 
     Examples
@@ -85,7 +87,25 @@ class DateTimeFeatures(BaseTransformer):
     >>> from sktime.transformations.series.date import DateTimeFeatures
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
+
+    Returns columns `y`, `year`, `month_of_year`
     >>> transformer = DateTimeFeatures(ts_freq="M")
+    >>> y_hat = transformer.fit_transform(y)
+
+    Returns columns `y`, `month_of_year`
+    >>> transformer = DateTimeFeatures(ts_freq="M", manual_selection=["month_of_year"])
+    >>> y_hat = transformer.fit_transform(y)
+
+    Returns columns 'y', 'year', 'quarter_of_year', 'month_of_year', 'month_of_quarter'
+    >>> transformer = DateTimeFeatures(ts_freq="M", feature_scope="comprehensive")
+    >>> y_hat = transformer.fit_transform(y)
+
+    Returns columns 'y', 'year', 'quarter_of_year', 'month_of_year'
+    >>> transformer = DateTimeFeatures(ts_freq="M", feature_scope="efficient")
+    >>> y_hat = transformer.fit_transform(y)
+
+    Returns columns 'y',  'year', 'month_of_year'
+    >>> transformer = DateTimeFeatures(ts_freq="M", feature_scope="minimal")
     >>> y_hat = transformer.fit_transform(y)
     """
 
@@ -258,6 +278,8 @@ def _calendar_dummies(x, funcs):
             (x["date_sequence"] - quarter_start) / pd.to_timedelta("1D") + 1
         ).astype(int)
         cd = values
+    elif funcs == "is_weekend":
+        cd = date_sequence.day_of_week > 4
     else:
         cd = getattr(date_sequence, funcs)
     cd = pd.DataFrame(cd)
@@ -298,6 +320,9 @@ def _prep_dummies(DUMMIES):
     DUMMIES["fourier"] = DUMMIES["child"] + "_in_" + DUMMIES["parent"]
     DUMMIES["dummy"] = DUMMIES["child"] + "_of_" + DUMMIES["parent"]
     DUMMIES.loc[DUMMIES["dummy"] == "year_of_year", "dummy"] = "year"
+    DUMMIES.loc[
+        DUMMIES["dummy_func"] == "is_weekend", ["dummy", "fourier"]
+    ] = "is_weekend"
 
     DUMMIES["child"] = (
         DUMMIES["child"].astype("category").cat.reorder_categories(date_order)

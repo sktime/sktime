@@ -4,6 +4,7 @@
 """Implements forecaster for selecting among different model classes."""
 
 from sktime.base import _HeterogenousMetaEstimator
+from sktime.datatypes import ALL_TIME_SERIES_MTYPES
 from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.base._delegate import _DelegatedForecaster
 
@@ -11,7 +12,7 @@ __author__ = ["kkoralturk", "aiwalter", "fkiraly", "miraep8"]
 __all__ = ["MultiplexForecaster"]
 
 
-class MultiplexForecaster(_DelegatedForecaster, _HeterogenousMetaEstimator):
+class MultiplexForecaster(_HeterogenousMetaEstimator, _DelegatedForecaster):
     """MultiplexForecaster for selecting among different models.
 
     MultiplexForecaster facilitates a framework for performing
@@ -67,15 +68,13 @@ class MultiplexForecaster(_DelegatedForecaster, _HeterogenousMetaEstimator):
     >>> forecaster = MultiplexForecaster(forecasters=[
     ...     ("ets", AutoETS()),
     ...     ("theta", ThetaForecaster()),
-    ...     ("naive", NaiveForecaster())])
-    >>> cv = ExpandingWindowSplitter(
-    ...     start_with_window=True,
-    ...     step_length=12)
+    ...     ("naive", NaiveForecaster())])  # doctest: +SKIP
+    >>> cv = ExpandingWindowSplitter(step_length=12)  # doctest: +SKIP
     >>> gscv = ForecastingGridSearchCV(
     ...     cv=cv,
     ...     param_grid={"selected_forecaster":["ets", "theta", "naive"]},
-    ...     forecaster=forecaster)
-    >>> gscv.fit(y)
+    ...     forecaster=forecaster)  # doctest: +SKIP
+    >>> gscv.fit(y)  # doctest: +SKIP
     ForecastingGridSearchCV(...)
     """
 
@@ -83,7 +82,8 @@ class MultiplexForecaster(_DelegatedForecaster, _HeterogenousMetaEstimator):
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
         "scitype:y": "both",
-        "y_inner_mtype": ["pd.DataFrame", "pd.Series"],
+        "y_inner_mtype": ALL_TIME_SERIES_MTYPES,
+        "X_inner_mtype": ALL_TIME_SERIES_MTYPES,
         "fit_is_empty": False,
     }
 
@@ -91,6 +91,12 @@ class MultiplexForecaster(_DelegatedForecaster, _HeterogenousMetaEstimator):
     #     all non-overridden methods to those of same name in self.forecaster_
     #     see further details in _DelegatedForecaster docstring
     _delegate_name = "forecaster_"
+
+    # for default get_params/set_params from _HeterogenousMetaEstimator
+    # _steps_attr points to the attribute of self
+    # which contains the heterogeneous set of estimators
+    # this must be an iterable of (name: str, estimator) pairs for the default
+    _steps_attr = "_forecasters"
 
     def __init__(
         self,
@@ -108,8 +114,12 @@ class MultiplexForecaster(_DelegatedForecaster, _HeterogenousMetaEstimator):
             clone_ests=False,
         )
         self._set_forecaster()
+
         self.clone_tags(self.forecaster_)
         self.set_tags(**{"fit_is_empty": False})
+        # this ensures that we convert in the inner estimator, not in the multiplexer
+        self.set_tags(**{"y_inner_mtype": ALL_TIME_SERIES_MTYPES})
+        self.set_tags(**{"X_inner_mtype": ALL_TIME_SERIES_MTYPES})
 
     @property
     def _forecasters(self):
@@ -190,34 +200,6 @@ class MultiplexForecaster(_DelegatedForecaster, _HeterogenousMetaEstimator):
         else:
             # if None, simply clone the first forecaster to self.forecaster_
             self.forecaster_ = self._get_estimator_list(self.forecasters)[0].clone()
-
-    def get_params(self, deep=True):
-        """Get parameters for this estimator.
-
-        Parameters
-        ----------
-        deep : boolean, optional, default=True
-            If True, will return the parameters for this estimator and
-            contained subobjects that are estimators.
-
-        Returns
-        -------
-        params : mapping of string to any
-            Parameter names mapped to their values.
-        """
-        return self._get_params("_forecasters", deep=deep)
-
-    def set_params(self, **kwargs):
-        """Set the parameters of this estimator.
-
-        Valid parameter keys can be listed with ``get_params()``.
-
-        Returns
-        -------
-        self
-        """
-        self._set_params("_forecasters", **kwargs)
-        return self
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):

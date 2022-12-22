@@ -65,7 +65,7 @@ class AggrDist(BasePairwiseTransformerPanel):
         super(AggrDist, self).__init__()
 
         if self.aggfunc_is_symm:
-            self.set_tag("symmetric", True)
+            self.set_tags(**{"symmetric": True})
 
     def _transform(self, X, X2=None):
         """Compute distance/kernel matrix.
@@ -125,7 +125,10 @@ class AggrDist(BasePairwiseTransformerPanel):
         # importing inside to avoid circular dependencies
         from sktime.dists_kernels import ScipyDist
 
-        return {"transformer": ScipyDist()}
+        return [
+            {"transformer": ScipyDist(), "aggfunc_is_symm": True},
+            {"transformer": ScipyDist(), "aggfunc_is_symm": False},
+        ]
 
 
 class FlatDist(BasePairwiseTransformerPanel):

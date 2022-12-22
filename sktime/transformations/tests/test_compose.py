@@ -13,11 +13,11 @@ from sktime.datatypes import get_examples
 from sktime.transformations.compose import (
     FeatureUnion,
     InvertTransform,
+    OptionalPassthrough,
     TransformerPipeline,
 )
 from sktime.transformations.panel.padder import PaddingTransformer
 from sktime.transformations.series.boxcox import LogTransformer
-from sktime.transformations.series.compose import OptionalPassthrough
 from sktime.transformations.series.exponent import ExponentTransformer
 from sktime.transformations.series.impute import Imputer
 from sktime.transformations.series.subset import ColumnSelect
@@ -160,7 +160,7 @@ def test_sklearn_after_primitives():
     X_out = t.fit_transform(X)
     X_summary = SummaryTransformer().fit_transform(X)
 
-    assert deep_equals(X_out.index, X_summary.index)
+    assert (X_out.index == X_summary.index).all()
     assert deep_equals(X_out.columns, X_summary.columns)
     # var_0 is the same for all three instances
     # so summary statistics are all the same, thus StandardScaler transforms to 0

@@ -13,7 +13,6 @@ from itertools import product
 import numpy as np
 import pandas as pd
 from joblib import Parallel, delayed
-from statsmodels.tsa.exponential_smoothing.ets import ETSModel as _ETSModel
 
 from sktime.forecasting.base.adapters import _StatsModelsAdapter
 
@@ -161,10 +160,10 @@ class AutoETS(_StatsModelsAdapter):
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.ets import AutoETS
     >>> y = load_airline()
-    >>> forecaster = AutoETS(auto=True, n_jobs=-1, sp=12)
-    >>> forecaster.fit(y)
+    >>> forecaster = AutoETS(auto=True, n_jobs=-1, sp=12)  # doctest: +SKIP
+    >>> forecaster.fit(y)  # doctest: +SKIP
     AutoETS(...)
-    >>> y_pred = forecaster.predict(fh=[1,2,3])
+    >>> y_pred = forecaster.predict(fh=[1,2,3])  # doctest: +SKIP
     """
 
     _fitted_param_names = ("aic", "aicc", "bic", "hqic")
@@ -172,7 +171,7 @@ class AutoETS(_StatsModelsAdapter):
         "ignores-exogeneous-X": True,
         "capability:pred_int": True,
         "requires-fh-in-fit": False,
-        "handles-missing-data": False,
+        "handles-missing-data": True,
     }
 
     def __init__(
@@ -238,6 +237,7 @@ class AutoETS(_StatsModelsAdapter):
         super(AutoETS, self).__init__(random_state=random_state)
 
     def _fit_forecaster(self, y, X=None):
+        from statsmodels.tsa.exponential_smoothing.ets import ETSModel as _ETSModel
 
         # Select model automatically
         if self.auto:

@@ -64,6 +64,7 @@ class DummyClassifier(BaseClassifier):
         "X_inner_mtype": "nested_univ",
         "capability:missing_values": True,
         "capability:unequal_length": True,
+        "capability:multivariate": True,
     }
 
     def __init__(self, strategy="prior", random_state=None, constant=None):

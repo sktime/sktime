@@ -25,90 +25,110 @@ and people who are looking to learn and develop their skills.
 Recommended steps for first time contributors, or to get started with regular contributions:
 
 1. Say hello and get set up for development, see `instructions in the developer guide <https://www.sktime.org/en/stable/developer_guide.html>`_
-2. Pick a good first issue to work on, see a collection `in this summary issue <https://github.com/alan-turing-institute/sktime/issues/1147>`_ , or from `this list <https://github.com/alan-turing-institute/sktime/issues?q=is%3Aopen+is%3Aissue+label%3A%22good+first+issue%22>`_
+2. Pick a good first issue to work on, see a collection `in this summary issue <https://github.com/sktime/sktime/issues/1147>`_ , or from `this list <https://github.com/sktime/sktime/issues?q=is%3Aopen+is%3Aissue+label%3A%22good+first+issue%22>`_
    suggestion: pick something small with simple content to learn the “process”
 3. Feel free to attend the regular community collab sessions or one of the topic specific stand-ups and tech sessions (see schedule on `Slack`_)
 4. Once your first PR is merged and you’ve seen how things work, you could consider contributing more regularly: optionally, continue attending the Friday community collaboration sessions and stand-ups; or, optionally, `apply for mentoring <https://www.sktime.org/en/stable/get_involved/mentoring.html#mentoring>`_
 
 .. _Discord: https://discord.com/invite/gqSab2K
-.. _Slack: https://join.slack.com/t/sktime-group/shared_invite/zt-62i7aejn-vXc3nOWF26S_P3VXFPWisQ
+.. _Slack: https://join.slack.com/t/sktime-group/shared_invite/zt-1jphqjpnk-AfxAR8IEfIVkf4By8cT7tQ
 
 .. note::
 
    If you get stuck, chat with us on `Slack`_, or join one of the community sessions on `Discord`_.
 
-.. panels::
-    :card: + intro-card text-center
+.. grid:: 1 2 2 2
+    :gutter: 3
 
-    ---
+    .. grid-item-card::
+        :text-align: center
 
-    Developer Guide
-    ^^^^^^^^^^^^^^^
+        Developer Guide
 
-    ``sktime`` developer guide.
+        ^^^
 
-    +++
+        ``sktime`` developer guide.
 
-    .. link-button:: developer_guide
-            :type: ref
-            :text: Developer Guide
-            :classes: btn-block btn-secondary stretched-link
+        +++
 
-    ---
+        .. button-ref:: developer_guide
+            :color: primary
+            :click-parent:
+            :expand:
 
-    Installation
-    ^^^^^^^^^^^^
+            Developer Guide
 
-    ``sktime`` developer installation guide.
+    .. grid-item-card::
+        :text-align: center
 
-    +++
+        Installation
 
-    .. link-button:: installation
-            :type: ref
-            :text: Developer Installation
-            :classes: btn-block btn-secondary stretched-link
+        ^^^
 
-    ---
+        ``sktime`` developer installation guide.
 
-    Enhancement Proposals
-    ^^^^^^^^^^^^^^^^^^^^^
+        +++
 
-    ``sktime`` enhancement proposals.
+        .. button-ref:: installation
+            :color: primary
+            :click-parent:
+            :expand:
 
-    +++
+            Developer Installation
 
-    .. link-button:: enhancement_proposals
-            :type: ref
-            :text: Enhancement Proposals
-            :classes: btn-block btn-secondary stretched-link
+    .. grid-item-card::
+        :text-align: center
 
-    ---
+        Enhancement Proposals
 
-    Reporting Bugs
-    ^^^^^^^^^^^^^^
+        ^^^
 
-    ``sktime`` reporting bugs.
+        ``sktime`` enhancement proposals.
 
-    +++
+        +++
 
-    .. link-button:: reporting_bugs
-            :type: ref
-            :text: Reporting Bugs
-            :classes: btn-block btn-secondary stretched-link
+        .. button-ref:: enhancement_proposals
+            :color: primary
+            :click-parent:
+            :expand:
 
-    ---
+            Enhancement Proposals
 
-    Reviewer Guide
-    ^^^^^^^^^^^^^^
+    .. grid-item-card::
+        :text-align: center
 
-    ``sktime`` reviewer guide.
+        Reporting Bugs
 
-    +++
+        ^^^
 
-    .. link-button:: reviewer_guide
-            :type: ref
-            :text: Reporting Bugs
-            :classes: btn-block btn-secondary stretched-link
+        ``sktime`` reporting bugs.
+
+        +++
+
+        .. button-ref:: reporting_bugs
+            :color: primary
+            :click-parent:
+            :expand:
+
+            Reporting Bugs
+
+    .. grid-item-card::
+        :text-align: center
+
+        Reviewer Guide
+
+        ^^^
+
+        ``sktime`` reviewer guide.
+
+        +++
+
+        .. button-ref:: reviewer_guide
+            :color: primary
+            :click-parent:
+            :expand:
+
+            Reviewer Guide
 
 Acknowledging contributions
 ---------------------------
@@ -117,13 +137,13 @@ We follow the `all-contributors
 specification <https://allcontributors.org>`_ and recognize various
 types of contributions.
 Take a look at our past and current
-`contributors <https://github.com/alan-turing-institute/sktime/blob/main/CONTRIBUTORS.md>`_!
+`contributors <https://github.com/sktime/sktime/blob/main/CONTRIBUTORS.md>`_!
 
 If you are a new contributor, make sure we add you to our list of
 contributors.
 All contributions are recorded in
-`.all-contributorsrc <https://github.com/alan-turing-institute/sktime/blob/main/.all-contributorsrc>`_.
+`.all-contributorsrc <https://github.com/sktime/sktime/blob/main/.all-contributorsrc>`_.
 
 .. note::
 
-   If we have missed anything, please `raise an issue <https://github.com/alan-turing-institute/sktime/issues/new/choose>`_ or chat with us on `Slack`_.
+   If we have missed anything, please `raise an issue <https://github.com/sktime/sktime/issues/new/choose>`_ or chat with us on `Slack`_.

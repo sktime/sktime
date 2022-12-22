@@ -4,8 +4,6 @@
 import warnings
 
 import pandas as pd
-from statsmodels.tsa.ardl import ARDL as _ARDL
-from statsmodels.tsa.ardl import ardl_select_order as _ardl_select_order
 
 from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.base.adapters import _StatsModelsAdapter
@@ -181,17 +179,18 @@ class ARDL(_StatsModelsAdapter):
     >>> from sktime.datasets import load_macroeconomic
     >>> from sktime.forecasting.ardl import ARDL
     >>> from sktime.forecasting.base import ForecastingHorizon
-    >>> data = load_macroeconomic()
-    >>> oos = data.iloc[-5:, :]
-    >>> data = data.iloc[:-5, :]
-    >>> y = data.realgdp
-    >>> X = data[["realcons", "realinv"]]
-    >>> X_oos = oos[["realcons", "realinv"]]
-    >>> ardl = ARDL(lags=2, order={"realcons": 1, "realinv": 2}, trend="c")
-    >>> ardl.fit(y=y, X=X)
+    >>> data = load_macroeconomic()  # doctest: +SKIP
+    >>> oos = data.iloc[-5:, :]  # doctest: +SKIP
+    >>> data = data.iloc[:-5, :]  # doctest: +SKIP
+    >>> y = data.realgdp  # doctest: +SKIP
+    >>> X = data[["realcons", "realinv"]]  # doctest: +SKIP
+    >>> X_oos = oos[["realcons", "realinv"]]  # doctest: +SKIP
+    >>> ardl = ARDL(lags=2, order={"realcons": 1, "realinv": 2}, trend="c")\
+    # doctest: +SKIP
+    >>> ardl.fit(y=y, X=X)  # doctest: +SKIP
     ARDL(lags=2, order={'realcons': 1, 'realinv': 2})
-    >>> fh = ForecastingHorizon([1, 2, 3])
-    >>> y_pred = ardl.predict(fh=fh, X=X_oos)
+    >>> fh = ForecastingHorizon([1, 2, 3])  # doctest: +SKIP
+    >>> y_pred = ardl.predict(fh=fh, X=X_oos)  # doctest: +SKIP
     """
 
     _tags = {
@@ -317,6 +316,9 @@ class ARDL(_StatsModelsAdapter):
         -------
         self : reference to self
         """
+        from statsmodels.tsa.ardl import ARDL as _ARDL
+        from statsmodels.tsa.ardl import ardl_select_order as _ardl_select_order
+
         # statsmodels does not support the pd.Int64Index as required,
         # so we coerce them here to pd.RangeIndex
         if isinstance(y, pd.Series) and y.index.is_integer():
@@ -485,7 +487,7 @@ class ARDL(_StatsModelsAdapter):
 
         return self
 
-    def get_fitted_params(self):
+    def _get_fitted_params(self):
         """Get fitted parameters.
 
         State required:
@@ -495,7 +497,8 @@ class ARDL(_StatsModelsAdapter):
         -------
         fitted_params : dict
         """
-        self.check_is_fitted()
+        from statsmodels.tsa.ardl import ARDL as _ARDL
+
         fitted_params = {}
         if isinstance(self._forecaster, _ARDL):
             fitted_params["score"] = self._forecaster.score(
