@@ -8,12 +8,9 @@ import sys
 from pathlib import Path
 from unittest import mock
 
-import boto3
-import moto
 import numpy as np
 import pandas as pd
 import pytest
-from botocore.config import Config
 
 from sktime.datasets import load_airline, load_longley
 from sktime.forecasting.arima import AutoARIMA
@@ -21,6 +18,11 @@ from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.utils.multiindex import flatten_multiindex
 from sktime.utils.validation._dependencies import _check_soft_dependencies
+
+if _check_soft_dependencies("mlflow", "boto3", "moto", "botocore", severity="none"):
+    import boto3
+    import moto
+    from botocore.config import Config
 
 if not sys.platform.startswith("linux"):
     pytest.skip("Skipping MLflow tests for Windows and macOS", allow_module_level=True)
