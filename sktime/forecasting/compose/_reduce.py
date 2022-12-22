@@ -559,6 +559,16 @@ class _RecursiveReducer(_Reducer):
                     + "observation size"
                 )
 
+        if self.pooling == "global":
+            timepoints = get_time_index(y)
+            if isinstance(timepoints, (pd.DatetimeIndex, pd.PeriodIndex)):
+                if timepoints.freq is None:
+                    raise ValueError(
+                        "Please set frequency for DatetimeIndex or PeriodIndex. You "
+                        + "can use set_freq_hier function from sktime.utils.datetime "
+                        + "for this purpose (will convert DatetimeIndex to PeriodIndex)"
+                    )
+
         yt, Xt = self._transform(y, X)
 
         # Make sure yt is 1d array to avoid DataConversion warning from scikit-learn.
@@ -1397,6 +1407,24 @@ def slice_at_ix(df, ix):
         return df.loc[[ix]]
 
 
+def _get_notna_idx(df):
+    """Get sub-index of df that contains rows without nans.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+
+    Returns
+    -------
+    df_notna_idx : pd.Index
+        sub-set of df.index that contains rows of df without nans
+        index is in same order as of df
+    """
+    df_notna_bool = df.notnull().all(axis=1)
+    df_notna_idx = df.index[df_notna_bool]
+    return df_notna_idx
+
+
 class _ReducerMixin:
     """Common utilities for reducers."""
 
@@ -1553,28 +1581,27 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
 
     def _fit_shifted(self, y, X=None, fh=None):
         """Fit to training data."""
-        from sktime.transformations.series.impute import Imputer
-        from sktime.transformations.series.lag import Lag
+        from sktime.transformations.series.lag import Lag, ReducerTransform
 
         impute_method = self.impute_method
+        lags = self._lags
+        trafos = self.transformers
 
         # lagger_y_to_X_ will lag y to obtain the sklearn X
-        lags = self._lags
-        lagger_y_to_X = Lag(lags=lags, index_out="extend")
-        if impute_method is not None:
-            lagger_y_to_X = lagger_y_to_X * Imputer(method=impute_method)
+        lagger_y_to_X = ReducerTransform(
+            lags=lags, transformers=trafos, impute_method=impute_method
+        )
         self.lagger_y_to_X_ = lagger_y_to_X
 
         # lagger_y_to_y_ will lag y to obtain the sklearn y
         fh_rel = fh.to_relative(self.cutoff)
         y_lags = list(fh_rel)
         y_lags = [-x for x in y_lags]
-        lagger_y_to_y = Lag(lags=y_lags, index_out="original")
+        lagger_y_to_y = Lag(lags=y_lags, index_out="original", keep_column_names=True)
         self.lagger_y_to_y_ = lagger_y_to_y
 
-        yt = lagger_y_to_y.fit_transform(y)
-        y_notna = yt.notnull().all(axis=1)
-        y_notna_idx = y_notna.index[y_notna]
+        yt = lagger_y_to_y.fit_transform(X=y)
+        y_notna_idx = _get_notna_idx(yt)
 
         # we now check whether the set of full lags is empty
         # if yes, we set a flag, since we cannot fit the reducer
@@ -1587,10 +1614,9 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
             self.empty_lags_ = False
 
         yt = yt.loc[y_notna_idx]
-        Xt = lagger_y_to_X.fit_transform(y).loc[y_notna_idx]
 
-        if X is not None:
-            Xt = pd.concat([X.loc[y_notna_idx], Xt], axis=1)
+        Xt = lagger_y_to_X.fit_transform(X=y, y=X)
+        Xt = Xt.loc[y_notna_idx]
 
         Xt = _coerce_col_str(Xt)
         yt = _coerce_col_str(yt)
@@ -1616,11 +1642,8 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
 
         lagger_y_to_X = self.lagger_y_to_X_
 
-        Xt_lastrow = slice_at_ix(lagger_y_to_X.transform(self._y), self.cutoff)
-        if self._X is not None:
-            exog_X_lastrow = slice_at_ix(self._X, self.cutoff)
-            Xt_lastrow = pd.concat([exog_X_lastrow, Xt_lastrow], axis=1)
-
+        Xt = lagger_y_to_X.transform(X=self._y, y=self._X)
+        Xt_lastrow = slice_at_ix(Xt, self.cutoff)
         Xt_lastrow = _coerce_col_str(Xt_lastrow)
 
         estimator = self.estimator_
@@ -1637,47 +1660,64 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
 
     def _fit_concurrent(self, y, X=None, fh=None):
         """Fit to training data."""
-        from sktime.transformations.series.impute import Imputer
-        from sktime.transformations.series.lag import Lag
+        from sktime.transformations.series.lag import Lag, ReducerTransform
 
         impute_method = self.impute_method
 
         # lagger_y_to_X_ will lag y to obtain the sklearn X
         lags = self._lags
-        lagger_y_to_X = Lag(lags=lags, index_out="extend")
-        if impute_method is not None:
-            lagger_y_to_X = lagger_y_to_X * Imputer(method=impute_method)
-        self.lagger_y_to_X_ = lagger_y_to_X
 
+        # lagger_y_to_y_ will lag y to obtain the sklearn y
         fh_rel = fh.to_relative(self.cutoff)
         y_lags = list(fh_rel)
+        y_lags = [-x for x in y_lags]
 
-        Xt = lagger_y_to_X.fit_transform(y)
+        # lagging behaviour is per fh, so w initialize dicts
+        # copied to self.lagger_y_to_X/y_, by reference
+        lagger_y_to_y = dict()
+        lagger_y_to_X = dict()
+        self.lagger_y_to_y_ = lagger_y_to_y
+        self.lagger_y_to_X_ = lagger_y_to_X
 
         self.estimators_ = []
 
         for lag in y_lags:
 
-            lag_plus = Lag(lag, index_out="extend")
-            Xtt = lag_plus.fit_transform(Xt)
-            Xtt_notna = Xtt.notnull().all(axis=1)
-            Xtt_notna_idx = Xtt_notna.index[Xtt_notna].intersection(y.index)
+            t = Lag(lags=lag, index_out="original", keep_column_names=True)
+            lagger_y_to_y[lag] = t
 
-            yt = y.loc[Xtt_notna_idx]
-            Xtt = Xtt.loc[Xtt_notna_idx]
+            yt = lagger_y_to_y[lag].fit_transform(X=y)
+
+            impute_method = self.impute_method
+            lags = self._lags
+            trafos = self.transformers
+
+            # lagger_y_to_X_ will lag y to obtain the sklearn X
+            # also updates self.lagger_y_to_X_ by reference
+            lagger_y_to_X[lag] = ReducerTransform(
+                lags=lags,
+                shifted_vars_lag=lag,
+                transformers=trafos,
+                impute_method=impute_method,
+            )
+
+            Xtt = lagger_y_to_X[lag].fit_transform(X=y, y=X)
+            Xtt_notna_idx = _get_notna_idx(Xtt)
+            yt_notna_idx = _get_notna_idx(yt)
+            notna_idx = Xtt_notna_idx.intersection(yt_notna_idx)
+
+            yt = yt.loc[notna_idx]
+            Xtt = Xtt.loc[notna_idx]
+
+            Xtt = _coerce_col_str(Xtt)
+            yt = _coerce_col_str(yt)
 
             # we now check whether the set of full lags is empty
             # if yes, we set a flag, since we cannot fit the reducer
             # instead, later, we return a dummy prediction
-            if len(Xtt_notna_idx) == 0:
+            if len(notna_idx) == 0:
                 self.estimators_.append(y.mean())
             else:
-                if X is not None:
-                    Xtt = pd.concat([X.loc[Xtt_notna_idx], Xtt], axis=1)
-
-                Xtt = _coerce_col_str(Xtt)
-                yt = _coerce_col_str(yt)
-
                 estimator = clone(self.estimator)
                 estimator.fit(Xtt, yt)
                 self.estimators_.append(estimator)
@@ -1705,22 +1745,17 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         y_lags = list(fh_rel)
         y_abs = list(fh_abs)
 
-        Xt = lagger_y_to_X.transform(self._y)
         y_pred_list = []
 
-        for i in range(len(y_lags)):
+        for i, lag in enumerate(y_lags):
 
-            lag = y_lags[i]
             predict_idx = y_abs[i]
 
-            lag_plus = Lag(lag, index_out="extend")
+            lag_plus = Lag(lag, index_out="extend", keep_column_names=True)
+
+            Xt = lagger_y_to_X[-lag].transform(X=self._y, y=X_pool)
             Xtt = lag_plus.fit_transform(Xt)
             Xtt_predrow = slice_at_ix(Xtt, predict_idx)
-            if X_pool is not None:
-                Xtt_predrow = pd.concat(
-                    [slice_at_ix(X_pool, predict_idx), Xtt_predrow], axis=1
-                )
-
             Xtt_predrow = _coerce_col_str(Xtt_predrow)
 
             estimator = self.estimators_[i]
@@ -1776,7 +1811,8 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
             "X_treatment": "concurrent",
             "pooling": "global",
         }
-        return [params1, params2]
+        params3 = {"estimator": est, "window_length": 0}
+        return [params1, params2, params3]
 
 
 class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
@@ -1904,20 +1940,20 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         # lag is 1, since we want to do recursive forecasting with 1 step ahead
         lag_plus = Lag(lags=1, index_out="extend")
         Xtt = lag_plus.fit_transform(Xt)
-        Xtt_notna = Xtt.notnull().all(axis=1)
-        Xtt_notna_idx = Xtt_notna.index[Xtt_notna].intersection(y.index)
+        Xtt_notna_idx = _get_notna_idx(Xtt)
+        notna_idx = Xtt_notna_idx.intersection(y.index)
 
-        yt = y.loc[Xtt_notna_idx]
-        Xtt = Xtt.loc[Xtt_notna_idx]
+        yt = y.loc[notna_idx]
+        Xtt = Xtt.loc[notna_idx]
 
         # we now check whether the set of full lags is empty
         # if yes, we set a flag, since we cannot fit the reducer
         # instead, later, we return a dummy prediction
-        if len(Xtt_notna_idx) == 0:
+        if len(notna_idx) == 0:
             self.estimator_ = y.mean()
         else:
             if X is not None:
-                Xtt = pd.concat([X.loc[Xtt_notna_idx], Xtt], axis=1)
+                Xtt = pd.concat([X.loc[notna_idx], Xtt], axis=1)
 
             Xtt = _coerce_col_str(Xtt)
             yt = _coerce_col_str(yt)

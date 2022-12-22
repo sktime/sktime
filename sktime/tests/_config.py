@@ -32,6 +32,7 @@ EXCLUDE_ESTIMATORS = [
     # tapnet based estimators fail stochastically for unknown reasons, see #3525
     "TapNetRegressor",
     "TapNetClassifier",
+    "ResNetClassifier",  # known ResNetClassifier sporafic failures, see #3954
 ]
 
 
@@ -77,6 +78,9 @@ EXCLUDED_TESTS = {
         "test_save_estimators_to_file",
     ],
     # `test_fit_idempotent` fails with `AssertionError`, see #3616
+    "ResNetClassifier": [
+        "test_fit_idempotent",
+    ],
     "CNNClassifier": [
         "test_fit_idempotent",
     ],
@@ -84,6 +88,9 @@ EXCLUDED_TESTS = {
         "test_fit_idempotent",
     ],
     "FCNClassifier": [
+        "test_fit_idempotent",
+    ],
+    "LSTMFCNClassifier": [
         "test_fit_idempotent",
     ],
     "MLPClassifier": [
@@ -95,12 +102,12 @@ EXCLUDED_TESTS = {
     "SeriesToSeriesRowTransformer": ["test_methods_do_not_change_state"],
     # ColumnTransformer still needs to be refactored, see #2537
     "ColumnTransformer": ["test_methods_do_not_change_state"],
-    # Early classifiers intentionally retain information from pervious predict calls
+    # Early classifiers intentionally retain information from previous predict calls
     #   for #1.
     # #2 amd #3 are due to predict/predict_proba returning two items and that breaking
     #   assert_array_equal
     "TEASER": [
-        "test_methods_do_not_change_state",
+        "test_non_state_changing_method_contract",
         "test_fit_idempotent",
         "test_persistence_via_pickle",
         "test_save_estimators_to_file",

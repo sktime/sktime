@@ -76,6 +76,24 @@ class BaseObject(_BaseEstimator):
         self._tags_dynamic = dict()
         super(BaseObject, self).__init__()
 
+    def __eq__(self, other):
+        """Equality dunder. Checks equal class and parameters.
+
+        Returns True iff result of get_params(deep=False)
+        results in equal parameter sets.
+
+        Nested BaseObject descendants from get_params are compared via __eq__ as well.
+        """
+        from sktime.utils._testing.deep_equals import deep_equals
+
+        if not isinstance(other, BaseObject):
+            return False
+
+        self_params = self.get_params(deep=False)
+        other_params = other.get_params(deep=False)
+
+        return deep_equals(self_params, other_params)
+
     def reset(self):
         """Reset the object to a clean post-init state.
 
@@ -581,8 +599,8 @@ class BaseObject(_BaseEstimator):
             base_class = BaseObject
         if base_class is not None and not inspect.isclass(base_class):
             raise TypeError(f"base_class must be a class, but found {type(base_class)}")
-        if base_class is not None and not issubclass(base_class, BaseObject):
-            raise TypeError("base_class must be a subclass of BaseObject")
+        # if base_class is not None and not issubclass(base_class, BaseObject):
+        #     raise TypeError("base_class must be a subclass of BaseObject")
 
         # retrieve parameter names to exclude them later
         param_names = self.get_params(deep=False).keys()

@@ -63,7 +63,7 @@ class ForecastByLevel(_DelegatedForecaster):
     }
 
     # attribute for _DelegatedForecaster, which then delegates
-    #     all non-overridden methods to those of same name in self.forecaster_
+    #     all non-overridden methods are same as of getattr(self, _delegate_name)
     #     see further details in _DelegatedForecaster docstring
     _delegate_name = "forecaster_"
 

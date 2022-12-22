@@ -309,7 +309,7 @@ class BaseTransformer(BaseEstimator):
     def __getitem__(self, key):
         """Magic [...] method, return column subsetted transformer.
 
-        First index does output subsetting, second index does input subsetting.
+        First index does intput subsetting, second index does output subsetting.
 
         Keys must be valid inputs for `columns` in `ColumnSubset`.
 
@@ -1021,11 +1021,18 @@ class BaseTransformer(BaseEstimator):
             #   we cannot convert back to pd.Series, do pd.DataFrame instead then
             #   this happens only for Series, not Panel
             if X_input_scitype == "Series":
-                _, _, metadata = check_is_mtype(
+                valid, msg, metadata = check_is_mtype(
                     Xt,
                     ["pd.DataFrame", "pd.Series", "np.ndarray"],
                     return_metadata=True,
                 )
+                if not valid:
+                    raise TypeError(
+                        f"_transform output of {type(self)} does not comply "
+                        "with sktime mtype specifications. See datatypes.MTYPE_REGISTER"
+                        " for mtype specifications. Returned error message:"
+                        f" {msg}. Returned object: {Xt}"
+                    )
                 if not metadata["is_univariate"] and X_input_mtype == "pd.Series":
                     X_output_mtype = "pd.DataFrame"
 
@@ -1037,14 +1044,21 @@ class BaseTransformer(BaseEstimator):
                 store_behaviour="freeze",
             )
         elif output_scitype == "Primitives":
-            # we "abuse" the Series converter to ensure df output
-            # & reset index to have integers for instances
+            # we ensure the output is pd_DataFrame_Table
+            # & ensure the returned index is sensible
+            # for return index, we need to deal with last level, constant 0
             if isinstance(Xt, (pd.DataFrame, pd.Series)):
-                Xt = Xt.reset_index(drop=True)
+                # if index is multiindex, last level is constant 0
+                # and other levels are hierarchy
+                if isinstance(Xt.index, pd.MultiIndex):
+                    Xt.index = Xt.index.droplevel(-1)
+                # else this is only zeros and should be reset to RangeIndex
+                else:
+                    Xt = Xt.reset_index(drop=True)
             Xt = convert_to(
                 Xt,
-                to_type="pd.DataFrame",
-                as_scitype="Series",
+                to_type="pd_DataFrame_Table",
+                as_scitype="Table",
                 # no converter store since this is not a "1:1 back-conversion"
             )
         # else output_scitype is "Panel" and no need for conversion

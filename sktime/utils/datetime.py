@@ -5,9 +5,9 @@
 __author__ = ["mloning", "xiaobenbenecho", "khrapovs"]
 __all__ = []
 
+import warnings
 from functools import singledispatch
 from typing import Optional, Tuple, Union
-from warnings import warn
 
 import numpy as np
 import pandas as pd
@@ -89,6 +89,44 @@ def _get_freq(x):
         return None
 
 
+def set_hier_freq(x):
+    """Set frequency for multiindex dataframes without frequency.
+
+    As of pandas 1.5.1, only a pd.PeriodIndex time index can have freq other None in
+    a pandas multiindex data set. A DatetimeIndex will always have a frequency equal
+    to None.
+    This function converts the DatetimeIndex to a PeriodIndex, which supports
+    frequency arguments.
+
+    Parameters
+    ----------
+    y : Panel, or Hierarchical object, or VectorizedDF with timeindex as
+        pd.DatetimeIndex or pd.PeriodIndex
+
+    Returns
+    -------
+    Series, Panel, or Hierarchical object, or VectorizedDF with pd.PeriodIndex as
+    time index and freq set.
+    """
+    if not isinstance(x.index, pd.MultiIndex):
+        raise ValueError("Only intended for use with MultiIndex.")
+
+    timepoints = get_time_index(x)
+    if not isinstance(timepoints, (pd.DatetimeIndex)):
+        raise ValueError("Set_freq only supported for DatetimeIndex.")
+
+    if timepoints.freq is not None:
+        warnings.warn("Frequency already set.")
+    else:
+        time_names = x.index.names[-1]
+        x = (
+            x.reset_index(-1)
+            .groupby(level=0, group_keys=True)
+            .apply(lambda df: df.set_index(time_names).to_period())
+        )
+    return x
+
+
 @singledispatch
 def infer_freq(y=None) -> Optional[str]:
     """Infer frequency string from the time series object.
@@ -145,7 +183,7 @@ def _shift(x, by=1, return_index=False):
 
     Parameters
     ----------
-    x : pd.Index, pd.Period, int. If pd.Index or pd.Peeriod, must have `freq` attribute.
+    x : pd.Index, pd.Period, int. If pd.Index or pd.Period, must have `freq` attribute.
         If pd.Index, must be of integer type, PeriodIndex, or DateTimeIndex
         Time point to shift
     by : int, optional, default=1
@@ -161,12 +199,8 @@ def _shift(x, by=1, return_index=False):
             if `x` is index, is coerced to index element by selecting first element
         Period shift is integer for `x: int`, and `freq` if `x` is temporal with `freq`
     """
-    # deprecate in 0.13.0 and remove in 0.14.0, pd.Timestamp will not have freq
     if isinstance(x, pd.Timestamp):
-        warn("_shift no longer supports x: pd.Timestamp fom 0.14.0", DeprecationWarning)
-        if not hasattr(x, "freq") or x.freq is None:
-            raise ValueError("No `freq` information available")
-        # raise TypeError("_shift no longer supports x: pd.Timestamp")
+        raise TypeError("_shift does not support x of type pd.Timestamp")
 
     # we ensure idx is pd.Index, x is first (and usually only) element
     if isinstance(x, pd.Index):
