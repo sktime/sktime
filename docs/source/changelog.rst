@@ -37,6 +37,12 @@ Dependency changes
 Core interface changes
 ~~~~~~~~~~~~~~~~~~~~~~
 
+BaseObject
+^^^^^^^^^^
+
+Comparison by equality for any ``sktime`` object now compares identity of parameters,
+as obtained via ``get_params``, with recursive application if objects/estimators are nested.f
+
 Deprecations and removals
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -87,7 +93,7 @@ Transformations
 Testing framework
 ^^^^^^^^^^^^^^^^^
 
-* The general interface contract test ``test_methods_do_not_change_state` `has been renamed to ``test_non_state_changing_method_contract``
+* The general interface contract test ``test_methods_do_not_change_state`` has been renamed to ``test_non_state_changing_method_contract``
 
 Enhancements
 ~~~~~~~~~~~~
