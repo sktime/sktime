@@ -242,11 +242,12 @@ class BaseClusterer(BaseEstimator, ABC):
             (i, j)-th entry is predictive probability that i-th instance is of class j
         """
         preds = self._predict(X)
+        n_instances = len(preds)
         n_clusters = self.n_clusters
         if n_clusters is None:
             n_clusters = max(preds) + 1
         dists = np.zeros((X.shape[0], n_clusters))
-        for i in range(X.shape[0]):
+        for i in range(n_instances):
             dists[i, preds[i]] = 1
         return dists
 
