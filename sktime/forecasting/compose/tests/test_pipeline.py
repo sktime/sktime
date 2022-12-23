@@ -444,7 +444,6 @@ def test_subset_getitem():
 )
 def test_forecastx_logic():
     """Test that ForecastX logic is as expected, compared to manual execution."""
-    from sktime.forecasting.arima import ARIMA
     from sktime.forecasting.base import ForecastingHorizon
     from sktime.forecasting.compose import ForecastX
     from sktime.forecasting.model_selection import temporal_train_test_split
@@ -459,7 +458,7 @@ def test_forecastx_logic():
     # ForecastX
     pipe = ForecastX(
         forecaster_X=VAR(),
-        forecaster_y=ARIMA(),
+        forecaster_y=SARIMAX(),
         columns=columns,
     )
     pipe = pipe.fit(y_train, X=X_train, fh=fh)
@@ -468,7 +467,7 @@ def test_forecastx_logic():
 
     # comparison case: manual execution
     # fit y forecaster
-    arima = ARIMA().fit(y_train, X=X_train)
+    arima = SARIMAX().fit(y_train, X=X_train)
 
     # fit and predict X forecaster
     var = VAR()
