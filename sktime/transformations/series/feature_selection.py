@@ -73,7 +73,7 @@ class FeatureSelection(BaseTransformer):
     _tags = {
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
-        "scitype:transform-output": ["Series", "Primitives"],
+        "scitype:transform-output": "Series",
         # what scitype is returned: Primitives, Series, Panel
         "scitype:instancewise": True,  # is this an instance-wise transform?
         "X_inner_mtype": ["pd.DataFrame", "pd.Series"],
@@ -119,6 +119,9 @@ class FeatureSelection(BaseTransformer):
         """
         self.n_columns_ = self.n_columns
         self.feature_importances_ = None
+
+        if self.method == "none":
+            self.set_tags(**{"scitype:transform-output": "Primitives"})
 
         # multivariate X
         if not isinstance(X, pd.Series):
