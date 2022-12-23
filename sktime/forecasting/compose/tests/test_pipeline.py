@@ -443,6 +443,7 @@ def test_subset_getitem():
     reason="skip test if required soft dependency is not available",
 )
 def test_forecastx_logic():
+    """Test that ForecastX logic is as expected, compared to manual execution."""
     from sktime.forecasting.arima import ARIMA
     from sktime.forecasting.base import ForecastingHorizon
     from sktime.forecasting.compose import ForecastX
