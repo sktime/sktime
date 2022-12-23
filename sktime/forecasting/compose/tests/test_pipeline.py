@@ -436,3 +436,47 @@ def test_subset_getitem():
     _assert_array_almost_equal(y_pred_f_before, y_pred_f_both[["y", "z"]])
     _assert_array_almost_equal(y_pred_f_after_with_colon, y_pred_f_none[["x", "y"]])
     _assert_array_almost_equal(y_pred_f_before_with_colon, y_pred_f_both[["y", "z"]])
+
+
+@pytest.mark.skipif(
+    not _check_soft_dependencies("statsmodels", severity="none"),
+    reason="skip test if required soft dependency is not available",
+)
+def test_forecastx_logic():
+    from sktime.forecasting.arima import ARIMA
+    from sktime.forecasting.base import ForecastingHorizon
+    from sktime.forecasting.compose import ForecastX
+    from sktime.forecasting.model_selection import temporal_train_test_split
+    from sktime.forecasting.var import VAR
+
+    # test case: using pipeline execution
+    y, X = load_longley()
+    y_train, _, X_train, X_test = temporal_train_test_split(y, X, test_size=3)
+    fh = ForecastingHorizon([1, 2, 3])
+    columns = ["ARMED", "POP"]
+
+    # ForecastX
+    pipe = ForecastX(  
+        forecaster_X=VAR(),
+        forecaster_y=ARIMA(),
+        columns=columns,
+    )
+    pipe = pipe.fit(y_train, X=X_train, fh=fh) 
+    # dropping ["ARMED", "POP"] as those are the columns where we expect not to have future values
+    y_pred = pipe.predict(fh=fh, X=X_test.drop(columns=columns))
+
+    # comparison case: manual execution
+    # fit y forecaster
+    arima = ARIMA().fit(y_train, X=X_train)
+
+    # fit and predict X forecaster
+    var = VAR()
+    var.fit(X_train[columns])
+    var_pred = var.predict(fh)
+
+    # predict y forecaster with predictions from VAR
+    X_pred = pd.concat([X_test.drop(columns=columns), var_pred], axis=1)
+    y_pred_manual = arima.predict(fh=fh, X=X_pred)
+
+    # compare that test and comparison case results are equal
+    assert np.allclose(y_pred, y_pred_manual)
