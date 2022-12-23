@@ -604,13 +604,13 @@ class SklearnClustererPipeline(ClustererPipeline):
         # example with series-to-series transformer before sklearn clusterer
         t1 = ExponentTransformer(power=2)
         t2 = ExponentTransformer(power=0.5)
-        c = KMeans()
+        c = KMeans(random_state=42)
         params1 = {"transformers": [t1, t2], "clusterer": c}
 
         # example with series-to-primitive transformer before sklearn clusterer
         t1 = ExponentTransformer(power=2)
         t2 = SummaryTransformer()
-        c = KMeans()
+        c = KMeans(random_state=42)
         params2 = {"transformers": [t1, t2], "clusterer": c}
 
         # construct without names
