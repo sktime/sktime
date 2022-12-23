@@ -456,13 +456,13 @@ def test_forecastx_logic():
     columns = ["ARMED", "POP"]
 
     # ForecastX
-    pipe = ForecastX(  
+    pipe = ForecastX(
         forecaster_X=VAR(),
         forecaster_y=ARIMA(),
         columns=columns,
     )
-    pipe = pipe.fit(y_train, X=X_train, fh=fh) 
-    # dropping ["ARMED", "POP"] as those are the columns where we expect not to have future values
+    pipe = pipe.fit(y_train, X=X_train, fh=fh)
+    # dropping ["ARMED", "POP"] = columns where we expect not to have future values
     y_pred = pipe.predict(fh=fh, X=X_test.drop(columns=columns))
 
     # comparison case: manual execution
