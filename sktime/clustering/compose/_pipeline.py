@@ -308,7 +308,7 @@ class ClustererPipeline(_HeterogenousMetaEstimator, BaseClusterer):
 
         t1 = ExponentTransformer(power=2)
         t2 = ExponentTransformer(power=0.5)
-        c = TimeSeriesKMeans()
+        c = TimeSeriesKMeans(random_state=42)
 
         # construct without names
         return {"transformers": [t1, t2], "clusterer": c}
