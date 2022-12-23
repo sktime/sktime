@@ -149,7 +149,7 @@ class DistFromKernel(BasePairwiseTransformerPanel):
     Formal details (for real valued objects, mixed typed rows in analogy):
     Let :math:`k: \mathbb{R}^D \times \mathbb{R}^D\rightarrow \mathbb{R}`
     be the pairwise function in `kernel`, when applied to `D`-vectors.
-    If `dist_diag=None`, then `KernelFromDist(dist)` corresponds to the kernel function
+    `DistFromKernel(dist)` corresponds to the distance function
     :math:`d(x, y) := \sqrt{k(x, x) + k(y, y) - 2 \cdot k(x, y)}`.
 
     It should be noted that if :math:`k` is positive semi-definite,
@@ -168,9 +168,9 @@ class DistFromKernel(BasePairwiseTransformerPanel):
         "capability:unequal_length": True,  # can dist handle unequal length panels?
     }
 
-    def __init__(self, dist):
+    def __init__(self, kernel):
 
-        self.dist = dist
+        self.kernel = kernel
 
         super(DistFromKernel, self).__init__()
 
@@ -181,8 +181,8 @@ class DistFromKernel(BasePairwiseTransformerPanel):
             "capability:unequal_length",
         ]
 
-        if isinstance(dist, BasePairwiseTransformerPanel):
-            self.clone_tags(dist, tags_to_clone)
+        if isinstance(kernel, BasePairwiseTransformerPanel):
+            self.clone_tags(kernel, tags_to_clone)
 
     def _transform(self, X, X2=None):
         """Compute distance/kernel matrix.
@@ -199,26 +199,26 @@ class DistFromKernel(BasePairwiseTransformerPanel):
         distmat: np.array of shape [n, m]
             (i,j)-th entry contains distance/kernel between X.iloc[i] and X2.iloc[j]
         """
-        dist = self.dist
+        kernel = self.kernel
 
-        distmat = dist(X, X2)
+        kernelmat = kernel(X, X2)
 
-        diag1 = dist(X)
+        diag1 = kernel(X)
         if X2 is None:
             diag2 = diag1
         else:
-            diag2 = dist(X2)
+            diag2 = kernel(X2)
 
         diag1 = np.array(diag1).flatten()
         diag2 = np.array(diag2).flatten()
 
-        n, m = distmat.shape
+        n, m = kernelmat.shape
 
         mat1 = np.tile(np.expand_dims(diag1, 1), m)
         mat2 = np.tile(np.expand_dims(diag2, 1), n)
         mat2 = mat2.transpose()
 
-        kernmat = mat1 + mat2 - 2 * distmat
+        kernmat = mat1 + mat2 - 2 * kernelmat
         kernmat = np.sqrt(kernmat)
 
         return kernmat
