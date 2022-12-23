@@ -73,7 +73,7 @@ class FeatureSelection(BaseTransformer):
     _tags = {
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
-        "scitype:transform-output": "Series",
+        "scitype:transform-output": ["Series", "Primitives"],
         # what scitype is returned: Primitives, Series, Panel
         "scitype:instancewise": True,  # is this an instance-wise transform?
         "X_inner_mtype": ["pd.DataFrame", "pd.Series"],
