@@ -136,18 +136,21 @@ class _ProphetAdapter(BaseForecaster):
             fh = fh_date[fh]
         return fh
 
-    def _convert_X_for_exog(self, X):
+    def _convert_X_for_exog(self, X, fh):
         """Conerce index of X to index expected by prophet."""
         if X is None:
             return None
         elif isinstance(X.index, pd.PeriodIndex):
             X = X.copy()
             X.index = X.index.to_timestamp()
+            X = X.loc[self.fh.to_absolute(self.cutoff)]
         elif X.index.is_integer():
             X = X.copy()
             X = X.loc[self.fh.to_absolute(self.cutoff).to_numpy()]
-            X.index = self.fh
+            X.index = fh
         # else X is pd.DateTimeIndex as prophet expects, and needs no conversion
+        else:
+            X = X.loc[fh]
         return X
 
     def _predict(self, fh=None, X=None):
@@ -175,7 +178,7 @@ class _ProphetAdapter(BaseForecaster):
         fh = self._get_prophet_fh()
         df = pd.DataFrame({"ds": fh}, index=fh)
 
-        X = self._convert_X_for_exog(X)
+        X = self._convert_X_for_exog(X, fh)
 
         # Merge X with df (of created future DatetimeIndex values)
         if X is not None:
@@ -240,7 +243,7 @@ class _ProphetAdapter(BaseForecaster):
         """
         fh = self._get_prophet_fh()
 
-        X = self._convert_X_for_exog(X)
+        X = self._convert_X_for_exog(X, fh)
 
         # prepare the return DataFrame - empty with correct cols
         var_names = ["Coverage"]
