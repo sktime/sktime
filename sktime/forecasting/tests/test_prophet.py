@@ -24,8 +24,8 @@ def test_prophet_nonnative_index(indextype):
     X = pd.DataFrame({"b": [1, 5, 3, 3, 5, 6], "c": [5, 5, 3, 3, 4, 2]})
 
     if indextype == "period":
-        y.index = pd.period_range('2000-01-01', periods=4)
-        X.index = pd.period_range('2000-01-01', periods=6)
+        y.index = pd.period_range("2000-01-01", periods=4)
+        X.index = pd.period_range("2000-01-01", periods=6)
 
     X_train = X.iloc[:4]
     X_test = X.iloc[4:]
