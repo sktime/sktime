@@ -60,11 +60,11 @@ def test_prophet_period_fh(convert_to_datetime):
     fh_index = pd.PeriodIndex(pd.date_range("1961-01", periods=36, freq="M"))
     fh = ForecastingHorizon(fh_index, is_relative=False)
 
-    forecaster = Prophet(  
+    forecaster = Prophet(
         seasonality_mode="multiplicative",
         n_changepoints=int(len(y) / 12),
         add_country_holidays={"country_name": "UnitedStates"},
-        yearly_seasonality=True
+        yearly_seasonality=True,
     )
 
     forecaster.fit(y)
