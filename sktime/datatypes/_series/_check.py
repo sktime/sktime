@@ -254,7 +254,7 @@ def _index_equally_spaced(index):
 
     # fallback for all other cases:
     # in general, we need to compute all differences and check explicitly
-    # CAVEAT: this has a comparabily long runtime and memory usage
+    # CAVEAT: this has a comparabily long runtime and high memory usage
     diffs = np.diff(index)
     all_equal = np.all(diffs == diffs[0])
 
