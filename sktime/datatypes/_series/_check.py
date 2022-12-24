@@ -245,7 +245,7 @@ def _index_equally_spaced(index):
         return False
 
     # if we arrive at this stage, and the index is PeriodIndex,
-    # we know it must be equally:
+    # we know it must be equally spaced:
     # it cannot have duplicates and must be sorted (other conditions for mtype),
     # therefore, by the pigeonhole principle, the
     # two necessary conditions we checked are also sufficient
