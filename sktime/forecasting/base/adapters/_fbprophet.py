@@ -128,6 +128,8 @@ class _ProphetAdapter(BaseForecaster):
     def _get_prophet_fh(self):
         """Get a prophet compatible fh, in datetime, even if fh was int."""
         fh = self.fh.to_absolute(cutoff=self.cutoff).to_pandas()
+        if isinstance(fh, pd.PeriodIndex):
+            fh = fh.to_timestamp()
         if not isinstance(fh, pd.DatetimeIndex):
             max_int = fh[-1] + 1
             fh_date = pd.date_range(start="2000-01-01", periods=max_int, freq="D")
@@ -138,7 +140,10 @@ class _ProphetAdapter(BaseForecaster):
         """Conerce index of X to index expected by prophet."""
         if X is None:
             return None
-        elif type(X.index) is pd.PeriodIndex or X.index.is_integer():
+        elif isinstance(X.index, pd.PeriodIndex):
+            X = X.copy()
+            X.index = X.index.to_timestamp()
+        elif X.index.is_integer():
             X = X.copy()
             X = X.loc[self.fh.to_absolute(self.cutoff).to_numpy()]
             X.index = self.fh
