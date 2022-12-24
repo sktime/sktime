@@ -35,7 +35,7 @@ class _ProphetAdapter(BaseForecaster):
         return y
 
     def _convert_input_to_date(self, y):
-        """Coerce y.index to pd.DateTimeIndex, for use by prophet."""
+        """Coerce y.index to pd.DatetimeIndex, for use by prophet."""
         if y is None:
             return None
         elif type(y.index) is pd.PeriodIndex:
@@ -43,7 +43,7 @@ class _ProphetAdapter(BaseForecaster):
             y.index = y.index.to_timestamp()
         elif y.index.is_integer():
             y = self._convert_int_to_date(y)
-        # else y is pd.DateTimeIndex as prophet expects, and needs no conversion
+        # else y is pd.DatetimeIndex as prophet expects, and needs no conversion
         return y
 
     def _remember_y_input_index_type(self, y):
@@ -142,13 +142,13 @@ class _ProphetAdapter(BaseForecaster):
             return None
         elif isinstance(X.index, pd.PeriodIndex):
             X = X.copy()
+            X = X.loc[self.fh.to_absolute(self.cutoff).to_pandas()]
             X.index = X.index.to_timestamp()
-            X = X.loc[self.fh.to_absolute(self.cutoff)]
         elif X.index.is_integer():
             X = X.copy()
             X = X.loc[self.fh.to_absolute(self.cutoff).to_numpy()]
             X.index = fh
-        # else X is pd.DateTimeIndex as prophet expects, and needs no conversion
+        # else X is pd.DatetimeIndex as prophet expects, and needs no conversion
         else:
             X = X.loc[fh]
         return X

@@ -37,7 +37,7 @@ def test_prophet_nonnative_index(indextype):
     y_pred = f.predict(fh=fh, X=X_test)
 
     if indextype == "range":
-        assert isinstance(y_pred.index, pd.RangeIndex)
+        assert y_pred.index.is_integer()
     if indextype == "period":
         assert isinstance(y_pred.index, pd.PeriodIndex)
 
@@ -73,7 +73,7 @@ def test_prophet_period_fh(convert_to_datetime):
 
     assert len(y_pred) == len(fh_index)
     if convert_to_datetime:
-        assert isinstance(y_pred, pd.DateTimeIndex)
+        assert isinstance(y_pred, pd.DatetimeIndex)
         assert (y_pred.index == fh_index.to_timestamp()).all()
     else:
         assert isinstance(y_pred, pd.PeriodIndex)
