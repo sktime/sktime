@@ -40,3 +40,41 @@ def test_prophet_nonnative_index(indextype):
         assert isinstance(y_pred.index, pd.RangeIndex)
     if indextype == "period":
         assert isinstance(y_pred.index, pd.PeriodIndex)
+
+
+@pytest.mark.skipif(
+    not _check_soft_dependencies("prophet", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
+@pytest.mark.parametrize("convert_to_datetime", [False, True])
+def test_prophet_period_fh(convert_to_datetime):
+    """Test Prophet with PeriodIndex based forecasting horizon, see issue #3537."""
+    from sktime.datasets import load_airline
+    from sktime.forecasting.base import ForecastingHorizon
+
+    y = load_airline()
+
+    if convert_to_datetime:
+        y = y.to_timestamp(freq="M")
+
+    fh_index = pd.PeriodIndex(pd.date_range("1961-01", periods=36, freq="M"))
+    fh = ForecastingHorizon(fh_index, is_relative=False)
+
+    forecaster = Prophet(  
+        seasonality_mode="multiplicative",
+        n_changepoints=int(len(y) / 12),
+        add_country_holidays={"country_name": "UnitedStates"},
+        yearly_seasonality=True
+    )
+
+    forecaster.fit(y)
+
+    y_pred = forecaster.predict(fh)
+
+    assert len(y_pred) == len(fh_index)
+    if convert_to_datetime:
+        assert isinstance(y_pred, pd.DateTimeIndex)
+        assert (y_pred.index == fh_index.to_timestamp()).all()
+    else:
+        assert isinstance(y_pred, pd.PeriodIndex)
+        assert (y_pred.index == fh_index).all()
