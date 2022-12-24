@@ -245,8 +245,9 @@ def _index_equally_spaced(index):
         return False
 
     # if we arrive at this stage, and the index is PeriodIndex,
-    # we know it must be equally spaced and sorted:
-    # it cannot have duplicates, and by the pigeonhole principle, the
+    # we know it must be equally:
+    # it cannot have duplicates and must be sorted (other conditions for mtype),
+    # therefore, by the pigeonhole principle, the
     # two necessary conditions we checked are also sufficient
     if isinstance(index, pd.PeriodIndex):
         return True
