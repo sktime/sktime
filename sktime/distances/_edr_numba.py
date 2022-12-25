@@ -6,11 +6,14 @@ __author__ = ["chrisholder", "TonyBagnall"]
 import warnings
 
 import numpy as np
-from numba import njit
-from numba.core.errors import NumbaWarning
+from sktime.utils.numba.njit import njit
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-# Warning occurs when using large time series (i.e. 1000x1000)
-warnings.simplefilter("ignore", category=NumbaWarning)
+if _check_soft_dependencies("numba", severity="none"):
+    from numba.core.errors import NumbaWarning
+
+    # Warning occurs when using large time series (i.e. 1000x1000)
+    warnings.simplefilter("ignore", category=NumbaWarning)
 
 
 @njit(cache=True)
