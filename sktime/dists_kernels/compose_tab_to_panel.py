@@ -80,6 +80,10 @@ class AggrDist(BasePairwiseTransformerPanel):
         if self.aggfunc_is_symm:
             self.set_tags(**{"symmetric": True})
 
+        if isinstance(transformer, BasePairwiseTransformer):
+            tags_to_clone = ["capability:missing_values"]
+            self.clone_tags(transformer, tags_to_clone)
+
     def _transform(self, X, X2=None):
         """Compute distance/kernel matrix.
 
@@ -192,6 +196,7 @@ class FlatDist(BasePairwiseTransformerPanel):
 
     _tags = {
         "X_inner_mtype": "numpy3D",  # which mtype is used internally in _transform?
+        "capability:unequal_length": False,
     }
 
     def __init__(self, transformer):
@@ -199,6 +204,10 @@ class FlatDist(BasePairwiseTransformerPanel):
         self.transformer = transformer
 
         super(FlatDist, self).__init__()
+
+        if isinstance(transformer, BasePairwiseTransformer):
+            tags_to_clone = ["capability:missing_values"]
+            self.clone_tags(transformer, tags_to_clone)
 
     def _transform(self, X, X2=None):
         """Compute distance/kernel matrix.
