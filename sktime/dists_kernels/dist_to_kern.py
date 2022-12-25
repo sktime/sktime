@@ -13,6 +13,15 @@ from sktime.dists_kernels._base import (
 SUPPORTED_MTYPES = ["pd-multiindex", "nested_univ", "df-list", "numpy3D"]
 
 
+def _trafo_diag(fun):
+    """Obtain a function which returns the diagonal from one that returns a matrix."""
+    def diag(X):
+        mat = fun(X)
+        return np.diag(mat)
+
+    return diag
+
+
 class KernelFromDist(BasePairwiseTransformerPanel):
     r"""Kernel function obtained from a distance function.
 
@@ -93,7 +102,7 @@ class KernelFromDist(BasePairwiseTransformerPanel):
         elif isinstance(dist_diag, BasePairwiseTransformer):
             diagfun = dist_diag.fit_transform
         else:
-            diagfun = dist_diag
+            diagfun = _trafo_diag(dist_diag)
 
         distmat = dist(X, X2) ** 2
 
@@ -203,11 +212,16 @@ class DistFromKernel(BasePairwiseTransformerPanel):
 
         kernelmat = kernel(X, X2)
 
-        diag1 = kernel(X)
+        if isinstance(kernel, BasePairwiseTransformerPanel):
+            diagfun = kernel.transform_diag
+        else:
+            diagfun = _trafo_diag(kernel)
+
+        diag1 = diagfun(X)
         if X2 is None:
             diag2 = diag1
         else:
-            diag2 = kernel(X2)
+            diag2 = diagfun(X2)
 
         diag1 = np.array(diag1).flatten()
         diag2 = np.array(diag2).flatten()
@@ -218,10 +232,10 @@ class DistFromKernel(BasePairwiseTransformerPanel):
         mat2 = np.tile(np.expand_dims(diag2, 1), n)
         mat2 = mat2.transpose()
 
-        kernmat = mat1 + mat2 - 2 * kernelmat
-        kernmat = np.sqrt(kernmat)
+        distmat = mat1 + mat2 - 2 * kernelmat
+        distmat = np.sqrt(distmat)
 
-        return kernmat
+        return distmat
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
