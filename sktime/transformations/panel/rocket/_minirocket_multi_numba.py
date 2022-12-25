@@ -6,7 +6,6 @@ __author__ = "angus924"
 import numpy as np
 
 from sktime.utils.numba.njit import njit
-
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 if _check_soft_dependencies("numba", severity="none"):
