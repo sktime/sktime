@@ -160,7 +160,7 @@ class MiniRocketMultivariateVariable(BaseTransformer):
             _fit_multi_var,
         )
 
-        X_2d_t, lenghts_1darray = _nested_dataframe_to_transposed2D_array_and_len_list(
+        X_2d_t, lengths_1darray = _nested_dataframe_to_transposed2D_array_and_len_list(
             X, pad=self.pad_value_short_series
         )
 
