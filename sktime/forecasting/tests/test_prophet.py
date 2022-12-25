@@ -73,8 +73,8 @@ def test_prophet_period_fh(convert_to_datetime):
 
     assert len(y_pred) == len(fh_index)
     if convert_to_datetime:
-        assert isinstance(y_pred, pd.DatetimeIndex)
+        assert isinstance(y_pred.index, pd.DatetimeIndex)
         assert (y_pred.index == fh_index.to_timestamp()).all()
     else:
-        assert isinstance(y_pred, pd.PeriodIndex)
+        assert isinstance(y_pred.index, pd.PeriodIndex)
         assert (y_pred.index == fh_index).all()
