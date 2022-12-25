@@ -395,6 +395,14 @@ Seasonality and Date-Time Features
 
     DateTimeFeatures
 
+.. currentmodule:: sktime.transformations.series.time_since
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TimeSince
+
 .. currentmodule:: sktime.transformations.series.fourier
 
 .. autosummary::
