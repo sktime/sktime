@@ -48,17 +48,13 @@ class TimeSeriesDBSCAN(BaseClusterer):
 
     Attributes
     ----------
-    cluster_centers_: np.ndarray (3d array of shape (n_clusters, n_dimensions,
-        series_length))
-        Time series that represent each of the cluster centers. If the algorithm stops
-        before fully converging these will not be consistent with labels_.
-    labels_: np.ndarray (1d array of shape (n_instance,))
-        Labels that is the index each time series belongs to.
-    inertia_: float
-        Sum of squared distances of samples to their closest cluster center, weighted by
-        the sample weights if provided.
-    n_iter_: int
-        Number of iterations run.
+    core_sample_indices_ : ndarray of shape (n_core_samples,)
+        Indices of core samples.
+    components_ : ndarray of shape (n_core_samples, n_features)
+        Copy of each core sample found by training.
+    labels_ : ndarray of shape (n_samples)
+        Cluster labels for each point in the dataset given to fit().
+        Noisy samples are given the label -1.
     """
 
     _tags = {
@@ -70,7 +66,7 @@ class TimeSeriesDBSCAN(BaseClusterer):
     }
 
     DELEGATED_PARAMS = ["eps", "min_samples", "algorithm", "leaf_size", "n_jobs"]
-    DELEGATED_FITTED_PARAMS = ["cluster_centers_", "labels_", "inertia_", "n_iter_"]
+    DELEGATED_FITTED_PARAMS = ["core_sample_indices_", "components_ ", "labels_"]
 
     def __init__(
         self,
@@ -144,7 +140,7 @@ class TimeSeriesDBSCAN(BaseClusterer):
         np.ndarray (1d array of shape (n_instances,))
             Index of the cluster each time series in X belongs to
         """
-        ...
+        return self.labels_
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
