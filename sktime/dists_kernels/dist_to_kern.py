@@ -112,6 +112,8 @@ class KernelFromDist(BasePairwiseTransformerPanel):
         else:
             diag2 = diagfun(X2)
 
+        print(diag1)
+
         diag1 = np.array(diag1).flatten() ** 2
         diag2 = np.array(diag2).flatten() ** 2
 
@@ -144,10 +146,15 @@ class KernelFromDist(BasePairwiseTransformerPanel):
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
         from sktime.dists_kernels.dtw import DtwDist
+        from sktime.transformations.series.adapt import PandasTransformAdaptor
         from sktime.transformations.series.summarize import SummaryTransformer
 
         params1 = {"dist": DtwDist()}
-        params2 = {"dist": DtwDist(), "dist_diag": SummaryTransformer("mean", None)}
+        t = SummaryTransformer("mean", None)
+        # we need this since multivariate summary produces two columns
+        # if one column, has no effect; if multiple, takes means by row
+        t = PandasTransformAdaptor("mean", {"axis": 1}) * t
+        params2 = {"dist": DtwDist(), "dist_diag": t}
 
         return [params1, params2]
 
