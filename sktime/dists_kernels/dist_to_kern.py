@@ -15,6 +15,7 @@ SUPPORTED_MTYPES = ["pd-multiindex", "nested_univ", "df-list", "numpy3D"]
 
 def _trafo_diag(fun):
     """Obtain a function which returns the diagonal from one that returns a matrix."""
+
     def diag(X):
         mat = fun(X)
         return np.diag(mat)
