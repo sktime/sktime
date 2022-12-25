@@ -5,10 +5,7 @@ __author__ = ["fkiraly"]
 
 import numpy as np
 
-from sktime.dists_kernels._base import (
-    BasePairwiseTransformer,
-    BasePairwiseTransformerPanel,
-)
+from sktime.dists_kernels._base import BasePairwiseTransformerPanel
 
 SUPPORTED_MTYPES = ["pd-multiindex", "nested_univ", "df-list", "numpy3D"]
 
@@ -93,6 +90,8 @@ class KernelFromDist(BasePairwiseTransformerPanel):
         distmat: np.array of shape [n, m]
             (i,j)-th entry contains distance/kernel between X.iloc[i] and X2.iloc[j]
         """
+        from sktime.transformations.base import BaseTransformer
+
         dist = self.dist
         dist_diag = self.dist_diag
         if dist_diag is None:
@@ -100,7 +99,7 @@ class KernelFromDist(BasePairwiseTransformerPanel):
 
         if isinstance(dist_diag, BasePairwiseTransformerPanel):
             diagfun = dist_diag.transform_diag
-        elif isinstance(dist_diag, BasePairwiseTransformer):
+        elif isinstance(dist_diag, BaseTransformer):
             diagfun = dist_diag.fit_transform
         else:
             diagfun = _trafo_diag(dist_diag)
