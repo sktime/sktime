@@ -13,6 +13,218 @@ All notable changes to this project will be documented in this file. We keep tra
 For upcoming changes and next releases, see our `milestones <https://github.com/sktime/sktime/milestones?direction=asc&sort=due_date&state=open>`_.
 For our long-term plan, see our :ref:`roadmap`.
 
+Version 0.15.0 - 2022-12-22
+---------------------------
+
+Highlights
+~~~~~~~~~~~~
+
+* ``MLflow`` custom flavor for ``sktime`` forecasting (:pr:`3912`, :pr:`3915`) :user:`benjaminbluhm`
+* compatibility with most recent versions of core dependencies ``sktime 1.2.0``and ``numpy 1.24`` (:pr:`3922`) :user:`fkiraly`
+* ``TimeBinner`` transformation for temporal bin aggregation (:pr:`3745`) :user:`kcc-lion`
+* E-Agglo estimator for hierarchical agglomerative cluster estimation (:pr:`3430`) :user:`KatieBuc`
+* week-end dummy ``is_weekend`` in ``DateTimeFeatures`` transformation (:pr:`3844`) :user:`KishManani`
+* deep learning classifiers migrated from ``sktime-dl`` to ``sktime``: ResNet, LSTM-FCN (:pr:`3714`, :pr:`3881`) :user:`nilesh05apr`, :user:`solen0id`
+
+Dependency changes
+~~~~~~~~~~~~~~~~~~
+
+* ``sktime`` is now compatible with ``numpy 1.24``, bound is relaxed to ``<1.25``
+* ``sktime`` is now compatible with ``sklearn 1.2.0``, bound is relaxed to ``<1.3.0``
+* ``pycatch22`` is no longer a soft dependency of ``sktime``, due to installation issues.
+  ``pycatch22`` based transformers are still functional if the dependency is installed in the python environment.
+* ``statsmodels`` will change from core dependency to soft dependency in ``sktime 0.16.0``
+
+Core interface changes
+~~~~~~~~~~~~~~~~~~~~~~
+
+BaseObject
+^^^^^^^^^^
+
+Comparison by equality for any ``sktime`` object now compares identity of parameters,
+as obtained via ``get_params``, with recursive application if objects/estimators are nested.
+
+Deprecations and removals
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Dependencies
+^^^^^^^^^^^^
+
+* ``statsmodels`` will change from core dependency to soft dependency in ``sktime 0.16.0``.
+  To ensure functioning of setups of ``sktime`` code dependent on ``statsmodels`` based estimators
+  after the deprecation period, ensure to install ``statsmodels`` in the environment explicitly,
+  or install the ``all_extras`` soft dependency set which will continue to contain ``statsmodels``.
+
+Data types, checks, conversions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+``datatypes.check_is_scitype``: 2nd return argument (only returned if ``return_metadata=True``)
+will be changed from ``list`` to ``dict`` format (see docstring).
+The ``list`` format is deprecated since 0.14.0, and replaced by ``dict`` in 0.15.0.
+The format is determined by temporary additional arg ``msg_legacy_interface``, which will be
+the default has now changed to ``False`` (``dict`` format).
+The ``msg_legacy_interface`` argument and the option to return the legacy ``list`` format will be removed in 0.16.0.
+
+Forecasting
+^^^^^^^^^^^
+
+* ``ExpandingWindowSplitter`` had ``start_with_window`` argument removed. From now on, ``initial_window=0`` should be used instead of ``start_with_window=False``.
+* the row transformers, ``SeriesToSeriesRowTransformer`` and ``SeriesToPrimitivesRowTransformer`` have been removed.
+  Row/instance vectorization functionality is natively supported by ``sktime`` since 0.11.0 and does not need to be added by these wrappers anymore.
+  Both transformers will be removed in 0.15.0. To migrate, simply remove the row transformer wrappers.
+  In some rarer, ambiguous vectorization cases (e.g., using wrapped functions that are vectorized, such as ``np.mean``),
+  ``FunctionTransformer`` may have to be used instead of ``SeriesToPrimitivesRowTransformer``.
+* change to public ``cutoff`` attribute delayed to 0.16.0:
+  public ``cutoff`` attribute of forecasters will change to ``pd.Index`` subtype, from index element.
+
+Time series classification
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* Delayed: the base class of ``ProbabilityThresholdEarlyClassifier`` will be changed to ``BaseEarlyClassifier`` in 0.16.0.
+  This will change how classification safety decisions are made and returned, see ``BaseEarlyClassifier`` or ``TEASER`` for the new interface.
+
+Transformations
+^^^^^^^^^^^^^^^
+
+* ``transformations.series.compose`` has been removed in favour of ``transformations.compose``.
+  All estimators in the former have been moved to the latter.
+* The default of ``default_fc_parameters`` in ``TSFreshFeatureExtractor`` and ``TSFreshRelevantFeatureExtractor``
+  has beenchanged from ``"efficient"`` to ``"comprehensive"``.
+
+Testing framework
+^^^^^^^^^^^^^^^^^
+
+* The general interface contract test ``test_methods_do_not_change_state`` has been renamed to ``test_non_state_changing_method_contract``
+
+Enhancements
+~~~~~~~~~~~~
+
+MLOps & Deployment
+~~~~~~~~~~~~~~~~~~
+
+* [ENH] MLflow custom flavor for ``sktime`` forecasting (:pr:`3912`) :user:`benjaminbluhm`
+
+BaseObject
+^^^^^^^^^^
+
+* [ENH] equality dunder for ``BaseObject`` to compare blueprint (:pr:`3862`) :user:`fkiraly`
+
+Forecasting
+^^^^^^^^^^^
+
+* [ENH] Check for frequency in hierarchical data, provide utility function to set frequency for hierarchical data (:pr:`3729`) :user:`danbartl`
+* [ENH] forecasting pipeline ``get_fitted_params`` (:pr:`3863`) :user:`fkiraly`
+
+Time series annotation
+^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] E-Agglo estimator for hierarchical agglomerative cluster estimation (:pr:`3430`) :user:`KatieBuc`
+
+Time series classification
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] Migrate LSTM-FCN classifier  from ``sktime-dl`` to ``sktime`` (:pr:`3714`) :user:`solen0id`
+* [ENH] Migrate ``ResNetClassifier`` from ``sktime-dl`` to ``sktime`` (:pr:`3881`) :user:`nilesh05apr`
+
+Time series regression
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] ``DummyRegressor`` for time series regression (:pr:`3968`) :user:`badrmarani`
+
+Transformations
+^^^^^^^^^^^^^^^
+
+* [ENH] ``TimeBinner`` transformation for temporal bin aggregation (:pr:`3745`) :user:`kcc-lion`
+* [ENH] Add ``is_weekend`` option to ``DateTimeFeatures`` trafo (:pr:`3844`) :user:`KishManani`
+* [ENH] Add multiplicative option to ``Detrender`` (:pr:`3931`) :user:`KishManani`
+
+Visualisations
+^^^^^^^^^^^^^^
+
+* [ENH] Add support for plotting intervals in ``plot_series`` (:pr:`3825`) :user:`chillerobscuro`
+* [ENH] Add ``colors`` argument to ``plot_series`` (:pr:`3908`) :user:`chillerobscuro`
+
+Fixes
+~~~~~
+
+Forecasting
+^^^^^^^^^^^
+
+* [BUG] in ``ConformalIntervals``, fix update of residuals matrix for sliding window splitter (:pr:`3914`) :user:`bethrice44`
+* [BUG] fix ``start_with_window`` deprecation in ``ExpandingWindowSplitter`` (:pr:`3953`) :user:`fkiraly`
+* [BUG] fix ``EnsembleForecaster`` erroneous broadcasting and attribute clash (:pr:`3964`) :user:`fkiraly`
+
+Time series classification
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [BUG] fix unreported ``set_params`` bug in ``ClassifierPipeline`` and ``RegressorPipeline`` (:pr:`3857`) :user:`fkiraly`
+* [BUG] fixes KNN estimators' ``kneighbors`` methods to work with all mtypes (:pr:`3927`) :user:`fkiraly`
+
+Time series regression
+^^^^^^^^^^^^^^^^^^^^^^
+
+* [BUG] fix unreported ``set_params`` bug in ``ClassifierPipeline`` and ``RegressorPipeline`` (:pr:`3857`) :user:`fkiraly`
+* [BUG] fixes KNN estimators' ``kneighbors`` methods to work with all mtypes (:pr:`3927`) :user:`fkiraly`
+
+Transformations
+^^^^^^^^^^^^^^^
+
+* [BUG] ``ClearSky`` doesn't raise error for range indexes and when ``X`` has no set frequency (:pr:`3872`) :user:`ciaran-g`
+* [BUG] ``sklearn 1.2.0`` compatibility - fix invalid elbow variable selection shrinkage parameter passed to ``sklearn`` ``NearestCentroid`` (:pr:`3921`) :user:`fkiraly`
+
+Visualisations
+^^^^^^^^^^^^^^
+
+* [BUG] fix soft dependency check in ``plotting.plot_correlations`` (:pr:`3887`) :user:`dsanr`
+
+
+Documentation
+~~~~~~~~~~~~~
+
+* [DOC] fixed rendering in dependencies doc (:pr:`3846`) :user:`templierw`
+* [DOC] update transformers extension section in transformers tutorial (:pr:`3860`) :user:`fkiraly`
+* [DOC] tidying Rocket docstrings (:pr:`3860`) :user:`TonyBagnall`
+* [DOC] added post-processing in pipelines to forecasting tutorial (:pr:`3878`) :user:`nshahpazov`
+* [DOC] changing import path for ``plot_cluster_algorithm`` (:pr:`3945`) :user:`GianFree`
+
+Maintenance
+~~~~~~~~~~~
+
+* [MNT] Additional project urls in ``pyproject.toml`` (#3864) :user:`lmmentel`
+* [MNT] ``sklearn 1.2.0`` compatibility - remove private ``_check_weights`` import in ``KNeighborsTimeSeriesClassifier`` and -``Regressor`` (:pr:`3918`) :user:`fkiraly`
+* [MNT] ``sklearn 1.2.0`` compatibility - cover ``BaseForest`` parameter change (:pr:`3919`) :user:`fkiraly`
+* [MNT] ``sklearn 1.2.0`` compatibility - decouple ``sklearn.base._pprint`` (:pr:`3923`) :user:`fkiraly`
+* [MNT] ``sklearn 1.2.0`` compatibility - remove ``normalize=False`` args from ``RidgeClassifierCV`` (:pr:`3924`) :user:`fkiraly`
+* [MNT] ``sklearn 1.2.0`` compatibility - ``ComposableTimeSeriesForest`` reserved attribute fix (:pr:`3926`) :user:`fkiraly`
+* [MNT] remove ``pycatch22`` as a soft dependency (:pr:`3917`) :user:`fkiraly`
+* [MNT] Update ``sklearn`` compatibility to ``1.2.x``, version bound to ``<1.3`` (:pr:`3922`) :user:`fkiraly`
+* [MNT] bump ``numpy`` version bound to ``<1.25`` and fix compatibility issues (:pr:`3915`) :user:`aquemy`, :user:`fkiraly`
+* [MNT] ``0.15.0`` deprecation actions (:pr:`3952`) :user:`fkiraly`
+* [MNT] skip sporadic ``ResNetClassifier`` failures (:pr:`3974`) :user:`fkiraly`
+
+Contributors
+~~~~~~~~~~~~
+
+:user:`aiwalter`,
+:user:`aquemy`,
+:user:`badrmarani`,
+:user:`benjaminbluhm`,
+:user:`bethrice44`,
+:user:`chillerobscuro`,
+:user:`ciaran-g`,
+:user:`danbartl`,
+:user:`dsanr`,
+:user:`fkiraly`,
+:user:`GianFree`,
+:user:`KatieBuc`,
+:user:`kcc-lion`,
+:user:`KishManani`,
+:user:`lmmentel`,
+:user:`nilesh05apr`,
+:user:`nshahpazov`,
+:user:`solen0id`,
+:user:`templierw`,
+:user:`TonyBagnall`
 
 Version 0.14.1 - 2022-11-30
 ---------------------------
@@ -112,7 +324,7 @@ Transformations
 * [BUG] in ``Reconciler``, fix summation matrix bug for small hierarchies with one unique ID in outer index (:pr:`3859`) :user:`ciaran-g`
 
 Testing framework
-^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^
 
 * [BUG] Update ``test_deep_estimator_full`` to incorporate new versions of ``tensorflow`` / ``keras`` (:pr:`3820`) :user:`achieveordie`
 
