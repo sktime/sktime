@@ -253,7 +253,7 @@ class WEASEL(BaseClassifier):
 
         # Ridge Classifier does not give probabilities
         if not self.support_probabilities:
-            self.clf = RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=False)
+            self.clf = RidgeClassifierCV(alphas=np.logspace(-3, 3, 10))
         else:
             self.clf = LogisticRegression(
                 max_iter=5000,
