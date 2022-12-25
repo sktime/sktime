@@ -4,9 +4,9 @@ __author__ = ["chrisholder", "TonyBagnall"]
 from typing import Callable
 
 import numpy as np
-from numba import njit
 
 from sktime.distances.base import DistanceCallable
+from sktime.utils.numba.njit import njit
 
 
 @njit(cache=True)

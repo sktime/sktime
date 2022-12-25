@@ -4,7 +4,8 @@ __author__ = ["chrisholder"]
 from typing import Tuple
 
 import numpy as np
-from numba import njit
+
+from sktime.utils.numba.njit import njit
 
 
 @njit(fastmath=True)

@@ -93,11 +93,10 @@ class _WdtwDistance(NumbaDistance):
             If the itakura_max_slope is not a float or int.
             If the value of g is not a float
         """
-        from numba import njit
-
         from sktime.distances._distance_alignment_paths import compute_min_return_path
         from sktime.distances._wdtw_numba import _weighted_cost_matrix
         from sktime.distances.lower_bounding import resolve_bounding_matrix
+        from sktime.utils.numba.njit import njit
 
         _bounding_matrix = resolve_bounding_matrix(
             x, y, window, itakura_max_slope, bounding_matrix
@@ -187,10 +186,9 @@ class _WdtwDistance(NumbaDistance):
             If the itakura_max_slope is not a float or int.
             If the value of g is not a float
         """
-        from numba import njit
-
         from sktime.distances._wdtw_numba import _weighted_cost_matrix
         from sktime.distances.lower_bounding import resolve_bounding_matrix
+        from sktime.utils.numba.njit import njit
 
         _bounding_matrix = resolve_bounding_matrix(
             x, y, window, itakura_max_slope, bounding_matrix

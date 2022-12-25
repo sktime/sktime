@@ -3,7 +3,11 @@
 
 __author__ = ["MatthewMiddlehurst"]
 
-from numba import njit, types
+from sktime.utils.numba.njit import njit
+from sktime.utils.validation._dependencies import _check_soft_dependencies
+
+if _check_soft_dependencies("numba", severity="none"):
+    from numba import types
 
 
 @njit(fastmath=True, cache=True)

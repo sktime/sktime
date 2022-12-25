@@ -6,7 +6,8 @@ __author__ = ["MatthewMiddlehurst"]
 import math
 
 import numpy as np
-from numba import njit
+
+from sktime.utils.numba.njit import njit
 
 
 @njit(fastmath=True, cache=True)
