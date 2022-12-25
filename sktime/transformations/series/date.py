@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Extract calendar features from datetimeindex."""
-__author__ = ["danbartl"]
+__author__ = ["danbartl", "KishManani"]
 __all__ = ["DateTimeFeatures"]
 
 import warnings
@@ -115,7 +115,12 @@ class DateTimeFeatures(BaseTransformer):
         "scitype:transform-output": "Series",
         # what scitype is returned: Primitives, Series, Panel
         "scitype:instancewise": True,  # is this an instance-wise transform?
-        "X_inner_mtype": ["pd.DataFrame", "pd.Series"],
+        "X_inner_mtype": [
+            "pd.Series",
+            "pd.DataFrame",
+            "pd-multiindex",
+            "pd_multiindex_hier",
+        ],
         # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "univariate-only": False,
@@ -156,12 +161,17 @@ class DateTimeFeatures(BaseTransformer):
 
         Z = X.copy()
 
+        if isinstance(Z.index, pd.MultiIndex):
+            time_index = Z.index.get_level_values(-1)
+        else:
+            time_index = Z.index
+
         x_df = pd.DataFrame(index=Z.index)
-        if isinstance(x_df.index, pd.PeriodIndex):
-            x_df["date_sequence"] = Z.index.to_timestamp().astype("datetime64[ns]")
-        elif isinstance(x_df.index, pd.DatetimeIndex):
-            x_df["date_sequence"] = Z.index
-        elif not isinstance(x_df.index, pd.DatetimeIndex):
+        if isinstance(time_index, pd.PeriodIndex):
+            x_df["date_sequence"] = time_index.to_timestamp().astype("datetime64[ns]")
+        elif isinstance(time_index, pd.DatetimeIndex):
+            x_df["date_sequence"] = time_index
+        elif not isinstance(time_index, pd.DatetimeIndex):
             raise ValueError("Index type not supported")
 
         if self.manual_selection is None:

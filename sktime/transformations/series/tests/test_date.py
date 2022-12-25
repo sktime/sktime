@@ -10,6 +10,7 @@ from pandas.testing import assert_frame_equal
 from sktime.datasets import load_airline, load_longley
 from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.transformations.series.date import DateTimeFeatures
+from sktime.utils._testing.hierarchical import _make_hierarchical
 
 # Load multivariate dataset longley and apply calendar extraction
 
@@ -80,6 +81,12 @@ def df_datetime_daily_idx():
         data={"y": [1, 1, 1, 1, 1, 1, 1]},
         index=pd.date_range(start="2000-01-01", freq="D", periods=7),
     )
+
+
+@pytest.fixture()
+def df_panel():
+    """Create panel data of two time series using pd-multiindex mtype."""
+    return _make_hierarchical(hierarchy_levels=(2,), min_timepoints=3, max_timepoints=3)
 
 
 all_args = [
@@ -185,5 +192,24 @@ def test_manual_selection_is_weekend(df_datetime_daily_idx):
     expected = pd.DataFrame(
         data={"y": [1, 1, 1, 1, 1, 1, 1], "is_weekend": [1, 1, 0, 0, 0, 0, 0]},
         index=df_datetime_daily_idx.index,
+    )
+    assert_frame_equal(Xt, expected)
+
+
+def test_transform_panel(df_panel):
+    """Test `.transform()` on panel data."""
+    transformer = DateTimeFeatures(
+        manual_selection=["year", "month_of_year", "day_of_month"]
+    )
+    Xt = transformer.fit_transform(df_panel)
+
+    expected = pd.DataFrame(
+        index=df_panel.index,
+        data={
+            "c0": df_panel["c0"].values,
+            "year": [2000, 2000, 2000, 2000, 2000, 2000],
+            "month_of_year": [1, 1, 1, 1, 1, 1],
+            "day_of_month": [1, 2, 3, 1, 2, 3],
+        },
     )
     assert_frame_equal(Xt, expected)
