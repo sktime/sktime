@@ -112,8 +112,6 @@ class KernelFromDist(BasePairwiseTransformerPanel):
         else:
             diag2 = diagfun(X2)
 
-        print(diag1)
-
         diag1 = np.array(diag1).flatten() ** 2
         diag2 = np.array(diag2).flatten() ** 2
 
