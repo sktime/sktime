@@ -74,6 +74,9 @@ class BaseGridSearch(_DelegatedForecaster):
         self._extend_to_all_scitypes("y_inner_mtype")
         self._extend_to_all_scitypes("X_inner_mtype")
 
+    # attribute for _DelegatedForecaster, which then delegates
+    #     all non-overridden methods are same as of getattr(self, _delegate_name)
+    #     see further details in _DelegatedForecaster docstring
     _delegate_name = "best_forecaster_"
 
     def _extend_to_all_scitypes(self, tagname):
@@ -221,7 +224,8 @@ class BaseGridSearch(_DelegatedForecaster):
         # Raise error if all fits in evaluate failed because all score values are NaN.
         if self.best_index_ == -1:
             raise NotFittedError(
-                f"""All fits of forecaster failed, set error_score='raise' to see the exceptions.
+                f"""All fits of forecaster failed,
+                set error_score='raise' to see the exceptions.
                 Failed forecaster: {self.forecaster}"""
             )
         self.best_score_ = results.loc[self.best_index_, f"mean_{scoring_name}"]
@@ -385,9 +389,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> y = load_shampoo_sales()
     >>> fh = [1,2,3]
-    >>> cv = ExpandingWindowSplitter(
-    ...     start_with_window=True,
-    ...     fh=fh)
+    >>> cv = ExpandingWindowSplitter(fh=fh)
     >>> forecaster = NaiveForecaster()
     >>> param_grid = {"strategy" : ["last", "mean", "drift"]}
     >>> gscv = ForecastingGridSearchCV(
@@ -415,7 +417,6 @@ class ForecastingGridSearchCV(BaseGridSearch):
     >>> cv = ExpandingWindowSplitter(
     ...     initial_window=24,
     ...     step_length=12,
-    ...     start_with_window=True,
     ...     fh=[1,2,3])
     >>> gscv = ForecastingGridSearchCV(
     ...     forecaster=pipe,
@@ -434,10 +435,10 @@ class ForecastingGridSearchCV(BaseGridSearch):
     ...     },
     ...     ],
     ...     cv=cv,
-    ...     n_jobs=-1)
-    >>> gscv.fit(y)
+    ...     n_jobs=-1)  # doctest: +SKIP
+    >>> gscv.fit(y)  # doctest: +SKIP
     ForecastingGridSearchCV(...)
-    >>> y_pred = gscv.predict(fh=[1,2,3])
+    >>> y_pred = gscv.predict(fh=[1,2,3])  # doctest: +SKIP
     """
 
     def __init__(

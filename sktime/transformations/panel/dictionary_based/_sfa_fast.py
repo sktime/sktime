@@ -25,7 +25,6 @@ from numba import (
 )
 from numba.core import types
 from numba.typed import Dict
-from scipy.sparse import csr_matrix
 from sklearn.feature_selection import chi2, f_classif
 from sklearn.preprocessing import KBinsDiscretizer
 from sklearn.tree import DecisionTreeClassifier
@@ -149,6 +148,7 @@ class SFAFast(BaseTransformer):
         "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "pd_Series_Table",  # which mtypes does y require?
         "requires_y": True,  # does y need to be passed in fit?
+        "python_dependencies": "scipy",
     }
 
     def __init__(
@@ -324,6 +324,8 @@ class SFAFast(BaseTransformer):
         -------
         List of dictionaries containing SFA words
         """
+        from scipy.sparse import csr_matrix
+
         self.check_is_fitted()
         X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
         X = X.squeeze(1)
@@ -376,6 +378,8 @@ class SFAFast(BaseTransformer):
 
     def transform_to_bag(self, words, word_len, y=None):
         """Transform words to bag-of-pattern and apply feature selection."""
+        from scipy.sparse import csr_matrix
+
         bag_of_words = None
         rng = check_random_state(self.random_state)
 

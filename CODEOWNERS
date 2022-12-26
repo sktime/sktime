@@ -3,6 +3,9 @@
 
 * @fkiraly @aiwalter @guzalbulatova
 
+
+sktime/regression/dummy/ @badrmarani
+
 sktime/classification/dictionary_based/_boss.py @patrickzib @MatthewMiddlehurst @TonyBagnall
 sktime/classification/dictionary_based/_cboss.py @patrickzib @MatthewMiddlehurst @TonyBagnall
 sktime/classification/dictionary_based/_muse.py @patrickzib @MatthewMiddlehurst @TonyBagnall
@@ -37,6 +40,7 @@ sktime/transformations/panel/dictionary_based/_sax.py @patrickzib @MatthewMiddle
 sktime/transformations/panel/dictionary_based/_sfa.py @patrickzib @MatthewMiddlehurst
 sktime/transformations/panel/dictionary_based/_sfa_fast.py @patrickzib @MatthewMiddlehurst
 sktime/transformations/panel/catch22.py @MatthewMiddlehurst
+sktime/transformations/panel/catch22wrapper.py @MatthewMiddlehurst
 sktime/transformations/panel/random_intervals.py @MatthewMiddlehurst
 sktime/transformations/panel/shapelet_transform.py @jasonlines @ABostrom @MatthewMiddlehurst @TonyBagnall
 sktime/transformations/panel/supervised_intervals.py @MatthewMiddlehurst
@@ -57,6 +61,7 @@ sktime/transformations/panel/augmenter.py @MrPr3ntice @iljamaurer
 sktime/transformations/multiplex.py @miraep8
 sktime/transformations/tests/test_multiplexer.py @miraep8
 sktime/transformations/panel/channel_selection.py @haskarb @a-pasos-ruiz @TonyBagnall
+sktime/transformations/series/time_since.py @KishManani
 
 sktime/forecasting/base/ @fkiraly @mloning @aiwalter
 sktime/forecasting/base/adapters/_statsforecast.py @FedericoGarza
@@ -88,3 +93,5 @@ sktime/annotation/datagen.py @lmmentel
 sktime/transformations/series/clasp.py @patrickzib @ermshaua
 
 .github/workflows/* @lmmentel @freddyaboulton
+
+sktime/utils/mlflow_sktime.py @benjaminbluhm

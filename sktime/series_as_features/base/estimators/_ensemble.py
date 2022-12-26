@@ -13,7 +13,6 @@ import numpy as np
 import pandas as pd
 from joblib import Parallel, delayed
 from numpy import float64 as DOUBLE
-from scipy.sparse import issparse
 from sklearn.base import clone
 from sklearn.ensemble._base import _set_random_states
 from sklearn.ensemble._forest import (
@@ -104,12 +103,12 @@ class BaseTimeSeriesForest(BaseForest):
         self.max_samples = max_samples
 
     def _make_estimator(self, append=True, random_state=None):
-        """Make and configure a copy of the `estimator_` attribute.
+        """Make and configure a copy of the `_estimator` attribute.
 
         Warning: This method should be used to properly instantiate new
         sub-estimators.
         """
-        estimator = clone(self.estimator_)
+        estimator = clone(self._estimator)
         estimator.set_params(**{p: getattr(self, p) for p in self.estimator_params})
 
         if random_state is not None:
@@ -143,7 +142,7 @@ class BaseTimeSeriesForest(BaseForest):
         -------
         self : object
         """
-        #        X, y = check_X_y(X, y, enforce_univariate=True)
+        from scipy.sparse import issparse
 
         # Validate or convert input data
         if sample_weight is not None:

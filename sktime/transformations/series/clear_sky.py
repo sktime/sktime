@@ -7,7 +7,6 @@ __author__ = ["ciaran-g"]
 import numpy as np
 import pandas as pd
 from joblib import Parallel, delayed
-from scipy.stats import vonmises
 
 from sktime.transformations.base import BaseTransformer
 
@@ -87,7 +86,8 @@ class ClearSky(BaseTransformer):
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "requires_y": False,  # does y need to be passed in fit?
         "enforce_index_type": [
-            pd.DatetimeIndex
+            pd.DatetimeIndex,
+            pd.PeriodIndex,
         ],  # index type that needs to be enforced in X/y
         "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
         "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
@@ -98,7 +98,7 @@ class ClearSky(BaseTransformer):
         "handles-missing-data": False,
         "capability:missing_values:removes": True,
         "python_version": None,  # PEP 440 python version specifier to limit versions
-        "python_dependencies": "statsmodels",
+        "python_dependencies": ["statsmodels", "scipy"],
     }
 
     def __init__(
@@ -135,12 +135,15 @@ class ClearSky(BaseTransformer):
         -------
         self: reference to self
         """
+        # check that the data is formatted correctly etc
+        self.freq = _check_index(X)
+        # now get grid of model
         df = pd.DataFrame(index=X.index)
         df["yday"] = df.index.dayofyear
         df["tod"] = df.index.hour + df.index.minute / 60 + df.index.second / 60
 
         # set up smoothing grid
-        tod = pd.timedelta_range(start="0T", end="1D", freq=df.index.freq)[:-1]
+        tod = pd.timedelta_range(start="0T", end="1D", freq=self.freq)[:-1]
         tod = [(x.total_seconds() / (60 * 60)) for x in tod.to_pytimedelta()]
         yday = pd.RangeIndex(start=1, stop=367)
         indx = pd.MultiIndex.from_product([yday, tod], names=["yday", "tod"])
@@ -184,6 +187,14 @@ class ClearSky(BaseTransformer):
         -------
         X_trafo : transformed version of X
         """
+        _freq_ind = _check_index(X)
+        if self.freq != _freq_ind:
+            raise ValueError(
+                """
+                Change in frequency detected from original input. Make sure
+                X is the same frequency as used in .fit().
+                """
+            )
         # get required seasonal index
         yday = X.index.dayofyear
         tod = X.index.hour + X.index.minute / 60 + X.index.second / 60
@@ -215,6 +226,14 @@ class ClearSky(BaseTransformer):
         -------
         X_trafo : inverse transformed version of X
         """
+        _freq_ind = _check_index(X)
+        if self.freq != _freq_ind:
+            raise ValueError(
+                """
+                Change in frequency detected from original input. Make sure
+                X is the same frequency as used in .fit().
+                """
+            )
         yday = X.index.dayofyear
         tod = X.index.hour + X.index.minute / 60 + X.index.second / 60
         indx_seasonal = pd.MultiIndex.from_arrays([yday, tod], names=["yday", "tod"])
@@ -285,6 +304,7 @@ def _clearskypower(y, q, tod_i, doy_i, tod_vec, doy_vec, bw_tod, bw_doy):
     csp : float
         The clear sky power at tod_i and doy_i
     """
+    from scipy.stats import vonmises
     from statsmodels.stats.weightstats import DescrStatsW
 
     wts_tod = vonmises.pdf(
@@ -300,3 +320,49 @@ def _clearskypower(y, q, tod_i, doy_i, tod_vec, doy_vec, bw_tod, bw_doy):
     csp = DescrStatsW(y, weights=wts).quantile(probs=q).values[0]
 
     return csp
+
+
+def _check_index(X):
+    """Check input value frequency is set and we have the correct index.
+
+    Parameters
+    ----------
+    X : Series or pd.DataFrame
+        Data used to be inversed transformed.
+
+    Raises
+    ------
+    ValueError : Input index must be class pd.DatetimeIndex or pd.PeriodIndex.
+    ValueError : Input index frequency cannot be inferred and is not set.
+    ValueError : Frequency of data not suitable for transformer as is.
+
+    Returns
+    -------
+    freq_ind : str or None
+        Frequency of data in string format
+
+    """
+    if not (isinstance(X.index, pd.DatetimeIndex)) | (
+        isinstance(X.index, pd.PeriodIndex)
+    ):
+        raise ValueError(
+            "Input index must be class pd.DatetimeIndex or pd.PeriodIndex."
+        )
+    # check that it has a frequency, if not infer
+    freq_ind = X.index.freq
+    if freq_ind is None:
+        freq_ind = pd.infer_freq(X.index)
+        if freq_ind is None:
+            raise ValueError("Input index frequency cannot be inferred and is not set.")
+
+    tod = pd.timedelta_range(start="0T", end="1D", freq=freq_ind)
+    # checck frequency of tod
+    if (tod.freq > pd.offsets.Day(1)) | (tod.freq < pd.offsets.Second(1)):
+        raise ValueError(
+            """
+            Transformer intended to be used with input frequency of greater than
+            or equal to one day and with a frequency of less or equal to than
+            1 second. Contributions welcome on adapting for these use cases.
+            """
+        )
+    return freq_ind
