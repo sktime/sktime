@@ -64,6 +64,13 @@ class TimeBinAggregate(BaseTransformer):
         "X_inner_mtype": ["pd.DataFrame"],
         # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # and for y?
+        "handles-missing-data": True,
+        "capability:multivariate": False,
+        "capability:unequal_length": True,
+        "capability:unequal_length:removes": True,
+        "fit_is_empty": True,
+        "transform-returns-same-time-index": False,
+        "capability:inverse_transform": False,
     }
 
     def __init__(self, bins, aggfunc=None, return_index="bin_start"):
