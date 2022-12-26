@@ -2,7 +2,6 @@
 """Time series interpolator/re-sampler."""
 import numpy as np
 import pandas as pd
-from scipy import interpolate
 
 from sktime.transformations.base import BaseTransformer
 
@@ -34,6 +33,7 @@ class TSInterpolator(BaseTransformer):
         "X_inner_mtype": "nested_univ",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
         "fit_is_empty": True,
+        "python_dependencies": "scipy",
     }
 
     def __init__(self, length):
@@ -65,6 +65,8 @@ class TSInterpolator(BaseTransformer):
         -------
         numpy.array : with user defined size
         """
+        from scipy import interpolate
+
         f = interpolate.interp1d(list(np.linspace(0, 1, len(cell))), cell.to_numpy())
         Xt = f(np.linspace(0, 1, self.length))
         return pd.Series(Xt)

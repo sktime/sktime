@@ -8,15 +8,19 @@ import math
 from warnings import simplefilter
 
 import numpy as np
-from numba import (
-    NumbaPendingDeprecationWarning,
-    NumbaTypeSafetyWarning,
-    njit,
-    objmode,
-    prange,
-)
-from numba.core import types
-from numba.typed import Dict
+
+from sktime.utils.numba.njit import njit
+from sktime.utils.validation._dependencies import _check_soft_dependencies
+
+if _check_soft_dependencies("numba", severity="none"):
+    from numba import (
+        NumbaPendingDeprecationWarning,
+        NumbaTypeSafetyWarning,
+        objmode,
+        prange,
+    )
+    from numba.core import types
+    from numba.typed import Dict
 
 # The binning methods to use: equi-depth, equi-width, information gain or kmeans
 binning_methods = {"equi-depth", "equi-width", "information-gain", "kmeans", "quantile"}
