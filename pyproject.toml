@@ -46,6 +46,7 @@ classifiers = [
 requires-python = ">=3.7,<3.12"
 dependencies = [
     "deprecated>=1.2.13",
+    "numba>=0.53; python_version < '3.11'",
     "numpy>=1.21.0,<1.25",
     "pandas>=1.1.0,<1.6.0",
     "scikit-learn>=0.24.0,<1.3.0",
@@ -66,7 +67,6 @@ all_extras = [
     "keras-self-attention",
     "matplotlib>=3.3.2",
     "mne",
-    "numba>=0.53; python_version < '3.11'",
     "pmdarima>=1.8.0,!=1.8.1,<3.0.0",
     "prophet>=1.1",
     "pykalman>=0.9.5",
