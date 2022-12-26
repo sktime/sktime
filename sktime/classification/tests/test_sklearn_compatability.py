@@ -85,6 +85,8 @@ if _check_soft_dependencies("numba", severity="none"):
             cv=3,
         ),
     ]
+else:
+    COMPOSITE_ESTIMATORS = []
 
 
 @pytest.mark.skipif(
