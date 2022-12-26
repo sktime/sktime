@@ -13,44 +13,48 @@ from sktime.transformations.base import BaseTransformer
 
 
 class Rocket(BaseTransformer):
-    """ROCKET.
+    """RandOm Convolutional KErnel Transform (ROCKET).
 
-    RandOm Convolutional KErnel Transform
+    ROCKET [1]_ generates random convolutional kernels, including random length and
+    dilation. It transforms the time series with two features per kernel. The first
+    feature is global max pooling and the second is proportion of positive values.
+
 
     Parameters
     ----------
-    num_kernels              : int, (default=10,000)
-                                number of random convolutional kernels
-    normalise                : boolean, (default=True)
-                                whether or not to normalise the input time
-                                series per instance
-    n_jobs                   : int, (default=1)
-                                The number of jobs to run in parallel
-                                for `transform`. ``-1`` means using all processors.
-    random_state             : int or None, (default=None)
-                                random seed, not set by default
+    num_kernels : int, default=10,000
+       number of random convolutional kernels.
+    normalise : boolean, default True
+       whether or not to normalise the input time series per instance.
+    n_jobs : int, default=1
+       The number of jobs to run in parallel for `transform`. ``-1`` means use all
+       processors.
+    random_state : None or int, optional, default = None
+
+    See Also
+    --------
+    MultiRocketMultivariate, MiniRocket, MiniRocketMultivariate, Rocket
 
     References
     ----------
-    .. [1] Dempster, Angus and Petitjean, Francois and Webb, Geoffrey I
-        ROCKET: Exceptionally fast and accurate time series
-        classification using random convolutional kernels,
-        2019, arXiv:1910.13051
-
+    .. [1] Tan, Chang Wei and Dempster, Angus and Bergmeir, Christoph
+        and Webb, Geoffrey I,
+        "ROCKET: Exceptionally fast and accurate time series
+      classification using random convolutional kernels",2020,
+      https://link.springer.com/article/10.1007/s10618-020-00701-z,
+      https://arxiv.org/abs/1910.13051
 
     Examples
     --------
     >>> from sktime.transformations.panel.rocket import Rocket
-    >>> from sktime.datasets import load_gunpoint
-    >>> # load univariate dataset
-    >>> X_train, _ = load_gunpoint(split="train", return_X_y=True)
-    >>> X_test, _ = load_gunpoint(split="test", return_X_y=True)
-    >>> pre_clf = Rocket()
-    >>> pre_clf.fit(X_train, y=None)
+    >>> from sktime.datasets import load_unit_test
+    >>> X_train, y_train = load_unit_test(split="train") # doctest: +SKIP
+    >>> X_test, y_test = load_unit_test(split="test") # doctest: +SKIP
+    >>> trf = Rocket(num_kernels=512) # doctest: +SKIP
+    >>> trf.fit(X_train) # doctest: +SKIP
     Rocket(...)
-    >>> X_transformed = pre_clf.transform(X_test)
-    >>> X_transformed.shape
-    (150, 20000)
+    >>> X_train = trf.transform(X_train) # doctest: +SKIP
+    >>> X_test = trf.transform(X_test) # doctest: +SKIP
     """
 
     _tags = {

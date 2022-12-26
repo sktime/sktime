@@ -1,12 +1,18 @@
 # -*- coding: utf-8 -*-
 """ShapeletTransform test code."""
 import numpy as np
+import pytest
 from numpy import testing
 
 from sktime.datasets import load_basic_motions, load_unit_test
 from sktime.transformations.panel.shapelet_transform import RandomShapeletTransform
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("numba", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
 def test_st_on_unit_test():
     """Test of ShapeletTransform on unit test data."""
     # load unit test data
@@ -26,6 +32,10 @@ def test_st_on_unit_test():
     )
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("numba", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
 def test_st_on_basic_motions():
     """Test of ShapeletTransform on basic motions data."""
     # load basic motions data

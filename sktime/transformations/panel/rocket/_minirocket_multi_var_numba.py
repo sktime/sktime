@@ -4,7 +4,19 @@
 __author__ = ["angus924", "michaelfeil"]
 
 import numpy as np
-from numba import njit, prange, vectorize
+
+from sktime.utils.numba.njit import njit
+from sktime.utils.validation._dependencies import _check_soft_dependencies
+
+if _check_soft_dependencies("numba", severity="none"):
+    from numba import prange, vectorize
+
+    @vectorize("float32(float32,float32)", nopython=True, cache=True)
+    def _PPV(a, b):
+        if a > b:
+            return 1
+        else:
+            return 0
 
 
 @njit(
@@ -496,14 +508,6 @@ def _fit_multi_var(
         num_features_per_dilation,
         biases,
     )
-
-
-@vectorize("float32(float32,float32)", nopython=True, cache=True)
-def _PPV(a, b):
-    if a > b:
-        return 1
-    else:
-        return 0
 
 
 @njit(

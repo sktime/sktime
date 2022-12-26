@@ -4,7 +4,12 @@
 __author__ = "angus924"
 
 import numpy as np
-from numba import njit, prange
+
+from sktime.utils.numba.njit import njit
+from sktime.utils.validation._dependencies import _check_soft_dependencies
+
+if _check_soft_dependencies("numba", severity="none"):
+    from numba import prange
 
 
 @njit(

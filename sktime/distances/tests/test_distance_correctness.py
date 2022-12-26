@@ -6,6 +6,7 @@ results generated with tsml, in distances.tests.TestDistances.
 """
 __author__ = ["chrisholder", "TonyBagnall"]
 
+import pytest
 from numpy.testing import assert_almost_equal
 
 from sktime.datasets import load_basic_motions, load_unit_test
@@ -21,6 +22,7 @@ from sktime.distances import (
     wddtw_distance,
     wdtw_distance,
 )
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 distances = [
     "dtw",
@@ -72,6 +74,10 @@ basic_motions_distances = {
 }
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("numba", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
 def test_multivariate_correctness():
     """Test distance correctness on BasicMotions: multivariate, equal length."""
     trainX, trainy = load_basic_motions(return_type="numpy3D")
@@ -100,6 +106,10 @@ def test_multivariate_correctness():
         assert_almost_equal(d, basic_motions_distances["twe"][j], 4)
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("numba", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
 def test_univariate_correctness():
     """Test dtw correctness on UnitTest: univariate, equal length."""
     trainX, trainy = load_unit_test(return_type="numpy3D")

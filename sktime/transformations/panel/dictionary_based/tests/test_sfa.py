@@ -9,8 +9,13 @@ import pytest
 from sktime.datasets import load_gunpoint
 from sktime.datatypes._panel._convert import from_nested_to_2d_array
 from sktime.transformations.panel.dictionary_based._sfa import SFA
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("numba", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
 # Check the transformer has changed the data correctly.
 @pytest.mark.parametrize(
     "binning_method", ["equi-depth", "equi-width", "information-gain", "kmeans"]
@@ -36,6 +41,10 @@ def test_transformer(binning_method):
     _ = p.transform(X, y)
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("numba", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
 @pytest.mark.parametrize("use_fallback_dft", [True, False])
 @pytest.mark.parametrize("norm", [True, False])
 def test_dft_mft(use_fallback_dft, norm):
@@ -97,6 +106,10 @@ def test_dft_mft(use_fallback_dft, norm):
     assert len(mft[0]) == word_length
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("numba", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
 @pytest.mark.parametrize("binning_method", ["equi-depth", "information-gain"])
 def test_sfa_anova(binning_method):
     """Test SFA expected breakpoints."""
@@ -133,6 +146,10 @@ def test_sfa_anova(binning_method):
     _ = p2.transform(X, y)
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("numba", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
 # test word lengths larger than the window-length
 @pytest.mark.parametrize("word_length", [6, 7])
 @pytest.mark.parametrize("alphabet_size", [4, 5])
@@ -160,6 +177,10 @@ def test_word_lengths(
     _ = p.transform(X, y)
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("numba", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
 def test_bit_size():
     """Test expected bit size on training data."""
     # load training data
@@ -184,6 +205,10 @@ def test_bit_size():
     assert len(p.word_list(list(w[0][0].keys())[0])[0]) == 40
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("numba", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
 def test_typed_dict():
     """Test word list from typed dict."""
     # load training data

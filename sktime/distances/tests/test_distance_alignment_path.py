@@ -5,6 +5,7 @@ import pytest
 
 from sktime.distances._distance import _METRIC_INFOS, distance, distance_alignment_path
 from sktime.distances.tests._utils import create_test_distance_numpy
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 
 def _validate_distance_alignment_path_result(
@@ -69,6 +70,10 @@ def _validate_distance_alignment_path_result(
     assert metric_str_result_cm[1] == metric_str_result[1]
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("numba", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
 @pytest.mark.parametrize("dist", _METRIC_INFOS)
 def test_distance_alignment_path(dist):
     """Test the distance paths."""

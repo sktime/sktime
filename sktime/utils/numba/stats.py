@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
-"""Numba statistic utilities."""
+"""Numba statistics utilities."""
 
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-_check_soft_dependencies("numba")
+_check_soft_dependencies("numba", severity="warning")
 
 import numpy as np  # noqa E402
-from numba import njit  # noqa E402
 
 import sktime.utils.numba.general as general_numba  # noqa E402
+from sktime.utils.numba.njit import njit  # noqa E402
 
 
 @njit(fastmath=True, cache=True)

@@ -6,9 +6,9 @@ __author__ = ["ermshaua", "patrickzib"]
 
 import numpy as np
 import pandas as pd
-from numba import njit
 
 from sktime.transformations.panel.matrix_profile import _sliding_dot_products
+from sktime.utils.numba.njit import njit
 
 
 def _sliding_window(X, m):

@@ -7,7 +7,8 @@ import math
 from typing import Union
 
 import numpy as np
-from numba import njit
+
+from sktime.utils.numba.njit import njit
 
 
 @njit(cache=True)

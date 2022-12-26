@@ -372,12 +372,12 @@ def wddtw_distance(
     --------
     >>> x_1d = np.array([1, 2, 3, 4])  # 1d array
     >>> y_1d = np.array([5, 6, 7, 8])  # 1d array
-    >>> wddtw_distance(x_1d, y_1d)
+    >>> wddtw_distance(x_1d, y_1d) # doctest: +SKIP
     0.0
 
     >>> x_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])  # 2d array
     >>> y_2d = np.array([[9, 10, 11, 12], [13, 14, 15, 16]])  # 2d array
-    >>> wddtw_distance(x_2d, y_2d)
+    >>> wddtw_distance(x_2d, y_2d) # doctest: +SKIP
     0.0
 
     References
@@ -574,12 +574,12 @@ def ddtw_distance(
     >>> import numpy as np
     >>> x_1d = np.array([1, 2, 3, 4])  # 1d array
     >>> y_1d = np.array([5, 6, 7, 8])  # 1d array
-    >>> ddtw_distance(x_1d, y_1d)
+    >>> ddtw_distance(x_1d, y_1d) # doctest: +SKIP
     0.0
 
     >>> x_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])  # 2d array
     >>> y_2d = np.array([[9, 10, 11, 12], [13, 14, 15, 16]])  # 2d array
-    >>> ddtw_distance(x_2d, y_2d)
+    >>> ddtw_distance(x_2d, y_2d) # doctest: +SKIP
     0.0
 
     References
@@ -1954,9 +1954,8 @@ def distance_factory(
         If a resolved metric is not no_python compiled.
         If the metric type cannot be determined.
     """
-    from numba import njit
-
     from sktime.distances._numba_utils import _numba_to_timeseries, to_numba_timeseries
+    from sktime.utils.numba.njit import njit
 
     if x is None:
         x = np.zeros((1, 10))
@@ -2227,9 +2226,8 @@ def distance_alignment_path_factory(
     Callable[[np.ndarray, np.ndarray], Union[np.ndarray, np.ndarray]]
         Callable for the distance path.
     """
-    from numba import njit
-
     from sktime.distances._numba_utils import _numba_to_timeseries, to_numba_timeseries
+    from sktime.utils.numba.njit import njit
 
     if x is None:
         x = np.zeros((1, 10))

@@ -6,7 +6,8 @@ __author__ = ["MatthewMiddlehurst", "patrickzib"]
 import math
 
 import numpy as np
-from numba import njit
+
+from sktime.utils.numba.njit import njit
 
 # The binning methods to use: equi-depth, equi-width, information gain or kmeans
 binning_methods = {"equi-depth", "equi-width", "information-gain", "kmeans"}
