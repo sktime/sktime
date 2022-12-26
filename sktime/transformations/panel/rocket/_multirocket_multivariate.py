@@ -59,13 +59,13 @@ class MultiRocketMultivariate(BaseTransformer):
     --------
      >>> from sktime.transformations.panel.rocket import Rocket
      >>> from sktime.datasets import load_basic_motions
-     >>> X_train, y_train = load_basic_motions(split="train")
-     >>> X_test, y_test = load_basic_motions(split="test")
-     >>> trf = MultiRocketMultivariate(num_kernels=512)
-     >>> trf.fit(X_train)
+     >>> X_train, y_train = load_basic_motions(split="train") # doctest: +SKIP
+     >>> X_test, y_test = load_basic_motions(split="test") # doctest: +SKIP
+     >>> trf = MultiRocketMultivariate(num_kernels=512) # doctest: +SKIP
+     >>> trf.fit(X_train) # doctest: +SKIP
      MultiRocketMultivariate(...)
-     >>> X_train = trf.transform(X_train)
-     >>> X_test = trf.transform(X_test)
+     >>> X_train = trf.transform(X_train) # doctest: +SKIP
+     >>> X_test = trf.transform(X_test) # doctest: +SKIP
     """
 
     _tags = {

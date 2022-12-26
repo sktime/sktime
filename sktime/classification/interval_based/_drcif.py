@@ -130,11 +130,13 @@ class DrCIF(BaseClassifier):
     >>> from sktime.classification.interval_based import DrCIF
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
-    >>> clf = DrCIF(n_estimators=3, n_intervals=2, att_subsample_size=2)
-    >>> clf.fit(X_train, y_train)
+    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True) # doctest: +SKIP
+    >>> clf = DrCIF(
+    ...     n_estimators=3, n_intervals=2, att_subsample_size=2
+    ... ) # doctest: +SKIP
+    >>> clf.fit(X_train, y_train) # doctest: +SKIP
     DrCIF(...)
-    >>> y_pred = clf.predict(X_test)
+    >>> y_pred = clf.predict(X_test) # doctest: +SKIP
     """
 
     _tags = {

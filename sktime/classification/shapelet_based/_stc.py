@@ -115,16 +115,16 @@ class ShapeletTransformClassifier(BaseClassifier):
     >>> from sktime.classification.sklearn import RotationForest
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
+    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True) # doctest: +SKIP
     >>> clf = ShapeletTransformClassifier(
     ...     estimator=RotationForest(n_estimators=3),
     ...     n_shapelet_samples=100,
     ...     max_shapelets=10,
     ...     batch_size=20,
-    ... )
-    >>> clf.fit(X_train, y_train)
+    ... ) # doctest: +SKIP
+    >>> clf.fit(X_train, y_train) # doctest: +SKIP
     ShapeletTransformClassifier(...)
-    >>> y_pred = clf.predict(X_test)
+    >>> y_pred = clf.predict(X_test) # doctest: +SKIP
     """
 
     _tags = {
