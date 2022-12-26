@@ -24,7 +24,6 @@ from sktime.distances import (
 )
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-
 distances = [
     "dtw",
     "wdtw",
