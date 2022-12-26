@@ -83,8 +83,8 @@ def test_reconciler_fit_predict(method, flatten, no_levels):
 def test_reconcilerforecaster_exog(n_columns):
     """Test that ReconcilerForecaster works without aggregated input, see #3980."""
     from sktime.datatypes._utilities import get_window
-    from sktime.forecasting.sarimax import SARIMAX
     from sktime.forecasting.reconcile import ReconcilerForecaster
+    from sktime.forecasting.sarimax import SARIMAX
 
     y = _make_hierarchical(
         hierarchy_levels=(2, 4),
