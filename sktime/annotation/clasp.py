@@ -213,12 +213,12 @@ class ClaSPSegmentation(BaseSeriesAnnotator):
     >>> from sktime.annotation.clasp import ClaSPSegmentation
     >>> from sktime.annotation.clasp import find_dominant_window_sizes
     >>> from sktime.datasets import load_gun_point_segmentation
-    >>> X, true_period_size, cps = load_gun_point_segmentation()
-    >>> dominant_period_size = find_dominant_window_sizes(X)
-    >>> clasp = ClaSPSegmentation(dominant_period_size, n_cps=1)
-    >>> found_cps = clasp.fit_predict(X)
-    >>> profiles = clasp.profiles
-    >>> scores = clasp.scores
+    >>> X, true_period_size, cps = load_gun_point_segmentation() # doctest: +SKIP
+    >>> dominant_period_size = find_dominant_window_sizes(X) # doctest: +SKIP
+    >>> clasp = ClaSPSegmentation(dominant_period_size, n_cps=1) # doctest: +SKIP
+    >>> found_cps = clasp.fit_predict(X) # doctest: +SKIP
+    >>> profiles = clasp.profiles # doctest: +SKIP
+    >>> scores = clasp.scores # doctest: +SKIP
     """
 
     _tags = {"univariate-only": True, "fit_is_empty": True}  # for unit test cases
