@@ -48,13 +48,13 @@ class Rocket(BaseTransformer):
     --------
     >>> from sktime.transformations.panel.rocket import Rocket
     >>> from sktime.datasets import load_unit_test
-    >>> X_train, y_train = load_unit_test(split="train")
-    >>> X_test, y_test = load_unit_test(split="test")
-    >>> trf = Rocket(num_kernels=512)
-    >>> trf.fit(X_train)
+    >>> X_train, y_train = load_unit_test(split="train") # doctest: +SKIP
+    >>> X_test, y_test = load_unit_test(split="test") # doctest: +SKIP
+    >>> trf = Rocket(num_kernels=512) # doctest: +SKIP
+    >>> trf.fit(X_train) # doctest: +SKIP
     Rocket(...)
-    >>> X_train = trf.transform(X_train)
-    >>> X_test = trf.transform(X_test)
+    >>> X_train = trf.transform(X_train) # doctest: +SKIP
+    >>> X_test = trf.transform(X_test) # doctest: +SKIP
     """
 
     _tags = {
