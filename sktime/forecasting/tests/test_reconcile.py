@@ -13,7 +13,7 @@ from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.reconcile import ReconcilerForecaster
 from sktime.transformations.hierarchical.aggregate import Aggregator
-from sktime.utils._testing.hierarchical import _bottom_hier_datagen
+from sktime.utils._testing.hierarchical import _bottom_hier_datagen, _make_hierarchical
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 # get all the methods
@@ -73,3 +73,45 @@ def test_reconciler_fit_predict(method, flatten, no_levels):
     reconciler_unnamed = ReconcilerForecaster(forecaster, method=method)
     msg = "Reconciler returns different output for named and unnamed indexes."
     assert prds_recon.equals(reconciler_unnamed.fit_predict(y=y, fh=fh)), msg
+
+
+@pytest.mark.skipif(
+    not _check_soft_dependencies("statsmodels", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
+def test_reconcilerforecaster_exog():
+    """Test that ReconcilerForecaster works without aggregated input, see #3980."""
+    from sktime.datatypes._utilities import get_window
+    from sktime.forecasting.sarimax import SARIMAX
+    from sktime.forecasting.reconcile import ReconcilerForecaster
+
+    y = _make_hierarchical(
+        hierarchy_levels=(2, 4),
+        n_columns=1,
+        min_timepoints=24,
+        max_timepoints=24,
+        index_type="period",
+    )
+    y_train = get_window(y, lag=2)
+    y_test = get_window(y, window_length=2)
+
+    X = _make_hierarchical(
+        hierarchy_levels=(2, 4),
+        n_columns=2,
+        min_timepoints=24,
+        max_timepoints=24,
+        index_type="period",
+    )
+    X.columns = ["foo", "bar"]
+    X_train = get_window(X, lag=2)
+    X_test = get_window(X, window_length=2)
+
+    forecaster = SARIMAX()
+    estimator_instance = ReconcilerForecaster(forecaster, method="mint_shrink")
+    fh = [1, 2]
+    # fit works ok
+    estimator_instance.fit(y=y_train, X=X_train, fh=fh)
+    # no aggregation in X so it fails
+    estimator_instance.predict(X=X_test)
+    # no aggregation in X or y so it fails again
+    estimator_instance.update(y=y_test, X=X_test)
