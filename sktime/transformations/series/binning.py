@@ -36,7 +36,8 @@ class TimeBinAggregate(BaseTransformer):
         Function used to aggregate the values in intervals.
         Should have signature 1D -> float and defaults
         to mean if None
-    return_index : str, one of the below; optional, default="bin_start"
+    return_index : str, one of the below; optional, default="range"
+        "range" = RangeIndex with bins indexed in same order as in `bins`
         "bin_start" = transformed pd.DataFrame will be indexed by bin starts
         "bin_end" = transformed pd.DataFrame will be indexed by bin starts
         "bin_mid" = transformed pd.DataFrame will be indexed by bin midpoints
@@ -114,8 +115,13 @@ class TimeBinAggregate(BaseTransformer):
         idx_cut = pd.cut(X.index, bins=self._bins, include_lowest=True)
         Xt = X.groupby(idx_cut).apply(self._aggfunc)
 
-        if self.return_index == "bin_start":
-            Xt.index = [x.left for x in Xt.index]
+        if self.return_index == "range":
+            Xt = Xt.reset_index(drop=True)
+        elif self.return_index == "bin_start":
+            if self.bins is pd.IntervalIndex:
+                Xt.index = [x.left for x in Xt.index]
+            else:
+                Xt.index = self.bins
         elif self.return_index == "bin_end":
             Xt.index = [x.right for x in Xt.index]
         elif self.return_index == "bin_mid":
@@ -146,5 +152,5 @@ class TimeBinAggregate(BaseTransformer):
         bins = pd.interval_range(start=0, end=100, freq=10, closed="left")
         params1 = {"bins": bins}
 
-        params2 = {"bins": [0, 2, 4], "aggfunc": np.sum, "return_index": "bin_mid"}
+        params2 = {"bins": [0, 2, 4], "aggfunc": np.sum, "return_index": "bin_start"}
         return [params1, params2]
