@@ -615,15 +615,15 @@ class WeightedEnsembleClassifier(_HeterogenousMetaEstimator, BaseClassifier):
     >>> from sktime.classification.dummy import DummyClassifier
     >>> from sktime.classification.kernel_based import RocketClassifier
     >>> from sktime.datasets import load_unit_test
-    >>> X_train, y_train = load_unit_test(split="train")
-    >>> X_test, y_test = load_unit_test(split="test")
+    >>> X_train, y_train = load_unit_test(split="train") # doctest: +SKIP
+    >>> X_test, y_test = load_unit_test(split="test") # doctest: +SKIP
     >>> clf = WeightedEnsembleClassifier(
     ...     [DummyClassifier(), RocketClassifier(num_kernels=100)],
     ...     weights=2,
-    ... )
-    >>> clf.fit(X_train, y_train)
+    ... ) # doctest: +SKIP
+    >>> clf.fit(X_train, y_train) # doctest: +SKIP
     WeightedEnsembleClassifier(...)
-    >>> y_pred = clf.predict(X_test)
+    >>> y_pred = clf.predict(X_test) # doctest: +SKIP
     """
 
     _tags = {
