@@ -221,7 +221,11 @@ class ClaSPSegmentation(BaseSeriesAnnotator):
     >>> scores = clasp.scores # doctest: +SKIP
     """
 
-    _tags = {"univariate-only": True, "fit_is_empty": True}  # for unit test cases
+    _tags = {
+        "univariate-only": True,
+        "fit_is_empty": True,
+        "python_dependencies": "numba",
+    }  # for unit test cases
 
     def __init__(self, period_length=10, n_cps=1, fmt="sparse", exclusion_radius=0.05):
         self.period_length = int(period_length)

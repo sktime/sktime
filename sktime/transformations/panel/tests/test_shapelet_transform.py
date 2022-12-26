@@ -32,6 +32,10 @@ def test_st_on_unit_test():
     )
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("numba", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
 def test_st_on_basic_motions():
     """Test of ShapeletTransform on basic motions data."""
     # load basic motions data
