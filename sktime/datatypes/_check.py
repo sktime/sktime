@@ -58,13 +58,6 @@ def _check_scitype_valid(scitype: str = None):
         raise TypeError(scitype + " is not a supported scitype")
 
 
-def _ret(valid, msg, metadata, return_metadata):
-    if return_metadata:
-        return valid, msg, metadata
-    else:
-        return valid
-
-
 def _coerce_list_of_str(obj, var_name="obj"):
     """Check whether object is string or list of string.
 

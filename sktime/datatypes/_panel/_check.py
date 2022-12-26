@@ -44,10 +44,10 @@ import numpy as np
 import pandas as pd
 
 from sktime.datatypes._series._check import check_pddataframe_series
+from sktime.datatypes._utilities import check_is_dataframe
 from sktime.utils.validation.series import is_in_valid_index_types, is_integer_index
 
 VALID_MULTIINDEX_TYPES = (pd.RangeIndex, pd.Index)
-VALID_INDEX_TYPES = (pd.RangeIndex, pd.PeriodIndex, pd.DatetimeIndex)
 
 
 def is_in_valid_multiindex_types(x) -> bool:
@@ -152,30 +152,21 @@ check_dict[("numpy3D", "Panel")] = check_numpy3d_panel
 
 
 def check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj"):
-    def ret(valid, msg, metadata, return_metadata):
-        if return_metadata:
-            return valid, msg, metadata
-        else:
-            return valid
 
-    nlevels = obj.index.nlevels
-    inst_inds_names = obj.index.names[0:-1]
-    col_names = obj.columns
-
-    if not isinstance(obj, pd.DataFrame):
-        msg = f"{var_name} must be a pd.DataFrame, found {type(obj)}"
-        return _ret(False, msg, None, return_metadata)
+    check_is_dataframe(obj)
 
     if not isinstance(obj.index, pd.MultiIndex):
         msg = f"{var_name} must have a MultiIndex, found {type(obj.index)}"
         return _ret(False, msg, None, return_metadata)
 
     # check that columns are unique
+    col_names = obj.columns
     if not col_names.is_unique:
         msg = f"{var_name} must have unique column indices, but found {col_names}"
         return _ret(False, msg, None, return_metadata)
 
     # check that there are precisely two index levels
+    nlevels = obj.index.nlevels
     if not nlevels == 2:
         msg = f"{var_name} must have a MultiIndex with 2 levels, found {nlevels}"
         return _ret(False, msg, None, return_metadata)
@@ -193,6 +184,8 @@ def check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj"):
         )
         return ret(False, msg, None, return_metadata)
 
+    inst_inds_names = obj.index.names[0:-1]
+    time_inds_names = obj.index.names[-1]
     time_obj = obj.reset_index(-1).drop(obj.columns, axis=1)
     time_grp = time_obj.groupby(level=inst_inds_names, group_keys=True, as_index=True)
     inst_inds = time_obj.index.unique()
@@ -211,12 +204,11 @@ def check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj"):
         .nunique()
     )
 
-    unique_diff = is_equally_spaced["time"].unique()
-
+    unique_diff = is_equally_spaced[time_inds_names].unique()
     is_equal_length = time_grp.count()
 
     # Check time index is ordered in time
-    if not all(unique_diff > 0):
+    if not all(unique_diff >= 0):
         msg = (
             f"The (time) index of {var_name} must be sorted monotonically increasing, "
             f"but found: {obj.index.get_level_values(-1)}"
