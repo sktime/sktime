@@ -118,11 +118,9 @@ def piecewise_normal_multivariate(
         # get covariance matrices from variance arrays
         covariances = [get_covariances(var) for var in variances]
 
-    # if covariance is specified, then check if symmetric (eigenvalues are real)
-    # and check if matrix is positive semidefinite (eigenvalues are nonnegative)
     else:
-        assert all([np.allclose(np.array(cov), np.array(cov).T) for cov in covariances])
-        assert all([np.all(np.linalg.eigvals(cov) >= 0) for cov in covariances])
+        assert all(np.allclose(np.array(cov), np.array(cov).T) for cov in covariances)
+        assert all(np.all(np.linalg.eigvals(cov) >= 0) for cov in covariances)
 
     assert np.array(covariances).shape[0] == L
     assert np.array(covariances).shape[1] == N

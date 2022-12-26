@@ -22,10 +22,10 @@ from sktime.classification.interval_based import CanonicalIntervalForest
 from sktime.utils.validation.panel import check_X
 
 
-# TODO: remove message in v0.15.0 and change base class
+# TODO: remove message in v0.16.0 and change base class
 @deprecated(
     version="0.13.0",
-    reason="The base class of ProbabilityThresholdEarlyClassifier will be changed to BaseEarlyClassifier in v0.15.0. This will change how classification safety decisions are made and returned, see BaseEarlyClassifier or TEASER for the new interface.",  # noqa: E501
+    reason="The base class of ProbabilityThresholdEarlyClassifier will be changed to BaseEarlyClassifier in v0.16.0. This will change how classification safety decisions are made and returned, see BaseEarlyClassifier or TEASER for the new interface.",  # noqa: E501
     category=FutureWarning,
 )
 class ProbabilityThresholdEarlyClassifier(BaseClassifier):
