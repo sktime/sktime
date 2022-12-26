@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """ShapeletTransform test code."""
 import numpy as np
-from numpy import testing
 import pytest
+from numpy import testing
 
 from sktime.datasets import load_basic_motions, load_unit_test
 from sktime.transformations.panel.shapelet_transform import RandomShapeletTransform
