@@ -79,7 +79,8 @@ def test_reconciler_fit_predict(method, flatten, no_levels):
     not _check_soft_dependencies("statsmodels", severity="none"),
     reason="skip test if required soft dependency not available",
 )
-def test_reconcilerforecaster_exog():
+@pytest.mark.parametrize("n_columns", [1, 2])
+def test_reconcilerforecaster_exog(n_columns):
     """Test that ReconcilerForecaster works without aggregated input, see #3980."""
     from sktime.datatypes._utilities import get_window
     from sktime.forecasting.sarimax import SARIMAX
@@ -87,7 +88,7 @@ def test_reconcilerforecaster_exog():
 
     y = _make_hierarchical(
         hierarchy_levels=(2, 4),
-        n_columns=1,
+        n_columns=n_columns,
         min_timepoints=24,
         max_timepoints=24,
         index_type="period",
