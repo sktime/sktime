@@ -65,10 +65,8 @@ class TimeBinAggregate(BaseTransformer):
         # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # and for y?
         "handles-missing-data": True,
-        "capability:multivariate": False,
         "capability:unequal_length": True,
         "capability:unequal_length:removes": True,
-        "fit_is_empty": True,
         "transform-returns-same-time-index": False,
         "capability:inverse_transform": False,
     }
