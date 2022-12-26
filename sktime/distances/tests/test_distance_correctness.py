@@ -6,8 +6,8 @@ results generated with tsml, in distances.tests.TestDistances.
 """
 __author__ = ["chrisholder", "TonyBagnall"]
 
-from numpy.testing import assert_almost_equal
 import pytest
+from numpy.testing import assert_almost_equal
 
 from sktime.datasets import load_basic_motions, load_unit_test
 from sktime.distances import (
