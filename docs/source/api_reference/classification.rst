@@ -18,6 +18,7 @@ Composition
     ColumnEnsembleClassifier
     ComposableTimeSeriesForestClassifier
     SklearnClassifierPipeline
+    WeightedEnsembleClassifier
 
 Deep learning
 -------------
