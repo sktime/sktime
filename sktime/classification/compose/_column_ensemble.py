@@ -224,19 +224,19 @@ class ColumnEnsembleClassifier(BaseColumnEnsembleClassifier):
     >>> from sktime.classification.dictionary_based import ContractableBOSS
     >>> from sktime.classification.interval_based import CanonicalIntervalForest
     >>> from sktime.datasets import load_basic_motions
-    >>> X_train, y_train = load_basic_motions(split="train")
-    >>> X_test, y_test = load_basic_motions(split="test")
+    >>> X_train, y_train = load_basic_motions(split="train") # doctest: +SKIP
+    >>> X_test, y_test = load_basic_motions(split="test") # doctest: +SKIP
     >>> cboss = ContractableBOSS(
     ...     n_parameter_samples=4, max_ensemble_size=2, random_state=0
-    ... )
+    ... ) # doctest: +SKIP
     >>> cif = CanonicalIntervalForest(
     ...     n_estimators=2, n_intervals=4, att_subsample_size=4, random_state=0
-    ... )
-    >>> estimators = [("cBOSS", cboss, 5), ("CIF", cif, [3, 4])]
-    >>> col_ens = ColumnEnsembleClassifier(estimators=estimators)
-    >>> col_ens.fit(X_train, y_train)
+    ... ) # doctest: +SKIP
+    >>> estimators = [("cBOSS", cboss, 5), ("CIF", cif, [3, 4])] # doctest: +SKIP
+    >>> col_ens = ColumnEnsembleClassifier(estimators=estimators) # doctest: +SKIP
+    >>> col_ens.fit(X_train, y_train) # doctest: +SKIP
     ColumnEnsembleClassifier(...)
-    >>> y_pred = col_ens.predict(X_test)
+    >>> y_pred = col_ens.predict(X_test) # doctest: +SKIP
     """
 
     # for default get_params/set_params from _HeterogenousMetaEstimator
