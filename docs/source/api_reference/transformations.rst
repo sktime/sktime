@@ -356,6 +356,14 @@ Differencing and slope
 Binning and segmentation
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
+.. currentmodule:: sktime.transformations.series.binning
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TimeBinAggregate
+
 .. currentmodule:: sktime.transformations.panel.interpolate
 
 .. autosummary::
