@@ -54,9 +54,10 @@ class ClaSPTransformer(BaseTransformer):
     >>> from sktime.annotation.clasp import find_dominant_window_sizes
     >>> from sktime.datasets import load_electric_devices_segmentation
     >>> X, true_period_size, true_cps = load_electric_devices_segmentation()
-    >>> dominant_period_size = find_dominant_window_sizes(X)
-    >>> clasp = ClaSPTransformer(window_length=dominant_period_size).fit(X)
-    >>> profile = clasp.transform(X)
+    >>> dominant_period_size = find_dominant_window_sizes(X) # doctest: +SKIP
+    >>> clasp = ClaSPTransformer(window_length=dominant_period_size) # doctest: +SKIP
+    >>> clasp.fit(X) # doctest: +SKIP
+    >>> profile = clasp.transform(X) # doctest: +SKIP
     """
 
     _tags = {

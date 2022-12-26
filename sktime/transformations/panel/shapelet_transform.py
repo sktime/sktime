@@ -1058,10 +1058,10 @@ class RandomShapeletTransform(BaseTransformer):
     ...     n_shapelet_samples=500,
     ...     max_shapelets=10,
     ...     batch_size=100,
-    ... )
-    >>> t.fit(X_train, y_train)
+    ... ) # doctest: +SKIP
+    >>> t.fit(X_train, y_train) # doctest: +SKIP
     RandomShapeletTransform(...)
-    >>> X_t = t.transform(X_train)
+    >>> X_t = t.transform(X_train) # doctest: +SKIP
     """
 
     _tags = {

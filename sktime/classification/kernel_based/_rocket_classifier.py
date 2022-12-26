@@ -98,11 +98,11 @@ class RocketClassifier(_DelegatedClassifier):
     >>> from sktime.classification.kernel_based import RocketClassifier
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
-    >>> clf = RocketClassifier(num_kernels=500)
-    >>> clf.fit(X_train, y_train)
+    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True) # doctest: +SKIP
+    >>> clf = RocketClassifier(num_kernels=500) # doctest: +SKIP
+    >>> clf.fit(X_train, y_train) # doctest: +SKIP
     RocketClassifier(...)
-    >>> y_pred = clf.predict(X_test)
+    >>> y_pred = clf.predict(X_test) # doctest: +SKIP
     """
 
     _tags = {
