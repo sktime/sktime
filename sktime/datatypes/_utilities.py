@@ -566,27 +566,3 @@ def get_slice(obj, start=None, end=None):
     raise ValueError(
         "bug in get_slice, unreachable condition, ifs should be exhaustive"
     )
-
-def check_is_dataframe(obj, var_name="obj"):
-    """Check if object is a dataframe.
-
-    Parameters
-    ----------
-    obj - object to check
-
-    Returns
-    -------
-    valid: bool - whether obj is a valid object of mtype/scitype
-    msg: str or list of str - error messages if object is not valid, otherwise None
-            str if mtype is str; list of len(mtype) with message per mtype if list
-            returned only if return_metadata is True
-    """
-    def _ret(valid, msg, metadata, return_metadata):
-        if return_metadata:
-            return valid, msg, metadata
-        else:
-            return valid
-    
-    if not isinstance(obj, pd.DataFrame):
-        msg = f"{var_name} must be a pd.DataFrame, found {type(obj)}"
-        return _ret(False, msg, None, return_metadata)
