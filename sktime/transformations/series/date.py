@@ -81,6 +81,8 @@ class DateTimeFeatures(BaseTransformer):
         * day_of_quarter
         * is_weekend
         * year (special case with no lower frequency).
+    keep_original_columns :  boolean, optional, default=True
+        Keep original columns in X passed to `.transform()`.
 
     Examples
     --------
@@ -130,12 +132,26 @@ class DateTimeFeatures(BaseTransformer):
         "skip-inverse-transform": True,
     }
 
-    def __init__(self, ts_freq=None, feature_scope="minimal", manual_selection=None):
+    def __init__(
+        self,
+        ts_freq=None,
+        feature_scope="minimal",
+        manual_selection=None,
+        keep_original_columns=True,
+    ):
 
         self.ts_freq = ts_freq
         self.feature_scope = feature_scope
         self.manual_selection = manual_selection
         self.dummies = _prep_dummies(_RAW_DUMMIES)
+        self.keep_original_columns = keep_original_columns
+        warnings.warn(
+            "Currently the default value of `keep_original_columns\n"
+            " is `True`. In future releases this will be changed \n"
+            " to `False`. To keep the current behaviour explicitly \n"
+            " set `keep_original_columns=True`.",
+            FutureWarning,
+        )
         super(DateTimeFeatures, self).__init__()
 
     def _transform(self, X, y=None):
@@ -159,14 +175,12 @@ class DateTimeFeatures(BaseTransformer):
         _check_feature_scope(self.feature_scope)
         _check_manual_selection(self.manual_selection, self.dummies)
 
-        Z = X.copy()
-
-        if isinstance(Z.index, pd.MultiIndex):
-            time_index = Z.index.get_level_values(-1)
+        if isinstance(X.index, pd.MultiIndex):
+            time_index = X.index.get_level_values(-1)
         else:
-            time_index = Z.index
+            time_index = X.index
 
-        x_df = pd.DataFrame(index=Z.index)
+        x_df = pd.DataFrame(index=X.index)
         if isinstance(time_index, pd.PeriodIndex):
             x_df["date_sequence"] = time_index.to_timestamp().astype("datetime64[ns]")
         elif isinstance(time_index, pd.DatetimeIndex):
@@ -212,7 +226,12 @@ class DateTimeFeatures(BaseTransformer):
         if self.manual_selection is not None:
             df = df[self.manual_selection]
 
-        Xt = pd.concat([Z, df], axis=1)
+        if self.keep_original_columns:
+            Xt = pd.concat([X, df], axis=1, copy=True)
+        else:
+            Xt = df
+            # Remove the name `"dummy"` from column index.
+            Xt = Xt.rename_axis(None, axis="columns")
 
         return Xt
 
