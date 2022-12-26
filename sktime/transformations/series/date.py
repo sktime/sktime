@@ -9,6 +9,7 @@ import warnings
 
 import numpy as np
 import pandas as pd
+from deprecated.sphinx import deprecated
 
 from sktime.transformations.base import BaseTransformer
 
@@ -33,6 +34,15 @@ _RAW_DUMMIES = [
 ]
 
 
+# TODO: remove in v0.17.0
+@deprecated(
+    version="0.16.0",
+    reason="Currently the default value of `keep_original_columns\n"
+    " is `True`. In v0.17.0 this will be changed \n"
+    " to `False`. To keep the current behaviour explicitly \n"
+    " set `keep_original_columns=True`.",
+    category=FutureWarning,
+)
 class DateTimeFeatures(BaseTransformer):
     """DateTime feature extraction for use in e.g. tree based models.
 
@@ -145,13 +155,6 @@ class DateTimeFeatures(BaseTransformer):
         self.manual_selection = manual_selection
         self.dummies = _prep_dummies(_RAW_DUMMIES)
         self.keep_original_columns = keep_original_columns
-        warnings.warn(
-            "Currently the default value of `keep_original_columns\n"
-            " is `True`. In future releases this will be changed \n"
-            " to `False`. To keep the current behaviour explicitly \n"
-            " set `keep_original_columns=True`.",
-            FutureWarning,
-        )
         super(DateTimeFeatures, self).__init__()
 
     def _transform(self, X, y=None):
