@@ -1,11 +1,17 @@
 # -*- coding: utf-8 -*-
 """TDE test code."""
 import numpy as np
+import pytest
 
 from sktime.classification.dictionary_based._tde import TemporalDictionaryEnsemble
 from sktime.datasets import load_unit_test
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("numba", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
 def test_tde_train_estimate():
     """Test of TDE train estimate on unit test data."""
     # load unit test data
@@ -27,6 +33,10 @@ def test_tde_train_estimate():
     np.testing.assert_almost_equal(train_proba.sum(axis=1), 1, decimal=4)
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("numba", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
 def test_contracted_tde():
     """Test of contracted TDE on unit test data."""
     # load unit test data
