@@ -16,6 +16,7 @@ Interface specifications below.
 Scitype defining methods:
     computing distance/kernel matrix (shorthand) - __call__(self, X, X2=X)
     computing distance/kernel matrix             - transform(self, X, X2=X)
+    computing diagonal of distance/kernel matrix - transform_diag(self, X)
 
 Inspection methods:
     hyper-parameter inspection  - get_params()
@@ -227,6 +228,127 @@ class BasePairwiseTransformerPanel(BaseEstimator):
         # this just defines __call__ as an alias for transform
         return self.transform(X=X, X2=X2)
 
+    def __mul__(self, other):
+        """Magic * method, return (right) multiplied CombinedDistance.
+
+        Implemented for `other` being:
+        * a pairwise panel transformer, then `CombinedDistance([other, self], "*")`
+
+        Parameters
+        ----------
+        other: one of:
+            * `sktime` transformer, must inherit from BaseTransformer,
+            otherwise, `NotImplemented` is returned (leads to further dispatch by rmul)
+
+        Returns
+        -------
+        CombinedDistance object,
+            algebraic multiplication of `self` (first) with `other` (last).
+            not nested, contains only non-CombinedDistance `sktime` transformers
+        """
+        from sktime.dists_kernels.algebra import CombinedDistance
+        from sktime.dists_kernels.dummy import ConstantPwTrafoPanel
+
+        # when other is an integer or float, treat it as constant distance/kernel
+        if isinstance(other, (int, float)):
+            other = ConstantPwTrafoPanel(constant=other)
+
+        # we wrap self in a CombinedDistance, and concatenate with the other
+        #   the CombinedDistance does the rest, e.g., dispatch on other
+        if isinstance(other, BasePairwiseTransformerPanel):
+            if not isinstance(self, CombinedDistance):
+                self_as_pipeline = CombinedDistance(pw_trafos=[self], operation="*")
+            else:
+                self_as_pipeline = self
+            return self_as_pipeline * other
+        # otherwise, we let the right operation handle the remaining dispatch
+        else:
+            return NotImplemented
+
+    def __rmul__(self, other):
+        """Magic * method, return (right) PwTrafoPanelPipeline or CombinedDistance.
+
+        Implemented for `other` being:
+        * a transformer, then `PwTrafoPanelPipeline([other, self])` is returned
+        * sklearn transformers are coerced via TabularToSeriesAdaptor
+
+        Parameters
+        ----------
+        other: `sktime` transformer, must inherit from BaseTransformer
+            otherwise, `NotImplemented` is returned
+
+        Returns
+        -------
+        PwTrafoPanelPipeline object,
+            concatenation of `other` (first) with `self` (last).
+            not nested, contains only non-TransformerPipeline `sktime` steps
+        """
+        from sktime.dists_kernels.compose import PwTrafoPanelPipeline
+        from sktime.dists_kernels.dummy import ConstantPwTrafoPanel
+        from sktime.transformations.base import BaseTransformer
+        from sktime.transformations.compose import TransformerPipeline
+        from sktime.transformations.series.adapt import TabularToSeriesAdaptor
+        from sktime.utils.sklearn import is_sklearn_transformer
+
+        # when other is an integer or float, treat it as constant distance/kernel
+        if isinstance(other, (int, float)):
+            other = ConstantPwTrafoPanel(constant=other)
+
+        # behaviour is implemented only if other inherits from BaseTransformer
+        #  in that case, distinctions arise from whether self or other is a pipeline
+        #  todo: this can probably be simplified further with "zero length" pipelines
+        if isinstance(other, BaseTransformer):
+            # PwTrafoPanelPipeline already has the dunder method defined
+            if isinstance(self, PwTrafoPanelPipeline):
+                return other * self
+            # if other is a TransformerPipeline but self is not, first unwrap it
+            elif isinstance(other, TransformerPipeline):
+                return PwTrafoPanelPipeline(pw_trafo=self, transformers=other.steps)
+            # if neither self nor other are a pipeline, construct a PwTrafoPanelPipeline
+            else:
+                return PwTrafoPanelPipeline(pw_trafo=self, transformers=[other])
+        elif is_sklearn_transformer(other):
+            return TabularToSeriesAdaptor(other) * self
+        else:
+            return NotImplemented
+
+    def __add__(self, other):
+        """Magic + method, return (right) added CombinedDistance.
+
+        Implemented for `other` being:
+        * a pairwise panel transformer, then `CombinedDistance([other, self], "+")`
+
+        Parameters
+        ----------
+        other: one of:
+            * `sktime` transformer, must inherit from BaseTransformer,
+            otherwise, `NotImplemented` is returned (leads to further dispatch by rmul)
+
+        Returns
+        -------
+        CombinedDistance object,
+            algebraic addition of `self` (first) with `other` (last).
+            not nested, contains only non-CombinedDistance `sktime` transformers
+        """
+        from sktime.dists_kernels.algebra import CombinedDistance
+        from sktime.dists_kernels.dummy import ConstantPwTrafoPanel
+
+        # when other is an integer or float, treat it as constant distance/kernel
+        if isinstance(other, (int, float)):
+            other = ConstantPwTrafoPanel(constant=other)
+
+        # we wrap self in a CombinedDistance, and concatenate with the other
+        #   the CombinedDistance does the rest, e.g., dispatch on other
+        if isinstance(other, BasePairwiseTransformerPanel):
+            if not isinstance(self, CombinedDistance):
+                self_as_pipeline = CombinedDistance(pw_trafos=[self], operation="+")
+            else:
+                self_as_pipeline = self
+            return self_as_pipeline + other
+        # otherwise, we let the right operation handle the remaining dispatch
+        else:
+            return NotImplemented
+
     def transform(self, X, X2=None):
         """Compute distance/kernel matrix.
 
@@ -290,6 +412,40 @@ class BasePairwiseTransformerPanel(BaseEstimator):
             (i,j)-th entry contains distance/kernel between X[i] and X2[j]
         """
         raise NotImplementedError
+
+    def transform_diag(self, X):
+        """Compute diagonal of distance/kernel matrix.
+
+        Behaviour: returns diagonal of distance/kernel matrix for samples in X
+
+        Parameters
+        ----------
+        X : Series or Panel, any supported mtype, of n instances
+            Data to transform, of python type as follows:
+                Series: pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
+                Panel: pd.DataFrame with 2-level MultiIndex, list of pd.DataFrame,
+                    nested pd.DataFrame, or pd.DataFrame in long/wide format
+                subject to sktime mtype format specifications, for further details see
+                    examples/AA_datatypes_and_datasets.ipynb
+
+        Returns
+        -------
+        diag: np.array of shape [n]
+            i-th entry contains distance/kernel between X[i] and X[i]
+        """
+        import numpy as np
+
+        from sktime.datatypes._vectorize import VectorizedDF
+
+        X = self._pairwise_panel_x_check(X)
+        X_spl = VectorizedDF(X, iterate_as="Series")
+
+        diag = np.zeros(len(X_spl))
+
+        for i, X_instance in enumerate(X_spl):
+            diag[i] = self.transform(X=X_instance)
+
+        return diag
 
     def fit(self, X=None, X2=None):
         """Fit method for interface compatibility (no logic inside)."""

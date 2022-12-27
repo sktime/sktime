@@ -14,6 +14,7 @@ import sys
 
 import numpy as np
 import pandas as pd
+from scipy.sparse import csr_matrix
 from sklearn.feature_selection import chi2, f_classif
 from sklearn.preprocessing import KBinsDiscretizer
 from sklearn.tree import DecisionTreeClassifier
@@ -322,7 +323,6 @@ class SFAFast(BaseTransformer):
         """
         from numba.core import types
         from numba.typed import Dict
-        from scipy.sparse import csr_matrix
 
         from sktime.transformations.panel.dictionary_based._sfa_fast_numba import (
             _transform_case,
@@ -383,7 +383,6 @@ class SFAFast(BaseTransformer):
         """Transform words to bag-of-pattern and apply feature selection."""
         from numba.core import types
         from numba.typed import Dict
-        from scipy.sparse import csr_matrix
 
         from sktime.transformations.panel.dictionary_based._sfa_fast_numba import (
             create_bag_feature_selection,

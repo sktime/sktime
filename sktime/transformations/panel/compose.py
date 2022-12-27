@@ -6,6 +6,7 @@ transformations as building blocks.
 """
 import numpy as np
 import pandas as pd
+from scipy import sparse
 from sklearn.compose import ColumnTransformer as _ColumnTransformer
 
 from sktime.transformations.base import BaseTransformer, _PanelToPanelTransformer
@@ -105,8 +106,6 @@ class ColumnTransformer(_ColumnTransformer, _PanelToPanelTransformer):
         of the individual transformations and the `sparse_threshold` keyword.
     """
 
-    _tags = {"python_dependencies": "scipy"}
-
     def __init__(
         self,
         transformers,
@@ -137,8 +136,6 @@ class ColumnTransformer(_ColumnTransformer, _PanelToPanelTransformer):
         types = set(type(X) for X in Xs)
 
         if self.sparse_output_:
-            from scipy import sparse
-
             return sparse.hstack(Xs).tocsr()
         if self.preserve_dataframe and (pd.Series in types or pd.DataFrame in types):
             vars = [y for x in self.transformers for y in x[2]]
