@@ -15,6 +15,8 @@ from sktime.dists_kernels._base import BasePairwiseTransformerPanel
 class TimeSeriesDBSCAN(BaseClusterer):
     """DBSCAN for time series distances.
 
+    Interface to sklearn DBSCAN with sktime time series distances.
+
     Parameters
     ----------
     distance : str, or callable, default='euclidean'
