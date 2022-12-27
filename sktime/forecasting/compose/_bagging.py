@@ -226,6 +226,7 @@ class BaggingForecaster(BaseForecaster):
         """
         y_bootstraps_pred = self.forecaster_.predict(fh=fh, X=None)
         y_pred = y_bootstraps_pred.groupby(level=-1).mean().iloc[:, 0]
+        y_pred.name = None
         return y_pred
 
     def _predict_quantiles(self, fh, X=None, alpha=None):
