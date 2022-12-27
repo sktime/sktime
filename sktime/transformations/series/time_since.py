@@ -126,10 +126,7 @@ class TimeSince(BaseTransformer):
         -------
         self: reference to self
         """
-        if isinstance(X.index, pd.MultiIndex):
-            time_index = X.index.get_level_values(-1)
-        else:
-            time_index = X.index
+        time_index = _get_time_index(X)
 
         if time_index.is_numeric():
             if self.freq:
@@ -206,10 +203,7 @@ class TimeSince(BaseTransformer):
         -------
         transformed version of X
         """
-        if isinstance(X.index, pd.MultiIndex):
-            time_index = X.index.get_level_values(-1)
-        else:
-            time_index = X.index
+        time_index = _get_time_index(X)
 
         Xt = pd.DataFrame(index=X.index)
         for start_ in self.start_:
@@ -301,3 +295,12 @@ def _period_to_int(x: pd.PeriodIndex | list[pd.offsets.DateOffset]) -> int:
 
 def _remove_digits_from_str(x: str) -> str:
     return x.translate({ord(k): None for k in digits})
+
+
+def _get_time_index(X: pd.DataFrame) -> pd.PeriodIndex | pd.DatetimeIndex:
+    """Get time index from single and multi-index dataframes."""
+    if isinstance(X.index, pd.MultiIndex):
+        time_index = X.index.get_level_values(-1)
+    else:
+        time_index = X.index
+    return time_index
