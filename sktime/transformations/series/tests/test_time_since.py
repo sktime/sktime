@@ -29,6 +29,15 @@ def df_datetime_15mins_idx():
 
 
 @pytest.fixture
+def df_datetime_weekly_wed_idx():
+    """Create timeseries with Datetime index, weekly with Wed start frequency."""
+    return pd.DataFrame(
+        data={"y": [1, 1, 1, 1, 1]},
+        index=pd.date_range(start="2000-01-05", freq="W-WED", periods=5),
+    )
+
+
+@pytest.fixture
 def df_datetime_monthly_idx():
     """Create timeseries with Datetime index, month start frequency."""
     return pd.DataFrame(
@@ -77,6 +86,23 @@ def test_fit_transform_datetime_15mins_idx_numeric_output(df_datetime_15mins_idx
     expected = pd.DataFrame(
         data={"time_since_2000-01-01 00:00:00": [0, 15, 30, 45, 60]},
         index=df_datetime_15mins_idx.index,
+    )
+    assert_frame_equal(Xt, expected)
+
+
+def test_fit_transform_datetime_weekly_wed_idx_numeric_output(
+    df_datetime_weekly_wed_idx,
+):
+    """Tests that we get the expected outputs."""
+    transformer = TimeSince(
+        start=None, to_numeric=True, keep_original_columns=False, positive_only=False
+    )
+
+    Xt = transformer.fit_transform(df_datetime_weekly_wed_idx)
+
+    expected = pd.DataFrame(
+        data={"time_since_2000-01-05 00:00:00": [0, 1, 2, 3, 4]},
+        index=df_datetime_weekly_wed_idx.index,
     )
     assert_frame_equal(Xt, expected)
 

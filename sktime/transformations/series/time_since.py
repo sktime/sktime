@@ -137,7 +137,11 @@ class TimeSince(BaseTransformer):
             self.freq_ = time_index.freqstr or self.freq or pd.infer_freq(time_index)
             if self.freq_ is None:
                 raise ValueError("X has no known frequency and none is supplied")
-            if self.freq_ == time_index.freqstr and self.freq_ != self.freq:
+            if (
+                (self.freq_ == time_index.freqstr)
+                and (self.freq_ != self.freq)
+                and (self.freq)
+            ):
                 warnings.warn(
                     f"Using frequency from index: {time_index.freq}, which "
                     f"does not match the frequency given: {self.freq}."
