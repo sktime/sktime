@@ -2,10 +2,12 @@
 """Time series DBSCAN, wrapping sklearn ."""
 __author__ = ["fkiraly"]
 
+from warnings import warn
+
 from sklearn.cluster import DBSCAN
 
 from sktime.clustering.base import BaseClusterer
-from sktime.datatypes import MTYPE_LIST_PANEL
+from sktime.datatypes import update_data
 from sktime.dists_kernels._base import BasePairwiseTransformerPanel
 
 
@@ -61,8 +63,9 @@ class TimeSeriesDBSCAN(BaseClusterer):
         "capability:multivariate": True,
         "capability:unequal_length": True,
         "capability:missing_values": True,
-        "X_inner_mtype": MTYPE_LIST_PANEL,  # all panel types are allowed
-        # the types are passed through to the distance directly
+        "X_inner_mtype": ["pd-multiindex", "numpy3D"],
+        # required by the update_data utility
+        # otherwise, we could pass through to the distance directly
     }
 
     DELEGATED_PARAMS = ["eps", "min_samples", "algorithm", "leaf_size", "n_jobs"]
@@ -140,7 +143,18 @@ class TimeSeriesDBSCAN(BaseClusterer):
         np.ndarray (1d array of shape (n_instances,))
             Index of the cluster each time series in X belongs to
         """
-        return self.labels_
+        # if X is the same as seen in _fit, simply return the labels
+        if X is self._X:
+            return self.labels_
+        else:
+            all_X = update_data(X=self._X, X_new=X)
+            warn(
+                "sklearn and sktime DBSCAN estimators do not support different X "
+                "in fit and predict, but a new X was passed in predict. "
+                "Therefore, a clone of TimeSeriesDBSCAN will be fit, and results "
+                "returned, without updating the state of the fitted estimator."
+            )
+            return self.clone().fit(all_X).labels_
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
