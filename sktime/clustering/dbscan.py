@@ -178,9 +178,13 @@ class TimeSeriesDBSCAN(BaseClusterer):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        from sktime.dists_kernels import DtwDist, EditDist
+        from sktime.dists_kernels import AggrDist, DtwDist, EditDist
 
         params1 = {"distance": DtwDist()}
         params2 = {"distance": EditDist()}
 
-        return [params1, params2]
+        # distance capable of unequal length
+        dist = AggrDist.create_test_instance()
+        params3 = {"distance": dist}
+
+        return [params1, params2, params3]
