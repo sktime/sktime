@@ -7,6 +7,7 @@ import numpy as np
 import numpy.typing as npt
 import pandas as pd
 from pandas.api.types import is_numeric_dtype
+from scipy.linalg import null_space
 from sklearn.decomposition import PCA
 from sklearn.neighbors import NearestNeighbors
 
@@ -82,7 +83,6 @@ class DOBIN(BaseTransformer):
         "X_inner_mtype": "pd.DataFrame",
         "fit_is_empty": False,
         "skip-inverse-transform": True,
-        "python_dependencies": "scipy",
     }
 
     def __init__(
@@ -110,8 +110,6 @@ class DOBIN(BaseTransformer):
         -------
         self: reference to self
         """
-        from scipy.linalg import null_space
-
         self._X = X
 
         assert all(X.apply(is_numeric_dtype, axis=0))
