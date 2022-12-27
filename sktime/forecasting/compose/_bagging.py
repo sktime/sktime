@@ -225,7 +225,8 @@ class BaggingForecaster(BaseForecaster):
             Point predictions
         """
         y_bootstraps_pred = self.forecaster_.predict(fh=fh, X=None)
-        return y_bootstraps_pred.groupby(level=-1).mean()
+        y_pred = y_bootstraps_pred.groupby(level=-1).mean().iloc[:, 0]
+        return y_pred
 
     def _predict_quantiles(self, fh, X=None, alpha=None):
         """Compute/return prediction quantiles for a forecast.
