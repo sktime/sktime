@@ -47,6 +47,7 @@ from sktime.datatypes._series._check import check_pddataframe_series
 from sktime.utils.validation.series import is_in_valid_index_types, is_integer_index
 
 VALID_MULTIINDEX_TYPES = (pd.RangeIndex, pd.Index)
+VALID_INDEX_TYPES = (pd.RangeIndex, pd.PeriodIndex, pd.DatetimeIndex)
 
 
 def is_in_valid_multiindex_types(x) -> bool:
@@ -59,26 +60,6 @@ def _ret(valid, msg, metadata, return_metadata):
         return valid, msg, metadata
     else:
         return valid
-
-
-def check_is_dataframe(obj, var_name="obj", return_metadata=True):
-    """Check if object is a dataframe.
-
-    Parameters
-    ----------
-    obj - object to check
-
-    Returns
-    -------
-    valid: bool - whether obj is a valid object of mtype/scitype
-    msg: str or list of str - error messages if object is not valid, otherwise None
-            str if mtype is str; list of len(mtype) with message per mtype if list
-            returned only if return_metadata is True
-    """
-
-    if not isinstance(obj, pd.DataFrame):
-        msg = f"{var_name} must be a pd.DataFrame, found {type(obj)}"
-        return _ret(False, msg, None, return_metadata)
 
 
 def _list_all_equal(obj):
@@ -172,7 +153,9 @@ check_dict[("numpy3D", "Panel")] = check_numpy3d_panel
 
 def check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj"):
 
-    check_is_dataframe(obj)
+    if not isinstance(obj, pd.DataFrame):
+        msg = f"{var_name} must be a pd.DataFrame, found {type(obj)}"
+        return _ret(False, msg, None, return_metadata)
 
     if not isinstance(obj.index, pd.MultiIndex):
         msg = f"{var_name} must have a MultiIndex, found {type(obj.index)}"
@@ -193,7 +176,7 @@ def check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj"):
     # check that no dtype is object
     if "object" in obj.dtypes.values:
         msg = f"{var_name} should not have column of 'object' dtype"
-        return ret(False, msg, None, return_metadata)
+        return _ret(False, msg, None, return_metadata)
 
     # check whether the time index is of valid type
     if not is_in_valid_index_types(obj.index.get_level_values(-1)):
@@ -201,7 +184,7 @@ def check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj"):
             f"{type(obj.index)} is not supported for {var_name}, use "
             f"one of {VALID_INDEX_TYPES} or integer index instead."
         )
-        return ret(False, msg, None, return_metadata)
+        return _ret(False, msg, None, return_metadata)
 
     inst_inds_names = obj.index.names[0:-1]
     time_inds_names = obj.index.names[-1]
@@ -232,7 +215,7 @@ def check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj"):
             f"The (time) index of {var_name} must be sorted monotonically increasing, "
             f"but found: {obj.index.get_level_values(-1)}"
         )
-        return ret(False, msg, None, return_metadata)
+        return _ret(False, msg, None, return_metadata)
 
     metadata = dict()
     metadata["is_univariate"] = len(obj.columns) < 2
