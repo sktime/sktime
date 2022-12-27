@@ -690,7 +690,11 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
 
         assert isinstance(y_pred, pd.DataFrame)
         assert check_is_mtype(y_pred, "pd_multiindex_hier")
-        assert np.all(y_pred.columns == y_train.columns)
+        msg = (
+            "returned columns after predict are not as expected. "
+            f"expected: {y_train.columns}. Found: {y_pred.columns}"
+        )
+        assert np.all(y_pred.columns == y_train.columns), msg
 
         # check consistency of forecast hierarchy with training data
         # some forecasters add __total levels, e.g., ReconcilerForecaster
