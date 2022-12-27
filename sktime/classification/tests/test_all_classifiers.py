@@ -19,6 +19,7 @@ from sktime.utils._testing.panel import make_classification_problem
 from sktime.utils._testing.scenarios_classification import (
     ClassifierFitPredictMultivariate,
 )
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 
 class ClassifierFixtureGenerator(BaseFixtureGenerator):
@@ -126,10 +127,20 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
             # skip test if no expected probas are registered
             return None
 
-        # we only use the first estimator instance for testing
-        estimator_instance = estimator_class.create_test_instance(
-            parameter_set="results_comparison"
-        )
+        # if numba is not installed, some estimators may still try to construct
+        # numba dependenct estimators in results_comparison
+        # if that is the case, we skip the test
+        try:
+            # we only use the first estimator instance for testing
+            estimator_instance = estimator_class.create_test_instance(
+                parameter_set="results_comparison"
+            )
+        except ModuleNotFoundError as e:
+            if not _check_soft_dependencies("numba", severity="none"):
+                return None
+            else:
+                raise e
+
         # set random seed if possible
         if "random_state" in estimator_instance.get_params().keys():
             estimator_instance.set_params(random_state=0)
@@ -158,10 +169,20 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
             # skip test if no expected probas are registered
             return None
 
-        # we only use the first estimator instance for testing
-        estimator_instance = estimator_class.create_test_instance(
-            parameter_set="results_comparison"
-        )
+        # if numba is not installed, some estimators may still try to construct
+        # numba dependenct estimators in results_eomparison
+        # if that is the case, we skip the test
+        try:
+            # we only use the first estimator instance for testing
+            estimator_instance = estimator_class.create_test_instance(
+                parameter_set="results_comparison"
+            )
+        except ModuleNotFoundError as e:
+            if not _check_soft_dependencies("numba", severity="none"):
+                return None
+            else:
+                raise e
+
         # set random seed if possible
         if "random_state" in estimator_instance.get_params().keys():
             estimator_instance.set_params(random_state=0)
