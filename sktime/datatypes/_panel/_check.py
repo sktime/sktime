@@ -186,10 +186,10 @@ def check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj"):
         )
         return _ret(False, msg, None, return_metadata)
 
-    inst_inds_names = obj.index.names[0:-1]
-    time_inds_names = obj.index.names[-1]
+    # inst_inds_names = obj.index.names[0:-1]
+    # time_inds_names = obj.index.names[-1]
     time_obj = obj.reset_index(-1).drop(obj.columns, axis=1)
-    time_grp = time_obj.groupby(level=inst_inds_names, group_keys=True, as_index=True)
+    time_grp = time_obj.groupby(level=0, group_keys=True, as_index=True)
     inst_inds = time_obj.index.unique()
 
     # check instance index being integer or range index
@@ -201,12 +201,10 @@ def check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj"):
         return _ret(False, msg, None, return_metadata)
 
     is_equally_spaced = (
-        time_grp.diff()
-        .groupby(level=inst_inds_names, group_keys=True, as_index=True)
-        .nunique()
+        time_grp.diff().groupby(level=0, group_keys=True, as_index=True).nunique()
     )
 
-    unique_diff = is_equally_spaced[time_inds_names].unique()
+    unique_diff = is_equally_spaced.iloc[:, 0].unique()
     is_equal_length = time_grp.count()
 
     # Check time index is ordered in time
