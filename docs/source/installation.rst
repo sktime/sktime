@@ -39,7 +39,8 @@ To install ``sktime`` with maximum dependencies, including soft dependencies, in
 
 .. warning::
     Some of the dependencies included in ``all_extras`` do not work on mac ARM-based processors, such
-    as M1, M1Pro, M1Max or M1Ultra. This may cause an error during installation.
+    as M1, M1Pro, M1Max or M1Ultra. This may cause an error during installation. Mode details can be found
+    in troubleshooting section below.
 
 
 Installing sktime from conda
@@ -217,6 +218,24 @@ Import errors are often caused by an improperly linked virtual environment.  Mak
 your environment is activated and linked to whatever IDE you are using.  If you are using Jupyter
 Notebooks, follow `these instructions <https://janakiev.com/blog/jupyter-virtual-envs/>`_ for
 adding your virtual environment as a new kernel for your notebook.
+
+Dependency error on mac ARM
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+If you are using a mac with an ARM processor, you may encounter an error when installing
+``sktime[all_extras]``.  This is due to the fact that some libraries included in ``all_extras``
+are not prepared to run in ARM-based processors.
+
+If you want to still install all the remaining compatible libraries from ``all_extras`` you need
+to take into account the following:
+
+* Avoid the following packages:
+    * esig
+    * prophet
+    * tsfresh
+    * tslearn
+* Replace tensorflow package with the following packages:
+    * tensorflow-macos
+    * tensorflow-metal (optional)
 
 Other Startup Resources
 -----------------------
