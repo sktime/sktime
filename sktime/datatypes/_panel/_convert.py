@@ -36,6 +36,7 @@ __all__ = [
 
 from sktime.datatypes._convert_utils._convert import _extend_conversions
 from sktime.datatypes._panel._registry import MTYPE_LIST_PANEL
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 # dictionary indexed by triples of types
 #  1st element = convert from - type
@@ -1063,3 +1064,28 @@ convert_dict[("numpyflat", "numpy3D", "Panel")] = from_numpyflat_to_numpy3d
 _extend_conversions(
     "numpyflat", "numpy3D", convert_dict, mtype_universe=MTYPE_LIST_PANEL
 )
+
+
+if _check_soft_dependencies("dask", severity="none"):
+    from sktime.datatypes._adapter.dask_to_pd import (
+        convert_dask_to_pandas,
+        convert_pandas_to_dask,
+    )
+
+    def convert_dask_to_pd_as_panel(obj, store=None):
+        return convert_dask_to_pandas(obj)
+
+    convert_dict[
+        ("dask_panel", "pd-multiindex", "Panel")
+    ] = convert_dask_to_pd_as_panel
+
+    def convert_pd_to_dask_as_panel(obj, store=None):
+        return convert_pandas_to_dask(obj)
+
+    convert_dict[
+        ("pd-multiindex", "dask_panel", "Panel")
+    ] = convert_pd_to_dask_as_panel
+
+    _extend_conversions(
+        "dask_panel", "pd-multiindex", convert_dict, mtype_universe=MTYPE_LIST_PANEL
+    )
