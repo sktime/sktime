@@ -1075,16 +1075,12 @@ if _check_soft_dependencies("dask", severity="none"):
     def convert_dask_to_pd_as_panel(obj, store=None):
         return convert_dask_to_pandas(obj)
 
-    convert_dict[
-        ("dask_panel", "pd-multiindex", "Panel")
-    ] = convert_dask_to_pd_as_panel
+    convert_dict[("dask_panel", "pd-multiindex", "Panel")] = convert_dask_to_pd_as_panel
 
     def convert_pd_to_dask_as_panel(obj, store=None):
         return convert_pandas_to_dask(obj)
 
-    convert_dict[
-        ("pd-multiindex", "dask_panel", "Panel")
-    ] = convert_pd_to_dask_as_panel
+    convert_dict[("pd-multiindex", "dask_panel", "Panel")] = convert_pd_to_dask_as_panel
 
     _extend_conversions(
         "dask_panel", "pd-multiindex", convert_dict, mtype_universe=MTYPE_LIST_PANEL
