@@ -1937,6 +1937,16 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "dainelli98",
+      "name": "Daniel Martín Martínez",
+      "avatar_url": "https://avatars.githubusercontent.com/dainelli98",
+      "profile": "https://www.linkedin.com/in/daniel-martin-martinez",
+      "contributions": [
+        "doc",
+        "bug"
+      ]
     }
   ]
 }
