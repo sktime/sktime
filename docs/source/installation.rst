@@ -171,7 +171,7 @@ In the ``anaconda prompt`` terminal:
 2. Create new environment with python 3.8: :code:`conda create -n sktime-dev python=3.8`
 
    .. warning::
-       If you already have an environment called "sktime-dev" from a previous attempt you will first need to remove this
+       If you already have an environment called "sktime-dev" from a previous attempt you will first need to remove this.
 
 3. Activate the environment: :code:`conda activate sktime-dev`
 
