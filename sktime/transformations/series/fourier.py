@@ -6,7 +6,7 @@ __author__ = ["ltsaprounis"]
 
 import warnings
 from distutils.log import warn
-from typing import List, Union
+from typing import List, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -113,8 +113,8 @@ class FourierFeatures(BaseTransformer):
         self,
         sp_list: List[Union[int, float]],
         fourier_terms_list: List[int],
-        freq=None,
-        keep_original_columns=False,
+        freq: Optional[str] = None,
+        keep_original_columns: Optional[bool] = True,
     ):
         self.sp_list = sp_list
         self.fourier_terms_list = fourier_terms_list
