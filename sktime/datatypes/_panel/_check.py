@@ -43,7 +43,10 @@ __all__ = ["check_dict"]
 import numpy as np
 import pandas as pd
 
-from sktime.datatypes._series._check import check_pddataframe_series
+from sktime.datatypes._series._check import (
+    _index_equally_spaced,
+    check_pddataframe_series,
+)
 from sktime.utils.validation.series import is_in_valid_index_types, is_integer_index
 
 VALID_MULTIINDEX_TYPES = (pd.RangeIndex, pd.Index)
@@ -186,8 +189,6 @@ def check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj"):
         )
         return _ret(False, msg, None, return_metadata)
 
-    # inst_inds_names = obj.index.names[0:-1]
-    # time_inds_names = obj.index.names[-1]
     time_obj = obj.reset_index(-1).drop(obj.columns, axis=1)
     time_grp = time_obj.groupby(level=0, group_keys=True, as_index=True)
     inst_inds = time_obj.index.unique()
@@ -200,15 +201,22 @@ def check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj"):
         )
         return _ret(False, msg, None, return_metadata)
 
-    is_equally_spaced = (
-        time_grp.diff().groupby(level=0, group_keys=True, as_index=True).nunique()
-    )
+    if pd.__version__ < "1.5.0":
+        # Earlier versions of pandas are very slow for this type of operation.
+        is_equally_spaced = [_index_equally_spaced(obj.loc[i].index) for i in inst_inds]
+        unique_diff_list = [obj.loc[i].index.is_monotonic for i in inst_inds]
+        time_is_monotonic = len([i for i in unique_diff_list if i is False]) == 0
+    else:
+        is_equally_spaced = (
+            time_grp.diff().groupby(level=0, group_keys=True, as_index=True).nunique()
+        )
+        unique_diff = is_equally_spaced.iloc[:, 0].unique()
+        time_is_monotonic = all(unique_diff >= 0)
 
-    unique_diff = is_equally_spaced.iloc[:, 0].unique()
     is_equal_length = time_grp.count()
 
     # Check time index is ordered in time
-    if not all(unique_diff >= 0):
+    if not time_is_monotonic:
         msg = (
             f"The (time) index of {var_name} must be sorted monotonically increasing, "
             f"but found: {obj.index.get_level_values(-1)}"
@@ -217,7 +225,7 @@ def check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj"):
 
     metadata = dict()
     metadata["is_univariate"] = len(obj.columns) < 2
-    metadata["is_equally_spaced"] = unique_diff.shape[0] == 1
+    metadata["is_equally_spaced"] = is_equally_spaced
     metadata["is_empty"] = len(obj.index) < 1 or len(obj.columns) < 1
     metadata["n_instances"] = len(inst_inds)
     metadata["is_one_series"] = len(inst_inds) == 1
