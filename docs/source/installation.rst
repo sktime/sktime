@@ -229,13 +229,13 @@ If you want to still install all the remaining compatible libraries from ``all_e
 to take into account the following:
 
 * Avoid the following packages:
-    * esig
-    * prophet
-    * tsfresh
-    * tslearn
-* Replace tensorflow package with the following packages:
-    * tensorflow-macos
-    * tensorflow-metal (optional)
+    * ``esig``
+    * ``prophet``
+    * ``tsfresh``
+    * ``tslearn``
+* Replace ``tensorflow`` package with the following packages:
+    * ``tensorflow-macos``
+    * ``tensorflow-metal`` (optional)
 
 Other Startup Resources
 -----------------------
