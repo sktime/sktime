@@ -47,13 +47,6 @@ check_dict.update(check_dict_Table)
 check_dict.update(check_dict_Proba)
 
 
-def _ret(valid, msg, metadata, return_metadata):
-    if return_metadata:
-        return valid, msg, metadata
-    else:
-        return valid
-
-
 def _check_scitype_valid(scitype: str = None):
     """Check validity of scitype."""
     valid_scitypes = list(set([x[1] for x in check_dict.keys()]))
@@ -63,6 +56,13 @@ def _check_scitype_valid(scitype: str = None):
 
     if scitype is not None and scitype not in valid_scitypes:
         raise TypeError(scitype + " is not a supported scitype")
+
+
+def _ret(valid, msg, metadata, return_metadata):
+    if return_metadata:
+        return valid, msg, metadata
+    else:
+        return valid
 
 
 def _coerce_list_of_str(obj, var_name="obj"):

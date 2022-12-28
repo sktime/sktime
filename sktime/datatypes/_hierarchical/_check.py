@@ -101,31 +101,24 @@ def check_pdmultiindex_hierarchical(obj, return_metadata=False, var_name="obj"):
     inst_inds = obj.index.droplevel(-1).unique()
     panel_inds = inst_inds.droplevel(-1).unique()
 
-    idx_len = list(range(len(obj.index.names) - 1))
+    check_res = [
+        check_pddataframe_series(obj.loc[i], return_metadata=True) for i in inst_inds
+    ]
+    bad_inds = [i[1] for i in enumerate(inst_inds) if not check_res[i[0]][0]]
 
-    check_res = obj.groupby(level=idx_len, group_keys=False, as_index=True).apply(
-        lambda x: check_pddataframe_series(x.droplevel(idx_len), return_metadata=True)
-    )
-
-    bad_inds = check_res.apply(pd.Series)
-
-    if check_res.shape[0] == 0:
-        bad_inds["is_univariate"] = np.nan
-        bad_inds["is_equally_spaced"] = np.nan
-        bad_inds["is_empty"] = np.nan
-        bad_inds["check"] = np.nan
-    else:
-        bad_inds = pd.concat([bad_inds[[0, 1]], bad_inds[2].apply(pd.Series)], axis=1)
-        bad_inds = bad_inds.rename(columns={0: "check"})
-
-    if not all(bad_inds["check"]):
-        msg = f"{var_name}.loc[i] must be Series of mtype pd.DataFrame," f" not at i"
+    if len(bad_inds) > 0:
+        msg = (
+            f"{var_name}.loc[i] must be Series of mtype pd.DataFrame,"
+            f" not at i={bad_inds}"
+        )
         return _ret(False, msg, None, return_metadata)
 
     metadata = dict()
-    metadata["is_univariate"] = all(bad_inds["is_univariate"])
-    metadata["is_equally_spaced"] = all(bad_inds["is_equally_spaced"])
-    metadata["is_empty"] = all(bad_inds["is_empty"])
+    metadata["is_univariate"] = np.all([res[2]["is_univariate"] for res in check_res])
+    metadata["is_equally_spaced"] = np.all(
+        [res[2]["is_equally_spaced"] for res in check_res]
+    )
+    metadata["is_empty"] = np.any([res[2]["is_empty"] for res in check_res])
     metadata["n_instances"] = len(inst_inds)
     metadata["n_panels"] = len(panel_inds)
     metadata["is_one_series"] = len(inst_inds) == 1
