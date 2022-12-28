@@ -30,6 +30,9 @@ class _DelegatedClassifier(BaseClassifier):
     Does NOT delegate or copy tags, this should be done in a child class if required.
     """
 
+    # attribute for _Delegatedclassifier, which then delegates
+    #     all non-overridden methods are same as of getattr(self, _delegate_name)
+    #     see further details in _DelegatedClassifier docstring
     _delegate_name = "estimator_"
 
     def _get_delegate(self):
@@ -133,7 +136,8 @@ class _DelegatedClassifier(BaseClassifier):
 
         Returns
         -------
-        fitted_params : dict
+        fitted_params : dict with str keys
+            fitted parameters, keyed by names of fitted parameter
         """
         estimator = self._get_delegate()
         return estimator.get_fitted_params()

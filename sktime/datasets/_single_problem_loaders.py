@@ -13,6 +13,7 @@ __author__ = [
     "aiwalter",
     "jasonlines",
     "achieveordie",
+    "ciaran-g",
 ]
 
 __all__ = [
@@ -24,6 +25,7 @@ __all__ = [
     "load_italy_power_demand",
     "load_basic_motions",
     "load_japanese_vowels",
+    "load_solar",
     "load_shampoo_sales",
     "load_longley",
     "load_lynx",
@@ -40,7 +42,8 @@ __all__ = [
 ]
 
 import os
-from urllib.error import HTTPError
+from urllib.error import HTTPError, URLError
+from warnings import warn
 
 import numpy as np
 import pandas as pd
@@ -94,7 +97,8 @@ def load_UCR_UEA_dataset(
         Exception is raised if the data cannot be stored in the requested type.
     extract_path : str, optional (default=None)
         the path to look for the data. If no path is provided, the function
-        looks in `sktime/datasets/data/`.
+        looks in `sktime/datasets/data/`. If a path is given, it can be absolute,
+        e.g. C:/Temp or relative, e.g. Temp or ./Temp.
 
     Returns
     -------
@@ -1046,7 +1050,7 @@ def load_macroeconomic():
     Examples
     --------
     >>> from sktime.datasets import load_macroeconomic
-    >>> y = load_macroeconomic()
+    >>> y = load_macroeconomic()  # doctest: +SKIP
 
     Notes
     -----
@@ -1144,8 +1148,8 @@ def load_solar(
         Normalise the returned time-series by installed capacity?
     return_full_df : boolean, default=False
         Return a pd.DataFrame with power, capacity, and normalised estimates?
-    api_version : string, default="v4"
-        API version to call
+    api_version : string or None, default="v4"
+        API version to call. If None then a stored sample of the data is loaded.
 
     References
     ----------
@@ -1157,13 +1161,15 @@ def load_solar(
     >>> from sktime.datasets import load_solar  # doctest: +SKIP
     >>> y = load_solar()  # doctest: +SKIP
     """
-    from sktime.utils.validation._dependencies import _check_soft_dependencies
+    name = "solar"
+    fname = name + ".csv"
+    path = os.path.join(MODULE, DIRNAME, name, fname)
+    y = pd.read_csv(path, index_col=0, parse_dates=["datetime_gmt"], dtype={1: float})
+    y = y.asfreq("30T")
+    y = y.squeeze("columns")
+    if api_version is None:
+        return y
 
-    _check_soft_dependencies("backoff")
-
-    import backoff
-
-    @backoff.on_exception(wait_gen=backoff.expo, exception=HTTPError, max_tries=5)
     def _load_solar(
         start="2021-05-01",
         end="2021-09-01",
@@ -1198,13 +1204,28 @@ def load_solar(
             else:
                 return df["generation_mw"].rename("solar_gen")
 
-    return _load_solar(
-        start=start,
-        end=end,
-        normalise=normalise,
-        return_full_df=return_full_df,
-        api_version=api_version,
-    )
+    tries = 5
+    for i in range(tries):
+        try:
+            return _load_solar(
+                start=start,
+                end=end,
+                normalise=normalise,
+                return_full_df=return_full_df,
+                api_version=api_version,
+            )
+        except (URLError, HTTPError):
+            if i < tries - 1:
+                continue
+            else:
+                warn(
+                    """
+                    Error detected using API. Check connection, input arguments, and
+                    API status here https://www.solar.sheffield.ac.uk/pvlive/api/.
+                    Loading stored sample data instead.
+                    """
+                )
+                return y
 
 
 def load_covid_3month(split=None, return_X_y=True):

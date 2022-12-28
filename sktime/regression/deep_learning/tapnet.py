@@ -16,7 +16,12 @@ from sktime.utils.validation._dependencies import _check_dl_dependencies
 
 
 class TapNetRegressor(BaseDeepRegressor):
-    """Implementation of TapNetRegressor, as described in [1].
+    """Time series attentional prototype network (TapNet), as described in [1].
+
+     TapNet was initially proposed for multivariate time series
+     classification. The is an adaptation for time series regression. TapNet comprises
+     these components: random dimension permutation, multivariate time series
+     encoding, and attentional prototype learning.
 
     Parameters
     ----------
@@ -38,10 +43,10 @@ class TapNetRegressor(BaseDeepRegressor):
         dilation value
     activation          : str, default = "sigmoid"
         activation function for the last output layer
-    loss                : str, default = "binary_crossentropy"
+    loss                : str, default = "mean_squared_error"
         loss function for the classifier
     optimizer           : str or None, default = "Adam(lr=0.01)"
-        gradient updating function for the classifer
+        gradient updating function for the classifier
     use_bias            : bool, default = True
         whether to use bias in the output dense layer
     use_rp              : bool, default = True
@@ -118,8 +123,6 @@ class TapNetRegressor(BaseDeepRegressor):
         self.metrics = metrics
         self.callbacks = callbacks
         self.verbose = verbose
-
-        self._is_fitted = False
 
         self.dropout = dropout
         self.use_lstm = use_lstm
@@ -213,3 +216,41 @@ class TapNetRegressor(BaseDeepRegressor):
         )
 
         return self
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            For classifiers, a "default" set of parameters should be provided for
+            general testing, and a "results_comparison" set for comparing against
+            previously recorded results if the general set does not produce suitable
+            probabilities to compare against.
+
+        Returns
+        -------
+        params : dict or list of dict, default={}
+            Parameters to create testing instances of the class.
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`.
+        """
+        param1 = {
+            "n_epochs": 10,
+            "batch_size": 4,
+            "padding": "valid",
+            "filter_sizes": (16, 16, 16),
+            "kernel_size": (3, 3, 1),
+            "layers": (25, 50),
+        }
+        param2 = {
+            "n_epochs": 20,
+            "use_cnn": False,
+            "layers": (25, 25),
+        }
+
+        return [param1, param2]

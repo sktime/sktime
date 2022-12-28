@@ -333,7 +333,6 @@ def mtype(
     return mtypes_positive[0]
 
 
-# todo 0.15.0: change msg_legacy_interface default to False
 # todo 0.16.0: remove msg_legacy_interface arg, and remove msg_legacy variable inside
 def check_is_scitype(
     obj,
@@ -341,7 +340,7 @@ def check_is_scitype(
     return_metadata=False,
     var_name="obj",
     exclude_mtypes=AMBIGUOUS_MTYPES,
-    msg_legacy_interface=True,
+    msg_legacy_interface=False,
 ):
     """Check object for compliance with scitype specification, return metadata.
 
@@ -412,7 +411,7 @@ def check_is_scitype(
     # find all the mtype keys corresponding to the scitypes
     keys = [x for x in valid_keys if x[1] in scitype and x[0] not in exclude_mtypes]
 
-    # storing the msg retursn
+    # storing the msg return
     msg = {}
     msg_legacy = []
     found_mtype = []
@@ -461,8 +460,7 @@ def check_is_scitype(
             warn(
                 "return msg (2nd argument) of check_is_scitype will change to "
                 "dict from list type. Set msg_legacy_interface=False for "
-                "post-deprecation behaviour. Default msg_legacy_interface "
-                "will change to True in 0.15.0. Argument msg_legacy_interface "
+                "post-deprecation behaviour. Argument msg_legacy_interface "
                 "will be removed in 0.16.0.",
                 DeprecationWarning,
             )

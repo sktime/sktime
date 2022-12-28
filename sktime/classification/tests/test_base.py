@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 """Unit tests for classifier base class functionality."""
 
-__author__ = ["mloning", "fkiraly", "TonyBagnall", "MatthewMiddlehurst"]
+__author__ = ["mloning", "fkiraly", "TonyBagnall", "MatthewMiddlehurst", "achieveordie"]
+
+import pickle
 
 import numpy as np
 import pandas as pd
@@ -9,6 +11,7 @@ import pytest
 from sklearn.model_selection import KFold
 
 from sktime.classification.base import BaseClassifier
+from sktime.classification.deep_learning.base import BaseDeepClassifier
 from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
 from sktime.classification.feature_based import Catch22Classifier
 from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
@@ -17,6 +20,7 @@ from sktime.utils._testing.panel import (
     _make_panel,
     make_classification_problem,
 )
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 
 class _DummyClassifier(BaseClassifier):
@@ -40,6 +44,36 @@ class _DummyComposite(_DummyClassifier):
 
     def __init__(self, foo):
         self.foo = foo
+
+
+class _DummyDeepClassifierEmpty(BaseDeepClassifier):
+    """Dummy Deep Classifier for testing empty base deep class save utilities."""
+
+    def __init__(self):
+        super(_DummyDeepClassifierEmpty, self).__init__()
+
+    def build_model(self, input_shape, n_classes, **kwargs):
+        return None
+
+    def _fit(self, X, y):
+        return self
+
+
+class _DummyDeepClassifierFull(BaseDeepClassifier):
+    """Dummy Deep Classifier to test serialization capabilities."""
+
+    def __init__(
+        self,
+        optimizer,
+    ):
+        super(_DummyDeepClassifierFull, self).__init__()
+        self.optimizer = optimizer
+
+    def build_model(self, input_shape, n_classes, **kwargs):
+        return None
+
+    def _fit(self, X, y):
+        return self
 
 
 class _DummyHandlesAllInput(BaseClassifier):
@@ -426,3 +460,52 @@ def test_fit_predict_single_class(method, cv):
         assert y_pred.ndim == 2
         assert y_pred.shape == (n_instances, 1)
         assert all(list(y_pred == 1))
+
+
+@pytest.mark.skipif(
+    not _check_soft_dependencies("tensorflow", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
+def test_deep_estimator_empty():
+    """Check if serialization works for empty dummy."""
+    empty_dummy = _DummyDeepClassifierEmpty()
+    serialized_empty = pickle.dumps(empty_dummy)
+    deserialized_empty = pickle.loads(serialized_empty)
+    assert empty_dummy.__dict__ == deserialized_empty.__dict__
+
+
+@pytest.mark.skipif(
+    not _check_soft_dependencies("tensorflow", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
+@pytest.mark.parametrize("optimizer", [None, "adam", "object-adamax"])
+def test_deep_estimator_full(optimizer):
+    """Check if serialization works for full dummy."""
+    from tensorflow.keras.optimizers import Adamax, Optimizer, serialize
+
+    if optimizer == "object-adamax":
+        optimizer = Adamax()
+
+    full_dummy = _DummyDeepClassifierFull(optimizer)
+    serialized_full = pickle.dumps(full_dummy)
+    deserialized_full = pickle.loads(serialized_full)
+
+    if isinstance(optimizer, Optimizer):
+        # assert same configuration of optimizer
+        assert serialize(full_dummy.__dict__["optimizer"]) == serialize(
+            deserialized_full.__dict__["optimizer"]
+        )
+        assert serialize(full_dummy.optimizer) == serialize(deserialized_full.optimizer)
+
+        # assert weights of optimizers are same
+        assert (
+            full_dummy.optimizer.variables() == deserialized_full.optimizer.variables()
+        )
+
+        # remove optimizers from both to do full dict check,
+        # since two different objects
+        del full_dummy.__dict__["optimizer"]
+        del deserialized_full.__dict__["optimizer"]
+
+    # check if components are same
+    assert full_dummy.__dict__ == deserialized_full.__dict__

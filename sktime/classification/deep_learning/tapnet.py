@@ -20,7 +20,7 @@ _check_dl_dependencies(severity="warning")
 
 
 class TapNetClassifier(BaseDeepClassifier):
-    """Implementation of TapNetClassifier, as described in [1].
+    """Time series attentional prototype network (TapNet), as described in [1]_.
 
     Parameters
     ----------
@@ -79,9 +79,9 @@ class TapNetClassifier(BaseDeepClassifier):
     --------
     >>> from sktime.classification.deep_learning.tapnet import TapNetClassifier
     >>> from sktime.datasets import load_unit_test
-    >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
-    >>> tapnet = TapNetClassifier()  # doctest: +SKIP
+    >>> X_train, y_train = load_unit_test(split="train")
+    >>> X_test, y_test = load_unit_test(split="test")
+    >>> tapnet = TapNetClassifier(n_epochs=20,batch_size=4)  # doctest: +SKIP
     >>> tapnet.fit(X_train, y_train) # doctest: +SKIP
     TapNetClassifier(...)
     """
@@ -133,8 +133,6 @@ class TapNetClassifier(BaseDeepClassifier):
         self.metrics = metrics
         self.callbacks = callbacks
         self.verbose = verbose
-
-        self._is_fitted = False
 
         self.dropout = dropout
         self.use_lstm = use_lstm
@@ -255,10 +253,19 @@ class TapNetClassifier(BaseDeepClassifier):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
-        return {
-            "n_epochs": 50,
-            "batch_size": 32,
-            "filter_sizes": (128, 128, 64),
+        param1 = {
+            "n_epochs": 20,
+            "batch_size": 4,
+            "use_lstm": False,
+            "use_att": False,
+            "filter_sizes": (16, 16, 16),
             "dilation": 2,
-            "layers": (200, 100),
+            "layers": (32, 16),
         }
+        param2 = {
+            "n_epochs": 20,
+            "use_cnn": False,
+            "layers": (25, 25),
+        }
+
+        return [param1, param2]

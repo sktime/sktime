@@ -40,6 +40,7 @@ from sktime.forecasting.base._fh import _index_range
 from sktime.forecasting.base._sktime import _BaseWindowForecaster
 from sktime.regression.base import BaseRegressor
 from sktime.transformations.compose import FeatureUnion
+from sktime.transformations.series.summarize import WindowSummarizer
 from sktime.utils.datetime import _shift
 from sktime.utils.validation import check_window_length
 
@@ -62,7 +63,13 @@ def _check_fh(fh):
 
 
 def _sliding_window_transform(
-    y, window_length, fh, X=None, transformers=None, scitype="tabular-regressor"
+    y,
+    window_length,
+    fh,
+    X=None,
+    transformers=None,
+    scitype="tabular-regressor",
+    pooling="local",
 ):
     """Transform time series data using sliding window.
 
@@ -79,12 +86,16 @@ def _sliding_window_transform(
         Forecasting horizon for transformed target variable
     X : pd.DataFrame, optional (default=None)
         Exogenous series.
-    transformers: *experimental*
-        A suitable transformer that allows for using an en-bloc approach with
+    transformers: list of transformers (default = None)
+        A suitable list of transformers that allows for using an en-bloc approach with
         make_reduction. This means that instead of using the raw past observations of
         y across the window length, suitable features will be generated directly from
-        the past raw observations. Currently only supports WindowSummarizer to generate
-        e.g. the mean of the past 7 observations.
+        the past raw observations. Currently only supports WindowSummarizer (or a list
+        of WindowSummarizers) to generate features e.g. the mean of the past 7
+        observations.
+    pooling: str {"local", "global"}, optional
+        Specifies whether separate models will be fit at the level of each instance
+        (local) of if you wish to fit a single model to all instances ("global").
     scitype : str {"tabular-regressor", "time-series-regressor"}, optional
         Scitype of estimator to use with transformed data.
         - If "tabular-regressor", returns X as tabular 2d array
@@ -107,7 +118,7 @@ def _sliding_window_transform(
     n_timepoints = ts_index.shape[0]
     window_length = check_window_length(window_length, n_timepoints)
 
-    if transformers is not None:
+    if pooling == "global":
         if len(transformers) == 1:
             tf_fit = transformers[0].fit(y)
         else:
@@ -179,11 +190,12 @@ class _Reducer(_BaseWindowForecaster):
         "handles-missing-data": True,
     }
 
-    def __init__(self, estimator, window_length=10, transformers=None):
+    def __init__(self, estimator, window_length=10, transformers=None, pooling=None):
         super(_Reducer, self).__init__(window_length=window_length)
         self.transformers = transformers
         self.transformers_ = None
         self.estimator = estimator
+        self.pooling = None
         self._cv = None
 
         # it seems that the sklearn tags are not fully reliable
@@ -466,6 +478,7 @@ class _RecursiveReducer(_Reducer):
             X=X,
             transformers=self.transformers_,
             scitype=self._estimator_scitype,
+            pooling=self.pooling,
         )
 
     def _fit(self, y, X=None, fh=None):
@@ -484,23 +497,51 @@ class _RecursiveReducer(_Reducer):
         -------
         self : returns an instance of self.
         """
+        if self.pooling is not None and self.pooling not in ["local", "global"]:
+            raise ValueError(
+                "pooling must be one of local, global" + f" but found {self.pooling}"
+            )
+
         if self.window_length is not None and self.transformers is not None:
             raise ValueError(
                 "Transformers provided, suggesting en-bloc approach"
                 + " to derive reduction features. Window length will be"
                 + " inferred, please set to None"
             )
+        if self.transformers is not None and self.pooling == "local":
+            raise ValueError(
+                "Transformers currently cannot be provided"
+                + "for models that run locally"
+            )
+        pd_format = isinstance(y, pd.Series) or isinstance(y, pd.DataFrame)
+        if self.pooling == "local":
+            if pd_format is True and isinstance(y, pd.MultiIndex):
+                warn(
+                    "Pooling has been changed by default to 'local', which"
+                    + " means that separate models will be fit at the level of"
+                    + " each instance. If you wish to fit a single model to"
+                    + " all instances, please specify pooling = 'global'.",
+                    DeprecationWarning,
+                )
         self.window_length_ = check_window_length(
             self.window_length, n_timepoints=len(y)
         )
         if self.transformers is not None:
             self.transformers_ = clone(self.transformers)
-            self.transformers = clone(self.transformers)
+
+        if self.transformers is None and self.pooling == "global":
+            kwargs = {
+                "lag_feature": {
+                    "lag": list(range(1, self.window_length + 1)),
+                }
+            }
+            self.transformers_ = [WindowSummarizer(**kwargs)]
 
         if self.window_length is None:
             trafo = self.transformers_
             fit_trafo = [i.fit(y) for i in trafo]
             ts = [i.truncate_start for i in fit_trafo if hasattr(i, "truncate_start")]
+
             if len(ts) > 0:
                 self.window_length_ = max(ts)
             else:
@@ -509,10 +550,29 @@ class _RecursiveReducer(_Reducer):
                     + "or needs to have it passed by transformer via"
                     + "truncate_start"
                 )
+
+            n_timepoints = len(get_time_index(y))
+            if self.transformers_ is not None and n_timepoints < max(ts):
+                raise ValueError(
+                    "Not sufficient observations to calculate transformations"
+                    + "Please reduce window length / window lagging to match"
+                    + "observation size"
+                )
+
+        if self.pooling == "global":
+            timepoints = get_time_index(y)
+            if isinstance(timepoints, (pd.DatetimeIndex, pd.PeriodIndex)):
+                if timepoints.freq is None:
+                    raise ValueError(
+                        "Please set frequency for DatetimeIndex or PeriodIndex. You "
+                        + "can use set_freq_hier function from sktime.utils.datetime "
+                        + "for this purpose (will convert DatetimeIndex to PeriodIndex)"
+                    )
+
         yt, Xt = self._transform(y, X)
 
         # Make sure yt is 1d array to avoid DataConversion warning from scikit-learn.
-        if self.transformers is not None:
+        if self.transformers_ is not None:
             yt = yt.to_numpy().ravel()
         else:
             yt = yt.ravel()
@@ -576,67 +636,60 @@ class _RecursiveReducer(_Reducer):
             contains the y and X data prepared for the respective windows, see above.
 
         """
-        # shift and cutoff determine start and end of the window, respectively.
-        start = _shift(self._cutoff, by=shift - self.window_length_)
         cutoff = _shift(self._cutoff, by=shift)
 
-        if self.transformers_ is not None:
-            # Get the last window of the endogenous variable.
-            # If X is given, also get the last window of the exogenous variables.
-            # relative _int will give the integer indices of the window defined above
-            relative_int = pd.Index(list(map(int, range(-self.window_length_, 1))))
-            # index_range will give the same indices,
-            # but using the date format of cutoff
-            index_range = _index_range(relative_int, cutoff)
+        # Get the last window of the endogenous variable.
+        # If X is given, also get the last window of the exogenous variables.
+        # relative _int will give the integer indices of the window defined above
+        # Apart from the window_length, relative_int also contains the first
+        # observation after the window, because this is what the window
+        # is summarized to.
+        relative_int = pd.Index(list(map(int, range(-self.window_length_ + 1, 2))))
+        # index_range will give the same indices,
+        # but using the date format of cutoff
+        index_range = _index_range(relative_int, cutoff)
 
-            # y_raw is defined solely for the purpose of deriving a dataframe
-            # window_length forecasting steps into the past in order to calculate the
-            # new X from y features based on the transformer provided
-            y_raw = _create_fcst_df(index_range, self._y)
+        # y_raw is defined solely for the purpose of deriving a dataframe
+        # window_length forecasting steps into the past in order to calculate the
+        # new X from y features based on the transformer provided
 
-            # The y_raw dataframe will contain historical and / or recursively
-            # forecast value to calculate the new X features.
+        # Historical values are passed here for all time steps of y_raw that lie in
+        # the past .
+        y_raw = _create_fcst_df(index_range, self._y)
+        y_raw.update(self._y)
+        # The y_raw dataframe will contain historical and / or recursively
+        # forecast value to calculate the new X features.
+        # Forecast values are passed here for all time steps of y_raw that lie in
+        # the future and were forecast in previous iterations.
+        if y_update is not None:
+            y_raw.update(y_update)
 
-            # Historical values are passed here for all time steps of y_raw that lie in
-            # the past .
-            y_raw.update(self._y)
-
-            # Forecast values are passed here for all time steps of y_raw that lie in
-            # the future and were forecast in previous iterations.
-            if y_update is not None:
-                y_raw.update(y_update)
-
-            # After filling the empty y_raw frame with historic / forecast values
-            # X from y features can be calculated based on the passed transformer.
-            if len(self.transformers_) == 1:
-                X_from_y = self.transformers_[0].fit_transform(y_raw)
-            else:
-                ref = self.transformers_
-                feat = [("trafo_" + str(index), i) for index, i in enumerate(ref)]
-                X_from_y = FeatureUnion(feat).fit_transform(y_raw)
-            # We are only interested in the last observations, since only that one
-            # contains relevant value. In recursive forecasting, only one observations
-            # can be forecast at a time.
-            X_from_y_cut = _cut_tail(X_from_y)
-
-            # X_from_y_cut is added to X dataframe (unlike y_raw, the X dataframe can
-            # directly be created with one observation from the start,
-            # since no features need to be calculated).
-            if self._X is not None:
-                X = _create_fcst_df([index_range[-1]], self._X)
-                X.update(self._X)
-                if X_update is not None:
-                    X.update(X_update)
-                X_cut = _cut_tail(X)
-                X = pd.concat([X_from_y_cut, X_cut], axis=1)
-            else:
-                X = X_from_y_cut
-            y = _cut_tail(y_raw)
+        # After filling the empty y_raw frame with historic / forecast values
+        # X from y features can be calculated based on the passed transformer.
+        if len(self.transformers_) == 1:
+            X_from_y = self.transformers_[0].fit_transform(y_raw)
         else:
-            # Get the last window of the endogenous variable.
-            y = self._y.loc[start:cutoff].to_numpy()
-            # If X is given, also get the last window of the exogenous variables.
-            X = self._X.loc[start:cutoff].to_numpy() if self._X is not None else None
+            ref = self.transformers_
+            feat = [("trafo_" + str(index), i) for index, i in enumerate(ref)]
+            X_from_y = FeatureUnion(feat).fit_transform(y_raw)
+        # We are only interested in the last observations, since only that one
+        # contains relevant value. In recursive forecasting, only one observations
+        # can be forecast at a time.
+        X_from_y_cut = _cut_tail(X_from_y)
+
+        # X_from_y_cut is added to X dataframe (unlike y_raw, the X dataframe can
+        # directly be created with one observation from the start,
+        # since no features need to be calculated).
+        if self._X is not None:
+            X = _create_fcst_df([index_range[-1]], self._X)
+            X.update(self._X)
+            if X_update is not None:
+                X.update(X_update)
+            X_cut = _cut_tail(X)
+            X = pd.concat([X_from_y_cut, X_cut], axis=1)
+        else:
+            X = X_from_y_cut
+        y = _cut_tail(y_raw)
         return y, X
 
     def _predict_last_window(
@@ -669,21 +722,19 @@ class _RecursiveReducer(_Reducer):
             )
 
         # Get last window of available data.
-        if self.transformers_ is not None:
-            y_last, X_last = self._get_shifted_window()
-        else:
-            y_last, X_last = self._get_last_window()
-
         # If we cannot generate a prediction from the available data, return nan.
-        if self.transformers_ is None:
-            if not self._is_predictable(y_last):
-                return self._predict_nan(fh)
-        else:
+
+        if self.pooling == "global":
+            y_last, X_last = self._get_shifted_window(X_update=X)
             ys = np.array(y_last)
             if not np.sum(np.isnan(ys)) == 0 and np.sum(np.isinf(ys)) == 0:
                 return self._predict_nan(fh)
+        else:
+            y_last, X_last = self._get_last_window()
+            if not self._is_predictable(y_last):
+                return self._predict_nan(fh)
 
-        if self.transformers_ is not None:
+        if self.pooling == "global":
             fh_max = fh.to_relative(self.cutoff)[-1]
             relative = pd.Index(list(map(int, range(1, fh_max + 1))))
             index_range = _index_range(relative, self.cutoff)
@@ -939,6 +990,16 @@ class RecursiveTabularRegressionForecaster(_RecursiveReducer):
     window_length : int, optional (default=10)
         The length of the sliding window used to transform the series into
         a tabular matrix.
+    transformers: list of transformers (default = None)
+        A suitable list of transformers that allows for using an en-bloc approach with
+        make_reduction. This means that instead of using the raw past observations of
+        y across the window length, suitable features will be generated directly from
+        the past raw observations. Currently only supports WindowSummarizer (or a list
+        of WindowSummarizers) to generate features e.g. the mean of the past 7
+        observations.
+    pooling: str {"local", "global"}, optional
+        Specifies whether separate models will be fit at the level of each instance
+        (local) of if you wish to fit a single model to all instances ("global").
     """
 
     _tags = {
@@ -949,6 +1010,36 @@ class RecursiveTabularRegressionForecaster(_RecursiveReducer):
         # "y_inner_mtype": ["pd.Series", "pd-multiindex", "pd_multiindex_hier"],
         # "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
     }
+
+    def __init__(
+        self,
+        estimator,
+        window_length=10,
+        transformers=None,
+        pooling="local",
+    ):
+        super(_RecursiveReducer, self).__init__(
+            estimator=estimator, window_length=window_length, transformers=transformers
+        )
+        self.pooling = pooling
+
+        if pooling == "local":
+            mtypes_y = "pd.Series"
+            mtypes_x = "pd.DataFrame"
+        elif pooling == "global":
+            mtypes_y = ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"]
+            mtypes_x = mtypes_y
+        elif pooling == "panel":
+            mtypes_y = ["pd.DataFrame", "pd-multiindex"]
+            mtypes_x = mtypes_y
+        else:
+            raise ValueError(
+                "pooling in DirectReductionForecaster must be one of"
+                ' "local", "global", "panel", '
+                f"but found {pooling}"
+            )
+        self.set_tags(**{"X_inner_mtype": mtypes_x})
+        self.set_tags(**{"y_inner_mtype": mtypes_y})
 
     _estimator_scitype = "tabular-regressor"
 
@@ -1059,6 +1150,7 @@ def make_reduction(
     window_length=10,
     scitype="infer",
     transformers=None,
+    pooling="local",
 ):
     """Make forecaster based on reduction to tabular or time-series regression.
 
@@ -1081,6 +1173,18 @@ def make_reduction(
         Must be one of "infer", "tabular-regressor" or "time-series-regressor". If
         the scitype cannot be inferred, please specify it explicitly.
         See :term:`scitype`.
+    transformers: list of transformers (default = None)
+        A suitable list of transformers that allows for using an en-bloc approach with
+        make_reduction. This means that instead of using the raw past observations of
+        y across the window length, suitable features will be generated directly from
+        the past raw observations. Currently only supports WindowSummarizer (or a list
+        of WindowSummarizers) to generate features e.g. the mean of the past 7
+        observations.
+        Currently only works for RecursiveTimeSeriesRegressionForecaster.
+    pooling: str {"local", "global"}, optional
+        Specifies whether separate models will be fit at the level of each instance
+        (local) of if you wish to fit a single model to all instances ("global").
+        Currently only works for RecursiveTimeSeriesRegressionForecaster.
 
     Returns
     -------
@@ -1113,7 +1217,10 @@ def make_reduction(
 
     Forecaster = _get_forecaster(scitype, strategy)
     return Forecaster(
-        estimator=estimator, window_length=window_length, transformers=transformers
+        estimator=estimator,
+        window_length=window_length,
+        transformers=transformers,
+        pooling=pooling,
     )
 
 
@@ -1236,18 +1343,24 @@ def _create_fcst_df(target_date, origin_df, fill=None):
         idx = idx[instance_names].drop_duplicates()
 
         timeframe = pd.DataFrame(target_date, columns=[time_names])
-
         target_frame = idx.merge(timeframe, how="cross")
-        freq_inferred = target_date[0].freq
-        mi = (
-            target_frame.groupby(instance_names, as_index=True)
-            .apply(
-                lambda df: df.drop(instance_names, axis=1)
-                .set_index(time_names)
-                .asfreq(freq_inferred)
+        if hasattr(target_date, "freq"):
+            freq_inferred = target_date[0].freq
+            mi = (
+                target_frame.groupby(instance_names, as_index=True)
+                .apply(
+                    lambda df: df.drop(instance_names, axis=1)
+                    .set_index(time_names)
+                    .asfreq(freq_inferred)
+                )
+                .index
             )
-            .index
-        )
+        else:
+            mi = (
+                target_frame.groupby(instance_names, as_index=True)
+                .apply(lambda df: df.drop(instance_names, axis=1).set_index(time_names))
+                .index
+            )
 
         if fill is None:
             template = pd.DataFrame(
@@ -1292,6 +1405,24 @@ def slice_at_ix(df, ix):
         return df.xs(ix, level=-1, axis=0, drop_level=False)
     else:
         return df.loc[[ix]]
+
+
+def _get_notna_idx(df):
+    """Get sub-index of df that contains rows without nans.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+
+    Returns
+    -------
+    df_notna_idx : pd.Index
+        sub-set of df.index that contains rows of df without nans
+        index is in same order as of df
+    """
+    df_notna_bool = df.notnull().all(axis=1)
+    df_notna_idx = df.index[df_notna_bool]
+    return df_notna_idx
 
 
 class _ReducerMixin:
@@ -1450,28 +1581,27 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
 
     def _fit_shifted(self, y, X=None, fh=None):
         """Fit to training data."""
-        from sktime.transformations.series.impute import Imputer
-        from sktime.transformations.series.lag import Lag
+        from sktime.transformations.series.lag import Lag, ReducerTransform
 
         impute_method = self.impute_method
+        lags = self._lags
+        trafos = self.transformers
 
         # lagger_y_to_X_ will lag y to obtain the sklearn X
-        lags = self._lags
-        lagger_y_to_X = Lag(lags=lags, index_out="extend")
-        if impute_method is not None:
-            lagger_y_to_X = lagger_y_to_X * Imputer(method=impute_method)
+        lagger_y_to_X = ReducerTransform(
+            lags=lags, transformers=trafos, impute_method=impute_method
+        )
         self.lagger_y_to_X_ = lagger_y_to_X
 
         # lagger_y_to_y_ will lag y to obtain the sklearn y
         fh_rel = fh.to_relative(self.cutoff)
         y_lags = list(fh_rel)
         y_lags = [-x for x in y_lags]
-        lagger_y_to_y = Lag(lags=y_lags, index_out="original")
+        lagger_y_to_y = Lag(lags=y_lags, index_out="original", keep_column_names=True)
         self.lagger_y_to_y_ = lagger_y_to_y
 
-        yt = lagger_y_to_y.fit_transform(y)
-        y_notna = yt.notnull().all(axis=1)
-        y_notna_idx = y_notna.index[y_notna]
+        yt = lagger_y_to_y.fit_transform(X=y)
+        y_notna_idx = _get_notna_idx(yt)
 
         # we now check whether the set of full lags is empty
         # if yes, we set a flag, since we cannot fit the reducer
@@ -1484,10 +1614,9 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
             self.empty_lags_ = False
 
         yt = yt.loc[y_notna_idx]
-        Xt = lagger_y_to_X.fit_transform(y).loc[y_notna_idx]
 
-        if X is not None:
-            Xt = pd.concat([X.loc[y_notna_idx], Xt], axis=1)
+        Xt = lagger_y_to_X.fit_transform(X=y, y=X)
+        Xt = Xt.loc[y_notna_idx]
 
         Xt = _coerce_col_str(Xt)
         yt = _coerce_col_str(yt)
@@ -1513,11 +1642,8 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
 
         lagger_y_to_X = self.lagger_y_to_X_
 
-        Xt_lastrow = slice_at_ix(lagger_y_to_X.transform(self._y), self.cutoff)
-        if self._X is not None:
-            exog_X_lastrow = slice_at_ix(self._X, self.cutoff)
-            Xt_lastrow = pd.concat([exog_X_lastrow, Xt_lastrow], axis=1)
-
+        Xt = lagger_y_to_X.transform(X=self._y, y=self._X)
+        Xt_lastrow = slice_at_ix(Xt, self.cutoff)
         Xt_lastrow = _coerce_col_str(Xt_lastrow)
 
         estimator = self.estimator_
@@ -1534,47 +1660,64 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
 
     def _fit_concurrent(self, y, X=None, fh=None):
         """Fit to training data."""
-        from sktime.transformations.series.impute import Imputer
-        from sktime.transformations.series.lag import Lag
+        from sktime.transformations.series.lag import Lag, ReducerTransform
 
         impute_method = self.impute_method
 
         # lagger_y_to_X_ will lag y to obtain the sklearn X
         lags = self._lags
-        lagger_y_to_X = Lag(lags=lags, index_out="extend")
-        if impute_method is not None:
-            lagger_y_to_X = lagger_y_to_X * Imputer(method=impute_method)
-        self.lagger_y_to_X_ = lagger_y_to_X
 
+        # lagger_y_to_y_ will lag y to obtain the sklearn y
         fh_rel = fh.to_relative(self.cutoff)
         y_lags = list(fh_rel)
+        y_lags = [-x for x in y_lags]
 
-        Xt = lagger_y_to_X.fit_transform(y)
+        # lagging behaviour is per fh, so w initialize dicts
+        # copied to self.lagger_y_to_X/y_, by reference
+        lagger_y_to_y = dict()
+        lagger_y_to_X = dict()
+        self.lagger_y_to_y_ = lagger_y_to_y
+        self.lagger_y_to_X_ = lagger_y_to_X
 
         self.estimators_ = []
 
         for lag in y_lags:
 
-            lag_plus = Lag(lag, index_out="extend")
-            Xtt = lag_plus.fit_transform(Xt)
-            Xtt_notna = Xtt.notnull().all(axis=1)
-            Xtt_notna_idx = Xtt_notna.index[Xtt_notna].intersection(y.index)
+            t = Lag(lags=lag, index_out="original", keep_column_names=True)
+            lagger_y_to_y[lag] = t
 
-            yt = y.loc[Xtt_notna_idx]
-            Xtt = Xtt.loc[Xtt_notna_idx]
+            yt = lagger_y_to_y[lag].fit_transform(X=y)
+
+            impute_method = self.impute_method
+            lags = self._lags
+            trafos = self.transformers
+
+            # lagger_y_to_X_ will lag y to obtain the sklearn X
+            # also updates self.lagger_y_to_X_ by reference
+            lagger_y_to_X[lag] = ReducerTransform(
+                lags=lags,
+                shifted_vars_lag=lag,
+                transformers=trafos,
+                impute_method=impute_method,
+            )
+
+            Xtt = lagger_y_to_X[lag].fit_transform(X=y, y=X)
+            Xtt_notna_idx = _get_notna_idx(Xtt)
+            yt_notna_idx = _get_notna_idx(yt)
+            notna_idx = Xtt_notna_idx.intersection(yt_notna_idx)
+
+            yt = yt.loc[notna_idx]
+            Xtt = Xtt.loc[notna_idx]
+
+            Xtt = _coerce_col_str(Xtt)
+            yt = _coerce_col_str(yt)
 
             # we now check whether the set of full lags is empty
             # if yes, we set a flag, since we cannot fit the reducer
             # instead, later, we return a dummy prediction
-            if len(Xtt_notna_idx) == 0:
+            if len(notna_idx) == 0:
                 self.estimators_.append(y.mean())
             else:
-                if X is not None:
-                    Xtt = pd.concat([X.loc[Xtt_notna_idx], Xtt], axis=1)
-
-                Xtt = _coerce_col_str(Xtt)
-                yt = _coerce_col_str(yt)
-
                 estimator = clone(self.estimator)
                 estimator.fit(Xtt, yt)
                 self.estimators_.append(estimator)
@@ -1602,22 +1745,17 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         y_lags = list(fh_rel)
         y_abs = list(fh_abs)
 
-        Xt = lagger_y_to_X.transform(self._y)
         y_pred_list = []
 
-        for i in range(len(y_lags)):
+        for i, lag in enumerate(y_lags):
 
-            lag = y_lags[i]
             predict_idx = y_abs[i]
 
-            lag_plus = Lag(lag, index_out="extend")
+            lag_plus = Lag(lag, index_out="extend", keep_column_names=True)
+
+            Xt = lagger_y_to_X[-lag].transform(X=self._y, y=X_pool)
             Xtt = lag_plus.fit_transform(Xt)
             Xtt_predrow = slice_at_ix(Xtt, predict_idx)
-            if X_pool is not None:
-                Xtt_predrow = pd.concat(
-                    [slice_at_ix(X_pool, predict_idx), Xtt_predrow], axis=1
-                )
-
             Xtt_predrow = _coerce_col_str(Xtt_predrow)
 
             estimator = self.estimators_[i]
@@ -1673,7 +1811,8 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
             "X_treatment": "concurrent",
             "pooling": "global",
         }
-        return [params1, params2]
+        params3 = {"estimator": est, "window_length": 0}
+        return [params1, params2, params3]
 
 
 class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
@@ -1801,20 +1940,20 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         # lag is 1, since we want to do recursive forecasting with 1 step ahead
         lag_plus = Lag(lags=1, index_out="extend")
         Xtt = lag_plus.fit_transform(Xt)
-        Xtt_notna = Xtt.notnull().all(axis=1)
-        Xtt_notna_idx = Xtt_notna.index[Xtt_notna].intersection(y.index)
+        Xtt_notna_idx = _get_notna_idx(Xtt)
+        notna_idx = Xtt_notna_idx.intersection(y.index)
 
-        yt = y.loc[Xtt_notna_idx]
-        Xtt = Xtt.loc[Xtt_notna_idx]
+        yt = y.loc[notna_idx]
+        Xtt = Xtt.loc[notna_idx]
 
         # we now check whether the set of full lags is empty
         # if yes, we set a flag, since we cannot fit the reducer
         # instead, later, we return a dummy prediction
-        if len(Xtt_notna_idx) == 0:
+        if len(notna_idx) == 0:
             self.estimator_ = y.mean()
         else:
             if X is not None:
-                Xtt = pd.concat([X.loc[Xtt_notna_idx], Xtt], axis=1)
+                Xtt = pd.concat([X.loc[notna_idx], Xtt], axis=1)
 
             Xtt = _coerce_col_str(Xtt)
             yt = _coerce_col_str(yt)

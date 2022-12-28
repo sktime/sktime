@@ -26,5 +26,7 @@ For a scientific manual, see the :ref:`user_guide`.
     api_reference/series_as_features
     api_reference/annotation
     api_reference/datasets
+    api_reference/data_format
+    api_reference/deployment
     api_reference/utils
     api_reference/exceptions
