@@ -309,69 +309,16 @@ if _check_soft_dependencies("xarray", severity="none"):
 
 
 if _check_soft_dependencies("dask", severity="none"):
-    import dask
-
-    from sktime.datatypes._adapter.dask_to_pd import get_mi_cols
+    from sktime.datatypes._adapter.dask_to_pd import check_dask_frame
 
     def check_dask_series(obj, return_metadata=False, var_name="obj"):
-        metadata = {}
 
-        def ret(valid, msg, metadata, return_metadata):
-            if return_metadata:
-                return valid, msg, metadata
-            return valid
-
-        if not isinstance(obj, dask.dataframe.core.DataFrame):
-            msg = f"{var_name} must be a dask DataFrame, found {type(obj)}"
-            return ret(False, msg, None, return_metadata)
-
-        # we now know obj is a dask DataFrame
-
-        index_cols = get_mi_cols(obj)
-        if len(index_cols) > 1:
-            # dask series should have at most one __index__ col
-            msg = (
-                f"{var_name} must have exactly one index column, "
-                f"found {len(index_cols)}, namely: {index_cols}"
-            )
-            return ret(False, msg, None, return_metadata)
-
-        metadata["is_empty"] = len(obj.index) < 1 or len(obj.columns) < 1
-        metadata["is_univariate"] = len(obj.columns) == 1
-
-        # check that columns are unique
-        if not obj.columns.is_unique:
-            msg = f"{var_name} must have unique column indices, but found {obj.columns}"
-            return ret(False, msg, None, return_metadata)
-
-        # check whether the time index is of valid type
-        # if not is_in_valid_index_types(index):
-        #     msg = (
-        #         f"{type(index)} is not supported for {var_name}, use "
-        #         f"one of {VALID_INDEX_TYPES} or integer index instead."
-        #     )
-        #     return ret(False, msg, None, return_metadata)
-
-        # Check time index is ordered in time
-        if not obj.index.is_monotonic_increasing.compute():
-            msg = (
-                f"The (time) index of {var_name} must be sorted "
-                f"monotonically increasing, but found: {obj.index}"
-            )
-            return ret(False, msg, None, return_metadata)
-
-        if FREQ_SET_CHECK and isinstance(obj.index, pd.DatetimeIndex):
-            if obj.index.freq is None:
-                msg = f"{var_name} has DatetimeIndex, but no freq attribute set."
-                return ret(False, msg, None, return_metadata)
-
-        # check whether index is equally spaced or if there are any nans
-        #   compute only if needed
-        if return_metadata:
-            # todo: logic for equal spacing
-            metadata["is_equally_spaced"] = True
-            metadata["has_nans"] = obj.isnull().values.any().compute()
-
-        return ret(True, None, metadata, return_metadata)
+        return check_dask_frame(
+            obj=obj,
+            return_metadata=return_metadata,
+            var_name=var_name,
+            freq_set_check=FREQ_SET_CHECK,
+            scitype="Series",
+        )
 
     check_dict[("dask_series", "Series")] = check_dask_series
