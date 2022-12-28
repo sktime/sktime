@@ -125,11 +125,7 @@ def convert_pandas_to_dask(obj, npartitions=1, chunksize=None, sort=True):
 
 
 def check_dask_frame(
-    obj,
-    return_metadata=False,
-    var_name="obj",
-    freq_set_check=False,
-    scitype="Series"
+    obj, return_metadata=False, var_name="obj", freq_set_check=False, scitype="Series"
 ):
     """Check dask frame, generic for sktime check format."""
     import dask
