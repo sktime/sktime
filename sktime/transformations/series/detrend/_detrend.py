@@ -4,7 +4,7 @@
 """Implements transformations to detrend a time series."""
 
 __all__ = ["Detrender"]
-__author__ = ["mloning", "SveaMeyer13"]
+__author__ = ["mloning", "SveaMeyer13", "KishManani"]
 
 import pandas as pd
 
@@ -20,8 +20,10 @@ class Detrender(BaseTransformer):
     of the forecaster's predicted values.
 
     The Detrender works as follows:
-    in "fit", the forecaster is fit to the input data.
-    in "transform", the forecast residuals are computed and return.
+    in "fit", the forecaster is fit to the input data, i.e., `forecaster.fit(y=X)`.
+    in "transform", returns forecast residuals of forecasts at the data index.
+    That is, `transform(X)` returns `X - forecaster.predict(fh=X.index)` (additive)
+    or `X / forecaster.predict(fh=X.index)` (multiplicative detrending).
     Depending on time indices, this can generate in-sample or out-of-sample residuals.
 
     For example, to remove the linear trend of a time series:
@@ -38,6 +40,12 @@ class Detrender(BaseTransformer):
         The forecasting model to remove the trend with
             (e.g. PolynomialTrendForecaster).
         If forecaster is None, PolynomialTrendForecaster(degree=1) is used.
+        Must be a forecaster to which `fh` can be passed in `predict`.
+    model : {"additive", "multiplicative"}, default="additive"
+        If `model="additive"` the `forecaster.transform` subtracts the trend,
+        i.e., `transform(X)` returns `X - forecaster.predict(fh=X.index)`
+        If `model="multiplicative"` the `forecaster.transform` divides by the trend,
+        i.e., `transform(X)` returns `X / forecaster.predict(fh=X.index)`
 
     Attributes
     ----------
@@ -74,8 +82,9 @@ class Detrender(BaseTransformer):
         "transform-returns-same-time-index": True,
     }
 
-    def __init__(self, forecaster=None):
+    def __init__(self, forecaster=None, model="additive"):
         self.forecaster = forecaster
+        self.model = model
         self.forecaster_ = None
         super(Detrender, self).__init__()
 
@@ -118,6 +127,10 @@ class Detrender(BaseTransformer):
         else:
             raise TypeError("X must be pd.Series or pd.DataFrame")
 
+        allowed_models = ("additive", "multiplicative")
+        if self.model not in allowed_models:
+            raise ValueError("`model` must be 'additive' or 'multiplicative'")
+
         return self
 
     def _transform(self, X, y=None):
@@ -143,8 +156,10 @@ class Detrender(BaseTransformer):
         if isinstance(X, pd.Series):
             # note: the y in the transformer is exogeneous in the forecaster, i.e., X
             X_pred = self.forecaster_.predict(fh=fh, X=y)
-            Xt = X - X_pred
-            return Xt
+            if self.model == "additive":
+                return X - X_pred
+            elif self.model == "multiplicative":
+                return X / X_pred
         # multivariate: X is pd.DataFrame
         elif isinstance(X, pd.DataFrame):
             Xt = X.copy()
@@ -159,7 +174,10 @@ class Detrender(BaseTransformer):
                 )
             for colname in Xt.columns:
                 X_pred = self.forecaster_[colname].predict(fh=fh, X=y)
-                Xt[colname] = Xt[colname] - X_pred
+                if self.model == "additive":
+                    Xt[colname] = Xt[colname] - X_pred
+                elif self.model == "multiplicative":
+                    Xt[colname] = Xt[colname] / X_pred
             return Xt
         else:
             raise TypeError("X must be pd.Series or pd.DataFrame")
@@ -185,7 +203,10 @@ class Detrender(BaseTransformer):
         if isinstance(X, pd.Series):
             # note: the y in the transformer is exogeneous in the forecaster, i.e., X
             X_pred = self.forecaster_.predict(fh=fh, X=y)
-            return X + X_pred
+            if self.model == "additive":
+                return X + X_pred
+            elif self.model == "multiplicative":
+                return X * X_pred
         # multivariate: X is pd.DataFrame
         if isinstance(X, pd.DataFrame):
             X = X.copy()
@@ -200,7 +221,11 @@ class Detrender(BaseTransformer):
                 )
             for colname in X.columns:
                 X_pred = self.forecaster_[colname].predict(fh=fh, X=y)
-                X[colname] = X[colname] + X_pred
+                if self.model == "additive":
+                    X[colname] = X[colname] + X_pred
+                elif self.model == "multiplicative":
+                    X[colname] = X[colname] * X_pred
+
             return X
 
     def _update(self, X, y=None, update_params=True):

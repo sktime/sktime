@@ -8,7 +8,6 @@ The :mod:`sktime.regression` module contains algorithms and composition tools fo
 All current sktime Regressors can be listed using the ``sktime.registry import
 all_estimators`` function.
 
-
 Composition
 -----------
 
@@ -31,6 +30,28 @@ Deep learning
 
     CNNRegressor
     TapNetRegressor
+
+Distance-based
+--------------
+
+.. currentmodule:: sktime.regression.distance_based
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    KNeighborsTimeSeriesRegressor
+
+Dummy
+-----
+
+.. currentmodule:: sktime.regression.dummy
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    DummyRegressor
 
 Interval-based
 --------------

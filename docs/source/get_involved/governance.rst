@@ -293,9 +293,13 @@ developers which will stay open for 5 days excluding weekends. CoC committee
 membership votes are subject to:
 
 * a 2/3 majority of all cast votes, and
+* a simple majority approval of all the current CoC committee members.
 
 The vote will take place in private communication channels and will be
 anonymous.
+
+To avoid deadlocks if there is an even number of CoC committee members, one
+of them will have a tie breaking privilege.
 
 .. _cc-members:
 
@@ -346,11 +350,19 @@ for 5 days excluding weekends and then a vote by core developers which will
 stay open for 5 days excluding weekends. Approval of appointment requires:
 
 * a 2/3 majority of all cast votes, and
+* a simple majority approval of all the current CC members.
 
 The core developer vote takes place in private communication channels,
 visible to, and only to, core developers, and is anonymous.
 The CC members' vote takes place in private communication channels,
 visible to, and only to, CC members, and is anonymous.
+
+In case the CC members' vote is tied,
+the CC member with the shortest continuous tenure has a tie breaking privilege.
+
+The tie breaking is by construction visible to CC members,
+does not require the tie breaking CC member to have voted in the anonymous vote,
+and need not follow their anonymous vote if they have voted.
 
 End of tenure
 ^^^^^^^^^^^^^
@@ -434,6 +446,8 @@ All discussion and votes takes place on the project’s `issue
 tracker <https://github.com/sktime/sktime/issues>`__,
 `pull requests <https://github.com/sktime/sktime/pulls>`__ or an :ref:`steps`. Some
 sensitive discussions and appointment votes occur on private chats.
+
+The CC reserves the right to overrule decisions.
 
 We distinguish between the following types of proposed changes. The
 corresponding decision making process is described in more detail below.
