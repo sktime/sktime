@@ -37,6 +37,10 @@ To install ``sktime`` with maximum dependencies, including soft dependencies, in
 
     pip install sktime[all_extras]
 
+.. warning::
+    Some of the dependencies included in ``all_extras`` do not work on mac ARM-based processors, such
+    as M1, M1Pro, M1Max or M1Ultra. This may cause an error during installation.
+
 
 Installing sktime from conda
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
