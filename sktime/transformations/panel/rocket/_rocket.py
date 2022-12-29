@@ -125,6 +125,8 @@ class Rocket(BaseTransformer):
         set_num_threads(n_jobs)
         t = pd.DataFrame(_apply_kernels(X.astype(np.float32), self.kernels))
         set_num_threads(prev_threads)
+
+        self.total_features_count = t.shape[-1]
         return t
 
 

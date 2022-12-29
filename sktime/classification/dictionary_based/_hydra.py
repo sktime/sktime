@@ -36,6 +36,7 @@ class HYDRA(BaseClassifier):
     def _fit(self, X, y):
         self.transform = HydraInternal(X.shape[-1])
         X_training_transform = self.transform(torch.tensor(X).float())
+        self.total_features_count = X_training_transform.shape[-1]
 
         self.clf = RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True)
         self.clf.fit(X_training_transform, y)

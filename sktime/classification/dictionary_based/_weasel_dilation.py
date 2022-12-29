@@ -115,36 +115,29 @@ class WEASEL_DILATION(BaseClassifier):
 
     def __init__(
         self,
-        anova=False,
-        variance=True,
-        bigrams=False,
-        lower_bounding=True,
-        binning_strategies=["equi-depth", "equi-width"],
         ensemble_size=150,
-        max_feature_count=30_000,
         min_window=4,
         max_window=84,
         norm_options=[False],
         word_lengths=[7, 8],
-        alphabet_sizes=[2],
         use_first_differences=[True, False],
-        feature_selection="chi2",
-        remove_repeat_words=False,
+        feature_selection="none",
+        max_feature_count=30_000,
         random_state=None,
-        sections=1,
         n_jobs=4,
     ):
-        self.alphabet_sizes = alphabet_sizes
+        self.alphabet_sizes = [2]
+        self.binning_strategies = (["equi-depth", "equi-width"],)
 
-        self.anova = anova
-        self.variance = variance
+        self.anova = False
+        self.variance = True
+        self.bigrams = False
+        self.lower_bounding = True
+        self.remove_repeat_words = False
 
         self.norm_options = norm_options
         self.word_lengths = word_lengths
 
-        self.bigrams = bigrams
-        self.lower_bounding = lower_bounding
-        self.binning_strategies = binning_strategies
         self.random_state = random_state
 
         self.min_window = min_window
@@ -153,12 +146,11 @@ class WEASEL_DILATION(BaseClassifier):
         self.max_feature_count = max_feature_count
         self.use_first_differences = use_first_differences
         self.feature_selection = feature_selection
-        self.remove_repeat_words = remove_repeat_words
+        self.sections = 1
 
         self.window_sizes = []
         self.series_length = 0
         self.n_instances = 0
-        self.sections = sections
 
         self.SFA_transformers = []
 

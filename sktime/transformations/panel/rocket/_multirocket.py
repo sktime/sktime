@@ -175,6 +175,7 @@ class MultiRocket(BaseTransformer):
         set_num_threads(prev_threads)
         # # from_2d_array_to_3d_numpy
         # _X = np.reshape(_X, (_X.shape[0], 1, _X.shape[1])).astype(np.float64)
+        self.total_features_count = X.shape[-1]
         return pd.DataFrame(X)
 
     def _get_parameter(self, X):

@@ -139,6 +139,7 @@ class MiniRocket(BaseTransformer):
         set_num_threads(n_jobs)
         X_ = _transform(X, self.parameters)
         set_num_threads(prev_threads)
+        self.total_features_count = X_.shape[-1]
         return pd.DataFrame(X_)
 
 

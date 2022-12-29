@@ -22,6 +22,7 @@ import pandas as pd
 import torch
 from convst.classifiers import R_DST_Ridge
 from joblib import Parallel, delayed, parallel_backend
+from numba import NumbaPendingDeprecationWarning
 from scipy.stats import zscore
 from sklearn.ensemble import StackingClassifier, VotingClassifier
 from sklearn.linear_model import LogisticRegression, RidgeClassifierCV
@@ -40,6 +41,9 @@ from sktime.classification.hybrid._hivecote_v2 import HIVECOTEV2
 # from sktime.classification.dictionary_based._mpdist import MPDist
 from sktime.transformations.panel.rocket import MiniRocket, MultiRocket, Rocket
 
+# from mrsqm import MrSQMClassifier
+
+
 sys.path.append("../../..")
 
 
@@ -57,134 +61,134 @@ def load_from_ucr_tsv_to_dataframe_plain(full_file_path_and_name):
 
 
 dataset_names_full = [
-    "ACSF1",
-    "Adiac",
-    # # "AllGestureWiimoteX",
-    # # "AllGestureWiimoteY",
-    # # "AllGestureWiimoteZ",
-    "ArrowHead",
-    "Beef",
-    "BeetleFly",
-    "BirdChicken",
-    "BME",
-    "Car",
-    "CBF",
-    "Chinatown",
-    "ChlorineConcentration",
-    "CinCECGTorso",
-    "Coffee",
-    "Computers",
-    "CricketX",
-    "CricketY",
-    "CricketZ",
-    "Crop",
-    "DiatomSizeReduction",
-    "DistalPhalanxOutlineAgeGroup",
-    "DistalPhalanxOutlineCorrect",
-    "DistalPhalanxTW",
-    # "DodgerLoopDay",
-    # "DodgerLoopGame",
-    # "DodgerLoopWeekend",
-    "Earthquakes",
-    "ECG200",
-    "ECG5000",
-    "ECGFiveDays",
+    # "ACSF1",
+    # "Adiac",
+    # # # "AllGestureWiimoteX",
+    # # # "AllGestureWiimoteY",
+    # # # "AllGestureWiimoteZ",
+    # "ArrowHead",
+    # "Beef",
+    # "BeetleFly",
+    # "BirdChicken",
+    # "BME",
+    # "Car",
+    # "CBF",
+    # "Chinatown",
+    # "ChlorineConcentration",
+    # "CinCECGTorso",
+    # "Coffee",
+    # "Computers",
+    # "CricketX",
+    # "CricketY",
+    # "CricketZ",
+    # "Crop",
+    # "DiatomSizeReduction",
+    # "DistalPhalanxOutlineAgeGroup",
+    # "DistalPhalanxOutlineCorrect",
+    # "DistalPhalanxTW",
+    # # "DodgerLoopDay",
+    # # "DodgerLoopGame",
+    # # "DodgerLoopWeekend",
+    # "Earthquakes",
+    # "ECG200",
+    # "ECG5000",
+    # "ECGFiveDays",
     "ElectricDevices",
-    "EOGHorizontalSignal",
-    "EOGVerticalSignal",
-    "EthanolLevel",
-    "FaceAll",
-    "FaceFour",
-    "FacesUCR",
-    "FiftyWords",
-    "Fish",
-    "FordA",
-    "FordB",
-    "FreezerRegularTrain",
-    "FreezerSmallTrain",
-    # "Fungi",
-    # "GestureMidAirD1",
-    # "GestureMidAirD2",
-    # "GestureMidAirD3",
-    # "GesturePebbleZ1",
-    # "GesturePebbleZ2",
-    "GunPoint",
-    "GunPointAgeSpan",
-    "GunPointMaleVersusFemale",
-    "GunPointOldVersusYoung",
-    "Ham",
-    "HandOutlines",
-    "Haptics",
-    "Herring",
-    "HouseTwenty",
-    "InlineSkate",
-    "InsectEPGRegularTrain",
-    "InsectEPGSmallTrain",
-    "InsectWingbeatSound",
-    "ItalyPowerDemand",
-    "LargeKitchenAppliances",
-    "Lightning2",
-    "Lightning7",
-    "Mallat",
-    "Meat",
-    "MedicalImages",
-    # "MelbournePedestrian",
-    "MiddlePhalanxOutlineAgeGroup",
-    "MiddlePhalanxOutlineCorrect",
-    "MiddlePhalanxTW",
-    "MixedShapesRegularTrain",
-    "MixedShapesSmallTrain",
-    "MoteStrain",
-    "NonInvasiveFetalECGThorax1",
-    "NonInvasiveFetalECGThorax2",
-    "OliveOil",
-    "OSULeaf",
-    "PhalangesOutlinesCorrect",
-    "Phoneme",
-    "PickupGestureWiimoteZ",
-    "PigAirwayPressure",
-    "PigArtPressure",
-    "PigCVP",
-    # "PLAID",
-    "Plane",
-    "PowerCons",
-    "ProximalPhalanxOutlineAgeGroup",
-    "ProximalPhalanxOutlineCorrect",
-    "ProximalPhalanxTW",
-    "RefrigerationDevices",
-    "Rock",
-    "ScreenType",
-    "SemgHandGenderCh2",
-    "SemgHandMovementCh2",
-    "SemgHandSubjectCh2",
-    "ShakeGestureWiimoteZ",
-    "ShapeletSim",
-    "ShapesAll",
-    "SmallKitchenAppliances",
-    "SmoothSubspace",
-    "SonyAIBORobotSurface1",
-    "SonyAIBORobotSurface2",
-    "StarLightCurves",  # 5 Mins
-    "Strawberry",
-    "SwedishLeaf",
-    "Symbols",
-    "SyntheticControl",
-    "ToeSegmentation1",
-    "ToeSegmentation2",
-    "Trace",
-    "TwoLeadECG",
-    "TwoPatterns",
-    "UMD",
-    "UWaveGestureLibraryAll",
-    "UWaveGestureLibraryX",
-    "UWaveGestureLibraryY",
-    "UWaveGestureLibraryZ",  # error???
-    "Wafer",
-    "Wine",
-    "WordSynonyms",
-    "Worms",
-    "WormsTwoClass",
-    "Yoga",
+    # "EOGHorizontalSignal",
+    # "EOGVerticalSignal",
+    # "EthanolLevel",
+    # "FaceAll",
+    # "FaceFour",
+    # "FacesUCR",
+    # "FiftyWords",
+    # "Fish",
+    # "FordA",
+    # "FordB",
+    # "FreezerRegularTrain",
+    # "FreezerSmallTrain",
+    # # "Fungi",
+    # # "GestureMidAirD1",
+    # # "GestureMidAirD2",
+    # # "GestureMidAirD3",
+    # # "GesturePebbleZ1",
+    # # "GesturePebbleZ2",
+    # "GunPoint",
+    # "GunPointAgeSpan",
+    # "GunPointMaleVersusFemale",
+    # "GunPointOldVersusYoung",
+    # "Ham",
+    # "HandOutlines",
+    # "Haptics",
+    # "Herring",
+    # "HouseTwenty",
+    # "InlineSkate",
+    # "InsectEPGRegularTrain",
+    # "InsectEPGSmallTrain",
+    # "InsectWingbeatSound",
+    # "ItalyPowerDemand",
+    # "LargeKitchenAppliances",
+    # "Lightning2",
+    # "Lightning7",
+    # "Mallat",
+    # "Meat",
+    # "MedicalImages",
+    # # "MelbournePedestrian",
+    # "MiddlePhalanxOutlineAgeGroup",
+    # "MiddlePhalanxOutlineCorrect",
+    # "MiddlePhalanxTW",
+    # "MixedShapesRegularTrain",
+    # "MixedShapesSmallTrain",
+    # "MoteStrain",
+    # "NonInvasiveFetalECGThorax1",
+    # "NonInvasiveFetalECGThorax2",
+    # "OliveOil",
+    # "OSULeaf",
+    # "PhalangesOutlinesCorrect",
+    # "Phoneme",
+    # "PickupGestureWiimoteZ",
+    # "PigAirwayPressure",
+    # "PigArtPressure",
+    # "PigCVP",
+    # # "PLAID",
+    # "Plane",
+    # "PowerCons",
+    # "ProximalPhalanxOutlineAgeGroup",
+    # "ProximalPhalanxOutlineCorrect",
+    # "ProximalPhalanxTW",
+    # "RefrigerationDevices",
+    # "Rock",
+    # "ScreenType",
+    # "SemgHandGenderCh2",
+    # "SemgHandMovementCh2",
+    # "SemgHandSubjectCh2",
+    # "ShakeGestureWiimoteZ",
+    # "ShapeletSim",
+    # "ShapesAll",
+    # "SmallKitchenAppliances",
+    # "SmoothSubspace",
+    # "SonyAIBORobotSurface1",
+    # "SonyAIBORobotSurface2",
+    # "StarLightCurves",  # 5 Mins
+    # "Strawberry",
+    # "SwedishLeaf",
+    # "Symbols",
+    # "SyntheticControl",
+    # "ToeSegmentation1",
+    # "ToeSegmentation2",
+    # "Trace",
+    # "TwoLeadECG",
+    # "TwoPatterns",
+    # "UMD",
+    # "UWaveGestureLibraryAll",
+    # "UWaveGestureLibraryX",
+    # "UWaveGestureLibraryY",
+    # "UWaveGestureLibraryZ",  # error???
+    # "Wafer",
+    # "Wine",
+    # "WordSynonyms",
+    # "Worms",
+    # "WormsTwoClass",
+    # "Yoga",
 ]
 
 dataset_names_excerpt = [
@@ -235,7 +239,12 @@ dataset_names_excerpt = [
 def get_classifiers(threads_to_use):
     """Obtain the benchmark classifiers."""
     clfs = {
-        "HC 2.0": HIVECOTEV2(random_state=1379, n_jobs=threads_to_use)
+        # MrSQMClassifier()
+        "HC 2.0": HIVECOTEV2(
+            random_state=1379,
+            # time_limit_in_minutes=1,
+            n_jobs=threads_to_use,
+        )
         # "Hydra": HYDRA(),
         # "MPDist": MPDist()
         # "WEASEL (dilated;7-8)": WEASEL_DILATION(
@@ -319,8 +328,8 @@ if os.path.exists(DATA_PATH):
 # server
 else:
     DATA_PATH = "/vol/fob-wbib-vol2/wbi/schaefpa/sktime/datasets/UCRArchive_2018"
-    parallel_jobs = 20
-    threads_to_use = 1
+    parallel_jobs = 1  # 20
+    threads_to_use = 40  # 1
     server = True
     used_dataset = dataset_names_full
 
@@ -330,6 +339,7 @@ if __name__ == "__main__":
         # ignore all future warnings
         simplefilter(action="ignore", category=FutureWarning)
         simplefilter(action="ignore", category=UserWarning)
+        simplefilter(action="ignore", category=NumbaPendingDeprecationWarning)
 
         X_train, y_train = load_from_ucr_tsv_to_dataframe_plain(
             os.path.join(DATA_PATH, dataset_name, dataset_name + "_TRAIN.tsv")
@@ -407,7 +417,6 @@ if __name__ == "__main__":
 
         return sum_scores
 
-    # with parallel_backend("threading", n_jobs=-1):
     parallel_res = Parallel(n_jobs=parallel_jobs, timeout=9999999, batch_size=1)(
         delayed(_parallel_fit)(dataset, clf_name)
         for dataset, clf_name in itertools.product(
@@ -472,7 +481,7 @@ if __name__ == "__main__":
                 "Accuracy",
                 "Train-Acc",
             ],
-        ).to_csv("ucr-112-accuracy-sonic-dict-weasel.csv", index=None)
+        ).to_csv("ucr-112-accuracy-hc2.csv", index=None)
 
         pd.DataFrame.from_records(
             csv_timings,
@@ -482,4 +491,4 @@ if __name__ == "__main__":
                 "Fit-Time",
                 "Predict-Time",
             ],
-        ).to_csv("ucr-112-runtime-sonic-dict-weasel.csv", index=None)
+        ).to_csv("ucr-112-runtime-hc2.csv", index=None)

@@ -236,28 +236,28 @@ def get_classifiers(threads_to_use):
     """Obtain the benchmark classifiers."""
     clfs = {
         # "HC 2.0": HIVECOTEV2()
-        # "Hydra": HYDRA(),
+        "Hydra": HYDRA(),
         # "MPDist": MPDist()
-        "WEASEL 2.0": WEASEL_DILATION(
-            feature_selection="none", random_state=1379, n_jobs=threads_to_use
-        ),
-        "WEASEL 1.0": WEASEL(random_state=1379, n_jobs=threads_to_use),
+        # "WEASEL 2.0": WEASEL_DILATION(
+        #     feature_selection="none", random_state=1379, n_jobs=threads_to_use
+        # ),
+        # "WEASEL 1.0": WEASEL(random_state=1379, n_jobs=threads_to_use),
         # "BOSS": BOSSEnsemble(random_state=1379, n_jobs=threads_to_use),
         # "cBOSS": ContractableBOSS(random_state=1379, n_jobs=threads_to_use),
         # "TDE": TemporalDictionaryEnsemble(random_state=1379, n_jobs=threads_to_use),
-        # "MultiRocket": make_pipeline(
-        #    MultiRocket(random_state=1379, n_jobs=threads_to_use),
-        #    RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True),
-        # )
+        "MultiRocket": make_pipeline(
+            MultiRocket(random_state=1379, n_jobs=threads_to_use),
+            RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True),
+        ),
         # "R_DST": R_DST_Ridge(random_state=1379),
-        # "Rocket": make_pipeline(
-        #     Rocket(random_state=1379, n_jobs=threads_to_use),
-        #     RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True),
-        # ),
-        # "MiniRocket": make_pipeline(
-        #     MiniRocket(random_state=1379, n_jobs=threads_to_use),
-        #     RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True),
-        # ),
+        "Rocket": make_pipeline(
+            Rocket(random_state=1379, n_jobs=threads_to_use),
+            RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True),
+        ),
+        "MiniRocket": make_pipeline(
+            MiniRocket(random_state=1379, n_jobs=threads_to_use),
+            RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True),
+        ),
     }
     return clfs
 
@@ -349,7 +349,15 @@ if __name__ == "__main__":
                 if hasattr(clf, "total_features_count")
                 else f""
             )
-            + (f",{train_acc}" if hasattr(clf, "cross_val_score") else f""),
+            + (
+                f",{clf.steps[0][-1].total_features_count}"
+                if hasattr(clf, "steps")
+                and (len(clf.steps) > 0)
+                and hasattr(clf.steps[0][-1], "total_features_count")
+                else f""
+            )
+            # + (f",{train_acc}" if hasattr(clf, "cross_val_score") else f"")
+            ,
             flush=True,
         )
         sum_scores[clf_name]["dataset"].append(dataset_name)
@@ -429,7 +437,7 @@ if __name__ == "__main__":
                 "Accuracy",
                 "Train-Acc",
             ],
-        ).to_csv("ucr-112-accuracy-sonic-weasel.csv", index=None)
+        ).to_csv("ucr-112-accuracy-sone.csv", index=None)
 
         pd.DataFrame.from_records(
             csv_timings,
@@ -439,4 +447,4 @@ if __name__ == "__main__":
                 "Fit-Time",
                 "Predict-Time",
             ],
-        ).to_csv("ucr-112-runtime-sonic-weasel.csv", index=None)
+        ).to_csv("ucr-112-runtime-sone.csv", index=None)
