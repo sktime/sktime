@@ -142,7 +142,7 @@ if _check_soft_dependencies("dask", severity="none"):
             obj=obj,
             return_metadata=return_metadata,
             var_name=var_name,
-            scitype="Panel",
+            scitype="Hierarchical",
         )
 
     check_dict[("dask_hierarchical", "Hierarchical")] = check_dask_hierarchical
