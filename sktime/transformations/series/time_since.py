@@ -33,11 +33,13 @@ class TimeSince(BaseTransformer):
     ----------
     start : a list of start times, optional, default=None (use earliest time in index)
         a "start time" can be one of the following types:
-        int - Start time to compute the time elapsed, use when index is integer
-        time-like: `Period` or `datetime`
+
+        * int: Start time to compute the time elapsed, use when index is integer.
+        * time-like: `Period` or `datetime`
             Start time to compute the time elapsed.
-        str - String is converted to datetime/period using pd.to_datetime()/pd.Period()
-              to give the start time.
+        * str: String is converted to datetime or period, depending on the index type, \
+            to give the start time.
+
     to_numeric : string, optional (default=True)
         Return the integer number of periods elapsed since `start`; the period
         is defined by the frequency of the data. Converts datetime types to
@@ -48,7 +50,7 @@ class TimeSince(BaseTransformer):
         match a pandas offset alias:
         https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#offset-aliases
     keep_original_columns :  boolean, optional, default=False
-        Keep original columns in X passed to `.transform()`
+        Keep original columns in X passed to `.transform()`.
     positive_only :  boolean, optional, default=False
         Clips negative values to zero when `to_numeric` is True.
 
@@ -229,7 +231,7 @@ class TimeSince(BaseTransformer):
                     freq_ = _remove_digits_from_str(self.freq_)
                     freq_period = get_period_alias(freq_)
 
-                    # Convert `start` and datetime index to integers.
+                    # Convert `start` and datetime index to period.
                     start_period = pd.Period(start_, freq=freq_period)
                     time_index_period = time_index.to_period(freq=freq_period)
                     # Compute time differences and convert to integers.
