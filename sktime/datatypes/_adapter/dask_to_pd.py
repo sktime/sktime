@@ -164,6 +164,10 @@ def check_dask_frame(
             f"found {len(index_cols)}, namely: {index_cols}"
         )
         right_no_index_cols = len(index_cols) >= 3
+            f"{var_name} must have two or more index columns, "
+            f"found {len(index_cols)}, namely: {index_cols}"
+        )
+        right_no_index_cols = len(index_cols) >= 2
     else:
         return RuntimeError(
             'scitype arg of check_dask_frame must be one of strings "Series", '
@@ -217,5 +221,6 @@ def check_dask_frame(
     if return_metadata and scitype in ["Hierarchical"]:
         panel_cols = index_cols[:-2]
         metadata["n_panels"] = len(obj[panel_cols].unique())
+
 
     return ret(True, None, metadata, return_metadata)
