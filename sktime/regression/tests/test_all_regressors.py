@@ -28,14 +28,14 @@ class RegressorFixtureGenerator(BaseFixtureGenerator):
         ranges over all scenarios returned by retrieve_scenarios
     """
 
-    # note: this should be separate from TestAllRegressors
+    # note: this should be separate from _TestAllRegressors
     #   additional fixtures, parameters, etc should be added here
-    #   TestAllRegressors should contain the tests only
+    #   _TestAllRegressors should contain the tests only
 
     estimator_type_filter = "regressor"
 
 
-class TestAllRegressors(RegressorFixtureGenerator, QuickTester):
+class _TestAllRegressors(RegressorFixtureGenerator, QuickTester):
     """Module level tests for all sktime regressors."""
 
     def test_multivariate_input_exception(self, estimator_instance):

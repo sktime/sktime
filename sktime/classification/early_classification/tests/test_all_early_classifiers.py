@@ -6,7 +6,7 @@ __author__ = ["mloning", "TonyBagnall", "fkiraly", "MatthewMiddlehurst"]
 import numpy as np
 
 from sktime.classification.tests.test_all_classifiers import (
-    TestAllClassifiers as ClassifierTests,
+    _TestAllClassifiers as ClassifierTests,
 )
 from sktime.tests.test_all_estimators import BaseFixtureGenerator, QuickTester
 
@@ -25,14 +25,14 @@ class EarlyClassifierFixtureGenerator(BaseFixtureGenerator):
         ranges over all scenarios returned by retrieve_scenarios
     """
 
-    # note: this should be separate from TestAllEarlyClassifiers
+    # note: this should be separate from _TestAllEarlyClassifiers
     #   additional fixtures, parameters, etc should be added here
-    #   TestAllEarlyClassifiers should contain the tests only
+    #   _TestAllEarlyClassifiers should contain the tests only
 
     estimator_type_filter = "early_classifier"
 
 
-class TestAllEarlyClassifiers(EarlyClassifierFixtureGenerator, QuickTester):
+class _TestAllEarlyClassifiers(EarlyClassifierFixtureGenerator, QuickTester):
     """Module level tests for all sktime classifiers."""
 
     def test_multivariate_input_exception(self, estimator_instance):

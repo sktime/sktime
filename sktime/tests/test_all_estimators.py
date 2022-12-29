@@ -96,6 +96,22 @@ def subsample_by_version_os(x):
     return res
 
 
+ALL_ESTIMATOR_LIST = all_estimators(
+    return_names=False,
+    exclude_estimators=EXCLUDE_ESTIMATORS,
+)
+
+
+@pytest.mark.parametrize("estimator_class", ALL_ESTIMATOR_LIST)
+def test_estimator(estimator_class):
+    """Universal test for an estimator. Used to measure time per estimator."""
+    from sktime.utils.estimator_checks import check_estimator
+
+    excluded = EXCLUDED_TESTS.get(estimator_class.__name__, None)
+
+    check_estimator(estimator_class, return_exceptions=False, tests_to_exclude=excluded)
+
+
 class BaseFixtureGenerator:
     """Fixture generator for base testing functionality in sktime.
 
@@ -461,8 +477,8 @@ class QuickTester:
         Examples
         --------
         >>> from sktime.forecasting.naive import NaiveForecaster
-        >>> from sktime.tests.test_all_estimators import TestAllObjects
-        >>> TestAllObjects().run_tests(
+        >>> from sktime.tests.test_all_estimators import _TestAllObjects
+        >>> _TestAllObjects().run_tests(
         ...     NaiveForecaster,
         ...     tests_to_run="test_constructor"
         ... )
@@ -693,7 +709,7 @@ class QuickTester:
         return fixture_vars_return, fixture_prod_return, fixture_names_return
 
 
-class TestAllObjects(BaseFixtureGenerator, QuickTester):
+class _TestAllObjects(BaseFixtureGenerator, QuickTester):
     """Package level tests for all sktime objects."""
 
     estimator_type_filter = "object"
@@ -1019,7 +1035,7 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
             assert tag in VALID_ESTIMATOR_TAGS
 
 
-class TestAllEstimators(BaseFixtureGenerator, QuickTester):
+class _TestAllEstimators(BaseFixtureGenerator, QuickTester):
     """Package level tests for all sktime estimators, i.e., objects with fit."""
 
     def test_fit_updates_state(self, estimator_instance, scenario):
