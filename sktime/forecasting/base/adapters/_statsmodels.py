@@ -99,6 +99,7 @@ class _StatsModelsAdapter(BaseForecaster):
         # statsmodels requires zero-based indexing starting at the
         # beginning of the training series when passing integers
         start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
+        fh_abs = fh.to_absolute(self.cutoff).to_pandas()
 
         # bug fix for evaluate function as test_plus_train indices are passed
         # statsmodels exog must contain test indices only.
@@ -106,6 +107,8 @@ class _StatsModelsAdapter(BaseForecaster):
         if X is not None:
             ind_drop = self._X.index
             X = X.loc[~X.index.isin(ind_drop)]
+            # we need the entire range of the forecast horizon
+            X = X[:fh_abs[-1]]
 
         if "exog" in inspect.signature(self._forecaster.__init__).parameters.keys():
             y_pred = self._fitted_forecaster.predict(start=start, end=end, exog=X)
@@ -114,7 +117,7 @@ class _StatsModelsAdapter(BaseForecaster):
 
         # statsmodels forecasts all periods from start to end of forecasting
         # horizon, but only return given time points in forecasting horizon
-        y_pred = y_pred.loc[fh.to_absolute(self.cutoff).to_pandas()]
+        y_pred = y_pred.loc[fh_abs]
         # ensure that name is not added nor removed
         # otherwise this may upset conversion to pd.DataFrame
         y_pred.name = self._y.name
