@@ -18,6 +18,7 @@ Composition
     ColumnEnsembleClassifier
     ComposableTimeSeriesForestClassifier
     SklearnClassifierPipeline
+    WeightedEnsembleClassifier
 
 Deep learning
 -------------
@@ -142,6 +143,7 @@ Kernel-based
     :toctree: auto_generated/
     :template: class.rst
 
+    TimeSeriesSVC
     Arsenal
     RocketClassifier
 

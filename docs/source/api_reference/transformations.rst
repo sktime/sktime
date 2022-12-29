@@ -100,6 +100,7 @@ Sklearn and pandas adapters
     :template: class.rst
 
     Tabularizer
+    TimeBinner
 
 .. currentmodule:: sktime.transformations.series.adapt
 
@@ -164,6 +165,7 @@ Shapelets, wavelets, and convolution
     Rocket
     MiniRocket
     MiniRocketMultivariate
+    MiniRocketMultivariateVariable
 
 .. currentmodule:: sktime.transformations.panel.dwt
 
@@ -392,6 +394,14 @@ Seasonality and Date-Time Features
     :template: class.rst
 
     DateTimeFeatures
+
+.. currentmodule:: sktime.transformations.series.time_since
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TimeSince
 
 .. currentmodule:: sktime.transformations.series.fourier
 
