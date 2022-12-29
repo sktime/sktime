@@ -1043,6 +1043,7 @@ class ProximityTree(BaseClassifier):
 
     _tags = {
         "capability:multithreading": True,
+        "capability:predict_proba": True,
         "X_inner_mtype": "nested_univ",
     }
 
@@ -1282,6 +1283,7 @@ class ProximityForest(BaseClassifier):
     _tags = {
         "X_inner_mtype": "nested_univ",
         "capability:multithreading": True,
+        "capability:predict_proba": True,
         "classifier_type": "distance",
     }
 

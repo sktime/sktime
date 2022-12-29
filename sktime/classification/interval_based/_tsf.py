@@ -85,6 +85,8 @@ class TimeSeriesForestClassifier(
 
     _base_estimator = DecisionTreeClassifier(criterion="entropy")
 
+    _tags = {"capability:predict_proba": True}
+
     def __init__(
         self,
         min_interval=3,

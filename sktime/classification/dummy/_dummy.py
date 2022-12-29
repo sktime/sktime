@@ -65,6 +65,7 @@ class DummyClassifier(BaseClassifier):
         "capability:missing_values": True,
         "capability:unequal_length": True,
         "capability:multivariate": True,
+        "capability:predict_proba": True,
     }
 
     def __init__(self, strategy="prior", random_state=None, constant=None):

@@ -113,6 +113,7 @@ class ShapeDTW(BaseClassifier):
     """
 
     _tags = {
+        "capability:predict_proba": True,
         "classifier_type": "distance",
     }
 

@@ -94,6 +94,7 @@ class HIVECOTEV2(BaseClassifier):
         "capability:multivariate": True,
         "capability:contractable": True,
         "capability:multithreading": True,
+        "capability:predict_proba": True,
         "classifier_type": "hybrid",
     }
 

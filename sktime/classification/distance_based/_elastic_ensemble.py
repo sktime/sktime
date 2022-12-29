@@ -91,6 +91,7 @@ class ElasticEnsemble(BaseClassifier):
 
     _tags = {
         "capability:multithreading": True,
+        "capability:predict_proba": True,
         "classifier_type": "distance",
     }
 
