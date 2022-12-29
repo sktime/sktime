@@ -306,3 +306,19 @@ if _check_soft_dependencies("xarray", severity="none"):
         return ret(True, None, metadata, return_metadata)
 
     check_dict[("xr.DataArray", "Series")] = check_xrdataarray_series
+
+
+if _check_soft_dependencies("dask", severity="none"):
+    from sktime.datatypes._adapter.dask_to_pd import check_dask_frame
+
+    def check_dask_series(obj, return_metadata=False, var_name="obj"):
+
+        return check_dask_frame(
+            obj=obj,
+            return_metadata=return_metadata,
+            var_name=var_name,
+            freq_set_check=FREQ_SET_CHECK,
+            scitype="Series",
+        )
+
+    check_dict[("dask_series", "Series")] = check_dask_series

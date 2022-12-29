@@ -32,6 +32,7 @@ EXCLUDE_ESTIMATORS = [
     # tapnet based estimators fail stochastically for unknown reasons, see #3525
     "TapNetRegressor",
     "TapNetClassifier",
+    "ResNetClassifier",  # known ResNetClassifier sporafic failures, see #3954
 ]
 
 
@@ -89,6 +90,9 @@ EXCLUDED_TESTS = {
     "FCNClassifier": [
         "test_fit_idempotent",
     ],
+    "LSTMFCNClassifier": [
+        "test_fit_idempotent",
+    ],
     "MLPClassifier": [
         "test_fit_idempotent",
     ],
@@ -121,6 +125,8 @@ EXCLUDED_TESTS = {
     ],
     "SAX": "test_fit_transform_output",  # SAX returns strange output format
     # this needs to be fixed, was not tested previously due to legacy exception
+    "Prophet": ":test_hierarchical_with_exogeneous",
+    # Prophet does not support datetime indices, see #2475 for the known issue
 }
 
 # We use estimator tags in addition to class hierarchies to further distinguish

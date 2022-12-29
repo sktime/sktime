@@ -9,6 +9,7 @@ import warnings
 from importlib import import_module
 from inspect import isclass
 
+from packaging.requirements import InvalidRequirement, Requirement
 from packaging.specifiers import InvalidSpecifier, SpecifierSet
 
 
@@ -23,16 +24,23 @@ def _check_soft_dependencies(
 
     Parameters
     ----------
-    packages : str or tuple of str
-        One or more package names to check. This needs to be the *package* name,
-        i.e., the name of the package on pypi, installed by pip install package
+    packages : str or list/tuple of str, or length-1-tuple containing list/tuple of str
+        str should be package names and/or package version specifications to check.
+        Each str must be a PEP 440 compatibe specifier string, for a single package.
+        For instance, the PEP 440 compatible package name such as "pandas";
+        or a package requirement specifier string such as "pandas>1.2.3".
+        arg can be str, kwargs tuple, or tuple/list of str, following calls are valid:
+        `_check_soft_dependencies("package1")`
+        `_check_soft_dependencies("package1", "package2")`
+        `_check_soft_dependencies(("package1", "package2"))`
+        `_check_soft_dependencies(["package1", "package2"])`
     package_import_alias : dict with str keys and values, optional, default=empty
         key-value pairs are package name, import name
         import name is str used in python import, i.e., from import_name import ...
         should be provided if import name differs from package name
     severity : str, "error" (default), "warning", "none"
         behaviour for raising errors or warnings
-        "error" - raises a ModuleNotFoundException if one of packages is not installed
+        "error" - raises a `ModuleNotFoundException` if one of packages is not installed
         "warning" - raises a warning if one of packages is not installed
             function returns False if one of packages is not installed, otherwise True
         "none" - does not raise exception or warning
@@ -54,6 +62,8 @@ def _check_soft_dependencies(
     -------
     boolean - whether all packages are installed, only if no exception is raised
     """
+    if len(packages) == 1 and isinstance(packages[0], (tuple, list)):
+        packages = packages[0]
     if not all(isinstance(x, str) for x in packages):
         raise TypeError("packages must be str or tuple of str")
 
@@ -68,21 +78,35 @@ def _check_soft_dependencies(
         raise TypeError(msg)
 
     for package in packages:
+
+        try:
+            req = Requirement(package)
+        except InvalidRequirement:
+            msg_version = (
+                f"wrong format for package requirement string, "
+                f'must be PEP 440 compatible requirement string, e.g., "pandas"'
+                f' or "pandas>1.1", but found "{package}"'
+            )
+            raise InvalidRequirement(msg_version)
+
+        req = Requirement(package)
+        package_name = req.name
+        package_version_req = req.specifier
+
         # determine the package import
-        if package in package_import_alias.keys():
-            package_import_name = package_import_alias[package]
+        if package_name in package_import_alias.keys():
+            package_import_name = package_import_alias[package_name]
         else:
-            package_import_name = package
+            package_import_name = package_name
         # attempt import - if not possible, we know we need to raise warning/exception
         try:
             if suppress_import_stdout:
                 # setup text trap, import, then restore
                 sys.stdout = io.StringIO()
-                import_module(package_import_name)
+                pkg_ref = import_module(package_import_name)
                 sys.stdout = sys.__stdout__
             else:
-                import_module(package_import_name)
-            return True
+                pkg_ref = import_module(package_import_name)
         # if package cannot be imported, make the user aware of installation requirement
         except ModuleNotFoundError as e:
             if obj is None:
@@ -124,6 +148,39 @@ def _check_soft_dependencies(
                     'argument must be "error", "warning", or "none",'
                     f'found "{severity}".'
                 )
+
+        # now we check compatibility with the version specifier if non-empty
+        if package_version_req != SpecifierSet(""):
+            pkg_env_version = pkg_ref.__version__
+
+            msg = (
+                f"{class_name} requires package '{package}' to be present "
+                f"in the python environment, with version {package_version_req}, "
+                f"but incompatible version {pkg_env_version} was found. "
+            )
+            if obj is not None:
+                msg = msg + (
+                    f"This version requirement is not one by sktime, but specific "
+                    f"to the module, class or object with name {obj}."
+                )
+
+            # raise error/warning or return False if version is incompatible
+            if pkg_env_version not in package_version_req:
+                if severity == "error":
+                    raise ModuleNotFoundError(msg)
+                elif severity == "warning":
+                    warnings.warn(msg)
+                elif severity == "none":
+                    return False
+                else:
+                    raise RuntimeError(
+                        "Error in calling _check_soft_dependencies, severity argument"
+                        f' must be "error", "warning", or "none", found "{severity}".'
+                    )
+
+    # if package can be imported and no version issue was caught for any string,
+    # then obj is compatible with the requirements and we should return True
+    return True
 
 
 def _check_dl_dependencies(msg=None, severity="error"):

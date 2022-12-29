@@ -11,6 +11,7 @@ from string import digits
 
 import numpy as np
 import pandas as pd
+from pandas.tseries.frequencies import get_period_alias
 
 from sktime.transformations.base import BaseTransformer
 
@@ -75,7 +76,7 @@ class TimeSince(BaseTransformer):
         "scitype:transform-output": "Series",
         "scitype:instancewise": True,  # is this an instance-wise transform?
         "scitype:transform-labels": "None",
-        "X_inner_mtype": "pd.DataFrame",
+        "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "y_inner_mtype": "None",
         "univariate-only": False,
         "requires_y": False,
@@ -125,18 +126,24 @@ class TimeSince(BaseTransformer):
         -------
         self: reference to self
         """
-        if X.index.is_numeric():
+        time_index = _get_time_index(X)
+
+        if time_index.is_numeric():
             if self.freq:
                 warnings.warn("Index is integer type. `freq` will be ignored.")
             self.freq_ = None
-        elif isinstance(X.index, (pd.DatetimeIndex, pd.PeriodIndex)):
+        elif isinstance(time_index, (pd.DatetimeIndex, pd.PeriodIndex)):
             # Chooses first non None value
-            self.freq_ = X.index.freq or self.freq or pd.infer_freq(X.index)
+            self.freq_ = time_index.freqstr or self.freq or pd.infer_freq(time_index)
             if self.freq_ is None:
                 raise ValueError("X has no known frequency and none is supplied")
-            if self.freq_ == X.index.freq and self.freq_ != self.freq and self.freq:
+            if (
+                (self.freq_ == time_index.freqstr)
+                and (self.freq_ != self.freq)
+                and (self.freq)
+            ):
                 warnings.warn(
-                    f"Using frequency from index: {X.index.freq}, which "
+                    f"Using frequency from index: {time_index.freq}, which "
                     f"does not match the frequency given: {self.freq}."
                 )
         else:
@@ -144,13 +151,13 @@ class TimeSince(BaseTransformer):
 
         self.start_ = []
         if self.start is None:
-            self.start_.append(X.index.min())
+            self.start_.append(time_index.min())
         else:
             for start in self.start:
                 if start is None:
-                    self.start_.append(X.index.min())
+                    self.start_.append(time_index.min())
                 elif isinstance(start, str):
-                    if isinstance(X.index, pd.PeriodIndex):
+                    if isinstance(time_index, pd.PeriodIndex):
                         self.start_.append(pd.Period(start))
                     else:
                         self.start_.append(pd.to_datetime(start))
@@ -159,7 +166,7 @@ class TimeSince(BaseTransformer):
 
         # Check `start_` is compatible with index
         for start_ in self.start_:
-            if isinstance(X.index, pd.DatetimeIndex) and not isinstance(
+            if isinstance(time_index, pd.DatetimeIndex) and not isinstance(
                 start_, datetime.datetime
             ):
                 raise ValueError(
@@ -167,7 +174,7 @@ class TimeSince(BaseTransformer):
                     f"datetime index. Check that `start` is of type "
                     f"datetime or a pd.Datetime parsable string."
                 )
-            elif isinstance(X.index, pd.PeriodIndex) and not isinstance(
+            elif isinstance(time_index, pd.PeriodIndex) and not isinstance(
                 start_, pd.Period
             ):
                 raise ValueError(
@@ -200,62 +207,62 @@ class TimeSince(BaseTransformer):
         -------
         transformed version of X
         """
-        X = X.copy()
-        col_names = []
+        time_index = _get_time_index(X)
+
+        Xt = pd.DataFrame(index=X.index)
         for start_ in self.start_:
             if self.to_numeric:
-                if isinstance(X.index, pd.DatetimeIndex):
-                    #  To support calculating integer time differences when `freq`
-                    #  is not compatible with timedelta type (e.g., "M", "MS", "Y")
-                    #  X.index and `start` are first converted to pandas Period
+                if isinstance(time_index, pd.DatetimeIndex):
+                    # To support calculating integer time differences when `freq`
+                    # is not compatible with timedelta type (e.g., "M", "MS", "Y")
+                    # X.index and `start` are first converted to pandas Period.
 
-                    # Infer the freq needed to convert to period
-                    if X.index.freq is None:
-                        freq_period = X.asfreq(self.freq_).index.to_period().freqstr
-                    else:
-                        freq_period = X.index.to_period().freqstr
+                    # Infer the freq needed to convert to period. We use the
+                    # `get_period_alas` helper method from Pandas. This method
+                    # maps from a frequency that is compatible with a datetime
+                    # index to one that is compatible with a period index
+                    # (e.g., "MS" -> "M"). We must strip the freq str of any
+                    # integer multiplier (e.g., "15T" -> "T"). This is needed so that
+                    # `get_period_alias` returns the correct result.
+                    # If `get_period_alias` recieves a freq str with a multiplier
+                    # (e.g., "15T") it returns `None` which causes errors downstream.
+                    freq_ = _remove_digits_from_str(self.freq_)
+                    freq_period = get_period_alias(freq_)
 
-                    if pd.__version__ < "1.5.0":
-                        # Earlier versions of pandas returned incorrect result
-                        # when taking a difference between Periods when the frequency
-                        # is a multiple of a unit (e.g. "15T"). Solution is to
-                        # cast to lowest frequency when taking difference (e.g., "T").
-                        freq_period = _remove_digits_from_str(freq_period)
-
-                    # Convert `start` and datetime index to period
+                    # Convert `start` and datetime index to period.
                     start_period = pd.Period(start_, freq=freq_period)
-                    X_idx_period = X.index.to_period(freq_period)
-                    time_deltas_period = X_idx_period - start_period
+                    time_index_period = time_index.to_period(freq=freq_period)
+                    # Compute time differences and convert to integers.
+                    time_deltas_period = time_index_period - start_period
                     time_deltas = _period_to_int(time_deltas_period)
-                elif isinstance(X.index, pd.PeriodIndex):
+                elif isinstance(time_index, pd.PeriodIndex):
                     if pd.__version__ < "1.5.0":
                         # Earlier versions of pandas returned incorrect result
                         # when taking a difference between Periods when the frequency
                         # is a multiple of a unit (e.g. "15T"). Solution is to
                         # cast to lowest frequency when taking difference (e.g., "T").
-                        freq_ = _remove_digits_from_str(X.index.freqstr)
-                        time_deltas_period = X.index.to_timestamp().to_period(
+                        freq_ = _remove_digits_from_str(time_index.freqstr)
+                        time_deltas_period = time_index.to_timestamp().to_period(
                             freq_
                         ) - start_.to_timestamp().to_period(freq_)
                     else:
-                        time_deltas_period = X.index - start_
+                        time_deltas_period = time_index - start_
                     time_deltas = _period_to_int(time_deltas_period)
                 elif X.index.is_numeric():
-                    time_deltas = X.index - start_
+                    time_deltas = time_index - start_
             else:
-                time_deltas = X.index - start_
+                time_deltas = time_index - start_
 
             col_name = f"time_since_{start_}"
-            X[col_name] = time_deltas
-            col_names.append(col_name)
+            Xt[col_name] = time_deltas
 
         if self.to_numeric and self.positive_only:
-            X.loc[:, col_names] = X.loc[:, col_names].clip(lower=0)
+            Xt = Xt.clip(lower=0)
 
-        if self.keep_original_columns is False:
-            X = X[col_names]
+        if self.keep_original_columns:
+            Xt = pd.concat([X, Xt], axis=1, copy=True)
 
-        return X
+        return Xt
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -292,3 +299,12 @@ def _period_to_int(x: pd.PeriodIndex | list[pd.offsets.DateOffset]) -> int:
 
 def _remove_digits_from_str(x: str) -> str:
     return x.translate({ord(k): None for k in digits})
+
+
+def _get_time_index(X: pd.DataFrame) -> pd.PeriodIndex | pd.DatetimeIndex:
+    """Get time index from single and multi-index dataframes."""
+    if isinstance(X.index, pd.MultiIndex):
+        time_index = X.index.get_level_values(-1)
+    else:
+        time_index = X.index
+    return time_index

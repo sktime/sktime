@@ -20,8 +20,10 @@ class Detrender(BaseTransformer):
     of the forecaster's predicted values.
 
     The Detrender works as follows:
-    in "fit", the forecaster is fit to the input data.
-    in "transform", the forecast residuals are computed and return.
+    in "fit", the forecaster is fit to the input data, i.e., `forecaster.fit(y=X)`.
+    in "transform", returns forecast residuals of forecasts at the data index.
+    That is, `transform(X)` returns `X - forecaster.predict(fh=X.index)` (additive)
+    or `X / forecaster.predict(fh=X.index)` (multiplicative detrending).
     Depending on time indices, this can generate in-sample or out-of-sample residuals.
 
     For example, to remove the linear trend of a time series:
@@ -38,11 +40,12 @@ class Detrender(BaseTransformer):
         The forecasting model to remove the trend with
             (e.g. PolynomialTrendForecaster).
         If forecaster is None, PolynomialTrendForecaster(degree=1) is used.
+        Must be a forecaster to which `fh` can be passed in `predict`.
     model : {"additive", "multiplicative"}, default="additive"
-        If `model="additive"` the `forecaster` is fit to the original time
-        series and the `transform` method subtracts the trend from the time series.
-        If `model="multiplicative"` the `forecaster` is fit to the original time
-        series and the `transform` method divides the trend from the time series.
+        If `model="additive"` the `forecaster.transform` subtracts the trend,
+        i.e., `transform(X)` returns `X - forecaster.predict(fh=X.index)`
+        If `model="multiplicative"` the `forecaster.transform` divides by the trend,
+        i.e., `transform(X)` returns `X / forecaster.predict(fh=X.index)`
 
     Attributes
     ----------

@@ -1,6 +1,6 @@
 [project]
 name = "sktime"
-version = "0.14.1"
+version = "0.15.0"
 description = "A unified framework for machine learning with time series"
 authors = [
     {name = "Franz Király", email = "f.kiraly@ucl.ac.uk"},
@@ -55,6 +55,8 @@ dependencies = [
 
 [project.optional-dependencies]
 all_extras = [
+    "cloudpickle",
+    "dask",
     "dtw-python",
     "esig==0.9.7; python_version < '3.10'",
     "filterpy>=1.4.5",
@@ -78,7 +80,6 @@ all_extras = [
     "tsfresh>=0.17.0; python_version < '3.10'",
     "tslearn>=0.5.2",
     "xarray",
-    "dask",
 ]
 
 dev = [
@@ -91,6 +92,17 @@ dev = [
     "pytest-timeout",
     "pytest-xdist",
     "wheel",
+]
+
+mlflow = [
+    "mlflow",
+]
+
+mlflow_tests = [
+    "boto3",
+    "botocore",
+    "mlflow",
+    "moto",
 ]
 
 binder = [
@@ -116,10 +128,12 @@ dl = [
 ]
 
 [project.urls]
-homepage = "https://www.sktime.org"
-repository = "https://github.com/sktime/sktime"
-documentation = "https://www.sktime.org"
-download = "https://pypi.org/project/sktime/#files"
+Homepage = "https://www.sktime.org"
+Repository = "https://github.com/sktime/sktime"
+Documentation = "https://www.sktime.org"
+Download = "https://pypi.org/project/sktime/#files"
+"API Reference" = "https://www.sktime.org/en/stable/api_reference.html"
+"Release Notes" = "https://www.sktime.org/en/stable/changelog.html"
 
 [project.license]
 file = "LICENSE"

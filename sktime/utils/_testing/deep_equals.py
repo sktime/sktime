@@ -11,6 +11,7 @@ __author__ = ["fkiraly"]
 
 __all__ = ["deep_equals"]
 
+from inspect import isclass
 
 import numpy as np
 import pandas as pd
@@ -23,6 +24,7 @@ def deep_equals(x, y, return_msg=False):
         types compatible with != comparison
         pd.Series, pd.DataFrame, np.ndarray
         lists, tuples, or dicts of a valid type (recursive)
+        delayed types that result in the above when calling .compute(), e.g., dask df
 
     Important note:
         this function will return "not equal" if types of x,y are different
@@ -66,6 +68,12 @@ def deep_equals(x, y, return_msg=False):
 
     if type(x) != type(y):
         return ret(False, f".type, x.type = {type(x)} != y.type = {type(y)}")
+
+    # compute delayed objects (dask)
+    if hasattr(x, "compute"):
+        x = x.compute()
+    if hasattr(y, "compute"):
+        y = y.compute()
 
     # we now know all types are the same
     # so now we compare values
@@ -116,6 +124,8 @@ def deep_equals(x, y, return_msg=False):
         return ret(
             isinstance(y, type(np.nan)), f"type(x)={type(x)} != type(y)={type(y)}"
         )
+    elif isclass(x):
+        return ret(x == y, f".class, x={x.__name__} != y={y.__name__}")
     elif type(x).__name__ == "ForecastingHorizon":
         return ret(*_fh_equals(x, y, return_msg=True))
     elif isinstance(x != y, bool) and x != y:

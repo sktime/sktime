@@ -177,6 +177,43 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
     def _steps(self, value):
         self.steps = value
 
+    def _components(self, base_class=None):
+        """Return references to all state changing BaseObject type attributes.
+
+        This *excludes* the blue-print-like components passed in the __init__.
+
+        Caution: this method returns *references* and not *copies*.
+            Writing to the reference will change the respective attribute of self.
+
+        Parameters
+        ----------
+        base_class : class, optional, default=None, must be subclass of BaseObject
+            if None, behaves the same as `base_class=BaseObject`
+            if not None, return dict collects descendants of `base_class`
+
+        Returns
+        -------
+        dict with key = attribute name, value = reference to attribute
+        dict contains all attributes of `self` that inherit from `base_class`, and:
+            whose names do not contain the string "__", e.g., hidden attributes
+            are not class attributes, and are not hyper-parameters (`__init__` args)
+        """
+        import inspect
+
+        from sktime.base import BaseObject
+
+        if base_class is None:
+            base_class = BaseObject
+        if base_class is not None and not inspect.isclass(base_class):
+            raise TypeError(f"base_class must be a class, but found {type(base_class)}")
+        # if base_class is not None and not issubclass(base_class, BaseObject):
+        #     raise TypeError("base_class must be a subclass of BaseObject")
+
+        fitted_estimator_tuples = self.steps_
+
+        comp_dict = {name: comp for (name, comp) in fitted_estimator_tuples}
+        return comp_dict
+
     # both children use the same step params for testing, so putting it here
     @classmethod
     def get_test_params(cls, parameter_set="default"):
