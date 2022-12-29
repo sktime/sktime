@@ -160,10 +160,10 @@ def check_dask_frame(
         right_no_index_cols = len(index_cols) == 2
     elif scitype == "Hierarchical":
         cols_msg = (
-            f"{var_name} must have two or more index columns, "
+            f"{var_name} must have three or more index columns, "
             f"found {len(index_cols)}, namely: {index_cols}"
         )
-        right_no_index_cols = len(index_cols) >= 2
+        right_no_index_cols = len(index_cols) >= 3
     else:
         return RuntimeError(
             'scitype arg of check_dask_frame must be one of strings "Series", '
@@ -209,5 +209,13 @@ def check_dask_frame(
         # todo: logic for equal spacing
         metadata["is_equally_spaced"] = True
         metadata["has_nans"] = obj.isnull().values.any().compute()
+
+    if return_metadata and scitype in ["Panel", "Hierarchical"]:
+        instance_cols = index_cols[:-1]
+        metadata["n_instances"] = len(obj[instance_cols].unique())
+
+    if return_metadata and scitype in ["Hierarchical"]:
+        panel_cols = index_cols[:-2]
+        metadata["n_panels"] = len(obj[panel_cols].unique())
 
     return ret(True, None, metadata, return_metadata)
