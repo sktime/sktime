@@ -205,14 +205,14 @@ def check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj"):
         # Earlier versions of pandas are very slow for this type of operation.
         is_equally_list = [_index_equally_spaced(obj.loc[i].index) for i in inst_inds]
         is_equally_spaced = all(is_equally_list)
-        unique_diff_list = [obj.loc[i].index.is_monotonic for i in inst_inds]
-        time_is_monotonic = len([i for i in unique_diff_list if i is False]) == 0
+        montonic_list = [obj.loc[i].index.is_monotonic for i in inst_inds]
+        time_is_monotonic = len([i for i in montonic_list if i is False]) == 0
     else:
-        is_equally_spaced = (
+        is_equally_df = (
             time_grp.diff().groupby(level=0, group_keys=True, as_index=True).nunique()
         )
-        unique_diff = is_equally_spaced.iloc[:, 0].unique()
-        time_is_monotonic = all(unique_diff >= 0)
+        is_equally_spaced = is_equally_df.iloc[:, 0].unique()
+        time_is_monotonic = all(is_equally_spaced >= 0)
 
     is_equal_length = time_grp.count()
 
