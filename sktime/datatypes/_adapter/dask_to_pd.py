@@ -216,6 +216,6 @@ def check_dask_frame(
 
     if return_metadata and scitype in ["Hierarchical"]:
         panel_cols = index_cols[:-2]
-        metadata["n_panels"] = len(obj[instance_cols].drop_duplicates())
+        metadata["n_panels"] = len(obj[panel_cols].drop_duplicates())
 
     return ret(True, None, metadata, return_metadata)
