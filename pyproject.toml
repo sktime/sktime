@@ -127,6 +127,16 @@ dl = [
     "tensorflow-probability",
 ]
 
+dependencies_minimal = [
+    "deprecated==1.2.13",
+    "numba==0.55",
+    "numpy==1.21.0",
+    "pandas==1.1.0",
+    "scikit-learn==0.24.0",
+    "statsmodels==0.12.1",
+    "scipy==1.1.0",
+]
+
 [project.urls]
 Homepage = "https://www.sktime.org"
 Repository = "https://github.com/sktime/sktime"
