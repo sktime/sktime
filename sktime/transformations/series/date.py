@@ -184,10 +184,10 @@ class DateTimeFeatures(BaseTransformer):
 
         x_df = pd.DataFrame(index=X.index)
         if isinstance(time_index, pd.PeriodIndex):
-            x_df["date_sequence"] = time_index.to_timestamp().astype("datetime64[ns]")
+            x_df["date_sequence"] = time_index.to_timestamp()
         elif isinstance(time_index, pd.DatetimeIndex):
             x_df["date_sequence"] = time_index
-        elif not isinstance(time_index, pd.DatetimeIndex):
+        else:
             raise ValueError("Index type not supported")
 
         if self.manual_selection is None:
@@ -225,8 +225,6 @@ class DateTimeFeatures(BaseTransformer):
         ]
         df = pd.concat(df, axis=1)
         df.columns = calendar_dummies["dummy"]
-        if self.manual_selection is not None:
-            df = df[self.manual_selection]
 
         if self.keep_original_columns:
             Xt = pd.concat([X, df], axis=1, copy=True)
