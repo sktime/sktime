@@ -182,7 +182,7 @@ class TimeSince(BaseTransformer):
                     f"Period index. Check that `start` is of type "
                     f"pd.Period or a pd.Period parsable string."
                 )
-            elif X.index.is_numeric() and not isinstance(start_, (int, np.integer)):
+            elif time_index.is_numeric() and not isinstance(start_, (int, np.integer)):
                 raise ValueError(
                     f"start_={start_} incompatible with a numeric index."
                     f"Check that `start` is an integer."
