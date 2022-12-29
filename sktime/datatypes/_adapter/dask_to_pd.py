@@ -212,10 +212,10 @@ def check_dask_frame(
 
     if return_metadata and scitype in ["Panel", "Hierarchical"]:
         instance_cols = index_cols[:-1]
-        metadata["n_instances"] = len(obj[instance_cols].unique())
+        metadata["n_instances"] = obj[instance_cols].nunique().compute()
 
     if return_metadata and scitype in ["Hierarchical"]:
         panel_cols = index_cols[:-2]
-        metadata["n_panels"] = len(obj[panel_cols].unique())
+        metadata["n_panels"] = obj[panel_cols].nunique().compute()
 
     return ret(True, None, metadata, return_metadata)
