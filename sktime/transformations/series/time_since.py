@@ -58,13 +58,13 @@ class TimeSince(BaseTransformer):
     >>> from sktime.transformations.series.time_since import TimeSince
     >>> X = load_airline()
 
-    Create a single column with time elapsed since start date of time series.
-    The output is in units of integer number of months, same as the index `freq`.
+        Create a single column with time elapsed since start date of time series.
+        The output is in units of integer number of months, same as the index `freq`.
     >>> transformer = TimeSince()
     >>> Xt = transformer.fit_transform(X)
 
-    Create multiple columns with different start times. The output is in units
-    of integer number of months, same as the index `freq`.
+        Create multiple columns with different start times. The output is in units
+        of integer number of months, same as the index `freq`.
     >>> transformer = TimeSince(["2000-01", "2000-02"])
     >>> Xt = transformer.fit_transform(X)
     """
@@ -229,7 +229,7 @@ class TimeSince(BaseTransformer):
                     freq_ = _remove_digits_from_str(self.freq_)
                     freq_period = get_period_alias(freq_)
 
-                    # Convert `start` and datetime index to period.
+                    # Convert `start` and datetime index to integers.
                     start_period = pd.Period(start_, freq=freq_period)
                     time_index_period = time_index.to_period(freq=freq_period)
                     # Compute time differences and convert to integers.
