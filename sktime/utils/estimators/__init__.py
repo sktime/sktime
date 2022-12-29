@@ -7,7 +7,7 @@ __all__ = [
     "MockForecaster",
     "MockUnivariateForecasterLogger",
     "make_mock_estimator",
-    "construct_dispatch"
+    "construct_dispatch",
 ]
 
 from sktime.utils.estimators._base import make_mock_estimator

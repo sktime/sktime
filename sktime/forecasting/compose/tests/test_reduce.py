@@ -578,12 +578,8 @@ def test_direct_vs_recursive():
     forecaster_dir_spec = DirectTabularRegressionForecaster(
         LinearRegression(), windows_identical=True
     )
-    forecaster_rec_max = RecursiveTabularRegressionForecaster(
-        LinearRegression(), windows_identical=False
-    )
-    forecaster_rec_spec = RecursiveTabularRegressionForecaster(
-        LinearRegression(), windows_identical=True
-    )
+    forecaster_rec_max = RecursiveTabularRegressionForecaster(LinearRegression())
+    forecaster_rec_spec = RecursiveTabularRegressionForecaster(LinearRegression())
 
     pred_dir_max = forecaster_dir_max.fit(y_train, fh=fh).predict(fh)
     pred_dir_spec = forecaster_dir_spec.fit(y_train, fh=fh).predict(fh)
