@@ -6,6 +6,7 @@ from inspect import isclass
 
 from sklearn.base import BaseEstimator as SklearnBaseEstimator
 from sklearn.base import ClassifierMixin, ClusterMixin, RegressorMixin, TransformerMixin
+from sklearn.pipeline import Pipeline
 
 from sktime.base import BaseObject
 
@@ -67,6 +68,9 @@ def sklearn_scitype(obj, var_name="obj"):
 
     if not is_sklearn_estimator(obj):
         raise TypeError(f"{var_name} is not an sklearn estimator, has type {type(obj)}")
+
+    if isinstance(obj, Pipeline):
+        return sklearn_scitype(estimator.steps[-1][1], var_name=var_name)
 
     sklearn_mixins = tuple(mixin_to_scitype.keys())
 
