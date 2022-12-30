@@ -30,7 +30,7 @@ from warnings import warn
 
 import numpy as np
 import pandas as pd
-from sklearn.base import RegressorMixin, clone
+from sklearn.base import clone
 from sklearn.multioutput import MultiOutputRegressor
 
 from sktime.datatypes._utilities import get_time_index
