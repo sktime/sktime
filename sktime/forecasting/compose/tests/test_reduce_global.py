@@ -133,7 +133,6 @@ def test_reduction(y, index_names):
 
     forecaster2 = make_reduction(
         regressor,
-        scitype="tabular-regressor",
         transformers=[WindowSummarizer(**kwargs, n_jobs=1)],
         window_length=None,
         strategy="recursive",
@@ -174,7 +173,6 @@ def test_list_reduction(y, index_names):
 
     forecaster2 = make_reduction(
         regressor,
-        scitype="tabular-regressor",
         transformers=[WindowSummarizer(**kwargs), WindowSummarizer(**kwargs_variant)],
         window_length=None,
         strategy="recursive",
