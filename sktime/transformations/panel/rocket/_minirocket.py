@@ -14,51 +14,48 @@ from sktime.transformations.base import BaseTransformer
 
 
 class MiniRocket(BaseTransformer):
-    """MINIROCKET.
+    """MINImally RandOm Convolutional KErnel Transform (MiniRocket).
 
-    MINImally RandOm Convolutional KErnel Transform
-
-    **Univariate** and **equal length**
-
-    Unviariate input only.  Use class MiniRocketMultivariate for multivariate
-    input, or MiniRocketMultivariate for unequal length time-series . [1]_
-
+    MiniRocket [1]_ is an almost deterministic version of Rocket. If creates
+    convolutions of length of 9 with weights restricted to two values, and uses 84 fixed
+    convolutions with six of one weight, three of the second weight to seed dilations.
+    MiniRocket is for unviariate time series only.  Use class MiniRocketMultivariate
+    for multivariate time series.
 
     Parameters
     ----------
-    num_kernels              : int, (default=10,000)
-                                number of random convolutional kernels
-    max_dilations_per_kernel : int, (default=32)
-                                maximum number of dilations per kernel
-    n_jobs                   : int, (default=1)
-                                The number of jobs to run in parallel
-                                for `transform`. ``-1`` means using all processors.
-    random_state             : int or None, (default=None)
-                                random seed, not set by default
-
-    References
-    ----------
-    .. [1] Angus Dempster, Daniel F Schmidt, Geoffrey I Webb
-        MINIROCKET: A Very Fast (Almost) Deterministic Transform for
-        Time Series Classification, 2020, arXiv:2012.08791
+    num_kernels : int, default=10,000
+       number of random convolutional kernels.
+    max_dilations_per_kernel : int, default=32
+        maximum number of dilations per kernel.
+    n_jobs : int, default=1
+        The number of jobs to run in parallel for `transform`. ``-1`` means using all
+        processors.
+    random_state : None or int, default = None
 
     See Also
     --------
-    MultiRocket, MiniRocketMultivariate, MiniRocketMultivariateVariable, Rocket
+    MultiRocketMultivariate, MiniRocket, MiniRocketMultivariate, Rocket
+
+    References
+    ----------
+    .. [1] Dempster, Angus and Schmidt, Daniel F and Webb, Geoffrey I,
+        "MINIROCKET: A Very Fast (Almost) Deterministic Transform for Time Series
+        Classification",2020,
+        https://dl.acm.org/doi/abs/10.1145/3447548.3467231,
+        https://arxiv.org/abs/2012.08791
 
     Examples
     --------
-    >>> from sktime.transformations.panel.rocket import MiniRocket
-    >>> from sktime.datasets import load_gunpoint
-    >>> # load univariate dataset
-    >>> X_train, _ = load_gunpoint(split="train", return_X_y=True)
-    >>> X_test, _ = load_gunpoint(split="test", return_X_y=True)
-    >>> pre_clf = MiniRocket()
-    >>> pre_clf.fit(X_train, y=None)
-    MiniRocket(...)
-    >>> X_transformed = pre_clf.transform(X_test)
-    >>> X_transformed.shape
-    (150, 9996)
+     >>> from sktime.transformations.panel.rocket import Rocket
+     >>> from sktime.datasets import load_unit_test
+     >>> X_train, y_train = load_unit_test(split="train")
+     >>> X_test, y_test = load_unit_test(split="test")
+     >>> trf = MiniRocket(num_kernels=512)
+     >>> trf.fit(X_train)
+     MiniRocket(...)
+     >>> X_train = trf.transform(X_train)
+     >>> X_test = trf.transform(X_test)
     """
 
     _tags = {

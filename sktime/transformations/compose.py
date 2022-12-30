@@ -858,7 +858,6 @@ class MultiplexTransformer(_HeterogenousMetaEstimator, _DelegatedTransformer):
     >>> cv = ExpandingWindowSplitter(
     ...     initial_window=24,
     ...     step_length=12,
-    ...     start_with_window=True,
     ...     fh=[1,2,3])
     >>> pipe = TransformedTargetForecaster(steps = [
     ...     ("multiplex", multiplexer),
@@ -1284,7 +1283,7 @@ class OptionalPassthrough(_DelegatedTransformer):
     --------
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.naive import NaiveForecaster
-    >>> from sktime.transformations.series.compose import OptionalPassthrough
+    >>> from sktime.transformations.compose import OptionalPassthrough
     >>> from sktime.transformations.series.detrend import Deseasonalizer
     >>> from sktime.transformations.series.adapt import TabularToSeriesAdaptor
     >>> from sktime.forecasting.compose import TransformedTargetForecaster
@@ -1417,7 +1416,7 @@ class ColumnwiseTransformer(BaseTransformer):
     --------
     >>> from sktime.datasets import load_longley
     >>> from sktime.transformations.series.detrend import Detrender
-    >>> from sktime.transformations.series.compose import ColumnwiseTransformer
+    >>> from sktime.transformations.compose import ColumnwiseTransformer
     >>> _, X = load_longley()
     >>> transformer = ColumnwiseTransformer(Detrender())
     >>> Xt = transformer.fit_transform(X)
