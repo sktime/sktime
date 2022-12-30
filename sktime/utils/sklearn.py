@@ -63,14 +63,15 @@ def sklearn_scitype(obj, var_name="obj"):
     ------
     TypeError if obj is not an sklearn estimator, according to is_sklearn_estimator
     """
+    # deal with sklearn pipelines: scitype is determined by the last element
+    if isinstance(obj, Pipeline):
+        return sklearn_scitype(obj.steps[-1][1], var_name=var_name)
+
     if not isclass(obj):
         obj = type(obj)
 
     if not is_sklearn_estimator(obj):
         raise TypeError(f"{var_name} is not an sklearn estimator, has type {type(obj)}")
-
-    if isinstance(obj, Pipeline):
-        return sklearn_scitype(obj.steps[-1][1], var_name=var_name)
 
     sklearn_mixins = tuple(mixin_to_scitype.keys())
 
