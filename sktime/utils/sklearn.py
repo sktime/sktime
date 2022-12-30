@@ -70,7 +70,7 @@ def sklearn_scitype(obj, var_name="obj"):
         raise TypeError(f"{var_name} is not an sklearn estimator, has type {type(obj)}")
 
     if isinstance(obj, Pipeline):
-        return sklearn_scitype(estimator.steps[-1][1], var_name=var_name)
+        return sklearn_scitype(obj.steps[-1][1], var_name=var_name)
 
     sklearn_mixins = tuple(mixin_to_scitype.keys())
 
