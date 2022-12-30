@@ -1877,15 +1877,6 @@
       ]
     },
     {
-      "login": "templierw",
-      "name": "William Templier",
-      "avatar_url": "https://github.com/templierw.png",
-      "profile": "https://www.linkedin.com/in/templierw/",
-      "contributions": [
-        "doc"
-      ]
-    },
-    {
       "login": "jorenham",
       "name": "Joren Hammudoglu",
       "profile": "https://github.com/jorenham",
@@ -1899,6 +1890,15 @@
       "profile": "https://github.com/wolph",
       "contributions": [
       "build"
+      ]
+    },
+    {
+      "login": "templierw",
+      "name": "William Templier",
+      "avatar_url": "https://github.com/templierw.png",
+      "profile": "https://www.linkedin.com/in/templierw/",
+      "contributions": [
+        "doc"
       ]
     },
     {
