@@ -200,13 +200,13 @@ class WEASEL(BaseClassifier):
         # Window length parameter space dependent on series length
         self.n_instances, self.series_length = X.shape[0], X.shape[-1]
 
-        if self.alphabet_size == 4:
+        """ if self.alphabet_size == 4:
             warnings.warn(
                 "``alphabet_size=4`` was deprecated in version 0.13.3 and "
                 "will be changed to ``alphabet_size=2`` in 0.15."
                 "Please use alphabet_size=2 due to its lower memory "
                 "footprint, better runtime at equal accuracy."
-            )
+            ) """
 
         win_inc = self._compute_window_inc()
         self.max_window = int(min(self.series_length, self.max_window))

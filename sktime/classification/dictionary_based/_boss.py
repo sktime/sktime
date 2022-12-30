@@ -147,7 +147,7 @@ class BOSSEnsemble(BaseClassifier):
         max_ensemble_size=500,
         max_win_len_prop=1,
         min_window=10,
-        typed_dict="deprecated",
+        # typed_dict="deprecated",
         save_train_predictions=False,
         feature_selection="none",
         use_boss_distance=True,
@@ -211,11 +211,11 @@ class BOSSEnsemble(BaseClassifier):
         max_window = int(self.series_length_ * self.max_win_len_prop)
         win_inc = max(1, int((max_window - self.min_window) / max_window_searches))
 
-        if self.typed_dict != "deprecated":
+        """ if self.typed_dict != "deprecated":
             warnings.warn(
                 "``typed_dict`` was deprecated in version 0.13.3 and "
                 "will be removed in 0.15."
-            )
+            ) """
 
         if self.min_window > max_window + 1:
             raise ValueError(
