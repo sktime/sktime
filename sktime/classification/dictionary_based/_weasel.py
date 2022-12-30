@@ -141,7 +141,7 @@ class WEASEL(BaseClassifier):
         binning_strategy="information-gain",
         window_inc=2,
         p_threshold=0.05,
-        alphabet_size=4,  # TODO set default alphabet_size=2 in v0.15
+        alphabet_size=2,
         n_jobs=1,
         feature_selection="chi2",
         support_probabilities=False,

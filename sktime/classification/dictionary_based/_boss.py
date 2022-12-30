@@ -147,11 +147,11 @@ class BOSSEnsemble(BaseClassifier):
         max_ensemble_size=500,
         max_win_len_prop=1,
         min_window=10,
-        typed_dict=True,
+        typed_dict="deprecated",
         save_train_predictions=False,
         feature_selection="none",
         use_boss_distance=True,
-        alphabet_size=4,
+        alphabet_size=2,
         n_jobs=1,
         random_state=None,
     ):
