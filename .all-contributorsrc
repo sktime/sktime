@@ -1886,15 +1886,6 @@
       ]
     },
     {
-      "login": "adoherty21",
-      "name": "adoherty21",
-      "avatar_url": "https://avatars.githubusercontent.com/u/52799751?s=400&v=4",
-      "profile": "https://github.com/adoherty21",
-      "contributions": [
-        "bug"
-      ]
-    },
-    {
       "login": "jorenham",
       "name": "Joren Hammudoglu",
       "profile": "https://github.com/jorenham",
@@ -1908,6 +1899,15 @@
       "profile": "https://github.com/wolph",
       "contributions": [
       "build"
+      ]
+    },
+    {
+      "login": "adoherty21",
+      "name": "adoherty21",
+      "avatar_url": "https://avatars.githubusercontent.com/u/52799751?s=400&v=4",
+      "profile": "https://github.com/adoherty21",
+      "contributions": [
+        "bug"
       ]
     },
     {
