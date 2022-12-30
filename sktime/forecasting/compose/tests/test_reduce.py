@@ -387,15 +387,15 @@ def test_make_reduction_infer_scitype(estimator, scitype):
     assert forecaster._estimator_scitype == scitype
 
 
-def test_make_reduction_infer_scitype_raises_error():
+def test_make_reduction_infer_scitype_for_sklearn_pipeline():
     """Test make_reduction.
 
     The scitype of pipeline cannot be inferred here, as it may be used together
     with a tabular or time series regressor.
     """
     estimator = make_pipeline(Tabularizer(), LinearRegression())
-    with pytest.raises(ValueError):
-        make_reduction(estimator, scitype="infer")
+    forecaster = make_reduction(estimator, scitype="infer")
+    assert forecaster._estimator_scitype == "tabular-regressor"
 
 
 @pytest.mark.parametrize("fh", TEST_OOS_FHS)
