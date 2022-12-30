@@ -1877,35 +1877,10 @@
       ]
     },
     {
-      "login": "jorenham",
-      "name": "Joren Hammudoglu",
-      "profile": "https://github.com/jorenham",
-      "contributions": [
-        "build"
-      ]
-    },
-    {
-      "login": "wolph",
-      "name": "Rick van Hattem",
-      "profile": "https://github.com/wolph",
-      "contributions": [
-        "build"
-      ]
-    },
-    {
       "login": "templierw",
       "name": "William Templier",
       "avatar_url": "https://github.com/templierw.png",
       "profile": "https://www.linkedin.com/in/templierw/",
-      "contributions": [
-        "doc"
-      ]
-    },
-    {
-      "login": "nshahpazov",
-      "name": "Nikola Shahpazov",
-      "avatar_url": "https://avatars.githubusercontent.com/nshahpazov",
-      "profile": "https://www.linkedin.com/in/nshahpazov/",
       "contributions": [
         "doc"
       ]
@@ -1933,15 +1908,6 @@
       "profile": "https://github.com/wolph",
       "contributions": [
       "build"
-      ]
-    },
-    {
-      "login": "templierw",
-      "name": "William Templier",
-      "avatar_url": "https://github.com/templierw.png",
-      "profile": "https://www.linkedin.com/in/templierw/",
-      "contributions": [
-      "doc"
       ]
     },
     {
