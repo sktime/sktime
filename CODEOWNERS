@@ -7,10 +7,10 @@
 sktime/regression/dummy/ @badrmarani
 
 sktime/classification/dictionary_based/_boss.py @patrickzib @MatthewMiddlehurst @TonyBagnall
-sktime/classification/dictionary_based/_cboss.py @patrickzib @MatthewMiddlehurst @TonyBagnall
+sktime/classification/dictionary_based/_cboss.py @patrickzib @MatthewMiddlehurst @TonyBagnall @xxl4tomxu98
 sktime/classification/dictionary_based/_muse.py @patrickzib @MatthewMiddlehurst @TonyBagnall
 sktime/classification/dictionary_based/_tde.py @patrickzib @MatthewMiddlehurst @TonyBagnall
-sktime/classification/dictionary_based/_weasel.py @patrickzib @MatthewMiddlehurst @TonyBagnall
+sktime/classification/dictionary_based/_weasel.py @patrickzib @MatthewMiddlehurst @TonyBagnall @xxl4tomxu98
 sktime/classification/distance_based/ @jasonlines @goaster @TonyBagnall
 sktime/classification/dummy/ @ZiyaoWei
 sktime/classification/early_classification/_probability_threshold.py @MatthewMiddlehurst
