@@ -107,8 +107,8 @@ class _StatsModelsAdapter(BaseForecaster):
         if X is not None:
             ind_drop = self._X.index
             X = X.loc[~X.index.isin(ind_drop)]
-            # we need the entire range of the forecast horizon
-            X = X[:fh_abs[-1]]
+            # Entire range of the forecast horizon is required
+            X = X[: fh_abs[-1]]
 
         if "exog" in inspect.signature(self._forecaster.__init__).parameters.keys():
             y_pred = self._fitted_forecaster.predict(start=start, end=end, exog=X)
