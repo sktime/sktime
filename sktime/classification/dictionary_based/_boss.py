@@ -8,7 +8,6 @@ BOSS and a BOSS ensemble.
 __author__ = ["MatthewMiddlehurst", "patrickzib"]
 __all__ = ["BOSSEnsemble", "IndividualBOSS", "pairwise_distances"]
 
-import warnings
 from itertools import compress
 
 import numpy as np
@@ -61,19 +60,10 @@ class BOSSEnsemble(BaseClassifier):
         Maximum window length as a proportion of the series length.
     min_window : int, default=10
         Minimum window size.
-    typed_dict : bool, default="deprecated"
-        Use a numba TypedDict to store word counts. May increase memory usage, but will
-        be faster for larger datasets. As the Dict cannot be pickled currently, there
-        will be some overhead converting it to a python dict with multiple threads and
-        pickling.
-
-        .. deprecated:: 0.13.3
-            ``typed_dict`` was deprecated in version 0.13.3 and will be removed in 0.15.
-
     save_train_predictions : bool, default=False
         Save the ensemble member train predictions in fit for use in _get_train_probs
         leave-one-out cross-validation.
-    alphabet_size : default = 4
+    alphabet_size : default = 2
         Number of possible letters (values) for each word.
     n_jobs : int, default=1
         The number of jobs to run in parallel for both `fit` and `predict`.
@@ -147,11 +137,10 @@ class BOSSEnsemble(BaseClassifier):
         max_ensemble_size=500,
         max_win_len_prop=1,
         min_window=10,
-        typed_dict=True,
         save_train_predictions=False,
         feature_selection="none",
         use_boss_distance=True,
-        alphabet_size=4,
+        alphabet_size=2,
         n_jobs=1,
         random_state=None,
     ):
@@ -159,8 +148,6 @@ class BOSSEnsemble(BaseClassifier):
         self.max_ensemble_size = max_ensemble_size
         self.max_win_len_prop = max_win_len_prop
         self.min_window = min_window
-
-        self.typed_dict = typed_dict
         self.save_train_predictions = save_train_predictions
         self.n_jobs = n_jobs
         self.random_state = random_state
@@ -210,12 +197,6 @@ class BOSSEnsemble(BaseClassifier):
         max_window_searches = self.series_length_ / 4
         max_window = int(self.series_length_ * self.max_win_len_prop)
         win_inc = max(1, int((max_window - self.min_window) / max_window_searches))
-
-        if self.typed_dict != "deprecated":
-            warnings.warn(
-                "``typed_dict`` was deprecated in version 0.13.3 and "
-                "will be removed in 0.15."
-            )
 
         if self.min_window > max_window + 1:
             raise ValueError(
@@ -496,21 +477,13 @@ class IndividualBOSS(BaseClassifier):
         Length of word to use to use in BOSS algorithm.
     norm : bool, default = False
         Whether to normalize words by dropping the first Fourier coefficient.
-    alphabet_size : default = 4
+    alphabet_size : default = 2
         Number of possible letters (values) for each word.
     save_words : bool, default = True
         Whether to keep NumPy array of words in SFA transformation even after
         the dictionary of words is returned. If True, the array is saved, which
         can shorten the time to calculate dictionaries using a shorter
         `word_length` (since the last "n" letters can be removed).
-    typed_dict : bool, default="deprecated"
-        Use a numba TypedDict to store word counts. May increase memory usage, but will
-        be faster for larger datasets. As the Dict cannot be pickled currently, there
-        will be some overhead converting it to a python dict with multiple threads and
-        pickling.
-
-        .. deprecated:: 0.13.3
-            ``typed_dict`` was deprecated in version 0.13.3 and will be removed in 0.15.
     n_jobs : int, default=1
         The number of jobs to run in parallel for both `fit` and `predict`.
         ``-1`` means using all processors.
@@ -561,7 +534,7 @@ class IndividualBOSS(BaseClassifier):
         window_size=10,
         word_length=8,
         norm=False,
-        alphabet_size=4,
+        alphabet_size=2,
         save_words=False,
         typed_dict="deprecated",
         use_boss_distance=True,
