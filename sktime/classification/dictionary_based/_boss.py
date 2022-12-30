@@ -441,6 +441,7 @@ class BOSSEnsemble(BaseClassifier):
                 "max_ensemble_size": 5,
                 "feature_selection": "none",
                 "use_boss_distance": False,
+                "alphabet_size": 4,
             }
         else:
             return {
