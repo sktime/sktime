@@ -180,6 +180,9 @@ Base class
 Standalone ``numba`` distances
 ------------------------------
 
+Standalong functions not wrapped in the ``sktime`` ``BaseObject`` interface.
+Can be used within other ``numba`` compiled functions for end-to-end compilation.
+
 .. currentmodule:: sktime.distances
 
 .. autosummary::
