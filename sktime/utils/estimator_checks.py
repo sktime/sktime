@@ -5,16 +5,27 @@ __author__ = ["fkiraly"]
 __all__ = ["check_estimator"]
 
 from inspect import isclass
+from warnings import warn
 
 
+# todo 0.17.0:
+# * remove the return_exceptions arg
+# * move the raise_exceptions arg to 2nd place
+# * update the docstring - remove return_exceptions
+# * update the docstring - move raise_exceptions block to 2nd place
+# * update the docstring - remove deprecation references
+# * update the docstring - condition in raises block to refer only to raise_exceptions
+# * remove the code block for input handling
+# * remove import of warn
 def check_estimator(
     estimator,
-    return_exceptions=True,
+    return_exceptions=None,
     tests_to_run=None,
     fixtures_to_run=None,
     verbose=True,
     tests_to_exclude=None,
     fixtures_to_exclude=None,
+    raise_exceptions=None,
 ):
     """Run all tests on one single estimator.
 
@@ -26,10 +37,13 @@ def check_estimator(
     Parameters
     ----------
     estimator : estimator class or estimator instance
-    return_exception : bool, optional, default=True
+    return_exceptions : bool, optional, default=True
         whether to return exceptions/failures, or raise them
-            if True: returns exceptions in results
+            if True: returns exceptions in returned `results` dict
             if False: raises exceptions as they occur
+        deprecated since 0.15.1, and will be replaced by `raise_exceptions` in 0.17.0.
+        Overridden to `False` if `raise_exceptions=True`.
+        For safe deprecation, use `raise_exceptions` instead of `return_exceptions`.
     tests_to_run : str or list of str, optional. Default = run all tests.
         Names (test/function name string) of tests to run.
         sub-sets tests that are run to the tests given here.
@@ -46,6 +60,13 @@ def check_estimator(
     fixtures_to_exclude : str or list of str, fixtures to exclude. default = None
         removes test-fixture combinations that should not be run.
         This is done after subsetting via fixtures_to_run.
+    raise_exceptions : bool, optional, default=False
+        whether to return exceptions/failures in the results dict, or raise them
+            if False: returns exceptions in returned `results` dict
+            if True: raises exceptions as they occur
+        Overrides `return_exceptions` if used as a keyword argument.
+        both `raise_exceptions=True` and `return_exceptions=True`.
+        Will move to replace `return_exceptions` as 2nd arg in 0.17.0.
 
     Returns
     -------
@@ -57,7 +78,8 @@ def check_estimator(
 
     Raises
     ------
-    if return_exception=False, raises any exception produced by the tests directly
+    if return_exceptions=False, or raise_exceptions=True,
+    raises any exception produced by the tests directly
 
     Examples
     --------
@@ -103,6 +125,22 @@ def check_estimator(
     from sktime.tests.test_all_estimators import TestAllEstimators, TestAllObjects
     from sktime.transformations.tests.test_all_transformers import TestAllTransformers
 
+    # todo 0.17.0: remove this code block
+    if return_exceptions is None and raise_exceptions is None:
+        raise_exceptions = False
+
+    if return_exceptions is not None and raise_exceptions is None:
+        warn(
+            "The return_exceptions argument of check_estimator has been deprecated "
+            "since 0.15.1, and will be replaced by raise_exceptions in 0.17.0. "
+            "For safe deprecation: use raise_exceptions argument instead of "
+            "return_exceptions when using keywords. Avoid positional use, instead "
+            "ensure to use keywords. When not using keywords, the "
+            "default behaviour will not change."
+        )
+        raise_exceptions = not return_exceptions
+    # end block to remove
+
     testclass_dict = dict()
     testclass_dict["classifier"] = TestAllClassifiers
     testclass_dict["early_classifier"] = TestAllEarlyClassifiers
@@ -114,7 +152,7 @@ def check_estimator(
 
     results = TestAllObjects().run_tests(
         estimator=estimator,
-        return_exceptions=return_exceptions,
+        raise_exceptions=raise_exceptions,
         tests_to_run=tests_to_run,
         fixtures_to_run=fixtures_to_run,
         tests_to_exclude=tests_to_exclude,
@@ -131,7 +169,7 @@ def check_estimator(
     if is_estimator(estimator):
         results_estimator = TestAllEstimators().run_tests(
             estimator=estimator,
-            return_exceptions=return_exceptions,
+            raise_exceptions=raise_exceptions,
             tests_to_run=tests_to_run,
             fixtures_to_run=fixtures_to_run,
             tests_to_exclude=tests_to_exclude,
@@ -147,7 +185,7 @@ def check_estimator(
     if scitype_of_estimator in testclass_dict.keys():
         results_scitype = testclass_dict[scitype_of_estimator]().run_tests(
             estimator=estimator,
-            return_exceptions=return_exceptions,
+            raise_exceptions=raise_exceptions,
             tests_to_run=tests_to_run,
             fixtures_to_run=fixtures_to_run,
             tests_to_exclude=tests_to_exclude,

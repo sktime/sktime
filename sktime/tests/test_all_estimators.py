@@ -12,6 +12,7 @@ import os
 import types
 from copy import deepcopy
 from inspect import getfullargspec, isclass, signature
+from warnings import warn
 from tempfile import TemporaryDirectory
 
 import joblib
@@ -405,14 +406,24 @@ class BaseFixtureGenerator:
 class QuickTester:
     """Mixin class which adds the run_tests method to run tests on one estimator."""
 
+    # todo 0.17.0:
+    # * remove the return_exceptions arg
+    # * move the raise_exceptions arg to 2nd place
+    # * update the docstring - remove return_exceptions
+    # * update the docstring - move raise_exceptions block to 2nd place
+    # * update the docstring - remove deprecation references
+    # * update the docstring - condition in raises block to refer only to raise_exceptions
+    # * remove the code block for input handling
+    # * remove import of warn
     def run_tests(
         self,
         estimator,
-        return_exceptions=True,
+        return_exceptions=None,
         tests_to_run=None,
         fixtures_to_run=None,
         tests_to_exclude=None,
         fixtures_to_exclude=None,
+        raise_exceptions=None,
     ):
         """Run all tests on one single estimator.
 
@@ -430,8 +441,11 @@ class QuickTester:
         estimator : estimator class or estimator instance
         return_exceptions : bool, optional, default=True
             whether to return exceptions/failures, or raise them
-                if True: returns exceptions in results
+                if True: returns exceptions in returned `results` dict
                 if False: raises exceptions as they occur
+            deprecated in 0.15.1, and will be replaced by `raise_exceptions` in 0.17.0.
+            Overridden to `False` if `raise_exceptions=True`.
+            For safe deprecation, use `raise_exceptions` instead of `return_exceptions`.
         tests_to_run : str or list of str, names of tests to run. default = all tests
             sub-sets tests that are run to the tests given here.
         fixtures_to_run : str or list of str, pytest test-fixture combination codes.
@@ -445,6 +459,13 @@ class QuickTester:
         fixtures_to_exclude : str or list of str, fixtures to exclude. default = None
             removes test-fixture combinations that should not be run.
             This is done after subsetting via fixtures_to_run.
+        raise_exceptions : bool, optional, default=False
+            whether to return exceptions/failures in the results dict, or raise them
+                if False: returns exceptions in returned `results` dict
+                if True: raises exceptions as they occur
+            Overrides `return_exceptions` if used as a keyword argument.
+            both `raise_exceptions=True` and `return_exceptions=True`.
+            Will move to replace `return_exceptions` as 2nd arg in 0.17.0.
 
         Returns
         -------
@@ -456,7 +477,8 @@ class QuickTester:
 
         Raises
         ------
-        if return_exception=False, raises any exception produced by the tests directly
+        if return_exceptions=False, or raise_exceptions=True,
+        raises any exception produced by the tests directly
 
         Examples
         --------
@@ -472,6 +494,22 @@ class QuickTester:
         ... )
         {'test_repr[NaiveForecaster-2]': 'PASSED'}
         """
+        # todo 0.17.0: remove this code block
+        if return_exceptions is None and raise_exceptions is None:
+            raise_exceptions = False
+
+        if return_exceptions is not None and raise_exceptions is None:
+            warn(
+                "The return_exceptions argument of check_estimator has been deprecated "
+                "since 0.15.1, and will be replaced by raise_exceptions in 0.17.0. "
+                "For safe deprecation: use raise_exceptions argument instead of "
+                "return_exceptions when using keywords. Avoid positional use, instead "
+                "ensure to use keywords. When not using keywords, the "
+                "default behaviour will not change."
+            )
+            raise_exceptions = not return_exceptions
+        # end block to remove
+
         tests_to_run = self._check_None_str_or_list_of_str(
             tests_to_run, var_name="tests_to_run"
         )
@@ -546,8 +584,6 @@ class QuickTester:
             fixture_vars = getfullargspec(test_fun)[0][1:]
             fixture_vars = [var for var in fixture_sequence if var in fixture_vars]
 
-            raise_exceptions = not return_exceptions
-
             # this call retrieves the conditional fixtures
             #  for the test test_name, and the estimator
             _, fixture_prod, fixture_names = create_conditional_fixtures_and_names(
@@ -595,7 +631,7 @@ class QuickTester:
                 if fixtures_to_exclude is not None and key in fixtures_to_exclude:
                     continue
 
-                if return_exceptions:
+                if not raise_exceptions:
                     try:
                         test_fun(**deepcopy(args))
                         results[key] = "PASSED"
