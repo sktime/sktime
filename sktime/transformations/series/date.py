@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Extract calendar features from datetimeindex."""
-__author__ = ["danbartl"]
+__author__ = ["danbartl", "KishManani"]
 __all__ = ["DateTimeFeatures"]
 
 import warnings
@@ -33,6 +33,8 @@ _RAW_DUMMIES = [
 ]
 
 
+# TODO: Change the default value of `keep_original_columns` from True to False
+# and remove the warning in v0.17.0
 class DateTimeFeatures(BaseTransformer):
     """DateTime feature extraction for use in e.g. tree based models.
 
@@ -81,6 +83,8 @@ class DateTimeFeatures(BaseTransformer):
         * day_of_quarter
         * is_weekend
         * year (special case with no lower frequency).
+    keep_original_columns :  boolean, optional, default=True
+        Keep original columns in X passed to `.transform()`.
 
     Examples
     --------
@@ -115,7 +119,12 @@ class DateTimeFeatures(BaseTransformer):
         "scitype:transform-output": "Series",
         # what scitype is returned: Primitives, Series, Panel
         "scitype:instancewise": True,  # is this an instance-wise transform?
-        "X_inner_mtype": ["pd.DataFrame", "pd.Series"],
+        "X_inner_mtype": [
+            "pd.Series",
+            "pd.DataFrame",
+            "pd-multiindex",
+            "pd_multiindex_hier",
+        ],
         # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "univariate-only": False,
@@ -125,12 +134,26 @@ class DateTimeFeatures(BaseTransformer):
         "skip-inverse-transform": True,
     }
 
-    def __init__(self, ts_freq=None, feature_scope="minimal", manual_selection=None):
+    def __init__(
+        self,
+        ts_freq=None,
+        feature_scope="minimal",
+        manual_selection=None,
+        keep_original_columns=True,
+    ):
 
         self.ts_freq = ts_freq
         self.feature_scope = feature_scope
         self.manual_selection = manual_selection
         self.dummies = _prep_dummies(_RAW_DUMMIES)
+        self.keep_original_columns = keep_original_columns
+        warnings.warn(
+            "Currently the default value of `keep_original_columns\n"
+            " is `True`. In future releases this will be changed \n"
+            " to `False`. To keep the current behaviour explicitly \n"
+            " set `keep_original_columns=True`.",
+            FutureWarning,
+        )
         super(DateTimeFeatures, self).__init__()
 
     def _transform(self, X, y=None):
@@ -154,14 +177,17 @@ class DateTimeFeatures(BaseTransformer):
         _check_feature_scope(self.feature_scope)
         _check_manual_selection(self.manual_selection, self.dummies)
 
-        Z = X.copy()
+        if isinstance(X.index, pd.MultiIndex):
+            time_index = X.index.get_level_values(-1)
+        else:
+            time_index = X.index
 
-        x_df = pd.DataFrame(index=Z.index)
-        if isinstance(x_df.index, pd.PeriodIndex):
-            x_df["date_sequence"] = Z.index.to_timestamp().astype("datetime64[ns]")
-        elif isinstance(x_df.index, pd.DatetimeIndex):
-            x_df["date_sequence"] = Z.index
-        elif not isinstance(x_df.index, pd.DatetimeIndex):
+        x_df = pd.DataFrame(index=X.index)
+        if isinstance(time_index, pd.PeriodIndex):
+            x_df["date_sequence"] = time_index.to_timestamp()
+        elif isinstance(time_index, pd.DatetimeIndex):
+            x_df["date_sequence"] = time_index
+        else:
             raise ValueError("Index type not supported")
 
         if self.manual_selection is None:
@@ -199,10 +225,12 @@ class DateTimeFeatures(BaseTransformer):
         ]
         df = pd.concat(df, axis=1)
         df.columns = calendar_dummies["dummy"]
-        if self.manual_selection is not None:
-            df = df[self.manual_selection]
 
-        Xt = pd.concat([Z, df], axis=1)
+        if self.keep_original_columns:
+            Xt = pd.concat([X, df], axis=1, copy=True)
+        else:
+            # Remove the name `"dummy"` from column index.
+            Xt = df.rename_axis(None, axis="columns")
 
         return Xt
 
