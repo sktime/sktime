@@ -2373,6 +2373,7 @@ def _format_moving_cutoff_predictions(y_preds, cutoffs):
         # return series for single step ahead predictions
         y_pred = pd.concat(y_preds)
     else:
+        cutoffs = [cutoff[0] for cutoff in cutoffs]
         y_pred = pd.concat(y_preds, axis=1, keys=cutoffs)
 
     return y_pred
