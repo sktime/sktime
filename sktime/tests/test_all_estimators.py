@@ -409,6 +409,7 @@ class QuickTester:
     # todo 0.17.0:
     # * remove the return_exceptions arg
     # * move the raise_exceptions arg to 2nd place
+    # * change its default to False, from None
     # * update the docstring - remove return_exceptions
     # * update the docstring - move raise_exceptions block to 2nd place
     # * update the docstring - remove deprecation references
