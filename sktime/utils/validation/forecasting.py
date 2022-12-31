@@ -455,3 +455,27 @@ def check_regressor(regressor=None, random_state=None):
             )
         regressor = clone(regressor)
     return regressor
+
+
+def check_interval_df(interval_df, index_to_match):
+    """
+    Verify that a predicted interval DataFrame is formatted correctly.
+
+    Parameters
+    ----------
+    interval_df : pandas DataFrame outputted from forecaster.predict_interval()
+    index_to_match : Index object that must match interval_df.index
+    """
+    from sktime.datatypes import check_is_mtype
+
+    checked = check_is_mtype(interval_df, "pred_interval", return_metadata=True)
+    if not checked[0]:
+        raise ValueError(checked[1])
+    df_idx = interval_df.index
+    if len(index_to_match) != len(df_idx) or not (index_to_match == df_idx).all():
+        raise ValueError("Prediction interval index must match the final Series index.")
+    levels = interval_df.columns.levels
+    if len(levels[0]) != 1:
+        raise ValueError("`interval_df` must only contain one variable with interval")
+    if not (levels[0] == "Coverage")[0]:
+        raise ValueError("`interval_df` must have 'Coverage' column label")

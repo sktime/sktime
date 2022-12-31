@@ -142,21 +142,21 @@ def mean_linex_error(
     >>> from sktime.performance_metrics.forecasting import mean_linex_error
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
-    >>> mean_linex_error(y_true, y_pred)
+    >>> mean_linex_error(y_true, y_pred)  # doctest: +SKIP
     0.19802627763937575
-    >>> mean_linex_error(y_true, y_pred, b=2)
+    >>> mean_linex_error(y_true, y_pred, b=2)  # doctest: +SKIP
     0.3960525552787515
-    >>> mean_linex_error(y_true, y_pred, a=-1)
+    >>> mean_linex_error(y_true, y_pred, a=-1)  # doctest: +SKIP
     0.2391800623225643
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
-    >>> mean_linex_error(y_true, y_pred)
+    >>> mean_linex_error(y_true, y_pred)  # doctest: +SKIP
     0.2700398392309829
-    >>> mean_linex_error(y_true, y_pred, a=-1)
+    >>> mean_linex_error(y_true, y_pred, a=-1)  # doctest: +SKIP
     0.49660966225813563
-    >>> mean_linex_error(y_true, y_pred, multioutput='raw_values')
+    >>> mean_linex_error(y_true, y_pred, multioutput='raw_values')  # doctest: +SKIP
     array([0.17220024, 0.36787944])
-    >>> mean_linex_error(y_true, y_pred, multioutput=[0.3, 0.7])
+    >>> mean_linex_error(y_true, y_pred, multioutput=[0.3, 0.7])  # doctest: +SKIP
     0.30917568000716666
     """
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
@@ -1396,28 +1396,28 @@ def geometric_mean_squared_error(
     --------
     >>> import numpy as np
     >>> from sktime.performance_metrics.forecasting import \
-    geometric_mean_squared_error
+    geometric_mean_squared_error as gmse
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
-    >>> geometric_mean_squared_error(y_true, y_pred)
+    >>> gmse(y_true, y_pred)  # doctest: +SKIP
     2.80399089461488e-07
-    >>> geometric_mean_squared_error(y_true, y_pred, square_root=True)
+    >>> gmse(y_true, y_pred, square_root=True)  # doctest: +SKIP
     0.000529527232030127
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
-    >>> geometric_mean_squared_error(y_true, y_pred)
+    >>> gmse(y_true, y_pred)  # doctest: +SKIP
     0.5000000000115499
-    >>> geometric_mean_squared_error(y_true, y_pred, square_root=True)
+    >>> gmse(y_true, y_pred, square_root=True)  # doctest: +SKIP
     0.5000024031086919
-    >>> geometric_mean_squared_error(y_true, y_pred, multioutput='raw_values')
+    >>> gmse(y_true, y_pred, multioutput='raw_values')  # doctest: +SKIP
     array([2.30997255e-11, 1.00000000e+00])
-    >>> geometric_mean_squared_error(y_true, y_pred, multioutput='raw_values', \
-    square_root=True)
+    >>> gmse(y_true, y_pred, multioutput='raw_values', \
+    square_root=True)  # doctest: +SKIP
     array([4.80621738e-06, 1.00000000e+00])
-    >>> geometric_mean_squared_error(y_true, y_pred, multioutput=[0.3, 0.7])
+    >>> gmse(y_true, y_pred, multioutput=[0.3, 0.7])  # doctest: +SKIP
     0.7000000000069299
-    >>> geometric_mean_squared_error(y_true, y_pred, multioutput=[0.3, 0.7], \
-    square_root=True)
+    >>> gmse(y_true, y_pred, multioutput=[0.3, 0.7], \
+    square_root=True)  # doctest: +SKIP
     0.7000014418652152
     """
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)

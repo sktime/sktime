@@ -153,8 +153,8 @@ def check_pred_interval_proba(obj, return_metadata=False, var_name="obj"):
     # check column multiindex
     colidx = obj.columns
     msg = (
-        f"column of {var_name} must be pd.MultiIndex, with three levels."
-        "first level is variable name, "
+        f"Column of {var_name} must be pd.MultiIndex, with three levels. "
+        "First level is variable name, "
         "second level are (numeric) coverage values between 0 and 1, "
         'third level is string "lower" or "upper", for lower/upper interval end.'
     )

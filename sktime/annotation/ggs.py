@@ -2,6 +2,25 @@
 """
 Greedy Gaussian Segmentation (GGS).
 
+The method approximates solutions for the problem of breaking a
+multivariate time series into segments, where the data in each segment
+could be modeled as independent samples from a multivariate Gaussian
+distribution. It uses a dynamic programming search algorithm with
+a heuristic that allows finding approximate solution in linear time with
+respect to the data length and always yields locally optimal choice.
+
+This module is structured with the ``GGS`` that implements the actual
+segmentation algorithm and a ``GreedyGaussianSegmentation`` that
+interfaces the algorithm with the sklearn/sktime api. The benefit
+behind that design is looser coupling between the logic and the
+interface introduced to allow for easier changes of either part
+since segmentation still has an experimental nature. When making
+algorithm changes you probably want to look into ``GGS`` when
+evolving the sktime/sklearn interface look into ``GreedyGaussianSegmentation``.
+This design also allows adapting ``GGS`` to other interfaces.
+
+Notes
+-----
 Based on the work from [1]_.
 
 - source code adapted based on: https://github.com/cvxgrp/GGS
@@ -34,18 +53,48 @@ class GGS:
     """
     Greedy Gaussian Segmentation.
 
+    The method approxmates solutions for the problem of breaking a
+    multivariate time series into segments, where the data in each segment
+    could be modeled as independent samples from a multivariate Gaussian
+    distribution. It uses a dynamic programming search algorithm with
+    a heuristic that allows finding approximate solution in linear time with
+    respect to the data length and always yields locally optimal choice.
+
+    Greedy Gaussian Segmentation (GGS) fits a segmented gaussian model (SGM)
+    to the data by computing the approximate solution to the combinatorial
+    problem of finding the approximate covariance-regularized  maximum
+    log-likelihood for fixed number of change points and a reagularization
+    strength. It follows an interative procedure
+    where a new breakpoint is added and then adjusting all breakpoints to
+    (approximately) maximize the objective. It is similar to the top-down
+    search used in other change point detection problems.
+
     Parameters
     ----------
     k_max: int, default=10
-        Maximum number of change points to find
+        Maximum number of change points to find. The number of segments is thus k+1.
     lamb: : float, default=1.0
-        Regularization parameter lambda
+        Regularization parameter lambda (>= 0), which controls the amount of
+        (inverse) covariance regularization, see Eq (1) in [1]_. Regularization
+        is introduced to reduce issues for high-dimensional problems. Setting
+        ``lamb`` to zero will ignore regularization, whereas large values of
+        lambda will favour simpler models.
     max_shuffles: int, default=250
-        maximum number of shuffles
+        Maximum number of shuffles
     verbose: bool, default=False
         If ``True`` verbose output is enabled.
     random_state: int or np.random.RandomState, default=None
         Either random seed or an instance of ``np.random.RandomState``
+
+    Attributes
+    ----------
+    change_points_: array_like, default=[]
+        Locations of change points as integer indexes. By convention change points
+        include the identity segmentation, i.e. first and last index + 1 values.
+    _intermediate_change_points: List[List[int]], default=[]
+        Intermediate values of change points for each value of k = 1...k_max
+    _intermediate_ll: List[float], default=[]
+        Intermediate values for log-likelihood for each value of k = 1...k_max
 
     Notes
     -----
@@ -72,28 +121,27 @@ class GGS:
     _intermediate_change_points: List[List[int]] = field(init=False, default=[])
     _intermediate_ll: List[float] = field(init=False, default=[])
 
-    def initialize_intermediates(self):
-        """Fit."""
+    def initialize_intermediates(self) -> None:
+        """Initialize the state fo the estimator."""
         self._intermediate_change_points = []
         self._intermediate_ll = []
 
-    def log_likelihood(self, cov: float, nrows: int, ncols: int) -> float:
+    def log_likelihood(self, data: npt.ArrayLike) -> float:
         """
-        Compute the GGS log likelihood.
+        Compute the GGS log-likelihood of the segmented Gaussian model.
 
         Parameters
         ----------
-        cov: float
-            covariance
-        nrows: int
-            number of observations
-        ncols: int
-            number of columns
+        data: array_like
+            2D `array_like` representing time series with sequence index along
+            the first dimension and value series as columns.
 
         Returns
         -------
         log_likelihood
         """
+        nrows, ncols = data.shape
+        cov = np.cov(data.T, bias=True)
         (_, logdet) = np.linalg.slogdet(
             cov + float(self.lamb) * np.identity(ncols) / nrows
         )
@@ -106,14 +154,16 @@ class GGS:
         self, data: npt.ArrayLike, change_points: List[int]
     ) -> float:
         """
-        Calculate cumulative GGS log likelihood for all segments.
+        Calculate cumulative GGS log-likelihood for all segments.
 
         Args
         ----
         data: array_like
-            time series data
+            2D `array_like` representing time series with sequence index along
+            the first dimension and value series as columns.
         change_points: list of ints
-            list of indexes of change points
+            Locations of change points as integer indexes. By convention change points
+            include the identity segmentation, i.e. first and last index + 1 values.
 
         Returns
         -------
@@ -122,19 +172,22 @@ class GGS:
         log_likelihood = 0
         for start, stop in zip(change_points[:-1], change_points[1:]):
             segment = data[start:stop, :]
-            nrows, ncols = segment.shape
-            cov = np.cov(segment.T, bias=True)
-            log_likelihood -= self.log_likelihood(cov, nrows, ncols)
+            log_likelihood -= self.log_likelihood(segment)
         return log_likelihood
 
     def add_new_change_point(self, data: npt.ArrayLike) -> Tuple[int, float]:
         """
         Add change point.
 
+        This methods finds a new change point by that splits the segment and
+        optimizes the objective function. See section 3.1 on split subroutine
+        in [1]_.
+
         Parameters
         ----------
         data: array_like
-            time series data
+            2D `array_like` representing time series with sequence index along
+            the first dimension and value series as columns.
 
         Returns
         -------
@@ -145,14 +198,14 @@ class GGS:
         m, n = data.shape
         orig_mean = np.mean(data, axis=0)
         orig_cov = np.cov(data.T, bias=True)
-        orig_ll = self.log_likelihood(orig_cov, m, n)
-        totSum = m * (orig_cov + np.outer(orig_mean, orig_mean))
+        orig_ll = self.log_likelihood(data)
+        total_sum = m * (orig_cov + np.outer(orig_mean, orig_mean))
         mu_left = data[0, :] / n
         mu_right = (m * orig_mean - data[0, :]) / (m - 1)
         runSum = np.outer(data[0, :], data[0, :])
         # Loop through all samples
         # find point where breaking the segment would have the largest LL increase
-        minLL = orig_ll
+        min_ll = orig_ll
         new_index = 0
         for i in range(2, m - 1):
             # Update parameters
@@ -160,31 +213,31 @@ class GGS:
             mu_left = ((i - 1) * mu_left + data[i - 1, :]) / (i)
             mu_right = ((m - i + 1) * mu_right - data[i - 1, :]) / (m - i)
             sigLeft = runSum / (i) - np.outer(mu_left, mu_left)
-            sigRight = (totSum - runSum) / (m - i) - np.outer(mu_right, mu_right)
+            sigRight = (total_sum - runSum) / (m - i) - np.outer(mu_right, mu_right)
 
             # Compute Cholesky, LogDet, and Trace
             Lleft = np.linalg.cholesky(sigLeft + float(self.lamb) * np.identity(n) / i)
             Lright = np.linalg.cholesky(
                 sigRight + float(self.lamb) * np.identity(n) / (m - i)
             )
-            llLeft = 2 * sum(map(math.log, np.diag(Lleft)))
-            llRight = 2 * sum(map(math.log, np.diag(Lright)))
-            (trLeft, trRight) = (0, 0)
+            ll_left = 2 * sum(map(math.log, np.diag(Lleft)))
+            ll_right = 2 * sum(map(math.log, np.diag(Lright)))
+            (trace_left, trace_right) = (0, 0)
             if self.lamb > 0:
-                trLeft = math.pow(np.linalg.norm(np.linalg.inv(Lleft)), 2)
-                trRight = math.pow(np.linalg.norm(np.linalg.inv(Lright)), 2)
+                trace_left = math.pow(np.linalg.norm(np.linalg.inv(Lleft)), 2)
+                trace_right = math.pow(np.linalg.norm(np.linalg.inv(Lright)), 2)
             LL = (
-                i * llLeft
-                - float(self.lamb) * trLeft
-                + (m - i) * llRight
-                - float(self.lamb) * trRight
+                i * ll_left
+                - float(self.lamb) * trace_left
+                + (m - i) * ll_right
+                - float(self.lamb) * trace_right
             )
             # Keep track of the best point so far
-            if LL < minLL:
-                minLL = LL
+            if LL < min_ll:
+                min_ll = LL
                 new_index = i
         # Return break, increase in LL
-        return new_index, minLL - orig_ll
+        return new_index, min_ll - orig_ll
 
     def adjust_change_points(
         self, data: npt.ArrayLike, change_points: List[int], new_index: List[int]
@@ -192,19 +245,26 @@ class GGS:
         """
         Adjust change points.
 
+        This method adjusts the positions of all change points until the
+        result is 1-OPT, i.e., no change of any one breakpoint improves
+        the objective.
+
         Parameters
         ----------
         data: array_like
-            time series data
+            2D `array_like` representing time series with sequence index along
+            the first dimension and value series as columns.
         change_points: list of ints
-            change points indexes
+            Locations of change points as integer indexes. By convention change points
+            include the identity segmentation, i.e. first and last index + 1 values.
         new_index: list of ints
-            new change points
+            New change points
 
         Returns
         -------
         change_points: list of ints
-            change point indexes
+            Locations of change points as integer indexes. By convention change points
+            include the identity segmentation, i.e. first and last index + 1 values.
         """
         rng = check_random_state(self.random_state)
         bp = change_points[:]
@@ -250,25 +310,26 @@ class GGS:
                 return bp
         return bp
 
-    def initialize_change_points(self, data: npt.ArrayLike) -> List[int]:
+    def identity_segmentation(self, data: npt.ArrayLike) -> List[int]:
         """Initialize change points."""
         return [0, data.shape[0] + 1]
 
     def find_change_points(self, data: npt.ArrayLike) -> List[int]:
         """
-        Find ``k`` change points on the data at a specific lambda.
+        Search iteratively  for up to ``k_max`` change points.
 
         Parameters
         ----------
         data: array_like
-            time series data
+            2D `array_like` representing time series with sequence index along
+            the first dimension and value series as columns.
 
         Returns
         -------
         The K change points, along with all intermediate change points (for k < K)
         and their corresponding covariance-regularized maximum likelihoods.
         """
-        change_points = self.initialize_change_points(data)
+        change_points = self.identity_segmentation(data)
         self._intermediate_change_points = [change_points[:]]
         self._intermediate_ll = [self.cumulative_log_likelihood(data, change_points)]
 
@@ -307,33 +368,52 @@ class GGS:
 
         return change_points
 
-    def predict(self, X: npt.ArrayLike):
-        """Predict."""
-        self.change_points_ = self.find_change_points(X)
-
-        labels = np.zeros(X.shape[0], dtype=np.int32)
-        for i, (start, stop) in enumerate(
-            zip(self.change_points_[:-1], self.change_points_[1:])
-        ):
-            labels[start:stop] = i
-        return labels
-
 
 class GreedyGaussianSegmentation(BaseEstimator):
     """Greedy Gaussian Segmentation Estimator.
 
+    The method approxmates solutions for the problem of breaking a
+    multivariate time series into segments, where the data in each segment
+    could be modeled as independent samples from a multivariate Gaussian
+    distribution. It uses a dynamic programming search algorithm with
+    a heuristic that allows finding approximate solution in linear time with
+    respect to the data length and always yields locally optimal choice.
+
+    Greedy Gaussian Segmentation (GGS) fits a segmented gaussian model (SGM)
+    to the data by computing the approximate solution to the combinatorial
+    problem of finding the approximate covariance-regularized  maximum
+    log-likelihood for fixed number of change points and a reagularization
+    strength. It follows an interative procedure
+    where a new breakpoint is added and then adjusting all breakpoints to
+    (approximately) maximize the objective. It is similar to the top-down
+    search used in other change point detection problems.
+
     Parameters
     ----------
     k_max: int, default=10
-        Maximum number of change points to find
+        Maximum number of change points to find. The number of segments is thus k+1.
     lamb: : float, default=1.0
-        Regularization parameter lambda
+        Regularization parameter lambda (>= 0), which controls the amount of
+        (inverse) covariance regularization, see Eq (1) in [1]_. Regularization
+        is introduced to reduce issues for high-dimensional problems. Setting
+        ``lamb`` to zero will ignore regularization, whereas large values of
+        lambda will favour simpler models.
     max_shuffles: int, default=250
-        maximum number of shuffles
+        Maximum number of shuffles
     verbose: bool, default=False
         If ``True`` verbose output is enabled.
     random_state: int or np.random.RandomState, default=None
         Either random seed or an instance of ``np.random.RandomState``
+
+    Attributes
+    ----------
+    change_points_: array_like, default=[]
+        Locations of change points as integer indexes. By convention change points
+        include the identity segmentation, i.e. first and last index + 1 values.
+    _intermediate_change_points: List[List[int]], default=[]
+        Intermediate values of change points for each value of k = 1...k_max
+    _intermediate_ll: List[float], default=[]
+        Intermediate values for log-likelihood for each value of k = 1...k_max
 
     Notes
     -----
@@ -409,10 +489,17 @@ class GreedyGaussianSegmentation(BaseEstimator):
             dimension of X. The numerical values represent distinct segments
             labels for each of the data points.
         """
-        return self._adaptee.predict(X)
+        self.change_points_ = self._adaptee.find_change_points(X)
+
+        labels = np.zeros(X.shape[0], dtype=np.int32)
+        for i, (start, stop) in enumerate(
+            zip(self.change_points_[:-1], self.change_points_[1:])
+        ):
+            labels[start:stop] = i
+        return labels
 
     def fit_predict(self, X: npt.ArrayLike, y: npt.ArrayLike = None) -> npt.ArrayLike:
-        """Perform fit and predict.
+        """Perform segmentation.
 
         Parameters
         ----------

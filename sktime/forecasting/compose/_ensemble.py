@@ -304,6 +304,7 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         "ignores-exogeneous-X": False,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
+        "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "scitype:y": "both",
     }
@@ -313,17 +314,21 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         self.aggfunc = aggfunc
         self.weights = weights
 
+        # the ensemble requires fh in fit
+        # iff any of the component forecasters require fh in fit
+        self._anytagis_then_set("requires-fh-in-fit", True, False, self.forecasters)
+
     def _fit(self, y, X=None, fh=None):
         """Fit to training data.
 
         Parameters
         ----------
-        y : pd.Series
+        y : pd.DataFrame - Series, Panel, or Hierarchical mtype format.
             Target time series to which to fit the forecaster.
-        fh : int, list or np.array, optional, default=None
+        fh : ForecastingHorizon, optional, default=None
             The forecasters horizon with the steps ahead to to predict.
-        X : pd.DataFrame, optional, default=None
-            Exogenous variables are ignored.
+        X : pd.DataFrame, optional, default=None, must be of same mtype as y
+            Exogenous data to which to fit the forecaster.
 
         Returns
         -------
@@ -338,13 +343,15 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
 
         Parameters
         ----------
-        fh : int, list or np.array, optional, default=None
-        X : pd.DataFrame
+        fh : ForecastingHorizon, optional, default=None
+        X : pd.DataFrame, optional, default=None, must be of same mtype as y
+            Exogenous data to which to fit the forecaster.
 
         Returns
         -------
-        y_pred : pd.Series
-            Aggregated predictions.
+        y_pred : pd.DataFrame - Series, Panel, or Hierarchical mtype format,
+            will be of same mtype as y in _fit
+            Ensembled predictions
         """
         names, _ = self._check_forecasters()
         y_pred = pd.concat(self._predict_forecasters(fh, X), axis=1, keys=names)
@@ -368,10 +375,17 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         -------
         params : dict or list of dict
         """
+        from sktime.forecasting.compose._reduce import DirectReductionForecaster
         from sktime.forecasting.naive import NaiveForecaster
 
+        # univariate case
         FORECASTER = NaiveForecaster()
-        params = {"forecasters": [("f1", FORECASTER), ("f2", FORECASTER)]}
+        params = [{"forecasters": [("f1", FORECASTER), ("f2", FORECASTER)]}]
+
+        # test multivariate case, i.e., ensembling multiple variables at same time
+        FORECASTER = DirectReductionForecaster.create_test_instance()
+        params = params + [{"forecasters": [("f1", FORECASTER), ("f2", FORECASTER)]}]
+
         return params
 
 

@@ -6,6 +6,7 @@ __author__ = ["ltsaprounis"]
 
 import warnings
 from copy import deepcopy
+from distutils.log import warn
 from typing import List, Union
 
 import numpy as np
@@ -45,6 +46,11 @@ class FourierFeatures(BaseTransformer):
         For example, if sp_list = [7, 365] and fourier_terms_list = [3, 9], the seasonal
         frequency of 7 will have 3 fourier terms and the seasonal frequency of 365
         will have 9 fourier terms.
+    freq : str, optional, default = None
+        Only used when X has a pd.DatetimeIndex without a specified frequency.
+        Specifies the frequency of the index of your data. The string should
+        match a pandas offset alias:
+        https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#offset-aliases
 
     References
     ----------
@@ -78,7 +84,10 @@ class FourierFeatures(BaseTransformer):
         # this can be a Panel mtype even if transform-input is Series, vectorized
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "requires_y": False,  # does y need to be passed in fit?
-        "enforce_index_type": [pd.PeriodIndex],  # index type that needs to be enforced
+        "enforce_index_type": [
+            pd.PeriodIndex,
+            pd.DatetimeIndex,
+        ],  # index type that needs to be enforced
         # in X/y
         "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
         "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
@@ -97,9 +106,12 @@ class FourierFeatures(BaseTransformer):
         "python_version": None,  # PEP 440 python version specifier to limit versions
     }
 
-    def __init__(self, sp_list: List[Union[int, float]], fourier_terms_list: List[int]):
+    def __init__(
+        self, sp_list: List[Union[int, float]], fourier_terms_list: List[int], freq=None
+    ):
         self.sp_list = sp_list
         self.fourier_terms_list = fourier_terms_list
+        self.freq = freq
 
         if len(self.sp_list) != len(self.fourier_terms_list):
             raise ValueError(
@@ -127,6 +139,11 @@ class FourierFeatures(BaseTransformer):
             Data to fit transform to
         y : Series or Panel of mtype y_inner_mtype, default=None
             Additional data, e.g., labels for transformation
+        freq : str, optional, default = None
+            Only used when X has a pd.DatetimeIndex without a specified frequency.
+            Specifies the frequency of the index of your data. The string should
+            match a pandas offset alias:
+            https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#offset-aliases
 
         Returns
         -------
@@ -149,9 +166,22 @@ class FourierFeatures(BaseTransformer):
                         "exists from other seasonal period, fourier term pairs."
                     )
 
-        # store the integer form of the minimum date in the prediod index
+        X = deepcopy(X)
+
+        if isinstance(X.index, pd.DatetimeIndex):
+            # Chooses first non None value
+            self.freq_ = X.index.freq or self.freq or pd.infer_freq(X.index)
+            if self.freq_ is None:
+                ValueError("X has no known frequency and none is supplied")
+            if self.freq_ == X.index.freq and self.freq_ != self.freq:
+                warn(
+                    f"Using frequency from index: {X.index.freq}, which \
+                     does not match the frequency given:{self.freq}."
+                )
+            X.index = X.index.to_period(self.freq_)
         # this is used to make sure that time t is calculated with reference to
         # the data passed on fit
+        # store the integer form of the minimum date in the prediod index
         self.min_t_ = np.min(X.index.astype(int))
 
         return self
@@ -174,6 +204,10 @@ class FourierFeatures(BaseTransformer):
         transformed version of X
         """
         X_transformed = deepcopy(X)
+
+        if isinstance(X.index, pd.DatetimeIndex):
+            X_transformed.index = X_transformed.index.to_period(self.freq_)
+
         # get the integer form of the PeriodIndex
         int_index = X_transformed.index.astype(int) - self.min_t_
 
@@ -184,6 +218,8 @@ class FourierFeatures(BaseTransformer):
             X_transformed[f"sin_{sp}_{k}"] = np.sin(int_index * 2 * k * np.pi / sp)
             X_transformed[f"cos_{sp}_{k}"] = np.cos(int_index * 2 * k * np.pi / sp)
 
+        # Ensure transformed X has same index
+        X_transformed.index = deepcopy(X.index)
         return X_transformed
 
     @classmethod

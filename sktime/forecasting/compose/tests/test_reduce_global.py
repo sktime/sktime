@@ -2,15 +2,24 @@
 """Test extraction of features across (shifted) windows."""
 __author__ = ["danbartl"]
 
+import random
+
+import numpy as np
 import pandas as pd
 import pytest
-from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import (
+    GradientBoostingRegressor,
+    HistGradientBoostingRegressor,
+    RandomForestRegressor,
+)
 from sklearn.pipeline import make_pipeline
 
 from sktime.datasets import load_airline
 from sktime.datatypes import get_examples
+from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.compose import make_reduction
 from sktime.forecasting.model_selection import temporal_train_test_split
+from sktime.performance_metrics.forecasting import mean_absolute_percentage_error
 from sktime.transformations.series.summarize import WindowSummarizer
 
 # Load data that will be the basis of tests
@@ -116,7 +125,48 @@ def check_eval(test_input, expected):
         ),
     ],
 )
-def test_reduction(y, index_names):
+def test_recursive_reduction(y, index_names):
+    """Test index columns match input."""
+    regressor = make_pipeline(
+        RandomForestRegressor(random_state=1),
+    )
+
+    forecaster2 = make_reduction(
+        regressor,
+        scitype="tabular-regressor",
+        transformers=[WindowSummarizer(**kwargs, n_jobs=1)],
+        window_length=None,
+        strategy="recursive",
+        pooling="global",
+    )
+
+    forecaster2.fit(y, fh=[1, 2])
+    y_pred = forecaster2.predict(fh=[1, 2, 12])
+    check_eval(y_pred.index.names, index_names)
+
+
+@pytest.mark.parametrize(
+    "y, index_names",
+    [
+        (
+            y_train_grp,
+            ["instances", "timepoints"],
+        ),
+        (
+            y_train,
+            [None],
+        ),
+        (
+            y_numeric,
+            [None],
+        ),
+        (
+            y_train_hier_unequal,
+            ["foo", "bar", "Period"],
+        ),
+    ],
+)
+def test_direct_reduction(y, index_names):
     """Test index columns match input."""
     regressor = make_pipeline(
         RandomForestRegressor(random_state=1),
@@ -172,6 +222,54 @@ def test_list_reduction(y, index_names):
         pooling="global",
     )
 
-    forecaster2.fit(y, fh=[1, 2])
+    forecaster2.fit(y, fh=[1, 2, 12])
     y_pred = forecaster2.predict(fh=[1, 2, 12])
     check_eval(y_pred.index.names, index_names)
+
+
+@pytest.mark.parametrize(
+    "regressor",
+    [
+        RandomForestRegressor(),
+        GradientBoostingRegressor(),
+        HistGradientBoostingRegressor(),
+    ],
+)
+def test_equality_transfo_nontranso(regressor):
+    """Test that recursive reducers return same results for global / local forecasts."""
+    y = load_airline()
+    y_train, y_test = temporal_train_test_split(y, test_size=30)
+    fh = ForecastingHorizon(y_test.index, is_relative=False)
+
+    lag_vec = [i for i in range(12, 0, -1)]
+    kwargs = {
+        "lag_feature": {
+            "lag": lag_vec,
+        }
+    }
+
+    for _i in range(1, 5):
+        random_int = random.randint(1, 1000)
+        regressor.random_state = random_int
+        forecaster = make_reduction(
+            regressor, window_length=int(12), strategy="recursive"
+        )
+        forecaster.fit(y_train)
+        y_pred = forecaster.predict(fh)
+        recursive_without = mean_absolute_percentage_error(
+            y_test, y_pred, symmetric=False
+        )
+        forecaster = make_reduction(
+            regressor,
+            window_length=None,
+            strategy="recursive",
+            transformers=[WindowSummarizer(**kwargs, n_jobs=1)],
+            pooling="global",
+        )
+
+        forecaster.fit(y_train)
+        y_pred = forecaster.predict(fh)
+        recursive_global = mean_absolute_percentage_error(
+            y_test, y_pred, symmetric=False
+        )
+        np.testing.assert_almost_equal(recursive_without, recursive_global)

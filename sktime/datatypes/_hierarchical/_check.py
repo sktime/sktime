@@ -86,8 +86,9 @@ def check_pdmultiindex_hierarchical(obj, return_metadata=False, var_name="obj"):
         return _ret(False, msg, None, return_metadata)
 
     # check that columns are unique
-    msg = f"{var_name} must have " f"unique column indices, but found {obj.columns}"
-    assert obj.columns.is_unique, msg
+    if not obj.columns.is_unique:
+        msg = f"{var_name} must have unique column indices, but found {obj.columns}"
+        return _ret(False, msg, None, return_metadata)
 
     # check that there are 3 or more index levels
     nlevels = obj.index.nlevels
