@@ -237,6 +237,10 @@ replacements for others:
     * ``tensorflow-macos``
     * ``tensorflow-metal`` (optional)
 
+Also, ARM-based processors have issues when installing packages distributed as source distributions
+instead of Python wheels. To avoid this issue when installing a package you can try installing it
+though conda or use a prior version of the package that was distributed as a wheel.
+
 Other Startup Resources
 -----------------------
 
