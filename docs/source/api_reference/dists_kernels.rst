@@ -73,6 +73,22 @@ Composition
     KernelFromDist
     DistFromKernel
 
+Simple Time Series Distances
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Simple time series distance, including flat/vector distance, bag-of-value distance, or
+mean pairwise distance can be obtained by applying ``AggrDist`` or ``FlatDist``
+to pairwise distances in ``ScipyDist``. See docstring of ``AggrDist`` and ``FlatDist``.
+
+.. currentmodule:: sktime.dists_kernels.compose_tab_to_panel
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    AggrDist
+    FlatDist
+
 Dynamic Time Warping Distances
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -99,7 +115,7 @@ Time Series Kernels
 ~~~~~~~~~~~~~~~~~~~
 
 Simple time series kernels, including flat/vector kernels, bag-of-value kernels, or
-mean pairwise distance kernels can be obtained by applying ``AggrDist`` or ``FlatDist``
+mean pairwise kernels can be obtained by applying ``AggrDist`` or ``FlatDist``
 to kernels from ``sklearn.gaussian_process.kernels``.
 See docstring of ``AggrDist`` and ``FlatDist``.
 
