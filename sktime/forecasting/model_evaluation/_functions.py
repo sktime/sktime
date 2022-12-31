@@ -189,7 +189,7 @@ def _evaluate_window(
             "fit_time": [fit_time],
             "pred_time": [pred_time],
             "len_train_window": [len(y_train)],
-            "cutoff": [cutoff],
+            "cutoff": [cutoff[0]],
             "y_train": [y_train if return_data else pd.NA],
             "y_test": [y_test if return_data else pd.NA],
             "y_pred": [y_pred if return_data else pd.NA],
