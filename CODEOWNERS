@@ -72,6 +72,7 @@ sktime/forecasting/fbprophet.py @aiwalter
 sktime/forecasting/bats.py @aiwalter
 sktime/forecasting/tbats.py @aiwalter
 sktime/forecasting/arima.py @HYang1996
+sktime/forecasting/hcrystalball.py @MichalChromcak
 sktime/forecasting/statsforecast.py @FedericoGarza
 sktime/forecasting/structural.py @juanitorduz
 sktime/forecasting/model_selection/_split @koralturkk
