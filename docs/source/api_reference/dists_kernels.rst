@@ -64,6 +64,15 @@ Composition
 
     DistFromAligner
 
+.. currentmodule:: sktime.dists_to_kern
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    KernelFromDist
+    DistFromKernel
+
 Dynamic Time Warping Distances
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -85,6 +94,33 @@ Edit Distances
     :template: class.rst
 
     EditDist
+
+Time Series Kernels
+~~~~~~~~~~~~~~~~~~~
+
+Simple time series kernels, including flat/vector kernels, bag-of-value kernels, or
+mean pairwise distance kernels can be obtained by applying ``AggrDist`` or ``FlatDist``
+to kernels from ``sklearn.gaussian_process.kernels``.
+See docstring of ``AggrDist`` and ``FlatDist``.
+
+.. currentmodule:: sktime.dists_kernels.compose_tab_to_panel
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    AggrDist
+    FlatDist
+
+Advanced time series kernels that cannot be expressed as aggrgates or flat applicates:
+
+.. currentmodule:: sktime.dists_kernels.signature_kernel
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    SignatureKernel
 
 Base class
 ~~~~~~~~~~
@@ -124,7 +160,6 @@ Base class
     :template: class.rst
 
     BasePairwiseTransformer
-
 
 Standalone ``numba`` distances
 ------------------------------
