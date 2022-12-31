@@ -33,7 +33,7 @@ RAND_SEED = 42
 RAND_SEED2 = 84
 
 # typical length of time series
-N_T = 14
+N_T = 10
 
 
 def _is_child_of(obj, class_or_tuple):
