@@ -413,7 +413,8 @@ class QuickTester:
     # * update the docstring - remove return_exceptions
     # * update the docstring - move raise_exceptions block to 2nd place
     # * update the docstring - remove deprecation references
-    # * update the docstring - condition in raises block to refer only to raise_exceptions
+    # * update the docstring - condition in return block, refer only to raise_exceptions
+    # * update the docstring - condition in raises block, refer only to raise_exceptions
     # * remove the code block for input handling
     # * remove import of warn
     def run_tests(
@@ -474,7 +475,8 @@ class QuickTester:
             keys are test/fixture strings, identical as in pytest, e.g., test[fixture]
             entries are the string "PASSED" if the test passed,
                 or the exception raised if the test did not pass
-            returned only if all tests pass, or return_exceptions=True
+            returned only if all tests pass,
+            or both return_exceptions=True and raise_exceptions=False
 
         Raises
         ------
