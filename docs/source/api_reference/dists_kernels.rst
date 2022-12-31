@@ -14,8 +14,19 @@ Below, we list separately pairwise transformers for time series, and pairwise tr
    :no-members:
    :no-inherited-members:
 
+Standalone, performant ``numba`` distance functions are available in the :mod:`sktime.distance` module.
+These are not wrapped in the ``sktime`` ``BaseObject`` interface and can therefore
+be used within other ``numba`` compiled functions for end-to-end compilation.
+
+.. automodule:: sktime.distances
+   :no-members:
+   :no-inherited-members:
+
 Time series distances/kernels
 -----------------------------
+
+Distances or kernels between time series, following the
+pairwise panel transformer interface of ``BasePairwiseTransformerPanel``.
 
 Composition
 ~~~~~~~~~~~
@@ -75,8 +86,25 @@ Edit Distances
 
     EditDist
 
+Base class
+~~~~~~~~~~
+
+.. currentmodule:: sktime.dists_kernels
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    BasePairwiseTransformerPanel
+
 Tabular distances/kernels
 -------------------------
+
+Distances or kernels between tabular vectors or data frame rows, following the
+pairwise transformer interface of ``BasePairwiseTransformer``.
+
+Distance metrics from ``scipy``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: sktime.dists_kernels.scipy_dist
 
@@ -85,3 +113,37 @@ Tabular distances/kernels
     :template: class.rst
 
     ScipyDist
+
+Base class
+~~~~~~~~~~
+
+.. currentmodule:: sktime.dists_kernels
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    BasePairwiseTransformer
+
+
+Standalone ``numba`` distances
+------------------------------
+
+.. currentmodule:: sktime.distances
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: function.rst
+
+    ddtw_distance
+    dtw_distance
+    edr_distance
+    erp_distance
+    euclidean_distance
+    lcss_distance
+    msm_distance
+    pairwise_distance
+    squared_distance
+    twe_distance
+    wddtw_distance
+    wdtw_distance
