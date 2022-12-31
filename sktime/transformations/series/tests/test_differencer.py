@@ -3,7 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Unit tests of Differencer functionality."""
 
-__author__ = ["RNKuhns"]
+__author__ = ["RNKuhns", "fkiraly", "ilkersigirci"]
 __all__ = []
 
 import numpy as np
@@ -61,6 +61,12 @@ def test_differencer_remove_missing_false(y, lags, na_handling):
     """Test transform against inverse_transform."""
     transformer = Differencer(lags=lags, na_handling=na_handling)
     y_transform = transformer.fit_transform(y)
+
+    # if na_handling is fill_zero, get rid of the zeros for reconstruction
+    if na_handling == "fill_zero":
+        y_transform = y_transform[24:]
+        y = y[24:]
+
     y_reconstructed = transformer.inverse_transform(y_transform)
 
     _assert_array_almost_equal(y, y_reconstructed)
@@ -134,7 +140,6 @@ def test_differencer_cutoff():
     step_cv = 1
     cv = ExpandingWindowSplitter(
         initial_window=len(train_model) - (N_cv_fold - 1) * step_cv - len(fh),
-        start_with_window=True,
         step_length=step_cv,
         fh=fh,
     )
@@ -151,3 +156,47 @@ def test_differencer_cutoff():
 
     # fit
     gscv.fit(train_model, X=X_train)
+
+
+def test_differencer_inverse_does_not_memorize():
+    """Tests that differencer inverse always computes inverse via cumsum.
+
+    Test case by ilkersigirci in #3345 (simplified)
+
+    Failure mode:
+    previous versions "remembered" the fit data, which can lead to unexpected
+    output in the case of pipelining forecasters with a Differencer, see # 3345
+    """
+    import numpy as np
+
+    from sktime.forecasting.base import ForecastingHorizon
+    from sktime.forecasting.model_selection import temporal_train_test_split
+    from sktime.forecasting.naive import NaiveForecaster
+    from sktime.transformations.series.difference import Differencer
+
+    y = load_airline()
+
+    y_train, y_test = temporal_train_test_split(y=y, test_size=30)
+    fh_out = np.arange(1, len(y_test) + 1)
+    fh_ins = ForecastingHorizon(y_train.index, is_relative=False)[1:]
+
+    pipe = Differencer() * NaiveForecaster()
+
+    pipe.fit(y=y_train)
+    pipe_ins = pipe.predict(fh=fh_ins)
+    pipe.predict(fh=fh_out)
+
+    naive_model = NaiveForecaster()
+    naive_model.fit(y=y_train)
+    model_ins = naive_model.predict(fh=fh_ins)
+    naive_model.predict(fh=fh_out)
+
+    # pipe output should not be similar to train input
+    assert not np.allclose(y_train[1:].to_numpy(), pipe_ins.to_numpy())
+
+    # pipe output should be similar to model output
+    assert np.allclose(pipe_ins.to_numpy(), model_ins.to_numpy())
+    # (first element can be different)
+
+    # model output should not be similar to train input
+    assert not np.allclose(y_train[1:].to_numpy(), model_ins.to_numpy())

@@ -13,16 +13,12 @@ import warnings
 
 import numpy as np
 from joblib import Parallel, delayed
-from numba import njit
-from sklearn.feature_extraction import DictVectorizer
-from sklearn.feature_selection import chi2
-from sklearn.linear_model import LogisticRegression
-from sklearn.pipeline import make_pipeline
+from scipy.sparse import hstack
+from sklearn.linear_model import LogisticRegression, RidgeClassifierCV
 from sklearn.utils import check_random_state
 
 from sktime.classification.base import BaseClassifier
-from sktime.datatypes._panel._convert import from_nested_to_3d_numpy
-from sktime.transformations.panel.dictionary_based import SFA
+from sktime.transformations.panel.dictionary_based import SFAFast
 
 
 class MUSE(BaseClassifier):
@@ -50,19 +46,36 @@ class MUSE(BaseClassifier):
         If True, the Fourier coefficient selection is done via a one-way
         ANOVA test. If False, the first Fourier coefficients are selected.
         Only applicable if labels are given
+    variance: boolean, default = False
+            If True, the Fourier coefficient selection is done via the largest
+            variance. If False, the first Fourier coefficients are selected.
+            Only applicable if labels are given
     bigrams: boolean, default=True
         whether to create bigrams of SFA words
     window_inc: int, default=2
         WEASEL create a BoP model for each window sizes. This is the
         increment used to determine the next window size.
-     p_threshold: int, default=0.05 (disabled by default)
-        Feature selection is applied based on the chi-squared test.
+    alphabet_size : default = 4
+        Number of possible letters (values) for each word.
+    p_threshold: int, default=0.05 (disabled by default)
+        Used when feature selection is applied based on the chi-squared test.
         This is the p-value threshold to use for chi-squared test on bag-of-words
         (lower means more strict). 1 indicates that the test
         should not be performed.
     use_first_order_differences: boolean, default=True
         If set to True will add the first order differences of each dimension
         to the data.
+    support_probabilities: bool, default: False
+        If set to False, a RidgeClassifierCV will be trained, which has higher accuracy
+        and is faster, yet does not support predict_proba.
+        If set to True, a LogisticRegression will be trained, which does support
+        predict_proba(), yet is slower and typically less accuracy. predict_proba() is
+        needed for example in Early-Classification like TEASER.
+    feature_selection: {"chi2", "none", "random"}, default: chi2
+        Sets the feature selections strategy to be used. Chi2 reduces the number
+        of words significantly and is thus much faster (preferred). Random also reduces
+        the number significantly. None applies not feature selectiona and yields large
+        bag of words, e.g. much memory may be needed.
     n_jobs : int, default=1
         The number of jobs to run in parallel for both `fit` and `predict`.
         ``-1`` means using all processors.
@@ -89,7 +102,9 @@ class MUSE(BaseClassifier):
     Notes
     -----
     For the Java version, see
-    `MUSE <https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/tsml/
+    - `Original Publication <https://github.com/patrickzib/SFA>`_.
+    - `MUSE
+        <https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/tsml/
     classifiers/multivariate/WEASEL_MUSE.java>`_.
 
     Examples
@@ -107,27 +122,32 @@ class MUSE(BaseClassifier):
     _tags = {
         "capability:multivariate": True,
         "capability:multithreading": True,
-        "X_inner_mtype": "nested_univ",  # MUSE requires nested dataframe
+        "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
         "classifier_type": "dictionary",
     }
 
     def __init__(
         self,
         anova=True,
+        variance=False,
         bigrams=True,
         window_inc=2,
-        p_threshold=0.05,
+        alphabet_size=4,
         use_first_order_differences=True,
+        feature_selection="chi2",
+        p_threshold=0.05,
+        support_probabilities=False,
         n_jobs=1,
         random_state=None,
     ):
 
         # currently other values than 4 are not supported.
-        self.alphabet_size = 4
+        self.alphabet_size = alphabet_size
 
         # feature selection is applied based on the chi-squared test.
         self.p_threshold = p_threshold
         self.anova = anova
+        self.variance = variance
         self.use_first_order_differences = use_first_order_differences
 
         self.norm_options = [False]
@@ -141,16 +161,15 @@ class MUSE(BaseClassifier):
         self.max_window = 100
 
         self.window_inc = window_inc
-        self.highest_bit = -1
         self.window_sizes = []
-
-        self.col_names = []
-        self.highest_dim_bit = 0
-        self.highest_bits = []
 
         self.SFA_transformers = []
         self.clf = None
+
         self.n_jobs = n_jobs
+        self.support_probabilities = support_probabilities
+        self.total_features_count = 0
+        self.feature_selection = feature_selection
 
         super(MUSE, self).__init__()
 
@@ -174,13 +193,8 @@ class MUSE(BaseClassifier):
         # add first order differences in each dimension to TS
         if self.use_first_order_differences:
             X = self._add_first_order_differences(X)
+        self.n_dims = X.shape[1]
 
-        # Window length parameter space dependent on series length
-        self.col_names = X.columns
-
-        rng = check_random_state(self.random_state)
-
-        self.n_dims = len(self.col_names)
         self.highest_dim_bit = (math.ceil(math.log2(self.n_dims))) + 1
 
         if self.n_dims == 1:
@@ -189,143 +203,67 @@ class MUSE(BaseClassifier):
                 + " multivariate series. It is recommended WEASEL is used instead."
             )
 
-        def _parallel_fit(ind, column):
-            all_words = [
-                [] for x in range(X.shape[0])
-            ]  # no dict needed, array is enough
-            relevant_features_count = 0
+        if self.variance and self.anova:
+            raise ValueError("MUSE Warning: Please set either variance or anova.")
 
-            # On each dimension, perform SFA
-            X_dim = X[[column]]
-            X_dim = from_nested_to_3d_numpy(X_dim)
-            series_length = X_dim.shape[-1]  # TODO compute minimum over all ts ?
-
-            SFA_transformers = []
-
-            # increment window size in steps of 'win_inc'
-            win_inc = self._compute_window_inc(series_length)
-
-            self.max_window = int(min(series_length, self.max_window))
-            if self.min_window > self.max_window:
-                raise ValueError(
-                    f"Error in MUSE, min_window ="
-                    f"{self.min_window} is bigger"
-                    f" than max_window ={self.max_window}."
-                    f" Try set min_window to be smaller than series length in "
-                    f"the constructor, but the classifier may not work at "
-                    f"all with very short series"
-                )
-
-            window_sizes = np.array(
-                list(range(self.min_window, self.max_window, win_inc))
+        parallel_res = Parallel(n_jobs=self.n_jobs, backend="threading")(
+            delayed(_parallel_fit)(
+                X,
+                y.copy(),  # no clue why, but this copy is required.
+                ind,
+                self.min_window,
+                self.max_window,
+                self.window_inc,
+                self.word_lengths,
+                self.alphabet_size,
+                self.norm_options,
+                self.anova,
+                self.variance,
+                self.binning_strategies,
+                self.bigrams,
+                self.n_jobs,
+                self.p_threshold,
+                self.feature_selection,
+                self.random_state,
             )
-            highest_bits = math.ceil(math.log2(self.max_window)) + 1
-
-            for window_size in window_sizes:
-                transformer = SFA(
-                    word_length=rng.choice(self.word_lengths),
-                    alphabet_size=self.alphabet_size,
-                    window_size=window_size,
-                    norm=rng.choice(self.norm_options),
-                    anova=self.anova,
-                    binning_method=rng.choice(self.binning_strategies),
-                    bigrams=self.bigrams,
-                    remove_repeat_words=False,
-                    lower_bounding=False,
-                    save_words=False,
-                    n_jobs=self._threads_to_use,
-                )
-
-                sfa_words = transformer.fit_transform(X_dim, y)
-
-                SFA_transformers.append(transformer)
-                bag = sfa_words[0]
-                apply_chi_squared = self.p_threshold < 1
-
-                # chi-squared test to keep only relevant features
-                relevant_features = {}
-                if apply_chi_squared:
-                    vectorizer = DictVectorizer(sparse=True, dtype=np.int32, sort=False)
-                    bag_vec = vectorizer.fit_transform(bag)
-
-                    chi2_statistics, p = chi2(bag_vec, y)
-                    relevant_features_idx = np.where(p <= self.p_threshold)[0]
-                    relevant_features = set(
-                        np.array(vectorizer.feature_names_)[relevant_features_idx]
-                    )
-                    relevant_features_count += len(relevant_features_idx)
-
-                # merging bag-of-patterns of different window_sizes
-                # to single bag-of-patterns with prefix indicating
-                # the used window-length
-                highest = np.int32(highest_bits)
-                for j in range(len(bag)):
-                    for (key, value) in bag[j].items():
-                        # chi-squared test
-                        if (not apply_chi_squared) or (key in relevant_features):
-                            # append the prefices to the words to
-                            # distinguish between window-sizes
-                            word = MUSE._shift_left(
-                                key, highest, ind, self.highest_dim_bit, window_size
-                            )
-                            all_words[j].append((word, value))
-
-            return (
-                all_words,
-                relevant_features_count,
-                SFA_transformers,
-                window_sizes,
-                highest_bits,
-            )
-
-        parallel_res = Parallel(n_jobs=self._threads_to_use)(
-            delayed(_parallel_fit)(ind, column)
-            for (ind, column) in enumerate(self.col_names.values)
+            for ind in range(self.n_dims)
         )
 
-        relevant_features_count = 0
-        all_words = [dict() for x in range(len(X))]
-
-        self.SFA_transformers = []
-        self.window_sizes = []
-        self.highest_bits = []
-
+        self.SFA_transformers = [[] for _ in range(X.shape[1])]
+        self.window_sizes = [[] for _ in range(X.shape[1])]
+        all_words = []
         for (
+            ind,
             sfa_words,
-            rel_features_count,
-            transformers,
+            transformer,
             window_sizes,
-            highest_bits,
+            rel_features_count,
         ) in parallel_res:
-            relevant_features_count += rel_features_count
+            self.SFA_transformers[ind].extend(transformer)
+            self.window_sizes[ind].extend(window_sizes)
+            all_words.extend(sfa_words)
+            self.total_features_count += rel_features_count
+        if type(all_words[0]) is np.ndarray:
+            all_words = np.concatenate(all_words, axis=1)
+        else:
+            all_words = hstack((all_words))
 
-            self.window_sizes.append(window_sizes)
-            self.SFA_transformers.append(transformers)
-            self.highest_bits.append(highest_bits)
-
-            for idx, bag in enumerate(sfa_words):
-                all_words[idx].update(bag)
-
-        self.clf = make_pipeline(
-            DictVectorizer(sparse=True, sort=False),
-            # StandardScaler(with_mean=True, copy=False),
-            LogisticRegression(
+        # Ridge Classifier does not give probabilities
+        if not self.support_probabilities:
+            self.clf = RidgeClassifierCV(alphas=np.logspace(-3, 3, 10))
+        else:
+            self.clf = LogisticRegression(
                 max_iter=5000,
                 solver="liblinear",
                 dual=True,
                 # class_weight="balanced",
                 penalty="l2",
                 random_state=self.random_state,
-                n_jobs=self._threads_to_use,
-            ),
-        )
-
-        for words in all_words:
-            if len(words) == 0:
-                words[-1] = 1
+                n_jobs=self.n_jobs,
+            )
 
         self.clf.fit(all_words, y)
-
+        self.total_features_count = all_words.shape[-1]
         return self
 
     def _predict(self, X) -> np.ndarray:
@@ -358,67 +296,41 @@ class MUSE(BaseClassifier):
             Predicted probabilities using the ordering in classes_.
         """
         bag = self._transform_words(X)
-        return self.clf.predict_proba(bag)
+        if self.support_probabilities:
+            return self.clf.predict_proba(bag)
+        else:
+            raise ValueError(
+                "Error in MUSE, please set support_probabilities=True, to"
+                + "allow for probabilities to be computed."
+            )
 
     def _transform_words(self, X):
         if self.use_first_order_differences:
             X = self._add_first_order_differences(X)
 
-        def _parallel_transform_words(X, ind, column):
-            bag_all_words = [[] for _ in range(len(X))]
-
-            # On each dimension, perform SFA
-            X_dim = X[[column]]
-            X_dim = from_nested_to_3d_numpy(X_dim)
-
-            for i, window_size in enumerate(self.window_sizes[ind]):
-                # SFA transform
-                sfa_words = self.SFA_transformers[ind][i].transform(X_dim)
-                bag = sfa_words[0]
-
-                # merging bag-of-patterns of different window_sizes
-                # to single bag-of-patterns with prefix indicating
-                # the used window-length
-                highest = np.int32(self.highest_bits[ind])
-                for j in range(len(bag)):
-                    for (key, value) in bag[j].items():
-                        # append the prefices to the words to distinguish
-                        # between window-sizes
-                        word = MUSE._shift_left(
-                            key, highest, ind, self.highest_dim_bit, window_size
-                        )
-                        bag_all_words[j].append((word, value))
-            return bag_all_words
-
-        parallel_res = Parallel(n_jobs=self._threads_to_use)(
-            delayed(_parallel_transform_words)(X, ind, column)
-            for ind, column in enumerate(self.col_names)
+        parallel_res = Parallel(n_jobs=self._threads_to_use, backend="threading")(
+            delayed(_parallel_transform_words)(
+                X, self.window_sizes, self.SFA_transformers, ind
+            )
+            for ind in range(self.n_dims)
         )
-        all_words = [dict() for x in range(len(X))]
+
+        all_words = []
         for sfa_words in parallel_res:
-            for idx, bag in enumerate(sfa_words):
-                all_words[idx].update(bag)
+            all_words.extend(sfa_words)
+        if type(all_words[0]) is np.ndarray:
+            all_words = np.concatenate(all_words, axis=1)
+        else:
+            all_words = hstack((all_words))
+
         return all_words
 
     def _add_first_order_differences(self, X):
-        X_copy = X.copy()
-        for column in X.columns:
-            X_copy[str(column) + "_diff"] = X_copy[column]
-            for ts in X[column]:
-                ts_diff = ts.diff(1)
-                ts.replace(ts_diff)
-        return X_copy
-
-    def _compute_window_inc(self, series_length):
-        win_inc = self.window_inc
-        if series_length < 100:
-            win_inc = 1  # less than 100 is ok time-wise
-        return win_inc
-
-    @staticmethod
-    @njit(fastmath=True, cache=True)
-    def _shift_left(key, highest, ind, highest_dim_bit, window_size):
-        return ((key << highest | ind) << highest_dim_bit) | window_size
+        X_new = np.zeros((X.shape[0], X.shape[1] * 2, X.shape[2]))
+        X_new[:, 0 : X.shape[1], :] = X
+        diff = np.diff(X, 1)
+        X_new[:, X.shape[1] :, : diff.shape[2]] = diff
+        return X_new
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -442,4 +354,106 @@ class MUSE(BaseClassifier):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
-        return {"window_inc": 4, "use_first_order_differences": False}
+        return {
+            "window_inc": 4,
+            "alphabet_size": 2,
+            "use_first_order_differences": False,
+            "support_probabilities": True,
+            "feature_selection": "none",
+            "bigrams": False,
+        }
+
+
+def _compute_window_inc(series_length, window_inc):
+    win_inc = window_inc
+    if series_length < 100:
+        win_inc = 1  # less than 100 is ok time-wise
+
+    return win_inc
+
+
+def _parallel_transform_words(X, window_sizes, SFA_transformers, ind):
+    # On each dimension, perform SFA
+    X_dim = X[:, ind]
+
+    bag_all_words = []
+    for i in range(len(window_sizes[ind])):
+        words = SFA_transformers[ind][i].transform(X_dim)
+        bag_all_words.append(words)
+
+    return bag_all_words
+
+
+def _parallel_fit(
+    X,
+    y,
+    ind,
+    min_window,
+    max_window,
+    window_inc,
+    word_lengths,
+    alphabet_size,
+    norm_options,
+    anova,
+    variance,
+    binning_strategies,
+    bigrams,
+    n_jobs,
+    p_threshold,
+    feature_selection,
+    random_state,
+):
+    if random_state is not None:
+        rng = check_random_state(random_state + ind)
+    else:
+        rng = check_random_state(random_state)
+
+    all_words = []
+
+    # On each dimension, perform SFA
+    X_dim = X[:, ind]
+    series_length = X_dim.shape[-1]
+
+    # increment window size in steps of 'win_inc'
+    win_inc = _compute_window_inc(series_length, window_inc)
+    max_window = int(min(series_length, max_window))
+
+    if min_window > max_window:
+        raise ValueError(
+            f"Error in MUSE, min_window ="
+            f"{min_window} is bigger"
+            f" than max_window ={max_window}."
+            f" Try set min_window to be smaller than series length in "
+            f"the constructor, but the classifier may not work at "
+            f"all with very short series"
+        )
+
+    SFA_transformers = []
+    window_sizes = np.arange(min_window, max_window, win_inc)
+    relevant_features_count = 0
+
+    for window_size in window_sizes:
+        transformer = SFAFast(
+            word_length=rng.choice(word_lengths),
+            alphabet_size=alphabet_size,
+            window_size=window_size,
+            norm=rng.choice(norm_options),
+            anova=anova,
+            variance=variance,
+            binning_method=rng.choice(binning_strategies),
+            bigrams=bigrams,
+            remove_repeat_words=False,
+            lower_bounding=False,
+            p_threshold=p_threshold,
+            feature_selection=feature_selection,
+            save_words=False,
+            n_jobs=n_jobs,
+            return_pandas_data_series=False,
+            return_sparse=True,
+        )
+
+        all_words.append(transformer.fit_transform(X_dim, y))
+        SFA_transformers.append(transformer)
+        relevant_features_count = transformer.feature_count
+
+    return ind, all_words, SFA_transformers, window_sizes, relevant_features_count

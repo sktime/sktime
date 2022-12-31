@@ -13,6 +13,7 @@ from warnings import warn
 
 import numpy as np
 import pandas as pd
+from joblib import Parallel, delayed
 from sklearn.base import clone
 
 from sktime.datatypes import convert, convert_to
@@ -65,6 +66,9 @@ class ConformalIntervals(BaseForecaster):
         residuals matrix values for (for speeding up calculation)
     verbose : bool, optional, default=False
         whether to print warnings if windows with too few data points occur
+    n_jobs : int or None, optional, default=1
+        The number of jobs to run in parallel for fit.
+        -1 means using all processors.
 
     References
     ----------
@@ -103,9 +107,10 @@ class ConformalIntervals(BaseForecaster):
         self,
         forecaster,
         method="empirical",
-        initial_window=1,
+        initial_window=None,
         sample_frac=None,
         verbose=False,
+        n_jobs=None,
     ):
 
         if not isinstance(method, str):
@@ -121,6 +126,8 @@ class ConformalIntervals(BaseForecaster):
         self.verbose = verbose
         self.initial_window = initial_window
         self.sample_frac = sample_frac
+        self.n_jobs = n_jobs
+        self.forecasters_ = []
 
         super(ConformalIntervals, self).__init__()
 
@@ -156,7 +163,16 @@ class ConformalIntervals(BaseForecaster):
 
     def _update(self, y, X=None, update_params=True):
         self.forecaster_.update(y, X, update_params=update_params)
-        return self
+
+        if update_params and len(y.index.difference(self.residuals_matrix_.index)) > 2:
+            self.residuals_matrix_ = self._compute_sliding_residuals(
+                y,
+                X,
+                self.forecaster_,
+                self.initial_window,
+                self.sample_frac,
+                update=True,
+            )
 
     def _predict_interval(self, fh, X=None, coverage=None):
         """Compute/return prediction quantiles for a forecast.
@@ -283,7 +299,12 @@ class ConformalIntervals(BaseForecaster):
         n_samples = len(y)
 
         if initial_window is None:
-            initial_window = max(10, 0.1 * n_samples)
+            if int(floor(0.1 * n_samples)) > 10:
+                initial_window = int(floor(0.1 * n_samples))
+            elif n_samples > 10:
+                initial_window = 10
+            else:
+                initial_window = n_samples - 1
 
         initial_window_type = np.asarray(initial_window).dtype.kind
 
@@ -311,7 +332,9 @@ class ConformalIntervals(BaseForecaster):
 
         return n_initial_window
 
-    def _compute_sliding_residuals(self, y, X, forecaster, initial_window, sample_frac):
+    def _compute_sliding_residuals(
+        self, y, X, forecaster, initial_window, sample_frac, update=False
+    ):
         """Compute sliding residuals used in uncertainty estimates.
 
         Parameters
@@ -330,9 +353,12 @@ class ConformalIntervals(BaseForecaster):
             initial window.
             If None, the value is set to the larger of 0.1*len(y) and 10
         sample_frac : float
-            For speeding up computing of residuals matrix.
+            for speeding up computing of residuals matrix.
             sample value in range (0, 1) to obtain a fraction of y indices to
             compute residuals matrix for
+        update : bool
+            Whether residuals_matrix has been calculated previously and just
+            needs extending. Default = False
         Returns
         -------
         residuals_matrix : pd.DataFrame, row and column index = y.index[initial_window:]
@@ -345,36 +371,86 @@ class ConformalIntervals(BaseForecaster):
 
         n_initial_window = self._parse_initial_window(y, initial_window=initial_window)
 
-        y_index = y.iloc[n_initial_window:].index
+        full_y_index = y.iloc[n_initial_window:].index
 
-        residuals_matrix = pd.DataFrame(columns=y_index, index=y_index, dtype="float")
+        residuals_matrix = pd.DataFrame(
+            columns=full_y_index, index=full_y_index, dtype="float"
+        )
+
+        if update and hasattr(self, "residuals_matrix_"):
+            remaining_y_index = full_y_index.difference(self.residuals_matrix_.index)
+            if len(remaining_y_index) != len(full_y_index):
+                overlapping_index = pd.Index(
+                    self.residuals_matrix_.index.intersection(full_y_index)
+                ).sort_values()
+                residuals_matrix.loc[
+                    overlapping_index, overlapping_index
+                ] = self.residuals_matrix_.loc[overlapping_index, overlapping_index]
+            else:
+                overlapping_index = None
+            y_index = remaining_y_index
+        else:
+            y_index = full_y_index
+            overlapping_index = None
 
         if sample_frac:
-            y_index = y_index.to_series().sample(frac=sample_frac)
+            y_sample = y_index.to_series().sample(frac=sample_frac)
+            if len(y_sample) > 2:
+                y_index = y_sample
 
-        for id in y_index:
-            forecaster = clone(forecaster)
+        def _get_residuals_matrix_row(forecaster, y, X, id):
             y_train = get_slice(y, start=None, end=id)  # subset on which we fit
             y_test = get_slice(y, start=id, end=None)  # subset on which we predict
 
             X_train = get_slice(X, start=None, end=id)
             X_test = get_slice(X, start=id, end=None)
+            forecaster.fit(y_train, X=X_train, fh=y_test.index)
+            # Append fitted forecaster to list for extending for update
+            self.forecasters_.append({"id": str(id), "forecaster": forecaster})
 
             try:
-                forecaster.fit(y_train, X=X_train, fh=y_test.index)
-            except ValueError:
-                warn(
-                    f"Couldn't fit the model on "
-                    f"time series window length {len(y_train)}.\n"
-                )
-                continue
-            try:
-                residuals_matrix.loc[id] = forecaster.predict_residuals(y_test, X_test)
+                residuals = forecaster.predict_residuals(y_test, X_test)
             except IndexError:
                 warn(
                     f"Couldn't predict after fitting on time series of length \
-                     {len(y_train)}.\n"
+                                 {len(y_train)}.\n"
                 )
+            return residuals
+
+        all_residuals = Parallel(n_jobs=self.n_jobs)(
+            delayed(_get_residuals_matrix_row)(forecaster.clone(), y, X, id)
+            for id in y_index
+        )
+        for idx, id in enumerate(y_index):
+            residuals_matrix.loc[id] = all_residuals[idx]
+
+        if overlapping_index is not None:
+
+            def _extend_residuals_matrix_row(y, X, id):
+                forecasters_df = pd.DataFrame(self.forecasters_)
+                forecaster_to_extend = forecasters_df.loc[
+                    forecasters_df["id"] == str(id)
+                ]["forecaster"].values[0]
+
+                y_test = get_slice(y, start=id, end=None)
+                X_test = get_slice(X, start=id, end=None)
+
+                try:
+                    residuals = forecaster_to_extend.predict_residuals(y_test, X_test)
+                except IndexError:
+                    warn(
+                        f"Couldn't predict with existing forecaster for cutoff {id} \
+                         with existing forecaster.\n"
+                    )
+                return residuals
+
+            extend_residuals = Parallel(n_jobs=self.n_jobs)(
+                delayed(_extend_residuals_matrix_row)(y, X, id)
+                for id in overlapping_index
+            )
+
+            for idx, id in enumerate(overlapping_index):
+                residuals_matrix.loc[id] = extend_residuals[idx]
 
         return residuals_matrix
 

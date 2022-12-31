@@ -6,8 +6,6 @@ __author__ = ["fkiraly"]
 __all__ = ["SeasonalityACF"]
 
 import numpy as np
-from statsmodels.stats.multitest import multipletests
-from statsmodels.tsa.stattools import acf
 
 from sktime.param_est.base import BaseParamFitter
 
@@ -62,13 +60,13 @@ class SeasonalityACF(BaseParamFitter):
     >>> from sktime.datasets import load_airline
     >>> from sktime.param_est.seasonality import SeasonalityACF
     >>>
-    >>> X = load_airline().diff()[1:]
-    >>> sp_est = SeasonalityACF()
-    >>> sp_est.fit(X)
+    >>> X = load_airline().diff()[1:]  # doctest: +SKIP
+    >>> sp_est = SeasonalityACF()  # doctest: +SKIP
+    >>> sp_est.fit(X)  # doctest: +SKIP
     SeasonalityACF(...)
-    >>> sp_est.get_fitted_params()["sp"]
+    >>> sp_est.get_fitted_params()["sp"]  # doctest: +SKIP
     12
-    >>> sp_est.get_fitted_params()["sp_significant"]
+    >>> sp_est.get_fitted_params()["sp_significant"]  # doctest: +SKIP
     array([12, 11])
 
     Series should be stationary before applying ACF.
@@ -77,13 +75,13 @@ class SeasonalityACF(BaseParamFitter):
     >>> from sktime.param_est.seasonality import SeasonalityACF
     >>> from sktime.transformations.series.difference import Differencer
     >>>
-    >>> X = load_airline()
-    >>> sp_est = Differencer() * SeasonalityACF()
-    >>> sp_est.fit(X)
+    >>> X = load_airline()  # doctest: +SKIP
+    >>> sp_est = Differencer() * SeasonalityACF()  # doctest: +SKIP
+    >>> sp_est.fit(X)  # doctest: +SKIP
     ParamFitterPipeline(...)
-    >>> sp_est.get_fitted_params()["sp"]
+    >>> sp_est.get_fitted_params()["sp"]  # doctest: +SKIP
     12
-    >>> sp_est.get_fitted_params()["sp_significant"]
+    >>> sp_est.get_fitted_params()["sp_significant"]  # doctest: +SKIP
     array([12, 11])
     """
 
@@ -92,6 +90,7 @@ class SeasonalityACF(BaseParamFitter):
         "scitype:X": "Series",  # which X scitypes are supported natively?
         "capability:missing_values": True,  # can estimator handle missing data?
         "capability:multivariate": False,  # can estimator handle multivariate data?
+        "python_dependencies": "statsmodels",
     }
 
     def __init__(
@@ -128,6 +127,8 @@ class SeasonalityACF(BaseParamFitter):
         -------
         self : reference to self
         """
+        from statsmodels.tsa.stattools import acf
+
         p_threshold = self.p_threshold
         adjusted = self.adjusted
 
@@ -259,10 +260,10 @@ class SeasonalityACFqstat(BaseParamFitter):
     >>> from sktime.datasets import load_airline
     >>> from sktime.param_est.seasonality import SeasonalityACFqstat
     >>> X = load_airline().diff()[1:]
-    >>> sp_est = SeasonalityACFqstat(candidate_sp=[3, 7, 12])
-    >>> sp_est.fit(X)
+    >>> sp_est = SeasonalityACFqstat(candidate_sp=[3, 7, 12])  # doctest: +SKIP
+    >>> sp_est.fit(X)  # doctest: +SKIP
     SeasonalityACFqstat(...)
-    >>> sp_est.get_fitted_params()["sp_significant"]
+    >>> sp_est.get_fitted_params()["sp_significant"]  # doctest: +SKIP
     array([12,  7,  3])
     """
 
@@ -271,6 +272,7 @@ class SeasonalityACFqstat(BaseParamFitter):
         "scitype:X": "Series",  # which X scitypes are supported natively?
         "capability:missing_values": True,  # can estimator handle missing data?
         "capability:multivariate": False,  # can estimator handle multivariate data?
+        "python_dependencies": "statsmodels",
     }
 
     def __init__(
@@ -309,6 +311,9 @@ class SeasonalityACFqstat(BaseParamFitter):
         -------
         self : reference to self
         """
+        from statsmodels.stats.multitest import multipletests
+        from statsmodels.tsa.stattools import acf
+
         p_threshold = self.p_threshold
         p_adjust = self.p_adjust
         adjusted = self.adjusted

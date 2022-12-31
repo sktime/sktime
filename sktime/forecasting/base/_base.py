@@ -231,6 +231,52 @@ class BaseForecaster(BaseEstimator):
         else:
             return NotImplemented
 
+    def __getitem__(self, key):
+        """Magic [...] method, return forecaster with subsetted data.
+
+        First index does subsetting of exogeneous input data.
+        Second index does subsetting of the forecast (but not of endogeneous data).
+
+        Keys must be valid inputs for `columns` in `ColumnSubset`.
+
+        Parameters
+        ----------
+        key: valid input for `columns` in `ColumnSubset`, or pair thereof
+            keys can also be a :-slice, in which case it is considered as not passed
+
+        Returns
+        -------
+        the following composite pipeline object:
+            ColumnSubset(columns1) ** self * ColumnSubset(columns2)
+            where `columns1` is first or only item in `key`, and `columns2` is the last
+            if only one item is passed in `key`, only `columns1` is applied to input
+        """
+        from sktime.transformations.series.subset import ColumnSelect
+
+        def is_noneslice(obj):
+            res = isinstance(obj, slice)
+            res = res and obj.start is None and obj.stop is None and obj.step is None
+            return res
+
+        if isinstance(key, tuple):
+            if not len(key) == 2:
+                raise ValueError(
+                    "there should be one or two keys when calling [] or getitem, "
+                    "e.g., mytrafo[key], or mytrafo[key1, key2]"
+                )
+            columns1 = key[0]
+            columns2 = key[1]
+            if is_noneslice(columns1) and is_noneslice(columns2):
+                return self
+            elif is_noneslice(columns2):
+                return ColumnSelect(columns1) ** self
+            elif is_noneslice(columns1):
+                return self * ColumnSelect(columns2)
+            else:
+                return ColumnSelect(columns1) ** self * ColumnSelect(columns2)
+        else:
+            return ColumnSelect(key) ** self
+
     def fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
 
@@ -1041,7 +1087,7 @@ class BaseForecaster(BaseEstimator):
             self.cutoff, self._is_fitted
 
         Writes to self:
-            Stores y.index to self.fh if has not been passed previously.
+            Nothing.
 
         Parameters
         ----------
@@ -1064,6 +1110,14 @@ class BaseForecaster(BaseEstimator):
                 Series, Panel, Hierarchical scitype, same format (see above)
         """
         self.check_is_fitted()
+
+        # clone self._fh to avoid any side-effects to self due to calling _check_fh
+        # and predict()
+        if self._fh is not None:
+            fh_orig = deepcopy(self._fh)
+        else:
+            fh_orig = None
+
         # if no y is passed, the so far observed y is used
         if y is None:
             y = self._y
@@ -1095,6 +1149,10 @@ class BaseForecaster(BaseEstimator):
             )
 
         y_res = y - y_pred
+
+        # write fh back to self that was given before calling predict_residuals to
+        # avoid side-effects
+        self._fh = fh_orig
 
         return y_res
 
@@ -1229,6 +1287,22 @@ class BaseForecaster(BaseEstimator):
             else:
                 raise ValueError("no series scitypes supported, bug in estimator")
 
+        def _check_missing(metadata, obj_name):
+            """Check input metadata against self's missing capability tag."""
+            if not self.get_tag("handles-missing-data"):
+                msg = (
+                    f"{type(self).__name__} cannot handle missing data (nans), "
+                    f"but {obj_name} passed contained missing data."
+                )
+                if self.get_class_tag("handles-missing-data"):
+                    msg = msg + (
+                        f" Whether instances of {type(self).__name__} can handle "
+                        "missing data depends on parameters of the instance, "
+                        "e.g., estimator components."
+                    )
+                if metadata["has_nans"]:
+                    raise ValueError(msg)
+
         # retrieve supported mtypes
         y_inner_mtype = _coerce_to_list(self.get_tag("y_inner_mtype"))
         X_inner_mtype = _coerce_to_list(self.get_tag("X_inner_mtype"))
@@ -1280,6 +1354,9 @@ class BaseForecaster(BaseEstimator):
                 raise ValueError(
                     "y must have two or more variables, but found only one"
                 )
+
+            _check_missing(y_metadata, "y")
+
         else:
             # y_scitype is used below - set to None if y is None
             y_scitype = None
@@ -1310,6 +1387,9 @@ class BaseForecaster(BaseEstimator):
             X_scitype = X_metadata["scitype"]
             X_requires_vectorization = X_scitype not in X_inner_scitype
             requires_vectorization = requires_vectorization or X_requires_vectorization
+
+            _check_missing(X_metadata, "X")
+
         else:
             # X_scitype is used below - set to None if X is None
             X_scitype = None
@@ -1802,7 +1882,9 @@ class BaseForecaster(BaseEstimator):
                 f"NotImplementedWarning: {self.__class__.__name__} "
                 f"does not have a custom `update` method implemented. "
                 f"{self.__class__.__name__} will be refit each time "
-                f"`update` is called with update_params=True."
+                f"`update` is called with update_params=True. "
+                "To refit less often, use the wrappers in the "
+                "forecasting.stream module, e.g., UpdateEvery."
             )
             # we need to overwrite the mtype last seen and converter store, since the _y
             #    may have been converted

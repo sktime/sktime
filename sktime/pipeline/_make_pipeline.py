@@ -26,11 +26,11 @@ def make_pipeline(*steps):
 
     Example 1: forecaster pipeline
     >>> from sktime.datasets import load_airline
-    >>> from sktime.forecasting.theta import ThetaForecaster
+    >>> from sktime.forecasting.trend import PolynomialTrendForecaster
     >>> from sktime.pipeline import make_pipeline
     >>> from sktime.transformations.series.exponent import ExponentTransformer
     >>> y = load_airline()
-    >>> pipe = make_pipeline(ExponentTransformer(), ThetaForecaster())
+    >>> pipe = make_pipeline(ExponentTransformer(), PolynomialTrendForecaster())
     >>> type(pipe).__name__
     'TransformedTargetForecaster'
 

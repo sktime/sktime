@@ -14,7 +14,7 @@ __author__ = ["fkiraly"]
 __all__ = ["RegressorPipeline", "SklearnRegressorPipeline"]
 
 
-class RegressorPipeline(BaseRegressor, _HeterogenousMetaEstimator):
+class RegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
     """Pipeline of transformers and a regressor.
 
     The `RegressorPipeline` compositor chains transformers and a single regressor.
@@ -229,11 +229,7 @@ class RegressorPipeline(BaseRegressor, _HeterogenousMetaEstimator):
         params : mapping of string to any
             Parameter names mapped to their values.
         """
-        params = dict()
-        trafo_params = self._get_params("_transformers", deep=deep)
-        params.update(trafo_params)
-
-        return params
+        return self._get_params("_transformers", deep=deep)
 
     def set_params(self, **kwargs):
         """Set the parameters of estimator in `transformers`.
@@ -248,11 +244,13 @@ class RegressorPipeline(BaseRegressor, _HeterogenousMetaEstimator):
             if not isinstance(kwargs["regressor"], BaseRegressor):
                 raise TypeError('"regressor" arg must be an sktime regressor')
         trafo_keys = self._get_params("_transformers", deep=True).keys()
-        classif_keys = self.regressor.get_params(deep=True).keys()
+        regr_keys = self.regressor.get_params(deep=True).keys()
         trafo_args = self._subset_dict_keys(dict_to_subset=kwargs, keys=trafo_keys)
-        classif_args = self._subset_dict_keys(dict_to_subset=kwargs, keys=classif_keys)
-        if len(classif_args) > 0:
-            self.regressor.set_params(**classif_args)
+        regr_args = self._subset_dict_keys(
+            dict_to_subset=kwargs, keys=regr_keys, prefix="regressor"
+        )
+        if len(regr_args) > 0:
+            self.regressor.set_params(**regr_args)
         if len(trafo_args) > 0:
             self._set_params("_transformers", **trafo_args)
         return self
@@ -279,19 +277,29 @@ class RegressorPipeline(BaseRegressor, _HeterogenousMetaEstimator):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
-        # imports
-        from sktime.regression.distance_based import KNeighborsTimeSeriesRegressor
         from sktime.transformations.series.exponent import ExponentTransformer
+        from sktime.utils.validation._dependencies import _check_soft_dependencies
 
         t1 = ExponentTransformer(power=2)
         t2 = ExponentTransformer(power=0.5)
-        c = KNeighborsTimeSeriesRegressor()
 
-        # construct without names
-        return {"transformers": [t1, t2], "regressor": c}
+        r = SklearnRegressorPipeline.create_test_instance()
+
+        params1 = {"transformers": [t1, t2], "regressor": r}
+
+        if _check_soft_dependencies("numba", severity="none"):
+            from sktime.regression.distance_based import KNeighborsTimeSeriesRegressor
+
+            c = KNeighborsTimeSeriesRegressor()
+
+            # construct without names
+            params2 = {"transformers": [t1, t2], "regressor": c}
+            return [params1, params2]
+        else:
+            return params1
 
 
-class SklearnRegressorPipeline(RegressorPipeline):
+class SklearnRegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
     """Pipeline of transformers and a regressor.
 
     The `SklearnRegressorPipeline` chains transformers and an single regressor.
@@ -392,7 +400,7 @@ class SklearnRegressorPipeline(RegressorPipeline):
         self.transformers = transformers
         self.transformers_ = TransformerPipeline(transformers)
 
-        super(RegressorPipeline, self).__init__()
+        super(SklearnRegressorPipeline, self).__init__()
 
         # can handle multivariate iff all transformers can
         # sklearn transformers always support multivariate
@@ -417,6 +425,14 @@ class SklearnRegressorPipeline(RegressorPipeline):
             "capability:multithreading": False,
         }
         self.set_tags(**tags_to_set)
+
+    @property
+    def _transformers(self):
+        return self.transformers_._steps
+
+    @_transformers.setter
+    def _transformers(self, value):
+        self.transformers_._steps = value
 
     def __rmul__(self, other):
         """Magic * method, return concatenated RegressorPipeline, transformers on left.
@@ -503,6 +519,22 @@ class SklearnRegressorPipeline(RegressorPipeline):
         Xt_sklearn = self._convert_X_to_sklearn(Xt)
         return self.regressor_.predict(Xt_sklearn)
 
+    def get_params(self, deep=True):
+        """Get parameters of estimator in `transformers`.
+
+        Parameters
+        ----------
+        deep : boolean, optional, default=True
+            If True, will return the parameters for this estimator and
+            contained sub-objects that are estimators.
+
+        Returns
+        -------
+        params : mapping of string to any
+            Parameter names mapped to their values.
+        """
+        return self._get_params("_transformers", deep=deep)
+
     def set_params(self, **kwargs):
         """Set the parameters of estimator in `transformers`.
 
@@ -516,11 +548,13 @@ class SklearnRegressorPipeline(RegressorPipeline):
             if not is_sklearn_regressor(kwargs["regressor"]):
                 raise TypeError('"regressor" arg must be an sklearn regressor')
         trafo_keys = self._get_params("_transformers", deep=True).keys()
-        classif_keys = self.regressor.get_params(deep=True).keys()
+        regr_keys = self.regressor.get_params(deep=True).keys()
         trafo_args = self._subset_dict_keys(dict_to_subset=kwargs, keys=trafo_keys)
-        classif_args = self._subset_dict_keys(dict_to_subset=kwargs, keys=classif_keys)
-        if len(classif_args) > 0:
-            self.regressor.set_params(**classif_args)
+        regr_args = self._subset_dict_keys(
+            dict_to_subset=kwargs, keys=regr_keys, prefix="regressor"
+        )
+        if len(regr_args) > 0:
+            self.regressor.set_params(**regr_args)
         if len(trafo_args) > 0:
             self._set_params("_transformers", **trafo_args)
         return self

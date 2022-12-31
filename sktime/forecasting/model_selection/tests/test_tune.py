@@ -32,6 +32,7 @@ from sktime.performance_metrics.forecasting import (
     MeanSquaredError,
 )
 from sktime.transformations.series.detrend import Detrender
+from sktime.utils._testing.hierarchical import _make_hierarchical
 
 TEST_METRICS = [MeanAbsolutePercentageError(symmetric=True), MeanSquaredError()]
 
@@ -131,3 +132,31 @@ def test_rscv(forecaster, param_grid, cv, scoring, error_score, n_iter, random_s
         ParameterSampler(param_grid, n_iter, random_state=random_state)
     )
     _check_cv(forecaster, rscv, cv, param_distributions, y, X, scoring)
+
+
+@pytest.mark.parametrize(
+    "forecaster, param_grid", [(NAIVE, NAIVE_GRID), (PIPE, PIPE_GRID)]
+)
+@pytest.mark.parametrize("scoring", TEST_METRICS)
+@pytest.mark.parametrize("cv", CVs)
+@pytest.mark.parametrize("error_score", ERROR_SCORES)
+def test_gscv_hierarchical(forecaster, param_grid, cv, scoring, error_score):
+    """Test ForecastingGridSearchCV."""
+    y = _make_hierarchical(
+        random_state=0, hierarchy_levels=(2, 2), min_timepoints=20, max_timepoints=20
+    )
+    X = _make_hierarchical(
+        random_state=42, hierarchy_levels=(2, 2), min_timepoints=20, max_timepoints=20
+    )
+
+    gscv = ForecastingGridSearchCV(
+        forecaster,
+        param_grid=param_grid,
+        cv=cv,
+        scoring=scoring,
+        error_score=error_score,
+    )
+    gscv.fit(y, X)
+
+    param_grid = ParameterGrid(param_grid)
+    _check_cv(forecaster, gscv, cv, param_grid, y, X, scoring)

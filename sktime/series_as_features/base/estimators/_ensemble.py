@@ -104,12 +104,12 @@ class BaseTimeSeriesForest(BaseForest):
         self.max_samples = max_samples
 
     def _make_estimator(self, append=True, random_state=None):
-        """Make and configure a copy of the `estimator_` attribute.
+        """Make and configure a copy of the `_estimator` attribute.
 
         Warning: This method should be used to properly instantiate new
         sub-estimators.
         """
-        estimator = clone(self.estimator_)
+        estimator = clone(self._estimator)
         estimator.set_params(**{p: getattr(self, p) for p in self.estimator_params})
 
         if random_state is not None:
@@ -368,3 +368,10 @@ class BaseTimeSeriesForest(BaseForest):
             fis /= fis_count
 
         return fis
+
+    def _get_fitted_params(self):
+
+        return {
+            "classes": self.classes_,
+            "estimators": self.estimators_,
+        }

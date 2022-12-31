@@ -8,6 +8,7 @@ __all__ = []
 
 import numpy as np
 import pandas as pd
+import pytest
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 from sklearn.svm import SVR
 
@@ -27,10 +28,10 @@ from sktime.forecasting.model_selection import (
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.sarimax import SARIMAX
 from sktime.forecasting.trend import PolynomialTrendForecaster
+from sktime.transformations.compose import OptionalPassthrough
 from sktime.transformations.hierarchical.aggregate import Aggregator
 from sktime.transformations.series.adapt import TabularToSeriesAdaptor
 from sktime.transformations.series.boxcox import LogTransformer
-from sktime.transformations.series.compose import OptionalPassthrough
 from sktime.transformations.series.detrend import Detrender
 from sktime.transformations.series.difference import Differencer
 from sktime.transformations.series.exponent import ExponentTransformer
@@ -38,6 +39,11 @@ from sktime.transformations.series.impute import Imputer
 from sktime.transformations.series.outlier_detection import HampelFilter
 from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
 from sktime.utils._testing.series import _make_series
+from sktime.utils.estimators import MockForecaster
+from sktime.utils.validation._dependencies import (
+    _check_estimator_deps,
+    _check_soft_dependencies,
+)
 
 
 def test_pipeline():
@@ -97,11 +103,15 @@ def test_skip_inverse_transform():
     assert isinstance(y_pred, pd.Series)
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("statsmodels", severity="none"),
+    reason="skip test if required soft dependency is not available",
+)
 def test_nesting_pipelines():
     """Test that nesting of pipelines works."""
     from sktime.forecasting.ets import AutoETS
+    from sktime.transformations.compose import OptionalPassthrough
     from sktime.transformations.series.boxcox import LogTransformer
-    from sktime.transformations.series.compose import OptionalPassthrough
     from sktime.transformations.series.detrend import Detrender
     from sktime.utils._testing.scenarios_forecasting import (
         ForecasterFitPredictUnivariateWithX,
@@ -180,7 +190,6 @@ def test_pipeline_with_dimension_changing_transformer():
     step_cv = 1
     cv = ExpandingWindowSplitter(
         initial_window=len(train_model) - (N_cv_fold - 1) * step_cv - len(fh),
-        start_with_window=True,
         step_length=step_cv,
         fh=fh,
     )
@@ -209,6 +218,10 @@ def test_pipeline_with_dimension_changing_transformer():
     gscv.fit(train_model, X=X_train)
 
 
+@pytest.mark.skipif(
+    not _check_estimator_deps(SARIMAX, severity="none"),
+    reason="skip test if required soft dependency is not available",
+)
 def test_nested_pipeline_with_index_creation_y_before_X():
     """Tests a nested pipeline where y indices are created before X indices.
 
@@ -234,6 +247,10 @@ def test_nested_pipeline_with_index_creation_y_before_X():
     assert len(y_pred) == 9
 
 
+@pytest.mark.skipif(
+    not _check_estimator_deps(SARIMAX, severity="none"),
+    reason="skip test if required soft dependency is not available",
+)
 def test_nested_pipeline_with_index_creation_X_before_y():
     """Tests a nested pipeline where X indices are created before y indices.
 
@@ -295,6 +312,10 @@ def test_forecasting_pipeline_dunder_endog():
     np.testing.assert_array_equal(actual, expected)
 
 
+@pytest.mark.skipif(
+    not _check_estimator_deps(SARIMAX, severity="none"),
+    reason="skip test if required soft dependency is not available",
+)
 def test_forecasting_pipeline_dunder_exog():
     """Test forecasting pipeline dunder for exogeneous transformation."""
     y = _make_series()
@@ -342,3 +363,120 @@ def test_forecasting_pipeline_dunder_exog():
     expected = compute_expected_y_pred(y_train, X_train, X_test, fh)
     _assert_array_almost_equal(actual, expected, decimal=2)
     _assert_array_almost_equal(actual_alt, expected, decimal=2)
+
+
+def test_tag_handles_missing_data():
+    """Test missing data with Imputer in pipelines.
+
+    Make sure that no exception is raised when NaN and Imputer is given.
+    This test is based on bug issue #3547.
+    """
+    forecaster = MockForecaster()
+    # make sure that test forecaster cant handle missing data
+    forecaster.set_tags(**{"handles-missing-data": False})
+
+    y = _make_series()
+    y[10] = np.nan
+
+    # test only TransformedTargetForecaster
+    y_pipe = TransformedTargetForecaster(
+        steps=[("transformer_y", Imputer()), ("model", forecaster)]
+    )
+    y_pipe.fit(y)
+
+    # test TransformedTargetForecaster and ForecastingPipeline nested
+    y_pipe = TransformedTargetForecaster(
+        steps=[("transformer_y", Imputer()), ("model", forecaster)]
+    )
+    X_pipe = ForecastingPipeline(steps=[("forecaster", y_pipe)])
+    X_pipe.fit(y)
+
+
+@pytest.mark.skipif(
+    not _check_estimator_deps(SARIMAX, severity="none"),
+    reason="skip test if required soft dependency is not available",
+)
+def test_subset_getitem():
+    """Test subsetting using the [ ] dunder, __getitem__."""
+    y = _make_series(n_columns=3)
+    y.columns = ["x", "y", "z"]
+    y_train, _ = temporal_train_test_split(y)
+    X = _make_series(n_columns=3)
+    X.columns = ["a", "b", "c"]
+    X_train, X_test = temporal_train_test_split(X)
+
+    f = SARIMAX(random_state=3)
+
+    f_before = f[["a", "b"]]
+    f_before_with_colon = f[["a", "b"], :]
+    f_after_with_colon = f[:, ["x", "y"]]
+    f_both = f[["a", "b"], ["y", "z"]]
+    f_none = f[:, :]
+
+    assert isinstance(f_before, ForecastingPipeline)
+    assert isinstance(f_after_with_colon, TransformedTargetForecaster)
+    assert isinstance(f_before_with_colon, ForecastingPipeline)
+    assert isinstance(f_both, TransformedTargetForecaster)
+    assert isinstance(f_none, SARIMAX)
+
+    y_pred = f.fit(y_train, X_train, fh=X_test.index).predict(X=X_test)
+
+    y_pred_f_before = f_before.fit(y_train, X_train, fh=X_test.index).predict(X=X_test)
+    y_pred_f_before_with_colon = f_before_with_colon.fit(
+        y_train, X_train, fh=X_test.index
+    ).predict(X=X_test)
+    y_pred_f_after_with_colon = f_after_with_colon.fit(
+        y_train, X_train, fh=X_test.index
+    ).predict(X=X_test)
+    y_pred_f_both = f_both.fit(y_train, X_train, fh=X_test.index).predict(X=X_test)
+    y_pred_f_none = f_none.fit(y_train, X_train, fh=X_test.index).predict(X=X_test)
+
+    _assert_array_almost_equal(y_pred, y_pred_f_none)
+    _assert_array_almost_equal(y_pred_f_before, y_pred_f_before_with_colon)
+    _assert_array_almost_equal(y_pred_f_before, y_pred_f_both[["y", "z"]])
+    _assert_array_almost_equal(y_pred_f_after_with_colon, y_pred_f_none[["x", "y"]])
+    _assert_array_almost_equal(y_pred_f_before_with_colon, y_pred_f_both[["y", "z"]])
+
+
+@pytest.mark.skipif(
+    not _check_soft_dependencies("statsmodels", severity="none"),
+    reason="skip test if required soft dependency is not available",
+)
+def test_forecastx_logic():
+    """Test that ForecastX logic is as expected, compared to manual execution."""
+    from sktime.forecasting.base import ForecastingHorizon
+    from sktime.forecasting.compose import ForecastX
+    from sktime.forecasting.model_selection import temporal_train_test_split
+    from sktime.forecasting.var import VAR
+
+    # test case: using pipeline execution
+    y, X = load_longley()
+    y_train, _, X_train, X_test = temporal_train_test_split(y, X, test_size=3)
+    fh = ForecastingHorizon([1, 2, 3])
+    columns = ["ARMED", "POP"]
+
+    # ForecastX
+    pipe = ForecastX(
+        forecaster_X=VAR(),
+        forecaster_y=SARIMAX(),
+        columns=columns,
+    )
+    pipe = pipe.fit(y_train, X=X_train, fh=fh)
+    # dropping ["ARMED", "POP"] = columns where we expect not to have future values
+    y_pred = pipe.predict(fh=fh, X=X_test.drop(columns=columns))
+
+    # comparison case: manual execution
+    # fit y forecaster
+    arima = SARIMAX().fit(y_train, X=X_train)
+
+    # fit and predict X forecaster
+    var = VAR()
+    var.fit(X_train[columns])
+    var_pred = var.predict(fh)
+
+    # predict y forecaster with predictions from VAR
+    X_pred = pd.concat([X_test.drop(columns=columns), var_pred], axis=1)
+    y_pred_manual = arima.predict(fh=fh, X=X_pred)
+
+    # compare that test and comparison case results are equal
+    assert np.allclose(y_pred, y_pred_manual)
