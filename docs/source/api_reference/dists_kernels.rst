@@ -100,6 +100,16 @@ Dynamic Time Warping Distances
 
     DtwDist
 
+Time warping distances can also be obtained by composing ``DistFromAligner`` with
+a time warping aligner, see docstring of ``DistFromAligner``:
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    DistFromAligner
+
+
 Edit Distances
 ~~~~~~~~~~~~~~
 
