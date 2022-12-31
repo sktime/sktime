@@ -41,15 +41,6 @@
       ]
     },
     {
-      "login": "badrmarani",
-      "name": "Badr-Eddine Marani",
-      "avatar_url": "https://avatars.githubusercontent.com/badrmarani",
-      "profile": "https://github.com/badrmarani",
-      "contributions": [
-        "code"
-      ]
-    },
-    {
       "login": "sajaysurya",
       "name": "Sajaysurya Ganesh",
       "avatar_url": "https://avatars2.githubusercontent.com/u/25329624?v=4",
@@ -1899,6 +1890,15 @@
       "profile": "https://www.linkedin.com/in/templierw/",
       "contributions": [
         "doc"
+      ]
+    },
+    {
+      "login": "badrmarani",
+      "name": "Badr-Eddine Marani",
+      "avatar_url": "https://avatars.githubusercontent.com/badrmarani",
+      "profile": "https://github.com/badrmarani",
+      "contributions": [
+        "code"
       ]
     },
     {
