@@ -5,13 +5,14 @@
 adapted from scikit-learn's estimator_checks
 """
 
-__author__ = ["mloning", "fkiraly"]
+__author__ = ["mloning", "fkiraly", "achieveordie"]
 
 import numbers
-import pickle
+import os
 import types
 from copy import deepcopy
 from inspect import getfullargspec, isclass, signature
+from tempfile import TemporaryDirectory
 
 import joblib
 import numpy as np
@@ -21,7 +22,8 @@ from sklearn.utils.estimator_checks import (
     check_get_params_invariance as _check_get_params_invariance,
 )
 
-from sktime.base import BaseEstimator, BaseObject
+from sktime.base import BaseEstimator, BaseObject, load
+from sktime.classification.deep_learning.base import BaseDeepClassifier
 from sktime.dists_kernels._base import (
     BasePairwiseTransformer,
     BasePairwiseTransformerPanel,
@@ -29,10 +31,12 @@ from sktime.dists_kernels._base import (
 from sktime.exceptions import NotFittedError
 from sktime.forecasting.base import BaseForecaster
 from sktime.registry import all_estimators
+from sktime.regression.deep_learning.base import BaseDeepRegressor
 from sktime.tests._config import (
     EXCLUDE_ESTIMATORS,
     EXCLUDED_TESTS,
     NON_STATE_CHANGING_METHODS,
+    NON_STATE_CHANGING_METHODS_ARRAYLIKE,
     VALID_ESTIMATOR_BASE_TYPES,
     VALID_ESTIMATOR_TAGS,
     VALID_ESTIMATOR_TYPES,
@@ -54,6 +58,7 @@ from sktime.utils.sampling import random_partition
 from sktime.utils.validation._dependencies import (
     _check_dl_dependencies,
     _check_estimator_deps,
+    _check_soft_dependencies,
 )
 
 # whether to subsample estimators per os/version partition matrix design
@@ -130,6 +135,9 @@ class BaseFixtureGenerator:
     method_nsc: string, name of estimator method
         ranges over all "predict"-like, non-state-changing methods
         of estimator_instance or estimator_class that the class/object implements
+    method_nsc_arraylike: string, for non-state-changing estimator methods
+        ranges over all "predict"-like, non-state-changing estimator methods,
+        which return an array-like output
     """
 
     # class variables which can be overridden by descendants
@@ -143,6 +151,7 @@ class BaseFixtureGenerator:
         "estimator_instance",
         "scenario",
         "method_nsc",
+        "method_nsc_arraylike",
     ]
 
     # which fixtures are indirect, e.g., have an additional pytest.fixture block
@@ -374,6 +383,23 @@ class BaseFixtureGenerator:
                 nsc_list = list(set(nsc_list).difference(["predict_proba"]))
 
         return nsc_list
+
+    def _generate_method_nsc_arraylike(self, test_name, **kwargs):
+        """Return estimator test scenario.
+
+        Fixtures parametrized
+        ---------------------
+        method_nsc_arraylike: string, for non-state-changing estimator methods
+            ranges over all "predict"-like, non-state-changing estimator methods,
+            which return an array-like output
+        """
+        method_nsc_list = self._generate_method_nsc(test_name=test_name, **kwargs)
+
+        # subset to the arraylike ones to avoid copy-paste
+        nsc_list_arraylike = set(method_nsc_list).intersection(
+            NON_STATE_CHANGING_METHODS_ARRAYLIKE
+        )
+        return list(nsc_list_arraylike)
 
 
 class QuickTester:
@@ -673,7 +699,19 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
     estimator_type_filter = "object"
 
     def test_create_test_instance(self, estimator_class):
-        """Check first that create_test_instance logic works."""
+        """Check create_test_instance logic and basic constructor functionality.
+
+        create_test_instance and create_test_instances_and_names are the
+        key methods used to create test instances in testing.
+        If this test does not pass, validity of the other tests cannot be guaranteed.
+
+        Also tests inheritance and super call logic in the constructor.
+
+        Tests that:
+        * create_test_instance results in an instance of estimator_class
+        * __init__ calls super.__init__
+        * _tags_dynamic attribute for tag inspection is present after construction
+        """
         estimator = estimator_class.create_test_instance()
 
         # Check that init does not construct object of other class than itself
@@ -682,8 +720,23 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
             f"found {type(estimator)}"
         )
 
+        msg = (
+            f"{estimator_class.__name__}.__init__ should call "
+            f"super({estimator_class.__name__}, self).__init__, "
+            "but that does not seem to be the case. Please ensure to call the "
+            f"parent class's constructor in {estimator_class.__name__}.__init__"
+        )
+        assert hasattr(estimator, "_tags_dynamic"), msg
+
     def test_create_test_instances_and_names(self, estimator_class):
-        """Check that create_test_instances_and_names works."""
+        """Check that create_test_instances_and_names works.
+
+        create_test_instance and create_test_instances_and_names are the
+        key methods used to create test instances in testing.
+        If this test does not pass, validity of the other tests cannot be guaranteed.
+
+        Tests expected function signature of create_test_instances_and_names.
+        """
         estimators, names = estimator_class.create_test_instances_and_names()
 
         assert isinstance(estimators, list), (
@@ -852,17 +905,41 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
             assert is_equal, msg
 
     def test_clone(self, estimator_instance):
-        """Check we can call clone from scikit-learn."""
-        estimator = estimator_instance
-        estimator.clone()
+        """Check that clone method does not raise exceptions and results in a clone.
+
+        A clone of an object x is an object that:
+        * has same class and parameters as x
+        * is not identical with x
+        * is unfitted (even if x was fitted)
+        """
+        est_clone = estimator_instance.clone()
+        assert isinstance(est_clone, type(estimator_instance))
+        assert est_clone is not estimator_instance
+        if hasattr(est_clone, "is_fitted"):
+            assert not est_clone.is_fitted
 
     def test_repr(self, estimator_instance):
-        """Check we can call repr."""
+        """Check that __repr__ call to instance does not raise exceptions."""
         estimator = estimator_instance
         repr(estimator)
 
     def test_constructor(self, estimator_class):
-        """Check that the constructor has correct signature and behaves correctly."""
+        """Check that the constructor has sklearn compatible signature and behaviour.
+
+        Based on sklearn check_estimator testing of __init__ logic.
+        Uses create_test_instance to create an instance.
+        Assumes test_create_test_instance has passed and certified create_test_instance.
+
+        Tests that:
+        * constructor has no varargs
+        * tests that constructor constructs an instance of the class
+        * tests that all parameters are set in init to an attribute of the same name
+        * tests that parameter values are always copied to the attribute and not changed
+        * tests that default parameters are one of the following:
+            None, str, int, float, bool, tuple, function, joblib memory, numpy primitive
+            (other type parameters should be None, default handling should be by writing
+            the default to attribute of a different name, e.g., my_param_ not my_param)
+        """
         msg = "constructor __init__ should have no varargs"
         assert getfullargspec(estimator_class.__init__).varkw is None, msg
 
@@ -951,10 +1028,15 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
         attrs = ["_is_fitted", "is_fitted"]
 
         estimator = estimator_instance
+        estimator_class = type(estimator_instance)
 
-        assert hasattr(
-            estimator, "_is_fitted"
-        ), f"Estimator: {estimator.__name__} does not set_is_fitted in construction"
+        msg = (
+            f"{estimator_class.__name__}.__init__ should call "
+            f"super({estimator_class.__name__}, self).__init__, "
+            "but that does not seem to be the case. Please ensure to call the "
+            f"parent class's constructor in {estimator_class.__name__}.__init__"
+        )
+        assert hasattr(estimator, "_is_fitted"), msg
 
         # Check is_fitted attribute is set correctly to False before fit, at init
         for attr in attrs:
@@ -978,12 +1060,21 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
         ), f"Estimator: {estimator_instance} does not return self when calling fit"
 
     def test_raises_not_fitted_error(self, estimator_instance, scenario, method_nsc):
-        """Check that we raise appropriate error for unfitted estimators."""
-        estimator = estimator_instance
+        """Check exception raised for non-fit method calls to unfitted estimators.
 
+        Tries to run all methods in NON_STATE_CHANGING_METHODS with valid scenario,
+        but before fit has been called on the estimator.
+
+        This should raise a NotFittedError if correctly caught,
+        normally by a self.check_is_fitted() call in the method's boilerplate.
+
+        Raises
+        ------
+        Exception if NotFittedError is not raised by non-state changing method
+        """
         # pairwise transformers are exempted from this test, since they have no fitting
         PWTRAFOS = (BasePairwiseTransformer, BasePairwiseTransformerPanel)
-        excepted = isinstance(estimator, PWTRAFOS)
+        excepted = isinstance(estimator_instance, PWTRAFOS)
         if excepted:
             return None
 
@@ -991,7 +1082,7 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
         with pytest.raises(NotFittedError, match=r"has not been fitted"):
             scenario.run(estimator_instance, method_sequence=[method_nsc])
 
-    def test_fit_idempotent(self, estimator_instance, scenario, method_nsc):
+    def test_fit_idempotent(self, estimator_instance, scenario, method_nsc_arraylike):
         """Check that calling fit twice is equivalent to calling it once."""
         estimator = estimator_instance
 
@@ -999,7 +1090,7 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
         #   does not work for tensorflow Distribution
         if (
             isinstance(estimator_instance, BaseForecaster)
-            and method_nsc == "predict_proba"
+            and method_nsc_arraylike == "predict_proba"
         ):
             return None
 
@@ -1007,7 +1098,7 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
         set_random_state(estimator)
         results = scenario.run(
             estimator,
-            method_sequence=["fit", method_nsc],
+            method_sequence=["fit", method_nsc_arraylike],
             return_all=True,
             deepcopy_return=True,
         )
@@ -1018,7 +1109,7 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
         # run fit plus method_nsc a second time
         results_2nd = scenario.run(
             estimator,
-            method_sequence=["fit", method_nsc],
+            method_sequence=["fit", method_nsc_arraylike],
             return_all=True,
             deepcopy_return=True,
         )
@@ -1059,14 +1150,18 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
                 % (estimator.__class__.__name__, param_name, original_value, new_value)
             )
 
-    def test_methods_do_not_change_state(
+    def test_non_state_changing_method_contract(
         self, estimator_instance, scenario, method_nsc
     ):
-        """Check that non-state-changing methods do not change state.
+        """Check that non-state-changing methods behave as per interface contract.
 
-        Check that methods that are not supposed to change attributes of the
-        estimators do not change anything (including hyper-parameters and
-        fitted parameters)
+        Check the following contract on non-state-changing methods:
+        1. do not change state of the estimator, i.e., any attributes
+            (including hyper-parameters and fitted parameters)
+        2. expected output type of the method matches actual output type
+            - only for abstract BaseEstimator methods, common to all estimator scitypes
+            list of BaseEstimator methdos tested: get_fitted_params
+            scitype specific method outputs are tested in TestAll[estimatortype] class
         """
         estimator = estimator_instance
         set_random_state(estimator)
@@ -1084,7 +1179,7 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
                 return None
 
         # dict_after = dictionary of estimator after predict and fit
-        _ = scenario.run(estimator, method_sequence=[method_nsc])
+        output = scenario.run(estimator, method_sequence=[method_nsc])
         dict_after = estimator.__dict__
 
         is_equal, msg = deep_equals(dict_after, dict_before, return_msg=True)
@@ -1094,11 +1189,32 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
             f"reason/location of discrepancy (x=after, y=before): {msg}"
         )
 
+        # once there are more methods, this may have to be factored out
+        # for now, there is only get_fitted_params and we test here to avoid fit calls
+        if method_nsc == "get_fitted_params":
+            msg = (
+                f"get_fitted_params of {type(estimator)} should return dict, "
+                f"but returns object of type {type(output)}"
+            )
+            assert isinstance(output, dict), msg
+            msg = (
+                f"get_fitted_params of {type(estimator)} should return dict with "
+                f"with str keys, but some keys are not str"
+            )
+            nonstr = [x for x in output.keys() if not isinstance(x, str)]
+            if not len(nonstr) == 0:
+                msg = f"found non-str keys in get_fitted_params return: {nonstr}"
+                raise AssertionError(msg)
+
     def test_methods_have_no_side_effects(
         self, estimator_instance, scenario, method_nsc
     ):
         """Check that calling methods has no side effects on args."""
         estimator = estimator_instance
+
+        # skip test for get_fitted_params, as this does not have mutable arguments
+        if method_nsc == "get_fitted_params":
+            return None
 
         set_random_state(estimator)
 
@@ -1132,8 +1248,55 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
             method_args_after, method_args_before
         ), f"Estimator: {estimator} has side effects on arguments of {method_nsc}"
 
-    def test_persistence_via_pickle(self, estimator_instance, scenario, method_nsc):
+    def test_persistence_via_pickle(
+        self, estimator_instance, scenario, method_nsc_arraylike
+    ):
         """Check that we can pickle all estimators."""
+        method_nsc = method_nsc_arraylike
+        # escape predict_proba for forecasters, tfp distributions cannot be pickled
+        if (
+            isinstance(estimator_instance, BaseForecaster)
+            and method_nsc == "predict_proba"
+        ):
+            return None
+        # escape Deep estimators if soft-dep `h5py` isn't installed
+        if isinstance(
+            estimator_instance, (BaseDeepClassifier, BaseDeepRegressor)
+        ) and not _check_soft_dependencies("h5py", severity="warning"):
+            return None
+
+        estimator = estimator_instance
+        set_random_state(estimator)
+        # Fit the model, get args before and after
+        scenario.run(estimator, method_sequence=["fit"], return_args=True)
+
+        # Generate results before pickling
+        vanilla_result = scenario.run(estimator, method_sequence=[method_nsc])
+
+        # Serialize and deserialize
+        serialized_estimator = estimator.save()
+        deserialized_estimator = load(serialized_estimator)
+
+        deserialized_result = scenario.run(
+            deserialized_estimator, method_sequence=[method_nsc]
+        )
+
+        msg = (
+            f"Results of {method_nsc} differ between when pickling and not pickling, "
+            f"estimator {type(estimator_instance).__name__}"
+        )
+        _assert_array_almost_equal(
+            vanilla_result,
+            deserialized_result,
+            decimal=6,
+            err_msg=msg,
+        )
+
+    def test_save_estimators_to_file(
+        self, estimator_instance, scenario, method_nsc_arraylike
+    ):
+        """Check if saved estimators onto disk can be loaded correctly."""
+        method_nsc = method_nsc_arraylike
         # escape predict_proba for forecasters, tfp distributions cannot be pickled
         if (
             isinstance(estimator_instance, BaseForecaster)
@@ -1146,31 +1309,33 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
         # Fit the model, get args before and after
         scenario.run(estimator, method_sequence=["fit"], return_args=True)
 
-        # Generate results before pickling
+        # Generate results before saving
         vanilla_result = scenario.run(estimator, method_sequence=[method_nsc])
 
-        # Pickle and unpickle
-        pickled_estimator = pickle.dumps(estimator)
-        unpickled_estimator = pickle.loads(pickled_estimator)
+        with TemporaryDirectory() as tmp_dir:
+            save_loc = os.path.join(tmp_dir, "estimator")
+            estimator.save(save_loc)
 
-        unpickled_result = scenario.run(
-            unpickled_estimator, method_sequence=[method_nsc]
-        )
+            loaded_estimator = load(save_loc)
+            loaded_result = scenario.run(loaded_estimator, method_sequence=[method_nsc])
 
-        msg = (
-            f"Results of {method_nsc} differ between when pickling and not pickling, "
-            f"estimator {type(estimator_instance).__name__}"
-        )
-        _assert_array_almost_equal(
-            vanilla_result,
-            unpickled_result,
-            decimal=6,
-            err_msg=msg,
-        )
+            msg = (
+                f"Results of {method_nsc} differ between saved and loaded "
+                f"estimator {type(estimator).__name__}"
+            )
+
+            _assert_array_almost_equal(
+                vanilla_result,
+                loaded_result,
+                decimal=6,
+                err_msg=msg,
+            )
 
     # todo: this needs to be diagnosed and fixed - temporary skip
     @pytest.mark.skip(reason="hangs on mac and unix remote tests")
-    def test_multiprocessing_idempotent(self, estimator_instance, scenario, method_nsc):
+    def test_multiprocessing_idempotent(
+        self, estimator_instance, scenario, method_nsc_arraylike
+    ):
         """Test that single and multi-process run results are identical.
 
         Check that running an estimator on a single process is no different to running
@@ -1178,6 +1343,7 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
         of all CPUs. The test is not really necessary though, as we rely on joblib for
         parallelization and can trust that it works as expected.
         """
+        method_nsc = method_nsc_arraylike
         params = estimator_instance.get_params()
 
         if "n_jobs" in params:

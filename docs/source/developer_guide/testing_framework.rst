@@ -285,7 +285,7 @@ Scenarios should usually define:
   For instance, comparing whether both scenario and estimator are multivariate.
 
 For further details and expected signature, consult the docstring of ``TestScenario``
-(`link <https://github.com/alan-turing-institute/sktime/blob/main/sktime/utils/_testing/scenarios.py>`_),
+(`link <https://github.com/sktime/sktime/blob/main/sktime/utils/_testing/scenarios.py>`_),
 and/or inspect any of the scenarios base classes, e.g., ``ForecasterTestScenario``.
 
 Creating tests for a new estimator type

@@ -9,6 +9,7 @@ from operator import mul
 
 import pandas as pd
 import pytest
+from pandas.testing import assert_series_equal
 
 from sktime.datatypes import check_is_mtype, convert
 from sktime.datatypes._utilities import get_cutoff, get_window
@@ -273,6 +274,10 @@ def test_vectorization_multivariate(mtype, exogeneous):
     assert y_pred_equal_length, msg
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("statsmodels", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
 def test_dynamic_tags_reset_properly():
     """Test that dynamic tags are being reset properly."""
     from sktime.forecasting.compose import MultiplexForecaster
@@ -287,3 +292,26 @@ def test_dynamic_tags_reset_properly():
     # fit should reset the estimator, and set scitype:y tag to "multivariate"
     # the fit will cause an error if this is not happening properly
     f.fit(X_multivariate)
+
+
+@pytest.mark.skipif(
+    not _check_soft_dependencies("statsmodels", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
+def test_predict_residuals():
+    """Test that predict_residuals has no side-effect."""
+    from sktime.forecasting.base import ForecastingHorizon
+    from sktime.forecasting.model_selection import temporal_train_test_split
+    from sktime.forecasting.theta import ThetaForecaster
+
+    y = _make_series(n_columns=1)
+    y_train, y_test = temporal_train_test_split(y)
+    fh = ForecastingHorizon(y_test.index, is_relative=False)
+    forecaster = ThetaForecaster(sp=12)
+    forecaster.fit(y_train, fh=fh)
+
+    y_pred_1 = forecaster.predict()
+    y_resid = forecaster.predict_residuals()
+    y_pred_2 = forecaster.predict()
+    assert_series_equal(y_pred_1, y_pred_2)
+    assert y_resid.index.equals(y_train.index)

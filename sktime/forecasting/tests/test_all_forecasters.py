@@ -647,3 +647,61 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         # changing fh during predict should raise error
         with pytest.raises(ValueError):
             f.predict(fh=FH0 + 1)
+
+    def test_hierarchical_with_exogeneous(self, estimator_instance, n_columns):
+        """Check that hierarchical forecasting works, also see bug #3961.
+
+        Arguments
+        ---------
+        estimator_instance : instance of BaseForecaster
+        n_columns : number of columns, of the endogeneous data y_train
+
+        Raises
+        ------
+        Exception - if fit/predict does not complete without error
+        AssertionError - if forecast is not expected mtype pd_multiindex_hier,
+            and does not have expected row and column indices
+        """
+        from sktime.datatypes import check_is_mtype
+        from sktime.datatypes._utilities import get_window
+        from sktime.utils._testing.hierarchical import _make_hierarchical
+
+        y_train = _make_hierarchical(
+            hierarchy_levels=(2, 4),
+            n_columns=n_columns,
+            min_timepoints=22,
+            max_timepoints=22,
+            index_type="period",
+        )
+        X = _make_hierarchical(
+            hierarchy_levels=(2, 4),
+            n_columns=2,
+            min_timepoints=24,
+            max_timepoints=24,
+            index_type="period",
+        )
+        X.columns = ["foo", "bar"]
+        X_train = get_window(X, lag=2)
+        X_test = get_window(X, window_length=2)
+        fh = [1, 2]
+
+        estimator_instance.fit(y=y_train, X=X_train, fh=fh)
+        y_pred = estimator_instance.predict(X=X_test)
+
+        assert isinstance(y_pred, pd.DataFrame)
+        assert check_is_mtype(y_pred, "pd_multiindex_hier")
+        msg = (
+            "returned columns after predict are not as expected. "
+            f"expected: {y_train.columns}. Found: {y_pred.columns}"
+        )
+        assert np.all(y_pred.columns == y_train.columns), msg
+
+        # check consistency of forecast hierarchy with training data
+        # some forecasters add __total levels, e.g., ReconcilerForecaster
+        # if = not such a forecaster; else = levels are added
+        if len(y_pred.index) == len(X_test.index):
+            # the indices should be equal iff no levels are added
+            assert np.all(y_pred.index == X_test.index)
+        else:
+            # if levels are added, all expected levels and times should be contained
+            assert set(X_test.index).issubset(y_pred.index)

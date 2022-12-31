@@ -7,27 +7,14 @@ transformations as building blocks.
 import numpy as np
 import pandas as pd
 from scipy import sparse
-from sklearn.base import clone
 from sklearn.compose import ColumnTransformer as _ColumnTransformer
 
-from sktime.datatypes._panel._convert import from_2d_array_to_nested
-from sktime.transformations.base import (
-    BaseTransformer,
-    _PanelToPanelTransformer,
-    _PanelToTabularTransformer,
-    _SeriesToPrimitivesTransformer,
-    _SeriesToSeriesTransformer,
-)
+from sktime.transformations.base import BaseTransformer, _PanelToPanelTransformer
 from sktime.utils.multiindex import flatten_multiindex
 from sktime.utils.validation.panel import check_X
 
 __author__ = ["mloning", "sajaysurya", "fkiraly"]
-__all__ = [
-    "ColumnTransformer",
-    "SeriesToPrimitivesRowTransformer",
-    "SeriesToSeriesRowTransformer",
-    "ColumnConcatenator",
-]
+__all__ = ["ColumnTransformer", "ColumnConcatenator"]
 
 
 class ColumnTransformer(_ColumnTransformer, _PanelToPanelTransformer):
@@ -135,6 +122,7 @@ class ColumnTransformer(_ColumnTransformer, _PanelToPanelTransformer):
             n_jobs=n_jobs,
             transformer_weights=transformer_weights,
         )
+        BaseTransformer.__init__(self)
         self.preserve_dataframe = preserve_dataframe
         self._is_fitted = False
 
@@ -191,24 +179,11 @@ class ColumnTransformer(_ColumnTransformer, _PanelToPanelTransformer):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        from sklearn.preprocessing import StandardScaler
+        from sktime.transformations.series.exponent import ExponentTransformer
 
-        from sktime.transformations.panel.compose import SeriesToSeriesRowTransformer
-
-        SERIES_TO_SERIES_TRANSFORMER = StandardScaler()
         TRANSFORMERS = [
-            (
-                "transformer1",
-                SeriesToSeriesRowTransformer(
-                    SERIES_TO_SERIES_TRANSFORMER, check_transformer=False
-                ),
-            ),
-            (
-                "transformer2",
-                SeriesToSeriesRowTransformer(
-                    SERIES_TO_SERIES_TRANSFORMER, check_transformer=False
-                ),
-            ),
+            ("transformer1", ExponentTransformer()),
+            ("transformer2", ExponentTransformer()),
         ]
 
         return {
@@ -286,150 +261,3 @@ class ColumnConcatenator(BaseTransformer):
         Xt.index = pd.MultiIndex.from_arrays([inst_idx, t_idx])
         Xt.index.names = X.index.names
         return Xt
-
-
-def _from_nested_to_series(x):
-    """Un-nest series."""
-    if x.shape[0] == 1:
-        return np.asarray(x.iloc[0]).reshape(-1, 1)
-    else:
-        data = x.tolist()
-        if not len(set([len(x) for x in data])) == 1:
-            raise NotImplementedError(
-                "Unequal length multivariate data are not supported yet."
-            )
-        return pd.DataFrame(data).T
-
-
-class _RowTransformer(BaseTransformer):
-    """Base class for RowTransformer."""
-
-    _tags = {"fit_is_empty": True}
-
-    def __init__(self, transformer, check_transformer=True):
-        self.transformer = transformer
-        self.check_transformer = check_transformer
-        super(_RowTransformer, self).__init__()
-
-    def _check_transformer(self):
-        """Check transformer type compatibility."""
-        assert hasattr(self, "_valid_transformer_type")
-        if self.check_transformer and not isinstance(
-            self.transformer, self._valid_transformer_type
-        ):
-            raise TypeError(
-                f"transformer must be a " f"{self._valid_transformer_type.__name__}"
-            )
-
-    def _prepare(self, X):
-        self.check_is_fitted()
-        self._check_transformer()
-        X = check_X(X, coerce_to_numpy=True)
-        self.transformer_ = [clone(self.transformer) for _ in range(X.shape[0])]
-        return X
-
-
-class SeriesToPrimitivesRowTransformer(_RowTransformer, _PanelToTabularTransformer):
-    """Series-to-primitives row transformer."""
-
-    _valid_transformer_type = _SeriesToPrimitivesTransformer
-
-    def transform(self, X, y=None):
-        """Transform the data."""
-        X = self._prepare(X)
-        Xt = np.zeros(X.shape[:2])
-        for i in range(X.shape[0]):
-            # We need to maintain the number of dimension when we slice, so that we
-            # still pass a 2-dimensional array to the transformer
-            Xt[i] = self.transformer_[i].fit_transform(X[i].T)
-        return pd.DataFrame(Xt)
-
-    @classmethod
-    def get_test_params(cls, parameter_set="default"):
-        """Return testing parameter settings for the estimator.
-
-        Parameters
-        ----------
-        parameter_set : str, default="default"
-            Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
-
-        Returns
-        -------
-        params : dict or list of dict, default={}
-            Parameters to create testing instances of the class.
-            Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`.
-        """
-        import numpy as np
-        from sklearn.preprocessing import FunctionTransformer
-
-        trafo = FunctionTransformer(np.mean, kw_args={"axis": 0}, check_inverse=False)
-        return {"transformer": trafo, "check_transformer": False}
-
-
-class SeriesToSeriesRowTransformer(_RowTransformer, _PanelToPanelTransformer):
-    """Series-to-series row transformer."""
-
-    _valid_transformer_type = _SeriesToSeriesTransformer
-
-    def transform(self, X, y=None):
-        """Transform the data."""
-        X = self._prepare(X)
-        xts = list()
-        for i in range(X.shape[0]):
-            xt = self.transformer_[i].fit_transform(X[i].T)
-            xts.append(from_2d_array_to_nested(xt.T).T)
-        Xt = pd.concat(xts, axis=0)
-        if isinstance(X, pd.DataFrame):
-            Xt.index = X.index
-        else:
-            Xt = Xt.reset_index(drop=True)
-        return Xt
-
-    @classmethod
-    def get_test_params(cls, parameter_set="default"):
-        """Return testing parameter settings for the estimator.
-
-        Parameters
-        ----------
-        parameter_set : str, default="default"
-            Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
-
-        Returns
-        -------
-        params : dict or list of dict, default={}
-            Parameters to create testing instances of the class.
-            Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`.
-        """
-        from sklearn.preprocessing import StandardScaler
-
-        return {"transformer": StandardScaler(), "check_transformer": False}
-
-
-def make_row_transformer(transformer, transformer_type=None, **kwargs):
-    """Cate InstanceTransformer based on transform type, factory function."""
-    if transformer_type is not None:
-        valid_transformer_types = ("series-to-series", "series-to-primitives")
-        if transformer_type not in valid_transformer_types:
-            raise ValueError(
-                f"Invalid `transformer_type`. Please choose one of "
-                f"{valid_transformer_types}."
-            )
-    else:
-        if isinstance(transformer, _SeriesToSeriesTransformer):
-            transformer_type = "series-to-series"
-        elif isinstance(transformer, _SeriesToPrimitivesTransformer):
-            transformer_type = "series-to-primitives"
-        else:
-            raise TypeError(
-                "transformer type not understood. Please specify `transformer_type`."
-            )
-    if transformer_type == "series-to-series":
-        return SeriesToSeriesRowTransformer(transformer, **kwargs)
-    else:
-        return SeriesToPrimitivesRowTransformer(transformer, **kwargs)

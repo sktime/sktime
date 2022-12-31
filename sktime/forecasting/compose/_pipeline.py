@@ -8,20 +8,35 @@ __all__ = ["TransformedTargetForecaster", "ForecastingPipeline", "ForecastX"]
 import pandas as pd
 
 from sktime.base import _HeterogenousMetaEstimator
+from sktime.datatypes import ALL_TIME_SERIES_MTYPES
 from sktime.forecasting.base._base import BaseForecaster
-from sktime.registry import scitype
+from sktime.forecasting.base._delegate import _DelegatedForecaster
+from sktime.transformations.base import BaseTransformer
 from sktime.utils.validation.series import check_series
 
 
-class _Pipeline(
-    BaseForecaster,
-    _HeterogenousMetaEstimator,
-):
+class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
     """Abstract class for forecasting pipelines."""
+
+    # for default get_params/set_params from _HeterogenousMetaEstimator
+    # _steps_attr points to the attribute of self
+    # which contains the heterogeneous set of estimators
+    # this must be an iterable of (name: str, estimator) pairs for the default
+    _steps_attr = "_steps"
 
     def _get_pipeline_scitypes(self, estimators):
         """Get list of scityes (str) from names/estimator list."""
-        return [scitype(x[1]) for x in estimators]
+
+        def est_scitype(tpl):
+            est = tpl[1]
+            if isinstance(est, BaseForecaster):
+                return "forecaster"
+            elif isinstance(est, BaseTransformer):
+                return "transformer"
+            else:
+                return "other"
+
+        return [est_scitype(x) for x in estimators]
 
     def _get_forecaster_index(self, estimators):
         """Get the index of the first forecaster in the list."""
@@ -162,33 +177,42 @@ class _Pipeline(
     def _steps(self, value):
         self.steps = value
 
-    def get_params(self, deep=True):
-        """Get parameters for this estimator.
+    def _components(self, base_class=None):
+        """Return references to all state changing BaseObject type attributes.
+
+        This *excludes* the blue-print-like components passed in the __init__.
+
+        Caution: this method returns *references* and not *copies*.
+            Writing to the reference will change the respective attribute of self.
 
         Parameters
         ----------
-        deep : boolean, optional, default=True
-            If True, will return the parameters for this estimator and
-            contained subobjects that are estimators.
+        base_class : class, optional, default=None, must be subclass of BaseObject
+            if None, behaves the same as `base_class=BaseObject`
+            if not None, return dict collects descendants of `base_class`
 
         Returns
         -------
-        params : mapping of string to any
-            Parameter names mapped to their values.
+        dict with key = attribute name, value = reference to attribute
+        dict contains all attributes of `self` that inherit from `base_class`, and:
+            whose names do not contain the string "__", e.g., hidden attributes
+            are not class attributes, and are not hyper-parameters (`__init__` args)
         """
-        return self._get_params("_steps", deep=deep)
+        import inspect
 
-    def set_params(self, **kwargs):
-        """Set the parameters of this estimator.
+        from sktime.base import BaseObject
 
-        Valid parameter keys can be listed with ``get_params()``.
+        if base_class is None:
+            base_class = BaseObject
+        if base_class is not None and not inspect.isclass(base_class):
+            raise TypeError(f"base_class must be a class, but found {type(base_class)}")
+        # if base_class is not None and not issubclass(base_class, BaseObject):
+        #     raise TypeError("base_class must be a subclass of BaseObject")
 
-        Returns
-        -------
-        self
-        """
-        self._set_params("_steps", **kwargs)
-        return self
+        fitted_estimator_tuples = self.steps_
+
+        comp_dict = {name: comp for (name, comp) in fitted_estimator_tuples}
+        return comp_dict
 
     # both children use the same step params for testing, so putting it here
     @classmethod
@@ -211,9 +235,10 @@ class _Pipeline(
         """
         from sklearn.preprocessing import StandardScaler
 
+        from sktime.forecasting.compose._reduce import DirectReductionForecaster
         from sktime.forecasting.naive import NaiveForecaster
-        from sktime.forecasting.sarimax import SARIMAX
         from sktime.transformations.series.adapt import TabularToSeriesAdaptor
+        from sktime.transformations.series.detrend import Detrender
         from sktime.transformations.series.exponent import ExponentTransformer
 
         # StandardScaler does not skip fit, NaiveForecaster is not probabilistic
@@ -226,11 +251,13 @@ class _Pipeline(
         # ARIMA has probabilistic methods, ExponentTransformer skips fit
         STEPS2 = [
             ("transformer", ExponentTransformer()),
-            ("forecaster", SARIMAX()),
+            ("forecaster", DirectReductionForecaster.create_test_instance()),
         ]
         params2 = {"steps": STEPS2}
 
-        params3 = {"steps": [ExponentTransformer(), SARIMAX()]}
+        params3 = {
+            "steps": [Detrender(), DirectReductionForecaster.create_test_instance()]
+        }
 
         return [params1, params2, params3]
 
@@ -298,7 +325,7 @@ class ForecastingPipeline(_Pipeline):
         "X_inner_mtype": SUPPORTED_MTYPES,
         "ignores-exogeneous-X": False,
         "requires-fh-in-fit": False,
-        "handles-missing-data": False,
+        "handles-missing-data": True,
         "capability:pred_int": True,
         "X-y-must-have-same-index": False,
     }
@@ -310,7 +337,6 @@ class ForecastingPipeline(_Pipeline):
         tags_to_clone = [
             "ignores-exogeneous-X",  # does estimator ignore the exogeneous X?
             "capability:pred_int",  # can the estimator produce prediction intervals?
-            "handles-missing-data",  # can estimator handle missing data?
             "requires-fh-in-fit",  # is forecasting horizon already required in fit?
             "enforce_index_type",  # index type that needs to be enforced in X/y
         ]
@@ -678,14 +704,14 @@ class TransformedTargetForecaster(_Pipeline):
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.forecasting.compose import TransformedTargetForecaster
     >>> from sktime.transformations.series.impute import Imputer
-    >>> from sktime.transformations.series.detrend import Deseasonalizer
+    >>> from sktime.transformations.series.detrend import Detrender
     >>> from sktime.transformations.series.exponent import ExponentTransformer
     >>> y = load_airline()
 
         Example 1: string/estimator pairs
     >>> pipe = TransformedTargetForecaster(steps=[
     ...     ("imputer", Imputer(method="mean")),
-    ...     ("detrender", Deseasonalizer()),
+    ...     ("detrender", Detrender()),
     ...     ("forecaster", NaiveForecaster(strategy="drift")),
     ... ])
     >>> pipe.fit(y)
@@ -695,7 +721,7 @@ class TransformedTargetForecaster(_Pipeline):
         Example 2: without strings
     >>> pipe = TransformedTargetForecaster([
     ...     Imputer(method="mean"),
-    ...     Deseasonalizer(),
+    ...     Detrender(),
     ...     NaiveForecaster(strategy="drift"),
     ...     ExponentTransformer(),
     ... ])
@@ -703,7 +729,7 @@ class TransformedTargetForecaster(_Pipeline):
         Example 3: using the dunder method
     >>> forecaster = NaiveForecaster(strategy="drift")
     >>> imputer = Imputer(method="mean")
-    >>> pipe = imputer * Deseasonalizer() * forecaster * ExponentTransformer()
+    >>> pipe = imputer * Detrender() * forecaster * ExponentTransformer()
     """
 
     _tags = {
@@ -712,7 +738,7 @@ class TransformedTargetForecaster(_Pipeline):
         "X_inner_mtype": SUPPORTED_MTYPES,
         "ignores-exogeneous-X": False,
         "requires-fh-in-fit": False,
-        "handles-missing-data": False,
+        "handles-missing-data": True,
         "capability:pred_int": True,
         "X-y-must-have-same-index": False,
     }
@@ -726,7 +752,6 @@ class TransformedTargetForecaster(_Pipeline):
         tags_to_clone = [
             "ignores-exogeneous-X",  # does estimator ignore the exogeneous X?
             "capability:pred_int",  # can the estimator produce prediction intervals?
-            "handles-missing-data",  # can estimator handle missing data?
             "requires-fh-in-fit",  # is forecasting horizon already required in fit?
             "enforce_index_type",  # index type that needs to be enforced in X/y
         ]
@@ -1128,8 +1153,8 @@ class ForecastX(BaseForecaster):
     """
 
     _tags = {
-        "X_inner_mtype": "pd.DataFrame",
-        "y_inner_mtype": "pd.DataFrame",
+        "X_inner_mtype": SUPPORTED_MTYPES,
+        "y_inner_mtype": SUPPORTED_MTYPES,
         "X-y-must-have-same-index": False,
         "fit_is_empty": False,
         "ignores-exogeneous-X": False,
@@ -1238,6 +1263,10 @@ class ForecastX(BaseForecaster):
         X_pred = getattr(forecaster, method)()
         if X is not None:
             X_pred = X_pred.combine_first(X)
+
+        # order columns so they are in the same order as in X seen
+        X_cols_ordered = [col for col in self._X.columns if col in X_pred.columns]
+        X_pred = X_pred[X_cols_ordered]
 
         return X_pred
 
@@ -1441,11 +1470,202 @@ class ForecastX(BaseForecaster):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         from sktime.forecasting.compose import DirectTabularRegressionForecaster
-        from sktime.forecasting.var import VAR
+        from sktime.forecasting.compose._reduce import DirectReductionForecaster
 
-        fx = VAR()
+        fx = DirectReductionForecaster.create_test_instance()
         fy = DirectTabularRegressionForecaster.create_test_instance()
 
         params = {"forecaster_X": fx, "forecaster_y": fy}
 
         return params
+
+
+class Permute(_DelegatedForecaster, BaseForecaster, _HeterogenousMetaEstimator):
+    """Permutation compositor for permuting forecasting pipeline steps.
+
+    The compositor can be used to permute the sequence of any meta-forecaster,
+    including ForecastingPipeline, TransformedTargetForecaster.
+
+    The `steps_arg` parameter needs to be pointed to the "steps"-like parameter
+    of the wrapped forecaster and `permutation` switches the sequence of steps.
+
+    Not very useful on its own, but
+    useful in combination with tuning or auto-ML wrappers on top of this.
+
+    Parameters
+    ----------
+    estimator : sktime forecaster, inheriting from BaseForecaster
+        must have parameter with name `steps_arg`
+        estimator whose steps are being permuted
+    permutation : list of str, or None, optional, default = None
+        if not None, must be equal length as getattr(estimator, steps_arg)
+        and elements must be equal to names of estimator.steps_arg estimators
+        names are unique names as created by _get_estimator_tuples (if unnamed list),
+        or first string element of tuples, of estimator.steps_arg
+        list is interpreted as range of permutation of names
+        if None, is interpreted as the identity permutation
+    steps_arg : string, optional, default="steps"
+        name of the steps parameter. getattr(estimator, steps_arg) must be
+        list of estimators, or list of (str, estimator) pairs
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.base import ForecastingHorizon
+    >>> from sktime.forecasting.compose import ForecastingPipeline, Permute
+    >>> from sktime.forecasting.naive import NaiveForecaster
+    >>> from sktime.transformations.series.boxcox import BoxCoxTransformer
+    >>> from sktime.transformations.series.exponent import ExponentTransformer
+
+    Simple example: permute sequence of estimator in forecasting pipeline
+    >>> y = load_airline()
+    >>> fh = ForecastingHorizon([1, 2, 3])
+    >>> pipe = ForecastingPipeline(
+    ...     [
+    ...         ("boxcox", BoxCoxTransformer()),
+    ...         ("exp", ExponentTransformer(3)),
+    ...         ("naive", NaiveForecaster()),
+    ...     ]
+    ... )
+    >>> # this results in the pipeline with sequence "exp", "boxcox", "naive"
+    >>> permuted = Permute(pipe, ["exp", "boxcox", "naive"])
+    >>> permuted = permuted.fit(y, fh=fh)
+    >>> y_pred = permuted.predict()
+
+    The permuter is useful in combination with grid search (toy example):
+    >>> from sktime.datasets import load_shampoo_sales
+    >>> from sktime.forecasting.model_selection import (
+    ...     ExpandingWindowSplitter,
+    ...     ForecastingGridSearchCV,
+    ... )
+    >>> fh = [1,2,3]
+    >>> cv = ExpandingWindowSplitter(fh=fh)
+    >>> forecaster = NaiveForecaster()
+    >>> # check which of the two sequences of transformers is better
+    >>> param_grid = {
+    ...     "permutation" : [["boxcox", "exp", "naive"], ["exp", "boxcox", "naive"]]
+    ... }
+    >>> gscv = ForecastingGridSearchCV(
+    ...     forecaster=permuted,
+    ...     param_grid=param_grid,
+    ...     cv=cv)
+    """
+
+    _tags = {
+        "scitype:y": "both",
+        "y_inner_mtype": ALL_TIME_SERIES_MTYPES,
+        "X_inner_mtype": ALL_TIME_SERIES_MTYPES,
+        "ignores-exogeneous-X": False,
+        "requires-fh-in-fit": False,
+        "handles-missing-data": True,
+        "capability:pred_int": True,
+        "X-y-must-have-same-index": False,
+    }
+
+    _delegate_name = "estimator_"
+
+    def __init__(self, estimator, permutation=None, steps_arg="steps"):
+        self.estimator = estimator
+        self.permutation = permutation
+        self.steps_arg = steps_arg
+
+        super(Permute, self).__init__()
+        tags_to_clone = [
+            "ignores-exogeneous-X",  # does estimator ignore the exogeneous X?
+            "capability:pred_int",  # can the estimator produce prediction intervals?
+            "requires-fh-in-fit",  # is forecasting horizon already required in fit?
+            "enforce_index_type",  # index type that needs to be enforced in X/y
+            "fit_is_empty",
+        ]
+
+        self.clone_tags(self.estimator, tags_to_clone)
+
+        self._set_permuted_estimator()
+
+    def _set_permuted_estimator(self):
+        """Set self.estimator_ based on permutation arg."""
+        estimator = self.estimator
+        permutation = self.permutation
+        steps_arg = self.steps_arg
+
+        self.estimator_ = estimator.clone()
+
+        if permutation is not None:
+
+            inner_estimators = getattr(estimator, steps_arg)
+            estimator_tuples = self._get_estimator_tuples(inner_estimators)
+
+            estimator_dict = {x[0]: x[1] for x in estimator_tuples}
+
+            # check that permutation is list of str
+            msg = "Error in Permutation, permutation must be None or a list of strings"
+            if not isinstance(permutation, list):
+                raise ValueError(msg)
+            if not all(isinstance(item, str) for item in permutation):
+                raise ValueError(msg)
+
+            # check that permutation contains same step names as given in steps
+            if not set(estimator_dict.keys()) == set(permutation):
+                raise ValueError(
+                    f"""Permutation hyperparameter permutation must contain exactly
+                    the same step names as
+                    the names of steps in getattr(estimator, steps_arg), but
+                    found tuple names {set(estimator_dict.keys())} but got
+                    permutation {set(permutation)}."""
+                )
+
+            estimator_tuples_permuted = [(k, estimator_dict[k]) for k in permutation]
+
+            self.estimator_ = estimator.clone()
+            self.estimator_.set_params(**{steps_arg: estimator_tuples_permuted})
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            There are currently no reserved values for forecasters.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        from sktime.forecasting.naive import NaiveForecaster
+        from sktime.transformations.series.boxcox import BoxCoxTransformer
+        from sktime.transformations.series.exponent import ExponentTransformer
+
+        # transformers mixed with-without fit, ForecastingPipeline
+        # steps are (str, estimator)
+        params1 = {
+            "estimator": ForecastingPipeline(
+                [
+                    ("foo", BoxCoxTransformer()),
+                    ("bar", ExponentTransformer(3)),
+                    ("foobar", NaiveForecaster()),
+                ]
+            ),
+            "permutation": ["bar", "foo", "foobar"],
+        }
+
+        # transformers have no fit, TransformedTargetForecaster
+        # steps are only estimator
+        params2 = {
+            "estimator": TransformedTargetForecaster(
+                [ExponentTransformer(0.5), NaiveForecaster(), ExponentTransformer(3)]
+            ),
+            "permutation": [
+                "NaiveForecaster",
+                "ExponentTransformer_1",
+                "ExponentTransformer_2",
+            ],
+        }
+
+        return [params1, params2]

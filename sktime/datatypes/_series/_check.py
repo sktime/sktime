@@ -40,6 +40,7 @@ __all__ = ["check_dict"]
 import numpy as np
 import pandas as pd
 
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.utils.validation.series import is_in_valid_index_types
 
 VALID_INDEX_TYPES = (pd.RangeIndex, pd.PeriodIndex, pd.DatetimeIndex)
@@ -71,8 +72,9 @@ def check_pddataframe_series(obj, return_metadata=False, var_name="obj"):
     metadata["is_univariate"] = len(obj.columns) < 2
 
     # check that columns are unique
-    msg = f"{var_name} must have " f"unique column indices, but found {obj.columns}"
-    assert obj.columns.is_unique, msg
+    if not obj.columns.is_unique:
+        msg = f"{var_name} must have unique column indices, but found {obj.columns}"
+        return ret(False, msg, None, return_metadata)
 
     # check whether the time index is of valid type
     if not is_in_valid_index_types(index):
@@ -88,7 +90,7 @@ def check_pddataframe_series(obj, return_metadata=False, var_name="obj"):
         return ret(False, msg, None, return_metadata)
 
     # Check time index is ordered in time
-    if not index.is_monotonic:
+    if not index.is_monotonic_increasing:
         msg = (
             f"The (time) index of {var_name} must be sorted monotonically increasing, "
             f"but found: {index}"
@@ -145,7 +147,7 @@ def check_pdseries_series(obj, return_metadata=False, var_name="obj"):
         return ret(False, msg, None, return_metadata)
 
     # Check time index is ordered in time
-    if not index.is_monotonic:
+    if not index.is_monotonic_increasing:
         msg = (
             f"The (time) index of {var_name} must be sorted monotonically increasing, "
             f"but found: {index}"
@@ -223,15 +225,122 @@ def _index_equally_spaced(index):
     if not is_in_valid_index_types(index):
         raise TypeError(f"index must be one of {VALID_INDEX_TYPES} or integer index")
 
-    # empty and single element indices are equally spaced
-    if len(index) < 2:
+    # empty, single and two-element indices are equally spaced
+    if len(index) < 3:
         return True
 
     # RangeIndex is always equally spaced
     if isinstance(index, pd.RangeIndex):
         return True
 
+    # we now treat a necessary condition for being equally spaced:
+    # the first two spaces are equal. From now on, we know this.
+    if index[1] - index[0] != index[2] - index[1]:
+        return False
+
+    # another necessary condition for equally spaced:
+    # index span is number of spaces times first space
+    n = len(index)
+    if index[n - 1] - index[0] != (n - 1) * (index[1] - index[0]):
+        return False
+
+    # if we arrive at this stage, and the index is PeriodIndex,
+    # we know it must be equally spaced:
+    # it cannot have duplicates and must be sorted (other conditions for mtype),
+    # therefore, by the pigeonhole principle, the
+    # two necessary conditions we checked are also sufficient
+    if isinstance(index, pd.PeriodIndex):
+        return True
+
+    # fallback for all other cases:
+    # in general, we need to compute all differences and check explicitly
+    # CAVEAT: this has a comparabily long runtime and high memory usage
     diffs = np.diff(index)
     all_equal = np.all(diffs == diffs[0])
 
     return all_equal
+
+
+if _check_soft_dependencies("xarray", severity="none"):
+    import xarray as xr
+
+    def check_xrdataarray_series(obj, return_metadata=False, var_name="obj"):
+        metadata = {}
+
+        def ret(valid, msg, metadata, return_metadata):
+            if return_metadata:
+                return valid, msg, metadata
+            return valid
+
+        if not isinstance(obj, xr.DataArray):
+            msg = f"{var_name} must be a xarray.DataArray, found {type(obj)}"
+            return ret(False, msg, None, return_metadata)
+
+        # we now know obj is a xr.DataArray
+        if len(obj.dims) > 2:  # Without multi indexing only two dimensions are possible
+            msg = f"{var_name} must have two or less dimension, found {type(obj.dims)}"
+            return ret(False, msg, None, return_metadata)
+
+        # The first dimension is the index of the time series in sktimelen
+        index = obj.indexes[obj.dims[0]]
+
+        metadata["is_empty"] = len(index) < 1 or len(obj.values) < 1
+        # The second dimension is the set of columns
+        metadata["is_univariate"] = len(obj.dims) == 1 or len(obj[obj.dims[1]]) < 2
+
+        # check that columns are unique
+        if not len(obj.dims) == len(set(obj.dims)):
+            msg = f"{var_name} must have unique column indices, but found {obj.dims}"
+            return ret(False, msg, None, return_metadata)
+
+        # check whether the time index is of valid type
+        if not is_in_valid_index_types(index):
+            msg = (
+                f"{type(index)} is not supported for {var_name}, use "
+                f"one of {VALID_INDEX_TYPES} or integer index instead."
+            )
+            return ret(False, msg, None, return_metadata)
+
+        # check that the dtype is not object
+        if "object" == obj.dtype:
+            msg = f"{var_name} should not have column of 'object' dtype"
+            return ret(False, msg, None, return_metadata)
+
+        # Check time index is ordered in time
+        if not index.is_monotonic_increasing:
+            msg = (
+                f"The (time) index of {var_name} must be sorted "
+                f"monotonically increasing, but found: {index}"
+            )
+            return ret(False, msg, None, return_metadata)
+
+        if FREQ_SET_CHECK and isinstance(index, pd.DatetimeIndex):
+            if index.freq is None:
+                msg = f"{var_name} has DatetimeIndex, but no freq attribute set."
+                return ret(False, msg, None, return_metadata)
+
+        # check whether index is equally spaced or if there are any nans
+        #   compute only if needed
+        if return_metadata:
+            metadata["is_equally_spaced"] = _index_equally_spaced(index)
+            metadata["has_nans"] = obj.isnull().values.any()
+
+        return ret(True, None, metadata, return_metadata)
+
+    check_dict[("xr.DataArray", "Series")] = check_xrdataarray_series
+
+
+if _check_soft_dependencies("dask", severity="none"):
+    from sktime.datatypes._adapter.dask_to_pd import check_dask_frame
+
+    def check_dask_series(obj, return_metadata=False, var_name="obj"):
+
+        return check_dask_frame(
+            obj=obj,
+            return_metadata=return_metadata,
+            var_name=var_name,
+            freq_set_check=FREQ_SET_CHECK,
+            scitype="Series",
+        )
+
+    check_dict[("dask_series", "Series")] = check_dask_series

@@ -45,6 +45,8 @@ Pipelines can also be constructed using ``*``, ``+``, and ``|`` dunders.
     ColumnEnsembleForecaster
     MultiplexForecaster
     ForecastX
+    ForecastByLevel
+    Permute
 
 Reduction
 ---------
@@ -88,6 +90,14 @@ Prediction intervals
 --------------------
 
 Wrappers that add prediction intervals to any forecaster.
+
+.. currentmodule:: sktime.forecasting.squaring_residuals
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    SquaringResiduals
 
 .. currentmodule:: sktime.forecasting.naive
 

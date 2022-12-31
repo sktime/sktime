@@ -12,22 +12,20 @@ from sklearn.tree import DecisionTreeClassifier
 from sktime.classification.compose import ComposableTimeSeriesForestClassifier
 from sktime.datasets import load_unit_test
 from sktime.transformations.compose import FeatureUnion
-from sktime.transformations.panel.compose import SeriesToPrimitivesRowTransformer
 from sktime.transformations.panel.segment import RandomIntervalSegmenter
 from sktime.transformations.panel.summarize import RandomIntervalFeatureExtractor
+from sktime.transformations.series.adapt import TabularToSeriesAdaptor
 from sktime.utils._testing.panel import make_classification_problem
 from sktime.utils.slope_and_trend import _slope
 
 X, y = make_classification_problem()
 n_classes = len(np.unique(y))
 
-mean_transformer = SeriesToPrimitivesRowTransformer(
-    FunctionTransformer(func=np.mean, validate=False, kw_args={"axis": 0}),
-    check_transformer=False,
+mean_transformer = TabularToSeriesAdaptor(
+    FunctionTransformer(func=np.mean, validate=False, kw_args={"axis": 0})
 )
-std_transformer = SeriesToPrimitivesRowTransformer(
-    FunctionTransformer(func=np.std, validate=False, kw_args={"axis": 0}),
-    check_transformer=False,
+std_transformer = TabularToSeriesAdaptor(
+    FunctionTransformer(func=np.std, validate=False, kw_args={"axis": 0})
 )
 
 
@@ -74,7 +72,7 @@ def test_equivalent_model_specifications(n_intervals, n_estimators):
             "transform",
             FeatureUnion([("mean", mean_transformer), ("std", std_transformer)]),
         ),
-        ("clf", DecisionTreeClassifier(random_state=random_state)),
+        ("clf", DecisionTreeClassifier(random_state=random_state, max_depth=2)),
     ]
     clf1 = Pipeline(steps)
     clf1.fit(X_train, y_train)
@@ -89,7 +87,7 @@ def test_equivalent_model_specifications(n_intervals, n_estimators):
                 random_state=random_state,
             ),
         ),
-        ("clf", DecisionTreeClassifier(random_state=random_state)),
+        ("clf", DecisionTreeClassifier(random_state=random_state, max_depth=2)),
     ]
     clf2 = Pipeline(steps)
     clf2.fit(X_train, y_train)
@@ -97,9 +95,8 @@ def test_equivalent_model_specifications(n_intervals, n_estimators):
     np.array_equal(a, b)
 
 
-# Compare TimeSeriesForest ensemble predictions using pipeline as
-# estimator
-@pytest.mark.parametrize("n_intervals", ["sqrt", 1, 3])
+# Compare TimeSeriesForest ensemble predictions using pipeline as estimator
+@pytest.mark.parametrize("n_intervals", ["sqrt", 1])
 @pytest.mark.parametrize("n_estimators", [1, 3])
 def test_tsf_predictions(n_estimators, n_intervals):
     """Test TSF predictions."""
@@ -115,7 +112,7 @@ def test_tsf_predictions(n_estimators, n_intervals):
                 random_state=random_state, features=features
             ),
         ),
-        ("clf", DecisionTreeClassifier()),
+        ("clf", DecisionTreeClassifier(random_state=random_state, max_depth=2)),
     ]
     estimator = Pipeline(steps)
 

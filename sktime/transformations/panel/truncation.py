@@ -118,6 +118,7 @@ class TruncationTransformer(BaseTransformer):
 
         Xt = pd.DataFrame(truncate)
         Xt.columns = X.columns
+        Xt.index = X.index
 
         return Xt
 

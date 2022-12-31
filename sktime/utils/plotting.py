@@ -4,23 +4,29 @@
 """Common timeseries plotting functionality."""
 
 __all__ = ["plot_series", "plot_correlations", "plot_windows"]
-__author__ = ["mloning", "RNKuhns", "Drishti Bhasin"]
+__author__ = ["mloning", "RNKuhns", "Drishti Bhasin", "chillerobscuro"]
 
 import math
-from warnings import simplefilter
+from warnings import simplefilter, warn
 
 import numpy as np
 import pandas as pd
-from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 
 from sktime.datatypes import convert_to
 from sktime.utils.validation._dependencies import _check_soft_dependencies
-from sktime.utils.validation.forecasting import check_y
+from sktime.utils.validation.forecasting import check_interval_df, check_y
 from sktime.utils.validation.series import check_consistent_index_type
 
 
 def plot_series(
-    *series, labels=None, markers=None, x_label=None, y_label=None, ax=None
+    *series,
+    labels=None,
+    markers=None,
+    colors=None,
+    x_label=None,
+    y_label=None,
+    ax=None,
+    pred_interval=None,
 ):
     """Plot one or more time series.
 
@@ -33,11 +39,23 @@ def plot_series(
     markers: list, default = None
         Markers of data points, if None the marker "o" is used by default.
         The length of the list has to match with the number of series.
+    colors: list, default = None
+        The colors to use for plotting each series. Must contain one color per series
+    pred_interval: pd.DataFrame, default = None
+        Output of `forecaster.predict_interval()`. Contains columns for lower
+        and upper boundaries of confidence interval.
 
     Returns
     -------
     fig : plt.Figure
     ax : plt.Axis
+
+    Examples
+    --------
+    >>> from sktime.utils.plotting import plot_series
+    >>> from sktime.datasets import load_airline
+    >>> y = load_airline()
+    >>> fig, ax = plot_series(y)  # doctest: +SKIP
     """
     _check_soft_dependencies("matplotlib", "seaborn")
     import matplotlib.pyplot as plt
@@ -91,7 +109,9 @@ def plot_series(
     if _ax_kwarg_is_none:
         fig, ax = plt.subplots(1, figsize=plt.figaspect(0.25))
 
-    colors = sns.color_palette("colorblind", n_colors=n_series)
+    # colors
+    if colors is None or not _check_colors(colors, n_series):
+        colors = sns.color_palette("colorblind", n_colors=n_series)
 
     # plot series
     for x, y, color, label, marker in zip(xs, series, colors, labels, markers):
@@ -127,10 +147,27 @@ def plot_series(
 
     if legend:
         ax.legend()
+    if pred_interval is not None:
+        check_interval_df(pred_interval, series[-1].index)
+        ax = plot_interval(ax, pred_interval)
     if _ax_kwarg_is_none:
         return fig, ax
     else:
         return ax
+
+
+def plot_interval(ax, interval_df):
+    cov = interval_df.columns.levels[1][0]
+    ax.fill_between(
+        ax.get_lines()[-1].get_xdata(),
+        interval_df["Coverage"][cov]["lower"].astype("float64"),
+        interval_df["Coverage"][cov]["upper"].astype("float64"),
+        alpha=0.2,
+        color=ax.get_lines()[-1].get_c(),
+        label=f"{int(cov * 100)}% prediction interval",
+    )
+    ax.legend()
+    return ax
 
 
 def plot_lags(series, lags=1, suptitle=None):
@@ -159,6 +196,7 @@ def plot_lags(series, lags=1, suptitle=None):
 
     Examples
     --------
+    >>> from sktime.utils.plotting import plot_lags
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
     >>> fig, ax = plot_lags(y, lags=2) # plot of y(t) with y(t-2)  # doctest: +SKIP
@@ -266,9 +304,17 @@ def plot_correlations(
 
     axes : np.ndarray
         Array of the figure's Axe objects
+
+    Examples
+    --------
+    >>> from sktime.utils.plotting import plot_correlations
+    >>> from sktime.datasets import load_airline
+    >>> y = load_airline()
+    >>> fig, ax = plot_correlations(y)  # doctest: +SKIP
     """
-    _check_soft_dependencies("matplotlib")
+    _check_soft_dependencies("matplotlib", "statsmodels")
     import matplotlib.pyplot as plt
+    from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 
     series = check_y(series)
     series = convert_to(series, "pd.Series", "Series")
@@ -307,6 +353,18 @@ def plot_correlations(
         fig.suptitle(suptitle, size="xx-large")
 
     return fig, np.array(fig.get_axes())
+
+
+def _check_colors(colors, n_series):
+    """Verify color list is correct length and contains only colors."""
+    from matplotlib.colors import is_color_like
+
+    if n_series == len(colors) and all([is_color_like(c) for c in colors]):
+        return True
+    warn(
+        "Color list must be same length as `series` and contain only matplotlib colors"
+    )
+    return False
 
 
 def _get_windows(cv, y):

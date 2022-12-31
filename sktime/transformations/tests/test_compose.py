@@ -10,7 +10,12 @@ from sklearn.preprocessing import StandardScaler
 
 from sktime.datasets import load_airline
 from sktime.datatypes import get_examples
-from sktime.transformations.compose import FeatureUnion, TransformerPipeline
+from sktime.transformations.compose import (
+    FeatureUnion,
+    InvertTransform,
+    OptionalPassthrough,
+    TransformerPipeline,
+)
 from sktime.transformations.panel.padder import PaddingTransformer
 from sktime.transformations.series.boxcox import LogTransformer
 from sktime.transformations.series.exponent import ExponentTransformer
@@ -155,7 +160,7 @@ def test_sklearn_after_primitives():
     X_out = t.fit_transform(X)
     X_summary = SummaryTransformer().fit_transform(X)
 
-    assert deep_equals(X_out.index, X_summary.index)
+    assert (X_out.index == X_summary.index).all()
     assert deep_equals(X_out.columns, X_summary.columns)
     # var_0 is the same for all three instances
     # so summary statistics are all the same, thus StandardScaler transforms to 0
@@ -224,3 +229,34 @@ def test_subset_getitem():
     )
     _assert_array_almost_equal(t_both.fit_transform(X), X_theta[["b__0", "b__2"]])
     _assert_array_almost_equal(t_none.fit_transform(X), X_theta)
+
+
+def test_dunder_invert():
+    """Test the invert dunder method, for wrapping in OptionalPassthrough."""
+    X = pd.DataFrame({"a": [1, 2], "b": [3, 4]})
+
+    t = ExponentTransformer(power=3)
+
+    t_inv = ~t
+
+    assert isinstance(t_inv, InvertTransform)
+    assert isinstance(t_inv.get_params()["transformer"], ExponentTransformer)
+
+    _assert_array_almost_equal(
+        t_inv.fit_transform(X), ExponentTransformer(1 / 3).fit_transform(X)
+    )
+
+
+def test_dunder_neg():
+    """Test the neg dunder method, for wrapping in OptionalPassthrough."""
+    X = pd.DataFrame({"a": [1, 2], "b": [3, 4]})
+
+    t = ExponentTransformer(power=2)
+
+    tp = -t
+
+    assert isinstance(tp, OptionalPassthrough)
+    assert not tp.get_params()["passthrough"]
+    assert isinstance(tp.get_params()["transformer"], ExponentTransformer)
+
+    _assert_array_almost_equal(tp.fit_transform(X), X)
