@@ -112,20 +112,27 @@ class TimeBinAggregate(BaseTransformer):
         -------
         transformed version of X
         """
+        bins = self.bins
         idx_cut = pd.cut(X.index, bins=self._bins, include_lowest=True)
         Xt = X.groupby(idx_cut).apply(self._aggfunc)
 
         if self.return_index == "range":
             Xt = Xt.reset_index(drop=True)
         elif self.return_index == "bin_start":
-            if self.bins is pd.IntervalIndex:
+            if bins is pd.IntervalIndex:
                 Xt.index = [x.left for x in Xt.index]
             else:
-                Xt.index = self.bins
+                Xt.index = bins[:-1]
         elif self.return_index == "bin_end":
-            Xt.index = [x.right for x in Xt.index]
+            if bins is pd.IntervalIndex:
+                Xt.index = [x.right for x in Xt.index]
+            else:
+                Xt.index = bins[1:]
         elif self.return_index == "bin_mid":
-            Xt.index = [(x.left + x.right) / 2 for x in Xt.index]
+            if bins is pd.IntervalIndex:
+                Xt.index = [(x.left + x.right) / 2 for x in Xt.index]
+            else:
+                Xt.index = [(bins[i] + bins[i + 1]) / 2 for i in range(len(bins))]
         elif self.return_index == "bin":
             Xt.index = self._bins
         return Xt
@@ -149,8 +156,7 @@ class TimeBinAggregate(BaseTransformer):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        bins = pd.interval_range(start=0, end=100, freq=10, closed="left")
-        params1 = {"bins": bins}
+        params1 = {"bins": [0, 1]}
 
         params2 = {"bins": [0, 2, 4], "aggfunc": np.sum, "return_index": "bin_start"}
         return [params1, params2]
