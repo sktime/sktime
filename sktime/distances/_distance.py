@@ -611,39 +611,61 @@ def dtw_distance(
 ) -> float:
     r"""Compute the dynamic time warping (DTW) distance between two time series.
 
-    Originally proposed in [1]_, DTW is the most widely researched and used elastic
-    distance measure. It mitigates
-    distortions in the time axis by realligning (warping) the series to best match
-    each other. A good background into DTW can be found in [2]_. For two series
+    Originally proposed in [1]_, DTW is an elastic
+    distance measure, i.e., it is a distance computed after realigning (warping)
+    two time series to best match each other via time axis distortions [2]_.
+
+    This function computes time warping distances only for:
+    * sequences, time index is ignored
+    * two time series of equal length
+    * the Euclidean pairwise distance
+
+    For unequal length time series, use `sktime.dists_kernels.DistFromAligner`
+    with a time warping aligner such as `sktime.aligners.AlignerDTW`.
+    To use arbitrary pairwise distances, use `sktime.aligners.AlignerDTWfromDist`.
+
+    Mathematically, for two sequences
     :math:'\mathbf{a}=\{a_1,a_2,\ldots,a_m\}' and :math:'\mathbf{b}=\{b_1,b_2,\ldots,
-    b_m\}',  (assumed equal length for simplicity), DTW first calculates  :math:'M(
-    \mathbf{a},\mathbf{b})', the :math:'m \times m'
-    pointwise distance matrix between series :math:'\mathbf{a}' and :math:'\mathbf{b}',
-    where :math:'M_{i,j}=   (a_i-b_j)^2'. A warping path
-    .. math::  P=<(e_1,f_1),(e_2,f_2),\ldots, (e_s,f_s)>
-    is a set of pairs of indices that  define a traversal of matrix :math:'M'. A
-    valid warping path must start at location :math:'(1,1)' and end at point :math:'(
-    m,m)' and not backtrack, i.e. :math:'0 \leq e_{i+1}-e_{i} \leq 1' and :math:'0
-    \leq f_{i+1}- f_i \leq 1' for all :math:'1< i < m'. The DTW distance between
-    series is the path through :math:'M' that minimizes the total distance. The
-    distance for any path :math:'P' of length :math:'s' is
-    .. math::  D_P(\mathbf{a},\mathbf{b}, M) =\sum_{i=1}^s M_{e_i,f_i}.
-    If :math:'\mathcal{P}' is the space of all possible paths, the DTW path :math:'P^*'
-    is the path that has the minimum distance, hence the DTW distance between series is
-    .. math::  d_{dtw}(\mathbf{a}, \mathbf{b}) =D_{P*}(\mathbf{a},\mathbf{b}, M).
-    The optimal warping path $P^*$ can be found exactly through a dynamic programming
-    formulation. This can be a time consuming operation, and it is common to put a
+    b_n\}',  (assumed equal length for simplicity), DTW first calculates
+    the pairwise distance matrix :math:'M(
+    \mathbf{a},\mathbf{b})', the :math:'m \times n',
+    between series :math:'\mathbf{a}' and :math:'\mathbf{b}',
+    where :math:'M_{i,j} = d(a_i, b_j)', for a chosen distance measure
+    :math:`d: \mathbb{R}^h \times \mathbb{R}^h \rightarrow \mathbb{R}`.
+    In this estimator, the squared Euclidean distance is used, i.e.,
+    :math:`d(x, y):= (x-y)^2`. A warping path
+    .. math::  P=((i_1, j_1), (i_2, j_2), \ldots, (i_s, j_s))
+    is an ordered tuple of indices
+    :math:`i_k \in \{1, \dots, m\}, j_k \in \{1, \dots, n\}`
+    which define a traversal path of matrix :math:'M'.
+    This implementation assumes for warping paths that:
+    * closed paths: :math:`i_1 = j_1 = 1`; :math:`i_s = m, j_s = n`
+    * monotonous paths: :math:`i_k \le i_{k+1}, j_k \le j_{k+1}` for all :math:`k`
+    * strictly monotonous paths: :math:`(i_k, j_k) \neq (i_{k+1}, j_{k+1})` for all :math:`k`
+    The DTW path between sequences is the path through :math:'M' that minimizes the total distance,
+    over all valid paths (satisfying the above assumptions), given the sequences.
+    Formally:
+    The distance for a warping path :math:'P' of length :math:'s' is
+    .. math::  D_P(\mathbf{a},\mathbf{b}) = \sum_{k=1}^s M_{i_k,j_k}.
+    If :math:'\mathcal{P}' is the set of all possible paths, the DTW path :math:'P^*'
+    is the path that has the minimum distance amongst those:
+    .. math::  P^* = \argmin_{P\in \mathcal{P}} D_{P}(\mathbf{a},\mathbf{b}).
+    The DTW distance between the two sequences :math:'\mathbf{a},\mathbf{b}' is
+    the minimum warping path distance:
+    .. math::  d_{dtw}(\mathbf{a}, \mathbf{b}) = \min_{P\in \mathcal{P}} D_{P}(\mathbf{a},\mathbf{b}) = D_{P^*}(\mathbf{a},\mathbf{b}).
+    The optimal warping path $P^*$ can be found exactly through dynamic programming.
+    This can be a time consuming operation, and it is common to put a
     restriction on the amount of warping allowed. This is implemented through
-    the bounding_matrix structure, that supplies a mask for allowable warpings.
+    the `bounding_matrix` structure, that restricts allowable warpings by a mask.
     Common bounding strategies include the Sakoe-Chiba band [3]_ and the Itakura
     parallelogram [4_]. The Sakoe-Chiba band creates a warping path window that has
     the same width along the diagonal of :math:'M'. The Itakura paralleogram allows
-    for less warping at the start or end of the series than in the middle.
+    for less warping at the start or end of the sequence than in the middle.
 
-    If the function is called with multivariate series, the matrix :math:'M' is
-    calculated over dimensions :math:'d', i.e. :math:'M_{i,j}=  \sum_{k=i} (a_{k,
-    i}-b_{k,j})^2'. This is commonly called the dependent version of DTW, DTW_D,
-    a term first used in [5]_.
+    If the function is called with multivariate time series, note that
+    the matrix :math:'M' is computed with the multivariate squared Euclidean distance,
+    :math:`d(x, y):= (x-y)^2` = \sum_{i=1}^h (x_i - y_i)^2`
+    This is sometimes called the "dependent" version of DTW, DTW_D, see [5]_.
 
     Parameters
     ----------
@@ -713,7 +735,7 @@ def dtw_distance(
     1):67–72, 1975.
     .. [5] Shokoohi-Yekta M et al.: Generalizing DTW to the multi-dimensional case
     requires an adaptive approach. Data Mining and Knowledge Discovery, 31, 1–31 (2017).
-    """
+    """  # noqa: E501
     format_kwargs = {
         "window": window,
         "itakura_max_slope": itakura_max_slope,
