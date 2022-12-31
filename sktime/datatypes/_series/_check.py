@@ -225,14 +225,36 @@ def _index_equally_spaced(index):
     if not is_in_valid_index_types(index):
         raise TypeError(f"index must be one of {VALID_INDEX_TYPES} or integer index")
 
-    # empty and single element indices are equally spaced
-    if len(index) < 2:
+    # empty, single and two-element indices are equally spaced
+    if len(index) < 3:
         return True
 
     # RangeIndex is always equally spaced
     if isinstance(index, pd.RangeIndex):
         return True
 
+    # we now treat a necessary condition for being equally spaced:
+    # the first two spaces are equal. From now on, we know this.
+    if index[1] - index[0] != index[2] - index[1]:
+        return False
+
+    # another necessary condition for equally spaced:
+    # index span is number of spaces times first space
+    n = len(index)
+    if index[n - 1] - index[0] != (n - 1) * (index[1] - index[0]):
+        return False
+
+    # if we arrive at this stage, and the index is PeriodIndex,
+    # we know it must be equally spaced:
+    # it cannot have duplicates and must be sorted (other conditions for mtype),
+    # therefore, by the pigeonhole principle, the
+    # two necessary conditions we checked are also sufficient
+    if isinstance(index, pd.PeriodIndex):
+        return True
+
+    # fallback for all other cases:
+    # in general, we need to compute all differences and check explicitly
+    # CAVEAT: this has a comparabily long runtime and high memory usage
     diffs = np.diff(index)
     all_equal = np.all(diffs == diffs[0])
 
@@ -306,3 +328,19 @@ if _check_soft_dependencies("xarray", severity="none"):
         return ret(True, None, metadata, return_metadata)
 
     check_dict[("xr.DataArray", "Series")] = check_xrdataarray_series
+
+
+if _check_soft_dependencies("dask", severity="none"):
+    from sktime.datatypes._adapter.dask_to_pd import check_dask_frame
+
+    def check_dask_series(obj, return_metadata=False, var_name="obj"):
+
+        return check_dask_frame(
+            obj=obj,
+            return_metadata=return_metadata,
+            var_name=var_name,
+            freq_set_check=FREQ_SET_CHECK,
+            scitype="Series",
+        )
+
+    check_dict[("dask_series", "Series")] = check_dask_series

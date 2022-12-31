@@ -28,10 +28,10 @@ from sktime.forecasting.model_selection import (
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.sarimax import SARIMAX
 from sktime.forecasting.trend import PolynomialTrendForecaster
+from sktime.transformations.compose import OptionalPassthrough
 from sktime.transformations.hierarchical.aggregate import Aggregator
 from sktime.transformations.series.adapt import TabularToSeriesAdaptor
 from sktime.transformations.series.boxcox import LogTransformer
-from sktime.transformations.series.compose import OptionalPassthrough
 from sktime.transformations.series.detrend import Detrender
 from sktime.transformations.series.difference import Differencer
 from sktime.transformations.series.exponent import ExponentTransformer
@@ -110,8 +110,8 @@ def test_skip_inverse_transform():
 def test_nesting_pipelines():
     """Test that nesting of pipelines works."""
     from sktime.forecasting.ets import AutoETS
+    from sktime.transformations.compose import OptionalPassthrough
     from sktime.transformations.series.boxcox import LogTransformer
-    from sktime.transformations.series.compose import OptionalPassthrough
     from sktime.transformations.series.detrend import Detrender
     from sktime.utils._testing.scenarios_forecasting import (
         ForecasterFitPredictUnivariateWithX,
@@ -190,7 +190,6 @@ def test_pipeline_with_dimension_changing_transformer():
     step_cv = 1
     cv = ExpandingWindowSplitter(
         initial_window=len(train_model) - (N_cv_fold - 1) * step_cv - len(fh),
-        start_with_window=True,
         step_length=step_cv,
         fh=fh,
     )
@@ -437,3 +436,47 @@ def test_subset_getitem():
     _assert_array_almost_equal(y_pred_f_before, y_pred_f_both[["y", "z"]])
     _assert_array_almost_equal(y_pred_f_after_with_colon, y_pred_f_none[["x", "y"]])
     _assert_array_almost_equal(y_pred_f_before_with_colon, y_pred_f_both[["y", "z"]])
+
+
+@pytest.mark.skipif(
+    not _check_soft_dependencies("statsmodels", severity="none"),
+    reason="skip test if required soft dependency is not available",
+)
+def test_forecastx_logic():
+    """Test that ForecastX logic is as expected, compared to manual execution."""
+    from sktime.forecasting.base import ForecastingHorizon
+    from sktime.forecasting.compose import ForecastX
+    from sktime.forecasting.model_selection import temporal_train_test_split
+    from sktime.forecasting.var import VAR
+
+    # test case: using pipeline execution
+    y, X = load_longley()
+    y_train, _, X_train, X_test = temporal_train_test_split(y, X, test_size=3)
+    fh = ForecastingHorizon([1, 2, 3])
+    columns = ["ARMED", "POP"]
+
+    # ForecastX
+    pipe = ForecastX(
+        forecaster_X=VAR(),
+        forecaster_y=SARIMAX(),
+        columns=columns,
+    )
+    pipe = pipe.fit(y_train, X=X_train, fh=fh)
+    # dropping ["ARMED", "POP"] = columns where we expect not to have future values
+    y_pred = pipe.predict(fh=fh, X=X_test.drop(columns=columns))
+
+    # comparison case: manual execution
+    # fit y forecaster
+    arima = SARIMAX().fit(y_train, X=X_train)
+
+    # fit and predict X forecaster
+    var = VAR()
+    var.fit(X_train[columns])
+    var_pred = var.predict(fh)
+
+    # predict y forecaster with predictions from VAR
+    X_pred = pd.concat([X_test.drop(columns=columns), var_pred], axis=1)
+    y_pred_manual = arima.predict(fh=fh, X=X_pred)
+
+    # compare that test and comparison case results are equal
+    assert np.allclose(y_pred, y_pred_manual)
