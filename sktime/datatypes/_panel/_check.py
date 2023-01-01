@@ -208,11 +208,12 @@ def check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj"):
         montonic_list = [obj.loc[i].index.is_monotonic for i in inst_inds]
         time_is_monotonic = len([i for i in montonic_list if i is False]) == 0
     else:
-        is_equally_df = (
+        timedelta_by_grp = (
             time_grp.diff().groupby(level=0, group_keys=True, as_index=True).nunique()
         )
-        is_equally_spaced = is_equally_df.iloc[:, 0].unique()
-        time_is_monotonic = all(is_equally_spaced >= 0)
+        timedelta_unique = timedelta_by_grp.iloc[:, 0].unique()
+        is_equally_spaced = len(timedelta_unique) == 1
+        time_is_monotonic = all(timedelta_unique >= 0)
 
     is_equal_length = time_grp.count()
 
