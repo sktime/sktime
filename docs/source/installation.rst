@@ -37,6 +37,11 @@ To install ``sktime`` with maximum dependencies, including soft dependencies, in
 
     pip install sktime[all_extras]
 
+.. warning::
+    Some of the dependencies included in ``all_extras`` do not work on mac ARM-based processors, such
+    as M1, M2, M1Pro, M1Max or M1Ultra. This may cause an error during installation. Mode details can
+    be found in the :ref:`troubleshooting section<Dependency error on mac ARM>` below.
+
 
 Installing sktime from conda
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -171,7 +176,7 @@ In the ``anaconda prompt`` terminal:
 2. Create new environment with python 3.8: :code:`conda create -n sktime-dev python=3.8`
 
    .. warning::
-       If you already have an environment called "sktime-dev" from a previous attempt you will first need to remove this
+       If you already have an environment called "sktime-dev" from a previous attempt you will first need to remove this.
 
 3. Activate the environment: :code:`conda activate sktime-dev`
 
@@ -213,6 +218,28 @@ Import errors are often caused by an improperly linked virtual environment.  Mak
 your environment is activated and linked to whatever IDE you are using.  If you are using Jupyter
 Notebooks, follow `these instructions <https://janakiev.com/blog/jupyter-virtual-envs/>`_ for
 adding your virtual environment as a new kernel for your notebook.
+
+Installing ``all_extras`` on mac with ARM processor
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+If you are using a mac with an ARM processor, you may encounter an error when installing
+``sktime[all_extras]``.  This is due to the fact that some libraries included in ``all_extras``
+are not compatible with ARM-based processors.
+
+The workaround is not to install some of the packages in ``all_extras`` and install ARM compatible
+replacements for others:
+
+* Do not install the following packages:
+    * ``esig``
+    * ``prophet``
+    * ``tsfresh``
+    * ``tslearn``
+* Replace ``tensorflow`` package with the following packages:
+    * ``tensorflow-macos``
+    * ``tensorflow-metal`` (optional)
+
+Also, ARM-based processors have issues when installing packages distributed as source distributions
+instead of Python wheels. To avoid this issue when installing a package you can try installing it
+through conda or use a prior version of the package that was distributed as a wheel.
 
 Other Startup Resources
 -----------------------
