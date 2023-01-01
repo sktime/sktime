@@ -183,13 +183,18 @@ def _evaluate_window(
                 FitFailedWarning,
             )
 
+    if pd.isnull(cutoff):
+        cutoff_ind = cutoff
+    else:
+        cutoff_ind = cutoff[0]
+
     result = pd.DataFrame(
         {
             score_name: [score],
             "fit_time": [fit_time],
             "pred_time": [pred_time],
             "len_train_window": [len(y_train)],
-            "cutoff": [cutoff[0]],
+            "cutoff": [cutoff_ind],
             "y_train": [y_train if return_data else pd.NA],
             "y_test": [y_test if return_data else pd.NA],
             "y_pred": [y_pred if return_data else pd.NA],
