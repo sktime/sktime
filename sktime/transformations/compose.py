@@ -15,6 +15,7 @@ from sktime.transformations.base import BaseTransformer
 from sktime.utils.multiindex import flatten_multiindex
 from sktime.utils.sklearn import (
     is_sklearn_classifier,
+    is_sklearn_clusterer,
     is_sklearn_regressor,
     is_sklearn_transformer,
 )
@@ -246,6 +247,7 @@ class TransformerPipeline(_HeterogenousMetaEstimator, BaseTransformer):
             not nested, contains only non-TransformerPipeline `sktime` transformers
         """
         from sktime.classification.compose import SklearnClassifierPipeline
+        from sktime.clustering.compose import SklearnClustererPipeline
         from sktime.regression.compose import SklearnRegressorPipeline
 
         other = _coerce_to_sktime(other)
@@ -253,6 +255,10 @@ class TransformerPipeline(_HeterogenousMetaEstimator, BaseTransformer):
         # if sklearn classifier, use sklearn classifier pipeline
         if is_sklearn_classifier(other):
             return SklearnClassifierPipeline(classifier=other, transformers=self.steps)
+
+        # if sklearn clusterer, use sklearn clusterer pipeline
+        if is_sklearn_clusterer(other):
+            return SklearnClustererPipeline(clusterer=other, transformers=self.steps)
 
         # if sklearn regressor, use sklearn regressor pipeline
         if is_sklearn_regressor(other):
@@ -858,7 +864,6 @@ class MultiplexTransformer(_HeterogenousMetaEstimator, _DelegatedTransformer):
     >>> cv = ExpandingWindowSplitter(
     ...     initial_window=24,
     ...     step_length=12,
-    ...     start_with_window=True,
     ...     fh=[1,2,3])
     >>> pipe = TransformedTargetForecaster(steps = [
     ...     ("multiplex", multiplexer),
@@ -1284,7 +1289,7 @@ class OptionalPassthrough(_DelegatedTransformer):
     --------
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.naive import NaiveForecaster
-    >>> from sktime.transformations.series.compose import OptionalPassthrough
+    >>> from sktime.transformations.compose import OptionalPassthrough
     >>> from sktime.transformations.series.detrend import Deseasonalizer
     >>> from sktime.transformations.series.adapt import TabularToSeriesAdaptor
     >>> from sktime.forecasting.compose import TransformedTargetForecaster
@@ -1417,7 +1422,7 @@ class ColumnwiseTransformer(BaseTransformer):
     --------
     >>> from sktime.datasets import load_longley
     >>> from sktime.transformations.series.detrend import Detrender
-    >>> from sktime.transformations.series.compose import ColumnwiseTransformer
+    >>> from sktime.transformations.compose import ColumnwiseTransformer
     >>> _, X = load_longley()
     >>> transformer = ColumnwiseTransformer(Detrender())
     >>> Xt = transformer.fit_transform(X)

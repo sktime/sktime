@@ -3,7 +3,7 @@
 
 __author__ = ["fkiraly"]
 
-from sktime.datatypes import SCITYPE_REGISTER
+from sktime.datatypes import SCITYPE_REGISTER, scitype_to_mtype
 from sktime.datatypes._convert import _conversions_defined, convert
 from sktime.datatypes._examples import get_examples
 from sktime.utils._testing.deep_equals import deep_equals
@@ -27,7 +27,8 @@ def _generate_fixture_tuples():
             continue
 
         conv_mat = _conversions_defined(scitype)
-        mtypes = conv_mat.index.values
+
+        mtypes = scitype_to_mtype(scitype, softdeps="exclude")
 
         if len(mtypes) == 0:
             # if there are no mtypes, this must have been reached by mistake/bug

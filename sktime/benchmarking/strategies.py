@@ -6,7 +6,7 @@ __author__ = ["mloning", "sajaysurya"]
 
 import pandas as pd
 from joblib import dump, load
-from sklearn.base import ClassifierMixin, RegressorMixin, _pprint
+from sklearn.base import ClassifierMixin, RegressorMixin
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
 from sklearn.pipeline import Pipeline
 
@@ -176,10 +176,7 @@ class BaseStrategy(BaseEstimator):
         return "%s(%s(%s))" % (
             strategy_name,
             estimator_name,
-            _pprint(
-                self.get_params(deep=False),
-                offset=len(strategy_name),
-            ),
+            repr(self.get_params(deep=False)),
         )
 
 
