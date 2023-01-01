@@ -70,7 +70,7 @@ class LSTMFCNClassifier(BaseDeepClassifier):
 
     def __init__(
         self,
-        n_epochs=100,
+        n_epochs=2000,
         batch_size=128,
         dropout=0.8,
         kernel_sizes=(8, 5, 3),
@@ -84,7 +84,6 @@ class LSTMFCNClassifier(BaseDeepClassifier):
 
         super(LSTMFCNClassifier, self).__init__()
 
-        # calced in fit
         self.classes_ = None
         self.input_shape = None
         self.model_ = None
@@ -225,11 +224,19 @@ class LSTMFCNClassifier(BaseDeepClassifier):
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
         param1 = {
-            "n_epochs": 50,
+            "n_epochs": 25,
+            "batch_size": 16,
+            "kernel_size": (5, 4, 3),
+            "filter_size": (8, 16, 8),
         }
 
         param2 = {
-            "n_epochs": 100,
+            "n_epochs": 50,
+            "batch_size": 8,
+            "kernel_size": (3, 2, 1),
+            "filter_size": (4, 8, 4),
+            "lstm_size": 4,
+            "attention": True,
         }
 
         return [param1, param2]
