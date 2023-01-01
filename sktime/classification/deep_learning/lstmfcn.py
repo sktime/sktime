@@ -225,17 +225,17 @@ class LSTMFCNClassifier(BaseDeepClassifier):
         """
         param1 = {
             "n_epochs": 25,
-            "batch_size": 16,
-            "kernel_sizes": (5, 4, 3),
-            "filter_sizes": (8, 16, 8),
+            "batch_size": 4,
+            "kernel_sizes": (3, 2, 1),
+            "filter_sizes": (2, 4, 2),
         }
 
         param2 = {
-            "n_epochs": 50,
-            "batch_size": 8,
+            "n_epochs": 5,
+            "batch_size": 2,
             "kernel_sizes": (3, 2, 1),
-            "filter_sizes": (4, 8, 4),
-            "lstm_size": 4,
+            "filter_sizes": (2, 4, 2),
+            "lstm_size": 2,
             "attention": True,
         }
 
