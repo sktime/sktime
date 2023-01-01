@@ -67,6 +67,7 @@ from sktime.datatypes import (
 from sktime.datatypes._series_as_panel import convert_to_scitype
 from sktime.utils.sklearn import (
     is_sklearn_classifier,
+    is_sklearn_clusterer,
     is_sklearn_regressor,
     is_sklearn_transformer,
 )
@@ -177,6 +178,7 @@ class BaseTransformer(BaseEstimator):
         if (
             isinstance(other, BaseTransformer)
             or is_sklearn_classifier(other)
+            or is_sklearn_clusterer(other)
             or is_sklearn_regressor(other)
             or is_sklearn_transformer(other)
         ):

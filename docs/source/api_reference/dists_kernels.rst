@@ -1,4 +1,4 @@
-.. _transformations_ref:
+.. _transformations_pairwise_ref:
 
 Time series distances/kernels
 =============================
@@ -13,6 +13,12 @@ Below, we list separately pairwise transformers for time series, and pairwise tr
 .. automodule:: sktime.dists_kernels
    :no-members:
    :no-inherited-members:
+
+All time series distances and kernels in ``sktime``can be listed using the ``sktime.registry.all_estimators`` utility,
+using ``estimator_types="transformer-pairwise-panel"``, optionally filtered by tags.
+Valid tags can be listed using ``sktime.registry.all_tags``.
+
+Distances and kernels for vector-valued features can be listed using ``estimator_types="transformer-pairwise"``.
 
 Time series distances/kernels
 -----------------------------

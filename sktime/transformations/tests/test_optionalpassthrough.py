@@ -24,8 +24,8 @@ def test_optionalpassthrough():
         SlidingWindowSplitter,
     )
     from sktime.forecasting.naive import NaiveForecaster
+    from sktime.transformations.compose import OptionalPassthrough
     from sktime.transformations.series.adapt import TabularToSeriesAdaptor
-    from sktime.transformations.series.compose import OptionalPassthrough
     from sktime.transformations.series.detrend import Deseasonalizer
 
     # create pipeline

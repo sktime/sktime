@@ -76,6 +76,24 @@ class BaseObject(_BaseEstimator):
         self._tags_dynamic = dict()
         super(BaseObject, self).__init__()
 
+    def __eq__(self, other):
+        """Equality dunder. Checks equal class and parameters.
+
+        Returns True iff result of get_params(deep=False)
+        results in equal parameter sets.
+
+        Nested BaseObject descendants from get_params are compared via __eq__ as well.
+        """
+        from sktime.utils._testing.deep_equals import deep_equals
+
+        if not isinstance(other, BaseObject):
+            return False
+
+        self_params = self.get_params(deep=False)
+        other_params = other.get_params(deep=False)
+
+        return deep_equals(self_params, other_params)
+
     def reset(self):
         """Reset the object to a clean post-init state.
 

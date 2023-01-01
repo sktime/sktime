@@ -1,17 +1,29 @@
 # -*- coding: utf-8 -*-
 """Test detrenders."""
+import numpy as np
+import pandas as pd
+import pytest
 
-__author__ = ["mloning"]
+from sktime.datasets import load_airline
+from sktime.forecasting.tests.test_trend import get_expected_polynomial_coefs
+from sktime.forecasting.trend import PolynomialTrendForecaster
+from sktime.transformations.series.detrend import Detrender
+
+__author__ = ["mloning", "KishManani"]
 __all__ = []
 
 
-def test_polynomial_detrending():
-    import numpy as np
-    import pandas as pd
+@pytest.fixture()
+def y_series():
+    return load_airline()
 
-    from sktime.forecasting.tests.test_trend import get_expected_polynomial_coefs
-    from sktime.forecasting.trend import PolynomialTrendForecaster
-    from sktime.transformations.series.detrend import Detrender
+
+@pytest.fixture()
+def y_dataframe():
+    return load_airline().to_frame()
+
+
+def test_polynomial_detrending():
 
     y = pd.Series(np.arange(20) * 0.5) + np.random.normal(0, 1, size=20)
     forecaster = PolynomialTrendForecaster(degree=1, with_intercept=True)
@@ -34,3 +46,79 @@ def test_polynomial_detrending():
     actual = transformer.transform(y)
     expected = y - expected_trend
     np.testing.assert_array_almost_equal(actual, expected)
+
+
+def test_multiplicative_detrending_series(y_series):
+    """Tests we get the expected result when setting `model=multiplicative`."""
+    # Load test dataset
+    y = y_series
+
+    # Get the trend
+    forecaster = PolynomialTrendForecaster(degree=1, with_intercept=True)
+    trend = forecaster.fit_predict(y, fh=y.index)
+
+    # De-trend the time series
+    detrender = Detrender(forecaster, model="multiplicative")
+    y_transformed = detrender.fit_transform(y)
+
+    # Compute the expected de-trended time series
+    expected = y / trend
+
+    pd.testing.assert_series_equal(y_transformed, expected)
+
+
+def test_multiplicative_detrending_dataframe(y_dataframe):
+    """Tests we get the expected result when setting `model=multiplicative`."""
+    # Load test dataset
+    y = y_dataframe
+
+    # Get the trend
+    forecaster = PolynomialTrendForecaster(degree=1, with_intercept=True)
+    trend = forecaster.fit_predict(y, fh=y.index)
+
+    # De-trend the time series
+    detrender = Detrender(forecaster, model="multiplicative")
+    y_transformed = detrender.fit_transform(y)
+
+    # Compute the expected de-trended time series
+    expected = y / trend
+
+    pd.testing.assert_frame_equal(y_transformed, expected)
+
+
+def test_additive_detrending_series(y_series):
+    """Tests we get the expected result when setting `model=additive`."""
+    # Load test dataset
+    y = y_series
+
+    # Get the trend
+    forecaster = PolynomialTrendForecaster(degree=1, with_intercept=True)
+    trend = forecaster.fit_predict(y, fh=y.index)
+
+    # De-trend the time series
+    detrender = Detrender(forecaster, model="additive")
+    y_transformed = detrender.fit_transform(y)
+
+    # Compute the expected de-trended time series
+    expected = y - trend
+
+    pd.testing.assert_series_equal(y_transformed, expected)
+
+
+def test_additive_detrending_dataframe(y_dataframe):
+    """Tests we get the expected result when setting `model=additive`."""
+    # Load test dataset
+    y = y_dataframe
+
+    # Get the trend
+    forecaster = PolynomialTrendForecaster(degree=1, with_intercept=True)
+    trend = forecaster.fit_predict(y, fh=y.index)
+
+    # De-trend the time series
+    detrender = Detrender(forecaster, model="additive")
+    y_transformed = detrender.fit_transform(y)
+
+    # Compute the expected de-trended time series
+    expected = y - trend
+
+    pd.testing.assert_frame_equal(y_transformed, expected)
