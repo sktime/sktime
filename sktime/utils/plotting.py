@@ -23,7 +23,7 @@ def plot_series(
     labels=None,
     markers=None,
     colors=None,
-    suptitle=None,
+    title=None,
     x_label=None,
     y_label=None,
     ax=None,
@@ -42,7 +42,7 @@ def plot_series(
         The length of the list has to match with the number of series.
     colors: list, default = None
         The colors to use for plotting each series. Must contain one color per series
-    suptitle: str, default = None
+    title: str, default = None
         The text to use as the figure's suptitle
     pred_interval: pd.DataFrame, default = None
         Output of `forecaster.predict_interval()`. Contains columns for lower
