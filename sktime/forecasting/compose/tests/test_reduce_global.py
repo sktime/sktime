@@ -11,7 +11,6 @@ import random
 import numpy as np
 import pandas as pd
 import pytest
-
 from sklearn.ensemble import (
     GradientBoostingRegressor,
     HistGradientBoostingRegressor,
@@ -27,7 +26,6 @@ from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.performance_metrics.forecasting import mean_absolute_percentage_error
 from sktime.transformations.series.summarize import WindowSummarizer
 from sktime.utils.validation._dependencies import _check_soft_dependencies
-
 
 # Load data that will be the basis of tests
 y = load_airline()
