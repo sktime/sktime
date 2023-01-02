@@ -88,7 +88,6 @@ def _check_soft_dependencies(
     else:
         raise TypeError("obj must be a class, an object, a str, or None")
 
-
     for package in packages:
 
         try:
