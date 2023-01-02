@@ -97,7 +97,7 @@ def _adapt_y_pred(y_pred):
     return y_pred.iloc[:, 0]
 
 
-class HCrystalBallForecaster(BaseForecaster):
+class HCrystalBallAdapter(BaseForecaster):
     """Adapter for using `hcrystalball` forecasters in sktime.
 
     Adapter class - wraps any forecaster from `hcrystalball`
@@ -118,7 +118,7 @@ class HCrystalBallForecaster(BaseForecaster):
     def __init__(self, model):
 
         self.model = model
-        super(HCrystalBallForecaster, self).__init__()
+        super(HCrystalBallAdapter, self).__init__()
 
     def _fit(self, y, X=None, fh=None):
         """Fit to training data.
