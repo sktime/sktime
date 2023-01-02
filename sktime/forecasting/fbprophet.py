@@ -23,8 +23,9 @@ class Prophet(_ProphetAdapter):
     Data can be passed in one of the sktime compatible formats,
     naming a column `ds` such as in the prophet package is not necessary.
 
-    Integer indices can also be passed, in which case internally a conversion
-    to days since Jan 1, 2000 is carried out before passing to prophet.
+    Unlike vanilla `prophet`, also supports integer/range and period index:
+    * integer/range index is interpreted as days since Jan 1, 2000
+    * `PeriodIndex` is converted using the `pandas` method `to_timestamp`
 
     Parameters
     ----------
