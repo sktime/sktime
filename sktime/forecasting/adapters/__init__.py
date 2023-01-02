@@ -4,4 +4,4 @@
 
 __all__ = ["HCrystalBallAdapter"]
 
-from sktime.forecasting.adapters.hcrystalball import HCrystalBallAdapter
+from sktime.forecasting.adapters._hcrystalball import HCrystalBallAdapter
