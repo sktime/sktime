@@ -142,8 +142,8 @@ def plot_series(
     ax.xaxis.set_major_locator(MaxNLocator(integer=True))
 
     # Set the figure's title
-    if suptitle is not None:
-        fig.suptitle(suptitle, size="xx-large")
+    if title is not None:
+        fig.suptitle(title, size="xx-large")
 
     # Label the x and y axes
     if x_label is not None:
