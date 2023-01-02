@@ -161,13 +161,6 @@ class HCrystalBallAdapter(BaseForecaster):
         y_pred = self.model_.predict(X=X_pred)
         return _adapt_y_pred(y_pred)
 
-    def get_fitted_params(self):
-        """Get fitted parameters."""
-        raise NotImplementedError()
-
-    def _compute_pred_err(self, alphas):
-        raise NotImplementedError()
-
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
@@ -182,7 +175,12 @@ class HCrystalBallAdapter(BaseForecaster):
         -------
         params : dict or list of dict
         """
-        from hcrystalball.wrappers import HoltSmoothingWrapper
+        if _check_soft_dependencies("hcrystalball", severity="none"):
+            from hcrystalball.wrappers import HoltSmoothingWrapper
 
-        params = {"model": HoltSmoothingWrapper()}
+            params = {"model": HoltSmoothingWrapper()}
+
+        else:
+            params = {"model": 42}
+
         return params
