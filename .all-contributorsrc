@@ -41,15 +41,6 @@
       ]
     },
     {
-      "login": "badrmarani",
-      "name": "Badr-Eddine Marani",
-      "avatar_url": "https://avatars.githubusercontent.com/badrmarani",
-      "profile": "https://github.com/badrmarani",
-      "contributions": [
-        "code"
-      ]
-    },
-    {
       "login": "sajaysurya",
       "name": "Sajaysurya Ganesh",
       "avatar_url": "https://avatars2.githubusercontent.com/u/25329624?v=4",
@@ -1902,6 +1893,15 @@
       ]
     },
     {
+      "login": "badrmarani",
+      "name": "Badr-Eddine Marani",
+      "avatar_url": "https://avatars.githubusercontent.com/badrmarani",
+      "profile": "https://github.com/badrmarani",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
       "login": "adoherty21",
       "name": "adoherty21",
       "avatar_url": "https://avatars.githubusercontent.com/u/52799751?s=400&v=4",
@@ -1939,12 +1939,32 @@
       ]
     },
     {
+      "login": "xxl4tomxu98",
+      "name": "Tom Xu",
+      "avatar_url": "https://avatars.githubusercontent.com/u/62292177?s=40&v=4",
+      "profile": "https://github.com/xxl4tomxu98",
+      "contributions": [
+        "code",
+        "doc"
+      ]
+    },
+    {
       "login": "nshahpazov",
       "name": "Nikola Shahpazov",
       "avatar_url": "https://avatars.githubusercontent.com/nshahpazov",
       "profile": "https://www.linkedin.com/in/nshahpazov/",
       "contributions": [
         "doc"
+      ]
+    },
+    {
+      "login": "dainelli98",
+      "name": "Daniel Martín Martínez",
+      "avatar_url": "https://avatars.githubusercontent.com/dainelli98",
+      "profile": "https://www.linkedin.com/in/daniel-martin-martinez",
+      "contributions": [
+        "doc",
+        "bug"
       ]
     }
   ]
