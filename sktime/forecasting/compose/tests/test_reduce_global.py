@@ -2,11 +2,16 @@
 """Test extraction of features across (shifted) windows."""
 __author__ = ["danbartl"]
 
+# HistGradientBoostingRegressor requires experimental flag in old sklearn versions
+if _check_soft_dependencies("sklearn<1.0", severity="none"):
+    from sklearn.experimental import enable_hist_gradient_boosting  # noqa
+
 import random
 
 import numpy as np
 import pandas as pd
 import pytest
+
 from sklearn.ensemble import (
     GradientBoostingRegressor,
     HistGradientBoostingRegressor,
@@ -21,6 +26,8 @@ from sktime.forecasting.compose import make_reduction
 from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.performance_metrics.forecasting import mean_absolute_percentage_error
 from sktime.transformations.series.summarize import WindowSummarizer
+from sktime.utils.validation._dependencies import _check_soft_dependencies
+
 
 # Load data that will be the basis of tests
 y = load_airline()
