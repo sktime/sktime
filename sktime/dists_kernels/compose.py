@@ -239,7 +239,7 @@ class PwTrafoPanelPipeline(_HeterogenousMetaEstimator, BasePairwiseTransformerPa
         # transformer has fit, 1 transformer, name/estimator pair list
         params2 = {
             "pw_trafo": FlatDist.create_test_instance(),
-            "transformers": [("boxcox", BoxCoxTransformer())]
+            "transformers": [("boxcox", BoxCoxTransformer())],
         }
 
         return [params1, params2]

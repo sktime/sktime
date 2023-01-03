@@ -694,7 +694,6 @@ class SummaryTransformer(BaseTransformer):
 
         return Xt
 
-
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
