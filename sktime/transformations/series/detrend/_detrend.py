@@ -6,6 +6,9 @@
 __all__ = ["Detrender"]
 __author__ = ["mloning", "SveaMeyer13", "KishManani", "fkiraly"]
 
+import pandas as pd
+
+from sktime.datatypes import update_data
 from sktime.forecasting.base._fh import ForecastingHorizon
 from sktime.forecasting.trend import PolynomialTrendForecaster
 from sktime.transformations.base import BaseTransformer
@@ -113,8 +116,30 @@ class Detrender(BaseTransformer):
         -------
         self: a fitted instance of the estimator
         """
-        self.forecaster_.fit(y=X, X=y)
+        if not self.forecaster.get_tag("requires-fh-in-fit", True):
+            self.forecaster_.fit(y=X, X=y)
+        else:
+            self._X = X
+            self._y = y
         return self
+
+    def _get_fh_from_X(self, X):
+        """Obtain fh from X, which can be simple or hierarchical."""
+        if not isinstance(X.index, pd.MultiIndex):
+            time_index = X.index
+        else:
+            time_index = X.index.get_level_values(-1).unique()
+        return ForecastingHorizon(time_index, is_relative=False)
+
+    def _get_fitted_forecaster(self, X, y):
+        """Obtain fitted forecaster from self."""
+        if self.forecaster.get_tag("requires-fh-in-fit", True):
+            X = update_data(self._X, X)
+            y = update_data(self._y, y)
+            forecaster = self.forecaster_.clone().fit(y=X, X=y)
+        else:
+            forecaster = self.forecaster_
+        return forecaster
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
@@ -133,8 +158,10 @@ class Detrender(BaseTransformer):
         Xt : pd.Series or pd.DataFrame, same type as X
             transformed version of X, detrended series
         """
-        fh = ForecastingHorizon(X.index, is_relative=False)
-        X_pred = self.forecaster_.predict(fh=fh, X=y)
+        fh = self._get_fh_from_X(X)
+        forecaster = self._get_fitted_forecaster(X, y)
+
+        X_pred = forecaster.predict(fh=fh, X=y)
 
         if self.model == "additive":
             return X - X_pred
@@ -156,8 +183,10 @@ class Detrender(BaseTransformer):
         Xt : pd.Series or pd.DataFrame, same type as X
             inverse transformed version of X
         """
-        fh = ForecastingHorizon(X.index, is_relative=False)
-        X_pred = self.forecaster_.predict(fh=fh, X=y)
+        fh = self._get_fh_from_X(X)
+        forecaster = self._get_fitted_forecaster(X, y)
+
+        X_pred = forecaster.predict(fh=fh, X=y)
 
         if self.model == "additive":
             return X + X_pred
@@ -183,7 +212,11 @@ class Detrender(BaseTransformer):
         -------
         self : an instance of self
         """
-        self.forecaster_.update(y=X, X=y, update_params=update_params)
+        if not self.forecaster.get_tag("requires-fh-in-fit", True):
+            self.forecaster_.update(y=X, X=y, update_params=update_params)
+        else:
+            self._X = update_data(self._X, X)
+            self._y = update_data(self._y, y)
         return self
 
     @classmethod
