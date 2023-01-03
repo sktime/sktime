@@ -116,7 +116,7 @@ class Detrender(BaseTransformer):
         -------
         self: a fitted instance of the estimator
         """
-        if not self.forecaster.get_tag("requires-fh-in-fit", True):
+        if not self.forecaster_.get_tag("requires-fh-in-fit", True):
             self.forecaster_.fit(y=X, X=y)
         else:
             self._X = X
@@ -133,7 +133,7 @@ class Detrender(BaseTransformer):
 
     def _get_fitted_forecaster(self, X, y, fh):
         """Obtain fitted forecaster from self."""
-        if self.forecaster.get_tag("requires-fh-in-fit", True):
+        if self.forecaster_.get_tag("requires-fh-in-fit", True):
             X = update_data(self._X, X)
             y = update_data(self._y, y)
             forecaster = self.forecaster_.clone().fit(y=X, X=y, fh=fh)
