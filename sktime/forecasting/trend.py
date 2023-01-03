@@ -574,7 +574,7 @@ class STLForecaster(BaseForecaster):
             {
                 "sp": 3,
                 "seasonal": 7,
-                "trend": 3,
+                "trend": 5,
                 "seasonal_deg": 2,
                 "trend_deg": 2,
                 "robust": True,
