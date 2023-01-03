@@ -320,6 +320,6 @@ class VAR(_StatsModelsAdapter):
         """
         params1 = {"maxlags": 3}
 
-        params2 = {"trend": "ctt", "ic": "aic"}
+        params2 = {"trend": "ctt"}  # breaks with "ic": "aic"}, see #4055
 
         return [params1, params2]
