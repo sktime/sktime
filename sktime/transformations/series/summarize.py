@@ -528,7 +528,7 @@ def _check_summary_function(summary_function):
     summary_function : list or tuple
         The summary functions that will be used to summarize the dataset.
     """
-    msg = f"""`summary_function` must be str or a list or tuple made up of
+    msg = f"""`summary_function` must be None, or str or a list or tuple made up of
           {ALLOWED_SUM_FUNCS}.
           """
     if isinstance(summary_function, str):
@@ -538,7 +538,7 @@ def _check_summary_function(summary_function):
     elif isinstance(summary_function, (list, tuple)):
         if not all([func in ALLOWED_SUM_FUNCS for func in summary_function]):
             raise ValueError(msg)
-    else:
+    elif summary_function is not None:
         raise ValueError(msg)
     return summary_function
 
@@ -586,14 +586,15 @@ class SummaryTransformer(BaseTransformer):
 
     Parameters
     ----------
-    summary_function : str, list, tuple, default=("mean", "std", "min", "max")
-        Either a string, or list or tuple of strings indicating the pandas
+    summary_function : str, list, tuple, or None, default=("mean", "std", "min", "max")
+        If not None, a string, or list or tuple of strings indicating the pandas
         summary functions that are used to summarize each column of the dataset.
         Must be one of ("mean", "min", "max", "median", "sum", "skew", "kurt",
         "var", "std", "mad", "sem", "nunique", "count").
+        If None, no summaries are calculated, and quantiles must be non-None.
     quantiles : str, list, tuple or None, default=(0.1, 0.25, 0.5, 0.75, 0.9)
         Optional list of series quantiles to calculate. If None, no quantiles
-        are calculated.
+        are calculated, and summary_function must be non-None.
     flatten_transform_index : bool, optional (default=True)
         if True, columns of return DataFrame are flat, by "variablename__feature"
         if False, columns are MultiIndex (variablename__feature)
@@ -667,11 +668,17 @@ class SummaryTransformer(BaseTransformer):
         summary_function = _check_summary_function(self.summary_function)
         quantiles = _check_quantiles(self.quantiles)
 
-        summary_value = X.agg(summary_function)
+        if summary_function is not None:
+            summary_value = X.agg(summary_function)
+
         if quantiles is not None:
             quantile_value = X.quantile(quantiles)
             quantile_value.index = [str(s) for s in quantile_value.index]
+
+        if summary_function is not None and quantiles is not None:
             summary_value = pd.concat([summary_value, quantile_value])
+        elif summary_function is None:
+            summary_value = quantile_value
 
         if isinstance(X, pd.Series):
             summary_value.name = X.name
@@ -686,3 +693,32 @@ class SummaryTransformer(BaseTransformer):
                 Xt.columns = flatten_multiindex(Xt.columns)
 
         return Xt
+
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        from sktime.forecasting.exp_smoothing import ExponentialSmoothing
+        from sktime.forecasting.trend import TrendForecaster
+        from sktime.utils.validation._dependencies import _check_estimator_deps
+
+        params1 = {}
+        params2 = {"summary_function": ["mean", "std", "skew"], "quantiles": None}
+        params3 = {"summary_function": None, "quantiles": (0.1, 0.2, 0.25)}
+
+        return [params1, params2, params3]
