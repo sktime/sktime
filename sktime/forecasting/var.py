@@ -319,5 +319,8 @@ class VAR(_StatsModelsAdapter):
         -------
         params : dict or list of dict
         """
-        params = {"maxlags": 3}
-        return params
+        params1 = {"maxlags": 3}
+
+        params2 = {"trend": "ctt", "ic": "aic"}
+
+        return [params1, params2]
