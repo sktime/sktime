@@ -559,7 +559,7 @@ def _check_quantiles(quantiles):
     quantiles : list or tuple
         The validated quantiles that will be used to summarize the dataset.
     """
-    msg = """`quantiles` must be int, float or a list or tuple made up of
+    msg = """`quantiles` must be None, int, float or a list or tuple made up of
           int and float values that are between 0 and 1.
           """
     if isinstance(quantiles, (int, float)):
