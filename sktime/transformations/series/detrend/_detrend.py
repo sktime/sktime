@@ -4,7 +4,7 @@
 """Implements transformations to detrend a time series."""
 
 __all__ = ["Detrender"]
-__author__ = ["mloning", "SveaMeyer13", "KishManani"]
+__author__ = ["mloning", "SveaMeyer13", "KishManani", "fkiraly"]
 
 import pandas as pd
 
@@ -73,10 +73,11 @@ class Detrender(BaseTransformer):
         "scitype:transform-output": "Series",
         # what scitype is returned: Primitives, Series, Panel
         "scitype:instancewise": True,  # is this an instance-wise transform?
-        "X_inner_mtype": ["pd.DataFrame", "pd.Series"],
+        "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         # which mtypes do _fit/_predict support for X?
-        "y_inner_mtype": "pd.DataFrame",  # which mtypes do _fit/_predict support for y?
-        "univariate-only": True,
+        "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
+        # which mtypes do _fit/_predict support for y?
+        "univariate-only": False,
         "fit_is_empty": False,
         "capability:inverse_transform": True,
         "transform-returns-same-time-index": True,
@@ -85,14 +86,18 @@ class Detrender(BaseTransformer):
     def __init__(self, forecaster=None, model="additive"):
         self.forecaster = forecaster
         self.model = model
-        self.forecaster_ = None
+
         super(Detrender, self).__init__()
 
-        # whether this transformer is univariate depends on the forecaster
-        #  this transformer is univariate iff the forecaster is univariate
-        if forecaster is not None:
-            fc_univ = forecaster.get_tag("scitype:y", "univariate") == "univariate"
-            self.set_tags(**{"univariate-only": fc_univ})
+        # default for forecaster - written to forecaster_ to not overwrite param
+        if self.forecaster is None:
+            self.forecaster_ = PolynomialTrendForecaster(degree=1)
+        else:
+            self.forecaster_ = forecaster.clone()
+
+        allowed_models = ("additive", "multiplicative")
+        if model not in allowed_models:
+            raise ValueError("`model` must be 'additive' or 'multiplicative'")
 
     def _fit(self, X, y=None):
         """Fit transformer to X and y.
@@ -110,27 +115,7 @@ class Detrender(BaseTransformer):
         -------
         self: a fitted instance of the estimator
         """
-        if self.forecaster is None:
-            self.forecaster = PolynomialTrendForecaster(degree=1)
-
-        # univariate: X is pd.Series
-        if isinstance(X, pd.Series):
-            forecaster = self.forecaster.clone()
-            # note: the y in the transformer is exogeneous in the forecaster, i.e., X
-            self.forecaster_ = forecaster.fit(y=X, X=y)
-        # multivariate
-        elif isinstance(X, pd.DataFrame):
-            self.forecaster_ = {}
-            for colname in X.columns:
-                forecaster = self.forecaster.clone()
-                self.forecaster_[colname] = forecaster.fit(y=X[colname], X=y)
-        else:
-            raise TypeError("X must be pd.Series or pd.DataFrame")
-
-        allowed_models = ("additive", "multiplicative")
-        if self.model not in allowed_models:
-            raise ValueError("`model` must be 'additive' or 'multiplicative'")
-
+        self.forecaster_.fit(y=X, X=y)
         return self
 
     def _transform(self, X, y=None):
@@ -151,36 +136,12 @@ class Detrender(BaseTransformer):
             transformed version of X, detrended series
         """
         fh = ForecastingHorizon(X.index, is_relative=False)
+        X_pred = self.forecaster_.predict(fh=fh, X=y)
 
-        # univariate: X is pd.Series
-        if isinstance(X, pd.Series):
-            # note: the y in the transformer is exogeneous in the forecaster, i.e., X
-            X_pred = self.forecaster_.predict(fh=fh, X=y)
-            if self.model == "additive":
-                return X - X_pred
-            elif self.model == "multiplicative":
-                return X / X_pred
-        # multivariate: X is pd.DataFrame
-        elif isinstance(X, pd.DataFrame):
-            Xt = X.copy()
-            # check if all columns are known
-            X_fit_keys = set(self.forecaster_.keys())
-            X_new_keys = set(X.columns)
-            difference = X_new_keys.difference(X_fit_keys)
-            if len(difference) != 0:
-                raise ValueError(
-                    "X contains columns that have not been "
-                    "seen in fit: " + str(difference)
-                )
-            for colname in Xt.columns:
-                X_pred = self.forecaster_[colname].predict(fh=fh, X=y)
-                if self.model == "additive":
-                    Xt[colname] = Xt[colname] - X_pred
-                elif self.model == "multiplicative":
-                    Xt[colname] = Xt[colname] / X_pred
-            return Xt
-        else:
-            raise TypeError("X must be pd.Series or pd.DataFrame")
+        if self.model == "additive":
+            return X - X_pred
+        elif self.model == "multiplicative":
+            return X / X_pred
 
     def _inverse_transform(self, X, y=None):
         """Logic used by `inverse_transform` to reverse transformation on `X`.
@@ -198,35 +159,12 @@ class Detrender(BaseTransformer):
             inverse transformed version of X
         """
         fh = ForecastingHorizon(X.index, is_relative=False)
+        X_pred = self.forecaster_.predict(fh=fh, X=y)
 
-        # univariate: X is pd.Series
-        if isinstance(X, pd.Series):
-            # note: the y in the transformer is exogeneous in the forecaster, i.e., X
-            X_pred = self.forecaster_.predict(fh=fh, X=y)
-            if self.model == "additive":
-                return X + X_pred
-            elif self.model == "multiplicative":
-                return X * X_pred
-        # multivariate: X is pd.DataFrame
-        if isinstance(X, pd.DataFrame):
-            X = X.copy()
-            # check if all columns are known
-            X_fit_keys = set(self.forecaster_.keys())
-            X_new_keys = set(X.columns)
-            difference = X_new_keys.difference(X_fit_keys)
-            if len(difference) != 0:
-                raise ValueError(
-                    "X contains columns that have not been "
-                    "seen in fit: " + str(difference)
-                )
-            for colname in X.columns:
-                X_pred = self.forecaster_[colname].predict(fh=fh, X=y)
-                if self.model == "additive":
-                    X[colname] = X[colname] + X_pred
-                elif self.model == "multiplicative":
-                    X[colname] = X[colname] * X_pred
-
-            return X
+        if self.model == "additive":
+            return X + X_pred
+        elif self.model == "multiplicative":
+            return X * X_pred
 
     def _update(self, X, y=None, update_params=True):
         """Update the parameters of the detrending estimator with new data.
@@ -247,24 +185,7 @@ class Detrender(BaseTransformer):
         -------
         self : an instance of self
         """
-        # multivariate
-        if isinstance(X, pd.DataFrame):
-            # check if all columns are known
-            X_fit_keys = set(self.forecaster_.keys())
-            X_new_keys = set(X.columns)
-            difference = X_new_keys.difference(X_fit_keys)
-            if len(difference) != 0:
-                raise ValueError(
-                    "Z contains columns that have not been "
-                    "seen in fit: " + str(difference)
-                )
-            for colname in X.columns:
-                self.forecaster_[colname].update(
-                    y=X[colname], X=y, update_params=update_params
-                )
-        # univariate
-        else:
-            self.forecaster_.update(y=X, X=y, update_params=update_params)
+        self.forecaster_.update(y=X, X=y, update_params=update_params)
         return self
 
     @classmethod
