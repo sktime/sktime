@@ -132,9 +132,9 @@ class PolynomialTrendForecaster(BaseForecaster):
 
     Parameters
     ----------
-    regressor : estimator object, default = None
+    regressor : sklearn regressor estimator object, default = None
         Define the regression model type. If not set, will default to
-         sklearn.linear_model.LinearRegression
+        sklearn.linear_model.LinearRegression
     degree : int, default = 1
         Degree of polynomial function
     with_intercept : bool, default=True
@@ -187,7 +187,7 @@ class PolynomialTrendForecaster(BaseForecaster):
         if self.regressor is None:
             regressor = LinearRegression(fit_intercept=False)
         else:
-            regressor = self.regressor
+            regressor = clone(self.regressor)
 
         # make pipeline with polynomial features
         self.regressor_ = make_pipeline(
