@@ -111,18 +111,19 @@ class Detrender(BaseTransformer):
         self: a fitted instance of the estimator
         """
         if self.forecaster is None:
-            self.forecaster = PolynomialTrendForecaster(degree=1)
+            forecaster_ = PolynomialTrendForecaster(degree=1)
+        else:
+            forecaster_ = self.forecaster.clone()
 
         # univariate: X is pd.Series
         if isinstance(X, pd.Series):
-            forecaster = self.forecaster.clone()
             # note: the y in the transformer is exogeneous in the forecaster, i.e., X
-            self.forecaster_ = forecaster.fit(y=X, X=y)
+            self.forecaster_ = forecaster_.fit(y=X, X=y)
         # multivariate
         elif isinstance(X, pd.DataFrame):
             self.forecaster_ = {}
             for colname in X.columns:
-                forecaster = self.forecaster.clone()
+                forecaster = forecaster_.clone()
                 self.forecaster_[colname] = forecaster.fit(y=X[colname], X=y)
         else:
             raise TypeError("X must be pd.Series or pd.DataFrame")
