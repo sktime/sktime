@@ -286,7 +286,7 @@ class STLForecaster(BaseForecaster):
         default forecaster_trend does not get sp as trend is independent
         to seasonality.
     seasonal : int, optional., default=7. Passed to `statsmodels` `STL`.
-        Length of the seasonal smoother. Must be an odd integer, and should
+        Length of the seasonal smoother. Must be an odd integer >=3, and should
         normally be >= 7 (default).
     trend : {int, None}, optional, default=None. Passed to `statsmodels` `STL`.
         Length of the trend smoother. Must be an odd integer. If not provided
@@ -573,7 +573,7 @@ class STLForecaster(BaseForecaster):
             {},
             {
                 "sp": 3,
-                "seasonal": 8,
+                "seasonal": 7,
                 "trend": 3,
                 "seasonal_deg": 2,
                 "trend_deg": 2,
