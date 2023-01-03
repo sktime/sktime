@@ -583,7 +583,7 @@ class STLForecaster(BaseForecaster):
                 "low_pass_jump": 2,
                 "forecaster_trend": LinearRegression(),
                 "forecaster_seasonal": RandomForestRegressor(),
-                "forecaster_trend": RandomForestRegressor(),
+                "forecaster_resid": RandomForestRegressor(),
             },
         ]
 
