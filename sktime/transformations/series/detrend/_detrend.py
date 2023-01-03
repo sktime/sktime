@@ -131,12 +131,12 @@ class Detrender(BaseTransformer):
             time_index = X.index.get_level_values(-1).unique()
         return ForecastingHorizon(time_index, is_relative=False)
 
-    def _get_fitted_forecaster(self, X, y):
+    def _get_fitted_forecaster(self, X, y, fh):
         """Obtain fitted forecaster from self."""
         if self.forecaster.get_tag("requires-fh-in-fit", True):
             X = update_data(self._X, X)
             y = update_data(self._y, y)
-            forecaster = self.forecaster_.clone().fit(y=X, X=y)
+            forecaster = self.forecaster_.clone().fit(y=X, X=y, fh=fh)
         else:
             forecaster = self.forecaster_
         return forecaster
@@ -159,7 +159,7 @@ class Detrender(BaseTransformer):
             transformed version of X, detrended series
         """
         fh = self._get_fh_from_X(X)
-        forecaster = self._get_fitted_forecaster(X, y)
+        forecaster = self._get_fitted_forecaster(X, y, fh)
 
         X_pred = forecaster.predict(fh=fh, X=y)
 
