@@ -712,10 +712,6 @@ class SummaryTransformer(BaseTransformer):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        from sktime.forecasting.exp_smoothing import ExponentialSmoothing
-        from sktime.forecasting.trend import TrendForecaster
-        from sktime.utils.validation._dependencies import _check_estimator_deps
-
         params1 = {}
         params2 = {"summary_function": ["mean", "std", "skew"], "quantiles": None}
         params3 = {"summary_function": None, "quantiles": (0.1, 0.2, 0.25)}
