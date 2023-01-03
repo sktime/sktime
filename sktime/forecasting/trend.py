@@ -99,6 +99,30 @@ class TrendForecaster(BaseForecaster):
         y_pred = self.regressor_.predict(X_pred)
         return pd.Series(y_pred, index=self.fh.to_absolute(self.cutoff))
 
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        from sklearn.ensemble import RandomForestRegressor
+
+        params_list = [{}, {"regressor": RandomForestRegressor()}]
+
+        return params_list
+
 
 class PolynomialTrendForecaster(BaseForecaster):
     """Forecast time series data with a polynomial trend.
@@ -199,6 +223,37 @@ class PolynomialTrendForecaster(BaseForecaster):
         X_pred = fh.to_numpy().reshape(-1, 1)
         y_pred = self.regressor_.predict(X_pred)
         return pd.Series(y_pred, index=self.fh.to_absolute(self.cutoff))
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        from sklearn.ensemble import RandomForestRegressor
+
+        params_list = [
+            {},
+            {
+                "regressor": RandomForestRegressor(),
+                "degree": 2,
+                "with_intercept": False,
+            },
+        ]
+
+        return params_list
 
 
 class STLForecaster(BaseForecaster):
@@ -493,3 +548,43 @@ class STLForecaster(BaseForecaster):
         self.forecaster_trend_.update(y=self.trend_, X=X, update_params=update_params)
         self.forecaster_resid_.update(y=self.resid_, X=X, update_params=update_params)
         return self
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        from sklearn.ensemble import RandomForestRegressor
+
+        params_list = [
+            {},
+            {
+                "sp": 3,
+                "seasonal": 8,
+                "trend": 3,
+                "seasonal_deg": 2,
+                "trend_deg": 2,
+                "robust": True,
+                "seasonal_jump": 2,
+                "trend_jump": 2,
+                "low_pass_jump": 2,
+                "forecaster_trend": LinearRegression(),
+                "forecaster_seasonal": RandomForestRegressor(),
+                "forecaster_resid": RandomForestRegressor(),
+            },
+        ]
+
+        return params_list
