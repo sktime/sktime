@@ -201,3 +201,9 @@ There are many ways to join the sktime community. We follow the [all-contributor
 * **clean, descriptive specification syntax** -- based on modern object-oriented design principles for data science.
 * **fair model assessment and benchmarking** -- build your models, inspect your models, check your models, avoid pitfalls.
 * **easily extensible** -- easy extension templates to add your own algorithms compatible with sktime's API.
+
+## :star2: Contributors
+
+<a href="https://github.com/sktime/sktime/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=sktime/sktime" />
+</a>
