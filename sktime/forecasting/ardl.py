@@ -417,7 +417,7 @@ class ARDL(_StatsModelsAdapter):
         )
         return y_pred.loc[valid_indices]
 
-    def _update(self, y, X=None, update_params=True):
+    def _update(self, y, X=None, update_params=False):
         """Update time series to incremental training data.
 
         private _update containing the core logic, called from update

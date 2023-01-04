@@ -1,6 +1,6 @@
-BSD 3-Clause License
+This software also includes code from the scikit-learn library, which is licensed under the BSD 3-Clause License.
 
-Copyright (c) 2019 - 2020 The sktime developers.
+Copyright (c) 2019 - 2023 The sktime developers.
 
 All rights reserved.
 
