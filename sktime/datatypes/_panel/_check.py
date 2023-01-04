@@ -115,6 +115,9 @@ def check_dflist_panel(obj, return_metadata=False, var_name="obj"):
     metadata["is_empty"] = np.any([res[2]["is_empty"] for res in check_res])
     metadata["has_nans"] = np.any([res[2]["has_nans"] for res in check_res])
     metadata["is_one_series"] = n == 1
+    metadata["n_panels"] = 1
+    metadata["is_one_panel"] = True
+
     metadata["n_instances"] = n
 
     return _ret(True, None, metadata, return_metadata)
@@ -143,6 +146,8 @@ def check_numpy3d_panel(obj, return_metadata=False, var_name="obj"):
 
     metadata["n_instances"] = obj.shape[0]
     metadata["is_one_series"] = obj.shape[0] == 1
+    metadata["n_panels"] = 1
+    metadata["is_one_panel"] = True
 
     # check whether there any nans; only if requested
     if return_metadata:
@@ -154,7 +159,7 @@ def check_numpy3d_panel(obj, return_metadata=False, var_name="obj"):
 check_dict[("numpy3D", "Panel")] = check_numpy3d_panel
 
 
-def check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj"):
+def check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj", panel=True):
 
     if not isinstance(obj, pd.DataFrame):
         msg = f"{var_name} must be a pd.DataFrame, found {type(obj)}"
@@ -172,8 +177,13 @@ def check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj"):
 
     # check that there are precisely two index levels
     nlevels = obj.index.nlevels
-    if not nlevels == 2:
+    if panel is True and not nlevels == 2:
         msg = f"{var_name} must have a MultiIndex with 2 levels, found {nlevels}"
+        return _ret(False, msg, None, return_metadata)
+    elif panel is False and not nlevels > 2:
+        msg = (
+            f"{var_name} must have a MultiIndex with 3 or more levels, found {nlevels}"
+        )
         return _ret(False, msg, None, return_metadata)
 
     # check that no dtype is object
@@ -225,10 +235,17 @@ def check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj"):
         )
         return _ret(False, msg, None, return_metadata)
 
+    if panel is True:
+        panel_inds = [1]
+    else:
+        panel_inds = inst_inds.droplevel(-1).unique()
+
     metadata = dict()
     metadata["is_univariate"] = len(obj.columns) < 2
     metadata["is_equally_spaced"] = is_equally_spaced
     metadata["is_empty"] = len(obj.index) < 1 or len(obj.columns) < 1
+    metadata["n_panels"] = len(panel_inds)
+    metadata["is_one_panel"] = len(panel_inds) == 1
     metadata["n_instances"] = len(inst_inds)
     metadata["is_one_series"] = len(inst_inds) == 1
     metadata["has_nans"] = obj.isna().values.any()
@@ -360,6 +377,8 @@ def is_nested_dataframe(obj, return_metadata=False, var_name="obj"):
     metadata["is_univariate"] = obj.shape[1] < 2
     metadata["n_instances"] = len(obj)
     metadata["is_one_series"] = len(obj) == 1
+    metadata["n_panels"] = 1
+    metadata["is_one_panel"] = True
     if return_metadata:
         metadata["has_nans"] = _nested_dataframe_has_nans(obj)
         metadata["is_equal_length"] = not _nested_dataframe_has_unequal(obj)
@@ -394,6 +413,8 @@ def check_numpyflat_Panel(obj, return_metadata=False, var_name="obj"):
     metadata["is_equal_length"] = True
     metadata["n_instances"] = obj.shape[0]
     metadata["is_one_series"] = obj.shape[0] == 1
+    metadata["n_panels"] = 1
+    metadata["is_one_panel"] = True
 
     # check whether there any nans; only if requested
     if return_metadata:
