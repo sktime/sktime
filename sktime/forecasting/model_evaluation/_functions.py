@@ -11,13 +11,11 @@ import warnings
 from typing import List, Optional, Union
 
 import numpy as np
-import numpy.typing as npt
 import pandas as pd
 
 from sktime.datatypes import check_is_scitype, convert_to
 from sktime.exceptions import FitFailedWarning
-from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
-from sktime.forecasting.model_selection._split import BaseSplitter
+from sktime.forecasting.base import ForecastingHorizon
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.utils.validation.forecasting import check_cv, check_scoring
 
@@ -207,10 +205,10 @@ def _evaluate_window(
 
 
 def evaluate(
-    forecaster: BaseForecaster,
-    cv: BaseSplitter,
-    y: npt.ArrayLike,
-    X: Optional[npt.ArrayLike] = None,
+    forecaster,
+    cv,
+    y,
+    X=None,
     strategy: str = "refit",
     scoring: Optional[Union[callable, List[callable]]] = None,
     return_data: bool = False,
@@ -223,9 +221,9 @@ def evaluate(
 
     Parameters
     ----------
-    forecaster : sktime.forecaster
+    forecaster : sktime BaseForecaster descendant
         sktime forecaster (concrete BaseForecaster descendant)
-    cv : Temporal cross-validation splitter
+    cv : sktime BaseSplitter descendant
         Splitter of how to split the data into test data and train data
     y : sktime time series container
         Target (endogeneous) time series used in the evaluation experiment
@@ -272,7 +270,8 @@ def evaluate(
         Row index is splitter index of train/test fold in `cv`.
         Entries in the i-th row are for the i-th train/test split in `cv`.
         Columns are as follows:
-        - test_{scoring.name}: (float) Model performance score.
+        - test_{scoring.name}: (float) Model performance score. If `scoring` is a list,
+            then there is a column withname `test_{scoring.name}` for each scorer.
         - fit_time: (float) Time in sec for `fit` or `update` on train fold.
         - pred_time: (float) Time in sec to `predict` from fitted estimator.
         - len_train_window: (int) Length of train window.
