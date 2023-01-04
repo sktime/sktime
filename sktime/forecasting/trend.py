@@ -567,7 +567,7 @@ class STLForecaster(BaseForecaster):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        from sklearn.ensemble import RandomForestRegressor
+        from sktime.forecasting.naive import NaiveForecaster
 
         params_list = [
             {},
@@ -581,9 +581,9 @@ class STLForecaster(BaseForecaster):
                 "seasonal_jump": 2,
                 "trend_jump": 2,
                 "low_pass_jump": 2,
-                "forecaster_trend": LinearRegression(),
-                "forecaster_seasonal": RandomForestRegressor(),
-                "forecaster_resid": RandomForestRegressor(),
+                "forecaster_trend": NaiveForecaster(strategy="drift"),
+                "forecaster_seasonal": NaiveForecaster(sp=3),
+                "forecaster_resid": NaiveForecaster(strategy="mean"),
             },
         ]
 
