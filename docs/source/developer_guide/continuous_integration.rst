@@ -15,8 +15,9 @@ Code quality checks
 
 .. _pre-commit: https://pre-commit.com
 
-We use `pre-commit`_ for code quality checks.  We recommend that you set this up locally as it will insure that you never run into code-quality errors!
-These checks run automatically before you make a new commit.  To setup, first install precommit in your developer environment:
+We use `pre-commit`_ for code quality checks (a process we also refer to as "linting" checks).  We recommend that you set this up locally as it will
+insure that you never run into code-quality errors when you make your first PR! These checks run automatically before you make a new commit.
+To setup, first install precommit in your developer environment:
 
 ::
    pip install pre-commit
