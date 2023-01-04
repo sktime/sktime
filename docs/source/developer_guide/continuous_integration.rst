@@ -6,6 +6,10 @@ Continuous integration
 We use continuous integration services on GitHub to automatically check
 if new pull requests do not break anything and meet code quality
 standards such as a common `coding style <#Coding-style>`__.
+Before setting up Continuous Integration, be sure that you have set
+up your developer environment, and installed a
+`developement version <https://www.sktime.org/en/stable/installation.html>`__
+ of sktime.
 
 .. contents::
    :local:
@@ -17,17 +21,12 @@ Code quality checks
 
 We use `pre-commit`_ for code quality checks (a process we also refer to as "linting" checks).  We recommend that you set this up locally as it will
 insure that you never run into code-quality errors when you make your first PR! These checks run automatically before you make a new commit.
-To setup, first install precommit in your developer environment:
-
-::
-   pip install pre-commit
-
-Then navigate the the sktime folder and install our pre-commit configuration:
+To setup, simply navigate to the sktime folder and install our pre-commit configuration:
 
 ::
    pre-commit install
 
-pre-commit should now automatically run anything you make a commit! Please let us know if you have any issues with this.
+pre-commit should now automatically run anything you make a commit! Please let us know if you encounter any issues getting this setup.
 
 
 
