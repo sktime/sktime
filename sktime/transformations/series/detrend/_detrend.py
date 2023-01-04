@@ -158,8 +158,8 @@ class Detrender(BaseTransformer):
         Xt : pd.Series or pd.DataFrame, same type as X
             transformed version of X, detrended series
         """
-        fh = self._get_fh_from_X(X)
-        forecaster = self._get_fitted_forecaster(X, y, fh)
+        fh = self._get_fh_from_X(X=X)
+        forecaster = self._get_fitted_forecaster(X=X, y=y, fh=fh)
 
         X_pred = forecaster.predict(fh=fh, X=y)
 
@@ -183,8 +183,8 @@ class Detrender(BaseTransformer):
         Xt : pd.Series or pd.DataFrame, same type as X
             inverse transformed version of X
         """
-        fh = self._get_fh_from_X(X)
-        forecaster = self._get_fitted_forecaster(X, y)
+        fh = self._get_fh_from_X(X=X)
+        forecaster = self._get_fitted_forecaster(X=X, y=y, fh=fh)
 
         X_pred = forecaster.predict(fh=fh, X=y)
 
