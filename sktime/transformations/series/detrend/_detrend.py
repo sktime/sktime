@@ -212,7 +212,7 @@ class Detrender(BaseTransformer):
         -------
         self : an instance of self
         """
-        if not self.forecaster.get_tag("requires-fh-in-fit", True):
+        if not self.forecaster_.get_tag("requires-fh-in-fit", True):
             self.forecaster_.update(y=X, X=y, update_params=update_params)
         else:
             self._X = update_data(self._X, X)
