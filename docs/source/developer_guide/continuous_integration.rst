@@ -13,13 +13,21 @@ standards such as a common `coding style <#Coding-style>`__.
 Code quality checks
 -------------------
 
-.. _precommit: https://pre-commit.com
+.. _pre-commit: https://pre-commit.com
 
-We use `pre-commit <precommit>`_ for code quality checks.
-These checks run automatically before you make a new commit.
+We use `pre-commit`_ for code quality checks.  We recommend that you set this up locally as it will insure that you never run into code-quality errors!
+These checks run automatically before you make a new commit.  To setup, first install precommit in your developer environment:
 
-See the guide on `coding style <#Coding-style>`__ on how to set up local code quality checks,
-to ensure the code reaches GitHub CI while satisfying code formatting requirements.
+::
+   pip install pre-commit
+
+Then navigate the the sktime folder and install our pre-commit configuration:
+
+::
+   pre-commit install
+
+pre-commit should now automatically run anything you make a commit! Please let us know if you have any issues with this.
+
 
 
 Unit testing
@@ -61,9 +69,9 @@ Test coverage
 
 .. _codecov: https://codecov.io
 .. _coverage: https://coverage.readthedocs.io/
-.. _pytestcov: https://github.com/pytest-dev/pytest-cov
+.. _pytest-cov: https://github.com/pytest-dev/pytest-cov
 
-We use `coverage`_, the `pytest-cov <pytestcov>`_ plugin, and `codecov`_ for test coverage.
+We use `coverage`_, the `pytest-cov`_ plugin, and `codecov`_ for test coverage.
 
 Infrastructure
 --------------
