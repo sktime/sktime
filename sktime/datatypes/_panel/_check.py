@@ -43,10 +43,14 @@ __all__ = ["check_dict"]
 import numpy as np
 import pandas as pd
 
-from sktime.datatypes._series._check import check_pddataframe_series
-from sktime.utils.validation.series import is_integer_index
+from sktime.datatypes._series._check import (
+    _index_equally_spaced,
+    check_pddataframe_series,
+)
+from sktime.utils.validation.series import is_in_valid_index_types, is_integer_index
 
 VALID_MULTIINDEX_TYPES = (pd.RangeIndex, pd.Index)
+VALID_INDEX_TYPES = (pd.RangeIndex, pd.PeriodIndex, pd.DatetimeIndex)
 
 
 def is_in_valid_multiindex_types(x) -> bool:
@@ -161,8 +165,9 @@ def check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj"):
         return _ret(False, msg, None, return_metadata)
 
     # check that columns are unique
-    if not obj.columns.is_unique:
-        msg = f"{var_name} must have unique column indices, but found {obj.columns}"
+    col_names = obj.columns
+    if not col_names.is_unique:
+        msg = f"{var_name} must have unique column indices, but found {col_names}"
         return _ret(False, msg, None, return_metadata)
 
     # check that there are precisely two index levels
@@ -171,41 +176,63 @@ def check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj"):
         msg = f"{var_name} must have a MultiIndex with 2 levels, found {nlevels}"
         return _ret(False, msg, None, return_metadata)
 
-    # check instance index being integer or range index
-    instind = obj.index.get_level_values(0)
-    if not is_in_valid_multiindex_types(instind):
+    # check that no dtype is object
+    if "object" in obj.dtypes.values:
+        msg = f"{var_name} should not have column of 'object' dtype"
+        return _ret(False, msg, None, return_metadata)
+
+    # check whether the time index is of valid type
+    if not is_in_valid_index_types(obj.index.get_level_values(-1)):
         msg = (
-            f"instance index (first/highest index) must be {VALID_MULTIINDEX_TYPES}, "
-            f"integer index, but found {type(instind)}"
+            f"{type(obj.index)} is not supported for {var_name}, use "
+            f"one of {VALID_INDEX_TYPES} or integer index instead."
         )
         return _ret(False, msg, None, return_metadata)
 
-    inst_inds = obj.index.get_level_values(0).unique()
-    # inst_inds = np.unique(obj.index.get_level_values(0))
+    time_obj = obj.reset_index(-1).drop(obj.columns, axis=1)
+    time_grp = time_obj.groupby(level=0, group_keys=True, as_index=True)
+    inst_inds = time_obj.index.unique()
 
-    check_res = [
-        check_pddataframe_series(obj.loc[i], return_metadata=True) for i in inst_inds
-    ]
-    bad_inds = [i for i in range(len(inst_inds)) if not check_res[i][0]]
-
-    if len(bad_inds) > 0:
+    # check instance index being integer or range index
+    if not is_in_valid_multiindex_types(inst_inds):
         msg = (
-            f"{var_name}.loc[i] must be Series of mtype pd.DataFrame,"
-            f" not at i={bad_inds}"
+            f"instance index (first/highest index) must be {VALID_MULTIINDEX_TYPES}, "
+            f"integer index, but found {type(inst_inds)}"
+        )
+        return _ret(False, msg, None, return_metadata)
+
+    if pd.__version__ < "1.5.0":
+        # Earlier versions of pandas are very slow for this type of operation.
+        is_equally_list = [_index_equally_spaced(obj.loc[i].index) for i in inst_inds]
+        is_equally_spaced = all(is_equally_list)
+        montonic_list = [obj.loc[i].index.is_monotonic for i in inst_inds]
+        time_is_monotonic = len([i for i in montonic_list if i is False]) == 0
+    else:
+        timedelta_by_grp = (
+            time_grp.diff().groupby(level=0, group_keys=True, as_index=True).nunique()
+        )
+        timedelta_unique = timedelta_by_grp.iloc[:, 0].unique()
+        is_equally_spaced = len(timedelta_unique) == 1
+        time_is_monotonic = all(timedelta_unique >= 0)
+
+    is_equal_length = time_grp.count()
+
+    # Check time index is ordered in time
+    if not time_is_monotonic:
+        msg = (
+            f"The (time) index of {var_name} must be sorted monotonically increasing, "
+            f"but found: {obj.index.get_level_values(-1)}"
         )
         return _ret(False, msg, None, return_metadata)
 
     metadata = dict()
-    metadata["is_univariate"] = np.all([res[2]["is_univariate"] for res in check_res])
-    metadata["is_equally_spaced"] = np.all(
-        [res[2]["is_equally_spaced"] for res in check_res]
-    )
-    metadata["is_empty"] = np.any([res[2]["is_empty"] for res in check_res])
+    metadata["is_univariate"] = len(obj.columns) < 2
+    metadata["is_equally_spaced"] = is_equally_spaced
+    metadata["is_empty"] = len(obj.index) < 1 or len(obj.columns) < 1
     metadata["n_instances"] = len(inst_inds)
     metadata["is_one_series"] = len(inst_inds) == 1
     metadata["has_nans"] = obj.isna().values.any()
-    metadata["is_equal_length"] = _list_all_equal([len(obj.loc[i]) for i in inst_inds])
-
+    metadata["is_equal_length"] = is_equal_length.nunique().shape[0] == 1
     return _ret(True, None, metadata, return_metadata)
 
 

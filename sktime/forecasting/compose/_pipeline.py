@@ -1264,6 +1264,10 @@ class ForecastX(BaseForecaster):
         if X is not None:
             X_pred = X_pred.combine_first(X)
 
+        # order columns so they are in the same order as in X seen
+        X_cols_ordered = [col for col in self._X.columns if col in X_pred.columns]
+        X_pred = X_pred[X_cols_ordered]
+
         return X_pred
 
     def _predict(self, fh=None, X=None):
