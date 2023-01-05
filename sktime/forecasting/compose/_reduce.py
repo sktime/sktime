@@ -7,8 +7,8 @@
 __author__ = [
     "mloning",
     "AyushmaanSeth",
-    "Kavin Anand",
-    "Luis Zugasti",
+    "kAnand77",
+    "LuisZugasti",
     "Lovkush-A",
     "fkiraly",
 ]
@@ -1333,9 +1333,11 @@ def make_reduction(
     window_length : int, optional (default=10)
         Window length used in sliding window transformation.
     scitype : str, optional (default="infer")
-        Must be one of "infer", "tabular-regressor" or "time-series-regressor". If
-        the scitype cannot be inferred, please specify it explicitly.
-        See :term:`scitype`.
+        Legacy argument for downwards compatibility, should not be used.
+        `make_reduction` will automatically infer the correct type of `estimator`.
+        This internal inference can be force-overridden by the `scitype` argument.
+        Must be one of "infer", "tabular-regressor" or "time-series-regressor".
+        If the scitype cannot be inferred, this is a bug and should be reported.
     transformers: list of transformers (default = None)
         A suitable list of transformers that allows for using an en-bloc approach with
         make_reduction. This means that instead of using the raw past observations of
@@ -1477,10 +1479,13 @@ def _infer_scitype(estimator):
     elif is_sklearn_regressor(estimator):
         return "tabular-regressor"
     else:
-        raise ValueError(
+        warn(
             "The `scitype` of the given `estimator` cannot be inferred. "
-            "Please specify the `scitype` explicitly."
+            'Assuming "tabular-regressor" = scikit-learn regressor interface. '
+            "If this warning is followed by an unexpected exception, "
+            "please consider report as a bug on the sktime issue tracker."
         )
+        return "tabular-regressor"
 
 
 def _check_strategy(strategy):
