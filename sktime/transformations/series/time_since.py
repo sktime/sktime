@@ -33,11 +33,13 @@ class TimeSince(BaseTransformer):
     ----------
     start : a list of start times, optional, default=None (use earliest time in index)
         a "start time" can be one of the following types:
-        int - Start time to compute the time elapsed, use when index is integer
-        time-like: `Period` or `datetime`
+
+        * int: Start time to compute the time elapsed, use when index is integer.
+        * time-like: `Period` or `datetime`
             Start time to compute the time elapsed.
-        str - String is converted to datetime/period using pd.to_datetime()/pd.Period()
-              to give the start time.
+        * str: String is converted to datetime or period, depending on the index type, \
+            to give the start time.
+
     to_numeric : string, optional (default=True)
         Return the integer number of periods elapsed since `start`; the period
         is defined by the frequency of the data. Converts datetime types to
@@ -48,7 +50,7 @@ class TimeSince(BaseTransformer):
         match a pandas offset alias:
         https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#offset-aliases
     keep_original_columns :  boolean, optional, default=False
-        Keep original columns in X passed to `.transform()`
+        Keep original columns in X passed to `.transform()`.
     positive_only :  boolean, optional, default=False
         Clips negative values to zero when `to_numeric` is True.
 
@@ -58,13 +60,13 @@ class TimeSince(BaseTransformer):
     >>> from sktime.transformations.series.time_since import TimeSince
     >>> X = load_airline()
 
-    Create a single column with time elapsed since start date of time series.
-    The output is in units of integer number of months, same as the index `freq`.
+        Create a single column with time elapsed since start date of time series.
+        The output is in units of integer number of months, same as the index `freq`.
     >>> transformer = TimeSince()
     >>> Xt = transformer.fit_transform(X)
 
-    Create multiple columns with different start times. The output is in units
-    of integer number of months, same as the index `freq`.
+        Create multiple columns with different start times. The output is in units
+        of integer number of months, same as the index `freq`.
     >>> transformer = TimeSince(["2000-01", "2000-02"])
     >>> Xt = transformer.fit_transform(X)
     """
@@ -182,7 +184,7 @@ class TimeSince(BaseTransformer):
                     f"Period index. Check that `start` is of type "
                     f"pd.Period or a pd.Period parsable string."
                 )
-            elif X.index.is_numeric() and not isinstance(start_, (int, np.integer)):
+            elif time_index.is_numeric() and not isinstance(start_, (int, np.integer)):
                 raise ValueError(
                     f"start_={start_} incompatible with a numeric index."
                     f"Check that `start` is an integer."
@@ -229,26 +231,47 @@ class TimeSince(BaseTransformer):
                     freq_ = _remove_digits_from_str(self.freq_)
                     freq_period = get_period_alias(freq_)
 
-                    # Convert `start` and datetime index to period.
-                    start_period = pd.Period(start_, freq=freq_period)
+                    # Convert `start` and `time_index` to period.
+                    # Casting `start_` to PeriodIndex using pd.period_range
+                    # here so we can later cast it to an int using
+                    # `astype(int)` in _get_period_diff_as_int().
+                    start_period = pd.period_range(
+                        start=start_, periods=1, freq=freq_period
+                    )
                     time_index_period = time_index.to_period(freq=freq_period)
-                    # Compute time differences and convert to integers.
-                    time_deltas_period = time_index_period - start_period
-                    time_deltas = _period_to_int(time_deltas_period)
+                    # Compute time differences.
+                    time_deltas = _get_period_diff_as_int(
+                        time_index_period, start_period
+                    )
+
                 elif isinstance(time_index, pd.PeriodIndex):
                     if pd.__version__ < "1.5.0":
                         # Earlier versions of pandas returned incorrect result
                         # when taking a difference between Periods when the frequency
                         # is a multiple of a unit (e.g. "15T"). Solution is to
                         # cast to lowest frequency when taking difference (e.g., "T").
-                        freq_ = _remove_digits_from_str(time_index.freqstr)
-                        time_deltas_period = time_index.to_timestamp().to_period(
-                            freq_
-                        ) - start_.to_timestamp().to_period(freq_)
+                        freq_ = _remove_digits_from_str(self.freq_)
+
+                        # Change freq of `start` and `time_index`.
+                        # Casting `start_` to PeriodIndex using pd.period_range
+                        # here so we can later cast it to an int using
+                        # `astype(int)` in _get_period_diff_as_int().
+                        start_period = pd.period_range(
+                            start=start_.to_timestamp(), periods=1, freq=freq_
+                        )
+                        time_index = time_index.to_timestamp().to_period(freq_)
                     else:
-                        time_deltas_period = time_index - start_
-                    time_deltas = _period_to_int(time_deltas_period)
-                elif X.index.is_numeric():
+                        # Casting `start_` to PeriodIndex using pd.period_range
+                        # here so we can later cast it to an int using
+                        # `astype(int)` in _get_period_diff_as_int().
+                        start_period = pd.period_range(
+                            start=start_, periods=1, freq=self.freq_
+                        )
+
+                    # Compute time differences.
+                    time_deltas = _get_period_diff_as_int(time_index, start_period)
+
+                elif time_index.is_numeric():
                     time_deltas = time_index - start_
             else:
                 time_deltas = time_index - start_
@@ -293,8 +316,8 @@ class TimeSince(BaseTransformer):
         ]
 
 
-def _period_to_int(x: pd.PeriodIndex | list[pd.offsets.DateOffset]) -> int:
-    return x.map(lambda y: y.n)
+def _get_period_diff_as_int(x: pd.PeriodIndex, y: pd.PeriodIndex) -> pd.Index:
+    return x.astype(int) - y.astype(int)
 
 
 def _remove_digits_from_str(x: str) -> str:
