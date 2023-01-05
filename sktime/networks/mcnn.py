@@ -49,7 +49,7 @@ class Classifier_MCNN:
     def split_train(self, train_x, train_y):
         # shuffle for splitting train set and dataset
         n = train_x.shape[0]
-        ind = np.arange(n)
+        ind = n.arange(n)
         np.random.shuffle(ind)  # shuffle the train set
 
         # split train set into train set and validation set
