@@ -196,6 +196,77 @@ def piecewise_normal(
     return np.concatenate(tuple(segments_data))
 
 
+def piecewise_multinomial(
+    n_trials: int,
+    lengths: npt.ArrayLike,
+    pvals: npt.ArrayLike,
+    random_state: Union[int, np.random.RandomState] = None,
+) -> npt.ArrayLike:
+    """
+    Generate series from segments.
+
+    Each segment has length specified in ``lengths`` and data sampled from a multinomial
+    distribution with a total number of experiments for each trial set from ``n_trials``
+    and the probability for each outcome stored inside a list contained in  ``p_vals``.
+
+    Parameters
+    ----------
+    n_trials : int
+        Number of experiments to run during each trial
+    lengths : array_like
+        Lengths of the segments to be generated
+    pvals : array_like
+        Set of probabilities for each outcome for each distribution
+    random_state : int or np.random.RandomState
+        Either a random seed or RandomState instance
+
+    Returns
+    -------
+    data : np.array
+        univariate or multivariate time series as np.array
+
+    Examples
+    --------
+    >>> from sktime.annotation.datagen import piecewise_multinomial
+    >>> piecewise_multinomial(20, lengths=[3, 2], pvals=[[1/4, 3/4], \
+        [3/4, 1/4]], random_state=42) # doctest: +SKIP
+    array([[ 4, 16],
+       [ 8, 12],
+       [ 6, 14],
+       [15,  5],
+       [17,  3]])
+
+    >>> from sktime.annotation.datagen import piecewise_multinomial
+    >>> piecewise_multinomial(10, lengths=[2, 4, 8], \
+        pvals=[[1, 0], [0, 1], [1, 0]]) # doctest: +SKIP
+    array([[10,  0],
+       [10,  0],
+       [ 0, 10],
+       [ 0, 10],
+       [ 0, 10],
+       [ 0, 10],
+       [10,  0],
+       [10,  0],
+       [10,  0],
+       [10,  0],
+       [10,  0],
+       [10,  0],
+       [10,  0],
+       [10,  0]])
+
+    """
+    rng = check_random_state(random_state)
+    assert len(lengths) == len(pvals)
+    assert all(sum(pval) == 1 for pval in pvals)
+    assert (np.array([len(pval) for pval in pvals]) == len(pvals[0])).all()
+
+    segments_data = [
+        rng.multinomial(n=n_trials, pvals=pval, size=[length])
+        for pval, length, in zip(pvals, lengths)
+    ]
+    return np.concatenate(tuple(segments_data))
+
+
 def labels_with_repeats(means: npt.ArrayLike, std_dev: npt.ArrayLike) -> npt.ArrayLike:
     """Generate labels for unique combinations of means and std_dev."""
     data = [means, std_dev]
