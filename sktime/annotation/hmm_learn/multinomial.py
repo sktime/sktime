@@ -10,7 +10,7 @@ Please see the original library
 from sktime.annotation.hmm_learn import BaseHMMLearn
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-__author__ = []
+__author__ = ["klam-data", "pyyim", "mgorlin"]
 __all__ = ["MultinomialHMM"]
 
 _check_soft_dependencies("hmmlearn.hmm", severity="warning")
