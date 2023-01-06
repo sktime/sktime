@@ -110,9 +110,6 @@ def test_reconcilerforecaster_exog(n_columns):
     forecaster = SARIMAX()
     estimator_instance = ReconcilerForecaster(forecaster, method="mint_shrink")
     fh = [1, 2]
-    # fit works ok
     estimator_instance.fit(y=y_train, X=X_train, fh=fh)
-    # no aggregation in X so it fails
     estimator_instance.predict(X=X_test)
-    # no aggregation in X or y so it fails again
     estimator_instance.update(y=y_test, X=X_test)
