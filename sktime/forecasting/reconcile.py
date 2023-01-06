@@ -42,16 +42,16 @@ class ReconcilerForecaster(BaseForecaster):
     ----------
     forecaster : estimator
         Estimator to generate base forecasts which are then reconciled
-    method : {"mint_cov", "mint_shrink", "ols", "wls_var", "wls_str",
+    method : {"mint_cov", "mint_shrink", "ols", "wls_var", "wls_str", \
             "bu", "td_fcst"}, default="mint_shrink"
-        The reconciliation approach applied to the forecasts based on
-            - "mint_cov" - sample covariance
-            - "mint_shrink" - covariance with shrinkage
-            - "ols" - ordinary least squares
-            - "wls_var" - weighted least squares (variance)
-            - "wls_str" - weighted least squares (structural)
-            - "bu" - bottom-up
-            - "td_fcst" - top down based on forecast proportions
+        The reconciliation approach applied to the forecasts based on:
+            * "mint_cov" - sample covariance
+            * "mint_shrink" - covariance with shrinkage
+            * "ols" - ordinary least squares
+            * "wls_var" - weighted least squares (variance)
+            * "wls_str" - weighted least squares (structural)
+            * "bu" - bottom-up
+            * "td_fcst" - top down based on forecast proportions
 
     See Also
     --------
