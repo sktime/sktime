@@ -236,25 +236,24 @@ class ForecastingPipeline(_Pipeline):
     to X. The forecaster can also be a TransformedTargetForecaster containing
     transformers to transform y.
 
-    For a list `t1`, `t2`, ..., `tN`, `f`, `tp1`, `tp2`, ..., `tpM`
-    where `t[i]` and `tp[i]` are transformers (`t` to pre-, `tp` to post-process), and
-    `f` is an sktime forecaster, the pipeline behaves as follows:
+    For steps: List of tuples like (“name”, forecaster/transformer), the
+    pipeline behaves as follows):
 
     `fit(y, X, fh)`  - If `X` is not given then it just passthrough the data without
-    transformation. Otherwise, it clones `t1` by `t1.clone()`, changes state by running
-    t1.fit_transform` with `X=X` and `y=y`, then clones `t2` and run `t2.fit_transform`
-    with `X`= the output of `tp1.fit_transform` etc, sequentially, with
-    `tp[i]` receiving the output of `tp[i-1]`,
+    transformation. Otherwise, it clones `t[i]` by `t[i].clone()`, changes state by
+    running t[i].fit_transform` with `X=X` and `y=y`, then stores `t` in `steps_`,
+    iteratively for all transformers. Then it takes forecaster from `steps_[-1]`, clones
+    forecaster by running `forecaster.clone()` and fit the cloned forecaster by
+    `f.fit(y, X, fh)`.
 
-    `predict(fh, X)` - The result is of running `t1.transform` with `X=X` then running
-    `f.predict` with `fh=fh` and `X` = the output of `tp1.transform`, etc., sequentially
-    with `tp[i]` receiving the output of `tp[i-1]`,
+    `predict(fh, X)` - The result is of running `transform(X)` with `X=X` of
+    ForecastingPipeline then running `f.predict` with `fh=fh` and `X` = the output of
+    `transform(X)`.
 
     `predict_interval(X, fh)`, `predict_quantiles(X, fh)` - as `predict(X, fh)`, with
     `predict_interval` or `predict_quantiles` substituted for `predict`, `predict_var`,
     `predict_proba` - uses base class default to obtain crude estimates
     from `predict_quantiles`.
-    Recommended to replace with better custom implementations if needed.
 
     Parameters
     ----------
@@ -263,11 +262,14 @@ class ForecastingPipeline(_Pipeline):
 
     Attributes
     ----------
-    cutoff : Cut-off = “present time” state of forecaster.
-    fh : Forecasting horizon that was passed.
-    forecaster_ : Return reference to the forecaster in the pipeline.
-    is_fitted : Whether fit has been called.
-    named_steps : Map the steps to a dictionary.
+    cutoff : (pandas compatible index element, or None)
+    Cut-off = “present time” state of forecaster.
+    fh () : int, list or np.array, optional (default=None)
+    Forecasting horizon that was passed.
+    forecaster_ : list[tuple]
+    Return reference to the forecaster in the pipeline.
+    named_steps : (class) dict(__iterable: Iterable[list[str]], /)
+    Map the steps to a dictionary.
 
     Examples
     --------
