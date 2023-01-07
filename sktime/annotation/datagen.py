@@ -241,6 +241,53 @@ def label_piecewise_normal(
     return np.repeat(unique_labels, lengths)
 
 
+def piecewise_poisson(
+    frequency: npt.ArrayLike,
+    lengths: npt.ArrayLike,
+    random_state: Union[int, np.random.RandomState] = None,
+) -> npt.ArrayLike:
+    """
+    Generate series using Possion distribution.
+
+    Each segment has length specified in ``lengths`` and data sampled from a Poisson
+    distribution with expected frequency from ``frequency``.
+
+    Parameters
+    ----------
+    frequency : array_like
+        Expected frequency of the segments to be generated
+    lengths : array_like
+        Lengths of the segments to be generated
+    random_state : int or np.random.RandomState
+        Either a random seed or RandomState instance
+
+    Returns
+    -------
+    data : np.array
+        univariate time series as np.array
+
+    Examples
+    --------
+    >>> from sktime.annotation.datagen import piecewise_normal
+    >>> piecewise_normal([1, 2, 3], lengths=[2, 4, 8], random_state=42) # doctest: +SKIP
+    array([1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0])
+
+    >>> from sktime.annotation.datagen import piecewise_normal
+    >>> piecewise_normal([1, 3, 6], lengths=[2, 4, 8], random_state=42) # doctest: +SKIP
+    array([2, 2, 2, 2, 2, 2, 1, 0, 1, 0, 1, 0, 1, 0])
+
+    """
+    rng = check_random_state(random_state)
+    assert len(frequency) == len(lengths)
+
+    segments_data = [
+        rng.poisson(lam=frequency, size=[length])
+        for frequency, length in zip(frequency, lengths)
+    ]
+
+    return np.concatenate(tuple(segments_data))
+
+
 class GenBasicGauss:
     """Data generator base class in order to allow composition."""
 
