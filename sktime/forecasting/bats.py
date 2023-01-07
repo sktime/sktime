@@ -136,7 +136,7 @@ class BATS(_TbatsAdapter):
         -------
         params : dict or list of dict
         """
-        params = {
+        params1 = {
             "use_box_cox": False,
             "use_trend": False,
             "use_damped_trend": False,
@@ -144,4 +144,10 @@ class BATS(_TbatsAdapter):
             "use_arma_errors": False,
             "n_jobs": 1,
         }
-        return params
+
+        params2 = {
+            "box_cox_bounds": (1, 10),
+            "sp": [2, 12],
+        }
+
+        return [params1, params2]
