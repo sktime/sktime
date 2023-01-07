@@ -556,10 +556,6 @@ class DynamicFactor(_StatsModelsAdapter):
             `create_test_instance` uses the first (or only) dictionary in `params
         """
         params1 = {"k_factors": 1, "factor_order": 1}
-        params2 = {
-            "enforce_stationarity": False,
-            "maxiter": 25,
-            "low_memory": True,
-        }
+        params2 = {"enforce_stationarity": False, "maxiter": 25, "low_memory": True}
 
         return [params1, params2]
