@@ -127,6 +127,7 @@ class ConformalIntervals(BaseForecaster):
         self.initial_window = initial_window
         self.sample_frac = sample_frac
         self.n_jobs = n_jobs
+        self.forecasters_ = []
 
         super(ConformalIntervals, self).__init__()
 
@@ -376,7 +377,7 @@ class ConformalIntervals(BaseForecaster):
             columns=full_y_index, index=full_y_index, dtype="float"
         )
 
-        if update and hasattr(self, "residuals_matrix_"):
+        if update and hasattr(self, "residuals_matrix_") and not sample_frac:
             remaining_y_index = full_y_index.difference(self.residuals_matrix_.index)
             if len(remaining_y_index) != len(full_y_index):
                 overlapping_index = pd.Index(
@@ -396,9 +397,6 @@ class ConformalIntervals(BaseForecaster):
             y_sample = y_index.to_series().sample(frac=sample_frac)
             if len(y_sample) > 2:
                 y_index = y_sample
-
-        if not hasattr(self, "forecasters_"):
-            self.forecasters_ = []
 
         def _get_residuals_matrix_row(forecaster, y, X, id):
             y_train = get_slice(y, start=None, end=id)  # subset on which we fit
