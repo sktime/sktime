@@ -28,7 +28,7 @@ If your contribution does add a new hard dependency, we may suggest to initially
 
 <!-- This section is particularly useful if you have a pull request that is still in development. You can guide the reviews to focus on the parts that are ready for their comments. We suggest using bullets (indicated by * or -) and filled checkboxes [x] here -->
 
-### Did you add any tests rather than the exisiting ones?
+#### Did you add any tests rather than the exisiting ones?
 
 <!-- This section is useful if you have added a test in addition to the existing ones. This will ensure that further changes to these files won't introduce the same kind of bug. It is considered good practice to add tests with newly added code to enforce the fact that the code actually works. This will reduce the chance of introducing logical bugs. 
 -->
