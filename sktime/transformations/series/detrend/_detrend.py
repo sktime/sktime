@@ -184,7 +184,9 @@ class Detrender(BaseTransformer):
             inverse transformed version of X
         """
         fh = self._get_fh_from_X(X=X)
-        forecaster = self._get_fitted_forecaster(X=X, y=y, fh=fh)
+        # we pass X and y as None, since the X passed is inverse transformed (detrended)
+        # the fit, in case fh needs be passed late, is done on remembered data from fit
+        forecaster = self._get_fitted_forecaster(X=None, y=None, fh=fh)
 
         X_pred = forecaster.predict(fh=fh, X=y)
 
