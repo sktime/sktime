@@ -13,7 +13,6 @@ import types
 from copy import deepcopy
 from inspect import getfullargspec, isclass, signature
 from tempfile import TemporaryDirectory
-from warnings import warn
 
 import joblib
 import numpy as np
@@ -774,12 +773,19 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
         assert all(isinstance(key, str) for key in all_tags.keys())
         if hasattr(Estimator, "_tags"):
             tags = Estimator._tags
-            msg = f"_tags must be a dict, but found {type(tags)}"
+            msg = (
+                f"_tags attribute of {estimator_class} must be dict, "
+                f"but found {type(tags)}"
+            )
             assert isinstance(tags, dict), msg
-            assert len(tags) > 0, "_tags is empty"
-            assert all(
-                tag in VALID_ESTIMATOR_TAGS for tag in tags.keys()
-            ), "Some tags in _tags are invalid"
+            assert len(tags) > 0, f"_tags dict of class {estimator_class} is empty"
+            invalid_tags = [
+                tag for tag in tags.keys() if tag not in VALID_ESTIMATOR_TAGS
+            ]
+            assert len(invalid_tags) == 0, (
+                f"_tags of {estimator_class} contains invalid tags: {invalid_tags}. "
+                "For a list of valid tags, see registry.all_tags, or registry._tags. "
+            )
 
         # Avoid ambiguous class attributes
         ambiguous_attrs = ("tags", "tags_")
@@ -1151,7 +1157,7 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
                 % (estimator.__class__.__name__, param_name, original_value, new_value)
             )
 
-    def test_methods_do_not_change_state(
+    def test_non_state_changing_method_contract(
         self, estimator_instance, scenario, method_nsc
     ):
         """Check that non-state-changing methods behave as per interface contract.
@@ -1164,14 +1170,6 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
             list of BaseEstimator methdos tested: get_fitted_params
             scitype specific method outputs are tested in TestAll[estimatortype] class
         """
-        warn(
-            "name of test_methods_do_not_change_state will change to "
-            "test_non_state_changing_method_contract in 0.15.0. "
-            "For a safe transition in a case where the old name "
-            "has been used as part of an argument in `check_estimator`, use "
-            "both the new and the old name in test/fixture exclusion or inclusion. ",
-            DeprecationWarning,
-        )
         estimator = estimator_instance
         set_random_state(estimator)
 

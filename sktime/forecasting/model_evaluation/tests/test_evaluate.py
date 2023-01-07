@@ -188,9 +188,7 @@ def test_evaluate_error_score(error_score, return_data, strategy, backend):
     # add NaN to make ExponentialSmoothing fail
     y.iloc[1] = np.nan
     fh = [1, 2, 3]
-    cv = ExpandingWindowSplitter(
-        start_with_window=True, step_length=48, initial_window=12, fh=fh
-    )
+    cv = ExpandingWindowSplitter(step_length=48, initial_window=12, fh=fh)
     if error_score in [np.nan, 1000]:
         with pytest.warns(FitFailedWarning):
             results = evaluate(
