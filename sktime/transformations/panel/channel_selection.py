@@ -261,6 +261,9 @@ class ElbowClassSum(BaseTransformer):
         self.distance = distance
         self.mean_centering = mean_centering
         self.class_prototype = class_prototype
+        self._is_fitted = False
+
+        super(ElbowClassSum, self).__init__()
 
     def _fit(self, X, y):
         """Fit ECS to a specified X and y.
@@ -289,6 +292,7 @@ class ElbowClassSum(BaseTransformer):
 
         self.channels_selected_idx.extend(_detect_knee_point(distance, indices)[0])
         self.rank = self.channels_selected_idx
+        self._is_fitted = True
 
         return self
 
@@ -397,6 +401,7 @@ class ElbowClassPairwise(BaseTransformer):
         self.distance = distance
         self.class_prototype = class_prototype
         self.mean_centering = mean_centering
+        self._is_fitted = False
 
         super(ElbowClassPairwise, self).__init__()
 
@@ -449,6 +454,7 @@ class ElbowClassPairwise(BaseTransformer):
 
         self.rank = self._rank()
         self.channels_selected_idx = list(set(self.channels_selected_idx))
+        self._is_fitted = True
         return self
 
     def _transform(self, X, y=None):
