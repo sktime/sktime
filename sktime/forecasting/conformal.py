@@ -127,7 +127,6 @@ class ConformalIntervals(BaseForecaster):
         self.initial_window = initial_window
         self.sample_frac = sample_frac
         self.n_jobs = n_jobs
-        self.forecasters_ = []
 
         super(ConformalIntervals, self).__init__()
 
@@ -397,6 +396,9 @@ class ConformalIntervals(BaseForecaster):
             y_sample = y_index.to_series().sample(frac=sample_frac)
             if len(y_sample) > 2:
                 y_index = y_sample
+
+        if not hasattr(self, "forecasters_"):
+            self.forecasters_ = []
 
         def _get_residuals_matrix_row(forecaster, y, X, id):
             y_train = get_slice(y, start=None, end=id)  # subset on which we fit
