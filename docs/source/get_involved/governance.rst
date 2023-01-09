@@ -218,14 +218,34 @@ Eligibility
 
 Anyone is eligible to be a core developer.
 
+Core developers, at their time of appointment, must have made substantial contributions
+to the ``sktime`` community
+within the last twelve months, above contributions expected of an algorithm maintainer.
+
+It is expected that the most recent twelve month period contains:
+
+* at least 1 non-code contribution
+* at least 1 code contribution
+* at least 10 contributions that are at least small (possibly identical with the above)
+* at least 5 contributions that are at least medium size (possibly identical with the above)
+
+See :ref:`contribs` for possible types of contributions.
+
+The above must be contributions not pertaining to one's own estimators, e.g.,
+outside an algorithm maintainer role.
+
 .. _appointment-1:
 
 Appointment
 ^^^^^^^^^^^
 
-New core developers can be nominated by any current core developer. Once
-they have been nominated, there will be a vote by the current core
-developers.
+New core developers can be nominated by any current core developer.
+Once they have been nominated, they have to prepare a list of their contributions
+within the last 12 months (with summary and links to evidence) to evidence their eligibility.
+This list is deposited in the public ``sktime`` community repository.
+
+After the nomination and preparation of the list, there is a vote by the current core
+developers. The list of contributions is linked in the vote.
 
 Voting on appointments is one of the few activities that takes
 place on the project’s private communication channels. The vote will be
@@ -240,21 +260,9 @@ End of tenure
 
 Core developers can resign voluntarily at any point in time, by informing the CC in writing.
 
-Core developers that have not contributed to the project in the past
-one-year-period will automatically become *inactive*
-and give up their rights and responsibilities. When they become active
-again, they can retake their role without having to be appointed.
-
-Becoming inactive in the above sense means not contributing for the period via:
-
-* creating pull requests
-* commenting on pull requests or issues
-* attending one of the regular meetings
-
-Becoming active (after becoming inactive) in the above sense requires one of:
-
-* an approved pull request authored by the core developer
-* a contribution to the community that is minuted in one of the regular meetings
+Core developers are appointed for a period of twelve months.
+For continued tenure, they have to present a summary of their contributions within
+the last twelve months and meet the same contribution threshold.
 
 .. _coc-committee-members:
 
@@ -338,6 +346,23 @@ Only core developers are eligible for appointment as CC members.
 Non-core-developers can be nominated, but this must be accompanied
 by a nomination for core developer, and a core developer appointment vote
 concurrent with the 5 day discussion period (see below).
+
+CC members, at their time of appointment, must have made significant contributions
+to the ``sktime`` community within the last twelve months,
+above contributions expected of an algorithm maintainer.
+
+It is expected that the most recent twelve month period contains:
+
+* at least 2 non-code contributions
+* at least 2 code contributions
+* at least 10 contributions that are at least small (possibly identical with the above)
+* at least 10 contributions that are at least medium size (possibly identical with the above)
+* at least 2 contributions that are large (possibly identical with the above)
+
+See :ref:`contribs` for possible types of contributions.
+
+The above must be contributions not pertaining to one's own estimators, e.g.,
+outside an algorithm maintainer role.
 
 .. _appointment-3:
 
@@ -425,6 +450,73 @@ stay open for 5 days excluding weekends. CC observer membership votes are
 subject to a simple majority approval of all the current CC committee members.
 
 In case of ties, the CC member with shortest tenure breaks the tie.
+
+
+.. _contribs:
+
+Contributions
+-------------
+
+This section details the types of contributions expected for certain committee roles.
+
+``sktime`` values contributions of any kind - not just code.
+Below are contributions to code and community.
+
+We count as small contributions (code):
+
+* fixing typos in documentation or docstrings. At most 3 of these count in a given period.
+* reviewing a PR that does not require a STEP, and not dropping the review (1 week latency)
+* reproducing a bug reported by a user
+
+We count as small contributions (community):
+
+* answering a user question in one of the help/contributor channels (e.g., discord helpdesk) until user confirmation of answer
+* participating in 12 mentoring meetings as co-mentor, in one of the ``sktime`` mentoring or internship programmes
+* writing minutes in one of the ``sktime`` committee meetings
+* attending one of the ``sktime`` committee meetings and being minuted as present
+
+We cound as medium contributions (code):
+
+* successfully fixing a bug in an estimator, framework or utility code
+* successfully diagnosing a bug reported by a user
+* getting a code or maintenance PR merged
+* reviewing a STEP or a PR that implements a STEP
+
+We count as medium contributions (community):
+
+* participating in 12 mentoring meetings as co-mentor, in one of the ``sktime`` mentoring or internship programmes
+* organizing a presentation or workshop, involving new contributors to present (just giving a presentation does not count)
+* being present at 6 community collaboration meetings to help any contributors who show up, e.g., via screenshare
+  
+We cound as medium contributions (code):
+
+* successfully fixing a bug in an estimator, framework or utility code
+* successfully diagnosing a bug reported by a user
+* getting a code PR merged
+* reviewing a STEP or a PR that implements a STEP
+* taking on the release manager role for at least 3 releases
+
+We count as large contributions (community):
+
+* organizing a major community event, e.g., developer days
+* running one of the ``sktime`` mentoring or internship programmes
+* organizing a series of workstream or roadmap meetings that lead to successful STEP and PR
+* acquiring funding in the order of 1 year of maintainer position, under strategic control of the ``sktime`` community
+
+We cound as large contributions (code):
+
+* more than 10 medium contributions in the period (20 do not count as two)
+* writing a clean STEP, fully implementing it in PR, getting those merged
+
+Notes:
+
+* community contributions only count if they involve a majority of community members
+  not from one's research group or direct network (by company affiliation or academic family tree) 
+* Contributions related to estimators owned by oneself do not count as 
+  contributions for core developer and CC role eligibility.
+  Such contributions are expected part of the algorithm maintainer role.
+* PR and changes pertaining to ``sktime`` governance do not count as contributions.
+
 
 .. _decision-making:
 
