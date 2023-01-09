@@ -248,6 +248,7 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
 
         return [params1, params2]
 
+
 def _get_weights(regressor):
     # tree-based models from sklearn which have feature importance values
     if hasattr(regressor, "feature_importances_"):
