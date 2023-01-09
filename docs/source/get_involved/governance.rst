@@ -490,7 +490,7 @@ We count as medium contributions (community):
 * participating in 12 mentoring meetings as co-mentor, in one of the ``sktime`` mentoring or internship programmes
 * organizing a presentation or workshop, involving new contributors to present (just giving a presentation does not count)
 * being present at 6 community collaboration meetings to help any contributors who show up, e.g., via screenshare
-  
+
 We cound as medium contributions (code):
 
 * successfully fixing a bug in an estimator, framework or utility code
@@ -506,7 +506,7 @@ We count as large contributions (community):
 * organizing a series of workstream or roadmap meetings that lead to successful STEP and PR
 * acquiring funding in the order of 1 year of maintainer position, under strategic control of the ``sktime`` community
 
-We cound as large contributions (code):
+We count as large contributions (code):
 
 * more than 10 medium contributions in the period (20 do not count as two)
 * writing a clean STEP, fully implementing it in PR, getting those merged
