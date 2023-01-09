@@ -9,8 +9,8 @@ experience. Accordingly, everyone who participates in the sktime project
 is expected to show respect and courtesy to other community members at
 all times.
 
-The sktime Community Council, and all project members,
-are dedicated to a **harassment-free experience for
+Dr Franz Király, as principal investigator of this project, and all
+project members, are dedicated to a **harassment-free experience for
 everyone**, regardless of gender, gender identity and expression,
 sexual orientation, disability, physical appearance, body size, race,
 age or religion. **We do not tolerate harassment by and/or of members of
@@ -53,15 +53,16 @@ of Conduct. This Code of Conduct applies to all spaces managed by the
 sktime project including, but not limited to, in-person focus groups and
 workshops, and communications online via GitHub.
 
-The Code of Conduct Committee of sktime is responsible for defining and
-enforcing the Code of Conduct, according to Section 4 below.
+The lead investigator of the sktime - Dr Franz Király - is responsible
+for enforcing the Code of Conduct. He can be contacted by emailing
+sktime.toolbox@gmail.com.
 
 Incidents can be reported to the Code of Conduct Committee as outlined in Section 3, and
 are handled in accordance with Sections 3 and 4.
 
 The community council of sktime (see current composition on "roles")
 is responsible for ensuring that resolutions of the Code of Conduct committee
-are adhered to, and can be contacted under info@sktime.org.
+are adhered to, and can be contacted under sktime.toolbox@gmail.com.
 
 2 Code of Conduct
 -----------------
@@ -196,8 +197,8 @@ details).
 
 This Code of Conduct is not intended as a static set of rules by which
 everyone must abide. Rather, you are invited to make suggestions for
-updates or clarifications by contacting the sktime Code of Conduct Committee via
-info@sktime.org, or by making a pull request to this document on
+updates or clarifications by contacting Dr Franz Király at
+sktime.toolbox@gmail.com, or by making a pull request to this document on
 GitHub.
 
 3 Incident Reporting Guidelines
@@ -264,8 +265,8 @@ enforcement manual, including bans and blocks online, or removal from a
 physical space.
 
 In situations where an individual community member acts unilaterally,
-they must inform the sktime Community Council and Code of Conduct Committee
-via info@sktime.org as soon as possible,
+they must inform Dr Franz Király as soon as possible, and report their
+actions for review within 24 hours.
 and report their actions for review within 24 hours.
 
 4.3 Code of Conduct Investigation Process
