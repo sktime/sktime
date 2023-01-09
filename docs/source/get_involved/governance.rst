@@ -224,7 +224,7 @@ within the last twelve months, above contributions expected of an algorithm main
 
 It is expected that the most recent twelve month period contains:
 
-* at least 1 non-code contribution
+* at least 1 community contribution
 * at least 1 code contribution
 * at least 10 contributions that are at least small (possibly identical with the above)
 * at least 5 contributions that are at least medium size (possibly identical with the above)
@@ -356,7 +356,7 @@ above contributions expected of an algorithm maintainer.
 
 It is expected that the most recent twelve month period contains:
 
-* at least 2 non-code contributions
+* at least 2 community contributions
 * at least 2 code contributions
 * at least 10 contributions that are at least small (possibly identical with the above)
 * at least 10 contributions that are at least medium size (possibly identical with the above)
