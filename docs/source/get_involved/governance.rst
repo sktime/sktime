@@ -264,6 +264,9 @@ Core developers are appointed for a period of twelve months.
 For continued tenure, they have to present a summary of their contributions within
 the last twelve months and meet the same contribution threshold.
 
+If they do not meet the contribution threshold, they become inactive.
+To become a core developer again, they need to undergo the appointment process above, again.
+
 .. _coc-committee-members:
 
 CoC committee members
