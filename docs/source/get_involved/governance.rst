@@ -514,8 +514,8 @@ We cound as large contributions (code):
 Notes:
 
 * community contributions only count if they involve a majority of community members
-  not from one's research group or direct network (by company affiliation or academic family tree) 
-* Contributions related to estimators owned by oneself do not count as 
+  not from one's research group or direct network (by company affiliation or academic family tree)
+* Contributions related to estimators owned by oneself do not count as
   contributions for core developer and CC role eligibility.
   Such contributions are expected part of the algorithm maintainer role.
 * PR and changes pertaining to ``sktime`` governance do not count as contributions.
