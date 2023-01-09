@@ -94,6 +94,8 @@ if _check_soft_dependencies("dask", severity="none"):
 example_dict_metadata[("Panel", 0)] = {
     "is_univariate": False,
     "is_one_series": False,
+    "n_panels": 1,
+    "is_one_panel": True,
     "is_equally_spaced": True,
     "is_equal_length": True,
     "is_empty": False,
@@ -163,6 +165,8 @@ if _check_soft_dependencies("dask", severity="none"):
 example_dict_metadata[("Panel", 1)] = {
     "is_univariate": True,
     "is_one_series": False,
+    "n_panels": 1,
+    "is_one_panel": True,
     "is_equally_spaced": True,
     "is_equal_length": True,
     "is_empty": False,
@@ -225,6 +229,8 @@ if _check_soft_dependencies("dask", severity="none"):
 example_dict_metadata[("Panel", 2)] = {
     "is_univariate": True,
     "is_one_series": True,
+    "n_panels": 1,
+    "is_one_panel": True,
     "is_equally_spaced": True,
     "is_equal_length": True,
     "is_empty": False,
