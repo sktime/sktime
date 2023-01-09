@@ -22,7 +22,7 @@ from sktime.performance_metrics.forecasting.probabilistic import PinballLoss
 INTERVAL_WRAPPERS = [ConformalIntervals, NaiveVariance]
 CV_SPLITTERS = [SlidingWindowSplitter, ExpandingWindowSplitter]
 EVALUATE_STRATEGY = ["update", "refit"]
-SAMPLE_FRACS = [None, 0.2]
+SAMPLE_FRACS = [None, 0.5]
 MTYPES_SERIES = scitype_to_mtype("Series", softdeps="present")
 
 
