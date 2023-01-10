@@ -1893,12 +1893,21 @@
       ]
     },
     {
-      "login": "VyomkeshVyas",
-      "name": "Vyomkesh Vyas",
-      "profile": "https://github.com/VyomkeshVyas",
+      "login": "badrmarani",
+      "name": "Badr-Eddine Marani",
+      "avatar_url": "https://avatars.githubusercontent.com/badrmarani",
+      "profile": "https://github.com/badrmarani",
       "contributions": [
-        "code",
-        "test"
+        "code"
+      ]
+    },
+    {
+      "login": "adoherty21",
+      "name": "adoherty21",
+      "avatar_url": "https://avatars.githubusercontent.com/u/52799751?s=400&v=4",
+      "profile": "https://github.com/adoherty21",
+      "contributions": [
+        "bug"
       ]
     },
     {
@@ -1930,12 +1939,50 @@
       ]
     },
     {
+      "login": "xxl4tomxu98",
+      "name": "Tom Xu",
+      "avatar_url": "https://avatars.githubusercontent.com/u/62292177?s=40&v=4",
+      "profile": "https://github.com/xxl4tomxu98",
+      "contributions": [
+        "code",
+        "doc"
+      ]
+    },
+    {
       "login": "nshahpazov",
       "name": "Nikola Shahpazov",
       "avatar_url": "https://avatars.githubusercontent.com/nshahpazov",
       "profile": "https://www.linkedin.com/in/nshahpazov/",
       "contributions": [
         "doc"
+      ]
+    },
+    {
+      "login": "dainelli98",
+      "name": "Daniel Martín Martínez",
+      "avatar_url": "https://avatars.githubusercontent.com/dainelli98",
+      "profile": "https://www.linkedin.com/in/daniel-martin-martinez",
+      "contributions": [
+        "doc",
+        "bug"
+      ]
+    },
+    {
+      "login": "arnavrneo",
+      "name": "Arnav",
+      "avatar_url": "https://avatars.githubusercontent.com/u/48650781?v=4",
+      "profile": "https://github.com/arnavrneo",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "VyomkeshVyas",
+      "name": "Vyomkesh Vyas",
+      "profile": "https://github.com/VyomkeshVyas",
+      "contributions": [
+        "code",
+        "test"
       ]
     }
   ]
