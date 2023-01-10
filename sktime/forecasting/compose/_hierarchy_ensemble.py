@@ -119,9 +119,10 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
             ]
             self.clone_tags(forecasters, tags_to_clone)
         else:
-            if isinstance(forecasters, tuple):
-                forecasters = [forecasters]
-            l_forecasters = [(str(x[0]), x[0]) for x in forecasters]
+            frcstrs = forecasters
+            if isinstance(frcstrs, tuple):
+                frcstrs = [frcstrs]
+            l_forecasters = [(str(x[0]), x[0]) for x in frcstrs]
             self._anytagis_then_set("requires-fh-in-fit", True, False, l_forecasters)
             self._anytagis_then_set("capability:pred_int", False, True, l_forecasters)
             self._anytagis_then_set("ignores-exogeneous-X", False, True, l_forecasters)
@@ -295,18 +296,18 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
             raise ValueError(
                 "Data should have multiindex with levels greater than or equal to 1."
             )
-
+        forecasters = self.forecasters
         # if a single estimator is passed, replicate across levels
-        if isinstance(self.forecasters, BaseForecaster):
+        if isinstance(forecasters, BaseForecaster):
             lvlrange = range(y.index.nlevels)
-            forecaster_list = [self.forecasters.clone() for _ in lvlrange]
+            forecaster_list = [forecasters.clone() for _ in lvlrange]
             self.by = "level"
             return list(zip(forecaster_list, lvlrange))
 
         if (
-            self.forecasters is None
-            or len(self.forecasters) == 0
-            or not isinstance(self.forecasters, list)
+            forecasters is None
+            or len(forecasters) == 0
+            or not isinstance(forecasters, list)
         ):
             raise ValueError(
                 "Invalid 'forecasters' attribute, 'forecasters' should be a list"
@@ -318,23 +319,23 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
                 "Invalid 'default' attribute, 'default' should be a Forecaster"
             )
         if self.by == "node":
-            for i in range(len(self.forecasters)):
-                if type(self.forecasters[i]) == tuple:
-                    self.forecasters[i] = list(self.forecasters[i])
-                if type(self.forecasters[i][1]) == tuple:
-                    self.forecasters[i][1] = [self.forecasters[i][1]]
+            for i in range(len(forecasters)):
+                if type(forecasters[i]) == tuple:
+                    forecasters[i] = list(forecasters[i])
+                if type(forecasters[i][1]) == tuple:
+                    forecasters[i][1] = [forecasters[i][1]]
 
         if y.index.nlevels == 1:
-            if isinstance(self.forecasters[0], BaseForecaster):
-                return [(self.forecasters[0], 0)]
-            elif isinstance(self.forecasters[0][0], BaseForecaster):
-                return [(self.forecasters[0][0], 0)]
+            if isinstance(forecasters[0], BaseForecaster):
+                return [(forecasters[0], 0)]
+            elif isinstance(forecasters[0][0], BaseForecaster):
+                return [(forecasters[0][0], 0)]
             else:
                 raise ValueError("Incorrect format of input forecaster being passed.")
 
-        forecasters, level_nd = zip(*self.forecasters)
+        forecasters_, level_nd = zip(*forecasters)
 
-        for forecaster in forecasters:
+        for forecaster in forecasters_:
             if not isinstance(forecaster, BaseForecaster):
                 raise ValueError(
                     f"The estimator {forecaster.__class__.__name__} should be a "
@@ -361,7 +362,7 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
                 )
             if self.default:
                 forecaster_list = [self.default.clone() for _ in y_lvls_not_found]
-                return self.forecasters + list(zip(forecaster_list, y_lvls_not_found))
+                return forecasters + list(zip(forecaster_list, y_lvls_not_found))
         else:
             for nodes in level_nd:
                 for node in nodes:
@@ -381,7 +382,7 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
                             "dataframe and must not include timepoint index."
                         )
 
-        return self.forecasters
+        return forecasters
 
     @classmethod
     def get_test_params(cls):
