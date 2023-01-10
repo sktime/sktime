@@ -22,7 +22,10 @@ from sktime.utils.validation._dependencies import _check_soft_dependencies
 )
 @pytest.mark.parametrize(
     "forecasters",
-    [[(PolynomialTrendForecaster(), 0)], [(NaiveForecaster(), 0)]],
+    [
+        [(PolynomialTrendForecaster(), 0)],
+        [(NaiveForecaster(), 0)],
+    ],
 )
 def test_hierarchy_ensemble_level_predict(forecasters):
     """Check the level predictions."""

@@ -67,7 +67,7 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
     >>> forecasters = [
     ...     ( NaiveForecaster(), 0),
     ...     (ExponentialSmoothing(trend='add'), 1),
-    ...     (ThetaForecaster(), 2)
+    ...     (ThetaForecaster(), 2),
     ... ]
     >>> forecaster = HierarchyEnsembleForecaster(forecasters=forecasters,by='level')
     >>> forecaster.fit(y, fh=[1, 2, 3])
@@ -77,7 +77,7 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
     >>> # Example of by = 'node'
     >>> forecasters = [
     ...     (ExponentialSmoothing(), ("__total", "__total")),
-    ...    (ThetaForecaster(), ('l2_node01', 'l1_node01')
+    ...    (ThetaForecaster(), ('l2_node01', 'l1_node01')),
     ... ]
     >>> forecaster = HierarchyEnsembleForecaster(forecasters=forecasters,by='node')
     >>> forecaster.fit(y, fh=[1, 2, 3])
