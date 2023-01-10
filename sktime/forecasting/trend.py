@@ -66,10 +66,10 @@ class TrendForecaster(BaseForecaster):
         -------
         self : returns an instance of self.
         """
-        self.regressor_ = self.regressor or LinearRegression(fit_intercept=True)
-
-        # create a clone of self.regressor
-        self.regressor_ = clone(self.regressor_)
+        if self.regressor is None:
+            self.regressor_ = LinearRegression(fit_intercept=True)
+        else:
+            self.regressor_ = clone(self.regressor)
 
         # transform data
         X = y.index.astype("int").to_numpy().reshape(-1, 1)
