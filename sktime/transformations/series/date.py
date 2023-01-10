@@ -132,6 +132,7 @@ class DateTimeFeatures(BaseTransformer):
         "transform-returns-same-time-index": True,
         "enforce_index_type": [pd.DatetimeIndex, pd.PeriodIndex],
         "skip-inverse-transform": True,
+        "python_dependencies": "pandas>=1.2.0",  # from DateTimeProperties
     }
 
     def __init__(
