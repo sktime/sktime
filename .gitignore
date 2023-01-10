@@ -162,3 +162,6 @@ sktime/_contrib/debug.py
 sktime/_contrib/local_code.py
 sktime/_contrib/main.py
 sktime/_contrib/temp/
+
+# example mlflow runs
+examples/local/

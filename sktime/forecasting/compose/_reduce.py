@@ -559,6 +559,16 @@ class _RecursiveReducer(_Reducer):
                     + "observation size"
                 )
 
+        if self.pooling == "global":
+            timepoints = get_time_index(y)
+            if isinstance(timepoints, (pd.DatetimeIndex, pd.PeriodIndex)):
+                if timepoints.freq is None:
+                    raise ValueError(
+                        "Please set frequency for DatetimeIndex or PeriodIndex. You "
+                        + "can use set_freq_hier function from sktime.utils.datetime "
+                        + "for this purpose (will convert DatetimeIndex to PeriodIndex)"
+                    )
+
         yt, Xt = self._transform(y, X)
 
         # Make sure yt is 1d array to avoid DataConversion warning from scikit-learn.
