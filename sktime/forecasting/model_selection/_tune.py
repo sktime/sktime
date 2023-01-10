@@ -699,7 +699,7 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         params2 = {
             "forecaster": PolynomialTrendForecaster(),
             "cv": SingleWindowSplitter(fh=1),
-            "param_grid": {"degree": [1, 2]},
+            "param_distributions": {"degree": [1, 2]},
             "scoring": MeanAbsolutePercentageError(symmetric=True),
             "update_behaviour": "inner_only",
         }
