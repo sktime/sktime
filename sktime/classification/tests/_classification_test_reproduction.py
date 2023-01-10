@@ -3,6 +3,7 @@ import numpy as np
 from sklearn.ensemble import IsolationForest, RandomForestClassifier
 
 from sktime.classification.compose import ColumnEnsembleClassifier
+from sktime.classification.convolution_based import Arsenal, RocketClassifier
 from sktime.classification.dictionary_based import (
     MUSE,
     WEASEL,
@@ -34,7 +35,6 @@ from sktime.classification.interval_based import (
     SupervisedTimeSeriesForest,
     TimeSeriesForestClassifier,
 )
-from sktime.classification.kernel_based import Arsenal, RocketClassifier
 from sktime.classification.shapelet_based import ShapeletTransformClassifier
 from sktime.datasets import load_basic_motions, load_unit_test
 from sktime.datatypes._panel._convert import from_nested_to_3d_numpy

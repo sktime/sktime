@@ -4,6 +4,7 @@ __author__ = ["TonyBagnall"]
 
 from sklearn.ensemble import RandomForestClassifier
 
+from sktime.classification.convolution_based import Arsenal, RocketClassifier
 from sktime.classification.deep_learning import CNNClassifier
 from sktime.classification.dictionary_based import (
     MUSE,
@@ -37,7 +38,6 @@ from sktime.classification.interval_based import (
     SupervisedTimeSeriesForest,
     TimeSeriesForestClassifier,
 )
-from sktime.classification.kernel_based import Arsenal, RocketClassifier
 from sktime.classification.shapelet_based import ShapeletTransformClassifier
 from sktime.transformations.series.summarize import SummaryTransformer
 
@@ -156,7 +156,7 @@ def set_classifier(cls, resample_id=None, train_file=False):
         return DrCIF(
             random_state=resample_id, n_estimators=500, save_transformed_data=train_file
         )
-    # Kernel based
+    # Convolution based
     elif name == "rocket":
         return RocketClassifier(random_state=resample_id)
     elif name == "mini-rocket":
