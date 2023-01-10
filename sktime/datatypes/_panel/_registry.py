@@ -35,8 +35,13 @@ MTYPE_REGISTER_PANEL = [
         "pd.DataFrame in long format, cols = (index, time_index, column)",
     ),
     ("df-list", "Panel", "list of pd.DataFrame"),
+    (
+        "dask_panel",
+        "Panel",
+        "dask frame with one instance and one time index, as per dask_to_pd convention",
+    ),
 ]
 
-MTYPE_SOFT_DEPS_PANEL = {"xr.DataArray": "xarray"}
+MTYPE_SOFT_DEPS_PANEL = {"xr.DataArray": "xarray", "dask_panel": "dask"}
 
 MTYPE_LIST_PANEL = pd.DataFrame(MTYPE_REGISTER_PANEL)[0].values
