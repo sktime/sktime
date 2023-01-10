@@ -19,8 +19,10 @@ Code quality checks
 
 .. _pre-commit: https://pre-commit.com
 
-We use `pre-commit`_ for code quality checks (a process we also refer to as "linting" checks).  We recommend that you set this up locally as it will
-insure that you never run into code-quality errors when you make your first PR! These checks run automatically before you make a new commit.
+We use `pre-commit`_ for code quality checks (a process we also refer to as "linting" checks).
+
+We recommend that you also set this up locally as it will ensure that you never run into code quality errors when you make your first PR!
+These checks run automatically before you make a new commit.
 To setup, simply navigate to the sktime folder and install our pre-commit configuration:
 
 ::
@@ -28,12 +30,13 @@ To setup, simply navigate to the sktime folder and install our pre-commit config
 
 pre-commit should now automatically run anything you make a commit! Please let us know if you encounter any issues getting this setup.
 
-
+For a detailed guide on code quality and linting for developers, see :ref:`coding_standards`.
 
 Unit testing
 ~~~~~~~~~~~~
 
 We use `pytest <https://docs.pytest.org/en/latest/>`__ for unit testing.
+
 To check if your code passes all tests locally, you need to install the
 development version of sktime and all extra dependencies.
 
