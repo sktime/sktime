@@ -46,7 +46,10 @@ EXCEPTED_FROM_NO_DEP_CHECK = []
 # estimators excepted from checking that get_test_params does not import soft deps
 # this is ok, in general, for adapters to soft dependency frameworks
 # since such adapters will import estimators from the adapted framework
-EXCEPTED_FROM_GET_PARAMS_CHECK = ["PyODAnnotator"]
+EXCEPTED_FROM_GET_PARAMS_CHECK = [
+    "PyODAnnotator",  # adapters always require soft dep. Here: pyod
+    "HCrystalBallAdapter",  # adapters always require soft dep. Here: hcrystalball
+]
 
 
 def _is_test(module):

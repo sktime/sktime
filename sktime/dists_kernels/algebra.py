@@ -108,6 +108,77 @@ class CombinedDistance(_HeterogenousMetaEstimator, BasePairwiseTransformerPanel)
     def _pw_trafos(self, value):
         self.pw_trafos = value
 
+    def _algebra_dunder_concat(self, other, operation):
+        """Return (right) concat CombinedDistance, common boilerplate for dunders.
+
+        Implemented for `other` being a transformer, otherwise returns `NotImplemented`.
+
+        Parameters
+        ----------
+        other: `sktime` pairwise transformer, must inherit BasePairwiseTransformerPanel
+            otherwise, `NotImplemented` is returned
+        operation: operation string used in CombinedDistance for the dunder.
+            Must be equal to the operation of the dunder, not of self.
+
+        Returns
+        -------
+        CombinedDistance object, concat of `self` (first) with `other` (last).
+            does not contain CombinedDistance `sktime` transformers with same operation
+            (but may nest CombinedDistance with different operations)
+        """
+        if self.operation == operation:
+            # if other is CombinedDistance but with different operation,
+            # we need to wrap it, or _dunder_concat would overwrite the operation
+            if isinstance(other, CombinedDistance) and not other.operation == operation:
+                other = CombinedDistance([other], operation=operation)
+            return self._dunder_concat(
+                other=other,
+                base_class=BasePairwiseTransformerPanel,
+                composite_class=CombinedDistance,
+                attr_name="pw_trafos",
+                concat_order="left",
+                composite_params={"operation": operation},
+            )
+        elif isinstance(other, BasePairwiseTransformerPanel):
+            return CombinedDistance([self, other], operation=operation)
+        else:
+            return NotImplemented
+
+    def __mul__(self, other):
+        """Magic * method, return (right) multiplied CombinedDistance.
+
+        Implemented for `other` being a transformer, otherwise returns `NotImplemented`.
+
+        Parameters
+        ----------
+        other: `sktime` pairwise transformer, must inherit BasePairwiseTransformerPanel
+            otherwise, `NotImplemented` is returned
+
+        Returns
+        -------
+        CombinedDistance object, algebraic * of `self` (first) with `other` (last).
+            does not contain CombinedDistance `sktime` transformers with same operation
+            (but may nest CombinedDistance with different operations)
+        """
+        return self._algebra_dunder_concat(other=other, operation="*")
+
+    def __add__(self, other):
+        """Magic + method, return (right) multiplied CombinedDistance.
+
+        Implemented for `other` being a transformer, otherwise returns `NotImplemented`.
+
+        Parameters
+        ----------
+        other: `sktime` pairwise transformer, must inherit BasePairwiseTransformerPanel
+            otherwise, `NotImplemented` is returned
+
+        Returns
+        -------
+        CombinedDistance object, algebraic + of `self` (first) with `other` (last).
+            not nested, contains only non-CombinedDistance `sktime` transformers
+        """
+        return self._algebra_dunder_concat(other=other, operation="+")
+
     def _transform(self, X, X2=None):
         """Compute distance/kernel matrix.
 

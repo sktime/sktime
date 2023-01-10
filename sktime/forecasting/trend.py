@@ -66,13 +66,13 @@ class TrendForecaster(BaseForecaster):
         -------
         self : returns an instance of self.
         """
-        self.regressor_ = self.regressor or LinearRegression(fit_intercept=True)
-
-        # create a clone of self.regressor
-        self.regressor_ = clone(self.regressor_)
+        if self.regressor is None:
+            self.regressor_ = LinearRegression(fit_intercept=True)
+        else:
+            self.regressor_ = clone(self.regressor)
 
         # transform data
-        X = y.index.astype("int").to_numpy().reshape(-1, 1)
+        X = y.index.astype("int64").to_numpy().reshape(-1, 1)
 
         # fit regressor
         self.regressor_.fit(X, y)
@@ -108,9 +108,9 @@ class PolynomialTrendForecaster(BaseForecaster):
 
     Parameters
     ----------
-    regressor : estimator object, default = None
+    regressor : sklearn regressor estimator object, default = None
         Define the regression model type. If not set, will default to
-         sklearn.linear_model.LinearRegression
+        sklearn.linear_model.LinearRegression
     degree : int, default = 1
         Degree of polynomial function
     with_intercept : bool, default=True
@@ -163,7 +163,7 @@ class PolynomialTrendForecaster(BaseForecaster):
         if self.regressor is None:
             regressor = LinearRegression(fit_intercept=False)
         else:
-            regressor = self.regressor
+            regressor = clone(self.regressor)
 
         # make pipeline with polynomial features
         self.regressor_ = make_pipeline(

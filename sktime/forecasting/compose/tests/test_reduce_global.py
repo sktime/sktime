@@ -2,6 +2,12 @@
 """Test extraction of features across (shifted) windows."""
 __author__ = ["danbartl"]
 
+from sktime.utils.validation._dependencies import _check_soft_dependencies
+
+# HistGradientBoostingRegressor requires experimental flag in old sklearn versions
+if _check_soft_dependencies("sklearn<1.0", severity="none"):
+    from sklearn.experimental import enable_hist_gradient_boosting  # noqa
+
 import random
 
 import numpy as np
@@ -125,7 +131,7 @@ def check_eval(test_input, expected):
         ),
     ],
 )
-def test_reduction(y, index_names):
+def test_recursive_reduction(y, index_names):
     """Test index columns match input."""
     regressor = make_pipeline(
         RandomForestRegressor(random_state=1),
@@ -166,6 +172,46 @@ def test_reduction(y, index_names):
         ),
     ],
 )
+def test_direct_reduction(y, index_names):
+    """Test index columns match input."""
+    regressor = make_pipeline(
+        RandomForestRegressor(random_state=1),
+    )
+
+    forecaster2 = make_reduction(
+        regressor,
+        transformers=[WindowSummarizer(**kwargs, n_jobs=1)],
+        window_length=None,
+        strategy="recursive",
+        pooling="global",
+    )
+
+    forecaster2.fit(y, fh=[1, 2])
+    y_pred = forecaster2.predict(fh=[1, 2, 12])
+    check_eval(y_pred.index.names, index_names)
+
+
+@pytest.mark.parametrize(
+    "y, index_names",
+    [
+        (
+            y_train_grp,
+            ["instances", "timepoints"],
+        ),
+        (
+            y_train,
+            [None],
+        ),
+        (
+            y_numeric,
+            [None],
+        ),
+        (
+            y_train_hier_unequal,
+            ["foo", "bar", "Period"],
+        ),
+    ],
+)
 def test_list_reduction(y, index_names):
     """Test index columns match input."""
     regressor = make_pipeline(
@@ -174,14 +220,13 @@ def test_list_reduction(y, index_names):
 
     forecaster2 = make_reduction(
         regressor,
-        scitype="tabular-regressor",
         transformers=[WindowSummarizer(**kwargs), WindowSummarizer(**kwargs_variant)],
         window_length=None,
         strategy="recursive",
         pooling="global",
     )
 
-    forecaster2.fit(y, fh=[1, 2])
+    forecaster2.fit(y, fh=[1, 2, 12])
     y_pred = forecaster2.predict(fh=[1, 2, 12])
     check_eval(y_pred.index.names, index_names)
 

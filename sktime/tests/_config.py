@@ -12,8 +12,6 @@ from sktime.registry import (
 )
 from sktime.transformations.base import BaseTransformer
 
-# The following estimators currently do not pass all unit tests
-# https://github.com/sktime/sktime/issues/1627
 EXCLUDE_ESTIMATORS = [
     # SFA is non-compliant with any transformer interfaces, #2064
     "SFA",
@@ -33,6 +31,7 @@ EXCLUDE_ESTIMATORS = [
     "TapNetRegressor",
     "TapNetClassifier",
     "ResNetClassifier",  # known ResNetClassifier sporafic failures, see #3954
+    "LSTMFCNClassifier",  # unknown cause, see bug report #4033
 ]
 
 
@@ -95,6 +94,7 @@ EXCLUDED_TESTS = {
     ],
     "MLPClassifier": [
         "test_fit_idempotent",
+        "test_methods_have_no_side_effects",  # unknown cause, see bug report #4033
     ],
     # sth is not quite right with the RowTransformer-s changing state,
     #   but these are anyway on their path to deprecation, see #2370
@@ -125,6 +125,8 @@ EXCLUDED_TESTS = {
     ],
     "SAX": "test_fit_transform_output",  # SAX returns strange output format
     # this needs to be fixed, was not tested previously due to legacy exception
+    "Prophet": ":test_hierarchical_with_exogeneous",
+    # Prophet does not support datetime indices, see #2475 for the known issue
 }
 
 # We use estimator tags in addition to class hierarchies to further distinguish

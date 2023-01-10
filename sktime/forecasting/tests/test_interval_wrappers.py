@@ -22,6 +22,7 @@ from sktime.performance_metrics.forecasting.probabilistic import PinballLoss
 INTERVAL_WRAPPERS = [ConformalIntervals, NaiveVariance]
 CV_SPLITTERS = [SlidingWindowSplitter, ExpandingWindowSplitter]
 EVALUATE_STRATEGY = ["update", "refit"]
+SAMPLE_FRACS = [None, 0.5]
 MTYPES_SERIES = scitype_to_mtype("Series", softdeps="present")
 
 
@@ -65,7 +66,8 @@ def test_wrapper_series_mtype(wrapper, override_y_mtype, mtype):
 @pytest.mark.parametrize("wrapper", INTERVAL_WRAPPERS)
 @pytest.mark.parametrize("splitter", CV_SPLITTERS)
 @pytest.mark.parametrize("strategy", EVALUATE_STRATEGY)
-def test_evaluate_with_window_splitters(wrapper, splitter, strategy):
+@pytest.mark.parametrize("sample_frac", SAMPLE_FRACS)
+def test_evaluate_with_window_splitters(wrapper, splitter, strategy, sample_frac):
     """Test interval wrappers with different strategies and cross validators.
 
     The wrapper does some internal sliding window cross-validation to
@@ -92,7 +94,10 @@ def test_evaluate_with_window_splitters(wrapper, splitter, strategy):
 
     f = NaiveForecaster()
 
-    interval_forecaster = wrapper(f, initial_window=24)
+    if wrapper == ConformalIntervals:
+        interval_forecaster = wrapper(f, initial_window=24, sample_frac=sample_frac)
+    else:
+        interval_forecaster = wrapper(f, initial_window=24)
 
     results = evaluate(
         forecaster=interval_forecaster,

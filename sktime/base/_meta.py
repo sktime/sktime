@@ -402,7 +402,13 @@ class _HeterogenousMetaEstimator:
         return self._make_strings_unique(uniquestr)
 
     def _dunder_concat(
-        self, other, base_class, composite_class, attr_name="steps", concat_order="left"
+        self,
+        other,
+        base_class,
+        composite_class,
+        attr_name="steps",
+        concat_order="left",
+        composite_params=None,
     ):
         """Concatenate pipelines for dunder parsing, helper function.
 
@@ -426,6 +432,9 @@ class _HeterogenousMetaEstimator:
         concat_order : str, one of "left" and "right", optional, default="left"
             if "left", result attr_name will be like self.attr_name + other.attr_name
             if "right", result attr_name will be like other.attr_name + self.attr_name
+        composite_params : dict, optional, default=None; else, pairs strname-value
+            if not None, parameters of the composite are always set accordingly
+            i.e., contains key-value pairs, and composite_class has key set to value
 
         Returns
         -------
@@ -488,11 +497,22 @@ class _HeterogenousMetaEstimator:
         else:
             return NotImplemented
 
+        # create the "steps" param for the composite
         # if all the names are equal to class names, we eat them away
         if all(type(x[1]).__name__ == x[0] for x in zip(new_names, new_ests)):
-            return composite_class(**{attr_name: list(new_ests)})
+            step_param = {attr_name: list(new_ests)}
         else:
-            return composite_class(**{attr_name: list(zip(new_names, new_ests))})
+            step_param = {attr_name: list(zip(new_names, new_ests))}
+
+        # retrieve other parameters, from composite_params attribute
+        if composite_params is None:
+            composite_params = {}
+        else:
+            composite_params = composite_params.copy()
+
+        # construct the composite with both step and additional params
+        composite_params.update(step_param)
+        return composite_class(**composite_params)
 
     def _anytagis(self, tag_name, value, estimators):
         """Return whether any estimator in list has tag `tag_name` of value `value`.
