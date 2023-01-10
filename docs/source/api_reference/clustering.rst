@@ -10,25 +10,6 @@ All clusterers in ``sktime``can be listed using the ``sktime.registry.all_estima
 using ``estimator_types="clusterer"``, optionally filtered by tags.
 Valid tags can be listed using ``sktime.registry.all_tags``.
 
-Base
-----
-
-.. currentmodule:: sktime.clustering.base
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    BaseClusterer
-
-.. currentmodule:: sktime.clustering.partitioning
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    TimeSeriesLloyds
-
 Clustering models
 -----------------
 
@@ -63,3 +44,22 @@ Clustering models
     :template: class.rst
 
     TimeSeriesKernelKMeans
+
+Base
+----
+
+.. currentmodule:: sktime.clustering.base
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    BaseClusterer
+
+.. currentmodule:: sktime.clustering.partitioning
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TimeSeriesLloyds
