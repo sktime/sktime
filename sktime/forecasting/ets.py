@@ -472,3 +472,38 @@ class AutoETS(_StatsModelsAdapter):
         https://www.statsmodels.org/dev/examples/notebooks/generated/ets.html
         """
         return self._fitted_forecaster.summary()
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str , default = "default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            There are currently no reserved values for forecasters.
+
+        Returns
+        -------
+        params :dict or list of dict , default = {}
+            arameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params
+        """
+        params1 = {}
+        params2 = {
+            "error": "mul",
+            "trend": "mul",
+            "damped_trend": True,
+            "seasonal": "mul",
+            "sp": 2,
+            "initialization_method": "heuristic",
+            "maxiter": 100,
+            "auto": True,
+            "information_criterion": "bic",
+            "allow_multiplicative_trend": True,
+        }
+
+        return [params1, params2]
