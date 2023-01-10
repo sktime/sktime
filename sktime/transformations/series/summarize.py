@@ -440,7 +440,8 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False):
                 feat = getattr(
                     Z.shift(lag).rolling(
                         window=window_length, min_periods=window_length
-                    ), summarizer,
+                    ),
+                    summarizer,
                 )()
             else:
                 feat = getattr(
@@ -456,7 +457,7 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False):
                     lambda x: getattr(
                         x.shift(lag).rolling(
                             window=window_length, min_periods=window_length
-                        ), 
+                        ),
                         summarizer,
                     )()
                 )
@@ -482,8 +483,9 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False):
             summarizer
         ):
             feat = feat.apply(
-                lambda x: x.rolling(window=window_length, min_periods=window_length)
-                .apply(summarizer, raw=True)
+                lambda x: x.rolling(
+                    window=window_length, min_periods=window_length
+                ).apply(summarizer, raw=True)
             )
         feat = pd.DataFrame(feat)
     if bfill is True:
