@@ -30,7 +30,7 @@ If your contribution does add a new hard dependency, we may suggest to initially
 
 #### Did you add any tests for the change?
 
-<!-- This section is useful if you have added a test in addition to the existing ones. This will ensure that further changes to these files won't introduce the same kind of bug. It is considered good practice to add tests with newly added code to enforce the fact that the code actually works. This will reduce the chance of introducing logical bugs. 
+<!-- This section is useful if you have added a test in addition to the existing ones. This will ensure that further changes to these files won't introduce the same kind of bug. It is considered good practice to add tests with newly added code to enforce the fact that the code actually works. This will reduce the chance of introducing logical bugs.
 -->
 
 #### Any other comments?
