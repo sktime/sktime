@@ -4,8 +4,7 @@
 """Implements online algorithms for prediction weighted ensembles."""
 
 import numpy as np
-from scipy.optimize import bisect
-from scipy.optimize import nnls
+from scipy.optimize import bisect, nnls
 
 
 class _PredictionWeightedEnsembler:
