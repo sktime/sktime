@@ -308,6 +308,10 @@ def test_prediction_intervals_exog(alpha, coverage, level_sample_data_split):
         assert intervals_np[0] < intervals_np[1]
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("statsmodels", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
 def test_evaluate_exog():
     """Test evaluate works when exogenous regressors are present."""
     y, X = load_longley()
