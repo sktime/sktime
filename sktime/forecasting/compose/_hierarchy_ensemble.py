@@ -161,7 +161,6 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
         self.forecasters_ = self._check_forecasters(y, z)
 
         self.fitted_list = []
-        hier_nm = z.index.names
 
         if y.index.nlevels == 1:
             frcstr = self.forecasters_[0][0].clone()
@@ -183,19 +182,17 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
                     self.fitted_list.append([frcstr, df.index])
 
         else:
-            node_dict = self._get_node_dict(z)
-            for forecaster, nodes in node_dict.items():
-                for node in nodes:
-                    frcstr = forecaster.clone()
-                    df = z.loc[node]
-                    df[hier_nm[:-1]] = list(node)
-                    df = df.set_index(hier_nm[:-1], append=True).reorder_levels(hier_nm)
-                    if X is not None:
-                        x = X.loc[df.index]
-                        frcstr.fit(df, fh=fh, X=x)
-                    else:
-                        frcstr.fit(df, fh=fh, X=X)
-                    self.fitted_list.append([frcstr, df.index])
+            node_dict, frcstr_dict = self._get_node_dict(z)
+
+            for key, nodes in node_dict.items():
+                frcstr = frcstr_dict[key].clone()
+                df = z[z.index.droplevel(-1).isin(nodes)]
+                if X is not None:
+                    x = X.loc[df.index]
+                    frcstr.fit(df, fh=fh, X=x)
+                else:
+                    frcstr.fit(df, fh=fh, X=X)
+                self.fitted_list.append([frcstr, df.index])
         return self
 
     def _get_hier_dict(self, z):
@@ -229,17 +226,23 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
     def _get_node_dict(self, z):
 
         node_dict = {}
+        frcstr_dict = {}
         nodes = []
+        counter = 0
 
         for (forecaster, node) in self.forecasters_:
-            node_dict[forecaster] = node
+            mi = pd.MultiIndex.from_tuples(node, names=z.index.names[:-1])
+            frcstr_dict[counter] = forecaster
+            node_dict[counter] = mi
             nodes += node
+            counter += 1
 
         if self.default:
             diff_nodes = z.index.droplevel(-1).unique().difference(nodes)
-            node_dict[self.default] = diff_nodes
+            frcstr_dict[counter] = self.default
+            node_dict[counter] = diff_nodes
 
-        return node_dict
+        return node_dict, frcstr_dict
 
     def _predict(self, fh=None, X=None):
         """Forecast time series at future horizon.
