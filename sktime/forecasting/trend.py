@@ -72,7 +72,7 @@ class TrendForecaster(BaseForecaster):
             self.regressor_ = clone(self.regressor)
 
         # transform data
-        X = y.index.astype("int").to_numpy().reshape(-1, 1)
+        X = y.index.astype("int64").to_numpy().reshape(-1, 1)
 
         # fit regressor
         self.regressor_.fit(X, y)
