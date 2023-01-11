@@ -141,7 +141,6 @@ class TapNetRegressor(BaseDeepRegressor):
             use_rp=self.use_rp,
             rp_params=self.rp_params,
             use_att=self.use_att,
-            use_ss=self.use_ss,
             use_lstm=self.use_lstm,
             use_cnn=self.use_cnn,
             random_state=self.random_state,
