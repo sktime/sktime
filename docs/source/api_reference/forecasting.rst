@@ -311,6 +311,19 @@ Online and stream forecasting
     UpdateRefitsEvery
     DontUpdate
 
+Adapters to other forecasting framework packages
+------------------------------------------------
+
+Generic framework adapters that expose other frameworks in the ``sktime`` interface.
+
+.. currentmodule:: sktime.forecasting.adapters
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    HCrystalBallAdapter
+
 Model selection and tuning
 --------------------------
 
