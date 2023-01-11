@@ -156,8 +156,7 @@ class ResNetClassifier(BaseDeepClassifier):
         -------
         self : object
         """
-        if self.callbacks is None:
-            self._callbacks = []
+        self.callbacks = self.callbacks or []
 
         y_onehot = self.convert_y_to_keras(y)
         # Transpose to conform to Keras input style.
@@ -174,7 +173,7 @@ class ResNetClassifier(BaseDeepClassifier):
             batch_size=self.batch_size,
             epochs=self.n_epochs,
             verbose=self.verbose,
-            callbacks=self._callbacks,
+            callbacks=self.callbacks,
         )
         return self
 

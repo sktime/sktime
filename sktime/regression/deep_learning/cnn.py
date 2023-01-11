@@ -156,8 +156,7 @@ class CNNRegressor(BaseDeepRegressor):
         -------
         self : object
         """
-        if self.callbacks is None:
-            self._callbacks = []
+        self.callbacks = self.callbacks or []
 
         # Transpose to conform to Keras input style.
         X = X.transpose(0, 2, 1)
@@ -174,7 +173,7 @@ class CNNRegressor(BaseDeepRegressor):
             batch_size=self.batch_size,
             epochs=self.n_epochs,
             verbose=self.verbose,
-            callbacks=self._callbacks,
+            callbacks=self.callbacks,
         )
         return self
 

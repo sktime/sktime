@@ -194,8 +194,7 @@ class TapNetRegressor(BaseDeepRegressor):
         -------
         self: object
         """
-        if self.callbacks is None:
-            self._callbacks = []
+        self.callbacks = self.callbacks or []
 
         # Transpose to conform to expectation format from keras
         X = X.transpose(0, 2, 1)
@@ -212,7 +211,7 @@ class TapNetRegressor(BaseDeepRegressor):
             batch_size=self.batch_size,
             epochs=self.n_epochs,
             verbose=self.verbose,
-            callbacks=self._callbacks,
+            callbacks=self.callbacks,
         )
 
         return self

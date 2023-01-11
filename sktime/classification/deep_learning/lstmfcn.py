@@ -139,8 +139,7 @@ class LSTMFCNClassifier(BaseDeepClassifier):
             metrics=["accuracy"],
         )
 
-        if self.callbacks is None:
-            self._callbacks = []
+        self.callbacks = self.callbacks or []
 
         return model
 
@@ -195,7 +194,7 @@ class LSTMFCNClassifier(BaseDeepClassifier):
             batch_size=self.batch_size,
             epochs=self.n_epochs,
             verbose=self.verbose,
-            callbacks=self._callbacks,
+            callbacks=self.callbacks,
         )
 
         self._is_fitted = True
