@@ -7,17 +7,18 @@ ensemble structure of the original BOSS algorithm.
 
 __author__ = ["MatthewMiddlehurst", "BINAYKUMAR943"]
 
-__all__ = ["ContractableBOSS"]
+__all__ = ["ContractableBOSS", "pairwise_distances"]
 
 import math
 import time
+import warnings
 
 import numpy as np
-from joblib import Parallel, delayed
 from sklearn.utils import check_random_state
 
 from sktime.classification.base import BaseClassifier
 from sktime.classification.dictionary_based import IndividualBOSS
+from sktime.classification.dictionary_based._boss import pairwise_distances
 from sktime.utils.validation.panel import check_X_y
 
 
@@ -62,17 +63,26 @@ class ContractableBOSS(BaseClassifier):
     contract_max_n_parameter_samples : int, default=np.inf
         Max number of parameter combinations to consider when time_limit_in_minutes is
         set.
-    typed_dict : bool, default=True
+    typed_dict : bool, default="deprecated"
         Use a numba TypedDict to store word counts. May increase memory usage, but will
         be faster for larger datasets. As the Dict cannot be pickled currently, there
         will be some overhead converting it to a python dict with multiple threads and
         pickling.
+
+        .. deprecated:: 0.13.3
+            ``typed_dict`` was deprecated in version 0.13.3 and will be removed in 0.15.
+
     save_train_predictions : bool, default=False
         Save the ensemble member train predictions in fit for use in _get_train_probs
         leave-one-out cross-validation.
     n_jobs : int, default = 1
         The number of jobs to run in parallel for both `fit` and `predict`.
         ``-1`` means using all processors.
+    feature_selection: {"chi2", "none", "random"}, default: none
+        Sets the feature selections strategy to be used. Chi2 reduces the number
+        of words significantly and is thus much faster (preferred). Random also reduces
+        the number significantly. None applies not feature selectiona and yields large
+        bag of words, e.g. much memory may be needed.
     random_state : int or None, default=None
         Seed for random integer.
 
@@ -143,8 +153,9 @@ class ContractableBOSS(BaseClassifier):
         min_window=10,
         time_limit_in_minutes=0.0,
         contract_max_n_parameter_samples=np.inf,
-        typed_dict=True,
+        typed_dict="deprecated",
         save_train_predictions=False,
+        feature_selection="none",
         n_jobs=1,
         random_state=None,
     ):
@@ -159,6 +170,7 @@ class ContractableBOSS(BaseClassifier):
         self.save_train_predictions = save_train_predictions
         self.n_jobs = n_jobs
         self.random_state = random_state
+        self.feature_selection = feature_selection
 
         self.estimators_ = []
         self.weights_ = []
@@ -202,6 +214,12 @@ class ContractableBOSS(BaseClassifier):
 
         self.estimators_ = []
         self.weights_ = []
+
+        if self.typed_dict != "deprecated":
+            warnings.warn(
+                "``typed_dict`` was deprecated in version 0.13.3 and "
+                "will be removed in 0.15."
+            )
 
         # Window length parameter space dependent on series length
         max_window_searches = self.series_length_ / 4
@@ -256,8 +274,8 @@ class ContractableBOSS(BaseClassifier):
                 *parameters,
                 alphabet_size=self._alphabet_size,
                 save_words=False,
-                typed_dict=self.typed_dict,
-                n_jobs=self._threads_to_use,
+                n_jobs=self.n_jobs,
+                feature_selection=self.feature_selection,
                 random_state=self.random_state,
             )
             boss.fit(X_subsample, y_subsample)
@@ -275,18 +293,20 @@ class ContractableBOSS(BaseClassifier):
             else:
                 weight = 0.000000001
 
-            if num_classifiers < self.max_ensemble_size:
-                if boss._accuracy < lowest_acc:
-                    lowest_acc = boss._accuracy
-                    lowest_acc_idx = num_classifiers
-                self.weights_.append(weight)
-                self.estimators_.append(boss)
-            elif boss._accuracy > lowest_acc:
-                self.weights_[lowest_acc_idx] = weight
-                self.estimators_[lowest_acc_idx] = boss
-                lowest_acc, lowest_acc_idx = self._worst_ensemble_acc()
+            # Only keep the classifier, if its accuracy is non-zero
+            if boss._accuracy > 0:
+                if num_classifiers < self.max_ensemble_size:
+                    if boss._accuracy < lowest_acc:
+                        lowest_acc = boss._accuracy
+                        lowest_acc_idx = num_classifiers
+                    self.weights_.append(weight)
+                    self.estimators_.append(boss)
+                elif boss._accuracy > lowest_acc:
+                    self.weights_[lowest_acc_idx] = weight
+                    self.estimators_[lowest_acc_idx] = boss
+                    lowest_acc, lowest_acc_idx = self._worst_ensemble_acc()
 
-            num_classifiers += 1
+                num_classifiers += 1
             train_time = time.time() - start_time
 
         self.n_estimators_ = len(self.estimators_)
@@ -376,22 +396,33 @@ class ContractableBOSS(BaseClassifier):
         results = np.zeros((n_instances, self.n_classes_))
         divisors = np.zeros(n_instances)
 
-        for i, clf in enumerate(self.estimators_):
-            subsample = clf._subsample
-            preds = (
-                clf._train_predictions
-                if self.save_train_predictions
-                else Parallel(n_jobs=self._threads_to_use)(
-                    delayed(clf._train_predict)(
-                        i,
-                    )
-                    for i in range(len(subsample))
-                )
-            )
+        if self.save_train_predictions:
+            for i, clf in enumerate(self.estimators_):
+                subsample = clf._subsample
+                preds = clf._train_predictions
 
-            for n, pred in enumerate(preds):
-                results[subsample[n]][self._class_dictionary[pred]] += self.weights_[i]
-                divisors[subsample[n]] += self.weights_[i]
+                for n, pred in enumerate(preds):
+                    results[subsample[n]][
+                        self._class_dictionary[pred]
+                    ] += self.weights_[i]
+                    divisors[subsample[n]] += self.weights_[i]
+
+        else:
+            for i, clf in enumerate(self.estimators_):
+                subsample = clf._subsample
+                distance_matrix = pairwise_distances(
+                    clf._transformed_data, n_jobs=self.n_jobs
+                )
+
+                preds = []
+                for j in range(len(subsample)):
+                    preds.append(clf._train_predict(j, distance_matrix))
+
+                for n, pred in enumerate(preds):
+                    results[subsample[n]][
+                        self._class_dictionary[pred]
+                    ] += self.weights_[i]
+                    divisors[subsample[n]] += self.weights_[i]
 
         for i in range(n_instances):
             results[i] = (
@@ -406,29 +437,17 @@ class ContractableBOSS(BaseClassifier):
         correct = 0
         required_correct = int(lowest_acc * train_size)
 
-        if self._threads_to_use > 1:
-            c = Parallel(n_jobs=self._threads_to_use)(
-                delayed(boss._train_predict)(
-                    i,
-                )
-                for i in range(train_size)
+        # there may be no words if feature selection is too aggressive
+        if boss._transformed_data.shape[1] > 0:
+            distance_matrix = pairwise_distances(
+                boss._transformed_data, n_jobs=self.n_jobs
             )
 
             for i in range(train_size):
                 if correct + train_size - i < required_correct:
                     return -1
-                elif c[i] == y[i]:
-                    correct += 1
 
-                if self.save_train_predictions:
-                    boss._train_predictions.append(c[i])
-        else:
-            for i in range(train_size):
-                if correct + train_size - i < required_correct:
-                    return -1
-
-                c = boss._train_predict(i)
-
+                c = boss._train_predict(i, distance_matrix)
                 if c == y[i]:
                     correct += 1
 
@@ -466,4 +485,5 @@ class ContractableBOSS(BaseClassifier):
                 "n_parameter_samples": 4,
                 "max_ensemble_size": 2,
                 "save_train_predictions": True,
+                "feature_selection": "none",
             }

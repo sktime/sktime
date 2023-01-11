@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
-"""RotationForest vector classifier.
+"""A rotation forest (RotF) vector classifier.
 
-Rotation Forest, sktime implementation for continuous values only.
+A rotation Forest sktime implementation for continuous values only. Fits sklearn
+conventions.
 """
 
 __author__ = ["MatthewMiddlehurst"]
@@ -23,10 +24,12 @@ from sktime.utils.validation import check_n_jobs
 
 
 class RotationForest(BaseEstimator):
-    """Rotation Forest Classifier.
+    """A rotation forest (RotF) vector classifier.
 
     Implementation of the Rotation Forest classifier described in Rodriguez et al
-    (2013). [1]_
+    (2013) [1]. Builds a forest of trees build on random portions of the data
+    transformed using PCA.
+
     Intended as a benchmark for time series data and a base classifier for
     transformation based appraoches such as ShapeletTransformClassifier, this sktime
     implementation only works with continuous attributes.
@@ -36,51 +39,55 @@ class RotationForest(BaseEstimator):
     n_estimators : int, default=200
         Number of estimators to build for the ensemble.
     min_group : int, default=3
-        The minimum size of a group.
+        The minimum size of an attribute subsample group.
     max_group : int, default=3
-        The maximum size of a group.
+        The maximum size of an attribute subsample group.
     remove_proportion : float, default=0.5
-        The proportion of cases to be removed.
+        The proportion of cases to be removed per group.
     base_estimator : BaseEstimator or None, default="None"
-        Base estimator for the ensemble. By default uses the sklearn
-        DecisionTreeClassifier using entropy as a splitting measure.
+        Base estimator for the ensemble. By default, uses the sklearn
+        `DecisionTreeClassifier` using entropy as a splitting measure.
     time_limit_in_minutes : int, default=0
-        Time contract to limit build time in minutes, overriding n_estimators.
-        Default of 0 means n_estimators is used.
+        Time contract to limit build time in minutes, overriding ``n_estimators``.
+        Default of `0` means ``n_estimators`` is used.
     contract_max_n_estimators : int, default=500
-        Max number of estimators when time_limit_in_minutes is set.
+        Max number of estimators to build when ``time_limit_in_minutes`` is set.
     save_transformed_data : bool, default=False
-        Save the data transformed in fit for use in _get_train_probs.
+        Save the data transformed in fit in ``transformed_data_`` for use in
+        ``_get_train_probs``.
     n_jobs : int, default=1
-        The number of jobs to run in parallel for both `fit` and `predict`.
-        ``-1`` means using all processors.
-    random_state : int or None, default=None
-        Seed for random number generation.
+        The number of jobs to run in parallel for both ``fit`` and ``predict``.
+        `-1` means using all processors.
+    random_state : int, RandomState instance or None, default=None
+        If `int`, random_state is the seed used by the random number generator;
+        If `RandomState` instance, random_state is the random number generator;
+        If `None`, the random number generator is the `RandomState` instance used
+        by `np.random`.
 
     Attributes
     ----------
-    n_classes_ : int
-        The number of classes.
-    n_instances_ : int
-        The number of train cases.
-    n_atts_ : int
-        The number of attributes in each train case.
     classes_ : list
-        The classes labels.
+        The unique class labels in the training set.
+    n_classes_ : int
+        The number of unique classes in the training set.
+    n_instances_ : int
+        The number of train cases in the training set.
+    n_atts_ : int
+        The number of attributes in the training set.
+    transformed_data_ : list of shape (n_estimators) of ndarray
+        The transformed training dataset for all classifiers. Only saved when
+        ``save_transformed_data`` is `True`.
     estimators_ : list of shape (n_estimators) of BaseEstimator
         The collections of estimators trained in fit.
-    transformed_data_ : list of shape (n_estimators) of ndarray
-        The transformed dataset for all classifiers. Only saved when
-        save_transformed_data is true.
 
     See Also
     --------
-    ShapeletTransformClassifier
+    ShapeletTransformClassifier: A shapelet-based classifier using Rotation Forest.
 
     Notes
     -----
     For the Java version, see
-    `TSML <https://github.com/uea-machine-learning/tsml/blob/master/src/main/java
+    `tsml <https://github.com/uea-machine-learning/tsml/blob/master/src/main/java
     /weka/classifiers/meta/RotationForest.java>`_.
 
     References
@@ -125,11 +132,9 @@ class RotationForest(BaseEstimator):
         self.max_group = max_group
         self.remove_proportion = remove_proportion
         self.base_estimator = base_estimator
-
         self.time_limit_in_minutes = time_limit_in_minutes
         self.contract_max_n_estimators = contract_max_n_estimators
         self.save_transformed_data = save_transformed_data
-
         self.n_jobs = n_jobs
         self.random_state = random_state
 
@@ -140,14 +145,20 @@ class RotationForest(BaseEstimator):
 
         Parameters
         ----------
-        X : ndarray of shape = [n_instances,n_attributes]
-            The training input samples.
+        X : 2d ndarray or DataFrame of shape = [n_instances, n_attributes]
+            The training data.
         y : array-like, shape = [n_instances]
             The class labels.
 
         Returns
         -------
-        self : object
+        self :
+            Reference to self.
+
+        Notes
+        -----
+        Changes state by creating a fitted model that updates attributes
+        ending in "_".
         """
         if isinstance(X, np.ndarray) and len(X.shape) == 3 and X.shape[1] == 1:
             X = np.reshape(X, (X.shape[0], -1))
@@ -250,11 +261,13 @@ class RotationForest(BaseEstimator):
 
         Parameters
         ----------
-        X : ndarray of shape = [n_instances,n_attributes]
+        X : 2d ndarray or DataFrame of shape = [n_instances, n_attributes]
+            The data to make predictions for.
 
         Returns
         -------
-        output : array of shape = [n_test_instances]
+        y : array-like, shape = [n_instances]
+            Predicted class labels.
         """
         rng = check_random_state(self.random_state)
         return np.array(
@@ -269,12 +282,13 @@ class RotationForest(BaseEstimator):
 
         Parameters
         ----------
-        X : ndarray of shape = [n_instances,n_attributes]
+        X : 2d ndarray or DataFrame of shape = [n_instances, n_attributes]
+            The data to make predictions for.
 
         Returns
         -------
-        output : array of shape = [n_test_instances, num_classes] of
-        probabilities
+        y : array-like, shape = [n_instances, n_classes_]
+            Predicted probabilities using the ordering in classes_.
         """
         if not self._is_fitted:
             raise NotFittedError(
@@ -284,8 +298,7 @@ class RotationForest(BaseEstimator):
 
         # treat case of single class seen in fit
         if self.n_classes_ == 1:
-            n_instances = len(X)
-            return np.repeat([[1]], n_instances, axis=0)
+            return np.repeat([[1]], X.shape[0], axis=0)
 
         if isinstance(X, np.ndarray) and len(X.shape) == 3 and X.shape[1] == 1:
             X = np.reshape(X, (X.shape[0], -1))
@@ -432,6 +445,7 @@ class RotationForest(BaseEstimator):
         X_t = np.concatenate(
             [pcas[i].transform(X[:, group]) for i, group in enumerate(groups)], axis=1
         )
+        X_t = np.nan_to_num(X_t, False, 0, 0, 0)
         tree = _clone_estimator(self._base_estimator, random_state=rs)
         tree.fit(X_t, y)
 
@@ -441,6 +455,7 @@ class RotationForest(BaseEstimator):
         X_t = np.concatenate(
             [pcas[i].transform(X[:, group]) for i, group in enumerate(groups)], axis=1
         )
+        X_t = np.nan_to_num(X_t, False, 0, 0, 0)
         probas = clf.predict_proba(X_t)
 
         if probas.shape[1] != self.n_classes_:

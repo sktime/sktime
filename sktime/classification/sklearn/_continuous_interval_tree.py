@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
-"""CIT vector classifier.
+"""Continuous interval tree (CIT) vector classifier (aka Time Series Tree).
 
-Continuous Interval Tree aka Time Series Tree (TST), base classifier originally used
-in the TimeSeriesForest interval based classification algorithm.
+Continuous Interval Tree aka Time Series Tree, base classifier originally used
+in the time series forest interval based classification algorithm. Fits sklearn
+conventions.
 """
 
 __author__ = ["MatthewMiddlehurst"]
@@ -18,46 +19,51 @@ from sklearn.base import BaseEstimator
 from sklearn.utils import check_random_state
 
 from sktime.exceptions import NotFittedError
-from sktime.utils.numba.stats import iqr, mean, median, numba_max, numba_min, slope, std
-from sktime.utils.validation.panel import check_X
+from sktime.utils.numba.stats import iqr, mean, numba_max, numba_min, slope, std
 
 
 class ContinuousIntervalTree(BaseEstimator):
-    """Continuous Interval Tree (CIT).
+    """Continuous interval tree (CIT) vector classifier (aka Time Series Tree).
 
-    The 'Time Series Tree' described in the Time Series Forest (TSF) paper Deng et al
-    (2013). [1]_
-    A simple information gain based tree for continuous attributes using a bespoke
-    margin gain metric for tie breaking.
-    Implemented for interval based time series classifiers such as
-    CanonicalIntervalForest and DrCIF.
+    The `Time Series Tree` described in the Time Series Forest (TSF) paper Deng et al
+    (2013) [1]. A simple information gain based tree for continuous attributes using a
+    bespoke margin gain metric for tie breaking.
+
+    Implemented as a bade classifier for interval based time series classifiers such as
+    `CanonicalIntervalForest` and `DrCIF`.
 
     Parameters
     ----------
     max_depth : int, default=sys.maxsize
         Maximum depth for the tree.
     thresholds : int, default=20
-        Number of thresholds to split attributes on at tree nodes.
-    random_state : int or None, default=None
-        Seed for random number generation.
+        Number of thresholds to split continous attributes on at tree nodes.
+    random_state : int, RandomState instance or None, default=None
+        If `int`, random_state is the seed used by the random number generator;
+        If `RandomState` instance, random_state is the random number generator;
+        If `None`, the random number generator is the `RandomState` instance used
+        by `np.random`.
 
     Attributes
     ----------
-    n_classes_ : int
-        The number of classes.
     classes_ : list
-        The classes labels.
-    _root : _TreeNode
-        Tree root node.
+        The unique class labels in the training set.
+    n_classes_ : int
+        The number of unique classes in the training set.
+    n_instances_ : int
+        The number of train cases in the training set.
+    n_atts_ : int
+        The number of attributes in the training set.
 
     See Also
     --------
-    CanonicalIntervalForest, DrCIF
+    CanonicalIntervalForest
+    DrCIF
 
     Notes
     -----
     For the Java version, see
-    `TSML <https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/
+    `tsml <https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/
     machine_learning/classifiers/ContinuousIntervalTree.java>`_.
 
     References
@@ -88,7 +94,6 @@ class ContinuousIntervalTree(BaseEstimator):
     ):
         self.max_depth = max_depth
         self.thresholds = thresholds
-
         self.random_state = random_state
 
         super(ContinuousIntervalTree, self).__init__()
@@ -101,13 +106,20 @@ class ContinuousIntervalTree(BaseEstimator):
 
         Parameters
         ----------
-        X : array-like or sparse matrix of shape = [n_instances,n_attributes]
-        The training input samples.
-        y : array-like, shape =  [n_instances]    The class labels.
+        X : 2d ndarray or DataFrame of shape = [n_instances, n_attributes]
+            The training data.
+        y : array-like, shape = [n_instances]
+            The class labels.
 
         Returns
         -------
-        self : object
+        self :
+            Reference to self.
+
+        Notes
+        -----
+        Changes state by creating a fitted model that updates attributes
+        ending in "_".
         """
         if isinstance(X, np.ndarray) and len(X.shape) == 3 and X.shape[1] == 1:
             X = np.reshape(X, (X.shape[0], -1))
@@ -117,7 +129,9 @@ class ContinuousIntervalTree(BaseEstimator):
                 "A valid sklearn input such as a 2d numpy array is required."
                 "Sparse input formats are currently not supported."
             )
-        X, y = self._validate_data(X=X, y=y, ensure_min_samples=2)
+        X, y = self._validate_data(
+            X=X, y=y, ensure_min_samples=2, force_all_finite="allow-nan"
+        )
 
         self.n_instances_, self.n_atts_ = X.shape
         self.classes_ = np.unique(y)
@@ -165,12 +179,13 @@ class ContinuousIntervalTree(BaseEstimator):
 
         Parameters
         ----------
-        X : The training input samples. array-like or sparse matrix of shape
-        = [n_test_instances,n_attributes]
+        X : 2d ndarray or DataFrame of shape = [n_instances, n_attributes]
+            The data to make predictions for.
 
         Returns
         -------
-        output : array of shape = [n_test_instances]
+        y : array-like, shape = [n_instances]
+            Predicted class labels.
         """
         rng = check_random_state(self.random_state)
         return np.array(
@@ -185,13 +200,13 @@ class ContinuousIntervalTree(BaseEstimator):
 
         Parameters
         ----------
-        X : The training input samples. array-like or sparse matrix of shape
-        = [n_test_instances,n_attributes]
+        X : 2d ndarray or DataFrame of shape = [n_instances, n_attributes]
+            The data to make predictions for.
 
         Returns
         -------
-        output : array of shape = [n_test_instances, num_classes] of
-        probabilities
+        y : array-like, shape = [n_instances, n_classes_]
+            Predicted probabilities using the ordering in classes_.
         """
         if not self._is_fitted:
             raise NotFittedError(
@@ -201,8 +216,7 @@ class ContinuousIntervalTree(BaseEstimator):
 
         # treat case of single class seen in fit
         if self.n_classes_ == 1:
-            n_instances = len(X)
-            return np.repeat([[1]], n_instances, axis=0)
+            return np.repeat([[1]], X.shape[0], axis=0)
 
         if isinstance(X, np.ndarray) and len(X.shape) == 3 and X.shape[1] == 1:
             X = np.reshape(X, (X.shape[0], -1))
@@ -212,7 +226,7 @@ class ContinuousIntervalTree(BaseEstimator):
                 "A valid sklearn input such as a 2d numpy array is required."
                 "Sparse input formats are currently not supported."
             )
-        X = self._validate_data(X=X, reset=False)
+        X = self._validate_data(X=X, reset=False, force_all_finite="allow-nan")
 
         dists = np.zeros((X.shape[0], self.n_classes_))
         for i in range(X.shape[0]):
@@ -226,7 +240,6 @@ class ContinuousIntervalTree(BaseEstimator):
                 f"This instance of {self.__class__.__name__} has not "
                 f"been fitted yet; please call `fit` first."
             )
-        X = check_X(X, coerce_to_numpy=True)
         n_instances, n_dims, series_length = X.shape
 
         dists = np.zeros((n_instances, self.n_classes_))
@@ -250,7 +263,6 @@ class ContinuousIntervalTree(BaseEstimator):
                 f"This instance of {self.__class__.__name__} has not "
                 f"been fitted yet; please call `fit` first."
             )
-        X = check_X(X, coerce_to_numpy=True)
         n_instances, n_dims, series_length = X.shape
 
         dists = np.zeros((n_instances, self.n_classes_))
@@ -657,7 +669,7 @@ def _drcif_feature(X, interval, dim, att, c22, case_id=None):
     if att > 21:
         return _summary_stat(X[:, dim, interval[0] : interval[1]], att)
     else:
-        return c22.transform_single_feature(
+        return c22._transform_single_feature(
             X[:, dim, interval[0] : interval[1]], att, case_id=case_id
         )
 
@@ -670,7 +682,7 @@ def _summary_stat(X, att):
     elif att == 24:
         function = slope
     elif att == 25:
-        function = median
+        function = np.median
     elif att == 26:
         function = iqr
     elif att == 27:

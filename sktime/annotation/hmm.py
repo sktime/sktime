@@ -6,6 +6,7 @@ Implements a basic Hidden Markov Model (HMM) as an annotation estimator.
 To read more about the algorithm, check out the `HMM wikipedia page
 <https://en.wikipedia.org/wiki/Hidden_Markov_model>`_.
 """
+import warnings
 from typing import Tuple
 
 import numpy as np
@@ -70,7 +71,7 @@ class HMM(BaseSeriesAnnotator):
         a single observation. All functions should be properly normalized PDFs
         over the same space as the observed data.
     transition_prob_mat: 2D np.ndarry, shape = [num_states, num_states]
-        Each row should sumn to 1 in order to be properly normalized
+        Each row should sum to 1 in order to be properly normalized
         (ie the j'th column in the i'th row represents the
         probability of transitioning from state i to state j.)
     initial_probs: 1D np.ndarray, shape = [num hidden states], optional
@@ -156,8 +157,8 @@ class HMM(BaseSeriesAnnotator):
         tran_mat_len = self.transition_prob_mat.shape[0]
         # transition_prob_mat should be square:
         if (
-            not self.transition_prob_mat.ndim == 2
-            or not tran_mat_len == self.transition_prob_mat.shape[1]
+            self.transition_prob_mat.ndim != 2
+            or tran_mat_len != self.transition_prob_mat.shape[1]
         ):
             raise ValueError(
                 "Transtion Probability must be 2D square, but got an"
@@ -187,12 +188,11 @@ class HMM(BaseSeriesAnnotator):
         ).all():
             raise ValueError("The sum of all rows in the transition matrix must be 1.")
         # sum of all initial_probs should be 1 if it is provided.
-        if self.initial_probs is not None and not sum(self.initial_probs) == 1:
+        if self.initial_probs is not None and sum(self.initial_probs) != 1:
             raise ValueError("Sum of initial probs should be 1.")
 
-    @classmethod
+    @staticmethod
     def _calculate_trans_mats(
-        cls,
         initial_probs: np.ndarray,
         emi_probs: np.ndarray,
         transition_prob_mat: np.ndarray,
@@ -238,7 +238,7 @@ class HMM(BaseSeriesAnnotator):
         # trans_prob represents the maximum probability of being in that
         # state at that stage
         trans_prob = np.zeros((num_states, num_obs))
-        trans_prob[:, 0] = np.log(initial_probs)
+        trans_prob[:, 0] = np.log(initial_probs) + np.log(emi_probs[:, 0])
 
         # trans_id is the index of the state that would have been the most
         # likely preceeding state.
@@ -246,26 +246,27 @@ class HMM(BaseSeriesAnnotator):
 
         # use Vertibi Algorithm to fill in trans_prob and trans_id:
         for i in range(1, num_obs):
-            # use log probabilities to try to keep nums reasonable -Inf
-            # means 0 probability
-            paths = np.zeros((num_states, num_states))
-            for j in range(num_states):
-                paths[j, :] += trans_prob[:, i - 1]  # adds prev trans_prob column-wise
-                paths[:, j] += np.log(emi_probs[:, i])  # adds log(probs_sub) row-wise
-            paths += np.log(
-                transition_prob_mat
-            )  # adds log(transition_prob_mat) element-wise
+            # adds log(transition_prob_mat) element-wise:
+            paths = np.log(transition_prob_mat)
+            # adds the probabilities for the state before columsn wise:
+            paths += np.stack(
+                [trans_prob[:, i - 1] for _ in range(num_states)], axis=0
+            ).T
+            # adds the probabilities from emission row wise:
+            paths += np.stack(
+                [np.log(emi_probs[:, i]) for _ in range(num_states)], axis=0
+            )
             trans_id[:, i] = np.argmax(paths, axis=0)
             trans_prob[:, i] = np.max(paths, axis=0)
 
         if np.any(np.isinf(trans_prob[:, -1])):
-            raise ValueError("Change parameters, the distribution doesn't work")
+            warnings.warn("Change parameters, the distribution doesn't work")
 
         return trans_prob, trans_id
 
-    @classmethod
+    @staticmethod
     def _make_emission_probs(
-        cls, emission_funcs: list, observations: np.ndarray
+        emission_funcs: list, observations: np.ndarray
     ) -> np.ndarray:
         """Calculate the prob each obs comes from each hidden state.
 
@@ -306,9 +307,9 @@ class HMM(BaseSeriesAnnotator):
                 emi_probs[state_id, :] = np.array([emission(x) for x in observations])
         return emi_probs
 
-    @classmethod
+    @staticmethod
     def _hmm_viterbi_label(
-        cls, num_obs: int, states: list, trans_prob: np.ndarray, trans_id: np.ndarray
+        num_obs: int, states: list, trans_prob: np.ndarray, trans_id: np.ndarray
     ) -> np.array:
         """Assign hidden state ids to all observations based on most likely path.
 
@@ -340,7 +341,7 @@ class HMM(BaseSeriesAnnotator):
         max_inds = np.zeros(num_obs, dtype=np.int32)
         max_inds[-1] = np.argmax(trans_prob[:, -1])
         hmm_fit[-1] = states[max_inds[-1]]
-        for index in range(num_obs - 1, -1, -1):
+        for index in range(num_obs - 1, 0, -1):
             max_inds[index - 1] = trans_id[max_inds[index], index]
             hmm_fit[index - 1] = states[max_inds[index - 1]]
         return hmm_fit
@@ -374,26 +375,25 @@ class HMM(BaseSeriesAnnotator):
             Array of predicted class labels, same size as input.
         """
         self.num_states = len(self.emission_funcs)
-        self.states = [i for i in range(self.num_states)]
+        self.states = list(range(self.num_states))
         self.num_obs = len(X)
-        emi_probs = HMM._make_emission_probs(self.emission_funcs, X)
+        emi_probs = self._make_emission_probs(self.emission_funcs, X)
         init_probs = self.initial_probs
-        # if no initial_probs were supplied assign all states equal prob:
         if self.initial_probs is None:
-            init_probs = 1.0 / (self.num_states) * np.ones(self.num_states)
-        trans_prob, trans_id = HMM._calculate_trans_mats(
+            init_probs = 1.0 / self.num_states * np.ones(self.num_states)
+        trans_prob, trans_id = self._calculate_trans_mats(
             init_probs,
             emi_probs,
             self.transition_prob_mat,
             self.num_obs,
             self.num_states,
         )
+
         self.trans_prob = trans_prob
         self.trans_id = trans_id
-        annotated_x = HMM._hmm_viterbi_label(
+        return self._hmm_viterbi_label(
             self.num_obs, self.states, self.trans_prob, self.trans_id
         )
-        return annotated_x
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -409,20 +409,19 @@ class HMM(BaseSeriesAnnotator):
         -------
         params : dict or list of dict
         """
-        # define the emission probs for our HMM model:
         centers = [3.5, -5]
-        sd = [0.25 for i in centers]
+        sd = [100 for _ in centers]
         emi_funcs = [
             (norm.pdf, {"loc": mean, "scale": sd[ind]})
             for ind, mean in enumerate(centers)
         ]
-        # make the transition_mat:
+
         trans_mat = np.asarray([[0.25, 0.75], [0.666, 0.333]])
         params_1 = {"emission_funcs": emi_funcs, "transition_prob_mat": trans_mat}
-        # also try with passing initial_probs:
         params_2 = {
             "emission_funcs": emi_funcs,
             "transition_prob_mat": trans_mat,
             "initial_probs": np.asarray([0.2, 0.8]),
         }
+
         return [params_1, params_2]

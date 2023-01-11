@@ -31,8 +31,8 @@ class PluginParamsForecaster(_DelegatedForecaster):
         list of str: parameters in the list are plugged into parameters of the same name
             only parameters present in both `forecaster` and `param_est` are plugged in
         str: considered as a one-element list of str with the string as single element
-        dict: parameters of values are plugged into parameters of respective keys
-            only keys present in `forecaster` and values in `param_est` are plugged in
+        dict: parameter with name of key is plugged into parameter with name of value
+            only keys present in `param_est` and values in `forecaster` are plugged in
     update_params : bool, optional, default=False
         whether fitted parameters by param_est_ are to be updated in self.update
 
@@ -51,15 +51,21 @@ class PluginParamsForecaster(_DelegatedForecaster):
     >>> from sktime.param_est.seasonality import SeasonalityACF
     >>> from sktime.transformations.series.difference import Differencer
     >>>
-    >>> y = load_airline()
-    >>> sp_est = Differencer() * SeasonalityACF()
-    >>> fcst = NaiveForecaster()
-    >>> sp_auto = PluginParamsForecaster(sp_est, fcst)
-    >>> sp_auto.fit(y, fh=[1, 2, 3])
+    >>> y = load_airline()  # doctest: +SKIP
+    >>> sp_est = Differencer() * SeasonalityACF()  # doctest: +SKIP
+    >>> fcst = NaiveForecaster()  # doctest: +SKIP
+    >>> sp_auto = PluginParamsForecaster(sp_est, fcst)  # doctest: +SKIP
+    >>> sp_auto.fit(y, fh=[1, 2, 3])  # doctest: +SKIP
     PluginParamsForecaster(...)
-    >>> y_pred = sp_auto.predict()
-    >>> sp_auto.forecaster_.get_params()["sp"]
+    >>> y_pred = sp_auto.predict()  # doctest: +SKIP
+    >>> sp_auto.forecaster_.get_params()["sp"]  # doctest: +SKIP
     12
+
+    using dictionary to plug "foo" parameter into "sp"
+    >>> from sktime.param_est.fixed import FixedParams
+    >>> sp_plugin = PluginParamsForecaster(
+    ...     FixedParams({"foo": 12}), NaiveForecaster(), params={"foo": "sp"}
+    ... )  # doctest: +SKIP
     """
 
     _tags = {
@@ -235,19 +241,34 @@ class PluginParamsForecaster(_DelegatedForecaster):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         from sktime.forecasting.naive import NaiveForecaster
+        from sktime.param_est.fixed import FixedParams
         from sktime.param_est.seasonality import SeasonalityACF
+        from sktime.utils.validation._dependencies import _check_estimator_deps
 
+        # use of dictionary to plug "foo" parameter into "sp", uses mock param_est
         params1 = {
             "forecaster": NaiveForecaster(),
-            "param_est": SeasonalityACF(),
-            "params": "sp",
+            "param_est": FixedParams({"foo": 12}),
+            "params": {"foo": "sp"},
         }
+        params = [params1]
 
-        # no params given, this should recognize that the intersection is only "sp"
-        params2 = {
-            "forecaster": NaiveForecaster(),
-            "param_est": SeasonalityACF(),
-            "update_params": True,
-        }
+        # uses a "real" param est that depends on statsmodels, requires statsmodels
+        if _check_estimator_deps(SeasonalityACF, severity="none"):
+            # explicit reference to a parameter "sp", present in both estimators
+            params2 = {
+                "forecaster": NaiveForecaster(),
+                "param_est": SeasonalityACF(),
+                "params": "sp",
+            }
+            params = params + [params2]
 
-        return [params1, params2]
+            # no params given, this should recognize that the intersection is only "sp"
+            params3 = {
+                "forecaster": NaiveForecaster(),
+                "param_est": SeasonalityACF(),
+                "update_params": True,
+            }
+            params = params + [params3]
+
+        return params

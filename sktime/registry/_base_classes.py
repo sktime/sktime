@@ -70,6 +70,7 @@ from sktime.dists_kernels._base import (
 )
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.model_selection._split import BaseSplitter
+from sktime.networks.base import BaseDeepNetwork
 from sktime.param_est.base import BaseParamFitter
 from sktime.performance_metrics.base import BaseMetric
 from sktime.regression.base import BaseRegressor
@@ -90,6 +91,7 @@ BASE_CLASS_REGISTER = [
     ("early_classifier", BaseEarlyClassifier, "early time series classifier"),
     ("forecaster", BaseForecaster, "forecaster"),
     ("metric", BaseMetric, "performance metric"),
+    ("network", BaseDeepNetwork, "deep learning network"),
     ("param_est", BaseParamFitter, "parameter fitting estimator"),
     ("regressor", BaseRegressor, "time series regressor"),
     ("series-annotator", BaseSeriesAnnotator, "time series annotator"),

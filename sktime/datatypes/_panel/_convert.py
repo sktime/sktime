@@ -34,7 +34,9 @@ __all__ = [
     "convert_dict",
 ]
 
+from sktime.datatypes._convert_utils._convert import _extend_conversions
 from sktime.datatypes._panel._registry import MTYPE_LIST_PANEL
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 # dictionary indexed by triples of types
 #  1st element = convert from - type
@@ -891,9 +893,8 @@ def from_3d_numpy_to_nested(X, column_names=None, cells_as_numpy=False):
     -------
     df : pd.DataFrame
     """
-    df = pd.DataFrame()
-    # n_instances, n_variables, _ = X.shape
     n_instances, n_columns, n_timepoints = X.shape
+    array_type = X.dtype
 
     container = np.array if cells_as_numpy else pd.Series
 
@@ -910,8 +911,16 @@ def from_3d_numpy_to_nested(X, column_names=None, cells_as_numpy=False):
             )
             raise ValueError(msg)
 
+    column_list = []
     for j, column in enumerate(column_names):
-        df[column] = [container(X[instance, j, :]) for instance in range(n_instances)]
+        nested_column = (
+            pd.DataFrame(X[:, j, :])
+            .apply(lambda x: [container(x, dtype=array_type)], axis=1)
+            .str[0]
+            .rename(column)
+        )
+        column_list.append(nested_column)
+    df = pd.concat(column_list, axis=1)
     return df
 
 
@@ -1052,27 +1061,27 @@ def from_numpyflat_to_numpy3d(obj, store=None):
 
 convert_dict[("numpyflat", "numpy3D", "Panel")] = from_numpyflat_to_numpy3d
 
-
-# obtain other conversions from/to numpyflat via concatenation to numpy3D
-def _concat(fun1, fun2):
-    def concat_fun(obj, store=None):
-        obj1 = fun1(obj, store=store)
-        obj2 = fun2(obj1, store=store)
-        return obj2
-
-    return concat_fun
+_extend_conversions(
+    "numpyflat", "numpy3D", convert_dict, mtype_universe=MTYPE_LIST_PANEL
+)
 
 
-for tp in set(MTYPE_LIST_PANEL).difference(["numpyflat", "numpy3D"]):
-    if ("numpy3D", tp, "Panel") in convert_dict.keys():
-        if ("numpyflat", tp, "Panel") not in convert_dict.keys():
-            convert_dict[("numpyflat", tp, "Panel")] = _concat(
-                convert_dict[("numpyflat", "numpy3D", "Panel")],
-                convert_dict[("numpy3D", tp, "Panel")],
-            )
-    if (tp, "numpy3D", "Panel") in convert_dict.keys():
-        if (tp, "numpyflat", "Panel") not in convert_dict.keys():
-            convert_dict[(tp, "numpyflat", "Panel")] = _concat(
-                convert_dict[(tp, "numpy3D", "Panel")],
-                convert_dict[("numpy3D", "numpyflat", "Panel")],
-            )
+if _check_soft_dependencies("dask", severity="none"):
+    from sktime.datatypes._adapter.dask_to_pd import (
+        convert_dask_to_pandas,
+        convert_pandas_to_dask,
+    )
+
+    def convert_dask_to_pd_as_panel(obj, store=None):
+        return convert_dask_to_pandas(obj)
+
+    convert_dict[("dask_panel", "pd-multiindex", "Panel")] = convert_dask_to_pd_as_panel
+
+    def convert_pd_to_dask_as_panel(obj, store=None):
+        return convert_pandas_to_dask(obj)
+
+    convert_dict[("pd-multiindex", "dask_panel", "Panel")] = convert_pd_to_dask_as_panel
+
+    _extend_conversions(
+        "dask_panel", "pd-multiindex", convert_dict, mtype_universe=MTYPE_LIST_PANEL
+    )

@@ -8,8 +8,6 @@ __all__ = ["Deseasonalizer", "ConditionalDeseasonalizer", "STLTransformer"]
 
 import numpy as np
 import pandas as pd
-from statsmodels.tsa.seasonal import STL as _STL
-from statsmodels.tsa.seasonal import seasonal_decompose
 
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.datetime import _get_duration, _get_freq
@@ -60,9 +58,9 @@ class Deseasonalizer(BaseTransformer):
     --------
     >>> from sktime.transformations.series.detrend import Deseasonalizer
     >>> from sktime.datasets import load_airline
-    >>> y = load_airline()
-    >>> transformer = Deseasonalizer()
-    >>> y_hat = transformer.fit_transform(y)
+    >>> y = load_airline()  # doctest: +SKIP
+    >>> transformer = Deseasonalizer()  # doctest: +SKIP
+    >>> y_hat = transformer.fit_transform(y)  # doctest: +SKIP
     """
 
     _tags = {
@@ -78,6 +76,7 @@ class Deseasonalizer(BaseTransformer):
         "capability:inverse_transform": True,
         "transform-returns-same-time-index": True,
         "univariate-only": True,
+        "python_dependencies": "statsmodels",
     }
 
     def __init__(self, sp=1, model="additive"):
@@ -120,6 +119,8 @@ class Deseasonalizer(BaseTransformer):
         -------
         self: a fitted instance of the estimator
         """
+        from statsmodels.tsa.seasonal import seasonal_decompose
+
         self._X = X
         sp = self.sp
 
@@ -208,6 +209,31 @@ class Deseasonalizer(BaseTransformer):
             self._fit(X_full, update_params=update_params)
         return self
 
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            There are currently no reserved values for transformers.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        params = {}
+
+        params2 = {"sp": 2}
+
+        return [params, params2]
+
 
 class ConditionalDeseasonalizer(Deseasonalizer):
     """Remove seasonal components from time series, conditional on seasonality test.
@@ -261,9 +287,9 @@ class ConditionalDeseasonalizer(Deseasonalizer):
     --------
     >>> from sktime.transformations.series.detrend import ConditionalDeseasonalizer
     >>> from sktime.datasets import load_airline
-    >>> y = load_airline()
-    >>> transformer = ConditionalDeseasonalizer(sp=12)
-    >>> y_hat = transformer.fit_transform(y)
+    >>> y = load_airline()  # doctest: +SKIP
+    >>> transformer = ConditionalDeseasonalizer(sp=12)  # doctest: +SKIP
+    >>> y_hat = transformer.fit_transform(y)  # doctest: +SKIP
     """
 
     def __init__(self, seasonality_test=None, sp=1, model="additive"):
@@ -302,6 +328,8 @@ class ConditionalDeseasonalizer(Deseasonalizer):
         -------
         self: a fitted instance of the estimator
         """
+        from statsmodels.tsa.seasonal import seasonal_decompose
+
         self._X = X
         sp = self.sp
 
@@ -418,9 +446,9 @@ class STLTransformer(BaseTransformer):
     --------
     >>> from sktime.datasets import load_airline
     >>> from sktime.transformations.series.detrend import STLTransformer
-    >>> X = load_airline()
-    >>> transformer = STLTransformer(sp=12)
-    >>> Xt = transformer.fit_transform(X)
+    >>> X = load_airline()  # doctest: +SKIP
+    >>> transformer = STLTransformer(sp=12)  # doctest: +SKIP
+    >>> Xt = transformer.fit_transform(X)  # doctest: +SKIP
     """
 
     _tags = {
@@ -434,6 +462,7 @@ class STLTransformer(BaseTransformer):
         "transform-returns-same-time-index": True,
         "univariate-only": True,
         "fit_is_empty": False,
+        "python_dependencies": "statsmodels",
     }
 
     def __init__(
@@ -486,6 +515,8 @@ class STLTransformer(BaseTransformer):
         -------
         self: a fitted instance of the estimator
         """
+        from statsmodels.tsa.seasonal import STL as _STL
+
         # remember X for transform
         self._X = X
         sp = self.sp
@@ -512,6 +543,8 @@ class STLTransformer(BaseTransformer):
         return self
 
     def _transform(self, X, y=None):
+
+        from statsmodels.tsa.seasonal import STL as _STL
 
         # fit again if indices not seen, but don't store anything
         if not X.index.equals(self._X.index):
@@ -591,4 +624,7 @@ class STLTransformer(BaseTransformer):
         # test case 2: return all components
         params2 = {"return_components": True}
 
-        return [params1, params2]
+        # test case 3: seasonality parameter set, from the skipped doctest
+        params3 = {"sp": 12}
+
+        return [params1, params2, params3]

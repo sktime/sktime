@@ -6,8 +6,6 @@
 __all__ = ["ExponentialSmoothing"]
 __author__ = ["mloning", "big-o"]
 
-from statsmodels.tsa.holtwinters import ExponentialSmoothing as _ExponentialSmoothing
-
 from sktime.forecasting.base.adapters import _StatsModelsAdapter
 
 
@@ -105,10 +103,12 @@ class ExponentialSmoothing(_StatsModelsAdapter):
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.exp_smoothing import ExponentialSmoothing
     >>> y = load_airline()
-    >>> forecaster = ExponentialSmoothing(trend='add', seasonal='multiplicative', sp=12)
-    >>> forecaster.fit(y)
+    >>> forecaster = ExponentialSmoothing(
+    ...     trend='add', seasonal='multiplicative', sp=12
+    ... )  # doctest: +SKIP
+    >>> forecaster.fit(y)  # doctest: +SKIP
     ExponentialSmoothing(...)
-    >>> y_pred = forecaster.predict(fh=[1,2,3])
+    >>> y_pred = forecaster.predict(fh=[1,2,3])  # doctest: +SKIP
     """
 
     _fitted_param_names = (
@@ -167,6 +167,10 @@ class ExponentialSmoothing(_StatsModelsAdapter):
         super().__init__(random_state=random_state)
 
     def _fit_forecaster(self, y, X=None):
+        from statsmodels.tsa.holtwinters import (
+            ExponentialSmoothing as _ExponentialSmoothing,
+        )
+
         self._forecaster = _ExponentialSmoothing(
             y,
             trend=self.trend,

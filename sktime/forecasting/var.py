@@ -9,7 +9,6 @@ from collections import OrderedDict
 
 import numpy as np
 import pandas as pd
-from statsmodels.tsa.api import VAR as _VAR
 
 from sktime.forecasting.base.adapters import _StatsModelsAdapter
 
@@ -66,10 +65,10 @@ class VAR(_StatsModelsAdapter):
     >>> from sktime.forecasting.var import VAR
     >>> from sktime.datasets import load_longley
     >>> _, y = load_longley()
-    >>> forecaster = VAR()
-    >>> forecaster.fit(y)
+    >>> forecaster = VAR()  # doctest: +SKIP
+    >>> forecaster.fit(y)  # doctest: +SKIP
     VAR(...)
-    >>> y_pred = forecaster.predict(fh=[1,2,3])
+    >>> y_pred = forecaster.predict(fh=[1,2,3])  # doctest: +SKIP
     """
 
     _fitted_param_names = ("aic", "fpe", "hqic", "bic")
@@ -124,6 +123,8 @@ class VAR(_StatsModelsAdapter):
         -------
         self : returns an instance of self.
         """
+        from statsmodels.tsa.api import VAR as _VAR
+
         self._forecaster = _VAR(
             endog=y, exog=X, dates=self.dates, freq=self.freq, missing=self.missing
         )

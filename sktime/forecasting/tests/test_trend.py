@@ -1,8 +1,8 @@
-#!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
+"""Test trend forecasters."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-__author__ = ["Markus Löning"]
+__author__ = ["mloning"]
 __all__ = ["get_expected_polynomial_coefs"]
 
 import numpy as np
@@ -14,8 +14,7 @@ from sktime.utils._testing.forecasting import make_forecasting_problem
 
 
 def get_expected_polynomial_coefs(y, degree, with_intercept=True):
-    """Helper function to compute expected coefficients from polynomial
-    regression"""
+    """Compute expected coefficients from polynomial regression."""
     poly_matrix = np.vander(np.arange(len(y)), degree + 1)
     if not with_intercept:
         poly_matrix = poly_matrix[:, :-1]
@@ -23,7 +22,7 @@ def get_expected_polynomial_coefs(y, degree, with_intercept=True):
 
 
 def _test_trend(degree, with_intercept):
-    """Helper function to check trend"""
+    """Check trend, helper function."""
     y = make_forecasting_problem()
     forecaster = PolynomialTrendForecaster(degree=degree, with_intercept=with_intercept)
     forecaster.fit(y)

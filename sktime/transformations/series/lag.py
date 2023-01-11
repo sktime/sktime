@@ -4,6 +4,8 @@
 
 __author__ = ["fkiraly"]
 
+from warnings import warn
+
 import numpy as np
 import pandas as pd
 
@@ -45,18 +47,18 @@ class Lag(BaseTransformer):
     lags : lag offset, or list of lag offsets, optional, default=0 (identity transform)
         a "lag offset" can be one of the following:
         int - number of periods to shift/lag
-        time-like: DateOffset, tseries.offsets, or timedelta
+        time-like: `DateOffset`, `tseries.offsets`, or `timedelta`
             time delta offset to shift/lag
             requires time index of transformed data to be time-like (not int)
         str - time rule from pandas.tseries module, e.g., "EOM"
     freq : frequency descriptor of list of frequency descriptors, optional, default=None
-        if passed, must be scalar, or list of equal length to "lags" argument
-        elements in freq correspond to elements in lags
-        if i-th element of freq is not None, i-th element of lags must be int
+        if passed, must be scalar, or list of equal length to `lags` parameter
+        elements in `freq` correspond to elements in lags
+        if i-th element of `freq` is not None, i-th element of `lags` must be int
             this is called the "corresponding lags element" below
         "frequency descriptor" can be one of the following:
-        time-like: DateOffset, tseries.offsets, or timedelta
-            multiplied to corresponding "lags" element when shifting
+        time-like: `DateOffset`, `tseries.offsets`, or `timedelta`
+            multiplied to corresponding `lags` element when shifting
         str - offset from pd.tseries module, e.g., "D", "M", or time rule, e.g., "EOM"
     index_out : str, optional, one of "shift", "original", "extend", default="extend"
         determines set of output indices in lagged time series
@@ -69,6 +71,10 @@ class Lag(BaseTransformer):
         if True, columns of return DataFrame are flat, by "lagname__variablename"
         if False, columns are MultiIndex (lagname, variablename)
         has no effect if return mtype is one without column names
+    keep_column_names : bool, optional (default=False)
+        has an effect only if `lags` contains only a single element
+        if True, ensures that column names of `transform` output are same as in input,
+        i.e., not `lag_x__varname` but `varname`. Overrides `flatten_transform_index`.
 
     Examples
     --------
@@ -120,6 +126,7 @@ class Lag(BaseTransformer):
         "capability:unequal_length:removes": False,
         "handles-missing-data": True,  # can estimator handle missing data?
         "capability:missing_values:removes": False,
+        "remember_data": True,  # remember all data seen as _X
     }
 
     # todo: add any hyper-parameters and components to constructor
@@ -129,12 +136,14 @@ class Lag(BaseTransformer):
         freq=None,
         index_out="extend",
         flatten_transform_index=True,
+        keep_column_names=False,
     ):
 
         self.lags = lags
         self.freq = freq
         self.index_out = index_out
         self.flatten_transform_index = flatten_transform_index
+        self.keep_column_names = keep_column_names
 
         if index_out not in ["shift", "extend", "original"]:
             raise ValueError(
@@ -186,24 +195,6 @@ class Lag(BaseTransformer):
             name = "lag_" + name
             yield name
 
-    def _fit(self, X, y=None):
-        """Fit transformer to X and y.
-
-        private _fit containing the core logic, called from fit
-
-        Parameters
-        ----------
-        X : pd.DataFrame
-            Data to fit transform to
-        y : ignored, passed for interface compatibility
-
-        Returns
-        -------
-        self: reference to self
-        """
-        # remember X for lagging across past data indices
-        self._X = X
-
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
 
@@ -222,6 +213,7 @@ class Lag(BaseTransformer):
         index_out = self.index_out
 
         X_orig_idx = X.index
+        X_orig_cols = X.columns
         X = X.combine_first(self._X).copy()
 
         shift_params = list(self._yield_shift_params())
@@ -236,6 +228,8 @@ class Lag(BaseTransformer):
                 Xt.index = X.index + lag
                 X_orig_idx_shifted = X_orig_idx + lag
             else:
+                if hasattr(X.index, "freq") and X.index.freq is None and freq is None:
+                    freq = pd.infer_freq(X.index)
                 X_orig_idx_shifted = X_orig_idx.shift(periods=lag, freq=freq)
                 if isinstance(lag, int) and freq is None:
                     freq = "infer"
@@ -263,6 +257,8 @@ class Lag(BaseTransformer):
         Xt = pd.concat(Xt_list, axis=1, keys=lag_names, names=["lag", "variable"])
         if self.flatten_transform_index:
             Xt.columns = flatten_multiindex(Xt.columns)
+        if len(shift_params) == 1 and self.keep_column_names:
+            Xt.columns = X_orig_cols
 
         # some pandas versions do not sort index automatically after concat
         # so removing will break specific pandas versions
@@ -319,7 +315,7 @@ class Lag(BaseTransformer):
         -------
         self: reference to self
         """
-        self._X = X.combine_first(self._X)
+        return self
 
     # todo: return default parameters, so that a test instance can be created
     #   required for automated unit and integration testing of estimator
@@ -347,3 +343,251 @@ class Lag(BaseTransformer):
         params3 = {"lags": [0, 1, -1], "index_out": "shift"}
 
         return [params1, params2, params3]
+
+
+class ReducerTransform(BaseTransformer):
+    """Transformer for forecasting reduction. Prepares tabular X/y via lag and trafos.
+
+    Parameters
+    ----------
+    window_length : int, optional, default=0
+        window length used in the reduction algorithm
+    lags : lag offset, or list of lag offsets, optional, default=0 (identity transform)
+        a "lag offset" can be one of the following:
+        int - number of periods to shift/lag
+        time-like: `DateOffset`, `tseries.offsets`, or `timedelta`
+            time delta offset to shift/lag
+            requires time index of transformed data to be time-like (not int)
+        str - time rule from pandas.tseries module, e.g., "EOM"
+    freq : frequency descriptor of list of frequency descriptors, optional, default=None
+        if passed, must be scalar, or list of equal length to `lags` parameter
+        elements in `freq` correspond to elements in lags
+        if i-th element of `freq` is not None, i-th element of `lags` must be int
+            this is called the "corresponding lags element" below
+        "frequency descriptor" can be one of the following:
+        time-like: `DateOffset`, `tseries.offsets`, or `timedelta`
+            multiplied to corresponding `lags` element when shifting
+        str - offset from pd.tseries module, e.g., "D", "M", or time rule, e.g., "EOM"
+    shifted_vars : None
+    shifted_vars_lag : 0
+    shifted_vars_freq :
+    transformers : sktime series-to-series transformer, or list thereof
+
+    impute_method : str or None, optional, method string passed to Imputer
+        default="bfill", admissible strings are of Imputer.method parameter, see there
+        if None, no imputation is done when applying Lag transformer to obtain inner X
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.transformations.series.lag import Lag
+    >>> X = load_airline()
+
+    Single lag will yield a time series with the same variables:
+    >>> t = Lag(2)
+    >>> Xt = t.fit_transform(X)
+
+    Multiple lags can be provided, this will result in multiple columns:
+    >>> t = Lag([2, 4, -1])
+    >>> Xt = t.fit_transform(X)
+
+    The default setting of index_out will extend indices either side.
+    To ensure that the index remains the same after transform, use index_out="original"
+    >>> t = Lag([2, 4, -1], index_out="original")
+    >>> Xt = t.fit_transform(X)
+
+    The lag transformer may (and usually will) create NAs.
+    (except when index_out="shift" and there is only a single lag, or in trivial cases)
+    This may need to be handled, e.g., if a subsequent pipeline step does not accept NA.
+    To deal with the NAs, pipeline with the Imputer:
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.transformations.series.impute import Imputer
+    >>> from sktime.transformations.series.lag import Lag
+    >>> X = load_airline()
+    >>>
+    >>> t = Lag([2, 4, -1]) * Imputer("nearest")
+    >>> Xt = t.fit_transform(X)
+    """
+
+    _tags = {
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
+        "scitype:transform-output": "Series",
+        # what scitype is returned: Primitives, Series, Panel
+        "scitype:instancewise": True,  # is this an instance-wise transform?
+        "capability:inverse_transform": False,  # can the transformer inverse transform?
+        "univariate-only": False,  # can the transformer handle multivariate X?
+        "X_inner_mtype": "pd.DataFrame",  # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "pd.DataFrame",  # which mtypes do _fit/_predict support for y?
+        "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
+        "transform-returns-same-time-index": False,
+        # does transform return have the same time index as input X
+        "skip-inverse-transform": True,  # is inverse-transform skipped when called?
+        "capability:unequal_length": True,
+        "capability:unequal_length:removes": False,
+        "handles-missing-data": True,  # can estimator handle missing data?
+        "capability:missing_values:removes": False,
+    }
+
+    # todo: add any hyper-parameters and components to constructor
+    def __init__(
+        self,
+        lags=0,
+        freq=None,
+        shifted_vars=None,
+        shifted_vars_lag=0,
+        shifted_vars_freq=None,
+        transformers=None,
+        impute_method="bfill",
+    ):
+
+        self.lags = lags
+        self.freq = freq
+        self.shifted_vars = shifted_vars
+        self.shifted_vars_lag = shifted_vars_lag
+        self.shifted_vars_freq = shifted_vars_freq
+        self.transformers = transformers
+        self.impute_method = impute_method
+
+        # _lags and _freq are list-coerced variants of lags, freq
+        if isinstance(lags, int):
+            self._lags = list(range(lags))
+        else:
+            self._lags = lags
+
+        super(ReducerTransform, self).__init__()
+
+    def _fit(self, X, y=None):
+        """Fit transformer to X and y.
+
+        private _fit containing the core logic, called from fit
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+            Data to fit transform to
+        y : ignored, passed for interface compatibility
+
+        Returns
+        -------
+        self: reference to self
+        """
+        from sktime.transformations.compose import FeatureUnion, YtoX
+        from sktime.transformations.series.impute import Imputer
+
+        impute_method = self.impute_method
+        lags = self._lags
+        freq = self.freq
+
+        # edge case of no reduction features - prepare to return all-zeros matrix
+        if len(lags) == 0 and y is None:
+            warn(
+                "no lags specified and no exogeneous data present, "
+                "empty reduction X. Returning all-zeros X."
+            )
+            self.trafo_ = 0
+            return self
+
+        transformers = []
+
+        if len(lags) > 0:
+            t = Lag(lags=lags, freq=freq, index_out="original", keep_column_names=True)
+            transformers += [("Lag", t)]
+        if y is not None:
+            exog_t = YtoX()
+            if self.shifted_vars_lag != 0:
+                lag = self.shifted_vars_lag
+                freq = self.shifted_vars_freq
+                exog_t = exog_t * Lag(
+                    lags=lag, freq=freq, index_out="original", keep_column_names=True
+                )
+            transformers += [("exog", exog_t)]
+        if self.transformers is not None:
+            transformers += self.transformers
+        t = FeatureUnion(transformers, flatten_transform_index=False)
+
+        if impute_method is not None:
+            t = t * Imputer(method=impute_method)
+
+        self.trafo_ = t.fit(X=X, y=y)
+
+        return self
+
+    def _transform(self, X, y=None):
+        """Transform X and return a transformed version.
+
+        private _transform containing core logic, called from transform
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+            Data to be transformed
+        y : ignored, passed for interface compatibility
+
+        Returns
+        -------
+        pd.DataFrame, transformed version of X
+        """
+        # treat edge case of empty reduction matrix: return all-zeros
+        if self.trafo_ == 0:
+            return pd.DataFrame(0, index=X.index, columns=["zero"])
+
+        Xt = self.trafo_.transform(X=X, y=y)
+
+        varnames = Xt.columns.get_level_values(1)
+        if varnames.is_unique:
+            Xt.columns = Xt.columns.droplevel(0)
+            Xt.columns.name = None
+        else:
+            duplicates = list(varnames[varnames.duplicated()])
+            warn(
+                f"duplicate variable names found in ReducerTransform: {duplicates}, "
+                "returning variables with transformer name prefix"
+            )
+            Xt.columns = flatten_multiindex(Xt.columns)
+
+        Xt = Xt.loc[Xt.index.intersection(X.index)]
+        return Xt
+
+    def _update(self, X, y=None):
+        """Update transformer with X and y.
+
+        private _update containing the core logic, called from update
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+            Data to update transformer with
+        y : ignored, passed for interface compatibility
+
+        Returns
+        -------
+        self: reference to self
+        """
+        self.trafo_.update(X=X, y=y)
+        return self
+
+    # todo: return default parameters, so that a test instance can be created
+    #   required for automated unit and integration testing of estimator
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            There are currently no reserved values for transformers.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        params1 = {"lags": 2}
+
+        return [params1]

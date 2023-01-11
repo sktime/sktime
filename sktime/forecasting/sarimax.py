@@ -6,8 +6,6 @@
 __all__ = ["SARIMAX"]
 __author__ = ["TNTran92"]
 
-from statsmodels.tsa.api import SARIMAX as _SARIMAX
-
 from sktime.forecasting.base.adapters import _StatsModelsAdapter
 
 
@@ -108,10 +106,12 @@ class SARIMAX(_StatsModelsAdapter):
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.sarimax import SARIMAX
     >>> y = load_airline()
-    >>> forecaster = SARIMAX(order=(1, 0, 0), trend="t", seasonal_order=(1, 0, 0, 6))
-    >>> forecaster.fit(y)
+    >>> forecaster = SARIMAX(
+    ...     order=(1, 0, 0), trend="t", seasonal_order=(1, 0, 0, 6))  # doctest: +SKIP
+    ... )
+    >>> forecaster.fit(y)  # doctest: +SKIP
     SARIMAX(...)
-    >>> y_pred = forecaster.predict(fh=y.index)
+    >>> y_pred = forecaster.predict(fh=y.index)  # doctest: +SKIP
     """
 
     _tags = {
@@ -161,6 +161,8 @@ class SARIMAX(_StatsModelsAdapter):
         super().__init__(random_state=random_state)
 
     def _fit_forecaster(self, y, X=None):
+        from statsmodels.tsa.api import SARIMAX as _SARIMAX
+
         self._forecaster = _SARIMAX(
             endog=y,
             exog=X,

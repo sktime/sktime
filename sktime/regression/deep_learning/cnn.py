@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 """Time Convolutional Neural Network (CNN) for regression."""
 
-__author__ = ["AurumnPegasus"]
+__author__ = ["AurumnPegasus", "achieveordie"]
 __all__ = ["CNNRegressor"]
+
+from sklearn.utils import check_random_state
 
 from sktime.networks.cnn import CNNNetwork
 from sktime.regression.deep_learning.base import BaseDeepRegressor
@@ -12,7 +14,7 @@ _check_dl_dependencies(severity="warning")
 
 
 class CNNRegressor(BaseDeepRegressor):
-    """Time Convolutional Neural Network (CNN), as described in [1].
+    """Time Series Convolutional Neural Network (CNN), as described in [1].
 
     Parameters
     ----------
@@ -34,15 +36,22 @@ class CNNRegressor(BaseDeepRegressor):
         whether to output extra information
     loss            : string, default="mean_squared_error"
         fit parameter for the keras model
-    optimizer       : keras.optimizer, default=keras.optimizers.Adam(),
+    activation      : keras.activations or string, default `linear`
+        function to use in the output layer.
+    optimizer       : keras.optimizers or string, default `None`.
+        when `None`, internally uses `keras.optimizers.Adam(0.01)`
+    use_bias        : bool, default=True
+        whether to use bias in the output layer.
     metrics         : list of strings, default=["accuracy"],
 
-    Notes
-    -----
+    References
+    ----------
     .. [1] Zhao et. al, Convolutional neural networks for
     time series classification, Journal of
     Systems Engineering and Electronics, 28(1):2017.
 
+    Notes
+    -----
     Adapted from the implementation from Fawaz et. al
     https://github.com/hfawaz/dl-4-tsc/blob/master/classifiers/cnn.py
     """
@@ -58,7 +67,10 @@ class CNNRegressor(BaseDeepRegressor):
         verbose=False,
         loss="mean_squared_error",
         metrics=None,
-        random_seed=0,
+        random_state=0,
+        activation="linear",
+        use_bias=True,
+        optimizer=None,
     ):
         _check_dl_dependencies(severity="error")
         super(CNNRegressor, self).__init__(
@@ -73,8 +85,18 @@ class CNNRegressor(BaseDeepRegressor):
         self.verbose = verbose
         self.loss = loss
         self.metrics = metrics
-        self.random_seed = random_seed
-        self._network = CNNNetwork()
+        self.random_state = random_state
+        self.activation = activation
+        self.use_bias = use_bias
+        self.optimizer = optimizer
+        self.history = None
+        self._network = CNNNetwork(
+            kernel_size=self.kernel_size,
+            avg_pool_size=self.avg_pool_size,
+            n_conv_layers=self.n_conv_layers,
+            activation=self.activation,
+            random_state=self.random_state,
+        )
 
     def build_model(self, input_shape, **kwargs):
         """Construct a compiled, un-trained, keras model that is ready for training.
@@ -96,7 +118,7 @@ class CNNRegressor(BaseDeepRegressor):
         import tensorflow as tf
         from tensorflow import keras
 
-        tf.random.set_seed(self.random_seed)
+        tf.random.set_seed(self.random_state)
 
         if self.metrics is None:
             metrics = ["accuracy"]
@@ -105,13 +127,23 @@ class CNNRegressor(BaseDeepRegressor):
 
         input_layer, output_layer = self._network.build_network(input_shape, **kwargs)
 
-        output_layer = keras.layers.Dense(units=1, activation="sigmoid")(output_layer)
+        output_layer = keras.layers.Dense(
+            units=1,
+            activation=self.activation,
+            use_bias=self.use_bias,
+        )(output_layer)
+
+        self.optimizer_ = (
+            keras.optimizers.Adam(learning_rate=0.01)
+            if self.optimizer is None
+            else self.optimizer
+        )
 
         model = keras.models.Model(inputs=input_layer, outputs=output_layer)
 
         model.compile(
             loss=self.loss,
-            optimizer=keras.optimizers.Adam(),
+            optimizer=self.optimizer_,
             metrics=metrics,
         )
         return model
@@ -136,6 +168,7 @@ class CNNRegressor(BaseDeepRegressor):
         # Transpose to conform to Keras input style.
         X = X.transpose(0, 2, 1)
 
+        check_random_state(self.random_state)
         self.input_shape = X.shape[1:]
         self.model_ = self.build_model(self.input_shape)
         if self.verbose:
@@ -150,3 +183,40 @@ class CNNRegressor(BaseDeepRegressor):
             callbacks=self._callbacks,
         )
         return self
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            For classifiers, a "default" set of parameters should be provided for
+            general testing, and a "results_comparison" set for comparing against
+            previously recorded results if the general set does not produce suitable
+            probabilities to compare against.
+
+        Returns
+        -------
+        params : dict or list of dict, default={}
+            Parameters to create testing instances of the class.
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`.
+        """
+        param1 = {
+            "n_epochs": 10,
+            "batch_size": 4,
+            "avg_pool_size": 4,
+        }
+
+        param2 = {
+            "n_epochs": 12,
+            "batch_size": 6,
+            "kernel_size": 2,
+            "n_conv_layers": 1,
+        }
+
+        return [param1, param2]

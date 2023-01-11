@@ -5,7 +5,7 @@ __author__ = ["miraep8"]
 
 import numpy as np
 import pytest
-from numpy import asarray
+from numpy import array_equal, asarray
 from scipy.stats import norm
 
 from sktime.annotation.hmm import HMM
@@ -67,3 +67,20 @@ def test_reject_bad_inputs():
                 [[0.25, 0.25, 0.5], [0.2, 0.7, 0.1], [0.3, 0.3, 0.4]]
             ),
         )
+
+
+def test_hmm_behaves_as_expected_on_simple_input():
+    """Test HMM is consistent with expected ground truth in simple ex."""
+    # define the emission probs for our HMM model:
+    centers = [3.5, -5]
+    sd = [0.25 for i in centers]
+    emi_funcs = [
+        (norm.pdf, {"loc": mean, "scale": sd[ind]}) for ind, mean in enumerate(centers)
+    ]
+    hmm_est = HMM(emi_funcs, asarray([[0.25, 0.75], [0.666, 0.333]]))
+    # generate synthetic data (or of course use your own!)
+    obs = asarray([3.7, 3.2, 3.4, 3.6, -5.1, -5.2, -4.9])
+    hmm_est = hmm_est.fit(obs)
+    labels = hmm_est.predict(obs)
+    ground_truth = asarray([0, 0, 0, 0, 1, 1, 1])
+    assert array_equal(labels, ground_truth)

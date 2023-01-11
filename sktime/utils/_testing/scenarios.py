@@ -86,7 +86,7 @@ class TestScenario:
             names for keys need not equal names of methods these are used in
                 but scripted method will look at key with same name as default
         """
-        args = self.args[key]
+        args = self.args.get(key, {})
         if deepcopy_args:
             args = deepcopy(args)
         return args

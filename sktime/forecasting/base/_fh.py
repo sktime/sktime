@@ -8,7 +8,6 @@ __all__ = ["ForecastingHorizon"]
 
 from functools import lru_cache
 from typing import Optional, Union
-from warnings import warn
 
 import numpy as np
 import pandas as pd
@@ -655,7 +654,7 @@ class ForecastingHorizon:
 # This function needs to be outside ForecastingHorizon
 # since the lru_cache decorator has known, problematic interactions
 # with object methods, see B019 error of flake8-bugbear for a detail explanation.
-# See more here: https://github.com/alan-turing-institute/sktime/issues/2338
+# See more here: https://github.com/sktime/sktime/issues/2338
 # We cache the results from `to_relative()` and `to_absolute()` calls to speed up
 # computations, as these are the basic methods and often required internally when
 # calling different methods.
@@ -697,7 +696,7 @@ def _to_relative(fh: ForecastingHorizon, cutoff=None) -> ForecastingHorizon:
         # Out: Index([<0 * Hours>, <4 * Hours>, <8 * Hours>], dtype = 'object')
         # [v - periods[0] for v in periods]
         # Out: Index([<0 * Hours>, <2 * Hours>, <4 * Hours>], dtype='object')
-        # TODO: 0.14.0: Check if this comment below can be removed,
+        # TODO: 0.16.0: Check if this comment below can be removed,
         # so check if pandas has released the fix to PyPI:
         # This bug was reported: https://github.com/pandas-dev/pandas/issues/45999
         # and fixed: https://github.com/pandas-dev/pandas/pull/46006
@@ -716,7 +715,7 @@ def _to_relative(fh: ForecastingHorizon, cutoff=None) -> ForecastingHorizon:
 # This function needs to be outside ForecastingHorizon
 # since the lru_cache decorator has known, problematic interactions
 # with object methods, see B019 error of flake8-bugbear for a detail explanation.
-# See more here: https://github.com/alan-turing-institute/sktime/issues/2338
+# See more here: https://github.com/sktime/sktime/issues/2338
 @lru_cache(typed=True)
 def _to_absolute(fh: ForecastingHorizon, cutoff) -> ForecastingHorizon:
     """Return absolute version of forecasting horizon values.
@@ -799,15 +798,11 @@ def _coerce_to_period(x, freq=None):
     index : pd.Period or pd.PeriodIndex
         Index or index element coerced to period based format.
     """
-    # timestamp/freq combinations are deprecated from 0.13.0
-    # warning should be replaced by exception in 0.14.0
     if isinstance(x, pd.Timestamp) and freq is None:
         freq = x.freq
-        warn(
-            "use of ForecastingHorizon methods with pd.Timestamp carrying freq "
-            "is deprecated since 0.13.0 and will raise exception from 0.14.0"
+        raise ValueError(
+            "_coerce_to_period requires freq argument to be passed if x is pd.Timestamp"
         )
-    #   raise ValueError("_coerce_to_period requires freq if x is pd.Timestamp")
     try:
         return x.to_period(freq)
     except (ValueError, AttributeError) as e:

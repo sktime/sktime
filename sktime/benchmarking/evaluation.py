@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """Evaluator class for analyzing results of a machine learning experiment."""
-__author__ = ["Viktor Kazakov", "Markus Löning", "Aaron Bostrom"]
+__author__ = ["viktorkaz", "mloning", "Aaron Bostrom"]
 __all__ = ["Evaluator"]
 
 import itertools

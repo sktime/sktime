@@ -7,9 +7,6 @@ __all__ = ["UnobservedComponents"]
 __author__ = ["juanitorduz"]
 
 import pandas as pd
-from statsmodels.tsa.statespace.structural import (
-    UnobservedComponents as _UnobservedComponents,
-)
 
 from sktime.forecasting.base.adapters import _StatsModelsAdapter
 
@@ -195,10 +192,10 @@ class UnobservedComponents(_StatsModelsAdapter):
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.structural import UnobservedComponents
     >>> y = load_airline()
-    >>> forecaster = UnobservedComponents(level='local linear trend')
-    >>> forecaster.fit(y)
+    >>> forecaster = UnobservedComponents(level='local linear trend')  # doctest: +SKIP
+    >>> forecaster.fit(y)  # doctest: +SKIP
     UnobservedComponents(...)
-    >>> y_pred = forecaster.predict(fh=[1, 2, 3])
+    >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
     """
 
     _tags = {
@@ -291,6 +288,10 @@ class UnobservedComponents(_StatsModelsAdapter):
         X : pd.DataFrame, optional (default=None)
             Exogenous variables.
         """
+        from statsmodels.tsa.statespace.structural import (
+            UnobservedComponents as _UnobservedComponents,
+        )
+
         self._forecaster = _UnobservedComponents(
             endog=y,
             exog=X,

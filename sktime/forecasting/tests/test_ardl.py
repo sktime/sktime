@@ -2,18 +2,24 @@
 """Tests the ARDL model."""
 __author__ = ["kcc-lion"]
 
+import pytest
 from numpy.testing import assert_allclose
-from statsmodels.datasets import danish_data, grunfeld, longley
-from statsmodels.tsa.ardl import ARDL as _ARDL
-from statsmodels.tsa.ardl import ardl_select_order as _ardl_select_order
 
 from sktime.datasets import load_macroeconomic
 from sktime.forecasting.ardl import ARDL
 from sktime.forecasting.base import ForecastingHorizon
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("statsmodels", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
 def test_against_statsmodels():
     """Compare sktime's ARDL interface with statsmodels ARDL."""
+    from statsmodels.datasets import longley
+    from statsmodels.tsa.ardl import ARDL as _ARDL
+
     # data
     data = longley.load_pandas().data
     oos = data.iloc[-5:, :]
@@ -34,8 +40,15 @@ def test_against_statsmodels():
     return assert_allclose(y_pred, y_pred_stats)
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("statsmodels", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
 def test_against_statsmodels_2():
     """Compare sktime's ARDL interface with statsmodels ARDL with different data."""
+    from statsmodels.datasets import grunfeld
+    from statsmodels.tsa.ardl import ARDL as _ARDL
+
     # data
     data = grunfeld.load_pandas().data
     oos = data.iloc[-5:, :]
@@ -59,8 +72,15 @@ def test_against_statsmodels_2():
     return assert_allclose(y_pred, y_pred_stats)
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("statsmodels", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
 def test_against_statsmodels_3():
     """Compare sktime's ARDL interface with statsmodels ARDL with X=None."""
+    from statsmodels.datasets import longley
+    from statsmodels.tsa.ardl import ARDL as _ARDL
+
     # data
     data = longley.load_pandas().data
     data = data.iloc[:-5, :]
@@ -80,8 +100,14 @@ def test_against_statsmodels_3():
     return assert_allclose(y_pred, y_pred_stats)
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("statsmodels", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
 def test_against_statsmodels_4():
     """Compare sktime's ARDL interface with statsmodels ARDL."""
+    from statsmodels.tsa.ardl import ARDL as _ARDL
+
     # data
     data = load_macroeconomic()
     data = data.iloc[:-5, :]
@@ -101,8 +127,15 @@ def test_against_statsmodels_4():
     return assert_allclose(y_pred, y_pred_stats)
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("statsmodels", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
 def test_auto_ardl():
     """Compare sktime's ARDL interface with statsmodels ardl_select_order."""
+    from statsmodels.datasets import longley
+    from statsmodels.tsa.ardl import ardl_select_order as _ardl_select_order
+
     # data
     data = longley.load_pandas().data
     oos = data.iloc[-5:, :]
@@ -128,8 +161,15 @@ def test_auto_ardl():
     return assert_allclose(y_pred, y_pred_stats)
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("statsmodels", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
 def test_against_statsmodels_5():
     """Compare sktime's ARDL interface with statsmodels ARDL."""
+    from statsmodels.datasets import danish_data
+    from statsmodels.tsa.ardl import ardl_select_order as _ardl_select_order
+
     # data
     data = danish_data.load().data
     data[["lrm", "lry", "ibo", "ide"]]

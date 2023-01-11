@@ -376,6 +376,8 @@ class AutoARIMA(_PmdArimaAdapter):
 
         super(AutoARIMA, self).__init__()
 
+        self._sp = sp if sp else 1
+
     def _instantiate_model(self):
         # import inside method to avoid hard dependency
         from pmdarima.arima import AutoARIMA as _AutoARIMA  # type: ignore
@@ -396,7 +398,7 @@ class AutoARIMA(_PmdArimaAdapter):
             max_D=self.max_D,
             max_Q=self.max_Q,
             max_order=self.max_order,
-            m=self.sp,
+            m=self._sp,
             seasonal=self.seasonal,
             stationary=self.stationary,
             information_criterion=self.information_criterion,

@@ -16,7 +16,7 @@ def test_rocket_on_gunpoint():
     X_training, Y_training = load_gunpoint(split="train", return_X_y=True)
 
     # 'fit' ROCKET -> infer data dimensions, generate random kernels
-    ROCKET = Rocket(num_kernels=10_000)
+    ROCKET = Rocket(num_kernels=10_000, random_state=0)
     ROCKET.fit(X_training)
 
     # transform training data

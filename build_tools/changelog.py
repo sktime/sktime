@@ -15,7 +15,7 @@ HEADERS = {
 if os.getenv("GITHUB_TOKEN") is not None:
     HEADERS["Authorization"] = f"token {os.getenv('GITHUB_TOKEN')}"
 
-OWNER = "alan-turing-institute"
+OWNER = "sktime"
 REPO = "sktime"
 GITHUB_REPOS = "https://api.github.com/repos"
 

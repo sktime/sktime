@@ -7,6 +7,8 @@ Pipeline classifier using the TSFresh transformer and an estimator.
 __author__ = ["MatthewMiddlehurst"]
 __all__ = ["TSFreshClassifier"]
 
+import warnings
+
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier
 
@@ -93,6 +95,8 @@ class TSFreshClassifier(BaseClassifier):
 
         self._transformer = None
         self._estimator = None
+        self._return_majority_class = False
+        self._majority_class = 0
 
         super(TSFreshClassifier, self).__init__()
 
@@ -146,7 +150,19 @@ class TSFreshClassifier(BaseClassifier):
             self._estimator.n_jobs = self._threads_to_use
 
         X_t = self._transformer.fit_transform(X, y)
-        self._estimator.fit(X_t, y)
+
+        if X_t.shape[1] == 0:
+            warnings.warn(
+                "TSFresh has extracted no features from the data. Returning the "
+                "majority class in predictions. Setting "
+                "relevant_feature_extractor=False will keep all features.",
+                UserWarning,
+            )
+
+            self._return_majority_class = True
+            self._majority_class = np.argmax(np.unique(y, return_counts=True)[1])
+        else:
+            self._estimator.fit(X_t, y)
 
         return self
 
@@ -163,6 +179,9 @@ class TSFreshClassifier(BaseClassifier):
         y : array-like, shape = [n_instances]
             Predicted class labels.
         """
+        if self._return_majority_class:
+            return np.full(X.shape[0], self.classes_[self._majority_class])
+
         return self._estimator.predict(self._transformer.transform(X))
 
     def _predict_proba(self, X) -> np.ndarray:
@@ -178,6 +197,11 @@ class TSFreshClassifier(BaseClassifier):
         y : array-like, shape = [n_instances, n_classes_]
             Predicted probabilities using the ordering in classes_.
         """
+        if self._return_majority_class:
+            dists = np.zeros((X.shape[0], self.n_classes_))
+            dists[:, self._majority_class] = 1
+            return dists
+
         m = getattr(self._estimator, "predict_proba", None)
         if callable(m):
             return self._estimator.predict_proba(self._transformer.transform(X))

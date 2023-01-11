@@ -11,7 +11,7 @@ from sktime.transformations.compose import TransformerPipeline
 SUPPORTED_MTYPES = ["pd-multiindex", "nested_univ", "df-list", "numpy3D"]
 
 
-class PwTrafoPanelPipeline(BasePairwiseTransformerPanel, _HeterogenousMetaEstimator):
+class PwTrafoPanelPipeline(_HeterogenousMetaEstimator, BasePairwiseTransformerPanel):
     """Pipeline of transformers and a pairwise panel transformer.
 
     `PwTrafoPanelPipeline` chains transformers and a pairwise transformer at the end.

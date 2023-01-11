@@ -10,6 +10,12 @@ transformations.
    :no-members:
    :no-inherited-members:
 
+All (simple) transformers in ``sktime``can be listed using the ``sktime.registry.all_estimators`` utility,
+using ``estimator_types="regressor"``, optionally filtered by tags.
+Valid tags can be listed using ``sktime.registry.all_tags``.
+
+For pairwise transformers (time series distances, kernels), instead see :ref:`_transformations_pairwise_ref`.
+
 Transformations are categorized as follows:
 
 .. list-table::
@@ -51,17 +57,12 @@ Pipeline building
 
     TransformerPipeline
     FeatureUnion
+    ColumnwiseTransformer
     FitInTransform
     MultiplexTransformer
-
-.. currentmodule:: sktime.transformations.series.compose
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
     OptionalPassthrough
-    ColumnwiseTransformer
+    InvertTransform
+    Id
     YtoX
 
 .. currentmodule:: sktime.transformations.panel.compose
@@ -105,6 +106,7 @@ Sklearn and pandas adapters
     :template: class.rst
 
     Tabularizer
+    TimeBinner
 
 .. currentmodule:: sktime.transformations.series.adapt
 
@@ -169,6 +171,7 @@ Shapelets, wavelets, and convolution
     Rocket
     MiniRocket
     MiniRocketMultivariate
+    MiniRocketMultivariateVariable
 
 .. currentmodule:: sktime.transformations.panel.dwt
 
@@ -359,6 +362,14 @@ Differencing and slope
 Binning and segmentation
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
+.. currentmodule:: sktime.transformations.series.binning
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TimeBinAggregate
+
 .. currentmodule:: sktime.transformations.panel.interpolate
 
 .. autosummary::
@@ -387,8 +398,8 @@ Missing value imputation
 
     Imputer
 
-Datetime feature generation
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Seasonality and Date-Time Features
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: sktime.transformations.series.date
 
@@ -397,6 +408,22 @@ Datetime feature generation
     :template: class.rst
 
     DateTimeFeatures
+
+.. currentmodule:: sktime.transformations.series.time_since
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TimeSince
+
+.. currentmodule:: sktime.transformations.series.fourier
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    FourierFeatures
 
 Auto-correlation series
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -470,6 +497,15 @@ These transformers select features in `X` based on `y`.
     :template: class.rst
 
     FeatureSelection
+
+.. currentmodule:: sktime.transformations.panel.channel_selection
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ElbowClassSum
+    ElbowClassPairwise
 
 Subsetting time points and variables
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

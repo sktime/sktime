@@ -445,5 +445,25 @@ class FittedParamExtractor(BaseTransformer):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         from sktime.forecasting.exp_smoothing import ExponentialSmoothing
+        from sktime.forecasting.trend import TrendForecaster
+        from sktime.utils.validation._dependencies import _check_estimator_deps
 
-        return {"forecaster": ExponentialSmoothing(), "param_names": ["initial_level"]}
+        # accessing a nested parameter
+        params = [
+            {
+                "forecaster": TrendForecaster(),
+                "param_names": ["regressor__intercept"],
+            }
+        ]
+
+        # ExponentialSmoothing requires statsmodels
+        if _check_estimator_deps(ExponentialSmoothing, severity="none"):
+            # accessing a top level parameter
+            params = params + [
+                {
+                    "forecaster": ExponentialSmoothing(),
+                    "param_names": ["initial_level"],
+                }
+            ]
+
+        return params

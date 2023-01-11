@@ -30,15 +30,22 @@ def test_check_estimator_does_not_raise(estimator_class):
     """Test that check_estimator does not raise exceptions on examples we know pass."""
     estimator_instance = estimator_class.create_test_instance()
 
-    check_estimator(estimator_class, return_exceptions=False, verbose=False)
+    check_estimator(estimator_class, raise_exceptions=True, verbose=False)
 
-    check_estimator(estimator_instance, return_exceptions=False, verbose=False)
+    check_estimator(estimator_instance, raise_exceptions=True, verbose=False)
 
 
 def test_check_estimator_subset_tests():
     """Test that subsetting by tests_to_run and tests_to_exclude works as intended."""
-    tests_to_run = ["test_get_params", "test_set_params", "test_clone", "test_repr"]
-    tests_to_exclude = ["test_repr"]
+    tests_to_run = [
+        "test_get_params",
+        "test_set_params",
+        "test_clone",
+        "test_repr",
+        "test_capability_inverse_tag_is_correct",
+        "test_remember_data_tag_is_correct",
+    ]
+    tests_to_exclude = ["test_repr", "test_remember_data_tag_is_correct"]
 
     expected_tests = set(tests_to_run).difference(tests_to_exclude)
 

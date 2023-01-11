@@ -1,51 +1,61 @@
 # -*- coding: utf-8 -*-
-__author__ = ["Markus Löning", "Viktor Kazakov"]
+"""Benchmarking base module."""
+
+__author__ = ["mloning", "viktorkaz"]
 __all__ = ["BaseDataset", "HDDBaseDataset", "BaseResults", "HDDBaseResults"]
 
 import os
-from abc import ABC
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from warnings import warn
 
 import numpy as np
-from joblib import dump
-from joblib import load
+from joblib import dump, load
 
 
 class BaseDataset:
+    """Base dataset class."""
+
     def __init__(self, name):
         self._name = name
 
     def __repr__(self):
+        """Repr dunder."""
         class_name = self.__class__.__name__
         return f"{class_name}(name={self.name})"
 
     def load(self):
+        """Load dataset."""
         raise NotImplementedError()
 
     @property
     def name(self):
+        """Name of dataset."""
         return self._name
 
 
 class HDDBaseDataset(BaseDataset):
+    """HDD dataset."""
+
     def __init__(self, path, name):
         self._path = path
         super(HDDBaseDataset, self).__init__(name=name)
 
     @property
     def path(self):
+        """Path to dataset."""
         return self._path
 
     @staticmethod
     def _validate_path(path):
-        """Helper function to validate paths"""
+        """Validate paths."""
         # check if path already exists
         if not os.path.exists(path):
             raise ValueError(f"No dataset found at path: {path}")
 
 
 class BaseResults:
+    """Base results class."""
+
     def __init__(self):
         # assigned during fitting of orchestration
         self.strategy_names = []
@@ -63,29 +73,31 @@ class BaseResults:
         cv_fold,
         train_or_test,
     ):
+        """Save predictions."""
         raise NotImplementedError()
 
     def load_predictions(self, cv_fold, train_or_test):
-        """Loads predictions for all datasets and strategies iteratively"""
+        """Load predictions for all datasets and strategies iteratively."""
         raise NotImplementedError()
 
     def check_predictions_exist(self, strategy, dataset_name, cv_fold, train_or_test):
+        """Check that predictions exist."""
         raise NotImplementedError()
 
     def save_fitted_strategy(self, strategy, dataset_name, cv_fold):
+        """Save fitted strategy."""
         raise NotImplementedError()
 
     def load_fitted_strategy(self, strategy_name, dataset_name, cv_fold):
-        """Load fitted strategies for all datasets and strategies
-        iteratively"""
+        """Load fitted strategies for all datasets and strategies iteratively."""
         raise NotImplementedError()
 
     def check_fitted_strategy_exists(self, strategy, dataset_name, cv_fold):
+        """Check that fitted strategy exists."""
         raise NotImplementedError()
 
     def _append_key(self, strategy_name, dataset_name):
-        """Append names of datasets and strategies to results objects during
-        orchestration"""
+        """Append names of datasets, strategies to results objects."""
         if strategy_name not in self.strategy_names:
             self.strategy_names.append(strategy_name)
 
@@ -96,6 +108,7 @@ class BaseResults:
         raise NotImplementedError()
 
     def __repr__(self):
+        """Representation dunder."""
         class_name = self.__class__.__name__
         return (
             f"{class_name}(strategies={self.strategy_names}, datasets="
@@ -104,17 +117,19 @@ class BaseResults:
         )
 
     def save(self):
-        """Save results object as master file"""
+        """Save results object as master file."""
         NotImplementedError()
 
     def _iter(self):
-        """Iterate over registry of results object"""
+        """Iterate over registry of results object."""
         for strategy_name in self.strategy_names:
             for dataset_name in self.dataset_names:
                 yield strategy_name, dataset_name
 
 
 class HDDBaseResults(BaseResults):
+    """HDD results."""
+
     def __init__(self, path):
         # validate paths
         self._validate_path(path)
@@ -126,10 +141,11 @@ class HDDBaseResults(BaseResults):
 
     @property
     def path(self):
+        """Path for results on HDD."""
         return self._path
 
     def save(self):
-        """Save results object as master file"""
+        """Save results object as master file."""
         file = os.path.join(self.path, "results.pickle")
 
         # if file does not exist already, create a new one
@@ -148,7 +164,7 @@ class HDDBaseResults(BaseResults):
 
     @staticmethod
     def _validate_path(path):
-        """Helper function to validate paths"""
+        """Validate paths."""
         # check if path already exists
         if os.path.exists(path):
             if not os.path.isdir(path):
@@ -167,8 +183,7 @@ class HDDBaseResults(BaseResults):
 
 
 class _PredictionsWrapper:
-    """Single result class to ensure consistency for return object when
-    loading results"""
+    """Single result class for consistency of return object when loading results."""
 
     def __init__(
         self,
@@ -214,4 +229,4 @@ class BaseMetric(ABC):
 
     @abstractmethod
     def compute(self, y_true, y_pred):
-        """Compute mean and standard error of metric"""
+        """Compute mean and standard error of metric."""

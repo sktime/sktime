@@ -28,6 +28,8 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
         "ignores-exogeneous-X": True,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
+        "y_inner_mtype": ["pd.Series"],
+        "scitype:y": "univariate",
     }
 
     def __init__(self, forecasters, ensemble_algorithm=None, n_jobs=None):

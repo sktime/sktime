@@ -16,49 +16,59 @@ Each tutorial is located in its own repository, which contains notebooks and lin
 For user guides specific to learning tasks, see our :ref:`user_guide` page.
 The user guide notebooks are always functional with the most recent stable version.
 
-.. panels::
-    :card: + intro-card text-center
+.. grid:: 1 2 2 2
+    :gutter: 3
 
-    ---
+    .. grid-item-card::
+        :text-align: center
 
-    Introductory tutorial
-    ^^^^^^^^^^^^^^^^^^^^^
+        Introductory tutorial
 
-    A general introduction to ``sktime`` - for first time users.
+        ^^^
 
-    +++
+        A general introduction to ``sktime`` - for first time users.
 
-    .. link-button:: https://www.youtube.com/watch?v=ODspi8-uWgo
-            :type: url
-            :text: Intro to sktime
-            :classes: btn-block btn-secondary stretched-link
+        +++
 
-    ---
+        .. button-link:: https://www.youtube.com/watch?v=ODspi8-uWgo
+            :color: primary
+            :click-parent:
+            :expand:
 
-    Implementing your own estimator
-    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            Intro to sktime
 
-    How to implement your own ``sktime`` compatible estimator and check its validity.
+    .. grid-item-card::
+        :text-align: center
 
-    +++
+        Implementing your own estimator
 
-    .. link-button:: https://youtu.be/S_3ewcvs_pg
-            :type: url
-            :text: Implementing estimators
-            :classes: btn-block btn-secondary stretched-link
+        ^^^
 
-    ---
+        How to implement your own ``sktime`` compatible estimator and check its validity.
 
-    Advanced forecasting tutorial
-    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        +++
 
-    Probabilistic and hierarchical forecasting with ``sktime``
+        .. button-link:: https://youtu.be/S_3ewcvs_pg
+            :color: primary
+            :click-parent:
+            :expand:
 
-    +++
+            Implementing estimators
 
-    .. link-button:: https://www.youtube.com/watch?v=4Rf9euAhjNc
-            :type: url
-            :text: Advanced forecasting
-            :classes: btn-block btn-secondary stretched-link
+    .. grid-item-card::
+        :text-align: center
 
-    ---
+        Advanced forecasting tutorial
+
+        ^^^
+
+        Probabilistic and hierarchical forecasting with ``sktime``.
+
+        +++
+
+        .. button-link:: https://www.youtube.com/watch?v=4Rf9euAhjNc
+            :color: primary
+            :click-parent:
+            :expand:
+
+            Advanced forecasting

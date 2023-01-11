@@ -82,10 +82,10 @@ class BaggingForecaster(BaseForecaster):
     >>> y = load_airline()
     >>> forecaster = BaggingForecaster(
     ...     STLBootstrapTransformer(sp=12), NaiveForecaster(sp=12)
-    ... )
-    >>> forecaster.fit(y)
+    ... )  # doctest: +SKIP
+    >>> forecaster.fit(y)  # doctest: +SKIP
     BaggingForecaster(...)
-    >>> y_hat = forecaster.predict([1,2,3])
+    >>> y_hat = forecaster.predict([1,2,3])  # doctest: +SKIP
     """
 
     _tags = {
@@ -111,6 +111,13 @@ class BaggingForecaster(BaseForecaster):
         self.forecaster = forecaster
         self.sp = sp
         self.random_state = random_state
+
+        if bootstrap_transformer is None:
+            # if the transformer is None, this uses the statsmodels dependent
+            # sktime.transformations.bootstrap.STLBootstrapTransformer
+            #
+            # done before the super call to trigger exceptions
+            self.set_tags(**{"python_dependencies": "statsmodels"})
 
         super(BaggingForecaster, self).__init__()
 
@@ -218,7 +225,9 @@ class BaggingForecaster(BaseForecaster):
             Point predictions
         """
         y_bootstraps_pred = self.forecaster_.predict(fh=fh, X=None)
-        return y_bootstraps_pred.groupby(level=-1).mean()
+        y_pred = y_bootstraps_pred.groupby(level=-1).mean().iloc[:, 0]
+        y_pred.name = None
+        return y_pred
 
     def _predict_quantiles(self, fh, X=None, alpha=None):
         """Compute/return prediction quantiles for a forecast.
@@ -294,13 +303,19 @@ class BaggingForecaster(BaseForecaster):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
+        from sktime.utils.validation._dependencies import _check_soft_dependencies
+
         params = [
-            {},
             {
                 "bootstrap_transformer": MovingBlockBootstrapTransformer(),
                 "forecaster": MockForecaster(),
             },
         ]
+
+        # the default param set causes a statsmodels based estimator
+        # to be created as bootstrap_transformer
+        if _check_soft_dependencies("statsmodels", severity="none"):
+            params += [{}]
 
         return params
 
