@@ -1272,7 +1272,8 @@ class SingleWindowSplitter(BaseSplitter):
         train_end = _get_end(y_index=y, fh=fh)
 
         training_window = get_window(
-            pd.Series(index=y[y <= y[train_end]]), window_length=window_length
+            pd.Series(index=y[y <= y[train_end]], dtype=y.dtype),
+            window_length=window_length,
         ).index
         training_window = y.get_indexer(training_window)
         if array_is_int(fh):

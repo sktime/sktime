@@ -437,22 +437,36 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False):
     if summarizer in pd_rolling:
         if isinstance(Z, pd.core.groupby.generic.SeriesGroupBy):
             if bfill is False:
-                feat = getattr(Z.shift(lag).rolling(window_length), summarizer)()
+                feat = getattr(
+                    Z.shift(lag).rolling(
+                        window=window_length, min_periods=window_length
+                    ),
+                    summarizer,
+                )()
             else:
                 feat = getattr(
-                    Z.shift(lag).fillna(method="bfill").rolling(window_length),
+                    Z.shift(lag)
+                    .fillna(method="bfill")
+                    .rolling(window=window_length, min_periods=window_length),
                     summarizer,
                 )()
             feat = pd.DataFrame(feat)
         else:
             if bfill is False:
                 feat = Z.apply(
-                    lambda x: getattr(x.shift(lag).rolling(window_length), summarizer)()
+                    lambda x: getattr(
+                        x.shift(lag).rolling(
+                            window=window_length, min_periods=window_length
+                        ),
+                        summarizer,
+                    )()
                 )
             else:
                 feat = Z.apply(
                     lambda x: getattr(
-                        x.shift(lag).fillna(method="bfill").rolling(window_length),
+                        x.shift(lag)
+                        .fillna(method="bfill")
+                        .rolling(window=window_length, min_periods=window_length),
                         summarizer,
                     )()
                 )
@@ -469,7 +483,9 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False):
             summarizer
         ):
             feat = feat.apply(
-                lambda x: x.rolling(window_length).apply(summarizer, raw=True)
+                lambda x: x.rolling(
+                    window=window_length, min_periods=window_length
+                ).apply(summarizer, raw=True)
             )
         feat = pd.DataFrame(feat)
     if bfill is True:
