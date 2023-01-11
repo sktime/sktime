@@ -1416,6 +1416,37 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
                 err_msg="Results are not equal for n_jobs=1 and n_jobs=-1",
             )
 
+    def test_dl_constructor_initializes_deeply(self, estimator_class):
+        """Test DL estimators that they pass custom parameters to underlying Network."""
+        estimator = estimator_class
+
+        if not issubclass(estimator, (BaseDeepClassifier, BaseDeepRegressor)):
+            return None
+
+        if not hasattr(estimator, "get_test_params"):
+            return None
+
+        params = estimator.get_test_params()
+
+        if isinstance(params, list):
+            params = params[0]
+        if isinstance(params, dict):
+            pass
+        else:
+            raise TypeError(
+                f"`get_test_params()` of estimator: {estimator} returns "
+                f"an expected type: {type(params)}, acceptable formats: [list, dict]"
+            )
+
+        estimator = estimator(**params)
+
+        for key, value in params.items():
+            assert vars(estimator)[key] == value
+            # some keys are only relevant to the final model (eg: n_epochs)
+            # skip them for the underlying network
+            if vars(estimator._network).get(key) is not None:
+                assert vars(estimator._network)[key] == value
+
     def _get_err_msg(estimator):
         return (
             f"Invalid estimator type: {type(estimator)}. Valid estimator types are: "
