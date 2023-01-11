@@ -145,7 +145,7 @@ class BATS(_TbatsAdapter):
         }
 
         params2 = {
-            "box_cox_bounds": (1, 10),
+            "use_box_cox": False,
             "sp": [2, 12],
         }
 
