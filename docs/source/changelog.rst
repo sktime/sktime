@@ -106,23 +106,23 @@ Time series classification
 Time series clustering
 ^^^^^^^^^^^^^^^^^^^^^^
 
-* [ENH] Clustering pipelines and dunders (:pr:`3967`) :user:`fkiraly`
+* [ENH] clustering pipelines and dunders (:pr:`3967`) :user:`fkiraly`
 * [ENH] DBSCAN clustering for time series (:pr:`4003`) :user:`fkiraly`, :user:`josuedavalos`
 
 Transformations
 ^^^^^^^^^^^^^^^
 
 * [ENH] "typical length" constant in transformer scenarios (:pr:`3892`) :user:`fkiraly`
-* [ENH] Change ``DateTimeFeatures`` trafo to work with multi-index data and add option to drop columns. (:pr:`3996`) :user:`KishManani`
+* [ENH] change ``DateTimeFeatures`` trafo to work with multi-index data and add option to drop columns. (:pr:`3996`) :user:`KishManani`
 * [ENH] time bin aggregation transformer (:pr:`3997`) :user:`fkiraly`
-* [ENH] Enable ``TimeSince`` trafo to transform multiindex dataframes natively (:pr:`4006`) :user:`KishManani`
-* [ENH] Make ``TimeSince`` trafo faster by changing period diff calculation (:pr:`4018`) :user:`KishManani`
+* [ENH] enable ``TimeSince`` trafo to transform multiindex dataframes natively (:pr:`4006`) :user:`KishManani`
+* [ENH] make ``TimeSince`` trafo faster by changing period diff calculation (:pr:`4018`) :user:`KishManani`
 * [ENH] clean up ``Detrender``, extend to forecasters which require forecasting horizon in ``fit`` (:pr:`4053`) :user:`fkiraly`
 
 Testing framework
 ^^^^^^^^^^^^^^^^^
 
-* [ENH] Update ``_check_soft_dependencies`` to allow PEP 440 specifier strings for version bounds (:pr:`3925`) :user:`fkiraly`
+* [ENH] update ``_check_soft_dependencies`` to allow PEP 440 specifier strings for version bounds (:pr:`3925`) :user:`fkiraly`
 * [ENH] allow tuples/lists of package identifier strings in ``_check_soft_dependencies`` (:pr:`3955`) :user:`fkiraly`
 * [ENH] ``_check_estimator_deps`` to also allows list or tuple of ``BaseObject``-s (:pr:`4002`) :user:`fkiraly`
 * [ENH] extend ``sklearn_scitype`` to infer the scitype correctly from composites (:pr:`4021`) :user:`fkiraly`
@@ -140,7 +140,7 @@ Maintenance
 
 * [MNT] carry out accidentally missed deprecation action for 0.15.0: in ``WEASEL`` and ``BOSS``, remove ``type_dict`` and update default ``alphabet_size=2`` (:pr:`4025`) :user:`xxl4tomxu98`
 * [MNT] move ``badrmarani`` contrib to chronological order (:pr:`4029`) :user:`fkiraly`
-* [MNT] skip #4033 related failures until fixed (:pr:`4034`) :user:`fkiraly`
+* [MNT] skip :pr:`4033` related failures until fixed (:pr:`4034`) :user:`fkiraly`
 * [MNT] skip ``LSTMFCNClassifier`` tests due to unfixed failure on ``main`` (:pr:`4037`) :user:`fkiraly`
 * [MNT] explicit lower version bound on ``scipy`` (:pr:`4019`) :user:`fkiraly`
 * [MNT] fix ``_check_soft_dependencies`` breaking for PEP 440 specifiers without class reference (:pr:`4044`) :user:`fkiraly`
@@ -148,7 +148,7 @@ Maintenance
 * [MNT] address ``pd.Series`` constructor ``dtype`` deprecation / ``FutureWarning`` (:pr:`4031`) :user:`fkiraly`
 * [MNT] isolate ``statsmodels``, recent instances (:pr:`4035`) :user:`fkiraly`
 * [MNT] address ``pandas`` ``astype`` deprecation / ``FutureWarning`` in ``TrendForecaster`` (:pr:`4032`) :user:`fkiraly`
-* [MNT] Adding ``min_periods`` in ``WindowSummarizer`` to address deprecation message (:pr:`4052`, :pr:`4074`) :user:`arnavrneo`
+* [MNT] explicit use of ``min_periods`` args inside ``WindowSummarizer`` to address deprecation message (:pr:`4052`, :pr:`4074`) :user:`arnavrneo`
 
 Documentation
 ~~~~~~~~~~~~~
@@ -158,11 +158,11 @@ Documentation
 * [DOC] improve ``Detrender`` docstring (:pr:`3948`) :user:`fkiraly`
 * [DOC] add some missing entries in API reference (:pr:`3998`) :user:`fkiraly`
 * [DOC] API ref for ``pipeline`` module (:pr:`3970`) :user:`fkiraly`
-* [DOC] Fix the build tag in README (:pr:`4007`) :user:`badrmarani`
+* [DOC] fix the build tag in README (:pr:`4007`) :user:`badrmarani`
 * [DOC] warning, notes, and troubleshooting for installing ``sktime`` with macOS ARM (:pr:`4010`) :user:`dainelli98`
 * [DOC] ``all_estimators`` reference on all estimator pages (:pr:`4027`) :user:`fkiraly`, :user:`MatthewMiddlehurst`
 * [DOC] remove ``make_reduction`` scitype arg in examples (:pr:`4020`) :user:`fkiraly`
-* [DOC] More details on Code Quality and Linting (:pr:`4063`) :user:`miraep8`
+* [DOC] more details on code quality and linting (:pr:`4063`) :user:`miraep8`
 * [DOC] update list of core devs (:pr:`4085`) :user:`fkiraly`
 * [DOC] section on new tests in ``PULL_REQUEST_TEMPLATE`` (:pr:`4093`) :user:`Aarthy153`
 
@@ -177,14 +177,14 @@ Distances, kernels
 Forecasting
 ^^^^^^^^^^^
 
-* [BUG] Fix ``StatsForecastAutoARIMA_.predict`` incorrect in-sample start index (:pr:`3942`) :user:`tianjiqx`
+* [BUG] fix ``StatsForecastAutoARIMA_.predict`` incorrect in-sample start index (:pr:`3942`) :user:`tianjiqx`
 * [BUG] fix ``statsmodels`` estimators when exogenous ``X`` is passed with more indices than ``fh`` (:pr:`3972`) :user:`adoherty21`
 * [BUG] fix logic bug in ``ForecastX`` predictions (:pr:`3987`) :user:`aiwalter`, :user:`fkiraly`
 * [BUG] fix ``Prophet`` not working with non-integer forecast horizon (:pr:`3995`) :user:`fkiraly`
 * [BUG] fix dropped column index in ``BaggingForecaster`` (:pr:`4001`) :user:`fkiraly`
 * [BUG] fix ``TrendForecaster`` if ``regressor`` is not boolean coercible (:pr:`4047`) :user:`fkiraly`
 * [BUG] fix mutation of ``regressor`` in ``PolynomialTrendForecaster._fit`` (:pr:`4057`) :user:`fkiraly`
-* [BUG] Fix ``ConformalIntervals`` update when ``sample_frac`` argument is not None (:pr:`4083`) :user:`bethrice44`
+* [BUG] fix ``ConformalIntervals`` update when ``sample_frac`` argument is not None (:pr:`4083`) :user:`bethrice44`
 
 Governance
 ^^^^^^^^^^
@@ -194,7 +194,7 @@ Governance
 Time series classification
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* [BUG] Constructor of any DL estimator to pass non-default values to underlying ``Network`` object (:pr:`4075`) :user:`achieveordie`
+* [BUG] constructor of any DL estimator to pass non-default values to underlying ``Network`` object (:pr:`4075`) :user:`achieveordie`
 
 Time series clustering
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -204,12 +204,12 @@ Time series clustering
 Time series regression
 ^^^^^^^^^^^^^^^^^^^^^^
 
-* [BUG] Constructor of any DL estimator to pass non-default values to underlying ``Network`` object (:pr:`4075`) :user:`achieveordie`
+* [BUG] constructor of any DL estimator to pass non-default values to underlying ``Network`` object (:pr:`4075`) :user:`achieveordie`
 
 Transformations
 ^^^^^^^^^^^^^^^
 
-* [BUG] Fix ``TimeSince`` check of inconsistency between ``time_index`` and ``start`` (:pr:`4015`) :user:`KishManani`
+* [BUG] fix ``TimeSince`` check of inconsistency between ``time_index`` and ``start`` (:pr:`4015`) :user:`KishManani`
 * [BUG] fix multivariate and hierarchical behaviour of ``Detrender`` (:pr:`4053`) :user:`fkiraly`
 
 Testing framework
