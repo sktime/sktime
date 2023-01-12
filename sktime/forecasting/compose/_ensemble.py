@@ -58,7 +58,6 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
             use the inverse variance of the forecasting error
             (based on the internal train-test-split) to compute optimal
             weights, a given ``regressor`` will be omitted.
-
     regressor : sklearn-like regressor, optional, default=None.
         Used to infer optimal weights from coefficients (linear models) or from
         feature importance scores (decision tree-based models). If None, then
@@ -233,11 +232,21 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         -------
         params : dict or list of dict
         """
+        from sklearn.linear_model import LinearRegression
+
         from sktime.forecasting.naive import NaiveForecaster
 
         FORECASTER = NaiveForecaster()
-        params = {"forecasters": [("f1", FORECASTER), ("f2", FORECASTER)]}
-        return params
+        params1 = {"forecasters": [("f1", FORECASTER), ("f2", FORECASTER)]}
+
+        params2 = {
+            "forecasters": [("f1", FORECASTER), ("f2", FORECASTER)],
+            "method": "inverse-variance",
+            "regressor": LinearRegression(),
+            "test_size": 0.2,
+        }
+
+        return [params1, params2]
 
 
 def _get_weights(regressor):

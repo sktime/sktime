@@ -53,8 +53,6 @@ Core Developers
 
    * - Name
      - GitHub ID
-   * - Anthony Bagnall
-     - :user:`TonyBagnall`
    * - Chris Holder
      - :user:`chrisholder`
    * - Daniel Bartling
@@ -73,8 +71,6 @@ Core Developers
      - :user:`lmmentel`
    * - Markus Löning
      - :user:`mloning`
-   * - Matthew Middlehurst
-     - :user:`mattewmiddlehurst`
    * - Martin Walter
      - :user:`aiwalter`
    * - Mirae Parker
@@ -90,8 +86,8 @@ Core Developers
    * - Svea Marie Meyer
      - :user:`SveaMeyer13`
 
-Former Core Developers (inactive)
----------------------------------
+Former Core Developers
+----------------------
 
 .. list-table::
    :header-rows: 1
@@ -100,6 +96,8 @@ Former Core Developers (inactive)
      - GitHub ID
    * - Aaron Bostrom
      - :user:`abostrom`
+   * - Anthony Bagnall
+     - :user:`TonyBagnall`
    * - Ayushmaan Seth
      - :user:`ayushmaanseth`
    * - George Oastler
@@ -112,6 +110,8 @@ Former Core Developers (inactive)
      - :user:`jasonlines`
    * - Mathew Smith
      - :user:`matteogales`
+   * - Matthew Middlehurst
+     - :user:`mattewmiddlehurst`
    * - Patrick Rockenschaub
      - :user:`prockenschaub`
    * - Sajaysurya Ganesh
