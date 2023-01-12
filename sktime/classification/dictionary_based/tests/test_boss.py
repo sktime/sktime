@@ -3,19 +3,24 @@
 import numpy as np
 import pytest
 
-from sktime.classification.dictionary_based import IndividualBOSS, BOSSEnsemble
+from sktime.classification.dictionary_based import BOSSEnsemble, IndividualBOSS
 from sktime.datasets import load_unit_test
 
 
 @pytest.fixture
 def dataset():
+    """
+    Load unit_test train and test data set from sktime.
+
+    :return: tuple, (X_train, y_train, X_test, y_test).
+    """
     X_train, y_train = load_unit_test(split="train")
     X_test, y_test = load_unit_test(split="test")
     return (X_train, y_train, X_test, y_test)
 
 
 def test_individual_boss_classes_string(dataset):
-    """Test of Individual Boss on unit test data"""
+    """Test of Individual Boss on unit test data with class dtype as STRING."""
     # load unit test data
     X_train, y_train, X_test, y_test = dataset
 
@@ -34,7 +39,7 @@ def test_individual_boss_classes_string(dataset):
 
 
 def test_individual_boss_classes_integer(dataset):
-    """Test of Individual Boss on unit test data"""
+    """Test of Individual Boss on unit test data with class dtype as INTEGER."""
     # load unit test data
     X_train, y_train, X_test, y_test = dataset
 
@@ -53,7 +58,7 @@ def test_individual_boss_classes_integer(dataset):
 
 
 def test_individual_boss_classes_float(dataset):
-    """Test of Individual Boss on unit test data"""
+    """Test of Individual Boss on unit test data with class dtype as FLOAT."""
     # load unit test data
     X_train, y_train, X_test, y_test = dataset
 
@@ -72,7 +77,7 @@ def test_individual_boss_classes_float(dataset):
 
 
 def test_individual_boss_classes_boolean(dataset):
-    """Test of Individual Boss on unit test data"""
+    """Test of Individual Boss on unit test data with class dtype as BOOLEAN."""
     # load unit test data
     X_train, y_train, X_test, y_test = dataset
 
@@ -91,7 +96,7 @@ def test_individual_boss_classes_boolean(dataset):
 
 
 def test_boss_ensemble_classes_string(dataset):
-    """Test of Individual Boss on unit test data"""
+    """Test of Boss Ensemble on unit test data with class dtype as STRING."""
     # load unit test data
     X_train, y_train, X_test, y_test = dataset
 
@@ -110,7 +115,7 @@ def test_boss_ensemble_classes_string(dataset):
 
 
 def test_boss_ensemble_classes_integer(dataset):
-    """Test of Individual Boss on unit test data"""
+    """Test of Boss Ensemble on unit test data with class dtype as INTEGER."""
     # load unit test data
     X_train, y_train, X_test, y_test = dataset
 
@@ -129,7 +134,7 @@ def test_boss_ensemble_classes_integer(dataset):
 
 
 def test_boss_ensemble_classes_float(dataset):
-    """Test of Individual Boss on unit test data"""
+    """Test of Boss Ensemble on unit test data with class dtype as FLOAT."""
     # load unit test data
     X_train, y_train, X_test, y_test = dataset
 
@@ -148,7 +153,7 @@ def test_boss_ensemble_classes_float(dataset):
 
 
 def test_boss_ensemble_classes_boolean(dataset):
-    """Test of Individual Boss on unit test data"""
+    """Test of Boss Ensemble on unit test data with class dtype as BOOLEAN."""
     # load unit test data
     X_train, y_train, X_test, y_test = dataset
 
