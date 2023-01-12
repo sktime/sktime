@@ -617,7 +617,7 @@ class IndividualBOSS(BaseClassifier):
         """
         test_bags = self._transformer.transform(X)
         data_type = type(self._class_vals[0])
-        if data_type == str:
+        if data_type == np.str_:
             data_type = "object"
 
         classes = np.zeros(test_bags.shape[0], dtype=data_type)
