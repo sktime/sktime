@@ -4,8 +4,7 @@
 """Implements online algorithms for prediction weighted ensembles."""
 
 import numpy as np
-from scipy.optimize import bisect
-from scipy.optimize import nnls
+from scipy.optimize import bisect, nnls
 
 
 class _PredictionWeightedEnsembler:
@@ -213,7 +212,7 @@ class NormalHedgeEnsemble(HedgeExpertEnsemble):
             -------
             potential: float
             """
-            return np.mean(np.exp((R_plus ** 2) / (2 * c))) - np.e
+            return np.mean(np.exp((R_plus**2) / (2 * c))) - np.e
 
         c_t = bisect(_pot, low_c, high_c)
 
@@ -232,7 +231,7 @@ class NormalHedgeEnsemble(HedgeExpertEnsemble):
             prob : float
                 probability
             """
-            return (r / c_t) * np.exp((r ** 2) / (2 * c_t))
+            return (r / c_t) * np.exp((r**2) / (2 * c_t))
 
         self.weights = np.array([_prob(r, c_t) for r in R_plus])
         self.weights /= np.sum(self.weights)

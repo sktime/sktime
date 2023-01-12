@@ -273,10 +273,56 @@ class ForecastingPipeline(_Pipeline):
     to X. The forecaster can also be a TransformedTargetForecaster containing
     transformers to transform y.
 
+    For a list `t1`, `t2`, ..., `tN`, `f`
+        where `t[i]` are transformers, and `f` is an sktime forecaster,
+        the pipeline behaves as follows:
+
+    `fit(y, X, fh)` - changes state by running `t1.fit_transform` with `X=X`, `y=y`
+        then `t2.fit_transform` on `X=` the output of `t1.fit_transform`, `y=y`, etc
+        sequentially, with `t[i]` receiving the output of `t[i-1]` as `X`,
+        then running `f.fit` with `X` being the output of `t[N]`, and `y=y`
+    `predict(X, fh)` - result is of executing `f.predict`, with `fh=fh`, and `X`
+        being the result of the following process:
+        running `t1.fit_transform` with `X=X`,
+        then `t2.fit_transform` on `X=` the output of `t1.fit_transform`, etc
+        sequentially, with `t[i]` receiving the output of `t[i-1]` as `X`,
+        and returning th output of `tN` to pass to `f.predict` as `X`.
+    `predict_interval(X, fh)`, `predict_quantiles(X, fh)` - as `predict(X, fh)`,
+        with `predict_interval` or `predict_quantiles` substituted for `predict`
+    `predict_var`, `predict_proba` - uses base class default to obtain
+        crude estimates from `predict_quantiles`.
+
+    `get_params`, `set_params` uses `sklearn` compatible nesting interface
+        if list is unnamed, names are generated as names of classes
+        if names are non-unique, `f"_{str(i)}"` is appended to each name string
+            where `i` is the total count of occurrence of a non-unique string
+            inside the list of names leading up to it (inclusive)
+
+    `ForecastingPipeline` can also be created by using the magic multiplication
+        on any forecaster, i.e., if `my_forecaster` inherits from `BaseForecaster`,
+            and `my_t1`, `my_t2`, inherit from `BaseTransformer`,
+            then, for instance, `my_t1 ** my_t2 ** my_forecaster`
+            will result in the same object as  obtained from the constructor
+            `ForecastingPipeline([my_t1, my_t2, my_forecaster])`
+        magic multiplication can also be used with (str, transformer) pairs,
+            as long as one element in the chain is a transformer
+
     Parameters
     ----------
-    steps : list
-        List of tuples like ("name", forecaster/transformer)
+    steps : list of sktime transformers and forecasters, or
+        list of tuples (str, estimator) of sktime transformers or forecasters
+            the list must contain exactly one forecaster
+        these are "blueprint" transformers resp forecasters,
+            forecaster/transformer states do not change when `fit` is called
+
+    Attributes
+    ----------
+    steps_ : list of tuples (str, estimator) of sktime transformers or forecasters
+        clones of estimators in `steps` which are fitted in the pipeline
+        is always in (str, estimator) format, even if `steps` is just a list
+        strings not passed in `steps` are replaced by unique generated strings
+        i-th transformer in `steps_` is clone of i-th in `steps`
+    forecaster_ : estimator, reference to the unique forecaster in steps_
 
     Examples
     --------
@@ -660,7 +706,6 @@ class TransformedTargetForecaster(_Pipeline):
         with `predict_interval` or `predict_quantiles` substituted for `predict`
     `predict_var`, `predict_proba` - uses base class default to obtain
         crude estimates from `predict_quantiles`.
-        Recommended to replace with better custom implementations if needed.
 
     `get_params`, `set_params` uses `sklearn` compatible nesting interface
         if list is unnamed, names are generated as names of classes
