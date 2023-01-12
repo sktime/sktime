@@ -179,6 +179,7 @@ Forecasting
 
 * [BUG] fix ``StatsForecastAutoARIMA_.predict`` incorrect in-sample start index (:pr:`3942`) :user:`tianjiqx`
 * [BUG] fix ``statsmodels`` estimators when exogenous ``X`` is passed with more indices than ``fh`` (:pr:`3972`) :user:`adoherty21`
+* [BUG] fix ``ReconcilerForecaster`` when not used in a pipeline with ``Aggregator`` (:pr:`3980`) :user:`ciaran-g`
 * [BUG] fix logic bug in ``ForecastX`` predictions (:pr:`3987`) :user:`aiwalter`, :user:`fkiraly`
 * [BUG] fix ``Prophet`` not working with non-integer forecast horizon (:pr:`3995`) :user:`fkiraly`
 * [BUG] fix dropped column index in ``BaggingForecaster`` (:pr:`4001`) :user:`fkiraly`
@@ -233,6 +234,7 @@ Contributors
 :user:`arnavrneo`,
 :user:`badrmarani`,
 :user:`bethrice44`,
+:user:`ciaran-g`,
 :user:`dainelli98`,
 :user:`danbartl`,
 :user:`darshitsharma`,
