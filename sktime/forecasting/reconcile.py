@@ -148,12 +148,10 @@ class ReconcilerForecaster(BaseForecaster):
         # check index for no "__total", if not add totals to y
         if _check_index_no_total(y):
             y = self._add_totals(y)
-            self._y = y.copy()
 
         if X is not None:
             if _check_index_no_total(X):
                 X = self._add_totals(X)
-                self._X = X.copy()
 
         # if transformer just fit pipline and return
         if np.isin(self.method, self.TRFORM_LIST):
@@ -259,25 +257,24 @@ class ReconcilerForecaster(BaseForecaster):
         # check index for no "__total", if not add totals to y
         if _check_index_no_total(y):
             y = self._add_totals(y)
-            self._y = pd.concat([self._y, y]).sort_index()
-            self._y = self._y.drop_duplicates()
 
         if X is not None:
             if _check_index_no_total(X):
                 X = self._add_totals(X)
-                self._X = pd.concat([self._X, X]).sort_index()
-                self._X = self._X.drop_duplicates()
 
         self.forecaster_.update(y, X, update_params=update_params)
 
         if y.index.nlevels < 2 or np.isin(self.method, self.TRFORM_LIST):
             return self
 
+        # update self.residuals_
         # bug in self.forecaster_.predict_residuals() for heir data
         fh_resid = ForecastingHorizon(
-            self._y.index.get_level_values(-1).unique(), is_relative=False
+            y.index.get_level_values(-1).unique(), is_relative=False
         )
-        self.residuals_ = self._y - self.forecaster_.predict(fh=fh_resid, X=self._X)
+        update_residuals = y - self.forecaster_.predict(fh=fh_resid, X=X)
+        self.residuals_ = pd.concat([self.residuals_, update_residuals], axis=0)
+        self.residuals_ = self.residuals_.sort_index()
 
         # could implement something specific here
         # for now just refit
