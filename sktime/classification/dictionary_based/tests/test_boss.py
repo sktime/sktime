@@ -3,7 +3,7 @@
 import numpy as np
 import pytest
 
-from sktime.classification.dictionary_based import IndividualBOSS, BOSSEnsemble
+from sktime.classification.dictionary_based import  BOSSEnsemble, IndividualBOSS
 from sktime.datasets import load_unit_test
 
 
