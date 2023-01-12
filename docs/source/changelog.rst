@@ -195,6 +195,7 @@ Time series classification
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * [BUG] constructor of any DL estimator to pass non-default values to underlying ``Network`` object (:pr:`4075`) :user:`achieveordie`
+* [BUG] Fix BOSS based classifiers truncating class names to single character length (:pr:`4096`) :user:`erjieyong`
 
 Time series clustering
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -235,6 +236,7 @@ Contributors
 :user:`dainelli98`,
 :user:`danbartl`,
 :user:`darshitsharma`,
+:user:`erjieyong`,
 :user:`fkiraly`,
 :user:`hakim89`,
 :user:`josuedavalos`,
