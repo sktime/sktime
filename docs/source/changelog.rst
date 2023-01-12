@@ -147,7 +147,7 @@ Maintenance
 * [MNT] downwards compatibility fixes for minimal dependency set (:pr:`4041`) :user:`fkiraly`
 * [MNT] address ``pd.Series`` constructor ``dtype`` deprecation / ``FutureWarning`` (:pr:`4031`) :user:`fkiraly`
 * [MNT] isolate ``statsmodels``, recent instances (:pr:`4035`) :user:`fkiraly`
-* [MNT] address ``pandas`` ``astype`` deprecation / ````FutureWarning`` in ``TrendForecaster`` (:pr:`4032`) :user:`fkiraly`
+* [MNT] address ``pandas`` ``astype`` deprecation / ``FutureWarning`` in ``TrendForecaster`` (:pr:`4032`) :user:`fkiraly`
 * [MNT] Adding ``min_periods`` in ``WindowSummarizer`` to address deprecation message (:pr:`4052`, :pr:`4074`) :user:`arnavrneo`
 
 Documentation
