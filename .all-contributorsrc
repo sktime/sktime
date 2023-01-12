@@ -162,7 +162,7 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/65773314?v=4",
       "profile": "https://github.com/nilesh05apr",
       "contributions": [
-      "code"
+        "code"
       ]
     },
     {
@@ -1973,6 +1973,16 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/48650781?v=4",
       "profile": "https://github.com/arnavrneo",
       "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "erjieyong",
+      "name": "Er Jie Yong",
+      "avatar_url": "https://avatars.githubusercontent.com/u/109052378?v=4",
+      "profile": "https://www.linkedin.com/in/erjieyong",
+      "contributions": [
+        "bug",
         "code"
       ]
     }
