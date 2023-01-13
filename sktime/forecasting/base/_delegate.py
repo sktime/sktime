@@ -303,4 +303,4 @@ class _DelegatedForecaster(BaseForecaster):
             fitted parameters, keyed by names of fitted parameter
         """
         estimator = self._get_delegate()
-        return estimator.get_fitted_params()
+        return estimator._get_fitted_params()
