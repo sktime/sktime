@@ -42,6 +42,7 @@ if ON_READTHEDOCS:
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
+    "sphinx.ext.autosectionlabel",
     "numpydoc",
     "sphinx.ext.intersphinx",
     "sphinx.ext.linkcode",  # link to GitHub source code via linkcode_resolve()
@@ -54,6 +55,11 @@ extensions = [
 
 # Recommended by sphinx_design when using the MyST Parser
 myst_enable_extensions = ["colon_fence"]
+
+# Notebook thumbnails
+nbsphinx_thumbnails = {
+    "examples/02_classification": "examples/img/tsc.png",
+}
 
 # Use bootstrap CSS from theme.
 panels_add_bootstrap_css = False

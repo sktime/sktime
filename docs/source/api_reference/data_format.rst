@@ -7,7 +7,6 @@ The File Format Specifications provides a technical manual for understanding and
 different file formats found in ``sktime``.
 
 .. toctree::
-    :maxdepth: 2
-    :hidden: false
+    :maxdepth: 1
 
     file_specifications/ts

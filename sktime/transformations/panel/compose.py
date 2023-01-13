@@ -4,28 +4,17 @@
 This module has meta-transformations that is build using the pre-existing
 transformations as building blocks.
 """
-from warnings import warn
-
 import numpy as np
 import pandas as pd
-from deprecated.sphinx import deprecated
 from scipy import sparse
-from sklearn.base import clone
 from sklearn.compose import ColumnTransformer as _ColumnTransformer
 
 from sktime.transformations.base import BaseTransformer, _PanelToPanelTransformer
-from sktime.transformations.series.adapt import TabularToSeriesAdaptor
 from sktime.utils.multiindex import flatten_multiindex
-from sktime.utils.sklearn import is_sklearn_estimator
 from sktime.utils.validation.panel import check_X
 
 __author__ = ["mloning", "sajaysurya", "fkiraly"]
-__all__ = [
-    "ColumnTransformer",
-    "SeriesToPrimitivesRowTransformer",
-    "SeriesToSeriesRowTransformer",
-    "ColumnConcatenator",
-]
+__all__ = ["ColumnTransformer", "ColumnConcatenator"]
 
 
 class ColumnTransformer(_ColumnTransformer, _PanelToPanelTransformer):
@@ -272,81 +261,3 @@ class ColumnConcatenator(BaseTransformer):
         Xt.index = pd.MultiIndex.from_arrays([inst_idx, t_idx])
         Xt.index.names = X.index.names
         return Xt
-
-
-row_trafo_deprec_msg = (
-    "All row transformers are deprecated since 0.14.0 and will be removed "
-    "in 0.15.0. Vectorization functionality from Series to Panel is natively "
-    "integrated to all transformers via the base class. Simply use fit "
-    "or transform on Panel data, no row transformer is necessary anymore."
-)
-
-
-class _RowTransformer(BaseTransformer):
-    """Base class for RowTransformer."""
-
-    _tags = {"fit_is_empty": True}
-
-    def __init__(self, transformer, check_transformer=None):
-
-        warn(row_trafo_deprec_msg)
-
-        self.transformer = transformer
-        transformer_ = clone(transformer)
-        # safer wrapping: coerce to sktime transformer
-        if is_sklearn_estimator(transformer_):
-            transformer_ = TabularToSeriesAdaptor(transformer_)
-        self.transformer_ = transformer_
-
-        self.check_transformer = check_transformer
-        super(_RowTransformer, self).__init__()
-        self.clone_tags(transformer_)
-        # fit needs to be run, or the internal fit may not be updated
-        self.set_tags(**{"fit_is_empty": False})
-
-    def _fit(self, *args, **kwargs):
-        """Fit to the data."""
-        return self.transformer_.fit(*args, **kwargs)
-
-    def _transform(self, *args, **kwargs):
-        """Transform the data."""
-        return self.transformer_.transform(*args, **kwargs)
-
-    def _inverse_transform(self, *args, **kwargs):
-        """Inverse transform the data."""
-        return self.transformer_.inverse_transform(*args, **kwargs)
-
-    def _update(self, *args, **kwargs):
-        """Update with the data."""
-        return self.transformer_.update(*args, **kwargs)
-
-    @classmethod
-    def get_test_params(cls):
-        """Return testing parameter settings for the estimator."""
-        from sktime.transformations.series.exponent import ExponentTransformer
-
-        params = {"transformer": ExponentTransformer()}
-        return params
-
-
-class SeriesToPrimitivesRowTransformer(_RowTransformer, BaseTransformer):
-    """Series-to-primitives row transformer."""
-
-
-class SeriesToSeriesRowTransformer(_RowTransformer, BaseTransformer):
-    """Series-to-series row transformer."""
-
-
-@deprecated(version="0.14.0", reason=row_trafo_deprec_msg, category=FutureWarning)
-def make_row_transformer(transformer, transformer_type=None, **kwargs):
-    """Old vectorization utility for transformers for panel data.
-
-    This is now integrated into BaseTransformer, so no longer needed.
-
-    Deprecated from version 0.14.0, will be removed in 0.15.0.
-
-    Returns
-    -------
-    transformer, reference to input `transformer` (unchanged)
-    """
-    return transformer

@@ -17,7 +17,7 @@ from sktime.base import _HeterogenousMetaEstimator
 from sktime.classification.base import BaseClassifier
 
 
-class BaseColumnEnsembleClassifier(BaseClassifier, _HeterogenousMetaEstimator):
+class BaseColumnEnsembleClassifier(_HeterogenousMetaEstimator, BaseClassifier):
     """Base Class for column ensemble."""
 
     _tags = {
@@ -239,37 +239,15 @@ class ColumnEnsembleClassifier(BaseColumnEnsembleClassifier):
     >>> y_pred = col_ens.predict(X_test)
     """
 
+    # for default get_params/set_params from _HeterogenousMetaEstimator
+    # _steps_attr points to the attribute of self
+    # which contains the heterogeneous set of estimators
+    # this must be an iterable of (name: str, estimator) pairs for the default
+    _steps_attr = "_estimators"
+
     def __init__(self, estimators, remainder="drop", verbose=False):
         self.remainder = remainder
         super(ColumnEnsembleClassifier, self).__init__(estimators, verbose=verbose)
-
-    def get_params(self, deep=True):
-        """Get parameters for this estimator.
-
-        Parameters
-        ----------
-        deep : boolean, optional, default=True
-            If True, will return the parameters for this estimator and
-            contained subobjects that are estimators.
-
-        Returns
-        -------
-        params : mapping of string to any
-            Parameter names mapped to their values.
-        """
-        return self._get_params("_estimators", deep=deep)
-
-    def set_params(self, **kwargs):
-        """Set the parameters of this estimator.
-
-        Valid parameter keys can be listed with ``get_params()``.
-
-        Returns
-        -------
-        self
-        """
-        self._set_params("_estimators", **kwargs)
-        return self
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):

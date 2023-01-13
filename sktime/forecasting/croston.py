@@ -153,3 +153,22 @@ class Croston(BaseForecaster):
 
         index = self.fh.to_absolute(self.cutoff)
         return pd.Series(y_pred, index=index)
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict
+        """
+        params1 = {}
+        params2 = {"smoothing": 0.42}
+
+        return [params1, params2]

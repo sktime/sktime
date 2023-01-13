@@ -66,13 +66,13 @@ class TrendForecaster(BaseForecaster):
         -------
         self : returns an instance of self.
         """
-        self.regressor_ = self.regressor or LinearRegression(fit_intercept=True)
-
-        # create a clone of self.regressor
-        self.regressor_ = clone(self.regressor_)
+        if self.regressor is None:
+            self.regressor_ = LinearRegression(fit_intercept=True)
+        else:
+            self.regressor_ = clone(self.regressor)
 
         # transform data
-        X = y.index.astype("int").to_numpy().reshape(-1, 1)
+        X = y.index.astype("int64").to_numpy().reshape(-1, 1)
 
         # fit regressor
         self.regressor_.fit(X, y)
@@ -99,6 +99,30 @@ class TrendForecaster(BaseForecaster):
         y_pred = self.regressor_.predict(X_pred)
         return pd.Series(y_pred, index=self.fh.to_absolute(self.cutoff))
 
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        from sklearn.ensemble import RandomForestRegressor
+
+        params_list = [{}, {"regressor": RandomForestRegressor()}]
+
+        return params_list
+
 
 class PolynomialTrendForecaster(BaseForecaster):
     """Forecast time series data with a polynomial trend.
@@ -108,9 +132,9 @@ class PolynomialTrendForecaster(BaseForecaster):
 
     Parameters
     ----------
-    regressor : estimator object, default = None
+    regressor : sklearn regressor estimator object, default = None
         Define the regression model type. If not set, will default to
-         sklearn.linear_model.LinearRegression
+        sklearn.linear_model.LinearRegression
     degree : int, default = 1
         Degree of polynomial function
     with_intercept : bool, default=True
@@ -163,7 +187,7 @@ class PolynomialTrendForecaster(BaseForecaster):
         if self.regressor is None:
             regressor = LinearRegression(fit_intercept=False)
         else:
-            regressor = self.regressor
+            regressor = clone(self.regressor)
 
         # make pipeline with polynomial features
         self.regressor_ = make_pipeline(
@@ -200,6 +224,37 @@ class PolynomialTrendForecaster(BaseForecaster):
         y_pred = self.regressor_.predict(X_pred)
         return pd.Series(y_pred, index=self.fh.to_absolute(self.cutoff))
 
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        from sklearn.ensemble import RandomForestRegressor
+
+        params_list = [
+            {},
+            {
+                "regressor": RandomForestRegressor(),
+                "degree": 2,
+                "with_intercept": False,
+            },
+        ]
+
+        return params_list
+
 
 class STLForecaster(BaseForecaster):
     """Implements STLForecaster based on statsmodels.tsa.seasonal.STL implementation.
@@ -231,7 +286,7 @@ class STLForecaster(BaseForecaster):
         default forecaster_trend does not get sp as trend is independent
         to seasonality.
     seasonal : int, optional., default=7. Passed to `statsmodels` `STL`.
-        Length of the seasonal smoother. Must be an odd integer, and should
+        Length of the seasonal smoother. Must be an odd integer >=3, and should
         normally be >= 7 (default).
     trend : {int, None}, optional, default=None. Passed to `statsmodels` `STL`.
         Length of the trend smoother. Must be an odd integer. If not provided
@@ -304,10 +359,10 @@ class STLForecaster(BaseForecaster):
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.trend import STLForecaster
     >>> y = load_airline()
-    >>> forecaster = STLForecaster(sp=12)
-    >>> forecaster.fit(y)
+    >>> forecaster = STLForecaster(sp=12)  # doctest: +SKIP
+    >>> forecaster.fit(y)  # doctest: +SKIP
     STLForecaster(...)
-    >>> y_pred = forecaster.predict(fh=[1,2,3])
+    >>> y_pred = forecaster.predict(fh=[1,2,3])  # doctest: +SKIP
 
     See Also
     --------
@@ -493,3 +548,43 @@ class STLForecaster(BaseForecaster):
         self.forecaster_trend_.update(y=self.trend_, X=X, update_params=update_params)
         self.forecaster_resid_.update(y=self.resid_, X=X, update_params=update_params)
         return self
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        from sktime.forecasting.naive import NaiveForecaster
+
+        params_list = [
+            {},
+            {
+                "sp": 3,
+                "seasonal": 7,
+                "trend": 5,
+                "seasonal_deg": 2,
+                "trend_deg": 2,
+                "robust": True,
+                "seasonal_jump": 2,
+                "trend_jump": 2,
+                "low_pass_jump": 2,
+                "forecaster_trend": NaiveForecaster(strategy="drift"),
+                "forecaster_seasonal": NaiveForecaster(sp=3),
+                "forecaster_resid": NaiveForecaster(strategy="mean"),
+            },
+        ]
+
+        return params_list

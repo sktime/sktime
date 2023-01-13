@@ -79,9 +79,9 @@ class TapNetClassifier(BaseDeepClassifier):
     --------
     >>> from sktime.classification.deep_learning.tapnet import TapNetClassifier
     >>> from sktime.datasets import load_unit_test
-    >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
-    >>> tapnet = TapNetClassifier()  # doctest: +SKIP
+    >>> X_train, y_train = load_unit_test(split="train")
+    >>> X_test, y_test = load_unit_test(split="test")
+    >>> tapnet = TapNetClassifier(n_epochs=20,batch_size=4)  # doctest: +SKIP
     >>> tapnet.fit(X_train, y_train) # doctest: +SKIP
     TapNetClassifier(...)
     """
@@ -142,7 +142,20 @@ class TapNetClassifier(BaseDeepClassifier):
         self.use_rp = use_rp
         self.rp_params = rp_params
 
-        self._network = TapNetNetwork()
+        self._network = TapNetNetwork(
+            dropout=self.dropout,
+            filter_sizes=self.filter_sizes,
+            kernel_size=self.kernel_size,
+            dilation=self.dilation,
+            layers=self.layers,
+            use_rp=self.use_rp,
+            rp_params=self.rp_params,
+            use_att=self.use_att,
+            use_lstm=self.use_lstm,
+            use_cnn=self.use_cnn,
+            random_state=self.random_state,
+            padding=self.padding,
+        )
 
     def build_model(self, input_shape, n_classes, **kwargs):
         """Construct a complied, un-trained, keras model that is ready for training.
@@ -254,17 +267,16 @@ class TapNetClassifier(BaseDeepClassifier):
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
         param1 = {
-            "n_epochs": 50,
-            "batch_size": 32,
+            "n_epochs": 20,
+            "batch_size": 4,
             "use_lstm": False,
             "use_att": False,
-            "filter_sizes": (128, 128, 64),
+            "filter_sizes": (16, 16, 16),
             "dilation": 2,
-            "layers": (50, 25),
+            "layers": (32, 16),
         }
-
         param2 = {
-            "n_epochs": 100,
+            "n_epochs": 20,
             "use_cnn": False,
             "layers": (25, 25),
         }
