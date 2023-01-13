@@ -19,13 +19,21 @@ def dataset():
     return (X_train, y_train, X_test, y_test)
 
 
-def test_individual_boss_classes_string(dataset):
-    """Test of Individual Boss on unit test data with class dtype as STRING."""
+@pytest.mark.parametrize(
+    "new_class,expected_dtype",
+    [
+        ({"1": "Class1", "2": "Class2"}, object),
+        ({"1": 1, "2": 2}, int),
+        ({"1": 1.0, "2": 2.0}, float),
+        ({"1": True, "2": False}, bool),
+    ],
+)
+def test_individual_boss_classes(dataset, new_class, expected_dtype):
+    """Test Individual BOSS on unit_test data with different datatypes as classes."""
     # load unit test data
     X_train, y_train, X_test, y_test = dataset
 
     # change class
-    new_class = {"1": "Class1", "2": "Class2"}
     y_train = np.array([new_class[y] for y in y_train])
 
     # train iboss and predict X_test
@@ -34,74 +42,25 @@ def test_individual_boss_classes_string(dataset):
     y_pred = iboss.predict(X_test)
 
     # assert class type and names
-    assert y_pred.dtype == object
+    assert y_pred.dtype == expected_dtype
     assert set(y_pred) == set(y_train)
 
 
-def test_individual_boss_classes_integer(dataset):
-    """Test of Individual Boss on unit test data with class dtype as INTEGER."""
+@pytest.mark.parametrize(
+    "new_class,expected_dtype",
+    [
+        ({"1": "Class1", "2": "Class2"}, "<U6"),
+        ({"1": 1, "2": 2}, int),
+        ({"1": 1.0, "2": 2.0}, float),
+        ({"1": True, "2": False}, bool),
+    ],
+)
+def test_boss_ensemble_classes(dataset, new_class, expected_dtype):
+    """Test BOSS Ensemble on unit_test data with different datatypes as classes."""
     # load unit test data
     X_train, y_train, X_test, y_test = dataset
 
     # change class
-    new_class = {"1": 1, "2": 2}
-    y_train = np.array([new_class[y] for y in y_train])
-
-    # train iboss and predict X_test
-    iboss = IndividualBOSS()
-    iboss.fit(X_train, y_train)
-    y_pred = iboss.predict(X_test)
-
-    # assert class type and names
-    assert y_pred.dtype == int
-    assert set(y_pred) == set(y_train)
-
-
-def test_individual_boss_classes_float(dataset):
-    """Test of Individual Boss on unit test data with class dtype as FLOAT."""
-    # load unit test data
-    X_train, y_train, X_test, y_test = dataset
-
-    # change class
-    new_class = {"1": 1.0, "2": 2.0}
-    y_train = np.array([new_class[y] for y in y_train])
-
-    # train iboss and predict X_test
-    iboss = IndividualBOSS()
-    iboss.fit(X_train, y_train)
-    y_pred = iboss.predict(X_test)
-
-    # assert class type and names
-    assert y_pred.dtype == float
-    assert set(y_pred) == set(y_train)
-
-
-def test_individual_boss_classes_boolean(dataset):
-    """Test of Individual Boss on unit test data with class dtype as BOOLEAN."""
-    # load unit test data
-    X_train, y_train, X_test, y_test = dataset
-
-    # change class
-    new_class = {"1": True, "2": False}
-    y_train = np.array([new_class[y] for y in y_train])
-
-    # train iboss and predict X_test
-    iboss = IndividualBOSS()
-    iboss.fit(X_train, y_train)
-    y_pred = iboss.predict(X_test)
-
-    # assert class type and names
-    assert y_pred.dtype == bool
-    assert set(y_pred) == set(y_train)
-
-
-def test_boss_ensemble_classes_string(dataset):
-    """Test of Boss Ensemble on unit test data with class dtype as STRING."""
-    # load unit test data
-    X_train, y_train, X_test, y_test = dataset
-
-    # change class
-    new_class = {"1": "Class1", "2": "Class2"}
     y_train = np.array([new_class[y] for y in y_train])
 
     # train boss_ensemble and predict X_test
@@ -110,62 +69,5 @@ def test_boss_ensemble_classes_string(dataset):
     y_pred = boss_ensemble.predict(X_test)
 
     # assert class type and names
-    assert y_pred.dtype == "<U6"
-    assert set(y_pred) == set(y_train)
-
-
-def test_boss_ensemble_classes_integer(dataset):
-    """Test of Boss Ensemble on unit test data with class dtype as INTEGER."""
-    # load unit test data
-    X_train, y_train, X_test, y_test = dataset
-
-    # change class
-    new_class = {"1": 1, "2": 2}
-    y_train = np.array([new_class[y] for y in y_train])
-
-    # train boss_ensemble and predict X_test
-    boss_ensemble = BOSSEnsemble()
-    boss_ensemble.fit(X_train, y_train)
-    y_pred = boss_ensemble.predict(X_test)
-
-    # assert class type and names
-    assert y_pred.dtype == int
-    assert set(y_pred) == set(y_train)
-
-
-def test_boss_ensemble_classes_float(dataset):
-    """Test of Boss Ensemble on unit test data with class dtype as FLOAT."""
-    # load unit test data
-    X_train, y_train, X_test, y_test = dataset
-
-    # change class
-    new_class = {"1": 1.0, "2": 2.0}
-    y_train = np.array([new_class[y] for y in y_train])
-
-    # train boss_ensemble and predict X_test
-    boss_ensemble = BOSSEnsemble()
-    boss_ensemble.fit(X_train, y_train)
-    y_pred = boss_ensemble.predict(X_test)
-
-    # assert class type and names
-    assert y_pred.dtype == float
-    assert set(y_pred) == set(y_train)
-
-
-def test_boss_ensemble_classes_boolean(dataset):
-    """Test of Boss Ensemble on unit test data with class dtype as BOOLEAN."""
-    # load unit test data
-    X_train, y_train, X_test, y_test = dataset
-
-    # change class
-    new_class = {"1": True, "2": False}
-    y_train = np.array([new_class[y] for y in y_train])
-
-    # train boss_ensemble and predict X_test
-    boss_ensemble = BOSSEnsemble()
-    boss_ensemble.fit(X_train, y_train)
-    y_pred = boss_ensemble.predict(X_test)
-
-    # assert class type and names
-    assert y_pred.dtype == bool
+    assert y_pred.dtype == expected_dtype
     assert set(y_pred) == set(y_train)
