@@ -57,7 +57,7 @@ __all__ = ["BaseEstimator", "BaseObject"]
 import warnings
 from copy import deepcopy
 
-from skbase import BaseObject as _BaseObject
+from skbase.base import BaseObject as _BaseObject
 from sklearn import clone
 from sklearn.base import BaseEstimator as _BaseEstimator
 from sklearn.ensemble._base import _set_random_states
