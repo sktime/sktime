@@ -9,7 +9,7 @@ __all__ = []
 import numpy as np
 import pytest
 
-from sktime.forecasting.exp_smoothing import ExponentialSmoothing
+from sktime.forecasting.naive import NaiveForecaster
 from sktime.transformations.series.impute import Imputer
 from sktime.utils._testing.forecasting import make_forecasting_problem
 
@@ -43,7 +43,7 @@ y.iloc[-1] = np.nan
 )
 def test_imputer(method, Z):
     """Test univariate and multivariate Imputer with all methods."""
-    forecaster = ExponentialSmoothing() if method == "forecaster" else None
+    forecaster = NaiveForecaster() if method == "forecaster" else None
     value = 3 if method == "constant" else None
     t = Imputer(method=method, forecaster=forecaster, value=value)
     y_hat = t.fit_transform(Z)

@@ -10,12 +10,17 @@ from numpy.testing import assert_array_equal
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.utils._testing.forecasting import make_forecasting_problem
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 # load test data
 y = make_forecasting_problem()
 y_train, y_test = temporal_train_test_split(y, train_size=0.75)
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("statsmodels", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
 @pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_set_params():
     """Test set_params."""

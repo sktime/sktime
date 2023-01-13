@@ -282,7 +282,7 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
                 ),
                 ("clf", DecisionTreeClassifier(random_state=self.random_state)),
             ]
-            self.estimator_ = Pipeline(steps)
+            self._estimator = Pipeline(steps)
 
         else:
             # else check given estimator is a pipeline with prior
@@ -293,7 +293,7 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
                 raise ValueError(
                     "Last step in `estimator` must be DecisionTreeClassifier."
                 )
-            self.estimator_ = self.estimator
+            self._estimator = self.estimator
 
         # Set parameters according to naming in pipeline
         estimator_params = {
@@ -305,7 +305,7 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
             "max_leaf_nodes": self.max_leaf_nodes,
             "min_impurity_decrease": self.min_impurity_decrease,
         }
-        final_estimator = self.estimator_.steps[-1][0]
+        final_estimator = self._estimator.steps[-1][0]
         self.estimator_params = {
             f"{final_estimator}__{pname}": pval
             for pname, pval in estimator_params.items()
@@ -552,7 +552,7 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
         return {"n_estimators": 2}
 
 
-class WeightedEnsembleClassifier(BaseClassifier, _HeterogenousMetaEstimator):
+class WeightedEnsembleClassifier(_HeterogenousMetaEstimator, BaseClassifier):
     """Weighted ensemble of classifiers with fittable ensemble weight.
 
     Produces a probabilistic prediction which is the weighted average of
@@ -637,6 +637,12 @@ class WeightedEnsembleClassifier(BaseClassifier, _HeterogenousMetaEstimator):
         ],
     }
 
+    # for default get_params/set_params from _HeterogenousMetaEstimator
+    # _steps_attr points to the attribute of self
+    # which contains the heterogeneous set of estimators
+    # this must be an iterable of (name: str, estimator) pairs for the default
+    _steps_attr = "_classifiers"
+
     def __init__(
         self,
         classifiers,
@@ -692,34 +698,6 @@ class WeightedEnsembleClassifier(BaseClassifier, _HeterogenousMetaEstimator):
     @_classifiers.setter
     def _classifiers(self, value):
         self.classifiers = value
-
-    def get_params(self, deep=True):
-        """Get parameters of estimator in `classifiers`.
-
-        Parameters
-        ----------
-        deep : boolean, optional, default=True
-            If True, will return the parameters for this estimator and
-            contained sub-objects that are estimators.
-
-        Returns
-        -------
-        params : mapping of string to any
-            Parameter names mapped to their values.
-        """
-        return self._get_params("_classifiers", deep=deep)
-
-    def set_params(self, **kwargs):
-        """Set the parameters of estimator in `classifiers`.
-
-        Valid parameter keys can be listed with ``get_params()``.
-
-        Returns
-        -------
-        self : returns an instance of self.
-        """
-        self._set_params("_classifiers", **kwargs)
-        return self
 
     def _fit(self, X, y):
         """Fit time series classifier to training data.

@@ -20,6 +20,7 @@ from sktime.forecasting.trend import PolynomialTrendForecaster
 from sktime.transformations.series.detrend import Deseasonalizer
 from sktime.transformations.series.theta import ThetaLinesTransformer
 from sktime.utils.slope_and_trend import _fit_trend
+from sktime.utils.validation._dependencies import _check_estimator_deps
 from sktime.utils.validation.forecasting import check_sp
 
 
@@ -44,17 +45,14 @@ class ThetaForecaster(ExponentialSmoothing):
     ----------
     initial_level : float, optional
         The alpha value of the simple exponential smoothing, if the value is
-        set then
-        this will be used, otherwise it will be estimated from the data.
+        set then this will be used, otherwise it will be estimated from the data.
     deseasonalize : bool, optional (default=True)
         If True, data is seasonally adjusted.
     sp : int, optional (default=1)
         The number of observations that constitute a seasonal period for a
-        multiplicative deseasonaliser, which is used if seasonality is
-        detected in the
+        multiplicative deseasonaliser, which is used if seasonality is detected in the
         training data. Ignored if a deseasonaliser transformer is provided.
-        Default is
-        1 (no seasonality).
+        Default is 1 (no seasonality).
 
     Attributes
     ----------
@@ -82,10 +80,10 @@ class ThetaForecaster(ExponentialSmoothing):
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.theta import ThetaForecaster
     >>> y = load_airline()
-    >>> forecaster = ThetaForecaster(sp=12)
-    >>> forecaster.fit(y)
+    >>> forecaster = ThetaForecaster(sp=12)  # doctest: +SKIP
+    >>> forecaster.fit(y)  # doctest: +SKIP
     ThetaForecaster(...)
-    >>> y_pred = forecaster.predict(fh=[1,2,3])
+    >>> y_pred = forecaster.predict(fh=[1,2,3])  # doctest: +SKIP
     """
 
     _fitted_param_names = ("initial_level", "smoothing_level")
@@ -248,6 +246,31 @@ class ThetaForecaster(ExponentialSmoothing):
             self.trend_ = self._compute_trend(y)
         return self
 
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str , default = "default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            There are currently no reserved values for forecasters.
+
+        Returns
+        -------
+        params :dict or list of dict , default = {}
+            arameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params
+        """
+        params0 = {}
+        params1 = {"sp": 2, "deseasonalize": True}
+        params2 = {"deseasonalize": False}
+
+        return [params0, params1, params2]
+
 
 def _zscore(level: float, two_tailed: bool = True) -> float:
     """Calculate a z-score from a confidence level.
@@ -380,9 +403,16 @@ class ThetaModularForecaster(BaseForecaster):
                 if theta == 0:
                     name = f"trend{str(i)}"
                     forecaster = (name, PolynomialTrendForecaster(), i)
-                else:
+                elif _check_estimator_deps(ExponentialSmoothing, severity="none"):
                     name = f"ses{str(i)}"
                     forecaster = name, ExponentialSmoothing(), i
+                else:
+                    raise RuntimeError(
+                        "Constructing ThetaModularForecaster without forecasters "
+                        "results in using ExponentialSmoothing for non-zero theta "
+                        "components. Ensure that statsmodels package is available "
+                        "when constructing ThetaModularForecaster with this default."
+                    )
                 _forecasters.append(forecaster)
         elif len(forecasters) != len(self.theta_values):
             raise ValueError(
@@ -439,4 +469,11 @@ class ThetaModularForecaster(BaseForecaster):
         }
         params1 = {"theta_values": (0, 3)}
         params2 = {"weights": [1.0, 0.8]}
-        return [params0, params1, params2]
+
+        # params1 and params2 invoke ExpoentialSmoothing which requires statsmodels
+        if _check_estimator_deps(ExponentialSmoothing, severity="none"):
+            params = [params0, params1, params2]
+        else:
+            params = params0
+
+        return params

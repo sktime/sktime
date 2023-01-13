@@ -14,7 +14,7 @@ __all__ = ["ParamFitterPipeline"]
 SUPPORTED_MTYPES = ["pd.DataFrame", "pd.Series", "pd-multiindex", "pd_multiindex_hier"]
 
 
-class ParamFitterPipeline(BaseParamFitter, _HeterogenousMetaEstimator):
+class ParamFitterPipeline(_HeterogenousMetaEstimator, BaseParamFitter):
     """Pipeline of transformers and a parameter estimator.
 
     The `ParamFitterPipeline` compositor chains transformers and a single estimator.
@@ -75,14 +75,14 @@ class ParamFitterPipeline(BaseParamFitter, _HeterogenousMetaEstimator):
     >>> from sktime.datasets import load_airline
     >>>
     >>> X = load_airline()
-    >>> pipeline = ParamFitterPipeline(SeasonalityACF(), [Differencer()])
-    >>> pipeline.fit(X)
+    >>> pipe = ParamFitterPipeline(SeasonalityACF(), [Differencer()])  # doctest: +SKIP
+    >>> pipe.fit(X)  # doctest: +SKIP
     ParamFitterPipeline(...)
-    >>> pipeline.get_fitted_params()["sp"]
+    >>> pipe.get_fitted_params()["sp"]  # doctest: +SKIP
     12
 
     Alternative construction via dunder method:
-    >>> pipeline = Differencer() * SeasonalityACF()
+    >>> pipe = Differencer() * SeasonalityACF()  # doctest: +SKIP
     """
 
     _tags = {

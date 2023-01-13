@@ -53,7 +53,7 @@ class SupervisedIntervals(BaseTransformer):
         Each supervised extraction will output a varying amount of features based on
         series length, number of dimensions and the number of features.
     min_interval_length : int, default=3
-        The minimum length of extracted intervals.
+        The minimum length of extracted intervals. Minimum value of 3.
     features : function with a single 2d array-like parameter or list of said functions,
             default=None
         Functions used to extract features from selected intervals. If None, defaults to
@@ -68,6 +68,11 @@ class SupervisedIntervals(BaseTransformer):
         ``-1`` means using all processors.
     random_state : int or None, default=None
         Seed for random number generation.
+    parallel_backend : str, ParallelBackendBase instance or None, default=None
+        Specify the parallelisation backend implementation in joblib, if None a 'prefer'
+        value of "threads" is used by default.
+        Valid options are "loky", "multiprocessing", "threading" or a custom backend.
+        See the joblib Parallel documentation for more details.
 
     Attributes
     ----------
@@ -77,6 +82,10 @@ class SupervisedIntervals(BaseTransformer):
         The number of dimensions per case.
     series_length_ : int
         The length of each series.
+    intervals_ : list of tuples
+        Contains information for each feature extracted in fit. Each tuple contains the
+        interval start, interval end, interval dimension and the feature extracted.
+        Length will be the same as the amount of transformed features.
 
     See Also
     --------
@@ -115,6 +124,7 @@ class SupervisedIntervals(BaseTransformer):
         randomised_split_point=True,
         random_state=None,
         n_jobs=1,
+        parallel_backend=None,
     ):
         self.n_intervals = n_intervals
         self.min_interval_length = min_interval_length
@@ -122,14 +132,15 @@ class SupervisedIntervals(BaseTransformer):
         self.randomised_split_point = randomised_split_point
         self.random_state = random_state
         self.n_jobs = n_jobs
+        self.parallel_backend = parallel_backend
 
         self.n_instances_ = 0
         self.n_dims_ = 0
         self.series_length_ = 0
+        self.intervals_ = []
 
         self._min_interval_length = min_interval_length
         self._features = features
-        self._intervals = []
         self._transform_features = []
         self._n_jobs = n_jobs
 
@@ -194,12 +205,14 @@ class SupervisedIntervals(BaseTransformer):
         self.reset()
         if y is None:
             raise ValueError("SupervisedIntervals requires `y` in `fit`.")
-        X, y = self._check_X_y(X=X, y=y)
+        X, y, metadata = self._check_X_y(X=X, y=y, return_metadata=True)
 
         y = self._fit_setup(X, y)
         X_norm = z_normalise_series_3d(X)
 
-        fit = Parallel(n_jobs=self._n_jobs)(
+        fit = Parallel(
+            n_jobs=self._n_jobs, backend=self.parallel_backend, prefer="threads"
+        )(
             delayed(self._generate_intervals)(
                 X,
                 X_norm,
@@ -215,24 +228,31 @@ class SupervisedIntervals(BaseTransformer):
             transformed_intervals,
         ) = zip(*fit)
 
-        self._intervals = []
+        self.intervals_ = []
         for i in intervals:
-            self._intervals.extend(i)
+            self.intervals_.extend(i)
 
-        self._transform_features = [True] * len(self._intervals)
+        self._transform_features = [True] * len(self.intervals_)
 
         Xt = transformed_intervals[0]
         for i in range(1, self.n_intervals):
             Xt = np.hstack((Xt, transformed_intervals[i]))
 
         self._is_fitted = True
-        return Xt
+
+        if not hasattr(self, "_output_convert") or self._output_convert == "auto":
+            X_out = self._convert_output(Xt, metadata=metadata)
+        else:
+            X_out = Xt
+        return X_out
 
     def _fit(self, X, y=None):
         y = self._fit_setup(X, y)
         X_norm = z_normalise_series_3d(X)
 
-        fit = Parallel(n_jobs=self._n_jobs)(
+        fit = Parallel(
+            n_jobs=self._n_jobs, backend=self.parallel_backend, prefer="threads"
+        )(
             delayed(self._generate_intervals)(
                 X,
                 X_norm,
@@ -248,22 +268,23 @@ class SupervisedIntervals(BaseTransformer):
             _,
         ) = zip(*fit)
 
-        self._intervals = []
+        self.intervals_ = []
         for i in intervals:
-            self._intervals.extend(i)
+            self.intervals_.extend(i)
 
-        self._transform_features = [True] * len(self._intervals)
+        self._transform_features = [True] * len(self.intervals_)
 
         return self
 
     def _transform(self, X, y=None):
-        transform = Parallel(n_jobs=self._n_jobs)(
+        transform = Parallel(
+            n_jobs=self._n_jobs, backend=self.parallel_backend, prefer="threads"
+        )(
             delayed(self._transform_intervals)(
                 X,
                 i,
-                self._transform_features[i],
             )
-            for i in range(len(self._intervals))
+            for i in range(len(self.intervals_))
         )
 
         Xt = np.zeros((X.shape[0], len(transform)))
@@ -303,8 +324,16 @@ class SupervisedIntervals(BaseTransformer):
                 row_count_above_mean,
             ]
 
+        li = []
         if not isinstance(self._features, list):
             self._features = [self._features]
+
+        for f in self._features:
+            if callable(f):
+                li.append(f)
+            else:
+                raise ValueError()
+        self._features = li
 
         self._n_jobs = check_n_jobs(self.n_jobs)
 
@@ -320,8 +349,8 @@ class SupervisedIntervals(BaseTransformer):
         )
         rng = check_random_state(rs)
 
-        Xt = np.empty((self.n_instances_, 1)) if keep_transform else None
-        candidate_agg_feats = []
+        Xt = np.empty((self.n_instances_, 0)) if keep_transform else None
+        intervals = []
 
         for i in range(self.n_dims_):
             for feature in self._features:
@@ -332,7 +361,7 @@ class SupervisedIntervals(BaseTransformer):
                     )
                 )
 
-                candidate_agg_feat_L, Xt_L = self._supervised_search(
+                intervals_L, Xt_L = self._supervised_search(
                     X_norm[:, i, :random_cut_point],
                     y,
                     0,
@@ -342,11 +371,11 @@ class SupervisedIntervals(BaseTransformer):
                     rng,
                     keep_transform,
                 )
-                candidate_agg_feats.extend(candidate_agg_feat_L)
+                intervals.extend(intervals_L)
                 if keep_transform:
                     Xt = np.hstack((Xt, Xt_L))
 
-                candidate_agg_feat_R, Xt_R = self._supervised_search(
+                intervals_R, Xt_R = self._supervised_search(
                     X_norm[:, i, random_cut_point:],
                     y,
                     random_cut_point,
@@ -356,27 +385,24 @@ class SupervisedIntervals(BaseTransformer):
                     rng,
                     keep_transform,
                 )
-                candidate_agg_feats.extend(candidate_agg_feat_R)
+                intervals.extend(intervals_R)
                 if keep_transform:
                     Xt = np.hstack((Xt, Xt_R))
 
-        if keep_transform:
-            Xt = Xt[:, 1:]
+        return intervals, Xt
 
-        return candidate_agg_feats, Xt
-
-    def _transform_intervals(self, X, idx, skip):
-        if skip:
+    def _transform_intervals(self, X, idx):
+        if not self._transform_features[idx]:
             return np.zeros(X.shape[0])
 
-        start, end, dim, feature = self._intervals[idx]
+        start, end, dim, feature = self.intervals_[idx]
         return feature(X[:, dim, start:end])
 
     def _supervised_search(
         self, X, y, ini_idx, feature, dim, X_ori, rng, keep_transform
     ):
-        candidate_agg_feats = []
-        Xt = np.empty((X.shape[0], 1)) if keep_transform else None
+        intervals = []
+        Xt = np.empty((X.shape[0], 0)) if keep_transform else None
 
         while X.shape[1] >= self._min_interval_length * 2:
             if (
@@ -401,7 +427,7 @@ class SupervisedIntervals(BaseTransformer):
             if score_0 >= score_1 and score_0 != 0:
                 end = ini_idx + len(sub_interval_0[0])
 
-                candidate_agg_feats.append((ini_idx, end, dim, feature))
+                intervals.append((ini_idx, end, dim, feature))
                 X = sub_interval_0
 
                 interval_feature_to_use = feature(X_ori[:, ini_idx:end])
@@ -419,7 +445,7 @@ class SupervisedIntervals(BaseTransformer):
                 ini_idx = ini_idx + div_point
                 end = ini_idx + len(sub_interval_1[0])
 
-                candidate_agg_feats.append((ini_idx, end, dim, feature))
+                intervals.append((ini_idx, end, dim, feature))
                 X = sub_interval_1
 
                 interval_feature_to_use = feature(X_ori[:, ini_idx:end])
@@ -436,10 +462,24 @@ class SupervisedIntervals(BaseTransformer):
             else:
                 break
 
-        if keep_transform:
-            Xt = Xt[:, 1:]
+        return intervals, Xt
 
-        return candidate_agg_feats, Xt
+    def set_features_to_transform(self, arr):
+        """Set transform_features to the given array.
+
+        Each index in the list corresponds to the index of an interval, True intervals
+        are included in the transform, False intervals skipped and are set to 0.
+
+        Parameters
+        ----------
+        arr : list of booleans of length len(self.intervals_)
+             A list of intervals to skip.
+        """
+        if len(arr) != len(self.intervals_) or not all(
+            isinstance(b, bool) for b in arr
+        ):
+            raise ValueError("Input must be a list bools of length len(intervals_).")
+        self._transform_features = arr
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):

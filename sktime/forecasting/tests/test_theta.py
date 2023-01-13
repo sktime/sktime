@@ -13,9 +13,14 @@ from sktime.datasets import load_airline
 from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.forecasting.tests._config import TEST_OOS_FHS
 from sktime.forecasting.theta import ThetaForecaster, ThetaModularForecaster
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.utils.validation.forecasting import check_fh
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("statsmodels", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
 def test_predictive_performance_on_airline():
     """Check prediction performance on airline dataset.
 
@@ -36,6 +41,10 @@ def test_predictive_performance_on_airline():
     np.testing.assert_allclose(y_pred, y_test, rtol=0.05)
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("statsmodels", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
 @pytest.mark.parametrize("fh", TEST_OOS_FHS)
 def test_pred_errors_against_y_test(fh):
     """Check prediction performance on airline dataset.
@@ -66,6 +75,10 @@ def test_pred_errors_against_y_test(fh):
     assert np.all(y_test < intervals[("Coverage", 0.9, "upper")].values)
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("statsmodels", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
 def test_forecaster_with_initial_level():
     """Check prediction performance on airline dataset.
 
@@ -86,6 +99,10 @@ def test_forecaster_with_initial_level():
     np.testing.assert_allclose(y_pred, y_test, rtol=0.05)
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("statsmodels", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
 def test_theta_and_thetamodular():
     """Check predictions ThetaForecaster and ThetaModularForecaster align.
 

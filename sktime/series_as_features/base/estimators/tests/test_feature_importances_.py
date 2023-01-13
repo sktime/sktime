@@ -18,6 +18,7 @@ from sktime.utils._testing.panel import make_classification_problem
 X_train, y_train = make_classification_problem()
 
 
+@pytest.mark.xfail(reason="array dimension mismatch since 1.2.0, see #3930")
 def test_feature_importances_single_feature_interval_and_estimator():
     """Test feature importances for single feature interval and estimator.
 
@@ -71,6 +72,7 @@ def test_feature_importances_single_feature_interval_and_estimator():
     np.testing.assert_array_equal(fi_actual, fi_expected)
 
 
+@pytest.mark.xfail(reason="array dimension mismatch since 1.2.0, see #3930")
 @pytest.mark.parametrize("n_intervals", [1])
 @pytest.mark.parametrize("n_estimators", [1, 2])
 def test_feature_importances_multi_intervals_estimators(n_intervals, n_estimators):
