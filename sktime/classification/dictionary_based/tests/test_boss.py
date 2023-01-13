@@ -49,7 +49,7 @@ def test_individual_boss_classes(dataset, new_class, expected_dtype):
 @pytest.mark.parametrize(
     "new_class,expected_dtype",
     [
-        ({"1": "Class1", "2": "Class2"}, object),
+        ({"1": "Class1", "2": "Class2"}, "<U6"),
         ({"1": 1, "2": 2}, int),
         ({"1": 1.0, "2": 2.0}, float),
         ({"1": True, "2": False}, bool),
@@ -70,5 +70,5 @@ def test_boss_ensemble_classes(dataset, new_class, expected_dtype):
     y_pred = boss_ensemble.predict(X_test)
 
     # assert class type and names
-    assert y_pred.dtype == "<U6"
+    assert y_pred.dtype == expected_dtype
     assert set(y_pred) == set(y_train)
