@@ -199,7 +199,7 @@ def piecewise_normal(
 def piecewise_multinomial(
     n_trials: int,
     lengths: npt.ArrayLike,
-    pvals: npt.ArrayLike,
+    p_vals: npt.ArrayLike,
     random_state: Union[int, np.random.RandomState] = None,
 ) -> npt.ArrayLike:
     """
@@ -215,8 +215,9 @@ def piecewise_multinomial(
         Number of experiments to run during each trial
     lengths : array_like
         Lengths of the segments to be generated
-    pvals : array_like
+    p_vals : array_like
         Set of probabilities for each outcome for each distribution
+        Each set of probabilities must be equal length
     random_state : int or np.random.RandomState
         Either a random seed or RandomState instance
 
@@ -224,11 +225,13 @@ def piecewise_multinomial(
     -------
     data : np.array
         univariate or multivariate time series as np.array
+        that has dimensions sum(lengths) x n_outcomes
+        where n_outcomes = # of outcomes for each item in ``p_vals``
 
     Examples
     --------
     >>> from sktime.annotation.datagen import piecewise_multinomial
-    >>> piecewise_multinomial(20, lengths=[3, 2], pvals=[[1/4, 3/4], \
+    >>> piecewise_multinomial(20, lengths=[3, 2], p_vals=[[1/4, 3/4], \
         [3/4, 1/4]], random_state=42) # doctest: +SKIP
     array([[ 4, 16],
        [ 8, 12],
@@ -238,7 +241,7 @@ def piecewise_multinomial(
 
     >>> from sktime.annotation.datagen import piecewise_multinomial
     >>> piecewise_multinomial(10, lengths=[2, 4, 8], \
-        pvals=[[1, 0], [0, 1], [1, 0]]) # doctest: +SKIP
+        p_vals=[[1, 0], [0, 1], [1, 0]]) # doctest: +SKIP
     array([[10,  0],
        [10,  0],
        [ 0, 10],
@@ -253,16 +256,20 @@ def piecewise_multinomial(
        [10,  0],
        [10,  0],
        [10,  0]])
-
     """
     rng = check_random_state(random_state)
-    assert len(lengths) == len(pvals)
-    assert all(sum(pval) == 1 for pval in pvals)
-    assert (np.array([len(pval) for pval in pvals]) == len(pvals[0])).all()
+
+    # error handling for inputs
+    if len(lengths) != len(p_vals):
+        raise ValueError("lengths and p_vals arguments must be same length")
+    elif not all(sum(p_val) == 1 for p_val in p_vals):
+        raise ValueError("each set of probabilities in p_val must sum to 1")
+    elif not (np.array([len(p_val) for p_val in p_vals]) == len(p_vals[0])).all():
+        raise ValueError("each set of probabilities in p_val must be equal length")
 
     segments_data = [
-        rng.multinomial(n=n_trials, pvals=pval, size=[length])
-        for pval, length, in zip(pvals, lengths)
+        rng.multinomial(n=n_trials, pvals=p_val, size=[length])
+        for p_val, length, in zip(p_vals, lengths)
     ]
     return np.concatenate(tuple(segments_data))
 
