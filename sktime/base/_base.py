@@ -904,22 +904,33 @@ class BaseEstimator(BaseObject):
                 f"been fitted yet; please call `fit` first."
             )
 
-    def get_fitted_params(self):
+    def get_fitted_params(self, param=None):
         """Get fitted parameters.
 
         State required:
             Requires state to be "fitted".
 
+        Parameters
+        ----------
+        param : str or None, optional, default=None
+            optional, name of the parameter to retrieve
+            if passed, changes return to be `fitted_params.get(param, None)` instead
+
         Returns
         -------
         fitted_params : dict of fitted parameters, keys are str names of parameters
             parameters of components are indexed as [componentname]__[paramname]
+            if `param` is provided, returns instead `fitted_params.get(param, None)`
         """
         if not self.is_fitted:
             raise NotFittedError(
                 f"estimator of type {type(self).__name__} has not been "
                 "fitted yet, please call fit on data before get_fitted_params"
             )
+
+        # treat case where param is not None
+        if param is not None:
+            return self.get_fitted_params().get(param, None)
 
         fitted_params = dict()
 

@@ -325,6 +325,10 @@ def test_get_fitted_params():
     assert comp_f_params["foo"] is composite.foo_
     assert comp_f_params["foo"] is not composite.foo
 
+    assert composite.get_fitted_params("foo") is composite.foo_
+    assert composite.get_fitted_params("foo") is not composite.foo
+    assert non_composite.get_fitted_params("bar") is None
+
 
 def test_eq_dunder():
     """Tests equality dunder for BaseObject descendants.

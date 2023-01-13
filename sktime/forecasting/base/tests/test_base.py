@@ -14,6 +14,7 @@ from pandas.testing import assert_series_equal
 from sktime.datatypes import check_is_mtype, convert
 from sktime.datatypes._utilities import get_cutoff, get_window
 from sktime.forecasting.arima import ARIMA
+from sktime.forecasting.naive import NaiveForecaster
 from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils._testing.panel import _make_panel
 from sktime.utils._testing.series import _make_series
@@ -315,3 +316,28 @@ def test_predict_residuals():
     y_pred_2 = forecaster.predict()
     assert_series_equal(y_pred_1, y_pred_2)
     assert y_resid.index.equals(y_train.index)
+
+
+def test_get_fitted_params_vectorized():
+    """Tests get_fitted_param in the vectorized case."""
+    from sktime.forecasting.base import BaseForecaster
+
+    y = _make_hierarchical()
+    f = NaiveForecaster()
+
+    f.fit(y)
+
+    # this should be a pd.DataFrame containing forecasters
+    # the DataFrame should be indexed by the hierarchy levels
+    # the forecasters should be fitted to the time series instances
+    forecasters_df = f.get_fitted_params("forecasters")
+
+    assert isinstance(forecasters_df, pd.DataFrame)
+    assert (forecasters_df.index == y.index.droplevel(-1).unique()).all()
+    assert forecasters_df.applymap(lambda x: isinstance(x, BaseForecaster)).all().all()
+
+    # should be same format, containing the fitted/checked parameter, all "1"
+    sp_df = f.get_fitted_params("sp")
+    assert isinstance(sp_df, pd.DataFrame)
+    assert (sp_df.index == y.index.droplevel(-1).unique()).all()
+    assert sp_df.applymap(lambda x: x == 1).all().all()

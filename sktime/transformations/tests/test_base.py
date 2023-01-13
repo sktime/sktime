@@ -36,6 +36,7 @@ from sktime.utils._testing.scenarios_transformers import (
     TransformerFitTransformSeriesMultivariate,
     TransformerFitTransformSeriesUnivariate,
 )
+from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils._testing.series import _make_series
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
@@ -658,3 +659,28 @@ def test_vectorize_reconstruct_correct_hierarchy():
 
     # check that Xt.index is the same as X.index with time level dropped and made unique
     assert (X.index.droplevel(-1).unique() == Xt.index).all()
+
+
+def test_get_fitted_params_vectorized():
+    """Tests get_fitted_param in the vectorized case."""
+    from sktime.transformations.base import BaseTransformer
+
+    X = _make_hierarchical()
+    t = BoxCoxTransformer()
+
+    t.fit(X)
+
+    # this should be a pd.DataFrame containing transformers
+    # the DataFrame should be indexed by the hierarchy levels
+    # the transformers should be fitted to the time series instances
+    t_df = t.get_fitted_params("transformers")
+
+    assert isinstance(t_df, pd.DataFrame)
+    assert (t_df.index == X.index.droplevel(-1).unique()).all()
+    assert t_df.applymap(lambda x: isinstance(x, BaseTransformer)).all().all()
+
+    # should be same format, containing the fitted/checked parameter, all "1"
+    lambda_df = t.get_fitted_params("lambda")
+    assert isinstance(lambda_df, pd.DataFrame)
+    assert (lambda_df.index == X.index.droplevel(-1).unique()).all()
+    assert lambda_df.applymap(lambda x: isinstance(x, float)).all().all()
