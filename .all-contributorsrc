@@ -212,6 +212,15 @@
       ]
     },
     {
+      "login": "achieveordie",
+      "name": "Sagar Mishra",
+      "avatar_url": "https://avatars.githubusercontent.com/u/54197164?v=4",
+      "profile": "https://github.com/achieveordie",
+      "contributions": [
+       "test"
+      ]
+    },
+    {
       "login": "simone-pignotti",
       "name": "simone-pignotti",
       "avatar_url": "https://avatars1.githubusercontent.com/u/44410066?v=4",
@@ -595,20 +604,6 @@
       "profile": "https://github.com/evanmiller29",
       "contributions": [
         "tutorial"
-      ]
-    },
-    {
-      "login": "achieveordie",
-      "name": "Sagar Mishra",
-      "avatar_url": "https://avatars.githubusercontent.com/u/54197164?v=4",
-      "profile": "https://github.com/achieveordie",
-      "contributions": [
-        "bug",
-        "code",
-        "data",
-        "doc",
-        "review",
-        "test"
       ]
     },
     {
@@ -1872,7 +1867,7 @@
       "name": "Joren Hammudoglu",
       "profile": "https://github.com/jorenham",
       "contributions": [
-        "build"
+        "infra"
       ]
     },
     {
@@ -1880,7 +1875,7 @@
       "name": "Rick van Hattem",
       "profile": "https://github.com/wolph",
       "contributions": [
-        "build"
+        "infra"
       ]
     },
     {
