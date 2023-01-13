@@ -96,8 +96,7 @@ def _get_end(y_index: pd.Index, fh: ForecastingHorizon) -> int:
     fh_offset = null if fh.is_all_in_sample() else fh[-1]
     if array_is_int(fh):
         return n_timepoints - fh_offset - 1
-    else:
-        return y_index.get_loc(y_index[-1] - fh_offset)
+    return y_index.get_loc(y_index[-1] - fh_offset)
 
 
 def _check_window_lengths(
@@ -180,10 +179,7 @@ def _inputs_are_supported(args: list) -> bool:
     -------
     True if all inputs are compatible, False otherwise
     """
-    if all_inputs_are_iloc_like(args) or all_inputs_are_time_like(args):
-        return True
-    else:
-        return False
+    return all_inputs_are_iloc_like(args) or all_inputs_are_time_like(args)
 
 
 def _check_inputs_for_compatibility(args: list) -> None:
@@ -367,10 +363,10 @@ class BaseSplitter(BaseObject):
         """
         y_index = self._coerce_to_index(y)
 
-        if not isinstance(y_index, pd.MultiIndex):
-            split = self._split
-        else:
+        if isinstance(y_index, pd.MultiIndex):
             split = self._split_vectorized
+        else:
+            split = self._split
 
         for train, test in split(y_index):
             yield train[train >= 0], test[test >= 0]
@@ -637,8 +633,7 @@ class BaseSplitter(BaseObject):
             return np.argwhere(
                 (y >= y[max(train_start, 0)]) & (y <= y[min(split_point, len(y)) - 1])
             ).flatten()
-        else:
-            return np.array([], dtype=int)
+        return np.array([], dtype=int)
 
 
 class CutoffSplitter(BaseSplitter):
@@ -763,8 +758,7 @@ class CutoffSplitter(BaseSplitter):
         """
         if array_is_int(self.cutoffs):
             return check_cutoffs(self.cutoffs)
-        else:
-            return np.argwhere(y.index.isin(check_cutoffs(self.cutoffs))).flatten()
+        return np.argwhere(y.index.isin(check_cutoffs(self.cutoffs))).flatten()
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -784,8 +778,7 @@ class CutoffSplitter(BaseSplitter):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        params = {"cutoffs": np.array([3, 7, 10])}
-        return params
+        return {"cutoffs": np.array([3, 7, 10])}
 
 
 class BaseWindowSplitter(BaseSplitter):
@@ -811,8 +804,7 @@ class BaseWindowSplitter(BaseSplitter):
     def _initial_window(self):
         if hasattr(self, "initial_window"):
             return self.initial_window
-        else:
-            return None
+        return None
 
     def _split(self, y: pd.Index) -> SPLIT_GENERATOR_TYPE:
         n_timepoints = y.shape[0]
@@ -1449,7 +1441,6 @@ def _split_by_fh(
     if X is None:
         return y_train, y_test
 
-    else:
-        X_train = X.loc[train]
-        X_test = X.loc[test]
-        return y_train, y_test, X_train, X_test
+    X_train = X.loc[train]
+    X_test = X.loc[test]
+    return y_train, y_test, X_train, X_test
