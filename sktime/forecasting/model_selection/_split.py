@@ -348,7 +348,7 @@ class BaseSplitter(BaseObject):
         super(BaseSplitter, self).__init__()
 
     def split(self, y: ACCEPTED_Y_TYPES) -> SPLIT_GENERATOR_TYPE:
-        """Get iloc references to train/test slits of `y`.
+        """Get iloc references to train/test splits of `y`.
 
         Parameters
         ----------
