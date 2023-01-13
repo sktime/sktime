@@ -716,7 +716,7 @@ class BaseTransformer(BaseEstimator):
         # populate fitted_params with transformers and their parameters
         for ix, col in product(transformers.index, transformers.columns):
             trafo = transformers.loc[ix, col]
-            trafo_key = f"forecasters.loc[{_to_str(ix)},{_to_str(col)}]"
+            trafo_key = f"transformers.loc[{_to_str(ix)},{_to_str(col)}]"
             fitted_params[trafo_key] = trafo
             trafo_params = trafo.get_fitted_params()
             for key, val in trafo_params.items():
