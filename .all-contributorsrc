@@ -1977,6 +1977,16 @@
       ]
     },
     {
+      "login": "erjieyong",
+      "name": "Er Jie Yong",
+      "avatar_url": "https://avatars.githubusercontent.com/u/109052378?v=4",
+      "profile": "https://www.linkedin.com/in/erjieyong",
+      "contributions": [
+        "bug",
+        "code"
+      ]
+    },
+    {
       "login": "klam-data",
       "name": "Kevin Lam",
       "avatar_url": "https://avatars.githubusercontent.com/u/114420932?s=400&v=4",
@@ -2007,16 +2017,6 @@
         "code",
         "example",
         "test"
-      ]
-    },
-    {
-      "login": "erjieyong",
-      "name": "Er Jie Yong",
-      "avatar_url": "https://avatars.githubusercontent.com/u/109052378?v=4",
-      "profile": "https://www.linkedin.com/in/erjieyong",
-      "contributions": [
-        "bug",
-        "code"
       ]
     }
   ]
