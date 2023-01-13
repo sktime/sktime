@@ -162,7 +162,7 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/65773314?v=4",
       "profile": "https://github.com/nilesh05apr",
       "contributions": [
-      "code"
+        "code"
       ]
     },
     {
@@ -2007,6 +2007,16 @@
         "code",
         "example",
         "test"
+      ]
+    },
+    {
+      "login": "erjieyong",
+      "name": "Er Jie Yong",
+      "avatar_url": "https://avatars.githubusercontent.com/u/109052378?v=4",
+      "profile": "https://www.linkedin.com/in/erjieyong",
+      "contributions": [
+        "bug",
+        "code"
       ]
     }
   ]
