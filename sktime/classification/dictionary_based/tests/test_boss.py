@@ -61,7 +61,6 @@ def test_boss_ensemble_classes(dataset, new_class, expected_dtype):
     X_train, y_train, X_test, y_test = dataset
 
     # change class
-    new_class = {"1": "Class1", "2": "Class2"}
     y_train = np.array([new_class[y] for y in y_train])
 
     # train boss_ensemble and predict X_test
