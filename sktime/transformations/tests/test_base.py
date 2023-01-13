@@ -28,6 +28,7 @@ from sktime.transformations.panel.tsfresh import (
 from sktime.transformations.series.boxcox import BoxCoxTransformer
 from sktime.transformations.series.exponent import ExponentTransformer
 from sktime.transformations.series.summarize import SummaryTransformer
+from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils._testing.scenarios_transformers import (
     TransformerFitTransformHierarchicalMultivariate,
     TransformerFitTransformHierarchicalUnivariate,
@@ -36,7 +37,6 @@ from sktime.utils._testing.scenarios_transformers import (
     TransformerFitTransformSeriesMultivariate,
     TransformerFitTransformSeriesUnivariate,
 )
-from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils._testing.series import _make_series
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
