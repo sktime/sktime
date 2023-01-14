@@ -71,6 +71,24 @@ class BaseObject(_BaseObject):
     Extends skbase BaseObject with additional features.
     """
 
+    def __eq__(self, other):
+        """Equality dunder. Checks equal class and parameters.
+
+        Returns True iff result of get_params(deep=False)
+        results in equal parameter sets.
+
+        Nested BaseObject descendants from get_params are compared via __eq__ as well.
+        """
+        from sktime.utils._testing.deep_equals import deep_equals
+
+        if not isinstance(other, BaseObject):
+            return False
+
+        self_params = self.get_params(deep=False)
+        other_params = other.get_params(deep=False)
+
+        return deep_equals(self_params, other_params)
+
     def save(self, path=None):
         """Save serialized self to bytes-like object or to (.zip) file.
 
