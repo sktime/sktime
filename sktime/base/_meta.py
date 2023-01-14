@@ -95,11 +95,11 @@ class _HeterogenousMetaEstimator:
     def _get_params(self, attr, deep=True, fitted=False):
 
         if fitted:
-            method = "get_fitted_params"
+            method = "_get_fitted_params"
         else:
             method = "get_params"
 
-        out = getattr(super(), method)(deep=deep)
+        out = getattr(super(), method)()
         if not deep:
             return out
         estimators = getattr(self, attr)
