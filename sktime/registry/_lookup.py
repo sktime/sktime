@@ -152,7 +152,7 @@ def all_estimators(
     result = all_objects(
         object_types=estimator_types,
         filter_tags=filter_tags,
-        exclude_estimators=exclude_estimators,
+        exclude_objects=exclude_estimators,
         return_names=return_names,
         as_dataframe=as_dataframe,
         return_tags=return_tags,
