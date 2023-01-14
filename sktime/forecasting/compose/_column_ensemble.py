@@ -94,6 +94,10 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
     # which contains the heterogeneous set of estimators
     # this must be an iterable of (name: str, estimator) pairs for the default
     _steps_attr = "_forecasters"
+    # if the estimator is fittable, _HeterogenousMetaEstimator also
+    # provides an override for get_fitted_params for params from the fitted estimators
+    # the fitted estimators should be in a different attribute, _steps_fitted_attr
+    _steps_fitted_attr = "forecasters_"
 
     def __init__(self, forecasters):
         self.forecasters = forecasters
