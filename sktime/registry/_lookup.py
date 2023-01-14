@@ -20,7 +20,7 @@ from operator import itemgetter
 from pathlib import Path
 
 import pandas as pd
-from skbase import all_objects
+from skbase.lookup import all_objects
 
 from sktime.base import BaseEstimator
 from sktime.registry._base_classes import (
