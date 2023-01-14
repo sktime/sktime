@@ -249,15 +249,15 @@ class _HeterogenousMetaEstimator:
         TypeError, if estimators in the list are not instances of cls_type
         """
         msg = (
-            f"Invalid '{attr_name}' attribute, '{attr_name}' should be a list"
+            f"Invalid {attr_name!r} attribute, {attr_name!r} should be a list"
             " of estimators, or a list of (string, estimator) tuples. "
         )
         if cls_type is None:
-            msg += f"All estimators in '{attr_name}' must be of type BaseEstimator."
+            msg += f"All estimators in {attr_name!r} must be of type BaseEstimator."
             cls_type = BaseEstimator
         elif isclass(cls_type) or isinstance(cls_type, tuple):
             msg += (
-                f"All estimators in '{attr_name}' must be of type "
+                f"All estimators in {attr_name!r} must be of type "
                 f"{cls_type.__name__}."
             )
         else:
@@ -487,7 +487,7 @@ class _HeterogenousMetaEstimator:
         if concat_order not in ["left", "right"]:
             raise ValueError(
                 f'concat_order must be one of "left", "right", but found '
-                f'"{concat_order}"'
+                f"{concat_order!r}"
             )
         if not isinstance(attr_name, str):
             raise TypeError(f"attr_name must be str, but found {type(attr_name)}")
