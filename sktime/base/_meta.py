@@ -101,7 +101,7 @@ class _HeterogenousMetaEstimator:
             method = "get_params"
             deepkw = {"deep": deep}
 
-        out = getattr(super(**deepkw), method)()
+        out = getattr(super(), method)(**deepkw)
         if not deep:
             return out
         estimators = getattr(self, attr)
