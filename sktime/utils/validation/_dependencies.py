@@ -77,6 +77,17 @@ def _check_soft_dependencies(
     if not all(isinstance(x, str) for x in package_import_alias.values()):
         raise TypeError(msg)
 
+    if obj is None:
+        class_name = "This functionality"
+    elif not isclass(obj):
+        class_name = type(obj).__name__
+    elif isclass(obj):
+        class_name = obj.__name__
+    elif isinstance(obj, str):
+        class_name = obj
+    else:
+        raise TypeError("obj must be a class, an object, a str, or None")
+
     for package in packages:
 
         try:
@@ -89,7 +100,6 @@ def _check_soft_dependencies(
             )
             raise InvalidRequirement(msg_version)
 
-        req = Requirement(package)
         package_name = req.name
         package_version_req = req.specifier
 
@@ -118,14 +128,6 @@ def _check_soft_dependencies(
                     f"sktime[all_extras]`"
                 )
             else:
-                if not isclass(obj):
-                    class_name = type(obj).__name__
-                elif isclass(obj):
-                    class_name = obj.__name__
-                elif isinstance(obj, str):
-                    class_name = obj
-                else:
-                    raise TypeError("obj must be a class, an object, a str, or None")
                 msg = (
                     f"{class_name} requires package '{package}' to be present "
                     f"in the python environment, but '{package}' was not found. "

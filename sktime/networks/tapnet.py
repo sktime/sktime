@@ -74,9 +74,6 @@ class TapNetNetwork(BaseDeepNetwork):
         use_rp=True,
         rp_params=(-1, 3),
         use_att=True,
-        use_ss=False,
-        use_metric=False,
-        use_muse=False,
         use_lstm=True,
         use_cnn=True,
         random_state=1,
@@ -97,13 +94,10 @@ class TapNetNetwork(BaseDeepNetwork):
         self.rp_params = rp_params
         self.filter_sizes = filter_sizes
         self.use_att = use_att
-        self.use_ss = use_ss
         self.dilation = dilation
         self.padding = padding
 
         self.dropout = dropout
-        self.use_metric = use_metric
-        self.use_muse = use_muse
         self.use_lstm = use_lstm
         self.use_cnn = use_cnn
 

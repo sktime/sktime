@@ -13,6 +13,243 @@ All notable changes to this project will be documented in this file. We keep tra
 For upcoming changes and next releases, see our `milestones <https://github.com/sktime/sktime/milestones?direction=asc&sort=due_date&state=open>`_.
 For our long-term plan, see our :ref:`roadmap`.
 
+Version 0.15.1 - 2023-01-12
+---------------------------
+
+Highlights
+~~~~~~~~~~~~
+
+* substantial speed-ups of boilerplate for panel and hierarchical data,
+  may result in 10-50x overall speed improvement on large panel/hierarchical data (:pr:`3935`, :pr:`4061`) :user:`danbartl`
+* dunders for time series distances and kernels, for arithmetic composition and pipelining (:pr:`3949`) :user:`fkiraly`
+* pipelines and dunders for time series clustering (:pr:`3967`) :user:`fkiraly`
+* new estimators: DBSCAN clustering for time series; kernel support vector classifier for time series kernels (:pr:`3950`, :pr:`4003`) :user:`fkiraly`, :user:`josuedavalos`
+* notes and troubleshooting guide for installing ``sktime`` under macOS with ARM processors (:pr:`4010`) :user:`dainelli98`
+
+Core interface changes
+~~~~~~~~~~~~~~~~~~~~~~
+
+BaseObject
+^^^^^^^^^^
+
+* the ``python_dependencies`` tag now allows full PEP 440 specifier strings for specifying package dependencies
+
+Data types, checks, conversions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* new mtypes for time series, panels and hierarchical data that can be used when ``dask`` is installed:
+  ``dask_series``, ``dask_panel``, ``dask_hierarchical``. These can be used in estimators now.
+  End-to-end integration with ``dask`` is not yet available, but on the roadmap.
+
+Distances, kernels
+^^^^^^^^^^^^^^^^^^
+
+* pairwise transformers now possess a method ``transform_diag`` which returns the diagonal of the distance/kernel matrix
+* pairwise panel transformers can be composed with each other using arithmetic operations, which will result
+  in the corresponding arithmetic combination of transformers, e.g., sum of distances
+* pairwise panel transformers can be composed with simple transformers using the ``*`` dunder,
+  which will result in a pipeline of first applying the simple transformer, then the pairwise transformer
+
+Time series clustering
+^^^^^^^^^^^^^^^^^^^^^^
+
+* time series clusterers can now be used with ``make_pipeline`` and the ``*`` dunder to
+  build linear pipelines with time series transformers
+
+Deprecations and removals
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* in ``check_estimator`` and ``run_tests``, the ``return_exceptions`` argument has been deprecated,
+  and will be replaced with ``raise_exceptions`` (its logical negation) in 0.17.0.
+  Until 0.17.0, both arguments will work, with non-defaults being overriding.
+
+Enhancements
+~~~~~~~~~~~~
+
+Data types, checks, conversions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] ``dask`` mtypes - part 1, ``Series`` (:pr:`3554`) :user:`fkiraly`
+* [ENH] ``dask`` mtypes - part 2, ``Panel`` and ``Hierarchical`` (:pr:`4011`) :user:`fkiraly`
+* [ENH] speed up mtype check for ``pandas`` based mtypes with ``pd.PeriodIndex`` (:pr:`3991`) :user:`fkiraly`
+* [ENH] improve performance of ``pandas`` based panel and hierachical mtype checks (:pr:`3935`) :user:`danbartl`
+* [ENH] Speed up hierarchical checks and unify with panel approach (:pr:`4061`) :user:`danbartl`
+
+Distances, kernels
+^^^^^^^^^^^^^^^^^^
+
+* [ENH] generalize ``AggrDist`` and ``FlatDist`` to allow arbitrary callables, including ``sklearn`` kernel functions (:pr:`3956`) :user:`fkiraly`
+* [ENH] ``transform_diag`` method for pairwise transformers, for computing diagonal of distance/kernel matrix (:pr:`3957`) :user:`fkiraly`
+* [ENH] wrapper to convert kernels to distances and distances to kernels (:pr:`3958`) :user:`fkiraly`
+* [ENH] dunders for time series distances and kernels (:pr:`3949`) :user:`fkiraly`
+
+Forecasting
+^^^^^^^^^^^
+
+* [ENH] add global forecasting (pooling) options to ``DirectTabularRegressionForecaster`` and ``DirectTimeSeriesRegressionForecaster`` (:pr:`3688`) :user:`danbartl`
+* [ENH] forecasting benchmark function ``evaluate`` to accept list of scorers (:pr:`3883`) :user:`aiwalter`
+* [ENH] add contract test for hierarchical forecasting (:pr:`3969`) :user:`fkiraly`
+* [ENH] extend ``Prophet`` to allow ``pd.PeriodIndex`` (:pr:`3995`) :user:`fkiraly`
+* [ENH] improve handling of ``scitype`` in ``make_reduction`` (:pr:`4022`) :user:`fkiraly`
+* [ENH] ``hcrystalball`` forecaster adapter (:pr:`4040`) :user:`MichalChromcak`
+
+Pipelines
+^^^^^^^^^
+
+* [ENH] ``sklearn`` to ``sktime`` pipeline adapter (:pr:`3970`) :user:`fkiraly`
+
+Time series classification
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] kernel support vector classifier for time series kernels (:pr:`3950`) :user:`fkiraly`
+
+Time series clustering
+^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] clustering pipelines and dunders (:pr:`3967`) :user:`fkiraly`
+* [ENH] DBSCAN clustering for time series (:pr:`4003`) :user:`fkiraly`, :user:`josuedavalos`
+
+Transformations
+^^^^^^^^^^^^^^^
+
+* [ENH] "typical length" constant in transformer scenarios (:pr:`3892`) :user:`fkiraly`
+* [ENH] change ``DateTimeFeatures`` trafo to work with multi-index data and add option to drop columns. (:pr:`3996`) :user:`KishManani`
+* [ENH] time bin aggregation transformer (:pr:`3997`) :user:`fkiraly`
+* [ENH] enable ``TimeSince`` trafo to transform multiindex dataframes natively (:pr:`4006`) :user:`KishManani`
+* [ENH] make ``TimeSince`` trafo faster by changing period diff calculation (:pr:`4018`) :user:`KishManani`
+* [ENH] clean up ``Detrender``, extend to forecasters which require forecasting horizon in ``fit`` (:pr:`4053`) :user:`fkiraly`
+
+Testing framework
+^^^^^^^^^^^^^^^^^
+
+* [ENH] update ``_check_soft_dependencies`` to allow PEP 440 specifier strings for version bounds (:pr:`3925`) :user:`fkiraly`
+* [ENH] allow tuples/lists of package identifier strings in ``_check_soft_dependencies`` (:pr:`3955`) :user:`fkiraly`
+* [ENH] ``_check_estimator_deps`` to also allows list or tuple of ``BaseObject``-s (:pr:`4002`) :user:`fkiraly`
+* [ENH] extend ``sklearn_scitype`` to infer the scitype correctly from composites (:pr:`4021`) :user:`fkiraly`
+* [ENH] Improve error messages in ``test_estimator_tags`` test (:pr:`4014`) :user:`fkiraly`
+* [ENH] in ``check_estimator`` and ``run_tests`` replace ``return_exceptions`` arg  with ``raise_exceptions``, with deprecation (:pr:`4030`) :user:`fkiraly`
+* [ENH] add test parameter sets to increase number of test parameter sets per estimator to 2 or larger (:pr:`4043`) :user:`fkiraly`
+
+Visualisations
+^^^^^^^^^^^^^^
+
+* [ENH] Implementing plot title for ``plot_series`` (:pr:`4038`) :user:`arnavrneo`
+
+Maintenance
+~~~~~~~~~~~
+
+* [MNT] carry out accidentally missed deprecation action for 0.15.0: in ``WEASEL`` and ``BOSS``, remove ``type_dict`` and update default ``alphabet_size=2`` (:pr:`4025`) :user:`xxl4tomxu98`
+* [MNT] move ``badrmarani`` contrib to chronological order (:pr:`4029`) :user:`fkiraly`
+* [MNT] skip :pr:`4033` related failures until fixed (:pr:`4034`) :user:`fkiraly`
+* [MNT] skip ``LSTMFCNClassifier`` tests due to unfixed failure on ``main`` (:pr:`4037`) :user:`fkiraly`
+* [MNT] explicit lower version bound on ``scipy`` (:pr:`4019`) :user:`fkiraly`
+* [MNT] fix ``_check_soft_dependencies`` breaking for PEP 440 specifiers without class reference (:pr:`4044`) :user:`fkiraly`
+* [MNT] downwards compatibility fixes for minimal dependency set (:pr:`4041`) :user:`fkiraly`
+* [MNT] address ``pd.Series`` constructor ``dtype`` deprecation / ``FutureWarning`` (:pr:`4031`) :user:`fkiraly`
+* [MNT] isolate ``statsmodels``, recent instances (:pr:`4035`) :user:`fkiraly`
+* [MNT] address ``pandas`` ``astype`` deprecation / ``FutureWarning`` in ``TrendForecaster`` (:pr:`4032`) :user:`fkiraly`
+* [MNT] explicit use of ``min_periods`` args inside ``WindowSummarizer`` to address deprecation message (:pr:`4052`, :pr:`4074`) :user:`arnavrneo`
+
+Documentation
+~~~~~~~~~~~~~
+
+* [DOC] complete docstring for ``ForecastingPipeline`` (:pr:`3840`) :user:`darshitsharma`
+* [DOC] updates to distances API reference page (:pr:`3852`) :user:`MatthewMiddlehurst`, :user:`fkiraly`
+* [DOC] improve ``Detrender`` docstring (:pr:`3948`) :user:`fkiraly`
+* [DOC] add some missing entries in API reference (:pr:`3998`) :user:`fkiraly`
+* [DOC] API ref for ``pipeline`` module (:pr:`3970`) :user:`fkiraly`
+* [DOC] fix the build tag in README (:pr:`4007`) :user:`badrmarani`
+* [DOC] warning, notes, and troubleshooting for installing ``sktime`` with macOS ARM (:pr:`4010`) :user:`dainelli98`
+* [DOC] ``all_estimators`` reference on all estimator pages (:pr:`4027`) :user:`fkiraly`, :user:`MatthewMiddlehurst`
+* [DOC] remove ``make_reduction`` scitype arg in examples (:pr:`4020`) :user:`fkiraly`
+* [DOC] more details on code quality and linting (:pr:`4063`) :user:`miraep8`
+* [DOC] update list of core devs (:pr:`4085`) :user:`fkiraly`
+* [DOC] section on new tests in ``PULL_REQUEST_TEMPLATE`` (:pr:`4093`) :user:`Aarthy153`
+
+Fixes
+~~~~~
+
+Distances, kernels
+^^^^^^^^^^^^^^^^^^
+
+* [BUG] fix tag logic in ``AggrDist`` and ``FlatDist`` (:pr:`3971`) :user:`fkiraly`
+
+Forecasting
+^^^^^^^^^^^
+
+* [BUG] fix ``StatsForecastAutoARIMA_.predict`` incorrect in-sample start index (:pr:`3942`) :user:`tianjiqx`
+* [BUG] fix ``statsmodels`` estimators when exogenous ``X`` is passed with more indices than ``fh`` (:pr:`3972`) :user:`adoherty21`
+* [BUG] fix ``ReconcilerForecaster`` when not used in a pipeline with ``Aggregator`` (:pr:`3980`) :user:`ciaran-g`
+* [BUG] fix logic bug in ``ForecastX`` predictions (:pr:`3987`) :user:`aiwalter`, :user:`fkiraly`
+* [BUG] fix ``Prophet`` not working with non-integer forecast horizon (:pr:`3995`) :user:`fkiraly`
+* [BUG] fix dropped column index in ``BaggingForecaster`` (:pr:`4001`) :user:`fkiraly`
+* [BUG] fix ``TrendForecaster`` if ``regressor`` is not boolean coercible (:pr:`4047`) :user:`fkiraly`
+* [BUG] fix mutation of ``regressor`` in ``PolynomialTrendForecaster._fit`` (:pr:`4057`) :user:`fkiraly`
+* [BUG] fix ``ConformalIntervals`` update when ``sample_frac`` argument is not None (:pr:`4083`) :user:`bethrice44`
+
+Governance
+^^^^^^^^^^
+
+* [GOV] code of conduct update - decision making on finances and resource allocation (:pr:`3674`) :user:`fkiraly`
+
+Time series classification
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [BUG] constructor of any DL estimator to pass non-default values to underlying ``Network`` object (:pr:`4075`) :user:`achieveordie`
+* [BUG] Fix BOSS based classifiers truncating class names to single character length (:pr:`4096`) :user:`erjieyong`
+
+Time series clustering
+^^^^^^^^^^^^^^^^^^^^^^
+
+* [BUG] fix default ``BaseClusterer._predict_proba`` for all mtypes (:pr:`3985`) :user:`fkiraly`
+
+Time series regression
+^^^^^^^^^^^^^^^^^^^^^^
+
+* [BUG] constructor of any DL estimator to pass non-default values to underlying ``Network`` object (:pr:`4075`) :user:`achieveordie`
+
+Transformations
+^^^^^^^^^^^^^^^
+
+* [BUG] fix ``TimeSince`` check of inconsistency between ``time_index`` and ``start`` (:pr:`4015`) :user:`KishManani`
+* [BUG] fix multivariate and hierarchical behaviour of ``Detrender`` (:pr:`4053`) :user:`fkiraly`
+
+Testing framework
+^^^^^^^^^^^^^^^^^
+
+* [BUG] fix ``_check_soft_dependencies`` breaking for PEP 440 specifiers without class reference (:pr:`4044`) :user:`fkiraly`
+
+Visualisations
+^^^^^^^^^^^^^^
+
+* [BUG] ``plot_cluster_algorithm``: fix error ``predict_series is undefined`` if ``X`` is passed as ``np.ndarray`` (:pr:`3933`) :user:`hakim89`
+
+Contributors
+~~~~~~~~~~~~
+
+:user:`Aarthy153`,
+:user:`achieveordie`,
+:user:`adoherty21`,
+:user:`aiwalter`,
+:user:`arnavrneo`,
+:user:`badrmarani`,
+:user:`bethrice44`,
+:user:`ciaran-g`,
+:user:`dainelli98`,
+:user:`danbartl`,
+:user:`darshitsharma`,
+:user:`erjieyong`,
+:user:`fkiraly`,
+:user:`hakim89`,
+:user:`josuedavalos`,
+:user:`KishManani`,
+:user:`MatthewMiddlehurst`,
+:user:`MichalChromcak`,
+:user:`miraep8`,
+:user:`patrickzib`,
+:user:`tianjiqx`,
+:user:`xxl4tomxu98`
+
 Version 0.15.0 - 2022-12-22
 ---------------------------
 
@@ -127,7 +364,7 @@ Time series classification
 * [ENH] Migrate ``ResNetClassifier`` from ``sktime-dl`` to ``sktime`` (:pr:`3881`) :user:`nilesh05apr`
 
 Time series regression
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^
 
 * [ENH] ``DummyRegressor`` for time series regression (:pr:`3968`) :user:`badrmarani`
 
