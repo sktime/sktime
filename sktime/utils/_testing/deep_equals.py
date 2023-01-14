@@ -141,6 +141,7 @@ def _is_np_nan(x):
 
     return isinstance(x, float) and np.isnan(x)
 
+
 def _tuple_equals(x, y, return_msg=False):
     """Test two tuples or lists for equality.
 
