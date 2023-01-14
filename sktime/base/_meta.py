@@ -22,9 +22,13 @@ class _HeterogenousMetaEstimator:
     # which contains the heterogeneous set of estimators
     # this must be an iterable of (name: str, estimator) pairs for the default
     _steps_attr = "_steps"
+    # if the estimator is fittable, _HeterogenousMetaEstimator also
+    # provides an override for get_fitted_params for params from the fitted estimators
+    # the fitted estimators should be in a different attribute, _steps_fitted_attr
+    _steps_fitted_attr = "steps_"
 
     def get_params(self, deep=True):
-        """Get parameters of estimator in `_forecasters`.
+        """Get parameters of estimator.
 
         Parameters
         ----------
@@ -41,7 +45,7 @@ class _HeterogenousMetaEstimator:
         return self._get_params(steps, deep=deep)
 
     def set_params(self, **kwargs):
-        """Set the parameters of estimator in `_forecasters`.
+        """Set the parameters of estimator.
 
         Valid parameter keys can be listed with ``get_params()``.
 
@@ -52,6 +56,28 @@ class _HeterogenousMetaEstimator:
         steps_attr = self._steps_attr
         self._set_params(steps_attr, **kwargs)
         return self
+
+    def _get_fitted_params(self):
+        """Get fitted parameters.
+
+        private _get_fitted_params, called from get_fitted_params
+
+        State required:
+            Requires state to be "fitted".
+
+        Returns
+        -------
+        fitted_params : dict with str keys
+            fitted parameters, keyed by names of fitted parameter
+        """
+        fitted_params = self._get_fitted_params_default()
+
+        steps = self._steps_fitted_attr
+        steps_params = self._get_params(steps, fitted=True)
+
+        fitted_params.update(steps_params)
+
+        return fitted_params
 
     def is_composite(self):
         """Check if the object is composite.
@@ -66,15 +92,21 @@ class _HeterogenousMetaEstimator:
         # children of this class are always composite
         return True
 
-    def _get_params(self, attr, deep=True):
-        out = super().get_params(deep=deep)
+    def _get_params(self, attr, deep=True, fitted=False):
+
+        if fitted:
+            method = "get_fitted_params"
+        else:
+            method = "get_params"
+
+        out = getattr(super(), method)(deep=deep)
         if not deep:
             return out
         estimators = getattr(self, attr)
         out.update(estimators)
         for name, estimator in estimators:
             if hasattr(estimator, "get_params"):
-                for key, value in estimator.get_params(deep=True).items():
+                for key, value in getattr(estimator, method)().items():
                     out["%s__%s" % (name, key)] = value
         return out
 
