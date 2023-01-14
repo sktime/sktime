@@ -96,17 +96,19 @@ class _HeterogenousMetaEstimator:
 
         if fitted:
             method = "_get_fitted_params"
+            deepkw = {}
         else:
             method = "get_params"
+            deepkw = {"deep": deep}
 
-        out = getattr(super(), method)()
+        out = getattr(super(**deepkw), method)()
         if not deep:
             return out
         estimators = getattr(self, attr)
         out.update(estimators)
         for name, estimator in estimators:
             if hasattr(estimator, "get_params"):
-                for key, value in getattr(estimator, method)().items():
+                for key, value in getattr(estimator, method)(**deepkw).items():
                     out["%s__%s" % (name, key)] = value
         return out
 
