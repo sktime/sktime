@@ -363,10 +363,10 @@ class BaseSplitter(BaseObject):
         """
         y_index = self._coerce_to_index(y)
 
-        if isinstance(y_index, pd.MultiIndex):
-            split = self._split_vectorized
-        else:
+        if not isinstance(y_index, pd.MultiIndex):
             split = self._split
+        else:
+            split = self._split_vectorized
 
         for train, test in split(y_index):
             yield train[train >= 0], test[test >= 0]
