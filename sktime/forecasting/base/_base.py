@@ -1192,13 +1192,19 @@ class BaseForecaster(BaseEstimator):
 
         return mean_absolute_percentage_error(y, self.predict(fh, X))
 
-    def get_fitted_params(self):
+    def get_fitted_params(self, deep=True):
         """Get fitted parameters.
-
-        Overrides BaseEstimator default in case of vectorization.
 
         State required:
             Requires state to be "fitted".
+
+        Parameters
+        ----------
+        deep : bool, default=True
+            If True, will return fitted parameters for this estimator,
+            plus parameters of fitted components that are fittable estimators.
+            If False, will return fitted parameters only for this estimator,
+            but not parameters of fitted components.
 
         Returns
         -------
@@ -1207,7 +1213,7 @@ class BaseForecaster(BaseEstimator):
         """
         # if self is not vectorized, run the default get_fitted_params
         if not getattr(self, "_is_vectorized", False):
-            return super(BaseForecaster, self).get_fitted_params()
+            return super(BaseForecaster, self).get_fitted_params(deep=deep)
 
         # otherwise, we delegate to the instances' get_fitted_params
         # instances' parameters are returned at dataframe-slice-like keys
@@ -1224,7 +1230,7 @@ class BaseForecaster(BaseEstimator):
             fcst = forecasters.loc[ix, col]
             fcst_key = f"forecasters.loc[{ix},{col}]"
             fitted_params[fcst_key] = fcst
-            fcst_params = fcst.get_fitted_params()
+            fcst_params = fcst.get_fitted_params(deep=deep)
             for key, val in fcst_params.items():
                 fitted_params[f"{fcst_key}__{key}"] = val
 
