@@ -5,8 +5,6 @@
 __author__ = ["rnkuhns", "fkiraly"]
 __all__ = ["BaseMetric"]
 
-from warnings import warn
-
 from sktime.base import BaseObject
 
 
@@ -16,22 +14,9 @@ class BaseMetric(BaseObject):
     Extends sktime BaseObject.
     """
 
-    # todo: 0.13.0, remove the func/name args here and to all the metrics
-    def __init__(
-        self,
-        func=None,
-        name=None,
-    ):
+    def __init__(self):
 
-        if func is not None or name is not None:
-            warn(
-                "func and name parameters of BaseMetric are deprecated from 0.12.0"
-                "and will be removed in 0.13.0",
-                DeprecationWarning,
-            )
-
-        self.func = func
-        self.name = name
+        super(BaseMetric, self).__init__()
 
     def __call__(self, y_true, y_pred, **kwargs):
         """Calculate metric value using underlying metric function.

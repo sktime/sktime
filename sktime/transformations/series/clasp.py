@@ -364,6 +364,8 @@ class ClaSPTransformer(BaseTransformer):
         size of window for sliding.
     scoring_metric :      string, default = ROC_AUC
         the scoring metric to use in ClaSP - choose from ROC_AUC or F1
+    exclusion_radius : int
+        Exclusion Radius for change points to be non-trivial matches
 
     Notes
     -----
@@ -398,9 +400,12 @@ class ClaSPTransformer(BaseTransformer):
         "fit_is_empty": True,
     }
 
-    def __init__(self, window_length=10, scoring_metric="ROC_AUC"):
+    def __init__(
+        self, window_length=10, scoring_metric="ROC_AUC", exclusion_radius=0.05
+    ):
         self.window_length = int(window_length)
         self.scoring_metric = scoring_metric
+        self.exclusion_radius = exclusion_radius
         super(ClaSPTransformer, self).__init__()
 
     def _transform(self, X, y=None):
@@ -426,7 +431,12 @@ class ClaSPTransformer(BaseTransformer):
         scoring_metric_call = self._check_scoring_metric(self.scoring_metric)
 
         X = X.flatten()
-        Xt, _ = clasp(X, self.window_length, score=scoring_metric_call)
+        Xt, _ = clasp(
+            X,
+            self.window_length,
+            score=scoring_metric_call,
+            exclusion_radius=self.exclusion_radius,
+        )
 
         return Xt
 

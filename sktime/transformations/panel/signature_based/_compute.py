@@ -36,6 +36,8 @@ class _WindowSignatureTransform(BaseTransformer):
         "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
         "fit_is_empty": True,
+        "python_dependencies": "esig",
+        "python_version": "<3.10",
     }
 
     def __init__(
@@ -48,7 +50,6 @@ class _WindowSignatureTransform(BaseTransformer):
         sig_depth=None,
         rescaling=None,
     ):
-        _check_soft_dependencies("esig", severity="error", object=self)
         super().__init__()
         self.window_name = window_name
         self.window_depth = window_depth

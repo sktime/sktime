@@ -5,15 +5,16 @@ from logging import warning
 
 import numpy as np
 import pandas as pd
+from pandas.api.types import is_numeric_dtype
 from sklearn.utils import check_array, check_consistent_length
 
 from sktime.datatypes import check_is_scitype, convert
-from sktime.performance_metrics.forecasting._classes import _BaseForecastingErrorMetric
+from sktime.performance_metrics.forecasting._classes import BaseForecastingErrorMetric
 
 # TODO: Rework tests now
 
 
-class _BaseProbaForecastingErrorMetric(_BaseForecastingErrorMetric):
+class _BaseProbaForecastingErrorMetric(BaseForecastingErrorMetric):
     """Base class for probabilistic forecasting error metrics in sktime.
 
     Extends sktime's BaseMetric to the forecasting interface. Forecasting error
@@ -39,16 +40,10 @@ class _BaseProbaForecastingErrorMetric(_BaseForecastingErrorMetric):
         "lower_is_better": True,
     }
 
-    def __init__(
-        self,
-        func=None,
-        name=None,
-        multioutput="uniform_average",
-        score_average=True,
-    ):
+    def __init__(self, multioutput="uniform_average", score_average=True):
         self.multioutput = multioutput
         self.score_average = score_average
-        super().__init__(func, name=name, multioutput=multioutput)
+        super().__init__(multioutput=multioutput)
 
     def __call__(self, y_true, y_pred, **kwargs):
         """Calculate metric value using underlying metric function.
@@ -262,7 +257,7 @@ class _BaseProbaForecastingErrorMetric(_BaseForecastingErrorMetric):
         if not isinstance(y_pred, pd.DataFrame):
             raise ValueError("y_pred should be a dataframe.")
 
-        if not all(y_pred.dtypes == float):
+        if not np.all([is_numeric_dtype(y_pred[c]) for c in y_pred.columns]):
             raise ValueError("Data should be numeric.")
 
         if y_true.ndim == 1:
@@ -333,7 +328,7 @@ class _BaseProbaForecastingErrorMetric(_BaseForecastingErrorMetric):
         return alphas
 
     def _check_alpha(self, alpha):
-        """Check that alpha input is valid."""
+        """Check alpha input and coerce to np.ndarray."""
         if alpha is None:
             return None
 
@@ -398,19 +393,12 @@ class PinballLoss(_BaseProbaForecastingErrorMetric):
         "lower_is_better": True,
     }
 
-    def __init__(
-        self,
-        multioutput="uniform_average",
-        score_average=True,
-        alpha=None,
-    ):
-        name = "PinballLoss"
+    def __init__(self, multioutput="uniform_average", score_average=True, alpha=None):
         self.score_average = score_average
-        self.alpha = self._check_alpha(alpha)
-        self.metric_args = {"alpha": alpha}
-        super().__init__(
-            name=name, multioutput=multioutput, score_average=score_average
-        )
+        self.alpha = alpha
+        self._alpha = self._check_alpha(alpha)
+        self.metric_args = {"alpha": self._alpha}
+        super().__init__(multioutput=multioutput, score_average=score_average)
 
     def _evaluate_by_index(self, y_true, y_pred, multioutput, **kwargs):
         """Logic for finding the metric evaluated at each index.
@@ -426,7 +414,7 @@ class PinballLoss(_BaseProbaForecastingErrorMetric):
         multioutput : string "uniform_average" or "raw_values"
             Determines how multioutput results will be treated.
         """
-        alpha = self.alpha
+        alpha = self._alpha
         y_pred_alphas = self._get_alpha_from(y_pred)
         if alpha is None:
             alphas = y_pred_alphas
@@ -489,12 +477,9 @@ class EmpiricalCoverage(_BaseProbaForecastingErrorMetric):
     }
 
     def __init__(self, multioutput="uniform_average", score_average=True):
-        name = "EmpiricalCoverage"
         self.score_average = score_average
         self.multioutput = multioutput
-        super().__init__(
-            name=name, score_average=score_average, multioutput=multioutput
-        )
+        super().__init__(score_average=score_average, multioutput=multioutput)
 
     def _evaluate_by_index(self, y_true, y_pred, multioutput, **kwargs):
         """Logic for finding the metric evaluated at each index.
@@ -559,12 +544,9 @@ class ConstraintViolation(_BaseProbaForecastingErrorMetric):
     }
 
     def __init__(self, multioutput="uniform_average", score_average=True):
-        name = "ConstraintViolation"
         self.score_average = score_average
         self.multioutput = multioutput
-        super().__init__(
-            name=name, score_average=score_average, multioutput=multioutput
-        )
+        super().__init__(score_average=score_average, multioutput=multioutput)
 
     def _evaluate_by_index(self, y_true, y_pred, multioutput, **kwargs):
         """Logic for finding the metric evaluated at each index.

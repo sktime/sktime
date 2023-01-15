@@ -6,7 +6,9 @@ Forecasting
 
 The :mod:`sktime.forecasting` module contains algorithms and composition tools for forecasting.
 
-Use ``sktime.registry.all_estimators`` and ``sktime.registry.all_tags`` for dynamic search and tag-based listing of forecasters.
+All clusterers in ``sktime``can be listed using the ``sktime.registry.all_estimators`` utility,
+using ``estimator_types="forecaster"``, optionally filtered by tags.
+Valid tags can be listed using ``sktime.registry.all_tags``.
 
 Base
 ----
@@ -45,6 +47,8 @@ Pipelines can also be constructed using ``*``, ``+``, and ``|`` dunders.
     ColumnEnsembleForecaster
     MultiplexForecaster
     ForecastX
+    ForecastByLevel
+    Permute
 
 Reduction
 ---------
@@ -89,6 +93,14 @@ Prediction intervals
 
 Wrappers that add prediction intervals to any forecaster.
 
+.. currentmodule:: sktime.forecasting.squaring_residuals
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    SquaringResiduals
+
 .. currentmodule:: sktime.forecasting.naive
 
 .. autosummary::
@@ -104,6 +116,15 @@ Wrappers that add prediction intervals to any forecaster.
     :template: class.rst
 
     ConformalIntervals
+
+.. currentmodule:: sktime.forecasting.compose
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    BaggingForecaster
+
 
 Trend forecasters
 -----------------
@@ -192,6 +213,14 @@ All "ARIMA" models below include SARIMAX capability.
 
     VAR
 
+.. currentmodule:: sktime.forecasting.varmax
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    VARMAX
+
 Structural time series models
 -----------------------------
 
@@ -227,6 +256,14 @@ Structural time series models
 
     UnobservedComponents
 
+.. currentmodule:: sktime.forecasting.dynamic_factor
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    DynamicFactor
+
 Ensembles and stacking
 ----------------------
 
@@ -239,6 +276,17 @@ Ensembles and stacking
     EnsembleForecaster
     AutoEnsembleForecaster
     StackingForecaster
+
+Hierarchical reconciliation
+---------------------------
+
+.. currentmodule:: sktime.forecasting.reconcile
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ReconcilerForecaster
 
 Online and stream forecasting
 -----------------------------
@@ -259,7 +307,22 @@ Online and stream forecasting
     :toctree: auto_generated/
     :template: class.rst
 
+    UpdateEvery
     UpdateRefitsEvery
+    DontUpdate
+
+Adapters to other forecasting framework packages
+------------------------------------------------
+
+Generic framework adapters that expose other frameworks in the ``sktime`` interface.
+
+.. currentmodule:: sktime.forecasting.adapters
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    HCrystalBallAdapter
 
 Model selection and tuning
 --------------------------

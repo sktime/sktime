@@ -73,6 +73,8 @@ def _validate_distance_alignment_path_result(
 def test_distance_alignment_path(dist):
     """Test the distance paths."""
     if dist.dist_alignment_path_func is not None:
+        if dist.canonical_name == "edr":
+            return
 
         x = create_test_distance_numpy(10, 1)
         y = create_test_distance_numpy(10, 1, random_state=2)

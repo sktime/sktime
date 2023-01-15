@@ -32,6 +32,8 @@ overall, conversions from non-lossy representations to any other ones
 import numpy as np
 import pandas as pd
 
+from sktime.utils.validation._dependencies import _check_soft_dependencies
+
 example_dict = dict()
 example_dict_lossy = dict()
 example_dict_metadata = dict()
@@ -53,6 +55,26 @@ arr = np.array([[1], [4], [0.5], [-3]])
 
 example_dict[("np.ndarray", "Series", 0)] = arr
 example_dict_lossy[("np.ndarray", "Series", 0)] = True
+
+if _check_soft_dependencies("xarray", severity="none"):
+    import xarray as xr
+
+    da = xr.DataArray(
+        [[1], [4], [0.5], [-3]],
+        coords=[[0, 1, 2, 3], ["a"]],
+    )
+
+    example_dict[("xr.DataArray", "Series", 0)] = da
+    example_dict_lossy[("xr.DataArray", "Series", 0)] = False
+
+if _check_soft_dependencies("dask", severity="none"):
+    from dask.dataframe import from_pandas
+
+    df_dask = from_pandas(example_dict[("pd.DataFrame", "Series", 0)], npartitions=1)
+
+    example_dict[("dask_series", "Series", 0)] = df_dask
+    example_dict_lossy[("dask_series", "Series", 0)] = False
+
 
 example_dict_metadata[("Series", 0)] = {
     "is_univariate": True,
@@ -76,6 +98,24 @@ arr = np.array([[1, 3], [4, 7], [0.5, 2], [-3, -3 / 7]])
 
 example_dict[("np.ndarray", "Series", 1)] = arr
 example_dict_lossy[("np.ndarray", "Series", 1)] = True
+if _check_soft_dependencies("xarray", severity="none"):
+    import xarray as xr
+
+    da = xr.DataArray(
+        [[1, 3], [4, 7], [0.5, 2], [-3, -3 / 7]],
+        coords=[[0, 1, 2, 3], ["a", "b"]],
+    )
+
+    example_dict[("xr.DataArray", "Series", 1)] = da
+    example_dict_lossy[("xr.DataArray", "Series", 1)] = False
+
+if _check_soft_dependencies("dask", severity="none"):
+    from dask.dataframe import from_pandas
+
+    df_dask = from_pandas(example_dict[("pd.DataFrame", "Series", 1)], npartitions=1)
+
+    example_dict[("dask_series", "Series", 1)] = df_dask
+    example_dict_lossy[("dask_series", "Series", 1)] = False
 
 example_dict_metadata[("Series", 1)] = {
     "is_univariate": False,
@@ -83,6 +123,7 @@ example_dict_metadata[("Series", 1)] = {
     "is_empty": False,
     "has_nans": False,
 }
+
 
 ###
 # example 2: multivariate, positive
@@ -100,8 +141,64 @@ arr = np.array([[1, 3], [4, 7], [0.5, 2], [3, 3 / 7]])
 example_dict[("np.ndarray", "Series", 2)] = arr
 example_dict_lossy[("np.ndarray", "Series", 2)] = True
 
+if _check_soft_dependencies("xarray", severity="none"):
+    import xarray as xr
+
+    da = xr.DataArray(
+        [[1, 3], [4, 7], [0.5, 2], [3, 3 / 7]],
+        coords=[[0, 1, 2, 3], ["a", "b"]],
+    )
+
+    example_dict[("xr.DataArray", "Series", 2)] = da
+    example_dict_lossy[("xr.DataArray", "Series", 2)] = False
+
+if _check_soft_dependencies("dask", severity="none"):
+    from dask.dataframe import from_pandas
+
+    df_dask = from_pandas(example_dict[("pd.DataFrame", "Series", 2)], npartitions=1)
+
+    example_dict[("dask_series", "Series", 2)] = df_dask
+    example_dict_lossy[("dask_series", "Series", 2)] = False
+
+
 example_dict_metadata[("Series", 2)] = {
     "is_univariate": False,
+    "is_equally_spaced": True,
+    "is_empty": False,
+    "has_nans": False,
+}
+
+###
+# example 3: univariate, positive
+
+s = pd.Series([1, 4, 0.5, 3], dtype=np.float64, name="a")
+
+example_dict[("pd.Series", "Series", 3)] = s
+example_dict_lossy[("pd.Series", "Series", 3)] = False
+
+df = pd.DataFrame({"a": [1, 4, 0.5, 3]})
+
+example_dict[("pd.DataFrame", "Series", 3)] = df
+example_dict_lossy[("pd.DataFrame", "Series", 3)] = False
+
+arr = np.array([[1], [4], [0.5], [3]])
+
+example_dict[("np.ndarray", "Series", 3)] = arr
+example_dict_lossy[("np.ndarray", "Series", 3)] = True
+
+if _check_soft_dependencies("xarray", severity="none"):
+    import xarray as xr
+
+    da = xr.DataArray(
+        [[1], [4], [0.5], [3]],
+        coords=[[0, 1, 2, 3], ["a"]],
+    )
+
+    example_dict[("xr.DataArray", "Series", 3)] = da
+    example_dict_lossy[("xr.DataArray", "Series", 3)] = False
+
+example_dict_metadata[("Series", 3)] = {
+    "is_univariate": True,
     "is_equally_spaced": True,
     "is_empty": False,
     "has_nans": False,

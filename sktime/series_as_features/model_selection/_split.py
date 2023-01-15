@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-__author__ = ["Markus Löning"]
+__author__ = ["mloning"]
 __all__ = ["PresplitFilesCV", "SingleSplit"]
 
 import numpy as np
@@ -39,7 +39,7 @@ class PresplitFilesCV:
         # check input
         if not isinstance(data, pd.DataFrame):
             raise ValueError(f"Data must be pandas DataFrame, but found {type(data)}")
-        if not np.all(data.index.unique().isin(["train", "test"])):
+        if not np.all(data.index.get_level_values(0).unique().isin(["train", "test"])):
             raise ValueError(
                 "Train-test split not properly defined in "
                 "index of passed pandas DataFrame"
@@ -53,8 +53,10 @@ class PresplitFilesCV:
         # dataframe, and split them here again
         n_instances = data.shape[0]
         idx = np.arange(n_instances)
-        train = idx[data.index == "train"]
-        test = idx[data.index == "test"]
+        train = data.index.get_level_values(0) == "train"
+        test = data.index.get_level_values(0) == "test"
+        train = idx[train]
+        test = idx[test]
         yield train, test
 
         # if additionally a cv iterator is provided, yield the predefined

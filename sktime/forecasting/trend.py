@@ -12,10 +12,8 @@ from sklearn.base import clone
 from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import PolynomialFeatures
-from statsmodels.tsa.seasonal import STL as _STL
 
 from sktime.forecasting.base import BaseForecaster
-from sktime.forecasting.naive import NaiveForecaster
 from sktime.utils.datetime import _get_duration
 
 
@@ -68,13 +66,13 @@ class TrendForecaster(BaseForecaster):
         -------
         self : returns an instance of self.
         """
-        self.regressor_ = self.regressor or LinearRegression(fit_intercept=True)
-
-        # create a clone of self.regressor
-        self.regressor_ = clone(self.regressor_)
+        if self.regressor is None:
+            self.regressor_ = LinearRegression(fit_intercept=True)
+        else:
+            self.regressor_ = clone(self.regressor)
 
         # transform data
-        X = y.index.astype("int").to_numpy().reshape(-1, 1)
+        X = y.index.astype("int64").to_numpy().reshape(-1, 1)
 
         # fit regressor
         self.regressor_.fit(X, y)
@@ -101,6 +99,30 @@ class TrendForecaster(BaseForecaster):
         y_pred = self.regressor_.predict(X_pred)
         return pd.Series(y_pred, index=self.fh.to_absolute(self.cutoff))
 
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        from sklearn.ensemble import RandomForestRegressor
+
+        params_list = [{}, {"regressor": RandomForestRegressor()}]
+
+        return params_list
+
 
 class PolynomialTrendForecaster(BaseForecaster):
     """Forecast time series data with a polynomial trend.
@@ -110,9 +132,9 @@ class PolynomialTrendForecaster(BaseForecaster):
 
     Parameters
     ----------
-    regressor : estimator object, default = None
+    regressor : sklearn regressor estimator object, default = None
         Define the regression model type. If not set, will default to
-         sklearn.linear_model.LinearRegression
+        sklearn.linear_model.LinearRegression
     degree : int, default = 1
         Degree of polynomial function
     with_intercept : bool, default=True
@@ -165,7 +187,7 @@ class PolynomialTrendForecaster(BaseForecaster):
         if self.regressor is None:
             regressor = LinearRegression(fit_intercept=False)
         else:
-            regressor = self.regressor
+            regressor = clone(self.regressor)
 
         # make pipeline with polynomial features
         self.regressor_ = make_pipeline(
@@ -202,64 +224,106 @@ class PolynomialTrendForecaster(BaseForecaster):
         y_pred = self.regressor_.predict(X_pred)
         return pd.Series(y_pred, index=self.fh.to_absolute(self.cutoff))
 
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        from sklearn.ensemble import RandomForestRegressor
+
+        params_list = [
+            {},
+            {
+                "regressor": RandomForestRegressor(),
+                "degree": 2,
+                "with_intercept": False,
+            },
+        ]
+
+        return params_list
+
 
 class STLForecaster(BaseForecaster):
     """Implements STLForecaster based on statsmodels.tsa.seasonal.STL implementation.
 
-    The STLForecaster is using an STL to decompose the given
-    series y into the three components trend, season and residuals [1]_. Then,
-    the forecaster_trend, forecaster_seasonal and forecaster_resid are fitted
-    on the components individually to forecast them also individually. The
-    final forecast is then the sum of the three component forecasts. The STL
-    decomposition is done by means of using the package statsmodels [2]_.
+    The STLForecaster applies the following algorithm, also see [1]_.
+
+    in `fit`:
+    1. use `statsmodels` `STL` [2]_ to decompose the given series `y` into
+        the three components: `trend`, `season` and `residuals`.
+    2. fit clones of `forecaster_trend` to `trend`, `forecaster_seasonal` to `season`,
+        and `forecaster_resid` to `residuals`, using `y`, `X`, `fh` from `fit`.
+        The forecasters are fitted as clones, stored in the attributes
+        `forecaster_trend_`, `forecaster_seasonal_`, `forecaster_resid_`.
+
+    In `predict`, forecasts as follows:
+    1. obtain forecasts `y_pred_trend` from `forecaster_trend_`,
+        `y_pred_seasonal` from `forecaster_seasonal_`, and
+        `y_pred_residual` from `forecaster_resid_`, using `X`, `fh`, from `predict`.
+    2. recompose `y_pred` as `y_pred = y_pred_trend + y_pred_seasonal + y_pred_residual`
+    3. return `y_pred`
+
+    `update` refits entirely, i.e., behaves as `fit` on all data seen so far.
 
     Parameters
     ----------
-    sp : int, optional
-        Length of the seasonal period for STL, by default 2.
-        It's also the default sp for the forecasters
+    sp : int, optional, default=2. Passed to `statsmodels` `STL`.
+        Length of the seasonal period passed to `statsmodels` `STL`.
         (forecaster_seasonal, forecaster_resid) that are None. The
         default forecaster_trend does not get sp as trend is independent
         to seasonality.
-    seasonal : int, optional
-        Length of the seasonal smoother. Must be an odd integer, and should
+    seasonal : int, optional., default=7. Passed to `statsmodels` `STL`.
+        Length of the seasonal smoother. Must be an odd integer >=3, and should
         normally be >= 7 (default).
-    trend : {int, None}, optional
+    trend : {int, None}, optional, default=None. Passed to `statsmodels` `STL`.
         Length of the trend smoother. Must be an odd integer. If not provided
         uses the smallest odd integer greater than
         1.5 * period / (1 - 1.5 / seasonal), following the suggestion in
         the original implementation.
-    low_pass : {int, None}, optional
+    low_pass : {int, None}, optional, default=None. Passed to `statsmodels` `STL`.
         Length of the low-pass filter. Must be an odd integer >=3. If not
         provided, uses the smallest odd integer > period.
-    seasonal_deg : int, optional
+    seasonal_deg : int, optional, default=1. Passed to `statsmodels` `STL`.
         Degree of seasonal LOESS. 0 (constant) or 1 (constant and trend).
-    trend_deg : int, optional
+    trend_deg : int, optional, default=1. Passed to `statsmodels` `STL`.
         Degree of trend LOESS. 0 (constant) or 1 (constant and trend).
-    low_pass_deg : int, optional
+    low_pass_deg : int, optional, default=1. Passed to `statsmodels` `STL`.
         Degree of low pass LOESS. 0 (constant) or 1 (constant and trend).
-    robust : bool, optional
+    robust : bool, optional, default=False. Passed to `statsmodels` `STL`.
         Flag indicating whether to use a weighted version that is robust to
         some forms of outliers.
-    seasonal_jump : int, optional
+    seasonal_jump : int, optional, default=1. Passed to `statsmodels` `STL`.
         Positive integer determining the linear interpolation step. If larger
         than 1, the LOESS is used every seasonal_jump points and linear
         interpolation is between fitted points. Higher values reduce
         estimation time.
-    trend_jump : int, optional
+    trend_jump : int, optional, default=1. Passed to `statsmodels` `STL`.
         Positive integer determining the linear interpolation step. If larger
         than 1, the LOESS is used every trend_jump points and values between
         the two are linearly interpolated. Higher values reduce estimation
         time.
-    low_pass_jump : int, optional
+    low_pass_jump : int, optional, default=1. Passed to `statsmodels` `STL`.
         Positive integer determining the linear interpolation step. If larger
         than 1, the LOESS is used every low_pass_jump points and values between
         the two are linearly interpolated. Higher values reduce estimation
         time.
-    inner_iter: int, optional
+    inner_iter: int or None, optional, default=None. Passed to `statsmodels` `STL`.
         Number of iterations to perform in the inner loop. If not provided uses 2 if
         robust is True, or 5 if not. This param goes into STL.fit() from statsmodels.
-    outer_iter: int, optional
+    outer_iter: int or None, optional, default=None. Passed to `statsmodels` `STL`.
         Number of iterations to perform in the outer loop. If not provided uses 15 if
         robust is True, or 0 if not. This param goes into STL.fit() from statsmodels.
     forecaster_trend : sktime forecaster, optional
@@ -295,10 +359,10 @@ class STLForecaster(BaseForecaster):
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.trend import STLForecaster
     >>> y = load_airline()
-    >>> forecaster = STLForecaster(sp=12)
-    >>> forecaster.fit(y)
+    >>> forecaster = STLForecaster(sp=12)  # doctest: +SKIP
+    >>> forecaster.fit(y)  # doctest: +SKIP
     STLForecaster(...)
-    >>> y_pred = forecaster.predict(fh=[1,2,3])
+    >>> y_pred = forecaster.predict(fh=[1,2,3])  # doctest: +SKIP
 
     See Also
     --------
@@ -320,6 +384,7 @@ class STLForecaster(BaseForecaster):
         "y_inner_mtype": "pd.Series",  # which types do _fit, _predict, assume for y?
         "X_inner_mtype": "pd.DataFrame",  # which types do _fit, _predict, assume for X?
         "requires-fh-in-fit": False,  # is forecasting horizon already required in fit?
+        "python_dependencies": "statsmodels",
     }
 
     def __init__(
@@ -374,6 +439,10 @@ class STLForecaster(BaseForecaster):
         -------
         self : returns an instance of self.
         """
+        from statsmodels.tsa.seasonal import STL as _STL
+
+        from sktime.forecasting.naive import NaiveForecaster
+
         self._stl = _STL(
             y.values,
             period=self.sp,
@@ -452,6 +521,8 @@ class STLForecaster(BaseForecaster):
         -------
         self : reference to self
         """
+        from statsmodels.tsa.seasonal import STL as _STL
+
         self._stl = _STL(
             y.values,
             period=self.sp,
@@ -477,3 +548,43 @@ class STLForecaster(BaseForecaster):
         self.forecaster_trend_.update(y=self.trend_, X=X, update_params=update_params)
         self.forecaster_resid_.update(y=self.resid_, X=X, update_params=update_params)
         return self
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        from sktime.forecasting.naive import NaiveForecaster
+
+        params_list = [
+            {},
+            {
+                "sp": 3,
+                "seasonal": 7,
+                "trend": 5,
+                "seasonal_deg": 2,
+                "trend_deg": 2,
+                "robust": True,
+                "seasonal_jump": 2,
+                "trend_jump": 2,
+                "low_pass_jump": 2,
+                "forecaster_trend": NaiveForecaster(strategy="drift"),
+                "forecaster_seasonal": NaiveForecaster(sp=3),
+                "forecaster_resid": NaiveForecaster(strategy="mean"),
+            },
+        ]
+
+        return params_list

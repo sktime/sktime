@@ -5,7 +5,7 @@ Installation
 
 ``sktime`` currently supports:
 
-* Python versions 3.7, 3.8 and 3.9
+* Python versions 3.7, 3.8, 3.9 and 3.10.
 * Operating systems Mac OS X, Unix-like OS, Windows 8.1 and higher
 
 See here for a `full list of precompiled wheels available on PyPI <https://pypi.org/simple/sktime/>`_.
@@ -37,6 +37,11 @@ To install ``sktime`` with maximum dependencies, including soft dependencies, in
 
     pip install sktime[all_extras]
 
+.. warning::
+    Some of the dependencies included in ``all_extras`` do not work on mac ARM-based processors, such
+    as M1, M2, M1Pro, M1Max or M1Ultra. This may cause an error during installation. Mode details can
+    be found in the :ref:`troubleshooting section<Dependency error on mac ARM>` below.
+
 
 Installing sktime from conda
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -59,18 +64,6 @@ Note: currently this does not include the dependency ``catch-22``.
 As this package is not available on ``conda-forge``, it must be installed via ``pip`` if desired.
 Contributions to remedy this situation are appreciated.
 
-
-Release versions - troubleshooting
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Module not found
-""""""""""""""""
-
-The most frequent reason for *module not found* errors is installing ``sktime`` with
-minimum dependencies and using an estimator which interfaces a package that has not
-been installed in the environment. To resolve this, install the missing package, or
-install ``sktime`` with maximum dependencies (see above).
-
 Development versions
 --------------------
 To install the latest development version of ``sktime``, or earlier versions, the sequence of steps is as follows:
@@ -91,7 +84,7 @@ Using the ``git`` command line, the sequence of commands to install the latest v
 
 .. code-block:: bash
 
-    git clone https://github.com/alan-turing-institute/sktime.git
+    git clone https://github.com/sktime/sktime.git
     cd sktime
     git checkout main
     git pull
@@ -106,7 +99,7 @@ To build a previous version, replace line 3 with:
 This will checkout the code for the version ``<VERSION>``, where ``<VERSION>`` is a valid version string.
 Valid version strings are the repository's ``git`` tags, which can be inspected by running ``git tag``.
 
-You can also `download <https://github.com/alan-turing-institute/sktime/releases>`_ a zip archive of the version from GitHub.
+You can also `download <https://github.com/sktime/sktime/releases>`_ a zip archive of the version from GitHub.
 
 
 Step 2 - satisfying build requirements
@@ -171,8 +164,9 @@ This section outlines the ``sktime`` build requirements. These are required for:
 
 
 Setting up a development environment
-""""""""""""""""""""""""""""""""""""
-You now need to set up a new python virtual environment. Our instructions will go through the commands to set up a ``conda`` environment which is recommended for sktime development.
+------------------------------------
+
+First set up a new virtual environment. Our instructions will go through the commands to set up a ``conda`` environment which is recommended for sktime development.
 This relies on an `anaconda installation <https://www.anaconda.com/products/individual#windows>`_. The process will be similar for ``venv`` or other virtual environment managers.
 
 In the ``anaconda prompt`` terminal:
@@ -182,7 +176,7 @@ In the ``anaconda prompt`` terminal:
 2. Create new environment with python 3.8: :code:`conda create -n sktime-dev python=3.8`
 
    .. warning::
-       If you already have an environment called "sktime-dev" from a previous attempt you will first need to remove this
+       If you already have an environment called "sktime-dev" from a previous attempt you will first need to remove this.
 
 3. Activate the environment: :code:`conda activate sktime-dev`
 
@@ -207,6 +201,59 @@ Some users have experienced issues when installing NumPy, particularly version 1
     Another option under Windows is to follow the instructions for `Unix-like OS`_, using the Windows Subsystem for Linux (WSL).
     For installing WSL, follow the instructions `here <https://docs.microsoft.com/en-us/windows/wsl/install-win10#step-2---check-requirements-for-running-wsl-2>`_.
 
+Troubleshooting
+---------------
+
+Module not found
+~~~~~~~~~~~~~~~~
+
+The most frequent reason for *module not found* errors is installing ``sktime`` with
+minimum dependencies and using an estimator which interfaces a package that has not
+been installed in the environment. To resolve this, install the missing package, or
+install ``sktime`` with maximum dependencies (see above).
+
+ImportError
+~~~~~~~~~~~
+Import errors are often caused by an improperly linked virtual environment.  Make sure that
+your environment is activated and linked to whatever IDE you are using.  If you are using Jupyter
+Notebooks, follow `these instructions <https://janakiev.com/blog/jupyter-virtual-envs/>`_ for
+adding your virtual environment as a new kernel for your notebook.
+
+Installing ``all_extras`` on mac with ARM processor
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+If you are using a mac with an ARM processor, you may encounter an error when installing
+``sktime[all_extras]``.  This is due to the fact that some libraries included in ``all_extras``
+are not compatible with ARM-based processors.
+
+The workaround is not to install some of the packages in ``all_extras`` and install ARM compatible
+replacements for others:
+
+* Do not install the following packages:
+    * ``esig``
+    * ``prophet``
+    * ``tsfresh``
+    * ``tslearn``
+* Replace ``tensorflow`` package with the following packages:
+    * ``tensorflow-macos``
+    * ``tensorflow-metal`` (optional)
+
+Also, ARM-based processors have issues when installing packages distributed as source distributions
+instead of Python wheels. To avoid this issue when installing a package you can try installing it
+through conda or use a prior version of the package that was distributed as a wheel.
+
+Other Startup Resources
+-----------------------
+
+Virtual environments
+~~~~~~~~~~~~~~~~~~~~
+
+Two good options for virtual environment managers are:
+
+* `conda <https://uoa-eresearch.github.io/eresearch-cookbook/recipe/2014/11/20/conda/>`_ (many sktime community members us this)
+* `venv <https://realpython.com/python-virtual-environments-a-primer/>`_ (also quite good!).
+
+Be sure to link your new virtual environment as the python kernel in whatever IDE you are using.  You can find the instructions for doing so
+in VScode `here <https://code.visualstudio.com/docs/python/environments>`_.
 
 References
 ----------

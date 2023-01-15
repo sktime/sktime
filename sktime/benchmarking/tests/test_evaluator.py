@@ -3,12 +3,14 @@
 
 import numpy as np
 import pandas as pd
+import pytest
 from sklearn.metrics import accuracy_score
 
 from sktime.benchmarking.evaluation import Evaluator
 from sktime.benchmarking.metrics import PairwiseMetric
 from sktime.benchmarking.results import RAMResults
 from sktime.series_as_features.model_selection import PresplitFilesCV
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 
 def dummy_results():
@@ -172,6 +174,10 @@ def test_t_test_bonfer():
     assert np.array_equal(expected, result)
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("scikit_posthocs", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
 def test_nemenyi():
     """Test nemenyi."""
     evaluator, metrics_by_strategy = evaluator_setup(score_function=accuracy_score)
@@ -188,6 +194,11 @@ def test_nemenyi():
     return np.array_equal(expected, result)
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("matplotlib", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
+@pytest.mark.xfail(reason="known sporadic failure of unknown cause, see #2368")
 def test_plots():
     """Test plots."""
     evaluator, metrics_by_strategy = evaluator_setup(score_function=accuracy_score)

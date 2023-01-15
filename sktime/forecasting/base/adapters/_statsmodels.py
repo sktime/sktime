@@ -7,6 +7,7 @@ __author__ = ["mloning"]
 __all__ = ["_StatsModelsAdapter"]
 
 import inspect
+from warnings import warn
 
 import numpy as np
 import pandas as pd
@@ -22,6 +23,7 @@ class _StatsModelsAdapter(BaseForecaster):
         "ignores-exogeneous-X": True,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
+        "python_dependencies": "statsmodels",
     }
 
     def __init__(self, random_state=None):
@@ -57,6 +59,26 @@ class _StatsModelsAdapter(BaseForecaster):
         """Log used internally in fit."""
         raise NotImplementedError("abstract method")
 
+    def _update(self, y, X=None, update_params=True):
+        """Update used internally in update."""
+        if update_params or self.is_composite():
+            super()._update(y, X, update_params=update_params)
+        else:
+            if not hasattr(self._fitted_forecaster, "append"):
+                warn(
+                    f"NotImplementedWarning: {self.__class__.__name__} "
+                    f"can not accept new data when update_params=False. "
+                    f"Call with update_params=True to refit with new data."
+                )
+            else:
+                # only append unseen data to fitted forecaster
+                index_diff = y.index.difference(
+                    self._fitted_forecaster.fittedvalues.index
+                )
+                if index_diff.isin(y.index).all():
+                    y = y.loc[index_diff]
+                self._fitted_forecaster = self._fitted_forecaster.append(y)
+
     def _predict(self, fh, X=None):
         """Make forecasts.
 
@@ -77,6 +99,16 @@ class _StatsModelsAdapter(BaseForecaster):
         # statsmodels requires zero-based indexing starting at the
         # beginning of the training series when passing integers
         start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
+        fh_abs = fh.to_absolute(self.cutoff).to_pandas()
+
+        # bug fix for evaluate function as test_plus_train indices are passed
+        # statsmodels exog must contain test indices only.
+        # For discussion see https://github.com/sktime/sktime/issues/3830
+        if X is not None:
+            ind_drop = self._X.index
+            X = X.loc[~X.index.isin(ind_drop)]
+            # Entire range of the forecast horizon is required
+            X = X[: fh_abs[-1]]
 
         if "exog" in inspect.signature(self._forecaster.__init__).parameters.keys():
             y_pred = self._fitted_forecaster.predict(start=start, end=end, exog=X)
@@ -85,16 +117,19 @@ class _StatsModelsAdapter(BaseForecaster):
 
         # statsmodels forecasts all periods from start to end of forecasting
         # horizon, but only return given time points in forecasting horizon
-        return y_pred.loc[fh.to_absolute(self.cutoff).to_pandas()]
+        y_pred = y_pred.loc[fh_abs]
+        # ensure that name is not added nor removed
+        # otherwise this may upset conversion to pd.DataFrame
+        y_pred.name = self._y.name
+        return y_pred
 
-    def get_fitted_params(self):
+    def _get_fitted_params(self):
         """Get fitted parameters.
 
         Returns
         -------
         fitted_params : dict
         """
-        self.check_is_fitted()
         fitted_params = {}
         for name in self._get_fitted_param_names():
             if name in ["aic", "aicc", "bic", "hqic"]:

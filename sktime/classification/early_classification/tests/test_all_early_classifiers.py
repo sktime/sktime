@@ -5,7 +5,9 @@ __author__ = ["mloning", "TonyBagnall", "fkiraly", "MatthewMiddlehurst"]
 
 import numpy as np
 
-from sktime.classification.tests.test_all_classifiers import TestAllClassifiers
+from sktime.classification.tests.test_all_classifiers import (
+    TestAllClassifiers as ClassifierTests,
+)
 from sktime.tests.test_all_estimators import BaseFixtureGenerator, QuickTester
 
 
@@ -35,7 +37,7 @@ class TestAllEarlyClassifiers(EarlyClassifierFixtureGenerator, QuickTester):
 
     def test_multivariate_input_exception(self, estimator_instance):
         """Test univariate early classifiers raise exception on multivariate X."""
-        test = TestAllClassifiers.test_multivariate_input_exception
+        test = ClassifierTests.test_multivariate_input_exception
         test(self, estimator_instance)
 
     def test_classifier_output(self, estimator_instance, scenario):
@@ -47,7 +49,7 @@ class TestAllEarlyClassifiers(EarlyClassifierFixtureGenerator, QuickTester):
         n_classes = scenario.get_tag("n_classes")
         X_new = scenario.args["predict"]["X"]
         y_train = scenario.args["fit"]["y"]
-        y_pred, decisions, state_info = scenario.run(
+        y_pred, decisions = scenario.run(
             estimator_instance, method_sequence=["fit", "predict"]
         )
 
@@ -63,7 +65,7 @@ class TestAllEarlyClassifiers(EarlyClassifierFixtureGenerator, QuickTester):
         assert isinstance(estimator_instance.get_state_info(), np.ndarray)
 
         # check predict proba (all classifiers have predict_proba by default)
-        y_proba, decisions, state_info = scenario.run(
+        y_proba, decisions = scenario.run(
             estimator_instance, method_sequence=["predict_proba"]
         )
         assert isinstance(y_proba, np.ndarray)

@@ -6,6 +6,8 @@ from inspect import isclass
 
 from sklearn.base import BaseEstimator as SklearnBaseEstimator
 from sklearn.base import ClassifierMixin, ClusterMixin, RegressorMixin, TransformerMixin
+from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
+from sklearn.pipeline import Pipeline
 
 from sktime.base import BaseObject
 
@@ -57,25 +59,37 @@ def sklearn_scitype(obj, var_name="obj"):
         "clusterer" - unsupervised clusterer
         "regressor" - supervised regressor
         "transformer" - transformer (pipeline element, feature extractor, unsupervised)
+        "estimator" - sklearn estimator of indeterminate type
 
     Raises
     ------
     TypeError if obj is not an sklearn estimator, according to is_sklearn_estimator
     """
-    if not isclass(obj):
-        obj = type(obj)
-
     if not is_sklearn_estimator(obj):
         raise TypeError(f"{var_name} is not an sklearn estimator, has type {type(obj)}")
 
+    # first check whether obj class inherits from sklearn mixins
     sklearn_mixins = tuple(mixin_to_scitype.keys())
 
-    if issubclass(obj, sklearn_mixins):
-        for mx in sklearn_mixins:
-            if issubclass(obj, mx):
-                return mixin_to_scitype[mx]
+    if not isclass(obj):
+        obj_class = type(obj)
     else:
-        return "estimator"
+        obj_class = obj
+    if issubclass(obj_class, sklearn_mixins):
+        for mx in sklearn_mixins:
+            if issubclass(obj_class, mx):
+                return mixin_to_scitype[mx]
+
+    # deal with sklearn pipelines: scitype is determined by the last element
+    if isinstance(obj, Pipeline) or hasattr(obj, "steps"):
+        return sklearn_scitype(obj.steps[-1][1], var_name=var_name)
+
+    # deal with generic composites: scitype is type of wrapped "estimator"
+    if isinstance(obj, (GridSearchCV, RandomizedSearchCV)) or hasattr(obj, "estimator"):
+        return sklearn_scitype(obj.estimator, var_name=var_name)
+
+    # fallback - estimator of indeterminate type
+    return "estimator"
 
 
 def is_sklearn_transformer(obj):

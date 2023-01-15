@@ -61,7 +61,6 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
     >>> y_pred = forecaster.predict()
     """
 
-    _required_parameters = ["forecasters"]
     _tags = {
         "ignores-exogeneous-X": False,
         "requires-fh-in-fit": True,
@@ -184,11 +183,10 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
         -------
         params : dict or list of dict
         """
-        from sktime.forecasting.arima import ARIMA
         from sktime.forecasting.naive import NaiveForecaster
 
         f1 = NaiveForecaster()
-        f2 = ARIMA()
+        f2 = NaiveForecaster(strategy="mean", window_length=3)
         params = {"forecasters": [("f1", f1), ("f2", f2)]}
 
         return params

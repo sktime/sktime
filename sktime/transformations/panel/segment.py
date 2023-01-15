@@ -125,9 +125,10 @@ class IntervalSegmenter(BaseTransformer):
         new_column_names = []
         for interval in self.intervals_:
             start, end = interval[0], interval[-1]
-            interval = X[:, start:end]
-            intervals.append(interval)
-            new_column_names.append(f"{column_names}_{start}_{end}")
+            if f"{column_names}_{start}_{end}" not in new_column_names:
+                interval = X[:, start:end]
+                intervals.append(interval)
+                new_column_names.append(f"{column_names}_{start}_{end}")
 
         # Return nested pandas DataFrame.
         Xt = pd.DataFrame(_concat_nested_arrays(intervals))
@@ -311,7 +312,7 @@ def _rand_intervals_rand_n(x, random_state=None):
 
     References
     ----------
-    ..[1] Deng, Houtao, et al. "A time series forest for classification
+    .. [1] Deng, Houtao, et al. "A time series forest for classification
     and feature extraction."
         Information Sciences 239 (2013): 142-153.
     """
@@ -383,7 +384,8 @@ class SlidingWindowSegmenter(BaseTransformer):
 
     Parameters
     ----------
-        window_length : int, length of interval.
+        window_length : int, optional, default=5.
+            length of sliding window interval
 
     Returns
     -------

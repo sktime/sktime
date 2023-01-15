@@ -9,17 +9,30 @@ A list of all contributors can be found `here <contributors.md>`_.
 
 Community Council
 -----------------
+.. list-table::
+   :header-rows: 1
+
+   * - Name
+     - GitHub ID
+   * - Franz Király
+     - :user:`fkiraly`
+   * - Guzal Bulatova
+     - :user:`GuzalBulatova`
+   * - Martin Walter
+     - :user:`aiwalter`
+
+Community Council Observers
+---------------------------
 
 .. list-table::
    :header-rows: 1
 
    * - Name
      - GitHub ID
-   * - Franz Kiraly
-     - :user:`fkiraly`
-   * - Martin Walter
-     - :user:`aiwalter`
-
+   * - Leonidas Tsaprounis
+     - :user:`ltsaprounis`
+   * - Lovkush Agarwal
+     - :user:`lovkush-a`
 
 Code of Conduct Committee
 -------------------------
@@ -29,15 +42,52 @@ Code of Conduct Committee
 
    * - Name
      - GitHub ID
-   * - Anthony Bagnall
-     - :user:`TonyBagnall`
-   * - Franz Kiraly
+   * - Franz Király
      - :user:`fkiraly`
-   * - Martina Vilas
-     - :user:`martinagvilas`
 
 Core Developers
 ---------------
+
+.. list-table::
+   :header-rows: 1
+
+   * - Name
+     - GitHub ID
+   * - Chris Holder
+     - :user:`chrisholder`
+   * - Daniel Bartling
+     - :user:`danbartl`
+   * - Franz Király
+     - :user:`fkiraly`
+   * - Freddy A Boulton
+     - :user:`freddyaboulton`
+   * - Guzal Bulatova
+     - :user:`GuzalBulatova`
+   * - Leonidas Tsaprounis
+     - :user:`ltsaprounis`
+   * - Lovkush Agarwal
+     - :user:`lovkush-a`
+   * - Łukasz Mentel
+     - :user:`lmmentel`
+   * - Markus Löning
+     - :user:`mloning`
+   * - Martin Walter
+     - :user:`aiwalter`
+   * - Mirae Parker
+     - :user:`miraep8`
+   * - Patrick Schäfer
+     - :user:`patrickzib`
+   * - Ryan Kuhns
+     - :user:`rnkuhns`
+   * - Sagar Mishra
+     - :user:`achieveordie`
+   * - Stanislav Khrapov
+     - :user:`khrapovs`
+   * - Svea Marie Meyer
+     - :user:`SveaMeyer13`
+
+Former Core Developers
+----------------------
 
 .. list-table::
    :header-rows: 1
@@ -48,60 +98,23 @@ Core Developers
      - :user:`abostrom`
    * - Anthony Bagnall
      - :user:`TonyBagnall`
-   * - Chris Holder
-     - :user:`chrisholder`
-   * - Daniel Bartling
-     - :user:`danbartl`
-   * - Franz Kiraly
-     - :user:`fkiraly`
-   * - Freddy A Boulton
-     - :user:`freddyaboulton`
-   * - George Oastler
-     - :user:`goastler`
-   * - Guzal Bulatova
-     - :user:`GuzalBulatova`
-   * - James Large
-     - :user:`james-large`
-   * - Leonidas Tsaprounis
-     - :user:`ltsaprounis`
-   * - Lovkush Agarwal
-     - :user:`lovkush-a`
-   * - Łukasz Mentel
-     - :user:`lmmentel`
-   * - Markus Löning
-     - :user:`mloning`
-   * - Matthew Middlehurst
-     - :user:`mattewmiddlehurst`
-   * - Martin Walter
-     - :user:`aiwalter`
-   * - Patrick Schäfer
-     - :user:`patrickzib`
-   * - Stanislav Khrapov
-     - :user:`khrapovs`
-   * - Svea Marie Meyer
-     - :user:`SveaMeyer13`
-
-Former Core Developers (inactive)
----------------------------------
-
-.. list-table::
-   :header-rows: 1
-
-   * - Name
-     - GitHub ID
    * - Ayushmaan Seth
      - :user:`ayushmaanseth`
+   * - George Oastler
+     - :user:`goastler`
    * - Hongyi Yang
      - :user:`hyang1996`
+   * - James Large
+     - :user:`james-large`
    * - Jason Lines
      - :user:`jasonlines`
    * - Mathew Smith
      - :user:`matteogales`
+   * - Matthew Middlehurst
+     - :user:`mattewmiddlehurst`
    * - Patrick Rockenschaub
      - :user:`prockenschaub`
-   * - Ryan Kuhns
-     - :user:`rnkuhns`
    * - Sajaysurya Ganesh
      - :user:`sajaysurya`
-   * -
+   * - Anonymous upon contributor's request
      - :user:`big-o`
