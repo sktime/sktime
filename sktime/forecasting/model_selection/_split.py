@@ -708,9 +708,8 @@ class CutoffSplitter(BaseSplitter):
             null = 0 if is_int(cutoff) else pd.Timestamp(0)
             if cutoff >= null:
                 train_end = y[cutoff] if is_int(cutoff) else cutoff
-                training_window = get_window(
-                    pd.Series(index=y[y <= train_end]), window_length=window_length
-                ).index
+                y_train = pd.Series(index=y[y <= train_end], dtype=y.dtype)
+                training_window = get_window(y_train, window_length=window_length).index
             else:
                 training_window = []
             training_window = y.get_indexer(training_window)
