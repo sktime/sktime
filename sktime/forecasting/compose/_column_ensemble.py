@@ -101,6 +101,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
 
     @property
     def forecasters_name_est_(self):
+        """First two elements of forecasters_ attr, for default _get_fitted_params."""
         return [(name, forecaster) for (name, forecaster, _) in self.forecasters_]
 
     def __init__(self, forecasters):
