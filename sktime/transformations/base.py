@@ -382,24 +382,8 @@ class BaseTransformer(BaseEstimator):
         -------
         self : a fitted instance of the estimator
         """
-        # if fit is called, estimator is reset, including fitted state
-        self.reset()
-
-        # skip everything if fit_is_empty is True and we do not need to remember data
-        if self.get_tag("fit_is_empty") and not self.get_tag("remember_data", False):
-            self._is_fitted = True
-            return self
-
-        # if requires_y is set, y is required in fit and update
-        if self.get_tag("requires_y") and y is None:
-            raise ValueError(f"{self.__class__.__name__} requires `y` in `fit`.")
-
-        # check and convert X/y
-        X_inner, y_inner = self._check_X_y(X=X, y=y)
-
-        # memorize X as self._X, if remember_data tag is set to True
-        if self.get_tag("remember_data", False):
-            self._X = update_data(None, X_new=X_inner)
+        # input checks and datatype conversion
+        X_inner, y_inner = self._fit_checks(X, y)
 
         # skip the rest if fit_is_empty is True
         if self.get_tag("fit_is_empty"):
@@ -551,9 +535,29 @@ class BaseTransformer(BaseEstimator):
                 then the return is a `Panel` object of type `pd-multiindex`
                 Example: i-th instance of the output is the i-th window running over `X`
         """
-        # Non-optimized default implementation; override when a better
-        # method is possible for a given algorithm.
-        return self.fit(X, y).transform(X, y)
+        # input checks and datatype conversion
+        X_inner, y_inner, metadata = self._fit_checks(X, y, False, True)
+
+        # checks and conversions complete, pass to inner fit_transform
+        ####################################################
+        vectorization_needed = isinstance(X_inner, VectorizedDF)
+        self._is_vectorized = vectorization_needed
+        # we call the ordinary _fit_transform if no looping/vectorization needed
+        if not vectorization_needed:
+            Xt = self._fit_transform(X=X_inner, y=y_inner)
+        else:
+            # otherwise we call the vectorized version of fit_transform
+            Xt = self._vectorize("fit_transform", X=X_inner, y=y_inner)
+
+        self._is_fitted = True
+
+        # convert to output mtype
+        if not hasattr(self, "_output_convert") or self._output_convert == "auto":
+            X_out = self._convert_output(Xt, metadata=metadata)
+        else:
+            X_out = Xt
+
+        return X_out
 
     def inverse_transform(self, X, y=None):
         """Inverse transform X and return an inverse transformed version.
@@ -1165,6 +1169,25 @@ class BaseTransformer(BaseEstimator):
 
             return Xt
 
+        if methodname == "fit_transform":
+            X, _, Xs, ys, n, row_idx, col_idx = unwrap(kwargs)
+
+            # create container of transformers
+            self.transformers_ = pd.DataFrame(index=row_idx, columns=col_idx)
+            for ix in range(n):
+                i, j = X.get_iloc_indexer(ix)
+                self.transformers_.iloc[i].iloc[j] = self.clone()
+
+            # fit/update the ix-th transformer with the ix-th series/panel
+            Xts = []
+            for ix in range(n):
+                i, j = X.get_iloc_indexer(ix)
+                method = getattr(self.transformers_.iloc[i].iloc[j], methodname)
+                Xts += [method(X=Xs[ix], y=ys[i], **kwargs)]
+            Xt = X.reconstruct(Xts, overwrite_index=False)
+
+            return Xt
+
     def _fit(self, X, y=None):
         """Fit transformer to X and y.
 
@@ -1219,6 +1242,32 @@ class BaseTransformer(BaseEstimator):
         """
         raise NotImplementedError("abstract method")
 
+    def _fit_transform(self, X, y=None):
+        """Fit to data, then transform it.
+
+        Fits the transformer to X and y and returns a transformed version of X.
+
+        private _fit_transform containing the core logic, called from fit_transform
+
+        Parameters
+        ----------
+        X : Series or Panel of mtype X_inner_mtype
+            if X_inner_mtype is list, _fit_transform must support all types in it
+            Data to fit transform to
+        y : Series or Panel of mtype y_inner_mtype, default=None
+            Additional data, e.g., labels for tarnsformation
+
+        Returns
+        -------
+        self: a fitted instance of the estimator
+
+        See extension_templates/transformer.py for implementation details.
+        """
+        # Non-optimized default implementation; override when a better
+        # method is possible for a given algorithm.
+        self._fit(X, y)
+        return self._transform(X, y)
+
     def _inverse_transform(self, X, y=None):
         """Inverse transform X and return an inverse transformed version.
 
@@ -1262,6 +1311,36 @@ class BaseTransformer(BaseEstimator):
         """
         # standard behaviour: no update takes place, new data is ignored
         return self
+
+    def _fit_checks(self, X, y, early_abandon=True, return_metadata=False):
+        """Input checks and conversions for fit and fit_transform."""
+        self.reset()
+
+        X_inner = None
+        y_inner = None
+        metadata = None
+
+        # skip everything if fit_is_empty is True and we do not need to remember data
+        if (
+            not early_abandon
+            or not self.get_tag("fit_is_empty")
+            or self.get_tag("remember_data", False)
+        ):
+            # if requires_y is set, y is required in fit and update
+            if self.get_tag("requires_y") and y is None:
+                raise ValueError(f"{self.__class__.__name__} requires `y` in `fit`.")
+
+            # check and convert X/y
+            X_inner, y_inner, metadata = self._check_X_y(X=X, y=y, return_metadata=True)
+
+            # memorize X as self._X, if remember_data tag is set to True
+            if self.get_tag("remember_data", False):
+                self._X = update_data(None, X_new=X_inner)
+
+        if return_metadata:
+            return X_inner, y_inner, metadata
+        else:
+            return X_inner, y_inner
 
 
 class _SeriesToPrimitivesTransformer(BaseTransformer):
