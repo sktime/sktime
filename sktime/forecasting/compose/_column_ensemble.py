@@ -101,7 +101,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
 
     @property
     def forecasters_name_est_(self):
-        return [(name, forecaster) for (name, forecaster, _)in self.forecasters_]
+        return [(name, forecaster) for (name, forecaster, _) in self.forecasters_]
 
     def __init__(self, forecasters):
         self.forecasters = forecasters
