@@ -10,7 +10,6 @@ from typing import Tuple, Union
 import numpy as np
 import pandas as pd
 from sklearn.utils import check_random_state
-from statsmodels.tsa.api import STL as _STL
 
 from sktime.transformations.base import BaseTransformer
 from sktime.transformations.series.boxcox import BoxCoxTransformer
@@ -144,19 +143,19 @@ class STLBootstrapTransformer(BaseTransformer):
     --------
     >>> from sktime.transformations.bootstrap import STLBootstrapTransformer
     >>> from sktime.datasets import load_airline
-    >>> from sktime.utils.plotting import plot_series
-    >>> y = load_airline()
-    >>> transformer = STLBootstrapTransformer(10)
-    >>> y_hat = transformer.fit_transform(y)
-    >>> series_list = []
-    >>> names = []
+    >>> from sktime.utils.plotting import plot_series  # doctest: +SKIP
+    >>> y = load_airline()  # doctest: +SKIP
+    >>> transformer = STLBootstrapTransformer(10)  # doctest: +SKIP
+    >>> y_hat = transformer.fit_transform(y)  # doctest: +SKIP
+    >>> series_list = []  # doctest: +SKIP
+    >>> names = []  # doctest: +SKIP
     >>> for group, series in y_hat.groupby(level=[0], as_index=False):
     ...     series.index = series.index.droplevel(0)
     ...     series_list.append(series)
-    ...     names.append(group)
-    >>> plot_series(*series_list, labels=names)
+    ...     names.append(group)  # doctest: +SKIP
+    >>> plot_series(*series_list, labels=names)  # doctest: +SKIP
     (...)
-    >>> print(y_hat.head()) # doctest: +NORMALIZE_WHITESPACE
+    >>> print(y_hat.head())  # doctest: +SKIP
                           Number of airline passengers
     series_id time_index
     actual    1949-01                            112.0
@@ -174,7 +173,7 @@ class STLBootstrapTransformer(BaseTransformer):
         # todo: what is the scitype of y: None (not needed), Primitives, Series, Panel
         "scitype:transform-labels": "None",
         "scitype:instancewise": True,  # is this an instance-wise transform?
-        "X_inner_mtype": "pd.Series",  # which mtypes do _fit/_predict support for X?
+        "X_inner_mtype": "pd.DataFrame",  # which mtypes do _fit/_predict support for X?
         # X_inner_mtype can be Panel mtype even if transform-input is Series, vectorized
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "capability:inverse_transform": False,
@@ -185,6 +184,7 @@ class STLBootstrapTransformer(BaseTransformer):
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
         "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
         "transform-returns-same-time-index": False,
+        "python_dependencies": "statsmodels",
     }
 
     def __init__(
@@ -293,6 +293,11 @@ class STLBootstrapTransformer(BaseTransformer):
         -------
         transformed version of X
         """
+        from statsmodels.tsa.api import STL as _STL
+
+        Xcol = X.columns
+        X = X[X.columns[0]]
+
         if len(X) <= self.block_length_:
             raise ValueError(
                 "STLBootstrapTransformer requires that block_length is"
@@ -366,7 +371,10 @@ class STLBootstrapTransformer(BaseTransformer):
                 )
             )
 
-        return pd.concat(df_list)
+        Xt = pd.concat(df_list)
+        Xt.columns = Xcol
+
+        return Xt
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -449,7 +457,7 @@ class MovingBlockBootstrapTransformer(BaseTransformer):
     --------
     >>> from sktime.transformations.bootstrap import MovingBlockBootstrapTransformer
     >>> from sktime.datasets import load_airline
-    >>> from sktime.utils.plotting import plot_series
+    >>> from sktime.utils.plotting import plot_series  # doctest: +SKIP
     >>> y = load_airline()
     >>> transformer = MovingBlockBootstrapTransformer(10)
     >>> y_hat = transformer.fit_transform(y)
@@ -459,7 +467,7 @@ class MovingBlockBootstrapTransformer(BaseTransformer):
     ...     series.index = series.index.droplevel(0)
     ...     series_list.append(series)
     ...     names.append(group)
-    >>> plot_series(*series_list, labels=names)
+    >>> plot_series(*series_list, labels=names)  # doctest: +SKIP
     (...)
     >>> print(y_hat.head()) # doctest: +NORMALIZE_WHITESPACE
                           Number of airline passengers
@@ -479,7 +487,7 @@ class MovingBlockBootstrapTransformer(BaseTransformer):
         # todo: what is the scitype of y: None (not needed), Primitives, Series, Panel
         "scitype:transform-labels": "None",
         "scitype:instancewise": True,  # is this an instance-wise transform?
-        "X_inner_mtype": "pd.Series",  # which mtypes do _fit/_predict support for X?
+        "X_inner_mtype": "pd.DataFrame",  # which mtypes do _fit/_predict support for X?
         # X_inner_mtype can be Panel mtype even if transform-input is Series, vectorized
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "capability:inverse_transform": False,
@@ -525,6 +533,9 @@ class MovingBlockBootstrapTransformer(BaseTransformer):
         -------
         transformed version of X
         """
+        Xcol = X.columns
+        X = X[X.columns[0]]
+
         if len(X) <= self.block_length:
             raise ValueError(
                 "MovingBlockBootstrapTransformer requires that block_length is"
@@ -573,7 +584,10 @@ class MovingBlockBootstrapTransformer(BaseTransformer):
                 )
             )
 
-        return pd.concat(df_list)
+        Xt = pd.concat(df_list)
+        Xt.columns = Xcol
+
+        return Xt
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):

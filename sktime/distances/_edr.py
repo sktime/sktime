@@ -31,7 +31,7 @@ class _EdrDistance(NumbaDistance):
 
     References
     ----------
-    ..[1] Chen L, Ozsu MT, Oria V: Robust and fast similarity search for moving
+    .. [1] Chen L, Ozsu MT, Oria V: Robust and fast similarity search for moving
     object trajectories. In: Proceedings of the ACM SIGMOD International Conference
     on Management of Data, 2005
     """

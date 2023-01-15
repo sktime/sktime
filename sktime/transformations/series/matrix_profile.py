@@ -38,8 +38,8 @@ class MatrixProfileTransformer(BaseTransformer):
     MatrixProfileTransformer
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
-    >>> transformer = MatrixProfileTransformer()
-    >>> y_hat = transformer.fit_transform(y)
+    >>> transformer = MatrixProfileTransformer()  # doctest: +SKIP
+    >>> y_hat = transformer.fit_transform(y)  # doctest: +SKIP
     """
 
     _tags = {
@@ -53,10 +53,10 @@ class MatrixProfileTransformer(BaseTransformer):
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?,
         "univariate-only": True,
         "fit_is_empty": True,  # for unit test cases
+        "python_dependencies": "stumpy",
     }
 
     def __init__(self, window_length=3):
-        _check_soft_dependencies("stumpy", severity="error", object=self)
         self.window_length = window_length
         super(MatrixProfileTransformer, self).__init__()
 

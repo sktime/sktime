@@ -52,7 +52,14 @@ def test_summary_transformer_output_type(y, summary_arg, quantile_arg):
     yt = transformer.transform(y)
 
     output_is_dataframe = isinstance(yt, pd.DataFrame)
-    expected_instances = 1 if isinstance(y, pd.Series) else y.shape[1]
+    assert output_is_dataframe
+
+    # compute number of expected rows and columns
+
+    # all test cases are single series, so single row
+    expected_instances = 1
+
+    # expected number of feature types = quantiles plus summaries
     expected_sum_features = 1 if isinstance(summary_arg, str) else len(summary_arg)
     if quantile_arg is None:
         expected_q_features = 0
@@ -62,13 +69,17 @@ def test_summary_transformer_output_type(y, summary_arg, quantile_arg):
         expected_q_features = len(quantile_arg)
     expected_features = expected_sum_features + expected_q_features
 
-    assert output_is_dataframe and yt.shape == (expected_instances, expected_features)
+    # for multivariate series, columns = no variables * no feature types
+    if isinstance(y, pd.DataFrame):
+        expected_features = len(y.columns) * expected_features
+
+    assert yt.shape == (expected_instances, expected_features)
 
 
 @pytest.mark.parametrize("summary_arg", incorrect_sum_funcs_to_test)
 def test_summary_transformer_incorrect_summary_function_raises_error(summary_arg):
     """Test if correct errors are raised for invalid summary_function input."""
-    msg = rf"""`summary_function` must be str or a list or tuple made up of
+    msg = rf"""`summary_function` must be None, or str or a list or tuple made up of
           {ALLOWED_SUM_FUNCS}.
           """
     with pytest.raises(ValueError, match=re.escape(msg)):
@@ -79,7 +90,7 @@ def test_summary_transformer_incorrect_summary_function_raises_error(summary_arg
 @pytest.mark.parametrize("quantile_arg", incorrect_quantiles_to_test)
 def test_summary_transformer_incorrect_quantile_raises_error(quantile_arg):
     """Test if correct errors are raised for invalid quantiles input."""
-    msg = """`quantiles` must be int, float or a list or tuple made up of
+    msg = """`quantiles` must be None, int, float or a list or tuple made up of
           int and float values that are between 0 and 1.
           """
     with pytest.raises(ValueError, match=msg):

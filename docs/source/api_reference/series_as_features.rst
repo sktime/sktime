@@ -10,17 +10,6 @@ The :mod:`sktime.series_as_features` module contains algorithms and composition 
     :no-members:
     :no-inherited-members:
 
-Composition
------------
-
-.. currentmodule:: sktime.series_as_features.compose
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    FeatureUnion
-
 Model selection
 ---------------
 

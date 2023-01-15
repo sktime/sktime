@@ -5,14 +5,11 @@
 __author__ = ["mloning", "fkiraly"]
 __all__ = []
 
-import pytest
+import pandas as pd
 
 from sktime.datatypes import check_is_scitype
 from sktime.tests.test_all_estimators import BaseFixtureGenerator, QuickTester
 from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
-from sktime.utils._testing.scenarios_transformers import (
-    TransformerFitTransformSeriesMultivariate,
-)
 
 
 class TransformerFixtureGenerator(BaseFixtureGenerator):
@@ -42,8 +39,22 @@ class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
     def test_capability_inverse_tag_is_correct(self, estimator_instance):
         """Test that the capability:inverse_transform tag is set correctly."""
         capability_tag = estimator_instance.get_tag("capability:inverse_transform")
-        if capability_tag:
+        skip_tag = estimator_instance.get_tag("skip-inverse-transform")
+        if capability_tag and not skip_tag:
             assert estimator_instance._has_implementation_of("_inverse_transform")
+
+    def test_remember_data_tag_is_correct(self, estimator_instance):
+        """Test that the remember_data tag is set correctly."""
+        fit_empty_tag = estimator_instance.get_tag("fit_is_empty", True)
+        remember_data_tag = estimator_instance.get_tag("remember_data", False)
+        msg = (
+            'if the "remember_data" tag is set to True, then the "fit_is_empty" tag '
+            "must be set to False, even if _fit is not implemented or empty. "
+            "This is due to boilerplate that write to self.X in fit. "
+            f"Please check these two tags in {type(estimator_instance)}."
+        )
+        if fit_empty_tag and remember_data_tag:
+            raise AssertionError(msg)
 
     def _expected_trafo_output_scitype(self, X_scitype, trafo_input, trafo_output):
         """Return expected output scitype, given X scitype and input/output.
@@ -92,12 +103,6 @@ class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
             X_scitype, trafo_input, trafo_output
         )
 
-        # todo 0.11.0 or 0.12.0:
-        #   remove this once #2219 is merged, which adds Hierarchical support
-        #   until then, skip tests if expected scitype is Hierarchical
-        if Xt_expected_scitype == "Hierarchical":
-            return None
-
         valid_scitype, _, Xt_metadata = check_is_scitype(
             Xt, scitype=Xt_expected_scitype, return_metadata=True
         )
@@ -119,7 +124,17 @@ class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
         if type(estimator_instance).__name__ in ["Aggregator", "Reconciler"]:
             return None
 
+        # if DataFrame is returned, columns must be unique
+        if hasattr(Xt, "columns"):
+            msg = (
+                f"{type(estimator_instance).__name__}.transform return should have "
+                f"unique column indices, but found {Xt.columns}"
+            )
+            assert Xt.columns.is_unique, msg
+
         # if we vectorize, number of instances before/after transform should be same
+
+        # series-to-series transformers
         if trafo_input == "Series" and trafo_output == "Series":
             if X_scitype == "Series" and Xt_scitype == "Series":
                 if estimator_instance.get_tag("transform-returns-same-time-index"):
@@ -128,9 +143,18 @@ class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
                 assert X_metadata["n_instances"] == Xt_metadata["n_instances"]
             if X_scitype == "Hierarchical" and Xt_scitype == "Hierarchical":
                 assert X_metadata["n_instances"] == Xt_metadata["n_instances"]
+
+        # panel-to-panel transformers
         if trafo_input == "Panel" and trafo_output == "Panel":
             if X_scitype == "Hierarchical" and Xt_scitype == "Hierarchical":
                 assert X_metadata["n_panels"] == Xt_metadata["n_panels"]
+
+        # series-to-primitives transformers
+        if trafo_input == "Series" and trafo_output == "Primitives":
+            if X_scitype == "Series":
+                assert Xt_metadata["n_instances"] == 1
+            if X_scitype == "Panel":
+                assert X_metadata["n_instances"] == Xt_metadata["n_instances"]
 
         # todo: also test the expected mtype
 
@@ -140,27 +164,17 @@ class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
         if not estimator_instance.get_class_tag("capability:inverse_transform", False):
             return None
 
+        # skip this test if the estimator skips inverse_transform
+        if estimator_instance.get_tag("skip-inverse-transform", False):
+            return None
+
         X = scenario.args["transform"]["X"]
         Xt = scenario.run(estimator_instance, method_sequence=["fit", "transform"])
         Xit = estimator_instance.inverse_transform(Xt)
         if estimator_instance.get_tag("transform-returns-same-time-index"):
             _assert_array_almost_equal(X, Xit)
-        else:
+        elif isinstance(X, pd.DataFrame):
             _assert_array_almost_equal(X.loc[Xit.index], Xit)
-
-    def test_multivariate_raises_error(self, estimator_instance):
-        """Test error raised for multivariate data passed to univariate transformer."""
-        # test is only for univariate transformers, skip multivariate ones
-        if not estimator_instance.get_tag("univariate-only"):
-            return None
-        scenario = TransformerFitTransformSeriesMultivariate()
-        with pytest.raises(ValueError, match=r"univariate"):
-            # error should be raised in fit, unless fit is skipped
-            if estimator_instance.get_tag("fit_is_empty", False):
-                scenario.run(estimator_instance, method_sequence=["fit", "transform"])
-            else:
-                # All other estimators should raise the error in fit.
-                scenario.run(estimator_instance, method_sequence=["fit"])
 
 
 # todo: add testing of inverse_transform

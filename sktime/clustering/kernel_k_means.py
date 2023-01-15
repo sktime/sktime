@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """Time series kernel kmeans."""
-from typing import Union
+from typing import Dict, Union
 
 import numpy as np
 from numpy.random import RandomState
@@ -69,6 +69,7 @@ class TimeSeriesKernelKMeans(BaseClusterer):
 
     _tags = {
         "capability:multivariate": True,
+        "python_dependencies": "tslearn",
     }
 
     def __init__(
@@ -83,8 +84,6 @@ class TimeSeriesKernelKMeans(BaseClusterer):
         n_jobs: Union[int, None] = None,
         random_state: Union[int, RandomState] = None,
     ):
-        _check_soft_dependencies("tslearn", severity="error", object=self)
-
         self.kernel = kernel
         self.n_init = n_init
         self.max_iter = max_iter
@@ -159,7 +158,7 @@ class TimeSeriesKernelKMeans(BaseClusterer):
         return self._tslearn_kernel_k_means.predict(X)
 
     @classmethod
-    def get_test_params(cls, parameter_set="default"):
+    def get_test_params(cls, parameter_set="default") -> Dict:
         """Return testing parameter settings for the estimator.
 
         Parameters
@@ -177,18 +176,17 @@ class TimeSeriesKernelKMeans(BaseClusterer):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        params = {
+        return {
             "n_clusters": 2,
             "kernel": "gak",
             "n_init": 1,
             "max_iter": 1,
-            "tol": 1e-4,
+            "tol": 0.0001,
             "kernel_params": None,
             "verbose": False,
             "n_jobs": 1,
             "random_state": 1,
         }
-        return params
 
-    def _score(self, X, y=None):
+    def _score(self, X, y=None) -> float:
         return np.abs(self.inertia_)

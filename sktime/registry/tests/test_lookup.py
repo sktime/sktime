@@ -6,7 +6,7 @@ __author__ = ["fkiraly"]
 
 import pytest
 
-from sktime.base import BaseEstimator
+from sktime.base import BaseObject
 from sktime.registry import all_estimators, all_tags, scitype
 from sktime.registry._base_classes import (
     BASE_CLASS_LOOKUP,
@@ -20,7 +20,13 @@ VALID_SCITYPES_SET = set(
 )
 
 # some scitypes have no associated tags yet
-SCITYPES_WITHOUT_TAGS = ["series-annotator", "clusterer"]
+SCITYPES_WITHOUT_TAGS = [
+    "series-annotator",
+    "clusterer",
+    "object",
+    "splitter",
+    "network",
+]
 
 # shorthands for easy reading
 b = BASE_CLASS_SCITYPE_LIST
@@ -58,7 +64,7 @@ def _get_type_tuple(estimator_scitype):
             BASE_CLASS_LOOKUP[scitype] for scitype in _to_list(estimator_scitype)
         )
     else:
-        estimator_classes = (BaseEstimator,)
+        estimator_classes = (BaseObject,)
 
     return estimator_classes
 
@@ -115,7 +121,7 @@ def test_all_tags(estimator_scitype):
         if isinstance(tag[2], tuple):
             assert len(tag[2]) == 2
             assert isinstance(tag[2][0], str)
-            assert isinstance(tag[2][1], list)
+            assert isinstance(tag[2][1], (str, list))
         assert isinstance(tag[3], str)
 
 

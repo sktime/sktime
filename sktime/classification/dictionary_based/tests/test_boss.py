@@ -1,25 +1,73 @@
 # -*- coding: utf-8 -*-
 """BOSS test code."""
 import numpy as np
-from sklearn.metrics import accuracy_score
+import pytest
 
-from sktime.classification.dictionary_based import BOSSEnsemble
+from sktime.classification.dictionary_based import BOSSEnsemble, IndividualBOSS
 from sktime.datasets import load_unit_test
 
 
-def test_boss_train_estimate():
-    """Test of BOSS train estimate on unit test data."""
-    # load unit test data
+@pytest.fixture
+def dataset():
+    """
+    Load unit_test train and test data set from sktime.
+
+    :return: tuple, (X_train, y_train, X_test, y_test).
+    """
     X_train, y_train = load_unit_test(split="train")
+    X_test, y_test = load_unit_test(split="test")
+    return (X_train, y_train, X_test, y_test)
 
-    # train BOSS
-    boss = BOSSEnsemble(
-        max_ensemble_size=2, random_state=0, save_train_predictions=True
-    )
-    boss.fit(X_train, y_train)
 
-    # test train estimate
-    train_probas = boss._get_train_probs(X_train, y_train)
-    assert train_probas.shape == (20, 2)
-    train_preds = boss.classes_[np.argmax(train_probas, axis=1)]
-    assert accuracy_score(y_train, train_preds) >= 0.6
+@pytest.mark.parametrize(
+    "new_class,expected_dtype",
+    [
+        ({"1": "Class1", "2": "Class2"}, object),
+        ({"1": 1, "2": 2}, int),
+        ({"1": 1.0, "2": 2.0}, float),
+        ({"1": True, "2": False}, bool),
+    ],
+)
+def test_individual_boss_classes(dataset, new_class, expected_dtype):
+    """Test Individual BOSS on unit_test data with different datatypes as classes."""
+    # load unit test data
+    X_train, y_train, X_test, y_test = dataset
+
+    # change class
+    y_train = np.array([new_class[y] for y in y_train])
+
+    # train iboss and predict X_test
+    iboss = IndividualBOSS()
+    iboss.fit(X_train, y_train)
+    y_pred = iboss.predict(X_test)
+
+    # assert class type and names
+    assert y_pred.dtype == expected_dtype
+    assert set(y_pred) == set(y_train)
+
+
+@pytest.mark.parametrize(
+    "new_class,expected_dtype",
+    [
+        ({"1": "Class1", "2": "Class2"}, "<U6"),
+        ({"1": 1, "2": 2}, int),
+        ({"1": 1.0, "2": 2.0}, float),
+        ({"1": True, "2": False}, bool),
+    ],
+)
+def test_boss_ensemble_classes(dataset, new_class, expected_dtype):
+    """Test BOSS Ensemble on unit_test data with different datatypes as classes."""
+    # load unit test data
+    X_train, y_train, X_test, y_test = dataset
+
+    # change class
+    y_train = np.array([new_class[y] for y in y_train])
+
+    # train boss_ensemble and predict X_test
+    boss_ensemble = BOSSEnsemble()
+    boss_ensemble.fit(X_train, y_train)
+    y_pred = boss_ensemble.predict(X_test)
+
+    # assert class type and names
+    assert y_pred.dtype == expected_dtype
+    assert set(y_pred) == set(y_train)

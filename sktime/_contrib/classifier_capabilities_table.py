@@ -28,29 +28,24 @@ for classiName, classiClass in all_estimators(estimator_types="classifier"):
         train_estimate = str(cap_dict["train_estimate"])
         contractable = str(cap_dict["contractable"])
         # Adding capabilites for each classifier in the table
-        df = df.append(
-            {
-                "Classifier Category": category,
-                "Classifier Name": classiName,
-                "multivariate": multivariate,
-                "unequal_length": unequal_length,
-                "missing_values": missing_values,
-                "train_estimate": train_estimate,
-                "contractable": contractable,
-            },
-            ignore_index=True,
-        )
+        record = {
+            "Classifier Category": category,
+            "Classifier Name": classiName,
+            "multivariate": multivariate,
+            "unequal_length": unequal_length,
+            "missing_values": missing_values,
+            "train_estimate": train_estimate,
+            "contractable": contractable,
+        }
     except AttributeError:
-        df = df.append(
-            {
-                "Classifier Category": category,
-                "Classifier Name": classiName,
-                "multivariate": "N/A",
-                "unequal_length": "N/A",
-                "missing_values": "N/A",
-                "train_estimate": "N/A",
-                "contractable": "N/A",
-            },
-            ignore_index=True,
-        )
+        record = {
+            "Classifier Category": category,
+            "Classifier Name": classiName,
+            "multivariate": "N/A",
+            "unequal_length": "N/A",
+            "missing_values": "N/A",
+            "train_estimate": "N/A",
+            "contractable": "N/A",
+        }
+    df = pd.concat([df, pd.DataFrame(record, index=[0])], ignore_index=True)
 df.to_html("Classifier_Capabilities.html", index=False, escape=False)

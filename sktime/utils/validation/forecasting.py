@@ -34,7 +34,7 @@ from sktime.utils.validation import (
 )
 from sktime.utils.validation.series import check_equal_time_index, check_series
 
-ACCEPTED_CUTOFF_TYPES = np.ndarray, pd.Index
+ACCEPTED_CUTOFF_TYPES = list, np.ndarray, pd.Index
 VALID_CUTOFF_TYPES = Union[ACCEPTED_CUTOFF_TYPES]
 
 
@@ -262,8 +262,8 @@ def check_sp(sp, enforce_list=False):
     return sp
 
 
-def check_fh(fh, enforce_relative=False):
-    """Validate forecasting horizon.
+def check_fh(fh, enforce_relative: bool = False, freq=None):
+    """Coerce to ForecastingHorizon object and validate inputs.
 
     Parameters
     ----------
@@ -271,17 +271,29 @@ def check_fh(fh, enforce_relative=False):
         Forecasting horizon specifying the time points to predict.
     enforce_relative : bool, optional (default=False)
         If True, checks if fh is relative.
+    freq : str, or pd.Index, optional (default=None)
+        object carrying frequency information on values
+        ignored unless values is without inferrable freq
+        Frequency string or pd.Index
 
     Returns
     -------
     fh : ForecastingHorizon
         Validated forecasting horizon.
+
+    Raises
+    ------
+    ValueError
+        If passed fh is of length zero
+        If enforce_relative is True, but fh.is_relative is False
     """
     # Convert to ForecastingHorizon
     from sktime.forecasting.base import ForecastingHorizon
 
     if not isinstance(fh, ForecastingHorizon):
-        fh = ForecastingHorizon(fh, is_relative=None)
+        fh = ForecastingHorizon(fh, is_relative=None, freq=freq)
+    else:
+        fh.freq = freq
 
     # Check if non-empty, note we check for empty values here, rather than
     # during construction of ForecastingHorizon because ForecastingHorizon
@@ -443,3 +455,27 @@ def check_regressor(regressor=None, random_state=None):
             )
         regressor = clone(regressor)
     return regressor
+
+
+def check_interval_df(interval_df, index_to_match):
+    """
+    Verify that a predicted interval DataFrame is formatted correctly.
+
+    Parameters
+    ----------
+    interval_df : pandas DataFrame outputted from forecaster.predict_interval()
+    index_to_match : Index object that must match interval_df.index
+    """
+    from sktime.datatypes import check_is_mtype
+
+    checked = check_is_mtype(interval_df, "pred_interval", return_metadata=True)
+    if not checked[0]:
+        raise ValueError(checked[1])
+    df_idx = interval_df.index
+    if len(index_to_match) != len(df_idx) or not (index_to_match == df_idx).all():
+        raise ValueError("Prediction interval index must match the final Series index.")
+    levels = interval_df.columns.levels
+    if len(levels[0]) != 1:
+        raise ValueError("`interval_df` must only contain one variable with interval")
+    if not (levels[0] == "Coverage")[0]:
+        raise ValueError("`interval_df` must have 'Coverage' column label")

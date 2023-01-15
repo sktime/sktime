@@ -694,8 +694,11 @@ def dtw_distance(
 def msm_distance(
     x: np.ndarray,
     y: np.ndarray,
-    c: float = 0.0,
-    **kwargs: Any,
+    c: float = 1.0,
+    window: float = None,
+    itakura_max_slope: float = None,
+    bounding_matrix: np.ndarray = None,
+    **kwargs: dict,
 ) -> float:
     """Compute the move-split-merge distance.
 
@@ -713,8 +716,21 @@ def msm_distance(
         First time series.
     y: np.ndarray (1d or 2d array)
         Second time series.
-    kwargs: Any
-        Extra kwargs.
+    c: float, default = 1.0
+        Cost for split or merge operation.
+    window: Float, defaults = None
+        Float that is the radius of the sakoe chiba window (if using Sakoe-Chiba
+        lower bounding). Must be between 0 and 1.
+    itakura_max_slope: float, defaults = None
+        Gradient of the slope for itakura parallelogram (if using Itakura
+        Parallelogram lower bounding). Must be between 0 and 1.
+    bounding_matrix: np.ndarray (2d array of shape (m1,m2)), defaults = None
+        Custom bounding matrix to use. If defined then other lower_bounding params
+        are ignored. The matrix should be structure so that indexes considered in
+        bound should be the value 0. and indexes outside the bounding matrix should
+        be infinity.
+    kwargs: any
+        extra kwargs.
 
     Returns
     -------
@@ -731,7 +747,6 @@ def msm_distance(
         NumbaDistance.
         If a resolved metric is not no_python compiled.
         If the metric type cannot be determined
-
     References
     ----------
     .. [1]A.  Stefan,  V.  Athitsos,  and  G.  Das.   The  Move-Split-Merge  metric
@@ -740,6 +755,9 @@ def msm_distance(
     """
     format_kwargs = {
         "c": c,
+        "window": window,
+        "itakura_max_slope": itakura_max_slope,
+        "bounding_matrix": bounding_matrix,
     }
     format_kwargs = {**format_kwargs, **kwargs}
 
@@ -828,7 +846,7 @@ def twe_distance(
 
     References
     ----------
-    ..[1] Marteau, P.; F. (2009). "Time Warp Edit Distance with Stiffness Adjustment
+    .. [1] Marteau, P.; F. (2009). "Time Warp Edit Distance with Stiffness Adjustment
     for Time Series Matching". IEEE Transactions on Pattern Analysis and Machine
     Intelligence. 31 (2): 306–318.
     """
@@ -1601,8 +1619,11 @@ def msm_alignment_path(
     x: np.ndarray,
     y: np.ndarray,
     return_cost_matrix: bool = False,
-    c: float = 0.0,
-    **kwargs: Any,
+    c: float = 1.0,
+    window: float = None,
+    itakura_max_slope: float = None,
+    bounding_matrix: np.ndarray = None,
+    **kwargs: dict,
 ) -> AlignmentPathReturn:
     """Compute the move-split-merge alignment path.
 
@@ -1622,8 +1643,21 @@ def msm_alignment_path(
         Second time series.
     return_cost_matrix: bool, defaults = False
         Boolean that when true will also return the cost matrix.
-    kwargs: Any
-        Extra kwargs.
+    c: float, default = 1.0
+        Cost for split or merge operation.
+    window: float, defaults = None
+        Float that is the radius of the sakoe chiba window (if using Sakoe-Chiba
+        lower bounding). Must be between 0 and 1.
+    itakura_max_slope: float, defaults = None
+        Gradient of the slope for itakura parallelogram (if using Itakura
+        Parallelogram lower bounding). Must be between 0 and 1.
+    bounding_matrix: np.ndarray (2d array of shape (m1,m2)), defaults = None
+        Custom bounding matrix to use. If defined then other lower_bounding params
+        are ignored. The matrix should be structure so that indexes considered in
+        bound should be the value 0. and indexes outside the bounding matrix should
+        be infinity.
+    kwargs: any
+        extra kwargs.
 
     Returns
     -------
@@ -1645,7 +1679,6 @@ def msm_alignment_path(
         NumbaDistance.
         If a resolved metric is not no_python compiled.
         If the metric type cannot be determined
-
     References
     ----------
     .. [1]A.  Stefan,  V.  Athitsos,  and  G.  Das.   The  Move-Split-Merge  metric
@@ -1654,6 +1687,9 @@ def msm_alignment_path(
     """
     format_kwargs = {
         "c": c,
+        "window": window,
+        "itakura_max_slope": itakura_max_slope,
+        "bounding_matrix": bounding_matrix,
     }
     format_kwargs = {**format_kwargs, **kwargs}
 
@@ -1739,7 +1775,7 @@ def twe_alignment_path(
 
     References
     ----------
-    ..[1] Marteau, P.; F. (2009). "Time Warp Edit Distance with Stiffness Adjustment
+    .. [1] Marteau, P.; F. (2009). "Time Warp Edit Distance with Stiffness Adjustment
     for Time Series Matching". IEEE Transactions on Pattern Analysis and Machine
     Intelligence. 31 (2): 306–318.
     """
@@ -1950,8 +1986,8 @@ def pairwise_distance(
     metric: str or Callable, defaults = 'euclidean'
         The distance metric to use.
         If a string is given, the value must be one of the following strings:
-        'euclidean', 'squared', 'dtw', 'ddtw', 'wdtw', 'wddtw', 'lcss', 'edr', 'erp'
-
+            'euclidean', 'squared', 'dtw', 'ddtw', 'wdtw', 'wddtw',
+            'lcss', 'edr', 'erp', 'msm'
         If callable then it has to be a distance factory or numba distance callable.
         If you want to pass custom kwargs to the distance at runtime, use a distance
         factory as it constructs the distance using the kwargs before distance

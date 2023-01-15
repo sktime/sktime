@@ -6,37 +6,118 @@
 __all__ = ["NaiveForecaster", "NaiveVariance"]
 __author__ = [
     "mloning",
-    "Piyush Gade",
+    "piyush1729",
+    "sri1419",
     "Flix6x",
     "aiwalter",
     "IlyasMoutawwakil",
     "fkiraly",
+    "bethrice44",
 ]
 
+import math
 from warnings import warn
 
 import numpy as np
 import pandas as pd
 from scipy.stats import norm
 
+from sktime.datatypes._convert import convert, convert_to
+from sktime.datatypes._utilities import get_slice
+from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.base._base import DEFAULT_ALPHA, BaseForecaster
 from sktime.forecasting.base._sktime import _BaseWindowForecaster
-from sktime.forecasting.compose import ColumnEnsembleForecaster
 from sktime.utils.validation import check_window_length
 from sktime.utils.validation.forecasting import check_sp
 
 
-class _NaiveForecaster(_BaseWindowForecaster):
-    """Univariate NaiveForecaster."""
+class NaiveForecaster(_BaseWindowForecaster):
+    """Forecast based on naive assumptions about past trends continuing.
+
+    NaiveForecaster is a forecaster that makes forecasts using simple
+    strategies. Two out of three strategies are robust against NaNs. The
+    NaiveForecaster can also be used for multivariate data and it then
+    applies internally the ColumnEnsembleForecaster, so each column
+    is forecasted with the same strategy.
+
+    Internally, this forecaster does the following:
+    - obtains the so-called "last window", a 1D array that denotes the
+      most recent time window that the forecaster is allowed to use
+    - reshapes the last window into a 2D array according to the given
+      seasonal periodicity (prepended with NaN values to make it fit);
+    - make a prediction for each column, using the given strategy:
+      - "last": last non-NaN row
+      - "mean": np.nanmean over rows
+    - tile the predictions using the seasonal periodicity
+
+    To compute prediction quantiles, we first estimate the standard error
+    of prediction residuals under the assumption of uncorrelated residuals.
+    The forecast variance is then computed by multiplying the residual
+    variance by a constant. This constant is a small-sample bias adjustment
+    and each method (mean, last, drift) have different formulas for computing
+    the constant. These formulas can be found in the Forecasting:
+    Principles and Practice textbook (Table 5.2) [1]_. Lastly, under the assumption that
+    residuals follow a normal distribution, we use the forecast variance and
+    z-scores of a normal distribution to estimate the prediction quantiles.
+
+    Parameters
+    ----------
+    strategy : {"last", "mean", "drift"}, default="last"
+        Strategy used to make forecasts:
+
+        * "last":   (robust against NaN values)
+                    forecast the last value in the
+                    training series when sp is 1.
+                    When sp is not 1,
+                    last value of each season
+                    in the last window will be
+                    forecasted for each season.
+        * "mean":   (robust against NaN values)
+                    forecast the mean of last window
+                    of training series when sp is 1.
+                    When sp is not 1, mean of all values
+                    in a season from last window will be
+                    forecasted for each season.
+        * "drift":  (not robust against NaN values)
+                    forecast by fitting a line between the
+                    first and last point of the window and
+                    extrapolating it into the future.
+
+    sp : int, or None, default=1
+        Seasonal periodicity to use in the seasonal forecasting. None=1.
+
+    window_length : int or None, default=None
+        Window length to use in the `mean` strategy. If None, entire training
+            series will be used.
+
+    References
+    ----------
+    .. [1] Hyndman, R.J., & Athanasopoulos, G. (2021) Forecasting:
+        principles and practice, 3rd edition, OTexts: Melbourne, Australia.
+        OTexts.com/fpp3. Accessed on 22 September 2022.
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.naive import NaiveForecaster
+    >>> y = load_airline()
+    >>> forecaster = NaiveForecaster(strategy="drift")
+    >>> forecaster.fit(y)
+    NaiveForecaster(...)
+    >>> y_pred = forecaster.predict(fh=[1,2,3])
+    """
 
     _tags = {
+        "y_inner_mtype": "pd.Series",
         "requires-fh-in-fit": False,
-        "handles-missing-data": True,  # todo: switch to True if GH1367 is fixed
+        "handles-missing-data": True,
         "scitype:y": "univariate",
+        "capability:pred_var": True,
+        "capability:pred_int": True,
     }
 
     def __init__(self, strategy="last", window_length=None, sp=1):
-        super(_NaiveForecaster, self).__init__()
+        super(NaiveForecaster, self).__init__()
         self.strategy = strategy
         self.sp = sp
         self.window_length = window_length
@@ -63,27 +144,28 @@ class _NaiveForecaster(_BaseWindowForecaster):
         self : returns an instance of self.
         """
         # X_train is ignored
+        sp = self.sp or 1
 
         n_timepoints = y.shape[0]
 
         if self.strategy in ("last", "mean"):
             # check window length is greater than sp for seasonal mean or seasonal last
-            if self.window_length is not None and self.sp != 1:
-                if self.window_length < self.sp:
+            if self.window_length is not None and sp != 1:
+                if self.window_length < sp:
                     raise ValueError(
                         f"The `window_length`: "
                         f"{self.window_length} is smaller than "
-                        f"`sp`: {self.sp}."
+                        f"`sp`: {sp}."
                     )
             self.window_length_ = check_window_length(self.window_length, n_timepoints)
-            self.sp_ = check_sp(self.sp)
+            self.sp_ = check_sp(sp)
 
             #  if not given, set default window length
             if self.window_length is None:
                 self.window_length_ = len(y)
 
         elif self.strategy == "drift":
-            if self.sp != 1:
+            if sp != 1:
                 warn("For the `drift` strategy, the `sp` value will be ignored.")
             # window length we need for forecasts is just the
             # length of seasonal periodicity
@@ -106,9 +188,7 @@ class _NaiveForecaster(_BaseWindowForecaster):
 
         # check window length
         if self.window_length_ > len(self._y):
-            param = (
-                "sp" if self.strategy == "last" and self.sp != 1 else "window_length_"
-            )
+            param = "sp" if self.strategy == "last" and sp != 1 else "window_length_"
             raise ValueError(
                 f"The {param}: {self.window_length_} is larger than "
                 f"the training series."
@@ -124,7 +204,7 @@ class _NaiveForecaster(_BaseWindowForecaster):
         fh = fh.to_relative(self.cutoff)
 
         strategy = self.strategy
-        sp = self.sp
+        sp = self.sp or 1
 
         # if last window only contains missing values, return nan
         if np.all(np.isnan(last_window)) or len(last_window) == 0:
@@ -243,103 +323,6 @@ class _NaiveForecaster(_BaseWindowForecaster):
         fh_idx = fh.to_indexer(self.cutoff)
         return y_pred[fh_idx]
 
-
-class NaiveForecaster(BaseForecaster):
-    """Forecast based on naive assumptions about past trends continuing.
-
-    NaiveForecaster is a forecaster that makes forecasts using simple
-    strategies. Two out of three strategies are robust against NaNs. The
-    NaiveForecaster can also be used for multivariate data and it then
-    applies internally the ColumnEnsembleForecaster, so each column
-    is forecasted with the same strategy.
-
-    Internally, this forecaster does the following:
-    - obtains the so-called "last window", a 1D array that denotes the
-      most recent time window that the forecaster is allowed to use
-    - reshapes the last window into a 2D array according to the given
-      seasonal periodicity (prepended with NaN values to make it fit);
-    - make a prediction for each column, using the given strategy:
-      - "last": last non-NaN row
-      - "mean": np.nanmean over rows
-    - tile the predictions using the seasonal periodicity
-
-    Parameters
-    ----------
-    strategy : {"last", "mean", "drift"}, default="last"
-        Strategy used to make forecasts:
-
-        * "last":   (robust against NaN values)
-                    forecast the last value in the
-                    training series when sp is 1.
-                    When sp is not 1,
-                    last value of each season
-                    in the last window will be
-                    forecasted for each season.
-        * "mean":   (robust against NaN values)
-                    forecast the mean of last window
-                    of training series when sp is 1.
-                    When sp is not 1, mean of all values
-                    in a season from last window will be
-                    forecasted for each season.
-        * "drift":  (not robust against NaN values)
-                    forecast by fitting a line between the
-                    first and last point of the window and
-                    extrapolating it into the future.
-
-    sp : int, default=1
-        Seasonal periodicity to use in the seasonal forecasting.
-
-    window_length : int or None, default=None
-        Window length to use in the `mean` strategy. If None, entire training
-            series will be used.
-
-    Examples
-    --------
-    >>> from sktime.datasets import load_airline
-    >>> from sktime.forecasting.naive import NaiveForecaster
-    >>> y = load_airline()
-    >>> forecaster = NaiveForecaster(strategy="drift")
-    >>> forecaster.fit(y)
-    NaiveForecaster(...)
-    >>> y_pred = forecaster.predict(fh=[1,2,3])
-    """
-
-    _tags = {
-        "y_inner_mtype": ["pd.DataFrame", "pd.Series"],
-        "scitype:y": "both",
-        "requires-fh-in-fit": False,
-        "handles-missing-data": True,  # todo: switch to True if GH1367 is fixed
-    }
-
-    def __init__(self, strategy="last", window_length=None, sp=1):
-        self.strategy = strategy
-        self.sp = sp
-        self.window_length = window_length
-        super(NaiveForecaster, self).__init__()
-
-    def _fit(self, y, X=None, fh=None):
-        """Fit to training data.
-
-        Parameters
-        ----------
-        y : pd.Series, pd.DataFrame
-            Target time series to which to fit the forecaster.
-        fh : int, list or np.array, default=None
-            The forecasters horizon with the steps ahead to to predict.
-        X : pd.DataFrame, default=None
-            Exogenous variables are ignored.
-
-        Returns
-        -------
-        self : returns an instance of self.
-        """
-        self._forecaster = ColumnEnsembleForecaster(
-            _NaiveForecaster(
-                strategy=self.strategy, sp=self.sp, window_length=self.window_length
-            )
-        )
-        self._forecaster.fit(y=y, X=X, fh=fh)
-
     def _predict(self, fh=None, X=None):
         """Forecast time series at future horizon.
 
@@ -350,32 +333,186 @@ class NaiveForecaster(BaseForecaster):
         X : pd.DataFrame, optional (default=None)
             Exogenous time series
         """
-        y_pred = self._forecaster.predict(fh=fh, X=X)
+        y_pred = super(NaiveForecaster, self)._predict(fh=fh, X=X)
+
+        # test_predict_time_index_in_sample_full[ForecastingPipeline-0-int-int-True]
+        #   causes a pd.DataFrame to appear as y_pred, which upsets the next lines
+        #   reasons are unclear, this is coming from the _BaseWindowForecaster
+        # todo: investigate this
+        if isinstance(y_pred, pd.DataFrame):
+            y_pred = y_pred.iloc[:, 0]
 
         # check for in-sample prediction, if first time point needs to be imputed
         if self._y.index[0] in y_pred.index:
-            # fill NaN with next row values
-            y_pred.loc[self._y.index[0]] = y_pred.loc[self._y.index[1]]
+            if y_pred.loc[[self._y.index[0]]].hasnans:
+                # fill NaN with observed values
+                y_pred.loc[self._y.index[0]] = self._y[self._y.index[1]]
 
         return y_pred
 
-    def _update(self, y, X=None, update_params=True):
-        """Update cutoff value and, optionally, fitted parameters.
+    def _predict_quantiles(self, fh, X=None, alpha=0.5):
+        """Compute/return prediction quantiles for a forecast.
+
+        Uses normal distribution as predictive distribution to compute the
+        quantiles.
 
         Parameters
         ----------
-        y : pd.Series, pd.DataFrame, or np.array
-            Target time series to which to fit the forecaster.
+        fh : int, list, np.array or ForecastingHorizon
+            Forecasting horizon
         X : pd.DataFrame, optional (default=None)
-            Exogeneous data
-        update_params : bool, optional (default=True)
-            whether model parameters should be updated
+            Exogenous variables are ignored.
+        alpha : float or list of float, optional (default=0.5)
+            A probability or list of, at which quantile forecasts are computed.
 
         Returns
         -------
-        self : reference to self
+        pred_quantiles : pd.DataFrame
+            Column has multi-index: first level is variable name from y in fit,
+                second level being the quantile forecasts for each alpha.
+                Quantile forecasts are calculated for each a in alpha.
+            Row index is fh. Entries are quantile forecasts, for var in col index,
+                at quantile probability in second-level col index, for each row index.
         """
-        return self._forecaster.update(y=y, X=X, update_params=update_params)
+        y_pred = self.predict(fh)
+        y_pred = convert(y_pred, from_type=self._y_mtype_last_seen, to_type="pd.Series")
+
+        pred_var = self.predict_var(fh)
+        z_scores = norm.ppf(alpha)
+
+        errors = (
+            np.sqrt(pred_var.to_numpy().reshape(len(pred_var), 1)) * z_scores
+        ).reshape(len(y_pred), len(alpha))
+
+        pred_quantiles = pd.DataFrame(
+            errors + y_pred.values.reshape(len(y_pred), 1),
+            columns=pd.MultiIndex.from_product([["Quantiles"], alpha]),
+            index=fh.to_absolute(self.cutoff).to_pandas(),
+        )
+
+        return pred_quantiles
+
+    def _predict_var(self, fh, X=None, cov=False):
+        """Compute/return prediction variance for naive forecasts.
+
+        Variance are computed according to formulas from (Table 5.2)
+        Forecasting: Principles and Practice textbook [1]_.
+
+        Must be run *after* the forecaster has been fitted.
+
+        Parameters
+        ----------
+        fh : int, list, np.array or ForecastingHorizon
+            Forecasting horizon
+        X : pd.DataFrame, optional (default=None)
+            Exogenous variables are ignored.
+        cov : bool, optional (default=False)
+            If True, return the covariance matrix.
+            If False, return the marginal variance.
+
+        Returns
+        -------
+        pred_var :
+            if cov=False, pd.DataFrame with index fh.
+                a vector of same length as fh with predictive marginal variances;
+            if cov=True, pd.DataFrame with index fh and columns fh.
+                a square matrix of size len(fh) with predictive covariance matrix.
+
+        References
+        ----------
+        .. [1] https://otexts.com/fpp3/prediction-intervals.html#benchmark-methods
+        """
+        y = self._y
+        y = convert_to(y, "pd.Series")
+        T = len(y)
+        sp = self.sp
+
+        # Compute "past" residuals
+        if self.strategy == "last":
+            y_res = y - y.shift(self.sp)
+        elif self.strategy == "mean":
+            if not self.window_length:
+                if sp > 1:
+                    # Get the next sp predictions and repeat them
+                    # T / self.sp times to match the length of trained y
+                    # NOTE: +1 extra tile to defend against off-by-one errors
+                    reps = math.ceil(T / sp) + 1
+                    past_fh = ForecastingHorizon(
+                        list(range(1, sp + 1)), is_relative=None, freq=self._cutoff
+                    )
+                    seasonal_means = self._predict(fh=past_fh)
+                    if isinstance(seasonal_means, pd.DataFrame):
+                        seasonal_means = seasonal_means.squeeze()
+                    y_pred = np.tile(seasonal_means.to_numpy(), reps)[0:T]
+                else:
+                    # Since this strategy returns a constant, just predict fh=1 and
+                    # transform the constant into a repeated array
+                    past_fh = ForecastingHorizon(1, is_relative=None, freq=self._cutoff)
+                    y_pred = np.repeat(np.squeeze(self._predict(fh=past_fh)), T)
+            else:
+                if sp > 1:
+                    # Label index by seasonal period
+                    seasons = np.mod(np.arange(T), sp)
+                    # Compute rolling seasonal means
+                    y_pred = (
+                        y.to_frame()
+                        .assign(__sp__=seasons)
+                        # Group observations by their
+                        # seasonal period position
+                        .groupby("__sp__")
+                        # Compute rolling means per
+                        # seasonal period
+                        .rolling(self.window_length)
+                        .mean()
+                        .droplevel("__sp__")
+                        .sort_index()
+                        .squeeze()
+                    )
+                else:
+                    # Compute rolling means
+                    y_pred = y.rolling(self.window_length).mean()
+            y_res = y - y_pred
+        else:
+            # Slope equation from:
+            # https://otexts.com/fpp3/simple-methods.html#drift-method
+            slope = (y.iloc[-1] - y.iloc[-(self.window_length or 0)]) / (T - 1)
+            # Fitted value = previous value + slope
+            # https://github.com/robjhyndman/forecast/blob/master/R/naive.R#L34
+            y_res = y - (y.shift(sp) + slope)
+
+        # Residuals MSE and SE
+        # + 1 degrees of freedom to estimate drift coefficient standard error
+        # https://github.com/robjhyndman/forecast/blob/master/R/naive.R#L79
+        n_nans = np.sum(pd.isna(y_res))
+        mse_res = np.sum(np.square(y_res)) / (T - n_nans - (self.strategy == "drift"))
+        se_res = np.sqrt(mse_res)
+
+        window_length = self.window_length or T
+        # Formulas from:
+        # https://otexts.com/fpp3/prediction-intervals.html (Table 5.2)
+        partial_se_formulas = {
+            "last": lambda h: np.sqrt(h)
+            if sp == 1
+            else np.sqrt(np.floor((h - 1) / sp) + 1),
+            "mean": lambda h: np.repeat(np.sqrt(1 + (1 / window_length)), len(h)),
+            "drift": lambda h: np.sqrt(h * (1 + (h / (T - 1)))),
+        }
+
+        fh_periods = np.array(fh.to_relative(self.cutoff))
+        marginal_se = se_res * partial_se_formulas[self.strategy](fh_periods)
+        marginal_vars = marginal_se**2
+
+        fh_idx = fh.to_absolute(self.cutoff).to_pandas()
+        if cov:
+            fh_size = len(fh)
+            cov_matrix = np.fill_diagonal(
+                np.zeros(shape=(fh_size, fh_size)), marginal_vars
+            )
+            pred_var = pd.DataFrame(cov_matrix, columns=fh_idx, index=fh_idx)
+        else:
+            pred_var = pd.DataFrame(marginal_vars, index=fh_idx)
+
+        return pred_var
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -397,9 +534,9 @@ class NaiveForecaster(BaseForecaster):
         """
         params_list = [
             {},
-            {"sp": 2},
-            {"strategy": "mean"},
+            {"strategy": "mean", "sp": 2},
             {"strategy": "drift"},
+            {"strategy": "last"},
             {"strategy": "mean", "window_length": 5},
         ]
 
@@ -449,16 +586,13 @@ class NaiveVariance(BaseForecaster):
     >>> var_pred = variance_forecaster.predict_var(fh=[1,2,3])
     """
 
-    _required_parameters = ["forecaster"]
     _tags = {
         "scitype:y": "univariate",
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
         "ignores-exogeneous-X": False,
         "capability:pred_int": True,
-        # deprecated and likely to be removed in 0.12.0
         "capability:pred_var": True,
-        # deprecated and likely to be removed in 0.12.0
     }
 
     def __init__(self, forecaster, initial_window=1, verbose=False):
@@ -531,7 +665,10 @@ class NaiveVariance(BaseForecaster):
                 at quantile probability in second-level col index, for each row index.
         """
         y_pred = self.predict(fh, X)
+        y_pred = convert(y_pred, from_type=self._y_mtype_last_seen, to_type="pd.Series")
         pred_var = self.predict_var(fh, X)
+        pred_var = pred_var[pred_var.columns[0]]
+        pred_var.index = y_pred.index
 
         z_scores = norm.ppf(alpha)
         errors = [pred_var**0.5 * z for z in z_scores]
@@ -540,6 +677,9 @@ class NaiveVariance(BaseForecaster):
         pred_quantiles = pd.DataFrame(columns=index)
         for a, error in zip(alpha, errors):
             pred_quantiles[("Quantiles", a)] = y_pred + error
+
+        fh_absolute = fh.to_absolute(self.cutoff)
+        pred_quantiles.index = fh_absolute
 
         return pred_quantiles
 
@@ -561,7 +701,7 @@ class NaiveVariance(BaseForecaster):
         Returns
         -------
         pred_var :
-            if cov=False, pd.Series with index fh.
+            if cov=False, pd.DataFrame with index fh.
                 a vector of same length as fh with predictive marginal variances;
             if cov=True, pd.DataFrame with index fh and columns fh.
                 a square matrix of size len(fh) with predictive covariance matrix.
@@ -600,10 +740,11 @@ class NaiveVariance(BaseForecaster):
                 np.nanmean(np.diagonal(residuals_matrix, offset=offset) ** 2)
                 for offset in fh_relative
             ]
-            pred_var = pd.Series(
-                variance,
-                index=fh_absolute,
-            )
+            if hasattr(self._y, "columns"):
+                columns = self._y.columns
+                pred_var = pd.DataFrame(variance, columns=columns, index=fh_absolute)
+            else:
+                pred_var = pd.DataFrame(variance, index=fh_absolute)
 
         return pred_var
 
@@ -627,13 +768,15 @@ class NaiveVariance(BaseForecaster):
             [i,j]-th entry is signed residual of forecasting y.loc[j] from y.loc[:i],
             using a clone of the forecaster passed through the forecaster arg
         """
+        y = convert_to(y, "pd.Series")
+
         y_index = y.index[initial_window:]
         residuals_matrix = pd.DataFrame(columns=y_index, index=y_index, dtype="float")
 
         for id in y_index:
             forecaster = forecaster.clone()
-            y_train = y[:id]  # subset on which we fit
-            y_test = y[id:]  # subset on which we predict
+            y_train = get_slice(y, start=None, end=id)  # subset on which we fit
+            y_test = get_slice(y, start=id, end=None)  # subset on which we predict
             try:
                 forecaster.fit(y_train, fh=y_test.index)
             except ValueError:

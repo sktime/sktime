@@ -1,22 +1,25 @@
 # -*- coding: utf-8 -*-
 """Machine type converters for Series to Panel.
 
-Exports conversion functions for conversions between Series and Panel:
+Exports conversion functions for conversions between series scitypes:
 
 convert_Series_to_Panel(obj, store=None)
     converts obj of Series mtype to "adjacent" Panel mtype (e.g., numpy to numpy)
 convert_Panel_to_Series(obj, store=None)
     converts obj of Panel mtype to "adjacent" Series mtype (e.g., numpy to numpy)
+convert_Series_to_Hierarchical(obj, store=None)
+convert_Hierarchical_to_series(obj, store=None)
+convert_Panel_to_Hierarchical(obj, store=None)
+convert_Hierarchical_to_Panel(obj, store=None)
+    converts to pd.DataFrame based data container in the target scitype
 """
 
 __author__ = ["fkiraly"]
 
-__all__ = ["convert_Series_to_Panel", "convert_Panel_to_Series"]
-
 import numpy as np
 import pandas as pd
 
-from sktime.datatypes import convert_to, mtype, mtype_to_scitype
+from sktime.datatypes import convert_to, scitype
 
 
 def convert_Series_to_Panel(obj, store=None):
@@ -48,9 +51,16 @@ def convert_Series_to_Panel(obj, store=None):
 
     if isinstance(obj, np.ndarray):
         if len(obj.shape) == 2:
-            obj = np.expand_dims(obj, 2)
+            # from numpy2D to numpy3D
+            # numpy2D = (time, variables)
+            # numpy3D = (instances, variables, time)
+            obj = np.expand_dims(obj, 0)
+            obj = np.swapaxes(obj, 1, 2)
         elif len(obj.shape) == 1:
-            obj = np.expand_dims(obj, (1, 2))
+            # from numpy1D to numpy3D
+            # numpy1D = (time)
+            # numpy3D = (instances, variables, time)
+            obj = np.expand_dims(obj, (0, 1))
         else:
             raise ValueError("if obj is np.ndarray, must be of dim 1 or 2")
 
@@ -87,7 +97,11 @@ def convert_Panel_to_Series(obj, store=None):
     if isinstance(obj, np.ndarray):
         if obj.ndim != 3 or obj.shape[0] != 1:
             raise ValueError("if obj is np.ndarray, must be of dim 3, with shape[0]=1")
+        # from numpy3D to numpy2D
+        # numpy2D = (time, variables)
+        # numpy3D = (instances, variables, time)
         obj = np.reshape(obj, (obj.shape[1], obj.shape[2]))
+        obj = np.swapaxes(obj, 0, 1)
 
     return obj
 
@@ -216,8 +230,9 @@ def convert_to_scitype(obj, to_scitype, from_scitype=None, store=None):
             if not possible, will be one of the mtypes with pd.DataFrame python type
     """
     if from_scitype is None:
-        obj_mtype = mtype(obj, as_scitype=["Series", "Panel", "Hierarchical"])
-        from_scitype = mtype_to_scitype(obj_mtype)
+        from_scitype = scitype(
+            obj, candidate_scitypes=["Series", "Panel", "Hierarchical"]
+        )
 
     if to_scitype == from_scitype:
         return obj

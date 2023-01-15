@@ -46,7 +46,8 @@ def plot_time_series_with_change_points(ts_name, ts, true_cps, font_size=16):
     ts = check_X(ts)
 
     fig = plt.figure(figsize=(20, 5))
-    segments = [0] + true_cps.tolist() + [ts.shape[0]]
+    true_cps = np.sort(true_cps)
+    segments = [0] + list(true_cps) + [ts.shape[0]]
 
     for idx in np.arange(0, len(segments) - 1):
         plt.plot(
@@ -122,7 +123,7 @@ def plot_time_series_with_profiles(
     ax = ax.reshape(-1)
 
     if true_cps is not None:
-        segments = [0] + true_cps.tolist() + [ts.shape[0]]
+        segments = [0] + list(true_cps) + [ts.shape[0]]
         for idx in np.arange(0, len(segments) - 1):
             ax[0].plot(
                 np.arange(segments[idx], segments[idx + 1]),

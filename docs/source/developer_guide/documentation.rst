@@ -110,7 +110,7 @@ Notes
 The notes section can include several types of information, including:
 
 - Mathematical details of a code object or other important implementation details (using ..math or :math:`` functionality)
-- Links to alternative implementations of the code artifact that are external to ``sktime`` (e.g. the Java implementation of a sktime time series classifier)
+- Links to alternative implementations of the code artifact that are external to ``sktime`` (e.g. the Java implementation of an sktime time series classifier)
 - state changing methods (sktime estimator classes)
 
 References
@@ -148,7 +148,7 @@ Examples
 ~~~~~~~~
 
 Most code artifacts in sktime should include an examples section. At a minimum this should include a single example that illustrates basic functionality.
-The examples should use either a built-in sktime dataset or other simple data (e.g. randomly generated data, etc) generated using a sktime dependency
+The examples should use either a built-in sktime dataset or other simple data (e.g. randomly generated data, etc) generated using an sktime dependency
 (e.g. NumPy, pandas, etc) and whereever possible only depend on sktime or its core dependencies. Examples should also be designed to run quickly where possible.
 For quick running code artifacts, additional examples can be included to illustrate the affect of different parameter settings.
 
@@ -185,17 +185,17 @@ We use `sphinx`_ to build our documentation and `readthedocs`_ to host it.
 You can find our latest documentation `here <https://www.sktime.org/en/latest/>`_.
 
 The source files can be found
-in `docs/source/ <https://github.com/alan-turing-institute/sktime/tree/main/docs/source>`_.
+in `docs/source/ <https://github.com/sktime/sktime/tree/main/docs/source>`_.
 The main configuration file for sphinx is
-`conf.py <https://github.com/alan-turing-institute/sktime/blob/main/docs/source/conf.py>`__
+`conf.py <https://github.com/sktime/sktime/blob/main/docs/source/conf.py>`__
 and the main page is
-`index.rst <https://github.com/alan-turing-institute/sktime/blob/main/docs/source/index.rst>`__.
+`index.rst <https://github.com/sktime/sktime/blob/main/docs/source/index.rst>`__.
 To add new pages, you need to add a new ``.rst`` file and include it in
 the ``index.rst`` file.
 
 To build the documentation locally, you need to install a few extra
 dependencies listed in
-`pyproject.toml <https://github.com/alan-turing-institute/sktime/blob/main/pyproject.toml>`__.
+`pyproject.toml <https://github.com/sktime/sktime/blob/main/pyproject.toml>`__.
 
 1. To install extra dependencies from the root directory, run:
 

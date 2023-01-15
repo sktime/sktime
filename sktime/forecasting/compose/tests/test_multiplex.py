@@ -18,6 +18,7 @@ from sktime.forecasting.model_selection import (
 )
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.theta import ThetaForecaster
+from sktime.utils.validation._dependencies import _check_estimator_deps
 from sktime.utils.validation.forecasting import check_scoring
 
 
@@ -28,7 +29,7 @@ def _score_forecasters(forecasters, cv, y):
     score = None
     for name, forecaster in forecasters:
         results = evaluate(forecaster, cv, y)
-        results = results.mean()
+        results = results.mean(numeric_only=True)
         new_score = float(results[scoring_name])
         if not score or new_score < score:
             score = new_score
@@ -36,6 +37,10 @@ def _score_forecasters(forecasters, cv, y):
     return best_name
 
 
+@pytest.mark.skipif(
+    not _check_estimator_deps(ThetaForecaster, severity="none"),
+    reason="skip test if required soft dependency is not available",
+)
 def test_multiplex_forecaster_alone():
     """Test results of MultiplexForecaster.
 
@@ -80,12 +85,12 @@ def test_multiplex_with_grid_search():
     """
     y = load_shampoo_sales()
     forecasters = [
-        ("ets", AutoETS()),
-        ("naive", NaiveForecaster()),
+        ("naive1", NaiveForecaster()),
+        ("naive2", NaiveForecaster(strategy="mean")),
     ]
     multiplex_forecaster = MultiplexForecaster(forecasters=forecasters)
     forecaster_names = [name for name, _ in forecasters]
-    cv = ExpandingWindowSplitter(start_with_window=True, step_length=12)
+    cv = ExpandingWindowSplitter(step_length=12)
     gscv = ForecastingGridSearchCV(
         cv=cv,
         param_grid={"selected_forecaster": forecaster_names},
@@ -97,6 +102,10 @@ def test_multiplex_with_grid_search():
     assert gscv_best_name == best_name
 
 
+@pytest.mark.skipif(
+    not _check_estimator_deps(AutoARIMA, severity="none"),
+    reason="skip test if required soft dependency for AutoARIMA not available",
+)
 def test_multiplex_or_dunder():
     """Test that the MultiplexForecaster magic "|" dunder methodbahves as expected.
 
@@ -126,7 +135,7 @@ def test_multiplex_or_dunder():
     assert isinstance(multiplex_same_name_three_test, MultiplexForecaster)
     assert len(multiplex_same_name_three_test.forecasters) == 3
     forecaster_param_names = multiplex_same_name_three_test._get_estimator_names(
-        multiplex_same_name_three_test.forecasters_
+        multiplex_same_name_three_test._forecasters
     )
     assert len(set(forecaster_param_names)) == 3
 

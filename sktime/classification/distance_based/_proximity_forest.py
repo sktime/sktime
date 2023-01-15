@@ -48,10 +48,7 @@ class _CachedTransformer(_PanelToPanelTransformer):
     Attributes
     ----------
     cache       : location to store transforms seen before for fast look up
-
     """
-
-    _required_parameters = ["transformer"]
 
     def __init__(self, transformer):
         self.cache = {}
@@ -1260,7 +1257,7 @@ class ProximityForest(BaseClassifier):
 
     Notes
     -----
-    ..[1] Ben Lucas et al., "Proximity Forest: an effective and scalable distance-based
+    .. [1] Ben Lucas et al., "Proximity Forest: an effective and scalable distance-based
       classifier for time series",Data Mining and Knowledge Discovery, 33(3): 607-635,
       2019 https://arxiv.org/abs/1808.10594
     Java wrapper of authors original

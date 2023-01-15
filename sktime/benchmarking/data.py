@@ -2,7 +2,7 @@
 """Data storage for benchmarking."""
 
 __all__ = ["UEADataset", "RAMDataset", "make_datasets"]
-__author__ = ["Viktor Kazakov", "mloning"]
+__author__ = ["viktorkaz", "mloning"]
 
 import os
 
@@ -66,9 +66,7 @@ class UEADataset(HDDBaseDataset):
 
         # concatenate the two dataframes, keeping training and test split in
         # index, necessary for later optional CV
-        data = pd.concat(
-            [data_train, data_test], axis=0, keys=["train", "test"]
-        ).reset_index(level=1, drop=True)
+        data = pd.concat([data_train, data_test], axis=0, keys=["train", "test"])
 
         return data
 

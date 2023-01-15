@@ -84,7 +84,7 @@ class FunctionTransformer(BaseTransformer):
         "X_inner_mtype": ["pd.DataFrame", "pd.Series", "np.ndarray"],
         # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
-        "fit_is_empty": False,
+        "fit_is_empty": True,
         "handles-missing-data": True,
         "capability:inverse_transform": True,
     }
@@ -121,27 +121,6 @@ class FunctionTransformer(BaseTransformer):
                 " 'check_inverse=False'."
             )
 
-    def _fit(self, X, y=None):
-        """
-        Fit transformer to X and y.
-
-        private _fit containing the core logic, called from fit
-
-        Parameters
-        ----------
-        X : pd.Series or pd.DataFrame or 1D/2D np.ndarray
-            Data to fit transform to
-        y : ignored argument for interface compatibility
-            Additional data, e.g., labels for transformation
-
-        Returns
-        -------
-        self: a fitted instance of the estimator
-        """
-        if self.check_inverse and not (self.func is None or self.inverse_func is None):
-            self._check_inverse_transform(X)
-        return self
-
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
 
@@ -159,6 +138,9 @@ class FunctionTransformer(BaseTransformer):
         Xt : pd.Series or pd.DataFrame or 1D/2D np.ndarray, same type as X
             transformed version of X
         """
+        if self.check_inverse and not (self.func is None or self.inverse_func is None):
+            self._check_inverse_transform(X)
+
         Xt = self._apply_function(X, func=self.func, kw_args=self.kw_args)
         return Xt
 

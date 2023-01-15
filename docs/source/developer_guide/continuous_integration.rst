@@ -6,6 +6,10 @@ Continuous integration
 We use continuous integration services on GitHub to automatically check
 if new pull requests do not break anything and meet code quality
 standards such as a common `coding style <#Coding-style>`__.
+Before setting up Continuous Integration, be sure that you have set
+up your developer environment, and installed a
+`developement version <https://www.sktime.org/en/stable/installation.html>`__
+ of sktime.
 
 .. contents::
    :local:
@@ -13,41 +17,26 @@ standards such as a common `coding style <#Coding-style>`__.
 Code quality checks
 -------------------
 
-.. _precommit: https://pre-commit.com
+.. _pre-commit: https://pre-commit.com
 
-We use `pre-commit <precommit>`_ for code quality checks.
+We use `pre-commit`_ for code quality checks (a process we also refer to as "linting" checks).
+
+We recommend that you also set this up locally as it will ensure that you never run into code quality errors when you make your first PR!
 These checks run automatically before you make a new commit.
+To setup, simply navigate to the sktime folder and install our pre-commit configuration:
 
-To set up pre-commit, follow these steps:
-
-1. Install pre-commit:
-
-.. code:: bash
-
-   pip install pre-commit
-
-2. Set up pre-commit:
-
-.. code:: bash
-
+::
    pre-commit install
 
-Once installed, pre-commit will automatically run our code quality
-checks on the files you changed whenever you make a new commit.
+pre-commit should now automatically run anything you make a commit! Please let us know if you encounter any issues getting this setup.
 
-You can find our pre-commit configuration in
-`.pre-commit-config.yaml <https://github.com/alan-turing-institute/sktime/blob/main/.pre-commit-config.yaml>`_.
-Additional configurations can be found in
-`setup.cfg <https://github.com/alan-turing-institute/sktime/blob/main/setup.cfg>`_.
-
-.. note::
-   If you want to exclude some line of code from being checked, you can add a ``# noqa`` (no quality assurance) comment at the end of that line.
-
+For a detailed guide on code quality and linting for developers, see :ref:`coding_standards`.
 
 Unit testing
 ~~~~~~~~~~~~
 
 We use `pytest <https://docs.pytest.org/en/latest/>`__ for unit testing.
+
 To check if your code passes all tests locally, you need to install the
 development version of sktime and all extra dependencies.
 
@@ -83,9 +72,9 @@ Test coverage
 
 .. _codecov: https://codecov.io
 .. _coverage: https://coverage.readthedocs.io/
-.. _pytestcov: https://github.com/pytest-dev/pytest-cov
+.. _pytest-cov: https://github.com/pytest-dev/pytest-cov
 
-We use `coverage`_, the `pytest-cov <pytestcov>`_ plugin, and `codecov`_ for test coverage.
+We use `coverage`_, the `pytest-cov`_ plugin, and `codecov`_ for test coverage.
 
 Infrastructure
 --------------
@@ -97,7 +86,7 @@ integration services we use.
 | Platform      | Operation             | Configuration                       |
 +===============+=======================+=====================================+
 | `GitHub       | Build/test/           | `.github/workflows/ <https://gi     |
-| Actions       | distribute            | thub.com/alan-turing-institute/skti |
+| Actions       | distribute            | thub.com/sktime/skti |
 | <https:/      | on Linux, MacOS and   | me/blob/main/.github/workflows/>`__ |
 | /docs.github. | Windows,              |                                     |
 | com/en/free-p | run code quality      |                                     |
@@ -110,7 +99,7 @@ integration services we use.
 | edocs.org>`__ |                       | thub/workflows/code-quality.yml>`__ |
 +---------------+-----------------------+-------------------------------------+
 | `Codecov      | Test coverage         | `.codecov.yml <https                |
-| <https://c    |                       | ://github.com/alan-turing-institute |
+| <https://c    |                       | ://github.com/sktime |
 | odecov.io>`__ |                       | /sktime/blob/main/.codecov.yml>`__, |
 |               |                       | `.coveragerc <htt                   |
 |               |                       | ps://github.com/alan-turing-institu |
@@ -119,4 +108,4 @@ integration services we use.
 
 Additional scripts used for building, unit testing and distribution can
 be found in
-`build_tools/ <https://github.com/alan-turing-institute/sktime/tree/main/build_tools>`__.
+`build_tools/ <https://github.com/sktime/sktime/tree/main/build_tools>`__.

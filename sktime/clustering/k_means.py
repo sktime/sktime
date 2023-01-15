@@ -46,7 +46,9 @@ class TimeSeriesKMeans(TimeSeriesLloyds):
         Averaging method to compute the average of a cluster. Any of the following
         strings are valid: ['mean', 'dba']. If a Callable is provided must take the form
         Callable[[np.ndarray], np.ndarray].
-    distance_params: dict, defaults = None
+    average_params: dict, defaults = None = no parameters
+        Dictonary containing kwargs for averaging_method.
+    distance_params: dict, defaults = None = no parameters
         Dictonary containing kwargs for the distance metric being used.
 
     Attributes
@@ -81,22 +83,23 @@ class TimeSeriesKMeans(TimeSeriesLloyds):
         self.averaging_method = averaging_method
         self._averaging_method = _resolve_average_callable(averaging_method)
 
+        self.average_params = average_params
+        self._average_params = average_params
+        if self.average_params is None:
+            self._average_params = {}
         if averaging_method == "dba":
             self._dba_medoids_distance_metric = "dtw"
             self._precomputed_pairwise = None
-            if (
-                average_params is not None
-                and "medoids_distance_metric" in average_params
-            ):
-                self._dba_medoids_distance_metric = average_params[
+            if "medoids_distance_metric" in self._average_params:
+                self._dba_medoids_distance_metric = self._average_params[
                     "medoids_distance_metric"
                 ]
-
-        self.average_params = {}
-        if average_params is not None:
-            self.average_params = average_params
-
-        self._average_params = self.average_params
+            if "averaging_distance_metric" in self._average_params:
+                average_dist = self._average_params["averaging_distance_metric"]
+                if average_dist == "ddtw":
+                    self._average_params["averaging_distance_metric"] = "dtw"
+                if average_dist == "wddtw":
+                    self._average_params["averaging_distance_metric"] = "wdtw"
 
         super(TimeSeriesKMeans, self).__init__(
             n_clusters,
@@ -189,11 +192,10 @@ class TimeSeriesKMeans(TimeSeriesLloyds):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        params = {
+        return {
             "n_clusters": 2,
             "metric": "euclidean",
             "n_init": 1,
             "max_iter": 10,
             "random_state": 0,
         }
-        return params
