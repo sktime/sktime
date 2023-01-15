@@ -904,11 +904,19 @@ class BaseEstimator(BaseObject):
                 f"been fitted yet; please call `fit` first."
             )
 
-    def get_fitted_params(self):
+    def get_fitted_params(self, deep=True):
         """Get fitted parameters.
 
         State required:
             Requires state to be "fitted".
+
+        Parameters
+        ----------
+        deep : bool, default=True
+            If True, will return fitted parameters for this estimator,
+            plus parameters of fitted components that are fittable estimators.
+            If False, will return fitted parameters only for this estimator,
+            but not parameters of fitted components.
 
         Returns
         -------
@@ -921,7 +929,13 @@ class BaseEstimator(BaseObject):
                 "fitted yet, please call fit on data before get_fitted_params"
             )
 
-        fitted_params = dict()
+        # collect non-nested fitted params of self
+        fitted_params = self._get_fitted_params()
+
+        # the rest is only for nested parameters
+        # so, if deep=False, we simply return here
+        if not deep:
+            return fitted_params
 
         def sh(x):
             """Shorthand to remove all underscores at end of a string."""
@@ -937,9 +951,6 @@ class BaseEstimator(BaseObject):
                 c_f_params = comp.get_fitted_params()
                 c_f_params = {f"{sh(c)}__{k}": v for k, v in c_f_params.items()}
                 fitted_params.update(c_f_params)
-
-        # add non-nested fitted params of self
-        fitted_params.update(self._get_fitted_params())
 
         # add all nested parameters from components that are sklearn estimators
         # we do this recursively as we have to reach into nested sklearn estimators
