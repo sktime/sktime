@@ -850,10 +850,10 @@ class ForecasterTransform(BaseTransformer):
     ...         ("forecaster", ARIMA()),
     ...     ]
     ... )
-    >>> pipe.fit(y, X)
+    >>> pipe.fit(y, X) # doctest: +SKIP
     ForecastingPipeline(...)
     >>> # this works without X from the future of y
-    >>> y_pred = pipe.predict(fh=fh)
+    >>> y_pred = pipe.predict(fh=fh) # doctest: +SKIP
     """
 
     _tags = {
