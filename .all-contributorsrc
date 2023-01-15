@@ -1980,6 +1980,15 @@
         "bug",
         "code"
       ]
+    },
+    {
+      "login": "mateuja",
+      "name": "Jaume Mateu",
+      "avatar_url": "https://avatars.githubusercontent.com/mateuja",
+      "profile": "https://github.com/mateuja",
+      "contributions": [
+        "code"
+      ]
     }
   ]
 }
