@@ -488,7 +488,9 @@ class BaseTransformer(BaseEstimator):
             Xt = self._vectorize("transform", X=X_inner, y=y_inner)
 
         # convert to output mtype
-        if not hasattr(self, "_output_convert") or self._output_convert == "auto":
+        if X is None:
+            X_out = Xt
+        elif not hasattr(self, "_output_convert") or self._output_convert == "auto":
             X_out = self._convert_output(Xt, metadata=metadata)
         else:
             X_out = Xt
@@ -608,7 +610,7 @@ class BaseTransformer(BaseEstimator):
             Xt = self._vectorize("inverse_transform", X=X_inner, y=y_inner)
 
         # convert to output mtype
-        if self._output_convert == "auto":
+        if self._output_convert == "auto" and X is not None:
             X_out = self._convert_output(Xt, metadata=metadata, inverse=True)
         else:
             X_out = Xt
@@ -774,7 +776,10 @@ class BaseTransformer(BaseEstimator):
         ValueError if self.get_tag("requires_y")=True but y is None
         """
         if X is None:
-            raise TypeError("X cannot be None, but found None")
+            if return_metadata:
+                return X, y, {}
+            else:
+                return X, y
 
         metadata = dict()
         metadata["_converter_store_X"] = dict()
