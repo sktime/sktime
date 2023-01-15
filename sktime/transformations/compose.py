@@ -945,11 +945,15 @@ class ForecasterTransform(BaseTransformer):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        from sktime.transformations.series.boxcox import BoxCoxTransformer
+        from sktime.forecasting.naive import NaiveForecaster
 
         params = [
-            {"transformer": BoxCoxTransformer()},
-            {"transformer": BoxCoxTransformer(), "skip_inverse_transform": False},
+            {"forecaster": NaiveForecaster()},
+            {
+                "forecaster": NaiveForecaster(),
+                "fh": [1, 2, 3, 4, 5],
+                "behaviour": "replace",
+            },
         ]
         return params
 
