@@ -37,7 +37,7 @@ class FittedForecaster(_DelegatedForecaster):
     --------
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.naive import NaiveForecaster
-    >>> from sktime.serialize import FittedForecaster
+    >>> from sktime.forecasting.serialize import FittedForecaster
 
     >>> y_train = load_airline()[:36]
     >>> y_deploy = load_airline()[36:]
