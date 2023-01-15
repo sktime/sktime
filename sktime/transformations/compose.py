@@ -796,11 +796,7 @@ class FitInTransform(BaseTransformer):
         """
         from sktime.transformations.series.boxcox import BoxCoxTransformer
 
-        params = [
-            {"transformer": BoxCoxTransformer()},
-            {"transformer": BoxCoxTransformer(), "skip_inverse_transform": False},
-        ]
-        return params
+        return {"transformer": BoxCoxTransformer(), "passthrough": False}
 
 
 class ForecasterTransform(BaseTransformer):
