@@ -220,7 +220,7 @@ def check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj", panel=T
 
     # Check time index is ordered in time
     index_frame = obj.index.to_frame()
-    if not index_frame.groupby(level=list(range(obj.index.nlevels - 1)))[index_frame.columns[-1]].is_monotonic_increasing.all():
+    if not index_frame.groupby(level=list(range(obj.index.nlevels - 1)))[index_frame.columns[-1]].is_monotonic_increasing.astype(bool).all():
         msg = (
             f"The (time) index of {var_name} must be sorted monotonically increasing, "
             f"but found: {index}"
