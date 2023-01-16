@@ -4,6 +4,8 @@
 __author__ = ["James-Large", "AurumnPegasus"]
 __all__ = ["MLPClassifier"]
 
+from copy import deepcopy
+
 from sklearn.utils import check_random_state
 
 from sktime.classification.deep_learning.base import BaseDeepClassifier
@@ -153,8 +155,6 @@ class MLPClassifier(BaseDeepClassifier):
         -------
         self : object
         """
-        self.callbacks = self.callbacks or []
-
         y_onehot = self.convert_y_to_keras(y)
         # Transpose to conform to Keras input style.
         X = X.transpose(0, 2, 1)
@@ -170,7 +170,7 @@ class MLPClassifier(BaseDeepClassifier):
             batch_size=self.batch_size,
             epochs=self.n_epochs,
             verbose=self.verbose,
-            callbacks=self.callbacks,
+            callbacks=deepcopy(self.callbacks) if self.callbacks else [],
         )
         return self
 
