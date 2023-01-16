@@ -21,7 +21,7 @@ class AutoETS(_StatsModelsAdapter):
     """ETS models with both manual and automatic fitting capabilities.
 
     Manual (fixed parameter) use is a direct interface to `statsmodels` `ETSModel` [2]_,
-    while automatic fitting is an adaptation of from the R version of ets [3]_,
+    while automated tuning is an adaptation of from the R version of ets [3]_,
     on top of `statsmodels` `ETSModel`.
 
     The first parameters are direct interfaces to the `statsmodels` parameters
