@@ -142,7 +142,20 @@ class TapNetClassifier(BaseDeepClassifier):
         self.use_rp = use_rp
         self.rp_params = rp_params
 
-        self._network = TapNetNetwork()
+        self._network = TapNetNetwork(
+            dropout=self.dropout,
+            filter_sizes=self.filter_sizes,
+            kernel_size=self.kernel_size,
+            dilation=self.dilation,
+            layers=self.layers,
+            use_rp=self.use_rp,
+            rp_params=self.rp_params,
+            use_att=self.use_att,
+            use_lstm=self.use_lstm,
+            use_cnn=self.use_cnn,
+            random_state=self.random_state,
+            padding=self.padding,
+        )
 
     def build_model(self, input_shape, n_classes, **kwargs):
         """Construct a complied, un-trained, keras model that is ready for training.

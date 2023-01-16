@@ -45,17 +45,14 @@ class ThetaForecaster(ExponentialSmoothing):
     ----------
     initial_level : float, optional
         The alpha value of the simple exponential smoothing, if the value is
-        set then
-        this will be used, otherwise it will be estimated from the data.
+        set then this will be used, otherwise it will be estimated from the data.
     deseasonalize : bool, optional (default=True)
         If True, data is seasonally adjusted.
     sp : int, optional (default=1)
         The number of observations that constitute a seasonal period for a
-        multiplicative deseasonaliser, which is used if seasonality is
-        detected in the
+        multiplicative deseasonaliser, which is used if seasonality is detected in the
         training data. Ignored if a deseasonaliser transformer is provided.
-        Default is
-        1 (no seasonality).
+        Default is 1 (no seasonality).
 
     Attributes
     ----------
@@ -248,6 +245,31 @@ class ThetaForecaster(ExponentialSmoothing):
             self.initial_level_ = self._fitted_forecaster.params["smoothing_level"]
             self.trend_ = self._compute_trend(y)
         return self
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str , default = "default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            There are currently no reserved values for forecasters.
+
+        Returns
+        -------
+        params :dict or list of dict , default = {}
+            arameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params
+        """
+        params0 = {}
+        params1 = {"sp": 2, "deseasonalize": True}
+        params2 = {"deseasonalize": False}
+
+        return [params0, params1, params2]
 
 
 def _zscore(level: float, two_tailed: bool = True) -> float:

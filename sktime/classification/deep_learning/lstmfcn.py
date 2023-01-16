@@ -103,7 +103,14 @@ class LSTMFCNClassifier(BaseDeepClassifier):
         self.random_state = random_state
         self.verbose = verbose
 
-        self._network = LSTMFCNNetwork()
+        self._network = LSTMFCNNetwork(
+            kernel_sizes=self.kernel_sizes,
+            filter_sizes=self.filter_sizes,
+            random_state=self.random_state,
+            lstm_size=self.lstm_size,
+            dropout=self.dropout,
+            attention=self.attention,
+        )
         self._is_fitted = False
 
     def build_model(self, input_shape, n_classes, **kwargs):

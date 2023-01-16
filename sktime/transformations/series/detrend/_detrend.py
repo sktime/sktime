@@ -242,4 +242,7 @@ class Detrender(BaseTransformer):
         """
         from sktime.forecasting.trend import TrendForecaster
 
-        return {"forecaster": TrendForecaster()}
+        params1 = {"forecaster": TrendForecaster()}
+        params2 = {"model": "multiplicative"}
+
+        return [params1, params2]
