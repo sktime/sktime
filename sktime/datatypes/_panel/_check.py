@@ -201,16 +201,15 @@ def check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj", panel=T
         return _ret(False, msg, None, return_metadata)
 
     # check whether the time index is of valid type
-    if not is_in_valid_index_types(obj.index.get_level_values(-1)):
+    if not is_in_valid_index_types(index.get_level_values(-1)):
         msg = (
-            f"{type(obj.index)} is not supported for {var_name}, use "
+            f"{type(index)} is not supported for {var_name}, use "
             f"one of {VALID_INDEX_TYPES} or integer index instead."
         )
         return _ret(False, msg, None, return_metadata)
 
-    inst_inds = index.get_level_values(0)
-
     # check instance index being integer or range index
+    inst_inds = index.get_level_values(0)
     if not is_in_valid_multiindex_types(inst_inds):
         msg = (
             f"instance index (first/highest index) must be {VALID_MULTIINDEX_TYPES}, "
@@ -219,8 +218,8 @@ def check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj", panel=T
         return _ret(False, msg, None, return_metadata)
 
     # Check time index is ordered in time
-    index_frame = obj.index.to_frame()
-    if not index_frame.groupby(level=list(range(obj.index.nlevels - 1)))[index_frame.columns[-1]].is_monotonic_increasing.astype(bool).all():
+    index_frame = index.to_frame()
+    if not index_frame.groupby(level=list(range(index.nlevels - 1)))[index_frame.columns[-1]].is_monotonic_increasing.astype(bool).all():
         msg = (
             f"The (time) index of {var_name} must be sorted monotonically increasing, "
             f"but found: {index}"
@@ -232,12 +231,20 @@ def check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj", panel=T
     # check whether index is equally spaced or if there are any nans
     #   compute only if needed
     if return_metadata:
-        series_groups = obj.groupby(level=list(range(obj.index.nlevels - 1)))
+        series_groups = obj.groupby(level=list(range(index.nlevels - 1)))
         n_series = series_groups.ngroups
+
+        if not panel:
+            panel_groups = obj.groupby(level=list(range(index.nlevels - 2)))
+            n_panels = panel_groups.ngroups
+        else:
+            n_panels = 1
 
         metadata["is_univariate"] = len(obj.columns) < 2
         metadata["is_equally_spaced"] = all(_index_equally_spaced(group.index.levels[-1]) for _, group in series_groups)
         metadata["is_empty"] = len(index) < 1 or len(obj.columns) < 1
+        metadata["n_panels"] = n_panels
+        metadata["is_one_panel"] = n_panels == 1
         metadata["n_instances"] = n_series
         metadata["is_one_series"] = n_series == 1
         metadata["has_nans"] = obj.isna().values.any()
