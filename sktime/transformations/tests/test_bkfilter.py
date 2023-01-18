@@ -5,7 +5,6 @@ __author__ = ["klam-data", "pyyim"]
 
 import pandas as pd
 import pytest
-import statsmodels.api as sm
 from numpy import array_equal
 
 from sktime.utils.validation._dependencies import _check_soft_dependencies
@@ -18,14 +17,14 @@ from sktime.utils.validation._dependencies import _check_soft_dependencies
 def test_BKFilter_wrapper():
     """Verify that the wrapped BKFilter estimator agrees with statsmodel."""
     # moved all potential soft dependency import inside the test:
-    from statsmodels.api import bkfilter as BKFilter
+    import statsmodels.api as sm
 
     from sktime.transformations.series.bkfilter import BKFilter as _BKFilter
 
     dta = sm.datasets.macrodata.load_pandas().data
-    index = pd.DatetimeIndex(start="1959Q1", end="2009Q4", freq="Q")
+    index = pd.date_range(start="1959Q1", end="2009Q4", freq="Q")
     dta.set_index(index, inplace=True)
-    sm_cycles = BKFilter(dta[["realinv"]], 6, 24, 12)
+    sm_cycles = sm.tsa.filters.bkfilter(dta[["realinv"]], 6, 24, 12)
     bk = _BKFilter(6, 24, 12)
     sk_cycles = bk.fit_transform(X=dta[["realinv"]])
     assert array_equal(sm_cycles, sk_cycles)
