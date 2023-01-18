@@ -803,6 +803,161 @@ class FitInTransform(BaseTransformer):
         return params
 
 
+class ForecasterTransform(BaseTransformer):
+    """Transformer that uses a forecaster to interpolate or extrapolate.
+
+    Wraps a forecaster and a forecasting horizon specification, but acts as transformer.
+
+    In `transform`, the wrapped forecaster carries out a `predict` step.
+    The result from that prediction is added to (default, `combine` behaviour),
+    or replaces (`replace` behaviour), the input of `transform`.
+    In case of index clashes, the prediction overwrites the input.
+
+    The typical use case is extending exogeneous data available only up until the cutoff
+    into the future, for use by an exogeneous forecaster that requires such future data.
+
+    Parameters
+    ----------
+    forecaster : BaseForecaster
+        sktime forecaster to use for transformation
+    fh : None, ForecastingHorizon, or valid input to construct ForecastingHorizon
+        optional, default = None = in-sample, fh are indices of series seen in transform
+        valid inputs to construct ForecastingHorizon are:
+        int, list of int, 1D np.ndarray, pandas.Index (see ForecastingHorizon)
+    behaviour : str, one of "combine" or "replace", optional, default = "combine"
+        if "combine", `transform` updates input `X` with forecasts from `forecaster_`
+        if "replace", `transform` replaces input `X` by forecasts from `forecaster_`
+
+    Attributes
+    ----------
+    forecaster_ : BaseForecaster
+        clone of forecaster, state is after being fitted to data in `fit`
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_longley
+    >>> from sktime.forecasting.arima import ARIMA
+    >>> from sktime.forecasting.base import ForecastingHorizon
+    >>> from sktime.forecasting.compose import ForecastingPipeline
+    >>> from sktime.forecasting.var import VAR
+    >>> from sktime.transformations.compose import ForecasterTransform
+
+    >>> y, X = load_longley()
+    >>> fh = ForecastingHorizon([1, 2, 3])
+    >>> pipe = ForecastingPipeline(
+    ...     steps=[
+    ...         ("exogeneous-forecast", ForecasterTransform(VAR(), fh=fh)),
+    ...         ("forecaster", ARIMA()),
+    ...     ]
+    ... )
+    >>> pipe.fit(y, X) # doctest: +SKIP
+    ForecastingPipeline(...)
+    >>> # this works without X from the future of y
+    >>> y_pred = pipe.predict(fh=fh) # doctest: +SKIP
+    """
+
+    _tags = {
+        "skip-inverse-transform": True,
+        "scitype:transform-input": "Series",
+        "scitype:transform-output": "Series",
+        "X_inner_mtype": "pd.DataFrame",
+        "fit_is_empty": False,
+    }
+
+    def __init__(self, forecaster, fh=None, behaviour="combine"):
+
+        if behaviour not in ["combine", "replace"]:
+            raise ValueError('behaviour must be one of "combine", "replace"')
+
+        self.forecaster = forecaster
+        self.fh = fh
+        self.behaviour = behaviour
+        super(ForecasterTransform, self).__init__()
+
+        tag_translate_dict = {
+            "handles-missing-data": forecaster.get_tag("handles-missing-data")
+        }
+        self.set_tags(**tag_translate_dict)
+
+    def _fit(self, X, y=None):
+        """Fit transformer to X and y.
+
+        private _fit containing the core logic, called from fit
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+            Data to fit transform to
+        y : ignored argument, present for interface compatibility
+
+        Returns
+        -------
+        self: a fitted instance of the estimator
+        """
+        self.forecaster_ = self.forecaster.clone()
+        self.forecaster_.fit(y=X, fh=self.fh)
+        return self
+
+    def _transform(self, X, y=None):
+        """Transform X and return a transformed version.
+
+        private _transform containing core logic, called from transform
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+            Data to be transformed
+        y : ignored argument, present for interface compatibility
+
+        Returns
+        -------
+        transformed version of X
+        """
+        if self.fh is None:
+            fh = X.index
+        else:
+            fh = self.fh
+
+        X_pred = self.forecaster_.predict(fh=fh)
+        if X is not None:
+            Xt = X.combine_first(X_pred)
+        else:
+            Xt = X_pred
+
+        return Xt
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            There are currently no reserved values for transformers.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        from sktime.forecasting.naive import NaiveForecaster
+
+        params = [
+            {"forecaster": NaiveForecaster()},
+            {
+                "forecaster": NaiveForecaster(),
+                "fh": [1, 2, 3, 4, 5],
+                "behaviour": "replace",
+            },
+        ]
+        return params
+
+
 class MultiplexTransformer(_HeterogenousMetaEstimator, _DelegatedTransformer):
     """Facilitate an AutoML based selection of the best transformer.
 
@@ -961,6 +1116,7 @@ class MultiplexTransformer(_HeterogenousMetaEstimator, _DelegatedTransformer):
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
             special parameters are defined for a value, will return `"default"` set.
+            There are currently no reserved values for transformers.
 
         Returns
         -------
