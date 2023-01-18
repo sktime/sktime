@@ -129,4 +129,4 @@ def test_custom_metric(greater_is_better):
     score = fc_scorer(y, y)
     assert isinstance(score, float)
 
-    check_estimator(fc_scorer, return_exceptions=False)
+    check_estimator(fc_scorer, raise_exceptions=True)

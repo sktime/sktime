@@ -47,6 +47,7 @@ from sktime.datatypes._series._check import (
     _index_equally_spaced,
     check_pddataframe_series,
 )
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.utils.validation.series import is_in_valid_index_types, is_integer_index
 
 VALID_MULTIINDEX_TYPES = (pd.RangeIndex, pd.Index)
@@ -424,3 +425,18 @@ def check_numpyflat_Panel(obj, return_metadata=False, var_name="obj"):
 
 
 check_dict[("numpyflat", "Panel")] = check_numpyflat_Panel
+
+
+if _check_soft_dependencies("dask", severity="none"):
+    from sktime.datatypes._adapter.dask_to_pd import check_dask_frame
+
+    def check_dask_panel(obj, return_metadata=False, var_name="obj"):
+
+        return check_dask_frame(
+            obj=obj,
+            return_metadata=return_metadata,
+            var_name=var_name,
+            scitype="Panel",
+        )
+
+    check_dict[("dask_panel", "Panel")] = check_dask_panel
