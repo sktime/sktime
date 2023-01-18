@@ -1,9 +1,8 @@
 name: Update Contributors
 
 on:
-  push:
-    branches:
-      - main
+  pull_request_target:
+    types: [edited, opened, reopened, synchronize]
     paths:
       - '.all-contributorsrc'
 
@@ -12,6 +11,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+        with:
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          ref: ${{ github.head_ref }}
       - name: Set up Node
         uses: actions/setup-node@v3
         with:
