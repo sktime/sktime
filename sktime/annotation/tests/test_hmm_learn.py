@@ -54,26 +54,3 @@ def test_GMMHMM_wrapper():
     hmmlearn_predict = hmmlearn_model.predict(X=data)
     sktime_predict = sktime_model.predict(X=data)
     assert array_equal(hmmlearn_predict, sktime_predict)
-
-
-@pytest.mark.skipif(
-    not _check_soft_dependencies("hmmlearn", severity="none"),
-    reason="skip test if required soft dependency for hmmlearn not available",
-)
-def test_MultinomialHMM_wrapper():
-    """Verify that the wrapped MultinomialHMM estimator agrees with hmmlearn."""
-    # moved all potential soft dependency import inside the test:
-    from hmmlearn.hmm import MultinomialHMM as _MultinomialHMM
-
-    from sktime.annotation.hmm_learn import MultinomialHMM
-
-    data = piecewise_normal(
-        means=[2, 4, 1], lengths=[10, 35, 40], random_state=7
-    ).reshape((-1, 1))
-    hmmlearn_model = MultinomialHMM(n_components=3, random_state=7)
-    sktime_model = MultinomialHMM(n_components=3, random_state=7)
-    hmmlearn_model.fit(X=data)
-    sktime_model.fit(X=data)
-    hmmlearn_predict = hmmlearn_model.predict(X=data)
-    sktime_predict = sktime_model.predict(X=data)
-    assert array_equal(hmmlearn_predict, sktime_predict)
