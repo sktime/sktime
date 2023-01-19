@@ -1,17 +1,18 @@
 # -*- coding: utf-8 -*-
 """
-Baxter-King bandpass filter transformation.
+Implements Baxter-King bandpass filter transformation.
 
 Please see the original library
 (https://github.com/statsmodels/statsmodels/blob/main/statsmodels/tsa/filters/bk_filter.py)
 """
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-__author__ = ["klam-data", "pyyim"]
+__author__ = ["klam-data", "pyyim", "mgorlin"]
 __all__ = ["BKFilter"]
 
 
 import numpy as np
+import pandas as pd
 from scipy.signal import fftconvolve
 from statsmodels.tools.validation import PandasWrapper, array_like
 
@@ -21,17 +22,28 @@ from sktime.transformations.base import BaseTransformer
 class BKFilter(BaseTransformer):
     """Filter a times series using the Baxter-King filter.
 
+    This is a wrapper around statsmodels' bkfilter function
+    (see 'sm.tsa.filters.bkfilter').
+
+    The Baxter-King filter is intended for economic and econometric time series
+    data and deals with the periodicity of the business cycle. Applying their
+    band-pass filter to a series will produce a new series that does not contain
+    fluctuations at a higher or lower frequency than those of the business cycle.
+    Baxter-King follow Burns and Mitchell’s work on business cycles, which suggests
+    that U.S. business cycles typically last from 1.5 to 8 years.
+
     Parameters
     ----------
     low : float
-        Minimum period for oscillations, ie., Baxter and King suggest that
-        the Burns-Mitchell U.S. business cycle has 6 for quarterly data and
-        1.5 for annual data.
+        Minimum period for oscillations. Baxter and King recommend a value of 6
+        for quarterly data and 1.5 for annual data.
+
     high : float
-        Maximum period for oscillations BK suggest that the U.S.
-        business cycle has 32 for quarterly data and 8 for annual data.
+        Maximum period for oscillations. BK recommend 32 for U.S. business cycle
+        quarterly data and 8 for annual data.
+
     K : int
-        Lead-lag length of the filter. Baxter and King propose a truncation
+        Lead-lag length of the filter. Baxter and King suggest a truncation
         length of 12 for quarterly data and 3 for annual data.
 
     Notes
@@ -56,8 +68,9 @@ class BKFilter(BaseTransformer):
     --------
     >>> from sktime.transformations.series.bkfilter import BKFilter
     >>> import pandas as pd
+    >>> import statsmodels.api as sm
     >>> dta = sm.datasets.macrodata.load_pandas().data
-    >>> index = pd.DatetimeIndex(start='1959Q1', end='2009Q4', freq='Q')
+    >>> index = pd.date_range(start='1959Q1', end='2009Q4', freq='Q')
     >>> dta.set_index(index, inplace=True)
     >>> bk = BKFilter(6, 24, 12)
     >>> cycles = bk.fit_transform(X=dta[['realinv']])
@@ -79,13 +92,17 @@ class BKFilter(BaseTransformer):
         # this can be a Panel mtype even if transform-input is Series, vectorized
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "requires_y": False,  # does y need to be passed in fit?
+        "enforce_index_type": [
+            pd.RangeIndex
+        ],  # index type that needs to be enforced in X/y
         "fit_is_empty": True,  # is fit empty and can be skipped? Yes = True
-        "transform-returns-same-time-index": True,
+        "transform-returns-same-time-index": False,
         # does transform return have the same time index as input X
         "capability:unequal_length": False,
         # can the transformer handle unequal length time series (if passed Panel)?
         "handles-missing-data": False,  # can estimator handle missing data?
         "remember_data": False,  # whether all data seen is remembered as self._X
+        "python_dependencies": "statsmodels",
     }
 
     def __init__(
