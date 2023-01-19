@@ -98,7 +98,7 @@ class BKFilter(BaseTransformer):
         "fit_is_empty": True,  # is fit empty and can be skipped? Yes = True
         "transform-returns-same-time-index": False,
         # does transform return have the same time index as input X
-        "capability:unequal_length": False,
+        "capability:unequal_length": True,
         # can the transformer handle unequal length time series (if passed Panel)?
         "handles-missing-data": False,  # can estimator handle missing data?
         "remember_data": False,  # whether all data seen is remembered as self._X
