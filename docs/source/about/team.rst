@@ -29,8 +29,6 @@ Community Council Observers
 
    * - Name
      - GitHub ID
-   * - Leonidas Tsaprounis
-     - :user:`ltsaprounis`
    * - Lovkush Agarwal
      - :user:`lovkush-a`
 
@@ -63,8 +61,6 @@ Core Developers
      - :user:`freddyaboulton`
    * - Guzal Bulatova
      - :user:`GuzalBulatova`
-   * - Leonidas Tsaprounis
-     - :user:`ltsaprounis`
    * - Lovkush Agarwal
      - :user:`lovkush-a`
    * - Łukasz Mentel
@@ -108,6 +104,8 @@ Former Core Developers
      - :user:`james-large`
    * - Jason Lines
      - :user:`jasonlines`
+    * - Leonidas Tsaprounis
+     - :user:`ltsaprounis`
    * - Mathew Smith
      - :user:`matteogales`
    * - Matthew Middlehurst
