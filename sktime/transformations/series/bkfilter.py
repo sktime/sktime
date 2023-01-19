@@ -74,11 +74,7 @@ class BKFilter(BaseTransformer):
     >>> dta.set_index(index, inplace=True)
     >>> bk = BKFilter(6, 24, 12)
     >>> cycles = bk.fit_transform(X=dta[['realinv']])
-    >>> import matplotlib.pyplot as plt
-    >>> fig, ax = plt.subplots()
-    >>> cycles.plot(ax=ax, style=['r--', 'b-'])
-    >>> plt.show()
-    .. plot:: plots/bkf_plot.py
+
     """
 
     _tags = {
