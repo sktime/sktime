@@ -23,7 +23,7 @@ class BKFilter(BaseTransformer):
     """Filter a times series using the Baxter-King filter.
 
     This is a wrapper around statsmodels' bkfilter function
-    (see 'sm.tsa.filters.bkfilter').
+    (see 'sm.tsa.filters.bk_filter.bkfilter').
 
     The Baxter-King filter is intended for economic and econometric time series
     data and deals with the periodicity of the business cycle. Applying their
