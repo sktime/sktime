@@ -57,7 +57,7 @@ class BaseSeriesAnnotator(BaseEstimator):
     """
 
     _tags = {
-        "distribution_type": None,  # Tag to determine test in test_all_annotators
+        "distribution_type": "None",  # Tag to determine test in test_all_annotators
     }  # for unit test cases
 
     def __init__(self, fmt="dense", labels="indicator"):
