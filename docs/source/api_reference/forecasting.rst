@@ -49,6 +49,7 @@ Pipelines can also be constructed using ``*``, ``+``, and ``|`` dunders.
     ForecastX
     ForecastByLevel
     Permute
+    HierarchyEnsembleForecaster
 
 Reduction
 ---------
@@ -276,7 +277,6 @@ Ensembles and stacking
     EnsembleForecaster
     AutoEnsembleForecaster
     StackingForecaster
-    HierarchyEnsembleForecaster
 
 Hierarchical reconciliation
 ---------------------------

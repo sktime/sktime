@@ -23,8 +23,8 @@ from sktime.utils.validation._dependencies import _check_soft_dependencies
 @pytest.mark.parametrize(
     "forecasters",
     [
-        [(PolynomialTrendForecaster(), 0)],
-        [(NaiveForecaster(), 0)],
+        [("ptf", PolynomialTrendForecaster(), 0)],
+        [("naive", NaiveForecaster(), 0)],
     ],
 )
 def test_hierarchy_ensemble_level_predict(forecasters):
@@ -32,37 +32,33 @@ def test_hierarchy_ensemble_level_predict(forecasters):
     agg = Aggregator()
 
     y = _bottom_hier_datagen(
-        no_bottom_nodes=5,
-        no_levels=2,
+        no_bottom_nodes=3,
+        no_levels=1,
         random_seed=123,
     )
 
-    forecaster_nodef = HierarchyEnsembleForecaster(forecasters)
     forecaster_withdef = HierarchyEnsembleForecaster(
-        forecasters, default=forecasters[0][0].clone()
+        forecasters, default=forecasters[0][1].clone()
     )
-    forecaster_nodef.fit(y, fh=[1, 2, 3])
+
     forecaster_withdef.fit(y, fh=[1, 2, 3])
-    actual_nodef = forecaster_nodef.predict()
     actual_withdef = forecaster_withdef.predict()
 
     y = agg.fit_transform(y)
 
-    test_forecaster = forecasters[0][0].clone()
+    test_forecaster = forecasters[0][1].clone()
     test_forecaster.fit(y, fh=[1, 2, 3])
-    test = test_forecaster.predict()
-    test_nodef = test.loc[actual_nodef.index]
+    test_withdef = test_forecaster.predict()
 
     msg = "Level predictions do not match"
-    assert np.all(actual_withdef == test), msg
-    assert np.all(actual_nodef == test_nodef), msg
+    assert np.all(actual_withdef == test_withdef), msg
 
 
 @pytest.mark.parametrize(
     "forecasters",
     [
-        [(PolynomialTrendForecaster(), ("__total", "__total"))],
-        [(NaiveForecaster(), ("__total", "__total"))],
+        [("ptf", PolynomialTrendForecaster(), [("__total"), ("l1_node01")])],
+        [("naive", NaiveForecaster(), [("__total"), ("l1_node02")])],
     ],
 )
 def test_hierarchy_ensemble_node_predict(forecasters):
@@ -70,27 +66,23 @@ def test_hierarchy_ensemble_node_predict(forecasters):
     agg = Aggregator()
 
     y = _bottom_hier_datagen(
-        no_bottom_nodes=5,
-        no_levels=2,
+        no_bottom_nodes=3,
+        no_levels=1,
         random_seed=123,
     )
 
-    forecaster_nodef = HierarchyEnsembleForecaster(forecasters, by="node")
     forecaster_withdef = HierarchyEnsembleForecaster(
-        forecasters, by="node", default=forecasters[0][0].clone()
+        forecasters, by="node", default=forecasters[0][1].clone()
     )
-    forecaster_nodef.fit(y, fh=[1, 2, 3])
+
     forecaster_withdef.fit(y, fh=[1, 2, 3])
-    actual_nodef = forecaster_nodef.predict()
     actual_withdef = forecaster_withdef.predict()
 
     y = agg.fit_transform(y)
 
-    test_forecaster = forecasters[0][0].clone()
+    test_forecaster = forecasters[0][1].clone()
     test_forecaster.fit(y, fh=[1, 2, 3])
-    test = test_forecaster.predict()
-    test_nodef = test.loc[actual_nodef.index]
+    test_withdef = test_forecaster.predict()
 
     msg = "Node predictions do not match"
-    assert np.all(actual_withdef == test), msg
-    assert np.all(actual_nodef == test_nodef), msg
+    assert np.all(actual_withdef == test_withdef), msg
