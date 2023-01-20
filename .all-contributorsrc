@@ -2000,6 +2000,39 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "klam-data",
+      "name": "Kevin Lam",
+      "avatar_url": "https://avatars.githubusercontent.com/u/114420932?s=400&v=4",
+      "profile": "https://www.linkedin.com/in/kevinlam2",
+      "contributions": [
+        "code",
+        "example",
+        "test"
+      ]
+    },
+    {
+      "login": "mgorlin",
+      "name": "Margaret Gorlin",
+      "avatar_url": "",
+      "profile": "https://www.linkedin.com/in/margaret-gorlin/",
+      "contributions": [
+        "code",
+        "example",
+        "test"
+      ]
+    },
+    {
+      "login": "pyyim",
+      "name": "Paul Yim",
+      "avatar_url": "https://avatars.githubusercontent.com/pyyim",
+      "profile": "https://www.linkedin.com/in/paulyim97/",
+      "contributions": [
+        "code",
+        "example",
+        "test"
+      ]
     }
   ]
 }
