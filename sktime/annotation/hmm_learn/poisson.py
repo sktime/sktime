@@ -81,6 +81,11 @@ class PoissonHMM(BaseHMMLearn):
     >>> labeled_data = model.predict(data) # doctest: +SKIP
     """
 
+    _tags = {
+        "distribution_type": "Poisson",
+        # Tag to determine test for test_all_annotators
+    }
+
     def __init__(
         self,
         n_components: int = 1,
