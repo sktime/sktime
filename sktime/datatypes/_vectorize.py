@@ -402,6 +402,7 @@ class VectorizedDF:
         estimator,
         rowname_default="estimators",
         colname_default="estimators",
+        varname_of_self=None,
         **kwargs,
     ):
 
@@ -412,11 +413,14 @@ class VectorizedDF:
             col_ix = [colname_default]
         result = pd.DataFrame(index=row_ix, columns=col_ix)
 
-        for i in len(self):
-            row_ind, col_ind = self._get_item_indexer(i=i, result=result)
+        if varname_of_self is not None and isinstance(varname_of_self, str):
+            kwargs[varname_of_self] = self
+
+        for i in range(len(self)):
+            row_ind, col_ind = self.get_iloc_indexer(i)
             args_i = {k: self._vectorize_slice(v, i=i) for k, v in kwargs.items()}
             est_clone = estimator.clone()
-            result[row_ind].loc[col_ind] = est_clone.fit(**args_i)
+            result.iloc[row_ind].iloc[col_ind] = est_clone.fit(**args_i)
 
         return result
 
