@@ -405,7 +405,42 @@ class VectorizedDF:
         varname_of_self=None,
         **kwargs,
     ):
+        """Fit multiple clones of estimator in broadcast shape, return in pd.DataFrame.
 
+        This function returns a `pd.DataFrame` with `estimator` fitted on
+        vectorization slices of `self`. Row and column indices are the
+        same as obtained from `get_iter_indices`.
+
+        For a row and column of the return, the entry is a clone of `estimator`,
+        where `fit` has been executed with the following arguments:
+        * `varname=value`, where `varname`/`value` are key-value pair of `kwargs`,
+          and `value` is not an instance of `VectorizedDF`, for all such `value`
+        * `varname=value[i]`, where `varname`/`value` are key-value pair of `kwargs`,
+          and `i` is the iteration index corresponding to row/column,
+          and `value` is an instance of `VectorizedDF`, for all such `value`
+        * `varname_of_self=self`, if `varname_of_self` is not `None`. Here,
+          `varname_of_self` should be read as the `str` value of that variable.
+
+        Parameters
+        ----------
+        estimator : an sktime estimator object, instance of descendant of BaseEstimator
+            clones of the estimator will be fitted to vectorized slices of self
+        rowname_default : str, optional, default="estimators"
+            used as index name of single row if no row vectorization is performed
+        colname_default : str, optional, default="estimators"
+            used as index name of single column if no column vectorization is performed
+        varname_of_self : str, optional, default=None
+            if not None, self will be passed as kwarg under name "varname_of_self"
+        kwargs : will be passed to `fit` of clones on vectorized slices
+
+        Returns
+        -------
+        pd.DataFrame, with rows and columns as the return of `get_iter_indices`.
+          If rows or columns are not vectorized over, the single index
+          will be `rowname_default` resp `colname_default`.
+          Entries are fitted clones of `estimator`, fitted with arguments
+          as described above.
+        """
         row_ix, col_ix = self.get_iter_indices()
         if row_ix is None:
             row_ix = [rowname_default]
