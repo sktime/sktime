@@ -164,7 +164,7 @@ class PolynomialTrendForecaster(BaseForecaster):
         self.regressor_ = self.regressor
         super(PolynomialTrendForecaster, self).__init__()
 
-    def _get_X_numpy_int_from_pandas(x):
+    def _get_X_numpy_int_from_pandas(self, x):
         """Convert pandas index to an sklearn compatible X, 2D np.ndarray, int type."""
         return x.astype("int64").to_numpy().reshape(-1, 1)
 
