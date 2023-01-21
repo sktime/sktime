@@ -472,8 +472,10 @@ class VectorizedDF:
 
         def vec_dict(d, i, vectorize_cols=True):
 
-            fun = lambda v: self._vectorize_slice(v, i=i, vectorize_cols=vectorize_cols)
-            return {k: fun(v) for k, v in args.items()}
+            def fun(v):
+                return self._vectorize_slice(v, i=i, vectorize_cols=vectorize_cols)
+
+            return {k: fun(v) for k, v in d.items()}
 
         for i in range(len(self)):
 
