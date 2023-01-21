@@ -1714,14 +1714,14 @@ class BaseForecaster(BaseEstimator):
             "predict_var",
         ]
 
-        # retrieve data arguments
-        y = kwargs.pop("y", None)
-        X = kwargs.pop("X", None)
-
         if methodname == "fit":
-            self.forecasters_ = y.vectorize_fit(self, **kwargs)
+            self.forecasters_ = kwargs["y"].vectorize_fit(self, **kwargs)
 
         elif methodname in FIT_METHODS:
+            # retrieve data arguments
+            y = kwargs.pop("y", None)
+            X = kwargs.pop("X", None)
+
             # create container for clones
             self._yvec = y
 
@@ -1749,6 +1749,10 @@ class BaseForecaster(BaseEstimator):
             return self
 
         elif methodname in PREDICT_METHODS:
+            # retrieve data arguments
+            y = kwargs.pop("y", None)
+            X = kwargs.pop("X", None)
+
             n = len(self.forecasters_.index)
             m = len(self.forecasters_.columns)
 
