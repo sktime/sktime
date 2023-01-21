@@ -188,7 +188,7 @@ class VectorizedDF:
             2nd element is iloc index for 2nd element of get_iter_indices
             together, indicate iloc index of self[i] within get_iter_indices index sets
         """
-        row_ix, col_ix = self.iter_indices
+        row_ix, col_ix = self.get_iter_indices()
         if row_ix is None and col_ix is None:
             return (0, 0)
         elif row_ix is None:
@@ -199,7 +199,7 @@ class VectorizedDF:
             col_n = len(col_ix)
             return (i // col_n, i % col_n)
 
-    def _iter_indices(self):
+    def _iter_indices(self, X=None):
         """Get indices that are iterated over in vectorization.
 
         Returns
@@ -210,8 +210,10 @@ class VectorizedDF:
             i-th element of list selects rows/columns in i-th iterate sub-DataFrame
             first element of pair are rows, second element are columns selected
         """
-        X = self.X_multiindex
-        row_ix, col_ix = self.iter_indices
+        if X is None:
+            X = self.X_multiindex
+
+        row_ix, col_ix = self.get_iter_indices()
 
         if row_ix is None and col_ix is None:
             ret = [(X.index, X.columns)]
@@ -238,14 +240,19 @@ class VectorizedDF:
     def __getitem__(self, i: int):
         """Return the i-th element iterated over in vectorization."""
         X = self.X_multiindex
-        row_ind, col_ind = self._iter_indices()[i]
+        row_ind, col_ind = self._get_item_indexer(i=i, X=X)
+        item = X[col_ind].loc[row_ind]
+        item = _enforce_index_freq(item)
+        return item
+
+    def _get_item_indexer(self, i: int, X=None):
+
+        row_ind, col_ind = self._iter_indices(X=X)[i]
         if isinstance(col_ind, list):
             col_ind = pd.Index(col_ind)
         elif not isinstance(col_ind, pd.Index):
             col_ind = [col_ind]
-        item = X[col_ind].loc[row_ind]
-        item = _enforce_index_freq(item)
-        return item
+        return row_ind, col_ind
 
     def as_list(self):
         """Shorthand to retrieve self (iterator) as list."""
@@ -368,6 +375,50 @@ class VectorizedDF:
             )
 
             return X_reconstructed_orig_format
+
+    def _vectorize_slice(self, other, i):
+        """Get i-th vectorization slice from other.
+
+        Parameters
+        ----------
+        other : any object
+            object to take vectorization slice of
+        i : integer
+            index of vectorization slice to take
+
+        Returns
+        -------
+        i-th vectorization slice of `other`
+            if `other` is not `VectorizedDF`, reference to `other`
+            if `other` is VectorizedDF`, returns `other[i]`
+        """
+        if isinstance(other, VectorizedDF):
+            return other[i]
+        else:
+            return other
+
+    def vectorize_fit(
+        self,
+        estimator,
+        rowname_default="estimators",
+        colname_default="estimators",
+        **kwargs,
+    ):
+
+        row_ix, col_ix = self.get_iter_indices()
+        if row_ix is None:
+            row_ix = [rowname_default]
+        if col_ix is None:
+            col_ix = [colname_default]
+        result = pd.DataFrame(index=row_ix, columns=col_ix)
+
+        for i in len(self):
+            row_ind, col_ind = self._get_item_indexer(i=i, result=result)
+            args_i = {k: self._vectorize_slice(v, i=i) for k, v in kwargs.items()}
+            est_clone = estimator.clone()
+            result[row_ind].loc[col_ind] = est_clone.fit(**args_i)
+
+        return result
 
 
 def _enforce_index_freq(item: pd.Series) -> pd.Series:
