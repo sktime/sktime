@@ -471,7 +471,6 @@ class VectorizedDF:
             kwargs[varname_of_self] = self
 
         def vec_dict(d, i, vectorize_cols=True):
-
             def fun(v):
                 return self._vectorize_slice(v, i=i, vectorize_cols=vectorize_cols)
 
