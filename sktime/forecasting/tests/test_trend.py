@@ -10,7 +10,7 @@ import pandas as pd
 import pytest
 
 from sktime.datasets import load_airline
-from sktime.forecasting.trend import PolynomialTrendForecaster
+from sktime.forecasting.trend import PolynomialTrendForecaster, TrendForecaster
 from sktime.utils._testing.forecasting import make_forecasting_problem
 
 
@@ -64,5 +64,8 @@ def test_trendforecaster_with_datetimeindex():
     df = load_airline()
     df.index = df.index.to_timestamp()
 
-    trafo = PolynomialTrendForecaster()
-    trafo.fit(df)
+    f = PolynomialTrendForecaster()
+    f.fit(df)
+
+    f = TrendForecaster()
+    f.fit(df)
