@@ -15,7 +15,6 @@ from sklearn.preprocessing import PolynomialFeatures
 from sktime.forecasting.base import BaseForecaster
 
 
-
 def _get_X_numpy_int_from_pandas(x):
     """Convert pandas index to an sklearn compatible X, 2D np.ndarray, int type."""
     return x.astype("int64").to_numpy().reshape(-1, 1)
