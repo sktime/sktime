@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from sktime.datasets import load_airline
 from sktime.forecasting.trend import PolynomialTrendForecaster
 from sktime.utils._testing.forecasting import make_forecasting_problem
 
@@ -37,15 +38,18 @@ def _test_trend(degree, with_intercept):
 @pytest.mark.parametrize("degree", [1, 3])
 @pytest.mark.parametrize("with_intercept", [True, False])
 def test_trend(degree, with_intercept):
+    """Test PolynomialTrendForecaster coefficients."""
     _test_trend(degree, with_intercept)
 
 
 # zero trend does not work without intercept
 def test_zero_trend():
+    """Test PolynomialTrendForecaster with degree zero."""
     _test_trend(degree=0, with_intercept=True)
 
 
 def test_constant_trend():
+    """Test expected output from constant trend."""
     y = pd.Series(np.arange(30))
     fh = -np.arange(30)  # in-sample fh
 
@@ -53,3 +57,12 @@ def test_constant_trend():
     y_pred = forecaster.fit(y).predict(fh)
 
     np.testing.assert_array_almost_equal(y, y_pred)
+
+
+def test_trendforecaster_with_datetimeindex():
+    """Test PolyonmialTrendForecaster with DatetimeIndex, see #4131."""
+    df = load_airline()
+    df.index = df.index.to_timestamp()
+
+    trafo = PolynomialTrendForecaster()
+    trafo.fit(df)

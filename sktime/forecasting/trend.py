@@ -6,7 +6,6 @@
 __author__ = ["tensorflow-as-tf", "mloning", "aiwalter"]
 __all__ = ["TrendForecaster", "PolynomialTrendForecaster", "STLForecaster"]
 
-import numpy as np
 import pandas as pd
 from sklearn.base import clone
 from sklearn.linear_model import LinearRegression
@@ -14,7 +13,6 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import PolynomialFeatures
 
 from sktime.forecasting.base import BaseForecaster
-from sktime.utils.datetime import _get_duration
 
 
 class TrendForecaster(BaseForecaster):
@@ -166,6 +164,10 @@ class PolynomialTrendForecaster(BaseForecaster):
         self.regressor_ = self.regressor
         super(PolynomialTrendForecaster, self).__init__()
 
+    def _get_X_numpy_int_from_pandas(x):
+        """Convert pandas index to an sklearn compatible X, 2D np.ndarray, int type."""
+        return x.astype("int64").to_numpy().reshape(-1, 1)
+
     def _fit(self, y, X=None, fh=None):
         """Fit to training data.
 
@@ -195,12 +197,13 @@ class PolynomialTrendForecaster(BaseForecaster):
             regressor,
         )
 
-        # transform data
-        n_timepoints = _get_duration(self._y.index, coerce_to_int=True) + 1
-        X = np.arange(n_timepoints).reshape(-1, 1)
+        # we regress index on series values
+        # the sklearn X is obtained from the index of y
+        # the sklearn y can be taken as the y seen here
+        X_sklearn = self._get_X_numpy_int_from_pandas(y.index)
 
         # fit regressor
-        self.regressor_.fit(X, y)
+        self.regressor_.fit(X_sklearn, y)
         return self
 
     def _predict(self, fh=None, X=None):
@@ -219,9 +222,9 @@ class PolynomialTrendForecaster(BaseForecaster):
             Point predictions for the forecast
         """
         # use relative fh as time index to predict
-        fh = self.fh.to_absolute_int(self._y.index[0], self.cutoff)
-        X_pred = fh.to_numpy().reshape(-1, 1)
-        y_pred = self.regressor_.predict(X_pred)
+        fh = self.fh.to_absolute(self.cutoff)
+        X_sklearn = self._get_X_numpy_int_from_pandas(fh)
+        y_pred = self.regressor_.predict(X_sklearn)
         return pd.Series(y_pred, index=self.fh.to_absolute(self.cutoff))
 
     @classmethod
