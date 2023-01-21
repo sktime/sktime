@@ -479,7 +479,7 @@ class VectorizedDF:
         for i in range(len(self)):
 
             args_i = vec_dict(args, i=i, vectorize_cols=True)
-            args_i_rowvec = vec_dict(args_rowvec, i=i, vectorize_cols=True)
+            args_i_rowvec = vec_dict(args_rowvec, i=i, vectorize_cols=False)
             args_i.update(args_i_rowvec)
 
             row_ind, col_ind = self.get_iloc_indexer(i)
