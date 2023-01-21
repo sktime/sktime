@@ -314,10 +314,12 @@ class VAR(_StatsModelsAdapter):
             Name of the set of test parameters to return, for use in tests. If no
             special parameters are defined for a value, will return `"default"` set.
 
-
         Returns
         -------
         params : dict or list of dict
         """
-        params = {"maxlags": 3}
-        return params
+        params1 = {"maxlags": 3}
+
+        params2 = {"trend": "ctt"}  # breaks with "ic": "aic"}, see #4055
+
+        return [params1, params2]
