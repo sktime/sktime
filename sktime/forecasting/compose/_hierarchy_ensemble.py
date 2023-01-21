@@ -74,7 +74,7 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
     >>> forecaster = HierarchyEnsembleForecaster(
     ...                 forecasters=forecasters,
     ...                 by='level', default = ThetaForecaster()
-    ...)
+    ... )
     >>> forecaster.fit(y, fh=[1, 2, 3])
     HierarchyEnsembleForecaster(...)
     >>> y_pred = forecaster.predict()
@@ -87,7 +87,7 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
     >>> forecaster = HierarchyEnsembleForecaster(
     ...                 forecasters=forecasters,
     ...                 by='node', default=NaiveForecaster()
-    ...)
+    ... )
     >>> forecaster.fit(y, fh=[1, 2, 3])
     HierarchyEnsembleForecaster(...)
     >>> y_pred = forecaster.predict()
