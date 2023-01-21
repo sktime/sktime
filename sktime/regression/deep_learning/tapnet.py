@@ -8,6 +8,8 @@ __all__ = [
     "TapNetRegressor",
 ]
 
+from copy import deepcopy
+
 from sklearn.utils import check_random_state
 
 from sktime.networks.tapnet import TapNetNetwork
@@ -207,8 +209,6 @@ class TapNetRegressor(BaseDeepRegressor):
         -------
         self: object
         """
-        self.callbacks = self.callbacks or []
-
         # Transpose to conform to expectation format from keras
         X = X.transpose(0, 2, 1)
 
@@ -224,7 +224,7 @@ class TapNetRegressor(BaseDeepRegressor):
             batch_size=self.batch_size,
             epochs=self.n_epochs,
             verbose=self.verbose,
-            callbacks=self.callbacks,
+            callbacks=deepcopy(self.callbacks) if self.callbacks else [],
         )
 
         return self

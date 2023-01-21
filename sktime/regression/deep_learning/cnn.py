@@ -4,6 +4,8 @@
 __author__ = ["AurumnPegasus", "achieveordie"]
 __all__ = ["CNNRegressor"]
 
+from copy import deepcopy
+
 from sklearn.utils import check_random_state
 
 from sktime.networks.cnn import CNNNetwork
@@ -162,8 +164,6 @@ class CNNRegressor(BaseDeepRegressor):
         -------
         self : object
         """
-        self.callbacks = self.callbacks or []
-
         # Transpose to conform to Keras input style.
         X = X.transpose(0, 2, 1)
 
@@ -179,7 +179,7 @@ class CNNRegressor(BaseDeepRegressor):
             batch_size=self.batch_size,
             epochs=self.n_epochs,
             verbose=self.verbose,
-            callbacks=self.callbacks,
+            callbacks=deepcopy(self.callbacks) if self.callbacks else [],
         )
         return self
 
