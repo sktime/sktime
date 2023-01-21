@@ -212,6 +212,8 @@ class VectorizedDF:
         """
         if X is None:
             X = self.X_multiindex
+        elif isinstance(X, VectorizedDF):
+            X = X.X_multiindex
 
         row_ix, col_ix = self.get_iter_indices()
 
@@ -376,7 +378,7 @@ class VectorizedDF:
 
             return X_reconstructed_orig_format
 
-    def _vectorize_slice(self, other, i):
+    def _vectorize_slice(self, other, i, vectorize_cols=True):
         """Get i-th vectorization slice from other.
 
         Parameters
@@ -385,6 +387,8 @@ class VectorizedDF:
             object to take vectorization slice of
         i : integer
             index of vectorization slice to take
+        vectorize_cols : boolean, optional, default=True
+            whether to vectorize cols
 
         Returns
         -------
@@ -393,13 +397,19 @@ class VectorizedDF:
             if `other` is VectorizedDF`, returns `other[i]`
         """
         if isinstance(other, VectorizedDF):
-            return other[i]
+            row_ind, col_ind = self._get_item_indexer(i=i, X=other)
+            if vectorize_cols:
+                return other.X_multiindex[col_ind].loc[row_ind]
+            else:
+                return other.X_multiindex.loc[row_ind]
         else:
             return other
 
     def vectorize_fit(
         self,
         estimator,
+        args=None,
+        args_rowvec=None,
         rowname_default="estimators",
         colname_default="estimators",
         varname_of_self=None,
@@ -441,6 +451,15 @@ class VectorizedDF:
           Entries are fitted clones of `estimator`, fitted with arguments
           as described above.
         """
+        if args is None:
+            args = kwargs
+        else:
+            args = args.copy()
+            args.update(kwargs)
+
+        if args_rowvec is None:
+            args_rowvec = {}
+
         row_ix, col_ix = self.get_iter_indices()
         if row_ix is None:
             row_ix = [rowname_default]
@@ -451,9 +470,18 @@ class VectorizedDF:
         if varname_of_self is not None and isinstance(varname_of_self, str):
             kwargs[varname_of_self] = self
 
+        def vec_dict(d, i, vectorize_cols=True):
+
+            fun = lambda v: self._vectorize_slice(v, i=i, vectorize_cols=vectorize_cols)
+            return {k: fun(v) for k, v in args.items()}
+
         for i in range(len(self)):
+            
+            args_i = vec_dict(args, i=i, vectorize_cols=True)
+            args_i_rowvec = vec_dict(args_rowvec, i=i, vectorize_cols=True)
+            args_i.update(args_i_rowvec)
+
             row_ind, col_ind = self.get_iloc_indexer(i)
-            args_i = {k: self._vectorize_slice(v, i=i) for k, v in kwargs.items()}
             est_clone = estimator.clone()
             result.iloc[row_ind].iloc[col_ind] = est_clone.fit(**args_i)
 
