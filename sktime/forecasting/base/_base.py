@@ -1715,7 +1715,9 @@ class BaseForecaster(BaseEstimator):
         ]
 
         if methodname == "fit":
-            self.forecasters_ = kwargs["y"].vectorize_fit(self, **kwargs)
+            y = kwargs["y"]
+            self._yvec = y
+            self.forecasters_ = y.vectorize_fit(self, **kwargs)
 
         elif methodname in FIT_METHODS:
             # retrieve data arguments
