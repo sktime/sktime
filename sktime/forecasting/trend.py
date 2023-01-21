@@ -223,7 +223,7 @@ class PolynomialTrendForecaster(BaseForecaster):
         """
         # use relative fh as time index to predict
         fh = self.fh.to_absolute(self.cutoff)
-        X_sklearn = self._get_X_numpy_int_from_pandas(fh)
+        X_sklearn = self._get_X_numpy_int_from_pandas(fh.to_pandas())
         y_pred = self.regressor_.predict(X_sklearn)
         return pd.Series(y_pred, index=self.fh.to_absolute(self.cutoff))
 
