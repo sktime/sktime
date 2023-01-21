@@ -414,3 +414,53 @@ def test_enforce_index_freq(item, freq):
     """Tests that enforce freq infers the right frequency."""
     item = _enforce_index_freq(item)
     assert item.index.freq == freq
+
+
+@pytest.mark.parametrize("varname_used", [True, False])
+def test_vectorize_fit(
+    scitype, mtype, fixture_index, iterate_as, iterate_cols, varname_used
+):
+    """Tests vectorize_fit method of VectorizeDF.
+
+    Fixtures parameterized
+    ----------------------
+    scitype : str - scitype of fixture
+    mtype : str - mtype of fixture
+    fixture_index : int - index of fixture tuple with that scitype and mtype
+    iterate_as : str - level on which to iterate over
+    iterate_cols : bool - whether to iterate over columns
+
+    Raises
+    ------
+    RuntimeError if scitype is not defined or has no mtypes or examples
+    AssertionError if vectorize_fit output has unexpected format
+    exception if vectorize_fit produces error
+    """
+    from sktime.forecasting.naive import NaiveForecaster
+
+    # escape for the invalid combinations, see above
+    if not _is_valid_iterate_as(scitype, iterate_as):
+        return None
+
+    # retrieve fixture for checking
+    fixture = get_examples(mtype=mtype, as_scitype=scitype).get(fixture_index)
+    X_vect = VectorizedDF(
+        X=fixture, iterate_as=iterate_as, is_scitype=None, iterate_cols=iterate_cols
+    )
+
+    kwargs = {"fh": [1, 2], "X": X_vect}
+
+    if varname_used:
+        kwargs["varname_of_self"] = "y"
+    else:
+        kwargs["y"] = X_vect
+
+    result = X_vect.vectorize_fit(NaiveForecaster(), **kwargs)
+
+    # the result should be a pd.DataFrame
+    # with entries being fittedd NaiveForecaster clones
+    rows, cols = X_vect.get_iter_indices()
+    assert isinstance(result, pd.DataFrame)
+    assert result.shape == (len(rows), len(cols))
+    is_fcst_frame = result.applymap(result, lambda x: isinstance(x, NaiveForecaster))
+    assert is_fcst_frame.all().all()
