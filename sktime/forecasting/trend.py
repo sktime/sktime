@@ -15,6 +15,12 @@ from sklearn.preprocessing import PolynomialFeatures
 from sktime.forecasting.base import BaseForecaster
 
 
+
+def _get_X_numpy_int_from_pandas(x):
+    """Convert pandas index to an sklearn compatible X, 2D np.ndarray, int type."""
+    return x.astype("int64").to_numpy().reshape(-1, 1)
+
+
 class TrendForecaster(BaseForecaster):
     """Trend based forecasts of time series data.
 
@@ -69,11 +75,13 @@ class TrendForecaster(BaseForecaster):
         else:
             self.regressor_ = clone(self.regressor)
 
-        # transform data
-        X = y.index.astype("int64").to_numpy().reshape(-1, 1)
+        # we regress index on series values
+        # the sklearn X is obtained from the index of y
+        # the sklearn y can be taken as the y seen here
+        X_sklearn = _get_X_numpy_int_from_pandas(y.index)
 
         # fit regressor
-        self.regressor_.fit(X, y)
+        self.regressor_.fit(X_sklearn, y)
         return self
 
     def _predict(self, fh=None, X=None):
@@ -92,9 +100,9 @@ class TrendForecaster(BaseForecaster):
             Point predictions for the forecast
         """
         # use relative fh as time index to predict
-        fh = self.fh.to_absolute_int(self._y.index[0], self.cutoff)
-        X_pred = fh.to_numpy().reshape(-1, 1)
-        y_pred = self.regressor_.predict(X_pred)
+        fh = self.fh.to_absolute(self.cutoff)
+        X_sklearn = _get_X_numpy_int_from_pandas(fh.to_pandas())
+        y_pred = self.regressor_.predict(X_sklearn)
         return pd.Series(y_pred, index=self.fh.to_absolute(self.cutoff))
 
     @classmethod
@@ -164,10 +172,6 @@ class PolynomialTrendForecaster(BaseForecaster):
         self.regressor_ = self.regressor
         super(PolynomialTrendForecaster, self).__init__()
 
-    def _get_X_numpy_int_from_pandas(self, x):
-        """Convert pandas index to an sklearn compatible X, 2D np.ndarray, int type."""
-        return x.astype("int64").to_numpy().reshape(-1, 1)
-
     def _fit(self, y, X=None, fh=None):
         """Fit to training data.
 
@@ -200,7 +204,7 @@ class PolynomialTrendForecaster(BaseForecaster):
         # we regress index on series values
         # the sklearn X is obtained from the index of y
         # the sklearn y can be taken as the y seen here
-        X_sklearn = self._get_X_numpy_int_from_pandas(y.index)
+        X_sklearn = _get_X_numpy_int_from_pandas(y.index)
 
         # fit regressor
         self.regressor_.fit(X_sklearn, y)
@@ -223,7 +227,7 @@ class PolynomialTrendForecaster(BaseForecaster):
         """
         # use relative fh as time index to predict
         fh = self.fh.to_absolute(self.cutoff)
-        X_sklearn = self._get_X_numpy_int_from_pandas(fh.to_pandas())
+        X_sklearn = _get_X_numpy_int_from_pandas(fh.to_pandas())
         y_pred = self.regressor_.predict(X_sklearn)
         return pd.Series(y_pred, index=self.fh.to_absolute(self.cutoff))
 
