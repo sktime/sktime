@@ -24,7 +24,7 @@ def test_get_X_numpy():
     X_idx = _get_X_numpy_int_from_pandas(y.index)
 
     # testing pd.PeriodIndex
-    # this should be a 2D.ndnp array, with diffs being 1 (month)
+    # this should be a 2D nd.nparray, with diffs being 1 (month)
     # because month is the periodicity
     assert isinstance(X_idx, np.ndarray)
     assert X_idx.shape == (len(y), 1)
@@ -46,7 +46,7 @@ def test_get_X_numpy():
     X_idx_int = _get_X_numpy_int_from_pandas(int_ix)
 
     # testing pd.IntegerIndex
-    # this should be an integer array with entries identical to int_ix
+    # this should be an 2D integer array with entries identical to int_ix
     assert isinstance(X_idx_int, np.ndarray)
     assert X_idx_int.shape == (len(int_ix), 1)
     assert (X_idx_int.reshape(-1) == int_ix.to_numpy()).all()
