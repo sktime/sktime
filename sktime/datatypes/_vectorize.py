@@ -239,13 +239,28 @@ class VectorizedDF:
         # if row_ix and col_ix are both not None
         return len(row_ix) * len(col_ix)
 
+    def _get_X_at_index(self, row_ind=None, col_ind=None, X=None):
+        """Return subset of self, at row_ind and col_ind."""
+        if X is None:
+            X = self.X_multiindex
+        elif isinstance(X, VectorizedDF):
+            X = X.X_multiindex
+
+        if col_ind is None and row_ind is None:
+            return X
+        elif col_ind is None:
+            res = X.loc[row_ind]
+        elif row_ind is None:
+            res = X[col_ind]
+        else:
+            res = X[col_ind].loc[row_ind]
+        res = _enforce_index_freq(res)
+        return res
+
     def __getitem__(self, i: int):
         """Return the i-th element iterated over in vectorization."""
-        X = self.X_multiindex
-        row_ind, col_ind = self._get_item_indexer(i=i, X=X)
-        item = X[col_ind].loc[row_ind]
-        item = _enforce_index_freq(item)
-        return item
+        row_ind, col_ind = self._get_item_indexer(i=i)
+        return self._get_X_at_index(row_ind=row_ind, col_ind=col_ind)
 
     def _get_item_indexer(self, i: int, X=None):
 
@@ -398,10 +413,9 @@ class VectorizedDF:
         """
         if isinstance(other, VectorizedDF):
             row_ind, col_ind = self._get_item_indexer(i=i, X=other)
-            if vectorize_cols:
-                return other.X_multiindex[col_ind].loc[row_ind]
-            else:
-                return other.X_multiindex.loc[row_ind]
+            if not vectorize_cols:
+                col_ind = None
+            return self._get_X_at_index(row_ind=row_ind, col_ind=col_ind, X=other)
         else:
             return other
 
