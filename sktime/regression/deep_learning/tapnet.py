@@ -10,7 +10,6 @@ __all__ = [
 
 from copy import deepcopy
 
-from keras.callbacks import LambdaCallback
 from sklearn.utils import check_random_state
 
 from sktime.networks.tapnet import TapNetNetwork
@@ -252,6 +251,8 @@ class TapNetRegressor(BaseDeepRegressor):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
+        from keras.callbacks import LambdaCallback
+
         param1 = {
             "n_epochs": 10,
             "batch_size": 4,
