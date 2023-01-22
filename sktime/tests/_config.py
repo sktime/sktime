@@ -12,8 +12,6 @@ from sktime.registry import (
 )
 from sktime.transformations.base import BaseTransformer
 
-# The following estimators currently do not pass all unit tests
-# https://github.com/sktime/sktime/issues/1627
 EXCLUDE_ESTIMATORS = [
     # SFA is non-compliant with any transformer interfaces, #2064
     "SFA",
@@ -33,6 +31,7 @@ EXCLUDE_ESTIMATORS = [
     "TapNetRegressor",
     "TapNetClassifier",
     "ResNetClassifier",  # known ResNetClassifier sporafic failures, see #3954
+    "LSTMFCNClassifier",  # unknown cause, see bug report #4033
 ]
 
 

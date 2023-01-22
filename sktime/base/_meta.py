@@ -20,11 +20,16 @@ class _HeterogenousMetaEstimator:
     # for default get_params/set_params from _HeterogenousMetaEstimator
     # _steps_attr points to the attribute of self
     # which contains the heterogeneous set of estimators
-    # this must be an iterable of (name: str, estimator) pairs for the default
+    # this must be an iterable of (name: str, estimator, ...) tuples for the default
     _steps_attr = "_steps"
+    # if the estimator is fittable, _HeterogenousMetaEstimator also
+    # provides an override for get_fitted_params for params from the fitted estimators
+    # the fitted estimators should be in a different attribute, _steps_fitted_attr
+    # this must be an iterable of (name: str, estimator, ...) tuples for the default
+    _steps_fitted_attr = "steps_"
 
     def get_params(self, deep=True):
-        """Get parameters of estimator in `_forecasters`.
+        """Get parameters of estimator.
 
         Parameters
         ----------
@@ -41,7 +46,7 @@ class _HeterogenousMetaEstimator:
         return self._get_params(steps, deep=deep)
 
     def set_params(self, **kwargs):
-        """Set the parameters of estimator in `_forecasters`.
+        """Set the parameters of estimator.
 
         Valid parameter keys can be listed with ``get_params()``.
 
@@ -52,6 +57,28 @@ class _HeterogenousMetaEstimator:
         steps_attr = self._steps_attr
         self._set_params(steps_attr, **kwargs)
         return self
+
+    def _get_fitted_params(self):
+        """Get fitted parameters.
+
+        private _get_fitted_params, called from get_fitted_params
+
+        State required:
+            Requires state to be "fitted".
+
+        Returns
+        -------
+        fitted_params : dict with str keys
+            fitted parameters, keyed by names of fitted parameter
+        """
+        fitted_params = self._get_fitted_params_default()
+
+        steps = self._steps_fitted_attr
+        steps_params = self._get_params(steps, fitted=True)
+
+        fitted_params.update(steps_params)
+
+        return fitted_params
 
     def is_composite(self):
         """Check if the object is composite.
@@ -66,16 +93,24 @@ class _HeterogenousMetaEstimator:
         # children of this class are always composite
         return True
 
-    def _get_params(self, attr, deep=True):
-        out = super().get_params(deep=deep)
-        if not deep:
-            return out
-        estimators = getattr(self, attr)
-        out.update(estimators)
-        for name, estimator in estimators:
-            if hasattr(estimator, "get_params"):
-                for key, value in estimator.get_params(deep=True).items():
-                    out["%s__%s" % (name, key)] = value
+    def _get_params(self, attr, deep=True, fitted=False):
+
+        if fitted:
+            method = "_get_fitted_params"
+            deepkw = {}
+        else:
+            method = "get_params"
+            deepkw = {"deep": deep}
+
+        out = getattr(super(), method)(**deepkw)
+        if deep and hasattr(self, attr):
+            estimators = getattr(self, attr)
+            estimators = [(x[0], x[1]) for x in estimators]
+            out.update(estimators)
+            for name, estimator in estimators:
+                if hasattr(estimator, "get_params"):
+                    for key, value in getattr(estimator, method)(**deepkw).items():
+                        out["%s__%s" % (name, key)] = value
         return out
 
     def _set_params(self, attr, **params):
@@ -215,15 +250,15 @@ class _HeterogenousMetaEstimator:
         TypeError, if estimators in the list are not instances of cls_type
         """
         msg = (
-            f"Invalid '{attr_name}' attribute, '{attr_name}' should be a list"
+            f"Invalid {attr_name!r} attribute, {attr_name!r} should be a list"
             " of estimators, or a list of (string, estimator) tuples. "
         )
         if cls_type is None:
-            msg += f"All estimators in '{attr_name}' must be of type BaseEstimator."
+            msg += f"All estimators in {attr_name!r} must be of type BaseEstimator."
             cls_type = BaseEstimator
         elif isclass(cls_type) or isinstance(cls_type, tuple):
             msg += (
-                f"All estimators in '{attr_name}' must be of type "
+                f"All estimators in {attr_name!r} must be of type "
                 f"{cls_type.__name__}."
             )
         else:
@@ -453,7 +488,7 @@ class _HeterogenousMetaEstimator:
         if concat_order not in ["left", "right"]:
             raise ValueError(
                 f'concat_order must be one of "left", "right", but found '
-                f'"{concat_order}"'
+                f"{concat_order!r}"
             )
         if not isinstance(attr_name, str):
             raise TypeError(f"attr_name must be str, but found {type(attr_name)}")

@@ -19,7 +19,7 @@ class _HeterogenousEnsembleForecaster(_HeterogenousMetaEstimator, BaseForecaster
     # for default get_params/set_params from _HeterogenousMetaEstimator
     # _steps_attr points to the attribute of self
     # which contains the heterogeneous set of estimators
-    # this must be an iterable of (name: str, estimator) pairs for the default
+    # this must be an iterable of (name: str, estimator, ...) tuples for the default
     _steps_attr = "forecasters"
 
     def __init__(self, forecasters, n_jobs=None):

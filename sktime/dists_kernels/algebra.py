@@ -58,7 +58,7 @@ class CombinedDistance(_HeterogenousMetaEstimator, BasePairwiseTransformerPanel)
     # for default get_params/set_params from _HeterogenousMetaEstimator
     # _steps_attr points to the attribute of self
     # which contains the heterogeneous set of estimators
-    # this must be an iterable of (name: str, estimator) pairs for the default
+    # this must be an iterable of (name: str, estimator, ...) tuples for the default
     _steps_attr = "_pw_trafos"
 
     def __init__(self, pw_trafos, operation=None):

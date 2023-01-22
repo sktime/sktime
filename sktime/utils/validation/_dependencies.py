@@ -77,6 +77,17 @@ def _check_soft_dependencies(
     if not all(isinstance(x, str) for x in package_import_alias.values()):
         raise TypeError(msg)
 
+    if obj is None:
+        class_name = "This functionality"
+    elif not isclass(obj):
+        class_name = type(obj).__name__
+    elif isclass(obj):
+        class_name = obj.__name__
+    elif isinstance(obj, str):
+        class_name = obj
+    else:
+        raise TypeError("obj must be a class, an object, a str, or None")
+
     for package in packages:
 
         try:
@@ -89,7 +100,6 @@ def _check_soft_dependencies(
             )
             raise InvalidRequirement(msg_version)
 
-        req = Requirement(package)
         package_name = req.name
         package_version_req = req.specifier
 
@@ -118,14 +128,6 @@ def _check_soft_dependencies(
                     f"sktime[all_extras]`"
                 )
             else:
-                if not isclass(obj):
-                    class_name = type(obj).__name__
-                elif isclass(obj):
-                    class_name = obj.__name__
-                elif isinstance(obj, str):
-                    class_name = obj
-                else:
-                    raise TypeError("obj must be a class, an object, a str, or None")
                 msg = (
                     f"{class_name} requires package '{package}' to be present "
                     f"in the python environment, but '{package}' was not found. "
@@ -305,15 +307,18 @@ def _check_python_version(obj, package=None, msg=None, severity="error"):
 
 
 def _check_estimator_deps(obj, msg=None, severity="error"):
-    """Check all dependencies of estimator, packages and python.
+    """Check if object/estimator's package & python requirements are met by python env.
 
-    Convenience wrapper around _check_python_version and _check_soft_dependencies,
-    checking against estimator tags "python_version", "python_dependencies".
+    Convenience wrapper around `_check_python_version` and `_check_soft_dependencies`,
+    checking against estimator tags `"python_version"`, `"python_dependencies"`.
+
+    Checks whether dependency requirements of `BaseObject`-s in `obj`
+    are satisfied by the current python environment.
 
     Parameters
     ----------
-    obj : sktime estimator, BaseObject descendant
-        used to check python version
+    obj : `sktime` object, `BaseObject` descendant, or list/tuple thereof
+        object(s) that this function checks compatibility of, with the python env
     msg : str, optional, default = default message (msg below)
         error message to be returned in the `ModuleNotFoundError`, overrides default
     severity : str, "error" (default), "warning", or "none"
@@ -323,12 +328,14 @@ def _check_estimator_deps(obj, msg=None, severity="error"):
             function returns False if environment is incompatible, otherwise True
         "none" - does not raise exception or warning
             function returns False if environment is incompatible, otherwise True
+
     Returns
     -------
-    compatible : bool, whether obj is compatible with python environment
+    compatible : bool, whether `obj` is compatible with python environment
         False is returned only if no exception is raised by the function
         checks for python version using the python_version tag of obj
         checks for soft dependencies present using the python_dependencies tag of obj
+        if `obj` contains multiple `BaseObject`-s, checks whether all are compatible
 
     Raises
     ------
@@ -340,6 +347,14 @@ def _check_estimator_deps(obj, msg=None, severity="error"):
         Packages are determined based on the "python_dependencies" tag of obj.
     """
     compatible = True
+
+    # if list or tuple, recurse & iterate over element, and return conjunction
+    if isinstance(obj, (list, tuple)):
+        for x in obj:
+            x_chk = _check_estimator_deps(x, msg=msg, severity=severity)
+            compatible = compatible and x_chk
+        return compatible
+
     compatible = compatible and _check_python_version(obj, severity=severity)
 
     pkg_deps = obj.get_class_tag("python_dependencies", None)
