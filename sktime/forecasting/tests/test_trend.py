@@ -10,14 +10,50 @@ import pandas as pd
 import pytest
 
 from sktime.datasets import load_airline
-from sktime.forecasting.trend import PolynomialTrendForecaster, TrendForecaster
+from sktime.forecasting.trend import (
+    _get_X_numpy_int_from_pandas,
+    PolynomialTrendForecaster,
+    TrendForecaster,
+)
 from sktime.utils._testing.forecasting import make_forecasting_problem
+
+
+def test_get_X_numpy():
+    """Test _get_X_numpy_int_from_pandas converts to int/float as expected."""
+    y = load_airline()
+    X_idx = _get_X_numpy_int_from_pandas(y.index)
+
+    # testing pd.PeriodIndex
+    # this should be a 2D.ndnp array, with diffs being 1 (month)
+    # because month is the periodicity
+    assert isinstance(X_idx, np.ndarray)
+    assert X_idx.shape == (len(y), 1)
+    assert (np.diff(X_idx.reshape(-1)) == 1).all()
+
+    y_idx_datetime = y.index.to_timestamp()
+    X_idx_datetime = _get_X_numpy_int_from_pandas(y_idx_datetime)
+
+    # testing pd.DatetimeIndex
+    # this should be a 2D np.ndarray, with diffs being 28, 29, 30, or 31 (days)
+    # because DatetimeIndex time stamps convert to days
+    assert isinstance(X_idx_datetime, np.ndarray)
+    assert X_idx_datetime.shape == (len(y), 1)
+    intdiffs = (np.diff(X_idx_datetime.reshape(-1))).astype(int)
+    assert np.isin(intdiffs, [30, 31, 28, 29]).all()
+
+    # testing integer index
+    int_ix = pd.Index([1, 3, 5, 7])
+    X_idx_int = _get_X_numpy_int_from_pandas(int_ix)
+
+    # testing pd.IntegerIndex
+    # this should be an integer array with entries identical to int_ix
+    assert isinstance(X_idx_int, np.ndarray)
+    assert X_idx_int.shape == (len(int_ix), 1)
+    assert (X_idx_int.reshape(-1) == int_ix.to_numpy()).all()
 
 
 def get_expected_polynomial_coefs(y, degree, with_intercept=True):
     """Compute expected coefficients from polynomial regression."""
-    from sktime.forecasting.trend import _get_X_numpy_int_from_pandas
-
     t_ix = _get_X_numpy_int_from_pandas(y.index).reshape(-1)
     poly_matrix = np.vander(t_ix, degree + 1)
     if not with_intercept:
