@@ -1718,10 +1718,17 @@ class BaseForecaster(BaseEstimator):
         X = kwargs.pop("X", None)
         y = kwargs.pop("y", None)
 
-        if methodname == "fit":
+        if methodname in FIT_METHODS:
             self._yvec = y
             dX = {"X": X}
-            self.forecasters_ = y.vectorize_fit(self, y=y, args_rowvec=dX, **kwargs)
+
+            if methodname == "fit":
+                forecasters_ = y.vectorize_est(self, method="clone")
+            else:
+                forecasters_ = self.forecasters_
+            self.forecasters_ = y.vectorize_est(
+                forecasters_, method=methodname, y=y, args_rowvec=dX, **kwargs
+            )
 
         elif methodname in FIT_METHODS:
             # create container for clones

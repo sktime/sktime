@@ -419,11 +419,13 @@ class VectorizedDF:
         else:
             return other
 
-    def vectorize_fit(
+    def vectorize_est(
         self,
         estimator,
+        method="clone",
         args=None,
         args_rowvec=None,
+        return_type="pd.DataFrame",
         rowname_default="estimators",
         colname_default="estimators",
         varname_of_self=None,
@@ -449,6 +451,7 @@ class VectorizedDF:
         ----------
         estimator : an sktime estimator object, instance of descendant of BaseEstimator
             clones of the estimator will be fitted to vectorized slices of self
+        return_type : str, one of "pd.DataFrame" or "list"
         rowname_default : str, optional, default="estimators"
             used as index name of single row if no row vectorization is performed
         colname_default : str, optional, default="estimators"
@@ -479,7 +482,13 @@ class VectorizedDF:
             row_idx = [rowname_default]
         if col_idx is None:
             col_idx = [colname_default]
-        result = pd.DataFrame(index=row_idx, columns=col_idx)
+
+        if return_type == "pd.DataFrame":
+            est_frame_new = pd.DataFrame(index=row_idx, columns=col_idx)
+        elif return_type == "list":
+            est_frame_new = []
+        else:
+            raise ValueError('return_type must be one of "pd.DataFrame" or "list"')
 
         if varname_of_self is not None and isinstance(varname_of_self, str):
             kwargs[varname_of_self] = self
@@ -491,16 +500,26 @@ class VectorizedDF:
             return {k: fun(v) for k, v in d.items()}
 
         for i in range(len(self)):
+            row_ind, col_ind = self.get_iloc_indexer(i)
 
             args_i = vec_dict(args, i=i, vectorize_cols=True)
             args_i_rowvec = vec_dict(args_rowvec, i=i, vectorize_cols=False)
             args_i.update(args_i_rowvec)
 
-            row_ind, col_ind = self.get_iloc_indexer(i)
-            est_clone = estimator.clone()
-            result.iloc[row_ind].iloc[col_ind] = est_clone.fit(**args_i)
+            if not isinstance(estimator, pd.DataFrame):
+                est_i = estimator
+            else:
+                est_i = estimator.iloc[row_ind].iloc[col_ind]
 
-        return result
+            est_i_method = getattr(est_i, method)
+            est_i_result = est_i_method(**args_i)
+
+            if return_type == "pd.DataFrame":
+                est_frame_new.iloc[row_ind].iloc[col_ind] = est_i_result
+            else:  # if return_type == "list"
+                est_frame_new += [est_i_result]
+
+        return est_frame_new
 
 
 def _enforce_index_freq(item: pd.Series) -> pd.Series:
