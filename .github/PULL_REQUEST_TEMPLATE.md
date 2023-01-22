@@ -28,6 +28,11 @@ If your contribution does add a new hard dependency, we may suggest to initially
 
 <!-- This section is particularly useful if you have a pull request that is still in development. You can guide the reviews to focus on the parts that are ready for their comments. We suggest using bullets (indicated by * or -) and filled checkboxes [x] here -->
 
+#### Did you add any tests for the change?
+
+<!-- This section is useful if you have added a test in addition to the existing ones. This will ensure that further changes to these files won't introduce the same kind of bug. It is considered good practice to add tests with newly added code to enforce the fact that the code actually works. This will reduce the chance of introducing logical bugs.
+-->
+
 #### Any other comments?
 <!--
 Please be aware that we are a loose team of volunteers so patience is necessary; assistance handling other issues is very welcome. We value all user contributions, no matter how minor they are. If we are slow to review, either the pull request needs some benchmarking, tinkering, convincing, etc. or more likely the reviewers are simply busy. In either case, we ask for your understanding during the review process.
@@ -41,7 +46,6 @@ Please go through the checklist below. Please feel free to remove points if they
 ##### For all contributions
 - [ ] I've added myself to the [list of contributors](https://github.com/sktime/sktime/blob/main/.all-contributorsrc).
 - [ ] Optionally, I've updated sktime's [CODEOWNERS](https://github.com/sktime/sktime/blob/main/CODEOWNERS) to receive notifications about future changes to these files.
-- [ ] I've added unit tests and made sure they pass locally.
 - [ ] The PR title starts with either [ENH], [MNT], [DOC], or [BUG] indicating whether the PR topic is related to enhancement, maintenance, documentation, or bug.
 
 ##### For new estimators
