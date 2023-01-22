@@ -2,7 +2,7 @@
 """Test trend forecasters."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-__author__ = ["mloning"]
+__author__ = ["mloning", "fkiraly"]
 __all__ = ["get_expected_polynomial_coefs"]
 
 import numpy as np
@@ -11,9 +11,9 @@ import pytest
 
 from sktime.datasets import load_airline
 from sktime.forecasting.trend import (
-    _get_X_numpy_int_from_pandas,
     PolynomialTrendForecaster,
     TrendForecaster,
+    _get_X_numpy_int_from_pandas,
 )
 from sktime.utils._testing.forecasting import make_forecasting_problem
 
