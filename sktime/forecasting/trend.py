@@ -161,7 +161,7 @@ class PolynomialTrendForecaster(BaseForecaster):
     and :math:`p` is the polynomial feature transform with degree `degree`,
     and with/without intercept depending on `with_intercept`,
     fits an `sklearn` model :math:`v_i = f(p(t_i)) + \epsilon_i`, where `f` is
-    the model fitted when `regressor.fit` is passed `X` = vector of :math:`t_i`,
+    the model fitted when `regressor.fit` is passed `X` = vector of :math:`p(t_i)`,
     and `y` = vector of :math:`v_i`.
 
     In `predict`, for a new time point :math:`t_*`, predicts :math:`f(p(t_*))`,
