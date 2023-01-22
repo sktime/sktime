@@ -455,7 +455,8 @@ def test_vectorize_fit(
     else:
         kwargs["y"] = X_vect
 
-    result = X_vect.vectorize_fit(NaiveForecaster(), **kwargs)
+    est_clones = X_vect.vectorize_est(NaiveForecaster(), method="clone")
+    result = X_vect.vectorize_est(est_clones, method="fit", **kwargs)
 
     def _len(x):
         if x is None:
