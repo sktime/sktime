@@ -153,7 +153,7 @@ class PolynomialTrendForecaster(BaseForecaster):
 
     Uses a `sklearn` regressor `regressor` to regress values of time series on index,
     after extraction of polynomial features.
-    Same as pipeline of `TrendForecaster` with transformation step
+    Same `TrendForecaster` where `regressor` is pipelined with transformation step
     `PolynomialFeatures(degree, with_intercept)` applied to time, at the start.
 
     In `fit`, for input time series :math:`(v_i, p(t_i)), i = 1, \dots, T`,
