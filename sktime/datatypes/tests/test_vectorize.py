@@ -458,9 +458,11 @@ def test_vectorize_fit(
     result = X_vect.vectorize_fit(NaiveForecaster(), **kwargs)
 
     # the result should be a pd.DataFrame
-    # with entries being fittedd NaiveForecaster clones
+    # with entries being fitted NaiveForecaster clones
     rows, cols = X_vect.get_iter_indices()
+    n_rows = len(rows) if rows else 1
+    n_cols = len(cols) if cols else 1
     assert isinstance(result, pd.DataFrame)
-    assert result.shape == (len(rows), len(cols))
+    assert result.shape == (n_rows, n_cols)
     is_fcst_frame = result.applymap(result, lambda x: isinstance(x, NaiveForecaster))
     assert is_fcst_frame.all().all()
