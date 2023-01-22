@@ -16,7 +16,10 @@ from sktime.utils._testing.forecasting import make_forecasting_problem
 
 def get_expected_polynomial_coefs(y, degree, with_intercept=True):
     """Compute expected coefficients from polynomial regression."""
-    poly_matrix = np.vander(np.arange(len(y)), degree + 1)
+    from sktime.forecasting.trend import _get_X_numpy_int_from_pandas
+
+    t_ix = _get_X_numpy_int_from_pandas(y.index).reshape(-1)
+    poly_matrix = np.vander(t_ix, degree + 1)
     if not with_intercept:
         poly_matrix = poly_matrix[:, :-1]
     return np.linalg.lstsq(poly_matrix, y.to_numpy(), rcond=None)[0]
