@@ -70,7 +70,7 @@ class LSTMFCNClassifier(BaseDeepClassifier):
 
     def __init__(
         self,
-        n_epochs=100,
+        n_epochs=2000,
         batch_size=128,
         dropout=0.8,
         kernel_sizes=(8, 5, 3),
@@ -84,7 +84,6 @@ class LSTMFCNClassifier(BaseDeepClassifier):
 
         super(LSTMFCNClassifier, self).__init__()
 
-        # calced in fit
         self.classes_ = None
         self.input_shape = None
         self.model_ = None
@@ -103,7 +102,14 @@ class LSTMFCNClassifier(BaseDeepClassifier):
         self.random_state = random_state
         self.verbose = verbose
 
-        self._network = LSTMFCNNetwork()
+        self._network = LSTMFCNNetwork(
+            kernel_sizes=self.kernel_sizes,
+            filter_sizes=self.filter_sizes,
+            random_state=self.random_state,
+            lstm_size=self.lstm_size,
+            dropout=self.dropout,
+            attention=self.attention,
+        )
         self._is_fitted = False
 
     def build_model(self, input_shape, n_classes, **kwargs):
@@ -225,11 +231,19 @@ class LSTMFCNClassifier(BaseDeepClassifier):
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
         param1 = {
-            "n_epochs": 50,
+            "n_epochs": 25,
+            "batch_size": 4,
+            "kernel_sizes": (3, 2, 1),
+            "filter_sizes": (2, 4, 2),
         }
 
         param2 = {
-            "n_epochs": 100,
+            "n_epochs": 5,
+            "batch_size": 2,
+            "kernel_sizes": (3, 2, 1),
+            "filter_sizes": (2, 4, 2),
+            "lstm_size": 2,
+            "attention": True,
         }
 
         return [param1, param2]

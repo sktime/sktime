@@ -2,6 +2,12 @@
 """Test extraction of features across (shifted) windows."""
 __author__ = ["danbartl"]
 
+from sktime.utils.validation._dependencies import _check_soft_dependencies
+
+# HistGradientBoostingRegressor requires experimental flag in old sklearn versions
+if _check_soft_dependencies("sklearn<1.0", severity="none"):
+    from sklearn.experimental import enable_hist_gradient_boosting  # noqa
+
 import random
 
 import numpy as np
@@ -177,7 +183,6 @@ def test_direct_reduction(y, index_names):
 
     forecaster2 = make_reduction(
         regressor,
-        scitype="tabular-regressor",
         transformers=[WindowSummarizer(**kwargs, n_jobs=1)],
         window_length=None,
         strategy="recursive",
@@ -218,7 +223,6 @@ def test_list_reduction(y, index_names):
 
     forecaster2 = make_reduction(
         regressor,
-        scitype="tabular-regressor",
         transformers=[WindowSummarizer(**kwargs), WindowSummarizer(**kwargs_variant)],
         window_length=None,
         strategy="recursive",
