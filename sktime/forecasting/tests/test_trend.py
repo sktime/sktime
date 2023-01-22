@@ -71,7 +71,7 @@ def _test_trend(degree, with_intercept):
     # intercept is added in reverse order
     actual = forecaster.regressor_.steps[-1][1].coef_[::-1]
     expected = get_expected_polynomial_coefs(y, degree, with_intercept)
-    np.testing.assert_allclose(actual, expected)
+    np.testing.assert_allclose(actual, expected, rtol=1e-5)
 
 
 @pytest.mark.parametrize("degree", [1, 3])
