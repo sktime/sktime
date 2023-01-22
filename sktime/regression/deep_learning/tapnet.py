@@ -10,6 +10,7 @@ __all__ = [
 
 from copy import deepcopy
 
+from keras.callbacks import LambdaCallback
 from sklearn.utils import check_random_state
 
 from sktime.networks.tapnet import TapNetNetwork
@@ -265,4 +266,9 @@ class TapNetRegressor(BaseDeepRegressor):
             "layers": (25, 25),
         }
 
-        return [param1, param2]
+        param3 = {
+            "n_epochs": 2,
+            "callbacks": [LambdaCallback()],
+        }
+
+        return [param1, param2, param3]

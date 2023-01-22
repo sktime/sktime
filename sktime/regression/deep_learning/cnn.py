@@ -6,6 +6,7 @@ __all__ = ["CNNRegressor"]
 
 from copy import deepcopy
 
+from keras.callbacks import LambdaCallback
 from sklearn.utils import check_random_state
 
 from sktime.networks.cnn import CNNNetwork
@@ -218,4 +219,9 @@ class CNNRegressor(BaseDeepRegressor):
             "n_conv_layers": 1,
         }
 
-        return [param1, param2]
+        param3 = {
+            "n_epochs": 2,
+            "callbacks": [LambdaCallback()],
+        }
+
+        return [param1, param2, param3]

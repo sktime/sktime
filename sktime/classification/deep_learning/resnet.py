@@ -6,6 +6,7 @@ __all__ = ["ResNetClassifier"]
 
 from copy import deepcopy
 
+from keras.callbacks import LambdaCallback
 from sklearn.utils import check_random_state
 
 from sktime.classification.deep_learning.base import BaseDeepClassifier
@@ -206,9 +207,15 @@ class ResNetClassifier(BaseDeepClassifier):
         }
 
         param2 = {
-            "n_epochs": 12,
-            "batch_size": 6,
-            "use_bias": True,
+            "n_epochs": 2,
+            "callbacks": [LambdaCallback()],
         }
 
-        return [param1, param2]
+        param3 = {
+            "n_epochs": 4,
+            "batch_size": 4,
+            "use_bias": False,
+            "callbacks": [LambdaCallback()],
+        }
+
+        return [param1, param2, param3]
