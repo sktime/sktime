@@ -431,7 +431,7 @@ class VectorizedDF:
         varname_of_self=None,
         **kwargs,
     ):
-        """Fit multiple clones of estimator in broadcast shape, return in pd.DataFrame.
+        """Vectorize application of estimator method, return results DataFrame or list.
 
         This function returns a `pd.DataFrame` with `estimator` fitted on
         vectorization slices of `self`. Row and column indices are the
@@ -451,6 +451,8 @@ class VectorizedDF:
         ----------
         estimator : an sktime estimator object, instance of descendant of BaseEstimator
             clones of the estimator will be fitted to vectorized slices of self
+        method : str, optional, default="clone"
+            method of estimator to call with arguments in `args`, `args_rowvec`
         return_type : str, one of "pd.DataFrame" or "list"
         rowname_default : str, optional, default="estimators"
             used as index name of single row if no row vectorization is performed
