@@ -239,6 +239,11 @@ class VectorizedDF:
         # if row_ix and col_ix are both not None
         return len(row_ix) * len(col_ix)
 
+    def __getitem__(self, i: int):
+        """Return the i-th element iterated over in vectorization."""
+        row_ind, col_ind = self._get_item_indexer(i=i)
+        return self._get_X_at_index(row_ind=row_ind, col_ind=col_ind)
+
     def _get_X_at_index(self, row_ind=None, col_ind=None, X=None):
         """Return subset of self, at row_ind and col_ind."""
         if X is None:
@@ -256,11 +261,6 @@ class VectorizedDF:
             res = X[col_ind].loc[row_ind]
         res = _enforce_index_freq(res)
         return res
-
-    def __getitem__(self, i: int):
-        """Return the i-th element iterated over in vectorization."""
-        row_ind, col_ind = self._get_item_indexer(i=i)
-        return self._get_X_at_index(row_ind=row_ind, col_ind=col_ind)
 
     def _get_item_indexer(self, i: int, X=None):
 
@@ -474,12 +474,12 @@ class VectorizedDF:
         if args_rowvec is None:
             args_rowvec = {}
 
-        row_ix, col_ix = self.get_iter_indices()
-        if row_ix is None:
-            row_ix = [rowname_default]
-        if col_ix is None:
-            col_ix = [colname_default]
-        result = pd.DataFrame(index=row_ix, columns=col_ix)
+        row_idx, col_idx = self.get_iter_indices()
+        if row_idx is None:
+            row_idx = [rowname_default]
+        if col_idx is None:
+            col_idx = [colname_default]
+        result = pd.DataFrame(index=row_idx, columns=col_idx)
 
         if varname_of_self is not None and isinstance(varname_of_self, str):
             kwargs[varname_of_self] = self
