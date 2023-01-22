@@ -41,7 +41,7 @@ class TrendForecaster(BaseForecaster):
     Default for `regressor` is linear regression = `sklearn` `LinearRegression` default.
 
     If time stamps are `pd.DatetimeIndex`, fitted coefficients are in units
-    of days since start of 1970.  If time stamps are `pd.PeriodIndex`,
+    of days since start of 1970. If time stamps are `pd.PeriodIndex`,
     coefficients are in units of (full) periods since start of 1970.
 
     Parameters
@@ -171,7 +171,7 @@ class PolynomialTrendForecaster(BaseForecaster):
     Default for `regressor` is linear regression = `sklearn` `LinearRegression` default.
 
     If time stamps are `pd.DatetimeIndex`, fitted coefficients are in units
-    of days since start of 1970.  If time stamps are `pd.PeriodIndex`,
+    of days since start of 1970. If time stamps are `pd.PeriodIndex`,
     coefficients are in units of (full) periods since start of 1970.
 
     Parameters
