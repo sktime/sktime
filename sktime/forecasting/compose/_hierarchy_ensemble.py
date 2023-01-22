@@ -81,8 +81,8 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
 
     >>> # Example of by = 'node'
     >>> forecasters = [
-    ...     ('exps', ExponentialSmoothing(), ("__total", "__total")),
-    ...    ('theta', ThetaForecaster(), ('l2_node01', 'l1_node01')),
+    ...     ('exps', ExponentialSmoothing(), [("__total", "__total")]),
+    ...    ('theta', ThetaForecaster(), [('l2_node01', 'l1_node01')]),
     ... ]
     >>> forecaster = HierarchyEnsembleForecaster(
     ...                 forecasters=forecasters,
