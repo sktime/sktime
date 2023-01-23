@@ -265,7 +265,7 @@ class TapNetClassifier(BaseDeepClassifier):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
-        from keras.callbacks import LambdaCallback
+        from sktime.utils.validation._dependencies import _check_soft_dependencies
 
         param1 = {
             "n_epochs": 20,
@@ -281,10 +281,16 @@ class TapNetClassifier(BaseDeepClassifier):
             "use_cnn": False,
             "layers": (25, 25),
         }
+        test_params = [param1, param2]
 
-        param3 = {
-            "n_epochs": 2,
-            "callbacks": [LambdaCallback()],
-        }
+        if _check_soft_dependencies("keras", severity="none"):
+            from keras.callbacks import LambdaCallback
 
-        return [param1, param2, param3]
+            test_params.append(
+                {
+                    "n_epochs": 2,
+                    "callbacks": [LambdaCallback()],
+                }
+            )
+
+        return test_params
