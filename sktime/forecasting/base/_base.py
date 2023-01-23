@@ -1733,7 +1733,7 @@ class BaseForecaster(BaseEstimator):
                 forecasters_ = self.forecasters_
 
             self.forecasters_ = y.vectorize_est(
-                forecasters_, method=methodname, **kwargs,
+                forecasters_, method=methodname, **kwargs
             )
             return self
 
@@ -1745,7 +1745,7 @@ class BaseForecaster(BaseEstimator):
                 self._yvec = y
 
             y_preds = self._yvec.vectorize_est(
-                self.forecasters_, method=methodname, return_type="list", **kwargs,
+                self.forecasters_, method=methodname, return_type="list", **kwargs
             )
 
             # if we vectorize over columns,
