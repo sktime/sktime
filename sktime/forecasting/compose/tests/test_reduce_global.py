@@ -282,7 +282,7 @@ def test_equality_transfo_nontranso(regressor):
 
 
 def test_nofreq_pass():
-    """Test that recursive reducers return same results for global / local forecasts."""
+    """Test that recursive reducers return same results with / without freq given."""
     regressor = make_pipeline(
         LinearRegression(),
     )
