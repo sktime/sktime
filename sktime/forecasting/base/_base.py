@@ -1760,44 +1760,6 @@ class BaseForecaster(BaseEstimator):
                 y_pred.columns = y_pred.columns.droplevel(1)
             return y_pred
 
-        elif methodname in PREDICT_METHODS:
-
-            n = len(self.forecasters_.index)
-            m = len(self.forecasters_.columns)
-
-            if X is None:
-                Xs = [None] * n * m
-            elif isinstance(X, VectorizedDF):
-                Xs = X.as_list()
-            else:
-                Xs = [X]
-
-            if methodname == "update_predict_single":
-                self._yvec = y
-                ys = y.as_list()
-
-            y_preds = []
-            ix = -1
-            for i, j in product(range(n), range(m)):
-                ix += 1
-                method = getattr(self.forecasters_.iloc[i].iloc[j], methodname)
-
-                if methodname != "update_predict_single":
-                    y_preds += [method(X=Xs[i], **kwargs)]
-                else:
-                    y_preds += [method(y=ys[ix], X=Xs[i], **kwargs)]
-
-            # if we vectorize over columns,
-            #   we need to replace top column level with variable names - part 1
-            col_multiindex = "multiindex" if m > 1 else "none"
-            y_pred = self._yvec.reconstruct(
-                y_preds, overwrite_index=True, col_multiindex=col_multiindex
-            )
-            # if vectorize over columns replace top column level with variable names
-            if col_multiindex == "multiindex":
-                y_pred.columns = y_pred.columns.droplevel(1)
-            return y_pred
-
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
 
