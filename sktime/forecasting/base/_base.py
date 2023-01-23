@@ -1716,11 +1716,11 @@ class BaseForecaster(BaseEstimator):
 
         # retrieve data arguments
         X = kwargs.pop("X", None)
-        y = kwargs.pop("y", None)
+        y = kwargs.get("y", None)
+        kwargs["args_rowvec"] = {"X": X}
 
         if methodname in FIT_METHODS:
             self._yvec = y
-            dX = {"X": X}
 
             if methodname == "fit":
                 forecasters_ = y.vectorize_est(
@@ -1735,13 +1735,37 @@ class BaseForecaster(BaseEstimator):
             self.forecasters_ = y.vectorize_est(
                 forecasters_,
                 method=methodname,
-                y=y,
-                args_rowvec=dX,
                 rowname_default="forecasters",
                 colname_default="forecasters",
                 **kwargs,
             )
             return self
+
+        elif methodname in PREDICT_METHODS:
+
+            if methodname == "update_predict_single":
+                self._yvec = y
+
+            y_preds = self._yvec.vectorize_est(
+                self.forecasters_,
+                method=methodname,
+                rowname_default="forecasters",
+                colname_default="forecasters",
+                return_type="list",
+                **kwargs,
+            )
+
+            # if we vectorize over columns,
+            #   we need to replace top column level with variable names - part 1
+            m = len(self.forecasters_.columns)
+            col_multiindex = "multiindex" if m > 1 else "none"
+            y_pred = self._yvec.reconstruct(
+                y_preds, overwrite_index=True, col_multiindex=col_multiindex
+            )
+            # if vectorize over columns replace top column level with variable names
+            if col_multiindex == "multiindex":
+                y_pred.columns = y_pred.columns.droplevel(1)
+            return y_pred
 
         elif methodname in PREDICT_METHODS:
 
