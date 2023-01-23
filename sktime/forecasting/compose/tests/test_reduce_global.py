@@ -281,47 +281,6 @@ def test_equality_transfo_nontranso(regressor):
         np.testing.assert_almost_equal(recursive_without, recursive_global)
 
 
-regressor = make_pipeline(
-    LinearRegression(),
-)
-
-kwargs = {
-    "lag_feature": {
-        "lag": [1],
-    }
-}
-
-forecaster_global = make_reduction(
-    regressor,
-    scitype="tabular-regressor",
-    transformers=[WindowSummarizer(**kwargs, n_jobs=1, truncate="bfill")],
-    window_length=None,
-    strategy="recursive",
-    pooling="global",
-)
-
-forecaster_global_freq = make_reduction(
-    regressor,
-    scitype="tabular-regressor",
-    transformers=[WindowSummarizer(**kwargs, n_jobs=1, truncate="bfill")],
-    window_length=None,
-    strategy="recursive",
-    pooling="global",
-)
-
-y = _make_hierarchical(
-    hierarchy_levels=(100,), min_timepoints=1000, max_timepoints=1000
-)
-
-y_no_freq = y.reset_index().set_index(["h0", "time"])
-
-forecaster_global.fit(y)
-forecaster_global_freq.fit(y_no_freq)
-
-y_pred_global = forecaster_global.predict(fh=[1, 2])
-y_pred_nofreq = forecaster_global_freq.predict(fh=[1, 2])
-
-
 def test_nofreq_pass():
     """Test that recursive reducers return same results for global / local forecasts."""
     regressor = make_pipeline(
