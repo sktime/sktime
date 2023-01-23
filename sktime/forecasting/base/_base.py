@@ -1723,38 +1723,24 @@ class BaseForecaster(BaseEstimator):
             dX = {"X": X}
 
             if methodname == "fit":
-                forecasters_ = y.vectorize_est(self, method="clone")
+                forecasters_ = y.vectorize_est(
+                    self,
+                    method="clone",
+                    rowname_default="forecasters",
+                    colname_default="forecasters",
+                )
             else:
                 forecasters_ = self.forecasters_
+
             self.forecasters_ = y.vectorize_est(
-                forecasters_, method=methodname, y=y, args_rowvec=dX, **kwargs
+                forecasters_,
+                method=methodname,
+                y=y,
+                args_rowvec=dX,
+                rowname_default="forecasters",
+                colname_default="forecasters",
+                **kwargs,
             )
-
-        elif methodname in FIT_METHODS:
-            # create container for clones
-            self._yvec = y
-
-            row_idx, col_idx = y.get_iter_indices()
-            ys = y.as_list()
-
-            if X is None:
-                Xs = [None] * len(ys)
-            else:
-                Xs = X.as_list()
-
-            if row_idx is None:
-                row_idx = ["forecasters"]
-            if col_idx is None:
-                col_idx = ["forecasters"]
-
-            if methodname == "fit":
-                self.forecasters_ = pd.DataFrame(index=row_idx, columns=col_idx)
-            for ix in range(len(ys)):
-                i, j = y.get_iloc_indexer(ix)
-                if methodname == "fit":
-                    self.forecasters_.iloc[i].iloc[j] = self.clone()
-                method = getattr(self.forecasters_.iloc[i].iloc[j], methodname)
-                method(y=ys[ix], X=Xs[i], **kwargs)
             return self
 
         elif methodname in PREDICT_METHODS:
