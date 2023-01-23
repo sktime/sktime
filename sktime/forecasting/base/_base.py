@@ -1717,42 +1717,35 @@ class BaseForecaster(BaseEstimator):
         # retrieve data arguments
         X = kwargs.pop("X", None)
         y = kwargs.get("y", None)
-        kwargs["args_rowvec"] = {"X": X}
 
+        # add some common arguments to kwargs
+        kwargs["args_rowvec"] = {"X": X}
+        kwargs["rowname_default"] = "forecasters"
+        kwargs["colname_default"] = "forecasters"
+
+        # fit-like methods: write y to self._yvec; then run method; clone first if fit
         if methodname in FIT_METHODS:
             self._yvec = y
 
             if methodname == "fit":
-                forecasters_ = y.vectorize_est(
-                    self,
-                    method="clone",
-                    rowname_default="forecasters",
-                    colname_default="forecasters",
-                )
+                forecasters_ = y.vectorize_est(self, method="clone")
             else:
                 forecasters_ = self.forecasters_
 
             self.forecasters_ = y.vectorize_est(
-                forecasters_,
-                method=methodname,
-                rowname_default="forecasters",
-                colname_default="forecasters",
-                **kwargs,
+                forecasters_, method=methodname, **kwargs,
             )
             return self
 
+        # predict-like methods: return as list, then run through reconstruct
+        # to obtain a pandas based container in one of the pandas mtype formats
         elif methodname in PREDICT_METHODS:
 
             if methodname == "update_predict_single":
                 self._yvec = y
 
             y_preds = self._yvec.vectorize_est(
-                self.forecasters_,
-                method=methodname,
-                rowname_default="forecasters",
-                colname_default="forecasters",
-                return_type="list",
-                **kwargs,
+                self.forecasters_, method=methodname, return_type="list", **kwargs,
             )
 
             # if we vectorize over columns,
