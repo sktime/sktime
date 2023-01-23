@@ -49,6 +49,7 @@ __all__ = [
     "_PanelToPanelTransformer",
 ]
 
+from itertools import product
 from typing import Union
 
 import numpy as np

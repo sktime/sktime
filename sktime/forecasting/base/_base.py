@@ -39,6 +39,7 @@ __author__ = ["mloning", "big-o", "fkiraly", "sveameyer13", "miraep8"]
 __all__ = ["BaseForecaster"]
 
 from copy import deepcopy
+from itertools import product
 from warnings import warn
 
 import numpy as np
