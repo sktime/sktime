@@ -327,9 +327,9 @@ class _Reducer(_BaseWindowForecaster):
             contains the y and X data prepared for the respective windows, see above.
 
         """
-        if hasattr(get_time_index(self._y), "freq"):
-            if get_time_index(self._y).freq is None:
-                freq_inferred = pd.infer_freq(get_time_index(self._y))
+        if hasattr(self._timepoints, "freq"):
+            if self._timepoints.freq is None:
+                freq_inferred = pd.infer_freq(self._timepoints)
                 cutoff_with_freq = self._cutoff
                 cutoff_with_freq.freq = freq_inferred
             else:
@@ -440,7 +440,8 @@ class _DirectReducer(_Reducer):
         # We currently only support out-of-sample predictions. For the direct
         # strategy, we need to check this at the beginning of fit, as the fh is
         # required for fitting.
-        n_timepoints = len(get_time_index(y))
+        self._timepoints = get_time_index(y)
+        n_timepoints = len(self._timepoints)
 
         if self.pooling is not None and self.pooling not in ["local", "global"]:
             raise ValueError(
@@ -508,7 +509,6 @@ class _DirectReducer(_Reducer):
 
         yt, Xt = self._transform(y, X)
 
-        n_window = len(get_time_index(yt))
         # Iterate over forecasting horizon, fitting a separate estimator for each step.
         self.estimators_ = []
         for i in range(len(self.fh)):
@@ -517,8 +517,8 @@ class _DirectReducer(_Reducer):
 
             if self.transformers_ is not None:
                 fh_rel = fh.to_relative(self.cutoff)
-                yt = _cut_df(yt, n_window - fh_rel[i] + 1)
-                Xt = _cut_df(Xt, n_window - fh_rel[i] + 1, type="head")
+                yt = _cut_df(yt, n_timepoints - fh_rel[i] + 1)
+                Xt = _cut_df(Xt, n_timepoints - fh_rel[i] + 1, type="head")
                 estimator.fit(Xt, yt)
             else:
                 if self.windows_identical is True:
@@ -798,7 +798,8 @@ class _RecursiveReducer(_Reducer):
                     + "truncate_start"
                 )
 
-            n_timepoints = len(get_time_index(y))
+            self._timepoints = get_time_index(y)
+            n_timepoints = len(self._timepoints)
             if self.transformers_ is not None and n_timepoints < max(ts):
                 raise ValueError(
                     "Not sufficient observations to calculate transformations"
