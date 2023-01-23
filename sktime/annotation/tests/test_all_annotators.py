@@ -25,7 +25,7 @@ def test_output_type(Estimator):
     estimator = Estimator.create_test_instance()
 
     arg = make_annotation_problem(
-        n_timepoints=50, estimator_type=all_estimators.get_tag("distribution_type")
+        n_timepoints=50, estimator_type=estimator.get_tag("distribution_type")
     )
     estimator.fit(arg)
     arg = make_annotation_problem(
