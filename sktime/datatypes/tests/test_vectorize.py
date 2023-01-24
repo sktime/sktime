@@ -417,7 +417,7 @@ def test_enforce_index_freq(item, freq):
 
 
 @pytest.mark.parametrize("varname_used", [True, False])
-def test_vectorize_fit(
+def test_vectorize_est(
     scitype, mtype, fixture_index, iterate_as, iterate_cols, varname_used
 ):
     """Tests vectorize_est method of VectorizeDF, for method = clone, fit.
