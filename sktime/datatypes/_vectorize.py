@@ -202,13 +202,24 @@ class VectorizedDF:
     def _iter_indices(self, X=None):
         """Get indices that are iterated over in vectorization.
 
+        Allows specifying `X` other than self, in which case indices are references
+        to row and column indices of `X`.
+
+        Parameters
+        ----------
+        X : `None`, `VectorizedDF`, or pd.DataFrame; optional, default=self
+          must be in one of the `sktime` time series formats, with last column time
+          if not `self`, the highest levels of row or column index in `X`
+          must agree with those indices of `self` that are non-trivially vectorized
+
         Returns
         -------
-        list of pair of pandas.Index or pandas.MultiIndex
+        list of pair of `pandas.Index` or `pandas.MultiIndex`
             iterable with unique indices that are iterated over
             use to reconstruct data frame after iteration
-            i-th element of list selects rows/columns in i-th iterate sub-DataFrame
+            `i`-th element of list selects rows/columns in `i`-th iterate sub-DataFrame
             first element of pair are rows, second element are columns selected
+            references are `loc` references, to rows and columns of `X` (default=self)
         """
         if X is None:
             X = self.X_multiindex
@@ -245,7 +256,23 @@ class VectorizedDF:
         return self._get_X_at_index(row_ind=row_ind, col_ind=col_ind)
 
     def _get_X_at_index(self, row_ind=None, col_ind=None, X=None):
-        """Return subset of self, at row_ind and col_ind."""
+        """Return subset of self, at row_ind and col_ind.
+
+        Parameters
+        ----------
+        row_ind : `None`, or `pd.Index` coercible; optional, default=None
+        col_ind : `None`, or `pd.Index` coercible; optional, default=None
+        X : `None`, `VectorizedDF`, or pd.DataFrame; optional, default=self
+          must be in one of the `sktime` time series formats, with last column time
+
+        Returns
+        -------
+        `pd.DataFrame`, loc-subset of `X` to `row_ind` at rows, and `col_ind` at cols
+
+        * if `row_ind` or `col_ind` are `None`, rows/cols are not subsetted
+        * if `X` is `VectorizedDF`, it is replaced by `X.X_multiindex` (`pandas` form)
+        * the `freq` attribute of the last index level is preserved in subsetting
+        """
         if X is None:
             X = self.X_multiindex
         elif isinstance(X, VectorizedDF):
@@ -263,6 +290,19 @@ class VectorizedDF:
         return res
 
     def _get_item_indexer(self, i: int, X=None):
+        """Get the i-th indexer from _iter_indices.
+
+        Parameters
+        ----------
+        X : `None`, `VectorizedDF`, or pd.DataFrame; optional, default=self
+          must be in one of the `sktime` time series formats, with last column time
+          if not `self`, the highest levels of row or column index in `X`
+          must agree with those indices of `self` that are non-trivially vectorized
+
+        Returns
+        -------
+        self._iter_indices(X=X)[i], tuple elements coerced to pd.Index coercible
+        """
 
         row_ind, col_ind = self._iter_indices(X=X)[i]
         if isinstance(col_ind, list):
@@ -449,18 +489,29 @@ class VectorizedDF:
 
         Parameters
         ----------
-        estimator : an sktime estimator object, instance of descendant of BaseEstimator
-            clones of the estimator will be fitted to vectorized slices of self
+        estimator : one of
+            a. an sktime estimator object, instance of descendant of BaseEstimator
+            b. pd.DataFrame with row/col indices being `self.get_iter_indices()`,
+               entries sktime estimator objects, inst. of descendants of BaseEstimator
         method : str, optional, default="clone"
             method of estimator to call with arguments in `args`, `args_rowvec`
+        args : dict, optional, default=empty dict
+            arguments to pass to `method` of estimator clones
+            will vectorize/iterater over rows and columns
+        args_rowvec : dict, optional, default=empty dict
+            arguments to pass to `method` of estimator clones
+            will vectorize/iterater only over rows but not over columns
         return_type : str, one of "pd.DataFrame" or "list"
+            the return will be of this type;
+            if `pd.DataFrame`, with row/col indices being `self.get_iter_indices()`
+            if `list`, entries in sequence corresponding to `self__getitem__`
         rowname_default : str, optional, default="estimators"
             used as index name of single row if no row vectorization is performed
         colname_default : str, optional, default="estimators"
             used as index name of single column if no column vectorization is performed
         varname_of_self : str, optional, default=None
             if not None, self will be passed as kwarg under name "varname_of_self"
-        kwargs : will be passed to `fit` of clones on vectorized slices
+        kwargs : will be passed to invoked methods of estimator(s) in `estimator`
 
         Returns
         -------
