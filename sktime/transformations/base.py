@@ -1118,7 +1118,7 @@ class BaseTransformer(BaseEstimator):
             else:
                 transformers_ = X.vectorize_est(self, method="clone")
                 transformers_ = X.vectorize_est(transformers_, method="fit", **kwargs)
-                transformers_ = X.vectorize_est(
+                Xts = X.vectorize_est(
                     transformers_, method=methodname, return_type="list", **kwargs
                 )
                 Xt = X.reconstruct(Xts, overwrite_index=False)
