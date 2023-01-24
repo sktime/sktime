@@ -1088,7 +1088,7 @@ class BaseTransformer(BaseEstimator):
             else:
                 transformers_ = self.transformers_
 
-            self.transformers_ = y.vectorize_est(
+            self.transformers_ = X.vectorize_est(
                 transformers_, method=methodname, **kwargs
             )
             return self
