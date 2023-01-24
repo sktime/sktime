@@ -48,15 +48,7 @@ class BKFilter(BaseTransformer):
 
     Notes
     -----
-    Returns a centered weighted moving average of the original series. Where
-    the weights a[j] are computed ::
-      a[j] = b[j] + theta, for j = 0, +/-1, +/-2, ... +/- K
-      b[0] = (omega_2 - omega_1)/pi
-      b[j] = 1/(pi*j)(sin(omega_2*j)-sin(omega_1*j), for j = +/-1, +/-2,...
-    and theta is a normalizing constant ::
-      theta = -sum(b)/(2K+1)
-    See the notebook `Time Series Filters
-    <../examples/notebooks/generated/tsa_filters.html>`__ for an overview.
+    Returns a centered weighted moving average of the original series.
 
     References
     ----------
