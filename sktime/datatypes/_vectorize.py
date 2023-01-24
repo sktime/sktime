@@ -476,12 +476,29 @@ class VectorizedDF:
         vectorization slices of `self`. Row and column indices are the
         same as obtained from `get_iter_indices`.
 
-        For a row and column of the return, the entry is a clone of `estimator`,
-        where `fit` has been executed with the following arguments:
+        This function:
+
+        1. takes a single `sktime` estimator or a `pd.DataFrame` with estimator entries
+        2. calls `method` of estimator, with arguments as per `args`, `args_rowvec`
+        3. returns the result, a list or pd.DataFrame with estimator values
+
+        If `estimator` is a single estimator, it is broadcast to a `pd.DataFrame`.
+        Elements of `args`, `args_rowvec` can be `VectorizedDF`, in which case
+        they are broadcast in the application step 2.
+
+        For a row and column of the return,
+        the entry is `estimator` at the same entry (if `DataFrame`) or `estimator`,
+        where `method` has been executed with the following arguments:
+
         * `varname=value`, where `varname`/`value` are key-value pair of `kwargs`,
           and `value` is not an instance of `VectorizedDF`, for all such `value`
-        * `varname=value[i]`, where `varname`/`value` are key-value pair of `kwargs`,
-          and `i` is the iteration index corresponding to row/column,
+        * `varname=value.loc[row,col]`,
+          where `varname`/`value` are key-value pair of `kwargs` or `args`,
+          and `row` and `col` are `loc` indices corresponding to row/column,
+          and `value` is an instance of `VectorizedDF`, for all such `value`
+        * `varname=value.loc[row]`,
+          where `varname`/`value` are key-value pair of `args_rowvec`,
+          and `row` and `col` are `loc` indices corresponding to row/column,
           and `value` is an instance of `VectorizedDF`, for all such `value`
         * `varname_of_self=self`, if `varname_of_self` is not `None`. Here,
           `varname_of_self` should be read as the `str` value of that variable.
@@ -517,8 +534,8 @@ class VectorizedDF:
         pd.DataFrame, with rows and columns as the return of `get_iter_indices`.
           If rows or columns are not vectorized over, the single index
           will be `rowname_default` resp `colname_default`.
-          Entries are fitted clones of `estimator`, fitted with arguments
-          as described above.
+          Entries are identity references to entries of `estimator`,
+          after `method` executed with arguments as above.
         """
         if args is None:
             args = kwargs
