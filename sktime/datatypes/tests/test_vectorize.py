@@ -420,7 +420,7 @@ def test_enforce_index_freq(item, freq):
 def test_vectorize_fit(
     scitype, mtype, fixture_index, iterate_as, iterate_cols, varname_used
 ):
-    """Tests vectorize_fit method of VectorizeDF.
+    """Tests vectorize_est method of VectorizeDF, for method = clone, fit.
 
     Fixtures parameterized
     ----------------------
