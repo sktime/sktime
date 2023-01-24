@@ -283,7 +283,7 @@ def piecewise_poisson(
     Generate series using Possion distribution.
 
     Each segment has length specified in ``lengths`` and data sampled from a Poisson
-    distribution with expected frequency from ``frequency``.
+    distribution with expected lambda from ``lambdas``.
 
     Parameters
     ----------
