@@ -1096,11 +1096,10 @@ class BaseTransformer(BaseEstimator):
         if methodname in TRAFO_METHODS:
             # loop through fitted transformers one-by-one, and transform series/panels
             if not self.get_tag("fit_is_empty"):
-
+                # if not fit_is_empty: check index compatibility, get fitted trafos
                 n_trafos = len(X)
                 n, m = self.transformers_.shape
                 n_fit = n * m
-
                 if n_trafos != n_fit:
                     raise RuntimeError(
                         "found different number of instances in transform than in fit. "
@@ -1108,30 +1107,18 @@ class BaseTransformer(BaseEstimator):
                         f"number of instances seen in transform: {n_trafos}"
                     )
 
-                # transform the i-th series/panel with the i-th stored transformer
-                Xts = X.vectorize_est(
-                    self.transformers_, method=methodname, return_type="list", **kwargs
-                )
-                Xt = X.reconstruct(Xts, overwrite_index=False)
+                transformers_ = self.transformers_
 
-            # if fit_is_empty: don't store transformers, run fit/transform in one
             else:
+                # if fit_is_empty: don't store transformers, run fit/transform in one
                 transformers_ = X.vectorize_est(self, method="clone")
                 transformers_ = X.vectorize_est(transformers_, method="fit", **kwargs)
-                Xts = X.vectorize_est(
-                    transformers_, method=methodname, return_type="list", **kwargs
-                )
-                Xt = X.reconstruct(Xts, overwrite_index=False)
 
-            # # one more thing before returning:
-            #
-            # if methodname == "inverse_transform":
-            #         output_scitype = self.get_tag("scitype:transform-input")
-            #     else:
-            #         output_scitype = self.get_tag("scitype:transform-output")
-            # if output_scitype == "Primitives" and :
-            #         Xt = pd.concat(Xt)
-            #         Xt = Xt.reset_index(drop=True)
+            # transform the i-th series/panel with the i-th stored transformer
+            Xts = X.vectorize_est(
+                transformers_, method=methodname, return_type="list", **kwargs
+            )
+            Xt = X.reconstruct(Xts, overwrite_index=False)
 
             return Xt
 
