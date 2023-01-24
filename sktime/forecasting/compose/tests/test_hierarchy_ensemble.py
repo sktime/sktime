@@ -23,7 +23,7 @@ from sktime.utils.validation._dependencies import _check_soft_dependencies
 @pytest.mark.parametrize(
     "forecasters",
     [
-        [("ptf", PolynomialTrendForecaster(), 0)],
+        [("ptf", PolynomialTrendForecaster(), 0), ("naive", NaiveForecaster(), 1)],
         [("naive", NaiveForecaster(), 0)],
     ],
 )
@@ -32,33 +32,42 @@ def test_hierarchy_ensemble_level_predict(forecasters):
     agg = Aggregator()
 
     y = _bottom_hier_datagen(
-        no_bottom_nodes=3,
-        no_levels=1,
+        no_bottom_nodes=7,
+        no_levels=2,
         random_seed=123,
     )
 
-    forecaster_withdef = HierarchyEnsembleForecaster(
+    forecaster = HierarchyEnsembleForecaster(
         forecasters, default=forecasters[0][1].clone()
     )
 
-    forecaster_withdef.fit(y, fh=[1, 2, 3])
-    actual_withdef = forecaster_withdef.predict()
+    forecaster.fit(y, fh=[1, 2, 3])
+    actual_pred = forecaster.predict()
 
     y = agg.fit_transform(y)
 
-    test_forecaster = forecasters[0][1].clone()
-    test_forecaster.fit(y, fh=[1, 2, 3])
-    test_withdef = test_forecaster.predict()
+    for i in range(len(forecasters)):
+        test_frcstr = forecasters[i][1].clone()
+        test_frcstr.fit(y.loc[forecaster.fitted_list[i][1]], fh=[1, 2, 3])
+        test_pred = test_frcstr.predict()
+        msg = "Level predictions do not match"
+        assert np.all(actual_pred.loc[test_pred.index] == test_pred), msg
 
-    msg = "Level predictions do not match"
-    assert np.all(actual_withdef == test_withdef), msg
+    def_frcstr = forecasters[0][1].clone()
+    def_frcstr.fit(y.loc[forecaster.fitted_list[-1][1]], fh=[1, 2, 3])
+    def_pred = def_frcstr.predict()
+    msg = "Level default predictions do not match"
+    assert np.all(actual_pred.loc[def_pred.index] == def_pred), msg
 
 
 @pytest.mark.parametrize(
     "forecasters",
     [
-        [("ptf", PolynomialTrendForecaster(), [("__total"), ("l1_node01")])],
-        [("naive", NaiveForecaster(), [("__total"), ("l1_node02")])],
+        [
+            ("ptf", PolynomialTrendForecaster(), [("__total", "__total")]),
+            ("naive", NaiveForecaster(), [("l2_node01", "__total")]),
+        ],
+        [("naive", NaiveForecaster(), [("l2_node01", "l1_node06")])],
     ],
 )
 def test_hierarchy_ensemble_node_predict(forecasters):
@@ -66,23 +75,29 @@ def test_hierarchy_ensemble_node_predict(forecasters):
     agg = Aggregator()
 
     y = _bottom_hier_datagen(
-        no_bottom_nodes=3,
-        no_levels=1,
+        no_bottom_nodes=7,
+        no_levels=2,
         random_seed=123,
     )
 
-    forecaster_withdef = HierarchyEnsembleForecaster(
+    forecaster = HierarchyEnsembleForecaster(
         forecasters, by="node", default=forecasters[0][1].clone()
     )
 
-    forecaster_withdef.fit(y, fh=[1, 2, 3])
-    actual_withdef = forecaster_withdef.predict()
+    forecaster.fit(y, fh=[1, 2, 3])
+    actual_pred = forecaster.predict()
 
     y = agg.fit_transform(y)
 
-    test_forecaster = forecasters[0][1].clone()
-    test_forecaster.fit(y, fh=[1, 2, 3])
-    test_withdef = test_forecaster.predict()
+    for i in range(len(forecasters)):
+        test_frcstr = forecasters[i][1].clone()
+        test_frcstr.fit(y.loc[forecaster.fitted_list[i][1]], fh=[1, 2, 3])
+        test_pred = test_frcstr.predict()
+        msg = "Node predictions do not match"
+        assert np.all(actual_pred.loc[test_pred.index] == test_pred), msg
 
-    msg = "Node predictions do not match"
-    assert np.all(actual_withdef == test_withdef), msg
+    def_frcstr = forecasters[0][1].clone()
+    def_frcstr.fit(y.loc[forecaster.fitted_list[-1][1]], fh=[1, 2, 3])
+    def_pred = def_frcstr.predict()
+    msg = "Node default predictions do not match"
+    assert np.all(actual_pred.loc[def_pred.index] == def_pred), msg

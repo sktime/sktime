@@ -6,6 +6,8 @@ __author__ = ["VyomkeshVyas"]
 __all__ = ["HierarchyEnsembleForecaster"]
 
 
+from warnings import warn
+
 import pandas as pd
 
 from sktime.base._meta import flatten
@@ -184,13 +186,12 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
 
         # check forecasters
         self.forecasters_ = self._check_forecasters(y, z)
-        self.nlevels = y.index.nlevels
         self.fitted_list = []
 
         if y.index.nlevels == 1:
             frcstr = self.forecasters_[0][1].clone()
             frcstr.fit(y, fh=fh, X=X)
-            self.fitted_list.append(frcstr)
+            self.fitted_list.append([frcstr, y.index])
             return self
 
         if self.by == "level":
@@ -204,7 +205,7 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
                         frcstr.fit(df, fh=fh, X=x)
                     else:
                         frcstr.fit(df, fh=fh, X=X)
-                    self.fitted_list.append(frcstr)
+                    self.fitted_list.append([frcstr, df.index])
 
         else:
             node_dict, frcstr_dict = self._get_node_dict(z)
@@ -216,7 +217,7 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
                     frcstr.fit(df, fh=fh, X=x)
                 else:
                     frcstr.fit(df, fh=fh, X=X)
-                self.fitted_list.append(frcstr)
+                self.fitted_list.append([frcstr, df.index])
         return self
 
     def _get_hier_dict(self, z):
@@ -281,6 +282,7 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
         frcstr_dict = {}
         nodes = []
         counter = 0
+        zindex = z.index.droplevel(-1).unique()
 
         for (_, forecaster, node) in self.forecasters_:
             if z.index.nlevels == 2:
@@ -290,14 +292,30 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
                 else:
                     nodes.append(mi)
             else:
-                mi = pd.MultiIndex.from_tuples(node, names=z.index.names[:-1])
-                nodes += node
+                node_l = []
+                for i in range(len(node)):
+                    if (
+                        isinstance(node[i], tuple)
+                        and len(node[i]) == z.index.nlevels - 1
+                    ):
+                        node_l.append(node[i])
+                    elif isinstance(node[i], str):
+                        for ind in zindex:
+                            if ind[0] == node[i]:
+                                node_l.append(ind)
+                    else:
+                        for ind in zindex:
+                            if ind[: len(node[i])] == node[i]:
+                                node_l.append(ind)
+
+                mi = pd.MultiIndex.from_tuples(node_l, names=z.index.names[:-1])
+                nodes += node_l
             frcstr_dict[counter] = forecaster
             node_dict[counter] = mi
             counter += 1
 
-        if self.default:
-            diff_nodes = z.index.droplevel(-1).unique().difference(nodes)
+        diff_nodes = z.index.droplevel(-1).unique().difference(nodes)
+        if self.default and len(diff_nodes) > 0:
             frcstr_dict[counter] = self.default
             node_dict[counter] = diff_nodes
 
@@ -316,7 +334,7 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
         -------
         self : an instance of self.
         """
-        for forecaster in self.fitted_list:
+        for forecaster, _ in self.fitted_list:
             forecaster.update(y, X, update_params=update_params)
         return self
 
@@ -348,7 +366,7 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
         preds = []
 
         for i in range(len(self.fitted_list)):
-            pred = self.fitted_list[i].predict(fh=fh, X=X)
+            pred = self.fitted_list[i][0].predict(fh=fh, X=X)
             preds.append(pred)
 
         preds = pd.concat(preds, axis=0)
@@ -456,12 +474,68 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
         else:
             nodes_t = []
             for nodes in level_nd:
+                if len(nodes) == 0:
+                    raise ValueError("Nodes cannot be empty.")
                 if z.index.nlevels == 2:
                     nodes_ix = pd.Index(nodes)
                 else:
+                    nodes_l = []
+                    for i in range(len(nodes)):
+                        if (
+                            isinstance(nodes[i], tuple)
+                            and len(nodes[i]) > z.index.nlevels - 1
+                        ):
+                            raise ValueError(
+                                "Ideally, length of individual node should be "
+                                "equal to N-1 (where N is number of levels in "
+                                "multi-index) and must not exceed N-1."
+                            )
+                        elif (
+                            isinstance(nodes[i], tuple)
+                            and len(nodes[i]) < z.index.nlevels - 1
+                        ) or isinstance(nodes[i], str):
+                            zindex = z.index.droplevel(-1).unique()
+                            flag = 0
+                            inds = []
+                            if isinstance(nodes[i], tuple):
+                                for ind in zindex:
+                                    if ind[: len(nodes[i])] == nodes[i]:
+                                        inds.append(ind)
+                                        flag = 1
+                            else:
+                                for ind in zindex:
+                                    if ind[0] == nodes[i]:
+                                        inds.append(ind)
+                                        flag = 1
+                            if flag == 0:
+                                raise ValueError(
+                                    "Node value must lie within "
+                                    "multi-index of aggregated data"
+                                )
+                            else:
+                                nodes_l += inds
+                                warn(
+                                    f"Ideally, length of individual node should be "
+                                    f"equal to N-1 (where N is number of levels in "
+                                    f"multi-index) and must not exceed N-1. The "
+                                    f"forecaster will now be fitted to the "
+                                    f"following nodes : {list(inds)}"
+                                )
+                        elif (
+                            isinstance(nodes[i], tuple)
+                            and len(nodes[i]) == z.index.nlevels - 1
+                        ):
+                            nodes_l.append(nodes[i])
+                        else:
+                            raise RuntimeError(
+                                "Unreachable condition. Check the format of nodes "
+                                "being passed."
+                            )
+
                     nodes_ix = pd.MultiIndex.from_tuples(
-                        nodes, names=z.index.names[:-1]
+                        nodes_l, names=z.index.names[:-1]
                     )
+                    nodes_t += nodes_l
                 nodes_m = z.index.droplevel(-1).unique()[
                     z.index.droplevel(-1).unique().isin(nodes_ix)
                 ]
@@ -475,7 +549,6 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
                         f"Following node/nodes are not present in"
                         f"the multi-index of aggregated data: {nodes_nm.to_list()}"
                     )
-                nodes_t += nodes
             nodes_set = set(nodes_t)
             if len(nodes_set) != len(nodes_t):
                 raise ValueError(
