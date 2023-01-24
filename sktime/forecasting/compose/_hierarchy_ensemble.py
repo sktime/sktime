@@ -184,6 +184,8 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
             if _check_index_no_total(X):
                 X = self._aggregate(X)
 
+        x = X
+
         # check forecasters
         self.forecasters_ = self._check_forecasters(y, z)
         self.fitted_list = []
@@ -202,10 +204,8 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
                     df = z[z.index.droplevel(-1).isin(hier_dict[level])]
                     if X is not None:
                         x = X.loc[df.index]
-                        frcstr.fit(df, fh=fh, X=x)
-                    else:
-                        frcstr.fit(df, fh=fh, X=X)
-                    self.fitted_list.append([frcstr, df.index])
+                    frcstr.fit(df, fh=fh, X=x)
+                    self.fitted_list.append([frcstr, df.index.droplevel(-1).unique()])
 
         else:
             node_dict, frcstr_dict = self._get_node_dict(z)
@@ -214,10 +214,8 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
                 df = z[z.index.droplevel(-1).isin(nodes)]
                 if X is not None:
                     x = X.loc[df.index]
-                    frcstr.fit(df, fh=fh, X=x)
-                else:
-                    frcstr.fit(df, fh=fh, X=X)
-                self.fitted_list.append([frcstr, df.index])
+                frcstr.fit(df, fh=fh, X=x)
+                self.fitted_list.append([frcstr, df.index.droplevel(-1).unique()])
         return self
 
     def _get_hier_dict(self, z):
@@ -334,8 +332,23 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
         -------
         self : an instance of self.
         """
-        for forecaster, _ in self.fitted_list:
-            forecaster.update(y, X, update_params=update_params)
+        z = y
+        if _check_index_no_total(y):
+            z = self._aggregate(y)
+
+        if X is not None:
+            if _check_index_no_total(X):
+                X = self._aggregate(X)
+        x = X
+
+        for forecaster, ind in self.fitted_list:
+            if z.index.nlevels == 1:
+                forecaster.update(z, X=x, update_params=update_params)
+            else:
+                df = z[z.index.droplevel(-1).isin(ind)]
+                if X is not None:
+                    x = X.loc[df.index]
+                forecaster.update(df, X=x, update_params=update_params)
         return self
 
     def _predict(self, fh=None, X=None):
@@ -365,8 +378,15 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
         """
         preds = []
 
-        for i in range(len(self.fitted_list)):
-            pred = self.fitted_list[i][0].predict(fh=fh, X=X)
+        if X is not None:
+            if _check_index_no_total(X):
+                X = self._aggregate(X)
+        x = X
+
+        for forecaster, ind in self.fitted_list:
+            if X is not None and X.index.nlevels > 1:
+                x = X[X.index.droplevel(-1).isin(ind)]
+            pred = forecaster.predict(fh=fh, X=x)
             preds.append(pred)
 
         preds = pd.concat(preds, axis=0)
