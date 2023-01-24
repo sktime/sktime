@@ -303,7 +303,6 @@ class VectorizedDF:
         -------
         self._iter_indices(X=X)[i], tuple elements coerced to pd.Index coercible
         """
-
         row_ind, col_ind = self._iter_indices(X=X)[i]
         if isinstance(col_ind, list):
             col_ind = pd.Index(col_ind)
