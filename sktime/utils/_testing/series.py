@@ -1,7 +1,7 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
 
-__author__ = ["mloning", "fkiraly", "klam-data", "pyyim", "mgorlin"]
+__author__ = ["mloning", "fkiraly"]
 __all__ = []
 
 import numpy as np
@@ -17,13 +17,10 @@ def _make_series(
     return_numpy=False,
     random_state=None,
     add_nan=False,
-    integer_only=False,
 ):
     """Generate univariate or multivariate time series."""
     rng = check_random_state(random_state)
     data = rng.normal(size=(n_timepoints, n_columns))
-    if integer_only:
-        data = np.round(data.ravel(), 0).astype("int")
     if add_nan:
         # add some nan values
         data[int(len(data) / 2)] = np.nan

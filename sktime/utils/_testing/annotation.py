@@ -3,6 +3,9 @@
 __author__ = ["mloning", "fkiraly", "klam-data", "pyyim", "mgorlin"]
 __all__ = []
 
+from sklearn.utils import check_random_state
+
+from sktime.annotation.datagen import piecewise_poisson
 from sktime.utils._testing.series import _make_series
 
 
@@ -15,9 +18,14 @@ def make_annotation_problem(
     random_state=None,
     estimator_type=None,
 ):
-    integer_only = False
     if estimator_type == "Poisson":
-        integer_only = True
+        rng = check_random_state(random_state)
+        y = piecewise_poisson(
+            lambdas=rng.randint(1, 4, n_timepoints),
+            lengths=rng.randint(1, 5, n_timepoints),
+            random_state=random_state,
+        )
+        return y
 
     y = _make_series(
         n_timepoints=n_timepoints,
@@ -25,7 +33,6 @@ def make_annotation_problem(
         all_positive=all_positive,
         index_type=index_type,
         random_state=random_state,
-        integer_only=integer_only,
     )
 
     if not make_X:
@@ -37,7 +44,6 @@ def make_annotation_problem(
         all_positive=all_positive,
         index_type=index_type,
         random_state=random_state,
-        integer_only=integer_only,
     )
     X.index = y.index
     return y, X
