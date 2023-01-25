@@ -6,7 +6,6 @@ __all__ = ["MLPClassifier"]
 
 from copy import deepcopy
 
-from keras.callbacks import LambdaCallback
 from sklearn.utils import check_random_state
 
 from sktime.classification.deep_learning.base import BaseDeepClassifier
