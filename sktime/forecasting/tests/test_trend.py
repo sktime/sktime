@@ -42,6 +42,7 @@ def test_get_X_numpy():
     assert np.isin(intdiffs, [30, 31, 28, 29]).all()
 
     # testing pd.DatetimeIndex with hourly frequency
+    # diffs should be 1/24, since this is converted to float, days since 1970
     df_hourly = pd.DataFrame(
         data=[10, 5, 4, 2, 10],
         index=pd.date_range(start="2000-01-01", periods=5, freq="H"),
