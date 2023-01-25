@@ -56,8 +56,6 @@ def test_get_X_numpy():
     # testing integer index
     int_ix = pd.Index([1, 3, 5, 7])
     X_idx_int = _get_X_numpy_int_from_pandas(int_ix)
-    intdiffs = (np.diff(X_idx_int.reshape(-1))).astype(int)
-    assert np.isin(intdiffs, [30, 31, 28, 29]).all()
 
     # testing pd.IntegerIndex
     # this should be an 2D integer array with entries identical to int_ix
