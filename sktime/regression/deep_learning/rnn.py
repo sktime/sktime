@@ -7,19 +7,15 @@ __all__ = ["SimpleRNNRegressor"]
 import tensorflow as tf
 from tensorflow import keras 
 
-import sktime
 from sklearn.utils import check_random_state
 
-from sktime.classification.deep_learning.base import BaseDeepClassifier
 from sktime.networks.rnn import RNNNetwork
-
+from sktime.regression.deep_learning.base import BaseDeepRegressor
 from sktime.utils.validation._dependencies import _check_dl_dependencies
-
-
 
 _check_dl_dependencies(severity="warning")
 
-class SimpleRNNRegressor(BaseDeepClassifier):
+class SimpleRNNRegressor(BaseDeepRegressor):
     """Simple recurrent neural network
     References
     ----------
@@ -37,7 +33,7 @@ class SimpleRNNRegressor(BaseDeepClassifier):
             verbose=0,
             loss = "Huber",
             metrics = None,
-            activation = "sigmoid",
+            activation = "linear",
             use_bias = True,
             optimizer = None,
             
@@ -102,7 +98,7 @@ class SimpleRNNRegressor(BaseDeepClassifier):
         """
         if self.callbacks is None:
             self._callbacks = []
-         
+        
         check_random_state(self.random_state)
         self.input_shape = X.shape[1:]
         self.batch_size = int(max(1, min(X.shape[0] / 10, self.batch_size)))
