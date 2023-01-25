@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-__author__ = ["mloning", "fkiraly", "klam-data", "pyyim", "mgorlin"]
+__author__ = []
 __all__ = []
 
 from sklearn.utils import check_random_state
