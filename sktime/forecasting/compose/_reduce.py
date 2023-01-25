@@ -481,7 +481,7 @@ class _DirectReducer(_Reducer):
                     "lag": list(range(1, self.window_length + 1)),
                 }
             }
-            self.transformers_ = [WindowSummarizer(**kwargs)]
+            self.transformers_ = [WindowSummarizer(**kwargs, n_jobs=1)]
 
         if self.window_length is None:
             trafo = self.transformers_
@@ -760,7 +760,16 @@ class _RecursiveReducer(_Reducer):
                 "Transformers currently cannot be provided"
                 + "for models that run locally"
             )
+
         pd_format = isinstance(y, pd.Series) or isinstance(y, pd.DataFrame)
+
+        self._timepoints = get_time_index(y)
+        n_timepoints = len(self._timepoints)
+
+        self.window_length_ = check_window_length(
+            self.window_length, n_timepoints=n_timepoints
+        )
+
         if self.pooling == "local":
             if pd_format is True and isinstance(y, pd.MultiIndex):
                 warn(
@@ -770,9 +779,6 @@ class _RecursiveReducer(_Reducer):
                     + " all instances, please specify pooling = 'global'.",
                     DeprecationWarning,
                 )
-        self.window_length_ = check_window_length(
-            self.window_length, n_timepoints=len(y)
-        )
         if self.transformers is not None:
             self.transformers_ = clone(self.transformers)
 
@@ -782,7 +788,7 @@ class _RecursiveReducer(_Reducer):
                     "lag": list(range(1, self.window_length + 1)),
                 }
             }
-            self.transformers_ = [WindowSummarizer(**kwargs)]
+            self.transformers_ = [WindowSummarizer(**kwargs, n_jobs=1)]
 
         if self.window_length is None:
             trafo = self.transformers_
@@ -798,8 +804,6 @@ class _RecursiveReducer(_Reducer):
                     + "truncate_start"
                 )
 
-            self._timepoints = get_time_index(y)
-            n_timepoints = len(self._timepoints)
             if self.transformers_ is not None and n_timepoints < max(ts):
                 raise ValueError(
                     "Not sufficient observations to calculate transformations"
