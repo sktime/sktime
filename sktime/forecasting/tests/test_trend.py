@@ -24,7 +24,7 @@ def test_get_X_numpy():
     X_idx = _get_X_numpy_int_from_pandas(y.index)
 
     # testing pd.PeriodIndex
-    # this should be a 2D nd.nparray, with diffs being 1 (month)
+    # this should be a 2D np.dparray, with diffs being 1 (month)
     # because month is the periodicity
     assert isinstance(X_idx, np.ndarray)
     assert X_idx.shape == (len(y), 1)
@@ -41,9 +41,22 @@ def test_get_X_numpy():
     intdiffs = (np.diff(X_idx_datetime.reshape(-1))).astype(int)
     assert np.isin(intdiffs, [30, 31, 28, 29]).all()
 
+    # testing pd.DatetimeIndex with hourly frequency
+    df_hourly = pd.DataFrame(
+        data=[10, 5, 4, 2, 10],
+        index=pd.date_range(start="2000-01-01", periods=5, freq="H"),
+    )
+    X_idx_hourly = _get_X_numpy_int_from_pandas(df_hourly.index)
+    assert isinstance(X_idx_hourly, np.ndarray)
+    assert X_idx_hourly.shape == (len(df_hourly), 1)
+    hourdiffs = np.diff(X_idx_hourly.reshape(-1))
+    assert np.allclose(hourdiffs, np.repeat([1 / 24], len(df_hourly) - 1))
+
     # testing integer index
     int_ix = pd.Index([1, 3, 5, 7])
     X_idx_int = _get_X_numpy_int_from_pandas(int_ix)
+    intdiffs = (np.diff(X_idx_int.reshape(-1))).astype(int)
+    assert np.isin(intdiffs, [30, 31, 28, 29]).all()
 
     # testing pd.IntegerIndex
     # this should be an 2D integer array with entries identical to int_ix
