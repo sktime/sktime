@@ -61,7 +61,7 @@ def test_GMMHMM_wrapper():
     reason="skip test if required soft dependency for hmmlearn not available",
 )
 def test_PoissonHMM_wrapper():
-    """Verify that the wrapped GMMHMM estimator agrees with hmmlearn."""
+    """Verify that the wrapped PoissonHMM estimator agrees with hmmlearn."""
     # moved all potential soft dependency import inside the test:
     from hmmlearn.hmm import PoissonHMM as _PoissonHMM
 
