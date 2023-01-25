@@ -297,7 +297,13 @@ def get_cutoff(
 
     # pd-multiindex (Panel) and pd_multiindex_hier (Hierarchical)
     if isinstance(obj, pd.DataFrame) and isinstance(obj.index, pd.MultiIndex):
-        return get_time_index(obj)[-1:]
+        idx = obj.index
+        series_idx = [
+            obj.loc[x].index.get_level_values(-1) for x in idx.droplevel(-1).unique()
+        ]
+        cutoffs = [sub_idx(x, ix, return_index) for x in series_idx]
+        agg(cutoffs)
+        return pd.Period(get_time_index(obj)[-1:][0])
 
     # df-list (Panel)
     if isinstance(obj, list):
