@@ -302,8 +302,7 @@ def get_cutoff(
             obj.loc[x].index.get_level_values(-1) for x in idx.droplevel(-1).unique()
         ]
         cutoffs = [sub_idx(x, ix, return_index) for x in series_idx]
-        agg(cutoffs)
-        return pd.Period(get_time_index(obj)[-1:][0])
+        return agg(cutoffs)
 
     # df-list (Panel)
     if isinstance(obj, list):
