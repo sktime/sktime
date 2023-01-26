@@ -19,6 +19,8 @@ def make_annotation_problem(
     estimator_type=None,
 ):
     if estimator_type == "Poisson":
+        if make_X:
+            raise ValueError("PoissonHMM creates a distribution for y only")
         rng = check_random_state(random_state)
         y = piecewise_poisson(
             lambdas=rng.randint(1, 4, n_timepoints),
