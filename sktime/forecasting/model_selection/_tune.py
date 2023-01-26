@@ -121,6 +121,8 @@ class BaseGridSearch(_DelegatedForecaster):
         except NotImplementedError:
             pass
         fitted_params = {**fitted_params, **self.best_params_}
+        fitted_params.update(self._get_fitted_params_default())
+
         return fitted_params
 
     def _run_search(self, evaluate_candidates):

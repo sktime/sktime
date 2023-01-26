@@ -1360,7 +1360,6 @@ class OptionalPassthrough(_DelegatedTransformer):
             "scitype:transform-input",
             "scitype:transform-output",
             "scitype:instancewise",
-            "X_inner_mtype",
             "y_inner_mtype",
             "capability:inverse_transform",
             "handles-missing-data",
