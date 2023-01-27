@@ -166,6 +166,7 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
                 regressor=self.regressor, random_state=self.random_state
             )
             X_meta = pd.concat(self._predict_forecasters(fh_test, X_test), axis=1)
+            X_meta.columns = pd.RangeIndex(len(X_meta.columns))
 
             # fit meta-model (regressor) on predictions of ensemble models
             # with y_test as endog/target
