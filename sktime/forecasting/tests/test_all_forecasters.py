@@ -333,7 +333,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         y_train = _make_series(n_timepoints=15)
         y_train.name = "foo"
 
-        estimator_instance.fit(y, fh=[1, 2, 3])
+        estimator_instance.fit(y_train, fh=[1, 2, 3])
         y_pred = estimator_instance.predict()
 
         _assert_correct_columns(y_pred, y_train)
