@@ -121,7 +121,7 @@ class TrendForecaster(BaseForecaster):
         fh = self.fh.to_absolute(self.cutoff)
         X_sklearn = _get_X_numpy_int_from_pandas(fh.to_pandas())
         y_pred_sklearn = self.regressor_.predict(X_sklearn)
-        y_pred = pd.Series(y_pred_sklearn, index=self.fh.to_absolute(self.cutoff))
+        y_pred = pd.Series(y_pred_sklearn, index=fh)
         y_pred.name = self._y.name
         return y_pred
 
@@ -269,7 +269,7 @@ class PolynomialTrendForecaster(BaseForecaster):
         fh = self.fh.to_absolute(self.cutoff)
         X_sklearn = _get_X_numpy_int_from_pandas(fh.to_pandas())
         y_pred_sklearn = self.regressor_.predict(X_sklearn)
-        y_pred = pd.Series(y_pred_sklearn, index=self.fh.to_absolute(self.cutoff))
+        y_pred = pd.Series(y_pred_sklearn, index=fh)
         y_pred.name = self._y.name
         return y_pred
 
