@@ -120,8 +120,10 @@ class TrendForecaster(BaseForecaster):
         # use relative fh as time index to predict
         fh = self.fh.to_absolute(self.cutoff)
         X_sklearn = _get_X_numpy_int_from_pandas(fh.to_pandas())
-        y_pred = self.regressor_.predict(X_sklearn)
-        return pd.Series(y_pred, index=self.fh.to_absolute(self.cutoff))
+        y_pred_sklearn = self.regressor_.predict(X_sklearn)
+        y_pred = pd.Series(y_pred_sklearn, index=fh)
+        y_pred.name = self._y.name
+        return y_pred
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -266,8 +268,10 @@ class PolynomialTrendForecaster(BaseForecaster):
         # use relative fh as time index to predict
         fh = self.fh.to_absolute(self.cutoff)
         X_sklearn = _get_X_numpy_int_from_pandas(fh.to_pandas())
-        y_pred = self.regressor_.predict(X_sklearn)
-        return pd.Series(y_pred, index=self.fh.to_absolute(self.cutoff))
+        y_pred_sklearn = self.regressor_.predict(X_sklearn)
+        y_pred = pd.Series(y_pred_sklearn, index=fh)
+        y_pred.name = self._y.name
+        return y_pred
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
