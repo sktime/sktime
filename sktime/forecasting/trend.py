@@ -3,10 +3,9 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements trend based forecasters."""
 
-__author__ = ["tensorflow-as-tf", "mloning", "aiwalter"]
+__author__ = ["tensorflow-as-tf", "mloning", "aiwalter", "fkiraly"]
 __all__ = ["TrendForecaster", "PolynomialTrendForecaster", "STLForecaster"]
 
-import numpy as np
 import pandas as pd
 from sklearn.base import clone
 from sklearn.linear_model import LinearRegression
@@ -14,13 +13,36 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import PolynomialFeatures
 
 from sktime.forecasting.base import BaseForecaster
-from sktime.utils.datetime import _get_duration
+
+
+def _get_X_numpy_int_from_pandas(x):
+    """Convert pandas index to an sklearn compatible X, 2D np.ndarray, int type."""
+    if isinstance(x, (pd.DatetimeIndex)):
+        x = x.astype("int64") / 864e11
+    else:
+        x = x.astype("int64")
+    return x.to_numpy().reshape(-1, 1)
 
 
 class TrendForecaster(BaseForecaster):
-    """Trend based forecasts of time series data.
+    r"""Trend based forecasts of time series data, regressing values on index.
 
-    Default settings train a linear regression model.
+    Uses a `sklearn` regressor `regressor` to regress values of time series on index:
+
+    In `fit`, for input time series :math:`(v_i, t_i), i = 1, \dots, T`,
+    where :math:`v_i` are values and :math:`t_i` are time stamps,
+    fits an `sklearn` model :math:`v_i = f(t_i) + \epsilon_i`, where `f` is
+    the model fitted when `regressor.fit` is passed `X` = vector of :math:`t_i`,
+    and `y` = vector of :math:`v_i`.
+
+    In `predict`, for a new time point :math:`t_*`, predicts :math:`f(t_*)`,
+    where :math:`f` is the function as fitted above in `fit`.
+
+    Default for `regressor` is linear regression = `sklearn` `LinearRegression` default.
+
+    If time stamps are `pd.DatetimeIndex`, fitted coefficients are in units
+    of days since start of 1970. If time stamps are `pd.PeriodIndex`,
+    coefficients are in units of (full) periods since start of 1970.
 
     Parameters
     ----------
@@ -71,11 +93,13 @@ class TrendForecaster(BaseForecaster):
         else:
             self.regressor_ = clone(self.regressor)
 
-        # transform data
-        X = y.index.astype("int64").to_numpy().reshape(-1, 1)
+        # we regress index on series values
+        # the sklearn X is obtained from the index of y
+        # the sklearn y can be taken as the y seen here
+        X_sklearn = _get_X_numpy_int_from_pandas(y.index)
 
         # fit regressor
-        self.regressor_.fit(X, y)
+        self.regressor_.fit(X_sklearn, y)
         return self
 
     def _predict(self, fh=None, X=None):
@@ -94,9 +118,9 @@ class TrendForecaster(BaseForecaster):
             Point predictions for the forecast
         """
         # use relative fh as time index to predict
-        fh = self.fh.to_absolute_int(self._y.index[0], self.cutoff)
-        X_pred = fh.to_numpy().reshape(-1, 1)
-        y_pred_sklearn = self.regressor_.predict(X_pred)
+        fh = self.fh.to_absolute(self.cutoff)
+        X_sklearn = _get_X_numpy_int_from_pandas(fh.to_pandas())
+        y_pred_sklearn = self.regressor_.predict(X_sklearn)
         y_pred = pd.Series(y_pred_sklearn, index=self.fh.to_absolute(self.cutoff))
         y_pred.name = self._y.name
         return y_pred
@@ -127,10 +151,30 @@ class TrendForecaster(BaseForecaster):
 
 
 class PolynomialTrendForecaster(BaseForecaster):
-    """Forecast time series data with a polynomial trend.
+    r"""Forecast time series data with a polynomial trend.
 
-    Default settings train a linear regression model with a 1st degree
-    polynomial transformation of the feature.
+    Uses a `sklearn` regressor `regressor` to regress values of time series on index,
+    after extraction of polynomial features.
+    Same `TrendForecaster` where `regressor` is pipelined with transformation step
+    `PolynomialFeatures(degree, with_intercept)` applied to time, at the start.
+
+    In `fit`, for input time series :math:`(v_i, p(t_i)), i = 1, \dots, T`,
+    where :math:`v_i` are values, :math:`t_i` are time stamps,
+    and :math:`p` is the polynomial feature transform with degree `degree`,
+    and with/without intercept depending on `with_intercept`,
+    fits an `sklearn` model :math:`v_i = f(p(t_i)) + \epsilon_i`, where `f` is
+    the model fitted when `regressor.fit` is passed `X` = vector of :math:`p(t_i)`,
+    and `y` = vector of :math:`v_i`.
+
+    In `predict`, for a new time point :math:`t_*`, predicts :math:`f(p(t_*))`,
+    where :math:`f` is the function as fitted above in `fit`,
+    and :math:`p` is the same polynomial feature transform as above.
+
+    Default for `regressor` is linear regression = `sklearn` `LinearRegression` default.
+
+    If time stamps are `pd.DatetimeIndex`, fitted coefficients are in units
+    of days since start of 1970. If time stamps are `pd.PeriodIndex`,
+    coefficients are in units of (full) periods since start of 1970.
 
     Parameters
     ----------
@@ -197,12 +241,13 @@ class PolynomialTrendForecaster(BaseForecaster):
             regressor,
         )
 
-        # transform data
-        n_timepoints = _get_duration(self._y.index, coerce_to_int=True) + 1
-        X = np.arange(n_timepoints).reshape(-1, 1)
+        # we regress index on series values
+        # the sklearn X is obtained from the index of y
+        # the sklearn y can be taken as the y seen here
+        X_sklearn = _get_X_numpy_int_from_pandas(y.index)
 
         # fit regressor
-        self.regressor_.fit(X, y)
+        self.regressor_.fit(X_sklearn, y)
         return self
 
     def _predict(self, fh=None, X=None):
@@ -221,9 +266,9 @@ class PolynomialTrendForecaster(BaseForecaster):
             Point predictions for the forecast
         """
         # use relative fh as time index to predict
-        fh = self.fh.to_absolute_int(self._y.index[0], self.cutoff)
-        X_pred = fh.to_numpy().reshape(-1, 1)
-        y_pred_sklearn = self.regressor_.predict(X_pred)
+        fh = self.fh.to_absolute(self.cutoff)
+        X_sklearn = _get_X_numpy_int_from_pandas(fh.to_pandas())
+        y_pred_sklearn = self.regressor_.predict(X_sklearn)
         y_pred = pd.Series(y_pred_sklearn, index=self.fh.to_absolute(self.cutoff))
         y_pred.name = self._y.name
         return y_pred
