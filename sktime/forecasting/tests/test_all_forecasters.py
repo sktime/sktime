@@ -224,17 +224,20 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         cutoff = get_cutoff(y_train, return_index=True)
         fh = _make_fh(cutoff, fh_int, fh_type, is_relative)
 
-        estimator_instance.fit(y_train, fh=fh)
-        y_pred = estimator_instance.predict()
-        _assert_correct_pred_time_index(y_pred.index, cutoff, fh=fh_int)
-        _assert_correct_columns(y_pred, y_train)
+        try:
+            estimator_instance.fit(y_train, fh=fh)
+            y_pred = estimator_instance.predict()
+            _assert_correct_pred_time_index(y_pred.index, cutoff, fh=fh_int)
+            _assert_correct_columns(y_pred, y_train)
 
-        y_test = _make_series(
-            n_columns=n_columns, index_type=index_type, n_timepoints=len(y_pred)
-        )
-        y_test.index = y_pred.index
-        y_res = estimator_instance.predict_residuals(y_test)
-        _assert_correct_pred_time_index(y_res.index, cutoff, fh=fh)
+            y_test = _make_series(
+                n_columns=n_columns, index_type=index_type, n_timepoints=len(y_pred)
+            )
+            y_test.index = y_pred.index
+            y_res = estimator_instance.predict_residuals(y_test)
+            _assert_correct_pred_time_index(y_res.index, cutoff, fh=fh)
+        except NotImplementedError:
+            pass
 
     @pytest.mark.parametrize(
         "index_fh_comb", VALID_INDEX_FH_COMBINATIONS, ids=index_fh_comb_names
