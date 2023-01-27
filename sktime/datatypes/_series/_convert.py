@@ -54,6 +54,24 @@ for tp in MTYPE_LIST_SERIES:
     convert_dict[(tp, tp, "Series")] = convert_identity
 
 
+def handle_UvS_as_Series_nameattr(obj: pd.Series, store=None) -> pd.DataFrame:
+
+    if not isinstance(obj, pd.Series):
+        raise TypeError("input must be a pd.Series")
+
+    res = obj.copy(deep=False)
+
+    if isinstance(store, dict) and "name" in store.keys():
+        res.name = store["name"]
+    if isinstance(store, dict) and "name" not in store.keys():
+        store["name"] = obj.name
+
+    return res
+
+
+convert_dict[("pd.Series", "pd.Series", "Series")] = handle_UvS_as_Series_nameattr
+
+
 def convert_UvS_to_MvS_as_Series(obj: pd.Series, store=None) -> pd.DataFrame:
 
     if not isinstance(obj, pd.Series):
