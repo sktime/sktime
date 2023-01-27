@@ -16,10 +16,6 @@ Community Council
      - GitHub ID
    * - Franz Király
      - :user:`fkiraly`
-   * - Guzal Bulatova
-     - :user:`GuzalBulatova`
-   * - Martin Walter
-     - :user:`aiwalter`
 
 Community Council Observers
 ---------------------------
@@ -71,8 +67,6 @@ Core Developers
      - :user:`lmmentel`
    * - Markus Löning
      - :user:`mloning`
-   * - Martin Walter
-     - :user:`aiwalter`
    * - Mirae Parker
      - :user:`miraep8`
    * - Patrick Schäfer
@@ -108,6 +102,8 @@ Former Core Developers
      - :user:`james-large`
    * - Jason Lines
      - :user:`jasonlines`
+   * - Martin Walter
+     - :user:`aiwalter`
    * - Mathew Smith
      - :user:`matteogales`
    * - Matthew Middlehurst
@@ -118,3 +114,13 @@ Former Core Developers
      - :user:`sajaysurya`
    * - Anonymous upon contributor's request
      - :user:`big-o`
+
+Former Community Council members
+
+.. list-table::
+   :header-rows: 1
+
+   * - Guzal Bulatova
+     - :user:`GuzalBulatova`
+   * - Martin Walter
+     - :user:`aiwalter`
