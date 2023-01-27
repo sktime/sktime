@@ -327,7 +327,7 @@ class _Reducer(_BaseWindowForecaster):
             contains the y and X data prepared for the respective windows, see above.
 
         """
-        if hasattr(self._y, "freq"):
+        if hasattr(get_time_index(self._y), "freq"):
             if get_time_index(self._y).freq is None:
                 freq_inferred = pd.infer_freq(get_time_index(self._y))
                 cutoff_with_freq = self._cutoff
@@ -805,16 +805,6 @@ class _RecursiveReducer(_Reducer):
                     + "Please reduce window length / window lagging to match"
                     + "observation size"
                 )
-
-        if self.pooling == "global":
-            timepoints = get_time_index(y)
-            if isinstance(timepoints, (pd.DatetimeIndex, pd.PeriodIndex)):
-                if timepoints.freq is None:
-                    raise ValueError(
-                        "Please set frequency for DatetimeIndex or PeriodIndex. You "
-                        + "can use set_freq_hier function from sktime.utils.datetime "
-                        + "for this purpose (will convert DatetimeIndex to PeriodIndex)"
-                    )
 
         yt, Xt = self._transform(y, X)
 
