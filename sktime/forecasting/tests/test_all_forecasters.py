@@ -328,6 +328,16 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         except NotImplementedError:
             pass
 
+    def test_predict_series_name_preserved(self, estimator_instance):
+        """Test that fit/predict preserves name attribute and type of pd.Series."""
+        y_train = _make_series(n_timepoints=15)
+        y_train.name = "foo"
+
+        estimator_instance.fit(y, fh=[1, 2, 3])
+        y_pred = estimator_instance.predict()
+
+        _assert_correct_columns(y_pred, y_train)
+
     def _check_pred_ints(
         self, pred_ints: pd.DataFrame, y_train: pd.Series, y_pred: pd.Series, fh_int
     ):
