@@ -13,8 +13,6 @@ __all__ = ["BKFilter"]
 
 import numpy as np
 import pandas as pd
-from scipy.signal import fftconvolve
-from statsmodels.tools.validation import PandasWrapper, array_like
 
 from sktime.transformations.base import BaseTransformer
 
@@ -118,6 +116,9 @@ class BKFilter(BaseTransformer):
         -------
         transformed cyclical version of X
         """
+        from scipy.signal import fftconvolve
+        from statsmodels.tools.validation import PandasWrapper, array_like
+
         pw = PandasWrapper(X)
         X = array_like(X, "X", maxdim=2)
         omega_1 = 2.0 * np.pi / self.high
