@@ -1962,6 +1962,17 @@
         "bug"
       ]
     },
+   {
+      "login": "JonathanBechtel",
+      "name": "JonathanBechtel",
+      "avatar_url": "https://avatars.githubusercontent.com/u/481696?v=4",
+      "profile": "https://github.com/JonathanBechtel",
+      "contributions": [
+        "code",
+        "ideas",
+        "test"
+      ]
+    },
     {
       "login": "arnavrneo",
       "name": "Arnav",
@@ -1979,6 +1990,57 @@
       "contributions": [
         "bug",
         "code"
+      ]
+    },
+    {
+      "login": "mateuja",
+      "name": "Jaume Mateu",
+      "avatar_url": "https://avatars.githubusercontent.com/mateuja",
+      "profile": "https://github.com/mateuja",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "aaronrmm",
+      "name": "Aaron Margolese-Malin",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1742879?v=4",
+      "profile": "https://github.com/aaronrmm",
+      "contributions": [
+        "bug"
+      ]
+    },
+    {
+      "login": "klam-data",
+      "name": "Kevin Lam",
+      "avatar_url": "https://avatars.githubusercontent.com/u/114420932?s=400&v=4",
+      "profile": "https://www.linkedin.com/in/kevinlam2",
+      "contributions": [
+        "code",
+        "example",
+        "test"
+      ]
+    },
+    {
+      "login": "mgorlin",
+      "name": "Margaret Gorlin",
+      "avatar_url": "",
+      "profile": "https://www.linkedin.com/in/margaret-gorlin/",
+      "contributions": [
+        "code",
+        "example",
+        "test"
+      ]
+    },
+    {
+      "login": "pyyim",
+      "name": "Paul Yim",
+      "avatar_url": "https://avatars.githubusercontent.com/pyyim",
+      "profile": "https://www.linkedin.com/in/paulyim97/",
+      "contributions": [
+        "code",
+        "example",
+        "test"
       ]
     }
   ]

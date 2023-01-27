@@ -1219,10 +1219,15 @@ class BaseForecaster(BaseEstimator):
         # return forecasters in the "forecasters" param
         fitted_params["forecasters"] = forecasters
 
+        def _to_str(x):
+            if isinstance(x, str):
+                x = f"'{x}'"
+            return str(x)
+
         # populate fitted_params with forecasters and their parameters
-        for ix, col in zip(forecasters.index, forecasters.columns):
+        for ix, col in product(forecasters.index, forecasters.columns):
             fcst = forecasters.loc[ix, col]
-            fcst_key = f"forecasters.loc[{ix},{col}]"
+            fcst_key = f"forecasters.loc[{_to_str(ix)},{_to_str(col)}]"
             fitted_params[fcst_key] = fcst
             fcst_params = fcst.get_fitted_params()
             for key, val in fcst_params.items():

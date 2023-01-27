@@ -18,6 +18,7 @@ from sklearn.ensemble import (
     HistGradientBoostingRegressor,
     RandomForestRegressor,
 )
+from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import make_pipeline
 
 from sktime.datasets import load_airline
@@ -27,6 +28,7 @@ from sktime.forecasting.compose import make_reduction
 from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.performance_metrics.forecasting import mean_absolute_percentage_error
 from sktime.transformations.series.summarize import WindowSummarizer
+from sktime.utils._testing.hierarchical import _make_hierarchical
 
 # Load data that will be the basis of tests
 y = load_airline()
@@ -277,3 +279,49 @@ def test_equality_transfo_nontranso(regressor):
             y_test, y_pred, symmetric=False
         )
         np.testing.assert_almost_equal(recursive_without, recursive_global)
+
+
+def test_nofreq_pass():
+    """Test that recursive reducers return same results with / without freq given."""
+    regressor = make_pipeline(
+        LinearRegression(),
+    )
+
+    kwargs = {
+        "lag_feature": {
+            "lag": [1],
+        }
+    }
+
+    forecaster_global = make_reduction(
+        regressor,
+        scitype="tabular-regressor",
+        transformers=[WindowSummarizer(**kwargs, n_jobs=1, truncate="bfill")],
+        window_length=None,
+        strategy="recursive",
+        pooling="global",
+    )
+
+    forecaster_global_freq = make_reduction(
+        regressor,
+        scitype="tabular-regressor",
+        transformers=[WindowSummarizer(**kwargs, n_jobs=1, truncate="bfill")],
+        window_length=None,
+        strategy="recursive",
+        pooling="global",
+    )
+
+    y = _make_hierarchical(
+        hierarchy_levels=(100,), min_timepoints=1000, max_timepoints=1000
+    )
+
+    y_no_freq = y.reset_index().set_index(["h0", "time"])
+
+    forecaster_global.fit(y)
+    forecaster_global_freq.fit(y_no_freq)
+
+    y_pred_global = forecaster_global.predict(fh=[1, 2])
+    y_pred_nofreq = forecaster_global_freq.predict(fh=[1, 2])
+    np.testing.assert_almost_equal(
+        y_pred_global["c0"].values, y_pred_nofreq["c0"].values
+    )
