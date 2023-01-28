@@ -60,16 +60,6 @@ repos:
       - id: pydocstyle
         args: ["--config=setup.cfg"]
 
-  - repo: https://github.com/pycqa/isort
-    rev: 5.10.1
-    hooks:
-      - id: isort
-        require_serial: true
-        name: isort
-        args: ["--profile", "black"]
-        stages: [commit]
-        exclude: ^legacy-backend.*$
-
   # We use the Python version instead of the original version which seems to require Docker
   # https://github.com/koalaman/shellcheck-precommit
   - repo: https://github.com/shellcheck-py/shellcheck-py
