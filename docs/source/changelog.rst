@@ -13,11 +13,48 @@ All notable changes to this project will be documented in this file. We keep tra
 For upcoming changes and next releases, see our `milestones <https://github.com/sktime/sktime/milestones?direction=asc&sort=due_date&state=open>`_.
 For our long-term plan, see our :ref:`roadmap`.
 
+Version 0.16.0 - 2023-01-29
+---------------------------
+
+Highlights
+~~~~~~~~~~
+
+Dependency changes
+~~~~~~~~~~~~~~~~~~
+
+* ``statsmodels`` is now a soft dependency. Estimators dependent on ``statsmodels``
+  can be used exactly as before if ``statsmodels`` is present in the python environment.
+
+
+Core interface changes
+~~~~~~~~~~~~~~~~~~~~~~
+
+
+Deprecations and removals
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+Enhancements
+~~~~~~~~~~~~
+
+
+Documentation
+~~~~~~~~~~~~~
+
+
+Fixes
+~~~~~
+
+
+Contributors
+~~~~~~~~~~~~
+
+
 Version 0.15.1 - 2023-01-12
 ---------------------------
 
 Highlights
-~~~~~~~~~~~~
+~~~~~~~~~~
 
 * substantial speed-ups of boilerplate for panel and hierarchical data,
   may result in 10-50x overall speed improvement on large panel/hierarchical data (:pr:`3935`, :pr:`4061`) :user:`danbartl`
