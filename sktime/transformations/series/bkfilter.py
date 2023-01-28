@@ -13,10 +13,11 @@ __all__ = ["BKFilter"]
 
 import numpy as np
 import pandas as pd
-from scipy.signal import fftconvolve
-from statsmodels.tools.validation import PandasWrapper, array_like
 
 from sktime.transformations.base import BaseTransformer
+from sktime.utils.validation._dependencies import _check_soft_dependencies
+
+_check_soft_dependencies("statsmodels", severity="warning")
 
 
 class BKFilter(BaseTransformer):
@@ -58,15 +59,14 @@ class BKFilter(BaseTransformer):
 
     Examples
     --------
-    >>> from sktime.transformations.series.bkfilter import BKFilter
-    >>> import pandas as pd
-    >>> import statsmodels.api as sm
-    >>> dta = sm.datasets.macrodata.load_pandas().data
-    >>> index = pd.date_range(start='1959Q1', end='2009Q4', freq='Q')
-    >>> dta.set_index(index, inplace=True)
-    >>> bk = BKFilter(6, 24, 12)
-    >>> cycles = bk.fit_transform(X=dta[['realinv']])
-
+    >>> from sktime.transformations.series.bkfilter import BKFilter # doctest: +SKIP
+    >>> import pandas as pd # doctest: +SKIP
+    >>> import statsmodels.api as sm # doctest: +SKIP
+    >>> dta = sm.datasets.macrodata.load_pandas().data # doctest: +SKIP
+    >>> index = pd.date_range(start='1959Q1', end='2009Q4', freq='Q') # doctest: +SKIP
+    >>> dta.set_index(index, inplace=True) # doctest: +SKIP
+    >>> bk = BKFilter(6, 24, 12) # doctest: +SKIP
+    >>> cycles = bk.fit_transform(X=dta[['realinv']]) # doctest: +SKIP
     """
 
     _tags = {
@@ -118,6 +118,9 @@ class BKFilter(BaseTransformer):
         -------
         transformed cyclical version of X
         """
+        from scipy.signal import fftconvolve
+        from statsmodels.tools.validation import PandasWrapper, array_like
+
         pw = PandasWrapper(X)
         X = array_like(X, "X", maxdim=2)
         omega_1 = 2.0 * np.pi / self.high
