@@ -283,7 +283,7 @@ def piecewise_poisson(
     Generate series using Possion distribution.
 
     Each segment has length specified in ``lengths`` and data sampled from a Poisson
-    distribution with expected frequency from ``frequency``.
+    distribution with expected lambda from ``lambdas``.
 
     Parameters
     ----------
@@ -303,11 +303,11 @@ def piecewise_poisson(
     --------
     >>> from sktime.annotation.datagen import piecewise_poisson
     >>> piecewise_poisson(lambdas=[1,2,3],lengths=[2,4,8],random_state=42)#doctest:+SKIP
-    array([1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0])
+    array([1, 2, 1, 3, 3, 1, 3, 1, 3, 2, 2, 4, 2, 1])
 
     >>> from sktime.annotation.datagen import piecewise_poisson
     >>> piecewise_poisson(lambdas=[1,3,6],lengths=[2,4,8],random_state=42)#doctest:+SKIP
-    array([2, 2, 2, 2, 2, 2, 1, 0, 1, 0, 1, 0, 1, 0])
+    array([1, 2, 1, 3, 3, 2, 5, 5, 6, 4, 4, 9, 3, 5])
 
     """
     rng = check_random_state(random_state)
