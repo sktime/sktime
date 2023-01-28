@@ -92,6 +92,8 @@ def convert_MvS_to_UvS_as_Series(obj: pd.DataFrame, store=None) -> pd.Series:
 
     if isinstance(store, dict) and "name" in store.keys():
         y.name = store["name"]
+    else:
+        y.name = None
 
     return y
 
