@@ -327,9 +327,9 @@ class _Reducer(_BaseWindowForecaster):
             contains the y and X data prepared for the respective windows, see above.
 
         """
-        if hasattr(self._y, "freq"):
-            if get_time_index(self._y).freq is None:
-                freq_inferred = pd.infer_freq(get_time_index(self._y))
+        if hasattr(self._timepoints, "freq"):
+            if self._timepoints.freq is None:
+                freq_inferred = pd.infer_freq(self._timepoints)
                 cutoff_with_freq = self._cutoff
                 cutoff_with_freq.freq = freq_inferred
             else:
@@ -440,7 +440,8 @@ class _DirectReducer(_Reducer):
         # We currently only support out-of-sample predictions. For the direct
         # strategy, we need to check this at the beginning of fit, as the fh is
         # required for fitting.
-        n_timepoints = len(get_time_index(y))
+        self._timepoints = get_time_index(y)
+        n_timepoints = len(self._timepoints)
 
         if self.pooling is not None and self.pooling not in ["local", "global"]:
             raise ValueError(
@@ -480,7 +481,7 @@ class _DirectReducer(_Reducer):
                     "lag": list(range(1, self.window_length + 1)),
                 }
             }
-            self.transformers_ = [WindowSummarizer(**kwargs)]
+            self.transformers_ = [WindowSummarizer(**kwargs, n_jobs=1)]
 
         if self.window_length is None:
             trafo = self.transformers_
@@ -508,7 +509,6 @@ class _DirectReducer(_Reducer):
 
         yt, Xt = self._transform(y, X)
 
-        n_window = len(get_time_index(yt))
         # Iterate over forecasting horizon, fitting a separate estimator for each step.
         self.estimators_ = []
         for i in range(len(self.fh)):
@@ -517,8 +517,8 @@ class _DirectReducer(_Reducer):
 
             if self.transformers_ is not None:
                 fh_rel = fh.to_relative(self.cutoff)
-                yt = _cut_df(yt, n_window - fh_rel[i] + 1)
-                Xt = _cut_df(Xt, n_window - fh_rel[i] + 1, type="head")
+                yt = _cut_df(yt, n_timepoints - fh_rel[i] + 1)
+                Xt = _cut_df(Xt, n_timepoints - fh_rel[i] + 1, type="head")
                 estimator.fit(Xt, yt)
             else:
                 if self.windows_identical is True:
@@ -760,7 +760,16 @@ class _RecursiveReducer(_Reducer):
                 "Transformers currently cannot be provided"
                 + "for models that run locally"
             )
+
         pd_format = isinstance(y, pd.Series) or isinstance(y, pd.DataFrame)
+
+        self._timepoints = get_time_index(y)
+        n_timepoints = len(self._timepoints)
+
+        self.window_length_ = check_window_length(
+            self.window_length, n_timepoints=n_timepoints
+        )
+
         if self.pooling == "local":
             if pd_format is True and isinstance(y, pd.MultiIndex):
                 warn(
@@ -770,9 +779,6 @@ class _RecursiveReducer(_Reducer):
                     + " all instances, please specify pooling = 'global'.",
                     DeprecationWarning,
                 )
-        self.window_length_ = check_window_length(
-            self.window_length, n_timepoints=len(y)
-        )
         if self.transformers is not None:
             self.transformers_ = clone(self.transformers)
 
@@ -782,7 +788,7 @@ class _RecursiveReducer(_Reducer):
                     "lag": list(range(1, self.window_length + 1)),
                 }
             }
-            self.transformers_ = [WindowSummarizer(**kwargs)]
+            self.transformers_ = [WindowSummarizer(**kwargs, n_jobs=1)]
 
         if self.window_length is None:
             trafo = self.transformers_
@@ -798,23 +804,12 @@ class _RecursiveReducer(_Reducer):
                     + "truncate_start"
                 )
 
-            n_timepoints = len(get_time_index(y))
             if self.transformers_ is not None and n_timepoints < max(ts):
                 raise ValueError(
                     "Not sufficient observations to calculate transformations"
                     + "Please reduce window length / window lagging to match"
                     + "observation size"
                 )
-
-        if self.pooling == "global":
-            timepoints = get_time_index(y)
-            if isinstance(timepoints, (pd.DatetimeIndex, pd.PeriodIndex)):
-                if timepoints.freq is None:
-                    raise ValueError(
-                        "Please set frequency for DatetimeIndex or PeriodIndex. You "
-                        + "can use set_freq_hier function from sktime.utils.datetime "
-                        + "for this purpose (will convert DatetimeIndex to PeriodIndex)"
-                    )
 
         yt, Xt = self._transform(y, X)
 
