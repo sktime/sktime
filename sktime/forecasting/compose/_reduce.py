@@ -868,7 +868,7 @@ class _RecursiveReducer(_Reducer):
         if self.pooling == "global":
             fh_max = fh.to_relative(self.cutoff)[-1]
             relative = pd.Index(list(map(int, range(1, fh_max + 1))))
-            index_range = _index_range(relative, self.cutoff)
+            index_range = _index_range(relative, self.cutoff[0])
 
             y_pred = _create_fcst_df(index_range, self._y)
 
