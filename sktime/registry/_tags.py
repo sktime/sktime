@@ -360,6 +360,12 @@ ESTIMATOR_TAG_REGISTER = [
         "bool",
         "whether estimator remembers all data seen as self._X, self._y, etc",
     ),
+    (
+        "distribution_type",
+        "estimator",
+        "str",
+        "distribution type of data as str",
+    ),
 ]
 
 ESTIMATOR_TAG_TABLE = pd.DataFrame(ESTIMATOR_TAG_REGISTER)
