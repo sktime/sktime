@@ -140,7 +140,6 @@ def test_differencer_cutoff():
     step_cv = 1
     cv = ExpandingWindowSplitter(
         initial_window=len(train_model) - (N_cv_fold - 1) * step_cv - len(fh),
-        start_with_window=True,
         step_length=step_cv,
         fh=fh,
     )

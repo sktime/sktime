@@ -67,6 +67,7 @@ from sktime.datatypes import (
 from sktime.datatypes._series_as_panel import convert_to_scitype
 from sktime.utils.sklearn import (
     is_sklearn_classifier,
+    is_sklearn_clusterer,
     is_sklearn_regressor,
     is_sklearn_transformer,
 )
@@ -177,6 +178,7 @@ class BaseTransformer(BaseEstimator):
         if (
             isinstance(other, BaseTransformer)
             or is_sklearn_classifier(other)
+            or is_sklearn_clusterer(other)
             or is_sklearn_regressor(other)
             or is_sklearn_transformer(other)
         ):
@@ -706,14 +708,19 @@ class BaseTransformer(BaseEstimator):
         # return forecasters in the "forecasters" param
         fitted_params["transformers"] = transformers
 
-        # populate fitted_params with ftransformers and their parameters
-        for ix, col in zip(transformers.index, transformers.columns):
-            fcst = transformers.loc[ix, col]
-            fcst_key = f"transformers.loc[{ix},{col}]"
-            fitted_params[fcst_key] = fcst
-            fcst_params = fcst.get_fitted_params()
-            for key, val in fcst_params.items():
-                fitted_params[f"{fcst_key}__{key}"] = val
+        def _to_str(x):
+            if isinstance(x, str):
+                x = f"'{x}'"
+            return str(x)
+
+        # populate fitted_params with transformers and their parameters
+        for ix, col in product(transformers.index, transformers.columns):
+            trafo = transformers.loc[ix, col]
+            trafo_key = f"transformers.loc[{_to_str(ix)},{_to_str(col)}]"
+            fitted_params[trafo_key] = trafo
+            trafo_params = trafo.get_fitted_params()
+            for key, val in trafo_params.items():
+                fitted_params[f"{trafo_key}__{key}"] = val
 
         return fitted_params
 

@@ -39,8 +39,7 @@ def get_time_index(X):
     if isinstance(X, (pd.DataFrame, pd.Series)):
         # pd-multiindex or pd_multiindex_hier
         if isinstance(X.index, pd.MultiIndex):
-            first_inst = X.index.to_flat_index()[0][:-1]
-            return X.loc[first_inst].index
+            return X.loc[tuple(list(X.index[0])[:-1])].index
         # nested_univ
         elif isinstance(X, pd.DataFrame) and isinstance(X.iloc[0, 0], pd.DataFrame):
             return _get_index(X.iloc[0, 0])

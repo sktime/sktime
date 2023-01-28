@@ -21,8 +21,13 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
     # for default get_params/set_params from _HeterogenousMetaEstimator
     # _steps_attr points to the attribute of self
     # which contains the heterogeneous set of estimators
-    # this must be an iterable of (name: str, estimator) pairs for the default
+    # this must be an iterable of (name: str, estimator, ...) tuples for the default
     _steps_attr = "_steps"
+    # if the estimator is fittable, _HeterogenousMetaEstimator also
+    # provides an override for get_fitted_params for params from the fitted estimators
+    # the fitted estimators should be in a different attribute, _steps_fitted_attr
+    # this must be an iterable of (name: str, estimator, ...) tuples for the default
+    _steps_fitted_attr = "steps_"
 
     def _get_pipeline_scitypes(self, estimators):
         """Get list of scityes (str) from names/estimator list."""
@@ -177,6 +182,43 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
     def _steps(self, value):
         self.steps = value
 
+    def _components(self, base_class=None):
+        """Return references to all state changing BaseObject type attributes.
+
+        This *excludes* the blue-print-like components passed in the __init__.
+
+        Caution: this method returns *references* and not *copies*.
+            Writing to the reference will change the respective attribute of self.
+
+        Parameters
+        ----------
+        base_class : class, optional, default=None, must be subclass of BaseObject
+            if None, behaves the same as `base_class=BaseObject`
+            if not None, return dict collects descendants of `base_class`
+
+        Returns
+        -------
+        dict with key = attribute name, value = reference to attribute
+        dict contains all attributes of `self` that inherit from `base_class`, and:
+            whose names do not contain the string "__", e.g., hidden attributes
+            are not class attributes, and are not hyper-parameters (`__init__` args)
+        """
+        import inspect
+
+        from sktime.base import BaseObject
+
+        if base_class is None:
+            base_class = BaseObject
+        if base_class is not None and not inspect.isclass(base_class):
+            raise TypeError(f"base_class must be a class, but found {type(base_class)}")
+        # if base_class is not None and not issubclass(base_class, BaseObject):
+        #     raise TypeError("base_class must be a subclass of BaseObject")
+
+        fitted_estimator_tuples = self.steps_
+
+        comp_dict = {name: comp for (name, comp) in fitted_estimator_tuples}
+        return comp_dict
+
     # both children use the same step params for testing, so putting it here
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -236,10 +278,56 @@ class ForecastingPipeline(_Pipeline):
     to X. The forecaster can also be a TransformedTargetForecaster containing
     transformers to transform y.
 
+    For a list `t1`, `t2`, ..., `tN`, `f`
+        where `t[i]` are transformers, and `f` is an sktime forecaster,
+        the pipeline behaves as follows:
+
+    `fit(y, X, fh)` - changes state by running `t1.fit_transform` with `X=X`, `y=y`
+        then `t2.fit_transform` on `X=` the output of `t1.fit_transform`, `y=y`, etc
+        sequentially, with `t[i]` receiving the output of `t[i-1]` as `X`,
+        then running `f.fit` with `X` being the output of `t[N]`, and `y=y`
+    `predict(X, fh)` - result is of executing `f.predict`, with `fh=fh`, and `X`
+        being the result of the following process:
+        running `t1.fit_transform` with `X=X`,
+        then `t2.fit_transform` on `X=` the output of `t1.fit_transform`, etc
+        sequentially, with `t[i]` receiving the output of `t[i-1]` as `X`,
+        and returning th output of `tN` to pass to `f.predict` as `X`.
+    `predict_interval(X, fh)`, `predict_quantiles(X, fh)` - as `predict(X, fh)`,
+        with `predict_interval` or `predict_quantiles` substituted for `predict`
+    `predict_var`, `predict_proba` - uses base class default to obtain
+        crude estimates from `predict_quantiles`.
+
+    `get_params`, `set_params` uses `sklearn` compatible nesting interface
+        if list is unnamed, names are generated as names of classes
+        if names are non-unique, `f"_{str(i)}"` is appended to each name string
+            where `i` is the total count of occurrence of a non-unique string
+            inside the list of names leading up to it (inclusive)
+
+    `ForecastingPipeline` can also be created by using the magic multiplication
+        on any forecaster, i.e., if `my_forecaster` inherits from `BaseForecaster`,
+            and `my_t1`, `my_t2`, inherit from `BaseTransformer`,
+            then, for instance, `my_t1 ** my_t2 ** my_forecaster`
+            will result in the same object as  obtained from the constructor
+            `ForecastingPipeline([my_t1, my_t2, my_forecaster])`
+        magic multiplication can also be used with (str, transformer) pairs,
+            as long as one element in the chain is a transformer
+
     Parameters
     ----------
-    steps : list
-        List of tuples like ("name", forecaster/transformer)
+    steps : list of sktime transformers and forecasters, or
+        list of tuples (str, estimator) of sktime transformers or forecasters
+            the list must contain exactly one forecaster
+        these are "blueprint" transformers resp forecasters,
+            forecaster/transformer states do not change when `fit` is called
+
+    Attributes
+    ----------
+    steps_ : list of tuples (str, estimator) of sktime transformers or forecasters
+        clones of estimators in `steps` which are fitted in the pipeline
+        is always in (str, estimator) format, even if `steps` is just a list
+        strings not passed in `steps` are replaced by unique generated strings
+        i-th transformer in `steps_` is clone of i-th in `steps`
+    forecaster_ : estimator, reference to the unique forecaster in steps_
 
     Examples
     --------
@@ -623,7 +711,6 @@ class TransformedTargetForecaster(_Pipeline):
         with `predict_interval` or `predict_quantiles` substituted for `predict`
     `predict_var`, `predict_proba` - uses base class default to obtain
         crude estimates from `predict_quantiles`.
-        Recommended to replace with better custom implementations if needed.
 
     `get_params`, `set_params` uses `sklearn` compatible nesting interface
         if list is unnamed, names are generated as names of classes
@@ -1227,6 +1314,10 @@ class ForecastX(BaseForecaster):
         if X is not None:
             X_pred = X_pred.combine_first(X)
 
+        # order columns so they are in the same order as in X seen
+        X_cols_ordered = [col for col in self._X.columns if col in X_pred.columns]
+        X_pred = X_pred[X_cols_ordered]
+
         return X_pred
 
     def _predict(self, fh=None, X=None):
@@ -1498,9 +1589,7 @@ class Permute(_DelegatedForecaster, BaseForecaster, _HeterogenousMetaEstimator):
     ...     ForecastingGridSearchCV,
     ... )
     >>> fh = [1,2,3]
-    >>> cv = ExpandingWindowSplitter(
-    ...     start_with_window=True,
-    ...     fh=fh)
+    >>> cv = ExpandingWindowSplitter(fh=fh)
     >>> forecaster = NaiveForecaster()
     >>> # check which of the two sequences of transformers is better
     >>> param_grid = {

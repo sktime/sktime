@@ -32,7 +32,11 @@ from sktime.datasets._data_io import (
     _convert_tsf_to_hierarchical,
     _load_provided_dataset,
 )
-from sktime.datatypes import MTYPE_LIST_PANEL, check_is_mtype
+from sktime.datatypes import check_is_mtype, scitype_to_mtype
+
+# using this and not a direct import
+# in order to avoid mtypes that require soft dependencies
+MTYPE_LIST_PANEL = scitype_to_mtype("Panel")
 
 # Disabling test for these mtypes since they don't support certain functionality yet
 _TO_DISABLE = ["pd-long", "pd-wide", "numpyflat"]

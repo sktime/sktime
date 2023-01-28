@@ -25,6 +25,8 @@ overall, conversions from non-lossy representations to any other ones
 import numpy as np
 import pandas as pd
 
+from sktime.utils.validation._dependencies import _check_soft_dependencies
+
 example_dict = dict()
 example_dict_lossy = dict()
 example_dict_metadata = dict()
@@ -79,9 +81,21 @@ X["var_1"] = pd.Series(
 example_dict[("nested_univ", "Panel", 0)] = X
 example_dict_lossy[("nested_univ", "Panel", 0)] = False
 
+if _check_soft_dependencies("dask", severity="none"):
+    from sktime.datatypes._adapter.dask_to_pd import convert_pandas_to_dask
+
+    df_dask = convert_pandas_to_dask(
+        example_dict[("pd-multiindex", "Panel", 0)], npartitions=1
+    )
+
+    example_dict[("dask_panel", "Panel", 0)] = df_dask
+    example_dict_lossy[("dask_panel", "Panel", 0)] = False
+
 example_dict_metadata[("Panel", 0)] = {
     "is_univariate": False,
     "is_one_series": False,
+    "n_panels": 1,
+    "is_one_panel": True,
     "is_equally_spaced": True,
     "is_equal_length": True,
     "is_empty": False,
@@ -137,9 +151,22 @@ X["var_0"] = pd.Series(
 example_dict[("nested_univ", "Panel", 1)] = X
 example_dict_lossy[("nested_univ", "Panel", 1)] = False
 
+if _check_soft_dependencies("dask", severity="none"):
+    from sktime.datatypes._adapter.dask_to_pd import convert_pandas_to_dask
+
+    df_dask = convert_pandas_to_dask(
+        example_dict[("pd-multiindex", "Panel", 1)], npartitions=1
+    )
+
+    example_dict[("dask_panel", "Panel", 1)] = df_dask
+    example_dict_lossy[("dask_panel", "Panel", 1)] = False
+
+
 example_dict_metadata[("Panel", 1)] = {
     "is_univariate": True,
     "is_one_series": False,
+    "n_panels": 1,
+    "is_one_panel": True,
     "is_equally_spaced": True,
     "is_equal_length": True,
     "is_empty": False,
@@ -189,9 +216,21 @@ X["var_0"] = pd.Series([pd.Series([4, 5, 6])])
 example_dict[("nested_univ", "Panel", 2)] = X
 example_dict_lossy[("nested_univ", "Panel", 2)] = False
 
+if _check_soft_dependencies("dask", severity="none"):
+    from sktime.datatypes._adapter.dask_to_pd import convert_pandas_to_dask
+
+    df_dask = convert_pandas_to_dask(
+        example_dict[("pd-multiindex", "Panel", 2)], npartitions=1
+    )
+
+    example_dict[("dask_panel", "Panel", 2)] = df_dask
+    example_dict_lossy[("dask_panel", "Panel", 2)] = False
+
 example_dict_metadata[("Panel", 2)] = {
     "is_univariate": True,
     "is_one_series": True,
+    "n_panels": 1,
+    "is_one_panel": True,
     "is_equally_spaced": True,
     "is_equal_length": True,
     "is_empty": False,

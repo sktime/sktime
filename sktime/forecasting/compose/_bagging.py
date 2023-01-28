@@ -49,7 +49,7 @@ class BaggingForecaster(BaseForecaster):
         A valid sktime Forecaster. If not specified sktime.forecating.ets.AutoETS is
         used.
     sp: int (default=2)
-        Seasonal period for default Forecaster and Transformer. Must be greater than 2.
+        Seasonal period for default Forecaster and Transformer. Must be 2 or greater.
         Ignored for the bootstrap_transformer and forecaster if they are specified.
     random_state: int or np.random.RandomState (default=None)
         The random state of the estimator, used to control the random number generator
@@ -225,7 +225,9 @@ class BaggingForecaster(BaseForecaster):
             Point predictions
         """
         y_bootstraps_pred = self.forecaster_.predict(fh=fh, X=None)
-        return y_bootstraps_pred.groupby(level=-1).mean()
+        y_pred = y_bootstraps_pred.groupby(level=-1).mean().iloc[:, 0]
+        y_pred.name = None
+        return y_pred
 
     def _predict_quantiles(self, fh, X=None, alpha=None):
         """Compute/return prediction quantiles for a forecast.
