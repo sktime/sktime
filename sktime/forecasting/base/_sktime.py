@@ -45,7 +45,8 @@ class _BaseWindowForecaster(BaseForecaster):
             y_pred = pd.concat([y_ins, y_oos])
 
         # ensure pd.Series name attribute is preserved
-        y_pred.name = self._y.name
+        if isinstance(y_pred, pd.Series) and isinstance(self._y, pd.Series):
+            y_pred.name = self._y.name
 
         return y_pred
 
