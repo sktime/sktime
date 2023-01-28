@@ -20,7 +20,7 @@ jobs:
           output: " "
       - name: List changed files
         run: echo '${{ steps.file_changes.outputs.files}}'
-      - uses: pre-commit/action@v2.0.0
+      - uses: pre-commit/action@v3.0.0
         with:
           extra_args: --files ${{ steps.file_changes.outputs.files}}
       - name: Check for missing init files
