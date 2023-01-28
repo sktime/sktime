@@ -722,7 +722,7 @@ class BaseTransformer(BaseEstimator):
         # transformers contains a pd.DataFrame with the individual transformers
         transformers = self.transformers_
 
-        # return forecasters in the "forecasters" param
+        # return transformers in the "transformers" param
         fitted_params["transformers"] = transformers
 
         def _to_str(x):
@@ -1106,60 +1106,36 @@ class BaseTransformer(BaseEstimator):
     def _vectorize(self, methodname, **kwargs):
         """Vectorized/iterated loop over method of BaseTransformer.
 
-        Uses transformers_ attribute to store one forecaster per loop index.
+        Uses transformers_ attribute to store one transformer per loop index.
         """
-
-        def unwrap(kwargs):
-            """Unwrap kwargs to X, y, and reusable results of some method calls."""
-            X = kwargs.pop("X")
-            y = kwargs.pop("y", None)
-
-            row_idx, col_idx = X.get_iter_indices()
-            if row_idx is None:
-                row_idx = ["transformers"]
-            if col_idx is None:
-                col_idx = ["transformers"]
-
-            Xs = X.as_list()
-            n = len(Xs)
-
-            if y is None:
-                ys = [None] * n
-            else:
-                ys = y.as_list()
-
-            return X, y, Xs, ys, n, row_idx, col_idx
+        X = kwargs.get("X")
+        y = kwargs.pop("y", None)
+        kwargs["args_rowvec"] = {"y": y}
+        kwargs["rowname_default"] = "transformers"
+        kwargs["colname_default"] = "transformers"
 
         FIT_METHODS = ["fit", "update"]
         TRAFO_METHODS = ["transform", "inverse_transform"]
 
+        # fit-like methods: run method; clone first if fit
         if methodname in FIT_METHODS:
-            X, _, Xs, ys, n, row_idx, col_idx = unwrap(kwargs)
-
-            # if fit is called, create container of transformers, but not in update
             if methodname == "fit":
-                self.transformers_ = pd.DataFrame(index=row_idx, columns=col_idx)
-                for ix in range(n):
-                    i, j = X.get_iloc_indexer(ix)
-                    self.transformers_.iloc[i].iloc[j] = self.clone()
+                transformers_ = X.vectorize_est(self, method="clone")
+            else:
+                transformers_ = self.transformers_
 
-            # fit/update the ix-th transformer with the ix-th series/panel
-            for ix in range(n):
-                i, j = X.get_iloc_indexer(ix)
-                method = getattr(self.transformers_.iloc[i].iloc[j], methodname)
-                method(X=Xs[ix], y=ys[i], **kwargs)
-
+            self.transformers_ = X.vectorize_est(
+                transformers_, method=methodname, **kwargs
+            )
             return self
 
         if methodname in TRAFO_METHODS:
             # loop through fitted transformers one-by-one, and transform series/panels
             if not self.get_tag("fit_is_empty"):
-                X, _, Xs, ys, n_trafos, _, _ = unwrap(kwargs)
-
-                n = len(self.transformers_.index)
-                m = len(self.transformers_.columns)
+                # if not fit_is_empty: check index compatibility, get fitted trafos
+                n_trafos = len(X)
+                n, m = self.transformers_.shape
                 n_fit = n * m
-
                 if n_trafos != n_fit:
                     raise RuntimeError(
                         "found different number of instances in transform than in fit. "
@@ -1167,37 +1143,18 @@ class BaseTransformer(BaseEstimator):
                         f"number of instances seen in transform: {n_trafos}"
                     )
 
-                # transform the i-th series/panel with the i-th stored transformer
-                Xts = []
-                ix = -1
-                for i, j in product(range(n), range(m)):
-                    ix += 1
-                    method = getattr(self.transformers_.iloc[i].iloc[j], methodname)
-                    Xts += [method(X=Xs[ix], y=ys[i], **kwargs)]
-                Xt = X.reconstruct(Xts, overwrite_index=False)
+                transformers_ = self.transformers_
 
-            # if fit_is_empty: don't store transformers, run fit/transform in one
             else:
-                X, _, Xs, ys, n, _, _ = unwrap(kwargs)
+                # if fit_is_empty: don't store transformers, run fit/transform in one
+                transformers_ = X.vectorize_est(self, method="clone")
+                transformers_ = X.vectorize_est(transformers_, method="fit", **kwargs)
 
-                # fit/transform the i-th series/panel with a new clone of self
-                Xts = []
-                for ix in range(n):
-                    i, j = X.get_iloc_indexer(ix)
-                    transformer = self.clone().fit(X=Xs[ix], y=ys[i], **kwargs)
-                    method = getattr(transformer, methodname)
-                    Xts += [method(X=Xs[ix], y=ys[i], **kwargs)]
-                Xt = X.reconstruct(Xts, overwrite_index=False)
-
-            # # one more thing before returning:
-            #
-            # if methodname == "inverse_transform":
-            #         output_scitype = self.get_tag("scitype:transform-input")
-            #     else:
-            #         output_scitype = self.get_tag("scitype:transform-output")
-            # if output_scitype == "Primitives" and :
-            #         Xt = pd.concat(Xt)
-            #         Xt = Xt.reset_index(drop=True)
+            # transform the i-th series/panel with the i-th stored transformer
+            Xts = X.vectorize_est(
+                transformers_, method=methodname, return_type="list", **kwargs
+            )
+            Xt = X.reconstruct(Xts, overwrite_index=False)
 
             return Xt
 
