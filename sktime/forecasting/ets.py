@@ -412,6 +412,7 @@ class AutoETS(_StatsModelsAdapter):
         valid_indices = fh.to_absolute(self.cutoff).to_pandas()
 
         y_pred = self._fitted_forecaster.predict(start=start, end=end)
+        y_pred.name = self._y.name
         return y_pred.loc[valid_indices]
 
     def _predict_interval(self, fh, X=None, coverage=None):
