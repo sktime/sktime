@@ -9,44 +9,24 @@ Dependencies
 Types of dependencies
 ---------------------
 
-There are three types of dependencies in ``sktime``:
-* "core" dependencies
-* "soft" dependencies
-* "developer" dependencies
+There are three types of dependencies in ``sktime``: **core**, **soft**, or **developer**.
 
 .. note::
 
-   A core dependency is required for ``sktime`` to install and run.
-   They are automatically installed whenever ``sktime`` is installed.
-   Example: ``pandas``
-
-.. note::
-
-   A soft dependency is a dependency that is only required to import
-   certain modules, but not necessary to use most functionality. A soft
-   dependency is not installed automatically when the package is
-   installed. Instead, users need to install it manually if they want to
-   use a module that requires a soft dependency.
-   Example: ``pmdarima``
-
-.. note::
-
-   A developer dependency is required for ``sktime`` developers, but not for typical
-   users of ``sktime``.
-   Example: ``pytest``
+   * **Core** dependencies are required to install and run ``sktime`` and are automatically installed with ``sktime``, *e.g.*  ``pandas``;
+   * **Soft** dependencies are only required to import certain modules, but not necessary to use most functionalities. A soft dependency is not installed automatically with the package. Instead, users need to install it manually if they want to use a module that requires a soft dependency, *e.g.* ``pmdarima``;
+   * **Developer** dependencies are required for ``sktime`` developers, but not for typical users of ``sktime``, *e.g.* ``pytest``.
 
 
-We try to keep the number of core dependencies to a minimum and rely on
-other packages as soft dependencies when feasible.
+We try to keep the number of core dependencies to a minimum and rely on other packages as soft dependencies when feasible.
 
 
 Adding a soft dependency
 ------------------------
 
-Soft dependencies in sktime should usually be restricted to estimators.
+Soft dependencies in ``sktime`` should usually be restricted to estimators.
 
-When adding a new soft dependency or changing the version of an existing one,
-the following files need to be updated:
+When adding a new soft dependency or changing the version of an existing one, the following files need to be updated:
 
 *  `pyproject.toml <https://github.com/sktime/sktime/blob/main/pyproject.toml>`__,
    adding the dependency or version bounds in the ``all_extras`` dependency set.

@@ -68,9 +68,11 @@ class SupervisedIntervals(BaseTransformer):
         ``-1`` means using all processors.
     random_state : int or None, default=None
         Seed for random number generation.
-    parallel_backend : str, default=None
-        Specify the parallelisation backend implementation in joblib, where
-        "threads" is used by default.
+    parallel_backend : str, ParallelBackendBase instance or None, default=None
+        Specify the parallelisation backend implementation in joblib, if None a 'prefer'
+        value of "threads" is used by default.
+        Valid options are "loky", "multiprocessing", "threading" or a custom backend.
+        See the joblib Parallel documentation for more details.
 
     Attributes
     ----------

@@ -11,19 +11,74 @@ from inspect import isclass
 from sktime.base import BaseEstimator
 
 
-class _HeterogenousMetaEstimator(BaseEstimator):
+class _HeterogenousMetaEstimator:
     """Handles parameter management for estimators composed of named estimators.
 
     Partly adapted from sklearn utils.metaestimator.py.
     """
 
-    def get_params(self, deep=True):
-        """Return estimator parameters."""
-        raise NotImplementedError("abstract method")
+    # for default get_params/set_params from _HeterogenousMetaEstimator
+    # _steps_attr points to the attribute of self
+    # which contains the heterogeneous set of estimators
+    # this must be an iterable of (name: str, estimator, ...) tuples for the default
+    _steps_attr = "_steps"
+    # if the estimator is fittable, _HeterogenousMetaEstimator also
+    # provides an override for get_fitted_params for params from the fitted estimators
+    # the fitted estimators should be in a different attribute, _steps_fitted_attr
+    # this must be an iterable of (name: str, estimator, ...) tuples for the default
+    _steps_fitted_attr = "steps_"
 
-    def set_params(self, **params):
-        """Set estimator parameters."""
-        raise NotImplementedError("abstract method")
+    def get_params(self, deep=True):
+        """Get parameters of estimator.
+
+        Parameters
+        ----------
+        deep : boolean, optional
+            If True, will return the parameters for this estimator and
+            contained sub-objects that are estimators.
+
+        Returns
+        -------
+        params : mapping of string to any
+            Parameter names mapped to their values.
+        """
+        steps = self._steps_attr
+        return self._get_params(steps, deep=deep)
+
+    def set_params(self, **kwargs):
+        """Set the parameters of estimator.
+
+        Valid parameter keys can be listed with ``get_params()``.
+
+        Returns
+        -------
+        self : returns an instance of self.
+        """
+        steps_attr = self._steps_attr
+        self._set_params(steps_attr, **kwargs)
+        return self
+
+    def _get_fitted_params(self):
+        """Get fitted parameters.
+
+        private _get_fitted_params, called from get_fitted_params
+
+        State required:
+            Requires state to be "fitted".
+
+        Returns
+        -------
+        fitted_params : dict with str keys
+            fitted parameters, keyed by names of fitted parameter
+        """
+        fitted_params = self._get_fitted_params_default()
+
+        steps = self._steps_fitted_attr
+        steps_params = self._get_params(steps, fitted=True)
+
+        fitted_params.update(steps_params)
+
+        return fitted_params
 
     def is_composite(self):
         """Check if the object is composite.
@@ -38,16 +93,24 @@ class _HeterogenousMetaEstimator(BaseEstimator):
         # children of this class are always composite
         return True
 
-    def _get_params(self, attr, deep=True):
-        out = super().get_params(deep=deep)
-        if not deep:
-            return out
-        estimators = getattr(self, attr)
-        out.update(estimators)
-        for name, estimator in estimators:
-            if hasattr(estimator, "get_params"):
-                for key, value in estimator.get_params(deep=True).items():
-                    out["%s__%s" % (name, key)] = value
+    def _get_params(self, attr, deep=True, fitted=False):
+
+        if fitted:
+            method = "_get_fitted_params"
+            deepkw = {}
+        else:
+            method = "get_params"
+            deepkw = {"deep": deep}
+
+        out = getattr(super(), method)(**deepkw)
+        if deep and hasattr(self, attr):
+            estimators = getattr(self, attr)
+            estimators = [(x[0], x[1]) for x in estimators]
+            out.update(estimators)
+            for name, estimator in estimators:
+                if hasattr(estimator, "get_params"):
+                    for key, value in getattr(estimator, method)(**deepkw).items():
+                        out["%s__%s" % (name, key)] = value
         return out
 
     def _set_params(self, attr, **params):
@@ -92,10 +155,42 @@ class _HeterogenousMetaEstimator(BaseEstimator):
                 "{0!r}".format(invalid_names)
             )
 
-    def _subset_dict_keys(self, dict_to_subset, keys):
-        """Subset dictionary d to keys in keys."""
+    def _subset_dict_keys(self, dict_to_subset, keys, prefix=None):
+        """Subset dictionary d to keys in keys.
+
+        Subsets `dict_to_subset` to keys in iterable `keys`.
+
+        If `prefix` is passed, subsets to `f"{prefix}__{key}"` for all `key` in `keys`.
+        The prefix is then removed from the keys of the return dict, i.e.,
+        return has keys `{key}` where `f"{prefix}__{key}"` was key in `dict_to_subset`.
+        Note that passing `prefix` will turn non-str keys into str keys.
+
+        Parameters
+        ----------
+        dict_to_subset : dict
+            dictionary to subset by keys
+        keys : iterable
+        prefix : str or None, optional
+
+        Returns
+        -------
+        `subsetted_dict` : dict
+            `dict_to_subset` subset to keys in `keys` described as above
+        """
+
+        def rem_prefix(x):
+            if prefix is None:
+                return x
+            prefix__ = f"{prefix}__"
+            if x.startswith(prefix__):
+                return x[len(prefix__) :]
+            else:
+                return x
+
+        if prefix is not None:
+            keys = [f"{prefix}__{key}" for key in keys]
         keys_in_both = set(keys).intersection(dict_to_subset.keys())
-        subsetted_dict = dict((k, dict_to_subset[k]) for k in keys_in_both)
+        subsetted_dict = dict((rem_prefix(k), dict_to_subset[k]) for k in keys_in_both)
         return subsetted_dict
 
     @staticmethod
@@ -155,15 +250,15 @@ class _HeterogenousMetaEstimator(BaseEstimator):
         TypeError, if estimators in the list are not instances of cls_type
         """
         msg = (
-            f"Invalid '{attr_name}' attribute, '{attr_name}' should be a list"
+            f"Invalid {attr_name!r} attribute, {attr_name!r} should be a list"
             " of estimators, or a list of (string, estimator) tuples. "
         )
         if cls_type is None:
-            msg += f"All estimators in '{attr_name}' must be of type BaseEstimator."
+            msg += f"All estimators in {attr_name!r} must be of type BaseEstimator."
             cls_type = BaseEstimator
         elif isclass(cls_type) or isinstance(cls_type, tuple):
             msg += (
-                f"All estimators in '{attr_name}' must be of type "
+                f"All estimators in {attr_name!r} must be of type "
                 f"{cls_type.__name__}."
             )
         else:
@@ -342,7 +437,13 @@ class _HeterogenousMetaEstimator(BaseEstimator):
         return self._make_strings_unique(uniquestr)
 
     def _dunder_concat(
-        self, other, base_class, composite_class, attr_name="steps", concat_order="left"
+        self,
+        other,
+        base_class,
+        composite_class,
+        attr_name="steps",
+        concat_order="left",
+        composite_params=None,
     ):
         """Concatenate pipelines for dunder parsing, helper function.
 
@@ -366,6 +467,9 @@ class _HeterogenousMetaEstimator(BaseEstimator):
         concat_order : str, one of "left" and "right", optional, default="left"
             if "left", result attr_name will be like self.attr_name + other.attr_name
             if "right", result attr_name will be like other.attr_name + self.attr_name
+        composite_params : dict, optional, default=None; else, pairs strname-value
+            if not None, parameters of the composite are always set accordingly
+            i.e., contains key-value pairs, and composite_class has key set to value
 
         Returns
         -------
@@ -384,7 +488,7 @@ class _HeterogenousMetaEstimator(BaseEstimator):
         if concat_order not in ["left", "right"]:
             raise ValueError(
                 f'concat_order must be one of "left", "right", but found '
-                f'"{concat_order}"'
+                f"{concat_order!r}"
             )
         if not isinstance(attr_name, str):
             raise TypeError(f"attr_name must be str, but found {type(attr_name)}")
@@ -428,11 +532,22 @@ class _HeterogenousMetaEstimator(BaseEstimator):
         else:
             return NotImplemented
 
+        # create the "steps" param for the composite
         # if all the names are equal to class names, we eat them away
         if all(type(x[1]).__name__ == x[0] for x in zip(new_names, new_ests)):
-            return composite_class(**{attr_name: list(new_ests)})
+            step_param = {attr_name: list(new_ests)}
         else:
-            return composite_class(**{attr_name: list(zip(new_names, new_ests))})
+            step_param = {attr_name: list(zip(new_names, new_ests))}
+
+        # retrieve other parameters, from composite_params attribute
+        if composite_params is None:
+            composite_params = {}
+        else:
+            composite_params = composite_params.copy()
+
+        # construct the composite with both step and additional params
+        composite_params.update(step_param)
+        return composite_class(**composite_params)
 
     def _anytagis(self, tag_name, value, estimators):
         """Return whether any estimator in list has tag `tag_name` of value `value`.

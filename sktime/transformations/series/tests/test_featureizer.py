@@ -6,7 +6,7 @@ from numpy.testing import assert_array_equal
 
 from sktime.datasets import load_longley
 from sktime.forecasting.model_selection import temporal_train_test_split
-from sktime.transformations.series.compose import YtoX
+from sktime.transformations.compose import YtoX
 from sktime.transformations.series.exponent import ExponentTransformer
 from sktime.transformations.series.lag import Lag
 

@@ -67,6 +67,7 @@ from sktime.datatypes import (
 from sktime.datatypes._series_as_panel import convert_to_scitype
 from sktime.utils.sklearn import (
     is_sklearn_classifier,
+    is_sklearn_clusterer,
     is_sklearn_regressor,
     is_sklearn_transformer,
 )
@@ -192,6 +193,7 @@ class BaseTransformer(BaseEstimator):
         if (
             isinstance(other, BaseTransformer)
             or is_sklearn_classifier(other)
+            or is_sklearn_clusterer(other)
             or is_sklearn_regressor(other)
             or is_sklearn_transformer(other)
         ):
@@ -324,7 +326,7 @@ class BaseTransformer(BaseEstimator):
     def __getitem__(self, key):
         """Magic [...] method, return column subsetted transformer.
 
-        First index does output subsetting, second index does input subsetting.
+        First index does intput subsetting, second index does output subsetting.
 
         Keys must be valid inputs for `columns` in `ColumnSubset`.
 
@@ -723,14 +725,19 @@ class BaseTransformer(BaseEstimator):
         # return forecasters in the "forecasters" param
         fitted_params["transformers"] = transformers
 
-        # populate fitted_params with ftransformers and their parameters
-        for ix, col in zip(transformers.index, transformers.columns):
-            fcst = transformers.loc[ix, col]
-            fcst_key = f"transformers.loc[{ix},{col}]"
-            fitted_params[fcst_key] = fcst
-            fcst_params = fcst.get_fitted_params()
-            for key, val in fcst_params.items():
-                fitted_params[f"{fcst_key}__{key}"] = val
+        def _to_str(x):
+            if isinstance(x, str):
+                x = f"'{x}'"
+            return str(x)
+
+        # populate fitted_params with transformers and their parameters
+        for ix, col in product(transformers.index, transformers.columns):
+            trafo = transformers.loc[ix, col]
+            trafo_key = f"transformers.loc[{_to_str(ix)},{_to_str(col)}]"
+            fitted_params[trafo_key] = trafo
+            trafo_params = trafo.get_fitted_params()
+            for key, val in trafo_params.items():
+                fitted_params[f"{trafo_key}__{key}"] = val
 
         return fitted_params
 
@@ -1075,14 +1082,21 @@ class BaseTransformer(BaseEstimator):
                 store_behaviour="freeze",
             )
         elif output_scitype == "Primitives":
-            # we "abuse" the Series converter to ensure df output
-            # & reset index to have integers for instances
+            # we ensure the output is pd_DataFrame_Table
+            # & ensure the returned index is sensible
+            # for return index, we need to deal with last level, constant 0
             if isinstance(Xt, (pd.DataFrame, pd.Series)):
-                Xt = Xt.reset_index(drop=True)
+                # if index is multiindex, last level is constant 0
+                # and other levels are hierarchy
+                if isinstance(Xt.index, pd.MultiIndex):
+                    Xt.index = Xt.index.droplevel(-1)
+                # else this is only zeros and should be reset to RangeIndex
+                else:
+                    Xt = Xt.reset_index(drop=True)
             Xt = convert_to(
                 Xt,
-                to_type="pd.DataFrame",
-                as_scitype="Series",
+                to_type="pd_DataFrame_Table",
+                as_scitype="Table",
                 # no converter store since this is not a "1:1 back-conversion"
             )
         # else output_scitype is "Panel" and no need for conversion

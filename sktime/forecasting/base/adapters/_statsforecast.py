@@ -131,7 +131,7 @@ class _StatsForecastAdapter(BaseForecaster):
         """
         # initialize return objects
         fh_abs = fh.to_absolute(self.cutoff).to_numpy()
-        fh_idx = fh.to_indexer(self.cutoff, from_cutoff=False)
+        fh_idx = fh.to_indexer(self.cutoff, from_cutoff=True)
         y_pred = pd.Series(index=fh_abs, dtype="float64")
 
         result = self._forecaster.predict_in_sample()

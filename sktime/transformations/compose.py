@@ -15,6 +15,7 @@ from sktime.transformations.base import BaseTransformer
 from sktime.utils.multiindex import flatten_multiindex
 from sktime.utils.sklearn import (
     is_sklearn_classifier,
+    is_sklearn_clusterer,
     is_sklearn_regressor,
     is_sklearn_transformer,
 )
@@ -59,7 +60,7 @@ def _coerce_to_sktime(other):
     return other
 
 
-class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
+class TransformerPipeline(_HeterogenousMetaEstimator, BaseTransformer):
     """Pipeline of transformers compositor.
 
     The `TransformerPipeline` compositor allows to chain transformers.
@@ -163,6 +164,17 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
 
     # no further default tag values - these are set dynamically below
 
+    # for default get_params/set_params from _HeterogenousMetaEstimator
+    # _steps_attr points to the attribute of self
+    # which contains the heterogeneous set of estimators
+    # this must be an iterable of (name: str, estimator, ...) tuples for the default
+    _steps_attr = "_steps"
+    # if the estimator is fittable, _HeterogenousMetaEstimator also
+    # provides an override for get_fitted_params for params from the fitted estimators
+    # the fitted estimators should be in a different attribute, _steps_fitted_attr
+    # this must be an iterable of (name: str, estimator, ...) tuples for the default
+    _steps_fitted_attr = "steps_"
+
     def __init__(self, steps):
 
         self.steps = steps
@@ -240,6 +252,7 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
             not nested, contains only non-TransformerPipeline `sktime` transformers
         """
         from sktime.classification.compose import SklearnClassifierPipeline
+        from sktime.clustering.compose import SklearnClustererPipeline
         from sktime.regression.compose import SklearnRegressorPipeline
 
         other = _coerce_to_sktime(other)
@@ -247,6 +260,10 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         # if sklearn classifier, use sklearn classifier pipeline
         if is_sklearn_classifier(other):
             return SklearnClassifierPipeline(classifier=other, transformers=self.steps)
+
+        # if sklearn clusterer, use sklearn clusterer pipeline
+        if is_sklearn_clusterer(other):
+            return SklearnClustererPipeline(clusterer=other, transformers=self.steps)
 
         # if sklearn regressor, use sklearn regressor pipeline
         if is_sklearn_regressor(other):
@@ -385,34 +402,6 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
 
         return self
 
-    def get_params(self, deep=True):
-        """Get parameters of estimator in `steps`.
-
-        Parameters
-        ----------
-        deep : boolean, optional, default=True
-            If True, will return the parameters for this estimator and
-            contained sub-objects that are estimators.
-
-        Returns
-        -------
-        params : mapping of string to any
-            Parameter names mapped to their values.
-        """
-        return self._get_params("_steps", deep=deep)
-
-    def set_params(self, **kwargs):
-        """Set the parameters of estimator in `steps`.
-
-        Valid parameter keys can be listed with ``get_params()``.
-
-        Returns
-        -------
-        self : returns an instance of self.
-        """
-        self._set_params("_steps", **kwargs)
-        return self
-
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
@@ -450,7 +439,7 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         return [params1, params2, params3]
 
 
-class FeatureUnion(BaseTransformer, _HeterogenousMetaEstimator):
+class FeatureUnion(_HeterogenousMetaEstimator, BaseTransformer):
     """Concatenates results of multiple transformer objects.
 
     This estimator applies a list of transformer objects in parallel to the
@@ -498,6 +487,16 @@ class FeatureUnion(BaseTransformer, _HeterogenousMetaEstimator):
         # unclear what inverse transform should be, since multiple inverse_transform
         #   would have to inverse transform to one
     }
+
+    # for default get_params/set_params from _HeterogenousMetaEstimator
+    # _steps_attr points to the attribute of self
+    # which contains the heterogeneous set of estimators
+    # this must be an iterable of (name: str, estimator) pairs for the default
+    _steps_attr = "_transformer_list"
+    # if the estimator is fittable, _HeterogenousMetaEstimator also
+    # provides an override for get_fitted_params for params from the fitted estimators
+    # the fitted estimators should be in a different attribute, _steps_fitted_attr
+    _steps_fitted_attr = "transformer_list_"
 
     def __init__(
         self,
@@ -652,49 +651,33 @@ class FeatureUnion(BaseTransformer, _HeterogenousMetaEstimator):
 
         return Xt
 
-    def get_params(self, deep=True):
-        """Get parameters of estimator in `_forecasters`.
-
-        Parameters
-        ----------
-        deep : boolean, optional, default=True
-            If True, will return the parameters for this estimator and
-            contained sub-objects that are estimators.
-
-        Returns
-        -------
-        params : mapping of string to any
-            Parameter names mapped to their values.
-        """
-        return self._get_params("transformer_list", deep=deep)
-
-    def set_params(self, **kwargs):
-        """Set the parameters of estimator in `_forecasters`.
-
-        Valid parameter keys can be listed with ``get_params()``.
-
-        Returns
-        -------
-        self : returns an instance of self.
-        """
-        self._set_params("transformer_list", **kwargs)
-        return self
-
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Test parameters for FeatureUnion."""
+        from sktime.transformations.series.boxcox import BoxCoxTransformer
         from sktime.transformations.series.exponent import ExponentTransformer
 
+        # with name and estimator tuple, all transformers don't have fit
         TRANSFORMERS = [
             ("transformer1", ExponentTransformer(power=4)),
             ("transformer2", ExponentTransformer(power=0.25)),
         ]
+        params1 = {"transformer_list": TRANSFORMERS}
 
-        return {"transformer_list": TRANSFORMERS}
+        # only with estimators, some transformers have fit, some not
+        params2 = {
+            "transformer_list": [
+                ExponentTransformer(power=4),
+                ExponentTransformer(power=0.25),
+                BoxCoxTransformer(),
+            ]
+        }
+
+        return [params1, params2]
 
 
 class FitInTransform(BaseTransformer):
-    """Transformer composition to always fit a given transformer on the transform data only.
+    """Transformer wrapper to delay fit to the transform phase.
 
     In panel settings, e.g., time series classification, it can be preferable
     (or, necessary) to fit and transform on the test set, e.g., interpolate within the
@@ -829,7 +812,7 @@ class FitInTransform(BaseTransformer):
         return params
 
 
-class MultiplexTransformer(_DelegatedTransformer, _HeterogenousMetaEstimator):
+class MultiplexTransformer(_HeterogenousMetaEstimator, _DelegatedTransformer):
     """Facilitate an AutoML based selection of the best transformer.
 
     When used in combination with either TransformedTargetForecaster or
@@ -890,7 +873,6 @@ class MultiplexTransformer(_DelegatedTransformer, _HeterogenousMetaEstimator):
     >>> cv = ExpandingWindowSplitter(
     ...     initial_window=24,
     ...     step_length=12,
-    ...     start_with_window=True,
     ...     fh=[1,2,3])
     >>> pipe = TransformedTargetForecaster(steps = [
     ...     ("multiplex", multiplexer),
@@ -915,7 +897,20 @@ class MultiplexTransformer(_DelegatedTransformer, _HeterogenousMetaEstimator):
         "X_inner_mtype": ALL_TIME_SERIES_MTYPES,
     }
 
+    # attribute for _DelegatedTransformer, which then delegates
+    #     all non-overridden methods are same as of getattr(self, _delegate_name)
+    #     see further details in _DelegatedTransformer docstring
     _delegate_name = "transformer_"
+
+    # for default get_params/set_params from _HeterogenousMetaEstimator
+    # _steps_attr points to the attribute of self
+    # which contains the heterogeneous set of estimators
+    # this must be an iterable of (name: str, estimator) pairs for the default
+    _steps_attr = "_transformers"
+    # if the estimator is fittable, _HeterogenousMetaEstimator also
+    # provides an override for get_fitted_params for params from the fitted estimators
+    # the fitted estimators should be in a different attribute, _steps_fitted_attr
+    _steps_fitted_attr = "transformers_"
 
     def __init__(
         self,
@@ -969,34 +964,6 @@ class MultiplexTransformer(_DelegatedTransformer, _HeterogenousMetaEstimator):
         else:
             # if None, simply clone the first transformer to self.transformer_
             self.transformer_ = self._get_estimator_list(self.transformers)[0].clone()
-
-    def get_params(self, deep=True):
-        """Get parameters for this estimator.
-
-        Parameters
-        ----------
-        deep : boolean, optional
-            If True, will return the parameters for this estimator and
-            contained subobjects that are estimators.
-
-        Returns
-        -------
-        params : mapping of string to any
-            Parameter names mapped to their values.
-        """
-        return self._get_params("_transformers", deep=deep)
-
-    def set_params(self, **kwargs):
-        """Set the parameters of this estimator.
-
-        Valid parameter keys can be listed with ``get_params()``.
-
-        Returns
-        -------
-        self
-        """
-        self._set_params("_transformers", **kwargs)
-        return self
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -1163,6 +1130,9 @@ class InvertTransform(_DelegatedTransformer):
                 " this transformer will likely crash on input."
             )
 
+    # attribute for _DelegatedTransformer, which then delegates
+    #     all non-overridden methods are same as of getattr(self, _delegate_name)
+    #     see further details in _DelegatedTransformer docstring
     _delegate_name = "transformer_"
 
     def _transform(self, X, y=None):
@@ -1332,7 +1302,7 @@ class OptionalPassthrough(_DelegatedTransformer):
     --------
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.naive import NaiveForecaster
-    >>> from sktime.transformations.series.compose import OptionalPassthrough
+    >>> from sktime.transformations.compose import OptionalPassthrough
     >>> from sktime.transformations.series.detrend import Deseasonalizer
     >>> from sktime.transformations.series.adapt import TabularToSeriesAdaptor
     >>> from sktime.forecasting.compose import TransformedTargetForecaster
@@ -1344,24 +1314,24 @@ class OptionalPassthrough(_DelegatedTransformer):
     >>> pipe = TransformedTargetForecaster(steps=[
     ...     ("deseasonalizer", OptionalPassthrough(Deseasonalizer())),
     ...     ("scaler", OptionalPassthrough(TabularToSeriesAdaptor(StandardScaler()))),
-    ...     ("forecaster", NaiveForecaster())])
+    ...     ("forecaster", NaiveForecaster())])  # doctest: +SKIP
     >>> # putting it all together in a grid search
     >>> cv = SlidingWindowSplitter(
     ...     initial_window=60,
     ...     window_length=24,
     ...     start_with_window=True,
-    ...     step_length=48)
+    ...     step_length=48)  # doctest: +SKIP
     >>> param_grid = {
     ...     "deseasonalizer__passthrough" : [True, False],
     ...     "scaler__transformer__transformer__with_mean": [True, False],
     ...     "scaler__passthrough" : [True, False],
-    ...     "forecaster__strategy": ["drift", "mean", "last"]}
+    ...     "forecaster__strategy": ["drift", "mean", "last"]}  # doctest: +SKIP
     >>> gscv = ForecastingGridSearchCV(
     ...     forecaster=pipe,
     ...     param_grid=param_grid,
     ...     cv=cv,
-    ...     n_jobs=-1)
-    >>> gscv_fitted = gscv.fit(load_airline())
+    ...     n_jobs=-1)  # doctest: +SKIP
+    >>> gscv_fitted = gscv.fit(load_airline())  # doctest: +SKIP
     """
 
     _tags = {
@@ -1390,7 +1360,6 @@ class OptionalPassthrough(_DelegatedTransformer):
             "scitype:transform-input",
             "scitype:transform-output",
             "scitype:instancewise",
-            "X_inner_mtype",
             "y_inner_mtype",
             "capability:inverse_transform",
             "handles-missing-data",
@@ -1405,6 +1374,9 @@ class OptionalPassthrough(_DelegatedTransformer):
         else:
             self.transformer_ = transformer.clone()
 
+    # attribute for _DelegatedTransformer, which then delegates
+    #     all non-overridden methods are same as of getattr(self, _delegate_name)
+    #     see further details in _DelegatedTransformer docstring
     _delegate_name = "transformer_"
 
     @classmethod
@@ -1462,7 +1434,7 @@ class ColumnwiseTransformer(BaseTransformer):
     --------
     >>> from sktime.datasets import load_longley
     >>> from sktime.transformations.series.detrend import Detrender
-    >>> from sktime.transformations.series.compose import ColumnwiseTransformer
+    >>> from sktime.transformations.compose import ColumnwiseTransformer
     >>> _, X = load_longley()
     >>> transformer = ColumnwiseTransformer(Detrender())
     >>> Xt = transformer.fit_transform(X)

@@ -1,5 +1,11 @@
 # -*- coding: utf-8 -*-
 
+__author__ = []
+__all__ = []
+
+from sklearn.utils import check_random_state
+
+from sktime.annotation.datagen import piecewise_poisson
 from sktime.utils._testing.series import _make_series
 
 
@@ -10,7 +16,19 @@ def make_annotation_problem(
     make_X=False,
     n_columns=2,
     random_state=None,
+    estimator_type=None,
 ):
+    if estimator_type == "Poisson":
+        if make_X:
+            raise ValueError("PoissonHMM creates a distribution for y only")
+        rng = check_random_state(random_state)
+        y = piecewise_poisson(
+            lambdas=rng.randint(1, 4, n_timepoints),
+            lengths=rng.randint(1, 5, n_timepoints),
+            random_state=random_state,
+        )
+        return y
+
     y = _make_series(
         n_timepoints=n_timepoints,
         n_columns=1,

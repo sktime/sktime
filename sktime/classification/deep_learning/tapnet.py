@@ -10,6 +10,8 @@ __all__ = [
     "TapNetClassifier",
 ]
 
+from copy import deepcopy
+
 from sklearn.utils import check_random_state
 
 from sktime.classification.deep_learning.base import BaseDeepClassifier
@@ -142,7 +144,20 @@ class TapNetClassifier(BaseDeepClassifier):
         self.use_rp = use_rp
         self.rp_params = rp_params
 
-        self._network = TapNetNetwork()
+        self._network = TapNetNetwork(
+            dropout=self.dropout,
+            filter_sizes=self.filter_sizes,
+            kernel_size=self.kernel_size,
+            dilation=self.dilation,
+            layers=self.layers,
+            use_rp=self.use_rp,
+            rp_params=self.rp_params,
+            use_att=self.use_att,
+            use_lstm=self.use_lstm,
+            use_cnn=self.use_cnn,
+            random_state=self.random_state,
+            padding=self.padding,
+        )
 
     def build_model(self, input_shape, n_classes, **kwargs):
         """Construct a complied, un-trained, keras model that is ready for training.
@@ -208,9 +223,6 @@ class TapNetClassifier(BaseDeepClassifier):
         -------
         self: object
         """
-        if self.callbacks is None:
-            self._callbacks = []
-
         y_onehot = self.convert_y_to_keras(y)
         # Transpose to conform to expectation format by keras
         X = X.transpose(0, 2, 1)
@@ -226,7 +238,7 @@ class TapNetClassifier(BaseDeepClassifier):
             batch_size=self.batch_size,
             epochs=self.n_epochs,
             verbose=self.verbose,
-            callbacks=self._callbacks,
+            callbacks=deepcopy(self.callbacks) if self.callbacks else [],
         )
 
         return self
@@ -253,6 +265,8 @@ class TapNetClassifier(BaseDeepClassifier):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
+        from sktime.utils.validation._dependencies import _check_soft_dependencies
+
         param1 = {
             "n_epochs": 20,
             "batch_size": 4,
@@ -267,5 +281,16 @@ class TapNetClassifier(BaseDeepClassifier):
             "use_cnn": False,
             "layers": (25, 25),
         }
+        test_params = [param1, param2]
 
-        return [param1, param2]
+        if _check_soft_dependencies("keras", severity="none"):
+            from keras.callbacks import LambdaCallback
+
+            test_params.append(
+                {
+                    "n_epochs": 2,
+                    "callbacks": [LambdaCallback()],
+                }
+            )
+
+        return test_params
