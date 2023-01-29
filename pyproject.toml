@@ -3,9 +3,7 @@ name = "sktime"
 version = "0.16.0"
 description = "A unified framework for machine learning with time series"
 authors = [
-    {name = "Franz Király", email = "f.kiraly@ucl.ac.uk"},
-    {name = "Tony Bagnall", email = "ajb@uea.ac.uk"},
-    {name = "Markus Löning"},
+    {name = "sktime developers", email = "sktime.toolbox@gmail.com"},
 ]
 maintainers = [
     {name = "sktime developers", email = "sktime.toolbox@gmail.com"},
