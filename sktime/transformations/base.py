@@ -681,22 +681,40 @@ class BaseTransformer(BaseEstimator):
 
         return self
 
-    def get_fitted_params(self):
+    def get_fitted_params(self, deep=True):
         """Get fitted parameters.
-
-        Overrides BaseEstimator default in case of vectorization.
 
         State required:
             Requires state to be "fitted".
 
+        Parameters
+        ----------
+        deep : bool, default=True
+            Whether to return fitted parameters of components.
+
+            * If True, will return a dict of parameter name : value for this object,
+              including fitted parameters of fittable components
+              (= BaseEstimator-valued parameters).
+            * If False, will return a dict of parameter name : value for this object,
+              but not include fitted parameters of components.
+
         Returns
         -------
-        fitted_params : dict of fitted parameters, keys are str names of parameters
-            parameters of components are indexed as [componentname]__[paramname]
+        fitted_params : dict with str-valued keys
+            Dictionary of fitted parameters, paramname : paramvalue
+            keys-value pairs include:
+
+            * always: all fitted parameters of this object, as via `get_param_names`
+              values are fitted parameter value for that key, of this object
+            * if `deep=True`, also contains keys/value pairs of component parameters
+              parameters of components are indexed as `[componentname]__[paramname]`
+              all parameters of `componentname` appear as `paramname` with its value
+            * if `deep=True`, also contains arbitrary levels of component recursion,
+              e.g., `[componentname]__[componentcomponentname]__[paramname]`, etc
         """
         # if self is not vectorized, run the default get_fitted_params
         if not getattr(self, "_is_vectorized", False):
-            return super(BaseTransformer, self).get_fitted_params()
+            return super(BaseTransformer, self).get_fitted_params(deep=deep)
 
         # otherwise, we delegate to the instances' get_fitted_params
         # instances' parameters are returned at dataframe-slice-like keys
@@ -718,7 +736,7 @@ class BaseTransformer(BaseEstimator):
             trafo = transformers.loc[ix, col]
             trafo_key = f"transformers.loc[{_to_str(ix)},{_to_str(col)}]"
             fitted_params[trafo_key] = trafo
-            trafo_params = trafo.get_fitted_params()
+            trafo_params = trafo.get_fitted_params(deep=deep)
             for key, val in trafo_params.items():
                 fitted_params[f"{trafo_key}__{key}"] = val
 
