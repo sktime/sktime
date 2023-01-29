@@ -29,6 +29,22 @@ Dependency changes
 Core interface changes
 ~~~~~~~~~~~~~~~~~~~~~~
 
+BaseEstimator
+^^^^^^^^^^^^^
+
+* The method ``get_fitted_params``, of all ``BaseEstimator`` descendants
+  (any estimator with ``fit``), has a new boolean argument ``deep``, default ``True``.
+  Similar to the argument of the same name of ``get_params``, this allows to control
+  for composite estimators, whether to return fitted parameters with or
+  without estimator nesting.
+
+Forecasting
+^^^^^^^^^^^
+
+* all forecasters: the public ``cutoff`` attribute of forecasters has changed
+  to ``pd.Index`` subtype, from index element. To update previously
+  functional code, replace references to ``cutoff`` by ``cutoff[0]``.
+
 
 Deprecations and removals
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -50,7 +66,7 @@ Data types, checks, conversions
 Forecasting
 ^^^^^^^^^^^
 
-* al forecasters: the public ``cutoff`` attribute of forecasters has changed
+* all forecasters: the public ``cutoff`` attribute of forecasters has changed
   to ``pd.Index`` subtype, from index element. To update previously
   functional code, replace references to ``cutoff`` by ``cutoff[0]``.
 
