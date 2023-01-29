@@ -33,6 +33,31 @@ Core interface changes
 Deprecations and removals
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
+Dependencies
+^^^^^^^^^^^^
+
+* ``statsmodels`` has changed from core dependency to soft dependency in ``sktime 0.16.0``.
+  To ensure functioning of setups of ``sktime`` code dependent on ``statsmodels`` based estimators
+  going forward, ensure to install ``statsmodels`` in the environment explicitly,
+  or install the ``all_extras`` soft dependency set which will continue to contain ``statsmodels``.
+
+Data types, checks, conversions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+in ``check_is_scitype``, the ``msg_legacy_interface`` argument has now been removed.
+  Future behaviour is as per the default of the argument, ``msg_legacy_interface=False``.
+
+Forecasting
+^^^^^^^^^^^
+
+* the public ``cutoff`` attribute of forecasters has changed to ``pd.Index`` subtype, from index element.
+  To update previously functional code, replace references to ``cutoff`` by ``cutoff[0]``.
+
+Transformations
+^^^^^^^^^^^^^^^
+
+* the ``Catch22.transform_single_feature`` method has been removed from the ``Catch22``
+  transformer
 
 Enhancements
 ~~~~~~~~~~~~
