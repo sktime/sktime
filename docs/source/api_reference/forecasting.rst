@@ -49,6 +49,7 @@ Pipelines can also be constructed using ``*``, ``+``, and ``|`` dunders.
     ForecastX
     ForecastByLevel
     Permute
+    HierarchyEnsembleForecaster
 
 Reduction
 ---------

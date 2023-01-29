@@ -20,13 +20,15 @@ from sktime.forecasting.base.adapters import _StatsModelsAdapter
 class AutoETS(_StatsModelsAdapter):
     """ETS models with both manual and automatic fitting capabilities.
 
-    Manual fitting is adapted from the statsmodels version,
-    while automatic fitting is adapted from the R version of ets.
+    Manual (fixed parameter) use (`auto=False`, default) is a direct interface
+    to `statsmodels` `ETSModel` [2]_,
+    while automated tuning (`auto=True`) is an adaptation of the R version of ets [3]_,
+    on top of `statsmodels` `ETSModel`.
 
-    The first few parameters are the same as the ones on statsmodels
+    The first parameters are direct interfaces to the `statsmodels` parameters
     (from ``error`` to ``return_params``) [2]_.
 
-    The next few parameters are adapted from the ones on R
+    The remaining parameters are adaptations of the parameters of R ets
     (``auto`` to ``additive_only``) [3]_,
     and are used for automatic model selection.
 
