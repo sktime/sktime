@@ -353,9 +353,12 @@ def is_nested_dataframe(obj, return_metadata=False, var_name="obj"):
     if not isinstance(obj, pd.DataFrame):
         msg = f"{var_name} must be a pd.DataFrame, found {type(obj)}"
         return _ret(False, msg, None, return_metadata)
-
     # Otherwise we'll see if any column has a nested structure in first row
     else:
+        if not all([i == "object" for i in obj.dtypes]):
+            msg = f"{var_name} All columns must be object, found {type(obj)}"
+            return _ret(False, msg, None, return_metadata)
+
         if not are_columns_nested(obj).any():
             msg = f"{var_name} entries must be pd.Series"
             return _ret(False, msg, None, return_metadata)
