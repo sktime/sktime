@@ -1328,10 +1328,25 @@ def temporal_train_test_split(
 
     Parameters
     ----------
-    y : pd.Series
-        Target series
-    X : pd.DataFrame, optional (default=None)
+    y : data in sktime compatible data container format
+    X : data in sktime compatible data container format, optional (default=None)
         Exogenous data
+        y and X can be in one of the following formats:
+        Series scitype: pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
+            for vanilla forecasting, one time series
+        Panel scitype: pd.DataFrame with 2-level row MultiIndex,
+            3D np.ndarray, list of Series pd.DataFrame, or nested pd.DataFrame
+            for global or panel forecasting
+        Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
+            for hierarchical forecasting
+        Number of columns admissible depend on the "scitype:y" tag:
+            if self.get_tag("scitype:y")=="univariate":
+                y must have a single column/variable
+            if self.get_tag("scitype:y")=="multivariate":
+                y must have 2 or more columns
+            if self.get_tag("scitype:y")=="both": no restrictions on columns apply
+        
+        
     test_size : float, int or None, optional (default=None)
         If float, should be between 0.0 and 1.0 and represent the proportion
         of the dataset to include in the test split. If int, represents the
@@ -1343,7 +1358,9 @@ def temporal_train_test_split(
         proportion of the dataset to include in the train split. If
         int, represents the relative number of train samples. If None,
         the value is automatically set to the complement of the test size.
-    fh : ForecastingHorizon
+    fh : int, list, np.array or ForecastingHorizon, optional (default=None)
+        The forecasting horizon encoding the time stamps to forecast at.
+        if self.get_tag("requires-fh-in-fit"), must be passed, not optional
 
     Returns
     -------
