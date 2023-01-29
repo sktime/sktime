@@ -44,20 +44,23 @@ Dependencies
 Data types, checks, conversions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-in ``check_is_scitype``, the ``msg_legacy_interface`` argument has now been removed.
+* ``check_is_scitype``: the ``msg_legacy_interface`` argument has now been removed.
   Future behaviour is as per the default of the argument, ``msg_legacy_interface=False``.
 
 Forecasting
 ^^^^^^^^^^^
 
-* the public ``cutoff`` attribute of forecasters has changed to ``pd.Index`` subtype, from index element.
-  To update previously functional code, replace references to ``cutoff`` by ``cutoff[0]``.
+* al forecasters: the public ``cutoff`` attribute of forecasters has changed
+  to ``pd.Index`` subtype, from index element. To update previously
+  functional code, replace references to ``cutoff`` by ``cutoff[0]``.
 
 Transformations
 ^^^^^^^^^^^^^^^
 
-* the ``Catch22.transform_single_feature`` method has been removed from the ``Catch22``
+* ``Catch22``: the ``transform_single_feature`` method has been removed from the ``Catch22``
   transformer
+* ``FourierFeatures``: in 0.17.0, the default value of the ``keep_original_columns``
+  parameter will change to ``False``
 
 Enhancements
 ~~~~~~~~~~~~
