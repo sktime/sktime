@@ -106,7 +106,7 @@ class _PmdArimaAdapter(BaseForecaster):
             y_pred = pd.concat([y_ins, y_oos])
 
         # ensure that name is not added nor removed
-        # otherwise this may upset conversion to pd.DataFrame 
+        # otherwise this may upset conversion to pd.DataFrame
         y_pred.name = self._y.name
         return y_pred
 
