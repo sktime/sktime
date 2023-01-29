@@ -15,6 +15,7 @@ import pandas as pd
 from joblib import Parallel, delayed
 from numba import njit
 
+from sktime.datatypes import convert_to
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.validation import check_n_jobs
 
@@ -271,6 +272,178 @@ class Catch22(BaseTransformer):
                     c22[dim + n] = features[feature](*args)
 
         return c22
+
+    def _transform_single_feature(self, X, feature, case_id=None):
+        if isinstance(feature, (int, np.integer)) or isinstance(
+            feature, (float, float)
+        ):
+            if feature > 21 or feature < 0:
+                raise ValueError("Invalid catch22 feature ID")
+        elif isinstance(feature, str):
+            if feature in feature_names:
+                feature = feature_names.index(feature)
+            else:
+                raise ValueError("Invalid catch22 feature name")
+        else:
+            raise ValueError("catch22 feature name or ID required")
+
+        if isinstance(X, pd.DataFrame):
+            X = convert_to(X, "numpy3D")
+
+        if len(X.shape) > 2:
+            n_instances, n_dims, series_length = X.shape
+
+            if n_dims > 1:
+                raise ValueError(
+                    "transform_single_feature can only handle univariate series "
+                    "currently."
+                )
+
+            X = np.reshape(X, (n_instances, -1))
+        else:
+            n_instances, series_length = X.shape
+
+        if case_id is not None:
+            if case_id != self._case_id:
+                self._case_id = case_id
+                self._st_n_instances = n_instances
+                self._st_series_length = series_length
+                self._outlier_series = [None] * n_instances
+                self._smin = [None] * n_instances
+                self._smax = [None] * n_instances
+                self._smean = [None] * n_instances
+                self._fft = [None] * n_instances
+                self._ac = [None] * n_instances
+                self._acfz = [None] * n_instances
+            else:
+                if (
+                    n_instances != self._st_n_instances
+                    or series_length != self._st_series_length
+                ):
+                    raise ValueError(
+                        "Catch22: case_is the same, but n_instances and "
+                        "series_length do not match last seen for single "
+                        "feature transform."
+                    )
+
+        threads_to_use = check_n_jobs(self.n_jobs)
+
+        if self.n_jobs == -1:
+            threads_to_use = 1
+            warnings.warn(
+                "``n_jobs`` default was changed to 1 from -1 in version 0.13.4. "
+                "In version 0.15 a value of -1 will use all CPU cores instead of the "
+                "current 1 CPU core."
+            )
+
+        c22_list = Parallel(n_jobs=threads_to_use)(
+            delayed(self._transform_case_single)(
+                X[i],
+                feature,
+                case_id,
+                i,
+            )
+            for i in range(n_instances)
+        )
+
+        if self.replace_nans:
+            c22_list = np.nan_to_num(c22_list, False, 0, 0, 0)
+
+        return np.asarray(c22_list)
+
+    def _transform_case_single(self, series, feature, case_id, inst_idx):
+        args = [series]
+
+        if case_id is None:
+            if feature == 0 or feature == 1 or feature == 11:
+                smin = np.min(series)
+                smax = np.max(series)
+                args = [series, smin, smax]
+            elif feature == 2:
+                smean = np.mean(series)
+                args = [series, smean]
+            elif feature == 3 or feature == 4:
+                if self.outlier_norm:
+                    std = np.std(series)
+                    if std > 0:
+                        series = (series - np.mean(series)) / std
+                args = [series]
+            elif feature == 7 or feature == 8:
+                smean = np.mean(series)
+                nfft = int(np.power(2, np.ceil(np.log(len(series)) / np.log(2))))
+                fft = np.fft.fft(series - smean, n=nfft)
+                args = [series, fft]
+            elif feature == 5 or feature == 6 or feature == 12:
+                smean = np.mean(series)
+                nfft = int(np.power(2, np.ceil(np.log(len(series)) / np.log(2))))
+                fft = np.fft.fft(series - smean, n=nfft)
+                ac = _autocorr(series, fft)
+                args = [ac]
+            elif feature == 16 or feature == 17 or feature == 20:
+                smean = np.mean(series)
+                nfft = int(np.power(2, np.ceil(np.log(len(series)) / np.log(2))))
+                fft = np.fft.fft(series - smean, n=nfft)
+                ac = _autocorr(series, fft)
+                acfz = _ac_first_zero(ac)
+                args = [series, acfz]
+        else:
+            if feature == 0 or feature == 1 or feature == 11:
+                if self._smin[inst_idx] is None:
+                    self._smin[inst_idx] = np.min(series)
+                if self._smax[inst_idx] is None:
+                    self._smax[inst_idx] = np.max(series)
+                args = [series, self._smin[inst_idx], self._smax[inst_idx]]
+            elif feature == 2:
+                if self._smean[inst_idx] is None:
+                    self._smean[inst_idx] = np.mean(series)
+                args = [series, self._smean[inst_idx]]
+            elif feature == 3 or feature == 4:
+                if self.outlier_norm:
+                    if self._outlier_series[inst_idx] is None:
+                        std = np.std(series)
+                        if std > 0:
+                            self._outlier_series[inst_idx] = (
+                                series - np.mean(series)
+                            ) / std
+                        else:
+                            self._outlier_series[inst_idx] = series
+                    series = self._outlier_series[inst_idx]
+                args = [series]
+            elif feature == 7 or feature == 8:
+                if self._smean[inst_idx] is None:
+                    self._smean[inst_idx] = np.mean(series)
+                if self._fft[inst_idx] is None:
+                    nfft = int(np.power(2, np.ceil(np.log(len(series)) / np.log(2))))
+                    self._fft[inst_idx] = np.fft.fft(
+                        series - self._smean[inst_idx], n=nfft
+                    )
+                args = [series, self._fft[inst_idx]]
+            elif feature == 5 or feature == 6 or feature == 12:
+                if self._smean[inst_idx] is None:
+                    self._smean[inst_idx] = np.mean(series)
+                if self._fft[inst_idx] is None:
+                    nfft = int(np.power(2, np.ceil(np.log(len(series)) / np.log(2))))
+                    self._fft[inst_idx] = np.fft.fft(
+                        series - self._smean[inst_idx], n=nfft
+                    )
+                if self._ac[inst_idx] is None:
+                    self._ac[inst_idx] = _autocorr(series, self._fft[inst_idx])
+                args = [self._ac[inst_idx]]
+            elif feature == 16 or feature == 17 or feature == 20:
+                if self._smean[inst_idx] is None:
+                    self._smean[inst_idx] = np.mean(series)
+                if self._fft[inst_idx] is None:
+                    nfft = int(np.power(2, np.ceil(np.log(len(series)) / np.log(2))))
+                    self._fft[inst_idx] = np.fft.fft(
+                        series - self._smean[inst_idx], n=nfft
+                    )
+                if self._ac[inst_idx] is None:
+                    self._ac[inst_idx] = _autocorr(series, self._fft[inst_idx])
+                if self._acfz[inst_idx] is None:
+                    self._acfz[inst_idx] = _ac_first_zero(self._ac[inst_idx])
+                args = [series, self._acfz[inst_idx]]
+
+        return features[feature](*args)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
