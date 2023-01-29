@@ -840,7 +840,6 @@ class BaseTransformer(BaseEstimator):
             scitype=ALLOWED_SCITYPES,
             return_metadata=True,
             var_name="X",
-            msg_legacy_interface=False,
         )
 
         msg_invalid_input = (
