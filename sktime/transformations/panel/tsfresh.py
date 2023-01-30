@@ -125,17 +125,6 @@ class _TSFreshFeatureExtractor(BaseTransformer):
                 )
             else:
                 fc_parameters = fc_param_lookup[self.default_fc_parameters]
-        # TODO: remove elif in v0.15.0
-        # this will pass None to tsfresh, and hence default to "comprehensive"
-        elif self.default_fc_parameters is None:
-            fc_parameters = fc_param_lookup["efficient"]
-            warn(
-                "Passing None to default_fc_parameters currently defaults "
-                "to 'efficient', this behaviour has been is deprecated. From 0.15.0, "
-                "this will change to passing default_fc_parameters directly to tsfresh,"
-                " which in turn defaults to 'comprehensive'.",
-                DeprecationWarning,
-            )
         else:
             fc_parameters = self.default_fc_parameters
         extraction_params["default_fc_parameters"] = fc_parameters
@@ -150,7 +139,6 @@ class _TSFreshFeatureExtractor(BaseTransformer):
         return extraction_params
 
 
-# todo 0.15.0: change default_fc_parameters docstring to "comprehensive" default"
 class TSFreshFeatureExtractor(_TSFreshFeatureExtractor):
     """Transformer for extracting time series features via `tsfresh.extract_features`.
 
@@ -159,7 +147,7 @@ class TSFreshFeatureExtractor(_TSFreshFeatureExtractor):
     Parameters
     ----------
     default_fc_parameters : str, FCParameters object or None,
-        default=None = "efficient"
+        default=None = tsfresh default = "comprehensive"
         Specifies pre-defined feature sets to be extracted
         If str, should be in ["minimal", "efficient", "comprehensive"]
         See [3] for more details.
@@ -358,7 +346,6 @@ class TSFreshFeatureExtractor(_TSFreshFeatureExtractor):
         ]
 
 
-# todo 0.15.0: change default_fc_parameters docstring to "comprehensive" default"
 class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
     """Transformer for extracting time series features via `tsfresh.extract_features`.
 
@@ -368,7 +355,7 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
     Parameters
     ----------
     default_fc_parameters : str, FCParameters object or None,
-        default=None = "efficient"
+        default=None = tsfresh default = "comprehensive"
         Specifies pre-defined feature sets to be extracted
         If str, should be in ["minimal", "efficient", "comprehensive"]
         See [3] for more details.

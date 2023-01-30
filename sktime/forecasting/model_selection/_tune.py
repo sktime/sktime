@@ -121,6 +121,8 @@ class BaseGridSearch(_DelegatedForecaster):
         except NotImplementedError:
             pass
         fitted_params = {**fitted_params, **self.best_params_}
+        fitted_params.update(self._get_fitted_params_default())
+
         return fitted_params
 
     def _run_search(self, evaluate_candidates):
@@ -389,9 +391,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> y = load_shampoo_sales()
     >>> fh = [1,2,3]
-    >>> cv = ExpandingWindowSplitter(
-    ...     start_with_window=True,
-    ...     fh=fh)
+    >>> cv = ExpandingWindowSplitter(fh=fh)
     >>> forecaster = NaiveForecaster()
     >>> param_grid = {"strategy" : ["last", "mean", "drift"]}
     >>> gscv = ForecastingGridSearchCV(
@@ -419,7 +419,6 @@ class ForecastingGridSearchCV(BaseGridSearch):
     >>> cv = ExpandingWindowSplitter(
     ...     initial_window=24,
     ...     step_length=12,
-    ...     start_with_window=True,
     ...     fh=[1,2,3])
     >>> gscv = ForecastingGridSearchCV(
     ...     forecaster=pipe,
@@ -689,6 +688,7 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         """
         from sktime.forecasting.model_selection._split import SingleWindowSplitter
         from sktime.forecasting.naive import NaiveForecaster
+        from sktime.forecasting.trend import PolynomialTrendForecaster
         from sktime.performance_metrics.forecasting import MeanAbsolutePercentageError
 
         params = {
@@ -697,4 +697,13 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
             "param_distributions": {"window_length": [2, 5]},
             "scoring": MeanAbsolutePercentageError(symmetric=True),
         }
-        return params
+
+        params2 = {
+            "forecaster": PolynomialTrendForecaster(),
+            "cv": SingleWindowSplitter(fh=1),
+            "param_distributions": {"degree": [1, 2]},
+            "scoring": MeanAbsolutePercentageError(symmetric=True),
+            "update_behaviour": "inner_only",
+        }
+
+        return [params, params2]

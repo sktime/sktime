@@ -17,6 +17,26 @@ index is replaced by a string index where tuples are replaced with str coerced e
 import pandas as pd
 
 
+def _is_mi_col(x):
+    return isinstance(x, str) and x.startswith("__index__")
+
+
+def get_mi_cols(obj):
+    """Get multiindex cols from a dask object.
+
+    Parameters
+    ----------
+    obj : dask DataFrame
+
+    Returns
+    -------
+    list of pandas index elements
+        all column index elements of obj that start with __index__
+        i.e., columns that are interpreted as multiindex columns  in the correspondence
+    """
+    return [x for x in obj.columns if _is_mi_col(x)]
+
+
 def convert_dask_to_pandas(obj):
     """Convert dask DataFrame to pandas DataFrame, preserving MultiIndex.
 
@@ -34,9 +54,6 @@ def convert_dask_to_pandas(obj):
     """
     obj = obj.compute()
 
-    def is_mi_col(x):
-        return isinstance(x, str) and x.startswith("__index__")
-
     def mi_name(x):
         return x.split("__index__")[1]
 
@@ -47,7 +64,7 @@ def convert_dask_to_pandas(obj):
                 new_names[i] = None
         return new_names
 
-    multi_cols = [x for x in obj.columns if is_mi_col(x)]
+    multi_cols = get_mi_cols(obj)
 
     # if has multi-index cols, move to pandas MultiIndex
     if len(multi_cols) > 0:
@@ -105,3 +122,100 @@ def convert_pandas_to_dask(obj, npartitions=1, chunksize=None, sort=True):
     obj = from_pandas(obj, npartitions=npartitions, chunksize=chunksize, sort=sort)
 
     return obj
+
+
+def check_dask_frame(
+    obj, return_metadata=False, var_name="obj", freq_set_check=False, scitype="Series"
+):
+    """Check dask frame, generic for sktime check format."""
+    import dask
+
+    metadata = {}
+
+    def ret(valid, msg, metadata, return_metadata):
+        if return_metadata:
+            return valid, msg, metadata
+        return valid
+
+    if not isinstance(obj, dask.dataframe.core.DataFrame):
+        msg = f"{var_name} must be a dask DataFrame, found {type(obj)}"
+        return ret(False, msg, None, return_metadata)
+
+    # we now know obj is a dask DataFrame
+
+    index_cols = get_mi_cols(obj)
+
+    # check right number of cols depending on scitype
+    if scitype == "Series":
+        cols_msg = (
+            f"{var_name} must have exactly one index column, "
+            f"found {len(index_cols)}, namely: {index_cols}"
+        )
+        right_no_index_cols = len(index_cols) <= 1
+    elif scitype == "Panel":
+        cols_msg = (
+            f"{var_name} must have exactly two index columns, "
+            f"found {len(index_cols)}, namely: {index_cols}"
+        )
+        right_no_index_cols = len(index_cols) == 2
+    elif scitype == "Hierarchical":
+        cols_msg = (
+            f"{var_name} must have three or more index columns, "
+            f"found {len(index_cols)}, namely: {index_cols}"
+        )
+        right_no_index_cols = len(index_cols) >= 3
+    else:
+        return RuntimeError(
+            'scitype arg of check_dask_frame must be one of strings "Series", '
+            f'"Panel", or "Hierarchical", but found {scitype}'
+        )
+
+    if not right_no_index_cols:
+        # dask series should have at most one __index__ col
+        return ret(False, cols_msg, None, return_metadata)
+
+    metadata["is_empty"] = len(obj.index) < 1 or len(obj.columns) < 1
+    metadata["is_univariate"] = len(obj.columns) == 1
+
+    # check that columns are unique
+    if not obj.columns.is_unique:
+        msg = f"{var_name} must have unique column indices, but found {obj.columns}"
+        return ret(False, msg, None, return_metadata)
+
+    # check whether the time index is of valid type
+    # if not is_in_valid_index_types(index):
+    #     msg = (
+    #         f"{type(index)} is not supported for {var_name}, use "
+    #         f"one of {VALID_INDEX_TYPES} or integer index instead."
+    #     )
+    #     return ret(False, msg, None, return_metadata)
+
+    # Check time index is ordered in time
+    if not obj.index.is_monotonic_increasing.compute():
+        msg = (
+            f"The (time) index of {var_name} must be sorted "
+            f"monotonically increasing, but found: {obj.index}"
+        )
+        return ret(False, msg, None, return_metadata)
+
+    if freq_set_check and isinstance(obj.index, pd.DatetimeIndex):
+        if obj.index.freq is None:
+            msg = f"{var_name} has DatetimeIndex, but no freq attribute set."
+            return ret(False, msg, None, return_metadata)
+
+    # check whether index is equally spaced or if there are any nans
+    #   compute only if needed
+    if return_metadata:
+        # todo: logic for equal spacing
+        metadata["is_equally_spaced"] = True
+        metadata["has_nans"] = obj.isnull().values.any().compute()
+
+    if return_metadata and scitype in ["Panel", "Hierarchical"]:
+        instance_cols = index_cols[:-1]
+        metadata["n_instances"] = len(obj[instance_cols].drop_duplicates())
+
+    if return_metadata and scitype in ["Hierarchical"]:
+        panel_cols = index_cols[:-2]
+        metadata["n_panels"] = len(obj[panel_cols].drop_duplicates())
+
+    return ret(True, None, metadata, return_metadata)

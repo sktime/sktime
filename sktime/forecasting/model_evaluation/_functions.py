@@ -8,6 +8,7 @@ __all__ = ["evaluate"]
 
 import time
 import warnings
+from typing import List, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -183,13 +184,18 @@ def _evaluate_window(
                 FitFailedWarning,
             )
 
+    if pd.isnull(cutoff):
+        cutoff_ind = cutoff
+    else:
+        cutoff_ind = cutoff[0]
+
     result = pd.DataFrame(
         {
             score_name: [score],
             "fit_time": [fit_time],
             "pred_time": [pred_time],
             "len_train_window": [len(y_train)],
-            "cutoff": [cutoff],
+            "cutoff": [cutoff_ind],
             "y_train": [y_train if return_data else pd.NA],
             "y_test": [y_test if return_data else pd.NA],
             "y_pred": [y_pred if return_data else pd.NA],
@@ -208,21 +214,21 @@ def evaluate(
     cv,
     y,
     X=None,
-    strategy="refit",
-    scoring=None,
-    return_data=False,
-    error_score=np.nan,
-    backend=None,
-    compute=True,
+    strategy: str = "refit",
+    scoring: Optional[Union[callable, List[callable]]] = None,
+    return_data: bool = False,
+    error_score: Union[str, int, float] = np.nan,
+    backend: Optional[str] = None,
+    compute: bool = True,
     **kwargs,
 ):
     """Evaluate forecaster using timeseries cross-validation.
 
     Parameters
     ----------
-    forecaster : sktime.forecaster
+    forecaster : sktime BaseForecaster descendant
         sktime forecaster (concrete BaseForecaster descendant)
-    cv : Temporal cross-validation splitter
+    cv : sktime BaseSplitter descendant
         Splitter of how to split the data into test data and train data
     y : sktime time series container
         Target (endogeneous) time series used in the evaluation experiment
@@ -233,9 +239,9 @@ def evaluate(
         "refit" = forecaster is refitted to each training window
         "update" = forecaster is updated with training window data, in sequence provided
         "no-update_params" = fit to first training window, re-used without fit or update
-    scoring : subclass of sktime.performance_metrics.BaseMetric, default=None.
-        Used to get a score function that takes y_pred and y_test arguments
-        and accept y_train as keyword argument.
+    scoring : subclass of sktime.performance_metrics.BaseMetric or list of same,
+        default=None. Used to get a score function that takes y_pred and y_test
+        arguments and accept y_train as keyword argument.
         If None, then uses scoring = MeanAbsolutePercentageError(symmetric=True).
     return_data : bool, default=False
         Returns three additional columns in the DataFrame, by default False.
@@ -269,7 +275,8 @@ def evaluate(
         Row index is splitter index of train/test fold in `cv`.
         Entries in the i-th row are for the i-th train/test split in `cv`.
         Columns are as follows:
-        - test_{scoring.name}: (float) Model performance score.
+        - test_{scoring.name}: (float) Model performance score. If `scoring` is a list,
+            then there is a column withname `test_{scoring.name}` for each scorer.
         - fit_time: (float) Time in sec for `fit` or `update` on train fold.
         - pred_time: (float) Time in sec to `predict` from fitted estimator.
         - len_train_window: (int) Length of train window.
@@ -304,6 +311,15 @@ def evaluate(
     >>> loss = MeanAbsoluteError()
     >>> results = evaluate(forecaster=forecaster, y=y, cv=cv, scoring=loss)
 
+        Optionally, users can provide a list of metrics to `scoring` argument.
+    >>> from sktime.performance_metrics.forecasting import MeanSquaredError
+    >>> results = evaluate(
+    ...     forecaster=forecaster,
+    ...     y=y,
+    ...     cv=cv,
+    ...     scoring=[MeanSquaredError(square_root=True), MeanAbsoluteError()],
+    ... )
+
         An example of an interval metric is the `PinballLoss`.
         It can be used with all probabilistic forecasters.
     >>> from sktime.forecasting.naive import NaiveVariance
@@ -321,7 +337,10 @@ def evaluate(
 
     _check_strategy(strategy)
     cv = check_cv(cv, enforce_start_with_window=True)
-    scoring = check_scoring(scoring)
+    if isinstance(scoring, List):
+        scoring = [check_scoring(s) for s in scoring]
+    else:
+        scoring = check_scoring(scoring)
 
     ALLOWED_SCITYPES = ["Series", "Panel", "Hierarchical"]
 
@@ -352,15 +371,19 @@ def evaluate(
             )
         X = convert_to(X, to_type=PANDAS_MTYPES)
 
-    score_name = f"test_{scoring.name}"
+    score_name = (
+        f"test_{scoring.name}"
+        if not isinstance(scoring, List)
+        else f"test_{scoring[0].name}"
+    )
     cutoff_dtype = str(y.index.dtype)
     _evaluate_window_kwargs = {
         "fh": cv.fh,
         "freq": freq,
         "forecaster": forecaster,
-        "scoring": scoring,
+        "scoring": scoring if not isinstance(scoring, List) else scoring[0],
         "strategy": strategy,
-        "return_data": return_data,
+        "return_data": True,
         "error_score": error_score,
         "score_name": score_name,
         "cutoff_dtype": cutoff_dtype,
@@ -442,6 +465,16 @@ def evaluate(
             for i, (train, test) in enumerate(cv.split(y))
         )
         results = pd.concat(results)
+
+    if isinstance(scoring, List):
+        for s in scoring[1:]:
+            results[f"test_{s.name}"] = np.nan
+            for row in range(len(results)):
+                results[f"test_{s.name}"].iloc[row] = s(
+                    results["y_test"].iloc[row],
+                    results["y_pred"].iloc[row],
+                    y_train=results["y_train"].iloc[row],
+                )
 
     if not return_data:
         results = results.drop(columns=["y_train", "y_test", "y_pred"])
