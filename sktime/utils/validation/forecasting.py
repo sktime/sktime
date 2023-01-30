@@ -431,9 +431,7 @@ def check_scoring(scoring, allow_y_pred_benchmark=False, obj=None):
         return MeanAbsolutePercentageError()
 
     if obj is not None:
-        if not isclass(obj):
-            obj = type(obj)
-        obj_str = f" of {obj.__name__}"
+        obj_str = f" of {str(obj)}"
     else:
         obj_str = ""
 
