@@ -51,8 +51,6 @@ Core Developers
 
    * - Name
      - GitHub ID
-   * - Chris Holder
-     - :user:`chrisholder`
    * - Daniel Bartling
      - :user:`danbartl`
    * - Franz Király
@@ -114,5 +112,7 @@ Former Core Developers
      - :user:`patrickzib`
    * - Sajaysurya Ganesh
      - :user:`sajaysurya`
+   * - Christopher Holder
+     - :user:`chrisholder`
    * - Anonymous upon contributor's request
      - :user:`big-o`
