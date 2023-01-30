@@ -448,11 +448,7 @@ def check_scoring(scoring, allow_y_pred_benchmark=False, obj=None):
         raise TypeError(msg)
 
     if not isclass(scoring):
-        scoring = make_forecasting_scorer(
-            func=scoring,
-            name=scoring.__name__,
-            greater_is_better=False,
-        )
+        scoring = make_forecasting_scorer(func=scoring, greater_is_better=False)
 
     if hasattr(scoring, "get_class_tag"):
         scoring_req_bench = scoring.get_class_tag("requires-y-pred-benchmark", False)
