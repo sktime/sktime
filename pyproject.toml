@@ -1,18 +1,13 @@
 [project]
 name = "sktime"
-version = "0.15.1"
+version = "0.16.0"
 description = "A unified framework for machine learning with time series"
 authors = [
-    {name = "Franz Király", email = "f.kiraly@ucl.ac.uk"},
-    {name = "Tony Bagnall", email = "ajb@uea.ac.uk"},
-    {name = "Markus Löning"},
-    {name = "Martin Walter", email = "mwalter@sktime.org"},
+    {name = "sktime developers", email = "sktime.toolbox@gmail.com"},
 ]
 maintainers = [
-    {name = "sktime developers", email = "info@sktime.org"},
-    {name = "Franz Király", email = "fkiraly@sktime.org"},
-    {name = "Guzal Bulatova", email = "gbulatova@sktime.org"},
-    {name = "Martin Walter", email = "mwalter@sktime.org"},
+    {name = "sktime developers", email = "sktime.toolbox@gmail.com"},
+    {name = "Franz Király", email = "f.kiraly@ucl.ac.uk"},
 ]
 readme = "README.md"
 keywords = [
