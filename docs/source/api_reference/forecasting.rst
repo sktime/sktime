@@ -49,6 +49,7 @@ Pipelines can also be constructed using ``*``, ``+``, and ``|`` dunders.
     ForecastX
     ForecastByLevel
     Permute
+    HierarchyEnsembleForecaster
 
 Reduction
 ---------
@@ -310,6 +311,19 @@ Online and stream forecasting
     UpdateEvery
     UpdateRefitsEvery
     DontUpdate
+
+Adapters to other forecasting framework packages
+------------------------------------------------
+
+Generic framework adapters that expose other frameworks in the ``sktime`` interface.
+
+.. currentmodule:: sktime.forecasting.adapters
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    HCrystalBallAdapter
 
 Model selection and tuning
 --------------------------

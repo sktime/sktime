@@ -5,9 +5,8 @@
 __author__ = ["ltsaprounis"]
 
 import warnings
-from copy import deepcopy
 from distutils.log import warn
-from typing import List, Union
+from typing import List, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -15,6 +14,8 @@ import pandas as pd
 from sktime.transformations.base import BaseTransformer
 
 
+# TODO: Change the default value of `keep_original_columns` from True to False
+# and remove the warning in v0.17.0
 class FourierFeatures(BaseTransformer):
     r"""Fourier Features for time series seasonality.
 
@@ -51,6 +52,8 @@ class FourierFeatures(BaseTransformer):
         Specifies the frequency of the index of your data. The string should
         match a pandas offset alias:
         https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#offset-aliases
+    keep_original_columns :  boolean, optional, default=True
+        Keep original columns in X passed to `.transform()`
 
     References
     ----------
@@ -107,11 +110,24 @@ class FourierFeatures(BaseTransformer):
     }
 
     def __init__(
-        self, sp_list: List[Union[int, float]], fourier_terms_list: List[int], freq=None
+        self,
+        sp_list: List[Union[int, float]],
+        fourier_terms_list: List[int],
+        freq: Optional[str] = None,
+        keep_original_columns: Optional[bool] = True,
     ):
         self.sp_list = sp_list
         self.fourier_terms_list = fourier_terms_list
         self.freq = freq
+        self.keep_original_columns = keep_original_columns
+
+        warnings.warn(
+            "Currently the default value of `keep_original_columns\n"
+            " is `True`. In future releases this will be changed \n"
+            " to `False`. To keep the current behaviour explicitly \n"
+            " set `keep_original_columns=True`.",
+            FutureWarning,
+        )
 
         if len(self.sp_list) != len(self.fourier_terms_list):
             raise ValueError(
@@ -166,23 +182,23 @@ class FourierFeatures(BaseTransformer):
                         "exists from other seasonal period, fourier term pairs."
                     )
 
-        X = deepcopy(X)
+        time_index = X.index
 
-        if isinstance(X.index, pd.DatetimeIndex):
+        if isinstance(time_index, pd.DatetimeIndex):
             # Chooses first non None value
-            self.freq_ = X.index.freq or self.freq or pd.infer_freq(X.index)
+            self.freq_ = time_index.freq or self.freq or pd.infer_freq(time_index)
             if self.freq_ is None:
                 ValueError("X has no known frequency and none is supplied")
-            if self.freq_ == X.index.freq and self.freq_ != self.freq:
+            if self.freq_ == time_index.freq and self.freq_ != self.freq:
                 warn(
-                    f"Using frequency from index: {X.index.freq}, which \
+                    f"Using frequency from index: {time_index.freq}, which \
                      does not match the frequency given:{self.freq}."
                 )
-            X.index = X.index.to_period(self.freq_)
+            time_index = time_index.to_period(self.freq_)
         # this is used to make sure that time t is calculated with reference to
         # the data passed on fit
         # store the integer form of the minimum date in the prediod index
-        self.min_t_ = np.min(X.index.astype(int))
+        self.min_t_ = np.min(time_index.astype(int))
 
         return self
 
@@ -203,13 +219,14 @@ class FourierFeatures(BaseTransformer):
         -------
         transformed version of X
         """
-        X_transformed = deepcopy(X)
+        X_transformed = pd.DataFrame(index=X.index)
+        time_index = X.index
 
-        if isinstance(X.index, pd.DatetimeIndex):
-            X_transformed.index = X_transformed.index.to_period(self.freq_)
+        if isinstance(time_index, pd.DatetimeIndex):
+            time_index = time_index.to_period(self.freq_)
 
         # get the integer form of the PeriodIndex
-        int_index = X_transformed.index.astype(int) - self.min_t_
+        int_index = time_index.astype(int) - self.min_t_
 
         for sp_k in self.sp_k_pairs_list_:
             sp = sp_k[0]
@@ -218,8 +235,9 @@ class FourierFeatures(BaseTransformer):
             X_transformed[f"sin_{sp}_{k}"] = np.sin(int_index * 2 * k * np.pi / sp)
             X_transformed[f"cos_{sp}_{k}"] = np.cos(int_index * 2 * k * np.pi / sp)
 
-        # Ensure transformed X has same index
-        X_transformed.index = deepcopy(X.index)
+        if self.keep_original_columns:
+            X_transformed = pd.concat([X, X_transformed], axis=1, copy=True)
+
         return X_transformed
 
     @classmethod

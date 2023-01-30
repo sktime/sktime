@@ -125,7 +125,7 @@ class ColumnSelect(BaseTransformer):
 
     Sequence of columns in `Xt=transform(X)` is as in `columns` hyper-parameter.
     Caveat: this means that `transform` may change sequence of columns,
-        even if no  columns are removed from `X` in `transform(X)`.
+        even if no columns are removed from `X` in `transform(X)`.
 
     Parameters
     ----------
