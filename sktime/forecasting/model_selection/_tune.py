@@ -146,7 +146,7 @@ class BaseGridSearch(_DelegatedForecaster):
         """
         cv = check_cv(self.cv)
 
-        scoring = check_scoring(self.scoring)
+        scoring = check_scoring(self.scoring, obj=self)
         scoring_name = f"test_{scoring.name}"
 
         parallel = Parallel(
@@ -524,7 +524,10 @@ class ForecastingGridSearchCV(BaseGridSearch):
         from sktime.forecasting.model_selection._split import SingleWindowSplitter
         from sktime.forecasting.naive import NaiveForecaster
         from sktime.forecasting.trend import PolynomialTrendForecaster
-        from sktime.performance_metrics.forecasting import MeanAbsolutePercentageError
+        from sktime.performance_metrics.forecasting import (
+            MeanAbsolutePercentageError,
+            mean_absolute_percentage_error,
+        )
 
         params = {
             "forecaster": NaiveForecaster(strategy="mean"),
@@ -536,7 +539,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
             "forecaster": PolynomialTrendForecaster(),
             "cv": SingleWindowSplitter(fh=1),
             "param_grid": {"degree": [1, 2]},
-            "scoring": MeanAbsolutePercentageError(symmetric=True),
+            "scoring": mean_absolute_percentage_error,
             "update_behaviour": "inner_only",
         }
         return [params, params2]
