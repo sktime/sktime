@@ -63,8 +63,6 @@ Core Developers
      - :user:`GuzalBulatova`
    * - Lovkush Agarwal
      - :user:`lovkush-a`
-   * - Łukasz Mentel
-     - :user:`lmmentel`
    * - Markus Löning
      - :user:`mloning`
    * - Mirae Parker
@@ -102,6 +100,8 @@ Former Core Developers
      - :user:`jasonlines`
    * - Leonidas Tsaprounis
      - :user:`ltsaprounis`
+   * - Łukasz Mentel
+     - :user:`lmmentel`
    * - Martin Walter
      - :user:`aiwalter`
    * - Mathew Smith
