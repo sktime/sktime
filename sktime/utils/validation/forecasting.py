@@ -18,6 +18,7 @@ __all__ = [
 __author__ = ["mloning", "@big-o", "khrapovs"]
 
 from datetime import timedelta
+from inspect import isclass
 from typing import Optional, Union
 
 import numpy as np
@@ -386,7 +387,7 @@ def check_cutoffs(cutoffs: VALID_CUTOFF_TYPES) -> np.ndarray:
     return np.sort(cutoffs)
 
 
-def check_scoring(scoring, allow_y_pred_benchmark=False):
+def check_scoring(scoring, allow_y_pred_benchmark=False, obj=None):
     """
     Validate the performance scoring.
 
@@ -407,22 +408,46 @@ def check_scoring(scoring, allow_y_pred_benchmark=False):
         if metric requires y_pred_benchmark to be passed
     """
     # Note symmetric=True is default arg for MeanAbsolutePercentageError
-    from sktime.performance_metrics.forecasting import MeanAbsolutePercentageError
+    from sktime.performance_metrics.forecasting import (
+        MeanAbsolutePercentageError,
+        make_forecasting_scorer,
+    )
 
     if scoring is None:
         return MeanAbsolutePercentageError()
 
-    scoring_req_bench = scoring.get_class_tag("requires-y-pred-benchmark", False)
+    if not isclass(obj):
+        obj = type(obj)
+    obj_name = obj.__name__
 
-    if scoring_req_bench and not allow_y_pred_benchmark:
-        msg = """Scoring requiring benchmark forecasts (y_pred_benchmark) are not
-                 fully supported yet. Please use a performance metric that does not
-                 require y_pred_benchmark as a keyword argument in its call signature.
-              """
-        raise NotImplementedError(msg)
+    msg = (
+        f"scoring parameter of {obj_name} must be an sktime metric, descendant of"
+        "BaseMetric, or a callable with signature "
+        "(y_true: 1D np.ndarray, y_pred: 1D np.ndarray) -> float, "
+        "assuming np.ndarrays being of the same length, and lower being better. "
+    )
 
+    # note: BaseMetric descendants are callable, so this is the same as
+    # if not callable(scoring) and not isinstance(scoring, BaseMetric)
     if not callable(scoring):
-        raise TypeError("`scoring` must be a callable object")
+        raise TypeError(msg)
+
+    if not isclass(scoring):
+        scoring = make_forecasting_scorer(
+            func=scoring,
+            name=scoring.__name__,
+            greater_is_better=False,
+        )
+
+    if hasattr(scoring, "get_class_tag"):
+        scoring_req_bench = scoring.get_class_tag("requires-y-pred-benchmark", False)
+        if scoring_req_bench and not allow_y_pred_benchmark:
+            msg = (
+                "Scoring requiring benchmark forecasts (y_pred_benchmark) are not "
+                "fully supported yet. Please use a performance metric that does not "
+                "require y_pred_benchmark as a keyword argument in its call signature."
+            )
+            raise NotImplementedError(msg)
 
     return scoring
 
