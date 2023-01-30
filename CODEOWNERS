@@ -11,7 +11,7 @@ sktime/classification/dictionary_based/_cboss.py @patrickzib
 sktime/classification/dictionary_based/_muse.py @patrickzib
 sktime/classification/dictionary_based/_tde.py @patrickzib
 sktime/classification/dictionary_based/_weasel.py @patrickzib
-sktime/classification/distance_based/ @jasonlines @goaster
+sktime/classification/distance_based/ @goaster
 sktime/classification/dummy/ @ZiyaoWei
 sktime/classification/early_classification/_probability_threshold.py
 sktime/classification/early_classification/_teaser.py @patrickzib
@@ -31,19 +31,19 @@ sktime/classification/interval_based/_stsf.py
 sktime/classification/interval_based/_tsf.py
 sktime/classification/kernel_based/_arsenal.py
 sktime/classification/kernel_based/_rocket_classifier.py
-sktime/classification/shapelet_based/_stc.py @jasonlines @ABostrom
-sktime/classification/sklearn/_continuous_interval_tree.py 
-sktime/classification/sklearn/_rotation_forest.py 
+sktime/classification/shapelet_based/_stc.py
+sktime/classification/sklearn/_continuous_interval_tree.py
+sktime/classification/sklearn/_rotation_forest.py
 
-sktime/transformations/panel/dictionary_based/_paa.py @patrickzib 
-sktime/transformations/panel/dictionary_based/_sax.py @patrickzib 
-sktime/transformations/panel/dictionary_based/_sfa.py @patrickzib 
-sktime/transformations/panel/dictionary_based/_sfa_fast.py @patrickzib 
-sktime/transformations/panel/catch22.py 
-sktime/transformations/panel/catch22wrapper.py 
-sktime/transformations/panel/random_intervals.py 
-sktime/transformations/panel/shapelet_transform.py @jasonlines @ABostrom
-sktime/transformations/panel/supervised_intervals.py 
+sktime/transformations/panel/dictionary_based/_paa.py @patrickzib
+sktime/transformations/panel/dictionary_based/_sax.py @patrickzib
+sktime/transformations/panel/dictionary_based/_sfa.py @patrickzib
+sktime/transformations/panel/dictionary_based/_sfa_fast.py @patrickzib
+sktime/transformations/panel/catch22.py
+sktime/transformations/panel/catch22wrapper.py
+sktime/transformations/panel/random_intervals.py
+sktime/transformations/panel/shapelet_transform.py
+sktime/transformations/panel/supervised_intervals.py
 sktime/transformations/panel/rocket/ @angus924
 sktime/transformations/panel/rocket/_multirocket.py @ChangWeiTan @fstinner @angus924
 sktime/transformations/panel/rocket/_multirocket_multivariate.py @ChangWeiTan @fstinner @angus924
@@ -60,7 +60,7 @@ sktime/transformations/series/kalman_filter.py @NoaBenAmi
 sktime/transformations/panel/augmenter.py @MrPr3ntice @iljamaurer
 sktime/transformations/multiplex.py @miraep8
 sktime/transformations/tests/test_multiplexer.py @miraep8
-sktime/transformations/panel/channel_selection.py @haskarb @a-pasos-ruiz 
+sktime/transformations/panel/channel_selection.py @haskarb @a-pasos-ruiz
 sktime/transformations/series/time_since.py @KishManani
 
 sktime/forecasting/base/ @fkiraly @mloning @aiwalter
