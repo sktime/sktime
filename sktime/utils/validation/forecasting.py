@@ -18,7 +18,6 @@ __all__ = [
 __author__ = ["mloning", "@big-o", "khrapovs"]
 
 from datetime import timedelta
-from inspect import isclass
 from typing import Optional, Union
 
 import numpy as np
@@ -394,7 +393,7 @@ def check_scoring(scoring, allow_y_pred_benchmark=False, obj=None):
     ----------
     scoring : object to validate. For successful validation, must be one of
 
-        * sktime metric, descendant of `BaseMetric`
+        * sktime metric object, instance of descendant of `BaseMetric`
         * a callable with signature
           `(y_true: 1D np.ndarray, y_pred: 1D np.ndarray) -> float`,
           assuming `np.ndarray`-s being of the same length, and lower being better.
@@ -408,7 +407,7 @@ def check_scoring(scoring, allow_y_pred_benchmark=False, obj=None):
 
     Returns
     -------
-    scoring : input `scoring` coerced to sktime `BaseMetric` descendant
+    scoring : input `scoring` coerced to instance of sktime `BaseMetric` descendant
 
         * if `scoring` was sktime metric, returns `scoring`
         * if `scoring` was `None`, returns `MeanAbsolutePercentageError()`
@@ -417,11 +416,12 @@ def check_scoring(scoring, allow_y_pred_benchmark=False, obj=None):
 
     Raises
     ------
-    TypeError, if `scorin`
+    TypeError, if `scoring` is not a callable
     NotImplementedError
-        if metric requires y_pred_benchmark to be passed
+        if allow_y_pred_benchmark=False and metric requires y_pred_benchmark argument
     """
     # Note symmetric=True is default arg for MeanAbsolutePercentageError
+    from sktime.performance_metrics.base import BaseMetric
     from sktime.performance_metrics.forecasting import (
         MeanAbsolutePercentageError,
         make_forecasting_scorer,
@@ -447,7 +447,7 @@ def check_scoring(scoring, allow_y_pred_benchmark=False, obj=None):
     if not callable(scoring):
         raise TypeError(msg)
 
-    if not isclass(scoring):
+    if not isinstance(scoring, BaseMetric):
         scoring = make_forecasting_scorer(func=scoring, greater_is_better=False)
 
     if hasattr(scoring, "get_class_tag"):

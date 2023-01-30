@@ -333,7 +333,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
         "no_update" = neither tuning parameters nor inner estimator are updated
     param_grid : dict or list of dictionaries
         Model tuning parameters of the forecaster to evaluate
-    scoring : sktime metric, BaseMetric descendant, or callable, optional (default=None)
+    scoring : sktime metric object (BaseMetric), or callable, optional (default=None)
         scoring metric to use in tuning the forecaster
         if callable, must have signature
         `(y_true: 1D np.ndarray, y_pred: 1D np.ndarray) -> float`,
@@ -588,7 +588,7 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
     n_iter : int, default=10
         Number of parameter settings that are sampled. n_iter trades
         off runtime vs quality of the solution.
-    scoring : sktime metric, BaseMetric descendant, or callable, optional (default=None)
+    scoring : sktime metric object (BaseMetric), or callable, optional (default=None)
         scoring metric to use in tuning the forecaster
         if callable, must have signature
         `(y_true: 1D np.ndarray, y_pred: 1D np.ndarray) -> float`,
