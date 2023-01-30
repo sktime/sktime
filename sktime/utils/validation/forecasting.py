@@ -388,22 +388,36 @@ def check_cutoffs(cutoffs: VALID_CUTOFF_TYPES) -> np.ndarray:
 
 
 def check_scoring(scoring, allow_y_pred_benchmark=False, obj=None):
-    """
-    Validate the performance scoring.
+    """Validate a scorer parameter and coerce to sktime BaseMetric.
 
     Parameters
     ----------
-    scoring : object that inherits from BaseMetric from sktime.performance_metrics.
+    scoring : object to validate. For successful validation, must be one of
+
+        * sktime metric, descendant of `BaseMetric`
+        * a callable with signature
+          `(y_true: 1D np.ndarray, y_pred: 1D np.ndarray) -> float`,
+          assuming `np.ndarray`-s being of the same length, and lower being better.
+        * None
+
+    allow_y_pred_benchmark : boolean, optional, default=False
+        whether to allow scorer classes with `requires-y-pred-benchmark` tag = `True`
+
+    obj : object or class, or None, optional, default=None
+        if not None, will be used as a reference in the error message
 
     Returns
     -------
-    scoring :
-        MeanAbsolutePercentageError if the object is None.
+    scoring : input `scoring` coerced to sktime `BaseMetric` descendant
+
+        * if `scoring` was sktime metric, returns `scoring`
+        * if `scoring` was `None`, returns `MeanAbsolutePercentageError()`
+        * if `scoring` was a callable, returns dynamic scoring metric class,
+          as created by `performance_metrics.forecasting.make_forecasting_scorer`
 
     Raises
     ------
-    TypeError
-        if object is not callable from current scope.
+    TypeError, if `scorin`
     NotImplementedError
         if metric requires y_pred_benchmark to be passed
     """
@@ -416,12 +430,15 @@ def check_scoring(scoring, allow_y_pred_benchmark=False, obj=None):
     if scoring is None:
         return MeanAbsolutePercentageError()
 
-    if not isclass(obj):
-        obj = type(obj)
-    obj_name = obj.__name__
+    if obj is not None:
+        if not isclass(obj):
+            obj = type(obj)
+        obj_str = f" of {obj.__name__}"
+    else:
+        obj_str = ""
 
     msg = (
-        f"scoring parameter of {obj_name} must be an sktime metric, descendant of"
+        f"scoring parameter{obj_str} must be an sktime metric, descendant of"
         "BaseMetric, or a callable with signature "
         "(y_true: 1D np.ndarray, y_pred: 1D np.ndarray) -> float, "
         "assuming np.ndarrays being of the same length, and lower being better. "
