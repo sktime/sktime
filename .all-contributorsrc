@@ -2062,6 +2062,16 @@
       "contributions": [
         "maintenance"
       ]
+    },
+    {
+       "login": "pranavvp16"
+       "name": "Pranav Prajapati"
+       "avatar_url": "https://avatars.githubusercontent.com/u/94780581?v=4"
+       "profile": "https://www.linkedin.com/in/pranav-prajapati-a5b413226/"
+       "contributions":[
+          "code",
+          "test"
+       ]
     }
   ]
 }
