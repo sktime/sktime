@@ -195,11 +195,6 @@ def check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj", panel=T
         )
         return _ret(False, msg, None, return_metadata)
 
-    # check that no dtype is object
-    if "object" in obj.dtypes.values:
-        msg = f"{var_name} should not have column of 'object' dtype"
-        return _ret(False, msg, None, return_metadata)
-
     # check whether the time index is of valid type
     if not is_in_valid_index_types(index.get_level_values(-1)):
         msg = (
