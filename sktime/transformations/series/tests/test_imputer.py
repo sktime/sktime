@@ -31,6 +31,7 @@ z.iloc[3] = np.nan
 z.iloc[0] = np.nan
 z.iloc[-1] = np.nan
 
+
 @pytest.mark.parametrize("Z", [y, X, z])
 @pytest.mark.parametrize(
     "method",

@@ -248,7 +248,9 @@ def check_raise(obj, mtype: str, scitype: str = None, var_name: str = "input"):
     if valid:
         return True
     else:
-        raise TypeError(f"Expected object mtype to be one of {list(mtype)}, was {type(obj)}")
+        raise TypeError(
+            f"Expected object mtype to be one of {list(mtype)}, was {type(obj)}"
+        )
 
 
 def mtype(
