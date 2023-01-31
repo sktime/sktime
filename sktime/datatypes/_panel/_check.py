@@ -256,7 +256,7 @@ def check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj", panel=T
         metadata["n_instances"] = n_series
         metadata["is_one_series"] = n_series == 1
         metadata["has_nans"] = obj.isna().values.any()
-        metadata["is_equal_length"] = _list_all_equal(series_groups.size())
+        metadata["is_equal_length"] = _list_all_equal(series_groups.size().to_numpy())
 
     return _ret(True, None, metadata, return_metadata)
 
