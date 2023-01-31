@@ -2062,6 +2062,15 @@
       "contributions": [
         "maintenance"
       ]
+    },
+    {
+      "login": "hoesler",
+      "name": "Christoph Hösler",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1052770?v=4",
+      "profile": "https://www.linkedin.com/in/hoesler/",
+      "contributions": [
+        "code"
+      ]
     }
   ]
 }
