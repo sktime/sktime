@@ -1,18 +1,13 @@
 [project]
 name = "sktime"
-version = "0.14.1"
+version = "0.16.0"
 description = "A unified framework for machine learning with time series"
 authors = [
-    {name = "Franz Király", email = "f.kiraly@ucl.ac.uk"},
-    {name = "Tony Bagnall", email = "ajb@uea.ac.uk"},
-    {name = "Markus Löning"},
-    {name = "Martin Walter", email = "mwalter@sktime.org"},
+    {name = "sktime developers", email = "sktime.toolbox@gmail.com"},
 ]
 maintainers = [
-    {name = "sktime developers", email = "info@sktime.org"},
-    {name = "Franz Király", email = "fkiraly@sktime.org"},
-    {name = "Guzal Bulatova", email = "gbulatova@sktime.org"},
-    {name = "Martin Walter", email = "mwalter@sktime.org"},
+    {name = "sktime developers", email = "sktime.toolbox@gmail.com"},
+    {name = "Franz Király", email = "f.kiraly@ucl.ac.uk"},
 ]
 readme = "README.md"
 keywords = [
@@ -46,15 +41,16 @@ requires-python = ">=3.7,<3.11"
 dependencies = [
     "deprecated>=1.2.13",
     "numba>=0.55",
-    "numpy>=1.21.0,<1.23",
+    "numpy>=1.21.0,<1.25",
     "pandas>=1.1.0,<1.6.0",
-    "scikit-learn>=0.24.0,<1.2.0",
-    "statsmodels>=0.12.1",
-    "scipy<2.0.0",
+    "scikit-learn>=0.24.0,<1.3.0",
+    "scipy<2.0.0,>=1.2.0",
 ]
 
 [project.optional-dependencies]
 all_extras = [
+    "cloudpickle",
+    "dask",
     "dtw-python",
     "esig==0.9.7; python_version < '3.10'",
     "filterpy>=1.4.5",
@@ -66,12 +62,12 @@ all_extras = [
     "mne",
     "pmdarima>=1.8.0,!=1.8.1,<3.0.0",
     "prophet>=1.1",
-    "pycatch22",
     "pykalman>=0.9.5",
     "pyod>=0.8.0",
     "scikit_posthocs>=0.6.5",
     "seaborn>=0.11.0",
     "statsforecast>=0.5.2",
+    "statsmodels>=0.12.1",
     "stumpy>=1.5.1",
     "tbats>=1.1.0",
     "tensorflow-probability",
@@ -79,7 +75,6 @@ all_extras = [
     "tsfresh>=0.17.0; python_version < '3.10'",
     "tslearn>=0.5.2",
     "xarray",
-    "dask",
 ]
 
 dev = [
@@ -92,6 +87,17 @@ dev = [
     "pytest-timeout",
     "pytest-xdist",
     "wheel",
+]
+
+mlflow = [
+    "mlflow",
+]
+
+mlflow_tests = [
+    "boto3",
+    "botocore",
+    "mlflow",
+    "moto",
 ]
 
 binder = [
@@ -117,10 +123,12 @@ dl = [
 ]
 
 [project.urls]
-homepage = "https://www.sktime.org"
-repository = "https://github.com/sktime/sktime"
-documentation = "https://www.sktime.org"
-download = "https://pypi.org/project/sktime/#files"
+Homepage = "https://www.sktime.org"
+Repository = "https://github.com/sktime/sktime"
+Documentation = "https://www.sktime.org"
+Download = "https://pypi.org/project/sktime/#files"
+"API Reference" = "https://www.sktime.org/en/stable/api_reference.html"
+"Release Notes" = "https://www.sktime.org/en/stable/changelog.html"
 
 [project.license]
 file = "LICENSE"

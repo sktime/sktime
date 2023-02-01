@@ -87,9 +87,7 @@ def test_multiplex_transformer_in_grid():
     ]
     transformer_names = [name for name, _ in transformer_tuples]
     multiplex_transformer = MultiplexTransformer(transformers=transformer_tuples)
-    cv = ExpandingWindowSplitter(
-        initial_window=24, step_length=12, start_with_window=True, fh=[1, 2, 3]
-    )
+    cv = ExpandingWindowSplitter(initial_window=24, step_length=12, fh=[1, 2, 3])
     pipe = TransformedTargetForecaster(
         steps=[
             ("multiplex", multiplex_transformer),

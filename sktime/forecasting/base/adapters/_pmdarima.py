@@ -93,17 +93,22 @@ class _PmdArimaAdapter(BaseForecaster):
 
         # all values are out-of-sample
         if fh.is_all_out_of_sample(self.cutoff):
-            return self._predict_fixed_cutoff(fh_oos, X=X)
+            y_pred = self._predict_fixed_cutoff(fh_oos, X=X)
 
         # all values are in-sample
         elif fh.is_all_in_sample(self.cutoff):
-            return self._predict_in_sample(fh_ins, X=X)
+            y_pred = self._predict_in_sample(fh_ins, X=X)
 
         # both in-sample and out-of-sample values
         else:
             y_ins = self._predict_in_sample(fh_ins, X=X)
             y_oos = self._predict_fixed_cutoff(fh_oos, X=X)
-            return pd.concat([y_ins, y_oos])
+            y_pred = pd.concat([y_ins, y_oos])
+
+        # ensure that name is not added nor removed
+        # otherwise this may upset conversion to pd.DataFrame
+        y_pred.name = self._y.name
+        return y_pred
 
     def _predict_in_sample(
         self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA
