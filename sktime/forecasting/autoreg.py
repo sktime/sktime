@@ -23,13 +23,13 @@ class AutoReg(_StatsModelsAdapter):
         all AR lags, and behave identically to 0.
     trend : {'n','c','t','ct'},default='c'
         The trend to include in the model:
-        ‘n’ - No trend.
-        ‘c’ - Constant only.
-        ‘t’ - Time trend only.
-        ‘ct’ - Constant and time trend.
+        `n` - No trend.
+        `c` - Constant only.
+        `t` - Time trend only.
+        `ct` - Constant and time trend.
     seasonal : bool,default=False
         Flag indicating whether to include seasonal dummies in the model. If
-        seasonal is True and trend includes ‘c’, then the first period is
+        seasonal is True and trend includes `c`, then the first period is
         excluded from the seasonal terms.
     hold_back : {None,int},default=None
         Initial observations to exclude from the estimation sample. If None, then
@@ -42,9 +42,9 @@ class AutoReg(_StatsModelsAdapter):
         The period of the data. Only used if seasonal is True. This parameter can be
         omitted if using a pandas object for endog that contains a recognized frequency.
     missing : str,default='none'
-        Available options are ‘none’, ‘drop’, and ‘raise’. If ‘none’, no nan checking is
-        done. If ‘drop’, any observations with nans are dropped. If ‘raise’, an error is
-        raised. Default is ‘none’.
+        Available options are `none`, `drop`, and `raise`. If `none`, no nan checking is
+        done. If `drop`, any observations with nans are dropped. If `raise`, an error is
+        raised. Default is `none`.
     deterministic : DeterministicProcess,default=None
         A deterministic process. If provided, trend and seasonal are ignored. A warning
         is raised if trend is not “n” and seasonal is not False.
@@ -55,7 +55,7 @@ class AutoReg(_StatsModelsAdapter):
     ----------
     [1] Athanasopoulos, G., Poskitt, D. S., & Vahid, F. (2012).
     Two canonical VARMA forms: Scalar component models vis-à-vis the echelon form.
-    Econometric Reviews, 31(1), 60–83, 2012.
+    Econometric Reviews, 31(1), 60-83, 2012.
 
     Examples
     --------
@@ -66,7 +66,7 @@ class AutoReg(_StatsModelsAdapter):
     >>> forecaster.fit(y)
     AutoReg(...)
     >>> y_pred = forecaster.predict(fh=[1,2,3])
- """
+    """
     _tags = {
         "scitype:y":"univariate",
         "ignores-exogeneous-X": False,
@@ -111,10 +111,13 @@ class AutoReg(_StatsModelsAdapter):
             old_names=self.old_names
         )
         self._fitted_forecaster = self._forecaster.fit()
+
+    def summary(self):
         """Get a summary of the fitted forecaster.
-           This is the same as the implementation in statsmodels:
-           https://www.statsmodels.org/dev/examples/notebooks/generated/autoregressions.html               
-            """
+
+        This is the same as the implementation in statsmodels:
+        https://www.statsmodels.org/dev/examples/notebooks/generated/autoregressions.html
+        """
         return self._fitted_forecaster.summary()
 
 
