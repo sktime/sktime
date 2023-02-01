@@ -28,13 +28,13 @@ class _BaseWindowForecaster(BaseForecaster):
 
         # all values are out-of-sample
         if fh.is_all_out_of_sample(self.cutoff):
-            return self._predict_fixed_cutoff(
+            y_pred = self._predict_fixed_cutoff(
                 fh.to_out_of_sample(self.cutoff), **kwargs
             )
 
         # all values are in-sample
         elif fh.is_all_in_sample(self.cutoff):
-            return self._predict_in_sample(fh.to_in_sample(self.cutoff), **kwargs)
+            y_pred = self._predict_in_sample(fh.to_in_sample(self.cutoff), **kwargs)
 
         # both in-sample and out-of-sample values
         else:
@@ -42,7 +42,13 @@ class _BaseWindowForecaster(BaseForecaster):
             y_oos = self._predict_fixed_cutoff(
                 fh.to_out_of_sample(self.cutoff), **kwargs
             )
-            return pd.concat([y_ins, y_oos])
+            y_pred = pd.concat([y_ins, y_oos])
+
+        # ensure pd.Series name attribute is preserved
+        if isinstance(y_pred, pd.Series) and isinstance(self._y, pd.Series):
+            y_pred.name = self._y.name
+
+        return y_pred
 
     def _predict_fixed_cutoff(
         self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA

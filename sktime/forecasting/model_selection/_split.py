@@ -13,7 +13,6 @@ __all__ = [
 __author__ = ["mloning", "kkoralturk", "khrapovs", "chillerobscuro"]
 
 from typing import Iterator, Optional, Tuple, Union
-from warnings import warn
 
 import numpy as np
 import pandas as pd
@@ -97,8 +96,7 @@ def _get_end(y_index: pd.Index, fh: ForecastingHorizon) -> int:
     fh_offset = null if fh.is_all_in_sample() else fh[-1]
     if array_is_int(fh):
         return n_timepoints - fh_offset - 1
-    else:
-        return y_index.get_loc(y_index[-1] - fh_offset)
+    return y_index.get_loc(y_index[-1] - fh_offset)
 
 
 def _check_window_lengths(
@@ -181,10 +179,7 @@ def _inputs_are_supported(args: list) -> bool:
     -------
     True if all inputs are compatible, False otherwise
     """
-    if all_inputs_are_iloc_like(args) or all_inputs_are_time_like(args):
-        return True
-    else:
-        return False
+    return all_inputs_are_iloc_like(args) or all_inputs_are_time_like(args)
 
 
 def _check_inputs_for_compatibility(args: list) -> None:
@@ -349,7 +344,7 @@ class BaseSplitter(BaseObject):
         super(BaseSplitter, self).__init__()
 
     def split(self, y: ACCEPTED_Y_TYPES) -> SPLIT_GENERATOR_TYPE:
-        """Get iloc references to train/test slits of `y`.
+        """Get iloc references to train/test splits of `y`.
 
         Parameters
         ----------
@@ -395,7 +390,7 @@ class BaseSplitter(BaseObject):
         """
         raise NotImplementedError("abstract method")
 
-    def _split_vectorized(self, y: pd.Index) -> SPLIT_GENERATOR_TYPE:
+    def _split_vectorized(self, y: pd.MultiIndex) -> SPLIT_GENERATOR_TYPE:
         """Get iloc references to train/test splits of `y`, for pd.MultiIndex.
 
         This applies _split per time series instance in the multiindex.
@@ -413,51 +408,22 @@ class BaseSplitter(BaseObject):
         test : 1D np.ndarray of dtype int
             Test window indices, iloc references to test indices in y
         """
-        # challenge is obtaining iloc references for *the original data frame*
-        #   todo: try to shorten this, there must be a quicker way
-        train_test_res = dict()
-        train_iloc = dict()
-        test_iloc = dict()
-        y = pd.DataFrame(index=y)
-        y_index_df = y.reset_index(-1)
-        y_index_df["__index"] = range(len(y_index_df))
-        y_index_inst = y_index_df.index.unique()
-        for idx in y_index_inst:
-            train_iloc[idx] = dict()
-            test_iloc[idx] = dict()
-        for idx in y_index_inst:
-            y_inst = y_index_df.loc[idx]
-            y_inst = y_inst.reset_index(drop=True).set_index(y_inst.columns[0])
-            y_inst_index = y_inst.index
-            train_test_res[idx] = list(self._split(y_inst_index))
-            for i, tt in enumerate(train_test_res[idx]):
-                train_iloc[idx][i] = tt[0]
-                test_iloc[idx][i] = tt[1]
-            for i, train in train_iloc[idx].items():
-                train_iloc[idx][i] = y_inst["__index"].iloc[train].values
-            for i, test in test_iloc[idx].items():
-                test_iloc[idx][i] = y_inst["__index"].iloc[test].values
+        srs = pd.DataFrame(index=y).reset_index(-1).iloc[:, 0]
+        index = srs.index
+        anchors = pd.Series(range(len(srs)), index).groupby(index).first().tolist()
+        splits = (self._split(pd.Index(inst.values)) for _, inst in srs.groupby(index))
 
-        train_multi = dict()
-        test_multi = dict()
-        for idx in y_index_inst:
-            for i in train_iloc[idx].keys():
-                if i not in train_multi.keys():
-                    train_multi[i] = train_iloc[idx][i]
-                    test_multi[i] = test_iloc[idx][i]
-                else:
-                    train_multi[i] = np.concatenate(
-                        (train_iloc[idx][i], train_multi[i])
-                    )
-                    test_multi[i] = np.concatenate((test_iloc[idx][i], test_multi[i]))
-        for i in train_multi.keys():
-            train_multi[i] = np.sort(train_multi[i])
-            test_multi[i] = np.sort(test_multi[i])
+        train = []
+        test = []
+        for split_inst, anchor in zip(splits, anchors):
+            train_inst, test_inst = zip(*split_inst)
+            train.append(tuple(indices + anchor for indices in train_inst))
+            test.append(tuple(indices + anchor for indices in test_inst))
 
-        for i in train_multi.keys():
-            train = train_multi[i]
-            test = test_multi[i]
-            yield train, test
+        train = map(np.concatenate, zip(*train))
+        test = map(np.concatenate, zip(*test))
+
+        yield from zip(train, test)
 
     def split_loc(self, y: ACCEPTED_Y_TYPES) -> Iterator[Tuple[pd.Index, pd.Index]]:
         """Get loc references to train/test splits of `y`.
@@ -667,8 +633,7 @@ class BaseSplitter(BaseObject):
             return np.argwhere(
                 (y >= y[max(train_start, 0)]) & (y <= y[min(split_point, len(y)) - 1])
             ).flatten()
-        else:
-            return np.array([], dtype=int)
+        return np.array([], dtype=int)
 
 
 class CutoffSplitter(BaseSplitter):
@@ -743,9 +708,8 @@ class CutoffSplitter(BaseSplitter):
             null = 0 if is_int(cutoff) else pd.Timestamp(0)
             if cutoff >= null:
                 train_end = y[cutoff] if is_int(cutoff) else cutoff
-                training_window = get_window(
-                    pd.Series(index=y[y <= train_end]), window_length=window_length
-                ).index
+                y_train = pd.Series(index=y[y <= train_end], dtype=y.dtype)
+                training_window = get_window(y_train, window_length=window_length).index
             else:
                 training_window = []
             training_window = y.get_indexer(training_window)
@@ -793,8 +757,7 @@ class CutoffSplitter(BaseSplitter):
         """
         if array_is_int(self.cutoffs):
             return check_cutoffs(self.cutoffs)
-        else:
-            return np.argwhere(y.index.isin(check_cutoffs(self.cutoffs))).flatten()
+        return np.argwhere(y.index.isin(check_cutoffs(self.cutoffs))).flatten()
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -814,8 +777,7 @@ class CutoffSplitter(BaseSplitter):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        params = {"cutoffs": np.array([3, 7, 10])}
-        return params
+        return {"cutoffs": np.array([3, 7, 10])}
 
 
 class BaseWindowSplitter(BaseSplitter):
@@ -841,8 +803,7 @@ class BaseWindowSplitter(BaseSplitter):
     def _initial_window(self):
         if hasattr(self, "initial_window"):
             return self.initial_window
-        else:
-            return None
+        return None
 
     def _split(self, y: pd.Index) -> SPLIT_GENERATOR_TYPE:
         n_timepoints = y.shape[0]
@@ -1177,12 +1138,9 @@ class ExpandingWindowSplitter(BaseWindowSplitter):
     fh : int, list or np.array, optional (default=1)
         Forecasting horizon
     initial_window : int or timedelta or pd.DateOffset, optional (default=10)
-        Window length
+        Window length of initial training fold. If =0, initial training fold is empty.
     step_length : int or timedelta or pd.DateOffset, optional (default=1)
         Step length between windows
-    start_with_window : bool, optional (default=True)
-        - If True, starts with full window.
-        - If False, starts with empty window.
 
     Examples
     --------
@@ -1200,8 +1158,10 @@ class ExpandingWindowSplitter(BaseWindowSplitter):
         fh: FORECASTING_HORIZON_TYPES = DEFAULT_FH,
         initial_window: ACCEPTED_WINDOW_LENGTH_TYPES = DEFAULT_WINDOW_LENGTH,
         step_length: NON_FLOAT_WINDOW_LENGTH_TYPES = DEFAULT_STEP_LENGTH,
-        start_with_window: bool = True,  # TODO: remove 0.15.0
     ) -> None:
+
+        start_with_window = initial_window != 0
+
         # Note that we pass the initial window as the window_length below. This
         # allows us to use the common logic from the parent class, while at the same
         # time expose the more intuitive name for the ExpandingWindowSplitter.
@@ -1210,14 +1170,8 @@ class ExpandingWindowSplitter(BaseWindowSplitter):
             window_length=initial_window,
             initial_window=None,
             step_length=step_length,
-            start_with_window=start_with_window,  # TODO: remove 0.15.0
+            start_with_window=start_with_window,
         )
-
-        if not start_with_window:  # TODO: remove 0.15.0
-            warn(
-                '"start_with_window" will be depreciated in 0.15.0, '
-                "use initial_window=0 instead"
-            )
 
         # initial_window needs to be written to self for sklearn compatibility
         self.initial_window = initial_window
@@ -1280,7 +1234,8 @@ class SingleWindowSplitter(BaseSplitter):
         train_end = _get_end(y_index=y, fh=fh)
 
         training_window = get_window(
-            pd.Series(index=y[y <= y[train_end]]), window_length=window_length
+            pd.Series(index=y[y <= y[train_end]], dtype=y.dtype),
+            window_length=window_length,
         ).index
         training_window = y.get_indexer(training_window)
         if array_is_int(fh):
@@ -1485,7 +1440,6 @@ def _split_by_fh(
     if X is None:
         return y_train, y_test
 
-    else:
-        X_train = X.loc[train]
-        X_test = X.loc[test]
-        return y_train, y_test, X_train, X_test
+    X_train = X.loc[train]
+    X_test = X.loc[test]
+    return y_train, y_test, X_train, X_test

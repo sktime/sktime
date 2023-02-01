@@ -8,7 +8,6 @@ __author__ = ["patrickzib", "Arik Ermshaus"]
 __all__ = ["WEASEL"]
 
 import math
-import warnings
 
 import numpy as np
 from joblib import Parallel, delayed
@@ -69,14 +68,8 @@ class WEASEL(BaseClassifier):
         This is the p-value threshold to use for chi-squared test on bag-of-words
         (lower means more strict). 1 indicates that the test
         should not be performed.
-    alphabet_size : default = 4
+    alphabet_size : default = 2
         Number of possible letters (values) for each word.
-
-        .. deprecated:: 0.13.3
-            the default = 4 was deprecated in version 0.13.3 and will be changed to
-            default = 2 in 0.15. Please use alphabet_size=2 due to its lower memory
-            footprint, better runtime at equal accuracy.
-
     feature_selection: {"chi2", "none", "random"}, default: chi2
         Sets the feature selections strategy to be used. *Chi2* reduces the number
         of words significantly and is thus much faster (preferred). If set to chi2,
@@ -89,7 +82,6 @@ class WEASEL(BaseClassifier):
         If set to True, a LogisticRegression will be trained, which does support
         predict_proba(), yet is slower and typically less accuracy. predict_proba() is
         needed for example in Early-Classification like TEASER.
-
     random_state: int or None, default=None
         Seed for random, integer
 
@@ -141,7 +133,7 @@ class WEASEL(BaseClassifier):
         binning_strategy="information-gain",
         window_inc=2,
         p_threshold=0.05,
-        alphabet_size=4,  # TODO set default alphabet_size=2 in v0.15
+        alphabet_size=2,
         n_jobs=1,
         feature_selection="chi2",
         support_probabilities=False,
@@ -200,14 +192,6 @@ class WEASEL(BaseClassifier):
         # Window length parameter space dependent on series length
         self.n_instances, self.series_length = X.shape[0], X.shape[-1]
 
-        if self.alphabet_size == 4:
-            warnings.warn(
-                "``alphabet_size=4`` was deprecated in version 0.13.3 and "
-                "will be changed to ``alphabet_size=2`` in 0.15."
-                "Please use alphabet_size=2 due to its lower memory "
-                "footprint, better runtime at equal accuracy."
-            )
-
         win_inc = self._compute_window_inc()
         self.max_window = int(min(self.series_length, self.max_window))
         if self.min_window > self.max_window:
@@ -251,7 +235,7 @@ class WEASEL(BaseClassifier):
 
         # Ridge Classifier does not give probabilities
         if not self.support_probabilities:
-            self.clf = RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=False)
+            self.clf = RidgeClassifierCV(alphas=np.logspace(-3, 3, 10))
         else:
             self.clf = LogisticRegression(
                 max_iter=5000,

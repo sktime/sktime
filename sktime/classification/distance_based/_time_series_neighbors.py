@@ -24,7 +24,6 @@ from inspect import signature
 
 import numpy as np
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.neighbors._base import _check_weights
 
 from sktime.classification.base import BaseClassifier
 from sktime.datatypes import check_is_mtype
@@ -139,7 +138,7 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
         n_jobs=None,
     ):
         self.n_neighbors = n_neighbors
-        self.weights = _check_weights(weights)
+        self.weights = weights
         self.algorithm = algorithm
         self.distance = distance
         self.distance_params = distance_params
@@ -262,6 +261,9 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
             Indices of the nearest points in the population matrix.
         """
         self.check_is_fitted()
+
+        # boilerplate input checks for predict-like methods
+        X = self._check_convert_X_for_predict(X)
 
         # self._X should be the stored _X
         dist_mat = self._distance(X, self._X)

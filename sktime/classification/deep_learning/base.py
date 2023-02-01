@@ -73,11 +73,11 @@ class BaseDeepClassifier(BaseClassifier, ABC):
 
         Returns
         -------
-        history: dict,
+        history: dict or None,
             Dictionary containing model's train/validation losses and metrics
 
         """
-        return self.history.history
+        return self.history.history if self.history is not None else None
 
     def _predict(self, X, **kwargs):
         probs = self._predict_proba(X, **kwargs)

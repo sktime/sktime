@@ -88,3 +88,20 @@ class TestAllPanelTransformers(TransformerPairwisePanelFixtureGenerator, QuickTe
             dist_mat.shape
             == (len_X, len_X2)
         ), f"Shape of matrix returned by transform is wrong for {trafo_name}"
+
+    def test_transform_diag(self, estimator_instance, scenario):
+        """Test expected output of transform_diag."""
+        trafo_name = type(estimator_instance).__name__
+        diag_vec = scenario.run(estimator_instance, method_sequence=["transform_diag"])
+
+        len_X = len(scenario.args["transform"]["X"])
+
+        assert isinstance(
+            diag_vec, np.ndarray
+        ), f"Shape of matrix returned by transform is wrong for {trafo_name}"
+        assert (
+            # this is only true as long as fixture are of mtypes where len = n_instances
+            # should that change, use check_is_mtype to get n_instances metadata
+            diag_vec.shape
+            == (len_X,)
+        ), f"Shape of matrix returned by transform is wrong for {trafo_name}"

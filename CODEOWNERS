@@ -3,6 +3,9 @@
 
 * @fkiraly @aiwalter @guzalbulatova
 
+
+sktime/regression/dummy/ @badrmarani
+
 sktime/classification/dictionary_based/_boss.py @patrickzib @MatthewMiddlehurst @TonyBagnall
 sktime/classification/dictionary_based/_cboss.py @patrickzib @MatthewMiddlehurst @TonyBagnall
 sktime/classification/dictionary_based/_muse.py @patrickzib @MatthewMiddlehurst @TonyBagnall
@@ -69,6 +72,7 @@ sktime/forecasting/fbprophet.py @aiwalter
 sktime/forecasting/bats.py @aiwalter
 sktime/forecasting/tbats.py @aiwalter
 sktime/forecasting/arima.py @HYang1996
+sktime/forecasting/adapters/_hcrystalball.py @MichalChromcak
 sktime/forecasting/statsforecast.py @FedericoGarza
 sktime/forecasting/structural.py @juanitorduz
 sktime/forecasting/model_selection/_split @koralturkk
@@ -81,12 +85,14 @@ sktime/forecasting/sarimax.py @TNTran92
 
 sktime/performance_metrics/forecasting/_functions.py @aiwalter @rnkuhns
 sktime/performance_metrics/forecasting/_classes.py @rnkuhns
-sktime/performance_metrics/annotation @lmmentel
+sktime/performance_metrics/annotation
 
 sktime/annotation/clasp.py @patrickzib @ermshaua
-sktime/annotation/igts.py @lmmentel
-sktime/annotation/ggs.py @lmmentel
-sktime/annotation/datagen.py @lmmentel
+sktime/annotation/igts.py
+sktime/annotation/ggs.py
+sktime/annotation/datagen.py
 sktime/transformations/series/clasp.py @patrickzib @ermshaua
 
-.github/workflows/* @lmmentel @freddyaboulton
+.github/workflows/* @freddyaboulton
+
+sktime/utils/mlflow_sktime.py @benjaminbluhm

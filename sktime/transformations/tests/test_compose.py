@@ -13,11 +13,11 @@ from sktime.datatypes import get_examples
 from sktime.transformations.compose import (
     FeatureUnion,
     InvertTransform,
+    OptionalPassthrough,
     TransformerPipeline,
 )
 from sktime.transformations.panel.padder import PaddingTransformer
 from sktime.transformations.series.boxcox import LogTransformer
-from sktime.transformations.series.compose import OptionalPassthrough
 from sktime.transformations.series.exponent import ExponentTransformer
 from sktime.transformations.series.impute import Imputer
 from sktime.transformations.series.subset import ColumnSelect
