@@ -59,6 +59,9 @@ def convert_UvS_to_MvS_as_Series(obj: pd.Series, store=None) -> pd.DataFrame:
     if not isinstance(obj, pd.Series):
         raise TypeError("input must be a pd.Series")
 
+    if isinstance(store, dict):
+        store["name"] = obj.name
+
     res = pd.DataFrame(obj)
 
     if (
@@ -86,7 +89,11 @@ def convert_MvS_to_UvS_as_Series(obj: pd.DataFrame, store=None) -> pd.Series:
         store["columns"] = obj.columns[[0]]
 
     y = obj[obj.columns[0]]
-    y.name = None
+
+    if isinstance(store, dict) and "name" in store.keys():
+        y.name = store["name"]
+    else:
+        y.name = None
 
     return y
 
@@ -116,6 +123,7 @@ def convert_UvS_to_np_as_Series(obj: pd.Series, store=None) -> np.ndarray:
 
     if isinstance(store, dict):
         store["index"] = obj.index
+        store["name"] = obj.name
 
     return pd.DataFrame(obj).to_numpy(dtype="float")
 
@@ -170,6 +178,9 @@ def convert_np_to_UvS_as_Series(obj: np.ndarray, store=None) -> pd.Series:
         and len(store["index"]) == obj.shape[0]
     ):
         res.index = store["index"]
+
+    if isinstance(store, dict) and "name" in store.keys():
+        res.name = store["name"]
 
     return res
 
