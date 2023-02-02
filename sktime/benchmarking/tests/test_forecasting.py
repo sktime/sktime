@@ -2,11 +2,13 @@
 """Forecasting benchmarks tests."""
 
 import pandas as pd
+import pytest
 
 from sktime.benchmarking import forecasting
 from sktime.forecasting.model_selection import ExpandingWindowSplitter
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.performance_metrics.forecasting import MeanSquaredPercentageError
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 
 def data_loader_simple() -> pd.DataFrame:
@@ -14,6 +16,10 @@ def data_loader_simple() -> pd.DataFrame:
     return pd.DataFrame([2, 2, 3])
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("kotsu", severity="none"),
+    reason="skip test if required soft dependencies not available",
+)
 def test_forecastingbenchmark(tmp_path):
     """Test benchmarking a forecaster estimator."""
     benchmark = forecasting.ForecastingBenchmark()

@@ -3,10 +3,12 @@
 from typing import Callable
 
 import pandas as pd
+import pytest
 
 from sktime.base import BaseEstimator
 from sktime.benchmarking import benchmarks
 from sktime.forecasting.naive import NaiveForecaster
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 
 def factory_estimator_class_task(**kwargs) -> Callable:
@@ -22,6 +24,10 @@ def factory_estimator_class_task(**kwargs) -> Callable:
     return estimator_class_task
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("kotsu", severity="none"),
+    reason="skip test if required soft dependencies not available",
+)
 def test_basebenchmark(tmp_path):
     """Test registering estimator, registering a simple task, and running."""
     benchmark = benchmarks.BaseBenchmark()
@@ -51,6 +57,10 @@ def test_basebenchmark(tmp_path):
     )
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("kotsu", severity="none"),
+    reason="skip test if required soft dependencies not available",
+)
 def test_add_estimator_args(tmp_path):
     """Test adding estimator with args specified."""
     benchmark = benchmarks.BaseBenchmark()
@@ -67,6 +77,10 @@ def test_add_estimator_args(tmp_path):
     assert results_df.iloc[0, 1] == "test_id-v1"
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("kotsu", severity="none"),
+    reason="skip test if required soft dependencies not available",
+)
 def test_add_task_args(tmp_path):
     """Test adding task with args specified."""
     benchmark = benchmarks.BaseBenchmark()
@@ -84,6 +98,10 @@ def test_add_task_args(tmp_path):
     assert results_df.iloc[0, 0] == "test_id-v1"
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("kotsu", severity="none"),
+    reason="skip test if required soft dependencies not available",
+)
 def test_add_task_string_entrypoint(tmp_path):
     """Test adding task using string of entrypoint."""
     benchmark = benchmarks.BaseBenchmark()
