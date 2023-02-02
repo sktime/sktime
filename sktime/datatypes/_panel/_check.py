@@ -219,7 +219,13 @@ def check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj", panel=T
 
     # Check time index is ordered in time
     index_frame = index.to_frame()
-    if not index_frame.groupby(level=list(range(index.nlevels - 1)))[index_frame.columns[-1]].is_monotonic_increasing.astype(bool).all():
+    if (
+        not index_frame.groupby(level=list(range(index.nlevels - 1)))[
+            index_frame.columns[-1]
+        ]
+        .is_monotonic_increasing.astype(bool)
+        .all()
+    ):
         msg = (
             f"The (time) index of {var_name} must be sorted monotonically increasing, "
             f"but found: {index}"
@@ -241,7 +247,9 @@ def check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj", panel=T
             n_panels = 1
 
         metadata["is_univariate"] = len(obj.columns) < 2
-        metadata["is_equally_spaced"] = all(_index_equally_spaced(group.index.levels[-1]) for _, group in series_groups)
+        metadata["is_equally_spaced"] = all(
+            _index_equally_spaced(group.index.levels[-1]) for _, group in series_groups
+        )
         metadata["is_empty"] = len(index) < 1 or len(obj.columns) < 1
         metadata["n_panels"] = n_panels
         metadata["is_one_panel"] = n_panels == 1
