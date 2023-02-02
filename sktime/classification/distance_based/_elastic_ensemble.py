@@ -189,7 +189,7 @@ class ElasticEnsemble(BaseClassifier):
         # StratifiedShuffleSplit:
         if self.proportion_train_in_param_finding < 1:
             if self.verbose > 0:
-                print(  # noqa: T001
+                print(  # noqa: T201
                     "Restricting training cases for parameter optimisation: ", end=""
                 )
             sss = StratifiedShuffleSplit(
@@ -203,7 +203,7 @@ class ElasticEnsemble(BaseClassifier):
                 if der_X is not None:
                     der_param_train_x = der_X[train_index, :]
                 if self.verbose > 0:
-                    print(  # noqa: T001
+                    print(  # noqa: T201
                         "using "
                         + str(len(param_train_x))
                         + " training cases instead of "
@@ -213,7 +213,7 @@ class ElasticEnsemble(BaseClassifier):
         # else, use the full training data for optimising parameters
         else:
             if self.verbose > 0:
-                print(  # noqa: T001
+                print(  # noqa: T201
                     "Using all training cases for parameter optimisation"
                 )
             param_train_x = X
@@ -224,7 +224,7 @@ class ElasticEnsemble(BaseClassifier):
         self.constituent_build_times = []
 
         if self.verbose > 0:
-            print(  # noqa: T001
+            print(  # noqa: T201
                 "Using " + str(100 * self.proportion_of_param_options) + " parameter "
                 "options per "
                 "measure"
@@ -250,7 +250,7 @@ class ElasticEnsemble(BaseClassifier):
                     self.distance_measures[dm] == "ddtw"
                     or self.distance_measures[dm] == "wddtw"
                 ):
-                    print(  # noqa: T001
+                    print(  # noqa: T201
                         "Currently evaluating "
                         + str(self.distance_measures[dm].__name__)
                         + " (implemented as "
@@ -258,7 +258,7 @@ class ElasticEnsemble(BaseClassifier):
                         + " with pre-transformed derivative data)"
                     )
                 else:
-                    print(  # noqa: T001
+                    print(  # noqa: T201
                         "Currently evaluating "
                         + str(self.distance_measures[dm].__name__)
                     )
@@ -321,7 +321,7 @@ class ElasticEnsemble(BaseClassifier):
                 acc = accuracy_score(y, preds)
 
             if self.verbose > 0:
-                print(  # noqa: T001
+                print(  # noqa: T201
                     "Training accuracy for "
                     + str(self.distance_measures[dm].__name__)
                     + ": "
@@ -484,10 +484,16 @@ class ElasticEnsemble(BaseClassifier):
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
             special parameters are defined for a value, will return `"default"` set.
-            For classifiers, a "default" set of parameters should be provided for
-            general testing, and a "results_comparison" set for comparing against
-            previously recorded results if the general set does not produce suitable
-            probabilities to compare against.
+            ElasticEnsemble provides the following special sets:
+                 "results_comparison" - used in some classifiers to compare against
+                    previously generated results where the default set of parameters
+                    cannot produce suitable probability estimates
+                "contracting" - used in classifiers that set the
+                    "capability:contractable" tag to True to test contacting
+                    functionality
+                "train_estimate" - used in some classifiers that set the
+                    "capability:train_estimate" tag to True to allow for more efficient
+                    testing when relevant parameters are available
 
         Returns
         -------

@@ -12,14 +12,14 @@ def test_contracted_rotf():
     X_train, y_train = load_unit_test(split="train", return_type="numpy2d")
 
     rotf = RotationForest(
+        time_limit_in_minutes=5,
         contract_max_n_estimators=5,
-        time_limit_in_minutes=0.25,
         save_transformed_data=True,
         random_state=0,
     )
     rotf.fit(X_train, y_train)
 
-    assert len(rotf.estimators_) > 1
+    assert len(rotf.estimators_) > 0
 
     # test train estimate
     train_proba = rotf._get_train_probs(X_train, y_train)

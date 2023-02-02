@@ -354,10 +354,13 @@ class HIVECOTEV2(BaseClassifier):
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
             special parameters are defined for a value, will return `"default"` set.
-            For classifiers, a "default" set of parameters should be provided for
-            general testing, and a "results_comparison" set for comparing against
-            previously recorded results if the general set does not produce suitable
-            probabilities to compare against.
+            HIVECOTEV2 provides the following special sets:
+                 "results_comparison" - used in some classifiers to compare against
+                    previously generated results where the default set of parameters
+                    cannot produce suitable probability estimates
+                "contracting" - used in classifiers that set the
+                    "capability:contractable" tag to True to test contacting
+                    functionality
 
         Returns
         -------
@@ -368,6 +371,8 @@ class HIVECOTEV2(BaseClassifier):
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
         from sklearn.ensemble import RandomForestClassifier
+
+        from sktime.classification.sklearn import RotationForest
 
         if parameter_set == "results_comparison":
             return {
@@ -387,6 +392,27 @@ class HIVECOTEV2(BaseClassifier):
                     "n_parameter_samples": 5,
                     "max_ensemble_size": 3,
                     "randomly_selected_params": 3,
+                },
+            }
+        elif parameter_set == "contracting":
+            return {
+                "time_limit_in_minutes": 5,
+                "stc_params": {
+                    "estimator": RotationForest(contract_max_n_estimators=1),
+                    "contract_max_n_shapelet_samples": 5,
+                    "max_shapelets": 5,
+                    "batch_size": 5,
+                },
+                "drcif_params": {
+                    "contract_max_n_estimators": 1,
+                    "n_intervals": 2,
+                    "att_subsample_size": 2,
+                },
+                "arsenal_params": {"num_kernels": 5, "contract_max_n_estimators": 1},
+                "tde_params": {
+                    "contract_max_n_parameter_samples": 1,
+                    "max_ensemble_size": 1,
+                    "randomly_selected_params": 1,
                 },
             }
         else:

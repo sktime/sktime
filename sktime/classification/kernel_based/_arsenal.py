@@ -423,10 +423,16 @@ class Arsenal(BaseClassifier):
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
             special parameters are defined for a value, will return `"default"` set.
-            For classifiers, a "default" set of parameters should be provided for
-            general testing, and a "results_comparison" set for comparing against
-            previously recorded results if the general set does not produce suitable
-            probabilities to compare against.
+            Arsenal provides the following special sets:
+                 "results_comparison" - used in some classifiers to compare against
+                    previously generated results where the default set of parameters
+                    cannot produce suitable probability estimates
+                "contracting" - used in classifiers that set the
+                    "capability:contractable" tag to True to test contacting
+                    functionality
+                "train_estimate" - used in some classifiers that set the
+                    "capability:train_estimate" tag to True to allow for more efficient
+                    testing when relevant parameters are available
 
         Returns
         -------
@@ -437,12 +443,18 @@ class Arsenal(BaseClassifier):
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
         if parameter_set == "results_comparison":
-            params = {"num_kernels": 20, "n_estimators": 5}
-        else:
-            params = {
+            return {"num_kernels": 20, "n_estimators": 5}
+        elif parameter_set == "contracting":
+            return {
+                "time_limit_in_minutes": 5,
+                "num_kernels": 10,
+                "contract_max_n_estimators": 2,
+            }
+        elif parameter_set == "train_estimate":
+            return {
                 "num_kernels": 10,
                 "n_estimators": 2,
                 "save_transformed_data": True,
             }
-
-        return params
+        else:
+            return {"num_kernels": 10, "n_estimators": 2}

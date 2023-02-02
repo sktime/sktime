@@ -3,6 +3,7 @@
 
 __author__ = ["mloning", "TonyBagnall", "fkiraly"]
 
+import inspect
 
 import numpy as np
 import pytest
@@ -17,6 +18,7 @@ from sktime.tests.test_all_estimators import BaseFixtureGenerator, QuickTester
 from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
 from sktime.utils._testing.panel import make_classification_problem
 from sktime.utils._testing.scenarios_classification import (
+    ClassifierFitPredict,
     ClassifierFitPredictMultivariate,
 )
 
@@ -95,25 +97,6 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
         assert y_proba.shape == (X_new_instances, n_classes)
         np.testing.assert_almost_equal(y_proba.sum(axis=1), 1, decimal=4)
 
-        if estimator_instance.get_tag("capability:train_estimate"):
-            if not hasattr(estimator_instance, "_get_train_probs"):
-                raise ValueError(
-                    "Classifier capability:train_estimate tag is set to "
-                    "true, but no _get_train_probs method is present."
-                )
-
-            X_train = scenario.args["fit"]["X"]
-            _, _, X_train_metadata = check_is_scitype(
-                X_train, "Panel", return_metadata=True
-            )
-            X_train_len = X_train_metadata["n_instances"]
-
-            train_proba = estimator_instance._get_train_probs(X_train, y_train)
-
-            assert isinstance(train_proba, np.ndarray)
-            assert train_proba.shape == (X_train_len, n_classes)
-            np.testing.assert_almost_equal(train_proba.sum(axis=1), 1, decimal=4)
-
     def test_classifier_on_unit_test_data(self, estimator_class):
         """Test classifier on unit test data."""
         # we only use the first estimator instance for testing
@@ -191,3 +174,92 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
 
         with pytest.warns(UserWarning, match=error_msg):
             estimator_instance.fit(X, y)
+
+    def test_contracted_classifier(self, estimator_class):
+        """Test classifiers that can be contracted."""
+        if estimator_class.get_class_tag(tag_name="capability:contractable") is True:
+            # if we have a train_estimate parameter set use it, else use default
+            estimator_instance = estimator_class.create_test_instance(
+                parameter_set="contracting"
+            )
+
+            # The "capability:contractable" has not been fully implemented yet.
+            # Most uses currently have a time_limit_in_minutes parameter, but we won't
+            # fail those that don't.
+            default_params = inspect.signature(estimator_class.__init__).parameters
+            if default_params.get(
+                "time_limit_in_minutes", None
+            ) is not None and default_params.get(
+                "time_limit_in_minutes", None
+            ).default not in (
+                0,
+                -1,
+                None,
+            ):
+                return None
+
+            # too short of a contract time can lead to test failures
+            if vars(estimator_instance).get("time_limit_in_minutes", None) < 5:
+                raise ValueError(
+                    "Test parameters for test_contracted_classifier must set "
+                    "time_limit_in_minutes to 5 or more."
+                )
+
+            scenario = ClassifierFitPredict()
+
+            X_new = scenario.args["predict"]["X"]
+            y_train = scenario.args["fit"]["y"]
+            # we use check_is_scitype to get the number instances in X_new
+            #   this is more robust against different scitypes in X_new
+            _, _, X_new_metadata = check_is_scitype(
+                X_new, "Panel", return_metadata=True
+            )
+            X_new_instances = X_new_metadata["n_instances"]
+
+            # run fit and predict
+            y_pred = scenario.run(
+                estimator_instance, method_sequence=["fit", "predict"]
+            )
+
+            # check predict
+            assert isinstance(y_pred, np.ndarray)
+            assert y_pred.shape == (X_new_instances,)
+            assert np.all(np.isin(np.unique(y_pred), np.unique(y_train)))
+        else:
+            # skip test if it can't contract
+            return None
+
+    def test_classifier_train_estimate(self, estimator_class):
+        """Test classifiers that can produce train set probability estimates."""
+        if estimator_class.get_class_tag(tag_name="capability:train_estimate") is True:
+            # if we have a train_estimate parameter set use it, else use default
+            estimator_instance = estimator_class.create_test_instance(
+                parameter_set="train_estimate"
+            )
+
+            # The "capability:train_estimate" has not been fully implemented yet.
+            # Most uses currently have the below method, but we won't fail those that
+            # don't.
+            if not hasattr(estimator_instance, "_get_train_probs"):
+                return None
+
+            # fit classifier
+            scenario = ClassifierFitPredict()
+            scenario.run(estimator_instance, method_sequence=["fit"])
+
+            n_classes = scenario.get_tag("n_classes")
+            X_train = scenario.args["fit"]["X"]
+            y_train = scenario.args["fit"]["y"]
+            _, _, X_train_metadata = check_is_scitype(
+                X_train, "Panel", return_metadata=True
+            )
+            X_train_len = X_train_metadata["n_instances"]
+
+            # check the probabilities are valid
+            train_proba = estimator_instance._get_train_probs(X_train, y_train)
+            assert isinstance(train_proba, np.ndarray)
+            assert train_proba.shape == (X_train_len, n_classes)
+            np.testing.assert_almost_equal(train_proba.sum(axis=1), 1, decimal=4)
+        else:
+            # skip test if it can't produce an estimate
+            return None
