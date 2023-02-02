@@ -28,6 +28,7 @@ class Normal(_BaseTFDistribution):
         self.sd = sd
 
         import tensorflow_probability as tfp
+
         tfd = tfp.distributions
 
         distr = tfd.Normal(loc=mean, scale=sd)
