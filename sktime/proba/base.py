@@ -6,6 +6,8 @@ __author__ = ["fkiraly"]
 
 __all__ = ["BaseProba"]
 
+import numpy as np
+
 from sktime.base import BaseObject
 from sktime.utils.validation._dependencies import _check_estimator_deps
 
@@ -31,7 +33,10 @@ class BaseProba(BaseObject):
         "python_dependencies": None,  # string or str list of pkg soft dependencies
     }
 
-    def __init__(self):
+    def __init__(self, index=None, columns=None):
+        self.index = index
+        self.columns = columns
+
         super(BaseProba, self).__init__()
         _check_estimator_deps(self)
 
@@ -48,6 +53,10 @@ class BaseProba(BaseObject):
     @property
     def iloc(self):
         return _Indexer(ref=self, method="_iloc")
+
+    @property
+    def shape(self):
+        return (len(self.index), len(self.columns))
 
 
 class _Indexer:
@@ -83,26 +92,53 @@ class _Indexer:
             else:
                 return indexer(rowidx=rows, colidx=cols)
         else:
-            return indexer(rowidx=key[0], colidx=None)
+            return indexer(rowidx=key, colidx=None)
 
 
 class _BaseTFProba(BaseProba):
 
     def __init__(self, index=None, columns=None, distr=None):
 
-        self.index = index
-        self.columns = columns
         self.distr = distr
 
-        super(BaseObject, self).__init__()
+        super(_BaseTFProba, self).__init__(index=index, columns=columns)
 
     def _loc(self, rowidx=None, colidx=None):
-        row_iloc = self.index.get_indexer(rowidx)
-        col_iloc = self.columns.get_indexer(colidx)
+        if rowidx is not None:
+            row_iloc = self.index.get_indexer_for(rowidx)
+        else:
+            row_iloc = None
+        if colidx is not None:
+            col_iloc = self.columns.get_indexer_for(colidx)
+        else:
+            col_iloc = None
         return self._iloc(rowidx=row_iloc, colidx=col_iloc)
 
+    def _subset_params(self, rowidx, colidx):
+        paramnames = self.distr.parameters.keys()
+        reserved_names = ["validate_args", "allow_nan_stats", "name"]
+        paramnames = set(paramnames).difference(reserved_names)
+
+        subset_param_dict = {}
+        for param in paramnames:
+            arr = np.array(self.distr.parameters[param])
+            if len(arr.shape) == 1:
+                if rowidx is not None:
+                    arr = arr[rowidx]
+                subset_param_dict[param] = arr
+            else:
+                if rowidx is not None:
+                    arr = arr[rowidx]
+                if colidx is not None:
+                    arr = arr[:, colidx]
+                subset_param_dict[param] = arr
+        return subset_param_dict
+
     def _iloc(self, rowidx=None, colidx=None):
-        distr_subset = self.distr[rowidx, colidx]
+        distr_type = type(self.distr)
+        subset_params = self._subset_params(rowidx=rowidx, colidx=colidx)
+        print(subset_params)
+        distr_subset = distr_type(**subset_params)
 
         def subset_not_none(idx, subs):
             if subs is not None:

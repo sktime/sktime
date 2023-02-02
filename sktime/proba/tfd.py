@@ -4,8 +4,6 @@
 
 __author__ = ["fkiraly"]
 
-__all__ = ["BaseProba"]
-
 import pandas as pd
 
 from sktime.proba.base import _BaseTFProba
