@@ -160,7 +160,7 @@ class _BaseTFProba(BaseProba):
 
         return {k: params[k] for k in paramnames}
 
-    def __str__(self):
+    def to_str(self):
 
         params = self._get_dist_params()
 
@@ -170,3 +170,7 @@ class _BaseTFProba(BaseProba):
         prt = prt[:-2] + ")"
 
         return prt
+
+    def __str__(self):
+
+        return self.to_str()
