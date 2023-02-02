@@ -115,13 +115,12 @@ class _BaseTFProba(BaseProba):
         return self._iloc(rowidx=row_iloc, colidx=col_iloc)
 
     def _subset_params(self, rowidx, colidx):
-        paramnames = self.distr.parameters.keys()
-        reserved_names = ["validate_args", "allow_nan_stats", "name"]
-        paramnames = set(paramnames).difference(reserved_names)
+
+        params = self._get_dist_params()
 
         subset_param_dict = {}
-        for param in paramnames:
-            arr = np.array(self.distr.parameters[param])
+        for param, val in params.items():
+            arr = np.array(val)
             if len(arr.shape) == 0:
                 subset_param_dict
             if len(arr.shape) >= 1 and rowidx is not None:
@@ -152,12 +151,18 @@ class _BaseTFProba(BaseProba):
             **subset_params,
         )
 
-    def __str__(self):
+    def _get_dist_params(self):
 
         params = self.get_params(deep=False)
         paramnames = params.keys()
         reserved_names = ["index", "columns"]
-        paramnames = set(paramnames).difference(reserved_names)
+        paramnames = [x for x in paramnames if x not in reserved_names]
+
+        return {k: params[k] for k in paramnames}
+
+    def __str__(self):
+
+        params = self._get_dist_params()
 
         prt = f"{self.__class__.__name__}("
         for paramname, val in params.items():
