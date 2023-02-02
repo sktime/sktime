@@ -132,10 +132,9 @@ class _BaseTFProba(BaseProba):
         return subset_param_dict
 
     def _iloc(self, rowidx=None, colidx=None):
-        distr_type = type(self.distr)
+        # distr_type = type(self.distr)
         subset_params = self._subset_params(rowidx=rowidx, colidx=colidx)
-        print(subset_params)
-        distr_subset = distr_type(**subset_params)
+        # distr_subset = distr_type(**subset_params)
 
         def subset_not_none(idx, subs):
             if subs is not None:
@@ -146,6 +145,23 @@ class _BaseTFProba(BaseProba):
         index_subset = subset_not_none(self.index, rowidx)
         columns_subset = subset_not_none(self.columns, colidx)
 
-        return _BaseTFProba(
-            index=index_subset, columns=columns_subset, distr=distr_subset,
+        sk_distr_type = type(self)
+        return sk_distr_type(
+            index=index_subset,
+            columns=columns_subset,
+            **subset_params,
         )
+
+    def __str__(self):
+
+        params = self.get_params(deep=False)
+        paramnames = params.keys()
+        reserved_names = ["index", "columns"]
+        paramnames = set(paramnames).difference(reserved_names)
+
+        prt = f"{self.__class__.__name__}("
+        for paramname, val in params.items():
+            prt += f"{paramname}={val}, "
+        prt = prt[:-2] + ")"
+
+        return prt
