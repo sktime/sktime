@@ -6,10 +6,21 @@ __author__ = ["fkiraly"]
 
 import pandas as pd
 
-from sktime.proba.base import _BaseTFProba
+from sktime.proba.base import _BaseTFDistribution
 
 
-class Normal(_BaseTFProba):
+class Normal(_BaseTFDistribution):
+    """Normal distribution with tensorflow-probability back-end.
+
+    Parameters
+    ----------
+    mean : float or array of float (1D or 2D)
+        mean of the normal distribution
+    sd : float or array of float (1D or 2D), must be positive
+        standard deviation of the normal distribution
+    index : pd.Index, optional, default = RangeIndex
+    columns : pd.Index, optional, default = RangeIndex
+    """
 
     def __init__(self, mean, sd, index=None, columns=None):
 

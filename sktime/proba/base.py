@@ -4,7 +4,7 @@
 
 __author__ = ["fkiraly"]
 
-__all__ = ["BaseProba"]
+__all__ = ["BaseDistribution"]
 
 import numpy as np
 
@@ -12,23 +12,11 @@ from sktime.base import BaseObject
 from sktime.utils.validation._dependencies import _check_estimator_deps
 
 
-def _coerce_to_list(obj):
-    """Return [obj] if obj is not a list, otherwise obj."""
-    if not isinstance(obj, list):
-        return [obj]
-    else:
-        return obj
-
-
-class BaseProba(BaseObject):
+class BaseDistribution(BaseObject):
     """Base probability distribution."""
 
     # default tag values - these typically make the "safest" assumption
     _tags = {
-        "X_inner_mtype": "pd.DataFrame",  # which types do _fit/_predict, support for X?
-        "scitype:X": "Series",  # which X scitypes are supported natively?
-        "capability:missing_values": False,  # can estimator handle missing data?
-        "capability:multivariate": False,  # can estimator handle multivariate data?
         "python_version": None,  # PEP 440 python version specifier to limit versions
         "python_dependencies": None,  # string or str list of pkg soft dependencies
     }
@@ -37,7 +25,7 @@ class BaseProba(BaseObject):
         self.index = index
         self.columns = columns
 
-        super(BaseProba, self).__init__()
+        super(BaseDistribution, self).__init__()
         _check_estimator_deps(self)
 
     def _loc(self, rowidx=None, colidx=None):
@@ -48,18 +36,44 @@ class BaseProba(BaseObject):
 
     @property
     def loc(self):
+        """Location indexer.
+
+        Use `my_distribution.loc[index]` for `pandas`-like row/column subsetting
+        of `BaseDistribution` descendants.
+
+        `index` can be any `pandas` `loc` compatible index subsetter.
+
+        `my_distribution.loc[index]` or `my_distribution.loc[row_index, col_index]`
+        subset `my_distribution` to rows defined by `row_index`, cols by `col_index`,
+        to exactly the same/cols rows as `pandas` `loc` would subset
+        rows in `my_distribution.index` and columns in `my_distribution.columns`.
+        """
         return _Indexer(ref=self, method="_loc")
 
     @property
     def iloc(self):
+        """Integer location indexer.
+
+        Use `my_distribution.iloc[index]` for `pandas`-like row/column subsetting
+        of `BaseDistribution` descendants.
+
+        `index` can be any `pandas` `iloc` compatible index subsetter.
+
+        `my_distribution.iloc[index]` or `my_distribution.iloc[row_index, col_index]`
+        subset `my_distribution` to rows defined by `row_index`, cols by `col_index`,
+        to exactly the same/cols rows as `pandas` `iloc` would subset
+        rows in `my_distribution.index` and columns in `my_distribution.columns`.
+        """
         return _Indexer(ref=self, method="_iloc")
 
     @property
     def shape(self):
+        """Shape of self, a pair (2-tuple)."""
         return (len(self.index), len(self.columns))
 
 
 class _Indexer:
+    """Indexer for BaseDistribution, for pandas-like index in loc and iloc property."""
 
     def __init__(self, ref, method="_loc"):
         self.ref = ref
@@ -95,13 +109,14 @@ class _Indexer:
             return indexer(rowidx=key, colidx=None)
 
 
-class _BaseTFProba(BaseProba):
+class _BaseTFDistribution(BaseDistribution):
+    """Adapter for tensorflow-probability distributions."""
 
     def __init__(self, index=None, columns=None, distr=None):
 
         self.distr = distr
 
-        super(_BaseTFProba, self).__init__(index=index, columns=columns)
+        super(_BaseTFDistribution, self).__init__(index=index, columns=columns)
 
     def _loc(self, rowidx=None, colidx=None):
         if rowidx is not None:
