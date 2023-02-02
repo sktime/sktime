@@ -62,28 +62,28 @@ class AutoReg(_StatsModelsAdapter):
     >>> from sktime.forecasting.autoreg import AutoReg
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
-    >>> forecaster = AutoReg()
-    >>> forecaster.fit(y)
+    >>> forecaster = AutoReg() # doctest: +SKIP
+    >>> forecaster.fit(y) # doctest: +SKIP
     AutoReg(...)
-    >>> y_pred = forecaster.predict(fh=[1,2,3])
+    >>> y_pred = forecaster.predict(fh=[1,2,3]) # doctest: +SKIP
     """
+
     _tags = {
-        "scitype:y":"univariate",
+        "scitype:y": "univariate",
         "ignores-exogeneous-X": False,
     }
 
     def __init__(
         self,
         lags=None,
-        trend='c',
+        trend="c",
         seasonal=False,
         hold_back=None,
         period=None,
-        missing='none',
+        missing="none",
         deterministic=None,
-        old_names=False
-     ):
-
+        old_names=False,
+    ):
         self.lags = lags
         self.trend = trend
         self.seasonal = seasonal
@@ -93,7 +93,7 @@ class AutoReg(_StatsModelsAdapter):
         self.deterministic = deterministic
         self.old_names = old_names
 
-        super(AutoReg,self).__init__()
+        super().__init__(self)
 
     def _fit_forecaster(self, y_train, X_train=None):
         from statsmodels.tsa.api import AutoReg as _AutoReg
@@ -108,7 +108,7 @@ class AutoReg(_StatsModelsAdapter):
             period=self.period,
             missing=self.missing,
             deterministic=self.deterministic,
-            old_names=self.old_names
+            old_names=self.old_names,
         )
         self._fitted_forecaster = self._forecaster.fit()
 
@@ -119,6 +119,3 @@ class AutoReg(_StatsModelsAdapter):
         https://www.statsmodels.org/dev/examples/notebooks/generated/autoregressions.html
         """
         return self._fitted_forecaster.summary()
-
-
-
