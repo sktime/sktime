@@ -3,9 +3,6 @@
 
 __author__ = "James Large, Withington, Tony Bagnall"
 
-from keras.layers import Dense, SimpleRNN
-from tensorflow import keras
-
 from sktime.networks.base import BaseDeepNetwork
 
 
@@ -36,11 +33,13 @@ class RNNNetwork(BaseDeepNetwork):
         -------
         output : a compiled Keras Model
         """
+        from tensorflow import keras
+
         input_layer = keras.layers.Input((input_shape, 1))
 
-        rnn = SimpleRNN(
+        rnn = keras.layers.SimpleRNN(
             units=self.units, return_sequences=True, input_shape=(input_shape, 1)
         )(input_layer)
-        dense = Dense(units=1)(rnn)
+        dense = keras.layers.Dense(units=1)(rnn)
 
         return input_layer, dense

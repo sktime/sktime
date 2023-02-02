@@ -6,9 +6,7 @@
 __author__ = ["Markus Löning"]
 __all__ = ["SimpleRNNRegressor"]
 
-import tensorflow as tf
 from sklearn.utils import check_random_state
-from tensorflow import keras
 
 from sktime.classification.deep_learning.base import BaseDeepClassifier
 from sktime.networks.rnn import RNNNetwork
@@ -78,6 +76,9 @@ class SimpleRNNRegressor(BaseDeepClassifier):
         -------
         output : a compiled Keras Model
         """
+        import tensorflow as tf
+        from tensorflow import keras
+
         tf.random.set_seed(self.random_state)
         if self.metrics is None:
             metrics = ["accuracy"]
