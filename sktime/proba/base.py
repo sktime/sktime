@@ -122,16 +122,13 @@ class _BaseTFProba(BaseProba):
         subset_param_dict = {}
         for param in paramnames:
             arr = np.array(self.distr.parameters[param])
-            if len(arr.shape) == 1:
-                if rowidx is not None:
-                    arr = arr[rowidx]
-                subset_param_dict[param] = arr
-            else:
-                if rowidx is not None:
-                    arr = arr[rowidx]
-                if colidx is not None:
-                    arr = arr[:, colidx]
-                subset_param_dict[param] = arr
+            if len(arr.shape) == 0:
+                subset_param_dict
+            if len(arr.shape) >= 1 and rowidx is not None:
+                arr = arr[rowidx]
+            if len(arr.shape) >= 2 and colidx is not None:
+                arr = arr[:, colidx]
+            subset_param_dict[param] = arr
         return subset_param_dict
 
     def _iloc(self, rowidx=None, colidx=None):
