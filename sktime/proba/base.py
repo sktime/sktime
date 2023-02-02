@@ -4,7 +4,7 @@
 
 __author__ = ["fkiraly"]
 
-__all__ = ["BaseProba", "BaseTFProba"]
+__all__ = ["BaseProba"]
 
 from sktime.base import BaseObject
 from sktime.utils.validation._dependencies import _check_estimator_deps
@@ -35,10 +35,10 @@ class BaseProba(BaseObject):
         super(BaseProba, self).__init__()
         _check_estimator_deps(self)
 
-    def _loc(rowidx=None, colidx=None):
+    def _loc(self, rowidx=None, colidx=None):
         return NotImplemented
 
-    def _iloc(rowidx=None, colidx=None):
+    def _iloc(self, rowidx=None, colidx=None):
         return NotImplemented
 
     @property
@@ -86,8 +86,33 @@ class _Indexer:
             return indexer(rowidx=key[0], colidx=None)
 
 
-class BaseTFProba(BaseProba):
+class _BaseTFProba(BaseProba):
 
-    def __init__(self):
+    def __init__(self, index=None, columns=None, distr=None):
+
+        self.index = index
+        self.columns = columns
+        self.distr = distr
 
         super(BaseObject, self).__init__()
+
+    def _loc(self, rowidx=None, colidx=None):
+        row_iloc = self.index.get_indexer(rowidx)
+        col_iloc = self.columns.get_indexer(colidx)
+        return self._iloc(rowidx=row_iloc, colidx=col_iloc)
+
+    def _iloc(self, rowidx=None, colidx=None):
+        distr_subset = self.distr[rowidx, colidx]
+
+        def subset_not_none(idx, subs):
+            if subs is not None:
+                return idx.take(subs)
+            else:
+                return idx
+
+        index_subset = subset_not_none(self.index, rowidx)
+        columns_subset = subset_not_none(self.columns, colidx)
+
+        return _BaseTFProba(
+            index=index_subset, columns=columns_subset, distr=distr_subset,
+        )
