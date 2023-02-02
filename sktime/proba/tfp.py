@@ -7,6 +7,7 @@ __author__ = ["fkiraly"]
 import pandas as pd
 
 from sktime.proba.base import _BaseTFDistribution
+from sktime.utils.validation._dependencies import _check_estimator_deps
 
 
 class Normal(_BaseTFDistribution):
@@ -28,6 +29,8 @@ class Normal(_BaseTFDistribution):
 
         self.mean = mean
         self.sd = sd
+
+        _check_estimator_deps(self)
 
         import tensorflow_probability as tfp
 
