@@ -22,6 +22,8 @@ class Normal(_BaseTFDistribution):
     columns : pd.Index, optional, default = RangeIndex
     """
 
+    _tags = {"python_dependencies": "tensorflow_probability"}
+
     def __init__(self, mean, sd, index=None, columns=None):
 
         self.mean = mean
@@ -40,3 +42,15 @@ class Normal(_BaseTFDistribution):
             columns = pd.RangeIndex(distr.batch_shape[1])
 
         super(Normal, self).__init__(index=index, columns=columns, distr=distr)
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator."""
+        params1 = {"mean": [[0, 1], [2, 3], [4, 5]], "sd": 1}
+        params2 = {
+            "mean": 0,
+            "sd": 1,
+            "index": pd.Index([1, 2, 5]),
+            "columns": pd.Index(["a", "b"]),
+        }
+        return [params1, params2]
