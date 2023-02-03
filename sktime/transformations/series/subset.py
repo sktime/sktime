@@ -155,7 +155,7 @@ class ColumnSelect(BaseTransformer):
         "scitype:transform-output": "Series",
         # what scitype is returned: Primitives, Series, Panel
         "scitype:instancewise": True,  # is this an instance-wise transform?
-        "X_inner_mtype": "pd.DataFrame",
+        "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "y_inner_mtype": "None",
         "transform-returns-same-time-index": True,
         "fit_is_empty": True,
@@ -207,10 +207,7 @@ class ColumnSelect(BaseTransformer):
         if index_treatment == "remove":
             Xt = X[col_X_and_cols]
         elif index_treatment == "keep":
-            Xt = X[col_X_and_cols]
-            X_idx_frame = type(X)(columns=columns)
-            Xt = Xt.combine_first(X_idx_frame)
-            Xt = Xt[columns]
+            Xt = X.reindex(columns=columns)
         else:
             raise ValueError(
                 f'index_treatment must be one of "remove", "keep", but found'
