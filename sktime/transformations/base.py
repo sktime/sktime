@@ -474,7 +474,7 @@ class BaseTransformer(BaseEstimator):
               - `Panel`
             * - `Series`
               - `Panel`
-              - `Panel`              
+              - `Panel`
 
         instances in return correspond to instances in `X`
         combinations not in the table are currently not supported
