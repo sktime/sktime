@@ -2072,6 +2072,15 @@
         "code",
         "test"
       ]
+    },
+    {
+      "login": "romanlutz",
+      "name": "Roman Lutz",
+      "avatar_url": "https://avatars.githubusercontent.com/u/10245648?v=4",
+      "profile": "https://www.linkedin.com/in/romanlutz/",
+      "contributions":[
+        "doc"
+      ]
     }
   ]
 }
