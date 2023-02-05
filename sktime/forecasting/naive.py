@@ -348,6 +348,8 @@ class NaiveForecaster(_BaseWindowForecaster):
                 # fill NaN with observed values
                 y_pred.loc[self._y.index[0]] = self._y[self._y.index[1]]
 
+        y_pred.name = self._y.name
+
         return y_pred
 
     def _predict_quantiles(self, fh, X=None, alpha=0.5):

@@ -12,7 +12,6 @@ import warnings
 
 import numpy as np
 import pandas as pd
-from deprecated.sphinx import deprecated
 from joblib import Parallel, delayed
 from numba import njit
 
@@ -57,12 +56,7 @@ class Catch22(BaseTransformer):
         Replace NaN or inf values from the Catch22 transform with 0.
     n_jobs : int, optional, default=1
         The number of jobs to run in parallel for transform. Requires multiple input
-        cases.
-
-        .. deprecated:: 0.14.0
-            ``n_jobs`` default was changed to 1 from -1 in version 0.14.0. In version
-            0.16.0 a value of -1 will use all CPU cores instead of the current 1
-            CPU core.
+        cases. A value of -1 uses all CPU cores.
 
     See Also
     --------
@@ -279,31 +273,6 @@ class Catch22(BaseTransformer):
 
         return c22
 
-    # todo remove in v0.16
-    @deprecated(
-        version="0.14.0",
-        reason="The Catch22 transform_single_feature method will be removed in v0.16.0. Use the 'features' parameter for the class.",  # noqa: E501
-        category=FutureWarning,
-    )
-    def transform_single_feature(self, X, feature, case_id=None):
-        """Transform data into a specified catch22 feature.
-
-        Parameters
-        ----------
-        X : np.ndarray, 3D, in numpy3D mtype format
-            or other sktime data container of Panel scitype
-        feature : int, catch22 feature id or String, catch22 feature
-                  name.
-        case_id : int, identifier for the current set of cases. If the case_id is not
-                  None and the same as the previously used case_id, calculations from
-                  previous features will be reused.
-
-        Returns
-        -------
-        Numpy array containing a catch22 feature for each input series.
-        """
-        self._transform_single_feature(X, feature, case_id)
-
     def _transform_single_feature(self, X, feature, case_id=None):
         if isinstance(feature, (int, np.integer)) or isinstance(
             feature, (float, float)
@@ -382,7 +351,6 @@ class Catch22(BaseTransformer):
 
         return np.asarray(c22_list)
 
-    # todo remove in v0.16.0
     def _transform_case_single(self, series, feature, case_id, inst_idx):
         args = [series]
 
