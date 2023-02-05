@@ -27,15 +27,16 @@ class SeasonalityACF(BaseParamFitter):
     Parameters
     ----------
     candidate_sp : None, int or list of int, optional, default = None
-        candidate sp to test, and to restrict tests to
-        if None, will test all integer lags between 1 and nlags
+        candidate sp to test, and to restrict tests to; ints must be 2 or larger
+        if None, will test all integer lags between 2 and `nlags` (inclusive)
     p_threshold : float, optional, default=0.05
         significance threshold to apply in tesing for seasonality
     adjusted : bool, optional, default=False
         If True, then denominators for autocovariance are n-k, otherwise n.
     nlags : int, optional, default=None
         Number of lags to compute autocorrelations for and select from.
-        At default None, uses min(10 * np.log10(nobs), nobs - 1).
+        At default None, uses `min(10 * np.log10(nobs), nobs - 1)`.
+        Will be ignored if `candidate_sp` is provided.
     fft : bool, optional, default=True
         If True, computes the ACF via FFT.
     missing : str, ["none", "raise", "conservative", "drop"], optional, default="none"
@@ -140,7 +141,7 @@ class SeasonalityACF(BaseParamFitter):
 
         candidate_sp = self.candidate_sp
         if candidate_sp is None:
-            candidate_sp = range(2, nlags)
+            candidate_sp = range(2, nlags + 1)
 
         fft = self.fft
         missing = self.missing
@@ -220,8 +221,8 @@ class SeasonalityACFqstat(BaseParamFitter):
     Parameters
     ----------
     candidate_sp : None, int or list of int, optional, default = None
-        candidate sp to test, and to restrict tests to
-        if None, will test all integer lags between 1 and nlags
+        candidate sp to test, and to restrict tests to; ints must be 2 or larger
+        if None, will test all integer lags between 2 and `nlags` (inclusive)
     p_threshold : float, optional, default=0.05
         significance threshold to apply in tesing for seasonality
     p_adjust : str, optional, default="fdr_by" (Benjamini/Yekutieli)
@@ -235,7 +236,8 @@ class SeasonalityACFqstat(BaseParamFitter):
         If True, then denominators for autocovariance are n-k, otherwise n.
     nlags : int, optional, default=None
         Number of lags to compute autocorrelations for and select from.
-        At default None, uses min(10 * np.log10(nobs), nobs - 1).
+        At default None, uses `min(10 * np.log10(nobs), nobs - 1)`.
+        Will be ignored if `candidate_sp` is provided.
     fft : bool, optional, default=True
         If True, computes the ACF via FFT.
     missing : str, ["none", "raise", "conservative", "drop"], optional, default="none"
@@ -329,7 +331,7 @@ class SeasonalityACFqstat(BaseParamFitter):
 
         candidate_sp = self.candidate_sp
         if candidate_sp is None:
-            candidate_sp = range(2, nlags)
+            candidate_sp = range(2, nlags + 1)
 
         fft = self.fft
         missing = self.missing
@@ -354,7 +356,7 @@ class SeasonalityACFqstat(BaseParamFitter):
         else:
             qstat_cand = qstat
             pvalues_cand = pvalues
-            candidate_sp = range(2, nlags)
+            candidate_sp = range(2, nlags + 1)
 
         self.qstat_cand_ = qstat_cand
         self.pvalues_cand = pvalues_cand

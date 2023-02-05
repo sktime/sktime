@@ -449,14 +449,33 @@ class BaseTransformer(BaseEstimator):
         -------
         transformed version of X
         type depends on type of X and scitype:transform-output tag:
-            |          | `transform`  |                        |
-            |   `X`    |  `-output`   |     type of return     |
-            |----------|--------------|------------------------|
-            | `Series` | `Primitives` | `pd.DataFrame` (1-row) |
-            | `Panel`  | `Primitives` | `pd.DataFrame`         |
-            | `Series` | `Series`     | `Series`               |
-            | `Panel`  | `Series`     | `Panel`                |
-            | `Series` | `Panel`      | `Panel`                |
+
+        .. list-table::
+            :widths: 35 35 40
+            :header-rows: 2
+
+            * -
+              - `transform`
+              -
+            * - `X`
+              - `-output`
+              - type of return
+            * - `Series`
+              - `Primitives`
+              - `pd.DataFrame` (1-row)
+            * - `Panel`
+              - `Primitives`
+              - `pd.DataFrame`
+            * - `Series`
+              - `Series`
+              - `Series`
+            * - `Panel`
+              - `Series`
+              - `Panel`
+            * - `Series`
+              - `Panel`
+              - `Panel`
+
         instances in return correspond to instances in `X`
         combinations not in the table are currently not supported
 
@@ -681,22 +700,40 @@ class BaseTransformer(BaseEstimator):
 
         return self
 
-    def get_fitted_params(self):
+    def get_fitted_params(self, deep=True):
         """Get fitted parameters.
-
-        Overrides BaseEstimator default in case of vectorization.
 
         State required:
             Requires state to be "fitted".
 
+        Parameters
+        ----------
+        deep : bool, default=True
+            Whether to return fitted parameters of components.
+
+            * If True, will return a dict of parameter name : value for this object,
+              including fitted parameters of fittable components
+              (= BaseEstimator-valued parameters).
+            * If False, will return a dict of parameter name : value for this object,
+              but not include fitted parameters of components.
+
         Returns
         -------
-        fitted_params : dict of fitted parameters, keys are str names of parameters
-            parameters of components are indexed as [componentname]__[paramname]
+        fitted_params : dict with str-valued keys
+            Dictionary of fitted parameters, paramname : paramvalue
+            keys-value pairs include:
+
+            * always: all fitted parameters of this object, as via `get_param_names`
+              values are fitted parameter value for that key, of this object
+            * if `deep=True`, also contains keys/value pairs of component parameters
+              parameters of components are indexed as `[componentname]__[paramname]`
+              all parameters of `componentname` appear as `paramname` with its value
+            * if `deep=True`, also contains arbitrary levels of component recursion,
+              e.g., `[componentname]__[componentcomponentname]__[paramname]`, etc
         """
         # if self is not vectorized, run the default get_fitted_params
         if not getattr(self, "_is_vectorized", False):
-            return super(BaseTransformer, self).get_fitted_params()
+            return super(BaseTransformer, self).get_fitted_params(deep=deep)
 
         # otherwise, we delegate to the instances' get_fitted_params
         # instances' parameters are returned at dataframe-slice-like keys
@@ -705,7 +742,7 @@ class BaseTransformer(BaseEstimator):
         # transformers contains a pd.DataFrame with the individual transformers
         transformers = self.transformers_
 
-        # return forecasters in the "forecasters" param
+        # return transformers in the "transformers" param
         fitted_params["transformers"] = transformers
 
         def _to_str(x):
@@ -718,7 +755,7 @@ class BaseTransformer(BaseEstimator):
             trafo = transformers.loc[ix, col]
             trafo_key = f"transformers.loc[{_to_str(ix)},{_to_str(col)}]"
             fitted_params[trafo_key] = trafo
-            trafo_params = trafo.get_fitted_params()
+            trafo_params = trafo.get_fitted_params(deep=deep)
             for key, val in trafo_params.items():
                 fitted_params[f"{trafo_key}__{key}"] = val
 
@@ -822,7 +859,6 @@ class BaseTransformer(BaseEstimator):
             scitype=ALLOWED_SCITYPES,
             return_metadata=True,
             var_name="X",
-            msg_legacy_interface=False,
         )
 
         msg_invalid_input = (
@@ -1075,60 +1111,36 @@ class BaseTransformer(BaseEstimator):
     def _vectorize(self, methodname, **kwargs):
         """Vectorized/iterated loop over method of BaseTransformer.
 
-        Uses transformers_ attribute to store one forecaster per loop index.
+        Uses transformers_ attribute to store one transformer per loop index.
         """
-
-        def unwrap(kwargs):
-            """Unwrap kwargs to X, y, and reusable results of some method calls."""
-            X = kwargs.pop("X")
-            y = kwargs.pop("y", None)
-
-            row_idx, col_idx = X.get_iter_indices()
-            if row_idx is None:
-                row_idx = ["transformers"]
-            if col_idx is None:
-                col_idx = ["transformers"]
-
-            Xs = X.as_list()
-            n = len(Xs)
-
-            if y is None:
-                ys = [None] * n
-            else:
-                ys = y.as_list()
-
-            return X, y, Xs, ys, n, row_idx, col_idx
+        X = kwargs.get("X")
+        y = kwargs.pop("y", None)
+        kwargs["args_rowvec"] = {"y": y}
+        kwargs["rowname_default"] = "transformers"
+        kwargs["colname_default"] = "transformers"
 
         FIT_METHODS = ["fit", "update"]
         TRAFO_METHODS = ["transform", "inverse_transform"]
 
+        # fit-like methods: run method; clone first if fit
         if methodname in FIT_METHODS:
-            X, _, Xs, ys, n, row_idx, col_idx = unwrap(kwargs)
-
-            # if fit is called, create container of transformers, but not in update
             if methodname == "fit":
-                self.transformers_ = pd.DataFrame(index=row_idx, columns=col_idx)
-                for ix in range(n):
-                    i, j = X.get_iloc_indexer(ix)
-                    self.transformers_.iloc[i].iloc[j] = self.clone()
+                transformers_ = X.vectorize_est(self, method="clone")
+            else:
+                transformers_ = self.transformers_
 
-            # fit/update the ix-th transformer with the ix-th series/panel
-            for ix in range(n):
-                i, j = X.get_iloc_indexer(ix)
-                method = getattr(self.transformers_.iloc[i].iloc[j], methodname)
-                method(X=Xs[ix], y=ys[i], **kwargs)
-
+            self.transformers_ = X.vectorize_est(
+                transformers_, method=methodname, **kwargs
+            )
             return self
 
         if methodname in TRAFO_METHODS:
             # loop through fitted transformers one-by-one, and transform series/panels
             if not self.get_tag("fit_is_empty"):
-                X, _, Xs, ys, n_trafos, _, _ = unwrap(kwargs)
-
-                n = len(self.transformers_.index)
-                m = len(self.transformers_.columns)
+                # if not fit_is_empty: check index compatibility, get fitted trafos
+                n_trafos = len(X)
+                n, m = self.transformers_.shape
                 n_fit = n * m
-
                 if n_trafos != n_fit:
                     raise RuntimeError(
                         "found different number of instances in transform than in fit. "
@@ -1136,37 +1148,18 @@ class BaseTransformer(BaseEstimator):
                         f"number of instances seen in transform: {n_trafos}"
                     )
 
-                # transform the i-th series/panel with the i-th stored transformer
-                Xts = []
-                ix = -1
-                for i, j in product(range(n), range(m)):
-                    ix += 1
-                    method = getattr(self.transformers_.iloc[i].iloc[j], methodname)
-                    Xts += [method(X=Xs[ix], y=ys[i], **kwargs)]
-                Xt = X.reconstruct(Xts, overwrite_index=False)
+                transformers_ = self.transformers_
 
-            # if fit_is_empty: don't store transformers, run fit/transform in one
             else:
-                X, _, Xs, ys, n, _, _ = unwrap(kwargs)
+                # if fit_is_empty: don't store transformers, run fit/transform in one
+                transformers_ = X.vectorize_est(self, method="clone")
+                transformers_ = X.vectorize_est(transformers_, method="fit", **kwargs)
 
-                # fit/transform the i-th series/panel with a new clone of self
-                Xts = []
-                for ix in range(n):
-                    i, j = X.get_iloc_indexer(ix)
-                    transformer = self.clone().fit(X=Xs[ix], y=ys[i], **kwargs)
-                    method = getattr(transformer, methodname)
-                    Xts += [method(X=Xs[ix], y=ys[i], **kwargs)]
-                Xt = X.reconstruct(Xts, overwrite_index=False)
-
-            # # one more thing before returning:
-            #
-            # if methodname == "inverse_transform":
-            #         output_scitype = self.get_tag("scitype:transform-input")
-            #     else:
-            #         output_scitype = self.get_tag("scitype:transform-output")
-            # if output_scitype == "Primitives" and :
-            #         Xt = pd.concat(Xt)
-            #         Xt = Xt.reset_index(drop=True)
+            # transform the i-th series/panel with the i-th stored transformer
+            Xts = X.vectorize_est(
+                transformers_, method=methodname, return_type="list", **kwargs
+            )
+            Xt = X.reconstruct(Xts, overwrite_index=False)
 
             return Xt
 

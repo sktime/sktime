@@ -1,18 +1,13 @@
 [project]
 name = "sktime"
-version = "0.15.1"
+version = "0.16.0"
 description = "A unified framework for machine learning with time series"
 authors = [
-    {name = "Franz Király", email = "f.kiraly@ucl.ac.uk"},
-    {name = "Tony Bagnall", email = "ajb@uea.ac.uk"},
-    {name = "Markus Löning"},
-    {name = "Martin Walter", email = "mwalter@sktime.org"},
+    {name = "sktime developers", email = "sktime.toolbox@gmail.com"},
 ]
 maintainers = [
-    {name = "sktime developers", email = "info@sktime.org"},
-    {name = "Franz Király", email = "fkiraly@sktime.org"},
-    {name = "Guzal Bulatova", email = "gbulatova@sktime.org"},
-    {name = "Martin Walter", email = "mwalter@sktime.org"},
+    {name = "sktime developers", email = "sktime.toolbox@gmail.com"},
+    {name = "Franz Király", email = "f.kiraly@ucl.ac.uk"},
 ]
 readme = "README.md"
 keywords = [
@@ -50,7 +45,6 @@ dependencies = [
     "pandas>=1.1.0,<1.6.0",
     "scikit-learn>=0.24.0,<1.3.0",
     "skbase",
-    "statsmodels>=0.12.1",
     "scipy<2.0.0,>=1.2.0",
 ]
 
@@ -65,6 +59,7 @@ all_extras = [
     "hmmlearn>=0.2.7",
     "gluonts>=0.9.0",
     "keras-self-attention",
+    "kotsu>=0.3.1",
     "matplotlib>=3.3.2",
     "mne",
     "pmdarima>=1.8.0,!=1.8.1,<3.0.0",
@@ -74,6 +69,7 @@ all_extras = [
     "scikit_posthocs>=0.6.5",
     "seaborn>=0.11.0",
     "statsforecast>=0.5.2",
+    "statsmodels>=0.12.1",
     "stumpy>=1.5.1",
     "tbats>=1.1.0",
     "tensorflow-probability",

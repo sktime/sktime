@@ -82,29 +82,22 @@ Infrastructure
 This section gives an overview of the infrastructure and continuous
 integration services we use.
 
-+---------------+-----------------------+-------------------------------------+
-| Platform      | Operation             | Configuration                       |
-+===============+=======================+=====================================+
-| `GitHub       | Build/test/           | `.github/workflows/ <https://gi     |
-| Actions       | distribute            | thub.com/sktime/skti |
-| <https:/      | on Linux, MacOS and   | me/blob/main/.github/workflows/>`__ |
-| /docs.github. | Windows,              |                                     |
-| com/en/free-p | run code quality      |                                     |
-| ro-team@lates | checks                |                                     |
-| t/actions>`__ |                       |                                     |
-+---------------+-----------------------+-------------------------------------+
-| `Read the     | Build/deploy          | `.readthedocs.yml                   |
-| Docs <h       | documentation         | <https://github.com/alan-tu         |
-| ttps://readth |                       | ring-institute/sktime/blob/main/.gi |
-| edocs.org>`__ |                       | thub/workflows/code-quality.yml>`__ |
-+---------------+-----------------------+-------------------------------------+
-| `Codecov      | Test coverage         | `.codecov.yml <https                |
-| <https://c    |                       | ://github.com/sktime |
-| odecov.io>`__ |                       | /sktime/blob/main/.codecov.yml>`__, |
-|               |                       | `.coveragerc <htt                   |
-|               |                       | ps://github.com/alan-turing-institu |
-|               |                       | te/sktime/blob/main/.coveragerc>`__ |
-+---------------+-----------------------+-------------------------------------+
+.. list-table::
+   :widths: 25 25 50
+   :header-rows: 1
+
+   * - Platforms
+     - Operation
+     - Configuration
+   * - `GitHub Action <https://docs.github.com/en/free-pro-team@latest/actions>`__
+     - Build/test/distribute on Linux, MacOS and Windows, run code quality checks
+     - `.github/workflows/ <https://github.com/sktime/sktime/blob/main/.github/workflows/>`__
+   * - `Read the Docs <https://readthedocs.org>`__
+     - Build/deploy documentation
+     - `.readthedocs.yml <https://github.com/alan-turing-institute/sktime/blob/main/.github/workflows/code-quality.yml>`__
+   * - `Codecov <https://codecov.io>`__
+     - Test coverage
+     - `.codecov.yml <https://github.com/sktime/sktime/blob/main/.codecov.yml>`__, `.coveragerc <https://github.com/alan-turing-institute/sktime/blob/main/.coveragerc>`__
 
 Additional scripts used for building, unit testing and distribution can
 be found in
