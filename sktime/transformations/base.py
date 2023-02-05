@@ -449,14 +449,33 @@ class BaseTransformer(BaseEstimator):
         -------
         transformed version of X
         type depends on type of X and scitype:transform-output tag:
-            |          | `transform`  |                        |
-            |   `X`    |  `-output`   |     type of return     |
-            |----------|--------------|------------------------|
-            | `Series` | `Primitives` | `pd.DataFrame` (1-row) |
-            | `Panel`  | `Primitives` | `pd.DataFrame`         |
-            | `Series` | `Series`     | `Series`               |
-            | `Panel`  | `Series`     | `Panel`                |
-            | `Series` | `Panel`      | `Panel`                |
+
+        .. list-table::
+            :widths: 35 35 40
+            :header-rows: 2
+
+            * -
+              - `transform`
+              -
+            * - `X`
+              - `-output`
+              - type of return
+            * - `Series`
+              - `Primitives`
+              - `pd.DataFrame` (1-row)
+            * - `Panel`
+              - `Primitives`
+              - `pd.DataFrame`
+            * - `Series`
+              - `Series`
+              - `Series`
+            * - `Panel`
+              - `Series`
+              - `Panel`
+            * - `Series`
+              - `Panel`
+              - `Panel`
+
         instances in return correspond to instances in `X`
         combinations not in the table are currently not supported
 

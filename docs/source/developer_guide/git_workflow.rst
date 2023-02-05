@@ -94,7 +94,6 @@ GitHub, clone, and develop on a new branch.
     updated automatically if you push new changes to the same branch.
 
 .. _Discord: https://discord.com/invite/gqSab2K
-.. _Slack: https://join.slack.com/t/sktime-group/shared_invite/zt-62i7aejn-vXc3nOWF26S_P3VXFPWisQ
 
 .. note::
 
