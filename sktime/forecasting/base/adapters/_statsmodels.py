@@ -24,6 +24,7 @@ class _StatsModelsAdapter(BaseForecaster):
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
         "python_dependencies": "statsmodels",
+        "capability:simulate": False,
     }
 
     def __init__(self, random_state=None):
@@ -86,8 +87,6 @@ class _StatsModelsAdapter(BaseForecaster):
         ----------
         fh : ForecastingHorizon
             The forecasters horizon with the steps ahead to to predict.
-            Default is one-step ahead forecast,
-            i.e. np.array([1])
         X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored.
 
@@ -121,6 +120,76 @@ class _StatsModelsAdapter(BaseForecaster):
         # ensure that name is not added nor removed
         # otherwise this may upset conversion to pd.DataFrame
         y_pred.name = self._y.name
+        return y_pred
+
+    def _simulate(self, fh, n_simulations, X=None):
+        """Make forecasts.
+
+        Parameters
+        ----------
+        fh : ForecastingHorizon
+            The forecasters horizon with the steps ahead to to predict.
+        X : pd.DataFrame, optional (default=None)
+            Exogenous variables are ignored.
+
+        Returns
+        -------
+        y_pred : pd.DataFrame
+            Returns multiindex dataframe of simulated forecasts.
+        """
+        # check if there is a private attribute _simulate_kwargs
+        simulate_kwargs = getattr(self, "_simulate_kwargs", None) or {}
+
+        max_fh = np.max(fh.to_relative(self.cutoff))
+
+        if "exog" in inspect.signature(self._forecaster.__init__).parameters.keys():
+            y_pred = self._fitted_forecaster.simulate(
+                nsimulations=max_fh,
+                anchor="end",
+                exog=X,
+                repetitions=n_simulations,
+                random_state=self.random_state,
+                **simulate_kwargs,
+            )
+        else:
+            y_pred = self._fitted_forecaster.simulate(
+                nsimulations=max_fh,
+                anchor="end",
+                repetitions=n_simulations,
+                random_state=self.random_state,
+                **simulate_kwargs,
+            )
+
+        # add an offset to the index in the special case where the y passed in fit has
+        # an integer index not equal to 0.
+        if not isinstance(self._y.index, pd.RangeIndex) and (
+            isinstance(y_pred.index, pd.Index)
+            and (y_pred.index.is_integer())
+            and (self._y.index.min() != 0)
+        ):
+            warn(
+                (
+                    "Integer index not starting from zero is not supported by "
+                    "statsmodels. An offset will be added to the statsmodels "
+                    "predictions to ensure the index is correct."
+                ),
+                RuntimeWarning,
+            )
+            y_pred.index = y_pred.index + int(self._y.index.min())
+
+        # statsmodels forecasts all periods from start to end of forecasting
+        # horizon, but only return given time points in forecasting horizon
+        y_pred = y_pred.loc[fh.to_absolute(self.cutoff).to_pandas()]
+
+        # convert the outputs to a "pd_multiindex" mtype
+        y_pred = y_pred.stack()
+
+        if isinstance(y_pred, pd.Series):
+            y_pred = y_pred.to_frame()
+        y_pred = y_pred.swaplevel()
+        y_pred.index = y_pred.index.set_names(["simulation_id", "time_index"])
+        y_pred = y_pred.sort_index()
+
         return y_pred
 
     def _get_fitted_params(self):

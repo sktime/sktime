@@ -200,6 +200,12 @@ ESTIMATOR_TAG_REGISTER = [
         "does the forecaster implement predict_variance?",
     ),
     (
+        "capability:simulate",
+        "forecaster",
+        "bool",
+        "does the forecaster implement simulate?",
+    ),
+    (
         "capability:multivariate",
         [
             "classifier",

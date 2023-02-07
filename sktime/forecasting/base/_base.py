@@ -91,6 +91,7 @@ class BaseForecaster(BaseEstimator):
         "scitype:y": "univariate",  # which y are fine? univariate/multivariate/both
         "ignores-exogeneous-X": False,  # does estimator ignore the exogeneous X?
         "capability:pred_int": False,  # can the estimator produce prediction intervals?
+        "capability:simulate": False,  # can the estimator produce simulated forecasts?
         "handles-missing-data": False,  # can estimator handle missing data?
         "y_inner_mtype": "pd.Series",  # which types do _fit/_predict, support for y?
         "X_inner_mtype": "pd.DataFrame",  # which types do _fit/_predict, support for X?
@@ -413,6 +414,88 @@ class BaseForecaster(BaseEstimator):
             store=self._converter_store_y,
             store_behaviour="freeze",
         )
+
+        return y_out
+
+    def simulate(self, fh=None, X=None, n_simulations=10):
+        """Simulate multiple forecasts at future horizon.
+
+        State required:
+            Requires state to be "fitted".
+
+        Accesses in self:
+            Fitted model attributes ending in "_".
+            self.cutoff, self._is_fitted
+
+        Writes to self:
+            Stores fh to self.fh if fh is passed and has not been passed previously.
+
+        Parameters
+        ----------
+        fh : int, list, np.array or ForecastingHorizon, optional (default=None)
+            The forecasting horizon encoding the time stamps to forecast at.
+            if has not been passed in fit, must be passed, not optional.
+        X : time series in sktime compatible format, optional (default=None)
+                Exogeneous time series to fit to
+            Should be of same scitype (Series, Panel, or Hierarchical) as y in fit
+            if self.get_tag("X-y-must-have-same-index"), X.index must contain fh.index
+            there are no restrictions on number of columns (unlike for y)
+        n_simulations: int, optional (default=10)
+            number of simulated time series that will be generated.
+
+        Returns
+        -------
+        y_pred : Multiple time series in a Panel or Hierarchical sktime format
+            Simulated point forecasts at fh, with same index as fh
+            y_pred a ""pd-multiindex"" mtype if y is a Series scitype and a
+            "pd_multiindex_hier" if y is a Panel or Hierarchicla scitype.
+            the last two levels of the multiindex are "simulation_id" and "time_index"
+        """
+        if not self.get_tag("capability:simulate"):
+            raise NotImplementedError(
+                f"{self.__class__.__name__} does not have the capability to return "
+                "simulated forecasts. If you "
+                "think this estimator should have the capability, please open "
+                "an issue on sktime."
+            )
+
+        fh = self._check_fh(fh)
+
+        if len(fh.to_in_sample(cutoff=self.cutoff)) > 0:
+            raise NotImplementedError(
+                f"{self.__class__.__name__} currently does support simulated forecasts "
+                "for in-sample horizons (i.e. negative realtive  horizons)."
+            )
+
+        self.check_is_fitted()
+
+        # input check and conversion for X
+        X_inner = self._check_X(X=X)
+
+        # we call the ordinary _simulate if no looping/vectorization needed
+        if not self._is_vectorized:
+            y_pred = self._simulate(fh=fh, X=X_inner, n_simulations=n_simulations)
+        else:
+            y_pred = self._vectorize(
+                "simulate", fh=fh, X=X_inner, n_simulations=n_simulations
+            )
+
+        # convert to output mtype, identical with last y mtype seen
+        convert_to_mtype = (
+            "pd_multiindex_hier" if len(y_pred.index.levels) > 2 else "pd-multiindex"
+        )
+
+        y_out = convert_to(
+            y_pred,
+            convert_to_mtype,
+            store=self._converter_store_y,
+            store_behaviour="freeze",
+        )
+
+        # name is not added though this operation.
+        # TODO: move this to converter, if possible
+        if "columns" in self._converter_store_y.keys():
+            y_out.columns = self._converter_store_y["columns"]
 
         return y_out
 
@@ -1735,6 +1818,7 @@ class BaseForecaster(BaseEstimator):
             "predict_quantiles",
             "predict_interval",
             "predict_var",
+            "simulate",
         ]
 
         # retrieve data arguments
