@@ -6,12 +6,10 @@
 __author__ = ["aiwalter"]
 __all__ = ["Imputer"]
 
-
 import numpy as np
 import pandas as pd
 from sklearn.utils import check_random_state
 
-from sktime.datatypes import VectorizedDF
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.trend import PolynomialTrendForecaster
 from sktime.transformations.base import BaseTransformer
@@ -87,7 +85,7 @@ class Imputer(BaseTransformer):
         "scitype:transform-output": "Series",
         # what scitype is returned: Primitives, Series, Panel
         "scitype:instancewise": True,  # is this an instance-wise transform?
-        "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
+        "X_inner_mtype": ["pd.DataFrame"],
         # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "fit_is_empty": False,
@@ -120,6 +118,27 @@ class Imputer(BaseTransformer):
         if method in ["drift", "forecaster", "random"]:
             self.set_tags(**{"remember_data": True})
 
+        # these methods can be applied to multi-index frames without vectorization or
+        # by using an efficient pandas native method
+        if method in [
+            "constant",
+            "mean",
+            "median",
+            "backfill",
+            "bfill",
+            "pad",
+            "ffill",
+        ]:
+            self.set_tags(
+                **{
+                    "X_inner_mtype": [
+                        "pd.DataFrame",
+                        "pd-multiindex",
+                        "pd_multiindex_hier",
+                    ]
+                }
+            )
+
     def _fit(self, X, y=None):
         """Fit transformer to X and y.
 
@@ -149,12 +168,6 @@ class Imputer(BaseTransformer):
                 self._mean = X_grouped.mean()
             elif self.method == "median":
                 self._median = X_grouped.median()
-            else:
-                X_vec = VectorizedDF(X, is_scitype=None)
-                y_vec = None
-                if y is not None:
-                    y_vec = VectorizedDF(y, is_scitype=None)
-                self._vectorize("fit", X=X_vec, y=y_vec)
         else:
             if self.method in ["drift", "forecaster"]:
                 self._y = y.copy() if y is not None else None
@@ -208,18 +221,20 @@ class Imputer(BaseTransformer):
         elif isinstance(index, pd.MultiIndex):
             X_grouped = X.groupby(level=list(range(index.nlevels - 1)))
 
-            if self.method in ["backfill", "bfill", "pad", "ffill"]:
-                X = X_grouped.fillna(method=self.method)
+            if self.method in ["backfill", "bfill"]:
+                X = X_grouped.fillna(method="bfill")
+                # fill trailing NAs of panel instances with reverse method
+                return X.fillna(method="ffill")
+            elif self.method in ["pad", "ffill"]:
+                X = X_grouped.fillna(method="ffill")
+                # fill leading NAs of panel instances with reverse method
+                return X.fillna(method="bfill")
             elif self.method == "mean":
                 return X_grouped.fillna(value=self._mean)
             elif self.method == "median":
                 return X_grouped.fillna(value=self._median)
             else:
-                X_vec = VectorizedDF(X, is_scitype=None)
-                y_vec = None
-                if y is not None:
-                    y_vec = VectorizedDF(y, is_scitype=None)
-                return self._vectorize("transform", X=X_vec, y=y_vec)
+                raise AssertionError("Code should not be reached")
         else:
             if self.method in ["backfill", "bfill", "pad", "ffill"]:
                 X = X.fillna(method=self.method)
@@ -236,10 +251,11 @@ class Imputer(BaseTransformer):
             else:
                 raise ValueError(f"`method`: {self.method} not available.")
 
-        # fill first/last elements of series,
-        # as some methods (e.g. "linear") can't impute those
-        X = X.fillna(method="ffill").fillna(method="backfill")
-        return X
+            # fill first/last elements of series,
+            # as some methods (e.g. "linear") can't impute those
+            X = X.fillna(method="ffill").fillna(method="backfill")
+
+            return X
 
     def _check_method(self):
         method = self.method
