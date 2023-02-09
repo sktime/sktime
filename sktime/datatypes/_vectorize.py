@@ -310,29 +310,42 @@ class VectorizedDF:
             col_ind = [col_ind]
         return row_ind, col_ind
 
+    def __iter__(self):
+        """Iterate over all instances.
+
+        Returns
+        -------
+        An iterator over all instances
+        """
+
+        def _iter_cols(inst):
+            if self.iterate_cols:
+                for col in inst.columns:
+                    yield _enforce_index_freq(inst[[col]])
+            else:
+                yield _enforce_index_freq(inst)
+
+        iter_levels = 0
+
+        if self.is_scitype == "Panel":
+            if self.iterate_as == "Series":
+                iter_levels = 1
+        if self.is_scitype == "Hierarchical":
+            if self.iterate_as == "Panel":
+                iter_levels = 2
+            elif self.iterate_as == "Series":
+                iter_levels = 1
+
+        if iter_levels > 0:
+            group_levels = list(range(self.X_multiindex.index.nlevels - iter_levels))
+            for _, group in self.X_multiindex.groupby(level=group_levels):
+                yield from _iter_cols(group.droplevel(group_levels))
+        else:
+            yield from _iter_cols(self.X_multiindex)
+
     def as_list(self):
         """Shorthand to retrieve self (iterator) as list."""
-        if (
-            isinstance(self.X_multiindex.index, pd.MultiIndex)
-            and self.iterate_as == "Series"
-            and not self.iterate_cols
-        ):
-
-            def _convert(series):
-                series = series.droplevel(
-                    list(range(self.X_multiindex.index.nlevels - 1))
-                )
-                series = _enforce_index_freq(series)
-                return series
-
-            return [
-                _convert(series)
-                for _, series in self.X_multiindex.groupby(
-                    level=list(range(self.X_multiindex.index.nlevels - 1))
-                )
-            ]
-        else:
-            return list(self)
+        return list(self)
 
     def reconstruct(
         self,
