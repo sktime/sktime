@@ -317,13 +317,25 @@ class VectorizedDF:
         -------
         An iterator over all instances
         """
+        return (group for _, _, group in self.items())
 
-        def _iter_cols(inst):
+    def items(self):
+        """Iterate over (row name, column name, instance) tuples.
+
+        Row name is null if iterate_as is the same as scitype of data.
+        Col name is null if iterate_cols is False.
+
+        Returns
+        -------
+        An iterator over all (row name, column name, instance) tuples.
+        """
+
+        def _iter_cols(inst, group_name=None):
             if self.iterate_cols:
                 for col in inst.columns:
-                    yield _enforce_index_freq(inst[[col]])
+                    yield group_name, col, _enforce_index_freq(inst[[col]])
             else:
-                yield _enforce_index_freq(inst)
+                yield group_name, None, _enforce_index_freq(inst)
 
         iter_levels = 0
 
@@ -338,8 +350,8 @@ class VectorizedDF:
 
         if iter_levels > 0:
             group_levels = list(range(self.X_multiindex.index.nlevels - iter_levels))
-            for _, group in self.X_multiindex.groupby(level=group_levels):
-                yield from _iter_cols(group.droplevel(group_levels))
+            for name, group in self.X_multiindex.groupby(level=group_levels):
+                yield from _iter_cols(group.droplevel(group_levels), group_name=name)
         else:
             yield from _iter_cols(self.X_multiindex)
 
