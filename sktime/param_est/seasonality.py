@@ -2,10 +2,11 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Parameter estimators for seasonality."""
 
-__author__ = ["fkiraly"]
-__all__ = ["SeasonalityACF"]
+__author__ = ["fkiraly", "blazingbhavneek"]
+__all__ = ["SeasonalityACF", "Seasonality"]
 
 import numpy as np
+from seasonal.periodogram import periodogram
 
 from sktime.param_est.base import BaseParamFitter
 
@@ -27,16 +28,15 @@ class SeasonalityACF(BaseParamFitter):
     Parameters
     ----------
     candidate_sp : None, int or list of int, optional, default = None
-        candidate sp to test, and to restrict tests to; ints must be 2 or larger
-        if None, will test all integer lags between 2 and `nlags` (inclusive)
+        candidate sp to test, and to restrict tests to
+        if None, will test all integer lags between 1 and nlags
     p_threshold : float, optional, default=0.05
         significance threshold to apply in tesing for seasonality
     adjusted : bool, optional, default=False
         If True, then denominators for autocovariance are n-k, otherwise n.
     nlags : int, optional, default=None
         Number of lags to compute autocorrelations for and select from.
-        At default None, uses `min(10 * np.log10(nobs), nobs - 1)`.
-        Will be ignored if `candidate_sp` is provided.
+        At default None, uses min(10 * np.log10(nobs), nobs - 1).
     fft : bool, optional, default=True
         If True, computes the ACF via FFT.
     missing : str, ["none", "raise", "conservative", "drop"], optional, default="none"
@@ -141,7 +141,7 @@ class SeasonalityACF(BaseParamFitter):
 
         candidate_sp = self.candidate_sp
         if candidate_sp is None:
-            candidate_sp = range(2, nlags + 1)
+            candidate_sp = range(2, nlags)
 
         fft = self.fft
         missing = self.missing
@@ -221,8 +221,8 @@ class SeasonalityACFqstat(BaseParamFitter):
     Parameters
     ----------
     candidate_sp : None, int or list of int, optional, default = None
-        candidate sp to test, and to restrict tests to; ints must be 2 or larger
-        if None, will test all integer lags between 2 and `nlags` (inclusive)
+        candidate sp to test, and to restrict tests to
+        if None, will test all integer lags between 1 and nlags
     p_threshold : float, optional, default=0.05
         significance threshold to apply in tesing for seasonality
     p_adjust : str, optional, default="fdr_by" (Benjamini/Yekutieli)
@@ -236,8 +236,7 @@ class SeasonalityACFqstat(BaseParamFitter):
         If True, then denominators for autocovariance are n-k, otherwise n.
     nlags : int, optional, default=None
         Number of lags to compute autocorrelations for and select from.
-        At default None, uses `min(10 * np.log10(nobs), nobs - 1)`.
-        Will be ignored if `candidate_sp` is provided.
+        At default None, uses min(10 * np.log10(nobs), nobs - 1).
     fft : bool, optional, default=True
         If True, computes the ACF via FFT.
     missing : str, ["none", "raise", "conservative", "drop"], optional, default="none"
@@ -331,7 +330,7 @@ class SeasonalityACFqstat(BaseParamFitter):
 
         candidate_sp = self.candidate_sp
         if candidate_sp is None:
-            candidate_sp = range(2, nlags + 1)
+            candidate_sp = range(2, nlags)
 
         fft = self.fft
         missing = self.missing
@@ -356,7 +355,7 @@ class SeasonalityACFqstat(BaseParamFitter):
         else:
             qstat_cand = qstat
             pvalues_cand = pvalues
-            candidate_sp = range(2, nlags + 1)
+            candidate_sp = range(2, nlags)
 
         self.qstat_cand_ = qstat_cand
         self.pvalues_cand = pvalues_cand
@@ -381,6 +380,96 @@ class SeasonalityACFqstat(BaseParamFitter):
         else:
             self.sp_ = 1
             self.sp_significant_ = []
+
+        return self
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            There are currently no reserved values for transformers.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        params1 = {}
+        params2 = {"candidate_sp": [3, 7, 12]}
+
+        return [params1, params2]
+
+
+class Seasonality(BaseParamFitter):
+    """Find candidate seasonality parameter.
+
+    Interfacing `seasonal.periodogram` to determine candidate seasonality parameters.
+
+    Attributes
+    ----------
+    sp_ : int, seasonality period at lowest p-level, if any sub-threshold, else 1
+        if `candidate_sp` is passed, will be in `candidate_sp` or 1
+    sp_significant_ : list of int, seasonality periods with sub-threshold p-levels
+        ordered increasingly by p-level. Empty list, not [1], if none are sub-threshold
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.param_est.seasonality import Seasonality
+    >>>
+    >>> X = load_airline().diff()[1:]  # doctest: +SKIP
+    >>> sp_est = Seasonality()  # doctest: +SKIP
+    >>> sp_est.fit(X)  # doctest: +SKIP
+    Seasonality(...)
+    >>> sp_est.get_fitted_params()["sp"]  # doctest: +SKIP
+    12
+    >>> sp_est.get_fitted_params()["sp_significant"]  # doctest: +SKIP
+    array([12, 11])
+    """
+
+    _tags = {
+        "X_inner_mtype": "pd.Series",
+        "scitype:X": "Series",
+        "capability:missing_values": True,
+        "capability:multivariate": False,
+        "python_dependencies": "seasonal",
+    }
+
+    def __init__(self):
+        super(Seasonality, self).__init__()
+
+    def _fit(self, X):
+        """Fit estimator and estimate parameters.
+
+        private _fit containing the core logic, called from fit
+
+        Writes to self:
+            Sets fitted model attributes ending in "_".
+
+        Parameters
+        ----------
+        X : guaranteed to be of a type in self.get_tag("X_inner_mtype")
+            Time series to which to fit the estimator.
+
+        Returns
+        -------
+        self : reference to self
+        """
+        seasons, _ = periodogram(X)
+        if seasons is None:
+            self.sp_ = 1
+            self.sp_significant_ = []
+        else:
+            self.sp_significant_ = seasons
+            self.sp_ = self.sp_significant_[0]
 
         return self
 
