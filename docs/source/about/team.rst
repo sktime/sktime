@@ -25,8 +25,6 @@ Community Council Observers
 
    * - Name
      - GitHub ID
-   * - Leonidas Tsaprounis
-     - :user:`ltsaprounis`
    * - Lovkush Agarwal
      - :user:`lovkush-a`
    * - Mirae Parker
