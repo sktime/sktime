@@ -210,11 +210,8 @@ class Imputer(BaseTransformer):
 
         if self.method == "random":
             for col in X.columns:
-                X[col] = X[col].apply(
-                    lambda i, col=col: self._get_random(col)
-                    if np.isnan(i)
-                    else i  # noqa: B023
-                )
+                isna = X[col].isna()
+                X.loc[isna, col] = self._create_random_distribution(X[col])(isna.sum())
             return X
         elif self.method == "constant":
             return X.fillna(value=self.value)
@@ -297,25 +294,30 @@ class Imputer(BaseTransformer):
         else:
             pass
 
-    def _get_random(self, col):
-        """Create a random int or float value.
+    def _create_random_distribution(self, z: pd.Series):
+        """Create a uniform random distribution function within boundaries of given series.
+
+        The distribution is discrete, if the series contains only int-like values.
 
         Parameters
         ----------
-        col : str
-            Column name
+        z : pd.Series
+            A series to create a random distribution from
 
         Returns
         -------
-        int/float
-            Random int or float between min and max of X
+        Callable[[Optional[int]], Union[int, float]]
+            Random (discrete) uniform distribution between min and max of series
         """
         rng = check_random_state(self.random_state)
-        # check if series contains only int or int-like values (e.g. 3.0)
-        if (self._X[col].dropna() % 1 == 0).all():
-            return rng.randint(self._X[col].min(), self._X[col].max())
+        if (z.dropna() % 1 == 0).all():
+            return lambda size, low=z.min(), high=z.max(): rng.randint(
+                low=low, high=high, size=size
+            )
         else:
-            return rng.uniform(self._X[col].min(), self._X[col].max())
+            return lambda size, low=z.min(), high=z.max(): rng.uniform(
+                low=low, high=high, size=size
+            )
 
     def _impute_with_forecaster(self, X, y):
         """Use a given forecaster for imputation by in-sample predictions.
