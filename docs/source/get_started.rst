@@ -140,7 +140,7 @@ Time Series Annotation
 .. warning::
 
    The API for annotating time series data is experimental and its 
-   features may change in future updates.
+   features may change in future releases.
 
 .. code-block:: python
 
