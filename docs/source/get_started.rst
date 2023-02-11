@@ -110,8 +110,8 @@ Time Series Regression
 ~~~~~~~~~~~~~~~~~~~~~~
 
 .. note::
-    The time series regression API is stable. But the inclusion of a dataset to illustrate
-    its features is still in progress.
+   The regression API for time series data is stable, but the addition of 
+   an example dataset to showcase its features is still underway.
 
 .. code-block:: python
 
@@ -139,8 +139,8 @@ Time Series Annotation
 
 .. warning::
 
-   The time series annotation API is still experimental. Features may change
-   in future releases.
+   The API for annotating time series data is experimental and its 
+   features may change in future updates.
 
 .. code-block:: python
 
