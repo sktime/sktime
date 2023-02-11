@@ -88,7 +88,6 @@ check_dict = dict()
 
 
 def check_dflist_panel(obj, return_metadata=False, var_name="obj"):
-
     if not isinstance(obj, list):
         msg = f"{var_name} must be list of pd.DataFrame, found {type(obj)}"
         return _ret(False, msg, None, return_metadata)
@@ -129,7 +128,6 @@ check_dict[("df-list", "Panel")] = check_dflist_panel
 
 
 def check_numpy3d_panel(obj, return_metadata=False, var_name="obj"):
-
     if not isinstance(obj, np.ndarray):
         msg = f"{var_name} must be a numpy.ndarray, found {type(obj)}"
         return _ret(False, msg, None, return_metadata)
@@ -162,7 +160,6 @@ check_dict[("numpy3D", "Panel")] = check_numpy3d_panel
 
 
 def check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj", panel=True):
-
     if not isinstance(obj, pd.DataFrame):
         msg = f"{var_name} must be a pd.DataFrame, found {type(obj)}"
         return _ret(False, msg, None, return_metadata)
@@ -196,7 +193,7 @@ def check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj", panel=T
         return _ret(False, msg, None, return_metadata)
 
     # check whether the time index is of valid type
-    if not is_in_valid_index_types(index.get_level_values(-1)):
+    if not is_in_valid_index_types(index.levels[-1]):
         msg = (
             f"{type(index)} is not supported for {var_name}, use "
             f"one of {VALID_INDEX_TYPES} or integer index instead."
@@ -204,7 +201,7 @@ def check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj", panel=T
         return _ret(False, msg, None, return_metadata)
 
     # check instance index being integer or range index
-    inst_inds = index.get_level_values(0)
+    inst_inds = index.levels[0]
     if not is_in_valid_multiindex_types(inst_inds):
         msg = (
             f"instance index (first/highest index) must be {VALID_MULTIINDEX_TYPES}, "
@@ -212,34 +209,35 @@ def check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj", panel=T
         )
         return _ret(False, msg, None, return_metadata)
 
-    # Check time index is ordered in time
-    index_frame = index.to_frame()
-    if (
-        not index_frame.groupby(level=list(range(index.nlevels - 1)))[
-            index_frame.columns[-1]
-        ]
-        .is_monotonic_increasing.astype(bool)
-        .all()
-    ):
-        msg = (
-            f"The (time) index of {var_name} must be sorted monotonically increasing, "
-            f"but found: {index}"
-        )
-        return _ret(False, msg, None, return_metadata)
+    # check if time index is monotonic increasing for each group
+    if not index.is_monotonic_increasing:
+        index_frame = index.to_frame()
+        if (
+            not index_frame.groupby(level=list(range(index.nlevels - 1)), sort=False)[
+                index_frame.columns[-1]
+            ]
+            .is_monotonic_increasing.astype(bool)
+            .all()
+        ):
+            msg = (
+                f"The (time) index of {var_name} must be sorted monotonically "
+                f"increasing, but found: {index}"
+            )
+            return _ret(False, msg, None, return_metadata)
 
     metadata = dict()
 
     # check whether index is equally spaced or if there are any nans
     #   compute only if needed
     if return_metadata:
-        series_groups = obj.groupby(level=list(range(index.nlevels - 1)))
+        series_groups = obj.groupby(level=list(range(index.nlevels - 1)), sort=False)
         n_series = series_groups.ngroups
 
-        if not panel:
-            panel_groups = obj.groupby(level=list(range(index.nlevels - 2)))
-            n_panels = panel_groups.ngroups
-        else:
+        if panel:
             n_panels = 1
+        else:
+            panel_groups = obj.groupby(level=list(range(index.nlevels - 2)), sort=False)
+            n_panels = panel_groups.ngroups
 
         metadata["is_univariate"] = len(obj.columns) < 2
         metadata["is_equally_spaced"] = all(
@@ -393,7 +391,6 @@ check_dict[("nested_univ", "Panel")] = is_nested_dataframe
 
 
 def check_numpyflat_Panel(obj, return_metadata=False, var_name="obj"):
-
     if not isinstance(obj, np.ndarray):
         msg = f"{var_name} must be a numpy.ndarray, found {type(obj)}"
         return _ret(False, msg, None, return_metadata)
@@ -423,12 +420,10 @@ def check_numpyflat_Panel(obj, return_metadata=False, var_name="obj"):
 
 check_dict[("numpyflat", "Panel")] = check_numpyflat_Panel
 
-
 if _check_soft_dependencies("dask", severity="none"):
     from sktime.datatypes._adapter.dask_to_pd import check_dask_frame
 
     def check_dask_panel(obj, return_metadata=False, var_name="obj"):
-
         return check_dask_frame(
             obj=obj,
             return_metadata=return_metadata,
