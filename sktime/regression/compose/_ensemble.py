@@ -44,14 +44,14 @@ class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
         and a decision tree regressor as final estimator.
     n_estimators : integer, optional (default=100)
         The number of trees in the forest.
-    criterion : string, optional (default="mse")
-        The function to measure the quality of a split. Supported criteria
-        are "mse" for the mean squared error, which is equal to variance
-        reduction as feature selection criterion and minimizes the L2 loss
-        using the mean of each terminal node, "friedman_mse", which uses mean
-        squared error with Friedman's improvement score for potential splits,
-        and "mae" for the mean absolute error, which minimizes the L1 loss
-        using the median of each terminal node.
+    criterion : string, optional (default="squared_error")
+        The function to measure the quality of a split. Supported criteria are
+        "squared_error" for the mean squared error, which is equal to variance reduction
+        as feature selection criterion and minimizes the L2 loss using the mean of each
+        terminal node, "friedman_mse", which uses mean squared error with Friedman’s
+        improvement score for potential splits, "absolute_error" for the mean absolute
+        error, which minimizes the L1 loss using the median of each terminal node,
+        and "poisson" which uses reduction in Poisson deviance to find splits.
     max_depth : integer or None, optional (default=None)
         The maximum depth of the tree. If None, then nodes are expanded until
         all leaves are pure or until all leaves contain less than
@@ -171,7 +171,7 @@ class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
         self,
         estimator=None,
         n_estimators=100,
-        criterion="mse",
+        criterion="squared_error",
         max_depth=None,
         min_samples_split=2,
         min_samples_leaf=1,
