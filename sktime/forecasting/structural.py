@@ -364,9 +364,10 @@ class UnobservedComponents(_StatsModelsAdapter):
         --------
         statsmodels.tsa.statespace.mlemodel.PredictionResults.summary_frame
         """
+        start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
+
         valid_indices = fh.to_absolute(self.cutoff).to_pandas()
 
-        start, end = valid_indices[[0, -1]]
         prediction_results = self._fitted_forecaster.get_prediction(
             start=start, end=end, exog=X
         )
