@@ -51,13 +51,14 @@ class SimpleRNNRegressor(BaseDeepRegressor):
         self.use_bias = use_bias
         self.optimizer = optimizer
         self.history = None
-        self._network = RNNNetwork()
+        self._network = RNNNetwork(
+            batch_size=self.batch_size,
+            units=self.units,
+        )
 
         _check_dl_dependencies(severity="error")
 
-        super(SimpleRNNRegressor, self).__init__(
-            batch_size=batch_size,
-        )
+        super(SimpleRNNRegressor, self).__init__()
 
     def build_model(self, input_shape, **kwargs):
         """
