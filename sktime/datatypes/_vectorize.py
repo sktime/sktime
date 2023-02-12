@@ -4,6 +4,10 @@
 
 Contains VectorizedDF class.
 """
+
+__author__ = ["fkiraly", "hoesler"]
+
+
 import itertools
 from itertools import product
 
@@ -314,7 +318,7 @@ class VectorizedDF:
 
         Returns
         -------
-        An iterator over all instances
+        An generator over all instances
         """
         return (
             group
@@ -347,7 +351,8 @@ class VectorizedDF:
 
         Returns
         -------
-        An iterator over all (row name, column name, instance) tuples.
+        A generator returning (row index, col index instance) tuples for vectorization.
+        i-th element is i-th
         """
         if iterate_as is None:
             iterate_as = self.iterate_as
