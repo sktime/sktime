@@ -50,7 +50,7 @@ class SimpleFourier(BaseTransformer):
     def __init__(self):
         super(SimpleFourier, self).__init__()
 
-    def _transform(self, X):
+    def _transform(self, X, y=None):
         """Transform X and return a transformed version.
 
         private _transform containing core logic, called from transform
