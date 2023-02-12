@@ -5,7 +5,6 @@
 Contains VectorizedDF class.
 """
 import itertools
-from itertools import product
 
 import numpy as np
 import pandas as pd
@@ -206,108 +205,9 @@ class VectorizedDF:
             col_n = len(col_ix)
             return (i // col_n, i % col_n)
 
-    def _iter_indices(self, X=None):
-        """Get indices that are iterated over in vectorization.
-
-        Allows specifying `X` other than self, in which case indices are references
-        to row and column indices of `X`.
-
-        Parameters
-        ----------
-        X : `None`, `VectorizedDF`, or pd.DataFrame; optional, default=self
-          must be in one of the `sktime` time series formats, with last column time
-          if not `self`, the highest levels of row or column index in `X`
-          must agree with those indices of `self` that are non-trivially vectorized
-
-        Returns
-        -------
-        list of pair of `pandas.Index` or `pandas.MultiIndex`
-            iterable with unique indices that are iterated over
-            use to reconstruct data frame after iteration
-            `i`-th element of list selects rows/columns in `i`-th iterate sub-DataFrame
-            first element of pair are rows, second element are columns selected
-            references are `loc` references, to rows and columns of `X` (default=self)
-        """
-        if X is None:
-            X = self.X_multiindex
-        elif isinstance(X, VectorizedDF):
-            X = X.X_multiindex
-
-        row_ix, col_ix = self.get_iter_indices()
-
-        if row_ix is None and col_ix is None:
-            ret = [(X.index, X.columns)]
-        elif row_ix is None:
-            ret = product([X.index], col_ix)
-        elif col_ix is None:
-            ret = product(row_ix, [X.columns])
-        else:  # if row_ix and col_ix are both not None
-            ret = product(row_ix, col_ix)
-        return list(ret)
-
     def __len__(self):
         """Return number of indices to iterate over."""
         return np.prod(self.shape)
-
-    def __getitem__(self, i: int):
-        """Return the i-th element iterated over in vectorization."""
-        row_ind, col_ind = self._get_item_indexer(i=i)
-        return self._get_X_at_index(row_ind=row_ind, col_ind=col_ind)
-
-    def _get_X_at_index(self, row_ind=None, col_ind=None, X=None):
-        """Return subset of self, at row_ind and col_ind.
-
-        Parameters
-        ----------
-        row_ind : `None`, or `pd.Index` coercible; optional, default=None
-        col_ind : `None`, or `pd.Index` coercible; optional, default=None
-        X : `None`, `VectorizedDF`, or pd.DataFrame; optional, default=self
-          must be in one of the `sktime` time series formats, with last column time
-
-        Returns
-        -------
-        `pd.DataFrame`, loc-subset of `X` to `row_ind` at rows, and `col_ind` at cols
-
-        * if `row_ind` or `col_ind` are `None`, rows/cols are not subsetted
-        * if `X` is `VectorizedDF`, it is replaced by `X.X_multiindex` (`pandas` form)
-        * the `freq` attribute of the last index level is preserved in subsetting
-        """
-        if X is None:
-            X = self.X_multiindex
-        elif isinstance(X, VectorizedDF):
-            X = X.X_multiindex
-
-        if col_ind is None and row_ind is None:
-            return X
-        elif col_ind is None:
-            res = X.loc[row_ind]
-        elif row_ind is None:
-            res = X[col_ind]
-        else:
-            res = X.loc[row_ind, col_ind]
-        res = _enforce_index_freq(res)
-        return res.copy()
-
-    def _get_item_indexer(self, i: int, X=None):
-        """Get the i-th indexer from _iter_indices.
-
-        Parameters
-        ----------
-        X : `None`, `VectorizedDF`, or pd.DataFrame; optional, default=self
-          must be in one of the `sktime` time series formats, with last column time
-          if not `self`, the highest levels of row or column index in `X`
-          must agree with those indices of `self` that are non-trivially vectorized
-
-        Returns
-        -------
-        self._iter_indices(X=X)[i], tuple elements coerced to pd.Index coercible
-        """
-        row_ind, col_ind = self._iter_indices(X=X)[i]
-        if isinstance(col_ind, list):
-            col_ind = pd.Index(col_ind)
-        elif not isinstance(col_ind, pd.Index):
-            col_ind = [col_ind]
-        return row_ind, col_ind
 
     def __iter__(self):
         """Iterate over all instances.
