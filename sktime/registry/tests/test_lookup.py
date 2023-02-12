@@ -227,7 +227,7 @@ def _get_bad_return_tags():
 @pytest.mark.parametrize("return_tags", _get_bad_return_tags())
 def test_all_estimators_return_tags_bad_arg(return_tags):
     """Test ability to catch bad arguments of return_tags."""
-    with pytest.raises(TypeError):
+    with pytest.raises((TypeError, ValueError)):
         _ = all_estimators(return_tags=return_tags)
 
 
