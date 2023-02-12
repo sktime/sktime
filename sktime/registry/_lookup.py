@@ -159,7 +159,7 @@ def all_estimators(
         suppress_import_stdout=suppress_import_stdout,
         package_name="sktime",
         path=ROOT,
-        ignore_modules=MODULES_TO_IGNORE,
+        modules_to_ignore=MODULES_TO_IGNORE,
         class_lookup=CLASS_LOOKUP,
     )
 
