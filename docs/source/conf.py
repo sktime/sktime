@@ -193,11 +193,6 @@ html_theme_options = {
             "icon": "fab fa-github",
         },
         {
-            "name": "Slack",
-            "url": "https://join.slack.com/t/sktime-group/shared_invite/zt-1cghagwee-sqLJ~eHWGYgzWbqUX937ig",  # noqa: E501
-            "icon": "fab fa-slack",
-        },
-        {
             "name": "Discord",
             "url": "https://discord.com/invite/gqSab2K",
             "icon": "fab fa-discord",

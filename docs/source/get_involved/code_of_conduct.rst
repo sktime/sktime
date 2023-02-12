@@ -502,7 +502,7 @@ Examples for in-scope:
 * hiring decisions for roles that are advertised with a primary ``sktime`` branding
 * spending decisions from ``sktime`` community administered accounts
 * decisions arising from academic collaboration or commercial requests directed to the ``sktime`` community,
-  e.g., via official email, or via digital ``sktime`` discussion tools (slack, GitHub discussion etc)
+  e.g., via official email, or via digital ``sktime`` discussion tools (slack, discord, GitHub discussion etc)
 
 "resources" in the above context are to be interpreted in the usual sense of the word,
 i.e., valuable possessions, opportunities, qualities, that can be accessed and allocated.
