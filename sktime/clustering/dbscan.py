@@ -6,7 +6,6 @@ __author__ = ["fkiraly"]
 from warnings import warn
 
 import numpy as np
-
 from sklearn.cluster import DBSCAN
 
 from sktime.clustering.base import BaseClusterer
