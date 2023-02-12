@@ -4,6 +4,8 @@
 
 __author__ = ["mloning", "khrapovs"]
 
+from datetime import timedelta
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -38,6 +40,7 @@ from sktime.utils.datetime import (
     _shift,
     infer_freq,
 )
+from sktime.utils.validation._dependencies import _check_estimator_deps
 from sktime.utils.validation.series import is_in_valid_index_types, is_integer_index
 
 
@@ -77,10 +80,11 @@ def test_fh(index_type, fh_type, is_relative, steps):
     y_train, y_test = temporal_train_test_split(y, test_size=10)
 
     # choose cutoff point
-    cutoff = y_train.index[-1]
+    cutoff_idx = get_cutoff(y_train, return_index=True)
+    cutoff = cutoff_idx[0]
 
     # generate fh
-    fh = _make_fh(cutoff, steps, fh_type, is_relative)
+    fh = _make_fh(cutoff_idx, steps, fh_type, is_relative)
     # update frequency of the forecasting horizon
     fh.freq = infer_freq(y)
     if fh_type == "int":
@@ -200,7 +204,9 @@ def test_check_fh_absolute_values_input_conversion_to_pandas_index(arg):
 
 
 GOOD_RELATIVE_INPUT_ARGS = [
-    pd.timedelta_range(pd.to_timedelta(1, unit="D"), periods=3, freq="D")
+    pd.timedelta_range(pd.to_timedelta(1, unit="D"), periods=3, freq="D"),
+    [np.timedelta64(x, "D") for x in range(3)],
+    [timedelta(days=x) for x in range(3)],
 ]
 
 
@@ -394,7 +400,7 @@ def test_to_relative(freq: str):
     """Test conversion to relative.
 
     Fixes bug in
-    https://github.com/alan-turing-institute/sktime/issues/1935#issue-1114814142
+    https://github.com/sktime/sktime/issues/1935#issue-1114814142
     """
     freq = "2H"
     t = pd.date_range(start="2021-01-01", freq=freq, periods=5)
@@ -429,6 +435,10 @@ def test_to_absolute_int_fh_with_freq(idx: int, freq: str):
     assert_array_equal(fh + idx, absolute_int)
 
 
+@pytest.mark.skipif(
+    not _check_estimator_deps(AutoETS, severity="none"),
+    reason="skip test if required soft dependency for hmmlearn not available",
+)
 @pytest.mark.parametrize("freqstr", ["W-WED", "W-SUN", "W-SAT"])
 def test_estimator_fh(freqstr):
     """Test model fitting with anchored frequency."""
@@ -469,10 +479,14 @@ def test_frequency_setter(freqstr):
 
 
 # TODO: Replace this long running test with fast unit test
+@pytest.mark.skipif(
+    not _check_estimator_deps(AutoETS, severity="none"),
+    reason="skip test if required soft dependency for hmmlearn not available",
+)
 def test_auto_ets():
-    """Fix bug in 1435.
+    """Test failure case from #1435.
 
-    https://github.com/alan-turing-institute/sktime/issues/1435#issue-1000175469
+    https://github.com/sktime/sktime/issues/1435#issue-1000175469
     """
     freq = "30T"
     _y = np.arange(50) + np.random.rand(50) + np.sin(np.arange(50) / 4) * 10
@@ -489,10 +503,14 @@ def test_auto_ets():
 
 
 # TODO: Replace this long running test with fast unit test
+@pytest.mark.skipif(
+    not _check_estimator_deps(ExponentialSmoothing, severity="none"),
+    reason="skip test if required soft dependency for hmmlearn not available",
+)
 def test_exponential_smoothing():
-    """Test bug in 1876.
+    """Test failure case from #1876.
 
-    https://github.com/alan-turing-institute/sktime/issues/1876#issue-1103752402.
+    https://github.com/sktime/sktime/issues/1876#issue-1103752402.
     """
     y = load_airline()
     # Change index to 10 min interval
@@ -514,10 +532,14 @@ def test_exponential_smoothing():
 
 
 # TODO: Replace this long running test with fast unit test
+@pytest.mark.skipif(
+    not _check_estimator_deps(AutoARIMA, severity="none"),
+    reason="skip test if required soft dependencies not available",
+)
 def test_auto_arima():
-    """Test bug in 805.
+    """Test failure case from #805.
 
-    https://github.com/alan-turing-institute/sktime/issues/805#issuecomment-891848228.
+    https://github.com/sktime/sktime/issues/805#issuecomment-891848228.
     """
     time_index = pd.date_range("January 1, 2021", periods=8, freq="1D")
     X = pd.DataFrame(

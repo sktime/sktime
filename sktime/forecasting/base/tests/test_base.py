@@ -9,6 +9,7 @@ from operator import mul
 
 import pandas as pd
 import pytest
+from pandas.testing import assert_series_equal
 
 from sktime.datatypes import check_is_mtype, convert
 from sktime.datatypes._utilities import get_cutoff, get_window
@@ -16,11 +17,16 @@ from sktime.forecasting.arima import ARIMA
 from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils._testing.panel import _make_panel
 from sktime.utils._testing.series import _make_series
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 PANEL_MTYPES = ["pd-multiindex", "nested_univ", "numpy3D"]
 HIER_MTYPES = ["pd_multiindex_hier"]
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("pmdarima", severity="none"),
+    reason="skip test if required soft dependency for ARIMA not available",
+)
 @pytest.mark.parametrize("mtype", PANEL_MTYPES)
 def test_vectorization_series_to_panel(mtype):
     """Test that forecaster vectorization works for Panel data.
@@ -66,6 +72,10 @@ def test_vectorization_series_to_panel(mtype):
     assert f.cutoff == cutoff_expected, msg
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("pmdarima", severity="none"),
+    reason="skip test if required soft dependency for ARIMA not available",
+)
 @pytest.mark.parametrize("mtype", HIER_MTYPES)
 def test_vectorization_series_to_hier(mtype):
     """Test that forecaster vectorization works for Hierarchical data.
@@ -115,6 +125,10 @@ def test_vectorization_series_to_hier(mtype):
 PROBA_DF_METHODS = ["predict_interval", "predict_quantiles", "predict_var"]
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("pmdarima", severity="none"),
+    reason="skip test if required soft dependency for ARIMA not available",
+)
 @pytest.mark.parametrize("method", PROBA_DF_METHODS)
 @pytest.mark.parametrize("mtype", PANEL_MTYPES)
 def test_vectorization_series_to_panel_proba(method, mtype):
@@ -147,6 +161,10 @@ def test_vectorization_series_to_panel_proba(method, mtype):
     assert valid, msg
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("pmdarima", severity="none"),
+    reason="skip test if required soft dependency for ARIMA not available",
+)
 @pytest.mark.parametrize("method", PROBA_DF_METHODS)
 @pytest.mark.parametrize("mtype", HIER_MTYPES)
 def test_vectorization_series_to_hier_proba(method, mtype):
@@ -179,6 +197,10 @@ def test_vectorization_series_to_hier_proba(method, mtype):
     assert valid, msg
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("pmdarima", severity="none"),
+    reason="skip test if required soft dependency for ARIMA not available",
+)
 @pytest.mark.parametrize("method", PROBA_DF_METHODS)
 def test_vectorization_preserves_row_index_names(method):
     """Test that forecaster vectorization preserves row index names in forecast."""
@@ -196,6 +218,10 @@ def test_vectorization_preserves_row_index_names(method):
     assert y_pred.index.names == y.index.names, msg
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("pmdarima", severity="none"),
+    reason="skip test if required soft dependency for ARIMA not available",
+)
 @pytest.mark.parametrize("mtype", HIER_MTYPES)
 @pytest.mark.parametrize("exogeneous", [True, False])
 def test_vectorization_multivariate(mtype, exogeneous):
@@ -248,6 +274,10 @@ def test_vectorization_multivariate(mtype, exogeneous):
     assert y_pred_equal_length, msg
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("statsmodels", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
 def test_dynamic_tags_reset_properly():
     """Test that dynamic tags are being reset properly."""
     from sktime.forecasting.compose import MultiplexForecaster
@@ -262,3 +292,26 @@ def test_dynamic_tags_reset_properly():
     # fit should reset the estimator, and set scitype:y tag to "multivariate"
     # the fit will cause an error if this is not happening properly
     f.fit(X_multivariate)
+
+
+@pytest.mark.skipif(
+    not _check_soft_dependencies("statsmodels", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
+def test_predict_residuals():
+    """Test that predict_residuals has no side-effect."""
+    from sktime.forecasting.base import ForecastingHorizon
+    from sktime.forecasting.model_selection import temporal_train_test_split
+    from sktime.forecasting.theta import ThetaForecaster
+
+    y = _make_series(n_columns=1)
+    y_train, y_test = temporal_train_test_split(y)
+    fh = ForecastingHorizon(y_test.index, is_relative=False)
+    forecaster = ThetaForecaster(sp=12)
+    forecaster.fit(y_train, fh=fh)
+
+    y_pred_1 = forecaster.predict()
+    y_resid = forecaster.predict_residuals()
+    y_pred_2 = forecaster.predict()
+    assert_series_equal(y_pred_1, y_pred_2)
+    assert y_resid.index.equals(y_train.index)

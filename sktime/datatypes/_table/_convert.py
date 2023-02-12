@@ -34,6 +34,7 @@ __all__ = ["convert_dict"]
 import numpy as np
 import pandas as pd
 
+from sktime.datatypes._convert_utils._convert import _extend_conversions
 from sktime.datatypes._table._registry import MTYPE_LIST_TABLE
 
 ##############################################################
@@ -239,35 +240,9 @@ convert_dict[
 ] = convert_df_to_list_of_dict_as_table
 
 
-# obtain other conversions from/to numpyflat via concatenation to DataFrame
-def _concat(fun1, fun2):
-    def concat_fun(obj, store=None):
-        obj1 = fun1(obj, store=store)
-        obj2 = fun2(obj1, store=store)
-        return obj2
-
-    return concat_fun
-
-
-def _extend_conversions(mtype, anchor_mtype, convert_dict, mtype_list=None):
-
-    keys = convert_dict.keys()
-    scitype = list(keys)[0][2]
-    if mtype_list is None:
-        mtype_list = [key[0] for key in keys]
-
-    for tp in set(MTYPE_LIST_TABLE).difference([mtype, anchor_mtype]):
-        if (anchor_mtype, tp, scitype) in convert_dict.keys():
-            convert_dict[(mtype, tp, scitype)] = _concat(
-                convert_dict[(mtype, anchor_mtype, scitype)],
-                convert_dict[(anchor_mtype, tp, scitype)],
-            )
-        if (tp, anchor_mtype, scitype) in convert_dict.keys():
-            convert_dict[(tp, mtype, scitype)] = _concat(
-                convert_dict[(tp, anchor_mtype, scitype)],
-                convert_dict[(anchor_mtype, mtype, scitype)],
-            )
-
-
-_extend_conversions("pd_Series_Table", "pd_DataFrame_Table", convert_dict)
-_extend_conversions("list_of_dict", "pd_DataFrame_Table", convert_dict)
+_extend_conversions(
+    "pd_Series_Table", "pd_DataFrame_Table", convert_dict, MTYPE_LIST_TABLE
+)
+_extend_conversions(
+    "list_of_dict", "pd_DataFrame_Table", convert_dict, MTYPE_LIST_TABLE
+)

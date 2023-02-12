@@ -50,12 +50,12 @@ class _DtwDistance(NumbaDistance):
 
     References
     ----------
-    ..[1] Ratanamahatana C and Keogh E.: Three myths about dynamic time warping data
+    .. [1] Ratanamahatana C and Keogh E.: Three myths about dynamic time warping data
     mining Proceedings of 5th SIAM International Conference on Data Mining, 2005
-    ..[2] Sakoe H. and Chiba S.: Dynamic programming algorithm optimization for
+    .. [2] Sakoe H. and Chiba S.: Dynamic programming algorithm optimization for
     spoken word recognition. IEEE Transactions on Acoustics, Speech, and Signal
     Processing 26(1):43–49, 1978
-    ..[3] Itakura F: Minimum prediction residual principle applied to speech
+    .. [3] Itakura F: Minimum prediction residual principle applied to speech
     recognition. IEEE Transactions on Acoustics, Speech, and Signal Processing 23(
     1):67–72, 1975
     """

@@ -59,7 +59,7 @@ from sktime.forecasting.base import ForecastingHorizon
 from sktime.utils.datetime import _shift
 from sktime.utils.validation._dependencies import (
     _check_dl_dependencies,
-    _check_python_version,
+    _check_estimator_deps,
 )
 from sktime.utils.validation.forecasting import check_alpha, check_cv, check_fh, check_X
 from sktime.utils.validation.series import check_equal_time_index
@@ -86,9 +86,10 @@ class BaseForecaster(BaseEstimator):
     """
 
     # default tag values - these typically make the "safest" assumption
+    # for more extensive documentation, see extension_templates/forecasting.py
     _tags = {
         "scitype:y": "univariate",  # which y are fine? univariate/multivariate/both
-        "ignores-exogeneous-X": True,  # does estimator ignore the exogeneous X?
+        "ignores-exogeneous-X": False,  # does estimator ignore the exogeneous X?
         "capability:pred_int": False,  # can the estimator produce prediction intervals?
         "handles-missing-data": False,  # can estimator handle missing data?
         "y_inner_mtype": "pd.Series",  # which types do _fit/_predict, support for y?
@@ -98,6 +99,7 @@ class BaseForecaster(BaseEstimator):
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
         "fit_is_empty": False,  # is fit empty and can be skipped?
         "python_version": None,  # PEP 440 python version specifier to limit versions
+        "python_dependencies": None,  # str or list of str, package soft dependencies
     }
 
     def __init__(self):
@@ -113,7 +115,7 @@ class BaseForecaster(BaseEstimator):
         self._converter_store_y = dict()  # storage dictionary for in/output conversion
 
         super(BaseForecaster, self).__init__()
-        _check_python_version(self)
+        _check_estimator_deps(self)
 
     def __mul__(self, other):
         """Magic * method, return (right) concatenated TransformedTargetForecaster.
@@ -147,7 +149,7 @@ class BaseForecaster(BaseEstimator):
             return NotImplemented
 
     def __rmul__(self, other):
-        """Magic * method, return (left) concatenated TransformerPipeline.
+        """Magic * method, return (left) concatenated TransformedTargetForecaster.
 
         Implemented for `other` being a transformer, otherwise returns `NotImplemented`.
 
@@ -177,6 +179,37 @@ class BaseForecaster(BaseEstimator):
         else:
             return NotImplemented
 
+    def __rpow__(self, other):
+        """Magic ** method, return (left) concatenated ForecastingPipeline.
+
+        Implemented for `other` being a transformer, otherwise returns `NotImplemented`.
+
+        Parameters
+        ----------
+        other: `sktime` transformer, must inherit from BaseTransformer
+            otherwise, `NotImplemented` is returned
+
+        Returns
+        -------
+        TransformedTargetForecaster object,
+            concatenation of `other` (first) with `self` (last).
+            not nested, contains only non-TransformerPipeline `sktime` steps
+        """
+        from sktime.forecasting.compose import ForecastingPipeline
+        from sktime.transformations.base import BaseTransformer
+        from sktime.transformations.series.adapt import TabularToSeriesAdaptor
+        from sktime.utils.sklearn import is_sklearn_transformer
+
+        # we wrap self in a pipeline, and concatenate with the other
+        #   the ForecastingPipeline does the rest, e.g., dispatch on other
+        if isinstance(other, BaseTransformer):
+            self_as_pipeline = ForecastingPipeline(steps=[self])
+            return other**self_as_pipeline
+        elif is_sklearn_transformer(other):
+            return TabularToSeriesAdaptor(other) ** self
+        else:
+            return NotImplemented
+
     def __or__(self, other):
         """Magic | method, return MultiplexForecaster.
 
@@ -197,6 +230,52 @@ class BaseForecaster(BaseEstimator):
             return multiplex_self | other
         else:
             return NotImplemented
+
+    def __getitem__(self, key):
+        """Magic [...] method, return forecaster with subsetted data.
+
+        First index does subsetting of exogeneous input data.
+        Second index does subsetting of the forecast (but not of endogeneous data).
+
+        Keys must be valid inputs for `columns` in `ColumnSubset`.
+
+        Parameters
+        ----------
+        key: valid input for `columns` in `ColumnSubset`, or pair thereof
+            keys can also be a :-slice, in which case it is considered as not passed
+
+        Returns
+        -------
+        the following composite pipeline object:
+            ColumnSubset(columns1) ** self * ColumnSubset(columns2)
+            where `columns1` is first or only item in `key`, and `columns2` is the last
+            if only one item is passed in `key`, only `columns1` is applied to input
+        """
+        from sktime.transformations.series.subset import ColumnSelect
+
+        def is_noneslice(obj):
+            res = isinstance(obj, slice)
+            res = res and obj.start is None and obj.stop is None and obj.step is None
+            return res
+
+        if isinstance(key, tuple):
+            if not len(key) == 2:
+                raise ValueError(
+                    "there should be one or two keys when calling [] or getitem, "
+                    "e.g., mytrafo[key], or mytrafo[key1, key2]"
+                )
+            columns1 = key[0]
+            columns2 = key[1]
+            if is_noneslice(columns1) and is_noneslice(columns2):
+                return self
+            elif is_noneslice(columns2):
+                return ColumnSelect(columns1) ** self
+            elif is_noneslice(columns1):
+                return self * ColumnSelect(columns2)
+            else:
+                return ColumnSelect(columns1) ** self * ColumnSelect(columns2)
+        else:
+            return ColumnSelect(key) ** self
 
     def fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
@@ -773,7 +852,10 @@ class BaseForecaster(BaseEstimator):
         self._update_y_X(y_inner, X_inner)
 
         # checks and conversions complete, pass to inner fit
-        self._update(y=y_inner, X=X_inner, update_params=update_params)
+        if not self._is_vectorized:
+            self._update(y=y_inner, X=X_inner, update_params=update_params)
+        else:
+            self._vectorize("update", y=y_inner, X=X_inner, update_params=update_params)
 
         return self
 
@@ -963,12 +1045,29 @@ class BaseForecaster(BaseEstimator):
         # this also updates cutoff from y
         self._update_y_X(y_inner, X_inner)
 
-        return self._update_predict_single(
-            y=y_inner,
-            fh=fh,
-            X=X_inner,
-            update_params=update_params,
+        # checks and conversions complete, pass to inner update_predict_single
+        if not self._is_vectorized:
+            y_pred = self._update_predict_single(
+                y=y_inner, X=X_inner, fh=fh, update_params=update_params
+            )
+        else:
+            y_pred = self._vectorize(
+                "update_predict_single",
+                y=y_inner,
+                X=X_inner,
+                fh=fh,
+                update_params=update_params,
+            )
+
+        # convert to output mtype, identical with last y mtype seen
+        y_pred = convert_to(
+            y_pred,
+            self._y_mtype_last_seen,
+            store=self._converter_store_y,
+            store_behaviour="freeze",
         )
+
+        return y_pred
 
     def predict_residuals(self, y=None, X=None):
         """Return residuals of time series forecasts.
@@ -988,7 +1087,7 @@ class BaseForecaster(BaseEstimator):
             self.cutoff, self._is_fitted
 
         Writes to self:
-            Stores y.index to self.fh if has not been passed previously.
+            Nothing.
 
         Parameters
         ----------
@@ -1011,6 +1110,14 @@ class BaseForecaster(BaseEstimator):
                 Series, Panel, Hierarchical scitype, same format (see above)
         """
         self.check_is_fitted()
+
+        # clone self._fh to avoid any side-effects to self due to calling _check_fh
+        # and predict()
+        if self._fh is not None:
+            fh_orig = deepcopy(self._fh)
+        else:
+            fh_orig = None
+
         # if no y is passed, the so far observed y is used
         if y is None:
             y = self._y
@@ -1042,6 +1149,10 @@ class BaseForecaster(BaseEstimator):
             )
 
         y_res = y - y_pred
+
+        # write fh back to self that was given before calling predict_residuals to
+        # avoid side-effects
+        self._fh = fh_orig
 
         return y_res
 
@@ -1081,17 +1192,66 @@ class BaseForecaster(BaseEstimator):
 
         return mean_absolute_percentage_error(y, self.predict(fh, X))
 
-    def get_fitted_params(self):
+    def get_fitted_params(self, deep=True):
         """Get fitted parameters.
 
         State required:
             Requires state to be "fitted".
 
+        Parameters
+        ----------
+        deep : bool, default=True
+            Whether to return fitted parameters of components.
+
+            * If True, will return a dict of parameter name : value for this object,
+              including fitted parameters of fittable components
+              (= BaseEstimator-valued parameters).
+            * If False, will return a dict of parameter name : value for this object,
+              but not include fitted parameters of components.
+
         Returns
         -------
-        fitted_params : dict
+        fitted_params : dict with str-valued keys
+            Dictionary of fitted parameters, paramname : paramvalue
+            keys-value pairs include:
+
+            * always: all fitted parameters of this object, as via `get_param_names`
+              values are fitted parameter value for that key, of this object
+            * if `deep=True`, also contains keys/value pairs of component parameters
+              parameters of components are indexed as `[componentname]__[paramname]`
+              all parameters of `componentname` appear as `paramname` with its value
+            * if `deep=True`, also contains arbitrary levels of component recursion,
+              e.g., `[componentname]__[componentcomponentname]__[paramname]`, etc
         """
-        raise NotImplementedError("abstract method")
+        # if self is not vectorized, run the default get_fitted_params
+        if not getattr(self, "_is_vectorized", False):
+            return super(BaseForecaster, self).get_fitted_params(deep=deep)
+
+        # otherwise, we delegate to the instances' get_fitted_params
+        # instances' parameters are returned at dataframe-slice-like keys
+        fitted_params = {}
+
+        # forecasters contains a pd.DataFrame with the individual forecasters
+        forecasters = self.forecasters_
+
+        # return forecasters in the "forecasters" param
+        fitted_params["forecasters"] = forecasters
+
+        def _to_str(x):
+            if isinstance(x, str):
+                x = f"'{x}'"
+            return str(x)
+
+        # populate fitted_params with forecasters and their parameters
+        for ix, col in product(forecasters.index, forecasters.columns):
+            fcst = forecasters.loc[ix, col]
+            fcst_key = f"forecasters.loc[{_to_str(ix)},{_to_str(col)}]"
+            fitted_params[fcst_key] = fcst
+            fcst_params = fcst.get_fitted_params(deep=deep)
+            for key, val in fcst_params.items():
+                fitted_params[f"{fcst_key}__{key}"] = val
+
+        return fitted_params
 
     def _check_X_y(self, X=None, y=None):
         """Check and coerce X/y for fit/predict/update functions.
@@ -1150,6 +1310,22 @@ class BaseForecaster(BaseEstimator):
             else:
                 raise ValueError("no series scitypes supported, bug in estimator")
 
+        def _check_missing(metadata, obj_name):
+            """Check input metadata against self's missing capability tag."""
+            if not self.get_tag("handles-missing-data"):
+                msg = (
+                    f"{type(self).__name__} cannot handle missing data (nans), "
+                    f"but {obj_name} passed contained missing data."
+                )
+                if self.get_class_tag("handles-missing-data"):
+                    msg = msg + (
+                        f" Whether instances of {type(self).__name__} can handle "
+                        "missing data depends on parameters of the instance, "
+                        "e.g., estimator components."
+                    )
+                if metadata["has_nans"]:
+                    raise ValueError(msg)
+
         # retrieve supported mtypes
         y_inner_mtype = _coerce_to_list(self.get_tag("y_inner_mtype"))
         X_inner_mtype = _coerce_to_list(self.get_tag("X_inner_mtype"))
@@ -1201,6 +1377,9 @@ class BaseForecaster(BaseEstimator):
                 raise ValueError(
                     "y must have two or more variables, but found only one"
                 )
+
+            _check_missing(y_metadata, "y")
+
         else:
             # y_scitype is used below - set to None if y is None
             y_scitype = None
@@ -1229,7 +1408,11 @@ class BaseForecaster(BaseEstimator):
                 raise TypeError(msg + mtypes_msg)
 
             X_scitype = X_metadata["scitype"]
-            requires_vectorization = X_scitype not in X_inner_scitype
+            X_requires_vectorization = X_scitype not in X_inner_scitype
+            requires_vectorization = requires_vectorization or X_requires_vectorization
+
+            _check_missing(X_metadata, "X")
+
         else:
             # X_scitype is used below - set to None if X is None
             X_scitype = None
@@ -1243,7 +1426,9 @@ class BaseForecaster(BaseEstimator):
         # compatibility checks between X and y
         if X is not None and y is not None:
             if self.get_tag("X-y-must-have-same-index"):
-                if not self.get_tag("ignores-exogeneous-X"):
+                # currently, check_equal_time_index only works for Series
+                # todo: fix this so the check is general, using get_time_index
+                if not self.get_tag("ignores-exogeneous-X") and X_scitype == "Series":
                     check_equal_time_index(X, y, mode="contains")
 
             if y_scitype != X_scitype:
@@ -1324,6 +1509,10 @@ class BaseForecaster(BaseEstimator):
             this is only done if X is not None
         cutoff : is set to latest index seen in y
 
+        _y and _X are guaranteed to be one of mtypes:
+            pd.DataFrame, pd.Series, np.ndarray, pd-multiindex, numpy3D,
+            pd_multiindex_hier
+
         Parameters
         ----------
         y : pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
@@ -1332,6 +1521,9 @@ class BaseForecaster(BaseEstimator):
             Exogeneous time series
         """
         if y is not None:
+            # unwrap y if VectorizedDF
+            if isinstance(y, VectorizedDF):
+                y = y.X_multiindex
             # if _y does not exist yet, initialize it with y
             if not hasattr(self, "_y") or self._y is None or not self.is_fitted:
                 self._y = y
@@ -1342,6 +1534,9 @@ class BaseForecaster(BaseEstimator):
             self._set_cutoff_from_y(y)
 
         if X is not None:
+            # unwrap X if VectorizedDF
+            if isinstance(X, VectorizedDF):
+                X = X.X_multiindex
             # if _X does not exist yet, initialize it with X
             if not hasattr(self, "_X") or self._X is None or not self.is_fitted:
                 self._X = X
@@ -1386,7 +1581,7 @@ class BaseForecaster(BaseEstimator):
         if self._cutoff is None:
             return None
         else:
-            return self._cutoff[0]
+            return self._cutoff
 
     def _set_cutoff(self, cutoff):
         """Set and update cutoff.
@@ -1533,55 +1728,59 @@ class BaseForecaster(BaseEstimator):
 
         Uses forecasters_ attribute to store one forecaster per loop index.
         """
+        FIT_METHODS = ["fit", "update"]
         PREDICT_METHODS = [
             "predict",
+            "update_predict_single",
             "predict_quantiles",
             "predict_interval",
             "predict_var",
         ]
 
-        if methodname == "fit":
-            # create container for clones
-            y = kwargs.pop("y")
-            X = kwargs.pop("X", None)
+        # retrieve data arguments
+        X = kwargs.pop("X", None)
+        y = kwargs.get("y", None)
 
+        # add some common arguments to kwargs
+        kwargs["args_rowvec"] = {"X": X}
+        kwargs["rowname_default"] = "forecasters"
+        kwargs["colname_default"] = "forecasters"
+
+        # fit-like methods: write y to self._yvec; then run method; clone first if fit
+        if methodname in FIT_METHODS:
             self._yvec = y
 
-            row_idx, col_idx = y.get_iter_indices()
-            ys = y.as_list()
-
-            if X is None:
-                Xs = [None] * len(ys)
+            if methodname == "fit":
+                forecasters_ = y.vectorize_est(self, method="clone")
             else:
-                Xs = X.as_list()
+                forecasters_ = self.forecasters_
 
-            if row_idx is None:
-                row_idx = ["forecasters"]
-            if col_idx is None:
-                col_idx = ["forecasters"]
-
-            self.forecasters_ = pd.DataFrame(index=row_idx, columns=col_idx)
-            for ix in range(len(ys)):
-                i, j = y.get_iloc_indexer(ix)
-                self.forecasters_.iloc[i].iloc[j] = self.clone()
-                self.forecasters_.iloc[i].iloc[j].fit(y=ys[ix], X=Xs[i], **kwargs)
-
+            self.forecasters_ = y.vectorize_est(
+                forecasters_, method=methodname, **kwargs
+            )
             return self
+
+        # predict-like methods: return as list, then run through reconstruct
+        # to obtain a pandas based container in one of the pandas mtype formats
         elif methodname in PREDICT_METHODS:
-            n = len(self.forecasters_.index)
+
+            if methodname == "update_predict_single":
+                self._yvec = y
+
+            y_preds = self._yvec.vectorize_est(
+                self.forecasters_, method=methodname, return_type="list", **kwargs
+            )
+
+            # if we vectorize over columns,
+            #   we need to replace top column level with variable names - part 1
             m = len(self.forecasters_.columns)
-            X = kwargs.pop("X", None)
-            if X is None:
-                Xs = [None] * n * m
-            else:
-                Xs = X.as_list()
-            y_preds = []
-            ix = -1
-            for i, j in product(range(n), range(m)):
-                ix += 1
-                method = getattr(self.forecasters_.iloc[i].iloc[j], methodname)
-                y_preds += [method(X=Xs[i], **kwargs)]
-            y_pred = self._yvec.reconstruct(y_preds, overwrite_index=True)
+            col_multiindex = "multiindex" if m > 1 else "none"
+            y_pred = self._yvec.reconstruct(
+                y_preds, overwrite_index=True, col_multiindex=col_multiindex
+            )
+            # if vectorize over columns replace top column level with variable names
+            if col_multiindex == "multiindex":
+                y_pred.columns = y_pred.columns.droplevel(1)
             return y_pred
 
     def _fit(self, y, X=None, fh=None):
@@ -1684,16 +1883,20 @@ class BaseForecaster(BaseEstimator):
                 f"NotImplementedWarning: {self.__class__.__name__} "
                 f"does not have a custom `update` method implemented. "
                 f"{self.__class__.__name__} will be refit each time "
-                f"`update` is called with update_params=True."
+                f"`update` is called with update_params=True. "
+                "To refit less often, use the wrappers in the "
+                "forecasting.stream module, e.g., UpdateEvery."
             )
-            # we need to overwrite the mtype last seen, since the _y
+            # we need to overwrite the mtype last seen and converter store, since the _y
             #    may have been converted
             mtype_last_seen = self._y_mtype_last_seen
+            _converter_store_y = self._converter_store_y
             # refit with updated data, not only passed data
             self.fit(y=self._y, X=self._X, fh=self._fh)
             # todo: should probably be self._fit, not self.fit
             # but looping to self.fit for now to avoid interface break
             self._y_mtype_last_seen = mtype_last_seen
+            self._converter_store_y = _converter_store_y
 
         # if update_params=False, and there are no components, do nothing
         # if update_params=False, and there are components, we update cutoffs
@@ -1854,9 +2057,12 @@ class BaseForecaster(BaseEstimator):
             # now we need to subset to lower/upper depending
             #   on whether alpha was < 0.5 or >= 0.5
             #   this formula gives the integer column indices giving lower/upper
-            col_selector = (np.array(alpha) >= 0.5) + 2 * np.arange(len(alpha))
-            pred_int = pred_int.iloc[:, col_selector]
+            col_selector_int = (np.array(alpha) >= 0.5) + 2 * np.arange(len(alpha))
+            col_selector_bool = np.isin(np.arange(2 * len(alpha)), col_selector_int)
+            num_var = len(pred_int.columns.get_level_values(0).unique())
+            col_selector_bool = np.tile(col_selector_bool, num_var)
 
+            pred_int = pred_int.iloc[:, col_selector_bool]
             # change the column labels (multiindex) to the format for intervals
             # idx returned by _predict_interval is
             #   3-level MultiIndex with variable names, coverage, lower/upper
@@ -2089,6 +2295,12 @@ class BaseForecaster(BaseEstimator):
         # set cutoff to time point before data
         y_first_index = get_cutoff(y, return_index=True, reverse_order=True)
         self_copy._set_cutoff(_shift(y_first_index, by=-1, return_index=True))
+
+        if isinstance(y, VectorizedDF):
+            y = y.X
+        if isinstance(X, VectorizedDF):
+            X = X.X
+
         # iterate over data
         for new_window, _ in cv.split(y):
             y_new = y.iloc[new_window]
@@ -2162,6 +2374,7 @@ def _format_moving_cutoff_predictions(y_preds, cutoffs):
         # return series for single step ahead predictions
         y_pred = pd.concat(y_preds)
     else:
+        cutoffs = [cutoff[0] for cutoff in cutoffs]
         y_pred = pd.concat(y_preds, axis=1, keys=cutoffs)
 
     return y_pred

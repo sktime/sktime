@@ -22,6 +22,7 @@ State:
 """
 
 __author__ = ["satya-pattnaik ", "fkiraly"]
+__all__ = ["BaseSeriesAnnotator"]
 
 from sktime.base import BaseEstimator
 from sktime.utils.validation.annotation import check_fmt, check_labels
@@ -54,6 +55,10 @@ class BaseSeriesAnnotator(BaseEstimator):
     Specific implementations of these methods is deferred to concrete
     annotators.
     """
+
+    _tags = {
+        "distribution_type": "None",  # Tag to determine test in test_all_annotators
+    }  # for unit test cases
 
     def __init__(self, fmt="dense", labels="indicator"):
         self.fmt = fmt

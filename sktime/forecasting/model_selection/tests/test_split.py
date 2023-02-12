@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from sktime.datatypes._utilities import get_cutoff
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.model_selection import (
     CutoffSplitter,
@@ -324,6 +325,31 @@ def test_sliding_window_splitter_start_with_empty_window(
             )
 
 
+@pytest.mark.parametrize("y", TEST_YS)
+@pytest.mark.parametrize("fh", [*TEST_FHS, *TEST_FHS_TIMEDELTA])
+@pytest.mark.parametrize("step_length", TEST_STEP_LENGTHS)
+def test_expanding_window_splitter_start_with_initial_window_zero(y, fh, step_length):
+    """Test ExpandingWindowSplitter."""
+    initial_window = 0
+    if _inputs_are_supported([fh, step_length, initial_window]):
+        cv = ExpandingWindowSplitter(
+            fh=fh,
+            step_length=step_length,
+            initial_window=initial_window,
+        )
+        train_windows, test_windows, _, n_splits = _check_cv(
+            cv, y, allow_empty_window=True
+        )
+
+        assert np.vstack(test_windows).shape == (n_splits, len(check_fh(fh)))
+    else:
+        match = "Unsupported combination of types"
+        with pytest.raises(TypeError, match=match):
+            ExpandingWindowSplitter(
+                fh=fh, initial_window=initial_window, step_length=step_length
+            )
+
+
 def test_sliding_window_splitter_initial_window_start_with_empty_window_raises_error():
     """Test SlidingWindowSplitter."""
     y = _make_series()
@@ -374,7 +400,6 @@ def test_expanding_window_splitter_start_with_empty_window(
             fh=fh,
             initial_window=initial_window,
             step_length=step_length,
-            start_with_window=True,
         )
         train_windows, test_windows, _, n_splits = _check_cv(cv, y)
         assert np.vstack(test_windows).shape == (n_splits, len(check_fh(fh)))
@@ -389,7 +414,6 @@ def test_expanding_window_splitter_start_with_empty_window(
                 fh=fh,
                 initial_window=initial_window,
                 step_length=step_length,
-                start_with_window=True,
             )
 
 
@@ -404,7 +428,6 @@ def test_expanding_window_splitter(y, fh, initial_window, step_length):
             fh=fh,
             initial_window=initial_window,
             step_length=step_length,
-            start_with_window=True,
         )
         train_windows, test_windows, _, n_splits = _check_cv(cv, y)
         assert np.vstack(test_windows).shape == (n_splits, len(check_fh(fh)))
@@ -419,7 +442,6 @@ def test_expanding_window_splitter(y, fh, initial_window, step_length):
                 fh=fh,
                 initial_window=initial_window,
                 step_length=step_length,
-                start_with_window=True,
             )
 
 
@@ -461,7 +483,7 @@ def test_split_by_fh(index_type, fh_type, is_relative, values):
         #     "is currently experimental and not supported everywhere"
         # )
     y = _make_series(20, index_type=index_type)
-    cutoff = y.index[10]
+    cutoff = get_cutoff(y.iloc[:10], return_index=True)
     fh = _make_fh(cutoff, values, fh_type, is_relative)
     split = temporal_train_test_split(y, fh=fh)
     _check_train_test_split_y(fh, split)

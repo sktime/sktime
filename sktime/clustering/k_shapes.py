@@ -52,6 +52,7 @@ class TimeSeriesKShapes(BaseClusterer):
 
     _tags = {
         "capability:multivariate": True,
+        "python_dependencies": "tslearn",
     }
 
     def __init__(
@@ -64,8 +65,6 @@ class TimeSeriesKShapes(BaseClusterer):
         verbose: bool = False,
         random_state: Union[int, RandomState] = None,
     ):
-        _check_soft_dependencies("tslearn", severity="error", object=self)
-
         self.init_algorithm = init_algorithm
         self.n_init = n_init
         self.max_iter = max_iter
@@ -153,7 +152,7 @@ class TimeSeriesKShapes(BaseClusterer):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        params = {
+        return {
             "n_clusters": 2,
             "init_algorithm": "random",
             "n_init": 1,
@@ -162,7 +161,6 @@ class TimeSeriesKShapes(BaseClusterer):
             "verbose": False,
             "random_state": 1,
         }
-        return params
 
     def _score(self, X, y=None):
         return np.abs(self.inertia_)

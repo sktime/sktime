@@ -1,17 +1,16 @@
-"""
-Unified high-level interface for various time series related learning tasks.
-"""
+# -*- coding: utf-8 -*-
+"""Unified high-level interface for various time series related learning tasks."""
 
 from inspect import signature
 
 import numpy as np
 import pandas as pd
-from sklearn.base import _pprint
+
+from sktime.base import BaseObject
 
 
-class BaseTask:
-    """
-    Abstract base task class.
+class BaseTask(BaseObject):
+    """Abstract base task class.
 
     A task encapsulates metadata information such as the feature and
     target variable which to fit the data to and additional necessary
@@ -40,35 +39,27 @@ class BaseTask:
         self._metadata = None  # initialised as None, properly updated
         # through setter method below
         if metadata is not None:
-            self.set_metadata(
-                metadata)  # using the modified setter method below
+            self.set_metadata(metadata)  # using the modified setter method below
 
     @property
     def target(self):
-        """
-        Make attributes read-only.
-        """
+        """Variable target - read-only."""
         return self._target
 
     @property
     def features(self):
-        """
-        Make attributes read-only.
-        """
+        """Variable features - read-only."""
         return self._features
 
     @property
     def metadata(self):
-        """
-        Make attributes read-only.
-        """
+        """Variable metadata - read-only."""
         # TODO if metadata is a mutable object itself, its contents may
         #  still be mutable
         return self._metadata
 
     def set_metadata(self, metadata):
-        """
-        Provide missing metadata information to task if not already set.
+        """Provide missing metadata information to task if not already set.
 
         This method is especially useful in orchestration where metadata may
         not be
@@ -90,9 +81,9 @@ class BaseTask:
         # error
         if self._metadata is not None:
             raise AttributeError(
-                'Metadata is already set and can only be set once, create a '
-                'new task for different '
-                'metadata')
+                "Metadata is already set and can only be set once, create a "
+                "new task for different metadata"
+            )
 
         # check for consistency of information provided in task with given
         # metadata
@@ -107,16 +98,15 @@ class BaseTask:
         self._metadata = {
             "nrow": metadata.shape[0],
             "ncol": metadata.shape[1],
-            "target_type": {self.target: type(i) for i in
-                            metadata[self.target]},
-            "feature_type": {col: {type(i) for i in metadata[col]} for col in
-                             self.features}
+            "target_type": {self.target: type(i) for i in metadata[self.target]},
+            "feature_type": {
+                col: {type(i) for i in metadata[col]} for col in self.features
+            },
         }
         return self
 
     def check_data_compatibility(self, metadata):
-        """
-        Check compatibility of task with passed metadata.
+        """Check compatibility of task with passed metadata.
 
         Parameters
         ----------
@@ -125,8 +115,9 @@ class BaseTask:
         """
         if not isinstance(metadata, pd.DataFrame):
             raise ValueError(
-                f'Metadata must be provided in form of a pandas dataframe, '
-                f'but found: {type(metadata)}')
+                f"Metadata must be provided in form of a pandas dataframe, "
+                f"but found: {type(metadata)}"
+            )
 
         if self.target not in metadata.columns:
             raise ValueError(f"Target: {self.target} not found in metadata")
@@ -134,7 +125,8 @@ class BaseTask:
         if self.features is not None:
             if not np.all(self.features.isin(metadata.columns)):
                 raise ValueError(
-                    f"Features: {list(self.features)} not found in metadata")
+                    f"Features: {list(self.features)} not found in metadata"
+                )
 
         if isinstance(self, (TSCTask, TSRTask)):
             if self.features is None:
@@ -142,20 +134,22 @@ class BaseTask:
                     raise ValueError(
                         f"For task of type: {type(self)}, at least one "
                         f"feature must be given, "
-                        f"but found none")
+                        f"but found none"
+                    )
 
             if metadata.shape[0] <= 1:
                 raise ValueError(
                     f"For task of type: {type(self)}, several samples (rows) "
                     f"must be given, but only "
-                    f"found: {metadata.shape[0]} samples")
+                    f"found: {metadata.shape[0]} samples"
+                )
 
     @classmethod
     def _get_param_names(cls):
-        """Get parameter names for the task"""
+        """Get parameter names for the task."""
         # fetch the constructor or the original constructor before
         # deprecation wrapping if any
-        init = getattr(cls.__init__, 'deprecated_original', cls.__init__)
+        init = getattr(cls.__init__, "deprecated_original", cls.__init__)
         if init is object.__init__:
             # No explicit constructor to introspect
             return []
@@ -164,9 +158,11 @@ class BaseTask:
         # to represent
         init_signature = signature(init)
         # Consider the constructor parameters excluding 'self'
-        parameters = [p for p in init_signature.parameters.values()
-                      if p.name != 'self' and p.kind != p.VAR_KEYWORD]
-
+        parameters = [
+            p
+            for p in init_signature.parameters.values()
+            if p.name != "self" and p.kind != p.VAR_KEYWORD
+        ]
         # Extract and sort argument names excluding 'self'
         return sorted([p.name for p in parameters])
 
@@ -178,14 +174,8 @@ class BaseTask:
         params : mapping of string to any
             Parameter names mapped to their values.
         """
-        out = {key: getattr(self, key, None) for key in
-               self._get_param_names()}
+        out = {key: getattr(self, key, None) for key in self._get_param_names()}
         return out
-
-    def __repr__(self):
-        class_name = self.__class__.__name__
-        return '%s(%s)' % (class_name, _pprint(self._get_params(),
-                                               offset=len(class_name), ),)
 
 
 class TSCTask(BaseTask):
@@ -210,9 +200,8 @@ class TSCTask(BaseTask):
     """
 
     def __init__(self, target, features=None, metadata=None):
-        self._case = 'TSC'
-        super(TSCTask, self).__init__(target, features=features,
-                                      metadata=metadata)
+        self._case = "TSC"
+        super(TSCTask, self).__init__(target, features=features, metadata=metadata)
 
 
 class TSRTask(BaseTask):
@@ -237,6 +226,5 @@ class TSRTask(BaseTask):
     """
 
     def __init__(self, target, features=None, metadata=None):
-        self._case = 'TSR'
-        super(TSRTask, self).__init__(target, features=features,
-                                      metadata=metadata)
+        self._case = "TSR"
+        super(TSRTask, self).__init__(target, features=features, metadata=metadata)

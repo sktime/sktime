@@ -7,7 +7,7 @@
 adapted from :func:`sklearn.show_versions`
 """
 
-__author__ = ["Markus Löning"]
+__author__ = ["mloning"]
 __all__ = ["show_versions"]
 
 import importlib
@@ -84,10 +84,10 @@ def show_versions():
     sys_info = _get_sys_info()
     deps_info = _get_deps_info()
 
-    print("\nSystem:")  # noqa: T001
+    print("\nSystem:")  # noqa: T001, T201
     for k, stat in sys_info.items():
-        print("{k:>10}: {stat}".format(k=k, stat=stat))  # noqa: T001
+        print("{k:>10}: {stat}".format(k=k, stat=stat))  # noqa: T001, T201
 
-    print("\nPython dependencies:")  # noqa: T001
+    print("\nPython dependencies:")  # noqa: T001, T201
     for k, stat in deps_info.items():
-        print("{k:>13}: {stat}".format(k=k, stat=stat))  # noqa: T001
+        print("{k:>13}: {stat}".format(k=k, stat=stat))  # noqa: T001, T201

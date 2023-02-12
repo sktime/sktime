@@ -257,3 +257,151 @@ def test_strategy_mean_and_last_seasonal_additional_combinations(
         for i in range(1 + len(test_data) // sp):
             test_data[i * sp : i * sp + sp - window_length] = np.nan
         pd.testing.assert_series_equal(forecast_data, test_data)
+
+
+@pytest.mark.parametrize(
+    "strategy,sp,window_length",
+    [
+        ("last", 1, None),
+        ("last", 24, None),
+        ("mean", 1, None),
+        ("mean", 24, None),
+        ("mean", 1, 24),
+        ("mean", 24, 48),
+        ("drift", 1, None),
+        ("drift", 1, 24),
+    ],
+)
+@pytest.mark.parametrize("n_periods", [10000, 9999, 12128])
+def test_naive_predict_var_backwards(strategy, sp, window_length, n_periods):
+    """Checks naive prediction variance computations.
+
+    Test whether, given h=1 and large T, the forecast standard error
+    is approximately equal to the residual standard errors.
+    This property is noted in the Forecasting: Principles and
+    Practice textbook (FPP3) [1]_.
+
+    More specifically, predict_var computes the forecast standard errors
+    (and hence variance) from the residuals standard errors times
+    some constant. According to FPP3, this operation can be fully inverted.
+    Hence, for this unit test, we redo our computations backwards and
+    check that our results are approximately equal.
+
+    References
+    ----------
+    .. [1] https://otexts.com/fpp3/prediction-intervals.html#benchmark-methods
+    """
+    mu, sigma = 0.0, 10.0
+    fake_idx = pd.date_range("1980", periods=n_periods + 1, freq="H")
+    np.random.seed(42)
+    y = pd.Series(np.random.normal(mu, sigma, size=n_periods), index=fake_idx[:-1])
+
+    h = 1
+    forecaster = NaiveForecaster(strategy, sp=sp, window_length=window_length)
+    sigma2 = forecaster.fit(y).predict_var(fh=h)
+    sigma = np.sqrt(sigma2).iloc[0, 0]
+
+    T = len(y.dropna())
+    if strategy == "last":
+        # This is trival because square root of (h) when h=1 is just 1
+        sigma_res = sigma / np.sqrt(h)
+    elif strategy == "mean":
+        sigma_res = sigma / np.sqrt(1 + (1 / T))
+    else:
+        sigma_res = sigma / np.sqrt(1 + (1 / (T - 1)))
+
+    upper_bound, lower_bound = (sigma + 0.001), (sigma - 0.001)
+    assert lower_bound < sigma_res < upper_bound
+
+
+@pytest.mark.parametrize(
+    "strategy,sp,window_length",
+    [
+        ("last", 1, None),
+        ("last", 24, None),
+        ("mean", 1, None),
+        ("mean", 24, None),
+        ("mean", 1, 24),
+        ("mean", 24, 48),
+        ("drift", 1, None),
+        ("drift", 1, 24),
+    ],
+)
+@pytest.mark.parametrize("fh", TEST_OOS_FHS)
+def test_naive_predict_interval_mean(strategy, sp, window_length, fh):
+    """Checks naive prediction interval means are equal to mean predictions.
+
+    Note: this is largely a smoke test to check the validity of tricky rolling
+    mean and seasonal mean array operations within pred_var.
+    """
+    n_timepoints = 100000
+    mu, sigma = 0.0, 10.0
+    fake_idx = pd.date_range("1980", periods=n_timepoints + 1, freq="H")
+    np.random.seed(42)
+    y = pd.Series(np.random.normal(mu, sigma, size=n_timepoints), index=fake_idx[:-1])
+
+    forecaster = NaiveForecaster(strategy, sp=sp, window_length=window_length).fit(y)
+    y_pred_interval = forecaster.predict_interval(fh=fh)
+    y_pred = forecaster.predict(fh=fh)
+    pd.testing.assert_series_equal(y_pred_interval.mean(axis=1), y_pred)
+
+
+@pytest.mark.parametrize(
+    "strategy,sp,lower,upper",
+    [
+        (
+            "last",
+            1,
+            [-22.07661, -31.71836, -39.11673, -45.35385, -50.84886],
+            [24.47787, 34.11962, 41.51799, 47.75511, 53.25012],
+        ),
+        (
+            "last",
+            24,
+            [-45.45926, -18.718647, -36.369212, -12.929395, -13.960794],
+            [1.025702, 27.766313, 10.115747, 33.555565, 32.524165],
+        ),
+        ("mean", 1, -16.45385, 16.47319),
+        (
+            "drift",
+            1,
+            [-22.07676, -31.71876, -39.11745, -45.35493, -50.85035],
+            [24.47795, 34.11987, 41.51848, 47.75589, 53.25123],
+        ),
+    ],
+)
+def test_naive_predict_interval_against_R_naive(strategy, sp, lower, upper):
+    """Checks naive prediction interval computations.
+
+    Compare prediction interval results with R implementation in [1]_.
+
+    Note:
+    - Seasonality is not applicable to "mean" strategy in R.
+    - Argument "window_length" is not available in R.
+
+    References
+    ----------
+    .. [1] https://github.com/robjhyndman/forecast/blob/master/R/naive.R
+    """
+    n_timepoints = 100000
+    mu, sigma = 0.0, 10.0
+    fake_idx = pd.date_range("1980", periods=n_timepoints + 1, freq="H")
+    np.random.seed(42)
+    y = pd.Series(np.random.normal(mu, sigma, size=n_timepoints), index=fake_idx[:-1])
+
+    h = list(range(1, 6))
+    coverage = 0.90
+    forecaster = NaiveForecaster(strategy, sp=sp)
+    y_pred_ints = forecaster.fit(y).predict_interval(fh=h, coverage=coverage)
+
+    expected = pd.DataFrame(
+        columns=pd.MultiIndex.from_product(
+            [["Coverage"], [coverage], ["lower", "upper"]]
+        ),
+        index=y_pred_ints.index,
+    )
+
+    expected[("Coverage", coverage, "lower")] = lower
+    expected[("Coverage", coverage, "upper")] = upper
+
+    pd.testing.assert_frame_equal(y_pred_ints, expected)

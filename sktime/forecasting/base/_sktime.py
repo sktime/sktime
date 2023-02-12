@@ -3,16 +3,15 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """sktime window forecaster base class."""
 
-__author__ = ["@mloning", "@big-o"]
+__author__ = ["@mloning", "@big-o", "fkiraly"]
 __all__ = ["_BaseWindowForecaster"]
 
 import numpy as np
 import pandas as pd
 
 from sktime.forecasting.base._base import DEFAULT_ALPHA, BaseForecaster
-from sktime.forecasting.model_selection import CutoffSplitter, SlidingWindowSplitter
+from sktime.forecasting.model_selection import CutoffSplitter
 from sktime.utils.datetime import _shift
-from sktime.utils.validation.forecasting import check_cv
 
 
 class _BaseWindowForecaster(BaseForecaster):
@@ -23,49 +22,19 @@ class _BaseWindowForecaster(BaseForecaster):
         self.window_length = window_length
         self.window_length_ = None
 
-    def update_predict(
-        self,
-        y,
-        cv=None,
-        X=None,
-        update_params=True,
-    ):
-        """Make and update predictions iteratively over the test set.
-
-        Parameters
-        ----------
-        y : pd.Series
-        cv : temporal cross-validation generator, optional (default=None)
-        X : pd.DataFrame, optional (default=None)
-        update_params : bool, optional (default=True)
-
-        Returns
-        -------
-        y_pred : pd.Series or pd.DataFrame
-        """
-        if cv is not None:
-            cv = check_cv(cv)
-        else:
-            cv = SlidingWindowSplitter(
-                self.fh.to_relative(self.cutoff),
-                window_length=self.window_length_,
-                start_with_window=False,
-            )
-        return self._predict_moving_cutoff(y, cv, X, update_params=update_params)
-
     def _predict(self, fh, X=None):
         """Predict core logic."""
         kwargs = {"X": X}
 
         # all values are out-of-sample
         if fh.is_all_out_of_sample(self.cutoff):
-            return self._predict_fixed_cutoff(
+            y_pred = self._predict_fixed_cutoff(
                 fh.to_out_of_sample(self.cutoff), **kwargs
             )
 
         # all values are in-sample
         elif fh.is_all_in_sample(self.cutoff):
-            return self._predict_in_sample(fh.to_in_sample(self.cutoff), **kwargs)
+            y_pred = self._predict_in_sample(fh.to_in_sample(self.cutoff), **kwargs)
 
         # both in-sample and out-of-sample values
         else:
@@ -73,7 +42,13 @@ class _BaseWindowForecaster(BaseForecaster):
             y_oos = self._predict_fixed_cutoff(
                 fh.to_out_of_sample(self.cutoff), **kwargs
             )
-            return pd.concat([y_ins, y_oos])
+            y_pred = pd.concat([y_ins, y_oos])
+
+        # ensure pd.Series name attribute is preserved
+        if isinstance(y_pred, pd.Series) and isinstance(self._y, pd.Series):
+            y_pred.name = self._y.name
+
+        return y_pred
 
     def _predict_fixed_cutoff(
         self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA
@@ -167,24 +142,3 @@ class _BaseWindowForecaster(BaseForecaster):
     def _predict_nan(fh):
         """Predict nan if predictions are not possible."""
         return np.full(len(fh), np.nan)
-
-    def _update_predict_single(self, y, fh, X=None, update_params=True):
-        """Update and make forecasts, core logic..
-
-        Implements default behaviour of calling update and predict
-        sequentially, but can be overwritten by subclasses
-        to implement more efficient updating algorithms when available.
-
-        Parameters
-        ----------
-        y
-        fh
-        X
-        update_params
-
-        Returns
-        -------
-        predictions
-        """
-        self.update(y=y, X=X, update_params=update_params)
-        return self._predict(fh=fh, X=X)

@@ -9,38 +9,30 @@ from sktime.transformations.base import BaseTransformer
 
 
 class MultiRocketMultivariate(BaseTransformer):
-    """
-    MultiRocket multivariate version.
+    """Multi RandOm Convolutional KErnel Transform (MultiRocket).
 
-    Multi RandOm Convolutional KErnel Transform
-
-    **Multivariate**
-
-    A provisional and naive extension of MultiRocket to multivariate input.  Use
-    class MultiRocket for univariate input.
-
-    @article{Tan2021MultiRocket,
-    title={{MultiRocket}: Multiple pooling operators and transformations
-    for fast and effective time series classification},
-    author={Tan, Chang Wei and Dempster, Angus and Bergmeir, Christoph and
-    Webb, Geoffrey I},
-    year={2021},
-    journal={arxiv:2102.00457v3}
-    }
+    MultiRocket [1]_ is uses the same set of kernels as MiniRocket on both the raw
+    series and the first order differenced series representation. It uses a different
+    set of dilations and used for each representation. In addition to percentage of
+    positive values (PPV) MultiRocket adds 3 pooling operators: Mean of Positive
+    Values (MPV); Mean of Indices of Positive Values (MIPV); and Longest Stretch of
+    Positive Values (LSPV). This version is the multivariate version.
 
     Parameters
     ----------
-    num_kernels              : int, number of random convolutional kernels
-    (default 6,250)
-    calculated number of features is the nearest multiple of
-    n_features_per_kernel(default 4)*84=336 < 50,000
-    (2*n_features_per_kernel(default 4)*num_kernels(default 6,250))
-    max_dilations_per_kernel : int, maximum number of dilations per kernel (default 32)
-    n_features_per_kernel    : int, number of features per kernel (default 4)
-    normalise                : int, normalise the data (default False)
-    n_jobs                   : int, optional (default=1) The number of jobs to run in
-    parallel for `transform`. ``-1`` means using all processors.
-    random_state             : int, random seed (optional, default None)
+    num_kernels : int, default=6,250
+       number of random convolutional kernels. The calculated number of features is the
+       nearest multiple of n_features_per_kernel(default 4)*84=336 < 50,000
+       (2*n_features_per_kernel(default 4)*num_kernels(default 6,250)).
+    max_dilations_per_kernel : int, default=32
+        maximum number of dilations per kernel.
+    n_features_per_kernel : int, default =4
+        number of features per kernel.
+    normalise : bool, default False
+    n_jobs : int, default=1
+        The number of jobs to run in parallel for `transform`. ``-1`` means using all
+        processors.
+    random_state : None or int, default = None
 
     Attributes
     ----------
@@ -51,29 +43,30 @@ class MultiRocketMultivariate(BaseTransformer):
         parameter (dilations, num_features_per_dilation, biases) for
         transformation of input X1 = np.diff(X, 1)
 
+
     See Also
     --------
-    MultiRocket, MiniRocket, MiniRocketMultivariate, Rocket
+    MultiRocketMultivariate, MiniRocket, MiniRocketMultivariate, Rocket
 
     References
     ----------
-    .. [1] Tan, Chang Wei and Dempster, Angus and Bergmeir, Christoph
-        and Webb, Geoffrey I,
-        "MultiRocket: Multiple pooling operators and transformations
-        for fast and effective time series classification",
-        2021, https://arxiv.org/abs/2102.00457v3
+    .. [1] Tan, Chang Wei and Dempster, Angus and Bergmeir, Christoph and
+    Webb, Geoffrey I, "MultiRocket: Multiple pooling operators and transformations
+    for fast and effective time series classification",2022,
+    https://link.springer.com/article/10.1007/s10618-022-00844-1
+    https://arxiv.org/abs/2102.00457
 
     Examples
     --------
-    >>> from sktime.transformations.panel.rocket._multirocket import MultiRocket
-    >>> from sktime.datasets import load_italy_power_demand
-    >>> X_train, y_train = load_italy_power_demand(split="train", return_X_y=True)
-    >>> X_test, y_test = load_italy_power_demand(split="test", return_X_y=True)
-    >>> trf = MultiRocket()
-    >>> trf.fit(X_train)
-    MultiRocket(...)
-    >>> X_train = trf.transform(X_train)
-    >>> X_test = trf.transform(X_test)
+     >>> from sktime.transformations.panel.rocket import Rocket
+     >>> from sktime.datasets import load_basic_motions
+     >>> X_train, y_train = load_basic_motions(split="train")
+     >>> X_test, y_test = load_basic_motions(split="test")
+     >>> trf = MultiRocketMultivariate(num_kernels=512)
+     >>> trf.fit(X_train)
+     MultiRocketMultivariate(...)
+     >>> X_train = trf.transform(X_train)
+     >>> X_test = trf.transform(X_test)
     """
 
     _tags = {
@@ -135,6 +128,8 @@ class MultiRocketMultivariate(BaseTransformer):
             _X1[:, :, : X.shape[2]] = X
             X = _X1
             del _X1
+
+        X = X.astype(np.float64)
 
         self.parameter = self._get_parameter(X)
         _X1 = np.diff(X, 1)

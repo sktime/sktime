@@ -28,6 +28,13 @@ from sktime.dists_kernels import BasePairwiseTransformer
 
 # todo: add any necessary imports here
 
+# todo: if any imports are sktime soft dependencies:
+#  * make sure to fill in the "python_dependencies" tag with the package import name
+#  * add a _check_soft_dependencies warning here, example:
+#
+# from sktime.utils.validation._dependencies import check_soft_dependencies
+# _check_soft_dependencies("soft_dependency_name", severity="warning")
+
 
 class MyTrafoPw(BasePairwiseTransformer):
     """Custom distance/kernel (on data frame rows). todo: write docstring.
@@ -71,16 +78,19 @@ class MyTrafoPw(BasePairwiseTransformer):
         self.parama = parama
         self.paramb = paramb
         self.paramc = paramc
-        # important: no checking or other logic should happen here
+
+        # todo: change "MyTrafoPw" to the name of the class
+        super(MyTrafoPw, self).__init__()
+
+        # todo: optional, parameter checking logic (if applicable) should happen here
+        # if writes derived values to self, should *not* overwrite self.parama etc
+        # instead, write to self._parama, self._newparam (starting with _)
 
         # todo: default estimators should have None arg defaults
         #  and be initialized here
         #  do this only with default estimators, not with parameters
         # if est2 is None:
         #     self.estimator = MyDefaultEstimator()
-
-        # todo: change "MyTrafoPw" to the name of the class
-        super(MyTrafoPw, self).__init__()
 
         # todo: if tags of estimator depend on component tags, set these here
         #  only needed if estimator is a composite
@@ -153,6 +163,15 @@ class MyTrafoPw(BasePairwiseTransformer):
         #   It can be used in custom, estimator specific tests, for "special" settings.
         # A parameter dictionary must be returned *for all values* of parameter_set,
         #   i.e., "parameter_set not available" errors should never be raised.
+        #
+        # A good parameter set should primarily satisfy two criteria,
+        #   1. Chosen set of parameters should have a low testing time,
+        #      ideally in the magnitude of few seconds for the entire test suite.
+        #       This is vital for the cases where default values result in
+        #       "big" models which not only increases test time but also
+        #       run into the risk of test workers crashing.
+        #   2. There should be a minimum two such parameter sets with different
+        #      sets of values to ensure a wide range of code coverage is provided.
         #
         # example 1: specify params as dictionary
         # any number of params can be specified

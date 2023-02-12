@@ -117,6 +117,8 @@ class TruncationTransformer(BaseTransformer):
         truncate = [pd.Series([series.iloc[idxs] for series in out]) for out in arr]
 
         Xt = pd.DataFrame(truncate)
+        Xt.columns = X.columns
+        Xt.index = X.index
 
         return Xt
 

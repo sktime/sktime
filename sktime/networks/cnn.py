@@ -6,7 +6,7 @@ __author__ = ["James-Large, Withington, TonyBagnall"]
 from sktime.networks.base import BaseDeepNetwork
 from sktime.utils.validation._dependencies import _check_dl_dependencies
 
-_check_dl_dependencies("tensorflow", severity="warning")
+_check_dl_dependencies(severity="warning")
 
 
 class CNNNetwork(BaseDeepNetwork):
@@ -39,6 +39,8 @@ class CNNNetwork(BaseDeepNetwork):
     Journal of Systems Engineering and Electronics 28(1), 162--169, 2017
     """
 
+    _tags = {"python_dependencies": "tensorflow"}
+
     def __init__(
         self,
         kernel_size=7,
@@ -47,13 +49,15 @@ class CNNNetwork(BaseDeepNetwork):
         activation="sigmoid",
         random_state=0,
     ):
-        _check_dl_dependencies("tensorflow", severity="error")
+        _check_dl_dependencies(severity="error")
         self.random_state = random_state
         self.kernel_size = kernel_size
         self.avg_pool_size = avg_pool_size
         self.n_conv_layers = n_conv_layers
         self.filter_sizes = [6, 12]
         self.activation = activation
+
+        super(CNNNetwork, self).__init__()
 
     def build_network(self, input_shape, **kwargs):
         """Construct a network and return its input and output layers.

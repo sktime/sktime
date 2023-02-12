@@ -13,7 +13,6 @@ __author__ = ["fkiraly"]
 __all__ = ["KNeighborsTimeSeriesRegressor"]
 
 from sklearn.neighbors import KNeighborsRegressor
-from sklearn.neighbors._base import _check_weights
 
 from sktime.distances import pairwise_distance
 from sktime.regression.base import BaseRegressor
@@ -93,6 +92,8 @@ class KNeighborsTimeSeriesRegressor(BaseRegressor):
 
     _tags = {
         "capability:multivariate": True,
+        "capability:unequal_length": True,
+        "capability:missing_values": True,
         "X_inner_mtype": ["pd-multiindex", "numpy3D"],
     }
 
@@ -130,7 +131,7 @@ class KNeighborsTimeSeriesRegressor(BaseRegressor):
             leaf_size=leaf_size,
             n_jobs=n_jobs,
         )
-        self.weights = _check_weights(weights)
+        self.weights = weights
 
         super(KNeighborsTimeSeriesRegressor, self).__init__()
 
@@ -138,8 +139,21 @@ class KNeighborsTimeSeriesRegressor(BaseRegressor):
         #   otherwise all Panel formats are ok
         if isinstance(self.distance, str):
             self.set_tags(X_inner_mtype="numpy3D")
+            self.set_tags(**{"capability:unequal_length": False})
+            self.set_tags(**{"capability:missing_values": False})
         elif distance_mtype is not None:
             self.set_tags(X_inner_mtype=distance_mtype)
+
+        from sktime.dists_kernels import BasePairwiseTransformerPanel
+
+        # inherit capability tags from distance, if it is an estimator
+        if isinstance(distance, BasePairwiseTransformerPanel):
+            inherit_tags = [
+                "capability:missing_values",
+                "capability:unequal_length",
+                "capability:multivariate",
+            ]
+            self.clone_tags(distance, inherit_tags)
 
     def _distance(self, X, X2):
         """Compute distance - unified interface to str code and callable."""
@@ -195,6 +209,11 @@ class KNeighborsTimeSeriesRegressor(BaseRegressor):
         ind : array
             Indices of the nearest points in the population matrix.
         """
+        self.check_is_fitted()
+
+        # boilerplate input checks for predict-like methods
+        X = self._check_convert_X_for_predict(X)
+
         # self._X should be the stored _X
         dist_mat = self._distance(X, self._X)
 

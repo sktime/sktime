@@ -206,6 +206,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         self._weight_sum = 0
         self._prev_parameters_x = []
         self._prev_parameters_y = []
+        self._min_window = min_window
 
         super(TemporalDictionaryEnsemble, self).__init__()
 
@@ -235,8 +236,9 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         """
         if self.n_parameter_samples <= self.randomly_selected_params:
             warnings.warn(
-                "TDE Warning: n_parameter_samples <= randomly_selected_params, "
-                + "ensemble member parameters will be fully randomly selected."
+                "TemporalDictionaryEnsemble warning: n_parameter_samples <= "
+                "randomly_selected_params, ensemble member parameters will be fully "
+                "randomly selected."
             )
 
         self.n_instances_, self.n_dims_, self.series_length_ = X.shape
@@ -249,18 +251,18 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         # Window length parameter space dependent on series length
         max_window_searches = self.series_length_ / 4
         max_window = int(self.series_length_ * self.max_win_len_prop)
-        win_inc = int((max_window - self.min_window) / max_window_searches)
+
+        if self.min_window >= max_window:
+            self._min_window = max_window
+            warnings.warn(
+                f"TemporalDictionaryEnsemble warning: min_window = "
+                f"{self.min_window} is larger than max_window = {max_window}."
+                f" min_window has been set to {max_window}."
+            )
+
+        win_inc = int((max_window - self._min_window) / max_window_searches)
         if win_inc < 1:
             win_inc = 1
-        if self.min_window > max_window + 1:
-            raise ValueError(
-                f"Error in TemporalDictionaryEnsemble, min_window ="
-                f"{self.min_window} is bigger"
-                f" than max_window ={max_window}."
-                f" Try set min_window to be smaller than series length in "
-                f"the constructor, but the classifier may not work at "
-                f"all with very short series"
-            )
 
         possible_parameters = self._unique_parameters(max_window, win_inc)
         num_classifiers = 0
@@ -429,7 +431,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         possible_parameters = [
             [win_size, word_len, normalise, levels, igb]
             for normalise in self._norm_options
-            for win_size in range(self.min_window, max_window + 1, win_inc)
+            for win_size in range(self._min_window, max_window + 1, win_inc)
             for word_len in self._word_lengths
             for levels in self._levels
             for igb in self._igb_options
@@ -463,7 +465,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
                 preds = (
                     clf._train_predictions
                     if self.save_train_predictions
-                    else Parallel(n_jobs=self._threads_to_use)(
+                    else Parallel(n_jobs=self._threads_to_use, prefer="threads")(
                         delayed(clf._train_predict)(
                             i,
                         )
@@ -508,7 +510,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         required_correct = int(lowest_acc * train_size)
 
         if self._threads_to_use > 1:
-            c = Parallel(n_jobs=self._threads_to_use)(
+            c = Parallel(n_jobs=self._threads_to_use, prefer="threads")(
                 delayed(tde._train_predict)(
                     i,
                 )
@@ -876,7 +878,7 @@ class IndividualTDE(BaseClassifier):
             test_bags = self._transformers[0].transform(X)
             test_bags = test_bags[0]
 
-        classes = Parallel(n_jobs=self._threads_to_use)(
+        classes = Parallel(n_jobs=self._threads_to_use, prefer="threads")(
             delayed(self._test_nn)(
                 test_bag,
             )

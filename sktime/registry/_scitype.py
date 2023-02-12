@@ -42,6 +42,12 @@ def scitype(obj, force_single_scitype=True, coerce_to_list=False):
     if len(scitypes) == 0:
         raise TypeError("Error, no scitype could be determined for obj")
 
+    if len(scitypes) > 1 and "object" in scitypes:
+        scitypes = list(set(scitypes).difference(["object"]))
+
+    if len(scitypes) > 1 and "estimator" in scitypes:
+        scitypes = list(set(scitypes).difference(["estimator"]))
+
     if force_single_scitype:
         scitypes = [scitypes[0]]
 

@@ -8,8 +8,6 @@ __author__ = ["fkiraly"]
 
 __all__ = ["scenarios_clustering"]
 
-from copy import deepcopy
-
 from sktime.base import BaseObject
 from sktime.utils._testing.panel import _make_panel_X, make_clustering_problem
 from sktime.utils._testing.scenarios import TestScenario
@@ -44,12 +42,9 @@ class ClustererTestScenario(TestScenario, BaseObject):
         if key in ["predict_proba"]:
             key = "predict"
 
-        args = self.args[key]
-
-        if deepcopy_args:
-            args = deepcopy(args)
-
-        return args
+        return super(ClustererTestScenario, self).get_args(
+            key=key, obj=obj, deepcopy_args=deepcopy_args
+        )
 
 
 class ClustererFitPredict(ClustererTestScenario):

@@ -30,6 +30,7 @@ from sktime.forecasting.tests._config import (
 from sktime.performance_metrics.forecasting import mean_absolute_percentage_error
 from sktime.tests.test_all_estimators import BaseFixtureGenerator, QuickTester
 from sktime.utils._testing.forecasting import (
+    _assert_correct_columns,
     _assert_correct_pred_time_index,
     _get_expected_index_for_update_predict,
     _get_n_columns,
@@ -224,6 +225,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             estimator_instance.fit(y_train, fh=fh)
             y_pred = estimator_instance.predict()
             _assert_correct_pred_time_index(y_pred.index, cutoff, fh=fh_int)
+            _assert_correct_columns(y_pred, y_train)
         except NotImplementedError:
             pass
 
@@ -285,7 +287,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         # Some estimators may not support all time index types and fh types, hence we
         # need to catch NotImplementedErrors.
         y = _make_series(n_columns=n_columns, index_type=index_type)
-        cutoff = y.index[len(y) // 2]
+        cutoff = get_cutoff(y.iloc[: len(y) // 2], return_index=True)
         fh = _make_fh(cutoff, fh_int_oos, fh_type, is_relative)
 
         y_train, _, X_train, X_test = temporal_train_test_split(y, X, fh=fh)
@@ -295,6 +297,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             y_pred = estimator_instance.predict(X=X_test)
             cutoff = get_cutoff(y_train, return_index=True)
             _assert_correct_pred_time_index(y_pred.index, cutoff, fh)
+            _assert_correct_columns(y_pred, y_train)
         except NotImplementedError:
             pass
 
@@ -325,6 +328,21 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         except NotImplementedError:
             pass
 
+    def test_predict_series_name_preserved(self, estimator_instance):
+        """Test that fit/predict preserves name attribute and type of pd.Series."""
+        # skip this test if estimator needs multivariate data
+        # because then it does not take pd.Series at all
+        if estimator_instance.get_tag("scitype:y") == "multivariate":
+            return None
+
+        y_train = _make_series(n_timepoints=15)
+        y_train.name = "foo"
+
+        estimator_instance.fit(y_train, fh=[1, 2, 3])
+        y_pred = estimator_instance.predict()
+
+        _assert_correct_columns(y_pred, y_train)
+
     def _check_pred_ints(
         self, pred_ints: pd.DataFrame, y_train: pd.Series, y_pred: pd.Series, fh_int
     ):
@@ -349,20 +367,25 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             #     pred_errors.values[1:].round(4) >= pred_errors.values[:-1].round(4)
             # )
 
+    @pytest.mark.parametrize("index_type", [None, "range"])
     @pytest.mark.parametrize(
-        "alpha", TEST_ALPHAS, ids=[f"alpha={a}" for a in TEST_ALPHAS]
+        "coverage", TEST_ALPHAS, ids=[f"alpha={a}" for a in TEST_ALPHAS]
     )
     @pytest.mark.parametrize(
         "fh_int_oos", TEST_OOS_FHS, ids=[f"fh={fh}" for fh in TEST_OOS_FHS]
     )
-    def test_predict_interval(self, estimator_instance, n_columns, fh_int_oos, alpha):
+    def test_predict_interval(
+        self, estimator_instance, n_columns, index_type, fh_int_oos, coverage
+    ):
         """Check prediction intervals returned by predict.
 
         Arguments
         ---------
-        Forecaster: BaseEstimator class descendant, forecaster to test
-        fh: ForecastingHorizon, fh at which to test prediction
-        alpha: float, coverage at which to make prediction intervals
+        estimator_instance : BaseEstimator class descendant instance, forecaster to test
+        n_columns : number of columns for the test data
+        index_type : index type of the test data
+        fh_int_oos : forecasting horizon to test the forecaster at, all out of sample
+        coverage: float, coverage at which to make prediction intervals
 
         Raises
         ------
@@ -371,16 +394,21 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         AssertionError - if Forecaster test instance does not have "capability:pred_int"
                 and no NotImplementedError is raised when asking predict for pred.int
         """
-        y_train = _make_series(n_columns=n_columns)
+        y_train = _make_series(n_columns=n_columns, index_type=index_type)
         estimator_instance.fit(y_train, fh=fh_int_oos)
         if estimator_instance.get_tag("capability:pred_int"):
 
-            pred_ints = estimator_instance.predict_interval(fh_int_oos, coverage=alpha)
-            assert check_is_mtype(pred_ints, mtype="pred_interval", scitype="Proba")
+            pred_ints = estimator_instance.predict_interval(
+                fh_int_oos, coverage=coverage
+            )
+            valid, msg, _ = check_is_mtype(
+                pred_ints, mtype="pred_interval", scitype="Proba", return_metadata=True
+            )  # type: ignore
+            assert valid, msg
 
         else:
             with pytest.raises(NotImplementedError, match="prediction intervals"):
-                estimator_instance.predict_interval(fh_int_oos, coverage=alpha)
+                estimator_instance.predict_interval(fh_int_oos, coverage=coverage)
 
     def _check_predict_quantiles(
         self, pred_quantiles: pd.DataFrame, y_train: pd.Series, fh, alpha
@@ -397,7 +425,8 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         else:
             # multiply variables with all alpha values
             expected = pd.MultiIndex.from_product([y_train.columns, [alpha]])
-        assert all(expected == pred_quantiles.columns.to_flat_index())
+        found = pred_quantiles.columns.to_flat_index()
+        assert all(expected == found)
 
         if isinstance(alpha, list):
             # sorts the columns that correspond to alpha values
@@ -515,6 +544,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         )
         cutoff = get_cutoff(y_train, return_index=True)
         _assert_correct_pred_time_index(y_pred.index, cutoff, fh_int_oos)
+        _assert_correct_columns(y_pred, y_train)
 
     @pytest.mark.parametrize(
         "fh_int_oos", TEST_OOS_FHS, ids=[f"fh={fh}" for fh in TEST_OOS_FHS]
@@ -635,3 +665,61 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         # changing fh during predict should raise error
         with pytest.raises(ValueError):
             f.predict(fh=FH0 + 1)
+
+    def test_hierarchical_with_exogeneous(self, estimator_instance, n_columns):
+        """Check that hierarchical forecasting works, also see bug #3961.
+
+        Arguments
+        ---------
+        estimator_instance : instance of BaseForecaster
+        n_columns : number of columns, of the endogeneous data y_train
+
+        Raises
+        ------
+        Exception - if fit/predict does not complete without error
+        AssertionError - if forecast is not expected mtype pd_multiindex_hier,
+            and does not have expected row and column indices
+        """
+        from sktime.datatypes import check_is_mtype
+        from sktime.datatypes._utilities import get_window
+        from sktime.utils._testing.hierarchical import _make_hierarchical
+
+        y_train = _make_hierarchical(
+            hierarchy_levels=(2, 4),
+            n_columns=n_columns,
+            min_timepoints=22,
+            max_timepoints=22,
+            index_type="period",
+        )
+        X = _make_hierarchical(
+            hierarchy_levels=(2, 4),
+            n_columns=2,
+            min_timepoints=24,
+            max_timepoints=24,
+            index_type="period",
+        )
+        X.columns = ["foo", "bar"]
+        X_train = get_window(X, lag=2)
+        X_test = get_window(X, window_length=2)
+        fh = [1, 2]
+
+        estimator_instance.fit(y=y_train, X=X_train, fh=fh)
+        y_pred = estimator_instance.predict(X=X_test)
+
+        assert isinstance(y_pred, pd.DataFrame)
+        assert check_is_mtype(y_pred, "pd_multiindex_hier")
+        msg = (
+            "returned columns after predict are not as expected. "
+            f"expected: {y_train.columns}. Found: {y_pred.columns}"
+        )
+        assert np.all(y_pred.columns == y_train.columns), msg
+
+        # check consistency of forecast hierarchy with training data
+        # some forecasters add __total levels, e.g., ReconcilerForecaster
+        # if = not such a forecaster; else = levels are added
+        if len(y_pred.index) == len(X_test.index):
+            # the indices should be equal iff no levels are added
+            assert np.all(y_pred.index == X_test.index)
+        else:
+            # if levels are added, all expected levels and times should be contained
+            assert set(X_test.index).issubset(y_pred.index)

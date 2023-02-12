@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 """Tests for time series kernel kmeans."""
 import numpy as np
+import pytest
 
 from sktime.clustering.kernel_k_means import TimeSeriesKernelKMeans
 from sktime.datasets import load_basic_motions
+from sktime.utils.validation._dependencies import _check_estimator_deps
 
 expected_results = [
     0,
@@ -96,6 +98,10 @@ expected_labels = [
 ]
 
 
+@pytest.mark.skipif(
+    not _check_estimator_deps(TimeSeriesKernelKMeans, severity="none"),
+    reason="skip test if required soft dependencies not available",
+)
 def test_kernel_k_means():
     """Test implementation of kernel k means."""
     X_train, y_train = load_basic_motions(split="train")

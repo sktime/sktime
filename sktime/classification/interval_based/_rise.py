@@ -173,17 +173,6 @@ class RandomIntervalSpectralEnsemble(BaseClassifier):
     .. [1] Jason Lines, Sarah Taylor and Anthony Bagnall, "Time Series Classification
        with HIVE-COTE: The Hierarchical Vote Collective of Transformation-Based
        Ensembles", ACM Transactions on Knowledge and Data Engineering, 12(5): 2018
-
-    Examples
-    --------
-    >>> from sktime.classification.interval_based import RandomIntervalSpectralEnsemble
-    >>> from sktime.datasets import load_unit_test
-    >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
-    >>> clf = RandomIntervalSpectralEnsemble(n_estimators=5)
-    >>> clf.fit(X_train, y_train)
-    RandomIntervalSpectralEnsemble(...)
-    >>> y_pred = clf.predict(X_test)
     """
 
     _tags = {
