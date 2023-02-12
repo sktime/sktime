@@ -252,7 +252,7 @@ class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
                 ),
                 ("clf", DecisionTreeRegressor(random_state=self.random_state)),
             ]
-            self.estimator_ = Pipeline(steps)
+            self._estimator = Pipeline(steps)
 
         else:
             # else check given estimator is a pipeline with prior
@@ -263,7 +263,7 @@ class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
                 raise ValueError(
                     "Last step in `estimator` must be DecisionTreeRegressor."
                 )
-            self.estimator_ = self.estimator
+            self._estimator = self.estimator
 
         # Set parameters according to naming in pipeline
         estimator_params = {
@@ -277,7 +277,7 @@ class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
             "min_impurity_decrease": self.min_impurity_decrease,
             "min_impurity_split": self.min_impurity_split,
         }
-        final_estimator = self.estimator_.steps[-1][0]
+        final_estimator = self._estimator.steps[-1][0]
         self.estimator_params = {
             f"{final_estimator}__{pname}": pval
             for pname, pval in estimator_params.items()
