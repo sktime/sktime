@@ -351,8 +351,11 @@ class VectorizedDF:
 
         Returns
         -------
-        A generator returning (row index, col index instance) tuples for vectorization.
-        i-th element is i-th
+        A generator returning (row index, col index, instance) tuples for vectorization.
+        i-th element corresponds to i-th vectorization slice, rows first then cols
+        2nd tuple element is X row sub-set to 0-th tuple element, col sub-set to 1-st
+        if no sub-setting takes place for row, 0-th tuple element is None
+        if no sub-setting takes place for col, 1-st tuple element is None
         """
         if iterate_as is None:
             iterate_as = self.iterate_as
