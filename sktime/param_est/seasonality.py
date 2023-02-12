@@ -6,7 +6,6 @@ __author__ = ["fkiraly", "blazingbhavneek"]
 __all__ = ["SeasonalityACF", "Seasonality"]
 
 import numpy as np
-from seasonal.periodogram import periodogram
 
 from sktime.param_est.base import BaseParamFitter
 
@@ -463,6 +462,8 @@ class Seasonality(BaseParamFitter):
         -------
         self : reference to self
         """
+        from seasonal.periodogram import periodogram
+
         seasons, _ = periodogram(X)
         if seasons is None:
             self.sp_ = 1
@@ -472,27 +473,3 @@ class Seasonality(BaseParamFitter):
             self.sp_ = self.sp_significant_[0]
 
         return self
-
-    @classmethod
-    def get_test_params(cls, parameter_set="default"):
-        """Return testing parameter settings for the estimator.
-
-        Parameters
-        ----------
-        parameter_set : str, default="default"
-            Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
-            There are currently no reserved values for transformers.
-
-        Returns
-        -------
-        params : dict or list of dict, default = {}
-            Parameters to create testing instances of the class
-            Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
-        """
-        params1 = {}
-        params2 = {"candidate_sp": [3, 7, 12]}
-
-        return [params1, params2]
