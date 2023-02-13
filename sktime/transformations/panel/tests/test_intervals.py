@@ -1,13 +1,19 @@
 # -*- coding: utf-8 -*-
 """RandomIntervals test code."""
 import numpy as np
+import pytest
 from numpy import testing
 
 from sktime.datasets import load_basic_motions
 from sktime.transformations.panel.random_intervals import RandomIntervals
 from sktime.transformations.panel.supervised_intervals import SupervisedIntervals
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("numba", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
 def test_random_intervals_on_basic_motions():
     """Test of RandomIntervals on basic motions data."""
     # load basic motions data
@@ -24,6 +30,10 @@ def test_random_intervals_on_basic_motions():
     )
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("numba", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
 def test_supervised_intervals_on_basic_motions():
     """Test of SupervisedIntervals on basic motions data."""
     # load basic motions data
