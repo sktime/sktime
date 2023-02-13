@@ -52,6 +52,18 @@ Forecasting
 * forecasters will now consistently preserve the ``name`` attribute in ``pd.Series`` passed.
   Previously, named ``pd.Series`` were not fully supported.
 
+Deprecations and removals
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Dependencies
+^^^^^^^^^^^^
+
+* ``numba`` will change from core dependency to soft dependency in ``sktime 0.18.0``.
+  To ensure functioning of setups of ``sktime`` code dependent on ``numba`` based estimators
+  going forward, ensure to install ``numba`` in the environment explicitly,
+  or install the ``all_extras`` soft dependency set which will continue to contain ``numba``.
+  Besides this, ``numba`` dependent estimators will function identically as before.
+
 Enhancements
 ~~~~~~~~~~~~
 
