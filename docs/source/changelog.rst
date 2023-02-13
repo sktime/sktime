@@ -20,9 +20,11 @@ Version 0.16.1 - 2023-02-13
 Highlights
 ~~~~~~~~~~
 
-* Experimental python 3.11 support. Full support is planned with 0.17.0, testing and feedback welcome.
+* Experimental python 3.11 support. Full python 3.11 support is planned with 0.17.0.
 * Experimental benchmarking module based on ``kotsu``, forecasting (:pr:`2977`) :user:`alex-hh`, :user:`dbcerigo`
 * substantial speed-ups for hierarchical data (:pr:`4193`, :pr:`4194`, :pr:`4195`, :pr:`4196`) :user:`hoesler`
+
+Testing and feedback are welcome for python 3.11 and the benchmarking module.
 
 Dependency changes
 ~~~~~~~~~~~~~~~~~~
@@ -37,6 +39,12 @@ Dependency changes
 
 Core interface changes
 ~~~~~~~~~~~~~~~~~~~~~~
+
+Benchmarking
+^^^^^^^^^^^^
+
+* the ``kotsu``-based benchmarking module introduces a new design and syntax
+  for benchmarking forecasters.
 
 Forecasting
 ^^^^^^^^^^^
