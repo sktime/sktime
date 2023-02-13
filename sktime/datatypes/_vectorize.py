@@ -42,13 +42,11 @@ class VectorizedDF:
 
     Methods
     -------
-    self[i] or self.__getitem__(i)
-        Returns i-th Series/Panel (depending on iterate_as) in X
+    iter(self) or self.__iter__()
+        Iterates over each Series/Panel (depending on iterate_as) in X
         as pandas.DataFrame with Index or MultiIndex (in sktime pandas format)
-    len(self) or self.__len__
-        returns number of Series/Panel in X
-    get_iter_indices()
-        Returns pandas.(Multi)Index that are iterated over
+    len(self) or self.__len__()
+        returns number of Series/Panels in X
     reconstruct(self, df_list, convert_back=False)
         Takes iterable df_list and returns as an object of is_scitype.
         Used to obtain original format after applying operations to self iterated
@@ -336,7 +334,7 @@ class VectorizedDF:
 
         Parameters
         ----------
-        df_list : iterable of objects of same type and sequence as __getitem__ returns.
+        df_list : iterable of objects of same type and sequence as __iter__ returns.
             can be self, but will in general be another object to be useful.
             Example: [some_operation(df) for df in self] that leaves types the same
         convert_back : bool, optional, default = False
@@ -505,7 +503,7 @@ class VectorizedDF:
         return_type : str, one of "pd.DataFrame" or "list"
             the return will be of this type;
             if `pd.DataFrame`, with row/col indices being `self.get_iter_indices()`
-            if `list`, entries in sequence corresponding to `self__getitem__`
+            if `list`, entries in sequence corresponding to `self__iter__`
         rowname_default : str, optional, default="estimators"
             used as index name of single row if no row vectorization is performed
         colname_default : str, optional, default="estimators"
