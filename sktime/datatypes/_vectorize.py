@@ -4,10 +4,8 @@
 
 Contains VectorizedDF class.
 """
-import itertools
 from itertools import product
 
-import numpy as np
 import pandas as pd
 
 from sktime.datatypes._check import check_is_scitype, mtype
@@ -77,41 +75,36 @@ class VectorizedDF:
                 'is_scitype must be None, "Hierarchical", "Panel", or "Series" ',
                 f"found: {is_scitype}",
             )
+        self.iterate_as = iterate_as
 
         self.is_scitype = is_scitype
         self.X_orig_mtype = X_orig_mtype
 
-        self._check_iterate_as(iterate_as)
+        if iterate_as not in self.SERIES_SCITYPES:
+            raise ValueError(
+                f'iterate_as must be "Series", "Panel", or "Hierarchical", '
+                f"found: {iterate_as}"
+            )
         self.iterate_as = iterate_as
 
-        self._check_iterate_cols(iterate_cols)
+        if is_scitype == "Panel" and iterate_as == "Hierarchical":
+            raise ValueError(
+                'If is_scitype is "Panel", then iterate_as must be "Series" or "Panel"'
+            )
+
+        if is_scitype == "Series" and iterate_as != "Series":
+            raise ValueError(
+                'If is_scitype is "Series", then iterate_as must be "Series"'
+            )
+
+        if iterate_cols not in [True, False]:
+            raise ValueError(f"iterate_cols must be a boolean, found {iterate_as}")
         self.iterate_cols = iterate_cols
 
         self.converter_store = dict()
 
         self.X_multiindex = self._init_conversion(X)
         self.iter_indices = self._init_iter_indices()
-
-        self.shape = self._iter_shape()
-
-    def _check_iterate_cols(self, iterate_cols):
-        if iterate_cols not in [True, False]:
-            raise ValueError(f"iterate_cols must be a boolean, found {iterate_cols}")
-
-    def _check_iterate_as(self, iterate_as):
-        if iterate_as not in self.SERIES_SCITYPES:
-            raise ValueError(
-                f'iterate_as must be "Series", "Panel", or "Hierarchical", '
-                f"found: {iterate_as}"
-            )
-        if self.is_scitype == "Panel" and iterate_as == "Hierarchical":
-            raise ValueError(
-                'If is_scitype is "Panel", then iterate_as must be "Series" or "Panel"'
-            )
-        if self.is_scitype == "Series" and iterate_as != "Series":
-            raise ValueError(
-                'If is_scitype is "Series", then iterate_as must be "Series"'
-            )
 
     def _coerce_to_df(self, obj, scitype=None, store=None, store_behaviour=None):
         """Coerce obj to a pandas multiindex format."""
@@ -247,7 +240,15 @@ class VectorizedDF:
 
     def __len__(self):
         """Return number of indices to iterate over."""
-        return np.prod(self.shape)
+        row_ix, col_ix = self.iter_indices
+        if row_ix is None and col_ix is None:
+            return 1
+        if row_ix is None:
+            return len(col_ix)
+        if col_ix is None:
+            return len(row_ix)
+        # if row_ix and col_ix are both not None
+        return len(row_ix) * len(col_ix)
 
     def __getitem__(self, i: int):
         """Return the i-th element iterated over in vectorization."""
@@ -284,9 +285,9 @@ class VectorizedDF:
         elif row_ind is None:
             res = X[col_ind]
         else:
-            res = X.loc[row_ind, col_ind]
+            res = X[col_ind].loc[row_ind]
         res = _enforce_index_freq(res)
-        return res.copy()
+        return res
 
     def _get_item_indexer(self, i: int, X=None):
         """Get the i-th indexer from _iter_indices.
@@ -308,118 +309,6 @@ class VectorizedDF:
         elif not isinstance(col_ind, pd.Index):
             col_ind = [col_ind]
         return row_ind, col_ind
-
-    def __iter__(self):
-        """Iterate over all instances.
-
-        Returns
-        -------
-        An iterator over all instances
-        """
-        return (
-            group
-            for _, _, group in self.items(
-                iterate_as=self.iterate_as, iterate_cols=self.iterate_cols
-            )
-        )
-
-    def items(self, iterate_as=None, iterate_cols=None):
-        """Iterate over (group name, column name, instance) tuples.
-
-        Iteration order is "depth first" with columns being the branches and groups the
-        root nodes. Groups are ordered by group keys.
-
-        Row name is null if iterate_as is the same as scitype of data.
-        Col name is null if iterate_cols is False.
-
-        Parameters
-        ----------
-        iterate_as : str ("Series", "Panel"), optional, default=self.iterate_as
-            scitype of the iteration
-            for instance, if X is Panel and iterate_as is "Series"
-                then the class will iterate over individual Series in X
-            or, if X is Hierarchical and iterate_as is "Panel"
-                then the class will iterate over individual Panels in X
-                    (Panel = flat/non-hierarchical collection of Series)
-        iterate_cols : boolean, optional, default=self.iterate_cols
-            whether to iterate over columns, if true, the class will iterate over
-            columns
-
-        Returns
-        -------
-        An iterator over all (row name, column name, instance) tuples.
-        """
-        if iterate_as is None:
-            iterate_as = self.iterate_as
-        self._check_iterate_as(iterate_as)
-
-        if iterate_cols is None:
-            iterate_cols = self.iterate_cols
-        self._check_iterate_cols(iterate_cols)
-
-        def _iter_cols(inst, group_name=None):
-            if iterate_cols:
-                for col in inst.columns:
-                    yield group_name, col, _enforce_index_freq(inst[[col]])
-            else:
-                yield group_name, None, _enforce_index_freq(inst)
-
-        iter_levels = self._iter_levels(iterate_as)
-        is_self_iter = len(iter_levels) == self.X_multiindex.index.nlevels
-
-        if is_self_iter:
-            yield from _iter_cols(self.X_multiindex)
-        else:
-            for name, group in self.X_multiindex.groupby(level=iter_levels):
-                yield from _iter_cols(group.droplevel(iter_levels), group_name=name)
-
-    def _iter_levels(self, iterate_as):
-        """Get the levels to group by for iteration using iterate_as.
-
-        Parameters
-        ----------
-        iterate_as: The scitype of iteration elements
-
-        Returns
-        -------
-        A list of multiindex levels to group by for iteration
-        """
-        iter_levels = 0
-        if self.is_scitype == "Panel":
-            if iterate_as == "Series":
-                iter_levels = 1
-        if self.is_scitype == "Hierarchical":
-            if iterate_as == "Panel":
-                iter_levels = 2
-            elif iterate_as == "Series":
-                iter_levels = 1
-        return list(range(self.X_multiindex.index.nlevels - iter_levels))
-
-    def _iter_shape(self, iterate_as=None, iterate_cols=None):
-        """Get the number of groups and columns to iterate over.
-
-        Parameters
-        ----------
-        iterate_as: the scitype to iterate over (default self.iterate_as)
-        iterate_cols: if to iterate columns (defaults to self.iterate_cols)
-
-        Returns
-        -------
-        A tuple of the number of groups and columns to iterate over
-        """
-        if iterate_as is None:
-            iterate_as = self.iterate_as
-
-        if iterate_cols is None:
-            iterate_cols = self.iterate_cols
-
-        iter_levels = self._iter_levels(iterate_as)
-        is_self_iter = len(iter_levels) == self.X_multiindex.index.nlevels
-
-        return (
-            1 if is_self_iter else self.X_multiindex.groupby(level=iter_levels).ngroups,
-            len(self.X_multiindex.columns) if iterate_cols else 1,
-        )
 
     def as_list(self):
         """Shorthand to retrieve self (iterator) as list."""
@@ -543,6 +432,32 @@ class VectorizedDF:
 
             return X_reconstructed_orig_format
 
+    def _vectorize_slice(self, other, i, vectorize_cols=True):
+        """Get i-th vectorization slice from other.
+
+        Parameters
+        ----------
+        other : any object
+            object to take vectorization slice of
+        i : integer
+            index of vectorization slice to take
+        vectorize_cols : boolean, optional, default=True
+            whether to vectorize cols
+
+        Returns
+        -------
+        i-th vectorization slice of `other`
+            if `other` is not `VectorizedDF`, reference to `other`
+            if `other` is VectorizedDF`, returns `other[i]`
+        """
+        if isinstance(other, VectorizedDF):
+            row_ind, col_ind = self._get_item_indexer(i=i, X=other)
+            if not vectorize_cols:
+                col_ind = None
+            return self._get_X_at_index(row_ind=row_ind, col_ind=col_ind, X=other)
+        else:
+            return other
+
     def vectorize_est(
         self,
         estimator,
@@ -631,86 +546,49 @@ class VectorizedDF:
         if args_rowvec is None:
             args_rowvec = {}
 
-        if return_type not in {"pd.DataFrame", "list"}:
+        row_idx, col_idx = self.get_iter_indices()
+        if row_idx is None:
+            row_idx = [rowname_default]
+        if col_idx is None:
+            col_idx = [colname_default]
+
+        if return_type == "pd.DataFrame":
+            est_frame_new = pd.DataFrame(index=row_idx, columns=col_idx)
+        elif return_type == "list":
+            est_frame_new = []
+        else:
             raise ValueError('return_type must be one of "pd.DataFrame" or "list"')
 
-        if varname_of_self and not isinstance(varname_of_self, str):
-            raise TypeError("varname_of_self must be a string")
+        if varname_of_self is not None and isinstance(varname_of_self, str):
+            kwargs[varname_of_self] = self
 
-        def explode(d: dict, iterate_as, iterate_cols):
-            if not d:
-                yield from itertools.cycle([{}])
+        def vec_dict(d, i, vectorize_cols=True):
+            def fun(v):
+                return self._vectorize_slice(v, i=i, vectorize_cols=vectorize_cols)
 
-            def _to_iter(e):
-                if isinstance(e, VectorizedDF):
-                    it = (
-                        inst
-                        for _, _, inst in e.items(
-                            iterate_as=iterate_as, iterate_cols=iterate_cols
-                        )
-                    )
+            return {k: fun(v) for k, v in d.items()}
 
-                    # repeat group for each column
-                    if self.iterate_cols and not iterate_cols:
-                        it = itertools.chain.from_iterable(
-                            itertools.repeat(el, self.shape[1]) for el in it
-                        )
+        for i in range(len(self)):
+            row_ind, col_ind = self.get_iloc_indexer(i)
 
-                    return it
-                else:
-                    return itertools.cycle([e])
-
-            keys, values_with_vec = zip(*d.items())
-            for values_inst in zip(*map(_to_iter, values_with_vec)):
-                yield dict(zip(keys, values_inst))
-
-        if isinstance(estimator, pd.DataFrame):
-            if estimator.shape != self.shape:
-                raise ValueError(
-                    f"The estimator data frame must have the same shape as self. "
-                    f"Expected {self.shape}, found {estimator.shape}"
-                )
-            estimators = (
-                cell for _, row in estimator.iterrows() for cell in row.values
-            )
-        else:
-            estimators = itertools.cycle([estimator])
-
-        ret = []
-
-        for ((group_name, col_name, group), args_i, args_i_rowvec, est_i) in zip(
-            self.items(),
-            explode(args, iterate_as=self.iterate_as, iterate_cols=self.iterate_cols),
-            explode(args_rowvec, iterate_as=self.iterate_as, iterate_cols=False),
-            estimators,
-        ):
+            args_i = vec_dict(args, i=i, vectorize_cols=True)
+            args_i_rowvec = vec_dict(args_rowvec, i=i, vectorize_cols=False)
             args_i.update(args_i_rowvec)
 
-            if varname_of_self is not None:
-                args_i[varname_of_self] = group
+            if not isinstance(estimator, pd.DataFrame):
+                est_i = estimator
+            else:
+                est_i = estimator.iloc[row_ind].iloc[col_ind]
 
             est_i_method = getattr(est_i, method)
             est_i_result = est_i_method(**args_i)
 
-            if group_name is None:
-                group_name = rowname_default
-            if col_name is None:
-                col_name = colname_default
+            if return_type == "pd.DataFrame":
+                est_frame_new.iloc[row_ind].iloc[col_ind] = est_i_result
+            else:  # if return_type == "list"
+                est_frame_new += [est_i_result]
 
-            ret.append((group_name, col_name, est_i_result))
-
-        if return_type == "pd.DataFrame":
-            df = pd.DataFrame(ret).pivot(index=0, columns=1, values=2)
-            # TODO: add test case for tuple index
-            try:
-                df.index = pd.MultiIndex.from_tuples(df.index)
-            except TypeError:
-                pass
-            except ValueError:
-                pass
-            return df
-        else:  # if return_type == "list"
-            return [result for _, _, result in ret]
+        return est_frame_new
 
 
 def _enforce_index_freq(item: pd.Series) -> pd.Series:

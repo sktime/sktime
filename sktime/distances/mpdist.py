@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
-"""MP distance."""
 
 import numpy as np
 
 
 def sliding_dot_products(q, t, q_len, t_len):
-    """Compute the sliding dot products between a query and a time series.
+    """
+    Computes the sliding dot products between a query and a time series.
 
     Parameters
     ----------
@@ -23,6 +23,7 @@ def sliding_dot_products(q, t, q_len, t_len):
         dot_prod: numpy.array
                     Sliding dot products between q and t.
     """
+
     # Reversing query and padding both query and time series
     t_padded = np.pad(t, (0, t_len))
     q_reversed = np.flipud(q)
@@ -44,7 +45,8 @@ def sliding_dot_products(q, t, q_len, t_len):
 
 
 def calculate_distance_profile(dot_prod, q_mean, q_std, t_mean, t_std, q_len, n_t_subs):
-    """Calculate the distance profile for the given query.
+    """
+    Calculates the distance profile for the given query.
 
     Parameters
     ----------
@@ -70,6 +72,7 @@ def calculate_distance_profile(dot_prod, q_mean, q_std, t_mean, t_std, q_len, n_
         d: numpy.array
             Distance profile of query q.
     """
+
     d = [
         2
         * q_len
@@ -86,7 +89,8 @@ def calculate_distance_profile(dot_prod, q_mean, q_std, t_mean, t_std, q_len, n_
 
 
 def stomp_ab(ts1, ts2, m):
-    """STOMP implementation for AB similarity join.
+    """
+    STOMP implementation for AB similarity join.
 
     Parameters
     ----------
@@ -105,6 +109,7 @@ def stomp_ab(ts1, ts2, m):
         ip: numpy.array
             Array with the index of the nearest neighbor of ts1 in ts2.
     """
+
     len1 = len(ts1)
     len2 = len(ts2)
 
@@ -160,7 +165,8 @@ def stomp_ab(ts1, ts2, m):
 
 
 def mpdist(ts1, ts2, m=0):
-    """Evaluate MP distance.
+    """
+    MPDist implementation.
 
     Parameters
     ----------
@@ -176,6 +182,7 @@ def mpdist(ts1, ts2, m=0):
         mpdist: float
             Distance between the two time series.
     """
+
     len1 = len(ts1)
     len2 = len(ts2)
 

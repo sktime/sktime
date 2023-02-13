@@ -95,7 +95,6 @@ class KNeighborsTimeSeriesRegressor(BaseRegressor):
         "capability:unequal_length": True,
         "capability:missing_values": True,
         "X_inner_mtype": ["pd-multiindex", "numpy3D"],
-        "python_dependencies": "numba",
     }
 
     def __init__(

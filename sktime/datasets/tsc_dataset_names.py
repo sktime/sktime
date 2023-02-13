@@ -139,7 +139,7 @@ univariate = [
     "SmoothSubspace",
     "SonyAIBORobotSurface1",
     "SonyAIBORobotSurface2",
-    "StarLightCurves",
+    "StarlightCurves",
     "Strawberry",
     "SwedishLeaf",
     "Symbols",

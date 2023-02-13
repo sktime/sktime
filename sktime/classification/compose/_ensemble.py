@@ -615,15 +615,15 @@ class WeightedEnsembleClassifier(_HeterogenousMetaEstimator, BaseClassifier):
     >>> from sktime.classification.dummy import DummyClassifier
     >>> from sktime.classification.kernel_based import RocketClassifier
     >>> from sktime.datasets import load_unit_test
-    >>> X_train, y_train = load_unit_test(split="train") # doctest: +SKIP
-    >>> X_test, y_test = load_unit_test(split="test") # doctest: +SKIP
+    >>> X_train, y_train = load_unit_test(split="train")
+    >>> X_test, y_test = load_unit_test(split="test")
     >>> clf = WeightedEnsembleClassifier(
     ...     [DummyClassifier(), RocketClassifier(num_kernels=100)],
     ...     weights=2,
-    ... ) # doctest: +SKIP
-    >>> clf.fit(X_train, y_train) # doctest: +SKIP
+    ... )
+    >>> clf.fit(X_train, y_train)
     WeightedEnsembleClassifier(...)
-    >>> y_pred = clf.predict(X_test) # doctest: +SKIP
+    >>> y_pred = clf.predict(X_test)
     """
 
     _tags = {
@@ -789,33 +789,23 @@ class WeightedEnsembleClassifier(_HeterogenousMetaEstimator, BaseClassifier):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
-        from sktime.classification.dummy import DummyClassifier
-        from sktime.utils.validation._dependencies import _check_soft_dependencies
+        from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
+        from sktime.classification.kernel_based import RocketClassifier
 
-        params0 = {"classifiers": [DummyClassifier()]}
+        params1 = {
+            "classifiers": [
+                KNeighborsTimeSeriesClassifier.create_test_instance(),
+                RocketClassifier.create_test_instance(),
+            ],
+            "weights": [42, 1],
+        }
 
-        if _check_soft_dependencies("numba", severity="none"):
-            from sktime.classification.distance_based import (
-                KNeighborsTimeSeriesClassifier,
-            )
-            from sktime.classification.kernel_based import RocketClassifier
-
-            params1 = {
-                "classifiers": [
-                    KNeighborsTimeSeriesClassifier.create_test_instance(),
-                    RocketClassifier.create_test_instance(),
-                ],
-                "weights": [42, 1],
-            }
-
-            params2 = {
-                "classifiers": [
-                    KNeighborsTimeSeriesClassifier.create_test_instance(),
-                    RocketClassifier.create_test_instance(),
-                ],
-                "weights": 2,
-                "cv": 3,
-            }
-            return [params0, params1, params2]
-        else:
-            return params0
+        params2 = {
+            "classifiers": [
+                KNeighborsTimeSeriesClassifier.create_test_instance(),
+                RocketClassifier.create_test_instance(),
+            ],
+            "weights": 2,
+            "cv": 3,
+        }
+        return [params1, params2]

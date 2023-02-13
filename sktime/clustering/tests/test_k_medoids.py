@@ -1,12 +1,10 @@
 # -*- coding: utf-8 -*-
 """Tests for time series k-medoids."""
 import numpy as np
-import pytest
 from sklearn import metrics
 
 from sktime.clustering.k_medoids import TimeSeriesKMedoids
 from sktime.datasets import load_basic_motions
-from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 expected_results = {
     "medoids": [
@@ -107,10 +105,6 @@ expected_labels = {
 }
 
 
-@pytest.mark.skipif(
-    not _check_soft_dependencies("numba", severity="none"),
-    reason="skip test if required soft dependency not available",
-)
 def test_kmedoids():
     """Test implementation of Kmedoids."""
     X_train, y_train = load_basic_motions(split="train")

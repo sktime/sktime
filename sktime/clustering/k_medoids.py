@@ -60,8 +60,6 @@ class TimeSeriesKMedoids(TimeSeriesLloyds):
         Number of iterations run.
     """
 
-    _tags = {"python_dependencies": "numba"}
-
     def __init__(
         self,
         n_clusters: int = 8,

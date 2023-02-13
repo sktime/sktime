@@ -1125,12 +1125,7 @@ class BaseTransformer(BaseEstimator):
         # fit-like methods: run method; clone first if fit
         if methodname in FIT_METHODS:
             if methodname == "fit":
-                transformers_ = X.vectorize_est(
-                    self,
-                    method="clone",
-                    rowname_default="transformers",
-                    colname_default="transformers",
-                )
+                transformers_ = X.vectorize_est(self, method="clone")
             else:
                 transformers_ = self.transformers_
 
@@ -1157,12 +1152,7 @@ class BaseTransformer(BaseEstimator):
 
             else:
                 # if fit_is_empty: don't store transformers, run fit/transform in one
-                transformers_ = X.vectorize_est(
-                    self,
-                    method="clone",
-                    rowname_default="transformers",
-                    colname_default="transformers",
-                )
+                transformers_ = X.vectorize_est(self, method="clone")
                 transformers_ = X.vectorize_est(transformers_, method="fit", **kwargs)
 
             # transform the i-th series/panel with the i-th stored transformer

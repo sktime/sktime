@@ -1751,12 +1751,7 @@ class BaseForecaster(BaseEstimator):
             self._yvec = y
 
             if methodname == "fit":
-                forecasters_ = y.vectorize_est(
-                    self,
-                    method="clone",
-                    rowname_default="forecasters",
-                    colname_default="forecasters",
-                )
+                forecasters_ = y.vectorize_est(self, method="clone")
             else:
                 forecasters_ = self.forecasters_
 

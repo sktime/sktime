@@ -303,31 +303,15 @@ class ClustererPipeline(_HeterogenousMetaEstimator, BaseClusterer):
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
         # imports
-        from sktime.clustering.dbscan import TimeSeriesDBSCAN
         from sktime.clustering.k_means import TimeSeriesKMeans
         from sktime.transformations.series.exponent import ExponentTransformer
-        from sktime.utils.validation._dependencies import _check_estimator_deps
 
-        params = []
+        t1 = ExponentTransformer(power=2)
+        t2 = ExponentTransformer(power=0.5)
+        c = TimeSeriesKMeans(random_state=42)
 
         # construct without names
-        t1 = ExponentTransformer(power=2)
-        c = TimeSeriesDBSCAN()
-
-        params1 = {"transformers": [t1], "clusterer": c}
-        params = params + [params1]
-
-        if _check_estimator_deps(TimeSeriesKMeans, severity="none"):
-
-            t1 = ExponentTransformer(power=2)
-            t2 = ExponentTransformer(power=0.5)
-            c = TimeSeriesKMeans(random_state=42)
-
-            params2 = {"transformers": [t1, t2], "clusterer": c}
-
-            params = params + [params2]
-
-        return params
+        return {"transformers": [t1, t2], "clusterer": c}
 
 
 class SklearnClustererPipeline(ClustererPipeline):

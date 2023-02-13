@@ -71,21 +71,20 @@ class Catch22Classifier(_DelegatedClassifier):
     >>> from sklearn.ensemble import RandomForestClassifier
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True) # doctest: +SKIP
+    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
     >>> clf = Catch22Classifier(
     ...     estimator=RandomForestClassifier(n_estimators=5),
     ...     outlier_norm=True,
-    ... ) # doctest: +SKIP
-    >>> clf.fit(X_train, y_train) # doctest: +SKIP
+    ... )
+    >>> clf.fit(X_train, y_train)
     Catch22Classifier(...)
-    >>> y_pred = clf.predict(X_test) # doctest: +SKIP
+    >>> y_pred = clf.predict(X_test)
     """
 
     _tags = {
         "capability:multivariate": True,
         "capability:multithreading": True,
         "classifier_type": "feature",
-        "python_dependencies": "numba",
     }
 
     def __init__(
