@@ -14,19 +14,6 @@ from sklearn import preprocessing
 from sklearn.utils import check_random_state
 
 from sktime.transformations.base import BaseTransformer
-from sktime.utils.numba.general import z_normalise_series_3d
-from sktime.utils.numba.stats import (
-    fisher_score,
-    row_count_above_mean,
-    row_count_mean_crossing,
-    row_iqr,
-    row_mean,
-    row_median,
-    row_numba_max,
-    row_numba_min,
-    row_slope,
-    row_std,
-)
 from sktime.utils.validation import check_n_jobs
 
 
@@ -114,6 +101,7 @@ class SupervisedIntervals(BaseTransformer):
         "fit_is_empty": False,
         "capability:unequal_length": False,
         "requires_y": True,
+        "python_dependencies": "numba",
     }
 
     def __init__(
@@ -202,6 +190,8 @@ class SupervisedIntervals(BaseTransformer):
                 then the return is a `Panel` object of type `pd-multiindex`
                 Example: i-th instance of the output is the i-th window running over `X`
         """
+        from sktime.utils.numba.general import z_normalise_series_3d
+
         self.reset()
         if y is None:
             raise ValueError("SupervisedIntervals requires `y` in `fit`.")
@@ -247,6 +237,8 @@ class SupervisedIntervals(BaseTransformer):
         return X_out
 
     def _fit(self, X, y=None):
+        from sktime.utils.numba.general import z_normalise_series_3d
+
         y = self._fit_setup(X, y)
         X_norm = z_normalise_series_3d(X)
 
@@ -294,6 +286,18 @@ class SupervisedIntervals(BaseTransformer):
         return Xt
 
     def _fit_setup(self, X, y):
+        from sktime.utils.numba.stats import (
+            row_count_above_mean,
+            row_count_mean_crossing,
+            row_iqr,
+            row_mean,
+            row_median,
+            row_numba_max,
+            row_numba_min,
+            row_slope,
+            row_std,
+        )
+
         self.n_instances_, self.n_dims_, self.series_length_ = X.shape
 
         if self.n_instances_ <= 1:
@@ -401,6 +405,8 @@ class SupervisedIntervals(BaseTransformer):
     def _supervised_search(
         self, X, y, ini_idx, feature, dim, X_ori, rng, keep_transform
     ):
+        from sktime.utils.numba.stats import fisher_score
+
         intervals = []
         Xt = np.empty((X.shape[0], 0)) if keep_transform else None
 
@@ -499,14 +505,29 @@ class SupervisedIntervals(BaseTransformer):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        params1 = {
-            "n_intervals": 1,
-            "features": [row_mean, row_numba_min, row_numba_max],
-            "min_interval_length": 4,
-        }
-        params2 = {
-            "n_intervals": 2,
-            "randomised_split_point": False,
-            "features": row_median,
-        }
-        return [params1, params2]
+        from sktime.utils.validation._dependencies import _check_soft_dependencies
+
+        params0 = {}
+
+        if _check_soft_dependencies("numba", severity="none"):
+            from sktime.utils.numba.stats import (
+                row_mean,
+                row_median,
+                row_numba_max,
+                row_numba_min,
+            )
+
+            params1 = {
+                "n_intervals": 1,
+                "features": [row_mean, row_numba_min, row_numba_max],
+                "min_interval_length": 4,
+            }
+            params2 = {
+                "n_intervals": 2,
+                "randomised_split_point": False,
+                "features": row_median,
+            }
+            return [params0, params1, params2]
+
+        else:
+            return params0

@@ -19,7 +19,6 @@ from sktime.base._base import _clone_estimator
 from sktime.classification.base import BaseClassifier
 from sktime.classification.sklearn._continuous_interval_tree import (
     ContinuousIntervalTree,
-    _drcif_feature,
 )
 from sktime.transformations.panel.catch22 import Catch22
 
@@ -109,19 +108,20 @@ class CanonicalIntervalForest(BaseClassifier):
     >>> from sktime.classification.interval_based import CanonicalIntervalForest
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
+    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True) # doctest: +SKIP
     >>> clf = CanonicalIntervalForest(
     ...     n_estimators=3, n_intervals=2, att_subsample_size=2
-    ... )
-    >>> clf.fit(X_train, y_train)
+    ... ) # doctest: +SKIP
+    >>> clf.fit(X_train, y_train) # doctest: +SKIP
     CanonicalIntervalForest(...)
-    >>> y_pred = clf.predict(X_test)
+    >>> y_pred = clf.predict(X_test) # doctest: +SKIP
     """
 
     _tags = {
         "capability:multivariate": True,
         "capability:multithreading": True,
         "classifier_type": "interval",
+        "python_dependencies": "numba",
     }
 
     def __init__(
@@ -241,6 +241,10 @@ class CanonicalIntervalForest(BaseClassifier):
         return output
 
     def _fit_estimator(self, X, y, idx):
+        from sktime.classification.sklearn._continuous_interval_tree_numba import (
+            _drcif_feature,
+        )
+
         c22 = Catch22(outlier_norm=True)
         rs = 255 if self.random_state == 0 else self.random_state
         rs = (
@@ -308,6 +312,10 @@ class CanonicalIntervalForest(BaseClassifier):
         return [tree, intervals, dims, atts]
 
     def _predict_proba_for_estimator(self, X, classifier, intervals, dims, atts):
+        from sktime.classification.sklearn._continuous_interval_tree_numba import (
+            _drcif_feature,
+        )
+
         c22 = Catch22(outlier_norm=True)
         if isinstance(self._base_estimator, ContinuousIntervalTree):
             return classifier._predict_proba_cif(X, c22, intervals, dims, atts)
