@@ -318,7 +318,9 @@ class VectorizedDF:
 
         Returns
         -------
-        An generator over all instances
+        A generator over all slices/instances iterated over.
+        i-th element corresponds to i-th vectorization slice, rows first then cols
+        Same as iterating over 2nd tuple element of self.items()
         """
         return (
             group
