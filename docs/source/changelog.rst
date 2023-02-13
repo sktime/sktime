@@ -21,6 +21,8 @@ Highlights
 ~~~~~~~~~~
 
 * Experimental python 3.11 support. Full support is planned with 0.17.0, testing and feedback welcome.
+* Experimental benchmarking module based on ``kotsu``, forecasting (:pr:`2977`) :user:`alex-hh`, :user:`dbcerigo`
+* substantial speed-ups for hierarchical data (:pr:`4193`, :pr:`4194`, :pr:`4195`, :pr:`4196`) :user:`hoesler`
 
 Dependency changes
 ~~~~~~~~~~~~~~~~~~
@@ -33,11 +35,82 @@ Dependency changes
   Estimators dependent on ``numba`` will function exactly as before if ``numba``
   is present in the python environment.
 
-
 Core interface changes
 ~~~~~~~~~~~~~~~~~~~~~~
 
+Forecasting
+^^^^^^^^^^^
 
+* forecasters will now consistently preserve the ``name`` attribute in ``pd.Series`` passed.
+  Previously, named ``pd.Series`` were not fully supported.
+
+Enhancements
+~~~~~~~~~~~~
+
+Benchmarking
+^^^^^^^^^^^^
+
+* [ENH] Benchmarking interface v2 based on ``kotsu`` package (:pr:`2977`) :user:`alex-hh`, :user:`dbcerigo`
+
+Data types, checks, conversions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] Improve vectorization performance (:pr:`4195`) :user:`hoesler`
+* [ENH] Improve panel mtype check performance (:pr:`4196`) :user:`hoesler`, :user:`danbartl`
+
+Forecasting
+^^^^^^^^^^^
+
+* [ENH] fixes for forecasters to retain ``name`` attribute in ``predict`` (:pr:`4161`) :user:`fkiraly`
+* [ENH] improved/fixed ``scoring`` argument for forecasting tuners (:pr:`4178`) :user:`fkiraly`
+* [ENH] test ``Prophet`` with ``pd.DatetimeIndex`` (:pr:`4183`) :user:`fkiraly`
+* [ENH] test that forecasters preserve ``name`` attr of ``pd.Series`` (:pr:`4157`) :user:`fkiraly`
+* [ENH] improved/fixed ``scoring`` argument for forecasting tuners (:pr:`4178`) :user:`fkiraly`
+
+Transformations
+^^^^^^^^^^^^^^^
+
+* [ENH] add native multi-index/hierarchical data support to ``Imputer`` (:pr:`4194`) :user:`hoesler`
+* [ENH] Add panel support to ``ColSelect`` transformer (:pr:`4193`) :user:`hoesler`
+
+Fixes
+~~~~~
+
+* [BUG] fixes for forecasters to retain ``name`` attribute in ``predict`` (:pr:`4161`) :user:`fkiraly`
+* [BUG] ensure ``pd.Series`` ``name`` attribute is preserved in conversion to/from ``pd.DataFrame`` and ``np.ndarray``, as ``Series`` scitype (:pr:`4150`) :user:`fkiraly`
+* [BUG] fix race condition in ``tsfile`` tests (:pr:`4192`) :user:`hoesler`
+* [BUG] fix ``nlag`` logic in ``SeasonalityACF`` and ``SeasonalityACFqstat`` (:pr:`4171`) :user:`fkiraly`
+* [BUG] ``AutoETS``, ``UnobservedComponents``: fix ``predict_interval`` for integer based index not starting at zero (:pr:`4180`) :user:`fkiraly`
+* [BUG] Correct ``'StarlightCurves'`` data set identifier string, to 'StarLightCurves' (:pr:`4222`) :user:`NeuralNut`
+
+Maintenance
+~~~~~~~~~~~
+
+* [MNT] Fix merge conflicts and formatting in ``.all-contributorsrc`` (:pr:`4205`) :user:`fkiraly`
+
+Documentation
+~~~~~~~~~~~~~
+
+* [DOC] Fix rendering of examples section in ``Lag`` docstring (:pr:`3960`) :user:`aiwalter`
+* [DOC] improved docstring for ``dtw_distance`` (:pr:`4028`) :user:`fkiraly`, :user:`matthewmiddlehurst`
+* [DOC] remove slack links in favour of discord (:pr:`4202`) :user:`fkiraly`
+* [DOC] fix tables in transformer ``transform`` docstrings - change md to rst (:pr:`4199`) :user:`romanlutz`
+* [DOC] remove gap between pandas and ``DataFrame`` | ``Series`` in classification notebook (#4200) (:pr:`4200`) :user:`romanlutz`
+* [DOC] Fixed table in ``CI`` overview documentation (:pr:`4198`) :user:`pranavvp16`
+
+Contributors
+~~~~~~~~~~~~
+
+:user:`aiwalter`,
+:user:`alex-hh`,
+:user:`danbartl`,
+:user:`dbcerigo`,
+:user:`fkiraly`,
+:user:`hoesler`,
+:user:`matthewmiddlehurst`,
+:user:`NeuralNut`,
+:user:`pranavvp16`,
+:user:`romanlutz`
 
 Version 0.16.0 - 2023-01-30
 ---------------------------
