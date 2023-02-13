@@ -140,7 +140,7 @@ class SeasonalityACF(BaseParamFitter):
 
         candidate_sp = self.candidate_sp
         if candidate_sp is None:
-            candidate_sp = range(2, nlags)
+            candidate_sp = range(2, nlags + 1)
 
         fft = self.fft
         missing = self.missing
