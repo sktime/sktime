@@ -382,7 +382,7 @@ The CC has regular public meetings that the full community is welcome to attend.
 
 For more details about our meetings, please go to our `community-council repository <https://github.com/sktime/community-council/>`__.
 
-To contact the CC directly, please send an email to info@sktime.org.
+To contact the CC directly, please send an email to sktime.toolbox@gmail.com.
 
 .. _cc-observers:
 
