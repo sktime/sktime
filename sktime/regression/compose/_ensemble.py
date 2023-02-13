@@ -167,6 +167,10 @@ class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
             sharing both Classifier and Regressor parameters.
     """
 
+    _tags = {
+        "X_inner_mtype": "nested_univ",  # nested pd.DataFrame
+    }
+
     def __init__(
         self,
         estimator=None,
@@ -218,6 +222,27 @@ class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
 
         # We need to add is-fitted state when inheriting from scikit-learn
         self._is_fitted = False
+
+    def fit(self, X, y, **kwargs):
+        """Wrap fit to call BaseRegressor.fit.
+
+        This is a fix to get around the problem with multiple inheritance. The
+        problem is that if we just override _fit, this class inherits the fit from
+        the sklearn class BaseTimeSeriesForest. This is the simplest solution,
+        albeit a little hacky.
+        """
+        return BaseRegressor.fit(self, X=X, y=y, **kwargs)
+
+    def predict(self, X, **kwargs) -> np.ndarray:
+        """Wrap predict to call BaseRegressor.predict."""
+        return BaseRegressor.predict(self, X=X, **kwargs)
+
+    def predict_proba(self, X, **kwargs) -> np.ndarray:
+        """Wrap predict_proba to call BaseRegressor.predict_proba."""
+        return BaseRegressor.predict_proba(self, X=X, **kwargs)
+
+    def _fit(self, X, y):
+        BaseTimeSeriesForest._fit(self, X=X, y=y)
 
     def _validate_estimator(self):
 
@@ -282,35 +307,28 @@ class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
         for pname, pval in self.estimator_params.items():
             self.__setattr__(pname, pval)
 
-    def fit(self, X, y, **kwargs):
-        """Wrap BaseForest._fit.
+    def _predict(self, X):
+        """Predict class for X.
 
-        This is a temporary measure prior to the BaseRegressor refactor.
-        """
-        X, y = check_X_y(X, y, coerce_to_numpy=True, enforce_univariate=True)
-        return BaseTimeSeriesForest._fit(self, X, y, **kwargs)
-
-    def predict(self, X):
-        """Predict regression target for X.
-
-        The predicted regression target of an input sample is computed as the
-        mean predicted regression targets of the trees in the forest.
+        The predicted class of an input sample is a vote by the trees in
+        the forest, weighted by their probability estimates. That is,
+        the predicted class is the one with highest mean probability
+        estimate across the trees.
 
         Parameters
         ----------
-        X : array-like or sparse matrix of shape = [n_samples, n_features]
+        X : array-like or sparse matrix of shape (n_samples, n_features)
             The input samples. Internally, its dtype will be converted to
             ``dtype=np.float32``. If a sparse matrix is provided, it will be
             converted into a sparse ``csr_matrix``.
 
         Returns
         -------
-        y : array of shape = [n_samples] or [n_samples, n_outputs]
-            The predicted values.
+        y : array-like of shape (n_samples,) or (n_samples, n_outputs)
+            The predicted classes.
         """
-        self.check_is_fitted()
-        # Check data
         X = check_X(X, enforce_univariate=True)
+
         X = self._validate_X_predict(X)
 
         # Assign chunk of trees to jobs
@@ -376,12 +394,6 @@ class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
         # in regression, we don't validate class weights
         # TODO remove from regression
         return y, None
-
-    def _fit(self, X, y):
-        """Empty method to satisfy abstract parent. Needs refactoring."""
-
-    def _predict(self, X):
-        """Empty method to satisfy abstract parent. Needs refactoring."""
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
