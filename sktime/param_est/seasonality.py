@@ -428,14 +428,13 @@ class SeasonalityPeriodogram(BaseParamFitter):
     Attributes
     ----------
     sp_ : int, seasonality period with highest power, if any sub-threshold, else 1
-    sp_significant_ : list of int, seasonality periods is an array of Fourier periods
-        in descending order of their powers.
+    sp_significant_ : list of int, array of Fourier periods in descending order
+        of their powers.
 
     Examples
     --------
     >>> from sktime.datasets import load_airline
     >>> from sktime.param_est.seasonality import SeasonalityPeriodogram
-    >>>
     >>> X = load_airline().diff()[1:]  # doctest: +SKIP
     >>> sp_est = SeasonalityPeriodogram()  # doctest: +SKIP
     >>> sp_est.fit(X)  # doctest: +SKIP
