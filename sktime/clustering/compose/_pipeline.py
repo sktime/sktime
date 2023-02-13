@@ -88,7 +88,7 @@ class ClustererPipeline(_HeterogenousMetaEstimator, BaseClusterer):
     >>> y_pred = pipeline.predict(X_test) # doctest: +SKIP
 
     Alternative construction via dunder method:
-    >>> pipeline = PCATransformer() * TimeSeriesKMeans()
+    >>> pipeline = PCATransformer() * TimeSeriesKMeans() # doctest: +SKIP
     """
 
     _tags = {
