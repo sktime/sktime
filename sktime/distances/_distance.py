@@ -5,21 +5,14 @@ __author__ = ["chrisholder", "TonyBagnall"]
 from typing import Any, Callable, Union
 
 import numpy as np
-from numba import njit
 
-from sktime.distances._ddtw import DerivativeCallable, _DdtwDistance, average_of_slope
+from sktime.distances._ddtw import _DdtwDistance
 from sktime.distances._dtw import _DtwDistance
 from sktime.distances._edr import _EdrDistance
 from sktime.distances._erp import _ErpDistance
 from sktime.distances._euclidean import _EuclideanDistance
 from sktime.distances._lcss import _LcssDistance
 from sktime.distances._msm import _MsmDistance
-from sktime.distances._numba_utils import (
-    _compute_pairwise_distance,
-    _make_3d_series,
-    _numba_to_timeseries,
-    to_numba_timeseries,
-)
 from sktime.distances._resolve_metric import (
     _resolve_dist_instance,
     _resolve_metric_to_factory,
@@ -306,7 +299,7 @@ def wddtw_distance(
     window: Union[float, None] = None,
     itakura_max_slope: Union[float, None] = None,
     bounding_matrix: Union[np.ndarray, None] = None,
-    compute_derivative: DerivativeCallable = average_of_slope,
+    compute_derivative=None,
     g: float = 0.0,
     **kwargs: Any,
 ) -> float:
@@ -379,12 +372,12 @@ def wddtw_distance(
     --------
     >>> x_1d = np.array([1, 2, 3, 4])  # 1d array
     >>> y_1d = np.array([5, 6, 7, 8])  # 1d array
-    >>> wddtw_distance(x_1d, y_1d)
+    >>> wddtw_distance(x_1d, y_1d) # doctest: +SKIP
     0.0
 
     >>> x_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])  # 2d array
     >>> y_2d = np.array([[9, 10, 11, 12], [13, 14, 15, 16]])  # 2d array
-    >>> wddtw_distance(x_2d, y_2d)
+    >>> wddtw_distance(x_2d, y_2d) # doctest: +SKIP
     0.0
 
     References
@@ -393,6 +386,11 @@ def wddtw_distance(
     warping for time series classification, Pattern Recognition, Volume 44, Issue 9,
     2011, Pages 2231-2240, ISSN 0031-3203, https://doi.org/10.1016/j.patcog.2010.09.022.
     """
+    if compute_derivative is None:
+        from sktime.distances._ddtw_numba import average_of_slope
+
+        compute_derivative = average_of_slope
+
     format_kwargs = {
         "window": window,
         "itakura_max_slope": itakura_max_slope,
@@ -508,7 +506,7 @@ def ddtw_distance(
     window: Union[float, None] = None,
     itakura_max_slope: Union[float, None] = None,
     bounding_matrix: np.ndarray = None,
-    compute_derivative: DerivativeCallable = average_of_slope,
+    compute_derivative=None,
     **kwargs: Any,
 ) -> float:
     r"""Compute the derivative dynamic time warping (DDTW) distance between time series.
@@ -576,12 +574,12 @@ def ddtw_distance(
     >>> import numpy as np
     >>> x_1d = np.array([1, 2, 3, 4])  # 1d array
     >>> y_1d = np.array([5, 6, 7, 8])  # 1d array
-    >>> ddtw_distance(x_1d, y_1d)
+    >>> ddtw_distance(x_1d, y_1d) # doctest: +SKIP
     0.0
 
     >>> x_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])  # 2d array
     >>> y_2d = np.array([[9, 10, 11, 12], [13, 14, 15, 16]])  # 2d array
-    >>> ddtw_distance(x_2d, y_2d)
+    >>> ddtw_distance(x_2d, y_2d) # doctest: +SKIP
     0.0
 
     References
@@ -590,6 +588,11 @@ def ddtw_distance(
         First SIAM International Conference on Data Mining.
         1. 10.1137/1.9781611972719.1.
     """
+    if compute_derivative is None:
+        from sktime.distances._ddtw_numba import average_of_slope
+
+        compute_derivative = average_of_slope
+
     format_kwargs = {
         "window": window,
         "itakura_max_slope": itakura_max_slope,
@@ -1210,7 +1213,7 @@ def ddtw_alignment_path(
     window: Union[float, None] = None,
     itakura_max_slope: Union[float, None] = None,
     bounding_matrix: np.ndarray = None,
-    compute_derivative: DerivativeCallable = average_of_slope,
+    compute_derivative=None,
     **kwargs: Any,
 ) -> AlignmentPathReturn:
     r"""Compute the derivative dynamic time warping (DDTW) alignment path.
@@ -1286,6 +1289,11 @@ def ddtw_alignment_path(
         First SIAM International Conference on Data Mining.
         1. 10.1137/1.9781611972719.1.
     """
+    if compute_derivative is None:
+        from sktime.distances._ddtw_numba import average_of_slope
+
+        compute_derivative = average_of_slope
+
     format_kwargs = {
         "window": window,
         "itakura_max_slope": itakura_max_slope,
@@ -1306,7 +1314,7 @@ def wddtw_alignment_path(
     window: Union[float, None] = None,
     itakura_max_slope: Union[float, None] = None,
     bounding_matrix: Union[np.ndarray, None] = None,
-    compute_derivative: DerivativeCallable = average_of_slope,
+    compute_derivative=None,
     g: float = 0.0,
     **kwargs: Any,
 ) -> AlignmentPathReturn:
@@ -1388,6 +1396,11 @@ def wddtw_alignment_path(
     warping for time series classification, Pattern Recognition, Volume 44, Issue 9,
     2011, Pages 2231-2240, ISSN 0031-3203, https://doi.org/10.1016/j.patcog.2010.09.022.
     """
+    if compute_derivative is None:
+        from sktime.distances._ddtw_numba import average_of_slope
+
+        compute_derivative = average_of_slope
+
     format_kwargs = {
         "window": window,
         "itakura_max_slope": itakura_max_slope,
@@ -1928,6 +1941,8 @@ def distance(
     float
         Distance between the x and y.
     """
+    from sktime.distances._numba_utils import to_numba_timeseries
+
     _x = to_numba_timeseries(x)
     _y = to_numba_timeseries(y)
 
@@ -1994,6 +2009,9 @@ def distance_factory(
         If a resolved metric is not no_python compiled.
         If the metric type cannot be determined.
     """
+    from sktime.distances._numba_utils import _numba_to_timeseries, to_numba_timeseries
+    from sktime.utils.numba.njit import njit
+
     if x is None:
         x = np.zeros((1, 10))
     if y is None:
@@ -2102,6 +2120,11 @@ def pairwise_distance(
     array([[256., 576.],
            [ 58., 256.]])
     """
+    from sktime.distances._numba_utils import (
+        _compute_pairwise_distance,
+        _make_3d_series,
+    )
+
     _x = _make_3d_series(x)
     if y is None:
         y = x
@@ -2182,6 +2205,8 @@ def distance_alignment_path(
         Optional return only given if return_cost_matrix = True.
         Cost matrix used to compute the distance.
     """
+    from sktime.distances._numba_utils import to_numba_timeseries
+
     _x = to_numba_timeseries(x)
     _y = to_numba_timeseries(y)
 
@@ -2256,6 +2281,9 @@ def distance_alignment_path_factory(
     Callable[[np.ndarray, np.ndarray], Union[np.ndarray, np.ndarray]]
         Callable for the distance path.
     """
+    from sktime.distances._numba_utils import _numba_to_timeseries, to_numba_timeseries
+    from sktime.utils.numba.njit import njit
+
     if x is None:
         x = np.zeros((1, 10))
     if y is None:
