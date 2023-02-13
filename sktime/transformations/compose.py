@@ -15,6 +15,7 @@ from sktime.transformations.base import BaseTransformer
 from sktime.utils.multiindex import flatten_multiindex
 from sktime.utils.sklearn import (
     is_sklearn_classifier,
+    is_sklearn_clusterer,
     is_sklearn_regressor,
     is_sklearn_transformer,
 )
@@ -166,8 +167,13 @@ class TransformerPipeline(_HeterogenousMetaEstimator, BaseTransformer):
     # for default get_params/set_params from _HeterogenousMetaEstimator
     # _steps_attr points to the attribute of self
     # which contains the heterogeneous set of estimators
-    # this must be an iterable of (name: str, estimator) pairs for the default
+    # this must be an iterable of (name: str, estimator, ...) tuples for the default
     _steps_attr = "_steps"
+    # if the estimator is fittable, _HeterogenousMetaEstimator also
+    # provides an override for get_fitted_params for params from the fitted estimators
+    # the fitted estimators should be in a different attribute, _steps_fitted_attr
+    # this must be an iterable of (name: str, estimator, ...) tuples for the default
+    _steps_fitted_attr = "steps_"
 
     def __init__(self, steps):
 
@@ -246,6 +252,7 @@ class TransformerPipeline(_HeterogenousMetaEstimator, BaseTransformer):
             not nested, contains only non-TransformerPipeline `sktime` transformers
         """
         from sktime.classification.compose import SklearnClassifierPipeline
+        from sktime.clustering.compose import SklearnClustererPipeline
         from sktime.regression.compose import SklearnRegressorPipeline
 
         other = _coerce_to_sktime(other)
@@ -253,6 +260,10 @@ class TransformerPipeline(_HeterogenousMetaEstimator, BaseTransformer):
         # if sklearn classifier, use sklearn classifier pipeline
         if is_sklearn_classifier(other):
             return SklearnClassifierPipeline(classifier=other, transformers=self.steps)
+
+        # if sklearn clusterer, use sklearn clusterer pipeline
+        if is_sklearn_clusterer(other):
+            return SklearnClustererPipeline(clusterer=other, transformers=self.steps)
 
         # if sklearn regressor, use sklearn regressor pipeline
         if is_sklearn_regressor(other):
@@ -482,6 +493,10 @@ class FeatureUnion(_HeterogenousMetaEstimator, BaseTransformer):
     # which contains the heterogeneous set of estimators
     # this must be an iterable of (name: str, estimator) pairs for the default
     _steps_attr = "_transformer_list"
+    # if the estimator is fittable, _HeterogenousMetaEstimator also
+    # provides an override for get_fitted_params for params from the fitted estimators
+    # the fitted estimators should be in a different attribute, _steps_fitted_attr
+    _steps_fitted_attr = "transformer_list_"
 
     def __init__(
         self,
@@ -892,6 +907,10 @@ class MultiplexTransformer(_HeterogenousMetaEstimator, _DelegatedTransformer):
     # which contains the heterogeneous set of estimators
     # this must be an iterable of (name: str, estimator) pairs for the default
     _steps_attr = "_transformers"
+    # if the estimator is fittable, _HeterogenousMetaEstimator also
+    # provides an override for get_fitted_params for params from the fitted estimators
+    # the fitted estimators should be in a different attribute, _steps_fitted_attr
+    _steps_fitted_attr = "transformers_"
 
     def __init__(
         self,
@@ -1341,7 +1360,6 @@ class OptionalPassthrough(_DelegatedTransformer):
             "scitype:transform-input",
             "scitype:transform-output",
             "scitype:instancewise",
-            "X_inner_mtype",
             "y_inner_mtype",
             "capability:inverse_transform",
             "handles-missing-data",

@@ -10,6 +10,12 @@ transformations.
    :no-members:
    :no-inherited-members:
 
+All (simple) transformers in ``sktime``can be listed using the ``sktime.registry.all_estimators`` utility,
+using ``estimator_types="regressor"``, optionally filtered by tags.
+Valid tags can be listed using ``sktime.registry.all_tags``.
+
+For pairwise transformers (time series distances, kernels), instead see :ref:`_transformations_pairwise_ref`.
+
 Transformations are categorized as follows:
 
 .. list-table::
@@ -317,6 +323,22 @@ Detrending
 Filtering and denoising
 ~~~~~~~~~~~~~~~~~~~~~~~
 
+.. currentmodule:: sktime.transformations.series.bkfilter
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    BKFilter
+
+.. currentmodule:: sktime.transformations.series.filter
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    Filter
+
 .. currentmodule:: sktime.transformations.series.kalman_filter
 
 .. autosummary::
@@ -355,6 +377,14 @@ Differencing and slope
 
 Binning and segmentation
 ~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.transformations.series.binning
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TimeBinAggregate
 
 .. currentmodule:: sktime.transformations.panel.interpolate
 
