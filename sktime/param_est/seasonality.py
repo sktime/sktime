@@ -416,11 +416,12 @@ class SeasonalityPeriodogram(BaseParamFitter):
 
     Parameters
     ----------
-    candidate_sp : None, int or list of int, optional, default = None
-        candidate sp to test, and to restrict tests to
-        if None, min_period and max_period will default to 4 and None
-        if int, min_period = candidate_sp and max_period will be None
-        if list of int (size 2), will set min_period and max_period respectively
+    min_period : int
+        Disregard periods shorter than this number of samples.
+        Defaults to 4
+    max_period : int
+        Disregard periods longer than this number of samples.
+        Defaults to None
 
     Attributes
     ----------
@@ -432,7 +433,7 @@ class SeasonalityPeriodogram(BaseParamFitter):
     Examples
     --------
     >>> from sktime.datasets import load_airline
-    >>> from sktime.param_est.seasonality import Seasonality
+    >>> from sktime.param_est.seasonality import SeasonalityPeriodogram
     >>>
     >>> X = load_airline().diff()[1:]  # doctest: +SKIP
     >>> sp_est = Seasonality()  # doctest: +SKIP
@@ -452,8 +453,9 @@ class SeasonalityPeriodogram(BaseParamFitter):
         "python_dependencies": "seasonal",
     }
 
-    def __init__(self, candidate_sp=None):
-        self.candidate_sp = candidate_sp
+    def __init__(self, min_period=4, max_period=None):
+        self.min_period = min_period
+        self.max_period = max_period
         super(SeasonalityPeriodogram, self).__init__()
 
     def _fit(self, X):
@@ -474,28 +476,6 @@ class SeasonalityPeriodogram(BaseParamFitter):
         self : reference to self
         """
         from seasonal.periodogram import periodogram
-
-        self.max_period = None
-
-        if self.candidate_sp is None:
-            self.min_period = 4
-
-        elif isinstance(self.candidate_sp, int):
-            self.min_period = self.candidate_sp
-
-        elif isinstance(self.candidate_sp, list):
-            if len(self.candidate_sp) == 0:
-                self.min_period = 4
-            elif len(self.candidate_sp) == 1:
-                self.min_period = self.candidate_sp[0]
-            elif len(self.candidate_sp) == 2:
-                self.min_period = self.candidate_sp[0]
-                self.max_period = self.candidate_sp[1]
-            else:
-                raise RuntimeError("candidate_sp list must have size <= 2")
-
-        else:
-            raise TypeError("candidate_sp must be of type None, int or list of int")
 
         seasons, _ = periodogram(
             X, min_period=self.min_period, max_period=self.max_period
@@ -530,7 +510,7 @@ class SeasonalityPeriodogram(BaseParamFitter):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         params1 = {}
-        params2 = {"candidate_sp": [5, 12]}
-        params3 = {"candidate_sp": [5, 12, 2]}
+        params2 = {"min_period": 5, "max_period": 12}
+        params3 = {"min_period": 5}
 
         return [params1, params2, params3]
