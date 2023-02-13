@@ -13,6 +13,32 @@ All notable changes to this project will be documented in this file. We keep tra
 For upcoming changes and next releases, see our `milestones <https://github.com/sktime/sktime/milestones?direction=asc&sort=due_date&state=open>`_.
 For our long-term plan, see our :ref:`roadmap`.
 
+
+Version 0.16.1 - 2023-02-13
+---------------------------
+
+Highlights
+~~~~~~~~~~
+
+* Experimental python 3.11 support. Full support is planned with 0.17.0, testing and feedback welcome.
+
+Dependency changes
+~~~~~~~~~~~~~~~~~~
+
+* on python 3.11, ``numba`` is not a dependency, and a number of other packages are
+  also not available as soft dependencies, mostly due to compatibility.
+* ``sktime`` and its test suite can now be used without ``numba`` installed.
+  ``numba`` is still a core dependency on python 3.7-3.10.
+* ``numba`` will become a soft dependency, from a core dependency, in 0.18.0.
+  Estimators dependent on ``numba`` will function exactly as before if ``numba``
+  is present in the python environment.
+
+
+Core interface changes
+~~~~~~~~~~~~~~~~~~~~~~
+
+
+
 Version 0.16.0 - 2023-01-30
 ---------------------------
 
