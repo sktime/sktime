@@ -422,13 +422,14 @@ class SeasonalityPeriodogram(BaseParamFitter):
     max_period : int
         Disregard periods longer than this number of samples.
         Defaults to None
+    thresh : float (0..1)
+        Retain periods scoring above thresh*maxscore. Defaults to 0.10
 
     Attributes
     ----------
-    sp_ : int, seasonality period at lowest p-level, if any sub-threshold, else 1
-        if `candidate_sp` is passed, will be in `candidate_sp` or 1
-    sp_significant_ : list of int, seasonality periods with sub-threshold p-levels
-        ordered increasingly by p-level. Empty list, not [1], if none are sub-threshold
+    sp_ : int, seasonality period with highest power, if any sub-threshold, else 1
+    sp_significant_ : list of int, seasonality periods is an array of Fourier periods
+        in descending order of their powers.
 
     Examples
     --------
@@ -436,13 +437,13 @@ class SeasonalityPeriodogram(BaseParamFitter):
     >>> from sktime.param_est.seasonality import SeasonalityPeriodogram
     >>>
     >>> X = load_airline().diff()[1:]  # doctest: +SKIP
-    >>> sp_est = Seasonality()  # doctest: +SKIP
+    >>> sp_est = SeasonalityPeriodogram()  # doctest: +SKIP
     >>> sp_est.fit(X)  # doctest: +SKIP
-    Seasonality(...)
+    SeasonalityPeriodogram(...)
     >>> sp_est.get_fitted_params()["sp"]  # doctest: +SKIP
-    12
+    6
     >>> sp_est.get_fitted_params()["sp_significant"]  # doctest: +SKIP
-    array([12, 11])
+    array([6, 12, 14, 4, 10, 5])
     """
 
     _tags = {
@@ -453,9 +454,10 @@ class SeasonalityPeriodogram(BaseParamFitter):
         "python_dependencies": "seasonal",
     }
 
-    def __init__(self, min_period=4, max_period=None):
+    def __init__(self, min_period=4, max_period=None, thresh=0.10):
         self.min_period = min_period
         self.max_period = max_period
+        self.thresh = thresh
         super(SeasonalityPeriodogram, self).__init__()
 
     def _fit(self, X):
@@ -475,11 +477,16 @@ class SeasonalityPeriodogram(BaseParamFitter):
         -------
         self : reference to self
         """
-        from seasonal.periodogram import periodogram
+        from seasonal.periodogram import periodogram_peaks
 
-        seasons, _ = periodogram(
-            X, min_period=self.min_period, max_period=self.max_period
+        seasons = periodogram_peaks(
+            X,
+            min_period=self.min_period,
+            max_period=self.max_period,
+            thresh=self.thresh,
         )
+
+        seasons = [x[0] for x in seasons]
 
         if seasons is None or len(seasons) == 0:
             self.sp_ = 1
@@ -510,7 +517,7 @@ class SeasonalityPeriodogram(BaseParamFitter):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         params1 = {}
-        params2 = {"min_period": 5, "max_period": 12}
+        params2 = {"min_period": 5, "max_period": 24, "thresh": 0.1}
         params3 = {"min_period": 5}
 
         return [params1, params2, params3]
