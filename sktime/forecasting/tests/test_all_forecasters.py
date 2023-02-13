@@ -328,6 +328,21 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         except NotImplementedError:
             pass
 
+    def test_predict_series_name_preserved(self, estimator_instance):
+        """Test that fit/predict preserves name attribute and type of pd.Series."""
+        # skip this test if estimator needs multivariate data
+        # because then it does not take pd.Series at all
+        if estimator_instance.get_tag("scitype:y") == "multivariate":
+            return None
+
+        y_train = _make_series(n_timepoints=15)
+        y_train.name = "foo"
+
+        estimator_instance.fit(y_train, fh=[1, 2, 3])
+        y_pred = estimator_instance.predict()
+
+        _assert_correct_columns(y_pred, y_train)
+
     def _check_pred_ints(
         self, pred_ints: pd.DataFrame, y_train: pd.Series, y_pred: pd.Series, fh_int
     ):
@@ -352,6 +367,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             #     pred_errors.values[1:].round(4) >= pred_errors.values[:-1].round(4)
             # )
 
+    @pytest.mark.parametrize("index_type", [None, "range"])
     @pytest.mark.parametrize(
         "coverage", TEST_ALPHAS, ids=[f"alpha={a}" for a in TEST_ALPHAS]
     )
@@ -359,14 +375,16 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         "fh_int_oos", TEST_OOS_FHS, ids=[f"fh={fh}" for fh in TEST_OOS_FHS]
     )
     def test_predict_interval(
-        self, estimator_instance, n_columns, fh_int_oos, coverage
+        self, estimator_instance, n_columns, index_type, fh_int_oos, coverage
     ):
         """Check prediction intervals returned by predict.
 
         Arguments
         ---------
-        Forecaster: BaseEstimator class descendant, forecaster to test
-        fh: ForecastingHorizon, fh at which to test prediction
+        estimator_instance : BaseEstimator class descendant instance, forecaster to test
+        n_columns : number of columns for the test data
+        index_type : index type of the test data
+        fh_int_oos : forecasting horizon to test the forecaster at, all out of sample
         coverage: float, coverage at which to make prediction intervals
 
         Raises
@@ -376,7 +394,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         AssertionError - if Forecaster test instance does not have "capability:pred_int"
                 and no NotImplementedError is raised when asking predict for pred.int
         """
-        y_train = _make_series(n_columns=n_columns)
+        y_train = _make_series(n_columns=n_columns, index_type=index_type)
         estimator_instance.fit(y_train, fh=fh_int_oos)
         if estimator_instance.get_tag("capability:pred_int"):
 
