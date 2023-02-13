@@ -39,6 +39,8 @@ class SimpleRNNRegressor(BaseDeepRegressor):
         use_bias=True,
         optimizer=None,
     ):
+        _check_dl_dependencies(severity="error")
+        super(SimpleRNNRegressor, self).__init__()
         self.nb_epochs = nb_epochs
         self.batch_size = batch_size
         self.verbose = verbose
@@ -55,10 +57,6 @@ class SimpleRNNRegressor(BaseDeepRegressor):
             batch_size=self.batch_size,
             units=self.units,
         )
-
-        _check_dl_dependencies(severity="error")
-
-        super(SimpleRNNRegressor, self).__init__()
 
     def build_model(self, input_shape, **kwargs):
         """
