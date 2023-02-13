@@ -312,7 +312,7 @@ class ClustererPipeline(_HeterogenousMetaEstimator, BaseClusterer):
 
         # construct without names
         t1 = ExponentTransformer(power=2)
-        c = TimeSeriesDBSCAN()
+        c = TimeSeriesDBSCAN.create_test_instance()
 
         params1 = {"transformers": [t1], "clusterer": c}
         params = params + [params1]
