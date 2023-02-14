@@ -13,6 +13,147 @@ All notable changes to this project will be documented in this file. We keep tra
 For upcoming changes and next releases, see our `milestones <https://github.com/sktime/sktime/milestones?direction=asc&sort=due_date&state=open>`_.
 For our long-term plan, see our :ref:`roadmap`.
 
+
+Version 0.16.1 - 2023-02-13
+---------------------------
+
+Highlights
+~~~~~~~~~~
+
+* Experimental python 3.11 support. Full python 3.11 support is planned with 0.17.0. (:pr:`4000`, :pr:`3631`, :pr:`4226`) :user:`fkiraly`
+* Experimental benchmarking module based on ``kotsu``, forecasting sub-module (:pr:`2977`) :user:`alex-hh`, :user:`dbcerigo`
+* substantial speed-ups for panel and hierarchical transformers and forecasters (:pr:`4193`, :pr:`4194`, :pr:`4195`, :pr:`4196`) :user:`hoesler`
+
+Testing and feedback of python 3.11 support and the benchmarking module are appreciated.
+
+Dependency changes
+~~~~~~~~~~~~~~~~~~
+
+* ``sktime`` now supports python 3.11
+* on python 3.11, ``numba`` is not a dependency, and a number of other packages are
+  also not available as soft dependencies, mostly due to compatibility with 3.11.
+* ``sktime`` and its test suite can now be used without ``numba`` installed,
+  with the exception of estimators depending on ``numba``.
+  ``numba`` is still a core dependency on python 3.7-3.10.
+* ``numba`` will become a soft dependency, from a core dependency, in 0.18.0.
+  Estimators dependent on ``numba`` will function exactly as before if ``numba``
+  is present in the python environment.
+
+Core interface changes
+~~~~~~~~~~~~~~~~~~~~~~
+
+Benchmarking
+^^^^^^^^^^^^
+
+* the ``kotsu``-based benchmarking module introduces a new design and syntax
+  for benchmarking forecasters.
+
+Forecasting
+^^^^^^^^^^^
+
+* forecasters will now consistently preserve the ``name`` attribute in ``pd.Series`` passed.
+  Previously, named ``pd.Series`` were not fully supported.
+
+Deprecations and removals
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Dependencies
+^^^^^^^^^^^^
+
+* ``numba`` will change from core dependency to soft dependency in ``sktime 0.18.0``.
+  To ensure functioning of setups of ``sktime`` code dependent on ``numba`` based estimators
+  going forward, ensure to install ``numba`` in the environment explicitly,
+  or install the ``all_extras`` soft dependency set which will continue to contain ``numba``.
+  Besides this, ``numba`` dependent estimators will function identically as before.
+
+Enhancements
+~~~~~~~~~~~~
+
+Benchmarking
+^^^^^^^^^^^^
+
+* [ENH] Benchmarking interface v2 based on ``kotsu`` package (:pr:`2977`) :user:`alex-hh`, :user:`dbcerigo`
+
+Data types, checks, conversions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] Improve vectorization performance (:pr:`4195`) :user:`hoesler`
+* [ENH] Improve panel mtype check performance (:pr:`4196`) :user:`hoesler`, :user:`danbartl`
+
+Forecasting
+^^^^^^^^^^^
+
+* [ENH] fixes for forecasters to retain ``name`` attribute in ``predict`` (:pr:`4161`) :user:`fkiraly`
+* [ENH] improved/fixed ``scoring`` argument for forecasting tuners (:pr:`4178`) :user:`fkiraly`
+* [ENH] test ``Prophet`` with ``pd.DatetimeIndex`` (:pr:`4183`) :user:`fkiraly`
+* [ENH] faster test for forecasters' ``predict_residuals`` (:pr:`4156`) :user:`fkiraly`
+* [ENH] test that forecasters preserve ``name`` attr of ``pd.Series`` (:pr:`4157`) :user:`fkiraly`
+* [ENH] improved/fixed ``scoring`` argument for forecasting tuners (:pr:`4178`) :user:`fkiraly`
+
+Transformations
+^^^^^^^^^^^^^^^
+
+* [ENH] add native multi-index/hierarchical data support to ``Imputer`` (:pr:`4194`) :user:`hoesler`
+* [ENH] Add panel support to ``ColSelect`` transformer (:pr:`4193`) :user:`hoesler`
+
+Fixes
+~~~~~
+
+Data sets and data loaders
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [BUG] Correct ``'StarlightCurves'`` data set identifier string, to 'StarLightCurves' (:pr:`4222`) :user:`NeuralNut`
+* [BUG] fix race condition in ``tsfile`` tests (:pr:`4192`) :user:`hoesler`
+
+Forecasting
+^^^^^^^^^^^
+
+* [BUG] fixes for forecasters to retain ``name`` attribute in ``predict`` (:pr:`4161`) :user:`fkiraly`
+* [BUG] ensure ``pd.Series`` ``name`` attribute is preserved in conversion to/from ``pd.DataFrame`` and ``np.ndarray``, as ``Series`` scitype (:pr:`4150`) :user:`fkiraly`
+* [BUG] ``AutoETS``, ``UnobservedComponents``: fix ``predict_interval`` for integer based index not starting at zero (:pr:`4180`) :user:`fkiraly`
+
+Parameter estimation
+^^^^^^^^^^^^^^^^^^^^
+
+* [BUG] fix ``nlag`` logic in ``SeasonalityACF`` and ``SeasonalityACFqstat`` (:pr:`4171`) :user:`fkiraly`
+
+Time series clustering
+^^^^^^^^^^^^^^^^^^^^^^
+
+* [BUG] fix ``TimeSeriesDBSCAN`` and remove strict ``BaseClusterer`` abstracts (:pr:`4227`) :user:`fkiraly`
+
+Maintenance
+~~~~~~~~~~~
+
+* [MNT] Fix merge conflicts and formatting in ``.all-contributorsrc`` (:pr:`4205`) :user:`fkiraly`
+* [MNT] isolate ``numba`` - NB: does not make ``numba`` a soft dependency (:pr:`3631`) :user:`fkiraly`
+* [MNT] isolate remaining ``numba`` references (:pr:`4226`) :user:`fkiraly`
+* [MNT] python 3.11 compatibility, with ``numba`` as core dependency on 3.7-3.10 (:pr:`4000`) :user:`fkiraly`
+
+Documentation
+~~~~~~~~~~~~~
+
+* [DOC] Fix rendering of examples section in ``Lag`` docstring (:pr:`3960`) :user:`aiwalter`
+* [DOC] improved docstring for ``dtw_distance`` (:pr:`4028`) :user:`fkiraly`, :user:`matthewmiddlehurst`
+* [DOC] remove slack links in favour of discord (:pr:`4202`) :user:`fkiraly`
+* [DOC] fix tables in transformer ``transform`` docstrings - change md to rst (:pr:`4199`) :user:`romanlutz`
+* [DOC] remove gap between pandas and ``DataFrame`` | ``Series`` in classification notebook (#4200) (:pr:`4200`) :user:`romanlutz`
+* [DOC] Fixed table in ``CI`` overview documentation (:pr:`4198`) :user:`pranavvp16`
+
+Contributors
+~~~~~~~~~~~~
+
+:user:`aiwalter`,
+:user:`alex-hh`,
+:user:`danbartl`,
+:user:`dbcerigo`,
+:user:`fkiraly`,
+:user:`hoesler`,
+:user:`matthewmiddlehurst`,
+:user:`NeuralNut`,
+:user:`pranavvp16`,
+:user:`romanlutz`
+
 Version 0.16.0 - 2023-01-30
 ---------------------------
 
