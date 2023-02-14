@@ -183,6 +183,12 @@ class VectorizedDF:
         """
         return self.iter_indices
 
+    # TODO: remove in v0.18.0
+    @deprecated(
+        version="0.16.1",
+        reason="get_iloc_indexer will be removed in v0.18.0",
+        category=FutureWarning,
+    )
     def get_iloc_indexer(self, i: int):
         """Get iloc row/column indexer for i-th list element.
 
