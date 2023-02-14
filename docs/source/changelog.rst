@@ -29,8 +29,9 @@ Testing and feedback of python 3.11 support and the benchmarking module are appr
 Dependency changes
 ~~~~~~~~~~~~~~~~~~
 
+* ``sktime`` now supports python 3.11
 * on python 3.11, ``numba`` is not a dependency, and a number of other packages are
-  also not available as soft dependencies, mostly due to compatibility.
+  also not available as soft dependencies, mostly due to compatibility with 3.11.
 * ``sktime`` and its test suite can now be used without ``numba`` installed.
   ``numba`` is still a core dependency on python 3.7-3.10.
 * ``numba`` will become a soft dependency, from a core dependency, in 0.18.0.
