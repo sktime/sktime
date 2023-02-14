@@ -8,6 +8,7 @@ import itertools
 
 import numpy as np
 import pandas as pd
+from deprecated.sphinx import deprecated
 
 from sktime.datatypes._check import check_is_scitype, mtype
 from sktime.datatypes._convert import convert_to
@@ -220,6 +221,16 @@ class VectorizedDF:
                 iterate_as=self.iterate_as, iterate_cols=self.iterate_cols
             )
         )
+
+    # TODO: remove in v0.18.0
+    @deprecated(
+        version="0.16.1",
+        reason="__getitem__ will be removed in v0.18.0",
+        category=FutureWarning,
+    )
+    def __getitem__(self, i: int):
+        """Return the i-th element iterated over in vectorization."""
+        return next(itertools.islice(self, i, None))
 
     def items(self, iterate_as=None, iterate_cols=None):
         """Iterate over (group name, column name, instance) tuples.
