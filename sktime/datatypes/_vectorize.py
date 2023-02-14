@@ -48,6 +48,8 @@ class VectorizedDF:
         as pandas.DataFrame with Index or MultiIndex (in sktime pandas format)
     len(self) or self.__len__()
         returns number of Series/Panels in X
+    get_iter_indices()
+        Returns pandas.(Multi)Index that are iterated over
     reconstruct(self, df_list, convert_back=False)
         Takes iterable df_list and returns as an object of is_scitype.
         Used to obtain original format after applying operations to self iterated
@@ -185,7 +187,7 @@ class VectorizedDF:
 
     # TODO: remove in v0.18.0
     @deprecated(
-        version="0.16.1",
+        version="0.16.2",
         reason="get_iloc_indexer will be removed in v0.18.0",
         category=FutureWarning,
     )
@@ -230,7 +232,7 @@ class VectorizedDF:
 
     # TODO: remove in v0.18.0
     @deprecated(
-        version="0.16.1",
+        version="0.16.2",
         reason="__getitem__ will be removed in v0.18.0",
         category=FutureWarning,
     )
