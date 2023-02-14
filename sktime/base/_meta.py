@@ -893,7 +893,11 @@ class _ColumnEstimator:
                 f"Invalid '{est_attr}' attribute, '{est_attr}' should be a list"
                 " of (string, estimator, int) tuples."
             )
-        _, ests, indices = zip(*estimators)
+        names, ests, indices = zip(*estimators)
+
+        # check names, via _HeterogenousMetaEstimator._check_names
+        if hasattr(self, "_check_names"):
+            self._check_names(names)
 
         # coerce column names to indices in columns
         indices = self._get_indices(X, indices)

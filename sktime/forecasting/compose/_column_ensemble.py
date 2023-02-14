@@ -363,10 +363,6 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster, _ColumnEstimator
         ------
         ValueError if checks fail, with informative error message
         """
-        # check names, via _HeterogenousMetaEstimator._check_names
-        names, _, _ = zip(*self.forecasters)
-        self._check_names(names)
-
         return self._check_col_estimators(
             X=y, X_name="y", est_attr="forecasters", cls=BaseForecaster
         )
