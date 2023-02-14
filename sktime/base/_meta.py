@@ -842,7 +842,7 @@ class _ColumnEstimator:
             y_pred = pd.concat(y_preds, axis=1)
         return y_pred
 
-    def _check_estimators(self, X, X_name="X", est_attr="estimators", cls=None):
+    def _check_col_estimators(self, X, X_name="X", est_attr="estimators", cls=None):
         """Check getattr(self, est_attr) attribute, and coerce to (name, est, index).
 
         Checks:
