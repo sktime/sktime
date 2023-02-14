@@ -4,7 +4,6 @@ __author__ = ["chrisholder", "TonyBagnall"]
 __all__ = ["BaseClusterer"]
 
 import time
-from abc import ABC, abstractmethod
 from typing import Any, Union
 
 import numpy as np
@@ -20,7 +19,7 @@ from sktime.utils.validation._dependencies import _check_estimator_deps
 TimeSeriesInstances = Union[pd.DataFrame, np.ndarray]
 
 
-class BaseClusterer(BaseEstimator, ABC):
+class BaseClusterer(BaseEstimator):
     """Abstract base class for time series clusterer.
 
     Parameters
@@ -251,11 +250,9 @@ class BaseClusterer(BaseEstimator, ABC):
             dists[i, preds[i]] = 1
         return dists
 
-    @abstractmethod
     def _score(self, X, y=None):
-        ...
+        raise NotImplementedError
 
-    @abstractmethod
     def _predict(self, X: TimeSeriesInstances, y=None) -> np.ndarray:
         """Predict the closest cluster each sample in X belongs to.
 
@@ -273,9 +270,8 @@ class BaseClusterer(BaseEstimator, ABC):
         np.ndarray (1d array of shape (n_instances,))
             Index of the cluster each time series in X belongs to.
         """
-        ...
+        raise NotImplementedError
 
-    @abstractmethod
     def _fit(self, X: TimeSeriesInstances, y=None) -> np.ndarray:
         """Fit time series clusterer to training data.
 
@@ -291,7 +287,7 @@ class BaseClusterer(BaseEstimator, ABC):
         self:
             Fitted estimator.
         """
-        ...
+        raise NotImplementedError
 
     def _check_capabilities(self, missing: bool, multivariate: bool, unequal: bool):
         """Check the capabilities of the clusterer matches input data requirements.

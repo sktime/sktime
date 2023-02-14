@@ -5,6 +5,7 @@ __author__ = ["fkiraly"]
 
 from warnings import warn
 
+import numpy as np
 from sklearn.cluster import DBSCAN
 
 from sktime.clustering.base import BaseClusterer
@@ -128,7 +129,8 @@ class TimeSeriesDBSCAN(BaseClusterer):
         self.dbscan_.fit(X=distmat)
 
         for key in self.DELEGATED_FITTED_PARAMS:
-            setattr(self, key, getattr(self.dbscan_, key))
+            if hasattr(self.dbscan_, key):
+                setattr(self, key, getattr(self.dbscan_, key))
 
         return self
 
@@ -158,6 +160,40 @@ class TimeSeriesDBSCAN(BaseClusterer):
                 "returned, without updating the state of the fitted estimator."
             )
             return self.clone().fit(all_X).labels_
+
+    def _predict_proba(self, X):
+        """Predicts labels probabilities for sequences in X.
+
+        Default behaviour is to call _predict and set the predicted class probability
+        to 1, other class probabilities to 0. Override if better estimates are
+        obtainable.
+
+        Parameters
+        ----------
+        X : guaranteed to be of a type in self.get_tag("X_inner_mtype")
+            if self.get_tag("X_inner_mtype") = "numpy3D":
+                3D np.ndarray of shape = [n_instances, n_dimensions, series_length]
+            if self.get_tag("X_inner_mtype") = "nested_univ":
+                pd.DataFrame with each column a dimension, each cell a pd.Series
+            for list of other mtypes, see datatypes.SCITYPE_REGISTER
+            for specifications, see examples/AA_datatypes_and_datasets.ipynb
+
+        Returns
+        -------
+        y : 2D array of shape [n_instances, n_classes] - predicted class probabilities
+            1st dimension indices correspond to instance indices in X
+            2nd dimension indices correspond to possible labels (integers)
+            (i, j)-th entry is predictive probability that i-th instance is of class j
+        """
+        preds = self._predict(X)
+        n_instances = len(preds)
+        n_clusters = max(preds) + 1
+        dists = np.zeros((X.shape[0], n_clusters))
+        for i in range(n_instances):
+            # preds[i] can be -1 for DBSCAN
+            if preds[i] > -1:
+                dists[i, preds[i]] = 1
+        return dists
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
