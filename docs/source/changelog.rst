@@ -20,11 +20,11 @@ Version 0.16.1 - 2023-02-13
 Highlights
 ~~~~~~~~~~
 
-* Experimental python 3.11 support. Full python 3.11 support is planned with 0.17.0.
-* Experimental benchmarking module based on ``kotsu``, forecasting (:pr:`2977`) :user:`alex-hh`, :user:`dbcerigo`
-* substantial speed-ups for hierarchical data (:pr:`4193`, :pr:`4194`, :pr:`4195`, :pr:`4196`) :user:`hoesler`
+* Experimental python 3.11 support. Full python 3.11 support is planned with 0.17.0. (:pr:`4000`, :pr:`3631`, :pr:`4226`) :user:`fkiraly`
+* Experimental benchmarking module based on ``kotsu``, forecasting sub-module (:pr:`2977`) :user:`alex-hh`, :user:`dbcerigo`
+* substantial speed-ups for panel and hierarchical transformers and forecasters (:pr:`4193`, :pr:`4194`, :pr:`4195`, :pr:`4196`) :user:`hoesler`
 
-Testing and feedback are welcome for python 3.11 and the benchmarking module.
+Testing and feedback of python 3.11 support and the benchmarking module are appreciated.
 
 Dependency changes
 ~~~~~~~~~~~~~~~~~~
@@ -84,6 +84,7 @@ Forecasting
 * [ENH] fixes for forecasters to retain ``name`` attribute in ``predict`` (:pr:`4161`) :user:`fkiraly`
 * [ENH] improved/fixed ``scoring`` argument for forecasting tuners (:pr:`4178`) :user:`fkiraly`
 * [ENH] test ``Prophet`` with ``pd.DatetimeIndex`` (:pr:`4183`) :user:`fkiraly`
+* [ENH] faster test for forecasters' ``predict_residuals`` (:pr:`4156`) :user:`fkiraly`
 * [ENH] test that forecasters preserve ``name`` attr of ``pd.Series`` (:pr:`4157`) :user:`fkiraly`
 * [ENH] improved/fixed ``scoring`` argument for forecasting tuners (:pr:`4178`) :user:`fkiraly`
 
@@ -96,17 +97,36 @@ Transformations
 Fixes
 ~~~~~
 
+Data sets and data loaders
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [BUG] Correct ``'StarlightCurves'`` data set identifier string, to 'StarLightCurves' (:pr:`4222`) :user:`NeuralNut`
+* [BUG] fix race condition in ``tsfile`` tests (:pr:`4192`) :user:`hoesler`
+
+Forecasting
+^^^^^^^^^^^
+
 * [BUG] fixes for forecasters to retain ``name`` attribute in ``predict`` (:pr:`4161`) :user:`fkiraly`
 * [BUG] ensure ``pd.Series`` ``name`` attribute is preserved in conversion to/from ``pd.DataFrame`` and ``np.ndarray``, as ``Series`` scitype (:pr:`4150`) :user:`fkiraly`
-* [BUG] fix race condition in ``tsfile`` tests (:pr:`4192`) :user:`hoesler`
-* [BUG] fix ``nlag`` logic in ``SeasonalityACF`` and ``SeasonalityACFqstat`` (:pr:`4171`) :user:`fkiraly`
 * [BUG] ``AutoETS``, ``UnobservedComponents``: fix ``predict_interval`` for integer based index not starting at zero (:pr:`4180`) :user:`fkiraly`
-* [BUG] Correct ``'StarlightCurves'`` data set identifier string, to 'StarLightCurves' (:pr:`4222`) :user:`NeuralNut`
+
+Parameter estimation
+^^^^^^^^^^^^^^^^^^^^
+
+* [BUG] fix ``nlag`` logic in ``SeasonalityACF`` and ``SeasonalityACFqstat`` (:pr:`4171`) :user:`fkiraly`
+
+Time series clustering
+^^^^^^^^^^^^^^^^^^^^^^
+
+* [BUG] fix ``TimeSeriesDBSCAN`` and remove strict ``BaseClusterer`` abstracts (:pr:`4227`) :user:`fkiraly`
 
 Maintenance
 ~~~~~~~~~~~
 
 * [MNT] Fix merge conflicts and formatting in ``.all-contributorsrc`` (:pr:`4205`) :user:`fkiraly`
+* [MNT] isolate ``numba`` - NB: does not make ``numba`` a soft dependency (:pr:`3631`) :user:`fkiraly`
+* [MNT] isolate remaining ``numba`` references (:pr:`4226`) :user:`fkiraly`
+* [MNT] python 3.11 compatibility, with ``numba`` as core dependency on 3.7-3.10 (:pr:`4000`) :user:`fkiraly`
 
 Documentation
 ~~~~~~~~~~~~~
