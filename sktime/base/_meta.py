@@ -7,6 +7,7 @@ __author__ = ["mloning", "fkiraly"]
 __all__ = ["_HeterogenousMetaEstimator", "_ColumnEstimator"]
 
 from inspect import isclass
+
 import numpy as np
 import pandas as pd
 
