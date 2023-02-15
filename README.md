@@ -52,7 +52,7 @@ Questions and feedback are extremely welcome! Please understand that we won't be
 | :woman_technologist: **Usage Questions**          | [GitHub Discussions] · [Stack Overflow] |
 | :speech_balloon: **General Discussion**        | [GitHub Discussions] |
 | :factory: **Contribution & Development** | [Slack], contributors channel · [Discord] |
-| :globe_with_meridians: **Community collaboration session** | [Discord] - Fridays 1pm UTC, dev/meet-ups channel |
+| :globe_with_meridians: **Community collaboration session** | [Discord] - Fridays 4pm UTC, dev/meet-ups channel |
 
 [github issue tracker]: https://github.com/sktime/sktime/issues
 [github discussions]: https://github.com/sktime/sktime/discussions
