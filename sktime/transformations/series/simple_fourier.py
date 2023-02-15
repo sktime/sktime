@@ -29,15 +29,15 @@ class SimpleFourier(BaseTransformer):
     >>> from sktime.datasets import load_airline
     >>> X = load_airline()
     >>> transformer = SimpleFourier()
-    >>> X_ft = transformer._transform(X)
+    >>> X_ft = transformer.fit_transform(X)
     """
 
     _tags = {
-        "scitype:transform-input": "Series",
-        "scitype:transform-output": "Series",
+        "scitype:transform-input": "pd.Series",
+        "scitype:transform-output": "pd.Series",
         "scitype:instancewise": True,
         "scitype:transform-labels": "None",
-        "X_inner_mtype": "np.ndarray",
+        "X_inner_mtype": "pd.Series",
         "y_inner_mtype": "None",
         "univariate-only": False,
         "requires_y": False,
@@ -50,7 +50,7 @@ class SimpleFourier(BaseTransformer):
     def __init__(self):
         super(SimpleFourier, self).__init__()
 
-    def fit_transform(self, X, y=None):
+    def _transform(self, X, y=None):
         """Transform X and return a transformed version.
 
         private _transform containing core logic, called from transform
