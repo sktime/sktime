@@ -2963,7 +2963,7 @@ Highlights
 * probabilistic forecasting: ``predict_var`` (variance forecast) and ``predict_proba`` (full distribution forecast) interfaces; performance metrics for interval and quantile forecasts (:pr:`2100`, :pr:`2130`, :pr:`2232`) :user:`eenticott-shell` :user:`fkiraly` :user:`kejsitake`
 * dunder methods for transformer and classifier pipelines: write ``my_trafo1 * my_trafo2`` for pipeline, ``my_trafo1 + my_trafo2`` for ``FeatureUnion`` (:pr:`2090`, :pr:`2251`) :user:`fkiraly`
 * Frequently requested: ``AutoARIMA`` from ``statsforecast`` package available as ``StatsforecastAutoARIMA`` (:pr:`2251`) :user:`FedericoGarza`
-* for extenders: detailed `"creating sktime compatible estimator" guide <https://www.sktime-backup.readthedocs.io/en/stable/developer_guide/add_estimators.html>`_
+* for extenders: detailed `"creating sktime compatible estimator" guide <https://sktime-backup.readthedocs.io/en/stable/developer_guide/add_estimators.html>`_
 * for extenders: simplified extension templates for forecasters and transformers (:pr:`2161`) :user:`fkiraly`
 
 Dependency changes
@@ -3918,8 +3918,8 @@ Highlights
 * :code:`conda-forge` metapackage for installing `sktime` with all extras :user:`freddyaboulton`
 * framework support for multivariate forecasting (:pr:`980` :pr:`1195` :pr:`1286` :pr:`1301` :pr:`1306` :pr:`1311` :pr:`1401` :pr:`1410`) :user:`aiwalter` :user:`fkiraly` :user:`thayeylolu`
 * consolidated lookup of estimators and tags using :code:`registry.all_estimators` and :code:`registry.all_tags` (:pr:`1196`) :user:`fkiraly`
-* [DOC] major overhaul of :code:`sktime`'s `online documentation <https://www.sktime-backup.readthedocs.io/en/latest/>`_
-* [DOC] `searchable, auto-updating estimators register <https://www.sktime-backup.readthedocs.io/en/latest/estimator_overview.html>`_ in online documentation (:pr:`930` :pr:`1138`) :user:`afzal442` :user:`mloning`
+* [DOC] major overhaul of :code:`sktime`'s `online documentation <https://sktime-backup.readthedocs.io/en/latest/>`_
+* [DOC] `searchable, auto-updating estimators register <https://sktime-backup.readthedocs.io/en/latest/estimator_overview.html>`_ in online documentation (:pr:`930` :pr:`1138`) :user:`afzal442` :user:`mloning`
 * [MNT] working Binder in-browser notebook showcase (:pr:`1266`) :user:`corvusrabus`
 * [DOC] tutorial notebook for in-memory data format conventions, validation, and conversion (:pr:`1232`) :user:`fkiraly`
 * easy conversion functionality for estimator inputs, series and panel data (:pr:`1061` :pr:`1187` :pr:`1201` :pr:`1225`) :user:`fkiraly`

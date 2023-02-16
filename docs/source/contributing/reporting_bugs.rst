@@ -26,4 +26,4 @@ rules before submitting:
 .. note::
 
    To find out more about how to take part in sktime’s community, check out our `governance
-   guidelines <https://www.sktime-backup.readthedocs.io/en/latest/governance.html>`__.
+   guidelines <https://sktime-backup.readthedocs.io/en/latest/governance.html>`__.
