@@ -32,7 +32,7 @@ class URLs:
     DOCS_LOCAL = "file://" + os.path.realpath(
         os.path.join(ROOT_DIR, "docs/_build/html/index.html")
     )
-    DOCS_ONLINE = "https://sktime-backup.readthedocs.io"
+    DOCS_ONLINE = "https://www.sktime.net"
     PYPI = f"https://pypi.org/simple/{PACKAGE_NAME}/"
 
 

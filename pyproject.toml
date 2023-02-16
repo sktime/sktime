@@ -125,12 +125,12 @@ dl = [
 ]
 
 [project.urls]
-Homepage = "https://sktime-backup.readthedocs.io"
+Homepage = "https://www.sktime.net"
 Repository = "https://github.com/sktime/sktime"
-Documentation = "https://sktime-backup.readthedocs.io"
+Documentation = "https://www.sktime.net"
 Download = "https://pypi.org/project/sktime/#files"
-"API Reference" = "https://sktime-backup.readthedocs.io/en/stable/api_reference.html"
-"Release Notes" = "https://sktime-backup.readthedocs.io/en/stable/changelog.html"
+"API Reference" = "https://www.sktime.net/en/stable/api_reference.html"
+"Release Notes" = "https://www.sktime.net/en/stable/changelog.html"
 
 [project.license]
 file = "LICENSE"
