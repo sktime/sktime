@@ -8,7 +8,7 @@ if new pull requests do not break anything and meet code quality
 standards such as a common `coding style <#Coding-style>`__.
 Before setting up Continuous Integration, be sure that you have set
 up your developer environment, and installed a
-`developement version <https://sktime-backup.readthedocs.io/en/stable/installation.html>`__
+`developement version <https://www.sktime.net/en/stable/installation.html>`__
  of sktime.
 
 .. contents::
@@ -53,7 +53,7 @@ development version of sktime and all extra dependencies.
 .. note::
 
    For trouble shooting on different operating systems, please see our detailed
-   `installation instructions <https://sktime-backup.readthedocs.io/en/latest/installation.html>`__.
+   `installation instructions <https://www.sktime.net/en/latest/installation.html>`__.
 
 2. To run all unit tests, run:
 
