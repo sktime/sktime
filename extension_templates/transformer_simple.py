@@ -24,7 +24,8 @@ How to use this implementation template to implement a new estimator:
 - change docstrings for functions and the file
 - ensure interface compatibility by sktime.utils.estimator_checks.check_estimator
 - once complete: use as a local library, or contribute to sktime via PR
-- more details: https://www.sktime.org/en/stable/developer_guide/add_estimators.html
+- more details:
+  https://sktime-backup.readthedocs.io/en/stable/developer_guide/add_estimators.html
 
 Mandatory implements:
     fitting         - _fit(self, X, y=None)
