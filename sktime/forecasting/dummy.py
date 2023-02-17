@@ -6,6 +6,7 @@ __author__ = ["fkiraly"]
 
 import pandas as pd
 
+from sktime.datatypes import convert_to
 from sktime.forecasting.base import BaseForecaster
 
 
@@ -28,8 +29,9 @@ class ForecastKnownValues(BaseForecaster):
 
     Parameters
     ----------
-    y_known : pd.DataFrame
+    y_known : pd.DataFrame or pd.Series in one of the sktime compatible data formats
         should contain known values that the forecaster will replay in predict
+        can also be in a non-pandas sktime data format, will then be coerced to pandas
     method : str or None, optional, default=None
         one of {None, 'backfill'/'bfill', 'pad'/'ffill', 'nearest'}
         method to use for imputing indices at which forecasts are unavailable in y_known
@@ -37,6 +39,19 @@ class ForecastKnownValues(BaseForecaster):
         value to use for any missing values (e.g., if `method` is None)
     limit : int, optional, default=None=infinite
         maximum number of consecutive elements to bfill/ffill if `method=bfill`/`ffill`
+
+    Examples
+    --------
+    >>> y_known = pd.DataFrame(range(100))
+    >>> y_train = y_known[:24]
+    >>>
+    >>> from sktime.forecasting.dummy import ForecastKnownValues
+    >>>
+    >>> fcst = ForecastKnownValues(y_known)
+    >>> fcst.fit(y_train, fh=[1, 2, 3])
+
+    The forecast "plays back" the known/prescribed values from y_known
+    >>> fcst.predict()
     """
 
     _tags = {
@@ -54,15 +69,13 @@ class ForecastKnownValues(BaseForecaster):
         self.fill_value = fill_value
         self.limit = limit
 
-        if not isinstance(y_known, pd.DataFrame):
-            raise TypeError(
-                "y_known parameter of ForecastKnownValues must be pd.DataFrame, "
-                f"but found object of type {type(y_known)}"
-            )
-
         super(ForecastKnownValues, self).__init__()
 
-        idx = y_known.index
+        PANDAS_DF_TYPES = ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"]
+
+        self._y_known = convert_to(y_known, PANDAS_DF_TYPES)
+
+        idx = self._y_known.index
         if isinstance(idx, pd.MultiIndex):
             if idx.nlevels >= 3:
                 mtypes = ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"]
@@ -133,6 +146,7 @@ class ForecastKnownValues(BaseForecaster):
 
         fh_abs = fh.to_absolute(self.cutoff).to_pandas()
         y_pred = self.y_known.reindex(fh_abs, **reindex_params)
+        y_pred = y_pred.reindex(self._y.columns, axis=1, **reindex_params)
         return y_pred
 
     @classmethod
