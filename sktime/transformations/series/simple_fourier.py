@@ -8,7 +8,7 @@ __author__ = ["blazingbhavneek"]
 
 import numpy as np
 import pandas as pd
-from numpy.fft import rfft, rfftfreq
+from numpy.fft import rfft
 
 from sktime.transformations.base import BaseTransformer
 
@@ -33,8 +33,8 @@ class SimpleFourier(BaseTransformer):
     """
 
     _tags = {
-        "scitype:transform-input": "pd.Series",
-        "scitype:transform-output": "pd.Series",
+        "scitype:transform-input": "Series",
+        "scitype:transform-output": "Series",
         "scitype:instancewise": True,
         "scitype:transform-labels": "None",
         "X_inner_mtype": "pd.Series",
@@ -65,8 +65,7 @@ class SimpleFourier(BaseTransformer):
         """
         # numpy.fft methods
         dft_seq = np.abs(rfft(X))
-        sample_freq = rfftfreq(X.size)
 
         # Combining the arrays to Pandas Series
-        Y = pd.Series(dft_seq[1:], index=sample_freq[1:])
+        Y = pd.Series(dft_seq[1:])
         return Y
