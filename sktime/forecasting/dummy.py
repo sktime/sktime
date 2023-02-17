@@ -4,6 +4,7 @@
 
 __author__ = ["fkiraly"]
 
+import pandas as pd
 
 from sktime.forecasting.base import BaseForecaster
 
@@ -21,10 +22,21 @@ class ForecastKnownValues(BaseForecaster):
     * to pass forecast data values in a composite used for postprocessing,
       e.g., in combination with ReconcilerForecaster for an isolated reconciliation step
 
+    When forecasting, uses `pandas.DataFrame.reindex` under the hood to obtain predicted
+    values from `y_known`. Paramters other than `y_known` are directly passed
+    on to `pandas.DataFrame.reindex`.
+
     Parameters
     ----------
     y_known : pd.DataFrame
         should contain known values that the forecaster will replay in predict
+    method : str or None, optional, default=None
+        one of {None, 'backfill'/'bfill', 'pad'/'ffill', 'nearest'}
+        method to use for imputing indices at which forecasts are unavailable in y_known
+    fill_value : scalar, optional, default=np.NaN
+        value to use for any missing values (e.g., if `method` is None)
+    limit : int, optional, default=None=infinite
+        maximum number of consecutive elements to bfill/ffill if `method=bfill`/`ffill`
     """
 
     _tags = {
@@ -35,12 +47,29 @@ class ForecastKnownValues(BaseForecaster):
         "requires-fh-in-fit": False,
     }
 
-    # todo: add any hyper-parameters and components to constructor
-    def __init__(self, y_known):
+    def __init__(self, y_known, method=None, fill_value=None, limit=None):
 
         self.y_known = y_known
+        self.method = method
+        self.fill_value = fill_value
+        self.limit = limit
+
+        if not isinstance(y_known, pd.DataFrame):
+            raise TypeError(
+                "y_known parameter of ForecastKnownValues must be pd.DataFrame, "
+                f"but found object of type {type(y_known)}"
+            )
 
         super(ForecastKnownValues, self).__init__()
+
+        idx = y_known.index
+        if isinstance(idx, pd.MultiIndex):
+            if idx.nlevels >= 3:
+                mtypes = ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"]
+            elif idx.levels == 2:
+                mtypes = ["pd.DataFrame", "pd-multiindex"]
+            self.set_tags(**{"y_inner_mtype": mtypes})
+            self.set_tags(**{"X_inner_mtype": mtypes})
 
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
@@ -98,8 +127,13 @@ class ForecastKnownValues(BaseForecaster):
         -------
         y_pred : Point predictions
         """
-        fh_abs = fh.to_absolute(self.cutoff).to_pandas()
+        reindex_params = {"method": self.method, "limit": self.limit}
+        if self.fill_value is not None:
+            reindex_params["fill_value"] = self.fill_value
 
+        fh_abs = fh.to_absolute(self.cutoff).to_pandas()
+        y_pred = self.y_known.reindex(fh_abs, **reindex_params)
+        return y_pred
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -120,34 +154,12 @@ class ForecastKnownValues(BaseForecaster):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
+        from sktime.utils._testing.series import _make_series
 
-        # todo: set the testing parameters for the estimators
-        # Testing parameters can be dictionary or list of dictionaries.
-        # Testing parameter choice should cover internal cases well.
-        #   for "simple" extension, ignore the parameter_set argument.
-        #
-        # this method can, if required, use:
-        #   class properties (e.g., inherited); parent class test case
-        #   imported objects such as estimators from sktime or sklearn
-        # important: all such imports should be *inside get_test_params*, not at the top
-        #            since imports are used only at testing time
-        #
-        # A good parameter set should primarily satisfy two criteria,
-        #   1. Chosen set of parameters should have a low testing time,
-        #      ideally in the magnitude of few seconds for the entire test suite.
-        #       This is vital for the cases where default values result in
-        #       "big" models which not only increases test time but also
-        #       run into the risk of test workers crashing.
-        #   2. There should be a minimum two such parameter sets with different
-        #      sets of values to ensure a wide range of code coverage is provided.
-        #
-        # example 1: specify params as dictionary
-        # any number of params can be specified
-        # params = {"est": value0, "parama": value1, "paramb": value2}
-        #
-        # example 2: specify params as list of dictionary
-        # note: Only first dictionary will be used by create_test_instance
-        # params = [{"est": value1, "parama": value2},
-        #           {"est": value3, "parama": value4}]
-        #
-        # return params
+        y = _make_series()
+        y2 = y.iloc[3:12]
+
+        params1 = {"y_known": y}
+        params2 = {"y_known": y2, "method": "ffill", "limit": 3, "fill_value": 42}
+
+        return [params1, params2]
