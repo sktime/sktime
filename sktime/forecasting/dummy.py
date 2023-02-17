@@ -145,8 +145,19 @@ class ForecastKnownValues(BaseForecaster):
             reindex_params["fill_value"] = self.fill_value
 
         fh_abs = fh.to_absolute(self.cutoff).to_pandas()
-        y_pred = self.y_known.reindex(fh_abs, **reindex_params)
-        y_pred = y_pred.reindex(self._y.columns, axis=1, **reindex_params)
+
+        try:
+            y_pred = self._y_known.reindex(fh_abs, **reindex_params)
+            y_pred = y_pred.reindex(self._y.columns, axis=1, **reindex_params)
+        # TypeError happens if indices are incompatible types
+        except TypeError:
+            if self.fill_value is None:
+                y_pred = pd.DataFrame(index=fh_abs, columns=self._y.columns)
+            else:
+                y_pred = pd.DataFrame(
+                    self.fill_value, index=fh_abs, columns=self._y.columns
+                )
+
         return y_pred
 
     @classmethod
@@ -170,10 +181,10 @@ class ForecastKnownValues(BaseForecaster):
         """
         from sktime.utils._testing.series import _make_series
 
-        y = _make_series()
-        y2 = y.iloc[3:12]
+        y = _make_series(n_columns=1)
+        y2 = _make_series(n_columns=2, n_timepoints=15, index_type="int")
 
-        params1 = {"y_known": y}
+        params1 = {"y_known": y, "fill_value": 42}
         params2 = {"y_known": y2, "method": "ffill", "limit": 3, "fill_value": 42}
 
         return [params1, params2]
