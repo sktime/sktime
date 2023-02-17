@@ -233,6 +233,9 @@ def _index_equally_spaced(index):
     if isinstance(index, pd.RangeIndex):
         return True
 
+    if isinstance(index, pd.PeriodIndex):
+        return index.is_full
+
     # we now treat a necessary condition for being equally spaced:
     # the first two spaces are equal. From now on, we know this.
     if index[1] - index[0] != index[2] - index[1]:
@@ -243,14 +246,6 @@ def _index_equally_spaced(index):
     n = len(index)
     if index[n - 1] - index[0] != (n - 1) * (index[1] - index[0]):
         return False
-
-    # if we arrive at this stage, and the index is PeriodIndex,
-    # we know it must be equally spaced:
-    # it cannot have duplicates and must be sorted (other conditions for mtype),
-    # therefore, by the pigeonhole principle, the
-    # two necessary conditions we checked are also sufficient
-    if isinstance(index, pd.PeriodIndex):
-        return True
 
     # fallback for all other cases:
     # in general, we need to compute all differences and check explicitly
