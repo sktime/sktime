@@ -9,9 +9,17 @@ from sktime.forecasting.base import BaseForecaster
 
 
 class ForecastKnownValues(BaseForecaster):
-    """Custom forecaster. todo: write docstring.
+    """Forecaster that plays back known or prescribed values as forecasts.
 
-    todo: describe your custom forecaster here
+    Takes a data set of "known future values" to produces these in the sktime interface.
+
+    Common use cases for this forecaster:
+
+    * as a dummy or naive forecaster with a known baseline expectation
+    * as a forecaster with (non-naive) expert forecasts, "known" values as per expert
+    * as a counterfactual in benchmarking experiments, "what if we knew the truth"
+    * to pass forecast data values in a composite used for postprocessing,
+      e.g., in combination with ReconcilerForecaster for an isolated reconciliation step
 
     Parameters
     ----------
