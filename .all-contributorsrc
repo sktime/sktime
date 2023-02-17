@@ -2062,6 +2062,61 @@
       "contributions": [
         "maintenance"
       ]
+    },
+    {
+      "login": "hoesler",
+      "name": "Christoph Hösler",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1052770?v=4",
+      "profile": "https://www.linkedin.com/in/hoesler/",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "pranavvp16",
+      "name": "Pranav Prajapati",
+      "avatar_url": "https://avatars.githubusercontent.com/u/94780581?v=4",
+      "profile": "https://www.linkedin.com/in/pranav-prajapati-a5b413226/",
+      "contributions": [
+        "code",
+        "test"
+      ]
+    },
+    {
+      "login": "romanlutz",
+      "name": "Roman Lutz",
+      "avatar_url": "https://avatars.githubusercontent.com/u/10245648?v=4",
+      "profile": "https://www.linkedin.com/in/romanlutz/",
+      "contributions":[
+        "doc"
+      ]
+    },
+    {
+      "login": "DBCerigo",
+      "name": "Daniel Burkhardt Cerigo",
+      "avatar_url": "https://avatars.githubusercontent.com/u/8318425?v=4",
+      "profile": "https://github.com/DBCerigo",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "alex-hh",
+      "name": "Alex Hawkins-Hooker",
+      "avatar_url": "https://avatars.githubusercontent.com/u/5719745?v=4",
+      "profile": "https://github.com/alex-hh",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "ali-tny",
+      "name": "Ali Teeney",
+      "avatar_url": "https://avatars.githubusercontent.com/u/26010073?v=4",
+      "profile": "https://github.com/ali-tny",
+      "contributions": [
+        "code"
+      ]
     }
   ]
 }

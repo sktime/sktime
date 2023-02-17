@@ -193,11 +193,6 @@ html_theme_options = {
             "icon": "fab fa-github",
         },
         {
-            "name": "Slack",
-            "url": "https://join.slack.com/t/sktime-group/shared_invite/zt-1cghagwee-sqLJ~eHWGYgzWbqUX937ig",  # noqa: E501
-            "icon": "fab fa-slack",
-        },
-        {
             "name": "Discord",
             "url": "https://discord.com/invite/gqSab2K",
             "icon": "fab fa-discord",
@@ -369,7 +364,7 @@ def _make_estimator_overview(app):
         clean_path = ".".join(list(filter(_does_not_start_with_underscore, path_parts)))
         # adds html link reference
         modname = str(
-            '<a href="https://www.sktime.org/en/latest/api_reference'
+            '<a href="https://www.sktime.net/en/latest/api_reference'
             + "/auto_generated/"
             + clean_path
             + '.html">'

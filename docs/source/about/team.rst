@@ -16,10 +16,6 @@ Community Council
      - GitHub ID
    * - Franz Király
      - :user:`fkiraly`
-   * - Guzal Bulatova
-     - :user:`GuzalBulatova`
-   * - Martin Walter
-     - :user:`aiwalter`
 
 Community Council Observers
 ---------------------------
@@ -29,10 +25,10 @@ Community Council Observers
 
    * - Name
      - GitHub ID
-   * - Leonidas Tsaprounis
-     - :user:`ltsaprounis`
    * - Lovkush Agarwal
      - :user:`lovkush-a`
+   * - Mirae Parker
+     - :user:`miraep8`
 
 Code of Conduct Committee
 -------------------------
@@ -53,8 +49,6 @@ Core Developers
 
    * - Name
      - GitHub ID
-   * - Chris Holder
-     - :user:`chrisholder`
    * - Daniel Bartling
      - :user:`danbartl`
    * - Franz Király
@@ -63,20 +57,12 @@ Core Developers
      - :user:`freddyaboulton`
    * - Guzal Bulatova
      - :user:`GuzalBulatova`
-   * - Leonidas Tsaprounis
-     - :user:`ltsaprounis`
    * - Lovkush Agarwal
      - :user:`lovkush-a`
-   * - Łukasz Mentel
-     - :user:`lmmentel`
    * - Markus Löning
      - :user:`mloning`
-   * - Martin Walter
-     - :user:`aiwalter`
    * - Mirae Parker
      - :user:`miraep8`
-   * - Patrick Schäfer
-     - :user:`patrickzib`
    * - Ryan Kuhns
      - :user:`rnkuhns`
    * - Sagar Mishra
@@ -108,13 +94,23 @@ Former Core Developers
      - :user:`james-large`
    * - Jason Lines
      - :user:`jasonlines`
+   * - Leonidas Tsaprounis
+     - :user:`ltsaprounis`
+   * - Łukasz Mentel
+     - :user:`lmmentel`
+   * - Martin Walter
+     - :user:`aiwalter`
    * - Mathew Smith
      - :user:`matteogales`
    * - Matthew Middlehurst
      - :user:`mattewmiddlehurst`
    * - Patrick Rockenschaub
      - :user:`prockenschaub`
+   * - Patrick Schäfer
+     - :user:`patrickzib`
    * - Sajaysurya Ganesh
      - :user:`sajaysurya`
+   * - Christopher Holder
+     - :user:`chrisholder`
    * - Anonymous upon contributor's request
      - :user:`big-o`
