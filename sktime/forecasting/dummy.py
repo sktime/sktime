@@ -49,6 +49,7 @@ class ForecastKnownValues(BaseForecaster):
     >>>
     >>> fcst = ForecastKnownValues(y_known)
     >>> fcst.fit(y_train, fh=[1, 2, 3])
+    ForecastKnownValues(...)
 
     The forecast "plays back" the known/prescribed values from y_known
     >>> fcst.predict()
