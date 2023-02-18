@@ -780,12 +780,43 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
         assert all(
             isinstance(x, dict) for x in param_list
         ), f"get_test_params must return list of dict or dict, found {param_list}"
-        param_names = estimator_class.get_param_names()
-        assert all(set(x.keys()).issubset(set(param_names)) for x in param_list), (
-            "get_test_params return dict keys must be valid parameter names, "
-            "i.e., names of arguments of __init__"
+
+        def _coerce_to_list_of_str(obj):
+            if isinstance(obj, str):
+                return obj
+            elif isinstance(obj, list):
+                return obj
+            else:
+                return []
+
+        reserved_param_names = estimator_class.get_tag(
+            "reserved_params", tag_value_default=None, raise_error=False
         )
-        if len(param_names) > 0:
+        reserved_param_names = _coerce_to_list_of_str(reserved_param_names)
+        reserved_set = set(reserved_param_names)
+
+        param_names = estimator_class.get_param_names()
+        valid_param_names = set(param_names).difference(reserved_param_names)
+
+        key_list = [x.keys() for x in param_list]
+
+        reserved_errs = [set(x).intersection(reserved_set) for x in key_list]
+
+        assert all([len(x) == 0 for x in reserved_errs]), (
+            "get_test_params return dict keys must be valid parameter names, "
+            "i.e., names of arguments of __init__ that are not reserved, "
+            f"but found the following reserved parameters as keys: {reserved_errs}"
+        )
+
+        notfound_errs = [set(x).difference(param_names) for x in key_list]
+
+        assert all([len(x) == 0 for x in notfound_errs]), (
+            "get_test_params return dict keys must be valid parameter names, "
+            "i.e., names of arguments of __init__, "
+            f"but found some parameters that are not __init__ args: {notfound_errs}"
+        )
+
+        if len(valid_param_names) > 0:
             assert (
                 len(param_list) > 1
             ), "get_test_params should return at least two test parameter sets"
