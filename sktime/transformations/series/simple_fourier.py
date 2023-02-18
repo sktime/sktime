@@ -16,12 +16,14 @@ from sktime.transformations.base import BaseTransformer
 class SimpleFourier(BaseTransformer):
     r"""Simple Fourier transform for time series.
 
+    The implementation is based on the real fast fourier transform from numpy.fft.rfft
+    Returns pd.Series of amplitudes of integer range frequencies.
+    Even-Sampling of data is assumed and frequency range converted to integer.
+
     Fourier Transform is used to test data for periodicity.
     Non-periodic/Noisy/Random data will have limited and
     random amplitudes for frequencies, whereas periodic data
     will have exceptional amplitudes for certain frequencies.
-
-    The implementation is based on the fast fourier transform from numpy.fft
 
     Examples
     --------
