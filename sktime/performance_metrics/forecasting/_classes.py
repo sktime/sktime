@@ -585,8 +585,17 @@ class _DynamicForecastingErrorMetric(BaseForecastingErrorMetricFunc):
 
             return float(result)
 
-        params = {"func": custom_mape, "name": "custom_mape", "lower_is_better": False}
-        return params
+        params1 = {"func": custom_mape, "name": "custom_mape", "lower_is_better": False}
+
+        def custom_mae(y_true, y_pred) -> float:
+
+            result = np.mean(np.abs(y_true - y_pred))
+
+            return float(result)
+
+        params2 = {"func": custom_mae, "name": "custom_nmae", "lower_is_better": True}
+
+        return [params1, params2]
 
 
 class _ScaledMetricTags:
