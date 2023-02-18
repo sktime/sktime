@@ -34,6 +34,7 @@ __all__ = [
     "convert_dict",
 ]
 
+from sktime.datatypes._convert_utils._coerce import _coerce_df_dtypes
 from sktime.datatypes._convert_utils._convert import _extend_conversions
 from sktime.datatypes._panel._registry import MTYPE_LIST_PANEL
 from sktime.utils.validation._dependencies import _check_soft_dependencies
@@ -581,9 +582,8 @@ def from_multi_index_to_3d_numpy(X):
     n_timepoints = len(X.index.get_level_values(1).unique())
     n_columns = X.shape[1]
 
-    X_values = X.values
-    if X_values.dtype == "object":
-        X_values = X_values.astype("float")
+    X_coerced = _coerce_df_dtypes(X)
+    X_values = X_coerced.values
     X_3d = X_values.reshape(n_instances, n_timepoints, n_columns).swapaxes(1, 2)
 
     return X_3d
