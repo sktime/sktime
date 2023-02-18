@@ -581,7 +581,9 @@ def from_multi_index_to_3d_numpy(X):
     n_timepoints = len(X.index.get_level_values(1).unique())
     n_columns = X.shape[1]
 
-    X_values = X.values.astype("float64")
+    X_values = X.values
+    if X_values.dtype == "object":
+        X_values = X_values.astype("float")
     X_3d = X_values.reshape(n_instances, n_timepoints, n_columns).swapaxes(1, 2)
 
     return X_3d
