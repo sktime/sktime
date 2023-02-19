@@ -182,6 +182,7 @@ def _evaluate_window(
                 Failed forecaster: {forecaster}.
                 """,
                 FitFailedWarning,
+                stacklevel=2,
             )
 
     if pd.isnull(cutoff):
