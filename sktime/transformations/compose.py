@@ -1841,7 +1841,7 @@ class TransformIf(_DelegatedTransformer):
             bool_params = [k for k, v in params.items() if isinstance(v, bool)]
             param = bool_params[0]
 
-        param_val = [param]
+        param_val = params[param]
 
         # evaluate condition
         condition = self.condition
