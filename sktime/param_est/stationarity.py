@@ -147,7 +147,7 @@ class StationarityADF(BaseParamFitter):
             "maxlag": 5,
             "regression": "ctt",
             "autolag": "t-stat",
-         }
+        }
 
         return [params1, params2]
 
