@@ -143,8 +143,11 @@ class StationarityADF(BaseParamFitter):
         """
         params1 = {}
         params2 = {
-            "p_threshold": 0.1, "maxlag": 5, "regression": "ctt", "autolag": "t-stat"
-        }
+            "p_threshold": 0.1,
+            "maxlag": 5,
+            "regression": "ctt",
+            "autolag": "t-stat",
+         }
 
         return [params1, params2]
 
