@@ -1717,65 +1717,70 @@ class YtoX(BaseTransformer):
 
 
 class TransformIf(_DelegatedTransformer):
-    """Wrap an existing transformer to tune whether to include it in a pipeline.
+    """Conditional execution of a transformer given a condition from a fittable object.
 
-    Allows tuning the implicit hyperparameter whether or not to use a
-    particular transformer inside a pipeline (e.g. TransformedTargetForecaster)
-    or not. This is achieved by the hyperparameter `passthrough`
-    which can be added to a tuning grid then (see example).
+    Compositor to construct conditionally executed transformers, e.g.,
+
+    * compute first differences if a stationarity test is positive
+    * deseasonalize if a seasonality test is positive
+
+    This compositor allows to specify a condition, and an if/else transformer.
+    The default "else" transformer is "no transformation".
+
+    The specific algorithm implemented is as follows:
+
+    In `fit`, for inputs `X`, `y`:
+    1. fits `in_estimator` to `X`, `y`
+    2. checks the condition for `inestimator` fitted parameter `param`:
+       whether `param` satisfies `condition` with `condition_value`
+    3. If yes, fits `then_est` to `X`, `y`, and behaves as `then_est` from then on
+       If no, fits `else_est` to `X`, `y`, and behaves as `else_est` from then on
+
+    In other methods, behaves as `then_est` or `else_est`, as above.
 
     Parameters
     ----------
-    transformer : Estimator
-        scikit-learn-like or sktime-like transformer to fit and apply to series.
+    in_estimator : sktime estimator, must have `fit`
+        sktime estimator to fit and apply to series.
+        this is a "blueprint" estimator, state does not change when `fit` is called
+    param : str, optional, default = first boolean parameter of fitted in_estimator
+    condition : str, optional, default = "bool"
+        condition that defines whether self behaves like `then_est` or `else_est`
+        this estimator behaves like `then_est` iff:
+        "bool" = if `param` is True
+        ">", ">=", "==", "<", "<=", "!=" = if `param condition condition_value`
+    condition_value : required for some conditions, see above; otherwise optional
+    then_trafo : sktime transformer, optional, default=`in_estimator`
+        transformer that this behaves as if condition is satisfied
         this is a "blueprint" transformer, state does not change when `fit` is called
-    passthrough : bool, default=False
-       Whether to apply the given transformer or to just
-        passthrough the data (identity transformation). If, True the transformer
-        is not applied and the OptionalPassthrough uses the identity
-        transformation.
+    else_trafo : sktime transformer, optional default=`Id` (identity/no transform)
+        transformer that this behaves as if condition is not satisfied
+        this is a "blueprint" transformer, state does not change when `fit` is called
 
     Attributes
     ----------
-    transformer_: transformer,
-        this clone is fitted when `fit` is called and provides `transform` and inverse
-        if passthrough = False, a clone of `transformer`passed
-        if passthrough = True, the identity transformer `Id`
+    transformer_ : transformer,
+        this clone is fitted when `fit` is called
+        if condition is satisfied, a clone of `then_est`
+        if condition is not satisfied, a clone of `else_est`
+    condition_ : bool,
+        True if condition was true, False if it was false
+    in_estimator_ : estimator
+        this clone of `in_estimator` is fitted when `fit` is called
 
     Examples
     --------
-    >>> from sktime.datasets import load_airline
-    >>> from sktime.forecasting.naive import NaiveForecaster
-    >>> from sktime.transformations.compose import OptionalPassthrough
+    >>> from sktime.param_est.seasonality import SeasonalityACF
+    >>> from sktime.transformations.compose import TransformIf
     >>> from sktime.transformations.series.detrend import Deseasonalizer
-    >>> from sktime.transformations.series.adapt import TabularToSeriesAdaptor
-    >>> from sktime.forecasting.compose import TransformedTargetForecaster
-    >>> from sktime.forecasting.model_selection import (
-    ...     ForecastingGridSearchCV,
-    ...     SlidingWindowSplitter)
-    >>> from sklearn.preprocessing import StandardScaler
-    >>> # create pipeline
-    >>> pipe = TransformedTargetForecaster(steps=[
-    ...     ("deseasonalizer", OptionalPassthrough(Deseasonalizer())),
-    ...     ("scaler", OptionalPassthrough(TabularToSeriesAdaptor(StandardScaler()))),
-    ...     ("forecaster", NaiveForecaster())])  # doctest: +SKIP
-    >>> # putting it all together in a grid search
-    >>> cv = SlidingWindowSplitter(
-    ...     initial_window=60,
-    ...     window_length=24,
-    ...     start_with_window=True,
-    ...     step_length=48)  # doctest: +SKIP
-    >>> param_grid = {
-    ...     "deseasonalizer__passthrough" : [True, False],
-    ...     "scaler__transformer__transformer__with_mean": [True, False],
-    ...     "scaler__passthrough" : [True, False],
-    ...     "forecaster__strategy": ["drift", "mean", "last"]}  # doctest: +SKIP
-    >>> gscv = ForecastingGridSearchCV(
-    ...     forecaster=pipe,
-    ...     param_grid=param_grid,
-    ...     cv=cv,
-    ...     n_jobs=-1)  # doctest: +SKIP
-    >>> gscv_fitted = gscv.fit(load_airline())  # doctest: +SKIP
+    >>> from sktime.datasets import load_airline
+    ...
+    >>> y = load_airline()  # doctest: +SKIP
+    >>>
+    >>> seasonal = SeasonalityACF(candidate_sp=12)
+    >>> deseason = Deseasonalizer()  # doctest: +SKIP
+    >>> cond_deseason = TransformIf(seasonal, "sp", "!=", 1, deseason)  # doctest: +SKIP
+    >>> y_hat = cond_deseason.fit_transform(y)  # doctest: +SKIP
     """
 
     _tags = {
@@ -1798,31 +1803,118 @@ class TransformIf(_DelegatedTransformer):
         param=None,
         condition="bool",
         condition_value=None,
-        then_est=None,
-        else_est=None,
+        then_trafo=None,
+        else_trafo=None,
     ):
         self.in_estimator = in_estimator
         self.param = param
         self.condition = condition
         self.condition_value = condition_value
-        self.then_est = then_est
-        self.else_est = else_est
+        self.then_trafo = then_trafo
+        self.else_trafo = else_trafo
 
-        if then_est is None:
-            then_est_ = in_estimator
-        if else_est is None:
-            else_est_ = Id()
+        if then_trafo is None:
+            self.then_trafo_ = in_estimator
+        else:
+            self.then_trafo_ = then_trafo
+
+        if else_trafo is None:
+            self.else_trafo_ = Id()
+        else:
+            self.else_trafo_ = else_trafo
 
         super(TransformIf, self).__init__()
 
-        if_or_else = self._evaluate_condition(
-            in_estimator, param, condition, condition_value
-        )
+    # attribute for _DelegatedTransformer, which then delegates
+    #     all non-overridden methods are same as of getattr(self, _delegate_name)
+    #     see further details in _DelegatedTransformer docstring
+    _delegate_name = "transformer_"
+
+    def _evaluate_condition(self):
+        """Evalutes the condition, as described in the docstring of the class."""
+        param = self.param
+
+        params = self.in_estimator_.get_fitted_params()
+
+        # if param is None, get the first boolean parameter
+        if param is None:
+            bool_params = [k for k, v in params.items() if isinstance(v, bool)]
+            param = bool_params[0]
+
+        param_val = [param]
+
+        # evaluate condition
+        condition = self.condition
+        condition_value = self.condition_value
+
+        if condition == "bool":
+            cond_bool = param_val
+        elif condition in [">=", ">", "==", "!=", "<", "<="]:
+            cond_bool =  eval(f"{param_val} {condition} {condition_value}")
+        else:
+            raise ValueError(
+                f"unsupported value for parameter 'condition' found in "
+                f"TransformIf: {condition}"
+            )
+
+        if cond_bool:
+            return "if"
+        else:
+            return "else"
+
+    # we need to override fit, since the earliest time we can determine
+    # which of the two transformers we are dealing with is when we see X and y
+    def fit(self, X, y=None):
+        """Fit transformer to X, optionally to y.
+
+        State change:
+            Changes state to "fitted".
+
+        Writes to self:
+        _is_fitted : flag is set to True.
+        _X : X, coerced copy of X, if remember_data tag is True
+            possibly coerced to inner type or update_data compatible type
+            by reference, when possible
+        model attributes (ending in "_") : dependent on estimator
+
+        Parameters
+        ----------
+        X : Series or Panel, any supported mtype
+            Data to fit transform to, of python type as follows:
+                Series: pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
+                Panel: pd.DataFrame with 2-level MultiIndex, list of pd.DataFrame,
+                    nested pd.DataFrame, or pd.DataFrame in long/wide format
+                subject to sktime mtype format specifications, for further details see
+                    examples/AA_datatypes_and_datasets.ipynb
+        y : Series or Panel, default=None
+            Additional data, e.g., labels for transformation
+
+        Returns
+        -------
+        self : a fitted instance of the estimator
+        """
+        from sktime.registry import scitype
+
+        in_estimator_ = self.in_estimator.clone()
+
+        if scitype(in_estimator_) == "forecaster":
+            self.in_estimator_ = in_estimator_.fit(y=X, X=y)
+        elif scitype(in_estimator_) == "transformer":
+            self.in_estimator_ = in_estimator_.fit(X=X, y=y)
+        else:
+            try:
+                self.in_estimator_ = in_estimator_.fit(X, y)
+            except Exception:
+                self.in_estimator_ = in_estimator_.fit(X)
+
+        if_or_else = self._evaluate_condition()
 
         if if_or_else == "if":
-            self.transformer_ = then_est_.clone()
+            self.transformer_ = self.then_trafo_.clone()
+            self.condition_ = True
         elif if_or_else == "else":
-            self.transformer_ = else_est_.clone()
+            self.transformer_ = self.else_trafo_.clone()
+            self.condition_ = False
         else:
             raise RuntimeError(
                 "unexpected condition, bug in _evaluate_condition return"
@@ -1843,10 +1935,11 @@ class TransformIf(_DelegatedTransformer):
         ]
         self.clone_tags(self.transformer_, tag_names=tags_to_clone)
 
-    # attribute for _DelegatedTransformer, which then delegates
-    #     all non-overridden methods are same as of getattr(self, _delegate_name)
-    #     see further details in _DelegatedTransformer docstring
-    _delegate_name = "transformer_"
+        # executes the base class fit, for the delegated estimator
+        # this is via the fit of _DelegatedTransformer
+        super(TransformIf, self).fit(X=X, y=y)
+
+        return self
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -1867,6 +1960,20 @@ class TransformIf(_DelegatedTransformer):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
+        from sktime.param_est.fixed import FixedParams
         from sktime.transformations.series.boxcox import BoxCoxTransformer
 
-        return {"transformer": BoxCoxTransformer(), "passthrough": False}
+        params1 = {
+            "in_estimator": BoxCoxTransformer(),
+            "param": "lambda",
+            "condition": ">",
+            "condition_value": 1.0,
+        }
+
+        params2 = {
+            "in_estimator": FixedParams(param_dict={"foo": False}),
+            "then_trafo": Id(),
+            "else_trafo": BoxCoxTransformer(bounds=(2.0, 3.0))
+        }
+
+        return [params1, params2]
