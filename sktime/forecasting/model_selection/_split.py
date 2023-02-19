@@ -49,7 +49,7 @@ DEFAULT_WINDOW_LENGTH = 10
 DEFAULT_FH = 1
 ACCEPTED_Y_TYPES = Union[pd.Series, pd.DataFrame, np.ndarray, pd.Index]
 FORECASTING_HORIZON_TYPES = Union[
-    Union[VALID_FORECASTING_HORIZON_TYPES], ForecastingHorizon
+    Union[VALID_FORECASTING_HORIZON_TYPES], ForecastingHorizon # is this a typo? is it supposed to be Union[VALID_FORECASTING_HORIZON_TYPES, ForecastingHorizon]?
 ]
 SPLIT_TYPE = Union[
     Tuple[pd.Series, pd.Series], Tuple[pd.Series, pd.Series, pd.DataFrame, pd.DataFrame]
