@@ -1994,7 +1994,7 @@ class TransformIf(_DelegatedTransformer):
         params2 = {
             "in_estimator": FixedParams(param_dict={"foo": False}),
             "then_trafo": Id(),
-            "else_trafo": BoxCoxTransformer(bounds=(2.0, 3.0))
+            "else_trafo": BoxCoxTransformer(bounds=(2.0, 3.0)),
         }
 
         return [params1, params2]
