@@ -49,7 +49,8 @@ convert_dict = dict()
 
 
 def convert_identity(obj, store=None):
-
+    # coerces pandas nullable dtypes; does nothing if obj is not pandas
+    obj = _coerce_df_dtypes(obj)
     return obj
 
 
@@ -591,6 +592,8 @@ def from_multi_index_to_3d_numpy(X):
 
 def from_multi_index_to_3d_numpy_adp(obj, store=None):
 
+    obj = _coerce_df_dtypes(obj)
+
     res = from_multi_index_to_3d_numpy(X=obj)
     if isinstance(store, dict):
         store["columns"] = obj.columns
@@ -742,6 +745,8 @@ def from_multi_index_to_nested(
 
 
 def from_multi_index_to_nested_adp(obj, store=None):
+
+    obj = _coerce_df_dtypes(obj)
 
     if isinstance(store, dict):
         store["index_names"] = obj.index.names
@@ -951,6 +956,8 @@ convert_dict[("df-list", "pd-multiindex", "Panel")] = from_dflist_to_multiindex
 
 
 def from_multiindex_to_dflist(obj, store=None):
+
+    obj = _coerce_df_dtypes(obj)
 
     instance_index = obj.index.levels[0]
 
