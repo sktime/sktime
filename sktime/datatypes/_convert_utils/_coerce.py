@@ -14,6 +14,8 @@ def _is_nullable_numeric(dtype):
 def _coerce_df_dtypes(obj):
     """Coerce pandas objects to non-nullable column types.
 
+    Returns shallow copy and does not mutate input `obj`.
+
     Parameters
     ----------
     obj: pandas Series or DataFrame, or any object
@@ -27,11 +29,14 @@ def _coerce_df_dtypes(obj):
     if isinstance(obj, pd.Series):
         if _is_nullable_numeric(obj.dtype):
             return obj.astype("float")
+        return obj
 
     if isinstance(obj, pd.DataFrame):
-        for col in obj.columns:
-            if _is_nullable_numeric(obj.dtypes[col]):
-                obj[col] = obj[col].astype("float")
+        nullable_cols = [
+            col for col in obj.columns if _is_nullable_numeric(obj.dtypes[col])
+        ]
+        if len(nullable_cols) > 0:
+            obj = obj.astype({col: "float" for col in nullable_cols})
         return obj
 
     return obj
