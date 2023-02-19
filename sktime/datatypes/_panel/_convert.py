@@ -49,14 +49,23 @@ convert_dict = dict()
 
 
 def convert_identity(obj, store=None):
-    # coerces pandas nullable dtypes; does nothing if obj is not pandas
-    obj = _coerce_df_dtypes(obj)
+
     return obj
 
 
 # assign identity function to type conversion to self
 for tp in MTYPE_LIST_PANEL:
     convert_dict[(tp, tp, "Panel")] = convert_identity
+
+
+def convert_coerce(obj, store=None):
+    # coerces pandas nullable dtypes; does nothing if obj is not pandas
+    obj = _coerce_df_dtypes(obj)
+    return obj
+
+
+# coercing pd-multiindex nullable columns to non-nullable float
+convert_dict[("pd-multiindex", "pd-multiindex", "Panel")] = convert_coerce
 
 
 def _cell_is_series_or_array(cell):
