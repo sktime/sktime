@@ -1778,7 +1778,7 @@ class TransformIf(_DelegatedTransformer):
     >>> y = load_airline()  # doctest: +SKIP
     >>>
     >>> seasonal = SeasonalityACF(candidate_sp=12)
-    >>> deseason = Deseasonalizer()  # doctest: +SKIP
+    >>> deseason = Deseasonalizer(sp=12)  # doctest: +SKIP
     >>> cond_deseason = TransformIf(seasonal, "sp", "!=", 1, deseason)  # doctest: +SKIP
     >>> y_hat = cond_deseason.fit_transform(y)  # doctest: +SKIP
     """
@@ -1850,7 +1850,7 @@ class TransformIf(_DelegatedTransformer):
         if condition == "bool":
             cond_bool = param_val
         elif condition in [">=", ">", "==", "!=", "<", "<="]:
-            cond_bool =  eval(f"{param_val} {condition} {condition_value}")
+            cond_bool = eval(f"{param_val} {condition} {condition_value}")
         else:
             raise ValueError(
                 f"unsupported value for parameter 'condition' found in "
@@ -1937,9 +1937,30 @@ class TransformIf(_DelegatedTransformer):
 
         # executes the base class fit, for the delegated estimator
         # this is via the fit of _DelegatedTransformer
+        # we need to turn off reset temporarily for the logic to work
+        # todo 0.17.0 or 0.18.0 - move this to the config system
+        self._config_reset = False
         super(TransformIf, self).fit(X=X, y=y)
+        self._config_reset = True
 
         return self
+
+    # we also override _get_fitted_params with the original
+    # to see the condition and then/else_trafo under a stable indexing
+    def _get_fitted_params(self):
+        """Get fitted parameters.
+
+        private _get_fitted_params, called from get_fitted_params
+
+        State required:
+            Requires state to be "fitted".
+
+        Returns
+        -------
+        fitted_params : dict with str keys
+            fitted parameters, keyed by names of fitted parameter
+        """
+        return BaseTransformer._get_fitted_params(self)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
