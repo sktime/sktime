@@ -278,6 +278,6 @@ class StationarityKPSS(BaseParamFitter):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         params1 = {}
-        params2 = {"p_threshold": 0.1, "regression": "ctt", "lags": 5}
+        params2 = {"p_threshold": 0.1, "regression": "ctt", "nlags": 5}
 
         return [params1, params2]
