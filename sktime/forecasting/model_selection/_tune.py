@@ -719,3 +719,7 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         }
 
         return [params, params2]
+    
+    class ForecastingSkoptSearchCV(BaseGridSearch):
+        def __init__(self):
+            pass
