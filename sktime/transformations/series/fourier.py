@@ -128,6 +128,7 @@ class FourierFeatures(BaseTransformer):
             " to `False`. To keep the current behaviour explicitly \n"
             " set `keep_original_columns=True`.",
             FutureWarning,
+            stacklevel=2,
         )
 
         if len(self.sp_list) != len(self.fourier_terms_list):
@@ -180,7 +181,8 @@ class FourierFeatures(BaseTransformer):
                     warnings.warn(
                         f"The terms sin_{sp}_{k} and cos_{sp}_{k} from FourierFeatures "
                         "will be skipped because the resulting coefficient already "
-                        "exists from other seasonal period, fourier term pairs."
+                        "exists from other seasonal period, fourier term pairs.",
+                        stacklevel=2,
                     )
 
         time_index = X.index
