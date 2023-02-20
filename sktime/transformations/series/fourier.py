@@ -2,7 +2,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Fourier features for time series with long/complex seasonality."""
 
-__author__ = ["ltsaprounis"]
+__author__ = ["ltsaprounis", "blazingbhavneek"]
 
 import warnings
 from distutils.log import warn
@@ -10,6 +10,7 @@ from typing import List, Optional, Union
 
 import numpy as np
 import pandas as pd
+from numpy.fft import rfft
 
 from sktime.transformations.base import BaseTransformer
 
@@ -264,3 +265,58 @@ class FourierFeatures(BaseTransformer):
             {"sp_list": [12, 6.2], "fourier_terms_list": [3, 4]},
         ]
         return params
+
+
+class FourierTransform(BaseTransformer):
+    r"""Simple Fourier transform for time series.
+
+    The implementation is based on the real fast fourier transform from numpy.fft.rfft
+    Returns pd.Series of amplitudes of integer range frequencies.
+    Even-Sampling of data is assumed and frequency range converted to integer.
+
+    Examples
+    --------
+    >>> from sktime.transformations.series.fourier import FourierTransform
+    >>> from sktime.datasets import load_airline
+    >>> X = load_airline()
+    >>> transformer = FourierTransform()
+    >>> X_ft = transformer.fit_transform(X)
+    """
+
+    _tags = {
+        "scitype:transform-input": "Series",
+        "scitype:transform-output": "Series",
+        "scitype:instancewise": True,
+        "scitype:transform-labels": "None",
+        "X_inner_mtype": "pd.Series",
+        "y_inner_mtype": "None",
+        "univariate-only": True,
+        "requires_y": False,
+        "fit_is_empty": True,
+        "capability:inverse_transform": False,
+        "capability:unequal_length": True,
+        "handles-missing-data": False,
+    }
+
+    def __init__(self):
+        super(FourierTransform, self).__init__()
+
+    def _transform(self, X, y=None):
+        """Transform X and return a transformed version.
+
+        private _transform containing core logic, called from transform
+
+        Parameters
+        ----------
+        X : Series mtype X_inner_mtype
+
+        Returns
+        -------
+        transformed version of X
+        """
+        # numpy.fft methods
+        dft_seq = np.abs(rfft(X))
+
+        # Combining the arrays to Pandas Series
+        Y = pd.Series(dft_seq[1:])
+        return Y
