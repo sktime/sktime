@@ -55,8 +55,6 @@ Core Developers
      - :user:`fkiraly`
    * - Freddy A Boulton
      - :user:`freddyaboulton`
-   * - Guzal Bulatova
-     - :user:`GuzalBulatova`
    * - Lovkush Agarwal
      - :user:`lovkush-a`
    * - Markus Löning
@@ -88,6 +86,8 @@ Former Core Developers
      - :user:`ayushmaanseth`
    * - George Oastler
      - :user:`goastler`
+   * - Guzal Bulatova
+     - :user:`GuzalBulatova`
    * - Hongyi Yang
      - :user:`hyang1996`
    * - James Large
