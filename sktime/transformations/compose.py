@@ -1777,7 +1777,7 @@ class TransformIf(_DelegatedTransformer):
     ...
     >>> y = load_airline()  # doctest: +SKIP
     >>>
-    >>> seasonal = SeasonalityACF(candidate_sp=12)
+    >>> seasonal = SeasonalityACF(candidate_sp=12)  # doctest: +SKIP
     >>> deseason = Deseasonalizer(sp=12)  # doctest: +SKIP
     >>> cond_deseason = TransformIf(seasonal, "sp", "!=", 1, deseason)  # doctest: +SKIP
     >>> y_hat = cond_deseason.fit_transform(y)  # doctest: +SKIP
