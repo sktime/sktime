@@ -36,6 +36,8 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: 3.9
+      - name: Install skbase
+        run: python -m pip install git+https://github.com/sktime/skbase.git@main
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -60,9 +62,8 @@ jobs:
         run: |
           python -m pip install .[dev]
 
-      - name: Install baseobject
-        run: |
-          python -m pip install git+https://github.com/sktime/BaseObject.git@main
+      - name: Install skbase
+        run: python -m pip install git+https://github.com/sktime/skbase.git@main
 
       - name: Show dependencies
         run: python -m pip list
@@ -81,6 +82,9 @@ jobs:
           python-version: 3.9
       - name: Display Python version
         run: python -c "import sys; print(sys.version)"
+
+      - name: Install skbase
+        run: python -m pip install git+https://github.com/sktime/skbase.git@main
 
       - name: Install sktime and dependencies
         run: |
@@ -103,6 +107,9 @@ jobs:
           python-version: 3.9
       - name: Display Python version
         run: python -c "import sys; print(sys.version)"
+
+      - name: Install skbase
+        run: python -m pip install git+https://github.com/sktime/skbase.git@main
 
       - name: Install sktime and dependencies
         run: |
@@ -140,6 +147,9 @@ jobs:
       - name: Install conda libpython
         run: conda install -c anaconda libpython
 
+      - name: Install skbase
+        run: python -m pip install git+https://github.com/sktime/skbase.git@main
+
       - name: Install sktime and dependencies
         run: python -m pip install .[all_extras,dev]
 
@@ -171,6 +181,9 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Display Python version
         run: python -c "import sys; print(sys.version)"
+
+      - name: Install skbase
+        run: python -m pip install git+https://github.com/sktime/skbase.git@main
 
       - name: Install sktime and dependencies
         run: |
