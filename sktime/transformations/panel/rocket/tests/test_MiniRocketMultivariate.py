@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """MiniRocketMultivariate test code."""
 import numpy as np
+import pytest
 from sklearn.linear_model import RidgeClassifierCV
 from sklearn.metrics import accuracy_score
 from sklearn.pipeline import make_pipeline
@@ -8,8 +9,13 @@ from sklearn.preprocessing import StandardScaler
 
 from sktime.datasets import load_basic_motions
 from sktime.transformations.panel.rocket import MiniRocketMultivariate
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("numba", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
 def test_minirocket_multivariate_on_basic_motions():
     """Test of MiniRocketMultivariate on basic motions."""
     # load training data
