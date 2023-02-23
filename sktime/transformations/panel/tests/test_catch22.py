@@ -11,6 +11,10 @@ from sktime.transformations.panel.catch22wrapper import Catch22Wrapper
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("numba", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
 def test_catch22_on_basic_motions():
     """Test of Catch22 on basic motions data."""
     # load basic motions data

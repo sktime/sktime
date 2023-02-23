@@ -30,6 +30,8 @@ SOFT_DEPENDENCIES = {
     "sktime.regression.deep_learning": ["tensorflow"],
     "sktime.networks": ["tensorflow"],
     "sktime.clustering.evaluation._plot_clustering": ["matplotlib"],
+    "sktime.utils.numba.general": ["numba"],
+    "sktime.utils.numba.stats": ["numba"],
 }
 
 MODULES_TO_IGNORE = ("sktime._contrib", "sktime.utils._testing")
@@ -61,6 +63,11 @@ def _is_ignored(module):
     return any(module_to_ignore in module for module_to_ignore in MODULES_TO_IGNORE)
 
 
+def _is_private(module):
+    module_parts = module.split(".")
+    return any(part.startswith("_") for part in module_parts)
+
+
 def _extract_dependency_from_error_msg(msg):
     # We raise an user-friendly error if a soft dependency is missing in the
     # `check_soft_dependencies` function. In the error message, the missing
@@ -76,7 +83,7 @@ def _extract_dependency_from_error_msg(msg):
 # collect all modules
 modules = pkgutil.walk_packages(path=["./sktime/"], prefix="sktime.")
 modules = [x[1] for x in modules]
-modules = [x for x in modules if not _is_test(x) and not _is_ignored(x)]
+modules = [x for x in modules if not (_is_test(x) or _is_ignored(x) or _is_private(x))]
 
 
 @pytest.mark.parametrize("module", modules)
