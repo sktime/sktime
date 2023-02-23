@@ -432,7 +432,7 @@ class SlidingWindowSegmenter(BaseTransformer):
 
         df = pd.DataFrame(subsequences)
 
-        return df
+        return df.transpose()
 
     def _extract_subsequences(self, instance, n_timepoints):
         """Extract a set of subsequences from a list of instances.
