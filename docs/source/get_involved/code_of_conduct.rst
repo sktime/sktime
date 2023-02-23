@@ -212,9 +212,8 @@ Please contact the current chair of the Code of Conduct Committee directly by em
 3.2 Alternate contact points
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-In case of conflict of interest of sktime CoC Committee members, you can report
-through the `NumFOCUS CoC process <https://numfocus.org/code-of-conduct>`__,
-or, in case of events, to the organisation at which the event is taking place (e.g., a university).
+In case of conflict of interest of sktime CoC Committee members, you can report,
+in case of events, to the organisation at which the event is taking place (e.g., a university).
 
 3.3 What to do if someone is in physical danger
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -245,9 +244,6 @@ The sktime Code of Conduct committee currently consists of:
 Dr Franz Király (f.kiraly@ucl.ac.uk)
 
 We encourage community members to step up to become a member of the committee.
-
-You can use the `NumFOCUS CoC process <https://numfocus.org/code-of-conduct>`__ as an alternative entry point
-for reporting, see 3.2.
 
 4.2 Urgent Situations: Acting Unilaterally
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -345,9 +341,8 @@ committee is not required to act on this feedback.
 4.5 Conflicts of Interest
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-In case of conflict of interest of sktime CoC committee members, you can report
-through the `NumFOCUS CoC process <https://numfocus.org/code-of-conduct>`__,
-or, in case of events, to the organisation at which the event is taking place (e.g., a university).
+In case of conflict of interest of sktime CoC committee members, you can report,
+in case of events, to the organisation at which the event is taking place (e.g., a university).
 
 4.6 Audit of Investigation Process
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -525,7 +520,7 @@ To ensure decision making in line with the code of conduct, decision making must
 * by the ``sktime`` community, through ``sktime`` community decision making mechanisms.
   E.g., following decision making outlined in the ``sktime`` governance document.
 * in communication transparent to the ``sktime`` community, following communication requirements outlined in the ``sktime`` governance document.
-* pursuant of and in line with the charitable mission of ``sktime`` and NumFOCUS.
+* pursuant of and in line with the charitable mission of ``sktime``.
 
 Adherence to widely accepted guidelines of anti-corruption and anti-bribery practice
 (e.g., United Nations Anti-Corruption Guidelines) is strictly expected,

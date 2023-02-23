@@ -364,7 +364,7 @@ def _make_estimator_overview(app):
         clean_path = ".".join(list(filter(_does_not_start_with_underscore, path_parts)))
         # adds html link reference
         modname = str(
-            '<a href="https://www.sktime.org/en/latest/api_reference'
+            '<a href="https://www.sktime.net/en/latest/api_reference'
             + "/auto_generated/"
             + clean_path
             + '.html">'
