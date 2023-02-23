@@ -375,15 +375,10 @@ class SlidingWindowSegmenter(BaseTransformer):
 
     Parameters
     ----------
-        window_length : int, optional, default=5.
-            length of sliding window interval
+    window_length : int, optional, default=5.
+        length of sliding window interval
 
-    Returns
-    -------
-        df : pandas dataframe of shape
-             [n_instances, n_timepoints]
-
-    Proposed in the ShapeDTW algorithm.
+    Used by the ShapeDTW algorithm.
     """
 
     _tags = {
