@@ -118,14 +118,14 @@ class KinematicFeatures(BaseTransformer):
 
         def absq_rows(df, col="absq"):
             """Compute DataFrame with one col, absolute value square of rows of df."""
-            abs_frame = df ** 2
+            abs_frame = df**2
             abs_frame = abs_frame.agg(["sum"], axis=1)
             abs_frame.columns = [col]
             return abs_frame
 
         def abs_rows(df, col="abs"):
             """Compute DataFrame with single column, absolute value of rows of df."""
-            return absq_rows(df, col=col) ** 0.5
+            return absq_rows(df, col=col)**0.5
 
         def feature_query(queries):
             """Boolean, whether any of the features in queries is being asked for."""
