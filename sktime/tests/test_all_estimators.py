@@ -13,6 +13,7 @@ import types
 from copy import deepcopy
 from inspect import getfullargspec, isclass, signature
 from tempfile import TemporaryDirectory
+from warnings import warn
 
 import joblib
 import numpy as np
@@ -405,14 +406,26 @@ class BaseFixtureGenerator:
 class QuickTester:
     """Mixin class which adds the run_tests method to run tests on one estimator."""
 
+    # todo 0.17.0:
+    # * remove the return_exceptions arg
+    # * move the raise_exceptions arg to 2nd place
+    # * change its default to False, from None
+    # * update the docstring - remove return_exceptions
+    # * update the docstring - move raise_exceptions block to 2nd place
+    # * update the docstring - remove deprecation references
+    # * update the docstring - condition in return block, refer only to raise_exceptions
+    # * update the docstring - condition in raises block, refer only to raise_exceptions
+    # * remove the code block for input handling
+    # * remove import of warn
     def run_tests(
         self,
         estimator,
-        return_exceptions=True,
+        return_exceptions=None,
         tests_to_run=None,
         fixtures_to_run=None,
         tests_to_exclude=None,
         fixtures_to_exclude=None,
+        raise_exceptions=None,
     ):
         """Run all tests on one single estimator.
 
@@ -430,8 +443,11 @@ class QuickTester:
         estimator : estimator class or estimator instance
         return_exceptions : bool, optional, default=True
             whether to return exceptions/failures, or raise them
-                if True: returns exceptions in results
+                if True: returns exceptions in returned `results` dict
                 if False: raises exceptions as they occur
+            deprecated in 0.15.1, and will be replaced by `raise_exceptions` in 0.17.0.
+            Overridden to `False` if `raise_exceptions=True`.
+            For safe deprecation, use `raise_exceptions` instead of `return_exceptions`.
         tests_to_run : str or list of str, names of tests to run. default = all tests
             sub-sets tests that are run to the tests given here.
         fixtures_to_run : str or list of str, pytest test-fixture combination codes.
@@ -445,6 +461,13 @@ class QuickTester:
         fixtures_to_exclude : str or list of str, fixtures to exclude. default = None
             removes test-fixture combinations that should not be run.
             This is done after subsetting via fixtures_to_run.
+        raise_exceptions : bool, optional, default=False
+            whether to return exceptions/failures in the results dict, or raise them
+                if False: returns exceptions in returned `results` dict
+                if True: raises exceptions as they occur
+            Overrides `return_exceptions` if used as a keyword argument.
+            both `raise_exceptions=True` and `return_exceptions=True`.
+            Will move to replace `return_exceptions` as 2nd arg in 0.17.0.
 
         Returns
         -------
@@ -452,11 +475,13 @@ class QuickTester:
             keys are test/fixture strings, identical as in pytest, e.g., test[fixture]
             entries are the string "PASSED" if the test passed,
                 or the exception raised if the test did not pass
-            returned only if all tests pass, or return_exceptions=True
+            returned only if all tests pass,
+            or both return_exceptions=True and raise_exceptions=False
 
         Raises
         ------
-        if return_exception=False, raises any exception produced by the tests directly
+        if return_exceptions=False, or raise_exceptions=True,
+        raises any exception produced by the tests directly
 
         Examples
         --------
@@ -472,6 +497,22 @@ class QuickTester:
         ... )
         {'test_repr[NaiveForecaster-2]': 'PASSED'}
         """
+        # todo 0.17.0: remove this code block
+        if return_exceptions is None and raise_exceptions is None:
+            raise_exceptions = False
+
+        if return_exceptions is not None and raise_exceptions is None:
+            warn(
+                "The return_exceptions argument of check_estimator has been deprecated "
+                "since 0.15.1, and will be replaced by raise_exceptions in 0.17.0. "
+                "For safe deprecation: use raise_exceptions argument instead of "
+                "return_exceptions when using keywords. Avoid positional use, instead "
+                "ensure to use keywords. When not using keywords, the "
+                "default behaviour will not change."
+            )
+            raise_exceptions = not return_exceptions
+        # end block to remove
+
         tests_to_run = self._check_None_str_or_list_of_str(
             tests_to_run, var_name="tests_to_run"
         )
@@ -546,8 +587,6 @@ class QuickTester:
             fixture_vars = getfullargspec(test_fun)[0][1:]
             fixture_vars = [var for var in fixture_sequence if var in fixture_vars]
 
-            raise_exceptions = not return_exceptions
-
             # this call retrieves the conditional fixtures
             #  for the test test_name, and the estimator
             _, fixture_prod, fixture_names = create_conditional_fixtures_and_names(
@@ -595,7 +634,7 @@ class QuickTester:
                 if fixtures_to_exclude is not None and key in fixtures_to_exclude:
                     continue
 
-                if return_exceptions:
+                if not raise_exceptions:
                     try:
                         test_fun(**deepcopy(args))
                         results[key] = "PASSED"
@@ -773,12 +812,19 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
         assert all(isinstance(key, str) for key in all_tags.keys())
         if hasattr(Estimator, "_tags"):
             tags = Estimator._tags
-            msg = f"_tags must be a dict, but found {type(tags)}"
+            msg = (
+                f"_tags attribute of {estimator_class} must be dict, "
+                f"but found {type(tags)}"
+            )
             assert isinstance(tags, dict), msg
-            assert len(tags) > 0, "_tags is empty"
-            assert all(
-                tag in VALID_ESTIMATOR_TAGS for tag in tags.keys()
-            ), "Some tags in _tags are invalid"
+            assert len(tags) > 0, f"_tags dict of class {estimator_class} is empty"
+            invalid_tags = [
+                tag for tag in tags.keys() if tag not in VALID_ESTIMATOR_TAGS
+            ]
+            assert len(invalid_tags) == 0, (
+                f"_tags of {estimator_class} contains invalid tags: {invalid_tags}. "
+                "For a list of valid tags, see registry.all_tags, or registry._tags. "
+            )
 
         # Avoid ambiguous class attributes
         ambiguous_attrs = ("tags", "tags_")
@@ -1369,6 +1415,37 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
                 result_multiple_process,
                 err_msg="Results are not equal for n_jobs=1 and n_jobs=-1",
             )
+
+    def test_dl_constructor_initializes_deeply(self, estimator_class):
+        """Test DL estimators that they pass custom parameters to underlying Network."""
+        estimator = estimator_class
+
+        if not issubclass(estimator, (BaseDeepClassifier, BaseDeepRegressor)):
+            return None
+
+        if not hasattr(estimator, "get_test_params"):
+            return None
+
+        params = estimator.get_test_params()
+
+        if isinstance(params, list):
+            params = params[0]
+        if isinstance(params, dict):
+            pass
+        else:
+            raise TypeError(
+                f"`get_test_params()` of estimator: {estimator} returns "
+                f"an expected type: {type(params)}, acceptable formats: [list, dict]"
+            )
+
+        estimator = estimator(**params)
+
+        for key, value in params.items():
+            assert vars(estimator)[key] == value
+            # some keys are only relevant to the final model (eg: n_epochs)
+            # skip them for the underlying network
+            if vars(estimator._network).get(key) is not None:
+                assert vars(estimator._network)[key] == value
 
     def _get_err_msg(estimator):
         return (

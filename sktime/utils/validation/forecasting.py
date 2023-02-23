@@ -386,43 +386,79 @@ def check_cutoffs(cutoffs: VALID_CUTOFF_TYPES) -> np.ndarray:
     return np.sort(cutoffs)
 
 
-def check_scoring(scoring, allow_y_pred_benchmark=False):
-    """
-    Validate the performance scoring.
+def check_scoring(scoring, allow_y_pred_benchmark=False, obj=None):
+    """Validate a scorer parameter and coerce to sktime BaseMetric.
 
     Parameters
     ----------
-    scoring : object that inherits from BaseMetric from sktime.performance_metrics.
+    scoring : object to validate. For successful validation, must be one of
+
+        * sktime metric object, instance of descendant of `BaseMetric`
+        * a callable with signature
+          `(y_true: 1D np.ndarray, y_pred: 1D np.ndarray) -> float`,
+          assuming `np.ndarray`-s being of the same length, and lower being better.
+        * None
+
+    allow_y_pred_benchmark : boolean, optional, default=False
+        whether to allow scorer classes with `requires-y-pred-benchmark` tag = `True`
+
+    obj : object or class, or None, optional, default=None
+        if not None, will be used as a reference in the error message
 
     Returns
     -------
-    scoring :
-        MeanAbsolutePercentageError if the object is None.
+    scoring : input `scoring` coerced to instance of sktime `BaseMetric` descendant
+
+        * if `scoring` was sktime metric, returns `scoring`
+        * if `scoring` was `None`, returns `MeanAbsolutePercentageError()`
+        * if `scoring` was a callable, returns dynamic scoring metric class,
+          as created by `performance_metrics.forecasting.make_forecasting_scorer`
 
     Raises
     ------
-    TypeError
-        if object is not callable from current scope.
+    TypeError, if `scoring` is not a callable
     NotImplementedError
-        if metric requires y_pred_benchmark to be passed
+        if allow_y_pred_benchmark=False and metric requires y_pred_benchmark argument
     """
     # Note symmetric=True is default arg for MeanAbsolutePercentageError
-    from sktime.performance_metrics.forecasting import MeanAbsolutePercentageError
+    from sktime.performance_metrics.base import BaseMetric
+    from sktime.performance_metrics.forecasting import (
+        MeanAbsolutePercentageError,
+        make_forecasting_scorer,
+    )
 
     if scoring is None:
         return MeanAbsolutePercentageError()
 
-    scoring_req_bench = scoring.get_class_tag("requires-y-pred-benchmark", False)
+    if obj is not None:
+        obj_str = f" of {str(obj)}"
+    else:
+        obj_str = ""
 
-    if scoring_req_bench and not allow_y_pred_benchmark:
-        msg = """Scoring requiring benchmark forecasts (y_pred_benchmark) are not
-                 fully supported yet. Please use a performance metric that does not
-                 require y_pred_benchmark as a keyword argument in its call signature.
-              """
-        raise NotImplementedError(msg)
+    msg = (
+        f"scoring parameter{obj_str} must be an sktime metric, descendant of"
+        "BaseMetric, or a callable with signature "
+        "(y_true: 1D np.ndarray, y_pred: 1D np.ndarray) -> float, "
+        "assuming np.ndarrays being of the same length, and lower being better. "
+    )
 
+    # note: BaseMetric descendants are callable, so this is the same as
+    # if not callable(scoring) and not isinstance(scoring, BaseMetric)
     if not callable(scoring):
-        raise TypeError("`scoring` must be a callable object")
+        raise TypeError(msg)
+
+    if not isinstance(scoring, BaseMetric):
+        scoring = make_forecasting_scorer(func=scoring, greater_is_better=False)
+
+    if hasattr(scoring, "get_class_tag"):
+        scoring_req_bench = scoring.get_class_tag("requires-y-pred-benchmark", False)
+        if scoring_req_bench and not allow_y_pred_benchmark:
+            msg = (
+                "Scoring requiring benchmark forecasts (y_pred_benchmark) are not "
+                "fully supported yet. Please use a performance metric that does not "
+                "require y_pred_benchmark as a keyword argument in its call signature."
+            )
+            raise NotImplementedError(msg)
 
     return scoring
 

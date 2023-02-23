@@ -58,7 +58,6 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
             use the inverse variance of the forecasting error
             (based on the internal train-test-split) to compute optimal
             weights, a given ``regressor`` will be omitted.
-
     regressor : sklearn-like regressor, optional, default=None.
         Used to infer optimal weights from coefficients (linear models) or from
         feature importance scores (decision tree-based models). If None, then
@@ -167,6 +166,7 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
                 regressor=self.regressor, random_state=self.random_state
             )
             X_meta = pd.concat(self._predict_forecasters(fh_test, X_test), axis=1)
+            X_meta.columns = pd.RangeIndex(len(X_meta.columns))
 
             # fit meta-model (regressor) on predictions of ensemble models
             # with y_test as endog/target
@@ -216,6 +216,7 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         y_pred_df = pd.concat(self._predict_forecasters(fh, X), axis=1)
         # apply weights
         y_pred = y_pred_df.apply(lambda x: np.average(x, weights=self.weights_), axis=1)
+        y_pred.name = self._y.name
         return y_pred
 
     @classmethod
@@ -233,11 +234,21 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         -------
         params : dict or list of dict
         """
+        from sklearn.linear_model import LinearRegression
+
         from sktime.forecasting.naive import NaiveForecaster
 
         FORECASTER = NaiveForecaster()
-        params = {"forecasters": [("f1", FORECASTER), ("f2", FORECASTER)]}
-        return params
+        params1 = {"forecasters": [("f1", FORECASTER), ("f2", FORECASTER)]}
+
+        params2 = {
+            "forecasters": [("f1", FORECASTER), ("f2", FORECASTER)],
+            "method": "inverse-variance",
+            "regressor": LinearRegression(),
+            "test_size": 0.2,
+        }
+
+        return [params1, params2]
 
 
 def _get_weights(regressor):

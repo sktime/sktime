@@ -101,6 +101,10 @@ def test_gscv(forecaster, param_grid, cv, scoring, error_score):
     param_grid = ParameterGrid(param_grid)
     _check_cv(forecaster, gscv, cv, param_grid, y, X, scoring)
 
+    fitted_params = gscv.get_fitted_params()
+    assert "best_forecaster" in fitted_params.keys()
+    assert "best_score" in fitted_params.keys()
+
 
 @pytest.mark.parametrize(
     "forecaster, param_grid", [(NAIVE, NAIVE_GRID), (PIPE, PIPE_GRID)]

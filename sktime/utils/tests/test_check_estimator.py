@@ -30,9 +30,9 @@ def test_check_estimator_does_not_raise(estimator_class):
     """Test that check_estimator does not raise exceptions on examples we know pass."""
     estimator_instance = estimator_class.create_test_instance()
 
-    check_estimator(estimator_class, return_exceptions=False, verbose=False)
+    check_estimator(estimator_class, raise_exceptions=True, verbose=False)
 
-    check_estimator(estimator_instance, return_exceptions=False, verbose=False)
+    check_estimator(estimator_instance, raise_exceptions=True, verbose=False)
 
 
 def test_check_estimator_subset_tests():
