@@ -9,7 +9,6 @@ from sklearn.utils import check_random_state
 from sktime.datatypes._panel._convert import _get_time_index
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.validation import check_window_length
-from sktime.utils.validation.panel import check_X
 
 
 class IntervalSegmenter(BaseTransformer):
