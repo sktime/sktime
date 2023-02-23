@@ -423,7 +423,7 @@ class SlidingWindowSegmenter(BaseTransformer):
         padded_data = np.zeros(n_timepoints + (2 * pad_amnt))
 
         # Pad both ends of X
-        padded_data = np.pad(X, pad_amnt, mode="edge")
+        padded_data = np.pad(X_np1d, pad_amnt, mode="edge")
 
         subsequences = np.zeros((n_timepoints, self.window_length))
 
