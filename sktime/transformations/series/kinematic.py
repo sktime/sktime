@@ -162,7 +162,7 @@ class KinematicFeatures(BaseTransformer):
             cross_term = cross_term.reshape(-1, 1)
             curv_arr = (curv_arr - cross_term) / (vsq_frame.values**3)
             curv_arr = curv_arr**0.5
-            curv_frame = pd.DataFrame(curv_arr, columns=["curv"])
+            curv_frame = pd.DataFrame(curv_arr, columns=["curv"], index=X.index)
             res = pd.concat([res, curv_frame], axis=1)
 
         return res
