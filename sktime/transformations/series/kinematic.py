@@ -48,7 +48,7 @@ class KinematicFeatures(BaseTransformer):
         * "v_abs" - absolute velocity
         * "a" - vector of acceleration
         * "a_abs" - absolute acceleration
-        * "curv" - curvature vector
+        * "curv" - curvature
 
     Example
     -------
