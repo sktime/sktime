@@ -186,6 +186,15 @@ class RandomIntervalSegmenter(_DelegatedTransformer):
         # which mtype do _fit/_predict support for X?
         "y_inner_mtype": "pd_Series_Table",
         # which mtypes do _fit/_predict support for y?
+        "univariate-only": True,
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
+        "scitype:transform-output": "Series",
+        # what scitype is returned: Primitives, Series, Panel
+        "scitype:instancewise": True,  # is this an instance-wise transform?
+        "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
+        "capability:unequal_length:removes": True,
+        # is transform result always guaranteed to be equal length (and series)?
     }
 
     # attribute for _DelegatedTransformer, which then delegates
