@@ -6,11 +6,7 @@ import numpy as np
 import pandas as pd
 from sklearn.utils import check_random_state
 
-from sktime.datatypes._panel._convert import (
-    _concat_nested_arrays,
-    _get_column_names,
-    _get_time_index,
-)
+from sktime.datatypes._panel._convert import _get_time_index
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.validation import check_window_length
 from sktime.utils.validation.panel import check_X
@@ -37,7 +33,7 @@ class IntervalSegmenter(BaseTransformer):
         "scitype:transform-output": "Series",
         # what scitype is returned: Primitives, Series, Panel
         "scitype:instancewise": True,  # is this an instance-wise transform?
-        "X_inner_mtype": "nested_univ",  # which mtypes do _fit/_predict support for X?
+        "X_inner_mtype": "pd.DataFrame",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
         "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
         "capability:unequal_length:removes": True,
@@ -66,10 +62,8 @@ class IntervalSegmenter(BaseTransformer):
         -------
         self : an instance of self.
         """
-        X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
-
-        n_instances, n_columns, n_timepoints = X.shape
-        self.input_shape_ = n_instances, n_columns, n_timepoints
+        n_timepoints = X.shape[0]
+        self.input_shape_ = n_timepoints
 
         self._time_index = np.arange(n_timepoints)
 
@@ -111,27 +105,25 @@ class IntervalSegmenter(BaseTransformer):
           Transformed pandas DataFrame with same number of rows and one
           column for each generated interval.
         """
-        # Tabularise assuming series
-        # have equal indexes in any given column
-        X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
-        X = X.squeeze(1)
+        # Flatten to 1D numpy series
+        X_np1d = X.values.flatten()
 
         # Segment into intervals.
         # TODO generalise to non-equal-index cases
         intervals = []
 
         # univariate, only a single column name
-        column_names = _get_column_names(X)[0]
+        column_names = X.columns[0]
         new_column_names = []
         for interval in self.intervals_:
             start, end = interval[0], interval[-1]
             if f"{column_names}_{start}_{end}" not in new_column_names:
-                interval = X[:, start:end]
+                interval = X_np1d[start:end]
                 intervals.append(interval)
                 new_column_names.append(f"{column_names}_{start}_{end}")
 
-        # Return nested pandas DataFrame.
-        Xt = pd.DataFrame(_concat_nested_arrays(intervals))
+        # Return intervals as individual variables
+        Xt = pd.DataFrame(intervals).transpose()
         Xt.columns = new_column_names
         return Xt
 
@@ -403,7 +395,7 @@ class SlidingWindowSegmenter(BaseTransformer):
         "scitype:transform-output": "Series",
         # what scitype is returned: Primitives, Series, Panel
         "scitype:instancewise": False,  # is this an instance-wise transform?
-        "X_inner_mtype": "nested_univ",  # which mtypes do _fit/_predict support for X?
+        "X_inner_mtype": "pd.DataFrame",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
     }
 
@@ -425,39 +417,28 @@ class SlidingWindowSegmenter(BaseTransformer):
         -------
         dims: a pandas data frame of shape = [n_instances, n_timepoints]
         """
-        # get the number of attributes and instances
-        X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
-        X = X.squeeze(1)
+        # Flatten to 1D numpy series
+        X_np1d = X.values.flatten()
 
-        n_timepoints = X.shape[1]
-        n_instances = X.shape[0]
+        n_timepoints = X_np1d.shape[0]
 
         # Check the parameters are appropriate
         self._check_parameters(n_timepoints)
 
         pad_amnt = math.floor(self.window_length / 2)
-        padded_data = np.zeros((n_instances, n_timepoints + (2 * pad_amnt)))
+        padded_data = np.zeros(n_timepoints + (2 * pad_amnt))
 
         # Pad both ends of X
-        for i in range(n_instances):
-            padded_data[i] = np.pad(X[i], pad_amnt, mode="edge")
+        padded_data = np.pad(X, pad_amnt, mode="edge")
 
-        subsequences = np.zeros((n_instances, n_timepoints, self.window_length))
+        subsequences = np.zeros((n_timepoints, self.window_length))
 
         # Extract subsequences
-        for i in range(n_instances):
-            subsequences[i] = self._extract_subsequences(padded_data[i], n_timepoints)
+        subsequences = self._extract_subsequences(padded_data, n_timepoints)
 
-        # Convert this into a panda's data frame
-        df = pd.DataFrame()
-        for i in range(len(subsequences)):
-            inst = subsequences[i]
-            data = []
-            for j in range(len(inst)):
-                data.append(pd.Series(inst[j]))
-            df[i] = data
+        df = pd.DataFrame(subsequences)
 
-        return df.transpose()
+        return df
 
     def _extract_subsequences(self, instance, n_timepoints):
         """Extract a set of subsequences from a list of instances.
