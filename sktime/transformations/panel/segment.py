@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 from sklearn.utils import check_random_state
 
-from sktime.datatypes._panel._convert import _get_time_index
+from sktime.datatypes._utilities import get_time_index
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.validation import check_window_length
 
@@ -42,7 +42,6 @@ class IntervalSegmenter(BaseTransformer):
     def __init__(self, intervals=10):
         self.intervals = intervals
         self._time_index = []
-        self.input_shape_ = ()
         super(IntervalSegmenter, self).__init__()
 
     def _fit(self, X, y=None):
@@ -62,7 +61,6 @@ class IntervalSegmenter(BaseTransformer):
         self : an instance of self.
         """
         n_timepoints = X.shape[0]
-        self.input_shape_ = n_timepoints
 
         self._time_index = np.arange(n_timepoints)
 
@@ -183,7 +181,7 @@ class RandomIntervalSegmenter(IntervalSegmenter):
     """
 
     _tags = {
-        "X_inner_mtype": "nested_univ",  # which mtypes do _fit/_predict support for X?
+        "X_inner_mtype": "pd-multiindex",  # which mtype do _fit/_predict support for X?
         "y_inner_mtype": "pd_Series_Table",
         # which mtypes do _fit/_predict support for y?
     }
@@ -232,11 +230,9 @@ class RandomIntervalSegmenter(IntervalSegmenter):
             if not min_length < self.max_length:
                 raise ValueError("`max_length` must be bigger than `min_length`.")
 
-        self.input_shape_ = X.shape
-
         # Retrieve time-series indexes from each column.
         # TODO generalise to columns with series of unequal length
-        self._time_index = _get_time_index(X)
+        self._time_index = get_time_index(X)
 
         # Compute random intervals for each column.
         # TODO if multiple columns are passed, introduce option to compute
