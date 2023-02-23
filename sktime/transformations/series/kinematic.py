@@ -159,10 +159,10 @@ class KinematicFeatures(BaseTransformer):
             vsq_frame = absq_rows(v_frame)
             curv_frame = vsq_frame * absq_rows(a_frame)
             curv_arr = curv_frame.values
-            cross_term = (v_frame.values * a_frame.values).sum(axis=1) ** 2
+            cross_term = (v_frame.values * a_frame.values).sum(axis=1)**2
             cross_term = cross_term.reshape(-1, 1)
-            curv_arr = (curv_arr - cross_term) / (vsq_frame.values ** 3)
-            curv_arr = curv_arr ** 0.5
+            curv_arr = (curv_arr - cross_term) / (vsq_frame.values**3)
+            curv_arr = curv_arr**0.5
             curv_frame = pd.DataFrame(curv_arr, columns=["curv"])
             res = pd.concat([res, curv_frame], axis=1)
 
