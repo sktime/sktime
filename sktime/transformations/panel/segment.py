@@ -7,6 +7,7 @@ import pandas as pd
 from sklearn.utils import check_random_state
 
 from sktime.datatypes._utilities import get_time_index
+from sktime.transformations._delegate import _DelegatedTransformer
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.validation import check_window_length
 
@@ -148,7 +149,7 @@ class IntervalSegmenter(BaseTransformer):
         return params
 
 
-class RandomIntervalSegmenter(IntervalSegmenter):
+class RandomIntervalSegmenter(_DelegatedTransformer):
     """Random interval segmenter transformer.
 
     Transformer that segments time-series into random intervals with
@@ -181,10 +182,16 @@ class RandomIntervalSegmenter(IntervalSegmenter):
     """
 
     _tags = {
-        "X_inner_mtype": "pd-multiindex",  # which mtype do _fit/_predict support for X?
+        "X_inner_mtype": ["pd.DataFrame", "pd-multiindex"],
+        # which mtype do _fit/_predict support for X?
         "y_inner_mtype": "pd_Series_Table",
         # which mtypes do _fit/_predict support for y?
     }
+
+    # attribute for _DelegatedTransformer, which then delegates
+    #     all non-overridden methods are same as of getattr(self, _delegate_name)
+    #     see further details in _DelegatedTransformer docstring
+    _delegate_name = "interval_segmenter_"
 
     def __init__(
         self, n_intervals="sqrt", min_length=None, max_length=None, random_state=None
@@ -194,6 +201,8 @@ class RandomIntervalSegmenter(IntervalSegmenter):
         self.max_length = max_length
         self.random_state = random_state
         super(RandomIntervalSegmenter, self).__init__()
+
+        self.interval_segmenter_ = IntervalSegmenter()
 
     def _fit(self, X, y=None):
         """Fit transformer, generating random interval indices.
@@ -255,6 +264,11 @@ class RandomIntervalSegmenter(IntervalSegmenter):
                 max_length=self.max_length,
                 random_state=self.random_state,
             )
+
+        self.interval_segmenter_ = IntervalSegmenter(self.intervals_)
+
+        self.interval_segmenter_.fit(X=X, y=y)
+
         return self
 
     @classmethod
