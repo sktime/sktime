@@ -5,6 +5,7 @@ from logging import warning
 
 import numpy as np
 import pandas as pd
+from pandas.api.types import is_numeric_dtype
 from sklearn.utils import check_array, check_consistent_length
 
 from sktime.datatypes import check_is_scitype, convert
@@ -256,7 +257,7 @@ class _BaseProbaForecastingErrorMetric(BaseForecastingErrorMetric):
         if not isinstance(y_pred, pd.DataFrame):
             raise ValueError("y_pred should be a dataframe.")
 
-        if not all(y_pred.dtypes == float):
+        if not np.all([is_numeric_dtype(y_pred[c]) for c in y_pred.columns]):
             raise ValueError("Data should be numeric.")
 
         if y_true.ndim == 1:

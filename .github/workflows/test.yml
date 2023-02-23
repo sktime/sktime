@@ -39,7 +39,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install .[all_extras,binder,dev]
+          python -m pip install .[all_extras,binder,dev,mlflow]
       - name: Run example notebooks
         run: build_tools/run_examples.sh
         shell: bash
@@ -87,6 +87,28 @@ jobs:
 
       - name: Run tests
         run: make PYTESTOPTIONS="--cov --cov-report=xml --timeout=600" test_softdeps_full
+
+  test-mlflow:
+    needs: test-nosoftdeps
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.9
+      - name: Display Python version
+        run: python -c "import sys; print(sys.version)"
+
+      - name: Install sktime and dependencies
+        run: |
+          python -m pip install .[all_extras,dev,mlflow_tests] --no-cache-dir
+
+      - name: Show dependencies
+        run: python -m pip list
+
+      - name: Run tests
+        run: make PYTESTOPTIONS="--cov --cov-report=xml --timeout=600" test_mlflow
 
   test-windows:
     needs: test-nosoftdeps
@@ -148,7 +170,7 @@ jobs:
 
       - name: Install sktime and dependencies
         run: |
-          python -m pip install .[all_extras,dev]
+          python -m pip install .[all_extras,dev] --no-cache-dir
 
       - name: Show dependencies
         run: python -m pip list

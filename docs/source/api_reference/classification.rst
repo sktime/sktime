@@ -5,6 +5,10 @@ Time series classification
 
 The :mod:`sktime.classification` module contains algorithms and composition tools for time series classification.
 
+All classifiers in ``sktime``can be listed using the ``sktime.registry.all_estimators`` utility,
+using ``estimator_types="classifier"``, optionally filtered by tags.
+Valid tags can be listed using ``sktime.registry.all_tags``.
+
 Composition
 -----------
 
@@ -18,6 +22,7 @@ Composition
     ColumnEnsembleClassifier
     ComposableTimeSeriesForestClassifier
     SklearnClassifierPipeline
+    WeightedEnsembleClassifier
 
 Deep learning
 -------------
@@ -142,6 +147,7 @@ Kernel-based
     :toctree: auto_generated/
     :template: class.rst
 
+    TimeSeriesSVC
     Arsenal
     RocketClassifier
 

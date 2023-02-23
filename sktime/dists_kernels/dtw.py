@@ -20,6 +20,19 @@ class DtwDist(BasePairwiseTransformerPanel):
     DDTW - derivative dynamic time warping
     WDDTW - weighted derivative dynamic time warping
 
+    `sktime` interface to the efficient `numba` implementations in `sktime.distances`.
+
+    This estimator provides performant implementation of time warping distances for:
+    * time series of equal length
+    * the Euclidean pairwise distance
+
+    For unequal length time series, use `sktime.dists_kernels.DistFromAligner`
+    with a time warping aligner such as `sktime.aligners.AlignerDTW`.
+    To use arbitrary pairwise distances, use `sktime.aligners.AlignerDTWfromDist`.
+    (for derivative DTW, pipeline an alignment distance with `Differencer`)
+
+    Note that the more flexible options above may be less performant.
+
     DTW:
     Originally proposed in [1]_, DTW computes the distance between two time series by
     considering their alignments during the calculation. This is done by measuring
@@ -85,6 +98,7 @@ class DtwDist(BasePairwiseTransformerPanel):
     _tags = {
         "symmetric": True,  # all the distances are symmetric
         "X_inner_mtype": "numpy3D",
+        "python_dependencies": "numba",
     }
 
     def __init__(

@@ -282,7 +282,7 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
                 ),
                 ("clf", DecisionTreeClassifier(random_state=self.random_state)),
             ]
-            self.estimator_ = Pipeline(steps)
+            self._estimator = Pipeline(steps)
 
         else:
             # else check given estimator is a pipeline with prior
@@ -293,7 +293,7 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
                 raise ValueError(
                     "Last step in `estimator` must be DecisionTreeClassifier."
                 )
-            self.estimator_ = self.estimator
+            self._estimator = self.estimator
 
         # Set parameters according to naming in pipeline
         estimator_params = {
@@ -305,7 +305,7 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
             "max_leaf_nodes": self.max_leaf_nodes,
             "min_impurity_decrease": self.min_impurity_decrease,
         }
-        final_estimator = self.estimator_.steps[-1][0]
+        final_estimator = self._estimator.steps[-1][0]
         self.estimator_params = {
             f"{final_estimator}__{pname}": pval
             for pname, pval in estimator_params.items()
@@ -615,15 +615,15 @@ class WeightedEnsembleClassifier(_HeterogenousMetaEstimator, BaseClassifier):
     >>> from sktime.classification.dummy import DummyClassifier
     >>> from sktime.classification.kernel_based import RocketClassifier
     >>> from sktime.datasets import load_unit_test
-    >>> X_train, y_train = load_unit_test(split="train")
-    >>> X_test, y_test = load_unit_test(split="test")
+    >>> X_train, y_train = load_unit_test(split="train") # doctest: +SKIP
+    >>> X_test, y_test = load_unit_test(split="test") # doctest: +SKIP
     >>> clf = WeightedEnsembleClassifier(
     ...     [DummyClassifier(), RocketClassifier(num_kernels=100)],
     ...     weights=2,
-    ... )
-    >>> clf.fit(X_train, y_train)
+    ... ) # doctest: +SKIP
+    >>> clf.fit(X_train, y_train) # doctest: +SKIP
     WeightedEnsembleClassifier(...)
-    >>> y_pred = clf.predict(X_test)
+    >>> y_pred = clf.predict(X_test) # doctest: +SKIP
     """
 
     _tags = {
@@ -640,8 +640,13 @@ class WeightedEnsembleClassifier(_HeterogenousMetaEstimator, BaseClassifier):
     # for default get_params/set_params from _HeterogenousMetaEstimator
     # _steps_attr points to the attribute of self
     # which contains the heterogeneous set of estimators
-    # this must be an iterable of (name: str, estimator) pairs for the default
+    # this must be an iterable of (name: str, estimator, ...) tuples for the default
     _steps_attr = "_classifiers"
+    # if the estimator is fittable, _HeterogenousMetaEstimator also
+    # provides an override for get_fitted_params for params from the fitted estimators
+    # the fitted estimators should be in a different attribute, _steps_fitted_attr
+    # this must be an iterable of (name: str, estimator, ...) tuples for the default
+    _steps_fitted_attr = "classifiers_"
 
     def __init__(
         self,
@@ -784,23 +789,33 @@ class WeightedEnsembleClassifier(_HeterogenousMetaEstimator, BaseClassifier):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
-        from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
-        from sktime.classification.kernel_based import RocketClassifier
+        from sktime.classification.dummy import DummyClassifier
+        from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-        params1 = {
-            "classifiers": [
-                KNeighborsTimeSeriesClassifier.create_test_instance(),
-                RocketClassifier.create_test_instance(),
-            ],
-            "weights": [42, 1],
-        }
+        params0 = {"classifiers": [DummyClassifier()]}
 
-        params2 = {
-            "classifiers": [
-                KNeighborsTimeSeriesClassifier.create_test_instance(),
-                RocketClassifier.create_test_instance(),
-            ],
-            "weights": 2,
-            "cv": 3,
-        }
-        return [params1, params2]
+        if _check_soft_dependencies("numba", severity="none"):
+            from sktime.classification.distance_based import (
+                KNeighborsTimeSeriesClassifier,
+            )
+            from sktime.classification.kernel_based import RocketClassifier
+
+            params1 = {
+                "classifiers": [
+                    KNeighborsTimeSeriesClassifier.create_test_instance(),
+                    RocketClassifier.create_test_instance(),
+                ],
+                "weights": [42, 1],
+            }
+
+            params2 = {
+                "classifiers": [
+                    KNeighborsTimeSeriesClassifier.create_test_instance(),
+                    RocketClassifier.create_test_instance(),
+                ],
+                "weights": 2,
+                "cv": 3,
+            }
+            return [params0, params1, params2]
+        else:
+            return params0

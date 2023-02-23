@@ -118,11 +118,9 @@ def piecewise_normal_multivariate(
         # get covariance matrices from variance arrays
         covariances = [get_covariances(var) for var in variances]
 
-    # if covariance is specified, then check if symmetric (eigenvalues are real)
-    # and check if matrix is positive semidefinite (eigenvalues are nonnegative)
     else:
-        assert all([np.allclose(np.array(cov), np.array(cov).T) for cov in covariances])
-        assert all([np.all(np.linalg.eigvals(cov) >= 0) for cov in covariances])
+        assert all(np.allclose(np.array(cov), np.array(cov).T) for cov in covariances)
+        assert all(np.all(np.linalg.eigvals(cov) >= 0) for cov in covariances)
 
     assert np.array(covariances).shape[0] == L
     assert np.array(covariances).shape[1] == N
@@ -195,6 +193,135 @@ def piecewise_normal(
         rng.normal(loc=mean, scale=sd, size=[length])
         for mean, length, sd in zip(means, lengths, std_dev)
     ]
+    return np.concatenate(tuple(segments_data))
+
+
+def piecewise_multinomial(
+    n_trials: int,
+    lengths: npt.ArrayLike,
+    p_vals: npt.ArrayLike,
+    random_state: Union[int, np.random.RandomState] = None,
+) -> npt.ArrayLike:
+    """
+    Generate series from segments.
+
+    Each segment has length specified in ``lengths`` and data sampled from a multinomial
+    distribution with a total number of experiments for each trial set from ``n_trials``
+    and the probability for each outcome stored inside a list contained in  ``p_vals``.
+
+    Parameters
+    ----------
+    n_trials : int
+        Number of experiments to run during each trial
+    lengths : array_like
+        Lengths of the segments to be generated
+    p_vals : array_like
+        Set of probabilities for each outcome for each distribution
+        Each set of probabilities must be equal length
+    random_state : int or np.random.RandomState
+        Either a random seed or RandomState instance
+
+    Returns
+    -------
+    data : np.array
+        univariate or multivariate time series as np.array
+        that has dimensions sum(lengths) x n_outcomes
+        where n_outcomes = # of outcomes for each item in ``p_vals``
+
+    Examples
+    --------
+    >>> from sktime.annotation.datagen import piecewise_multinomial
+    >>> piecewise_multinomial(20, lengths=[3, 2], p_vals=[[1/4, 3/4], \
+        [3/4, 1/4]], random_state=42) # doctest: +SKIP
+    array([[ 4, 16],
+       [ 8, 12],
+       [ 6, 14],
+       [15,  5],
+       [17,  3]])
+
+    >>> from sktime.annotation.datagen import piecewise_multinomial
+    >>> piecewise_multinomial(10, lengths=[2, 4, 8], \
+        p_vals=[[1, 0], [0, 1], [1, 0]]) # doctest: +SKIP
+    array([[10,  0],
+       [10,  0],
+       [ 0, 10],
+       [ 0, 10],
+       [ 0, 10],
+       [ 0, 10],
+       [10,  0],
+       [10,  0],
+       [10,  0],
+       [10,  0],
+       [10,  0],
+       [10,  0],
+       [10,  0],
+       [10,  0]])
+    """
+    rng = check_random_state(random_state)
+
+    # error handling for inputs
+    if len(lengths) != len(p_vals):
+        raise ValueError("lengths and p_vals arguments must be same length")
+    elif not all(sum(p_val) == 1 for p_val in p_vals):
+        raise ValueError("each set of probabilities in p_val must sum to 1")
+    elif not (np.array([len(p_val) for p_val in p_vals]) == len(p_vals[0])).all():
+        raise ValueError("each set of probabilities in p_val must be equal length")
+
+    segments_data = [
+        rng.multinomial(n=n_trials, pvals=p_val, size=[length])
+        for p_val, length, in zip(p_vals, lengths)
+    ]
+    return np.concatenate(tuple(segments_data))
+
+
+def piecewise_poisson(
+    lambdas: npt.ArrayLike,
+    lengths: npt.ArrayLike,
+    random_state: Union[int, np.random.RandomState] = None,
+) -> npt.ArrayLike:
+    """
+    Generate series using Possion distribution.
+
+    Each segment has length specified in ``lengths`` and data sampled from a Poisson
+    distribution with expected lambda from ``lambdas``.
+
+    Parameters
+    ----------
+    lambdas : array_like
+        Expected number and variance of events within a specified time interval
+    lengths : array_like
+        Lengths of the segments to be generated
+    random_state : int or np.random.RandomState
+        Either a random seed or RandomState instance
+
+    Returns
+    -------
+    data : np.array
+        univariate time series as np.array
+
+    Examples
+    --------
+    >>> from sktime.annotation.datagen import piecewise_poisson
+    >>> piecewise_poisson(lambdas=[1,2,3],lengths=[2,4,8],random_state=42)#doctest:+SKIP
+    array([1, 2, 1, 3, 3, 1, 3, 1, 3, 2, 2, 4, 2, 1])
+
+    >>> from sktime.annotation.datagen import piecewise_poisson
+    >>> piecewise_poisson(lambdas=[1,3,6],lengths=[2,4,8],random_state=42)#doctest:+SKIP
+    array([1, 2, 1, 3, 3, 2, 5, 5, 6, 4, 4, 9, 3, 5])
+
+    """
+    rng = check_random_state(random_state)
+
+    assert len(lambdas) == len(lengths)
+
+    try:
+        segments_data = [
+            rng.poisson(lam=lams, size=[length])
+            for lams, length in zip(lambdas, lengths)
+        ]
+    except ValueError:
+        raise Exception("Size mismatch")
+
     return np.concatenate(tuple(segments_data))
 
 

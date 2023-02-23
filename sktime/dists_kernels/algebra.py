@@ -58,7 +58,7 @@ class CombinedDistance(_HeterogenousMetaEstimator, BasePairwiseTransformerPanel)
     # for default get_params/set_params from _HeterogenousMetaEstimator
     # _steps_attr points to the attribute of self
     # which contains the heterogeneous set of estimators
-    # this must be an iterable of (name: str, estimator) pairs for the default
+    # this must be an iterable of (name: str, estimator, ...) tuples for the default
     _steps_attr = "_pw_trafos"
 
     def __init__(self, pw_trafos, operation=None):
@@ -107,6 +107,77 @@ class CombinedDistance(_HeterogenousMetaEstimator, BasePairwiseTransformerPanel)
     @_pw_trafos.setter
     def _pw_trafos(self, value):
         self.pw_trafos = value
+
+    def _algebra_dunder_concat(self, other, operation):
+        """Return (right) concat CombinedDistance, common boilerplate for dunders.
+
+        Implemented for `other` being a transformer, otherwise returns `NotImplemented`.
+
+        Parameters
+        ----------
+        other: `sktime` pairwise transformer, must inherit BasePairwiseTransformerPanel
+            otherwise, `NotImplemented` is returned
+        operation: operation string used in CombinedDistance for the dunder.
+            Must be equal to the operation of the dunder, not of self.
+
+        Returns
+        -------
+        CombinedDistance object, concat of `self` (first) with `other` (last).
+            does not contain CombinedDistance `sktime` transformers with same operation
+            (but may nest CombinedDistance with different operations)
+        """
+        if self.operation == operation:
+            # if other is CombinedDistance but with different operation,
+            # we need to wrap it, or _dunder_concat would overwrite the operation
+            if isinstance(other, CombinedDistance) and not other.operation == operation:
+                other = CombinedDistance([other], operation=operation)
+            return self._dunder_concat(
+                other=other,
+                base_class=BasePairwiseTransformerPanel,
+                composite_class=CombinedDistance,
+                attr_name="pw_trafos",
+                concat_order="left",
+                composite_params={"operation": operation},
+            )
+        elif isinstance(other, BasePairwiseTransformerPanel):
+            return CombinedDistance([self, other], operation=operation)
+        else:
+            return NotImplemented
+
+    def __mul__(self, other):
+        """Magic * method, return (right) multiplied CombinedDistance.
+
+        Implemented for `other` being a transformer, otherwise returns `NotImplemented`.
+
+        Parameters
+        ----------
+        other: `sktime` pairwise transformer, must inherit BasePairwiseTransformerPanel
+            otherwise, `NotImplemented` is returned
+
+        Returns
+        -------
+        CombinedDistance object, algebraic * of `self` (first) with `other` (last).
+            does not contain CombinedDistance `sktime` transformers with same operation
+            (but may nest CombinedDistance with different operations)
+        """
+        return self._algebra_dunder_concat(other=other, operation="*")
+
+    def __add__(self, other):
+        """Magic + method, return (right) multiplied CombinedDistance.
+
+        Implemented for `other` being a transformer, otherwise returns `NotImplemented`.
+
+        Parameters
+        ----------
+        other: `sktime` pairwise transformer, must inherit BasePairwiseTransformerPanel
+            otherwise, `NotImplemented` is returned
+
+        Returns
+        -------
+        CombinedDistance object, algebraic + of `self` (first) with `other` (last).
+            not nested, contains only non-CombinedDistance `sktime` transformers
+        """
+        return self._algebra_dunder_concat(other=other, operation="+")
 
     def _transform(self, X, X2=None):
         """Compute distance/kernel matrix.
