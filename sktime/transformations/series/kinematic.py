@@ -63,7 +63,7 @@ class KinematicFeatures(BaseTransformer):
     >>> traj3d["z"] = pd.Series(np.arange(200)/100)
 
     >>> t = KinematicFeatures()
-    >>> t.fit_transform(traj3d)
+    >>> Xt = t.fit_transform(traj3d)
     """
 
     _tags = {
