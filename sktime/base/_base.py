@@ -67,6 +67,11 @@ from sktime.base._tagmanager import _FlagManager
 from sktime.exceptions import NotFittedError
 
 
+class GlobalObjectConfig:
+
+    _config = {"foo": "bar"}
+
+
 class BaseObject(_FlagManager, _BaseEstimator):
     """Base class for parametric objects with tags sktime.
 
@@ -410,7 +415,10 @@ class BaseObject(_FlagManager, _BaseEstimator):
             class attribute via nested inheritance and then any overrides
             and new tags from _onfig_dynamic object attribute.
         """
-        return self._get_flags(flag_attr_name="_config")
+        configs = GlobalObjectConfig._config.copy()
+        local_config = self._get_flags(flag_attr_name="_config")
+        configs.update(local_config)
+        return configs
 
     def set_config(self, **config_dict):
         """Set config flags to given values.
