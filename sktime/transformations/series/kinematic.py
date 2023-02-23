@@ -141,7 +141,7 @@ class KinematicFeatures(BaseTransformer):
                 res = pd.concat([res, v_frame], axis=1)
             if feature_query(["v_abs"]):
                 vabs_frame = abs_rows(v_frame, "v_abs")
-                vabs_frame[0] = np.nan
+                vabs_frame.iloc[0] = np.nan
                 res = pd.concat([res, vabs_frame], axis=1)
 
         if feature_query(["a", "a_abs", "curv"]):
@@ -151,8 +151,8 @@ class KinematicFeatures(BaseTransformer):
                 res = pd.concat([res, a_frame], axis=1)
             if feature_query(["a_abs"]):
                 aabs_frame = abs_rows(a_frame, "a_abs")
-                aabs_frame[0] = np.nan
-                aabs_frame[1] = np.nan
+                aabs_frame.iloc[0] = np.nan
+                aabs_frame.iloc[1] = np.nan
                 res = pd.concat([res, aabs_frame], axis=1)
 
         if feature_query(["curv"]):
