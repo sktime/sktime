@@ -106,11 +106,14 @@ class IntervalSegmenter(BaseTransformer):
         """
         segments = []
 
-        for interval in self.intervals_:
-            start, end = interval[0], interval[-1]
+        for start, end in self.intervals_:
             nlevels = X.index.nlevels
             seg = X.groupby(level=list(range(nlevels - 1)))
-            seg = seg.apply(lambda x: x.iloc[start:end].reset_index(drop=True))
+
+            def subset(x):
+                return x.iloc[start:end].reset_index(drop=True)
+
+            seg = seg.apply(subset)
             seg.columns = [f"{X.columns[0]}_{start}_{end}"]
 
             segments = segments + [seg]
