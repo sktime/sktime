@@ -297,6 +297,407 @@ class BaseGridSearch(_DelegatedForecaster):
             )
         return self
 
+class TuneForecastingGridSearchCV(BaseGridSearch):
+    """Perform grid search cross validation to find optimal model parameters, using hyperopt as tuning algorithm.
+    This algorithm converts the param_grid into a search space for an optimization function to run on. And on the bases of the score returned by the optimization function by running on different parameters, it choses the best ones. 
+
+    HyperOpt : https://github.com/hyperopt/hyperopt
+    For running this algorithm we require 2 things to be given in a function called *fmin* : 
+    1. Optimization Function
+    2. Search Space
+    
+    I modify _fit_and_predict to _hyperopt_fit_and_predict to use it as an optimization function. 
+    In order to ensure that all the statistics used in the *out* dictionary are preserved when hyperopt is run, I use a trials object :https://github.com/hyperopt/hyperopt/wiki/FMin
+    The trials object contains the return object of the optimization function, i.e. _hyperopt_fit_and_predict and a *loss* key for the fmin function to use. 
+
+    For the search space I convert the given parameter grid into the search space used by fmin. 
+    
+    I have kept everything the same as ForecastingGridSearchCV, except making changes in the functions to run hyperopt.
+    Parameters
+    ----------
+    forecaster : estimator object
+        The estimator should implement the sktime or scikit-learn estimator
+        interface. Either the estimator must contain a "score" function,
+        or a scoring function must be passed.
+    cv : cross-validation generator or an iterable
+        e.g. SlidingWindowSplitter()
+    strategy : {"refit", "update", "no-update_params"}, optional, default="refit"
+        data ingestion strategy in fitting cv, passed to `evaluate` internally
+        defines the ingestion mode when the forecaster sees new data when window expands
+        "refit" = forecaster is refitted to each training window
+        "update" = forecaster is updated with training window data, in sequence provided
+        "no-update_params" = fit to first training window, re-used without fit or update
+    update_behaviour : str, optional, default = "full_refit"
+        one of {"full_refit", "inner_only", "no_update"}
+        behaviour of the forecaster when calling update
+        "full_refit" = both tuning parameters and inner estimator refit on all data seen
+        "inner_only" = tuning parameters are not re-tuned, inner estimator is updated
+        "no_update" = neither tuning parameters nor inner estimator are updated
+    param_grid : dict or list of dictionaries
+        Model tuning parameters of the forecaster to evaluate
+    scoring : sktime metric object (BaseMetric), or callable, optional (default=None)
+        scoring metric to use in tuning the forecaster
+        if callable, must have signature
+        `(y_true: 1D np.ndarray, y_pred: 1D np.ndarray) -> float`,
+        assuming np.ndarrays being of the same length, and lower being better.
+    n_jobs: int, optional (default=None)
+        Number of jobs to run in parallel.
+        None means 1 unless in a joblib.parallel_backend context.
+        -1 means using all processors.
+    refit : bool, optional (default=True)
+        True = refit the forecaster with the best parameters on the entire data in fit
+        False = best forecaster remains fitted on the last fold in cv
+    verbose: int, optional (default=0)
+    return_n_best_forecasters : int, default=1
+        In case the n best forecaster should be returned, this value can be set
+        and the n best forecasters will be assigned to n_best_forecasters_
+    pre_dispatch : str, optional (default='2*n_jobs')
+    error_score : numeric value or the str 'raise', optional (default=np.nan)
+        The test score returned when a forecaster fails to be fitted.
+    return_train_score : bool, optional (default=False)
+    backend : str, optional (default="loky")
+        Specify the parallelisation backend implementation in joblib, where
+        "loky" is used by default.
+    error_score : "raise" or numeric, default=np.nan
+        Value to assign to the score if an exception occurs in estimator fitting. If set
+        to "raise", the exception is raised. If a numeric value is given,
+        FitFailedWarning is raised.
+    n_evals : int
+        Number of runs the hypertopt algorithm will make.
+    algo : str
+        To decide what algorithm will the fmin function use
+        tpe =  tpe.suggest
+        rnd = I couldn't find it in the documentation on how to run random, but will add this.
+
+    Attributes
+    ----------
+    best_index_ : int
+    best_score_: float
+        Score of the best model
+    best_params_ : dict
+        Best parameter values across the parameter grid
+    best_forecaster_ : estimator
+        Fitted estimator with the best parameters
+    cv_results_ : dict
+        Results from grid search cross validation
+    n_splits_: int
+        Number of splits in the data for cross validation
+    refit_time_ : float
+        Time (seconds) to refit the best forecaster
+    scorer_ : function
+        Function used to score model
+    n_best_forecasters_: list of tuples ("rank", <forecaster>)
+        The "rank" is in relation to best_forecaster_
+    n_best_scores_: list of float
+        The scores of n_best_forecasters_ sorted from best to worst
+        score of forecasters
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_shampoo_sales
+    >>> from sktime.forecasting.model_selection import (
+    ...     ExpandingWindowSplitter,
+    ...     ForecastingGridSearchCV,
+    ...     ExpandingWindowSplitter)
+    >>> from sktime.forecasting.naive import NaiveForecaster
+    >>> from sktime.forecasting.model_selection._tune import TuneForecastingGridSearchCV
+    >>> y = load_shampoo_sales()
+    >>> fh = [1,2,3]
+    >>> cv = ExpandingWindowSplitter(fh=fh)
+    >>> forecaster = NaiveForecaster()
+    >>> param_grid = {"strategy" : ["last", "mean", "drift"]}
+    >>> gscv = TuneForecastingGridSearchCV(
+    ...     forecaster=forecaster,
+    ...     param_grid=param_grid,
+    ...     cv=cv)
+    >>> gscv.fit(y)
+    >>> y_pred = gscv.predict(fh)
+
+        Advanced model meta-tuning (model selection) with multiple forecasters
+        together with hyper-parametertuning at same time using sklearn notation:
+    >>> from sktime.datasets import load_shampoo_sales
+    >>> from sktime.forecasting.exp_smoothing import ExponentialSmoothing
+    >>> from sktime.forecasting.naive import NaiveForecaster
+    >>> from sktime.forecasting.model_selection import ExpandingWindowSplitter
+    >>> from sktime.forecasting.model_selection import ForecastingGridSearchCV
+    >>> from sktime.forecasting.compose import TransformedTargetForecaster
+    >>> from sktime.forecasting.theta import ThetaForecaster
+    >>> from sktime.transformations.series.impute import Imputer
+    >>> y = load_shampoo_sales()
+    >>> pipe = TransformedTargetForecaster(steps=[
+    ...     ("imputer", Imputer()),
+    ...     ("forecaster", NaiveForecaster())])
+    >>> cv = ExpandingWindowSplitter(
+    ...     initial_window=24,
+    ...     step_length=12,
+    ...     fh=[1,2,3])
+    >>> gscv = TuneForecastingGridSearchCV(
+    ...     forecaster=pipe,
+    ...     param_grid=[{
+    ...         "forecaster": [NaiveForecaster(sp=12)],
+    ...         "forecaster__strategy": ["drift", "last", "mean"],
+    ...     },
+    ...     {
+    ...         "imputer__method": ["mean", "drift"],
+    ...         "forecaster": [ThetaForecaster(sp=12)],
+    ...     },
+    ...     {
+    ...         "imputer__method": ["mean", "median"],
+    ...         "forecaster": [ExponentialSmoothing(sp=12)],
+    ...         "forecaster__trend": ["add", "mul"],
+    ...     },
+    ...     ],
+    ...     cv=cv,
+    ...     n_jobs=-1)  # doctest: +SKIP
+    >>> gscv.fit(y)  # doctest: +SKIP
+    ForecastingGridSearchCV(...)
+    >>> y_pred = gscv.predict(fh=[1,2,3])  # doctest: +SKIP
+    """
+    def __init__(
+        self,
+        forecaster,
+        cv,
+        param_grid,
+        scoring=None,
+        strategy="refit",
+        n_jobs=None,
+        refit=True,
+        verbose=0,
+        return_n_best_forecasters=1,
+        pre_dispatch="2*n_jobs",
+        backend="loky",
+        update_behaviour="full_refit",
+        error_score=np.nan,
+        #two parameters that can be set by the user.
+        n_evals=100,
+        algo="tpe",
+    ):
+        super(TuneForecastingGridSearchCV, self).__init__(
+            forecaster=forecaster,
+            scoring=scoring,
+            n_jobs=n_jobs,
+            refit=refit,
+            cv=cv,
+            strategy=strategy,
+            verbose=verbose,
+            return_n_best_forecasters=return_n_best_forecasters,
+            pre_dispatch=pre_dispatch,
+            backend=backend,
+            update_behaviour=update_behaviour,
+            error_score=error_score,
+        )
+        self.param_grid = param_grid
+        self.n_evals = n_evals
+        self.algo = algo
+        self.algo_list = ["ran","tpe"]
+
+    def _check_param_grid(self, param_grid):
+        """_check_param_grid from sklearn 1.0.2, before it was removed."""
+        if hasattr(param_grid, "items"):
+            param_grid = [param_grid]
+
+        for p in param_grid:
+            for name, v in p.items():
+                if isinstance(v, np.ndarray) and v.ndim > 1:
+                    raise ValueError("Parameter array should be one-dimensional.")
+
+                if isinstance(v, str) or not isinstance(v, (np.ndarray, Sequence)):
+                    raise ValueError(
+                        "Parameter grid for parameter ({0}) needs to"
+                        " be a list or numpy array, but got ({1})."
+                        " Single values need to be wrapped in a list"
+                        " with one element.".format(name, type(v))
+                    )
+
+                if len(v) == 0:
+                    raise ValueError(
+                        "Parameter values for parameter ({0}) need "
+                        "to be a non-empty sequence.".format(name)
+                    )
+        if self.n_evals <= 0 :
+            raise ValueError(
+                "Number of Evalulations for HyperOpt can't be 0 or negative"
+            )
+
+        if self.algo not in self.algo_list :
+            raise ValueError(
+                print("Algo type not present in hyperopt choose from".format(self.algo_list))
+            )
+        
+    def _fit(self, y, X=None, fh=None):
+        """Fit to training data.
+
+        Parameters
+        ----------
+        y : pd.Series
+            Target time series to which to fit the forecaster.
+        fh : int, list or np.array, optional (default=None)
+            The forecasters horizon with the steps ahead to to predict.
+        X : pd.DataFrame, optional (default=None)
+            Exogenous variables are ignored
+
+        Returns
+        -------
+        self : returns an instance of self.
+        """
+        from hyperopt import hp, fmin, tpe, Trials, STATUS_OK
+        cv = check_cv(self.cv)
+
+        scoring = check_scoring(self.scoring, obj=self)
+        scoring_name = f"test_{scoring.name}"
+
+        #Will this be useful now?
+        parallel = Parallel(
+            n_jobs=self.n_jobs, pre_dispatch=self.pre_dispatch, backend=self.backend
+        )
+
+        def _hyperopt_fit_and_score(params):
+            # Clone forecaster.
+            forecaster = self.forecaster.clone()
+
+            # Set parameters.
+            forecaster.set_params(**params)
+
+            # Evaluate.
+            out = evaluate(
+                forecaster,
+                cv,
+                y,
+                X,
+                strategy=self.strategy,
+                scoring=scoring,
+                error_score=self.error_score,
+            )
+            # Filter columns.
+            out = out.filter(items=[scoring_name, "fit_time", "pred_time"], axis=1)
+
+            # Aggregate results.
+            out = out.mean()
+            out = out.add_prefix("mean_")
+
+            # Add parameters to output table.
+            out["params"] = params
+            # Extra keys are added for fmin to work properly 
+            # Loss is taken as positive, because later ranking is done as lower is better
+            # Reference  : https://github.com/hyperopt/hyperopt/wiki/FMin Section 1.2
+            # It needs a dictionary not a Series object
+            out["loss"] = out[f"mean_{scoring_name}"]
+            out["status"] = STATUS_OK
+            out = out.to_dict()
+
+            return out
+
+        def evaluate_candidates(candidate_params):
+            candidate_params = list(candidate_params)
+            # Add as parameters
+
+            if self.verbose > 0:
+                n_candidates = len(candidate_params)
+                n_splits = cv.get_n_splits(y)
+                print(  # noqa
+                    "Fitting {0} folds for each of {1} candidates,"
+                    " totalling {2} fits".format(
+                        n_splits, n_candidates, n_candidates * n_splits
+                    )
+                )
+
+            # out = parallel(
+            #     delayed(_fit_and_score)(params) for params in candidate_params
+            # )
+
+            search_space = []
+            for p in candidate_params:
+                param_dict = {}
+                for name,v in p.items():
+                    if isinstance(v, list) :
+                        param_dict[name] = hp.choice(name,v)
+                    else :
+                        param_dict[name] = v
+                search_space.append(param_dict)
+            space = hp.choice('case', search_space)
+            
+            trials = Trials() 
+            
+            if self.algo == "tpe":
+                use_algo = tpe.suggest
+
+            out = fmin(
+                fn=_hyperopt_fit_and_score,
+                space=space,
+                algo=use_algo,
+                max_evals=self.n_evals,
+                trials=trials,
+            )
+
+            if len(out) < 1:
+                raise ValueError(
+                    "No fits were performed. "
+                    "Was the CV iterator empty? "
+                    "Were there no candidates?"
+                )
+            # This result carries the entire out dictionaries returned by fit being run on different candidates
+            result = []
+            for item in trials.trials :
+                result.append(item["result"])
+            return result 
+
+        # Run grid-search cross-validation.
+        results = self._run_search(evaluate_candidates)
+        results = pd.DataFrame(results)
+
+        # Rank results, according to whether greater is better for the given scoring.
+        results[f"rank_{scoring_name}"] = results.loc[:, f"mean_{scoring_name}"].rank(
+            ascending=scoring.get_tag("lower_is_better")
+        )
+
+        self.cv_results_ = results
+
+        # Select best parameters.
+        self.best_index_ = results.loc[:, f"rank_{scoring_name}"].argmin()
+        # Raise error if all fits in evaluate failed because all score values are NaN.
+        if self.best_index_ == -1:
+            raise NotFittedError(
+                f"""All fits of forecaster failed,
+                set error_score='raise' to see the exceptions.
+                Failed forecaster: {self.forecaster}"""
+            )
+        self.best_score_ = results.loc[self.best_index_, f"mean_{scoring_name}"]
+        self.best_params_ = results.loc[self.best_index_, "params"]
+        self.best_forecaster_ = self.forecaster.clone().set_params(**self.best_params_)
+
+        # Refit model with best parameters.
+        if self.refit:
+            self.best_forecaster_.fit(y, X, fh)
+
+        # Sort values according to rank
+        results = results.sort_values(
+            by=f"rank_{scoring_name}", ascending=scoring.get_tag("lower_is_better")
+        )
+        # Select n best forecaster
+        ### ----------- TODO There will be a problem getting n_best_forecastors, if I run it like this.
+        self.n_best_forecasters_ = []
+        self.n_best_scores_ = []
+        for i in range(self.return_n_best_forecasters):
+            params = results["params"].iloc[i]
+            rank = results[f"rank_{scoring_name}"].iloc[i]
+            rank = str(int(rank))
+            forecaster = self.forecaster.clone().set_params(**params)
+            # Refit model with best parameters.
+            if self.refit:
+                forecaster.fit(y, X, fh)
+            self.n_best_forecasters_.append((rank, forecaster))
+            # Save score
+            score = results[f"mean_{scoring_name}"].iloc[i]
+            self.n_best_scores_.append(score)
+
+        return self
+
+
+    def _run_search(self, evaluate_candidates):
+        """Search all candidates in param_grid."""
+        self._check_param_grid(self.param_grid)
+        return evaluate_candidates(ParameterGrid(self.param_grid))
+    
 
 class ForecastingGridSearchCV(BaseGridSearch):
     """Perform grid-search cross-validation to find optimal model parameters.
