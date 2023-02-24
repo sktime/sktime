@@ -33,7 +33,8 @@ class IntervalSegmenter(BaseTransformer):
         "scitype:transform-output": "Series",
         # what scitype is returned: Primitives, Series, Panel
         "scitype:instancewise": True,  # is this an instance-wise transform?
-        "X_inner_mtype": "pd-multiindex",  # which mtypes do _fit/_predict support for X?
+        "X_inner_mtype": ["pd-multiindex", "pd_multiindex_hier"],
+        # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
         "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
         "capability:unequal_length:removes": True,
@@ -107,7 +108,8 @@ class IntervalSegmenter(BaseTransformer):
 
         for interval in self.intervals_:
             start, end = interval[0], interval[-1]
-            seg = X.groupby(level=0)
+            nlevels = X.index.nlevels
+            seg = X.groupby(level=list(range(nlevels-1)))
             seg = seg.apply(lambda x: x.iloc[start:end].reset_index(drop=True))
             seg.columns = [f"{X.columns[0]}_{start}_{end}"]
 
