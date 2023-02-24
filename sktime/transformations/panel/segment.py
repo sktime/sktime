@@ -111,7 +111,7 @@ class IntervalSegmenter(BaseTransformer):
             seg = X.groupby(level=list(range(nlevels - 1)))
 
             def subset(x):
-                return x.iloc[start:end].reset_index(drop=True)
+                return x.iloc[start:end].reset_index(drop=True)  # noqa B023
 
             seg = seg.apply(subset)
             seg.columns = [f"{X.columns[0]}_{start}_{end}"]
