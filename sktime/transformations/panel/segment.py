@@ -24,6 +24,15 @@ class IntervalSegmenter(BaseTransformer):
         - If ndarray, 2d np.ndarray [n_intervals, 2] with rows giving
         intervals, the first column giving start points,
         and the second column giving end points of intervals
+
+    Examples
+    --------
+    >>> from sktime.utils._testing.panel import _make_panel
+    >>> from sktime.transformations.panel.segment import IntervalSegmenter
+
+    >>> X = _make_panel()
+    >>> t = IntervalSegmenter()
+    >>> Xt = t.fit_transform(X)
     """
 
     _tags = {
@@ -75,7 +84,9 @@ class IntervalSegmenter(BaseTransformer):
                     "The number of intervals must be half the number of time points"
                     " or less"
                 )
-            self.intervals_ = np.array_split(self._time_index, self.intervals)
+            ints = np.array_split(self._time_index, self.intervals)
+            ints = [x[[0, -1]] for x in ints]
+            self.intervals_ = ints
 
         else:
             raise ValueError(
@@ -142,7 +153,7 @@ class IntervalSegmenter(BaseTransformer):
         """
         # small number of intervals for testing
         params = {"intervals": 2}
-        params2 = {}
+        params2 = {"intervals": 3}
         return [params, params2]
 
 
