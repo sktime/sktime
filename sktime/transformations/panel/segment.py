@@ -33,7 +33,7 @@ class IntervalSegmenter(BaseTransformer):
         "scitype:transform-output": "Series",
         # what scitype is returned: Primitives, Series, Panel
         "scitype:instancewise": True,  # is this an instance-wise transform?
-        "X_inner_mtype": "pd.DataFrame",  # which mtypes do _fit/_predict support for X?
+        "X_inner_mtype": "pd-multiindex",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
         "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
         "capability:unequal_length:removes": True,
@@ -61,7 +61,7 @@ class IntervalSegmenter(BaseTransformer):
         -------
         self : an instance of self.
         """
-        n_timepoints = X.shape[0]
+        n_timepoints = len(get_time_index(X))
 
         self._time_index = np.arange(n_timepoints)
 
@@ -103,26 +103,17 @@ class IntervalSegmenter(BaseTransformer):
           Transformed pandas DataFrame with same number of rows and one
           column for each generated interval.
         """
-        # Flatten to 1D numpy series
-        X_np1d = X.values.flatten()
+        segments = []
 
-        # Segment into intervals.
-        # TODO generalise to non-equal-index cases
-        intervals = []
-
-        # univariate, only a single column name
-        column_names = X.columns[0]
-        new_column_names = []
         for interval in self.intervals_:
             start, end = interval[0], interval[-1]
-            if f"{column_names}_{start}_{end}" not in new_column_names:
-                interval = X_np1d[start:end]
-                intervals.append(interval)
-                new_column_names.append(f"{column_names}_{start}_{end}")
+            seg = X.groupby(level=0).apply(lambda x: x.iloc[start:end]).droplevel(0)
+            seg = seg.reset_index(drop=True)
+            seg.columns = [f"{X.columns[0]}_{start}_{end}"]
 
-        # Return intervals as individual variables
-        Xt = pd.DataFrame(intervals).transpose()
-        Xt.columns = new_column_names
+            segments = segments + [seg]
+
+        Xt = pd.concat(segments, axis=1)
         return Xt
 
     @classmethod
