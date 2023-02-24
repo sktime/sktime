@@ -109,7 +109,7 @@ class IntervalSegmenter(BaseTransformer):
         for interval in self.intervals_:
             start, end = interval[0], interval[-1]
             nlevels = X.index.nlevels
-            seg = X.groupby(level=list(range(nlevels-1)))
+            seg = X.groupby(level=list(range(nlevels - 1)))
             seg = seg.apply(lambda x: x.iloc[start:end].reset_index(drop=True))
             seg.columns = [f"{X.columns[0]}_{start}_{end}"]
 
@@ -139,7 +139,8 @@ class IntervalSegmenter(BaseTransformer):
         """
         # small number of intervals for testing
         params = {"intervals": 2}
-        return params
+        params2 = {}
+        return [params, params2]
 
 
 class RandomIntervalSegmenter(_DelegatedTransformer):
