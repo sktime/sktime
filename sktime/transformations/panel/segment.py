@@ -259,20 +259,20 @@ class RandomIntervalSegmenter(_DelegatedTransformer):
                     "Setting `min_length` or `max_length` is not yet "
                     "implemented for `n_intervals='random'`."
                 )
-            self.intervals_ = _rand_intervals_rand_n(
+            rand_intervals = _rand_intervals_rand_n(
                 self._time_index, random_state=self.random_state
             )
         else:
-            self.intervals_ = _rand_intervals_fixed_n(
+            rand_intervals = _rand_intervals_fixed_n(
                 self._time_index,
                 n_intervals=self.n_intervals,
                 min_length=min_length,
                 max_length=self.max_length,
                 random_state=self.random_state,
             )
+        self.intervals_ = np.unique(rand_intervals, axis=0)
 
         self.interval_segmenter_ = IntervalSegmenter(self.intervals_)
-
         self.interval_segmenter_.fit(X=X, y=y)
 
         return self
