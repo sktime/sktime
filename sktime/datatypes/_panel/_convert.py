@@ -743,7 +743,12 @@ def from_multi_index_to_nested_adp(obj, store=None):
     if isinstance(store, dict):
         store["index_names"] = obj.index.names
 
-    return from_multi_index_to_nested(multi_ind_dataframe=obj, instance_index=None)
+    res = from_multi_index_to_nested(multi_ind_dataframe=obj, instance_index=None)
+
+    if isinstance(store, dict) and "instance_names" in store.keys():
+        res.index.names = store["instance_names"]
+
+    return res
 
 
 convert_dict[("pd-multiindex", "nested_univ", "Panel")] = from_multi_index_to_nested_adp
@@ -803,12 +808,19 @@ def from_nested_to_multi_index(X, instance_index=None, time_index=None):
 
 def from_nested_to_multi_index_adp(obj, store=None):
 
-    res = from_nested_to_multi_index(
-        X=obj, instance_index="instances", time_index="timepoints"
-    )
+    if isinstance(store, dict):
+        store["instance_names"] = obj.index.names
 
     if isinstance(store, dict) and "index_names" in store.keys():
-        res.index.names = store["index_names"]
+        instance_index = store["index_names"][0]
+        time_index = store["index_names"][1]
+    else:
+        instance_index = obj.index.names[0]
+        time_index = "timepoints"
+
+    res = from_nested_to_multi_index(
+        X=obj, instance_index=instance_index, time_index=time_index
+    )
 
     return res
 
