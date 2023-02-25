@@ -53,6 +53,7 @@ class Normal(_BaseTFDistribution):
         super(Normal, self).__init__(index=index, columns=columns, distr=distr)
 
     def pdf(self, x):
+        """Probability density function."""
         if isinstance(x, pd.DataFrame):
             dist_at_x = self.loc[x.index, x.columns]
             tensor = dist_at_x.distr.prob(x.values)
@@ -61,7 +62,6 @@ class Normal(_BaseTFDistribution):
             dist_at_x = self
             return dist_at_x.distr.prob(x)
     
-
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator."""
