@@ -222,7 +222,7 @@ class ColumnConcatenator(BaseTransformer):
 
     Examples
     --------
-    >>> from sktime.transformations.panel.compose # doctest: +SKIP
+    >>> from sktime.transformations.panel.compose import ColumnConcatenator # noqa: E501
     >>> import numpy as np # doctest: +SKIP
     >>> data = data = np.array([[1, 2, 3], # doctest: +SKIP
     ...                         [4, 5, 6], # doctest: +SKIP
