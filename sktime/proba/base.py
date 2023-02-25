@@ -143,6 +143,8 @@ class _BaseTFDistribution(BaseDistribution):
                 arr = arr[rowidx]
             if len(arr.shape) >= 2 and colidx is not None:
                 arr = arr[:, colidx]
+            if np.issubdtype(arr.dtype, np.integer):
+                arr = arr.astype("float")
             subset_param_dict[param] = arr
         return subset_param_dict
 

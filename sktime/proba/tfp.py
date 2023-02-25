@@ -21,6 +21,12 @@ class Normal(_BaseTFDistribution):
         standard deviation of the normal distribution
     index : pd.Index, optional, default = RangeIndex
     columns : pd.Index, optional, default = RangeIndex
+
+    Example
+    -------
+    >>> from sktime.proba.tfp import Normal
+
+    >>> n = Normal(mean=[[0, 1], [2, 3], [4, 5]], sd=1)
     """
 
     _tags = {"python_dependencies": "tensorflow_probability"}
@@ -45,6 +51,16 @@ class Normal(_BaseTFDistribution):
             columns = pd.RangeIndex(distr.batch_shape[1])
 
         super(Normal, self).__init__(index=index, columns=columns, distr=distr)
+
+    def pdf(self, x):
+        if isinstance(x, pd.DataFrame):
+            dist_at_x = self.loc[x.index, x.columns]
+            tensor = dist_at_x.distr.prob(x.values)
+            return pd.DataFrame(tensor, index=x.index, columns=x.columns)
+        else:
+            dist_at_x = self
+            return dist_at_x.distr.prob(x)
+    
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
