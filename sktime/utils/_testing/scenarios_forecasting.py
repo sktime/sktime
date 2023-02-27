@@ -18,7 +18,7 @@ from inspect import isclass
 import pandas as pd
 
 from sktime.base import BaseObject
-from sktime.datatypes import mtype_to_scitype
+from sktime.datatypes import convert_to, mtype_to_scitype
 from sktime.forecasting.base import BaseForecaster
 from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils._testing.panel import _make_panel_X
@@ -163,6 +163,7 @@ class ForecasterFitPredictUnivariateNoXLongFh(ForecasterTestScenario):
 
 
 LONG_X = _make_series(n_columns=2, n_timepoints=30, random_state=RAND_SEED)
+LONG_X = LONG_X.convert_dtypes()
 X = LONG_X.iloc[0:20]
 X_test = LONG_X.iloc[20:23]
 X_test_short = LONG_X.iloc[20:21]
@@ -240,6 +241,7 @@ y_panel = _make_panel_X(
     random_state=RAND_SEED,
     all_positive=True,
 )
+y_panel = convert_to(y_panel, "pd-multiindex").convert_dtypes()
 
 
 class ForecasterFitPredictPanelSimple(ForecasterTestScenario):
@@ -259,6 +261,7 @@ class ForecasterFitPredictPanelSimple(ForecasterTestScenario):
 y_hierarchical = _make_hierarchical(
     hierarchy_levels=(2, 2), n_columns=1, random_state=RAND_SEED
 )
+y_hierarchical = y_hierarchical.convert_dtypes()
 
 
 class ForecasterFitPredictHierarchicalSimple(ForecasterTestScenario):

@@ -15,7 +15,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.base import BaseObject
-from sktime.datatypes import mtype_to_scitype
+from sktime.datatypes import convert_to, mtype_to_scitype
 from sktime.transformations.base import _PanelToPanelTransformer
 from sktime.utils._testing.estimator_checks import _make_primitives, _make_tabular_X
 from sktime.utils._testing.forecasting import _make_series
@@ -182,9 +182,11 @@ class TransformerTestScenario(TestScenario, BaseObject):
 
 
 X_series = _make_series(n_timepoints=N_T, random_state=RAND_SEED)
+X_series = convert_to(X_series, "pd.DataFrame").convert_dtypes()
 X_panel = _make_panel_X(
     n_instances=7, n_columns=1, n_timepoints=N_T, random_state=RAND_SEED
 )
+X_panel = convert_to(X_panel, "pd-multiindex").convert_dtypes()
 
 
 class TransformerFitTransformSeriesUnivariate(TransformerTestScenario):
@@ -299,18 +301,7 @@ class TransformerFitTransformPanelUnivariate(TransformerTestScenario):
         "is_enabled": False,
     }
 
-    args = {
-        "fit": {
-            "X": _make_panel_X(
-                n_instances=7, n_columns=1, n_timepoints=N_T, random_state=RAND_SEED
-            )
-        },
-        "transform": {
-            "X": _make_panel_X(
-                n_instances=7, n_columns=1, n_timepoints=N_T, random_state=RAND_SEED
-            )
-        },
-    }
+    args = {"fit": {"X": X_panel}, "transform": {"X": X_panel}}
     default_method_sequence = ["fit", "transform"]
 
 
@@ -388,10 +379,10 @@ class TransformerFitTransformPanelUnivariateWithClassYOnlyFit(TransformerTestSce
 
     args = {
         "fit": {
-            "X": _make_panel_X(n_instances=7, n_columns=1, n_timepoints=N_T),
+            "X": X_panel,
             "y": _make_classification_y(n_instances=7, n_classes=2),
         },
-        "transform": {"X": _make_panel_X(n_instances=7, n_columns=1, n_timepoints=N_T)},
+        "transform": {"X": X_panel},
     }
     default_method_sequence = ["fit", "transform"]
 
