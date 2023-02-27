@@ -1380,7 +1380,7 @@ def make_reduction(
         With the argument `windows_identical = True` (default) the windows used to train
         the model are defined by the maximum forecasting horizon.
         Only two complete windows can be defined in this example:
-        `fh = 4` (maxium of `fh = [2, 4]`)
+        `fh = 4` (maximum of `fh = [2, 4]`)
             |--------------------------- |
             | x x x x x x x x x * * * y *|
             | * x x x x x x x x x * * * y|
