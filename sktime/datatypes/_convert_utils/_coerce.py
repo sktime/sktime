@@ -8,7 +8,7 @@ import pandas as pd
 
 def _is_nullable_numeric(dtype):
 
-    return dtype in ["Int64", "Float64"]
+    return dtype in ["Int64", "Float64", "boolean"]
 
 
 def _coerce_df_dtypes(obj):
