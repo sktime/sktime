@@ -223,21 +223,27 @@ class ColumnConcatenator(BaseTransformer):
     Examples
     --------
     >>> from sktime.transformations.panel.compose import ColumnConcatenator # noqa: E501
-    >>> import numpy as np # doctest: +SKIP
-    >>> data = data = np.array([[1, 2, 3], # doctest: +SKIP
-    ...                         [4, 5, 6], # doctest: +SKIP
-    ...                         [7, 8, 9]]) # doctest: +SKIP
-    >>> concatenator = ColumnConcatenator() # doctest: +SKIP
-    >>> concatenator.fit_transform(data) # doctest: +SKIP
-    >>> array([[1.],  # doctest: +SKIP
-    ...        [4.],  # doctest: +SKIP
-    ...        [7.],  # doctest: +SKIP
-    ...        [2.],  # doctest: +SKIP
-    ...        [5.],  # doctest: +SKIP
-    ...        [8.],  # doctest: +SKIP
-    ...        [3.],  # doctest: +SKIP
-    ...        [6.],  # doctest: +SKIP
-    ...        [9.]]) # doctest: +SKIP
+    >>> import numpy as np
+    >>> data = np.array([[1, 2, 3],
+    ...                  [4, 5, 6],
+    ...                  [7, 8, 9]])
+    >>> concatenator = ColumnConcatenator()
+    >>> concatenator.fit_transform(data)
+    ... array([[1.],
+    ...        [4.],
+    ...        [7.],
+    ...        [2.],
+    ...        [5.],
+    ...        [8.],
+    ...        [3.],
+    ...        [6.],
+    ...        [9.]])
+    >>> # panel data
+    >>> from sktime.utils._testing.panel import _make_panel
+    >>> panel_data = _make_panel(n_columns = 2,
+    ...                          n_instances = 2,
+    ...                          n_timepoints = 3)
+    >>> panel_data = concatenator.fit_transform(panel_data)
     """
 
     _tags = {
