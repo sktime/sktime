@@ -321,13 +321,13 @@ def test_predict_residuals():
     not _check_soft_dependencies("statsmodels", severity="none"),
     reason="skip test if required soft dependency not available",
 )
-@pytest.mark.parametrize("nullable_type", ['Int64', 'Float64', 'boolean'])
+@pytest.mark.parametrize("nullable_type", ["Int64", "Float64", "boolean"])
 def test_nullable_dtypes(nullable_type):
     """Test that basic forecasting vignette works with nullable DataFrame dtypes."""
     dtype = nullable_type
 
     X = pd.DataFrame()
-    X["ints"] = pd.Series([1, 0]*20, dtype=dtype)
+    X["ints"] = pd.Series([1, 0] * 20, dtype=dtype)
     X.index = pd.date_range("1/1/21", periods=40)
     y = pd.Series([1, 0] * 20, dtype=dtype)
     y.index = pd.date_range("1/1/21", periods=40)
