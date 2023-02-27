@@ -94,19 +94,20 @@ class TEASER(BaseEarlyClassifier):
     >>> from sktime.classification.interval_based import TimeSeriesForestClassifier
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
+    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True) # doctest: +SKIP
     >>> clf = TEASER(
     ...     classification_points=[6, 16, 24],
     ...     estimator=TimeSeriesForestClassifier(n_estimators=5),
-    ... )
-    >>> clf.fit(X_train, y_train)
+    ... ) # doctest: +SKIP
+    >>> clf.fit(X_train, y_train) # doctest: +SKIP
     TEASER(...)
-    >>> y_pred, decisions = clf.predict(X_test)
+    >>> y_pred, decisions = clf.predict(X_test) # doctest: +SKIP
     """
 
     _tags = {
         "capability:multivariate": True,
         "capability:multithreading": True,
+        "python_dependencies": "numba",
     }
 
     def __init__(
@@ -597,12 +598,14 @@ class TEASER(BaseEarlyClassifier):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class.
         """
+        from sktime.classification.dummy import DummyClassifier
         from sktime.classification.feature_based import Catch22Classifier
+        from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-        params = {
-            "classification_points": [3],
-            "estimator": Catch22Classifier(
-                estimator=RandomForestClassifier(n_estimators=2)
-            ),
-        }
+        if _check_soft_dependencies("numba", severity="none"):
+            est = Catch22Classifier(estimator=RandomForestClassifier(n_estimators=2))
+        else:
+            est = DummyClassifier()
+
+        params = {"classification_points": [3], "estimator": est}
         return params
