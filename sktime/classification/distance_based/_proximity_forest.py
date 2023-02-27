@@ -1034,16 +1034,17 @@ class ProximityTree(BaseClassifier):
     >>> from sktime.classification.distance_based import ProximityTree
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
-    >>> clf = ProximityTree(max_depth=2, n_stump_evaluations=1)
-    >>> clf.fit(X_train, y_train)
+    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True) # doctest: +SKIP
+    >>> clf = ProximityTree(max_depth=2, n_stump_evaluations=1) # doctest: +SKIP
+    >>> clf.fit(X_train, y_train) # doctest: +SKIP
     ProximityTree(...)
-    >>> y_pred = clf.predict(X_test)
+    >>> y_pred = clf.predict(X_test) # doctest: +SKIP
     """
 
     _tags = {
         "capability:multithreading": True,
         "X_inner_mtype": "nested_univ",
+        "python_dependencies": "numba",
     }
 
     def __init__(
@@ -1272,17 +1273,20 @@ class ProximityForest(BaseClassifier):
     >>> from sktime.classification.distance_based import ProximityForest
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
-    >>> clf = ProximityForest(n_estimators=2, max_depth=2, n_stump_evaluations=1)
-    >>> clf.fit(X_train, y_train)
+    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True) # doctest: +SKIP
+    >>> clf = ProximityForest(
+    ...     n_estimators=2, max_depth=2, n_stump_evaluations=1
+    ... ) # doctest: +SKIP
+    >>> clf.fit(X_train, y_train) # doctest: +SKIP
     ProximityForest(...)
-    >>> y_pred = clf.predict(X_test)
+    >>> y_pred = clf.predict(X_test) # doctest: +SKIP
     """
 
     _tags = {
         "X_inner_mtype": "nested_univ",
         "capability:multithreading": True,
         "classifier_type": "distance",
+        "python_dependencies": "numba",
     }
 
     def __init__(

@@ -42,6 +42,7 @@ __all__ = ["check_dict"]
 
 import numpy as np
 import pandas as pd
+from pandas.core.dtypes.cast import is_nested_object
 
 from sktime.datatypes._series._check import (
     _index_equally_spaced,
@@ -87,7 +88,6 @@ check_dict = dict()
 
 
 def check_dflist_panel(obj, return_metadata=False, var_name="obj"):
-
     if not isinstance(obj, list):
         msg = f"{var_name} must be list of pd.DataFrame, found {type(obj)}"
         return _ret(False, msg, None, return_metadata)
@@ -128,7 +128,6 @@ check_dict[("df-list", "Panel")] = check_dflist_panel
 
 
 def check_numpy3d_panel(obj, return_metadata=False, var_name="obj"):
-
     if not isinstance(obj, np.ndarray):
         msg = f"{var_name} must be a numpy.ndarray, found {type(obj)}"
         return _ret(False, msg, None, return_metadata)
@@ -161,7 +160,6 @@ check_dict[("numpy3D", "Panel")] = check_numpy3d_panel
 
 
 def check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj", panel=True):
-
     if not isinstance(obj, pd.DataFrame):
         msg = f"{var_name} must be a pd.DataFrame, found {type(obj)}"
         return _ret(False, msg, None, return_metadata)
@@ -170,14 +168,21 @@ def check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj", panel=T
         msg = f"{var_name} must have a MultiIndex, found {type(obj.index)}"
         return _ret(False, msg, None, return_metadata)
 
+    index = obj.index
+
     # check that columns are unique
     col_names = obj.columns
     if not col_names.is_unique:
         msg = f"{var_name} must have unique column indices, but found {col_names}"
         return _ret(False, msg, None, return_metadata)
 
+    # check that no dtype is object
+    if "object" in obj.dtypes.values:
+        msg = f"{var_name} should not have column of 'object' dtype"
+        return _ret(False, msg, None, return_metadata)
+
     # check that there are precisely two index levels
-    nlevels = obj.index.nlevels
+    nlevels = index.nlevels
     if panel is True and not nlevels == 2:
         msg = f"{var_name} must have a MultiIndex with 2 levels, found {nlevels}"
         return _ret(False, msg, None, return_metadata)
@@ -187,24 +192,16 @@ def check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj", panel=T
         )
         return _ret(False, msg, None, return_metadata)
 
-    # check that no dtype is object
-    if "object" in obj.dtypes.values:
-        msg = f"{var_name} should not have column of 'object' dtype"
-        return _ret(False, msg, None, return_metadata)
-
     # check whether the time index is of valid type
-    if not is_in_valid_index_types(obj.index.get_level_values(-1)):
+    if not is_in_valid_index_types(index.levels[-1]):
         msg = (
-            f"{type(obj.index)} is not supported for {var_name}, use "
+            f"{type(index)} is not supported for {var_name}, use "
             f"one of {VALID_INDEX_TYPES} or integer index instead."
         )
         return _ret(False, msg, None, return_metadata)
 
-    time_obj = obj.reset_index(-1).drop(obj.columns, axis=1)
-    time_grp = time_obj.groupby(level=0, group_keys=True, as_index=True)
-    inst_inds = time_obj.index.unique()
-
     # check instance index being integer or range index
+    inst_inds = index.levels[0]
     if not is_in_valid_multiindex_types(inst_inds):
         msg = (
             f"instance index (first/highest index) must be {VALID_MULTIINDEX_TYPES}, "
@@ -212,57 +209,52 @@ def check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj", panel=T
         )
         return _ret(False, msg, None, return_metadata)
 
-    if pd.__version__ < "1.5.0":
-        # Earlier versions of pandas are very slow for this type of operation.
-        is_equally_list = [_index_equally_spaced(obj.loc[i].index) for i in inst_inds]
-        is_equally_spaced = all(is_equally_list)
-        montonic_list = [obj.loc[i].index.is_monotonic for i in inst_inds]
-        time_is_monotonic = len([i for i in montonic_list if i is False]) == 0
-    else:
-        timedelta_by_grp = (
-            time_grp.diff().groupby(level=0, group_keys=True, as_index=True).nunique()
-        )
-        timedelta_unique = timedelta_by_grp.iloc[:, 0].unique()
-        is_equally_spaced = len(timedelta_unique) == 1
-        time_is_monotonic = all(timedelta_unique >= 0)
-
-    is_equal_length = time_grp.count()
-
-    # Check time index is ordered in time
-    if not time_is_monotonic:
-        msg = (
-            f"The (time) index of {var_name} must be sorted monotonically increasing, "
-            f"but found: {obj.index.get_level_values(-1)}"
-        )
-        return _ret(False, msg, None, return_metadata)
-
-    if panel is True:
-        panel_inds = [1]
-    else:
-        panel_inds = inst_inds.droplevel(-1).unique()
+    # check if time index is monotonic increasing for each group
+    if not index.is_monotonic_increasing:
+        index_frame = index.to_frame()
+        if (
+            not index_frame.groupby(level=list(range(index.nlevels - 1)), sort=False)[
+                index_frame.columns[-1]
+            ]
+            .is_monotonic_increasing.astype(bool)
+            .all()
+        ):
+            msg = (
+                f"The (time) index of {var_name} must be sorted monotonically "
+                f"increasing, but found: {index}"
+            )
+            return _ret(False, msg, None, return_metadata)
 
     metadata = dict()
-    metadata["is_univariate"] = len(obj.columns) < 2
-    metadata["is_equally_spaced"] = is_equally_spaced
-    metadata["is_empty"] = len(obj.index) < 1 or len(obj.columns) < 1
-    metadata["n_panels"] = len(panel_inds)
-    metadata["is_one_panel"] = len(panel_inds) == 1
-    metadata["n_instances"] = len(inst_inds)
-    metadata["is_one_series"] = len(inst_inds) == 1
-    metadata["has_nans"] = obj.isna().values.any()
-    metadata["is_equal_length"] = is_equal_length.nunique().shape[0] == 1
+
+    # check whether index is equally spaced or if there are any nans
+    #   compute only if needed
+    if return_metadata:
+        series_groups = obj.groupby(level=list(range(index.nlevels - 1)), sort=False)
+        n_series = series_groups.ngroups
+
+        if panel:
+            n_panels = 1
+        else:
+            panel_groups = obj.groupby(level=list(range(index.nlevels - 2)), sort=False)
+            n_panels = panel_groups.ngroups
+
+        metadata["is_univariate"] = len(obj.columns) < 2
+        metadata["is_equally_spaced"] = all(
+            _index_equally_spaced(group.index.levels[-1]) for _, group in series_groups
+        )
+        metadata["is_empty"] = len(index) < 1 or len(obj.columns) < 1
+        metadata["n_panels"] = n_panels
+        metadata["is_one_panel"] = n_panels == 1
+        metadata["n_instances"] = n_series
+        metadata["is_one_series"] = n_series == 1
+        metadata["has_nans"] = obj.isna().values.any()
+        metadata["is_equal_length"] = _list_all_equal(series_groups.size().to_numpy())
+
     return _ret(True, None, metadata, return_metadata)
 
 
 check_dict[("pd-multiindex", "Panel")] = check_pdmultiindex_panel
-
-
-def _cell_is_series(cell):
-    return isinstance(cell, pd.Series)
-
-
-def _nested_cell_mask(X):
-    return X.applymap(_cell_is_series)
 
 
 def are_columns_nested(X):
@@ -279,7 +271,7 @@ def are_columns_nested(X):
         If True, at least one column is nested.
         If False, no nested columns.
     """
-    any_nested = _nested_cell_mask(X).any().values
+    any_nested = any(is_nested_object(series) for _, series in X.items())
     return any_nested
 
 
@@ -353,10 +345,13 @@ def is_nested_dataframe(obj, return_metadata=False, var_name="obj"):
     if not isinstance(obj, pd.DataFrame):
         msg = f"{var_name} must be a pd.DataFrame, found {type(obj)}"
         return _ret(False, msg, None, return_metadata)
-
     # Otherwise we'll see if any column has a nested structure in first row
     else:
-        if not are_columns_nested(obj).any():
+        if not all([i == "object" for i in obj.dtypes]):
+            msg = f"{var_name} All columns must be object, found {type(obj)}"
+            return _ret(False, msg, None, return_metadata)
+
+        if not are_columns_nested(obj):
             msg = f"{var_name} entries must be pd.Series"
             return _ret(False, msg, None, return_metadata)
 
@@ -396,7 +391,6 @@ check_dict[("nested_univ", "Panel")] = is_nested_dataframe
 
 
 def check_numpyflat_Panel(obj, return_metadata=False, var_name="obj"):
-
     if not isinstance(obj, np.ndarray):
         msg = f"{var_name} must be a numpy.ndarray, found {type(obj)}"
         return _ret(False, msg, None, return_metadata)
@@ -426,12 +420,10 @@ def check_numpyflat_Panel(obj, return_metadata=False, var_name="obj"):
 
 check_dict[("numpyflat", "Panel")] = check_numpyflat_Panel
 
-
 if _check_soft_dependencies("dask", severity="none"):
     from sktime.datatypes._adapter.dask_to_pd import check_dask_frame
 
     def check_dask_panel(obj, return_metadata=False, var_name="obj"):
-
         return check_dask_frame(
             obj=obj,
             return_metadata=return_metadata,

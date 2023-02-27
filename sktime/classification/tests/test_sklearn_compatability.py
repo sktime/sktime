@@ -37,6 +37,7 @@ from sklearn.pipeline import Pipeline
 from sktime.classification.interval_based import CanonicalIntervalForest
 from sktime.transformations.panel.pca import PCATransformer
 from sktime.utils._testing.panel import _make_panel_X, make_classification_problem
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 DATA_ARGS = [
     {"return_numpy": True, "n_columns": 2},
@@ -63,27 +64,35 @@ PARAMETER_TUNING_METHODS = [
     HalvingGridSearchCV,
     HalvingRandomSearchCV,
 ]
-COMPOSITE_ESTIMATORS = [
-    Pipeline(
-        [
-            ("transform", PCATransformer()),
-            ("clf", CanonicalIntervalForest.create_test_instance()),
-        ]
-    ),
-    VotingClassifier(
-        estimators=[
-            ("clf1", CanonicalIntervalForest.create_test_instance()),
-            ("clf2", CanonicalIntervalForest.create_test_instance()),
-            ("clf3", CanonicalIntervalForest.create_test_instance()),
-        ]
-    ),
-    CalibratedClassifierCV(
-        base_estimator=CanonicalIntervalForest.create_test_instance(),
-        cv=3,
-    ),
-]
+
+if _check_soft_dependencies("numba", severity="none"):
+    COMPOSITE_ESTIMATORS = [
+        Pipeline(
+            [
+                ("transform", PCATransformer()),
+                ("clf", CanonicalIntervalForest.create_test_instance()),
+            ]
+        ),
+        VotingClassifier(
+            estimators=[
+                ("clf1", CanonicalIntervalForest.create_test_instance()),
+                ("clf2", CanonicalIntervalForest.create_test_instance()),
+                ("clf3", CanonicalIntervalForest.create_test_instance()),
+            ]
+        ),
+        CalibratedClassifierCV(
+            base_estimator=CanonicalIntervalForest.create_test_instance(),
+            cv=3,
+        ),
+    ]
+else:
+    COMPOSITE_ESTIMATORS = []
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("numba", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
 @pytest.mark.parametrize("data_args", DATA_ARGS)
 def test_sklearn_cross_validation(data_args):
     """Test sklearn cross-validation works with sktime panel data and classifiers."""
@@ -105,6 +114,10 @@ def test_sklearn_cross_validation_iterators(data_args, cross_validation_method):
         assert isinstance(train, np.ndarray) and isinstance(test, np.ndarray)
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("numba", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
 @pytest.mark.parametrize("data_args", DATA_ARGS)
 @pytest.mark.parametrize("parameter_tuning_method", PARAMETER_TUNING_METHODS)
 def test_sklearn_parameter_tuning(data_args, parameter_tuning_method):
@@ -120,6 +133,10 @@ def test_sklearn_parameter_tuning(data_args, parameter_tuning_method):
     assert isinstance(parameter_tuning_method.best_estimator_, CanonicalIntervalForest)
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("numba", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
 @pytest.mark.parametrize("data_args", DATA_ARGS)
 @pytest.mark.parametrize("composite_classifier", COMPOSITE_ESTIMATORS)
 def test_sklearn_composite_classifiers(data_args, composite_classifier):

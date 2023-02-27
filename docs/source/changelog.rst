@@ -13,11 +13,331 @@ All notable changes to this project will be documented in this file. We keep tra
 For upcoming changes and next releases, see our `milestones <https://github.com/sktime/sktime/milestones?direction=asc&sort=due_date&state=open>`_.
 For our long-term plan, see our :ref:`roadmap`.
 
+
+Version 0.16.1 - 2023-02-13
+---------------------------
+
+Highlights
+~~~~~~~~~~
+
+* Experimental python 3.11 support. Full python 3.11 support is planned with 0.17.0. (:pr:`4000`, :pr:`3631`, :pr:`4226`) :user:`fkiraly`
+* Experimental benchmarking module based on ``kotsu``, forecasting sub-module (:pr:`2977`) :user:`alex-hh`, :user:`dbcerigo`
+* substantial speed-ups for panel and hierarchical transformers and forecasters (:pr:`4193`, :pr:`4194`, :pr:`4195`, :pr:`4196`) :user:`hoesler`
+
+Testing and feedback of python 3.11 support and the benchmarking module are appreciated.
+
+Dependency changes
+~~~~~~~~~~~~~~~~~~
+
+* ``sktime`` now supports python 3.11
+* on python 3.11, ``numba`` is not a dependency, and a number of other packages are
+  also not available as soft dependencies, mostly due to compatibility with 3.11.
+* ``sktime`` and its test suite can now be used without ``numba`` installed,
+  with the exception of estimators depending on ``numba``.
+  ``numba`` is still a core dependency on python 3.7-3.10.
+* ``numba`` will become a soft dependency, from a core dependency, in 0.18.0.
+  Estimators dependent on ``numba`` will function exactly as before if ``numba``
+  is present in the python environment.
+
+Core interface changes
+~~~~~~~~~~~~~~~~~~~~~~
+
+Benchmarking
+^^^^^^^^^^^^
+
+* the ``kotsu``-based benchmarking module introduces a new design and syntax
+  for benchmarking forecasters.
+
+Forecasting
+^^^^^^^^^^^
+
+* forecasters will now consistently preserve the ``name`` attribute in ``pd.Series`` passed.
+  Previously, named ``pd.Series`` were not fully supported.
+
+Deprecations and removals
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Dependencies
+^^^^^^^^^^^^
+
+* ``numba`` will change from core dependency to soft dependency in ``sktime 0.18.0``.
+  To ensure functioning of setups of ``sktime`` code dependent on ``numba`` based estimators
+  going forward, ensure to install ``numba`` in the environment explicitly,
+  or install the ``all_extras`` soft dependency set which will continue to contain ``numba``.
+  Besides this, ``numba`` dependent estimators will function identically as before.
+
+Enhancements
+~~~~~~~~~~~~
+
+Benchmarking
+^^^^^^^^^^^^
+
+* [ENH] Benchmarking interface v2 based on ``kotsu`` package (:pr:`2977`) :user:`alex-hh`, :user:`dbcerigo`
+
+Data types, checks, conversions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] Improve vectorization performance (:pr:`4195`) :user:`hoesler`
+* [ENH] Improve panel mtype check performance (:pr:`4196`) :user:`hoesler`, :user:`danbartl`
+
+Forecasting
+^^^^^^^^^^^
+
+* [ENH] fixes for forecasters to retain ``name`` attribute in ``predict`` (:pr:`4161`) :user:`fkiraly`
+* [ENH] improved/fixed ``scoring`` argument for forecasting tuners (:pr:`4178`) :user:`fkiraly`
+* [ENH] test ``Prophet`` with ``pd.DatetimeIndex`` (:pr:`4183`) :user:`fkiraly`
+* [ENH] faster test for forecasters' ``predict_residuals`` (:pr:`4156`) :user:`fkiraly`
+* [ENH] test that forecasters preserve ``name`` attr of ``pd.Series`` (:pr:`4157`) :user:`fkiraly`
+* [ENH] improved/fixed ``scoring`` argument for forecasting tuners (:pr:`4178`) :user:`fkiraly`
+
+Transformations
+^^^^^^^^^^^^^^^
+
+* [ENH] add native multi-index/hierarchical data support to ``Imputer`` (:pr:`4194`) :user:`hoesler`
+* [ENH] Add panel support to ``ColSelect`` transformer (:pr:`4193`) :user:`hoesler`
+
+Fixes
+~~~~~
+
+Data sets and data loaders
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [BUG] Correct ``'StarlightCurves'`` data set identifier string, to 'StarLightCurves' (:pr:`4222`) :user:`NeuralNut`
+* [BUG] fix race condition in ``tsfile`` tests (:pr:`4192`) :user:`hoesler`
+
+Forecasting
+^^^^^^^^^^^
+
+* [BUG] fixes for forecasters to retain ``name`` attribute in ``predict`` (:pr:`4161`) :user:`fkiraly`
+* [BUG] ensure ``pd.Series`` ``name`` attribute is preserved in conversion to/from ``pd.DataFrame`` and ``np.ndarray``, as ``Series`` scitype (:pr:`4150`) :user:`fkiraly`
+* [BUG] ``AutoETS``, ``UnobservedComponents``: fix ``predict_interval`` for integer based index not starting at zero (:pr:`4180`) :user:`fkiraly`
+
+Parameter estimation
+^^^^^^^^^^^^^^^^^^^^
+
+* [BUG] fix ``nlag`` logic in ``SeasonalityACF`` and ``SeasonalityACFqstat`` (:pr:`4171`) :user:`fkiraly`
+
+Time series clustering
+^^^^^^^^^^^^^^^^^^^^^^
+
+* [BUG] fix ``TimeSeriesDBSCAN`` and remove strict ``BaseClusterer`` abstracts (:pr:`4227`) :user:`fkiraly`
+
+Maintenance
+~~~~~~~~~~~
+
+* [MNT] Fix merge conflicts and formatting in ``.all-contributorsrc`` (:pr:`4205`) :user:`fkiraly`
+* [MNT] isolate ``numba`` - NB: does not make ``numba`` a soft dependency (:pr:`3631`) :user:`fkiraly`
+* [MNT] isolate remaining ``numba`` references (:pr:`4226`) :user:`fkiraly`
+* [MNT] python 3.11 compatibility, with ``numba`` as core dependency on 3.7-3.10 (:pr:`4000`) :user:`fkiraly`
+
+Documentation
+~~~~~~~~~~~~~
+
+* [DOC] Fix rendering of examples section in ``Lag`` docstring (:pr:`3960`) :user:`aiwalter`
+* [DOC] improved docstring for ``dtw_distance`` (:pr:`4028`) :user:`fkiraly`, :user:`matthewmiddlehurst`
+* [DOC] remove slack links in favour of discord (:pr:`4202`) :user:`fkiraly`
+* [DOC] fix tables in transformer ``transform`` docstrings - change md to rst (:pr:`4199`) :user:`romanlutz`
+* [DOC] remove gap between pandas and ``DataFrame`` | ``Series`` in classification notebook (#4200) (:pr:`4200`) :user:`romanlutz`
+* [DOC] Fixed table in ``CI`` overview documentation (:pr:`4198`) :user:`pranavvp16`
+
+Contributors
+~~~~~~~~~~~~
+
+:user:`aiwalter`,
+:user:`alex-hh`,
+:user:`danbartl`,
+:user:`dbcerigo`,
+:user:`fkiraly`,
+:user:`hoesler`,
+:user:`matthewmiddlehurst`,
+:user:`NeuralNut`,
+:user:`pranavvp16`,
+:user:`romanlutz`
+
+Version 0.16.0 - 2023-01-30
+---------------------------
+
+Highlights
+~~~~~~~~~~
+
+* ``HierarchyEnsembleForecaster`` for level- or node-wise application of forecasters on panel/hierarchical data (:pr:`3905`) :user:`VyomkeshVyas`
+* new transformer: ``BKFilter``, Baxter-King filter, interfaced from ``statsmodels`` (:pr:`4127`) :user:`klam-data`, :user:`pyyim``
+* ``get_fitted_params`` of pipelines and other heterogenous meta-estimators now supports parameter nesting (:pr:`4110`) :user:`fkiraly`
+
+Dependency changes
+~~~~~~~~~~~~~~~~~~
+
+* ``statsmodels`` is now a soft dependency. Estimators dependent on ``statsmodels``
+  can be used exactly as before if ``statsmodels`` is present in the python environment.
+
+Core interface changes
+~~~~~~~~~~~~~~~~~~~~~~
+
+BaseEstimator
+^^^^^^^^^^^^^
+
+* The method ``get_fitted_params``, of all ``BaseEstimator`` descendants
+  (any estimator with ``fit``), has a new boolean argument ``deep``, default ``True``.
+  Similar to the argument of the same name of ``get_params``, this allows to control
+  for composite estimators, whether to return fitted parameters with or
+  without estimator nesting.
+
+Forecasting
+^^^^^^^^^^^
+
+* all forecasters: the public ``cutoff`` attribute of forecasters has changed
+  to ``pd.Index`` subtype, from index element. To update previously
+  functional code, replace references to ``cutoff`` by ``cutoff[0]``.
+
+
+Deprecations and removals
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Dependencies
+^^^^^^^^^^^^
+
+* ``statsmodels`` has changed from core dependency to soft dependency in ``sktime 0.16.0``.
+  To ensure functioning of setups of ``sktime`` code dependent on ``statsmodels`` based estimators
+  going forward, ensure to install ``statsmodels`` in the environment explicitly,
+  or install the ``all_extras`` soft dependency set which will continue to contain ``statsmodels``.
+
+Data types, checks, conversions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* ``check_is_scitype``: the ``msg_legacy_interface`` argument has now been removed.
+  Future behaviour is as per the default of the argument, ``msg_legacy_interface=False``.
+
+Forecasting
+^^^^^^^^^^^
+
+* all forecasters: the public ``cutoff`` attribute of forecasters has changed
+  to ``pd.Index`` subtype, from index element. To update previously
+  functional code, replace references to ``cutoff`` by ``cutoff[0]``.
+
+Transformations
+^^^^^^^^^^^^^^^
+
+* ``Catch22``: the ``transform_single_feature`` method has been removed from the ``Catch22``
+  transformer
+* ``FourierFeatures``: in 0.17.0, the default value of the ``keep_original_columns``
+  parameter will change to ``False``
+
+Enhancements
+~~~~~~~~~~~~
+
+BaseEstimator
+^^^^^^^^^^^^^
+
+* [ENH] ``get_fitted_params`` for pipelines and other heterogenous meta-estimators (:pr:`4110`) :user:`fkiraly`
+* [ENH] ``deep`` argument for ``get_fitted_params`` (:pr:`4113`) :user:`fkiraly`
+
+Data types, checks, conversions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] significantly speed up ``nested_univ`` (nested dataframe) check for non-nested data (:pr:`4130`) :user:`danbartl`
+* [ENH] refactor - localize broadcasting in ``VectorizedDF`` (:pr:`4132`) :user:`fkiraly`
+* [ENH] ``get_time_index`` rework to get faster run times for grouped data (:pr:`4141`) :user:`danbartl`
+
+Forecasting
+^^^^^^^^^^^
+
+* [ENH] ``HierarchyEnsembleForecaster`` for level- or node-wise application of forecasters on panel/hierarchical data (:pr:`3905`) :user:`VyomkeshVyas`
+* [ENH] second set of test parameters for ``ARIMA`` (:pr:`4099`) :user:`fkiraly`
+* [ENH] Refactor/simplify ``sktime.forecasting.model_selection._split.BaseSplitter._split_vectorized`` (:pr:`4108`) :user:`mateuja`
+
+Time series annotation
+^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] ``PoissonHMM`` estimator (:pr:`4126`) :user:`klam-data`
+
+Time series classification
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] Reduce repetitive code in ``test_boss.py`` and add check for string datatype in _boss.py (:pr:`4100`) :user:`erjieyong`
+
+Time series generators
+^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] added ``piecewise_multinomial`` (:pr:`4079`) :user:`JonathanBechtel`
+* [ENH] added ``piecewise_poisson`` (:pr:`4121`) :user:`Pyyim`
+
+Transformations
+^^^^^^^^^^^^^^^
+
+* [ENH] Add ``keep_original_columns`` option to ``FourierFeatures`` trafo (:pr:`4008`) :user:`KishManani`
+* [ENH] Add ``BKFilter`` Transformer (:pr:`4127`) :user:`klam-data`, :user:`pyyim``
+
+Maintenance
+~~~~~~~~~~~
+
+* [MNT] Automate updating CONTRIBUTORS.md (:pr:`3807`) :user:`achieveordie`
+* [MNT] address ``pd.Series`` constructor ``dtype`` deprecation / ``FutureWarning`` - part 2 (:pr:`4111`) :user:`fkiraly`
+* [MNT] 0.16.0 change/deprecation action - ``statsmodels`` as soft dependency (:pr:`3516`) :user:`fkiraly`
+* [MNT] emergency fix for precommit CI failure - remove ``isort`` (:pr:`4164`) :user:`fkiraly`
+* [MNT] isolate ``statsmodels`` in ``HierarchyEnsembleForecaster`` docstring (:pr:`4166`) :user:`fkiraly`
+* [MNT] 0.16.0 deprecation action - change ``BaseForecaster.cutoff`` to ``pd.Index`` (:pr:`3678`) :user:`fkiraly`
+* [MNT] isolate ``statsmodels`` in ``HierarchyEnsembleForecaster`` docstring - accidentally missing commit (:pr:`4168`) :user:`fkiraly`
+* [MNT] 0.16.0 deprecation & change actions (:pr:`4138`) :user:`fkiraly`
+* [MNT] Bump ``isort`` to ``5.12.0`` in ``pre-commit`` config (:pr:`4167`) :user:`snnbotchway`
+
+Documentation
+~~~~~~~~~~~~~
+
+* [DOC] fixes table of contents in ``01_forecasting.ipynb`` tutorial (:pr:`4120`) :user:`fkiraly`
+* [DOC] improved docstring for ``AutoETS`` (:pr:`4116`) :user:`fkiraly`
+* [DOC] Added Paul Yim, Kevin Lam, and Margaret Gorlin to contributor list (:pr:`4122`) :user:`Pyyim`
+* [DOC] Fix broken link to the user guide in the glossary (:pr:`4125`) :user:`romanlutz`
+
+Fixes
+~~~~~
+
+BaseObject
+^^^^^^^^^^
+
+* [BUG] fix faulty ``BaseObject.__eq__`` and ``deep_equals`` if an attribute or nested structure contains ``float`` (:pr:`4109`) :user:`fkiraly`
+
+Forecasting
+^^^^^^^^^^^
+
+* [BUG] fix ``get_fitted_params`` for forecaster tuners, missing ``best_forecaster`` etc (:pr:`4102`) :user:`fkiraly`
+* [BUG] fix ``get_fitted_params`` in case of vectoriztion for forecasters (:pr:`4105`) :user:`fkiraly`
+* [BUG] fix erroneous ``int`` coercion of ``TrendForecaster`` and ``PolynomialTrendForecaster`` on ``DatetimeIndex`` (:pr:`4133`) :user:`fkiraly`
+* [BUG] Remove unnecessary ``freq`` error in ``_RecursiveReducer`` (:pr:`4124`) :user:`danbartl`
+
+Time series classification
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [BUG] Diagnose and fix sporadic failures in the test suite due to ``MemoryError`` (:pr:`4036`) :user:`achieveordie`
+* [BUG] fix - Callbacks cause deep learning estimators to fail (:pr:`4095`) :user:`aaronrmm`
+
+Transformations
+^^^^^^^^^^^^^^^
+
+* [BUG] fix ``get_fitted_params`` in case of vectoriztion for transformers (:pr:`4105`) :user:`fkiraly`
+* [BUG] Fix ``OptionalPassthrough`` ``X_inner_mtype`` tag (:pr:`4115`) :user:`fkiraly`
+
+Contributors
+~~~~~~~~~~~~
+
+:user:`aaronrmm`,
+:user:`achieveordie`,
+:user:`danbartl`,
+:user:`erjieyong`,
+:user:`fkiraly`,
+:user:`JonathanBechtel`,
+:user:`KishManani`,
+:user:`klam-data`,
+:user:`mateuja`,
+:user:`Pyyim`,
+:user:`romanlutz`,
+:user:`snnbotchway`,
+:user:`VyomkeshVyas`
+
 Version 0.15.1 - 2023-01-12
 ---------------------------
 
 Highlights
-~~~~~~~~~~~~
+~~~~~~~~~~
 
 * substantial speed-ups of boilerplate for panel and hierarchical data,
   may result in 10-50x overall speed improvement on large panel/hierarchical data (:pr:`3935`, :pr:`4061`) :user:`danbartl`
@@ -2643,7 +2963,7 @@ Highlights
 * probabilistic forecasting: ``predict_var`` (variance forecast) and ``predict_proba`` (full distribution forecast) interfaces; performance metrics for interval and quantile forecasts (:pr:`2100`, :pr:`2130`, :pr:`2232`) :user:`eenticott-shell` :user:`fkiraly` :user:`kejsitake`
 * dunder methods for transformer and classifier pipelines: write ``my_trafo1 * my_trafo2`` for pipeline, ``my_trafo1 + my_trafo2`` for ``FeatureUnion`` (:pr:`2090`, :pr:`2251`) :user:`fkiraly`
 * Frequently requested: ``AutoARIMA`` from ``statsforecast`` package available as ``StatsforecastAutoARIMA`` (:pr:`2251`) :user:`FedericoGarza`
-* for extenders: detailed `"creating sktime compatible estimator" guide <https://www.sktime.org/en/stable/developer_guide/add_estimators.html>`_
+* for extenders: detailed `"creating sktime compatible estimator" guide <https://www.sktime.net/en/stable/developer_guide/add_estimators.html>`_
 * for extenders: simplified extension templates for forecasters and transformers (:pr:`2161`) :user:`fkiraly`
 
 Dependency changes
@@ -3598,8 +3918,8 @@ Highlights
 * :code:`conda-forge` metapackage for installing `sktime` with all extras :user:`freddyaboulton`
 * framework support for multivariate forecasting (:pr:`980` :pr:`1195` :pr:`1286` :pr:`1301` :pr:`1306` :pr:`1311` :pr:`1401` :pr:`1410`) :user:`aiwalter` :user:`fkiraly` :user:`thayeylolu`
 * consolidated lookup of estimators and tags using :code:`registry.all_estimators` and :code:`registry.all_tags` (:pr:`1196`) :user:`fkiraly`
-* [DOC] major overhaul of :code:`sktime`'s `online documentation <https://www.sktime.org/en/latest/>`_
-* [DOC] `searchable, auto-updating estimators register <https://www.sktime.org/en/latest/estimator_overview.html>`_ in online documentation (:pr:`930` :pr:`1138`) :user:`afzal442` :user:`mloning`
+* [DOC] major overhaul of :code:`sktime`'s `online documentation <https://www.sktime.net/en/latest/>`_
+* [DOC] `searchable, auto-updating estimators register <https://www.sktime.net/en/latest/estimator_overview.html>`_ in online documentation (:pr:`930` :pr:`1138`) :user:`afzal442` :user:`mloning`
 * [MNT] working Binder in-browser notebook showcase (:pr:`1266`) :user:`corvusrabus`
 * [DOC] tutorial notebook for in-memory data format conventions, validation, and conversion (:pr:`1232`) :user:`fkiraly`
 * easy conversion functionality for estimator inputs, series and panel data (:pr:`1061` :pr:`1187` :pr:`1201` :pr:`1225`) :user:`fkiraly`
