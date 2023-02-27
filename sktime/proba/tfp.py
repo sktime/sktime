@@ -61,7 +61,7 @@ class Normal(_BaseTFDistribution):
         else:
             dist_at_x = self
             return dist_at_x.distr.prob(x)
-    
+
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator."""
