@@ -229,16 +229,18 @@ class ColumnConcatenator(BaseTransformer):
     ...                  [7, 8, 9]])
     >>> concatenator = ColumnConcatenator()
     >>> concatenator.fit_transform(data)
-    ... array([[1.],
-    ...        [4.],
-    ...        [7.],
-    ...        [2.],
-    ...        [5.],
-    ...        [8.],
-    ...        [3.],
-    ...        [6.],
-    ...        [9.]])
-    >>> # panel data
+    array([[1.],
+           [4.],
+           [7.],
+           [2.],
+           [5.],
+           [8.],
+           [3.],
+           [6.],
+           [9.]])
+
+    Another example with panel data.
+
     >>> from sktime.utils._testing.panel import _make_panel
     >>> panel_data = _make_panel(n_columns = 2,
     ...                          n_instances = 2,
