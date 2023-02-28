@@ -141,6 +141,7 @@ class BaseTransformer(BaseEstimator):
         # valid values:
         # "on" - input check and conversion is carried out
         # "off" - input check and conversion is not done before passing to inner methods
+        # valid mtype string - input is assumed to specified mtype
         "output_conversion": "on"
         # controls output conversion for _transform, _inverse_transform
         # valid values:
