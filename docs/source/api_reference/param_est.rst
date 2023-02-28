@@ -58,3 +58,15 @@ Seasonality estimators
     SeasonalityACF
     SeasonalityACFqstat
     SeasonalityPeriodogram
+
+Stationarity estimators
+~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.param_est.stationarity
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    StationarityADF
+    StationarityKPSS
