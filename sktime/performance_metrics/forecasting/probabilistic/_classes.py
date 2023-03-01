@@ -650,9 +650,11 @@ class _BaseDistrForecastingMetric(_BaseProbaForecastingErrorMetric):
         multivariate = self.multivariate
 
         if multivariate:
-            return self._evaluate_by_index(
+            res = self._evaluate_by_index(
                 y_true=y_true, y_pred=y_pred, multioutput=multioutput
             )
+            res.columns = ["score"]
+            return res
         else:
             res_by_col = []
             for col in y_pred.columns:
@@ -687,7 +689,13 @@ class LogLoss(_BaseDistrForecastingMetric):
         super().__init__(multioutput=multioutput)
 
     def _evaluate_by_index(self, y_true, y_pred, multioutput, **kwargs):
-        return -y_pred.log_pdf(y_true)
+        # replace this by multivariate log_pdf once distr implements
+        # i.e., pass multivariate on to log_pdf
+        if self.multivariate:
+            res = -y_pred.log_pdf(y_true)
+            return pd.DataFrame(res.mean(axis=1), columns=["density"])
+        else:
+            return -y_pred.log_pdf(y_true)
 
 
 class CRPS(_BaseDistrForecastingMetric):
