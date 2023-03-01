@@ -24,9 +24,9 @@ class Normal(_BaseTFDistribution):
 
     Example
     -------
-    >>> from sktime.proba.tfp import Normal
+    >>> from sktime.proba.tfp import Normal  # doctest: +SKIP
 
-    >>> n = Normal(mean=[[0, 1], [2, 3], [4, 5]], sd=1)
+    >>> n = Normal(mean=[[0, 1], [2, 3], [4, 5]], sd=1)  # doctest: +SKIP
     """
 
     _tags = {"python_dependencies": "tensorflow_probability"}
