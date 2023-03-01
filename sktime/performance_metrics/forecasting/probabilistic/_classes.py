@@ -594,3 +594,124 @@ class ConstraintViolation(_BaseProbaForecastingErrorMetric):
         """Retrieve test parameters."""
         params1 = {}
         return [params1]
+
+
+class _BaseDistrForecastingMetric(_BaseProbaForecastingErrorMetric):
+    """Intermediate base class for distributional prediction metrics/scores.
+
+    Developer note:
+    Experimental and overrides public methods of _BaseProbaForecastingErrorMetric.
+    This should be refactored into one base class.
+    """
+
+    _tags = {
+        "scitype:y_pred": "distr",
+        "lower_is_better": True,
+    }
+
+    def evaluate(self, y_true, y_pred, multioutput=None, **kwargs):
+        """Evaluate the desired metric on given inputs.
+
+        Parameters
+        ----------
+        y_true : pd.Series, pd.DataFrame or np.array of shape (fh,) or \
+                (fh, n_outputs) where fh is the forecasting horizon
+            Ground truth (correct) target values.
+
+        y_pred : return object of probabilistic predictition method scitype:y_pred
+            must be at fh and for variables equal to those in y_true
+
+        multioutput : string "uniform_average" or "raw_values" determines how\
+            multioutput results will be treated.
+
+        Returns
+        -------
+        loss : float or 1-column pd.DataFrame with calculated metric value(s)
+            metric is always averaged (arithmetic) over fh values
+        """
+        index_df = self.evaluate_by_index(y_true, y_pred, multioutput)
+        out_df = pd.DataFrame(index_df.mean(axis=0)).T
+        out_df.columns = index_df.columns
+        return out_df
+
+    def evaluate_by_index(
+        self, y_true, y_pred, multioutput="uniform_average", **kwargs
+    ):
+        """Logic for finding the metric evaluated at each index.
+
+        y_true : pd.Series, pd.DataFrame or np.array of shape (fh,) or \
+            (fh, n_outputs) where fh is the forecasting horizon
+            Ground truth (correct) target values.
+
+        y_pred : sktime BaseDistribution of same shape as y_true
+            Predictive distribution.
+            Must have same index and columns as y_true.
+        """
+        multivariate = self.multivariate
+
+        if multivariate:
+            return self._evaluate_by_index(
+                y_true=y_true, y_pred=y_pred, multioutput=multioutput
+            )
+        else:
+            res_by_col = []
+            for col in y_pred.columns:
+                y_pred_col = y_pred.loc[:, [col]]
+                y_true_col = y_true.loc[:, [col]]
+                res_for_col = self._evaluate_by_index(
+                    y_true=y_true_col, y_pred=y_pred_col, multioutput=multioutput
+                )
+                res_for_col.columns = [col]
+                res_by_col += [res_for_col]
+            res = pd.concat(res_by_col, axis=1)
+
+        return res
+
+
+class LogLoss(_BaseDistrForecastingMetric):
+    """Logarithmic loss for distributional predictions.
+
+    Parameters
+    ----------
+    multioutput : str, "uniform_average" or "raw_values"
+        determines how multioutput results will be treated.
+    multivariate : bool, optional, default=False
+        if True, behaves as multivariate log-loss
+        log-loss is computed for entire row, results one score per row
+        if False, is univariate log-loss
+        log-loss is computed per variable marginal, results in many scores per row
+    """
+
+    def __init__(self, multioutput="uniform_average", multivariate=False):
+        self.multivariate = multivariate
+        super().__init__(multioutput=multioutput)
+
+    def _evaluate_by_index(self, y_true, y_pred, multioutput, **kwargs):
+        return -y_pred.log_pdf(y_true)
+
+
+class CRPS(_BaseDistrForecastingMetric):
+    """Continuous rank probability score for distributional predictions.
+
+    Also known as:
+
+    * integrated squared loss (ISL)
+    * energy loss
+
+    Parameters
+    ----------
+    multioutput : str, "uniform_average" or "raw_values"
+        determines how multioutput results will be treated.
+    multivariate : bool, optional, default=False
+        if True, behaves as multivariate log-loss
+        log-loss is computed for entire row, results one score per row
+        if False, is univariate log-loss
+        log-loss is computed per variable marginal, results in many scores per row
+    """
+
+    def __init__(self, multioutput="uniform_average", multivariate=False):
+        self.multivariate = multivariate
+        super().__init__(multioutput=multioutput)
+
+    def _evaluate_by_index(self, y_true, y_pred, multioutput, **kwargs):
+        return y_pred.energy(y_true) - y_pred.energy() / 2
