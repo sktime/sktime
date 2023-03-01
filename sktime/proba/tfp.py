@@ -4,6 +4,7 @@
 
 __author__ = ["fkiraly"]
 
+import numpy as np
 import pandas as pd
 
 from sktime.proba.base import _BaseTFDistribution
@@ -51,6 +52,16 @@ class Normal(_BaseTFDistribution):
             columns = pd.RangeIndex(distr.batch_shape[1])
 
         super(Normal, self).__init__(index=index, columns=columns, distr=distr)
+
+    def mean(self):
+        """Return expected value of the distribution."""
+        mean_arr, _ = np.broadcast_arrays(self.mean, self.sd)
+        return pd.DataFrame(mean_arr, index=self.index, columns=self.columns)
+
+    def var(self):
+        """Return element/entry-wise variance of the distribution."""
+        _, sd_arr = np.broadcast_arrays(self.mean, self.sd)
+        return pd.DataFrame(sd_arr, index=self.index, columns=self.columns) ** 2
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):

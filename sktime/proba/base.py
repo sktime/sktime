@@ -26,6 +26,7 @@ class BaseDistribution(BaseObject):
 
     # move this to configs when the config interface is ready
     APPROX_MEAN_SPL = 1000
+    APPROX_VAR_SPL = 1000
     APPROX_ENERGY_SPL = 1000
 
     def __init__(self, index=None, columns=None):
@@ -159,6 +160,19 @@ class BaseDistribution(BaseObject):
         warn(self._method_error_msg("mean", fill_in=approx_method))
 
         spl = self.sample(self.APPROX_MEAN_SPL)
+        return spl.groupby(level=0).mean()
+
+    def var(self):
+        """Return element/entry-wise variance of the distribution."""
+        approx_method = (
+            "by approximating the variance by the arithmetic mean of "
+            f"{self.APPROX_VAR_SPL} samples of squared differences"
+        )
+        warn(self._method_error_msg("var", fill_in=approx_method))
+
+        spl1 = self.sample(self.APPROX_VAR_SPL)
+        spl2 = self.sample(self.APPROX_VAR_SPL)
+        spl = (spl1 - spl2) ** 2
         return spl.groupby(level=0).mean()
 
     def sample(self, n_samples=None):
