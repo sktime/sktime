@@ -119,7 +119,7 @@ class BaseDistribution(BaseObject):
             splx = pd.concat([x] * N, keys=range(N))
             sply = self.sample(N)
 
-        # approx E[abs(X-Y)] via mean of samples
+        # approx E[abs(X-Y)] via mean of samples of abs(X-Y) obtained from splx, sply
         spl = splx - sply
         energy = spl.apply(np.linalg.norm, axis=1, ord=1).groupby(level=1).mean()
         energy = pd.DataFrame(energy, columns=["energy"])
