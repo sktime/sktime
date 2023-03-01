@@ -148,7 +148,7 @@ class BaseDistribution(BaseObject):
         # approx E[abs(X-Y)] via mean of samples of abs(X-Y) obtained from splx, sply
         spl = splx - sply
         energy = spl.apply(np.linalg.norm, axis=1, ord=1).groupby(level=1).mean()
-        energy = pd.DataFrame(energy, columns=["energy"])
+        energy = pd.DataFrame(energy, index=self.index, columns=["energy"])
         return energy
 
     def mean(self):
@@ -335,6 +335,16 @@ class _BaseTFDistribution(BaseDistribution):
         else:
             dist_at_x = self
             return dist_at_x.distr.log_prob(x)
+
+    def cdf(self, x):
+        """Cumulative distribution function."""
+        if isinstance(x, pd.DataFrame):
+            dist_at_x = self.loc[x.index, x.columns]
+            tensor = dist_at_x.distr.cdf(x.values)
+            return pd.DataFrame(tensor, index=x.index, columns=x.columns)
+        else:
+            dist_at_x = self
+            return dist_at_x.distr.cdf(x)
 
     def sample(self, n_samples=None):
         """Sample from the distribution.
