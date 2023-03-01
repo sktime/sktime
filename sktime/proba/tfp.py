@@ -62,7 +62,7 @@ class Normal(_BaseTFDistribution):
             energy = pd.DataFrame(energy_arr, index=self.index, columns=["energy"])
         else:
             mu_arr, sd_arr = np.broadcast_arrays(self.mu, self.sigma)
-            c_arr = (x - mu_arr) * (2 * self.cdf(x) - 1) + 2 * sd_arr * self.pdf(x)
+            c_arr = (x - mu_arr) * (2 * self.cdf(x) - 1) + 2 * sd_arr ** 2 * self.pdf(x)
             energy_arr = np.sum(c_arr, axis=1)
             energy = pd.DataFrame(energy_arr, index=self.index, columns=["energy"])
         return energy
