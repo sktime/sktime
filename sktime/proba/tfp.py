@@ -27,15 +27,15 @@ class Normal(_BaseTFDistribution):
     -------
     >>> from sktime.proba.tfp import Normal  # doctest: +SKIP
 
-    >>> n = Normal(mean=[[0, 1], [2, 3], [4, 5]], sd=1)  # doctest: +SKIP
+    >>> n = Normal(mu=[[0, 1], [2, 3], [4, 5]], sigma=1)  # doctest: +SKIP
     """
 
     _tags = {"python_dependencies": "tensorflow_probability"}
 
-    def __init__(self, mean, sd, index=None, columns=None):
+    def __init__(self, mu, sigma, index=None, columns=None):
 
-        self.mean = mean
-        self.sd = sd
+        self.mu = mu
+        self.sigma = sigma
 
         _check_estimator_deps(self)
 
@@ -43,7 +43,7 @@ class Normal(_BaseTFDistribution):
 
         tfd = tfp.distributions
 
-        distr = tfd.Normal(loc=mean, scale=sd)
+        distr = tfd.Normal(loc=mu, scale=sigma)
 
         if index is None:
             index = pd.RangeIndex(distr.batch_shape[0])
@@ -53,23 +53,39 @@ class Normal(_BaseTFDistribution):
 
         super(Normal, self).__init__(index=index, columns=columns, distr=distr)
 
+    def _energy(self, x=None):
+        """Energy of self, w.r.t. self or a constant frame x."""
+        # note: self-energy, x=None case seems correct
+        if x is None:
+            _, sd_arr = np.broadcast_arrays(self.mu, self.sigma)
+            energy_arr = 2 * np.sum(sd_arr, axis=1) / np.sqrt(np.pi)
+            energy = pd.DataFrame(energy_arr, index=self.index, columns=["energy"])
+        # this explicit formula is not correct, not sure why
+        else:
+            mu_arr, sd_arr = np.broadcast_arrays(self.mu, self.sigma)
+            xc = (x - mu_arr) / sd_arr
+            c_arr = xc * (2 * self.cdf(xc) - 1) + 2 * self.pdf(xc)
+            energy_arr = np.sum(c_arr * sd_arr, axis=1)
+            energy = pd.DataFrame(energy_arr, index=self.index, columns=["energy"])
+        return energy
+
     def mean(self):
         """Return expected value of the distribution."""
-        mean_arr, _ = np.broadcast_arrays(self.mean, self.sd)
+        mean_arr, _ = np.broadcast_arrays(self.mu, self.sigma)
         return pd.DataFrame(mean_arr, index=self.index, columns=self.columns)
 
     def var(self):
         """Return element/entry-wise variance of the distribution."""
-        _, sd_arr = np.broadcast_arrays(self.mean, self.sd)
+        _, sd_arr = np.broadcast_arrays(self.mu, self.sigma)
         return pd.DataFrame(sd_arr, index=self.index, columns=self.columns) ** 2
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator."""
-        params1 = {"mean": [[0, 1], [2, 3], [4, 5]], "sd": 1}
+        params1 = {"mu": [[0, 1], [2, 3], [4, 5]], "sigma": 1}
         params2 = {
-            "mean": 0,
-            "sd": 1,
+            "mu": 0,
+            "sigma": 1,
             "index": pd.Index([1, 2, 5]),
             "columns": pd.Index(["a", "b"]),
         }
