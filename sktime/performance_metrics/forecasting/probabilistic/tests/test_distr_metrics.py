@@ -5,10 +5,7 @@ import warnings
 import pandas as pd
 import pytest
 
-from sktime.performance_metrics.forecasting.probabilistic._classes import (
-    CRPS,
-    LogLoss,
-)
+from sktime.performance_metrics.forecasting.probabilistic._classes import CRPS, LogLoss
 from sktime.proba.tfp import Normal
 
 warnings.filterwarnings("ignore", category=FutureWarning)
