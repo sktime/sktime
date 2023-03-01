@@ -113,7 +113,6 @@ class BaseDistribution(BaseObject):
         raise NotImplementedError(self._method_err_msg("sample", "error"))
 
 
-
 class _Indexer:
     """Indexer for BaseDistribution, for pandas-like index in loc and iloc property."""
 
@@ -246,7 +245,22 @@ class _BaseTFDistribution(BaseDistribution):
             return dist_at_x.distr.prob(x)
 
     def sample(self, n_samples=None):
-        """Sample from the distribution."""
+        """Sample from the distribution.
+
+        Parameters
+        ----------
+        n_samples : int, optional, default = None
+
+        Returns
+        -------
+        if `n_samples` is `None`:
+        returns a sample that contains a single sample from `self`,
+        in `pd.DataFrame` mtype format convention, with `index` and `columns` as `self`
+        if n_samples is `int`:
+        returns a `pd.DataFrame` that contains `n_samples` i.i.d. samples from `self`,
+        in `pd-multiindex` mtype format convention, with same `columns` as `self`,
+        and `MultiIndex` that is product of `RangeIndex(n_samples)` and `self.index`
+        """
         if n_samples is None:
             np_spl = self.distr.sample()
             return pd.DataFrame(np_spl, index=self.index, columns=self.columns)
