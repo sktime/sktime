@@ -60,12 +60,10 @@ class Normal(_BaseTFDistribution):
             _, sd_arr = np.broadcast_arrays(self.mu, self.sigma)
             energy_arr = 2 * np.sum(sd_arr, axis=1) / np.sqrt(np.pi)
             energy = pd.DataFrame(energy_arr, index=self.index, columns=["energy"])
-        # this explicit formula is not correct, not sure why
         else:
             mu_arr, sd_arr = np.broadcast_arrays(self.mu, self.sigma)
-            xc = (x - mu_arr) / sd_arr
-            c_arr = xc * (2 * self.cdf(xc) - 1) + 2 * self.pdf(xc)
-            energy_arr = np.sum(c_arr * sd_arr, axis=1)
+            c_arr = (x - mu_arr) * (2 * self.cdf(x) - 1) + 2 * sd_arr * self.pdf(x)
+            energy_arr = np.sum(c_arr, axis=1)
             energy = pd.DataFrame(energy_arr, index=self.index, columns=["energy"])
         return energy
 
