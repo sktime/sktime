@@ -127,6 +127,12 @@ class BaseDistribution(BaseObject):
 
     def mean(self):
         """Return expected value of the distribution."""
+        approx_method = (
+            "by approximating the expected value by the arithmetic mean of "
+            f"{self.APPROX_MEAN_SPL} samples"
+        )
+        warn(self._method_error_msg("mean", fill_in=approx_method))
+
         spl = self.sample(self.APPROX_MEAN_SPL)
         return spl.groupby(level=0).mean()
 
