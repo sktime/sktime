@@ -7,6 +7,7 @@ __author__ = ["fkiraly"]
 __all__ = ["BaseDistribution"]
 
 import numpy as np
+import pandas as pd
 
 from sktime.base import BaseObject
 from sktime.utils.validation._dependencies import _check_estimator_deps
@@ -70,6 +71,47 @@ class BaseDistribution(BaseObject):
     def shape(self):
         """Shape of self, a pair (2-tuple)."""
         return (len(self.index), len(self.columns))
+
+    def _method_error_msg(
+        self, method="this method", severity="warn", fill_in="other methods"
+    ):
+        msg = (
+            f"{type(self)} does not have an implementation of the '{method}' method, "
+            "via numerically exact implementation or fill-in approximation."
+        )
+        msg_approx = (
+            f"{type(self)} does not have a numerically exact implementation of "
+            f"the '{method}' method, it is "
+            f"filled in by an approximation via {fill_in}."
+        )
+        if severity == "warn":
+            return msg_approx
+        else:
+            return msg
+
+    def pdf(self, x):
+        """Probability density function."""
+        raise NotImplementedError(self._method_err_msg("pdf", "error"))
+
+    def sample(self, n_samples=None):
+        """Sample from the distribution.
+
+        Parameters
+        ----------
+        n_samples : int, optional, default = None
+
+        Returns
+        -------
+        if `n_samples` is `None`:
+        returns a sample that contains a single sample from `self`,
+        in `pd.DataFrame` mtype format convention, with `index` and `columns` as `self`
+        if n_samples is `int`:
+        returns a `pd.DataFrame` that contains `n_samples` i.i.d. samples from `self`,
+        in `pd-multiindex` mtype format convention, with same `columns` as `self`,
+        and `MultiIndex` that is product of `RangeIndex(n_samples)` and `self.index`
+        """
+        raise NotImplementedError(self._method_err_msg("sample", "error"))
+
 
 
 class _Indexer:
@@ -192,3 +234,43 @@ class _BaseTFDistribution(BaseDistribution):
     def __str__(self):
 
         return self.to_str()
+
+    def pdf(self, x):
+        """Probability density function."""
+        if isinstance(x, pd.DataFrame):
+            dist_at_x = self.loc[x.index, x.columns]
+            tensor = dist_at_x.distr.prob(x.values)
+            return pd.DataFrame(tensor, index=x.index, columns=x.columns)
+        else:
+            dist_at_x = self
+            return dist_at_x.distr.prob(x)
+
+    def sample(self, n_samples=None):
+        """Sample from the distribution."""
+        if n_samples is None:
+            np_spl = self.distr.sample()
+            return pd.DataFrame(np_spl, index=self.index, columns=self.columns)
+        else:
+            np_spl = np.array(self.distr.sample(n_samples))
+            np_spl = np_spl.reshape(-1, np_spl.shape[-1])
+            mi = _prod_multiindex(range(n_samples), self.index)
+            df_spl = pd.DataFrame(np_spl, index=mi, columns=self.columns)
+            return df_spl
+
+
+def _prod_multiindex(ix1, ix2):
+    rows = []
+
+    def add_rows(rows, ix):
+        if isinstance(ix, pd.MultiIndex):
+            ix = ix.to_frame()
+            rows += [ix[col] for col in ix.columns]
+        else:
+            rows += [ix]
+        return rows
+
+    rows = add_rows(rows, ix1)
+    rows = add_rows(rows, ix2)
+    res = pd.MultiIndex.from_product(rows)
+    res.names = [None] * len(res.names)
+    return res
