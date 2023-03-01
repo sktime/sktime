@@ -6,9 +6,10 @@ __author__ = ["fkiraly"]
 
 __all__ = ["BaseDistribution"]
 
+from warnings import warn
+
 import numpy as np
 import pandas as pd
-from warnings import warn
 
 from sktime.base import BaseObject
 from sktime.utils.validation._dependencies import _check_estimator_deps
