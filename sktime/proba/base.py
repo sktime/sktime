@@ -96,7 +96,31 @@ class BaseDistribution(BaseObject):
 
     def pdf(self, x):
         """Probability density function."""
-        raise NotImplementedError(self._method_err_msg("pdf", "error"))
+        try:
+            self.pdf(x=x).applymap(np.log)
+
+            approx_method = (
+                "by exponentiating the output returned by the log_pdf method, "
+                "this may be numerically unstable"
+            )
+            warn(self._method_error_msg("pdf", fill_in=approx_method))
+
+        except NotImplementedError:
+            raise NotImplementedError(self._method_err_msg("pdf", "error"))
+
+    def log_pdf(self, x):
+        """Natural logarithmic probability density function."""
+        try:
+            self.pdf(x=x).applymap(np.log)
+
+            approx_method = (
+                "by taking the logarithm of the output returned by the pdf method, "
+                "this may be numerically unstable"
+            )
+            warn(self._method_error_msg("log_pdf", fill_in=approx_method))
+
+        except NotImplementedError:
+            raise NotImplementedError(self._method_err_msg("log_pdf", "error"))
 
     def energy(self, x=None):
         """Energy of self, w.r.t. self or a constant frame x."""
@@ -286,6 +310,16 @@ class _BaseTFDistribution(BaseDistribution):
         else:
             dist_at_x = self
             return dist_at_x.distr.prob(x)
+
+    def log_pdf(self, x):
+        """Logarithmic probability density function."""
+        if isinstance(x, pd.DataFrame):
+            dist_at_x = self.loc[x.index, x.columns]
+            tensor = dist_at_x.distr.log_prob(x.values)
+            return pd.DataFrame(tensor, index=x.index, columns=x.columns)
+        else:
+            dist_at_x = self
+            return dist_at_x.distr.log_prob(x)
 
     def sample(self, n_samples=None):
         """Sample from the distribution.
