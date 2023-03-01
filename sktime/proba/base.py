@@ -23,6 +23,10 @@ class BaseDistribution(BaseObject):
         "python_dependencies": None,  # string or str list of pkg soft dependencies
     }
 
+    # move this to configs when the config interface is ready
+    APPROX_MEAN_SPL = 1000
+    APPROX_ENERGY_SPL = 1000
+
     def __init__(self, index=None, columns=None):
         self.index = index
         self.columns = columns
@@ -73,17 +77,17 @@ class BaseDistribution(BaseObject):
         """Shape of self, a pair (2-tuple)."""
         return (len(self.index), len(self.columns))
 
-    def _method_error_msg(
-        self, method="this method", severity="warn", fill_in="other methods"
-    ):
+    def _method_error_msg(self, method="this method", severity="warn", fill_in=None):
         msg = (
             f"{type(self)} does not have an implementation of the '{method}' method, "
             "via numerically exact implementation or fill-in approximation."
         )
+        if fill_in is None:
+            fill_in = "by an approximation via other methods"
         msg_approx = (
             f"{type(self)} does not have a numerically exact implementation of "
             f"the '{method}' method, it is "
-            f"filled in by an approximation via {fill_in}."
+            f"filled in {fill_in}."
         )
         if severity == "warn":
             return msg_approx
@@ -93,6 +97,38 @@ class BaseDistribution(BaseObject):
     def pdf(self, x):
         """Probability density function."""
         raise NotImplementedError(self._method_err_msg("pdf", "error"))
+
+    def energy(self, x=None):
+        """Energy of self, w.r.t. self or a constant frame x."""
+        # we want to approximate E[abs(X-Y)]
+        # if x = None, X,Y are i.i.d. copies of self
+        # if x is not None, X=x (constant), Y=self
+
+        approx_method = (
+            "by approximating the energy expectation by the arithmetic mean of "
+            f"{self.APPROX_ENERGY_SPL} samples"
+        )
+        warn(self._method_error_msg("energy", fill_in=approx_method))
+
+        # splx, sply = i.i.d. samples of X - Y of size N = self.APPROX_ENERGY_SPL
+        N = self.APPROX_ENERGY_SPL
+        if x is None:
+            splx = self.sample(N)
+            sply = self.sample(N)
+        else:
+            splx = pd.concat([x] * N, keys=range(N))
+            sply = self.sample(N)
+
+        # approx E[abs(X-Y)] via mean of samples
+        spl = splx - sply
+        energy = spl.apply(np.linalg.norm, axis=1, ord=1).groupby(level=1).mean()
+        energy = pd.DataFrame(energy, columns=["energy"])
+        return energy
+
+    def mean(self):
+        """Return expected value of the distribution."""
+        spl = self.sample(self.APPROX_MEAN_SPL)
+        return spl.groupby(level=0).mean()
 
     def sample(self, n_samples=None):
         """Sample from the distribution.
