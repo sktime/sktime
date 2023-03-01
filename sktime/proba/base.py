@@ -26,6 +26,7 @@ class BaseDistribution(BaseObject):
 
     # move this to configs when the config interface is ready
     APPROX_MEAN_SPL = 1000
+    APPROX_VAR_SPL = 1000
     APPROX_ENERGY_SPL = 1000
 
     def __init__(self, index=None, columns=None):
@@ -147,7 +148,7 @@ class BaseDistribution(BaseObject):
         # approx E[abs(X-Y)] via mean of samples of abs(X-Y) obtained from splx, sply
         spl = splx - sply
         energy = spl.apply(np.linalg.norm, axis=1, ord=1).groupby(level=1).mean()
-        energy = pd.DataFrame(energy, columns=["energy"])
+        energy = pd.DataFrame(energy, index=self.index, columns=["energy"])
         return energy
 
     def mean(self):
@@ -159,6 +160,19 @@ class BaseDistribution(BaseObject):
         warn(self._method_error_msg("mean", fill_in=approx_method))
 
         spl = self.sample(self.APPROX_MEAN_SPL)
+        return spl.groupby(level=0).mean()
+
+    def var(self):
+        """Return element/entry-wise variance of the distribution."""
+        approx_method = (
+            "by approximating the variance by the arithmetic mean of "
+            f"{self.APPROX_VAR_SPL} samples of squared differences"
+        )
+        warn(self._method_error_msg("var", fill_in=approx_method))
+
+        spl1 = self.sample(self.APPROX_VAR_SPL)
+        spl2 = self.sample(self.APPROX_VAR_SPL)
+        spl = (spl1 - spl2) ** 2
         return spl.groupby(level=0).mean()
 
     def sample(self, n_samples=None):
@@ -321,6 +335,16 @@ class _BaseTFDistribution(BaseDistribution):
         else:
             dist_at_x = self
             return dist_at_x.distr.log_prob(x)
+
+    def cdf(self, x):
+        """Cumulative distribution function."""
+        if isinstance(x, pd.DataFrame):
+            dist_at_x = self.loc[x.index, x.columns]
+            tensor = dist_at_x.distr.cdf(x.values)
+            return pd.DataFrame(tensor, index=x.index, columns=x.columns)
+        else:
+            dist_at_x = self
+            return dist_at_x.distr.cdf(x)
 
     def sample(self, n_samples=None):
         """Sample from the distribution.
