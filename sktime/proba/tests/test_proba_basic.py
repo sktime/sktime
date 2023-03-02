@@ -4,6 +4,8 @@
 
 __author__ = ["fkiraly"]
 
+import pytest
+
 
 @pytest.mark.skipif(
     not _check_soft_dependencies("tensorflow_probability", severity="none"),
