@@ -215,8 +215,37 @@ class ColumnConcatenator(BaseTransformer):
     """Concatenate multivariate series to a long univariate series.
 
     Transformer that concatenates multivariate time series/panel data
-    into long univariate time series/panel
-        data by simply concatenating times series in time.
+    into single univariate time series/panel data by concatenating
+    each individual series on top of each other from left to right.
+
+    Uses pandas method stack() to do the concatenating
+
+    Examples
+    --------
+    >>> from sktime.transformations.panel.compose import ColumnConcatenator # noqa: E501
+    >>> import numpy as np
+    >>> data = np.array([[1, 2, 3],
+    ...                  [4, 5, 6],
+    ...                  [7, 8, 9]])
+    >>> concatenator = ColumnConcatenator()
+    >>> concatenator.fit_transform(data)
+    array([[1.],
+           [4.],
+           [7.],
+           [2.],
+           [5.],
+           [8.],
+           [3.],
+           [6.],
+           [9.]])
+
+    Another example with panel data.
+
+    >>> from sktime.utils._testing.panel import _make_panel
+    >>> panel_data = _make_panel(n_columns = 2,
+    ...                          n_instances = 2,
+    ...                          n_timepoints = 3)
+    >>> panel_data = concatenator.fit_transform(panel_data)
     """
 
     _tags = {

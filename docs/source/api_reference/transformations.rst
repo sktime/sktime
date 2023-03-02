@@ -441,6 +441,14 @@ Seasonality and Date-Time Features
 
     FourierFeatures
 
+.. currentmodule:: sktime.transformations.series.fourier
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    FourierTransform
+
 Auto-correlation series
 ~~~~~~~~~~~~~~~~~~~~~~~
 
