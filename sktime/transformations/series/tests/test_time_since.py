@@ -161,7 +161,7 @@ def test_fit_transform_period_monthly_idx_period_output(df_period_monthly_idx):
     transformer.fit(df_period_monthly_idx)
     # Temporary solution to get this test to pass
     # See: https://github.com/sktime/sktime/pull/3810#issuecomment-1320969799
-    transformer._output_convert = "off"
+    transformer.set_config(**{"output_conversion": "off"})
     Xt = transformer.transform(df_period_monthly_idx)
     expected = pd.DataFrame(
         data={
