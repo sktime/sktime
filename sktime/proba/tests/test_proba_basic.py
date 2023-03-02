@@ -4,6 +4,10 @@
 
 __author__ = ["fkiraly"]
 
+import pytest
+
+from sktime.utils.validation._dependencies import _check_soft_dependencies
+
 
 @pytest.mark.skipif(
     not _check_soft_dependencies("tensorflow_probability", severity="none"),
