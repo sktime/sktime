@@ -53,7 +53,7 @@ class Normal(_BaseTFDistribution):
 
         super(Normal, self).__init__(index=index, columns=columns, distr=distr)
 
-    def _energy(self, x=None):
+    def energy(self, x=None):
         """Energy of self, w.r.t. self or a constant frame x."""
         # note: self-energy, x=None case seems correct
         if x is None:
