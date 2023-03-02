@@ -16,7 +16,7 @@ DISTR_METRICS = [CRPS, LogLoss]
 
 @pytest.mark.skipif(
     not _check_soft_dependencies("tensorflow_probability", severity="none"),
-    reason="skip test if required soft dependency for hmmlearn not available",
+    reason="skip test if required soft dependency is not available",
 )
 @pytest.mark.parametrize("metric", DISTR_METRICS)
 @pytest.mark.parametrize("multivariate", [True, False])
