@@ -816,7 +816,6 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
             f"but found some parameters that are not __init__ args: {notfound_errs}"
         )
 
-
         if len(valid_param_names) > 0:
             assert (
                 len(param_list) > 1
@@ -832,7 +831,6 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
         #     f"to a non-default value at least once, but the following "
         #     f"parameters are not tested: {params_not_tested}"
         # )
-
 
     def test_create_test_instances_and_names(self, estimator_class):
         """Check that create_test_instances_and_names works.
