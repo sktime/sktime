@@ -22,6 +22,7 @@ class BaseDistribution(BaseObject):
     _tags = {
         "python_version": None,  # PEP 440 python version specifier to limit versions
         "python_dependencies": None,  # string or str list of pkg soft dependencies
+        "reserved_params": ["index", "columns"],
     }
 
     # move this to configs when the config interface is ready
