@@ -5,6 +5,10 @@
 __author__ = ["fkiraly"]
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("tensorflow_probability", severity="none"),
+    reason="skip test if required soft dependency for hmmlearn not available",
+)
 def test_proba_example():
     """Test one subsetting case for BaseDistribution."""
     from sktime.proba.tfp import Normal
