@@ -19,7 +19,8 @@ How to use this implementation template to implement a new estimator:
 - change docstrings for functions and the file
 - ensure interface compatibility by sktime.utils.estimator_checks.check_estimator
 - once complete: use as a local library, or contribute to sktime via PR
-- more details: https://www.sktime.org/en/stable/developer_guide/add_estimators.html
+- more details:
+  https://www.sktime.net/en/stable/developer_guide/add_estimators.html
 
 Mandatory implements:
     fitting         - _fit(self, X, y=None)
@@ -328,10 +329,10 @@ class MyTransformer(BaseTransformer):
 
         Parameters
         ----------
-        X : Series or Panel of mtype X_inner_mtype
+        X : Series, Panel, or Hierarchical data, of mtype X_inner_mtype
             if X_inner_mtype is list, _transform must support all types in it
             Data to be transformed
-        y : Series or Panel of mtype y_inner_mtype, default=None
+        y : Series, Panel, or Hierarchical data, of mtype y_inner_mtype, default=None
             Additional data, e.g., labels for transformation
 
         Returns
@@ -368,10 +369,10 @@ class MyTransformer(BaseTransformer):
 
         Parameters
         ----------
-        X : Series or Panel of mtype X_inner_mtype
+        X : Series, Panel, or Hierarchical data, of mtype X_inner_mtype
             if X_inner_mtype is list, _inverse_transform must support all types in it
             Data to be inverse transformed
-        y : Series or Panel of mtype y_inner_mtype, optional (default=None)
+        y : Series, Panel, or Hierarchical data, of mtype y_inner_mtype, default=None
             Additional data, e.g., labels for transformation
 
         Returns
@@ -404,10 +405,10 @@ class MyTransformer(BaseTransformer):
 
         Parameters
         ----------
-        X : Series or Panel of mtype X_inner_mtype
+        X : Series, Panel, or Hierarchical data, of mtype X_inner_mtype
             if X_inner_mtype is list, _update must support all types in it
             Data to update transformer with
-        y : Series or Panel of mtype y_inner_mtype, default=None
+        y : Series, Panel, or Hierarchical data, of mtype y_inner_mtype, default=None
             Additional data, e.g., labels for tarnsformation
 
         Returns
