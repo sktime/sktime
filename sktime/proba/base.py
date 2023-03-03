@@ -23,6 +23,7 @@ class BaseDistribution(BaseObject):
         "python_version": None,  # PEP 440 python version specifier to limit versions
         "python_dependencies": None,  # string or str list of pkg soft dependencies
         "reserved_params": ["index", "columns"],
+        "capabilities:approx": ["energy", "mean", "var"],
     }
 
     # move this to configs when the config interface is ready
@@ -301,6 +302,12 @@ class _Indexer:
 
 class _BaseTFDistribution(BaseDistribution):
     """Adapter for tensorflow-probability distributions."""
+
+    _tags = {
+        "python_dependencies": "tensorflow_probability",
+        "capabilities:approx": ["energy"],
+        "capabilities:exact": ["mean", "var", "pdf", "log_pdf", "cdf", "ppf"],
+    }
 
     def __init__(self, index=None, columns=None, distr=None):
 

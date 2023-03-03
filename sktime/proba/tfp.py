@@ -30,7 +30,11 @@ class TFNormal(_BaseTFDistribution):
     >>> n = Normal(mu=[[0, 1], [2, 3], [4, 5]], sigma=1)  # doctest: +SKIP
     """
 
-    _tags = {"python_dependencies": "tensorflow_probability"}
+    _tags = {
+        "python_dependencies": "tensorflow_probability",
+        "capabilities:approx": [],
+        "capabilities:exact": ["mean", "var", "energy", "pdf", "log_pdf", "cdf", "ppf"],
+    }
 
     def __init__(self, mu, sigma, index=None, columns=None):
 

@@ -31,7 +31,10 @@ class Normal(BaseDistribution):
     >>> n = Normal(mu=[[0, 1], [2, 3], [4, 5]], sigma=1)
     """
 
-    _tags = {}
+    _tags = {
+        "capabilities:approx": [],
+        "capabilities:exact": ["mean", "var", "energy", "pdf", "log_pdf", "cdf", "ppf"],
+    }
 
     def __init__(self, mu, sigma, index=None, columns=None):
 
