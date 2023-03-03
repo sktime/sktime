@@ -57,6 +57,7 @@ Pipeline building
 
     TransformerPipeline
     FeatureUnion
+    ColumnEnsembleTransformer
     ColumnwiseTransformer
     FitInTransform
     MultiplexTransformer
