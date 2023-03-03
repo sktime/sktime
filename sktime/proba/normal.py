@@ -82,14 +82,14 @@ class Normal(BaseDistribution):
     def pdf(self, x):
         """Probability density function."""
         d = self.loc[x.index, x.columns]
-        pdf_arr = np.exp(-0.5 * ((x.values - d.mu) / d.sigma)**2)
+        pdf_arr = np.exp(-0.5 * ((x.values - d.mu) / d.sigma) ** 2)
         pdf_arr = pdf_arr / (d.sigma * np.sqrt(2 * np.pi))
         return pd.DataFrame(pdf_arr, index=x.index, columns=x.columns)
 
     def log_pdf(self, x):
         """Logarithmic probability density function."""
         d = self.loc[x.index, x.columns]
-        lpdf_arr = -0.5 * ((x.values - d.mu) / d.sigma)**2
+        lpdf_arr = -0.5 * ((x.values - d.mu) / d.sigma) ** 2
         lpdf_arr = lpdf_arr - np.log(d.sigma * np.sqrt(2 * np.pi))
         return pd.DataFrame(lpdf_arr, index=x.index, columns=x.columns)
 
@@ -122,6 +122,7 @@ class Normal(BaseDistribution):
         in `pd-multiindex` mtype format convention, with same `columns` as `self`,
         and `MultiIndex` that is product of `RangeIndex(n_samples)` and `self.index`
         """
+
         def gen_unif():
             np_unif = np.random.uniform(size=self.shape)
             return pd.DataFrame(np_unif, index=self.index, columns=self.columns)
