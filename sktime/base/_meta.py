@@ -778,6 +778,10 @@ class _ColumnEstimator:
 
     def _coerce_to_pd_index(self, obj):
         """Coerce obj to pandas Index."""
+        # multi-index kept unchanged
+        if isinstance(obj, (list, tuple)):
+            return obj
+
         # replace ints by column names
         obj = self._get_indices(self._y, obj)
 
@@ -837,6 +841,9 @@ class _ColumnEstimator:
         keys = self._get_indices(self._y, keys)
 
         if col_multiindex:
+            y_pred = pd.concat(y_preds, axis=1, keys=keys)
+        elif isinstance(keys[0], (list, tuple)):
+            keys = [tuple(key) for key in keys]
             y_pred = pd.concat(y_preds, axis=1, keys=keys)
         else:
             y_pred = pd.concat(y_preds, axis=1)
@@ -909,10 +916,11 @@ class _ColumnEstimator:
                     f"{cls}."
                 )
 
-        index_flat = flatten(indices)
+        index_flat = [hash(tuple(tup)) for tup in indices]
         index_set = set(index_flat)
-        not_in_y_idx = index_set.difference(X.columns)
-        y_cols_not_found = set(X.columns).difference(index_set)
+        col_set = set([hash(tuple(tup)) for tup in X.columns.tolist()])
+        not_in_y_idx = index_set.difference(col_set)
+        y_cols_not_found = set(col_set).difference(index_set)
 
         if len(not_in_y_idx) > 0:
             raise ValueError(
