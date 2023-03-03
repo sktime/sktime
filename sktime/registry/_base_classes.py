@@ -108,7 +108,7 @@ BASE_CLASS_REGISTER = [
         BasePairwiseTransformerPanel,
         "pairwise transformer for panel data, distance or kernel",
     ),
-    ("distribution", BaseDistribution, "pandas-like probability distribution")
+    ("distribution", BaseDistribution, "pandas-like probability distribution"),
 ]
 
 
