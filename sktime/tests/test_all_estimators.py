@@ -978,7 +978,7 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
             test_params = [test_params]
 
         reserved_params = estimator_class.get_class_tag(
-            "reserved_params", tag_value_default=None
+            "reserved_params", tag_value_default=[]
         )
 
         for params in test_params:
