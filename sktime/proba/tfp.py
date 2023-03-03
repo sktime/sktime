@@ -25,7 +25,7 @@ class TFNormal(_BaseTFDistribution):
 
     Example
     -------
-    >>> from sktime.proba.tfp import Normal  # doctest: +SKIP
+    >>> from sktime.proba.tfp import TFNormal  # doctest: +SKIP
 
     >>> n = Normal(mu=[[0, 1], [2, 3], [4, 5]], sigma=1)  # doctest: +SKIP
     """
