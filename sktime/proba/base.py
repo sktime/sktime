@@ -31,17 +31,12 @@ class BaseDistribution(BaseObject):
     APPROX_ENERGY_SPL = 1000
 
     def __init__(self, index=None, columns=None):
+
         self.index = index
         self.columns = columns
 
         super(BaseDistribution, self).__init__()
         _check_estimator_deps(self)
-
-    def _loc(self, rowidx=None, colidx=None):
-        return NotImplemented
-
-    def _iloc(self, rowidx=None, colidx=None):
-        return NotImplemented
 
     @property
     def loc(self):
@@ -79,6 +74,76 @@ class BaseDistribution(BaseObject):
     def shape(self):
         """Shape of self, a pair (2-tuple)."""
         return (len(self.index), len(self.columns))
+
+    def _loc(self, rowidx=None, colidx=None):
+        if rowidx is not None:
+            row_iloc = self.index.get_indexer_for(rowidx)
+        else:
+            row_iloc = None
+        if colidx is not None:
+            col_iloc = self.columns.get_indexer_for(colidx)
+        else:
+            col_iloc = None
+        return self._iloc(rowidx=row_iloc, colidx=col_iloc)
+
+    def _subset_params(self, rowidx, colidx):
+
+        params = self._get_dist_params()
+
+        subset_param_dict = {}
+        for param, val in params.items():
+            arr = np.array(val)
+            if len(arr.shape) == 0:
+                subset_param_dict
+            if len(arr.shape) >= 1 and rowidx is not None:
+                arr = arr[rowidx]
+            if len(arr.shape) >= 2 and colidx is not None:
+                arr = arr[:, colidx]
+            if np.issubdtype(arr.dtype, np.integer):
+                arr = arr.astype("float")
+            subset_param_dict[param] = arr
+        return subset_param_dict
+
+    def _iloc(self, rowidx=None, colidx=None):
+        # distr_type = type(self.distr)
+        subset_params = self._subset_params(rowidx=rowidx, colidx=colidx)
+        # distr_subset = distr_type(**subset_params)
+
+        def subset_not_none(idx, subs):
+            if subs is not None:
+                return idx.take(subs)
+            else:
+                return idx
+
+        index_subset = subset_not_none(self.index, rowidx)
+        columns_subset = subset_not_none(self.columns, colidx)
+
+        sk_distr_type = type(self)
+        return sk_distr_type(
+            index=index_subset,
+            columns=columns_subset,
+            **subset_params,
+        )
+
+    def _get_dist_params(self):
+
+        params = self.get_params(deep=False)
+        paramnames = params.keys()
+        reserved_names = ["index", "columns"]
+        paramnames = [x for x in paramnames if x not in reserved_names]
+
+        return {k: params[k] for k in paramnames}
+
+    def to_str(self):
+        """Return string representation of self."""
+        params = self._get_dist_params()
+
+        prt = f"{self.__class__.__name__}("
+        for paramname, val in params.items():
+            prt += f"{paramname}={val}, "
+        prt = prt[:-2] + ")"
+
+        return prt
 
     def _method_error_msg(self, method="this method", severity="warn", fill_in=None):
         msg = (
@@ -242,76 +307,6 @@ class _BaseTFDistribution(BaseDistribution):
         self.distr = distr
 
         super(_BaseTFDistribution, self).__init__(index=index, columns=columns)
-
-    def _loc(self, rowidx=None, colidx=None):
-        if rowidx is not None:
-            row_iloc = self.index.get_indexer_for(rowidx)
-        else:
-            row_iloc = None
-        if colidx is not None:
-            col_iloc = self.columns.get_indexer_for(colidx)
-        else:
-            col_iloc = None
-        return self._iloc(rowidx=row_iloc, colidx=col_iloc)
-
-    def _subset_params(self, rowidx, colidx):
-
-        params = self._get_dist_params()
-
-        subset_param_dict = {}
-        for param, val in params.items():
-            arr = np.array(val)
-            if len(arr.shape) == 0:
-                subset_param_dict
-            if len(arr.shape) >= 1 and rowidx is not None:
-                arr = arr[rowidx]
-            if len(arr.shape) >= 2 and colidx is not None:
-                arr = arr[:, colidx]
-            if np.issubdtype(arr.dtype, np.integer):
-                arr = arr.astype("float")
-            subset_param_dict[param] = arr
-        return subset_param_dict
-
-    def _iloc(self, rowidx=None, colidx=None):
-        # distr_type = type(self.distr)
-        subset_params = self._subset_params(rowidx=rowidx, colidx=colidx)
-        # distr_subset = distr_type(**subset_params)
-
-        def subset_not_none(idx, subs):
-            if subs is not None:
-                return idx.take(subs)
-            else:
-                return idx
-
-        index_subset = subset_not_none(self.index, rowidx)
-        columns_subset = subset_not_none(self.columns, colidx)
-
-        sk_distr_type = type(self)
-        return sk_distr_type(
-            index=index_subset,
-            columns=columns_subset,
-            **subset_params,
-        )
-
-    def _get_dist_params(self):
-
-        params = self.get_params(deep=False)
-        paramnames = params.keys()
-        reserved_names = ["index", "columns"]
-        paramnames = [x for x in paramnames if x not in reserved_names]
-
-        return {k: params[k] for k in paramnames}
-
-    def to_str(self):
-
-        params = self._get_dist_params()
-
-        prt = f"{self.__class__.__name__}("
-        for paramname, val in params.items():
-            prt += f"{paramname}={val}, "
-        prt = prt[:-2] + ")"
-
-        return prt
 
     def __str__(self):
 
