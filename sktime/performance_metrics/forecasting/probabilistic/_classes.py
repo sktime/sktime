@@ -704,6 +704,7 @@ class CRPS(_BaseDistrForecastingMetric):
     Also known as:
 
     * integrated squared loss (ISL)
+    * integrated Brier loss (IBL)
     * energy loss
 
     Parameters
@@ -722,4 +723,5 @@ class CRPS(_BaseDistrForecastingMetric):
         super().__init__(multioutput=multioutput)
 
     def _evaluate_by_index(self, y_true, y_pred, multioutput, **kwargs):
+        # CRPS(d, y) = E_X,Y as d [abs(Y-y) - 0.5 abs(X-Y)]
         return y_pred.energy(y_true) - y_pred.energy() / 2
