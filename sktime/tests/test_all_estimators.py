@@ -977,6 +977,10 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
         if not isinstance(test_params, list):
             test_params = [test_params]
 
+        reserved_params = estimator_class.get_class_tag(
+            "reserved_params", tag_value_default=[]
+        )
+
         for params in test_params:
             # we construct the full parameter set for params
             # params may only have parameters that are deviating from defaults
@@ -988,8 +992,12 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
             est_after_set = estimator.set_params(**params_full)
             assert est_after_set is estimator, msg
 
+            def unreserved(params):
+                return {p: v for p, v in params.items() if p not in reserved_params}
+
+            est_params = estimator.get_params(deep=False)
             is_equal, equals_msg = deep_equals(
-                estimator.get_params(deep=False), params_full, return_msg=True
+                unreserved(est_params), unreserved(params_full), return_msg=True
             )
             msg = (
                 f"get_params result of {estimator_class.__name__} (x) does not match "
