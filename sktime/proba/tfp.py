@@ -1,6 +1,6 @@
-# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Base classes for probability distribution objects."""
+"""Probability distribution objects with tensorflow-probability back-end."""
 
 __author__ = ["fkiraly"]
 
@@ -11,7 +11,7 @@ from sktime.proba.base import _BaseTFDistribution
 from sktime.utils.validation._dependencies import _check_estimator_deps
 
 
-class Normal(_BaseTFDistribution):
+class TFNormal(_BaseTFDistribution):
     """Normal distribution with tensorflow-probability back-end.
 
     Parameters
@@ -51,7 +51,7 @@ class Normal(_BaseTFDistribution):
         if columns is None:
             columns = pd.RangeIndex(distr.batch_shape[1])
 
-        super(Normal, self).__init__(index=index, columns=columns, distr=distr)
+        super(TFNormal, self).__init__(index=index, columns=columns, distr=distr)
 
     def energy(self, x=None):
         """Energy of self, w.r.t. self or a constant frame x."""
