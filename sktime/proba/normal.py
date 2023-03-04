@@ -52,7 +52,14 @@ class Normal(BaseDistribution):
         super(Normal, self).__init__(index=index, columns=columns)
 
     def _get_bc_params(self):
-        return np.broadcast_arrays(self.mu, self.sigma)
+        """Fully broadcast parameters of self, given param shapes and index, columns."""
+        to_broadcast = [self.mu, self.sigma]
+        if hasattr(self, "index"):
+            to_broadcast += [self.index.to_numpy().reshape(-1, 1)]
+        if hasattr(self, "columns"):
+            to_broadcast += [self.index.to_numpy()]
+        bc = np.broadcast_arrays(*to_broadcast)
+        return bc[0], bc[1]
 
     def energy(self, x=None):
         r"""Energy of self, w.r.t. self or a constant frame x.
