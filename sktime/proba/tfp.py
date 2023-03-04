@@ -47,6 +47,7 @@ class TFNormal(_BaseTFDistribution):
 
         tfd = tfp.distributions
 
+        mu, sigma = self._get_bc_params()
         distr = tfd.Normal(loc=mu, scale=sigma)
 
         if index is None:
@@ -56,6 +57,16 @@ class TFNormal(_BaseTFDistribution):
             columns = pd.RangeIndex(distr.batch_shape[1])
 
         super(TFNormal, self).__init__(index=index, columns=columns, distr=distr)
+
+    def _get_bc_params(self):
+        """Fully broadcast parameters of self, given param shapes and index, columns."""
+        to_broadcast = [self.mu, self.sigma]
+        if hasattr(self, "index"):
+            to_broadcast += [self.index.to_numpy().reshape(-1, 1)]
+        if hasattr(self, "columns"):
+            to_broadcast += [self.index.to_numpy()]
+        bc = np.broadcast_arrays(*to_broadcast)
+        return bc[0], bc[1]
 
     def energy(self, x=None):
         r"""Energy of self, w.r.t. self or a constant frame x.
