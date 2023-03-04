@@ -789,11 +789,11 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
             else:
                 return []
 
-        reserved_param_names = estimator_class.get_class_tag(
-            "reserved_params", tag_value_default=None
-        )
-        reserved_param_names = _coerce_to_list_of_str(reserved_param_names)
-        reserved_set = set(reserved_param_names)
+        # reserved_param_names = estimator_class.get_class_tag(
+        #     "reserved_params", tag_value_default=None
+        # )
+        # reserved_param_names = _coerce_to_list_of_str(reserved_param_names)
+        # reserved_set = set(reserved_param_names)
 
         param_names = estimator_class.get_param_names()
 
