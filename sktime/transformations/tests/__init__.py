@@ -1,1 +1,2 @@
-'''Major refactoring of utils directory, all tests pass'''
+# -*- coding: utf-8 -*-
+"""Tests for transformation module."""

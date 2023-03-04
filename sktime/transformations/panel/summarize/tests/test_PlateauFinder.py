@@ -1,5 +1,5 @@
-'''Refactoring utils and transformer module'''
 # -*- coding: utf-8 -*-
+"""Tests for PlateauFinder."""
 import numpy as np
 import pandas as pd
 import pytest
@@ -9,7 +9,7 @@ from sktime.transformations.panel.summarize import PlateauFinder
 
 @pytest.mark.parametrize("value", [np.nan, -10, 10, -0.5, 0.5])
 def test_PlateauFinder(value):
-    ''' Generates test data '''' 
+    """Test PlateauFinder on test data against expected output plateau features."""
     value = np.nan
     X = pd.DataFrame(
         pd.Series(
