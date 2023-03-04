@@ -22,6 +22,8 @@ class BaseDistribution(BaseObject):
     _tags = {
         "python_version": None,  # PEP 440 python version specifier to limit versions
         "python_dependencies": None,  # string or str list of pkg soft dependencies
+        "reserved_params": ["index", "columns"],
+        "capabilities:approx": ["energy", "mean", "var"],
     }
 
     # move this to configs when the config interface is ready
@@ -30,17 +32,12 @@ class BaseDistribution(BaseObject):
     APPROX_ENERGY_SPL = 1000
 
     def __init__(self, index=None, columns=None):
+
         self.index = index
         self.columns = columns
 
         super(BaseDistribution, self).__init__()
         _check_estimator_deps(self)
-
-    def _loc(self, rowidx=None, colidx=None):
-        return NotImplemented
-
-    def _iloc(self, rowidx=None, colidx=None):
-        return NotImplemented
 
     @property
     def loc(self):
@@ -78,6 +75,76 @@ class BaseDistribution(BaseObject):
     def shape(self):
         """Shape of self, a pair (2-tuple)."""
         return (len(self.index), len(self.columns))
+
+    def _loc(self, rowidx=None, colidx=None):
+        if rowidx is not None:
+            row_iloc = self.index.get_indexer_for(rowidx)
+        else:
+            row_iloc = None
+        if colidx is not None:
+            col_iloc = self.columns.get_indexer_for(colidx)
+        else:
+            col_iloc = None
+        return self._iloc(rowidx=row_iloc, colidx=col_iloc)
+
+    def _subset_params(self, rowidx, colidx):
+
+        params = self._get_dist_params()
+
+        subset_param_dict = {}
+        for param, val in params.items():
+            arr = np.array(val)
+            if len(arr.shape) == 0:
+                subset_param_dict
+            if len(arr.shape) >= 1 and rowidx is not None:
+                arr = arr[rowidx]
+            if len(arr.shape) >= 2 and colidx is not None:
+                arr = arr[:, colidx]
+            if np.issubdtype(arr.dtype, np.integer):
+                arr = arr.astype("float")
+            subset_param_dict[param] = arr
+        return subset_param_dict
+
+    def _iloc(self, rowidx=None, colidx=None):
+        # distr_type = type(self.distr)
+        subset_params = self._subset_params(rowidx=rowidx, colidx=colidx)
+        # distr_subset = distr_type(**subset_params)
+
+        def subset_not_none(idx, subs):
+            if subs is not None:
+                return idx.take(subs)
+            else:
+                return idx
+
+        index_subset = subset_not_none(self.index, rowidx)
+        columns_subset = subset_not_none(self.columns, colidx)
+
+        sk_distr_type = type(self)
+        return sk_distr_type(
+            index=index_subset,
+            columns=columns_subset,
+            **subset_params,
+        )
+
+    def _get_dist_params(self):
+
+        params = self.get_params(deep=False)
+        paramnames = params.keys()
+        reserved_names = ["index", "columns"]
+        paramnames = [x for x in paramnames if x not in reserved_names]
+
+        return {k: params[k] for k in paramnames}
+
+    def to_str(self):
+        """Return string representation of self."""
+        params = self._get_dist_params()
+
+        prt = f"{self.__class__.__name__}("
+        for paramname, val in params.items():
+            prt += f"{paramname}={val}, "
+        prt = prt[:-2] + ")"
+
+        return prt
 
     def _method_error_msg(self, method="this method", severity="warn", fill_in=None):
         msg = (
@@ -125,7 +192,23 @@ class BaseDistribution(BaseObject):
             raise NotImplementedError(self._method_err_msg("log_pdf", "error"))
 
     def energy(self, x=None):
-        """Energy of self, w.r.t. self or a constant frame x."""
+        """Energy of self, w.r.t. self or a constant frame x.
+
+        Let :math:`X, Y` be i.i.d. random variables with the distribution of `self`.
+
+        If `x` is `None`, returns :math:`E[|X-Y|]` (for each row), "self-energy".
+        If `x` is passed, returns :math:`E[|X-x|]` (for each row), "energy wrt x".
+
+        Parameters
+        ----------
+        x : None or pd.DataFrame, optional, default=None
+            if pd.DataFrame, must have same rows and columns as `self`
+
+        Returns
+        -------
+        pd.DataFrame with same rows as `self`, single column `"energy"`
+        each row contains one float, self-energy/energy as described above.
+        """
         # we want to approximate E[abs(X-Y)]
         # if x = None, X,Y are i.i.d. copies of self
         # if x is not None, X=x (constant), Y=self
@@ -152,7 +235,16 @@ class BaseDistribution(BaseObject):
         return energy
 
     def mean(self):
-        """Return expected value of the distribution."""
+        r"""Return expected value of the distribution.
+
+        Let :math:`X` be a random variable with the distribution of `self`.
+        Returns the expectation :math:`\mathbb{E}[X]`
+
+        Returns
+        -------
+        pd.DataFrame with same rows, columns as `self`
+        expected value of distribution (entry-wise)
+        """
         approx_method = (
             "by approximating the expected value by the arithmetic mean of "
             f"{self.APPROX_MEAN_SPL} samples"
@@ -163,7 +255,16 @@ class BaseDistribution(BaseObject):
         return spl.groupby(level=0).mean()
 
     def var(self):
-        """Return element/entry-wise variance of the distribution."""
+        r"""Return element/entry-wise variance of the distribution.
+
+        Let :math:`X` be a random variable with the distribution of `self`.
+        Returns :math:`\mathbb{V}[X] = \mathbb{E}\left(X - \mathbb{E}[X]\right)^2`
+
+        Returns
+        -------
+        pd.DataFrame with same rows, columns as `self`
+        variance of distribution (entry-wise)
+        """
         approx_method = (
             "by approximating the variance by the arithmetic mean of "
             f"{self.APPROX_VAR_SPL} samples of squared differences"
@@ -236,81 +337,17 @@ class _Indexer:
 class _BaseTFDistribution(BaseDistribution):
     """Adapter for tensorflow-probability distributions."""
 
+    _tags = {
+        "python_dependencies": "tensorflow_probability",
+        "capabilities:approx": ["energy"],
+        "capabilities:exact": ["mean", "var", "pdf", "log_pdf", "cdf", "ppf"],
+    }
+
     def __init__(self, index=None, columns=None, distr=None):
 
         self.distr = distr
 
         super(_BaseTFDistribution, self).__init__(index=index, columns=columns)
-
-    def _loc(self, rowidx=None, colidx=None):
-        if rowidx is not None:
-            row_iloc = self.index.get_indexer_for(rowidx)
-        else:
-            row_iloc = None
-        if colidx is not None:
-            col_iloc = self.columns.get_indexer_for(colidx)
-        else:
-            col_iloc = None
-        return self._iloc(rowidx=row_iloc, colidx=col_iloc)
-
-    def _subset_params(self, rowidx, colidx):
-
-        params = self._get_dist_params()
-
-        subset_param_dict = {}
-        for param, val in params.items():
-            arr = np.array(val)
-            if len(arr.shape) == 0:
-                subset_param_dict
-            if len(arr.shape) >= 1 and rowidx is not None:
-                arr = arr[rowidx]
-            if len(arr.shape) >= 2 and colidx is not None:
-                arr = arr[:, colidx]
-            if np.issubdtype(arr.dtype, np.integer):
-                arr = arr.astype("float")
-            subset_param_dict[param] = arr
-        return subset_param_dict
-
-    def _iloc(self, rowidx=None, colidx=None):
-        # distr_type = type(self.distr)
-        subset_params = self._subset_params(rowidx=rowidx, colidx=colidx)
-        # distr_subset = distr_type(**subset_params)
-
-        def subset_not_none(idx, subs):
-            if subs is not None:
-                return idx.take(subs)
-            else:
-                return idx
-
-        index_subset = subset_not_none(self.index, rowidx)
-        columns_subset = subset_not_none(self.columns, colidx)
-
-        sk_distr_type = type(self)
-        return sk_distr_type(
-            index=index_subset,
-            columns=columns_subset,
-            **subset_params,
-        )
-
-    def _get_dist_params(self):
-
-        params = self.get_params(deep=False)
-        paramnames = params.keys()
-        reserved_names = ["index", "columns"]
-        paramnames = [x for x in paramnames if x not in reserved_names]
-
-        return {k: params[k] for k in paramnames}
-
-    def to_str(self):
-
-        params = self._get_dist_params()
-
-        prt = f"{self.__class__.__name__}("
-        for paramname, val in params.items():
-            prt += f"{paramname}={val}, "
-        prt = prt[:-2] + ")"
-
-        return prt
 
     def __str__(self):
 

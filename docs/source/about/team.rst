@@ -25,8 +25,6 @@ Community Council Observers
 
    * - Name
      - GitHub ID
-   * - Leonidas Tsaprounis
-     - :user:`ltsaprounis`
    * - Lovkush Agarwal
      - :user:`lovkush-a`
    * - Mirae Parker
@@ -51,20 +49,14 @@ Core Developers
 
    * - Name
      - GitHub ID
-   * - Chris Holder
-     - :user:`chrisholder`
    * - Daniel Bartling
      - :user:`danbartl`
    * - Franz Király
      - :user:`fkiraly`
    * - Freddy A Boulton
      - :user:`freddyaboulton`
-   * - Guzal Bulatova
-     - :user:`GuzalBulatova`
    * - Lovkush Agarwal
      - :user:`lovkush-a`
-   * - Markus Löning
-     - :user:`mloning`
    * - Mirae Parker
      - :user:`miraep8`
    * - Ryan Kuhns
@@ -92,6 +84,8 @@ Former Core Developers
      - :user:`ayushmaanseth`
    * - George Oastler
      - :user:`goastler`
+   * - Guzal Bulatova
+     - :user:`GuzalBulatova`
    * - Hongyi Yang
      - :user:`hyang1996`
    * - James Large
@@ -102,6 +96,8 @@ Former Core Developers
      - :user:`ltsaprounis`
    * - Łukasz Mentel
      - :user:`lmmentel`
+   * - Markus Löning
+     - :user:`mloning`
    * - Martin Walter
      - :user:`aiwalter`
    * - Mathew Smith
@@ -114,5 +110,7 @@ Former Core Developers
      - :user:`patrickzib`
    * - Sajaysurya Ganesh
      - :user:`sajaysurya`
+   * - Christopher Holder
+     - :user:`chrisholder`
    * - Anonymous upon contributor's request
      - :user:`big-o`

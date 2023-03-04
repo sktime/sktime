@@ -366,6 +366,24 @@ ESTIMATOR_TAG_REGISTER = [
         "str",
         "distribution type of data as str",
     ),
+    (
+        "reserved_params",
+        "estimator",
+        ("list", "str"),
+        "parameters reserved by the base class and present in all child estimators",
+    ),
+    (
+        "capabilities:exact",
+        "distribution",
+        ("list", "str"),
+        "methods provided by the distribution that return numerically exact results",
+    ),
+    (
+        "capabilities:approx",
+        "distribution",
+        ("list", "str"),
+        "methods provided by the distribution that return approximate results",
+    ),
 ]
 
 ESTIMATOR_TAG_TABLE = pd.DataFrame(ESTIMATOR_TAG_REGISTER)

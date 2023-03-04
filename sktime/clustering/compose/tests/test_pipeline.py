@@ -48,6 +48,10 @@ def test_dunder_mul():
     _assert_array_almost_equal(y_pred, t12c_3.fit(X).predict(X_test))
 
 
+@pytest.mark.skipif(
+    not _check_estimator_deps(TimeSeriesKMeans, severity="none"),
+    reason="skip test if required soft dependencies not available",
+)
 def test_mul_sklearn_autoadapt():
     """Test auto-adapter for sklearn in mul."""
     RAND_SEED = 42
@@ -72,6 +76,10 @@ def test_mul_sklearn_autoadapt():
     _assert_array_almost_equal(y_pred, t12c_3.fit(X).predict(X_test))
 
 
+@pytest.mark.skipif(
+    not _check_estimator_deps(TimeSeriesKMeans, severity="none"),
+    reason="skip test if required soft dependencies not available",
+)
 def test_missing_unequal_tag_inference():
     """Test that ClustererPipeline infers missing/unequal tags correctly."""
     c = TimeSeriesKMeans()

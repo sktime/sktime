@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Base classes for probability distribution objects."""
+"""Probability distribution objects with tensorflow-probability back-end."""
 
 __author__ = ["fkiraly"]
 
@@ -11,7 +11,7 @@ from sktime.proba.base import _BaseTFDistribution
 from sktime.utils.validation._dependencies import _check_estimator_deps
 
 
-class Normal(_BaseTFDistribution):
+class TFNormal(_BaseTFDistribution):
     """Normal distribution with tensorflow-probability back-end.
 
     Parameters
@@ -25,17 +25,23 @@ class Normal(_BaseTFDistribution):
 
     Example
     -------
-    >>> from sktime.proba.tfp import Normal  # doctest: +SKIP
+    >>> from sktime.proba.tfp import TFNormal  # doctest: +SKIP
 
     >>> n = Normal(mu=[[0, 1], [2, 3], [4, 5]], sigma=1)  # doctest: +SKIP
     """
 
-    _tags = {"python_dependencies": "tensorflow_probability"}
+    _tags = {
+        "python_dependencies": "tensorflow_probability",
+        "capabilities:approx": [],
+        "capabilities:exact": ["mean", "var", "energy", "pdf", "log_pdf", "cdf", "ppf"],
+    }
 
     def __init__(self, mu, sigma, index=None, columns=None):
 
         self.mu = mu
         self.sigma = sigma
+        self.index = index
+        self.columns = columns
 
         _check_estimator_deps(self)
 
@@ -43,19 +49,50 @@ class Normal(_BaseTFDistribution):
 
         tfd = tfp.distributions
 
-        distr = tfd.Normal(loc=mu, scale=sigma)
+        # todo: untangle index handling
+        # and broadcast of parameters.
+        # move this functionality to the base class
+        # 0.18.0?
+        self._mu, self._sigma = self._get_bc_params()
+        distr = tfd.Normal(loc=self._mu, scale=self._sigma)
+        shape = self._mu.shape
 
         if index is None:
-            index = pd.RangeIndex(distr.batch_shape[0])
+            index = pd.RangeIndex(shape[0])
 
         if columns is None:
-            columns = pd.RangeIndex(distr.batch_shape[1])
+            columns = pd.RangeIndex(shape[1])
 
-        super(Normal, self).__init__(index=index, columns=columns, distr=distr)
+        super(TFNormal, self).__init__(index=index, columns=columns, distr=distr)
 
-    def _energy(self, x=None):
-        """Energy of self, w.r.t. self or a constant frame x."""
-        # note: self-energy, x=None case seems correct
+    def _get_bc_params(self):
+        """Fully broadcast parameters of self, given param shapes and index, columns."""
+        to_broadcast = [self.mu, self.sigma]
+        if hasattr(self, "index") and self.index is not None:
+            to_broadcast += [self.index.to_numpy().reshape(-1, 1)]
+        if hasattr(self, "columns") and self.columns is not None:
+            to_broadcast += [self.columns.to_numpy()]
+        bc = np.broadcast_arrays(*to_broadcast)
+        return bc[0], bc[1]
+
+    def energy(self, x=None):
+        r"""Energy of self, w.r.t. self or a constant frame x.
+
+        Let :math:`X, Y` be i.i.d. random variables with the distribution of `self`.
+
+        If `x` is `None`, returns :math:`\mathbb{E}[|X-Y|]` (per row), "self-energy".
+        If `x` is passed, returns :math:`\mathbb{E}[|X-x|]` (per row), "energy wrt x".
+
+        Parameters
+        ----------
+        x : None or pd.DataFrame, optional, default=None
+            if pd.DataFrame, must have same rows and columns as `self`
+
+        Returns
+        -------
+        pd.DataFrame with same rows as `self`, single column `"energy"`
+        each row contains one float, self-energy/energy as described above.
+        """
         if x is None:
             _, sd_arr = np.broadcast_arrays(self.mu, self.sigma)
             energy_arr = 2 * np.sum(sd_arr, axis=1) / np.sqrt(np.pi)
@@ -68,12 +105,30 @@ class Normal(_BaseTFDistribution):
         return energy
 
     def mean(self):
-        """Return expected value of the distribution."""
+        r"""Return expected value of the distribution.
+
+        Let :math:`X` be a random variable with the distribution of `self`.
+        Returns the expectation :math:`\mathbb{E}[X]`
+
+        Returns
+        -------
+        pd.DataFrame with same rows, columns as `self`
+        expected value of distribution (entry-wise)
+        """
         mean_arr, _ = np.broadcast_arrays(self.mu, self.sigma)
         return pd.DataFrame(mean_arr, index=self.index, columns=self.columns)
 
     def var(self):
-        """Return element/entry-wise variance of the distribution."""
+        r"""Return element/entry-wise variance of the distribution.
+
+        Let :math:`X` be a random variable with the distribution of `self`.
+        Returns :math:`\mathbb{V}[X] = \mathbb{E}\left(X - \mathbb{E}[X]\right)^2`
+
+        Returns
+        -------
+        pd.DataFrame with same rows, columns as `self`
+        variance of distribution (entry-wise)
+        """
         _, sd_arr = np.broadcast_arrays(self.mu, self.sigma)
         return pd.DataFrame(sd_arr, index=self.index, columns=self.columns) ** 2
 

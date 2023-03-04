@@ -449,14 +449,33 @@ class BaseTransformer(BaseEstimator):
         -------
         transformed version of X
         type depends on type of X and scitype:transform-output tag:
-            |          | `transform`  |                        |
-            |   `X`    |  `-output`   |     type of return     |
-            |----------|--------------|------------------------|
-            | `Series` | `Primitives` | `pd.DataFrame` (1-row) |
-            | `Panel`  | `Primitives` | `pd.DataFrame`         |
-            | `Series` | `Series`     | `Series`               |
-            | `Panel`  | `Series`     | `Panel`                |
-            | `Series` | `Panel`      | `Panel`                |
+
+        .. list-table::
+            :widths: 35 35 40
+            :header-rows: 2
+
+            * -
+              - `transform`
+              -
+            * - `X`
+              - `-output`
+              - type of return
+            * - `Series`
+              - `Primitives`
+              - `pd.DataFrame` (1-row)
+            * - `Panel`
+              - `Primitives`
+              - `pd.DataFrame`
+            * - `Series`
+              - `Series`
+              - `Series`
+            * - `Panel`
+              - `Series`
+              - `Panel`
+            * - `Series`
+              - `Panel`
+              - `Panel`
+
         instances in return correspond to instances in `X`
         combinations not in the table are currently not supported
 
@@ -1106,7 +1125,12 @@ class BaseTransformer(BaseEstimator):
         # fit-like methods: run method; clone first if fit
         if methodname in FIT_METHODS:
             if methodname == "fit":
-                transformers_ = X.vectorize_est(self, method="clone")
+                transformers_ = X.vectorize_est(
+                    self,
+                    method="clone",
+                    rowname_default="transformers",
+                    colname_default="transformers",
+                )
             else:
                 transformers_ = self.transformers_
 
@@ -1133,7 +1157,12 @@ class BaseTransformer(BaseEstimator):
 
             else:
                 # if fit_is_empty: don't store transformers, run fit/transform in one
-                transformers_ = X.vectorize_est(self, method="clone")
+                transformers_ = X.vectorize_est(
+                    self,
+                    method="clone",
+                    rowname_default="transformers",
+                    colname_default="transformers",
+                )
                 transformers_ = X.vectorize_est(transformers_, method="fit", **kwargs)
 
             # transform the i-th series/panel with the i-th stored transformer

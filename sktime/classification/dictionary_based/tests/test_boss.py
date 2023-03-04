@@ -5,6 +5,7 @@ import pytest
 
 from sktime.classification.dictionary_based import BOSSEnsemble, IndividualBOSS
 from sktime.datasets import load_unit_test
+from sktime.utils.validation._dependencies import _check_estimator_deps
 
 
 @pytest.fixture
@@ -19,6 +20,10 @@ def dataset():
     return (X_train, y_train, X_test, y_test)
 
 
+@pytest.mark.skipif(
+    not _check_estimator_deps(IndividualBOSS, severity="none"),
+    reason="skip test if required soft dependencies not available",
+)
 @pytest.mark.parametrize(
     "new_class,expected_dtype",
     [
@@ -46,6 +51,10 @@ def test_individual_boss_classes(dataset, new_class, expected_dtype):
     assert set(y_pred) == set(y_train)
 
 
+@pytest.mark.skipif(
+    not _check_estimator_deps(BOSSEnsemble, severity="none"),
+    reason="skip test if required soft dependencies not available",
+)
 @pytest.mark.parametrize(
     "new_class,expected_dtype",
     [
