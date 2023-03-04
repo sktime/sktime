@@ -7,24 +7,16 @@ adapted from scikit-learn's estimator_checks
 
 __author__ = ["mloning", "fkiraly", "achieveordie"]
 
-import numbers
 import os
-import types
 from copy import deepcopy
-from inspect import getfullargspec, isclass, signature
 from tempfile import TemporaryDirectory
-from warnings import warn
 
 import joblib
-import numpy as np
 import pytest
 from skbase.testing import BaseFixtureGenerator as _BaseFixtureGenerator
 from skbase.testing import QuickTester as _QuickTester
 from skbase.testing import TestAllObjects as _TestAllObjects
 from sklearn.utils._testing import set_random_state
-from sklearn.utils.estimator_checks import (
-    check_get_params_invariance as _check_get_params_invariance,
-)
 
 from sktime.base import BaseEstimator, BaseObject, load
 from sktime.classification.deep_learning.base import BaseDeepClassifier
@@ -46,14 +38,10 @@ from sktime.tests._config import (
     VALID_ESTIMATOR_TYPES,
     VALID_TRANSFORMER_TYPES,
 )
-from sktime.utils._testing._conditional_fixtures import (
-    create_conditional_fixtures_and_names,
-)
 from sktime.utils._testing.deep_equals import deep_equals
 from sktime.utils._testing.estimator_checks import (
     _assert_array_almost_equal,
     _assert_array_equal,
-    _get_args,
     _has_capability,
     _list_required_methods,
 )
