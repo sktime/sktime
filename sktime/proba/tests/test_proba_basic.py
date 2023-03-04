@@ -15,12 +15,12 @@ from sktime.utils.validation._dependencies import _check_soft_dependencies
 )
 def test_proba_example():
     """Test one subsetting case for BaseDistribution."""
-    from sktime.proba.tfp import Normal
+    from sktime.proba.tfp import TFNormal
 
-    n = Normal(mu=[[0, 1], [2, 3], [4, 5]], sigma=1)
+    n = TFNormal(mu=[[0, 1], [2, 3], [4, 5]], sigma=1)
 
     assert n.shape == (3, 2)
 
     one_row = n.loc[[1]]
-    assert isinstance(one_row, Normal)
+    assert isinstance(one_row, TFNormal)
     assert one_row.shape == (1, 2)
