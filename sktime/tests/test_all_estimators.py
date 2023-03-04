@@ -18,6 +18,9 @@ from warnings import warn
 import joblib
 import numpy as np
 import pytest
+from skbase.testing import BaseFixtureGenerator as _BaseFixtureGenerator
+from skbase.testing import QuickTester as _QuickTester
+from skbase.testing import TestAllObjects as _TestAllObjects
 from sklearn.utils._testing import set_random_state
 from sklearn.utils.estimator_checks import (
     check_get_params_invariance as _check_get_params_invariance,
@@ -97,7 +100,7 @@ def subsample_by_version_os(x):
     return res
 
 
-class BaseFixtureGenerator:
+class BaseFixtureGenerator(_BaseFixtureGenerator):
     """Fixture generator for base testing functionality in sktime.
 
     Test classes inheriting from this and not overriding pytest_generate_tests
@@ -141,10 +144,26 @@ class BaseFixtureGenerator:
         which return an array-like output
     """
 
-    # class variables which can be overridden by descendants
+    # class variables to configure skbase BaseFixtureGenerator
+    # --------------------------------------------------------
 
-    # which estimator types are generated; None=all, or scitype string like "forecaster"
-    estimator_type_filter = None
+    # package to search for objects
+    package_name = "sktime"
+
+    # which object types are generated; None=all, or scitype string like "forecaster"
+    object_type_filter = None
+
+    # list of object types (class names) to exclude
+    exclude_objects = None
+
+    # list of tests to exclude
+    excluded_tests = None
+
+    # list of valid tags
+    valid_tags = VALID_ESTIMATOR_TAGS
+
+    # list of valid base type names
+    valid_base_types = None
 
     # which sequence the conditional fixtures are generated in
     fixture_sequence = [
@@ -160,42 +179,6 @@ class BaseFixtureGenerator:
     #   warning: direct fixtures retain state changes within the same test
     indirect_fixtures = ["estimator_instance"]
 
-    def pytest_generate_tests(self, metafunc):
-        """Test parameterization routine for pytest.
-
-        This uses create_conditional_fixtures_and_names and generator_dict
-        to create the fixtures for a mark.parametrize decoration of all tests.
-        """
-        # get name of the test
-        test_name = metafunc.function.__name__
-
-        fixture_sequence = self.fixture_sequence
-
-        fixture_vars = getfullargspec(metafunc.function)[0]
-
-        (
-            fixture_param_str,
-            fixture_prod,
-            fixture_names,
-        ) = create_conditional_fixtures_and_names(
-            test_name=test_name,
-            fixture_vars=fixture_vars,
-            generator_dict=self.generator_dict(),
-            fixture_sequence=fixture_sequence,
-            raise_exceptions=True,
-        )
-
-        # determine indirect variables for the parametrization block
-        #   this is intersection of self.indirect_vixtures with args in fixture_vars
-        indirect_vars = list(set(fixture_vars).intersection(self.indirect_fixtures))
-
-        metafunc.parametrize(
-            fixture_param_str,
-            fixture_prod,
-            ids=fixture_names,
-            indirect=indirect_vars,
-        )
-
     def _all_estimators(self):
         """Retrieve list of all estimator classes of type self.estimator_type_filter."""
         est_list = all_estimators(
@@ -209,28 +192,6 @@ class BaseFixtureGenerator:
         if MATRIXDESIGN:
             est_list = subsample_by_version_os(est_list)
         return est_list
-
-    def generator_dict(self):
-        """Return dict with methods _generate_[variable] collected in a dict.
-
-        The returned dict is the one required by create_conditional_fixtures_and_names,
-            used in this _conditional_fixture plug-in to pytest_generate_tests, above.
-
-        Returns
-        -------
-        generator_dict : dict, with keys [variable], where
-            [variable] are all strings such that self has a static method
-                named _generate_[variable](test_name: str, **kwargs)
-            value at [variable] is a reference to _generate_[variable]
-        """
-        gens = [attr for attr in dir(self) if attr.startswith("_generate_")]
-        vars = [gen.replace("_generate_", "") for gen in gens]
-
-        generator_dict = dict()
-        for var, gen in zip(vars, gens):
-            generator_dict[var] = getattr(self, gen)
-
-        return generator_dict
 
     @staticmethod
     def is_excluded(test_name, est):
@@ -403,436 +364,16 @@ class BaseFixtureGenerator:
         return list(nsc_list_arraylike)
 
 
-class QuickTester:
+class QuickTester(_QuickTester):
     """Mixin class which adds the run_tests method to run tests on one estimator."""
 
-    # todo 0.17.0:
-    # * remove the return_exceptions arg
-    # * move the raise_exceptions arg to 2nd place
-    # * change its default to False, from None
-    # * update the docstring - remove return_exceptions
-    # * update the docstring - move raise_exceptions block to 2nd place
-    # * update the docstring - remove deprecation references
-    # * update the docstring - condition in return block, refer only to raise_exceptions
-    # * update the docstring - condition in raises block, refer only to raise_exceptions
-    # * remove the code block for input handling
-    # * remove import of warn
-    def run_tests(
-        self,
-        estimator,
-        return_exceptions=None,
-        tests_to_run=None,
-        fixtures_to_run=None,
-        tests_to_exclude=None,
-        fixtures_to_exclude=None,
-        raise_exceptions=None,
-    ):
-        """Run all tests on one single estimator.
-
-        All tests in self are run on the following estimator type fixtures:
-            if est is a class, then estimator_class = est, and
-                estimator_instance loops over est.create_test_instance()
-            if est is an object, then estimator_class = est.__class__, and
-                estimator_instance = est
-
-        This is compatible with pytest.mark.parametrize decoration,
-            but currently only with multiple *single variable* annotations.
-
-        Parameters
-        ----------
-        estimator : estimator class or estimator instance
-        return_exceptions : bool, optional, default=True
-            whether to return exceptions/failures, or raise them
-                if True: returns exceptions in returned `results` dict
-                if False: raises exceptions as they occur
-            deprecated in 0.15.1, and will be replaced by `raise_exceptions` in 0.17.0.
-            Overridden to `False` if `raise_exceptions=True`.
-            For safe deprecation, use `raise_exceptions` instead of `return_exceptions`.
-        tests_to_run : str or list of str, names of tests to run. default = all tests
-            sub-sets tests that are run to the tests given here.
-        fixtures_to_run : str or list of str, pytest test-fixture combination codes.
-            which test-fixture combinations to run. Default = run all of them.
-            sub-sets tests and fixtures to run to the list given here.
-            If both tests_to_run and fixtures_to_run are provided, runs the *union*,
-            i.e., all test-fixture combinations for tests in tests_to_run,
-                plus all test-fixture combinations in fixtures_to_run.
-        tests_to_exclude : str or list of str, names of tests to exclude. default = None
-            removes tests that should not be run, after subsetting via tests_to_run.
-        fixtures_to_exclude : str or list of str, fixtures to exclude. default = None
-            removes test-fixture combinations that should not be run.
-            This is done after subsetting via fixtures_to_run.
-        raise_exceptions : bool, optional, default=False
-            whether to return exceptions/failures in the results dict, or raise them
-                if False: returns exceptions in returned `results` dict
-                if True: raises exceptions as they occur
-            Overrides `return_exceptions` if used as a keyword argument.
-            both `raise_exceptions=True` and `return_exceptions=True`.
-            Will move to replace `return_exceptions` as 2nd arg in 0.17.0.
-
-        Returns
-        -------
-        results : dict of results of the tests in self
-            keys are test/fixture strings, identical as in pytest, e.g., test[fixture]
-            entries are the string "PASSED" if the test passed,
-                or the exception raised if the test did not pass
-            returned only if all tests pass,
-            or both return_exceptions=True and raise_exceptions=False
-
-        Raises
-        ------
-        if return_exceptions=False, or raise_exceptions=True,
-        raises any exception produced by the tests directly
-
-        Examples
-        --------
-        >>> from sktime.forecasting.naive import NaiveForecaster
-        >>> from sktime.tests.test_all_estimators import TestAllObjects
-        >>> TestAllObjects().run_tests(
-        ...     NaiveForecaster,
-        ...     tests_to_run="test_constructor"
-        ... )
-        {'test_constructor[NaiveForecaster]': 'PASSED'}
-        >>> TestAllObjects().run_tests(
-        ...     NaiveForecaster, fixtures_to_run="test_repr[NaiveForecaster-2]"
-        ... )
-        {'test_repr[NaiveForecaster-2]': 'PASSED'}
-        """
-        # todo 0.17.0: remove this code block
-        if return_exceptions is None and raise_exceptions is None:
-            raise_exceptions = False
-
-        if return_exceptions is not None and raise_exceptions is None:
-            warn(
-                "The return_exceptions argument of check_estimator has been deprecated "
-                "since 0.15.1, and will be replaced by raise_exceptions in 0.17.0. "
-                "For safe deprecation: use raise_exceptions argument instead of "
-                "return_exceptions when using keywords. Avoid positional use, instead "
-                "ensure to use keywords. When not using keywords, the "
-                "default behaviour will not change."
-            )
-            raise_exceptions = not return_exceptions
-        # end block to remove
-
-        tests_to_run = self._check_None_str_or_list_of_str(
-            tests_to_run, var_name="tests_to_run"
-        )
-        fixtures_to_run = self._check_None_str_or_list_of_str(
-            fixtures_to_run, var_name="fixtures_to_run"
-        )
-        tests_to_exclude = self._check_None_str_or_list_of_str(
-            tests_to_exclude, var_name="tests_to_exclude"
-        )
-        fixtures_to_exclude = self._check_None_str_or_list_of_str(
-            fixtures_to_exclude, var_name="fixtures_to_exclude"
-        )
-
-        # retrieve tests from self
-        test_names = [attr for attr in dir(self) if attr.startswith("test")]
-
-        # we override the generator_dict, by replacing it with temp_generator_dict:
-        #  the only estimator (class or instance) is est, this is overridden
-        #  the remaining fixtures are generated conditionally, without change
-        temp_generator_dict = deepcopy(self.generator_dict())
-
-        if isclass(estimator):
-            estimator_class = estimator
-        else:
-            estimator_class = type(estimator)
-
-        def _generate_estimator_class(test_name, **kwargs):
-            return [estimator_class], [estimator_class.__name__]
-
-        def _generate_estimator_instance(test_name, **kwargs):
-            return [estimator.clone()], [estimator_class.__name__]
-
-        def _generate_estimator_instance_cls(test_name, **kwargs):
-            return estimator_class.create_test_instances_and_names()
-
-        temp_generator_dict["estimator_class"] = _generate_estimator_class
-
-        if not isclass(estimator):
-            temp_generator_dict["estimator_instance"] = _generate_estimator_instance
-        else:
-            temp_generator_dict["estimator_instance"] = _generate_estimator_instance_cls
-        # override of generator_dict end, temp_generator_dict is now prepared
-
-        # sub-setting to specific tests to run, if tests or fixtures were speified
-        if tests_to_run is None and fixtures_to_run is None:
-            test_names_subset = test_names
-        else:
-            test_names_subset = []
-            if tests_to_run is not None:
-                test_names_subset += list(set(test_names).intersection(tests_to_run))
-            if fixtures_to_run is not None:
-                # fixture codes contain the test as substring until the first "["
-                tests_from_fixt = [fixt.split("[")[0] for fixt in fixtures_to_run]
-                test_names_subset += list(set(test_names).intersection(tests_from_fixt))
-            test_names_subset = list(set(test_names_subset))
-
-        # sub-setting by removing all tests from tests_to_exclude
-        if tests_to_exclude is not None:
-            test_names_subset = list(
-                set(test_names_subset).difference(tests_to_exclude)
-            )
-
-        # the below loops run all the tests and collect the results here:
-        results = dict()
-        # loop A: we loop over all the tests
-        for test_name in test_names_subset:
-
-            test_fun = getattr(self, test_name)
-            fixture_sequence = self.fixture_sequence
-
-            # all arguments except the first one (self)
-            fixture_vars = getfullargspec(test_fun)[0][1:]
-            fixture_vars = [var for var in fixture_sequence if var in fixture_vars]
-
-            # this call retrieves the conditional fixtures
-            #  for the test test_name, and the estimator
-            _, fixture_prod, fixture_names = create_conditional_fixtures_and_names(
-                test_name=test_name,
-                fixture_vars=fixture_vars,
-                generator_dict=temp_generator_dict,
-                fixture_sequence=fixture_sequence,
-                raise_exceptions=raise_exceptions,
-            )
-
-            # if function is decorated with mark.parametrize, add variable settings
-            # NOTE: currently this works only with single-variable mark.parametrize
-            if hasattr(test_fun, "pytestmark"):
-                if len([x for x in test_fun.pytestmark if x.name == "parametrize"]) > 0:
-                    # get the three lists from pytest
-                    (
-                        pytest_fixture_vars,
-                        pytest_fixture_prod,
-                        pytest_fixture_names,
-                    ) = self._get_pytest_mark_args(test_fun)
-                    # add them to the three lists from conditional fixtures
-                    fixture_vars, fixture_prod, fixture_names = self._product_fixtures(
-                        fixture_vars,
-                        fixture_prod,
-                        fixture_names,
-                        pytest_fixture_vars,
-                        pytest_fixture_prod,
-                        pytest_fixture_names,
-                    )
-
-            # loop B: for each test, we loop over all fixtures
-            for params, fixt_name in zip(fixture_prod, fixture_names):
-
-                # this is needed because pytest unwraps 1-tuples automatically
-                # but subsequent code assumes params is k-tuple, no matter what k is
-                if len(fixture_vars) == 1:
-                    params = (params,)
-                key = f"{test_name}[{fixt_name}]"
-                args = dict(zip(fixture_vars, params))
-
-                # we subset to test-fixtures to run by this, if given
-                #  key is identical to the pytest test-fixture string identifier
-                if fixtures_to_run is not None and key not in fixtures_to_run:
-                    continue
-                if fixtures_to_exclude is not None and key in fixtures_to_exclude:
-                    continue
-
-                if not raise_exceptions:
-                    try:
-                        test_fun(**deepcopy(args))
-                        results[key] = "PASSED"
-                    except Exception as err:
-                        results[key] = err
-                else:
-                    test_fun(**deepcopy(args))
-                    results[key] = "PASSED"
-
-        return results
-
-    @staticmethod
-    def _check_None_str_or_list_of_str(obj, var_name="obj"):
-        """Check that obj is None, str, or list of str, and coerce to list of str."""
-        if obj is not None:
-            msg = f"{var_name} must be None, str, or list of str"
-            if isinstance(obj, str):
-                obj = [obj]
-            if not isinstance(obj, list):
-                raise ValueError(msg)
-            if not np.all([isinstance(x, str) for x in obj]):
-                raise ValueError(msg)
-        return obj
-
-    # todo: surely there is a pytest method that can be called instead of this?
-    #   find and replace if it exists
-    @staticmethod
-    def _get_pytest_mark_args(fun):
-        """Get args from pytest mark annotation of function.
-
-        Parameters
-        ----------
-        fun: callable, any function
-
-        Returns
-        -------
-        pytest_fixture_vars: list of str
-            names of args participating in mark.parametrize marks, in pytest order
-        pytest_fixt_list: list of tuple
-            list of value tuples from the mark parameterization
-            i-th value in each tuple corresponds to i-th arg name in pytest_fixture_vars
-        pytest_fixt_names: list of str
-            i-th element is display name for i-th fixture setting in pytest_fixt_list
-        """
-        from itertools import product
-
-        marks = [x for x in fun.pytestmark if x.name == "parametrize"]
-
-        def to_str(obj):
-            return [str(x) for x in obj]
-
-        def get_id(mark):
-            if "ids" in mark.kwargs.keys():
-                return mark.kwargs["ids"]
-            else:
-                return to_str(range(len(mark.args[1])))
-
-        pytest_fixture_vars = [x.args[0] for x in marks]
-        pytest_fixt_raw = [x.args[1] for x in marks]
-        pytest_fixt_list = product(*pytest_fixt_raw)
-        pytest_fixt_names_raw = [get_id(x) for x in marks]
-        pytest_fixt_names = product(*pytest_fixt_names_raw)
-        pytest_fixt_names = ["-".join(x) for x in pytest_fixt_names]
-
-        return pytest_fixture_vars, pytest_fixt_list, pytest_fixt_names
-
-    @staticmethod
-    def _product_fixtures(
-        fixture_vars,
-        fixture_prod,
-        fixture_names,
-        pytest_fixture_vars,
-        pytest_fixture_prod,
-        pytest_fixture_names,
-    ):
-        """Compute products of two sets of fixture vars, values, names."""
-        from itertools import product
-
-        # product of fixture variable names = concatenation
-        fixture_vars_return = fixture_vars + pytest_fixture_vars
-
-        # this is needed because pytest unwraps 1-tuples automatically
-        # but subsequent code assumes params is k-tuple, no matter what k is
-        if len(fixture_vars) == 1:
-            fixture_prod = [(x,) for x in fixture_prod]
-
-        # product of fixture products = Cartesian product plus append tuples
-        fixture_prod_return = product(fixture_prod, pytest_fixture_prod)
-        fixture_prod_return = [sum(x, ()) for x in fixture_prod_return]
-
-        # product of fixture names = Cartesian product plus concat
-        fixture_names_return = product(fixture_names, pytest_fixture_names)
-        fixture_names_return = ["-".join(x) for x in fixture_names_return]
-
-        return fixture_vars_return, fixture_prod_return, fixture_names_return
+    pass
 
 
-class TestAllObjects(BaseFixtureGenerator, QuickTester):
+class TestAllObjects(_TestAllObjects):
     """Package level tests for all sktime objects."""
 
     estimator_type_filter = "object"
-
-    def test_create_test_instance(self, estimator_class):
-        """Check create_test_instance logic and basic constructor functionality.
-
-        create_test_instance and create_test_instances_and_names are the
-        key methods used to create test instances in testing.
-        If this test does not pass, validity of the other tests cannot be guaranteed.
-
-        Also tests inheritance and super call logic in the constructor.
-
-        Tests that:
-        * create_test_instance results in an instance of estimator_class
-        * __init__ calls super.__init__
-        * _tags_dynamic attribute for tag inspection is present after construction
-        """
-        estimator = estimator_class.create_test_instance()
-
-        # Check that init does not construct object of other class than itself
-        assert isinstance(estimator, estimator_class), (
-            "object returned by create_test_instance must be an instance of the class, "
-            f"found {type(estimator)}"
-        )
-
-        msg = (
-            f"{estimator_class.__name__}.__init__ should call "
-            f"super({estimator_class.__name__}, self).__init__, "
-            "but that does not seem to be the case. Please ensure to call the "
-            f"parent class's constructor in {estimator_class.__name__}.__init__"
-        )
-        assert hasattr(estimator, "_tags_dynamic"), msg
-
-    def test_create_test_instances_and_names(self, estimator_class):
-        """Check that create_test_instances_and_names works.
-
-        create_test_instance and create_test_instances_and_names are the
-        key methods used to create test instances in testing.
-        If this test does not pass, validity of the other tests cannot be guaranteed.
-
-        Tests expected function signature of create_test_instances_and_names.
-        """
-        estimators, names = estimator_class.create_test_instances_and_names()
-
-        assert isinstance(estimators, list), (
-            "first return of create_test_instances_and_names must be a list, "
-            f"found {type(estimators)}"
-        )
-        assert isinstance(names, list), (
-            "second return of create_test_instances_and_names must be a list, "
-            f"found {type(names)}"
-        )
-
-        assert np.all([isinstance(est, estimator_class) for est in estimators]), (
-            "list elements of first return returned by create_test_instances_and_names "
-            "all must be an instance of the class"
-        )
-
-        assert np.all([isinstance(name, str) for name in names]), (
-            "list elements of second return returned by create_test_instances_and_names"
-            " all must be strings"
-        )
-
-        assert len(estimators) == len(names), (
-            "the two lists returned by create_test_instances_and_names must have "
-            "equal length"
-        )
-
-    def test_estimator_tags(self, estimator_class):
-        """Check conventions on estimator tags."""
-        Estimator = estimator_class
-
-        assert hasattr(Estimator, "get_class_tags")
-        all_tags = Estimator.get_class_tags()
-        assert isinstance(all_tags, dict)
-        assert all(isinstance(key, str) for key in all_tags.keys())
-        if hasattr(Estimator, "_tags"):
-            tags = Estimator._tags
-            msg = (
-                f"_tags attribute of {estimator_class} must be dict, "
-                f"but found {type(tags)}"
-            )
-            assert isinstance(tags, dict), msg
-            assert len(tags) > 0, f"_tags dict of class {estimator_class} is empty"
-            invalid_tags = [
-                tag for tag in tags.keys() if tag not in VALID_ESTIMATOR_TAGS
-            ]
-            assert len(invalid_tags) == 0, (
-                f"_tags of {estimator_class} contains invalid tags: {invalid_tags}. "
-                "For a list of valid tags, see registry.all_tags, or registry._tags. "
-            )
-
-        # Avoid ambiguous class attributes
-        ambiguous_attrs = ("tags", "tags_")
-        for attr in ambiguous_attrs:
-            assert not hasattr(Estimator, attr), (
-                f"Please avoid using the {attr} attribute to disambiguate it from "
-                f"estimator tags."
-            )
 
     def test_inheritance(self, estimator_class):
         """Check that estimator inherits from BaseObject and/or BaseEstimator."""
@@ -879,77 +420,6 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
         if hasattr(estimator, "predict_proba"):
             assert hasattr(estimator, "predict")
 
-    def test_no_cross_test_side_effects_part1(self, estimator_instance):
-        """Test that there are no side effects across tests, through estimator state."""
-        estimator_instance.test__attr = 42
-
-    def test_no_cross_test_side_effects_part2(self, estimator_instance):
-        """Test that there are no side effects across tests, through estimator state."""
-        assert not hasattr(estimator_instance, "test__attr")
-
-    @pytest.mark.parametrize("a", [True, 42])
-    def test_no_between_test_case_side_effects(self, estimator_instance, scenario, a):
-        """Test that there are no side effects across instances of the same test."""
-        assert not hasattr(estimator_instance, "test__attr")
-        estimator_instance.test__attr = 42
-
-    def test_get_params(self, estimator_instance):
-        """Check that get_params works correctly."""
-        estimator = estimator_instance
-        params = estimator.get_params()
-        assert isinstance(params, dict)
-        _check_get_params_invariance(estimator.__class__.__name__, estimator)
-
-    def test_set_params(self, estimator_instance):
-        """Check that set_params works correctly."""
-        estimator = estimator_instance
-        params = estimator.get_params()
-
-        msg = f"set_params of {type(estimator).__name__} does not return self"
-        assert estimator.set_params(**params) is estimator, msg
-
-        is_equal, equals_msg = deep_equals(
-            estimator.get_params(), params, return_msg=True
-        )
-        msg = (
-            f"get_params result of {type(estimator).__name__} (x) does not match "
-            f"what was passed to set_params (y). Reason for discrepancy: {equals_msg}"
-        )
-        assert is_equal, msg
-
-    def test_set_params_sklearn(self, estimator_class):
-        """Check that set_params works correctly, mirrors sklearn check_set_params.
-
-        Instead of the "fuzz values" in sklearn's check_set_params,
-        we use the other test parameter settings (which are assumed valid).
-        This guarantees settings which play along with the __init__ content.
-        """
-        estimator = estimator_class.create_test_instance()
-        test_params = estimator_class.get_test_params()
-        if not isinstance(test_params, list):
-            test_params = [test_params]
-
-        for params in test_params:
-            # we construct the full parameter set for params
-            # params may only have parameters that are deviating from defaults
-            # in order to set non-default parameters back to defaults
-            params_full = estimator_class.get_param_defaults()
-            params_full.update(params)
-
-            msg = f"set_params of {estimator_class.__name__} does not return self"
-            est_after_set = estimator.set_params(**params_full)
-            assert est_after_set is estimator, msg
-
-            is_equal, equals_msg = deep_equals(
-                estimator.get_params(deep=False), params_full, return_msg=True
-            )
-            msg = (
-                f"get_params result of {estimator_class.__name__} (x) does not match "
-                f"what was passed to set_params (y). "
-                f"Reason for discrepancy: {equals_msg}"
-            )
-            assert is_equal, msg
-
     def test_clone(self, estimator_instance):
         """Check that clone method does not raise exceptions and results in a clone.
 
@@ -963,106 +433,6 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
         assert est_clone is not estimator_instance
         if hasattr(est_clone, "is_fitted"):
             assert not est_clone.is_fitted
-
-    def test_repr(self, estimator_instance):
-        """Check that __repr__ call to instance does not raise exceptions."""
-        estimator = estimator_instance
-        repr(estimator)
-
-    def test_constructor(self, estimator_class):
-        """Check that the constructor has sklearn compatible signature and behaviour.
-
-        Based on sklearn check_estimator testing of __init__ logic.
-        Uses create_test_instance to create an instance.
-        Assumes test_create_test_instance has passed and certified create_test_instance.
-
-        Tests that:
-        * constructor has no varargs
-        * tests that constructor constructs an instance of the class
-        * tests that all parameters are set in init to an attribute of the same name
-        * tests that parameter values are always copied to the attribute and not changed
-        * tests that default parameters are one of the following:
-            None, str, int, float, bool, tuple, function, joblib memory, numpy primitive
-            (other type parameters should be None, default handling should be by writing
-            the default to attribute of a different name, e.g., my_param_ not my_param)
-        """
-        msg = "constructor __init__ should have no varargs"
-        assert getfullargspec(estimator_class.__init__).varkw is None, msg
-
-        estimator = estimator_class.create_test_instance()
-        assert isinstance(estimator, estimator_class)
-
-        # Ensure that each parameter is set in init
-        init_params = _get_args(type(estimator).__init__)
-        invalid_attr = set(init_params) - set(vars(estimator)) - {"self"}
-        assert not invalid_attr, (
-            "Estimator %s should store all parameters"
-            " as an attribute during init. Did not find "
-            "attributes `%s`." % (estimator.__class__.__name__, sorted(invalid_attr))
-        )
-
-        # Ensure that init does nothing but set parameters
-        # No logic/interaction with other parameters
-        def param_filter(p):
-            """Identify hyper parameters of an estimator."""
-            return p.name != "self" and p.kind not in [p.VAR_KEYWORD, p.VAR_POSITIONAL]
-
-        init_params = [
-            p
-            for p in signature(estimator.__init__).parameters.values()
-            if param_filter(p)
-        ]
-
-        params = estimator.get_params()
-
-        test_params = estimator_class.get_test_params()
-        if isinstance(test_params, list):
-            test_params = test_params[0]
-        test_params = test_params.keys()
-
-        init_params = [param for param in init_params if param.name not in test_params]
-
-        for param in init_params:
-            assert param.default != param.empty, (
-                "parameter `%s` for %s has no default value and is not "
-                "set in `get_test_params`" % (param.name, estimator.__class__.__name__)
-            )
-            if type(param.default) is type:
-                assert param.default in [np.float64, np.int64]
-            else:
-                assert type(param.default) in [
-                    str,
-                    int,
-                    float,
-                    bool,
-                    tuple,
-                    type(None),
-                    np.float64,
-                    types.FunctionType,
-                    joblib.Memory,
-                ]
-
-            param_value = params[param.name]
-            if isinstance(param_value, np.ndarray):
-                np.testing.assert_array_equal(param_value, param.default)
-            else:
-                if bool(
-                    isinstance(param_value, numbers.Real) and np.isnan(param_value)
-                ):
-                    # Allows to set default parameters to np.nan
-                    assert param_value is param.default, param.name
-                else:
-                    assert param_value == param.default, param.name
-
-    def test_valid_estimator_class_tags(self, estimator_class):
-        """Check that Estimator class tags are in VALID_ESTIMATOR_TAGS."""
-        for tag in estimator_class.get_class_tags().keys():
-            assert tag in VALID_ESTIMATOR_TAGS
-
-    def test_valid_estimator_tags(self, estimator_instance):
-        """Check that Estimator tags are in VALID_ESTIMATOR_TAGS."""
-        for tag in estimator_instance.get_tags().keys():
-            assert tag in VALID_ESTIMATOR_TAGS
 
 
 class TestAllEstimators(BaseFixtureGenerator, QuickTester):
