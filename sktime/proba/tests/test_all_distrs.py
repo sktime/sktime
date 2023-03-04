@@ -50,6 +50,7 @@ METHODS_SCALAR_POS = ["var", "energy"]  # result always non-negative?
 METHODS_X = ["energy", "pdf", "log_pdf", "cdf"]
 METHODS_X_POS = ["energy", "pdf", "cdf"]  # result always non-negative?
 METHODS_P = ["ppf"]
+METHODS_ROWWISE = ["energy"]  # results in one column
 
 
 class TestAllDistributions(DistributionFixtureGenerator, QuickTester):
@@ -80,12 +81,7 @@ class TestAllDistributions(DistributionFixtureGenerator, QuickTester):
         d = estimator_instance
         res = getattr(estimator_instance, method)()
 
-        assert d.shape == res.shape
-        assert (res.index == d.index).all()
-        assert (res.columns == d.columns).all()
-
-        if method in METHODS_SCALAR_POS:
-            assert (res >= 0).all().all()
+        _check_output_format(res, d, method)
 
     @pytest.mark.parametrize("method", METHODS_X)
     def test_methods_x(self, estimator_instance, method):
@@ -97,12 +93,7 @@ class TestAllDistributions(DistributionFixtureGenerator, QuickTester):
         x = d.sample()
         res = getattr(estimator_instance, method)(x)
 
-        assert d.shape == res.shape
-        assert (res.index == d.index).all()
-        assert (res.columns == d.columns).all()
-
-        if method in METHODS_X_POS:
-            assert (res >= 0).all().all()
+        _check_output_format(res, d, method)
 
     @pytest.mark.parametrize("method", METHODS_P)
     def test_methods_p(self, estimator_instance, method):
@@ -115,6 +106,22 @@ class TestAllDistributions(DistributionFixtureGenerator, QuickTester):
         p = pd.DataFrame(np_unif, index=d.index, columns=d.columns)
         res = getattr(estimator_instance, method)(p)
 
-        assert d.shape == res.shape
-        assert (res.index == d.index).all()
-        assert (res.columns == d.columns).all()
+        _check_output_format(res, d, method)
+
+
+def _check_output_format(res, dist, method):
+    """Check output format expectations for BaseDistribution tests."""
+    if method in METHODS_ROWWISE:
+        exp_shape = (dist.shape[0], 1)
+    else:
+        exp_shape = dist.shape
+    assert res.shape == exp_shape
+    assert (res.index == dist.index).all()
+    if method not in METHODS_ROWWISE:
+        assert (res.columns == dist.columns).all()
+
+    if method in METHODS_SCALAR_POS:
+        assert (res >= 0).all().all()
+
+    if method in METHODS_X_POS:
+        assert (res >= 0).all().all()
