@@ -384,6 +384,12 @@ ESTIMATOR_TAG_REGISTER = [
         ("list", "str"),
         "methods provided by the distribution that return approximate results",
     ),
+    (
+        "distr:measuretype",
+        "distribution",
+        ("str", ["continuous", "discrete", "mixed"]),
+        "class the distribution measure belongs to - abs.continuous, discrete, mixed",
+    ),
 ]
 
 ESTIMATOR_TAG_TABLE = pd.DataFrame(ESTIMATOR_TAG_REGISTER)
