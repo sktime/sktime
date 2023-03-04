@@ -230,12 +230,6 @@ class VectorizedDF:
             )
         )
 
-    # TODO: remove in v0.18.0
-    @deprecated(
-        version="0.16.2",
-        reason="__getitem__ will be removed in v0.18.0",
-        category=FutureWarning,
-    )
     def __getitem__(self, i: int):
         """Return the i-th element iterated over in vectorization."""
         return next(itertools.islice(self, i, None))
