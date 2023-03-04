@@ -358,7 +358,7 @@ class QuickTester(_QuickTester):
     pass
 
 
-class TestAllObjects(_TestAllObjects):
+class TestAllObjects(BaseFixtureGenerator, QuickTester, _TestAllObjects):
     """Package level tests for all sktime objects."""
 
     estimator_type_filter = "object"
