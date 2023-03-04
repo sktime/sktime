@@ -54,6 +54,7 @@ class TFNormal(_BaseTFDistribution):
         # move this functionality to the base class
         # 0.18.0?
         self._mu, self._sigma = self._get_bc_params()
+        distr = tfd.Normal(loc=self._mu, scale=self._sigma)
         shape = self._mu.shape
 
         if index is None:
