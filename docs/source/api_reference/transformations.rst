@@ -356,8 +356,8 @@ Filtering and denoising
 
     ThetaLinesTransformer
 
-Differencing and slope
-~~~~~~~~~~~~~~~~~~~~~~
+Differencing, slope, kinematics
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: sktime.transformations.series.difference
 
@@ -374,6 +374,14 @@ Differencing and slope
     :template: class.rst
 
     SlopeTransformer
+
+.. currentmodule:: sktime.transformations.series.kinematic
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    KinematicFeatures
 
 Binning and segmentation
 ~~~~~~~~~~~~~~~~~~~~~~~~
