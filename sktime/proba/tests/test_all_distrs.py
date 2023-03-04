@@ -120,8 +120,5 @@ def _check_output_format(res, dist, method):
     if method not in METHODS_ROWWISE:
         assert (res.columns == dist.columns).all()
 
-    if method in METHODS_SCALAR_POS:
-        assert (res >= 0).all().all()
-
-    if method in METHODS_X_POS:
+    if method in METHODS_SCALAR_POS or method in METHODS_X_POS:
         assert (res >= 0).all().all()
