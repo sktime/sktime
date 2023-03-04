@@ -55,8 +55,23 @@ class Normal(BaseDistribution):
         return np.broadcast_arrays(self.mu, self.sigma)
 
     def energy(self, x=None):
-        """Energy of self, w.r.t. self or a constant frame x."""
-        # note: self-energy, x=None case seems correct
+        r"""Energy of self, w.r.t. self or a constant frame x.
+
+        Let :math:`X, Y` be i.i.d. random variables with the distribution of `self`.
+
+        If `x` is `None`, returns :math:`\mathbb{E}[|X-Y|]` (per row), "self-energy".
+        If `x` is passed, returns :math:`\mathbb{E}[|X-x|]` (per row), "energy wrt x".
+
+        Parameters
+        ----------
+        x : None or pd.DataFrame, optional, default=None
+            if pd.DataFrame, must have same rows and columns as `self`
+
+        Returns
+        -------
+        pd.DataFrame with same rows as `self`, single column `"energy"`
+        each row contains one float, self-energy/energy as described above.
+        """
         if x is None:
             sd_arr = self._sigma
             energy_arr = 2 * np.sum(sd_arr, axis=1) / np.sqrt(np.pi)
@@ -69,12 +84,30 @@ class Normal(BaseDistribution):
         return energy
 
     def mean(self):
-        """Return expected value of the distribution."""
+        r"""Return expected value of the distribution.
+
+        Let :math:`X` be a random variable with the distribution of `self`.
+        Returns the expectation :math:`\mathbb{E}[X]`
+
+        Returns
+        -------
+        pd.DataFrame with same rows, columns as `self`
+        expected value of distribution (entry-wise)
+        """
         mean_arr = self._mu
         return pd.DataFrame(mean_arr, index=self.index, columns=self.columns)
 
     def var(self):
-        """Return element/entry-wise variance of the distribution."""
+        r"""Return element/entry-wise variance of the distribution.
+
+        Let :math:`X` be a random variable with the distribution of `self`.
+        Returns :math:`\mathbb{V}[X] = \mathbb{E}\left(X - \mathbb{E}[X]\right)^2`
+
+        Returns
+        -------
+        pd.DataFrame with same rows, columns as `self`
+        variance of distribution (entry-wise)
+        """
         sd_arr = self._sigma
         return pd.DataFrame(sd_arr, index=self.index, columns=self.columns) ** 2
 

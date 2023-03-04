@@ -192,7 +192,23 @@ class BaseDistribution(BaseObject):
             raise NotImplementedError(self._method_err_msg("log_pdf", "error"))
 
     def energy(self, x=None):
-        """Energy of self, w.r.t. self or a constant frame x."""
+        """Energy of self, w.r.t. self or a constant frame x.
+
+        Let :math:`X, Y` be i.i.d. random variables with the distribution of `self`.
+
+        If `x` is `None`, returns :math:`E[|X-Y|]` (for each row), "self-energy".
+        If `x` is passed, returns :math:`E[|X-x|]` (for each row), "energy wrt x".
+
+        Parameters
+        ----------
+        x : None or pd.DataFrame, optional, default=None
+            if pd.DataFrame, must have same rows and columns as `self`
+
+        Returns
+        -------
+        pd.DataFrame with same rows as `self`, single column `"energy"`
+        each row contains one float, self-energy/energy as described above.
+        """
         # we want to approximate E[abs(X-Y)]
         # if x = None, X,Y are i.i.d. copies of self
         # if x is not None, X=x (constant), Y=self
@@ -219,7 +235,16 @@ class BaseDistribution(BaseObject):
         return energy
 
     def mean(self):
-        """Return expected value of the distribution."""
+        r"""Return expected value of the distribution.
+
+        Let :math:`X` be a random variable with the distribution of `self`.
+        Returns the expectation :math:`\mathbb{E}[X]`
+
+        Returns
+        -------
+        pd.DataFrame with same rows, columns as `self`
+        expected value of distribution (entry-wise)
+        """
         approx_method = (
             "by approximating the expected value by the arithmetic mean of "
             f"{self.APPROX_MEAN_SPL} samples"
@@ -230,7 +255,16 @@ class BaseDistribution(BaseObject):
         return spl.groupby(level=0).mean()
 
     def var(self):
-        """Return element/entry-wise variance of the distribution."""
+        r"""Return element/entry-wise variance of the distribution.
+
+        Let :math:`X` be a random variable with the distribution of `self`.
+        Returns :math:`\mathbb{V}[X] = \mathbb{E}\left(X - \mathbb{E}[X]\right)^2`
+
+        Returns
+        -------
+        pd.DataFrame with same rows, columns as `self`
+        variance of distribution (entry-wise)
+        """
         approx_method = (
             "by approximating the variance by the arithmetic mean of "
             f"{self.APPROX_VAR_SPL} samples of squared differences"
