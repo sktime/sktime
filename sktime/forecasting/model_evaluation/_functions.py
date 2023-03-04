@@ -182,6 +182,7 @@ def _evaluate_window(
                 Failed forecaster: {forecaster}.
                 """,
                 FitFailedWarning,
+                stacklevel=2,
             )
 
     if pd.isnull(cutoff):
@@ -305,7 +306,7 @@ def evaluate(
         Optionally, users may select other metrics that can be supplied
         by `scoring` argument. These can be forecast metrics of any kind,
         i.e., point forecast metrics, interval metrics, quantile foreast metrics.
-        https://www.sktime.org/en/stable/api_reference/performance_metrics.html?highlight=metrics
+        https://www.sktime.net/en/stable/api_reference/performance_metrics.html?highlight=metrics
         To evaluate estimators using a specific metric, provide them to the scoring arg.
     >>> from sktime.performance_metrics.forecasting import MeanAbsoluteError
     >>> loss = MeanAbsoluteError()
