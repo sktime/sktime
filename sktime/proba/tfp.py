@@ -40,6 +40,8 @@ class TFNormal(_BaseTFDistribution):
 
         self.mu = mu
         self.sigma = sigma
+        self.index = index
+        self.columns = columns
 
         _check_estimator_deps(self)
 
@@ -47,24 +49,28 @@ class TFNormal(_BaseTFDistribution):
 
         tfd = tfp.distributions
 
-        mu, sigma = self._get_bc_params()
-        distr = tfd.Normal(loc=mu, scale=sigma)
+        # todo: untangle index handling
+        # and broadcast of parameters.
+        # move this functionality to the base class
+        # 0.18.0?
+        self._mu, self._sigma = self._get_bc_params()
+        shape = self._mu.shape
 
         if index is None:
-            index = pd.RangeIndex(distr.batch_shape[0])
+            index = pd.RangeIndex(shape[0])
 
         if columns is None:
-            columns = pd.RangeIndex(distr.batch_shape[1])
+            columns = pd.RangeIndex(shape[1])
 
         super(TFNormal, self).__init__(index=index, columns=columns, distr=distr)
 
     def _get_bc_params(self):
         """Fully broadcast parameters of self, given param shapes and index, columns."""
         to_broadcast = [self.mu, self.sigma]
-        if hasattr(self, "index"):
+        if hasattr(self, "index") and self.index is not None:
             to_broadcast += [self.index.to_numpy().reshape(-1, 1)]
-        if hasattr(self, "columns"):
-            to_broadcast += [self.index.to_numpy()]
+        if hasattr(self, "columns") and self.columns is not None:
+            to_broadcast += [self.columns.to_numpy()]
         bc = np.broadcast_arrays(*to_broadcast)
         return bc[0], bc[1]
 
