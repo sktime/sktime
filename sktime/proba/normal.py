@@ -33,6 +33,7 @@ class Normal(BaseDistribution):
     _tags = {
         "capabilities:approx": [],
         "capabilities:exact": ["mean", "var", "energy", "pdf", "log_pdf", "cdf", "ppf"],
+        "distr:measuretype": "continuous",
     }
 
     def __init__(self, mu, sigma, index=None, columns=None):

@@ -34,6 +34,7 @@ class TFNormal(_BaseTFDistribution):
         "python_dependencies": "tensorflow_probability",
         "capabilities:approx": [],
         "capabilities:exact": ["mean", "var", "energy", "pdf", "log_pdf", "cdf"],
+        "distr:measuretype": "continuous",
     }
 
     def __init__(self, mu, sigma, index=None, columns=None):
@@ -73,7 +74,7 @@ class TFNormal(_BaseTFDistribution):
         if hasattr(self, "columns") and self.columns is not None:
             to_broadcast += [self.columns.to_numpy()]
         bc = np.broadcast_arrays(*to_broadcast)
-        return bc[0], bc[1]
+        return np.array(bc[0], dtype="float"), np.array(bc[1], dtype="float")
 
     def energy(self, x=None):
         r"""Energy of self, w.r.t. self or a constant frame x.
