@@ -33,7 +33,7 @@ class TFNormal(_BaseTFDistribution):
     _tags = {
         "python_dependencies": "tensorflow_probability",
         "capabilities:approx": [],
-        "capabilities:exact": ["mean", "var", "energy", "pdf", "log_pdf", "cdf", "ppf"],
+        "capabilities:exact": ["mean", "var", "energy", "pdf", "log_pdf", "cdf"],
     }
 
     def __init__(self, mu, sigma, index=None, columns=None):
@@ -94,11 +94,11 @@ class TFNormal(_BaseTFDistribution):
         each row contains one float, self-energy/energy as described above.
         """
         if x is None:
-            _, sd_arr = np.broadcast_arrays(self.mu, self.sigma)
+            sd_arr = self._sigma
             energy_arr = 2 * np.sum(sd_arr, axis=1) / np.sqrt(np.pi)
             energy = pd.DataFrame(energy_arr, index=self.index, columns=["energy"])
         else:
-            mu_arr, sd_arr = np.broadcast_arrays(self.mu, self.sigma)
+            mu_arr, sd_arr = self._mu, self._sigma
             c_arr = (x - mu_arr) * (2 * self.cdf(x) - 1) + 2 * sd_arr**2 * self.pdf(x)
             energy_arr = np.sum(c_arr, axis=1)
             energy = pd.DataFrame(energy_arr, index=self.index, columns=["energy"])
@@ -115,7 +115,7 @@ class TFNormal(_BaseTFDistribution):
         pd.DataFrame with same rows, columns as `self`
         expected value of distribution (entry-wise)
         """
-        mean_arr, _ = np.broadcast_arrays(self.mu, self.sigma)
+        mean_arr = self._mu
         return pd.DataFrame(mean_arr, index=self.index, columns=self.columns)
 
     def var(self):
@@ -129,7 +129,7 @@ class TFNormal(_BaseTFDistribution):
         pd.DataFrame with same rows, columns as `self`
         variance of distribution (entry-wise)
         """
-        _, sd_arr = np.broadcast_arrays(self.mu, self.sigma)
+        sd_arr = self._sigma
         return pd.DataFrame(sd_arr, index=self.index, columns=self.columns) ** 2
 
     @classmethod
