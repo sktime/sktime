@@ -129,7 +129,7 @@ with the image of name ``PYTHON_VERSION`` based on the following python versions
 +----------------+----------------+
 
 The dockerized tests can be also executed via `make <https://www.gnu.org/software/make/>`_,
-via the co,mand ``make dockertest PYTHON_VERSION=<python version>``.
+via the command ``make dockertest PYTHON_VERSION=<python version>``.
 The ``PYTHON_VERSION`` argument specifies the python version and is the same string as in the table above.
 For example, to execute the tests in the Python version ``3.7.16``,
 use ``make dockertest PYTHON_VERSION=py37``.
