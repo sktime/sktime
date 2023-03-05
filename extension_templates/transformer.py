@@ -31,7 +31,7 @@ Optional implements:
     update                      - _update(self, X, y=None)
     fitted parameter inspection - _get_fitted_params()
 
-Testing - implement if sktime transformer (not needed locally):
+Testing - required for sktime test framework and check_estimator usage:
     get default parameters for test instance(s) - get_test_params()
 """
 # todo: write an informative docstring for the file or module, remove the above

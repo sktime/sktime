@@ -19,7 +19,7 @@ How to use this:
 Mandatory implements:
     transforming    - _transform(self, X, X2=None)
 
-Testing - implement if sktime forecaster (not needed locally):
+Testing - required for sktime test framework and check_estimator usage:
     get default parameters for test instance(s) - get_test_params()
 
 copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
