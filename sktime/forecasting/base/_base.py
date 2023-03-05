@@ -2258,7 +2258,9 @@ class BaseForecaster(BaseEstimator):
         pred_mean = convert_to(pred_mean, to_type=df_types)
         # pred_mean and pred_var now have the same format
 
-        if legacy_interface and _check_dl_dependencies(severity="none"):
+        if legacy_interface is None:
+            legacy_interface = _check_dl_dependencies(severity="none")
+        if legacy_interface:
             import tensorflow_probability as tfp
 
             d = tfp.distributions.Normal
