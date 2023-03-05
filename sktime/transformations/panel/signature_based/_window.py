@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-window.py
+window.py.
 
 ======================================
 Introduces the Window module that is used when splitting the path over:
@@ -21,7 +21,7 @@ _Pair = co.namedtuple("Pair", ("start", "end"))
 def _window_getter(
     window_name, window_depth=None, window_length=None, window_step=None
 ):
-    """Gets the window method correspondent to the given string and initialises with specified parameters.
+    """Get the window method correspondent to the given string and initialises with specified parameters.
 
     Parameters
     ----------
@@ -72,11 +72,12 @@ class _Window:
     """
 
     def num_windows(self, length):
-        """Method that returns the total number of windows in the set.
+        """Return the total number of windows in the set.
 
         Parameters
         ----------
         length: int, The length of the input path.
+
         Returns
         -------
         int: The number of windows.
