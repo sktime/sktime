@@ -717,8 +717,8 @@ class SquaredDistrLoss(_BaseDistrForecastingMetric):
     * (mean) squared error/loss, i.e., confusingly named the same as the
       point prediction loss commonly known as the mean squared error
 
-    For a predictive distribution :math:`d` with pdf :math:`p_d`
-    and a ground truth value :math:`y`, the logarithmic loss is
+    For a predictive distribution :math:`d`
+    and a ground truth value :math:`y`, the squared (distribution) loss is
     defined as :math:`L(y, d) := -2 p_d(y) + \|p_d\|^2`,
     where :math:`\|p_d\|^2` is the (function) L2-norm of :math:`p_d`.
 
@@ -752,13 +752,21 @@ class SquaredDistrLoss(_BaseDistrForecastingMetric):
 
 
 class CRPS(_BaseDistrForecastingMetric):
-    """Continuous rank probability score for distributional predictions.
+    r"""Continuous rank probability score for distributional predictions.
 
     Also known as:
 
     * integrated squared loss (ISL)
     * integrated Brier loss (IBL)
     * energy loss
+
+    For a predictive distribution :math:`d` and a ground truth value :math:`y`,
+    the CRPS is defined as
+    :math:`L(y, d) := \mathbb{E}_{Y \sim d}|Y-y| - \frac{1}{2} \mathbb{E}_{X,Y \sim d}|X-Y|`.
+
+    `evaluate` computes the average test sample loss.
+    `evaluate_by_index` produces the loss sample by test data point
+    `multivariate` controls averaging over variables.
 
     Parameters
     ----------
