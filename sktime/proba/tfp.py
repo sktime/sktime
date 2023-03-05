@@ -32,7 +32,7 @@ class TFNormal(_BaseTFDistribution):
 
     _tags = {
         "python_dependencies": "tensorflow_probability",
-        "capabilities:approx": [],
+        "capabilities:approx": ["pdfnorm"],
         "capabilities:exact": ["mean", "var", "energy", "pdf", "log_pdf", "cdf"],
         "distr:measuretype": "continuous",
     }

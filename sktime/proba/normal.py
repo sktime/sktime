@@ -31,7 +31,7 @@ class Normal(BaseDistribution):
     """
 
     _tags = {
-        "capabilities:approx": [],
+        "capabilities:approx": ["pdfnorm"],
         "capabilities:exact": ["mean", "var", "energy", "pdf", "log_pdf", "cdf", "ppf"],
         "distr:measuretype": "continuous",
     }
