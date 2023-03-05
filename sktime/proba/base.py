@@ -307,7 +307,7 @@ class BaseDistribution(BaseObject):
         warn(self._method_error_msg("pdfnorm", fill_in=approx_method))
 
         # uses formula int p(x)^a dx = E[p(X)^{a-1}], and MC approximates the RHS
-        spl = [self.pdf(self.sample())**(a-1) for _ in range(self.APPROX_SPL)]
+        spl = [self.pdf(self.sample()) ** (a - 1) for _ in range(self.APPROX_SPL)]
         return pd.concat(spl, axis=0).groupby(level=0).mean()
 
     def sample(self, n_samples=None):
