@@ -12,6 +12,7 @@ from sktime.utils._testing.panel import _make_nested_from_array
 # correct input is meant to be a positive integer of 1 or more.
 @pytest.mark.parametrize("bad_num_intervals", ["str", 1.2, -1.2, -1, {}, 0])
 def test_bad_input_args(bad_num_intervals):
+    """Test that exception is raised for bad num levels."""
     X = _make_nested_from_array(np.ones(10), n_instances=10, n_columns=1)
 
     if not isinstance(bad_num_intervals, int):
@@ -24,7 +25,7 @@ def test_bad_input_args(bad_num_intervals):
 
 # Check the transformer has changed the data correctly.
 def test_output_of_transformer():
-
+    """Test that the transformer has changed the data correctly."""
     X = _make_nested_from_array(
         np.array([4, 6, 10, 12, 8, 6, 5, 5]), n_instances=1, n_columns=1
     )
@@ -56,7 +57,7 @@ def test_output_of_transformer():
 
 @pytest.mark.parametrize("num_intervals,corr_series_length", [(2, 2), (5, 5), (8, 8)])
 def test_output_dimensions(num_intervals, corr_series_length):
-
+    """Test output dimensions."""
     X = _make_nested_from_array(np.ones(13), n_instances=10, n_columns=1)
 
     s = SlopeTransformer(num_intervals=num_intervals).fit(X)
@@ -74,7 +75,7 @@ def test_output_dimensions(num_intervals, corr_series_length):
 
 # This is to check that Slope produces the same result along each dimension
 def test_slope_performs_correcly_along_each_dim():
-
+    """Test that Slope produces the same result along each dimension."""
     X = _make_nested_from_array(
         np.array([4, 6, 10, 12, 8, 6, 5, 5]), n_instances=1, n_columns=2
     )
@@ -92,6 +93,7 @@ def test_slope_performs_correcly_along_each_dim():
 
 
 def convert_list_to_dataframe(list_to_convert):
+    """Convert a Python list to a Pandas dataframe."""
     # Convert this into a panda's data frame
     df = pd.DataFrame()
     for i in range(len(list_to_convert)):
