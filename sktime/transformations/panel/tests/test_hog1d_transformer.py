@@ -137,9 +137,7 @@ def convert_list_to_dataframe(list_to_convert):
 
 
 def check_if_dataframes_are_equal(df1, df2):
-    """
-    for some reason, this is how you check that two dataframes are equal.
-    """
+    """Check that pandas DataFrames are equal."""
     from pandas.testing import assert_frame_equal
 
     try:
