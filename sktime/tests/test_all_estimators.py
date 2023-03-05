@@ -138,21 +138,27 @@ class BaseFixtureGenerator(_BaseFixtureGenerator):
     # --------------------------------------------------------
 
     # package to search for objects
+    # expected type: str, package/module name, relative to python environment root
     package_name = "sktime"
 
     # which object types are generated; None=all, or scitype string like "forecaster"
     object_type_filter = None
 
     # list of object types (class names) to exclude
+    # expected type: list of str, str are class names
     exclude_objects = None
 
     # list of tests to exclude
+    # expected type: dict of lists, key:str, value: List[str]
+    # keys are class names of estimators, values are lists of test names to exclude
     excluded_tests = None
 
     # list of valid tags
+    # expected type: list of str, str are tag names
     valid_tags = VALID_ESTIMATOR_TAGS
 
     # list of valid base type names
+    # expected type: list of str, str are base type (class) names
     valid_base_types = None
 
     # which sequence the conditional fixtures are generated in
