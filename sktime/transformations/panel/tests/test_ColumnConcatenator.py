@@ -7,6 +7,7 @@ from sktime.transformations.panel.compose import ColumnConcatenator
 
 
 def test_TimeSeriesConcatenator():
+    """Test the time series concatenator."""
     X, y = load_basic_motions(split="train", return_X_y=True)
 
     # check that loaded dataframe is multivariate
