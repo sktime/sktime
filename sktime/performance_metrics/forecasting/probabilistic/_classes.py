@@ -762,7 +762,7 @@ class CRPS(_BaseDistrForecastingMetric):
 
     For a predictive distribution :math:`d` and a ground truth value :math:`y`,
     the CRPS is defined as
-    :math:`L(y, d) := \mathbb{E}_{Y \sim d}|Y-y| - \frac{1}{2} \mathbb{E}_{X,Y \sim d}|X-Y|`.
+    :math:`L(y, d) := \mathbb{E}_{Y \sim d}|Y-y| - \frac{1}{2} \mathbb{E}_{X,Y \sim d}|X-Y|`.  # noqa: E501
 
     `evaluate` computes the average test sample loss.
     `evaluate_by_index` produces the loss sample by test data point
