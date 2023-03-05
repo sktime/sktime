@@ -23,13 +23,14 @@ class BaseDistribution(BaseObject):
         "python_version": None,  # PEP 440 python version specifier to limit versions
         "python_dependencies": None,  # string or str list of pkg soft dependencies
         "reserved_params": ["index", "columns"],
-        "capabilities:approx": ["energy", "mean", "var"],
+        "capabilities:approx": ["energy", "mean", "var", "pdfnorm"],
     }
 
     # move this to configs when the config interface is ready
-    APPROX_MEAN_SPL = 1000
-    APPROX_VAR_SPL = 1000
-    APPROX_ENERGY_SPL = 1000
+    APPROX_MEAN_SPL = 1000  # sample size used in MC estimates of mean
+    APPROX_VAR_SPL = 1000  # sample size used in MC estimates of var
+    APPROX_ENERGY_SPL = 1000  # sample size used in MC estimates of energy
+    APPROX_SPL = 1000  # sample size used in other MC estimates
 
     def __init__(self, index=None, columns=None):
 
@@ -192,12 +193,14 @@ class BaseDistribution(BaseObject):
             raise NotImplementedError(self._method_err_msg("log_pdf", "error"))
 
     def energy(self, x=None):
-        """Energy of self, w.r.t. self or a constant frame x.
+        r"""Energy of self, w.r.t. self or a constant frame x.
 
         Let :math:`X, Y` be i.i.d. random variables with the distribution of `self`.
 
-        If `x` is `None`, returns :math:`E[|X-Y|]` (for each row), "self-energy".
-        If `x` is passed, returns :math:`E[|X-x|]` (for each row), "energy wrt x".
+        If `x` is `None`, returns :math:`\mathbb{E}[|X-Y|]` (for each row),
+        "self-energy" (of the row marginal distribution).
+        If `x` is passed, returns :math:`\mathbb{E}[|X-x|]` (for each row),
+        "energy wrt x" (of the row marginal distribution).
 
         Parameters
         ----------
@@ -275,6 +278,37 @@ class BaseDistribution(BaseObject):
         spl2 = self.sample(self.APPROX_VAR_SPL)
         spl = (spl1 - spl2) ** 2
         return spl.groupby(level=0).mean()
+
+    def pdfnorm(self, a=2):
+        r"""a-norm of pdf, defaults to 2-norm.
+
+        computes a-norm of the entry marginal pdf, i.e.,
+        :math:`\mathbb{E}[p_X(X)^{a-1}] = \int p(x)^a dx`,
+        where :math:`X` is a random variable distributed according to the entry marginal
+        of `self`, and :math:`p_X` is its pdf
+
+        Parameters
+        ----------
+        a: int or float, optional, default=2
+
+        Returns
+        -------
+        pd.DataFrame with same rows and columns as `self`
+        each entry is :math:`\mathbb{E}[p_X(X)^{a-1}] = \int p(x)^a dx`, see above
+        """
+        # special case: if a == 1, this is just the integral of the pdf, which is 1
+        if a == 1:
+            return pd.DataFrame(1.0, index=self.index, columns=self.columns)
+
+        approx_method = (
+            f"by approximating the {a}-norm of the pdf by the arithmetic mean of "
+            f"{self.APPROX_SPL} samples"
+        )
+        warn(self._method_error_msg("pdfnorm", fill_in=approx_method))
+
+        # uses formula int p(x)^a dx = E[p(X)^{a-1}], and MC approximates the RHS
+        spl = [self.pdf(self.sample())**(a-1) for _ in range(self.APPROX_SPL)]
+        return pd.concat(spl, axis=0).groupby(level=0).mean()
 
     def sample(self, n_samples=None):
         """Sample from the distribution.
