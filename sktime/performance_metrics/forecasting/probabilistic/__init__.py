@@ -22,8 +22,8 @@ __all__ = [
 ]
 
 from sktime.performance_metrics.forecasting.probabilistic._classes import (
-    ConstraintViolation,
     CRPS,
+    ConstraintViolation,
     EmpiricalCoverage,
     LogLoss,
     PinballLoss,
