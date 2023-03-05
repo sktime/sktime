@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+"""Slope transformer test code."""
+
 import numpy as np
 import pandas as pd
 import pytest

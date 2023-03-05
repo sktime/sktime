@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+"""Tests for PAA utilities."""
+
 import numpy as np
 import pandas as pd
 import pytest

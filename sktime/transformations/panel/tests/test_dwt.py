@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+"""DWT (Discrete Wavelet Transform) test code."""
+
 import numpy as np
 import pandas as pd
 import pytest
