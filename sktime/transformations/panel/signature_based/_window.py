@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 window.py
+
 ======================================
 Introduces the Window module that is used when splitting the path over:
     - Global
@@ -20,8 +21,7 @@ _Pair = co.namedtuple("Pair", ("start", "end"))
 def _window_getter(
     window_name, window_depth=None, window_length=None, window_step=None
 ):
-    """Gets the window method correspondent to the given string and initialises
-    with specified parameters.
+    """Gets the window method correspondent to the given string and initialises with specified parameters.
 
     Parameters
     ----------
@@ -73,6 +73,7 @@ class _Window:
 
     def num_windows(self, length):
         """Method that returns the total number of windows in the set.
+
         Parameters
         ----------
         length: int, The length of the input path.
@@ -92,7 +93,8 @@ class _Global(_Window):
 
 class _ExpandingSliding(_Window):
     def __init__(self, initial_length, start_step, end_step):
-        """
+        """Build a ExpandingSliding object.
+
         Parameters
         ----------
         initial_length: int, Initial length of the input window.
@@ -122,12 +124,11 @@ class _ExpandingSliding(_Window):
 
 
 class _Sliding(_ExpandingSliding):
-    """A window starting at zero and going to some point that increases
-    between windows.
-    """
+    """A window starting at zero and going to some point that increases between windows."""
 
     def __init__(self, length, step):
-        """
+        """Build a Sliding object.
+
         Parameters
         ----------
         length: int, The length of the window.
@@ -142,7 +143,8 @@ class _Expanding(_ExpandingSliding):
     """A window of fixed length, slid along the dataset."""
 
     def __init__(self, length, step):
-        """
+        """Build a Expanding object.
+
         Parameters
         ----------
         length: int, The length of each window.
