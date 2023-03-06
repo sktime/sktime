@@ -2,9 +2,8 @@
 """Test the Padder transformer."""
 
 from sktime.datasets import load_basic_motions
-from sktime.transformations.panel.padder import PaddingTransformer
-
 from sktime.datatypes._panel._convert import from_nested_to_2d_array
+from sktime.transformations.panel.padder import PaddingTransformer
 
 
 def test_padding_transformer():
