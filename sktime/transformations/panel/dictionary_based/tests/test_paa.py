@@ -26,7 +26,6 @@ def test_bad_input_args(bad_num_intervals):
             PAA(num_intervals=bad_num_intervals).fit(X).transform(X)
 
 
-# Check the transformer has changed the data correctly.
 def test_output_of_transformer():
     """Test that the transformer has changed the data correctly."""
     X = _make_nested_from_array(
@@ -73,7 +72,6 @@ def test_output_dimensions():
     assert num_cols == 5
 
 
-# This is to check that PAA produces the same result along each dimension
 def test_paa_performs_correcly_along_each_dim():
     """Test that PAA produces the same result along each dimension."""
     X = _make_nested_from_array(

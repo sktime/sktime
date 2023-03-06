@@ -27,7 +27,6 @@ def test_bad_input_args(bad_num_levels):
             DWTTransformer(num_levels=bad_num_levels).fit(X).transform(X)
 
 
-# Check the transformer has changed the data correctly.
 def test_output_of_transformer():
     """Test that the transformer has changed the data correctly."""
     X = _make_nested_from_array(
@@ -67,7 +66,6 @@ def test_output_of_transformer():
     # assert check_if_dataframes_are_equal(res,orig)
 
 
-# This is to test that if num_levels = 0 then no change occurs.
 def test_no_levels_does_no_change():
     """Test that if num_levels = 0 then no change occurs."""
     X = _make_nested_from_array(
@@ -96,7 +94,6 @@ def test_output_dimensions(num_levels, corr_series_length):
     assert num_cols == 1
 
 
-# This is to check that DWT produces the same result along each dimension
 def test_dwt_performs_correcly_along_each_dim():
     """Test that DWT produces the same result along each dimension."""
     X = _make_nested_from_array(
@@ -137,7 +134,6 @@ def test_dwt_performs_correcly_along_each_dim():
 
 def convert_list_to_dataframe(list_to_convert):
     """Convert a Python list to a Pandas dataframe."""
-    # Convert this into a panda's data frame
     df = pd.DataFrame()
     for i in range(len(list_to_convert)):
         inst = list_to_convert[i]

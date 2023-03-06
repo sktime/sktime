@@ -62,7 +62,6 @@ def test_bad_scaling_factor(bad_scaling_factor):
         HOG1DTransformer(scaling_factor=bad_scaling_factor).fit(X).transform(X)
 
 
-# Check the transformer has changed the data correctly.
 def test_output_of_transformer():
     """Test that the transformer has changed the data correctly."""
     X = _make_nested_from_array(
@@ -85,7 +84,6 @@ def test_output_of_transformer():
     assert check_if_dataframes_are_equal(res, orig)
 
 
-# the time series length should always be num_bins*num_intervals
 # (num_intervals is 2 by default)
 @pytest.mark.parametrize("num_bins,corr_series_length", [(4, 8), (8, 16), (12, 24)])
 def test_output_dimensions(num_bins, corr_series_length):
@@ -105,7 +103,6 @@ def test_output_dimensions(num_bins, corr_series_length):
     assert num_cols == 1
 
 
-# This is to check that HOG1D produces the same result along each dimension
 def test_hog1d_performs_correcly_along_each_dim():
     """Test that HOG1D produces the same result along each dimension."""
     X = _make_nested_from_array(
@@ -124,10 +121,8 @@ def test_hog1d_performs_correcly_along_each_dim():
     assert check_if_dataframes_are_equal(res, orig)
 
 
-# Helper function to convert a Python list to a Pandas dataframe.
 def convert_list_to_dataframe(list_to_convert):
     """Convert a Python list to a Pandas dataframe."""
-    # Convert this into a panda's data frame
     df = pd.DataFrame()
     for i in range(len(list_to_convert)):
         inst = list_to_convert[i]
