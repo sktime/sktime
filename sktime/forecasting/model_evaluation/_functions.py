@@ -467,6 +467,7 @@ def evaluate(
         )
         results = pd.concat(results)
 
+    results = results.reset_index(drop=True)
     if isinstance(scoring, List):
         for s in scoring[1:]:
             results[f"test_{s.name}"] = np.nan
@@ -479,6 +480,6 @@ def evaluate(
 
     if not return_data:
         results = results.drop(columns=["y_train", "y_test", "y_pred"])
-    results = results.astype({"len_train_window": int}).reset_index(drop=True)
+    results = results.astype({"len_train_window": int})
 
     return results
