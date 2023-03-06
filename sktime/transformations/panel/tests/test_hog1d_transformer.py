@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 """HOG1D transformer test code."""
 
+import numbers
+
 import numpy as np
 import pandas as pd
 import pytest
-import numbers
+
 from sktime.transformations.panel.hog1d import HOG1DTransformer
 from sktime.utils._testing.panel import _make_nested_from_array
 

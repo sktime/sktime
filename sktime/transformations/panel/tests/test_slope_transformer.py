@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 """Slope transformer test code."""
 
+import math
+
 import numpy as np
 import pandas as pd
 import pytest
-import math
+
 from sktime.transformations.panel.slope import SlopeTransformer
 from sktime.utils._testing.panel import _make_nested_from_array
 

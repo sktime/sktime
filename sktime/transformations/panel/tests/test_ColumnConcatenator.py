@@ -2,6 +2,7 @@
 """Column concatenator test code."""
 
 import numpy as np
+
 from sktime.datasets import load_basic_motions
 from sktime.transformations.panel.compose import ColumnConcatenator
 

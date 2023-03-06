@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 """DWT (Discrete Wavelet Transform) test code."""
 
+import math
+
 import numpy as np
 import pandas as pd
 import pytest
-import math
+
 from sktime.transformations.panel.dwt import DWTTransformer
 from sktime.utils._testing.panel import _make_nested_from_array
 
