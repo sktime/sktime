@@ -39,7 +39,7 @@ def _window_getter(
     list:
         A list of lists where the inner lists are lists of tuples that
         denote the start and end indexes of each window.
-    """
+    """  # noqa: E501
     # Setup all available windows here
     length_step = {"length": window_length, "step": window_step}
     window_dict = {
@@ -125,7 +125,7 @@ class _ExpandingSliding(_Window):
 
 
 class _Sliding(_ExpandingSliding):
-    """A window starting at zero and going to some point that increases between windows."""
+    """A window starting at zero and going to some point that increases between windows."""  # noqa: E501
 
     def __init__(self, length, step):
         """Build a Sliding object.
