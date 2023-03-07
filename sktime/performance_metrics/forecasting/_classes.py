@@ -292,7 +292,6 @@ class BaseForecastingErrorMetric(BaseMetric):
 
         return eval_result
 
-
     def evaluate_by_index(self, y_true, y_pred, **kwargs):
         """Return the metric evaluated at each time point.
 
