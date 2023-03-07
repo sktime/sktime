@@ -285,6 +285,30 @@ class BaseForecastingErrorMetric(BaseMetric):
         else:
             return eval_result
 
+    def _evaluate_by_index_vectorized(self, y_true, y_pred, **kwargs):
+        """Vectorized version of _evaluate_by_index.
+
+        Runs _evaluate for all instances in y_true, y_pred,
+        and returns results in a hierarchical pandas.DataFrame.
+
+        Parameters
+        ----------
+        y_true : VectorizedDF
+        y_pred : VectorizedDF
+        non-time-like instances of y_true, y_pred must be identical
+        """
+        eval_result = y_true.vectorize_est(
+            estimator=self.clone().set_params(**{"multilevel": "uniform_average"}),
+            method="_evaluate_by_index",
+            varname_of_self="y_true",
+            args={**kwargs, "y_pred": y_pred},
+            colname_default=self.name,
+            return_type="list",
+        )
+
+        eval_result = y_true.reconstruct(eval_result)
+        return eval_result
+
     def evaluate_by_index(self, y_true, y_pred, **kwargs):
         """Return the metric evaluated at each time point.
 
@@ -318,8 +342,18 @@ class BaseForecastingErrorMetric(BaseMetric):
         y_true_inner, y_pred_inner, multioutput, multilevel, kwargs = self._check_ys(
             y_true, y_pred, multioutput, multilevel, **kwargs
         )
-        # pass to inner function
-        out_df = self._evaluate_by_index(y_true_inner, y_pred_inner, **kwargs)
+        requires_vectorization = isinstance(y_true_inner, VectorizedDF)
+        if not requires_vectorization:
+            # pass to inner function
+            out_df = self._evaluate_by_index(
+                y_true=y_true_inner, y_pred=y_pred_inner, **kwargs
+            )
+        else:
+            out_df = self._evaluate_by_index_vectorized(
+                y_true=y_true_inner, y_pred=y_pred_inner, **kwargs
+            )
+            if multilevel == "uniform_average":
+                out_df = out_df.groupby(level=-1).mean()
 
         return out_df
 
@@ -360,9 +394,11 @@ class BaseForecastingErrorMetric(BaseMetric):
         multioutput = self.multioutput
         n = y_true.shape[0]
         if multioutput == "raw_values":
-            out_series = pd.DataFrame(index=y_true.index, columns=y_true.columns)
+            out_series = pd.DataFrame(
+                index=y_true.index, columns=y_true.columns, dtype="float64"
+            )
         else:
-            out_series = pd.Series(index=y_true.index)
+            out_series = pd.Series(index=y_true.index, dtype="float64")
         try:
             x_bar = self.evaluate(y_true, y_pred, **kwargs)
             for i in range(n):
@@ -464,6 +500,9 @@ class BaseForecastingErrorMetric(BaseMetric):
         INNER_MTYPES = ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"]
 
         def _coerce_to_df(y, var_name="y"):
+            if isinstance(y, VectorizedDF):
+                return y.X_multiindex
+
             valid, msg, metadata = check_is_scitype(
                 y, scitype=SCITYPES, return_metadata=True, var_name=var_name
             )
