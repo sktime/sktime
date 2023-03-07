@@ -130,3 +130,67 @@ def test_custom_metric(greater_is_better):
     assert isinstance(score, float)
 
     check_estimator(fc_scorer, raise_exceptions=True)
+
+
+@pytest.mark.parametrize("n_columns", [1, 2])
+@pytest.mark.parametrize("multioutput", ["uniform_average", "raw_values"])
+@pytest.mark.parametrize("metric", metrics, ids=names)
+def test_metric_output_by_instancet(metric, multioutput, n_columns):
+    """Test output of evaluate_by_index is of correct type, dependent on multioutput."""
+    y_pred = _make_series(n_columns=n_columns, n_timepoints=20, random_state=21)
+    y_true = _make_series(n_columns=n_columns, n_timepoints=20, random_state=42)
+
+    # coerce to DataFrame since _make_series does not return consisten output type
+    y_pred = pd.DataFrame(y_pred)
+    y_true = pd.DataFrame(y_true)
+
+    res = metric(multioutput=multioutput).evaluate_by_index(
+        y_true=y_true,
+        y_pred=y_pred,
+        y_pred_benchmark=y_pred,
+        y_train=y_true,
+    )
+
+    assert isinstance(res, pd.DataFrame)
+    assert (res.index == y_true.index).all()
+
+    if multioutput == "uniform_average":
+        assert len(res.columns) == 1
+    elif multioutput == "raw_values":
+        assert (res.columns == y_true.columns).all()
+
+
+@pytest.mark.parametrize("n_columns", [1, 2])
+@pytest.mark.parametrize(
+    "multilevel", ["uniform_average", "uniform_average_time", "raw_values"]
+)
+@pytest.mark.parametrize("multioutput", ["uniform_average", "raw_values"])
+def test_metric_hierarchical_by_index(multioutput, multilevel, n_columns):
+    """Test hierarchical input for metrics."""
+    y_pred = _make_hierarchical(random_state=21, n_columns=n_columns)
+    y_true = _make_hierarchical(random_state=42, n_columns=n_columns)
+
+    metric = MeanSquaredError(multioutput=multioutput, multilevel=multilevel)
+
+    res = metric(
+        y_true=y_true,
+        y_pred=y_pred,
+    )
+
+    if multilevel == "raw_values":
+        assert isinstance(res, (pd.DataFrame, pd.Series))
+        assert isinstance(res.index, pd.MultiIndex)
+
+        expected_index = y_true.index.droplevel(-1).unique()
+        found_index = res.index.unique()
+        assert set(expected_index) == set(found_index)
+        if multioutput == "raw_values" and isinstance(res, pd.DataFrame):
+            assert all(y_true.columns == res.columns)
+    # if multilevel == "uniform_average" or "uniform_average_time"
+    else:
+        if multioutput == "uniform_average":
+            assert isinstance(res, float)
+        elif multioutput == "raw_values":
+            assert isinstance(res, np.ndarray)
+            assert res.ndim == 1
+            assert len(res) == len(y_true.columns)
