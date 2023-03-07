@@ -84,6 +84,13 @@ def _coerce_to_df(obj):
     return pd.DataFrame(obj)
 
 
+def _coerce_to_1d_numpy(obj):
+    """Coerce to 1D np.ndarray, from pd.DataFrame or pd.Series."""
+    if isinstance(obj, (pd.DataFrame, pd.Series)):
+        obj = obj.values
+    return obj.flatten()
+
+
 class BaseForecastingErrorMetric(BaseMetric):
     """Base class for defining forecasting error metrics in sktime.
 
@@ -208,10 +215,9 @@ class BaseForecastingErrorMetric(BaseMetric):
             )
             if multilevel == "uniform_average":
                 out_df = out_df.mean(axis=0)
-                # if level is averaged, but not variables, return numpy
-                if multioutput == "raw_values":
-                    out_df = out_df.values
 
+        if multilevel == "uniform_average" and multioutput == "raw_values":
+            out_df = _coerce_to_1d_numpy(out_df)
         if multilevel == "uniform_average" and multioutput == "uniform_average":
             out_df = _coerce_to_scalar(out_df)
         if multilevel == "raw_values":
