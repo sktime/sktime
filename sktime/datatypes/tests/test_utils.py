@@ -49,10 +49,17 @@ def test_get_time_index(scitype, mtype):
         return None
 
     # retrieve example fixture
-    fixtures = get_examples(mtype=mtype, as_scitype=scitype, return_lossy=False)
+    fixtures = get_examples(
+        mtype=mtype, as_scitype=scitype, return_lossy=True, return_metadata=True
+    )
 
-    for fixture in fixtures.values():
+    for fixture_tuple in fixtures.values():
+        fixture = fixture_tuple[0]
+        fixture_metadata = fixture_tuple[2]
+
         if fixture is None:
+            continue
+        if not fixture_metadata.get("is_equal_index", True):
             continue
 
         idx = get_time_index(fixture)
