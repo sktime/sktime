@@ -32,7 +32,10 @@ SCITYPE_MTYPE_PAIRS = [
 
 @pytest.mark.parametrize("scitype,mtype", SCITYPE_MTYPE_PAIRS)
 def test_get_time_index(scitype, mtype):
-    """Tests that conversions for scitype agree with from/to example fixtures.
+    """Tests that get_time_index returns the expected output.
+
+    Note: this is tested only for fixtures with equal time index across instances,
+    as get_time_index assumes that.
 
     Parameters
     ----------
@@ -41,7 +44,7 @@ def test_get_time_index(scitype, mtype):
 
     Raises
     ------
-    AssertionError if get_cutoff does not return a length 1 pandas.index
+    AssertionError if get_time_index does not return the expected return
         for any fixture example of given scitype, mtype
     """
     # get_time_index currently does not work for df-list type, skip
