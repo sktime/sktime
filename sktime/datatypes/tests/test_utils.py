@@ -52,9 +52,7 @@ def test_get_time_index(scitype, mtype):
         return None
 
     # retrieve example fixture
-    fixtures = get_examples(
-        mtype=mtype, as_scitype=scitype, return_lossy=True, return_metadata=True
-    )
+    fixtures = get_examples(mtype=mtype, as_scitype=scitype, return_metadata=True)
 
     for fixture_tuple in fixtures.values():
         fixture = fixture_tuple[0]

@@ -171,8 +171,9 @@ def test_check_metadata_inference(scitype, mtype, fixture_index):
             del metadata["scitype"]
 
         # currently we do not check this field in metadata inference
-        if "is_equal_index" in metadata:
-            del metadata["is_equal_index"]
+        if "is_equal_index" in expected_metadata:
+            expected_metadata = expected_metadata.copy()
+            del expected_metadata["is_equal_index"]
 
         msg = (
             f"check_is_mtype returns wrong metadata on scitype {scitype}, "
