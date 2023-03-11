@@ -217,13 +217,15 @@ class BaseForecastingErrorMetric(BaseMetric):
             out_df = self._evaluate_vectorized(
                 y_true=y_true_inner, y_pred=y_pred_inner, **kwargs
             )
-            if multilevel == "uniform_average":
+            if multilevel in ["uniform_average", "uniform_average_time"]:
                 out_df = out_df.mean(axis=0)
                 # if level is averaged, but not variables, return numpy
                 if multioutput == "raw_values":
                     out_df = out_df.values
 
         if multilevel == "uniform_average" and multioutput == "uniform_average":
+            out_df = _coerce_to_scalar(out_df)
+        if multilevel == "uniform_average_time" and multioutput == "uniform_average":
             out_df = _coerce_to_scalar(out_df)
         if multilevel == "raw_values":
             out_df = _coerce_to_df(out_df)
@@ -363,7 +365,8 @@ class BaseForecastingErrorMetric(BaseMetric):
             out_df = self._evaluate_by_index_vectorized(
                 y_true=y_true_inner, y_pred=y_pred_inner, **kwargs
             )
-            if multilevel == "uniform_average":
+
+            if multilevel in ["uniform_average", "uniform_average_time"]:
                 out_df = out_df.groupby(level=-1).mean()
 
         if multioutput == "raw_values":

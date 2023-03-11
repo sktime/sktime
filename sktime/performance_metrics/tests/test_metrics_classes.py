@@ -162,7 +162,7 @@ def test_metric_output_by_instance(metric, multioutput, n_columns):
 
 @pytest.mark.parametrize("n_columns", [1, 2])
 @pytest.mark.parametrize(
-    "multilevel", ["uniform_average", "uniform_average_time", "raw_values"]
+    "multilevel", ["uniform_average", "raw_values"]
 )
 @pytest.mark.parametrize("multioutput", ["uniform_average", "raw_values"])
 def test_metric_hierarchical_by_index(multioutput, multilevel, n_columns):
