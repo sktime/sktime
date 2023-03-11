@@ -172,7 +172,7 @@ def test_metric_hierarchical_by_index(multioutput, multilevel, n_columns):
 
     metric = MeanSquaredError(multioutput=multioutput, multilevel=multilevel)
 
-    res = metric(
+    res = metric.evaluate_by_index(
         y_true=y_true,
         y_pred=y_pred,
     )
