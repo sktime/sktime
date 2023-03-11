@@ -263,6 +263,7 @@ example_dict_metadata[("Panel", 3)] = {
     "is_one_panel": True,
     "is_equally_spaced": True,
     "is_equal_length": True,
+    "is_equal_index": False,
     "is_empty": False,
     "has_nans": False,
     "n_instances": 3,
