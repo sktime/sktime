@@ -84,6 +84,17 @@ def _coerce_to_df(obj):
     return pd.DataFrame(obj)
 
 
+def _coerce_to_series(obj):
+    """Coerce to pd.Series, from polymorphic input scalar or pandas."""
+    if isinstance(obj, pd.DataFrame):
+        assert len(obj.columns) == 1
+        return obj.iloc[:, 0]
+    elif isinstance(obj, pd.Series):
+        return obj
+    else:
+        return pd.Series(obj)
+
+
 class BaseForecastingErrorMetric(BaseMetric):
     """Base class for defining forecasting error metrics in sktime.
 
@@ -355,6 +366,10 @@ class BaseForecastingErrorMetric(BaseMetric):
             if multilevel == "uniform_average":
                 out_df = out_df.groupby(level=-1).mean()
 
+        if multioutput == "raw_values":
+            out_df = _coerce_to_series(out_df)
+        else:
+            out_df = _coerce_to_df(out_df)
         return out_df
 
     def _evaluate_by_index(self, y_true, y_pred, **kwargs):

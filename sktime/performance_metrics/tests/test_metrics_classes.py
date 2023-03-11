@@ -151,13 +151,13 @@ def test_metric_output_by_instance(metric, multioutput, n_columns):
         y_train=y_true,
     )
 
-    assert isinstance(res, pd.DataFrame)
-    assert (res.index == y_true.index).all()
-
-    if multioutput == "uniform_average":
-        assert len(res.columns) == 1
-    elif multioutput == "raw_values":
+    if multioutput == "raw_values":
+        assert isinstance(res, pd.DataFrame)
         assert (res.columns == y_true.columns).all()
+    else:
+        assert isinstance(res, pd.Series)
+
+    assert (res.index == y_true.index).all()
 
 
 @pytest.mark.parametrize("n_columns", [1, 2])
@@ -178,9 +178,10 @@ def test_metric_hierarchical_by_index(multioutput, multilevel, n_columns):
     )
 
     if multioutput == "raw_values":
-        assert all(y_true.columns == res.columns)
+        assert isinstance(res, pd.DataFrame)
+        assert (res.columns == y_true.columns).all()
     else:
-        assert len(res.columns) == 1
+        assert isinstance(res, pd.Series)
 
     if multilevel == "raw_values":
         assert isinstance(res, (pd.DataFrame, pd.Series))
