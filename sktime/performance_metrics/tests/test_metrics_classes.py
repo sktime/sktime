@@ -184,9 +184,11 @@ def test_metric_hierarchical_by_index(multioutput, multilevel, n_columns):
         assert isinstance(res, pd.Series)
 
     if multilevel == "raw_values":
-        assert isinstance(res, (pd.DataFrame, pd.Series))
         assert isinstance(res.index, pd.MultiIndex)
+        expected_index = y_true.index
+    else:
+        assert not isinstance(res.index, pd.MultiIndex)
+        expected_index = y_true.index.get_level_values(-1).unique()
 
-        expected_index = y_true.index.droplevel(-1).unique()
-        found_index = res.index.unique()
-        assert set(expected_index) == set(found_index)
+    found_index = res.index.unique()
+    assert set(expected_index) == set(found_index)
