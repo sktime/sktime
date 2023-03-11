@@ -367,9 +367,9 @@ class BaseForecastingErrorMetric(BaseMetric):
                 out_df = out_df.groupby(level=-1).mean()
 
         if multioutput == "raw_values":
-            out_df = _coerce_to_series(out_df)
-        else:
             out_df = _coerce_to_df(out_df)
+        else:
+            out_df = _coerce_to_series(out_df)
         return out_df
 
     def _evaluate_by_index(self, y_true, y_pred, **kwargs):
