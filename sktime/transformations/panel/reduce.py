@@ -118,13 +118,19 @@ class TimeBinner(BaseTransformer):
         self.aggfunc = aggfunc
         if self.aggfunc is None:
             self._aggfunc = np.mean
-            warnings.warn("No aggfunc was passed, defaulting to mean")
+            warnings.warn(
+                "No aggfunc was passed, defaulting to mean",
+                stacklevel=2,
+            )
         else:
             assert callable(aggfunc), (
                 "aggfunc should be callable with" "signature 1D -> float"
             )
             if aggfunc.__name__ == "<lambda>":
-                warnings.warn("Save and load will not work with lambda functions")
+                warnings.warn(
+                    "Save and load will not work with lambda functions",
+                    stacklevel=2,
+                )
             self._aggfunc = self.aggfunc
         self.idx = idx
 
