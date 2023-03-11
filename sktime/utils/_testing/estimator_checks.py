@@ -195,7 +195,11 @@ def _has_capability(est, method: str) -> bool:
                 tag_name=tag_name, tag_value_default=tag_value_default
             )
         else:
-            return est.get_tag(tag_name=tag_name, tag_value_default=tag_value_default)
+            return est.get_tag(
+                tag_name=tag_name,
+                tag_value_default=tag_value_default,
+                raise_error=False,
+            )
 
     if not hasattr(est, method):
         return False

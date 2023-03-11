@@ -2117,6 +2117,25 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "ShivamPathak99",
+      "name": "Shivam Pathak",
+      "avatar_url": "https://avatars.githubusercontent.com/u/98941325?s=400&v=4",
+      "profile": "https://github.com/ShivamPathak99",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "SamiAlavi",
+      "name": "Sami Alavi",
+      "avatar_url": "https://avatars.githubusercontent.com/u/32700289?v=4",
+      "profile": "https://github.com/SamiAlavi",
+      "contributions": [
+        "code",
+        "maintenance"
+      ]
     }
   ]
 }

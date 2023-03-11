@@ -4,11 +4,15 @@
 
 Contains VectorizedDF class.
 """
+
+__author__ = ["fkiraly", "hoesler"]
+
+
 import itertools
-from itertools import product
 
 import numpy as np
 import pandas as pd
+from deprecated.sphinx import deprecated
 
 from sktime.datatypes._check import check_is_scitype, mtype
 from sktime.datatypes._convert import convert_to
@@ -43,11 +47,11 @@ class VectorizedDF:
 
     Methods
     -------
-    self[i] or self.__getitem__(i)
-        Returns i-th Series/Panel (depending on iterate_as) in X
+    iter(self) or self.__iter__()
+        Iterates over each Series/Panel (depending on iterate_as) in X
         as pandas.DataFrame with Index or MultiIndex (in sktime pandas format)
-    len(self) or self.__len__
-        returns number of Series/Panel in X
+    len(self) or self.__len__()
+        returns number of Series/Panels in X
     get_iter_indices()
         Returns pandas.(Multi)Index that are iterated over
     reconstruct(self, df_list, convert_back=False)
@@ -185,6 +189,12 @@ class VectorizedDF:
         """
         return self.iter_indices
 
+    # TODO: remove in v0.18.0
+    @deprecated(
+        version="0.16.2",
+        reason="get_iloc_indexer will be removed in v0.18.0",
+        category=FutureWarning,
+    )
     def get_iloc_indexer(self, i: int):
         """Get iloc row/column indexer for i-th list element.
 
@@ -206,115 +216,18 @@ class VectorizedDF:
             col_n = len(col_ix)
             return (i // col_n, i % col_n)
 
-    def _iter_indices(self, X=None):
-        """Get indices that are iterated over in vectorization.
-
-        Allows specifying `X` other than self, in which case indices are references
-        to row and column indices of `X`.
-
-        Parameters
-        ----------
-        X : `None`, `VectorizedDF`, or pd.DataFrame; optional, default=self
-          must be in one of the `sktime` time series formats, with last column time
-          if not `self`, the highest levels of row or column index in `X`
-          must agree with those indices of `self` that are non-trivially vectorized
-
-        Returns
-        -------
-        list of pair of `pandas.Index` or `pandas.MultiIndex`
-            iterable with unique indices that are iterated over
-            use to reconstruct data frame after iteration
-            `i`-th element of list selects rows/columns in `i`-th iterate sub-DataFrame
-            first element of pair are rows, second element are columns selected
-            references are `loc` references, to rows and columns of `X` (default=self)
-        """
-        if X is None:
-            X = self.X_multiindex
-        elif isinstance(X, VectorizedDF):
-            X = X.X_multiindex
-
-        row_ix, col_ix = self.get_iter_indices()
-
-        if row_ix is None and col_ix is None:
-            ret = [(X.index, X.columns)]
-        elif row_ix is None:
-            ret = product([X.index], col_ix)
-        elif col_ix is None:
-            ret = product(row_ix, [X.columns])
-        else:  # if row_ix and col_ix are both not None
-            ret = product(row_ix, col_ix)
-        return list(ret)
-
     def __len__(self):
         """Return number of indices to iterate over."""
         return np.prod(self.shape)
-
-    def __getitem__(self, i: int):
-        """Return the i-th element iterated over in vectorization."""
-        row_ind, col_ind = self._get_item_indexer(i=i)
-        return self._get_X_at_index(row_ind=row_ind, col_ind=col_ind)
-
-    def _get_X_at_index(self, row_ind=None, col_ind=None, X=None):
-        """Return subset of self, at row_ind and col_ind.
-
-        Parameters
-        ----------
-        row_ind : `None`, or `pd.Index` coercible; optional, default=None
-        col_ind : `None`, or `pd.Index` coercible; optional, default=None
-        X : `None`, `VectorizedDF`, or pd.DataFrame; optional, default=self
-          must be in one of the `sktime` time series formats, with last column time
-
-        Returns
-        -------
-        `pd.DataFrame`, loc-subset of `X` to `row_ind` at rows, and `col_ind` at cols
-
-        * if `row_ind` or `col_ind` are `None`, rows/cols are not subsetted
-        * if `X` is `VectorizedDF`, it is replaced by `X.X_multiindex` (`pandas` form)
-        * the `freq` attribute of the last index level is preserved in subsetting
-        """
-        if X is None:
-            X = self.X_multiindex
-        elif isinstance(X, VectorizedDF):
-            X = X.X_multiindex
-
-        if col_ind is None and row_ind is None:
-            return X
-        elif col_ind is None:
-            res = X.loc[row_ind]
-        elif row_ind is None:
-            res = X[col_ind]
-        else:
-            res = X.loc[row_ind, col_ind]
-        res = _enforce_index_freq(res)
-        return res.copy()
-
-    def _get_item_indexer(self, i: int, X=None):
-        """Get the i-th indexer from _iter_indices.
-
-        Parameters
-        ----------
-        X : `None`, `VectorizedDF`, or pd.DataFrame; optional, default=self
-          must be in one of the `sktime` time series formats, with last column time
-          if not `self`, the highest levels of row or column index in `X`
-          must agree with those indices of `self` that are non-trivially vectorized
-
-        Returns
-        -------
-        self._iter_indices(X=X)[i], tuple elements coerced to pd.Index coercible
-        """
-        row_ind, col_ind = self._iter_indices(X=X)[i]
-        if isinstance(col_ind, list):
-            col_ind = pd.Index(col_ind)
-        elif not isinstance(col_ind, pd.Index):
-            col_ind = [col_ind]
-        return row_ind, col_ind
 
     def __iter__(self):
         """Iterate over all instances.
 
         Returns
         -------
-        An iterator over all instances
+        A generator over all slices/instances iterated over.
+        i-th element corresponds to i-th vectorization slice, rows first then cols
+        Same as iterating over 2nd tuple element of self.items()
         """
         return (
             group
@@ -322,6 +235,10 @@ class VectorizedDF:
                 iterate_as=self.iterate_as, iterate_cols=self.iterate_cols
             )
         )
+
+    def __getitem__(self, i: int):
+        """Return the i-th element iterated over in vectorization."""
+        return next(itertools.islice(self, i, None))
 
     def items(self, iterate_as=None, iterate_cols=None):
         """Iterate over (group name, column name, instance) tuples.
@@ -347,7 +264,11 @@ class VectorizedDF:
 
         Returns
         -------
-        An iterator over all (row name, column name, instance) tuples.
+        A generator returning (row index, col index, instance) tuples for vectorization.
+        i-th element corresponds to i-th vectorization slice, rows first then cols
+        2nd tuple element is X row sub-set to 0-th tuple element, col sub-set to 1-st
+        if no sub-setting takes place for row, 0-th tuple element is None
+        if no sub-setting takes place for col, 1-st tuple element is None
         """
         if iterate_as is None:
             iterate_as = self.iterate_as
@@ -436,7 +357,7 @@ class VectorizedDF:
 
         Parameters
         ----------
-        df_list : iterable of objects of same type and sequence as __getitem__ returns.
+        df_list : iterable of objects of same type and sequence as __iter__ returns.
             can be self, but will in general be another object to be useful.
             Example: [some_operation(df) for df in self] that leaves types the same
         convert_back : bool, optional, default = False
@@ -605,7 +526,7 @@ class VectorizedDF:
         return_type : str, one of "pd.DataFrame" or "list"
             the return will be of this type;
             if `pd.DataFrame`, with row/col indices being `self.get_iter_indices()`
-            if `list`, entries in sequence corresponding to `self__getitem__`
+            if `list`, entries in sequence corresponding to `self__iter__`
         rowname_default : str, optional, default="estimators"
             used as index name of single row if no row vectorization is performed
         colname_default : str, optional, default="estimators"
