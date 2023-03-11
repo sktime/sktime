@@ -636,7 +636,8 @@ class ShapeletTransform(BaseTransformer):
                 "calling the transform method "
                 "will raise an Exception. Please re-fit the transform with "
                 "other data and/or "
-                "parameter options."
+                "parameter options.",
+                stacklevel=2,
             )
 
         return self

@@ -132,7 +132,10 @@ class TimeSince(BaseTransformer):
 
         if time_index.is_numeric():
             if self.freq:
-                warnings.warn("Index is integer type. `freq` will be ignored.")
+                warnings.warn(
+                    "Index is integer type. `freq` will be ignored.",
+                    stacklevel=2,
+                )
             self.freq_ = None
         elif isinstance(time_index, (pd.DatetimeIndex, pd.PeriodIndex)):
             # Chooses first non None value
@@ -146,7 +149,8 @@ class TimeSince(BaseTransformer):
             ):
                 warnings.warn(
                     f"Using frequency from index: {time_index.freq}, which "
-                    f"does not match the frequency given: {self.freq}."
+                    f"does not match the frequency given: {self.freq}.",
+                    stacklevel=2,
                 )
         else:
             raise ValueError("Index must be of type int, datetime, or period.")
