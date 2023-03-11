@@ -403,9 +403,13 @@ class BaseForecastingErrorMetric(BaseMetric):
             x_bar = self.evaluate(y_true, y_pred, **kwargs)
             for i in range(n):
                 idx = y_true.index[i]
+                kwargs_i = kwargs.copy()
+                if "y_pred_benchmark" in kwargs.keys():
+                    kwargs_i["y_pred_benchmark"] = kwargs["y_pred_benchmark"].drop(idx)
                 pseudovalue = n * x_bar - (n - 1) * self.evaluate(
                     y_true.drop(idx),
                     y_pred.drop(idx),
+                    **kwargs_i,
                 )
                 out_series.loc[idx] = pseudovalue
             return out_series

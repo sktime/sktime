@@ -135,7 +135,7 @@ def test_custom_metric(greater_is_better):
 @pytest.mark.parametrize("n_columns", [1, 2])
 @pytest.mark.parametrize("multioutput", ["uniform_average", "raw_values"])
 @pytest.mark.parametrize("metric", metrics, ids=names)
-def test_metric_output_by_instancet(metric, multioutput, n_columns):
+def test_metric_output_by_instance(metric, multioutput, n_columns):
     """Test output of evaluate_by_index is of correct type, dependent on multioutput."""
     y_pred = _make_series(n_columns=n_columns, n_timepoints=20, random_state=21)
     y_true = _make_series(n_columns=n_columns, n_timepoints=20, random_state=42)
