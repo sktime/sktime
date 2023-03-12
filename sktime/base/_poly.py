@@ -70,14 +70,13 @@ class _Delegator(BasePolymorph):
         base = BASE_CLASS_LOOKUP[scitype(estimator)]
         delegator = delegator_dict[scitype(estimator)]
 
-        class Delegator(delegator, base):
-
+        class _Delegator(delegator, base):
             def __init__(self, estimator):
                 self.estimator = estimator
                 self.estimator_ = estimator
                 base.__init__(self)
 
-        return Delegator(estimator)
+        return _Delegator(estimator)
 
 
 class Pipeline(_Delegator):
