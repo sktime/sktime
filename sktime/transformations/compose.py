@@ -8,13 +8,14 @@ import pandas as pd
 from sklearn import clone
 from sklearn.utils.metaestimators import if_delegate_has_method
 
-from sktime.base import _HeterogenousMetaEstimator
+from sktime.base._meta import _ColumnEstimator, _HeterogenousMetaEstimator
 from sktime.datatypes import ALL_TIME_SERIES_MTYPES
 from sktime.transformations._delegate import _DelegatedTransformer
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.multiindex import flatten_multiindex
 from sktime.utils.sklearn import (
     is_sklearn_classifier,
+    is_sklearn_clusterer,
     is_sklearn_regressor,
     is_sklearn_transformer,
 )
@@ -23,6 +24,7 @@ from sktime.utils.validation.series import check_series
 __author__ = ["fkiraly", "mloning", "miraep8", "aiwalter", "SveaMeyer13"]
 __all__ = [
     "ColumnwiseTransformer",
+    "ColumnEnsembleTransformer",
     "FeatureUnion",
     "FitInTransform",
     "Id",
@@ -59,7 +61,7 @@ def _coerce_to_sktime(other):
     return other
 
 
-class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
+class TransformerPipeline(_HeterogenousMetaEstimator, BaseTransformer):
     """Pipeline of transformers compositor.
 
     The `TransformerPipeline` compositor allows to chain transformers.
@@ -163,6 +165,17 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
 
     # no further default tag values - these are set dynamically below
 
+    # for default get_params/set_params from _HeterogenousMetaEstimator
+    # _steps_attr points to the attribute of self
+    # which contains the heterogeneous set of estimators
+    # this must be an iterable of (name: str, estimator, ...) tuples for the default
+    _steps_attr = "_steps"
+    # if the estimator is fittable, _HeterogenousMetaEstimator also
+    # provides an override for get_fitted_params for params from the fitted estimators
+    # the fitted estimators should be in a different attribute, _steps_fitted_attr
+    # this must be an iterable of (name: str, estimator, ...) tuples for the default
+    _steps_fitted_attr = "steps_"
+
     def __init__(self, steps):
 
         self.steps = steps
@@ -240,6 +253,7 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
             not nested, contains only non-TransformerPipeline `sktime` transformers
         """
         from sktime.classification.compose import SklearnClassifierPipeline
+        from sktime.clustering.compose import SklearnClustererPipeline
         from sktime.regression.compose import SklearnRegressorPipeline
 
         other = _coerce_to_sktime(other)
@@ -247,6 +261,10 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         # if sklearn classifier, use sklearn classifier pipeline
         if is_sklearn_classifier(other):
             return SklearnClassifierPipeline(classifier=other, transformers=self.steps)
+
+        # if sklearn clusterer, use sklearn clusterer pipeline
+        if is_sklearn_clusterer(other):
+            return SklearnClustererPipeline(clusterer=other, transformers=self.steps)
 
         # if sklearn regressor, use sklearn regressor pipeline
         if is_sklearn_regressor(other):
@@ -385,34 +403,6 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
 
         return self
 
-    def get_params(self, deep=True):
-        """Get parameters of estimator in `steps`.
-
-        Parameters
-        ----------
-        deep : boolean, optional, default=True
-            If True, will return the parameters for this estimator and
-            contained sub-objects that are estimators.
-
-        Returns
-        -------
-        params : mapping of string to any
-            Parameter names mapped to their values.
-        """
-        return self._get_params("_steps", deep=deep)
-
-    def set_params(self, **kwargs):
-        """Set the parameters of estimator in `steps`.
-
-        Valid parameter keys can be listed with ``get_params()``.
-
-        Returns
-        -------
-        self : returns an instance of self.
-        """
-        self._set_params("_steps", **kwargs)
-        return self
-
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
@@ -450,7 +440,7 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         return [params1, params2, params3]
 
 
-class FeatureUnion(BaseTransformer, _HeterogenousMetaEstimator):
+class FeatureUnion(_HeterogenousMetaEstimator, BaseTransformer):
     """Concatenates results of multiple transformer objects.
 
     This estimator applies a list of transformer objects in parallel to the
@@ -498,6 +488,16 @@ class FeatureUnion(BaseTransformer, _HeterogenousMetaEstimator):
         # unclear what inverse transform should be, since multiple inverse_transform
         #   would have to inverse transform to one
     }
+
+    # for default get_params/set_params from _HeterogenousMetaEstimator
+    # _steps_attr points to the attribute of self
+    # which contains the heterogeneous set of estimators
+    # this must be an iterable of (name: str, estimator) pairs for the default
+    _steps_attr = "_transformer_list"
+    # if the estimator is fittable, _HeterogenousMetaEstimator also
+    # provides an override for get_fitted_params for params from the fitted estimators
+    # the fitted estimators should be in a different attribute, _steps_fitted_attr
+    _steps_fitted_attr = "transformer_list_"
 
     def __init__(
         self,
@@ -652,49 +652,33 @@ class FeatureUnion(BaseTransformer, _HeterogenousMetaEstimator):
 
         return Xt
 
-    def get_params(self, deep=True):
-        """Get parameters of estimator in `_forecasters`.
-
-        Parameters
-        ----------
-        deep : boolean, optional, default=True
-            If True, will return the parameters for this estimator and
-            contained sub-objects that are estimators.
-
-        Returns
-        -------
-        params : mapping of string to any
-            Parameter names mapped to their values.
-        """
-        return self._get_params("transformer_list", deep=deep)
-
-    def set_params(self, **kwargs):
-        """Set the parameters of estimator in `_forecasters`.
-
-        Valid parameter keys can be listed with ``get_params()``.
-
-        Returns
-        -------
-        self : returns an instance of self.
-        """
-        self._set_params("transformer_list", **kwargs)
-        return self
-
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Test parameters for FeatureUnion."""
+        from sktime.transformations.series.boxcox import BoxCoxTransformer
         from sktime.transformations.series.exponent import ExponentTransformer
 
+        # with name and estimator tuple, all transformers don't have fit
         TRANSFORMERS = [
             ("transformer1", ExponentTransformer(power=4)),
             ("transformer2", ExponentTransformer(power=0.25)),
         ]
+        params1 = {"transformer_list": TRANSFORMERS}
 
-        return {"transformer_list": TRANSFORMERS}
+        # only with estimators, some transformers have fit, some not
+        params2 = {
+            "transformer_list": [
+                ExponentTransformer(power=4),
+                ExponentTransformer(power=0.25),
+                BoxCoxTransformer(),
+            ]
+        }
+
+        return [params1, params2]
 
 
 class FitInTransform(BaseTransformer):
-    """Transformer composition to always fit a given transformer on the transform data only.
+    """Transformer wrapper to delay fit to the transform phase.
 
     In panel settings, e.g., time series classification, it can be preferable
     (or, necessary) to fit and transform on the test set, e.g., interpolate within the
@@ -829,7 +813,7 @@ class FitInTransform(BaseTransformer):
         return params
 
 
-class MultiplexTransformer(_DelegatedTransformer, _HeterogenousMetaEstimator):
+class MultiplexTransformer(_HeterogenousMetaEstimator, _DelegatedTransformer):
     """Facilitate an AutoML based selection of the best transformer.
 
     When used in combination with either TransformedTargetForecaster or
@@ -890,7 +874,6 @@ class MultiplexTransformer(_DelegatedTransformer, _HeterogenousMetaEstimator):
     >>> cv = ExpandingWindowSplitter(
     ...     initial_window=24,
     ...     step_length=12,
-    ...     start_with_window=True,
     ...     fh=[1,2,3])
     >>> pipe = TransformedTargetForecaster(steps = [
     ...     ("multiplex", multiplexer),
@@ -915,7 +898,20 @@ class MultiplexTransformer(_DelegatedTransformer, _HeterogenousMetaEstimator):
         "X_inner_mtype": ALL_TIME_SERIES_MTYPES,
     }
 
+    # attribute for _DelegatedTransformer, which then delegates
+    #     all non-overridden methods are same as of getattr(self, _delegate_name)
+    #     see further details in _DelegatedTransformer docstring
     _delegate_name = "transformer_"
+
+    # for default get_params/set_params from _HeterogenousMetaEstimator
+    # _steps_attr points to the attribute of self
+    # which contains the heterogeneous set of estimators
+    # this must be an iterable of (name: str, estimator) pairs for the default
+    _steps_attr = "_transformers"
+    # if the estimator is fittable, _HeterogenousMetaEstimator also
+    # provides an override for get_fitted_params for params from the fitted estimators
+    # the fitted estimators should be in a different attribute, _steps_fitted_attr
+    _steps_fitted_attr = "transformers_"
 
     def __init__(
         self,
@@ -969,34 +965,6 @@ class MultiplexTransformer(_DelegatedTransformer, _HeterogenousMetaEstimator):
         else:
             # if None, simply clone the first transformer to self.transformer_
             self.transformer_ = self._get_estimator_list(self.transformers)[0].clone()
-
-    def get_params(self, deep=True):
-        """Get parameters for this estimator.
-
-        Parameters
-        ----------
-        deep : boolean, optional
-            If True, will return the parameters for this estimator and
-            contained subobjects that are estimators.
-
-        Returns
-        -------
-        params : mapping of string to any
-            Parameter names mapped to their values.
-        """
-        return self._get_params("_transformers", deep=deep)
-
-    def set_params(self, **kwargs):
-        """Set the parameters of this estimator.
-
-        Valid parameter keys can be listed with ``get_params()``.
-
-        Returns
-        -------
-        self
-        """
-        self._set_params("_transformers", **kwargs)
-        return self
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -1163,6 +1131,9 @@ class InvertTransform(_DelegatedTransformer):
                 " this transformer will likely crash on input."
             )
 
+    # attribute for _DelegatedTransformer, which then delegates
+    #     all non-overridden methods are same as of getattr(self, _delegate_name)
+    #     see further details in _DelegatedTransformer docstring
     _delegate_name = "transformer_"
 
     def _transform(self, X, y=None):
@@ -1332,7 +1303,7 @@ class OptionalPassthrough(_DelegatedTransformer):
     --------
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.naive import NaiveForecaster
-    >>> from sktime.transformations.series.compose import OptionalPassthrough
+    >>> from sktime.transformations.compose import OptionalPassthrough
     >>> from sktime.transformations.series.detrend import Deseasonalizer
     >>> from sktime.transformations.series.adapt import TabularToSeriesAdaptor
     >>> from sktime.forecasting.compose import TransformedTargetForecaster
@@ -1344,24 +1315,24 @@ class OptionalPassthrough(_DelegatedTransformer):
     >>> pipe = TransformedTargetForecaster(steps=[
     ...     ("deseasonalizer", OptionalPassthrough(Deseasonalizer())),
     ...     ("scaler", OptionalPassthrough(TabularToSeriesAdaptor(StandardScaler()))),
-    ...     ("forecaster", NaiveForecaster())])
+    ...     ("forecaster", NaiveForecaster())])  # doctest: +SKIP
     >>> # putting it all together in a grid search
     >>> cv = SlidingWindowSplitter(
     ...     initial_window=60,
     ...     window_length=24,
     ...     start_with_window=True,
-    ...     step_length=48)
+    ...     step_length=48)  # doctest: +SKIP
     >>> param_grid = {
     ...     "deseasonalizer__passthrough" : [True, False],
     ...     "scaler__transformer__transformer__with_mean": [True, False],
     ...     "scaler__passthrough" : [True, False],
-    ...     "forecaster__strategy": ["drift", "mean", "last"]}
+    ...     "forecaster__strategy": ["drift", "mean", "last"]}  # doctest: +SKIP
     >>> gscv = ForecastingGridSearchCV(
     ...     forecaster=pipe,
     ...     param_grid=param_grid,
     ...     cv=cv,
-    ...     n_jobs=-1)
-    >>> gscv_fitted = gscv.fit(load_airline())
+    ...     n_jobs=-1)  # doctest: +SKIP
+    >>> gscv_fitted = gscv.fit(load_airline())  # doctest: +SKIP
     """
 
     _tags = {
@@ -1390,7 +1361,6 @@ class OptionalPassthrough(_DelegatedTransformer):
             "scitype:transform-input",
             "scitype:transform-output",
             "scitype:instancewise",
-            "X_inner_mtype",
             "y_inner_mtype",
             "capability:inverse_transform",
             "handles-missing-data",
@@ -1405,6 +1375,9 @@ class OptionalPassthrough(_DelegatedTransformer):
         else:
             self.transformer_ = transformer.clone()
 
+    # attribute for _DelegatedTransformer, which then delegates
+    #     all non-overridden methods are same as of getattr(self, _delegate_name)
+    #     see further details in _DelegatedTransformer docstring
     _delegate_name = "transformer_"
 
     @classmethod
@@ -1462,7 +1435,7 @@ class ColumnwiseTransformer(BaseTransformer):
     --------
     >>> from sktime.datasets import load_longley
     >>> from sktime.transformations.series.detrend import Detrender
-    >>> from sktime.transformations.series.compose import ColumnwiseTransformer
+    >>> from sktime.transformations.compose import ColumnwiseTransformer
     >>> _, X = load_longley()
     >>> transformer = ColumnwiseTransformer(Detrender())
     >>> Xt = transformer.fit_transform(X)
@@ -1741,3 +1714,225 @@ class YtoX(BaseTransformer):
             return y.loc[X.index.intersection(y.index)]
         else:
             return y
+
+
+# mtypes that are native pandas
+# ColumnEnsembleTransformer uses these internally, since we need (pandas) columns
+PANDAS_MTYPES = ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"]
+
+
+class ColumnEnsembleTransformer(_HeterogenousMetaEstimator, _ColumnEstimator):
+    """Column-wise application of transformers.
+
+    Applies transformations to columns of an array or pandas DataFrame. Simply
+    takes the column transformer from sklearn
+    and adds capability to handle pandas dataframe.
+
+    This estimator allows different columns or column subsets of the input
+    to be transformed separately and the features generated by each transformer
+    will be concatenated to form a single feature space.
+    This is useful for heterogeneous or columnar data, to combine several
+    feature extraction mechanisms or transformations into a single transformer.
+
+    Parameters
+    ----------
+    transformers : sktime trafo, or list of tuples (str, estimator, int or pd.index)
+        if tuples, with name = str, estimator is transformer, index as int or index
+        if last element is index, it must be int, str, or pd.Index coercable
+        if last element is int x, and is not in columns, is interpreted as x-th column
+        all columns must be present in an index
+
+        If transformer, clones of transformer are applied to all columns.
+        If list of tuples, transformer in tuple is applied to column with int/str index
+
+    Attributes
+    ----------
+    transformers_ : list
+        The collection of fitted transformations as tuples of
+        (name, fitted_transformer, column). `fitted_transformer` can be an
+        estimator, "drop", or "passthrough". In case there were no columns
+        selected, this will be the unfitted transformer.
+        If there are remaining columns, the final element is a tuple of the
+        form:
+        ("remainder", transformer, remaining_columns) corresponding to the
+        ``remainder`` parameter. If there are remaining columns, then
+        ``len(transformers_)==len(transformations)+1``, otherwise
+        ``len(transformers_)==len(transformations)``.
+    """
+
+    _tags = {
+        "X_inner_mtype": PANDAS_MTYPES,
+        "y_inner_mtype": PANDAS_MTYPES,
+        "fit_is_empty": False,
+        "capability:unequal_length": True,
+        "handles-missing-data": True,
+    }
+
+    # for default get_params/set_params from _HeterogenousMetaEstimator
+    # _steps_attr points to the attribute of self
+    # which contains the heterogeneous set of estimators
+    # this must be an iterable of (name: str, estimator, ...) tuples for the default
+    _steps_attr = "_transformers"
+    # if the estimator is fittable, _HeterogenousMetaEstimator also
+    # provides an override for get_fitted_params for params from the fitted estimators
+    # the fitted estimators should be in a different attribute, _steps_fitted_attr
+    # this must be an iterable of (name: str, estimator, ...) tuples for the default
+    _steps_fitted_attr = "transformers_"
+
+    def __init__(self, transformers):
+        self.transformers = transformers
+        super(ColumnEnsembleTransformer, self).__init__()
+
+        # set requires-fh-in-fit depending on transformers
+        if isinstance(transformers, BaseTransformer):
+            tags_to_clone = [
+                "fit_is_empty",
+                "requires_y",
+                "X-y-must-have-same-index",
+                "transform-returns-same-time-index",
+                "capability:unequal_length",
+                "capability:unequal_length:removes",
+                "handles-missing-data",
+                "capability:missing_values:removes",
+                "scitype:transform-output",
+                "scitype:transform-labels",
+            ]
+            self.clone_tags(transformers, tags_to_clone)
+        else:
+            l_transformers = [(x[0], x[1]) for x in transformers]
+            self._anytagis_then_set("fit_is_empty", False, True, l_transformers)
+            self._anytagis_then_set("requires_y", True, False, l_transformers)
+            self._anytagis_then_set(
+                "X-y-must-have-same-index", True, False, l_transformers
+            )
+            self._anytagis_then_set(
+                "transform-returns-same-time-index", False, True, l_transformers
+            )
+            self._anytagis_then_set(
+                "capability:unequal_length", False, True, l_transformers
+            )
+            self._anytagis_then_set(
+                "capability:unequal_length:removes", False, True, l_transformers
+            )
+            self._anytagis_then_set("handles-missing-data", False, True, l_transformers)
+            self._anytagis_then_set(
+                "capability:missing_values:removes", False, True, l_transformers
+            )
+
+            # must be all the same, currently not checking
+            tags_to_clone = ["scitype:transform-output", "scitype:transform-labels"]
+            self.clone_tags(transformers[0][1], tags_to_clone)
+
+    @property
+    def _transformers(self):
+        """Make internal list of transformers.
+
+        The list only contains the name and transformers, dropping
+        the columns. This is for the implementation of get_params
+        via _HeterogenousMetaEstimator._get_params which expects
+        lists of tuples of len 2.
+        """
+        transformers = self.transformers
+        if isinstance(transformers, BaseTransformer):
+            return [("transformers", transformers)]
+        else:
+            return [(name, transformer) for name, transformer, _ in self.transformers]
+
+    @_transformers.setter
+    def _transformers(self, value):
+        if len(value) == 1 and isinstance(value, BaseTransformer):
+            self.transformers = value
+        elif len(value) == 1 and isinstance(value, list):
+            self.transformers = value[0][1]
+        else:
+            self.transformers = [
+                (name, transformer, columns)
+                for ((name, transformer), (_, _, columns)) in zip(
+                    value, self.transformers
+                )
+            ]
+
+    def _fit(self, X, y=None):
+        """Fit transformer to X and y.
+
+        private _fit containing the core logic, called from fit
+
+        Parameters
+        ----------
+        X : Series or Panel of mtype X_inner_mtype
+            if X_inner_mtype is list, _fit must support all types in it
+            Data to fit transform to
+        y : Series or Panel of mtype y_inner_mtype, default=None
+            Additional data, e.g., labels for transformation
+
+        Returns
+        -------
+        self: reference to self
+        """
+        transformers = self._check_transformers(y)
+
+        self.transformers_ = []
+        self._Xcolumns = list(X.columns)
+
+        for (name, transformer, index) in transformers:
+            transformer_ = transformer.clone()
+
+            pd_index = self._coerce_to_pd_index(index)
+
+            transformer_.fit(X.loc[:, pd_index], y)
+            self.transformers_.append((name, transformer_, index))
+
+        return self
+
+    def _transform(self, X, y=None):
+        """Transform X and return a transformed version.
+
+        private _transform containing core logic, called from transform
+
+        Parameters
+        ----------
+        X : Series or Panel of mtype X_inner_mtype
+            if X_inner_mtype is list, _transform must support all types in it
+            Data to be transformed
+        y : Series or Panel of mtype y_inner_mtype, default=None
+            Additional data, e.g., labels for transformation
+
+        Returns
+        -------
+        transformed version of X
+        """
+        Xts = []
+        keys = []
+        for _, est, index in getattr(self, self._steps_fitted_attr):
+            pd_index = self._coerce_to_pd_index(index)
+
+            Xts += [est.transform(X.loc[:, pd_index], y)]
+            keys += [index]
+
+        keys = self._get_indices(self._Xcolumns, keys)
+
+        Xt = pd.concat(Xts, axis=1)
+        return Xt
+
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        from sktime.transformations.series.exponent import ExponentTransformer
+
+        TRANSFORMERS = [
+            ("transformer1", ExponentTransformer()),
+            ("transformer2", ExponentTransformer()),
+        ]
+
+        return {
+            "transformers": [(name, estimator, [0]) for name, estimator in TRANSFORMERS]
+        }

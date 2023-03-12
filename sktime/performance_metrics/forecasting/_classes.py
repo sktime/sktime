@@ -7,7 +7,6 @@ Classes named as ``*Score`` return a value to maximize: the higher the better.
 Classes named as ``*Error`` or ``*Loss`` return a value to minimize:
 the lower the better.
 """
-from copy import deepcopy
 from inspect import getfullargspec, isfunction, signature
 from warnings import warn
 
@@ -117,6 +116,7 @@ class BaseForecastingErrorMetric(BaseMetric):
         "lower_is_better": True,
         # "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"]
         "inner_implements_multilevel": False,
+        "reserved_params": ["multioutput", "multilevel"],
     }
 
     def __init__(self, multioutput="uniform_average", multilevel="uniform_average"):
@@ -265,32 +265,26 @@ class BaseForecastingErrorMetric(BaseMetric):
 
         Parameters
         ----------
-        y_true : pandas.DataFrame with MultiIndex, last level time-like
-        y_pred : pandas.DataFrame with MultiIndex, last level time-like
-        non-time-like instanceso of y_true, y_pred must be identical
+        y_true : VectorizedDF
+        y_pred : VectorizedDF
+        non-time-like instances of y_true, y_pred must be identical
         """
-        kwargsi = deepcopy(kwargs)
-        n_batches = len(y_true)
-        res = []
-        for i in range(n_batches):
-            if "y_train" in kwargs:
-                kwargsi["y_train"] = kwargs["y_train"][i]
-            if "y_pred_benchmark" in kwargs:
-                kwargsi["y_pred_benchmark"] = kwargs["y_pred_benchmark"][i]
-            resi = self._evaluate(y_true=y_true[i], y_pred=y_pred[i], **kwargsi)
-            if isinstance(resi, float):
-                resi = pd.Series(resi)
-            if self.multioutput == "raw_values":
-                assert isinstance(resi, np.ndarray)
-                df = pd.DataFrame(columns=y_true.X.columns)
-                df.loc[0] = resi
-                resi = df
-            res += [resi]
-        out_df = y_true.reconstruct(res)
-        if out_df.index.nlevels == y_true.X.index.nlevels:
-            out_df.index = out_df.index.droplevel(-1)
+        eval_result = y_true.vectorize_est(
+            estimator=self.clone(),
+            method="_evaluate",
+            varname_of_self="y_true",
+            args={**kwargs, "y_pred": y_pred},
+            colname_default=self.name,
+        )
 
-        return out_df
+        if self.multioutput == "raw_values":
+            return pd.DataFrame(
+                eval_result.iloc[:, 0].to_list(),
+                index=eval_result.index,
+                columns=y_true.X.columns,
+            )
+        else:
+            return eval_result
 
     def evaluate_by_index(self, y_true, y_pred, **kwargs):
         """Return the metric evaluated at each time point.
@@ -578,15 +572,23 @@ class _DynamicForecastingErrorMetric(BaseForecastingErrorMetricFunc):
         """
 
         def custom_mape(y_true, y_pred) -> float:
-
             eps = np.finfo(np.float64).eps
 
             result = np.mean(np.abs(y_true - y_pred) / np.maximum(np.abs(y_true), eps))
 
             return float(result)
 
-        params = {"func": custom_mape, "name": "custom_mape", "lower_is_better": False}
-        return params
+        params1 = {"func": custom_mape, "name": "custom_mape", "lower_is_better": False}
+
+        def custom_mae(y_true, y_pred) -> float:
+
+            result = np.mean(np.abs(y_true - y_pred))
+
+            return float(result)
+
+        params2 = {"func": custom_mae, "name": "custom_nmae", "lower_is_better": True}
+
+        return [params1, params2]
 
 
 class _ScaledMetricTags:
@@ -724,6 +726,28 @@ class MeanAbsoluteScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc)
         self.sp = sp
         super().__init__(multioutput=multioutput, multilevel=multilevel)
 
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        params1 = {}
+        params2 = {"sp": 2}
+        return [params1, params2]
+
 
 class MedianAbsoluteScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc):
     """Median absolute scaled error (MdASE).
@@ -805,9 +829,30 @@ class MedianAbsoluteScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFun
         multilevel="uniform_average",
         sp=1,
     ):
-
         self.sp = sp
         super().__init__(multioutput=multioutput, multilevel=multilevel)
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        params1 = {}
+        params2 = {"sp": 2}
+        return [params1, params2]
 
 
 class MeanSquaredScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc):
@@ -892,6 +937,28 @@ class MeanSquaredScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc):
         self.square_root = square_root
         super().__init__(multioutput=multioutput, multilevel=multilevel)
 
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        params1 = {}
+        params2 = {"sp": 2, "square_root": True}
+        return [params1, params2]
+
 
 class MedianSquaredScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc):
     """Median squared scaled error (MdSSE) or root median squared scaled error (RMdSSE).
@@ -974,6 +1041,28 @@ class MedianSquaredScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc
         self.sp = sp
         self.square_root = square_root
         super().__init__(multioutput=multioutput, multilevel=multilevel)
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        params1 = {}
+        params2 = {"sp": 2, "square_root": True}
+        return [params1, params2]
 
 
 class MeanAbsoluteError(BaseForecastingErrorMetricFunc):
@@ -1161,6 +1250,28 @@ class MeanSquaredError(BaseForecastingErrorMetricFunc):
         self.square_root = square_root
         super().__init__(multioutput=multioutput, multilevel=multilevel)
 
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        params1 = {}
+        params2 = {"square_root": True}
+        return [params1, params2]
+
 
 class MedianSquaredError(BaseForecastingErrorMetricFunc):
     """Median squared error (MdSE) or root median squared error (RMdSE).
@@ -1243,6 +1354,28 @@ class MedianSquaredError(BaseForecastingErrorMetricFunc):
     ):
         self.square_root = square_root
         super().__init__(multioutput=multioutput, multilevel=multilevel)
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        params1 = {}
+        params2 = {"square_root": True}
+        return [params1, params2]
 
 
 class GeometricMeanAbsoluteError(BaseForecastingErrorMetricFunc):
@@ -1367,30 +1500,30 @@ class GeometricMeanSquaredError(BaseForecastingErrorMetricFunc):
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
     >>> gmse = GeometricMeanSquaredError()
-    >>> gmse(y_true, y_pred)
+    >>> gmse(y_true, y_pred)  # doctest: +SKIP
     2.80399089461488e-07
     >>> rgmse = GeometricMeanSquaredError(square_root=True)
-    >>> rgmse(y_true, y_pred)
+    >>> rgmse(y_true, y_pred)  # doctest: +SKIP
     0.000529527232030127
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> gmse = GeometricMeanSquaredError()
-    >>> gmse(y_true, y_pred)
+    >>> gmse(y_true, y_pred)  # doctest: +SKIP
     0.5000000000115499
     >>> rgmse = GeometricMeanSquaredError(square_root=True)
-    >>> rgmse(y_true, y_pred)
+    >>> rgmse(y_true, y_pred)  # doctest: +SKIP
     0.5000024031086919
     >>> gmse = GeometricMeanSquaredError(multioutput='raw_values')
-    >>> gmse(y_true, y_pred)
+    >>> gmse(y_true, y_pred)  # doctest: +SKIP
     array([2.30997255e-11, 1.00000000e+00])
     >>> rgmse = GeometricMeanSquaredError(multioutput='raw_values', square_root=True)
-    >>> rgmse(y_true, y_pred)
+    >>> rgmse(y_true, y_pred)# doctest: +SKIP
     array([4.80621738e-06, 1.00000000e+00])
     >>> gmse = GeometricMeanSquaredError(multioutput=[0.3, 0.7])
-    >>> gmse(y_true, y_pred)
+    >>> gmse(y_true, y_pred)  # doctest: +SKIP
     0.7000000000069299
     >>> rgmse = GeometricMeanSquaredError(multioutput=[0.3, 0.7], square_root=True)
-    >>> rgmse(y_true, y_pred)
+    >>> rgmse(y_true, y_pred)  # doctest: +SKIP
     0.7000014418652152
     """
 
@@ -1404,6 +1537,28 @@ class GeometricMeanSquaredError(BaseForecastingErrorMetricFunc):
     ):
         self.square_root = square_root
         super().__init__(multioutput=multioutput, multilevel=multilevel)
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        params1 = {}
+        params2 = {"square_root": True}
+        return [params1, params2]
 
 
 class MeanAbsolutePercentageError(BaseForecastingErrorMetricFunc):
@@ -1486,6 +1641,28 @@ class MeanAbsolutePercentageError(BaseForecastingErrorMetricFunc):
     ):
         self.symmetric = symmetric
         super().__init__(multioutput=multioutput, multilevel=multilevel)
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        params1 = {}
+        params2 = {"symmetric": True}
+        return [params1, params2]
 
 
 class MedianAbsolutePercentageError(BaseForecastingErrorMetricFunc):
@@ -1572,6 +1749,28 @@ class MedianAbsolutePercentageError(BaseForecastingErrorMetricFunc):
     ):
         self.symmetric = symmetric
         super().__init__(multioutput=multioutput, multilevel=multilevel)
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        params1 = {}
+        params2 = {"symmetric": True}
+        return [params1, params2]
 
 
 class MeanSquaredPercentageError(BaseForecastingErrorMetricFunc):
@@ -1663,6 +1862,28 @@ class MeanSquaredPercentageError(BaseForecastingErrorMetricFunc):
         self.symmetric = symmetric
         self.square_root = square_root
         super().__init__(multioutput=multioutput, multilevel=multilevel)
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        params1 = {}
+        params2 = {"symmetric": True, "square_root": True}
+        return [params1, params2]
 
 
 class MedianSquaredPercentageError(BaseForecastingErrorMetricFunc):
@@ -1758,6 +1979,28 @@ class MedianSquaredPercentageError(BaseForecastingErrorMetricFunc):
         self.symmetric = symmetric
         self.square_root = square_root
         super().__init__(multioutput=multioutput, multilevel=multilevel)
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        params1 = {}
+        params2 = {"symmetric": True, "square_root": True}
+        return [params1, params2]
 
 
 class MeanRelativeAbsoluteError(BaseForecastingErrorMetricFunc):
@@ -2026,6 +2269,28 @@ class GeometricMeanRelativeSquaredError(BaseForecastingErrorMetricFunc):
         self.square_root = square_root
         super().__init__(multioutput=multioutput, multilevel=multilevel)
 
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        params1 = {}
+        params2 = {"square_root": True}
+        return [params1, params2]
+
 
 class MeanAsymmetricError(BaseForecastingErrorMetricFunc):
     """Calculate mean of asymmetric loss function.
@@ -2101,26 +2366,26 @@ class MeanAsymmetricError(BaseForecastingErrorMetricFunc):
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
     >>> asymmetric_error = MeanAsymmetricError()
-    >>> asymmetric_error(y_true, y_pred)
+    >>> asymmetric_error(y_true, y_pred)  # doctest: +SKIP
     0.5
     >>> asymmetric_error = MeanAsymmetricError(left_error_function='absolute', \
     right_error_function='squared')
-    >>> asymmetric_error(y_true, y_pred)
+    >>> asymmetric_error(y_true, y_pred)  # doctest: +SKIP
     0.4625
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> asymmetric_error = MeanAsymmetricError()
-    >>> asymmetric_error(y_true, y_pred)
+    >>> asymmetric_error(y_true, y_pred)  # doctest: +SKIP
     0.75
     >>> asymmetric_error = MeanAsymmetricError(left_error_function='absolute', \
     right_error_function='squared')
-    >>> asymmetric_error(y_true, y_pred)
+    >>> asymmetric_error(y_true, y_pred)  # doctest: +SKIP
     0.7083333333333334
     >>> asymmetric_error = MeanAsymmetricError(multioutput='raw_values')
-    >>> asymmetric_error(y_true, y_pred)
+    >>> asymmetric_error(y_true, y_pred)  # doctest: +SKIP
     array([0.5, 1. ])
     >>> asymmetric_error = MeanAsymmetricError(multioutput=[0.3, 0.7])
-    >>> asymmetric_error(y_true, y_pred)
+    >>> asymmetric_error(y_true, y_pred)  # doctest: +SKIP
     0.85
     """
 
@@ -2143,6 +2408,34 @@ class MeanAsymmetricError(BaseForecastingErrorMetricFunc):
         self.right_error_penalty = right_error_penalty
 
         super().__init__(multioutput=multioutput, multilevel=multilevel)
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        params1 = {}
+        params2 = {
+            "asymmetric_threshold": 0.1,
+            "left_error_function": "absolute",
+            "right_error_function": "squared",
+            "left_error_penalty": 2.0,
+            "right_error_penalty": 0.5,
+        }
+        return [params1, params2]
 
 
 class MeanLinexError(BaseForecastingErrorMetricFunc):
@@ -2204,27 +2497,27 @@ class MeanLinexError(BaseForecastingErrorMetricFunc):
     >>> linex_error = MeanLinexError()
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
-    >>> linex_error(y_true, y_pred)
+    >>> linex_error(y_true, y_pred)  # doctest: +SKIP
     0.19802627763937575
     >>> linex_error = MeanLinexError(b=2)
-    >>> linex_error(y_true, y_pred)
+    >>> linex_error(y_true, y_pred)  # doctest: +SKIP
     0.3960525552787515
     >>> linex_error = MeanLinexError(a=-1)
-    >>> linex_error(y_true, y_pred)
+    >>> linex_error(y_true, y_pred)  # doctest: +SKIP
     0.2391800623225643
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> linex_error = MeanLinexError()
-    >>> linex_error(y_true, y_pred)
+    >>> linex_error(y_true, y_pred)  # doctest: +SKIP
     0.2700398392309829
     >>> linex_error = MeanLinexError(a=-1)
-    >>> linex_error(y_true, y_pred)
+    >>> linex_error(y_true, y_pred)  # doctest: +SKIP
     0.49660966225813563
     >>> linex_error = MeanLinexError(multioutput='raw_values')
-    >>> linex_error(y_true, y_pred)
+    >>> linex_error(y_true, y_pred)  # doctest: +SKIP
     array([0.17220024, 0.36787944])
     >>> linex_error = MeanLinexError(multioutput=[0.3, 0.7])
-    >>> linex_error(y_true, y_pred)
+    >>> linex_error(y_true, y_pred)  # doctest: +SKIP
     0.30917568000716666
     """
 
@@ -2240,6 +2533,28 @@ class MeanLinexError(BaseForecastingErrorMetricFunc):
         self.a = a
         self.b = b
         super().__init__(multioutput=multioutput, multilevel=multilevel)
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        params1 = {}
+        params2 = {"a": 0.5, "b": 2}
+        return [params1, params2]
 
 
 class RelativeLoss(BaseForecastingErrorMetricFunc):

@@ -39,10 +39,12 @@ def get_time_index(X):
     if isinstance(X, (pd.DataFrame, pd.Series)):
         # pd-multiindex or pd_multiindex_hier
         if isinstance(X.index, pd.MultiIndex):
-            first_inst = X.index.to_flat_index()[0][:-1]
-            return X.loc[first_inst].index
+            return X.loc[tuple(list(X.index[0])[:-1])].index
         # nested_univ
         elif isinstance(X, pd.DataFrame) and isinstance(X.iloc[0, 0], pd.DataFrame):
+            return _get_index(X.iloc[0, 0])
+        # nested_univ
+        elif isinstance(X, pd.DataFrame) and isinstance(X.iloc[0, 0], pd.Series):
             return _get_index(X.iloc[0, 0])
         # pd.Series or pd.DataFrame
         else:
@@ -297,12 +299,25 @@ def get_cutoff(
 
     # pd-multiindex (Panel) and pd_multiindex_hier (Hierarchical)
     if isinstance(obj, pd.DataFrame) and isinstance(obj.index, pd.MultiIndex):
-        idx = obj.index
-        series_idx = [
-            obj.loc[x].index.get_level_values(-1) for x in idx.droplevel(-1).unique()
-        ]
-        cutoffs = [sub_idx(x, ix, return_index) for x in series_idx]
-        return agg(cutoffs)
+        from pandas.core.indexes.base import ensure_index
+
+        inst_levels = list(range(obj.index.nlevels - 1))
+        cutoff = (
+            obj.index.to_frame()
+            .groupby(level=inst_levels, sort=False)
+            .nth(ix)
+            .iloc[:, -1]
+            .agg(agg)
+        )
+        if return_index:
+            cuttoff_idx = ensure_index([cutoff])
+            time_idx = obj.index.levels[-1]
+            if hasattr(time_idx, "freq") and time_idx.freq is not None:
+                if cuttoff_idx.freq != time_idx.freq:
+                    cuttoff_idx.freq = time_idx.freq
+            return cuttoff_idx
+        else:
+            return cutoff
 
     # df-list (Panel)
     if isinstance(obj, list):

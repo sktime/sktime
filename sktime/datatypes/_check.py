@@ -25,7 +25,6 @@ __all__ = [
 ]
 
 from typing import List, Union
-from warnings import warn
 
 import numpy as np
 
@@ -333,15 +332,12 @@ def mtype(
     return mtypes_positive[0]
 
 
-# todo 0.15.0: change msg_legacy_interface default to False
-# todo 0.16.0: remove msg_legacy_interface arg, and remove msg_legacy variable inside
 def check_is_scitype(
     obj,
     scitype: Union[str, List[str]],
     return_metadata=False,
     var_name="obj",
     exclude_mtypes=AMBIGUOUS_MTYPES,
-    msg_legacy_interface=True,
 ):
     """Check object for compliance with scitype specification, return metadata.
 
@@ -356,9 +352,6 @@ def check_is_scitype(
     var_name: str, optional, default="obj" - name of input in error messages
     exclude_mtypes : list of str, default = AMBIGUOUS_MTYPES
         which mtypes to ignore in inferring mtype, default = ambiguous ones
-    msg_legacy_interface : bool, default = True
-        whether the deprecated interface for msg return is used (True) or not (False)
-        False = msg is returned as dict; True = msg is returned as list (values only)
 
     Returns
     -------
@@ -414,7 +407,6 @@ def check_is_scitype(
 
     # storing the msg return
     msg = {}
-    msg_legacy = []
     found_mtype = []
     found_scitype = []
 
@@ -432,7 +424,6 @@ def check_is_scitype(
             found_scitype.append(key[1])
         elif return_metadata:
             msg[key[0]] = res[1]
-            msg_legacy.append(res[1])
 
     # there are three options on the result of check_is_mtype:
     # a. two or more mtypes are found - this is unexpected and an error with checks
@@ -453,20 +444,6 @@ def check_is_scitype(
             return True
     # c. no mtype is found - then return False and all error messages if requested
     else:
-        if len(msg_legacy) == 1:
-            msg_legacy = msg_legacy[0]
-
-        if msg_legacy_interface:
-            msg = msg_legacy
-            warn(
-                "return msg (2nd argument) of check_is_scitype will change to "
-                "dict from list type. Set msg_legacy_interface=False for "
-                "post-deprecation behaviour. Default msg_legacy_interface "
-                "will change to True in 0.15.0. Argument msg_legacy_interface "
-                "will be removed in 0.16.0.",
-                DeprecationWarning,
-            )
-
         return _ret(False, msg, None, return_metadata)
 
 

@@ -54,7 +54,7 @@ class Reconciler(BaseTransformer):
 
     Examples
     --------
-    >>> from sktime.forecasting.exp_smoothing import ExponentialSmoothing
+    >>> from sktime.forecasting.trend import PolynomialTrendForecaster
     >>> from sktime.transformations.hierarchical.reconcile import Reconciler
     >>> from sktime.transformations.hierarchical.aggregate import Aggregator
     >>> from sktime.utils._testing.hierarchical import _bottom_hier_datagen
@@ -65,9 +65,9 @@ class Reconciler(BaseTransformer):
     ...     random_seed=123,
     ... )
     >>> y = agg.fit_transform(y)
-    >>> forecaster = ExponentialSmoothing()
+    >>> forecaster = PolynomialTrendForecaster()
     >>> forecaster.fit(y)
-    ExponentialSmoothing(...)
+    PolynomialTrendForecaster(...)
     >>> prds = forecaster.predict(fh=[1])
     >>> # reconcile forecasts
     >>> reconciler = Reconciler(method="ols")
@@ -297,7 +297,7 @@ def _get_s_matrix(X):
             s_matrix.loc["__total", i] = 1.0
 
     # drop new levels not present in orginal matrix
-    s_matrix.dropna(inplace=True)
+    s_matrix = s_matrix.loc[s_matrix.index.isin(al_inds)]
 
     return s_matrix
 

@@ -16,6 +16,8 @@ tests in this module:
 
     test_components         - tests retrieval of list of components via _components
     test_get_fitted_params  - tests get_fitted_params logic, nested and non-nested
+
+    test_eq_dunder       - tests __eq__ dunder to compare parameter definition
 """
 
 __author__ = ["fkiraly"]
@@ -28,6 +30,9 @@ __all__ = [
     "test_set_tags",
     "test_reset",
     "test_reset_composite",
+    "test_components",
+    "test_get_fitted_params",
+    "test_eq_dunder",
 ]
 
 from copy import deepcopy
@@ -276,8 +281,8 @@ def test_components():
 
     assert isinstance(comp_comps, dict)
     assert set(comp_comps.keys()) == set(["foo_"])
-    assert comp_comps["foo_"] == composite.foo_
-    assert comp_comps["foo_"] != composite.foo
+    assert comp_comps["foo_"] is composite.foo_
+    assert comp_comps["foo_"] is not composite.foo
 
 
 class FittableCompositionDummy(BaseEstimator):
@@ -311,11 +316,58 @@ def test_get_fitted_params():
 
     non_comp_f_params = non_composite.get_fitted_params()
     comp_f_params = composite.get_fitted_params()
+    comp_f_params_shallow = composite.get_fitted_params(deep=False)
 
     assert isinstance(non_comp_f_params, dict)
     assert set(non_comp_f_params.keys()) == set(["foo"])
 
     assert isinstance(comp_f_params, dict)
     assert set(comp_f_params) == set(["foo", "foo__foo"])
-    assert comp_f_params["foo"] == composite.foo_
-    assert comp_f_params["foo"] != composite.foo
+    assert set(comp_f_params_shallow) == set(["foo"])
+    assert comp_f_params["foo"] is composite.foo_
+    assert comp_f_params["foo"] is not composite.foo
+    assert comp_f_params_shallow["foo"] is composite.foo_
+    assert comp_f_params_shallow["foo"] is not composite.foo
+
+
+def test_eq_dunder():
+    """Tests equality dunder for BaseObject descendants.
+
+    Equality should be determined only by get_params results.
+
+    Raises
+    ------
+    AssertionError if logic behind __eq__ is incorrect, logic tested:
+        equality of non-composites depends only on params, not on identity
+        equality of composites depends only on params, not on identity
+        result is not affected by fitting the estimator
+    """
+    non_composite = FittableCompositionDummy(foo=42)
+    non_composite_2 = FittableCompositionDummy(foo=42)
+    non_composite_3 = FittableCompositionDummy(foo=84)
+
+    composite = FittableCompositionDummy(foo=non_composite)
+    composite_2 = FittableCompositionDummy(foo=non_composite_2)
+    composite_3 = FittableCompositionDummy(foo=non_composite_3)
+
+    assert non_composite == non_composite
+    assert composite == composite
+    assert non_composite == non_composite_2
+    assert non_composite != non_composite_3
+    assert non_composite_2 != non_composite_3
+    assert composite == composite_2
+    assert composite != composite_3
+    assert composite_2 != composite_3
+
+    # equality should not be affected by fitting
+    composite.fit()
+    non_composite_2.fit()
+
+    assert non_composite == non_composite
+    assert composite == composite
+    assert non_composite == non_composite_2
+    assert non_composite != non_composite_3
+    assert non_composite_2 != non_composite_3
+    assert composite == composite_2
+    assert composite != composite_3
+    assert composite_2 != composite_3

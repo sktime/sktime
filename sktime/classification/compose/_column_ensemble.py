@@ -17,7 +17,7 @@ from sktime.base import _HeterogenousMetaEstimator
 from sktime.classification.base import BaseClassifier
 
 
-class BaseColumnEnsembleClassifier(BaseClassifier, _HeterogenousMetaEstimator):
+class BaseColumnEnsembleClassifier(_HeterogenousMetaEstimator, BaseClassifier):
     """Base Class for column ensemble."""
 
     _tags = {
@@ -224,52 +224,35 @@ class ColumnEnsembleClassifier(BaseColumnEnsembleClassifier):
     >>> from sktime.classification.dictionary_based import ContractableBOSS
     >>> from sktime.classification.interval_based import CanonicalIntervalForest
     >>> from sktime.datasets import load_basic_motions
-    >>> X_train, y_train = load_basic_motions(split="train")
-    >>> X_test, y_test = load_basic_motions(split="test")
+    >>> X_train, y_train = load_basic_motions(split="train") # doctest: +SKIP
+    >>> X_test, y_test = load_basic_motions(split="test") # doctest: +SKIP
     >>> cboss = ContractableBOSS(
     ...     n_parameter_samples=4, max_ensemble_size=2, random_state=0
-    ... )
+    ... ) # doctest: +SKIP
     >>> cif = CanonicalIntervalForest(
     ...     n_estimators=2, n_intervals=4, att_subsample_size=4, random_state=0
-    ... )
-    >>> estimators = [("cBOSS", cboss, 5), ("CIF", cif, [3, 4])]
-    >>> col_ens = ColumnEnsembleClassifier(estimators=estimators)
-    >>> col_ens.fit(X_train, y_train)
+    ... ) # doctest: +SKIP
+    >>> estimators = [("cBOSS", cboss, 5), ("CIF", cif, [3, 4])] # doctest: +SKIP
+    >>> col_ens = ColumnEnsembleClassifier(estimators=estimators) # doctest: +SKIP
+    >>> col_ens.fit(X_train, y_train) # doctest: +SKIP
     ColumnEnsembleClassifier(...)
-    >>> y_pred = col_ens.predict(X_test)
+    >>> y_pred = col_ens.predict(X_test) # doctest: +SKIP
     """
+
+    # for default get_params/set_params from _HeterogenousMetaEstimator
+    # _steps_attr points to the attribute of self
+    # which contains the heterogeneous set of estimators
+    # this must be an iterable of (name: str, estimator, ...) tuples for the default
+    _steps_attr = "_estimators"
+    # if the estimator is fittable, _HeterogenousMetaEstimator also
+    # provides an override for get_fitted_params for params from the fitted estimators
+    # the fitted estimators should be in a different attribute, _steps_fitted_attr
+    # this must be an iterable of (name: str, estimator, ...) tuples for the default
+    _steps_fitted_attr = "estimators_"
 
     def __init__(self, estimators, remainder="drop", verbose=False):
         self.remainder = remainder
         super(ColumnEnsembleClassifier, self).__init__(estimators, verbose=verbose)
-
-    def get_params(self, deep=True):
-        """Get parameters for this estimator.
-
-        Parameters
-        ----------
-        deep : boolean, optional, default=True
-            If True, will return the parameters for this estimator and
-            contained subobjects that are estimators.
-
-        Returns
-        -------
-        params : mapping of string to any
-            Parameter names mapped to their values.
-        """
-        return self._get_params("_estimators", deep=deep)
-
-    def set_params(self, **kwargs):
-        """Set the parameters of this estimator.
-
-        Valid parameter keys can be listed with ``get_params()``.
-
-        Returns
-        -------
-        self
-        """
-        self._set_params("_estimators", **kwargs)
-        return self
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):

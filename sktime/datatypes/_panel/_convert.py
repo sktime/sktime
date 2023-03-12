@@ -36,6 +36,7 @@ __all__ = [
 
 from sktime.datatypes._convert_utils._convert import _extend_conversions
 from sktime.datatypes._panel._registry import MTYPE_LIST_PANEL
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 # dictionary indexed by triples of types
 #  1st element = convert from - type
@@ -710,7 +711,7 @@ def from_multi_index_to_nested(
     x_nested = pd.DataFrame()
 
     # Loop the dimensions (columns) of multi-index DataFrame
-    for _label, _series in multi_ind_dataframe.iteritems():  # noqa
+    for _label, _series in multi_ind_dataframe.items():  # noqa
         # for _label in multi_ind_dataframe.columns:
         #    _series = multi_ind_dataframe.loc[:, _label]
         # Slice along the instance dimension to return list of series for each case
@@ -742,7 +743,12 @@ def from_multi_index_to_nested_adp(obj, store=None):
     if isinstance(store, dict):
         store["index_names"] = obj.index.names
 
-    return from_multi_index_to_nested(multi_ind_dataframe=obj, instance_index=None)
+    res = from_multi_index_to_nested(multi_ind_dataframe=obj, instance_index=None)
+
+    if isinstance(store, dict) and "instance_names" in store.keys():
+        res.index.names = store["instance_names"]
+
+    return res
 
 
 convert_dict[("pd-multiindex", "nested_univ", "Panel")] = from_multi_index_to_nested_adp
@@ -802,12 +808,19 @@ def from_nested_to_multi_index(X, instance_index=None, time_index=None):
 
 def from_nested_to_multi_index_adp(obj, store=None):
 
-    res = from_nested_to_multi_index(
-        X=obj, instance_index="instances", time_index="timepoints"
-    )
+    if isinstance(store, dict):
+        store["instance_names"] = obj.index.names
 
     if isinstance(store, dict) and "index_names" in store.keys():
-        res.index.names = store["index_names"]
+        instance_index = store["index_names"][0]
+        time_index = store["index_names"][1]
+    else:
+        instance_index = obj.index.names[0]
+        time_index = "timepoints"
+
+    res = from_nested_to_multi_index(
+        X=obj, instance_index=instance_index, time_index=time_index
+    )
 
     return res
 
@@ -1063,3 +1076,24 @@ convert_dict[("numpyflat", "numpy3D", "Panel")] = from_numpyflat_to_numpy3d
 _extend_conversions(
     "numpyflat", "numpy3D", convert_dict, mtype_universe=MTYPE_LIST_PANEL
 )
+
+
+if _check_soft_dependencies("dask", severity="none"):
+    from sktime.datatypes._adapter.dask_to_pd import (
+        convert_dask_to_pandas,
+        convert_pandas_to_dask,
+    )
+
+    def convert_dask_to_pd_as_panel(obj, store=None):
+        return convert_dask_to_pandas(obj)
+
+    convert_dict[("dask_panel", "pd-multiindex", "Panel")] = convert_dask_to_pd_as_panel
+
+    def convert_pd_to_dask_as_panel(obj, store=None):
+        return convert_pandas_to_dask(obj)
+
+    convert_dict[("pd-multiindex", "dask_panel", "Panel")] = convert_pd_to_dask_as_panel
+
+    _extend_conversions(
+        "dask_panel", "pd-multiindex", convert_dict, mtype_universe=MTYPE_LIST_PANEL
+    )

@@ -3,12 +3,15 @@
 
 * @fkiraly @aiwalter @guzalbulatova
 
+
+sktime/regression/dummy/ @badrmarani
+
 sktime/classification/dictionary_based/_boss.py @patrickzib @MatthewMiddlehurst @TonyBagnall
 sktime/classification/dictionary_based/_cboss.py @patrickzib @MatthewMiddlehurst @TonyBagnall
 sktime/classification/dictionary_based/_muse.py @patrickzib @MatthewMiddlehurst @TonyBagnall
 sktime/classification/dictionary_based/_tde.py @patrickzib @MatthewMiddlehurst @TonyBagnall
 sktime/classification/dictionary_based/_weasel.py @patrickzib @MatthewMiddlehurst @TonyBagnall
-sktime/classification/distance_based/ @jasonlines @goaster @TonyBagnall
+sktime/classification/distance_based/ @goastler @TonyBagnall
 sktime/classification/dummy/ @ZiyaoWei
 sktime/classification/early_classification/_probability_threshold.py @MatthewMiddlehurst
 sktime/classification/early_classification/_teaser.py @patrickzib @MatthewMiddlehurst
@@ -28,7 +31,7 @@ sktime/classification/interval_based/_stsf.py @MatthewMiddlehurst @TonyBagnall
 sktime/classification/interval_based/_tsf.py @MatthewMiddlehurst @TonyBagnall
 sktime/classification/kernel_based/_arsenal.py @MatthewMiddlehurst @TonyBagnall
 sktime/classification/kernel_based/_rocket_classifier.py @MatthewMiddlehurst @TonyBagnall
-sktime/classification/shapelet_based/_stc.py @jasonlines @ABostrom @MatthewMiddlehurst @TonyBagnall
+sktime/classification/shapelet_based/_stc.py @ABostrom @MatthewMiddlehurst @TonyBagnall
 sktime/classification/sklearn/_continuous_interval_tree.py @MatthewMiddlehurst
 sktime/classification/sklearn/_rotation_forest.py @MatthewMiddlehurst
 
@@ -37,8 +40,9 @@ sktime/transformations/panel/dictionary_based/_sax.py @patrickzib @MatthewMiddle
 sktime/transformations/panel/dictionary_based/_sfa.py @patrickzib @MatthewMiddlehurst
 sktime/transformations/panel/dictionary_based/_sfa_fast.py @patrickzib @MatthewMiddlehurst
 sktime/transformations/panel/catch22.py @MatthewMiddlehurst
+sktime/transformations/panel/catch22wrapper.py @MatthewMiddlehurst
 sktime/transformations/panel/random_intervals.py @MatthewMiddlehurst
-sktime/transformations/panel/shapelet_transform.py @jasonlines @ABostrom @MatthewMiddlehurst @TonyBagnall
+sktime/transformations/panel/shapelet_transform.py @ABostrom @MatthewMiddlehurst @TonyBagnall
 sktime/transformations/panel/supervised_intervals.py @MatthewMiddlehurst
 sktime/transformations/panel/rocket/ @angus924
 sktime/transformations/panel/rocket/_multirocket.py @ChangWeiTan @fstinner @angus924
@@ -57,6 +61,7 @@ sktime/transformations/panel/augmenter.py @MrPr3ntice @iljamaurer
 sktime/transformations/multiplex.py @miraep8
 sktime/transformations/tests/test_multiplexer.py @miraep8
 sktime/transformations/panel/channel_selection.py @haskarb @a-pasos-ruiz @TonyBagnall
+sktime/transformations/series/time_since.py @KishManani
 
 sktime/forecasting/base/ @fkiraly @mloning @aiwalter
 sktime/forecasting/base/adapters/_statsforecast.py @FedericoGarza
@@ -67,6 +72,7 @@ sktime/forecasting/fbprophet.py @aiwalter
 sktime/forecasting/bats.py @aiwalter
 sktime/forecasting/tbats.py @aiwalter
 sktime/forecasting/arima.py @HYang1996
+sktime/forecasting/adapters/_hcrystalball.py @MichalChromcak
 sktime/forecasting/statsforecast.py @FedericoGarza
 sktime/forecasting/structural.py @juanitorduz
 sktime/forecasting/model_selection/_split @koralturkk
@@ -79,12 +85,14 @@ sktime/forecasting/sarimax.py @TNTran92
 
 sktime/performance_metrics/forecasting/_functions.py @aiwalter @rnkuhns
 sktime/performance_metrics/forecasting/_classes.py @rnkuhns
-sktime/performance_metrics/annotation @lmmentel
+sktime/performance_metrics/annotation
 
 sktime/annotation/clasp.py @patrickzib @ermshaua
-sktime/annotation/igts.py @lmmentel
-sktime/annotation/ggs.py @lmmentel
-sktime/annotation/datagen.py @lmmentel
+sktime/annotation/igts.py
+sktime/annotation/ggs.py
+sktime/annotation/datagen.py
 sktime/transformations/series/clasp.py @patrickzib @ermshaua
 
-.github/workflows/* @lmmentel @freddyaboulton
+.github/workflows/* @freddyaboulton
+
+sktime/utils/mlflow_sktime.py @benjaminbluhm

@@ -64,7 +64,10 @@ class DummyClassifier(BaseClassifier):
         "X_inner_mtype": "nested_univ",
         "capability:missing_values": True,
         "capability:unequal_length": True,
+        "capability:multivariate": True,
     }
+
+    VALID_STRATEGIES = ["most_frequent", "prior", "stratified", "uniform", "constant"]
 
     def __init__(self, strategy="prior", random_state=None, constant=None):
         self.strategy = strategy
@@ -116,3 +119,28 @@ class DummyClassifier(BaseClassifier):
         y : predictions of probabilities for class values of X, np.ndarray
         """
         return self.sklearn_dummy_classifier.predict_proba(np.zeros(X.shape))
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default={}
+            Parameters to create testing instances of the class.
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`.
+        """
+        params = [{"strategy": x} for x in cls.VALID_STRATEGIES]
+        for p in params:
+            if p["strategy"] == "constant":
+                p["constant"] = 0
+
+        return params

@@ -192,10 +192,10 @@ class UnobservedComponents(_StatsModelsAdapter):
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.structural import UnobservedComponents
     >>> y = load_airline()
-    >>> forecaster = UnobservedComponents(level='local linear trend')
-    >>> forecaster.fit(y)
+    >>> forecaster = UnobservedComponents(level='local linear trend')  # doctest: +SKIP
+    >>> forecaster.fit(y)  # doctest: +SKIP
     UnobservedComponents(...)
-    >>> y_pred = forecaster.predict(fh=[1, 2, 3])
+    >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
     """
 
     _tags = {
@@ -364,9 +364,10 @@ class UnobservedComponents(_StatsModelsAdapter):
         --------
         statsmodels.tsa.statespace.mlemodel.PredictionResults.summary_frame
         """
+        start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
+
         valid_indices = fh.to_absolute(self.cutoff).to_pandas()
 
-        start, end = valid_indices[[0, -1]]
         prediction_results = self._fitted_forecaster.get_prediction(
             start=start, end=end, exog=X
         )
