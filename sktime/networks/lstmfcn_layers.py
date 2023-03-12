@@ -642,7 +642,8 @@ def make_attention_lstm():
                 warnings.warn(
                     "`implementation=0` has been deprecated, "
                     "and now defaults to `implementation=1`."
-                    "Please update your layer call."
+                    "Please update your layer call.",
+                    stacklevel=2,
                 )
                 implementation = 1
 
@@ -653,7 +654,8 @@ def make_attention_lstm():
                         "when using dynamic RNNs (i.e. non-unrolled). "
                         "You can either set `unroll=True`, "
                         "set `dropout` and `recurrent_dropout` to 0, "
-                        "or use a different backend."
+                        "or use a different backend.",
+                        stacklevel=2,
                     )
                     dropout = 0.0
                     recurrent_dropout = 0.0
