@@ -1,8 +1,8 @@
-#!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
+"""Module for summarization transformers."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-__author__ = ["Markus Löning"]
+__author__ = ["mloning"]
 __all__ = [
     "DerivativeSlopeTransformer",
     "PlateauFinder",
@@ -10,7 +10,9 @@ __all__ = [
     "FittedParamExtractor",
 ]
 
-from ._extract import DerivativeSlopeTransformer
-from ._extract import FittedParamExtractor
-from ._extract import PlateauFinder
-from ._extract import RandomIntervalFeatureExtractor
+from ._extract import (
+    DerivativeSlopeTransformer,
+    FittedParamExtractor,
+    PlateauFinder,
+    RandomIntervalFeatureExtractor,
+)

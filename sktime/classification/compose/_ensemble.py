@@ -28,24 +28,10 @@ from sktime.utils.validation.panel import check_X, check_X_y
 
 
 class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier):
-    """Time-Series Forest Classifier.
+    """Time Series Forest Classifier as described in [1]_.
 
-    @article{DENG2013142,
-        title = {A time series forest for classification and feature extraction},
-        journal = {Information Sciences},
-        volume = {239},
-        pages = {142 - 153},
-        year = {2013},
-        issn = {0020-0255},
-        doi = {https://doi.org/10.1016/j.ins.2013.02.030},
-        url = {http://www.sciencedirect.com/science/article/pii/S0020025513001473},
-        author = {Houtao Deng and George Runger and Eugene Tuv and Martyanov Vladimir},
-        keywords = {Decision tree, Ensemble, Entrance gain, Interpretability,
-                    Large margin, Time series classification}
-    }
-
-    A time series forest is a meta estimator and an adaptation of the random
-    forest for time-series/panel data that fits a number of decision tree
+    A time series forest is an adaptation of the random
+    forest for time-series data. It that fits a number of decision tree
     classifiers on various sub-samples of a transformed dataset and uses
     averaging to improve the predictive accuracy and control over-fitting.
     The sub-sample size is always the same as the original input sample size
@@ -182,6 +168,11 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
         set. If n_estimators is small it might be possible that a data point
         was never left out during the bootstrap. In this case,
         `oob_decision_function_` might contain NaN.
+
+    References
+    ----------
+    .. [1] Deng et. al, A time series forest for classification and feature extraction,
+    Information Sciences, 239:2013.
     """
 
     _tags = {
@@ -236,6 +227,7 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
             class_weight=class_weight,
             max_samples=max_samples,
         )
+        BaseClassifier.__init__(self)
 
         # We need to add is-fitted state when inheriting from scikit-learn
         self._is_fitted = False
@@ -290,7 +282,7 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
                 ),
                 ("clf", DecisionTreeClassifier(random_state=self.random_state)),
             ]
-            self.estimator_ = Pipeline(steps)
+            self._estimator = Pipeline(steps)
 
         else:
             # else check given estimator is a pipeline with prior
@@ -301,7 +293,7 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
                 raise ValueError(
                     "Last step in `estimator` must be DecisionTreeClassifier."
                 )
-            self.estimator_ = self.estimator
+            self._estimator = self.estimator
 
         # Set parameters according to naming in pipeline
         estimator_params = {
@@ -313,7 +305,7 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
             "max_leaf_nodes": self.max_leaf_nodes,
             "min_impurity_decrease": self.min_impurity_decrease,
         }
-        final_estimator = self.estimator_.steps[-1][0]
+        final_estimator = self._estimator.steps[-1][0]
         self.estimator_params = {
             f"{final_estimator}__{pname}": pval
             for pname, pval in estimator_params.items()
@@ -560,7 +552,7 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
         return {"n_estimators": 2}
 
 
-class WeightedEnsembleClassifier(BaseClassifier, _HeterogenousMetaEstimator):
+class WeightedEnsembleClassifier(_HeterogenousMetaEstimator, BaseClassifier):
     """Weighted ensemble of classifiers with fittable ensemble weight.
 
     Produces a probabilistic prediction which is the weighted average of
@@ -620,18 +612,18 @@ class WeightedEnsembleClassifier(BaseClassifier, _HeterogenousMetaEstimator):
 
     Examples
     --------
-    >>> from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
+    >>> from sktime.classification.dummy import DummyClassifier
     >>> from sktime.classification.kernel_based import RocketClassifier
     >>> from sktime.datasets import load_unit_test
-    >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
+    >>> X_train, y_train = load_unit_test(split="train") # doctest: +SKIP
+    >>> X_test, y_test = load_unit_test(split="test") # doctest: +SKIP
     >>> clf = WeightedEnsembleClassifier(
-    ...     [KNeighborsTimeSeriesClassifier(), RocketClassifier()],
+    ...     [DummyClassifier(), RocketClassifier(num_kernels=100)],
     ...     weights=2,
-    ... )
-    >>> clf.fit(X_train, y_train)
+    ... ) # doctest: +SKIP
+    >>> clf.fit(X_train, y_train) # doctest: +SKIP
     WeightedEnsembleClassifier(...)
-    >>> y_pred = clf.predict(X_test)
+    >>> y_pred = clf.predict(X_test) # doctest: +SKIP
     """
 
     _tags = {
@@ -644,6 +636,17 @@ class WeightedEnsembleClassifier(BaseClassifier, _HeterogenousMetaEstimator):
             "numpy3D",
         ],
     }
+
+    # for default get_params/set_params from _HeterogenousMetaEstimator
+    # _steps_attr points to the attribute of self
+    # which contains the heterogeneous set of estimators
+    # this must be an iterable of (name: str, estimator, ...) tuples for the default
+    _steps_attr = "_classifiers"
+    # if the estimator is fittable, _HeterogenousMetaEstimator also
+    # provides an override for get_fitted_params for params from the fitted estimators
+    # the fitted estimators should be in a different attribute, _steps_fitted_attr
+    # this must be an iterable of (name: str, estimator, ...) tuples for the default
+    _steps_fitted_attr = "classifiers_"
 
     def __init__(
         self,
@@ -701,34 +704,6 @@ class WeightedEnsembleClassifier(BaseClassifier, _HeterogenousMetaEstimator):
     def _classifiers(self, value):
         self.classifiers = value
 
-    def get_params(self, deep=True):
-        """Get parameters of estimator in `classifiers`.
-
-        Parameters
-        ----------
-        deep : boolean, optional, default=True
-            If True, will return the parameters for this estimator and
-            contained sub-objects that are estimators.
-
-        Returns
-        -------
-        params : mapping of string to any
-            Parameter names mapped to their values.
-        """
-        return self._get_params("_classifiers", deep=deep)
-
-    def set_params(self, **kwargs):
-        """Set the parameters of estimator in `classifiers`.
-
-        Valid parameter keys can be listed with ``get_params()``.
-
-        Returns
-        -------
-        self : returns an instance of self.
-        """
-        self._set_params("_classifiers", **kwargs)
-        return self
-
     def _fit(self, X, y):
         """Fit time series classifier to training data.
 
@@ -779,13 +754,16 @@ class WeightedEnsembleClassifier(BaseClassifier, _HeterogenousMetaEstimator):
         y : array-like, shape = [n_instances, n_classes_]
             Predicted probabilities using the ordering in classes_.
         """
-        dists = np.zeros((X.shape[0], self.n_classes_))
+        dists = None
 
         # Call predict proba on each classifier, multiply the probabilities by the
         # classifiers weight then add them to the current HC2 probabilities
         for clf_name, clf in self.classifiers_:
             y_proba = clf.predict_proba(X=X)
-            dists += y_proba * self.weights_[clf_name]
+            if dists is None:
+                dists = y_proba * self.weights_[clf_name]
+            else:
+                dists += y_proba * self.weights_[clf_name]
 
         # Make each instances probability array sum to 1 and return
         y_proba = dists / dists.sum(axis=1, keepdims=True)
@@ -814,23 +792,33 @@ class WeightedEnsembleClassifier(BaseClassifier, _HeterogenousMetaEstimator):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
-        from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
-        from sktime.classification.kernel_based import RocketClassifier
+        from sktime.classification.dummy import DummyClassifier
+        from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-        params1 = {
-            "classifiers": [
-                KNeighborsTimeSeriesClassifier.create_test_instance(),
-                RocketClassifier.create_test_instance(),
-            ],
-            "weights": [42, 1],
-        }
+        params0 = {"classifiers": [DummyClassifier()]}
 
-        params2 = {
-            "classifiers": [
-                KNeighborsTimeSeriesClassifier.create_test_instance(),
-                RocketClassifier.create_test_instance(),
-            ],
-            "weights": 2,
-            "cv": 3,
-        }
-        return [params1, params2]
+        if _check_soft_dependencies("numba", severity="none"):
+            from sktime.classification.distance_based import (
+                KNeighborsTimeSeriesClassifier,
+            )
+            from sktime.classification.kernel_based import RocketClassifier
+
+            params1 = {
+                "classifiers": [
+                    KNeighborsTimeSeriesClassifier.create_test_instance(),
+                    RocketClassifier.create_test_instance(),
+                ],
+                "weights": [42, 1],
+            }
+
+            params2 = {
+                "classifiers": [
+                    KNeighborsTimeSeriesClassifier.create_test_instance(),
+                    RocketClassifier.create_test_instance(),
+                ],
+                "weights": 2,
+                "cv": 3,
+            }
+            return [params0, params1, params2]
+        else:
+            return params0

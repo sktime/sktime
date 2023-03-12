@@ -85,6 +85,21 @@ class TimeSeriesForestClassifier(
 
     _base_estimator = DecisionTreeClassifier(criterion="entropy")
 
+    def __init__(
+        self,
+        min_interval=3,
+        n_estimators=200,
+        n_jobs=1,
+        random_state=None,
+    ):
+        super(TimeSeriesForestClassifier, self).__init__(
+            min_interval=min_interval,
+            n_estimators=n_estimators,
+            n_jobs=n_jobs,
+            random_state=random_state,
+        )
+        BaseClassifier.__init__(self)
+
     def fit(self, X, y, **kwargs):
         """Wrap fit to call BaseClassifier.fit.
 
@@ -154,6 +169,11 @@ class TimeSeriesForestClassifier(
             np.ones(self.n_classes) * self.n_estimators
         )
         return output
+
+    def _get_fitted_params(self):
+        params = super(TimeSeriesForestClassifier, self)._get_fitted_params()
+        params.update({"n_classes": self.n_classes_, "fit_time": self.fit_time_})
+        return params
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):

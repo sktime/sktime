@@ -25,7 +25,7 @@ Tag inspection and setter methods
     inspect tags (one tag)        - get_tag(tag_name: str, tag_value_default=None)
     inspect tags (class method)   - get_class_tags()
     inspect tags (one tag, class) - get_class_tag(tag_name:str, tag_value_default=None)
-    setting dynamic tags          - set_tag(**tag_dict: dict)
+    setting dynamic tags          - set_tags(**tag_dict: dict)
     set/clone dynamic tags        - clone_tags(estimator, tag_names=None)
 
 Blueprinting: resetting and cloning, post-init state with same hyper-parameters
@@ -63,18 +63,37 @@ from sklearn import clone
 from sklearn.base import BaseEstimator as _BaseEstimator
 from sklearn.ensemble._base import _set_random_states
 
+from sktime.base._tagmanager import _FlagManager
 from sktime.exceptions import NotFittedError
 
 
-class BaseObject(_BaseEstimator):
+class BaseObject(_FlagManager, _BaseEstimator):
     """Base class for parametric objects with tags sktime.
 
     Extends scikit-learn's BaseEstimator to include sktime interface for tags.
     """
 
     def __init__(self):
-        self._tags_dynamic = dict()
+        self._init_flags(flag_attr_name="_tags")
         super(BaseObject, self).__init__()
+
+    def __eq__(self, other):
+        """Equality dunder. Checks equal class and parameters.
+
+        Returns True iff result of get_params(deep=False)
+        results in equal parameter sets.
+
+        Nested BaseObject descendants from get_params are compared via __eq__ as well.
+        """
+        from sktime.utils._testing.deep_equals import deep_equals
+
+        if not isinstance(other, BaseObject):
+            return False
+
+        self_params = self.get_params(deep=False)
+        other_params = other.get_params(deep=False)
+
+        return deep_equals(self_params, other_params)
 
     def reset(self):
         """Reset the object to a clean post-init state.
@@ -245,19 +264,7 @@ class BaseObject(_BaseEstimator):
             class attribute via nested inheritance. NOT overridden by dynamic
             tags set by set_tags or mirror_tags.
         """
-        collected_tags = dict()
-
-        # We exclude the last two parent classes: sklearn.base.BaseEstimator and
-        # the basic Python object.
-        for parent_class in reversed(inspect.getmro(cls)[:-2]):
-            if hasattr(parent_class, "_tags"):
-                # Need the if here because mixins might not have _more_tags
-                # but might do redundant work in estimators
-                # (i.e. calling more tags on BaseEstimator multiple times)
-                more_tags = parent_class._tags
-                collected_tags.update(more_tags)
-
-        return deepcopy(collected_tags)
+        return cls._get_class_flags(flag_attr_name="_tags")
 
     @classmethod
     def get_class_tag(cls, tag_name, tag_value_default=None):
@@ -273,12 +280,13 @@ class BaseObject(_BaseEstimator):
         Returns
         -------
         tag_value :
-            Value of the `tag_name` tag in self. If not found, returns
-            `tag_value_default`.
+            Value of `tag_name` tag in self. If not found, returns `tag_value_default`.
         """
-        collected_tags = cls.get_class_tags()
-
-        return collected_tags.get(tag_name, tag_value_default)
+        return cls._get_class_flag(
+            flag_name=tag_name,
+            flag_value_default=tag_value_default,
+            flag_attr_name="_tags",
+        )
 
     def get_tags(self):
         """Get tags from estimator class and dynamic tag overrides.
@@ -290,12 +298,7 @@ class BaseObject(_BaseEstimator):
             class attribute via nested inheritance and then any overrides
             and new tags from _tags_dynamic object attribute.
         """
-        collected_tags = self.get_class_tags()
-
-        if hasattr(self, "_tags_dynamic"):
-            collected_tags.update(self._tags_dynamic)
-
-        return deepcopy(collected_tags)
+        return self._get_flags(flag_attr_name="_tags")
 
     def get_tag(self, tag_name, tag_value_default=None, raise_error=True):
         """Get tag value from estimator class and dynamic tag overrides.
@@ -320,14 +323,12 @@ class BaseObject(_BaseEstimator):
         ValueError if raise_error is True i.e. if tag_name is not in self.get_tags(
         ).keys()
         """
-        collected_tags = self.get_tags()
-
-        tag_value = collected_tags.get(tag_name, tag_value_default)
-
-        if raise_error and tag_name not in collected_tags.keys():
-            raise ValueError(f"Tag with name {tag_name} could not be found.")
-
-        return tag_value
+        return self._get_flag(
+            flag_name=tag_name,
+            flag_value_default=tag_value_default,
+            raise_error=raise_error,
+            flag_attr_name="_tags",
+        )
 
     def set_tags(self, **tag_dict):
         """Set dynamic tags to given values.
@@ -347,7 +348,7 @@ class BaseObject(_BaseEstimator):
         Changes object state by settting tag values in tag_dict as dynamic tags
         in self.
         """
-        self._tags_dynamic.update(deepcopy(tag_dict))
+        self._set_flags(flag_attr_name="_tags", **tag_dict)
 
         return self
 
@@ -371,20 +372,9 @@ class BaseObject(_BaseEstimator):
         Changes object state by setting tag values in tag_set from estimator as
         dynamic tags in self.
         """
-        tags_est = deepcopy(estimator.get_tags())
-
-        # if tag_set is not passed, default is all tags in estimator
-        if tag_names is None:
-            tag_names = tags_est.keys()
-        else:
-            # if tag_set is passed, intersect keys with tags in estimator
-            if not isinstance(tag_names, list):
-                tag_names = [tag_names]
-            tag_names = [key for key in tag_names if key in tags_est.keys()]
-
-        update_dict = {key: tags_est[key] for key in tag_names}
-
-        self.set_tags(**update_dict)
+        self._clone_flags(
+            estimator=estimator, flag_names=tag_names, flag_attr_name="_tags"
+        )
 
         return self
 
@@ -406,18 +396,6 @@ class BaseObject(_BaseEstimator):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        # if non-default parameters are required, but none have been found,
-        # raise error
-        if hasattr(cls, "_required_parameters"):
-            required_parameters = getattr(cls, "required_parameters", [])
-            if len(required_parameters) > 0:
-                raise ValueError(
-                    f"Estimator: {cls} requires "
-                    f"non-default parameters for construction, "
-                    f"but none were given. Please set them "
-                    f"as given in the extension template"
-                )
-
         # default parameters = empty dict
         return {}
 
@@ -565,7 +543,7 @@ class BaseObject(_BaseEstimator):
         return composite
 
     def _components(self, base_class=None):
-        """Retirn references to all state changing BaseObject type attributes.
+        """Return references to all state changing BaseObject type attributes.
 
         This *excludes* the blue-print-like components passed in the __init__.
 
@@ -575,21 +553,22 @@ class BaseObject(_BaseEstimator):
         Parameters
         ----------
         base_class : class, optional, default=None, must be subclass of BaseObject
-            if not None, sub-sets return dict to only descendants of base_class
+            if None, behaves the same as `base_class=BaseObject`
+            if not None, return dict collects descendants of `base_class`
 
         Returns
         -------
-        dict with key = attribute name, value = reference to that BaseObject attribute
-        dict contains all attributes of self that inherit from BaseObjects, and:
+        dict with key = attribute name, value = reference to attribute
+        dict contains all attributes of `self` that inherit from `base_class`, and:
             whose names do not contain the string "__", e.g., hidden attributes
-            are not class attributes, and are not hyper-parameters (__init__ args)
+            are not class attributes, and are not hyper-parameters (`__init__` args)
         """
         if base_class is None:
             base_class = BaseObject
         if base_class is not None and not inspect.isclass(base_class):
             raise TypeError(f"base_class must be a class, but found {type(base_class)}")
-        if base_class is not None and not issubclass(base_class, BaseObject):
-            raise TypeError("base_class must be a subclass of BaseObject")
+        # if base_class is not None and not issubclass(base_class, BaseObject):
+        #     raise TypeError("base_class must be a subclass of BaseObject")
 
         # retrieve parameter names to exclude them later
         param_names = self.get_params(deep=False).keys()
@@ -603,6 +582,88 @@ class BaseObject(_BaseEstimator):
         comp_dict = {x: y for (x, y) in comp_dict.items() if isinstance(y, base_class)}
 
         return comp_dict
+
+    def save(self, path=None):
+        """Save serialized self to bytes-like object or to (.zip) file.
+
+        Behaviour:
+        if `path` is None, returns an in-memory serialized self
+        if `path` is a file location, stores self at that location as a zip file
+
+        saved files are zip files with following contents:
+        _metadata - contains class of self, i.e., type(self)
+        _obj - serialized self. This class uses the default serialization (pickle).
+
+        Parameters
+        ----------
+        path : None or file location (str or Path)
+            if None, self is saved to an in-memory object
+            if file location, self is saved to that file location. If:
+                path="estimator" then a zip file `estimator.zip` will be made at cwd.
+                path="/home/stored/estimator" then a zip file `estimator.zip` will be
+                stored in `/home/stored/`.
+
+        Returns
+        -------
+        if `path` is None - in-memory serialized self
+        if `path` is file location - ZipFile with reference to the file
+        """
+        import pickle
+        import shutil
+        from pathlib import Path
+        from zipfile import ZipFile
+
+        if path is None:
+            return (type(self), pickle.dumps(self))
+        if not isinstance(path, (str, Path)):
+            raise TypeError(
+                "`path` is expected to either be a string or a Path object "
+                f"but found of type:{type(path)}."
+            )
+
+        path = Path(path) if isinstance(path, str) else path
+        path.mkdir()
+
+        pickle.dump(type(self), open(path / "_metadata", "wb"))
+        pickle.dump(self, open(path / "_obj", "wb"))
+
+        shutil.make_archive(base_name=path, format="zip", root_dir=path)
+        shutil.rmtree(path)
+        return ZipFile(path.with_name(f"{path.stem}.zip"))
+
+    @classmethod
+    def load_from_serial(cls, serial):
+        """Load object from serialized memory container.
+
+        Parameters
+        ----------
+        serial : 1st element of output of `cls.save(None)`
+
+        Returns
+        -------
+        deserialized self resulting in output `serial`, of `cls.save(None)`
+        """
+        import pickle
+
+        return pickle.loads(serial)
+
+    @classmethod
+    def load_from_path(cls, serial):
+        """Load object from file location.
+
+        Parameters
+        ----------
+        serial : result of ZipFile(path).open("object)
+
+        Returns
+        -------
+        deserialized self resulting in output at `path`, of `cls.save(path)`
+        """
+        import pickle
+        from zipfile import ZipFile
+
+        with ZipFile(serial, "r") as file:
+            return pickle.loads(file.open("_obj").read())
 
 
 class TagAliaserMixin:
@@ -772,14 +833,14 @@ class TagAliaserMixin:
             if tag_name in cls.alias_dict.keys():
                 version = cls.deprecate_dict[tag_name]
                 new_tag = cls.alias_dict[tag_name]
-                msg = f'tag "{tag_name}" will be removed in sktime version {version}'
+                msg = f"tag {tag_name!r} will be removed in sktime version {version}"
                 if new_tag != "":
                     msg += (
-                        f' and replaced by "{new_tag}", please use "{new_tag}" instead'
+                        f" and replaced by {new_tag!r}, please use {new_tag!r} instead"
                     )
                 else:
                     msg += ', please remove code that access or sets "{tag_name}"'
-                warnings.warn(msg, category=DeprecationWarning)
+                warnings.warn(msg, category=DeprecationWarning, stacklevel=2)
 
 
 class BaseEstimator(BaseObject):
@@ -811,25 +872,50 @@ class BaseEstimator(BaseObject):
                 f"been fitted yet; please call `fit` first."
             )
 
-    def get_fitted_params(self):
+    def get_fitted_params(self, deep=True):
         """Get fitted parameters.
 
         State required:
             Requires state to be "fitted".
 
+        Parameters
+        ----------
+        deep : bool, default=True
+            Whether to return fitted parameters of components.
+
+            * If True, will return a dict of parameter name : value for this object,
+              including fitted parameters of fittable components
+              (= BaseEstimator-valued parameters).
+            * If False, will return a dict of parameter name : value for this object,
+              but not include fitted parameters of components.
+
         Returns
         -------
-        fitted_params : dict of fitted parameters, keys are str names of parameters
-            parameters of components are indexed as [componentname]__[paramname]
+        fitted_params : dict with str-valued keys
+            Dictionary of fitted parameters, paramname : paramvalue
+            keys-value pairs include:
+
+            * always: all fitted parameters of this object, as via `get_param_names`
+              values are fitted parameter value for that key, of this object
+            * if `deep=True`, also contains keys/value pairs of component parameters
+              parameters of components are indexed as `[componentname]__[paramname]`
+              all parameters of `componentname` appear as `paramname` with its value
+            * if `deep=True`, also contains arbitrary levels of component recursion,
+              e.g., `[componentname]__[componentcomponentname]__[paramname]`, etc
         """
         if not self.is_fitted:
             raise NotFittedError(
-                f"parameter estimator of type {type(self).__name__} has not been "
+                f"estimator of type {type(self).__name__} has not been "
                 "fitted yet, please call fit on data before get_fitted_params"
             )
 
-        fitted_params = dict()
-        c_dict = self._components()
+        # collect non-nested fitted params of self
+        fitted_params = self._get_fitted_params()
+
+        # the rest is only for nested parameters
+        # so, if deep=False, we simply return here
+        if not deep:
+            return fitted_params
 
         def sh(x):
             """Shorthand to remove all underscores at end of a string."""
@@ -838,14 +924,59 @@ class BaseEstimator(BaseObject):
             else:
                 return x
 
-        for c in c_dict.keys():
-            c_f_params = c_dict[c].get_fitted_params()
-            c_f_params = {f"{sh(c)}__{k}": c_f_params[k] for k in c_f_params.keys()}
-            fitted_params.update(c_f_params)
+        # add all nested parameters from components that are sktime BaseObject
+        c_dict = self._components()
+        for c, comp in c_dict.items():
+            if isinstance(comp, BaseEstimator) and comp._is_fitted:
+                c_f_params = comp.get_fitted_params()
+                c_f_params = {f"{sh(c)}__{k}": v for k, v in c_f_params.items()}
+                fitted_params.update(c_f_params)
 
-        fitted_params.update(self._get_fitted_params())
+        # add all nested parameters from components that are sklearn estimators
+        # we do this recursively as we have to reach into nested sklearn estimators
+        n_new_params = 42
+        old_new_params = fitted_params
+        while n_new_params > 0:
+            new_params = dict()
+            for c, comp in old_new_params.items():
+                if isinstance(comp, _BaseEstimator):
+                    c_f_params = self._get_fitted_params_default(comp)
+                    c_f_params = {f"{sh(c)}__{k}": v for k, v in c_f_params.items()}
+                    new_params.update(c_f_params)
+            fitted_params.update(new_params)
+            old_new_params = new_params.copy()
+            n_new_params = len(new_params)
 
         return fitted_params
+
+    def _get_fitted_params_default(self, obj=None):
+        """Obtain fitted params of object, per sklearn convention.
+
+        Extracts a dict with {paramstr : paramvalue} contents,
+        where paramstr are all string names of "fitted parameters".
+
+        A "fitted attribute" of obj is one that ends in "_" but does not start with "_".
+        "fitted parameters" are names of fitted attributes, minus the "_" at the end.
+
+        Parameters
+        ----------
+        obj : any object, optional, default=self
+
+        Returns
+        -------
+        fitted_params : dict with str keys
+            fitted parameters, keyed by names of fitted parameter
+        """
+        obj = obj if obj else self
+
+        # default retrieves all self attributes ending in "_"
+        # and returns them with keys that have the "_" removed
+        fitted_params = [attr for attr in dir(obj) if attr.endswith("_")]
+        fitted_params = [x for x in fitted_params if not x.startswith("_")]
+        fitted_params = [x for x in fitted_params if hasattr(obj, x)]
+        fitted_param_dict = {p[:-1]: getattr(obj, p) for p in fitted_params}
+
+        return fitted_param_dict
 
     def _get_fitted_params(self):
         """Get fitted parameters.
@@ -857,15 +988,10 @@ class BaseEstimator(BaseObject):
 
         Returns
         -------
-        fitted_params : dict
+        fitted_params : dict with str keys
+            fitted parameters, keyed by names of fitted parameter
         """
-        # default retrieves all self attributes ending in "_"
-        # and returns them with keys that have the "_" removed
-        fitted_params = [attr for attr in dir(self) if attr.endswith("_")]
-        fitted_params = [x for x in fitted_params if not x.startswith("_")]
-        fitted_param_dict = {p[:-1]: getattr(self, p) for p in fitted_params}
-
-        return fitted_param_dict
+        return self._get_fitted_params_default()
 
 
 def _clone_estimator(base_estimator, random_state=None):

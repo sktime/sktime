@@ -297,14 +297,13 @@ class _TbatsAdapter(BaseForecaster):
 
         return pred_int
 
-    def get_fitted_params(self):
+    def _get_fitted_params(self):
         """Get fitted parameters.
 
         Returns
         -------
         fitted_params : dict
         """
-        self.check_is_fitted()
         fitted_params = {}
         for name in self._get_fitted_param_names():
             fitted_params[name] = getattr(self._forecaster, name, None)

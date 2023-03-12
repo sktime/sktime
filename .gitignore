@@ -80,7 +80,6 @@ instance/
 docs/_build/
 docs/source/api_reference/auto_generated/
 docs/estimator_overview_table.md
-docs/source/examples
 
 # PyBuilder
 target/
@@ -163,3 +162,6 @@ sktime/_contrib/debug.py
 sktime/_contrib/local_code.py
 sktime/_contrib/main.py
 sktime/_contrib/temp/
+
+# example mlflow runs
+examples/local/

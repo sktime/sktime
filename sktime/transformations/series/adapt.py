@@ -23,12 +23,12 @@ class TabularToSeriesAdaptor(BaseTransformer):
     If fit_in_transform = False and X is a series (pd.DataFrame, pd.Series, np.ndarray):
         ``fit(X)`` fits a clone of ``transformer`` to X (considered as a table)
         ``transform(X)`` applies transformer.transform to X and returns the result
-        ``inverse_transform(X)`` applies tansformer.inverse_transform to X
+        ``inverse_transform(X)`` applies transformer.inverse_transform to X
     If fit_in_transform = True and X is a series (pd.DataFrame, pd.Series, np.ndarray):
         ``fit`` is empty
-        ``transform(X)`` applies transformer.fit(X).transform.(X) to X,
+        ``transform(X)`` applies transformer.fit(X).transform(X) to X,
             considered as a table, and returns the result
-        ``inverse_transform(X)`` applies tansformer(X).inverse_transform(X) to X
+        ``inverse_transform(X)`` applies transformer.fit(X).inverse_transform(X) to X
 
     If fit_in_transform = False, and X is of a panel/hierarchical type:
         ``fit(X)`` fits a clone of ``transformer`` for each individual series x in X
@@ -83,8 +83,6 @@ class TabularToSeriesAdaptor(BaseTransformer):
     >>> transformer = TabularToSeriesAdaptor(MinMaxScaler())
     >>> y_hat = transformer.fit_transform(y)
     """
-
-    _required_parameters = ["transformer"]
 
     _tags = {
         "scitype:transform-input": "Series",
@@ -272,6 +270,7 @@ class PandasTransformAdaptor(BaseTransformer):
         "transform-returns-same-time-index": False,
         "fit_is_empty": False,
         "capability:inverse_transform": False,
+        "remember_data": False,  # remember all data seen as _X
     }
 
     def __init__(self, method, kwargs=None, apply_to="call"):
@@ -291,31 +290,14 @@ class PandasTransformAdaptor(BaseTransformer):
 
         super(PandasTransformAdaptor, self).__init__()
 
+        if apply_to in ["all", "all_subset"]:
+            self.set_tags(**{"remember_data": True})
+
         if apply_to == "all_subset":
             self.set_tags(**{"transform-returns-same-time-index": True})
 
         if apply_to == "call":
             self.set_tags(**{"fit_is_empty": True})
-
-    def _fit(self, X, y=None):
-        """Fit transformer to X and y.
-
-        private _fit containing the core logic, called from fit
-
-        Parameters
-        ----------
-        X : pd.DataFrame
-            Data to fit transform to
-        y : ignored argument for interface compatibility
-            Additional data, e.g., labels for transformation
-
-        Returns
-        -------
-        self: a fitted instance of the estimator
-        """
-        if self.apply_to in ["all", "all_subset"]:
-            self._X = X
-        return self
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
@@ -352,26 +334,6 @@ class PandasTransformAdaptor(BaseTransformer):
             Xt = Xt.loc[X.index]
 
         return Xt
-
-    def _update(self, X, y=None):
-        """Fit transformer to X and y.
-
-        private _fit containing the core logic, called from fit
-
-        Parameters
-        ----------
-        X : pd.DataFrame
-            Data to fit transform to
-        y : ignored argument for interface compatibility
-            Additional data, e.g., labels for transformation
-
-        Returns
-        -------
-        self: a fitted instance of the estimator
-        """
-        if self.apply_to in ["all", "all_subset"]:
-            self._X = X.combine_first(self._X)
-        return self
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):

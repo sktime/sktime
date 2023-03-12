@@ -206,7 +206,10 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
     def test_predict_time_index(
         self, estimator_instance, n_columns, index_fh_comb, fh_int
     ):
-        """Check that predicted time index matches forecasting horizon."""
+        """Check that predicted time index matches forecasting horizon.
+
+        Tests predicted time index for predict and predict_residuals.
+        """
         index_type, fh_type, is_relative = index_fh_comb
         if fh_type == "timedelta":
             return None
@@ -226,34 +229,6 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             y_pred = estimator_instance.predict()
             _assert_correct_pred_time_index(y_pred.index, cutoff, fh=fh_int)
             _assert_correct_columns(y_pred, y_train)
-        except NotImplementedError:
-            pass
-
-    @pytest.mark.parametrize(
-        "index_fh_comb", VALID_INDEX_FH_COMBINATIONS, ids=index_fh_comb_names
-    )
-    @pytest.mark.parametrize("fh_int", TEST_FHS, ids=[f"fh={fh}" for fh in TEST_FHS])
-    def test_predict_residuals(
-        self, estimator_instance, n_columns, index_fh_comb, fh_int
-    ):
-        """Check that predict_residuals method works as expected."""
-        index_type, fh_type, is_relative = index_fh_comb
-        if fh_type == "timedelta":
-            # workaround to ensure check_estimator without breaking e.g. debugging
-            return None
-            # todo: ensure check_estimator works with pytest.skip like below
-            # pytest.skip(
-            #    "ForecastingHorizon with timedelta values "
-            #     "is currently experimental and not supported everywhere"
-            # )
-        y_train = _make_series(
-            n_columns=n_columns, index_type=index_type, n_timepoints=50
-        )
-        cutoff = get_cutoff(y_train, return_index=True)
-        fh = _make_fh(cutoff, fh_int, fh_type, is_relative)
-        try:
-            estimator_instance.fit(y_train, fh=fh)
-            y_pred = estimator_instance.predict()
 
             y_test = _make_series(
                 n_columns=n_columns, index_type=index_type, n_timepoints=len(y_pred)
@@ -328,6 +303,21 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         except NotImplementedError:
             pass
 
+    def test_predict_series_name_preserved(self, estimator_instance):
+        """Test that fit/predict preserves name attribute and type of pd.Series."""
+        # skip this test if estimator needs multivariate data
+        # because then it does not take pd.Series at all
+        if estimator_instance.get_tag("scitype:y") == "multivariate":
+            return None
+
+        y_train = _make_series(n_timepoints=15)
+        y_train.name = "foo"
+
+        estimator_instance.fit(y_train, fh=[1, 2, 3])
+        y_pred = estimator_instance.predict()
+
+        _assert_correct_columns(y_pred, y_train)
+
     def _check_pred_ints(
         self, pred_ints: pd.DataFrame, y_train: pd.Series, y_pred: pd.Series, fh_int
     ):
@@ -352,6 +342,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             #     pred_errors.values[1:].round(4) >= pred_errors.values[:-1].round(4)
             # )
 
+    @pytest.mark.parametrize("index_type", [None, "range"])
     @pytest.mark.parametrize(
         "coverage", TEST_ALPHAS, ids=[f"alpha={a}" for a in TEST_ALPHAS]
     )
@@ -359,14 +350,16 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         "fh_int_oos", TEST_OOS_FHS, ids=[f"fh={fh}" for fh in TEST_OOS_FHS]
     )
     def test_predict_interval(
-        self, estimator_instance, n_columns, fh_int_oos, coverage
+        self, estimator_instance, n_columns, index_type, fh_int_oos, coverage
     ):
         """Check prediction intervals returned by predict.
 
         Arguments
         ---------
-        Forecaster: BaseEstimator class descendant, forecaster to test
-        fh: ForecastingHorizon, fh at which to test prediction
+        estimator_instance : BaseEstimator class descendant instance, forecaster to test
+        n_columns : number of columns for the test data
+        index_type : index type of the test data
+        fh_int_oos : forecasting horizon to test the forecaster at, all out of sample
         coverage: float, coverage at which to make prediction intervals
 
         Raises
@@ -376,7 +369,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         AssertionError - if Forecaster test instance does not have "capability:pred_int"
                 and no NotImplementedError is raised when asking predict for pred.int
         """
-        y_train = _make_series(n_columns=n_columns)
+        y_train = _make_series(n_columns=n_columns, index_type=index_type)
         estimator_instance.fit(y_train, fh=fh_int_oos)
         if estimator_instance.get_tag("capability:pred_int"):
 
@@ -647,3 +640,61 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         # changing fh during predict should raise error
         with pytest.raises(ValueError):
             f.predict(fh=FH0 + 1)
+
+    def test_hierarchical_with_exogeneous(self, estimator_instance, n_columns):
+        """Check that hierarchical forecasting works, also see bug #3961.
+
+        Arguments
+        ---------
+        estimator_instance : instance of BaseForecaster
+        n_columns : number of columns, of the endogeneous data y_train
+
+        Raises
+        ------
+        Exception - if fit/predict does not complete without error
+        AssertionError - if forecast is not expected mtype pd_multiindex_hier,
+            and does not have expected row and column indices
+        """
+        from sktime.datatypes import check_is_mtype
+        from sktime.datatypes._utilities import get_window
+        from sktime.utils._testing.hierarchical import _make_hierarchical
+
+        y_train = _make_hierarchical(
+            hierarchy_levels=(2, 4),
+            n_columns=n_columns,
+            min_timepoints=22,
+            max_timepoints=22,
+            index_type="period",
+        )
+        X = _make_hierarchical(
+            hierarchy_levels=(2, 4),
+            n_columns=2,
+            min_timepoints=24,
+            max_timepoints=24,
+            index_type="period",
+        )
+        X.columns = ["foo", "bar"]
+        X_train = get_window(X, lag=2)
+        X_test = get_window(X, window_length=2)
+        fh = [1, 2]
+
+        estimator_instance.fit(y=y_train, X=X_train, fh=fh)
+        y_pred = estimator_instance.predict(X=X_test)
+
+        assert isinstance(y_pred, pd.DataFrame)
+        assert check_is_mtype(y_pred, "pd_multiindex_hier")
+        msg = (
+            "returned columns after predict are not as expected. "
+            f"expected: {y_train.columns}. Found: {y_pred.columns}"
+        )
+        assert np.all(y_pred.columns == y_train.columns), msg
+
+        # check consistency of forecast hierarchy with training data
+        # some forecasters add __total levels, e.g., ReconcilerForecaster
+        # if = not such a forecaster; else = levels are added
+        if len(y_pred.index) == len(X_test.index):
+            # the indices should be equal iff no levels are added
+            assert np.all(y_pred.index == X_test.index)
+        else:
+            # if levels are added, all expected levels and times should be contained
+            assert set(X_test.index).issubset(y_pred.index)

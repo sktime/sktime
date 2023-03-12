@@ -39,6 +39,8 @@ class CNNNetwork(BaseDeepNetwork):
     Journal of Systems Engineering and Electronics 28(1), 162--169, 2017
     """
 
+    _tags = {"python_dependencies": "tensorflow"}
+
     def __init__(
         self,
         kernel_size=7,
@@ -54,6 +56,8 @@ class CNNNetwork(BaseDeepNetwork):
         self.n_conv_layers = n_conv_layers
         self.filter_sizes = [6, 12]
         self.activation = activation
+
+        super(CNNNetwork, self).__init__()
 
     def build_network(self, input_shape, **kwargs):
         """Construct a network and return its input and output layers.

@@ -147,7 +147,7 @@ class Aggregator(BaseTransformer):
                 df_out.reset_index(level=-1).loc[new_index].set_index(nm, append=True)
             ).rename_axis(X.index.names, axis=0)
 
-        df_out.sort_index(inplace=True)
+        df_out = df_out.sort_index()
 
         return df_out
 

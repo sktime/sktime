@@ -5,6 +5,7 @@ from logging import warning
 
 import numpy as np
 import pandas as pd
+from pandas.api.types import is_numeric_dtype
 from sklearn.utils import check_array, check_consistent_length
 
 from sktime.datatypes import check_is_scitype, convert
@@ -35,6 +36,7 @@ class _BaseProbaForecastingErrorMetric(BaseForecastingErrorMetric):
     """
 
     _tags = {
+        "reserved_params": ["multioutput", "score_average"],
         "scitype:y_pred": "pred_quantiles",
         "lower_is_better": True,
     }
@@ -256,7 +258,7 @@ class _BaseProbaForecastingErrorMetric(BaseForecastingErrorMetric):
         if not isinstance(y_pred, pd.DataFrame):
             raise ValueError("y_pred should be a dataframe.")
 
-        if not all(y_pred.dtypes == float):
+        if not np.all([is_numeric_dtype(y_pred[c]) for c in y_pred.columns]):
             raise ValueError("Data should be numeric.")
 
         if y_true.ndim == 1:
@@ -327,7 +329,7 @@ class _BaseProbaForecastingErrorMetric(BaseForecastingErrorMetric):
         return alphas
 
     def _check_alpha(self, alpha):
-        """Check that alpha input is valid."""
+        """Check alpha input and coerce to np.ndarray."""
         if alpha is None:
             return None
 
@@ -394,8 +396,9 @@ class PinballLoss(_BaseProbaForecastingErrorMetric):
 
     def __init__(self, multioutput="uniform_average", score_average=True, alpha=None):
         self.score_average = score_average
-        self.alpha = self._check_alpha(alpha)
-        self.metric_args = {"alpha": alpha}
+        self.alpha = alpha
+        self._alpha = self._check_alpha(alpha)
+        self.metric_args = {"alpha": self._alpha}
         super().__init__(multioutput=multioutput, score_average=score_average)
 
     def _evaluate_by_index(self, y_true, y_pred, multioutput, **kwargs):
@@ -412,7 +415,7 @@ class PinballLoss(_BaseProbaForecastingErrorMetric):
         multioutput : string "uniform_average" or "raw_values"
             Determines how multioutput results will be treated.
         """
-        alpha = self.alpha
+        alpha = self._alpha
         y_pred_alphas = self._get_alpha_from(y_pred)
         if alpha is None:
             alphas = y_pred_alphas

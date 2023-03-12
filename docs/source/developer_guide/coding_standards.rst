@@ -32,9 +32,9 @@ We adhere to the following code formatting standards:
 This is enforced through our CI/CD workflows via `pre-commit <https://pre-commit.com/>`_.
 
 The full pre-commit configuration can be found in
-`.pre-commit-config.yaml <https://github.com/alan-turing-institute/sktime/blob/main/.pre-commit-config.yaml>`_.
+`.pre-commit-config.yaml <https://github.com/sktime/sktime/blob/main/.pre-commit-config.yaml>`_.
 Additional configurations can be found in
-`setup.cfg <https://github.com/alan-turing-institute/sktime/blob/main/setup.cfg>`_.
+`setup.cfg <https://github.com/sktime/sktime/blob/main/setup.cfg>`_.
 
 ``sktime`` specific code formatting conventions
 -----------------------------------------------
@@ -87,9 +87,9 @@ Once installed, pre-commit will automatically run all ``sktime`` code quality
 checks on the files you changed whenever you make a new commit.
 
 You can find our pre-commit configuration in
-`.pre-commit-config.yaml <https://github.com/alan-turing-institute/sktime/blob/main/.pre-commit-config.yaml>`_.
+`.pre-commit-config.yaml <https://github.com/sktime/sktime/blob/main/.pre-commit-config.yaml>`_.
 Additional configurations can be found in
-`setup.cfg <https://github.com/alan-turing-institute/sktime/blob/main/setup.cfg>`_.
+`setup.cfg <https://github.com/sktime/sktime/blob/main/setup.cfg>`_.
 
 .. note::
    If you want to exclude some line of code from being checked, you can add a ``# noqa`` (no quality assurance) comment at the end of that line.

@@ -11,9 +11,9 @@ It is recommended to check that your issue complies with the following
 rules before submitting:
 
 -  Verify that your issue is not being currently addressed by other
-   `issues <https://github.com/alan-turing-institute/sktime/issues>`__
+   `issues <https://github.com/sktime/sktime/issues>`__
    or `pull
-   requests <https://github.com/alan-turing-institute/sktime/pulls>`__.
+   requests <https://github.com/sktime/sktime/pulls>`__.
 -  Please ensure all code snippets and error messages are formatted in
    appropriate code blocks. See `Creating and highlighting code
    blocks <https://help.github.com/articles/creating-and-highlighting-code-blocks>`__.
@@ -26,4 +26,4 @@ rules before submitting:
 .. note::
 
    To find out more about how to take part in sktime’s community, check out our `governance
-   guidelines <https://www.sktime.org/en/latest/governance.html>`__.
+   guidelines <https://www.sktime.net/en/latest/governance.html>`__.

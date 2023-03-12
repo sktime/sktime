@@ -13,6 +13,7 @@ import pandas as pd
 from joblib import Parallel, delayed
 from sklearn.model_selection import ParameterGrid, ParameterSampler, check_cv
 
+from sktime.datatypes import mtype_to_scitype
 from sktime.exceptions import NotFittedError
 from sktime.forecasting.base._delegate import _DelegatedForecaster
 from sktime.forecasting.model_evaluation import evaluate
@@ -70,10 +71,41 @@ class BaseGridSearch(_DelegatedForecaster):
             "enforce_index_type",
         ]
         self.clone_tags(forecaster, tags_to_clone)
+        self._extend_to_all_scitypes("y_inner_mtype")
+        self._extend_to_all_scitypes("X_inner_mtype")
 
+    # attribute for _DelegatedForecaster, which then delegates
+    #     all non-overridden methods are same as of getattr(self, _delegate_name)
+    #     see further details in _DelegatedForecaster docstring
     _delegate_name = "best_forecaster_"
 
-    def get_fitted_params(self):
+    def _extend_to_all_scitypes(self, tagname):
+        """Ensure mtypes for all scitypes are in the tag with tagname.
+
+        Mutates self tag with name `tagname`.
+        If no mtypes are present of a time series scitype, adds a pandas based one.
+
+        Parameters
+        ----------
+        tagname : str, name of the tag. Should be "y_inner_mtype" or "X_inner_mtype".
+
+        Returns
+        -------
+        None (mutates tag in self)
+        """
+        tagval = self.get_tag(tagname)
+        if not isinstance(tagval, list):
+            tagval = [tagval]
+        scitypes = mtype_to_scitype(tagval, return_unique=True)
+        if "Series" not in scitypes:
+            tagval = tagval + ["pd.DataFrame"]
+        if "Panel" not in scitypes:
+            tagval = tagval + ["pd-multiindex"]
+        if "Hierarchical" not in scitypes:
+            tagval = tagval + ["pd_multiindex_hier"]
+        self.set_tags(**{tagname: tagval})
+
+    def _get_fitted_params(self):
         """Get fitted parameters.
 
         Returns
@@ -83,18 +115,14 @@ class BaseGridSearch(_DelegatedForecaster):
             the best estimator (if available), merged together with the former
             taking precedence.
         """
-        if not self.is_fitted:
-            raise NotFittedError
-
-        if self._is_vectorized:
-            return {"forecasters_": self.forecasters_}
-
         fitted_params = {}
         try:
             fitted_params = self.best_forecaster_.get_fitted_params()
         except NotImplementedError:
             pass
         fitted_params = {**fitted_params, **self.best_params_}
+        fitted_params.update(self._get_fitted_params_default())
+
         return fitted_params
 
     def _run_search(self, evaluate_candidates):
@@ -118,7 +146,7 @@ class BaseGridSearch(_DelegatedForecaster):
         """
         cv = check_cv(self.cv)
 
-        scoring = check_scoring(self.scoring)
+        scoring = check_scoring(self.scoring, obj=self)
         scoring_name = f"test_{scoring.name}"
 
         parallel = Parallel(
@@ -198,7 +226,8 @@ class BaseGridSearch(_DelegatedForecaster):
         # Raise error if all fits in evaluate failed because all score values are NaN.
         if self.best_index_ == -1:
             raise NotFittedError(
-                f"""All fits of forecaster failed, set error_score='raise' to see the exceptions.
+                f"""All fits of forecaster failed,
+                set error_score='raise' to see the exceptions.
                 Failed forecaster: {self.forecaster}"""
             )
         self.best_score_ = results.loc[self.best_index_, f"mean_{scoring_name}"]
@@ -296,7 +325,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
         "refit" = forecaster is refitted to each training window
         "update" = forecaster is updated with training window data, in sequence provided
         "no-update_params" = fit to first training window, re-used without fit or update
-    update_behaviour: str, optional, default = "full_refit"
+    update_behaviour : str, optional, default = "full_refit"
         one of {"full_refit", "inner_only", "no_update"}
         behaviour of the forecaster when calling update
         "full_refit" = both tuning parameters and inner estimator refit on all data seen
@@ -304,24 +333,27 @@ class ForecastingGridSearchCV(BaseGridSearch):
         "no_update" = neither tuning parameters nor inner estimator are updated
     param_grid : dict or list of dictionaries
         Model tuning parameters of the forecaster to evaluate
-    scoring: function, optional (default=None)
-        Function to score models for evaluation of optimal parameters
+    scoring : sktime metric object (BaseMetric), or callable, optional (default=None)
+        scoring metric to use in tuning the forecaster
+        if callable, must have signature
+        `(y_true: 1D np.ndarray, y_pred: 1D np.ndarray) -> float`,
+        assuming np.ndarrays being of the same length, and lower being better.
     n_jobs: int, optional (default=None)
         Number of jobs to run in parallel.
         None means 1 unless in a joblib.parallel_backend context.
         -1 means using all processors.
-    refit: bool, optional (default=True)
+    refit : bool, optional (default=True)
         True = refit the forecaster with the best parameters on the entire data in fit
         False = best forecaster remains fitted on the last fold in cv
     verbose: int, optional (default=0)
-    return_n_best_forecasters: int, default=1
+    return_n_best_forecasters : int, default=1
         In case the n best forecaster should be returned, this value can be set
         and the n best forecasters will be assigned to n_best_forecasters_
-    pre_dispatch: str, optional (default='2*n_jobs')
-    error_score: numeric value or the str 'raise', optional (default=np.nan)
+    pre_dispatch : str, optional (default='2*n_jobs')
+    error_score : numeric value or the str 'raise', optional (default=np.nan)
         The test score returned when a forecaster fails to be fitted.
-    return_train_score: bool, optional (default=False)
-    backend: str, optional (default="loky")
+    return_train_score : bool, optional (default=False)
+    backend : str, optional (default="loky")
         Specify the parallelisation backend implementation in joblib, where
         "loky" is used by default.
     error_score : "raise" or numeric, default=np.nan
@@ -362,9 +394,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> y = load_shampoo_sales()
     >>> fh = [1,2,3]
-    >>> cv = ExpandingWindowSplitter(
-    ...     start_with_window=True,
-    ...     fh=fh)
+    >>> cv = ExpandingWindowSplitter(fh=fh)
     >>> forecaster = NaiveForecaster()
     >>> param_grid = {"strategy" : ["last", "mean", "drift"]}
     >>> gscv = ForecastingGridSearchCV(
@@ -392,7 +422,6 @@ class ForecastingGridSearchCV(BaseGridSearch):
     >>> cv = ExpandingWindowSplitter(
     ...     initial_window=24,
     ...     step_length=12,
-    ...     start_with_window=True,
     ...     fh=[1,2,3])
     >>> gscv = ForecastingGridSearchCV(
     ...     forecaster=pipe,
@@ -411,13 +440,11 @@ class ForecastingGridSearchCV(BaseGridSearch):
     ...     },
     ...     ],
     ...     cv=cv,
-    ...     n_jobs=-1)
-    >>> gscv.fit(y)
+    ...     n_jobs=-1)  # doctest: +SKIP
+    >>> gscv.fit(y)  # doctest: +SKIP
     ForecastingGridSearchCV(...)
-    >>> y_pred = gscv.predict(fh=[1,2,3])
+    >>> y_pred = gscv.predict(fh=[1,2,3])  # doctest: +SKIP
     """
-
-    _required_parameters = ["forecaster", "cv", "param_grid"]
 
     def __init__(
         self,
@@ -494,10 +521,13 @@ class ForecastingGridSearchCV(BaseGridSearch):
         -------
         params : dict or list of dict
         """
-        from sktime.forecasting.exp_smoothing import ExponentialSmoothing
         from sktime.forecasting.model_selection._split import SingleWindowSplitter
         from sktime.forecasting.naive import NaiveForecaster
-        from sktime.performance_metrics.forecasting import MeanAbsolutePercentageError
+        from sktime.forecasting.trend import PolynomialTrendForecaster
+        from sktime.performance_metrics.forecasting import (
+            MeanAbsolutePercentageError,
+            mean_absolute_percentage_error,
+        )
 
         params = {
             "forecaster": NaiveForecaster(strategy="mean"),
@@ -506,10 +536,10 @@ class ForecastingGridSearchCV(BaseGridSearch):
             "scoring": MeanAbsolutePercentageError(symmetric=True),
         }
         params2 = {
-            "forecaster": ExponentialSmoothing(),
+            "forecaster": PolynomialTrendForecaster(),
             "cv": SingleWindowSplitter(fh=1),
-            "param_grid": {"initialization_method": ["estimated", "heuristic"]},
-            "scoring": MeanAbsolutePercentageError(symmetric=True),
+            "param_grid": {"degree": [1, 2]},
+            "scoring": mean_absolute_percentage_error,
             "update_behaviour": "inner_only",
         }
         return [params, params2]
@@ -558,27 +588,30 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
     n_iter : int, default=10
         Number of parameter settings that are sampled. n_iter trades
         off runtime vs quality of the solution.
-    scoring: function, optional (default=None)
-        Function to score models for evaluation of optimal parameters
-    n_jobs: int, optional (default=None)
+    scoring : sktime metric object (BaseMetric), or callable, optional (default=None)
+        scoring metric to use in tuning the forecaster
+        if callable, must have signature
+        `(y_true: 1D np.ndarray, y_pred: 1D np.ndarray) -> float`,
+        assuming np.ndarrays being of the same length, and lower being better.
+    n_jobs : int, optional (default=None)
         Number of jobs to run in parallel.
         None means 1 unless in a joblib.parallel_backend context.
         -1 means using all processors.
-    refit: bool, optional (default=True)
+    refit : bool, optional (default=True)
         True = refit the forecaster with the best parameters on the entire data in fit
         False = best forecaster remains fitted on the last fold in cv
-    verbose: int, optional (default=0)
+    verbose : int, optional (default=0)
     return_n_best_forecasters: int, default=1
         In case the n best forecaster should be returned, this value can be set
         and the n best forecasters will be assigned to n_best_forecasters_
-    pre_dispatch: str, optional (default='2*n_jobs')
+    pre_dispatch : str, optional (default='2*n_jobs')
     random_state : int, RandomState instance or None, default=None
         Pseudo random number generator state used for random uniform sampling
         from lists of possible values instead of scipy.stats distributions.
         Pass an int for reproducible output across multiple
         function calls.
-    pre_dispatch: str, optional (default='2*n_jobs')
-    backend: str, optional (default="loky")
+    pre_dispatch : str, optional (default='2*n_jobs')
+    backend : str, optional (default="loky")
         Specify the parallelisation backend implementation in joblib, where
         "loky" is used by default.
     error_score : "raise" or numeric, default=np.nan
@@ -603,8 +636,6 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         The scores of n_best_forecasters_ sorted from best to worst
         score of forecasters
     """
-
-    _required_parameters = ["forecaster", "cv", "param_distributions"]
 
     def __init__(
         self,
@@ -666,6 +697,7 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         """
         from sktime.forecasting.model_selection._split import SingleWindowSplitter
         from sktime.forecasting.naive import NaiveForecaster
+        from sktime.forecasting.trend import PolynomialTrendForecaster
         from sktime.performance_metrics.forecasting import MeanAbsolutePercentageError
 
         params = {
@@ -674,4 +706,13 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
             "param_distributions": {"window_length": [2, 5]},
             "scoring": MeanAbsolutePercentageError(symmetric=True),
         }
-        return params
+
+        params2 = {
+            "forecaster": PolynomialTrendForecaster(),
+            "cv": SingleWindowSplitter(fh=1),
+            "param_distributions": {"degree": [1, 2]},
+            "scoring": MeanAbsolutePercentageError(symmetric=True),
+            "update_behaviour": "inner_only",
+        }
+
+        return [params, params2]

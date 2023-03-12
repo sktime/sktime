@@ -16,8 +16,10 @@ The high-level steps to implement ``sktime`` compatible estimators are as follow
 1.  identify the type of the estimator: forecaster, classifier, etc
 2.  copy the extension template for that kind of estimator to its intended location
 3.  complete the extension template
-4.  run the ``sktime`` test suite on the implemented estimator
+4.  run the ``sktime`` test suite and/or the ``check_estimator`` utility (see `here <https://www.sktime.net/en/latest/developer_guide/add_estimators.html#using-the-check-estimator-utility>`__)
 5.  if the test suite highlights bugs or issues, fix them and go to 4
+
+For more guidance on how to implement your own estimator, see this `tutorial at pydata <https://github.com/sktime/sktime-workshop-pydata-london-2022>`__ on testing interface conformance.
 
 
 What is my learning task?
@@ -31,7 +33,7 @@ The scitype of an estimator that solves the time series classification task is "
 
 Estimators for a given scitype should be located in the respective module.
 The estimator scitypes also map onto the different extension templates found in
-the `extension_templates <https://github.com/alan-turing-institute/sktime/tree/main/extension_templates>`__
+the `extension_templates <https://github.com/sktime/sktime/tree/main/extension_templates>`__
 directory of ``sktime``.
 
 Usually, the scitype of a given estimator is directly determined by what the estimator does.
@@ -142,7 +144,7 @@ Example: ``'test_repr[NaiveForecaster-2]'``, where ``test_repr`` is the test nam
 
 Values of the return ``dict`` are either the string ``"PASSED"``, if the test succeeds, or the exception that the test would raise at failure.
 ``check_estimator`` does not raise exceptions by default, the default is returning them as dictionary values.
-To raise the exceptions instead, e.g., for debugging, use the argument ``return_exceptions=False``,
+To raise the exceptions instead, e.g., for debugging, use the argument ``raise_exceptions=True``,
 which will raise the exceptions instead of returning them as dictionary values.
 In that case, there will be at most one exception raised, namely the first exception encountered in the test execution order.
 
@@ -150,13 +152,13 @@ To run or exclude certain tests, use the ``tests_to_run`` or ``tests_to_exclude`
 Values provided should be names of tests (str), or a list of names of tests.
 Note that test names exclude the part in squared brackets.
 
-Example, running the test ``test_required_params`` with all fixtures:
+Example, running the test ``test_constructor`` with all fixtures:
 
 .. code-block:: python
 
-    check_estimator(NaiveForecaster, tests_to_run="test_required_params")
+    check_estimator(NaiveForecaster, tests_to_run="test_constructor")
 
-``{'test_required_params[NaiveForecaster]': 'PASSED'}``
+``{'test_constructor[NaiveForecaster]': 'PASSED'}``
 
 To run or exclude certain test-fixture-combinations, use the ``fixtures_to_run`` or ``fixtures_to_exclude`` arguments.
 Values provided should be names of test-fixture-combination strings (str), or a list of such.
@@ -174,7 +176,7 @@ A useful workflow for using ``check_estimator`` to debug an estimator is as foll
 
 1. Run ``check_estimator(MyEstimator)`` to find failing tests
 2. Subset to failing tests or fixtures using ``fixtures_to_run`` or ``tests_to_run``
-3. If the failure is not obvious, set ``return_exceptions=False`` to raise the exception and inspecet the traceback.
+3. If the failure is not obvious, set ``raise_exceptions=True`` to raise the exception and inspecet the traceback.
 4. If the failure is still not clear, use advanced debuggers on the line of code with ``check_estimator``.
 
 Running the test suite in a repository clone

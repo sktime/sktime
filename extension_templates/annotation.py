@@ -16,7 +16,8 @@ How to use this implementation template to implement a new estimator:
 - change docstrings for functions and the file
 - ensure interface compatibility by sktime.utils.estimator_checks.check_estimator
 - once complete: use as a local library, or contribute to sktime via PR
-- more details: https://www.sktime.org/en/stable/developer_guide/add_estimators.html
+- more details:
+  https://www.sktime.net/en/stable/developer_guide/add_estimators.html
 
 Mandatory implements:
     fitting         - _fit(self, X, Y=None)
@@ -25,7 +26,7 @@ Mandatory implements:
 Optional implements:
     updating        - _update(self, X, Y=None)
 
-Testing - implement if sktime forecaster (not needed locally):
+Testing - required for sktime test framework and check_estimator usage:
     get default parameters for test instance(s) - get_test_params()
 
 copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
@@ -217,6 +218,15 @@ class MySeriesAnnotator(BaseSeriesAnnotator):
         #   It can be used in custom, estimator specific tests, for "special" settings.
         # A parameter dictionary must be returned *for all values* of parameter_set,
         #   i.e., "parameter_set not available" errors should never be raised.
+        #
+        # A good parameter set should primarily satisfy two criteria,
+        #   1. Chosen set of parameters should have a low testing time,
+        #      ideally in the magnitude of few seconds for the entire test suite.
+        #       This is vital for the cases where default values result in
+        #       "big" models which not only increases test time but also
+        #       run into the risk of test workers crashing.
+        #   2. There should be a minimum two such parameter sets with different
+        #      sets of values to ensure a wide range of code coverage is provided.
         #
         # example 1: specify params as dictionary
         # any number of params can be specified

@@ -2,7 +2,7 @@
 """Data storage for benchmarking."""
 
 __all__ = ["UEADataset", "RAMDataset", "make_datasets"]
-__author__ = ["Viktor Kazakov", "mloning"]
+__author__ = ["viktorkaz", "mloning"]
 
 import os
 

@@ -145,7 +145,7 @@ def _check_conditional_dependency(obj, condition, package, severity, msg=None):
                 f"install the `{package}` package. "
             )
         try:
-            _check_soft_dependencies(package, severity=severity, object=obj)
+            _check_soft_dependencies(package, severity=severity, obj=obj)
         except ModuleNotFoundError as e:
             raise ModuleNotFoundError(msg) from e
 

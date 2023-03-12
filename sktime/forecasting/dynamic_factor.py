@@ -6,7 +6,6 @@ import inspect
 
 import numpy as np
 import pandas as pd
-from statsmodels.tsa.statespace.dynamic_factor import DynamicFactor as _DynamicFactor
 
 from sktime.forecasting.base.adapters import _StatsModelsAdapter
 
@@ -119,10 +118,10 @@ class DynamicFactor(_StatsModelsAdapter):
     >>> from sktime.utils._testing.series import _make_series
     >>> from sktime.forecasting.dynamic_factor import DynamicFactor
     >>> y = _make_series(n_columns=4)
-    >>> forecaster = DynamicFactor()
-    >>> forecaster.fit(y)
+    >>> forecaster = DynamicFactor()  # doctest: +SKIP
+    >>> forecaster.fit(y)  # doctest: +SKIP
     DynamicFactor(...)
-    >>> y_pred = forecaster.predict(fh=[1,2,3])
+    >>> y_pred = forecaster.predict(fh=[1,2,3])  # doctest: +SKIP
     """
 
     _tags = {
@@ -351,6 +350,10 @@ class DynamicFactor(_StatsModelsAdapter):
         X:pd.DataFrame , optional (default=None)
           Exogenous variables
         """
+        from statsmodels.tsa.statespace.dynamic_factor import (
+            DynamicFactor as _DynamicFactor,
+        )
+
         self._forecaster = _DynamicFactor(
             endog=y,
             exog=X,
@@ -552,4 +555,7 @@ class DynamicFactor(_StatsModelsAdapter):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params
         """
-        return {"k_factors": 1, "factor_order": 1}
+        params1 = {"k_factors": 1, "factor_order": 1}
+        params2 = {"enforce_stationarity": False, "maxiter": 25, "low_memory": True}
+
+        return [params1, params2]

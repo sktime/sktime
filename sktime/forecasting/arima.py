@@ -376,6 +376,8 @@ class AutoARIMA(_PmdArimaAdapter):
 
         super(AutoARIMA, self).__init__()
 
+        self._sp = sp if sp else 1
+
     def _instantiate_model(self):
         # import inside method to avoid hard dependency
         from pmdarima.arima import AutoARIMA as _AutoARIMA  # type: ignore
@@ -396,7 +398,7 @@ class AutoARIMA(_PmdArimaAdapter):
             max_D=self.max_D,
             max_Q=self.max_Q,
             max_order=self.max_order,
-            m=self.sp,
+            m=self._sp,
             seasonal=self.seasonal,
             stationary=self.stationary,
             information_criterion=self.information_criterion,
@@ -736,3 +738,25 @@ class ARIMA(_PmdArimaAdapter):
             with_intercept=self.with_intercept,
             **sarimax_kwargs,
         )
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict
+        """
+        params1 = {"maxiter": 3}
+        params2 = {
+            "order": (1, 1, 0),
+            "seasonal_order": (1, 0, 0, 2),
+            "maxiter": 3,
+        }
+        return [params1, params2]

@@ -6,7 +6,9 @@ Forecasting
 
 The :mod:`sktime.forecasting` module contains algorithms and composition tools for forecasting.
 
-Use ``sktime.registry.all_estimators`` and ``sktime.registry.all_tags`` for dynamic search and tag-based listing of forecasters.
+All clusterers in ``sktime``can be listed using the ``sktime.registry.all_estimators`` utility,
+using ``estimator_types="forecaster"``, optionally filtered by tags.
+Valid tags can be listed using ``sktime.registry.all_tags``.
 
 Base
 ----
@@ -45,6 +47,9 @@ Pipelines can also be constructed using ``*``, ``+``, and ``|`` dunders.
     ColumnEnsembleForecaster
     MultiplexForecaster
     ForecastX
+    ForecastByLevel
+    Permute
+    HierarchyEnsembleForecaster
 
 Reduction
 ---------
@@ -73,8 +78,8 @@ Use ``make_reduction`` for easy specification.
     DirRecTabularRegressionForecaster
     DirRecTimeSeriesRegressionForecaster
 
-Naive forecaster
-----------------
+Naive forecasters
+-----------------
 
 .. currentmodule:: sktime.forecasting.naive
 
@@ -84,10 +89,26 @@ Naive forecaster
 
     NaiveForecaster
 
+.. currentmodule:: sktime.forecasting.dummy
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ForecastKnownValues
+
 Prediction intervals
 --------------------
 
 Wrappers that add prediction intervals to any forecaster.
+
+.. currentmodule:: sktime.forecasting.squaring_residuals
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    SquaringResiduals
 
 .. currentmodule:: sktime.forecasting.naive
 
@@ -298,6 +319,19 @@ Online and stream forecasting
     UpdateEvery
     UpdateRefitsEvery
     DontUpdate
+
+Adapters to other forecasting framework packages
+------------------------------------------------
+
+Generic framework adapters that expose other frameworks in the ``sktime`` interface.
+
+.. currentmodule:: sktime.forecasting.adapters
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    HCrystalBallAdapter
 
 Model selection and tuning
 --------------------------

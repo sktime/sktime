@@ -6,7 +6,7 @@ from numpy.testing import assert_array_equal
 
 from sktime.datasets import load_longley
 from sktime.forecasting.model_selection import temporal_train_test_split
-from sktime.transformations.series.compose import YtoX
+from sktime.transformations.compose import YtoX
 from sktime.transformations.series.exponent import ExponentTransformer
 from sktime.transformations.series.lag import Lag
 
@@ -28,4 +28,4 @@ def test_featurized_values():
     exp_transformer = ExponentTransformer()
     expected_len = lags + len(y_test)
     y_hat = exp_transformer.fit_transform(y[-expected_len:])
-    assert_array_equal(X_hat["TOTEMP"].values, y_hat.values)
+    assert_array_equal(X_hat[f"lag_{lags}__TOTEMP"].values, y_hat.values)
