@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
-from sktime.forecasting.croston import Croston
-from sktime.datasets import load_PBS_dataset
-import pytest
 import numpy as np
+import pytest
+
+from sktime.datasets import load_PBS_dataset
+from sktime.forecasting.croston import Croston
 
 # test the Croston's Method against the R package
 
