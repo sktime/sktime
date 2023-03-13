@@ -70,13 +70,18 @@ class _Delegator(BasePolymorph):
         base = BASE_CLASS_LOOKUP[scitype(estimator)]
         delegator = delegator_dict[scitype(estimator)]
 
-        class _Delegator(delegator, base):
-            def __init__(self, estimator):
-                self.estimator = estimator
-                self.estimator_ = estimator
-                base.__init__(self)
+        def del_init(self, estimator):
+            self.estimator = estimator
+            self.estimator_ = estimator
+            base.__init__(self)
 
-        return _Delegator(estimator)
+        dyn_cls = type(
+            cls.__name__,
+            (delegator, base),
+            {"__init__": del_init},
+        )
+
+        return dyn_cls(estimator)
 
 
 class Pipeline(_Delegator):
