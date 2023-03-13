@@ -4,50 +4,51 @@
 
 __author__ = ["Tomasz Chodakowski", "Ryan Kuhns"]
 
-import pytest
 import numpy as np
 import pandas as pd
+import pytest
 from pandas.api.types import is_numeric_dtype
-from sktime.utils._testing.series import _make_series
+
 from sktime.performance_metrics.forecasting import (
-    MeanAbsoluteScaledError,
-    MedianAbsoluteScaledError,
-    MeanSquaredScaledError,
-    MedianSquaredScaledError,
-    MeanAbsoluteError,
-    MeanSquaredError,
-    MedianAbsoluteError,
-    MedianSquaredError,
-    MeanAbsolutePercentageError,
-    MedianAbsolutePercentageError,
-    MeanSquaredPercentageError,
-    MedianSquaredPercentageError,
-    MeanRelativeAbsoluteError,
-    MedianRelativeAbsoluteError,
     GeometricMeanRelativeAbsoluteError,
     GeometricMeanRelativeSquaredError,
+    MeanAbsoluteError,
+    MeanAbsolutePercentageError,
+    MeanAbsoluteScaledError,
     MeanAsymmetricError,
+    MeanRelativeAbsoluteError,
+    MeanSquaredError,
+    MeanSquaredPercentageError,
+    MeanSquaredScaledError,
+    MedianAbsoluteError,
+    MedianAbsolutePercentageError,
+    MedianAbsoluteScaledError,
+    MedianRelativeAbsoluteError,
+    MedianSquaredError,
+    MedianSquaredPercentageError,
+    MedianSquaredScaledError,
     RelativeLoss,
-    mean_absolute_scaled_error,
-    median_absolute_scaled_error,
-    mean_squared_scaled_error,
-    median_squared_scaled_error,
-    mean_absolute_error,
-    mean_squared_error,
-    median_absolute_error,
-    median_squared_error,
-    mean_absolute_percentage_error,
-    median_absolute_percentage_error,
-    mean_squared_percentage_error,
-    median_squared_percentage_error,
-    mean_relative_absolute_error,
-    median_relative_absolute_error,
     geometric_mean_relative_absolute_error,
     geometric_mean_relative_squared_error,
+    mean_absolute_error,
+    mean_absolute_percentage_error,
+    mean_absolute_scaled_error,
     mean_asymmetric_error,
+    mean_relative_absolute_error,
+    mean_squared_error,
+    mean_squared_percentage_error,
+    mean_squared_scaled_error,
+    median_absolute_error,
+    median_absolute_percentage_error,
+    median_absolute_scaled_error,
+    median_relative_absolute_error,
+    median_squared_error,
+    median_squared_percentage_error,
+    median_squared_scaled_error,
     relative_loss,
 )
 from sktime.performance_metrics.tests._config import RANDOM_SEED
+from sktime.utils._testing.series import _make_series
 
 # For multiple comparisons of equality between functions and classes
 rng = np.random.default_rng(RANDOM_SEED)
