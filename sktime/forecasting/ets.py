@@ -252,7 +252,8 @@ class AutoETS(_StatsModelsAdapter):
                 else:
                     warnings.warn(
                         "Warning: time series is not strictly positive, "
-                        "multiplicative components are ommitted"
+                        "multiplicative components are ommitted",
+                        stacklevel=2,
                     )
                     error_range = ["add"]
 
