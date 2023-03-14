@@ -13,8 +13,6 @@ by default, this is off, including for default local runs of pytest
 
 __author__ = ["fkiraly"]
 
-from sktime.tests import test_all_estimators
-
 
 def pytest_addoption(parser):
     """Pytest command line parser options adder."""
@@ -27,5 +25,7 @@ def pytest_addoption(parser):
 
 def pytest_configure(config):
     """Pytest configuration preamble."""
+    from sktime.tests import test_all_estimators
+
     if config.getoption("--matrixdesign") in [True, "True"]:
         test_all_estimators.MATRIXDESIGN = True
