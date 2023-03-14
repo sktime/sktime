@@ -9,6 +9,64 @@ __all__ = ["BasePolymorph"]
 from sktime.base import BaseObject
 
 
+class _Polymorph(BaseObject):
+    """Polymorphic class mixin.
+
+    Example
+    -------
+    from sktime.base._poly import _Polymorph
+    from sktime.datasets import load_airline
+    from sktime.forecasting.naive import NaiveForecaster
+
+    f = _Polymorph(_cls=NaiveForecaster)
+
+    y = load_airline()
+    f = f.fit(y, fh=[1])
+    """
+
+    @classmethod
+    def _infer_class(cls, *args, **kwargs):
+        """Class inference method, can be overridden by descendants.
+
+        The polymorph will behave as cls(*args, *kwargs),
+        where cls is the a class inheriting from the output of _infer_class,
+        and args/kwargs are the output of _infer_params.
+        """
+        cls = kwargs.pop("_cls")
+        return (cls,)
+
+    @classmethod
+    def _infer_params(cls, *args, **kwargs):
+        """Params inference method, can be overridden by descendants.
+
+        The polymorph will behave as cls(*args, *kwargs),
+        where cls is the a class inheriting from the output of _infer_class,
+        and args/kwargs are the output of _infer_params.
+        """
+        return args, kwargs
+
+    def __new__(cls, *args, **kwargs):
+        """Polymorphic constructor."""
+        dyn_cls_parents = cls._infer_class(*args, **kwargs)
+        dyn_args, dyn_kwargs = cls._infer_params(*args, **kwargs)
+
+        dyn_cls = type(
+            cls.__name__,
+            dyn_cls_parents,
+            {"__init__": cls.__init__},
+        )
+
+        return dyn_cls(*dyn_args, **dyn_kwargs)
+
+    def __init__(self, _cls=None):
+
+        if _cls is not None:
+            self._cls = _cls
+            _cls.__init__(self)
+        else:
+            BaseObject.__init__(self)
+
+
 class BasePolymorph(BaseObject):
     """Handles parameter management for estimators composed of named estimators.
 
