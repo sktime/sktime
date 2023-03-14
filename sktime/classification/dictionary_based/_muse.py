@@ -201,7 +201,8 @@ class MUSE(BaseClassifier):
         if self.n_dims == 1:
             warnings.warn(
                 "MUSE Warning: Input series is univariate; MUSE is designed for"
-                + " multivariate series. It is recommended WEASEL is used instead."
+                + " multivariate series. It is recommended WEASEL is used instead.",
+                stacklevel=2,
             )
 
         if self.variance and self.anova:

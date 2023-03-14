@@ -789,28 +789,32 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
             else:
                 return []
 
-        reserved_param_names = estimator_class.get_class_tag(
-            "reserved_params", tag_value_default=None
-        )
-        reserved_param_names = _coerce_to_list_of_str(reserved_param_names)
-        reserved_set = set(reserved_param_names)
+        # reserved_param_names = estimator_class.get_class_tag(
+        #     "reserved_params", tag_value_default=None
+        # )
+        # reserved_param_names = _coerce_to_list_of_str(reserved_param_names)
+        # reserved_set = set(reserved_param_names)
 
         param_names = estimator_class.get_param_names()
-        valid_param_names = set(param_names).difference(reserved_param_names)
 
         key_list = [x.keys() for x in param_list]
 
-        reserved_errs = [set(x).intersection(reserved_set) for x in key_list]
+        # commenting out "no reserved params in test params for now"
+        # probably cannot ask for that, e.g., index/columns in BaseDistribution
 
-        assert all([len(x) == 0 for x in reserved_errs]), (
-            "get_test_params return dict keys must be valid parameter names, "
-            "i.e., names of arguments of __init__ that are not reserved, "
-            f"but found the following reserved parameters as keys: {reserved_errs}"
-        )
+        # reserved_errs = [set(x).intersection(reserved_set) for x in key_list]
+        # reserved_errs = [x for x in reserved_errs if len(x) > 0]
+
+        # assert len(reserved_errs) == 0, (
+        #     "get_test_params return dict keys must be valid parameter names, "
+        #     "i.e., names of arguments of __init__ that are not reserved, "
+        #     f"but found the following reserved parameters as keys: {reserved_errs}"
+        # )
 
         notfound_errs = [set(x).difference(param_names) for x in key_list]
+        notfound_errs = [x for x in notfound_errs if len(x) > 0]
 
-        assert all([len(x) == 0 for x in notfound_errs]), (
+        assert len(notfound_errs) == 0, (
             "get_test_params return dict keys must be valid parameter names, "
             "i.e., names of arguments of __init__, "
             f"but found some parameters that are not __init__ args: {notfound_errs}"
@@ -832,13 +836,13 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
         #     f"parameters are not tested: {params_not_tested}"
         # )
 
+
     def test_create_test_instances_and_names(self, estimator_class):
         """Check that create_test_instances_and_names works.
 
         create_test_instance and create_test_instances_and_names are the
         key methods used to create test instances in testing.
         If this test does not pass, validity of the other tests cannot be guaranteed.
-
         Tests expected function signature of create_test_instances_and_names.
         """
         estimators, names = estimator_class.create_test_instances_and_names()
@@ -855,8 +859,6 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
         assert np.all([isinstance(est, estimator_class) for est in estimators]), (
             "list elements of first return returned by create_test_instances_and_names "
             "all must be an instance of the class"
-        )
-
         assert np.all([isinstance(name, str) for name in names]), (
             "list elements of second return returned by create_test_instances_and_names"
             " all must be strings"
@@ -994,6 +996,10 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
         if not isinstance(test_params, list):
             test_params = [test_params]
 
+        reserved_params = estimator_class.get_class_tag(
+            "reserved_params", tag_value_default=[]
+        )
+
         for params in test_params:
             # we construct the full parameter set for params
             # params may only have parameters that are deviating from defaults
@@ -1005,8 +1011,12 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
             est_after_set = estimator.set_params(**params_full)
             assert est_after_set is estimator, msg
 
+            def unreserved(params):
+                return {p: v for p, v in params.items() if p not in reserved_params}
+
+            est_params = estimator.get_params(deep=False)
             is_equal, equals_msg = deep_equals(
-                estimator.get_params(deep=False), params_full, return_msg=True
+                unreserved(est_params), unreserved(params_full), return_msg=True
             )
             msg = (
                 f"get_params result of {estimator_class.__name__} (x) does not match "

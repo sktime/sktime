@@ -192,12 +192,14 @@ class MiniRocketMultivariateVariable(BaseTransformer):
         if lengths_1darray.min() == lengths_1darray.max():
             warnings.warn(
                 "X is of equal length, consider using MiniRocketMultivariate for "
-                "speedup and stability instead."
+                "speedup and stability instead.",
+                stacklevel=2,
             )
         if X_2d_t.shape[0] == 1:
             warnings.warn(
                 "X is univariate, consider using MiniRocket as Univariante for "
-                "speedup and stability instead."
+                "speedup and stability instead.",
+                stacklevel=2,
             )
 
         self.parameters = _fit_multi_var(
