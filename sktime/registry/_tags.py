@@ -372,6 +372,84 @@ ESTIMATOR_TAG_REGISTER = [
         ("list", "str"),
         "parameters reserved by the base class and present in all child estimators",
     ),
+    (
+        "is_univariate",
+        "dataset",
+        "bool",
+        "is the dataset univariate?",
+    ),
+    (
+        "is_one_series",
+        "dataset",
+        "bool",
+        "does the data consist of a single series?",
+    ),
+    (
+        "n_panels",
+        "dataset",
+        "int",
+        "number of panels in the dataset",
+    ),
+    (
+        "is_one_panel",
+        "dataset",
+        "bool",
+        "does the dataset consist of a single panel?",
+    ),
+    (
+        "is_equally_spaced",
+        "dataset",
+        "bool",
+        "are the series in the dataset equally spaced?",
+    ),
+    (
+        "is_equal_length",
+        "dataset",
+        "bool",
+        "are the series in the dataset of equal length?",
+    ),
+    (
+        "is_equal_index",
+        "dataset",
+        "bool",
+        "do the series in the dataset have equal index set?",
+    ),
+    (
+        "is_empty",
+        "dataset",
+        "bool",
+        "is the dataset empty?",
+    ),
+    (
+        "has_nans",
+        "dataset",
+        "bool",
+        "does the dataset contain nans?",
+    ),
+    (
+        "n_instances",
+        "dataset",
+        "int",
+        "number of instances in the dataset",
+    ),
+    (
+        "n_instances_train",
+        "dataset",
+        "int",
+        "number of training instances in the dataset",
+    ),
+    (
+        "n_instances_test",
+        "dataset",
+        "int",
+        "number of test instances in the dataset",
+    ),
+    (
+        "n_classes",
+        "dataset",
+        "int",
+        "number of classes in the dataset",
+    ),
 ]
 
 ESTIMATOR_TAG_TABLE = pd.DataFrame(ESTIMATOR_TAG_REGISTER)
