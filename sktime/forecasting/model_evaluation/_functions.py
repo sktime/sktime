@@ -467,18 +467,19 @@ def evaluate(
         )
         results = pd.concat(results)
 
+    results = results.reset_index(drop=True)
     if isinstance(scoring, List):
         for s in scoring[1:]:
             results[f"test_{s.name}"] = np.nan
-            for row in range(len(results)):
-                results[f"test_{s.name}"].iloc[row] = s(
-                    results["y_test"].iloc[row],
-                    results["y_pred"].iloc[row],
-                    y_train=results["y_train"].iloc[row],
+            for row in results.index:
+                results.loc[row, f"test_{s.name}"] = s(
+                    results["y_test"].loc[row],
+                    results["y_pred"].loc[row],
+                    y_train=results["y_train"].loc[row],
                 )
 
     if not return_data:
         results = results.drop(columns=["y_train", "y_test", "y_pred"])
-    results = results.astype({"len_train_window": int}).reset_index(drop=True)
+    results = results.astype({"len_train_window": int})
 
     return results

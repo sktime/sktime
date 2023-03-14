@@ -315,3 +315,28 @@ def test_predict_residuals():
     y_pred_2 = forecaster.predict()
     assert_series_equal(y_pred_1, y_pred_2)
     assert y_resid.index.equals(y_train.index)
+
+
+@pytest.mark.skipif(
+    not _check_soft_dependencies("statsmodels", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
+@pytest.mark.parametrize("nullable_type", ["Int64", "Float64", "boolean"])
+def test_nullable_dtypes(nullable_type):
+    """Test that basic forecasting vignette works with nullable DataFrame dtypes."""
+    dtype = nullable_type
+
+    X = pd.DataFrame()
+    X["ints"] = pd.Series([1, 0] * 20, dtype=dtype)
+    X.index = pd.date_range("1/1/21", periods=40)
+    y = pd.Series([1, 0] * 20, dtype=dtype)
+    y.index = pd.date_range("1/1/21", periods=40)
+
+    f = ARIMA()
+
+    fh = list(range(1, len(X) + 1))
+    f.fit(X=X, y=y, fh=fh)
+    y_pred = f.predict(X=X)
+    assert isinstance(y_pred, pd.Series)
+    assert len(y_pred) == 40
+    assert y_pred.dtype == "float64"

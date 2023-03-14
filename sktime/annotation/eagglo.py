@@ -198,7 +198,8 @@ class EAgglo(BaseTransformer):
                 "Warning: Input data X differs from that given to fit(). "
                 "Refitting with both the data in fit and new input data, not storing "
                 "updated public class attributes. For this, explicitly use fit(X) or "
-                "fit_transform(X)."
+                "fit_transform(X).",
+                stacklevel=2,
             )
             return new_eagglo.cluster_
 

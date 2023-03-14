@@ -95,6 +95,18 @@ def _coerce_to_series(obj):
         return pd.Series(obj)
 
 
+def _coerce_to_1d_numpy(obj):
+    """Coerce to 1D np.ndarray, from pd.DataFrame or pd.Series."""
+    if isinstance(obj, (pd.DataFrame, pd.Series)):
+        obj = obj.values
+    return obj.flatten()
+
+
+def _is_uniform_average(multilevel):
+    """Check if multilevel is one of strings uniform_average, uniform_average_time."""
+    return multilevel in ["uniform_average", "uniform_average_time"]
+
+
 class BaseForecastingErrorMetric(BaseMetric):
     """Base class for defining forecasting error metrics in sktime.
 
@@ -218,15 +230,10 @@ class BaseForecastingErrorMetric(BaseMetric):
             out_df = self._evaluate_vectorized(
                 y_true=y_true_inner, y_pred=y_pred_inner, **kwargs
             )
-            if multilevel in ["uniform_average", "uniform_average_time"]:
-                out_df = out_df.mean(axis=0)
-                # if level is averaged, but not variables, return numpy
-                if multioutput == "raw_values":
-                    out_df = out_df.values
 
-        if multilevel == "uniform_average" and multioutput == "uniform_average":
-            out_df = _coerce_to_scalar(out_df)
-        if multilevel == "uniform_average_time" and multioutput == "uniform_average":
+        if _is_uniform_average(multilevel) and multioutput == "raw_values":
+            out_df = _coerce_to_1d_numpy(out_df)
+        if _is_uniform_average(multilevel) and multioutput == "uniform_average":
             out_df = _coerce_to_scalar(out_df)
         if multilevel == "raw_values":
             out_df = _coerce_to_df(out_df)
@@ -291,13 +298,16 @@ class BaseForecastingErrorMetric(BaseMetric):
         )
 
         if self.multioutput == "raw_values":
-            return pd.DataFrame(
+            eval_result = pd.DataFrame(
                 eval_result.iloc[:, 0].to_list(),
                 index=eval_result.index,
                 columns=y_true.X.columns,
             )
-        else:
-            return eval_result
+
+        if self.multilevel == "uniform_average":
+            eval_result = eval_result.mean(axis=0)
+
+        return eval_result
 
     def _evaluate_by_index_vectorized(self, y_true, y_pred, **kwargs):
         """Vectorized version of _evaluate_by_index.
