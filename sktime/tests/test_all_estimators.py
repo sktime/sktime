@@ -842,6 +842,7 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
         create_test_instance and create_test_instances_and_names are the
         key methods used to create test instances in testing.
         If this test does not pass, validity of the other tests cannot be guaranteed.
+
         Tests expected function signature of create_test_instances_and_names.
         """
         estimators, names = estimator_class.create_test_instances_and_names()
@@ -859,6 +860,7 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
             "list elements of first return returned by create_test_instances_and_names "
             "all must be an instance of the class"
         )
+
         assert np.all([isinstance(name, str) for name in names]), (
             "list elements of second return returned by create_test_instances_and_names"
             " all must be strings"
