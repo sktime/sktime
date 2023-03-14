@@ -80,6 +80,7 @@ class BaseObject(_FlagManager, _BaseEstimator):
     def __init__(self):
         self._init_flags(flag_attr_name="_tags")
         self._init_flags(flag_attr_name="_config")
+
         super(BaseObject, self).__init__()
 
     def __eq__(self, other):
@@ -877,7 +878,7 @@ class TagAliaserMixin:
                     )
                 else:
                     msg += ', please remove code that access or sets "{tag_name}"'
-                warnings.warn(msg, category=DeprecationWarning)
+                warnings.warn(msg, category=DeprecationWarning, stacklevel=2)
 
 
 class BaseEstimator(BaseObject):

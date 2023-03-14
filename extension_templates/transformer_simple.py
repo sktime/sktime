@@ -31,7 +31,7 @@ Mandatory implements:
     fitting         - _fit(self, X, y=None)
     transformation  - _transform(self, X, y=None)
 
-Testing - implement if sktime transformer (not needed locally):
+Testing - required for sktime test framework and check_estimator usage:
     get default parameters for test instance(s) - get_test_params()
 """
 # todo: write an informative docstring for the file or module, remove the above

@@ -84,6 +84,13 @@ def _coerce_to_df(obj):
     return pd.DataFrame(obj)
 
 
+def _coerce_to_1d_numpy(obj):
+    """Coerce to 1D np.ndarray, from pd.DataFrame or pd.Series."""
+    if isinstance(obj, (pd.DataFrame, pd.Series)):
+        obj = obj.values
+    return obj.flatten()
+
+
 class BaseForecastingErrorMetric(BaseMetric):
     """Base class for defining forecasting error metrics in sktime.
 
@@ -116,6 +123,7 @@ class BaseForecastingErrorMetric(BaseMetric):
         "lower_is_better": True,
         # "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"]
         "inner_implements_multilevel": False,
+        "reserved_params": ["multioutput", "multilevel"],
     }
 
     def __init__(self, multioutput="uniform_average", multilevel="uniform_average"):
@@ -206,12 +214,9 @@ class BaseForecastingErrorMetric(BaseMetric):
             out_df = self._evaluate_vectorized(
                 y_true=y_true_inner, y_pred=y_pred_inner, **kwargs
             )
-            if multilevel == "uniform_average":
-                out_df = out_df.mean(axis=0)
-                # if level is averaged, but not variables, return numpy
-                if multioutput == "raw_values":
-                    out_df = out_df.values
 
+        if multilevel == "uniform_average" and multioutput == "raw_values":
+            out_df = _coerce_to_1d_numpy(out_df)
         if multilevel == "uniform_average" and multioutput == "uniform_average":
             out_df = _coerce_to_scalar(out_df)
         if multilevel == "raw_values":
@@ -277,13 +282,16 @@ class BaseForecastingErrorMetric(BaseMetric):
         )
 
         if self.multioutput == "raw_values":
-            return pd.DataFrame(
+            eval_result = pd.DataFrame(
                 eval_result.iloc[:, 0].to_list(),
                 index=eval_result.index,
                 columns=y_true.X.columns,
             )
-        else:
-            return eval_result
+
+        if self.multilevel == "uniform_average":
+            eval_result = eval_result.mean(axis=0)
+
+        return eval_result
 
     def evaluate_by_index(self, y_true, y_pred, **kwargs):
         """Return the metric evaluated at each time point.
