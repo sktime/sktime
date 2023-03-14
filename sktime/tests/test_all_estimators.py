@@ -789,13 +789,14 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
             else:
                 return []
 
-        # reserved_param_names = estimator_class.get_class_tag(
-        #     "reserved_params", tag_value_default=None
-        # )
-        # reserved_param_names = _coerce_to_list_of_str(reserved_param_names)
-        # reserved_set = set(reserved_param_names)
+        reserved_param_names = estimator_class.get_class_tag(
+            "reserved_params", tag_value_default=None
+        )
+        reserved_param_names = _coerce_to_list_of_str(reserved_param_names)
+        reserved_set = set(reserved_param_names)
 
         param_names = estimator_class.get_param_names()
+        unreserved_param_names = set(param_names).difference(reserved_set)
 
         key_list = [x.keys() for x in param_list]
 
@@ -820,7 +821,7 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
             f"but found some parameters that are not __init__ args: {notfound_errs}"
         )
 
-        if len(valid_param_names) > 0:
+        if len(unreserved_param_names) > 0:
             assert (
                 len(param_list) > 1
             ), "get_test_params should return at least two test parameter sets"
@@ -829,7 +830,7 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
             params_tested = params_tested.union(params.keys())
 
         # this test is too harsh for the current estimator base
-        # params_not_tested = set(param_names).difference(params_tested)
+        # params_not_tested = set(unreserved_param_names).difference(params_tested)
         # assert len(params_not_tested) == 0, (
         #     f"get_test_params shoud set each parameter of {estimator_class} "
         #     f"to a non-default value at least once, but the following "
