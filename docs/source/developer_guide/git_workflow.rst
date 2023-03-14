@@ -93,7 +93,7 @@ GitHub, clone, and develop on a new branch.
 10. To add more changes, simply repeat steps 7 - 8. Pull requests are
     updated automatically if you push new changes to the same branch.
 
-.. _Discord: https://discord.com/invite/gqSab2K
+.. _Discord: https://discord.com/invite/54ACzaFsn7
 
 .. note::
 

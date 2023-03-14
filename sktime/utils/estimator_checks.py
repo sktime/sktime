@@ -123,6 +123,7 @@ def check_estimator(
         TestAllPanelTransformers,
     )
     from sktime.forecasting.tests.test_all_forecasters import TestAllForecasters
+    from sktime.param_est.tests.test_all_param_est import TestAllParamFitters
     from sktime.registry import scitype
     from sktime.regression.tests.test_all_regressors import TestAllRegressors
     from sktime.tests.test_all_estimators import TestAllEstimators, TestAllObjects
@@ -148,6 +149,7 @@ def check_estimator(
     testclass_dict["classifier"] = TestAllClassifiers
     testclass_dict["early_classifier"] = TestAllEarlyClassifiers
     testclass_dict["forecaster"] = TestAllForecasters
+    testclass_dict["param_est"] = TestAllParamFitters
     testclass_dict["regressor"] = TestAllRegressors
     testclass_dict["transformer"] = TestAllTransformers
     testclass_dict["transformer-pairwise"] = TestAllPairwiseTransformers

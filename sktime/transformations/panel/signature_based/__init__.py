@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+"""Signature based transformers."""
+
 __all__ = [
     "SignatureTransformer",
 ]
