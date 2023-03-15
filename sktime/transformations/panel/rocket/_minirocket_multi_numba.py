@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Isolated numba imports for _minirocket_multivariate."""
 
-__author__ = "angus924"
+__author__ = ["angus924"]
 
 import numpy as np
 
