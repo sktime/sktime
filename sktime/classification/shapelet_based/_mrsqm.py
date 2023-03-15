@@ -35,7 +35,7 @@ class MrSQM(_DelegatedClassifier):
         customized parameters for the symbolic transformation.
     random_state        : int, default=None.
         random seed for the classifier.
-    ts_norm             : bool, default=True.
+    sfa_norm            : bool, default=True.
         whether to apply time series normalisation (standardisation).
 
     References
@@ -62,7 +62,7 @@ class MrSQM(_DelegatedClassifier):
         nsfa=0,
         custom_config=None,
         random_state=None,
-        sfa_norm=True
+        sfa_norm=True,
     ):
         self.strat = strat
         self.features_per_rep = features_per_rep
