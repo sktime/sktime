@@ -18,6 +18,21 @@ class BaseClassificationDataset(BaseDataset):
         super(BaseClassificationDataset, self).__init__()
 
     def load(self, *args):
+        """Load the dataset.
+
+        Parameters
+        ----------
+        *args: tuple of strings that specify what to load
+            available/valid strings are provided by the concrete classes
+            the expectation is that this docstring is replaced with the details
+
+        Returns
+        -------
+        dataset, if args is empty or length one
+            data container corresponding to string in args (see above)
+        tuple, of same length as args, if args is length 2 or longer
+            data containers corresponding to strings in args, in same order
+        """
         pass
 
 
@@ -29,6 +44,7 @@ def _coerce_to_list_of_str(obj):
 
 
 class ClassificationDatasetFromLoader(BaseClassificationDataset):
+    """Classification dataset object, wrapping an sktime loader function."""
 
     loader_func = None
 
