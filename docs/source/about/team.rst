@@ -25,7 +25,7 @@ Community Council
    * - Marc Rovira
      - :user:`marrov`
 
-(interim, subject to `widening of governance model <https://github.com/sktime/sktime/issues/4234>`_)
+(interim, subject to `widening of governance model <https://github.com/sktime/community-org/issues/46>`_)
 
 Community Council Observers
 ---------------------------
