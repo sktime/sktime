@@ -12,7 +12,7 @@ class PLAID(ClassificationDatasetFromLoader):
 
     Parameters
     ----------
-    return_mtype: valid Panel mtype str or None, optional (default=None="pd-multiindex")
+    return_mtype: valid Panel mtype str or None, optional (default="pd-multiindex")
         Memory data format specification to return X in, None = "nested_univ" type.
         str can be any supported sktime Panel mtype,
             for list of mtypes, see datatypes.MTYPE_REGISTER
