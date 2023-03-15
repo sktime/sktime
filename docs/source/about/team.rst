@@ -15,7 +15,7 @@ Community Council
    * - Name
      - GitHub ID
    * - Jonathan Bechtel
-     - :user:`jonathanb`
+     - :user:`jonathanbechtel`
    * - Franz Király
      - :user:`fkiraly`
    * - Ryan Kuhns
