@@ -3,7 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Tests for performance metrics forecasting."""
 
-__author__ = ["Tomasz Chodakowski", "Ryan Kuhns"]
+__author__ = ["tch", "RNKuhns"]
 
 import numpy as np
 import pandas as pd
