@@ -14,8 +14,18 @@ Community Council
 
    * - Name
      - GitHub ID
+   * - Jonathan Bechtel
+     - :user:`jonathanb`
    * - Franz Király
      - :user:`fkiraly`
+   * - Ryan Kuhns
+     - :user:`rnkuhns`
+   * - Kiril Ralinovski
+     - :user:`kirilral`
+   * - Marc Rovira
+     - :user:`marrov`
+
+(interim subject to `widening of governance model <https://github.com/sktime/sktime/issues/4234>`_)
 
 Community Council Observers
 ---------------------------
@@ -25,6 +35,8 @@ Community Council Observers
 
    * - Name
      - GitHub ID
+   * - Jana Schmidberger
+     - :user:`janasberger`
    * - Lovkush Agarwal
      - :user:`lovkush-a`
    * - Mirae Parker
@@ -40,6 +52,8 @@ Code of Conduct Committee
      - GitHub ID
    * - Franz Király
      - :user:`fkiraly`
+   * - Marc Rovira
+     - :user:`marrov`
 
 Core Developers
 ---------------
