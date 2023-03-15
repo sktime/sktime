@@ -18,7 +18,6 @@ import numpy as np
 def test_Croston_against_r_implementation(smoothing, fh, r_forecast):
     """
     Testing forecasted values estimated by the R package of the Croston's method against the Croston method in sktime.
-    
     R code to generate the hardcoded value for fh=10:
     ('PBS_dataset.csv' contains the data from 'load_PBS_dataset()'):
 
