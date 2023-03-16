@@ -51,6 +51,7 @@ class MrSQM(_DelegatedClassifier):
     _tags = {
         "X_inner_mtype": "nested_univ",
         "python_dependencies": "mrsqm",
+        "requires_cython": True,
     }
 
     def __init__(
