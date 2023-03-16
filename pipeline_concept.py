@@ -5,16 +5,14 @@ from inspect import _ParameterKind
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
-from sktime.forecasting.ets import AutoETS
-
-from sktime.forecasting.arima import AutoARIMA
-
-from sktime.forecasting.base import ForecastingHorizon
-from sktime.forecasting.naive import NaiveForecaster
-
-from sktime.transformations.series.exponent import ExponentTransformer
+from sklearn.model_selection import train_test_split
 
 from sktime.base import BaseEstimator
+from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
+from sktime.datasets import load_arrow_head
+from sktime.forecasting.arima import AutoARIMA
+from sktime.transformations.series.exponent import ExponentTransformer
+
 
 class Pipeline(BaseEstimator):
 
@@ -52,8 +50,16 @@ class Pipeline(BaseEstimator):
         return self
 
     def transform(self, *args, **kwargs):
+        kwargs = deepcopy(kwargs)
+        for transformer in self.steps[:-1]:
+            required_kwargs = self._check_validity(transformer, "transform", **kwargs)
+            X = transformer.transform(**required_kwargs)
+            kwargs["X"] = X
         required_kwargs = self._check_validity(self.steps[-1], "transform", **kwargs)
-        # TODO additional stuff
+        f = self.steps[-1]
+        return f.transform(**required_kwargs)
+
+
     def predict(self, *args, **kwargs):
         kwargs = deepcopy(kwargs)
         for transformer in self.steps[:-1]:
@@ -86,3 +92,32 @@ if __name__ == "__main__":
 
     plt.plot(result)
     plt.show()
+
+    X, y = load_arrow_head(return_X_y=True)
+    X_train, X_test, y_train, y_test = train_test_split(X, y)
+    train_y = np.ones((60,))
+
+
+    # Build pipeline with only transformers
+    pipe = Pipeline([ExponentTransformer(), ExponentTransformer()])
+    # Fit pipeline
+    pipe.fit(y=train_y, X=train_X)  # TODO Only kwargs are possible
+    # Predict pipeline.
+    result = pipe.transform(X=test_X)
+
+    plt.plot(result)
+    plt.show()
+
+
+    # Build pipeline with classifer
+    X, y = load_arrow_head(return_X_y=True)
+    X_train, X_test, y_train, y_test = train_test_split(X, y)
+
+    pipe = Pipeline([ExponentTransformer(), KNeighborsTimeSeriesClassifier()])
+    # Fit pipeline
+    pipe.fit(y=y_train, X=X_train) # TODO Only kwargs are possible
+    # Predict pipeline.
+    result = pipe.predict(fh=list(range(1, 41)), X=X_test)
+    plt.plot(result)
+    plt.show()
+
