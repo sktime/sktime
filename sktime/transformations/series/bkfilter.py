@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Implements Baxter-King bandpass filter transformation.
+Interface to Baxter-King bandpass filter from `statsmodels`.
 
-Please see the original library
-(https://github.com/statsmodels/statsmodels/blob/main/statsmodels/tsa/filters/bk_filter.py)
+Interfaces `bk_filter` from `statsmodels.tsa.filters`.
 """
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
@@ -11,7 +10,6 @@ __author__ = ["klam-data", "pyyim", "mgorlin"]
 __all__ = ["BKFilter"]
 
 
-import numpy as np
 import pandas as pd
 
 from sktime.transformations.base import BaseTransformer
@@ -23,8 +21,8 @@ _check_soft_dependencies("statsmodels", severity="warning")
 class BKFilter(BaseTransformer):
     """Filter a times series using the Baxter-King filter.
 
-    This is a wrapper around statsmodels' bkfilter function
-    (see 'sm.tsa.filters.bk_filter.bkfilter').
+    This is a wrapper around the `bkfilter` function from `statsmodels`.
+    (see `statsmodels.tsa.filters.bk_filter.bkfilter`).
 
     The Baxter-King filter is intended for economic and econometric time series
     data and deals with the periodicity of the business cycle. Applying their
