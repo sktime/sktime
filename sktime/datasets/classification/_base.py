@@ -43,7 +43,7 @@ def _coerce_to_list_of_str(obj):
         return obj
 
 
-class ClassificationDatasetFromLoader(BaseClassificationDataset):
+class _ClassificationDatasetFromLoader(BaseClassificationDataset):
     """Classification dataset object, wrapping an sktime loader function."""
 
     loader_func = None

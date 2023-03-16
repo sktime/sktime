@@ -2,10 +2,10 @@
 """Plaid dataset."""
 
 from sktime.datasets._single_problem_loaders import load_plaid
-from sktime.datasets.classification._base import ClassificationDatasetFromLoader
+from sktime.datasets.classification._base import _ClassificationDatasetFromLoader
 
 
-class PLAID(ClassificationDatasetFromLoader):
+class PLAID(_ClassificationDatasetFromLoader):
     """PLAID time series classification problem.
 
     Example of a univariate problem with unequal length series.
