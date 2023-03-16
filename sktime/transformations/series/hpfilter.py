@@ -61,7 +61,7 @@ class HPFilter(BaseTransformer):
         "scitype:transform-output": "Series",
         # what scitype is returned: Primitives, Series, Panel
         "scitype:instancewise": True,  # is this an instance-wise transform?
-        "univariate-only": True,  # can the transformer handle multivariate X? ############################
+        "univariate-only": True,  # can the transformer handle multivariate X?
         "X_inner_mtype": "np.ndarray",  # which mtypes do _fit/_predict support for X?
         # this can be a Panel mtype even if transform-input is Series, vectorized
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
