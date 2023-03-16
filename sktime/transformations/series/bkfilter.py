@@ -118,25 +118,10 @@ class BKFilter(BaseTransformer):
         -------
         transformed cyclical version of X
         """
-        from scipy.signal import fftconvolve
-        from statsmodels.tools.validation import PandasWrapper, array_like
+        from statsmodels.tsa.filters.bk_filter import bkfilter
 
-        pw = PandasWrapper(X)
-        X = array_like(X, "X", maxdim=2)
-        omega_1 = 2.0 * np.pi / self.high
-        omega_2 = 2.0 * np.pi / self.low
-        bweights = np.zeros(2 * self.K + 1)
-        bweights[self.K] = (omega_2 - omega_1) / np.pi
-        j = np.arange(1, int(self.K) + 1)
-        weights = 1 / (np.pi * j) * (np.sin(omega_2 * j) - np.sin(omega_1 * j))
-        bweights[self.K + j] = weights
-        bweights[: self.K] = weights[::-1]
-        bweights -= bweights.mean()
-        if X.ndim == 2:
-            bweights = bweights[:, None]
-        X = fftconvolve(X, bweights, mode="valid")
-
-        return pw.wrap(X, append="cycle", trim_start=self.K, trim_end=self.K)
+        kwargs = {"low": self.low, "high": self.high, "K": self.K}
+        return bkfilter(X, **kwargs)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
