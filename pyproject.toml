@@ -82,6 +82,8 @@ all_extras = [
 
 dev = [
     "backoff",
+    "coverage<7.2.2",
+    "dash<2.9.0",
     "httpx",
     "pre-commit",
     "pytest",
