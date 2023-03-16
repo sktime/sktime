@@ -140,5 +140,6 @@ class BKFilter(BaseTransformer):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        params = {"low": 6, "high": 24, "K": 12}
-        return params
+        params1 = {"low": 5, "high": 24, "K": 4}
+        params2 = {}
+        return [params1, params2]
