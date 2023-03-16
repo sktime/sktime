@@ -203,7 +203,7 @@ class BaseFixtureGenerator:
     def _all_estimators(self):
         """Retrieve list of all estimator classes of type self.estimator_type_filter."""
         if CYTHON_ESTIMATORS:
-            filter_tags = {"requires_cython", True}
+            filter_tags = {"requires_cython": True}
         else:
             filter_tags = None
 
