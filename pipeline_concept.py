@@ -117,7 +117,7 @@ if __name__ == "__main__":
     # Fit pipeline
     pipe.fit(y=y_train, X=X_train) # TODO Only kwargs are possible
     # Predict pipeline.
-    result = pipe.predict(fh=list(range(1, 41)), X=X_test)
+    result = pipe.predict(X=X_test)
     plt.plot(result)
     plt.show()
 
