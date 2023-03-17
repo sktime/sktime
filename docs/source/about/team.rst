@@ -9,6 +9,10 @@ A list of all contributors can be found `here <contributors.md>`_.
 
 Community Council
 -----------------
+
+transitional working group (in delegation),
+subject to `widening of governance model <https://github.com/sktime/community-org/issues/46>`_.
+
 .. list-table::
    :header-rows: 1
 
@@ -20,12 +24,13 @@ Community Council
      - :user:`fkiraly`
    * - Ryan Kuhns
      - :user:`rnkuhns`
+   * - Sagar Mishra
+     - :user:`achieveordie`
    * - Kiril Ralinovski
      - :user:`kirilral`
    * - Marc Rovira
      - :user:`marrov`
 
-(interim, subject to `widening of governance model <https://github.com/sktime/community-org/issues/46>`_)
 
 Community Council Observers
 ---------------------------
