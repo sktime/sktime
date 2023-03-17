@@ -1,6 +1,6 @@
 .. _testing_framework:
 
-``Sktime`` testing framework overview
+``sktime`` testing framework overview
 =====================================
 
 ``sktime`` uses ``pytest`` for testing interface compliance of estimators, and correctness of code.

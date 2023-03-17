@@ -49,6 +49,7 @@ Pipelines can also be constructed using ``*``, ``+``, and ``|`` dunders.
     ForecastX
     ForecastByLevel
     Permute
+    HierarchyEnsembleForecaster
 
 Reduction
 ---------
@@ -77,8 +78,8 @@ Use ``make_reduction`` for easy specification.
     DirRecTabularRegressionForecaster
     DirRecTimeSeriesRegressionForecaster
 
-Naive forecaster
-----------------
+Naive forecasters
+-----------------
 
 .. currentmodule:: sktime.forecasting.naive
 
@@ -87,6 +88,14 @@ Naive forecaster
     :template: class.rst
 
     NaiveForecaster
+
+.. currentmodule:: sktime.forecasting.dummy
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ForecastKnownValues
 
 Prediction intervals
 --------------------

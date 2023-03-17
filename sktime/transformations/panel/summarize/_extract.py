@@ -243,7 +243,7 @@ class RandomIntervalFeatureExtractor(BaseTransformer):
         )
         self._interval_segmenter.fit(X, y)
         self.intervals_ = self._interval_segmenter.intervals_
-        self.input_shape_ = self._interval_segmenter.input_shape_
+        self.input_shape_ = X.shape
         self._time_index = self._interval_segmenter._time_index
         return self
 

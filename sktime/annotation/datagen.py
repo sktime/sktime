@@ -274,6 +274,57 @@ def piecewise_multinomial(
     return np.concatenate(tuple(segments_data))
 
 
+def piecewise_poisson(
+    lambdas: npt.ArrayLike,
+    lengths: npt.ArrayLike,
+    random_state: Union[int, np.random.RandomState] = None,
+) -> npt.ArrayLike:
+    """
+    Generate series using Possion distribution.
+
+    Each segment has length specified in ``lengths`` and data sampled from a Poisson
+    distribution with expected lambda from ``lambdas``.
+
+    Parameters
+    ----------
+    lambdas : array_like
+        Expected number and variance of events within a specified time interval
+    lengths : array_like
+        Lengths of the segments to be generated
+    random_state : int or np.random.RandomState
+        Either a random seed or RandomState instance
+
+    Returns
+    -------
+    data : np.array
+        univariate time series as np.array
+
+    Examples
+    --------
+    >>> from sktime.annotation.datagen import piecewise_poisson
+    >>> piecewise_poisson(lambdas=[1,2,3],lengths=[2,4,8],random_state=42)#doctest:+SKIP
+    array([1, 2, 1, 3, 3, 1, 3, 1, 3, 2, 2, 4, 2, 1])
+
+    >>> from sktime.annotation.datagen import piecewise_poisson
+    >>> piecewise_poisson(lambdas=[1,3,6],lengths=[2,4,8],random_state=42)#doctest:+SKIP
+    array([1, 2, 1, 3, 3, 2, 5, 5, 6, 4, 4, 9, 3, 5])
+
+    """
+    rng = check_random_state(random_state)
+
+    assert len(lambdas) == len(lengths)
+
+    try:
+        segments_data = [
+            rng.poisson(lam=lams, size=[length])
+            for lams, length in zip(lambdas, lengths)
+        ]
+    except ValueError:
+        raise Exception("Size mismatch")
+
+    return np.concatenate(tuple(segments_data))
+
+
 def labels_with_repeats(means: npt.ArrayLike, std_dev: npt.ArrayLike) -> npt.ArrayLike:
     """Generate labels for unique combinations of means and std_dev."""
     data = [means, std_dev]

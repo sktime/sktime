@@ -24,13 +24,14 @@ How to use this implementation template to implement a new estimator:
 - change docstrings for functions and the file
 - ensure interface compatibility by sktime.utils.estimator_checks.check_estimator
 - once complete: use as a local library, or contribute to sktime via PR
-- more details: https://www.sktime.org/en/stable/developer_guide/add_estimators.html
+- more details:
+  https://www.sktime.net/en/stable/developer_guide/add_estimators.html
 
 Mandatory implements:
     fitting         - _fit(self, X, y=None)
     transformation  - _transform(self, X, y=None)
 
-Testing - implement if sktime transformer (not needed locally):
+Testing - required for sktime test framework and check_estimator usage:
     get default parameters for test instance(s) - get_test_params()
 """
 # todo: write an informative docstring for the file or module, remove the above
@@ -198,10 +199,10 @@ class MyTransformer(BaseTransformer):
 
         Parameters
         ----------
-        X : Series or Panel of mtype X_inner_mtype
+        X : Series, Panel, or Hierarchical data, of mtype X_inner_mtype
             if X_inner_mtype is list, _fit must support all types in it
             Data to fit transform to
-        y : Series or Panel of mtype y_inner_mtype, default=None
+        y : Series, Panel, or Hierarchical data, of mtype y_inner_mtype, default=None
             Additional data, e.g., labels for transformation
 
         Returns
@@ -234,10 +235,10 @@ class MyTransformer(BaseTransformer):
 
         Parameters
         ----------
-        X : Series or Panel of mtype X_inner_mtype
+        X : Series, Panel, or Hierarchical data, of mtype X_inner_mtype
             if X_inner_mtype is list, _transform must support all types in it
             Data to be transformed
-        y : Series or Panel of mtype y_inner_mtype, default=None
+        y : Series, Panel, or Hierarchical data, of mtype y_inner_mtype, default=None
             Additional data, e.g., labels for transformation
 
         Returns

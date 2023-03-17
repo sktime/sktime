@@ -166,7 +166,7 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
         y_pred = self.regressor_.predict(y_preds)
         # index = y_preds.index
         index = self.fh.to_absolute(self.cutoff)
-        return pd.Series(y_pred, index=index)
+        return pd.Series(y_pred, index=index, name=self._y.name)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):

@@ -327,9 +327,9 @@ class _Reducer(_BaseWindowForecaster):
             contains the y and X data prepared for the respective windows, see above.
 
         """
-        if hasattr(self._y, "freq"):
-            if get_time_index(self._y).freq is None:
-                freq_inferred = pd.infer_freq(get_time_index(self._y))
+        if hasattr(self._timepoints, "freq"):
+            if self._timepoints.freq is None:
+                freq_inferred = pd.infer_freq(self._timepoints)
                 cutoff_with_freq = self._cutoff
                 cutoff_with_freq.freq = freq_inferred
             else:
@@ -440,7 +440,8 @@ class _DirectReducer(_Reducer):
         # We currently only support out-of-sample predictions. For the direct
         # strategy, we need to check this at the beginning of fit, as the fh is
         # required for fitting.
-        n_timepoints = len(get_time_index(y))
+        self._timepoints = get_time_index(y)
+        n_timepoints = len(self._timepoints)
 
         if self.pooling is not None and self.pooling not in ["local", "global"]:
             raise ValueError(
@@ -480,7 +481,7 @@ class _DirectReducer(_Reducer):
                     "lag": list(range(1, self.window_length + 1)),
                 }
             }
-            self.transformers_ = [WindowSummarizer(**kwargs)]
+            self.transformers_ = [WindowSummarizer(**kwargs, n_jobs=1)]
 
         if self.window_length is None:
             trafo = self.transformers_
@@ -508,7 +509,6 @@ class _DirectReducer(_Reducer):
 
         yt, Xt = self._transform(y, X)
 
-        n_window = len(get_time_index(yt))
         # Iterate over forecasting horizon, fitting a separate estimator for each step.
         self.estimators_ = []
         for i in range(len(self.fh)):
@@ -517,8 +517,8 @@ class _DirectReducer(_Reducer):
 
             if self.transformers_ is not None:
                 fh_rel = fh.to_relative(self.cutoff)
-                yt = _cut_df(yt, n_window - fh_rel[i] + 1)
-                Xt = _cut_df(Xt, n_window - fh_rel[i] + 1, type="head")
+                yt = _cut_df(yt, n_timepoints - fh_rel[i] + 1)
+                Xt = _cut_df(Xt, n_timepoints - fh_rel[i] + 1, type="head")
                 estimator.fit(Xt, yt)
             else:
                 if self.windows_identical is True:
@@ -760,7 +760,16 @@ class _RecursiveReducer(_Reducer):
                 "Transformers currently cannot be provided"
                 + "for models that run locally"
             )
+
         pd_format = isinstance(y, pd.Series) or isinstance(y, pd.DataFrame)
+
+        self._timepoints = get_time_index(y)
+        n_timepoints = len(self._timepoints)
+
+        self.window_length_ = check_window_length(
+            self.window_length, n_timepoints=n_timepoints
+        )
+
         if self.pooling == "local":
             if pd_format is True and isinstance(y, pd.MultiIndex):
                 warn(
@@ -770,9 +779,6 @@ class _RecursiveReducer(_Reducer):
                     + " all instances, please specify pooling = 'global'.",
                     DeprecationWarning,
                 )
-        self.window_length_ = check_window_length(
-            self.window_length, n_timepoints=len(y)
-        )
         if self.transformers is not None:
             self.transformers_ = clone(self.transformers)
 
@@ -782,7 +788,7 @@ class _RecursiveReducer(_Reducer):
                     "lag": list(range(1, self.window_length + 1)),
                 }
             }
-            self.transformers_ = [WindowSummarizer(**kwargs)]
+            self.transformers_ = [WindowSummarizer(**kwargs, n_jobs=1)]
 
         if self.window_length is None:
             trafo = self.transformers_
@@ -798,23 +804,12 @@ class _RecursiveReducer(_Reducer):
                     + "truncate_start"
                 )
 
-            n_timepoints = len(get_time_index(y))
             if self.transformers_ is not None and n_timepoints < max(ts):
                 raise ValueError(
                     "Not sufficient observations to calculate transformations"
                     + "Please reduce window length / window lagging to match"
                     + "observation size"
                 )
-
-        if self.pooling == "global":
-            timepoints = get_time_index(y)
-            if isinstance(timepoints, (pd.DatetimeIndex, pd.PeriodIndex)):
-                if timepoints.freq is None:
-                    raise ValueError(
-                        "Please set frequency for DatetimeIndex or PeriodIndex. You "
-                        + "can use set_freq_hier function from sktime.utils.datetime "
-                        + "for this purpose (will convert DatetimeIndex to PeriodIndex)"
-                    )
 
         yt, Xt = self._transform(y, X)
 
@@ -873,7 +868,7 @@ class _RecursiveReducer(_Reducer):
         if self.pooling == "global":
             fh_max = fh.to_relative(self.cutoff)[-1]
             relative = pd.Index(list(map(int, range(1, fh_max + 1))))
-            index_range = _index_range(relative, self.cutoff)
+            index_range = _index_range(relative, self.cutoff[0])
 
             y_pred = _create_fcst_df(index_range, self._y)
 
@@ -1364,53 +1359,54 @@ def make_reduction(
         ``*`` = observations, past or future, neither part of window nor forecast.
 
         Assume we have the following training data (14 observations):
-        |----------------------------|
-        | * * * * * * * * * * * * * *|
-        |----------------------------|
+            |----------------------------|
+            | * * * * * * * * * * * * * *|
+            |----------------------------|
 
         And want to forecast with `window_length = 9` and `fh = [2, 4]`.
 
         By construction, a recursive reducer always targets the first data point after
         the window, irrespective of the forecasting horizons requested.
         In the example the following 5 windows are created:
-        |--------------------------- |
-        | x x x x x x x x x y * * * *|
-        | * x x x x x x x x x y * * *|
-        | * * x x x x x x x x x y * *|
-        | * * * x x x x x x x x x y *|
-        | * * * * x x x x x x x x x y|
-        |----------------------------|
+            |--------------------------- |
+            | x x x x x x x x x y * * * *|
+            | * x x x x x x x x x y * * *|
+            | * * x x x x x x x x x y * *|
+            | * * * x x x x x x x x x y *|
+            | * * * * x x x x x x x x x y|
+            |----------------------------|
 
         Direct Reducers will create multiple models, one for each forecasting horizon.
         With the argument `windows_identical = True` (default) the windows used to train
         the model are defined by the maximum forecasting horizon.
         Only two complete windows can be defined in this example:
-        `fh = 4` (maxium of `fh = [2, 4]`)
-        |--------------------------- |
-        | x x x x x x x x x * * * y *|
-        | * x x x x x x x x x * * * y|
-        |----------------------------|
-        All other forecasting horizon will also use those two windows.
+        `fh = 4` (maximum of `fh = [2, 4]`)
+            |--------------------------- |
+            | x x x x x x x x x * * * y *|
+            | * x x x x x x x x x * * * y|
+            |----------------------------|
+
+        All other forecasting horizons will also use those two (maximal) windows.
         `fh = 2`
-        |--------------------------- |
-        | x x x x x x x x x * y * * *|
-        | * x x x x x x x x x * y * *|
-        |----------------------------|
+            |--------------------------- |
+            | x x x x x x x x x * y * * *|
+            | * x x x x x x x x x * y * *|
+            |----------------------------|
         With `windows_identical = False` we drop the requirement to use the same windows
         for each of the direct models, so more windows can be created for horizons other
         than the maximum forecasting horizon:
         `fh = 2`
-        |--------------------------- |
-        | x x x x x x x x x * y * * *|
-        | * x x x x x x x x x * y * *|
-        | * * x x x x x x x x x * y *|
-        | * * * x x x x x x x x x * y|
-        |----------------------------|
+            |--------------------------- |
+            | x x x x x x x x x * y * * *|
+            | * x x x x x x x x x * y * *|
+            | * * x x x x x x x x x * y *|
+            | * * * x x x x x x x x x * y|
+            |----------------------------|
         `fh = 4`
-        |--------------------------- |
-        | x x x x x x x x x * * * y *|
-        | * x x x x x x x x x * * * y|
-        |----------------------------|
+            |--------------------------- |
+            | x x x x x x x x x * * * y *|
+            | * x x x x x x x x x * * * y|
+            |----------------------------|
 
         Use `windows_identical = True` if you want to compare the forecasting
         performance across different horizons, since all models trained will use the

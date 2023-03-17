@@ -301,12 +301,14 @@ class ProbabilityThresholdEarlyClassifier(BaseClassifier):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class.
         """
+        from sktime.classification.dummy import DummyClassifier
         from sktime.classification.feature_based import Catch22Classifier
+        from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-        params = {
-            "classification_points": [3],
-            "estimator": Catch22Classifier(
-                estimator=RandomForestClassifier(n_estimators=2)
-            ),
-        }
+        if _check_soft_dependencies("numba", severity="none"):
+            est = Catch22Classifier(estimator=RandomForestClassifier(n_estimators=2))
+        else:
+            est = DummyClassifier()
+
+        params = {"classification_points": [3], "estimator": est}
         return params

@@ -4,6 +4,8 @@ __author__ = ["jnrusson1", "solen0id"]
 
 __all__ = ["LSTMFCNClassifier"]
 
+from copy import deepcopy
+
 from sklearn.utils import check_random_state
 
 from sktime.classification.deep_learning.base import BaseDeepClassifier
@@ -145,8 +147,7 @@ class LSTMFCNClassifier(BaseDeepClassifier):
             metrics=["accuracy"],
         )
 
-        if self.callbacks is None:
-            self._callbacks = []
+        self.callbacks = self.callbacks or []
 
         return model
 
@@ -201,7 +202,7 @@ class LSTMFCNClassifier(BaseDeepClassifier):
             batch_size=self.batch_size,
             epochs=self.n_epochs,
             verbose=self.verbose,
-            callbacks=self._callbacks,
+            callbacks=deepcopy(self.callbacks) if self.callbacks else [],
         )
 
         self._is_fitted = True
@@ -230,6 +231,8 @@ class LSTMFCNClassifier(BaseDeepClassifier):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
+        from sktime.utils.validation._dependencies import _check_soft_dependencies
+
         param1 = {
             "n_epochs": 25,
             "batch_size": 4,
@@ -245,5 +248,16 @@ class LSTMFCNClassifier(BaseDeepClassifier):
             "lstm_size": 2,
             "attention": True,
         }
+        test_params = [param1, param2]
 
-        return [param1, param2]
+        if _check_soft_dependencies("keras", severity="none"):
+            from keras.callbacks import LambdaCallback
+
+            test_params.append(
+                {
+                    "n_epochs": 2,
+                    "callbacks": [LambdaCallback()],
+                }
+            )
+
+        return test_params

@@ -13,7 +13,7 @@ from sklearn.model_selection import KFold
 from sktime.classification.base import BaseClassifier
 from sktime.classification.deep_learning.base import BaseDeepClassifier
 from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
-from sktime.classification.feature_based import Catch22Classifier
+from sktime.classification.dummy import DummyClassifier
 from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
 from sktime.utils._testing.panel import (
     _make_classification_y,
@@ -339,7 +339,7 @@ def test_input_conversion_fit_predict(mtype):
     y = _make_classification_y()
     X = _make_panel(return_mtype=mtype)
 
-    clf = Catch22Classifier()
+    clf = DummyClassifier()
     clf.fit(X, y)
     clf.predict(X)
 

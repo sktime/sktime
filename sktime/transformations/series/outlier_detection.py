@@ -121,7 +121,8 @@ class HampelFilter(BaseTransformer):
         if Z.isnull().values.any():
             warnings.warn(
                 """Series contains nan values, more nan might be
-                added if there are outliers"""
+                added if there are outliers""",
+                stacklevel=2,
             )
 
         cv = SlidingWindowSplitter(

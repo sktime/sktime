@@ -140,7 +140,7 @@ def _check_soft_dependencies(
             if severity == "error":
                 raise ModuleNotFoundError(msg) from e
             elif severity == "warning":
-                warnings.warn(msg)
+                warnings.warn(msg, stacklevel=2)
                 return False
             elif severity == "none":
                 return False
@@ -171,7 +171,7 @@ def _check_soft_dependencies(
                 if severity == "error":
                     raise ModuleNotFoundError(msg)
                 elif severity == "warning":
-                    warnings.warn(msg)
+                    warnings.warn(msg, stacklevel=2)
                 elif severity == "none":
                     return False
                 else:
@@ -223,7 +223,7 @@ def _check_dl_dependencies(msg=None, severity="error"):
         if severity == "error":
             raise ModuleNotFoundError(msg) from e
         elif severity == "warning":
-            warnings.warn(msg)
+            warnings.warn(msg, stacklevel=2)
             return False
         elif severity == "none":
             return False
@@ -295,7 +295,7 @@ def _check_python_version(obj, package=None, msg=None, severity="error"):
     if severity == "error":
         raise ModuleNotFoundError(msg)
     elif severity == "warning":
-        warnings.warn(msg)
+        warnings.warn(msg, stacklevel=2)
     elif severity == "none":
         return False
     else:
