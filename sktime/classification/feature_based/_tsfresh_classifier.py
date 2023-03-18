@@ -157,6 +157,7 @@ class TSFreshClassifier(BaseClassifier):
                 "majority class in predictions. Setting "
                 "relevant_feature_extractor=False will keep all features.",
                 UserWarning,
+                stacklevel=2,
             )
 
             self._return_majority_class = True

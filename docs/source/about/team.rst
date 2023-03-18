@@ -9,13 +9,28 @@ A list of all contributors can be found `here <contributors.md>`_.
 
 Community Council
 -----------------
+
+transitional working group (in delegation),
+subject to `widening of governance model <https://github.com/sktime/community-org/issues/46>`_.
+
 .. list-table::
    :header-rows: 1
 
    * - Name
      - GitHub ID
+   * - Jonathan Bechtel
+     - :user:`jonathanbechtel`
    * - Franz Király
      - :user:`fkiraly`
+   * - Ryan Kuhns
+     - :user:`rnkuhns`
+   * - Sagar Mishra
+     - :user:`achieveordie`
+   * - Kiril Ralinovski
+     - :user:`kirilral`
+   * - Marc Rovira
+     - :user:`marrov`
+
 
 Community Council Observers
 ---------------------------
@@ -25,6 +40,8 @@ Community Council Observers
 
    * - Name
      - GitHub ID
+   * - Jana Schmidberger
+     - :user:`janasberger`
    * - Lovkush Agarwal
      - :user:`lovkush-a`
    * - Mirae Parker
@@ -40,6 +57,8 @@ Code of Conduct Committee
      - GitHub ID
    * - Franz Király
      - :user:`fkiraly`
+   * - Marc Rovira
+     - :user:`marrov`
 
 Core Developers
 ---------------
