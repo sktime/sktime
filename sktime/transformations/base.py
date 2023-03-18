@@ -399,8 +399,7 @@ class BaseTransformer(BaseEstimator):
         self : a fitted instance of the estimator
         """
         # if fit is called, estimator is reset, including fitted state
-        if not hasattr(self, "_config_reset") or self._config_reset:
-            self.reset()
+        self.reset()
 
         # skip everything if fit_is_empty is True and we do not need to remember data
         if self.get_tag("fit_is_empty") and not self.get_tag("remember_data", False):
