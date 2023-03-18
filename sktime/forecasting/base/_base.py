@@ -39,6 +39,7 @@ __author__ = ["mloning", "big-o", "fkiraly", "sveameyer13", "miraep8"]
 __all__ = ["BaseForecaster"]
 
 from copy import deepcopy
+from inspect import signature
 from itertools import product
 from warnings import warn
 
@@ -711,6 +712,8 @@ class BaseForecaster(BaseEstimator):
 
         return pred_var
 
+    # todo 0.18.0: switch legacy_interface default to False
+    # todo 0.19.0: remove any legacy_interface logic
     def predict_proba(self, fh=None, X=None, marginal=True, legacy_interface=None):
         """Compute/return fully probabilistic forecasts.
 
@@ -786,9 +789,24 @@ class BaseForecaster(BaseEstimator):
         # check and convert X
         X_inner = self._check_X(X=X)
 
-        pred_dist = self._predict_proba(
-            fh=fh, X=X_inner, marginal=marginal, legacy_interface=legacy_interface
-        )
+        # pass legacy_interface arg on only if inner function has it
+        inner_params = signature(self._predict_proba).parameters.keys()
+        if "legacy_interface" in inner_params:
+            pred_dist = self._predict_proba(
+                fh=fh, X=X_inner, marginal=marginal, legacy_interface=legacy_interface
+            )
+        else:
+            pred_dist = self._predict_proba(fh=fh, X=X_inner, marginal=marginal)
+            msg = (
+                f"warning: {type(self)} implements _predict_proba, but "
+                "has no legacy_interface parameter. This likely means that the class "
+                "is custom built. Please note that from 0.19.0 on, "
+                "_predict_proba will be expected to return an sktime BaseDistribution. "
+                "We will try to catch this via coercion from 0.18.0, if a "
+                "tensorflow distribution is returned, but to minimize risk, "
+                "we recommend to move to sktime BaseDistribution. "
+            )
+            warn(msg)
 
         return pred_dist
 
