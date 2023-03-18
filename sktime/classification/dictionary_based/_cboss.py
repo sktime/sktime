@@ -221,7 +221,8 @@ class ContractableBOSS(BaseClassifier):
         if self.typed_dict != "deprecated":
             warnings.warn(
                 "``typed_dict`` was deprecated in version 0.13.3 and "
-                "will be removed in 0.15."
+                "will be removed in 0.15.",
+                stacklevel=2,
             )
 
         # Window length parameter space dependent on series length

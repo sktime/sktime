@@ -1,0 +1,15 @@
+.binder
+.eggs
+.git
+.github
+.ipynb_checkpoints
+.pytest_cache
+.vscode
+build
+dist
+docs/_build
+htmlcov
+sktime.egg-info
+testdir
+**/*.pyc
+**/__pycache__

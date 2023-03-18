@@ -9,6 +9,7 @@ from sklearn import clone
 from sklearn.utils.metaestimators import if_delegate_has_method
 
 from sktime.base import _HeterogenousMetaEstimator
+from sktime.base._meta import _ColumnEstimator, _HeterogenousMetaEstimator
 from sktime.datatypes import ALL_TIME_SERIES_MTYPES, mtype_to_scitype, scitype_to_mtype
 from sktime.transformations._delegate import _DelegatedTransformer
 from sktime.transformations.base import BaseTransformer
@@ -24,6 +25,7 @@ from sktime.utils.validation.series import check_series
 __author__ = ["fkiraly", "mloning", "miraep8", "aiwalter", "SveaMeyer13"]
 __all__ = [
     "ColumnwiseTransformer",
+    "ColumnEnsembleTransformer",
     "FeatureUnion",
     "FitInTransform",
     "Id",
@@ -1939,9 +1941,7 @@ class ColumnEnsembleTransformer(_HeterogenousMetaEstimator, _ColumnEstimator):
 
 
 class TransformIf(_DelegatedTransformer):
-    """Conditional execution of a transformer given a condition from a fittable object.
-
-    Compositor to construct conditionally executed transformers, e.g.,
+    """Compositor to construct conditionally executed transformers, e.g.,
 
     * compute first differences if a stationarity test is positive
     * deseasonalize if a seasonality test is positive

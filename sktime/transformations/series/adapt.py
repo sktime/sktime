@@ -23,12 +23,12 @@ class TabularToSeriesAdaptor(BaseTransformer):
     If fit_in_transform = False and X is a series (pd.DataFrame, pd.Series, np.ndarray):
         ``fit(X)`` fits a clone of ``transformer`` to X (considered as a table)
         ``transform(X)`` applies transformer.transform to X and returns the result
-        ``inverse_transform(X)`` applies tansformer.inverse_transform to X
+        ``inverse_transform(X)`` applies transformer.inverse_transform to X
     If fit_in_transform = True and X is a series (pd.DataFrame, pd.Series, np.ndarray):
         ``fit`` is empty
-        ``transform(X)`` applies transformer.fit(X).transform.(X) to X,
+        ``transform(X)`` applies transformer.fit(X).transform(X) to X,
             considered as a table, and returns the result
-        ``inverse_transform(X)`` applies tansformer(X).inverse_transform(X) to X
+        ``inverse_transform(X)`` applies transformer.fit(X).inverse_transform(X) to X
 
     If fit_in_transform = False, and X is of a panel/hierarchical type:
         ``fit(X)`` fits a clone of ``transformer`` for each individual series x in X
