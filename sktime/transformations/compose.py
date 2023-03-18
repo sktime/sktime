@@ -9,7 +9,7 @@ from sklearn import clone
 from sklearn.utils.metaestimators import if_delegate_has_method
 
 from sktime.base import _HeterogenousMetaEstimator
-from sktime.datatypes import ALL_TIME_SERIES_MTYPES
+from sktime.datatypes import ALL_TIME_SERIES_MTYPES, mtype_to_scitype, scitype_to_mtype
 from sktime.transformations._delegate import _DelegatedTransformer
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.multiindex import flatten_multiindex
@@ -1730,27 +1730,30 @@ class TransformIf(_DelegatedTransformer):
     The specific algorithm implemented is as follows:
 
     In `fit`, for inputs `X`, `y`:
-    1. fits `in_estimator` to `X`, `y`
-    2. checks the condition for `inestimator` fitted parameter `param`:
+    1. fits `if_estimator` to `X`, `y`
+    2. checks the condition for `if_estimator` fitted parameter `param`:
        whether `param` satisfies `condition` with `condition_value`
     3. If yes, fits `then_est` to `X`, `y`, and behaves as `then_est` from then on
        If no, fits `else_est` to `X`, `y`, and behaves as `else_est` from then on
 
     In other methods, behaves as `then_est` or `else_est`, as above.
 
+    Note: `then_trafo` and `else_trafo` must hae the same input/output signature,
+    e.g., Series-to-Series, or Series-to-Primitives.
+
     Parameters
     ----------
-    in_estimator : sktime estimator, must have `fit`
+    if_estimator : sktime estimator, must have `fit`
         sktime estimator to fit and apply to series.
         this is a "blueprint" estimator, state does not change when `fit` is called
-    param : str, optional, default = first boolean parameter of fitted in_estimator
+    param : str, optional, default = first boolean parameter of fitted if_estimator
     condition : str, optional, default = "bool"
         condition that defines whether self behaves like `then_est` or `else_est`
         this estimator behaves like `then_est` iff:
         "bool" = if `param` is True
         ">", ">=", "==", "<", "<=", "!=" = if `param condition condition_value`
     condition_value : required for some conditions, see above; otherwise optional
-    then_trafo : sktime transformer, optional, default=`in_estimator`
+    then_trafo : sktime transformer, optional, default=`if_estimator`
         transformer that this behaves as if condition is satisfied
         this is a "blueprint" transformer, state does not change when `fit` is called
     else_trafo : sktime transformer, optional default=`Id` (identity/no transform)
@@ -1765,8 +1768,8 @@ class TransformIf(_DelegatedTransformer):
         if condition is not satisfied, a clone of `else_est`
     condition_ : bool,
         True if condition was true, False if it was false
-    in_estimator_ : estimator
-        this clone of `in_estimator` is fitted when `fit` is called
+    if_estimator_ : estimator
+        this clone of `if_estimator` is fitted when `fit` is called
 
     Examples
     --------
@@ -1774,7 +1777,7 @@ class TransformIf(_DelegatedTransformer):
     >>> from sktime.transformations.compose import TransformIf
     >>> from sktime.transformations.series.detrend import Deseasonalizer
     >>> from sktime.datasets import load_airline
-    ...
+    >>>
     >>> y = load_airline()  # doctest: +SKIP
     >>>
     >>> seasonal = SeasonalityACF(candidate_sp=12)  # doctest: +SKIP
@@ -1799,14 +1802,14 @@ class TransformIf(_DelegatedTransformer):
 
     def __init__(
         self,
-        in_estimator,
+        if_estimator,
         param=None,
         condition="bool",
         condition_value=None,
         then_trafo=None,
         else_trafo=None,
     ):
-        self.in_estimator = in_estimator
+        self.if_estimator = if_estimator
         self.param = param
         self.condition = condition
         self.condition_value = condition_value
@@ -1814,7 +1817,7 @@ class TransformIf(_DelegatedTransformer):
         self.else_trafo = else_trafo
 
         if then_trafo is None:
-            self.then_trafo_ = in_estimator
+            self.then_trafo_ = if_estimator
         else:
             self.then_trafo_ = then_trafo
 
@@ -1825,6 +1828,22 @@ class TransformIf(_DelegatedTransformer):
 
         super(TransformIf, self).__init__()
 
+        self.clone_tags(if_estimator, tag_names=["univariate-only"])
+        if_scitypes = mtype_to_scitype(if_estimator.get_tag("X_inner_mtype"))
+        valid_scitypes = [
+            x for x in ALL_TIME_SERIES_MTYPES if mtype_to_scitype(x) in if_scitypes
+        ]
+        self.set_tags(**{"X_inner_mtype": valid_scitypes})
+
+        tags_to_clone = [
+            "scitype:transform-input",
+            "scitype:transform-output",
+            "y_inner_mtype",
+            "capability:inverse_transform",
+            "transform-returns-same-time-index",
+        ]
+        self.clone_tags(self.then_trafo_, tag_names=tags_to_clone)
+
     # attribute for _DelegatedTransformer, which then delegates
     #     all non-overridden methods are same as of getattr(self, _delegate_name)
     #     see further details in _DelegatedTransformer docstring
@@ -1834,7 +1853,7 @@ class TransformIf(_DelegatedTransformer):
         """Evalutes the condition, as described in the docstring of the class."""
         param = self.param
 
-        params = self.in_estimator_.get_fitted_params()
+        params = self.if_estimator_.get_fitted_params()
 
         # if param is None, get the first boolean parameter
         if param is None:
@@ -1862,19 +1881,13 @@ class TransformIf(_DelegatedTransformer):
         else:
             return "else"
 
-    # we need to override fit, since the earliest time we can determine
-    # which of the two transformers we are dealing with is when we see X and y
-    def fit(self, X, y=None):
+    def _fit(self, X, y=None):
         """Fit transformer to X, optionally to y.
 
         State change:
             Changes state to "fitted".
 
         Writes to self:
-        _is_fitted : flag is set to True.
-        _X : X, coerced copy of X, if remember_data tag is True
-            possibly coerced to inner type or update_data compatible type
-            by reference, when possible
         model attributes (ending in "_") : dependent on estimator
 
         Parameters
@@ -1895,17 +1908,18 @@ class TransformIf(_DelegatedTransformer):
         """
         from sktime.registry import scitype
 
-        in_estimator_ = self.in_estimator.clone()
+        if_estimator_ = self.if_estimator.clone()
 
-        if scitype(in_estimator_) == "forecaster":
-            self.in_estimator_ = in_estimator_.fit(y=X, X=y)
-        elif scitype(in_estimator_) == "transformer":
-            self.in_estimator_ = in_estimator_.fit(X=X, y=y)
+        if scitype(if_estimator_) == "forecaster":
+            self.if_estimator_ = if_estimator_.fit(y=X, X=y)
+        elif scitype(if_estimator_) == "transformer":
+            self.if_estimator_ = if_estimator_.fit(X=X, y=y)
         else:
             try:
-                self.in_estimator_ = in_estimator_.fit(X, y)
+                self.if_estimator_ = if_estimator_.fit(X, y)
             except Exception:
-                self.in_estimator_ = in_estimator_.fit(X)
+                print(X)
+                self.if_estimator_ = if_estimator_.fit(X)
 
         if_or_else = self._evaluate_condition()
 
@@ -1920,29 +1934,7 @@ class TransformIf(_DelegatedTransformer):
                 "unexpected condition, bug in _evaluate_condition return"
             )
 
-        # should be all tags, but not fit_is_empty
-        #   (_fit should not be skipped)
-        tags_to_clone = [
-            "scitype:transform-input",
-            "scitype:transform-output",
-            "scitype:instancewise",
-            "y_inner_mtype",
-            "capability:inverse_transform",
-            "handles-missing-data",
-            "X-y-must-have-same-index",
-            "transform-returns-same-time-index",
-            "skip-inverse-transform",
-        ]
-        self.clone_tags(self.transformer_, tag_names=tags_to_clone)
-
-        # executes the base class fit, for the delegated estimator
-        # this is via the fit of _DelegatedTransformer
-        # we need to turn off reset temporarily for the logic to work
-        # todo 0.17.0 or 0.18.0 - move this to the config system
-        self._config_reset = False
-        super(TransformIf, self).fit(X=X, y=y)
-        self._config_reset = True
-
+        self.transformer_.fit(X, y)
         return self
 
     # we also override _get_fitted_params with the original
@@ -1985,14 +1977,14 @@ class TransformIf(_DelegatedTransformer):
         from sktime.transformations.series.boxcox import BoxCoxTransformer
 
         params1 = {
-            "in_estimator": BoxCoxTransformer(),
+            "if_estimator": BoxCoxTransformer(),
             "param": "lambda",
             "condition": ">",
             "condition_value": 1.0,
         }
 
         params2 = {
-            "in_estimator": FixedParams(param_dict={"foo": False}),
+            "if_estimator": FixedParams(param_dict={"foo": False}),
             "then_trafo": Id(),
             "else_trafo": BoxCoxTransformer(bounds=(2.0, 3.0)),
         }
