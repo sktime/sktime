@@ -124,6 +124,7 @@ def check_estimator(
     )
     from sktime.forecasting.tests.test_all_forecasters import TestAllForecasters
     from sktime.param_est.tests.test_all_param_est import TestAllParamFitters
+    from sktime.proba.tests.test_all_distrs import TestAllDistributions
     from sktime.registry import scitype
     from sktime.regression.tests.test_all_regressors import TestAllRegressors
     from sktime.tests.test_all_estimators import TestAllEstimators, TestAllObjects
@@ -147,6 +148,7 @@ def check_estimator(
 
     testclass_dict = dict()
     testclass_dict["classifier"] = TestAllClassifiers
+    testclass_dict["distribution"] = TestAllDistributions
     testclass_dict["early_classifier"] = TestAllEarlyClassifiers
     testclass_dict["forecaster"] = TestAllForecasters
     testclass_dict["param_est"] = TestAllParamFitters
