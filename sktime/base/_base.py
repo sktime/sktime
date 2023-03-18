@@ -28,6 +28,10 @@ Tag inspection and setter methods
     setting dynamic tags          - set_tags(**tag_dict: dict)
     set/clone dynamic tags        - clone_tags(estimator, tag_names=None)
 
+Config inspection and setter methods
+    get configs (all)             - get_config()
+    set configs                   - set_config(**config_dict: dict)
+
 Blueprinting: resetting and cloning, post-init state with same hyper-parameters
     reset estimator to post-init  - reset()
     cloneestimator (copy&reset)   - clone()
@@ -75,6 +79,8 @@ class BaseObject(_FlagManager, _BaseEstimator):
 
     def __init__(self):
         self._init_flags(flag_attr_name="_tags")
+        self._init_flags(flag_attr_name="_config")
+
         super(BaseObject, self).__init__()
 
     def __eq__(self, other):
@@ -398,6 +404,38 @@ class BaseObject(_FlagManager, _BaseEstimator):
         """
         # default parameters = empty dict
         return {}
+
+    def get_config(self):
+        """Get config flags for self.
+
+        Returns
+        -------
+        config_dict : dict
+            Dictionary of config name : config value pairs. Collected from _config
+            class attribute via nested inheritance and then any overrides
+            and new tags from _onfig_dynamic object attribute.
+        """
+        return self._get_flags(flag_attr_name="_config")
+
+    def set_config(self, **config_dict):
+        """Set config flags to given values.
+
+        Parameters
+        ----------
+        config_dict : dict
+            Dictionary of config name : config value pairs.
+
+        Returns
+        -------
+        self : reference to self.
+
+        Notes
+        -----
+        Changes object state, copies configs in config_dict to self._config_dynamic.
+        """
+        self._set_flags(flag_attr_name="_config", **config_dict)
+
+        return self
 
     @classmethod
     def create_test_instance(cls, parameter_set="default"):
@@ -840,7 +878,7 @@ class TagAliaserMixin:
                     )
                 else:
                     msg += ', please remove code that access or sets "{tag_name}"'
-                warnings.warn(msg, category=DeprecationWarning)
+                warnings.warn(msg, category=DeprecationWarning, stacklevel=2)
 
 
 class BaseEstimator(BaseObject):

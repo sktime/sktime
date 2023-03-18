@@ -194,7 +194,7 @@ html_theme_options = {
         },
         {
             "name": "Discord",
-            "url": "https://discord.com/invite/gqSab2K",
+            "url": "https://discord.com/invite/54ACzaFsn7",
             "icon": "fab fa-discord",
         },
         {
