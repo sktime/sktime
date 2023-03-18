@@ -607,7 +607,7 @@ class _BaseDistrForecastingMetric(_BaseProbaForecastingErrorMetric):
     """
 
     _tags = {
-        "scitype:y_pred": "distr",
+        "scitype:y_pred": "pred_proba",
         "lower_is_better": True,
     }
 
