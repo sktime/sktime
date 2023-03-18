@@ -8,9 +8,8 @@ import pandas as pd
 from sklearn import clone
 from sklearn.utils.metaestimators import if_delegate_has_method
 
-from sktime.base import _HeterogenousMetaEstimator
 from sktime.base._meta import _ColumnEstimator, _HeterogenousMetaEstimator
-from sktime.datatypes import ALL_TIME_SERIES_MTYPES, mtype_to_scitype, scitype_to_mtype
+from sktime.datatypes import ALL_TIME_SERIES_MTYPES, mtype_to_scitype
 from sktime.transformations._delegate import _DelegatedTransformer
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.multiindex import flatten_multiindex
@@ -2142,7 +2141,6 @@ class TransformIf(_DelegatedTransformer):
             try:
                 self.if_estimator_ = if_estimator_.fit(X, y)
             except Exception:
-                print(X)
                 self.if_estimator_ = if_estimator_.fit(X)
 
         if_or_else = self._evaluate_condition()
