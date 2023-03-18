@@ -1942,7 +1942,7 @@ class ColumnEnsembleTransformer(_HeterogenousMetaEstimator, _ColumnEstimator):
 
 class TransformIf(_DelegatedTransformer):
     """Conditional execution of a transformer given a condition from a fittable object.
-    
+
     Compositor to construct conditionally executed transformers, e.g.,
 
     * compute first differences if a stationarity test is positive
