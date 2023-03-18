@@ -445,7 +445,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             with pytest.raises(NotImplementedError, match="quantile predictions"):
                 estimator_instance.predict_quantiles(fh=fh_int_oos, alpha=alpha)
 
-    def _check_pred_proba(self, pred_dist, y_train, fh_int):
+    def _check_predict_proba(self, pred_dist, y_train, fh_int):
         from sktime.proba.base import BaseDistribution
 
         assert isinstance(pred_dist, BaseDistribution)
@@ -462,11 +462,11 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         else:
             assert (pred_cols == y_train.index).all()
 
-    # todo 0.18.0 or 0.19.0: remove legacy_interface parameter below 
+    # todo 0.18.0 or 0.19.0: remove legacy_interface parameter below
     @pytest.mark.parametrize(
         "fh_int_oos", TEST_OOS_FHS, ids=[f"fh={fh}" for fh in TEST_OOS_FHS]
     )
-    def test_predict_proba(self, estimator_instance, n_columns, fh_int_oos, alpha):
+    def test_predict_proba(self, estimator_instance, n_columns, fh_int_oos):
         """Check predictive distribution returned by predict_proba.
 
         Arguments
