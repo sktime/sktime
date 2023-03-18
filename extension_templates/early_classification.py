@@ -31,7 +31,7 @@ Optional implements:
     predicting class probabilities        - _predict_proba(self, X)
     updating probability predictions      - _update_predict_proba(self, X)
 
-Testing - implement if sktime early classifier (not needed locally):
+Testing - required for sktime test framework and check_estimator usage:
     get default parameters for test instance(s) - get_test_params()
 
 copyright: sktime developers, BSD-3-Clause License (see LICENSE file)

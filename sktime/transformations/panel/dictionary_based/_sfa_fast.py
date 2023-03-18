@@ -219,7 +219,7 @@ class SFAFast(BaseTransformer):
         set_num_threads(n_jobs)
 
         if not return_pandas_data_series:
-            self._output_convert = "off"
+            self.set_config(**{"output_conversion": "off"})
 
     def fit_transform(self, X, y=None):
         """Fit to data, then transform it."""
