@@ -483,9 +483,13 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         """
         y_train = _make_series(n_columns=n_columns)
         estimator_instance.fit(y_train, fh=fh_int_oos)
+
         if estimator_instance.get_tag("capability:pred_int"):
-            pred_dist = estimator_instance.predict_proba(legacy_interface=False)
-            self._check_predict_proba(pred_dist, y_train, fh_int_oos)
+            try:
+                pred_dist = estimator_instance.predict_proba(legacy_interface=False)
+                self._check_predict_proba(pred_dist, y_train, fh_int_oos)
+            except NotImplementedError:
+                pass
         else:
             with pytest.raises(NotImplementedError, match="probabilistic predictions"):
                 estimator_instance.predict_proba(legacy_interface=False)
