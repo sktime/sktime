@@ -460,7 +460,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         if isinstance(y_train, pd.Series):
             assert (pred_cols == pd.Index([0])).all()
         else:
-            assert (pred_cols == y_train.index).all()
+            assert (pred_cols == y_train.columns).all()
 
     # todo 0.18.0 or 0.19.0: remove legacy_interface parameter below
     @pytest.mark.parametrize(
