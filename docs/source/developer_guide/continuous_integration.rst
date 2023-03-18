@@ -1,21 +1,62 @@
 .. _continuous_integration:
 
-Continuous integration
-======================
+Testing and continuous integration
+==================================
 
-We use continuous integration services on GitHub to automatically check
+This page gives a summary of:
+
+* testing for contributors - code style and local testing
+* testing for maintainers - continuous integration
+
+If you are a contributor or developer, ensure that you have set
+up your developer environment, and installed a
+`development version <https://www.sktime.net/en/stable/installation.html>`__
+of ``sktime``.
+
+``sktime`` use continuous integration (CI) services on GitHub to automatically check
 if new pull requests do not break anything and meet code quality
 standards such as a common `coding style <#Coding-style>`__.
-Before setting up Continuous Integration, be sure that you have set
-up your developer environment, and installed a
-`developement version <https://www.sktime.net/en/stable/installation.html>`__
- of sktime.
 
 .. contents::
    :local:
 
+Local Testing
+-------------
+
+If you contribute to ``sktime``, the below gives you a guide on how to
+test your code locally before you make a pull request.
+
+We recommend:
+
+* set up code quality checks in your local dev IDE
+* learn how to use the ``check_estimator`` utility for estimators and ``sktime`` objects
+* advanced contributions: ensure you can run the full ``pytest`` test suite locally, via your dev IDE, console, or docker
+
+
+Prerequisite: local python environment
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Local testing requires a `development version <https://www.sktime.net/en/stable/installation.html>`__
+of ``sktime``, follow the link for detail instructions.
+
+In your environment, ensure you have an editable development version of sktime with developer dependencies.
+To install, if not already installed:
+
+   .. code:: bash
+
+      pip install -e .[dev]
+
+   This installs an editable `development
+   version <https://pip.pypa.io/en/stable/reference/pip_install/#editable-installs>`__
+   of sktime which will include the changes you make.
+
+.. note::
+
+   For trouble shooting on different operating systems, please see our detailed
+   `installation instructions <https://www.sktime.net/en/latest/installation.html>`__.
+
 Code quality checks
--------------------
+~~~~~~~~~~~~~~~~~~~
 
 .. _pre-commit: https://pre-commit.com
 
@@ -32,52 +73,73 @@ pre-commit should now automatically run anything you make a commit! Please let u
 
 For a detailed guide on code quality and linting for developers, see :ref:`coding_standards`.
 
-Unit testing
-~~~~~~~~~~~~
+Testing objects via ``check_estimator``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-We use `pytest <https://docs.pytest.org/en/latest/>`__ for unit testing.
+For contributions that are localized to estimators or objects, the ``check_estimator``
+utility can be used.
 
-To check if your code passes all tests locally, you need to install the
-development version of sktime and all extra dependencies.
+For this, follow the instructions in the
+`estimator development guide <https://www.sktime.net/en/stable/developer_guide/add_estimators.html>`__
 
-1. Install the development version of sktime with developer dependencies:
+Full test suite runs via ``pytest``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-   .. code:: bash
+The full test suite can be run locally via `pytest <https://docs.pytest.org/en/latest/>`__,
+which ``sktime`` uses for its testing framework.
 
-      pip install -e .[dev]
-
-   This installs an editable `development
-   version <https://pip.pypa.io/en/stable/reference/pip_install/#editable-installs>`__
-   of sktime which will include the changes you make.
-
-.. note::
-
-   For trouble shooting on different operating systems, please see our detailed
-   `installation instructions <https://www.sktime.net/en/latest/installation.html>`__.
-
-2. To run all unit tests, run:
+To run all tests via the console via `make <https://www.gnu.org/software/make/>`_ (only unix based OS):
 
    .. code:: bash
 
       make test
 
-or if you don't have `make <https://www.gnu.org/software/make/>`_ installed:
+or, from a console with ``pytest`` in the path, from the repository root:
 
    .. code:: bash
 
       pytest ./sktime
 
-Test coverage
--------------
+Further, developer IDEs such as pycharm or vs code will automatically recognize
+the tests via ``pytest``, refer to the documentation of the IDEs for testing
+via the embedded graphical user interface.
 
-.. _codecov: https://codecov.io
-.. _coverage: https://coverage.readthedocs.io/
-.. _pytest-cov: https://github.com/pytest-dev/pytest-cov
+Alternative: dockerized testing
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-We use `coverage`_, the `pytest-cov`_ plugin, and `codecov`_ for test coverage.
+We also provide an option to execute the test suite via ``docker`` containers.
+This requires a local docker installation.
+To install, follow the instructions `here <https://docs.docker.com/desktop/>`_.
 
-Infrastructure
---------------
+The docker images for the tests are in the folder ``build_tools/docker``,
+with the image of name ``PYTHON_VERSION`` based on the following python versions:
+
++----------------+----------------+
+| Python version | PYTHON_VERSION |
++================+================+
+|     3.7.16     |      py37      |
++----------------+----------------+
+|     3.8.16     |      py38      |
++----------------+----------------+
+|     3.9.16     |      py39      |
++----------------+----------------+
+|     3.10.10    |      py310     |
++----------------+----------------+
+|     3.11.2     |      py311     |
++----------------+----------------+
+
+The dockerized tests can be also executed via `make <https://www.gnu.org/software/make/>`_,
+via the command ``make dockertest PYTHON_VERSION=<python version>``.
+The ``PYTHON_VERSION`` argument specifies the python version and is the same string as in the table above.
+For example, to execute the tests in the Python version ``3.7.16``,
+use ``make dockertest PYTHON_VERSION=py37``.
+
+
+Continuous integration
+----------------------
+
+Infrastructure overview
+~~~~~~~~~~~~~~~~~~~~~~~
 
 This section gives an overview of the infrastructure and continuous
 integration services we use.
@@ -102,3 +164,12 @@ integration services we use.
 Additional scripts used for building, unit testing and distribution can
 be found in
 `build_tools/ <https://github.com/sktime/sktime/tree/main/build_tools>`__.
+
+Test coverage
+~~~~~~~~~~~~~
+
+.. _codecov: https://codecov.io
+.. _coverage: https://coverage.readthedocs.io/
+.. _pytest-cov: https://github.com/pytest-dev/pytest-cov
+
+We use `coverage`_, the `pytest-cov`_ plugin, and `codecov`_ for test coverage.

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Extension template for time series classifiers.
+Extension template for parameter estimators.
 
 Purpose of this implementation template:
     quick implementation of new estimators following the template
@@ -11,8 +11,7 @@ How to use this implementation template to implement a new estimator:
 - make a copy of the template in a suitable location, give it a descriptive name.
 - work through all the "todo" comments below
 - fill in code for mandatory methods, and optionally for optional methods
-- do not write to reserved variables: is_fitted, _is_fitted, _X, _y, classes_,
-    n_classes_, fit_time_, _class_dictionary, _threads_to_use, _tags, _tags_dynamic
+- do not write to reserved variables: is_fitted, _is_fitted, _tags, _tags_dynamic, _X
 - you can add more private methods, but do not override BaseEstimator's private methods
     an easy way to be safe is to prefix your methods with "_custom"
 - change docstrings for functions and the file
@@ -22,22 +21,19 @@ How to use this implementation template to implement a new estimator:
   https://www.sktime.net/en/stable/developer_guide/add_estimators.html
 
 Mandatory implements:
-    fitting                 - _fit(self, X, y)
-    predicting classes      - _predict(self, X)
+    fitting                 - _fit(self, X)
 
 Optional implements:
+    updating                              - _update(self, X)
     data conversion and capabilities tags - _tags
     fitted parameter inspection           - _get_fitted_params()
-    predicting class probabilities        - _predict_proba(self, X)
 
 Testing - required for sktime test framework and check_estimator usage:
     get default parameters for test instance(s) - get_test_params()
 
 copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
-import numpy as np
-
-from sktime.classification.base import BaseClassifier
+from sktime.param_est.base import BaseParamFitter
 
 # todo: add any necessary imports here
 
@@ -49,10 +45,10 @@ from sktime.classification.base import BaseClassifier
 # _check_soft_dependencies("soft_dependency_name", severity="warning")
 
 
-class MyTimeSeriesClassifier(BaseClassifier):
-    """Custom time series classifier. todo: write docstring.
+class MyTimeSeriesParamFitter(BaseParamFitter):
+    """Custom time series parameter fitter. todo: write docstring.
 
-    todo: describe your custom time series classifier here
+    todo: describe your custom time series parameter fitter here
 
     Hyper-parameters
     ----------------
@@ -73,20 +69,61 @@ class MyTimeSeriesClassifier(BaseClassifier):
     and so on
     """
 
-    # optional todo: override base class estimator default tags here if necessary
-    # these are the default values, only add if different to these.
+    # todo: fill out estimator tags here
+    #  tags are inherited from parent class if they are not set
+    # other tags are "safe defaults" which can usually be left as-is
     _tags = {
-        "X_inner_mtype": "numpy3D",  # which type do _fit/_predict accept, usually
-        # this is either "numpy3D" or "nested_univ" (nested pd.DataFrame). Other
-        # types are allowable, see datatypes/panel/_registry.py for options.
-        "capability:multivariate": False,
-        "capability:unequal_length": False,
+        # to list all valid tags with description, use sktime.registry.all_tags
+        #   all_tags(estimator_types="param_est", as_dataframe=True)
+        #
+        # behavioural tags: internal type
+        # -------------------------------
+        #
+        # X_inner_mtype controls which format X appears in
+        # in the inner functions _fit, _update, etc
+        "X_inner_mtype": "pd.DataFrame",
+        # valid values: str and list of str
+        # if str, must be a valid mtype str, in sktime.datatypes.MTYPE_REGISTER
+        #   of scitype Series, Panel (panel data) or Hierarchical (hierarchical series)
+        #   in that case, all inputs are converted to that one type
+        # if list of str, must be a list of valid str specifiers
+        #   in that case, X/y are passed through without conversion if on the list
+        #   if not on the list, converted to the first entry of the same scitype
+        #
+        # scitype:X tells the user which scitypes are supported natively
+        "scitype:X": "Series",
+        # valid values: "Series", "Panel", "Hierarchical", or list thereof
+        #   should correspond to the mtype formats in X_inner_mtype
+        #
+        # capability tags: properties of the estimator
+        # --------------------------------------------
+        #
+        # capability:missing_values = can estimator handle missing data?
         "capability:missing_values": False,
-        "capability:train_estimate": False,
-        "capability:contractable": False,
-        "capability:multithreading": False,
-        "python_version": None,  # PEP 440 python version specifier to limit versions
+        # valid values: boolean True (yes), False (no)
+        # if False, raises exception if X passed contain missing data (nans)
+        #
+        # capability:multivariate = can estimator handle multivariate data?
+        "capability:multivariate": False,
+        # valid values: boolean True (yes), False (no)
+        # if False, raises exception if X passed has more than one variable
+        #
+        #
+        # dependency tags: python version and soft dependencies
+        # -----------------------------------------------------
+        #
+        # python version requirement
+        "python_version": None,
+        # valid values: str, PEP 440 valid python version specifiers
+        # raises exception at construction if local python veresion is incompatible
+        #
+        # soft dependency requirement
+        "python_dependencies": None
+        # valid values: str or list of str
+        # raises exception at construction if modules at strings cannot be imported
     }
+    #  in case of inheritance, concrete class should typically set tags
+    #  alternatively, descendants can set tags in __init__ (avoid this if possible)
 
     # todo: add any hyper-parameters and components to constructor
     def __init__(self, est, parama, est2=None, paramb="default", paramc=None):
@@ -99,8 +136,8 @@ class MyTimeSeriesClassifier(BaseClassifier):
         self.paramb = paramb
         self.paramc = paramc
 
-        # todo: change "MyTimeSeriesClassifier" to the name of the class
-        super(MyTimeSeriesClassifier, self).__init__()
+        # todo: change "MyTimeSeriesParamFitter" to the name of the class
+        super(MyTimeSeriesParamFitter, self).__init__()
 
         # todo: optional, parameter checking logic (if applicable) should happen here
         # if writes derived values to self, should *not* overwrite self.parama etc
@@ -118,13 +155,13 @@ class MyTimeSeriesClassifier(BaseClassifier):
         #
         # example 1: conditional setting of a tag
         # if est.foo == 42:
-        #   self.set_tags(handles-missing-data=True)
+        #   self.set_tags(capability:missing_values=True)
         # example 2: cloning tags from component
-        #   self.clone_tags(est2, ["enforce_index_type", "handles-missing-data"])
+        #   self.clone_tags(est2, ["capability:missing_values", "other_tag"])
 
     # todo: implement this, mandatory
-    def _fit(self, X, y):
-        """Fit time series classifier to training data.
+    def _fit(self, X):
+        """Fit estimator and estimate parameters.
 
         private _fit containing the core logic, called from fit
 
@@ -134,67 +171,28 @@ class MyTimeSeriesClassifier(BaseClassifier):
         Parameters
         ----------
         X : guaranteed to be of a type in self.get_tag("X_inner_mtype")
-            if self.get_tag("X_inner_mtype") = "numpy3D":
-                3D np.ndarray of shape = [n_instances, n_dimensions, series_length]
-            if self.get_tag("X_inner_mtype") = "nested_univ":
-                pd.DataFrame with each column a dimension, each cell a pd.Series
-            for list of other mtypes, see datatypes.SCITYPE_REGISTER
-            for specifications, see examples/AA_datatypes_and_datasets.ipynb
-        y : 1D np.array of int, of shape [n_instances] - class labels for fitting
-            indices correspond to instance indices in X
+            Time series to which to fit the estimator.
 
         Returns
         -------
-        self : Reference to self.
+        self : reference to self
         """
-
         # implement here
-        # IMPORTANT: avoid side effects to X, y
+        # IMPORTANT: avoid side effects to X
         #
         # Note: when interfacing a model that has fit, with parameters
-        #   that are not data (X, y) or data-like,
+        #   that are not data X or data-like,
         #   but model parameters, *don't* add as arguments to fit, but treat as follows:
         #   1. pass to constructor,  2. write to self in constructor,
         #   3. read from self in _fit,  4. pass to interfaced_model.fit in _fit
 
-    # todo: implement this, mandatory
-    def _predict(self, X) -> np.ndarray:
-        """Predict labels for sequences in X.
-
-        private _predict containing the core logic, called from predict
-
-        State required:
-            Requires state to be "fitted".
-
-        Accesses in self:
-            Fitted model attributes ending in "_"
-
-        Parameters
-        ----------
-        X : guaranteed to be of a type in self.get_tag("X_inner_mtype")
-            if self.get_tag("X_inner_mtype") = "numpy3D":
-                3D np.ndarray of shape = [n_instances, n_dimensions, series_length]
-            if self.get_tag("X_inner_mtype") = "nested_univ":
-                pd.DataFrame with each column a dimension, each cell a pd.Series
-            for list of other mtypes, see datatypes.SCITYPE_REGISTER
-            for specifications, see examples/AA_datatypes_and_datasets.ipynb
-
-        Returns
-        -------
-        y : 1D np.array of int, of shape [n_instances] - predicted class labels
-            indices correspond to instance indices in X
-        """
-
-        # implement here
-        # IMPORTANT: avoid side effects to X
-
     # todo: consider implementing this, optional
-    # if you do not implement it, then the default _predict_proba will be called.
-    # the default simply calls predict and sets probas to 0 or 1.
-    def _predict_proba(self, X) -> np.ndarray:
-        """Predicts labels probabilities for sequences in X.
+    # if not implemented, default behaviour of update is refit on all data seen so far
+    # if not implementing, delete the _update method
+    def _update(self, X):
+        """Update fitted parameters on more data.
 
-        private _predict_proba containing the core logic, called from predict_proba
+        private _update containing the core logic, called from update
 
         State required:
             Requires state to be "fitted".
@@ -202,24 +200,18 @@ class MyTimeSeriesClassifier(BaseClassifier):
         Accesses in self:
             Fitted model attributes ending in "_"
 
+        Writes to self:
+            Sets fitted model attributes ending in "_"
+
         Parameters
         ----------
         X : guaranteed to be of a type in self.get_tag("X_inner_mtype")
-            if self.get_tag("X_inner_mtype") = "numpy3D":
-                3D np.ndarray of shape = [n_instances, n_dimensions, series_length]
-            if self.get_tag("X_inner_mtype") = "nested_univ":
-                pd.DataFrame with each column a dimension, each cell a pd.Series
-            for list of other mtypes, see datatypes.SCITYPE_REGISTER
-            for specifications, see examples/AA_datatypes_and_datasets.ipynb
+            Time series with which to update the estimator.
 
         Returns
         -------
-        y : 2D array of shape [n_instances, n_classes] - predicted class probabilities
-            1st dimension indices correspond to instance indices in X
-            2nd dimension indices correspond to possible labels (integers)
-            (i, j)-th entry is predictive probability that i-th instance is of class j
+        self : reference to self
         """
-
         # implement here
         # IMPORTANT: avoid side effects to X
 
@@ -239,8 +231,7 @@ class MyTimeSeriesClassifier(BaseClassifier):
 
         Returns
         -------
-        fitted_params : dict with str keys
-            fitted parameters, keyed by names of fitted parameter
+        fitted_params : dict
         """
         # implement here
         #
@@ -262,9 +253,7 @@ class MyTimeSeriesClassifier(BaseClassifier):
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
             special parameters are defined for a value, will return `"default"` set.
-            Reserved values for classifiers:
-                "results_comparison" - used for identity testing in some classifiers
-                    should contain parameter settings comparable to "TSC bakeoff"
+            There are no reserved values for parameter estimators.
 
         Returns
         -------
@@ -286,8 +275,6 @@ class MyTimeSeriesClassifier(BaseClassifier):
         #
         # The parameter_set argument is not used for most automated, module level tests.
         #   It can be used in custom, estimator specific tests, for "special" settings.
-        #   For classification, this is also used in tests for reference settings,
-        #       such as published in benchmarking studies, or for identity testing.
         # A parameter dictionary must be returned *for all values* of parameter_set,
         #   i.e., "parameter_set not available" errors should never be raised.
         #

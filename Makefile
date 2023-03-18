@@ -84,3 +84,7 @@ nb: clean
 	rm -rf .venv || true
 	python3 -m venv .venv
 	. .venv/bin/activate && python -m pip install .[all_extras,binder] && ./build_tools/run_examples.sh
+
+dockertest:
+	docker build -t sktime -f build_tools/docker/$(PYTHON_VERSION).dockerfile .
+	docker run -it --name sktime sktime bash -c "make test"

@@ -165,7 +165,28 @@ class BaseDistribution(BaseObject):
             return msg
 
     def pdf(self, x):
-        """Probability density function."""
+        r"""Probability density function.
+
+        Let :math:`X` be a random variables with the distribution of `self`,
+        taking values in `(N, n)` `DataFrame`-s
+        Let :math:`x\in \mathbb{R}^{N\times n}`.
+        By :math:`p_{X_{ij}}`, denote the marginal pdf of :math:`X` at the
+        :math:`(i,j)`-th entry.
+
+        The output of this method, for input `x` representing :math:`x`,
+        is a `DataFrame` with same columns and indices as `self`,
+        and entries :math:`p_{X_{ij}}(x_{ij})`.
+
+        Parameters
+        ----------
+        x : `pandas.DataFrame` or 2D np.ndarray
+            representing :math:`x`, as above
+
+        Returns
+        -------
+        `DataFrame` with same columns and index as `self`
+            containing :math:`p_{X_{ij}}(x_{ij})`, as above
+        """
         try:
             self.pdf(x=x).applymap(np.log)
 
@@ -179,7 +200,34 @@ class BaseDistribution(BaseObject):
             raise NotImplementedError(self._method_err_msg("pdf", "error"))
 
     def log_pdf(self, x):
-        """Natural logarithmic probability density function."""
+        r"""Logarithmic probability density function.
+
+        Numerically more stable than calling pdf and then taking logartihms.
+
+        Let :math:`X` be a random variables with the distribution of `self`,
+        taking values in `(N, n)` `DataFrame`-s
+        Let :math:`x\in \mathbb{R}^{N\times n}`.
+        By :math:`p_{X_{ij}}`, denote the marginal pdf of :math:`X` at the
+        :math:`(i,j)`-th entry.
+
+        The output of this method, for input `x` representing :math:`x`,
+        is a `DataFrame` with same columns and indices as `self`,
+        and entries :math:`\log p_{X_{ij}}(x_{ij})`.
+
+        If `self` has a mixed or discrete distribution, this returns
+        the weighted continuous part of `self`'s distribution instead of the pdf,
+        i.e., the marginal pdf integrate to the weight of the continuous part.
+
+        Parameters
+        ----------
+        x : `pandas.DataFrame` or 2D np.ndarray
+            representing :math:`x`, as above
+
+        Returns
+        -------
+        `DataFrame` with same columns and index as `self`
+            containing :math:`\log p_{X_{ij}}(x_{ij})`, as above
+        """
         try:
             self.pdf(x=x).applymap(np.log)
 
@@ -388,7 +436,32 @@ class _BaseTFDistribution(BaseDistribution):
         return self.to_str()
 
     def pdf(self, x):
-        """Probability density function."""
+        r"""Probability density function.
+
+        Let :math:`X` be a random variables with the distribution of `self`,
+        taking values in `(N, n)` `DataFrame`-s
+        Let :math:`x\in \mathbb{R}^{N\times n}`.
+        By :math:`p_{X_{ij}}`, denote the marginal pdf of :math:`X` at the
+        :math:`(i,j)`-th entry.
+
+        The output of this method, for input `x` representing :math:`x`,
+        is a `DataFrame` with same columns and indices as `self`,
+        and entries :math:`p_{X_{ij}}(x_{ij})`.
+
+        If `self` has a mixed or discrete distribution, this returns
+        the weighted continuous part of `self`'s distribution instead of the pdf,
+        i.e., the marginal pdf integrate to the weight of the continuous part.
+
+        Parameters
+        ----------
+        x : `pandas.DataFrame` or 2D np.ndarray
+            representing :math:`x`, as above
+
+        Returns
+        -------
+        `DataFrame` with same columns and index as `self`
+            containing :math:`p_{X_{ij}}(x_{ij})`, as above
+        """
         if isinstance(x, pd.DataFrame):
             dist_at_x = self.loc[x.index, x.columns]
             tensor = dist_at_x.distr.prob(x.values)
@@ -398,7 +471,34 @@ class _BaseTFDistribution(BaseDistribution):
             return dist_at_x.distr.prob(x)
 
     def log_pdf(self, x):
-        """Logarithmic probability density function."""
+        r"""Logarithmic probability density function.
+
+        Numerically more stable than calling pdf and then taking logartihms.
+
+        Let :math:`X` be a random variables with the distribution of `self`,
+        taking values in `(N, n)` `DataFrame`-s
+        Let :math:`x\in \mathbb{R}^{N\times n}`.
+        By :math:`p_{X_{ij}}`, denote the marginal pdf of :math:`X` at the
+        :math:`(i,j)`-th entry.
+
+        The output of this method, for input `x` representing :math:`x`,
+        is a `DataFrame` with same columns and indices as `self`,
+        and entries :math:`\log p_{X_{ij}}(x_{ij})`.
+
+        If `self` has a mixed or discrete distribution, this returns
+        the weighted continuous part of `self`'s distribution instead of the pdf,
+        i.e., the marginal pdf integrate to the weight of the continuous part.
+
+        Parameters
+        ----------
+        x : `pandas.DataFrame` or 2D np.ndarray
+            representing :math:`x`, as above
+
+        Returns
+        -------
+        `DataFrame` with same columns and index as `self`
+            containing :math:`\log p_{X_{ij}}(x_{ij})`, as above
+        """
         if isinstance(x, pd.DataFrame):
             dist_at_x = self.loc[x.index, x.columns]
             tensor = dist_at_x.distr.log_prob(x.values)

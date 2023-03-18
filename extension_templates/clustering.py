@@ -28,7 +28,7 @@ Optional implements:
     cluster assignment          -  _predict(self, X)
     fitted parameter inspection -  _get_fitted_params()
 
-Testing - implement if sktime forecaster (not needed locally):
+Testing - required for sktime test framework and check_estimator usage:
     get default parameters for test instance(s) - get_test_params()
 
 copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
