@@ -241,7 +241,7 @@ def test_evaluate_error_score(error_score, return_data, strategy, backend):
         if error_score == 1000:
             assert results["test_MeanAbsolutePercentageError"].max() == 1000
     if error_score == "raise":
-        with pytest.raises(Exception):
+        with pytest.raises(Exception):  # noqa: B017
             evaluate(
                 forecaster=forecaster,
                 y=y,
