@@ -9,7 +9,7 @@ from sktime.datatypes import ALL_TIME_SERIES_MTYPES, mtype_to_scitype
 from sktime.transformations._delegate import _DelegatedTransformer
 from sktime.transformations.base import BaseTransformer
 from sktime.transformations.compose._common import CORE_MTYPES
-from sktime.transformations.compose._common._id import Id
+from sktime.transformations.compose._id import Id
 
 
 class TransformIf(_DelegatedTransformer):
