@@ -17,10 +17,10 @@ from sklearn.utils import check_array
 from sktime.datatypes import VectorizedDF, check_is_scitype, convert_to
 from sktime.performance_metrics.base import BaseMetric
 from sktime.performance_metrics.forecasting._coerce import (
-    _coerce_to_scalar,
-    _coerce_to_df,
-    _coerce_to_series,
     _coerce_to_1d_numpy,
+    _coerce_to_df,
+    _coerce_to_scalar,
+    _coerce_to_series,
 )
 from sktime.performance_metrics.forecasting._functions import (
     geometric_mean_absolute_error,

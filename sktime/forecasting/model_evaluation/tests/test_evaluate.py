@@ -300,7 +300,12 @@ def test_evaluate_probabilistic(n_columns, metric):
     scoring = metric()
     try:
         out = evaluate(
-            forecaster, cv, y, X=None, scoring=scoring, error_score="raise",
+            forecaster,
+            cv,
+            y,
+            X=None,
+            scoring=scoring,
+            error_score="raise",
         )
         scoring_name = f"test_{scoring.name}"
         assert scoring_name in out.columns
