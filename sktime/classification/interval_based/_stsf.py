@@ -12,7 +12,6 @@ import math
 
 import numpy as np
 from joblib import Parallel, delayed
-from scipy import signal, stats
 from sklearn.base import clone
 from sklearn.preprocessing import StandardScaler
 from sklearn.tree import DecisionTreeClassifier
@@ -89,6 +88,7 @@ class SupervisedTimeSeriesForest(BaseClassifier):
     _tags = {
         "capability:multithreading": True,
         "classifier_type": "interval",
+        "python_dependencies": "scipy",
     }
 
     def __init__(
@@ -107,10 +107,12 @@ class SupervisedTimeSeriesForest(BaseClassifier):
         self.estimators_ = []
         self.intervals_ = []
 
+        super(SupervisedTimeSeriesForest, self).__init__()
+
+        from scipy import stats
+
         self._base_estimator = DecisionTreeClassifier(criterion="entropy")
         self._stats = [np.mean, np.median, np.std, _slope, stats.iqr, np.min, np.max]
-
-        super(SupervisedTimeSeriesForest, self).__init__()
 
     def _fit(self, X, y):
         """Build a forest of trees from the training set (X, y).
@@ -131,6 +133,8 @@ class SupervisedTimeSeriesForest(BaseClassifier):
         -------
         self : object
         """
+        from scipy import signal
+
         X = X.squeeze(1)
 
         self.n_instances_, self.series_length_ = X.shape
@@ -208,6 +212,8 @@ class SupervisedTimeSeriesForest(BaseClassifier):
         output : nd.array of shape = (n_instances, n_classes)
             Predicted probabilities
         """
+        from scipy import signal
+
         X = X.squeeze(1)
 
         _, X_p = signal.periodogram(X)
