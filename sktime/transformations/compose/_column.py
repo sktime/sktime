@@ -12,7 +12,6 @@ from sktime.base._meta import _ColumnEstimator, _HeterogenousMetaEstimator
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.validation.series import check_series
 
-
 # mtypes that are native pandas
 # ColumnEnsembleTransformer uses these internally, since we need (pandas) columns
 PANDAS_MTYPES = ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"]

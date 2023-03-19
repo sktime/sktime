@@ -3,8 +3,8 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 from sktime.transformations.compose._column import (
-    ColumnwiseTransformer,
     ColumnEnsembleTransformer,
+    ColumnwiseTransformer,
 )
 from sktime.transformations.compose._featureunion import FeatureUnion
 from sktime.transformations.compose._fitintransform import FitInTransform

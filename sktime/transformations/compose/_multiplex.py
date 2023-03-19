@@ -7,9 +7,9 @@ __all__ = ["MultiplexTransformer"]
 
 from sktime.base._meta import _HeterogenousMetaEstimator
 from sktime.datatypes import ALL_TIME_SERIES_MTYPES
-from sktime.transformations.compose._common import _coerce_to_sktime
 from sktime.transformations._delegate import _DelegatedTransformer
 from sktime.transformations.base import BaseTransformer
+from sktime.transformations.compose._common import _coerce_to_sktime
 
 
 class MultiplexTransformer(_HeterogenousMetaEstimator, _DelegatedTransformer):
