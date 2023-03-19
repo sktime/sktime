@@ -3,8 +3,8 @@
 
 """Time Recurrent Neural Network (RNN) for classification."""
 
-__author__ = ["Markus Löning"]
-__all__ = ["SimpleRNNRegressor"]
+__author__ = ["mloning"]
+__all__ = ["SimpleRNNClassifier"]
 
 from sklearn.utils import check_random_state
 
@@ -15,7 +15,7 @@ from sktime.utils.validation._dependencies import _check_dl_dependencies
 _check_dl_dependencies(severity="warning")
 
 
-class SimpleRNNRegressor(BaseDeepClassifier):
+class SimpleRNNClassifier(BaseDeepClassifier):
     """Simple recurrent neural network.
 
     References
@@ -39,7 +39,7 @@ class SimpleRNNRegressor(BaseDeepClassifier):
         optimizer=None,
     ):
         _check_dl_dependencies(severity="error")
-        super(SimpleRNNRegressor, self).__init__()
+        super(SimpleRNNClassifier, self).__init__()
         self.nb_epochs = nb_epochs
         self.batch_size = batch_size
         self.verbose = verbose
@@ -134,3 +134,33 @@ class SimpleRNNRegressor(BaseDeepClassifier):
             callbacks=self.callbacks,
         )
         return self
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            Reserved values for classifiers:
+                "results_comparison" - used for identity testing in some classifiers
+                    should contain parameter settings comparable to "TSC bakeoff"
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        params1 = {}
+        params2 = {
+            "nb_epochs": 50,
+            "batch_size": 2,
+            "units": 5,
+            "use_bias": False,
+        }
+        return [params1, params2]
