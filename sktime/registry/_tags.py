@@ -360,6 +360,36 @@ ESTIMATOR_TAG_REGISTER = [
         "bool",
         "whether estimator remembers all data seen as self._X, self._y, etc",
     ),
+    (
+        "distribution_type",
+        "estimator",
+        "str",
+        "distribution type of data as str",
+    ),
+    (
+        "reserved_params",
+        "estimator",
+        ("list", "str"),
+        "parameters reserved by the base class and present in all child estimators",
+    ),
+    (
+        "capabilities:exact",
+        "distribution",
+        ("list", "str"),
+        "methods provided by the distribution that return numerically exact results",
+    ),
+    (
+        "capabilities:approx",
+        "distribution",
+        ("list", "str"),
+        "methods provided by the distribution that return approximate results",
+    ),
+    (
+        "distr:measuretype",
+        "distribution",
+        ("str", ["continuous", "discrete", "mixed"]),
+        "class the distribution measure belongs to - abs.continuous, discrete, mixed",
+    ),
 ]
 
 ESTIMATOR_TAG_TABLE = pd.DataFrame(ESTIMATOR_TAG_REGISTER)

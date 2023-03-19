@@ -415,6 +415,7 @@ class ARDL(_StatsModelsAdapter):
         y_pred = self._fitted_forecaster.predict(
             start=start, end=end, exog=self._X, exog_oos=X, fixed_oos=self.fixed_oos
         )
+        y_pred.name = self._y.name
         return y_pred.loc[valid_indices]
 
     def _update(self, y, X=None, update_params=True):

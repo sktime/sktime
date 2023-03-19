@@ -121,7 +121,8 @@ class DOBIN(BaseTransformer):
         if n_dim == 1:
             warnings.warn(
                 "Warning: Input data X is univariate. For dimensionality reduction, "
-                "please provide multivariate input."
+                "please provide multivariate input.",
+                stacklevel=2,
             )
             self._coords = X
             return self
@@ -209,7 +210,8 @@ class DOBIN(BaseTransformer):
             warnings.warn(
                 "Warning: Input data X differs from that given to fit(). "
                 "Refitting with new input data, not storing updated public class "
-                "attributes. For this, explicitly use fit(X) or fit_transform(X)."
+                "attributes. For this, explicitly use fit(X) or fit_transform(X).",
+                stacklevel=2,
             )
             return new_dobin._coords
 

@@ -132,10 +132,12 @@ class ContractableBOSS(BaseClassifier):
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
     >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
-    >>> clf = ContractableBOSS(n_parameter_samples=10, max_ensemble_size=3)
-    >>> clf.fit(X_train, y_train)
+    >>> clf = ContractableBOSS(
+    ...     n_parameter_samples=10, max_ensemble_size=3
+    ... ) # doctest: +SKIP
+    >>> clf.fit(X_train, y_train) # doctest: +SKIP
     ContractableBOSS(...)
-    >>> y_pred = clf.predict(X_test)
+    >>> y_pred = clf.predict(X_test) # doctest: +SKIP
     """
 
     _tags = {
@@ -143,6 +145,7 @@ class ContractableBOSS(BaseClassifier):
         "capability:contractable": True,
         "capability:multithreading": True,
         "classifier_type": "dictionary",
+        "python_dependencies": "numba",
     }
 
     def __init__(
@@ -218,7 +221,8 @@ class ContractableBOSS(BaseClassifier):
         if self.typed_dict != "deprecated":
             warnings.warn(
                 "``typed_dict`` was deprecated in version 0.13.3 and "
-                "will be removed in 0.15."
+                "will be removed in 0.15.",
+                stacklevel=2,
             )
 
         # Window length parameter space dependent on series length

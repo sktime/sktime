@@ -4,6 +4,8 @@ __author__ = ["jnrusson1", "solen0id"]
 
 __all__ = ["LSTMFCNClassifier"]
 
+from copy import deepcopy
+
 from sklearn.utils import check_random_state
 
 from sktime.classification.deep_learning.base import BaseDeepClassifier
@@ -70,7 +72,7 @@ class LSTMFCNClassifier(BaseDeepClassifier):
 
     def __init__(
         self,
-        n_epochs=100,
+        n_epochs=2000,
         batch_size=128,
         dropout=0.8,
         kernel_sizes=(8, 5, 3),
@@ -84,7 +86,6 @@ class LSTMFCNClassifier(BaseDeepClassifier):
 
         super(LSTMFCNClassifier, self).__init__()
 
-        # calced in fit
         self.classes_ = None
         self.input_shape = None
         self.model_ = None
@@ -103,7 +104,14 @@ class LSTMFCNClassifier(BaseDeepClassifier):
         self.random_state = random_state
         self.verbose = verbose
 
-        self._network = LSTMFCNNetwork()
+        self._network = LSTMFCNNetwork(
+            kernel_sizes=self.kernel_sizes,
+            filter_sizes=self.filter_sizes,
+            random_state=self.random_state,
+            lstm_size=self.lstm_size,
+            dropout=self.dropout,
+            attention=self.attention,
+        )
         self._is_fitted = False
 
     def build_model(self, input_shape, n_classes, **kwargs):
@@ -139,8 +147,7 @@ class LSTMFCNClassifier(BaseDeepClassifier):
             metrics=["accuracy"],
         )
 
-        if self.callbacks is None:
-            self._callbacks = []
+        self.callbacks = self.callbacks or []
 
         return model
 
@@ -195,7 +202,7 @@ class LSTMFCNClassifier(BaseDeepClassifier):
             batch_size=self.batch_size,
             epochs=self.n_epochs,
             verbose=self.verbose,
-            callbacks=self._callbacks,
+            callbacks=deepcopy(self.callbacks) if self.callbacks else [],
         )
 
         self._is_fitted = True
@@ -224,12 +231,33 @@ class LSTMFCNClassifier(BaseDeepClassifier):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
+        from sktime.utils.validation._dependencies import _check_soft_dependencies
+
         param1 = {
-            "n_epochs": 50,
+            "n_epochs": 25,
+            "batch_size": 4,
+            "kernel_sizes": (3, 2, 1),
+            "filter_sizes": (2, 4, 2),
         }
 
         param2 = {
-            "n_epochs": 100,
+            "n_epochs": 5,
+            "batch_size": 2,
+            "kernel_sizes": (3, 2, 1),
+            "filter_sizes": (2, 4, 2),
+            "lstm_size": 2,
+            "attention": True,
         }
+        test_params = [param1, param2]
 
-        return [param1, param2]
+        if _check_soft_dependencies("keras", severity="none"):
+            from keras.callbacks import LambdaCallback
+
+            test_params.append(
+                {
+                    "n_epochs": 2,
+                    "callbacks": [LambdaCallback()],
+                }
+            )
+
+        return test_params

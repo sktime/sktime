@@ -386,7 +386,7 @@ class ElbowClassPairwise(BaseTransformer):
         obj = _distance_matrix()
         self.distance_frame_ = obj.distance(df)
 
-        for pairdistance in self.distance_frame_.iteritems():
+        for pairdistance in self.distance_frame_.items():
             distance = pairdistance[1].sort_values(ascending=False).values
             indices = pairdistance[1].sort_values(ascending=False).index
 

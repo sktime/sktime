@@ -367,10 +367,3 @@ class BaseTimeSeriesForest(BaseForest):
             fis /= fis_count
 
         return fis
-
-    def _get_fitted_params(self):
-
-        return {
-            "classes": self.classes_,
-            "estimators": self.estimators_,
-        }

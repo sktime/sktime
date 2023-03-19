@@ -316,14 +316,59 @@ def test_get_fitted_params():
 
     non_comp_f_params = non_composite.get_fitted_params()
     comp_f_params = composite.get_fitted_params()
+    comp_f_params_shallow = composite.get_fitted_params(deep=False)
 
     assert isinstance(non_comp_f_params, dict)
     assert set(non_comp_f_params.keys()) == set(["foo"])
 
     assert isinstance(comp_f_params, dict)
     assert set(comp_f_params) == set(["foo", "foo__foo"])
+    assert set(comp_f_params_shallow) == set(["foo"])
     assert comp_f_params["foo"] is composite.foo_
     assert comp_f_params["foo"] is not composite.foo
+    assert comp_f_params_shallow["foo"] is composite.foo_
+    assert comp_f_params_shallow["foo"] is not composite.foo
+
+
+class ConfigTester(BaseObject):
+
+    _config = {"foo_config": 42, "bar": "a"}
+
+    clsvar = 210
+
+    def __init__(self, a, b=42):
+        self.a = a
+        self.b = b
+        self.c = 84
+
+
+def test_set_get_config():
+    """Test logic behind get_config, set_config.
+
+    Raises
+    ------
+    AssertionError if logic behind get_config, set_config is incorrect, logic tested:
+        calling get_fitted_params on a non-composite fittable returns the fitted param
+        calling get_fitted_params on a composite returns all nested params
+    """
+    obj = ConfigTester(4242)
+
+    config_start = obj.get_config()
+    assert isinstance(config_start, dict)
+    assert set(config_start.keys()) == set(["foo_config", "bar"])
+    assert config_start["foo_config"] == 42
+    assert config_start["bar"] == "a"
+
+    setconfig_return = obj.set_config(foobar=126)
+    assert obj is setconfig_return
+
+    obj.set_config(**{"bar": "b"})
+    config_end = obj.get_config()
+    assert isinstance(config_end, dict)
+    assert set(config_end.keys()) == set(["foo_config", "bar", "foobar"])
+    assert config_end["foo_config"] == 42
+    assert config_end["bar"] == "b"
+    assert config_end["foobar"] == 126
 
 
 def test_eq_dunder():

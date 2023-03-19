@@ -30,6 +30,8 @@ SOFT_DEPENDENCIES = {
     "sktime.regression.deep_learning": ["tensorflow"],
     "sktime.networks": ["tensorflow"],
     "sktime.clustering.evaluation._plot_clustering": ["matplotlib"],
+    "sktime.utils.numba.general": ["numba"],
+    "sktime.utils.numba.stats": ["numba"],
 }
 
 MODULES_TO_IGNORE = ("sktime._contrib", "sktime.utils._testing")
@@ -46,7 +48,10 @@ EXCEPTED_FROM_NO_DEP_CHECK = []
 # estimators excepted from checking that get_test_params does not import soft deps
 # this is ok, in general, for adapters to soft dependency frameworks
 # since such adapters will import estimators from the adapted framework
-EXCEPTED_FROM_GET_PARAMS_CHECK = ["PyODAnnotator"]
+EXCEPTED_FROM_GET_PARAMS_CHECK = [
+    "PyODAnnotator",  # adapters always require soft dep. Here: pyod
+    "HCrystalBallAdapter",  # adapters always require soft dep. Here: hcrystalball
+]
 
 
 def _is_test(module):
@@ -56,6 +61,11 @@ def _is_test(module):
 
 def _is_ignored(module):
     return any(module_to_ignore in module for module_to_ignore in MODULES_TO_IGNORE)
+
+
+def _is_private(module):
+    module_parts = module.split(".")
+    return any(part.startswith("_") for part in module_parts)
 
 
 def _extract_dependency_from_error_msg(msg):
@@ -73,7 +83,7 @@ def _extract_dependency_from_error_msg(msg):
 # collect all modules
 modules = pkgutil.walk_packages(path=["./sktime/"], prefix="sktime.")
 modules = [x[1] for x in modules]
-modules = [x for x in modules if not _is_test(x) and not _is_ignored(x)]
+modules = [x for x in modules if not (_is_test(x) or _is_ignored(x) or _is_private(x))]
 
 
 @pytest.mark.parametrize("module", modules)

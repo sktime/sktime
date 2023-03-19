@@ -31,12 +31,12 @@ class WindowSummarizer(BaseTransformer):
     lag_feature: dict of str and list, optional (default = dict containing first lag)
         Dictionary specifying as key the type of function to be used and as value
         the argument `window`.
-        For all keys other than `lag`, the argument `window` is a length 2 list
-        containing the integer `lag`, which specifies how far back
-        in the past the window will start, and the integer `window length`,
-        which will give the length of the window across which to apply the function.
-        For ease of notation, for the key "lag", only a single integer
-        specifying the `lag` argument will be provided.
+        For the function `lag`, the argument `window` is an integer or a list of
+        integers giving the `lag` values to be used.
+        For all other functions, the argument `window` is a list with the arguments
+        `lag` and `window length`. `lag` defines how far back in the past the window
+        starts, `window length` gives the length of the window across which to apply the
+        function. For multiple different windows, provide a list of lists.
 
         Please see below a graphical representation of the logic using the following
         symbols:
@@ -44,40 +44,39 @@ class WindowSummarizer(BaseTransformer):
         ``z`` = time stamp that the window is summarized *to*.
         Part of the window if `lag` is between 0 and `1-window_length`, otherwise
         not part of the window.
-        ``*`` = (other) time stamps in the window which is summarized
-        ``x`` = observations, past or future, not part of the window
+        ``x`` = (other) time stamps in the window which is summarized
+        ``*`` = observations, past or future, not part of the window
 
-        The summarization function is applied to the window consisting of * and
+        The summarization function is applied to the window consisting of x and
         potentially z.
 
         For `window = [1, 3]`, we have a `lag` of 1 and
         `window_length` of 3 to target the three last days (exclusive z) that were
         observed. Summarization is done across windows like this:
         |-------------------------- |
-        | x x x x x x x x * * * z x |
+        | * * * * * * * * x x x z * |
         |---------------------------|
 
         For `window = [0, 3]`, we have a `lag` of 0 and
         `window_length` of 3 to target the three last days (inclusive z) that
         were observed. Summarization is done across windows like this:
         |-------------------------- |
-        | x x x x x x x x * * z x x |
+        | * * * * * * * * x x z * * |
         |---------------------------|
 
 
         Special case ´lag´: Since lags are frequently used and window length is
-        redundant, a special notation will be used for lags. You need to provide a list
-        of `lag` values, and `window_length` is not available.
+        redundant, you only need to provide a list of `lag` values.
         So `window = [1]` will result in the first lag:
 
         |-------------------------- |
-        | x x x x x x x x x x * z x |
+        | * * * * * * * * * * x z * |
         |---------------------------|
 
         And `window = [1, 4]` will result in the first and fourth lag:
 
         |-------------------------- |
-        | x x x x x x x * x x * z x |
+        | * * * * * * * x * * x z * |
         |---------------------------|
 
         key: either custom function call (to be
@@ -438,22 +437,36 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False):
     if summarizer in pd_rolling:
         if isinstance(Z, pd.core.groupby.generic.SeriesGroupBy):
             if bfill is False:
-                feat = getattr(Z.shift(lag).rolling(window_length), summarizer)()
+                feat = getattr(
+                    Z.shift(lag).rolling(
+                        window=window_length, min_periods=window_length
+                    ),
+                    summarizer,
+                )()
             else:
                 feat = getattr(
-                    Z.shift(lag).fillna(method="bfill").rolling(window_length),
+                    Z.shift(lag)
+                    .fillna(method="bfill")
+                    .rolling(window=window_length, min_periods=window_length),
                     summarizer,
                 )()
             feat = pd.DataFrame(feat)
         else:
             if bfill is False:
                 feat = Z.apply(
-                    lambda x: getattr(x.shift(lag).rolling(window_length), summarizer)()
+                    lambda x: getattr(
+                        x.shift(lag).rolling(
+                            window=window_length, min_periods=window_length
+                        ),
+                        summarizer,
+                    )()
                 )
             else:
                 feat = Z.apply(
                     lambda x: getattr(
-                        x.shift(lag).fillna(method="bfill").rolling(window_length),
+                        x.shift(lag)
+                        .fillna(method="bfill")
+                        .rolling(window=window_length, min_periods=window_length),
                         summarizer,
                     )()
                 )
@@ -470,7 +483,9 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False):
             summarizer
         ):
             feat = feat.apply(
-                lambda x: x.rolling(window_length).apply(summarizer, raw=True)
+                lambda x: x.rolling(
+                    window=window_length, min_periods=window_length
+                ).apply(summarizer, raw=True)
             )
         feat = pd.DataFrame(feat)
     if bfill is True:
@@ -529,7 +544,7 @@ def _check_summary_function(summary_function):
     summary_function : list or tuple
         The summary functions that will be used to summarize the dataset.
     """
-    msg = f"""`summary_function` must be str or a list or tuple made up of
+    msg = f"""`summary_function` must be None, or str or a list or tuple made up of
           {ALLOWED_SUM_FUNCS}.
           """
     if isinstance(summary_function, str):
@@ -539,7 +554,7 @@ def _check_summary_function(summary_function):
     elif isinstance(summary_function, (list, tuple)):
         if not all([func in ALLOWED_SUM_FUNCS for func in summary_function]):
             raise ValueError(msg)
-    else:
+    elif summary_function is not None:
         raise ValueError(msg)
     return summary_function
 
@@ -560,7 +575,7 @@ def _check_quantiles(quantiles):
     quantiles : list or tuple
         The validated quantiles that will be used to summarize the dataset.
     """
-    msg = """`quantiles` must be int, float or a list or tuple made up of
+    msg = """`quantiles` must be None, int, float or a list or tuple made up of
           int and float values that are between 0 and 1.
           """
     if isinstance(quantiles, (int, float)):
@@ -587,14 +602,15 @@ class SummaryTransformer(BaseTransformer):
 
     Parameters
     ----------
-    summary_function : str, list, tuple, default=("mean", "std", "min", "max")
-        Either a string, or list or tuple of strings indicating the pandas
+    summary_function : str, list, tuple, or None, default=("mean", "std", "min", "max")
+        If not None, a string, or list or tuple of strings indicating the pandas
         summary functions that are used to summarize each column of the dataset.
         Must be one of ("mean", "min", "max", "median", "sum", "skew", "kurt",
         "var", "std", "mad", "sem", "nunique", "count").
+        If None, no summaries are calculated, and quantiles must be non-None.
     quantiles : str, list, tuple or None, default=(0.1, 0.25, 0.5, 0.75, 0.9)
         Optional list of series quantiles to calculate. If None, no quantiles
-        are calculated.
+        are calculated, and summary_function must be non-None.
     flatten_transform_index : bool, optional (default=True)
         if True, columns of return DataFrame are flat, by "variablename__feature"
         if False, columns are MultiIndex (variablename__feature)
@@ -668,11 +684,17 @@ class SummaryTransformer(BaseTransformer):
         summary_function = _check_summary_function(self.summary_function)
         quantiles = _check_quantiles(self.quantiles)
 
-        summary_value = X.agg(summary_function)
+        if summary_function is not None:
+            summary_value = X.agg(summary_function)
+
         if quantiles is not None:
             quantile_value = X.quantile(quantiles)
             quantile_value.index = [str(s) for s in quantile_value.index]
+
+        if summary_function is not None and quantiles is not None:
             summary_value = pd.concat([summary_value, quantile_value])
+        elif summary_function is None:
+            summary_value = quantile_value
 
         if isinstance(X, pd.Series):
             summary_value.name = X.name
@@ -687,3 +709,27 @@ class SummaryTransformer(BaseTransformer):
                 Xt.columns = flatten_multiindex(Xt.columns)
 
         return Xt
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        params1 = {}
+        params2 = {"summary_function": ["mean", "std", "skew"], "quantiles": None}
+        params3 = {"summary_function": None, "quantiles": (0.1, 0.2, 0.25)}
+
+        return [params1, params2, params3]
