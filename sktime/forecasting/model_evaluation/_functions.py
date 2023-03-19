@@ -146,7 +146,7 @@ def _evaluate_window(
 
         pred_type = {
             "pred_quantiles": "forecaster.predict_quantiles",
-            "pred_intervals": "forecaster.predict_interval",
+            "pred_interval": "forecaster.predict_interval",
             "pred_proba": "forecaster.predict_proba",
             None: "forecaster.predict",
         }
@@ -155,13 +155,14 @@ def _evaluate_window(
 
         if hasattr(scoring, "metric_args"):
             metric_args = scoring.metric_args
+        else:
+            metric_args = {}
 
-        try:
-            scitype = scoring.get_tag("scitype:y_pred")
-        except ValueError:
+        if hasattr(scoring, "get_tag"):
+            scitype = scoring.get_tag("scitype:y_pred", raise_error=False)
+        else:
             # If no scitype exists then metric is not proba and no args needed
             scitype = None
-            metric_args = {}
 
         y_pred = eval(pred_type[scitype])(fh, X_test, **metric_args)
         pred_time = time.perf_counter() - start_pred
