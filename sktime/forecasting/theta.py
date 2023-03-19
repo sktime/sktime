@@ -9,7 +9,6 @@ from warnings import warn
 
 import numpy as np
 import pandas as pd
-from scipy.stats import norm
 
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.compose import ColumnEnsembleForecaster
@@ -93,6 +92,7 @@ class ThetaForecaster(ExponentialSmoothing):
         "capability:pred_int": True,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
+        "python_dependencies": "scipy",
     }
 
     def __init__(self, initial_level=None, deseasonalize=True, sp=1):
@@ -216,6 +216,8 @@ class ThetaForecaster(ExponentialSmoothing):
             Row index is fh. Entries are quantile forecasts, for var in col index,
                 at quantile probability in second col index, for the row index.
         """
+        from scipy.stats import norm
+
         # prepare return data frame
         index = pd.MultiIndex.from_product([["Quantiles"], alpha])
         pred_quantiles = pd.DataFrame(columns=index)
@@ -287,6 +289,8 @@ def _zscore(level: float, two_tailed: bool = True) -> float:
     z : float
         The z score.
     """
+    from scipy.stats import norm
+
     alpha = 1 - level
     if two_tailed:
         alpha /= 2
