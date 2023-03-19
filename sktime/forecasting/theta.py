@@ -92,7 +92,7 @@ class ThetaForecaster(ExponentialSmoothing):
         "capability:pred_int": True,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
-        "python_dependencies": "scipy",
+        "python_dependencies": ["scipy", "statsmodels"]
     }
 
     def __init__(self, initial_level=None, deseasonalize=True, sp=1):
