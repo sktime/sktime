@@ -28,6 +28,10 @@ Tag inspection and setter methods
     setting dynamic tags          - set_tags(**tag_dict: dict)
     set/clone dynamic tags        - clone_tags(estimator, tag_names=None)
 
+Config inspection and setter methods
+    get configs (all)             - get_config()
+    set configs                   - set_config(**config_dict: dict)
+
 Blueprinting: resetting and cloning, post-init state with same hyper-parameters
     reset estimator to post-init  - reset()
     cloneestimator (copy&reset)   - clone()
@@ -63,17 +67,20 @@ from sklearn import clone
 from sklearn.base import BaseEstimator as _BaseEstimator
 from sklearn.ensemble._base import _set_random_states
 
+from sktime.base._tagmanager import _FlagManager
 from sktime.exceptions import NotFittedError
 
 
-class BaseObject(_BaseEstimator):
+class BaseObject(_FlagManager, _BaseEstimator):
     """Base class for parametric objects with tags sktime.
 
     Extends scikit-learn's BaseEstimator to include sktime interface for tags.
     """
 
     def __init__(self):
-        self._tags_dynamic = dict()
+        self._init_flags(flag_attr_name="_tags")
+        self._init_flags(flag_attr_name="_config")
+
         super(BaseObject, self).__init__()
 
     def __eq__(self, other):
@@ -263,19 +270,7 @@ class BaseObject(_BaseEstimator):
             class attribute via nested inheritance. NOT overridden by dynamic
             tags set by set_tags or mirror_tags.
         """
-        collected_tags = dict()
-
-        # We exclude the last two parent classes: sklearn.base.BaseEstimator and
-        # the basic Python object.
-        for parent_class in reversed(inspect.getmro(cls)[:-2]):
-            if hasattr(parent_class, "_tags"):
-                # Need the if here because mixins might not have _more_tags
-                # but might do redundant work in estimators
-                # (i.e. calling more tags on BaseEstimator multiple times)
-                more_tags = parent_class._tags
-                collected_tags.update(more_tags)
-
-        return deepcopy(collected_tags)
+        return cls._get_class_flags(flag_attr_name="_tags")
 
     @classmethod
     def get_class_tag(cls, tag_name, tag_value_default=None):
@@ -291,12 +286,13 @@ class BaseObject(_BaseEstimator):
         Returns
         -------
         tag_value :
-            Value of the `tag_name` tag in self. If not found, returns
-            `tag_value_default`.
+            Value of `tag_name` tag in self. If not found, returns `tag_value_default`.
         """
-        collected_tags = cls.get_class_tags()
-
-        return collected_tags.get(tag_name, tag_value_default)
+        return cls._get_class_flag(
+            flag_name=tag_name,
+            flag_value_default=tag_value_default,
+            flag_attr_name="_tags",
+        )
 
     def get_tags(self):
         """Get tags from estimator class and dynamic tag overrides.
@@ -308,12 +304,7 @@ class BaseObject(_BaseEstimator):
             class attribute via nested inheritance and then any overrides
             and new tags from _tags_dynamic object attribute.
         """
-        collected_tags = self.get_class_tags()
-
-        if hasattr(self, "_tags_dynamic"):
-            collected_tags.update(self._tags_dynamic)
-
-        return deepcopy(collected_tags)
+        return self._get_flags(flag_attr_name="_tags")
 
     def get_tag(self, tag_name, tag_value_default=None, raise_error=True):
         """Get tag value from estimator class and dynamic tag overrides.
@@ -338,14 +329,12 @@ class BaseObject(_BaseEstimator):
         ValueError if raise_error is True i.e. if tag_name is not in self.get_tags(
         ).keys()
         """
-        collected_tags = self.get_tags()
-
-        tag_value = collected_tags.get(tag_name, tag_value_default)
-
-        if raise_error and tag_name not in collected_tags.keys():
-            raise ValueError(f"Tag with name {tag_name} could not be found.")
-
-        return tag_value
+        return self._get_flag(
+            flag_name=tag_name,
+            flag_value_default=tag_value_default,
+            raise_error=raise_error,
+            flag_attr_name="_tags",
+        )
 
     def set_tags(self, **tag_dict):
         """Set dynamic tags to given values.
@@ -365,11 +354,7 @@ class BaseObject(_BaseEstimator):
         Changes object state by settting tag values in tag_dict as dynamic tags
         in self.
         """
-        tag_update = deepcopy(tag_dict)
-        if hasattr(self, "_tags_dynamic"):
-            self._tags_dynamic.update(tag_update)
-        else:
-            self._tags_dynamic = tag_update
+        self._set_flags(flag_attr_name="_tags", **tag_dict)
 
         return self
 
@@ -393,20 +378,9 @@ class BaseObject(_BaseEstimator):
         Changes object state by setting tag values in tag_set from estimator as
         dynamic tags in self.
         """
-        tags_est = deepcopy(estimator.get_tags())
-
-        # if tag_set is not passed, default is all tags in estimator
-        if tag_names is None:
-            tag_names = tags_est.keys()
-        else:
-            # if tag_set is passed, intersect keys with tags in estimator
-            if not isinstance(tag_names, list):
-                tag_names = [tag_names]
-            tag_names = [key for key in tag_names if key in tags_est.keys()]
-
-        update_dict = {key: tags_est[key] for key in tag_names}
-
-        self.set_tags(**update_dict)
+        self._clone_flags(
+            estimator=estimator, flag_names=tag_names, flag_attr_name="_tags"
+        )
 
         return self
 
@@ -430,6 +404,38 @@ class BaseObject(_BaseEstimator):
         """
         # default parameters = empty dict
         return {}
+
+    def get_config(self):
+        """Get config flags for self.
+
+        Returns
+        -------
+        config_dict : dict
+            Dictionary of config name : config value pairs. Collected from _config
+            class attribute via nested inheritance and then any overrides
+            and new tags from _onfig_dynamic object attribute.
+        """
+        return self._get_flags(flag_attr_name="_config")
+
+    def set_config(self, **config_dict):
+        """Set config flags to given values.
+
+        Parameters
+        ----------
+        config_dict : dict
+            Dictionary of config name : config value pairs.
+
+        Returns
+        -------
+        self : reference to self.
+
+        Notes
+        -----
+        Changes object state, copies configs in config_dict to self._config_dynamic.
+        """
+        self._set_flags(flag_attr_name="_config", **config_dict)
+
+        return self
 
     @classmethod
     def create_test_instance(cls, parameter_set="default"):
@@ -865,14 +871,14 @@ class TagAliaserMixin:
             if tag_name in cls.alias_dict.keys():
                 version = cls.deprecate_dict[tag_name]
                 new_tag = cls.alias_dict[tag_name]
-                msg = f'tag "{tag_name}" will be removed in sktime version {version}'
+                msg = f"tag {tag_name!r} will be removed in sktime version {version}"
                 if new_tag != "":
                     msg += (
-                        f' and replaced by "{new_tag}", please use "{new_tag}" instead'
+                        f" and replaced by {new_tag!r}, please use {new_tag!r} instead"
                     )
                 else:
                     msg += ', please remove code that access or sets "{tag_name}"'
-                warnings.warn(msg, category=DeprecationWarning)
+                warnings.warn(msg, category=DeprecationWarning, stacklevel=2)
 
 
 class BaseEstimator(BaseObject):
@@ -904,16 +910,36 @@ class BaseEstimator(BaseObject):
                 f"been fitted yet; please call `fit` first."
             )
 
-    def get_fitted_params(self):
+    def get_fitted_params(self, deep=True):
         """Get fitted parameters.
 
         State required:
             Requires state to be "fitted".
 
+        Parameters
+        ----------
+        deep : bool, default=True
+            Whether to return fitted parameters of components.
+
+            * If True, will return a dict of parameter name : value for this object,
+              including fitted parameters of fittable components
+              (= BaseEstimator-valued parameters).
+            * If False, will return a dict of parameter name : value for this object,
+              but not include fitted parameters of components.
+
         Returns
         -------
-        fitted_params : dict of fitted parameters, keys are str names of parameters
-            parameters of components are indexed as [componentname]__[paramname]
+        fitted_params : dict with str-valued keys
+            Dictionary of fitted parameters, paramname : paramvalue
+            keys-value pairs include:
+
+            * always: all fitted parameters of this object, as via `get_param_names`
+              values are fitted parameter value for that key, of this object
+            * if `deep=True`, also contains keys/value pairs of component parameters
+              parameters of components are indexed as `[componentname]__[paramname]`
+              all parameters of `componentname` appear as `paramname` with its value
+            * if `deep=True`, also contains arbitrary levels of component recursion,
+              e.g., `[componentname]__[componentcomponentname]__[paramname]`, etc
         """
         if not self.is_fitted:
             raise NotFittedError(
@@ -921,7 +947,13 @@ class BaseEstimator(BaseObject):
                 "fitted yet, please call fit on data before get_fitted_params"
             )
 
-        fitted_params = dict()
+        # collect non-nested fitted params of self
+        fitted_params = self._get_fitted_params()
+
+        # the rest is only for nested parameters
+        # so, if deep=False, we simply return here
+        if not deep:
+            return fitted_params
 
         def sh(x):
             """Shorthand to remove all underscores at end of a string."""
@@ -937,9 +969,6 @@ class BaseEstimator(BaseObject):
                 c_f_params = comp.get_fitted_params()
                 c_f_params = {f"{sh(c)}__{k}": v for k, v in c_f_params.items()}
                 fitted_params.update(c_f_params)
-
-        # add non-nested fitted params of self
-        fitted_params.update(self._get_fitted_params())
 
         # add all nested parameters from components that are sklearn estimators
         # we do this recursively as we have to reach into nested sklearn estimators

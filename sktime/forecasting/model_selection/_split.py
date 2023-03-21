@@ -708,9 +708,8 @@ class CutoffSplitter(BaseSplitter):
             null = 0 if is_int(cutoff) else pd.Timestamp(0)
             if cutoff >= null:
                 train_end = y[cutoff] if is_int(cutoff) else cutoff
-                training_window = get_window(
-                    pd.Series(index=y[y <= train_end]), window_length=window_length
-                ).index
+                y_train = pd.Series(index=y[y <= train_end], dtype=y.dtype)
+                training_window = get_window(y_train, window_length=window_length).index
             else:
                 training_window = []
             training_window = y.get_indexer(training_window)
@@ -1329,10 +1328,25 @@ def temporal_train_test_split(
 
     Parameters
     ----------
-    y : pd.Series
-        Target series
-    X : pd.DataFrame, optional (default=None)
-        Exogenous data
+    y : time series in sktime compatible data container format
+    X : time series in sktime compatible data container format, optional, default=None
+        y and X can be in one of the following formats:
+        Series scitype: pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
+            for vanilla forecasting, one time series
+        Panel scitype: pd.DataFrame with 2-level row MultiIndex,
+            3D np.ndarray, list of Series pd.DataFrame, or nested pd.DataFrame
+            for global or panel forecasting
+        Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
+            for hierarchical forecasting
+        Number of columns admissible depend on the "scitype:y" tag:
+            if self.get_tag("scitype:y")=="univariate":
+                y must have a single column/variable
+            if self.get_tag("scitype:y")=="multivariate":
+                y must have 2 or more columns
+            if self.get_tag("scitype:y")=="both": no restrictions on columns apply
+        For further details:
+            on usage, see forecasting tutorial examples/01_forecasting.ipynb
+            on specification of formats, examples/AA_datatypes_and_datasets.ipynb
     test_size : float, int or None, optional (default=None)
         If float, should be between 0.0 and 1.0 and represent the proportion
         of the dataset to include in the test split. If int, represents the

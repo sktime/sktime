@@ -182,7 +182,13 @@ def _evaluate_window(
                 Failed forecaster: {forecaster}.
                 """,
                 FitFailedWarning,
+                stacklevel=2,
             )
+
+    if pd.isnull(cutoff):
+        cutoff_ind = cutoff
+    else:
+        cutoff_ind = cutoff[0]
 
     result = pd.DataFrame(
         {
@@ -190,7 +196,7 @@ def _evaluate_window(
             "fit_time": [fit_time],
             "pred_time": [pred_time],
             "len_train_window": [len(y_train)],
-            "cutoff": [cutoff],
+            "cutoff": [cutoff_ind],
             "y_train": [y_train if return_data else pd.NA],
             "y_test": [y_test if return_data else pd.NA],
             "y_pred": [y_pred if return_data else pd.NA],
@@ -300,7 +306,7 @@ def evaluate(
         Optionally, users may select other metrics that can be supplied
         by `scoring` argument. These can be forecast metrics of any kind,
         i.e., point forecast metrics, interval metrics, quantile foreast metrics.
-        https://www.sktime.org/en/stable/api_reference/performance_metrics.html?highlight=metrics
+        https://www.sktime.net/en/stable/api_reference/performance_metrics.html?highlight=metrics
         To evaluate estimators using a specific metric, provide them to the scoring arg.
     >>> from sktime.performance_metrics.forecasting import MeanAbsoluteError
     >>> loss = MeanAbsoluteError()
@@ -461,18 +467,19 @@ def evaluate(
         )
         results = pd.concat(results)
 
+    results = results.reset_index(drop=True)
     if isinstance(scoring, List):
         for s in scoring[1:]:
             results[f"test_{s.name}"] = np.nan
-            for row in range(len(results)):
-                results[f"test_{s.name}"].iloc[row] = s(
-                    results["y_test"].iloc[row],
-                    results["y_pred"].iloc[row],
-                    y_train=results["y_train"].iloc[row],
+            for row in results.index:
+                results.loc[row, f"test_{s.name}"] = s(
+                    results["y_test"].loc[row],
+                    results["y_pred"].loc[row],
+                    y_train=results["y_train"].loc[row],
                 )
 
     if not return_data:
         results = results.drop(columns=["y_train", "y_test", "y_pred"])
-    results = results.astype({"len_train_window": int}).reset_index(drop=True)
+    results = results.astype({"len_train_window": int})
 
     return results

@@ -35,10 +35,10 @@ def make_pipeline(*steps):
     'TransformedTargetForecaster'
 
     Example 2: classifier pipeline
-    >>> from sktime.classification.feature_based import Catch22Classifier
+    >>> from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
     >>> from sktime.pipeline import make_pipeline
     >>> from sktime.transformations.series.exponent import ExponentTransformer
-    >>> pipe = make_pipeline(ExponentTransformer(), Catch22Classifier())
+    >>> pipe = make_pipeline(ExponentTransformer(), KNeighborsTimeSeriesClassifier())
     >>> type(pipe).__name__
     'ClassifierPipeline'
 

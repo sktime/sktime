@@ -154,6 +154,7 @@ class DateTimeFeatures(BaseTransformer):
             " to `False`. To keep the current behaviour explicitly \n"
             " set `keep_original_columns=True`.",
             FutureWarning,
+            stacklevel=2,
         )
         super(DateTimeFeatures, self).__init__()
 
@@ -209,7 +210,8 @@ class DateTimeFeatures(BaseTransformer):
                 ):
                     warnings.warn(
                         "Level of selected dummy variable "
-                        + " lower level than base ts_frequency."
+                        + " lower level than base ts_frequency.",
+                        stacklevel=2,
                     )
                 calendar_dummies = self.dummies.loc[
                     self.dummies["dummy"].isin(self.manual_selection),
