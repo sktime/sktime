@@ -133,7 +133,7 @@ jobs:
         run: python -m pip list
 
       - name: Run tests
-        run: make PYTESTOPTIONS="--cov --cov-report=xml --only_cython_estimators=True --timeout=600" test_check_suite
+        run: make PYTESTOPTIONS="--cov --cov-report=xml --only_cython_estimators=True --matrixdesign=False --timeout=600" test_check_suite
 
       - name: Publish code coverage
         uses: codecov/codecov-action@v3
