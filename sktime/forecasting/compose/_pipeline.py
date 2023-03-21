@@ -6,6 +6,7 @@ __author__ = ["mloning", "aiwalter"]
 __all__ = ["TransformedTargetForecaster", "ForecastingPipeline", "ForecastX"]
 
 import pandas as pd
+from warnings import warn
 
 from sktime.base import _HeterogenousMetaEstimator
 from sktime.datatypes import ALL_TIME_SERIES_MTYPES
@@ -69,6 +70,24 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
         TypeError if there is not exactly one forecaster in `estimators`
         TypeError if not allow_postproc and forecaster is not last estimator
         """
+        self_name = type(self).__name__
+        if not isinstance(estimators, list):
+            msg = (
+                f"steps in {self_name} must be list of estimators, "
+                f"or (string, estimator) pairs, "
+                f"the two can be mixed; but, found steps of type {type(estimators)}"
+            )
+            raise TypeError(msg)
+
+        if len(estimators) == 1:
+            msg = (
+                f"in {self_name}, found steps of length 1, "
+                f"this will result in the same behaviour "
+                f"as not wrapping the single step in a pipeline. "
+                f"Consider not wrapping steps in {self_name} as it is redundant."
+            )
+            warn(msg)
+
         estimator_tuples = self._get_estimator_tuples(estimators, clone_ests=True)
         names, estimators = zip(*estimator_tuples)
 
@@ -78,7 +97,7 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
         scitypes = self._get_pipeline_scitypes(estimator_tuples)
         if not set(scitypes).issubset(["forecaster", "transformer"]):
             raise TypeError(
-                f"estimators passed to {type(self).__name__} "
+                f"estimators passed to {self_name} "
                 f"must be either transformer or forecaster"
             )
         if scitypes.count("forecaster") != 1:
@@ -91,7 +110,7 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
 
         if not allow_postproc and forecaster_ind != len(estimators) - 1:
             TypeError(
-                f"in {type(self).__name__}, last estimator must be a forecaster, "
+                f"in {self_name}, last estimator must be a forecaster, "
                 f"but found a transformer"
             )
 
