@@ -35,7 +35,7 @@ test_check_suite: ## run only estimator contract tests in TestAll classes
 	mkdir -p ${TEST_DIR}
 	cp .coveragerc ${TEST_DIR}
 	cp setup.cfg ${TEST_DIR}
-	python -m pytest -k TestAll
+	python -m pytest -k 'TestAll' $(PYTESTOPTIONS)
 
 test_softdeps: ## Run unit tests to check soft dependency handling in estimators
 	-rm -rf ${TEST_DIR}
