@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Testes for tabular-to-panel distance aggregation/reduction."""
+"""Tests for tabular-to-panel distance aggregation/reduction."""
 import numpy as np
 
 from sktime.datatypes import convert_to

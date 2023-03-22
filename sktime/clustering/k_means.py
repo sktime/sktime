@@ -20,7 +20,7 @@ class TimeSeriesKMeans(TimeSeriesLloyds):
     n_clusters: int, defaults = 8
         The number of clusters to form as well as the number of
         centroids to generate.
-    init_algorithm: str, defaults = 'forgy'
+    init_algorithm: str, defaults = 'random'
         Method for initializing cluster centers. Any of the following are valid:
         ['kmeans++', 'random', 'forgy']
     metric: str or Callable, defaults = 'dtw'

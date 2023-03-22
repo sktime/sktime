@@ -36,6 +36,7 @@ class _BaseProbaForecastingErrorMetric(BaseForecastingErrorMetric):
     """
 
     _tags = {
+        "reserved_params": ["multioutput", "score_average"],
         "scitype:y_pred": "pred_quantiles",
         "lower_is_better": True,
     }
@@ -242,6 +243,7 @@ class _BaseProbaForecastingErrorMetric(BaseForecastingErrorMetric):
                     np.vstack((y_true[:i, :], y_true[i + 1 :, :])),  # noqa
                     np.vstack((y_pred[:i, :], y_pred[i + 1 :, :])),  # noqa
                     multioutput,
+                    **kwargs,
                 )
             return out_series
         except RecursionError:
@@ -594,3 +596,194 @@ class ConstraintViolation(_BaseProbaForecastingErrorMetric):
         """Retrieve test parameters."""
         params1 = {}
         return [params1]
+
+
+class _BaseDistrForecastingMetric(_BaseProbaForecastingErrorMetric):
+    """Intermediate base class for distributional prediction metrics/scores.
+
+    Developer note:
+    Experimental and overrides public methods of _BaseProbaForecastingErrorMetric.
+    This should be refactored into one base class.
+    """
+
+    _tags = {
+        "scitype:y_pred": "pred_proba",
+        "lower_is_better": True,
+    }
+
+    def evaluate(self, y_true, y_pred, multioutput=None, **kwargs):
+        """Evaluate the desired metric on given inputs.
+
+        Parameters
+        ----------
+        y_true : pd.Series, pd.DataFrame or np.array of shape (fh,) or \
+                (fh, n_outputs) where fh is the forecasting horizon
+            Ground truth (correct) target values.
+
+        y_pred : return object of probabilistic predictition method scitype:y_pred
+            must be at fh and for variables equal to those in y_true
+
+        multioutput : string "uniform_average" or "raw_values" determines how\
+            multioutput results will be treated.
+
+        Returns
+        -------
+        loss : float or 1-column pd.DataFrame with calculated metric value(s)
+            metric is always averaged (arithmetic) over fh values
+        """
+        index_df = self.evaluate_by_index(y_true, y_pred, multioutput)
+        out_df = pd.DataFrame(index_df.mean(axis=0)).T
+        out_df.columns = index_df.columns
+        return out_df
+
+    def evaluate_by_index(
+        self, y_true, y_pred, multioutput="uniform_average", **kwargs
+    ):
+        """Logic for finding the metric evaluated at each index.
+
+        y_true : pd.Series, pd.DataFrame or np.array of shape (fh,) or \
+            (fh, n_outputs) where fh is the forecasting horizon
+            Ground truth (correct) target values.
+
+        y_pred : sktime BaseDistribution of same shape as y_true
+            Predictive distribution.
+            Must have same index and columns as y_true.
+        """
+        multivariate = self.multivariate
+
+        if multivariate:
+            res = self._evaluate_by_index(
+                y_true=y_true, y_pred=y_pred, multioutput=multioutput
+            )
+            res.columns = ["score"]
+            return res
+        else:
+            res_by_col = []
+            for col in y_pred.columns:
+                y_pred_col = y_pred.loc[:, [col]]
+                y_true_col = y_true.loc[:, [col]]
+                res_for_col = self._evaluate_by_index(
+                    y_true=y_true_col, y_pred=y_pred_col, multioutput=multioutput
+                )
+                res_for_col.columns = [col]
+                res_by_col += [res_for_col]
+            res = pd.concat(res_by_col, axis=1)
+
+        return res
+
+
+class LogLoss(_BaseDistrForecastingMetric):
+    r"""Logarithmic loss for distributional predictions.
+
+    For a predictive distribution :math:`d` with pdf :math:`p_d`
+    and a ground truth value :math:`y`, the logarithmic loss is
+    defined as :math:`L(y, d) := -\log p_d(y)`.
+
+    `evaluate` computes the average test sample loss.
+    `evaluate_by_index` produces the loss sample by test data point
+    `multivariate` controls averaging over variables.
+
+    Parameters
+    ----------
+    multioutput : str, "uniform_average" or "raw_values"
+        determines how multioutput results will be treated.
+    multivariate : bool, optional, default=False
+        if True, behaves as multivariate log-loss
+        log-loss is computed for entire row, results one score per row
+        if False, is univariate log-loss
+        log-loss is computed per variable marginal, results in many scores per row
+    """
+
+    def __init__(self, multioutput="uniform_average", multivariate=False):
+        self.multivariate = multivariate
+        super().__init__(multioutput=multioutput)
+
+    def _evaluate_by_index(self, y_true, y_pred, multioutput, **kwargs):
+        res = -y_pred.log_pdf(y_true)
+        # replace this by multivariate log_pdf once distr implements
+        # i.e., pass multivariate on to log_pdf
+        if self.multivariate:
+            return pd.DataFrame(res.mean(axis=1), columns=["density"])
+        else:
+            return res
+
+
+class SquaredDistrLoss(_BaseDistrForecastingMetric):
+    r"""Squared loss for distributional predictions.
+
+    Also known as:
+
+    * continuous Brier loss
+    * Gneiting loss
+    * (mean) squared error/loss, i.e., confusingly named the same as the
+      point prediction loss commonly known as the mean squared error
+
+    For a predictive distribution :math:`d`
+    and a ground truth value :math:`y`, the squared (distribution) loss is
+    defined as :math:`L(y, d) := -2 p_d(y) + \|p_d\|^2`,
+    where :math:`\|p_d\|^2` is the (function) L2-norm of :math:`p_d`.
+
+    `evaluate` computes the average test sample loss.
+    `evaluate_by_index` produces the loss sample by test data point
+    `multivariate` controls averaging over variables.
+
+    Parameters
+    ----------
+    multioutput : str, "uniform_average" or "raw_values"
+        determines how multioutput results will be treated.
+    multivariate : bool, optional, default=False
+        if True, behaves as multivariate squared loss
+        log-loss is computed for entire row, results one score per row
+        if False, is univariate squared loss
+        log-loss is computed per variable marginal, results in many scores per row
+    """
+
+    def __init__(self, multioutput="uniform_average", multivariate=False):
+        self.multivariate = multivariate
+        super().__init__(multioutput=multioutput)
+
+    def _evaluate_by_index(self, y_true, y_pred, multioutput, **kwargs):
+        res = -2 * y_pred.log_pdf(y_true) + y_pred.pdfnorm(a=2)
+        # replace this by multivariate log_pdf once distr implements
+        # i.e., pass multivariate on to log_pdf
+        if self.multivariate:
+            return pd.DataFrame(res.mean(axis=1), columns=["density"])
+        else:
+            return res
+
+
+class CRPS(_BaseDistrForecastingMetric):
+    r"""Continuous rank probability score for distributional predictions.
+
+    Also known as:
+
+    * integrated squared loss (ISL)
+    * integrated Brier loss (IBL)
+    * energy loss
+
+    For a predictive distribution :math:`d` and a ground truth value :math:`y`,
+    the CRPS is defined as
+    :math:`L(y, d) := \mathbb{E}_{Y \sim d}|Y-y| - \frac{1}{2} \mathbb{E}_{X,Y \sim d}|X-Y|`.  # noqa: E501
+
+    `evaluate` computes the average test sample loss.
+    `evaluate_by_index` produces the loss sample by test data point
+    `multivariate` controls averaging over variables.
+
+    Parameters
+    ----------
+    multioutput : str, "uniform_average" or "raw_values"
+        determines how multioutput results will be treated.
+    multivariate : bool, optional, default=False
+        if True, behaves as multivariate log-loss
+        log-loss is computed for entire row, results one score per row
+        if False, is univariate log-loss
+        log-loss is computed per variable marginal, results in many scores per row
+    """
+
+    def __init__(self, multioutput="uniform_average", multivariate=False):
+        self.multivariate = multivariate
+        super().__init__(multioutput=multioutput)
+
+    def _evaluate_by_index(self, y_true, y_pred, multioutput, **kwargs):
+        # CRPS(d, y) = E_X,Y as d [abs(Y-y) - 0.5 abs(X-Y)]
+        return y_pred.energy(y_true) - y_pred.energy() / 2

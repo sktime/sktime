@@ -116,7 +116,7 @@ def set_hier_freq(x):
         raise ValueError("Set_freq only supported for DatetimeIndex.")
 
     if timepoints.freq is not None:
-        warnings.warn("Frequency already set.")
+        warnings.warn("Frequency already set.", stacklevel=2)
     else:
         time_names = x.index.names[-1]
         x = (

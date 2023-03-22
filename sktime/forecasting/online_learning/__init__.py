@@ -11,10 +11,8 @@ __all__ = [
     "OnlineEnsembleForecaster",
 ]
 
+from sktime.forecasting.online_learning._online_ensemble import OnlineEnsembleForecaster
 from sktime.forecasting.online_learning._prediction_weighted_ensembler import (
-    NormalHedgeEnsemble,
     NNLSEnsemble,
-)
-from sktime.forecasting.online_learning._online_ensemble import (
-    OnlineEnsembleForecaster,
+    NormalHedgeEnsemble,
 )
