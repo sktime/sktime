@@ -2,7 +2,7 @@
 """Time Series Forest (TSF) Classifier."""
 
 __author__ = [
-    "Tony Bagnall",
+    "TonyBagnall",
     "kkoziara",
     "luiszugasti",
     "kanand77",

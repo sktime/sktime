@@ -36,7 +36,7 @@ metadata: dict - metadata about obj if valid, otherwise None
         "n_instances": int, number of instances in the panel
 """
 
-__author__ = ["fkiraly", "tonybagnall"]
+__author__ = ["fkiraly", "TonyBagnall"]
 
 __all__ = ["check_dict"]
 
